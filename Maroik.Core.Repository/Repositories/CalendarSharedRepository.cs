@@ -24,4 +24,7 @@ public class CalendarSharedRepository(ApplicationDbContext context)
         User = s.User,
         Anonymous = s.Anonymous
     };
+
+    public Task<List<CalendarShared>> GetAllAsync(CancellationToken ct = default)
+        => QueryAllAsync(ct: ct);
 }

@@ -1,4 +1,4 @@
-﻿using Maroik.Core.Contract.Domains.Board;
+using Maroik.Core.Contract.Domains.Board;
 using Maroik.Core.Contract.Interfaces;
 using Maroik.Core.PostgreSQL.Data;
 using Microsoft.EntityFrameworkCore;
@@ -48,4 +48,10 @@ public class BoardRepository(ApplicationDbContext context)
         Locked = b.Locked,
         Noticed = b.Noticed
     };
+
+    public Task<List<Board>> GetByTypeAsync(string type, CancellationToken ct = default)
+        => QueryAsync(e => e.Type == type, ct: ct);
+
+    public Task<Board?> FindActiveByIdAsync(long id, CancellationToken ct = default)
+        => QueryFirstAsync(e => e.Id == id && e.Deleted == false, ct);
 }

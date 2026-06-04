@@ -2,7 +2,6 @@ using Ganss.Xss;
 using HtmlAgilityPack;
 using ImageMagick;
 using Maroik.Core.Contract.Domains.Calendar;
-using Maroik.Core.Contract.Filters;
 using Maroik.Core.Contract.Utilities;
 using Maroik.Core.Contract.Dtos;
 using Maroik.Core.Contract.Interfaces;
@@ -62,48 +61,48 @@ public class CalendarService : ICalendarService
 
     /// <inheritdoc />
     public async Task<List<CalendarResponse>> GetCalendarsAsync(string email, CancellationToken ct = default)
-        => (await _calendarRepository.FindAsync([FilterCondition.Equal("AccountEmail", email)], orderByProperty: "Name", ct: ct)).Select(CalendarMapper.ToResponse).ToList();
+        => (await _calendarRepository.GetByAccountEmailAsync(email, ct)).OrderBy(c => c.Name).Select(CalendarMapper.ToResponse).ToList();
 
     /// <inheritdoc />
     public async Task<List<CalendarResponse>> GetAllCalendarsAsync(CancellationToken ct = default)
-        => (await _calendarRepository.FindAsync([], orderByProperty: "Name", ct: ct)).Select(CalendarMapper.ToResponse).ToList();
+        => (await _calendarRepository.GetAllOrderedByNameAsync(ct)).Select(CalendarMapper.ToResponse).ToList();
 
     /// <inheritdoc />
     public async Task<IEnumerable<CalendarEventResponse>> GetCalendarEventsAsync(long calendarId, CancellationToken ct = default)
-        => (await _calendarEventRepository.FindAsync([FilterCondition.Equal("CalendarId", calendarId)], ct: ct)).Select(CalendarEventMapper.ToResponse);
+        => (await _calendarEventRepository.GetByCalendarIdAsync(calendarId, ct)).Select(CalendarEventMapper.ToResponse);
 
     /// <inheritdoc />
     public async Task<CalendarEventResponse?> GetCalendarEventAsync(long id, CancellationToken ct = default)
     {
-        CalendarEvent? evt = (await _calendarEventRepository.FindAsync([FilterCondition.Equal("Id", id)], ct: ct)).FirstOrDefault();
+        CalendarEvent? evt = await _calendarEventRepository.FindByIdAsync(id, ct);
         return evt == null ? null : CalendarEventMapper.ToResponse(evt);
     }
 
     /// <inheritdoc />
     public async Task<CalendarEventAttachedFileResponse?> GetCalendarEventAttachedFileAsync(long calendarEventId, CancellationToken ct = default)
     {
-        CalendarEventAttachedFile? file = (await _calendarEventAttachedFileRepository.FindAsync([FilterCondition.Equal("CalendarEventId", calendarEventId)], ct: ct)).FirstOrDefault();
+        CalendarEventAttachedFile? file = await _calendarEventAttachedFileRepository.FindByCalendarEventIdAsync(calendarEventId, ct);
         return file == null ? null : CalendarEventAttachedFileMapper.ToResponse(file);
     }
 
     /// <inheritdoc />
     public async Task<IEnumerable<CalendarEventReminderResponse>> GetCalendarEventRemindersAsync(long calendarEventId, CancellationToken ct = default)
-        => (await _calendarEventReminderRepository.FindAsync([FilterCondition.Equal("CalendarEventId", calendarEventId)], ct: ct)).Select(CalendarEventReminderMapper.ToResponse);
+        => (await _calendarEventReminderRepository.GetByCalendarEventIdAsync(calendarEventId, ct)).Select(CalendarEventReminderMapper.ToResponse);
 
     /// <inheritdoc />
     public async Task<List<OtherCalendarResponse>> GetOtherCalendarsAsync(string email, CancellationToken ct = default)
-        => (await _otherCalendarRepository.FindAsync([FilterCondition.Equal("AccountEmail", email)], ct: ct)).Select(OtherCalendarMapper.ToResponse).ToList();
+        => (await _otherCalendarRepository.GetByAccountEmailAsync(email, ct)).Select(OtherCalendarMapper.ToResponse).ToList();
 
     /// <inheritdoc />
     public async Task<List<CalendarSharedResponse>> GetCalendarSharedAsync(CancellationToken ct = default)
-        => (await _calendarSharedRepository.FindAsync([], ct: ct)).Select(CalendarSharedMapper.ToResponse).ToList();
+        => (await _calendarSharedRepository.GetAllAsync(ct)).Select(CalendarSharedMapper.ToResponse).ToList();
 
     /// <inheritdoc />
     public async Task<ServiceResult> EnsureCalendarSharedAsync(long calendarId, CancellationToken ct = default)
     {
         try
         {
-            List<CalendarShared> shareds = await _calendarSharedRepository.FindAsync([], ct: ct);
+            List<CalendarShared> shareds = await _calendarSharedRepository.GetAllAsync(ct);
 
             // Only create a sharing record if one does not already exist for this calendar.
             if (!shareds.Any(s => s.Id == calendarId))
@@ -119,7 +118,7 @@ public class CalendarService : ICalendarService
     {
         try
         {
-            List<Calendar> calendars = await _calendarRepository.FindAsync([FilterCondition.Equal("AccountEmail", request.AccountEmail ?? "")], ct: ct);
+            List<Calendar> calendars = await _calendarRepository.GetByAccountEmailAsync(request.AccountEmail ?? "", ct);
 
             // Prevent duplicate calendar names for the same account.
             if (calendars.Any(c => c.Name == request.Name))
@@ -141,7 +140,7 @@ public class CalendarService : ICalendarService
     {
         try
         {
-            List<Calendar> calendars = await _calendarRepository.FindAsync([FilterCondition.Equal("AccountEmail", request.AccountEmail ?? "")], ct: ct);
+            List<Calendar> calendars = await _calendarRepository.GetByAccountEmailAsync(request.AccountEmail ?? "", ct);
             Calendar? previous = calendars.FirstOrDefault(c => c.Id == request.Id);
             if (previous == null)
                 return ServiceResult.Fail("Input is invalid");
@@ -161,12 +160,12 @@ public class CalendarService : ICalendarService
     {
         try
         {
-            List<Calendar> calendars = await _calendarRepository.FindAsync([FilterCondition.Equal("AccountEmail", request.AccountEmail ?? "")], ct: ct);
+            List<Calendar> calendars = await _calendarRepository.GetByAccountEmailAsync(request.AccountEmail ?? "", ct);
             Calendar? existing = calendars.FirstOrDefault(c => c.Id == request.Id);
             if (existing == null)
                 return ServiceResult.Fail("Input is invalid");
 
-            await _calendarRepository.DeleteAsync([FilterCondition.Equal("Id", existing.Id)], ct);
+            await _calendarRepository.DeleteByIdAsync(existing.Id, ct);
             return ServiceResult.Ok();
         }
         catch { return ServiceResult.Fail("Input is invalid"); }
@@ -177,7 +176,7 @@ public class CalendarService : ICalendarService
     {
         try
         {
-            List<Calendar> calendars = await _calendarRepository.FindAsync([FilterCondition.Equal("AccountEmail", request.AccountEmail ?? "")], ct: ct);
+            List<Calendar> calendars = await _calendarRepository.GetByAccountEmailAsync(request.AccountEmail ?? "", ct);
 
             // Create the default calendar only when the user has none yet (e.g., first login).
             if (calendars.Count == 0)
@@ -201,7 +200,7 @@ public class CalendarService : ICalendarService
         try
         {
             // Replace-all strategy: delete existing subscriptions then re-insert from the new list.
-            await _otherCalendarRepository.DeleteAsync([FilterCondition.Equal("AccountEmail", email)], ct);
+            await _otherCalendarRepository.DeleteByAccountEmailAsync(email, ct);
 
             foreach (OtherCalendarRequest req in requests)
             {
@@ -236,7 +235,7 @@ public class CalendarService : ICalendarService
                 await _calendarSharedRepository.UpdateEntityAsync(shared, ct);
             }
 
-            List<OtherCalendar> allOtherCalendars = await _otherCalendarRepository.FindAsync([], ct: ct);
+            List<OtherCalendar> allOtherCalendars = await _otherCalendarRepository.GetAllAsync(ct);
 
             // When a calendar is set to non-user-visible, remove any existing subscriptions to it.
             foreach (CalendarSharedRequest req in requests.Where(r => !r.User))
@@ -246,10 +245,7 @@ public class CalendarService : ICalendarService
                 {
                     try
                     {
-                        await _otherCalendarRepository.DeleteAsync([
-                            FilterCondition.Equal("AccountEmail", other.AccountEmail.Value),
-                            FilterCondition.Equal("CalendarId", other.CalendarId)
-                        ], ct);
+                        await _otherCalendarRepository.DeleteByAccountEmailAndCalendarIdAsync(other.AccountEmail.Value, other.CalendarId, ct);
                     }
                     catch { /* best effort: subscription removal is non-critical */ }
                 }
@@ -292,7 +288,7 @@ public class CalendarService : ICalendarService
         await _unitOfWork.BeginAsync(ct);
         try
         {
-            List<Calendar> calendars = await _calendarRepository.FindAsync([FilterCondition.Equal("AccountEmail", email)], ct: ct);
+            List<Calendar> calendars = await _calendarRepository.GetByAccountEmailAsync(email, ct);
 
             // Verify the target calendar belongs to the requesting user.
             if (!calendars.Any(c => c.Id == request.CalendarId))
@@ -367,7 +363,7 @@ public class CalendarService : ICalendarService
         await _unitOfWork.BeginAsync(ct);
         try
         {
-            List<Calendar> calendars = await _calendarRepository.FindAsync([FilterCondition.Equal("AccountEmail", email)], ct: ct);
+            List<Calendar> calendars = await _calendarRepository.GetByAccountEmailAsync(email, ct);
 
             // Verify the target calendar belongs to the requesting user.
             if (!calendars.Any(c => c.Id == request.CalendarId))
@@ -376,7 +372,7 @@ public class CalendarService : ICalendarService
                 return ServiceResult.Fail("The calendar does not exists.");
             }
 
-            CalendarEvent? existing = (await _calendarEventRepository.FindAsync([FilterCondition.Equal("Id", request.Id)], ct: ct)).FirstOrDefault();
+            CalendarEvent? existing = await _calendarEventRepository.FindByIdAsync(request.Id, ct);
             if (existing == null || existing.Id <= 0)
             {
                 await _unitOfWork.RollbackAsync();
@@ -397,7 +393,7 @@ public class CalendarService : ICalendarService
             await _calendarEventRepository.UpdateEntityAsync(existing, ct);
 
             // Replace attachment: delete existing record then optionally upload and re-create.
-            await _calendarEventAttachedFileRepository.DeleteAsync([FilterCondition.Equal("CalendarEventId", existing.Id)], ct);
+            await _calendarEventAttachedFileRepository.DeleteByCalendarEventIdAsync(existing.Id, ct);
             if (attachedFile != null)
             {
                 string filePath = BuildEventFilePath(roleIndex, existing.Id, attachedFile.FileName);
@@ -415,7 +411,7 @@ public class CalendarService : ICalendarService
             }
 
             // Replace reminders: delete all existing then re-create from the updated list.
-            await _calendarEventReminderRepository.DeleteAsync([FilterCondition.Equal("CalendarEventId", existing.Id)], ct);
+            await _calendarEventReminderRepository.DeleteByCalendarEventIdAsync(existing.Id, ct);
             foreach (CalendarReminderInfo r in reminders)
             {
                 var reminderResult = CalendarEventReminder.Create(existing.Id, r.Method,
@@ -444,14 +440,14 @@ public class CalendarService : ICalendarService
     {
         try
         {
-            List<Calendar> calendars = await _calendarRepository.FindAsync([FilterCondition.Equal("AccountEmail", email)], ct: ct);
-            CalendarEvent? evt = (await _calendarEventRepository.FindAsync([FilterCondition.Equal("Id", calendarEventId)], ct: ct)).FirstOrDefault();
+            List<Calendar> calendars = await _calendarRepository.GetByAccountEmailAsync(email, ct);
+            CalendarEvent? evt = await _calendarEventRepository.FindByIdAsync(calendarEventId, ct);
 
             // Ensure the event exists and belongs to one of the requesting user's calendars.
             if (evt == null || !calendars.Any(c => c.Id == evt.CalendarId))
                 return ServiceResult.Fail("Input is invalid");
 
-            await _calendarEventRepository.DeleteAsync([FilterCondition.Equal("Id", evt.Id)], ct);
+            await _calendarEventRepository.DeleteByIdAsync(evt.Id, ct);
             return ServiceResult.Ok();
         }
         catch { return ServiceResult.Fail("Input is invalid"); }

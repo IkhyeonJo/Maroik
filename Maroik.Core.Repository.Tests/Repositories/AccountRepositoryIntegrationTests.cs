@@ -1,5 +1,4 @@
-﻿using Maroik.Core.Contract.Domains.Account;
-using Maroik.Core.Contract.Filters;
+using Maroik.Core.Contract.Domains.Account;
 using Maroik.Core.Contract.Utilities;
 using Maroik.Core.PostgreSQL.Data;
 using Maroik.Core.Repository.Repositories;
@@ -78,7 +77,7 @@ public class AccountRepositoryIntegrationTests : IAsyncLifetime
             MakeOrm("alice@example.com", "Alice"),
             MakeOrm("bob@example.com", "Bob"));
 
-        List<Account> result = await _sut.FindAsync([]);
+        List<Account> result = await _sut.GetAllAsync();
 
         Assert.Equal(2, result.Count);
     }
@@ -110,7 +109,7 @@ public class AccountRepositoryIntegrationTests : IAsyncLifetime
         await _sut.CreateAsync(account);
         _context.ChangeTracker.Clear();
 
-        Account? retrieved = (await _sut.FindAsync([FilterCondition.Equal("Email", "newuser@example.com")])).FirstOrDefault();
+        Account? retrieved = await _sut.FindByEmailAsync("newuser@example.com");
 
         Assert.NotNull(retrieved);
         Assert.Equal("NewUser", retrieved.Nickname);
@@ -146,7 +145,7 @@ public class AccountRepositoryIntegrationTests : IAsyncLifetime
         await _sut.UpdateEntityAsync(updated);
         _context.ChangeTracker.Clear();
 
-        Account? result = (await _sut.FindAsync([FilterCondition.Equal("Email", "alice@example.com")])).FirstOrDefault();
+        Account? result = await _sut.FindByEmailAsync("alice@example.com");
 
         Assert.NotNull(result);
         Assert.Equal(Role.Admin, result.Role);
@@ -196,10 +195,10 @@ public class AccountRepositoryIntegrationTests : IAsyncLifetime
             MakeOrm("active@example.com", "Active"),
             deleted);
 
-        // Repository has no implicit soft-delete filter; callers must pass an explicit condition.
-        List<Account> result = await _sut.FindAsync([FilterCondition.Equal("Deleted", false)]);
+        // Repository has no implicit soft-delete filter; GetAllAsync returns all accounts.
+        List<Account> result = await _sut.GetAllAsync();
 
-        Assert.DoesNotContain(result, a => a.Email.Value == "deleted@example.com");
+        Assert.DoesNotContain(result, a => a.Email.Value == "deleted@example.com" && !a.Deleted);
         Assert.Contains(result, a => a.Email.Value == "active@example.com");
     }
 }

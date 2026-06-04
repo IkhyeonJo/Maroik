@@ -1,5 +1,4 @@
-﻿using Maroik.Core.Contract.Domains.Calendar;
-using Maroik.Core.Contract.Filters;
+using Maroik.Core.Contract.Domains.Calendar;
 using Maroik.Core.PostgreSQL.Data;
 using Maroik.Core.Repository.Repositories;
 using Microsoft.EntityFrameworkCore;
@@ -45,28 +44,6 @@ public class CalendarEventAttachedFileRepositoryTests : IDisposable
         await _context.SaveChangesAsync();
     }
 
-    // -- GetAllAsync ----------------------------------------------------------
-
-    /// <summary>Verifies that <c>GetAllAsync</c> returns all files.</summary>
-    [Fact]
-    public async Task GetAllAsync_ReturnsAllFiles()
-    {
-        await SeedAsync(MakeFile(1, "a.pdf"), MakeFile(2, "b.pdf"));
-
-        List<CalendarEventAttachedFile> result = await _sut.FindAsync([]);
-
-        Assert.Equal(2, result.Count);
-    }
-
-    /// <summary>Verifies that <c>GetAllAsync</c> returns empty when no files exist.</summary>
-    [Fact]
-    public async Task GetAllAsync_ReturnsEmpty_WhenNoFilesExist()
-    {
-        List<CalendarEventAttachedFile> result = await _sut.FindAsync([]);
-
-        Assert.Empty(result);
-    }
-
     // -- GetCalendarEventAttachedFileAsync ------------------------------------
 
     /// <summary>Verifies that <c>GetCalendarEventAttachedFileAsync</c> returns file when found.</summary>
@@ -75,7 +52,7 @@ public class CalendarEventAttachedFileRepositoryTests : IDisposable
     {
         await SeedAsync(MakeFile(10, "slide.pdf"));
 
-        CalendarEventAttachedFile? result = (await _sut.FindAsync([FilterCondition.Equal("CalendarEventId", 10L)])).FirstOrDefault();
+        CalendarEventAttachedFile? result = await _sut.FindByCalendarEventIdAsync(10L);
 
         Assert.NotNull(result);
         Assert.Equal(10, result.CalendarEventId);
@@ -86,7 +63,7 @@ public class CalendarEventAttachedFileRepositoryTests : IDisposable
     [Fact]
     public async Task GetCalendarEventAttachedFileAsync_ReturnsNull_WhenNotFound()
     {
-        CalendarEventAttachedFile? result = (await _sut.FindAsync([FilterCondition.Equal("CalendarEventId", 999L)])).FirstOrDefault();
+        CalendarEventAttachedFile? result = await _sut.FindByCalendarEventIdAsync(999L);
 
         Assert.Null(result);
     }
@@ -146,7 +123,7 @@ public class CalendarEventAttachedFileRepositoryTests : IDisposable
     {
         await SeedAsync(MakeFile(20, "x.pdf"), MakeFile(20, "y.pdf"), MakeFile(30, "z.pdf"));
 
-        await _sut.DeleteAsync([FilterCondition.Equal("CalendarEventId", 20L)]);
+        await _sut.DeleteByCalendarEventIdAsync(20L);
 
         Assert.False(await _context.CalendarEventAttachedFiles.AnyAsync(f => f.CalendarEventId == 20, TestContext.Current.CancellationToken));
         Assert.True(await _context.CalendarEventAttachedFiles.AnyAsync(f => f.CalendarEventId == 30, TestContext.Current.CancellationToken));
@@ -156,7 +133,7 @@ public class CalendarEventAttachedFileRepositoryTests : IDisposable
     [Fact]
     public async Task DeleteCalendarEventAttachedFileAsync_ReturnsZero_WhenNoFilesMatch()
     {
-        await _sut.DeleteAsync([FilterCondition.Equal("CalendarEventId", 999L)]);
+        await _sut.DeleteByCalendarEventIdAsync(999L);
 
         Assert.False(await _context.CalendarEventAttachedFiles.AnyAsync(TestContext.Current.CancellationToken));
     }

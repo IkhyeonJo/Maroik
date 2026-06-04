@@ -1,5 +1,4 @@
 using Maroik.Core.Contract.Domains.Finance;
-using Maroik.Core.Contract.Filters;
 using Maroik.Core.Contract.Dtos;
 using Maroik.Core.Contract.Interfaces;
 using Maroik.Core.Service.Mappers;
@@ -27,16 +26,12 @@ public class FixedIncomeService : IFixedIncomeService
 
     /// <inheritdoc />
     public async Task<List<FixedIncomeResponse>> GetFixedIncomesAsync(string accountEmail, CancellationToken ct = default)
-        => (await _fixedIncomeRepository.FindAsync([FilterCondition.Equal("AccountEmail", accountEmail)], ct: ct)).Select(FixedIncomeMapper.ToResponse).ToList();
+        => (await _fixedIncomeRepository.GetByAccountEmailAsync(accountEmail, ct)).Select(FixedIncomeMapper.ToResponse).ToList();
 
     /// <inheritdoc />
     public async Task<FixedIncomeResponse?> GetByIdAsync(string accountEmail, long id, CancellationToken ct = default)
     {
-        var results = await _fixedIncomeRepository.FindAsync([
-            FilterCondition.Equal("AccountEmail", accountEmail),
-            FilterCondition.Equal("Id", id)
-        ], ct: ct);
-        var item = results.FirstOrDefault();
+        var item = await _fixedIncomeRepository.FindByEmailAndIdAsync(accountEmail, id, ct);
         return item == null ? null : FixedIncomeMapper.ToResponse(item);
     }
 
@@ -69,7 +64,7 @@ public class FixedIncomeService : IFixedIncomeService
         var validation = ValidateRequest(request);
         if (!validation.Success) return validation;
 
-        List<FixedIncome> items = await _fixedIncomeRepository.FindAsync([FilterCondition.Equal("AccountEmail", accountEmail)], ct: ct);
+        List<FixedIncome> items = await _fixedIncomeRepository.GetByAccountEmailAsync(accountEmail, ct);
         FixedIncome? fi = items.FirstOrDefault(x => x.Id == request.Id);
         if (fi == null) return ServiceResult.Fail("Input is invalid");
 
@@ -89,11 +84,11 @@ public class FixedIncomeService : IFixedIncomeService
     /// <inheritdoc />
     public async Task<ServiceResult> DeleteAsync(string accountEmail, long id, CancellationToken ct = default)
     {
-        List<FixedIncome> items = await _fixedIncomeRepository.FindAsync([FilterCondition.Equal("AccountEmail", accountEmail)], ct: ct);
+        List<FixedIncome> items = await _fixedIncomeRepository.GetByAccountEmailAsync(accountEmail, ct);
         FixedIncome? fi = items.FirstOrDefault(x => x.Id == id);
         if (fi == null) return ServiceResult.Fail("Input is invalid");
 
-        await _fixedIncomeRepository.DeleteAsync([FilterCondition.Equal("Id", fi.Id)], ct);
+        await _fixedIncomeRepository.DeleteByIdAsync(fi.Id, ct);
         return ServiceResult.Ok();
     }
 

@@ -2,7 +2,6 @@ using Ganss.Xss;
 using HtmlAgilityPack;
 using ImageMagick;
 using Maroik.Core.Contract.Domains.Board;
-using Maroik.Core.Contract.Filters;
 using Maroik.Core.Contract.Utilities;
 using Maroik.Core.Contract.Dtos;
 using Maroik.Core.Contract.Interfaces;
@@ -64,22 +63,19 @@ public class BoardService : IBoardService
 
     /// <inheritdoc />
     public async Task<IEnumerable<BoardResponse>> GetBoardsAsync(string type, CancellationToken ct = default)
-        => (await _boardRepository.FindAsync([FilterCondition.Equal("Type", type)], ct: ct)).Select(BoardMapper.ToResponse);
+        => (await _boardRepository.GetByTypeAsync(type, ct)).Select(BoardMapper.ToResponse);
 
     /// <inheritdoc />
     public async Task<BoardResponse?> GetBoardByIdAsync(long id, CancellationToken ct = default)
     {
-        Board? board = (await _boardRepository.FindAsync([
-            FilterCondition.Equal("Id", id),
-            FilterCondition.Equal("Deleted", false)
-        ], ct: ct)).FirstOrDefault();
+        Board? board = await _boardRepository.FindActiveByIdAsync(id, ct);
         return board == null ? null : BoardMapper.ToResponse(board);
     }
 
     /// <inheritdoc />
     public async Task<BoardAttachedFileResponse?> GetAttachedFileByBoardIdAsync(long boardId, CancellationToken ct = default)
     {
-        BoardAttachedFile? file = (await _boardAttachedFileRepository.FindAsync([FilterCondition.Equal("BoardId", boardId)], ct: ct)).FirstOrDefault();
+        BoardAttachedFile? file = await _boardAttachedFileRepository.FindByBoardIdAsync(boardId, ct);
         return file == null ? null : BoardAttachedFileMapper.ToResponse(file);
     }
 
@@ -94,7 +90,7 @@ public class BoardService : IBoardService
 
     /// <inheritdoc />
     public async Task<IEnumerable<BoardCommentResponse>> GetCommentsByBoardIdAsync(long boardId, CancellationToken ct = default)
-        => (await _boardCommentRepository.FindAsync([FilterCondition.Equal("BoardId", boardId)], orderByProperty: "Order", ct: ct)).Select(BoardCommentMapper.ToResponse);
+        => (await _boardCommentRepository.GetByBoardIdOrderedAsync(boardId, ct)).Select(BoardCommentMapper.ToResponse);
 
     /// <inheritdoc />
     public async Task<Dictionary<long, int>> GetCommentCountsForBoardsAsync(IEnumerable<long> boardIds, CancellationToken ct = default)
@@ -169,7 +165,7 @@ public class BoardService : IBoardService
         await _unitOfWork.BeginAsync(ct);
         try
         {
-            Board? board = (await _boardRepository.FindAsync([FilterCondition.Equal("Id", request.Id), FilterCondition.Equal("Deleted", false)], ct: ct)).FirstOrDefault();
+            Board? board = await _boardRepository.FindActiveByIdAsync(request.Id, ct);
 
             if (board == null || board.Deleted)
             {
@@ -197,7 +193,7 @@ public class BoardService : IBoardService
 
             await _boardRepository.UpdateEntityAsync(board, ct);
 
-            BoardAttachedFile? previous = (await _boardAttachedFileRepository.FindAsync([FilterCondition.Equal("BoardId", request.Id)], ct: ct)).FirstOrDefault();
+            BoardAttachedFile? previous = await _boardAttachedFileRepository.FindByBoardIdAsync(request.Id, ct);
             await HandleAttachmentAsync(board.Type, board.Id, previous, newFile, ct);
 
             await _unitOfWork.CommitAsync(ct);
@@ -216,7 +212,7 @@ public class BoardService : IBoardService
     {
         try
         {
-            Board? board = (await _boardRepository.FindAsync([FilterCondition.Equal("Id", boardId), FilterCondition.Equal("Deleted", false)], ct: ct)).FirstOrDefault();
+            Board? board = await _boardRepository.FindActiveByIdAsync(boardId, ct);
 
             if (board == null || board.Deleted)
                 return ServiceResult.Fail("Input is invalid");
@@ -246,7 +242,7 @@ public class BoardService : IBoardService
 
         try
         {
-            Board? board = (await _boardRepository.FindAsync([FilterCondition.Equal("Id", request.BoardId), FilterCondition.Equal("Deleted", false)], ct: ct)).FirstOrDefault();
+            Board? board = await _boardRepository.FindActiveByIdAsync(request.BoardId, ct);
             if (board == null)
                 return ServiceResult.Fail("Input is invalid");
 
@@ -254,7 +250,7 @@ public class BoardService : IBoardService
             if (requiredOwnerNickname != null && board.Writer != requiredOwnerNickname)
                 return ServiceResult.Fail("You do not have permission to write a comment.");
 
-            IEnumerable<BoardComment> existing = await _boardCommentRepository.FindAsync([FilterCondition.Equal("BoardId", request.BoardId)], orderByProperty: "Order", ct: ct);
+            IEnumerable<BoardComment> existing = await _boardCommentRepository.GetByBoardIdOrderedAsync(request.BoardId, ct);
 
             // The comment order is the current count, giving sequential ordering starting at 0.
             long order = (long)(existing?.Count() ?? 0);
@@ -297,7 +293,7 @@ public class BoardService : IBoardService
     {
         try
         {
-            BoardComment? comment = (await _boardCommentRepository.FindAsync([FilterCondition.Equal("Id", (int)commentId)], ct: ct)).FirstOrDefault();
+            BoardComment? comment = await _boardCommentRepository.FindByIdAsync(commentId, ct);
             if (comment == null)
                 return ServiceResult.Fail("Input is invalid");
 

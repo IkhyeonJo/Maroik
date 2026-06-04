@@ -1,5 +1,4 @@
 using Maroik.Core.Contract.Domains.Finance;
-using Maroik.Core.Contract.Filters;
 using Maroik.Core.Contract.Dtos;
 using Maroik.Core.Contract.Interfaces;
 using Maroik.Core.Service.Mappers;
@@ -30,16 +29,12 @@ public class ExpenditureService : IExpenditureService
 
     /// <inheritdoc />
     public async Task<List<ExpenditureResponse>> GetExpendituresAsync(string accountEmail, CancellationToken ct = default)
-        => (await _expenditureRepository.FindAsync([FilterCondition.Equal("AccountEmail", accountEmail)], ct: ct)).Select(ExpenditureMapper.ToResponse).ToList();
+        => (await _expenditureRepository.GetByAccountEmailAsync(accountEmail, ct)).Select(ExpenditureMapper.ToResponse).ToList();
 
     /// <inheritdoc />
     public async Task<ExpenditureResponse?> GetByIdAsync(string accountEmail, long id, CancellationToken ct = default)
     {
-        var results = await _expenditureRepository.FindAsync([
-            FilterCondition.Equal("AccountEmail", accountEmail),
-            FilterCondition.Equal("Id", id)
-        ], ct: ct);
-        var expenditure = results.FirstOrDefault();
+        var expenditure = await _expenditureRepository.FindByEmailAndIdAsync(accountEmail, id, ct);
         return expenditure == null ? null : ExpenditureMapper.ToResponse(expenditure);
     }
 
@@ -163,7 +158,7 @@ public class ExpenditureService : IExpenditureService
                 }
             }
 
-            List<Expenditure> expenditures = await _expenditureRepository.FindAsync([FilterCondition.Equal("AccountEmail", accountEmail)], ct: ct);
+            List<Expenditure> expenditures = await _expenditureRepository.GetByAccountEmailAsync(accountEmail, ct);
             Expenditure? previous = expenditures.FirstOrDefault(x => x.Id == request.Id);
             if (previous == null)
             {
@@ -221,7 +216,7 @@ public class ExpenditureService : IExpenditureService
         await _unitOfWork.BeginAsync(ct);
         try
         {
-            List<Expenditure> expenditures = await _expenditureRepository.FindAsync([FilterCondition.Equal("AccountEmail", accountEmail)], ct: ct);
+            List<Expenditure> expenditures = await _expenditureRepository.GetByAccountEmailAsync(accountEmail, ct);
             Expenditure? expenditure = expenditures.FirstOrDefault(x => x.Id == id);
             if (expenditure == null)
             {
@@ -232,7 +227,7 @@ public class ExpenditureService : IExpenditureService
             await AdjustAssetBalancesAsync(accountEmail,
                 new ExpenditureSnapshot(expenditure.PaymentMethod, expenditure.MyDepositAsset, expenditure.Amount.Amount),
                 null, ct);
-            await _expenditureRepository.DeleteAsync([FilterCondition.Equal("Id", expenditure.Id)], ct);
+            await _expenditureRepository.DeleteByIdAsync(expenditure.Id, ct);
 
             await _unitOfWork.CommitAsync(ct);
             return ServiceResult.Ok();

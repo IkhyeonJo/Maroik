@@ -1,5 +1,4 @@
 using Maroik.Core.Contract.Domains.Account;
-using Maroik.Core.Contract.Filters;
 using Maroik.Core.Contract.Utilities;
 using Maroik.Core.Contract.Dtos;
 using Maroik.Core.Contract.Interfaces;
@@ -45,11 +44,11 @@ public class AccountService : IAccountService
 
     /// <inheritdoc />
     public async Task<List<AccountResponse>> GetAllAccountsAsync(CancellationToken ct = default)
-        => (await _accountRepository.FindAsync([], ct: ct)).Select(AccountMapper.ToResponse).ToList();
+        => (await _accountRepository.GetAllAsync(ct)).Select(AccountMapper.ToResponse).ToList();
 
     /// <inheritdoc />
     public async Task<List<AccountResponse>> GetAccountsByNicknamesAsync(IEnumerable<string> nicknames, CancellationToken ct = default)
-        => (await _accountRepository.FindAsync([FilterCondition.In("Nickname", nicknames)], ct: ct)).Select(AccountMapper.ToResponse).ToList();
+        => (await _accountRepository.FindByNicknamesAsync(nicknames, ct)).Select(AccountMapper.ToResponse).ToList();
 
     /// <inheritdoc />
     public async Task<AccountResponse?> GetAccountByEmailAsync(string email, CancellationToken ct = default)
@@ -402,14 +401,14 @@ public class AccountService : IAccountService
         return ServiceResult.Ok();
     }
 
-    private async Task<Account?> FindByEmailAsync(string email, CancellationToken ct = default)
-        => (await _accountRepository.FindAsync([FilterCondition.Equal("Email", email)], ct: ct)).FirstOrDefault();
+    private Task<Account?> FindByEmailAsync(string email, CancellationToken ct = default)
+        => _accountRepository.FindByEmailAsync(email, ct);
 
-    private async Task<Account?> FindByRegistrationTokenAsync(string token, CancellationToken ct = default)
-        => (await _accountRepository.FindAsync([FilterCondition.Equal("RegistrationToken", token)], ct: ct)).FirstOrDefault();
+    private Task<Account?> FindByRegistrationTokenAsync(string token, CancellationToken ct = default)
+        => _accountRepository.FindByRegistrationTokenAsync(token, ct);
 
-    private async Task<Account?> FindByResetPasswordTokenAsync(string token, CancellationToken ct = default)
-        => (await _accountRepository.FindAsync([FilterCondition.Equal("ResetPasswordToken", token)], ct: ct)).FirstOrDefault();
+    private Task<Account?> FindByResetPasswordTokenAsync(string token, CancellationToken ct = default)
+        => _accountRepository.FindByResetPasswordTokenAsync(token, ct);
 
     /// <summary>
     /// Sends a mail via <see cref="IMailClient"/> using the SMTP settings from <see cref="ServerSetting"/>.

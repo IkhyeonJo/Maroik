@@ -1,5 +1,4 @@
-﻿using Maroik.Core.Contract.Domains.Calendar;
-using Maroik.Core.Contract.Filters;
+using Maroik.Core.Contract.Domains.Calendar;
 using Maroik.Core.PostgreSQL.Data;
 using Maroik.Core.Repository.Repositories;
 using Microsoft.EntityFrameworkCore;
@@ -57,7 +56,7 @@ public class CalendarRepositoryTests : IDisposable
             MakeCalendar("alice@example.com", "Work"),
             MakeCalendar("bob@example.com", "Personal"));
 
-        List<Calendar> result = await _sut.FindAsync([]);
+        List<Calendar> result = await _sut.GetAllOrderedByNameAsync();
 
         Assert.Equal(2, result.Count);
     }
@@ -66,7 +65,7 @@ public class CalendarRepositoryTests : IDisposable
     [Fact]
     public async Task GetAllCalendarsAsync_ReturnsEmpty_WhenNoCalendars()
     {
-        List<Calendar> result = await _sut.FindAsync([]);
+        List<Calendar> result = await _sut.GetAllOrderedByNameAsync();
 
         Assert.Empty(result);
     }
@@ -79,7 +78,7 @@ public class CalendarRepositoryTests : IDisposable
             MakeCalendar("alice@example.com", "Work"),
             MakeCalendar("alice@example.com", "Personal"));
 
-        List<Calendar> result = await _sut.FindAsync([], "Name");
+        List<Calendar> result = await _sut.GetAllOrderedByNameAsync();
 
         Assert.Equal("Personal", result[0].Name);
         Assert.Equal("Work", result[1].Name);
@@ -96,7 +95,7 @@ public class CalendarRepositoryTests : IDisposable
             MakeCalendar("alice@example.com", "Personal"),
             MakeCalendar("bob@example.com", "Bob Calendar"));
 
-        List<Calendar> result = await _sut.FindAsync([FilterCondition.Equal("AccountEmail", "alice@example.com")]);
+        List<Calendar> result = await _sut.GetByAccountEmailAsync("alice@example.com");
 
         Assert.Equal(2, result.Count);
         Assert.All(result, c => Assert.Equal("alice@example.com", c.AccountEmail.Value));
@@ -106,7 +105,7 @@ public class CalendarRepositoryTests : IDisposable
     [Fact]
     public async Task GetCalendarsAsync_ReturnsEmpty_WhenNoCalendarsForEmail()
     {
-        List<Calendar> result = await _sut.FindAsync([FilterCondition.Equal("AccountEmail", "nobody@example.com")]);
+        List<Calendar> result = await _sut.GetByAccountEmailAsync("nobody@example.com");
 
         Assert.Empty(result);
     }
@@ -182,7 +181,7 @@ public class CalendarRepositoryTests : IDisposable
             created: efCalendar.Created,
             updated: efCalendar.Updated);
 
-        await _sut.DeleteAsync([FilterCondition.Equal("Id", calendar.Id)]);
+        await _sut.DeleteByIdAsync(calendar.Id);
 
         EfCalendar? deleted = await _context.Calendars.FirstOrDefaultAsync(c => c.Id == efCalendar.Id, TestContext.Current.CancellationToken);
         Assert.Null(deleted);
@@ -207,7 +206,7 @@ public class CalendarRepositoryTests : IDisposable
             created: all[0].Created,
             updated: all[0].Updated);
 
-        await _sut.DeleteAsync([FilterCondition.Equal("Id", calendar.Id)]);
+        await _sut.DeleteByIdAsync(calendar.Id);
 
         List<EfCalendar> remaining = await _context.Calendars.ToListAsync(TestContext.Current.CancellationToken);
         Assert.Single(remaining);

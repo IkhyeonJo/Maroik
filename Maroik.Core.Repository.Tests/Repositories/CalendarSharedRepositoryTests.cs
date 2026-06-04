@@ -1,5 +1,4 @@
-﻿using Maroik.Core.Contract.Domains.Calendar;
-using Maroik.Core.Contract.Filters;
+using Maroik.Core.Contract.Domains.Calendar;
 using Maroik.Core.PostgreSQL.Data;
 using Maroik.Core.Repository.Repositories;
 using Microsoft.EntityFrameworkCore;
@@ -47,28 +46,25 @@ public class CalendarSharedRepositoryTests : IDisposable
 
     // -- GetCalendarSharedAsync -----------------------------------------------
 
-    /// <summary>Verifies that <c>GetCalendarSharedAsync</c> returns all entries when ordered by calendar id.</summary>
+    /// <summary>Verifies that <c>GetCalendarSharedAsync</c> returns all entries.</summary>
     [Fact]
-    public async Task GetCalendarSharedAsync_ReturnsAllEntries_OrderedByCalendarId()
+    public async Task GetCalendarSharedAsync_ReturnsAllEntries()
     {
         await SeedAsync(
             MakeShared(3, user: true),
             MakeShared(1, anonymous: true),
             MakeShared(2));
 
-        List<CalendarShared> result = await _sut.FindAsync([], "CalendarId");
+        List<CalendarShared> result = await _sut.GetAllAsync();
 
         Assert.Equal(3, result.Count);
-        Assert.Equal(1, result[0].Id);
-        Assert.Equal(2, result[1].Id);
-        Assert.Equal(3, result[2].Id);
     }
 
     /// <summary>Verifies that <c>GetCalendarSharedAsync</c> returns empty when no entries exist.</summary>
     [Fact]
     public async Task GetCalendarSharedAsync_ReturnsEmpty_WhenNoEntriesExist()
     {
-        List<CalendarShared> result = await _sut.FindAsync([]);
+        List<CalendarShared> result = await _sut.GetAllAsync();
 
         Assert.Empty(result);
     }

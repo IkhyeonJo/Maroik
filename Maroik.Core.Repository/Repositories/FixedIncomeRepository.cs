@@ -1,4 +1,4 @@
-﻿using Maroik.Core.Contract.Domains.Finance;
+using Maroik.Core.Contract.Domains.Finance;
 using Maroik.Core.Contract.Interfaces;
 using Maroik.Core.PostgreSQL.Data;
 using Microsoft.EntityFrameworkCore;
@@ -38,4 +38,13 @@ public class FixedIncomeRepository(ApplicationDbContext context)
         Created = fi.Created,
         Updated = fi.Updated
     };
+
+    public Task<List<FixedIncome>> GetByAccountEmailAsync(string accountEmail, CancellationToken ct = default)
+        => QueryAsync(e => e.AccountEmail == accountEmail, ct: ct);
+
+    public Task<FixedIncome?> FindByEmailAndIdAsync(string accountEmail, long id, CancellationToken ct = default)
+        => QueryFirstAsync(e => e.AccountEmail == accountEmail && e.Id == id, ct);
+
+    public Task DeleteByIdAsync(long id, CancellationToken ct = default)
+        => DeleteWhereAsync(e => e.Id == id, ct);
 }

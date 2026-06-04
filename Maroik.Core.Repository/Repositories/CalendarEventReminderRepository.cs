@@ -30,4 +30,10 @@ public class CalendarEventReminderRepository(ApplicationDbContext context)
         WeeksBeforeEvent = r.WeeksBeforeEvent,
         TimesBeforeEvent = r.TimesBeforeEvent
     };
+
+    public Task<List<CalendarEventReminder>> GetByCalendarEventIdAsync(long calendarEventId, CancellationToken ct = default)
+        => QueryAsync(e => e.CalendarEventId == calendarEventId, ct: ct);
+
+    public Task DeleteByCalendarEventIdAsync(long calendarEventId, CancellationToken ct = default)
+        => DeleteWhereAsync(e => e.CalendarEventId == calendarEventId, ct);
 }

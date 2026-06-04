@@ -1,5 +1,4 @@
-﻿using Maroik.Core.Contract.Domains.Calendar;
-using Maroik.Core.Contract.Filters;
+using Maroik.Core.Contract.Domains.Calendar;
 using Maroik.Core.PostgreSQL.Data;
 using Maroik.Core.Repository.Repositories;
 using Microsoft.EntityFrameworkCore;
@@ -60,7 +59,7 @@ public class CalendarEventRepositoryTests : IDisposable
             MakeEvent(1, "Event B"),
             MakeEvent(2, "Other Calendar Event"));
 
-        IEnumerable<CalendarEvent> result = await _sut.FindAsync([FilterCondition.Equal("CalendarId", 1L)]);
+        IEnumerable<CalendarEvent> result = await _sut.GetByCalendarIdAsync(1L);
 
         Assert.Equal(2, result.Count());
         Assert.All(result, e => Assert.Equal(1, e.CalendarId));
@@ -70,7 +69,7 @@ public class CalendarEventRepositoryTests : IDisposable
     [Fact]
     public async Task GetCalendarEventsAsync_ReturnsEmpty_WhenNoEventsForCalendar()
     {
-        IEnumerable<CalendarEvent> result = await _sut.FindAsync([FilterCondition.Equal("CalendarId", 99L)]);
+        IEnumerable<CalendarEvent> result = await _sut.GetByCalendarIdAsync(99L);
 
         Assert.Empty(result);
     }
@@ -84,7 +83,7 @@ public class CalendarEventRepositoryTests : IDisposable
         await SeedAsync(MakeEvent(1, "Team Standup"));
 
         long id = (await _context.CalendarEvents.FirstAsync(TestContext.Current.CancellationToken)).Id;
-        CalendarEvent? result = (await _sut.FindAsync([FilterCondition.Equal("Id", id)])).FirstOrDefault();
+        CalendarEvent? result = await _sut.FindByIdAsync(id);
 
         Assert.NotNull(result);
         Assert.Equal("Team Standup", result.Title);
@@ -94,7 +93,7 @@ public class CalendarEventRepositoryTests : IDisposable
     [Fact]
     public async Task GetCalendarEventAsync_ReturnsNull_WhenNotFound()
     {
-        CalendarEvent? result = (await _sut.FindAsync([FilterCondition.Equal("Id", 999L)])).FirstOrDefault();
+        CalendarEvent? result = await _sut.FindByIdAsync(999L);
 
         Assert.Null(result);
     }
@@ -189,7 +188,7 @@ public class CalendarEventRepositoryTests : IDisposable
             created: efEvent.Created,
             updated: efEvent.Updated);
 
-        await _sut.DeleteAsync([FilterCondition.Equal("Id", calendarEvent.Id)]);
+        await _sut.DeleteByIdAsync(calendarEvent.Id);
 
         bool exists = await _context.CalendarEvents.AnyAsync(e => e.Id == efEvent.Id, TestContext.Current.CancellationToken);
         Assert.False(exists);

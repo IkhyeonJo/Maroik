@@ -1,4 +1,4 @@
-﻿using Maroik.Core.Contract.Domains.Finance;
+using Maroik.Core.Contract.Domains.Finance;
 using Maroik.Core.Contract.Interfaces;
 using Maroik.Core.PostgreSQL.Data;
 using Microsoft.EntityFrameworkCore;
@@ -16,7 +16,7 @@ public class ExpenditureRepository(ApplicationDbContext context)
 {
     protected override DbSet<OrmExpenditure> Set => Context.Expenditures;
 
-    // Always join the Asset navigation property so FindAsync results carry the monetary unit.
+    // Always join the Asset navigation property so query results carry the monetary unit.
     protected override IQueryable<OrmExpenditure> ApplyIncludes(IQueryable<OrmExpenditure> query)
         => query.Include(x => x.Asset);
 
@@ -40,4 +40,31 @@ public class ExpenditureRepository(ApplicationDbContext context)
         Created = e.Created,
         Updated = e.Updated
     };
+
+    public Task<List<Expenditure>> GetByAccountEmailAsync(string accountEmail, CancellationToken ct = default)
+        => QueryAsync(e => e.AccountEmail == accountEmail, ct: ct);
+
+    public Task<Expenditure?> FindByEmailAndIdAsync(string accountEmail, long id, CancellationToken ct = default)
+        => QueryFirstAsync(e => e.AccountEmail == accountEmail && e.Id == id, ct);
+
+    public Task<List<Expenditure>> GetByAccountEmailAndDateRangeAsync(string accountEmail, DateTime from, DateTime to, CancellationToken ct = default)
+        => QueryAsync(e => e.AccountEmail == accountEmail && e.Created >= from && e.Created < to, ct: ct);
+
+    public async Task<Expenditure?> GetFirstByAccountEmailOrderedByCreatedAsync(string accountEmail, CancellationToken ct = default)
+    {
+        var entity = await Set.Where(e => e.AccountEmail == accountEmail).OrderBy(e => e.Created).FirstOrDefaultAsync(ct);
+        return entity == null ? null : ToDomain(entity);
+    }
+
+    public Task DeleteByIdAsync(long id, CancellationToken ct = default)
+        => DeleteWhereAsync(e => e.Id == id, ct);
+
+    public async Task UpdateMyDepositAssetNameAsync(string accountEmail, string oldName, string newName, CancellationToken ct = default)
+    {
+        var entities = await Context.Expenditures
+            .Where(e => e.AccountEmail == accountEmail && e.MyDepositAsset == oldName)
+            .ToListAsync(ct);
+        foreach (var e in entities) e.MyDepositAsset = newName;
+        _ = await Context.SaveChangesAsync(ct);
+    }
 }

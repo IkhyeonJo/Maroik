@@ -29,4 +29,10 @@ public class SubCategoryRepository(ApplicationDbContext context)
         Role = s.Role,
         Order = s.Order
     };
+
+    public Task<List<SubCategory>> GetAllAsync(CancellationToken ct = default)
+        => QueryAllAsync(ct: ct);
+
+    public Task DeleteByIdAsync(int id, CancellationToken ct = default)
+        => DeleteWhereAsync(e => e.Id == id, ct);
 }

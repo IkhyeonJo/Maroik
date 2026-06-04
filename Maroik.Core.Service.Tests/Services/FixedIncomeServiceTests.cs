@@ -1,6 +1,5 @@
-﻿using Maroik.Core.Contract.Domains.Finance;
+using Maroik.Core.Contract.Domains.Finance;
 using Maroik.Core.Contract.Dtos;
-using Maroik.Core.Contract.Filters;
 using Maroik.Core.Contract.Interfaces;
 using Maroik.Core.Service.Services;
 using Moq;
@@ -100,7 +99,7 @@ public class FixedIncomeServiceTests
     {
         _assetBalance.Setup(r => r.GetAssetAsync(It.IsAny<string>(), It.IsAny<string>()))
             .ReturnsAsync(MakeSavingsAsset());
-        _fixedIncomeRepo.Setup(r => r.CreateAsync(It.IsAny<FixedIncome>())).Returns(Task.CompletedTask);
+        _fixedIncomeRepo.Setup(r => r.CreateAsync(It.IsAny<FixedIncome>(), It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
         var sut = CreateSut();
 
         ServiceResult result = await sut.CreateAsync("user@example.com", ValidRequest(mainClass, subClass));
@@ -115,8 +114,8 @@ public class FixedIncomeServiceTests
         _assetBalance.Setup(r => r.GetAssetAsync(It.IsAny<string>(), It.IsAny<string>()))
             .ReturnsAsync(MakeSavingsAsset());
         FixedIncome? captured = null;
-        _fixedIncomeRepo.Setup(r => r.CreateAsync(It.IsAny<FixedIncome>()))
-            .Callback<FixedIncome>(fi => captured = fi)
+        _fixedIncomeRepo.Setup(r => r.CreateAsync(It.IsAny<FixedIncome>(), It.IsAny<CancellationToken>()))
+            .Callback<FixedIncome, CancellationToken>((fi, _) => captured = fi)
             .Returns(Task.CompletedTask);
         var sut = CreateSut();
 
@@ -150,7 +149,7 @@ public class FixedIncomeServiceTests
     [Fact]
     public async Task UpdateAsync_ReturnsFail_WhenRecordNotFound()
     {
-        _fixedIncomeRepo.Setup(r => r.FindAsync(It.IsAny<IReadOnlyList<FilterCondition>>(), It.IsAny<string?>(), It.IsAny<bool>())).ReturnsAsync(new List<FixedIncome>());
+        _fixedIncomeRepo.Setup(r => r.GetByAccountEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(new List<FixedIncome>());
         var sut = CreateSut();
 
         var request = ValidRequest();
@@ -167,10 +166,10 @@ public class FixedIncomeServiceTests
         const string email = "user@example.com";
         var existing = FixedIncome.Reconstitute(1, email, "RegularIncome", "LaborIncome", null, 0m, "KRW",
             "SavingsAccount", (short)1, (short)15, new DateTime(2025, 12, 31), null, false, DateTime.UtcNow, DateTime.UtcNow);
-        _fixedIncomeRepo.Setup(r => r.FindAsync(It.IsAny<IReadOnlyList<FilterCondition>>(), It.IsAny<string?>(), It.IsAny<bool>())).ReturnsAsync(new List<FixedIncome> { existing });
+        _fixedIncomeRepo.Setup(r => r.GetByAccountEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(new List<FixedIncome> { existing });
         _assetBalance.Setup(r => r.GetAssetAsync(It.IsAny<string>(), It.IsAny<string>()))
             .ReturnsAsync(MakeSavingsAsset());
-        _fixedIncomeRepo.Setup(r => r.UpdateEntityAsync(It.IsAny<FixedIncome>())).Returns(Task.CompletedTask);
+        _fixedIncomeRepo.Setup(r => r.UpdateEntityAsync(It.IsAny<FixedIncome>(), It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
         var sut = CreateSut();
 
         var request = ValidRequest();
@@ -179,7 +178,7 @@ public class FixedIncomeServiceTests
         ServiceResult result = await sut.UpdateAsync(email, request);
 
         Assert.True(result.Success);
-        _fixedIncomeRepo.Verify(r => r.UpdateEntityAsync(It.Is<FixedIncome>(fi => fi.Amount.Amount == 600m)), Times.Once);
+        _fixedIncomeRepo.Verify(r => r.UpdateEntityAsync(It.Is<FixedIncome>(fi => fi.Amount.Amount == 600m), It.IsAny<CancellationToken>()), Times.Once);
     }
 
     // -- DeleteAsync ----------------------------------------------------------
@@ -188,7 +187,7 @@ public class FixedIncomeServiceTests
     [Fact]
     public async Task DeleteAsync_ReturnsFail_WhenRecordNotFound()
     {
-        _fixedIncomeRepo.Setup(r => r.FindAsync(It.IsAny<IReadOnlyList<FilterCondition>>(), It.IsAny<string?>(), It.IsAny<bool>())).ReturnsAsync(new List<FixedIncome>());
+        _fixedIncomeRepo.Setup(r => r.GetByAccountEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(new List<FixedIncome>());
         var sut = CreateSut();
 
         ServiceResult result = await sut.DeleteAsync("user@example.com", 99);
@@ -203,14 +202,14 @@ public class FixedIncomeServiceTests
         const string email = "user@example.com";
         var existing = FixedIncome.Reconstitute(1, email, "RegularIncome", "LaborIncome", null, 0m, "KRW",
             "SavingsAccount", (short)1, (short)15, new DateTime(2030, 12, 31), null, false, DateTime.UtcNow, DateTime.UtcNow);
-        _fixedIncomeRepo.Setup(r => r.FindAsync(It.IsAny<IReadOnlyList<FilterCondition>>(), It.IsAny<string?>(), It.IsAny<bool>())).ReturnsAsync(new List<FixedIncome> { existing });
-        _fixedIncomeRepo.Setup(r => r.DeleteAsync(It.IsAny<IReadOnlyList<FilterCondition>>())).Returns(Task.CompletedTask);
+        _fixedIncomeRepo.Setup(r => r.GetByAccountEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(new List<FixedIncome> { existing });
+        _fixedIncomeRepo.Setup(r => r.DeleteByIdAsync(It.IsAny<long>(), It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
         var sut = CreateSut();
 
         ServiceResult result = await sut.DeleteAsync(email, 1);
 
         Assert.True(result.Success);
-        _fixedIncomeRepo.Verify(r => r.DeleteAsync(It.IsAny<IReadOnlyList<FilterCondition>>()), Times.Once);
+        _fixedIncomeRepo.Verify(r => r.DeleteByIdAsync(It.IsAny<long>(), It.IsAny<CancellationToken>()), Times.Once);
     }
 
     // -- GetFixedIncomesAsync -------------------------------------------------
@@ -225,7 +224,7 @@ public class FixedIncomeServiceTests
             FixedIncome.Reconstitute(1, email, "RegularIncome", "LaborIncome", null, 500m, "KRW",
                 "SavingsAccount", (short)1, (short)15, new DateTime(2030, 12, 31), null, false, DateTime.UtcNow, DateTime.UtcNow)
         };
-        _fixedIncomeRepo.Setup(r => r.FindAsync(It.IsAny<IReadOnlyList<FilterCondition>>(), It.IsAny<string?>(), It.IsAny<bool>())).ReturnsAsync(list);
+        _fixedIncomeRepo.Setup(r => r.GetByAccountEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(list);
         var sut = CreateSut();
 
         List<FixedIncomeResponse> result = await sut.GetFixedIncomesAsync(email);

@@ -1,4 +1,4 @@
-﻿using Maroik.Core.Contract.Domains.Finance;
+using Maroik.Core.Contract.Domains.Finance;
 using Maroik.Core.Contract.Interfaces;
 using Maroik.Core.PostgreSQL.Data;
 using Microsoft.EntityFrameworkCore;
@@ -39,4 +39,22 @@ public class FixedExpenditureRepository(ApplicationDbContext context)
         Created = fe.Created,
         Updated = fe.Updated
     };
+
+    public Task<List<FixedExpenditure>> GetByAccountEmailAsync(string accountEmail, CancellationToken ct = default)
+        => QueryAsync(e => e.AccountEmail == accountEmail, ct: ct);
+
+    public Task<FixedExpenditure?> FindByEmailAndIdAsync(string accountEmail, long id, CancellationToken ct = default)
+        => QueryFirstAsync(e => e.AccountEmail == accountEmail && e.Id == id, ct);
+
+    public Task DeleteByIdAsync(long id, CancellationToken ct = default)
+        => DeleteWhereAsync(e => e.Id == id, ct);
+
+    public async Task UpdateMyDepositAssetNameAsync(string accountEmail, string oldName, string newName, CancellationToken ct = default)
+    {
+        var entities = await Context.FixedExpenditures
+            .Where(e => e.AccountEmail == accountEmail && e.MyDepositAsset == oldName)
+            .ToListAsync(ct);
+        foreach (var e in entities) e.MyDepositAsset = newName;
+        _ = await Context.SaveChangesAsync(ct);
+    }
 }

@@ -1,5 +1,4 @@
-﻿using Maroik.Core.Contract.Domains.Calendar;
-using Maroik.Core.Contract.Filters;
+using Maroik.Core.Contract.Domains.Calendar;
 using Maroik.Core.PostgreSQL.Data;
 using Maroik.Core.Repository.Repositories;
 using Microsoft.EntityFrameworkCore;
@@ -46,28 +45,25 @@ public class OtherCalendarRepositoryTests : IDisposable
 
     // -- GetAllOtherCalendarsAsync --------------------------------------------
 
-    /// <summary>Verifies that <c>GetAllOtherCalendarsAsync</c> returns all when ordered by calendar id.</summary>
+    /// <summary>Verifies that <c>GetAllOtherCalendarsAsync</c> returns all entries.</summary>
     [Fact]
-    public async Task GetAllOtherCalendarsAsync_ReturnsAll_OrderedByCalendarId()
+    public async Task GetAllOtherCalendarsAsync_ReturnsAll()
     {
         await SeedAsync(
             MakeOtherCalendar("alice@example.com", 3),
             MakeOtherCalendar("bob@example.com", 1),
             MakeOtherCalendar("alice@example.com", 2));
 
-        List<OtherCalendar> result = await _sut.FindAsync([], "CalendarId");
+        List<OtherCalendar> result = await _sut.GetAllAsync();
 
         Assert.Equal(3, result.Count);
-        Assert.Equal(1, result[0].CalendarId);
-        Assert.Equal(2, result[1].CalendarId);
-        Assert.Equal(3, result[2].CalendarId);
     }
 
     /// <summary>Verifies that <c>GetAllOtherCalendarsAsync</c> returns empty when no entries.</summary>
     [Fact]
     public async Task GetAllOtherCalendarsAsync_ReturnsEmpty_WhenNoEntries()
     {
-        List<OtherCalendar> result = await _sut.FindAsync([]);
+        List<OtherCalendar> result = await _sut.GetAllAsync();
 
         Assert.Empty(result);
     }
@@ -83,31 +79,17 @@ public class OtherCalendarRepositoryTests : IDisposable
             MakeOtherCalendar("alice@example.com", 2),
             MakeOtherCalendar("bob@example.com", 3));
 
-        List<OtherCalendar> result = await _sut.FindAsync([FilterCondition.Equal("AccountEmail", "alice@example.com")]);
+        List<OtherCalendar> result = await _sut.GetByAccountEmailAsync("alice@example.com");
 
         Assert.Equal(2, result.Count);
         Assert.All(result, r => Assert.Equal("alice@example.com", r.AccountEmail.Value));
-    }
-
-    /// <summary>Verifies that <c>GetOtherCalendarsAsync</c> returns results when ordered by calendar id.</summary>
-    [Fact]
-    public async Task GetOtherCalendarsAsync_ReturnsResults_OrderedByCalendarId()
-    {
-        await SeedAsync(
-            MakeOtherCalendar("alice@example.com", 5),
-            MakeOtherCalendar("alice@example.com", 2));
-
-        List<OtherCalendar> result = await _sut.FindAsync([FilterCondition.Equal("AccountEmail", "alice@example.com")], "CalendarId");
-
-        Assert.Equal(2, result[0].CalendarId);
-        Assert.Equal(5, result[1].CalendarId);
     }
 
     /// <summary>Verifies that <c>GetOtherCalendarsAsync</c> returns empty when email not found.</summary>
     [Fact]
     public async Task GetOtherCalendarsAsync_ReturnsEmpty_WhenEmailNotFound()
     {
-        List<OtherCalendar> result = await _sut.FindAsync([FilterCondition.Equal("AccountEmail", "ghost@example.com")]);
+        List<OtherCalendar> result = await _sut.GetByAccountEmailAsync("ghost@example.com");
 
         Assert.Empty(result);
     }
@@ -131,20 +113,33 @@ public class OtherCalendarRepositoryTests : IDisposable
 
     // -- DeleteOtherCalendarAsync ---------------------------------------------
 
-    /// <summary>Verifies that <c>DeleteOtherCalendarAsync</c> removes entry.</summary>
+    /// <summary>Verifies that <c>DeleteOtherCalendarAsync</c> removes entry by email and calendar id.</summary>
     [Fact]
     public async Task DeleteOtherCalendarAsync_RemovesEntry()
     {
         await SeedAsync(MakeOtherCalendar("dave@example.com", 7));
 
-        var otherCalendar = OtherCalendar.Reconstitute(
-            accountEmail: "dave@example.com",
-            calendarId: 7);
-
-        await _sut.DeleteAsync([FilterCondition.Equal("AccountEmail", otherCalendar.AccountEmail.Value), FilterCondition.Equal("CalendarId", otherCalendar.CalendarId)]);
+        await _sut.DeleteByAccountEmailAndCalendarIdAsync("dave@example.com", 7);
 
         bool exists = await _context.OtherCalendars.AnyAsync(
             oc => oc.AccountEmail == "dave@example.com" && oc.CalendarId == 7, TestContext.Current.CancellationToken);
         Assert.False(exists);
+    }
+
+    // -- DeleteByAccountEmailAsync --------------------------------------------
+
+    /// <summary>Verifies that <c>DeleteByAccountEmailAsync</c> removes all entries for given email.</summary>
+    [Fact]
+    public async Task DeleteByAccountEmailAsync_RemovesAllEntriesForEmail()
+    {
+        await SeedAsync(
+            MakeOtherCalendar("alice@example.com", 1),
+            MakeOtherCalendar("alice@example.com", 2),
+            MakeOtherCalendar("bob@example.com", 3));
+
+        await _sut.DeleteByAccountEmailAsync("alice@example.com");
+
+        Assert.False(await _context.OtherCalendars.AnyAsync(oc => oc.AccountEmail == "alice@example.com", TestContext.Current.CancellationToken));
+        Assert.True(await _context.OtherCalendars.AnyAsync(oc => oc.AccountEmail == "bob@example.com", TestContext.Current.CancellationToken));
     }
 }

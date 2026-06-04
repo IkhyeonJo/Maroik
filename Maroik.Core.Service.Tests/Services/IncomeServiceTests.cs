@@ -1,6 +1,5 @@
-﻿using Maroik.Core.Contract.Domains.Finance;
+using Maroik.Core.Contract.Domains.Finance;
 using Maroik.Core.Contract.Dtos;
-using Maroik.Core.Contract.Filters;
 using Maroik.Core.Contract.Interfaces;
 using Maroik.Core.Service.Services;
 using Moq;
@@ -125,7 +124,7 @@ public class IncomeServiceTests
         const string email = "user@example.com";
         var asset = MakeAsset("SavingsAccount", amount: 2000m);
         _assetBalance.Setup(r => r.GetAssetAsync(email, "SavingsAccount")).ReturnsAsync(asset);
-        _incomeRepo.Setup(r => r.CreateAsync(It.IsAny<Income>())).Returns(Task.CompletedTask);
+        _incomeRepo.Setup(r => r.CreateAsync(It.IsAny<Income>(), It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
 
         Asset? captured = null;
         _assetBalance.Setup(r => r.SaveAsync(It.IsAny<Asset>()))
@@ -156,7 +155,7 @@ public class IncomeServiceTests
         const string email = "user@example.com";
         var asset = MakeAsset("SavingsAccount");
         _assetBalance.Setup(r => r.GetAssetAsync(email, "SavingsAccount")).ReturnsAsync(asset);
-        _incomeRepo.Setup(r => r.CreateAsync(It.IsAny<Income>())).Returns(Task.CompletedTask);
+        _incomeRepo.Setup(r => r.CreateAsync(It.IsAny<Income>(), It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
         _assetBalance.Setup(r => r.SaveAsync(It.IsAny<Asset>())).Returns(Task.CompletedTask);
         var sut = CreateSut();
 
@@ -189,7 +188,7 @@ public class IncomeServiceTests
     [Fact]
     public async Task UpdateAsync_ReturnsFail_WhenIncomeRecordNotFound()
     {
-        _incomeRepo.Setup(r => r.FindAsync(It.IsAny<IReadOnlyList<FilterCondition>>(), It.IsAny<string?>(), It.IsAny<bool>())).ReturnsAsync([]);
+        _incomeRepo.Setup(r => r.GetByAccountEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync([]);
         var sut = CreateSut();
         var request = ValidRequest();
         request.Id = 99;
@@ -206,7 +205,7 @@ public class IncomeServiceTests
         const string email = "user@example.com";
         var existing = MakeIncome(1, "OldAsset", 100m);
         var deletedAsset = MakeAsset("OldAsset", deleted: true);
-        _incomeRepo.Setup(r => r.FindAsync(It.IsAny<IReadOnlyList<FilterCondition>>(), It.IsAny<string?>(), It.IsAny<bool>())).ReturnsAsync([existing]);
+        _incomeRepo.Setup(r => r.GetByAccountEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync([existing]);
         _assetBalance.Setup(r => r.GetAssetAsync(email, "OldAsset")).ReturnsAsync(deletedAsset);
         var sut = CreateSut();
 
@@ -225,9 +224,9 @@ public class IncomeServiceTests
         const string email = "user@example.com";
         var existing = MakeIncome(1, "SavingsAccount", 300m);
         var asset = MakeAsset("SavingsAccount", amount: 1300m);
-        _incomeRepo.Setup(r => r.FindAsync(It.IsAny<IReadOnlyList<FilterCondition>>(), It.IsAny<string?>(), It.IsAny<bool>())).ReturnsAsync([existing]);
+        _incomeRepo.Setup(r => r.GetByAccountEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync([existing]);
         _assetBalance.Setup(r => r.GetAssetAsync(email, "SavingsAccount")).ReturnsAsync(asset);
-        _incomeRepo.Setup(r => r.UpdateEntityAsync(It.IsAny<Income>())).Returns(Task.CompletedTask);
+        _incomeRepo.Setup(r => r.UpdateEntityAsync(It.IsAny<Income>(), It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
 
         Asset? captured = null;
         _assetBalance.Setup(r => r.SaveAsync(It.IsAny<Asset>()))
@@ -257,10 +256,10 @@ public class IncomeServiceTests
         var existing = MakeIncome(1, "OldAsset", 200m);
         var oldAsset = MakeAsset("OldAsset", amount: 500m);
         var newAsset = MakeAsset("NewAsset", amount: 100m);
-        _incomeRepo.Setup(r => r.FindAsync(It.IsAny<IReadOnlyList<FilterCondition>>(), It.IsAny<string?>(), It.IsAny<bool>())).ReturnsAsync([existing]);
+        _incomeRepo.Setup(r => r.GetByAccountEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync([existing]);
         _assetBalance.Setup(r => r.GetAssetAsync(email, "OldAsset")).ReturnsAsync(oldAsset);
         _assetBalance.Setup(r => r.GetAssetAsync(email, "NewAsset")).ReturnsAsync(newAsset);
-        _incomeRepo.Setup(r => r.UpdateEntityAsync(It.IsAny<Income>())).Returns(Task.CompletedTask);
+        _incomeRepo.Setup(r => r.UpdateEntityAsync(It.IsAny<Income>(), It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
 
         var updatedAssets = new List<Asset>();
         _assetBalance.Setup(r => r.SaveAsync(It.IsAny<Asset>()))
@@ -287,7 +286,7 @@ public class IncomeServiceTests
     [Fact]
     public async Task DeleteAsync_ReturnsFail_WhenIncomeNotFound()
     {
-        _incomeRepo.Setup(r => r.FindAsync(It.IsAny<IReadOnlyList<FilterCondition>>(), It.IsAny<string?>(), It.IsAny<bool>())).ReturnsAsync([]);
+        _incomeRepo.Setup(r => r.GetByAccountEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync([]);
         var sut = CreateSut();
 
         ServiceResult result = await sut.DeleteAsync("user@example.com", 99);
@@ -303,7 +302,7 @@ public class IncomeServiceTests
         const string email = "user@example.com";
         var income = MakeIncome(1, "SavingsAccount", 100m);
         var deletedAsset = MakeAsset("SavingsAccount", deleted: true);
-        _incomeRepo.Setup(r => r.FindAsync(It.IsAny<IReadOnlyList<FilterCondition>>(), It.IsAny<string?>(), It.IsAny<bool>())).ReturnsAsync([income]);
+        _incomeRepo.Setup(r => r.GetByAccountEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync([income]);
         _assetBalance.Setup(r => r.GetAssetAsync(email, "SavingsAccount")).ReturnsAsync(deletedAsset);
         var sut = CreateSut();
 
@@ -320,9 +319,9 @@ public class IncomeServiceTests
         const string email = "user@example.com";
         var income = MakeIncome(1, "SavingsAccount", 250m);
         var asset = MakeAsset("SavingsAccount", amount: 1000m);
-        _incomeRepo.Setup(r => r.FindAsync(It.IsAny<IReadOnlyList<FilterCondition>>(), It.IsAny<string?>(), It.IsAny<bool>())).ReturnsAsync([income]);
+        _incomeRepo.Setup(r => r.GetByAccountEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync([income]);
         _assetBalance.Setup(r => r.GetAssetAsync(email, "SavingsAccount")).ReturnsAsync(asset);
-        _incomeRepo.Setup(r => r.DeleteAsync(It.IsAny<IReadOnlyList<FilterCondition>>())).Returns(Task.CompletedTask);
+        _incomeRepo.Setup(r => r.DeleteByIdAsync(It.IsAny<long>(), It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
 
         Asset? captured = null;
         _assetBalance.Setup(r => r.SaveAsync(It.IsAny<Asset>()))
@@ -346,7 +345,7 @@ public class IncomeServiceTests
     {
         const string email = "user@example.com";
         var list = new List<Income> { MakeIncome(1) };
-        _incomeRepo.Setup(r => r.FindAsync(It.IsAny<IReadOnlyList<FilterCondition>>(), It.IsAny<string?>(), It.IsAny<bool>())).ReturnsAsync(list);
+        _incomeRepo.Setup(r => r.GetByAccountEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(list);
         var sut = CreateSut();
 
         List<IncomeResponse> result = await sut.GetIncomesAsync(email);

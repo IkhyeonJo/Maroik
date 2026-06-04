@@ -40,4 +40,7 @@ public class BoardAttachedFileRepository(ApplicationDbContext context)
         Extension = f.Extension,
         Path = f.Path
     };
+
+    public Task<BoardAttachedFile?> FindByBoardIdAsync(long boardId, CancellationToken ct = default)
+        => QueryFirstAsync(e => e.BoardId == boardId, ct);
 }

@@ -1,5 +1,4 @@
 using Maroik.Core.Contract.Domains.Finance;
-using Maroik.Core.Contract.Filters;
 using Maroik.Core.Contract.Dtos;
 using Maroik.Core.Contract.Interfaces;
 using Maroik.Core.Service.Mappers;
@@ -27,16 +26,12 @@ public class FixedExpenditureService : IFixedExpenditureService
 
     /// <inheritdoc />
     public async Task<List<FixedExpenditureResponse>> GetFixedExpendituresAsync(string accountEmail, CancellationToken ct = default)
-        => (await _fixedExpenditureRepository.FindAsync([FilterCondition.Equal("AccountEmail", accountEmail)], ct: ct)).Select(FixedExpenditureMapper.ToResponse).ToList();
+        => (await _fixedExpenditureRepository.GetByAccountEmailAsync(accountEmail, ct)).Select(FixedExpenditureMapper.ToResponse).ToList();
 
     /// <inheritdoc />
     public async Task<FixedExpenditureResponse?> GetByIdAsync(string accountEmail, long id, CancellationToken ct = default)
     {
-        var results = await _fixedExpenditureRepository.FindAsync([
-            FilterCondition.Equal("AccountEmail", accountEmail),
-            FilterCondition.Equal("Id", id)
-        ], ct: ct);
-        var item = results.FirstOrDefault();
+        var item = await _fixedExpenditureRepository.FindByEmailAndIdAsync(accountEmail, id, ct);
         return item == null ? null : FixedExpenditureMapper.ToResponse(item);
     }
 
@@ -94,7 +89,7 @@ public class FixedExpenditureService : IFixedExpenditureService
                 return ServiceResult.Fail("PaymentMethod MonetaryUnit must be same as MyDepositAsset MonetaryUnit.");
         }
 
-        List<FixedExpenditure> items = await _fixedExpenditureRepository.FindAsync([FilterCondition.Equal("AccountEmail", accountEmail)], ct: ct);
+        List<FixedExpenditure> items = await _fixedExpenditureRepository.GetByAccountEmailAsync(accountEmail, ct);
         FixedExpenditure? fe = items.FirstOrDefault(x => x.Id == request.Id);
         if (fe == null) return ServiceResult.Fail("Input is invalid");
 
@@ -115,11 +110,11 @@ public class FixedExpenditureService : IFixedExpenditureService
     /// <inheritdoc />
     public async Task<ServiceResult> DeleteAsync(string accountEmail, long id, CancellationToken ct = default)
     {
-        List<FixedExpenditure> items = await _fixedExpenditureRepository.FindAsync([FilterCondition.Equal("AccountEmail", accountEmail)], ct: ct);
+        List<FixedExpenditure> items = await _fixedExpenditureRepository.GetByAccountEmailAsync(accountEmail, ct);
         FixedExpenditure? fe = items.FirstOrDefault(x => x.Id == id);
         if (fe == null) return ServiceResult.Fail("Input is invalid");
 
-        await _fixedExpenditureRepository.DeleteAsync([FilterCondition.Equal("Id", fe.Id)], ct);
+        await _fixedExpenditureRepository.DeleteByIdAsync(fe.Id, ct);
         return ServiceResult.Ok();
     }
 

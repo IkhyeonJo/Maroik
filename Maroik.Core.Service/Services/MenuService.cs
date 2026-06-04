@@ -1,5 +1,4 @@
 using Maroik.Core.Contract.Domains.Menu;
-using Maroik.Core.Contract.Filters;
 using Maroik.Core.Contract.Dtos;
 using Maroik.Core.Contract.Interfaces;
 using Maroik.Core.Service.Mappers;
@@ -32,23 +31,23 @@ public class MenuService : IMenuService
 
     /// <inheritdoc />
     public async Task<IEnumerable<CategoryResponse>> GetAllCategoriesAsync(CancellationToken ct = default)
-        => (await _categoryRepository.FindAsync([], ct: ct)).Select(CategoryMapper.ToResponse);
+        => (await _categoryRepository.GetAllAsync(ct)).Select(CategoryMapper.ToResponse);
 
     /// <inheritdoc />
     public async Task<IEnumerable<SubCategoryResponse>> GetAllSubCategoriesAsync(CancellationToken ct = default)
-        => (await _subCategoryRepository.FindAsync([], ct: ct)).Select(SubCategoryMapper.ToResponse);
+        => (await _subCategoryRepository.GetAllAsync(ct)).Select(SubCategoryMapper.ToResponse);
 
     /// <inheritdoc />
     public async Task<CategoryResponse?> GetCategoryByIdAsync(int id, CancellationToken ct = default)
     {
-        Category? category = (await _categoryRepository.FindAsync([], ct: ct)).FirstOrDefault(c => c.Id == id);
+        Category? category = (await _categoryRepository.GetAllAsync(ct)).FirstOrDefault(c => c.Id == id);
         return category == null ? null : CategoryMapper.ToResponse(category);
     }
 
     /// <inheritdoc />
     public async Task<SubCategoryResponse?> GetSubCategoryByIdAsync(int id, CancellationToken ct = default)
     {
-        SubCategory? sub = (await _subCategoryRepository.FindAsync([], ct: ct)).FirstOrDefault(s => s.Id == id);
+        SubCategory? sub = (await _subCategoryRepository.GetAllAsync(ct)).FirstOrDefault(s => s.Id == id);
         return sub == null ? null : SubCategoryMapper.ToResponse(sub);
     }
 
@@ -96,7 +95,7 @@ public class MenuService : IMenuService
         {
             var category = Category.Reconstitute(request.Id, request.Name, request.DisplayName, request.IconPath,
                 request.Controller, request.Action, request.Role, request.Order);
-            await _categoryRepository.DeleteAsync([FilterCondition.Equal("Id", category.Id)], ct);
+            await _categoryRepository.DeleteByIdAsync(category.Id, ct);
             return ServiceResult.Ok();
         }
         catch (Exception e)
@@ -150,7 +149,7 @@ public class MenuService : IMenuService
         {
             var subCategory = SubCategory.Reconstitute(request.Id, request.CategoryId, request.Name,
                 request.DisplayName, request.IconPath, request.Action, request.Role, request.Order);
-            await _subCategoryRepository.DeleteAsync([FilterCondition.Equal("Id", subCategory.Id)], ct);
+            await _subCategoryRepository.DeleteByIdAsync(subCategory.Id, ct);
             return ServiceResult.Ok();
         }
         catch (Exception e)

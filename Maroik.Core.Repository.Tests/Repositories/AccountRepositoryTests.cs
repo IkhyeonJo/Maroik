@@ -1,5 +1,4 @@
-﻿using Maroik.Core.Contract.Domains.Account;
-using Maroik.Core.Contract.Filters;
+using Maroik.Core.Contract.Domains.Account;
 using Maroik.Core.Contract.Utilities;
 using Maroik.Core.PostgreSQL.Data;
 using Maroik.Core.Repository.Repositories;
@@ -64,7 +63,7 @@ public class AccountRepositoryTests : IDisposable
             MakeAccount("alice@example.com", "Alice"),
             MakeAccount("bob@example.com", "Bob"));
 
-        List<Account> result = await _sut.FindAsync([]);
+        List<Account> result = await _sut.GetAllAsync();
 
         Assert.Equal(2, result.Count);
     }
@@ -73,7 +72,7 @@ public class AccountRepositoryTests : IDisposable
     [Fact]
     public async Task GetAllAsync_ReturnsEmptyList_WhenNoAccounts()
     {
-        List<Account> result = await _sut.FindAsync([]);
+        List<Account> result = await _sut.GetAllAsync();
 
         Assert.Empty(result);
     }
@@ -86,7 +85,7 @@ public class AccountRepositoryTests : IDisposable
     {
         await SeedAsync(MakeAccount("alice@example.com", "Alice"));
 
-        Account? result = (await _sut.FindAsync([FilterCondition.Equal("Email", "alice@example.com")])).FirstOrDefault();
+        Account? result = await _sut.FindByEmailAsync("alice@example.com");
 
         Assert.NotNull(result);
         Assert.Equal("alice@example.com", result.Email.Value);
@@ -97,7 +96,7 @@ public class AccountRepositoryTests : IDisposable
     [Fact]
     public async Task GetAccountByEmailAsync_ReturnsNull_WhenNotFound()
     {
-        Account? result = (await _sut.FindAsync([FilterCondition.Equal("Email", "ghost@example.com")])).FirstOrDefault();
+        Account? result = await _sut.FindByEmailAsync("ghost@example.com");
 
         Assert.Null(result);
     }
@@ -113,7 +112,7 @@ public class AccountRepositoryTests : IDisposable
         account.RegistrationToken = token;
         await SeedAsync(account);
 
-        Account? result = (await _sut.FindAsync([FilterCondition.Equal("RegistrationToken", token)])).FirstOrDefault();
+        Account? result = await _sut.FindByRegistrationTokenAsync(token);
 
         Assert.NotNull(result);
         Assert.Equal("alice@example.com", result.Email.Value);
@@ -123,7 +122,7 @@ public class AccountRepositoryTests : IDisposable
     [Fact]
     public async Task GetAccountByRegistrationTokenAsync_ReturnsNull_WhenTokenDoesNotMatch()
     {
-        Account? result = (await _sut.FindAsync([FilterCondition.Equal("RegistrationToken", "nonexistent-token")])).FirstOrDefault();
+        Account? result = await _sut.FindByRegistrationTokenAsync("nonexistent-token");
 
         Assert.Null(result);
     }
@@ -139,7 +138,7 @@ public class AccountRepositoryTests : IDisposable
         account.ResetPasswordToken = token;
         await SeedAsync(account);
 
-        Account? result = (await _sut.FindAsync([FilterCondition.Equal("ResetPasswordToken", token)])).FirstOrDefault();
+        Account? result = await _sut.FindByResetPasswordTokenAsync(token);
 
         Assert.NotNull(result);
         Assert.Equal("alice@example.com", result.Email.Value);
@@ -149,7 +148,7 @@ public class AccountRepositoryTests : IDisposable
     [Fact]
     public async Task GetAccountByResetPasswordTokenAsync_ReturnsNull_WhenTokenNotFound()
     {
-        Account? result = (await _sut.FindAsync([FilterCondition.Equal("ResetPasswordToken", "no-such-token")])).FirstOrDefault();
+        Account? result = await _sut.FindByResetPasswordTokenAsync("no-such-token");
 
         Assert.Null(result);
     }
@@ -197,7 +196,7 @@ public class AccountRepositoryTests : IDisposable
             MakeAccount("bob@example.com", "Bob"),
             MakeAccount("carol@example.com", "Carol"));
 
-        List<Account> result = await _sut.FindAsync([FilterCondition.In("Nickname", new[] { "Alice", "Carol" })]);
+        List<Account> result = await _sut.FindByNicknamesAsync(new[] { "Alice", "Carol" });
 
         Assert.Equal(2, result.Count);
         Assert.Contains(result, a => a.Nickname == "Alice");
@@ -210,7 +209,7 @@ public class AccountRepositoryTests : IDisposable
     {
         await SeedAsync(MakeAccount("alice@example.com", "Alice"));
 
-        List<Account> result = await _sut.FindAsync([FilterCondition.In("Nickname", new[] { "Ghost" })]);
+        List<Account> result = await _sut.FindByNicknamesAsync(new[] { "Ghost" });
 
         Assert.Empty(result);
     }
@@ -221,7 +220,7 @@ public class AccountRepositoryTests : IDisposable
     {
         await SeedAsync(MakeAccount("alice@example.com", "Alice"));
 
-        List<Account> result = await _sut.FindAsync([FilterCondition.In("Nickname", Array.Empty<string>())]);
+        List<Account> result = await _sut.FindByNicknamesAsync(Array.Empty<string>());
 
         Assert.Empty(result);
     }

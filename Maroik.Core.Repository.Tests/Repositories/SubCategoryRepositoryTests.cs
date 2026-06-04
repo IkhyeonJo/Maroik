@@ -1,5 +1,4 @@
-﻿using Maroik.Core.Contract.Domains.Menu;
-using Maroik.Core.Contract.Filters;
+using Maroik.Core.Contract.Domains.Menu;
 using Maroik.Core.Contract.Utilities;
 using Maroik.Core.PostgreSQL.Data;
 using Maroik.Core.Repository.Repositories;
@@ -65,9 +64,9 @@ public class SubCategoryRepositoryTests : IDisposable
         await _context.SaveChangesAsync();
     }
 
-    // -- GetSubCategoryAsync --------------------------------------------------
+    // -- GetAllAsync ----------------------------------------------------------
 
-    /// <summary>Verifies that <c>GetSubCategoryAsync</c> returns all sub categories.</summary>
+    /// <summary>Verifies that <c>GetAllAsync</c> returns all sub categories.</summary>
     [Fact]
     public async Task GetSubCategoryAsync_ReturnsAllSubCategories()
     {
@@ -76,52 +75,18 @@ public class SubCategoryRepositoryTests : IDisposable
             MakeSubCategory(catId, "SubA", order: 1),
             MakeSubCategory(catId, "SubB", order: 2));
 
-        IEnumerable<SubCategory> result = await _sut.FindAsync([]);
+        IEnumerable<SubCategory> result = await _sut.GetAllAsync();
 
         Assert.Equal(2, result.Count());
     }
 
-    /// <summary>Verifies that <c>GetSubCategoryAsync</c> returns empty when no sub categories.</summary>
+    /// <summary>Verifies that <c>GetAllAsync</c> returns empty when no sub categories.</summary>
     [Fact]
     public async Task GetSubCategoryAsync_ReturnsEmpty_WhenNoSubCategories()
     {
-        IEnumerable<SubCategory> result = await _sut.FindAsync([]);
+        IEnumerable<SubCategory> result = await _sut.GetAllAsync();
 
         Assert.Empty(result);
-    }
-
-    // -- GetSubCategoryByRoleAsync --------------------------------------------
-
-    /// <summary>Verifies that <c>GetSubCategoryByRoleAsync</c> returns only sub categories for role.</summary>
-    [Fact]
-    public async Task GetSubCategoryByRoleAsync_ReturnsOnlySubCategoriesForRole()
-    {
-        long catId = await SeedCategoryAsync();
-        await SeedAsync(
-            MakeSubCategory(catId, "UserSub1", role: Role.User, order: 1),
-            MakeSubCategory(catId, "AdminSub", role: Role.Admin, order: 2),
-            MakeSubCategory(catId, "UserSub2", role: Role.User, order: 3));
-
-        IEnumerable<SubCategory> result = await _sut.FindAsync([FilterCondition.Equal("Role", Role.User)]);
-
-        Assert.Equal(2, result.Count());
-        Assert.All(result, sc => Assert.Equal(Role.User, sc.Role));
-    }
-
-    /// <summary>Verifies that <c>GetSubCategoryByRoleAsync</c> returns ordered by order.</summary>
-    [Fact]
-    public async Task GetSubCategoryByRoleAsync_ReturnsOrderedByOrder()
-    {
-        long catId = await SeedCategoryAsync();
-        await SeedAsync(
-            MakeSubCategory(catId, "SecondItem", role: Role.User, order: 2),
-            MakeSubCategory(catId, "FirstItem", role: Role.User, order: 1));
-
-        IEnumerable<SubCategory> result = await _sut.FindAsync([FilterCondition.Equal("Role", Role.User)], "Order");
-        List<SubCategory> list = result.ToList();
-
-        Assert.Equal("FirstItem", list[0].Name);
-        Assert.Equal("SecondItem", list[1].Name);
     }
 
     // -- CreateSubCategoryAsync -----------------------------------------------
@@ -179,9 +144,9 @@ public class SubCategoryRepositoryTests : IDisposable
         Assert.Equal(10, updated.Order);
     }
 
-    // -- DeleteSubCategoryAsync -----------------------------------------------
+    // -- DeleteByIdAsync -----------------------------------------------
 
-    /// <summary>Verifies that <c>DeleteSubCategoryAsync</c> removes sub category from database.</summary>
+    /// <summary>Verifies that <c>DeleteByIdAsync</c> removes sub category from database.</summary>
     [Fact]
     public async Task DeleteSubCategoryAsync_RemovesSubCategoryFromDatabase()
     {
@@ -189,23 +154,13 @@ public class SubCategoryRepositoryTests : IDisposable
         await SeedAsync(MakeSubCategory(catId, "ToDelete"));
         EfSubCategory efSub = await _context.SubCategories.FirstAsync(TestContext.Current.CancellationToken);
 
-        var subCategory = SubCategory.Reconstitute(
-            id: efSub.Id,
-            categoryId: efSub.CategoryId,
-            name: efSub.Name,
-            displayName: efSub.DisplayName,
-            iconPath: efSub.IconPath,
-            action: efSub.Action,
-            role: efSub.Role,
-            order: efSub.Order);
-
-        await _sut.DeleteAsync([FilterCondition.Equal("Id", efSub.Id)]);
+        await _sut.DeleteByIdAsync(efSub.Id);
 
         EfSubCategory? deleted = await _context.SubCategories.FirstOrDefaultAsync(sc => sc.Id == efSub.Id, TestContext.Current.CancellationToken);
         Assert.Null(deleted);
     }
 
-    /// <summary>Verifies that <c>DeleteSubCategoryAsync</c> does not affect other sub categories.</summary>
+    /// <summary>Verifies that <c>DeleteByIdAsync</c> does not affect other sub categories.</summary>
     [Fact]
     public async Task DeleteSubCategoryAsync_DoesNotAffectOtherSubCategories()
     {
@@ -215,17 +170,7 @@ public class SubCategoryRepositoryTests : IDisposable
             MakeSubCategory(catId, "Sub2", order: 2));
         List<EfSubCategory> all = await _context.SubCategories.ToListAsync(TestContext.Current.CancellationToken);
 
-        var subCategory = SubCategory.Reconstitute(
-            id: all[0].Id,
-            categoryId: all[0].CategoryId,
-            name: all[0].Name,
-            displayName: all[0].DisplayName,
-            iconPath: all[0].IconPath,
-            action: all[0].Action,
-            role: all[0].Role,
-            order: all[0].Order);
-
-        await _sut.DeleteAsync([FilterCondition.Equal("Id", all[0].Id)]);
+        await _sut.DeleteByIdAsync(all[0].Id);
 
         List<EfSubCategory> remaining = await _context.SubCategories.ToListAsync(TestContext.Current.CancellationToken);
         Assert.Single(remaining);

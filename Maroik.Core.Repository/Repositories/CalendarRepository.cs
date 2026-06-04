@@ -1,4 +1,4 @@
-﻿using Maroik.Core.Contract.Domains.Calendar;
+using Maroik.Core.Contract.Domains.Calendar;
 using Maroik.Core.Contract.Interfaces;
 using Maroik.Core.PostgreSQL.Data;
 using Microsoft.EntityFrameworkCore;
@@ -31,4 +31,13 @@ public class CalendarRepository(ApplicationDbContext context)
         Created = c.Created,
         Updated = c.Updated
     };
+
+    public Task<List<Calendar>> GetByAccountEmailAsync(string accountEmail, CancellationToken ct = default)
+        => QueryAsync(e => e.AccountEmail == accountEmail, ct: ct);
+
+    public Task<List<Calendar>> GetAllOrderedByNameAsync(CancellationToken ct = default)
+        => QueryAllAsync(q => q.OrderBy(e => e.Name), ct: ct);
+
+    public Task DeleteByIdAsync(long id, CancellationToken ct = default)
+        => DeleteWhereAsync(e => e.Id == id, ct);
 }

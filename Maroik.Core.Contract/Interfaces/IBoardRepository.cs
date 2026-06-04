@@ -1,16 +1,9 @@
 using Maroik.Core.Contract.Domains.Board;
-
 namespace Maroik.Core.Contract.Interfaces;
-
-/// <summary>
-/// Low-level repository for Board post table operations.
-/// Lookup operations are provided by <see cref="IGenericRepository{TDomain}"/>.
-/// </summary>
 public interface IBoardRepository : IGenericRepository<Board>
 {
-    /// <summary>Atomically increments the view counter of the post with the given ID.</summary>
     Task IncrementViewAsync(long id, CancellationToken ct = default);
-
-    /// <summary>Inserts a new board post row and returns the database-generated ID.</summary>
     Task<long> WriteBoardAsync(Board board, CancellationToken ct = default);
+    Task<List<Board>> GetByTypeAsync(string type, CancellationToken ct = default);
+    Task<Board?> FindActiveByIdAsync(long id, CancellationToken ct = default);
 }

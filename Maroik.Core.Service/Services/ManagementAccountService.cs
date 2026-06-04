@@ -1,5 +1,4 @@
 using Maroik.Core.Contract.Domains.Account;
-using Maroik.Core.Contract.Filters;
 using Maroik.Core.Contract.Dtos;
 using Maroik.Core.Contract.Utilities;
 using Maroik.Core.Contract.Interfaces;
@@ -33,7 +32,7 @@ public class ManagementAccountService : IManagementAccountService
 
     /// <inheritdoc />
     public async Task<List<AccountResponse>> GetAllAccountsAsync(CancellationToken ct = default)
-        => (await _accountRepository.FindAsync([], ct: ct)).Select(AccountMapper.ToResponse).ToList();
+        => (await _accountRepository.GetAllAsync(ct)).Select(AccountMapper.ToResponse).ToList();
 
     /// <inheritdoc />
     public async Task<AccountResponse?> GetAccountByEmailAsync(string email, CancellationToken ct = default)
@@ -116,8 +115,8 @@ public class ManagementAccountService : IManagementAccountService
         }
     }
 
-    private async Task<Account?> FindByEmailAsync(string email, CancellationToken ct = default)
-        => (await _accountRepository.FindAsync([FilterCondition.Equal("Email", email)], ct: ct)).FirstOrDefault();
+    private Task<Account?> FindByEmailAsync(string email, CancellationToken ct = default)
+        => _accountRepository.FindByEmailAsync(email, ct);
 
     /// <inheritdoc />
     public async Task<ServiceResult> DeleteAccountAsync(string email, CancellationToken ct = default)

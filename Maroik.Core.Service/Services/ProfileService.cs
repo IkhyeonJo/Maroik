@@ -1,6 +1,5 @@
 using ImageMagick;
 using Maroik.Core.Contract.Domains.Account;
-using Maroik.Core.Contract.Filters;
 using Maroik.Core.Contract.Domains.Finance;
 using Maroik.Core.Contract.Domains.ValueObjects;
 using Maroik.Core.Contract.Dtos;
@@ -178,13 +177,13 @@ public class ProfileService : IProfileService
         return await UpdateAvatarAsync(email, $"/upload/Management/Profile/Avatar/{avatarFile}", ct);
     }
 
-    private async Task<Account?> FindByEmailAsync(string email, CancellationToken ct = default)
-        => (await _accountRepository.FindAsync([FilterCondition.Equal("Email", email)], ct: ct)).FirstOrDefault();
+    private Task<Account?> FindByEmailAsync(string email, CancellationToken ct = default)
+        => _accountRepository.FindByEmailAsync(email, ct);
 
     /// <inheritdoc />
     public async Task UpdateDefaultMonetaryUnitAsync(string accountEmail, string? monetaryUnit, CancellationToken ct = default)
     {
-        List<Asset> assets = await _assetRepository.FindAsync([FilterCondition.Equal("AccountEmail", accountEmail)], ct: ct);
+        List<Asset> assets = await _assetRepository.GetByAccountEmailAsync(accountEmail, ct);
         Account? account = await FindByEmailAsync(accountEmail, ct);
         if (account == null) return;
 

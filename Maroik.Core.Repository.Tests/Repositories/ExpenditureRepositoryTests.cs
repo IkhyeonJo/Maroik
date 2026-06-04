@@ -1,5 +1,4 @@
-﻿using Maroik.Core.Contract.Domains.Finance;
-using Maroik.Core.Contract.Filters;
+using Maroik.Core.Contract.Domains.Finance;
 using Maroik.Core.PostgreSQL.Data;
 using Maroik.Core.Repository.Repositories;
 using Microsoft.EntityFrameworkCore;
@@ -70,7 +69,7 @@ public class ExpenditureRepositoryTests : IDisposable
             MakeExpenditure("alice@example.com", "Dinner"),
             MakeExpenditure("bob@example.com", "Coffee"));
 
-        List<Expenditure> result = await _sut.FindAsync([FilterCondition.Equal("AccountEmail", "alice@example.com")]);
+        List<Expenditure> result = await _sut.GetByAccountEmailAsync("alice@example.com");
 
         Assert.Equal(2, result.Count);
         Assert.All(result, e => Assert.Equal("alice@example.com", e.AccountEmail.Value));
@@ -80,7 +79,7 @@ public class ExpenditureRepositoryTests : IDisposable
     [Fact]
     public async Task GetExpendituresAsync_ReturnsEmpty_WhenNoExpendituresForEmail()
     {
-        List<Expenditure> result = await _sut.FindAsync([FilterCondition.Equal("AccountEmail", "nobody@example.com")]);
+        List<Expenditure> result = await _sut.GetByAccountEmailAsync("nobody@example.com");
 
         Assert.Empty(result);
     }
@@ -145,9 +144,9 @@ public class ExpenditureRepositoryTests : IDisposable
         Assert.Equal("Updated Lunch", updated.Content);
     }
 
-    // -- DeleteExpenditureAsync -----------------------------------------------
+    // -- DeleteByIdAsync -----------------------------------------------
 
-    /// <summary>Verifies that <c>DeleteExpenditureAsync</c> removes expenditure from database.</summary>
+    /// <summary>Verifies that <c>DeleteByIdAsync</c> removes expenditure from database.</summary>
     [Fact]
     public async Task DeleteExpenditureAsync_RemovesExpenditureFromDatabase()
     {
@@ -155,27 +154,13 @@ public class ExpenditureRepositoryTests : IDisposable
         await SeedAsync(efExpenditure);
         long id = efExpenditure.Id;
 
-        var expenditure = Expenditure.Reconstitute(
-            id: id,
-            accountEmail: "alice@example.com",
-            mainClass: "ConsumerSpending",
-            subClass: "MealOrEatOutExpenses",
-            content: "Taxi",
-            amount: 100m,
-            monetaryUnit: string.Empty,
-            paymentMethod: "Wallet",
-            myDepositAsset: "Wallet",
-            note: null,
-            created: efExpenditure.Created,
-            updated: efExpenditure.Updated);
-
-        await _sut.DeleteAsync([FilterCondition.Equal("Id", expenditure.Id)]);
+        await _sut.DeleteByIdAsync(id);
 
         EfExpenditure? deleted = await _context.Expenditures.FirstOrDefaultAsync(e => e.Id == id, TestContext.Current.CancellationToken);
         Assert.Null(deleted);
     }
 
-    /// <summary>Verifies that <c>DeleteExpenditureAsync</c> does not affect other expenditures.</summary>
+    /// <summary>Verifies that <c>DeleteByIdAsync</c> does not affect other expenditures.</summary>
     [Fact]
     public async Task DeleteExpenditureAsync_DoesNotAffectOtherExpenditures()
     {
@@ -183,21 +168,7 @@ public class ExpenditureRepositoryTests : IDisposable
         var efExp2 = MakeExpenditure("alice@example.com", "Dinner");
         await SeedAsync(efExp1, efExp2);
 
-        var expenditure = Expenditure.Reconstitute(
-            id: efExp1.Id,
-            accountEmail: "alice@example.com",
-            mainClass: "ConsumerSpending",
-            subClass: "MealOrEatOutExpenses",
-            content: "Lunch",
-            amount: 100m,
-            monetaryUnit: string.Empty,
-            paymentMethod: "Wallet",
-            myDepositAsset: "Wallet",
-            note: null,
-            created: efExp1.Created,
-            updated: efExp1.Updated);
-
-        await _sut.DeleteAsync([FilterCondition.Equal("Id", expenditure.Id)]);
+        await _sut.DeleteByIdAsync(efExp1.Id);
 
         List<EfExpenditure> remaining = await _context.Expenditures.ToListAsync(TestContext.Current.CancellationToken);
         Assert.Single(remaining);

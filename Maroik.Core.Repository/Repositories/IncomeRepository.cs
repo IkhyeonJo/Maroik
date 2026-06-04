@@ -1,4 +1,4 @@
-﻿using Maroik.Core.Contract.Domains.Finance;
+using Maroik.Core.Contract.Domains.Finance;
 using Maroik.Core.Contract.Interfaces;
 using Maroik.Core.PostgreSQL.Data;
 using Microsoft.EntityFrameworkCore;
@@ -32,4 +32,22 @@ public class IncomeRepository(ApplicationDbContext context)
         Created = i.Created,
         Updated = i.Updated
     };
+
+    public Task<List<Income>> GetByAccountEmailAsync(string accountEmail, CancellationToken ct = default)
+        => QueryAsync(e => e.AccountEmail == accountEmail, ct: ct);
+
+    public Task<Income?> FindByEmailAndIdAsync(string accountEmail, long id, CancellationToken ct = default)
+        => QueryFirstAsync(e => e.AccountEmail == accountEmail && e.Id == id, ct);
+
+    public Task<List<Income>> GetByAccountEmailAndDateRangeAsync(string accountEmail, DateTime from, DateTime to, CancellationToken ct = default)
+        => QueryAsync(e => e.AccountEmail == accountEmail && e.Created >= from && e.Created < to, ct: ct);
+
+    public async Task<Income?> GetFirstByAccountEmailOrderedByCreatedAsync(string accountEmail, CancellationToken ct = default)
+    {
+        var entity = await Set.Where(e => e.AccountEmail == accountEmail).OrderBy(e => e.Created).FirstOrDefaultAsync(ct);
+        return entity == null ? null : ToDomain(entity);
+    }
+
+    public Task DeleteByIdAsync(long id, CancellationToken ct = default)
+        => DeleteWhereAsync(e => e.Id == id, ct);
 }

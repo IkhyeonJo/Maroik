@@ -1,5 +1,4 @@
 using Maroik.Core.Contract.Domains.Finance;
-using Maroik.Core.Contract.Filters;
 using Maroik.Core.Contract.Dtos;
 using Maroik.Core.Contract.Interfaces;
 using Maroik.Core.Service.Mappers;
@@ -33,7 +32,7 @@ public class AssetService : IAssetService
 
     /// <inheritdoc />
     public async Task<List<AssetResponse>> GetAssetsAsync(string accountEmail, CancellationToken ct = default)
-        => (await _assetRepository.FindAsync([FilterCondition.Equal("AccountEmail", accountEmail)], ct: ct)).Select(AssetMapper.ToResponse).ToList();
+        => (await _assetRepository.GetByAccountEmailAsync(accountEmail, ct)).Select(AssetMapper.ToResponse).ToList();
 
     /// <inheritdoc />
     public async Task<AssetResponse?> GetAssetAsync(string accountEmail, string productName, CancellationToken ct = default)
@@ -105,14 +104,8 @@ public class AssetService : IAssetService
             }
 
             // Cascade the renamed product name to all related expenditure records within the same transaction.
-            await _fixedExpenditureRepository.UpdateAsync(
-                [FilterCondition.Equal("AccountEmail", accountEmail), FilterCondition.Equal("MyDepositAsset", originalProductName)],
-                new Dictionary<string, object?> { ["MyDepositAsset"] = asset.ProductName },
-                ct);
-            await _expenditureRepository.UpdateAsync(
-                [FilterCondition.Equal("AccountEmail", accountEmail), FilterCondition.Equal("MyDepositAsset", originalProductName)],
-                new Dictionary<string, object?> { ["MyDepositAsset"] = asset.ProductName },
-                ct);
+            await _fixedExpenditureRepository.UpdateMyDepositAssetNameAsync(accountEmail, originalProductName, asset.ProductName, ct);
+            await _expenditureRepository.UpdateMyDepositAssetNameAsync(accountEmail, originalProductName, asset.ProductName, ct);
 
             await _unitOfWork.CommitAsync(ct);
             return ServiceResult.Ok();
@@ -138,11 +131,8 @@ public class AssetService : IAssetService
         return ServiceResult.Ok();
     }
 
-    private async Task<Asset?> FindAssetAsync(string accountEmail, string productName, CancellationToken ct = default)
-        => (await _assetRepository.FindAsync([
-            FilterCondition.Equal("AccountEmail", accountEmail),
-            FilterCondition.Equal("ProductName", productName)
-        ], ct: ct)).FirstOrDefault();
+    private Task<Asset?> FindAssetAsync(string accountEmail, string productName, CancellationToken ct = default)
+        => _assetRepository.FindByEmailAndProductNameAsync(accountEmail, productName, ct);
 
     /// <summary>
     /// Returns <see langword="true"/> when <paramref name="item"/> is one of the recognised asset category values.

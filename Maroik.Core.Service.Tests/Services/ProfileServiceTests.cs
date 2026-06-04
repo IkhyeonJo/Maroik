@@ -1,7 +1,6 @@
-﻿using Maroik.Core.Contract.Domains.Account;
+using Maroik.Core.Contract.Domains.Account;
 using Maroik.Core.Contract.Domains.Finance;
 using Maroik.Core.Contract.Dtos;
-using Maroik.Core.Contract.Filters;
 using Maroik.Core.Contract.Interfaces;
 using Maroik.Core.Contract.Utilities;
 using Maroik.Core.Service.Services;
@@ -75,7 +74,7 @@ public class ProfileServiceTests
     public async Task GetProfileAsync_DelegatesToRepository()
     {
         var account = ActiveAccount();
-        _accountRepo.Setup(r => r.FindAsync(It.IsAny<IReadOnlyList<FilterCondition>>(), It.IsAny<string?>(), It.IsAny<bool>())).ReturnsAsync([account]);
+        _accountRepo.Setup(r => r.FindByEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(account);
         var sut = CreateSut();
 
         AccountResponse? result = await sut.GetProfileAsync(account.Email.Value);
@@ -90,7 +89,7 @@ public class ProfileServiceTests
     [Fact]
     public async Task UpdateAvatarAsync_ReturnsFail_WhenAccountNotFound()
     {
-        _accountRepo.Setup(r => r.FindAsync(It.IsAny<IReadOnlyList<FilterCondition>>(), It.IsAny<string?>(), It.IsAny<bool>())).ReturnsAsync([]);
+        _accountRepo.Setup(r => r.FindByEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync((Account?)null);
         var sut = CreateSut();
 
         ServiceResult result = await sut.UpdateAvatarAsync("ghost@example.com", "/new/path.jpg");
@@ -103,15 +102,15 @@ public class ProfileServiceTests
     public async Task UpdateAvatarAsync_UpdatesAvatarPath_WhenAccountFound()
     {
         var account = ActiveAccount();
-        _accountRepo.Setup(r => r.FindAsync(It.IsAny<IReadOnlyList<FilterCondition>>(), It.IsAny<string?>(), It.IsAny<bool>())).ReturnsAsync([account]);
-        _accountRepo.Setup(r => r.UpdateEntityAsync(It.IsAny<Account>())).Returns(Task.CompletedTask);
+        _accountRepo.Setup(r => r.FindByEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(account);
+        _accountRepo.Setup(r => r.UpdateEntityAsync(It.IsAny<Account>(), It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
         var sut = CreateSut();
 
         ServiceResult result = await sut.UpdateAvatarAsync(account.Email.Value, "/new/avatar.jpg");
 
         Assert.True(result.Success);
         _accountRepo.Verify(r => r.UpdateEntityAsync(
-            It.Is<Account>(a => a.AvatarImagePath == "/new/avatar.jpg")), Times.Once);
+            It.Is<Account>(a => a.AvatarImagePath == "/new/avatar.jpg"), It.IsAny<CancellationToken>()), Times.Once);
     }
 
     // -- UpdateTimeZoneAsync --------------------------------------------------
@@ -120,7 +119,7 @@ public class ProfileServiceTests
     [Fact]
     public async Task UpdateTimeZoneAsync_ReturnsFail_WhenAccountNotFound()
     {
-        _accountRepo.Setup(r => r.FindAsync(It.IsAny<IReadOnlyList<FilterCondition>>(), It.IsAny<string?>(), It.IsAny<bool>())).ReturnsAsync([]);
+        _accountRepo.Setup(r => r.FindByEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync((Account?)null);
         var sut = CreateSut();
 
         ServiceResult result = await sut.UpdateTimeZoneAsync("ghost@example.com", "Asia/Seoul");
@@ -133,15 +132,15 @@ public class ProfileServiceTests
     public async Task UpdateTimeZoneAsync_UpdatesTimeZone_WhenAccountFound()
     {
         var account = ActiveAccount();
-        _accountRepo.Setup(r => r.FindAsync(It.IsAny<IReadOnlyList<FilterCondition>>(), It.IsAny<string?>(), It.IsAny<bool>())).ReturnsAsync([account]);
-        _accountRepo.Setup(r => r.UpdateEntityAsync(It.IsAny<Account>())).Returns(Task.CompletedTask);
+        _accountRepo.Setup(r => r.FindByEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(account);
+        _accountRepo.Setup(r => r.UpdateEntityAsync(It.IsAny<Account>(), It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
         var sut = CreateSut();
 
         ServiceResult result = await sut.UpdateTimeZoneAsync(account.Email.Value, "Asia/Seoul");
 
         Assert.True(result.Success);
         _accountRepo.Verify(r => r.UpdateEntityAsync(
-            It.Is<Account>(a => a.TimeZone.Value == "Asia/Seoul")), Times.Once);
+            It.Is<Account>(a => a.TimeZone.Value == "Asia/Seoul"), It.IsAny<CancellationToken>()), Times.Once);
     }
 
     // -- UpdatePasswordAsync --------------------------------------------------
@@ -150,7 +149,7 @@ public class ProfileServiceTests
     [Fact]
     public async Task UpdatePasswordAsync_ReturnsFail_WhenAccountNotFound()
     {
-        _accountRepo.Setup(r => r.FindAsync(It.IsAny<IReadOnlyList<FilterCondition>>(), It.IsAny<string?>(), It.IsAny<bool>())).ReturnsAsync([]);
+        _accountRepo.Setup(r => r.FindByEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync((Account?)null);
         var sut = CreateSut();
 
         ServiceResult result = await sut.UpdatePasswordAsync("ghost@example.com", "old", "new");
@@ -163,7 +162,7 @@ public class ProfileServiceTests
     public async Task UpdatePasswordAsync_ReturnsFail_WhenCurrentPasswordIsWrong()
     {
         var account = ActiveAccount();
-        _accountRepo.Setup(r => r.FindAsync(It.IsAny<IReadOnlyList<FilterCondition>>(), It.IsAny<string?>(), It.IsAny<bool>())).ReturnsAsync([account]);
+        _accountRepo.Setup(r => r.FindByEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(account);
         _passwordService.Setup(p => p.VerifyPassword("wrongpass", account.HashedPassword)).Returns(false);
         var sut = CreateSut();
 
@@ -178,17 +177,17 @@ public class ProfileServiceTests
     public async Task UpdatePasswordAsync_HashesAndUpdates_WhenCurrentPasswordIsCorrect()
     {
         var account = ActiveAccount();
-        _accountRepo.Setup(r => r.FindAsync(It.IsAny<IReadOnlyList<FilterCondition>>(), It.IsAny<string?>(), It.IsAny<bool>())).ReturnsAsync([account]);
+        _accountRepo.Setup(r => r.FindByEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(account);
         _passwordService.Setup(p => p.VerifyPassword("oldpass", account.HashedPassword)).Returns(true);
         _passwordService.Setup(p => p.HashPassword("newpass")).Returns("$2a$13$newhash");
-        _accountRepo.Setup(r => r.UpdateEntityAsync(It.IsAny<Account>())).Returns(Task.CompletedTask);
+        _accountRepo.Setup(r => r.UpdateEntityAsync(It.IsAny<Account>(), It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
         var sut = CreateSut();
 
         ServiceResult result = await sut.UpdatePasswordAsync(account.Email.Value, "oldpass", "newpass");
 
         Assert.True(result.Success);
         _accountRepo.Verify(r => r.UpdateEntityAsync(
-            It.Is<Account>(a => a.HashedPassword == "$2a$13$newhash")), Times.Once);
+            It.Is<Account>(a => a.HashedPassword == "$2a$13$newhash"), It.IsAny<CancellationToken>()), Times.Once);
     }
 
     // -- UpdateDefaultMonetaryUnitAsync --------------------------------------
@@ -197,13 +196,13 @@ public class ProfileServiceTests
     [Fact]
     public async Task UpdateDefaultMonetaryUnitAsync_DoesNothing_WhenAccountNotFound()
     {
-        _assetRepo.Setup(r => r.FindAsync(It.IsAny<IReadOnlyList<FilterCondition>>(), It.IsAny<string?>(), It.IsAny<bool>())).ReturnsAsync([]);
-        _accountRepo.Setup(r => r.FindAsync(It.IsAny<IReadOnlyList<FilterCondition>>(), It.IsAny<string?>(), It.IsAny<bool>())).ReturnsAsync([]);
+        _assetRepo.Setup(r => r.GetByAccountEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync([]);
+        _accountRepo.Setup(r => r.FindByEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync((Account?)null);
         var sut = CreateSut();
 
         await sut.UpdateDefaultMonetaryUnitAsync("missing@example.com", "KRW");
 
-        _accountRepo.Verify(r => r.UpdateEntityAsync(It.IsAny<Account>()), Times.Never);
+        _accountRepo.Verify(r => r.UpdateEntityAsync(It.IsAny<Account>(), It.IsAny<CancellationToken>()), Times.Never);
     }
 
     /// <summary>Verifies that <c>UpdateDefaultMonetaryUnitAsync</c> persists unit when it exists in assets.</summary>
@@ -211,15 +210,15 @@ public class ProfileServiceTests
     public async Task UpdateDefaultMonetaryUnitAsync_SetsUnit_WhenUnitExistsInAssets()
     {
         var account = ActiveAccount();
-        _assetRepo.Setup(r => r.FindAsync(It.IsAny<IReadOnlyList<FilterCondition>>(), It.IsAny<string?>(), It.IsAny<bool>())).ReturnsAsync([MakeAsset("Wallet", "KRW")]);
-        _accountRepo.Setup(r => r.FindAsync(It.IsAny<IReadOnlyList<FilterCondition>>(), It.IsAny<string?>(), It.IsAny<bool>())).ReturnsAsync([account]);
-        _accountRepo.Setup(r => r.UpdateEntityAsync(It.IsAny<Account>())).Returns(Task.CompletedTask);
+        _assetRepo.Setup(r => r.GetByAccountEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync([MakeAsset("Wallet", "KRW")]);
+        _accountRepo.Setup(r => r.FindByEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(account);
+        _accountRepo.Setup(r => r.UpdateEntityAsync(It.IsAny<Account>(), It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
         var sut = CreateSut();
 
         await sut.UpdateDefaultMonetaryUnitAsync(account.Email.Value, "KRW");
 
         _accountRepo.Verify(r => r.UpdateEntityAsync(
-            It.Is<Account>(a => a.DefaultMonetaryUnit == "KRW")), Times.Once);
+            It.Is<Account>(a => a.DefaultMonetaryUnit == "KRW"), It.IsAny<CancellationToken>()), Times.Once);
     }
 
     /// <summary>Verifies that <c>UpdateDefaultMonetaryUnitAsync</c> clears unit when it is not in assets.</summary>
@@ -227,14 +226,14 @@ public class ProfileServiceTests
     public async Task UpdateDefaultMonetaryUnitAsync_SetsNull_WhenUnitNotInAssets()
     {
         var account = ActiveAccount();
-        _assetRepo.Setup(r => r.FindAsync(It.IsAny<IReadOnlyList<FilterCondition>>(), It.IsAny<string?>(), It.IsAny<bool>())).ReturnsAsync([MakeAsset("Wallet", "USD")]);
-        _accountRepo.Setup(r => r.FindAsync(It.IsAny<IReadOnlyList<FilterCondition>>(), It.IsAny<string?>(), It.IsAny<bool>())).ReturnsAsync([account]);
-        _accountRepo.Setup(r => r.UpdateEntityAsync(It.IsAny<Account>())).Returns(Task.CompletedTask);
+        _assetRepo.Setup(r => r.GetByAccountEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync([MakeAsset("Wallet", "USD")]);
+        _accountRepo.Setup(r => r.FindByEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(account);
+        _accountRepo.Setup(r => r.UpdateEntityAsync(It.IsAny<Account>(), It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
         var sut = CreateSut();
 
         await sut.UpdateDefaultMonetaryUnitAsync(account.Email.Value, "KRW");
 
         _accountRepo.Verify(r => r.UpdateEntityAsync(
-            It.Is<Account>(a => a.DefaultMonetaryUnit == null)), Times.Once);
+            It.Is<Account>(a => a.DefaultMonetaryUnit == null), It.IsAny<CancellationToken>()), Times.Once);
     }
 }

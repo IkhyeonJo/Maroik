@@ -1,5 +1,4 @@
 using Maroik.Core.Contract.Domains.Finance;
-using Maroik.Core.Contract.Filters;
 using Maroik.Core.Contract.Interfaces;
 
 namespace Maroik.Core.Service.Services;
@@ -19,11 +18,8 @@ public class AssetBalanceDomainService : IAssetBalanceDomainService
         => _assetRepository = assetRepository;
 
     /// <inheritdoc />
-    public async Task<Asset?> GetAssetAsync(string accountEmail, string productName, CancellationToken ct = default)
-        => (await _assetRepository.FindAsync([
-            FilterCondition.Equal("AccountEmail", accountEmail),
-            FilterCondition.Equal("ProductName", productName)
-        ], ct: ct)).FirstOrDefault();
+    public Task<Asset?> GetAssetAsync(string accountEmail, string productName, CancellationToken ct = default)
+        => _assetRepository.FindByEmailAndProductNameAsync(accountEmail, productName, ct);
 
     /// <inheritdoc />
     public Task SaveAsync(Asset asset, CancellationToken ct = default)

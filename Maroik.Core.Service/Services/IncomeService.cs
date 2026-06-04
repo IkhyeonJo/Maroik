@@ -1,5 +1,4 @@
 using Maroik.Core.Contract.Domains.Finance;
-using Maroik.Core.Contract.Filters;
 using Maroik.Core.Contract.Dtos;
 using Maroik.Core.Contract.Interfaces;
 using Maroik.Core.Service.Mappers;
@@ -27,16 +26,12 @@ public class IncomeService : IIncomeService
 
     /// <inheritdoc />
     public async Task<List<IncomeResponse>> GetIncomesAsync(string accountEmail, CancellationToken ct = default)
-        => (await _incomeRepository.FindAsync([FilterCondition.Equal("AccountEmail", accountEmail)], ct: ct)).Select(IncomeMapper.ToResponse).ToList();
+        => (await _incomeRepository.GetByAccountEmailAsync(accountEmail, ct)).Select(IncomeMapper.ToResponse).ToList();
 
     /// <inheritdoc />
     public async Task<IncomeResponse?> GetByIdAsync(string accountEmail, long id, CancellationToken ct = default)
     {
-        var results = await _incomeRepository.FindAsync([
-            FilterCondition.Equal("AccountEmail", accountEmail),
-            FilterCondition.Equal("Id", id)
-        ], ct: ct);
-        var income = results.FirstOrDefault();
+        var income = await _incomeRepository.FindByEmailAndIdAsync(accountEmail, id, ct);
         return income == null ? null : IncomeMapper.ToResponse(income);
     }
 
@@ -101,7 +96,7 @@ public class IncomeService : IIncomeService
                 return ServiceResult.Fail("Input is invalid");
             }
 
-            List<Income> incomes = await _incomeRepository.FindAsync([FilterCondition.Equal("AccountEmail", accountEmail)], ct: ct);
+            List<Income> incomes = await _incomeRepository.GetByAccountEmailAsync(accountEmail, ct);
             Income? previous = incomes.FirstOrDefault(x => x.Id == request.Id);
             if (previous == null)
             {
@@ -172,7 +167,7 @@ public class IncomeService : IIncomeService
         await _unitOfWork.BeginAsync(ct);
         try
         {
-            List<Income> incomes = await _incomeRepository.FindAsync([FilterCondition.Equal("AccountEmail", accountEmail)], ct: ct);
+            List<Income> incomes = await _incomeRepository.GetByAccountEmailAsync(accountEmail, ct);
             Income? income = incomes.FirstOrDefault(x => x.Id == id);
             if (income == null)
             {
@@ -193,7 +188,7 @@ public class IncomeService : IIncomeService
                 await _assetBalance.SaveAsync(asset, ct);
             }
 
-            await _incomeRepository.DeleteAsync([FilterCondition.Equal("Id", income.Id)], ct);
+            await _incomeRepository.DeleteByIdAsync(income.Id, ct);
 
             await _unitOfWork.CommitAsync(ct);
             return ServiceResult.Ok();

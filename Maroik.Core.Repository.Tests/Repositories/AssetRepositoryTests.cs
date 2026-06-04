@@ -1,5 +1,4 @@
-﻿using Maroik.Core.Contract.Domains.Finance;
-using Maroik.Core.Contract.Filters;
+using Maroik.Core.Contract.Domains.Finance;
 using Maroik.Core.PostgreSQL.Data;
 using Maroik.Core.Repository.Repositories;
 using Microsoft.EntityFrameworkCore;
@@ -61,7 +60,7 @@ public class AssetRepositoryTests : IDisposable
             MakeAsset("Savings", "alice@example.com"),
             MakeAsset("Wallet", "bob@example.com"));
 
-        List<Asset> result = await _sut.FindAsync([FilterCondition.Equal("AccountEmail", "alice@example.com")]);
+        List<Asset> result = await _sut.GetByAccountEmailAsync("alice@example.com");
 
         Assert.Equal(2, result.Count);
         Assert.All(result, a => Assert.Equal("alice@example.com", a.AccountEmail.Value));
@@ -71,7 +70,7 @@ public class AssetRepositoryTests : IDisposable
     [Fact]
     public async Task GetAssetsAsync_ReturnsEmptyList_WhenEmailHasNoAssets()
     {
-        List<Asset> result = await _sut.FindAsync([FilterCondition.Equal("AccountEmail", "nobody@example.com")]);
+        List<Asset> result = await _sut.GetByAccountEmailAsync("nobody@example.com");
 
         Assert.Empty(result);
     }
@@ -84,7 +83,7 @@ public class AssetRepositoryTests : IDisposable
     {
         await SeedAsync(MakeAsset("Wallet", "alice@example.com", amount: 5000m));
 
-        Asset? result = (await _sut.FindAsync([FilterCondition.Equal("AccountEmail", "alice@example.com"), FilterCondition.Equal("ProductName", "Wallet")])).FirstOrDefault();
+        Asset? result = await _sut.FindByEmailAndProductNameAsync("alice@example.com", "Wallet");
 
         Assert.NotNull(result);
         Assert.Equal("Wallet", result.ProductName);
@@ -95,7 +94,7 @@ public class AssetRepositoryTests : IDisposable
     [Fact]
     public async Task GetAssetAsync_ReturnsNull_WhenNotFound()
     {
-        Asset? result = (await _sut.FindAsync([FilterCondition.Equal("AccountEmail", "alice@example.com"), FilterCondition.Equal("ProductName", "NonExistent")])).FirstOrDefault();
+        Asset? result = await _sut.FindByEmailAndProductNameAsync("alice@example.com", "NonExistent");
 
         Assert.Null(result);
     }
@@ -106,7 +105,7 @@ public class AssetRepositoryTests : IDisposable
     {
         await SeedAsync(MakeAsset("Wallet", "bob@example.com"));
 
-        Asset? result = (await _sut.FindAsync([FilterCondition.Equal("AccountEmail", "alice@example.com"), FilterCondition.Equal("ProductName", "Wallet")])).FirstOrDefault();
+        Asset? result = await _sut.FindByEmailAndProductNameAsync("alice@example.com", "Wallet");
 
         Assert.Null(result);
     }

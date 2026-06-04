@@ -1,6 +1,5 @@
 using Maroik.Core.Contract.Domains.Account;
 using Maroik.Core.Contract.Domains.Finance;
-using Maroik.Core.Contract.Filters;
 using Maroik.Core.Contract.Dtos;
 using Maroik.Core.Contract.Interfaces;
 using Maroik.Core.Contract.Utilities;
@@ -51,8 +50,8 @@ public class DashboardService : IDashboardService
         string normalizedMonth = monthInt.ToString("00");
         string normalizedYearMonth = $"{normalizedYear}-{normalizedMonth}";
 
-        List<Asset> assets = await _assetRepository.FindAsync([FilterCondition.Equal("AccountEmail", accountEmail)], ct: ct);
-        Account? account = (await _accountRepository.FindAsync([FilterCondition.Equal("Email", accountEmail)], ct: ct)).FirstOrDefault();
+        List<Asset> assets = await _assetRepository.GetByAccountEmailAsync(accountEmail, ct);
+        Account? account = await _accountRepository.FindByEmailAsync(accountEmail, ct);
 
         string? defaultMonetaryUnit = GetEffectiveMonetaryUnit(account, assets);
 
@@ -85,26 +84,10 @@ public class DashboardService : IDashboardService
                 ymEnd     = ymStart.AddMonths(1);
             }
 
-            List<Income> yearIncomes = await _incomeRepository.FindAsync([
-                FilterCondition.Equal("AccountEmail", accountEmail),
-                FilterCondition.GreaterThanOrEqual("Created", yearStart),
-                FilterCondition.LessThan("Created", yearEnd)
-            ], ct: ct);
-            List<Expenditure> yearExpenditures = await _expenditureRepository.FindAsync([
-                FilterCondition.Equal("AccountEmail", accountEmail),
-                FilterCondition.GreaterThanOrEqual("Created", yearStart),
-                FilterCondition.LessThan("Created", yearEnd)
-            ], ct: ct);
-            List<Income> ymIncomes = await _incomeRepository.FindAsync([
-                FilterCondition.Equal("AccountEmail", accountEmail),
-                FilterCondition.GreaterThanOrEqual("Created", ymStart),
-                FilterCondition.LessThan("Created", ymEnd)
-            ], ct: ct);
-            List<Expenditure> ymExpenditures = await _expenditureRepository.FindAsync([
-                FilterCondition.Equal("AccountEmail", accountEmail),
-                FilterCondition.GreaterThanOrEqual("Created", ymStart),
-                FilterCondition.LessThan("Created", ymEnd)
-            ], ct: ct);
+            List<Income> yearIncomes = await _incomeRepository.GetByAccountEmailAndDateRangeAsync(accountEmail, yearStart, yearEnd, ct);
+            List<Expenditure> yearExpenditures = await _expenditureRepository.GetByAccountEmailAndDateRangeAsync(accountEmail, yearStart, yearEnd, ct);
+            List<Income> ymIncomes = await _incomeRepository.GetByAccountEmailAndDateRangeAsync(accountEmail, ymStart, ymEnd, ct);
+            List<Expenditure> ymExpenditures = await _expenditureRepository.GetByAccountEmailAndDateRangeAsync(accountEmail, ymStart, ymEnd, ct);
 
             // Filter by default monetary unit via asset lookup
             string defaultUnit = summary.DefaultMonetaryUnit;
@@ -123,10 +106,8 @@ public class DashboardService : IDashboardService
         }
 
         // Compute StartYear
-        var firstIncome = (await _incomeRepository.FindAsync(
-            [FilterCondition.Equal("AccountEmail", accountEmail)], orderByProperty: "Created", ct: ct)).FirstOrDefault();
-        var firstExpenditure = (await _expenditureRepository.FindAsync(
-            [FilterCondition.Equal("AccountEmail", accountEmail)], orderByProperty: "Created", ct: ct)).FirstOrDefault();
+        var firstIncome = await _incomeRepository.GetFirstByAccountEmailOrderedByCreatedAsync(accountEmail, ct);
+        var firstExpenditure = await _expenditureRepository.GetFirstByAccountEmailOrderedByCreatedAsync(accountEmail, ct);
 
         DateTime firstCreated = DateTime.MaxValue;
         if (firstIncome != null && firstIncome.Created != DateTime.MinValue && firstIncome.Created < firstCreated)
@@ -152,7 +133,7 @@ public class DashboardService : IDashboardService
 
         DateTime currentDate = DateTime.UtcNow.Date;
 
-        foreach (var item in await _fixedIncomeRepository.FindAsync([FilterCondition.Equal("AccountEmail", email)], ct: ct))
+        foreach (var item in await _fixedIncomeRepository.GetByAccountEmailAsync(email, ct))
         {
             if (FixedSchedulePolicy.IsNoticed(item.DepositMonth, item.DepositDay, currentDate, noticeMaturityDateDay, item.Unpunctuality))
                 incomesNoticed++;
@@ -160,7 +141,7 @@ public class DashboardService : IDashboardService
                 incomesExpired++;
         }
 
-        foreach (var item in await _fixedExpenditureRepository.FindAsync([FilterCondition.Equal("AccountEmail", email)], ct: ct))
+        foreach (var item in await _fixedExpenditureRepository.GetByAccountEmailAsync(email, ct))
         {
             if (FixedSchedulePolicy.IsNoticed(item.DepositMonth, item.DepositDay, currentDate, noticeMaturityDateDay, item.Unpunctuality))
                 expendituresNoticed++;

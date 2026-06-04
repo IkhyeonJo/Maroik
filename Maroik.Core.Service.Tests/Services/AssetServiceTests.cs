@@ -1,6 +1,5 @@
-﻿using Maroik.Core.Contract.Domains.Finance;
+using Maroik.Core.Contract.Domains.Finance;
 using Maroik.Core.Contract.Dtos;
-using Maroik.Core.Contract.Filters;
 using Maroik.Core.Contract.Interfaces;
 using Maroik.Core.Service.Services;
 using Moq;
@@ -41,8 +40,8 @@ public class AssetServiceTests
         Asset.Reconstitute(name, "user@example.com", "FreeDepositAndWithdrawal", amount, currency, null, deleted, DateTime.UtcNow, DateTime.UtcNow);
 
     private void SetupFindAsset(string productName, Asset? asset)
-        => _assetRepo.Setup(r => r.FindAsync(It.IsAny<IReadOnlyList<FilterCondition>>(), It.IsAny<string?>(), It.IsAny<bool>()))
-            .ReturnsAsync(asset == null ? [] : [asset]);
+        => _assetRepo.Setup(r => r.FindByEmailAndProductNameAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(asset);
 
     private static AssetRequest ValidRequest(string name = "MyBank") => new()
     {
@@ -97,7 +96,7 @@ public class AssetServiceTests
     public async Task CreateAsync_ReturnsSuccess_ForAllValidItemTypes(string item)
     {
         SetupFindAsset("MyBank", null);
-        _assetRepo.Setup(r => r.CreateAsync(It.IsAny<Asset>())).Returns(Task.CompletedTask);
+        _assetRepo.Setup(r => r.CreateAsync(It.IsAny<Asset>(), It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
         var sut = CreateSut();
 
         var request = new AssetRequest { ProductName = "MyBank", Item = item, MonetaryUnit = "KRW" };
@@ -113,8 +112,8 @@ public class AssetServiceTests
         SetupFindAsset("MyBank", null);
 
         Asset? captured = null;
-        _assetRepo.Setup(r => r.CreateAsync(It.IsAny<Asset>()))
-            .Callback<Asset>(asset => captured = asset)
+        _assetRepo.Setup(r => r.CreateAsync(It.IsAny<Asset>(), It.IsAny<CancellationToken>()))
+            .Callback<Asset, CancellationToken>((asset, _) => captured = asset)
             .Returns(Task.CompletedTask);
         var sut = CreateSut();
 
@@ -161,7 +160,7 @@ public class AssetServiceTests
     public async Task UpdateAsync_ReturnsFail_WhenRenameReturnsZeroRowsAffected()
     {
         SetupFindAsset("OldName", MakeAsset("OldName"));
-        _assetRepo.Setup(r => r.UpdateAssetWithProductNameAsync(It.IsAny<Asset>(), "OldName")).ReturnsAsync(0);
+        _assetRepo.Setup(r => r.UpdateAssetWithProductNameAsync(It.IsAny<Asset>(), "OldName", It.IsAny<CancellationToken>())).ReturnsAsync(0);
         var sut = CreateSut();
 
         ServiceResult result = await sut.UpdateAsync("user@example.com", ValidRequest("NewName"), "OldName");
@@ -176,16 +175,16 @@ public class AssetServiceTests
     {
         const string email = "user@example.com";
         SetupFindAsset("OldName", MakeAsset("OldName"));
-        _assetRepo.Setup(r => r.UpdateAssetWithProductNameAsync(It.IsAny<Asset>(), "OldName")).ReturnsAsync(1);
-        _fixedExpenditureRepo.Setup(r => r.UpdateAsync(It.IsAny<IReadOnlyList<FilterCondition>>(), It.IsAny<IReadOnlyDictionary<string, object?>>())).Returns(Task.CompletedTask);
-        _expenditureRepo.Setup(r => r.UpdateAsync(It.IsAny<IReadOnlyList<FilterCondition>>(), It.IsAny<IReadOnlyDictionary<string, object?>>())).Returns(Task.CompletedTask);
+        _assetRepo.Setup(r => r.UpdateAssetWithProductNameAsync(It.IsAny<Asset>(), "OldName", It.IsAny<CancellationToken>())).ReturnsAsync(1);
+        _fixedExpenditureRepo.Setup(r => r.UpdateMyDepositAssetNameAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
+        _expenditureRepo.Setup(r => r.UpdateMyDepositAssetNameAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
         var sut = CreateSut();
 
         ServiceResult result = await sut.UpdateAsync(email, ValidRequest("NewName"), "OldName");
 
         Assert.True(result.Success);
-        _fixedExpenditureRepo.Verify(r => r.UpdateAsync(It.IsAny<IReadOnlyList<FilterCondition>>(), It.IsAny<IReadOnlyDictionary<string, object?>>()), Times.Once);
-        _expenditureRepo.Verify(r => r.UpdateAsync(It.IsAny<IReadOnlyList<FilterCondition>>(), It.IsAny<IReadOnlyDictionary<string, object?>>()), Times.Once);
+        _fixedExpenditureRepo.Verify(r => r.UpdateMyDepositAssetNameAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Once);
+        _expenditureRepo.Verify(r => r.UpdateMyDepositAssetNameAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Once);
         _unitOfWork.Verify(u => u.CommitAsync(), Times.Once);
     }
 
@@ -212,8 +211,8 @@ public class AssetServiceTests
         SetupFindAsset("MyBank", MakeAsset("MyBank"));
 
         Asset? captured = null;
-        _assetRepo.Setup(r => r.UpdateEntityAsync(It.IsAny<Asset>()))
-            .Callback<Asset>(asset => captured = asset)
+        _assetRepo.Setup(r => r.UpdateEntityAsync(It.IsAny<Asset>(), It.IsAny<CancellationToken>()))
+            .Callback<Asset, CancellationToken>((asset, _) => captured = asset)
             .Returns(Task.CompletedTask);
         var sut = CreateSut();
 
@@ -231,7 +230,7 @@ public class AssetServiceTests
     public async Task GetAssetsAsync_DelegatesToRepository()
     {
         var list = new List<Asset> { MakeAsset("MyBank") };
-        _assetRepo.Setup(r => r.FindAsync(It.IsAny<IReadOnlyList<FilterCondition>>(), It.IsAny<string?>(), It.IsAny<bool>())).ReturnsAsync(list);
+        _assetRepo.Setup(r => r.GetByAccountEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(list);
         var sut = CreateSut();
 
         List<AssetResponse> result = await sut.GetAssetsAsync("user@example.com");

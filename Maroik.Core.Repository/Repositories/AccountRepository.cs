@@ -1,4 +1,4 @@
-﻿using Maroik.Core.Contract.Domains.Account;
+using Maroik.Core.Contract.Domains.Account;
 using Maroik.Core.Contract.Interfaces;
 using Maroik.Core.PostgreSQL.Data;
 using Microsoft.EntityFrameworkCore;
@@ -42,4 +42,22 @@ public class AccountRepository(ApplicationDbContext context)
         Message = a.Message,
         Deleted = a.Deleted
     };
+
+    public Task<List<Account>> GetAllAsync(CancellationToken ct = default)
+        => QueryAllAsync(ct: ct);
+
+    public Task<Account?> FindByEmailAsync(string email, CancellationToken ct = default)
+        => QueryFirstAsync(e => e.Email == email, ct);
+
+    public Task<Account?> FindByRegistrationTokenAsync(string token, CancellationToken ct = default)
+        => QueryFirstAsync(e => e.RegistrationToken == token, ct);
+
+    public Task<Account?> FindByResetPasswordTokenAsync(string token, CancellationToken ct = default)
+        => QueryFirstAsync(e => e.ResetPasswordToken == token, ct);
+
+    public Task<List<Account>> FindByNicknamesAsync(IEnumerable<string> nicknames, CancellationToken ct = default)
+    {
+        var list = nicknames.ToList();
+        return QueryAsync(e => list.Contains(e.Nickname!), ct: ct);
+    }
 }

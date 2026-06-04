@@ -1,5 +1,4 @@
-﻿using Maroik.Core.Contract.Domains.Board;
-using Maroik.Core.Contract.Filters;
+using Maroik.Core.Contract.Domains.Board;
 using Maroik.Core.Contract.Utilities;
 using Maroik.Core.PostgreSQL.Data;
 using Maroik.Core.Repository.Repositories;
@@ -78,7 +77,7 @@ public class BoardCommentRepositoryTests : IDisposable
             MakeComment(board1Id, 2),
             MakeComment(board2Id, 1));
 
-        IEnumerable<BoardComment> result = await _sut.FindAsync([FilterCondition.Equal("BoardId", board1Id)]);
+        IEnumerable<BoardComment> result = await _sut.GetByBoardIdOrderedAsync(board1Id);
 
         Assert.Equal(2, result.Count());
         Assert.All(result, c => Assert.Equal(board1Id, c.BoardId));
@@ -94,7 +93,7 @@ public class BoardCommentRepositoryTests : IDisposable
             MakeComment(boardId, 1),
             MakeComment(boardId, 2));
 
-        IEnumerable<BoardComment> result = await _sut.FindAsync([FilterCondition.Equal("BoardId", boardId)], "Order");
+        IEnumerable<BoardComment> result = await _sut.GetByBoardIdOrderedAsync(boardId);
         List<BoardComment> list = result.ToList();
 
         Assert.Equal(1, list[0].Order);
@@ -108,7 +107,7 @@ public class BoardCommentRepositoryTests : IDisposable
     {
         long boardId = await SeedBoardAsync();
 
-        IEnumerable<BoardComment> result = await _sut.FindAsync([FilterCondition.Equal("BoardId", boardId)]);
+        IEnumerable<BoardComment> result = await _sut.GetByBoardIdOrderedAsync(boardId);
 
         Assert.Empty(result);
     }
@@ -123,7 +122,7 @@ public class BoardCommentRepositoryTests : IDisposable
         await SeedAsync(MakeComment(boardId, 1, writer: "Bob"));
         EfBoardComment comment = await _context.BoardComments.FirstAsync(TestContext.Current.CancellationToken);
 
-        BoardComment? result = (await _sut.FindAsync([FilterCondition.Equal("Id", comment.Id)])).FirstOrDefault();
+        BoardComment? result = await _sut.FindByIdAsync(comment.Id);
 
         Assert.NotNull(result);
         Assert.Equal("Bob", result.Writer);
@@ -133,7 +132,7 @@ public class BoardCommentRepositoryTests : IDisposable
     [Fact]
     public async Task GetBoardCommentAsync_ReturnsNull_WhenNotFound()
     {
-        BoardComment? result = (await _sut.FindAsync([FilterCondition.Equal("Id", 99999L)])).FirstOrDefault();
+        BoardComment? result = await _sut.FindByIdAsync(99999L);
 
         Assert.Null(result);
     }

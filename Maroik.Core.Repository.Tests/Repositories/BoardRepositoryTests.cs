@@ -1,5 +1,4 @@
-﻿using Maroik.Core.Contract.Domains.Board;
-using Maroik.Core.Contract.Filters;
+using Maroik.Core.Contract.Domains.Board;
 using Maroik.Core.Contract.Utilities;
 using Maroik.Core.PostgreSQL.Data;
 using Maroik.Core.Repository.Repositories;
@@ -63,7 +62,7 @@ public class BoardRepositoryTests : IDisposable
             MakeBoard(nameof(BoardType.FreeForum), "World"),
             MakeBoard(nameof(BoardType.PrivateNote), "Note1"));
 
-        IEnumerable<Board> result = await _sut.FindAsync([FilterCondition.Equal("Type", nameof(BoardType.FreeForum))]);
+        IEnumerable<Board> result = await _sut.GetByTypeAsync(nameof(BoardType.FreeForum));
 
         Assert.Equal(2, result.Count());
         Assert.All(result, b => Assert.Equal(nameof(BoardType.FreeForum), b.Type));
@@ -73,7 +72,7 @@ public class BoardRepositoryTests : IDisposable
     [Fact]
     public async Task GetOneTypeBoardsAsync_ReturnsEmpty_WhenNoMatchingType()
     {
-        IEnumerable<Board> result = await _sut.FindAsync([FilterCondition.Equal("Type", "NonExistentType")]);
+        IEnumerable<Board> result = await _sut.GetByTypeAsync("NonExistentType");
 
         Assert.Empty(result);
     }
@@ -87,7 +86,7 @@ public class BoardRepositoryTests : IDisposable
         await SeedAsync(MakeBoard(nameof(BoardType.FreeForum), "My Post"));
         EfBoard efBoard = await _context.Boards.FirstAsync(TestContext.Current.CancellationToken);
 
-        Board? result = (await _sut.FindAsync([FilterCondition.Equal("Id", efBoard.Id)])).FirstOrDefault();
+        Board? result = await _sut.FindActiveByIdAsync(efBoard.Id);
 
         Assert.NotNull(result);
         Assert.Equal("My Post", result.Title);
@@ -100,7 +99,7 @@ public class BoardRepositoryTests : IDisposable
         await SeedAsync(MakeBoard(nameof(BoardType.FreeForum), "Deleted Post", deleted: true));
         EfBoard efBoard = await _context.Boards.FirstAsync(TestContext.Current.CancellationToken);
 
-        Board? result = (await _sut.FindAsync([FilterCondition.Equal("Id", efBoard.Id), FilterCondition.Equal("Deleted", false)])).FirstOrDefault();
+        Board? result = await _sut.FindActiveByIdAsync(efBoard.Id);
 
         Assert.Null(result);
     }
@@ -109,7 +108,7 @@ public class BoardRepositoryTests : IDisposable
     [Fact]
     public async Task GetBoardByIdAsync_ReturnsNull_WhenIdDoesNotExist()
     {
-        Board? result = (await _sut.FindAsync([FilterCondition.Equal("Id", 99999L)])).FirstOrDefault();
+        Board? result = await _sut.FindActiveByIdAsync(99999L);
 
         Assert.Null(result);
     }

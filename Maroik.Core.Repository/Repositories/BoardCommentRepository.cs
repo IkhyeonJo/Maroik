@@ -1,4 +1,4 @@
-﻿using Maroik.Core.Contract.Domains.Board;
+using Maroik.Core.Contract.Domains.Board;
 using Maroik.Core.Contract.Interfaces;
 using Maroik.Core.PostgreSQL.Data;
 using Microsoft.EntityFrameworkCore;
@@ -47,4 +47,10 @@ public class BoardCommentRepository(ApplicationDbContext context)
         Created = c.Created,
         Deleted = c.Deleted
     };
+
+    public Task<List<BoardComment>> GetByBoardIdOrderedAsync(long boardId, CancellationToken ct = default)
+        => QueryAsync(e => e.BoardId == boardId, q => q.OrderBy(e => e.Order), ct);
+
+    public Task<BoardComment?> FindByIdAsync(long id, CancellationToken ct = default)
+        => QueryFirstAsync(e => e.Id == id, ct);
 }

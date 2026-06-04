@@ -1,7 +1,6 @@
-﻿using Maroik.Core.Contract.Domains.Account;
+using Maroik.Core.Contract.Domains.Account;
 using Maroik.Core.Contract.Domains.Finance;
 using Maroik.Core.Contract.Dtos;
-using Maroik.Core.Contract.Filters;
 using Maroik.Core.Contract.Interfaces;
 using Maroik.Core.Contract.Utilities;
 using Maroik.Core.Service.Services;
@@ -68,10 +67,14 @@ public class DashboardServiceTests
 
     private void SetupEmptyFinancials(string email)
     {
-        _incomeRepo.Setup(r => r.FindAsync(It.IsAny<IReadOnlyList<FilterCondition>>(), It.IsAny<string?>(), It.IsAny<bool>()))
+        _incomeRepo.Setup(r => r.GetByAccountEmailAndDateRangeAsync(It.IsAny<string>(), It.IsAny<DateTime>(), It.IsAny<DateTime>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync([]);
-        _expenditureRepo.Setup(r => r.FindAsync(It.IsAny<IReadOnlyList<FilterCondition>>(), It.IsAny<string?>(), It.IsAny<bool>()))
+        _expenditureRepo.Setup(r => r.GetByAccountEmailAndDateRangeAsync(It.IsAny<string>(), It.IsAny<DateTime>(), It.IsAny<DateTime>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync([]);
+        _incomeRepo.Setup(r => r.GetFirstByAccountEmailOrderedByCreatedAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((Income?)null);
+        _expenditureRepo.Setup(r => r.GetFirstByAccountEmailOrderedByCreatedAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((Expenditure?)null);
     }
 
     // -- GetSummaryAsync ------------------------------------------------------
@@ -84,10 +87,10 @@ public class DashboardServiceTests
         var account = MakeAccount(unit: null);
         var assets = new List<Asset>();
 
-        _accountRepo.Setup(r => r.FindAsync(It.IsAny<IReadOnlyList<FilterCondition>>(), It.IsAny<string?>(), It.IsAny<bool>())).ReturnsAsync([account]);
-        _assetRepo.Setup(r => r.FindAsync(It.IsAny<IReadOnlyList<FilterCondition>>(), It.IsAny<string?>(), It.IsAny<bool>())).ReturnsAsync(assets);
-        _incomeRepo.Setup(r => r.FindAsync(It.IsAny<IReadOnlyList<FilterCondition>>(), It.IsAny<string?>(), It.IsAny<bool>())).ReturnsAsync([]);
-        _expenditureRepo.Setup(r => r.FindAsync(It.IsAny<IReadOnlyList<FilterCondition>>(), It.IsAny<string?>(), It.IsAny<bool>())).ReturnsAsync([]);
+        _accountRepo.Setup(r => r.FindByEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(account);
+        _assetRepo.Setup(r => r.GetByAccountEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(assets);
+        _incomeRepo.Setup(r => r.GetFirstByAccountEmailOrderedByCreatedAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync((Income?)null);
+        _expenditureRepo.Setup(r => r.GetFirstByAccountEmailOrderedByCreatedAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync((Expenditure?)null);
         var sut = CreateSut();
 
         DashboardSummary summary = await sut.GetSummaryAsync(email, "2025", "3", "UTC");
@@ -102,10 +105,10 @@ public class DashboardServiceTests
     {
         const string email = "user@example.com";
         var account = MakeAccount(unit: null);
-        _accountRepo.Setup(r => r.FindAsync(It.IsAny<IReadOnlyList<FilterCondition>>(), It.IsAny<string?>(), It.IsAny<bool>())).ReturnsAsync([account]);
-        _assetRepo.Setup(r => r.FindAsync(It.IsAny<IReadOnlyList<FilterCondition>>(), It.IsAny<string?>(), It.IsAny<bool>())).ReturnsAsync([]);
-        _incomeRepo.Setup(r => r.FindAsync(It.IsAny<IReadOnlyList<FilterCondition>>(), It.IsAny<string?>(), It.IsAny<bool>())).ReturnsAsync([]);
-        _expenditureRepo.Setup(r => r.FindAsync(It.IsAny<IReadOnlyList<FilterCondition>>(), It.IsAny<string?>(), It.IsAny<bool>())).ReturnsAsync([]);
+        _accountRepo.Setup(r => r.FindByEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(account);
+        _assetRepo.Setup(r => r.GetByAccountEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync([]);
+        _incomeRepo.Setup(r => r.GetFirstByAccountEmailOrderedByCreatedAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync((Income?)null);
+        _expenditureRepo.Setup(r => r.GetFirstByAccountEmailOrderedByCreatedAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync((Expenditure?)null);
         var sut = CreateSut();
 
         DashboardSummary summary = await sut.GetSummaryAsync(email, "bad", "bad", "UTC");
@@ -127,8 +130,8 @@ public class DashboardServiceTests
             MakeAsset("Savings", "USD")
         };
 
-        _accountRepo.Setup(r => r.FindAsync(It.IsAny<IReadOnlyList<FilterCondition>>(), It.IsAny<string?>(), It.IsAny<bool>())).ReturnsAsync([account]);
-        _assetRepo.Setup(r => r.FindAsync(It.IsAny<IReadOnlyList<FilterCondition>>(), It.IsAny<string?>(), It.IsAny<bool>())).ReturnsAsync(assets);
+        _accountRepo.Setup(r => r.FindByEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(account);
+        _assetRepo.Setup(r => r.GetByAccountEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(assets);
         SetupEmptyFinancials(email);
         var sut = CreateSut();
 
@@ -136,7 +139,7 @@ public class DashboardServiceTests
 
         // Most-used unit is KRW (2 assets) — computed in-memory, no DB write
         Assert.Equal("KRW", summary.DefaultMonetaryUnit);
-        _accountRepo.Verify(r => r.UpdateEntityAsync(It.IsAny<Account>()), Times.Never);
+        _accountRepo.Verify(r => r.UpdateEntityAsync(It.IsAny<Account>(), It.IsAny<CancellationToken>()), Times.Never);
     }
 
     /// <summary>Verifies that <c>GetSummaryAsync</c> clears default monetary unit when no assets exist.</summary>
@@ -145,16 +148,16 @@ public class DashboardServiceTests
     {
         const string email = "user@example.com";
         var account = MakeAccount(unit: "KRW");
-        _accountRepo.Setup(r => r.FindAsync(It.IsAny<IReadOnlyList<FilterCondition>>(), It.IsAny<string?>(), It.IsAny<bool>())).ReturnsAsync([account]);
-        _assetRepo.Setup(r => r.FindAsync(It.IsAny<IReadOnlyList<FilterCondition>>(), It.IsAny<string?>(), It.IsAny<bool>())).ReturnsAsync([]);
-        _incomeRepo.Setup(r => r.FindAsync(It.IsAny<IReadOnlyList<FilterCondition>>(), It.IsAny<string?>(), It.IsAny<bool>())).ReturnsAsync([]);
-        _expenditureRepo.Setup(r => r.FindAsync(It.IsAny<IReadOnlyList<FilterCondition>>(), It.IsAny<string?>(), It.IsAny<bool>())).ReturnsAsync([]);
+        _accountRepo.Setup(r => r.FindByEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(account);
+        _assetRepo.Setup(r => r.GetByAccountEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync([]);
+        _incomeRepo.Setup(r => r.GetFirstByAccountEmailOrderedByCreatedAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync((Income?)null);
+        _expenditureRepo.Setup(r => r.GetFirstByAccountEmailOrderedByCreatedAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync((Expenditure?)null);
         var sut = CreateSut();
 
         DashboardSummary summary = await sut.GetSummaryAsync(email, "2025", "1", "UTC");
 
         Assert.Null(summary.DefaultMonetaryUnit);
-        _accountRepo.Verify(r => r.UpdateEntityAsync(It.IsAny<Account>()), Times.Never);
+        _accountRepo.Verify(r => r.UpdateEntityAsync(It.IsAny<Account>(), It.IsAny<CancellationToken>()), Times.Never);
     }
 
     // -- GetNoticeCountsAsync -------------------------------------------------
@@ -164,8 +167,8 @@ public class DashboardServiceTests
     public async Task GetNoticeCountsAsync_ReturnsZeroCounts_WhenNoFixedItems()
     {
         const string email = "user@example.com";
-        _fixedIncomeRepo.Setup(r => r.FindAsync(It.IsAny<IReadOnlyList<FilterCondition>>(), It.IsAny<string?>(), It.IsAny<bool>())).ReturnsAsync([]);
-        _fixedExpenditureRepo.Setup(r => r.FindAsync(It.IsAny<IReadOnlyList<FilterCondition>>(), It.IsAny<string?>(), It.IsAny<bool>())).ReturnsAsync([]);
+        _fixedIncomeRepo.Setup(r => r.GetByAccountEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync([]);
+        _fixedExpenditureRepo.Setup(r => r.GetByAccountEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync([]);
         var sut = CreateSut();
 
         NotificationCounts counts = await sut.GetNoticeCountsAsync(email, 7);
@@ -183,7 +186,7 @@ public class DashboardServiceTests
         const string email = "user@example.com";
         var pastDate = DateTime.UtcNow.Date.AddDays(-10);
 
-        _fixedIncomeRepo.Setup(r => r.FindAsync(It.IsAny<IReadOnlyList<FilterCondition>>(), It.IsAny<string?>(), It.IsAny<bool>())).ReturnsAsync(
+        _fixedIncomeRepo.Setup(r => r.GetByAccountEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(
         [
             FixedIncome.Reconstitute(
                 id: 1,
@@ -202,7 +205,7 @@ public class DashboardServiceTests
                 created: DateTime.UtcNow,
                 updated: DateTime.UtcNow)
         ]);
-        _fixedExpenditureRepo.Setup(r => r.FindAsync(It.IsAny<IReadOnlyList<FilterCondition>>(), It.IsAny<string?>(), It.IsAny<bool>())).ReturnsAsync(
+        _fixedExpenditureRepo.Setup(r => r.GetByAccountEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(
         [
             FixedExpenditure.Reconstitute(
                 id: 1,
@@ -237,7 +240,7 @@ public class DashboardServiceTests
         const string email = "user@example.com";
         var futureDate = DateTime.UtcNow.Date.AddYears(1);
 
-        _fixedIncomeRepo.Setup(r => r.FindAsync(It.IsAny<IReadOnlyList<FilterCondition>>(), It.IsAny<string?>(), It.IsAny<bool>())).ReturnsAsync(
+        _fixedIncomeRepo.Setup(r => r.GetByAccountEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(
         [
             FixedIncome.Reconstitute(
                 id: 1,
@@ -256,7 +259,7 @@ public class DashboardServiceTests
                 created: DateTime.UtcNow,
                 updated: DateTime.UtcNow)
         ]);
-        _fixedExpenditureRepo.Setup(r => r.FindAsync(It.IsAny<IReadOnlyList<FilterCondition>>(), It.IsAny<string?>(), It.IsAny<bool>())).ReturnsAsync([]);
+        _fixedExpenditureRepo.Setup(r => r.GetByAccountEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync([]);
         var sut = CreateSut();
 
         NotificationCounts counts = await sut.GetNoticeCountsAsync(email, 7);

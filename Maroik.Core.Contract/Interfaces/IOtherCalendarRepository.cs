@@ -1,9 +1,9 @@
 using Maroik.Core.Contract.Domains.Calendar;
-
 namespace Maroik.Core.Contract.Interfaces;
-
-/// <summary>
-/// Low-level repository for the OtherCalendar (calendar subscription) table.
-/// All CRUD operations are provided by <see cref="IGenericRepository{TDomain}"/>.
-/// </summary>
-public interface IOtherCalendarRepository : IGenericRepository<OtherCalendar> { }
+public interface IOtherCalendarRepository : IGenericRepository<OtherCalendar>
+{
+    Task<List<OtherCalendar>> GetByAccountEmailAsync(string email, CancellationToken ct = default);
+    Task<List<OtherCalendar>> GetAllAsync(CancellationToken ct = default);
+    Task DeleteByAccountEmailAsync(string email, CancellationToken ct = default);
+    Task DeleteByAccountEmailAndCalendarIdAsync(string email, long calendarId, CancellationToken ct = default);
+}

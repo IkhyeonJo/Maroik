@@ -1,5 +1,4 @@
-﻿using Maroik.Core.Contract.Domains.Finance;
-using Maroik.Core.Contract.Filters;
+using Maroik.Core.Contract.Domains.Finance;
 using Maroik.Core.PostgreSQL.Data;
 using Maroik.Core.Repository.Repositories;
 using Microsoft.EntityFrameworkCore;
@@ -66,7 +65,7 @@ public class FixedExpenditureRepositoryTests : IDisposable
             MakeFixedExpenditure("alice@example.com", "Insurance"),
             MakeFixedExpenditure("bob@example.com", "Gym"));
 
-        List<FixedExpenditure> result = await _sut.FindAsync([FilterCondition.Equal("AccountEmail", "alice@example.com")]);
+        List<FixedExpenditure> result = await _sut.GetByAccountEmailAsync("alice@example.com");
 
         Assert.Equal(2, result.Count);
         Assert.All(result, fe => Assert.Equal("alice@example.com", fe.AccountEmail.Value));
@@ -76,7 +75,7 @@ public class FixedExpenditureRepositoryTests : IDisposable
     [Fact]
     public async Task GetFixedExpendituresAsync_ReturnsEmpty_WhenNoItemsForEmail()
     {
-        List<FixedExpenditure> result = await _sut.FindAsync([FilterCondition.Equal("AccountEmail", "nobody@example.com")]);
+        List<FixedExpenditure> result = await _sut.GetByAccountEmailAsync("nobody@example.com");
 
         Assert.Empty(result);
     }
@@ -152,9 +151,9 @@ public class FixedExpenditureRepositoryTests : IDisposable
         Assert.True(updated.Unpunctuality);
     }
 
-    // -- DeleteFixedExpenditureAsync ------------------------------------------
+    // -- DeleteByIdAsync ------------------------------------------
 
-    /// <summary>Verifies that <c>DeleteFixedExpenditureAsync</c> removes item from database.</summary>
+    /// <summary>Verifies that <c>DeleteByIdAsync</c> removes item from database.</summary>
     [Fact]
     public async Task DeleteFixedExpenditureAsync_RemovesItemFromDatabase()
     {
@@ -162,31 +161,13 @@ public class FixedExpenditureRepositoryTests : IDisposable
         await SeedAsync(efItem);
         long id = efItem.Id;
 
-        var fixedExpenditure = FixedExpenditure.Reconstitute(
-            id: id,
-            accountEmail: "alice@example.com",
-            mainClass: "ConsumerSpending",
-            subClass: "Tax",
-            content: "Spotify",
-            amount: 50m,
-            monetaryUnit: string.Empty,
-            paymentMethod: "Wallet",
-            myDepositAsset: "Wallet",
-            depositMonth: 0,
-            depositDay: 25,
-            maturityDate: efItem.MaturityDate,
-            note: null,
-            unpunctuality: false,
-            created: efItem.Created,
-            updated: efItem.Updated);
-
-        await _sut.DeleteAsync([FilterCondition.Equal("Id", fixedExpenditure.Id)]);
+        await _sut.DeleteByIdAsync(id);
 
         EfFixedExpenditure? deleted = await _context.FixedExpenditures.FirstOrDefaultAsync(fe => fe.Id == id, TestContext.Current.CancellationToken);
         Assert.Null(deleted);
     }
 
-    /// <summary>Verifies that <c>DeleteFixedExpenditureAsync</c> does not affect other items.</summary>
+    /// <summary>Verifies that <c>DeleteByIdAsync</c> does not affect other items.</summary>
     [Fact]
     public async Task DeleteFixedExpenditureAsync_DoesNotAffectOtherItems()
     {
@@ -194,25 +175,7 @@ public class FixedExpenditureRepositoryTests : IDisposable
         var efItem2 = MakeFixedExpenditure("alice@example.com", "Spotify");
         await SeedAsync(efItem1, efItem2);
 
-        var fixedExpenditure = FixedExpenditure.Reconstitute(
-            id: efItem1.Id,
-            accountEmail: "alice@example.com",
-            mainClass: "ConsumerSpending",
-            subClass: "Tax",
-            content: "Netflix",
-            amount: 50m,
-            monetaryUnit: string.Empty,
-            paymentMethod: "Wallet",
-            myDepositAsset: "Wallet",
-            depositMonth: 0,
-            depositDay: 25,
-            maturityDate: efItem1.MaturityDate,
-            note: null,
-            unpunctuality: false,
-            created: efItem1.Created,
-            updated: efItem1.Updated);
-
-        await _sut.DeleteAsync([FilterCondition.Equal("Id", fixedExpenditure.Id)]);
+        await _sut.DeleteByIdAsync(efItem1.Id);
 
         List<EfFixedExpenditure> remaining = await _context.FixedExpenditures.ToListAsync(TestContext.Current.CancellationToken);
         Assert.Single(remaining);

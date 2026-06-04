@@ -1,11 +1,10 @@
 using Maroik.Core.Contract.Domains.Account;
-
 namespace Maroik.Core.Contract.Interfaces;
-
-/// <summary>
-/// Low-level repository for direct Account table operations.
-/// All CRUD operations are provided by <see cref="IGenericRepository{TDomain}"/>.
-/// </summary>
 public interface IAccountRepository : IGenericRepository<Account>
 {
+    Task<List<Account>> GetAllAsync(CancellationToken ct = default);
+    Task<Account?> FindByEmailAsync(string email, CancellationToken ct = default);
+    Task<Account?> FindByRegistrationTokenAsync(string token, CancellationToken ct = default);
+    Task<Account?> FindByResetPasswordTokenAsync(string token, CancellationToken ct = default);
+    Task<List<Account>> FindByNicknamesAsync(IEnumerable<string> nicknames, CancellationToken ct = default);
 }

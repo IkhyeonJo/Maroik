@@ -1,5 +1,4 @@
-﻿using Maroik.Core.Contract.Domains.Finance;
-using Maroik.Core.Contract.Filters;
+using Maroik.Core.Contract.Domains.Finance;
 using Maroik.Core.PostgreSQL.Data;
 using Maroik.Core.Repository.Repositories;
 using Microsoft.EntityFrameworkCore;
@@ -61,7 +60,7 @@ public class IncomeRepositoryTests : IDisposable
             MakeIncome("alice@example.com", "SavingsB"),
             MakeIncome("bob@example.com", "BobSavings"));
 
-        List<Income> result = await _sut.FindAsync([FilterCondition.Equal("AccountEmail", "alice@example.com")]);
+        List<Income> result = await _sut.GetByAccountEmailAsync("alice@example.com");
 
         Assert.Equal(2, result.Count);
         Assert.All(result, i => Assert.Equal("alice@example.com", i.AccountEmail.Value));
@@ -71,7 +70,7 @@ public class IncomeRepositoryTests : IDisposable
     [Fact]
     public async Task GetIncomesAsync_ReturnsEmpty_WhenNoIncomesForEmail()
     {
-        List<Income> result = await _sut.FindAsync([FilterCondition.Equal("AccountEmail", "nobody@example.com")]);
+        List<Income> result = await _sut.GetByAccountEmailAsync("nobody@example.com");
 
         Assert.Empty(result);
     }
@@ -134,9 +133,9 @@ public class IncomeRepositoryTests : IDisposable
         Assert.Equal("BusinessIncome", updated.SubClass);
     }
 
-    // -- DeleteIncomeAsync ----------------------------------------------------
+    // -- DeleteByIdAsync ----------------------------------------------------
 
-    /// <summary>Verifies that <c>DeleteIncomeAsync</c> removes income from database.</summary>
+    /// <summary>Verifies that <c>DeleteByIdAsync</c> removes income from database.</summary>
     [Fact]
     public async Task DeleteIncomeAsync_RemovesIncomeFromDatabase()
     {
@@ -144,26 +143,13 @@ public class IncomeRepositoryTests : IDisposable
         await SeedAsync(efIncome);
         long id = efIncome.Id;
 
-        var income = Income.Reconstitute(
-            id: id,
-            accountEmail: "alice@example.com",
-            mainClass: "RegularIncome",
-            subClass: "LaborIncome",
-            content: "Salary",
-            amount: 500m,
-            monetaryUnit: string.Empty,
-            depositMyAssetProductName: "SavingsAccount",
-            note: null,
-            created: efIncome.Created,
-            updated: efIncome.Updated);
-
-        await _sut.DeleteAsync([FilterCondition.Equal("Id", income.Id)]);
+        await _sut.DeleteByIdAsync(id);
 
         EfIncome? deleted = await _context.Incomes.FirstOrDefaultAsync(i => i.Id == id, TestContext.Current.CancellationToken);
         Assert.Null(deleted);
     }
 
-    /// <summary>Verifies that <c>DeleteIncomeAsync</c> does not affect other incomes.</summary>
+    /// <summary>Verifies that <c>DeleteByIdAsync</c> does not affect other incomes.</summary>
     [Fact]
     public async Task DeleteIncomeAsync_DoesNotAffectOtherIncomes()
     {
@@ -171,20 +157,7 @@ public class IncomeRepositoryTests : IDisposable
         var efIncome2 = MakeIncome("alice@example.com", "SavingsB");
         await SeedAsync(efIncome1, efIncome2);
 
-        var income = Income.Reconstitute(
-            id: efIncome1.Id,
-            accountEmail: "alice@example.com",
-            mainClass: "RegularIncome",
-            subClass: "LaborIncome",
-            content: "Salary",
-            amount: 500m,
-            monetaryUnit: string.Empty,
-            depositMyAssetProductName: "SavingsA",
-            note: null,
-            created: efIncome1.Created,
-            updated: efIncome1.Updated);
-
-        await _sut.DeleteAsync([FilterCondition.Equal("Id", income.Id)]);
+        await _sut.DeleteByIdAsync(efIncome1.Id);
 
         List<EfIncome> remaining = await _context.Incomes.ToListAsync(TestContext.Current.CancellationToken);
         Assert.Single(remaining);

@@ -1,5 +1,4 @@
-﻿using Maroik.Core.Contract.Domains.Board;
-using Maroik.Core.Contract.Filters;
+using Maroik.Core.Contract.Domains.Board;
 using Maroik.Core.PostgreSQL.Data;
 using Maroik.Core.Repository.Repositories;
 using Microsoft.EntityFrameworkCore;
@@ -46,28 +45,6 @@ public class BoardAttachedFileRepositoryTests : IDisposable
         await _context.SaveChangesAsync();
     }
 
-    // -- GetAllAsync ----------------------------------------------------------
-
-    /// <summary>Verifies that <c>GetAllAsync</c> returns all files.</summary>
-    [Fact]
-    public async Task GetAllAsync_ReturnsAllFiles()
-    {
-        await SeedAsync(MakeFile(1, "a.pdf"), MakeFile(2, "b.pdf"));
-
-        List<BoardAttachedFile> result = await _sut.FindAsync([]);
-
-        Assert.Equal(2, result.Count);
-    }
-
-    /// <summary>Verifies that <c>GetAllAsync</c> returns empty when no files exist.</summary>
-    [Fact]
-    public async Task GetAllAsync_ReturnsEmpty_WhenNoFilesExist()
-    {
-        List<BoardAttachedFile> result = await _sut.FindAsync([]);
-
-        Assert.Empty(result);
-    }
-
     // -- GetByBoardIdAsync ----------------------------------------------------
 
     /// <summary>Verifies that <c>GetByBoardIdAsync</c> returns file when found.</summary>
@@ -76,7 +53,7 @@ public class BoardAttachedFileRepositoryTests : IDisposable
     {
         await SeedAsync(MakeFile(10, "report.pdf"));
 
-        BoardAttachedFile? result = (await _sut.FindAsync([FilterCondition.Equal("BoardId", 10L)])).FirstOrDefault();
+        BoardAttachedFile? result = await _sut.FindByBoardIdAsync(10L);
 
         Assert.NotNull(result);
         Assert.Equal(10, result.BoardId);
@@ -87,7 +64,7 @@ public class BoardAttachedFileRepositoryTests : IDisposable
     [Fact]
     public async Task GetByBoardIdAsync_ReturnsNull_WhenNotFound()
     {
-        BoardAttachedFile? result = (await _sut.FindAsync([FilterCondition.Equal("BoardId", 999L)])).FirstOrDefault();
+        BoardAttachedFile? result = await _sut.FindByBoardIdAsync(999L);
 
         Assert.Null(result);
     }

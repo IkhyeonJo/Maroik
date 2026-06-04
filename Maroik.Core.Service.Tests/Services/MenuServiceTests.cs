@@ -1,6 +1,5 @@
-﻿using Maroik.Core.Contract.Domains.Menu;
+using Maroik.Core.Contract.Domains.Menu;
 using Maroik.Core.Contract.Dtos;
-using Maroik.Core.Contract.Filters;
 using Maroik.Core.Contract.Utilities;
 using Maroik.Core.Contract.Interfaces;
 using Maroik.Core.Service.Services;
@@ -38,7 +37,7 @@ public class MenuServiceTests
     [Fact]
     public async Task GetAllCategoriesAsync_DelegatesToRepository()
     {
-        _categoryRepo.Setup(r => r.FindAsync(It.IsAny<IReadOnlyList<FilterCondition>>(), It.IsAny<string?>(), It.IsAny<bool>())).ReturnsAsync([MakeCategory()]);
+        _categoryRepo.Setup(r => r.GetAllAsync(It.IsAny<CancellationToken>())).ReturnsAsync([MakeCategory()]);
         var sut = CreateSut();
 
         IEnumerable<CategoryResponse> result = await sut.GetAllCategoriesAsync();
@@ -52,7 +51,7 @@ public class MenuServiceTests
     [Fact]
     public async Task GetAllSubCategoriesAsync_DelegatesToRepository()
     {
-        _subCategoryRepo.Setup(r => r.FindAsync(It.IsAny<IReadOnlyList<FilterCondition>>(), It.IsAny<string?>(), It.IsAny<bool>())).ReturnsAsync([MakeSubCategory()]);
+        _subCategoryRepo.Setup(r => r.GetAllAsync(It.IsAny<CancellationToken>())).ReturnsAsync([MakeSubCategory()]);
         var sut = CreateSut();
 
         IEnumerable<SubCategoryResponse> result = await sut.GetAllSubCategoriesAsync();
@@ -66,7 +65,7 @@ public class MenuServiceTests
     [Fact]
     public async Task GetCategoryByIdAsync_ReturnsCategory_WhenFound()
     {
-        _categoryRepo.Setup(r => r.FindAsync(It.IsAny<IReadOnlyList<FilterCondition>>(), It.IsAny<string?>(), It.IsAny<bool>())).ReturnsAsync([MakeCategory(id: 5, name: "Board")]);
+        _categoryRepo.Setup(r => r.GetAllAsync(It.IsAny<CancellationToken>())).ReturnsAsync([MakeCategory(id: 5, name: "Board")]);
         var sut = CreateSut();
 
         CategoryResponse? result = await sut.GetCategoryByIdAsync(5);
@@ -80,7 +79,7 @@ public class MenuServiceTests
     [Fact]
     public async Task GetCategoryByIdAsync_ReturnsNull_WhenNotFound()
     {
-        _categoryRepo.Setup(r => r.FindAsync(It.IsAny<IReadOnlyList<FilterCondition>>(), It.IsAny<string?>(), It.IsAny<bool>())).ReturnsAsync([MakeCategory(id: 1)]);
+        _categoryRepo.Setup(r => r.GetAllAsync(It.IsAny<CancellationToken>())).ReturnsAsync([MakeCategory(id: 1)]);
         var sut = CreateSut();
 
         CategoryResponse? result = await sut.GetCategoryByIdAsync(999);
@@ -94,7 +93,7 @@ public class MenuServiceTests
     [Fact]
     public async Task GetSubCategoryByIdAsync_ReturnsSubCategory_WhenFound()
     {
-        _subCategoryRepo.Setup(r => r.FindAsync(It.IsAny<IReadOnlyList<FilterCondition>>(), It.IsAny<string?>(), It.IsAny<bool>())).ReturnsAsync([MakeSubCategory(id: 3, name: nameof(BoardType.PrivateNote))]);
+        _subCategoryRepo.Setup(r => r.GetAllAsync(It.IsAny<CancellationToken>())).ReturnsAsync([MakeSubCategory(id: 3, name: nameof(BoardType.PrivateNote))]);
         var sut = CreateSut();
 
         SubCategoryResponse? result = await sut.GetSubCategoryByIdAsync(3);
@@ -107,7 +106,7 @@ public class MenuServiceTests
     [Fact]
     public async Task GetSubCategoryByIdAsync_ReturnsNull_WhenNotFound()
     {
-        _subCategoryRepo.Setup(r => r.FindAsync(It.IsAny<IReadOnlyList<FilterCondition>>(), It.IsAny<string?>(), It.IsAny<bool>())).ReturnsAsync([MakeSubCategory(id: 1)]);
+        _subCategoryRepo.Setup(r => r.GetAllAsync(It.IsAny<CancellationToken>())).ReturnsAsync([MakeSubCategory(id: 1)]);
         var sut = CreateSut();
 
         SubCategoryResponse? result = await sut.GetSubCategoryByIdAsync(999);
@@ -121,7 +120,7 @@ public class MenuServiceTests
     [Fact]
     public async Task CreateCategoryAsync_ReturnsSuccess_WhenRepositorySucceeds()
     {
-        _categoryRepo.Setup(r => r.CreateAsync(It.IsAny<Category>())).Returns(Task.CompletedTask);
+        _categoryRepo.Setup(r => r.CreateAsync(It.IsAny<Category>(), It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
         var sut = CreateSut();
 
         ServiceResult result = await sut.CreateCategoryAsync(new CategoryRequest { Name = "NewCategory" });
@@ -133,7 +132,7 @@ public class MenuServiceTests
     [Fact]
     public async Task CreateCategoryAsync_ReturnsFail_WhenRepositoryThrows()
     {
-        _categoryRepo.Setup(r => r.CreateAsync(It.IsAny<Category>())).ThrowsAsync(new Exception("DB error"));
+        _categoryRepo.Setup(r => r.CreateAsync(It.IsAny<Category>(), It.IsAny<CancellationToken>())).ThrowsAsync(new Exception("DB error"));
         var sut = CreateSut();
 
         ServiceResult result = await sut.CreateCategoryAsync(new CategoryRequest { Name = "Bad" });
@@ -147,7 +146,7 @@ public class MenuServiceTests
     [Fact]
     public async Task UpdateCategoryAsync_ReturnsSuccess_WhenRepositorySucceeds()
     {
-        _categoryRepo.Setup(r => r.UpdateEntityAsync(It.IsAny<Category>())).Returns(Task.CompletedTask);
+        _categoryRepo.Setup(r => r.UpdateEntityAsync(It.IsAny<Category>(), It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
         var sut = CreateSut();
 
         ServiceResult result = await sut.UpdateCategoryAsync(new CategoryRequest { Id = 1, Name = "Updated" });
@@ -159,7 +158,7 @@ public class MenuServiceTests
     [Fact]
     public async Task UpdateCategoryAsync_ReturnsFail_WhenRepositoryThrows()
     {
-        _categoryRepo.Setup(r => r.UpdateEntityAsync(It.IsAny<Category>())).ThrowsAsync(new Exception("DB error"));
+        _categoryRepo.Setup(r => r.UpdateEntityAsync(It.IsAny<Category>(), It.IsAny<CancellationToken>())).ThrowsAsync(new Exception("DB error"));
         var sut = CreateSut();
 
         ServiceResult result = await sut.UpdateCategoryAsync(new CategoryRequest { Id = 1 });
@@ -173,7 +172,7 @@ public class MenuServiceTests
     [Fact]
     public async Task DeleteCategoryAsync_ReturnsSuccess_WhenRepositorySucceeds()
     {
-        _categoryRepo.Setup(r => r.DeleteAsync(It.IsAny<IReadOnlyList<FilterCondition>>())).Returns(Task.CompletedTask);
+        _categoryRepo.Setup(r => r.DeleteByIdAsync(It.IsAny<int>(), It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
         var sut = CreateSut();
 
         ServiceResult result = await sut.DeleteCategoryAsync(new CategoryRequest { Id = 1 });
@@ -185,7 +184,7 @@ public class MenuServiceTests
     [Fact]
     public async Task DeleteCategoryAsync_ReturnsFail_WhenRepositoryThrows()
     {
-        _categoryRepo.Setup(r => r.DeleteAsync(It.IsAny<IReadOnlyList<FilterCondition>>())).ThrowsAsync(new Exception("DB error"));
+        _categoryRepo.Setup(r => r.DeleteByIdAsync(It.IsAny<int>(), It.IsAny<CancellationToken>())).ThrowsAsync(new Exception("DB error"));
         var sut = CreateSut();
 
         ServiceResult result = await sut.DeleteCategoryAsync(new CategoryRequest { Id = 1 });
@@ -199,7 +198,7 @@ public class MenuServiceTests
     [Fact]
     public async Task CreateSubCategoryAsync_ReturnsSuccess_WhenRepositorySucceeds()
     {
-        _subCategoryRepo.Setup(r => r.CreateAsync(It.IsAny<SubCategory>())).Returns(Task.CompletedTask);
+        _subCategoryRepo.Setup(r => r.CreateAsync(It.IsAny<SubCategory>(), It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
         var sut = CreateSut();
 
         ServiceResult result = await sut.CreateSubCategoryAsync(new SubCategoryRequest { Name = "NewSub" });
@@ -211,7 +210,7 @@ public class MenuServiceTests
     [Fact]
     public async Task CreateSubCategoryAsync_ReturnsFail_WhenRepositoryThrows()
     {
-        _subCategoryRepo.Setup(r => r.CreateAsync(It.IsAny<SubCategory>())).ThrowsAsync(new Exception("DB error"));
+        _subCategoryRepo.Setup(r => r.CreateAsync(It.IsAny<SubCategory>(), It.IsAny<CancellationToken>())).ThrowsAsync(new Exception("DB error"));
         var sut = CreateSut();
 
         ServiceResult result = await sut.CreateSubCategoryAsync(new SubCategoryRequest { Name = "Bad" });
@@ -225,7 +224,7 @@ public class MenuServiceTests
     [Fact]
     public async Task UpdateSubCategoryAsync_ReturnsSuccess_WhenRepositorySucceeds()
     {
-        _subCategoryRepo.Setup(r => r.UpdateEntityAsync(It.IsAny<SubCategory>())).Returns(Task.CompletedTask);
+        _subCategoryRepo.Setup(r => r.UpdateEntityAsync(It.IsAny<SubCategory>(), It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
         var sut = CreateSut();
 
         ServiceResult result = await sut.UpdateSubCategoryAsync(new SubCategoryRequest { Id = 1, Name = "Updated" });
@@ -237,7 +236,7 @@ public class MenuServiceTests
     [Fact]
     public async Task UpdateSubCategoryAsync_ReturnsFail_WhenRepositoryThrows()
     {
-        _subCategoryRepo.Setup(r => r.UpdateEntityAsync(It.IsAny<SubCategory>())).ThrowsAsync(new Exception("DB error"));
+        _subCategoryRepo.Setup(r => r.UpdateEntityAsync(It.IsAny<SubCategory>(), It.IsAny<CancellationToken>())).ThrowsAsync(new Exception("DB error"));
         var sut = CreateSut();
 
         ServiceResult result = await sut.UpdateSubCategoryAsync(new SubCategoryRequest { Id = 1 });
@@ -251,7 +250,7 @@ public class MenuServiceTests
     [Fact]
     public async Task DeleteSubCategoryAsync_ReturnsSuccess_WhenRepositorySucceeds()
     {
-        _subCategoryRepo.Setup(r => r.DeleteAsync(It.IsAny<IReadOnlyList<FilterCondition>>())).Returns(Task.CompletedTask);
+        _subCategoryRepo.Setup(r => r.DeleteByIdAsync(It.IsAny<int>(), It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
         var sut = CreateSut();
 
         ServiceResult result = await sut.DeleteSubCategoryAsync(new SubCategoryRequest { Id = 1 });
@@ -263,7 +262,7 @@ public class MenuServiceTests
     [Fact]
     public async Task DeleteSubCategoryAsync_ReturnsFail_WhenRepositoryThrows()
     {
-        _subCategoryRepo.Setup(r => r.DeleteAsync(It.IsAny<IReadOnlyList<FilterCondition>>())).ThrowsAsync(new Exception("DB error"));
+        _subCategoryRepo.Setup(r => r.DeleteByIdAsync(It.IsAny<int>(), It.IsAny<CancellationToken>())).ThrowsAsync(new Exception("DB error"));
         var sut = CreateSut();
 
         ServiceResult result = await sut.DeleteSubCategoryAsync(new SubCategoryRequest { Id = 1 });
