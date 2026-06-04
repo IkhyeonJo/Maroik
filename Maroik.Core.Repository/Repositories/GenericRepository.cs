@@ -1,4 +1,4 @@
-﻿using Maroik.Core.Contract.Filters;
+using Maroik.Core.Contract.Filters;
 using Maroik.Core.Contract.Interfaces;
 using Maroik.Core.PostgreSQL.Data;
 using Maroik.Core.Repository.Extensions;
@@ -32,12 +32,13 @@ public abstract class GenericRepository<TDomain, TEntity> : IGenericRepository<T
     public async Task<List<TDomain>> FindAsync(
         IReadOnlyList<FilterCondition> conditions,
         string? orderByProperty = null,
-        bool descending = false)
+        bool descending = false,
+        CancellationToken ct = default)
     {
         var query = ApplyIncludes(Set.Where(FilterExpressionBuilder.Build<TEntity>(conditions)));
         if (orderByProperty is not null)
             query = FilterExpressionBuilder.ApplyOrderBy(query, orderByProperty, descending);
-        return (await query.ToListAsync()).Select(ToDomain).ToList();
+        return (await query.ToListAsync(ct)).Select(ToDomain).ToList();
     }
 
     /// <inheritdoc />
@@ -46,31 +47,33 @@ public abstract class GenericRepository<TDomain, TEntity> : IGenericRepository<T
         int page,
         int pageSize,
         string? orderByProperty = null,
-        bool descending = false)
+        bool descending = false,
+        CancellationToken ct = default)
     {
         var query = ApplyIncludes(Set.Where(FilterExpressionBuilder.Build<TEntity>(conditions)));
         if (orderByProperty is not null)
             query = FilterExpressionBuilder.ApplyOrderBy(query, orderByProperty, descending);
-        int total = await query.CountAsync();
-        var items = await query.Skip((page - 1) * pageSize).Take(pageSize).ToListAsync();
+        int total = await query.CountAsync(ct);
+        var items = await query.Skip((page - 1) * pageSize).Take(pageSize).ToListAsync(ct);
         return (items.Select(ToDomain).ToList(), total);
     }
 
     /// <inheritdoc />
-    public async Task CreateAsync(TDomain domain)
+    public async Task CreateAsync(TDomain domain, CancellationToken ct = default)
     {
-        _ = await Set.AddAsync(ToEntity(domain));
-        _ = await Context.SaveChangesAsync();
+        _ = await Set.AddAsync(ToEntity(domain), ct);
+        _ = await Context.SaveChangesAsync(ct);
     }
 
     /// <inheritdoc />
     public async Task UpdateAsync(
         IReadOnlyList<FilterCondition> conditions,
-        IReadOnlyDictionary<string, object?> updates)
+        IReadOnlyDictionary<string, object?> updates,
+        CancellationToken ct = default)
     {
         var entities = await Set
             .Where(FilterExpressionBuilder.Build<TEntity>(conditions))
-            .ToListAsync();
+            .ToListAsync(ct);
 
         foreach (var entity in entities)
         {
@@ -78,39 +81,39 @@ public abstract class GenericRepository<TDomain, TEntity> : IGenericRepository<T
                 Context.Entry(entity).Property(key).CurrentValue = value;
         }
 
-        _ = await Context.SaveChangesAsync();
+        _ = await Context.SaveChangesAsync(ct);
     }
 
     /// <inheritdoc />
-    public async Task DeleteAsync(IReadOnlyList<FilterCondition> conditions)
+    public async Task DeleteAsync(IReadOnlyList<FilterCondition> conditions, CancellationToken ct = default)
     {
         // Load PKs without tracking to avoid conflicts with already-tracked instances.
         // FindAsync then resolves to the identity-map instance (or re-attaches as needed)
         // before marking Deleted ?? this works correctly with both InMemory and PostgreSQL.
         var toRemove = await Set.AsNoTracking()
             .Where(FilterExpressionBuilder.Build<TEntity>(conditions))
-            .ToListAsync();
+            .ToListAsync(ct);
 
         var pk = Context.Model.FindEntityType(typeof(TEntity))!.FindPrimaryKey()!.Properties;
         foreach (var entity in toRemove)
         {
             var keyValues = pk.Select(p => p.PropertyInfo!.GetValue(entity)).ToArray();
-            var tracked = await Set.FindAsync(keyValues);
+            var tracked = await Set.FindAsync(keyValues, ct);
             if (tracked is not null)
                 Set.Remove(tracked);
         }
 
-        _ = await Context.SaveChangesAsync();
+        _ = await Context.SaveChangesAsync(ct);
     }
 
     /// <inheritdoc />
-    public async Task UpdateEntityAsync(TDomain domain)
+    public async Task UpdateEntityAsync(TDomain domain, CancellationToken ct = default)
     {
         var newEntity = ToEntity(domain);
         var pk = Context.Model.FindEntityType(typeof(TEntity))!.FindPrimaryKey()!.Properties;
         var keyValues = pk.Select(p => p.PropertyInfo!.GetValue(newEntity)).ToArray();
 
-        var existing = await Set.FindAsync(keyValues);
+        var existing = await Set.FindAsync(keyValues, ct);
         if (existing is null) return;
 
         var entry = Context.Entry(existing);
@@ -121,6 +124,6 @@ public abstract class GenericRepository<TDomain, TEntity> : IGenericRepository<T
         // Explicit Modified ensures SaveChanges emits UPDATE even when AutoDetectChanges is off.
         entry.State = EntityState.Modified;
 
-        _ = await Context.SaveChangesAsync();
+        _ = await Context.SaveChangesAsync(ct);
     }
 }

@@ -1,4 +1,4 @@
-﻿using Maroik.Core.Contract.Domains.Finance;
+using Maroik.Core.Contract.Domains.Finance;
 using Maroik.Core.Contract.Filters;
 using Maroik.Core.Contract.Dtos;
 using Maroik.Core.Contract.Interfaces;
@@ -26,27 +26,27 @@ public class FixedExpenditureService : IFixedExpenditureService
     }
 
     /// <inheritdoc />
-    public async Task<List<FixedExpenditureResponse>> GetFixedExpendituresAsync(string accountEmail)
-        => (await _fixedExpenditureRepository.FindAsync([FilterCondition.Equal("AccountEmail", accountEmail)])).Select(FixedExpenditureMapper.ToResponse).ToList();
+    public async Task<List<FixedExpenditureResponse>> GetFixedExpendituresAsync(string accountEmail, CancellationToken ct = default)
+        => (await _fixedExpenditureRepository.FindAsync([FilterCondition.Equal("AccountEmail", accountEmail)], ct: ct)).Select(FixedExpenditureMapper.ToResponse).ToList();
 
     /// <inheritdoc />
-    public async Task<FixedExpenditureResponse?> GetByIdAsync(string accountEmail, long id)
+    public async Task<FixedExpenditureResponse?> GetByIdAsync(string accountEmail, long id, CancellationToken ct = default)
     {
         var results = await _fixedExpenditureRepository.FindAsync([
             FilterCondition.Equal("AccountEmail", accountEmail),
             FilterCondition.Equal("Id", id)
-        ]);
+        ], ct: ct);
         var item = results.FirstOrDefault();
         return item == null ? null : FixedExpenditureMapper.ToResponse(item);
     }
 
     /// <inheritdoc />
-    public async Task<ServiceResult> CreateAsync(string accountEmail, FixedExpenditureRequest request)
+    public async Task<ServiceResult> CreateAsync(string accountEmail, FixedExpenditureRequest request, CancellationToken ct = default)
     {
         var validation = ValidateClassAndDate(request);
         if (!validation.IsValid) return ServiceResult.Fail("Input is invalid");
 
-        Asset? payAsset = await _assetBalance.GetAssetAsync(accountEmail, request.PaymentMethod ?? "");
+        Asset? payAsset = await _assetBalance.GetAssetAsync(accountEmail, request.PaymentMethod ?? "", ct);
         if (payAsset == null) return ServiceResult.Fail("Input is invalid");
 
         string? myDepositAsset = null;
@@ -55,7 +55,7 @@ public class FixedExpenditureService : IFixedExpenditureService
             if (request.PaymentMethod == request.MyDepositAsset)
                 return ServiceResult.Fail("The PaymentMethod and MyDepositAsset value cannot be the same.");
 
-            Asset? depAsset = await _assetBalance.GetAssetAsync(accountEmail, request.MyDepositAsset ?? "");
+            Asset? depAsset = await _assetBalance.GetAssetAsync(accountEmail, request.MyDepositAsset ?? "", ct);
             if (depAsset == null) return ServiceResult.Fail("Input is invalid");
             if (payAsset.Balance.Currency != depAsset.Balance.Currency)
                 return ServiceResult.Fail("PaymentMethod MonetaryUnit must be same as MyDepositAsset MonetaryUnit.");
@@ -72,12 +72,12 @@ public class FixedExpenditureService : IFixedExpenditureService
             return ServiceResult.Fail(registerResult.FirstError.Description);
 
         var fixedExpenditure = registerResult.Value;
-        await _fixedExpenditureRepository.CreateAsync(fixedExpenditure);
+        await _fixedExpenditureRepository.CreateAsync(fixedExpenditure, ct);
         return ServiceResult.Ok();
     }
 
     /// <inheritdoc />
-    public async Task<ServiceResult> UpdateAsync(string accountEmail, FixedExpenditureRequest request)
+    public async Task<ServiceResult> UpdateAsync(string accountEmail, FixedExpenditureRequest request, CancellationToken ct = default)
     {
         var validation = ValidateClassAndDate(request);
         if (!validation.IsValid) return ServiceResult.Fail("Input is invalid");
@@ -87,18 +87,18 @@ public class FixedExpenditureService : IFixedExpenditureService
             if (request.PaymentMethod == request.MyDepositAsset)
                 return ServiceResult.Fail("The PaymentMethod and MyDepositAsset value cannot be the same.");
 
-            var payAsset = await _assetBalance.GetAssetAsync(accountEmail, request.PaymentMethod ?? "");
-            var depAsset = await _assetBalance.GetAssetAsync(accountEmail, request.MyDepositAsset ?? "");
+            var payAsset = await _assetBalance.GetAssetAsync(accountEmail, request.PaymentMethod ?? "", ct);
+            var depAsset = await _assetBalance.GetAssetAsync(accountEmail, request.MyDepositAsset ?? "", ct);
             if (payAsset == null || depAsset == null) return ServiceResult.Fail("Input is invalid");
             if (payAsset.Balance.Currency != depAsset.Balance.Currency)
                 return ServiceResult.Fail("PaymentMethod MonetaryUnit must be same as MyDepositAsset MonetaryUnit.");
         }
 
-        List<FixedExpenditure> items = await _fixedExpenditureRepository.FindAsync([FilterCondition.Equal("AccountEmail", accountEmail)]);
+        List<FixedExpenditure> items = await _fixedExpenditureRepository.FindAsync([FilterCondition.Equal("AccountEmail", accountEmail)], ct: ct);
         FixedExpenditure? fe = items.FirstOrDefault(x => x.Id == request.Id);
         if (fe == null) return ServiceResult.Fail("Input is invalid");
 
-        Asset? payAssetForCurrency = await _assetBalance.GetAssetAsync(accountEmail, request.PaymentMethod ?? "");
+        Asset? payAssetForCurrency = await _assetBalance.GetAssetAsync(accountEmail, request.PaymentMethod ?? "", ct);
         string currency = payAssetForCurrency?.Balance.Currency ?? fe.Amount.Currency;
         string? myDepositAsset = validation.RequiresDepositAsset ? request.MyDepositAsset : string.Empty;
 
@@ -108,18 +108,18 @@ public class FixedExpenditureService : IFixedExpenditureService
 
         if (updateResult.IsError) return ServiceResult.Fail(updateResult.FirstError.Description);
 
-        await _fixedExpenditureRepository.UpdateEntityAsync(fe);
+        await _fixedExpenditureRepository.UpdateEntityAsync(fe, ct);
         return ServiceResult.Ok();
     }
 
     /// <inheritdoc />
-    public async Task<ServiceResult> DeleteAsync(string accountEmail, long id)
+    public async Task<ServiceResult> DeleteAsync(string accountEmail, long id, CancellationToken ct = default)
     {
-        List<FixedExpenditure> items = await _fixedExpenditureRepository.FindAsync([FilterCondition.Equal("AccountEmail", accountEmail)]);
+        List<FixedExpenditure> items = await _fixedExpenditureRepository.FindAsync([FilterCondition.Equal("AccountEmail", accountEmail)], ct: ct);
         FixedExpenditure? fe = items.FirstOrDefault(x => x.Id == id);
         if (fe == null) return ServiceResult.Fail("Input is invalid");
 
-        await _fixedExpenditureRepository.DeleteAsync([FilterCondition.Equal("Id", fe.Id)]);
+        await _fixedExpenditureRepository.DeleteAsync([FilterCondition.Equal("Id", fe.Id)], ct);
         return ServiceResult.Ok();
     }
 
@@ -127,11 +127,6 @@ public class FixedExpenditureService : IFixedExpenditureService
     /// Validates the MainClass/SubClass combination and the deposit date fields of a fixed-expenditure request.
     /// Also determines whether the entry requires a deposit asset (e.g., savings or debt repayment categories).
     /// </summary>
-    /// <param name="req">The request to validate.</param>
-    /// <returns>
-    /// A tuple where <c>IsValid</c> indicates overall validity and <c>RequiresDepositAsset</c>
-    /// indicates whether a <see cref="FixedExpenditureRequest.MyDepositAsset"/> must be provided.
-    /// </returns>
     private static (bool IsValid, bool RequiresDepositAsset) ValidateClassAndDate(FixedExpenditureRequest req)
     {
         bool requiresDeposit;

@@ -16,17 +16,17 @@ public class BoardRepository(ApplicationDbContext context)
     protected override DbSet<OrmBoard> Set => Context.Boards;
 
     /// <inheritdoc />
-    public async Task IncrementViewAsync(long id)
+    public async Task IncrementViewAsync(long id, CancellationToken ct = default)
         => await Context.Boards
             .Where(x => x.Id == id)
-            .ExecuteUpdateAsync(s => s.SetProperty(b => b.View, b => b.View + 1));
+            .ExecuteUpdateAsync(s => s.SetProperty(b => b.View, b => b.View + 1), ct);
 
     /// <inheritdoc />
-    public async Task<long> WriteBoardAsync(Board board)
+    public async Task<long> WriteBoardAsync(Board board, CancellationToken ct = default)
     {
         OrmBoard entity = ToEntity(board);
-        _ = await Context.Boards.AddAsync(entity);
-        _ = await Context.SaveChangesAsync();
+        _ = await Context.Boards.AddAsync(entity, ct);
+        _ = await Context.SaveChangesAsync(ct);
         return entity.Id;
     }
 

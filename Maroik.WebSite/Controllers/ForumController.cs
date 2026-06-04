@@ -1,4 +1,4 @@
-﻿using Maroik.Core.Contract.Dtos;
+using Maroik.Core.Contract.Dtos;
 using Maroik.Core.Contract.Interfaces;
 using Maroik.Core.Contract.Utilities;
 using Maroik.WebSite.Utilities;
@@ -58,7 +58,7 @@ public class ForumController : BaseController
     [ValidateAntiForgeryToken]
     [RequiredHttpPostAccess(Role = Role.Admin)]
     [RequiredHttpPostAccess(Role = Role.User)]
-    public async Task<IActionResult> WriteFreeBoard(BoardInputViewModel boardInputViewModel)
+    public async Task<IActionResult> WriteFreeBoard(BoardInputViewModel boardInputViewModel, CancellationToken ct)
     {
         try
         {
@@ -90,7 +90,7 @@ public class ForumController : BaseController
             if (boardInputViewModel.UploadedFile != null)
             {
                 using MemoryStream ms = new();
-                await boardInputViewModel.UploadedFile.CopyToAsync(ms);
+                await boardInputViewModel.UploadedFile.CopyToAsync(ms, ct);
                 attachedFile = new AttachedFileInfo
                 {
                     Bytes = ms.ToArray(),
@@ -100,7 +100,7 @@ public class ForumController : BaseController
                 };
             }
 
-            ServiceResult result = await _boardService.WriteBoardAsync(boardRequest, attachedFile);
+            ServiceResult result = await _boardService.WriteBoardAsync(boardRequest, attachedFile, ct);
             return result.Success
                 ? Json(new { result = true, message = _localizer["The board has been successfully created."].Value })
                 : Json(new { result = false, error = _localizer["Input is invalid"].Value });
@@ -119,7 +119,7 @@ public class ForumController : BaseController
     [ValidateAntiForgeryToken]
     [RequiredHttpPostAccess(Role = Role.Admin)]
     [RequiredHttpPostAccess(Role = Role.User)]
-    public async Task<IActionResult> WriteFreeComment([FromBody] BoardCommentInputViewModel boardCommentInputViewModel)
+    public async Task<IActionResult> WriteFreeComment([FromBody] BoardCommentInputViewModel boardCommentInputViewModel, CancellationToken ct)
     {
         try
         {
@@ -143,7 +143,7 @@ public class ForumController : BaseController
                 Content = boardCommentInputViewModel.Content
             };
 
-            ServiceResult result = await _boardService.WriteCommentAsync(commentRequest);
+            ServiceResult result = await _boardService.WriteCommentAsync(commentRequest, ct: ct);
             return result.Success
                 ? Json(new { result = true, boardId = boardCommentInputViewModel.BoardId, page = boardCommentInputViewModel.DetailCurrentPage })
                 : Json(new { result = false, error = _localizer["Input is invalid"].Value });
@@ -164,7 +164,7 @@ public class ForumController : BaseController
     [ValidateAntiForgeryToken]
     [RequiredHttpPostAccess(Role = Role.Admin)]
     [RequiredHttpPostAccess(Role = Role.User)]
-    public async Task<IActionResult> UploadImageFile(IFormFile summernoteImageFile)
+    public async Task<IActionResult> UploadImageFile(IFormFile summernoteImageFile, CancellationToken ct)
     {
         if (summernoteImageFile == null)
             return Ok(new { result = false, errorMessage = _localizer["Please attach a file."].Value });
@@ -179,7 +179,7 @@ public class ForumController : BaseController
         byte[] bytes;
         using (var ms = new MemoryStream())
         {
-            await summernoteImageFile.CopyToAsync(ms);
+            await summernoteImageFile.CopyToAsync(ms, ct);
             bytes = ms.ToArray();
         }
 
@@ -191,7 +191,7 @@ public class ForumController : BaseController
             Size = summernoteImageFile.Length
         };
 
-        SummernoteUploadResult uploadResult = await _boardService.UploadSummernoteImageAsync(file, "Forum", EnumHelper.GetDescription(BoardType.FreeForum));
+        SummernoteUploadResult uploadResult = await _boardService.UploadSummernoteImageAsync(file, "Forum", EnumHelper.GetDescription(BoardType.FreeForum), ct);
 
         if (!uploadResult.Success)
             return Ok(new { result = false, errorMessage = _localizer[uploadResult.ErrorKey ?? "Input is invalid"].Value });
@@ -211,26 +211,20 @@ public class ForumController : BaseController
 
     #region Edit, List, Detail, Write
     /// <summary>Displays the free-forum list or a single post (list / write / view / edit).</summary>
-    public async Task<IActionResult> FreeForum(string method = "list", int? boardId = null, int page = 1, string searchType = "", string searchText = "")
+    public async Task<IActionResult> FreeForum(string method = "list", int? boardId = null, int page = 1, string searchType = "", string searchText = "", CancellationToken ct = default)
     {
         if (method == "write") // Write
         {
             FreeForumOutputViewModel freeForumOutputViewModel = new();
-
-            #region Write board
             freeForumOutputViewModel.Method = method;
-            #endregion
 
-            bool isAccountSessionExist = _sessionService.GetAccount() != null; // Check if account session exists after login
-
+            bool isAccountSessionExist = _sessionService.GetAccount() != null;
             return isAccountSessionExist ? View(freeForumOutputViewModel) : RedirectToAction("Login", "Account");
         }
         else if (method == "detail") // Detail view
         {
             if (boardId == null)
-            {
                 return RedirectToAction(nameof(BoardType.FreeForum), "Forum");
-            }
 
             FreeForumOutputViewModel freeForumOutputViewModel = new()
             {
@@ -239,8 +233,8 @@ public class ForumController : BaseController
                 DetailBoardId = boardId ?? default
             };
 
-            BoardResponse? freeBoard = await _boardService.GetBoardByIdAsync(boardId ?? 0);
-            BoardAttachedFileResponse? boardAttachedFile = await _boardService.GetAttachedFileByBoardIdAsync(boardId ?? 0);
+            BoardResponse? freeBoard = await _boardService.GetBoardByIdAsync(boardId ?? 0, ct);
+            BoardAttachedFileResponse? boardAttachedFile = await _boardService.GetAttachedFileByBoardIdAsync(boardId ?? 0, ct);
 
             try
             {
@@ -249,17 +243,14 @@ public class ForumController : BaseController
 
                 if (freeBoard.Locked)
                 {
-                    AccountResponse loginedAccount = _sessionService.GetAccount()!; // Get Session
-
+                    AccountResponse loginedAccount = _sessionService.GetAccount()!;
                     if (!(loginedAccount.Nickname == freeBoard.Writer || loginedAccount.Role == Role.Admin))
-                    {
                         return RedirectToAction(nameof(BoardType.FreeForum), "Forum");
-                    }
                 }
 
-                await _boardService.IncrementBoardViewAsync(boardId ?? 0);
+                await _boardService.IncrementBoardViewAsync(boardId ?? 0, ct);
 
-                (freeBoard.Content, bool isImgTagIncluded) = await _boardService.PrepareHtmlForDisplayAsync(freeBoard.Content ?? "");
+                (freeBoard.Content, bool isImgTagIncluded) = await _boardService.PrepareHtmlForDisplayAsync(freeBoard.Content ?? "", ct);
 
                 freeForumOutputViewModel.BoardOutputViewModel = new Maroik.WebSite.Models.ViewModels.Forum.BoardOutputViewModel()
                 {
@@ -277,8 +268,7 @@ public class ForumController : BaseController
 
                 if (!string.IsNullOrEmpty(freeForumOutputViewModel?.BoardOutputViewModel?.BoardAttachedFilePath ?? ""))
                 {
-                    byte[]? fileData = await _boardService.DownloadFileAsync(freeForumOutputViewModel?.BoardOutputViewModel?.BoardAttachedFilePath ?? "");
-
+                    byte[]? fileData = await _boardService.DownloadFileAsync(freeForumOutputViewModel?.BoardOutputViewModel?.BoardAttachedFilePath ?? "", ct);
                     if (fileData != null)
                     {
                         freeForumOutputViewModel!.BoardOutputViewModel.BoardAttachedFileBase64Data = Convert.ToBase64String(fileData);
@@ -286,14 +276,13 @@ public class ForumController : BaseController
                     }
                 }
 
-                // Preload comments and accounts for detail view
-                freeForumOutputViewModel!.DetailBoardComments = (await _boardService.GetCommentsByBoardIdAsync(boardId ?? 0))?.ToList() ?? [];
+                freeForumOutputViewModel!.DetailBoardComments = (await _boardService.GetCommentsByBoardIdAsync(boardId ?? 0, ct))?.ToList() ?? [];
                 var detailNicknames = freeForumOutputViewModel.DetailBoardComments.Select(c => c.Writer)
                     .Append(freeBoard.Writer ?? "")
                     .Where(w => !string.IsNullOrEmpty(w))
                     .Select(w => w!)
                     .Distinct();
-                freeForumOutputViewModel.AllAccounts = await _accountService.GetAccountsByNicknamesAsync(detailNicknames) ?? [];
+                freeForumOutputViewModel.AllAccounts = await _accountService.GetAccountsByNicknamesAsync(detailNicknames, ct) ?? [];
                 freeForumOutputViewModel.LoginedAccount = _sessionService.GetAccount() ?? new AccountResponse { Role = Role.Anonymous };
                 freeForumOutputViewModel.LoginedAccountTimeZoneIanaId = freeForumOutputViewModel.LoginedAccount.TimeZoneIanaId ?? "";
 
@@ -308,9 +297,7 @@ public class ForumController : BaseController
         else if (method == "edit") // Edit
         {
             if (boardId == null)
-            {
                 return RedirectToAction(nameof(BoardType.FreeForum), "Forum");
-            }
 
             FreeForumOutputViewModel freeForumOutputViewModel = new()
             {
@@ -319,8 +306,8 @@ public class ForumController : BaseController
                 EditBoardId = boardId ?? default
             };
 
-            BoardResponse? freeBoard = await _boardService.GetBoardByIdAsync(boardId ?? 0);
-            BoardAttachedFileResponse? boardAttachedFile = await _boardService.GetAttachedFileByBoardIdAsync(boardId ?? 0);
+            BoardResponse? freeBoard = await _boardService.GetBoardByIdAsync(boardId ?? 0, ct);
+            BoardAttachedFileResponse? boardAttachedFile = await _boardService.GetAttachedFileByBoardIdAsync(boardId ?? 0, ct);
 
             try
             {
@@ -328,13 +315,10 @@ public class ForumController : BaseController
                     return RedirectToAction(nameof(BoardType.FreeForum), "Forum");
 
                 AccountResponse loginedAccount = _sessionService.GetAccount()!;
-
-                if (freeBoard.Writer != loginedAccount.Nickname) // If writer and logged-in user are not the same
-                {
+                if (freeBoard.Writer != loginedAccount.Nickname)
                     return RedirectToAction(nameof(BoardType.FreeForum), "Forum");
-                }
 
-                (freeBoard.Content, bool isImgTagIncluded) = await _boardService.PrepareHtmlForDisplayAsync(freeBoard.Content ?? "");
+                (freeBoard.Content, bool isImgTagIncluded) = await _boardService.PrepareHtmlForDisplayAsync(freeBoard.Content ?? "", ct);
 
                 freeForumOutputViewModel.BoardOutputViewModel = new Maroik.WebSite.Models.ViewModels.Forum.BoardOutputViewModel()
                 {
@@ -353,8 +337,7 @@ public class ForumController : BaseController
 
                 if (!string.IsNullOrEmpty(freeForumOutputViewModel?.BoardOutputViewModel?.BoardAttachedFilePath ?? ""))
                 {
-                    byte[]? fileData = await _boardService.DownloadFileAsync(freeForumOutputViewModel?.BoardOutputViewModel?.BoardAttachedFilePath ?? "");
-
+                    byte[]? fileData = await _boardService.DownloadFileAsync(freeForumOutputViewModel?.BoardOutputViewModel?.BoardAttachedFilePath ?? "", ct);
                     if (fileData != null)
                     {
                         freeForumOutputViewModel!.BoardOutputViewModel.BoardAttachedFileBase64Data = Convert.ToBase64String(fileData);
@@ -369,80 +352,43 @@ public class ForumController : BaseController
                 _logger.LogError(ex, "Unhandled exception in FreeForum action");
                 return RedirectToAction(nameof(BoardType.FreeForum), "Forum");
             }
-
         }
         else // List
         {
-            #region Board default paging logic
             const int pageSize = 5;
-            if (page < 1)
-            {
-                page = 1;
-            }
-            #endregion
+            if (page < 1) page = 1;
 
-            #region Logic to get all related board data
-            IEnumerable<BoardResponse> allFreeBoards = await _boardService.GetBoardsAsync(EnumHelper.GetDescription(BoardType.FreeForum));
+            IEnumerable<BoardResponse> allFreeBoards = await _boardService.GetBoardsAsync(EnumHelper.GetDescription(BoardType.FreeForum), ct);
             IEnumerable<BoardResponse> freeBoards = allFreeBoards.Where(m => m.Deleted == false && m.Noticed == false).OrderByDescending(a => a.Id);
-            #endregion
 
-            #region Search keyword logic
             if (searchType == "Title" && !string.IsNullOrEmpty(searchText))
             {
                 bool isAccountSessionExist = _sessionService.GetAccount() != null;
-                if (isAccountSessionExist) // If logged in
+                if (isAccountSessionExist)
                 {
-                    AccountResponse loginedAccount = _sessionService.GetAccount()!; // Get Session
-
-                    if (loginedAccount.Role == Role.Admin) // Administrator can see all posts
-                    {
+                    AccountResponse loginedAccount = _sessionService.GetAccount()!;
+                    if (loginedAccount.Role == Role.Admin)
                         freeBoards = freeBoards.Where(a => (a.Title ?? "").Contains(searchText));
-                    }
-                    else if (loginedAccount.Role == Role.User) // User can see regular posts + their own private posts
+                    else if (loginedAccount.Role == Role.User)
                     {
                         List<BoardResponse> searchFreeBoards = [];
-                        List<BoardResponse> noLockedFreeBoards = freeBoards.Where(a => (a.Title ?? "").Contains(searchText)).Where(a => !a.Locked).ToList();
-                        List<BoardResponse> myLockedFreeBoards = freeBoards.Where(a => (a.Title ?? "").Contains(searchText)).Where(a => a.Locked && a.Writer == loginedAccount.Nickname).ToList();
-                        searchFreeBoards.AddRange(noLockedFreeBoards);
-                        searchFreeBoards.AddRange(myLockedFreeBoards);
-
+                        searchFreeBoards.AddRange(freeBoards.Where(a => (a.Title ?? "").Contains(searchText)).Where(a => !a.Locked));
+                        searchFreeBoards.AddRange(freeBoards.Where(a => (a.Title ?? "").Contains(searchText)).Where(a => a.Locked && a.Writer == loginedAccount.Nickname));
                         freeBoards = searchFreeBoards;
                     }
-                    else // If logged in but has neither Admin nor User role, it's a bug
-                    {
-
-                    }
                 }
-                else // If not logged in
-                {
-                    freeBoards = freeBoards.Where(a => (a.Title ?? "").Contains(searchText)).Where(a => !a.Locked); // When not logged in, private posts should not be searchable
-                }
+                else
+                    freeBoards = freeBoards.Where(a => (a.Title ?? "").Contains(searchText)).Where(a => !a.Locked);
             }
             else if (searchType == "Writer" && !string.IsNullOrEmpty(searchText))
-            {
                 freeBoards = freeBoards.Where(a => (a.Writer ?? "").Contains(searchText));
-            }
-            #endregion
 
             FreeForumOutputViewModel freeForumOutputViewModel = new();
-
-            #region Notice
             freeForumOutputViewModel.NoticeBoards = allFreeBoards.Where(m => m.Deleted == false && m.Noticed == true).OrderByDescending(a => a.Id);
-            #endregion
-
-            #region Board list
             freeForumOutputViewModel.Method = "list";
-            #endregion
-
-            #region Board paging logic
             freeForumOutputViewModel.Pager = new Pager(freeBoards.Count(), page, pageSize);
-            #endregion
-
-            #region Board data logic
             freeForumOutputViewModel.Boards = freeBoards.Skip((page - 1) * pageSize).Take(freeForumOutputViewModel.Pager.PageSize).ToList();
-            #endregion
 
-            #region Preload comment counts and attached files for view
             freeForumOutputViewModel.LoginedAccount = _sessionService.GetAccount() ?? new AccountResponse { Role = Role.Anonymous };
             freeForumOutputViewModel.LoginedAccountTimeZoneIanaId = freeForumOutputViewModel.LoginedAccount.TimeZoneIanaId ?? "";
             var listNicknames = freeForumOutputViewModel.NoticeBoards.Select(b => b.Writer)
@@ -450,14 +396,14 @@ public class ForumController : BaseController
                 .Where(w => !string.IsNullOrEmpty(w))
                 .Select(w => w!)
                 .Distinct();
-            freeForumOutputViewModel.AllAccounts = await _accountService.GetAccountsByNicknamesAsync(listNicknames) ?? [];
+            freeForumOutputViewModel.AllAccounts = await _accountService.GetAccountsByNicknamesAsync(listNicknames, ct) ?? [];
 
             List<long> allBoardIds = freeForumOutputViewModel.NoticeBoards.Select(b => b.Id)
                 .Concat(freeForumOutputViewModel.Boards.Select(b => b.Id))
                 .Distinct().ToList();
 
-            Dictionary<long, int> commentCounts = await _boardService.GetCommentCountsForBoardsAsync(allBoardIds);
-            Dictionary<long, BoardAttachedFileResponse?> attachedFiles = await _boardService.GetAttachedFilesForBoardsAsync(allBoardIds);
+            Dictionary<long, int> commentCounts = await _boardService.GetCommentCountsForBoardsAsync(allBoardIds, ct);
+            Dictionary<long, BoardAttachedFileResponse?> attachedFiles = await _boardService.GetAttachedFilesForBoardsAsync(allBoardIds, ct);
 
             foreach (var board in freeForumOutputViewModel.NoticeBoards)
             {
@@ -471,7 +417,6 @@ public class ForumController : BaseController
                 BoardAttachedFileResponse? af = attachedFiles.GetValueOrDefault(board.Id);
                 freeForumOutputViewModel.AttachedFilesByBoardId[board.Id] = af != null && !string.IsNullOrEmpty(af.Name) ? [af] : [];
             }
-            #endregion
 
             freeForumOutputViewModel.SelectedSearchType = searchType;
             freeForumOutputViewModel.TypedSearchText = searchText;
@@ -486,12 +431,11 @@ public class ForumController : BaseController
     [ValidateAntiForgeryToken]
     [RequiredHttpPostAccess(Role = Role.Admin)]
     [RequiredHttpPostAccess(Role = Role.User)]
-    public async Task<IActionResult> IsBoardExists(int id)
+    public async Task<IActionResult> IsBoardExists(int id, CancellationToken ct)
     {
         try
         {
-            BoardResponse? board = await _boardService.GetBoardByIdAsync(id);
-
+            BoardResponse? board = await _boardService.GetBoardByIdAsync(id, ct);
             return board == null || board.Deleted
                 ? Json(new { result = false, error = _localizer["Input is invalid"].Value })
                 : Json(new { result = true, freeBoard = board });
@@ -514,7 +458,7 @@ public class ForumController : BaseController
     [ValidateAntiForgeryToken]
     [RequiredHttpPostAccess(Role = Role.Admin)]
     [RequiredHttpPostAccess(Role = Role.User)]
-    public async Task<IActionResult> EditFreeBoard(BoardInputViewModel boardInputViewModel)
+    public async Task<IActionResult> EditFreeBoard(BoardInputViewModel boardInputViewModel, CancellationToken ct)
     {
         try
         {
@@ -542,7 +486,7 @@ public class ForumController : BaseController
             if (boardInputViewModel.UploadedFile != null)
             {
                 using MemoryStream ms = new();
-                await boardInputViewModel.UploadedFile.CopyToAsync(ms);
+                await boardInputViewModel.UploadedFile.CopyToAsync(ms, ct);
                 attachedFile = new AttachedFileInfo
                 {
                     Bytes = ms.ToArray(),
@@ -552,7 +496,7 @@ public class ForumController : BaseController
                 };
             }
 
-            ServiceResult result = await _boardService.EditBoardAsync(boardRequest, loginedAccount.Nickname!, attachedFile);
+            ServiceResult result = await _boardService.EditBoardAsync(boardRequest, loginedAccount.Nickname!, attachedFile, ct);
             return result.Success
                 ? Json(new { result = true, message = _localizer["The board has been successfully updated."].Value })
                 : Json(new { result = false, error = _localizer["Input is invalid"].Value });
@@ -575,7 +519,7 @@ public class ForumController : BaseController
     [ValidateAntiForgeryToken]
     [RequiredHttpPostAccess(Role = Role.Admin)]
     [RequiredHttpPostAccess(Role = Role.User)]
-    public async Task<IActionResult> DeleteBoard([FromBody] BoardInputViewModel boardInputViewModel)
+    public async Task<IActionResult> DeleteBoard([FromBody] BoardInputViewModel boardInputViewModel, CancellationToken ct)
     {
         try
         {
@@ -585,7 +529,8 @@ public class ForumController : BaseController
                 boardInputViewModel.Id,
                 EnumHelper.GetDescription(BoardType.FreeForum),
                 loginedAccount.Nickname!,
-                loginedAccount.Role == Role.Admin);
+                loginedAccount.Role == Role.Admin,
+                ct);
 
             return result.Success
                 ? Json(new { result = true, message = _localizer["The board has been successfully deleted."].Value })
@@ -605,7 +550,7 @@ public class ForumController : BaseController
     [ValidateAntiForgeryToken]
     [RequiredHttpPostAccess(Role = Role.Admin)]
     [RequiredHttpPostAccess(Role = Role.User)]
-    public async Task<IActionResult> DeleteComment(int id)
+    public async Task<IActionResult> DeleteComment(int id, CancellationToken ct)
     {
         try
         {
@@ -614,7 +559,8 @@ public class ForumController : BaseController
             ServiceResult result = await _boardService.DeleteCommentAsync(
                 id,
                 loginedAccount.Nickname!,
-                loginedAccount.Role == Role.Admin);
+                loginedAccount.Role == Role.Admin,
+                ct);
 
             return result.Success
                 ? Json(new { result = true })
@@ -631,5 +577,4 @@ public class ForumController : BaseController
     #endregion
 
     #endregion
-
 }

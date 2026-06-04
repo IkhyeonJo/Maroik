@@ -16,11 +16,11 @@ public class CalendarEventRepository(ApplicationDbContext context)
     protected override DbSet<OrmCalendarEvent> Set => Context.CalendarEvents;
 
     /// <inheritdoc />
-    public async Task<long> CreateCalendarEventAsync(CalendarEvent calendarEvent)
+    public async Task<long> CreateCalendarEventAsync(CalendarEvent calendarEvent, CancellationToken ct = default)
     {
         OrmCalendarEvent entity = ToEntity(calendarEvent);
-        _ = await Context.CalendarEvents.AddAsync(entity);
-        _ = await Context.SaveChangesAsync();
+        _ = await Context.CalendarEvents.AddAsync(entity, ct);
+        _ = await Context.SaveChangesAsync(ct);
         return entity.Id;
     }
 

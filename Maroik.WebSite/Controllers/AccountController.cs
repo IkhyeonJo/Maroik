@@ -1,4 +1,4 @@
-﻿using Maroik.Core.Contract.Dtos;
+using Maroik.Core.Contract.Dtos;
 using Maroik.Core.Contract.Interfaces;
 using Maroik.Core.Contract.Utilities;
 using Maroik.WebSite.Models.ViewModels.Account;
@@ -49,7 +49,7 @@ public class AccountController : BaseController
     /// <summary>Displays the login form (GET) or processes login credentials (POST).</summary>
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Login(LoginInputViewModel loginInputViewModel)
+    public async Task<IActionResult> Login(LoginInputViewModel loginInputViewModel, CancellationToken ct)
     {
         string userAgent = Request.Headers["User-Agent"].ToString();
         if (userAgent.Contains("MSIE") || userAgent.Contains("Trident"))
@@ -63,7 +63,7 @@ public class AccountController : BaseController
 
         if (!ModelState.IsValid) return View();
 
-        var result = await _accountService.LoginAsync(loginInputViewModel.Email!, loginInputViewModel.Password ?? "");
+        var result = await _accountService.LoginAsync(loginInputViewModel.Email!, loginInputViewModel.Password ?? "", ct);
 
         if (!result.Success)
         {
@@ -94,7 +94,7 @@ public class AccountController : BaseController
     /// <summary>Displays the registration form (GET) or processes new-account / resend-email requests (POST).</summary>
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Register(LoginInputViewModel loginInputViewModel)
+    public async Task<IActionResult> Register(LoginInputViewModel loginInputViewModel, CancellationToken ct)
     {
         if (!string.IsNullOrEmpty(loginInputViewModel.Password)) // Registration path
         {
@@ -137,7 +137,7 @@ public class AccountController : BaseController
                 Deleted = false
             };
 
-            var result = await _accountService.RegisterAsync(newAccount, emailSubject, emailTitle, emailContent0, emailContent1);
+            var result = await _accountService.RegisterAsync(newAccount, emailSubject, emailTitle, emailContent0, emailContent1, ct);
 
             if (!result.Success)
             {
@@ -162,7 +162,7 @@ public class AccountController : BaseController
             string emailContent0 = _localizer["Click the link below to verify your Email"].Value;
             string emailContent1 = _localizer["If this link does not work, please copy & paste this link to your Internet URL"].Value;
 
-            var result = await _accountService.ResendConfirmationEmailAsync(loginInputViewModel.Email!, emailSubject, emailTitle, emailContent0, emailContent1);
+            var result = await _accountService.ResendConfirmationEmailAsync(loginInputViewModel.Email!, emailSubject, emailTitle, emailContent0, emailContent1, ct);
 
             if (!result.Success)
             {
@@ -182,9 +182,9 @@ public class AccountController : BaseController
     #region ConfirmEmail
     /// <summary>Validates the email-confirmation token from the registration link and activates the account.</summary>
     [HttpGet]
-    public async Task<IActionResult> ConfirmEmail(string registrationToken)
+    public async Task<IActionResult> ConfirmEmail(string registrationToken, CancellationToken ct)
     {
-        var result = await _accountService.ConfirmEmailAsync(registrationToken);
+        var result = await _accountService.ConfirmEmailAsync(registrationToken, ct);
 
         if (!string.IsNullOrEmpty(result.ErrorKey))
             TempData["Error"] = _localizer[result.ErrorKey].Value;
@@ -203,7 +203,7 @@ public class AccountController : BaseController
     /// <summary>Displays the forgot-password form (GET) or sends a reset-password email (POST).</summary>
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> ForgotPassword(LoginInputViewModel loginInputViewModel)
+    public async Task<IActionResult> ForgotPassword(LoginInputViewModel loginInputViewModel, CancellationToken ct)
     {
         _ = ModelState.Remove(nameof(loginInputViewModel.Nickname));
         _ = ModelState.Remove(nameof(loginInputViewModel.Password));
@@ -215,7 +215,7 @@ public class AccountController : BaseController
         string emailContent0 = _localizer["Click the link below to reset your password"].Value;
         string emailContent1 = _localizer["If this link does not work, please copy & paste this link to your Internet URL"].Value;
 
-        await _accountService.ForgotPasswordAsync(loginInputViewModel.Email!, emailSubject, emailTitle, emailContent0, emailContent1);
+        await _accountService.ForgotPasswordAsync(loginInputViewModel.Email!, emailSubject, emailTitle, emailContent0, emailContent1, ct);
 
         ViewBag.mailSent = true;
         ViewBag.sentEmailAddress = loginInputViewModel.Email;
@@ -224,9 +224,9 @@ public class AccountController : BaseController
 
     /// <summary>Validates the reset token (GET) or applies the new password (POST).</summary>
     [HttpGet]
-    public async Task<IActionResult> ResetPassword(string resetPasswordToken)
+    public async Task<IActionResult> ResetPassword(string resetPasswordToken, CancellationToken ct)
     {
-        var result = await _accountService.ValidateResetPasswordTokenAsync(resetPasswordToken);
+        var result = await _accountService.ValidateResetPasswordTokenAsync(resetPasswordToken, ct);
         ViewBag.FailToResetPassword = result.FailToReset;
         ViewBag.ResetPasswordToken = result.ResetPasswordToken;
         return View();
@@ -235,7 +235,7 @@ public class AccountController : BaseController
     /// <summary>Validates the reset token (GET) or applies the new password (POST).</summary>
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> ResetPassword(LoginInputViewModel loginInputViewModel)
+    public async Task<IActionResult> ResetPassword(LoginInputViewModel loginInputViewModel, CancellationToken ct)
     {
         _ = ModelState.Remove(nameof(loginInputViewModel.Email));
         _ = ModelState.Remove(nameof(loginInputViewModel.Nickname));
@@ -245,7 +245,8 @@ public class AccountController : BaseController
 
         var result = await _accountService.ResetPasswordAsync(
             loginInputViewModel.ResetPasswordToken ?? "",
-            loginInputViewModel.Password ?? "");
+            loginInputViewModel.Password ?? "",
+            ct);
 
         if (!result.Success)
         {
@@ -263,5 +264,4 @@ public class AccountController : BaseController
         return View();
     }
     #endregion
-
 }

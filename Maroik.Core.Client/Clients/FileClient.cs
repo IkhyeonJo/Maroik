@@ -1,4 +1,4 @@
-﻿using Maroik.Core.Contract.Interfaces;
+using Maroik.Core.Contract.Interfaces;
 using System.Net;
 
 namespace Maroik.Core.Client.Clients;
@@ -10,7 +10,7 @@ namespace Maroik.Core.Client.Clients;
 public class FileClient : IFileClient
 {
     /// <inheritdoc />
-    public async Task<byte[]> DownloadAsync(string filePath, string fileStorageBaseUrl)
+    public async Task<byte[]> DownloadAsync(string filePath, string fileStorageBaseUrl, CancellationToken ct = default)
     {
         using HttpClient httpClient = new();
         using MultipartFormDataContent content = [];
@@ -18,14 +18,14 @@ public class FileClient : IFileClient
         // Pass the server-side file path to the storage service
         content.Add(new StringContent(filePath), "filePath");
 
-        HttpResponseMessage response = await httpClient.PostAsync($"{fileStorageBaseUrl}/api/File/download", content);
+        HttpResponseMessage response = await httpClient.PostAsync($"{fileStorageBaseUrl}/api/File/download", content, ct);
 
         _ = response.EnsureSuccessStatusCode(); // Throw on non-2xx status
-        return await response.Content.ReadAsByteArrayAsync(); // Return raw file bytes
+        return await response.Content.ReadAsByteArrayAsync(ct); // Return raw file bytes
     }
 
     /// <inheritdoc />
-    public async Task<bool> UploadAsync(byte[] fileData, string contentType, string filePath, string fileStorageBaseUrl)
+    public async Task<bool> UploadAsync(byte[] fileData, string contentType, string filePath, string fileStorageBaseUrl, CancellationToken ct = default)
     {
         try
         {
@@ -48,7 +48,7 @@ public class FileClient : IFileClient
                 // Tell the storage service where to save the file (directory path only)
                 content.Add(new StringContent(Path.GetDirectoryName(filePath ?? "") ?? ""), "filePath");
 
-                HttpResponseMessage response = await httpClient.PostAsync($"{fileStorageBaseUrl}/api/File/upload", content);
+                HttpResponseMessage response = await httpClient.PostAsync($"{fileStorageBaseUrl}/api/File/upload", content, ct);
                 _ = response.EnsureSuccessStatusCode();
 
                 return response.StatusCode == HttpStatusCode.OK;

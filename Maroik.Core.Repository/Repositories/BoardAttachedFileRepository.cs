@@ -16,12 +16,12 @@ public class BoardAttachedFileRepository(ApplicationDbContext context)
     protected override DbSet<OrmFile> Set => Context.BoardAttachedFiles;
 
     /// <inheritdoc />
-    public async Task<Dictionary<long, BoardAttachedFile?>> GetByBoardIdsAsync(IEnumerable<long> boardIds)
+    public async Task<Dictionary<long, BoardAttachedFile?>> GetByBoardIdsAsync(IEnumerable<long> boardIds, CancellationToken ct = default)
     {
         List<long> ids = boardIds.ToList();
         List<OrmFile> files = await Context.BoardAttachedFiles
             .Where(x => ids.Contains(x.BoardId))
-            .ToListAsync();
+            .ToListAsync(ct);
 
         return ids.ToDictionary(
             id => id,

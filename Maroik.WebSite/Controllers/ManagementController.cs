@@ -87,7 +87,7 @@ public class ManagementController : BaseController
     public async Task<IActionResult> Profile()
     {
         string? loginedAccountTimeZoneIanaId = _sessionService.GetAccount()!.TimeZoneIanaId;
-        AccountResponse? tempAccount = await _profileService.GetProfileAsync(_sessionService.GetAccount()!.Email!);
+        AccountResponse? tempAccount = await _profileService.GetProfileAsync(_sessionService.GetAccount()!.Email!, HttpContext.RequestAborted);
 
         return View(new ProfileOutputViewModel()
         {
@@ -136,7 +136,7 @@ public class ManagementController : BaseController
         string avatarDirectoryPath = Path.Combine(_hostEnvironment.ContentRootPath, "wwwroot", "upload", "Management", "Profile", "Avatar");
         string? email = _sessionService.GetAccount()!.Email;
 
-        ServiceResult avatarResult = await _profileService.UploadAndUpdateAvatarAsync(email!, imageBytes, extension, avatarDirectoryPath);
+        ServiceResult avatarResult = await _profileService.UploadAndUpdateAvatarAsync(email!, imageBytes, extension, avatarDirectoryPath, HttpContext.RequestAborted);
 
         if (!avatarResult.Success)
         {
@@ -172,10 +172,10 @@ public class ManagementController : BaseController
             try
             {
                 string? email = _sessionService.GetAccount()!.Email;
-                await _profileService.UpdateTimeZoneAsync(email!, profileInputViewModel.TimeZoneIanaId!);
+                await _profileService.UpdateTimeZoneAsync(email!, profileInputViewModel.TimeZoneIanaId!, HttpContext.RequestAborted);
 
                 // Refresh session with updated timezone
-                AccountResponse? updatedAccount = await _profileService.GetProfileAsync(email!);
+                AccountResponse? updatedAccount = await _profileService.GetProfileAsync(email!, HttpContext.RequestAborted);
                 _sessionService.RemoveAccount();
                 updatedAccount!.HashedPassword = null;
                 _sessionService.SetAccount(updatedAccount);
@@ -213,7 +213,8 @@ public class ManagementController : BaseController
             ServiceResult result = await _profileService.UpdatePasswordAsync(
                 email!,
                 profileInputViewModel.Password ?? "",
-                profileInputViewModel.NewPassword ?? "");
+                profileInputViewModel.NewPassword ?? "",
+                HttpContext.RequestAborted);
 
             return result.Success
                 ? Json(new { result = true, message = _localizer["Password change successfully done."].Value })
@@ -365,7 +366,7 @@ public class ManagementController : BaseController
                     Updated = DateTime.UtcNow,
                     Message = EnumHelper.GetDescription(AccountMessage.Success),
                     Deleted = false
-                });
+                }, HttpContext.RequestAborted);
 
                 return createResult.Success
                     ? Json(new { result = true, message = _localizer["Account create successfully done."].Value })
@@ -395,7 +396,7 @@ public class ManagementController : BaseController
         if (HttpContext.Request.Headers["X-Requested-With"] == "XMLHttpRequest")
         {
             string tz = _sessionService.GetAccount()!.TimeZoneIanaId!;
-            var accounts = await _managementAccountService.GetAllAccountsAsync();
+            var accounts = await _managementAccountService.GetAllAccountsAsync(HttpContext.RequestAborted);
             var viewModels = accounts
                 .ToDisplayViewModels(tz)
                 .ApplySearch(wholeSearch)
@@ -416,7 +417,7 @@ public class ManagementController : BaseController
     {
         try
         {
-            AccountResponse? tempAccount = await _managementAccountService.GetAccountByEmailAsync(email);
+            AccountResponse? tempAccount = await _managementAccountService.GetAccountByEmailAsync(email, HttpContext.RequestAborted);
 
             return tempAccount == null
                 ? Json(new
@@ -463,7 +464,8 @@ public class ManagementController : BaseController
                     Message = accountInputViewModel.Message,
                     Deleted = accountInputViewModel.Deleted
                 },
-                accountInputViewModel.Password); // new password (plain); service hashes it
+                accountInputViewModel.Password, // new password (plain); service hashes it
+                HttpContext.RequestAborted);
 
             return updateResult.Success
                 ? Json(new { result = true, message = _localizer["Successfully updated the account"].Value })
@@ -487,7 +489,7 @@ public class ManagementController : BaseController
     {
         try
         {
-            ServiceResult deleteResult = await _managementAccountService.DeleteAccountAsync(accountInputViewModel.Email!);
+            ServiceResult deleteResult = await _managementAccountService.DeleteAccountAsync(accountInputViewModel.Email!, HttpContext.RequestAborted);
             return deleteResult.Success
                 ? Json(new { result = true, message = _localizer["Successfully deleted the account"].Value })
                 : Json(new { result = false, error = _localizer[deleteResult.ErrorKey ?? "Input is invalid"].Value });
@@ -509,7 +511,7 @@ public class ManagementController : BaseController
     public async Task<IActionResult> ExportExcelAccount(string fileName = "")
     {
         var account  = _sessionService.GetAccount()!;
-        var accounts = await _managementAccountService.GetAllAccountsAsync();
+        var accounts = await _managementAccountService.GetAllAccountsAsync(HttpContext.RequestAborted);
         var stream   = _excelExportService.CreateAccountExcel(accounts, Localize, account.TimeZoneIanaId!);
         string name  = $"{fileName}-{DateTime.UtcNow.ConvertTimeByTimeZoneIanaId(account.TimeZoneIanaId!):yyyy-MM-dd-HH-mm-ss-fff}.xlsx";
         return File(stream, "application/octet-stream", name);
@@ -546,7 +548,7 @@ public class ManagementController : BaseController
                 Action = menuInputViewModel.Action,
                 Role = menuInputViewModel.Role,
                 Order = menuInputViewModel.Order
-            });
+            }, HttpContext.RequestAborted);
             if (!createCatResult.Success)
                 return Json(new { result = false, error = _localizer["Input is invalid"].Value });
             await InvalidateNavigationCacheAsync();
@@ -581,7 +583,7 @@ public class ManagementController : BaseController
                 Action = menuInputViewModel.Action,
                 Role = menuInputViewModel.Role,
                 Order = menuInputViewModel.Order
-            });
+            }, HttpContext.RequestAborted);
             if (!createSubCatResult.Success)
                 return Json(new { result = false, error = _localizer["Input is invalid"].Value });
             await InvalidateNavigationCacheAsync();
@@ -607,7 +609,7 @@ public class ManagementController : BaseController
 
             #region Categories
 
-            foreach (CategoryResponse item in await _menuService.GetAllCategoriesAsync())
+            foreach (CategoryResponse item in await _menuService.GetAllCategoriesAsync(HttpContext.RequestAborted))
             {
                 if (string.IsNullOrEmpty(wholeSearch) ||
                     item.Id.ToString().Contains(wholeSearch) ||
@@ -638,7 +640,7 @@ public class ManagementController : BaseController
 
             #region SubCategories
 
-            foreach (SubCategoryResponse item in await _menuService.GetAllSubCategoriesAsync())
+            foreach (SubCategoryResponse item in await _menuService.GetAllSubCategoriesAsync(HttpContext.RequestAborted))
             {
                 if (string.IsNullOrEmpty(wholeSearch) ||
                     item.Id.ToString().Contains(wholeSearch) ||
@@ -683,7 +685,7 @@ public class ManagementController : BaseController
     {
         try
         {
-            CategoryResponse? category = await _menuService.GetCategoryByIdAsync(id);
+            CategoryResponse? category = await _menuService.GetCategoryByIdAsync(id, HttpContext.RequestAborted);
             if (category == null)
                 return Json(new { result = false, error = _localizer["Input is invalid"].Value });
 
@@ -715,7 +717,7 @@ public class ManagementController : BaseController
     {
         try
         {
-            SubCategoryResponse? subCategory = await _menuService.GetSubCategoryByIdAsync(id);
+            SubCategoryResponse? subCategory = await _menuService.GetSubCategoryByIdAsync(id, HttpContext.RequestAborted);
             if (subCategory == null)
                 return Json(new { result = false, error = _localizer["Input is invalid"].Value });
 
@@ -767,7 +769,7 @@ public class ManagementController : BaseController
                 Action = menuInputViewModel.Action,
                 Role = menuInputViewModel.Role,
                 Order = menuInputViewModel.Order
-            });
+            }, HttpContext.RequestAborted);
             if (!updateCatResult.Success)
                 return Json(new { result = false, error = _localizer["Input is invalid"].Value });
             await InvalidateNavigationCacheAsync();
@@ -803,7 +805,7 @@ public class ManagementController : BaseController
                 Action = menuInputViewModel.Action,
                 Role = menuInputViewModel.Role,
                 Order = menuInputViewModel.Order
-            });
+            }, HttpContext.RequestAborted);
             if (!updateSubCatResult.Success)
                 return Json(new { result = false, error = _localizer["Input is invalid"].Value });
             await InvalidateNavigationCacheAsync();
@@ -843,7 +845,7 @@ public class ManagementController : BaseController
                 Action = menuInputViewModel.Action,
                 Role = menuInputViewModel.Role,
                 Order = menuInputViewModel.Order
-            });
+            }, HttpContext.RequestAborted);
             if (!deleteCatResult.Success)
                 return Json(new { result = false, error = _localizer["Input is invalid"].Value });
             await InvalidateNavigationCacheAsync();
@@ -879,7 +881,7 @@ public class ManagementController : BaseController
                 Action = menuInputViewModel.Action,
                 Role = menuInputViewModel.Role,
                 Order = menuInputViewModel.Order
-            });
+            }, HttpContext.RequestAborted);
 
             if (!deleteSubCatResult.Success)
                 return Json(new { result = false, error = _localizer["Input is invalid"].Value });
@@ -903,8 +905,8 @@ public class ManagementController : BaseController
     public async Task<IActionResult> ExportExcelMenu(string fileName = "")
     {
         var account     = _sessionService.GetAccount()!;
-        var categories  = await _menuService.GetAllCategoriesAsync();
-        var subCats     = await _menuService.GetAllSubCategoriesAsync();
+        var categories  = await _menuService.GetAllCategoriesAsync(HttpContext.RequestAborted);
+        var subCats     = await _menuService.GetAllSubCategoriesAsync(HttpContext.RequestAborted);
         var stream      = _excelExportService.CreateMenuExcel(categories, subCats, Localize);
         string name     = $"{fileName}-{DateTime.UtcNow.ConvertTimeByTimeZoneIanaId(account.TimeZoneIanaId!):yyyy-MM-dd-HH-mm-ss-fff}.xlsx";
         return File(stream, "application/octet-stream", name);
@@ -970,7 +972,7 @@ public class ManagementController : BaseController
                 };
             }
 
-            ServiceResult result = await _boardService.WriteBoardAsync(boardRequest, attachedFile);
+            ServiceResult result = await _boardService.WriteBoardAsync(boardRequest, attachedFile, HttpContext.RequestAborted);
             return result.Success
                 ? Json(new { result = true, message = _localizer["The board has been successfully created."].Value })
                 : Json(new { result = false, error = _localizer["Input is invalid"].Value });
@@ -1015,7 +1017,7 @@ public class ManagementController : BaseController
                 Content = boardCommentInputViewModel.Content
             };
 
-            ServiceResult result = await _boardService.WriteCommentAsync(commentRequest, loginedAccount.Nickname!);
+            ServiceResult result = await _boardService.WriteCommentAsync(commentRequest, loginedAccount.Nickname!, HttpContext.RequestAborted);
             return result.Success
                 ? Json(new { result = true, boardId = boardCommentInputViewModel.BoardId, page = boardCommentInputViewModel.DetailCurrentPage })
                 : Json(new { result = false, error = _localizer["Input is invalid"].Value });
@@ -1063,7 +1065,7 @@ public class ManagementController : BaseController
             Size = summernoteImageFile.Length
         };
 
-        SummernoteUploadResult uploadResult = await _boardService.UploadSummernoteImageAsync(file, "Management", EnumHelper.GetDescription(BoardType.PrivateNote));
+        SummernoteUploadResult uploadResult = await _boardService.UploadSummernoteImageAsync(file, "Management", EnumHelper.GetDescription(BoardType.PrivateNote), HttpContext.RequestAborted);
 
         if (!uploadResult.Success)
             return Ok(new { result = false, errorMessage = _localizer[uploadResult.ErrorKey ?? "Input is invalid"].Value });
@@ -1117,8 +1119,8 @@ public class ManagementController : BaseController
                 DetailBoardId = boardId ?? default
             };
 
-            BoardResponse? privateNoteBoard = await _boardService.GetBoardByIdAsync(boardId ?? 0);
-            BoardAttachedFileResponse? attachedFile = await _boardService.GetAttachedFileByBoardIdAsync(boardId ?? 0);
+            BoardResponse? privateNoteBoard = await _boardService.GetBoardByIdAsync(boardId ?? 0, HttpContext.RequestAborted);
+            BoardAttachedFileResponse? attachedFile = await _boardService.GetAttachedFileByBoardIdAsync(boardId ?? 0, HttpContext.RequestAborted);
 
             try
             {
@@ -1133,9 +1135,9 @@ public class ManagementController : BaseController
                     }
                 }
 
-                await _boardService.IncrementBoardViewAsync(boardId ?? 0);
+                await _boardService.IncrementBoardViewAsync(boardId ?? 0, HttpContext.RequestAborted);
 
-                (privateNoteBoard.Content, bool isImgTagIncluded) = await _boardService.PrepareHtmlForDisplayAsync(privateNoteBoard.Content ?? "");
+                (privateNoteBoard.Content, bool isImgTagIncluded) = await _boardService.PrepareHtmlForDisplayAsync(privateNoteBoard.Content ?? "", HttpContext.RequestAborted);
 
                 privateNoteOutputViewModel.BoardOutputViewModel =
                     new Maroik.WebSite.Models.ViewModels.Management.BoardOutputViewModel()
@@ -1155,7 +1157,7 @@ public class ManagementController : BaseController
                 if (!string.IsNullOrEmpty(privateNoteOutputViewModel?.BoardOutputViewModel?.BoardAttachedFilePath ?? ""))
                 {
                     byte[]? fileData = await _boardService.DownloadFileAsync(
-                        privateNoteOutputViewModel?.BoardOutputViewModel?.BoardAttachedFilePath ?? "");
+                        privateNoteOutputViewModel?.BoardOutputViewModel?.BoardAttachedFilePath ?? "", HttpContext.RequestAborted);
 
                     if (fileData != null)
                     {
@@ -1165,8 +1167,8 @@ public class ManagementController : BaseController
                     }
 
                 // Preload comments and accounts for detail view
-                privateNoteOutputViewModel!.DetailBoardComments = (await _boardService.GetCommentsByBoardIdAsync(boardId ?? 0))?.ToList() ?? [];
-                privateNoteOutputViewModel.AllAccounts = await _accountService.GetAllAccountsAsync() ?? [];
+                privateNoteOutputViewModel!.DetailBoardComments = (await _boardService.GetCommentsByBoardIdAsync(boardId ?? 0, HttpContext.RequestAborted))?.ToList() ?? [];
+                privateNoteOutputViewModel.AllAccounts = await _accountService.GetAllAccountsAsync(HttpContext.RequestAborted) ?? [];
                 privateNoteOutputViewModel.LoginedAccount = loginedAccount;
                 privateNoteOutputViewModel.LoginedAccountTimeZoneIanaId = loginedAccount?.TimeZoneIanaId ?? "";
 
@@ -1195,8 +1197,8 @@ public class ManagementController : BaseController
 
             AccountResponse loginedAccount = _sessionService.GetAccount()!;
 
-            BoardResponse? privateNoteBoard = await _boardService.GetBoardByIdAsync(boardId ?? 0);
-            BoardAttachedFileResponse? attachedFile = await _boardService.GetAttachedFileByBoardIdAsync(boardId ?? 0);
+            BoardResponse? privateNoteBoard = await _boardService.GetBoardByIdAsync(boardId ?? 0, HttpContext.RequestAborted);
+            BoardAttachedFileResponse? attachedFile = await _boardService.GetAttachedFileByBoardIdAsync(boardId ?? 0, HttpContext.RequestAborted);
 
             try
             {
@@ -1205,7 +1207,7 @@ public class ManagementController : BaseController
                     return RedirectToAction(nameof(BoardType.PrivateNote), "Management");
                 }
 
-                (privateNoteBoard.Content, bool isImgTagIncluded) = await _boardService.PrepareHtmlForDisplayAsync(privateNoteBoard.Content ?? "");
+                (privateNoteBoard.Content, bool isImgTagIncluded) = await _boardService.PrepareHtmlForDisplayAsync(privateNoteBoard.Content ?? "", HttpContext.RequestAborted);
 
                 privateNoteOutputViewModel.BoardOutputViewModel =
                     new Maroik.WebSite.Models.ViewModels.Management.BoardOutputViewModel()
@@ -1226,7 +1228,7 @@ public class ManagementController : BaseController
                 if (!string.IsNullOrEmpty(privateNoteOutputViewModel?.BoardOutputViewModel?.BoardAttachedFilePath ?? ""))
                 {
                     byte[]? fileData = await _boardService.DownloadFileAsync(
-                        privateNoteOutputViewModel?.BoardOutputViewModel?.BoardAttachedFilePath ?? "");
+                        privateNoteOutputViewModel?.BoardOutputViewModel?.BoardAttachedFilePath ?? "", HttpContext.RequestAborted);
 
                     if (fileData != null)
                     {
@@ -1261,7 +1263,7 @@ public class ManagementController : BaseController
             #region Logic to get all related board data
 
             IEnumerable<BoardResponse> privateNoteBoards =
-                await _boardService.GetBoardsAsync(EnumHelper.GetDescription(BoardType.PrivateNote));
+                await _boardService.GetBoardsAsync(EnumHelper.GetDescription(BoardType.PrivateNote), HttpContext.RequestAborted);
             privateNoteBoards = privateNoteBoards.Where(m => m.Writer == loginedAccount.Nickname)
                 .Where(m => m.Deleted == false && m.Noticed == false).OrderByDescending(a => a.Id);
 
@@ -1337,11 +1339,11 @@ public class ManagementController : BaseController
             #region Preload comment counts and attached files for view
             privateNoteOutputViewModel.LoginedAccount = loginedAccount;
             privateNoteOutputViewModel.LoginedAccountTimeZoneIanaId = loginedAccount?.TimeZoneIanaId ?? "";
-            privateNoteOutputViewModel.AllAccounts = await _accountService.GetAllAccountsAsync() ?? [];
+            privateNoteOutputViewModel.AllAccounts = await _accountService.GetAllAccountsAsync(HttpContext.RequestAborted) ?? [];
 
             List<long> boardIds = privateNoteOutputViewModel.Boards.Select(b => b.Id).ToList();
-            Dictionary<long, int> commentCounts = await _boardService.GetCommentCountsForBoardsAsync(boardIds);
-            Dictionary<long, BoardAttachedFileResponse?> attachedFiles = await _boardService.GetAttachedFilesForBoardsAsync(boardIds);
+            Dictionary<long, int> commentCounts = await _boardService.GetCommentCountsForBoardsAsync(boardIds, HttpContext.RequestAborted);
+            Dictionary<long, BoardAttachedFileResponse?> attachedFiles = await _boardService.GetAttachedFilesForBoardsAsync(boardIds, HttpContext.RequestAborted);
 
             foreach (var board in privateNoteOutputViewModel.Boards)
             {
@@ -1371,7 +1373,7 @@ public class ManagementController : BaseController
         try
         {
             string? nickname = _sessionService.GetAccount()!.Nickname;
-            BoardResponse? board = await _boardService.GetBoardByIdAsync(id);
+            BoardResponse? board = await _boardService.GetBoardByIdAsync(id, HttpContext.RequestAborted);
 
             return board == null || board.Deleted || board.Writer != nickname
                 ? Json(new { result = false, error = _localizer["Input is invalid"].Value })
@@ -1435,7 +1437,7 @@ public class ManagementController : BaseController
                 };
             }
 
-            ServiceResult result = await _boardService.EditBoardAsync(boardRequest, loginedAccount.Nickname!, attachedFile);
+            ServiceResult result = await _boardService.EditBoardAsync(boardRequest, loginedAccount.Nickname!, attachedFile, HttpContext.RequestAborted);
             return result.Success
                 ? Json(new { result = true, message = _localizer["The board has been successfully updated."].Value })
                 : Json(new { result = false, error = _localizer["Input is invalid"].Value });
@@ -1469,7 +1471,8 @@ public class ManagementController : BaseController
                 boardInputViewModel.Id,
                 EnumHelper.GetDescription(BoardType.PrivateNote),
                 loginedAccount.Nickname!,
-                loginedAccount.Role == Role.Admin);
+                loginedAccount.Role == Role.Admin,
+                HttpContext.RequestAborted);
 
             return result.Success
                 ? Json(new { result = true, message = _localizer["The board has been successfully deleted."].Value })
@@ -1499,7 +1502,8 @@ public class ManagementController : BaseController
             ServiceResult result = await _boardService.DeleteCommentAsync(
                 id,
                 loginedAccount.Nickname!,
-                loginedAccount.Role == Role.Admin);
+                loginedAccount.Role == Role.Admin,
+                HttpContext.RequestAborted);
 
             return result.Success
                 ? Json(new { result = true })

@@ -67,7 +67,7 @@ public class DashBoardController(
     #region Read
     /// <summary>Returns the user dashboard view populated with income/expenditure summary data.</summary>
     [HttpGet]
-    public async Task<IActionResult> UserIndex(string year, string month)
+    public async Task<IActionResult> UserIndex(string year, string month, CancellationToken ct)
     {
         var loginedAccount = _sessionService1.GetAccount();
         string? email      = loginedAccount?.Email;
@@ -75,7 +75,7 @@ public class DashBoardController(
 
         if (email == "demo@maroik.com") { year = "2025"; month = "06"; }
 
-        var summary = await _dashboardService1.GetSummaryAsync(email!, year ?? "", month ?? "", timeZoneId!);
+        var summary = await _dashboardService1.GetSummaryAsync(email!, year ?? "", month ?? "", timeZoneId!, ct);
         return View(summary.ToViewModel(timeZoneId!));
     }
     #endregion
@@ -85,12 +85,12 @@ public class DashBoardController(
     [HttpPost]
     [ValidateAntiForgeryToken]
     [RequiredHttpPostAccess(Role = Role.User)]
-    public async Task<IActionResult> UserUpdateDefaultMonetary([FromBody] UserIndexInputViewModel userIndexInputViewModel)
+    public async Task<IActionResult> UserUpdateDefaultMonetary([FromBody] UserIndexInputViewModel userIndexInputViewModel, CancellationToken ct)
     {
         try
         {
             string email = _sessionService1.GetAccount()?.Email ?? "";
-            await _profileService.UpdateDefaultMonetaryUnitAsync(email, userIndexInputViewModel.DefaultMonetaryUnit);
+            await _profileService.UpdateDefaultMonetaryUnitAsync(email, userIndexInputViewModel.DefaultMonetaryUnit, ct);
             return Json(new { result = true });
         }
         catch

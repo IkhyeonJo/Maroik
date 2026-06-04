@@ -13,14 +13,14 @@ public interface IDashboardService : IQueryService
     /// Builds the full dashboard summary for the given account, year, and month.
     /// All date comparisons are performed in the user's <paramref name="timeZoneId"/>.
     /// </summary>
-    Task<DashboardSummary> GetSummaryAsync(string accountEmail, string year, string month, string timeZoneId);
+    Task<DashboardSummary> GetSummaryAsync(string accountEmail, string year, string month, string timeZoneId, CancellationToken ct = default);
 
     /// <summary>
     /// Counts fixed income and expenditure items that are approaching their deposit day
     /// within <paramref name="noticeMaturityDateDay"/> days, or whose maturity date has passed.
     /// Used to populate the navigation header badges.
     /// </summary>
-    Task<NotificationCounts> GetNoticeCountsAsync(string email, int noticeMaturityDateDay);
+    Task<NotificationCounts> GetNoticeCountsAsync(string email, int noticeMaturityDateDay, CancellationToken ct = default);
 
     /// <summary>
     /// Reads the host and Docker resource log files and returns the parsed metrics

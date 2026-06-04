@@ -16,7 +16,7 @@ public class BoardCommentRepository(ApplicationDbContext context)
     protected override DbSet<OrmBoardComment> Set => Context.BoardComments;
 
     /// <inheritdoc />
-    public async Task<Dictionary<long, int>> GetCommentCountsByBoardIdsAsync(IEnumerable<long> boardIds)
+    public async Task<Dictionary<long, int>> GetCommentCountsByBoardIdsAsync(IEnumerable<long> boardIds, CancellationToken ct = default)
     {
         List<long> ids = boardIds.ToList();
 
@@ -24,7 +24,7 @@ public class BoardCommentRepository(ApplicationDbContext context)
             .Where(x => ids.Contains(x.BoardId) && !x.Deleted)
             .GroupBy(x => x.BoardId)
             .Select(g => new { BoardId = g.Key, Count = g.Count() })
-            .ToDictionaryAsync(x => x.BoardId, x => x.Count);
+            .ToDictionaryAsync(x => x.BoardId, x => x.Count, ct);
 
         foreach (long id in ids.Where(id => !counts.ContainsKey(id)))
             counts[id] = 0;

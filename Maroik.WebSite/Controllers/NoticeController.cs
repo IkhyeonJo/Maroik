@@ -57,7 +57,7 @@ public class NoticeController : BaseController
     [ValidateAntiForgeryToken]
     [RequiredHttpPostAccess(Role = Role.User)]
     public async Task<IActionResult> CreateFixedIncome(
-        [FromBody] FixedIncomeInputViewModel fixedIncomeInputViewModel)
+        [FromBody] FixedIncomeInputViewModel fixedIncomeInputViewModel, CancellationToken ct)
     {
         if (!ModelState.IsValid)
             return Json(new { result = false, error = _localizer["Input is invalid"].Value });
@@ -79,7 +79,7 @@ public class NoticeController : BaseController
             Unpunctuality             = fixedIncomeInputViewModel.Unpunctuality
         };
 
-        var result = await _fixedIncomeService.CreateAsync(email, request);
+        var result = await _fixedIncomeService.CreateAsync(email, request, ct);
         return result.Success
             ? Json(new { result = true, message = _localizer["The fixedIncome has been successfully created."].Value })
             : Json(new { result = false, error = _localizer[result.ErrorKey].Value });
@@ -90,13 +90,13 @@ public class NoticeController : BaseController
 
     /// <summary>Returns the fixed-income grid (AJAX) or the full page.</summary>
     [HttpGet]
-    public async Task<IActionResult> FixedIncome(string wholeSearch)
+    public async Task<IActionResult> FixedIncome(string wholeSearch, CancellationToken ct)
     {
         if (HttpContext.Request.Headers["X-Requested-With"] == "XMLHttpRequest")
         {
             var account = _sessionService.GetAccount()!;
-            var assets  = await _assetService.GetAssetsAsync(account.Email!);
-            var incomes = await _fixedIncomeService.GetFixedIncomesAsync(account.Email!);
+            var assets  = await _assetService.GetAssetsAsync(account.Email!, ct);
+            var incomes = await _fixedIncomeService.GetFixedIncomesAsync(account.Email!, ct);
             var viewModels = incomes
                 .ToDisplayViewModels(assets, Localize, account.TimeZoneIanaId!, NoticeWindowDays)
                 .ApplySearch(wholeSearch)
@@ -108,7 +108,7 @@ public class NoticeController : BaseController
         }
 
         var loginedAccount = _sessionService.GetAccount() ?? new AccountResponse();
-        ViewBag.Assets = (await _assetService.GetAssetsAsync(loginedAccount.Email!))
+        ViewBag.Assets = (await _assetService.GetAssetsAsync(loginedAccount.Email!, ct))
             .Where(x => !x.Deleted).OrderBy(x => x.ProductName).ToList();
         return View();
     }
@@ -117,12 +117,12 @@ public class NoticeController : BaseController
     [HttpPost]
     [ValidateAntiForgeryToken]
     [RequiredHttpPostAccess(Role = Role.User)]
-    public async Task<IActionResult> IsFixedIncomeExists(int id)
+    public async Task<IActionResult> IsFixedIncomeExists(int id, CancellationToken ct)
     {
         try
         {
             string email = _sessionService.GetAccount()!.Email!;
-            FixedIncomeResponse? item = await _fixedIncomeService.GetByIdAsync(email, id);
+            FixedIncomeResponse? item = await _fixedIncomeService.GetByIdAsync(email, id, ct);
             if (item == null)
                 return Json(new { result = false, error = _localizer["Input is invalid"].Value });
 
@@ -152,13 +152,13 @@ public class NoticeController : BaseController
     [HttpPost]
     [ValidateAntiForgeryToken]
     [RequiredHttpPostAccess(Role = Role.User)]
-    public async Task<IActionResult> GetFixedIncomeAmountLabel(string productName)
+    public async Task<IActionResult> GetFixedIncomeAmountLabel(string productName, CancellationToken ct)
     {
         try
         {
             string baseLabel = _localizer["Amount"].Value;
             AssetResponse? asset = await _assetService.GetAssetAsync(
-                _sessionService.GetAccount()!.Email!, productName);
+                _sessionService.GetAccount()!.Email!, productName, ct);
 
             string label = !string.IsNullOrEmpty(asset?.MonetaryUnit)
                 ? baseLabel.GetAmountLabel(asset.MonetaryUnit)
@@ -180,7 +180,7 @@ public class NoticeController : BaseController
     [ValidateAntiForgeryToken]
     [RequiredHttpPostAccess(Role = Role.User)]
     public async Task<IActionResult> UpdateFixedIncome(
-        [FromBody] FixedIncomeInputViewModel fixedIncomeInputViewModel)
+        [FromBody] FixedIncomeInputViewModel fixedIncomeInputViewModel, CancellationToken ct)
     {
         if (!ModelState.IsValid)
             return Json(new { result = false, error = _localizer["Input is invalid"].Value });
@@ -202,7 +202,7 @@ public class NoticeController : BaseController
             Unpunctuality             = fixedIncomeInputViewModel.Unpunctuality
         };
 
-        var result = await _fixedIncomeService.UpdateAsync(email, request);
+        var result = await _fixedIncomeService.UpdateAsync(email, request, ct);
         return result.Success
             ? Json(new { result = true, message = _localizer["The fixedIncome has been successfully updated."].Value })
             : Json(new { result = false, error = _localizer[result.ErrorKey].Value });
@@ -215,10 +215,10 @@ public class NoticeController : BaseController
     [ValidateAntiForgeryToken]
     [RequiredHttpPostAccess(Role = Role.User)]
     public async Task<IActionResult> DeleteFixedIncome(
-        [FromBody] FixedIncomeInputViewModel fixedIncomeInputViewModel)
+        [FromBody] FixedIncomeInputViewModel fixedIncomeInputViewModel, CancellationToken ct)
     {
         string email = _sessionService.GetAccount()!.Email!;
-        var result = await _fixedIncomeService.DeleteAsync(email, fixedIncomeInputViewModel.Id);
+        var result = await _fixedIncomeService.DeleteAsync(email, fixedIncomeInputViewModel.Id, ct);
         return result.Success
             ? Json(new { result = true, message = _localizer["The fixedIncome has been successfully deleted."].Value })
             : Json(new { result = false, error = _localizer[result.ErrorKey].Value });
@@ -230,11 +230,11 @@ public class NoticeController : BaseController
     [HttpPost]
     [ValidateAntiForgeryToken]
     [RequiredHttpPostAccess(Role = Role.User)]
-    public async Task<IActionResult> ExportExcelFixedIncome(string fileName = "")
+    public async Task<IActionResult> ExportExcelFixedIncome(string fileName = "", CancellationToken ct = default)
     {
         var account = _sessionService.GetAccount()!;
-        var assets  = await _assetService.GetAssetsAsync(account.Email!);
-        var incomes = await _fixedIncomeService.GetFixedIncomesAsync(account.Email!);
+        var assets  = await _assetService.GetAssetsAsync(account.Email!, ct);
+        var incomes = await _fixedIncomeService.GetFixedIncomesAsync(account.Email!, ct);
         var stream  = _excelExportService.CreateFixedIncomeExcel(incomes, assets, Localize, account.TimeZoneIanaId!, NoticeWindowDays);
         string name = ExcelFileName(fileName, account.TimeZoneIanaId!);
         return File(stream, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", name);
@@ -251,7 +251,7 @@ public class NoticeController : BaseController
     [ValidateAntiForgeryToken]
     [RequiredHttpPostAccess(Role = Role.User)]
     public async Task<IActionResult> CreateFixedExpenditure(
-        [FromBody] FixedExpenditureInputViewModel fixedExpenditureInputViewModel)
+        [FromBody] FixedExpenditureInputViewModel fixedExpenditureInputViewModel, CancellationToken ct)
     {
         if (!ModelState.IsValid)
             return Json(new { result = false, error = _localizer["Input is invalid"].Value });
@@ -274,7 +274,7 @@ public class NoticeController : BaseController
             Unpunctuality  = fixedExpenditureInputViewModel.Unpunctuality
         };
 
-        var result = await _fixedExpenditureService.CreateAsync(email, request);
+        var result = await _fixedExpenditureService.CreateAsync(email, request, ct);
         return result.Success
             ? Json(new { result = true, message = _localizer["The fixedExpenditure has been successfully created."].Value })
             : Json(new { result = false, error = _localizer[result.ErrorKey].Value });
@@ -285,13 +285,13 @@ public class NoticeController : BaseController
 
     /// <summary>Returns the fixed-expenditure grid (AJAX) or the full page.</summary>
     [HttpGet]
-    public async Task<IActionResult> FixedExpenditure(string wholeSearch)
+    public async Task<IActionResult> FixedExpenditure(string wholeSearch, CancellationToken ct)
     {
         if (HttpContext.Request.Headers["X-Requested-With"] == "XMLHttpRequest")
         {
             var account      = _sessionService.GetAccount()!;
-            var assets       = await _assetService.GetAssetsAsync(account.Email!);
-            var expenditures = await _fixedExpenditureService.GetFixedExpendituresAsync(account.Email!);
+            var assets       = await _assetService.GetAssetsAsync(account.Email!, ct);
+            var expenditures = await _fixedExpenditureService.GetFixedExpendituresAsync(account.Email!, ct);
             var viewModels   = expenditures
                 .ToDisplayViewModels(assets, Localize, account.TimeZoneIanaId!, NoticeWindowDays)
                 .ApplySearch(wholeSearch)
@@ -303,7 +303,7 @@ public class NoticeController : BaseController
         }
 
         var loginedAccount = _sessionService.GetAccount() ?? new AccountResponse();
-        ViewBag.Assets = (await _assetService.GetAssetsAsync(loginedAccount.Email!))
+        ViewBag.Assets = (await _assetService.GetAssetsAsync(loginedAccount.Email!, ct))
             .Where(x => !x.Deleted).OrderBy(x => x.ProductName).ToList();
         return View();
     }
@@ -312,12 +312,12 @@ public class NoticeController : BaseController
     [HttpPost]
     [ValidateAntiForgeryToken]
     [RequiredHttpPostAccess(Role = Role.User)]
-    public async Task<IActionResult> IsFixedExpenditureExists(int id)
+    public async Task<IActionResult> IsFixedExpenditureExists(int id, CancellationToken ct)
     {
         try
         {
             string email = _sessionService.GetAccount()!.Email!;
-            FixedExpenditureResponse? item = await _fixedExpenditureService.GetByIdAsync(email, id);
+            FixedExpenditureResponse? item = await _fixedExpenditureService.GetByIdAsync(email, id, ct);
             if (item == null)
                 return Json(new { result = false, error = _localizer["Input is invalid"].Value });
 
@@ -348,13 +348,13 @@ public class NoticeController : BaseController
     [HttpPost]
     [ValidateAntiForgeryToken]
     [RequiredHttpPostAccess(Role = Role.User)]
-    public async Task<IActionResult> GetFixedExpenditureAmountLabel(string productName)
+    public async Task<IActionResult> GetFixedExpenditureAmountLabel(string productName, CancellationToken ct)
     {
         try
         {
             string baseLabel = _localizer["Amount"].Value;
             AssetResponse? asset = await _assetService.GetAssetAsync(
-                _sessionService.GetAccount()!.Email!, productName);
+                _sessionService.GetAccount()!.Email!, productName, ct);
 
             string label = !string.IsNullOrEmpty(asset?.MonetaryUnit)
                 ? baseLabel.GetAmountLabel(asset.MonetaryUnit)
@@ -376,7 +376,7 @@ public class NoticeController : BaseController
     [ValidateAntiForgeryToken]
     [RequiredHttpPostAccess(Role = Role.User)]
     public async Task<IActionResult> UpdateFixedExpenditure(
-        [FromBody] FixedExpenditureInputViewModel fixedExpenditureInputViewModel)
+        [FromBody] FixedExpenditureInputViewModel fixedExpenditureInputViewModel, CancellationToken ct)
     {
         if (!ModelState.IsValid)
             return Json(new { result = false, error = _localizer["Input is invalid"].Value });
@@ -399,7 +399,7 @@ public class NoticeController : BaseController
             Unpunctuality  = fixedExpenditureInputViewModel.Unpunctuality
         };
 
-        var result = await _fixedExpenditureService.UpdateAsync(email, request);
+        var result = await _fixedExpenditureService.UpdateAsync(email, request, ct);
         return result.Success
             ? Json(new { result = true, message = _localizer["The fixedExpenditure has been successfully updated."].Value })
             : Json(new { result = false, error = _localizer[result.ErrorKey].Value });
@@ -412,10 +412,10 @@ public class NoticeController : BaseController
     [ValidateAntiForgeryToken]
     [RequiredHttpPostAccess(Role = Role.User)]
     public async Task<IActionResult> DeleteFixedExpenditure(
-        [FromBody] FixedExpenditureInputViewModel fixedExpenditureInputViewModel)
+        [FromBody] FixedExpenditureInputViewModel fixedExpenditureInputViewModel, CancellationToken ct)
     {
         string email = _sessionService.GetAccount()!.Email!;
-        var result = await _fixedExpenditureService.DeleteAsync(email, fixedExpenditureInputViewModel.Id);
+        var result = await _fixedExpenditureService.DeleteAsync(email, fixedExpenditureInputViewModel.Id, ct);
         return result.Success
             ? Json(new { result = true, message = _localizer["The fixedExpenditure has been successfully deleted."].Value })
             : Json(new { result = false, error = _localizer[result.ErrorKey].Value });
@@ -427,11 +427,11 @@ public class NoticeController : BaseController
     [HttpPost]
     [ValidateAntiForgeryToken]
     [RequiredHttpPostAccess(Role = Role.User)]
-    public async Task<IActionResult> ExportExcelFixedExpenditure(string fileName = "")
+    public async Task<IActionResult> ExportExcelFixedExpenditure(string fileName = "", CancellationToken ct = default)
     {
         var account      = _sessionService.GetAccount()!;
-        var assets       = await _assetService.GetAssetsAsync(account.Email!);
-        var expenditures = await _fixedExpenditureService.GetFixedExpendituresAsync(account.Email!);
+        var assets       = await _assetService.GetAssetsAsync(account.Email!, ct);
+        var expenditures = await _fixedExpenditureService.GetFixedExpendituresAsync(account.Email!, ct);
         var stream       = _excelExportService.CreateFixedExpenditureExcel(expenditures, assets, Localize, account.TimeZoneIanaId!, NoticeWindowDays);
         string name      = ExcelFileName(fileName, account.TimeZoneIanaId!);
         return File(stream, "application/octet-stream", name);

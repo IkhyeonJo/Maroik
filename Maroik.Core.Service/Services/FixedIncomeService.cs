@@ -1,4 +1,4 @@
-﻿using Maroik.Core.Contract.Domains.Finance;
+using Maroik.Core.Contract.Domains.Finance;
 using Maroik.Core.Contract.Filters;
 using Maroik.Core.Contract.Dtos;
 using Maroik.Core.Contract.Interfaces;
@@ -26,27 +26,27 @@ public class FixedIncomeService : IFixedIncomeService
     }
 
     /// <inheritdoc />
-    public async Task<List<FixedIncomeResponse>> GetFixedIncomesAsync(string accountEmail)
-        => (await _fixedIncomeRepository.FindAsync([FilterCondition.Equal("AccountEmail", accountEmail)])).Select(FixedIncomeMapper.ToResponse).ToList();
+    public async Task<List<FixedIncomeResponse>> GetFixedIncomesAsync(string accountEmail, CancellationToken ct = default)
+        => (await _fixedIncomeRepository.FindAsync([FilterCondition.Equal("AccountEmail", accountEmail)], ct: ct)).Select(FixedIncomeMapper.ToResponse).ToList();
 
     /// <inheritdoc />
-    public async Task<FixedIncomeResponse?> GetByIdAsync(string accountEmail, long id)
+    public async Task<FixedIncomeResponse?> GetByIdAsync(string accountEmail, long id, CancellationToken ct = default)
     {
         var results = await _fixedIncomeRepository.FindAsync([
             FilterCondition.Equal("AccountEmail", accountEmail),
             FilterCondition.Equal("Id", id)
-        ]);
+        ], ct: ct);
         var item = results.FirstOrDefault();
         return item == null ? null : FixedIncomeMapper.ToResponse(item);
     }
 
     /// <inheritdoc />
-    public async Task<ServiceResult> CreateAsync(string accountEmail, FixedIncomeRequest request)
+    public async Task<ServiceResult> CreateAsync(string accountEmail, FixedIncomeRequest request, CancellationToken ct = default)
     {
         var validation = ValidateRequest(request);
         if (!validation.Success) return validation;
 
-        Asset? asset = await _assetBalance.GetAssetAsync(accountEmail, request.DepositMyAssetProductName ?? "");
+        Asset? asset = await _assetBalance.GetAssetAsync(accountEmail, request.DepositMyAssetProductName ?? "", ct);
         if (asset == null) return ServiceResult.Fail("Input is invalid");
 
         string currency = asset.Balance.Currency;
@@ -59,21 +59,21 @@ public class FixedIncomeService : IFixedIncomeService
             return ServiceResult.Fail(registerResult.FirstError.Description);
 
         var fixedIncome = registerResult.Value;
-        await _fixedIncomeRepository.CreateAsync(fixedIncome);
+        await _fixedIncomeRepository.CreateAsync(fixedIncome, ct);
         return ServiceResult.Ok();
     }
 
     /// <inheritdoc />
-    public async Task<ServiceResult> UpdateAsync(string accountEmail, FixedIncomeRequest request)
+    public async Task<ServiceResult> UpdateAsync(string accountEmail, FixedIncomeRequest request, CancellationToken ct = default)
     {
         var validation = ValidateRequest(request);
         if (!validation.Success) return validation;
 
-        List<FixedIncome> items = await _fixedIncomeRepository.FindAsync([FilterCondition.Equal("AccountEmail", accountEmail)]);
+        List<FixedIncome> items = await _fixedIncomeRepository.FindAsync([FilterCondition.Equal("AccountEmail", accountEmail)], ct: ct);
         FixedIncome? fi = items.FirstOrDefault(x => x.Id == request.Id);
         if (fi == null) return ServiceResult.Fail("Input is invalid");
 
-        Asset? asset = await _assetBalance.GetAssetAsync(accountEmail, request.DepositMyAssetProductName ?? "");
+        Asset? asset = await _assetBalance.GetAssetAsync(accountEmail, request.DepositMyAssetProductName ?? "", ct);
         string currency = asset?.Balance.Currency ?? fi.Amount.Currency;
 
         var updateResult = fi.Update(request.MainClass, request.SubClass, request.Content,
@@ -82,29 +82,24 @@ public class FixedIncomeService : IFixedIncomeService
 
         if (updateResult.IsError) return ServiceResult.Fail(updateResult.FirstError.Description);
 
-        await _fixedIncomeRepository.UpdateEntityAsync(fi);
+        await _fixedIncomeRepository.UpdateEntityAsync(fi, ct);
         return ServiceResult.Ok();
     }
 
     /// <inheritdoc />
-    public async Task<ServiceResult> DeleteAsync(string accountEmail, long id)
+    public async Task<ServiceResult> DeleteAsync(string accountEmail, long id, CancellationToken ct = default)
     {
-        List<FixedIncome> items = await _fixedIncomeRepository.FindAsync([FilterCondition.Equal("AccountEmail", accountEmail)]);
+        List<FixedIncome> items = await _fixedIncomeRepository.FindAsync([FilterCondition.Equal("AccountEmail", accountEmail)], ct: ct);
         FixedIncome? fi = items.FirstOrDefault(x => x.Id == id);
         if (fi == null) return ServiceResult.Fail("Input is invalid");
 
-        await _fixedIncomeRepository.DeleteAsync([FilterCondition.Equal("Id", fi.Id)]);
+        await _fixedIncomeRepository.DeleteAsync([FilterCondition.Equal("Id", fi.Id)], ct);
         return ServiceResult.Ok();
     }
 
     /// <summary>
     /// Validates the income class, deposit month/day, and maturity date format of a fixed-income request.
     /// </summary>
-    /// <param name="request">The request to validate.</param>
-    /// <returns>
-    /// <see cref="ServiceResult.Ok()"/> when all fields are valid;
-    /// <see cref="ServiceResult.Fail(string)"/> with a descriptive message otherwise.
-    /// </returns>
     private static ServiceResult ValidateRequest(FixedIncomeRequest request)
     {
         if (IncomeClassPolicy.Validate(request.MainClass, request.SubClass).IsError)

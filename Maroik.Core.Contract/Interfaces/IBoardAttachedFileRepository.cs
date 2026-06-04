@@ -9,5 +9,5 @@ namespace Maroik.Core.Contract.Interfaces;
 public interface IBoardAttachedFileRepository : IGenericRepository<BoardAttachedFile>
 {
     /// <summary>Batch-loads attached files for multiple board IDs; value is null when no file is attached.</summary>
-    Task<Dictionary<long, BoardAttachedFile?>> GetByBoardIdsAsync(IEnumerable<long> boardIds);
+    Task<Dictionary<long, BoardAttachedFile?>> GetByBoardIdsAsync(IEnumerable<long> boardIds, CancellationToken ct = default);
 }

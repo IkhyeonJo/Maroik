@@ -1,4 +1,4 @@
-﻿using Maroik.Core.Contract.Domains.Finance;
+using Maroik.Core.Contract.Domains.Finance;
 using Maroik.Core.Contract.Filters;
 using Maroik.Core.Contract.Dtos;
 using Maroik.Core.Contract.Interfaces;
@@ -32,24 +32,24 @@ public class AssetService : IAssetService
     }
 
     /// <inheritdoc />
-    public async Task<List<AssetResponse>> GetAssetsAsync(string accountEmail)
-        => (await _assetRepository.FindAsync([FilterCondition.Equal("AccountEmail", accountEmail)])).Select(AssetMapper.ToResponse).ToList();
+    public async Task<List<AssetResponse>> GetAssetsAsync(string accountEmail, CancellationToken ct = default)
+        => (await _assetRepository.FindAsync([FilterCondition.Equal("AccountEmail", accountEmail)], ct: ct)).Select(AssetMapper.ToResponse).ToList();
 
     /// <inheritdoc />
-    public async Task<AssetResponse?> GetAssetAsync(string accountEmail, string productName)
+    public async Task<AssetResponse?> GetAssetAsync(string accountEmail, string productName, CancellationToken ct = default)
     {
-        Asset? asset = await FindAssetAsync(accountEmail, productName);
+        Asset? asset = await FindAssetAsync(accountEmail, productName, ct);
         return asset == null ? null : AssetMapper.ToResponse(asset);
     }
 
     /// <inheritdoc />
-    public async Task<ServiceResult> CreateAsync(string accountEmail, AssetRequest request)
+    public async Task<ServiceResult> CreateAsync(string accountEmail, AssetRequest request, CancellationToken ct = default)
     {
         if (!IsValidAssetItem(request.Item))
             return ServiceResult.Fail("Input is invalid");
 
         // Reject duplicate product names within the same account.
-        Asset? existing = await FindAssetAsync(accountEmail, request.ProductName ?? "");
+        Asset? existing = await FindAssetAsync(accountEmail, request.ProductName ?? "", ct);
         if (existing != null)
             return ServiceResult.Fail("The asset already exists.");
 
@@ -65,14 +65,14 @@ public class AssetService : IAssetService
             return ServiceResult.Fail(createResult.FirstError.Description);
 
         var asset = createResult.Value;
-        await _assetRepository.CreateAsync(asset);
+        await _assetRepository.CreateAsync(asset, ct);
         return ServiceResult.Ok();
     }
 
     /// <inheritdoc />
-    public async Task<ServiceResult> UpdateAsync(string accountEmail, AssetRequest request, string originalProductName)
+    public async Task<ServiceResult> UpdateAsync(string accountEmail, AssetRequest request, string originalProductName, CancellationToken ct = default)
     {
-        await _unitOfWork.BeginAsync();
+        await _unitOfWork.BeginAsync(ct);
         try
         {
             if (!IsValidAssetItem(request.Item))
@@ -81,7 +81,7 @@ public class AssetService : IAssetService
                 return ServiceResult.Fail("Input is invalid");
             }
 
-            Asset? asset = await FindAssetAsync(accountEmail, originalProductName);
+            Asset? asset = await FindAssetAsync(accountEmail, originalProductName, ct);
             if (asset == null)
             {
                 await _unitOfWork.RollbackAsync();
@@ -97,7 +97,7 @@ public class AssetService : IAssetService
                 return ServiceResult.Fail(updateResult.FirstError.Description);
             }
 
-            int updated = await _assetRepository.UpdateAssetWithProductNameAsync(asset, originalProductName);
+            int updated = await _assetRepository.UpdateAssetWithProductNameAsync(asset, originalProductName, ct);
             if (updated <= 0)
             {
                 await _unitOfWork.RollbackAsync();
@@ -107,12 +107,14 @@ public class AssetService : IAssetService
             // Cascade the renamed product name to all related expenditure records within the same transaction.
             await _fixedExpenditureRepository.UpdateAsync(
                 [FilterCondition.Equal("AccountEmail", accountEmail), FilterCondition.Equal("MyDepositAsset", originalProductName)],
-                new Dictionary<string, object?> { ["MyDepositAsset"] = asset.ProductName });
+                new Dictionary<string, object?> { ["MyDepositAsset"] = asset.ProductName },
+                ct);
             await _expenditureRepository.UpdateAsync(
                 [FilterCondition.Equal("AccountEmail", accountEmail), FilterCondition.Equal("MyDepositAsset", originalProductName)],
-                new Dictionary<string, object?> { ["MyDepositAsset"] = asset.ProductName });
+                new Dictionary<string, object?> { ["MyDepositAsset"] = asset.ProductName },
+                ct);
 
-            await _unitOfWork.CommitAsync();
+            await _unitOfWork.CommitAsync(ct);
             return ServiceResult.Ok();
         }
         catch
@@ -123,24 +125,24 @@ public class AssetService : IAssetService
     }
 
     /// <inheritdoc />
-    public async Task<ServiceResult> DeleteAsync(string accountEmail, string productName)
+    public async Task<ServiceResult> DeleteAsync(string accountEmail, string productName, CancellationToken ct = default)
     {
-        Asset? asset = await FindAssetAsync(accountEmail, productName);
+        Asset? asset = await FindAssetAsync(accountEmail, productName, ct);
         if (asset == null)
             return ServiceResult.Fail("Fail to find the asset by given product name");
 
         // Soft-delete preserves the record for historical reporting while hiding it from active use.
         asset.SoftDelete();
 
-        await _assetRepository.UpdateEntityAsync(asset);
+        await _assetRepository.UpdateEntityAsync(asset, ct);
         return ServiceResult.Ok();
     }
 
-    private async Task<Asset?> FindAssetAsync(string accountEmail, string productName)
+    private async Task<Asset?> FindAssetAsync(string accountEmail, string productName, CancellationToken ct = default)
         => (await _assetRepository.FindAsync([
             FilterCondition.Equal("AccountEmail", accountEmail),
             FilterCondition.Equal("ProductName", productName)
-        ])).FirstOrDefault();
+        ], ct: ct)).FirstOrDefault();
 
     /// <summary>
     /// Returns <see langword="true"/> when <paramref name="item"/> is one of the recognised asset category values.

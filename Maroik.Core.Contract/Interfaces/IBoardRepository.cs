@@ -9,8 +9,8 @@ namespace Maroik.Core.Contract.Interfaces;
 public interface IBoardRepository : IGenericRepository<Board>
 {
     /// <summary>Atomically increments the view counter of the post with the given ID.</summary>
-    Task IncrementViewAsync(long id);
+    Task IncrementViewAsync(long id, CancellationToken ct = default);
 
     /// <summary>Inserts a new board post row and returns the database-generated ID.</summary>
-    Task<long> WriteBoardAsync(Board board);
+    Task<long> WriteBoardAsync(Board board, CancellationToken ct = default);
 }

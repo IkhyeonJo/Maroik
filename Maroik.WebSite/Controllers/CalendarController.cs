@@ -66,7 +66,7 @@ public class CalendarController : BaseController
             CalendarRequest tempCalendar = calendarInputViewModel?.Calendars?.FirstOrDefault() ?? new CalendarRequest();
             tempCalendar.AccountEmail = _sessionService.GetAccount()!.Email!;
 
-            ServiceResult result = await _calendarService.CreateCalendarAsync(tempCalendar);
+            ServiceResult result = await _calendarService.CreateCalendarAsync(tempCalendar, HttpContext.RequestAborted);
 
             if (!result.Success)
                 return Json(new { result = false, error = _localizer[result.ErrorKey ?? "Input is invalid"].Value });
@@ -205,7 +205,8 @@ public class CalendarController : BaseController
                     loginedAccount.Email!,
                     $"{loginedAccount.Role}Index",
                     reminders,
-                    attachedFile);
+                    attachedFile,
+                    HttpContext.RequestAborted);
 
                 if (!createEventResult.Success)
                     return Json(new { result = false, error = _localizer[createEventResult.ErrorKey ?? "Input is invalid"].Value });
@@ -260,7 +261,7 @@ public class CalendarController : BaseController
             Size = summernoteImageFile.Length
         };
 
-        SummernoteUploadResult uploadResult = await _calendarService.UploadSummernoteImageAsync(file, roleIndex);
+        SummernoteUploadResult uploadResult = await _calendarService.UploadSummernoteImageAsync(file, roleIndex, HttpContext.RequestAborted);
 
         if (!uploadResult.Success)
             return Ok(new { result = false, errorMessage = _localizer[uploadResult.ErrorKey ?? "Input is invalid"].Value });
@@ -287,7 +288,7 @@ public class CalendarController : BaseController
         CalendarOutputViewModel calendarOutputViewModel = new();
 
         #region Load Calendar
-        List<CalendarResponse> calendars = await _calendarService.GetCalendarsAsync(loginedAccount.Email!);
+        List<CalendarResponse> calendars = await _calendarService.GetCalendarsAsync(loginedAccount.Email!, HttpContext.RequestAborted);
 
         if (calendars.Count == 0)
         {
@@ -297,8 +298,8 @@ public class CalendarController : BaseController
                 Name = loginedAccount.Nickname!,
                 TimeZoneIanaId = loginedAccount.TimeZoneIanaId,
                 HtmlColorCode = "#fc330e" // Default Html Color Code
-            });
-            calendars = await _calendarService.GetCalendarsAsync(loginedAccount.Email!);
+            }, HttpContext.RequestAborted);
+            calendars = await _calendarService.GetCalendarsAsync(loginedAccount.Email!, HttpContext.RequestAborted);
         }
         #endregion
 
@@ -307,7 +308,7 @@ public class CalendarController : BaseController
 
         foreach (CalendarResponse calendar in calendars)
         {
-            foreach (CalendarEventResponse calendarEvent in await _calendarService.GetCalendarEventsAsync(calendar.Id) ?? [])
+            foreach (CalendarEventResponse calendarEvent in await _calendarService.GetCalendarEventsAsync(calendar.Id, HttpContext.RequestAborted) ?? [])
             {
                 CalendarEventOutputViewModel item = new()
                 {
@@ -477,7 +478,7 @@ public class CalendarController : BaseController
         CalendarOutputViewModel calendarOutputViewModel = new();
 
         #region Load Calendar
-        List<CalendarResponse> calendars = await _calendarService.GetCalendarsAsync(loginedAccount.Email!);
+        List<CalendarResponse> calendars = await _calendarService.GetCalendarsAsync(loginedAccount.Email!, HttpContext.RequestAborted);
 
         if (calendars.Count == 0)
         {
@@ -487,8 +488,8 @@ public class CalendarController : BaseController
                 Name = loginedAccount.Nickname!,
                 TimeZoneIanaId = loginedAccount.TimeZoneIanaId,
                 HtmlColorCode = "#fc330e" // Default Html Color Code
-            });
-            calendars = await _calendarService.GetCalendarsAsync(loginedAccount.Email!);
+            }, HttpContext.RequestAborted);
+            calendars = await _calendarService.GetCalendarsAsync(loginedAccount.Email!, HttpContext.RequestAborted);
         }
         #endregion
 
@@ -497,7 +498,7 @@ public class CalendarController : BaseController
 
         foreach (CalendarResponse calendar in calendars)
         {
-            foreach (CalendarEventResponse calendarEvent in await _calendarService.GetCalendarEventsAsync(calendar.Id) ?? [])
+            foreach (CalendarEventResponse calendarEvent in await _calendarService.GetCalendarEventsAsync(calendar.Id, HttpContext.RequestAborted) ?? [])
             {
                 CalendarEventOutputViewModel item = new()
                 {
@@ -636,10 +637,10 @@ public class CalendarController : BaseController
         #region Load OtherCalendar
         List<CalendarResponse> otherCalendars = [];
 
-        List<CalendarResponse> allCalendars = await _calendarService.GetAllCalendarsAsync();
+        List<CalendarResponse> allCalendars = await _calendarService.GetAllCalendarsAsync(HttpContext.RequestAborted);
 
         var tempOtherCalendars = (from calendar in allCalendars
-                                  join otherCalendar in await _calendarService.GetOtherCalendarsAsync(loginedAccount.Email!)
+                                  join otherCalendar in await _calendarService.GetOtherCalendarsAsync(loginedAccount.Email!, HttpContext.RequestAborted)
                                   on calendar.Id equals otherCalendar.CalendarId
                                   select new
                                   {
@@ -659,7 +660,7 @@ public class CalendarController : BaseController
 
         foreach (CalendarResponse otherCalendar in otherCalendars)
         {
-            foreach (CalendarEventResponse otherCalendarEvent in await _calendarService.GetCalendarEventsAsync(otherCalendar.Id) ?? [])
+            foreach (CalendarEventResponse otherCalendarEvent in await _calendarService.GetCalendarEventsAsync(otherCalendar.Id, HttpContext.RequestAborted) ?? [])
             {
                 CalendarEventOutputViewModel item = new()
                 {
@@ -833,10 +834,10 @@ public class CalendarController : BaseController
         #region Load OtherCalendar
         List<CalendarResponse> otherCalendars = [];
 
-        List<CalendarResponse> allCalendars = await _calendarService.GetAllCalendarsAsync();
+        List<CalendarResponse> allCalendars = await _calendarService.GetAllCalendarsAsync(HttpContext.RequestAborted);
 
         var tempOtherCalendars = (from calendar in allCalendars
-                                  join calendarShared in (await _calendarService.GetCalendarSharedAsync()).Where(x => x.Anonymous).ToList()
+                                  join calendarShared in (await _calendarService.GetCalendarSharedAsync(HttpContext.RequestAborted)).Where(x => x.Anonymous).ToList()
                                   on calendar.Id equals calendarShared.CalendarId
                                   select new
                                   {
@@ -856,7 +857,7 @@ public class CalendarController : BaseController
 
         foreach (CalendarResponse otherCalendar in otherCalendars)
         {
-            foreach (CalendarEventResponse otherCalendarEvent in await _calendarService.GetCalendarEventsAsync(otherCalendar.Id) ?? [])
+            foreach (CalendarEventResponse otherCalendarEvent in await _calendarService.GetCalendarEventsAsync(otherCalendar.Id, HttpContext.RequestAborted) ?? [])
             {
                 CalendarEventOutputViewModel item = new()
                 {
@@ -1026,7 +1027,7 @@ public class CalendarController : BaseController
     {
         try
         {
-            List<CalendarResponse> tempCalendars = await _calendarService.GetCalendarsAsync(_sessionService.GetAccount()!.Email!);
+            List<CalendarResponse> tempCalendars = await _calendarService.GetCalendarsAsync(_sessionService.GetAccount()!.Email!, HttpContext.RequestAborted);
 
             if (tempCalendars == null || tempCalendars.Count == 0)
             {
@@ -1056,7 +1057,7 @@ public class CalendarController : BaseController
     {
         try
         {
-            List<CalendarResponse> calendars = await _calendarService.GetCalendarsAsync(_sessionService.GetAccount()!.Email!);
+            List<CalendarResponse> calendars = await _calendarService.GetCalendarsAsync(_sessionService.GetAccount()!.Email!, HttpContext.RequestAborted);
 
             return Json(new { result = true, calendars });
         }
@@ -1078,8 +1079,8 @@ public class CalendarController : BaseController
             bool isAccountSessionExist = _sessionService.GetAccount() != null;
             if (isAccountSessionExist)
             {
-                List<CalendarResponse> calendars = await _calendarService.GetAllCalendarsAsync();
-                List<OtherCalendarResponse> otherCalendars = await _calendarService.GetOtherCalendarsAsync(_sessionService.GetAccount()!.Email!);
+                List<CalendarResponse> calendars = await _calendarService.GetAllCalendarsAsync(HttpContext.RequestAborted);
+                List<OtherCalendarResponse> otherCalendars = await _calendarService.GetOtherCalendarsAsync(_sessionService.GetAccount()!.Email!, HttpContext.RequestAborted);
 
                 List<CalendarResponse> tempOtherCalendars = (from calendar in calendars
                                                      join otherCalendar in otherCalendars
@@ -1096,8 +1097,8 @@ public class CalendarController : BaseController
             else
             {
                 List<CalendarResponse> tempOtherCalendars = [];
-                var temporaryOtherCalendars = (from calendar in await _calendarService.GetAllCalendarsAsync()
-                                               join calendarShared in (await _calendarService.GetCalendarSharedAsync()).Where(x => x.Anonymous).ToList()
+                var temporaryOtherCalendars = (from calendar in await _calendarService.GetAllCalendarsAsync(HttpContext.RequestAborted)
+                                               join calendarShared in (await _calendarService.GetCalendarSharedAsync(HttpContext.RequestAborted)).Where(x => x.Anonymous).ToList()
                                                on calendar.Id equals calendarShared.CalendarId
                                                select new
                                                {
@@ -1135,9 +1136,9 @@ public class CalendarController : BaseController
                 {
                     AccountResponse loginedAccount = _sessionService.GetAccount()!;
 
-                    List<CalendarResponse> calendars = await _calendarService.GetCalendarsAsync(loginedAccount.Email!) ?? [];
+                    List<CalendarResponse> calendars = await _calendarService.GetCalendarsAsync(loginedAccount.Email!, HttpContext.RequestAborted) ?? [];
 
-                    CalendarEventResponse tempCalendarEvent = (await _calendarService.GetCalendarEventAsync(id))!;
+                    CalendarEventResponse tempCalendarEvent = (await _calendarService.GetCalendarEventAsync(id, HttpContext.RequestAborted))!;
                     CalendarResponse tempCalendar = calendars?.Where(x => x.Id == tempCalendarEvent.CalendarId)?.FirstOrDefault() ?? new CalendarResponse();
 
                     if (!(tempCalendarEvent.Id > 0))
@@ -1158,7 +1159,7 @@ public class CalendarController : BaseController
                         AllDay = tempCalendarEvent.AllDay
                     };
 
-                    (calendarEvent.Description, _) = await _calendarService.PrepareHtmlForDisplayAsync(tempCalendarEvent.Description ?? "");
+                    (calendarEvent.Description, _) = await _calendarService.PrepareHtmlForDisplayAsync(tempCalendarEvent.Description ?? "", HttpContext.RequestAborted);
 
                     if (tempCalendarEvent.AllDay)
                     {
@@ -1277,11 +1278,11 @@ public class CalendarController : BaseController
 
                     calendarEvent.Location = tempCalendarEvent.Location;
                     calendarEvent.Status = tempCalendarEvent.Status;
-                    calendarEvent.CalendarEventAttachedFile = await _calendarService.GetCalendarEventAttachedFileAsync(tempCalendarEvent.Id);
+                    calendarEvent.CalendarEventAttachedFile = await _calendarService.GetCalendarEventAttachedFileAsync(tempCalendarEvent.Id, HttpContext.RequestAborted);
 
                     if (!string.IsNullOrEmpty(calendarEvent?.CalendarEventAttachedFile?.Path ?? ""))
                     {
-                        byte[]? fileData = await _calendarService.DownloadFileAsync(calendarEvent?.CalendarEventAttachedFile?.Path ?? "");
+                        byte[]? fileData = await _calendarService.DownloadFileAsync(calendarEvent?.CalendarEventAttachedFile?.Path ?? "", HttpContext.RequestAborted);
 
                         if (fileData != null)
                         {
@@ -1301,7 +1302,7 @@ public class CalendarController : BaseController
                     }
 
                     calendarEvent!.Calendars = calendars!.Select(x => new CalendarResponse { Id = x.Id, Name = x.Name }).OrderBy(x => x.Name).ToList();
-                    calendarEvent.SerializedCalendarReminders = JsonConvert.SerializeObject((await _calendarService.GetCalendarEventRemindersAsync(tempCalendarEvent.Id)).Select(x => new CalendarReminderInfo { Method = x.Method ?? "", MinutesBeforeEvent = (int?)x.MinutesBeforeEvent, HoursBeforeEvent = (int?)x.HoursBeforeEvent, DaysBeforeEvent = (int?)x.DaysBeforeEvent, WeeksBeforeEvent = (int?)x.WeeksBeforeEvent, TimesBeforeEvent = x.TimesBeforeEvent?.ToTimeSpan() }) ?? []);
+                    calendarEvent.SerializedCalendarReminders = JsonConvert.SerializeObject((await _calendarService.GetCalendarEventRemindersAsync(tempCalendarEvent.Id, HttpContext.RequestAborted)).Select(x => new CalendarReminderInfo { Method = x.Method ?? "", MinutesBeforeEvent = (int?)x.MinutesBeforeEvent, HoursBeforeEvent = (int?)x.HoursBeforeEvent, DaysBeforeEvent = (int?)x.DaysBeforeEvent, WeeksBeforeEvent = (int?)x.WeeksBeforeEvent, TimesBeforeEvent = x.TimesBeforeEvent?.ToTimeSpan() }) ?? []);
 
                     calendarEvent.HtmlColorCode = calendars?.Where(x => x.Id == tempCalendarEvent.CalendarId)?.FirstOrDefault()?.HtmlColorCode;
 
@@ -1344,8 +1345,8 @@ public class CalendarController : BaseController
                     if (isAccountSessionExist)
                     {
                         loginedAccount = _sessionService.GetAccount()!;
-                        calendars = (from calendar in await _calendarService.GetAllCalendarsAsync() ?? []
-                                     join otherCalendar in await _calendarService.GetOtherCalendarsAsync(loginedAccount.Email!) ?? []
+                        calendars = (from calendar in await _calendarService.GetAllCalendarsAsync(HttpContext.RequestAborted) ?? []
+                                     join otherCalendar in await _calendarService.GetOtherCalendarsAsync(loginedAccount.Email!, HttpContext.RequestAborted) ?? []
                                      on calendar.Id equals otherCalendar.CalendarId
                                      select calendar).ToList();
                     }
@@ -1353,8 +1354,8 @@ public class CalendarController : BaseController
                     {
                         loginedAccount = new AccountResponse() { Role = Role.Anonymous, TimeZoneIanaId = "UTC" };
                         calendars = [];
-                        var temporaryOtherCalendars = (from calendar in await _calendarService.GetAllCalendarsAsync() ?? []
-                                                       join calendarShared in (await _calendarService.GetCalendarSharedAsync())?.Where(x => x.Anonymous)?.ToList() ?? []
+                        var temporaryOtherCalendars = (from calendar in await _calendarService.GetAllCalendarsAsync(HttpContext.RequestAborted) ?? []
+                                                       join calendarShared in (await _calendarService.GetCalendarSharedAsync(HttpContext.RequestAborted))?.Where(x => x.Anonymous)?.ToList() ?? []
                                                        on calendar.Id equals calendarShared.CalendarId
                                                        select new
                                                        {
@@ -1369,7 +1370,7 @@ public class CalendarController : BaseController
                         }
                     }
 
-                    CalendarEventResponse tempCalendarEvent = (await _calendarService.GetCalendarEventAsync(id))!;
+                    CalendarEventResponse tempCalendarEvent = (await _calendarService.GetCalendarEventAsync(id, HttpContext.RequestAborted))!;
                     CalendarResponse tempCalendar = calendars?.Where(x => x.Id == tempCalendarEvent.CalendarId)?.FirstOrDefault() ?? new CalendarResponse();
 
                     if (!(tempCalendarEvent.Id > 0))
@@ -1390,7 +1391,7 @@ public class CalendarController : BaseController
                         AllDay = tempCalendarEvent.AllDay
                     };
 
-                    (calendarEvent.Description, _) = await _calendarService.PrepareHtmlForDisplayAsync(tempCalendarEvent.Description ?? "");
+                    (calendarEvent.Description, _) = await _calendarService.PrepareHtmlForDisplayAsync(tempCalendarEvent.Description ?? "", HttpContext.RequestAborted);
 
                     if (tempCalendarEvent.AllDay)
                     {
@@ -1509,11 +1510,11 @@ public class CalendarController : BaseController
 
                     calendarEvent.Location = tempCalendarEvent.Location;
                     calendarEvent.Status = tempCalendarEvent.Status;
-                    calendarEvent.CalendarEventAttachedFile = await _calendarService.GetCalendarEventAttachedFileAsync(tempCalendarEvent.Id);
+                    calendarEvent.CalendarEventAttachedFile = await _calendarService.GetCalendarEventAttachedFileAsync(tempCalendarEvent.Id, HttpContext.RequestAborted);
 
                     if (!string.IsNullOrEmpty(calendarEvent?.CalendarEventAttachedFile?.Path ?? ""))
                     {
-                        byte[]? fileData = await _calendarService.DownloadFileAsync(calendarEvent?.CalendarEventAttachedFile?.Path ?? "");
+                        byte[]? fileData = await _calendarService.DownloadFileAsync(calendarEvent?.CalendarEventAttachedFile?.Path ?? "", HttpContext.RequestAborted);
 
                         if (fileData != null)
                         {
@@ -1533,7 +1534,7 @@ public class CalendarController : BaseController
                     }
 
                     calendarEvent!.Calendars = calendars!.Select(x => new CalendarResponse { Id = x.Id, Name = x.Name }).OrderBy(x => x.Name).ToList();
-                    calendarEvent.SerializedCalendarReminders = JsonConvert.SerializeObject((await _calendarService.GetCalendarEventRemindersAsync(tempCalendarEvent.Id)).Select(x => new CalendarReminderInfo { Method = x.Method ?? "", MinutesBeforeEvent = (int?)x.MinutesBeforeEvent, HoursBeforeEvent = (int?)x.HoursBeforeEvent, DaysBeforeEvent = (int?)x.DaysBeforeEvent, WeeksBeforeEvent = (int?)x.WeeksBeforeEvent, TimesBeforeEvent = x.TimesBeforeEvent?.ToTimeSpan() }) ?? []);
+                    calendarEvent.SerializedCalendarReminders = JsonConvert.SerializeObject((await _calendarService.GetCalendarEventRemindersAsync(tempCalendarEvent.Id, HttpContext.RequestAborted)).Select(x => new CalendarReminderInfo { Method = x.Method ?? "", MinutesBeforeEvent = (int?)x.MinutesBeforeEvent, HoursBeforeEvent = (int?)x.HoursBeforeEvent, DaysBeforeEvent = (int?)x.DaysBeforeEvent, WeeksBeforeEvent = (int?)x.WeeksBeforeEvent, TimesBeforeEvent = x.TimesBeforeEvent?.ToTimeSpan() }) ?? []);
 
                     calendarEvent.HtmlColorCode = calendars?.Where(x => x.Id == tempCalendarEvent.CalendarId)?.FirstOrDefault()?.HtmlColorCode;
 
@@ -1582,12 +1583,12 @@ public class CalendarController : BaseController
                     {
                         loginedAccount = _sessionService.GetAccount()!;
 
-                        tempCalendars = await _calendarService.GetCalendarsAsync(_sessionService.GetAccount()!.Email!);
+                        tempCalendars = await _calendarService.GetCalendarsAsync(_sessionService.GetAccount()!.Email!, HttpContext.RequestAborted);
 
                         tempOtherCalendars = [];
 
-                        var otherCalendars = (from calendar in await _calendarService.GetAllCalendarsAsync() ?? []
-                                              join otherCalendar in await _calendarService.GetOtherCalendarsAsync(loginedAccount.Email!) ?? []
+                        var otherCalendars = (from calendar in await _calendarService.GetAllCalendarsAsync(HttpContext.RequestAborted) ?? []
+                                              join otherCalendar in await _calendarService.GetOtherCalendarsAsync(loginedAccount.Email!, HttpContext.RequestAborted) ?? []
                                               on calendar.Id equals otherCalendar.CalendarId
                                               select new
                                               {
@@ -1609,8 +1610,8 @@ public class CalendarController : BaseController
 
                         tempOtherCalendars = [];
 
-                        var temporaryOtherCalendars = (from calendar in await _calendarService.GetAllCalendarsAsync() ?? []
-                                                       join calendarShared in (await _calendarService.GetCalendarSharedAsync())?.Where(x => x.Anonymous)?.ToList() ?? []
+                        var temporaryOtherCalendars = (from calendar in await _calendarService.GetAllCalendarsAsync(HttpContext.RequestAborted) ?? []
+                                                       join calendarShared in (await _calendarService.GetCalendarSharedAsync(HttpContext.RequestAborted))?.Where(x => x.Anonymous)?.ToList() ?? []
                                                        on calendar.Id equals calendarShared.CalendarId
                                                        select new
                                                        {
@@ -1632,7 +1633,7 @@ public class CalendarController : BaseController
                         if (((tempCalendars?.Where(x => x.Id == tempInputCalendar.Id)?.FirstOrDefault() ?? new CalendarResponse()).Id != 0) ||
                             ((tempOtherCalendars?.Where(x => x.Id == tempInputCalendar.Id)?.FirstOrDefault() ?? new CalendarResponse()).Id != 0))
                         {
-                            foreach (CalendarEventResponse calendarEvent in await _calendarService.GetCalendarEventsAsync(tempInputCalendar.Id))
+                            foreach (CalendarEventResponse calendarEvent in await _calendarService.GetCalendarEventsAsync(tempInputCalendar.Id, HttpContext.RequestAborted))
                             {
                                 CalendarEventOutputViewModel item = new()
                                 {
@@ -1805,16 +1806,16 @@ public class CalendarController : BaseController
     {
         try
         {
-            List<CalendarResponse> calendars = (await _calendarService.GetCalendarsAsync(_sessionService.GetAccount()!.Email!) ?? []).ToList();
+            List<CalendarResponse> calendars = (await _calendarService.GetCalendarsAsync(_sessionService.GetAccount()!.Email!, HttpContext.RequestAborted) ?? []).ToList();
 
             foreach (CalendarResponse calendar in calendars)
             {
-                await _calendarService.EnsureCalendarSharedAsync(calendar.Id);
+                await _calendarService.EnsureCalendarSharedAsync(calendar.Id, HttpContext.RequestAborted);
             }
 
             List<CalendarSharedResponse> tempCalendarShareds = [];
 
-            foreach (CalendarSharedResponse calendarShared in (await _calendarService.GetCalendarSharedAsync() ?? []).ToList())
+            foreach (CalendarSharedResponse calendarShared in (await _calendarService.GetCalendarSharedAsync(HttpContext.RequestAborted) ?? []).ToList())
             {
                 CalendarResponse item = calendars.Where(x => x.Id == calendarShared.CalendarId).FirstOrDefault() ?? new CalendarResponse();
 
@@ -1862,9 +1863,9 @@ public class CalendarController : BaseController
                     return Json(new { result = false, error = _localizer["Login required."].Value });
                 }
 
-                List<CalendarResponse> allCalendars = await _calendarService.GetAllCalendarsAsync() ?? [];
-                List<CalendarSharedResponse> calendarShareds = await _calendarService.GetCalendarSharedAsync() ?? [];
-                List<OtherCalendarResponse> otherCalendars = await _calendarService.GetOtherCalendarsAsync(_sessionService.GetAccount()!.Email!);
+                List<CalendarResponse> allCalendars = await _calendarService.GetAllCalendarsAsync(HttpContext.RequestAborted) ?? [];
+                List<CalendarSharedResponse> calendarShareds = await _calendarService.GetCalendarSharedAsync(HttpContext.RequestAborted) ?? [];
+                List<OtherCalendarResponse> otherCalendars = await _calendarService.GetOtherCalendarsAsync(_sessionService.GetAccount()!.Email!, HttpContext.RequestAborted);
 
                 switch (loginedAccount.Role)
                 {
@@ -1923,7 +1924,7 @@ public class CalendarController : BaseController
                     CalendarRequest calendarRequest = calendarInputViewModel?.Calendars?.FirstOrDefault() ?? new CalendarRequest();
                     calendarRequest.AccountEmail = _sessionService.GetAccount()!.Email;
 
-                    ServiceResult updateResult = await _calendarService.UpdateCalendarAsync(calendarRequest);
+                    ServiceResult updateResult = await _calendarService.UpdateCalendarAsync(calendarRequest, HttpContext.RequestAborted);
 
                     if (!updateResult.Success)
                     {
@@ -2071,7 +2072,8 @@ public class CalendarController : BaseController
                     loginedAccount.Email!,
                     $"{loginedAccount.Role}Index",
                     reminders,
-                    attachedFile);
+                    attachedFile,
+                    HttpContext.RequestAborted);
 
                 if (!updateEventResult.Success)
                     return Json(new { result = false, error = _localizer[updateEventResult.ErrorKey ?? "Input is invalid"].Value });
@@ -2101,7 +2103,7 @@ public class CalendarController : BaseController
         {
             if (ModelState.IsValid)
             {
-                ServiceResult sharedResult = await _calendarService.UpdateCalendarSharedAsync(calendarShareds.Select(c => new CalendarSharedRequest { CalendarId = c.CalendarId, User = c.User, Anonymous = c.Anonymous }));
+                ServiceResult sharedResult = await _calendarService.UpdateCalendarSharedAsync(calendarShareds.Select(c => new CalendarSharedRequest { CalendarId = c.CalendarId, User = c.User, Anonymous = c.Anonymous }), HttpContext.RequestAborted);
 
                 if (!sharedResult.Success)
                     return Json(new { result = false, error = _localizer[sharedResult.ErrorKey ?? "Input is invalid"].Value });
@@ -2142,7 +2144,8 @@ public class CalendarController : BaseController
 
                 ServiceResult otherCalendarResult = await _calendarService.UpdateOtherCalendarAsync(
                     loginedAccount.Email!,
-                    otherCalendars.Select(c => new OtherCalendarRequest { AccountEmail = c.AccountEmail, CalendarId = c.CalendarId }));
+                    otherCalendars.Select(c => new OtherCalendarRequest { AccountEmail = c.AccountEmail, CalendarId = c.CalendarId }),
+                    HttpContext.RequestAborted);
 
                 if (!otherCalendarResult.Success)
                     return Json(new { result = false, error = _localizer[otherCalendarResult.ErrorKey ?? "Input is invalid"].Value });
@@ -2176,7 +2179,7 @@ public class CalendarController : BaseController
             CalendarRequest tempCalendar = calendarInputViewModel?.Calendars?.FirstOrDefault() ?? new CalendarRequest();
             tempCalendar.AccountEmail = _sessionService.GetAccount()!.Email!;
 
-            ServiceResult deleteCalendarResult = await _calendarService.DeleteCalendarAsync(tempCalendar);
+            ServiceResult deleteCalendarResult = await _calendarService.DeleteCalendarAsync(tempCalendar, HttpContext.RequestAborted);
 
             if (!deleteCalendarResult.Success)
                 return Json(new { result = false, error = _localizer[deleteCalendarResult.ErrorKey ?? "Input is invalid"].Value });
@@ -2200,7 +2203,7 @@ public class CalendarController : BaseController
         {
             string email = _sessionService.GetAccount()!.Email!;
 
-            ServiceResult deleteEventResult = await _calendarService.DeleteCalendarEventAsync(id, email);
+            ServiceResult deleteEventResult = await _calendarService.DeleteCalendarEventAsync(id, email, HttpContext.RequestAborted);
 
             if (!deleteEventResult.Success)
                 return Json(new { result = false, error = _localizer[deleteEventResult.ErrorKey ?? "Input is invalid"].Value });

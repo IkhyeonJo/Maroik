@@ -9,32 +9,32 @@ namespace Maroik.Core.Contract.Interfaces;
 public interface IMenuService
 {
     /// <summary>Returns all top-level navigation categories.</summary>
-    Task<IEnumerable<CategoryResponse>> GetAllCategoriesAsync();
+    Task<IEnumerable<CategoryResponse>> GetAllCategoriesAsync(CancellationToken ct = default);
 
     /// <summary>Returns all sub-category (dropdown menu item) rows.</summary>
-    Task<IEnumerable<SubCategoryResponse>> GetAllSubCategoriesAsync();
+    Task<IEnumerable<SubCategoryResponse>> GetAllSubCategoriesAsync(CancellationToken ct = default);
 
     /// <summary>Returns a single category by its ID, or null.</summary>
-    Task<CategoryResponse?> GetCategoryByIdAsync(int id);
+    Task<CategoryResponse?> GetCategoryByIdAsync(int id, CancellationToken ct = default);
 
     /// <summary>Returns a single sub-category by its ID, or null.</summary>
-    Task<SubCategoryResponse?> GetSubCategoryByIdAsync(int id);
+    Task<SubCategoryResponse?> GetSubCategoryByIdAsync(int id, CancellationToken ct = default);
 
     /// <summary>Creates a new top-level navigation category.</summary>
-    Task<ServiceResult> CreateCategoryAsync(CategoryRequest request);
+    Task<ServiceResult> CreateCategoryAsync(CategoryRequest request, CancellationToken ct = default);
 
     /// <summary>Updates an existing navigation category.</summary>
-    Task<ServiceResult> UpdateCategoryAsync(CategoryRequest request);
+    Task<ServiceResult> UpdateCategoryAsync(CategoryRequest request, CancellationToken ct = default);
 
     /// <summary>Deletes a navigation category and its sub-categories.</summary>
-    Task<ServiceResult> DeleteCategoryAsync(CategoryRequest request);
+    Task<ServiceResult> DeleteCategoryAsync(CategoryRequest request, CancellationToken ct = default);
 
     /// <summary>Creates a new sub-category under an existing category.</summary>
-    Task<ServiceResult> CreateSubCategoryAsync(SubCategoryRequest request);
+    Task<ServiceResult> CreateSubCategoryAsync(SubCategoryRequest request, CancellationToken ct = default);
 
     /// <summary>Updates an existing sub-category.</summary>
-    Task<ServiceResult> UpdateSubCategoryAsync(SubCategoryRequest request);
+    Task<ServiceResult> UpdateSubCategoryAsync(SubCategoryRequest request, CancellationToken ct = default);
 
     /// <summary>Deletes a sub-category.</summary>
-    Task<ServiceResult> DeleteSubCategoryAsync(SubCategoryRequest request);
+    Task<ServiceResult> DeleteSubCategoryAsync(SubCategoryRequest request, CancellationToken ct = default);
 }

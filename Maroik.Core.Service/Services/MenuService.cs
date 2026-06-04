@@ -31,29 +31,29 @@ public class MenuService : IMenuService
     }
 
     /// <inheritdoc />
-    public async Task<IEnumerable<CategoryResponse>> GetAllCategoriesAsync()
-        => (await _categoryRepository.FindAsync([])).Select(CategoryMapper.ToResponse);
+    public async Task<IEnumerable<CategoryResponse>> GetAllCategoriesAsync(CancellationToken ct = default)
+        => (await _categoryRepository.FindAsync([], ct: ct)).Select(CategoryMapper.ToResponse);
 
     /// <inheritdoc />
-    public async Task<IEnumerable<SubCategoryResponse>> GetAllSubCategoriesAsync()
-        => (await _subCategoryRepository.FindAsync([])).Select(SubCategoryMapper.ToResponse);
+    public async Task<IEnumerable<SubCategoryResponse>> GetAllSubCategoriesAsync(CancellationToken ct = default)
+        => (await _subCategoryRepository.FindAsync([], ct: ct)).Select(SubCategoryMapper.ToResponse);
 
     /// <inheritdoc />
-    public async Task<CategoryResponse?> GetCategoryByIdAsync(int id)
+    public async Task<CategoryResponse?> GetCategoryByIdAsync(int id, CancellationToken ct = default)
     {
-        Category? category = (await _categoryRepository.FindAsync([])).FirstOrDefault(c => c.Id == id);
+        Category? category = (await _categoryRepository.FindAsync([], ct: ct)).FirstOrDefault(c => c.Id == id);
         return category == null ? null : CategoryMapper.ToResponse(category);
     }
 
     /// <inheritdoc />
-    public async Task<SubCategoryResponse?> GetSubCategoryByIdAsync(int id)
+    public async Task<SubCategoryResponse?> GetSubCategoryByIdAsync(int id, CancellationToken ct = default)
     {
-        SubCategory? sub = (await _subCategoryRepository.FindAsync([])).FirstOrDefault(s => s.Id == id);
+        SubCategory? sub = (await _subCategoryRepository.FindAsync([], ct: ct)).FirstOrDefault(s => s.Id == id);
         return sub == null ? null : SubCategoryMapper.ToResponse(sub);
     }
 
     /// <inheritdoc />
-    public async Task<ServiceResult> CreateCategoryAsync(CategoryRequest request)
+    public async Task<ServiceResult> CreateCategoryAsync(CategoryRequest request, CancellationToken ct = default)
     {
         try
         {
@@ -62,7 +62,7 @@ public class MenuService : IMenuService
             if (result.IsError)
                 return ServiceResult.Fail(result.FirstError.Description);
 
-            await _categoryRepository.CreateAsync(result.Value);
+            await _categoryRepository.CreateAsync(result.Value, ct);
             return ServiceResult.Ok();
         }
         catch (Exception e)
@@ -73,13 +73,13 @@ public class MenuService : IMenuService
     }
 
     /// <inheritdoc />
-    public async Task<ServiceResult> UpdateCategoryAsync(CategoryRequest request)
+    public async Task<ServiceResult> UpdateCategoryAsync(CategoryRequest request, CancellationToken ct = default)
     {
         try
         {
             var category = Category.Reconstitute(request.Id, request.Name, request.DisplayName, request.IconPath,
                 request.Controller, request.Action, request.Role, request.Order);
-            await _categoryRepository.UpdateEntityAsync(category);
+            await _categoryRepository.UpdateEntityAsync(category, ct);
             return ServiceResult.Ok();
         }
         catch (Exception e)
@@ -90,13 +90,13 @@ public class MenuService : IMenuService
     }
 
     /// <inheritdoc />
-    public async Task<ServiceResult> DeleteCategoryAsync(CategoryRequest request)
+    public async Task<ServiceResult> DeleteCategoryAsync(CategoryRequest request, CancellationToken ct = default)
     {
         try
         {
             var category = Category.Reconstitute(request.Id, request.Name, request.DisplayName, request.IconPath,
                 request.Controller, request.Action, request.Role, request.Order);
-            await _categoryRepository.DeleteAsync([FilterCondition.Equal("Id", category.Id)]);
+            await _categoryRepository.DeleteAsync([FilterCondition.Equal("Id", category.Id)], ct);
             return ServiceResult.Ok();
         }
         catch (Exception e)
@@ -107,7 +107,7 @@ public class MenuService : IMenuService
     }
 
     /// <inheritdoc />
-    public async Task<ServiceResult> CreateSubCategoryAsync(SubCategoryRequest request)
+    public async Task<ServiceResult> CreateSubCategoryAsync(SubCategoryRequest request, CancellationToken ct = default)
     {
         try
         {
@@ -116,7 +116,7 @@ public class MenuService : IMenuService
             if (result.IsError)
                 return ServiceResult.Fail(result.FirstError.Description);
 
-            await _subCategoryRepository.CreateAsync(result.Value);
+            await _subCategoryRepository.CreateAsync(result.Value, ct);
             return ServiceResult.Ok();
         }
         catch (Exception e)
@@ -127,13 +127,13 @@ public class MenuService : IMenuService
     }
 
     /// <inheritdoc />
-    public async Task<ServiceResult> UpdateSubCategoryAsync(SubCategoryRequest request)
+    public async Task<ServiceResult> UpdateSubCategoryAsync(SubCategoryRequest request, CancellationToken ct = default)
     {
         try
         {
             var subCategory = SubCategory.Reconstitute(request.Id, request.CategoryId, request.Name,
                 request.DisplayName, request.IconPath, request.Action, request.Role, request.Order);
-            await _subCategoryRepository.UpdateEntityAsync(subCategory);
+            await _subCategoryRepository.UpdateEntityAsync(subCategory, ct);
             return ServiceResult.Ok();
         }
         catch (Exception e)
@@ -144,13 +144,13 @@ public class MenuService : IMenuService
     }
 
     /// <inheritdoc />
-    public async Task<ServiceResult> DeleteSubCategoryAsync(SubCategoryRequest request)
+    public async Task<ServiceResult> DeleteSubCategoryAsync(SubCategoryRequest request, CancellationToken ct = default)
     {
         try
         {
             var subCategory = SubCategory.Reconstitute(request.Id, request.CategoryId, request.Name,
                 request.DisplayName, request.IconPath, request.Action, request.Role, request.Order);
-            await _subCategoryRepository.DeleteAsync([FilterCondition.Equal("Id", subCategory.Id)]);
+            await _subCategoryRepository.DeleteAsync([FilterCondition.Equal("Id", subCategory.Id)], ct);
             return ServiceResult.Ok();
         }
         catch (Exception e)

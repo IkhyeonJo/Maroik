@@ -21,27 +21,27 @@ public class UnitOfWork : IUnitOfWork
     public UnitOfWork(ApplicationDbContext context) => _context = context;
 
     /// <inheritdoc />
-    public async Task BeginAsync()
+    public async Task BeginAsync(CancellationToken ct = default)
     {
-        _transaction = await _context.Database.BeginTransactionAsync();
+        _transaction = await _context.Database.BeginTransactionAsync(ct);
         _committed = false;
     }
 
     /// <inheritdoc />
-    public async Task CommitAsync()
+    public async Task CommitAsync(CancellationToken ct = default)
     {
         if (_transaction != null)
         {
-            await _transaction.CommitAsync();
+            await _transaction.CommitAsync(ct);
             _committed = true;
         }
     }
 
     /// <inheritdoc />
-    public async Task RollbackAsync()
+    public async Task RollbackAsync(CancellationToken ct = default)
     {
         if (_transaction != null)
-            await _transaction.RollbackAsync();
+            await _transaction.RollbackAsync(ct);
     }
 
     /// <inheritdoc />

@@ -8,17 +8,17 @@ namespace Maroik.Core.Contract.Interfaces;
 public interface IFixedIncomeService
 {
     /// <summary>Returns all fixed income records for the given account.</summary>
-    Task<List<FixedIncomeResponse>> GetFixedIncomesAsync(string accountEmail);
+    Task<List<FixedIncomeResponse>> GetFixedIncomesAsync(string accountEmail, CancellationToken ct = default);
 
     /// <summary>Returns a single fixed income record owned by the account, or null if not found.</summary>
-    Task<FixedIncomeResponse?> GetByIdAsync(string accountEmail, long id);
+    Task<FixedIncomeResponse?> GetByIdAsync(string accountEmail, long id, CancellationToken ct = default);
 
     /// <summary>Validates and creates a new fixed income record.</summary>
-    Task<ServiceResult> CreateAsync(string accountEmail, FixedIncomeRequest request);
+    Task<ServiceResult> CreateAsync(string accountEmail, FixedIncomeRequest request, CancellationToken ct = default);
 
     /// <summary>Validates and updates an existing fixed income record.</summary>
-    Task<ServiceResult> UpdateAsync(string accountEmail, FixedIncomeRequest request);
+    Task<ServiceResult> UpdateAsync(string accountEmail, FixedIncomeRequest request, CancellationToken ct = default);
 
     /// <summary>Deletes a fixed income record, verifying it belongs to the given account.</summary>
-    Task<ServiceResult> DeleteAsync(string accountEmail, long id);
+    Task<ServiceResult> DeleteAsync(string accountEmail, long id, CancellationToken ct = default);
 }

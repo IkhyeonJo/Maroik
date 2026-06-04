@@ -11,7 +11,8 @@ public interface IFileClient
     /// </summary>
     /// <param name="filePath">Server-side path of the file within the storage service.</param>
     /// <param name="fileStorageBaseUrl">Base URL of the Maroik.FileStorage service.</param>
-    public Task<byte[]> DownloadAsync(string filePath, string fileStorageBaseUrl);
+    /// <param name="ct">Cancellation token.</param>
+    public Task<byte[]> DownloadAsync(string filePath, string fileStorageBaseUrl, CancellationToken ct = default);
 
     /// <summary>
     /// Uploads raw file bytes to the storage service.
@@ -21,5 +22,6 @@ public interface IFileClient
     /// <param name="contentType">MIME type (e.g. "image/png").</param>
     /// <param name="filePath">Destination path including file name within the storage service.</param>
     /// <param name="fileStorageBaseUrl">Base URL of the Maroik.FileStorage service.</param>
-    public Task<bool> UploadAsync(byte[] fileData, string contentType, string filePath, string fileStorageBaseUrl);
+    /// <param name="ct">Cancellation token.</param>
+    public Task<bool> UploadAsync(byte[] fileData, string contentType, string filePath, string fileStorageBaseUrl, CancellationToken ct = default);
 }

@@ -8,17 +8,17 @@ namespace Maroik.Core.Contract.Interfaces;
 public interface IExpenditureService
 {
     /// <summary>Returns all expenditure records for the given account.</summary>
-    Task<List<ExpenditureResponse>> GetExpendituresAsync(string accountEmail);
+    Task<List<ExpenditureResponse>> GetExpendituresAsync(string accountEmail, CancellationToken ct = default);
 
     /// <summary>Returns a single expenditure record owned by the account, or null if not found.</summary>
-    Task<ExpenditureResponse?> GetByIdAsync(string accountEmail, long id);
+    Task<ExpenditureResponse?> GetByIdAsync(string accountEmail, long id, CancellationToken ct = default);
 
     /// <summary>Validates and creates a new expenditure record owned by the given account.</summary>
-    Task<ServiceResult> CreateAsync(string accountEmail, ExpenditureRequest request);
+    Task<ServiceResult> CreateAsync(string accountEmail, ExpenditureRequest request, CancellationToken ct = default);
 
     /// <summary>Validates and updates an expenditure record, verifying it belongs to the given account.</summary>
-    Task<ServiceResult> UpdateAsync(string accountEmail, ExpenditureRequest request);
+    Task<ServiceResult> UpdateAsync(string accountEmail, ExpenditureRequest request, CancellationToken ct = default);
 
     /// <summary>Deletes an expenditure record, verifying it belongs to the given account.</summary>
-    Task<ServiceResult> DeleteAsync(string accountEmail, long id);
+    Task<ServiceResult> DeleteAsync(string accountEmail, long id, CancellationToken ct = default);
 }

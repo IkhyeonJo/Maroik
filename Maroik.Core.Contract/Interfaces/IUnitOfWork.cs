@@ -9,11 +9,11 @@ namespace Maroik.Core.Contract.Interfaces;
 public interface IUnitOfWork : IAsyncDisposable
 {
     /// <summary>Opens a new database transaction.</summary>
-    Task BeginAsync();
+    Task BeginAsync(CancellationToken ct = default);
 
     /// <summary>Commits all changes made within the current transaction.</summary>
-    Task CommitAsync();
+    Task CommitAsync(CancellationToken ct = default);
 
     /// <summary>Rolls back all changes made within the current transaction.</summary>
-    Task RollbackAsync();
+    Task RollbackAsync(CancellationToken ct = default);
 }

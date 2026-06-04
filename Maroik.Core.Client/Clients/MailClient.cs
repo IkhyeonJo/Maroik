@@ -63,7 +63,7 @@ public class MailClient : IMailClient
     }
 
     /// <inheritdoc />
-    public async Task<string> SendMailAsync(string toEmail, string subject, string body, string smtpHost, string smtpPort, string smtpUserName, string smtpPassword, string smtpSsl, string fromEmail, string fromFullName)
+    public async Task<string> SendMailAsync(string toEmail, string subject, string body, string smtpHost, string smtpPort, string smtpUserName, string smtpPassword, string smtpSsl, string fromEmail, string fromFullName, CancellationToken ct = default)
     {
         try
         {
@@ -80,7 +80,7 @@ public class MailClient : IMailClient
             smtp.Credentials = new System.Net.NetworkCredential(smtpUserName, smtpPassword);
             smtp.EnableSsl = bool.Parse(smtpSsl);
 
-            await smtp.SendMailAsync(mailMessage);
+            await smtp.SendMailAsync(mailMessage, ct);
 
             // Return a localised success message on success
             return EnumHelper.GetDescription(AccountMessage.MailSent);

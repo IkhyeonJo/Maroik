@@ -12,5 +12,5 @@ public interface IAssetRepository : IGenericRepository<Asset>
     /// Renames the ProductName PK column via raw SQL (EF Core cannot update a PK via tracking).
     /// Returns the number of rows affected.
     /// </summary>
-    Task<int> UpdateAssetWithProductNameAsync(Asset asset, string originalProductName);
+    Task<int> UpdateAssetWithProductNameAsync(Asset asset, string originalProductName, CancellationToken ct = default);
 }

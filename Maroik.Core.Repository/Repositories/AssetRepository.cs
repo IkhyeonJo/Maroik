@@ -16,7 +16,7 @@ public class AssetRepository(ApplicationDbContext context)
     protected override DbSet<OrmAsset> Set => Context.Assets;
 
     /// <inheritdoc />
-    public async Task<int> UpdateAssetWithProductNameAsync(Asset asset, string originalProductName)
+    public async Task<int> UpdateAssetWithProductNameAsync(Asset asset, string originalProductName, CancellationToken ct = default)
     {
         // Raw SQL is required because the composite PK (ProductName, AccountEmail) changes.
         return await Context.Database.ExecuteSqlInterpolatedAsync(
@@ -33,7 +33,7 @@ public class AssetRepository(ApplicationDbContext context)
              WHERE
                  "ProductName" = {originalProductName}
                  AND "AccountEmail" = {asset.AccountEmail.Value}
-             """);
+             """, ct);
     }
 
     protected override Asset ToDomain(OrmAsset e) => Asset.Reconstitute(

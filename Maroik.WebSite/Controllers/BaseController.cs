@@ -57,7 +57,7 @@ public abstract class BaseController : Controller
             {
                 string email = sessionAccount.Email ?? "";
                 if (!string.IsNullOrEmpty(email))
-                    loginedAccount = await _accountService.GetAccountByEmailAsync(email) ?? loginedAccount;
+                    loginedAccount = await _accountService.GetAccountByEmailAsync(email, context.HttpContext.RequestAborted) ?? loginedAccount;
             }
             catch (Exception ex) { logger.LogWarning(ex, "Failed to refresh session account for {Email}", sessionAccount?.Email); }
         }
@@ -74,7 +74,8 @@ public abstract class BaseController : Controller
             {
                 var counts = await _dashboardService.GetNoticeCountsAsync(
                     loginedAccount.Email ?? "",
-                    _serverSettings.Value.NoticeMaturityDateDay);
+                    _serverSettings.Value.NoticeMaturityDateDay,
+                    context.HttpContext.RequestAborted);
 
                 fixedIncomesNoticedCount = counts.FixedIncomesNoticed;
                 fixedExpenditureNoticedCount = counts.FixedExpendituresNoticed;

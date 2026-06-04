@@ -16,7 +16,8 @@ public interface IGenericRepository<TDomain>
     Task<List<TDomain>> FindAsync(
         IReadOnlyList<FilterCondition> conditions,
         string? orderByProperty = null,
-        bool descending = false);
+        bool descending = false,
+        CancellationToken ct = default);
 
     /// <summary>Returns a paged slice of matching records together with the total matching count.</summary>
     Task<(List<TDomain> Items, int TotalCount)> FindPagedAsync(
@@ -24,10 +25,11 @@ public interface IGenericRepository<TDomain>
         int page,
         int pageSize,
         string? orderByProperty = null,
-        bool descending = false);
+        bool descending = false,
+        CancellationToken ct = default);
 
     /// <summary>Inserts a new domain object.</summary>
-    Task CreateAsync(TDomain domain);
+    Task CreateAsync(TDomain domain, CancellationToken ct = default);
 
     /// <summary>
     /// Applies partial column updates to all rows matching <paramref name="conditions"/>.
@@ -35,14 +37,15 @@ public interface IGenericRepository<TDomain>
     /// </summary>
     Task UpdateAsync(
         IReadOnlyList<FilterCondition> conditions,
-        IReadOnlyDictionary<string, object?> updates);
+        IReadOnlyDictionary<string, object?> updates,
+        CancellationToken ct = default);
 
     /// <summary>Hard-deletes all rows matching <paramref name="conditions"/>.</summary>
-    Task DeleteAsync(IReadOnlyList<FilterCondition> conditions);
+    Task DeleteAsync(IReadOnlyList<FilterCondition> conditions, CancellationToken ct = default);
 
     /// <summary>
     /// Full-entity update: fetches the existing row by its primary key and overwrites every column.
     /// A no-op when no row with the same PK exists.
     /// </summary>
-    Task UpdateEntityAsync(TDomain domain);
+    Task UpdateEntityAsync(TDomain domain, CancellationToken ct = default);
 }

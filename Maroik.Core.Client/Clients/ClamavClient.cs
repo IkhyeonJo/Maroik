@@ -1,4 +1,4 @@
-﻿using Maroik.Core.Contract.Interfaces;
+using Maroik.Core.Contract.Interfaces;
 using System.Net;
 using System.Net.Sockets;
 
@@ -11,7 +11,7 @@ namespace Maroik.Core.Client.Clients;
 public class ClamavClient : IClamavClient
 {
     /// <inheritdoc />
-    public async Task<bool> ScanWithClamavAsync(Stream fileStream, string clamavHost, int clamavPort)
+    public async Task<bool> ScanWithClamavAsync(Stream fileStream, string clamavHost, int clamavPort, CancellationToken ct = default)
     {
         try
         {
@@ -29,17 +29,17 @@ public class ClamavClient : IClamavClient
             // Send file data in 2 KB chunks, each prefixed with its 4-byte big-endian length
             byte[] buffer = new byte[2048];
             int bytesRead;
-            while ((bytesRead = await fileStream.ReadAsync(buffer, 0, buffer.Length)) > 0)
+            while ((bytesRead = await fileStream.ReadAsync(buffer, ct)) > 0)
             {
                 // INSTREAM protocol requires network byte order (big-endian) for the length prefix
                 byte[] lengthPrefix = BitConverter.GetBytes(IPAddress.HostToNetworkOrder(bytesRead));
-                await stream.WriteAsync(lengthPrefix, 0, lengthPrefix.Length);
-                await stream.WriteAsync(buffer, 0, bytesRead);
+                await stream.WriteAsync(lengthPrefix, ct);
+                await stream.WriteAsync(buffer.AsMemory(0, bytesRead), ct);
             }
 
             // A zero-length chunk signals end-of-stream to ClamAV
             byte[] zero = BitConverter.GetBytes(0);
-            await stream.WriteAsync(zero, 0, zero.Length);
+            await stream.WriteAsync(zero, ct);
 
             // Read the single-line scan result (e.g. "stream: OK" or "stream: Virus FOUND")
             using var reader = new StreamReader(stream);

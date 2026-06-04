@@ -10,5 +10,5 @@ public interface IClamavClient
     /// Streams <paramref name="fileStream"/> to the ClamAV daemon via the INSTREAM protocol.
     /// Returns true when the file is clean; false on a virus detection or connection error.
     /// </summary>
-    public Task<bool> ScanWithClamavAsync(Stream fileStream, string clamavHost, int clamavPort);
+    public Task<bool> ScanWithClamavAsync(Stream fileStream, string clamavHost, int clamavPort, CancellationToken ct = default);
 }

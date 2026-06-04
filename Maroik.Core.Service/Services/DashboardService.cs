@@ -42,7 +42,7 @@ public class DashboardService : IDashboardService
     }
 
     /// <inheritdoc />
-    public async Task<DashboardSummary> GetSummaryAsync(string accountEmail, string year, string month, string timeZoneId)
+    public async Task<DashboardSummary> GetSummaryAsync(string accountEmail, string year, string month, string timeZoneId, CancellationToken ct = default)
     {
         // Normalize year/month
         if (!int.TryParse(year, out int yearInt)) yearInt = DateTime.UtcNow.Year;
@@ -51,8 +51,8 @@ public class DashboardService : IDashboardService
         string normalizedMonth = monthInt.ToString("00");
         string normalizedYearMonth = $"{normalizedYear}-{normalizedMonth}";
 
-        List<Asset> assets = await _assetRepository.FindAsync([FilterCondition.Equal("AccountEmail", accountEmail)]);
-        Account? account = (await _accountRepository.FindAsync([FilterCondition.Equal("Email", accountEmail)])).FirstOrDefault();
+        List<Asset> assets = await _assetRepository.FindAsync([FilterCondition.Equal("AccountEmail", accountEmail)], ct: ct);
+        Account? account = (await _accountRepository.FindAsync([FilterCondition.Equal("Email", accountEmail)], ct: ct)).FirstOrDefault();
 
         string? defaultMonetaryUnit = GetEffectiveMonetaryUnit(account, assets);
 
@@ -89,22 +89,22 @@ public class DashboardService : IDashboardService
                 FilterCondition.Equal("AccountEmail", accountEmail),
                 FilterCondition.GreaterThanOrEqual("Created", yearStart),
                 FilterCondition.LessThan("Created", yearEnd)
-            ]);
+            ], ct: ct);
             List<Expenditure> yearExpenditures = await _expenditureRepository.FindAsync([
                 FilterCondition.Equal("AccountEmail", accountEmail),
                 FilterCondition.GreaterThanOrEqual("Created", yearStart),
                 FilterCondition.LessThan("Created", yearEnd)
-            ]);
+            ], ct: ct);
             List<Income> ymIncomes = await _incomeRepository.FindAsync([
                 FilterCondition.Equal("AccountEmail", accountEmail),
                 FilterCondition.GreaterThanOrEqual("Created", ymStart),
                 FilterCondition.LessThan("Created", ymEnd)
-            ]);
+            ], ct: ct);
             List<Expenditure> ymExpenditures = await _expenditureRepository.FindAsync([
                 FilterCondition.Equal("AccountEmail", accountEmail),
                 FilterCondition.GreaterThanOrEqual("Created", ymStart),
                 FilterCondition.LessThan("Created", ymEnd)
-            ]);
+            ], ct: ct);
 
             // Filter by default monetary unit via asset lookup
             string defaultUnit = summary.DefaultMonetaryUnit;
@@ -124,9 +124,9 @@ public class DashboardService : IDashboardService
 
         // Compute StartYear
         var firstIncome = (await _incomeRepository.FindAsync(
-            [FilterCondition.Equal("AccountEmail", accountEmail)], orderByProperty: "Created")).FirstOrDefault();
+            [FilterCondition.Equal("AccountEmail", accountEmail)], orderByProperty: "Created", ct: ct)).FirstOrDefault();
         var firstExpenditure = (await _expenditureRepository.FindAsync(
-            [FilterCondition.Equal("AccountEmail", accountEmail)], orderByProperty: "Created")).FirstOrDefault();
+            [FilterCondition.Equal("AccountEmail", accountEmail)], orderByProperty: "Created", ct: ct)).FirstOrDefault();
 
         DateTime firstCreated = DateTime.MaxValue;
         if (firstIncome != null && firstIncome.Created != DateTime.MinValue && firstIncome.Created < firstCreated)
@@ -145,14 +145,14 @@ public class DashboardService : IDashboardService
     }
 
     /// <inheritdoc />
-    public async Task<NotificationCounts> GetNoticeCountsAsync(string email, int noticeMaturityDateDay)
+    public async Task<NotificationCounts> GetNoticeCountsAsync(string email, int noticeMaturityDateDay, CancellationToken ct = default)
     {
         int incomesNoticed = 0, expendituresNoticed = 0;
         int incomesExpired = 0, expendituresExpired = 0;
 
         DateTime currentDate = DateTime.UtcNow.Date;
 
-        foreach (var item in await _fixedIncomeRepository.FindAsync([FilterCondition.Equal("AccountEmail", email)]))
+        foreach (var item in await _fixedIncomeRepository.FindAsync([FilterCondition.Equal("AccountEmail", email)], ct: ct))
         {
             if (FixedSchedulePolicy.IsNoticed(item.DepositMonth, item.DepositDay, currentDate, noticeMaturityDateDay, item.Unpunctuality))
                 incomesNoticed++;
@@ -160,7 +160,7 @@ public class DashboardService : IDashboardService
                 incomesExpired++;
         }
 
-        foreach (var item in await _fixedExpenditureRepository.FindAsync([FilterCondition.Equal("AccountEmail", email)]))
+        foreach (var item in await _fixedExpenditureRepository.FindAsync([FilterCondition.Equal("AccountEmail", email)], ct: ct))
         {
             if (FixedSchedulePolicy.IsNoticed(item.DepositMonth, item.DepositDay, currentDate, noticeMaturityDateDay, item.Unpunctuality))
                 expendituresNoticed++;
@@ -267,11 +267,6 @@ public class DashboardService : IDashboardService
         };
     }
 
-    /// <summary>
-    /// Extracts the text between <paramref name="startMarker"/> and <paramref name="endMarker"/> from <paramref name="input"/>.
-    /// When <paramref name="endMarker"/> is <see langword="null"/>, the text from <paramref name="startMarker"/> to the end of
-    /// <paramref name="input"/> is returned.  Returns an empty string on any parse error.
-    /// </summary>
     private static string ExtractSection(string input, string startMarker, string? endMarker = null)
     {
         try

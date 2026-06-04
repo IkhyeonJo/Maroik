@@ -1,4 +1,4 @@
-﻿using Maroik.Core.Contract.Domains.Account;
+using Maroik.Core.Contract.Domains.Account;
 using Maroik.Core.Contract.Filters;
 using Maroik.Core.Contract.Dtos;
 using Maroik.Core.Contract.Utilities;
@@ -32,22 +32,22 @@ public class ManagementAccountService : IManagementAccountService
     }
 
     /// <inheritdoc />
-    public async Task<List<AccountResponse>> GetAllAccountsAsync()
-        => (await _accountRepository.FindAsync([])).Select(AccountMapper.ToResponse).ToList();
+    public async Task<List<AccountResponse>> GetAllAccountsAsync(CancellationToken ct = default)
+        => (await _accountRepository.FindAsync([], ct: ct)).Select(AccountMapper.ToResponse).ToList();
 
     /// <inheritdoc />
-    public async Task<AccountResponse?> GetAccountByEmailAsync(string email)
+    public async Task<AccountResponse?> GetAccountByEmailAsync(string email, CancellationToken ct = default)
     {
-        Account? account = await FindByEmailAsync(email);
+        Account? account = await FindByEmailAsync(email, ct);
         return account == null ? null : AccountMapper.ToResponse(account);
     }
 
     /// <inheritdoc />
-    public async Task<ServiceResult> CreateAccountAsync(AccountRequest request)
+    public async Task<ServiceResult> CreateAccountAsync(AccountRequest request, CancellationToken ct = default)
     {
         try
         {
-            if (await FindByEmailAsync(request.Email ?? "") != null)
+            if (await FindByEmailAsync(request.Email ?? "", ct) != null)
                 return ServiceResult.Fail("This account has already been created.");
 
             string hashedPassword = _passwordService.HashPassword(request.HashedPassword ?? "");
@@ -71,7 +71,7 @@ public class ManagementAccountService : IManagementAccountService
             if (request.EmailConfirmed)
                 account.ForceConfirmEmail();
 
-            await _accountRepository.CreateAsync(account);
+            await _accountRepository.CreateAsync(account, ct);
             return ServiceResult.Ok();
         }
         catch (Exception e)
@@ -82,11 +82,11 @@ public class ManagementAccountService : IManagementAccountService
     }
 
     /// <inheritdoc />
-    public async Task<ServiceResult> UpdateAccountAsync(AccountRequest request, string? newPassword)
+    public async Task<ServiceResult> UpdateAccountAsync(AccountRequest request, string? newPassword, CancellationToken ct = default)
     {
         try
         {
-            Account? account = await FindByEmailAsync(request.Email ?? "");
+            Account? account = await FindByEmailAsync(request.Email ?? "", ct);
             if (account == null)
                 return ServiceResult.Fail("Email address is wrong");
 
@@ -106,7 +106,7 @@ public class ManagementAccountService : IManagementAccountService
             if (updateResult.IsError)
                 return ServiceResult.Fail(updateResult.FirstError.Description);
 
-            await _accountRepository.UpdateEntityAsync(account);
+            await _accountRepository.UpdateEntityAsync(account, ct);
             return ServiceResult.Ok();
         }
         catch (Exception e)
@@ -116,21 +116,21 @@ public class ManagementAccountService : IManagementAccountService
         }
     }
 
-    private async Task<Account?> FindByEmailAsync(string email)
-        => (await _accountRepository.FindAsync([FilterCondition.Equal("Email", email)])).FirstOrDefault();
+    private async Task<Account?> FindByEmailAsync(string email, CancellationToken ct = default)
+        => (await _accountRepository.FindAsync([FilterCondition.Equal("Email", email)], ct: ct)).FirstOrDefault();
 
     /// <inheritdoc />
-    public async Task<ServiceResult> DeleteAccountAsync(string email)
+    public async Task<ServiceResult> DeleteAccountAsync(string email, CancellationToken ct = default)
     {
         try
         {
-            Account? account = await FindByEmailAsync(email);
+            Account? account = await FindByEmailAsync(email, ct);
             if (account == null)
                 return ServiceResult.Fail("Fail to find the account by given email address");
 
             account.SoftDelete();
 
-            await _accountRepository.UpdateEntityAsync(account);
+            await _accountRepository.UpdateEntityAsync(account, ct);
             return ServiceResult.Ok();
         }
         catch (Exception e)

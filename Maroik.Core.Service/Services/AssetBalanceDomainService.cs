@@ -19,13 +19,13 @@ public class AssetBalanceDomainService : IAssetBalanceDomainService
         => _assetRepository = assetRepository;
 
     /// <inheritdoc />
-    public async Task<Asset?> GetAssetAsync(string accountEmail, string productName)
+    public async Task<Asset?> GetAssetAsync(string accountEmail, string productName, CancellationToken ct = default)
         => (await _assetRepository.FindAsync([
             FilterCondition.Equal("AccountEmail", accountEmail),
             FilterCondition.Equal("ProductName", productName)
-        ])).FirstOrDefault();
+        ], ct: ct)).FirstOrDefault();
 
     /// <inheritdoc />
-    public Task SaveAsync(Asset asset)
-        => _assetRepository.UpdateEntityAsync(asset);
+    public Task SaveAsync(Asset asset, CancellationToken ct = default)
+        => _assetRepository.UpdateEntityAsync(asset, ct);
 }

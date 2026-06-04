@@ -1,4 +1,4 @@
-﻿using ImageMagick;
+using ImageMagick;
 using Maroik.Core.Contract.Domains.Account;
 using Maroik.Core.Contract.Filters;
 using Maroik.Core.Contract.Domains.Finance;
@@ -47,24 +47,24 @@ public class ProfileService : IProfileService
     }
 
     /// <inheritdoc />
-    public async Task<AccountResponse?> GetProfileAsync(string email)
+    public async Task<AccountResponse?> GetProfileAsync(string email, CancellationToken ct = default)
     {
-        Account? account = await FindByEmailAsync(email);
+        Account? account = await FindByEmailAsync(email, ct);
         return account == null ? null : AccountMapper.ToResponse(account);
     }
 
     /// <inheritdoc />
-    public async Task<ServiceResult> UpdateAvatarAsync(string email, string avatarPath)
+    public async Task<ServiceResult> UpdateAvatarAsync(string email, string avatarPath, CancellationToken ct = default)
     {
         try
         {
-            Account? account = await FindByEmailAsync(email);
+            Account? account = await FindByEmailAsync(email, ct);
             if (account == null)
                 return ServiceResult.Fail("Input is invalid");
 
             account.UpdateProfile(account.Nickname, avatarPath, account.TimeZone, account.DefaultMonetaryUnit);
 
-            await _accountRepository.UpdateEntityAsync(account);
+            await _accountRepository.UpdateEntityAsync(account, ct);
             return ServiceResult.Ok();
         }
         catch (Exception e)
@@ -75,11 +75,11 @@ public class ProfileService : IProfileService
     }
 
     /// <inheritdoc />
-    public async Task<ServiceResult> UpdateTimeZoneAsync(string email, string timeZoneIanaId)
+    public async Task<ServiceResult> UpdateTimeZoneAsync(string email, string timeZoneIanaId, CancellationToken ct = default)
     {
         try
         {
-            Account? account = await FindByEmailAsync(email);
+            Account? account = await FindByEmailAsync(email, ct);
             if (account == null)
                 return ServiceResult.Fail("Input is invalid");
 
@@ -89,7 +89,7 @@ public class ProfileService : IProfileService
 
             account.UpdateProfile(account.Nickname, account.AvatarImagePath, tzResult.Value, account.DefaultMonetaryUnit);
 
-            await _accountRepository.UpdateEntityAsync(account);
+            await _accountRepository.UpdateEntityAsync(account, ct);
             return ServiceResult.Ok();
         }
         catch (Exception e)
@@ -100,11 +100,11 @@ public class ProfileService : IProfileService
     }
 
     /// <inheritdoc />
-    public async Task<ServiceResult> UpdatePasswordAsync(string email, string currentPassword, string newPassword)
+    public async Task<ServiceResult> UpdatePasswordAsync(string email, string currentPassword, string newPassword, CancellationToken ct = default)
     {
         try
         {
-            Account? account = await FindByEmailAsync(email);
+            Account? account = await FindByEmailAsync(email, ct);
             if (account == null)
                 return ServiceResult.Fail("Input is invalid");
 
@@ -113,7 +113,7 @@ public class ProfileService : IProfileService
 
             account.ChangePassword(_passwordService.HashPassword(newPassword));
 
-            await _accountRepository.UpdateEntityAsync(account);
+            await _accountRepository.UpdateEntityAsync(account, ct);
             return ServiceResult.Ok();
         }
         catch (Exception e)
@@ -124,11 +124,11 @@ public class ProfileService : IProfileService
     }
 
     /// <inheritdoc />
-    public async Task<ServiceResult> UploadAndUpdateAvatarAsync(string email, byte[] imageBytes, string extension, string avatarDirectoryPath)
+    public async Task<ServiceResult> UploadAndUpdateAvatarAsync(string email, byte[] imageBytes, string extension, string avatarDirectoryPath, CancellationToken ct = default)
     {
         using var memoryStream = new MemoryStream(imageBytes);
 
-        if (!await _clamavClient.ScanWithClamavAsync(memoryStream, _settings.Value.ClamavHost ?? string.Empty, _settings.Value.ClamavPort))
+        if (!await _clamavClient.ScanWithClamavAsync(memoryStream, _settings.Value.ClamavHost ?? string.Empty, _settings.Value.ClamavPort, ct))
             return ServiceResult.Fail("virus-detected");
 
         memoryStream.Position = 0;
@@ -155,8 +155,8 @@ public class ProfileService : IProfileService
 #pragma warning restore SCS0018
         {
             memoryStream.Position = 0;
-            await memoryStream.CopyToAsync(stream);
-            await stream.FlushAsync();
+            await memoryStream.CopyToAsync(stream, ct);
+            await stream.FlushAsync(ct);
         }
 
         var chmod = new ProcessStartInfo
@@ -172,26 +172,26 @@ public class ProfileService : IProfileService
         };
         using (var process = Process.Start(chmod))
         {
-            await process?.WaitForExitAsync()!;
+            await process?.WaitForExitAsync(ct)!;
         }
 
-        return await UpdateAvatarAsync(email, $"/upload/Management/Profile/Avatar/{avatarFile}");
+        return await UpdateAvatarAsync(email, $"/upload/Management/Profile/Avatar/{avatarFile}", ct);
     }
 
-    private async Task<Account?> FindByEmailAsync(string email)
-        => (await _accountRepository.FindAsync([FilterCondition.Equal("Email", email)])).FirstOrDefault();
+    private async Task<Account?> FindByEmailAsync(string email, CancellationToken ct = default)
+        => (await _accountRepository.FindAsync([FilterCondition.Equal("Email", email)], ct: ct)).FirstOrDefault();
 
     /// <inheritdoc />
-    public async Task UpdateDefaultMonetaryUnitAsync(string accountEmail, string? monetaryUnit)
+    public async Task UpdateDefaultMonetaryUnitAsync(string accountEmail, string? monetaryUnit, CancellationToken ct = default)
     {
-        List<Asset> assets = await _assetRepository.FindAsync([FilterCondition.Equal("AccountEmail", accountEmail)]);
-        Account? account = await FindByEmailAsync(accountEmail);
+        List<Asset> assets = await _assetRepository.FindAsync([FilterCondition.Equal("AccountEmail", accountEmail)], ct: ct);
+        Account? account = await FindByEmailAsync(accountEmail, ct);
         if (account == null) return;
 
         string? newUnit = assets.Select(x => x.Balance.Currency).Distinct().Contains(monetaryUnit)
             ? monetaryUnit
             : null;
         account.UpdateProfile(account.Nickname, account.AvatarImagePath, account.TimeZone, newUnit);
-        await _accountRepository.UpdateEntityAsync(account);
+        await _accountRepository.UpdateEntityAsync(account, ct);
     }
 }

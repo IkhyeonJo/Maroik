@@ -41,5 +41,5 @@ public interface IMailClient
     /// <summary>
     /// Sends an HTML email via SMTP. Returns an empty string on success or the exception message on failure.
     /// </summary>
-    public Task<string> SendMailAsync(string toEmail, string subject, string body, string smtpHost, string smtpPort, string smtpUserName, string smtpPassword, string smtpSsl, string fromEmail, string fromFullName);
+    public Task<string> SendMailAsync(string toEmail, string subject, string body, string smtpHost, string smtpPort, string smtpUserName, string smtpPassword, string smtpSsl, string fromEmail, string fromFullName, CancellationToken ct = default);
 }

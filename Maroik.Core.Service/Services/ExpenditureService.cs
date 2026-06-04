@@ -1,4 +1,4 @@
-﻿using Maroik.Core.Contract.Domains.Finance;
+using Maroik.Core.Contract.Domains.Finance;
 using Maroik.Core.Contract.Filters;
 using Maroik.Core.Contract.Dtos;
 using Maroik.Core.Contract.Interfaces;
@@ -29,24 +29,24 @@ public class ExpenditureService : IExpenditureService
     }
 
     /// <inheritdoc />
-    public async Task<List<ExpenditureResponse>> GetExpendituresAsync(string accountEmail)
-        => (await _expenditureRepository.FindAsync([FilterCondition.Equal("AccountEmail", accountEmail)])).Select(ExpenditureMapper.ToResponse).ToList();
+    public async Task<List<ExpenditureResponse>> GetExpendituresAsync(string accountEmail, CancellationToken ct = default)
+        => (await _expenditureRepository.FindAsync([FilterCondition.Equal("AccountEmail", accountEmail)], ct: ct)).Select(ExpenditureMapper.ToResponse).ToList();
 
     /// <inheritdoc />
-    public async Task<ExpenditureResponse?> GetByIdAsync(string accountEmail, long id)
+    public async Task<ExpenditureResponse?> GetByIdAsync(string accountEmail, long id, CancellationToken ct = default)
     {
         var results = await _expenditureRepository.FindAsync([
             FilterCondition.Equal("AccountEmail", accountEmail),
             FilterCondition.Equal("Id", id)
-        ]);
+        ], ct: ct);
         var expenditure = results.FirstOrDefault();
         return expenditure == null ? null : ExpenditureMapper.ToResponse(expenditure);
     }
 
     /// <inheritdoc />
-    public async Task<ServiceResult> CreateAsync(string accountEmail, ExpenditureRequest request)
+    public async Task<ServiceResult> CreateAsync(string accountEmail, ExpenditureRequest request, CancellationToken ct = default)
     {
-        await _unitOfWork.BeginAsync();
+        await _unitOfWork.BeginAsync(ct);
         try
         {
             var classResult = ExpenditureClassPolicy.Validate(request.MainClass, request.SubClass);
@@ -56,7 +56,7 @@ public class ExpenditureService : IExpenditureService
                 return ServiceResult.Fail("Input is invalid");
             }
 
-            Asset? paymentAsset = await _assetBalance.GetAssetAsync(accountEmail, request.PaymentMethod ?? "");
+            Asset? paymentAsset = await _assetBalance.GetAssetAsync(accountEmail, request.PaymentMethod ?? "", ct);
             if (paymentAsset == null)
             {
                 await _unitOfWork.RollbackAsync();
@@ -77,7 +77,7 @@ public class ExpenditureService : IExpenditureService
                     return ServiceResult.Fail("The PaymentMethod and MyDepositAsset value cannot be the same.");
                 }
 
-                depositAsset = await _assetBalance.GetAssetAsync(accountEmail, request.MyDepositAsset ?? "");
+                depositAsset = await _assetBalance.GetAssetAsync(accountEmail, request.MyDepositAsset ?? "", ct);
                 if (depositAsset == null)
                 {
                     await _unitOfWork.RollbackAsync();
@@ -107,18 +107,18 @@ public class ExpenditureService : IExpenditureService
             }
 
             var expenditure = expenditureResult.Value;
-            await _expenditureRepository.CreateAsync(expenditure);
+            await _expenditureRepository.CreateAsync(expenditure, ct);
 
             paymentAsset.Withdraw(expenditure.Amount.Amount, currency);
-            await _assetBalance.SaveAsync(paymentAsset);
+            await _assetBalance.SaveAsync(paymentAsset, ct);
 
             if (depositAsset != null)
             {
                 depositAsset.Deposit(expenditure.Amount.Amount, currency);
-                await _assetBalance.SaveAsync(depositAsset);
+                await _assetBalance.SaveAsync(depositAsset, ct);
             }
 
-            await _unitOfWork.CommitAsync();
+            await _unitOfWork.CommitAsync(ct);
             return ServiceResult.Ok();
         }
         catch
@@ -129,9 +129,9 @@ public class ExpenditureService : IExpenditureService
     }
 
     /// <inheritdoc />
-    public async Task<ServiceResult> UpdateAsync(string accountEmail, ExpenditureRequest request)
+    public async Task<ServiceResult> UpdateAsync(string accountEmail, ExpenditureRequest request, CancellationToken ct = default)
     {
-        await _unitOfWork.BeginAsync();
+        await _unitOfWork.BeginAsync(ct);
         try
         {
             var classResult = ExpenditureClassPolicy.Validate(request.MainClass, request.SubClass);
@@ -149,8 +149,8 @@ public class ExpenditureService : IExpenditureService
 
             if (classResult.Value)
             {
-                var pm = await _assetBalance.GetAssetAsync(accountEmail, request.PaymentMethod ?? "");
-                var dep = await _assetBalance.GetAssetAsync(accountEmail, request.MyDepositAsset ?? "");
+                var pm = await _assetBalance.GetAssetAsync(accountEmail, request.PaymentMethod ?? "", ct);
+                var dep = await _assetBalance.GetAssetAsync(accountEmail, request.MyDepositAsset ?? "", ct);
                 if (pm == null || dep == null)
                 {
                     await _unitOfWork.RollbackAsync();
@@ -163,7 +163,7 @@ public class ExpenditureService : IExpenditureService
                 }
             }
 
-            List<Expenditure> expenditures = await _expenditureRepository.FindAsync([FilterCondition.Equal("AccountEmail", accountEmail)]);
+            List<Expenditure> expenditures = await _expenditureRepository.FindAsync([FilterCondition.Equal("AccountEmail", accountEmail)], ct: ct);
             Expenditure? previous = expenditures.FirstOrDefault(x => x.Id == request.Id);
             if (previous == null)
             {
@@ -171,7 +171,7 @@ public class ExpenditureService : IExpenditureService
                 return ServiceResult.Fail("Input is invalid");
             }
 
-            Asset? prevPayAsset = await _assetBalance.GetAssetAsync(accountEmail, previous.PaymentMethod ?? "");
+            Asset? prevPayAsset = await _assetBalance.GetAssetAsync(accountEmail, previous.PaymentMethod ?? "", ct);
             if (prevPayAsset?.Deleted == true)
             {
                 await _unitOfWork.RollbackAsync();
@@ -179,7 +179,7 @@ public class ExpenditureService : IExpenditureService
             }
             if (!string.IsNullOrEmpty(previous.MyDepositAsset))
             {
-                Asset? prevDepAsset = await _assetBalance.GetAssetAsync(accountEmail, previous.MyDepositAsset);
+                Asset? prevDepAsset = await _assetBalance.GetAssetAsync(accountEmail, previous.MyDepositAsset, ct);
                 if (prevDepAsset?.Deleted == true)
                 {
                     await _unitOfWork.RollbackAsync();
@@ -187,7 +187,7 @@ public class ExpenditureService : IExpenditureService
                 }
             }
 
-            Asset? newPayAsset = await _assetBalance.GetAssetAsync(accountEmail, request.PaymentMethod ?? "");
+            Asset? newPayAsset = await _assetBalance.GetAssetAsync(accountEmail, request.PaymentMethod ?? "", ct);
             string newCurrency = newPayAsset?.Balance.Currency ?? prevPayAsset?.Balance.Currency ?? string.Empty;
             string? myDepositAsset = classResult.Value ? request.MyDepositAsset : string.Empty;
 
@@ -201,11 +201,11 @@ public class ExpenditureService : IExpenditureService
                 return ServiceResult.Fail(updateResult.FirstError.Description);
             }
 
-            await _expenditureRepository.UpdateEntityAsync(previous);
+            await _expenditureRepository.UpdateEntityAsync(previous, ct);
             await AdjustAssetBalancesAsync(accountEmail, oldSnapshot,
-                new ExpenditureSnapshot(previous.PaymentMethod, previous.MyDepositAsset, previous.Amount.Amount));
+                new ExpenditureSnapshot(previous.PaymentMethod, previous.MyDepositAsset, previous.Amount.Amount), ct);
 
-            await _unitOfWork.CommitAsync();
+            await _unitOfWork.CommitAsync(ct);
             return ServiceResult.Ok();
         }
         catch
@@ -216,12 +216,12 @@ public class ExpenditureService : IExpenditureService
     }
 
     /// <inheritdoc />
-    public async Task<ServiceResult> DeleteAsync(string accountEmail, long id)
+    public async Task<ServiceResult> DeleteAsync(string accountEmail, long id, CancellationToken ct = default)
     {
-        await _unitOfWork.BeginAsync();
+        await _unitOfWork.BeginAsync(ct);
         try
         {
-            List<Expenditure> expenditures = await _expenditureRepository.FindAsync([FilterCondition.Equal("AccountEmail", accountEmail)]);
+            List<Expenditure> expenditures = await _expenditureRepository.FindAsync([FilterCondition.Equal("AccountEmail", accountEmail)], ct: ct);
             Expenditure? expenditure = expenditures.FirstOrDefault(x => x.Id == id);
             if (expenditure == null)
             {
@@ -231,10 +231,10 @@ public class ExpenditureService : IExpenditureService
 
             await AdjustAssetBalancesAsync(accountEmail,
                 new ExpenditureSnapshot(expenditure.PaymentMethod, expenditure.MyDepositAsset, expenditure.Amount.Amount),
-                null);
-            await _expenditureRepository.DeleteAsync([FilterCondition.Equal("Id", expenditure.Id)]);
+                null, ct);
+            await _expenditureRepository.DeleteAsync([FilterCondition.Equal("Id", expenditure.Id)], ct);
 
-            await _unitOfWork.CommitAsync();
+            await _unitOfWork.CommitAsync(ct);
             return ServiceResult.Ok();
         }
         catch
@@ -249,7 +249,7 @@ public class ExpenditureService : IExpenditureService
     /// Pass null for toApply when deleting.
     /// Uses a dictionary to batch all asset fetches and avoid double-fetch issues.
     /// </summary>
-    private async Task AdjustAssetBalancesAsync(string accountEmail, ExpenditureSnapshot toRevert, ExpenditureSnapshot? toApply)
+    private async Task AdjustAssetBalancesAsync(string accountEmail, ExpenditureSnapshot toRevert, ExpenditureSnapshot? toApply, CancellationToken ct = default)
     {
         var names = new HashSet<string>(StringComparer.Ordinal);
         if (!string.IsNullOrEmpty(toRevert.PaymentMethod)) names.Add(toRevert.PaymentMethod);
@@ -263,7 +263,7 @@ public class ExpenditureService : IExpenditureService
         var assets = new Dictionary<string, Asset>(StringComparer.Ordinal);
         foreach (string name in names)
         {
-            Asset? a = await _assetBalance.GetAssetAsync(accountEmail, name);
+            Asset? a = await _assetBalance.GetAssetAsync(accountEmail, name, ct);
             if (a != null) assets[name] = a;
         }
 
@@ -283,7 +283,7 @@ public class ExpenditureService : IExpenditureService
         }
 
         foreach (var asset in assets.Values)
-            await _assetBalance.SaveAsync(asset);
+            await _assetBalance.SaveAsync(asset, ct);
     }
 
     /// <summary>

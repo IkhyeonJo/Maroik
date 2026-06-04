@@ -9,8 +9,8 @@ namespace Maroik.Core.Contract.Interfaces;
 public interface IAssetBalanceDomainService
 {
     /// <summary>Returns the asset identified by the composite key (email + productName), or null if not found.</summary>
-    Task<Asset?> GetAssetAsync(string accountEmail, string productName);
+    Task<Asset?> GetAssetAsync(string accountEmail, string productName, CancellationToken ct = default);
 
     /// <summary>Persists changes to the given asset (insert or update).</summary>
-    Task SaveAsync(Asset asset);
+    Task SaveAsync(Asset asset, CancellationToken ct = default);
 }

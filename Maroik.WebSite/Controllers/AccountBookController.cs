@@ -57,7 +57,7 @@ public class AccountBookController : BaseController
     [HttpPost]
     [ValidateAntiForgeryToken]
     [RequiredHttpPostAccess(Role = Role.User)]
-    public async Task<IActionResult> CreateAsset([FromBody] AssetInputViewModel assetInputViewModel)
+    public async Task<IActionResult> CreateAsset([FromBody] AssetInputViewModel assetInputViewModel, CancellationToken ct)
     {
         if (!ModelState.IsValid)
             return Json(new { result = false, error = _localizer["Input is invalid"].Value });
@@ -74,7 +74,7 @@ public class AccountBookController : BaseController
             Deleted      = false
         };
 
-        var result = await _assetService.CreateAsync(email, request);
+        var result = await _assetService.CreateAsync(email, request, ct);
         return result.Success
             ? Json(new { result = true, message = _localizer["The asset has been successfully created."].Value })
             : Json(new { result = false, error = _localizer[result.ErrorKey!].Value });
@@ -86,12 +86,12 @@ public class AccountBookController : BaseController
 
     /// <summary>Returns the asset grid (AJAX) or the full asset page.</summary>
     [HttpGet]
-    public async Task<IActionResult> Asset(string wholeSearch)
+    public async Task<IActionResult> Asset(string wholeSearch, CancellationToken ct)
     {
         if (HttpContext.Request.Headers["X-Requested-With"] == "XMLHttpRequest")
         {
             var account = _sessionService.GetAccount()!;
-            var assets  = await _assetService.GetAssetsAsync(account.Email!);
+            var assets  = await _assetService.GetAssetsAsync(account.Email!, ct);
             var viewModels = assets
                 .ToDisplayViewModels(Localize, account.TimeZoneIanaId!)
                 .ApplySearch(wholeSearch)
@@ -100,19 +100,19 @@ public class AccountBookController : BaseController
             return PartialView("_AssetGrid", viewModels);
         }
 
-        return await AssetPageAsync();
+        return await AssetPageAsync(ct);
     }
 
     /// <summary>Checks whether an asset with the given product name exists.</summary>
     [HttpPost]
     [ValidateAntiForgeryToken]
     [RequiredHttpPostAccess(Role = Role.User)]
-    public async Task<IActionResult> IsAssetExists(string productName)
+    public async Task<IActionResult> IsAssetExists(string productName, CancellationToken ct)
     {
         try
         {
             AssetResponse? asset = await _assetService.GetAssetAsync(
-                _sessionService.GetAccount()!.Email!, productName);
+                _sessionService.GetAccount()!.Email!, productName, ct);
 
             return asset == null
                 ? Json(new { result = false, error = _localizer["Fail to find the asset by given product name"].Value })
@@ -132,7 +132,7 @@ public class AccountBookController : BaseController
     [HttpPost]
     [ValidateAntiForgeryToken]
     [RequiredHttpPostAccess(Role = Role.User)]
-    public async Task<IActionResult> UpdateAsset([FromBody] AssetInputViewModel assetInputViewModel)
+    public async Task<IActionResult> UpdateAsset([FromBody] AssetInputViewModel assetInputViewModel, CancellationToken ct)
     {
         _ = ModelState.Remove(nameof(assetInputViewModel.MonetaryUnit));
         if (!ModelState.IsValid)
@@ -150,7 +150,7 @@ public class AccountBookController : BaseController
             Deleted      = assetInputViewModel.Deleted
         };
 
-        var result = await _assetService.UpdateAsync(email, request, assetInputViewModel.OriginalProductName!);
+        var result = await _assetService.UpdateAsync(email, request, assetInputViewModel.OriginalProductName!, ct);
         return result.Success
             ? Json(new { result = true, message = _localizer["The asset has been successfully updated."].Value })
             : Json(new { result = false, error = _localizer[result.ErrorKey!].Value });
@@ -164,10 +164,10 @@ public class AccountBookController : BaseController
     [HttpPost]
     [ValidateAntiForgeryToken]
     [RequiredHttpPostAccess(Role = Role.User)]
-    public async Task<IActionResult> DeleteAsset([FromBody] AssetInputViewModel assetInputViewModel)
+    public async Task<IActionResult> DeleteAsset([FromBody] AssetInputViewModel assetInputViewModel, CancellationToken ct)
     {
         string email = _sessionService.GetAccount()!.Email!;
-        var result = await _assetService.DeleteAsync(email, assetInputViewModel.ProductName!);
+        var result = await _assetService.DeleteAsync(email, assetInputViewModel.ProductName!, ct);
         return result.Success
             ? Json(new { result = true, message = _localizer["The asset has been successfully deleted."].Value })
             : Json(new { result = false, error = _localizer[result.ErrorKey!].Value });
@@ -181,10 +181,10 @@ public class AccountBookController : BaseController
     [HttpPost]
     [ValidateAntiForgeryToken]
     [RequiredHttpPostAccess(Role = Role.User)]
-    public async Task<IActionResult> ExportExcelAsset(string fileName = "")
+    public async Task<IActionResult> ExportExcelAsset(string fileName = "", CancellationToken ct = default)
     {
         var account = _sessionService.GetAccount()!;
-        var assets  = await _assetService.GetAssetsAsync(account.Email!);
+        var assets  = await _assetService.GetAssetsAsync(account.Email!, ct);
         var stream  = _excelExportService.CreateAssetExcel(assets, Localize, account.TimeZoneIanaId!);
         string name = ExcelFileName(fileName, account.TimeZoneIanaId!);
         return File(stream, "application/octet-stream", name);
@@ -202,7 +202,7 @@ public class AccountBookController : BaseController
     [HttpPost]
     [ValidateAntiForgeryToken]
     [RequiredHttpPostAccess(Role = Role.User)]
-    public async Task<IActionResult> CreateIncome([FromBody] IncomeInputViewModel incomeInputViewModel)
+    public async Task<IActionResult> CreateIncome([FromBody] IncomeInputViewModel incomeInputViewModel, CancellationToken ct)
     {
         if (!ModelState.IsValid)
             return Json(new { result = false, error = _localizer["Input is invalid"].Value });
@@ -220,7 +220,7 @@ public class AccountBookController : BaseController
             Note                      = incomeInputViewModel.Note ?? ""
         };
 
-        var result = await _incomeService.CreateAsync(email, request);
+        var result = await _incomeService.CreateAsync(email, request, ct);
         return result.Success
             ? Json(new { result = true, message = _localizer["The income has been successfully created."].Value })
             : Json(new { result = false, error = _localizer[result.ErrorKey!].Value });
@@ -232,13 +232,13 @@ public class AccountBookController : BaseController
 
     /// <summary>Returns the income grid (AJAX) or the full income page.</summary>
     [HttpGet]
-    public async Task<IActionResult> Income(string wholeSearch)
+    public async Task<IActionResult> Income(string wholeSearch, CancellationToken ct)
     {
         if (HttpContext.Request.Headers["X-Requested-With"] == "XMLHttpRequest")
         {
             var account = _sessionService.GetAccount()!;
-            var assets  = await _assetService.GetAssetsAsync(account.Email!);
-            var incomes = await _incomeService.GetIncomesAsync(account.Email!);
+            var assets  = await _assetService.GetAssetsAsync(account.Email!, ct);
+            var incomes = await _incomeService.GetIncomesAsync(account.Email!, ct);
             var viewModels = incomes
                 .ToDisplayViewModels(assets, Localize, account.TimeZoneIanaId!)
                 .ApplySearch(wholeSearch)
@@ -248,21 +248,21 @@ public class AccountBookController : BaseController
             return PartialView("_IncomeGrid", viewModels);
         }
 
-        return await IncomePageAsync();
+        return await IncomePageAsync(ct);
     }
 
     /// <summary>Checks whether an income record with the given ID exists.</summary>
     [HttpPost]
     [ValidateAntiForgeryToken]
     [RequiredHttpPostAccess(Role = Role.User)]
-    public async Task<IActionResult> IsIncomeExists(int id)
+    public async Task<IActionResult> IsIncomeExists(int id, CancellationToken ct)
     {
         try
         {
             string email = _sessionService.GetAccount()!.Email!;
             string tz    = _sessionService.GetAccount()!.TimeZoneIanaId!;
 
-            IncomeResponse? income = await _incomeService.GetByIdAsync(email, id);
+            IncomeResponse? income = await _incomeService.GetByIdAsync(email, id, ct);
             if (income == null)
                 return Json(new { result = false, error = _localizer["Input is invalid"].Value });
 
@@ -279,13 +279,13 @@ public class AccountBookController : BaseController
     [HttpPost]
     [ValidateAntiForgeryToken]
     [RequiredHttpPostAccess(Role = Role.User)]
-    public async Task<IActionResult> GetIncomeAmountLabel(string productName)
+    public async Task<IActionResult> GetIncomeAmountLabel(string productName, CancellationToken ct)
     {
         try
         {
             string baseLabel = _localizer["Amount"].Value;
             AssetResponse? asset = await _assetService.GetAssetAsync(
-                _sessionService.GetAccount()!.Email!, productName);
+                _sessionService.GetAccount()!.Email!, productName, ct);
 
             string label = !string.IsNullOrEmpty(asset?.MonetaryUnit)
                 ? baseLabel.GetAmountLabel(asset.MonetaryUnit)
@@ -307,7 +307,7 @@ public class AccountBookController : BaseController
     [HttpPost]
     [ValidateAntiForgeryToken]
     [RequiredHttpPostAccess(Role = Role.User)]
-    public async Task<IActionResult> UpdateIncome([FromBody] IncomeInputViewModel incomeInputViewModel)
+    public async Task<IActionResult> UpdateIncome([FromBody] IncomeInputViewModel incomeInputViewModel, CancellationToken ct)
     {
         if (!ModelState.IsValid)
             return Json(new { result = false, error = _localizer["Input is invalid"].Value });
@@ -326,7 +326,7 @@ public class AccountBookController : BaseController
             Note                      = incomeInputViewModel.Note
         };
 
-        var result = await _incomeService.UpdateAsync(email, request);
+        var result = await _incomeService.UpdateAsync(email, request, ct);
         return result.Success
             ? Json(new { result = true, message = _localizer["The income has been successfully updated."].Value })
             : Json(new { result = false, error = _localizer[result.ErrorKey!].Value });
@@ -340,10 +340,10 @@ public class AccountBookController : BaseController
     [HttpPost]
     [ValidateAntiForgeryToken]
     [RequiredHttpPostAccess(Role = Role.User)]
-    public async Task<IActionResult> DeleteIncome([FromBody] IncomeInputViewModel incomeInputViewModel)
+    public async Task<IActionResult> DeleteIncome([FromBody] IncomeInputViewModel incomeInputViewModel, CancellationToken ct)
     {
         string email  = _sessionService.GetAccount()!.Email!;
-        var result    = await _incomeService.DeleteAsync(email, incomeInputViewModel.Id);
+        var result    = await _incomeService.DeleteAsync(email, incomeInputViewModel.Id, ct);
         return result.Success
             ? Json(new { result = true, message = _localizer["The income has been successfully deleted."].Value })
             : Json(new { result = false, error = _localizer[result.ErrorKey!].Value });
@@ -357,11 +357,11 @@ public class AccountBookController : BaseController
     [HttpPost]
     [ValidateAntiForgeryToken]
     [RequiredHttpPostAccess(Role = Role.User)]
-    public async Task<IActionResult> ExportExcelIncome(string fileName = "")
+    public async Task<IActionResult> ExportExcelIncome(string fileName = "", CancellationToken ct = default)
     {
         var account = _sessionService.GetAccount()!;
-        var assets  = await _assetService.GetAssetsAsync(account.Email!);
-        var incomes = await _incomeService.GetIncomesAsync(account.Email!);
+        var assets  = await _assetService.GetAssetsAsync(account.Email!, ct);
+        var incomes = await _incomeService.GetIncomesAsync(account.Email!, ct);
         var stream  = _excelExportService.CreateIncomeExcel(incomes, assets, Localize, account.TimeZoneIanaId!);
         string name = ExcelFileName(fileName, account.TimeZoneIanaId!);
         return File(stream, "application/octet-stream", name);
@@ -380,7 +380,7 @@ public class AccountBookController : BaseController
     [ValidateAntiForgeryToken]
     [RequiredHttpPostAccess(Role = Role.User)]
     public async Task<IActionResult> CreateExpenditure(
-        [FromBody] ExpenditureInputViewModel expenditureInputViewModel)
+        [FromBody] ExpenditureInputViewModel expenditureInputViewModel, CancellationToken ct)
     {
         if (!ModelState.IsValid)
             return Json(new { result = false, error = _localizer["Input is invalid"].Value });
@@ -399,7 +399,7 @@ public class AccountBookController : BaseController
             Note           = expenditureInputViewModel.Note ?? ""
         };
 
-        var result = await _expenditureService.CreateAsync(email, request);
+        var result = await _expenditureService.CreateAsync(email, request, ct);
         return result.Success
             ? Json(new { result = true, message = _localizer["The expenditure has been successfully created."].Value })
             : Json(new { result = false, error = _localizer[result.ErrorKey!].Value });
@@ -411,13 +411,13 @@ public class AccountBookController : BaseController
 
     /// <summary>Returns the expenditure grid (AJAX) or the full expenditure page.</summary>
     [HttpGet]
-    public async Task<IActionResult> Expenditure(string wholeSearch)
+    public async Task<IActionResult> Expenditure(string wholeSearch, CancellationToken ct)
     {
         if (HttpContext.Request.Headers["X-Requested-With"] == "XMLHttpRequest")
         {
             var account      = _sessionService.GetAccount()!;
-            var assets       = await _assetService.GetAssetsAsync(account.Email!);
-            var expenditures = await _expenditureService.GetExpendituresAsync(account.Email!);
+            var assets       = await _assetService.GetAssetsAsync(account.Email!, ct);
+            var expenditures = await _expenditureService.GetExpendituresAsync(account.Email!, ct);
             var viewModels   = expenditures
                 .ToDisplayViewModels(assets, Localize, account.TimeZoneIanaId!)
                 .ApplySearch(wholeSearch)
@@ -427,21 +427,21 @@ public class AccountBookController : BaseController
             return PartialView("_ExpenditureGrid", viewModels);
         }
 
-        return await ExpenditurePageAsync();
+        return await ExpenditurePageAsync(ct);
     }
 
     /// <summary>Checks whether an expenditure record with the given ID exists.</summary>
     [HttpPost]
     [ValidateAntiForgeryToken]
     [RequiredHttpPostAccess(Role = Role.User)]
-    public async Task<IActionResult> IsExpenditureExists(int id)
+    public async Task<IActionResult> IsExpenditureExists(int id, CancellationToken ct)
     {
         try
         {
             string email = _sessionService.GetAccount()!.Email!;
             string tz    = _sessionService.GetAccount()!.TimeZoneIanaId!;
 
-            ExpenditureResponse? expenditure = await _expenditureService.GetByIdAsync(email, id);
+            ExpenditureResponse? expenditure = await _expenditureService.GetByIdAsync(email, id, ct);
             if (expenditure == null)
                 return Json(new { result = false, error = _localizer["Input is invalid"].Value });
 
@@ -458,13 +458,13 @@ public class AccountBookController : BaseController
     [HttpPost]
     [ValidateAntiForgeryToken]
     [RequiredHttpPostAccess(Role = Role.User)]
-    public async Task<IActionResult> GetExpenditureAmountLabel(string productName)
+    public async Task<IActionResult> GetExpenditureAmountLabel(string productName, CancellationToken ct)
     {
         try
         {
             string baseLabel = _localizer["Amount"].Value;
             AssetResponse? asset = await _assetService.GetAssetAsync(
-                _sessionService.GetAccount()!.Email!, productName);
+                _sessionService.GetAccount()!.Email!, productName, ct);
 
             string label = !string.IsNullOrEmpty(asset?.MonetaryUnit)
                 ? baseLabel.GetAmountLabel(asset.MonetaryUnit)
@@ -487,7 +487,7 @@ public class AccountBookController : BaseController
     [ValidateAntiForgeryToken]
     [RequiredHttpPostAccess(Role = Role.User)]
     public async Task<IActionResult> UpdateExpenditure(
-        [FromBody] ExpenditureInputViewModel expenditureInputViewModel)
+        [FromBody] ExpenditureInputViewModel expenditureInputViewModel, CancellationToken ct)
     {
         if (!ModelState.IsValid)
             return Json(new { result = false, error = _localizer["Input is invalid"].Value });
@@ -507,7 +507,7 @@ public class AccountBookController : BaseController
             Note           = expenditureInputViewModel.Note ?? ""
         };
 
-        var result = await _expenditureService.UpdateAsync(email, request);
+        var result = await _expenditureService.UpdateAsync(email, request, ct);
         return result.Success
             ? Json(new { result = true, message = _localizer["The expenditure has been successfully updated."].Value })
             : Json(new { result = false, error = _localizer[result.ErrorKey!].Value });
@@ -522,10 +522,10 @@ public class AccountBookController : BaseController
     [ValidateAntiForgeryToken]
     [RequiredHttpPostAccess(Role = Role.User)]
     public async Task<IActionResult> DeleteExpenditure(
-        [FromBody] ExpenditureInputViewModel expenditureInputViewModel)
+        [FromBody] ExpenditureInputViewModel expenditureInputViewModel, CancellationToken ct)
     {
         string email = _sessionService.GetAccount()!.Email!;
-        var result   = await _expenditureService.DeleteAsync(email, expenditureInputViewModel.Id);
+        var result   = await _expenditureService.DeleteAsync(email, expenditureInputViewModel.Id, ct);
         return result.Success
             ? Json(new { result = true, message = _localizer["The expenditure has been successfully deleted."].Value })
             : Json(new { result = false, error = _localizer[result.ErrorKey!].Value });
@@ -539,11 +539,11 @@ public class AccountBookController : BaseController
     [HttpPost]
     [ValidateAntiForgeryToken]
     [RequiredHttpPostAccess(Role = Role.User)]
-    public async Task<IActionResult> ExportExcelExpenditure(string fileName = "")
+    public async Task<IActionResult> ExportExcelExpenditure(string fileName = "", CancellationToken ct = default)
     {
         var account      = _sessionService.GetAccount()!;
-        var assets       = await _assetService.GetAssetsAsync(account.Email!);
-        var expenditures = await _expenditureService.GetExpendituresAsync(account.Email!);
+        var assets       = await _assetService.GetAssetsAsync(account.Email!, ct);
+        var expenditures = await _expenditureService.GetExpendituresAsync(account.Email!, ct);
         var stream       = _excelExportService.CreateExpenditureExcel(expenditures, assets, Localize, account.TimeZoneIanaId!);
         string name      = ExcelFileName(fileName, account.TimeZoneIanaId!);
         return File(stream, "application/octet-stream", name);
@@ -555,31 +555,31 @@ public class AccountBookController : BaseController
 
     #region Helpers
 
-    private async Task<IActionResult> AssetPageAsync()
+    private async Task<IActionResult> AssetPageAsync(CancellationToken ct)
     {
         var account = _sessionService.GetAccount() ?? new AccountResponse();
         string tz   = account.TimeZoneIanaId ?? "UTC";
-        var assets  = (await _assetService.GetAssetsAsync(account.Email!))
+        var assets  = (await _assetService.GetAssetsAsync(account.Email!, ct))
             .Where(x => !x.Deleted).OrderBy(x => x.ProductName).ToList();
         SetCurrentTimeViewBag(tz, assets);
         return View();
     }
 
-    private async Task<IActionResult> IncomePageAsync()
+    private async Task<IActionResult> IncomePageAsync(CancellationToken ct)
     {
         var account = _sessionService.GetAccount() ?? new AccountResponse();
         string tz   = account.TimeZoneIanaId ?? "UTC";
-        var assets  = (await _assetService.GetAssetsAsync(account.Email!))
+        var assets  = (await _assetService.GetAssetsAsync(account.Email!, ct))
             .Where(x => !x.Deleted).OrderBy(x => x.ProductName).ToList();
         SetCurrentTimeViewBag(tz, assets);
         return View();
     }
 
-    private async Task<IActionResult> ExpenditurePageAsync()
+    private async Task<IActionResult> ExpenditurePageAsync(CancellationToken ct)
     {
         var account = _sessionService.GetAccount() ?? new AccountResponse();
         string tz   = account.TimeZoneIanaId ?? "UTC";
-        var assets  = (await _assetService.GetAssetsAsync(account.Email!))
+        var assets  = (await _assetService.GetAssetsAsync(account.Email!, ct))
             .Where(x => !x.Deleted).OrderBy(x => x.ProductName).ToList();
         SetCurrentTimeViewBag(tz, assets);
         return View();

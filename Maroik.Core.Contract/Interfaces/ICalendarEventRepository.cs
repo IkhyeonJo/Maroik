@@ -9,5 +9,5 @@ namespace Maroik.Core.Contract.Interfaces;
 public interface ICalendarEventRepository : IGenericRepository<CalendarEvent>
 {
     /// <summary>Inserts a new calendar event row and returns the database-generated ID.</summary>
-    Task<long> CreateCalendarEventAsync(CalendarEvent calendarEvent);
+    Task<long> CreateCalendarEventAsync(CalendarEvent calendarEvent, CancellationToken ct = default);
 }

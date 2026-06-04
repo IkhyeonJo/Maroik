@@ -9,5 +9,5 @@ namespace Maroik.Core.Contract.Interfaces;
 public interface IBoardCommentRepository : IGenericRepository<BoardComment>
 {
     /// <summary>Batch-loads comment counts for the given set of board IDs (used for list-view badges).</summary>
-    Task<Dictionary<long, int>> GetCommentCountsByBoardIdsAsync(IEnumerable<long> boardIds);
+    Task<Dictionary<long, int>> GetCommentCountsByBoardIdsAsync(IEnumerable<long> boardIds, CancellationToken ct = default);
 }
