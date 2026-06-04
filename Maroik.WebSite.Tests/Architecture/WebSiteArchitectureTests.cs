@@ -5,31 +5,34 @@ using NetArchTest.Rules;
 namespace Maroik.WebSite.Tests.Architecture;
 
 /// <summary>
-/// Architecture tests that enforce the rule: Maroik.WebSite must only consume
-/// the service layer (Maroik.Core.Service / Maroik.Core.Contract) and must
-/// never take a direct dependency on Maroik.Core.Repository.
+/// Architecture tests that enforce the layering rule for Maroik.WebSite:
 ///
-/// The intended layering is:
-///   WebSite  →  Service (interfaces in Contract)  →  Repository  →  PostgreSQL
+///   WebSite  →  Service interfaces (Maroik.Core.Contract)
+///                    ↓
+///              Service implementations (Maroik.Core.Service)
+///                    ↓
+///              Repository + Client implementations
 ///
-/// Bypassing the service layer by referencing Repository types directly would
-/// break the separation of concerns and make the web layer harder to test.
+/// WebSite must only consume the service layer via interfaces declared in
+/// Maroik.Core.Contract. Direct dependencies on Maroik.Core.Repository or
+/// Maroik.Core.Client are forbidden for all types except Program (the
+/// composition root), which wires up implementations into the DI container.
 /// </summary>
 public class WebSiteArchitectureTests
 {
     private static readonly Assembly WebSiteAssembly = typeof(BaseController).Assembly;
 
+    private const string RepositoryNamespace = "Maroik.Core.Repository";
+    private const string ClientNamespace = "Maroik.Core.Client";
+
     [Fact]
     public void WebSiteTypes_ExceptCompositionRoot_ShouldNot_DependOnRepositoryNamespace()
     {
-        // Program.cs is the composition root and legitimately wires up Repository
-        // implementations into the DI container. All other types must stay behind
-        // the service-interface boundary.
         NetArchTest.Rules.TestResult result = Types.InAssembly(WebSiteAssembly)
             .That()
             .DoNotHaveName("Program")
             .ShouldNot()
-            .HaveDependencyOn("Maroik.Core.Repository")
+            .HaveDependencyOn(RepositoryNamespace)
             .GetResult();
 
         Assert.True(
@@ -41,19 +44,50 @@ public class WebSiteArchitectureTests
     }
 
     [Fact]
-    public void Controllers_ShouldNot_DependOnRepositoryNamespace()
+    public void WebSiteTypes_ExceptCompositionRoot_ShouldNot_DependOnClientNamespace()
     {
         NetArchTest.Rules.TestResult result = Types.InAssembly(WebSiteAssembly)
             .That()
-            .ResideInNamespace("Maroik.WebSite.Controllers")
+            .DoNotHaveName("Program")
             .ShouldNot()
-            .HaveDependencyOn("Maroik.Core.Repository")
+            .HaveDependencyOn(ClientNamespace)
             .GetResult();
 
         Assert.True(
             result.IsSuccessful,
+            "Non-composition-root types in Maroik.WebSite must not reference " +
+            "Maroik.Core.Client directly. " +
+            "Use service interfaces from Maroik.Core.Contract instead.\n" +
+            "Failing types: " + string.Join(", ", result.FailingTypeNames ?? []));
+    }
+
+    [Fact]
+    public void Controllers_ShouldNot_DependOnRepositoryOrClientNamespace()
+    {
+        NetArchTest.Rules.TestResult repoResult = Types.InAssembly(WebSiteAssembly)
+            .That()
+            .ResideInNamespace("Maroik.WebSite.Controllers")
+            .ShouldNot()
+            .HaveDependencyOn(RepositoryNamespace)
+            .GetResult();
+
+        NetArchTest.Rules.TestResult clientResult = Types.InAssembly(WebSiteAssembly)
+            .That()
+            .ResideInNamespace("Maroik.WebSite.Controllers")
+            .ShouldNot()
+            .HaveDependencyOn(ClientNamespace)
+            .GetResult();
+
+        Assert.True(
+            repoResult.IsSuccessful,
             "Controllers must not reference Maroik.Core.Repository directly. " +
             "Inject IXxxService interfaces instead.\n" +
-            "Failing types: " + string.Join(", ", result.FailingTypeNames ?? []));
+            "Failing types: " + string.Join(", ", repoResult.FailingTypeNames ?? []));
+
+        Assert.True(
+            clientResult.IsSuccessful,
+            "Controllers must not reference Maroik.Core.Client directly. " +
+            "Inject IXxxService interfaces instead.\n" +
+            "Failing types: " + string.Join(", ", clientResult.FailingTypeNames ?? []));
     }
 }
