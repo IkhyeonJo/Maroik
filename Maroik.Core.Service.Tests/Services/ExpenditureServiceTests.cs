@@ -181,8 +181,8 @@ public class ExpenditureServiceTests
         _expenditureRepo.Setup(r => r.CreateAsync(It.IsAny<Expenditure>(), It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
 
         Asset? updatedAsset = null;
-        _assetBalance.Setup(r => r.SaveAsync(It.IsAny<Asset>()))
-            .Callback<Asset>(a => updatedAsset = a)
+        _assetBalance.Setup(r => r.SaveAsync(It.IsAny<Asset>(), It.IsAny<CancellationToken>()))
+            .Callback<Asset, CancellationToken>((a, _) => updatedAsset = a)
             .Returns(Task.CompletedTask);
         var sut = CreateSut();
 
@@ -206,8 +206,8 @@ public class ExpenditureServiceTests
         _expenditureRepo.Setup(r => r.CreateAsync(It.IsAny<Expenditure>(), It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
 
         var updatedAssets = new List<Asset>();
-        _assetBalance.Setup(r => r.SaveAsync(It.IsAny<Asset>()))
-            .Callback<Asset>(updatedAssets.Add)
+        _assetBalance.Setup(r => r.SaveAsync(It.IsAny<Asset>(), It.IsAny<CancellationToken>()))
+            .Callback<Asset, CancellationToken>((a, _) => updatedAssets.Add(a))
             .Returns(Task.CompletedTask);
         var sut = CreateSut();
 
@@ -279,8 +279,8 @@ public class ExpenditureServiceTests
         _expenditureRepo.Setup(r => r.UpdateEntityAsync(It.IsAny<Expenditure>(), It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
 
         Asset? captured = null;
-        _assetBalance.Setup(r => r.SaveAsync(It.IsAny<Asset>()))
-            .Callback<Asset>(a => captured = a)
+        _assetBalance.Setup(r => r.SaveAsync(It.IsAny<Asset>(), It.IsAny<CancellationToken>()))
+            .Callback<Asset, CancellationToken>((a, _) => captured = a)
             .Returns(Task.CompletedTask);
         var sut = CreateSut();
 
@@ -322,8 +322,8 @@ public class ExpenditureServiceTests
         _expenditureRepo.Setup(r => r.DeleteByIdAsync(It.IsAny<long>(), It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
 
         Asset? captured = null;
-        _assetBalance.Setup(r => r.SaveAsync(It.IsAny<Asset>()))
-            .Callback<Asset>(a => captured = a)
+        _assetBalance.Setup(r => r.SaveAsync(It.IsAny<Asset>(), It.IsAny<CancellationToken>()))
+            .Callback<Asset, CancellationToken>((a, _) => captured = a)
             .Returns(Task.CompletedTask);
         var sut = CreateSut();
 
@@ -349,8 +349,8 @@ public class ExpenditureServiceTests
         _expenditureRepo.Setup(r => r.DeleteByIdAsync(It.IsAny<long>(), It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
 
         var updatedAssets = new List<Asset>();
-        _assetBalance.Setup(r => r.SaveAsync(It.IsAny<Asset>()))
-            .Callback<Asset>(updatedAssets.Add)
+        _assetBalance.Setup(r => r.SaveAsync(It.IsAny<Asset>(), It.IsAny<CancellationToken>()))
+            .Callback<Asset, CancellationToken>((a, _) => updatedAssets.Add(a))
             .Returns(Task.CompletedTask);
         var sut = CreateSut();
 

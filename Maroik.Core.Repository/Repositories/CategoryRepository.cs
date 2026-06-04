@@ -33,6 +33,6 @@ public class CategoryRepository(ApplicationDbContext context)
     public Task<List<Category>> GetAllAsync(CancellationToken ct = default)
         => QueryAllAsync(ct: ct);
 
-    public Task DeleteByIdAsync(int id, CancellationToken ct = default)
+    public Task DeleteByIdAsync(long id, CancellationToken ct = default)
         => DeleteWhereAsync(e => e.Id == id, ct);
 }

@@ -127,8 +127,8 @@ public class IncomeServiceTests
         _incomeRepo.Setup(r => r.CreateAsync(It.IsAny<Income>(), It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
 
         Asset? captured = null;
-        _assetBalance.Setup(r => r.SaveAsync(It.IsAny<Asset>()))
-            .Callback<Asset>(req => captured = req)
+        _assetBalance.Setup(r => r.SaveAsync(It.IsAny<Asset>(), It.IsAny<CancellationToken>()))
+            .Callback<Asset, CancellationToken>((a, _) => captured = a)
             .Returns(Task.CompletedTask);
         var sut = CreateSut();
 
@@ -229,8 +229,8 @@ public class IncomeServiceTests
         _incomeRepo.Setup(r => r.UpdateEntityAsync(It.IsAny<Income>(), It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
 
         Asset? captured = null;
-        _assetBalance.Setup(r => r.SaveAsync(It.IsAny<Asset>()))
-            .Callback<Asset>(req => captured = req)
+        _assetBalance.Setup(r => r.SaveAsync(It.IsAny<Asset>(), It.IsAny<CancellationToken>()))
+            .Callback<Asset, CancellationToken>((a, _) => captured = a)
             .Returns(Task.CompletedTask);
         var sut = CreateSut();
 
@@ -262,8 +262,8 @@ public class IncomeServiceTests
         _incomeRepo.Setup(r => r.UpdateEntityAsync(It.IsAny<Income>(), It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
 
         var updatedAssets = new List<Asset>();
-        _assetBalance.Setup(r => r.SaveAsync(It.IsAny<Asset>()))
-            .Callback<Asset>(updatedAssets.Add)
+        _assetBalance.Setup(r => r.SaveAsync(It.IsAny<Asset>(), It.IsAny<CancellationToken>()))
+            .Callback<Asset, CancellationToken>((a, _) => updatedAssets.Add(a))
             .Returns(Task.CompletedTask);
         var sut = CreateSut();
 
@@ -324,8 +324,8 @@ public class IncomeServiceTests
         _incomeRepo.Setup(r => r.DeleteByIdAsync(It.IsAny<long>(), It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
 
         Asset? captured = null;
-        _assetBalance.Setup(r => r.SaveAsync(It.IsAny<Asset>()))
-            .Callback<Asset>(req => captured = req)
+        _assetBalance.Setup(r => r.SaveAsync(It.IsAny<Asset>(), It.IsAny<CancellationToken>()))
+            .Callback<Asset, CancellationToken>((a, _) => captured = a)
             .Returns(Task.CompletedTask);
         var sut = CreateSut();
 
