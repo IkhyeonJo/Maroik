@@ -181,4 +181,8 @@ public class FixedExpenditureRepositoryTests : IDisposable
         Assert.Single(remaining);
         Assert.Equal(efItem2.Id, remaining[0].Id);
     }
+
+    // UpdateMyDepositAssetNameAsync — tested in FixedExpenditureRepositoryIntegrationTests
+    // because HasDefaultValueSql on MyDepositAsset causes EF Core InMemory to omit the column
+    // on INSERT, making the Where clause always return zero rows.
 }
