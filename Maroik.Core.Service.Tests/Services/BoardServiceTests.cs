@@ -29,9 +29,9 @@ public class BoardServiceTests
     /// <summary>Initializes the test fixture, setting up all required test doubles and the system under test.</summary>
     public BoardServiceTests()
     {
-        _unitOfWork.Setup(u => u.BeginAsync()).Returns(Task.CompletedTask);
-        _unitOfWork.Setup(u => u.CommitAsync()).Returns(Task.CompletedTask);
-        _unitOfWork.Setup(u => u.RollbackAsync()).Returns(Task.CompletedTask);
+        _unitOfWork.Setup(u => u.BeginAsync(It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
+        _unitOfWork.Setup(u => u.CommitAsync(It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
+        _unitOfWork.Setup(u => u.RollbackAsync(It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
         _unitOfWork.Setup(u => u.DisposeAsync()).Returns(ValueTask.CompletedTask);
     }
 
@@ -97,7 +97,7 @@ public class BoardServiceTests
             new BoardRequest { Type = nameof(BoardType.FreeForum), Title = "Test Title", Writer = "Alice" }, null, TestContext.Current.CancellationToken);
 
         Assert.True(result.Success);
-        _unitOfWork.Verify(u => u.CommitAsync(), Times.Once);
+        _unitOfWork.Verify(u => u.CommitAsync(It.IsAny<CancellationToken>()), Times.Once);
     }
 
     /// <summary>Verifies that <c>WriteBoardAsync</c> returns success with attachment.</summary>
@@ -105,7 +105,7 @@ public class BoardServiceTests
     public async Task WriteBoardAsync_ReturnsSuccess_WithAttachment()
     {
         _boardRepo.Setup(r => r.WriteBoardAsync(It.IsAny<Board>(), It.IsAny<CancellationToken>())).ReturnsAsync(1L);
-        _fileClient.Setup(f => f.UploadAsync(It.IsAny<byte[]>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()))
+        _fileClient.Setup(f => f.UploadAsync(It.IsAny<byte[]>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(true);
         _attachedFileRepo.Setup(r => r.CreateAsync(It.IsAny<BoardAttachedFile>(), It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
         var sut = CreateSut();
@@ -116,7 +116,7 @@ public class BoardServiceTests
 
         Assert.True(result.Success);
         _attachedFileRepo.Verify(r => r.CreateAsync(It.IsAny<BoardAttachedFile>(), It.IsAny<CancellationToken>()), Times.Once);
-        _unitOfWork.Verify(u => u.CommitAsync(), Times.Once);
+        _unitOfWork.Verify(u => u.CommitAsync(It.IsAny<CancellationToken>()), Times.Once);
     }
 
     /// <summary>Verifies that <c>WriteBoardAsync</c> returns fail when repository throws.</summary>
@@ -130,7 +130,7 @@ public class BoardServiceTests
             new BoardRequest { Type = nameof(BoardType.FreeForum), Title = "Test Title", Writer = "Alice" }, null, TestContext.Current.CancellationToken);
 
         Assert.False(result.Success);
-        _unitOfWork.Verify(u => u.RollbackAsync(), Times.Once);
+        _unitOfWork.Verify(u => u.RollbackAsync(It.IsAny<CancellationToken>()), Times.Once);
     }
 
     // -- EditBoardAsync -------------------------------------------------------
@@ -145,7 +145,7 @@ public class BoardServiceTests
         ServiceResult result = await sut.EditBoardAsync(new BoardRequest { Id = 99, Type = nameof(BoardType.FreeForum) }, "Alice", null, TestContext.Current.CancellationToken);
 
         Assert.False(result.Success);
-        _unitOfWork.Verify(u => u.RollbackAsync(), Times.Once);
+        _unitOfWork.Verify(u => u.RollbackAsync(It.IsAny<CancellationToken>()), Times.Once);
     }
 
     /// <summary>Verifies that <c>EditBoardAsync</c> returns fail when board is deleted.</summary>
@@ -159,7 +159,7 @@ public class BoardServiceTests
         ServiceResult result = await sut.EditBoardAsync(new BoardRequest { Id = 1, Type = nameof(BoardType.FreeForum) }, "Alice", null, TestContext.Current.CancellationToken);
 
         Assert.False(result.Success);
-        _unitOfWork.Verify(u => u.RollbackAsync(), Times.Once);
+        _unitOfWork.Verify(u => u.RollbackAsync(It.IsAny<CancellationToken>()), Times.Once);
     }
 
     /// <summary>Verifies that <c>EditBoardAsync</c> returns fail when requester is not writer.</summary>
@@ -172,7 +172,7 @@ public class BoardServiceTests
         ServiceResult result = await sut.EditBoardAsync(new BoardRequest { Id = 1, Type = nameof(BoardType.FreeForum) }, "Bob", null, TestContext.Current.CancellationToken);
 
         Assert.False(result.Success);
-        _unitOfWork.Verify(u => u.RollbackAsync(), Times.Once);
+        _unitOfWork.Verify(u => u.RollbackAsync(It.IsAny<CancellationToken>()), Times.Once);
     }
 
     /// <summary>Verifies that <c>EditBoardAsync</c> returns success when writer matches and no new file.</summary>
@@ -188,7 +188,7 @@ public class BoardServiceTests
             new BoardRequest { Id = 1, Type = nameof(BoardType.FreeForum), Title = "New Title", Content = "New Content" }, "Alice", null, TestContext.Current.CancellationToken);
 
         Assert.True(result.Success);
-        _unitOfWork.Verify(u => u.CommitAsync(), Times.Once);
+        _unitOfWork.Verify(u => u.CommitAsync(It.IsAny<CancellationToken>()), Times.Once);
     }
 
     // -- DeleteBoardAsync -----------------------------------------------------

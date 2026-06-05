@@ -1,4 +1,4 @@
-﻿using Maroik.Core.Contract.Utilities;
+using Maroik.Core.Contract.Utilities;
 using Maroik.Core.Service.Services;
 using Microsoft.Extensions.Options;
 using System.Security.Cryptography;

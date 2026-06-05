@@ -108,7 +108,7 @@ public class FixedExpenditureServiceTests
     [Fact]
     public async Task CreateAsync_ReturnsFail_WhenPaymentMethodAssetNotFound()
     {
-        _assetBalance.Setup(r => r.GetAssetAsync("user@example.com", "Wallet")).ReturnsAsync((Asset?)null);
+        _assetBalance.Setup(r => r.GetAssetAsync("user@example.com", "Wallet", It.IsAny<CancellationToken>())).ReturnsAsync((Asset?)null);
         var sut = CreateSut();
 
         ServiceResult result = await sut.CreateAsync("user@example.com", ConsumerRequest(), TestContext.Current.CancellationToken);
@@ -120,7 +120,7 @@ public class FixedExpenditureServiceTests
     [Fact]
     public async Task CreateAsync_ReturnsFail_WhenSamePaymentAndDepositAsset()
     {
-        _assetBalance.Setup(r => r.GetAssetAsync("user@example.com", "Wallet")).ReturnsAsync(MakeAsset("Wallet"));
+        _assetBalance.Setup(r => r.GetAssetAsync("user@example.com", "Wallet", It.IsAny<CancellationToken>())).ReturnsAsync(MakeAsset("Wallet"));
         var sut = CreateSut();
         var request = SavingsRequest();
         request.PaymentMethod = "Wallet";
@@ -136,8 +136,8 @@ public class FixedExpenditureServiceTests
     [Fact]
     public async Task CreateAsync_ReturnsFail_WhenDepositAssetNotFound()
     {
-        _assetBalance.Setup(r => r.GetAssetAsync("user@example.com", "Checking")).ReturnsAsync(MakeAsset("Checking"));
-        _assetBalance.Setup(r => r.GetAssetAsync("user@example.com", "Savings")).ReturnsAsync((Asset?)null);
+        _assetBalance.Setup(r => r.GetAssetAsync("user@example.com", "Checking", It.IsAny<CancellationToken>())).ReturnsAsync(MakeAsset("Checking"));
+        _assetBalance.Setup(r => r.GetAssetAsync("user@example.com", "Savings", It.IsAny<CancellationToken>())).ReturnsAsync((Asset?)null);
         var sut = CreateSut();
 
         ServiceResult result = await sut.CreateAsync("user@example.com", SavingsRequest(), TestContext.Current.CancellationToken);
@@ -149,8 +149,8 @@ public class FixedExpenditureServiceTests
     [Fact]
     public async Task CreateAsync_ReturnsFail_WhenCurrenciesMismatch()
     {
-        _assetBalance.Setup(r => r.GetAssetAsync("user@example.com", "Checking")).ReturnsAsync(MakeAsset("Checking", "KRW"));
-        _assetBalance.Setup(r => r.GetAssetAsync("user@example.com", "Savings")).ReturnsAsync(MakeAsset("Savings", "USD"));
+        _assetBalance.Setup(r => r.GetAssetAsync("user@example.com", "Checking", It.IsAny<CancellationToken>())).ReturnsAsync(MakeAsset("Checking", "KRW"));
+        _assetBalance.Setup(r => r.GetAssetAsync("user@example.com", "Savings", It.IsAny<CancellationToken>())).ReturnsAsync(MakeAsset("Savings", "USD"));
         var sut = CreateSut();
 
         ServiceResult result = await sut.CreateAsync("user@example.com", SavingsRequest(), TestContext.Current.CancellationToken);
@@ -163,7 +163,7 @@ public class FixedExpenditureServiceTests
     [Fact]
     public async Task CreateAsync_ReturnsSuccess_ForConsumerSpendingWithValidAsset()
     {
-        _assetBalance.Setup(r => r.GetAssetAsync("user@example.com", "Wallet")).ReturnsAsync(MakeAsset("Wallet"));
+        _assetBalance.Setup(r => r.GetAssetAsync("user@example.com", "Wallet", It.IsAny<CancellationToken>())).ReturnsAsync(MakeAsset("Wallet"));
         _fixedExpenditureRepo.Setup(r => r.CreateAsync(It.IsAny<FixedExpenditure>(), It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
         var sut = CreateSut();
 
@@ -177,8 +177,8 @@ public class FixedExpenditureServiceTests
     [Fact]
     public async Task CreateAsync_ReturnsSuccess_ForRegularSavingsWithMatchingCurrencies()
     {
-        _assetBalance.Setup(r => r.GetAssetAsync("user@example.com", "Checking")).ReturnsAsync(MakeAsset("Checking", "KRW"));
-        _assetBalance.Setup(r => r.GetAssetAsync("user@example.com", "Savings")).ReturnsAsync(MakeAsset("Savings", "KRW"));
+        _assetBalance.Setup(r => r.GetAssetAsync("user@example.com", "Checking", It.IsAny<CancellationToken>())).ReturnsAsync(MakeAsset("Checking", "KRW"));
+        _assetBalance.Setup(r => r.GetAssetAsync("user@example.com", "Savings", It.IsAny<CancellationToken>())).ReturnsAsync(MakeAsset("Savings", "KRW"));
         _fixedExpenditureRepo.Setup(r => r.CreateAsync(It.IsAny<FixedExpenditure>(), It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
         var sut = CreateSut();
 
@@ -191,7 +191,7 @@ public class FixedExpenditureServiceTests
     [Fact]
     public async Task CreateAsync_SetsAmountToAbsoluteValue()
     {
-        _assetBalance.Setup(r => r.GetAssetAsync("user@example.com", "Wallet")).ReturnsAsync(MakeAsset("Wallet"));
+        _assetBalance.Setup(r => r.GetAssetAsync("user@example.com", "Wallet", It.IsAny<CancellationToken>())).ReturnsAsync(MakeAsset("Wallet"));
 
         FixedExpenditure? captured = null;
         _fixedExpenditureRepo.Setup(r => r.CreateAsync(It.IsAny<FixedExpenditure>(), It.IsAny<CancellationToken>()))
@@ -234,7 +234,7 @@ public class FixedExpenditureServiceTests
     [Fact]
     public async Task UpdateAsync_ReturnsFail_WhenExistingRecordNotFound()
     {
-        _assetBalance.Setup(r => r.GetAssetAsync("user@example.com", "Wallet")).ReturnsAsync(MakeAsset("Wallet"));
+        _assetBalance.Setup(r => r.GetAssetAsync("user@example.com", "Wallet", It.IsAny<CancellationToken>())).ReturnsAsync(MakeAsset("Wallet"));
         _fixedExpenditureRepo.Setup(r => r.GetByAccountEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(new List<FixedExpenditure>());
         var sut = CreateSut();
 
@@ -252,7 +252,7 @@ public class FixedExpenditureServiceTests
         const string email = "user@example.com";
         var existing = FixedExpenditure.Reconstitute(1, email, "ConsumerSpending", "MealOrEatOutExpenses", null, 100m, "KRW",
             "Wallet", null, (short)1, (short)15, new DateTime(2030, 12, 31), null, false, DateTime.UtcNow, DateTime.UtcNow);
-        _assetBalance.Setup(r => r.GetAssetAsync(email, "Wallet")).ReturnsAsync(MakeAsset("Wallet"));
+        _assetBalance.Setup(r => r.GetAssetAsync(email, "Wallet", It.IsAny<CancellationToken>())).ReturnsAsync(MakeAsset("Wallet"));
         _fixedExpenditureRepo.Setup(r => r.GetByAccountEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(new List<FixedExpenditure> { existing });
         _fixedExpenditureRepo.Setup(r => r.UpdateEntityAsync(It.IsAny<FixedExpenditure>(), It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
         var sut = CreateSut();
