@@ -518,7 +518,8 @@ public partial class ApplicationDbContext : DbContext
             entity.Property(e => e.MyDepositAsset)
                 .HasMaxLength(255)
                 .HasDefaultValueSql("NULL::character varying")
-                .HasComment("MyDepositAsset");
+                .HasComment("MyDepositAsset")
+                .ValueGeneratedNever();
             entity.Property(e => e.Note)
                 .HasMaxLength(255)
                 .HasDefaultValueSql("NULL::character varying")
@@ -579,7 +580,8 @@ public partial class ApplicationDbContext : DbContext
             entity.Property(e => e.MyDepositAsset)
                 .HasMaxLength(255)
                 .HasDefaultValueSql("NULL::character varying")
-                .HasComment("MyDepositAsset");
+                .HasComment("MyDepositAsset")
+                .ValueGeneratedNever();
             entity.Property(e => e.Note)
                 .HasMaxLength(255)
                 .HasDefaultValueSql("NULL::character varying")

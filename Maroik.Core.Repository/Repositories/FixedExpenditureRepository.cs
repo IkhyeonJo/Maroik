@@ -51,10 +51,10 @@ public class FixedExpenditureRepository(ApplicationDbContext context)
 
     public async Task UpdateMyDepositAssetNameAsync(string accountEmail, string oldName, string newName, CancellationToken ct = default)
     {
-        var entities = await Context.FixedExpenditures
+        // Context uses NoTracking + AutoDetectChangesEnabled=false, so LINQ-tracked update won't work.
+        // ExecuteUpdateAsync issues a direct SQL UPDATE, bypassing the change tracker entirely.
+        _ = await Context.FixedExpenditures
             .Where(e => e.AccountEmail == accountEmail && e.MyDepositAsset == oldName)
-            .ToListAsync(ct);
-        foreach (var e in entities) e.MyDepositAsset = newName;
-        _ = await Context.SaveChangesAsync(ct);
+            .ExecuteUpdateAsync(s => s.SetProperty(e => e.MyDepositAsset, newName), ct);
     }
 }

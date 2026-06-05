@@ -3,6 +3,7 @@ using Maroik.Core.PostgreSQL.Data;
 using Maroik.Core.Repository.Repositories;
 using Microsoft.EntityFrameworkCore;
 using Testcontainers.PostgreSql;
+using OrmAccount = Maroik.Core.PostgreSQL.Models.Account;
 using OrmAsset = Maroik.Core.PostgreSQL.Models.Asset;
 
 namespace Maroik.Core.Repository.Tests.Repositories;
@@ -45,6 +46,15 @@ public class AssetRepositoryIntegrationTests : IAsyncLifetime
 
     // -- Helpers --------------------------------------------------------------
 
+    private static OrmAccount MakeAccount(string email) => new()
+    {
+        Email = email,
+        HashedPassword = "hashed",
+        Nickname = email,
+        Created = DateTime.UtcNow,
+        Updated = DateTime.UtcNow
+    };
+
     private static OrmAsset MakeOrm(string productName, string email, string item = "FreeDepositAndWithdrawal",
         decimal amount = 1000m, string unit = "KRW") => new()
     {
@@ -60,6 +70,17 @@ public class AssetRepositoryIntegrationTests : IAsyncLifetime
 
     private async Task SeedAsync(params OrmAsset[] assets)
     {
+        // Asset_fk_0: Asset.AccountEmail → Account.Email — seed accounts first
+        var emails = assets.Select(a => a.AccountEmail).Distinct().ToList();
+        var existingEmails = await _context.Accounts.Select(a => a.Email).ToListAsync();
+        var newAccounts = emails.Where(e => !existingEmails.Contains(e)).Select(e => MakeAccount(e!)).ToList();
+        if (newAccounts.Count > 0)
+        {
+            await _context.Accounts.AddRangeAsync(newAccounts);
+            await _context.SaveChangesAsync();
+            _context.ChangeTracker.Clear();
+        }
+
         await _context.Assets.AddRangeAsync(assets);
         await _context.SaveChangesAsync();
         _context.ChangeTracker.Clear();

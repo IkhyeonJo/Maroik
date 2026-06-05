@@ -3,6 +3,8 @@ using Maroik.Core.Repository.Repositories;
 using Microsoft.EntityFrameworkCore;
 using Testcontainers.PostgreSql;
 using EfFixedExpenditure = Maroik.Core.PostgreSQL.Models.FixedExpenditure;
+using OrmAccount = Maroik.Core.PostgreSQL.Models.Account;
+using OrmAsset = Maroik.Core.PostgreSQL.Models.Asset;
 
 namespace Maroik.Core.Repository.Tests.Repositories;
 
@@ -44,6 +46,27 @@ public class FixedExpenditureRepositoryIntegrationTests : IAsyncLifetime
 
     // -- Helpers --------------------------------------------------------------
 
+    private static OrmAccount MakeAccount(string email) => new()
+    {
+        Email = email,
+        HashedPassword = "hashed",
+        Nickname = email,
+        Created = DateTime.UtcNow,
+        Updated = DateTime.UtcNow
+    };
+
+    private static OrmAsset MakeAsset(string productName, string email) => new()
+    {
+        ProductName = productName,
+        AccountEmail = email,
+        Item = "FreeDepositAndWithdrawal",
+        Amount = 0m,
+        MonetaryUnit = "KRW",
+        Deleted = false,
+        Created = DateTime.UtcNow,
+        Updated = DateTime.UtcNow
+    };
+
     private static EfFixedExpenditure MakeOrm(string email, string content, string depositAsset, decimal amount = 50m) => new()
     {
         AccountEmail = email,
@@ -63,6 +86,37 @@ public class FixedExpenditureRepositoryIntegrationTests : IAsyncLifetime
 
     private async Task SeedAsync(params EfFixedExpenditure[] items)
     {
+        // FK chain: Account ← Asset(ProductName=PaymentMethod) ← FixedExpenditure
+        // Asset_fk_0: Asset.AccountEmail → Account.Email
+        // FixedExpenditure_fk_0: (PaymentMethod, AccountEmail) → Asset.(ProductName, AccountEmail)
+
+        var emails = items.Select(i => i.AccountEmail).Distinct().ToList();
+        var existingEmails = await _context.Accounts.Select(a => a.Email).ToListAsync();
+        var newAccounts = emails.Where(e => !existingEmails.Contains(e)).Select(e => MakeAccount(e!)).ToList();
+        if (newAccounts.Count > 0)
+        {
+            await _context.Accounts.AddRangeAsync(newAccounts);
+            await _context.SaveChangesAsync();
+            _context.ChangeTracker.Clear();
+        }
+
+        var paymentMethods = items.Select(i => i.PaymentMethod).Distinct().ToList();
+        var assetsToAdd = new List<OrmAsset>();
+        foreach (var email in emails)
+        {
+            foreach (var pm in paymentMethods)
+            {
+                bool exists = await _context.Assets.AnyAsync(a => a.AccountEmail == email && a.ProductName == pm);
+                if (!exists) assetsToAdd.Add(MakeAsset(pm!, email!));
+            }
+        }
+        if (assetsToAdd.Count > 0)
+        {
+            await _context.Assets.AddRangeAsync(assetsToAdd);
+            await _context.SaveChangesAsync();
+            _context.ChangeTracker.Clear();
+        }
+
         await _context.FixedExpenditures.AddRangeAsync(items);
         await _context.SaveChangesAsync();
         _context.ChangeTracker.Clear();
