@@ -195,7 +195,6 @@ try
 
   #endregion
 
-  builder.Services.AddSingleton<IConfiguration>(builder.Configuration);
   builder.Services.AddHttpContextAccessor();
   builder.Services.AddMemoryCache(); // For IMemoryCache DI
   builder.Services.AddResponseCaching(); // For HTTP Header Setting
