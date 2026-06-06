@@ -141,7 +141,7 @@ try
 
   if (redis != null)
   {
-    builder.Services.AddSingleton<IConnectionMultiplexer>(redis);
+    builder.Services.AddSingleton(redis);
     builder.Services.AddStackExchangeRedisCache(options =>
     {
       options.ConnectionMultiplexerFactory = () => Task.FromResult(redis);
