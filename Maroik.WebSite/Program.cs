@@ -1,4 +1,4 @@
-﻿// Maroik.WebSite - Program.cs
+// Maroik.WebSite - Program.cs
 // Entry point for the Maroik web application.
 // Configures DI services (repositories, services, clients, session, antiforgery, CORS, localization),
 // sets up hot-swap TLS certificate polling for Docker deployments, and builds the ASP.NET Core pipeline.
@@ -258,7 +258,7 @@ try
     return Convert.ToHexString(hashBytes); // .NET 5+
   }
 
-// Certificate loading function definition using X509CertificateLoader
+  // Certificate loading function definition using X509CertificateLoader
   X509Certificate2 LoadCertificate(string certPath, string keyPath)
   {
     try
@@ -376,38 +376,39 @@ try
 
   #endregion
 
-//1.Exception / error handling
+  //1.Exception / error handling
 
-//When the app is running in the development environment:
-//The developer exception page middleware (UseDeveloperExceptionPage) reports app runtime errors.
-//The database error page middleware reports database runtime errors.
-//When the app is running in the production environment:
-//The exception handler middleware (UseExceptionHandler) catches exceptions thrown in the following middleware.
-//The HSTS (HTTP Strict Transport Security Protocol) middleware (UseHsts) adds the Strict-Transport-Security header.
+  //When the app is running in the development environment:
+  //The developer exception page middleware (UseDeveloperExceptionPage) reports app runtime errors.
+  //The database error page middleware reports database runtime errors.
+  //When the app is running in the production environment:
+  //The exception handler middleware (UseExceptionHandler) catches exceptions thrown in the following middleware.
+  //The HSTS (HTTP Strict Transport Security Protocol) middleware (UseHsts) adds the Strict-Transport-Security header.
 
-//if (!app.Environment.IsDevelopment())
-//{
-//    app.UseDeveloperExceptionPage();
-//}
-//else
-//{
-//    app.UseExceptionHandler("/Exception/Error");
-//    // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
-//    app.UseHsts();
-//}
+  //if (!app.Environment.IsDevelopment())
+  //{
+  //    app.UseDeveloperExceptionPage();
+  //}
+  //else
+  //{
+  //    app.UseExceptionHandler("/Exception/Error");
+  //    // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
+  //    app.UseHsts();
+  //}
 
   app.UseCookiePolicy(new CookiePolicyOptions
   {
-    HttpOnly = HttpOnlyPolicy.Always, Secure = CookieSecurePolicy.Always,
+    HttpOnly = HttpOnlyPolicy.Always,
+    Secure = CookieSecurePolicy.Always,
   });
 
   app.UseExceptionHandler("/Exception/Error");
 
-// The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
+  // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
   app.UseHsts();
 
-// /health bypasses HTTPS redirect and www-redirect so it is reachable on HTTP port 80
-// from the deployment server (used by the CI/CD post-deploy health check).
+  // /health bypasses HTTPS redirect and www-redirect so it is reachable on HTTP port 80
+  // from the deployment server (used by the CI/CD post-deploy health check).
   app.UseWhen(
     ctx => !ctx.Request.Path.StartsWithSegments("/health"),
     pipeline =>
@@ -430,16 +431,16 @@ try
 
   #region Default HTTP Header Setting
 
-//https://docs.microsoft.com/en-us/aspnet/core/performance/caching/middleware?view=aspnetcore-5.0
+  //https://docs.microsoft.com/en-us/aspnet/core/performance/caching/middleware?view=aspnetcore-5.0
   app.UseResponseCaching();
 
   #region Apply the following code to all pages. After logout, pressing back button shows logged-in page, so cache is disabled
 
-//<META http-equiv="Expires" content="-1">
-//<META http-equiv="Pragma" content="no-cache">
-//<META http-equiv="Cache-Control" content="No-Cache">
+  //<META http-equiv="Expires" content="-1">
+  //<META http-equiv="Pragma" content="no-cache">
+  //<META http-equiv="Cache-Control" content="No-Cache">
 
-//The code below is equivalent to the metadata content that goes into the HTML Header above.
+  //The code below is equivalent to the metadata content that goes into the HTML Header above.
 
   app.Use(async (context, next) =>
   {
