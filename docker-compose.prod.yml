@@ -57,8 +57,6 @@ services:
           - "443:443"
         env_file:
           - .env.prod
-        environment:
-          - ConnectionStrings__Redis=Maroik.Redis:6379,abortConnect=false
         volumes:
           - ./Maroik.SSL/conf:/etc/letsencrypt:ro
           - ./Maroik.Log/:/app/Maroik.Log:rw
