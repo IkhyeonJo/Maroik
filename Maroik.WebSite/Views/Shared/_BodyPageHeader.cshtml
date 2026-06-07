@@ -9,63 +9,37 @@
 @model Maroik.Core.Contract.Dtos.AccountResponse
 
 @{
-    string currentControllerName = ViewContext.RouteData.Values["Controller"]?.ToString() ?? string.Empty;
-    string currentActionName = ViewContext.RouteData.Values["Action"]?.ToString() ?? string.Empty;
+    var currentControllerName = ViewContext.RouteData.Values["Controller"]?.ToString() ?? string.Empty;
+    var currentActionName = ViewContext.RouteData.Values["Action"]?.ToString() ?? string.Empty;
 }
 
-@if (Model.Role == Role.Admin) // If the logged-in user has Admin role
+
+@switch (Model.Role)
 {
-    IOrderedEnumerable<CategoryResponse> tempAdminCategories = from adminCategory in (IEnumerable<CategoryResponse>)ViewBag.AdminCategories
-                                                       orderby adminCategory.Order ascending
-                                                       select adminCategory;
-    IEnumerable<SubCategoryResponse> tempAdminSubCategories = (IEnumerable<SubCategoryResponse>)ViewBag.AdminSubCategories;
-
-    foreach (CategoryResponse tempAdminCategory in tempAdminCategories)
+    // If the logged-in user has Admin role
+    case Role.Admin:
     {
-        if (!string.IsNullOrEmpty(tempAdminCategory.Action)) // Single category (no subcategories)
-        {
-            if (tempAdminCategory.Controller == currentControllerName && tempAdminCategory.Action == currentActionName) // If this is the currently selected item
-            {
-                <div class="content-header">
-                    <div class="container-fluid">
-                        <div class="row mb-2">
-                            <div class="col-sm-6">
-                                <h1 class="m-0">@localizer[tempAdminCategory.DisplayName!]</h1>
-                            </div>
-                            <div class="col-sm-6">
-                                <ol class="breadcrumb float-sm-right">
-                                    <li class="breadcrumb-item"><a href="/">@localizer["Home"]</a></li>
-                                    <li class="breadcrumb-item">@localizer[tempAdminCategory.DisplayName!]</li>
-                                </ol>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                goto Finish;
-            }
-        }
-        else if (string.IsNullOrEmpty(tempAdminCategory.Action)) // Multi-level category (has subcategories)
-        {
-            IOrderedEnumerable<SubCategoryResponse> tempAdminSelectedSubCategories = from tempAdminSubCategory in tempAdminSubCategories
-                                                                             where tempAdminCategory.Id == tempAdminSubCategory.CategoryId
-                                                                             orderby tempAdminSubCategory.Order ascending
-                                                                             select tempAdminSubCategory;
+        var tempAdminCategories = from adminCategory in (IEnumerable<CategoryResponse>)ViewBag.AdminCategories
+            orderby adminCategory.Order
+            select adminCategory;
+        var tempAdminSubCategories = ((IEnumerable<SubCategoryResponse>)ViewBag.AdminSubCategories).ToList();
 
-            foreach (SubCategoryResponse tempAdminSelectedSubCategory in tempAdminSelectedSubCategories)
+        foreach (var tempAdminCategory in tempAdminCategories)
+        {
+            if (!string.IsNullOrEmpty(tempAdminCategory.Action)) // Single category (no subcategories)
             {
-                if (tempAdminCategory.Controller == currentControllerName && tempAdminSelectedSubCategory.Action == currentActionName)
+                if (tempAdminCategory.Controller == currentControllerName && tempAdminCategory.Action == currentActionName) // If this is the currently selected item
                 {
                     <div class="content-header">
                         <div class="container-fluid">
                             <div class="row mb-2">
                                 <div class="col-sm-6">
-                                    <h1 class="m-0">@localizer[tempAdminSelectedSubCategory.DisplayName!]</h1>
+                                    <h1 class="m-0">@localizer[tempAdminCategory.DisplayName!]</h1>
                                 </div>
                                 <div class="col-sm-6">
                                     <ol class="breadcrumb float-sm-right">
                                         <li class="breadcrumb-item"><a href="/">@localizer["Home"]</a></li>
-                                        <li class="breadcrumb-item active">@localizer[tempAdminCategory.DisplayName!]</li>
-                                        <li class="breadcrumb-item">@localizer[tempAdminSelectedSubCategory.DisplayName!]</li>
+                                        <li class="breadcrumb-item">@localizer[tempAdminCategory.DisplayName!]</li>
                                     </ol>
                                 </div>
                             </div>
@@ -74,63 +48,68 @@
                     goto Finish;
                 }
             }
-        }
-    }
-Finish:;
-}
-else if (Model.Role == Role.User) // If the logged-in user has User role
-{
-    IOrderedEnumerable<CategoryResponse> tempUserCategories = from userCategory in (IEnumerable<CategoryResponse>)ViewBag.UserCategories
-                                                      orderby userCategory.Order ascending
-                                                      select userCategory;
-    IEnumerable<SubCategoryResponse> tempUserSubCategories = (IEnumerable<SubCategoryResponse>)ViewBag.UserSubCategories;
-
-    foreach (CategoryResponse tempUserCategory in tempUserCategories)
-    {
-        if (!string.IsNullOrEmpty(tempUserCategory.Action)) // Single category (no subcategories)
-        {
-            if (tempUserCategory.Controller == currentControllerName && tempUserCategory.Action == currentActionName) // If this is the currently selected item
+            else 
             {
-                <div class="content-header">
-                    <div class="container-fluid">
-                        <div class="row mb-2">
-                            <div class="col-sm-6">
-                                <h1 class="m-0">@localizer[tempUserCategory.DisplayName!]</h1>
+                if (string.IsNullOrEmpty(tempAdminCategory.Action)) // Multi-level category (has subcategories)
+                {
+                    var tempAdminSelectedSubCategories = from tempAdminSubCategory in tempAdminSubCategories
+                        where tempAdminCategory.Id == tempAdminSubCategory.CategoryId
+                        orderby tempAdminSubCategory.Order
+                        select tempAdminSubCategory;
+
+                    foreach (var tempAdminSelectedSubCategory in tempAdminSelectedSubCategories)
+                    {
+                        if (tempAdminCategory.Controller == currentControllerName && tempAdminSelectedSubCategory.Action == currentActionName)
+                        {
+                            <div class="content-header">
+                                <div class="container-fluid">
+                                    <div class="row mb-2">
+                                        <div class="col-sm-6">
+                                            <h1 class="m-0">@localizer[tempAdminSelectedSubCategory.DisplayName!]</h1>
+                                        </div>
+                                        <div class="col-sm-6">
+                                            <ol class="breadcrumb float-sm-right">
+                                                <li class="breadcrumb-item"><a href="/">@localizer["Home"]</a></li>
+                                                <li class="breadcrumb-item active">@localizer[tempAdminCategory.DisplayName!]</li>
+                                                <li class="breadcrumb-item">@localizer[tempAdminSelectedSubCategory.DisplayName!]</li>
+                                            </ol>
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
-                            <div class="col-sm-6">
-                                <ol class="breadcrumb float-sm-right">
-                                    <li class="breadcrumb-item"><a href="/">@localizer["Home"]</a></li>
-                                    <li class="breadcrumb-item">@localizer[tempUserCategory.DisplayName!]</li>
-                                </ol>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                goto Finish;
+                            goto Finish;
+                        }
+                    }
+                }
             }
         }
-        else if (string.IsNullOrEmpty(tempUserCategory.Action)) // Multi-level category (has subcategories)
-        {
-            IOrderedEnumerable<SubCategoryResponse> tempUserSelectedSubCategories = from tempUserSubCategory in tempUserSubCategories
-                                                                            where tempUserCategory.Id == tempUserSubCategory.CategoryId
-                                                                            orderby tempUserSubCategory.Order ascending
-                                                                            select tempUserSubCategory;
+        Finish:;
+        break;
+    }
+    // If the logged-in user has User role
+    case Role.User:
+    {
+        var tempUserCategories = from userCategory in (IEnumerable<CategoryResponse>)ViewBag.UserCategories
+            orderby userCategory.Order
+            select userCategory;
+        var tempUserSubCategories = ((IEnumerable<SubCategoryResponse>)ViewBag.UserSubCategories).ToList();
 
-            foreach (SubCategoryResponse tempUserSelectedSubCategory in tempUserSelectedSubCategories)
+        foreach (var tempUserCategory in tempUserCategories)
+        {
+            if (!string.IsNullOrEmpty(tempUserCategory.Action)) // Single category (no subcategories)
             {
-                if (tempUserCategory.Controller == currentControllerName && tempUserSelectedSubCategory.Action == currentActionName)
+                if (tempUserCategory.Controller == currentControllerName && tempUserCategory.Action == currentActionName) // If this is the currently selected item
                 {
                     <div class="content-header">
                         <div class="container-fluid">
                             <div class="row mb-2">
                                 <div class="col-sm-6">
-                                    <h1 class="m-0">@localizer[tempUserSelectedSubCategory.DisplayName!]</h1>
+                                    <h1 class="m-0">@localizer[tempUserCategory.DisplayName!]</h1>
                                 </div>
                                 <div class="col-sm-6">
                                     <ol class="breadcrumb float-sm-right">
                                         <li class="breadcrumb-item"><a href="/">@localizer["Home"]</a></li>
-                                        <li class="breadcrumb-item active">@localizer[tempUserCategory.DisplayName!]</li>
-                                        <li class="breadcrumb-item">@localizer[tempUserSelectedSubCategory.DisplayName!]</li>
+                                        <li class="breadcrumb-item">@localizer[tempUserCategory.DisplayName!]</li>
                                     </ol>
                                 </div>
                             </div>
@@ -139,63 +118,68 @@ else if (Model.Role == Role.User) // If the logged-in user has User role
                     goto Finish;
                 }
             }
-        }
-    }
-Finish:;
-}
-else if (Model.Role == Role.Anonymous) // If the user is not logged in (Anonymous role)
-{
-    IOrderedEnumerable<CategoryResponse> tempAnonymousCategories = from anonymousCategory in (IEnumerable<CategoryResponse>)ViewBag.AnonymousCategories
-                                                           orderby anonymousCategory.Order ascending
-                                                           select anonymousCategory;
-    IEnumerable<SubCategoryResponse> tempAnonymousSubCategories = (IEnumerable<SubCategoryResponse>)ViewBag.AnonymousSubCategories;
-
-    foreach (CategoryResponse tempAnonymousCategory in tempAnonymousCategories)
-    {
-        if (!string.IsNullOrEmpty(tempAnonymousCategory.Action)) // Single category (no subcategories)
-        {
-            if (tempAnonymousCategory.Controller == currentControllerName && tempAnonymousCategory.Action == currentActionName) // If this is the currently selected item
+            else 
             {
-                <div class="content-header">
-                    <div class="container-fluid">
-                        <div class="row mb-2">
-                            <div class="col-sm-6">
-                                <h1 class="m-0">@localizer[tempAnonymousCategory.DisplayName!]</h1>
+                if (string.IsNullOrEmpty(tempUserCategory.Action)) // Multi-level category (has subcategories)
+                {
+                    var tempUserSelectedSubCategories = from tempUserSubCategory in tempUserSubCategories
+                        where tempUserCategory.Id == tempUserSubCategory.CategoryId
+                        orderby tempUserSubCategory.Order
+                        select tempUserSubCategory;
+
+                    foreach (var tempUserSelectedSubCategory in tempUserSelectedSubCategories)
+                    {
+                        if (tempUserCategory.Controller == currentControllerName && tempUserSelectedSubCategory.Action == currentActionName)
+                        {
+                            <div class="content-header">
+                                <div class="container-fluid">
+                                    <div class="row mb-2">
+                                        <div class="col-sm-6">
+                                            <h1 class="m-0">@localizer[tempUserSelectedSubCategory.DisplayName!]</h1>
+                                        </div>
+                                        <div class="col-sm-6">
+                                            <ol class="breadcrumb float-sm-right">
+                                                <li class="breadcrumb-item"><a href="/">@localizer["Home"]</a></li>
+                                                <li class="breadcrumb-item active">@localizer[tempUserCategory.DisplayName!]</li>
+                                                <li class="breadcrumb-item">@localizer[tempUserSelectedSubCategory.DisplayName!]</li>
+                                            </ol>
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
-                            <div class="col-sm-6">
-                                <ol class="breadcrumb float-sm-right">
-                                    <li class="breadcrumb-item"><a href="/">@localizer["Home"]</a></li>
-                                    <li class="breadcrumb-item">@localizer[tempAnonymousCategory.DisplayName!]</li>
-                                </ol>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                goto Finish;
+                            goto Finish;
+                        }
+                    }
+                }
             }
         }
-        else if (string.IsNullOrEmpty(tempAnonymousCategory.Action)) // Multi-level category (has subcategories)
-        {
-            IOrderedEnumerable<SubCategoryResponse> tempAnonymousSelectedSubCategories = from tempAnonymousSubCategory in tempAnonymousSubCategories
-                                                                                 where tempAnonymousCategory.Id == tempAnonymousSubCategory.CategoryId
-                                                                                 orderby tempAnonymousSubCategory.Order ascending
-                                                                                 select tempAnonymousSubCategory;
+        Finish:;
+        break;
+    }
+    // If the user is not logged in (Anonymous role)
+    case Role.Anonymous:
+    {
+        var tempAnonymousCategories = from anonymousCategory in (IEnumerable<CategoryResponse>)ViewBag.AnonymousCategories
+            orderby anonymousCategory.Order
+            select anonymousCategory;
+        var tempAnonymousSubCategories = ((IEnumerable<SubCategoryResponse>)ViewBag.AnonymousSubCategories).ToList();
 
-            foreach (SubCategoryResponse tempAnonymousSelectedSubCategory in tempAnonymousSelectedSubCategories)
+        foreach (var tempAnonymousCategory in tempAnonymousCategories)
+        {
+            if (!string.IsNullOrEmpty(tempAnonymousCategory.Action)) // Single category (no subcategories)
             {
-                if (tempAnonymousCategory.Controller == currentControllerName && tempAnonymousSelectedSubCategory.Action == currentActionName)
+                if (tempAnonymousCategory.Controller == currentControllerName && tempAnonymousCategory.Action == currentActionName) // If this is the currently selected item
                 {
                     <div class="content-header">
                         <div class="container-fluid">
                             <div class="row mb-2">
                                 <div class="col-sm-6">
-                                    <h1 class="m-0">@localizer[tempAnonymousSelectedSubCategory.DisplayName!]</h1>
+                                    <h1 class="m-0">@localizer[tempAnonymousCategory.DisplayName!]</h1>
                                 </div>
                                 <div class="col-sm-6">
                                     <ol class="breadcrumb float-sm-right">
                                         <li class="breadcrumb-item"><a href="/">@localizer["Home"]</a></li>
-                                        <li class="breadcrumb-item active">@localizer[tempAnonymousCategory.DisplayName!]</li>
-                                        <li class="breadcrumb-item">@localizer[tempAnonymousSelectedSubCategory.DisplayName!]</li>
+                                        <li class="breadcrumb-item">@localizer[tempAnonymousCategory.DisplayName!]</li>
                                     </ol>
                                 </div>
                             </div>
@@ -204,11 +188,43 @@ else if (Model.Role == Role.Anonymous) // If the user is not logged in (Anonymou
                     goto Finish;
                 }
             }
-        }
-    }
-Finish:;
-}
-else // Should never reach here. A logged-in user must be Admin or User.
-{
+            else 
+            {
+                if (string.IsNullOrEmpty(tempAnonymousCategory.Action)) // Multi-level category (has subcategories)
+                {
+                    var tempAnonymousSelectedSubCategories = from tempAnonymousSubCategory in tempAnonymousSubCategories
+                        where tempAnonymousCategory.Id == tempAnonymousSubCategory.CategoryId
+                        orderby tempAnonymousSubCategory.Order
+                        select tempAnonymousSubCategory;
 
+                    foreach (var tempAnonymousSelectedSubCategory in tempAnonymousSelectedSubCategories)
+                    {
+                        if (tempAnonymousCategory.Controller == currentControllerName && tempAnonymousSelectedSubCategory.Action == currentActionName)
+                        {
+                            <div class="content-header">
+                                <div class="container-fluid">
+                                    <div class="row mb-2">
+                                        <div class="col-sm-6">
+                                            <h1 class="m-0">@localizer[tempAnonymousSelectedSubCategory.DisplayName!]</h1>
+                                        </div>
+                                        <div class="col-sm-6">
+                                            <ol class="breadcrumb float-sm-right">
+                                                <li class="breadcrumb-item"><a href="/">@localizer["Home"]</a></li>
+                                                <li class="breadcrumb-item active">@localizer[tempAnonymousCategory.DisplayName!]</li>
+                                                <li class="breadcrumb-item">@localizer[tempAnonymousSelectedSubCategory.DisplayName!]</li>
+                                            </ol>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            goto Finish;
+                        }
+                    }
+                }
+            }
+        }
+        Finish:;
+        break;
+    }
+    // Should never reach here.
 }
