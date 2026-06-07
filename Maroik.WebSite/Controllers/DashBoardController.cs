@@ -13,19 +13,28 @@ namespace Maroik.WebSite.Controllers;
 /// Serves the dashboard index views (Admin / User / Anonymous) and handles
 /// language-culture changes and the user's default monetary-unit preference.
 /// </summary>
-public class DashBoardController(
-    IAccountService accountService,
-    IDashboardService dashboardService,
-    IProfileService profileService,
-    IOptions<ServerSetting> serverSettings,
-    ISessionService sessionService)
-    : BaseController(accountService, dashboardService, serverSettings, sessionService)
+public class DashBoardController : BaseController
 {
-    private readonly IDashboardService _dashboardService1 = dashboardService;
-    private readonly IProfileService _profileService = profileService;
-    private readonly ISessionService _sessionService1 = sessionService;
+    private readonly IDashboardService _dashboardService;
+    private readonly IProfileService _profileService;
+    private readonly ISessionService _sessionService;
+
     private const string HostResourceFilePath = "/app/Maroik.Log/HostResourceInfo.txt";
     private const string DockerResourceFilePath = "/app/Maroik.Log/DockerResourceInfo.txt";
+
+    /// <summary>Initializes a new instance of <see cref="DashBoardController"/> with the required dependencies.</summary>
+    public DashBoardController(
+        IAccountService accountService,
+        IDashboardService dashboardService,
+        IProfileService profileService,
+        IOptions<ServerSetting> serverSettings,
+        ISessionService sessionService)
+        : base(accountService, dashboardService, serverSettings, sessionService)
+    {
+        _dashboardService = dashboardService;
+        _profileService = profileService;
+        _sessionService = sessionService;
+    }
 
     #region Language change
     /// <summary>Sets the UI culture cookie to the requested locale.</summary>
@@ -48,7 +57,7 @@ public class DashBoardController(
     [HttpGet]
     public IActionResult AdminIndex()
     {
-        var resource = _dashboardService1.GetServerResourceSummary(HostResourceFilePath, DockerResourceFilePath);
+        var resource = _dashboardService.GetServerResourceSummary(HostResourceFilePath, DockerResourceFilePath);
 
         ViewBag.HostCpuNumeric = resource.HostCpuNumeric;
         ViewBag.HostCpuInfo = resource.HostCpuInfo;
@@ -69,13 +78,13 @@ public class DashBoardController(
     [HttpGet]
     public async Task<IActionResult> UserIndex(string year, string month, CancellationToken ct)
     {
-        var loginedAccount = _sessionService1.GetAccount();
+        var loginedAccount = _sessionService.GetAccount();
         string? email      = loginedAccount?.Email;
         string? timeZoneId = loginedAccount?.TimeZoneIanaId;
 
         if (email == "demo@maroik.com") { year = "2025"; month = "06"; }
 
-        var summary = await _dashboardService1.GetSummaryAsync(email!, year ?? "", month ?? "", timeZoneId!, ct);
+        var summary = await _dashboardService.GetSummaryAsync(email!, year, month, timeZoneId!, ct);
         return View(summary.ToViewModel(timeZoneId!));
     }
     #endregion
@@ -89,7 +98,7 @@ public class DashBoardController(
     {
         try
         {
-            string email = _sessionService1.GetAccount()?.Email ?? "";
+            string email = _sessionService.GetAccount()?.Email ?? "";
             await _profileService.UpdateDefaultMonetaryUnitAsync(email, userIndexInputViewModel.DefaultMonetaryUnit, ct);
             return Json(new { result = true });
         }
@@ -107,14 +116,14 @@ public class DashBoardController(
     [HttpGet]
     public IActionResult AnonymousIndex()
     {
-        var loginedAccount = _sessionService1.GetAccount();
+        var loginedAccount = _sessionService.GetAccount();
 
         if (loginedAccount == null) return View();
         return loginedAccount.Role switch
         {
             Role.Admin => RedirectToAction("AdminIndex", "DashBoard"),
             Role.User => RedirectToAction("UserIndex", "DashBoard"),
-            _ => (IActionResult)View()
+            _ => View()
         };
     }
     #endregion
