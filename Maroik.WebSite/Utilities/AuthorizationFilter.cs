@@ -248,7 +248,8 @@ public class AuthorizationFilter : ActionFilterAttribute
                         //context.Result = new UnauthorizedObjectResult("User is unauthorized"); // If not found after all checks, it doesn't exist in DB
                         context.Result = new RedirectResult("/DashBoard/AnonymousIndex");
                         return;
-                        //Extract all DB Categories & SubCategories, compare with current accessed Controller & Action, proceed if match or output UnauthorizedObjectResult (Cancel Action!!)
+                        //Extract all DB Categories & SubCategories, compare with current accessed Controller & Action,
+                        //proceed if match or output UnauthorizedObjectResult (Cancel Action!!)
                     }
                     // If logged-in user has User role
                     case Role.User:
@@ -293,7 +294,8 @@ public class AuthorizationFilter : ActionFilterAttribute
                         //context.Result = new UnauthorizedObjectResult("User is unauthorized"); // If not found after all checks, it doesn't exist in DB
                         context.Result = new RedirectResult("/DashBoard/AnonymousIndex");
                         return;
-                        //Extract all DB Categories & SubCategories, compare with current accessed Controller & Action, proceed if match or output UnauthorizedObjectResult (Cancel Action!!)
+                        //Extract all DB Categories & SubCategories, compare with current accessed Controller & Action,
+                        //proceed if match or output UnauthorizedObjectResult (Cancel Action!!)
                     }
                 }
 
@@ -309,9 +311,8 @@ public class AuthorizationFilter : ActionFilterAttribute
                     .SelectMany(type => type.GetMethods()) // Get methods
                     .Where(method => method.IsPublic && !method.IsDefined(typeof(NonActionAttribute)) &&
                                      method.IsDefined(typeof(HttpPostAttribute)) &&
-                                     method.IsDefined(
-                                         typeof(
-                                             ValidateAntiForgeryTokenAttribute))); // Get methods with public access modifier, without NonAction attribute, with HttpPost and ValidateAntiForgeryToken attributes
+                                     method.IsDefined(typeof(ValidateAntiForgeryTokenAttribute))); 
+                // Get methods with public access modifier, without NonAction attribute, with HttpPost and ValidateAntiForgeryToken attributes
 
                 if (existingHttpPostMethods.Any(existingHttpPostMethod =>
                         currentControllerName ==
@@ -332,9 +333,8 @@ public class AuthorizationFilter : ActionFilterAttribute
                         .Where(method => method.IsPublic && !method.IsDefined(typeof(NonActionAttribute)) &&
                                          method.IsDefined(typeof(HttpPostAttribute)) &&
                                          method.IsDefined(typeof(ValidateAntiForgeryTokenAttribute)) &&
-                                         method.IsDefined(
-                                             typeof(
-                                                 RequiredHttpPostAccessAttribute))); // Get methods with public access modifier, without NonAction attribute, with HttpPost, ValidateAntiForgeryToken, and RequiredHttpPostAccess attributes
+                                         method.IsDefined(typeof(RequiredHttpPostAccessAttribute))); 
+                    // Get methods with public access modifier, without NonAction attribute, with HttpPost, ValidateAntiForgeryToken, and RequiredHttpPostAccess attributes
 
                     if (!(from existingHttpPostMethod in existingHttpPostMethods
                             where currentControllerName ==
