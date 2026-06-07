@@ -299,63 +299,100 @@ public class AuthorizationFilter : ActionFilterAttribute
 
                 break;
             }
-            // POST method
-            case "POST":
+            // POST method — not logged in
+            case "POST" when !isAccountSessionExist:
             {
                 var existingControllers = _cachedControllerTypes;
 
-                switch (isAccountSessionExist)
+                var existingHttpPostMethods = existingControllers
+                    .Where(type => type.Name == "AccountController") // Check AccountController
+                    .SelectMany(type => type.GetMethods()) // Get methods
+                    .Where(method => method.IsPublic && !method.IsDefined(typeof(NonActionAttribute)) &&
+                                     method.IsDefined(typeof(HttpPostAttribute)) &&
+                                     method.IsDefined(
+                                         typeof(
+                                             ValidateAntiForgeryTokenAttribute))); // Get methods with public access modifier, without NonAction attribute, with HttpPost and ValidateAntiForgeryToken attributes
+
+                if (existingHttpPostMethods.Any(existingHttpPostMethod =>
+                        currentControllerName ==
+                        existingHttpPostMethod.DeclaringType?.Name.Replace("Controller", "") &&
+                        currentActionName == existingHttpPostMethod.Name))
                 {
-                    // If not logged in
-                    case false:
+                    await next(); // Do Action!!
+                    return;
+                }
+
+                foreach (var anonymousCategory in anonymousCategories ?? [])
+                {
+                    existingHttpPostMethods = existingControllers
+                        .Where(type =>
+                            type.Name ==
+                            $"{anonymousCategory.Controller}Controller") // When permission is AnonymousCategory, only registered Category's Controller name is accessible
+                        .SelectMany(type => type.GetMethods()) // Get methods
+                        .Where(method => method.IsPublic && !method.IsDefined(typeof(NonActionAttribute)) &&
+                                         method.IsDefined(typeof(HttpPostAttribute)) &&
+                                         method.IsDefined(typeof(ValidateAntiForgeryTokenAttribute)) &&
+                                         method.IsDefined(
+                                             typeof(
+                                                 RequiredHttpPostAccessAttribute))); // Get methods with public access modifier, without NonAction attribute, with HttpPost, ValidateAntiForgeryToken, and RequiredHttpPostAccess attributes
+
+                    if (!(from existingHttpPostMethod in existingHttpPostMethods
+                            where currentControllerName ==
+                                  existingHttpPostMethod.DeclaringType?.Name.Replace("Controller", "") &&
+                                  currentActionName == existingHttpPostMethod.Name
+                            from customAttribute in existingHttpPostMethod.CustomAttributes
+                            where customAttribute.AttributeType.FullName ==
+                                  typeof(RequiredHttpPostAccessAttribute).ToString()
+                            from namedArgument in customAttribute.NamedArguments
+                            select namedArgument).Any(namedArgument =>
+                            (namedArgument.MemberName == nameof(RequiredHttpPostAccessAttribute.Role)) &&
+                            ((namedArgument.TypedValue.Value as string) == Role.Anonymous)))
                     {
-                        var existingHttpPostMethods = existingControllers
-                            .Where(type => type.Name == "AccountController") // Check AccountController
-                            .SelectMany(type => type.GetMethods()) // Get methods
-                            .Where(method => method.IsPublic && !method.IsDefined(typeof(NonActionAttribute)) &&
-                                             method.IsDefined(typeof(HttpPostAttribute)) &&
-                                             method.IsDefined(
-                                                 typeof(
-                                                     ValidateAntiForgeryTokenAttribute))); // Get methods with public access modifier, without NonAction attribute, with HttpPost and ValidateAntiForgeryToken attributes
+                        continue;
+                    }
 
-                        if (existingHttpPostMethods.Any(existingHttpPostMethod =>
-                                currentControllerName ==
-                                existingHttpPostMethod.DeclaringType?.Name.Replace("Controller", "") &&
-                                currentActionName == existingHttpPostMethod.Name))
+                    await next(); // Do Action!!
+                    return;
+                }
+
+                //context.Result = new UnauthorizedObjectResult("Access is not allowed"); // If not found after all checks, execution is not allowed!
+                context.Result = new RedirectResult("/DashBoard/AnonymousIndex");
+                return;
+            }
+            // POST method — logged in
+            case "POST" when isAccountSessionExist:
+            {
+                var existingControllers = _cachedControllerTypes;
+                var loginedAccount = _sessionService.GetAccount()!; // Get Session
+
+                switch (loginedAccount.Role)
+                {
+                    // If logged-in user has Admin role
+                    case Role.Admin:
+                    {
+                        if ((from adminCategory in adminCategories ?? []
+                                from existingHttpPostMethod in existingControllers
+                                    .Where(type =>
+                                        type.Name ==
+                                        $"{adminCategory.Controller}Controller") // When permission is Admin, only registered Category's Controller name is accessible
+                                    .SelectMany(type => type.GetMethods()) // Get methods
+                                    .Where(method =>
+                                        method.IsPublic && !method.IsDefined(typeof(NonActionAttribute)) &&
+                                        method.IsDefined(typeof(HttpPostAttribute)) &&
+                                        method.IsDefined(typeof(ValidateAntiForgeryTokenAttribute)) &&
+                                        method.IsDefined(typeof(RequiredHttpPostAccessAttribute)))
+                                where
+                                    currentControllerName ==
+                                    existingHttpPostMethod.DeclaringType?.Name.Replace("Controller", "") &&
+                                    currentActionName == existingHttpPostMethod.Name
+                                from customAttribute in existingHttpPostMethod.CustomAttributes
+                                where customAttribute.AttributeType.FullName ==
+                                      typeof(RequiredHttpPostAccessAttribute).ToString()
+                                from namedArgument in customAttribute.NamedArguments
+                                select namedArgument).Any(namedArgument =>
+                                (namedArgument.MemberName == nameof(RequiredHttpPostAccessAttribute.Role)) &&
+                                ((namedArgument.TypedValue.Value as string) == loginedAccount.Role)))
                         {
-                            await next(); // Do Action!!
-                            return;
-                        }
-
-                        foreach (var anonymousCategory in anonymousCategories ?? [])
-                        {
-                            existingHttpPostMethods = existingControllers
-                                .Where(type =>
-                                    type.Name ==
-                                    $"{anonymousCategory.Controller}Controller") // When permission is AnonymousCategory, only registered Category's Controller name is accessible
-                                .SelectMany(type => type.GetMethods()) // Get methods
-                                .Where(method => method.IsPublic && !method.IsDefined(typeof(NonActionAttribute)) &&
-                                                 method.IsDefined(typeof(HttpPostAttribute)) &&
-                                                 method.IsDefined(typeof(ValidateAntiForgeryTokenAttribute)) &&
-                                                 method.IsDefined(
-                                                     typeof(
-                                                         RequiredHttpPostAccessAttribute))); // Get methods with public access modifier, without NonAction attribute, with HttpPost, ValidateAntiForgeryToken, and RequiredHttpPostAccess attributes
-
-                            if (!(from existingHttpPostMethod in existingHttpPostMethods
-                                    where currentControllerName ==
-                                          existingHttpPostMethod.DeclaringType?.Name.Replace("Controller", "") &&
-                                          currentActionName == existingHttpPostMethod.Name
-                                    from customAttribute in existingHttpPostMethod.CustomAttributes
-                                    where customAttribute.AttributeType.FullName ==
-                                          typeof(RequiredHttpPostAccessAttribute).ToString()
-                                    from namedArgument in customAttribute.NamedArguments
-                                    select namedArgument).Any(namedArgument =>
-                                    (namedArgument.MemberName == nameof(RequiredHttpPostAccessAttribute.Role)) &&
-                                    ((namedArgument.TypedValue.Value as string) == Role.Anonymous)))
-                            {
-                                continue;
-                            }
-
                             await next(); // Do Action!!
                             return;
                         }
@@ -364,84 +401,39 @@ public class AuthorizationFilter : ActionFilterAttribute
                         context.Result = new RedirectResult("/DashBoard/AnonymousIndex");
                         return;
                     }
-                    // If logged in
-                    case true:
+                    // If logged-in user has User role
+                    case Role.User:
                     {
-                        var loginedAccount = _sessionService.GetAccount()!; // Get Session
-
-                        switch (loginedAccount.Role)
+                        if ((from userCategory in userCategories ?? []
+                                from existingHttpPostMethod in existingControllers
+                                    .Where(type =>
+                                        type.Name ==
+                                        $"{userCategory.Controller}Controller") // When permission is User, only registered Category's Controller name is accessible
+                                    .SelectMany(type => type.GetMethods()) // Get methods
+                                    .Where(method =>
+                                        method.IsPublic && !method.IsDefined(typeof(NonActionAttribute)) &&
+                                        method.IsDefined(typeof(HttpPostAttribute)) &&
+                                        method.IsDefined(typeof(ValidateAntiForgeryTokenAttribute)) &&
+                                        method.IsDefined(typeof(RequiredHttpPostAccessAttribute)))
+                                where
+                                    currentControllerName ==
+                                    existingHttpPostMethod.DeclaringType?.Name.Replace("Controller", "") &&
+                                    currentActionName == existingHttpPostMethod.Name
+                                from customAttribute in existingHttpPostMethod.CustomAttributes
+                                where customAttribute.AttributeType.FullName ==
+                                      typeof(RequiredHttpPostAccessAttribute).ToString()
+                                from namedArgument in customAttribute.NamedArguments
+                                select namedArgument).Any(namedArgument =>
+                                (namedArgument.MemberName == nameof(RequiredHttpPostAccessAttribute.Role)) &&
+                                ((namedArgument.TypedValue.Value as string) == loginedAccount.Role)))
                         {
-                            // If logged-in user has Admin role
-                            case Role.Admin:
-                            {
-                                if ((from adminCategory in adminCategories ?? []
-                                        from existingHttpPostMethod in existingControllers
-                                            .Where(type =>
-                                                type.Name ==
-                                                $"{adminCategory.Controller}Controller") // When permission is Admin, only registered Category's Controller name is accessible
-                                            .SelectMany(type => type.GetMethods()) // Get methods
-                                            .Where(method =>
-                                                method.IsPublic && !method.IsDefined(typeof(NonActionAttribute)) &&
-                                                method.IsDefined(typeof(HttpPostAttribute)) &&
-                                                method.IsDefined(typeof(ValidateAntiForgeryTokenAttribute)) &&
-                                                method.IsDefined(typeof(RequiredHttpPostAccessAttribute)))
-                                        where
-                                            currentControllerName ==
-                                            existingHttpPostMethod.DeclaringType?.Name.Replace("Controller", "") &&
-                                            currentActionName == existingHttpPostMethod.Name
-                                        from customAttribute in existingHttpPostMethod.CustomAttributes
-                                        where customAttribute.AttributeType.FullName ==
-                                              typeof(RequiredHttpPostAccessAttribute).ToString()
-                                        from namedArgument in customAttribute.NamedArguments
-                                        select namedArgument).Any(namedArgument =>
-                                        (namedArgument.MemberName == nameof(RequiredHttpPostAccessAttribute.Role)) &&
-                                        ((namedArgument.TypedValue.Value as string) == loginedAccount.Role)))
-                                {
-                                    await next(); // Do Action!!
-                                    return;
-                                }
-
-                                //context.Result = new UnauthorizedObjectResult("Access is not allowed"); // If not found after all checks, execution is not allowed!
-                                context.Result = new RedirectResult("/DashBoard/AnonymousIndex");
-                                return;
-                            }
-                            // If logged-in user has User role
-                            case Role.User:
-                            {
-                                if ((from userCategory in userCategories ?? []
-                                        from existingHttpPostMethod in existingControllers
-                                            .Where(type =>
-                                                type.Name ==
-                                                $"{userCategory.Controller}Controller") // When permission is User, only registered Category's Controller name is accessible
-                                            .SelectMany(type => type.GetMethods()) // Get methods
-                                            .Where(method =>
-                                                method.IsPublic && !method.IsDefined(typeof(NonActionAttribute)) &&
-                                                method.IsDefined(typeof(HttpPostAttribute)) &&
-                                                method.IsDefined(typeof(ValidateAntiForgeryTokenAttribute)) &&
-                                                method.IsDefined(typeof(RequiredHttpPostAccessAttribute)))
-                                        where
-                                            currentControllerName ==
-                                            existingHttpPostMethod.DeclaringType?.Name.Replace("Controller", "") &&
-                                            currentActionName == existingHttpPostMethod.Name
-                                        from customAttribute in existingHttpPostMethod.CustomAttributes
-                                        where customAttribute.AttributeType.FullName ==
-                                              typeof(RequiredHttpPostAccessAttribute).ToString()
-                                        from namedArgument in customAttribute.NamedArguments
-                                        select namedArgument).Any(namedArgument =>
-                                        (namedArgument.MemberName == nameof(RequiredHttpPostAccessAttribute.Role)) &&
-                                        ((namedArgument.TypedValue.Value as string) == loginedAccount.Role)))
-                                {
-                                    await next(); // Do Action!!
-                                    return;
-                                }
-
-                                //context.Result = new UnauthorizedObjectResult("Access is not allowed"); // If not found after all checks, execution is not allowed!
-                                context.Result = new RedirectResult("/DashBoard/AnonymousIndex");
-                                return;
-                            }
+                            await next(); // Do Action!!
+                            return;
                         }
 
-                        break;
+                        //context.Result = new UnauthorizedObjectResult("Access is not allowed"); // If not found after all checks, execution is not allowed!
+                        context.Result = new RedirectResult("/DashBoard/AnonymousIndex");
+                        return;
                     }
                 }
 
