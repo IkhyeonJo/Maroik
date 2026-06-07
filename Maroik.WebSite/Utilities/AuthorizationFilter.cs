@@ -164,7 +164,7 @@ public class AuthorizationFilter : ActionFilterAttribute
 
                 #region If Category with SubCategory
 
-                IEnumerable<CategoryResponse> nonSingleCategories = from anonymousCategory in anonymousCategories
+                var nonSingleCategories = from anonymousCategory in anonymousCategories
                     where string.IsNullOrEmpty(anonymousCategory.Action)
                     select anonymousCategory; // Collection of categories with sub-categories
 
@@ -187,116 +187,113 @@ public class AuthorizationFilter : ActionFilterAttribute
                 context.Result = new RedirectResult("/DashBoard/AnonymousIndex");
                 return;
             }
-            case "GET":
+            case "GET" when isAccountSessionExist:
             {
-                if (isAccountSessionExist) // If logged in
+                switch (currentControllerName)
                 {
-                    switch (currentControllerName)
+                    // Allow exception resource access (Error)
+                    case "Exception" when currentActionName == "Error":
+                    // Logout
+                    case "Account" when currentActionName == "Logout":
+                    // Initial screen
+                    case "DashBoard" when currentActionName == "AnonymousIndex":
+                        await next(); // Do Action!!
+                        return;
+                }
+
+                var loginedAccount = _sessionService.GetAccount()!; // Get Session
+
+                switch (loginedAccount.Role)
+                {
+                    // If logged-in user has Admin role
+                    case Role.Admin:
                     {
-                        // Allow exception resource access (Error)
-                        case "Exception" when currentActionName == "Error":
-                        // Logout
-                        case "Account" when currentActionName == "Logout":
-                        // Initial screen
-                        case "DashBoard" when currentActionName == "AnonymousIndex":
+                        #region If Category without SubCategory
+
+                        var singleCategories = from adminCategory in adminCategories
+                            where !string.IsNullOrEmpty(adminCategory.Action)
+                            select adminCategory; // Collection of categories without sub-categories
+
+                        if (singleCategories.Any(singleCategory =>
+                                singleCategory.Controller == currentControllerName &&
+                                singleCategory.Action == currentActionName))
+                        {
                             await next(); // Do Action!!
                             return;
+                        }
+
+                        #endregion
+
+                        #region If Category with SubCategory
+
+                        var nonSingleCategories = from adminCategory in adminCategories
+                            where string.IsNullOrEmpty(adminCategory.Action)
+                            select adminCategory; // Collection of categories with sub-categories
+
+                        if ((from nonSingleCategory in nonSingleCategories
+                                let nonSingleCategoriesSubCategories = from adminSubCategory in adminSubCategories
+                                    where adminSubCategory.CategoryId == nonSingleCategory.Id
+                                    select adminSubCategory
+                                from nonSingleCategoriesSubCategory in nonSingleCategoriesSubCategories
+                                where nonSingleCategory.Controller == currentControllerName &&
+                                      nonSingleCategoriesSubCategory.Action == currentActionName
+                                select nonSingleCategory).Any())
+                        {
+                            await next(); // Do Action!!
+                            return;
+                        }
+
+                        #endregion
+
+                        //context.Result = new UnauthorizedObjectResult("User is unauthorized"); // If not found after all checks, it doesn't exist in DB
+                        context.Result = new RedirectResult("/DashBoard/AnonymousIndex");
+                        return;
+                        //Extract all DB Categories & SubCategories, compare with current accessed Controller & Action, proceed if match or output UnauthorizedObjectResult (Cancel Action!!)
                     }
-
-                    var loginedAccount = _sessionService.GetAccount()!; // Get Session
-
-                    switch (loginedAccount.Role)
+                    // If logged-in user has User role
+                    case Role.User:
                     {
-                        // If logged-in user has Admin role
-                        case Role.Admin:
+                        #region If Category without SubCategory
+
+                        var singleCategories = from userCategory in userCategories
+                            where !string.IsNullOrEmpty(userCategory.Action)
+                            select userCategory; // Collection of categories without sub-categories
+
+                        if (singleCategories.Any(singleCategory =>
+                                singleCategory.Controller == currentControllerName &&
+                                singleCategory.Action == currentActionName))
                         {
-                            #region If Category without SubCategory
-
-                            IEnumerable<CategoryResponse> singleCategories = from adminCategory in adminCategories
-                                where !string.IsNullOrEmpty(adminCategory.Action)
-                                select adminCategory; // Collection of categories without sub-categories
-
-                            if (singleCategories.Any(singleCategory =>
-                                    singleCategory.Controller == currentControllerName &&
-                                    singleCategory.Action == currentActionName))
-                            {
-                                await next(); // Do Action!!
-                                return;
-                            }
-
-                            #endregion
-
-                            #region If Category with SubCategory
-
-                            IEnumerable<CategoryResponse> nonSingleCategories = from adminCategory in adminCategories
-                                where string.IsNullOrEmpty(adminCategory.Action)
-                                select adminCategory; // Collection of categories with sub-categories
-
-                            if ((from nonSingleCategory in nonSingleCategories
-                                    let nonSingleCategoriesSubCategories = from adminSubCategory in adminSubCategories
-                                        where adminSubCategory.CategoryId == nonSingleCategory.Id
-                                        select adminSubCategory
-                                    from nonSingleCategoriesSubCategory in nonSingleCategoriesSubCategories
-                                    where nonSingleCategory.Controller == currentControllerName &&
-                                          nonSingleCategoriesSubCategory.Action == currentActionName
-                                    select nonSingleCategory).Any())
-                            {
-                                await next(); // Do Action!!
-                                return;
-                            }
-
-                            #endregion
-
-                            //context.Result = new UnauthorizedObjectResult("User is unauthorized"); // If not found after all checks, it doesn't exist in DB
-                            context.Result = new RedirectResult("/DashBoard/AnonymousIndex");
+                            await next(); // Do Action!!
                             return;
-                            //Extract all DB Categories & SubCategories, compare with current accessed Controller & Action, proceed if match or output UnauthorizedObjectResult (Cancel Action!!)
                         }
-                        // If logged-in user has User role
-                        case Role.User:
+
+                        #endregion
+
+                        #region If Category with SubCategory
+
+                        var nonSingleCategories = from userCategory in userCategories
+                            where string.IsNullOrEmpty(userCategory.Action)
+                            select userCategory; // Collection of categories with sub-categories
+
+                        if ((from nonSingleCategory in nonSingleCategories
+                                let nonSingleCategoriesSubCategories = from userSubCategory in userSubCategories
+                                    where userSubCategory.CategoryId == nonSingleCategory.Id
+                                    select userSubCategory
+                                from nonSingleCategoriesSubCategory in nonSingleCategoriesSubCategories
+                                where nonSingleCategory.Controller == currentControllerName &&
+                                      nonSingleCategoriesSubCategory.Action == currentActionName
+                                select nonSingleCategory).Any())
                         {
-                            #region If Category without SubCategory
-
-                            IEnumerable<CategoryResponse> singleCategories = from userCategory in userCategories
-                                where !string.IsNullOrEmpty(userCategory.Action)
-                                select userCategory; // Collection of categories without sub-categories
-
-                            if (singleCategories.Any(singleCategory =>
-                                    singleCategory.Controller == currentControllerName &&
-                                    singleCategory.Action == currentActionName))
-                            {
-                                await next(); // Do Action!!
-                                return;
-                            }
-
-                            #endregion
-
-                            #region If Category with SubCategory
-
-                            IEnumerable<CategoryResponse> nonSingleCategories = from userCategory in userCategories
-                                where string.IsNullOrEmpty(userCategory.Action)
-                                select userCategory; // Collection of categories with sub-categories
-
-                            if ((from nonSingleCategory in nonSingleCategories
-                                    let nonSingleCategoriesSubCategories = from userSubCategory in userSubCategories
-                                        where userSubCategory.CategoryId == nonSingleCategory.Id
-                                        select userSubCategory
-                                    from nonSingleCategoriesSubCategory in nonSingleCategoriesSubCategories
-                                    where nonSingleCategory.Controller == currentControllerName &&
-                                          nonSingleCategoriesSubCategory.Action == currentActionName
-                                    select nonSingleCategory).Any())
-                            {
-                                await next(); // Do Action!!
-                                return;
-                            }
-
-                            #endregion
-
-                            //context.Result = new UnauthorizedObjectResult("User is unauthorized"); // If not found after all checks, it doesn't exist in DB
-                            context.Result = new RedirectResult("/DashBoard/AnonymousIndex");
+                            await next(); // Do Action!!
                             return;
-                            //Extract all DB Categories & SubCategories, compare with current accessed Controller & Action, proceed if match or output UnauthorizedObjectResult (Cancel Action!!)
                         }
+
+                        #endregion
+
+                        //context.Result = new UnauthorizedObjectResult("User is unauthorized"); // If not found after all checks, it doesn't exist in DB
+                        context.Result = new RedirectResult("/DashBoard/AnonymousIndex");
+                        return;
+                        //Extract all DB Categories & SubCategories, compare with current accessed Controller & Action, proceed if match or output UnauthorizedObjectResult (Cancel Action!!)
                     }
                 }
 
@@ -305,14 +302,14 @@ public class AuthorizationFilter : ActionFilterAttribute
             // POST method
             case "POST":
             {
-                IReadOnlyList<Type> existingControllers = _cachedControllerTypes;
+                var existingControllers = _cachedControllerTypes;
 
                 switch (isAccountSessionExist)
                 {
                     // If not logged in
                     case false:
                     {
-                        IEnumerable<MethodInfo> existingHttpPostMethods = existingControllers
+                        var existingHttpPostMethods = existingControllers
                             .Where(type => type.Name == "AccountController") // Check AccountController
                             .SelectMany(type => type.GetMethods()) // Get methods
                             .Where(method => method.IsPublic && !method.IsDefined(typeof(NonActionAttribute)) &&
@@ -330,7 +327,7 @@ public class AuthorizationFilter : ActionFilterAttribute
                             return;
                         }
 
-                        foreach (CategoryResponse anonymousCategory in anonymousCategories ?? [])
+                        foreach (var anonymousCategory in anonymousCategories ?? [])
                         {
                             existingHttpPostMethods = existingControllers
                                 .Where(type =>
