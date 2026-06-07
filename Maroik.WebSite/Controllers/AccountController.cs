@@ -214,8 +214,8 @@ public class AccountController : BaseController
 
         await _accountService.ForgotPasswordAsync(loginInputViewModel.Email!, emailSubject, emailTitle, emailContent0, emailContent1, ct);
 
-        ViewBag.mailSent = true;
-        ViewBag.sentEmailAddress = loginInputViewModel.Email;
+        ViewBag.MailSent = true;
+        ViewBag.SentEmailAddress = loginInputViewModel.Email;
         return View();
     }
 
@@ -257,7 +257,7 @@ public class AccountController : BaseController
             return View();
         }
 
-        ViewBag.resetPasswordComplete = true;
+        ViewBag.ResetPasswordComplete = true;
         return View();
     }
     #endregion
