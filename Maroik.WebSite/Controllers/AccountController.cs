@@ -15,14 +15,12 @@ namespace Maroik.WebSite.Controllers;
 public class AccountController : BaseController
 {
     private readonly IHtmlLocalizer<AccountController> _localizer;
-    private readonly ILogger<AccountController> _logger;
     private readonly IAccountService _accountService;
     private readonly ISessionService _sessionService;
 
     /// <summary>Initializes a new instance of <see cref="AccountController"/> with the supplied dependencies.</summary>
     public AccountController(
         IHtmlLocalizer<AccountController> localizer,
-        ILogger<AccountController> logger,
         IAccountService accountService,
         IDashboardService dashboardService,
         IOptions<ServerSetting> serverSettings,
@@ -30,7 +28,6 @@ public class AccountController : BaseController
         : base(accountService, dashboardService, serverSettings, sessionService)
     {
         _localizer = localizer;
-        _logger = logger;
         _accountService = accountService;
         _sessionService = sessionService;
     }
@@ -51,7 +48,7 @@ public class AccountController : BaseController
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Login(LoginInputViewModel loginInputViewModel, CancellationToken ct)
     {
-        string userAgent = Request.Headers["User-Agent"].ToString();
+        string userAgent = Request.Headers.UserAgent.ToString();
         if (userAgent.Contains("MSIE") || userAgent.Contains("Trident"))
         {
             TempData["Error"] = _localizer["BlockInternetExplorer"].Value;
