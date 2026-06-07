@@ -112,8 +112,7 @@ public class AuthorizationFilter : ActionFilterAttribute
             ctrl.ViewBag.AnonymousSubCategories = anonymousSubCategories;
         }
 
-        var currentControllerName =
-            context.ActionDescriptor.RouteValues["controller"] ?? ""; // Controller name before execution
+        var currentControllerName = context.ActionDescriptor.RouteValues["controller"] ?? ""; // Controller name before execution
         var currentActionName = context.ActionDescriptor.RouteValues["action"] ?? ""; // Action name before execution
         var currentRequestMethod = context.HttpContext.Request.Method; // GET HTTP METHOD
         var isAccountSessionExist = _sessionService.GetAccount() != null; // Check if account session exists after login
