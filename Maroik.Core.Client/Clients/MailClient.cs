@@ -1,12 +1,14 @@
-using Maroik.Core.Contract.Utilities;
+using MailKit.Net.Smtp;
+using MailKit.Security;
 using Maroik.Core.Contract.Interfaces;
-using System.Net.Mail;
+using Maroik.Core.Contract.Utilities;
+using MimeKit;
 
 namespace Maroik.Core.Client.Clients;
 
 /// <summary>
 /// Concrete implementation of <see cref="IMailClient"/> that builds transactional email bodies
-/// and delivers them via SMTP using <see cref="System.Net.Mail.SmtpClient"/>.
+/// and delivers them via SMTP using MailKit.
 /// </summary>
 public class MailClient : IMailClient
 {
@@ -67,27 +69,23 @@ public class MailClient : IMailClient
     {
         try
         {
-            // Build the email message
-            using MailMessage mailMessage = new();
-            mailMessage.From = new MailAddress(fromEmail, fromFullName);
-            mailMessage.To.Add(toEmail);
-            mailMessage.Subject = subject;
-            mailMessage.Body = body;
-            mailMessage.IsBodyHtml = true; // Body is an HTML string
+            var message = new MimeMessage();
+            message.From.Add(new MailboxAddress(fromFullName, fromEmail));
+            message.To.Add(new MailboxAddress(string.Empty, toEmail));
+            message.Subject = subject;
+            message.Body = new BodyBuilder { HtmlBody = body }.ToMessageBody();
 
-            // Configure the SMTP client with credentials and TLS setting from ServerSetting
-            using SmtpClient smtp = new(smtpHost, int.Parse(smtpPort));
-            smtp.Credentials = new System.Net.NetworkCredential(smtpUserName, smtpPassword);
-            smtp.EnableSsl = bool.Parse(smtpSsl);
+            using SmtpClient smtp = new();
+            SecureSocketOptions socketOptions = bool.Parse(smtpSsl) ? SecureSocketOptions.Auto : SecureSocketOptions.None;
+            await smtp.ConnectAsync(smtpHost, int.Parse(smtpPort), socketOptions, ct);
+            await smtp.AuthenticateAsync(smtpUserName, smtpPassword, ct);
+            await smtp.SendAsync(message, ct);
+            await smtp.DisconnectAsync(true, ct);
 
-            await smtp.SendMailAsync(mailMessage, ct);
-
-            // Return a localised success message on success
             return EnumHelper.GetDescription(AccountMessage.MailSent);
         }
         catch (Exception ex)
         {
-            // Return the raw exception message so the caller can log or display it
             return ex.Message;
         }
     }
