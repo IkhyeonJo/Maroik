@@ -1,5 +1,5 @@
-﻿using ErrorOr;
-using System.Text.RegularExpressions;
+using ErrorOr;
+using System.Net.Mail;
 using Maroik.Core.Contract.Domains.Primitives;
 
 namespace Maroik.Core.Contract.Domains.ValueObjects;
@@ -10,10 +10,6 @@ namespace Maroik.Core.Contract.Domains.ValueObjects;
 /// </summary>
 public sealed class Email : ValueObject
 {
-    private static readonly Regex EmailRegex = new(
-        @"^[^@\s]+@[^@\s]+\.[^@\s]+$",
-        RegexOptions.Compiled | RegexOptions.IgnoreCase);
-
     /// <summary>The normalised (lower-case) email address string.</summary>
     public string Value { get; }
 
@@ -34,10 +30,34 @@ public sealed class Email : ValueObject
         if (string.IsNullOrWhiteSpace(value))
             return Error.Validation("Email.Empty", "Email address cannot be empty.");
 
-        if (!EmailRegex.IsMatch(value))
+        if (!IsValid(value))
             return Error.Validation("Email.Invalid", $"'{value}' is not a valid email address.");
 
         return new Email(value.ToLowerInvariant());
+    }
+
+    private static bool IsValid(string email)
+    {
+        if (!MailAddress.TryCreate(email, out MailAddress? address))
+            return false;
+
+        string[] hostParts = address.Host.Split('.');
+        if (hostParts.Length == 1)
+            return false;
+
+        if (hostParts.Any(p => p == string.Empty))
+            return false;
+
+        if (hostParts[^1].Length < 2)
+            return false;
+
+        if (address.User.Contains(' '))
+            return false;
+
+        if (address.User.Split('.').Any(p => p == string.Empty))
+            return false;
+
+        return true;
     }
 
     /// <inheritdoc/>

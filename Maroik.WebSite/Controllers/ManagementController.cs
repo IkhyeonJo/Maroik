@@ -1,4 +1,5 @@
-﻿using Maroik.Core.Contract.Dtos;
+﻿using Maroik.Core.Contract.Domains.ValueObjects;
+using Maroik.Core.Contract.Dtos;
 using Maroik.Core.Contract.Interfaces;
 using Maroik.Core.Contract.Utilities;
 using Maroik.WebSite.Contracts;
@@ -11,7 +12,6 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Localization;
 using Microsoft.Extensions.Options;
 using Newtonsoft.Json;
-using System.Net.Mail;
 using System.Text;
 using System.Text.RegularExpressions;
 
@@ -253,44 +253,7 @@ public class ManagementController : BaseController
             {
                 #region Email format check
 
-                static bool IsValidEmail(string email)
-                {
-                    if (!MailAddress.TryCreate(email, out MailAddress? mailAddress))
-                    {
-                        return false;
-                    }
-
-                    // And if you want to be more strict:
-                    string[] hostParts = mailAddress.Host.Split('.');
-                    if (hostParts.Length == 1)
-                    {
-                        return false; // No dot.
-                    }
-
-                    if (hostParts.Any(p => p == string.Empty))
-                    {
-                        return false; // Double dot.
-                    }
-
-                    if (hostParts[^1].Length < 2)
-                    {
-                        return false; // TLD only one letter.
-                    }
-
-                    if (mailAddress.User.Contains(' '))
-                    {
-                        return false;
-                    }
-
-                    if (mailAddress.User.Split('.').Any(p => p == string.Empty))
-                    {
-                        return false; // Double dot or dot at end of user part.
-                    }
-
-                    return true;
-                }
-
-                if (!IsValidEmail(accountInputViewModel.Email!)) // Invalid email format
+                if (Email.Create(accountInputViewModel.Email).IsError) // Invalid email format
                 {
                     return Json(new { result = false, error = _localizer["Invalid email form"].Value });
                 }
