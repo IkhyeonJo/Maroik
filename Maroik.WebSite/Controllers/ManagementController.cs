@@ -11,9 +11,7 @@ using Maroik.WebSite.Models.ViewModels.Management;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Localization;
 using Microsoft.Extensions.Options;
-using Newtonsoft.Json;
 using System.Text;
-using System.Text.RegularExpressions;
 
 namespace Maroik.WebSite.Controllers;
 
@@ -262,9 +260,7 @@ public class ManagementController : BaseController
 
                 #region Password format check
 
-                if (!new Regex(
-                            "^((?=.*?[A-Z])(?=.*?[a-z])(?=.*?[0-9])|(?=.*?[A-Z])(?=.*?[a-z])(?=.*?[^a-zA-Z0-9])|(?=.*?[A-Z])(?=.*?[0-9])(?=.*?[^a-zA-Z0-9])|(?=.*?[a-z])(?=.*?[0-9])(?=.*?[^a-zA-Z0-9])).{8,}$")
-                        .IsMatch(accountInputViewModel.Password!)) // Invalid password format
+                if (!PasswordPolicy.IsValid(accountInputViewModel.Password))
                 {
                     return Json(new
                     {
