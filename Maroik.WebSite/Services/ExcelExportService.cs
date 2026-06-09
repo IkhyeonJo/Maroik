@@ -1,3 +1,4 @@
+using System.Globalization;
 using DocumentFormat.OpenXml;
 using DocumentFormat.OpenXml.Packaging;
 using DocumentFormat.OpenXml.Spreadsheet;
@@ -44,8 +45,8 @@ public class ExcelExportService : IExcelExportService
             localize(item.Item ?? ""),
             item.Amount.TrimTrailingZeros(),
             item.MonetaryUnit ?? "",
-            item.Created.ConvertTimeByTimeZoneIanaId(timeZoneIanaId).ToString(),
-            item.Updated.ConvertTimeByTimeZoneIanaId(timeZoneIanaId).ToString(),
+            item.Created.ConvertTimeByTimeZoneIanaId(timeZoneIanaId).ToString(CultureInfo.InvariantCulture),
+            item.Updated.ConvertTimeByTimeZoneIanaId(timeZoneIanaId).ToString(CultureInfo.InvariantCulture),
             item.Note ?? "",
             item.Deleted.ToString()
         ]);
@@ -84,8 +85,8 @@ public class ExcelExportService : IExcelExportService
             item.Amount.TrimTrailingZeros(),
             currencyByProduct.GetValueOrDefault(item.DepositMyAssetProductName ?? "", ""),
             item.DepositMyAssetProductName ?? "",
-            item.Created.ConvertTimeByTimeZoneIanaId(timeZoneIanaId).ToString(),
-            item.Updated.ConvertTimeByTimeZoneIanaId(timeZoneIanaId).ToString(),
+            item.Created.ConvertTimeByTimeZoneIanaId(timeZoneIanaId).ToString(CultureInfo.InvariantCulture),
+            item.Updated.ConvertTimeByTimeZoneIanaId(timeZoneIanaId).ToString(CultureInfo.InvariantCulture),
             item.Note ?? ""
         ]);
 
@@ -126,8 +127,8 @@ public class ExcelExportService : IExcelExportService
             item.PaymentMethod ?? "",
             item.Note ?? "",
             item.MyDepositAsset ?? "",
-            item.Created.ConvertTimeByTimeZoneIanaId(timeZoneIanaId).ToString(),
-            item.Updated.ConvertTimeByTimeZoneIanaId(timeZoneIanaId).ToString()
+            item.Created.ConvertTimeByTimeZoneIanaId(timeZoneIanaId).ToString(CultureInfo.InvariantCulture),
+            item.Updated.ConvertTimeByTimeZoneIanaId(timeZoneIanaId).ToString(CultureInfo.InvariantCulture)
         ]);
 
         return BuildExcel(headers, rows);
@@ -171,15 +172,15 @@ public class ExcelExportService : IExcelExportService
             item.MainClass ?? "",
             item.SubClass ?? "",
             item.Content ?? "",
-            item.Amount.ToString(),
+            item.Amount.ToString(CultureInfo.InvariantCulture),
             item.MonetaryUnit ?? "",
             item.DepositMonth.ToString(),
             item.DepositDay.ToString(),
             item.MaturityDate ?? "",
             item.Note ?? "",
             item.DepositMyAssetProductName ?? "",
-            item.Created.ToString(),
-            item.Updated.ToString(),
+            item.Created.ToString(CultureInfo.InvariantCulture),
+            item.Updated.ToString(CultureInfo.InvariantCulture),
             item.Noticed.ToString(),
             item.Expired.ToString()
         ]);
@@ -233,8 +234,8 @@ public class ExcelExportService : IExcelExportService
             item.DepositMonth.ToString(),
             item.DepositDay.ToString(),
             item.MaturityDate ?? "",
-            item.Created.ToString(),
-            item.Updated.ToString(),
+            item.Created.ToString(CultureInfo.InvariantCulture),
+            item.Updated.ToString(CultureInfo.InvariantCulture),
             item.Note ?? "",
             item.Noticed.ToString(),
             item.Expired.ToString()
@@ -289,8 +290,8 @@ public class ExcelExportService : IExcelExportService
             item.AgreedServiceTerms.ToString(),
             item.RegistrationToken ?? "",
             item.ResetPasswordToken ?? "",
-            item.Created.ToString(),
-            item.Updated.ToString(),
+            item.Created.ToString(CultureInfo.InvariantCulture),
+            item.Updated.ToString(CultureInfo.InvariantCulture),
             item.Message ?? "",
             item.Deleted.ToString()
         ]);

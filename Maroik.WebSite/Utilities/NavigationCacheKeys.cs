@@ -1,5 +1,9 @@
 namespace Maroik.WebSite.Utilities;
 
+/// <summary>
+/// Distributed-cache keys used by <see cref="AuthorizationFilter"/> to store
+/// role-partitioned navigation menu data (categories and sub-categories).
+/// </summary>
 internal static class NavigationCacheKeys
 {
     internal const string AdminCategories        = "nav_admin_categories";

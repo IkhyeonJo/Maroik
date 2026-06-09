@@ -21,19 +21,19 @@
             <a asp-controller="DashBoard" asp-action="AnonymousIndex" class="h1"><b>Maroik</b></a>
         </div>
         <div class="card-body">
-            <p class="login-box-msg">@localizer["Sign in to start your session"]</p>
+            <p class="login-box-msg">@Localizer["Sign in to start your session"]</p>
             <form id="loginForm" class="form-horizontal" method="post" asp-controller="Account" asp-action="Login">
                 <div class="form-group has-feedback">
-                    <input asp-for="Email" type="email" class="form-control" placeholder="@localizer["Email"]" value="demo@maroik.com"/>
+                    <input asp-for="Email" type="email" class="form-control" placeholder="@Localizer["Email"]" value="demo@maroik.com"/>
                     <span asp-validation-for="Email" class="text-danger"></span>
                 </div>
                 <div class="form-group has-feedback">
-                    <input id="Password" name="Password" maxlength="100" type="password" class="form-control" placeholder="@localizer["Password"]" value="demoO12!!"/>
+                    <input id="Password" name="Password" maxlength="100" type="password" class="form-control" placeholder="@Localizer["Password"]" value="demoO12!!"/>
                 </div>
                 <div class="row">
                     <div class="col-6 input-group-prepend">
                         <button type="button" class="btn btn-dark btn-block dropdown-toggle" data-toggle="dropdown" aria-expanded="false">
-                            <i class="fas fa-globe" style="padding-right:6px;"></i>@localizer["Language"]
+                            <i class="fas fa-globe" style="padding-right:6px;"></i>@Localizer["Language"]
                         </button>
                         <div class="dropdown-menu" style="">
                             <a id="aChangeCultureEnUS" class="dropdown-item @(currentCulture == "en-US" ? "active" : "")" style="cursor: pointer;">English</a>
@@ -42,7 +42,7 @@
                     </div>
                     <div class="col-6">
                         <button id="btnSignIn" type="submit" class="btn btn-primary btn-block">
-                            <i class="fas fa-sign-in-alt" style="padding-right:6px;"></i>@localizer["Sign In"]
+                            <i class="fas fa-sign-in-alt" style="padding-right:6px;"></i>@Localizer["Sign In"]
                         </button>
                     </div>
                 </div>
@@ -50,13 +50,13 @@
 
             <div class="social-auth-links text-center mt-2 mb-3">
                 <a asp-controller="Account" asp-action="Register" class="btn btn-block btn-primary">
-                    <i class="fas fa-user-plus" style="padding-right:3px;"></i>@localizer["Sign up"]
+                    <i class="fas fa-user-plus" style="padding-right:3px;"></i>@Localizer["Sign up"]
                 </a>
                 <a asp-controller="Account" asp-action="ForgotPassword" class="btn btn-block btn-danger">
-                    <i class="fas fa-key" style="padding-right:3px;"></i>@localizer["Forgot password"]
+                    <i class="fas fa-key" style="padding-right:3px;"></i>@Localizer["Forgot password"]
                 </a>
                 <a asp-controller="DashBoard" asp-action="AnonymousIndex" class="btn btn-block btn-info">
-                    <i class="fas fa-sign-out-alt" style="padding-right:3px;"></i>@localizer["Go to main page"]
+                    <i class="fas fa-sign-out-alt" style="padding-right:3px;"></i>@Localizer["Go to main page"]
                 </a>
             </div>
 

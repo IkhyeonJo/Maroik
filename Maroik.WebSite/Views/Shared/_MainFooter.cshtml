@@ -5,24 +5,16 @@
     and the application domain name link from ViewBag.DomainName.
     The year is computed server-side using the user's IANA time-zone ID to match the user's local date.
 *@
-@using System
 @model Maroik.Core.Contract.Dtos.AccountResponse
 
 <footer class="main-footer text-sm">
-    @if(Model.Role == Role.Admin)
+    @switch (Model.Role)
     {
-        <strong><span id="mainFooterYear">Copyright &copy; 2021-@DateTime.UtcNow.ConvertTimeByTimeZoneIanaId(Model!.TimeZoneIanaId!).Year</span><a href="@ViewBag.DomainName">Maroik</a>.</strong>
-    }
-    else if (Model.Role == Role.User)
-    {
-        <strong><span id="mainFooterYear">Copyright &copy; 2021-@DateTime.UtcNow.ConvertTimeByTimeZoneIanaId(Model!.TimeZoneIanaId!).Year</span><a href="@ViewBag.DomainName">Maroik</a>.</strong>
-    }
-    else if (Model.Role == Role.Anonymous)
-    {
-        <strong><span id="mainFooterYear">Copyright &copy; 2021-@DateTime.UtcNow.ConvertTimeByTimeZoneIanaId(Model!.TimeZoneIanaId!).Year</span><a href="@ViewBag.DomainName">Maroik</a>.</strong>
+        case Role.Admin:
+        case Role.User:
+        case Role.Anonymous:
+            <strong><span id="mainFooterYear">Copyright &copy; 2021-@DateTime.UtcNow.ConvertTimeByTimeZoneIanaId(Model.TimeZoneIanaId!).Year </span><a href="@ViewBag.DomainName">Maroik</a>.</strong>
+            break;
     }
     All rights reserved.
-    <div class="float-right d-none d-sm-inline-block">
-        <b>Version</b> 3.1.0
-    </div>
 </footer>

@@ -1,4 +1,4 @@
-﻿using Maroik.Core.Service.Services;
+using Maroik.Core.Service.Services;
 
 namespace Maroik.Core.Service.Tests.Services;
 

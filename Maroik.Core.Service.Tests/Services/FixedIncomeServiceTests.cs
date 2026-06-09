@@ -97,7 +97,7 @@ public class FixedIncomeServiceTests
     [InlineData("IrregularIncome", "OtherIncome")]
     public async Task CreateAsync_ReturnsSuccess_ForAllValidClassCombinations(string mainClass, string subClass)
     {
-        _assetBalance.Setup(r => r.GetAssetAsync(It.IsAny<string>(), It.IsAny<string>()))
+        _assetBalance.Setup(r => r.GetAssetAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(MakeSavingsAsset());
         _fixedIncomeRepo.Setup(r => r.CreateAsync(It.IsAny<FixedIncome>(), It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
         var sut = CreateSut();
@@ -111,7 +111,7 @@ public class FixedIncomeServiceTests
     [Fact]
     public async Task CreateAsync_SetsAccountEmailAndAbsoluteAmount()
     {
-        _assetBalance.Setup(r => r.GetAssetAsync(It.IsAny<string>(), It.IsAny<string>()))
+        _assetBalance.Setup(r => r.GetAssetAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(MakeSavingsAsset());
         FixedIncome? captured = null;
         _fixedIncomeRepo.Setup(r => r.CreateAsync(It.IsAny<FixedIncome>(), It.IsAny<CancellationToken>()))
@@ -167,7 +167,7 @@ public class FixedIncomeServiceTests
         var existing = FixedIncome.Reconstitute(1, email, "RegularIncome", "LaborIncome", null, 0m, "KRW",
             "SavingsAccount", (short)1, (short)15, new DateTime(2025, 12, 31), null, false, DateTime.UtcNow, DateTime.UtcNow);
         _fixedIncomeRepo.Setup(r => r.GetByAccountEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(new List<FixedIncome> { existing });
-        _assetBalance.Setup(r => r.GetAssetAsync(It.IsAny<string>(), It.IsAny<string>()))
+        _assetBalance.Setup(r => r.GetAssetAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(MakeSavingsAsset());
         _fixedIncomeRepo.Setup(r => r.UpdateEntityAsync(It.IsAny<FixedIncome>(), It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
         var sut = CreateSut();

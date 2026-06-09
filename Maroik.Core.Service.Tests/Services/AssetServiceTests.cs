@@ -28,9 +28,9 @@ public class AssetServiceTests
     /// <summary>Initializes the test fixture, setting up all required test doubles and the system under test.</summary>
     public AssetServiceTests()
     {
-        _unitOfWork.Setup(u => u.BeginAsync()).Returns(Task.CompletedTask);
-        _unitOfWork.Setup(u => u.CommitAsync()).Returns(Task.CompletedTask);
-        _unitOfWork.Setup(u => u.RollbackAsync()).Returns(Task.CompletedTask);
+        _unitOfWork.Setup(u => u.BeginAsync(It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
+        _unitOfWork.Setup(u => u.CommitAsync(It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
+        _unitOfWork.Setup(u => u.RollbackAsync(It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
         _unitOfWork.Setup(u => u.DisposeAsync()).Returns(ValueTask.CompletedTask);
     }
 
@@ -138,7 +138,7 @@ public class AssetServiceTests
         ServiceResult result = await sut.UpdateAsync("user@example.com", request, "MyBank", TestContext.Current.CancellationToken);
 
         Assert.False(result.Success);
-        _unitOfWork.Verify(u => u.RollbackAsync(), Times.Once);
+        _unitOfWork.Verify(u => u.RollbackAsync(It.IsAny<CancellationToken>()), Times.Once);
     }
 
     /// <summary>Verifies that <c>UpdateAsync</c> returns fail when original asset not found.</summary>
@@ -152,7 +152,7 @@ public class AssetServiceTests
 
         Assert.False(result.Success);
         Assert.Contains("find", result.ErrorKey, StringComparison.OrdinalIgnoreCase);
-        _unitOfWork.Verify(u => u.RollbackAsync(), Times.Once);
+        _unitOfWork.Verify(u => u.RollbackAsync(It.IsAny<CancellationToken>()), Times.Once);
     }
 
     /// <summary>Verifies that <c>UpdateAsync</c> returns fail when rename returns zero rows affected.</summary>
@@ -166,7 +166,7 @@ public class AssetServiceTests
         ServiceResult result = await sut.UpdateAsync("user@example.com", ValidRequest("NewName"), "OldName", TestContext.Current.CancellationToken);
 
         Assert.False(result.Success);
-        _unitOfWork.Verify(u => u.RollbackAsync(), Times.Once);
+        _unitOfWork.Verify(u => u.RollbackAsync(It.IsAny<CancellationToken>()), Times.Once);
     }
 
     /// <summary>Verifies that <c>UpdateAsync</c> cascades rename to expenditure and fixed expenditure when successful.</summary>
@@ -185,7 +185,7 @@ public class AssetServiceTests
         Assert.True(result.Success);
         _fixedExpenditureRepo.Verify(r => r.UpdateMyDepositAssetNameAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Once);
         _expenditureRepo.Verify(r => r.UpdateMyDepositAssetNameAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Once);
-        _unitOfWork.Verify(u => u.CommitAsync(), Times.Once);
+        _unitOfWork.Verify(u => u.CommitAsync(It.IsAny<CancellationToken>()), Times.Once);
     }
 
     // -- DeleteAsync ----------------------------------------------------------

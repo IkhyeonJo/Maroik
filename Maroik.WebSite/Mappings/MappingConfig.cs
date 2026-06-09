@@ -1,16 +1,5 @@
-﻿using Mapster;
+using Mapster;
 using Maroik.Core.Contract.Dtos;
-using Maroik.WebSite.Models.ViewModels.AccountBook;
-using Maroik.WebSite.Models.ViewModels.Calendar;
-using Maroik.WebSite.Models.ViewModels.Notice;
-using AccountBookExpOutput = Maroik.WebSite.Models.ViewModels.AccountBook.ExpenditureOutputViewModel;
-using AccountBookIncOutput = Maroik.WebSite.Models.ViewModels.AccountBook.IncomeOutputViewModel;
-using DashBoardExpOutput = Maroik.WebSite.Models.ViewModels.DashBoard.ExpenditureOutputViewModel;
-using DashBoardIncOutput = Maroik.WebSite.Models.ViewModels.DashBoard.IncomeOutputViewModel;
-using MgmtAccountInput = Maroik.WebSite.Models.ViewModels.Management.AccountInputViewModel;
-using MgmtAccountOutput = Maroik.WebSite.Models.ViewModels.Management.AccountOutputViewModel;
-using MgmtBoardInput = Maroik.WebSite.Models.ViewModels.Management.BoardInputViewModel;
-using ForumBoardInput = Maroik.WebSite.Models.ViewModels.Forum.BoardInputViewModel;
 
 namespace Maroik.WebSite.Mappings;
 
@@ -32,58 +21,58 @@ public class MappingConfig : IRegister
     {
         // -- Account ----------------------------------------------------------
         // Response → OutputViewModel: property names are identical, convention handles it.
-        config.NewConfig<AccountResponse, MgmtAccountOutput>();
+        config.NewConfig<AccountResponse, Models.ViewModels.Management.AccountOutputViewModel>();
 
         // InputViewModel → Request: Password (plain text) has no matching dest property;
         // HashedPassword is computed server-side and must NOT be overwritten by mapping.
-        config.NewConfig<MgmtAccountInput, AccountRequest>()
+        config.NewConfig<Models.ViewModels.Management.AccountInputViewModel, AccountRequest>()
             .Ignore(dest => dest.HashedPassword!);
 
         // -- Asset -------------------------------------------------------------
-        config.NewConfig<AssetResponse, AssetOutputViewModel>();
+        config.NewConfig<AssetResponse, Models.ViewModels.AccountBook.AssetOutputViewModel>();
 
         // AccountEmail is set server-side from the session, not from the form.
-        config.NewConfig<AssetInputViewModel, AssetRequest>()
+        config.NewConfig<Models.ViewModels.AccountBook.AssetInputViewModel, AssetRequest>()
             .Ignore(dest => dest.AccountEmail!);
 
         // -- Expenditure -------------------------------------------------------
         // MonetaryUnit exists in OutputViewModel but not in ExpenditureResponse;
         // Mapster leaves it at its default - controller populates it from account settings.
-        config.NewConfig<ExpenditureResponse, AccountBookExpOutput>();
-        config.NewConfig<ExpenditureResponse, DashBoardExpOutput>();
+        config.NewConfig<ExpenditureResponse, Models.ViewModels.AccountBook.ExpenditureOutputViewModel>();
+        config.NewConfig<ExpenditureResponse, Models.ViewModels.DashBoard.ExpenditureOutputViewModel>();
 
-        config.NewConfig<ExpenditureInputViewModel, ExpenditureRequest>()
+        config.NewConfig<Models.ViewModels.AccountBook.ExpenditureInputViewModel, ExpenditureRequest>()
             .Ignore(dest => dest.AccountEmail!);
 
         // -- Income ------------------------------------------------------------
-        config.NewConfig<IncomeResponse, AccountBookIncOutput>();
-        config.NewConfig<IncomeResponse, DashBoardIncOutput>();
+        config.NewConfig<IncomeResponse, Models.ViewModels.AccountBook.IncomeOutputViewModel>();
+        config.NewConfig<IncomeResponse, Models.ViewModels.DashBoard.IncomeOutputViewModel>();
 
-        config.NewConfig<IncomeInputViewModel, IncomeRequest>()
+        config.NewConfig<Models.ViewModels.AccountBook.IncomeInputViewModel, IncomeRequest>()
             .Ignore(dest => dest.AccountEmail!);
 
         // -- Fixed Expenditure -------------------------------------------------
         // MaturityDate: DateTime (DTO) ↔ string (ViewModel) - explicit conversion required.
         // Noticed / Expired exist only in OutputViewModel; controller sets them after mapping.
-        config.NewConfig<FixedExpenditureResponse, FixedExpenditureOutputViewModel>()
+        config.NewConfig<FixedExpenditureResponse, Models.ViewModels.Notice.FixedExpenditureOutputViewModel>()
             .Map(dest => dest.MaturityDate, src => src.MaturityDate.ToString("yyyy-MM-dd"));
 
-        config.NewConfig<FixedExpenditureInputViewModel, FixedExpenditureRequest>()
+        config.NewConfig<Models.ViewModels.Notice.FixedExpenditureInputViewModel, FixedExpenditureRequest>()
             .Map(dest => dest.MaturityDate, src => ParseDate(src.MaturityDate))
             .Ignore(dest => dest.AccountEmail!);
 
         // -- Fixed Income ------------------------------------------------------
-        config.NewConfig<FixedIncomeResponse, FixedIncomeOutputViewModel>()
+        config.NewConfig<FixedIncomeResponse, Models.ViewModels.Notice.FixedIncomeOutputViewModel>()
             .Map(dest => dest.MaturityDate, src => src.MaturityDate.ToString("yyyy-MM-dd"));
 
-        config.NewConfig<FixedIncomeInputViewModel, FixedIncomeRequest>()
+        config.NewConfig<Models.ViewModels.Notice.FixedIncomeInputViewModel, FixedIncomeRequest>()
             .Map(dest => dest.MaturityDate, src => ParseDate(src.MaturityDate))
             .Ignore(dest => dest.AccountEmail!);
 
         // -- Board -------------------------------------------------------------
         // UploadedFile (IFormFile) has no matching property in BoardRequest - ignored automatically.
         // Writer / Type / Created / Updated / View / Deleted are set server-side.
-        config.NewConfig<ForumBoardInput, BoardRequest>()
+        config.NewConfig<Models.ViewModels.Forum.BoardInputViewModel, BoardRequest>()
             .Ignore(dest => dest.Writer!)
             .Ignore(dest => dest.Type!)
             .Ignore(dest => dest.Created)
@@ -91,7 +80,7 @@ public class MappingConfig : IRegister
             .Ignore(dest => dest.View)
             .Ignore(dest => dest.Deleted);
 
-        config.NewConfig<MgmtBoardInput, BoardRequest>()
+        config.NewConfig<Models.ViewModels.Management.BoardInputViewModel, BoardRequest>()
             .Ignore(dest => dest.Writer!)
             .Ignore(dest => dest.Type!)
             .Ignore(dest => dest.Created)
@@ -102,13 +91,13 @@ public class MappingConfig : IRegister
         // -- Calendar Event ----------------------------------------------------
         // StartDate / EndDate come in as strings from the form; parse to DateTime.
         // CalendarEventUploadedFile / SerializedCalendarReminders have no dest match - ignored automatically.
-        config.NewConfig<CalendarEventInputViewModel, CalendarEventRequest>()
+        config.NewConfig<Models.ViewModels.Calendar.CalendarEventInputViewModel, CalendarEventRequest>()
             .Map(dest => dest.StartDate, src => ParseDate(src.StartDate))
             .Map(dest => dest.EndDate, src => ParseDate(src.EndDate))
             .Ignore(dest => dest.RecurrenceId!)
             .Ignore(dest => dest.Created)
             .Ignore(dest => dest.Updated);
 
-        config.NewConfig<CalendarEventResponse, CalendarEventOutputViewModel>();
+        config.NewConfig<CalendarEventResponse, Models.ViewModels.Calendar.CalendarEventOutputViewModel>();
     }
 }

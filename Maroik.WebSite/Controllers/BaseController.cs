@@ -4,8 +4,6 @@ using Maroik.Core.Contract.Utilities;
 using Microsoft.AspNetCore.Localization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
 namespace Maroik.WebSite.Controllers;
@@ -59,7 +57,7 @@ public abstract class BaseController : Controller
                 if (!string.IsNullOrEmpty(email))
                     loginedAccount = await _accountService.GetAccountByEmailAsync(email, context.HttpContext.RequestAborted) ?? loginedAccount;
             }
-            catch (Exception ex) { logger.LogWarning(ex, "Failed to refresh session account for {Email}", sessionAccount?.Email); }
+            catch (Exception ex) { logger.LogWarning(ex, "Failed to refresh session account for {Email}", sessionAccount.Email); }
         }
 
         ViewBag.LoginedAccount = loginedAccount;

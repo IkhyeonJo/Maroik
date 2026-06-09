@@ -32,9 +32,9 @@ public class CalendarServiceTests
     /// <summary>Initializes the test fixture, setting up all required test doubles and the system under test.</summary>
     public CalendarServiceTests()
     {
-        _unitOfWork.Setup(u => u.BeginAsync()).Returns(Task.CompletedTask);
-        _unitOfWork.Setup(u => u.CommitAsync()).Returns(Task.CompletedTask);
-        _unitOfWork.Setup(u => u.RollbackAsync()).Returns(Task.CompletedTask);
+        _unitOfWork.Setup(u => u.BeginAsync(It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
+        _unitOfWork.Setup(u => u.CommitAsync(It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
+        _unitOfWork.Setup(u => u.RollbackAsync(It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
         _unitOfWork.Setup(u => u.DisposeAsync()).Returns(ValueTask.CompletedTask);
     }
 
@@ -282,7 +282,7 @@ public class CalendarServiceTests
 
         Assert.False(result.Success);
         Assert.Contains("does not exist", result.ErrorKey, StringComparison.OrdinalIgnoreCase);
-        _unitOfWork.Verify(u => u.RollbackAsync(), Times.Once);
+        _unitOfWork.Verify(u => u.RollbackAsync(It.IsAny<CancellationToken>()), Times.Once);
     }
 
     /// <summary>Verifies that <c>CreateCalendarEventAsync</c> returns success with no attachment and no reminders.</summary>
@@ -298,7 +298,7 @@ public class CalendarServiceTests
             new CalendarEventRequest { CalendarId = 1, Title = "Meeting" }, "user@example.com", "1", [], null, TestContext.Current.CancellationToken);
 
         Assert.True(result.Success);
-        _unitOfWork.Verify(u => u.CommitAsync(), Times.Once);
+        _unitOfWork.Verify(u => u.CommitAsync(It.IsAny<CancellationToken>()), Times.Once);
     }
 
     /// <summary>Verifies that <c>CreateCalendarEventAsync</c> creates reminders when provided.</summary>
@@ -337,7 +337,7 @@ public class CalendarServiceTests
             new CalendarEventRequest { Id = 1, CalendarId = 1 }, "user@example.com", "1", [], null, TestContext.Current.CancellationToken);
 
         Assert.False(result.Success);
-        _unitOfWork.Verify(u => u.RollbackAsync(), Times.Once);
+        _unitOfWork.Verify(u => u.RollbackAsync(It.IsAny<CancellationToken>()), Times.Once);
     }
 
     /// <summary>Verifies that <c>UpdateCalendarEventAsync</c> returns fail when event not found.</summary>
@@ -353,7 +353,7 @@ public class CalendarServiceTests
             new CalendarEventRequest { Id = 1, CalendarId = 1 }, "user@example.com", "1", [], null, TestContext.Current.CancellationToken);
 
         Assert.False(result.Success);
-        _unitOfWork.Verify(u => u.RollbackAsync(), Times.Once);
+        _unitOfWork.Verify(u => u.RollbackAsync(It.IsAny<CancellationToken>()), Times.Once);
     }
 
     /// <summary>Verifies that <c>UpdateCalendarEventAsync</c> returns success when valid and no attachment.</summary>
@@ -373,7 +373,7 @@ public class CalendarServiceTests
             new CalendarEventRequest { Id = 1, CalendarId = 1, Title = "New Title" }, "user@example.com", "1", [], null, TestContext.Current.CancellationToken);
 
         Assert.True(result.Success);
-        _unitOfWork.Verify(u => u.CommitAsync(), Times.Once);
+        _unitOfWork.Verify(u => u.CommitAsync(It.IsAny<CancellationToken>()), Times.Once);
     }
 
     // -- DeleteCalendarEventAsync ---------------------------------------------
@@ -439,6 +439,6 @@ public class CalendarServiceTests
         Assert.True(result.Success);
         _otherCalendarRepo.Verify(r => r.DeleteByAccountEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Once);
         _otherCalendarRepo.Verify(r => r.CreateAsync(It.IsAny<OtherCalendar>(), It.IsAny<CancellationToken>()), Times.Once);
-        _unitOfWork.Verify(u => u.CommitAsync(), Times.Once);
+        _unitOfWork.Verify(u => u.CommitAsync(It.IsAny<CancellationToken>()), Times.Once);
     }
 }
