@@ -8,7 +8,6 @@ using Maroik.Core.Contract.Utilities;
 using Maroik.Core.Service.Mappers;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
-using System.Diagnostics;
 
 namespace Maroik.Core.Service.Services;
 
@@ -158,21 +157,11 @@ public class ProfileService : IProfileService
             await stream.FlushAsync(ct);
         }
 
-        var chmod = new ProcessStartInfo
-        {
-            FileName = "/bin/chmod",
-#pragma warning disable SCS0001
-            Arguments = $"644 \"{filePath}\"",
-#pragma warning restore SCS0001
-            RedirectStandardOutput = true,
-            RedirectStandardError = true,
-            UseShellExecute = false,
-            CreateNoWindow = true
-        };
-        using (var process = Process.Start(chmod))
-        {
-            await process?.WaitForExitAsync(ct)!;
-        }
+        if (OperatingSystem.IsLinux() || OperatingSystem.IsMacOS())
+            File.SetUnixFileMode(filePath,
+                UnixFileMode.UserRead  | UnixFileMode.UserWrite |
+                UnixFileMode.GroupRead |
+                UnixFileMode.OtherRead);
 
         return await UpdateAvatarAsync(email, $"/upload/Management/Profile/Avatar/{avatarFile}", ct);
     }
