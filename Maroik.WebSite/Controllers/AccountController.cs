@@ -2,7 +2,6 @@ using Maroik.Core.Contract.Dtos;
 using Maroik.Core.Contract.Interfaces;
 using Maroik.Core.Contract.Utilities;
 using Maroik.WebSite.Models.ViewModels.Account;
-using Maroik.WebSite.Utilities;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Localization;
 using Microsoft.Extensions.Options;
@@ -76,10 +75,7 @@ public class AccountController : BaseController
 
     #region Logout
     /// <summary>Clears the session and redirects to the anonymous dashboard.</summary>
-    [HttpPost]
-    [ValidateAntiForgeryToken]
-    [RequiredHttpPostAccess(Role = Role.Admin)]
-    [RequiredHttpPostAccess(Role = Role.User)]
+    [HttpGet]
     public IActionResult Logout()
     {
         _sessionService.RemoveAccount();

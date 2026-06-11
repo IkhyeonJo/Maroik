@@ -201,9 +201,7 @@
                         @*<!-- Menu Footer-->*@
                         <li class="user-footer">
                             <a asp-controller="Management" asp-action="Profile" class="btn btn-default btn-flat">@Localizer["Profile"]</a>
-                            <form asp-controller="Account" asp-action="Logout" method="post" style="display:inline;">
-                                <button type="submit" class="btn btn-default btn-flat float-right">@Localizer["Sign out"]</button>
-                            </form>
+                            <a asp-controller="Account" asp-action="Logout" class="btn btn-default btn-flat float-right">@Localizer["Sign out"]</a>
                         </li>
                     </ul>
                 </li>
@@ -284,9 +282,7 @@
                         @*<!-- Menu Footer-->*@
                         <li class="user-footer">
                             <a asp-controller="Management" asp-action="Profile" class="btn btn-default btn-flat">@Localizer["Profile"]</a>
-                            <form asp-controller="Account" asp-action="Logout" method="post" style="display:inline;">
-                                <button type="submit" class="btn btn-default btn-flat float-right">@Localizer["Sign out"]</button>
-                            </form>
+                            <a asp-controller="Account" asp-action="Logout" class="btn btn-default btn-flat float-right">@Localizer["Sign out"]</a>
                         </li>
                     </ul>
                 </li>
