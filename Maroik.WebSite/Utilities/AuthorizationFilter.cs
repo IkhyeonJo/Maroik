@@ -139,8 +139,6 @@ public class AuthorizationFilter : ActionFilterAttribute
                     case "Account" when currentActionName == "ForgotPassword":
                     // If password reset page
                     case "Account" when currentActionName == "ResetPassword":
-                    // If logout
-                    case "Account" when currentActionName == "Logout":
                         await next(); // Do Action!!
                         return;
                 }
@@ -192,8 +190,6 @@ public class AuthorizationFilter : ActionFilterAttribute
                 {
                     // Allow exception resource access (Error)
                     case "Exception" when currentActionName == "Error":
-                    // Logout
-                    case "Account" when currentActionName == "Logout":
                     // Initial screen
                     case "DashBoard" when currentActionName == "AnonymousIndex":
                         await next(); // Do Action!!
