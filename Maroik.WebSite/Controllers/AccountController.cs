@@ -75,7 +75,8 @@ public class AccountController : BaseController
 
     #region Logout
     /// <summary>Clears the session and redirects to the anonymous dashboard.</summary>
-    [HttpGet]
+    [HttpPost]
+    [ValidateAntiForgeryToken]
     public IActionResult Logout()
     {
         _sessionService.RemoveAccount();
