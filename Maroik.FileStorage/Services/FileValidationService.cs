@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using ICSharpCode.SharpZipLib.Zip;
 using Maroik.Core.Contract.Interfaces;
 
@@ -60,7 +61,7 @@ public class FileValidationService : IFileValidationService
         await memStream.CopyToAsync(stream);
         await stream.FlushAsync();
 
-        SetUnixPermissions(safePath);
+        await SetUnixPermissionsAsync(safePath);
 
         return (true, null);
     }
@@ -97,13 +98,21 @@ public class FileValidationService : IFileValidationService
         return false;
     }
 
-    private static void SetUnixPermissions(string filePath)
+    private static async Task SetUnixPermissionsAsync(string filePath)
     {
-        if (!OperatingSystem.IsLinux() && !OperatingSystem.IsMacOS()) return;
+        var chmod = new ProcessStartInfo
+        {
+            FileName               = "/bin/chmod",
+#pragma warning disable SCS0001
+            Arguments              = $"644 \"{filePath}\"",
+#pragma warning restore SCS0001
+            RedirectStandardOutput = true,
+            RedirectStandardError  = true,
+            UseShellExecute        = false,
+            CreateNoWindow         = true
+        };
 
-        File.SetUnixFileMode(filePath,
-            UnixFileMode.UserRead  | UnixFileMode.UserWrite |
-            UnixFileMode.GroupRead |
-            UnixFileMode.OtherRead);
+        using var process = Process.Start(chmod);
+        if (process != null) await process.WaitForExitAsync();
     }
 }
