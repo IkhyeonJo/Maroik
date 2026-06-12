@@ -86,19 +86,7 @@ public class ForumController : BaseController
                 Noticed = loginedAccount.Role == Role.Admin && boardInputViewModel.Noticed
             };
 
-            AttachedFileInfo? attachedFile = null;
-            if (boardInputViewModel.UploadedFile != null)
-            {
-                using MemoryStream ms = new();
-                await boardInputViewModel.UploadedFile.CopyToAsync(ms, ct);
-                attachedFile = new AttachedFileInfo
-                {
-                    Bytes = ms.ToArray(),
-                    ContentType = boardInputViewModel.UploadedFile.ContentType,
-                    FileName = boardInputViewModel.UploadedFile.FileName,
-                    Size = boardInputViewModel.UploadedFile.Length
-                };
-            }
+            AttachedFileInfo? attachedFile = await boardInputViewModel.UploadedFile.ToAttachedFileInfoAsync(ct);
 
             ServiceResult result = await _boardService.WriteBoardAsync(boardRequest, attachedFile, ct);
             return result.Success
@@ -482,19 +470,7 @@ public class ForumController : BaseController
                 Locked = boardInputViewModel.Locked
             };
 
-            AttachedFileInfo? attachedFile = null;
-            if (boardInputViewModel.UploadedFile != null)
-            {
-                using MemoryStream ms = new();
-                await boardInputViewModel.UploadedFile.CopyToAsync(ms, ct);
-                attachedFile = new AttachedFileInfo
-                {
-                    Bytes = ms.ToArray(),
-                    ContentType = boardInputViewModel.UploadedFile.ContentType,
-                    FileName = boardInputViewModel.UploadedFile.FileName,
-                    Size = boardInputViewModel.UploadedFile.Length
-                };
-            }
+            AttachedFileInfo? attachedFile = await boardInputViewModel.UploadedFile.ToAttachedFileInfoAsync(ct);
 
             ServiceResult result = await _boardService.EditBoardAsync(boardRequest, loginedAccount.Nickname!, attachedFile, ct);
             return result.Success

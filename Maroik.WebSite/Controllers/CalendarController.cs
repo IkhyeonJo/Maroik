@@ -1,4 +1,4 @@
-﻿using Maroik.Core.Contract.Dtos;
+using Maroik.Core.Contract.Dtos;
 using Maroik.Core.Contract.Interfaces;
 using Maroik.Core.Contract.Utilities;
 using Maroik.WebSite.Utilities;
@@ -8,7 +8,6 @@ using Microsoft.AspNetCore.Mvc.Localization;
 using Microsoft.AspNetCore.StaticFiles;
 using Microsoft.Extensions.Options;
 using Newtonsoft.Json;
-using System.Text;
 
 namespace Maroik.WebSite.Controllers;
 
@@ -93,130 +92,32 @@ public class CalendarController : BaseController
     {
         try
         {
-            if (ModelState.IsValid)
-            {
-                calendarEventInputViewModel.Description ??= ""; // If no content was entered
-
-                bool isAccountSessionExist = _sessionService.GetAccount() != null;
-                if (!isAccountSessionExist)
-                    return Json(new { result = false, error = _localizer["Please Login to create calendar event"].Value });
-
-                AccountResponse loginedAccount = _sessionService.GetAccount()!;
-
-                if (loginedAccount.Role is not (Role.Admin or Role.User))
-                    return Json(new { result = false, error = _localizer["Please Login to create calendar event"].Value });
-
-                #region Build CalendarEventRequest with UTC dates
-                CalendarEventRequest calendarEventRequest = new();
-
-                if (calendarEventInputViewModel.AllDay)
-                {
-                    calendarEventRequest.StartDate = new DateTime(Convert.ToInt32(calendarEventInputViewModel.StartDate!.Split("-")[0]),
-                        Convert.ToInt32(calendarEventInputViewModel.StartDate.Split("-")[1]),
-                        Convert.ToInt32(calendarEventInputViewModel.StartDate.Split("-")[2]), 0, 0, 0, DateTimeKind.Utc);
-                    calendarEventRequest.EndDate = new DateTime(Convert.ToInt32(calendarEventInputViewModel.EndDate!.Split("-")[0]),
-                        Convert.ToInt32(calendarEventInputViewModel.EndDate.Split("-")[1]),
-                        Convert.ToInt32(calendarEventInputViewModel.EndDate.Split("-")[2]), 0, 0, 0, DateTimeKind.Utc);
-                    calendarEventRequest.StartDateTimeZoneIanaId = null;
-                    calendarEventRequest.EndDateTimeZoneIanaId = null;
-                }
-                else
-                {
-                    string[] temporaryStartDate = calendarEventInputViewModel.StartDate!.Split(" ");
-                    string[] temporaryEndDate = calendarEventInputViewModel.EndDate!.Split(" ");
-                    DateTime tempStartDate = new(Convert.ToInt32(temporaryStartDate[0].Split("-")[0]),
-                        Convert.ToInt32(temporaryStartDate[0].Split("-")[1]),
-                        Convert.ToInt32(temporaryStartDate[0].Split("-")[2]),
-                        Convert.ToInt32(temporaryStartDate[1]!.Split(":")[0]),
-                        Convert.ToInt32(temporaryStartDate[1]!.Split(":")[1]),
-                        0, DateTimeKind.Unspecified);
-                    DateTime tempEndDate = new(Convert.ToInt32(temporaryEndDate[0].Split("-")[0]),
-                        Convert.ToInt32(temporaryEndDate[0].Split("-")[1]),
-                        Convert.ToInt32(temporaryEndDate[0].Split("-")[2]),
-                        Convert.ToInt32(temporaryEndDate[1]!.Split(":")[0]),
-                        Convert.ToInt32(temporaryEndDate[1]!.Split(":")[1]),
-                        0, DateTimeKind.Unspecified);
-
-                    foreach (TimeZoneInfo tz in TimeZoneInfo.GetSystemTimeZones())
-                    {
-                        string tzId = tz.HasIanaId ? tz.Id : (TimeZoneInfo.TryConvertWindowsIdToIanaId(tz.Id, out string? id) ? id : string.Empty);
-                        if (!string.IsNullOrEmpty(tzId) && tzId == calendarEventInputViewModel.StartDateTimeZoneIanaId)
-                        { tempStartDate = TimeZoneInfo.ConvertTime(tempStartDate, tz, TimeZoneInfo.Utc); break; }
-                    }
-                    foreach (TimeZoneInfo tz in TimeZoneInfo.GetSystemTimeZones())
-                    {
-                        string tzId = tz.HasIanaId ? tz.Id : (TimeZoneInfo.TryConvertWindowsIdToIanaId(tz.Id, out string? id) ? id : string.Empty);
-                        if (!string.IsNullOrEmpty(tzId) && tzId == calendarEventInputViewModel.EndDateTimeZoneIanaId)
-                        { tempEndDate = TimeZoneInfo.ConvertTime(tempEndDate, tz, TimeZoneInfo.Utc); break; }
-                    }
-
-                    calendarEventRequest.StartDate = tempStartDate;
-                    calendarEventRequest.EndDate = tempEndDate;
-                    calendarEventRequest.StartDateTimeZoneIanaId = calendarEventInputViewModel.StartDateTimeZoneIanaId;
-                    calendarEventRequest.EndDateTimeZoneIanaId = calendarEventInputViewModel.EndDateTimeZoneIanaId;
-                }
-
-                calendarEventRequest.CalendarId = calendarEventInputViewModel.CalendarId;
-                calendarEventRequest.Title = calendarEventInputViewModel.Title;
-                calendarEventRequest.Description = calendarEventInputViewModel.Description;
-                calendarEventRequest.AllDay = calendarEventInputViewModel.AllDay;
-                calendarEventRequest.Location = calendarEventInputViewModel.Location;
-                calendarEventRequest.Status = calendarEventInputViewModel.Status;
-                #endregion
-
-                #region Build reminders
-                List<CalendarReminderInfo> reminders = [];
-                List<Dictionary<string, object>> calendarReminders = JsonConvert.DeserializeObject<List<Dictionary<string, object>>>(calendarEventInputViewModel.SerializedCalendarReminders ?? "[]") ?? [];
-                foreach (Dictionary<string, object> reminder in calendarReminders)
-                {
-                    string? tempTimes = reminder["TimesBeforeEvent"]?.ToString();
-                    reminders.Add(new CalendarReminderInfo
-                    {
-                        Method = reminder["Method"]?.ToString() ?? "",
-                        MinutesBeforeEvent = reminder["MinutesBeforeEvent"] != null ? Convert.ToInt32(reminder["MinutesBeforeEvent"]) : null,
-                        HoursBeforeEvent = reminder["HoursBeforeEvent"] != null ? Convert.ToInt32(reminder["HoursBeforeEvent"]) : null,
-                        DaysBeforeEvent = reminder["DaysBeforeEvent"] != null ? Convert.ToInt32(reminder["DaysBeforeEvent"]) : null,
-                        WeeksBeforeEvent = reminder["WeeksBeforeEvent"] != null ? Convert.ToInt32(reminder["WeeksBeforeEvent"]) : null,
-                        TimesBeforeEvent = !string.IsNullOrEmpty(tempTimes)
-                            ? new TimeSpan(Convert.ToInt32(tempTimes.Split(":")[0]), Convert.ToInt32(tempTimes.Split(":")[1]), 0)
-                            : null
-                    });
-                }
-                #endregion
-
-                #region Build attached file
-                AttachedFileInfo? attachedFile = null;
-                if (calendarEventInputViewModel.CalendarEventUploadedFile != null)
-                {
-                    using MemoryStream ms = new();
-                    await calendarEventInputViewModel.CalendarEventUploadedFile.CopyToAsync(ms);
-                    attachedFile = new AttachedFileInfo
-                    {
-                        Bytes = ms.ToArray(),
-                        ContentType = calendarEventInputViewModel.CalendarEventUploadedFile.ContentType,
-                        FileName = calendarEventInputViewModel.CalendarEventUploadedFile.FileName,
-                        Size = calendarEventInputViewModel.CalendarEventUploadedFile.Length
-                    };
-                }
-                #endregion
-
-                ServiceResult createEventResult = await _calendarService.CreateCalendarEventAsync(
-                    calendarEventRequest,
-                    loginedAccount.Email!,
-                    $"{loginedAccount.Role}Index",
-                    reminders,
-                    attachedFile,
-                    HttpContext.RequestAborted);
-
-                if (!createEventResult.Success)
-                    return Json(new { result = false, error = _localizer[createEventResult.ErrorKey ?? "Input is invalid"].Value });
-
-                return Json(new { result = true, message = _localizer["The calendar event has been successfully created."].Value });
-            }
-            else
-            {
+            if (!ModelState.IsValid)
                 return Json(new { result = false, error = _localizer["Input is invalid"].Value });
-            }
+
+            calendarEventInputViewModel.Description ??= "";
+
+            bool isAccountSessionExist = _sessionService.GetAccount() != null;
+            if (!isAccountSessionExist)
+                return Json(new { result = false, error = _localizer["Please Login to create calendar event"].Value });
+
+            AccountResponse loginedAccount = _sessionService.GetAccount()!;
+
+            if (loginedAccount.Role is not (Role.Admin or Role.User))
+                return Json(new { result = false, error = _localizer["Please Login to create calendar event"].Value });
+
+            ServiceResult createEventResult = await _calendarService.CreateCalendarEventAsync(
+                calendarEventInputViewModel.ToCalendarEventRequest(),
+                loginedAccount.Email!,
+                $"{loginedAccount.Role}Index",
+                calendarEventInputViewModel.SerializedCalendarReminders.ToReminderInfoList(),
+                await calendarEventInputViewModel.CalendarEventUploadedFile.ToAttachedFileInfoAsync(HttpContext.RequestAborted),
+                HttpContext.RequestAborted);
+
+            if (!createEventResult.Success)
+                return Json(new { result = false, error = _localizer[createEventResult.ErrorKey ?? "Input is invalid"].Value });
+
+            return Json(new { result = true, message = _localizer["The calendar event has been successfully created."].Value });
         }
         catch
         {
@@ -284,12 +185,9 @@ public class CalendarController : BaseController
     public async Task<IActionResult> AdminIndex()
     {
         AccountResponse loginedAccount = _sessionService.GetAccount()!;
+        string userTz = loginedAccount.TimeZoneIanaId ?? "UTC";
 
-        CalendarOutputViewModel calendarOutputViewModel = new();
-
-        #region Load Calendar
         List<CalendarResponse> calendars = await _calendarService.GetCalendarsAsync(loginedAccount.Email!, HttpContext.RequestAborted);
-
         if (calendars.Count == 0)
         {
             await _calendarService.EnsureDefaultCalendarAsync(new CalendarRequest
@@ -297,176 +195,20 @@ public class CalendarController : BaseController
                 AccountEmail = loginedAccount.Email!,
                 Name = loginedAccount.Nickname!,
                 TimeZoneIanaId = loginedAccount.TimeZoneIanaId,
-                HtmlColorCode = "#fc330e" // Default Html Color Code
+                HtmlColorCode = "#fc330e"
             }, HttpContext.RequestAborted);
             calendars = await _calendarService.GetCalendarsAsync(loginedAccount.Email!, HttpContext.RequestAborted);
         }
-        #endregion
 
-        #region Load CalendarEvent
-        List<CalendarEventOutputViewModel> calendarEventOutputViewModels = [];
-
-        foreach (CalendarResponse calendar in calendars)
+        CalendarOutputViewModel vm = new()
         {
-            foreach (CalendarEventResponse calendarEvent in await _calendarService.GetCalendarEventsAsync(calendar.Id, HttpContext.RequestAborted) ?? [])
-            {
-                CalendarEventOutputViewModel item = new()
-                {
-                    Id = calendarEvent.Id,
-                    CalendarId = calendarEvent.CalendarId,
-                    Title = calendarEvent.Title,
-                    AllDay = calendarEvent.AllDay
-                };
-
-                if (calendarEvent.AllDay)
-                {
-                    foreach (TimeZoneInfo systemTimeZone in TimeZoneInfo.GetSystemTimeZones())
-                    {
-                        string systemTimeZoneIanaId = string.Empty;
-
-                        if (systemTimeZone.HasIanaId)
-                        {
-                            systemTimeZoneIanaId = systemTimeZone.Id;
-                        }
-                        else if (TimeZoneInfo.TryConvertWindowsIdToIanaId(systemTimeZone.Id, out string? ianaId))
-                        {
-                            systemTimeZoneIanaId = ianaId!;
-                        }
-
-                        if (string.IsNullOrEmpty(systemTimeZoneIanaId))
-                        {
-                            continue;
-                        }
-                        else if (systemTimeZoneIanaId == loginedAccount.TimeZoneIanaId)
-                        {
-                            calendarEvent.StartDate = TimeZoneInfo.ConvertTime(calendarEvent.StartDate, TimeZoneInfo.Utc, systemTimeZone);
-                            item.DisplayStartDateTimeZone = string.Empty;
-                            break;
-                        }
-                    }
-
-                    foreach (TimeZoneInfo systemTimeZone in TimeZoneInfo.GetSystemTimeZones())
-                    {
-                        string systemTimeZoneIanaId = string.Empty;
-
-                        if (systemTimeZone.HasIanaId)
-                        {
-                            systemTimeZoneIanaId = systemTimeZone.Id;
-                        }
-                        else if (TimeZoneInfo.TryConvertWindowsIdToIanaId(systemTimeZone.Id, out string? ianaId))
-                        {
-                            systemTimeZoneIanaId = ianaId!;
-                        }
-
-                        if (string.IsNullOrEmpty(systemTimeZoneIanaId))
-                        {
-                            continue;
-                        }
-                        else if (systemTimeZoneIanaId == loginedAccount.TimeZoneIanaId)
-                        {
-                            calendarEvent.EndDate = TimeZoneInfo.ConvertTime(calendarEvent.EndDate, TimeZoneInfo.Utc, systemTimeZone);
-                            item.DisplayEndDateTimeZone = string.Empty;
-                            break;
-                        }
-                    }
-
-                    item.DisplayStartDate = calendarEvent.StartDate.ToString("yyyy-MM-dd");
-                    item.DisplayEndDate = calendarEvent.EndDate.ToString("yyyy-MM-dd");
-
-                    item.StartDate = calendarEvent.StartDate;
-                    DateTime tempEndDate = calendarEvent.EndDate.AddDays(1);
-                    item.EndDate = new DateTime(tempEndDate.Year, tempEndDate.Month, tempEndDate.Day, 0, 0, 0, tempEndDate.Kind);
-                }
-                else
-                {
-                    foreach (TimeZoneInfo systemTimeZone in TimeZoneInfo.GetSystemTimeZones())
-                    {
-                        string systemTimeZoneIanaId = string.Empty;
-
-                        if (systemTimeZone.HasIanaId)
-                        {
-                            systemTimeZoneIanaId = systemTimeZone.Id;
-                        }
-                        else if (TimeZoneInfo.TryConvertWindowsIdToIanaId(systemTimeZone.Id, out string? ianaId))
-                        {
-                            systemTimeZoneIanaId = ianaId!;
-                        }
-
-                        if (string.IsNullOrEmpty(systemTimeZoneIanaId))
-                        {
-                            continue;
-                        }
-                        else if (systemTimeZoneIanaId == calendarEvent.StartDateTimeZoneIanaId)
-                        {
-                            calendarEvent.StartDate = TimeZoneInfo.ConvertTime(calendarEvent.StartDate, TimeZoneInfo.Utc, systemTimeZone);
-                            item.DisplayStartDateTimeZone = systemTimeZone.StandardName;
-                            break;
-                        }
-                    }
-
-                    foreach (TimeZoneInfo systemTimeZone in TimeZoneInfo.GetSystemTimeZones())
-                    {
-                        string systemTimeZoneIanaId = string.Empty;
-
-                        if (systemTimeZone.HasIanaId)
-                        {
-                            systemTimeZoneIanaId = systemTimeZone.Id;
-                        }
-                        else if (TimeZoneInfo.TryConvertWindowsIdToIanaId(systemTimeZone.Id, out string? ianaId))
-                        {
-                            systemTimeZoneIanaId = ianaId!;
-                        }
-
-                        if (string.IsNullOrEmpty(systemTimeZoneIanaId))
-                        {
-                            continue;
-                        }
-                        else if (systemTimeZoneIanaId == calendarEvent.EndDateTimeZoneIanaId)
-                        {
-                            calendarEvent.EndDate = TimeZoneInfo.ConvertTime(calendarEvent.EndDate, TimeZoneInfo.Utc, systemTimeZone);
-                            item.DisplayEndDateTimeZone = systemTimeZone.StandardName;
-                            break;
-                        }
-                    }
-
-                    item.DisplayStartDate = calendarEvent.StartDate.ToString("yyyy-MM-dd HH:mm");
-                    item.DisplayEndDate = calendarEvent.EndDate.ToString("yyyy-MM-dd HH:mm");
-
-                    item.StartDate = calendarEvent.StartDate;
-                    DateTime tempEndDate = calendarEvent.EndDate.AddDays(1);
-                    item.EndDate = new DateTime(tempEndDate.Year, tempEndDate.Month, tempEndDate.Day, 0, 0, 0, tempEndDate.Kind);
-                }
-
-                item.HtmlColorCode = calendar.HtmlColorCode;
-
-                calendarEventOutputViewModels.Add(item);
-            }
-        }
-        #endregion
-
-        calendarOutputViewModel.Calendars = calendars;
-        calendarOutputViewModel.CalendarEventOutputViewModels = calendarEventOutputViewModels;
-
-        // Populate time data for view
-        calendarOutputViewModel.LoginedAccount = loginedAccount;
-        calendarOutputViewModel.LoginedAccountTimeZoneIanaId = loginedAccount?.TimeZoneIanaId ?? "UTC";
-        {
-            DateTime _ct = DateTime.UtcNow.ConvertTimeByTimeZoneIanaId(calendarOutputViewModel.LoginedAccountTimeZoneIanaId);
-            calendarOutputViewModel.CurrentDate = _ct.ToString("yyyy-MM-dd");
-            calendarOutputViewModel.CurrentHour = _ct.Hour;
-            calendarOutputViewModel.CurrentMinute = _ct.Minute;
-            calendarOutputViewModel.CurrentSecond = _ct.Second;
-            List<string> _ti = [];
-            for (int _h = 0; _h < 24; _h++)
-                for (int _m = 0; _m < 60; _m += 15)
-                    _ti.Add($"{_h:D2}:{_m:D2}");
-            calendarOutputViewModel.TimeIntervals = _ti;
-            int _nm = (int)Math.Round(_ct.Minute / 15.0) * 15;
-            if (_nm == 60) { _ct = _ct.AddHours(1); _nm = 0; }
-            calendarOutputViewModel.CurrentInterval = $"{_ct.Hour:D2}:{_nm:D2}";
-        }
-
-        return View(calendarOutputViewModel);
+            Calendars = calendars,
+            CalendarEventOutputViewModels = await _calendarService.GetCalendarEventViewModelsAsync(calendars, userTz, null, HttpContext.RequestAborted),
+            LoginedAccount = loginedAccount,
+            LoginedAccountTimeZoneIanaId = userTz
+        };
+        vm.PopulateTimeData(userTz);
+        return View(vm);
     }
 
     /// <summary>Returns the user calendar view.</summary>
@@ -474,12 +216,9 @@ public class CalendarController : BaseController
     public async Task<IActionResult> UserIndex()
     {
         AccountResponse loginedAccount = _sessionService.GetAccount()!;
+        string userTz = loginedAccount.TimeZoneIanaId ?? "UTC";
 
-        CalendarOutputViewModel calendarOutputViewModel = new();
-
-        #region Load Calendar
         List<CalendarResponse> calendars = await _calendarService.GetCalendarsAsync(loginedAccount.Email!, HttpContext.RequestAborted);
-
         if (calendars.Count == 0)
         {
             await _calendarService.EnsureDefaultCalendarAsync(new CalendarRequest
@@ -487,535 +226,54 @@ public class CalendarController : BaseController
                 AccountEmail = loginedAccount.Email!,
                 Name = loginedAccount.Nickname!,
                 TimeZoneIanaId = loginedAccount.TimeZoneIanaId,
-                HtmlColorCode = "#fc330e" // Default Html Color Code
+                HtmlColorCode = "#fc330e"
             }, HttpContext.RequestAborted);
             calendars = await _calendarService.GetCalendarsAsync(loginedAccount.Email!, HttpContext.RequestAborted);
         }
-        #endregion
-
-        #region Load CalendarEvent
-        List<CalendarEventOutputViewModel> calendarEventOutputViewModels = [];
-
-        foreach (CalendarResponse calendar in calendars)
-        {
-            foreach (CalendarEventResponse calendarEvent in await _calendarService.GetCalendarEventsAsync(calendar.Id, HttpContext.RequestAborted) ?? [])
-            {
-                CalendarEventOutputViewModel item = new()
-                {
-                    Id = calendarEvent.Id,
-                    CalendarId = calendarEvent.CalendarId,
-                    Title = calendarEvent.Title,
-                    AllDay = calendarEvent.AllDay
-                };
-
-                if (calendarEvent.AllDay)
-                {
-                    foreach (TimeZoneInfo systemTimeZone in TimeZoneInfo.GetSystemTimeZones())
-                    {
-                        string systemTimeZoneIanaId = string.Empty;
-
-                        if (systemTimeZone.HasIanaId)
-                        {
-                            systemTimeZoneIanaId = systemTimeZone.Id;
-                        }
-                        else if (TimeZoneInfo.TryConvertWindowsIdToIanaId(systemTimeZone.Id, out string? ianaId))
-                        {
-                            systemTimeZoneIanaId = ianaId!;
-                        }
-
-                        if (string.IsNullOrEmpty(systemTimeZoneIanaId))
-                        {
-                            continue;
-                        }
-                        else if (systemTimeZoneIanaId == loginedAccount.TimeZoneIanaId)
-                        {
-                            calendarEvent.StartDate = TimeZoneInfo.ConvertTime(calendarEvent.StartDate, TimeZoneInfo.Utc, systemTimeZone);
-                            item.DisplayStartDateTimeZone = string.Empty;
-                            break;
-                        }
-                    }
-
-                    foreach (TimeZoneInfo systemTimeZone in TimeZoneInfo.GetSystemTimeZones())
-                    {
-                        string systemTimeZoneIanaId = string.Empty;
-
-                        if (systemTimeZone.HasIanaId)
-                        {
-                            systemTimeZoneIanaId = systemTimeZone.Id;
-                        }
-                        else if (TimeZoneInfo.TryConvertWindowsIdToIanaId(systemTimeZone.Id, out string? ianaId))
-                        {
-                            systemTimeZoneIanaId = ianaId!;
-                        }
-
-                        if (string.IsNullOrEmpty(systemTimeZoneIanaId))
-                        {
-                            continue;
-                        }
-                        else if (systemTimeZoneIanaId == loginedAccount.TimeZoneIanaId)
-                        {
-                            calendarEvent.EndDate = TimeZoneInfo.ConvertTime(calendarEvent.EndDate, TimeZoneInfo.Utc, systemTimeZone);
-                            item.DisplayEndDateTimeZone = string.Empty;
-                            break;
-                        }
-                    }
-
-                    item.DisplayStartDate = calendarEvent.StartDate.ToString("yyyy-MM-dd");
-                    item.DisplayEndDate = calendarEvent.EndDate.ToString("yyyy-MM-dd");
-
-                    item.StartDate = calendarEvent.StartDate;
-                    DateTime tempEndDate = calendarEvent.EndDate.AddDays(1);
-                    item.EndDate = new DateTime(tempEndDate.Year, tempEndDate.Month, tempEndDate.Day, 0, 0, 0, tempEndDate.Kind);
-                }
-                else
-                {
-                    foreach (TimeZoneInfo systemTimeZone in TimeZoneInfo.GetSystemTimeZones())
-                    {
-                        string systemTimeZoneIanaId = string.Empty;
-
-                        if (systemTimeZone.HasIanaId)
-                        {
-                            systemTimeZoneIanaId = systemTimeZone.Id;
-                        }
-                        else if (TimeZoneInfo.TryConvertWindowsIdToIanaId(systemTimeZone.Id, out string? ianaId))
-                        {
-                            systemTimeZoneIanaId = ianaId!;
-                        }
-
-                        if (string.IsNullOrEmpty(systemTimeZoneIanaId))
-                        {
-                            continue;
-                        }
-                        else if (systemTimeZoneIanaId == calendarEvent.StartDateTimeZoneIanaId)
-                        {
-                            calendarEvent.StartDate = TimeZoneInfo.ConvertTime(calendarEvent.StartDate, TimeZoneInfo.Utc, systemTimeZone);
-                            item.DisplayStartDateTimeZone = systemTimeZone.StandardName;
-                            break;
-                        }
-                    }
-
-                    foreach (TimeZoneInfo systemTimeZone in TimeZoneInfo.GetSystemTimeZones())
-                    {
-                        string systemTimeZoneIanaId = string.Empty;
-
-                        if (systemTimeZone.HasIanaId)
-                        {
-                            systemTimeZoneIanaId = systemTimeZone.Id;
-                        }
-                        else if (TimeZoneInfo.TryConvertWindowsIdToIanaId(systemTimeZone.Id, out string? ianaId))
-                        {
-                            systemTimeZoneIanaId = ianaId!;
-                        }
-
-                        if (string.IsNullOrEmpty(systemTimeZoneIanaId))
-                        {
-                            continue;
-                        }
-                        else if (systemTimeZoneIanaId == calendarEvent.EndDateTimeZoneIanaId)
-                        {
-                            calendarEvent.EndDate = TimeZoneInfo.ConvertTime(calendarEvent.EndDate, TimeZoneInfo.Utc, systemTimeZone);
-                            item.DisplayEndDateTimeZone = systemTimeZone.StandardName;
-                            break;
-                        }
-                    }
-
-                    item.DisplayStartDate = calendarEvent.StartDate.ToString("yyyy-MM-dd HH:mm");
-                    item.DisplayEndDate = calendarEvent.EndDate.ToString("yyyy-MM-dd HH:mm");
-
-                    item.StartDate = calendarEvent.StartDate;
-                    DateTime tempEndDate = calendarEvent.EndDate.AddDays(1);
-                    item.EndDate = new DateTime(tempEndDate.Year, tempEndDate.Month, tempEndDate.Day, 0, 0, 0, tempEndDate.Kind);
-                }
-
-                item.HtmlColorCode = calendar.HtmlColorCode;
-
-                calendarEventOutputViewModels.Add(item);
-            }
-        }
-        #endregion
-
-        #region Load OtherCalendar
-        List<CalendarResponse> otherCalendars = [];
 
         List<CalendarResponse> allCalendars = await _calendarService.GetAllCalendarsAsync(HttpContext.RequestAborted);
+        List<OtherCalendarResponse> otherCalendarSubscriptions = await _calendarService.GetOtherCalendarsAsync(loginedAccount.Email!, HttpContext.RequestAborted);
+        List<CalendarResponse> otherCalendars = (from c in allCalendars
+                                                  join oc in otherCalendarSubscriptions on c.Id equals oc.CalendarId
+                                                  select new CalendarResponse { Id = c.Id, Name = c.Name, HtmlColorCode = c.HtmlColorCode })
+                                                 .OrderBy(x => x.Name).ToList();
 
-        var tempOtherCalendars = (from calendar in allCalendars
-                                  join otherCalendar in await _calendarService.GetOtherCalendarsAsync(loginedAccount.Email!, HttpContext.RequestAborted)
-                                  on calendar.Id equals otherCalendar.CalendarId
-                                  select new
-                                  {
-                                      calendar.Id,
-                                      calendar.Name,
-                                      calendar.HtmlColorCode
-                                  }).OrderBy(x => x.Name).ToList();
-
-        foreach (var tempOtherCalendar in tempOtherCalendars)
+        CalendarOutputViewModel vm = new()
         {
-            otherCalendars.Add(new CalendarResponse() { Id = tempOtherCalendar.Id, Name = tempOtherCalendar.Name, HtmlColorCode = tempOtherCalendar.HtmlColorCode });
-        }
-        #endregion
-
-        #region Load OtherCalendarEvent
-        List<CalendarEventOutputViewModel> otherCalendarEventOutputViewModels = [];
-
-        foreach (CalendarResponse otherCalendar in otherCalendars)
-        {
-            foreach (CalendarEventResponse otherCalendarEvent in await _calendarService.GetCalendarEventsAsync(otherCalendar.Id, HttpContext.RequestAborted) ?? [])
-            {
-                CalendarEventOutputViewModel item = new()
-                {
-                    Id = otherCalendarEvent.Id,
-                    CalendarId = otherCalendarEvent.CalendarId,
-                    Title = otherCalendarEvent.Title,
-                    AllDay = otherCalendarEvent.AllDay
-                };
-
-                if (otherCalendarEvent.AllDay)
-                {
-                    foreach (TimeZoneInfo systemTimeZone in TimeZoneInfo.GetSystemTimeZones())
-                    {
-                        string systemTimeZoneIanaId = string.Empty;
-
-                        if (systemTimeZone.HasIanaId)
-                        {
-                            systemTimeZoneIanaId = systemTimeZone.Id;
-                        }
-                        else if (TimeZoneInfo.TryConvertWindowsIdToIanaId(systemTimeZone.Id, out string? ianaId))
-                        {
-                            systemTimeZoneIanaId = ianaId!;
-                        }
-
-                        if (string.IsNullOrEmpty(systemTimeZoneIanaId))
-                        {
-                            continue;
-                        }
-                        else if (systemTimeZoneIanaId == loginedAccount.TimeZoneIanaId)
-                        {
-                            otherCalendarEvent.StartDate = TimeZoneInfo.ConvertTime(otherCalendarEvent.StartDate, TimeZoneInfo.Utc, systemTimeZone);
-                            item.DisplayStartDateTimeZone = string.Empty;
-                            break;
-                        }
-                    }
-
-                    foreach (TimeZoneInfo systemTimeZone in TimeZoneInfo.GetSystemTimeZones())
-                    {
-                        string systemTimeZoneIanaId = string.Empty;
-
-                        if (systemTimeZone.HasIanaId)
-                        {
-                            systemTimeZoneIanaId = systemTimeZone.Id;
-                        }
-                        else if (TimeZoneInfo.TryConvertWindowsIdToIanaId(systemTimeZone.Id, out string? ianaId))
-                        {
-                            systemTimeZoneIanaId = ianaId!;
-                        }
-
-                        if (string.IsNullOrEmpty(systemTimeZoneIanaId))
-                        {
-                            continue;
-                        }
-                        else if (systemTimeZoneIanaId == loginedAccount.TimeZoneIanaId)
-                        {
-                            otherCalendarEvent.EndDate = TimeZoneInfo.ConvertTime(otherCalendarEvent.EndDate, TimeZoneInfo.Utc, systemTimeZone);
-                            item.DisplayEndDateTimeZone = string.Empty;
-                            break;
-                        }
-                    }
-
-                    item.DisplayStartDate = otherCalendarEvent.StartDate.ToString("yyyy-MM-dd");
-                    item.DisplayEndDate = otherCalendarEvent.EndDate.ToString("yyyy-MM-dd");
-
-                    item.StartDate = otherCalendarEvent.StartDate;
-                    DateTime tempEndDate = otherCalendarEvent.EndDate.AddDays(1);
-                    item.EndDate = new DateTime(tempEndDate.Year, tempEndDate.Month, tempEndDate.Day, 0, 0, 0, tempEndDate.Kind);
-                }
-                else
-                {
-                    foreach (TimeZoneInfo systemTimeZone in TimeZoneInfo.GetSystemTimeZones())
-                    {
-                        string systemTimeZoneIanaId = string.Empty;
-
-                        if (systemTimeZone.HasIanaId)
-                        {
-                            systemTimeZoneIanaId = systemTimeZone.Id;
-                        }
-                        else if (TimeZoneInfo.TryConvertWindowsIdToIanaId(systemTimeZone.Id, out string? ianaId))
-                        {
-                            systemTimeZoneIanaId = ianaId!;
-                        }
-
-                        if (string.IsNullOrEmpty(systemTimeZoneIanaId))
-                        {
-                            continue;
-                        }
-                        else if (systemTimeZoneIanaId == otherCalendarEvent.StartDateTimeZoneIanaId)
-                        {
-                            otherCalendarEvent.StartDate = TimeZoneInfo.ConvertTime(otherCalendarEvent.StartDate, TimeZoneInfo.Utc, systemTimeZone);
-                            item.DisplayStartDateTimeZone = systemTimeZone.StandardName;
-                            break;
-                        }
-                    }
-
-                    foreach (TimeZoneInfo systemTimeZone in TimeZoneInfo.GetSystemTimeZones())
-                    {
-                        string systemTimeZoneIanaId = string.Empty;
-
-                        if (systemTimeZone.HasIanaId)
-                        {
-                            systemTimeZoneIanaId = systemTimeZone.Id;
-                        }
-                        else if (TimeZoneInfo.TryConvertWindowsIdToIanaId(systemTimeZone.Id, out string? ianaId))
-                        {
-                            systemTimeZoneIanaId = ianaId!;
-                        }
-
-                        if (string.IsNullOrEmpty(systemTimeZoneIanaId))
-                        {
-                            continue;
-                        }
-                        else if (systemTimeZoneIanaId == otherCalendarEvent.EndDateTimeZoneIanaId)
-                        {
-                            otherCalendarEvent.EndDate = TimeZoneInfo.ConvertTime(otherCalendarEvent.EndDate, TimeZoneInfo.Utc, systemTimeZone);
-                            item.DisplayEndDateTimeZone = systemTimeZone.StandardName;
-                            break;
-                        }
-                    }
-
-                    item.DisplayStartDate = otherCalendarEvent.StartDate.ToString("yyyy-MM-dd HH:mm");
-                    item.DisplayEndDate = otherCalendarEvent.EndDate.ToString("yyyy-MM-dd HH:mm");
-
-                    item.StartDate = otherCalendarEvent.StartDate;
-                    DateTime tempEndDate = otherCalendarEvent.EndDate.AddDays(1);
-                    item.EndDate = new DateTime(tempEndDate.Year, tempEndDate.Month, tempEndDate.Day, 0, 0, 0, tempEndDate.Kind);
-                }
-
-                item.HtmlColorCode = otherCalendar.HtmlColorCode;
-
-                otherCalendarEventOutputViewModels.Add(item);
-            }
-        }
-        #endregion
-
-        calendarOutputViewModel.Calendars = calendars;
-        calendarOutputViewModel.CalendarEventOutputViewModels = calendarEventOutputViewModels;
-        calendarOutputViewModel.OtherCalendars = otherCalendars;
-        calendarOutputViewModel.OtherCalendarEventOutputViewModels = otherCalendarEventOutputViewModels;
-
-        // Populate time data for view
-        calendarOutputViewModel.LoginedAccount = loginedAccount;
-        calendarOutputViewModel.LoginedAccountTimeZoneIanaId = loginedAccount?.TimeZoneIanaId ?? "UTC";
-        {
-            DateTime _ct = DateTime.UtcNow.ConvertTimeByTimeZoneIanaId(calendarOutputViewModel.LoginedAccountTimeZoneIanaId);
-            calendarOutputViewModel.CurrentDate = _ct.ToString("yyyy-MM-dd");
-            calendarOutputViewModel.CurrentHour = _ct.Hour;
-            calendarOutputViewModel.CurrentMinute = _ct.Minute;
-            calendarOutputViewModel.CurrentSecond = _ct.Second;
-            List<string> _ti = [];
-            for (int _h = 0; _h < 24; _h++)
-                for (int _m = 0; _m < 60; _m += 15)
-                    _ti.Add($"{_h:D2}:{_m:D2}");
-            calendarOutputViewModel.TimeIntervals = _ti;
-            int _nm = (int)Math.Round(_ct.Minute / 15.0) * 15;
-            if (_nm == 60) { _ct = _ct.AddHours(1); _nm = 0; }
-            calendarOutputViewModel.CurrentInterval = $"{_ct.Hour:D2}:{_nm:D2}";
-        }
-
-        return View(calendarOutputViewModel);
+            Calendars = calendars,
+            CalendarEventOutputViewModels = await _calendarService.GetCalendarEventViewModelsAsync(calendars, userTz, null, HttpContext.RequestAborted),
+            OtherCalendars = otherCalendars,
+            OtherCalendarEventOutputViewModels = await _calendarService.GetCalendarEventViewModelsAsync(otherCalendars, userTz, null, HttpContext.RequestAborted),
+            LoginedAccount = loginedAccount,
+            LoginedAccountTimeZoneIanaId = userTz
+        };
+        vm.PopulateTimeData(userTz);
+        return View(vm);
     }
 
     /// <summary>Returns the anonymous calendar view.</summary>
     [HttpGet]
     public async Task<IActionResult> AnonymousIndex()
     {
-        AccountResponse loginedAccount = new() { Role = Role.Anonymous, TimeZoneIanaId = "UTC" };
-
-        CalendarOutputViewModel calendarOutputViewModel = new();
-
-        #region Load OtherCalendar
-        List<CalendarResponse> otherCalendars = [];
+        const string userTz = "UTC";
+        AccountResponse loginedAccount = new() { Role = Role.Anonymous, TimeZoneIanaId = userTz };
 
         List<CalendarResponse> allCalendars = await _calendarService.GetAllCalendarsAsync(HttpContext.RequestAborted);
+        List<CalendarSharedResponse> sharedCalendars = await _calendarService.GetCalendarSharedAsync(HttpContext.RequestAborted);
+        List<CalendarResponse> otherCalendars = (from c in allCalendars
+                                                  join cs in sharedCalendars.Where(x => x.Anonymous) on c.Id equals cs.CalendarId
+                                                  select new CalendarResponse { Id = c.Id, Name = c.Name, HtmlColorCode = c.HtmlColorCode })
+                                                 .OrderBy(x => x.Name).ToList();
 
-        var tempOtherCalendars = (from calendar in allCalendars
-                                  join calendarShared in (await _calendarService.GetCalendarSharedAsync(HttpContext.RequestAborted)).Where(x => x.Anonymous).ToList()
-                                  on calendar.Id equals calendarShared.CalendarId
-                                  select new
-                                  {
-                                      calendar.Id,
-                                      calendar.Name,
-                                      calendar.HtmlColorCode
-                                  }).OrderBy(x => x.Name).ToList();
-
-        foreach (var tempOtherCalendar in tempOtherCalendars)
+        CalendarOutputViewModel vm = new()
         {
-            otherCalendars.Add(new CalendarResponse() { Id = tempOtherCalendar.Id, Name = tempOtherCalendar.Name, HtmlColorCode = tempOtherCalendar.HtmlColorCode });
-        }
-        #endregion
-
-        #region Load OtherCalendarEvent
-        List<CalendarEventOutputViewModel> otherCalendarEventOutputViewModels = [];
-
-        foreach (CalendarResponse otherCalendar in otherCalendars)
-        {
-            foreach (CalendarEventResponse otherCalendarEvent in await _calendarService.GetCalendarEventsAsync(otherCalendar.Id, HttpContext.RequestAborted) ?? [])
-            {
-                CalendarEventOutputViewModel item = new()
-                {
-                    Id = otherCalendarEvent.Id,
-                    CalendarId = otherCalendarEvent.CalendarId,
-                    Title = otherCalendarEvent.Title,
-                    AllDay = otherCalendarEvent.AllDay
-                };
-
-                if (otherCalendarEvent.AllDay)
-                {
-                    foreach (TimeZoneInfo systemTimeZone in TimeZoneInfo.GetSystemTimeZones())
-                    {
-                        string systemTimeZoneIanaId = string.Empty;
-
-                        if (systemTimeZone.HasIanaId)
-                        {
-                            systemTimeZoneIanaId = systemTimeZone.Id;
-                        }
-                        else if (TimeZoneInfo.TryConvertWindowsIdToIanaId(systemTimeZone.Id, out string? ianaId))
-                        {
-                            systemTimeZoneIanaId = ianaId!;
-                        }
-
-                        if (string.IsNullOrEmpty(systemTimeZoneIanaId))
-                        {
-                            continue;
-                        }
-                        else if (systemTimeZoneIanaId == loginedAccount.TimeZoneIanaId)
-                        {
-                            otherCalendarEvent.StartDate = TimeZoneInfo.ConvertTime(otherCalendarEvent.StartDate, TimeZoneInfo.Utc, systemTimeZone);
-                            item.DisplayStartDateTimeZone = string.Empty;
-                            break;
-                        }
-                    }
-
-                    foreach (TimeZoneInfo systemTimeZone in TimeZoneInfo.GetSystemTimeZones())
-                    {
-                        string systemTimeZoneIanaId = string.Empty;
-
-                        if (systemTimeZone.HasIanaId)
-                        {
-                            systemTimeZoneIanaId = systemTimeZone.Id;
-                        }
-                        else if (TimeZoneInfo.TryConvertWindowsIdToIanaId(systemTimeZone.Id, out string? ianaId))
-                        {
-                            systemTimeZoneIanaId = ianaId!;
-                        }
-
-                        if (string.IsNullOrEmpty(systemTimeZoneIanaId))
-                        {
-                            continue;
-                        }
-                        else if (systemTimeZoneIanaId == loginedAccount.TimeZoneIanaId)
-                        {
-                            otherCalendarEvent.EndDate = TimeZoneInfo.ConvertTime(otherCalendarEvent.EndDate, TimeZoneInfo.Utc, systemTimeZone);
-                            item.DisplayEndDateTimeZone = string.Empty;
-                            break;
-                        }
-                    }
-
-                    item.DisplayStartDate = otherCalendarEvent.StartDate.ToString("yyyy-MM-dd");
-                    item.DisplayEndDate = otherCalendarEvent.EndDate.ToString("yyyy-MM-dd");
-
-                    item.StartDate = otherCalendarEvent.StartDate;
-                    DateTime tempEndDate = otherCalendarEvent.EndDate.AddDays(1);
-                    item.EndDate = new DateTime(tempEndDate.Year, tempEndDate.Month, tempEndDate.Day, 0, 0, 0, tempEndDate.Kind);
-                }
-                else
-                {
-                    foreach (TimeZoneInfo systemTimeZone in TimeZoneInfo.GetSystemTimeZones())
-                    {
-                        string systemTimeZoneIanaId = string.Empty;
-
-                        if (systemTimeZone.HasIanaId)
-                        {
-                            systemTimeZoneIanaId = systemTimeZone.Id;
-                        }
-                        else if (TimeZoneInfo.TryConvertWindowsIdToIanaId(systemTimeZone.Id, out string? ianaId))
-                        {
-                            systemTimeZoneIanaId = ianaId!;
-                        }
-
-                        if (string.IsNullOrEmpty(systemTimeZoneIanaId))
-                        {
-                            continue;
-                        }
-                        else if (systemTimeZoneIanaId == otherCalendarEvent.StartDateTimeZoneIanaId)
-                        {
-                            otherCalendarEvent.StartDate = TimeZoneInfo.ConvertTime(otherCalendarEvent.StartDate, TimeZoneInfo.Utc, systemTimeZone);
-                            item.DisplayStartDateTimeZone = systemTimeZone.StandardName;
-                            break;
-                        }
-                    }
-
-                    foreach (TimeZoneInfo systemTimeZone in TimeZoneInfo.GetSystemTimeZones())
-                    {
-                        string systemTimeZoneIanaId = string.Empty;
-
-                        if (systemTimeZone.HasIanaId)
-                        {
-                            systemTimeZoneIanaId = systemTimeZone.Id;
-                        }
-                        else if (TimeZoneInfo.TryConvertWindowsIdToIanaId(systemTimeZone.Id, out string? ianaId))
-                        {
-                            systemTimeZoneIanaId = ianaId!;
-                        }
-
-                        if (string.IsNullOrEmpty(systemTimeZoneIanaId))
-                        {
-                            continue;
-                        }
-                        else if (systemTimeZoneIanaId == otherCalendarEvent.EndDateTimeZoneIanaId)
-                        {
-                            otherCalendarEvent.EndDate = TimeZoneInfo.ConvertTime(otherCalendarEvent.EndDate, TimeZoneInfo.Utc, systemTimeZone);
-                            item.DisplayEndDateTimeZone = systemTimeZone.StandardName;
-                            break;
-                        }
-                    }
-
-                    item.DisplayStartDate = otherCalendarEvent.StartDate.ToString("yyyy-MM-dd HH:mm");
-                    item.DisplayEndDate = otherCalendarEvent.EndDate.ToString("yyyy-MM-dd HH:mm");
-
-                    item.StartDate = otherCalendarEvent.StartDate;
-                    DateTime tempEndDate = otherCalendarEvent.EndDate.AddDays(1);
-                    item.EndDate = new DateTime(tempEndDate.Year, tempEndDate.Month, tempEndDate.Day, 0, 0, 0, tempEndDate.Kind);
-                }
-
-                item.HtmlColorCode = otherCalendar.HtmlColorCode;
-
-                otherCalendarEventOutputViewModels.Add(item);
-            }
-        }
-        #endregion
-
-        calendarOutputViewModel.OtherCalendars = otherCalendars;
-        calendarOutputViewModel.OtherCalendarEventOutputViewModels = otherCalendarEventOutputViewModels;
-
-        // Populate time data for view
-        calendarOutputViewModel.LoginedAccount = loginedAccount;
-        calendarOutputViewModel.LoginedAccountTimeZoneIanaId = loginedAccount?.TimeZoneIanaId ?? "UTC";
-        {
-            DateTime _ct = DateTime.UtcNow.ConvertTimeByTimeZoneIanaId(calendarOutputViewModel.LoginedAccountTimeZoneIanaId);
-            calendarOutputViewModel.CurrentDate = _ct.ToString("yyyy-MM-dd");
-            calendarOutputViewModel.CurrentHour = _ct.Hour;
-            calendarOutputViewModel.CurrentMinute = _ct.Minute;
-            calendarOutputViewModel.CurrentSecond = _ct.Second;
-            List<string> _ti = [];
-            for (int _h = 0; _h < 24; _h++)
-                for (int _m = 0; _m < 60; _m += 15)
-                    _ti.Add($"{_h:D2}:{_m:D2}");
-            calendarOutputViewModel.TimeIntervals = _ti;
-            int _nm = (int)Math.Round(_ct.Minute / 15.0) * 15;
-            if (_nm == 60) { _ct = _ct.AddHours(1); _nm = 0; }
-            calendarOutputViewModel.CurrentInterval = $"{_ct.Hour:D2}:{_nm:D2}";
-        }
-
-        return View(calendarOutputViewModel);
+            OtherCalendars = otherCalendars,
+            OtherCalendarEventOutputViewModels = await _calendarService.GetCalendarEventViewModelsAsync(otherCalendars, userTz, null, HttpContext.RequestAborted),
+            LoginedAccount = loginedAccount,
+            LoginedAccountTimeZoneIanaId = userTz
+        };
+        vm.PopulateTimeData(userTz);
+        return View(vm);
     }
 
     /// <summary>Checks whether a calendar with the given ID exists.</summary>
@@ -1121,7 +379,7 @@ public class CalendarController : BaseController
         }
     }
 
-    /// <summary>Checks whether a calendar event with the given ID exists.</summary>
+    /// <summary>Checks whether a calendar event with the given ID exists and returns its full detail.</summary>
     [HttpPost]
     [ValidateAntiForgeryToken]
     [RequiredHttpPostAccess(Role = Role.Admin)]
@@ -1130,193 +388,44 @@ public class CalendarController : BaseController
     {
         try
         {
-            if (ModelState.IsValid)
-            {
-                try
-                {
-                    AccountResponse loginedAccount = _sessionService.GetAccount()!;
+            AccountResponse loginedAccount = _sessionService.GetAccount()!;
+            List<CalendarResponse> calendars = await _calendarService.GetCalendarsAsync(loginedAccount.Email!, HttpContext.RequestAborted) ?? [];
 
-                    List<CalendarResponse> calendars = await _calendarService.GetCalendarsAsync(loginedAccount.Email!, HttpContext.RequestAborted) ?? [];
+            CalendarEventResponse? tempCalendarEvent = await _calendarService.GetCalendarEventAsync(id, HttpContext.RequestAborted);
 
-                    CalendarEventResponse tempCalendarEvent = (await _calendarService.GetCalendarEventAsync(id, HttpContext.RequestAborted))!;
-                    CalendarResponse tempCalendar = calendars?.Where(x => x.Id == tempCalendarEvent.CalendarId)?.FirstOrDefault() ?? new CalendarResponse();
-
-                    if (!(tempCalendarEvent.Id > 0))
-                    {
-                        return Json(new { result = false, error = _localizer["Input is invalid"].Value });
-                    }
-
-                    if (!(tempCalendar.Id > 0))
-                    {
-                        return Json(new { result = false, error = _localizer["Input is invalid"].Value });
-                    }
-
-                    CalendarEventOutputViewModel calendarEvent = new()
-                    {
-                        Id = tempCalendarEvent.Id,
-                        CalendarId = tempCalendarEvent.CalendarId,
-                        Title = tempCalendarEvent.Title,
-                        AllDay = tempCalendarEvent.AllDay
-                    };
-
-                    (calendarEvent.Description, _) = await _calendarService.PrepareHtmlForDisplayAsync(tempCalendarEvent.Description ?? "", HttpContext.RequestAborted);
-
-                    if (tempCalendarEvent.AllDay)
-                    {
-                        foreach (TimeZoneInfo systemTimeZone in TimeZoneInfo.GetSystemTimeZones())
-                        {
-                            string systemTimeZoneIanaId = string.Empty;
-
-                            if (systemTimeZone.HasIanaId)
-                            {
-                                systemTimeZoneIanaId = systemTimeZone.Id;
-                            }
-                            else if (TimeZoneInfo.TryConvertWindowsIdToIanaId(systemTimeZone.Id, out string? ianaId))
-                            {
-                                systemTimeZoneIanaId = ianaId;
-                            }
-
-                            if (string.IsNullOrEmpty(systemTimeZoneIanaId))
-                            {
-                                continue;
-                            }
-                            else if (systemTimeZoneIanaId == loginedAccount.TimeZoneIanaId)
-                            {
-                                tempCalendarEvent.StartDate = TimeZoneInfo.ConvertTime(tempCalendarEvent.StartDate, TimeZoneInfo.Utc, systemTimeZone);
-                                calendarEvent.StartDateTimeZoneIanaId = systemTimeZoneIanaId;
-                                calendarEvent.DisplayStartDateTimeZone = string.Empty;
-                                break;
-                            }
-                        }
-
-                        foreach (TimeZoneInfo systemTimeZone in TimeZoneInfo.GetSystemTimeZones())
-                        {
-                            string systemTimeZoneIanaId = string.Empty;
-
-                            if (systemTimeZone.HasIanaId)
-                            {
-                                systemTimeZoneIanaId = systemTimeZone.Id;
-                            }
-                            else if (TimeZoneInfo.TryConvertWindowsIdToIanaId(systemTimeZone.Id, out string? ianaId))
-                            {
-                                systemTimeZoneIanaId = ianaId;
-                            }
-
-                            if (string.IsNullOrEmpty(systemTimeZoneIanaId))
-                            {
-                                continue;
-                            }
-                            else if (systemTimeZoneIanaId == loginedAccount.TimeZoneIanaId)
-                            {
-                                tempCalendarEvent.EndDate = TimeZoneInfo.ConvertTime(tempCalendarEvent.EndDate, TimeZoneInfo.Utc, systemTimeZone);
-                                calendarEvent.EndDateTimeZoneIanaId = systemTimeZoneIanaId;
-                                calendarEvent.DisplayEndDateTimeZone = string.Empty;
-                                break;
-                            }
-                        }
-
-                        calendarEvent.DisplayStartDate = tempCalendarEvent.StartDate.ToString("yyyy-MM-dd");
-                        calendarEvent.DisplayEndDate = tempCalendarEvent.EndDate.ToString("yyyy-MM-dd");
-                    }
-                    else
-                    {
-                        foreach (TimeZoneInfo systemTimeZone in TimeZoneInfo.GetSystemTimeZones())
-                        {
-                            string systemTimeZoneIanaId = string.Empty;
-
-                            if (systemTimeZone.HasIanaId)
-                            {
-                                systemTimeZoneIanaId = systemTimeZone.Id;
-                            }
-                            else if (TimeZoneInfo.TryConvertWindowsIdToIanaId(systemTimeZone.Id, out string? ianaId))
-                            {
-                                systemTimeZoneIanaId = ianaId;
-                            }
-
-                            if (string.IsNullOrEmpty(systemTimeZoneIanaId))
-                            {
-                                continue;
-                            }
-                            else if (systemTimeZoneIanaId == tempCalendarEvent.StartDateTimeZoneIanaId)
-                            {
-                                tempCalendarEvent.StartDate = TimeZoneInfo.ConvertTime(tempCalendarEvent.StartDate, TimeZoneInfo.Utc, systemTimeZone);
-                                calendarEvent.StartDateTimeZoneIanaId = systemTimeZoneIanaId;
-                                calendarEvent.DisplayStartDateTimeZone = systemTimeZone.StandardName;
-                                break;
-                            }
-                        }
-
-                        foreach (TimeZoneInfo systemTimeZone in TimeZoneInfo.GetSystemTimeZones())
-                        {
-                            string systemTimeZoneIanaId = string.Empty;
-
-                            if (systemTimeZone.HasIanaId)
-                            {
-                                systemTimeZoneIanaId = systemTimeZone.Id;
-                            }
-                            else if (TimeZoneInfo.TryConvertWindowsIdToIanaId(systemTimeZone.Id, out string? ianaId))
-                            {
-                                systemTimeZoneIanaId = ianaId;
-                            }
-
-                            if (string.IsNullOrEmpty(systemTimeZoneIanaId))
-                            {
-                                continue;
-                            }
-                            else if (systemTimeZoneIanaId == tempCalendarEvent.EndDateTimeZoneIanaId)
-                            {
-                                tempCalendarEvent.EndDate = TimeZoneInfo.ConvertTime(tempCalendarEvent.EndDate, TimeZoneInfo.Utc, systemTimeZone);
-                                calendarEvent.EndDateTimeZoneIanaId = systemTimeZoneIanaId;
-                                calendarEvent.DisplayEndDateTimeZone = systemTimeZone.StandardName;
-                                break;
-                            }
-                        }
-
-                        calendarEvent.DisplayStartDate = tempCalendarEvent.StartDate.ToString("yyyy-MM-dd HH:mm");
-                        calendarEvent.DisplayEndDate = tempCalendarEvent.EndDate.ToString("yyyy-MM-dd HH:mm");
-                    }
-
-                    calendarEvent.Location = tempCalendarEvent.Location;
-                    calendarEvent.Status = tempCalendarEvent.Status;
-                    calendarEvent.CalendarEventAttachedFile = await _calendarService.GetCalendarEventAttachedFileAsync(tempCalendarEvent.Id, HttpContext.RequestAborted);
-
-                    if (!string.IsNullOrEmpty(calendarEvent?.CalendarEventAttachedFile?.Path ?? ""))
-                    {
-                        byte[]? fileData = await _calendarService.DownloadFileAsync(calendarEvent?.CalendarEventAttachedFile?.Path ?? "", HttpContext.RequestAborted);
-
-                        if (fileData != null)
-                        {
-                            // Use FileExtensionContentTypeProvider to extract ContentType
-                            FileExtensionContentTypeProvider provider = new();
-
-                            // Default contentType is set to "application/octet-stream"
-                            if (!provider.TryGetContentType(calendarEvent?.CalendarEventAttachedFile?.Path ?? "", out string? contentType))
-                            {
-                                contentType = "application/octet-stream";
-                            }
-
-                            // Convert file data to Base64
-                            calendarEvent!.CalendarEventAttachedFileBase64Data = Convert.ToBase64String(fileData);
-                            calendarEvent!.CalendarEventAttachedFileContentType = contentType;
-                        }
-                    }
-
-                    calendarEvent!.Calendars = calendars!.Select(x => new CalendarResponse { Id = x.Id, Name = x.Name }).OrderBy(x => x.Name).ToList();
-                    calendarEvent.SerializedCalendarReminders = JsonConvert.SerializeObject((await _calendarService.GetCalendarEventRemindersAsync(tempCalendarEvent.Id, HttpContext.RequestAborted)).Select(x => new CalendarReminderInfo { Method = x.Method ?? "", MinutesBeforeEvent = (int?)x.MinutesBeforeEvent, HoursBeforeEvent = (int?)x.HoursBeforeEvent, DaysBeforeEvent = (int?)x.DaysBeforeEvent, WeeksBeforeEvent = (int?)x.WeeksBeforeEvent, TimesBeforeEvent = x.TimesBeforeEvent?.ToTimeSpan() }) ?? []);
-
-                    calendarEvent.HtmlColorCode = calendars?.Where(x => x.Id == tempCalendarEvent.CalendarId)?.FirstOrDefault()?.HtmlColorCode;
-
-                    return Json(new { result = true, calendarEvent });
-                }
-                catch
-                {
-                    return Json(new { result = false, error = _localizer["Input is invalid"].Value });
-                }
-            }
-            else
-            {
+            if (tempCalendarEvent == null || !(tempCalendarEvent.Id > 0))
                 return Json(new { result = false, error = _localizer["Input is invalid"].Value });
+
+            CalendarResponse tempCalendar = calendars.FirstOrDefault(x => x.Id == tempCalendarEvent.CalendarId) ?? new CalendarResponse();
+            if (!(tempCalendar.Id > 0))
+                return Json(new { result = false, error = _localizer["Input is invalid"].Value });
+
+            CalendarEventOutputViewModel calendarEvent = tempCalendarEvent.ToDisplayViewModel(
+                loginedAccount.TimeZoneIanaId ?? "UTC", null, null, forGrid: false);
+
+            (calendarEvent.Description, _) = await _calendarService.PrepareHtmlForDisplayAsync(tempCalendarEvent.Description ?? "", HttpContext.RequestAborted);
+            calendarEvent.Location = tempCalendarEvent.Location;
+            calendarEvent.Status = tempCalendarEvent.Status;
+            calendarEvent.CalendarEventAttachedFile = await _calendarService.GetCalendarEventAttachedFileAsync(tempCalendarEvent.Id, HttpContext.RequestAborted);
+
+            if (!string.IsNullOrEmpty(calendarEvent.CalendarEventAttachedFile?.Path))
+            {
+                byte[]? fileData = await _calendarService.DownloadFileAsync(calendarEvent.CalendarEventAttachedFile.Path, HttpContext.RequestAborted);
+                if (fileData != null)
+                {
+                    FileExtensionContentTypeProvider provider = new();
+                    if (!provider.TryGetContentType(calendarEvent.CalendarEventAttachedFile.Path, out string? contentType))
+                        contentType = "application/octet-stream";
+                    calendarEvent.CalendarEventAttachedFileBase64Data = Convert.ToBase64String(fileData);
+                    calendarEvent.CalendarEventAttachedFileContentType = contentType;
+                }
             }
+
+            calendarEvent.Calendars = calendars.Select(x => new CalendarResponse { Id = x.Id, Name = x.Name }).OrderBy(x => x.Name).ToList();
+            calendarEvent.SerializedCalendarReminders = (await _calendarService.GetCalendarEventRemindersAsync(tempCalendarEvent.Id, HttpContext.RequestAborted)).ToSerializedReminders();
+            calendarEvent.HtmlColorCode = calendars.FirstOrDefault(x => x.Id == tempCalendarEvent.CalendarId)?.HtmlColorCode;
+
+            return Json(new { result = true, calendarEvent });
         }
         catch
         {
@@ -1324,7 +433,7 @@ public class CalendarController : BaseController
         }
     }
 
-    /// <summary>Checks whether an event in a shared/other calendar exists.</summary>
+    /// <summary>Checks whether an event in a shared/other calendar exists and returns its full detail.</summary>
     [HttpPost]
     [ValidateAntiForgeryToken]
     [RequiredHttpPostAccess(Role = Role.Admin)]
@@ -1334,221 +443,63 @@ public class CalendarController : BaseController
     {
         try
         {
-            if (ModelState.IsValid)
+            bool isAccountSessionExist = _sessionService.GetAccount() != null;
+            AccountResponse loginedAccount;
+            List<CalendarResponse> calendars;
+
+            if (isAccountSessionExist)
             {
-                try
-                {
-                    bool isAccountSessionExist = _sessionService.GetAccount() != null;
-                    AccountResponse? loginedAccount = null;
-                    List<CalendarResponse>? calendars = null;
-
-                    if (isAccountSessionExist)
-                    {
-                        loginedAccount = _sessionService.GetAccount()!;
-                        calendars = (from calendar in await _calendarService.GetAllCalendarsAsync(HttpContext.RequestAborted) ?? []
-                                     join otherCalendar in await _calendarService.GetOtherCalendarsAsync(loginedAccount.Email!, HttpContext.RequestAborted) ?? []
-                                     on calendar.Id equals otherCalendar.CalendarId
-                                     select calendar).ToList();
-                    }
-                    else
-                    {
-                        loginedAccount = new AccountResponse() { Role = Role.Anonymous, TimeZoneIanaId = "UTC" };
-                        calendars = [];
-                        var temporaryOtherCalendars = (from calendar in await _calendarService.GetAllCalendarsAsync(HttpContext.RequestAborted) ?? []
-                                                       join calendarShared in (await _calendarService.GetCalendarSharedAsync(HttpContext.RequestAborted))?.Where(x => x.Anonymous)?.ToList() ?? []
-                                                       on calendar.Id equals calendarShared.CalendarId
-                                                       select new
-                                                       {
-                                                           calendar.Id,
-                                                           calendar.Name,
-                                                           calendar.HtmlColorCode
-                                                       }).OrderBy(x => x.Name).ToList();
-
-                        foreach (var tempOtherCalendar in temporaryOtherCalendars)
-                        {
-                            calendars.Add(new CalendarResponse() { Id = tempOtherCalendar.Id, Name = tempOtherCalendar.Name, HtmlColorCode = tempOtherCalendar.HtmlColorCode });
-                        }
-                    }
-
-                    CalendarEventResponse tempCalendarEvent = (await _calendarService.GetCalendarEventAsync(id, HttpContext.RequestAborted))!;
-                    CalendarResponse tempCalendar = calendars?.Where(x => x.Id == tempCalendarEvent.CalendarId)?.FirstOrDefault() ?? new CalendarResponse();
-
-                    if (!(tempCalendarEvent.Id > 0))
-                    {
-                        return Json(new { result = false, error = _localizer["Input is invalid"].Value });
-                    }
-
-                    if (!(tempCalendar.Id > 0))
-                    {
-                        return Json(new { result = false, error = _localizer["Input is invalid"].Value });
-                    }
-
-                    CalendarEventOutputViewModel calendarEvent = new()
-                    {
-                        Id = tempCalendarEvent.Id,
-                        CalendarId = tempCalendarEvent.CalendarId,
-                        Title = tempCalendarEvent.Title,
-                        AllDay = tempCalendarEvent.AllDay
-                    };
-
-                    (calendarEvent.Description, _) = await _calendarService.PrepareHtmlForDisplayAsync(tempCalendarEvent.Description ?? "", HttpContext.RequestAborted);
-
-                    if (tempCalendarEvent.AllDay)
-                    {
-                        foreach (TimeZoneInfo systemTimeZone in TimeZoneInfo.GetSystemTimeZones())
-                        {
-                            string systemTimeZoneIanaId = string.Empty;
-
-                            if (systemTimeZone.HasIanaId)
-                            {
-                                systemTimeZoneIanaId = systemTimeZone.Id;
-                            }
-                            else if (TimeZoneInfo.TryConvertWindowsIdToIanaId(systemTimeZone.Id, out string? ianaId))
-                            {
-                                systemTimeZoneIanaId = ianaId;
-                            }
-
-                            if (string.IsNullOrEmpty(systemTimeZoneIanaId))
-                            {
-                                continue;
-                            }
-                            else if (systemTimeZoneIanaId == loginedAccount.TimeZoneIanaId)
-                            {
-                                tempCalendarEvent.StartDate = TimeZoneInfo.ConvertTime(tempCalendarEvent.StartDate, TimeZoneInfo.Utc, systemTimeZone);
-                                calendarEvent.StartDateTimeZoneIanaId = systemTimeZoneIanaId;
-                                calendarEvent.DisplayStartDateTimeZone = string.Empty;
-                                break;
-                            }
-                        }
-
-                        foreach (TimeZoneInfo systemTimeZone in TimeZoneInfo.GetSystemTimeZones())
-                        {
-                            string systemTimeZoneIanaId = string.Empty;
-
-                            if (systemTimeZone.HasIanaId)
-                            {
-                                systemTimeZoneIanaId = systemTimeZone.Id;
-                            }
-                            else if (TimeZoneInfo.TryConvertWindowsIdToIanaId(systemTimeZone.Id, out string? ianaId))
-                            {
-                                systemTimeZoneIanaId = ianaId;
-                            }
-
-                            if (string.IsNullOrEmpty(systemTimeZoneIanaId))
-                            {
-                                continue;
-                            }
-                            else if (systemTimeZoneIanaId == loginedAccount.TimeZoneIanaId)
-                            {
-                                tempCalendarEvent.EndDate = TimeZoneInfo.ConvertTime(tempCalendarEvent.EndDate, TimeZoneInfo.Utc, systemTimeZone);
-                                calendarEvent.EndDateTimeZoneIanaId = systemTimeZoneIanaId;
-                                calendarEvent.DisplayEndDateTimeZone = string.Empty;
-                                break;
-                            }
-                        }
-
-                        calendarEvent.DisplayStartDate = tempCalendarEvent.StartDate.ToString("yyyy-MM-dd");
-                        calendarEvent.DisplayEndDate = tempCalendarEvent.EndDate.ToString("yyyy-MM-dd");
-                    }
-                    else
-                    {
-                        foreach (TimeZoneInfo systemTimeZone in TimeZoneInfo.GetSystemTimeZones())
-                        {
-                            string systemTimeZoneIanaId = string.Empty;
-
-                            if (systemTimeZone.HasIanaId)
-                            {
-                                systemTimeZoneIanaId = systemTimeZone.Id;
-                            }
-                            else if (TimeZoneInfo.TryConvertWindowsIdToIanaId(systemTimeZone.Id, out string? ianaId))
-                            {
-                                systemTimeZoneIanaId = ianaId;
-                            }
-
-                            if (string.IsNullOrEmpty(systemTimeZoneIanaId))
-                            {
-                                continue;
-                            }
-                            else if (systemTimeZoneIanaId == tempCalendarEvent.StartDateTimeZoneIanaId)
-                            {
-                                tempCalendarEvent.StartDate = TimeZoneInfo.ConvertTime(tempCalendarEvent.StartDate, TimeZoneInfo.Utc, systemTimeZone);
-                                calendarEvent.StartDateTimeZoneIanaId = systemTimeZoneIanaId;
-                                calendarEvent.DisplayStartDateTimeZone = systemTimeZone.StandardName;
-                                break;
-                            }
-                        }
-
-                        foreach (TimeZoneInfo systemTimeZone in TimeZoneInfo.GetSystemTimeZones())
-                        {
-                            string systemTimeZoneIanaId = string.Empty;
-
-                            if (systemTimeZone.HasIanaId)
-                            {
-                                systemTimeZoneIanaId = systemTimeZone.Id;
-                            }
-                            else if (TimeZoneInfo.TryConvertWindowsIdToIanaId(systemTimeZone.Id, out string? ianaId))
-                            {
-                                systemTimeZoneIanaId = ianaId;
-                            }
-
-                            if (string.IsNullOrEmpty(systemTimeZoneIanaId))
-                            {
-                                continue;
-                            }
-                            else if (systemTimeZoneIanaId == tempCalendarEvent.EndDateTimeZoneIanaId)
-                            {
-                                tempCalendarEvent.EndDate = TimeZoneInfo.ConvertTime(tempCalendarEvent.EndDate, TimeZoneInfo.Utc, systemTimeZone);
-                                calendarEvent.EndDateTimeZoneIanaId = systemTimeZoneIanaId;
-                                calendarEvent.DisplayEndDateTimeZone = systemTimeZone.StandardName;
-                                break;
-                            }
-                        }
-
-                        calendarEvent.DisplayStartDate = tempCalendarEvent.StartDate.ToString("yyyy-MM-dd HH:mm");
-                        calendarEvent.DisplayEndDate = tempCalendarEvent.EndDate.ToString("yyyy-MM-dd HH:mm");
-                    }
-
-                    calendarEvent.Location = tempCalendarEvent.Location;
-                    calendarEvent.Status = tempCalendarEvent.Status;
-                    calendarEvent.CalendarEventAttachedFile = await _calendarService.GetCalendarEventAttachedFileAsync(tempCalendarEvent.Id, HttpContext.RequestAborted);
-
-                    if (!string.IsNullOrEmpty(calendarEvent?.CalendarEventAttachedFile?.Path ?? ""))
-                    {
-                        byte[]? fileData = await _calendarService.DownloadFileAsync(calendarEvent?.CalendarEventAttachedFile?.Path ?? "", HttpContext.RequestAborted);
-
-                        if (fileData != null)
-                        {
-                            // Use FileExtensionContentTypeProvider to extract ContentType
-                            FileExtensionContentTypeProvider provider = new();
-
-                            // Default contentType is set to "application/octet-stream"
-                            if (!provider.TryGetContentType(calendarEvent?.CalendarEventAttachedFile?.Path ?? "", out string? contentType))
-                            {
-                                contentType = "application/octet-stream";
-                            }
-
-                            // Convert file data to Base64
-                            calendarEvent!.CalendarEventAttachedFileBase64Data = Convert.ToBase64String(fileData);
-                            calendarEvent!.CalendarEventAttachedFileContentType = contentType;
-                        }
-                    }
-
-                    calendarEvent!.Calendars = calendars!.Select(x => new CalendarResponse { Id = x.Id, Name = x.Name }).OrderBy(x => x.Name).ToList();
-                    calendarEvent.SerializedCalendarReminders = JsonConvert.SerializeObject((await _calendarService.GetCalendarEventRemindersAsync(tempCalendarEvent.Id, HttpContext.RequestAborted)).Select(x => new CalendarReminderInfo { Method = x.Method ?? "", MinutesBeforeEvent = (int?)x.MinutesBeforeEvent, HoursBeforeEvent = (int?)x.HoursBeforeEvent, DaysBeforeEvent = (int?)x.DaysBeforeEvent, WeeksBeforeEvent = (int?)x.WeeksBeforeEvent, TimesBeforeEvent = x.TimesBeforeEvent?.ToTimeSpan() }) ?? []);
-
-                    calendarEvent.HtmlColorCode = calendars?.Where(x => x.Id == tempCalendarEvent.CalendarId)?.FirstOrDefault()?.HtmlColorCode;
-
-                    return Json(new { result = true, calendarEvent });
-                }
-                catch
-                {
-                    return Json(new { result = false, error = _localizer["Input is invalid"].Value });
-                }
+                loginedAccount = _sessionService.GetAccount()!;
+                calendars = (from c in await _calendarService.GetAllCalendarsAsync(HttpContext.RequestAborted) ?? []
+                             join oc in await _calendarService.GetOtherCalendarsAsync(loginedAccount.Email!, HttpContext.RequestAborted) ?? []
+                             on c.Id equals oc.CalendarId
+                             select c).ToList();
             }
             else
             {
-                return Json(new { result = false, error = _localizer["Input is invalid"].Value });
+                loginedAccount = new AccountResponse { Role = Role.Anonymous, TimeZoneIanaId = "UTC" };
+                calendars = (from c in await _calendarService.GetAllCalendarsAsync(HttpContext.RequestAborted) ?? []
+                             join cs in (await _calendarService.GetCalendarSharedAsync(HttpContext.RequestAborted))?.Where(x => x.Anonymous)?.ToList() ?? []
+                             on c.Id equals cs.CalendarId
+                             select new CalendarResponse { Id = c.Id, Name = c.Name, HtmlColorCode = c.HtmlColorCode })
+                            .OrderBy(x => x.Name).ToList();
             }
+
+            CalendarEventResponse? tempCalendarEvent = await _calendarService.GetCalendarEventAsync(id, HttpContext.RequestAborted);
+
+            if (tempCalendarEvent == null || !(tempCalendarEvent.Id > 0))
+                return Json(new { result = false, error = _localizer["Input is invalid"].Value });
+
+            CalendarResponse tempCalendar = calendars.FirstOrDefault(x => x.Id == tempCalendarEvent.CalendarId) ?? new CalendarResponse();
+            if (!(tempCalendar.Id > 0))
+                return Json(new { result = false, error = _localizer["Input is invalid"].Value });
+
+            CalendarEventOutputViewModel calendarEvent = tempCalendarEvent.ToDisplayViewModel(
+                loginedAccount.TimeZoneIanaId ?? "UTC", null, null, forGrid: false);
+
+            (calendarEvent.Description, _) = await _calendarService.PrepareHtmlForDisplayAsync(tempCalendarEvent.Description ?? "", HttpContext.RequestAborted);
+            calendarEvent.Location = tempCalendarEvent.Location;
+            calendarEvent.Status = tempCalendarEvent.Status;
+            calendarEvent.CalendarEventAttachedFile = await _calendarService.GetCalendarEventAttachedFileAsync(tempCalendarEvent.Id, HttpContext.RequestAborted);
+
+            if (!string.IsNullOrEmpty(calendarEvent.CalendarEventAttachedFile?.Path))
+            {
+                byte[]? fileData = await _calendarService.DownloadFileAsync(calendarEvent.CalendarEventAttachedFile.Path, HttpContext.RequestAborted);
+                if (fileData != null)
+                {
+                    FileExtensionContentTypeProvider provider = new();
+                    if (!provider.TryGetContentType(calendarEvent.CalendarEventAttachedFile.Path, out string? contentType))
+                        contentType = "application/octet-stream";
+                    calendarEvent.CalendarEventAttachedFileBase64Data = Convert.ToBase64String(fileData);
+                    calendarEvent.CalendarEventAttachedFileContentType = contentType;
+                }
+            }
+
+            calendarEvent.Calendars = calendars.Select(x => new CalendarResponse { Id = x.Id, Name = x.Name }).OrderBy(x => x.Name).ToList();
+            calendarEvent.SerializedCalendarReminders = (await _calendarService.GetCalendarEventRemindersAsync(tempCalendarEvent.Id, HttpContext.RequestAborted)).ToSerializedReminders();
+            calendarEvent.HtmlColorCode = calendars.FirstOrDefault(x => x.Id == tempCalendarEvent.CalendarId)?.HtmlColorCode;
+
+            return Json(new { result = true, calendarEvent });
         }
         catch
         {
@@ -1556,7 +507,7 @@ public class CalendarController : BaseController
         }
     }
 
-    /// <summary>Returns calendar events for the given calendar as JSON.</summary>
+    /// <summary>Returns calendar events for the requested calendars as JSON.</summary>
     [HttpPost]
     [ValidateAntiForgeryToken]
     [RequiredHttpPostAccess(Role = Role.Admin)]
@@ -1566,231 +517,57 @@ public class CalendarController : BaseController
     {
         try
         {
-            if (ModelState.IsValid)
+            if (!ModelState.IsValid)
+                return Json(new { result = false, error = _localizer["Input is invalid"].Value });
+
+            bool isAccountSessionExist = _sessionService.GetAccount() != null;
+            AccountResponse loginedAccount;
+            List<CalendarResponse> ownedCalendars;
+            List<CalendarResponse> otherCalendars;
+
+            if (isAccountSessionExist)
             {
-                try
-                {
-                    List<CalendarEventOutputViewModel> calendarEvents = [];
+                loginedAccount = _sessionService.GetAccount()!;
+                ownedCalendars = await _calendarService.GetCalendarsAsync(loginedAccount.Email!, HttpContext.RequestAborted);
 
-                    bool isAccountSessionExist = _sessionService.GetAccount() != null;
-                    AccountResponse? loginedAccount = null;
-
-                    List<CalendarResponse>? tempCalendars = null;
-
-                    List<CalendarResponse>? tempOtherCalendars = null;
-
-                    if (isAccountSessionExist)
-                    {
-                        loginedAccount = _sessionService.GetAccount()!;
-
-                        tempCalendars = await _calendarService.GetCalendarsAsync(_sessionService.GetAccount()!.Email!, HttpContext.RequestAborted);
-
-                        tempOtherCalendars = [];
-
-                        var otherCalendars = (from calendar in await _calendarService.GetAllCalendarsAsync(HttpContext.RequestAborted) ?? []
-                                              join otherCalendar in await _calendarService.GetOtherCalendarsAsync(loginedAccount.Email!, HttpContext.RequestAborted) ?? []
-                                              on calendar.Id equals otherCalendar.CalendarId
-                                              select new
-                                              {
-                                                  calendar.Id,
-                                                  calendar.Name,
-                                                  calendar.HtmlColorCode
-                                              }).OrderBy(x => x.Name).ToList();
-
-                        foreach (var tempOtherCalendar in otherCalendars)
-                        {
-                            tempOtherCalendars.Add(new CalendarResponse() { Id = tempOtherCalendar.Id, Name = tempOtherCalendar.Name, HtmlColorCode = tempOtherCalendar.HtmlColorCode });
-                        }
-                    }
-                    else
-                    {
-                        loginedAccount = new AccountResponse() { Role = Role.Anonymous, TimeZoneIanaId = "UTC" };
-
-                        tempCalendars = [];
-
-                        tempOtherCalendars = [];
-
-                        var temporaryOtherCalendars = (from calendar in await _calendarService.GetAllCalendarsAsync(HttpContext.RequestAborted) ?? []
-                                                       join calendarShared in (await _calendarService.GetCalendarSharedAsync(HttpContext.RequestAborted))?.Where(x => x.Anonymous)?.ToList() ?? []
-                                                       on calendar.Id equals calendarShared.CalendarId
-                                                       select new
-                                                       {
-                                                           calendar.Id,
-                                                           calendar.Name,
-                                                           calendar.HtmlColorCode
-                                                       }).OrderBy(x => x.Name).ToList();
-
-                        foreach (var tempOtherCalendar in temporaryOtherCalendars)
-                        {
-                            tempOtherCalendars.Add(new CalendarResponse() { Id = tempOtherCalendar.Id, Name = tempOtherCalendar.Name, HtmlColorCode = tempOtherCalendar.HtmlColorCode });
-                        }
-                    }
-
-                    IEnumerable<CalendarRequest> tempInputCalendars = calendarInputViewModel?.Calendars ?? [];
-
-                    foreach (CalendarRequest tempInputCalendar in tempInputCalendars)
-                    {
-                        if (((tempCalendars?.Where(x => x.Id == tempInputCalendar.Id)?.FirstOrDefault() ?? new CalendarResponse()).Id != 0) ||
-                            ((tempOtherCalendars?.Where(x => x.Id == tempInputCalendar.Id)?.FirstOrDefault() ?? new CalendarResponse()).Id != 0))
-                        {
-                            foreach (CalendarEventResponse calendarEvent in await _calendarService.GetCalendarEventsAsync(tempInputCalendar.Id, HttpContext.RequestAborted))
-                            {
-                                CalendarEventOutputViewModel item = new()
-                                {
-                                    Id = calendarEvent.Id,
-                                    CalendarId = calendarEvent.CalendarId,
-                                    Title = calendarEvent.Title,
-                                    AllDay = calendarEvent.AllDay
-                                };
-
-                                if (calendarEvent.AllDay)
-                                {
-                                    foreach (TimeZoneInfo systemTimeZone in TimeZoneInfo.GetSystemTimeZones())
-                                    {
-                                        string systemTimeZoneIanaId = string.Empty;
-
-                                        if (systemTimeZone.HasIanaId)
-                                        {
-                                            systemTimeZoneIanaId = systemTimeZone.Id;
-                                        }
-                                        else if (TimeZoneInfo.TryConvertWindowsIdToIanaId(systemTimeZone.Id, out string? ianaId))
-                                        {
-                                            systemTimeZoneIanaId = ianaId;
-                                        }
-
-                                        if (string.IsNullOrEmpty(systemTimeZoneIanaId))
-                                        {
-                                            continue;
-                                        }
-                                        else if (systemTimeZoneIanaId == loginedAccount.TimeZoneIanaId)
-                                        {
-                                            calendarEvent.StartDate = TimeZoneInfo.ConvertTime(calendarEvent.StartDate, TimeZoneInfo.Utc, systemTimeZone);
-                                            item.DisplayStartDateTimeZone = string.Empty;
-                                            break;
-                                        }
-                                    }
-
-                                    foreach (TimeZoneInfo systemTimeZone in TimeZoneInfo.GetSystemTimeZones())
-                                    {
-                                        string systemTimeZoneIanaId = string.Empty;
-
-                                        if (systemTimeZone.HasIanaId)
-                                        {
-                                            systemTimeZoneIanaId = systemTimeZone.Id;
-                                        }
-                                        else if (TimeZoneInfo.TryConvertWindowsIdToIanaId(systemTimeZone.Id, out string? ianaId))
-                                        {
-                                            systemTimeZoneIanaId = ianaId;
-                                        }
-
-                                        if (string.IsNullOrEmpty(systemTimeZoneIanaId))
-                                        {
-                                            continue;
-                                        }
-                                        else if (systemTimeZoneIanaId == loginedAccount.TimeZoneIanaId)
-                                        {
-                                            calendarEvent.EndDate = TimeZoneInfo.ConvertTime(calendarEvent.EndDate, TimeZoneInfo.Utc, systemTimeZone);
-                                            item.DisplayEndDateTimeZone = string.Empty;
-                                            break;
-                                        }
-                                    }
-
-                                    item.DisplayStartDate = calendarEvent.StartDate.ToString("yyyy-MM-dd");
-                                    item.DisplayEndDate = calendarEvent.EndDate.ToString("yyyy-MM-dd");
-
-                                    item.StartDate = calendarEvent.StartDate;
-                                    DateTime tempEndDate = calendarEvent.EndDate.AddDays(1);
-                                    item.EndDate = new DateTime(tempEndDate.Year, tempEndDate.Month, tempEndDate.Day, 0, 0, 0, tempEndDate.Kind);
-                                }
-                                else
-                                {
-                                    foreach (TimeZoneInfo systemTimeZone in TimeZoneInfo.GetSystemTimeZones())
-                                    {
-                                        string systemTimeZoneIanaId = string.Empty;
-
-                                        if (systemTimeZone.HasIanaId)
-                                        {
-                                            systemTimeZoneIanaId = systemTimeZone.Id;
-                                        }
-                                        else if (TimeZoneInfo.TryConvertWindowsIdToIanaId(systemTimeZone.Id, out string? ianaId))
-                                        {
-                                            systemTimeZoneIanaId = ianaId;
-                                        }
-
-                                        if (string.IsNullOrEmpty(systemTimeZoneIanaId))
-                                        {
-                                            continue;
-                                        }
-                                        else if (systemTimeZoneIanaId == calendarEvent.StartDateTimeZoneIanaId)
-                                        {
-                                            calendarEvent.StartDate = TimeZoneInfo.ConvertTime(calendarEvent.StartDate, TimeZoneInfo.Utc, systemTimeZone);
-                                            item.DisplayStartDateTimeZone = systemTimeZone.StandardName;
-                                            break;
-                                        }
-                                    }
-
-                                    foreach (TimeZoneInfo systemTimeZone in TimeZoneInfo.GetSystemTimeZones())
-                                    {
-                                        string systemTimeZoneIanaId = string.Empty;
-
-                                        if (systemTimeZone.HasIanaId)
-                                        {
-                                            systemTimeZoneIanaId = systemTimeZone.Id;
-                                        }
-                                        else if (TimeZoneInfo.TryConvertWindowsIdToIanaId(systemTimeZone.Id, out string? ianaId))
-                                        {
-                                            systemTimeZoneIanaId = ianaId;
-                                        }
-
-                                        if (string.IsNullOrEmpty(systemTimeZoneIanaId))
-                                        {
-                                            continue;
-                                        }
-                                        else if (systemTimeZoneIanaId == calendarEvent.EndDateTimeZoneIanaId)
-                                        {
-                                            calendarEvent.EndDate = TimeZoneInfo.ConvertTime(calendarEvent.EndDate, TimeZoneInfo.Utc, systemTimeZone);
-                                            item.DisplayEndDateTimeZone = systemTimeZone.StandardName;
-                                            break;
-                                        }
-                                    }
-
-                                    item.DisplayStartDate = calendarEvent.StartDate.ToString("yyyy-MM-dd HH:mm");
-                                    item.DisplayEndDate = calendarEvent.EndDate.ToString("yyyy-MM-dd HH:mm");
-
-                                    item.StartDate = calendarEvent.StartDate;
-                                    DateTime tempEndDate = calendarEvent.EndDate.AddDays(1);
-                                    item.EndDate = new DateTime(tempEndDate.Year, tempEndDate.Month, tempEndDate.Day, 0, 0, 0, tempEndDate.Kind);
-                                }
-
-                                if ((tempCalendars?.Where(x => x.Id == tempInputCalendar.Id)?.FirstOrDefault() ?? new CalendarResponse()).Id != 0)
-                                {
-                                    item.HtmlColorCode = tempCalendars?.Where(x => x.Id == calendarEvent.CalendarId)?.FirstOrDefault()?.HtmlColorCode;
-                                    item.CalendarType = EnumHelper.GetDescription(CalendarType.My);
-                                }
-                                else if ((tempOtherCalendars?.Where(x => x.Id == tempInputCalendar.Id)?.FirstOrDefault() ?? new CalendarResponse()).Id != 0)
-                                {
-                                    item.HtmlColorCode = tempOtherCalendars?.Where(x => x.Id == calendarEvent.CalendarId)?.FirstOrDefault()?.HtmlColorCode;
-                                    item.CalendarType = EnumHelper.GetDescription(CalendarType.Other);
-                                }
-
-                                calendarEvents.Add(item);
-                            }
-                        }
-                    }
-
-                    return calendarEvents.Count > 0
-                        ? Json(new { result = true, calendarEvents = JsonConvert.SerializeObject(calendarEvents) })
-                        : (IActionResult)Json(new { result = false, error = _localizer["Input is invalid"].Value });
-                }
-                catch
-                {
-                    return Json(new { result = false, error = _localizer["Input is invalid"].Value });
-                }
+                otherCalendars = (from c in await _calendarService.GetAllCalendarsAsync(HttpContext.RequestAborted) ?? []
+                                  join oc in await _calendarService.GetOtherCalendarsAsync(loginedAccount.Email!, HttpContext.RequestAborted) ?? []
+                                  on c.Id equals oc.CalendarId
+                                  select new CalendarResponse { Id = c.Id, Name = c.Name, HtmlColorCode = c.HtmlColorCode })
+                                 .OrderBy(x => x.Name).ToList();
             }
             else
             {
-                return Json(new { result = false, error = _localizer["Input is invalid"].Value });
+                loginedAccount = new AccountResponse { Role = Role.Anonymous, TimeZoneIanaId = "UTC" };
+                ownedCalendars = [];
+                otherCalendars = (from c in await _calendarService.GetAllCalendarsAsync(HttpContext.RequestAborted) ?? []
+                                  join cs in (await _calendarService.GetCalendarSharedAsync(HttpContext.RequestAborted))?.Where(x => x.Anonymous)?.ToList() ?? []
+                                  on c.Id equals cs.CalendarId
+                                  select new CalendarResponse { Id = c.Id, Name = c.Name, HtmlColorCode = c.HtmlColorCode })
+                                 .OrderBy(x => x.Name).ToList();
             }
+
+            string userTz = loginedAccount.TimeZoneIanaId ?? "UTC";
+            List<CalendarEventOutputViewModel> calendarEvents = [];
+
+            foreach (CalendarRequest inputCalendar in calendarInputViewModel?.Calendars ?? [])
+            {
+                bool isOwned = ownedCalendars.Any(x => x.Id == inputCalendar.Id);
+                bool isOther = !isOwned && otherCalendars.Any(x => x.Id == inputCalendar.Id);
+                if (!isOwned && !isOther) continue;
+
+                string? calendarType = isOwned
+                    ? EnumHelper.GetDescription(CalendarType.My)
+                    : EnumHelper.GetDescription(CalendarType.Other);
+                string? htmlColorCode = isOwned
+                    ? ownedCalendars.FirstOrDefault(x => x.Id == inputCalendar.Id)?.HtmlColorCode
+                    : otherCalendars.FirstOrDefault(x => x.Id == inputCalendar.Id)?.HtmlColorCode;
+
+                foreach (CalendarEventResponse evt in await _calendarService.GetCalendarEventsAsync(inputCalendar.Id, HttpContext.RequestAborted))
+                    calendarEvents.Add(evt.ToDisplayViewModel(userTz, htmlColorCode, calendarType));
+            }
+
+            return Json(new { result = true, calendarEvents = JsonConvert.SerializeObject(calendarEvents) });
         }
         catch
         {
@@ -1853,50 +630,25 @@ public class CalendarController : BaseController
     {
         try
         {
-            bool isAccountSessionExist = _sessionService.GetAccount() != null;
-            if (isAccountSessionExist)
-            {
-                AccountResponse loginedAccount = _sessionService.GetAccount()!;
+            AccountResponse loginedAccount = _sessionService.GetAccount()!;
+            List<CalendarResponse> allCalendars = await _calendarService.GetAllCalendarsAsync(HttpContext.RequestAborted) ?? [];
+            List<CalendarSharedResponse> calendarShareds = (await _calendarService.GetCalendarSharedAsync(HttpContext.RequestAborted) ?? []).Where(x => x.User).ToList();
+            List<OtherCalendarResponse> otherCalendars = await _calendarService.GetOtherCalendarsAsync(loginedAccount.Email!, HttpContext.RequestAborted);
 
-                if (loginedAccount.Role is not (Role.Admin or Role.User)) // If not logged in user
-                {
-                    return Json(new { result = false, error = _localizer["Login required."].Value });
-                }
+            var browseCalendarsOfInterests = (from calendar in allCalendars
+                                              join calendarShared in calendarShareds
+                                              on calendar.Id equals calendarShared.CalendarId
+                                              join otherCalendar in otherCalendars
+                                              on calendar.Id equals otherCalendar.CalendarId into otherCalendarGroup
+                                              from otherCalendar in otherCalendarGroup.DefaultIfEmpty()
+                                              select new
+                                              {
+                                                  calendar.Id,
+                                                  calendar.Name,
+                                                  Checked = otherCalendar != null
+                                              }).OrderBy(x => x.Name).ToList();
 
-                List<CalendarResponse> allCalendars = await _calendarService.GetAllCalendarsAsync(HttpContext.RequestAborted) ?? [];
-                List<CalendarSharedResponse> calendarShareds = await _calendarService.GetCalendarSharedAsync(HttpContext.RequestAborted) ?? [];
-                List<OtherCalendarResponse> otherCalendars = await _calendarService.GetOtherCalendarsAsync(_sessionService.GetAccount()!.Email!, HttpContext.RequestAborted);
-
-                switch (loginedAccount.Role)
-                {
-                    case Role.User:
-                        calendarShareds = calendarShareds.Where(x => x.User).ToList();
-                        break;
-                    default:
-                        return Json(new { result = false, error = _localizer["Input is invalid"].Value });
-                }
-
-                var browseCalendarsOfInterests = (from calendar in allCalendars
-                                                  join calendarShared in calendarShareds
-                                                  on calendar.Id equals calendarShared.CalendarId
-                                                  // Left Join otherCalendars based on calendar.Id
-                                                  join otherCalendar in otherCalendars
-                                                  on calendar.Id equals otherCalendar.CalendarId into otherCalendarGroup
-                                                  from otherCalendar in otherCalendarGroup.DefaultIfEmpty() // Left Join
-                                                  select new
-                                                  {
-                                                      calendar.Id,
-                                                      calendar.Name,
-                                                      Checked = otherCalendar != null // true if otherCalendar exists, false otherwise
-                                                  }).OrderBy(x => x.Name).ToList();
-
-
-                return Json(new { result = true, browseCalendarsOfInterests });
-            }
-            else
-            {
-                return Json(new { result = false, error = _localizer["Please Login to update calendar event"].Value });
-            }
+            return Json(new { result = true, browseCalendarsOfInterests });
         }
         catch
         {
@@ -1960,130 +712,32 @@ public class CalendarController : BaseController
     {
         try
         {
-            if (ModelState.IsValid)
-            {
-                calendarEventInputViewModel.Description ??= ""; // If no content was entered
-
-                bool isAccountSessionExist = _sessionService.GetAccount() != null;
-                if (!isAccountSessionExist)
-                    return Json(new { result = false, error = _localizer["Please Login to update calendar event"].Value });
-
-                AccountResponse loginedAccount = _sessionService.GetAccount()!;
-
-                if (loginedAccount.Role is not (Role.Admin or Role.User))
-                    return Json(new { result = false, error = _localizer["Please Login to update calendar event"].Value });
-
-                #region Build CalendarEventRequest with UTC dates
-                CalendarEventRequest calendarEventRequest = new() { Id = calendarEventInputViewModel.Id };
-
-                if (calendarEventInputViewModel.AllDay)
-                {
-                    calendarEventRequest.StartDate = new DateTime(Convert.ToInt32(calendarEventInputViewModel.StartDate!.Split("-")[0]),
-                        Convert.ToInt32(calendarEventInputViewModel.StartDate.Split("-")[1]),
-                        Convert.ToInt32(calendarEventInputViewModel.StartDate.Split("-")[2]), 0, 0, 0, DateTimeKind.Utc);
-                    calendarEventRequest.EndDate = new DateTime(Convert.ToInt32(calendarEventInputViewModel.EndDate!.Split("-")[0]),
-                        Convert.ToInt32(calendarEventInputViewModel.EndDate.Split("-")[1]),
-                        Convert.ToInt32(calendarEventInputViewModel.EndDate.Split("-")[2]), 0, 0, 0, DateTimeKind.Utc);
-                    calendarEventRequest.StartDateTimeZoneIanaId = null;
-                    calendarEventRequest.EndDateTimeZoneIanaId = null;
-                }
-                else
-                {
-                    string[] temporaryStartDate = calendarEventInputViewModel.StartDate!.Split(" ");
-                    string[] temporaryEndDate = calendarEventInputViewModel.EndDate!.Split(" ");
-                    DateTime tempStartDate = new(Convert.ToInt32(temporaryStartDate[0].Split("-")[0]),
-                        Convert.ToInt32(temporaryStartDate[0].Split("-")[1]),
-                        Convert.ToInt32(temporaryStartDate[0].Split("-")[2]),
-                        Convert.ToInt32(temporaryStartDate[1]!.Split(":")[0]),
-                        Convert.ToInt32(temporaryStartDate[1]!.Split(":")[1]),
-                        0, DateTimeKind.Unspecified);
-                    DateTime tempEndDate = new(Convert.ToInt32(temporaryEndDate[0].Split("-")[0]),
-                        Convert.ToInt32(temporaryEndDate[0].Split("-")[1]),
-                        Convert.ToInt32(temporaryEndDate[0].Split("-")[2]),
-                        Convert.ToInt32(temporaryEndDate[1]!.Split(":")[0]),
-                        Convert.ToInt32(temporaryEndDate[1]!.Split(":")[1]),
-                        0, DateTimeKind.Unspecified);
-
-                    foreach (TimeZoneInfo tz in TimeZoneInfo.GetSystemTimeZones())
-                    {
-                        string tzId = tz.HasIanaId ? tz.Id : (TimeZoneInfo.TryConvertWindowsIdToIanaId(tz.Id, out string? id) ? id : string.Empty);
-                        if (!string.IsNullOrEmpty(tzId) && tzId == calendarEventInputViewModel.StartDateTimeZoneIanaId)
-                        { tempStartDate = TimeZoneInfo.ConvertTime(tempStartDate, tz, TimeZoneInfo.Utc); break; }
-                    }
-                    foreach (TimeZoneInfo tz in TimeZoneInfo.GetSystemTimeZones())
-                    {
-                        string tzId = tz.HasIanaId ? tz.Id : (TimeZoneInfo.TryConvertWindowsIdToIanaId(tz.Id, out string? id) ? id : string.Empty);
-                        if (!string.IsNullOrEmpty(tzId) && tzId == calendarEventInputViewModel.EndDateTimeZoneIanaId)
-                        { tempEndDate = TimeZoneInfo.ConvertTime(tempEndDate, tz, TimeZoneInfo.Utc); break; }
-                    }
-
-                    calendarEventRequest.StartDate = tempStartDate;
-                    calendarEventRequest.EndDate = tempEndDate;
-                    calendarEventRequest.StartDateTimeZoneIanaId = calendarEventInputViewModel.StartDateTimeZoneIanaId;
-                    calendarEventRequest.EndDateTimeZoneIanaId = calendarEventInputViewModel.EndDateTimeZoneIanaId;
-                }
-
-                calendarEventRequest.CalendarId = calendarEventInputViewModel.CalendarId;
-                calendarEventRequest.Title = calendarEventInputViewModel.Title;
-                calendarEventRequest.Description = calendarEventInputViewModel.Description;
-                calendarEventRequest.AllDay = calendarEventInputViewModel.AllDay;
-                calendarEventRequest.Location = calendarEventInputViewModel.Location;
-                calendarEventRequest.Status = calendarEventInputViewModel.Status;
-                #endregion
-
-                #region Build reminders
-                List<CalendarReminderInfo> reminders = [];
-                List<Dictionary<string, object>> calendarReminders = JsonConvert.DeserializeObject<List<Dictionary<string, object>>>(calendarEventInputViewModel.SerializedCalendarReminders ?? "[]") ?? [];
-                foreach (Dictionary<string, object> reminder in calendarReminders)
-                {
-                    string? tempTimes = reminder["TimesBeforeEvent"]?.ToString();
-                    reminders.Add(new CalendarReminderInfo
-                    {
-                        Method = reminder["Method"]?.ToString() ?? "",
-                        MinutesBeforeEvent = reminder["MinutesBeforeEvent"] != null ? Convert.ToInt32(reminder["MinutesBeforeEvent"]) : null,
-                        HoursBeforeEvent = reminder["HoursBeforeEvent"] != null ? Convert.ToInt32(reminder["HoursBeforeEvent"]) : null,
-                        DaysBeforeEvent = reminder["DaysBeforeEvent"] != null ? Convert.ToInt32(reminder["DaysBeforeEvent"]) : null,
-                        WeeksBeforeEvent = reminder["WeeksBeforeEvent"] != null ? Convert.ToInt32(reminder["WeeksBeforeEvent"]) : null,
-                        TimesBeforeEvent = !string.IsNullOrEmpty(tempTimes)
-                            ? new TimeSpan(Convert.ToInt32(tempTimes.Split(":")[0]), Convert.ToInt32(tempTimes.Split(":")[1]), 0)
-                            : null
-                    });
-                }
-                #endregion
-
-                #region Build attached file
-                AttachedFileInfo? attachedFile = null;
-                if (calendarEventInputViewModel.CalendarEventUploadedFile != null)
-                {
-                    using MemoryStream ms = new();
-                    await calendarEventInputViewModel.CalendarEventUploadedFile.CopyToAsync(ms);
-                    attachedFile = new AttachedFileInfo
-                    {
-                        Bytes = ms.ToArray(),
-                        ContentType = calendarEventInputViewModel.CalendarEventUploadedFile.ContentType,
-                        FileName = calendarEventInputViewModel.CalendarEventUploadedFile.FileName,
-                        Size = calendarEventInputViewModel.CalendarEventUploadedFile.Length
-                    };
-                }
-                #endregion
-
-                ServiceResult updateEventResult = await _calendarService.UpdateCalendarEventAsync(
-                    calendarEventRequest,
-                    loginedAccount.Email!,
-                    $"{loginedAccount.Role}Index",
-                    reminders,
-                    attachedFile,
-                    HttpContext.RequestAborted);
-
-                if (!updateEventResult.Success)
-                    return Json(new { result = false, error = _localizer[updateEventResult.ErrorKey ?? "Input is invalid"].Value });
-
-                return Json(new { result = true, message = _localizer["The calendar event has been successfully updated."].Value });
-            }
-            else
-            {
+            if (!ModelState.IsValid)
                 return Json(new { result = false, error = _localizer["Input is invalid"].Value });
-            }
+
+            calendarEventInputViewModel.Description ??= "";
+
+            bool isAccountSessionExist = _sessionService.GetAccount() != null;
+            if (!isAccountSessionExist)
+                return Json(new { result = false, error = _localizer["Please Login to update calendar event"].Value });
+
+            AccountResponse loginedAccount = _sessionService.GetAccount()!;
+
+            if (loginedAccount.Role is not (Role.Admin or Role.User))
+                return Json(new { result = false, error = _localizer["Please Login to update calendar event"].Value });
+
+            ServiceResult updateEventResult = await _calendarService.UpdateCalendarEventAsync(
+                calendarEventInputViewModel.ToCalendarEventRequest(),
+                loginedAccount.Email!,
+                $"{loginedAccount.Role}Index",
+                calendarEventInputViewModel.SerializedCalendarReminders.ToReminderInfoList(),
+                await calendarEventInputViewModel.CalendarEventUploadedFile.ToAttachedFileInfoAsync(HttpContext.RequestAborted),
+                HttpContext.RequestAborted);
+
+            if (!updateEventResult.Success)
+                return Json(new { result = false, error = _localizer[updateEventResult.ErrorKey ?? "Input is invalid"].Value });
+
+            return Json(new { result = true, message = _localizer["The calendar event has been successfully updated."].Value });
         }
         catch
         {
@@ -2097,13 +751,13 @@ public class CalendarController : BaseController
     [HttpPost]
     [ValidateAntiForgeryToken]
     [RequiredHttpPostAccess(Role = Role.Admin)]
-    public async Task<IActionResult> UpdateCalendarShared([FromBody] IEnumerable<CalendarSharedResponse> calendarShareds)
+    public async Task<IActionResult> UpdateCalendarShared([FromBody] IEnumerable<CalendarSharedRequest> calendarShareds)
     {
         try
         {
             if (ModelState.IsValid)
             {
-                ServiceResult sharedResult = await _calendarService.UpdateCalendarSharedAsync(calendarShareds.Select(c => new CalendarSharedRequest { CalendarId = c.CalendarId, User = c.User, Anonymous = c.Anonymous }), HttpContext.RequestAborted);
+                ServiceResult sharedResult = await _calendarService.UpdateCalendarSharedAsync(calendarShareds, HttpContext.RequestAborted);
 
                 if (!sharedResult.Success)
                     return Json(new { result = false, error = _localizer[sharedResult.ErrorKey ?? "Input is invalid"].Value });
@@ -2219,4 +873,5 @@ public class CalendarController : BaseController
     #endregion
 
     #endregion
+
 }
