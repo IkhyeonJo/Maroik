@@ -104,4 +104,5 @@ public static class AccountBookViewModelMapper
             .ToDictionary(a => a.ProductName ?? "", a => (string?)a.MonetaryUnit);
         return items.Select(i => i.ToDisplayViewModel(currencyByProduct, localize, timeZoneIanaId)).ToList();
     }
+
 }

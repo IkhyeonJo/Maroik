@@ -100,7 +100,7 @@ public class AccountBookController : BaseController
             return PartialView("_AssetGrid", viewModels);
         }
 
-        return await AssetPageAsync(ct);
+        return await AccountBookPageAsync(ct);
     }
 
     /// <summary>Checks whether an asset with the given product name exists.</summary>
@@ -186,7 +186,7 @@ public class AccountBookController : BaseController
         var account = _sessionService.GetAccount()!;
         var assets  = await _assetService.GetAssetsAsync(account.Email!, ct);
         var stream  = _excelExportService.CreateAssetExcel(assets, Localize, account.TimeZoneIanaId!);
-        string name = ExcelFileName(fileName, account.TimeZoneIanaId!);
+        string name = fileName.ToExcelFileName(account.TimeZoneIanaId!);
         return File(stream, "application/octet-stream", name);
     }
 
@@ -248,7 +248,7 @@ public class AccountBookController : BaseController
             return PartialView("_IncomeGrid", viewModels);
         }
 
-        return await IncomePageAsync(ct);
+        return await AccountBookPageAsync(ct);
     }
 
     /// <summary>Checks whether an income record with the given ID exists.</summary>
@@ -363,7 +363,7 @@ public class AccountBookController : BaseController
         var assets  = await _assetService.GetAssetsAsync(account.Email!, ct);
         var incomes = await _incomeService.GetIncomesAsync(account.Email!, ct);
         var stream  = _excelExportService.CreateIncomeExcel(incomes, assets, Localize, account.TimeZoneIanaId!);
-        string name = ExcelFileName(fileName, account.TimeZoneIanaId!);
+        string name = fileName.ToExcelFileName(account.TimeZoneIanaId!);
         return File(stream, "application/octet-stream", name);
     }
 
@@ -427,7 +427,7 @@ public class AccountBookController : BaseController
             return PartialView("_ExpenditureGrid", viewModels);
         }
 
-        return await ExpenditurePageAsync(ct);
+        return await AccountBookPageAsync(ct);
     }
 
     /// <summary>Checks whether an expenditure record with the given ID exists.</summary>
@@ -545,7 +545,7 @@ public class AccountBookController : BaseController
         var assets       = await _assetService.GetAssetsAsync(account.Email!, ct);
         var expenditures = await _expenditureService.GetExpendituresAsync(account.Email!, ct);
         var stream       = _excelExportService.CreateExpenditureExcel(expenditures, assets, Localize, account.TimeZoneIanaId!);
-        string name      = ExcelFileName(fileName, account.TimeZoneIanaId!);
+        string name      = fileName.ToExcelFileName(account.TimeZoneIanaId!);
         return File(stream, "application/octet-stream", name);
     }
 
@@ -553,50 +553,18 @@ public class AccountBookController : BaseController
 
     #endregion
 
-    #region Helpers
-
-    private async Task<IActionResult> AssetPageAsync(CancellationToken ct)
+    private async Task<IActionResult> AccountBookPageAsync(CancellationToken ct)
     {
-        var account = _sessionService.GetAccount() ?? new AccountResponse();
-        string tz   = account.TimeZoneIanaId ?? "UTC";
-        var assets  = (await _assetService.GetAssetsAsync(account.Email!, ct))
+        var account      = _sessionService.GetAccount() ?? new AccountResponse();
+        string tz        = account.TimeZoneIanaId ?? "UTC";
+        var assets       = (await _assetService.GetAssetsAsync(account.Email!, ct))
             .Where(x => !x.Deleted).OrderBy(x => x.ProductName).ToList();
-        SetCurrentTimeViewBag(tz, assets);
-        return View();
-    }
-
-    private async Task<IActionResult> IncomePageAsync(CancellationToken ct)
-    {
-        var account = _sessionService.GetAccount() ?? new AccountResponse();
-        string tz   = account.TimeZoneIanaId ?? "UTC";
-        var assets  = (await _assetService.GetAssetsAsync(account.Email!, ct))
-            .Where(x => !x.Deleted).OrderBy(x => x.ProductName).ToList();
-        SetCurrentTimeViewBag(tz, assets);
-        return View();
-    }
-
-    private async Task<IActionResult> ExpenditurePageAsync(CancellationToken ct)
-    {
-        var account = _sessionService.GetAccount() ?? new AccountResponse();
-        string tz   = account.TimeZoneIanaId ?? "UTC";
-        var assets  = (await _assetService.GetAssetsAsync(account.Email!, ct))
-            .Where(x => !x.Deleted).OrderBy(x => x.ProductName).ToList();
-        SetCurrentTimeViewBag(tz, assets);
-        return View();
-    }
-
-    private void SetCurrentTimeViewBag(string tz, List<AssetResponse> assets)
-    {
-        DateTime ct = DateTime.UtcNow.ConvertTimeByTimeZoneIanaId(tz);
+        DateTime current = DateTime.UtcNow.ConvertTimeByTimeZoneIanaId(tz);
         ViewBag.Assets        = assets;
-        ViewBag.CurrentDate   = ct.ToString("yyyy-MM-dd");
-        ViewBag.CurrentHour   = ct.Hour;
-        ViewBag.CurrentMinute = ct.Minute;
-        ViewBag.CurrentSecond = ct.Second;
+        ViewBag.CurrentDate   = current.ToString("yyyy-MM-dd");
+        ViewBag.CurrentHour   = current.Hour;
+        ViewBag.CurrentMinute = current.Minute;
+        ViewBag.CurrentSecond = current.Second;
+        return View();
     }
-
-    private string ExcelFileName(string fileNamePrefix, string timeZoneIanaId)
-        => $"{fileNamePrefix}-{DateTime.UtcNow.ConvertTimeByTimeZoneIanaId(timeZoneIanaId):yyyy-MM-dd-HH-mm-ss-fff}.xlsx";
-
-    #endregion
 }

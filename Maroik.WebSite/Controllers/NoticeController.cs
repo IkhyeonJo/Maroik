@@ -236,7 +236,7 @@ public class NoticeController : BaseController
         var assets  = await _assetService.GetAssetsAsync(account.Email!, ct);
         var incomes = await _fixedIncomeService.GetFixedIncomesAsync(account.Email!, ct);
         var stream  = _excelExportService.CreateFixedIncomeExcel(incomes, assets, Localize, account.TimeZoneIanaId!, NoticeWindowDays);
-        string name = ExcelFileName(fileName, account.TimeZoneIanaId!);
+        string name = fileName.ToExcelFileName(account.TimeZoneIanaId!);
         return File(stream, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", name);
     }
     #endregion
@@ -433,13 +433,10 @@ public class NoticeController : BaseController
         var assets       = await _assetService.GetAssetsAsync(account.Email!, ct);
         var expenditures = await _fixedExpenditureService.GetFixedExpendituresAsync(account.Email!, ct);
         var stream       = _excelExportService.CreateFixedExpenditureExcel(expenditures, assets, Localize, account.TimeZoneIanaId!, NoticeWindowDays);
-        string name      = ExcelFileName(fileName, account.TimeZoneIanaId!);
+        string name      = fileName.ToExcelFileName(account.TimeZoneIanaId!);
         return File(stream, "application/octet-stream", name);
     }
     #endregion
 
     #endregion
-
-    private string ExcelFileName(string prefix, string timeZoneIanaId)
-        => $"{prefix}-{DateTime.UtcNow.ConvertTimeByTimeZoneIanaId(timeZoneIanaId):yyyy-MM-dd-HH-mm-ss-fff}.xlsx";
 }

@@ -472,7 +472,7 @@ public class ManagementController : BaseController
         var account  = _sessionService.GetAccount()!;
         var accounts = await _managementAccountService.GetAllAccountsAsync(HttpContext.RequestAborted);
         var stream   = _excelExportService.CreateAccountExcel(accounts, Localize, account.TimeZoneIanaId!);
-        string name  = $"{fileName}-{DateTime.UtcNow.ConvertTimeByTimeZoneIanaId(account.TimeZoneIanaId!):yyyy-MM-dd-HH-mm-ss-fff}.xlsx";
+        string name  = fileName.ToExcelFileName(account.TimeZoneIanaId!);
         return File(stream, "application/octet-stream", name);
     }
 
@@ -867,7 +867,7 @@ public class ManagementController : BaseController
         var categories  = await _menuService.GetAllCategoriesAsync(HttpContext.RequestAborted);
         var subCats     = await _menuService.GetAllSubCategoriesAsync(HttpContext.RequestAborted);
         var stream      = _excelExportService.CreateMenuExcel(categories, subCats, Localize);
-        string name     = $"{fileName}-{DateTime.UtcNow.ConvertTimeByTimeZoneIanaId(account.TimeZoneIanaId!):yyyy-MM-dd-HH-mm-ss-fff}.xlsx";
+        string name     = fileName.ToExcelFileName(account.TimeZoneIanaId!);
         return File(stream, "application/octet-stream", name);
     }
 
