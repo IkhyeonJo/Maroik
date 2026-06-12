@@ -5,11 +5,11 @@ using Maroik.WebSite.Models.ViewModels.Calendar;
 namespace Maroik.WebSite.Utilities;
 
 /// <summary>
-/// Presentation-layer extension methods on <see cref="ICalendarService"/>.
-/// Combines service data-fetching with <see cref="CalendarViewModelMapper"/> mapping
-/// so controllers need not orchestrate the fetch-then-map loop themselves.
+/// Presentation-layer extensions on <see cref="ICalendarService"/> that combine
+/// service data-fetching with <see cref="CalendarViewModelMapper"/> mapping,
+/// so controllers receive ready-to-render view model lists without orchestrating the loop.
 /// </summary>
-public static class CalendarServiceExtensions
+public static class CalendarEventViewModelExtensions
 {
     extension(ICalendarService calendarService)
     {
