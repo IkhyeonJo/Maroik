@@ -1,11 +1,11 @@
 using Maroik.Core.Contract.Utilities;
 using Maroik.Core.Contract.Dtos;
-using Maroik.Core.Contract.Interfaces;
+using Maroik.WebSite.Contracts;
 using Microsoft.AspNetCore.Http;
 using System.Text;
 using System.Text.Json;
 
-namespace Maroik.Core.Service.Services;
+namespace Maroik.WebSite.Services;
 
 /// <summary>
 /// ASP.NET Core session-based implementation of <see cref="ISessionService"/>.

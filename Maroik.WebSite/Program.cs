@@ -122,7 +122,8 @@ try
 
     builder.Services.AddApplicationServices();
     builder.Services
-        .AddScoped<Maroik.WebSite.Contracts.IExcelExportService, Maroik.WebSite.Services.ExcelExportService>();
+        .AddScoped<Maroik.WebSite.Contracts.IExcelExportService, Maroik.WebSite.Services.ExcelExportService>()
+        .AddScoped<Maroik.WebSite.Contracts.ISessionService, Maroik.WebSite.Services.SessionService>();
 
     #endregion
 

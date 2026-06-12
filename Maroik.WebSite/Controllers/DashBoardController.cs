@@ -1,5 +1,6 @@
 ﻿using Maroik.Core.Contract.Interfaces;
 using Maroik.Core.Contract.Utilities;
+using Maroik.WebSite.Contracts;
 using Maroik.WebSite.Utilities;
 using Maroik.WebSite.Models.ViewModels.Account;
 using Maroik.WebSite.Models.ViewModels.DashBoard;

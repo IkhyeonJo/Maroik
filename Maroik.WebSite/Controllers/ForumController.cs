@@ -1,6 +1,7 @@
 using Maroik.Core.Contract.Dtos;
 using Maroik.Core.Contract.Interfaces;
 using Maroik.Core.Contract.Utilities;
+using Maroik.WebSite.Contracts;
 using Maroik.WebSite.Utilities;
 using Maroik.WebSite.Models;
 using Maroik.WebSite.Models.ViewModels.Forum;
