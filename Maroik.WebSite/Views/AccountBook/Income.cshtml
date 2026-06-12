@@ -10,12 +10,14 @@
     localization strings for the calendar widget are injected as hidden form fields.
 *@
 
+@using Maroik.WebSite.Models.ViewModels.AccountBook
+@model AccountBookPageViewModel
 @{
-    List<AssetResponse> assets = (ViewBag.Assets as List<AssetResponse>) ?? [];
-    string currentDate = (ViewBag.CurrentDate as string) ?? "";
-    int currentHour = (ViewBag.CurrentHour as int?) ?? 0;
-    int currentMinute = (ViewBag.CurrentMinute as int?) ?? 0;
-    int currentSecond = (ViewBag.CurrentSecond as int?) ?? 0;
+    var assets       = Model.Assets;
+    string currentDate = Model.CurrentDate;
+    int currentHour    = Model.CurrentHour;
+    int currentMinute  = Model.CurrentMinute;
+    int currentSecond  = Model.CurrentSecond;
 }
 
 @Html.Hidden("LocalizerPrevText", Localizer["PrevText"].Value)

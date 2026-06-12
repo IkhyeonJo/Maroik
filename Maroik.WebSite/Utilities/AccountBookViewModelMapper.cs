@@ -105,4 +105,15 @@ public static class AccountBookViewModelMapper
         return items.Select(i => i.ToDisplayViewModel(currencyByProduct, localize, timeZoneIanaId)).ToList();
     }
 
+    /// <summary>
+    /// Fills the current local time fields on <paramref name="vm"/> for pre-populating date/time pickers.
+    /// </summary>
+    public static void PopulateTimeData(this AccountBookPageViewModel vm, string timeZoneIanaId)
+    {
+        DateTime ct      = DateTime.UtcNow.ConvertTimeByTimeZoneIanaId(timeZoneIanaId);
+        vm.CurrentDate   = ct.ToString("yyyy-MM-dd");
+        vm.CurrentHour   = ct.Hour;
+        vm.CurrentMinute = ct.Minute;
+        vm.CurrentSecond = ct.Second;
+    }
 }

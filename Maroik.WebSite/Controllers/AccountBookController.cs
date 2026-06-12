@@ -100,7 +100,15 @@ public class AccountBookController : BaseController
             return PartialView("_AssetGrid", viewModels);
         }
 
-        return await AccountBookPageAsync(ct);
+        var pageAccount = _sessionService.GetAccount() ?? new AccountResponse();
+        string tz       = pageAccount.TimeZoneIanaId ?? "UTC";
+        var vm          = new AccountBookPageViewModel
+        {
+            Assets = (await _assetService.GetAssetsAsync(pageAccount.Email!, ct))
+                .Where(x => !x.Deleted).OrderBy(x => x.ProductName).ToList()
+        };
+        vm.PopulateTimeData(tz);
+        return View(vm);
     }
 
     /// <summary>Checks whether an asset with the given product name exists.</summary>
@@ -248,7 +256,15 @@ public class AccountBookController : BaseController
             return PartialView("_IncomeGrid", viewModels);
         }
 
-        return await AccountBookPageAsync(ct);
+        var pageAccount = _sessionService.GetAccount() ?? new AccountResponse();
+        string tz       = pageAccount.TimeZoneIanaId ?? "UTC";
+        var vm          = new AccountBookPageViewModel
+        {
+            Assets = (await _assetService.GetAssetsAsync(pageAccount.Email!, ct))
+                .Where(x => !x.Deleted).OrderBy(x => x.ProductName).ToList()
+        };
+        vm.PopulateTimeData(tz);
+        return View(vm);
     }
 
     /// <summary>Checks whether an income record with the given ID exists.</summary>
@@ -427,7 +443,15 @@ public class AccountBookController : BaseController
             return PartialView("_ExpenditureGrid", viewModels);
         }
 
-        return await AccountBookPageAsync(ct);
+        var pageAccount = _sessionService.GetAccount() ?? new AccountResponse();
+        string tz       = pageAccount.TimeZoneIanaId ?? "UTC";
+        var vm          = new AccountBookPageViewModel
+        {
+            Assets = (await _assetService.GetAssetsAsync(pageAccount.Email!, ct))
+                .Where(x => !x.Deleted).OrderBy(x => x.ProductName).ToList()
+        };
+        vm.PopulateTimeData(tz);
+        return View(vm);
     }
 
     /// <summary>Checks whether an expenditure record with the given ID exists.</summary>
@@ -553,18 +577,4 @@ public class AccountBookController : BaseController
 
     #endregion
 
-    private async Task<IActionResult> AccountBookPageAsync(CancellationToken ct)
-    {
-        var account      = _sessionService.GetAccount() ?? new AccountResponse();
-        string tz        = account.TimeZoneIanaId ?? "UTC";
-        var assets       = (await _assetService.GetAssetsAsync(account.Email!, ct))
-            .Where(x => !x.Deleted).OrderBy(x => x.ProductName).ToList();
-        DateTime current = DateTime.UtcNow.ConvertTimeByTimeZoneIanaId(tz);
-        ViewBag.Assets        = assets;
-        ViewBag.CurrentDate   = current.ToString("yyyy-MM-dd");
-        ViewBag.CurrentHour   = current.Hour;
-        ViewBag.CurrentMinute = current.Minute;
-        ViewBag.CurrentSecond = current.Second;
-        return View();
-    }
 }
