@@ -1,10 +1,10 @@
 using Maroik.Core.Contract.Dtos;
 using Maroik.Core.Contract.Utilities;
-using Maroik.Core.Service.Services;
+using Maroik.WebSite.Services;
 using Microsoft.AspNetCore.Http;
 using Moq;
 
-namespace Maroik.Core.Service.Tests.Services;
+namespace Maroik.WebSite.Tests.Services;
 
 /// <summary>
 /// Unit tests for <see cref="SessionService"/>.
@@ -131,7 +131,6 @@ public class SessionServiceTests
         _httpContextAccessor.Setup(a => a.HttpContext).Returns(((HttpContext?)null)!);
         var sut = CreateSut();
 
-        // Should not throw
         var ex = Record.Exception(() => sut.SetAccount(SampleAccount()));
         Assert.Null(ex);
     }

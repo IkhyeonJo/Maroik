@@ -1,6 +1,3 @@
-using Ganss.Xss;
-using HtmlAgilityPack;
-using ImageMagick;
 using Maroik.Core.Contract.Domains.Calendar;
 using Maroik.Core.Contract.Utilities;
 using Maroik.Core.Contract.Dtos;
@@ -14,7 +11,7 @@ namespace Maroik.Core.Service.Services;
 /// <summary>
 /// Implementation of <see cref="ICalendarService"/> covering the full calendar feature set:
 /// calendars, events, reminders, file attachments, sharing, and subscriptions.
-/// Event attachments are virus-scanned by ClamAV and image-processed by ImageMagick before upload.
+/// Event attachments are virus-scanned by ClamAV and image-validated before upload.
 /// Files are stored in and retrieved from the file-storage microservice.
 /// All multi-step write operations use <see cref="IUnitOfWork"/> transactions.
 /// </summary>
@@ -29,6 +26,9 @@ public class CalendarService : ICalendarService
     private readonly IFileClient _fileClient;
     private readonly IUnitOfWork _unitOfWork;
     private readonly IRsaService _rsa;
+    private readonly IImageValidator _imageValidator;
+    private readonly IHtmlContentSanitizer _htmlSanitizer;
+    private readonly IHtmlParser _htmlParser;
     private readonly IOptions<ServerSetting> _settings;
     private readonly ILogger<CalendarService> _logger;
 
@@ -43,6 +43,9 @@ public class CalendarService : ICalendarService
         IFileClient fileClient,
         IUnitOfWork unitOfWork,
         IRsaService rsa,
+        IImageValidator imageValidator,
+        IHtmlContentSanitizer htmlSanitizer,
+        IHtmlParser htmlParser,
         IOptions<ServerSetting> settings,
         ILogger<CalendarService> logger)
     {
@@ -55,6 +58,9 @@ public class CalendarService : ICalendarService
         _fileClient = fileClient;
         _unitOfWork = unitOfWork;
         _rsa = rsa;
+        _imageValidator = imageValidator;
+        _htmlSanitizer = htmlSanitizer;
+        _htmlParser = htmlParser;
         _settings = settings;
         _logger = logger;
     }
@@ -467,15 +473,8 @@ public class CalendarService : ICalendarService
     /// <inheritdoc />
     public async Task<SummernoteUploadResult> UploadSummernoteImageAsync(AttachedFileInfo file, string roleIndex, CancellationToken ct = default)
     {
-        // Validate the bytes as a real image by parsing them with ImageMagick before storing.
-        try
-        {
-            using var image = new MagickImage(new MemoryStream(file.Bytes));
-        }
-        catch (MagickException)
-        {
+        if (!_imageValidator.IsValidImage(file.Bytes))
             return SummernoteUploadResult.Fail("Invalid image file.");
-        }
 
         string ext = Path.GetExtension(file.FileName).ToLowerInvariant();
         // Use a GUID-based file name to avoid collisions and prevent path traversal via the original name.
@@ -507,41 +506,22 @@ public class CalendarService : ICalendarService
     /// <inheritdoc />
     public async Task<(string Html, bool HasImages)> PrepareHtmlForDisplayAsync(string html, CancellationToken ct = default)
     {
-        var doc = new HtmlDocument();
-        doc.LoadHtml(html);
-        bool hasImages = false;
-
-        foreach (HtmlNode imgTag in doc.DocumentNode.Descendants("img") ?? [])
+        return await _htmlParser.TransformImageAttributesAsync(html, async (alt, token) =>
         {
-            hasImages = true;
-            string filePath = imgTag.GetAttributeValue("alt", "");
-            byte[]? fileData = await _fileClient.DownloadAsync(filePath, _settings.Value.FileStorageBaseUrl ?? string.Empty, ct);
-            if (fileData != null)
-            {
-                _ = imgTag.SetAttributeValue("data-file", Convert.ToBase64String(fileData));
-                _ = imgTag.SetAttributeValue("data-contenttype", GetImageContentType(filePath));
-                _ = imgTag.SetAttributeValue("alt", _rsa.Encrypt(filePath));
-            }
-        }
-
-        return (doc.DocumentNode.OuterHtml, hasImages);
+            byte[]? fileData = await _fileClient.DownloadAsync(alt, _settings.Value.FileStorageBaseUrl ?? string.Empty, token);
+            if (fileData == null) return null;
+            return new HtmlImgPatch(
+                NewAlt: _rsa.Encrypt(alt),
+                DataFile: Convert.ToBase64String(fileData),
+                DataContentType: GetImageContentType(alt));
+        }, ct);
     }
 
     /// <summary>Sanitizes HTML to remove unsafe markup and decrypts RSA-encrypted file paths in img alt attributes.</summary>
     private string SanitizeAndDecryptContent(string html)
     {
-        var sanitizer = new HtmlSanitizer();
-        sanitizer.AllowedAttributes.Add("class");
-        string sanitized = sanitizer.Sanitize(html);
-
-        var doc = new HtmlDocument();
-        doc.LoadHtml(sanitized);
-        foreach (HtmlNode imgTag in doc.DocumentNode.Descendants("img") ?? [])
-        {
-            string encryptedPath = imgTag.GetAttributeValue("alt", "");
-            _ = imgTag.SetAttributeValue("alt", _rsa.Decrypt(encryptedPath));
-        }
-        return doc.DocumentNode.OuterHtml;
+        string sanitized = _htmlSanitizer.Sanitize(html);
+        return _htmlParser.TransformImageAttributes(sanitized, alt => new HtmlImgPatch(NewAlt: _rsa.Decrypt(alt)));
     }
 
     /// <summary>Returns the MIME content type for Summernote-uploaded images by file extension.</summary>

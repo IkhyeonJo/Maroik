@@ -1,4 +1,3 @@
-using ImageMagick;
 using Maroik.Core.Contract.Domains.Account;
 using Maroik.Core.Contract.Domains.Finance;
 using Maroik.Core.Contract.Domains.ValueObjects;
@@ -14,10 +13,9 @@ namespace Maroik.Core.Service.Services;
 
 /// <summary>
 /// Implementation of <see cref="IProfileService"/> for user self-service profile management.
-/// Avatar images are scanned by ClamAV (<see cref="IClamavClient"/>) before being processed
-/// with ImageMagick (resize/compress) and uploaded to the file-storage microservice.
-/// Password changes require the current password to be verified via BCrypt before the new
-/// hash is stored. Time-zone updates validate the IANA ID against the system's zone database.
+/// Avatar images are scanned by ClamAV (<see cref="IClamavClient"/>) and image-validated
+/// before being stored. Password changes require the current password to be verified via BCrypt
+/// before the new hash is stored. Time-zone updates validate the IANA ID against the system's zone database.
 /// </summary>
 public class ProfileService : IProfileService
 {
@@ -25,6 +23,7 @@ public class ProfileService : IProfileService
     private readonly IAssetRepository _assetRepository;
     private readonly IPasswordService _passwordService;
     private readonly IClamavClient _clamavClient;
+    private readonly IImageValidator _imageValidator;
     private readonly IOptions<ServerSetting> _settings;
     private readonly ILogger<ProfileService> _logger;
 
@@ -34,6 +33,7 @@ public class ProfileService : IProfileService
         IAssetRepository assetRepository,
         IPasswordService passwordService,
         IClamavClient clamavClient,
+        IImageValidator imageValidator,
         IOptions<ServerSetting> settings,
         ILogger<ProfileService> logger)
     {
@@ -41,6 +41,7 @@ public class ProfileService : IProfileService
         _assetRepository = assetRepository;
         _passwordService = passwordService;
         _clamavClient = clamavClient;
+        _imageValidator = imageValidator;
         _settings = settings;
         _logger = logger;
     }
@@ -131,16 +132,10 @@ public class ProfileService : IProfileService
             return ServiceResult.Fail("virus-detected");
 
         memoryStream.Position = 0;
-        try
-        {
-            using var image = new MagickImage(memoryStream);
-            if (image.Format == MagickFormat.Svg)
-                return ServiceResult.Fail("svg-not-allowed");
-        }
-        catch
-        {
+        if (!_imageValidator.IsValidImage(memoryStream.ToArray()))
             return ServiceResult.Fail("invalid-image");
-        }
+        if (_imageValidator.IsSvg(memoryStream.ToArray()))
+            return ServiceResult.Fail("svg-not-allowed");
 
         if (!Directory.Exists(avatarDirectoryPath))
             Directory.CreateDirectory(avatarDirectoryPath);
