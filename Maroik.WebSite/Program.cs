@@ -82,6 +82,7 @@ try
         cfg.FromEmail = smtp["fromEmail"];
         cfg.FromFullName = smtp["fromFullName"];
         cfg.IsDefault = Convert.ToBoolean(smtp["IsDefault"]);
+        cfg.MaxAttachedFileSizeBytes = Convert.ToInt64(section["MaxAttachedFileSizeBytes"]);
         cfg.NoticeMaturityDateDay = Convert.ToInt32(section["NoticeMaturityDateDay"]);
         cfg.DockerCertPath = section["DockerCertPath"];
         cfg.DockerKeyPath = section["DockerKeyPath"];
