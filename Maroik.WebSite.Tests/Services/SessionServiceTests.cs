@@ -54,7 +54,7 @@ public class SessionServiceTests
     public void GetAccount_ReturnsNull_WhenSessionKeyDoesNotExist()
     {
         SetupContext();
-        byte[] outBytes = null!;
+        byte[]? outBytes = null!;
         _session.Setup(s => s.TryGetValue(It.IsAny<string>(), out outBytes)).Returns(false);
         var sut = CreateSut();
 
@@ -69,7 +69,7 @@ public class SessionServiceTests
     {
         SetupContext();
         var account = SampleAccount();
-        byte[] bytes = System.Text.Encoding.UTF8.GetBytes(
+        byte[]? bytes = System.Text.Encoding.UTF8.GetBytes(
             System.Text.Json.JsonSerializer.Serialize(account));
         _session.Setup(s => s.TryGetValue(It.IsAny<string>(), out bytes)).Returns(true);
         var sut = CreateSut();
@@ -86,7 +86,7 @@ public class SessionServiceTests
     public void GetAccount_ReturnsNull_WhenSessionDataIsInvalidJson()
     {
         SetupContext();
-        byte[] bytes = System.Text.Encoding.UTF8.GetBytes("not valid json {{{{");
+        byte[]? bytes = System.Text.Encoding.UTF8.GetBytes("not valid json {{{{");
         _session.Setup(s => s.TryGetValue(It.IsAny<string>(), out bytes)).Returns(true);
         var sut = CreateSut();
 
@@ -100,7 +100,7 @@ public class SessionServiceTests
     public void GetAccount_ReturnsNull_WhenSessionBytesAreEmpty()
     {
         SetupContext();
-        byte[] bytes = [];
+        byte[]? bytes = [];
         _session.Setup(s => s.TryGetValue(It.IsAny<string>(), out bytes)).Returns(true);
         var sut = CreateSut();
 
