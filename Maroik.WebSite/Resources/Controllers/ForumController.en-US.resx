@@ -120,8 +120,8 @@
   <data name="content length is must be between 0 and 16384 characters." xml:space="preserve">
     <value>content length is must be between 0 and 16384 characters.</value>
   </data>
-  <data name="File Size must be smaller than 10MB." xml:space="preserve">
-    <value>File Size must be smaller than 10MB.</value>
+  <data name="File Size must be smaller than {0}MB." xml:space="preserve">
+    <value>File Size must be smaller than {0}MB.</value>
   </data>
   <data name="Input is invalid" xml:space="preserve">
     <value>Input is invalid</value>

@@ -156,8 +156,8 @@
   <data name="Fail to find the account by given email address" xml:space="preserve">
     <value>Fail to find the account by given email address</value>
   </data>
-  <data name="File Size must be smaller than 10MB." xml:space="preserve">
-    <value>File Size must be smaller than 10MB.</value>
+  <data name="File Size must be smaller than {0}MB." xml:space="preserve">
+    <value>File Size must be smaller than {0}MB.</value>
   </data>
   <data name="Nickname" xml:space="preserve">
     <value>Nickname</value>

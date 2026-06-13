@@ -1,4 +1,4 @@
-﻿const maxFileSize = 10485760;
+﻿const maxFileSize = parseInt($('#maxAttachedFileSizeBytes').val()) || 10485760;
 const $formUpdateProfileAvatar = $('#formUpdateProfileAvatar');
 const $formUpdateProfilePassword = $('#formUpdateProfilePassword');
 const $password = $('#Password');

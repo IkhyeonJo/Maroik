@@ -1,4 +1,4 @@
-﻿const maxFileSize = 10485760;
+﻿const maxFileSize = parseInt($('#maxAttachedFileSizeBytes').val()) || 10485760;
 const $__RequestVerificationToken = $('input[name="__RequestVerificationToken"]');
 const $writeBoardContent = $('#writeBoardContent');
 const $editBoardContent = $('#editBoardContent');

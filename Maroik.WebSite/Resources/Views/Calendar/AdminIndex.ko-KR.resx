@@ -453,8 +453,8 @@
   <data name="Attachment (Only zip extension allowed.)" xml:space="preserve">
     <value>첨부파일 (zip 확장자만 가능합니다.)</value>
   </data>
-  <data name="File size must be smaller than 10MB." xml:space="preserve">
-    <value>파일 크기는 10MB 보다 작아야 합니다.</value>
+  <data name="File size must be smaller than {0}MB." xml:space="preserve">
+    <value>파일 크기는 {0}MB 보다 작아야 합니다.</value>
   </data>
   <data name="My Calendar" xml:space="preserve">
     <value>나의 달력</value>

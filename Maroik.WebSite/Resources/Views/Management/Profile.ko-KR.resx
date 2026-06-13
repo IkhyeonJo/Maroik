@@ -135,8 +135,8 @@
   <data name="Email" xml:space="preserve">
     <value>이메일</value>
   </data>
-  <data name="File Size must be smaller than 10MB." xml:space="preserve">
-    <value>파일 크기는 10MB 이하만 가능합니다.</value>
+  <data name="File Size must be smaller than {0}MB." xml:space="preserve">
+    <value>파일 크기는 {0}MB 이하만 가능합니다.</value>
   </data>
   <data name="Nickname" xml:space="preserve">
     <value>닉네임</value>

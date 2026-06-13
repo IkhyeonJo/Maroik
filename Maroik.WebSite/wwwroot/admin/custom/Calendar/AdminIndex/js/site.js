@@ -93,7 +93,7 @@ const $aCreateCalendar = $('#aCreateCalendar');
 const $dropdownContent = $('#dropdown-content');
 const $dropdownIcon = $('#dropdown-icon');
 const $__RequestVerificationToken = $('input[name="__RequestVerificationToken"]');
-const maxFileSize = 10485760;
+const maxFileSize = parseInt($('#maxAttachedFileSizeBytes').val()) || 10485760;
 const maxMinutesBeforeEvent = 40320;
 const maxHoursBeforeEvent = 672;
 const maxDaysBeforeEvent = 28;

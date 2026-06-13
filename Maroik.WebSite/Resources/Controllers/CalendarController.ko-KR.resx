@@ -144,8 +144,8 @@
   <data name="Please Login to create calendar event" xml:space="preserve">
     <value>달력 이벤트를 생성하려면 로그인하세요</value>
   </data>
-  <data name="File size must be smaller than 10MB." xml:space="preserve">
-    <value>파일 크기는 10MB 보다 작아야 합니다.</value>
+  <data name="File size must be smaller than {0}MB." xml:space="preserve">
+    <value>파일 크기는 {0}MB 보다 작아야 합니다.</value>
   </data>
   <data name="The calendar event has been successfully created." xml:space="preserve">
     <value>달력 이벤트가 성공적으로 생성되었습니다.</value>

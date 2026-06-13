@@ -15,12 +15,14 @@
 
 @{
     string selectedSearchType = Model.SelectedSearchType;
+    long maxAttachedFileSizeBytes = (long)ViewBag.MaxAttachedFileSizeBytes;
     string typedSearchText = Model.TypedSearchText;
     AccountResponse loginedAccount = Model.LoginedAccount;
     string loginedAccountTimeZoneIanaId = Model.LoginedAccountTimeZoneIanaId;
     List<AccountResponse> accounts = Model.AllAccounts;
 }
 
+@Html.Hidden(nameof(maxAttachedFileSizeBytes), maxAttachedFileSizeBytes)
 @Html.Hidden("LocalizerIETFLanguageTag", Localizer["IETFLanguageTag"].Value)
 
 <section class="content">
@@ -61,7 +63,7 @@
                     </div> *@
 
                     <div class="form-group">
-                        <input type="file" id="writeUploadedFile" name="writeUploadedFile" accept=".zip" data-errorMessage="@Localizer["File size must be smaller than 10MB."].Value">
+                        <input type="file" id="writeUploadedFile" name="writeUploadedFile" accept=".zip" data-errorMessage="@Localizer["File size must be smaller than {0}MB.", ViewBag.MaxAttachedFileSizeBytes / (1024 * 1024)].Value">
                         <p class="help-block">@Localizer["Only zip extension allowed."].Value</p>
                     </div>
 
@@ -309,7 +311,7 @@
                     </div>
 
                     <div class="form-group">
-                        <input type="file" id="editUploadedFile" name="editUploadedFile" accept=".zip" data-errorMessage="@Localizer["File size must be smaller than 10MB."].Value">
+                        <input type="file" id="editUploadedFile" name="editUploadedFile" accept=".zip" data-errorMessage="@Localizer["File size must be smaller than {0}MB.", ViewBag.MaxAttachedFileSizeBytes / (1024 * 1024)].Value">
                         <p class="help-block">@Localizer["Only zip extension allowed."].Value</p>
                     </div>
 

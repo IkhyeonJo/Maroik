@@ -4,7 +4,7 @@ const $profileAvatarFiles = $('#ProfileAvatarFiles');
 const $newPassword = $('#NewPassword');
 const $password = $('#Password');
 const $__RequestVerificationToken = $('input[name="__RequestVerificationToken"]');
-const maxFileSize = 10485760;
+const maxFileSize = parseInt($('#maxAttachedFileSizeBytes').val()) || 10485760;
 
 function UpdateProfileAvatar(noFileAttachedErrorMessage, fileSizeLimitationErrorMessage, fileTypeErrorMessage) {
     let files = document.getElementById('ProfileAvatarFiles').files[0];

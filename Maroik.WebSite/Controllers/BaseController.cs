@@ -17,7 +17,7 @@ public abstract class BaseController : Controller
 {
     private readonly IAccountService _accountService;
     private readonly IDashboardService _dashboardService;
-    private readonly IOptions<ServerSetting> _serverSettings;
+    protected readonly IOptions<ServerSetting> _serverSettings;
     private readonly ISessionService _sessionService;
 
     /// <summary>Initializes a new instance of <see cref="BaseController"/> with the supplied dependencies.</summary>
@@ -40,6 +40,7 @@ public abstract class BaseController : Controller
             .GetRequiredService<ILoggerFactory>().CreateLogger<BaseController>();
 
         ViewBag.DomainName = _serverSettings.Value.DomainName;
+        ViewBag.MaxAttachedFileSizeBytes = (long)_serverSettings.Value.MaxAttachedFileSizeBytes;
 
         AccountResponse loginedAccount = new()
         {

@@ -453,8 +453,8 @@
   <data name="Attachment (Only zip extension allowed.)" xml:space="preserve">
     <value>Attachment (Only zip extension allowed.)</value>
   </data>
-  <data name="File size must be smaller than 10MB." xml:space="preserve">
-    <value>File size must be smaller than 10MB.</value>
+  <data name="File size must be smaller than {0}MB." xml:space="preserve">
+    <value>File size must be smaller than {0}MB.</value>
   </data>
   <data name="My Calendar" xml:space="preserve">
     <value>My Calendar</value>

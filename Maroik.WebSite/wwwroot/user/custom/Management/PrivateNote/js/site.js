@@ -1,6 +1,6 @@
 ﻿const $writeBoardContent = $('#writeBoardContent');
 const $editBoardContent = $('#editBoardContent');
-const maxFileSize = 10485760;
+const maxFileSize = parseInt($('#maxAttachedFileSizeBytes').val()) || 10485760;
 const $searchType = $('#searchType');
 const $btnPrivateNoteSearchText = $('#btnPrivateNoteSearchText');
 const $formWriteBoard = $('#formWriteBoard');

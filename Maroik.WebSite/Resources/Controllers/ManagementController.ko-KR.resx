@@ -156,8 +156,8 @@
   <data name="Fail to find the account by given email address" xml:space="preserve">
     <value>주어진 이메일 주소로 계정을 찾는데 실패하였습니다.</value>
   </data>
-  <data name="File Size must be smaller than 10MB." xml:space="preserve">
-    <value>파일 사이즈는 10MB 미만이여야 합니다.</value>
+  <data name="File Size must be smaller than {0}MB." xml:space="preserve">
+    <value>파일 사이즈는 {0}MB 미만이여야 합니다.</value>
   </data>
   <data name="Nickname" xml:space="preserve">
     <value>닉네임</value>

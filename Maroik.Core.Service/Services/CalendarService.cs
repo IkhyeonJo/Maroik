@@ -268,16 +268,17 @@ public class CalendarService : ICalendarService
     }
 
     /// <summary>
-    /// Validates an event attached file: only <c>.zip</c> files up to 10 MB are accepted.
+    /// Validates an event attached file: only <c>.zip</c> files within the configured size limit are accepted.
     /// Returns <see langword="null"/> when the file passes validation (or when no file is provided).
     /// </summary>
-    private static ServiceResult? ValidateAttachedFile(AttachedFileInfo? attachedFile)
+    private ServiceResult? ValidateAttachedFile(AttachedFileInfo? attachedFile)
     {
         if (attachedFile == null) return null;
         if (Path.GetExtension(attachedFile.FileName) != ".zip")
             return ServiceResult.Fail("Only zip extension allowed.");
-        if (attachedFile.Size is not (> 0 and <= 10485760))
-            return ServiceResult.Fail("Uploaded file size must be smaller than 10MB.");
+        long maxBytes = _settings.Value.MaxAttachedFileSizeBytes;
+        if (attachedFile.Size <= 0 || attachedFile.Size > maxBytes)
+            return ServiceResult.Fail($"Uploaded file size must be smaller than {maxBytes / (1024 * 1024)}MB.");
         return null;
     }
 

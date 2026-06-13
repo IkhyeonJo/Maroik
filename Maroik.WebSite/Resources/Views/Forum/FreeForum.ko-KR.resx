@@ -135,8 +135,8 @@
   <data name="Delete" xml:space="preserve">
     <value>삭제</value>
   </data>
-  <data name="File size must be smaller than 10MB." xml:space="preserve">
-    <value>파일 크기는 10MB 보다 작아야 합니다.</value>
+  <data name="File size must be smaller than {0}MB." xml:space="preserve">
+    <value>파일 크기는 {0}MB 보다 작아야 합니다.</value>
   </data>
   <data name="Free Forum" xml:space="preserve">
     <value>자유게시판</value>

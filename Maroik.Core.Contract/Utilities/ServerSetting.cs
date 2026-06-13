@@ -67,4 +67,10 @@ public class ServerSetting
 
     /// <summary>Base URL of the Maroik.FileStorage microservice used for file upload/download.</summary>
     public string? FileStorageBaseUrl { get; set; }
+
+    /// <summary>
+    /// Maximum allowed upload file size in bytes. Defaults to 10 MB when not configured.
+    /// Applies to attached files in Calendar events, Board posts, and Summernote image uploads.
+    /// </summary>
+    public long MaxAttachedFileSizeBytes { get; set; } = 10L * 1024 * 1024;
 }

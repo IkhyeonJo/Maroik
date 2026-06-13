@@ -29,7 +29,7 @@ const $aDetailBoardAttachedFile = $('#aDetailBoardAttachedFile');
 const $aEditBoardAttachedFile = $('#aEditBoardAttachedFile');
 const $aFreeForumDeleteComment = $('.aFreeForumDeleteComment');
 const $__RequestVerificationToken = $('input[name="__RequestVerificationToken"]');
-const maxFileSize = 10485760;
+const maxFileSize = parseInt($('#maxAttachedFileSizeBytes').val()) || 10485760;
 const boardHeight = 300;
 
 function base64ToBlob(base64, mime) {
