@@ -7,8 +7,8 @@
     <PackageVersion Include="BCrypt.Net-Next" Version="4.2.0" />
     <PackageVersion Include="MailKit" Version="4.17.0" />
     <PackageVersion Include="ErrorOr" Version="2.1.1" />
-    <PackageVersion Include="Mapster" Version="10.0.7" />
-    <PackageVersion Include="Mapster.DependencyInjection" Version="10.0.7" />
+    <PackageVersion Include="Mapster" Version="10.0.8" />
+    <PackageVersion Include="Mapster.DependencyInjection" Version="10.0.8" />
     <PackageVersion Include="NonFactors.Grid.Mvc6" Version="8.0.0" />
     <PackageVersion Include="SharpZipLib" Version="1.4.2" />
     <!-- Image processing -->
@@ -22,22 +22,22 @@
     <PackageVersion Include="NuGet.Packaging" Version="7.6.0" />
     <PackageVersion Include="NuGet.Protocol" Version="7.6.0" />
     <!-- ASP.NET Core -->
-    <PackageVersion Include="Microsoft.AspNetCore.Http.Abstractions" Version="2.3.10" />
-    <PackageVersion Include="Microsoft.AspNetCore.Mvc.Razor.RuntimeCompilation" Version="10.0.8" />
-    <PackageVersion Include="Microsoft.AspNetCore.Mvc.Testing" Version="10.0.8" />
+    <PackageVersion Include="Microsoft.AspNetCore.Http.Abstractions" Version="2.3.11" />
+    <PackageVersion Include="Microsoft.AspNetCore.Mvc.Razor.RuntimeCompilation" Version="10.0.9" />
+    <PackageVersion Include="Microsoft.AspNetCore.Mvc.Testing" Version="10.0.9" />
     <!-- Entity Framework Core -->
-    <PackageVersion Include="Microsoft.EntityFrameworkCore" Version="10.0.8" />
-    <PackageVersion Include="Microsoft.EntityFrameworkCore.Design" Version="10.0.8" />
-    <PackageVersion Include="Microsoft.EntityFrameworkCore.InMemory" Version="10.0.8" />
-    <PackageVersion Include="Microsoft.EntityFrameworkCore.Relational" Version="10.0.8" />
+    <PackageVersion Include="Microsoft.EntityFrameworkCore" Version="10.0.9" />
+    <PackageVersion Include="Microsoft.EntityFrameworkCore.Design" Version="10.0.9" />
+    <PackageVersion Include="Microsoft.EntityFrameworkCore.InMemory" Version="10.0.9" />
+    <PackageVersion Include="Microsoft.EntityFrameworkCore.Relational" Version="10.0.9" />
     <PackageVersion Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="10.0.2" />
     <!-- Extensions -->
-    <PackageVersion Include="Microsoft.AspNetCore.DataProtection.StackExchangeRedis" Version="10.0.8" />
-    <PackageVersion Include="Microsoft.Extensions.Caching.StackExchangeRedis" Version="10.0.8" />
-    <PackageVersion Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="10.0.8" />
-    <PackageVersion Include="Microsoft.Extensions.Http" Version="10.0.8" />
-    <PackageVersion Include="Microsoft.Extensions.Logging.Abstractions" Version="10.0.8" />
-    <PackageVersion Include="Microsoft.Extensions.Options" Version="10.0.8" />
+    <PackageVersion Include="Microsoft.AspNetCore.DataProtection.StackExchangeRedis" Version="10.0.9" />
+    <PackageVersion Include="Microsoft.Extensions.Caching.StackExchangeRedis" Version="10.0.9" />
+    <PackageVersion Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="10.0.9" />
+    <PackageVersion Include="Microsoft.Extensions.Http" Version="10.0.9" />
+    <PackageVersion Include="Microsoft.Extensions.Logging.Abstractions" Version="10.0.9" />
+    <PackageVersion Include="Microsoft.Extensions.Options" Version="10.0.9" />
     <!-- Swagger -->
     <PackageVersion Include="Swashbuckle.AspNetCore" Version="10.2.1" />
     <!-- Tooling (PrivateAssets / IncludeAssets are kept in each csproj) -->
