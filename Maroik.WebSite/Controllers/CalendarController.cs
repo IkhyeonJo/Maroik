@@ -20,16 +20,12 @@ public class CalendarController : BaseController
 {
     private readonly IRsaService _rsa;
     private readonly IHtmlLocalizer<CalendarController> _localizer;
-    private readonly ILogger<CalendarController> _logger;
-    private readonly IHostEnvironment _hostEnvironment;
     private readonly ICalendarService _calendarService;
     private readonly ISessionService _sessionService;
 
     /// <summary>Initializes a new instance of <see cref="CalendarController"/> with the supplied dependencies.</summary>
     public CalendarController(
         IHtmlLocalizer<CalendarController> localizer,
-        ILogger<CalendarController> logger,
-        IHostEnvironment hostEnvironment,
         ICalendarService calendarService,
         IRsaService rsa,
         IAccountService accountService,
@@ -41,8 +37,6 @@ public class CalendarController : BaseController
         _rsa = rsa;
         _sessionService = sessionService;
         _localizer = localizer;
-        _logger = logger;
-        _hostEnvironment = hostEnvironment;
         _calendarService = calendarService;
     }
 
@@ -135,15 +129,15 @@ public class CalendarController : BaseController
     [RequiredHttpPostAccess(Role = Role.User)]
     public async Task<IActionResult> UploadImageFile(IFormFile summernoteImageFile)
     {
-        if (summernoteImageFile == null)
+        if (summernoteImageFile.Length <= 0)
             return Ok(new { result = false, errorMessage = _localizer["Please attach a file."].Value });
 
-        if (summernoteImageFile.Length <= 0 || summernoteImageFile.Length > _serverSettings.Value.MaxAttachedFileSizeBytes)
+        if (summernoteImageFile.Length > _serverSettings.Value.MaxAttachedFileSizeBytes)
             return Ok(new { result = false, errorMessage = _localizer["File Size must be smaller than {0}MB.", _serverSettings.Value.MaxAttachedFileSizeBytes / (1024 * 1024)].Value });
 
         var ext = Path.GetExtension(summernoteImageFile.FileName).ToLowerInvariant();
         if (ext != ".png" && ext != ".jpg" && ext != ".jpeg")
-            return Ok(new { result = false, errorMessage = _localizer["Only .jpg, .jpeg or .png file allowed."].Value });
+            return Ok(new { result = false, errorMessage = _localizer["Only .jpg or jpeg or .png file allowed."].Value });
 
         byte[] bytes;
         using (var ms = new MemoryStream())
@@ -286,20 +280,20 @@ public class CalendarController : BaseController
     {
         try
         {
-            List<CalendarResponse> tempCalendars = await _calendarService.GetCalendarsAsync(_sessionService.GetAccount()!.Email!, HttpContext.RequestAborted);
+            var tempCalendars =
+                await _calendarService.GetCalendarsAsync(_sessionService.GetAccount()!.Email!,
+                    HttpContext.RequestAborted);
 
-            if (tempCalendars == null || tempCalendars.Count == 0)
+            if (tempCalendars.Count == 0)
             {
                 return Json(new { result = false, error = _localizer["No calendar exists"].Value });
             }
-            else
-            {
-                CalendarResponse? tempCalendar = tempCalendars.Where(a => a.Id == id).FirstOrDefault();
 
-                return tempCalendar == null
-                    ? Json(new { result = false, error = _localizer["Input is invalid"].Value })
-                    : (IActionResult)Json(new { result = true, calendar = tempCalendar });
-            }
+            var tempCalendar = tempCalendars.FirstOrDefault(a => a.Id == id);
+
+            return tempCalendar == null
+                ? Json(new { result = false, error = _localizer["Input is invalid"].Value })
+                : (IActionResult)Json(new { result = true, calendar = tempCalendar });
         }
         catch
         {
