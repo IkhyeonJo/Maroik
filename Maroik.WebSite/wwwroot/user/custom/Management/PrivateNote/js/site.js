@@ -40,7 +40,7 @@ function base64ToBlob(base64, mime) {
 }
 
 const localizer = {
-    IETFLanguageTag: $('#LocalizerIETFLanguageTag').val()
+    IETFLanguageTag: $('#localizerIETFLanguageTag').val()
 };
 
 $writeBoardContent.summernote({
