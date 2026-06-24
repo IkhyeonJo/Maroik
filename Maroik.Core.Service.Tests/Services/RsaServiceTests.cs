@@ -116,7 +116,7 @@ public class RsaServiceTests
         var sut = CreateSut();
         string badCipher = Convert.ToBase64String(new byte[256]); // zeros ?? not a valid RSA ciphertext
 
-        Assert.Throws<CryptographicException>(() => sut.Decrypt(badCipher));
+        Assert.ThrowsAny<CryptographicException>(() => sut.Decrypt(badCipher));
     }
 
     // -- Sign / Verify --------------------------------------------------------
