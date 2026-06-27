@@ -2,7 +2,7 @@ using Maroik.Core.Contract.Dtos;
 using Maroik.Core.Contract.Utilities;
 using Maroik.WebSite.Models.ViewModels.Management;
 
-namespace Maroik.WebSite.Utilities;
+namespace Maroik.WebSite.Mappings;
 
 /// <summary>
 /// Maps account response objects to Management-area display view models,

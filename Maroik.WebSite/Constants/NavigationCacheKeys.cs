@@ -1,7 +1,7 @@
-namespace Maroik.WebSite.Utilities;
+namespace Maroik.WebSite.Constants;
 
 /// <summary>
-/// Distributed-cache keys used by <see cref="AuthorizationFilter"/> to store
+/// Distributed-cache keys used by <see cref="Maroik.WebSite.Filters.AuthorizationFilter"/> to store
 /// role-partitioned navigation menu data (categories and sub-categories).
 /// </summary>
 internal static class NavigationCacheKeys

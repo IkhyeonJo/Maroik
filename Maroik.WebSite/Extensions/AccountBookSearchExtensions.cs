@@ -1,7 +1,7 @@
 using Maroik.Core.Contract.Utilities;
 using Maroik.WebSite.Models.ViewModels.AccountBook;
 
-namespace Maroik.WebSite.Utilities;
+namespace Maroik.WebSite.Extensions;
 
 /// <summary>
 /// Whole-text search filtering for account-book view models.

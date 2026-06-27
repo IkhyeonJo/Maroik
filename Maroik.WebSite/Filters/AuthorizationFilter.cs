@@ -1,6 +1,8 @@
 using Maroik.Core.Contract.Dtos;
 using Maroik.Core.Contract.Interfaces;
 using Maroik.Core.Contract.Utilities;
+using Maroik.WebSite.Attributes;
+using Maroik.WebSite.Constants;
 using Maroik.WebSite.Contracts;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
@@ -8,7 +10,7 @@ using Microsoft.Extensions.Caching.Distributed;
 using System.Reflection;
 using System.Text.Json;
 
-namespace Maroik.WebSite.Utilities;
+namespace Maroik.WebSite.Filters;
 
 /// <summary>
 /// Action filter that loads and caches the navigation menu (categories and sub-categories)
@@ -311,7 +313,7 @@ public class AuthorizationFilter : ActionFilterAttribute
                     .SelectMany(type => type.GetMethods()) // Get methods
                     .Where(method => method.IsPublic && !method.IsDefined(typeof(NonActionAttribute)) &&
                                      method.IsDefined(typeof(HttpPostAttribute)) &&
-                                     method.IsDefined(typeof(ValidateAntiForgeryTokenAttribute))); 
+                                     method.IsDefined(typeof(ValidateAntiForgeryTokenAttribute)));
                 // Get methods with public access modifier, without NonAction attribute, with HttpPost and ValidateAntiForgeryToken attributes
 
                 if (existingHttpPostMethods.Any(existingHttpPostMethod =>
@@ -333,7 +335,7 @@ public class AuthorizationFilter : ActionFilterAttribute
                         .Where(method => method.IsPublic && !method.IsDefined(typeof(NonActionAttribute)) &&
                                          method.IsDefined(typeof(HttpPostAttribute)) &&
                                          method.IsDefined(typeof(ValidateAntiForgeryTokenAttribute)) &&
-                                         method.IsDefined(typeof(RequiredHttpPostAccessAttribute))); 
+                                         method.IsDefined(typeof(RequiredHttpPostAccessAttribute)));
                     // Get methods with public access modifier, without NonAction attribute, with HttpPost, ValidateAntiForgeryToken, and RequiredHttpPostAccess attributes
 
                     if (!(from existingHttpPostMethod in existingHttpPostMethods

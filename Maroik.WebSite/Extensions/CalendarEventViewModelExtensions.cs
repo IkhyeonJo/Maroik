@@ -1,8 +1,9 @@
 using Maroik.Core.Contract.Dtos;
 using Maroik.Core.Contract.Interfaces;
+using Maroik.WebSite.Mappings;
 using Maroik.WebSite.Models.ViewModels.Calendar;
 
-namespace Maroik.WebSite.Utilities;
+namespace Maroik.WebSite.Extensions;
 
 /// <summary>
 /// Presentation-layer extensions on <see cref="ICalendarService"/> that combine

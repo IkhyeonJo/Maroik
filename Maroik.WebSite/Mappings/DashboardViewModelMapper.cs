@@ -2,7 +2,7 @@ using Maroik.Core.Contract.Dtos;
 using Maroik.Core.Contract.Utilities;
 using Maroik.WebSite.Models.ViewModels.DashBoard;
 
-namespace Maroik.WebSite.Utilities;
+namespace Maroik.WebSite.Mappings;
 
 /// <summary>
 /// Converts a <see cref="DashboardSummary"/> returned by <c>IDashboardService</c> into the
@@ -250,7 +250,7 @@ public static class DashboardViewModelMapper
             vm.ConsumerSpendingProtectionTypeInsuranceYearMonth    = cInsurance;
             vm.ConsumerSpendingOtherExpensesYearMonth              = cOther;
             vm.ConsumerSpendingUnknownExpenditureYearMonth         = cUnknown;
-            if (totalConsumer != 0) { vm.PercentageOfConsumerSpendingMealOrEatOutExpensesYearMonth = Pct(cMeal, totalConsumer); vm.PercentageOfConsumerSpendingHousingOrSuppliesCostYearMonth = Pct(cHousing, totalConsumer); vm.PercentageOfConsumerSpendingEducationExpensesYearMonth = Pct(cEducation, totalConsumer); vm.PercentageOfConsumerSpendingMedicalExpensesYearMonth = Pct(cMedical, totalConsumer); vm.PercentageOfConsumerSpendingTransportationCostYearMonth = Pct(cTransport, totalConsumer); vm.PercentageOfConsumerSpendingCommunicationCostYearMonth = Pct(cComm, totalConsumer); vm.PercentageOfConsumerSpendingLeisureOrCultureYearMonth = Pct(cLeisure, totalConsumer); vm.PercentageOfConsumerSpendingClothingOrShoesYearMonth = Pct(cClothing, totalConsumer); vm.PercentageOfConsumerSpendingPinMoneyYearMonth = Pct(cPin, totalConsumer); vm.PercentageOfConsumerSpendingProtectionTypeInsuranceYearMonth = Pct(cInsurance, totalConsumer); vm.PercentageOfConsumerSpendingOtherExpensesYearMonth = Pct(cOther, totalConsumer); vm.PercentageOfConsumerSpendingUnknownExpenditureYearMonth = Pct(cUnknown, totalConsumer); }
+            if (totalConsumer != 0) { vm.PercentageOfConsumerSpendingMealOrEatOutExpensesYearMonth = Pct(cMeal, totalConsumer); vm.PercentageOfConsumerSpendingHousingOrSuppliesCostYearMonth = Pct(cHousing, totalConsumer); vm.PercentageOfConsumerSpendingEducationExpensesYearMonth = Pct(cEducation, totalConsumer); vm.PercentageOfConsumerSpendingMedicalExpensesYearMonth = Pct(cMedical, totalConsumer); vm.PercentageOfConsumerSpendingTransportationCostYearMonth = Pct(cTransport, totalConsumer); vm.PercentageOfConsumerSpendingLeisureOrCultureYearMonth = Pct(cLeisure, totalConsumer); vm.PercentageOfConsumerSpendingClothingOrShoesYearMonth = Pct(cClothing, totalConsumer); vm.PercentageOfConsumerSpendingPinMoneyYearMonth = Pct(cPin, totalConsumer); vm.PercentageOfConsumerSpendingProtectionTypeInsuranceYearMonth = Pct(cInsurance, totalConsumer); vm.PercentageOfConsumerSpendingOtherExpensesYearMonth = Pct(cOther, totalConsumer); vm.PercentageOfConsumerSpendingUnknownExpenditureYearMonth = Pct(cUnknown, totalConsumer); }
         }
     }
 

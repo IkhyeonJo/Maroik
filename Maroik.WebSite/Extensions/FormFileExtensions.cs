@@ -1,6 +1,6 @@
 using Maroik.Core.Contract.Dtos;
 
-namespace Maroik.WebSite.Utilities;
+namespace Maroik.WebSite.Extensions;
 
 /// <summary>
 /// Extension methods for <see cref="IFormFile"/> to simplify reading uploaded files

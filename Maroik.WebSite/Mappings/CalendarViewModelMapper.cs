@@ -3,7 +3,7 @@ using Maroik.Core.Contract.Utilities;
 using Maroik.WebSite.Models.ViewModels.Calendar;
 using Newtonsoft.Json;
 
-namespace Maroik.WebSite.Utilities;
+namespace Maroik.WebSite.Mappings;
 
 /// <summary>
 /// Maps between calendar DTOs and view models in both directions:

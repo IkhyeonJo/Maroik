@@ -1,7 +1,7 @@
 using Maroik.WebSite.Models.ViewModels.Notice;
-using Maroik.WebSite.Utilities;
+using Maroik.WebSite.Extensions;
 
-namespace Maroik.WebSite.Tests.Utilities;
+namespace Maroik.WebSite.Tests.Extensions;
 
 /// <summary>Unit tests for <see cref="NoticeSearchExtensions"/>.</summary>
 public class NoticeSearchExtensionsTests

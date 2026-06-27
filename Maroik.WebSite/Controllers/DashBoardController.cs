@@ -1,7 +1,8 @@
 ﻿using Maroik.Core.Contract.Interfaces;
 using Maroik.Core.Contract.Utilities;
 using Maroik.WebSite.Contracts;
-using Maroik.WebSite.Utilities;
+using Maroik.WebSite.Attributes;
+using Maroik.WebSite.Mappings;
 using Maroik.WebSite.Models.ViewModels.Account;
 using Maroik.WebSite.Models.ViewModels.DashBoard;
 using Microsoft.AspNetCore.Localization;

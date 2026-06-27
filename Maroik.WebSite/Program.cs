@@ -9,7 +9,7 @@ using Maroik.Core.Repository.Extensions;
 using Maroik.Core.Service.Extensions;
 using Maroik.Core.Client.Extensions;
 using Maroik.WebSite.Filters;
-using Maroik.WebSite.Utilities;
+using Maroik.WebSite.Middlewares;
 using Maroik.WebSite.Extensions;
 using Microsoft.AspNetCore.Antiforgery;
 using Microsoft.AspNetCore.CookiePolicy;

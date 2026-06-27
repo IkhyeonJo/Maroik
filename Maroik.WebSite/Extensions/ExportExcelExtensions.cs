@@ -1,6 +1,6 @@
 using Maroik.Core.Contract.Utilities;
 
-namespace Maroik.WebSite.Utilities;
+namespace Maroik.WebSite.Extensions;
 
 /// <summary>
 /// Cross-cutting helpers for Excel export operations.

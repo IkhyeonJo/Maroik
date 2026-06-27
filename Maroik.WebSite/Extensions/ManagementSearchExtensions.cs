@@ -1,6 +1,6 @@
 using Maroik.WebSite.Models.ViewModels.Management;
 
-namespace Maroik.WebSite.Utilities;
+namespace Maroik.WebSite.Extensions;
 
 /// <summary>
 /// Whole-text search filtering for the Management-area account grid view model.

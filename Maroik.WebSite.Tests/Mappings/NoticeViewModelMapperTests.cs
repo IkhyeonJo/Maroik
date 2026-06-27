@@ -1,8 +1,8 @@
 using Maroik.Core.Contract.Dtos;
 using Maroik.Core.Contract.Utilities;
-using Maroik.WebSite.Utilities;
+using Maroik.WebSite.Mappings;
 
-namespace Maroik.WebSite.Tests.Utilities;
+namespace Maroik.WebSite.Tests.Mappings;
 
 /// <summary>
 /// Unit tests for <see cref="FixedSchedulePolicy"/> (schedule status rules)

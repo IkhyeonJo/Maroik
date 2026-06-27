@@ -1,7 +1,7 @@
 using Maroik.Core.Contract.Utilities;
 using Maroik.WebSite.Models.ViewModels.Notice;
 
-namespace Maroik.WebSite.Utilities;
+namespace Maroik.WebSite.Extensions;
 
 /// <summary>
 /// Whole-text search filtering for Notice (fixed income / fixed expenditure) view models.

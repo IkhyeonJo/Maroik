@@ -1,9 +1,9 @@
-﻿namespace Maroik.WebSite.Utilities;
+namespace Maroik.WebSite.Attributes;
 
 /// <summary>
 /// Marks an HTTP POST action method with the role that is permitted to invoke it.
 /// Can be applied multiple times (AllowMultiple = true) to grant access to several roles.
-/// The <see cref="AuthorizationFilter"/> reads these attributes to enforce role-based access.
+/// The <see cref="Maroik.WebSite.Filters.AuthorizationFilter"/> reads these attributes to enforce role-based access.
 /// </summary>
 [AttributeUsage(AttributeTargets.Method, AllowMultiple = true)]
 public class RequiredHttpPostAccessAttribute : Attribute

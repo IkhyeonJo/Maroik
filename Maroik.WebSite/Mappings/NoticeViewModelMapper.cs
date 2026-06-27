@@ -2,7 +2,7 @@ using Maroik.Core.Contract.Dtos;
 using Maroik.Core.Contract.Utilities;
 using Maroik.WebSite.Models.ViewModels.Notice;
 
-namespace Maroik.WebSite.Utilities;
+namespace Maroik.WebSite.Mappings;
 
 /// <summary>
 /// Maps fixed-income and fixed-expenditure response objects to display view models.

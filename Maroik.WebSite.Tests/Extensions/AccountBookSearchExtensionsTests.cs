@@ -1,7 +1,7 @@
 using Maroik.WebSite.Models.ViewModels.AccountBook;
-using Maroik.WebSite.Utilities;
+using Maroik.WebSite.Extensions;
 
-namespace Maroik.WebSite.Tests.Utilities;
+namespace Maroik.WebSite.Tests.Extensions;
 
 /// <summary>Unit tests for <see cref="AccountBookSearchExtensions"/>.</summary>
 public class AccountBookSearchExtensionsTests

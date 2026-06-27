@@ -1,8 +1,8 @@
-﻿using Maroik.Core.Contract.Utilities;
+using Maroik.Core.Contract.Utilities;
 using Maroik.Core.Contract.Interfaces;
 using Maroik.WebSite.Contracts;
 
-namespace Maroik.WebSite.Utilities;
+namespace Maroik.WebSite.Middlewares;
 
 /// <summary>
 /// Middleware that enforces role-based access to static files served under

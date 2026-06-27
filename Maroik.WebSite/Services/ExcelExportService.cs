@@ -8,7 +8,7 @@ using Maroik.WebSite.Contracts;
 using Maroik.WebSite.Models.ViewModels.AccountBook;
 using Maroik.WebSite.Models.ViewModels.Management;
 using Maroik.WebSite.Models.ViewModels.Notice;
-using Maroik.WebSite.Utilities;
+using Maroik.WebSite.Mappings;
 
 namespace Maroik.WebSite.Services;
 

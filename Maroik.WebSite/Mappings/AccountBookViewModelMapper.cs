@@ -2,7 +2,7 @@ using Maroik.Core.Contract.Dtos;
 using Maroik.Core.Contract.Utilities;
 using Maroik.WebSite.Models.ViewModels.AccountBook;
 
-namespace Maroik.WebSite.Utilities;
+namespace Maroik.WebSite.Mappings;
 
 /// <summary>
 /// Maps account-book service response objects to display view models.
