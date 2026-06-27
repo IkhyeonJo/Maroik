@@ -116,8 +116,8 @@ public class ManagementController : BaseController
 
         IFormFile file = profileInputViewModel.ProfileAvatarFiles[0];
 
-        if (file.Length <= 0 || file.Length > _serverSettings.Value.MaxAttachedFileSizeBytes)
-            return Ok(new { result = false, errorMessage = _localizer["File Size must be smaller than {0}MB.", _serverSettings.Value.MaxAttachedFileSizeBytes / (1024 * 1024)].Value });
+        if (file.Length <= 0 || file.Length > ServerSettings.Value.MaxAttachedFileSizeBytes)
+            return Ok(new { result = false, errorMessage = _localizer["File Size must be smaller than {0}MB.", ServerSettings.Value.MaxAttachedFileSizeBytes / (1024 * 1024)].Value });
 
         var allowedExtensions = new[] { ".jpg", ".jpeg", ".png" };
         var extension = Path.GetExtension(file.FileName).ToLowerInvariant();
@@ -1002,8 +1002,8 @@ public class ManagementController : BaseController
         if (summernoteImageFile == null)
             return Ok(new { result = false, errorMessage = _localizer["Please attach a file."].Value });
 
-        if (summernoteImageFile.Length <= 0 || summernoteImageFile.Length > _serverSettings.Value.MaxAttachedFileSizeBytes)
-            return Ok(new { result = false, errorMessage = _localizer["File Size must be smaller than {0}MB.", _serverSettings.Value.MaxAttachedFileSizeBytes / (1024 * 1024)].Value });
+        if (summernoteImageFile.Length <= 0 || summernoteImageFile.Length > ServerSettings.Value.MaxAttachedFileSizeBytes)
+            return Ok(new { result = false, errorMessage = _localizer["File Size must be smaller than {0}MB.", ServerSettings.Value.MaxAttachedFileSizeBytes / (1024 * 1024)].Value });
 
         var ext = Path.GetExtension(summernoteImageFile.FileName).ToLowerInvariant();
         if (ext != ".png" && ext != ".jpg" && ext != ".jpeg")

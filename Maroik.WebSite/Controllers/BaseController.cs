@@ -17,7 +17,7 @@ public abstract class BaseController : Controller
 {
     private readonly IAccountService _accountService;
     private readonly IDashboardService _dashboardService;
-    protected readonly IOptions<ServerSetting> _serverSettings;
+    protected readonly IOptions<ServerSetting> ServerSettings;
     private readonly ISessionService _sessionService;
 
     /// <summary>Initializes a new instance of <see cref="BaseController"/> with the supplied dependencies.</summary>
@@ -29,7 +29,7 @@ public abstract class BaseController : Controller
     {
         _accountService = accountService;
         _dashboardService = dashboardService;
-        _serverSettings = serverSettings;
+        ServerSettings = serverSettings;
         _sessionService = sessionService;
     }
 
@@ -39,8 +39,8 @@ public abstract class BaseController : Controller
         var logger = context.HttpContext.RequestServices
             .GetRequiredService<ILoggerFactory>().CreateLogger<BaseController>();
 
-        ViewBag.DomainName = _serverSettings.Value.DomainName;
-        ViewBag.MaxAttachedFileSizeBytes = (long)_serverSettings.Value.MaxAttachedFileSizeBytes;
+        ViewBag.DomainName = ServerSettings.Value.DomainName;
+        ViewBag.MaxAttachedFileSizeBytes = (long)ServerSettings.Value.MaxAttachedFileSizeBytes;
 
         AccountResponse loginedAccount = new()
         {
@@ -74,7 +74,7 @@ public abstract class BaseController : Controller
             {
                 var counts = await _dashboardService.GetNoticeCountsAsync(
                     loginedAccount.Email ?? "",
-                    _serverSettings.Value.NoticeMaturityDateDay,
+                    ServerSettings.Value.NoticeMaturityDateDay,
                     context.HttpContext.RequestAborted);
 
                 fixedIncomesNoticedCount = counts.FixedIncomesNoticed;
