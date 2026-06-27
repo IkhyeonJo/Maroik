@@ -5,7 +5,6 @@ using Maroik.WebSite.Contracts;
 using Maroik.WebSite.Models.ViewModels.Account;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Localization;
-using Microsoft.Extensions.Options;
 
 namespace Maroik.WebSite.Controllers;
 
@@ -13,7 +12,7 @@ namespace Maroik.WebSite.Controllers;
 /// Handles all self-service account flows: consent, login, logout, registration,
 /// email confirmation, forgot-password, and password reset.
 /// </summary>
-public class AccountController : BaseController
+public class AccountController : Controller
 {
     private readonly IHtmlLocalizer<AccountController> _localizer;
     private readonly IAccountService _accountService;
@@ -23,10 +22,7 @@ public class AccountController : BaseController
     public AccountController(
         IHtmlLocalizer<AccountController> localizer,
         IAccountService accountService,
-        IDashboardService dashboardService,
-        IOptions<ServerSetting> serverSettings,
         ISessionService sessionService)
-        : base(accountService, dashboardService, serverSettings, sessionService)
     {
         _localizer = localizer;
         _accountService = accountService;

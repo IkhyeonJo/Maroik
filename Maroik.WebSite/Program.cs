@@ -8,6 +8,7 @@ using Maroik.Core.Contract.Utilities;
 using Maroik.Core.Repository.Extensions;
 using Maroik.Core.Service.Extensions;
 using Maroik.Core.Client.Extensions;
+using Maroik.WebSite.Filters;
 using Maroik.WebSite.Utilities;
 using Maroik.WebSite.Extensions;
 using Microsoft.AspNetCore.Antiforgery;
@@ -233,10 +234,12 @@ try
 
     builder.Services.AddHealthChecks();
 
+    builder.Services.AddScoped<ViewBagPopulatorFilter>();
     builder.Services.AddControllersWithViews(options =>
     {
 #pragma warning disable CA2263
         _ = options.Filters.Add(typeof(AuthorizationFilter)); // An instance
+        _ = options.Filters.Add(typeof(ViewBagPopulatorFilter));
 #pragma warning restore CA2263
         options.Filters.Add(
             new AutoValidateAntiforgeryTokenAttribute()); // Globally enables token validation for all requests except for GET, HEAD, OPTIONS, and TRACE

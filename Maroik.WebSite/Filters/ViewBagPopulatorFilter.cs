@@ -1,4 +1,4 @@
-﻿using Maroik.Core.Contract.Dtos;
+using Maroik.Core.Contract.Dtos;
 using Maroik.Core.Contract.Interfaces;
 using Maroik.Core.Contract.Utilities;
 using Maroik.WebSite.Contracts;
@@ -7,21 +7,22 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
 using Microsoft.Extensions.Options;
 
-namespace Maroik.WebSite.Controllers;
+namespace Maroik.WebSite.Filters;
 
 /// <summary>
-/// Abstract base controller that runs before every action to populate ViewBag with
-/// the logged-in account, notification badge counts, current culture, and return URI.
+/// Global action filter that populates shared ViewBag entries before every action executes:
+/// domain name, file-size limit, logged-in account, notification badge counts, current culture,
+/// and the return URI.
 /// </summary>
-public abstract class BaseController : Controller
+public class ViewBagPopulatorFilter : IAsyncActionFilter
 {
     private readonly IAccountService _accountService;
     private readonly IDashboardService _dashboardService;
-    protected readonly IOptions<ServerSetting> ServerSettings;
+    private readonly IOptions<ServerSetting> _serverSettings;
     private readonly ISessionService _sessionService;
 
-    /// <summary>Initializes a new instance of <see cref="BaseController"/> with the supplied dependencies.</summary>
-    protected BaseController(
+    /// <summary>Initializes a new instance of <see cref="ViewBagPopulatorFilter"/> with the supplied dependencies.</summary>
+    public ViewBagPopulatorFilter(
         IAccountService accountService,
         IDashboardService dashboardService,
         IOptions<ServerSetting> serverSettings,
@@ -29,18 +30,24 @@ public abstract class BaseController : Controller
     {
         _accountService = accountService;
         _dashboardService = dashboardService;
-        ServerSettings = serverSettings;
+        _serverSettings = serverSettings;
         _sessionService = sessionService;
     }
 
-    /// <summary>Populates shared ViewBag entries (account, notice counts, culture, return URI) before each action executes.</summary>
-    public override async Task OnActionExecutionAsync(ActionExecutingContext context, ActionExecutionDelegate next)
+    /// <summary>Populates shared ViewBag entries before each action executes.</summary>
+    public async Task OnActionExecutionAsync(ActionExecutingContext context, ActionExecutionDelegate next)
     {
         var logger = context.HttpContext.RequestServices
-            .GetRequiredService<ILoggerFactory>().CreateLogger<BaseController>();
+            .GetRequiredService<ILoggerFactory>().CreateLogger<ViewBagPopulatorFilter>();
 
-        ViewBag.DomainName = ServerSettings.Value.DomainName;
-        ViewBag.MaxAttachedFileSizeBytes = ServerSettings.Value.MaxAttachedFileSizeBytes;
+        if (context.Controller is not Controller controller)
+        {
+            await next();
+            return;
+        }
+
+        controller.ViewBag.DomainName = _serverSettings.Value.DomainName;
+        controller.ViewBag.MaxAttachedFileSizeBytes = _serverSettings.Value.MaxAttachedFileSizeBytes;
 
         AccountResponse loginedAccount = new()
         {
@@ -62,9 +69,8 @@ public abstract class BaseController : Controller
             catch (Exception ex) { logger.LogWarning(ex, "Failed to refresh session account for {Email}", sessionAccount.Email); }
         }
 
-        ViewBag.LoginedAccount = loginedAccount;
+        controller.ViewBag.LoginedAccount = loginedAccount;
 
-        // Fixed income/expenditure notice counts - delegated to DashboardService
         int fixedIncomesNoticedCount = 0, fixedExpenditureNoticedCount = 0;
         int fixedIncomesExpiredCount = 0, fixedExpenditureExpiredCount = 0;
 
@@ -74,7 +80,7 @@ public abstract class BaseController : Controller
             {
                 var counts = await _dashboardService.GetNoticeCountsAsync(
                     loginedAccount.Email ?? "",
-                    ServerSettings.Value.NoticeMaturityDateDay,
+                    _serverSettings.Value.NoticeMaturityDateDay,
                     context.HttpContext.RequestAborted);
 
                 fixedIncomesNoticedCount = counts.FixedIncomesNoticed;
@@ -85,16 +91,16 @@ public abstract class BaseController : Controller
             catch (Exception ex) { logger.LogWarning(ex, "Failed to load notice counts for {Email}", loginedAccount.Email); }
         }
 
-        ViewBag.FixedIncomesNoticedCount = fixedIncomesNoticedCount;
-        ViewBag.FixedExpenditureNoticedCount = fixedExpenditureNoticedCount;
-        ViewBag.FixedIncomesExpiredCount = fixedIncomesExpiredCount;
-        ViewBag.FixedExpenditureExpiredCount = fixedExpenditureExpiredCount;
+        controller.ViewBag.FixedIncomesNoticedCount = fixedIncomesNoticedCount;
+        controller.ViewBag.FixedExpenditureNoticedCount = fixedExpenditureNoticedCount;
+        controller.ViewBag.FixedIncomesExpiredCount = fixedIncomesExpiredCount;
+        controller.ViewBag.FixedExpenditureExpiredCount = fixedExpenditureExpiredCount;
 
-        var requestCultureFeature = HttpContext.Features.Get<IRequestCultureFeature>();
-        ViewBag.CurrentCulture = requestCultureFeature?.RequestCulture.Culture.Name ?? "en-US";
+        var requestCultureFeature = context.HttpContext.Features.Get<IRequestCultureFeature>();
+        controller.ViewBag.CurrentCulture = requestCultureFeature?.RequestCulture.Culture.Name ?? "en-US";
 
-        string requestPath = HttpContext.Request.Path.Value ?? "";
-        ViewBag.ReturnUri = string.IsNullOrWhiteSpace(requestPath) ? "/" : $"{requestPath}{HttpContext.Request.QueryString}";
+        string requestPath = context.HttpContext.Request.Path.Value ?? "";
+        controller.ViewBag.ReturnUri = string.IsNullOrWhiteSpace(requestPath) ? "/" : $"{requestPath}{context.HttpContext.Request.QueryString}";
 
         await next();
     }

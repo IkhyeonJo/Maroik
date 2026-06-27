@@ -6,7 +6,6 @@ using Maroik.WebSite.Utilities;
 using Maroik.WebSite.Models.ViewModels.AccountBook;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Localization;
-using Microsoft.Extensions.Options;
 
 namespace Maroik.WebSite.Controllers;
 
@@ -14,7 +13,7 @@ namespace Maroik.WebSite.Controllers;
 /// Manages account-book records: assets, income transactions, and expenditure transactions
 /// (create, read, update, delete, export).
 /// </summary>
-public class AccountBookController : BaseController
+public class AccountBookController : Controller
 {
     private readonly IHtmlLocalizer<AccountBookController> _localizer;
     private readonly ILogger<AccountBookController> _logger;
@@ -31,12 +30,8 @@ public class AccountBookController : BaseController
         IAssetService assetService,
         IIncomeService incomeService,
         IExpenditureService expenditureService,
-        IAccountService accountService,
-        IDashboardService dashboardService,
-        IOptions<ServerSetting> serverSettings,
         ISessionService sessionService,
         IExcelExportService excelExportService)
-        : base(accountService, dashboardService, serverSettings, sessionService)
     {
         _localizer = localizer;
         _logger = logger;

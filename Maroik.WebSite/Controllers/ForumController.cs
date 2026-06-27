@@ -15,7 +15,7 @@ namespace Maroik.WebSite.Controllers;
 /// Manages the free forum: listing, writing, editing, and deleting posts and comments,
 /// plus Summernote inline-image uploads.
 /// </summary>
-public class ForumController : BaseController
+public class ForumController : Controller
 {
     private readonly IRsaService _rsa;
     private readonly IHtmlLocalizer<ForumController> _localizer;
@@ -24,6 +24,7 @@ public class ForumController : BaseController
     private readonly IBoardService _boardService;
     private readonly IAccountService _accountService;
     private readonly ISessionService _sessionService;
+    private readonly IOptions<ServerSetting> _serverSettings;
 
     /// <summary>Initializes a new instance of <see cref="ForumController"/> with the supplied dependencies.</summary>
     public ForumController(
@@ -33,10 +34,8 @@ public class ForumController : BaseController
         IBoardService boardService,
         IAccountService accountService,
         IRsaService rsa,
-        IDashboardService dashboardService,
         IOptions<ServerSetting> serverSettings,
         ISessionService sessionService)
-        : base(accountService, dashboardService, serverSettings, sessionService)
     {
         _rsa = rsa;
         _sessionService = sessionService;
@@ -45,6 +44,7 @@ public class ForumController : BaseController
         _hostEnvironment = hostEnvironment;
         _boardService = boardService;
         _accountService = accountService;
+        _serverSettings = serverSettings;
     }
 
     #region FreeForum
@@ -158,8 +158,8 @@ public class ForumController : BaseController
         if (summernoteImageFile == null)
             return Ok(new { result = false, errorMessage = _localizer["Please attach a file."].Value });
 
-        if (summernoteImageFile.Length <= 0 || summernoteImageFile.Length > ServerSettings.Value.MaxAttachedFileSizeBytes)
-            return Ok(new { result = false, errorMessage = _localizer["File Size must be smaller than {0}MB.", ServerSettings.Value.MaxAttachedFileSizeBytes / (1024 * 1024)].Value });
+        if (summernoteImageFile.Length <= 0 || summernoteImageFile.Length > _serverSettings.Value.MaxAttachedFileSizeBytes)
+            return Ok(new { result = false, errorMessage = _localizer["File Size must be smaller than {0}MB.", _serverSettings.Value.MaxAttachedFileSizeBytes / (1024 * 1024)].Value });
 
         var ext = Path.GetExtension(summernoteImageFile.FileName).ToLowerInvariant();
         if (ext != ".png" && ext != ".jpg" && ext != ".jpeg")

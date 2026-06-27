@@ -1,5 +1,5 @@
 using System.Reflection;
-using Maroik.WebSite.Controllers;
+using Maroik.WebSite.Filters;
 using NetArchTest.Rules;
 
 namespace Maroik.WebSite.Tests.Architecture;
@@ -20,7 +20,7 @@ namespace Maroik.WebSite.Tests.Architecture;
 /// </summary>
 public class WebSiteArchitectureTests
 {
-    private static readonly Assembly WebSiteAssembly = typeof(BaseController).Assembly;
+    private static readonly Assembly WebSiteAssembly = typeof(ViewBagPopulatorFilter).Assembly;
 
     private const string RepositoryNamespace = "Maroik.Core.Repository";
     private const string ClientNamespace = "Maroik.Core.Client";

@@ -19,7 +19,7 @@ namespace Maroik.WebSite.Controllers;
 /// Admin-only controller for managing user profiles, accounts, and the navigation menu
 /// (categories and sub-categories).
 /// </summary>
-public class ManagementController : BaseController
+public class ManagementController : Controller
 {
     private readonly IRsaService _rsa;
     private readonly IHtmlLocalizer<ManagementController> _localizer;
@@ -33,6 +33,7 @@ public class ManagementController : BaseController
     private readonly ISessionService _sessionService;
     private readonly IExcelExportService _excelExportService;
     private readonly IDistributedCache _cache;
+    private readonly IOptions<ServerSetting> _serverSettings;
 
     /// <summary>Initializes a new instance of <see cref="ManagementController"/> with the supplied dependencies.</summary>
     public ManagementController(
@@ -45,12 +46,10 @@ public class ManagementController : BaseController
         IMenuService menuService,
         IBoardService boardService,
         IRsaService rsa,
-        IDashboardService dashboardService,
         IOptions<ServerSetting> serverSettings,
         ISessionService sessionService,
         IExcelExportService excelExportService,
         IDistributedCache cache)
-        : base(accountService, dashboardService, serverSettings, sessionService)
     {
         _rsa = rsa;
         _sessionService = sessionService;
@@ -64,6 +63,7 @@ public class ManagementController : BaseController
         _boardService = boardService;
         _excelExportService = excelExportService;
         _cache = cache;
+        _serverSettings = serverSettings;
     }
 
     private Func<string, string> Localize => key => _localizer[key].Value;
@@ -116,8 +116,8 @@ public class ManagementController : BaseController
 
         IFormFile file = profileInputViewModel.ProfileAvatarFiles[0];
 
-        if (file.Length <= 0 || file.Length > ServerSettings.Value.MaxAttachedFileSizeBytes)
-            return Ok(new { result = false, errorMessage = _localizer["File Size must be smaller than {0}MB.", ServerSettings.Value.MaxAttachedFileSizeBytes / (1024 * 1024)].Value });
+        if (file.Length <= 0 || file.Length > _serverSettings.Value.MaxAttachedFileSizeBytes)
+            return Ok(new { result = false, errorMessage = _localizer["File Size must be smaller than {0}MB.", _serverSettings.Value.MaxAttachedFileSizeBytes / (1024 * 1024)].Value });
 
         var allowedExtensions = new[] { ".jpg", ".jpeg", ".png" };
         var extension = Path.GetExtension(file.FileName).ToLowerInvariant();
@@ -1002,8 +1002,8 @@ public class ManagementController : BaseController
         if (summernoteImageFile == null)
             return Ok(new { result = false, errorMessage = _localizer["Please attach a file."].Value });
 
-        if (summernoteImageFile.Length <= 0 || summernoteImageFile.Length > ServerSettings.Value.MaxAttachedFileSizeBytes)
-            return Ok(new { result = false, errorMessage = _localizer["File Size must be smaller than {0}MB.", ServerSettings.Value.MaxAttachedFileSizeBytes / (1024 * 1024)].Value });
+        if (summernoteImageFile.Length <= 0 || summernoteImageFile.Length > _serverSettings.Value.MaxAttachedFileSizeBytes)
+            return Ok(new { result = false, errorMessage = _localizer["File Size must be smaller than {0}MB.", _serverSettings.Value.MaxAttachedFileSizeBytes / (1024 * 1024)].Value });
 
         var ext = Path.GetExtension(summernoteImageFile.FileName).ToLowerInvariant();
         if (ext != ".png" && ext != ".jpg" && ext != ".jpeg")

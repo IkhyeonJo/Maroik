@@ -6,7 +6,6 @@ using Maroik.WebSite.Models.ViewModels.Account;
 using Maroik.WebSite.Models.ViewModels.DashBoard;
 using Microsoft.AspNetCore.Localization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.Options;
 
 namespace Maroik.WebSite.Controllers;
 
@@ -14,7 +13,7 @@ namespace Maroik.WebSite.Controllers;
 /// Serves the dashboard index views (Admin / User / Anonymous) and handles
 /// language-culture changes and the user's default monetary-unit preference.
 /// </summary>
-public class DashBoardController : BaseController
+public class DashBoardController : Controller
 {
     private readonly IDashboardService _dashboardService;
     private readonly IProfileService _profileService;
@@ -25,12 +24,9 @@ public class DashBoardController : BaseController
 
     /// <summary>Initializes a new instance of <see cref="DashBoardController"/> with the required dependencies.</summary>
     public DashBoardController(
-        IAccountService accountService,
         IDashboardService dashboardService,
         IProfileService profileService,
-        IOptions<ServerSetting> serverSettings,
         ISessionService sessionService)
-        : base(accountService, dashboardService, serverSettings, sessionService)
     {
         _dashboardService = dashboardService;
         _profileService = profileService;

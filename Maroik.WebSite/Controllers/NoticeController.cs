@@ -11,7 +11,7 @@ using Microsoft.Extensions.Options;
 namespace Maroik.WebSite.Controllers;
 
 /// <summary>Manages fixed-income and fixed-expenditure notice records (create, read, update, delete, export).</summary>
-public class NoticeController : BaseController
+public class NoticeController : Controller
 {
     private readonly IHtmlLocalizer<NoticeController> _localizer;
     private readonly ILogger<NoticeController> _logger;
@@ -29,12 +29,9 @@ public class NoticeController : BaseController
         IAssetService assetService,
         IFixedIncomeService fixedIncomeService,
         IFixedExpenditureService fixedExpenditureService,
-        IAccountService accountService,
-        IDashboardService dashboardService,
         IOptions<ServerSetting> settings,
         ISessionService sessionService,
         IExcelExportService excelExportService)
-        : base(accountService, dashboardService, settings, sessionService)
     {
         _localizer = localizer;
         _logger = logger;

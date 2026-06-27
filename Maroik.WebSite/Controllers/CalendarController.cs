@@ -16,28 +16,27 @@ namespace Maroik.WebSite.Controllers;
 /// Manages calendars and calendar events: CRUD, sharing, subscriptions,
 /// Summernote image uploads, and role-differentiated index views.
 /// </summary>
-public class CalendarController : BaseController
+public class CalendarController : Controller
 {
     private readonly IRsaService _rsa;
     private readonly IHtmlLocalizer<CalendarController> _localizer;
     private readonly ICalendarService _calendarService;
     private readonly ISessionService _sessionService;
+    private readonly IOptions<ServerSetting> _serverSettings;
 
     /// <summary>Initializes a new instance of <see cref="CalendarController"/> with the supplied dependencies.</summary>
     public CalendarController(
         IHtmlLocalizer<CalendarController> localizer,
         ICalendarService calendarService,
         IRsaService rsa,
-        IAccountService accountService,
-        IDashboardService dashboardService,
         IOptions<ServerSetting> serverSettings,
         ISessionService sessionService)
-        : base(accountService, dashboardService, serverSettings, sessionService)
     {
         _rsa = rsa;
         _sessionService = sessionService;
         _localizer = localizer;
         _calendarService = calendarService;
+        _serverSettings = serverSettings;
     }
 
     #region Calendar
@@ -132,8 +131,8 @@ public class CalendarController : BaseController
         if (summernoteImageFile.Length <= 0)
             return Ok(new { result = false, errorMessage = _localizer["Please attach a file."].Value });
 
-        if (summernoteImageFile.Length > ServerSettings.Value.MaxAttachedFileSizeBytes)
-            return Ok(new { result = false, errorMessage = _localizer["File Size must be smaller than {0}MB.", ServerSettings.Value.MaxAttachedFileSizeBytes / (1024 * 1024)].Value });
+        if (summernoteImageFile.Length > _serverSettings.Value.MaxAttachedFileSizeBytes)
+            return Ok(new { result = false, errorMessage = _localizer["File Size must be smaller than {0}MB.", _serverSettings.Value.MaxAttachedFileSizeBytes / (1024 * 1024)].Value });
 
         var ext = Path.GetExtension(summernoteImageFile.FileName).ToLowerInvariant();
         if (ext != ".png" && ext != ".jpg" && ext != ".jpeg")
