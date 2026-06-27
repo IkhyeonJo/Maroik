@@ -1,4 +1,4 @@
-using Maroik.Core.Contract.Utilities;
+using Maroik.Core.Contract.Extensions;
 using Maroik.WebSite.Models.ViewModels.Notice;
 
 namespace Maroik.WebSite.Extensions;

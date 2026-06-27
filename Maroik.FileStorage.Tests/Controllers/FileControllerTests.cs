@@ -1,9 +1,9 @@
-﻿using Maroik.Core.Contract.Interfaces;
+using System.Net;
+using System.Net.Http.Headers;
+using Maroik.Core.Contract.Interfaces;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.Extensions.DependencyInjection;
 using Moq;
-using System.Net;
-using System.Net.Http.Headers;
 
 namespace Maroik.FileStorage.Tests.Controllers;
 

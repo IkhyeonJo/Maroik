@@ -1,7 +1,7 @@
+using Maroik.FileStorage.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.StaticFiles;
-using Maroik.FileStorage.Services;
 
 namespace Maroik.FileStorage.Controllers;
 

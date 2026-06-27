@@ -1,5 +1,6 @@
 using Maroik.Core.Contract.Domains.Account;
 namespace Maroik.Core.Contract.Interfaces;
+
 public interface IAccountRepository : IGenericRepository<Account>
 {
     Task<List<Account>> GetAllAsync(CancellationToken ct = default);

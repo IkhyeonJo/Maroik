@@ -1,7 +1,8 @@
 using Maroik.Core.Contract.Domains.Board;
-using Maroik.Core.Contract.Utilities;
 using Maroik.Core.Contract.Dtos;
+using Maroik.Core.Contract.Enums;
 using Maroik.Core.Contract.Interfaces;
+using Maroik.Core.Contract.Settings;
 using Maroik.Core.Service.Mappers;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
@@ -36,7 +37,7 @@ public class BoardService : IBoardService
     /// </summary>
     private static readonly Dictionary<string, string> BoardAreaMap = new(StringComparer.OrdinalIgnoreCase)
     {
-        [nameof(BoardType.FreeForum)]   = "Forum",
+        [nameof(BoardType.FreeForum)] = "Forum",
         [nameof(BoardType.PrivateNote)] = "Management"
     };
 
@@ -431,9 +432,9 @@ public class BoardService : IBoardService
         Path.GetExtension(filePath).ToLowerInvariant() switch
         {
             ".jpg" or ".jpeg" => "image/jpeg",
-            ".png"            => "image/png",
-            ".gif"            => "image/gif",
-            ".webp"           => "image/webp",
-            _                 => "application/octet-stream"
+            ".png" => "image/png",
+            ".gif" => "image/gif",
+            ".webp" => "image/webp",
+            _ => "application/octet-stream"
         };
 }

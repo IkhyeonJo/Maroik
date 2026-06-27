@@ -1,8 +1,11 @@
+using Maroik.Core.Contract.Constants;
 using Maroik.Core.Contract.Dtos;
+using Maroik.Core.Contract.Enums;
+using Maroik.Core.Contract.Helpers;
 using Maroik.Core.Contract.Interfaces;
-using Maroik.Core.Contract.Utilities;
-using Maroik.WebSite.Contracts;
+using Maroik.Core.Contract.Settings;
 using Maroik.WebSite.Attributes;
+using Maroik.WebSite.Contracts;
 using Maroik.WebSite.Extensions;
 using Maroik.WebSite.Mappings;
 using Maroik.WebSite.Models.ViewModels.Calendar;
@@ -230,8 +233,8 @@ public class CalendarController : Controller
         List<CalendarResponse> allCalendars = await _calendarService.GetAllCalendarsAsync(HttpContext.RequestAborted);
         List<OtherCalendarResponse> otherCalendarSubscriptions = await _calendarService.GetOtherCalendarsAsync(loginedAccount.Email!, HttpContext.RequestAborted);
         List<CalendarResponse> otherCalendars = (from c in allCalendars
-                                                  join oc in otherCalendarSubscriptions on c.Id equals oc.CalendarId
-                                                  select new CalendarResponse { Id = c.Id, Name = c.Name, HtmlColorCode = c.HtmlColorCode })
+                                                 join oc in otherCalendarSubscriptions on c.Id equals oc.CalendarId
+                                                 select new CalendarResponse { Id = c.Id, Name = c.Name, HtmlColorCode = c.HtmlColorCode })
                                                  .OrderBy(x => x.Name).ToList();
 
         CalendarOutputViewModel vm = new()
@@ -257,8 +260,8 @@ public class CalendarController : Controller
         List<CalendarResponse> allCalendars = await _calendarService.GetAllCalendarsAsync(HttpContext.RequestAborted);
         List<CalendarSharedResponse> sharedCalendars = await _calendarService.GetCalendarSharedAsync(HttpContext.RequestAborted);
         List<CalendarResponse> otherCalendars = (from c in allCalendars
-                                                  join cs in sharedCalendars.Where(x => x.Anonymous) on c.Id equals cs.CalendarId
-                                                  select new CalendarResponse { Id = c.Id, Name = c.Name, HtmlColorCode = c.HtmlColorCode })
+                                                 join cs in sharedCalendars.Where(x => x.Anonymous) on c.Id equals cs.CalendarId
+                                                 select new CalendarResponse { Id = c.Id, Name = c.Name, HtmlColorCode = c.HtmlColorCode })
                                                  .OrderBy(x => x.Name).ToList();
 
         CalendarOutputViewModel vm = new()
@@ -337,14 +340,14 @@ public class CalendarController : Controller
                 List<OtherCalendarResponse> otherCalendars = await _calendarService.GetOtherCalendarsAsync(_sessionService.GetAccount()!.Email!, HttpContext.RequestAborted);
 
                 List<CalendarResponse> tempOtherCalendars = (from calendar in calendars
-                                                     join otherCalendar in otherCalendars
-                                                     on calendar.Id equals otherCalendar.CalendarId
-                                                     select new CalendarResponse()
-                                                     {
-                                                         Id = calendar.Id,
-                                                         Name = calendar.Name,
-                                                         HtmlColorCode = calendar.HtmlColorCode,
-                                                     }).OrderBy(x => x.Name).ToList();
+                                                             join otherCalendar in otherCalendars
+                                                             on calendar.Id equals otherCalendar.CalendarId
+                                                             select new CalendarResponse()
+                                                             {
+                                                                 Id = calendar.Id,
+                                                                 Name = calendar.Name,
+                                                                 HtmlColorCode = calendar.HtmlColorCode,
+                                                             }).OrderBy(x => x.Name).ToList();
 
                 return Json(new { result = true, tempOtherCalendars });
             }

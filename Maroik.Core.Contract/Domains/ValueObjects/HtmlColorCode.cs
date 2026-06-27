@@ -1,5 +1,5 @@
-﻿using ErrorOr;
 using System.Text.RegularExpressions;
+using ErrorOr;
 using Maroik.Core.Contract.Domains.Primitives;
 
 namespace Maroik.Core.Contract.Domains.ValueObjects;

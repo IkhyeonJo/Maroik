@@ -28,10 +28,10 @@ public class FileValidationService : IFileValidationService
         if (file is not { Length: > 0 })
             return (false, "Invalid file.");
 
-        var fileName   = Path.GetFileName(file.FileName);
-        var ext        = Path.GetExtension(fileName).ToLowerInvariant();
-        var safeDir    = Path.GetFullPath(filePath);
-        var safePath   = Path.Combine(safeDir, fileName);
+        var fileName = Path.GetFileName(file.FileName);
+        var ext = Path.GetExtension(fileName).ToLowerInvariant();
+        var safeDir = Path.GetFullPath(filePath);
+        var safePath = Path.Combine(safeDir, fileName);
 
         if (!AllowedExtensions.Contains(ext))
             return (false, "Unsupported file extension.");
@@ -75,11 +75,11 @@ public class FileValidationService : IFileValidationService
 
         return ext switch
         {
-            ".zip"            => header[0] == 0x50 && header[1] == 0x4B && header[2] == 0x03 && header[3] == 0x04,
+            ".zip" => header[0] == 0x50 && header[1] == 0x4B && header[2] == 0x03 && header[3] == 0x04,
             ".jpg" or ".jpeg" => header[0] == 0xFF && header[1] == 0xD8,
-            ".png"            => header[0] == 0x89 && header[1] == 0x50 && header[2] == 0x4E && header[3] == 0x47
+            ".png" => header[0] == 0x89 && header[1] == 0x50 && header[2] == 0x4E && header[3] == 0x47
                               && header[4] == 0x0D && header[5] == 0x0A && header[6] == 0x1A && header[7] == 0x0A,
-            _                 => false
+            _ => false
         };
     }
 
@@ -102,14 +102,14 @@ public class FileValidationService : IFileValidationService
     {
         var chmod = new ProcessStartInfo
         {
-            FileName               = "/bin/chmod",
+            FileName = "/bin/chmod",
 #pragma warning disable SCS0001
-            Arguments              = $"644 \"{filePath}\"",
+            Arguments = $"644 \"{filePath}\"",
 #pragma warning restore SCS0001
             RedirectStandardOutput = true,
-            RedirectStandardError  = true,
-            UseShellExecute        = false,
-            CreateNoWindow         = true
+            RedirectStandardError = true,
+            UseShellExecute = false,
+            CreateNoWindow = true
         };
 
         using var process = Process.Start(chmod);

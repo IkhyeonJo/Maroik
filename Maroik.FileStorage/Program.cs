@@ -2,10 +2,10 @@
 // Entry point for the file-storage microservice.
 // Configures DI, Swagger/OpenAPI, CORS, and the HTTP pipeline, then starts Kestrel.
 
-using Microsoft.OpenApi;
-using Maroik.Core.Contract.Interfaces;
 using Maroik.Core.Client.Clients;
+using Maroik.Core.Contract.Interfaces;
 using Maroik.FileStorage.Services;
+using Microsoft.OpenApi;
 using Serilog;
 using Serilog.Events;
 

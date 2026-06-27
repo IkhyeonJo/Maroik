@@ -1,4 +1,4 @@
-﻿namespace Maroik.Core.PostgreSQL.Models;
+namespace Maroik.Core.PostgreSQL.Models;
 
 /// <summary>
 /// OtherCalendar

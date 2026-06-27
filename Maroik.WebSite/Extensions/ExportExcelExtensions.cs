@@ -1,4 +1,4 @@
-using Maroik.Core.Contract.Utilities;
+using Maroik.Core.Contract.Extensions;
 
 namespace Maroik.WebSite.Extensions;
 

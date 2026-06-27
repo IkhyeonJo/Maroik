@@ -1,4 +1,4 @@
-﻿namespace Maroik.Core.Contract.Domains.Primitives;
+namespace Maroik.Core.Contract.Domains.Primitives;
 
 /// <summary>
 /// Base class for all domain entities.

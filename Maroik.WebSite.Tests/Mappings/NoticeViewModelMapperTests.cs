@@ -1,5 +1,5 @@
 using Maroik.Core.Contract.Dtos;
-using Maroik.Core.Contract.Utilities;
+using Maroik.Core.Contract.Policies;
 using Maroik.WebSite.Mappings;
 
 namespace Maroik.WebSite.Tests.Mappings;
@@ -85,14 +85,14 @@ public class NoticeViewModelMapperTests
         var items = new[] { new FixedIncomeResponse { MainClass = "RegularIncome", SubClass = "LaborIncome", MaturityDate = DateTime.Today.AddYears(1) } };
         var vms = items.ToDisplayViewModels([], key => $"L:{key}", "UTC", 7);
         Assert.Equal("L:RegularIncome", vms[0].MainClass);
-        Assert.Equal("L:LaborIncome",   vms[0].SubClass);
+        Assert.Equal("L:LaborIncome", vms[0].SubClass);
     }
 
     [Fact]
     public void FixedIncomesToDisplayViewModels_PopulatesMonetaryUnit()
     {
         var assets = new[] { new AssetResponse { ProductName = "Bank", MonetaryUnit = "KRW" } };
-        var items  = new[] { new FixedIncomeResponse { DepositMyAssetProductName = "Bank", MaturityDate = DateTime.Today.AddYears(1) } };
+        var items = new[] { new FixedIncomeResponse { DepositMyAssetProductName = "Bank", MaturityDate = DateTime.Today.AddYears(1) } };
         var vms = items.ToDisplayViewModels(assets, k => k, "UTC", 7);
         Assert.Equal("KRW", vms[0].MonetaryUnit);
     }

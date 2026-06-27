@@ -1,4 +1,6 @@
-﻿using Maroik.Core.Contract.Utilities;
+using Maroik.Core.Contract.Constants;
+using Maroik.Core.Contract.Enums;
+using Maroik.Core.Contract.Settings;
 using Maroik.Core.PostgreSQL.Data;
 using Maroik.Core.PostgreSQL.Models;
 using Microsoft.AspNetCore.DataProtection;
@@ -131,8 +133,8 @@ public sealed class PlaywrightWebApplicationFactory : WebApplicationFactory<Prog
             var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
             db.Categories.AddRange(
                 new Category { Id = 1, Name = "Dashboard", DisplayName = "Dashboard", IconPath = "", Controller = "DashBoard", Action = "AnonymousIndex", Role = Role.Anonymous, Order = 1 },
-                new Category { Id = 2, Name = "Calendar",  DisplayName = "Calendar",  IconPath = "", Controller = "Calendar",  Action = "AnonymousIndex", Role = Role.Anonymous, Order = 2 },
-                new Category { Id = 3, Name = "Forum",     DisplayName = "Forum",     IconPath = "", Controller = "Forum",     Action = nameof(BoardType.FreeForum),      Role = Role.Anonymous, Order = 3 }
+                new Category { Id = 2, Name = "Calendar", DisplayName = "Calendar", IconPath = "", Controller = "Calendar", Action = "AnonymousIndex", Role = Role.Anonymous, Order = 2 },
+                new Category { Id = 3, Name = "Forum", DisplayName = "Forum", IconPath = "", Controller = "Forum", Action = nameof(BoardType.FreeForum), Role = Role.Anonymous, Order = 3 }
             );
             db.SaveChanges();
         }

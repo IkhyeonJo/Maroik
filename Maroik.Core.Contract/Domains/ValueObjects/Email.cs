@@ -1,5 +1,5 @@
-using ErrorOr;
 using System.Net.Mail;
+using ErrorOr;
 using Maroik.Core.Contract.Domains.Primitives;
 
 namespace Maroik.Core.Contract.Domains.ValueObjects;

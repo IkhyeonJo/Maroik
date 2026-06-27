@@ -1,8 +1,8 @@
+using System.Text.RegularExpressions;
 using Maroik.Core.Contract.Domains.Finance;
 using Maroik.Core.Contract.Dtos;
 using Maroik.Core.Contract.Interfaces;
 using Maroik.Core.Service.Mappers;
-using System.Text.RegularExpressions;
 
 namespace Maroik.Core.Service.Services;
 

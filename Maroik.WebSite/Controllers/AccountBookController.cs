@@ -1,8 +1,9 @@
+using Maroik.Core.Contract.Constants;
 using Maroik.Core.Contract.Dtos;
+using Maroik.Core.Contract.Extensions;
 using Maroik.Core.Contract.Interfaces;
-using Maroik.Core.Contract.Utilities;
-using Maroik.WebSite.Contracts;
 using Maroik.WebSite.Attributes;
+using Maroik.WebSite.Contracts;
 using Maroik.WebSite.Extensions;
 using Maroik.WebSite.Mappings;
 using Maroik.WebSite.Models.ViewModels.AccountBook;
@@ -63,12 +64,12 @@ public class AccountBookController : Controller
 
         var request = new AssetRequest
         {
-            ProductName  = assetInputViewModel.ProductName,
-            Item         = assetInputViewModel.Item,
-            Amount       = assetInputViewModel.Amount,
+            ProductName = assetInputViewModel.ProductName,
+            Item = assetInputViewModel.Item,
+            Amount = assetInputViewModel.Amount,
             MonetaryUnit = assetInputViewModel.MonetaryUnit,
-            Note         = assetInputViewModel.Note ?? "",
-            Deleted      = false
+            Note = assetInputViewModel.Note ?? "",
+            Deleted = false
         };
 
         var result = await _assetService.CreateAsync(email, request, ct);
@@ -88,7 +89,7 @@ public class AccountBookController : Controller
         if (HttpContext.Request.Headers["X-Requested-With"] == "XMLHttpRequest")
         {
             var account = _sessionService.GetAccount()!;
-            var assets  = await _assetService.GetAssetsAsync(account.Email!, ct);
+            var assets = await _assetService.GetAssetsAsync(account.Email!, ct);
             var viewModels = assets
                 .ToDisplayViewModels(Localize, account.TimeZoneIanaId!)
                 .ApplySearch(wholeSearch)
@@ -98,8 +99,8 @@ public class AccountBookController : Controller
         }
 
         var pageAccount = _sessionService.GetAccount() ?? new AccountResponse();
-        string tz       = pageAccount.TimeZoneIanaId ?? "UTC";
-        var vm          = new AccountBookPageViewModel
+        string tz = pageAccount.TimeZoneIanaId ?? "UTC";
+        var vm = new AccountBookPageViewModel
         {
             Assets = (await _assetService.GetAssetsAsync(pageAccount.Email!, ct))
                 .Where(x => !x.Deleted).OrderBy(x => x.ProductName).ToList()
@@ -147,12 +148,12 @@ public class AccountBookController : Controller
 
         var request = new AssetRequest
         {
-            ProductName  = assetInputViewModel.ProductName,
-            Item         = assetInputViewModel.Item,
-            Amount       = assetInputViewModel.Amount,
+            ProductName = assetInputViewModel.ProductName,
+            Item = assetInputViewModel.Item,
+            Amount = assetInputViewModel.Amount,
             MonetaryUnit = assetInputViewModel.MonetaryUnit,
-            Note         = assetInputViewModel.Note,
-            Deleted      = assetInputViewModel.Deleted
+            Note = assetInputViewModel.Note,
+            Deleted = assetInputViewModel.Deleted
         };
 
         var result = await _assetService.UpdateAsync(email, request, assetInputViewModel.OriginalProductName!, ct);
@@ -189,8 +190,8 @@ public class AccountBookController : Controller
     public async Task<IActionResult> ExportExcelAsset(string fileName = "", CancellationToken ct = default)
     {
         var account = _sessionService.GetAccount()!;
-        var assets  = await _assetService.GetAssetsAsync(account.Email!, ct);
-        var stream  = _excelExportService.CreateAssetExcel(assets, Localize, account.TimeZoneIanaId!);
+        var assets = await _assetService.GetAssetsAsync(account.Email!, ct);
+        var stream = _excelExportService.CreateAssetExcel(assets, Localize, account.TimeZoneIanaId!);
         string name = fileName.ToExcelFileName(account.TimeZoneIanaId!);
         return File(stream, "application/octet-stream", name);
     }
@@ -216,13 +217,13 @@ public class AccountBookController : Controller
 
         var request = new IncomeRequest
         {
-            MainClass                 = incomeInputViewModel.MainClass,
-            SubClass                  = incomeInputViewModel.SubClass,
-            Content                   = incomeInputViewModel.Content ?? "",
-            Amount                    = incomeInputViewModel.Amount,
+            MainClass = incomeInputViewModel.MainClass,
+            SubClass = incomeInputViewModel.SubClass,
+            Content = incomeInputViewModel.Content ?? "",
+            Amount = incomeInputViewModel.Amount,
             DepositMyAssetProductName = incomeInputViewModel.DepositMyAssetProductName,
-            Created                   = incomeInputViewModel.Created,
-            Note                      = incomeInputViewModel.Note ?? ""
+            Created = incomeInputViewModel.Created,
+            Note = incomeInputViewModel.Note ?? ""
         };
 
         var result = await _incomeService.CreateAsync(email, request, ct);
@@ -242,7 +243,7 @@ public class AccountBookController : Controller
         if (HttpContext.Request.Headers["X-Requested-With"] == "XMLHttpRequest")
         {
             var account = _sessionService.GetAccount()!;
-            var assets  = await _assetService.GetAssetsAsync(account.Email!, ct);
+            var assets = await _assetService.GetAssetsAsync(account.Email!, ct);
             var incomes = await _incomeService.GetIncomesAsync(account.Email!, ct);
             var viewModels = incomes
                 .ToDisplayViewModels(assets, Localize, account.TimeZoneIanaId!)
@@ -254,8 +255,8 @@ public class AccountBookController : Controller
         }
 
         var pageAccount = _sessionService.GetAccount() ?? new AccountResponse();
-        string tz       = pageAccount.TimeZoneIanaId ?? "UTC";
-        var vm          = new AccountBookPageViewModel
+        string tz = pageAccount.TimeZoneIanaId ?? "UTC";
+        var vm = new AccountBookPageViewModel
         {
             Assets = (await _assetService.GetAssetsAsync(pageAccount.Email!, ct))
                 .Where(x => !x.Deleted).OrderBy(x => x.ProductName).ToList()
@@ -273,7 +274,7 @@ public class AccountBookController : Controller
         try
         {
             string email = _sessionService.GetAccount()!.Email!;
-            string tz    = _sessionService.GetAccount()!.TimeZoneIanaId!;
+            string tz = _sessionService.GetAccount()!.TimeZoneIanaId!;
 
             IncomeResponse? income = await _incomeService.GetByIdAsync(email, id, ct);
             if (income == null)
@@ -329,14 +330,14 @@ public class AccountBookController : Controller
 
         var request = new IncomeRequest
         {
-            Id                        = incomeInputViewModel.Id,
-            MainClass                 = incomeInputViewModel.MainClass,
-            SubClass                  = incomeInputViewModel.SubClass,
-            Content                   = incomeInputViewModel.Content,
-            Amount                    = incomeInputViewModel.Amount,
+            Id = incomeInputViewModel.Id,
+            MainClass = incomeInputViewModel.MainClass,
+            SubClass = incomeInputViewModel.SubClass,
+            Content = incomeInputViewModel.Content,
+            Amount = incomeInputViewModel.Amount,
             DepositMyAssetProductName = incomeInputViewModel.DepositMyAssetProductName,
-            Created                   = incomeInputViewModel.Created,
-            Note                      = incomeInputViewModel.Note
+            Created = incomeInputViewModel.Created,
+            Note = incomeInputViewModel.Note
         };
 
         var result = await _incomeService.UpdateAsync(email, request, ct);
@@ -355,8 +356,8 @@ public class AccountBookController : Controller
     [RequiredHttpPostAccess(Role = Role.User)]
     public async Task<IActionResult> DeleteIncome([FromBody] IncomeInputViewModel incomeInputViewModel, CancellationToken ct)
     {
-        string email  = _sessionService.GetAccount()!.Email!;
-        var result    = await _incomeService.DeleteAsync(email, incomeInputViewModel.Id, ct);
+        string email = _sessionService.GetAccount()!.Email!;
+        var result = await _incomeService.DeleteAsync(email, incomeInputViewModel.Id, ct);
         return result.Success
             ? Json(new { result = true, message = _localizer["The income has been successfully deleted."].Value })
             : Json(new { result = false, error = _localizer[result.ErrorKey!].Value });
@@ -373,9 +374,9 @@ public class AccountBookController : Controller
     public async Task<IActionResult> ExportExcelIncome(string fileName = "", CancellationToken ct = default)
     {
         var account = _sessionService.GetAccount()!;
-        var assets  = await _assetService.GetAssetsAsync(account.Email!, ct);
+        var assets = await _assetService.GetAssetsAsync(account.Email!, ct);
         var incomes = await _incomeService.GetIncomesAsync(account.Email!, ct);
-        var stream  = _excelExportService.CreateIncomeExcel(incomes, assets, Localize, account.TimeZoneIanaId!);
+        var stream = _excelExportService.CreateIncomeExcel(incomes, assets, Localize, account.TimeZoneIanaId!);
         string name = fileName.ToExcelFileName(account.TimeZoneIanaId!);
         return File(stream, "application/octet-stream", name);
     }
@@ -402,14 +403,14 @@ public class AccountBookController : Controller
 
         var request = new ExpenditureRequest
         {
-            MainClass      = expenditureInputViewModel.MainClass,
-            SubClass       = expenditureInputViewModel.SubClass,
-            Content        = expenditureInputViewModel.Content ?? "",
-            Amount         = expenditureInputViewModel.Amount,
-            PaymentMethod  = expenditureInputViewModel.PaymentMethod,
+            MainClass = expenditureInputViewModel.MainClass,
+            SubClass = expenditureInputViewModel.SubClass,
+            Content = expenditureInputViewModel.Content ?? "",
+            Amount = expenditureInputViewModel.Amount,
+            PaymentMethod = expenditureInputViewModel.PaymentMethod,
             MyDepositAsset = expenditureInputViewModel.MyDepositAsset ?? "",
-            Created        = expenditureInputViewModel.Created,
-            Note           = expenditureInputViewModel.Note ?? ""
+            Created = expenditureInputViewModel.Created,
+            Note = expenditureInputViewModel.Note ?? ""
         };
 
         var result = await _expenditureService.CreateAsync(email, request, ct);
@@ -428,10 +429,10 @@ public class AccountBookController : Controller
     {
         if (HttpContext.Request.Headers["X-Requested-With"] == "XMLHttpRequest")
         {
-            var account      = _sessionService.GetAccount()!;
-            var assets       = await _assetService.GetAssetsAsync(account.Email!, ct);
+            var account = _sessionService.GetAccount()!;
+            var assets = await _assetService.GetAssetsAsync(account.Email!, ct);
             var expenditures = await _expenditureService.GetExpendituresAsync(account.Email!, ct);
-            var viewModels   = expenditures
+            var viewModels = expenditures
                 .ToDisplayViewModels(assets, Localize, account.TimeZoneIanaId!)
                 .ApplySearch(wholeSearch)
                 .OrderByDescending(m => m.Created)
@@ -441,8 +442,8 @@ public class AccountBookController : Controller
         }
 
         var pageAccount = _sessionService.GetAccount() ?? new AccountResponse();
-        string tz       = pageAccount.TimeZoneIanaId ?? "UTC";
-        var vm          = new AccountBookPageViewModel
+        string tz = pageAccount.TimeZoneIanaId ?? "UTC";
+        var vm = new AccountBookPageViewModel
         {
             Assets = (await _assetService.GetAssetsAsync(pageAccount.Email!, ct))
                 .Where(x => !x.Deleted).OrderBy(x => x.ProductName).ToList()
@@ -460,7 +461,7 @@ public class AccountBookController : Controller
         try
         {
             string email = _sessionService.GetAccount()!.Email!;
-            string tz    = _sessionService.GetAccount()!.TimeZoneIanaId!;
+            string tz = _sessionService.GetAccount()!.TimeZoneIanaId!;
 
             ExpenditureResponse? expenditure = await _expenditureService.GetByIdAsync(email, id, ct);
             if (expenditure == null)
@@ -517,15 +518,15 @@ public class AccountBookController : Controller
 
         var request = new ExpenditureRequest
         {
-            Id             = expenditureInputViewModel.Id,
-            MainClass      = expenditureInputViewModel.MainClass,
-            SubClass       = expenditureInputViewModel.SubClass,
-            Content        = expenditureInputViewModel.Content ?? "",
-            Amount         = expenditureInputViewModel.Amount,
-            PaymentMethod  = expenditureInputViewModel.PaymentMethod,
+            Id = expenditureInputViewModel.Id,
+            MainClass = expenditureInputViewModel.MainClass,
+            SubClass = expenditureInputViewModel.SubClass,
+            Content = expenditureInputViewModel.Content ?? "",
+            Amount = expenditureInputViewModel.Amount,
+            PaymentMethod = expenditureInputViewModel.PaymentMethod,
             MyDepositAsset = expenditureInputViewModel.MyDepositAsset ?? "",
-            Created        = expenditureInputViewModel.Created,
-            Note           = expenditureInputViewModel.Note ?? ""
+            Created = expenditureInputViewModel.Created,
+            Note = expenditureInputViewModel.Note ?? ""
         };
 
         var result = await _expenditureService.UpdateAsync(email, request, ct);
@@ -546,7 +547,7 @@ public class AccountBookController : Controller
         [FromBody] ExpenditureInputViewModel expenditureInputViewModel, CancellationToken ct)
     {
         string email = _sessionService.GetAccount()!.Email!;
-        var result   = await _expenditureService.DeleteAsync(email, expenditureInputViewModel.Id, ct);
+        var result = await _expenditureService.DeleteAsync(email, expenditureInputViewModel.Id, ct);
         return result.Success
             ? Json(new { result = true, message = _localizer["The expenditure has been successfully deleted."].Value })
             : Json(new { result = false, error = _localizer[result.ErrorKey!].Value });
@@ -562,11 +563,11 @@ public class AccountBookController : Controller
     [RequiredHttpPostAccess(Role = Role.User)]
     public async Task<IActionResult> ExportExcelExpenditure(string fileName = "", CancellationToken ct = default)
     {
-        var account      = _sessionService.GetAccount()!;
-        var assets       = await _assetService.GetAssetsAsync(account.Email!, ct);
+        var account = _sessionService.GetAccount()!;
+        var assets = await _assetService.GetAssetsAsync(account.Email!, ct);
         var expenditures = await _expenditureService.GetExpendituresAsync(account.Email!, ct);
-        var stream       = _excelExportService.CreateExpenditureExcel(expenditures, assets, Localize, account.TimeZoneIanaId!);
-        string name      = fileName.ToExcelFileName(account.TimeZoneIanaId!);
+        var stream = _excelExportService.CreateExpenditureExcel(expenditures, assets, Localize, account.TimeZoneIanaId!);
+        string name = fileName.ToExcelFileName(account.TimeZoneIanaId!);
         return File(stream, "application/octet-stream", name);
     }
 

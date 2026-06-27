@@ -50,14 +50,14 @@ public class ExpenditureServiceTests
         string paymentMethod = "Checking",
         string depositAsset = "Savings",
         decimal amount = 200m) => new()
-    {
-        MainClass = "RegularSavings",
-        SubClass = "Deposit",
-        PaymentMethod = paymentMethod,
-        MyDepositAsset = depositAsset,
-        Amount = amount,
-        Content = "Monthly savings"
-    };
+        {
+            MainClass = "RegularSavings",
+            SubClass = "Deposit",
+            PaymentMethod = paymentMethod,
+            MyDepositAsset = depositAsset,
+            Amount = amount,
+            Content = "Monthly savings"
+        };
 
     // -- CreateAsync ----------------------------------------------------------
 

@@ -1,6 +1,7 @@
+using Maroik.Core.Contract.Constants;
 using Maroik.Core.Contract.Dtos;
 using Maroik.Core.Contract.Interfaces;
-using Maroik.Core.Contract.Utilities;
+using Maroik.Core.Contract.Settings;
 using Maroik.WebSite.Contracts;
 using Microsoft.AspNetCore.Localization;
 using Microsoft.AspNetCore.Mvc;

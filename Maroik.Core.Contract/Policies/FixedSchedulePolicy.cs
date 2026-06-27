@@ -1,4 +1,4 @@
-namespace Maroik.Core.Contract.Utilities;
+namespace Maroik.Core.Contract.Policies;
 
 /// <summary>
 /// Domain rules for determining the notification status of a recurring fixed-income or

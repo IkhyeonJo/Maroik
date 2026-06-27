@@ -1,7 +1,7 @@
-﻿using Maroik.Core.Contract.Interfaces;
-using Maroik.Core.Contract.Utilities;
-using Maroik.WebSite.Contracts;
+using Maroik.Core.Contract.Constants;
+using Maroik.Core.Contract.Interfaces;
 using Maroik.WebSite.Attributes;
+using Maroik.WebSite.Contracts;
 using Maroik.WebSite.Mappings;
 using Maroik.WebSite.Models.ViewModels.Account;
 using Maroik.WebSite.Models.ViewModels.DashBoard;
@@ -77,7 +77,7 @@ public class DashBoardController : Controller
     public async Task<IActionResult> UserIndex(string year, string month, CancellationToken ct)
     {
         var loginedAccount = _sessionService.GetAccount();
-        string? email      = loginedAccount?.Email;
+        string? email = loginedAccount?.Email;
         string? timeZoneId = loginedAccount?.TimeZoneIanaId;
 
         if (email == "demo@maroik.com") { year = "2025"; month = "06"; }

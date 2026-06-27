@@ -22,8 +22,8 @@ public class HtmlParser : IHtmlParser
             string alt = imgTag.GetAttributeValue("alt", "");
             HtmlImgPatch? patch = await patchFactory(alt, ct);
             if (patch == null) continue;
-            if (patch.NewAlt != null)          imgTag.SetAttributeValue("alt", patch.NewAlt);
-            if (patch.DataFile != null)        imgTag.SetAttributeValue("data-file", patch.DataFile);
+            if (patch.NewAlt != null) imgTag.SetAttributeValue("alt", patch.NewAlt);
+            if (patch.DataFile != null) imgTag.SetAttributeValue("data-file", patch.DataFile);
             if (patch.DataContentType != null) imgTag.SetAttributeValue("data-contenttype", patch.DataContentType);
         }
 

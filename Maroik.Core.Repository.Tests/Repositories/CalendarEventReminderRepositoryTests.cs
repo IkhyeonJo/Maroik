@@ -31,11 +31,11 @@ public class CalendarEventReminderRepositoryTests : IDisposable
 
     private static EfCalendarEventReminder MakeReminder(long calendarEventId, string method = "Email",
         long minutesBefore = 30) => new()
-    {
-        CalendarEventId = calendarEventId,
-        Method = method,
-        MinutesBeforeEvent = minutesBefore
-    };
+        {
+            CalendarEventId = calendarEventId,
+            Method = method,
+            MinutesBeforeEvent = minutesBefore
+        };
 
     private async Task SeedAsync(params EfCalendarEventReminder[] reminders)
     {

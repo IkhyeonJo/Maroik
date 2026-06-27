@@ -1,4 +1,6 @@
-namespace Maroik.Core.Contract.Utilities;
+using Maroik.Core.Contract.Enums;
+
+namespace Maroik.Core.Contract.Settings;
 
 /// <summary>
 /// Strongly-typed configuration class bound to the "ServerSetting" section of appsettings.json.

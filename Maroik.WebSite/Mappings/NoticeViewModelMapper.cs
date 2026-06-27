@@ -1,5 +1,6 @@
 using Maroik.Core.Contract.Dtos;
-using Maroik.Core.Contract.Utilities;
+using Maroik.Core.Contract.Extensions;
+using Maroik.Core.Contract.Policies;
 using Maroik.WebSite.Models.ViewModels.Notice;
 
 namespace Maroik.WebSite.Mappings;
@@ -19,24 +20,24 @@ public static class NoticeViewModelMapper
         string timeZoneIanaId,
         DateTime today,
         int noticeWindowDays) => new()
-    {
-        Id                        = item.Id,
-        MainClass                 = localize(item.MainClass ?? ""),
-        SubClass                  = localize(item.SubClass ?? ""),
-        Content                   = item.Content,
-        Amount                    = item.Amount,
-        MonetaryUnit              = currencyByProduct.GetValueOrDefault(item.DepositMyAssetProductName ?? ""),
-        DepositMonth              = item.DepositMonth,
-        DepositDay                = item.DepositDay,
-        MaturityDate              = item.MaturityDate.ToString("yyyy-MM-dd"),
-        Note                      = item.Note,
-        DepositMyAssetProductName = item.DepositMyAssetProductName,
-        Created                   = item.Created.ConvertTimeByTimeZoneIanaId(timeZoneIanaId),
-        Updated                   = item.Updated.ConvertTimeByTimeZoneIanaId(timeZoneIanaId),
-        Noticed                   = FixedSchedulePolicy.IsNoticed(item.DepositMonth, item.DepositDay, today, noticeWindowDays, item.Unpunctuality),
-        Expired                   = FixedSchedulePolicy.IsExpired(item.MaturityDate, today),
-        Unpunctuality             = item.Unpunctuality
-    };
+        {
+            Id = item.Id,
+            MainClass = localize(item.MainClass ?? ""),
+            SubClass = localize(item.SubClass ?? ""),
+            Content = item.Content,
+            Amount = item.Amount,
+            MonetaryUnit = currencyByProduct.GetValueOrDefault(item.DepositMyAssetProductName ?? ""),
+            DepositMonth = item.DepositMonth,
+            DepositDay = item.DepositDay,
+            MaturityDate = item.MaturityDate.ToString("yyyy-MM-dd"),
+            Note = item.Note,
+            DepositMyAssetProductName = item.DepositMyAssetProductName,
+            Created = item.Created.ConvertTimeByTimeZoneIanaId(timeZoneIanaId),
+            Updated = item.Updated.ConvertTimeByTimeZoneIanaId(timeZoneIanaId),
+            Noticed = FixedSchedulePolicy.IsNoticed(item.DepositMonth, item.DepositDay, today, noticeWindowDays, item.Unpunctuality),
+            Expired = FixedSchedulePolicy.IsExpired(item.MaturityDate, today),
+            Unpunctuality = item.Unpunctuality
+        };
 
     /// <summary>Maps all <see cref="FixedIncomeResponse"/> items to display view models.</summary>
     public static List<FixedIncomeOutputViewModel> ToDisplayViewModels(
@@ -59,25 +60,25 @@ public static class NoticeViewModelMapper
         string timeZoneIanaId,
         DateTime today,
         int noticeWindowDays) => new()
-    {
-        Id             = item.Id,
-        MainClass      = localize(item.MainClass ?? ""),
-        SubClass       = localize(item.SubClass ?? ""),
-        Content        = item.Content,
-        Amount         = item.Amount,
-        MonetaryUnit   = currencyByProduct.GetValueOrDefault(item.PaymentMethod ?? ""),
-        PaymentMethod  = item.PaymentMethod,
-        MyDepositAsset = item.MyDepositAsset,
-        DepositMonth   = item.DepositMonth,
-        DepositDay     = item.DepositDay,
-        MaturityDate   = item.MaturityDate.ToString("yyyy-MM-dd"),
-        Note           = item.Note,
-        Created        = item.Created.ConvertTimeByTimeZoneIanaId(timeZoneIanaId),
-        Updated        = item.Updated.ConvertTimeByTimeZoneIanaId(timeZoneIanaId),
-        Noticed        = FixedSchedulePolicy.IsNoticed(item.DepositMonth, item.DepositDay, today, noticeWindowDays, item.Unpunctuality),
-        Expired        = FixedSchedulePolicy.IsExpired(item.MaturityDate, today),
-        Unpunctuality  = item.Unpunctuality
-    };
+        {
+            Id = item.Id,
+            MainClass = localize(item.MainClass ?? ""),
+            SubClass = localize(item.SubClass ?? ""),
+            Content = item.Content,
+            Amount = item.Amount,
+            MonetaryUnit = currencyByProduct.GetValueOrDefault(item.PaymentMethod ?? ""),
+            PaymentMethod = item.PaymentMethod,
+            MyDepositAsset = item.MyDepositAsset,
+            DepositMonth = item.DepositMonth,
+            DepositDay = item.DepositDay,
+            MaturityDate = item.MaturityDate.ToString("yyyy-MM-dd"),
+            Note = item.Note,
+            Created = item.Created.ConvertTimeByTimeZoneIanaId(timeZoneIanaId),
+            Updated = item.Updated.ConvertTimeByTimeZoneIanaId(timeZoneIanaId),
+            Noticed = FixedSchedulePolicy.IsNoticed(item.DepositMonth, item.DepositDay, today, noticeWindowDays, item.Unpunctuality),
+            Expired = FixedSchedulePolicy.IsExpired(item.MaturityDate, today),
+            Unpunctuality = item.Unpunctuality
+        };
 
     /// <summary>Maps all <see cref="FixedExpenditureResponse"/> items to display view models.</summary>
     public static List<FixedExpenditureOutputViewModel> ToDisplayViewModels(

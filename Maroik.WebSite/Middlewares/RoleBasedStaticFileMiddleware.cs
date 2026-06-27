@@ -1,4 +1,4 @@
-using Maroik.Core.Contract.Utilities;
+using Maroik.Core.Contract.Constants;
 using Maroik.Core.Contract.Interfaces;
 using Maroik.WebSite.Contracts;
 

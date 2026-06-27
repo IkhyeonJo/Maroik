@@ -1,5 +1,5 @@
-using Maroik.Core.Contract.Interfaces;
 using System.Net;
+using Maroik.Core.Contract.Interfaces;
 
 namespace Maroik.Core.Client.Clients;
 

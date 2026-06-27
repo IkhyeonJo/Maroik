@@ -57,16 +57,16 @@ public class AssetRepositoryIntegrationTests : IAsyncLifetime
 
     private static OrmAsset MakeOrm(string productName, string email, string item = "FreeDepositAndWithdrawal",
         decimal amount = 1000m, string unit = "KRW") => new()
-    {
-        ProductName = productName,
-        AccountEmail = email,
-        Item = item,
-        Amount = amount,
-        MonetaryUnit = unit,
-        Deleted = false,
-        Created = DateTime.UtcNow,
-        Updated = DateTime.UtcNow
-    };
+        {
+            ProductName = productName,
+            AccountEmail = email,
+            Item = item,
+            Amount = amount,
+            MonetaryUnit = unit,
+            Deleted = false,
+            Created = DateTime.UtcNow,
+            Updated = DateTime.UtcNow
+        };
 
     private async Task SeedAsync(params OrmAsset[] assets)
     {

@@ -1,5 +1,5 @@
+using Maroik.Core.Contract.Constants;
 using Maroik.Core.Contract.Domains.Account;
-using Maroik.Core.Contract.Utilities;
 using Maroik.Core.PostgreSQL.Data;
 using Maroik.Core.Repository.Repositories;
 using Microsoft.EntityFrameworkCore;

@@ -1,6 +1,6 @@
-using Maroik.Core.Contract.Interfaces;
 using System.Net;
 using System.Net.Sockets;
+using Maroik.Core.Contract.Interfaces;
 
 namespace Maroik.Core.Client.Clients;
 

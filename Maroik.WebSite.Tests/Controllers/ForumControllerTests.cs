@@ -1,4 +1,4 @@
-﻿using Maroik.WebSite.Tests.Infrastructure;
+using Maroik.WebSite.Tests.Infrastructure;
 
 namespace Maroik.WebSite.Tests.Controllers;
 

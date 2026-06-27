@@ -1,9 +1,10 @@
-using Maroik.Core.Contract.Utilities;
+using Maroik.Core.Contract.Enums;
+using Maroik.Core.Contract.Helpers;
 
-namespace Maroik.Core.Contract.Tests.Utilities;
+namespace Maroik.Core.Contract.Tests.Helpers;
 
 /// <summary>
-/// Unit tests for <see cref="Maroik.Core.Contract.Utilities.EnumHelper"/>.
+/// Unit tests for <see cref="Maroik.Core.Contract.Helpers.EnumHelper"/>.
 /// Verifies that <c>GetDescription</c> returns the value of the
 /// <see cref="System.ComponentModel.DescriptionAttribute"/> on each enum member,
 /// and falls back to the member name when no attribute is present.

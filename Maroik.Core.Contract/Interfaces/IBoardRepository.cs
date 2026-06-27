@@ -1,5 +1,6 @@
 using Maroik.Core.Contract.Domains.Board;
 namespace Maroik.Core.Contract.Interfaces;
+
 public interface IBoardRepository : IGenericRepository<Board>
 {
     Task IncrementViewAsync(long id, CancellationToken ct = default);

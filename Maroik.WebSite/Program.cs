@@ -3,29 +3,30 @@
 // Configures DI services (repositories, services, clients, session, antiforgery, CORS, localization),
 // sets up hot-swap TLS certificate polling for Docker deployments, and builds the ASP.NET Core pipeline.
 
+using System.Globalization;
+using System.Runtime.InteropServices;
+using System.Security.Cryptography;
+using System.Security.Cryptography.X509Certificates;
 using Mapster;
-using Maroik.Core.Contract.Utilities;
+using Maroik.Core.Client.Extensions;
+using Maroik.Core.Contract.Enums;
+using Maroik.Core.Contract.Settings;
 using Maroik.Core.Repository.Extensions;
 using Maroik.Core.Service.Extensions;
-using Maroik.Core.Client.Extensions;
+using Maroik.WebSite.Extensions;
 using Maroik.WebSite.Filters;
 using Maroik.WebSite.Middlewares;
-using Maroik.WebSite.Extensions;
 using Microsoft.AspNetCore.Antiforgery;
 using Microsoft.AspNetCore.CookiePolicy;
+using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Localization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Razor;
 using Microsoft.AspNetCore.Rewrite;
 using Microsoft.AspNetCore.Session;
-using System.Globalization;
-using System.Security.Cryptography.X509Certificates;
-using System.Security.Cryptography;
-using System.Runtime.InteropServices;
-using Microsoft.AspNetCore.DataProtection;
-using StackExchange.Redis;
 using Serilog;
 using Serilog.Events;
+using StackExchange.Redis;
 
 // Bootstrap logger captures startup errors before the host is built.
 Log.Logger = new LoggerConfiguration()
@@ -406,7 +407,8 @@ try
 
     app.UseCookiePolicy(new CookiePolicyOptions
     {
-        HttpOnly = HttpOnlyPolicy.Always, Secure = CookieSecurePolicy.Always,
+        HttpOnly = HttpOnlyPolicy.Always,
+        Secure = CookieSecurePolicy.Always,
     });
 
     app.UseExceptionHandler("/Exception/Error");

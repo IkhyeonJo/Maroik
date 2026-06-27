@@ -1,5 +1,5 @@
-using Maroik.WebSite.Models.ViewModels.AccountBook;
 using Maroik.WebSite.Extensions;
+using Maroik.WebSite.Models.ViewModels.AccountBook;
 
 namespace Maroik.WebSite.Tests.Extensions;
 

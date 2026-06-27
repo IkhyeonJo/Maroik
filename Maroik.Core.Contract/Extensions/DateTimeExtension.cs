@@ -1,4 +1,4 @@
-namespace Maroik.Core.Contract.Utilities;
+namespace Maroik.Core.Contract.Extensions;
 
 /// <summary>
 /// Extension methods for <see cref="DateTime"/> to simplify time-zone conversions.

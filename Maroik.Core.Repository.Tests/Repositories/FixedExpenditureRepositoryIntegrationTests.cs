@@ -131,7 +131,7 @@ public class FixedExpenditureRepositoryIntegrationTests : IAsyncLifetime
         await SeedAsync(
             MakeOrm("alice@example.com", "Netflix", "OldWallet", 12m),
             MakeOrm("alice@example.com", "Spotify", "OldWallet", 10m),
-            MakeOrm("alice@example.com", "Gym",     "OtherAsset", 30m));
+            MakeOrm("alice@example.com", "Gym", "OtherAsset", 30m));
 
         await _sut.UpdateMyDepositAssetNameAsync("alice@example.com", "OldWallet", "NewWallet", TestContext.Current.CancellationToken);
         _context.ChangeTracker.Clear();
@@ -148,7 +148,7 @@ public class FixedExpenditureRepositoryIntegrationTests : IAsyncLifetime
     {
         await SeedAsync(
             MakeOrm("alice@example.com", "Netflix", "Wallet"),
-            MakeOrm("bob@example.com",   "Gym",     "Wallet"));
+            MakeOrm("bob@example.com", "Gym", "Wallet"));
 
         await _sut.UpdateMyDepositAssetNameAsync("alice@example.com", "Wallet", "AliceNewWallet", TestContext.Current.CancellationToken);
         _context.ChangeTracker.Clear();

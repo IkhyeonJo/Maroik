@@ -1,4 +1,4 @@
-﻿using Maroik.Core.Client.Clients;
+using Maroik.Core.Client.Clients;
 
 namespace Maroik.Core.Client.Tests.Clients;
 

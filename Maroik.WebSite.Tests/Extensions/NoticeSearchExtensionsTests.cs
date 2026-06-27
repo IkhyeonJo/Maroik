@@ -1,5 +1,5 @@
-using Maroik.WebSite.Models.ViewModels.Notice;
 using Maroik.WebSite.Extensions;
+using Maroik.WebSite.Models.ViewModels.Notice;
 
 namespace Maroik.WebSite.Tests.Extensions;
 

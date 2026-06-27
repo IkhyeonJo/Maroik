@@ -1,4 +1,4 @@
-﻿namespace Maroik.WebSite.Models;
+namespace Maroik.WebSite.Models;
 
 /// <summary>
 /// Pagination helper used to calculate the current page window for list views (e.g. board post lists).

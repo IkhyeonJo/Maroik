@@ -24,16 +24,16 @@ public class AccountBookViewModelMapperTests
     {
         var response = new AssetResponse
         {
-            ProductName  = "Savings",
-            Amount       = 1234.5m,
+            ProductName = "Savings",
+            Amount = 1234.5m,
             MonetaryUnit = "KRW",
-            Note         = "test note",
-            Deleted      = true
+            Note = "test note",
+            Deleted = true
         };
         var vm = response.ToDisplayViewModel(Identity, "UTC");
         Assert.Equal("Savings", vm.ProductName);
-        Assert.Equal(1234.5m,   vm.Amount);
-        Assert.Equal("KRW",     vm.MonetaryUnit);
+        Assert.Equal(1234.5m, vm.Amount);
+        Assert.Equal("KRW", vm.MonetaryUnit);
         Assert.Equal("test note", vm.Note);
         Assert.True(vm.Deleted);
     }
@@ -43,7 +43,7 @@ public class AccountBookViewModelMapperTests
     {
         // 2025-01-01 00:00:00 UTC → 2025-01-01 09:00:00 KST (UTC+9)
         var utc = new DateTime(2025, 1, 1, 0, 0, 0, DateTimeKind.Utc);
-        var vm  = new AssetResponse { Created = utc, Updated = utc }
+        var vm = new AssetResponse { Created = utc, Updated = utc }
             .ToDisplayViewModel(Identity, "Asia/Seoul");
         Assert.Equal(9, vm.Created.Hour);
         Assert.Equal(9, vm.Updated.Hour);
@@ -72,7 +72,7 @@ public class AccountBookViewModelMapperTests
             Prefix("L:"),
             "UTC");
         Assert.Equal("L:RegularIncome", vm.MainClass);
-        Assert.Equal("L:LaborIncome",   vm.SubClass);
+        Assert.Equal("L:LaborIncome", vm.SubClass);
     }
 
     [Fact]
@@ -102,7 +102,7 @@ public class AccountBookViewModelMapperTests
             new Dictionary<string, string?> { ["card"] = "KRW" },
             Prefix("L:"),
             "UTC");
-        Assert.Equal("L:ConsumerSpending",   vm.MainClass);
+        Assert.Equal("L:ConsumerSpending", vm.MainClass);
         Assert.Equal("L:MealOrEatOutExpenses", vm.SubClass);
     }
 

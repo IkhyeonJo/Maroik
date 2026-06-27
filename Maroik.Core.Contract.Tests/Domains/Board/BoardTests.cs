@@ -1,5 +1,5 @@
-﻿using Maroik.Core.Contract.Domains.Board;
-using Maroik.Core.Contract.Utilities;
+using Maroik.Core.Contract.Domains.Board;
+using Maroik.Core.Contract.Enums;
 
 namespace Maroik.Core.Contract.Tests.Domain.Post;
 

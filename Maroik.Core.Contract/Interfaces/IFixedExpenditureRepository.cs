@@ -1,5 +1,6 @@
 using Maroik.Core.Contract.Domains.Finance;
 namespace Maroik.Core.Contract.Interfaces;
+
 public interface IFixedExpenditureRepository : IGenericRepository<FixedExpenditure>
 {
     Task<List<FixedExpenditure>> GetByAccountEmailAsync(string accountEmail, CancellationToken ct = default);

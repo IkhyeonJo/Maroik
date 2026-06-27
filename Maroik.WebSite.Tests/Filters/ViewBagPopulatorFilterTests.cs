@@ -1,6 +1,7 @@
+using Maroik.Core.Contract.Constants;
 using Maroik.Core.Contract.Dtos;
 using Maroik.Core.Contract.Interfaces;
-using Maroik.Core.Contract.Utilities;
+using Maroik.Core.Contract.Settings;
 using Maroik.WebSite.Contracts;
 using Maroik.WebSite.Filters;
 using Microsoft.AspNetCore.Http;

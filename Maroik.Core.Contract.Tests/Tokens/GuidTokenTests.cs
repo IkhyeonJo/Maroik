@@ -1,9 +1,9 @@
-﻿using Maroik.Core.Contract.Utilities;
+using Maroik.Core.Contract.Tokens;
 
-namespace Maroik.Core.Contract.Tests.Utilities;
+namespace Maroik.Core.Contract.Tests.Tokens;
 
 /// <summary>
-/// Unit tests for <see cref="Maroik.Core.Contract.Utilities.GuidToken"/>.
+/// Unit tests for <see cref="Maroik.Core.Contract.Tokens.GuidToken"/>.
 /// Verifies token generation uniqueness, Base64 validity, 24-hour expiry window,
 /// and rejection of expired or tampered tokens.
 /// </summary>
@@ -63,7 +63,7 @@ public class GuidTokenTests
     [Fact]
     public void IsTokenAlive_ReturnsFalse_ForTokenCreatedExactly24HoursAgo()
     {
-        // Exactly on the boundary (24 h ago) ?? the check is strict less-than, so expired.
+        // Exactly on the boundary (24 h ago) — the check is strict less-than, so expired.
         string token = BuildTokenWithAge(hours: -24);
 
         Assert.False(GuidToken.IsTokenAlive(token));

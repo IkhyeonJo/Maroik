@@ -1,8 +1,10 @@
+using Maroik.Core.Contract.Constants;
 using Maroik.Core.Contract.Dtos;
+using Maroik.Core.Contract.Extensions;
 using Maroik.Core.Contract.Interfaces;
-using Maroik.Core.Contract.Utilities;
-using Maroik.WebSite.Contracts;
+using Maroik.Core.Contract.Settings;
 using Maroik.WebSite.Attributes;
+using Maroik.WebSite.Contracts;
 using Maroik.WebSite.Extensions;
 using Maroik.WebSite.Mappings;
 using Maroik.WebSite.Models.ViewModels.Notice;
@@ -65,17 +67,17 @@ public class NoticeController : Controller
 
         var request = new FixedIncomeRequest
         {
-            Id                        = fixedIncomeInputViewModel.Id,
-            MainClass                 = fixedIncomeInputViewModel.MainClass,
-            SubClass                  = fixedIncomeInputViewModel.SubClass,
-            Content                   = fixedIncomeInputViewModel.Content ?? "",
-            Amount                    = fixedIncomeInputViewModel.Amount,
+            Id = fixedIncomeInputViewModel.Id,
+            MainClass = fixedIncomeInputViewModel.MainClass,
+            SubClass = fixedIncomeInputViewModel.SubClass,
+            Content = fixedIncomeInputViewModel.Content ?? "",
+            Amount = fixedIncomeInputViewModel.Amount,
             DepositMyAssetProductName = fixedIncomeInputViewModel.DepositMyAssetProductName,
-            DepositMonth              = fixedIncomeInputViewModel.DepositMonth,
-            DepositDay                = fixedIncomeInputViewModel.DepositDay,
-            MaturityDate              = DateTime.Parse(fixedIncomeInputViewModel.MaturityDate!),
-            Note                      = fixedIncomeInputViewModel.Note ?? "",
-            Unpunctuality             = fixedIncomeInputViewModel.Unpunctuality
+            DepositMonth = fixedIncomeInputViewModel.DepositMonth,
+            DepositDay = fixedIncomeInputViewModel.DepositDay,
+            MaturityDate = DateTime.Parse(fixedIncomeInputViewModel.MaturityDate!),
+            Note = fixedIncomeInputViewModel.Note ?? "",
+            Unpunctuality = fixedIncomeInputViewModel.Unpunctuality
         };
 
         var result = await _fixedIncomeService.CreateAsync(email, request, ct);
@@ -94,7 +96,7 @@ public class NoticeController : Controller
         if (HttpContext.Request.Headers["X-Requested-With"] == "XMLHttpRequest")
         {
             var account = _sessionService.GetAccount()!;
-            var assets  = await _assetService.GetAssetsAsync(account.Email!, ct);
+            var assets = await _assetService.GetAssetsAsync(account.Email!, ct);
             var incomes = await _fixedIncomeService.GetFixedIncomesAsync(account.Email!, ct);
             var viewModels = incomes
                 .ToDisplayViewModels(assets, Localize, account.TimeZoneIanaId!, NoticeWindowDays)
@@ -127,17 +129,17 @@ public class NoticeController : Controller
 
             var vm = new FixedIncomeOutputViewModel
             {
-                Id                        = item.Id,
-                MainClass                 = item.MainClass,
-                SubClass                  = item.SubClass,
-                Content                   = item.Content,
-                Amount                    = item.Amount,
-                DepositMonth              = item.DepositMonth,
-                DepositDay                = item.DepositDay,
-                MaturityDate              = item.MaturityDate.ToString("yyyy-MM-dd"),
-                Note                      = item.Note,
+                Id = item.Id,
+                MainClass = item.MainClass,
+                SubClass = item.SubClass,
+                Content = item.Content,
+                Amount = item.Amount,
+                DepositMonth = item.DepositMonth,
+                DepositDay = item.DepositDay,
+                MaturityDate = item.MaturityDate.ToString("yyyy-MM-dd"),
+                Note = item.Note,
                 DepositMyAssetProductName = item.DepositMyAssetProductName,
-                Unpunctuality             = item.Unpunctuality
+                Unpunctuality = item.Unpunctuality
             };
             return Json(new { result = true, fixedIncome = vm });
         }
@@ -188,17 +190,17 @@ public class NoticeController : Controller
 
         var request = new FixedIncomeRequest
         {
-            Id                        = fixedIncomeInputViewModel.Id,
-            MainClass                 = fixedIncomeInputViewModel.MainClass,
-            SubClass                  = fixedIncomeInputViewModel.SubClass,
-            Content                   = fixedIncomeInputViewModel.Content ?? "",
-            Amount                    = fixedIncomeInputViewModel.Amount,
+            Id = fixedIncomeInputViewModel.Id,
+            MainClass = fixedIncomeInputViewModel.MainClass,
+            SubClass = fixedIncomeInputViewModel.SubClass,
+            Content = fixedIncomeInputViewModel.Content ?? "",
+            Amount = fixedIncomeInputViewModel.Amount,
             DepositMyAssetProductName = fixedIncomeInputViewModel.DepositMyAssetProductName,
-            DepositMonth              = fixedIncomeInputViewModel.DepositMonth,
-            DepositDay                = fixedIncomeInputViewModel.DepositDay,
-            MaturityDate              = DateTime.Parse(fixedIncomeInputViewModel.MaturityDate!),
-            Note                      = fixedIncomeInputViewModel.Note ?? "",
-            Unpunctuality             = fixedIncomeInputViewModel.Unpunctuality
+            DepositMonth = fixedIncomeInputViewModel.DepositMonth,
+            DepositDay = fixedIncomeInputViewModel.DepositDay,
+            MaturityDate = DateTime.Parse(fixedIncomeInputViewModel.MaturityDate!),
+            Note = fixedIncomeInputViewModel.Note ?? "",
+            Unpunctuality = fixedIncomeInputViewModel.Unpunctuality
         };
 
         var result = await _fixedIncomeService.UpdateAsync(email, request, ct);
@@ -232,9 +234,9 @@ public class NoticeController : Controller
     public async Task<IActionResult> ExportExcelFixedIncome(string fileName = "", CancellationToken ct = default)
     {
         var account = _sessionService.GetAccount()!;
-        var assets  = await _assetService.GetAssetsAsync(account.Email!, ct);
+        var assets = await _assetService.GetAssetsAsync(account.Email!, ct);
         var incomes = await _fixedIncomeService.GetFixedIncomesAsync(account.Email!, ct);
-        var stream  = _excelExportService.CreateFixedIncomeExcel(incomes, assets, Localize, account.TimeZoneIanaId!, NoticeWindowDays);
+        var stream = _excelExportService.CreateFixedIncomeExcel(incomes, assets, Localize, account.TimeZoneIanaId!, NoticeWindowDays);
         string name = fileName.ToExcelFileName(account.TimeZoneIanaId!);
         return File(stream, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", name);
     }
@@ -259,18 +261,18 @@ public class NoticeController : Controller
 
         var request = new FixedExpenditureRequest
         {
-            Id             = fixedExpenditureInputViewModel.Id,
-            MainClass      = fixedExpenditureInputViewModel.MainClass,
-            SubClass       = fixedExpenditureInputViewModel.SubClass,
-            Content        = fixedExpenditureInputViewModel.Content ?? "",
-            Amount         = fixedExpenditureInputViewModel.Amount,
-            PaymentMethod  = fixedExpenditureInputViewModel.PaymentMethod,
+            Id = fixedExpenditureInputViewModel.Id,
+            MainClass = fixedExpenditureInputViewModel.MainClass,
+            SubClass = fixedExpenditureInputViewModel.SubClass,
+            Content = fixedExpenditureInputViewModel.Content ?? "",
+            Amount = fixedExpenditureInputViewModel.Amount,
+            PaymentMethod = fixedExpenditureInputViewModel.PaymentMethod,
             MyDepositAsset = fixedExpenditureInputViewModel.MyDepositAsset ?? "",
-            DepositMonth   = fixedExpenditureInputViewModel.DepositMonth,
-            DepositDay     = fixedExpenditureInputViewModel.DepositDay,
-            MaturityDate   = DateTime.Parse(fixedExpenditureInputViewModel.MaturityDate!),
-            Note           = fixedExpenditureInputViewModel.Note ?? "",
-            Unpunctuality  = fixedExpenditureInputViewModel.Unpunctuality
+            DepositMonth = fixedExpenditureInputViewModel.DepositMonth,
+            DepositDay = fixedExpenditureInputViewModel.DepositDay,
+            MaturityDate = DateTime.Parse(fixedExpenditureInputViewModel.MaturityDate!),
+            Note = fixedExpenditureInputViewModel.Note ?? "",
+            Unpunctuality = fixedExpenditureInputViewModel.Unpunctuality
         };
 
         var result = await _fixedExpenditureService.CreateAsync(email, request, ct);
@@ -288,10 +290,10 @@ public class NoticeController : Controller
     {
         if (HttpContext.Request.Headers["X-Requested-With"] == "XMLHttpRequest")
         {
-            var account      = _sessionService.GetAccount()!;
-            var assets       = await _assetService.GetAssetsAsync(account.Email!, ct);
+            var account = _sessionService.GetAccount()!;
+            var assets = await _assetService.GetAssetsAsync(account.Email!, ct);
             var expenditures = await _fixedExpenditureService.GetFixedExpendituresAsync(account.Email!, ct);
-            var viewModels   = expenditures
+            var viewModels = expenditures
                 .ToDisplayViewModels(assets, Localize, account.TimeZoneIanaId!, NoticeWindowDays)
                 .ApplySearch(wholeSearch)
                 .OrderByDescending(a => a.Expired).ThenByDescending(m => m.Noticed)
@@ -322,18 +324,18 @@ public class NoticeController : Controller
 
             var vm = new FixedExpenditureOutputViewModel
             {
-                Id             = item.Id,
-                MainClass      = item.MainClass,
-                SubClass       = item.SubClass,
-                Content        = item.Content,
-                Amount         = item.Amount,
-                DepositMonth   = item.DepositMonth,
-                DepositDay     = item.DepositDay,
-                MaturityDate   = item.MaturityDate.ToString("yyyy-MM-dd"),
-                Note           = item.Note,
-                PaymentMethod  = item.PaymentMethod,
+                Id = item.Id,
+                MainClass = item.MainClass,
+                SubClass = item.SubClass,
+                Content = item.Content,
+                Amount = item.Amount,
+                DepositMonth = item.DepositMonth,
+                DepositDay = item.DepositDay,
+                MaturityDate = item.MaturityDate.ToString("yyyy-MM-dd"),
+                Note = item.Note,
+                PaymentMethod = item.PaymentMethod,
                 MyDepositAsset = item.MyDepositAsset ?? "",
-                Unpunctuality  = item.Unpunctuality
+                Unpunctuality = item.Unpunctuality
             };
             return Json(new { result = true, fixedExpenditure = vm });
         }
@@ -384,18 +386,18 @@ public class NoticeController : Controller
 
         var request = new FixedExpenditureRequest
         {
-            Id             = fixedExpenditureInputViewModel.Id,
-            MainClass      = fixedExpenditureInputViewModel.MainClass,
-            SubClass       = fixedExpenditureInputViewModel.SubClass,
-            Content        = fixedExpenditureInputViewModel.Content ?? "",
-            Amount         = fixedExpenditureInputViewModel.Amount,
-            PaymentMethod  = fixedExpenditureInputViewModel.PaymentMethod,
+            Id = fixedExpenditureInputViewModel.Id,
+            MainClass = fixedExpenditureInputViewModel.MainClass,
+            SubClass = fixedExpenditureInputViewModel.SubClass,
+            Content = fixedExpenditureInputViewModel.Content ?? "",
+            Amount = fixedExpenditureInputViewModel.Amount,
+            PaymentMethod = fixedExpenditureInputViewModel.PaymentMethod,
             MyDepositAsset = fixedExpenditureInputViewModel.MyDepositAsset ?? "",
-            DepositMonth   = fixedExpenditureInputViewModel.DepositMonth,
-            DepositDay     = fixedExpenditureInputViewModel.DepositDay,
-            MaturityDate   = DateTime.Parse(fixedExpenditureInputViewModel.MaturityDate!),
-            Note           = fixedExpenditureInputViewModel.Note ?? "",
-            Unpunctuality  = fixedExpenditureInputViewModel.Unpunctuality
+            DepositMonth = fixedExpenditureInputViewModel.DepositMonth,
+            DepositDay = fixedExpenditureInputViewModel.DepositDay,
+            MaturityDate = DateTime.Parse(fixedExpenditureInputViewModel.MaturityDate!),
+            Note = fixedExpenditureInputViewModel.Note ?? "",
+            Unpunctuality = fixedExpenditureInputViewModel.Unpunctuality
         };
 
         var result = await _fixedExpenditureService.UpdateAsync(email, request, ct);
@@ -428,11 +430,11 @@ public class NoticeController : Controller
     [RequiredHttpPostAccess(Role = Role.User)]
     public async Task<IActionResult> ExportExcelFixedExpenditure(string fileName = "", CancellationToken ct = default)
     {
-        var account      = _sessionService.GetAccount()!;
-        var assets       = await _assetService.GetAssetsAsync(account.Email!, ct);
+        var account = _sessionService.GetAccount()!;
+        var assets = await _assetService.GetAssetsAsync(account.Email!, ct);
         var expenditures = await _fixedExpenditureService.GetFixedExpendituresAsync(account.Email!, ct);
-        var stream       = _excelExportService.CreateFixedExpenditureExcel(expenditures, assets, Localize, account.TimeZoneIanaId!, NoticeWindowDays);
-        string name      = fileName.ToExcelFileName(account.TimeZoneIanaId!);
+        var stream = _excelExportService.CreateFixedExpenditureExcel(expenditures, assets, Localize, account.TimeZoneIanaId!, NoticeWindowDays);
+        string name = fileName.ToExcelFileName(account.TimeZoneIanaId!);
         return File(stream, "application/octet-stream", name);
     }
     #endregion

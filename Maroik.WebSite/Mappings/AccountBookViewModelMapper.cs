@@ -1,5 +1,5 @@
 using Maroik.Core.Contract.Dtos;
-using Maroik.Core.Contract.Utilities;
+using Maroik.Core.Contract.Extensions;
 using Maroik.WebSite.Models.ViewModels.AccountBook;
 
 namespace Maroik.WebSite.Mappings;
@@ -17,16 +17,16 @@ public static class AccountBookViewModelMapper
         this AssetResponse item,
         Func<string, string> localize,
         string timeZoneIanaId) => new()
-    {
-        ProductName = item.ProductName,
-        Item        = localize(item.Item ?? ""),
-        Amount      = item.Amount,
-        MonetaryUnit = item.MonetaryUnit,
-        Created     = item.Created.ConvertTimeByTimeZoneIanaId(timeZoneIanaId),
-        Updated     = item.Updated.ConvertTimeByTimeZoneIanaId(timeZoneIanaId),
-        Note        = item.Note,
-        Deleted     = item.Deleted
-    };
+        {
+            ProductName = item.ProductName,
+            Item = localize(item.Item ?? ""),
+            Amount = item.Amount,
+            MonetaryUnit = item.MonetaryUnit,
+            Created = item.Created.ConvertTimeByTimeZoneIanaId(timeZoneIanaId),
+            Updated = item.Updated.ConvertTimeByTimeZoneIanaId(timeZoneIanaId),
+            Note = item.Note,
+            Deleted = item.Deleted
+        };
 
     /// <summary>Maps all <see cref="AssetResponse"/> items to display view models.</summary>
     public static List<AssetOutputViewModel> ToDisplayViewModels(
@@ -45,18 +45,18 @@ public static class AccountBookViewModelMapper
         IReadOnlyDictionary<string, string?> currencyByProduct,
         Func<string, string> localize,
         string timeZoneIanaId) => new()
-    {
-        Id                      = item.Id,
-        MainClass               = localize(item.MainClass ?? ""),
-        SubClass                = localize(item.SubClass ?? ""),
-        Content                 = item.Content,
-        Amount                  = item.Amount,
-        MonetaryUnit            = currencyByProduct.GetValueOrDefault(item.DepositMyAssetProductName ?? ""),
-        DepositMyAssetProductName = item.DepositMyAssetProductName,
-        Created                 = item.Created.ConvertTimeByTimeZoneIanaId(timeZoneIanaId),
-        Updated                 = item.Updated.ConvertTimeByTimeZoneIanaId(timeZoneIanaId),
-        Note                    = item.Note
-    };
+        {
+            Id = item.Id,
+            MainClass = localize(item.MainClass ?? ""),
+            SubClass = localize(item.SubClass ?? ""),
+            Content = item.Content,
+            Amount = item.Amount,
+            MonetaryUnit = currencyByProduct.GetValueOrDefault(item.DepositMyAssetProductName ?? ""),
+            DepositMyAssetProductName = item.DepositMyAssetProductName,
+            Created = item.Created.ConvertTimeByTimeZoneIanaId(timeZoneIanaId),
+            Updated = item.Updated.ConvertTimeByTimeZoneIanaId(timeZoneIanaId),
+            Note = item.Note
+        };
 
     /// <summary>Maps all <see cref="IncomeResponse"/> items to display view models.</summary>
     public static List<IncomeOutputViewModel> ToDisplayViewModels(
@@ -79,19 +79,19 @@ public static class AccountBookViewModelMapper
         IReadOnlyDictionary<string, string?> currencyByProduct,
         Func<string, string> localize,
         string timeZoneIanaId) => new()
-    {
-        Id           = item.Id,
-        MainClass    = localize(item.MainClass ?? ""),
-        SubClass     = localize(item.SubClass ?? ""),
-        Content      = item.Content,
-        Amount       = item.Amount,
-        MonetaryUnit = currencyByProduct.GetValueOrDefault(item.PaymentMethod ?? ""),
-        PaymentMethod = item.PaymentMethod,
-        Note         = item.Note,
-        MyDepositAsset = item.MyDepositAsset,
-        Created      = item.Created.ConvertTimeByTimeZoneIanaId(timeZoneIanaId),
-        Updated      = item.Updated.ConvertTimeByTimeZoneIanaId(timeZoneIanaId)
-    };
+        {
+            Id = item.Id,
+            MainClass = localize(item.MainClass ?? ""),
+            SubClass = localize(item.SubClass ?? ""),
+            Content = item.Content,
+            Amount = item.Amount,
+            MonetaryUnit = currencyByProduct.GetValueOrDefault(item.PaymentMethod ?? ""),
+            PaymentMethod = item.PaymentMethod,
+            Note = item.Note,
+            MyDepositAsset = item.MyDepositAsset,
+            Created = item.Created.ConvertTimeByTimeZoneIanaId(timeZoneIanaId),
+            Updated = item.Updated.ConvertTimeByTimeZoneIanaId(timeZoneIanaId)
+        };
 
     /// <summary>Maps all <see cref="ExpenditureResponse"/> items to display view models.</summary>
     public static List<ExpenditureOutputViewModel> ToDisplayViewModels(
@@ -110,9 +110,9 @@ public static class AccountBookViewModelMapper
     /// </summary>
     public static void PopulateTimeData(this AccountBookPageViewModel vm, string timeZoneIanaId)
     {
-        DateTime ct      = DateTime.UtcNow.ConvertTimeByTimeZoneIanaId(timeZoneIanaId);
-        vm.CurrentDate   = ct.ToString("yyyy-MM-dd");
-        vm.CurrentHour   = ct.Hour;
+        DateTime ct = DateTime.UtcNow.ConvertTimeByTimeZoneIanaId(timeZoneIanaId);
+        vm.CurrentDate = ct.ToString("yyyy-MM-dd");
+        vm.CurrentHour = ct.Hour;
         vm.CurrentMinute = ct.Minute;
         vm.CurrentSecond = ct.Second;
     }

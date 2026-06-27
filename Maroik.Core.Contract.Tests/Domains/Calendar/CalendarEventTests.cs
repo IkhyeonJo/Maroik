@@ -1,4 +1,4 @@
-﻿using Maroik.Core.Contract.Domains.Calendar;
+using Maroik.Core.Contract.Domains.Calendar;
 
 namespace Maroik.Core.Contract.Tests.Domains.CalendarDomain;
 

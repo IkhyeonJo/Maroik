@@ -1,14 +1,15 @@
+using System.Reflection;
+using System.Text.Json;
+using Maroik.Core.Contract.Constants;
 using Maroik.Core.Contract.Dtos;
+using Maroik.Core.Contract.Enums;
 using Maroik.Core.Contract.Interfaces;
-using Maroik.Core.Contract.Utilities;
 using Maroik.WebSite.Attributes;
 using Maroik.WebSite.Constants;
 using Maroik.WebSite.Contracts;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
 using Microsoft.Extensions.Caching.Distributed;
-using System.Reflection;
-using System.Text.Json;
 
 namespace Maroik.WebSite.Filters;
 
@@ -125,322 +126,322 @@ public class AuthorizationFilter : ActionFilterAttribute
             // GET method (block page access only!!)
             // If not logged in
             case "GET" when !isAccountSessionExist:
-            {
-                switch (currentControllerName)
                 {
-                    // Allow exception resource access (Error)
-                    case "Exception" when currentActionName == "Error":
-                    // If login page
-                    case "Account" when currentActionName == "Login":
-                    // If registration page
-                    case "Account" when currentActionName == "Register":
-                    // If email confirmation page
-                    case "Account" when currentActionName == "ConfirmEmail":
-                    // If consent form page
-                    case "Account" when currentActionName == "ConsentForm":
-                    // If forgot password page
-                    case "Account" when currentActionName == "ForgotPassword":
-                    // If password reset page
-                    case "Account" when currentActionName == "ResetPassword":
-                    // If logout
-                    case "Account" when currentActionName == "Logout":
+                    switch (currentControllerName)
+                    {
+                        // Allow exception resource access (Error)
+                        case "Exception" when currentActionName == "Error":
+                        // If login page
+                        case "Account" when currentActionName == "Login":
+                        // If registration page
+                        case "Account" when currentActionName == "Register":
+                        // If email confirmation page
+                        case "Account" when currentActionName == "ConfirmEmail":
+                        // If consent form page
+                        case "Account" when currentActionName == "ConsentForm":
+                        // If forgot password page
+                        case "Account" when currentActionName == "ForgotPassword":
+                        // If password reset page
+                        case "Account" when currentActionName == "ResetPassword":
+                        // If logout
+                        case "Account" when currentActionName == "Logout":
+                            await next(); // Do Action!!
+                            return;
+                    }
+
+                    #region If Category without SubCategory
+
+                    var singleCategories = from anonymousCategory in anonymousCategories
+                                           where !string.IsNullOrEmpty(anonymousCategory.Action)
+                                           select anonymousCategory; // Collection of categories without sub-categories
+
+                    if (singleCategories.Any(singleCategory =>
+                            singleCategory.Controller == currentControllerName &&
+                            singleCategory.Action == currentActionName))
+                    {
                         await next(); // Do Action!!
                         return;
-                }
+                    }
 
-                #region If Category without SubCategory
+                    #endregion
 
-                var singleCategories = from anonymousCategory in anonymousCategories
-                    where !string.IsNullOrEmpty(anonymousCategory.Action)
-                    select anonymousCategory; // Collection of categories without sub-categories
+                    #region If Category with SubCategory
 
-                if (singleCategories.Any(singleCategory =>
-                        singleCategory.Controller == currentControllerName &&
-                        singleCategory.Action == currentActionName))
-                {
-                    await next(); // Do Action!!
+                    var nonSingleCategories = from anonymousCategory in anonymousCategories
+                                              where string.IsNullOrEmpty(anonymousCategory.Action)
+                                              select anonymousCategory; // Collection of categories with sub-categories
+
+                    if ((from nonSingleCategory in nonSingleCategories
+                         let nonSingleCategoriesSubCategories = from anonymousSubCategory in anonymousSubCategories
+                                                                where anonymousSubCategory.CategoryId == nonSingleCategory.Id
+                                                                select anonymousSubCategory
+                         from nonSingleCategoriesSubCategory in nonSingleCategoriesSubCategories
+                         where nonSingleCategory.Controller == currentControllerName &&
+                               nonSingleCategoriesSubCategory.Action == currentActionName
+                         select nonSingleCategory).Any())
+                    {
+                        await next(); // Do Action!!
+                        return;
+                    }
+
+                    #endregion
+
+                    //context.Result = new UnauthorizedObjectResult("User is unauthorized");
+                    context.Result = new RedirectResult("/DashBoard/AnonymousIndex");
                     return;
                 }
-
-                #endregion
-
-                #region If Category with SubCategory
-
-                var nonSingleCategories = from anonymousCategory in anonymousCategories
-                    where string.IsNullOrEmpty(anonymousCategory.Action)
-                    select anonymousCategory; // Collection of categories with sub-categories
-
-                if ((from nonSingleCategory in nonSingleCategories
-                        let nonSingleCategoriesSubCategories = from anonymousSubCategory in anonymousSubCategories
-                            where anonymousSubCategory.CategoryId == nonSingleCategory.Id
-                            select anonymousSubCategory
-                        from nonSingleCategoriesSubCategory in nonSingleCategoriesSubCategories
-                        where nonSingleCategory.Controller == currentControllerName &&
-                              nonSingleCategoriesSubCategory.Action == currentActionName
-                        select nonSingleCategory).Any())
-                {
-                    await next(); // Do Action!!
-                    return;
-                }
-
-                #endregion
-
-                //context.Result = new UnauthorizedObjectResult("User is unauthorized");
-                context.Result = new RedirectResult("/DashBoard/AnonymousIndex");
-                return;
-            }
             case "GET" when isAccountSessionExist:
-            {
-                switch (currentControllerName)
                 {
-                    // Allow exception resource access (Error)
-                    case "Exception" when currentActionName == "Error":
-                    // Logout
-                    case "Account" when currentActionName == "Logout":
-                    // Initial screen
-                    case "DashBoard" when currentActionName == "AnonymousIndex":
-                        await next(); // Do Action!!
-                        return;
-                }
-
-                var loginedAccount = _sessionService.GetAccount()!; // Get Session
-
-                switch (loginedAccount.Role)
-                {
-                    // If logged-in user has Admin role
-                    case Role.Admin:
+                    switch (currentControllerName)
                     {
-                        #region If Category without SubCategory
-
-                        var singleCategories = from adminCategory in adminCategories
-                            where !string.IsNullOrEmpty(adminCategory.Action)
-                            select adminCategory; // Collection of categories without sub-categories
-
-                        if (singleCategories.Any(singleCategory =>
-                                singleCategory.Controller == currentControllerName &&
-                                singleCategory.Action == currentActionName))
-                        {
+                        // Allow exception resource access (Error)
+                        case "Exception" when currentActionName == "Error":
+                        // Logout
+                        case "Account" when currentActionName == "Logout":
+                        // Initial screen
+                        case "DashBoard" when currentActionName == "AnonymousIndex":
                             await next(); // Do Action!!
                             return;
-                        }
-
-                        #endregion
-
-                        #region If Category with SubCategory
-
-                        var nonSingleCategories = from adminCategory in adminCategories
-                            where string.IsNullOrEmpty(adminCategory.Action)
-                            select adminCategory; // Collection of categories with sub-categories
-
-                        if ((from nonSingleCategory in nonSingleCategories
-                                let nonSingleCategoriesSubCategories = from adminSubCategory in adminSubCategories
-                                    where adminSubCategory.CategoryId == nonSingleCategory.Id
-                                    select adminSubCategory
-                                from nonSingleCategoriesSubCategory in nonSingleCategoriesSubCategories
-                                where nonSingleCategory.Controller == currentControllerName &&
-                                      nonSingleCategoriesSubCategory.Action == currentActionName
-                                select nonSingleCategory).Any())
-                        {
-                            await next(); // Do Action!!
-                            return;
-                        }
-
-                        #endregion
-
-                        //context.Result = new UnauthorizedObjectResult("User is unauthorized"); // If not found after all checks, it doesn't exist in DB
-                        context.Result = new RedirectResult("/DashBoard/AnonymousIndex");
-                        return;
-                        //Extract all DB Categories & SubCategories, compare with current accessed Controller & Action,
-                        //proceed if match or output UnauthorizedObjectResult (Cancel Action!!)
                     }
-                    // If logged-in user has User role
-                    case Role.User:
+
+                    var loginedAccount = _sessionService.GetAccount()!; // Get Session
+
+                    switch (loginedAccount.Role)
                     {
-                        #region If Category without SubCategory
+                        // If logged-in user has Admin role
+                        case Role.Admin:
+                            {
+                                #region If Category without SubCategory
 
-                        var singleCategories = from userCategory in userCategories
-                            where !string.IsNullOrEmpty(userCategory.Action)
-                            select userCategory; // Collection of categories without sub-categories
+                                var singleCategories = from adminCategory in adminCategories
+                                                       where !string.IsNullOrEmpty(adminCategory.Action)
+                                                       select adminCategory; // Collection of categories without sub-categories
 
-                        if (singleCategories.Any(singleCategory =>
-                                singleCategory.Controller == currentControllerName &&
-                                singleCategory.Action == currentActionName))
-                        {
-                            await next(); // Do Action!!
-                            return;
-                        }
+                                if (singleCategories.Any(singleCategory =>
+                                        singleCategory.Controller == currentControllerName &&
+                                        singleCategory.Action == currentActionName))
+                                {
+                                    await next(); // Do Action!!
+                                    return;
+                                }
 
-                        #endregion
+                                #endregion
 
-                        #region If Category with SubCategory
+                                #region If Category with SubCategory
 
-                        var nonSingleCategories = from userCategory in userCategories
-                            where string.IsNullOrEmpty(userCategory.Action)
-                            select userCategory; // Collection of categories with sub-categories
+                                var nonSingleCategories = from adminCategory in adminCategories
+                                                          where string.IsNullOrEmpty(adminCategory.Action)
+                                                          select adminCategory; // Collection of categories with sub-categories
 
-                        if ((from nonSingleCategory in nonSingleCategories
-                                let nonSingleCategoriesSubCategories = from userSubCategory in userSubCategories
-                                    where userSubCategory.CategoryId == nonSingleCategory.Id
-                                    select userSubCategory
-                                from nonSingleCategoriesSubCategory in nonSingleCategoriesSubCategories
-                                where nonSingleCategory.Controller == currentControllerName &&
-                                      nonSingleCategoriesSubCategory.Action == currentActionName
-                                select nonSingleCategory).Any())
-                        {
-                            await next(); // Do Action!!
-                            return;
-                        }
+                                if ((from nonSingleCategory in nonSingleCategories
+                                     let nonSingleCategoriesSubCategories = from adminSubCategory in adminSubCategories
+                                                                            where adminSubCategory.CategoryId == nonSingleCategory.Id
+                                                                            select adminSubCategory
+                                     from nonSingleCategoriesSubCategory in nonSingleCategoriesSubCategories
+                                     where nonSingleCategory.Controller == currentControllerName &&
+                                           nonSingleCategoriesSubCategory.Action == currentActionName
+                                     select nonSingleCategory).Any())
+                                {
+                                    await next(); // Do Action!!
+                                    return;
+                                }
 
-                        #endregion
+                                #endregion
 
-                        //context.Result = new UnauthorizedObjectResult("User is unauthorized"); // If not found after all checks, it doesn't exist in DB
-                        context.Result = new RedirectResult("/DashBoard/AnonymousIndex");
-                        return;
-                        //Extract all DB Categories & SubCategories, compare with current accessed Controller & Action,
-                        //proceed if match or output UnauthorizedObjectResult (Cancel Action!!)
+                                //context.Result = new UnauthorizedObjectResult("User is unauthorized"); // If not found after all checks, it doesn't exist in DB
+                                context.Result = new RedirectResult("/DashBoard/AnonymousIndex");
+                                return;
+                                //Extract all DB Categories & SubCategories, compare with current accessed Controller & Action,
+                                //proceed if match or output UnauthorizedObjectResult (Cancel Action!!)
+                            }
+                        // If logged-in user has User role
+                        case Role.User:
+                            {
+                                #region If Category without SubCategory
+
+                                var singleCategories = from userCategory in userCategories
+                                                       where !string.IsNullOrEmpty(userCategory.Action)
+                                                       select userCategory; // Collection of categories without sub-categories
+
+                                if (singleCategories.Any(singleCategory =>
+                                        singleCategory.Controller == currentControllerName &&
+                                        singleCategory.Action == currentActionName))
+                                {
+                                    await next(); // Do Action!!
+                                    return;
+                                }
+
+                                #endregion
+
+                                #region If Category with SubCategory
+
+                                var nonSingleCategories = from userCategory in userCategories
+                                                          where string.IsNullOrEmpty(userCategory.Action)
+                                                          select userCategory; // Collection of categories with sub-categories
+
+                                if ((from nonSingleCategory in nonSingleCategories
+                                     let nonSingleCategoriesSubCategories = from userSubCategory in userSubCategories
+                                                                            where userSubCategory.CategoryId == nonSingleCategory.Id
+                                                                            select userSubCategory
+                                     from nonSingleCategoriesSubCategory in nonSingleCategoriesSubCategories
+                                     where nonSingleCategory.Controller == currentControllerName &&
+                                           nonSingleCategoriesSubCategory.Action == currentActionName
+                                     select nonSingleCategory).Any())
+                                {
+                                    await next(); // Do Action!!
+                                    return;
+                                }
+
+                                #endregion
+
+                                //context.Result = new UnauthorizedObjectResult("User is unauthorized"); // If not found after all checks, it doesn't exist in DB
+                                context.Result = new RedirectResult("/DashBoard/AnonymousIndex");
+                                return;
+                                //Extract all DB Categories & SubCategories, compare with current accessed Controller & Action,
+                                //proceed if match or output UnauthorizedObjectResult (Cancel Action!!)
+                            }
                     }
-                }
 
-                break;
-            }
+                    break;
+                }
             // POST method — not logged in
             case "POST" when !isAccountSessionExist:
-            {
-                var existingControllers = _cachedControllerTypes;
-
-                var existingHttpPostMethods = existingControllers
-                    .Where(type => type.Name == "AccountController") // Check AccountController
-                    .SelectMany(type => type.GetMethods()) // Get methods
-                    .Where(method => method.IsPublic && !method.IsDefined(typeof(NonActionAttribute)) &&
-                                     method.IsDefined(typeof(HttpPostAttribute)) &&
-                                     method.IsDefined(typeof(ValidateAntiForgeryTokenAttribute)));
-                // Get methods with public access modifier, without NonAction attribute, with HttpPost and ValidateAntiForgeryToken attributes
-
-                if (existingHttpPostMethods.Any(existingHttpPostMethod =>
-                        currentControllerName ==
-                        existingHttpPostMethod.DeclaringType?.Name.Replace("Controller", "") &&
-                        currentActionName == existingHttpPostMethod.Name))
                 {
-                    await next(); // Do Action!!
-                    return;
-                }
+                    var existingControllers = _cachedControllerTypes;
 
-                foreach (var anonymousCategory in anonymousCategories ?? [])
-                {
-                    existingHttpPostMethods = existingControllers
-                        .Where(type =>
-                            type.Name ==
-                            $"{anonymousCategory.Controller}Controller") // When permission is AnonymousCategory, only registered Category's Controller name is accessible
+                    var existingHttpPostMethods = existingControllers
+                        .Where(type => type.Name == "AccountController") // Check AccountController
                         .SelectMany(type => type.GetMethods()) // Get methods
                         .Where(method => method.IsPublic && !method.IsDefined(typeof(NonActionAttribute)) &&
                                          method.IsDefined(typeof(HttpPostAttribute)) &&
-                                         method.IsDefined(typeof(ValidateAntiForgeryTokenAttribute)) &&
-                                         method.IsDefined(typeof(RequiredHttpPostAccessAttribute)));
-                    // Get methods with public access modifier, without NonAction attribute, with HttpPost, ValidateAntiForgeryToken, and RequiredHttpPostAccess attributes
+                                         method.IsDefined(typeof(ValidateAntiForgeryTokenAttribute)));
+                    // Get methods with public access modifier, without NonAction attribute, with HttpPost and ValidateAntiForgeryToken attributes
 
-                    if (!(from existingHttpPostMethod in existingHttpPostMethods
-                            where currentControllerName ==
-                                  existingHttpPostMethod.DeclaringType?.Name.Replace("Controller", "") &&
-                                  currentActionName == existingHttpPostMethod.Name
-                            from customAttribute in existingHttpPostMethod.CustomAttributes
-                            where customAttribute.AttributeType.FullName ==
-                                  typeof(RequiredHttpPostAccessAttribute).ToString()
-                            from namedArgument in customAttribute.NamedArguments
-                            select namedArgument).Any(namedArgument =>
-                            (namedArgument.MemberName == nameof(RequiredHttpPostAccessAttribute.Role)) &&
-                            ((namedArgument.TypedValue.Value as string) == Role.Anonymous)))
+                    if (existingHttpPostMethods.Any(existingHttpPostMethod =>
+                            currentControllerName ==
+                            existingHttpPostMethod.DeclaringType?.Name.Replace("Controller", "") &&
+                            currentActionName == existingHttpPostMethod.Name))
                     {
-                        continue;
+                        await next(); // Do Action!!
+                        return;
                     }
 
-                    await next(); // Do Action!!
+                    foreach (var anonymousCategory in anonymousCategories ?? [])
+                    {
+                        existingHttpPostMethods = existingControllers
+                            .Where(type =>
+                                type.Name ==
+                                $"{anonymousCategory.Controller}Controller") // When permission is AnonymousCategory, only registered Category's Controller name is accessible
+                            .SelectMany(type => type.GetMethods()) // Get methods
+                            .Where(method => method.IsPublic && !method.IsDefined(typeof(NonActionAttribute)) &&
+                                             method.IsDefined(typeof(HttpPostAttribute)) &&
+                                             method.IsDefined(typeof(ValidateAntiForgeryTokenAttribute)) &&
+                                             method.IsDefined(typeof(RequiredHttpPostAccessAttribute)));
+                        // Get methods with public access modifier, without NonAction attribute, with HttpPost, ValidateAntiForgeryToken, and RequiredHttpPostAccess attributes
+
+                        if (!(from existingHttpPostMethod in existingHttpPostMethods
+                              where currentControllerName ==
+                                    existingHttpPostMethod.DeclaringType?.Name.Replace("Controller", "") &&
+                                    currentActionName == existingHttpPostMethod.Name
+                              from customAttribute in existingHttpPostMethod.CustomAttributes
+                              where customAttribute.AttributeType.FullName ==
+                                    typeof(RequiredHttpPostAccessAttribute).ToString()
+                              from namedArgument in customAttribute.NamedArguments
+                              select namedArgument).Any(namedArgument =>
+                              (namedArgument.MemberName == nameof(RequiredHttpPostAccessAttribute.Role)) &&
+                              ((namedArgument.TypedValue.Value as string) == Role.Anonymous)))
+                        {
+                            continue;
+                        }
+
+                        await next(); // Do Action!!
+                        return;
+                    }
+
+                    //context.Result = new UnauthorizedObjectResult("Access is not allowed"); // If not found after all checks, execution is not allowed!
+                    context.Result = new RedirectResult("/DashBoard/AnonymousIndex");
                     return;
                 }
-
-                //context.Result = new UnauthorizedObjectResult("Access is not allowed"); // If not found after all checks, execution is not allowed!
-                context.Result = new RedirectResult("/DashBoard/AnonymousIndex");
-                return;
-            }
             // POST method — logged in
             case "POST" when isAccountSessionExist:
-            {
-                var existingControllers = _cachedControllerTypes;
-                var loginedAccount = _sessionService.GetAccount()!; // Get Session
-
-                switch (loginedAccount.Role)
                 {
-                    // If logged-in user has Admin role
-                    case Role.Admin:
-                    {
-                        if ((from adminCategory in adminCategories ?? []
-                                from existingHttpPostMethod in existingControllers
-                                    .Where(type =>
-                                        type.Name ==
-                                        $"{adminCategory.Controller}Controller") // When permission is Admin, only registered Category's Controller name is accessible
-                                    .SelectMany(type => type.GetMethods()) // Get methods
-                                    .Where(method =>
-                                        method.IsPublic && !method.IsDefined(typeof(NonActionAttribute)) &&
-                                        method.IsDefined(typeof(HttpPostAttribute)) &&
-                                        method.IsDefined(typeof(ValidateAntiForgeryTokenAttribute)) &&
-                                        method.IsDefined(typeof(RequiredHttpPostAccessAttribute)))
-                                where
-                                    currentControllerName ==
-                                    existingHttpPostMethod.DeclaringType?.Name.Replace("Controller", "") &&
-                                    currentActionName == existingHttpPostMethod.Name
-                                from customAttribute in existingHttpPostMethod.CustomAttributes
-                                where customAttribute.AttributeType.FullName ==
-                                      typeof(RequiredHttpPostAccessAttribute).ToString()
-                                from namedArgument in customAttribute.NamedArguments
-                                select namedArgument).Any(namedArgument =>
-                                (namedArgument.MemberName == nameof(RequiredHttpPostAccessAttribute.Role)) &&
-                                ((namedArgument.TypedValue.Value as string) == loginedAccount.Role)))
-                        {
-                            await next(); // Do Action!!
-                            return;
-                        }
+                    var existingControllers = _cachedControllerTypes;
+                    var loginedAccount = _sessionService.GetAccount()!; // Get Session
 
-                        //context.Result = new UnauthorizedObjectResult("Access is not allowed"); // If not found after all checks, execution is not allowed!
-                        context.Result = new RedirectResult("/DashBoard/AnonymousIndex");
-                        return;
-                    }
-                    // If logged-in user has User role
-                    case Role.User:
+                    switch (loginedAccount.Role)
                     {
-                        if ((from userCategory in userCategories ?? []
-                                from existingHttpPostMethod in existingControllers
-                                    .Where(type =>
-                                        type.Name ==
-                                        $"{userCategory.Controller}Controller") // When permission is User, only registered Category's Controller name is accessible
-                                    .SelectMany(type => type.GetMethods()) // Get methods
-                                    .Where(method =>
-                                        method.IsPublic && !method.IsDefined(typeof(NonActionAttribute)) &&
-                                        method.IsDefined(typeof(HttpPostAttribute)) &&
-                                        method.IsDefined(typeof(ValidateAntiForgeryTokenAttribute)) &&
-                                        method.IsDefined(typeof(RequiredHttpPostAccessAttribute)))
-                                where
-                                    currentControllerName ==
-                                    existingHttpPostMethod.DeclaringType?.Name.Replace("Controller", "") &&
-                                    currentActionName == existingHttpPostMethod.Name
-                                from customAttribute in existingHttpPostMethod.CustomAttributes
-                                where customAttribute.AttributeType.FullName ==
-                                      typeof(RequiredHttpPostAccessAttribute).ToString()
-                                from namedArgument in customAttribute.NamedArguments
-                                select namedArgument).Any(namedArgument =>
-                                (namedArgument.MemberName == nameof(RequiredHttpPostAccessAttribute.Role)) &&
-                                ((namedArgument.TypedValue.Value as string) == loginedAccount.Role)))
-                        {
-                            await next(); // Do Action!!
-                            return;
-                        }
+                        // If logged-in user has Admin role
+                        case Role.Admin:
+                            {
+                                if ((from adminCategory in adminCategories ?? []
+                                     from existingHttpPostMethod in existingControllers
+                                         .Where(type =>
+                                             type.Name ==
+                                             $"{adminCategory.Controller}Controller") // When permission is Admin, only registered Category's Controller name is accessible
+                                         .SelectMany(type => type.GetMethods()) // Get methods
+                                         .Where(method =>
+                                             method.IsPublic && !method.IsDefined(typeof(NonActionAttribute)) &&
+                                             method.IsDefined(typeof(HttpPostAttribute)) &&
+                                             method.IsDefined(typeof(ValidateAntiForgeryTokenAttribute)) &&
+                                             method.IsDefined(typeof(RequiredHttpPostAccessAttribute)))
+                                     where
+                                         currentControllerName ==
+                                         existingHttpPostMethod.DeclaringType?.Name.Replace("Controller", "") &&
+                                         currentActionName == existingHttpPostMethod.Name
+                                     from customAttribute in existingHttpPostMethod.CustomAttributes
+                                     where customAttribute.AttributeType.FullName ==
+                                           typeof(RequiredHttpPostAccessAttribute).ToString()
+                                     from namedArgument in customAttribute.NamedArguments
+                                     select namedArgument).Any(namedArgument =>
+                                     (namedArgument.MemberName == nameof(RequiredHttpPostAccessAttribute.Role)) &&
+                                     ((namedArgument.TypedValue.Value as string) == loginedAccount.Role)))
+                                {
+                                    await next(); // Do Action!!
+                                    return;
+                                }
 
-                        //context.Result = new UnauthorizedObjectResult("Access is not allowed"); // If not found after all checks, execution is not allowed!
-                        context.Result = new RedirectResult("/DashBoard/AnonymousIndex");
-                        return;
+                                //context.Result = new UnauthorizedObjectResult("Access is not allowed"); // If not found after all checks, execution is not allowed!
+                                context.Result = new RedirectResult("/DashBoard/AnonymousIndex");
+                                return;
+                            }
+                        // If logged-in user has User role
+                        case Role.User:
+                            {
+                                if ((from userCategory in userCategories ?? []
+                                     from existingHttpPostMethod in existingControllers
+                                         .Where(type =>
+                                             type.Name ==
+                                             $"{userCategory.Controller}Controller") // When permission is User, only registered Category's Controller name is accessible
+                                         .SelectMany(type => type.GetMethods()) // Get methods
+                                         .Where(method =>
+                                             method.IsPublic && !method.IsDefined(typeof(NonActionAttribute)) &&
+                                             method.IsDefined(typeof(HttpPostAttribute)) &&
+                                             method.IsDefined(typeof(ValidateAntiForgeryTokenAttribute)) &&
+                                             method.IsDefined(typeof(RequiredHttpPostAccessAttribute)))
+                                     where
+                                         currentControllerName ==
+                                         existingHttpPostMethod.DeclaringType?.Name.Replace("Controller", "") &&
+                                         currentActionName == existingHttpPostMethod.Name
+                                     from customAttribute in existingHttpPostMethod.CustomAttributes
+                                     where customAttribute.AttributeType.FullName ==
+                                           typeof(RequiredHttpPostAccessAttribute).ToString()
+                                     from namedArgument in customAttribute.NamedArguments
+                                     select namedArgument).Any(namedArgument =>
+                                     (namedArgument.MemberName == nameof(RequiredHttpPostAccessAttribute.Role)) &&
+                                     ((namedArgument.TypedValue.Value as string) == loginedAccount.Role)))
+                                {
+                                    await next(); // Do Action!!
+                                    return;
+                                }
+
+                                //context.Result = new UnauthorizedObjectResult("Access is not allowed"); // If not found after all checks, execution is not allowed!
+                                context.Result = new RedirectResult("/DashBoard/AnonymousIndex");
+                                return;
+                            }
                     }
+
+                    break;
                 }
-
-                break;
-            }
             // (Reject all methods like PATCH / DELETE etc.)
             default:
                 //await next(); // Do Action!!

@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using Maroik.Core.PostgreSQL.Models;
 using Microsoft.EntityFrameworkCore;

@@ -1,6 +1,6 @@
-﻿using Maroik.WebSite.Models.ViewModels;
-using Microsoft.AspNetCore.Mvc;
 using System.Diagnostics;
+using Maroik.WebSite.Models.ViewModels;
+using Microsoft.AspNetCore.Mvc;
 
 namespace Maroik.WebSite.Controllers;
 

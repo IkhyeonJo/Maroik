@@ -161,8 +161,10 @@ public class IncomeServiceTests
 
         var request = new IncomeRequest
         {
-            MainClass = mainClass, SubClass = subClass,
-            DepositMyAssetProductName = "SavingsAccount", Amount = 100m
+            MainClass = mainClass,
+            SubClass = subClass,
+            DepositMyAssetProductName = "SavingsAccount",
+            Amount = 100m
         };
         ServiceResult result = await sut.CreateAsync(email, request, TestContext.Current.CancellationToken);
 
@@ -237,8 +239,11 @@ public class IncomeServiceTests
         // Same asset, new amount = 500
         var request = new IncomeRequest
         {
-            Id = 1, MainClass = "RegularIncome", SubClass = "LaborIncome",
-            DepositMyAssetProductName = "SavingsAccount", Amount = 500m
+            Id = 1,
+            MainClass = "RegularIncome",
+            SubClass = "LaborIncome",
+            DepositMyAssetProductName = "SavingsAccount",
+            Amount = 500m
         };
         ServiceResult result = await sut.UpdateAsync(email, request, TestContext.Current.CancellationToken);
 
@@ -269,8 +274,11 @@ public class IncomeServiceTests
 
         var request = new IncomeRequest
         {
-            Id = 1, MainClass = "RegularIncome", SubClass = "LaborIncome",
-            DepositMyAssetProductName = "NewAsset", Amount = 400m
+            Id = 1,
+            MainClass = "RegularIncome",
+            SubClass = "LaborIncome",
+            DepositMyAssetProductName = "NewAsset",
+            Amount = 400m
         };
         ServiceResult result = await sut.UpdateAsync(email, request, TestContext.Current.CancellationToken);
 

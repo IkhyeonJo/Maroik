@@ -1,20 +1,25 @@
-﻿using Maroik.Core.Contract.Domains.ValueObjects;
+using System.Text;
+using Maroik.Core.Contract.Constants;
+using Maroik.Core.Contract.Domains.ValueObjects;
 using Maroik.Core.Contract.Dtos;
+using Maroik.Core.Contract.Enums;
+using Maroik.Core.Contract.Extensions;
+using Maroik.Core.Contract.Helpers;
 using Maroik.Core.Contract.Interfaces;
-using Maroik.Core.Contract.Utilities;
-using Maroik.WebSite.Contracts;
+using Maroik.Core.Contract.Policies;
+using Maroik.Core.Contract.Settings;
 using Maroik.WebSite.Attributes;
 using Maroik.WebSite.Constants;
+using Maroik.WebSite.Contracts;
 using Maroik.WebSite.Extensions;
 using Maroik.WebSite.Mappings;
-using Microsoft.Extensions.Caching.Distributed;
 // ReSharper disable ConvertToConstant.Local
 using Maroik.WebSite.Models;
 using Maroik.WebSite.Models.ViewModels.Management;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Localization;
+using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.Extensions.Options;
-using System.Text;
 
 namespace Maroik.WebSite.Controllers;
 
@@ -92,7 +97,8 @@ public class ManagementController : Controller
 
         return View(new ProfileOutputViewModel()
         {
-            Email = tempAccount!.Email, AvatarImagePath = tempAccount.AvatarImagePath,
+            Email = tempAccount!.Email,
+            AvatarImagePath = tempAccount.AvatarImagePath,
             Nickname = tempAccount.Nickname,
             Created = tempAccount.Created.ConvertTimeByTimeZoneIanaId(loginedAccountTimeZoneIanaId!),
             TimeZoneIanaId = tempAccount.TimeZoneIanaId
@@ -203,7 +209,7 @@ public class ManagementController : Controller
     {
         _ = ModelState.Remove(nameof(profileInputViewModel.Nickname));
         _ = ModelState.Remove(nameof(profileInputViewModel.TimeZoneIanaId));
-        
+
         if (!ModelState.IsValid)
             return Json(new { result = false, error = _localizer["Input is invalid"].Value });
 
@@ -286,7 +292,8 @@ public class ManagementController : Controller
                 {
                     return Json(new
                     {
-                        result = false, error = _localizer["Nickname is must be between 1 and 255 characters"].Value
+                        result = false,
+                        error = _localizer["Nickname is must be between 1 and 255 characters"].Value
                     });
                 }
 
@@ -384,7 +391,8 @@ public class ManagementController : Controller
             return tempAccount == null
                 ? Json(new
                 {
-                    result = false, error = _localizer["Fail to find the account by given email address"].Value
+                    result = false,
+                    error = _localizer["Fail to find the account by given email address"].Value
                 })
                 : (IActionResult)Json(new { result = true, account = tempAccount });
         }
@@ -472,10 +480,10 @@ public class ManagementController : Controller
     [RequiredHttpPostAccess(Role = Role.Admin)]
     public async Task<IActionResult> ExportExcelAccount(string fileName = "")
     {
-        var account  = _sessionService.GetAccount()!;
+        var account = _sessionService.GetAccount()!;
         var accounts = await _managementAccountService.GetAllAccountsAsync(HttpContext.RequestAborted);
-        var stream   = _excelExportService.CreateAccountExcel(accounts, Localize, account.TimeZoneIanaId!);
-        string name  = fileName.ToExcelFileName(account.TimeZoneIanaId!);
+        var stream = _excelExportService.CreateAccountExcel(accounts, Localize, account.TimeZoneIanaId!);
+        string name = fileName.ToExcelFileName(account.TimeZoneIanaId!);
         return File(stream, "application/octet-stream", name);
     }
 
@@ -866,11 +874,11 @@ public class ManagementController : Controller
     [RequiredHttpPostAccess(Role = Role.Admin)]
     public async Task<IActionResult> ExportExcelMenu(string fileName = "")
     {
-        var account     = _sessionService.GetAccount()!;
-        var categories  = await _menuService.GetAllCategoriesAsync(HttpContext.RequestAborted);
-        var subCats     = await _menuService.GetAllSubCategoriesAsync(HttpContext.RequestAborted);
-        var stream      = _excelExportService.CreateMenuExcel(categories, subCats, Localize);
-        string name     = fileName.ToExcelFileName(account.TimeZoneIanaId!);
+        var account = _sessionService.GetAccount()!;
+        var categories = await _menuService.GetAllCategoriesAsync(HttpContext.RequestAborted);
+        var subCats = await _menuService.GetAllSubCategoriesAsync(HttpContext.RequestAborted);
+        var stream = _excelExportService.CreateMenuExcel(categories, subCats, Localize);
+        string name = fileName.ToExcelFileName(account.TimeZoneIanaId!);
         return File(stream, "application/octet-stream", name);
     }
 
@@ -1128,11 +1136,11 @@ public class ManagementController : Controller
                         privateNoteOutputViewModel.BoardOutputViewModel.BoardAttachedFileContentType = "application/octet-stream";
                     }
 
-                // Preload comments and accounts for detail view
-                privateNoteOutputViewModel!.DetailBoardComments = (await _boardService.GetCommentsByBoardIdAsync(boardId ?? 0, HttpContext.RequestAborted))?.ToList() ?? [];
-                privateNoteOutputViewModel.AllAccounts = await _accountService.GetAllAccountsAsync(HttpContext.RequestAborted) ?? [];
-                privateNoteOutputViewModel.LoginedAccount = loginedAccount;
-                privateNoteOutputViewModel.LoginedAccountTimeZoneIanaId = loginedAccount?.TimeZoneIanaId ?? "";
+                    // Preload comments and accounts for detail view
+                    privateNoteOutputViewModel!.DetailBoardComments = (await _boardService.GetCommentsByBoardIdAsync(boardId ?? 0, HttpContext.RequestAborted))?.ToList() ?? [];
+                    privateNoteOutputViewModel.AllAccounts = await _accountService.GetAllAccountsAsync(HttpContext.RequestAborted) ?? [];
+                    privateNoteOutputViewModel.LoginedAccount = loginedAccount;
+                    privateNoteOutputViewModel.LoginedAccountTimeZoneIanaId = loginedAccount?.TimeZoneIanaId ?? "";
 
                 }
 

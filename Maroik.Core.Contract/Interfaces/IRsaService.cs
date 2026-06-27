@@ -3,7 +3,7 @@ namespace Maroik.Core.Contract.Interfaces;
 /// <summary>
 /// Service interface for RSA cryptographic operations used to protect sensitive data
 /// (e.g. passwords transmitted from the browser before HTTPS termination).
-/// The algorithm variant (RSA / RSA2) is configured via <see cref="Maroik.Core.Contract.Utilities.ServerSetting.RsaAlgorithm"/>.
+/// The algorithm variant (RSA / RSA2) is configured via <see cref="Maroik.Core.Contract.Settings.ServerSetting.RsaAlgorithm"/>.
 /// </summary>
 public interface IRsaService
 {

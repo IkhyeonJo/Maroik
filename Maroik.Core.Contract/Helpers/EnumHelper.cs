@@ -1,7 +1,7 @@
-﻿using System.ComponentModel;
+using System.ComponentModel;
 using System.Reflection;
 
-namespace Maroik.Core.Contract.Utilities;
+namespace Maroik.Core.Contract.Helpers;
 
 /// <summary>
 /// Utility class for retrieving the <see cref="System.ComponentModel.DescriptionAttribute"/>

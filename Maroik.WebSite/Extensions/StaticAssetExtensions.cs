@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.StaticFiles;
+using Microsoft.AspNetCore.StaticFiles;
 
 namespace Maroik.WebSite.Extensions;
 /// <summary>

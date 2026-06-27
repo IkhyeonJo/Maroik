@@ -1,7 +1,8 @@
-using Maroik.Core.Contract.Utilities;
+using System.Security.Cryptography;
+using Maroik.Core.Contract.Enums;
+using Maroik.Core.Contract.Settings;
 using Maroik.Core.Service.Services;
 using Microsoft.Extensions.Options;
-using System.Security.Cryptography;
 
 namespace Maroik.Core.Service.Tests.Services;
 

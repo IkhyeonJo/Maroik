@@ -1,4 +1,4 @@
-﻿using ErrorOr;
+using ErrorOr;
 using Maroik.Core.Contract.Domains.Primitives;
 
 namespace Maroik.Core.Contract.Domains.Calendar;

@@ -1,4 +1,4 @@
-namespace Maroik.Core.Contract.Utilities;
+namespace Maroik.Core.Contract.Constants;
 
 /// <summary>
 /// String constants for the three access roles used throughout the application.

@@ -1,5 +1,6 @@
 using Maroik.Core.Contract.Domains.Calendar;
 namespace Maroik.Core.Contract.Interfaces;
+
 public interface ICalendarEventRepository : IGenericRepository<CalendarEvent>
 {
     Task<long> CreateCalendarEventAsync(CalendarEvent calendarEvent, CancellationToken ct = default);

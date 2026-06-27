@@ -1,7 +1,7 @@
 using Maroik.Core.Contract.Domains.Calendar;
 using Maroik.Core.Contract.Dtos;
 using Maroik.Core.Contract.Interfaces;
-using Maroik.Core.Contract.Utilities;
+using Maroik.Core.Contract.Settings;
 using Maroik.Core.Service.Services;
 using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Options;

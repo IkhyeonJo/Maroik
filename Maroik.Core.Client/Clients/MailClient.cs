@@ -1,7 +1,8 @@
 using MailKit.Net.Smtp;
 using MailKit.Security;
+using Maroik.Core.Contract.Enums;
+using Maroik.Core.Contract.Helpers;
 using Maroik.Core.Contract.Interfaces;
-using Maroik.Core.Contract.Utilities;
 using MimeKit;
 
 namespace Maroik.Core.Client.Clients;

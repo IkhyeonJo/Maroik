@@ -1,5 +1,5 @@
-﻿using Maroik.Core.Contract.Utilities;
 using System.ComponentModel.DataAnnotations;
+using Maroik.Core.Contract.Policies;
 
 namespace Maroik.WebSite.Models.ViewModels.Management;
 

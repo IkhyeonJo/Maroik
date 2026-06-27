@@ -1,5 +1,6 @@
 using Maroik.Core.Contract.Dtos;
-using Maroik.Core.Contract.Utilities;
+using Maroik.Core.Contract.Enums;
+using Maroik.Core.Contract.Extensions;
 using Maroik.WebSite.Models.ViewModels.Calendar;
 using Newtonsoft.Json;
 
