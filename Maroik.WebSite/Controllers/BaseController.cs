@@ -40,7 +40,7 @@ public abstract class BaseController : Controller
             .GetRequiredService<ILoggerFactory>().CreateLogger<BaseController>();
 
         ViewBag.DomainName = ServerSettings.Value.DomainName;
-        ViewBag.MaxAttachedFileSizeBytes = (long)ServerSettings.Value.MaxAttachedFileSizeBytes;
+        ViewBag.MaxAttachedFileSizeBytes = ServerSettings.Value.MaxAttachedFileSizeBytes;
 
         AccountResponse loginedAccount = new()
         {
