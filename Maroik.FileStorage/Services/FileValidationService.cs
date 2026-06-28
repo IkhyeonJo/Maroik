@@ -1,6 +1,7 @@
 using System.Diagnostics;
 using ICSharpCode.SharpZipLib.Zip;
 using Maroik.Core.Contract.Interfaces;
+using Maroik.FileStorage.Contracts;
 
 namespace Maroik.FileStorage.Services;
 

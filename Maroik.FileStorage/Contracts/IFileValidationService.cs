@@ -1,4 +1,4 @@
-namespace Maroik.FileStorage.Services;
+namespace Maroik.FileStorage.Contracts;
 
 /// <summary>
 /// Validates and saves uploaded files: checks extension, size, magic bytes,

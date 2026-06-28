@@ -1,4 +1,4 @@
-using Maroik.FileStorage.Services;
+using Maroik.FileStorage.Contracts;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.StaticFiles;

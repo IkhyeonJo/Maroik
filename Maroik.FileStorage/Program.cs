@@ -4,6 +4,7 @@
 
 using Maroik.Core.Client.Clients;
 using Maroik.Core.Contract.Interfaces;
+using Maroik.FileStorage.Contracts;
 using Maroik.FileStorage.Services;
 using Microsoft.OpenApi;
 using Serilog;
