@@ -818,7 +818,6 @@ public class AccountController : Controller
     {
         _ = ModelState.Remove(nameof(loginInputViewModel.Email));
         _ = ModelState.Remove(nameof(loginInputViewModel.Nickname));
-        _ = ModelState.Remove(nameof(loginInputViewModel.Password));
 
         if (ModelState.IsValid)
         {
