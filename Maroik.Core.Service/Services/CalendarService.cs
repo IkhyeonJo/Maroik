@@ -380,7 +380,9 @@ public class CalendarService : ICalendarService
             }
 
             CalendarEvent? existing = await _calendarEventRepository.FindByIdAsync(request.Id, ct);
-            if (existing == null || existing.Id <= 0)
+            // Verify the existing event currently belongs to one of the caller's calendars
+            // before allowing any mutation or reassignment.
+            if (existing == null || existing.Id <= 0 || !calendars.Any(c => c.Id == existing.CalendarId))
             {
                 await _unitOfWork.RollbackAsync();
                 return ServiceResult.Fail("Input is invalid");

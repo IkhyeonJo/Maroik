@@ -382,6 +382,27 @@ public class CalendarServiceTests
         _unitOfWork.Verify(u => u.CommitAsync(It.IsAny<CancellationToken>()), Times.Once);
     }
 
+    /// <summary>Verifies that <c>UpdateCalendarEventAsync</c> returns fail and does not mutate when the
+    /// existing event belongs to a calendar the caller does not own (IDOR guard).</summary>
+    [Fact]
+    public async Task UpdateCalendarEventAsync_ReturnsFail_WhenExistingEventBelongsToDifferentCalendar()
+    {
+        _calendarRepo.Setup(r => r.GetByAccountEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync([MakeCalendar(id: 1)]);
+        // Caller owns calendar 1 and passes CalendarId = 1, but the target event currently lives in
+        // calendar 999 (another user's). The update must be rejected.
+        _eventRepo.Setup(r => r.FindByIdAsync(It.IsAny<long>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(MakeCalendarEvent(id: 1, calendarId: 999, title: "Victim"));
+        var sut = CreateSut();
+
+        ServiceResult result = await sut.UpdateCalendarEventAsync(
+            new CalendarEventRequest { Id = 1, CalendarId = 1, Title = "Hijacked" }, "user@example.com", "1", [], null, TestContext.Current.CancellationToken);
+
+        Assert.False(result.Success);
+        _eventRepo.Verify(r => r.UpdateEntityAsync(It.IsAny<CalendarEvent>(), It.IsAny<CancellationToken>()), Times.Never);
+        _unitOfWork.Verify(u => u.RollbackAsync(It.IsAny<CancellationToken>()), Times.Once);
+    }
+
     // -- DeleteCalendarEventAsync ---------------------------------------------
 
     /// <summary>Verifies that <c>DeleteCalendarEventAsync</c> returns fail when event not found.</summary>
