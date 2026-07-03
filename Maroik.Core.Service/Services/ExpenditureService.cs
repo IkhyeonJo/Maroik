@@ -51,7 +51,38 @@ public class ExpenditureService : IExpenditureService
                 return ServiceResult.Fail("Input is invalid");
             }
 
-            Asset? paymentAsset = await _assetBalance.GetAssetAsync(accountEmail, request.PaymentMethod ?? "", ct);
+            bool isTransfer = classResult.Value;
+            if (isTransfer && request.PaymentMethod == request.MyDepositAsset)
+            {
+                await _unitOfWork.RollbackAsync();
+                return ServiceResult.Fail("The PaymentMethod and MyDepositAsset value cannot be the same.");
+            }
+
+            // GetAssetAsync takes a row lock held until commit/rollback; for transfers the
+            // two assets are locked in ordinal name order so that concurrent transactions
+            // touching the same pair cannot deadlock.
+            Asset? paymentAsset;
+            Asset? depositAsset = null;
+            if (isTransfer)
+            {
+                string paymentName = request.PaymentMethod ?? "";
+                string depositName = request.MyDepositAsset ?? "";
+                if (string.CompareOrdinal(paymentName, depositName) <= 0)
+                {
+                    paymentAsset = await _assetBalance.GetAssetAsync(accountEmail, paymentName, ct);
+                    depositAsset = await _assetBalance.GetAssetAsync(accountEmail, depositName, ct);
+                }
+                else
+                {
+                    depositAsset = await _assetBalance.GetAssetAsync(accountEmail, depositName, ct);
+                    paymentAsset = await _assetBalance.GetAssetAsync(accountEmail, paymentName, ct);
+                }
+            }
+            else
+            {
+                paymentAsset = await _assetBalance.GetAssetAsync(accountEmail, request.PaymentMethod ?? "", ct);
+            }
+
             if (paymentAsset == null)
             {
                 await _unitOfWork.RollbackAsync();
@@ -63,16 +94,8 @@ public class ExpenditureService : IExpenditureService
                 return ServiceResult.Fail("Actions cannot be executed with assets that have already been deleted.");
             }
 
-            Asset? depositAsset = null;
-            if (classResult.Value)
+            if (isTransfer)
             {
-                if (request.PaymentMethod == request.MyDepositAsset)
-                {
-                    await _unitOfWork.RollbackAsync();
-                    return ServiceResult.Fail("The PaymentMethod and MyDepositAsset value cannot be the same.");
-                }
-
-                depositAsset = await _assetBalance.GetAssetAsync(accountEmail, request.MyDepositAsset ?? "", ct);
                 if (depositAsset == null)
                 {
                     await _unitOfWork.RollbackAsync();
@@ -91,7 +114,7 @@ public class ExpenditureService : IExpenditureService
             }
 
             string currency = paymentAsset.Balance.Currency;
-            string? myDepositAsset = classResult.Value ? request.MyDepositAsset : string.Empty;
+            string? myDepositAsset = isTransfer ? request.MyDepositAsset : string.Empty;
 
             var expenditureResult = Expenditure.Record(accountEmail, request.MainClass, request.SubClass,
                 request.Content, Math.Abs(request.Amount), currency, request.PaymentMethod, myDepositAsset, request.Note);
@@ -256,7 +279,9 @@ public class ExpenditureService : IExpenditureService
         }
 
         var assets = new Dictionary<string, Asset>(StringComparer.Ordinal);
-        foreach (string name in names)
+        // Ordinal name order gives every transaction the same lock-acquisition order,
+        // preventing deadlocks between concurrent operations on the same asset pair.
+        foreach (string name in names.OrderBy(n => n, StringComparer.Ordinal))
         {
             Asset? a = await _assetBalance.GetAssetAsync(accountEmail, name, ct);
             if (a != null) assets[name] = a;

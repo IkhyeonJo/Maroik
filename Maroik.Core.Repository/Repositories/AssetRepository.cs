@@ -58,4 +58,25 @@ public class AssetRepository(ApplicationDbContext context)
 
     public Task<Asset?> FindByEmailAndProductNameAsync(string accountEmail, string productName, CancellationToken ct = default)
         => QueryFirstAsync(e => e.AccountEmail == accountEmail && e.ProductName == productName, ct);
+
+    /// <inheritdoc />
+    public async Task<Asset?> FindByEmailAndProductNameForUpdateAsync(string accountEmail, string productName, CancellationToken ct = default)
+    {
+        // Raw SQL is required because EF Core LINQ cannot emit FOR UPDATE.
+        // ToListAsync on the raw root executes the SQL verbatim (no composition),
+        // keeping FOR UPDATE at the top level of the statement.
+        var entities = await Set.FromSqlInterpolated(
+            $"""
+             SELECT *
+             FROM "Asset"
+             WHERE
+                 "AccountEmail" = {accountEmail}
+                 AND "ProductName" = {productName}
+             LIMIT 1
+             FOR UPDATE
+             """).ToListAsync(ct);
+
+        var entity = entities.FirstOrDefault();
+        return entity == null ? null : ToDomain(entity);
+    }
 }

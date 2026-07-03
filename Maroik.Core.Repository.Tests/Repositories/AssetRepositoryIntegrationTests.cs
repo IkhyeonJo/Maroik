@@ -178,4 +178,68 @@ public class AssetRepositoryIntegrationTests : IAsyncLifetime
                 TestContext.Current.CancellationToken);
         Assert.True(bobUntouched);
     }
+
+    // -- FindByEmailAndProductNameForUpdateAsync (SELECT ... FOR UPDATE) ------
+
+    /// <summary>
+    /// Verifies that the row-locking lookup finds an existing asset and returns null
+    /// for a missing one (exercises the raw FOR UPDATE SQL against real PostgreSQL).
+    /// </summary>
+    [Fact]
+    public async Task FindByEmailAndProductNameForUpdateAsync_FindsAsset_OrReturnsNull()
+    {
+        await SeedAsync(MakeOrm("LockedWallet", "alice@example.com", amount: 750m));
+
+        Asset? found = await _sut.FindByEmailAndProductNameForUpdateAsync(
+            "alice@example.com", "LockedWallet", TestContext.Current.CancellationToken);
+        Asset? missing = await _sut.FindByEmailAndProductNameForUpdateAsync(
+            "alice@example.com", "DoesNotExist", TestContext.Current.CancellationToken);
+
+        Assert.NotNull(found);
+        Assert.Equal(750m, found.Balance.Amount);
+        Assert.Null(missing);
+    }
+
+    /// <summary>
+    /// Reproduces the double-submit race: two parallel transactions each read the same
+    /// asset, deliberately overlap, then write back a withdrawn balance. Without
+    /// FOR UPDATE the second write clobbers the first (lost update, final 900);
+    /// with FOR UPDATE the reads serialize and both withdrawals survive (final 800).
+    /// </summary>
+    [Fact]
+    public async Task FindByEmailAndProductNameForUpdateAsync_SerializesConcurrentBalanceUpdates()
+    {
+        await SeedAsync(MakeOrm("RaceWallet", "alice@example.com", amount: 1000m));
+
+        var options = new DbContextOptionsBuilder<ApplicationDbContext>()
+            .UseNpgsql(_postgres.GetConnectionString())
+            .Options;
+
+        async Task WithdrawAsync(decimal amount)
+        {
+            await using var ctx = new ApplicationDbContext(options);
+            var repo = new AssetRepository(ctx);
+            await using var tx = await ctx.Database.BeginTransactionAsync(TestContext.Current.CancellationToken);
+
+            Asset? asset = await repo.FindByEmailAndProductNameForUpdateAsync(
+                "alice@example.com", "RaceWallet", TestContext.Current.CancellationToken);
+            Assert.NotNull(asset);
+
+            // Hold the row long enough that both tasks overlap inside the read-modify-write window.
+            await Task.Delay(300, TestContext.Current.CancellationToken);
+
+            asset.Withdraw(amount, asset.Balance.Currency);
+            await repo.UpdateEntityAsync(asset, TestContext.Current.CancellationToken);
+            await tx.CommitAsync(TestContext.Current.CancellationToken);
+        }
+
+        await Task.WhenAll(WithdrawAsync(100m), WithdrawAsync(100m));
+
+        _context.ChangeTracker.Clear();
+        OrmAsset? result = await _context.Assets.AsNoTracking()
+            .FirstOrDefaultAsync(a => a.ProductName == "RaceWallet" && a.AccountEmail == "alice@example.com",
+                TestContext.Current.CancellationToken);
+        Assert.NotNull(result);
+        Assert.Equal(800m, result.Amount); // 1000 - 100 - 100: no lost update
+    }
 }

@@ -18,8 +18,12 @@ public class AssetBalanceDomainService : IAssetBalanceDomainService
         => _assetRepository = assetRepository;
 
     /// <inheritdoc />
+    /// <remarks>
+    /// Delegates to the row-locking lookup so that concurrent balance mutations of the
+    /// same asset serialize inside the ambient unit-of-work transaction (lost-update guard).
+    /// </remarks>
     public Task<Asset?> GetAssetAsync(string accountEmail, string productName, CancellationToken ct = default)
-        => _assetRepository.FindByEmailAndProductNameAsync(accountEmail, productName, ct);
+        => _assetRepository.FindByEmailAndProductNameForUpdateAsync(accountEmail, productName, ct);
 
     /// <inheritdoc />
     public Task SaveAsync(Asset asset, CancellationToken ct = default)
