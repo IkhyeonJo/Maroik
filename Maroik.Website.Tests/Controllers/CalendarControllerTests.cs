@@ -1,0 +1,28 @@
+using Maroik.Website.Tests.Infrastructure;
+
+namespace Maroik.Website.Tests.Controllers;
+
+/// <summary>
+/// Integration smoke tests for <c>CalendarController</c>.
+/// The anonymous index uses an anonymous-default <see cref="Maroik.Core.Contract.Dtos.AccountResponse"/>
+/// and requires no session; it must respond 200 OK.
+/// </summary>
+[Collection("Website Integration")]
+public class CalendarControllerTests
+{
+    private readonly HttpClient _client;
+
+    public CalendarControllerTests(MaroikWebApplicationFactory factory)
+    {
+        _client = factory.CreateTestClient(followRedirects: false);
+    }
+
+    /// <summary>Verifies that <c>AnonymousIndex</c> get when returns200.</summary>
+    [Fact]
+    public async Task AnonymousIndex_Get_Returns200()
+    {
+        var response = await _client.GetAsync("/Calendar/AnonymousIndex", TestContext.Current.CancellationToken);
+
+        Assert.Equal(System.Net.HttpStatusCode.OK, response.StatusCode);
+    }
+}

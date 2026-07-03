@@ -2,7 +2,7 @@
 
 # Target upload directories
 paths=(
-  "/home/ubuntu/Maroik/Maroik.WebSite/wwwroot/upload"
+  "/home/ubuntu/Maroik/Maroik.Website/wwwroot/upload"
   "/home/ubuntu/Maroik/Maroik.FileStorage/upload"
 )
 

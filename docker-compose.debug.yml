@@ -48,8 +48,8 @@ services:
     maroik.website:
         build :
          context : .
-         dockerfile : Maroik.WebSite/Dockerfile
-        container_name: Maroik.WebSite
+         dockerfile : Maroik.Website/Dockerfile
+        container_name: Maroik.Website
         networks :
           - backend
         ports:

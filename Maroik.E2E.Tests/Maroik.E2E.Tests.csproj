@@ -27,7 +27,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Maroik.WebSite\Maroik.WebSite.csproj" />
+    <ProjectReference Include="..\Maroik.Website\Maroik.Website.csproj" />
   </ItemGroup>
 
 </Project>

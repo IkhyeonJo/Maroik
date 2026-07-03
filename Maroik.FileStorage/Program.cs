@@ -44,7 +44,7 @@ try
         c.SwaggerDoc("v1", new OpenApiInfo { Title = "Maroik.FileStorage", Version = "v1" });
     });
 
-    // Open CORS policy — the file-storage service is called from the WebSite origin only in production;
+    // Open CORS policy — the file-storage service is called from the Website origin only in production;
     // the permissive policy here is intentional for local development convenience.
     builder.Services.AddCors(options =>
     {
