@@ -68,7 +68,7 @@ $(document).off('submit._DoubleSubmitGuard', 'form').on('submit._DoubleSubmitGua
 
 // Back/forward cache restores the DOM snapshot including disabled buttons and the
 // #loading overlay (Account/Forum/PrivateNote pages) shown at submit time — reset both.
-window.addEventListener('pageshow', function () {
+$(window).off('pageshow._DoubleSubmitGuard').on('pageshow._DoubleSubmitGuard', function () {
     inFlightPostCount = 0;
     $('button[type="submit"], input[type="submit"]').prop('disabled', false);
     $('#loading').hide();
