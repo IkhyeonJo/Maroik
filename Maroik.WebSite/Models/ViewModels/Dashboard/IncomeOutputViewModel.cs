@@ -1,6 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 
-namespace Maroik.WebSite.Models.ViewModels.DashBoard;
+namespace Maroik.WebSite.Models.ViewModels.Dashboard;
 
 /// <summary>
 /// Read-only view model for a single income record displayed on the Dashboard.

@@ -4,7 +4,7 @@ using Maroik.WebSite.Attributes;
 using Maroik.WebSite.Contracts;
 using Maroik.WebSite.Mappings;
 using Maroik.WebSite.Models.ViewModels.Account;
-using Maroik.WebSite.Models.ViewModels.DashBoard;
+using Maroik.WebSite.Models.ViewModels.Dashboard;
 using Microsoft.AspNetCore.Localization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -14,7 +14,7 @@ namespace Maroik.WebSite.Controllers;
 /// Serves the dashboard index views (Admin / User / Anonymous) and handles
 /// language-culture changes and the user's default monetary-unit preference.
 /// </summary>
-public class DashBoardController : Controller
+public class DashboardController : Controller
 {
     private readonly IDashboardService _dashboardService;
     private readonly IProfileService _profileService;
@@ -23,8 +23,8 @@ public class DashBoardController : Controller
     private const string HostResourceFilePath = "/app/Maroik.Log/HostResourceInfo.txt";
     private const string DockerResourceFilePath = "/app/Maroik.Log/DockerResourceInfo.txt";
 
-    /// <summary>Initializes a new instance of <see cref="DashBoardController"/> with the required dependencies.</summary>
-    public DashBoardController(
+    /// <summary>Initializes a new instance of <see cref="DashboardController"/> with the required dependencies.</summary>
+    public DashboardController(
         IDashboardService dashboardService,
         IProfileService profileService,
         ISessionService sessionService)
@@ -119,8 +119,8 @@ public class DashBoardController : Controller
         if (loginedAccount == null) return View();
         return loginedAccount.Role switch
         {
-            Role.Admin => RedirectToAction("AdminIndex", "DashBoard"),
-            Role.User => RedirectToAction("UserIndex", "DashBoard"),
+            Role.Admin => RedirectToAction("AdminIndex", "Dashboard"),
+            Role.User => RedirectToAction("UserIndex", "Dashboard"),
             _ => View()
         };
     }

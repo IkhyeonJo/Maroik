@@ -44,11 +44,11 @@ public class AccountControllerTests
 
     /// <summary>Verifies that <c>Logout</c> get when redirects to dash board.</summary>
     [Fact]
-    public async Task Logout_Get_RedirectsToDashBoard()
+    public async Task Logout_Get_RedirectsToDashboard()
     {
         var response = await _client.GetAsync("/Account/Logout", TestContext.Current.CancellationToken);
 
-        // Logout clears session and redirects to "/" (default route resolves DashBoard/AnonymousIndex)
+        // Logout clears session and redirects to "/" (default route resolves Dashboard/AnonymousIndex)
         Assert.Equal(System.Net.HttpStatusCode.Redirect, response.StatusCode);
     }
 

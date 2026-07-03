@@ -18,7 +18,7 @@
     <div class="register-box">
         <div class="card card-outline card-primary">
             <div class="card-header text-center">
-                <a asp-controller="DashBoard" asp-action="AnonymousIndex" class="h1"><b>Maroik</b></a>
+                <a asp-controller="Dashboard" asp-action="AnonymousIndex" class="h1"><b>Maroik</b></a>
             </div>
             <div class="card-body">
                 <p class="login-box-msg"><font style="font-weight:bold" color="black">@Localizer["You have already verified your email"]</font></p>
@@ -36,7 +36,7 @@ else if (invalidToken == false && accountCreated == true) // 1. Account created 
     <div class="register-box">
         <div class="card card-outline card-primary">
             <div class="card-header text-center">
-                <a asp-controller="DashBoard" asp-action="AnonymousIndex" class="h1"><b>Maroik</b></a>
+                <a asp-controller="Dashboard" asp-action="AnonymousIndex" class="h1"><b>Maroik</b></a>
             </div>
             <div class="card-body">
                 <p class="login-box-msg"><font style="font-weight:bold" color="green">@Localizer["Your account has been successfully created"]</font></p>
@@ -54,7 +54,7 @@ else if (invalidToken == true && accountCreated == false) // 1. Invalid confirma
     <div class="register-box">
         <div class="card card-outline card-primary">
             <div class="card-header text-center">
-                <a asp-controller="DashBoard" asp-action="AnonymousIndex" class="h1"><b>Maroik</b></a>
+                <a asp-controller="Dashboard" asp-action="AnonymousIndex" class="h1"><b>Maroik</b></a>
             </div>
             <div class="card-body">
                 <p class="login-box-msg"><font style="font-weight:bold" color="red">@Localizer["The authentication token is invalid."]</font></p>
@@ -88,7 +88,7 @@ else if (invalidToken == true && accountCreated == true) // 1. (This should not 
     <div class="register-box">
         <div class="card card-outline card-primary">
             <div class="card-header text-center">
-                <a asp-controller="DashBoard" asp-action="AnonymousIndex" class="h1"><b>Maroik</b></a>
+                <a asp-controller="Dashboard" asp-action="AnonymousIndex" class="h1"><b>Maroik</b></a>
             </div>
             <div class="card-body">
                 <p class="login-box-msg"><font style="font-weight:bold" color="red">@Localizer["Exception!!"]</font></p>

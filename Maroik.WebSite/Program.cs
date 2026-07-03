@@ -502,7 +502,7 @@ try
     app.MapHealthChecks("/health");
     app.MapControllerRoute(
         name: "default",
-        pattern: "{controller=DashBoard}/{action=AnonymousIndex}/{id?}");
+        pattern: "{controller=Dashboard}/{action=AnonymousIndex}/{id?}");
     app.UseMiddleware<RoleBasedStaticFileMiddleware>();
     app.MapStaticAssets();
 

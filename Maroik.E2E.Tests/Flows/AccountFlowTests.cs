@@ -142,7 +142,7 @@ public class AccountFlowTests : E2ETestBase
         // Logout clears session and redirects; Playwright follows it automatically
         await GotoAsync(page, "/Account/Logout");
 
-        // RedirectToAction("AnonymousIndex","DashBoard") produces "/" because those are
+        // RedirectToAction("AnonymousIndex","Dashboard") produces "/" because those are
         // the default-route defaults ?? the URL generator picks the shortest path.
         // Verify the page loaded by checking that the body is non-empty.
         string bodyText = await page.Locator("body").InnerTextAsync();

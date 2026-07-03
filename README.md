@@ -99,7 +99,7 @@ Maroik is a modern web application built with ASP.NET Core MVC, featuring a comp
 
 ### Ubuntu Server 24.04.4
 1. Configure .env.prod with domain name and mail settings
-2. Set email credentials in DBBackup.sh and UploadFileBackup.sh
+2. Set email credentials in DbBackup.sh and UploadFileBackup.sh
 3. Copy Maroik folder to /home/ubuntu/
 4. Open ports 80, 443
 5. Run Deploy.sh script
@@ -120,7 +120,7 @@ Maroik is a modern web application built with ASP.NET Core MVC, featuring a comp
 ![Login](https://user-images.githubusercontent.com/20404991/132020270-488a1ab7-448c-44d9-938a-40ce32d6d364.jpg)
 
 ### User Dashboard
-![User-DashBoard](https://user-images.githubusercontent.com/20404991/132020299-e5adb366-9041-44f9-ad56-f2bb606028d5.jpg)
+![User-Dashboard](https://user-images.githubusercontent.com/20404991/132020299-e5adb366-9041-44f9-ad56-f2bb606028d5.jpg)
 
 ### NonfactorGrid
 ![NonfactorGrid](https://user-images.githubusercontent.com/20404991/132020455-e66897ef-ece8-4e71-b323-6ebb72f6b110.jpg)

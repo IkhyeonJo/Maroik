@@ -9,9 +9,9 @@ namespace Maroik.E2E.Tests.Flows;
 /// dashboard that an unauthenticated browser can reach without a session.
 /// </summary>
 [Collection("E2E")]
-public class DashBoardFlowTests : E2ETestBase
+public class DashboardFlowTests : E2ETestBase
 {
-    public DashBoardFlowTests(E2ESharedFixture fixture) : base(fixture) { }
+    public DashboardFlowTests(E2ESharedFixture fixture) : base(fixture) { }
 
     // -- Anonymous dashboard --------------------------------------------------
 
@@ -20,7 +20,7 @@ public class DashBoardFlowTests : E2ETestBase
     public async Task AnonymousDashboard_Loads_WithNonEmptyBody()
     {
         var page = await NewPageAsync();
-        await GotoAsync(page, "/DashBoard/AnonymousIndex");
+        await GotoAsync(page, "/Dashboard/AnonymousIndex");
 
         string bodyText = await page.Locator("body").InnerTextAsync();
         Assert.False(string.IsNullOrWhiteSpace(bodyText));
@@ -28,12 +28,12 @@ public class DashBoardFlowTests : E2ETestBase
 
     /// <summary>Verifies that the default route loads and resolves to the dashboard page.</summary>
     [Fact]
-    public async Task DefaultRoute_Loads_AndResolvesToDashBoard()
+    public async Task DefaultRoute_Loads_AndResolvesToDashboard()
     {
         var page = await NewPageAsync();
         await GotoAsync(page, "/");
 
-        // The root URL resolves to DashBoard/AnonymousIndex via the default route
+        // The root URL resolves to Dashboard/AnonymousIndex via the default route
         string finalUrl = page.Url;
         Assert.Contains("localhost", finalUrl, StringComparison.OrdinalIgnoreCase);
 
@@ -46,7 +46,7 @@ public class DashBoardFlowTests : E2ETestBase
     public async Task AnonymousDashboard_HasHtmlBodyElement()
     {
         var page = await NewPageAsync();
-        await GotoAsync(page, "/DashBoard/AnonymousIndex");
+        await GotoAsync(page, "/Dashboard/AnonymousIndex");
 
         // Standard HTML body element must exist
         await Assertions.Expect(page.Locator("body")).ToBeVisibleAsync();
@@ -57,7 +57,7 @@ public class DashBoardFlowTests : E2ETestBase
     public async Task AnonymousDashboard_HasNonEmptyPageTitle()
     {
         var page = await NewPageAsync();
-        await GotoAsync(page, "/DashBoard/AnonymousIndex");
+        await GotoAsync(page, "/Dashboard/AnonymousIndex");
 
         string title = await page.TitleAsync();
         Assert.False(string.IsNullOrWhiteSpace(title));
@@ -70,7 +70,7 @@ public class DashBoardFlowTests : E2ETestBase
     public async Task AnonymousDashboard_ContainsNavigationElements()
     {
         var page = await NewPageAsync();
-        await GotoAsync(page, "/DashBoard/AnonymousIndex");
+        await GotoAsync(page, "/Dashboard/AnonymousIndex");
 
         // At minimum there should be one anchor element in the page
         int linkCount = await page.Locator("a").CountAsync();

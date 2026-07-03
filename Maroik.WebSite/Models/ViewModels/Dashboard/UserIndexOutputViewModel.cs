@@ -1,4 +1,4 @@
-namespace Maroik.WebSite.Models.ViewModels.DashBoard;
+namespace Maroik.WebSite.Models.ViewModels.Dashboard;
 
 /// <summary>
 /// Full output model for the Dashboard index page.

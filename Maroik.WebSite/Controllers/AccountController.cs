@@ -69,7 +69,7 @@ public class AccountController : Controller
         }
 
         _sessionService.SetAccount(result.Account!);
-        return RedirectToAction("AnonymousIndex", "DashBoard");
+        return RedirectToAction("AnonymousIndex", "Dashboard");
     }
     #endregion
 
@@ -79,7 +79,7 @@ public class AccountController : Controller
     public IActionResult Logout()
     {
         _sessionService.RemoveAccount();
-        return RedirectToAction("AnonymousIndex", "DashBoard");
+        return RedirectToAction("AnonymousIndex", "Dashboard");
     }
     #endregion
 

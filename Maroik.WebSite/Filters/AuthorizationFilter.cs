@@ -187,7 +187,7 @@ public class AuthorizationFilter : ActionFilterAttribute
                     #endregion
 
                     //context.Result = new UnauthorizedObjectResult("User is unauthorized");
-                    context.Result = new RedirectResult("/DashBoard/AnonymousIndex");
+                    context.Result = new RedirectResult("/Dashboard/AnonymousIndex");
                     return;
                 }
             case "GET" when isAccountSessionExist:
@@ -199,7 +199,7 @@ public class AuthorizationFilter : ActionFilterAttribute
                         // Logout
                         case "Account" when currentActionName == "Logout":
                         // Initial screen
-                        case "DashBoard" when currentActionName == "AnonymousIndex":
+                        case "Dashboard" when currentActionName == "AnonymousIndex":
                             await next(); // Do Action!!
                             return;
                     }
@@ -249,7 +249,7 @@ public class AuthorizationFilter : ActionFilterAttribute
                                 #endregion
 
                                 //context.Result = new UnauthorizedObjectResult("User is unauthorized"); // If not found after all checks, it doesn't exist in DB
-                                context.Result = new RedirectResult("/DashBoard/AnonymousIndex");
+                                context.Result = new RedirectResult("/Dashboard/AnonymousIndex");
                                 return;
                                 //Extract all DB Categories & SubCategories, compare with current accessed Controller & Action,
                                 //proceed if match or output UnauthorizedObjectResult (Cancel Action!!)
@@ -295,7 +295,7 @@ public class AuthorizationFilter : ActionFilterAttribute
                                 #endregion
 
                                 //context.Result = new UnauthorizedObjectResult("User is unauthorized"); // If not found after all checks, it doesn't exist in DB
-                                context.Result = new RedirectResult("/DashBoard/AnonymousIndex");
+                                context.Result = new RedirectResult("/Dashboard/AnonymousIndex");
                                 return;
                                 //Extract all DB Categories & SubCategories, compare with current accessed Controller & Action,
                                 //proceed if match or output UnauthorizedObjectResult (Cancel Action!!)
@@ -359,7 +359,7 @@ public class AuthorizationFilter : ActionFilterAttribute
                     }
 
                     //context.Result = new UnauthorizedObjectResult("Access is not allowed"); // If not found after all checks, execution is not allowed!
-                    context.Result = new RedirectResult("/DashBoard/AnonymousIndex");
+                    context.Result = new RedirectResult("/Dashboard/AnonymousIndex");
                     return;
                 }
             // POST method — logged in
@@ -401,7 +401,7 @@ public class AuthorizationFilter : ActionFilterAttribute
                                 }
 
                                 //context.Result = new UnauthorizedObjectResult("Access is not allowed"); // If not found after all checks, execution is not allowed!
-                                context.Result = new RedirectResult("/DashBoard/AnonymousIndex");
+                                context.Result = new RedirectResult("/Dashboard/AnonymousIndex");
                                 return;
                             }
                         // If logged-in user has User role
@@ -435,7 +435,7 @@ public class AuthorizationFilter : ActionFilterAttribute
                                 }
 
                                 //context.Result = new UnauthorizedObjectResult("Access is not allowed"); // If not found after all checks, execution is not allowed!
-                                context.Result = new RedirectResult("/DashBoard/AnonymousIndex");
+                                context.Result = new RedirectResult("/Dashboard/AnonymousIndex");
                                 return;
                             }
                     }
@@ -446,7 +446,7 @@ public class AuthorizationFilter : ActionFilterAttribute
             default:
                 //await next(); // Do Action!!
                 //context.Result = new UnauthorizedObjectResult("Access is not allowed [Only Allowed GET/POST Method]");
-                context.Result = new RedirectResult("/DashBoard/AnonymousIndex");
+                context.Result = new RedirectResult("/Dashboard/AnonymousIndex");
                 return;
         }
     }

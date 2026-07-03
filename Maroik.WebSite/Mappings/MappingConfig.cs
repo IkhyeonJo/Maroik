@@ -39,14 +39,14 @@ public class MappingConfig : IRegister
         // MonetaryUnit exists in OutputViewModel but not in ExpenditureResponse;
         // Mapster leaves it at its default - controller populates it from account settings.
         config.NewConfig<ExpenditureResponse, Models.ViewModels.AccountBook.ExpenditureOutputViewModel>();
-        config.NewConfig<ExpenditureResponse, Models.ViewModels.DashBoard.ExpenditureOutputViewModel>();
+        config.NewConfig<ExpenditureResponse, Models.ViewModels.Dashboard.ExpenditureOutputViewModel>();
 
         config.NewConfig<Models.ViewModels.AccountBook.ExpenditureInputViewModel, ExpenditureRequest>()
             .Ignore(dest => dest.AccountEmail!);
 
         // -- Income ------------------------------------------------------------
         config.NewConfig<IncomeResponse, Models.ViewModels.AccountBook.IncomeOutputViewModel>();
-        config.NewConfig<IncomeResponse, Models.ViewModels.DashBoard.IncomeOutputViewModel>();
+        config.NewConfig<IncomeResponse, Models.ViewModels.Dashboard.IncomeOutputViewModel>();
 
         config.NewConfig<Models.ViewModels.AccountBook.IncomeInputViewModel, IncomeRequest>()
             .Ignore(dest => dest.AccountEmail!);

@@ -43,8 +43,8 @@ jobs:
             git rev-parse HEAD > /tmp/maroik_prev_commit
             echo "Saved rollback point: $(cat /tmp/maroik_prev_commit)"
             git pull origin main
-            chmod +x Maroik.DeployOps/UnDeploy.sh Maroik.DeployOps/Deploy.sh
-            ./Maroik.DeployOps/UnDeploy.sh
+            chmod +x Maroik.DeployOps/Undeploy.sh Maroik.DeployOps/Deploy.sh
+            ./Maroik.DeployOps/Undeploy.sh
             ./Maroik.DeployOps/Deploy.sh
 
       # ── Post-Deploy Health Check ─────────────────────────────────────────────
@@ -86,8 +86,8 @@ jobs:
             echo "Rolling back to $PREV_COMMIT"
             cd /home/ubuntu/Maroik
             git checkout "$PREV_COMMIT"
-            chmod +x Maroik.DeployOps/UnDeploy.sh Maroik.DeployOps/Deploy.sh
-            ./Maroik.DeployOps/UnDeploy.sh
+            chmod +x Maroik.DeployOps/Undeploy.sh Maroik.DeployOps/Deploy.sh
+            ./Maroik.DeployOps/Undeploy.sh
             ./Maroik.DeployOps/Deploy.sh
             rm -f /tmp/maroik_prev_commit
             echo "Rollback complete"

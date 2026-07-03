@@ -1,5 +1,5 @@
 ﻿@*
-    DashBoard/UserIndex.cshtml
+    Dashboard/UserIndex.cshtml
     User dashboard showing personal income and expenditure summaries with Chart.js visualisations.
     The model (UserIndexOutputViewModel) carries yearly and year-month aggregated totals
     broken down by MainClass / SubClass category.
@@ -7,7 +7,7 @@
     Each category section renders a pie/doughnut chart and a detail table using the pre-computed
     Amount and Percentage properties from the model.
 *@
-@using Maroik.WebSite.Models.ViewModels.DashBoard
+@using Maroik.WebSite.Models.ViewModels.Dashboard
 
 @model UserIndexOutputViewModel
 
@@ -549,5 +549,5 @@
 
 @* Page-specific JavaScript: site.js *@
 @section Scripts {
-    <script src="~/user/custom/DashBoard/UserIndex/js/site.js" asp-append-version="true"></script>
+    <script src="~/user/custom/Dashboard/UserIndex/js/site.js" asp-append-version="true"></script>
 }

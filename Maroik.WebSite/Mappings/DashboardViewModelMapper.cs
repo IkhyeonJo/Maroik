@@ -1,6 +1,6 @@
 using Maroik.Core.Contract.Dtos;
 using Maroik.Core.Contract.Extensions;
-using Maroik.WebSite.Models.ViewModels.DashBoard;
+using Maroik.WebSite.Models.ViewModels.Dashboard;
 
 namespace Maroik.WebSite.Mappings;
 

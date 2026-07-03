@@ -55,7 +55,7 @@ function ChangeCulture(culture) {
     });
 
     $.ajax({
-        url: '/DashBoard/CultureManagement',
+        url: '/Dashboard/CultureManagement',
         type: 'POST',
         headers: { "RequestVerificationToken": $('input[name="__RequestVerificationToken"]').val() },
         dataType: 'json',
