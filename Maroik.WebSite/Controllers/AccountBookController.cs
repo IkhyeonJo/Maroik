@@ -270,6 +270,10 @@ public class AccountBookController : Controller
                         Maroik.Core.Common.Utilities.EnumHelper.GetDescription(Maroik.Core.Common
                             .Utilities.Session.Account), out byte[] resultByte);
 
+                    // Locks the account's asset rows (FOR UPDATE) until commit/rollback to prevent lost updates.
+                    _ = await _assetRepository.GetAssetsForUpdateAsync(JsonConvert
+                        .DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email);
+
                     Asset tempAsset = await _assetRepository.GetAssetAsync(
                         JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email,
                         assetInputViewModel.OriginalProductName);
@@ -503,6 +507,10 @@ public class AccountBookController : Controller
                     _ = HttpContext.Session.TryGetValue(
                         Maroik.Core.Common.Utilities.EnumHelper.GetDescription(Maroik.Core.Common
                             .Utilities.Session.Account), out byte[] resultByte);
+
+                    // Locks the account's asset rows (FOR UPDATE) until commit/rollback to prevent lost updates.
+                    _ = await _assetRepository.GetAssetsForUpdateAsync(JsonConvert
+                        .DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email);
 
                     #region Validate ProductName's Deletion
 
@@ -783,6 +791,10 @@ public class AccountBookController : Controller
                         Maroik.Core.Common.Utilities.EnumHelper.GetDescription(Maroik.Core.Common
                             .Utilities.Session.Account), out byte[] resultByte);
 
+                    // Locks the account's asset rows (FOR UPDATE) until commit/rollback to prevent lost updates.
+                    _ = await _assetRepository.GetAssetsForUpdateAsync(JsonConvert
+                        .DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email);
+
                     #region Validation of MainClass & SubClass Value
 
                     if (incomeInputViewModel.MainClass == "RegularIncome")
@@ -959,6 +971,10 @@ public class AccountBookController : Controller
             _ = HttpContext.Session.TryGetValue(
                 Maroik.Core.Common.Utilities.EnumHelper.GetDescription(Maroik.Core.Common
                     .Utilities.Session.Account), out byte[] resultByte);
+
+            // Locks the account's asset rows (FOR UPDATE) until commit/rollback to prevent lost updates.
+            _ = await _assetRepository.GetAssetsForUpdateAsync(JsonConvert
+                .DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email);
 
             List<Income> tempIncomes = await _incomeRepository.GetIncomesAsync(JsonConvert
                 .DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email);
@@ -1169,6 +1185,10 @@ public class AccountBookController : Controller
                 _ = HttpContext.Session.TryGetValue(
                     Maroik.Core.Common.Utilities.EnumHelper.GetDescription(Maroik.Core.Common
                         .Utilities.Session.Account), out byte[] resultByte);
+
+                // Locks the account's asset rows (FOR UPDATE) until commit/rollback to prevent lost updates.
+                _ = await _assetRepository.GetAssetsForUpdateAsync(JsonConvert
+                    .DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email);
 
                 #region Validate ProductName's Deletion
 
@@ -1758,6 +1778,10 @@ public class AccountBookController : Controller
                 _ = HttpContext.Session.TryGetValue(
                     Maroik.Core.Common.Utilities.EnumHelper.GetDescription(Maroik.Core.Common
                         .Utilities.Session.Account), out byte[] resultByte);
+
+                // Locks the account's asset rows (FOR UPDATE) until commit/rollback to prevent lost updates.
+                _ = await _assetRepository.GetAssetsForUpdateAsync(JsonConvert
+                    .DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email);
 
                 #region Main category = 'Regular savings'
 
@@ -4309,6 +4333,10 @@ public class AccountBookController : Controller
             _ = HttpContext.Session.TryGetValue(
                 Maroik.Core.Common.Utilities.EnumHelper.GetDescription(Maroik.Core.Common
                     .Utilities.Session.Account), out byte[] resultByte);
+
+            // Locks the account's asset rows (FOR UPDATE) until commit/rollback to prevent lost updates.
+            _ = await _assetRepository.GetAssetsForUpdateAsync(JsonConvert
+                .DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email);
 
             List<Expenditure> tempExpenditures =
                 await _expenditureRepository.GetExpendituresAsync(JsonConvert

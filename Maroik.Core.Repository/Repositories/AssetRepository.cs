@@ -39,6 +39,29 @@ public class AssetRepository : IAssetRepository
     }
 
     /// <summary>
+    /// Gets all assets for the logged-in account with a database row lock (SELECT ... FOR UPDATE).
+    /// Must be called inside an active transaction; the locks are held until commit/rollback.
+    /// </summary>
+    /// <param name="email"></param>
+    /// <returns></returns>
+    public async Task<List<Asset>> GetAssetsForUpdateAsync(string email)
+    {
+        // Raw SQL is required because EF Core LINQ cannot emit FOR UPDATE.
+        // ToListAsync on the raw root executes the SQL verbatim (no composition),
+        // keeping FOR UPDATE at the top level of the statement.
+        // ORDER BY "ProductName" makes the row-lock acquisition order deterministic,
+        // so two concurrent transactions on the same account cannot deadlock.
+        return await _context.Assets.FromSqlInterpolated(
+            $"""
+             SELECT *
+             FROM "Asset"
+             WHERE "AccountEmail" = {email}
+             ORDER BY "ProductName"
+             FOR UPDATE
+             """).ToListAsync();
+    }
+
+    /// <summary>
     /// Creates an asset.
     /// </summary>
     /// <param name="asset"></param>

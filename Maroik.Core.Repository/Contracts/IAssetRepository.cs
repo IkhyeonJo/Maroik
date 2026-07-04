@@ -22,6 +22,15 @@ public interface IAssetRepository
     public Task<Asset> GetAssetAsync(string email, string productName);
 
     /// <summary>
+    /// Gets all assets for the logged-in account with a database row lock (SELECT ... FOR UPDATE).
+    /// Must be called inside an active transaction; the locks are held until commit/rollback,
+    /// so concurrent balance mutations for the same account are serialized (prevents lost updates).
+    /// </summary>
+    /// <param name="email"></param>
+    /// <returns></returns>
+    public Task<List<Asset>> GetAssetsForUpdateAsync(string email);
+
+    /// <summary>
     /// Creates an asset.
     /// </summary>
     /// <param name="asset"></param>
