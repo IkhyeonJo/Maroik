@@ -809,6 +809,8 @@ public class CalendarController : Controller
         var tempOtherCalendars = (from calendar in allCalendars
                                   join otherCalendar in await _otherCalendarRepository.GetOtherCalendarsAsync(loginedAccount.Email) ?? []
                                   on calendar.Id equals otherCalendar.CalendarId
+                                  join calendarShared in (await _calendarSharedRepository?.GetCalendarSharedAsync())?.Where(x => x.User)?.ToList() ?? []
+                                  on calendar.Id equals calendarShared.CalendarId
                                   select new
                                   {
                                       calendar.Id,
@@ -1213,6 +1215,8 @@ public class CalendarController : Controller
                 List<Calendar> tempOtherCalendars = (from calendar in calendars
                                                      join otherCalendar in otherCalendars
                                                      on calendar.Id equals otherCalendar.CalendarId
+                                                     join calendarShared in (await _calendarSharedRepository?.GetCalendarSharedAsync())?.Where(x => x.User)?.ToList() ?? []
+                                                     on calendar.Id equals calendarShared.CalendarId
                                                      select new Calendar()
                                                      {
                                                          Id = calendar.Id,
@@ -1508,6 +1512,8 @@ public class CalendarController : Controller
                         calendars = (from calendar in await _calendarRepository.GetAllCalendarsAsync() ?? []
                                      join otherCalendar in await _otherCalendarRepository.GetOtherCalendarsAsync(loginedAccount.Email) ?? []
                                      on calendar.Id equals otherCalendar.CalendarId
+                                     join calendarShared in (await _calendarSharedRepository?.GetCalendarSharedAsync())?.Where(x => x.User)?.ToList() ?? []
+                                     on calendar.Id equals calendarShared.CalendarId
                                      select calendar).ToList();
                     }
                     else
@@ -1781,6 +1787,8 @@ public class CalendarController : Controller
                         var otherCalendars = (from calendar in await _calendarRepository.GetAllCalendarsAsync() ?? []
                                               join otherCalendar in await _otherCalendarRepository.GetOtherCalendarsAsync(loginedAccount.Email) ?? []
                                               on calendar.Id equals otherCalendar.CalendarId
+                                              join calendarShared in (await _calendarSharedRepository?.GetCalendarSharedAsync())?.Where(x => x.User)?.ToList() ?? []
+                                              on calendar.Id equals calendarShared.CalendarId
                                               select new
                                               {
                                                   calendar.Id,
@@ -2464,6 +2472,17 @@ public class CalendarController : Controller
         {
             if (ModelState.IsValid)
             {
+                _ = HttpContext.Session.TryGetValue(Maroik.Core.Common.Utilities.EnumHelper.GetDescription(Maroik.Core.Common.Utilities.Session.Account), out byte[] resultByte);
+
+                Account loginedAccount = JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte));
+
+                List<Calendar> ownedCalendars = (await _calendarRepository.GetCalendarsAsync(loginedAccount.Email) ?? [])?.ToList();
+
+                if (calendarShareds.Any(x => !ownedCalendars.Any(calendar => calendar.Id == x.CalendarId)))
+                {
+                    return Json(new { result = false, error = _localizer["Input is invalid"].Value });
+                }
+
                 await using var transaction = await _context.Database.BeginTransactionAsync();
                 try
                 {
@@ -2473,21 +2492,20 @@ public class CalendarController : Controller
                     }
 
                     #region Processing of Other Calendar
-                    _ = HttpContext.Session.TryGetValue(Maroik.Core.Common.Utilities.EnumHelper.GetDescription(Maroik.Core.Common.Utilities.Session.Account), out byte[] resultByte);
-
-                    Account loginedAccount = JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte));
-
                     List<OtherCalendar> otherCalendars = await _otherCalendarRepository.GetAllOtherCalendarsAsync() ?? [];
 
                     foreach (CalendarShared tempCalendarShared in calendarShareds.Where(x => !x.User).ToList())
                     {
-                        try
+                        foreach (OtherCalendar tempOtherCalendar in otherCalendars.Where(x => x.CalendarId == tempCalendarShared.CalendarId).ToList())
                         {
-                            await _otherCalendarRepository.DeleteOtherCalendarAsync(otherCalendars.Where(x => x.CalendarId == tempCalendarShared.CalendarId).FirstOrDefault() ?? new OtherCalendar());
-                        }
-                        catch
-                        {
+                            try
+                            {
+                                await _otherCalendarRepository.DeleteOtherCalendarAsync(tempOtherCalendar);
+                            }
+                            catch
+                            {
 
+                            }
                         }
                     }
                     #endregion
@@ -2535,6 +2553,14 @@ public class CalendarController : Controller
                         {
                             await transaction.RollbackAsync();
                             return Json(new { result = false, error = _localizer["Login required."].Value });
+                        }
+
+                        List<CalendarShared> userSharedCalendars = ((await _calendarSharedRepository.GetCalendarSharedAsync()) ?? [])?.Where(x => x.User)?.ToList();
+
+                        if (otherCalendars.Any(x => !userSharedCalendars.Any(calendarShared => calendarShared.CalendarId == x.CalendarId)))
+                        {
+                            await transaction.RollbackAsync();
+                            return Json(new { result = false, error = _localizer["Input is invalid"].Value });
                         }
 
                         // Delete previous otherCalendars
