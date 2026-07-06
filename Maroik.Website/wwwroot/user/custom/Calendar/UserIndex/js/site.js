@@ -2541,6 +2541,10 @@ $aBrowseCalendarsOfInterest.off('click').on('click', function () {
                 let $checkboxes = $('.checkBoxBrowseCalendarsOfInterest');
                 let allChecked = $checkboxes.length > 0 && $checkboxes.length === $checkboxes.filter(':checked').length;
                 $allCheckBrowseCalendarsOfInterest.prop('checked', allChecked);
+
+                $(document).off('change.UserIndex', '.checkBoxBrowseCalendarsOfInterest').on('change.UserIndex', '.checkBoxBrowseCalendarsOfInterest', function () {
+                    $allCheckBrowseCalendarsOfInterest.prop('checked', $('.checkBoxBrowseCalendarsOfInterest').length === $('.checkBoxBrowseCalendarsOfInterest:checked').length);
+                });
             }
         }
     });
@@ -2550,10 +2554,6 @@ $aBrowseCalendarsOfInterest.off('click').on('click', function () {
 
 $allCheckBrowseCalendarsOfInterest.off('change').on('change', function () {
     $('.checkBoxBrowseCalendarsOfInterest').prop('checked', $(this).prop('checked'));
-});
-
-$(document).off('change.UserIndex').on('change.UserIndex', '.checkBoxBrowseCalendarsOfInterest', function () {
-    $allCheckBrowseCalendarsOfInterest.prop('checked', $('.checkBoxBrowseCalendarsOfInterest').length === $('.checkBoxBrowseCalendarsOfInterest:checked').length);
 });
 
 $formUpdateBrowseCalendarsOfInterest.off('submit').on('submit', function (event) {
