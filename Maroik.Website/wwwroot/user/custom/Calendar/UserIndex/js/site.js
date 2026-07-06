@@ -1444,57 +1444,57 @@ $(function () {
         return isValid;
     }
 
-    $(document).off('change.UserIndex').on('change.UserIndex', '.chkCalendar', function () {
+    $(document).off('change.UserIndex', '.chkCalendar').on('change.UserIndex', '.chkCalendar', function () {
         RefreshCalendarEvents();
     });
 
-    $(document).off('change.UserIndex').on('change.UserIndex', '.chkOtherCalendar', function () {
+    $(document).off('change.UserIndex', '.chkOtherCalendar').on('change.UserIndex', '.chkOtherCalendar', function () {
         RefreshCalendarEvents();
     });
 
-    $(document).off('change.UserIndex').on('change.UserIndex', '.createCalendarEventSelNotificationTimeTypeAllDayChecked', function () {
+    $(document).off('change.UserIndex', '.createCalendarEventSelNotificationTimeTypeAllDayChecked').on('change.UserIndex', '.createCalendarEventSelNotificationTimeTypeAllDayChecked', function () {
         let row = $(this).closest('.divCreateEventNotificationAllDayCheckedRow');
         ValidateCreateEventInputAllDayChecked(row);
         row.find('.error-message').hide();
     });
 
-    $(document).off('input.UserIndex').on('input.UserIndex', '.createCalendarEventSelNotificationNumberAllDayChecked', function () {
+    $(document).off('input.UserIndex', '.createCalendarEventSelNotificationNumberAllDayChecked').on('input.UserIndex', '.createCalendarEventSelNotificationNumberAllDayChecked', function () {
         let row = $(this).closest('.divCreateEventNotificationAllDayCheckedRow');
         ValidateCreateEventInputAllDayChecked(row);
         row.find('.error-message').hide();
     });
 
-    $(document).off('change.UserIndex').on('change.UserIndex', '.createCalendarEventSelNotificationTimeTypeAllDayUnchecked', function () {
+    $(document).off('change.UserIndex', '.createCalendarEventSelNotificationTimeTypeAllDayUnchecked').on('change.UserIndex', '.createCalendarEventSelNotificationTimeTypeAllDayUnchecked', function () {
         let row = $(this).closest('.divCreateEventNotificationAllDayUncheckedRow');
         ValidateCreateEventInputAllDayUnchecked(row);
         row.find('.error-message').hide();
     });
 
-    $(document).off('input.UserIndex').on('input.UserIndex', '.createCalendarEventSelNotificationNumberAllDayUnchecked', function () {
+    $(document).off('input.UserIndex', '.createCalendarEventSelNotificationNumberAllDayUnchecked').on('input.UserIndex', '.createCalendarEventSelNotificationNumberAllDayUnchecked', function () {
         let row = $(this).closest('.divCreateEventNotificationAllDayUncheckedRow');
         ValidateCreateEventInputAllDayUnchecked(row);
         row.find('.error-message').hide();
     });
 
-    $(document).off('change.UserIndex').on('change.UserIndex', '.editCalendarEventSelNotificationTimeTypeAllDayChecked', function () {
+    $(document).off('change.UserIndex', '.editCalendarEventSelNotificationTimeTypeAllDayChecked').on('change.UserIndex', '.editCalendarEventSelNotificationTimeTypeAllDayChecked', function () {
         let row = $(this).closest('.divEditEventNotificationAllDayCheckedRow');
         ValidateEditEventInputAllDayChecked(row);
         row.find('.error-message').hide();
     });
 
-    $(document).off('input.UserIndex').on('input.UserIndex', '.editCalendarEventSelNotificationNumberAllDayChecked', function () {
+    $(document).off('input.UserIndex', '.editCalendarEventSelNotificationNumberAllDayChecked').on('input.UserIndex', '.editCalendarEventSelNotificationNumberAllDayChecked', function () {
         let row = $(this).closest('.divEditEventNotificationAllDayCheckedRow');
         ValidateEditEventInputAllDayChecked(row);
         row.find('.error-message').hide();
     });
 
-    $(document).off('change.UserIndex').on('change.UserIndex', '.editCalendarEventSelNotificationTimeTypeAllDayUnchecked', function () {
+    $(document).off('change.UserIndex', '.editCalendarEventSelNotificationTimeTypeAllDayUnchecked').on('change.UserIndex', '.editCalendarEventSelNotificationTimeTypeAllDayUnchecked', function () {
         let row = $(this).closest('.divEditEventNotificationAllDayUncheckedRow');
         ValidateEditEventInputAllDayUnchecked(row);
         row.find('.error-message').hide();
     });
 
-    $(document).off('input.UserIndex').on('input.UserIndex', '.editCalendarEventSelNotificationNumberAllDayUnchecked', function () {
+    $(document).off('input.UserIndex', '.editCalendarEventSelNotificationNumberAllDayUnchecked').on('input.UserIndex', '.editCalendarEventSelNotificationNumberAllDayUnchecked', function () {
         let row = $(this).closest('.divEditEventNotificationAllDayUncheckedRow');
         ValidateEditEventInputAllDayUnchecked(row);
         row.find('.error-message').hide();
@@ -2476,19 +2476,19 @@ $editCalendarEventNotificationAllDayUnchecked.off('click').on('click', function 
     $(htmlString).insertBefore(this);
 });
 
-$(document).off('click.UserIndex').on('click.UserIndex', '.aCreateCalendarDeleteNotificationAllDayChecked', function () {
+$(document).off('click.UserIndex', '.aCreateCalendarDeleteNotificationAllDayChecked').on('click.UserIndex', '.aCreateCalendarDeleteNotificationAllDayChecked', function () {
     $(this).parent().remove();
 });
 
-$(document).off('click.UserIndex').on('click.UserIndex', '.aCreateCalendarDeleteNotificationAllDayUnchecked', function () {
+$(document).off('click.UserIndex', '.aCreateCalendarDeleteNotificationAllDayUnchecked').on('click.UserIndex', '.aCreateCalendarDeleteNotificationAllDayUnchecked', function () {
     $(this).parent().remove();
 });
 
-$(document).off('click.UserIndex').on('click.UserIndex', '.aEditCalendarDeleteNotificationAllDayChecked', function () {
+$(document).off('click.UserIndex', '.aEditCalendarDeleteNotificationAllDayChecked').on('click.UserIndex', '.aEditCalendarDeleteNotificationAllDayChecked', function () {
     $(this).parent().remove();
 });
 
-$(document).off('click.UserIndex').on('click.UserIndex', '.aEditCalendarDeleteNotificationAllDayUnchecked', function () {
+$(document).off('click.UserIndex', '.aEditCalendarDeleteNotificationAllDayUnchecked').on('click.UserIndex', '.aEditCalendarDeleteNotificationAllDayUnchecked', function () {
     $(this).parent().remove();
 });
 
