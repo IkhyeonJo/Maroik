@@ -111,7 +111,7 @@ public class AccountController : Controller
             {
                 tempAccount.LoginAttempt++;
 
-                if (tempAccount.LoginAttempt == ServerSetting.MaxLoginAttempt)
+                if (tempAccount.LoginAttempt >= ServerSetting.MaxLoginAttempt)
                 {
                     tempAccount.Locked = true;
                     tempAccount.Message = EnumHelper.GetDescription(AccountMessage.AccountLocked);
