@@ -112,7 +112,7 @@ public class ForumController : Controller
 
                     if (isAccountSessionExist)
                     {
-                        Account loginedAccount = JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)); // Get Session
+                        Account loginedAccount = JsonConvert.DeserializeObject<Account>(Encoding.UTF8.GetString(resultByte)); // Get Session
                         Board board = new();
 
                         if (loginedAccount.Role == Role.Admin) // If administrator
@@ -236,7 +236,7 @@ public class ForumController : Controller
 
                     if (isAccountSessionExist)
                     {
-                        Account loginedAccount = JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)); // Get Session
+                        Account loginedAccount = JsonConvert.DeserializeObject<Account>(Encoding.UTF8.GetString(resultByte)); // Get Session
 
                         IEnumerable<Board> freeForumBoards = await _boardRepository.GetOneTypeBoardsAsync(EnumHelper.GetDescription(BoardType.FreeForum));
                         freeForumBoards = freeForumBoards.Where(m => m.Deleted == false).OrderByDescending(a => a.Id);
@@ -326,7 +326,7 @@ public class ForumController : Controller
             Maroik.Core.Common.Utilities.EnumHelper.GetDescription(Maroik.Core.Common.Utilities.Session.Account),
             out byte[] resultByte);
 
-        var loginedAccount = JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte));
+        var loginedAccount = JsonConvert.DeserializeObject<Account>(Encoding.UTF8.GetString(resultByte));
         
         string summernoteImagePath = Path.Combine("upload", "Forum", EnumHelper.GetDescription(BoardType.FreeForum), "summernote", "images");
         string imageFile = $"{Guid.NewGuid():N}{ext}";
@@ -395,7 +395,7 @@ public class ForumController : Controller
                 if (freeBoard.Locked)
                 {
                     _ = HttpContext.Session.TryGetValue(Maroik.Core.Common.Utilities.EnumHelper.GetDescription(Maroik.Core.Common.Utilities.Session.Account), out byte[] resultByte); // If writer or administrator
-                    Account loginedAccount = JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)); // Get Session
+                    Account loginedAccount = JsonConvert.DeserializeObject<Account>(Encoding.UTF8.GetString(resultByte)); // Get Session
 
                     if (!(loginedAccount.Nickname == freeBoard.Writer || loginedAccount.Role == Role.Admin))
                     {
@@ -509,7 +509,7 @@ public class ForumController : Controller
                 Board freeBoard = freeBoards.FirstOrDefault(m => m.Id == boardId);
 
                 _ = HttpContext.Session.TryGetValue(Maroik.Core.Common.Utilities.EnumHelper.GetDescription(Maroik.Core.Common.Utilities.Session.Account), out byte[] resultByte);
-                Account loginedAccount = await _accountRepository.GetAccountByEmailAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email);
+                Account loginedAccount = await _accountRepository.GetAccountByEmailAsync(JsonConvert.DeserializeObject<Account>(Encoding.UTF8.GetString(resultByte)).Email);
 
                 if (freeBoard.Writer != loginedAccount.Nickname) // If writer and logged-in user are not the same
                 {
@@ -621,7 +621,7 @@ public class ForumController : Controller
 
                 if (isAccountSessionExist) // If logged in
                 {
-                    Account loginedAccount = JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)); // Get Session
+                    Account loginedAccount = JsonConvert.DeserializeObject<Account>(Encoding.UTF8.GetString(resultByte)); // Get Session
 
                     if (loginedAccount.Role == Role.Admin) // Administrator can see all posts
                     {
@@ -776,7 +776,7 @@ public class ForumController : Controller
 
                     if (isAccountSessionExist)
                     {
-                        Account loginedAccount = JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)); // Get Session
+                        Account loginedAccount = JsonConvert.DeserializeObject<Account>(Encoding.UTF8.GetString(resultByte)); // Get Session
 
                         IEnumerable<Board> freeBoards = await _boardRepository.GetOneTypeBoardsAsync(EnumHelper.GetDescription(BoardType.FreeForum));
                         freeBoards = freeBoards.Where(m => m.Deleted == false).OrderByDescending(a => a.Id);
@@ -946,7 +946,7 @@ public class ForumController : Controller
                 else
                 {
                     _ = HttpContext.Session.TryGetValue(Maroik.Core.Common.Utilities.EnumHelper.GetDescription(Maroik.Core.Common.Utilities.Session.Account), out byte[] resultByte);
-                    Account loginedAccount = await _accountRepository.GetAccountByEmailAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email);
+                    Account loginedAccount = await _accountRepository.GetAccountByEmailAsync(JsonConvert.DeserializeObject<Account>(Encoding.UTF8.GetString(resultByte)).Email);
 
                     if ((loginedAccount.Nickname == tempFreeBoard.Writer) || loginedAccount.Role == Role.Admin) // If visitor is writer or administrator
                     {
@@ -989,7 +989,7 @@ public class ForumController : Controller
             else
             {
                 _ = HttpContext.Session.TryGetValue(Maroik.Core.Common.Utilities.EnumHelper.GetDescription(Maroik.Core.Common.Utilities.Session.Account), out byte[] resultByte);
-                Account loginedAccount = await _accountRepository.GetAccountByEmailAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email);
+                Account loginedAccount = await _accountRepository.GetAccountByEmailAsync(JsonConvert.DeserializeObject<Account>(Encoding.UTF8.GetString(resultByte)).Email);
 
                 if ((loginedAccount.Nickname == boardComment.Writer) || loginedAccount.Role == Role.Admin) // If deleter is writer or administrator
                 {

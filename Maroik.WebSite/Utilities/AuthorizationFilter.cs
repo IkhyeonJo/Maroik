@@ -61,7 +61,7 @@ public class AuthorizationFilter : ActionFilterAttribute
         Account loginedAccount = null;
         if (isAccountSessionExist)
         {
-            string sessionEmail = JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(accountSessionByte)).Email; // Get Session
+            string sessionEmail = JsonConvert.DeserializeObject<Account>(Encoding.UTF8.GetString(accountSessionByte)).Email; // Get Session
             loginedAccount = await _accountRepository.GetAccountByEmailAsync(sessionEmail); // Re-check account state from DB so that Locked/Deleted/Role changes take effect on the next request, not only at login
 
             if (loginedAccount == null || loginedAccount.Deleted || loginedAccount.Locked)

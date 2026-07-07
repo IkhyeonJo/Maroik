@@ -43,7 +43,7 @@ public class AccountController : Controller
 
         if (isAccountSessionExist) // If logged in
         {
-            Account loginedAccount = JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)); // Get Session
+            Account loginedAccount = JsonConvert.DeserializeObject<Account>(Encoding.UTF8.GetString(resultByte)); // Get Session
             if (loginedAccount.Role == Role.Admin) // If logged-in user role is Admin
             {
                 return RedirectToAction("AdminIndex", "DashBoard");
@@ -183,7 +183,7 @@ public class AccountController : Controller
 
         if (isAccountSessionExist) // If logged in
         {
-            Account loginedAccount = JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)); // Get Session
+            Account loginedAccount = JsonConvert.DeserializeObject<Account>(Encoding.UTF8.GetString(resultByte)); // Get Session
             if (loginedAccount.Role == Role.Admin) // If logged-in user has Admin role
             {
                 return RedirectToAction("AdminIndex", "DashBoard");
@@ -525,7 +525,7 @@ public class AccountController : Controller
 
         if (isAccountSessionExist) // If logged in
         {
-            Account loginedAccount = JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)); // Get Session
+            Account loginedAccount = JsonConvert.DeserializeObject<Account>(Encoding.UTF8.GetString(resultByte)); // Get Session
             if (loginedAccount.Role == Role.Admin) // If logged-in user role is Admin
             {
                 return RedirectToAction("AdminIndex", "DashBoard");
@@ -636,7 +636,7 @@ public class AccountController : Controller
 
         if (isAccountSessionExist) // If logged in
         {
-            Account loginedAccount = JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)); // Get Session
+            Account loginedAccount = JsonConvert.DeserializeObject<Account>(Encoding.UTF8.GetString(resultByte)); // Get Session
             if (loginedAccount.Role == Role.Admin) // If logged-in user role is Admin
             {
                 return RedirectToAction("AdminIndex", "DashBoard");
@@ -741,7 +741,7 @@ public class AccountController : Controller
 
         if (isAccountSessionExist) // If logged in
         {
-            Account loginedAccount = JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)); // Get Session
+            Account loginedAccount = JsonConvert.DeserializeObject<Account>(Encoding.UTF8.GetString(resultByte)); // Get Session
             if (loginedAccount.Role == Role.Admin) // If logged-in user role is Admin
             {
                 return RedirectToAction("AdminIndex", "DashBoard");

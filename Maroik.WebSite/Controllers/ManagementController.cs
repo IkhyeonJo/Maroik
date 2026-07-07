@@ -76,9 +76,9 @@ public class ManagementController : Controller
             Maroik.Core.Common.Utilities.EnumHelper.GetDescription(Maroik.Core.Common.Utilities
                 .Session.Account), out byte[] resultByte);
         string loginedAccountTimeZoneIanaId = JsonConvert
-            .DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).TimeZoneIanaId;
+            .DeserializeObject<Account>(Encoding.UTF8.GetString(resultByte)).TimeZoneIanaId;
         Account tempAccount = await _accountRepository.GetAccountByEmailAsync(JsonConvert
-            .DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email);
+            .DeserializeObject<Account>(Encoding.UTF8.GetString(resultByte)).Email);
 
         return View(new ProfileOutputViewModel()
         {
@@ -188,7 +188,7 @@ public class ManagementController : Controller
         try
         {
             Account tempAccount = await _accountRepository.GetAccountByEmailAsync(
-                JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email);
+                JsonConvert.DeserializeObject<Account>(Encoding.UTF8.GetString(resultByte)).Email);
 
             tempAccount.AvatarImagePath = $"/upload/Management/Profile/Avatar/{avatarFile}";
             await _accountRepository.UpdateAccountAsync(tempAccount);
@@ -223,7 +223,7 @@ public class ManagementController : Controller
                     Maroik.Core.Common.Utilities.EnumHelper.GetDescription(Maroik.Core.Common
                         .Utilities.Session.Account), out byte[] resultByte);
                 Account tempAccount = await _accountRepository.GetAccountByEmailAsync(JsonConvert
-                    .DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email);
+                    .DeserializeObject<Account>(Encoding.UTF8.GetString(resultByte)).Email);
                 tempAccount.TimeZoneIanaId = profileInputViewModel.TimeZoneIanaId;
                 await _accountRepository.UpdateAccountAsync(tempAccount);
 
@@ -266,7 +266,7 @@ public class ManagementController : Controller
                     Maroik.Core.Common.Utilities.EnumHelper.GetDescription(Maroik.Core.Common
                         .Utilities.Session.Account), out byte[] resultByte);
                 Account tempAccount = await _accountRepository.GetAccountByEmailAsync(JsonConvert
-                    .DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email);
+                    .DeserializeObject<Account>(Encoding.UTF8.GetString(resultByte)).Email);
 
                 if (_passwordService.VerifyPassword(profileInputViewModel.Password ?? "", tempAccount.HashedPassword)) // right password
                 {
@@ -477,7 +477,7 @@ public class ManagementController : Controller
                     .Utilities.Session.Account), out byte[] resultByte);
 
             string loginedAccountTimeZoneIanaId = JsonConvert
-                .DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).TimeZoneIanaId;
+                .DeserializeObject<Account>(Encoding.UTF8.GetString(resultByte)).TimeZoneIanaId;
 
             #region Accounts
 
@@ -687,7 +687,7 @@ public class ManagementController : Controller
             Maroik.Core.Common.Utilities.EnumHelper.GetDescription(Maroik.Core.Common.Utilities
                 .Session.Account), out byte[] resultByte);
         string loginedAccountTimeZoneIanaId = JsonConvert
-            .DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).TimeZoneIanaId;
+            .DeserializeObject<Account>(Encoding.UTF8.GetString(resultByte)).TimeZoneIanaId;
 
         #region Accounts
 
@@ -1547,7 +1547,7 @@ public class ManagementController : Controller
             Maroik.Core.Common.Utilities.EnumHelper.GetDescription(Maroik.Core.Common.Utilities
                 .Session.Account), out byte[] resultByte);
         string loginedAccountTimeZoneIanaId = JsonConvert
-            .DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).TimeZoneIanaId;
+            .DeserializeObject<Account>(Encoding.UTF8.GetString(resultByte)).TimeZoneIanaId;
 
         #region AdminCategories
         foreach (Category item in await _categoryRepository.GetCategoryByRoleAsync(Role.Admin))
@@ -1829,7 +1829,7 @@ public class ManagementController : Controller
                     {
                         Account loginedAccount =
                             JsonConvert.DeserializeObject<Account>(
-                                Encoding.Default.GetString(resultByte)); // Get Session
+                                Encoding.UTF8.GetString(resultByte)); // Get Session
                         Board board = new();
 
                         if (loginedAccount.Role == Role.Admin) // If administrator
@@ -1980,7 +1980,7 @@ public class ManagementController : Controller
                     {
                         Account loginedAccount =
                             JsonConvert.DeserializeObject<Account>(
-                                Encoding.Default.GetString(resultByte)); // Get Session
+                                Encoding.UTF8.GetString(resultByte)); // Get Session
 
                         IEnumerable<Board> privateNoteBoards =
                             await _boardRepository.GetOneTypeBoardsAsync(
@@ -2082,7 +2082,7 @@ public class ManagementController : Controller
             Maroik.Core.Common.Utilities.EnumHelper.GetDescription(Maroik.Core.Common.Utilities.Session.Account),
             out byte[] resultByte);
 
-        var loginedAccount = JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte));
+        var loginedAccount = JsonConvert.DeserializeObject<Account>(Encoding.UTF8.GetString(resultByte));
 
         string summernoteImagePath = Path.Combine("upload", "Management",
             EnumHelper.GetDescription(BoardType.PrivateNote), "summernote", "images");
@@ -2139,7 +2139,7 @@ public class ManagementController : Controller
                 Maroik.Core.Common.Utilities.EnumHelper.GetDescription(Maroik.Core.Common
                     .Utilities.Session.Account), out byte[] resultByte); // If writer or administrator
             Account loginedAccount =
-                JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)); // Get Session
+                JsonConvert.DeserializeObject<Account>(Encoding.UTF8.GetString(resultByte)); // Get Session
 
             if (boardId == null)
             {
@@ -2280,7 +2280,7 @@ public class ManagementController : Controller
                 Maroik.Core.Common.Utilities.EnumHelper.GetDescription(Maroik.Core.Common
                     .Utilities.Session.Account), out byte[] resultByte);
             Account loginedAccount = await _accountRepository.GetAccountByEmailAsync(JsonConvert
-                .DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email);
+                .DeserializeObject<Account>(Encoding.UTF8.GetString(resultByte)).Email);
 
             IEnumerable<Board> privateNoteBoards =
                 await _boardRepository.GetOneTypeBoardsAsync(EnumHelper.GetDescription(BoardType.PrivateNote));
@@ -2393,7 +2393,7 @@ public class ManagementController : Controller
                 Maroik.Core.Common.Utilities.EnumHelper.GetDescription(Maroik.Core.Common
                     .Utilities.Session.Account), out byte[] resultByte);
             Account loginedAccount =
-                JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)); // Get Session
+                JsonConvert.DeserializeObject<Account>(Encoding.UTF8.GetString(resultByte)); // Get Session
 
             #region Board default paging logic
 
@@ -2503,7 +2503,7 @@ public class ManagementController : Controller
                 Maroik.Core.Common.Utilities.EnumHelper.GetDescription(Maroik.Core.Common
                     .Utilities.Session.Account), out byte[] resultByte);
             Account loginedAccount = await _accountRepository.GetAccountByEmailAsync(JsonConvert
-                .DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email);
+                .DeserializeObject<Account>(Encoding.UTF8.GetString(resultByte)).Email);
 
             IEnumerable<Board> privateNoteBoards =
                 await _boardRepository.GetOneTypeBoardsAsync(EnumHelper.GetDescription(BoardType.PrivateNote));
@@ -2621,7 +2621,7 @@ public class ManagementController : Controller
                     {
                         Account loginedAccount =
                             JsonConvert.DeserializeObject<Account>(
-                                Encoding.Default.GetString(resultByte)); // Get Session
+                                Encoding.UTF8.GetString(resultByte)); // Get Session
 
                         IEnumerable<Board> privateNoteBoards =
                             await _boardRepository.GetOneTypeBoardsAsync(
@@ -2840,7 +2840,7 @@ public class ManagementController : Controller
                 Maroik.Core.Common.Utilities.EnumHelper.GetDescription(Maroik.Core.Common
                     .Utilities.Session.Account), out byte[] resultByte);
             Account loginedAccount = await _accountRepository.GetAccountByEmailAsync(JsonConvert
-                .DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email);
+                .DeserializeObject<Account>(Encoding.UTF8.GetString(resultByte)).Email);
 
             IEnumerable<Board> privateNoteBoards =
                 await _boardRepository.GetOneTypeBoardsAsync(EnumHelper.GetDescription(BoardType.PrivateNote));
@@ -2914,7 +2914,7 @@ public class ManagementController : Controller
                     Maroik.Core.Common.Utilities.EnumHelper.GetDescription(Maroik.Core.Common
                         .Utilities.Session.Account), out byte[] resultByte);
                 Account loginedAccount = await _accountRepository.GetAccountByEmailAsync(JsonConvert
-                    .DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email);
+                    .DeserializeObject<Account>(Encoding.UTF8.GetString(resultByte)).Email);
 
                 if (loginedAccount.Nickname == boardComment.Writer) // If deleter is writer
                 {

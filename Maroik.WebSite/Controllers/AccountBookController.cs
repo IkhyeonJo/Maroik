@@ -67,7 +67,7 @@ public class AccountBookController : Controller
                         .Utilities.Session.Account), out byte[] resultByte);
 
                 if (await _assetRepository.GetAssetAsync(
-                        JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email,
+                        JsonConvert.DeserializeObject<Account>(Encoding.UTF8.GetString(resultByte)).Email,
                         assetInputViewModel.ProductName) != null)
                 {
                     return Json(new { result = false, error = _localizer["The asset already exists."].Value });
@@ -98,7 +98,7 @@ public class AccountBookController : Controller
                         {
                             ProductName = assetInputViewModel.ProductName,
                             AccountEmail = JsonConvert
-                                .DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email,
+                                .DeserializeObject<Account>(Encoding.UTF8.GetString(resultByte)).Email,
                             Item = assetInputViewModel.Item,
                             Amount = assetInputViewModel.Amount,
                             MonetaryUnit = assetInputViewModel.MonetaryUnit,
@@ -146,10 +146,10 @@ public class AccountBookController : Controller
                     .Utilities.Session.Account), out byte[] resultByte);
 
             string loginedAccountTimeZoneIanaId = JsonConvert
-                .DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).TimeZoneIanaId;
+                .DeserializeObject<Account>(Encoding.UTF8.GetString(resultByte)).TimeZoneIanaId;
 
             foreach (Asset item in await _assetRepository.GetAssetsAsync(JsonConvert
-                         .DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email))
+                         .DeserializeObject<Account>(Encoding.UTF8.GetString(resultByte)).Email))
             {
                 if (string.IsNullOrEmpty(wholeSearch))
                 {
@@ -215,7 +215,7 @@ public class AccountBookController : Controller
                     .Utilities.Session.Account), out byte[] resultByte);
 
             Asset tempAsset = await _assetRepository.GetAssetAsync(
-                JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, productName);
+                JsonConvert.DeserializeObject<Account>(Encoding.UTF8.GetString(resultByte)).Email, productName);
 
             return tempAsset == null
                 ? Json(new
@@ -272,10 +272,10 @@ public class AccountBookController : Controller
 
                     // Locks the account's asset rows (FOR UPDATE) until commit/rollback to prevent lost updates.
                     _ = await _assetRepository.GetAssetsForUpdateAsync(JsonConvert
-                        .DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email);
+                        .DeserializeObject<Account>(Encoding.UTF8.GetString(resultByte)).Email);
 
                     Asset tempAsset = await _assetRepository.GetAssetAsync(
-                        JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email,
+                        JsonConvert.DeserializeObject<Account>(Encoding.UTF8.GetString(resultByte)).Email,
                         assetInputViewModel.OriginalProductName);
 
                     if (tempAsset == null)
@@ -355,7 +355,7 @@ public class AccountBookController : Controller
                     .Utilities.Session.Account), out byte[] resultByte);
 
             Asset tempAsset = await _assetRepository.GetAssetAsync(
-                JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email,
+                JsonConvert.DeserializeObject<Account>(Encoding.UTF8.GetString(resultByte)).Email,
                 assetInputViewModel.ProductName);
 
             if (tempAsset == null)
@@ -394,10 +394,10 @@ public class AccountBookController : Controller
             Maroik.Core.Common.Utilities.EnumHelper.GetDescription(Maroik.Core.Common.Utilities
                 .Session.Account), out byte[] resultByte);
         string loginedAccountTimeZoneIanaId = JsonConvert
-            .DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).TimeZoneIanaId;
+            .DeserializeObject<Account>(Encoding.UTF8.GetString(resultByte)).TimeZoneIanaId;
 
         foreach (Asset item in await _assetRepository.GetAssetsAsync(JsonConvert
-                     .DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email))
+                     .DeserializeObject<Account>(Encoding.UTF8.GetString(resultByte)).Email))
         {
             assetOutputViewModels.Add(new AssetOutputViewModel()
             {
@@ -510,12 +510,12 @@ public class AccountBookController : Controller
 
                     // Locks the account's asset rows (FOR UPDATE) until commit/rollback to prevent lost updates.
                     _ = await _assetRepository.GetAssetsForUpdateAsync(JsonConvert
-                        .DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email);
+                        .DeserializeObject<Account>(Encoding.UTF8.GetString(resultByte)).Email);
 
                     #region Validate ProductName's Deletion
 
                     Asset tempAssetToValidate = await _assetRepository.GetAssetAsync(
-                        JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email,
+                        JsonConvert.DeserializeObject<Account>(Encoding.UTF8.GetString(resultByte)).Email,
                         incomeInputViewModel.DepositMyAssetProductName);
                     if (tempAssetToValidate.Deleted)
                     {
@@ -564,7 +564,7 @@ public class AccountBookController : Controller
                         new Income()
                         {
                             AccountEmail = JsonConvert
-                                .DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email,
+                                .DeserializeObject<Account>(Encoding.UTF8.GetString(resultByte)).Email,
                             MainClass = incomeInputViewModel.MainClass,
                             SubClass = incomeInputViewModel.SubClass,
                             Content = incomeInputViewModel.Content ?? "",
@@ -581,7 +581,7 @@ public class AccountBookController : Controller
                     #region Asset update
 
                     Asset tempAsset = await _assetRepository.GetAssetAsync(
-                        JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email,
+                        JsonConvert.DeserializeObject<Account>(Encoding.UTF8.GetString(resultByte)).Email,
                         incomeInputViewModel.DepositMyAssetProductName);
                     tempAsset.Amount += Math.Abs(incomeInputViewModel.Amount);
                     tempAsset.Updated = DateTime.UtcNow;
@@ -630,13 +630,13 @@ public class AccountBookController : Controller
                     .Utilities.Session.Account), out byte[] resultByte);
 
             string loginedAccountTimeZoneIanaId = JsonConvert
-                .DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).TimeZoneIanaId;
+                .DeserializeObject<Account>(Encoding.UTF8.GetString(resultByte)).TimeZoneIanaId;
 
             List<Asset> assets = await _assetRepository.GetAssetsAsync(JsonConvert
-                .DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email);
+                .DeserializeObject<Account>(Encoding.UTF8.GetString(resultByte)).Email);
 
             foreach (Income item in await _incomeRepository.GetIncomesAsync(JsonConvert
-                         .DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email))
+                         .DeserializeObject<Account>(Encoding.UTF8.GetString(resultByte)).Email))
             {
                 if (string.IsNullOrEmpty(wholeSearch))
                 {
@@ -709,9 +709,9 @@ public class AccountBookController : Controller
                 Maroik.Core.Common.Utilities.EnumHelper.GetDescription(Maroik.Core.Common
                     .Utilities.Session.Account), out byte[] resultByte);
             string loginedAccountTimeZoneIanaId = JsonConvert
-                .DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).TimeZoneIanaId;
+                .DeserializeObject<Account>(Encoding.UTF8.GetString(resultByte)).TimeZoneIanaId;
             List<Income> tempIncomes = await _incomeRepository.GetIncomesAsync(JsonConvert
-                .DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email);
+                .DeserializeObject<Account>(Encoding.UTF8.GetString(resultByte)).Email);
 
             if (tempIncomes == null)
             {
@@ -754,7 +754,7 @@ public class AccountBookController : Controller
 
             Asset asset =
                 (await _assetRepository.GetAssetsAsync(JsonConvert
-                    .DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email))
+                    .DeserializeObject<Account>(Encoding.UTF8.GetString(resultByte)).Email))
                 .Where(x => !x.Deleted).Where(x => x.ProductName == productName).FirstOrDefault() ?? new Asset();
 
             if (!string.IsNullOrEmpty(asset.MonetaryUnit))
@@ -793,7 +793,7 @@ public class AccountBookController : Controller
 
                     // Locks the account's asset rows (FOR UPDATE) until commit/rollback to prevent lost updates.
                     _ = await _assetRepository.GetAssetsForUpdateAsync(JsonConvert
-                        .DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email);
+                        .DeserializeObject<Account>(Encoding.UTF8.GetString(resultByte)).Email);
 
                     #region Validation of MainClass & SubClass Value
 
@@ -825,7 +825,7 @@ public class AccountBookController : Controller
                     #region Income & asset update
 
                     List<Income> tempIncomes = await _incomeRepository.GetIncomesAsync(JsonConvert
-                        .DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email);
+                        .DeserializeObject<Account>(Encoding.UTF8.GetString(resultByte)).Email);
 
                     if (tempIncomes == null)
                     {
@@ -847,7 +847,7 @@ public class AccountBookController : Controller
                             #region Validate ProductName's Deletion
 
                             Asset tempAssetToValidate = await _assetRepository.GetAssetAsync(
-                                JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte))
+                                JsonConvert.DeserializeObject<Account>(Encoding.UTF8.GetString(resultByte))
                                     .Email, tempIncome.DepositMyAssetProductName);
                             if (tempAssetToValidate.Deleted)
                             {
@@ -890,7 +890,7 @@ public class AccountBookController : Controller
                                 #region Asset update
 
                                 Asset tempAsset = await _assetRepository.GetAssetAsync(
-                                    JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte))
+                                    JsonConvert.DeserializeObject<Account>(Encoding.UTF8.GetString(resultByte))
                                         .Email, tempIncome.DepositMyAssetProductName);
                                 tempAsset.Amount = tempAsset.Amount - Math.Abs(previousTempIncomeAmount) +
                                                    Math.Abs(tempIncome.Amount);
@@ -904,7 +904,7 @@ public class AccountBookController : Controller
                                 #region Old asset update
 
                                 Asset tempAsset = await _assetRepository.GetAssetAsync(
-                                    JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte))
+                                    JsonConvert.DeserializeObject<Account>(Encoding.UTF8.GetString(resultByte))
                                         .Email, previousTempIncomeDepositMyAssetProductName);
                                 tempAsset.Amount -= Math.Abs(previousTempIncomeAmount);
                                 tempAsset.Updated = DateTime.UtcNow;
@@ -915,7 +915,7 @@ public class AccountBookController : Controller
                                 #region New asset update
 
                                 tempAsset = await _assetRepository.GetAssetAsync(
-                                    JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte))
+                                    JsonConvert.DeserializeObject<Account>(Encoding.UTF8.GetString(resultByte))
                                         .Email, tempIncome.DepositMyAssetProductName);
                                 tempAsset.Amount += Math.Abs(tempIncome.Amount);
                                 tempAsset.Updated = DateTime.UtcNow;
@@ -974,10 +974,10 @@ public class AccountBookController : Controller
 
             // Locks the account's asset rows (FOR UPDATE) until commit/rollback to prevent lost updates.
             _ = await _assetRepository.GetAssetsForUpdateAsync(JsonConvert
-                .DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email);
+                .DeserializeObject<Account>(Encoding.UTF8.GetString(resultByte)).Email);
 
             List<Income> tempIncomes = await _incomeRepository.GetIncomesAsync(JsonConvert
-                .DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email);
+                .DeserializeObject<Account>(Encoding.UTF8.GetString(resultByte)).Email);
 
             if (tempIncomes == null)
             {
@@ -998,7 +998,7 @@ public class AccountBookController : Controller
                     #region Validate ProductName's Deletion
 
                     Asset tempAssetToValidate = await _assetRepository.GetAssetAsync(
-                        JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email,
+                        JsonConvert.DeserializeObject<Account>(Encoding.UTF8.GetString(resultByte)).Email,
                         tempIncome.DepositMyAssetProductName);
                     if (tempAssetToValidate.Deleted)
                     {
@@ -1016,7 +1016,7 @@ public class AccountBookController : Controller
                     #region Asset update
 
                     Asset tempAsset = await _assetRepository.GetAssetAsync(
-                        JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email,
+                        JsonConvert.DeserializeObject<Account>(Encoding.UTF8.GetString(resultByte)).Email,
                         tempIncome.DepositMyAssetProductName);
                     tempAsset.Amount -= Math.Abs(tempIncome.Amount);
                     tempAsset.Updated = DateTime.UtcNow;
@@ -1062,13 +1062,13 @@ public class AccountBookController : Controller
             Maroik.Core.Common.Utilities.EnumHelper.GetDescription(Maroik.Core.Common.Utilities
                 .Session.Account), out byte[] resultByte);
         string loginedAccountTimeZoneIanaId = JsonConvert
-            .DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).TimeZoneIanaId;
+            .DeserializeObject<Account>(Encoding.UTF8.GetString(resultByte)).TimeZoneIanaId;
 
         List<Asset> assets = await _assetRepository.GetAssetsAsync(JsonConvert
-            .DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email);
+            .DeserializeObject<Account>(Encoding.UTF8.GetString(resultByte)).Email);
 
         foreach (Income item in await _incomeRepository.GetIncomesAsync(JsonConvert
-                     .DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email))
+                     .DeserializeObject<Account>(Encoding.UTF8.GetString(resultByte)).Email))
         {
             incomeOutputViewModels.Add(new IncomeOutputViewModel()
             {
@@ -1188,12 +1188,12 @@ public class AccountBookController : Controller
 
                 // Locks the account's asset rows (FOR UPDATE) until commit/rollback to prevent lost updates.
                 _ = await _assetRepository.GetAssetsForUpdateAsync(JsonConvert
-                    .DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email);
+                    .DeserializeObject<Account>(Encoding.UTF8.GetString(resultByte)).Email);
 
                 #region Validate ProductName's Deletion
 
                 Asset tempExpenditureAssetToValidate = await _assetRepository.GetAssetAsync(
-                    JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email,
+                    JsonConvert.DeserializeObject<Account>(Encoding.UTF8.GetString(resultByte)).Email,
                     expenditureInputViewModel.PaymentMethod);
                 if (tempExpenditureAssetToValidate.Deleted)
                 {
@@ -1209,7 +1209,7 @@ public class AccountBookController : Controller
                 if (!string.IsNullOrEmpty(expenditureInputViewModel.MyDepositAsset))
                 {
                     Asset tempIncomeAssetToValidate = await _assetRepository.GetAssetAsync(
-                        JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email,
+                        JsonConvert.DeserializeObject<Account>(Encoding.UTF8.GetString(resultByte)).Email,
                         expenditureInputViewModel.MyDepositAsset);
                     if (tempIncomeAssetToValidate.Deleted)
                     {
@@ -1245,10 +1245,10 @@ public class AccountBookController : Controller
                             }
 
                             Asset expenditureAsset = await _assetRepository.GetAssetAsync(
-                                JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte))
+                                JsonConvert.DeserializeObject<Account>(Encoding.UTF8.GetString(resultByte))
                                     .Email, expenditureInputViewModel.PaymentMethod);
                             Asset incomeAsset = await _assetRepository.GetAssetAsync(
-                                JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte))
+                                JsonConvert.DeserializeObject<Account>(Encoding.UTF8.GetString(resultByte))
                                     .Email, expenditureInputViewModel.MyDepositAsset);
 
                             if (expenditureAsset == null || incomeAsset == null)
@@ -1276,7 +1276,7 @@ public class AccountBookController : Controller
                                 new Expenditure()
                                 {
                                     AccountEmail = JsonConvert
-                                        .DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email,
+                                        .DeserializeObject<Account>(Encoding.UTF8.GetString(resultByte)).Email,
                                     MainClass = expenditureInputViewModel.MainClass,
                                     SubClass = expenditureInputViewModel.SubClass,
                                     Content = expenditureInputViewModel.Content ?? "",
@@ -1349,10 +1349,10 @@ public class AccountBookController : Controller
                             }
 
                             Asset expenditureAsset = await _assetRepository.GetAssetAsync(
-                                JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte))
+                                JsonConvert.DeserializeObject<Account>(Encoding.UTF8.GetString(resultByte))
                                     .Email, expenditureInputViewModel.PaymentMethod);
                             Asset incomeAsset = await _assetRepository.GetAssetAsync(
-                                JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte))
+                                JsonConvert.DeserializeObject<Account>(Encoding.UTF8.GetString(resultByte))
                                     .Email, expenditureInputViewModel.MyDepositAsset);
 
                             if (expenditureAsset == null || incomeAsset == null)
@@ -1380,7 +1380,7 @@ public class AccountBookController : Controller
                                 new Expenditure()
                                 {
                                     AccountEmail = JsonConvert
-                                        .DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email,
+                                        .DeserializeObject<Account>(Encoding.UTF8.GetString(resultByte)).Email,
                                     MainClass = expenditureInputViewModel.MainClass,
                                     SubClass = expenditureInputViewModel.SubClass,
                                     Content = expenditureInputViewModel.Content ?? "",
@@ -1432,7 +1432,7 @@ public class AccountBookController : Controller
                         try
                         {
                             Asset expenditureAsset = await _assetRepository.GetAssetAsync(
-                                JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte))
+                                JsonConvert.DeserializeObject<Account>(Encoding.UTF8.GetString(resultByte))
                                     .Email, expenditureInputViewModel.PaymentMethod);
 
                             if (expenditureAsset == null)
@@ -1448,7 +1448,7 @@ public class AccountBookController : Controller
                                 new Expenditure()
                                 {
                                     AccountEmail = JsonConvert
-                                        .DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email,
+                                        .DeserializeObject<Account>(Encoding.UTF8.GetString(resultByte)).Email,
                                     MainClass = expenditureInputViewModel.MainClass,
                                     SubClass = expenditureInputViewModel.SubClass,
                                     Content = expenditureInputViewModel.Content ?? "",
@@ -1513,7 +1513,7 @@ public class AccountBookController : Controller
                         try
                         {
                             Asset expenditureAsset = await _assetRepository.GetAssetAsync(
-                                JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte))
+                                JsonConvert.DeserializeObject<Account>(Encoding.UTF8.GetString(resultByte))
                                     .Email, expenditureInputViewModel.PaymentMethod);
 
                             if (expenditureAsset == null)
@@ -1529,7 +1529,7 @@ public class AccountBookController : Controller
                                 new Expenditure()
                                 {
                                     AccountEmail = JsonConvert
-                                        .DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email,
+                                        .DeserializeObject<Account>(Encoding.UTF8.GetString(resultByte)).Email,
                                     MainClass = expenditureInputViewModel.MainClass,
                                     SubClass = expenditureInputViewModel.SubClass,
                                     Content = expenditureInputViewModel.Content ?? "",
@@ -1615,13 +1615,13 @@ public class AccountBookController : Controller
                     .Utilities.Session.Account), out byte[] resultByte);
 
             string loginedAccountTimeZoneIanaId = JsonConvert
-                .DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).TimeZoneIanaId;
+                .DeserializeObject<Account>(Encoding.UTF8.GetString(resultByte)).TimeZoneIanaId;
 
             List<Asset> assets = await _assetRepository.GetAssetsAsync(JsonConvert
-                .DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email);
+                .DeserializeObject<Account>(Encoding.UTF8.GetString(resultByte)).Email);
 
             foreach (Expenditure item in await _expenditureRepository.GetExpendituresAsync(JsonConvert
-                         .DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email))
+                         .DeserializeObject<Account>(Encoding.UTF8.GetString(resultByte)).Email))
             {
                 if (string.IsNullOrEmpty(wholeSearch))
                 {
@@ -1697,10 +1697,10 @@ public class AccountBookController : Controller
                 Maroik.Core.Common.Utilities.EnumHelper.GetDescription(Maroik.Core.Common
                     .Utilities.Session.Account), out byte[] resultByte);
             string loginedAccountTimeZoneIanaId = JsonConvert
-                .DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).TimeZoneIanaId;
+                .DeserializeObject<Account>(Encoding.UTF8.GetString(resultByte)).TimeZoneIanaId;
             List<Expenditure> tempExpenditures =
                 await _expenditureRepository.GetExpendituresAsync(JsonConvert
-                    .DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email);
+                    .DeserializeObject<Account>(Encoding.UTF8.GetString(resultByte)).Email);
 
             if (tempExpenditures == null)
             {
@@ -1743,7 +1743,7 @@ public class AccountBookController : Controller
 
             Asset asset =
                 (await _assetRepository.GetAssetsAsync(JsonConvert
-                    .DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email))
+                    .DeserializeObject<Account>(Encoding.UTF8.GetString(resultByte)).Email))
                 .Where(x => !x.Deleted).Where(x => x.ProductName == productName).FirstOrDefault() ?? new Asset();
 
             if (!string.IsNullOrEmpty(asset.MonetaryUnit))
@@ -1781,7 +1781,7 @@ public class AccountBookController : Controller
 
                 // Locks the account's asset rows (FOR UPDATE) until commit/rollback to prevent lost updates.
                 _ = await _assetRepository.GetAssetsForUpdateAsync(JsonConvert
-                    .DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email);
+                    .DeserializeObject<Account>(Encoding.UTF8.GetString(resultByte)).Email);
 
                 #region Main category = 'Regular savings'
 
@@ -1803,10 +1803,10 @@ public class AccountBookController : Controller
                             }
 
                             Asset expenditureAsset = await _assetRepository.GetAssetAsync(
-                                JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte))
+                                JsonConvert.DeserializeObject<Account>(Encoding.UTF8.GetString(resultByte))
                                     .Email, expenditureInputViewModel.PaymentMethod);
                             Asset incomeAsset = await _assetRepository.GetAssetAsync(
-                                JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte))
+                                JsonConvert.DeserializeObject<Account>(Encoding.UTF8.GetString(resultByte))
                                     .Email, expenditureInputViewModel.MyDepositAsset);
 
                             if (expenditureAsset == null || incomeAsset == null)
@@ -1829,14 +1829,14 @@ public class AccountBookController : Controller
 
                             List<Expenditure> tempExpenditures =
                                 await _expenditureRepository.GetExpendituresAsync(JsonConvert
-                                    .DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email);
+                                    .DeserializeObject<Account>(Encoding.UTF8.GetString(resultByte)).Email);
                             Expenditure previousTempExpenditure = tempExpenditures
                                 .Where(a => a.Id == expenditureInputViewModel.Id).FirstOrDefault();
                             Expenditure currentTempExpenditure = new()
                             {
                                 Id = expenditureInputViewModel.Id,
                                 AccountEmail = JsonConvert
-                                    .DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email,
+                                    .DeserializeObject<Account>(Encoding.UTF8.GetString(resultByte)).Email,
                                 MainClass = expenditureInputViewModel.MainClass,
                                 SubClass = expenditureInputViewModel.SubClass,
                                 Content = expenditureInputViewModel?.Content ?? "",
@@ -1853,7 +1853,7 @@ public class AccountBookController : Controller
 
                             Asset tempExpenditureAssetToValidate =
                                 await _assetRepository.GetAssetAsync(
-                                    JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte))
+                                    JsonConvert.DeserializeObject<Account>(Encoding.UTF8.GetString(resultByte))
                                         .Email, previousTempExpenditure.PaymentMethod);
                             if (tempExpenditureAssetToValidate.Deleted)
                             {
@@ -1872,7 +1872,7 @@ public class AccountBookController : Controller
                                 Asset tempIncomeAssetToValidate =
                                     await _assetRepository.GetAssetAsync(
                                         JsonConvert.DeserializeObject<Account>(
-                                            Encoding.Default.GetString(resultByte)).Email,
+                                            Encoding.UTF8.GetString(resultByte)).Email,
                                         previousTempExpenditure.MyDepositAsset);
                                 if (tempIncomeAssetToValidate.Deleted)
                                 {
@@ -1908,7 +1908,7 @@ public class AccountBookController : Controller
                                     Asset pastExpenditureAsset =
                                         await _assetRepository.GetAssetAsync(
                                             JsonConvert.DeserializeObject<Account>(
-                                                Encoding.Default.GetString(resultByte)).Email,
+                                                Encoding.UTF8.GetString(resultByte)).Email,
                                             previousTempExpenditure.PaymentMethod);
                                     pastExpenditureAsset.Amount = pastExpenditureAsset.Amount +
                                                                   Math.Abs(previousTempExpenditure.Amount) -
@@ -1919,7 +1919,7 @@ public class AccountBookController : Controller
                                     Asset currentIncomeAsset =
                                         await _assetRepository.GetAssetAsync(
                                             JsonConvert.DeserializeObject<Account>(
-                                                Encoding.Default.GetString(resultByte)).Email,
+                                                Encoding.UTF8.GetString(resultByte)).Email,
                                             currentTempExpenditure.MyDepositAsset);
                                     currentIncomeAsset.Amount += Math.Abs(currentTempExpenditure.Amount);
                                     currentIncomeAsset.Updated = DateTime.UtcNow;
@@ -1931,7 +1931,7 @@ public class AccountBookController : Controller
                                     Asset pastExpenditureAsset =
                                         await _assetRepository.GetAssetAsync(
                                             JsonConvert.DeserializeObject<Account>(
-                                                Encoding.Default.GetString(resultByte)).Email,
+                                                Encoding.UTF8.GetString(resultByte)).Email,
                                             previousTempExpenditure.PaymentMethod);
                                     pastExpenditureAsset.Amount = pastExpenditureAsset.Amount +
                                                                   Math.Abs(previousTempExpenditure.Amount) +
@@ -1942,7 +1942,7 @@ public class AccountBookController : Controller
                                     Asset currentExpenditureAsset =
                                         await _assetRepository.GetAssetAsync(
                                             JsonConvert.DeserializeObject<Account>(
-                                                Encoding.Default.GetString(resultByte)).Email,
+                                                Encoding.UTF8.GetString(resultByte)).Email,
                                             currentTempExpenditure.PaymentMethod);
                                     currentExpenditureAsset.Amount -= Math.Abs(currentTempExpenditure.Amount);
                                     currentExpenditureAsset.Updated = DateTime.UtcNow;
@@ -1955,19 +1955,19 @@ public class AccountBookController : Controller
                                     Asset pastExpenditureAsset =
                                         await _assetRepository.GetAssetAsync(
                                             JsonConvert.DeserializeObject<Account>(
-                                                Encoding.Default.GetString(resultByte)).Email,
+                                                Encoding.UTF8.GetString(resultByte)).Email,
                                             previousTempExpenditure.PaymentMethod);
-                                    //var pastIncomeAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, previousTempExpenditure.MyDepositAsset);
+                                    //var pastIncomeAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.UTF8.GetString(resultByte)).Email, previousTempExpenditure.MyDepositAsset);
 
                                     Asset currentExpenditureAsset =
                                         await _assetRepository.GetAssetAsync(
                                             JsonConvert.DeserializeObject<Account>(
-                                                Encoding.Default.GetString(resultByte)).Email,
+                                                Encoding.UTF8.GetString(resultByte)).Email,
                                             currentTempExpenditure.PaymentMethod);
                                     Asset currentIncomeAsset =
                                         await _assetRepository.GetAssetAsync(
                                             JsonConvert.DeserializeObject<Account>(
-                                                Encoding.Default.GetString(resultByte)).Email,
+                                                Encoding.UTF8.GetString(resultByte)).Email,
                                             currentTempExpenditure.MyDepositAsset);
 
                                     #region Previous asset
@@ -2030,12 +2030,12 @@ public class AccountBookController : Controller
                                         Asset pastExpenditureAsset =
                                             await _assetRepository.GetAssetAsync(
                                                 JsonConvert.DeserializeObject<Account>(
-                                                    Encoding.Default.GetString(resultByte)).Email,
+                                                    Encoding.UTF8.GetString(resultByte)).Email,
                                                 previousTempExpenditure.PaymentMethod);
                                         Asset pastIncomeAsset =
                                             await _assetRepository.GetAssetAsync(
                                                 JsonConvert.DeserializeObject<Account>(
-                                                    Encoding.Default.GetString(resultByte)).Email,
+                                                    Encoding.UTF8.GetString(resultByte)).Email,
                                                 previousTempExpenditure.MyDepositAsset);
 
                                         pastExpenditureAsset.Amount = pastExpenditureAsset.Amount +
@@ -2055,11 +2055,11 @@ public class AccountBookController : Controller
                                         //#region Asset update
 
                                         //#region Previous asset
-                                        //var pastExpenditureAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, previousTempExpenditure.PaymentMethod);
-                                        //var pastIncomeAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, previousTempExpenditure.MyDepositAsset);
+                                        //var pastExpenditureAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.UTF8.GetString(resultByte)).Email, previousTempExpenditure.PaymentMethod);
+                                        //var pastIncomeAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.UTF8.GetString(resultByte)).Email, previousTempExpenditure.MyDepositAsset);
 
-                                        //var currentExpenditureAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, currentTempExpenditure.PaymentMethod);
-                                        //var currentIncomeAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, currentTempExpenditure.MyDepositAsset);
+                                        //var currentExpenditureAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.UTF8.GetString(resultByte)).Email, currentTempExpenditure.PaymentMethod);
+                                        //var currentIncomeAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.UTF8.GetString(resultByte)).Email, currentTempExpenditure.MyDepositAsset);
 
                                         //pastExpenditureAsset.Amount += Math.Abs(previousTempExpenditure.Amount);
                                         //pastExpenditureAsset.Updated = DateTime.UtcNow;
@@ -2089,18 +2089,18 @@ public class AccountBookController : Controller
                                         Asset pastExpenditureAsset =
                                             await _assetRepository.GetAssetAsync(
                                                 JsonConvert.DeserializeObject<Account>(
-                                                    Encoding.Default.GetString(resultByte)).Email,
+                                                    Encoding.UTF8.GetString(resultByte)).Email,
                                                 previousTempExpenditure.PaymentMethod);
                                         Asset pastIncomeAsset =
                                             await _assetRepository.GetAssetAsync(
                                                 JsonConvert.DeserializeObject<Account>(
-                                                    Encoding.Default.GetString(resultByte)).Email,
+                                                    Encoding.UTF8.GetString(resultByte)).Email,
                                                 previousTempExpenditure.MyDepositAsset);
 
                                         Asset currentIncomeAsset =
                                             await _assetRepository.GetAssetAsync(
                                                 JsonConvert.DeserializeObject<Account>(
-                                                    Encoding.Default.GetString(resultByte)).Email,
+                                                    Encoding.UTF8.GetString(resultByte)).Email,
                                                 currentTempExpenditure.MyDepositAsset);
 
                                         pastExpenditureAsset.Amount = pastExpenditureAsset.Amount +
@@ -2122,11 +2122,11 @@ public class AccountBookController : Controller
                                         //#region Asset update
 
                                         //#region Previous asset
-                                        //var pastExpenditureAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, previousTempExpenditure.PaymentMethod);
-                                        //var pastIncomeAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, previousTempExpenditure.MyDepositAsset);
+                                        //var pastExpenditureAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.UTF8.GetString(resultByte)).Email, previousTempExpenditure.PaymentMethod);
+                                        //var pastIncomeAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.UTF8.GetString(resultByte)).Email, previousTempExpenditure.MyDepositAsset);
 
-                                        //var currentExpenditureAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, currentTempExpenditure.PaymentMethod);
-                                        //var currentIncomeAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, currentTempExpenditure.MyDepositAsset);
+                                        //var currentExpenditureAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.UTF8.GetString(resultByte)).Email, currentTempExpenditure.PaymentMethod);
+                                        //var currentIncomeAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.UTF8.GetString(resultByte)).Email, currentTempExpenditure.MyDepositAsset);
 
                                         //pastExpenditureAsset.Amount += Math.Abs(previousTempExpenditure.Amount);
                                         //pastExpenditureAsset.Updated = DateTime.UtcNow;
@@ -2161,12 +2161,12 @@ public class AccountBookController : Controller
                                         Asset pastExpenditureAsset =
                                             await _assetRepository.GetAssetAsync(
                                                 JsonConvert.DeserializeObject<Account>(
-                                                    Encoding.Default.GetString(resultByte)).Email,
+                                                    Encoding.UTF8.GetString(resultByte)).Email,
                                                 previousTempExpenditure.PaymentMethod);
                                         Asset pastIncomeAsset =
                                             await _assetRepository.GetAssetAsync(
                                                 JsonConvert.DeserializeObject<Account>(
-                                                    Encoding.Default.GetString(resultByte)).Email,
+                                                    Encoding.UTF8.GetString(resultByte)).Email,
                                                 previousTempExpenditure.MyDepositAsset);
 
                                         pastExpenditureAsset.Amount = pastExpenditureAsset.Amount +
@@ -2186,11 +2186,11 @@ public class AccountBookController : Controller
                                         //#region Asset update
 
                                         //#region Previous asset
-                                        //var pastExpenditureAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, previousTempExpenditure.PaymentMethod);
-                                        //var pastIncomeAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, previousTempExpenditure.MyDepositAsset);
+                                        //var pastExpenditureAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.UTF8.GetString(resultByte)).Email, previousTempExpenditure.PaymentMethod);
+                                        //var pastIncomeAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.UTF8.GetString(resultByte)).Email, previousTempExpenditure.MyDepositAsset);
 
-                                        //var currentExpenditureAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, currentTempExpenditure.PaymentMethod);
-                                        //var currentIncomeAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, currentTempExpenditure.MyDepositAsset);
+                                        //var currentExpenditureAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.UTF8.GetString(resultByte)).Email, currentTempExpenditure.PaymentMethod);
+                                        //var currentIncomeAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.UTF8.GetString(resultByte)).Email, currentTempExpenditure.MyDepositAsset);
 
                                         //pastExpenditureAsset.Amount += Math.Abs(previousTempExpenditure.Amount);
                                         //pastExpenditureAsset.Updated = DateTime.UtcNow;
@@ -2222,18 +2222,18 @@ public class AccountBookController : Controller
                                         Asset pastExpenditureAsset =
                                             await _assetRepository.GetAssetAsync(
                                                 JsonConvert.DeserializeObject<Account>(
-                                                    Encoding.Default.GetString(resultByte)).Email,
+                                                    Encoding.UTF8.GetString(resultByte)).Email,
                                                 previousTempExpenditure.PaymentMethod);
                                         Asset pastIncomeAsset =
                                             await _assetRepository.GetAssetAsync(
                                                 JsonConvert.DeserializeObject<Account>(
-                                                    Encoding.Default.GetString(resultByte)).Email,
+                                                    Encoding.UTF8.GetString(resultByte)).Email,
                                                 previousTempExpenditure.MyDepositAsset);
 
                                         Asset currentExpenditureAsset =
                                             await _assetRepository.GetAssetAsync(
                                                 JsonConvert.DeserializeObject<Account>(
-                                                    Encoding.Default.GetString(resultByte)).Email,
+                                                    Encoding.UTF8.GetString(resultByte)).Email,
                                                 currentTempExpenditure.PaymentMethod);
 
                                         pastExpenditureAsset.Amount = pastExpenditureAsset.Amount +
@@ -2261,11 +2261,11 @@ public class AccountBookController : Controller
                                         //#region Asset update
 
                                         //#region Previous asset
-                                        //var pastExpenditureAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, previousTempExpenditure.PaymentMethod);
-                                        //var pastIncomeAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, previousTempExpenditure.MyDepositAsset);
+                                        //var pastExpenditureAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.UTF8.GetString(resultByte)).Email, previousTempExpenditure.PaymentMethod);
+                                        //var pastIncomeAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.UTF8.GetString(resultByte)).Email, previousTempExpenditure.MyDepositAsset);
 
-                                        //var currentExpenditureAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, currentTempExpenditure.PaymentMethod);
-                                        //var currentIncomeAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, currentTempExpenditure.MyDepositAsset);
+                                        //var currentExpenditureAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.UTF8.GetString(resultByte)).Email, currentTempExpenditure.PaymentMethod);
+                                        //var currentIncomeAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.UTF8.GetString(resultByte)).Email, currentTempExpenditure.MyDepositAsset);
 
                                         //pastExpenditureAsset.Amount += Math.Abs(previousTempExpenditure.Amount);
                                         //pastExpenditureAsset.Updated = DateTime.UtcNow;
@@ -2302,12 +2302,12 @@ public class AccountBookController : Controller
                                         Asset pastExpenditureAsset =
                                             await _assetRepository.GetAssetAsync(
                                                 JsonConvert.DeserializeObject<Account>(
-                                                    Encoding.Default.GetString(resultByte)).Email,
+                                                    Encoding.UTF8.GetString(resultByte)).Email,
                                                 previousTempExpenditure.PaymentMethod);
                                         Asset pastIncomeAsset =
                                             await _assetRepository.GetAssetAsync(
                                                 JsonConvert.DeserializeObject<Account>(
-                                                    Encoding.Default.GetString(resultByte)).Email,
+                                                    Encoding.UTF8.GetString(resultByte)).Email,
                                                 previousTempExpenditure.MyDepositAsset);
 
                                         pastExpenditureAsset.Amount = pastExpenditureAsset.Amount +
@@ -2329,11 +2329,11 @@ public class AccountBookController : Controller
                                         //#region Asset update
 
                                         //#region Previous asset
-                                        //var pastExpenditureAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, previousTempExpenditure.PaymentMethod);
-                                        //var pastIncomeAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, previousTempExpenditure.MyDepositAsset);
+                                        //var pastExpenditureAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.UTF8.GetString(resultByte)).Email, previousTempExpenditure.PaymentMethod);
+                                        //var pastIncomeAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.UTF8.GetString(resultByte)).Email, previousTempExpenditure.MyDepositAsset);
 
-                                        //var currentExpenditureAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, currentTempExpenditure.PaymentMethod);
-                                        //var currentIncomeAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, currentTempExpenditure.MyDepositAsset);
+                                        //var currentExpenditureAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.UTF8.GetString(resultByte)).Email, currentTempExpenditure.PaymentMethod);
+                                        //var currentIncomeAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.UTF8.GetString(resultByte)).Email, currentTempExpenditure.MyDepositAsset);
 
                                         //pastExpenditureAsset.Amount += Math.Abs(previousTempExpenditure.Amount);
                                         //pastExpenditureAsset.Updated = DateTime.UtcNow;
@@ -2365,18 +2365,18 @@ public class AccountBookController : Controller
                                         Asset pastExpenditureAsset =
                                             await _assetRepository.GetAssetAsync(
                                                 JsonConvert.DeserializeObject<Account>(
-                                                    Encoding.Default.GetString(resultByte)).Email,
+                                                    Encoding.UTF8.GetString(resultByte)).Email,
                                                 previousTempExpenditure.PaymentMethod);
                                         Asset pastIncomeAsset =
                                             await _assetRepository.GetAssetAsync(
                                                 JsonConvert.DeserializeObject<Account>(
-                                                    Encoding.Default.GetString(resultByte)).Email,
+                                                    Encoding.UTF8.GetString(resultByte)).Email,
                                                 previousTempExpenditure.MyDepositAsset);
 
                                         Asset currentIncomeAsset =
                                             await _assetRepository.GetAssetAsync(
                                                 JsonConvert.DeserializeObject<Account>(
-                                                    Encoding.Default.GetString(resultByte)).Email,
+                                                    Encoding.UTF8.GetString(resultByte)).Email,
                                                 currentTempExpenditure.MyDepositAsset);
 
                                         pastExpenditureAsset.Amount += Math.Abs(previousTempExpenditure.Amount);
@@ -2404,11 +2404,11 @@ public class AccountBookController : Controller
                                         //#region Asset update
 
                                         //#region Previous asset
-                                        //var pastExpenditureAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, previousTempExpenditure.PaymentMethod);
-                                        //var pastIncomeAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, previousTempExpenditure.MyDepositAsset);
+                                        //var pastExpenditureAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.UTF8.GetString(resultByte)).Email, previousTempExpenditure.PaymentMethod);
+                                        //var pastIncomeAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.UTF8.GetString(resultByte)).Email, previousTempExpenditure.MyDepositAsset);
 
-                                        //var currentExpenditureAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, currentTempExpenditure.PaymentMethod);
-                                        //var currentIncomeAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, currentTempExpenditure.MyDepositAsset);
+                                        //var currentExpenditureAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.UTF8.GetString(resultByte)).Email, currentTempExpenditure.PaymentMethod);
+                                        //var currentIncomeAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.UTF8.GetString(resultByte)).Email, currentTempExpenditure.MyDepositAsset);
 
                                         //pastExpenditureAsset.Amount += Math.Abs(previousTempExpenditure.Amount);
                                         //pastExpenditureAsset.Updated = DateTime.UtcNow;
@@ -2445,12 +2445,12 @@ public class AccountBookController : Controller
                                         Asset pastExpenditureAsset =
                                             await _assetRepository.GetAssetAsync(
                                                 JsonConvert.DeserializeObject<Account>(
-                                                    Encoding.Default.GetString(resultByte)).Email,
+                                                    Encoding.UTF8.GetString(resultByte)).Email,
                                                 previousTempExpenditure.PaymentMethod);
                                         Asset pastIncomeAsset =
                                             await _assetRepository.GetAssetAsync(
                                                 JsonConvert.DeserializeObject<Account>(
-                                                    Encoding.Default.GetString(resultByte)).Email,
+                                                    Encoding.UTF8.GetString(resultByte)).Email,
                                                 previousTempExpenditure.MyDepositAsset);
 
                                         pastExpenditureAsset.Amount = pastExpenditureAsset.Amount +
@@ -2472,11 +2472,11 @@ public class AccountBookController : Controller
                                         //#region Asset update
 
                                         //#region Previous asset
-                                        //var pastExpenditureAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, previousTempExpenditure.PaymentMethod);
-                                        //var pastIncomeAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, previousTempExpenditure.MyDepositAsset);
+                                        //var pastExpenditureAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.UTF8.GetString(resultByte)).Email, previousTempExpenditure.PaymentMethod);
+                                        //var pastIncomeAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.UTF8.GetString(resultByte)).Email, previousTempExpenditure.MyDepositAsset);
 
-                                        //var currentExpenditureAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, currentTempExpenditure.PaymentMethod);
-                                        //var currentIncomeAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, currentTempExpenditure.MyDepositAsset);
+                                        //var currentExpenditureAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.UTF8.GetString(resultByte)).Email, currentTempExpenditure.PaymentMethod);
+                                        //var currentIncomeAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.UTF8.GetString(resultByte)).Email, currentTempExpenditure.MyDepositAsset);
 
                                         //pastExpenditureAsset.Amount += Math.Abs(previousTempExpenditure.Amount);
                                         //pastExpenditureAsset.Updated = DateTime.UtcNow;
@@ -2508,18 +2508,18 @@ public class AccountBookController : Controller
                                         Asset pastExpenditureAsset =
                                             await _assetRepository.GetAssetAsync(
                                                 JsonConvert.DeserializeObject<Account>(
-                                                    Encoding.Default.GetString(resultByte)).Email,
+                                                    Encoding.UTF8.GetString(resultByte)).Email,
                                                 previousTempExpenditure.PaymentMethod);
                                         Asset pastIncomeAsset =
                                             await _assetRepository.GetAssetAsync(
                                                 JsonConvert.DeserializeObject<Account>(
-                                                    Encoding.Default.GetString(resultByte)).Email,
+                                                    Encoding.UTF8.GetString(resultByte)).Email,
                                                 previousTempExpenditure.MyDepositAsset);
 
                                         Asset currentExpenditureAsset =
                                             await _assetRepository.GetAssetAsync(
                                                 JsonConvert.DeserializeObject<Account>(
-                                                    Encoding.Default.GetString(resultByte)).Email,
+                                                    Encoding.UTF8.GetString(resultByte)).Email,
                                                 currentTempExpenditure.PaymentMethod);
 
                                         pastExpenditureAsset.Amount += Math.Abs(previousTempExpenditure.Amount);
@@ -2547,11 +2547,11 @@ public class AccountBookController : Controller
                                         //#region Asset update
 
                                         //#region Previous asset
-                                        //var pastExpenditureAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, previousTempExpenditure.PaymentMethod);
-                                        //var pastIncomeAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, previousTempExpenditure.MyDepositAsset);
+                                        //var pastExpenditureAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.UTF8.GetString(resultByte)).Email, previousTempExpenditure.PaymentMethod);
+                                        //var pastIncomeAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.UTF8.GetString(resultByte)).Email, previousTempExpenditure.MyDepositAsset);
 
-                                        //var currentExpenditureAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, currentTempExpenditure.PaymentMethod);
-                                        //var currentIncomeAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, currentTempExpenditure.MyDepositAsset);
+                                        //var currentExpenditureAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.UTF8.GetString(resultByte)).Email, currentTempExpenditure.PaymentMethod);
+                                        //var currentIncomeAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.UTF8.GetString(resultByte)).Email, currentTempExpenditure.MyDepositAsset);
 
                                         //pastExpenditureAsset.Amount += Math.Abs(previousTempExpenditure.Amount);
                                         //pastExpenditureAsset.Updated = DateTime.UtcNow;
@@ -2584,22 +2584,22 @@ public class AccountBookController : Controller
                                     Asset pastExpenditureAsset =
                                         await _assetRepository.GetAssetAsync(
                                             JsonConvert.DeserializeObject<Account>(
-                                                Encoding.Default.GetString(resultByte)).Email,
+                                                Encoding.UTF8.GetString(resultByte)).Email,
                                             previousTempExpenditure.PaymentMethod);
                                     Asset pastIncomeAsset = await _assetRepository.GetAssetAsync(
                                         JsonConvert.DeserializeObject<Account>(
-                                            Encoding.Default.GetString(resultByte)).Email,
+                                            Encoding.UTF8.GetString(resultByte)).Email,
                                         previousTempExpenditure.MyDepositAsset);
 
                                     Asset currentExpenditureAsset =
                                         await _assetRepository.GetAssetAsync(
                                             JsonConvert.DeserializeObject<Account>(
-                                                Encoding.Default.GetString(resultByte)).Email,
+                                                Encoding.UTF8.GetString(resultByte)).Email,
                                             currentTempExpenditure.PaymentMethod);
                                     Asset currentIncomeAsset =
                                         await _assetRepository.GetAssetAsync(
                                             JsonConvert.DeserializeObject<Account>(
-                                                Encoding.Default.GetString(resultByte)).Email,
+                                                Encoding.UTF8.GetString(resultByte)).Email,
                                             currentTempExpenditure.MyDepositAsset);
 
                                     pastExpenditureAsset.Amount += Math.Abs(previousTempExpenditure.Amount);
@@ -2682,10 +2682,10 @@ public class AccountBookController : Controller
                             }
 
                             Asset expenditureAsset = await _assetRepository.GetAssetAsync(
-                                JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte))
+                                JsonConvert.DeserializeObject<Account>(Encoding.UTF8.GetString(resultByte))
                                     .Email, expenditureInputViewModel.PaymentMethod);
                             Asset incomeAsset = await _assetRepository.GetAssetAsync(
-                                JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte))
+                                JsonConvert.DeserializeObject<Account>(Encoding.UTF8.GetString(resultByte))
                                     .Email, expenditureInputViewModel.MyDepositAsset);
 
                             if (expenditureAsset == null || incomeAsset == null)
@@ -2708,14 +2708,14 @@ public class AccountBookController : Controller
 
                             List<Expenditure> tempExpenditures =
                                 await _expenditureRepository.GetExpendituresAsync(JsonConvert
-                                    .DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email);
+                                    .DeserializeObject<Account>(Encoding.UTF8.GetString(resultByte)).Email);
                             Expenditure previousTempExpenditure = tempExpenditures
                                 .Where(a => a.Id == expenditureInputViewModel.Id).FirstOrDefault();
                             Expenditure currentTempExpenditure = new()
                             {
                                 Id = expenditureInputViewModel.Id,
                                 AccountEmail = JsonConvert
-                                    .DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email,
+                                    .DeserializeObject<Account>(Encoding.UTF8.GetString(resultByte)).Email,
                                 MainClass = expenditureInputViewModel.MainClass,
                                 SubClass = expenditureInputViewModel.SubClass,
                                 Content = expenditureInputViewModel?.Content ?? "",
@@ -2732,7 +2732,7 @@ public class AccountBookController : Controller
 
                             Asset tempExpenditureAssetToValidate =
                                 await _assetRepository.GetAssetAsync(
-                                    JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte))
+                                    JsonConvert.DeserializeObject<Account>(Encoding.UTF8.GetString(resultByte))
                                         .Email, previousTempExpenditure.PaymentMethod);
                             if (tempExpenditureAssetToValidate.Deleted)
                             {
@@ -2751,7 +2751,7 @@ public class AccountBookController : Controller
                                 Asset tempIncomeAssetToValidate =
                                     await _assetRepository.GetAssetAsync(
                                         JsonConvert.DeserializeObject<Account>(
-                                            Encoding.Default.GetString(resultByte)).Email,
+                                            Encoding.UTF8.GetString(resultByte)).Email,
                                         previousTempExpenditure.MyDepositAsset);
                                 if (tempIncomeAssetToValidate.Deleted)
                                 {
@@ -2788,12 +2788,12 @@ public class AccountBookController : Controller
                                     Asset pastExpenditureAsset =
                                         await _assetRepository.GetAssetAsync(
                                             JsonConvert.DeserializeObject<Account>(
-                                                Encoding.Default.GetString(resultByte)).Email,
+                                                Encoding.UTF8.GetString(resultByte)).Email,
                                             previousTempExpenditure.PaymentMethod);
                                     Asset currentIncomeAsset =
                                         await _assetRepository.GetAssetAsync(
                                             JsonConvert.DeserializeObject<Account>(
-                                                Encoding.Default.GetString(resultByte)).Email,
+                                                Encoding.UTF8.GetString(resultByte)).Email,
                                             currentTempExpenditure.MyDepositAsset);
 
                                     pastExpenditureAsset.Amount = pastExpenditureAsset.Amount +
@@ -2811,11 +2811,11 @@ public class AccountBookController : Controller
                                     //#region Asset update
 
                                     //#region Previous asset
-                                    //var pastExpenditureAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, previousTempExpenditure.PaymentMethod);
-                                    //var pastIncomeAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, previousTempExpenditure.MyDepositAsset);
+                                    //var pastExpenditureAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.UTF8.GetString(resultByte)).Email, previousTempExpenditure.PaymentMethod);
+                                    //var pastIncomeAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.UTF8.GetString(resultByte)).Email, previousTempExpenditure.MyDepositAsset);
 
-                                    //var currentExpenditureAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, currentTempExpenditure.PaymentMethod);
-                                    //var currentIncomeAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, currentTempExpenditure.MyDepositAsset);
+                                    //var currentExpenditureAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.UTF8.GetString(resultByte)).Email, currentTempExpenditure.PaymentMethod);
+                                    //var currentIncomeAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.UTF8.GetString(resultByte)).Email, currentTempExpenditure.MyDepositAsset);
 
                                     //pastExpenditureAsset.Amount += Math.Abs(previousTempExpenditure.Amount);
                                     //pastExpenditureAsset.Updated = DateTime.UtcNow;
@@ -2848,13 +2848,13 @@ public class AccountBookController : Controller
                                     Asset pastExpenditureAsset =
                                         await _assetRepository.GetAssetAsync(
                                             JsonConvert.DeserializeObject<Account>(
-                                                Encoding.Default.GetString(resultByte)).Email,
+                                                Encoding.UTF8.GetString(resultByte)).Email,
                                             previousTempExpenditure.PaymentMethod);
 
                                     Asset currentExpenditureAsset =
                                         await _assetRepository.GetAssetAsync(
                                             JsonConvert.DeserializeObject<Account>(
-                                                Encoding.Default.GetString(resultByte)).Email,
+                                                Encoding.UTF8.GetString(resultByte)).Email,
                                             currentTempExpenditure.PaymentMethod);
 
                                     pastExpenditureAsset.Amount = pastExpenditureAsset.Amount +
@@ -2878,11 +2878,11 @@ public class AccountBookController : Controller
                                     //#region Asset update
 
                                     //#region Previous asset
-                                    //var pastExpenditureAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, previousTempExpenditure.PaymentMethod);
-                                    //var pastIncomeAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, previousTempExpenditure.MyDepositAsset);
+                                    //var pastExpenditureAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.UTF8.GetString(resultByte)).Email, previousTempExpenditure.PaymentMethod);
+                                    //var pastIncomeAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.UTF8.GetString(resultByte)).Email, previousTempExpenditure.MyDepositAsset);
 
-                                    //var currentExpenditureAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, currentTempExpenditure.PaymentMethod);
-                                    //var currentIncomeAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, currentTempExpenditure.MyDepositAsset);
+                                    //var currentExpenditureAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.UTF8.GetString(resultByte)).Email, currentTempExpenditure.PaymentMethod);
+                                    //var currentIncomeAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.UTF8.GetString(resultByte)).Email, currentTempExpenditure.MyDepositAsset);
 
                                     //pastExpenditureAsset.Amount += Math.Abs(previousTempExpenditure.Amount);
                                     //pastExpenditureAsset.Updated = DateTime.UtcNow;
@@ -2914,19 +2914,19 @@ public class AccountBookController : Controller
                                     Asset pastExpenditureAsset =
                                         await _assetRepository.GetAssetAsync(
                                             JsonConvert.DeserializeObject<Account>(
-                                                Encoding.Default.GetString(resultByte)).Email,
+                                                Encoding.UTF8.GetString(resultByte)).Email,
                                             previousTempExpenditure.PaymentMethod);
-                                    //var pastIncomeAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, previousTempExpenditure.MyDepositAsset);
+                                    //var pastIncomeAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.UTF8.GetString(resultByte)).Email, previousTempExpenditure.MyDepositAsset);
 
                                     Asset currentExpenditureAsset =
                                         await _assetRepository.GetAssetAsync(
                                             JsonConvert.DeserializeObject<Account>(
-                                                Encoding.Default.GetString(resultByte)).Email,
+                                                Encoding.UTF8.GetString(resultByte)).Email,
                                             currentTempExpenditure.PaymentMethod);
                                     Asset currentIncomeAsset =
                                         await _assetRepository.GetAssetAsync(
                                             JsonConvert.DeserializeObject<Account>(
-                                                Encoding.Default.GetString(resultByte)).Email,
+                                                Encoding.UTF8.GetString(resultByte)).Email,
                                             currentTempExpenditure.MyDepositAsset);
 
                                     pastExpenditureAsset.Amount += Math.Abs(previousTempExpenditure.Amount);
@@ -2987,12 +2987,12 @@ public class AccountBookController : Controller
                                         Asset pastExpenditureAsset =
                                             await _assetRepository.GetAssetAsync(
                                                 JsonConvert.DeserializeObject<Account>(
-                                                    Encoding.Default.GetString(resultByte)).Email,
+                                                    Encoding.UTF8.GetString(resultByte)).Email,
                                                 previousTempExpenditure.PaymentMethod);
                                         Asset pastIncomeAsset =
                                             await _assetRepository.GetAssetAsync(
                                                 JsonConvert.DeserializeObject<Account>(
-                                                    Encoding.Default.GetString(resultByte)).Email,
+                                                    Encoding.UTF8.GetString(resultByte)).Email,
                                                 previousTempExpenditure.MyDepositAsset);
 
                                         pastExpenditureAsset.Amount = pastExpenditureAsset.Amount +
@@ -3012,11 +3012,11 @@ public class AccountBookController : Controller
                                         //#region Asset update
 
                                         //#region Previous asset
-                                        //var pastExpenditureAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, previousTempExpenditure.PaymentMethod);
-                                        //var pastIncomeAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, previousTempExpenditure.MyDepositAsset);
+                                        //var pastExpenditureAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.UTF8.GetString(resultByte)).Email, previousTempExpenditure.PaymentMethod);
+                                        //var pastIncomeAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.UTF8.GetString(resultByte)).Email, previousTempExpenditure.MyDepositAsset);
 
-                                        //var currentExpenditureAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, currentTempExpenditure.PaymentMethod);
-                                        //var currentIncomeAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, currentTempExpenditure.MyDepositAsset);
+                                        //var currentExpenditureAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.UTF8.GetString(resultByte)).Email, currentTempExpenditure.PaymentMethod);
+                                        //var currentIncomeAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.UTF8.GetString(resultByte)).Email, currentTempExpenditure.MyDepositAsset);
 
                                         //pastExpenditureAsset.Amount += Math.Abs(previousTempExpenditure.Amount);
                                         //pastExpenditureAsset.Updated = DateTime.UtcNow;
@@ -3046,18 +3046,18 @@ public class AccountBookController : Controller
                                         Asset pastExpenditureAsset =
                                             await _assetRepository.GetAssetAsync(
                                                 JsonConvert.DeserializeObject<Account>(
-                                                    Encoding.Default.GetString(resultByte)).Email,
+                                                    Encoding.UTF8.GetString(resultByte)).Email,
                                                 previousTempExpenditure.PaymentMethod);
                                         Asset pastIncomeAsset =
                                             await _assetRepository.GetAssetAsync(
                                                 JsonConvert.DeserializeObject<Account>(
-                                                    Encoding.Default.GetString(resultByte)).Email,
+                                                    Encoding.UTF8.GetString(resultByte)).Email,
                                                 previousTempExpenditure.MyDepositAsset);
 
                                         Asset currentIncomeAsset =
                                             await _assetRepository.GetAssetAsync(
                                                 JsonConvert.DeserializeObject<Account>(
-                                                    Encoding.Default.GetString(resultByte)).Email,
+                                                    Encoding.UTF8.GetString(resultByte)).Email,
                                                 currentTempExpenditure.MyDepositAsset);
 
                                         pastExpenditureAsset.Amount = pastExpenditureAsset.Amount +
@@ -3079,11 +3079,11 @@ public class AccountBookController : Controller
                                         //#region Asset update
 
                                         //#region Previous asset
-                                        //var pastExpenditureAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, previousTempExpenditure.PaymentMethod);
-                                        //var pastIncomeAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, previousTempExpenditure.MyDepositAsset);
+                                        //var pastExpenditureAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.UTF8.GetString(resultByte)).Email, previousTempExpenditure.PaymentMethod);
+                                        //var pastIncomeAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.UTF8.GetString(resultByte)).Email, previousTempExpenditure.MyDepositAsset);
 
-                                        //var currentExpenditureAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, currentTempExpenditure.PaymentMethod);
-                                        //var currentIncomeAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, currentTempExpenditure.MyDepositAsset);
+                                        //var currentExpenditureAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.UTF8.GetString(resultByte)).Email, currentTempExpenditure.PaymentMethod);
+                                        //var currentIncomeAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.UTF8.GetString(resultByte)).Email, currentTempExpenditure.MyDepositAsset);
 
                                         //pastExpenditureAsset.Amount += Math.Abs(previousTempExpenditure.Amount);
                                         //pastExpenditureAsset.Updated = DateTime.UtcNow;
@@ -3118,12 +3118,12 @@ public class AccountBookController : Controller
                                         Asset pastExpenditureAsset =
                                             await _assetRepository.GetAssetAsync(
                                                 JsonConvert.DeserializeObject<Account>(
-                                                    Encoding.Default.GetString(resultByte)).Email,
+                                                    Encoding.UTF8.GetString(resultByte)).Email,
                                                 previousTempExpenditure.PaymentMethod);
                                         Asset pastIncomeAsset =
                                             await _assetRepository.GetAssetAsync(
                                                 JsonConvert.DeserializeObject<Account>(
-                                                    Encoding.Default.GetString(resultByte)).Email,
+                                                    Encoding.UTF8.GetString(resultByte)).Email,
                                                 previousTempExpenditure.MyDepositAsset);
 
                                         pastExpenditureAsset.Amount = pastExpenditureAsset.Amount +
@@ -3143,11 +3143,11 @@ public class AccountBookController : Controller
                                         //#region Asset update
 
                                         //#region Previous asset
-                                        //var pastExpenditureAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, previousTempExpenditure.PaymentMethod);
-                                        //var pastIncomeAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, previousTempExpenditure.MyDepositAsset);
+                                        //var pastExpenditureAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.UTF8.GetString(resultByte)).Email, previousTempExpenditure.PaymentMethod);
+                                        //var pastIncomeAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.UTF8.GetString(resultByte)).Email, previousTempExpenditure.MyDepositAsset);
 
-                                        //var currentExpenditureAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, currentTempExpenditure.PaymentMethod);
-                                        //var currentIncomeAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, currentTempExpenditure.MyDepositAsset);
+                                        //var currentExpenditureAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.UTF8.GetString(resultByte)).Email, currentTempExpenditure.PaymentMethod);
+                                        //var currentIncomeAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.UTF8.GetString(resultByte)).Email, currentTempExpenditure.MyDepositAsset);
 
                                         //pastExpenditureAsset.Amount += Math.Abs(previousTempExpenditure.Amount);
                                         //pastExpenditureAsset.Updated = DateTime.UtcNow;
@@ -3179,18 +3179,18 @@ public class AccountBookController : Controller
                                         Asset pastExpenditureAsset =
                                             await _assetRepository.GetAssetAsync(
                                                 JsonConvert.DeserializeObject<Account>(
-                                                    Encoding.Default.GetString(resultByte)).Email,
+                                                    Encoding.UTF8.GetString(resultByte)).Email,
                                                 previousTempExpenditure.PaymentMethod);
                                         Asset pastIncomeAsset =
                                             await _assetRepository.GetAssetAsync(
                                                 JsonConvert.DeserializeObject<Account>(
-                                                    Encoding.Default.GetString(resultByte)).Email,
+                                                    Encoding.UTF8.GetString(resultByte)).Email,
                                                 previousTempExpenditure.MyDepositAsset);
 
                                         Asset currentExpenditureAsset =
                                             await _assetRepository.GetAssetAsync(
                                                 JsonConvert.DeserializeObject<Account>(
-                                                    Encoding.Default.GetString(resultByte)).Email,
+                                                    Encoding.UTF8.GetString(resultByte)).Email,
                                                 currentTempExpenditure.PaymentMethod);
 
                                         pastExpenditureAsset.Amount = pastExpenditureAsset.Amount +
@@ -3218,11 +3218,11 @@ public class AccountBookController : Controller
                                         //#region Asset update
 
                                         //#region Previous asset
-                                        //var pastExpenditureAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, previousTempExpenditure.PaymentMethod);
-                                        //var pastIncomeAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, previousTempExpenditure.MyDepositAsset);
+                                        //var pastExpenditureAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.UTF8.GetString(resultByte)).Email, previousTempExpenditure.PaymentMethod);
+                                        //var pastIncomeAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.UTF8.GetString(resultByte)).Email, previousTempExpenditure.MyDepositAsset);
 
-                                        //var currentExpenditureAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, currentTempExpenditure.PaymentMethod);
-                                        //var currentIncomeAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, currentTempExpenditure.MyDepositAsset);
+                                        //var currentExpenditureAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.UTF8.GetString(resultByte)).Email, currentTempExpenditure.PaymentMethod);
+                                        //var currentIncomeAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.UTF8.GetString(resultByte)).Email, currentTempExpenditure.MyDepositAsset);
 
                                         //pastExpenditureAsset.Amount += Math.Abs(previousTempExpenditure.Amount);
                                         //pastExpenditureAsset.Updated = DateTime.UtcNow;
@@ -3259,12 +3259,12 @@ public class AccountBookController : Controller
                                         Asset pastExpenditureAsset =
                                             await _assetRepository.GetAssetAsync(
                                                 JsonConvert.DeserializeObject<Account>(
-                                                    Encoding.Default.GetString(resultByte)).Email,
+                                                    Encoding.UTF8.GetString(resultByte)).Email,
                                                 previousTempExpenditure.PaymentMethod);
                                         Asset pastIncomeAsset =
                                             await _assetRepository.GetAssetAsync(
                                                 JsonConvert.DeserializeObject<Account>(
-                                                    Encoding.Default.GetString(resultByte)).Email,
+                                                    Encoding.UTF8.GetString(resultByte)).Email,
                                                 previousTempExpenditure.MyDepositAsset);
 
                                         pastExpenditureAsset.Amount = pastExpenditureAsset.Amount +
@@ -3286,11 +3286,11 @@ public class AccountBookController : Controller
                                         //#region Asset update
 
                                         //#region Previous asset
-                                        //var pastExpenditureAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, previousTempExpenditure.PaymentMethod);
-                                        //var pastIncomeAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, previousTempExpenditure.MyDepositAsset);
+                                        //var pastExpenditureAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.UTF8.GetString(resultByte)).Email, previousTempExpenditure.PaymentMethod);
+                                        //var pastIncomeAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.UTF8.GetString(resultByte)).Email, previousTempExpenditure.MyDepositAsset);
 
-                                        //var currentExpenditureAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, currentTempExpenditure.PaymentMethod);
-                                        //var currentIncomeAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, currentTempExpenditure.MyDepositAsset);
+                                        //var currentExpenditureAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.UTF8.GetString(resultByte)).Email, currentTempExpenditure.PaymentMethod);
+                                        //var currentIncomeAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.UTF8.GetString(resultByte)).Email, currentTempExpenditure.MyDepositAsset);
 
                                         //pastExpenditureAsset.Amount += Math.Abs(previousTempExpenditure.Amount);
                                         //pastExpenditureAsset.Updated = DateTime.UtcNow;
@@ -3322,18 +3322,18 @@ public class AccountBookController : Controller
                                         Asset pastExpenditureAsset =
                                             await _assetRepository.GetAssetAsync(
                                                 JsonConvert.DeserializeObject<Account>(
-                                                    Encoding.Default.GetString(resultByte)).Email,
+                                                    Encoding.UTF8.GetString(resultByte)).Email,
                                                 previousTempExpenditure.PaymentMethod);
                                         Asset pastIncomeAsset =
                                             await _assetRepository.GetAssetAsync(
                                                 JsonConvert.DeserializeObject<Account>(
-                                                    Encoding.Default.GetString(resultByte)).Email,
+                                                    Encoding.UTF8.GetString(resultByte)).Email,
                                                 previousTempExpenditure.MyDepositAsset);
 
                                         Asset currentIncomeAsset =
                                             await _assetRepository.GetAssetAsync(
                                                 JsonConvert.DeserializeObject<Account>(
-                                                    Encoding.Default.GetString(resultByte)).Email,
+                                                    Encoding.UTF8.GetString(resultByte)).Email,
                                                 currentTempExpenditure.MyDepositAsset);
 
                                         pastExpenditureAsset.Amount += Math.Abs(previousTempExpenditure.Amount);
@@ -3361,11 +3361,11 @@ public class AccountBookController : Controller
                                         //#region Asset update
 
                                         //#region Previous asset
-                                        //var pastExpenditureAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, previousTempExpenditure.PaymentMethod);
-                                        //var pastIncomeAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, previousTempExpenditure.MyDepositAsset);
+                                        //var pastExpenditureAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.UTF8.GetString(resultByte)).Email, previousTempExpenditure.PaymentMethod);
+                                        //var pastIncomeAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.UTF8.GetString(resultByte)).Email, previousTempExpenditure.MyDepositAsset);
 
-                                        //var currentExpenditureAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, currentTempExpenditure.PaymentMethod);
-                                        //var currentIncomeAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, currentTempExpenditure.MyDepositAsset);
+                                        //var currentExpenditureAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.UTF8.GetString(resultByte)).Email, currentTempExpenditure.PaymentMethod);
+                                        //var currentIncomeAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.UTF8.GetString(resultByte)).Email, currentTempExpenditure.MyDepositAsset);
 
                                         //pastExpenditureAsset.Amount += Math.Abs(previousTempExpenditure.Amount);
                                         //pastExpenditureAsset.Updated = DateTime.UtcNow;
@@ -3402,12 +3402,12 @@ public class AccountBookController : Controller
                                         Asset pastExpenditureAsset =
                                             await _assetRepository.GetAssetAsync(
                                                 JsonConvert.DeserializeObject<Account>(
-                                                    Encoding.Default.GetString(resultByte)).Email,
+                                                    Encoding.UTF8.GetString(resultByte)).Email,
                                                 previousTempExpenditure.PaymentMethod);
                                         Asset pastIncomeAsset =
                                             await _assetRepository.GetAssetAsync(
                                                 JsonConvert.DeserializeObject<Account>(
-                                                    Encoding.Default.GetString(resultByte)).Email,
+                                                    Encoding.UTF8.GetString(resultByte)).Email,
                                                 previousTempExpenditure.MyDepositAsset);
 
                                         pastExpenditureAsset.Amount = pastExpenditureAsset.Amount +
@@ -3429,11 +3429,11 @@ public class AccountBookController : Controller
                                         //#region Asset update
 
                                         //#region Previous asset
-                                        //var pastExpenditureAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, previousTempExpenditure.PaymentMethod);
-                                        //var pastIncomeAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, previousTempExpenditure.MyDepositAsset);
+                                        //var pastExpenditureAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.UTF8.GetString(resultByte)).Email, previousTempExpenditure.PaymentMethod);
+                                        //var pastIncomeAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.UTF8.GetString(resultByte)).Email, previousTempExpenditure.MyDepositAsset);
 
-                                        //var currentExpenditureAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, currentTempExpenditure.PaymentMethod);
-                                        //var currentIncomeAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, currentTempExpenditure.MyDepositAsset);
+                                        //var currentExpenditureAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.UTF8.GetString(resultByte)).Email, currentTempExpenditure.PaymentMethod);
+                                        //var currentIncomeAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.UTF8.GetString(resultByte)).Email, currentTempExpenditure.MyDepositAsset);
 
                                         //pastExpenditureAsset.Amount += Math.Abs(previousTempExpenditure.Amount);
                                         //pastExpenditureAsset.Updated = DateTime.UtcNow;
@@ -3465,18 +3465,18 @@ public class AccountBookController : Controller
                                         Asset pastExpenditureAsset =
                                             await _assetRepository.GetAssetAsync(
                                                 JsonConvert.DeserializeObject<Account>(
-                                                    Encoding.Default.GetString(resultByte)).Email,
+                                                    Encoding.UTF8.GetString(resultByte)).Email,
                                                 previousTempExpenditure.PaymentMethod);
                                         Asset pastIncomeAsset =
                                             await _assetRepository.GetAssetAsync(
                                                 JsonConvert.DeserializeObject<Account>(
-                                                    Encoding.Default.GetString(resultByte)).Email,
+                                                    Encoding.UTF8.GetString(resultByte)).Email,
                                                 previousTempExpenditure.MyDepositAsset);
 
                                         Asset currentExpenditureAsset =
                                             await _assetRepository.GetAssetAsync(
                                                 JsonConvert.DeserializeObject<Account>(
-                                                    Encoding.Default.GetString(resultByte)).Email,
+                                                    Encoding.UTF8.GetString(resultByte)).Email,
                                                 currentTempExpenditure.PaymentMethod);
 
                                         pastExpenditureAsset.Amount += Math.Abs(previousTempExpenditure.Amount);
@@ -3504,11 +3504,11 @@ public class AccountBookController : Controller
                                         //#region Asset update
 
                                         //#region Previous asset
-                                        //var pastExpenditureAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, previousTempExpenditure.PaymentMethod);
-                                        //var pastIncomeAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, previousTempExpenditure.MyDepositAsset);
+                                        //var pastExpenditureAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.UTF8.GetString(resultByte)).Email, previousTempExpenditure.PaymentMethod);
+                                        //var pastIncomeAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.UTF8.GetString(resultByte)).Email, previousTempExpenditure.MyDepositAsset);
 
-                                        //var currentExpenditureAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, currentTempExpenditure.PaymentMethod);
-                                        //var currentIncomeAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, currentTempExpenditure.MyDepositAsset);
+                                        //var currentExpenditureAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.UTF8.GetString(resultByte)).Email, currentTempExpenditure.PaymentMethod);
+                                        //var currentIncomeAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.UTF8.GetString(resultByte)).Email, currentTempExpenditure.MyDepositAsset);
 
                                         //pastExpenditureAsset.Amount += Math.Abs(previousTempExpenditure.Amount);
                                         //pastExpenditureAsset.Updated = DateTime.UtcNow;
@@ -3541,22 +3541,22 @@ public class AccountBookController : Controller
                                     Asset pastExpenditureAsset =
                                         await _assetRepository.GetAssetAsync(
                                             JsonConvert.DeserializeObject<Account>(
-                                                Encoding.Default.GetString(resultByte)).Email,
+                                                Encoding.UTF8.GetString(resultByte)).Email,
                                             previousTempExpenditure.PaymentMethod);
                                     Asset pastIncomeAsset = await _assetRepository.GetAssetAsync(
                                         JsonConvert.DeserializeObject<Account>(
-                                            Encoding.Default.GetString(resultByte)).Email,
+                                            Encoding.UTF8.GetString(resultByte)).Email,
                                         previousTempExpenditure.MyDepositAsset);
 
                                     Asset currentExpenditureAsset =
                                         await _assetRepository.GetAssetAsync(
                                             JsonConvert.DeserializeObject<Account>(
-                                                Encoding.Default.GetString(resultByte)).Email,
+                                                Encoding.UTF8.GetString(resultByte)).Email,
                                             currentTempExpenditure.PaymentMethod);
                                     Asset currentIncomeAsset =
                                         await _assetRepository.GetAssetAsync(
                                             JsonConvert.DeserializeObject<Account>(
-                                                Encoding.Default.GetString(resultByte)).Email,
+                                                Encoding.UTF8.GetString(resultByte)).Email,
                                             currentTempExpenditure.MyDepositAsset);
 
                                     pastExpenditureAsset.Amount += Math.Abs(previousTempExpenditure.Amount);
@@ -3619,14 +3619,14 @@ public class AccountBookController : Controller
                         {
                             List<Expenditure> tempExpenditures =
                                 await _expenditureRepository.GetExpendituresAsync(JsonConvert
-                                    .DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email);
+                                    .DeserializeObject<Account>(Encoding.UTF8.GetString(resultByte)).Email);
                             Expenditure previousTempExpenditure = tempExpenditures
                                 .Where(a => a.Id == expenditureInputViewModel.Id).FirstOrDefault();
                             Expenditure currentTempExpenditure = new()
                             {
                                 Id = expenditureInputViewModel.Id,
                                 AccountEmail = JsonConvert
-                                    .DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email,
+                                    .DeserializeObject<Account>(Encoding.UTF8.GetString(resultByte)).Email,
                                 MainClass = expenditureInputViewModel.MainClass,
                                 SubClass = expenditureInputViewModel.SubClass,
                                 Content = expenditureInputViewModel?.Content ?? "",
@@ -3643,7 +3643,7 @@ public class AccountBookController : Controller
 
                             Asset tempExpenditureAssetToValidate =
                                 await _assetRepository.GetAssetAsync(
-                                    JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte))
+                                    JsonConvert.DeserializeObject<Account>(Encoding.UTF8.GetString(resultByte))
                                         .Email, previousTempExpenditure.PaymentMethod);
                             if (tempExpenditureAssetToValidate.Deleted)
                             {
@@ -3662,7 +3662,7 @@ public class AccountBookController : Controller
                                 Asset tempIncomeAssetToValidate =
                                     await _assetRepository.GetAssetAsync(
                                         JsonConvert.DeserializeObject<Account>(
-                                            Encoding.Default.GetString(resultByte)).Email,
+                                            Encoding.UTF8.GetString(resultByte)).Email,
                                         previousTempExpenditure.MyDepositAsset);
                                 if (tempIncomeAssetToValidate.Deleted)
                                 {
@@ -3701,7 +3701,7 @@ public class AccountBookController : Controller
                                     Asset pastExpenditureAsset =
                                         await _assetRepository.GetAssetAsync(
                                             JsonConvert.DeserializeObject<Account>(
-                                                Encoding.Default.GetString(resultByte)).Email,
+                                                Encoding.UTF8.GetString(resultByte)).Email,
                                             previousTempExpenditure.PaymentMethod);
                                     pastExpenditureAsset.Amount = pastExpenditureAsset.Amount +
                                                                   Math.Abs(previousTempExpenditure.Amount) -
@@ -3722,16 +3722,16 @@ public class AccountBookController : Controller
                                     Asset pastExpenditureAsset =
                                         await _assetRepository.GetAssetAsync(
                                             JsonConvert.DeserializeObject<Account>(
-                                                Encoding.Default.GetString(resultByte)).Email,
+                                                Encoding.UTF8.GetString(resultByte)).Email,
                                             previousTempExpenditure.PaymentMethod);
-                                    //var pastIncomeAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, previousTempExpenditure.MyDepositAsset);
+                                    //var pastIncomeAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.UTF8.GetString(resultByte)).Email, previousTempExpenditure.MyDepositAsset);
 
                                     Asset currentExpenditureAsset =
                                         await _assetRepository.GetAssetAsync(
                                             JsonConvert.DeserializeObject<Account>(
-                                                Encoding.Default.GetString(resultByte)).Email,
+                                                Encoding.UTF8.GetString(resultByte)).Email,
                                             currentTempExpenditure.PaymentMethod);
-                                    //var currentIncomeAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, currentTempExpenditure.MyDepositAsset);
+                                    //var currentIncomeAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.UTF8.GetString(resultByte)).Email, currentTempExpenditure.MyDepositAsset);
 
                                     pastExpenditureAsset.Amount += Math.Abs(previousTempExpenditure.Amount);
                                     pastExpenditureAsset.Updated = DateTime.UtcNow;
@@ -3789,11 +3789,11 @@ public class AccountBookController : Controller
                                     Asset pastExpenditureAsset =
                                         await _assetRepository.GetAssetAsync(
                                             JsonConvert.DeserializeObject<Account>(
-                                                Encoding.Default.GetString(resultByte)).Email,
+                                                Encoding.UTF8.GetString(resultByte)).Email,
                                             previousTempExpenditure.PaymentMethod);
                                     Asset pastIncomeAsset = await _assetRepository.GetAssetAsync(
                                         JsonConvert.DeserializeObject<Account>(
-                                            Encoding.Default.GetString(resultByte)).Email,
+                                            Encoding.UTF8.GetString(resultByte)).Email,
                                         previousTempExpenditure.MyDepositAsset);
 
                                     pastExpenditureAsset.Amount = pastExpenditureAsset.Amount +
@@ -3820,11 +3820,11 @@ public class AccountBookController : Controller
                                     Asset pastExpenditureAsset =
                                         await _assetRepository.GetAssetAsync(
                                             JsonConvert.DeserializeObject<Account>(
-                                                Encoding.Default.GetString(resultByte)).Email,
+                                                Encoding.UTF8.GetString(resultByte)).Email,
                                             previousTempExpenditure.PaymentMethod);
                                     Asset pastIncomeAsset = await _assetRepository.GetAssetAsync(
                                         JsonConvert.DeserializeObject<Account>(
-                                            Encoding.Default.GetString(resultByte)).Email,
+                                            Encoding.UTF8.GetString(resultByte)).Email,
                                         previousTempExpenditure.MyDepositAsset);
 
                                     pastExpenditureAsset.Amount += Math.Abs(previousTempExpenditure.Amount);
@@ -3850,17 +3850,17 @@ public class AccountBookController : Controller
                                     Asset pastExpenditureAsset =
                                         await _assetRepository.GetAssetAsync(
                                             JsonConvert.DeserializeObject<Account>(
-                                                Encoding.Default.GetString(resultByte)).Email,
+                                                Encoding.UTF8.GetString(resultByte)).Email,
                                             previousTempExpenditure.PaymentMethod);
                                     Asset pastIncomeAsset = await _assetRepository.GetAssetAsync(
                                         JsonConvert.DeserializeObject<Account>(
-                                            Encoding.Default.GetString(resultByte)).Email,
+                                            Encoding.UTF8.GetString(resultByte)).Email,
                                         previousTempExpenditure.MyDepositAsset);
 
                                     Asset currentExpenditureAsset =
                                         await _assetRepository.GetAssetAsync(
                                             JsonConvert.DeserializeObject<Account>(
-                                                Encoding.Default.GetString(resultByte)).Email,
+                                                Encoding.UTF8.GetString(resultByte)).Email,
                                             currentTempExpenditure.PaymentMethod);
 
                                     pastExpenditureAsset.Amount += Math.Abs(previousTempExpenditure.Amount);
@@ -3939,14 +3939,14 @@ public class AccountBookController : Controller
                         {
                             List<Expenditure> tempExpenditures =
                                 await _expenditureRepository.GetExpendituresAsync(JsonConvert
-                                    .DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email);
+                                    .DeserializeObject<Account>(Encoding.UTF8.GetString(resultByte)).Email);
                             Expenditure previousTempExpenditure = tempExpenditures
                                 .Where(a => a.Id == expenditureInputViewModel.Id).FirstOrDefault();
                             Expenditure currentTempExpenditure = new()
                             {
                                 Id = expenditureInputViewModel.Id,
                                 AccountEmail = JsonConvert
-                                    .DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email,
+                                    .DeserializeObject<Account>(Encoding.UTF8.GetString(resultByte)).Email,
                                 MainClass = expenditureInputViewModel.MainClass,
                                 SubClass = expenditureInputViewModel.SubClass,
                                 Content = expenditureInputViewModel?.Content ?? "",
@@ -3963,7 +3963,7 @@ public class AccountBookController : Controller
 
                             Asset tempExpenditureAssetToValidate =
                                 await _assetRepository.GetAssetAsync(
-                                    JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte))
+                                    JsonConvert.DeserializeObject<Account>(Encoding.UTF8.GetString(resultByte))
                                         .Email, previousTempExpenditure.PaymentMethod);
                             if (tempExpenditureAssetToValidate.Deleted)
                             {
@@ -3982,7 +3982,7 @@ public class AccountBookController : Controller
                                 Asset tempIncomeAssetToValidate =
                                     await _assetRepository.GetAssetAsync(
                                         JsonConvert.DeserializeObject<Account>(
-                                            Encoding.Default.GetString(resultByte)).Email,
+                                            Encoding.UTF8.GetString(resultByte)).Email,
                                         previousTempExpenditure.MyDepositAsset);
                                 if (tempIncomeAssetToValidate.Deleted)
                                 {
@@ -4021,12 +4021,12 @@ public class AccountBookController : Controller
                                     Asset pastExpenditureAsset =
                                         await _assetRepository.GetAssetAsync(
                                             JsonConvert.DeserializeObject<Account>(
-                                                Encoding.Default.GetString(resultByte)).Email,
+                                                Encoding.UTF8.GetString(resultByte)).Email,
                                             previousTempExpenditure.PaymentMethod);
-                                    //var pastIncomeAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, previousTempExpenditure.MyDepositAsset);
+                                    //var pastIncomeAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.UTF8.GetString(resultByte)).Email, previousTempExpenditure.MyDepositAsset);
 
-                                    //var currentExpenditureAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, currentTempExpenditure.PaymentMethod);
-                                    //var currentIncomeAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, currentTempExpenditure.MyDepositAsset);
+                                    //var currentExpenditureAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.UTF8.GetString(resultByte)).Email, currentTempExpenditure.PaymentMethod);
+                                    //var currentIncomeAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.UTF8.GetString(resultByte)).Email, currentTempExpenditure.MyDepositAsset);
 
                                     pastExpenditureAsset.Amount = pastExpenditureAsset.Amount +
                                                                   Math.Abs(previousTempExpenditure.Amount) -
@@ -4063,16 +4063,16 @@ public class AccountBookController : Controller
                                     Asset pastExpenditureAsset =
                                         await _assetRepository.GetAssetAsync(
                                             JsonConvert.DeserializeObject<Account>(
-                                                Encoding.Default.GetString(resultByte)).Email,
+                                                Encoding.UTF8.GetString(resultByte)).Email,
                                             previousTempExpenditure.PaymentMethod);
-                                    //var pastIncomeAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, previousTempExpenditure.MyDepositAsset);
+                                    //var pastIncomeAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.UTF8.GetString(resultByte)).Email, previousTempExpenditure.MyDepositAsset);
 
                                     Asset currentExpenditureAsset =
                                         await _assetRepository.GetAssetAsync(
                                             JsonConvert.DeserializeObject<Account>(
-                                                Encoding.Default.GetString(resultByte)).Email,
+                                                Encoding.UTF8.GetString(resultByte)).Email,
                                             currentTempExpenditure.PaymentMethod);
-                                    //var currentIncomeAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, currentTempExpenditure.MyDepositAsset);
+                                    //var currentIncomeAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.UTF8.GetString(resultByte)).Email, currentTempExpenditure.MyDepositAsset);
 
                                     pastExpenditureAsset.Amount += Math.Abs(previousTempExpenditure.Amount);
                                     pastExpenditureAsset.Updated = DateTime.UtcNow;
@@ -4130,15 +4130,15 @@ public class AccountBookController : Controller
                                     Asset pastExpenditureAsset =
                                         await _assetRepository.GetAssetAsync(
                                             JsonConvert.DeserializeObject<Account>(
-                                                Encoding.Default.GetString(resultByte)).Email,
+                                                Encoding.UTF8.GetString(resultByte)).Email,
                                             previousTempExpenditure.PaymentMethod);
                                     Asset pastIncomeAsset = await _assetRepository.GetAssetAsync(
                                         JsonConvert.DeserializeObject<Account>(
-                                            Encoding.Default.GetString(resultByte)).Email,
+                                            Encoding.UTF8.GetString(resultByte)).Email,
                                         previousTempExpenditure.MyDepositAsset);
 
-                                    //var currentExpenditureAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, currentTempExpenditure.PaymentMethod);
-                                    //var currentIncomeAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, currentTempExpenditure.MyDepositAsset);
+                                    //var currentExpenditureAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.UTF8.GetString(resultByte)).Email, currentTempExpenditure.PaymentMethod);
+                                    //var currentIncomeAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.UTF8.GetString(resultByte)).Email, currentTempExpenditure.MyDepositAsset);
 
                                     pastExpenditureAsset.Amount = pastExpenditureAsset.Amount +
                                                                   Math.Abs(previousTempExpenditure.Amount) -
@@ -4176,15 +4176,15 @@ public class AccountBookController : Controller
                                     Asset pastExpenditureAsset =
                                         await _assetRepository.GetAssetAsync(
                                             JsonConvert.DeserializeObject<Account>(
-                                                Encoding.Default.GetString(resultByte)).Email,
+                                                Encoding.UTF8.GetString(resultByte)).Email,
                                             previousTempExpenditure.PaymentMethod);
                                     Asset pastIncomeAsset = await _assetRepository.GetAssetAsync(
                                         JsonConvert.DeserializeObject<Account>(
-                                            Encoding.Default.GetString(resultByte)).Email,
+                                            Encoding.UTF8.GetString(resultByte)).Email,
                                         previousTempExpenditure.MyDepositAsset);
 
-                                    //var currentExpenditureAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, currentTempExpenditure.PaymentMethod);
-                                    //var currentIncomeAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, currentTempExpenditure.MyDepositAsset);
+                                    //var currentExpenditureAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.UTF8.GetString(resultByte)).Email, currentTempExpenditure.PaymentMethod);
+                                    //var currentIncomeAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.UTF8.GetString(resultByte)).Email, currentTempExpenditure.MyDepositAsset);
 
                                     pastExpenditureAsset.Amount += Math.Abs(previousTempExpenditure.Amount);
                                     pastExpenditureAsset.Updated = DateTime.UtcNow;
@@ -4221,19 +4221,19 @@ public class AccountBookController : Controller
                                     Asset pastExpenditureAsset =
                                         await _assetRepository.GetAssetAsync(
                                             JsonConvert.DeserializeObject<Account>(
-                                                Encoding.Default.GetString(resultByte)).Email,
+                                                Encoding.UTF8.GetString(resultByte)).Email,
                                             previousTempExpenditure.PaymentMethod);
                                     Asset pastIncomeAsset = await _assetRepository.GetAssetAsync(
                                         JsonConvert.DeserializeObject<Account>(
-                                            Encoding.Default.GetString(resultByte)).Email,
+                                            Encoding.UTF8.GetString(resultByte)).Email,
                                         previousTempExpenditure.MyDepositAsset);
 
                                     Asset currentExpenditureAsset =
                                         await _assetRepository.GetAssetAsync(
                                             JsonConvert.DeserializeObject<Account>(
-                                                Encoding.Default.GetString(resultByte)).Email,
+                                                Encoding.UTF8.GetString(resultByte)).Email,
                                             currentTempExpenditure.PaymentMethod);
-                                    //var currentIncomeAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, currentTempExpenditure.MyDepositAsset);
+                                    //var currentIncomeAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.UTF8.GetString(resultByte)).Email, currentTempExpenditure.MyDepositAsset);
 
                                     pastExpenditureAsset.Amount += Math.Abs(previousTempExpenditure.Amount);
                                     pastExpenditureAsset.Updated = DateTime.UtcNow;
@@ -4336,11 +4336,11 @@ public class AccountBookController : Controller
 
             // Locks the account's asset rows (FOR UPDATE) until commit/rollback to prevent lost updates.
             _ = await _assetRepository.GetAssetsForUpdateAsync(JsonConvert
-                .DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email);
+                .DeserializeObject<Account>(Encoding.UTF8.GetString(resultByte)).Email);
 
             List<Expenditure> tempExpenditures =
                 await _expenditureRepository.GetExpendituresAsync(JsonConvert
-                    .DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email);
+                    .DeserializeObject<Account>(Encoding.UTF8.GetString(resultByte)).Email);
 
             if (tempExpenditures == null)
             {
@@ -4361,7 +4361,7 @@ public class AccountBookController : Controller
                     #region Validate ProductName's Deletion
 
                     Asset tempExpenditureAssetToValidate = await _assetRepository.GetAssetAsync(
-                        JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email,
+                        JsonConvert.DeserializeObject<Account>(Encoding.UTF8.GetString(resultByte)).Email,
                         tempExpenditure.PaymentMethod);
                     if (tempExpenditureAssetToValidate.Deleted)
                     {
@@ -4377,7 +4377,7 @@ public class AccountBookController : Controller
                     if (!string.IsNullOrEmpty(tempExpenditure.MyDepositAsset))
                     {
                         Asset tempIncomeAssetToValidate = await _assetRepository.GetAssetAsync(
-                            JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email,
+                            JsonConvert.DeserializeObject<Account>(Encoding.UTF8.GetString(resultByte)).Email,
                             tempExpenditure.MyDepositAsset);
                         if (tempIncomeAssetToValidate.Deleted)
                         {
@@ -4404,10 +4404,10 @@ public class AccountBookController : Controller
                         #region Asset update
 
                         Asset expenditureAsset = await _assetRepository.GetAssetAsync(
-                            JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email,
+                            JsonConvert.DeserializeObject<Account>(Encoding.UTF8.GetString(resultByte)).Email,
                             tempExpenditure.PaymentMethod);
                         Asset incomeAsset = await _assetRepository.GetAssetAsync(
-                            JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email,
+                            JsonConvert.DeserializeObject<Account>(Encoding.UTF8.GetString(resultByte)).Email,
                             tempExpenditure.MyDepositAsset);
 
                         expenditureAsset.Amount += Math.Abs(tempExpenditure.Amount);
@@ -4438,7 +4438,7 @@ public class AccountBookController : Controller
                         #region Asset update
 
                         Asset expenditureAsset = await _assetRepository.GetAssetAsync(
-                            JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email,
+                            JsonConvert.DeserializeObject<Account>(Encoding.UTF8.GetString(resultByte)).Email,
                             tempExpenditure.PaymentMethod);
 
                         expenditureAsset.Amount += Math.Abs(tempExpenditure.Amount);
@@ -4483,13 +4483,13 @@ public class AccountBookController : Controller
             Maroik.Core.Common.Utilities.EnumHelper.GetDescription(Maroik.Core.Common.Utilities
                 .Session.Account), out byte[] resultByte);
         string loginedAccountTimeZoneIanaId = JsonConvert
-            .DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).TimeZoneIanaId;
+            .DeserializeObject<Account>(Encoding.UTF8.GetString(resultByte)).TimeZoneIanaId;
 
         List<Asset> assets = await _assetRepository.GetAssetsAsync(JsonConvert
-            .DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email);
+            .DeserializeObject<Account>(Encoding.UTF8.GetString(resultByte)).Email);
 
         foreach (Expenditure item in await _expenditureRepository.GetExpendituresAsync(JsonConvert
-                     .DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email))
+                     .DeserializeObject<Account>(Encoding.UTF8.GetString(resultByte)).Email))
         {
             expenditureOutputViewModels.Add(new ExpenditureOutputViewModel()
             {

@@ -25,7 +25,7 @@ public class RoleBasedStaticFileMiddleware
 
             if (resultByte != null)
             {
-                Account loginedAccount = JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte));
+                Account loginedAccount = JsonConvert.DeserializeObject<Account>(Encoding.UTF8.GetString(resultByte));
                 userRole = loginedAccount.Role;
             }
 
