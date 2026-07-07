@@ -13,11 +13,13 @@ public class AuthorizationFilter : ActionFilterAttribute
 {
     private readonly ICategoryRepository _categoryRepository;
     private readonly ISubCategoryRepository _subCategoryRepository;
+    private readonly IAccountRepository _accountRepository;
 
-    public AuthorizationFilter(ICategoryRepository categoryRepository, ISubCategoryRepository subCategoryRepository)
+    public AuthorizationFilter(ICategoryRepository categoryRepository, ISubCategoryRepository subCategoryRepository, IAccountRepository accountRepository)
     {
         _categoryRepository = categoryRepository;
         _subCategoryRepository = subCategoryRepository;
+        _accountRepository = accountRepository;
     }
 
     // Do something before the action executes.
@@ -54,7 +56,21 @@ public class AuthorizationFilter : ActionFilterAttribute
         string currentControllerName = context.ActionDescriptor.RouteValues["controller"].ToString(); // Controller name before execution
         string currentActionName = context.ActionDescriptor.RouteValues["action"].ToString(); // Action name before execution
         string currentRequestMethod = context.HttpContext.Request.Method; // GET HTTP METHOD
-        bool isAccountSessionExist = context.HttpContext.Session.TryGetValue(Maroik.Core.Common.Utilities.EnumHelper.GetDescription(Maroik.Core.Common.Utilities.Session.Account), out _); // Check if account session exists after login
+        bool isAccountSessionExist = context.HttpContext.Session.TryGetValue(Maroik.Core.Common.Utilities.EnumHelper.GetDescription(Maroik.Core.Common.Utilities.Session.Account), out byte[] accountSessionByte); // Check if account session exists after login
+
+        Account loginedAccount = null;
+        if (isAccountSessionExist)
+        {
+            string sessionEmail = JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(accountSessionByte)).Email; // Get Session
+            loginedAccount = await _accountRepository.GetAccountByEmailAsync(sessionEmail); // Re-check account state from DB so that Locked/Deleted/Role changes take effect on the next request, not only at login
+
+            if (loginedAccount == null || loginedAccount.Deleted || loginedAccount.Locked)
+            {
+                context.HttpContext.Session.Clear(); // Invalidate this session immediately
+                context.Result = new RedirectResult("/Account/Login");
+                return;
+            }
+        }
 
         if (currentRequestMethod.ToUpper() == "GET") // GET method (block page access only!!)
         {
@@ -160,9 +176,6 @@ public class AuthorizationFilter : ActionFilterAttribute
                     await next(); // Do Action!!
                     return;
                 }
-
-                _ = context.HttpContext.Session.TryGetValue(Maroik.Core.Common.Utilities.EnumHelper.GetDescription(Maroik.Core.Common.Utilities.Session.Account), out byte[] resultByte);
-                Account loginedAccount = JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)); // Get Session
 
                 if (loginedAccount.Role == Role.Admin) // If logged-in user has Admin role
                 {
@@ -313,9 +326,6 @@ public class AuthorizationFilter : ActionFilterAttribute
             }
             else if (isAccountSessionExist == true) // If logged in
             {
-                _ = context.HttpContext.Session.TryGetValue(Maroik.Core.Common.Utilities.EnumHelper.GetDescription(Maroik.Core.Common.Utilities.Session.Account), out byte[] resultByte);
-                Account loginedAccount = JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)); // Get Session
-
                 if (loginedAccount.Role == Role.Admin) // If logged-in user has Admin role
                 {
                     IEnumerable<Category> adminCategories = DbCache.AdminCategories;
