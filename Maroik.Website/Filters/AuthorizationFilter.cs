@@ -23,6 +23,7 @@ public class AuthorizationFilter : ActionFilterAttribute
     private readonly IMenuService _menuService;
     private readonly IDistributedCache _cache;
     private readonly ISessionService _sessionService;
+    private readonly IAccountService _accountService;
 
     private const string AdminCategoriesCacheKey = NavigationCacheKeys.AdminCategories;
     private const string AdminSubCategoriesCacheKey = NavigationCacheKeys.AdminSubCategories;
@@ -40,11 +41,13 @@ public class AuthorizationFilter : ActionFilterAttribute
     /// <param name="menuService">Service used to load category and sub-category navigation data.</param>
     /// <param name="cache">Distributed cache (Redis) used to store the navigation menu for 10 minutes.</param>
     /// <param name="sessionService">Service used to retrieve the currently logged-in account from the session.</param>
-    public AuthorizationFilter(IMenuService menuService, IDistributedCache cache, ISessionService sessionService)
+    /// <param name="accountService">Service used to re-verify the logged-in account's current state from the database.</param>
+    public AuthorizationFilter(IMenuService menuService, IDistributedCache cache, ISessionService sessionService, IAccountService accountService)
     {
         _menuService = menuService;
         _cache = cache;
         _sessionService = sessionService;
+        _accountService = accountService;
     }
 
     /// <summary>Loads (or restores from cache) the navigation menu data and populates ViewBag before the action executes.</summary>
@@ -119,7 +122,22 @@ public class AuthorizationFilter : ActionFilterAttribute
         var currentControllerName = context.ActionDescriptor.RouteValues["controller"] ?? ""; // Controller name before execution
         var currentActionName = context.ActionDescriptor.RouteValues["action"] ?? ""; // Action name before execution
         var currentRequestMethod = context.HttpContext.Request.Method; // GET HTTP METHOD
-        var isAccountSessionExist = _sessionService.GetAccount() != null; // Check if account session exists after login
+        var sessionAccount = _sessionService.GetAccount(); // Check if account session exists after login
+
+        AccountResponse? loggedInAccount = null;
+        if (sessionAccount != null)
+        {
+            loggedInAccount = await _accountService.GetAccountByEmailAsync(sessionAccount.Email ?? "", context.HttpContext.RequestAborted); // Re-check account state from DB so that Locked/Deleted/Role changes take effect on the next request, not only at login
+
+            if (loggedInAccount == null || loggedInAccount.Deleted || loggedInAccount.Locked)
+            {
+                _sessionService.RemoveAccount(); // Invalidate this session immediately
+                context.Result = new RedirectResult("/Account/Login");
+                return;
+            }
+        }
+
+        var isAccountSessionExist = loggedInAccount != null;
 
         switch (currentRequestMethod.ToUpper())
         {
@@ -204,9 +222,7 @@ public class AuthorizationFilter : ActionFilterAttribute
                             return;
                     }
 
-                    var loggedInAccount = _sessionService.GetAccount()!; // Get Session
-
-                    switch (loggedInAccount.Role)
+                    switch (loggedInAccount!.Role)
                     {
                         // If logged-in user has Admin role
                         case Role.Admin:
@@ -366,9 +382,8 @@ public class AuthorizationFilter : ActionFilterAttribute
             case "POST" when isAccountSessionExist:
                 {
                     var existingControllers = _cachedControllerTypes;
-                    var loggedInAccount = _sessionService.GetAccount()!; // Get Session
 
-                    switch (loggedInAccount.Role)
+                    switch (loggedInAccount!.Role)
                     {
                         // If logged-in user has Admin role
                         case Role.Admin:
@@ -394,7 +409,7 @@ public class AuthorizationFilter : ActionFilterAttribute
                                      from namedArgument in customAttribute.NamedArguments
                                      select namedArgument).Any(namedArgument =>
                                      (namedArgument.MemberName == nameof(RequiredHttpPostAccessAttribute.Role)) &&
-                                     ((namedArgument.TypedValue.Value as string) == loggedInAccount.Role)))
+                                     ((namedArgument.TypedValue.Value as string) == loggedInAccount!.Role)))
                                 {
                                     await next(); // Do Action!!
                                     return;
@@ -428,7 +443,7 @@ public class AuthorizationFilter : ActionFilterAttribute
                                      from namedArgument in customAttribute.NamedArguments
                                      select namedArgument).Any(namedArgument =>
                                      (namedArgument.MemberName == nameof(RequiredHttpPostAccessAttribute.Role)) &&
-                                     ((namedArgument.TypedValue.Value as string) == loggedInAccount.Role)))
+                                     ((namedArgument.TypedValue.Value as string) == loggedInAccount!.Role)))
                                 {
                                     await next(); // Do Action!!
                                     return;
