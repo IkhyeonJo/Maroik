@@ -1,7 +1,9 @@
 using Maroik.Core.Contract.Domains.Finance;
 using Maroik.Core.Contract.Dtos;
 using Maroik.Core.Contract.Interfaces;
+using Maroik.Core.Service.Extensions;
 using Maroik.Core.Service.Mappers;
+using Microsoft.Extensions.Logging;
 
 namespace Maroik.Core.Service.Services;
 
@@ -15,16 +17,19 @@ public class ExpenditureService : IExpenditureService
     private readonly IExpenditureRepository _expenditureRepository;
     private readonly IAssetBalanceDomainService _assetBalance;
     private readonly IUnitOfWork _unitOfWork;
+    private readonly ILogger<ExpenditureService> _logger;
 
     /// <summary>Initializes a new instance of <see cref="ExpenditureService"/> with the supplied dependencies.</summary>
     public ExpenditureService(
         IExpenditureRepository expenditureRepository,
         IAssetBalanceDomainService assetBalance,
-        IUnitOfWork unitOfWork)
+        IUnitOfWork unitOfWork,
+        ILogger<ExpenditureService> logger)
     {
         _expenditureRepository = expenditureRepository;
         _assetBalance = assetBalance;
         _unitOfWork = unitOfWork;
+        _logger = logger;
     }
 
     /// <inheritdoc />
@@ -58,30 +63,14 @@ public class ExpenditureService : IExpenditureService
                 return ServiceResult.Fail("The PaymentMethod and MyDepositAsset value cannot be the same.");
             }
 
-            // GetAssetAsync takes a row lock held until commit/rollback; for transfers the
-            // two assets are locked in ordinal name order so that concurrent transactions
-            // touching the same pair cannot deadlock.
-            Asset? paymentAsset;
-            Asset? depositAsset = null;
-            if (isTransfer)
-            {
-                string paymentName = request.PaymentMethod ?? "";
-                string depositName = request.MyDepositAsset ?? "";
-                if (string.CompareOrdinal(paymentName, depositName) <= 0)
-                {
-                    paymentAsset = await _assetBalance.GetAssetAsync(accountEmail, paymentName, ct);
-                    depositAsset = await _assetBalance.GetAssetAsync(accountEmail, depositName, ct);
-                }
-                else
-                {
-                    depositAsset = await _assetBalance.GetAssetAsync(accountEmail, depositName, ct);
-                    paymentAsset = await _assetBalance.GetAssetAsync(accountEmail, paymentName, ct);
-                }
-            }
-            else
-            {
-                paymentAsset = await _assetBalance.GetAssetAsync(accountEmail, request.PaymentMethod ?? "", ct);
-            }
+            // GetAssetsOrdinalAsync takes row locks held until commit/rollback, always in ordinal
+            // name order, so that concurrent transactions touching the same asset pair (here,
+            // elsewhere in this class, or in IncomeService) cannot deadlock on each other.
+            Dictionary<string, Asset> touchedAssets = await _assetBalance.GetAssetsOrdinalAsync(
+                accountEmail, [request.PaymentMethod, isTransfer ? request.MyDepositAsset : null], ct);
+
+            Asset? paymentAsset = !string.IsNullOrEmpty(request.PaymentMethod) && touchedAssets.TryGetValue(request.PaymentMethod, out var pay) ? pay : null;
+            Asset? depositAsset = isTransfer && !string.IsNullOrEmpty(request.MyDepositAsset) && touchedAssets.TryGetValue(request.MyDepositAsset, out var dep) ? dep : null;
 
             if (paymentAsset == null)
             {
@@ -139,8 +128,9 @@ public class ExpenditureService : IExpenditureService
             await _unitOfWork.CommitAsync(ct);
             return ServiceResult.Ok();
         }
-        catch
+        catch (Exception ex)
         {
+            _logger.LogError(ex, "Failed to create expenditure for account {AccountEmail}", accountEmail);
             await _unitOfWork.RollbackAsync();
             return ServiceResult.Fail("Input is invalid");
         }
@@ -165,22 +155,6 @@ public class ExpenditureService : IExpenditureService
                 return ServiceResult.Fail("The PaymentMethod and MyDepositAsset value cannot be the same.");
             }
 
-            if (classResult.Value)
-            {
-                var pm = await _assetBalance.GetAssetAsync(accountEmail, request.PaymentMethod ?? "", ct);
-                var dep = await _assetBalance.GetAssetAsync(accountEmail, request.MyDepositAsset ?? "", ct);
-                if (pm == null || dep == null)
-                {
-                    await _unitOfWork.RollbackAsync();
-                    return ServiceResult.Fail("Input is invalid");
-                }
-                if (pm.Balance.Currency != dep.Balance.Currency)
-                {
-                    await _unitOfWork.RollbackAsync();
-                    return ServiceResult.Fail("PaymentMethod MonetaryUnit must be same as MyDepositAsset MonetaryUnit.");
-                }
-            }
-
             List<Expenditure> expenditures = await _expenditureRepository.GetByAccountEmailAsync(accountEmail, ct);
             Expenditure? previous = expenditures.FirstOrDefault(x => x.Id == request.Id);
             if (previous == null)
@@ -189,7 +163,29 @@ public class ExpenditureService : IExpenditureService
                 return ServiceResult.Fail("Input is invalid");
             }
 
-            Asset? prevPayAsset = await _assetBalance.GetAssetAsync(accountEmail, previous.PaymentMethod ?? "", ct);
+            // Lock every asset this update can touch (old + new payment/deposit) in a single
+            // ordinal-ordered batch so concurrent transactions on the same asset pair cannot deadlock.
+            Dictionary<string, Asset> touchedAssets = await _assetBalance.GetAssetsOrdinalAsync(accountEmail,
+                [request.PaymentMethod, classResult.Value ? request.MyDepositAsset : null, previous.PaymentMethod, previous.MyDepositAsset], ct);
+
+            Asset? newPayAsset = !string.IsNullOrEmpty(request.PaymentMethod) && touchedAssets.TryGetValue(request.PaymentMethod, out var np) ? np : null;
+
+            if (classResult.Value)
+            {
+                Asset? newDepAsset = !string.IsNullOrEmpty(request.MyDepositAsset) && touchedAssets.TryGetValue(request.MyDepositAsset, out var nd) ? nd : null;
+                if (newPayAsset == null || newDepAsset == null)
+                {
+                    await _unitOfWork.RollbackAsync();
+                    return ServiceResult.Fail("Input is invalid");
+                }
+                if (newPayAsset.Balance.Currency != newDepAsset.Balance.Currency)
+                {
+                    await _unitOfWork.RollbackAsync();
+                    return ServiceResult.Fail("PaymentMethod MonetaryUnit must be same as MyDepositAsset MonetaryUnit.");
+                }
+            }
+
+            Asset? prevPayAsset = !string.IsNullOrEmpty(previous.PaymentMethod) && touchedAssets.TryGetValue(previous.PaymentMethod, out var pp) ? pp : null;
             if (prevPayAsset?.Deleted == true)
             {
                 await _unitOfWork.RollbackAsync();
@@ -197,7 +193,7 @@ public class ExpenditureService : IExpenditureService
             }
             if (!string.IsNullOrEmpty(previous.MyDepositAsset))
             {
-                Asset? prevDepAsset = await _assetBalance.GetAssetAsync(accountEmail, previous.MyDepositAsset, ct);
+                Asset? prevDepAsset = touchedAssets.TryGetValue(previous.MyDepositAsset, out var pd) ? pd : null;
                 if (prevDepAsset?.Deleted == true)
                 {
                     await _unitOfWork.RollbackAsync();
@@ -205,7 +201,6 @@ public class ExpenditureService : IExpenditureService
                 }
             }
 
-            Asset? newPayAsset = await _assetBalance.GetAssetAsync(accountEmail, request.PaymentMethod ?? "", ct);
             string newCurrency = newPayAsset?.Balance.Currency ?? prevPayAsset?.Balance.Currency ?? string.Empty;
             string? myDepositAsset = classResult.Value ? request.MyDepositAsset : string.Empty;
 
@@ -226,8 +221,9 @@ public class ExpenditureService : IExpenditureService
             await _unitOfWork.CommitAsync(ct);
             return ServiceResult.Ok();
         }
-        catch
+        catch (Exception ex)
         {
+            _logger.LogError(ex, "Failed to update expenditure {ExpenditureId} for account {AccountEmail}", request.Id, accountEmail);
             await _unitOfWork.RollbackAsync();
             return ServiceResult.Fail("Input is invalid");
         }
@@ -255,8 +251,9 @@ public class ExpenditureService : IExpenditureService
             await _unitOfWork.CommitAsync(ct);
             return ServiceResult.Ok();
         }
-        catch
+        catch (Exception ex)
         {
+            _logger.LogError(ex, "Failed to delete expenditure {ExpenditureId} for account {AccountEmail}", id, accountEmail);
             await _unitOfWork.RollbackAsync();
             return ServiceResult.Fail("Input is invalid");
         }
@@ -269,23 +266,8 @@ public class ExpenditureService : IExpenditureService
     /// </summary>
     private async Task AdjustAssetBalancesAsync(string accountEmail, ExpenditureSnapshot toRevert, ExpenditureSnapshot? toApply, CancellationToken ct = default)
     {
-        var names = new HashSet<string>(StringComparer.Ordinal);
-        if (!string.IsNullOrEmpty(toRevert.PaymentMethod)) names.Add(toRevert.PaymentMethod);
-        if (!string.IsNullOrEmpty(toRevert.MyDepositAsset)) names.Add(toRevert.MyDepositAsset);
-        if (toApply.HasValue)
-        {
-            if (!string.IsNullOrEmpty(toApply.Value.PaymentMethod)) names.Add(toApply.Value.PaymentMethod);
-            if (!string.IsNullOrEmpty(toApply.Value.MyDepositAsset)) names.Add(toApply.Value.MyDepositAsset);
-        }
-
-        var assets = new Dictionary<string, Asset>(StringComparer.Ordinal);
-        // Ordinal name order gives every transaction the same lock-acquisition order,
-        // preventing deadlocks between concurrent operations on the same asset pair.
-        foreach (string name in names.OrderBy(n => n, StringComparer.Ordinal))
-        {
-            Asset? a = await _assetBalance.GetAssetAsync(accountEmail, name, ct);
-            if (a != null) assets[name] = a;
-        }
+        Dictionary<string, Asset> assets = await _assetBalance.GetAssetsOrdinalAsync(accountEmail,
+            [toRevert.PaymentMethod, toRevert.MyDepositAsset, toApply?.PaymentMethod, toApply?.MyDepositAsset], ct);
 
         if (!string.IsNullOrEmpty(toRevert.PaymentMethod) && assets.TryGetValue(toRevert.PaymentMethod, out var rp))
             rp.Deposit(Math.Abs(toRevert.Amount), rp.Balance.Currency);

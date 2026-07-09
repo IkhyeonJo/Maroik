@@ -2,6 +2,7 @@ using Maroik.Core.Contract.Domains.Finance;
 using Maroik.Core.Contract.Dtos;
 using Maroik.Core.Contract.Interfaces;
 using Maroik.Core.Service.Services;
+using Microsoft.Extensions.Logging.Abstractions;
 using Moq;
 
 namespace Maroik.Core.Service.Tests.Services;
@@ -21,7 +22,8 @@ public class IncomeServiceTests
     private IncomeService CreateSut() => new(
         _incomeRepo.Object,
         _assetBalance.Object,
-        _unitOfWork.Object);
+        _unitOfWork.Object,
+        NullLogger<IncomeService>.Instance);
 
     /// <summary>Initializes the test fixture, setting up all required test doubles and the system under test.</summary>
     public IncomeServiceTests()
@@ -286,6 +288,34 @@ public class IncomeServiceTests
         Assert.Equal(2, updatedAssets.Count);
         Assert.Equal(300m, updatedAssets.First(a => a.ProductName == "OldAsset").Balance.Amount); // 500 - 200
         Assert.Equal(500m, updatedAssets.First(a => a.ProductName == "NewAsset").Balance.Amount); // 100 + 400
+    }
+
+    /// <summary>Verifies that <c>UpdateAsync</c> locks the previous/new deposit assets in ordinal
+    /// name order (not previous-then-new role order) so concurrent transactions on the same
+    /// asset pair, including in <see cref="ExpenditureService"/>, cannot deadlock.</summary>
+    [Fact]
+    public async Task UpdateAsync_LocksAssetsInOrdinalOrder_WhenAssetNameChanges()
+    {
+        const string email = "user@example.com";
+        var existing = MakeIncome(1, depositAsset: "Zebra", amount: 200m);
+        _incomeRepo.Setup(r => r.GetByAccountEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync([existing]);
+        _incomeRepo.Setup(r => r.UpdateEntityAsync(It.IsAny<Income>(), It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
+
+        var callOrder = new List<string>();
+        _assetBalance.Setup(r => r.GetAssetAsync(email, It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .Callback<string, string, CancellationToken>((_, name, _) => callOrder.Add(name))
+            .Returns<string, string, CancellationToken>((_, name, _) => Task.FromResult<Asset?>(MakeAsset(name)));
+        _assetBalance.Setup(r => r.SaveAsync(It.IsAny<Asset>(), It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
+        var sut = CreateSut();
+
+        // Previous asset "Zebra" sorts after the new asset "Apple"; the old code locked them in
+        // previous-then-new role order (Zebra, Apple) instead of ordinal order.
+        var request = ValidRequest("Apple");
+        request.Id = 1;
+        ServiceResult result = await sut.UpdateAsync(email, request, TestContext.Current.CancellationToken);
+
+        Assert.True(result.Success);
+        Assert.Equal(["Apple", "Zebra"], callOrder.Distinct());
     }
 
     // -- DeleteAsync ----------------------------------------------------------

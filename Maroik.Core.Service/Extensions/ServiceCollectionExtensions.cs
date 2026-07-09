@@ -30,6 +30,7 @@ public static class ServiceCollectionExtensions
         services.AddScoped<IMenuService, MenuService>();
         services.AddScoped<IBoardService, BoardService>();
         services.AddScoped<ICalendarService, CalendarService>();
+        services.AddScoped<IAttachmentContentService, AttachmentContentService>();
 
         services.AddSingleton<IRsaService, RsaService>();
         services.AddSingleton<IImageValidator, ImageValidator>();

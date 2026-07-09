@@ -23,10 +23,7 @@ public class BoardServiceTests
     private readonly Mock<IBoardCommentRepository> _commentRepo = new();
     private readonly Mock<IFileClient> _fileClient = new();
     private readonly Mock<IUnitOfWork> _unitOfWork = new();
-    private readonly Mock<IRsaService> _rsa = new();
-    private readonly Mock<IImageValidator> _imageValidator = new();
-    private readonly Mock<IHtmlContentSanitizer> _htmlSanitizer = new();
-    private readonly Mock<IHtmlParser> _htmlParser = new();
+    private readonly Mock<IAttachmentContentService> _attachmentContent = new();
     private readonly IOptions<ServerSetting> _settings =
         Options.Create(new ServerSetting { FileStorageBaseUrl = "http://files.example.com" });
 
@@ -37,7 +34,8 @@ public class BoardServiceTests
         _unitOfWork.Setup(u => u.CommitAsync(It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
         _unitOfWork.Setup(u => u.RollbackAsync(It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
         _unitOfWork.Setup(u => u.DisposeAsync()).Returns(ValueTask.CompletedTask);
-        _htmlSanitizer.Setup(s => s.Sanitize(It.IsAny<string>())).Returns<string>(html => html);
+        _attachmentContent.Setup(s => s.SanitizeAndDecryptContent(It.IsAny<string>())).Returns<string>(html => html);
+        _attachmentContent.Setup(s => s.SanitizeContent(It.IsAny<string>())).Returns<string>(html => html);
     }
 
     private BoardService CreateSut() => new(
@@ -46,10 +44,7 @@ public class BoardServiceTests
         _commentRepo.Object,
         _fileClient.Object,
         _unitOfWork.Object,
-        _rsa.Object,
-        _imageValidator.Object,
-        _htmlSanitizer.Object,
-        _htmlParser.Object,
+        _attachmentContent.Object,
         _settings,
         NullLogger<BoardService>.Instance);
 

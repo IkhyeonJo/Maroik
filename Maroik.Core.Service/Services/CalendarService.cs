@@ -25,10 +25,7 @@ public class CalendarService : ICalendarService
     private readonly IOtherCalendarRepository _otherCalendarRepository;
     private readonly IFileClient _fileClient;
     private readonly IUnitOfWork _unitOfWork;
-    private readonly IRsaService _rsa;
-    private readonly IImageValidator _imageValidator;
-    private readonly IHtmlContentSanitizer _htmlSanitizer;
-    private readonly IHtmlParser _htmlParser;
+    private readonly IAttachmentContentService _attachmentContent;
     private readonly IOptions<ServerSetting> _settings;
     private readonly ILogger<CalendarService> _logger;
 
@@ -42,10 +39,7 @@ public class CalendarService : ICalendarService
         IOtherCalendarRepository otherCalendarRepository,
         IFileClient fileClient,
         IUnitOfWork unitOfWork,
-        IRsaService rsa,
-        IImageValidator imageValidator,
-        IHtmlContentSanitizer htmlSanitizer,
-        IHtmlParser htmlParser,
+        IAttachmentContentService attachmentContent,
         IOptions<ServerSetting> settings,
         ILogger<CalendarService> logger)
     {
@@ -57,10 +51,7 @@ public class CalendarService : ICalendarService
         _otherCalendarRepository = otherCalendarRepository;
         _fileClient = fileClient;
         _unitOfWork = unitOfWork;
-        _rsa = rsa;
-        _imageValidator = imageValidator;
-        _htmlSanitizer = htmlSanitizer;
-        _htmlParser = htmlParser;
+        _attachmentContent = attachmentContent;
         _settings = settings;
         _logger = logger;
     }
@@ -116,7 +107,11 @@ public class CalendarService : ICalendarService
 
             return ServiceResult.Ok();
         }
-        catch { return ServiceResult.Fail("Input is invalid"); }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to ensure calendar shared record for calendar {CalendarId}", calendarId);
+            return ServiceResult.Fail("Input is invalid");
+        }
     }
 
     /// <inheritdoc />
@@ -138,7 +133,11 @@ public class CalendarService : ICalendarService
             await _calendarRepository.CreateAsync(calendar, ct);
             return ServiceResult.Ok();
         }
-        catch { return ServiceResult.Fail("Input is invalid"); }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to create calendar {CalendarName} for account {AccountEmail}", request.Name, request.AccountEmail);
+            return ServiceResult.Fail("Input is invalid");
+        }
     }
 
     /// <inheritdoc />
@@ -158,7 +157,11 @@ public class CalendarService : ICalendarService
             await _calendarRepository.UpdateEntityAsync(previous, ct);
             return ServiceResult.Ok();
         }
-        catch { return ServiceResult.Fail("Input is invalid"); }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to update calendar {CalendarId}", request.Id);
+            return ServiceResult.Fail("Input is invalid");
+        }
     }
 
     /// <inheritdoc />
@@ -174,7 +177,11 @@ public class CalendarService : ICalendarService
             await _calendarRepository.DeleteByIdAsync(existing.Id, ct);
             return ServiceResult.Ok();
         }
-        catch { return ServiceResult.Fail("Input is invalid"); }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to delete calendar {CalendarId}", request.Id);
+            return ServiceResult.Fail("Input is invalid");
+        }
     }
 
     /// <inheritdoc />
@@ -196,7 +203,11 @@ public class CalendarService : ICalendarService
             }
             return ServiceResult.Ok();
         }
-        catch { return ServiceResult.Fail("Input is invalid"); }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to ensure default calendar for account {AccountEmail}", request.AccountEmail);
+            return ServiceResult.Fail("Input is invalid");
+        }
     }
 
     /// <inheritdoc />
@@ -222,8 +233,9 @@ public class CalendarService : ICalendarService
             await _unitOfWork.CommitAsync(ct);
             return ServiceResult.Ok();
         }
-        catch
+        catch (Exception ex)
         {
+            _logger.LogError(ex, "Failed to update other-calendar subscriptions for account {AccountEmail}", email);
             await _unitOfWork.RollbackAsync();
             return ServiceResult.Fail("Input is invalid");
         }
@@ -260,26 +272,12 @@ public class CalendarService : ICalendarService
             await _unitOfWork.CommitAsync(ct);
             return ServiceResult.Ok();
         }
-        catch
+        catch (Exception ex)
         {
+            _logger.LogError(ex, "Failed to update calendar shared settings");
             await _unitOfWork.RollbackAsync();
             return ServiceResult.Fail("Input is invalid");
         }
-    }
-
-    /// <summary>
-    /// Validates an event attached file: only <c>.zip</c> files within the configured size limit are accepted.
-    /// Returns <see langword="null"/> when the file passes validation (or when no file is provided).
-    /// </summary>
-    private ServiceResult? ValidateAttachedFile(AttachedFileInfo? attachedFile)
-    {
-        if (attachedFile == null) return null;
-        if (Path.GetExtension(attachedFile.FileName) != ".zip")
-            return ServiceResult.Fail("Only zip extension allowed.");
-        long maxBytes = _settings.Value.MaxAttachedFileSizeBytes;
-        if (attachedFile.Size <= 0 || attachedFile.Size > maxBytes)
-            return ServiceResult.Fail($"Uploaded file size must be smaller than {maxBytes / (1024 * 1024)}MB.");
-        return null;
     }
 
     /// <inheritdoc />
@@ -287,10 +285,10 @@ public class CalendarService : ICalendarService
         CalendarEventRequest request, string email, string roleIndex,
         List<CalendarReminderInfo> reminders, AttachedFileInfo? attachedFile, CancellationToken ct = default)
     {
-        var fileError = ValidateAttachedFile(attachedFile);
+        var fileError = _attachmentContent.ValidateAttachedFile(attachedFile);
         if (fileError != null) return fileError;
 
-        string description = SanitizeAndDecryptContent(request.Description ?? "");
+        string description = _attachmentContent.SanitizeAndDecryptContent(request.Description ?? "");
 
         await _unitOfWork.BeginAsync(ct);
         try
@@ -350,8 +348,9 @@ public class CalendarService : ICalendarService
             await _unitOfWork.CommitAsync(ct);
             return ServiceResult.Ok();
         }
-        catch
+        catch (Exception ex)
         {
+            _logger.LogError(ex, "Failed to create calendar event for calendar {CalendarId} and account {AccountEmail}", request.CalendarId, email);
             await _unitOfWork.RollbackAsync();
             return ServiceResult.Fail("Input is invalid");
         }
@@ -362,10 +361,10 @@ public class CalendarService : ICalendarService
         CalendarEventRequest request, string email, string roleIndex,
         List<CalendarReminderInfo> reminders, AttachedFileInfo? attachedFile, CancellationToken ct = default)
     {
-        var fileError = ValidateAttachedFile(attachedFile);
+        var fileError = _attachmentContent.ValidateAttachedFile(attachedFile);
         if (fileError != null) return fileError;
 
-        string description = SanitizeAndDecryptContent(request.Description ?? "");
+        string description = _attachmentContent.SanitizeAndDecryptContent(request.Description ?? "");
 
         await _unitOfWork.BeginAsync(ct);
         try
@@ -437,8 +436,9 @@ public class CalendarService : ICalendarService
             await _unitOfWork.CommitAsync(ct);
             return ServiceResult.Ok();
         }
-        catch
+        catch (Exception ex)
         {
+            _logger.LogError(ex, "Failed to update calendar event {EventId} for account {AccountEmail}", request.Id, email);
             await _unitOfWork.RollbackAsync();
             return ServiceResult.Fail("Input is invalid");
         }
@@ -459,7 +459,11 @@ public class CalendarService : ICalendarService
             await _calendarEventRepository.DeleteByIdAsync(evt.Id, ct);
             return ServiceResult.Ok();
         }
-        catch { return ServiceResult.Fail("Input is invalid"); }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to delete calendar event {EventId} for account {AccountEmail}", calendarEventId, email);
+            return ServiceResult.Fail("Input is invalid");
+        }
     }
 
     /// <summary>
@@ -474,67 +478,14 @@ public class CalendarService : ICalendarService
     }
 
     /// <inheritdoc />
-    public async Task<SummernoteUploadResult> UploadSummernoteImageAsync(AttachedFileInfo file, string roleIndex, CancellationToken ct = default)
-    {
-        if (!_imageValidator.IsValidImage(file.Bytes))
-            return SummernoteUploadResult.Fail("Invalid image file.");
-
-        string ext = Path.GetExtension(file.FileName).ToLowerInvariant();
-        // Use a GUID-based file name to avoid collisions and prevent path traversal via the original name.
-        string imageFile = $"{Guid.NewGuid():N}{ext}";
-        string filePath = Path.Combine("upload", "Calendar", roleIndex, "summernote", "images", imageFile);
-
-        bool uploaded = await _fileClient.UploadAsync(file.Bytes, file.ContentType, filePath, _settings.Value.FileStorageBaseUrl ?? string.Empty, ct);
-        if (!uploaded)
-            return SummernoteUploadResult.Fail("Input is invalid");
-
-        byte[] fileBytes = await _fileClient.DownloadAsync(filePath, _settings.Value.FileStorageBaseUrl ?? string.Empty, ct);
-        return SummernoteUploadResult.Ok(fileBytes, file.ContentType, imageFile, filePath);
-    }
+    public Task<SummernoteUploadResult> UploadSummernoteImageAsync(AttachedFileInfo file, string roleIndex, CancellationToken ct = default)
+        => _attachmentContent.UploadSummernoteImageAsync(file, "Calendar", roleIndex, ct);
 
     /// <inheritdoc />
-    public async Task<byte[]?> DownloadFileAsync(string filePath, CancellationToken ct = default)
-    {
-        try
-        {
-            return await _fileClient.DownloadAsync(filePath, _settings.Value.FileStorageBaseUrl ?? string.Empty, ct);
-        }
-        catch (Exception e)
-        {
-            _logger.LogError(e, "Failed to download file {FilePath}", filePath);
-            return null;
-        }
-    }
+    public Task<byte[]?> DownloadFileAsync(string filePath, CancellationToken ct = default)
+        => _attachmentContent.DownloadFileAsync(filePath, ct);
 
     /// <inheritdoc />
-    public async Task<(string Html, bool HasImages)> PrepareHtmlForDisplayAsync(string html, CancellationToken ct = default)
-    {
-        return await _htmlParser.TransformImageAttributesAsync(html, async (alt, token) =>
-        {
-            byte[]? fileData = await _fileClient.DownloadAsync(alt, _settings.Value.FileStorageBaseUrl ?? string.Empty, token);
-            if (fileData == null) return null;
-            return new HtmlImgPatch(
-                NewAlt: _rsa.Encrypt(alt),
-                DataFile: Convert.ToBase64String(fileData),
-                DataContentType: GetImageContentType(alt));
-        }, ct);
-    }
-
-    /// <summary>Sanitizes HTML to remove unsafe markup and decrypts RSA-encrypted file paths in img alt attributes.</summary>
-    private string SanitizeAndDecryptContent(string html)
-    {
-        string sanitized = _htmlSanitizer.Sanitize(html);
-        return _htmlParser.TransformImageAttributes(sanitized, alt => new HtmlImgPatch(NewAlt: _rsa.Decrypt(alt)));
-    }
-
-    /// <summary>Returns the MIME content type for Summernote-uploaded images by file extension.</summary>
-    private static string GetImageContentType(string filePath) =>
-        Path.GetExtension(filePath).ToLowerInvariant() switch
-        {
-            ".jpg" or ".jpeg" => "image/jpeg",
-            ".png" => "image/png",
-            ".gif" => "image/gif",
-            ".webp" => "image/webp",
-            _ => "application/octet-stream"
-        };
+    public Task<(string Html, bool HasImages)> PrepareHtmlForDisplayAsync(string html, CancellationToken ct = default)
+        => _attachmentContent.PrepareHtmlForDisplayAsync(html, ct);
 }

@@ -25,10 +25,7 @@ public class CalendarServiceTests
     private readonly Mock<IOtherCalendarRepository> _otherCalendarRepo = new();
     private readonly Mock<IFileClient> _fileClient = new();
     private readonly Mock<IUnitOfWork> _unitOfWork = new();
-    private readonly Mock<IRsaService> _rsa = new();
-    private readonly Mock<IImageValidator> _imageValidator = new();
-    private readonly Mock<IHtmlContentSanitizer> _htmlSanitizer = new();
-    private readonly Mock<IHtmlParser> _htmlParser = new();
+    private readonly Mock<IAttachmentContentService> _attachmentContent = new();
     private readonly IOptions<ServerSetting> _settings =
         Options.Create(new ServerSetting { FileStorageBaseUrl = "http://files.example.com" });
 
@@ -50,10 +47,7 @@ public class CalendarServiceTests
         _otherCalendarRepo.Object,
         _fileClient.Object,
         _unitOfWork.Object,
-        _rsa.Object,
-        _imageValidator.Object,
-        _htmlSanitizer.Object,
-        _htmlParser.Object,
+        _attachmentContent.Object,
         _settings,
         NullLogger<CalendarService>.Instance);
 

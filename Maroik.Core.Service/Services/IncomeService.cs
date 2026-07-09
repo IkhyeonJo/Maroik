@@ -1,7 +1,9 @@
 using Maroik.Core.Contract.Domains.Finance;
 using Maroik.Core.Contract.Dtos;
 using Maroik.Core.Contract.Interfaces;
+using Maroik.Core.Service.Extensions;
 using Maroik.Core.Service.Mappers;
+using Microsoft.Extensions.Logging;
 
 namespace Maroik.Core.Service.Services;
 
@@ -15,13 +17,15 @@ public class IncomeService : IIncomeService
     private readonly IIncomeRepository _incomeRepository;
     private readonly IAssetBalanceDomainService _assetBalance;
     private readonly IUnitOfWork _unitOfWork;
+    private readonly ILogger<IncomeService> _logger;
 
     /// <summary>Initializes a new instance of <see cref="IncomeService"/> with the supplied dependencies.</summary>
-    public IncomeService(IIncomeRepository incomeRepository, IAssetBalanceDomainService assetBalance, IUnitOfWork unitOfWork)
+    public IncomeService(IIncomeRepository incomeRepository, IAssetBalanceDomainService assetBalance, IUnitOfWork unitOfWork, ILogger<IncomeService> logger)
     {
         _incomeRepository = incomeRepository;
         _assetBalance = assetBalance;
         _unitOfWork = unitOfWork;
+        _logger = logger;
     }
 
     /// <inheritdoc />
@@ -77,8 +81,9 @@ public class IncomeService : IIncomeService
             await _unitOfWork.CommitAsync(ct);
             return ServiceResult.Ok();
         }
-        catch
+        catch (Exception ex)
         {
+            _logger.LogError(ex, "Failed to create income for account {AccountEmail}", accountEmail);
             await _unitOfWork.RollbackAsync();
             return ServiceResult.Fail("Input is invalid");
         }
@@ -104,14 +109,20 @@ public class IncomeService : IIncomeService
                 return ServiceResult.Fail("Input is invalid");
             }
 
-            Asset? prevAsset = await _assetBalance.GetAssetAsync(accountEmail, previous.DepositMyAssetProductName ?? "", ct);
+            // Lock the previous and new deposit assets in a single ordinal-ordered batch so
+            // concurrent transactions on the same asset pair (here or in ExpenditureService)
+            // cannot deadlock on each other.
+            Dictionary<string, Asset> touchedAssets = await _assetBalance.GetAssetsOrdinalAsync(accountEmail,
+                [previous.DepositMyAssetProductName, request.DepositMyAssetProductName], ct);
+
+            Asset? prevAsset = !string.IsNullOrEmpty(previous.DepositMyAssetProductName) && touchedAssets.TryGetValue(previous.DepositMyAssetProductName, out var pa) ? pa : null;
             if (prevAsset?.Deleted == true)
             {
                 await _unitOfWork.RollbackAsync();
                 return ServiceResult.Fail("Actions cannot be executed with assets that have already been deleted.");
             }
 
-            Asset? newAsset = await _assetBalance.GetAssetAsync(accountEmail, request.DepositMyAssetProductName ?? "", ct);
+            Asset? newAsset = !string.IsNullOrEmpty(request.DepositMyAssetProductName) && touchedAssets.TryGetValue(request.DepositMyAssetProductName, out var na) ? na : null;
             string newCurrency = newAsset?.Balance.Currency ?? prevAsset?.Balance.Currency ?? string.Empty;
 
             string previousAssetName = previous.DepositMyAssetProductName ?? "";
@@ -154,8 +165,9 @@ public class IncomeService : IIncomeService
             await _unitOfWork.CommitAsync(ct);
             return ServiceResult.Ok();
         }
-        catch
+        catch (Exception ex)
         {
+            _logger.LogError(ex, "Failed to update income {IncomeId} for account {AccountEmail}", request.Id, accountEmail);
             await _unitOfWork.RollbackAsync();
             return ServiceResult.Fail("Input is invalid");
         }
@@ -193,8 +205,9 @@ public class IncomeService : IIncomeService
             await _unitOfWork.CommitAsync(ct);
             return ServiceResult.Ok();
         }
-        catch
+        catch (Exception ex)
         {
+            _logger.LogError(ex, "Failed to delete income {IncomeId} for account {AccountEmail}", id, accountEmail);
             await _unitOfWork.RollbackAsync();
             return ServiceResult.Fail("Input is invalid");
         }

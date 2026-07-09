@@ -24,10 +24,7 @@ public class BoardService : IBoardService
     private readonly IBoardCommentRepository _boardCommentRepository;
     private readonly IFileClient _fileClient;
     private readonly IUnitOfWork _unitOfWork;
-    private readonly IRsaService _rsa;
-    private readonly IImageValidator _imageValidator;
-    private readonly IHtmlContentSanitizer _htmlSanitizer;
-    private readonly IHtmlParser _htmlParser;
+    private readonly IAttachmentContentService _attachmentContent;
     private readonly IOptions<ServerSetting> _settings;
     private readonly ILogger<BoardService> _logger;
 
@@ -48,10 +45,7 @@ public class BoardService : IBoardService
         IBoardCommentRepository boardCommentRepository,
         IFileClient fileClient,
         IUnitOfWork unitOfWork,
-        IRsaService rsa,
-        IImageValidator imageValidator,
-        IHtmlContentSanitizer htmlSanitizer,
-        IHtmlParser htmlParser,
+        IAttachmentContentService attachmentContent,
         IOptions<ServerSetting> settings,
         ILogger<BoardService> logger)
     {
@@ -60,10 +54,7 @@ public class BoardService : IBoardService
         _boardCommentRepository = boardCommentRepository;
         _fileClient = fileClient;
         _unitOfWork = unitOfWork;
-        _rsa = rsa;
-        _imageValidator = imageValidator;
-        _htmlSanitizer = htmlSanitizer;
-        _htmlParser = htmlParser;
+        _attachmentContent = attachmentContent;
         _settings = settings;
         _logger = logger;
     }
@@ -103,28 +94,13 @@ public class BoardService : IBoardService
     public async Task<Dictionary<long, int>> GetCommentCountsForBoardsAsync(IEnumerable<long> boardIds, CancellationToken ct = default)
         => await _boardCommentRepository.GetCommentCountsByBoardIdsAsync(boardIds, ct);
 
-    /// <summary>
-    /// Validates an attached file: only <c>.zip</c> files within the configured size limit are accepted.
-    /// Returns <see langword="null"/> when the file passes validation (or when no file is provided).
-    /// </summary>
-    private ServiceResult? ValidateAttachedFile(AttachedFileInfo? attachedFile)
-    {
-        if (attachedFile == null) return null;
-        if (Path.GetExtension(attachedFile.FileName) != ".zip")
-            return ServiceResult.Fail("Only zip extension allowed.");
-        long maxBytes = _settings.Value.MaxAttachedFileSizeBytes;
-        if (attachedFile.Size <= 0 || attachedFile.Size > maxBytes)
-            return ServiceResult.Fail($"Uploaded file size must be smaller than {maxBytes / (1024 * 1024)}MB.");
-        return null;
-    }
-
     /// <inheritdoc />
     public async Task<ServiceResult> WriteBoardAsync(BoardRequest request, AttachedFileInfo? attachedFile, CancellationToken ct = default)
     {
-        var fileError = ValidateAttachedFile(attachedFile);
+        var fileError = _attachmentContent.ValidateAttachedFile(attachedFile);
         if (fileError != null) return fileError;
 
-        string content = SanitizeAndDecryptContent(request.Content ?? "");
+        string content = _attachmentContent.SanitizeAndDecryptContent(request.Content ?? "");
 
         await _unitOfWork.BeginAsync(ct);
         try
@@ -165,10 +141,10 @@ public class BoardService : IBoardService
     /// <inheritdoc />
     public async Task<ServiceResult> EditBoardAsync(BoardRequest request, string writerNickname, AttachedFileInfo? newFile, CancellationToken ct = default)
     {
-        var fileError = ValidateAttachedFile(newFile);
+        var fileError = _attachmentContent.ValidateAttachedFile(newFile);
         if (fileError != null) return fileError;
 
-        string content = SanitizeAndDecryptContent(request.Content ?? "");
+        string content = _attachmentContent.SanitizeAndDecryptContent(request.Content ?? "");
 
         await _unitOfWork.BeginAsync(ct);
         try
@@ -246,7 +222,7 @@ public class BoardService : IBoardService
     /// <inheritdoc />
     public async Task<ServiceResult> WriteCommentAsync(BoardCommentRequest request, string? requiredOwnerNickname = null, CancellationToken ct = default)
     {
-        string content = SanitizeContent(request.Content ?? "");
+        string content = _attachmentContent.SanitizeContent(request.Content ?? "");
 
         try
         {
@@ -358,37 +334,12 @@ public class BoardService : IBoardService
     }
 
     /// <inheritdoc />
-    public async Task<SummernoteUploadResult> UploadSummernoteImageAsync(AttachedFileInfo file, string area, string boardType, CancellationToken ct = default)
-    {
-        if (!_imageValidator.IsValidImage(file.Bytes))
-            return SummernoteUploadResult.Fail("Invalid image file.");
-
-        string ext = Path.GetExtension(file.FileName).ToLowerInvariant();
-        // Use a GUID-based file name to avoid collisions and prevent path traversal via the original name.
-        string imageFile = $"{Guid.NewGuid():N}{ext}";
-        string filePath = Path.Combine("upload", area, boardType, "summernote", "images", imageFile);
-
-        bool uploaded = await _fileClient.UploadAsync(file.Bytes, file.ContentType, filePath, _settings.Value.FileStorageBaseUrl ?? string.Empty, ct);
-        if (!uploaded)
-            return SummernoteUploadResult.Fail("Input is invalid");
-
-        byte[] fileBytes = await _fileClient.DownloadAsync(filePath, _settings.Value.FileStorageBaseUrl ?? string.Empty, ct);
-        return SummernoteUploadResult.Ok(fileBytes, file.ContentType, imageFile, filePath);
-    }
+    public Task<SummernoteUploadResult> UploadSummernoteImageAsync(AttachedFileInfo file, string area, string boardType, CancellationToken ct = default)
+        => _attachmentContent.UploadSummernoteImageAsync(file, area, boardType, ct);
 
     /// <inheritdoc />
-    public async Task<byte[]?> DownloadFileAsync(string filePath, CancellationToken ct = default)
-    {
-        try
-        {
-            return await _fileClient.DownloadAsync(filePath, _settings.Value.FileStorageBaseUrl ?? string.Empty, ct);
-        }
-        catch (Exception e)
-        {
-            _logger.LogError(e, "Failed to download file {FilePath}", filePath);
-            return null;
-        }
-    }
+    public Task<byte[]?> DownloadFileAsync(string filePath, CancellationToken ct = default)
+        => _attachmentContent.DownloadFileAsync(filePath, ct);
 
     /// <summary>
     /// Builds the remote storage path for a board attachment.
@@ -404,37 +355,6 @@ public class BoardService : IBoardService
     }
 
     /// <inheritdoc />
-    public async Task<(string Html, bool HasImages)> PrepareHtmlForDisplayAsync(string html, CancellationToken ct = default)
-    {
-        return await _htmlParser.TransformImageAttributesAsync(html, async (alt, token) =>
-        {
-            byte[]? fileData = await _fileClient.DownloadAsync(alt, _settings.Value.FileStorageBaseUrl ?? string.Empty, token);
-            if (fileData == null) return null;
-            return new HtmlImgPatch(
-                NewAlt: _rsa.Encrypt(alt),
-                DataFile: Convert.ToBase64String(fileData),
-                DataContentType: GetImageContentType(alt));
-        }, ct);
-    }
-
-    /// <summary>Sanitizes HTML to remove unsafe markup and decrypts RSA-encrypted file paths in img alt attributes.</summary>
-    private string SanitizeAndDecryptContent(string html)
-    {
-        string sanitized = _htmlSanitizer.Sanitize(html);
-        return _htmlParser.TransformImageAttributes(sanitized, alt => new HtmlImgPatch(NewAlt: _rsa.Decrypt(alt)));
-    }
-
-    /// <summary>Sanitizes HTML to remove unsafe markup (used for comment content, which contains no inline images).</summary>
-    private string SanitizeContent(string html) => _htmlSanitizer.Sanitize(html);
-
-    /// <summary>Returns the MIME content type for Summernote-uploaded images by file extension.</summary>
-    private static string GetImageContentType(string filePath) =>
-        Path.GetExtension(filePath).ToLowerInvariant() switch
-        {
-            ".jpg" or ".jpeg" => "image/jpeg",
-            ".png" => "image/png",
-            ".gif" => "image/gif",
-            ".webp" => "image/webp",
-            _ => "application/octet-stream"
-        };
+    public Task<(string Html, bool HasImages)> PrepareHtmlForDisplayAsync(string html, CancellationToken ct = default)
+        => _attachmentContent.PrepareHtmlForDisplayAsync(html, ct);
 }

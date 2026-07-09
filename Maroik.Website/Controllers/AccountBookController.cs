@@ -124,8 +124,9 @@ public class AccountBookController : Controller
                 ? Json(new { result = false, error = _localizer["Fail to find the asset by given product name"].Value })
                 : Json(new { result = true, asset });
         }
-        catch
+        catch (Exception ex)
         {
+            _logger.LogError(ex, "Failed to check asset existence for product {ProductName}", productName);
             return Json(new { result = false, error = _localizer["Input is invalid"].Value });
         }
     }
@@ -283,8 +284,9 @@ public class AccountBookController : Controller
             income.Created = income.Created.ConvertTimeByTimeZoneIanaId(tz);
             return Json(new { result = true, income });
         }
-        catch
+        catch (Exception ex)
         {
+            _logger.LogError(ex, "Failed to check income existence for id {IncomeId}", id);
             return Json(new { result = false, error = _localizer["Input is invalid"].Value });
         }
     }
@@ -307,8 +309,9 @@ public class AccountBookController : Controller
 
             return Json(new { result = true, label });
         }
-        catch
+        catch (Exception ex)
         {
+            _logger.LogError(ex, "Failed to get income amount label for product {ProductName}", productName);
             return Json(new { result = false, label = _localizer["Amount"].Value });
         }
     }
@@ -470,8 +473,9 @@ public class AccountBookController : Controller
             expenditure.Created = expenditure.Created.ConvertTimeByTimeZoneIanaId(tz);
             return Json(new { result = true, expenditure });
         }
-        catch
+        catch (Exception ex)
         {
+            _logger.LogError(ex, "Failed to check expenditure existence for id {ExpenditureId}", id);
             return Json(new { result = false, error = _localizer["Input is invalid"].Value });
         }
     }
@@ -494,8 +498,9 @@ public class AccountBookController : Controller
 
             return Json(new { result = true, label });
         }
-        catch
+        catch (Exception ex)
         {
+            _logger.LogError(ex, "Failed to get expenditure amount label for product {ProductName}", productName);
             return Json(new { result = false, label = _localizer["Amount"].Value });
         }
     }

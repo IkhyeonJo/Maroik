@@ -143,8 +143,9 @@ public class NoticeController : Controller
             };
             return Json(new { result = true, fixedIncome = vm });
         }
-        catch
+        catch (Exception ex)
         {
+            _logger.LogError(ex, "Failed to check fixed-income existence for id {FixedIncomeId}", id);
             return Json(new { result = false, error = _localizer["Input is invalid"].Value });
         }
     }
@@ -167,8 +168,9 @@ public class NoticeController : Controller
 
             return Json(new { result = true, label });
         }
-        catch
+        catch (Exception ex)
         {
+            _logger.LogError(ex, "Failed to get fixed-income amount label for product {ProductName}", productName);
             return Json(new { result = false, label = _localizer["Amount"].Value });
         }
     }
@@ -339,8 +341,9 @@ public class NoticeController : Controller
             };
             return Json(new { result = true, fixedExpenditure = vm });
         }
-        catch
+        catch (Exception ex)
         {
+            _logger.LogError(ex, "Failed to check fixed-expenditure existence for id {FixedExpenditureId}", id);
             return Json(new { result = false, error = _localizer["Input is invalid"].Value });
         }
     }
@@ -363,8 +366,9 @@ public class NoticeController : Controller
 
             return Json(new { result = true, label });
         }
-        catch
+        catch (Exception ex)
         {
+            _logger.LogError(ex, "Failed to get fixed-expenditure amount label for product {ProductName}", productName);
             return Json(new { result = false, label = _localizer["Amount"].Value });
         }
     }

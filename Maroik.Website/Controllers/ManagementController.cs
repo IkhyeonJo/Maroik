@@ -187,9 +187,9 @@ public class ManagementController : Controller
                 updatedAccount!.HashedPassword = null;
                 _sessionService.SetAccount(updatedAccount);
             }
-            catch
+            catch (Exception ex)
             {
-                Console.WriteLine(_localizer["Input is invalid"].Value);
+                _logger.LogError(ex, "Failed to update time zone for account {AccountEmail}", _sessionService.GetAccount()?.Email);
             }
         }
 
@@ -227,8 +227,9 @@ public class ManagementController : Controller
                 ? Json(new { result = true, message = _localizer["Password change successfully done."].Value })
                 : Json(new { result = false, error = _localizer[result.ErrorKey ?? "Input is invalid"].Value });
         }
-        catch
+        catch (Exception ex)
         {
+            _logger.LogError(ex, "Failed to update password for account {AccountEmail}", _sessionService.GetAccount()?.Email);
             return Json(new { result = false, error = _localizer["Input is invalid"].Value });
         }
     }
@@ -348,8 +349,9 @@ public class ManagementController : Controller
                 return Json(new { result = false, error = _localizer["Input is invalid"].Value });
             }
         }
-        catch
+        catch (Exception ex)
         {
+            _logger.LogError(ex, "Failed to create account {AccountEmail}", accountInputViewModel.Email);
             return Json(new { result = false, error = _localizer["Input is invalid"].Value });
         }
     }
@@ -396,8 +398,9 @@ public class ManagementController : Controller
                 })
                 : (IActionResult)Json(new { result = true, account = tempAccount });
         }
-        catch
+        catch (Exception ex)
         {
+            _logger.LogError(ex, "Failed to check account existence for email {AccountEmail}", email);
             return Json(new { result = false, error = _localizer["Input is invalid"].Value });
         }
     }
@@ -441,8 +444,9 @@ public class ManagementController : Controller
                 ? Json(new { result = true, message = _localizer["Successfully updated the account"].Value })
                 : Json(new { result = false, error = _localizer[updateResult.ErrorKey ?? "Input is invalid"].Value });
         }
-        catch
+        catch (Exception ex)
         {
+            _logger.LogError(ex, "Failed to update account {AccountEmail}", accountInputViewModel.Email);
             return Json(new { result = false, error = _localizer["Input is invalid"].Value });
         }
     }
@@ -464,8 +468,9 @@ public class ManagementController : Controller
                 ? Json(new { result = true, message = _localizer["Successfully deleted the account"].Value })
                 : Json(new { result = false, error = _localizer[deleteResult.ErrorKey ?? "Input is invalid"].Value });
         }
-        catch
+        catch (Exception ex)
         {
+            _logger.LogError(ex, "Failed to delete account {AccountEmail}", accountInputViewModel.Email);
             return Json(new { result = false, error = _localizer["Input is invalid"].Value });
         }
     }
@@ -524,8 +529,9 @@ public class ManagementController : Controller
             await InvalidateNavigationCacheAsync();
             return Json(new { result = true, message = _localizer["Successfully created the category"].Value });
         }
-        catch
+        catch (Exception ex)
         {
+            _logger.LogError(ex, "Failed to create menu category {CategoryName}", menuInputViewModel.Name);
             return Json(new { result = false, error = _localizer["Input is invalid"].Value });
         }
     }
@@ -559,8 +565,9 @@ public class ManagementController : Controller
             await InvalidateNavigationCacheAsync();
             return Json(new { result = true, message = _localizer["Successfully created the subCategory"].Value });
         }
-        catch
+        catch (Exception ex)
         {
+            _logger.LogError(ex, "Failed to create menu sub-category {SubCategoryName}", menuInputViewModel.Name);
             return Json(new { result = false, error = _localizer["Input is invalid"].Value });
         }
     }
@@ -673,8 +680,9 @@ public class ManagementController : Controller
             };
             return Json(new { result = true, category = vm });
         }
-        catch
+        catch (Exception ex)
         {
+            _logger.LogError(ex, "Failed to check category existence for id {CategoryId}", id);
             return Json(new { result = false, error = _localizer["Input is invalid"].Value });
         }
     }
@@ -705,8 +713,9 @@ public class ManagementController : Controller
             };
             return Json(new { result = true, subCategory = vm });
         }
-        catch
+        catch (Exception ex)
         {
+            _logger.LogError(ex, "Failed to check sub-category existence for id {SubCategoryId}", id);
             return Json(new { result = false, error = _localizer["Input is invalid"].Value });
         }
     }
@@ -745,8 +754,9 @@ public class ManagementController : Controller
             await InvalidateNavigationCacheAsync();
             return Json(new { result = true, message = _localizer["Successfully updated the category"].Value });
         }
-        catch
+        catch (Exception ex)
         {
+            _logger.LogError(ex, "Failed to update menu category {CategoryId}", menuInputViewModel.Id);
             return Json(new { result = false, error = _localizer["Input is invalid"].Value });
         }
     }
@@ -781,8 +791,9 @@ public class ManagementController : Controller
             await InvalidateNavigationCacheAsync();
             return Json(new { result = true, message = _localizer["Successfully updated the subCategory"].Value });
         }
-        catch
+        catch (Exception ex)
         {
+            _logger.LogError(ex, "Failed to update menu sub-category {SubCategoryId}", menuInputViewModel.Id);
             return Json(new { result = false, error = _localizer["Input is invalid"].Value });
         }
     }
@@ -821,8 +832,9 @@ public class ManagementController : Controller
             await InvalidateNavigationCacheAsync();
             return Json(new { result = true, message = _localizer["Successfully deleted the category"].Value });
         }
-        catch
+        catch (Exception ex)
         {
+            _logger.LogError(ex, "Failed to delete menu category {CategoryId}", menuInputViewModel.Id);
             return Json(new { result = false, error = _localizer["Input is invalid"].Value });
         }
     }
@@ -858,8 +870,9 @@ public class ManagementController : Controller
             await InvalidateNavigationCacheAsync();
             return Json(new { result = true, message = _localizer["Successfully deleted the subCategory"].Value });
         }
-        catch
+        catch (Exception ex)
         {
+            _logger.LogError(ex, "Failed to delete menu sub-category {SubCategoryId}", menuInputViewModel.Id);
             return Json(new { result = false, error = _localizer["Input is invalid"].Value });
         }
     }
@@ -947,8 +960,9 @@ public class ManagementController : Controller
                 ? Json(new { result = true, message = _localizer["The board has been successfully created."].Value })
                 : Json(new { result = false, error = _localizer["Input is invalid"].Value });
         }
-        catch
+        catch (Exception ex)
         {
+            _logger.LogError(ex, "Failed to write private note board {Title}", boardInputViewModel.Title);
             return Json(new { result = false, error = _localizer["Input is invalid"].Value });
         }
     }
@@ -992,8 +1006,9 @@ public class ManagementController : Controller
                 ? Json(new { result = true, boardId = boardCommentInputViewModel.BoardId, page = boardCommentInputViewModel.DetailCurrentPage })
                 : Json(new { result = false, error = _localizer["Input is invalid"].Value });
         }
-        catch
+        catch (Exception ex)
         {
+            _logger.LogError(ex, "Failed to write private note comment on board {BoardId}", boardCommentInputViewModel.BoardId);
             return Json(new { result = false, error = _localizer["Input is invalid"].Value });
         }
     }
@@ -1146,8 +1161,9 @@ public class ManagementController : Controller
 
                 return View(privateNoteOutputViewModel);
             }
-            catch
+            catch (Exception ex)
             {
+                _logger.LogError(ex, "Failed to load private note board detail for board {BoardId}", boardId);
                 return RedirectToAction(nameof(BoardType.PrivateNote), "Management");
             }
         }
@@ -1210,8 +1226,9 @@ public class ManagementController : Controller
 
                 return View(privateNoteOutputViewModel);
             }
-            catch
+            catch (Exception ex)
             {
+                _logger.LogError(ex, "Failed to load private note board edit form for board {BoardId}", boardId);
                 return RedirectToAction(nameof(BoardType.PrivateNote), "Management");
             }
         }
@@ -1349,8 +1366,9 @@ public class ManagementController : Controller
                 ? Json(new { result = false, error = _localizer["Input is invalid"].Value })
                 : Json(new { result = true, PrivateNoteBoard = board });
         }
-        catch
+        catch (Exception ex)
         {
+            _logger.LogError(ex, "Failed to check private note board existence for id {BoardId}", id);
             return Json(new { result = false, error = _localizer["Input is invalid"].Value });
         }
     }
@@ -1412,8 +1430,9 @@ public class ManagementController : Controller
                 ? Json(new { result = true, message = _localizer["The board has been successfully updated."].Value })
                 : Json(new { result = false, error = _localizer["Input is invalid"].Value });
         }
-        catch
+        catch (Exception ex)
         {
+            _logger.LogError(ex, "Failed to edit private note board {BoardId}", boardInputViewModel.Id);
             return Json(new { result = false, error = _localizer["Input is invalid"].Value });
         }
     }
@@ -1448,8 +1467,9 @@ public class ManagementController : Controller
                 ? Json(new { result = true, message = _localizer["The board has been successfully deleted."].Value })
                 : Json(new { result = false, error = result.ErrorKey });
         }
-        catch
+        catch (Exception ex)
         {
+            _logger.LogError(ex, "Failed to delete private note board {BoardId}", boardInputViewModel.Id);
             return Json(new { result = false, error = _localizer["Input is invalid"].Value });
         }
     }
@@ -1479,8 +1499,9 @@ public class ManagementController : Controller
                 ? Json(new { result = true })
                 : Json(new { result = false, error = result.ErrorKey });
         }
-        catch
+        catch (Exception ex)
         {
+            _logger.LogError(ex, "Failed to delete private note comment {CommentId}", id);
             return Json(new { result = false, error = _localizer["Input is invalid"].Value });
         }
     }
