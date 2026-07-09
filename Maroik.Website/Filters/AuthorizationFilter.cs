@@ -39,7 +39,7 @@ public class AuthorizationFilter : ActionFilterAttribute
 
     /// <summary>Initializes a new instance of <see cref="AuthorizationFilter"/> with the required dependencies.</summary>
     /// <param name="menuService">Service used to load category and sub-category navigation data.</param>
-    /// <param name="cache">Distributed cache (Redis) used to store the navigation menu for 10 minutes.</param>
+    /// <param name="cache">Distributed cache (Valkey) used to store the navigation menu for 10 minutes.</param>
     /// <param name="sessionService">Service used to retrieve the currently logged-in account from the session.</param>
     /// <param name="accountService">Service used to re-verify the logged-in account's current state from the database.</param>
     public AuthorizationFilter(IMenuService menuService, IDistributedCache cache, ISessionService sessionService, IAccountService accountService)

@@ -4,6 +4,7 @@ using Maroik.Core.Contract.Dtos;
 using Maroik.Core.Contract.Enums;
 using Maroik.Core.Contract.Helpers;
 using Maroik.Core.Contract.Interfaces;
+using Maroik.Core.Contract.Messaging;
 using Maroik.Core.Contract.Settings;
 using Maroik.Core.Contract.Tokens;
 using Maroik.Core.Service.Services;
@@ -15,8 +16,8 @@ namespace Maroik.Core.Service.Tests.Services;
 
 /// <summary>
 /// Unit tests for <see cref="AccountService"/>.
-/// All external dependencies (repository, password service, mail client, RSA service)
-/// are replaced with Moq mocks so tests run without a database or SMTP server.
+/// All external dependencies (repository, password service, mail client, email publisher, RSA service)
+/// are replaced with Moq mocks so tests run without a database, SMTP server, or RabbitMQ broker.
 /// Covers login, registration, email confirmation, and password-reset flows.
 /// </summary>
 public class AccountServiceTests
@@ -24,6 +25,7 @@ public class AccountServiceTests
     private readonly Mock<IAccountRepository> _accountRepo = new();
     private readonly Mock<IPasswordService> _passwordService = new();
     private readonly Mock<IMailClient> _mailClient = new();
+    private readonly Mock<IEmailPublisher> _emailPublisher = new();
     private readonly Mock<IRsaService> _rsa = new();
     private readonly IOptions<ServerSetting> _settings =
         Options.Create(new ServerSetting { MaxLoginAttempt = 5, DomainName = "https://example.com" });
@@ -32,6 +34,7 @@ public class AccountServiceTests
         _accountRepo.Object,
         _passwordService.Object,
         _mailClient.Object,
+        _emailPublisher.Object,
         _settings,
         _rsa.Object,
         NullLogger<AccountService>.Instance);
@@ -74,11 +77,8 @@ public class AccountServiceTests
         _mailClient.Setup(m => m.GetMailResetPasswordBody(
             It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()))
             .Returns("email-body");
-        _mailClient.Setup(m => m.SendMailAsync(
-            It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(),
-            It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(),
-            It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(EnumHelper.GetDescription(AccountMessage.MailSent));
+        _emailPublisher.Setup(p => p.PublishAsync(It.IsAny<SendEmailMessage>(), It.IsAny<CancellationToken>()))
+            .Returns(Task.CompletedTask);
     }
 
     private void SetupMailFailure()
@@ -89,11 +89,8 @@ public class AccountServiceTests
         _mailClient.Setup(m => m.GetMailResetPasswordBody(
             It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()))
             .Returns("email-body");
-        _mailClient.Setup(m => m.SendMailAsync(
-            It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(),
-            It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(),
-            It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync("SMTP error");
+        _emailPublisher.Setup(p => p.PublishAsync(It.IsAny<SendEmailMessage>(), It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new InvalidOperationException("RabbitMQ unreachable"));
     }
 
     // -- LoginAsync -----------------------------------------------------------
@@ -428,10 +425,7 @@ public class AccountServiceTests
         bool result = await sut.ForgotPasswordAsync("ghost@example.com", "s", "t", "c0", "c1", TestContext.Current.CancellationToken);
 
         Assert.True(result);
-        _mailClient.Verify(m => m.SendMailAsync(
-            It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(),
-            It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(),
-            It.IsAny<string>(), It.IsAny<string>()), Times.Never);
+        _emailPublisher.Verify(p => p.PublishAsync(It.IsAny<SendEmailMessage>(), It.IsAny<CancellationToken>()), Times.Never);
     }
 
     /// <summary>Verifies that <c>ForgotPasswordAsync</c> returns true silently when account email not confirmed.</summary>
@@ -445,10 +439,7 @@ public class AccountServiceTests
         bool result = await sut.ForgotPasswordAsync(account.Email.Value, "s", "t", "c0", "c1", TestContext.Current.CancellationToken);
 
         Assert.True(result);
-        _mailClient.Verify(m => m.SendMailAsync(
-            It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(),
-            It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(),
-            It.IsAny<string>(), It.IsAny<string>()), Times.Never);
+        _emailPublisher.Verify(p => p.PublishAsync(It.IsAny<SendEmailMessage>(), It.IsAny<CancellationToken>()), Times.Never);
     }
 
     /// <summary>Verifies that <c>ForgotPasswordAsync</c> sends reset email when account is valid.</summary>

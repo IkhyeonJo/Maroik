@@ -69,7 +69,7 @@ public class MaroikWebApplicationFactory : WebApplicationFactory<Program>
 
                 // DB ?? overridden below with InMemory, but a value is required to avoid null errors
                 ["ConnectionStrings:DefaultConnection"] = "Host=localhost;Database=test;Username=test;Password=test",
-                ["ConnectionStrings:Redis"] = ""
+                ["ConnectionStrings:Valkey"] = ""
             }!);
         });
 
@@ -101,14 +101,14 @@ public class MaroikWebApplicationFactory : WebApplicationFactory<Program>
                     .UseInternalServiceProvider(internalServiceProvider)
                     .UseInMemoryDatabase(dbName));
 
-            // Replace Redis distributed cache with in-memory so tests run without a Redis instance.
+            // Replace Valkey distributed cache with in-memory so tests run without a Valkey instance.
             var distributedCacheDescriptors = services
                 .Where(d => d.ServiceType == typeof(IDistributedCache))
                 .ToList();
             foreach (var d in distributedCacheDescriptors) services.Remove(d);
             services.AddDistributedMemoryCache();
 
-            // Replace Redis-backed Data Protection with ephemeral in-memory keys.
+            // Replace Valkey-backed Data Protection with ephemeral in-memory keys.
             services.AddDataProtection().UseEphemeralDataProtectionProvider();
 
             // Program.cs reads DomainName before ConfigureAppConfiguration overrides take effect,

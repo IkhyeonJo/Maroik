@@ -132,28 +132,32 @@ try
 
     #region AddClients
 
-    builder.Services.AddClientServices();
+    string rabbitMqConnectionString = builder.Configuration.GetConnectionString("RabbitMQ")
+        ?? "amqp://guest:guest@localhost:5672/";
+    builder.Services.AddClientServices(rabbitMqConnectionString);
     builder.Services.AddHttpClient();
 
     #endregion
 
-    #region Redis / Session / DataProtection
+    #region Valkey / Session / DataProtection
+    // Valkey is wire-protocol compatible with Redis, so the StackExchange.Redis client
+    // (there is no separate "StackExchange.Valkey" package) connects to it unmodified.
 
-    var redisConnectionString = builder.Configuration.GetConnectionString("Redis");
-    IConnectionMultiplexer? redis = string.IsNullOrEmpty(redisConnectionString)
+    var valkeyConnectionString = builder.Configuration.GetConnectionString("Valkey");
+    IConnectionMultiplexer? valkey = string.IsNullOrEmpty(valkeyConnectionString)
         ? null
-        : ConnectionMultiplexer.Connect(redisConnectionString);
+        : ConnectionMultiplexer.Connect(valkeyConnectionString);
 
-    if (redis != null)
+    if (valkey != null)
     {
-        builder.Services.AddSingleton(redis);
+        builder.Services.AddSingleton(valkey);
         builder.Services.AddStackExchangeRedisCache(options =>
         {
-            options.ConnectionMultiplexerFactory = () => Task.FromResult(redis);
+            options.ConnectionMultiplexerFactory = () => Task.FromResult(valkey);
             options.InstanceName = "MaroikWebsite:";
         });
         builder.Services.AddDataProtection()
-            .PersistKeysToStackExchangeRedis(redis, "MaroikWebsite:DataProtection-Keys")
+            .PersistKeysToStackExchangeRedis(valkey, "MaroikWebsite:DataProtection-Keys")
             .SetApplicationName("Maroik");
     }
     else

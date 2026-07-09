@@ -1,0 +1,79 @@
+using System.Text.Json;
+using Maroik.Core.Contract.Interfaces;
+using Maroik.Core.Contract.Messaging;
+using RabbitMQ.Client;
+
+namespace Maroik.Core.Client.Clients;
+
+/// <summary>
+/// Publishes <see cref="SendEmailMessage"/> to the durable "maroik.email" queue.
+/// The connection is opened lazily on first publish so a RabbitMQ outage at
+/// application startup does not prevent the web app from starting.
+/// </summary>
+public sealed class RabbitMqEmailPublisher : IEmailPublisher, IAsyncDisposable
+{
+    private readonly ConnectionFactory _factory;
+    private readonly SemaphoreSlim _connectionLock = new(1, 1);
+    private IConnection? _connection;
+
+    public RabbitMqEmailPublisher(string connectionString)
+    {
+        _factory = new ConnectionFactory { Uri = new Uri(connectionString) };
+    }
+
+    /// <inheritdoc />
+    public async Task PublishAsync(SendEmailMessage message, CancellationToken ct = default)
+    {
+        IConnection connection = await GetConnectionAsync(ct);
+
+        using IChannel channel = await connection.CreateChannelAsync(cancellationToken: ct);
+        await channel.QueueDeclareAsync(
+            queue: QueueNames.Email,
+            durable: true,
+            exclusive: false,
+            autoDelete: false,
+            cancellationToken: ct);
+
+        byte[] body = JsonSerializer.SerializeToUtf8Bytes(message);
+        var properties = new BasicProperties { Persistent = true };
+
+        await channel.BasicPublishAsync(
+            exchange: string.Empty,
+            routingKey: QueueNames.Email,
+            mandatory: false,
+            basicProperties: properties,
+            body: body,
+            cancellationToken: ct);
+    }
+
+    private async Task<IConnection> GetConnectionAsync(CancellationToken ct)
+    {
+        if (_connection is { IsOpen: true })
+            return _connection;
+
+        await _connectionLock.WaitAsync(ct);
+        try
+        {
+            if (_connection is { IsOpen: true })
+                return _connection;
+
+            if (_connection != null)
+                await _connection.DisposeAsync();
+
+            _connection = await _factory.CreateConnectionAsync(ct);
+            return _connection;
+        }
+        finally
+        {
+            _connectionLock.Release();
+        }
+    }
+
+    /// <inheritdoc />
+    public async ValueTask DisposeAsync()
+    {
+        if (_connection != null)
+            await _connection.DisposeAsync();
+        _connectionLock.Dispose();
+    }
+}

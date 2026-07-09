@@ -11,9 +11,13 @@ namespace Maroik.Core.Client.Extensions;
 public static class ServiceCollectionExtensions
 {
     /// <summary>
-    /// Registers the mail, file-storage, and ClamAV client implementations as scoped services.
+    /// Registers the mail, file-storage, ClamAV, and RabbitMQ email-publisher client implementations.
     /// </summary>
-    public static void AddClientServices(this IServiceCollection services)
+    /// <param name="services">The service collection to add to.</param>
+    /// <param name="rabbitMqConnectionString">
+    /// AMQP connection string (e.g. "amqp://user:pass@host:5672/") used by <see cref="IEmailPublisher"/>.
+    /// </param>
+    public static void AddClientServices(this IServiceCollection services, string rabbitMqConnectionString)
     {
         // Register the SMTP email client
         services.AddScoped<IMailClient, MailClient>();
@@ -23,5 +27,9 @@ public static class ServiceCollectionExtensions
 
         // Register the ClamAV antivirus scanning client
         services.AddScoped<IClamavClient, ClamavClient>();
+
+        // Register the RabbitMQ email publisher. Singleton: owns one long-lived AMQP connection,
+        // opened lazily on first publish so a RabbitMQ outage doesn't block app startup.
+        services.AddSingleton<IEmailPublisher>(_ => new RabbitMqEmailPublisher(rabbitMqConnectionString));
     }
 }

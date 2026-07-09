@@ -1,27 +1,47 @@
 volumes:
       datasource:
       dataprotection-keys:
-      redis-data:
+      valkey-data:
+      rabbitmq-data:
 
 networks:
        backend:
 
 services:
-    redis:
-      image: redis:7-alpine
-      container_name: Maroik.Redis
+    valkey:
+      image: valkey/valkey:9-alpine
+      container_name: Maroik.Valkey
       restart: unless-stopped
       expose:
         - "6379"
       volumes:
-        - redis-data:/data
+        - valkey-data:/data
       networks:
         - backend
-      command: redis-server --appendonly yes
+      command: valkey-server --appendonly yes
       healthcheck:
-        test: ["CMD", "redis-cli", "ping"]
+        test: ["CMD", "valkey-cli", "ping"]
         interval: 5s
         timeout: 3s
+        retries: 5
+
+    rabbitmq:
+      image: rabbitmq:4-management-alpine
+      container_name: Maroik.RabbitMQ
+      restart: unless-stopped
+      expose:
+        - "5672"
+        - "15672"
+      env_file:
+        - .env.prod
+      volumes:
+        - rabbitmq-data:/var/lib/rabbitmq
+      networks:
+        - backend
+      healthcheck:
+        test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+        interval: 10s
+        timeout: 5s
         retries: 5
 
     clamav:
@@ -64,9 +84,11 @@ services:
         depends_on:
           postgresql:
             condition: service_started
-          redis:
+          valkey:
             condition: service_healthy
-          
+          rabbitmq:
+            condition: service_healthy
+
     maroik.filestorage:
         build :
          context : .
@@ -83,6 +105,23 @@ services:
         volumes:
           - ./Maroik.FileStorage/upload/:/app/upload:rw
           - dataprotection-keys:/root/.aspnet/DataProtection-Keys
+
+    maroik.worker:
+        build :
+         context : .
+         dockerfile : Maroik.Worker/Dockerfile
+        container_name: Maroik.Worker
+        networks :
+          - backend
+        env_file:
+          - .env.prod
+        volumes:
+          - ./Maroik.Log/:/app/Maroik.Log:rw
+        depends_on:
+          postgresql:
+            condition: service_started
+          rabbitmq:
+            condition: service_healthy
 
     certbot:
         image: certbot/dns-cloudflare

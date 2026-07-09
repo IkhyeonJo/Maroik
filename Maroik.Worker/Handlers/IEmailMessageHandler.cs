@@ -1,0 +1,15 @@
+using Maroik.Core.Contract.Messaging;
+
+namespace Maroik.Worker.Handlers;
+
+/// <summary>Handles a single dequeued <see cref="SendEmailMessage"/>.</summary>
+public interface IEmailMessageHandler
+{
+    /// <summary>
+    /// Sends the email via SMTP. On failure, marks the corresponding account's status
+    /// as <c>FailToMailSent</c> so it is visible from the admin/account screens.
+    /// Throws if SMTP sending itself throws, so the caller can decide whether to
+    /// requeue or dead-letter the message.
+    /// </summary>
+    Task HandleAsync(SendEmailMessage message, CancellationToken ct = default);
+}

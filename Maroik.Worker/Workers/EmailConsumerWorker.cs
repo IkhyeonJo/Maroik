@@ -1,0 +1,103 @@
+using System.Text.Json;
+using Maroik.Core.Contract.Messaging;
+using Maroik.Worker.Handlers;
+using RabbitMQ.Client;
+using RabbitMQ.Client.Events;
+
+namespace Maroik.Worker.Workers;
+
+/// <summary>
+/// Long-running consumer for the "maroik.email" queue.
+/// Connects to RabbitMQ, dequeues <see cref="SendEmailMessage"/> items, and delegates
+/// each one to a scoped <see cref="IEmailMessageHandler"/> (a new DI scope per message,
+/// since the handler depends on scoped services such as the EF Core DbContext).
+/// </summary>
+public sealed class EmailConsumerWorker : BackgroundService
+{
+    private readonly string _connectionString;
+    private readonly IServiceScopeFactory _scopeFactory;
+    private readonly ILogger<EmailConsumerWorker> _logger;
+
+    private IConnection? _connection;
+    private IChannel? _channel;
+
+    public EmailConsumerWorker(
+        IConfiguration configuration,
+        IServiceScopeFactory scopeFactory,
+        ILogger<EmailConsumerWorker> logger)
+    {
+        _connectionString = configuration.GetConnectionString("RabbitMQ") ?? "amqp://guest:guest@localhost:5672/";
+        _scopeFactory = scopeFactory;
+        _logger = logger;
+    }
+
+    protected override async Task ExecuteAsync(CancellationToken stoppingToken)
+    {
+        var factory = new ConnectionFactory { Uri = new Uri(_connectionString) };
+        _connection = await factory.CreateConnectionAsync(stoppingToken);
+        _channel = await _connection.CreateChannelAsync(cancellationToken: stoppingToken);
+
+        await _channel.QueueDeclareAsync(
+            queue: QueueNames.Email,
+            durable: true,
+            exclusive: false,
+            autoDelete: false,
+            cancellationToken: stoppingToken);
+
+        // Cap in-flight (unacked) messages per consumer so one slow SMTP send doesn't
+        // let unbounded messages pile up in memory.
+        await _channel.BasicQosAsync(prefetchSize: 0, prefetchCount: 10, global: false, cancellationToken: stoppingToken);
+
+        var consumer = new AsyncEventingBasicConsumer(_channel);
+        consumer.ReceivedAsync += OnMessageReceivedAsync;
+
+        await _channel.BasicConsumeAsync(
+            queue: QueueNames.Email,
+            autoAck: false,
+            consumer: consumer,
+            cancellationToken: stoppingToken);
+
+        _logger.LogInformation("Email consumer started, listening on queue '{Queue}'", QueueNames.Email);
+
+        try
+        {
+            await Task.Delay(Timeout.Infinite, stoppingToken);
+        }
+        catch (OperationCanceledException)
+        {
+            // Expected during graceful shutdown.
+        }
+    }
+
+    private async Task OnMessageReceivedAsync(object sender, BasicDeliverEventArgs ea)
+    {
+        try
+        {
+            SendEmailMessage message = JsonSerializer.Deserialize<SendEmailMessage>(ea.Body.Span)
+                ?? throw new InvalidOperationException("Deserialized email message was null");
+
+            await using AsyncServiceScope scope = _scopeFactory.CreateAsyncScope();
+            var handler = scope.ServiceProvider.GetRequiredService<IEmailMessageHandler>();
+            await handler.HandleAsync(message);
+
+            await _channel!.BasicAckAsync(ea.DeliveryTag, multiple: false);
+        }
+        catch (Exception ex)
+        {
+            // Poison message or unexpected failure: drop rather than requeue forever.
+            // A dead-letter exchange would be the next step if this needs to be inspected/retried.
+            _logger.LogError(ex, "Failed to process email message (delivery tag {DeliveryTag})", ea.DeliveryTag);
+            await _channel!.BasicNackAsync(ea.DeliveryTag, multiple: false, requeue: false);
+        }
+    }
+
+    public override async Task StopAsync(CancellationToken cancellationToken)
+    {
+        await base.StopAsync(cancellationToken);
+
+        if (_channel != null)
+            await _channel.DisposeAsync();
+        if (_connection != null)
+            await _connection.DisposeAsync();
+    }
+}

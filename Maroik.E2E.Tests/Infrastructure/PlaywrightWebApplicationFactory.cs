@@ -66,21 +66,21 @@ public sealed class PlaywrightWebApplicationFactory : WebApplicationFactory<Prog
                 ["Clamav:Port"] = "3310",
                 ["FileStorage:BaseUrl"] = "http://localhost:5001",
                 ["ConnectionStrings:DefaultConnection"] = "Host=localhost;Database=test;Username=test;Password=test",
-                ["ConnectionStrings:Redis"] = ""
+                ["ConnectionStrings:Valkey"] = ""
             }!);
         });
 
-        // -- Replace PostgreSQL with InMemory, Redis with in-memory distributed cache --------
+        // -- Replace PostgreSQL with InMemory, Valkey with in-memory distributed cache -------
         builder.ConfigureServices(services =>
         {
-            // Replace Redis distributed cache with in-memory so tests run without a Redis instance.
+            // Replace Valkey distributed cache with in-memory so tests run without a Valkey instance.
             var distributedCacheDescriptors = services
                 .Where(d => d.ServiceType == typeof(IDistributedCache))
                 .ToList();
             foreach (var d in distributedCacheDescriptors) services.Remove(d);
             services.AddDistributedMemoryCache();
 
-            // Replace Redis-backed Data Protection with ephemeral in-memory keys.
+            // Replace Valkey-backed Data Protection with ephemeral in-memory keys.
             services.AddDataProtection().UseEphemeralDataProtectionProvider();
 
             var dbOptionsDescriptor = services.SingleOrDefault(
