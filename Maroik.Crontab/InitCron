@@ -1,4 +1,4 @@
-0 * * * * /bin/bash /home/ubuntu/Maroik/Maroik.Crontab/DbBackup.sh
+0 * * * * /bin/bash /home/ubuntu/Maroik/Maroik.Crontab/DBBackup.sh
 0 * * * * /bin/bash /home/ubuntu/Maroik/Maroik.Crontab/UploadFileBackup.sh
 * * * * * /bin/bash /home/ubuntu/Maroik/Maroik.Crontab/ResourceInfo.sh
 0 3 * * * /bin/bash /home/ubuntu/Maroik/Maroik.Crontab/CertbotScript.sh renew
