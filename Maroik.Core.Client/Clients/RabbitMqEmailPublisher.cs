@@ -16,6 +16,7 @@ public sealed class RabbitMqEmailPublisher : IEmailPublisher, IAsyncDisposable
     private readonly SemaphoreSlim _connectionLock = new(1, 1);
     private IConnection? _connection;
 
+    /// <summary>Initializes a new instance of <see cref="RabbitMqEmailPublisher"/>. Does not open a connection yet.</summary>
     public RabbitMqEmailPublisher(string connectionString)
     {
         _factory = new ConnectionFactory { Uri = new Uri(connectionString) };
@@ -46,6 +47,11 @@ public sealed class RabbitMqEmailPublisher : IEmailPublisher, IAsyncDisposable
             cancellationToken: ct);
     }
 
+    /// <summary>
+    /// Returns the current AMQP connection, opening (or reopening, if it dropped) one under a
+    /// lock if necessary. Double-checked locking avoids taking the semaphore on the common path
+    /// where the connection is already open.
+    /// </summary>
     private async Task<IConnection> GetConnectionAsync(CancellationToken ct)
     {
         if (_connection is { IsOpen: true })
@@ -54,6 +60,7 @@ public sealed class RabbitMqEmailPublisher : IEmailPublisher, IAsyncDisposable
         await _connectionLock.WaitAsync(ct);
         try
         {
+            // Re-check inside the lock: another caller may have already reconnected while we waited.
             if (_connection is { IsOpen: true })
                 return _connection;
 

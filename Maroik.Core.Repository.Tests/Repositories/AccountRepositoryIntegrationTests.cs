@@ -22,6 +22,7 @@ public class AccountRepositoryIntegrationTests : IAsyncLifetime
     private ApplicationDbContext _context = null!;
     private AccountRepository _sut = null!;
 
+    /// <summary>Starts the Testcontainers PostgreSQL instance and creates the schema before each test.</summary>
     public async ValueTask InitializeAsync()
     {
         // Npgsql 9+ requires DateTimeKind.Unspecified for timestamp-without-timezone columns.
@@ -38,6 +39,7 @@ public class AccountRepositoryIntegrationTests : IAsyncLifetime
         _sut = new AccountRepository(_context);
     }
 
+    /// <summary>Disposes the database context and stops the PostgreSQL container after each test.</summary>
     public async ValueTask DisposeAsync()
     {
         await _context.DisposeAsync();

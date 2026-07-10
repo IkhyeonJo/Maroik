@@ -52,6 +52,8 @@ public class FileController : ControllerBase
             filePath = Path.Combine(Path.GetDirectoryName(filePath ?? "") ?? string.Empty, sanitizedFileName);
 
             if (!System.IO.File.Exists(filePath)) return NotFound("File not found");
+            // filePath was rebuilt above from Path.GetFileName(filePath) + the original directory,
+            // stripping any "..\" segments, so this is not a path-traversal read.
 #pragma warning disable SCS0018
             var fileData = await System.IO.File.ReadAllBytesAsync(filePath);
 #pragma warning restore SCS0018

@@ -17,6 +17,7 @@ public sealed class EmailMessageHandler : IEmailMessageHandler
     private readonly IOptions<ServerSetting> _settings;
     private readonly ILogger<EmailMessageHandler> _logger;
 
+    /// <summary>Initializes a new instance of <see cref="EmailMessageHandler"/> with the supplied dependencies.</summary>
     public EmailMessageHandler(
         IMailClient mailClient,
         IAccountRepository accountRepository,

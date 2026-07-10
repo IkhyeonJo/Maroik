@@ -13,6 +13,7 @@ namespace Maroik.Core.Repository.Repositories;
 public class BoardRepository(ApplicationDbContext context)
     : GenericRepository<Board, OrmBoard>(context), IBoardRepository
 {
+    /// <summary>The underlying <see cref="DbSet{TEntity}"/> for <see cref="OrmBoard"/> rows.</summary>
     protected override DbSet<OrmBoard> Set => Context.Boards;
 
     /// <inheritdoc />
@@ -30,10 +31,12 @@ public class BoardRepository(ApplicationDbContext context)
         return entity.Id;
     }
 
+    /// <summary>Maps a persisted <see cref="OrmBoard"/> row to the <see cref="Board"/> domain object.</summary>
     protected override Board ToDomain(OrmBoard e) => Board.Reconstitute(
         e.Id, e.Type ?? string.Empty, e.Title ?? string.Empty, e.Content,
         e.Writer ?? string.Empty, e.Created, e.Updated, e.View, e.Deleted, e.Locked, e.Noticed);
 
+    /// <summary>Maps a <see cref="Board"/> domain object to its <see cref="OrmBoard"/> persistence representation.</summary>
     protected override OrmBoard ToEntity(Board b) => new()
     {
         Id = b.Id,
@@ -49,9 +52,11 @@ public class BoardRepository(ApplicationDbContext context)
         Noticed = b.Noticed
     };
 
+    /// <inheritdoc />
     public Task<List<Board>> GetByTypeAsync(string type, CancellationToken ct = default)
         => QueryAsync(e => e.Type == type, ct: ct);
 
+    /// <inheritdoc />
     public Task<Board?> FindActiveByIdAsync(long id, CancellationToken ct = default)
         => QueryFirstAsync(e => e.Id == id && e.Deleted == false, ct);
 }

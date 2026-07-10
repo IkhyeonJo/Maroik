@@ -69,6 +69,8 @@ public class CalendarController : Controller
             if (!result.Success)
                 return Json(new { result = false, error = _localizer[result.ErrorKey ?? "Input is invalid"].Value });
 
+            // Strip fields the client doesn't need back (and shouldn't see echoed), keeping the
+            // JSON payload limited to what the calendar picker UI uses to render the new entry.
             tempCalendar.AccountEmail = null;
             tempCalendar.Description = null;
             tempCalendar.TimeZoneIanaId = null;
@@ -189,6 +191,8 @@ public class CalendarController : Controller
         List<CalendarResponse> calendars = await _calendarService.GetCalendarsAsync(loggedInAccount.Email!, HttpContext.RequestAborted);
         if (calendars.Count == 0)
         {
+            // First visit for this account: auto-provision a default personal calendar
+            // so the grid is never empty and events can be created immediately.
             await _calendarService.EnsureDefaultCalendarAsync(new CalendarRequest
             {
                 AccountEmail = loggedInAccount.Email!,
@@ -220,6 +224,7 @@ public class CalendarController : Controller
         List<CalendarResponse> calendars = await _calendarService.GetCalendarsAsync(loggedInAccount.Email!, HttpContext.RequestAborted);
         if (calendars.Count == 0)
         {
+            // Same first-visit provisioning as AdminIndex (see comment there).
             await _calendarService.EnsureDefaultCalendarAsync(new CalendarRequest
             {
                 AccountEmail = loggedInAccount.Email!,
@@ -553,6 +558,8 @@ public class CalendarController : Controller
             {
                 bool isOwned = ownedCalendars.Any(x => x.Id == inputCalendar.Id);
                 bool isOther = !isOwned && otherCalendars.Any(x => x.Id == inputCalendar.Id);
+                // Ignore any requested calendar the account doesn't own and isn't subscribed to,
+                // so a tampered request body can't be used to read another user's private events.
                 if (!isOwned && !isOther) continue;
 
                 string? calendarType = isOwned
@@ -584,6 +591,8 @@ public class CalendarController : Controller
         {
             List<CalendarResponse> calendars = (await _calendarService.GetCalendarsAsync(_sessionService.GetAccount()!.Email!, HttpContext.RequestAborted) ?? []).ToList();
 
+            // A CalendarShared row may not exist yet for calendars created before sharing was
+            // configured, so backfill one for each owned calendar before reading the list below.
             foreach (CalendarResponse calendar in calendars)
             {
                 await _calendarService.EnsureCalendarSharedAsync(calendar.Id, HttpContext.RequestAborted);

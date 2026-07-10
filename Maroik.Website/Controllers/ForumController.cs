@@ -360,9 +360,9 @@ public class ForumController : Controller
                 if (isAccountSessionExist)
                 {
                     AccountResponse loggedInAccount = _sessionService.GetAccount()!;
-                    if (loggedInAccount.Role == Role.Admin)
+                    if (loggedInAccount.Role == Role.Admin) // Administrator can search all posts, including locked ones
                         freeBoards = freeBoards.Where(a => (a.Title ?? "").Contains(searchText));
-                    else if (loggedInAccount.Role == Role.User)
+                    else if (loggedInAccount.Role == Role.User) // User can search regular posts plus their own locked posts
                     {
                         List<BoardResponse> searchFreeBoards = [];
                         searchFreeBoards.AddRange(freeBoards.Where(a => (a.Title ?? "").Contains(searchText)).Where(a => !a.Locked));
@@ -370,7 +370,7 @@ public class ForumController : Controller
                         freeBoards = searchFreeBoards;
                     }
                 }
-                else
+                else // When not logged in, locked posts should never appear in search results
                     freeBoards = freeBoards.Where(a => (a.Title ?? "").Contains(searchText)).Where(a => !a.Locked);
             }
             else if (searchType == "Writer" && !string.IsNullOrEmpty(searchText))

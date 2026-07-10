@@ -13,26 +13,33 @@ namespace Maroik.Core.Repository.Repositories;
 public class OtherCalendarRepository(ApplicationDbContext context)
     : GenericRepository<OtherCalendar, OrmOtherCalendar>(context), IOtherCalendarRepository
 {
+    /// <summary>The underlying <see cref="DbSet{TEntity}"/> for <see cref="OrmOtherCalendar"/> rows.</summary>
     protected override DbSet<OrmOtherCalendar> Set => Context.OtherCalendars;
 
+    /// <summary>Maps a persisted <see cref="OrmOtherCalendar"/> row to the <see cref="OtherCalendar"/> domain object.</summary>
     protected override OtherCalendar ToDomain(OrmOtherCalendar e)
         => OtherCalendar.Reconstitute(e.AccountEmail ?? string.Empty, e.CalendarId);
 
+    /// <summary>Maps an <see cref="OtherCalendar"/> domain object to its <see cref="OrmOtherCalendar"/> persistence representation.</summary>
     protected override OrmOtherCalendar ToEntity(OtherCalendar o) => new()
     {
         AccountEmail = o.AccountEmail.Value,
         CalendarId = o.CalendarId
     };
 
+    /// <inheritdoc />
     public Task<List<OtherCalendar>> GetByAccountEmailAsync(string email, CancellationToken ct = default)
         => QueryAsync(e => e.AccountEmail == email, ct: ct);
 
+    /// <inheritdoc />
     public Task<List<OtherCalendar>> GetAllAsync(CancellationToken ct = default)
         => QueryAllAsync(ct: ct);
 
+    /// <inheritdoc />
     public Task DeleteByAccountEmailAsync(string email, CancellationToken ct = default)
         => DeleteWhereAsync(e => e.AccountEmail == email, ct);
 
+    /// <inheritdoc />
     public Task DeleteByAccountEmailAndCalendarIdAsync(string email, long calendarId, CancellationToken ct = default)
         => DeleteWhereAsync(e => e.AccountEmail == email && e.CalendarId == calendarId, ct);
 }

@@ -13,6 +13,7 @@ namespace Maroik.Core.Repository.Repositories;
 public class BoardCommentRepository(ApplicationDbContext context)
     : GenericRepository<BoardComment, OrmBoardComment>(context), IBoardCommentRepository
 {
+    /// <summary>The underlying <see cref="DbSet{TEntity}"/> for <see cref="OrmBoardComment"/> rows.</summary>
     protected override DbSet<OrmBoardComment> Set => Context.BoardComments;
 
     /// <inheritdoc />
@@ -32,10 +33,12 @@ public class BoardCommentRepository(ApplicationDbContext context)
         return counts;
     }
 
+    /// <summary>Maps a persisted <see cref="OrmBoardComment"/> row to the <see cref="BoardComment"/> domain object.</summary>
     protected override BoardComment ToDomain(OrmBoardComment e) => BoardComment.Reconstitute(
         e.Id, e.BoardId, e.Order, e.AvatarImagePath, e.Writer ?? string.Empty,
         e.Content, e.Created, e.Deleted);
 
+    /// <summary>Maps a <see cref="BoardComment"/> domain object to its <see cref="OrmBoardComment"/> persistence representation.</summary>
     protected override OrmBoardComment ToEntity(BoardComment c) => new()
     {
         Id = c.Id,
@@ -48,9 +51,11 @@ public class BoardCommentRepository(ApplicationDbContext context)
         Deleted = c.Deleted
     };
 
+    /// <inheritdoc />
     public Task<List<BoardComment>> GetByBoardIdOrderedAsync(long boardId, CancellationToken ct = default)
         => QueryAsync(e => e.BoardId == boardId, q => q.OrderBy(e => e.Order), ct);
 
+    /// <inheritdoc />
     public Task<BoardComment?> FindByIdAsync(long id, CancellationToken ct = default)
         => QueryFirstAsync(e => e.Id == id, ct);
 }

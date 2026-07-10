@@ -13,6 +13,7 @@ namespace Maroik.Core.Repository.Repositories;
 public class CalendarEventRepository(ApplicationDbContext context)
     : GenericRepository<CalendarEvent, OrmCalendarEvent>(context), ICalendarEventRepository
 {
+    /// <summary>The underlying <see cref="DbSet{TEntity}"/> for <see cref="OrmCalendarEvent"/> rows.</summary>
     protected override DbSet<OrmCalendarEvent> Set => Context.CalendarEvents;
 
     /// <inheritdoc />
@@ -24,12 +25,14 @@ public class CalendarEventRepository(ApplicationDbContext context)
         return entity.Id;
     }
 
+    /// <summary>Maps a persisted <see cref="OrmCalendarEvent"/> row to the <see cref="CalendarEvent"/> domain object.</summary>
     protected override CalendarEvent ToDomain(OrmCalendarEvent e) => CalendarEvent.Reconstitute(
         e.Id, e.CalendarId, e.Title ?? string.Empty, e.Description,
         e.AllDay, e.StartDate, e.EndDate,
         e.StartDateTimeZoneIanaId, e.EndDateTimeZoneIanaId,
         e.Location, e.Status, e.RecurrenceId, e.Created, e.Updated);
 
+    /// <summary>Maps a <see cref="CalendarEvent"/> domain object to its <see cref="OrmCalendarEvent"/> persistence representation.</summary>
     protected override OrmCalendarEvent ToEntity(CalendarEvent ce) => new()
     {
         Id = ce.Id,
@@ -48,12 +51,15 @@ public class CalendarEventRepository(ApplicationDbContext context)
         Updated = ce.Updated
     };
 
+    /// <inheritdoc />
     public Task<List<CalendarEvent>> GetByCalendarIdAsync(long calendarId, CancellationToken ct = default)
         => QueryAsync(e => e.CalendarId == calendarId, ct: ct);
 
+    /// <inheritdoc />
     public Task<CalendarEvent?> FindByIdAsync(long id, CancellationToken ct = default)
         => QueryFirstAsync(e => e.Id == id, ct);
 
+    /// <inheritdoc />
     public Task DeleteByIdAsync(long id, CancellationToken ct = default)
         => DeleteWhereAsync(e => e.Id == id, ct);
 }

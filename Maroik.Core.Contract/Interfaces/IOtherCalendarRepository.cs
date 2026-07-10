@@ -1,10 +1,20 @@
 using Maroik.Core.Contract.Domains.Calendar;
 namespace Maroik.Core.Contract.Interfaces;
 
+/// <summary>
+/// Repository abstraction over <see cref="OtherCalendar"/> (subscribed shared-calendar) persistence.
+/// </summary>
 public interface IOtherCalendarRepository : IGenericRepository<OtherCalendar>
 {
+    /// <summary>Returns the calendars that the given account subscribes to from other users.</summary>
     Task<List<OtherCalendar>> GetByAccountEmailAsync(string email, CancellationToken ct = default);
+
+    /// <summary>Returns all other-calendar subscription rows.</summary>
     Task<List<OtherCalendar>> GetAllAsync(CancellationToken ct = default);
+
+    /// <summary>Deletes all subscription rows for the given account.</summary>
     Task DeleteByAccountEmailAsync(string email, CancellationToken ct = default);
+
+    /// <summary>Deletes the subscription row linking the given account to the given calendar.</summary>
     Task DeleteByAccountEmailAndCalendarIdAsync(string email, long calendarId, CancellationToken ct = default);
 }

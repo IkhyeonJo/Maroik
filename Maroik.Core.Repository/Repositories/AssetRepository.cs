@@ -13,6 +13,7 @@ namespace Maroik.Core.Repository.Repositories;
 public class AssetRepository(ApplicationDbContext context)
     : GenericRepository<Asset, OrmAsset>(context), IAssetRepository
 {
+    /// <summary>The underlying <see cref="DbSet{TEntity}"/> for <see cref="OrmAsset"/> rows.</summary>
     protected override DbSet<OrmAsset> Set => Context.Assets;
 
     /// <inheritdoc />
@@ -36,10 +37,12 @@ public class AssetRepository(ApplicationDbContext context)
              """, ct);
     }
 
+    /// <summary>Maps a persisted <see cref="OrmAsset"/> row to the <see cref="Asset"/> domain object.</summary>
     protected override Asset ToDomain(OrmAsset e) => Asset.Reconstitute(
         e.ProductName ?? string.Empty, e.AccountEmail ?? string.Empty, e.Item ?? string.Empty,
         e.Amount, e.MonetaryUnit ?? string.Empty, e.Note, e.Deleted, e.Created, e.Updated);
 
+    /// <summary>Maps an <see cref="Asset"/> domain object to its <see cref="OrmAsset"/> persistence representation.</summary>
     protected override OrmAsset ToEntity(Asset a) => new()
     {
         ProductName = a.ProductName,
@@ -53,9 +56,11 @@ public class AssetRepository(ApplicationDbContext context)
         Updated = a.Updated
     };
 
+    /// <inheritdoc />
     public Task<List<Asset>> GetByAccountEmailAsync(string accountEmail, CancellationToken ct = default)
         => QueryAsync(e => e.AccountEmail == accountEmail, ct: ct);
 
+    /// <inheritdoc />
     public Task<Asset?> FindByEmailAndProductNameAsync(string accountEmail, string productName, CancellationToken ct = default)
         => QueryFirstAsync(e => e.AccountEmail == accountEmail && e.ProductName == productName, ct);
 

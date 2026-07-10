@@ -507,6 +507,8 @@ try
     app.MapControllerRoute(
         name: "default",
         pattern: "{controller=Dashboard}/{action=AnonymousIndex}/{id?}");
+    // Must run immediately before MapStaticAssets so it can 403 role-restricted /admin and /user
+    // static file paths before the static file middleware gets a chance to serve them.
     app.UseMiddleware<RoleBasedStaticFileMiddleware>();
     app.MapStaticAssets();
 

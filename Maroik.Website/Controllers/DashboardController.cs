@@ -80,6 +80,8 @@ public class DashboardController : Controller
         string? email = loggedInAccount?.Email;
         string? timeZoneId = loggedInAccount?.TimeZoneIanaId;
 
+        // The public demo account always shows a fixed, pre-seeded period so visitors see
+        // consistent sample data regardless of when they browse the demo.
         if (email == "demo@maroik.com") { year = "2025"; month = "06"; }
 
         var summary = await _dashboardService.GetSummaryAsync(email!, year, month, timeZoneId!, ct);

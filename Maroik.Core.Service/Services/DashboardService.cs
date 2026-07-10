@@ -248,6 +248,12 @@ public class DashboardService : IDashboardService
         };
     }
 
+    /// <summary>
+    /// Extracts and trims the text between <paramref name="startMarker"/> and <paramref name="endMarker"/>
+    /// (or to the end of <paramref name="input"/> when <paramref name="endMarker"/> is omitted).
+    /// Returns an empty string when a marker is missing or any parsing error occurs, instead of throwing,
+    /// so a malformed resource log never breaks the whole summary.
+    /// </summary>
     private static string ExtractSection(string input, string startMarker, string? endMarker = null)
     {
         try

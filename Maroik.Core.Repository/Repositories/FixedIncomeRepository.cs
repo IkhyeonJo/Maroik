@@ -13,14 +13,19 @@ namespace Maroik.Core.Repository.Repositories;
 public class FixedIncomeRepository(ApplicationDbContext context)
     : GenericRepository<FixedIncome, OrmFixedIncome>(context), IFixedIncomeRepository
 {
+    /// <summary>The underlying <see cref="DbSet{TEntity}"/> for <see cref="OrmFixedIncome"/> rows.</summary>
     protected override DbSet<OrmFixedIncome> Set => Context.FixedIncomes;
 
+    /// <summary>Maps a persisted <see cref="OrmFixedIncome"/> row to the <see cref="FixedIncome"/> domain object.</summary>
     protected override FixedIncome ToDomain(OrmFixedIncome e) => FixedIncome.Reconstitute(
         e.Id, e.AccountEmail ?? string.Empty, e.MainClass ?? string.Empty,
+        // Currency is passed as string.Empty: this repository does not eager-load the Asset
+        // navigation property, so the monetary unit is not available here (see ExpenditureRepository for contrast).
         e.SubClass ?? string.Empty, e.Content, e.Amount, string.Empty,
         e.DepositMyAssetProductName ?? string.Empty, e.DepositMonth, e.DepositDay,
         e.MaturityDate, e.Note, e.Unpunctuality, e.Created, e.Updated);
 
+    /// <summary>Maps a <see cref="FixedIncome"/> domain object to its <see cref="OrmFixedIncome"/> persistence representation.</summary>
     protected override OrmFixedIncome ToEntity(FixedIncome fi) => new()
     {
         Id = fi.Id,
@@ -39,12 +44,15 @@ public class FixedIncomeRepository(ApplicationDbContext context)
         Updated = fi.Updated
     };
 
+    /// <inheritdoc />
     public Task<List<FixedIncome>> GetByAccountEmailAsync(string accountEmail, CancellationToken ct = default)
         => QueryAsync(e => e.AccountEmail == accountEmail, ct: ct);
 
+    /// <inheritdoc />
     public Task<FixedIncome?> FindByEmailAndIdAsync(string accountEmail, long id, CancellationToken ct = default)
         => QueryFirstAsync(e => e.AccountEmail == accountEmail && e.Id == id, ct);
 
+    /// <inheritdoc />
     public Task DeleteByIdAsync(long id, CancellationToken ct = default)
         => DeleteWhereAsync(e => e.Id == id, ct);
 }

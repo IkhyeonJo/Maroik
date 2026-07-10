@@ -21,6 +21,7 @@ public sealed class EmailConsumerWorker : BackgroundService
     private IConnection? _connection;
     private IChannel? _channel;
 
+    /// <summary>Initializes a new instance of <see cref="EmailConsumerWorker"/> with the supplied dependencies.</summary>
     public EmailConsumerWorker(
         IConfiguration configuration,
         IServiceScopeFactory scopeFactory,
@@ -31,6 +32,10 @@ public sealed class EmailConsumerWorker : BackgroundService
         _logger = logger;
     }
 
+    /// <summary>
+    /// Opens the RabbitMQ connection, declares the durable email queue, and starts consuming.
+    /// Runs for the lifetime of the host; returns only when <paramref name="stoppingToken"/> is cancelled.
+    /// </summary>
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
         var factory = new ConnectionFactory { Uri = new Uri(_connectionString) };
@@ -69,6 +74,11 @@ public sealed class EmailConsumerWorker : BackgroundService
         }
     }
 
+    /// <summary>
+    /// Deserializes and processes one delivered message in a fresh DI scope, then acks it.
+    /// Any failure (bad JSON, handler exception) nacks without requeue, so a single poison
+    /// message cannot block the queue forever.
+    /// </summary>
     private async Task OnMessageReceivedAsync(object sender, BasicDeliverEventArgs ea)
     {
         try
@@ -91,6 +101,7 @@ public sealed class EmailConsumerWorker : BackgroundService
         }
     }
 
+    /// <summary>Stops the base <see cref="BackgroundService"/> and releases the RabbitMQ channel and connection.</summary>
     public override async Task StopAsync(CancellationToken cancellationToken)
     {
         await base.StopAsync(cancellationToken);

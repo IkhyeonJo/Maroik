@@ -55,6 +55,8 @@ public class FileValidationService : IFileValidationService
         if (!Directory.Exists(safeDir))
             Directory.CreateDirectory(safeDir);
 
+        // safePath is built from Path.GetFileName(file.FileName) combined into safeDir above,
+        // so it cannot escape the target directory; suppress the path-traversal false positive.
 #pragma warning disable SCS0018
         await using var stream = new FileStream(safePath, FileMode.Create);
 #pragma warning restore SCS0018
@@ -67,6 +69,11 @@ public class FileValidationService : IFileValidationService
         return (true, null);
     }
 
+    /// <summary>
+    /// Checks the leading bytes of <paramref name="stream"/> against the known signature for
+    /// <paramref name="ext"/>, so a file cannot bypass validation merely by having a permitted extension
+    /// (e.g. an executable renamed to <c>.png</c>).
+    /// </summary>
     private static bool HasValidMagicBytes(Stream stream, string ext)
     {
         stream.Position = 0;
@@ -84,6 +91,10 @@ public class FileValidationService : IFileValidationService
         };
     }
 
+    /// <summary>
+    /// Returns <see langword="true"/> if any entry in the ZIP archive is password-protected.
+    /// Encrypted entries cannot be scanned by ClamAV, so such archives are rejected outright.
+    /// </summary>
     private static bool IsZipEncrypted(Stream stream)
     {
         stream.Position = 0;
@@ -99,11 +110,17 @@ public class FileValidationService : IFileValidationService
         return false;
     }
 
+    /// <summary>
+    /// Sets file mode 644 on the newly written file so it is world-readable by the web server
+    /// process serving downloads, regardless of the umask the container was created with.
+    /// </summary>
     private static async Task SetUnixPermissionsAsync(string filePath)
     {
         var chmod = new ProcessStartInfo
         {
             FileName = "/bin/chmod",
+            // filePath is server-constructed (safeDir + sanitized file name), not raw user input,
+            // so shelling out here is not a command-injection vector; suppress the scanner warning.
 #pragma warning disable SCS0001
             Arguments = $"644 \"{filePath}\"",
 #pragma warning restore SCS0001

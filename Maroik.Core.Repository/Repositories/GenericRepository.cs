@@ -5,37 +5,71 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Maroik.Core.Repository.Repositories;
 
+/// <summary>
+/// Base class for EF Core repositories, implementing the create/update operations of
+/// <see cref="IGenericRepository{TDomain}"/> and providing protected query/delete helpers shared
+/// by every concrete repository.
+/// </summary>
+/// <typeparam name="TDomain">The domain aggregate/entity type exposed to the rest of the application.</typeparam>
+/// <typeparam name="TEntity">The EF Core persistence model (table mapping) type in <see cref="Maroik.Core.PostgreSQL.Models"/>.</typeparam>
+/// <remarks>
+/// Subclasses must implement <see cref="Set"/>, <see cref="ToDomain"/>, and <see cref="ToEntity"/> to
+/// wire up the concrete <see cref="DbSet{TEntity}"/> and the domain/entity mapping in both directions,
+/// and may override <see cref="ApplyIncludes"/> to eager-load navigation properties needed by <see cref="ToDomain"/>.
+/// Because <see cref="ApplicationDbContext"/> disables change tracking and auto-detection by default,
+/// all mutations here go through explicit <see cref="Microsoft.EntityFrameworkCore.ChangeTracking.EntityEntry"/>
+/// state assignment rather than relying on tracked-entity mutation.
+/// </remarks>
 public abstract class GenericRepository<TDomain, TEntity> : IGenericRepository<TDomain>
     where TEntity : class
 {
     protected readonly ApplicationDbContext Context;
     protected GenericRepository(ApplicationDbContext context) => Context = context;
 
+    /// <summary>The concrete <see cref="DbSet{TEntity}"/> on <see cref="ApplicationDbContext"/> this repository operates on.</summary>
     protected abstract DbSet<TEntity> Set { get; }
+
+    /// <summary>Maps a persisted <typeparamref name="TEntity"/> row to the <typeparamref name="TDomain"/> domain object.</summary>
     protected abstract TDomain ToDomain(TEntity entity);
+
+    /// <summary>Maps a <typeparamref name="TDomain"/> domain object to its <typeparamref name="TEntity"/> persistence representation.</summary>
     protected abstract TEntity ToEntity(TDomain domain);
+
+    /// <summary>
+    /// Hook for subclasses to eager-load navigation properties (e.g. via <c>.Include(...)</c>) that
+    /// <see cref="ToDomain"/> needs. No-op by default.
+    /// </summary>
     protected virtual IQueryable<TEntity> ApplyIncludes(IQueryable<TEntity> query) => query;
 
+    /// <inheritdoc />
     public async Task CreateAsync(TDomain domain, CancellationToken ct = default)
     {
         _ = await Set.AddAsync(ToEntity(domain), ct);
         _ = await Context.SaveChangesAsync(ct);
     }
 
+    /// <inheritdoc />
     public async Task UpdateEntityAsync(TDomain domain, CancellationToken ct = default)
     {
         var newEntity = ToEntity(domain);
+        // The context's query tracking is disabled globally, so a freshly-mapped entity is always
+        // Detached. Look up the primary key reflectively (works for both simple and composite keys)
+        // to re-find the row via Set.FindAsync, which returns a tracked instance we can then overwrite.
         var pk = Context.Model.FindEntityType(typeof(TEntity))!.FindPrimaryKey()!.Properties;
         var keyValues = pk.Select(p => p.PropertyInfo!.GetValue(newEntity)).ToArray();
         var existing = await Set.FindAsync(keyValues, ct);
         if (existing is null) return;
         var entry = Context.Entry(existing);
         if (entry.State == EntityState.Detached) entry.State = EntityState.Unchanged;
+        // Copy all scalar values from the mapped domain object onto the tracked entity, then mark
+        // the whole entry Modified (rather than relying on AutoDetectChanges, which is disabled) so
+        // SaveChanges issues an UPDATE for every column.
         entry.CurrentValues.SetValues(newEntity);
         entry.State = EntityState.Modified;
         _ = await Context.SaveChangesAsync(ct);
     }
 
+    /// <summary>Runs <paramref name="predicate"/> (with optional <paramref name="orderBy"/>) and maps every matching row to <typeparamref name="TDomain"/>.</summary>
     protected async Task<List<TDomain>> QueryAsync(
         Expression<Func<TEntity, bool>> predicate,
         Func<IQueryable<TEntity>, IQueryable<TEntity>>? orderBy = null,
@@ -46,6 +80,7 @@ public abstract class GenericRepository<TDomain, TEntity> : IGenericRepository<T
         return (await query.ToListAsync(ct)).Select(ToDomain).ToList();
     }
 
+    /// <summary>Returns every row in <see cref="Set"/> (with optional <paramref name="orderBy"/>), mapped to <typeparamref name="TDomain"/>.</summary>
     protected async Task<List<TDomain>> QueryAllAsync(
         Func<IQueryable<TEntity>, IQueryable<TEntity>>? orderBy = null,
         CancellationToken ct = default)
@@ -55,6 +90,7 @@ public abstract class GenericRepository<TDomain, TEntity> : IGenericRepository<T
         return (await query.ToListAsync(ct)).Select(ToDomain).ToList();
     }
 
+    /// <summary>Returns the first row matching <paramref name="predicate"/> mapped to <typeparamref name="TDomain"/>, or <see langword="default"/> if none exists.</summary>
     protected async Task<TDomain?> QueryFirstAsync(
         Expression<Func<TEntity, bool>> predicate,
         CancellationToken ct = default)
@@ -63,10 +99,14 @@ public abstract class GenericRepository<TDomain, TEntity> : IGenericRepository<T
         return entity == null ? default : ToDomain(entity);
     }
 
+    /// <summary>Deletes every row matching <paramref name="predicate"/>.</summary>
     protected async Task DeleteWhereAsync(
         Expression<Func<TEntity, bool>> predicate,
         CancellationToken ct = default)
     {
+        // AsNoTracking() here is belt-and-suspenders (the context already defaults to no-tracking):
+        // it just identifies which rows to remove. Each match is then re-fetched via Set.FindAsync,
+        // which returns (or attaches) a tracked instance, since Set.Remove requires a tracked entity.
         var toRemove = await Set.AsNoTracking().Where(predicate).ToListAsync(ct);
         var pk = Context.Model.FindEntityType(typeof(TEntity))!.FindPrimaryKey()!.Properties;
         foreach (var entity in toRemove)
