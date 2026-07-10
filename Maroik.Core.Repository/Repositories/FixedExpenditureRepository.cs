@@ -9,6 +9,8 @@ namespace Maroik.Core.Repository.Repositories;
 /// <summary>
 /// EF Core repository for <see cref="FixedExpenditure"/> domain objects,
 /// representing recurring monthly expenditures with a scheduled deposit day.
+/// Always eager-loads the linked <see cref="OrmFixedExpenditure.Asset"/> so that the monetary unit
+/// is available without a separate query.
 /// </summary>
 public class FixedExpenditureRepository(ApplicationDbContext context)
     : GenericRepository<FixedExpenditure, OrmFixedExpenditure>(context), IFixedExpenditureRepository
@@ -16,12 +18,14 @@ public class FixedExpenditureRepository(ApplicationDbContext context)
     /// <summary>The underlying <see cref="DbSet{TEntity}"/> for <see cref="OrmFixedExpenditure"/> rows.</summary>
     protected override DbSet<OrmFixedExpenditure> Set => Context.FixedExpenditures;
 
+    // Always join the Asset navigation property so query results carry the monetary unit.
+    protected override IQueryable<OrmFixedExpenditure> ApplyIncludes(IQueryable<OrmFixedExpenditure> query)
+        => query.Include(x => x.Asset);
+
     /// <summary>Maps a persisted <see cref="OrmFixedExpenditure"/> row to the <see cref="FixedExpenditure"/> domain object.</summary>
     protected override FixedExpenditure ToDomain(OrmFixedExpenditure e) => FixedExpenditure.Reconstitute(
         e.Id, e.AccountEmail ?? string.Empty, e.MainClass ?? string.Empty,
-        // Currency is passed as string.Empty: unlike ExpenditureRepository, this repository does not
-        // eager-load the Asset navigation property, so the monetary unit is not available here.
-        e.SubClass ?? string.Empty, e.Content, e.Amount, string.Empty,
+        e.SubClass ?? string.Empty, e.Content, e.Amount, e.Asset?.MonetaryUnit ?? string.Empty,
         e.PaymentMethod ?? string.Empty, e.MyDepositAsset, e.DepositMonth, e.DepositDay,
         e.MaturityDate, e.Note, e.Unpunctuality, e.Created, e.Updated);
 

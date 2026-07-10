@@ -57,6 +57,13 @@ public class FixedIncomeRepositoryTests : IDisposable
     [Fact]
     public async Task GetFixedIncomesAsync_ReturnsOnlyItemsForGivenEmail()
     {
+        // FixedIncomeRepository eager-loads Asset (required relationship), so a matching Asset row
+        // must exist for the InMemory provider to return the FixedIncome rows via Include.
+        await _context.Assets.AddRangeAsync(
+            new Maroik.Core.PostgreSQL.Models.Asset { ProductName = "BankAccount", AccountEmail = "alice@example.com", Item = "Bank", MonetaryUnit = "KRW", Amount = 0, Created = DateTime.UtcNow, Updated = DateTime.UtcNow },
+            new Maroik.Core.PostgreSQL.Models.Asset { ProductName = "BankAccount", AccountEmail = "bob@example.com", Item = "Bank", MonetaryUnit = "KRW", Amount = 0, Created = DateTime.UtcNow, Updated = DateTime.UtcNow });
+        await _context.SaveChangesAsync(TestContext.Current.CancellationToken);
+
         await SeedAsync(
             MakeFixedIncome("alice@example.com", "Salary"),
             MakeFixedIncome("alice@example.com", "Side job"),

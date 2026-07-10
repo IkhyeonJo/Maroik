@@ -57,7 +57,7 @@ public class ForumFlowTests : E2ETestBase
     {
         var page = await NewPageAsync();
 
-        // Navigate to write mode ?? without a session the controller redirects to Login
+        // Navigate to write mode — without a session the controller redirects to Login
         await GotoAsync(page, "/Forum/FreeForum?method=write");
 
         // After following the redirect, the page URL should contain "Login"

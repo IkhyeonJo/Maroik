@@ -8,7 +8,7 @@ namespace Maroik.E2E.Tests.Flows;
 ///
 /// Each test launches headless Chromium via Playwright against the real Kestrel server
 /// started by <see cref="PlaywrightWebApplicationFactory"/>.  Tests verify that the
-/// correct HTML elements are present on the page ?? no form submission is made
+/// correct HTML elements are present on the page — no form submission is made
 /// (POST requires a real DB and SMTP server).
 /// </summary>
 [Collection("E2E")]
@@ -76,7 +76,7 @@ public class AccountFlowTests : E2ETestBase
         var page = await NewPageAsync();
         await GotoAsync(page, "/Account/ConsentForm");
 
-        // Page loaded successfully ?? body element must have content
+        // Page loaded successfully — body element must have content
         string bodyText = await page.Locator("body").InnerTextAsync();
         Assert.False(string.IsNullOrWhiteSpace(bodyText));
     }
@@ -143,7 +143,7 @@ public class AccountFlowTests : E2ETestBase
         await GotoAsync(page, "/Account/Logout");
 
         // RedirectToAction("AnonymousIndex","Dashboard") produces "/" because those are
-        // the default-route defaults ?? the URL generator picks the shortest path.
+        // the default-route defaults — the URL generator picks the shortest path.
         // Verify the page loaded by checking that the body is non-empty.
         string bodyText = await page.Locator("body").InnerTextAsync();
         Assert.False(string.IsNullOrWhiteSpace(bodyText));

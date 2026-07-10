@@ -8,6 +8,8 @@ namespace Maroik.Core.Repository.Repositories;
 
 /// <summary>
 /// EF Core repository for <see cref="Income"/> domain objects.
+/// Always eager-loads the linked <see cref="OrmIncome.Asset"/> so that the monetary unit
+/// is available without a separate query.
 /// </summary>
 public class IncomeRepository(ApplicationDbContext context)
     : GenericRepository<Income, OrmIncome>(context), IIncomeRepository
@@ -15,12 +17,14 @@ public class IncomeRepository(ApplicationDbContext context)
     /// <summary>The underlying <see cref="DbSet{TEntity}"/> for <see cref="OrmIncome"/> rows.</summary>
     protected override DbSet<OrmIncome> Set => Context.Incomes;
 
+    // Always join the Asset navigation property so query results carry the monetary unit.
+    protected override IQueryable<OrmIncome> ApplyIncludes(IQueryable<OrmIncome> query)
+        => query.Include(x => x.Asset);
+
     /// <summary>Maps a persisted <see cref="OrmIncome"/> row to the <see cref="Income"/> domain object.</summary>
     protected override Income ToDomain(OrmIncome e) => Income.Reconstitute(
         e.Id, e.AccountEmail ?? string.Empty, e.MainClass ?? string.Empty,
-        // Currency is passed as string.Empty: this repository does not eager-load the Asset
-        // navigation property, so the monetary unit is not available here (see ExpenditureRepository for contrast).
-        e.SubClass ?? string.Empty, e.Content, e.Amount, string.Empty,
+        e.SubClass ?? string.Empty, e.Content, e.Amount, e.Asset?.MonetaryUnit ?? string.Empty,
         e.DepositMyAssetProductName ?? string.Empty, e.Note, e.Created, e.Updated);
 
     /// <summary>Maps an <see cref="Income"/> domain object to its <see cref="OrmIncome"/> persistence representation.</summary>
