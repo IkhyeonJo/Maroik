@@ -26,7 +26,7 @@ public class BoardAttachedFileRepository(ApplicationDbContext context)
 
         return ids.ToDictionary(
             id => id,
-            id => (BoardAttachedFile?)(files.FirstOrDefault(f => f.BoardId == id) is { } f ? ToDomain(f) : null));
+            id => files.FirstOrDefault(file => file.BoardId == id) is { } f ? ToDomain(f) : null);
     }
 
     /// <summary>Maps a persisted <see cref="OrmFile"/> row to the <see cref="BoardAttachedFile"/> domain object.</summary>

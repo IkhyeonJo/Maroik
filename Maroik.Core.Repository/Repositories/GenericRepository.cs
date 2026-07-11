@@ -20,11 +20,10 @@ namespace Maroik.Core.Repository.Repositories;
 /// all mutations here go through explicit <see cref="Microsoft.EntityFrameworkCore.ChangeTracking.EntityEntry"/>
 /// state assignment rather than relying on tracked-entity mutation.
 /// </remarks>
-public abstract class GenericRepository<TDomain, TEntity> : IGenericRepository<TDomain>
+public abstract class GenericRepository<TDomain, TEntity>(ApplicationDbContext context) : IGenericRepository<TDomain>
     where TEntity : class
 {
-    protected readonly ApplicationDbContext Context;
-    protected GenericRepository(ApplicationDbContext context) => Context = context;
+    protected readonly ApplicationDbContext Context = context;
 
     /// <summary>The concrete <see cref="DbSet{TEntity}"/> on <see cref="ApplicationDbContext"/> this repository operates on.</summary>
     protected abstract DbSet<TEntity> Set { get; }
@@ -109,9 +108,8 @@ public abstract class GenericRepository<TDomain, TEntity> : IGenericRepository<T
         // which returns (or attaches) a tracked instance, since Set.Remove requires a tracked entity.
         var toRemove = await Set.AsNoTracking().Where(predicate).ToListAsync(ct);
         var pk = Context.Model.FindEntityType(typeof(TEntity))!.FindPrimaryKey()!.Properties;
-        foreach (var entity in toRemove)
+        foreach (var keyValues in toRemove.Select(entity => pk.Select(p => p.PropertyInfo!.GetValue(entity)).ToArray()))
         {
-            var keyValues = pk.Select(p => p.PropertyInfo!.GetValue(entity)).ToArray();
             var tracked = await Set.FindAsync(keyValues, ct);
             if (tracked is not null) Set.Remove(tracked);
         }
