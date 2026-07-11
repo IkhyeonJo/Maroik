@@ -61,9 +61,10 @@ public sealed class BoardComment : Entity<long>
         DateTime created,
         bool deleted)
     {
-        var comment = new BoardComment(id, boardId, order, avatarImagePath, writer, content);
-        comment.Created = created;
-        comment.Deleted = deleted;
+        var comment = new BoardComment(id, boardId, order, avatarImagePath, writer, content)
+        {
+            Created = created, Deleted = deleted
+        };
         return comment;
     }
 

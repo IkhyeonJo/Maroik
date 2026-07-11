@@ -23,7 +23,7 @@ public sealed class TimeZoneId : ValueObject
 
     /// <summary>
     /// Creates a <see cref="TimeZoneId"/>, confirming the string maps to a known zone on the host.
-    /// Returns a validation error when the ID is null, empty, or unrecognised.
+    /// Returns a validation error when the ID is null, empty, or unrecognized.
     /// </summary>
     public static ErrorOr<TimeZoneId> Create(string? value)
     {
@@ -43,7 +43,7 @@ public sealed class TimeZoneId : ValueObject
     }
 
     /// <inheritdoc/>
-    public override IEnumerable<object?> GetAtomicValues() { yield return Value; }
+    protected override IEnumerable<object?> GetAtomicValues() { yield return Value; }
 
     /// <inheritdoc/>
     public override string ToString() => Value;

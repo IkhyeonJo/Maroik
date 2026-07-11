@@ -114,15 +114,13 @@ public sealed class CalendarEvent : AggregateRoot<long>
     {
         var calendarEvent = new CalendarEvent(
             id, calendarId, title, description, allDay,
-            startDate, endDate, startTz, endTz, location, status, recurrenceId);
+            startDate, endDate, startTz, endTz, location, status, recurrenceId) { Created = created, Updated = updated };
 
-        calendarEvent.Created = created;
-        calendarEvent.Updated = updated;
         return calendarEvent;
     }
 
     /// <summary>
-    /// Creates a new calendar event and raises <see cref="CalendarEventAddedEvent"/>.
+    /// Creates a new calendar event.
     /// </summary>
     public static ErrorOr<CalendarEvent> Create(
         long calendarId,

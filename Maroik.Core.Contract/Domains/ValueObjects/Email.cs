@@ -5,12 +5,12 @@ using Maroik.Core.Contract.Domains.Primitives;
 namespace Maroik.Core.Contract.Domains.ValueObjects;
 
 /// <summary>
-/// Value object that represents a validated, normalised email address.
+/// Value object that represents a validated, normalized email address.
 /// Always stored in lower-case.
 /// </summary>
 public sealed class Email : ValueObject
 {
-    /// <summary>The normalised (lower-case) email address string.</summary>
+    /// <summary>The normalized (lower-case) email address string.</summary>
     public string Value { get; }
 
     private Email(string value) => Value = value;
@@ -61,7 +61,7 @@ public sealed class Email : ValueObject
     }
 
     /// <inheritdoc/>
-    public override IEnumerable<object?> GetAtomicValues() { yield return Value; }
+    protected override IEnumerable<object?> GetAtomicValues() { yield return Value; }
 
     /// <inheritdoc/>
     public override string ToString() => Value;

@@ -66,6 +66,7 @@ public sealed class SubCategory : Entity<long>
         return new SubCategory(id, categoryId, name, displayName, iconPath, action, role, order);
     }
 
+/*
     /// <summary>Updates the mutable fields of this sub-category.</summary>
     public ErrorOr<SubCategory> Update(
         long categoryId, string? name, string? displayName,
@@ -83,4 +84,5 @@ public sealed class SubCategory : Entity<long>
         Order = order;
         return this;
     }
+*/
 }

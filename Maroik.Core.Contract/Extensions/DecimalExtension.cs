@@ -1,3 +1,5 @@
+using System.Globalization;
+
 namespace Maroik.Core.Contract.Extensions;
 
 /// <summary>
@@ -16,11 +18,11 @@ public static class DecimalExtension
         try
         {
             // If the value is a whole number, cast to int to avoid ".0" suffix
-            return value % 1 == 0 ? ((int)value).ToString() : value.ToString().TrimEnd('0').TrimEnd('.');
+            return value % 1 == 0 ? ((int)value).ToString() : value.ToString(CultureInfo.InvariantCulture).TrimEnd('0').TrimEnd('.');
         }
         catch
         {
-            return default(decimal).ToString();
+            return default(decimal).ToString(CultureInfo.InvariantCulture);
         }
     }
 

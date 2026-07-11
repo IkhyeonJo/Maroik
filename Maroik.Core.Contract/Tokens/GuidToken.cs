@@ -4,7 +4,7 @@ namespace Maroik.Core.Contract.Tokens;
 /// Utility class for generating and validating time-stamped tokens used in
 /// email confirmation and password-reset flows. Tokens expire after 24 hours.
 /// </summary>
-public class GuidToken
+public static class GuidToken
 {
     /// <summary>
     /// Generates a Base64-encoded token that embeds the current UTC timestamp
@@ -43,13 +43,8 @@ public class GuidToken
         byte[] data = Convert.FromBase64String(token);
         DateTime when = DateTime.FromBinary(BitConverter.ToInt64(data, 0));
 
-        if (when < DateTime.UtcNow.AddHours(-24))
-        {
-            return false; // token has expired
-        }
-        else
-        {
-            return true; // token is still valid
-        }
+        return when >= DateTime.UtcNow.AddHours(-24);
+        // token has expired
+        // token is still valid
     }
 }

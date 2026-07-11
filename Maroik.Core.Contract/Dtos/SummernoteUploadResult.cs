@@ -8,22 +8,22 @@ namespace Maroik.Core.Contract.Dtos;
 public class SummernoteUploadResult
 {
     /// <summary>True when the file was validated and stored successfully.</summary>
-    public bool Success { get; init; }
+    public bool Success { get; private init; }
 
     /// <summary>Raw file bytes, used to serve the image back to the editor on success.</summary>
-    public byte[]? FileBytes { get; init; }
+    public byte[]? FileBytes { get; private init; }
 
     /// <summary>MIME content type of the uploaded file (e.g. "image/png").</summary>
-    public string? ContentType { get; init; }
+    public string? ContentType { get; private init; }
 
     /// <summary>Sanitised original file name.</summary>
-    public string? FileName { get; init; }
+    public string? FileName { get; private init; }
 
     /// <summary>Server-side storage path where the file was saved.</summary>
-    public string? FilePath { get; init; }
+    public string? FilePath { get; private init; }
 
     /// <summary>Localization key describing the error (null on success).</summary>
-    public string? ErrorKey { get; init; }
+    public string? ErrorKey { get; private init; }
 
     /// <summary>Creates a successful upload result with the stored file data.</summary>
     public static SummernoteUploadResult Ok(byte[] fileBytes, string contentType, string fileName, string filePath)

@@ -5,13 +5,11 @@ namespace Maroik.Core.Contract.Domains.Primitives;
 /// Entities have a persistent identity — equality is determined by <typeparamref name="TId"/>, not by field values.
 /// </summary>
 /// <typeparam name="TId">Type of the entity's primary key.</typeparam>
-public abstract class Entity<TId> : IEquatable<Entity<TId>>
+public abstract class Entity<TId>(TId id) : IEquatable<Entity<TId>>
     where TId : notnull
 {
     /// <summary>Primary key that uniquely identifies this entity.</summary>
-    public TId Id { get; protected set; }
-
-    protected Entity(TId id) => Id = id;
+    public TId Id { get; } = id;
 
     /// <inheritdoc/>
     public bool Equals(Entity<TId>? other) =>

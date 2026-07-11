@@ -3,11 +3,11 @@ using System.Text.RegularExpressions;
 namespace Maroik.Core.Contract.Policies;
 
 /// <summary>
-/// Centralises the password-complexity rule used across the application.
+/// Centralizes the password-complexity rule used across the application.
 /// Rule: at least 8 characters, meeting 3 of 4 criteria —
 /// uppercase (A-Z), lowercase (a-z), digit (0-9), special character.
 /// </summary>
-public static class PasswordPolicy
+public static partial class PasswordPolicy
 {
     /// <summary>
     /// Regex pattern for the password complexity rule.
@@ -17,9 +17,11 @@ public static class PasswordPolicy
     public const string Pattern =
         @"^((?=.*?[A-Z])(?=.*?[a-z])(?=.*?[0-9])|(?=.*?[A-Z])(?=.*?[a-z])(?=.*?[^a-zA-Z0-9])|(?=.*?[A-Z])(?=.*?[0-9])(?=.*?[^a-zA-Z0-9])|(?=.*?[a-z])(?=.*?[0-9])(?=.*?[^a-zA-Z0-9])).{8,}$";
 
-    private static readonly Regex CompiledRegex = new(Pattern, RegexOptions.Compiled);
+    private static readonly Regex _compiledRegex = MyRegex();
 
     /// <summary>Returns <c>true</c> when <paramref name="password"/> satisfies the complexity rule.</summary>
     public static bool IsValid(string? password) =>
-        !string.IsNullOrEmpty(password) && CompiledRegex.IsMatch(password);
+        !string.IsNullOrEmpty(password) && _compiledRegex.IsMatch(password);
+    [GeneratedRegex(Pattern, RegexOptions.Compiled)]
+    private static partial Regex MyRegex();
 }

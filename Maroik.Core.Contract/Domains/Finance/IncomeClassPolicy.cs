@@ -4,14 +4,14 @@ namespace Maroik.Core.Contract.Domains.Finance;
 
 /// <summary>
 /// Domain policy that validates income main/sub-class combinations.
-/// Returns <see cref="Result.Success"/> when the combination is recognised,
+/// Returns <see cref="Result.Success"/> when the combination is recognized,
 /// or a validation error when it is not.
 /// </summary>
 public static class IncomeClassPolicy
 {
     /// <summary>
     /// Validates <paramref name="mainClass"/> / <paramref name="subClass"/>.
-    /// Returns a validation error if the combination is not recognised.
+    /// Returns a validation error if the combination is not recognized.
     /// </summary>
     public static ErrorOr<Success> Validate(string? mainClass, string? subClass) => mainClass switch
     {

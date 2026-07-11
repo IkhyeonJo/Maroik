@@ -64,7 +64,7 @@ public sealed class Money : ValueObject
     }
 
     /// <inheritdoc/>
-    public override IEnumerable<object?> GetAtomicValues()
+    protected override IEnumerable<object?> GetAtomicValues()
     {
         yield return Amount;
         yield return Currency;

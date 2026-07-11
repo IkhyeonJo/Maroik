@@ -113,16 +113,13 @@ public sealed class FixedIncome : AggregateRoot<long>
             depositMonth,
             depositDay,
             maturityDate,
-            note);
+            note) { Unpunctuality = unpunctuality, Created = created, Updated = updated };
 
-        fi.Unpunctuality = unpunctuality;
-        fi.Created = created;
-        fi.Updated = updated;
         return fi;
     }
 
     /// <summary>
-    /// Registers a new fixed income and raises <see cref="FixedIncomeRegisteredEvent"/>.
+    /// Registers a new fixed income.
     /// </summary>
     public static ErrorOr<FixedIncome> Register(
         string? accountEmailValue,

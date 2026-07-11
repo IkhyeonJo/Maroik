@@ -38,7 +38,4 @@ public sealed class CalendarShared : Entity<long>
         Anonymous = anonymous;
         return this;
     }
-
-    /// <summary>True when the calendar is accessible by at least one audience.</summary>
-    public bool IsShared => User || Anonymous;
 }

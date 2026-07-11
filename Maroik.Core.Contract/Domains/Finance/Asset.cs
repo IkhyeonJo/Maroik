@@ -73,17 +73,16 @@ public sealed class Asset : AggregateRoot<(string ProductName, string AccountEma
             productName,
             Email.FromTrustedSource(accountEmail),
             item,
-            Money.FromTrustedSource(amount, monetaryUnit));
+            Money.FromTrustedSource(amount, monetaryUnit))
+        {
+            Note = note, Deleted = deleted, Created = created, Updated = updated
+        };
 
-        asset.Note = note;
-        asset.Deleted = deleted;
-        asset.Created = created;
-        asset.Updated = updated;
         return asset;
     }
 
     /// <summary>
-    /// Registers a new asset and raises <see cref="AssetCreatedEvent"/>.
+    /// Registers a new asset.
     /// </summary>
     public static ErrorOr<Asset> Create(
         string? productName,

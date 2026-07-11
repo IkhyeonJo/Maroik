@@ -1,3 +1,5 @@
+// ReSharper disable PropertyCanBeMadeInitOnly.Global
+// ReSharper disable UnusedAutoPropertyAccessor.Global
 namespace Maroik.Core.Contract.Dtos;
 
 /// <summary>
@@ -39,18 +41,9 @@ public class FixedExpenditureRequest
     /// <summary>Date when the recurring charge ends (contract or subscription expiry date).</summary>
     public DateTime MaturityDate { get; set; }
 
-    /// <summary>UTC timestamp when the record was created.</summary>
-    public DateTime Created { get; set; }
-
-    /// <summary>UTC timestamp of the most recent update.</summary>
-    public DateTime Updated { get; set; }
-
     /// <summary>Optional free-text note.</summary>
     public string? Note { get; set; }
 
     /// <summary>When true, the charge was not made on the scheduled day (payment was late or missed).</summary>
     public bool Unpunctuality { get; set; }
-
-    /// <summary>Currency code (e.g. "KRW", "USD"). Derived from the payment-method asset.</summary>
-    public string? MonetaryUnit { get; set; }
 }

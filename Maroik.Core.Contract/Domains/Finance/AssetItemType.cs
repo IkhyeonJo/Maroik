@@ -1,3 +1,4 @@
+// ReSharper disable UnusedMember.Global
 namespace Maroik.Core.Contract.Domains.Finance;
 
 /// <summary>Recognised asset category values for the <see cref="Asset"/> aggregate.</summary>

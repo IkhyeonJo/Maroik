@@ -96,15 +96,13 @@ public sealed class Expenditure : AggregateRoot<long>
             Money.FromTrustedSource(amount, monetaryUnit),
             paymentMethod,
             myDepositAsset,
-            note);
+            note) { Created = created, Updated = updated };
 
-        expenditure.Created = created;
-        expenditure.Updated = updated;
         return expenditure;
     }
 
     /// <summary>
-    /// Records a new expenditure and raises <see cref="ExpenditureRecordedEvent"/>.
+    /// Records a new expenditure.
     /// </summary>
     public static ErrorOr<Expenditure> Record(
         string? accountEmailValue,

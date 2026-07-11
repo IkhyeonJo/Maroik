@@ -15,6 +15,6 @@ public interface IFixedExpenditureRepository : IGenericRepository<FixedExpenditu
     /// <summary>Deletes the fixed expenditure record with the given ID.</summary>
     Task DeleteByIdAsync(long id, CancellationToken ct = default);
 
-    /// <summary>Renames the deposit-asset reference on all of the account's fixed expenditure records (cascades an asset product-name change).</summary>
+    /// <summary>Renames the deposit-asset reference on all accounts fixed expenditure records (cascades an asset product-name change).</summary>
     Task UpdateMyDepositAssetNameAsync(string accountEmail, string oldName, string newName, CancellationToken ct = default);
 }

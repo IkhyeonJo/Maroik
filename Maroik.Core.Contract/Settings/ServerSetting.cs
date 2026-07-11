@@ -1,3 +1,5 @@
+// ReSharper disable PropertyCanBeMadeInitOnly.Global
+// ReSharper disable UnusedAutoPropertyAccessor.Global
 using Maroik.Core.Contract.Enums;
 
 namespace Maroik.Core.Contract.Settings;
@@ -11,7 +13,7 @@ public class ServerSetting
     /// <summary>Public-facing base URL of the application (e.g. "https://maroik.com/"). Used to build email links.</summary>
     public string? DomainName { get; set; }
 
-    /// <summary>SMTP login user name (typically the sender email address).</summary>
+    /// <summary>SMTP login username (typically the sender email address).</summary>
     public string? SmtpUserName { get; set; }
 
     /// <summary>SMTP login password.</summary>
@@ -26,7 +28,7 @@ public class ServerSetting
     /// <summary>Whether the SMTP connection requires SSL/TLS.</summary>
     public bool SmtpSsl { get; set; }
 
-    /// <summary>Email address shown in the From header of outgoing emails.</summary>
+    /// <summary>Email address shown in the form header of outgoing emails.</summary>
     public string? FromEmail { get; set; }
 
     /// <summary>Display name shown next to the From address in outgoing emails.</summary>

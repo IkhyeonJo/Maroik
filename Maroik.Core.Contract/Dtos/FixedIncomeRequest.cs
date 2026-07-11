@@ -1,3 +1,5 @@
+// ReSharper disable PropertyCanBeMadeInitOnly.Global
+// ReSharper disable UnusedAutoPropertyAccessor.Global
 namespace Maroik.Core.Contract.Dtos;
 
 /// <summary>
@@ -36,18 +38,9 @@ public class FixedIncomeRequest
     /// <summary>Date when the recurring income ends (e.g. contract end date).</summary>
     public DateTime MaturityDate { get; set; }
 
-    /// <summary>UTC timestamp when the record was created.</summary>
-    public DateTime Created { get; set; }
-
-    /// <summary>UTC timestamp of the most recent update.</summary>
-    public DateTime Updated { get; set; }
-
     /// <summary>Optional free-text note.</summary>
     public string? Note { get; set; }
 
     /// <summary>When true, the income was not received on the scheduled day.</summary>
     public bool Unpunctuality { get; set; }
-
-    /// <summary>Currency code (e.g. "KRW", "USD"). Derived from the deposit asset.</summary>
-    public string? MonetaryUnit { get; set; }
 }

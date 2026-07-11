@@ -8,7 +8,7 @@ namespace Maroik.Core.Contract.Domains.Primitives;
 public abstract class ValueObject : IEquatable<ValueObject>
 {
     /// <summary>Returns the values that define equality for this value object.</summary>
-    public abstract IEnumerable<object?> GetAtomicValues();
+    protected abstract IEnumerable<object?> GetAtomicValues();
 
     /// <inheritdoc/>
     public bool Equals(ValueObject? other)
@@ -25,7 +25,7 @@ public abstract class ValueObject : IEquatable<ValueObject>
     /// <inheritdoc/>
     public override int GetHashCode() =>
         GetAtomicValues().Aggregate(
-            default(int),
+            0,
             (hash, value) => HashCode.Combine(hash, value?.GetHashCode() ?? 0));
 
     /// <summary>Returns true when both value objects have the same atomic values.</summary>

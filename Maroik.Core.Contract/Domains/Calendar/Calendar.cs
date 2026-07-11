@@ -25,7 +25,7 @@ public sealed class Calendar : AggregateRoot<long>
     /// <summary>Default IANA time-zone for events in this calendar.</summary>
     public TimeZoneId TimeZone { get; private set; }
 
-    /// <summary>HTML colour code used to visually distinguish this calendar (e.g. "#FF5733").</summary>
+    /// <summary>HTML color code used to visually distinguish this calendar (e.g. "#FF5733").</summary>
     public HtmlColorCode ColorCode { get; private set; }
 
     /// <summary>UTC timestamp when the calendar was created.</summary>
@@ -82,15 +82,13 @@ public sealed class Calendar : AggregateRoot<long>
             name,
             description,
             TimeZoneId.FromTrustedSource(timeZoneIanaId),
-            HtmlColorCode.FromTrustedSource(htmlColorCode));
+            HtmlColorCode.FromTrustedSource(htmlColorCode)) { Created = created, Updated = updated };
 
-        calendar.Created = created;
-        calendar.Updated = updated;
         return calendar;
     }
 
     /// <summary>
-    /// Creates a new calendar and raises <see cref="CalendarCreatedEvent"/>.
+    /// Creates a new calendar.
     /// </summary>
     public static ErrorOr<Calendar> Create(
         string? accountEmailValue,
@@ -145,12 +143,10 @@ public sealed class Calendar : AggregateRoot<long>
 
     /// <summary>
     /// Updates the sharing permissions for this calendar.
-    /// Raises <see cref="CalendarSharedEvent"/>.
     /// </summary>
     public void UpdateSharing(bool sharedWithUsers, bool sharedWithAnonymous)
     {
-        if (Shared is null)
-            Shared = CalendarShared.CreatePrivate(Id);
+        Shared ??= CalendarShared.CreatePrivate(Id);
 
         Shared.Update(sharedWithUsers, sharedWithAnonymous);
         Updated = DateTime.UtcNow;

@@ -1,3 +1,5 @@
+// ReSharper disable PropertyCanBeMadeInitOnly.Global
+// ReSharper disable UnusedAutoPropertyAccessor.Global
 namespace Maroik.Core.Contract.Dtos;
 
 /// <summary>
@@ -29,12 +31,6 @@ public class IncomeRequest
     /// <summary>UTC timestamp when the income was recorded.</summary>
     public DateTime Created { get; set; }
 
-    /// <summary>UTC timestamp of the most recent edit.</summary>
-    public DateTime Updated { get; set; }
-
     /// <summary>Optional free-text note.</summary>
     public string? Note { get; set; }
-
-    /// <summary>Currency code (e.g. "KRW", "USD"). Derived from the deposit asset.</summary>
-    public string? MonetaryUnit { get; set; }
 }

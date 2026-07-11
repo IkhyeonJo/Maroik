@@ -66,6 +66,7 @@ public sealed class Category : Entity<long>
         return new Category(id, name, displayName, iconPath, controller, action, role, order);
     }
 
+/*
     /// <summary>Updates the mutable fields of this category.</summary>
     public ErrorOr<Category> Update(
         string? name, string? displayName, string? iconPath,
@@ -83,4 +84,5 @@ public sealed class Category : Entity<long>
         Order = order;
         return this;
     }
+*/
 }

@@ -1,3 +1,5 @@
+// ReSharper disable PropertyCanBeMadeInitOnly.Global
+// ReSharper disable UnusedAutoPropertyAccessor.Global
 namespace Maroik.Core.Contract.Dtos;
 
 /// <summary>
@@ -19,12 +21,6 @@ public class AssetRequest
 
     /// <summary>Currency unit (e.g. "KRW", "USD").</summary>
     public string? MonetaryUnit { get; set; }
-
-    /// <summary>UTC timestamp when the asset was first registered.</summary>
-    public DateTime Created { get; set; }
-
-    /// <summary>UTC timestamp of the most recent update.</summary>
-    public DateTime Updated { get; set; }
 
     /// <summary>Optional memo / note about the asset.</summary>
     public string? Note { get; set; }

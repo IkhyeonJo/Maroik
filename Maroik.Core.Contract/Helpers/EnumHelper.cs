@@ -22,18 +22,16 @@ public static class EnumHelper
         // Retrieve the reflected member info for the enum value name
         MemberInfo[] memInfo = type.GetMember(en.ToString());
 
-        if (memInfo != null && memInfo.Length > 0)
+        if (memInfo.Length <= 0)
         {
-            // Look for a [Description("...")] attribute on the member
-            object[] attrs = memInfo[0].GetCustomAttributes(typeof(DescriptionAttribute), false);
-
-            if (attrs != null && attrs.Length > 0)
-            {
-                return ((DescriptionAttribute)attrs[0]).Description;
-            }
+            return en.ToString();
         }
 
-        // No [Description] attribute found — return the member name as-is
-        return en.ToString();
+        // Look for a [Description("...")] attribute on the member
+        object[] attrs = memInfo[0].GetCustomAttributes(typeof(DescriptionAttribute), false);
+
+        return attrs.Length > 0 ? ((DescriptionAttribute)attrs[0]).Description :
+            // No [Description] attribute found — return the member name as-is
+            en.ToString();
     }
 }

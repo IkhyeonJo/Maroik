@@ -1,5 +1,4 @@
 using ErrorOr;
-using Maroik.Core.Contract.Constants;
 using Maroik.Core.Contract.Domains.Primitives;
 using Maroik.Core.Contract.Domains.ValueObjects;
 using Maroik.Core.Contract.Enums;
@@ -123,22 +122,21 @@ public sealed class Account : AggregateRoot<string>
             TimeZoneId.FromTrustedSource(timeZoneIanaId),
             defaultMonetaryUnit,
             registrationToken,
-            agreedServiceTerms);
+            agreedServiceTerms)
+        {
+            AvatarImagePath = avatarImagePath, Locked = locked, LoginAttempt = loginAttempt, EmailConfirmed = emailConfirmed,
+            ResetPasswordToken = resetPasswordToken,
+            Created = created,
+            Updated = updated,
+            Message = message,
+            Deleted = deleted
+        };
 
-        account.AvatarImagePath = avatarImagePath;
-        account.Locked = locked;
-        account.LoginAttempt = loginAttempt;
-        account.EmailConfirmed = emailConfirmed;
-        account.ResetPasswordToken = resetPasswordToken;
-        account.Created = created;
-        account.Updated = updated;
-        account.Message = message;
-        account.Deleted = deleted;
         return account;
     }
 
     /// <summary>
-    /// Creates a new <see cref="Account"/> and raises <see cref="AccountCreatedEvent"/>.
+    /// Creates a new <see cref="Account"/>.
     /// </summary>
     public static ErrorOr<Account> Create(
         string emailValue,
@@ -175,7 +173,6 @@ public sealed class Account : AggregateRoot<string>
 
     /// <summary>
     /// Validates the registration token and activates the account.
-    /// Raises <see cref="EmailConfirmedEvent"/> on success.
     /// </summary>
     public ErrorOr<Success> ConfirmEmail(string token)
     {
@@ -192,7 +189,7 @@ public sealed class Account : AggregateRoot<string>
     }
 
     /// <summary>
-    /// Stores a password-reset token and raises <see cref="PasswordResetRequestedEvent"/>
+    /// Stores a password-reset token
     /// so an email can be dispatched by the application layer.
     /// </summary>
     public ErrorOr<Success> RequestPasswordReset(string resetToken)
@@ -245,7 +242,6 @@ public sealed class Account : AggregateRoot<string>
 
     /// <summary>
     /// Locks the account, preventing login.
-    /// Raises <see cref="AccountLockedEvent"/>.
     /// </summary>
     public void Lock(string? message = null)
     {
@@ -300,11 +296,13 @@ public sealed class Account : AggregateRoot<string>
     /// </summary>
     public void RegenerateRegistrationTokenIfEmpty(string newToken)
     {
-        if (string.IsNullOrEmpty(RegistrationToken))
+        if (!string.IsNullOrEmpty(RegistrationToken))
         {
-            RegistrationToken = newToken;
-            Updated = DateTime.UtcNow;
+            return;
         }
+
+        RegistrationToken = newToken;
+        Updated = DateTime.UtcNow;
     }
 
     /// <summary>

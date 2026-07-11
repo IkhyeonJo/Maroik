@@ -85,19 +85,18 @@ public sealed class Board : AggregateRoot<long>
         bool locked,
         bool noticed)
     {
-        var board = new Board(id, type, title, content, writer);
+        var board = new Board(id, type, title, content, writer)
+        {
+            Created = created, Updated = updated, View = view, Deleted = deleted,
+            Locked = locked,
+            Noticed = noticed
+        };
 
-        board.Created = created;
-        board.Updated = updated;
-        board.View = view;
-        board.Deleted = deleted;
-        board.Locked = locked;
-        board.Noticed = noticed;
         return board;
     }
 
     /// <summary>
-    /// Creates a new board post and raises <see cref="BoardCreatedEvent"/>.
+    /// Creates a new board post.
     /// </summary>
     public static ErrorOr<Board> Create(
         string? type,
@@ -157,7 +156,6 @@ public sealed class Board : AggregateRoot<long>
 
     /// <summary>
     /// Adds a comment to this post.
-    /// Raises <see cref="BoardCommentAddedEvent"/>.
     /// </summary>
     public ErrorOr<Success> AddComment(BoardComment comment)
     {
@@ -226,7 +224,7 @@ public sealed class Board : AggregateRoot<long>
         Updated = DateTime.UtcNow;
     }
 
-    /// <summary>Marks the post as soft-deleted and raises <see cref="BoardDeletedEvent"/>.</summary>
+    /// <summary>Marks the post as soft-deleted.</summary>
     public ErrorOr<Success> SoftDelete()
     {
         if (Deleted)

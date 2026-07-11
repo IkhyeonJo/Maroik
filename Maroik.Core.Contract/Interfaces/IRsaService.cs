@@ -7,12 +7,6 @@ namespace Maroik.Core.Contract.Interfaces;
 /// </summary>
 public interface IRsaService
 {
-    /// <summary>Signs <paramref name="data"/> with the private key and returns a Base64 signature.</summary>
-    string Sign(string data);
-
-    /// <summary>Verifies that <paramref name="sign"/> is a valid signature for <paramref name="data"/> using the public key.</summary>
-    bool Verify(string data, string sign);
-
     /// <summary>Decrypts a Base64-encoded RSA cipher text using the private key.</summary>
     string Decrypt(string cipherText);
 

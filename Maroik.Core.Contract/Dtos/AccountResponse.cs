@@ -1,3 +1,5 @@
+// ReSharper disable PropertyCanBeMadeInitOnly.Global
+// ReSharper disable UnusedAutoPropertyAccessor.Global
 namespace Maroik.Core.Contract.Dtos;
 
 /// <summary>
@@ -54,6 +56,6 @@ public class AccountResponse
     /// <summary>One-time token used to confirm the registration e-mail.</summary>
     public string? RegistrationToken { get; set; }
 
-    /// <summary>One-time token used to authorise a password-reset request.</summary>
+    /// <summary>One-time token used to authorize a password-reset request.</summary>
     public string? ResetPasswordToken { get; set; }
 }

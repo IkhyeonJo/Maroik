@@ -12,7 +12,7 @@ public static class StringExtension
     /// <param name="value">The base label text (e.g. "Amount").</param>
     /// <param name="monetaryUnit">The currency unit to append (e.g. "KRW", "USD").</param>
     /// <returns>A formatted label string such as "Amount (KRW)".</returns>
-    public static string GetAmountLabel(this string value, string monetaryUnit)
+    public static string GetAmountLabel(this string? value, string? monetaryUnit)
     {
         return $"{value ?? ""} ({monetaryUnit ?? ""})";
     }

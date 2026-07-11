@@ -20,7 +20,7 @@ public static class DateTimeExtension
         }
         catch
         {
-            // Return the original value if the IANA ID is unrecognised or conversion fails
+            // Return the original value if the IANA ID is unrecognized or conversion fails
             return value;
         }
     }

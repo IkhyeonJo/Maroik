@@ -10,9 +10,6 @@ public interface IProfileService
     /// <summary>Returns the profile of the given account, or null if not found.</summary>
     Task<AccountResponse?> GetProfileAsync(string email, CancellationToken ct = default);
 
-    /// <summary>Sets the avatar image path to an existing server-side path (e.g. a preset avatar).</summary>
-    Task<ServiceResult> UpdateAvatarAsync(string email, string avatarPath, CancellationToken ct = default);
-
     /// <summary>
     /// Saves uploaded image bytes to <paramref name="avatarDirectoryPath"/> and updates the account's avatar path.
     /// </summary>

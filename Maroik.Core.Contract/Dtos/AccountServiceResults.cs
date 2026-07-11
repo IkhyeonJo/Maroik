@@ -1,3 +1,6 @@
+// ReSharper disable PropertyCanBeMadeInitOnly.Global
+// ReSharper disable UnusedAutoPropertyAccessor.Global
+// ReSharper disable MemberCanBePrivate.Global
 namespace Maroik.Core.Contract.Dtos;
 
 /// <summary>

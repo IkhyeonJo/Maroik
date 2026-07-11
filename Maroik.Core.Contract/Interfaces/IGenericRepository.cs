@@ -4,7 +4,7 @@ namespace Maroik.Core.Contract.Interfaces;
 /// Base repository abstraction providing the create and update persistence operations
 /// shared by all entity-specific repositories.
 /// </summary>
-public interface IGenericRepository<TDomain>
+public interface IGenericRepository<in TDomain>
 {
     /// <summary>Inserts a new entity.</summary>
     Task CreateAsync(TDomain domain, CancellationToken ct = default);

@@ -89,15 +89,13 @@ public sealed class Income : AggregateRoot<long>
             content,
             Money.FromTrustedSource(amount, monetaryUnit),
             depositMyAssetProductName,
-            note);
+            note) { Created = created, Updated = updated };
 
-        income.Created = created;
-        income.Updated = updated;
         return income;
     }
 
     /// <summary>
-    /// Records a new income entry and raises <see cref="IncomeRecordedEvent"/>.
+    /// Records a new income entry.
     /// </summary>
     public static ErrorOr<Income> Record(
         string? accountEmailValue,

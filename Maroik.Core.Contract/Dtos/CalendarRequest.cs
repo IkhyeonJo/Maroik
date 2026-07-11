@@ -1,3 +1,5 @@
+// ReSharper disable PropertyCanBeMadeInitOnly.Global
+// ReSharper disable UnusedAutoPropertyAccessor.Global
 namespace Maroik.Core.Contract.Dtos;
 
 /// <summary>
@@ -23,10 +25,4 @@ public class CalendarRequest
 
     /// <summary>HTML colour code used to visually distinguish this calendar (e.g. "#FF5733").</summary>
     public string? HtmlColorCode { get; set; }
-
-    /// <summary>UTC timestamp when the calendar was created.</summary>
-    public DateTime Created { get; set; }
-
-    /// <summary>UTC timestamp of the most recent update.</summary>
-    public DateTime Updated { get; set; }
 }

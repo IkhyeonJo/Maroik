@@ -120,16 +120,13 @@ public sealed class FixedExpenditure : AggregateRoot<long>
             depositMonth,
             depositDay,
             maturityDate,
-            note);
+            note) { Unpunctuality = unpunctuality, Created = created, Updated = updated };
 
-        fe.Unpunctuality = unpunctuality;
-        fe.Created = created;
-        fe.Updated = updated;
         return fe;
     }
 
     /// <summary>
-    /// Registers a new fixed expenditure and raises <see cref="FixedExpenditureRegisteredEvent"/>.
+    /// Registers a new fixed expenditure.
     /// </summary>
     public static ErrorOr<FixedExpenditure> Register(
         string? accountEmailValue,

@@ -69,7 +69,7 @@ public interface IBoardService
 
     /// <summary>
     /// Prepares HTML content for display by downloading each inline Summernote image,
-    /// embedding it as Base64 in <c>data-file</c> / <c>data-contenttype</c> attributes,
+    /// embedding it as Base64 in <c>data-file</c> / <c>data-contentType</c> attributes,
     /// and replacing the stored file path in <c>alt</c> with its RSA-encrypted form.
     /// Returns the transformed HTML and a flag indicating whether any images were present.
     /// </summary>

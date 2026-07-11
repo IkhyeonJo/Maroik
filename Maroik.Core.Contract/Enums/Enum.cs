@@ -72,7 +72,7 @@ public enum Session
 }
 
 /// <summary>
-/// Identifies the type of a board post, determining which list the post appears in.
+/// Identifies the type of board post, determining which list the post appears in.
 /// </summary>
 public enum BoardType
 {

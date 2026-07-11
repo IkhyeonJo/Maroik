@@ -1,10 +1,10 @@
+// ReSharper disable PropertyCanBeMadeInitOnly.Global
+// ReSharper disable UnusedAutoPropertyAccessor.Global
 namespace Maroik.Core.Contract.Dtos;
 
 /// <summary>
 /// Lightweight reminder descriptor passed from the view/controller to the service layer
 /// when creating or updating calendar events.
-/// Unlike <see cref="CalendarEventReminderRequest"/>, this object is not tied to a specific event ID
-/// and is used to carry reminder settings before the event has been persisted.
 /// </summary>
 public class CalendarReminderInfo
 {
