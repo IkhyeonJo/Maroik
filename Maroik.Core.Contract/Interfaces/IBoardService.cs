@@ -15,13 +15,13 @@ public interface IBoardService
     Task<BoardResponse?> GetBoardByIdAsync(long id, CancellationToken ct = default);
 
     /// <summary>Returns the attached file metadata for the given board post, or null if none.</summary>
-    Task<BoardAttachedFileResponse?> GetAttachedFileByBoardIdAsync(long boardId, CancellationToken ct = default);
+    Task<BoardAttachedFileDto?> GetAttachedFileByBoardIdAsync(long boardId, CancellationToken ct = default);
 
     /// <summary>
     /// Batch-loads attached file metadata for multiple board IDs in a single query.
     /// Returns a dictionary keyed by board ID; value is null when a post has no attachment.
     /// </summary>
-    Task<Dictionary<long, BoardAttachedFileResponse?>> GetAttachedFilesForBoardsAsync(IEnumerable<long> boardIds, CancellationToken ct = default);
+    Task<Dictionary<long, BoardAttachedFileDto?>> GetAttachedFilesForBoardsAsync(IEnumerable<long> boardIds, CancellationToken ct = default);
 
     /// <summary>Returns all non-deleted comments for the given board post.</summary>
     Task<IEnumerable<BoardCommentResponse>> GetCommentsByBoardIdAsync(long boardId, CancellationToken ct = default);

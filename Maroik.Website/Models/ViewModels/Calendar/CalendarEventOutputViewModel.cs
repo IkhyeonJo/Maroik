@@ -40,7 +40,7 @@ public class CalendarEventOutputViewModel
     public string? Description { get; set; }
 
     /// <summary>Metadata for the file attached to this event (null when no file is attached).</summary>
-    public CalendarEventAttachedFileResponse? CalendarEventAttachedFile { get; set; }
+    public CalendarEventAttachedFileDto? CalendarEventAttachedFile { get; set; }
 
     /// <summary>Base64-encoded bytes of the attached file, used for inline preview or download link generation.</summary>
     public string? CalendarEventAttachedFileBase64Data { get; set; }

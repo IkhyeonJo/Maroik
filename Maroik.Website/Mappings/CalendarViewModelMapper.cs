@@ -91,7 +91,7 @@ public static class CalendarViewModelMapper
     /// <summary>
     /// Serialises reminder response objects to the JSON array the client edit-form expects.
     /// </summary>
-    public static string ToSerializedReminders(this IEnumerable<CalendarEventReminderResponse> reminders)
+    public static string ToSerializedReminders(this IEnumerable<CalendarEventReminderDto> reminders)
         => JsonConvert.SerializeObject(reminders.Select(x => new CalendarReminderInfo
         {
             Method = x.Method ?? "",

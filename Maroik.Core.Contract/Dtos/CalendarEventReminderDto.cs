@@ -5,7 +5,7 @@ namespace Maroik.Core.Contract.Dtos;
 /// <summary>
 /// Data transfer object returned when reading a calendar event reminder.
 /// </summary>
-public class CalendarEventReminderResponse
+public class CalendarEventReminderDto
 {
     /// <summary>Reminder ID (primary key).</summary>
     public long Id { get; set; }

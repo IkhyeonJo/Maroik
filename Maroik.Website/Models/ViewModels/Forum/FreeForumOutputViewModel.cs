@@ -55,7 +55,7 @@ public class FreeForumOutputViewModel
     public Dictionary<long, int> CommentCountByBoardId { get; set; } = new();
 
     /// <summary>Maps each board post ID to its list of attached files for the attachment icon in the post list.</summary>
-    public Dictionary<long, List<Maroik.Core.Contract.Dtos.BoardAttachedFileResponse>> AttachedFilesByBoardId { get; set; } = new();
+    public Dictionary<long, List<Maroik.Core.Contract.Dtos.BoardAttachedFileDto>> AttachedFilesByBoardId { get; set; } = new();
 
     /// <summary>Comments on the currently open detail post, rendered in the detail panel.</summary>
     public List<Maroik.Core.Contract.Dtos.BoardCommentResponse> DetailBoardComments { get; set; } = [];

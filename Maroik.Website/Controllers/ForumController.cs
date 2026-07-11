@@ -227,7 +227,7 @@ public class ForumController : Controller
             };
 
             BoardResponse? freeBoard = await _boardService.GetBoardByIdAsync(boardId ?? 0, ct);
-            BoardAttachedFileResponse? boardAttachedFile = await _boardService.GetAttachedFileByBoardIdAsync(boardId ?? 0, ct);
+            BoardAttachedFileDto? boardAttachedFile = await _boardService.GetAttachedFileByBoardIdAsync(boardId ?? 0, ct);
 
             try
             {
@@ -300,7 +300,7 @@ public class ForumController : Controller
             };
 
             BoardResponse? freeBoard = await _boardService.GetBoardByIdAsync(boardId ?? 0, ct);
-            BoardAttachedFileResponse? boardAttachedFile = await _boardService.GetAttachedFileByBoardIdAsync(boardId ?? 0, ct);
+            BoardAttachedFileDto? boardAttachedFile = await _boardService.GetAttachedFileByBoardIdAsync(boardId ?? 0, ct);
 
             try
             {
@@ -396,18 +396,18 @@ public class ForumController : Controller
                 .Distinct().ToList();
 
             Dictionary<long, int> commentCounts = await _boardService.GetCommentCountsForBoardsAsync(allBoardIds, ct);
-            Dictionary<long, BoardAttachedFileResponse?> attachedFiles = await _boardService.GetAttachedFilesForBoardsAsync(allBoardIds, ct);
+            Dictionary<long, BoardAttachedFileDto?> attachedFiles = await _boardService.GetAttachedFilesForBoardsAsync(allBoardIds, ct);
 
             foreach (var board in freeForumOutputViewModel.NoticeBoards)
             {
                 freeForumOutputViewModel.CommentCountByBoardId[board.Id] = commentCounts.GetValueOrDefault(board.Id, 0);
-                BoardAttachedFileResponse? af = attachedFiles.GetValueOrDefault(board.Id);
+                BoardAttachedFileDto? af = attachedFiles.GetValueOrDefault(board.Id);
                 freeForumOutputViewModel.AttachedFilesByBoardId[board.Id] = af != null && !string.IsNullOrEmpty(af.Name) ? [af] : [];
             }
             foreach (var board in freeForumOutputViewModel.Boards)
             {
                 freeForumOutputViewModel.CommentCountByBoardId[board.Id] = commentCounts.GetValueOrDefault(board.Id, 0);
-                BoardAttachedFileResponse? af = attachedFiles.GetValueOrDefault(board.Id);
+                BoardAttachedFileDto? af = attachedFiles.GetValueOrDefault(board.Id);
                 freeForumOutputViewModel.AttachedFilesByBoardId[board.Id] = af != null && !string.IsNullOrEmpty(af.Name) ? [af] : [];
             }
 

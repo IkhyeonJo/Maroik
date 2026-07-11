@@ -76,14 +76,14 @@ public class CalendarService : ICalendarService
     }
 
     /// <inheritdoc />
-    public async Task<CalendarEventAttachedFileResponse?> GetCalendarEventAttachedFileAsync(long calendarEventId, CancellationToken ct = default)
+    public async Task<CalendarEventAttachedFileDto?> GetCalendarEventAttachedFileAsync(long calendarEventId, CancellationToken ct = default)
     {
         CalendarEventAttachedFile? file = await _calendarEventAttachedFileRepository.FindByCalendarEventIdAsync(calendarEventId, ct);
         return file == null ? null : CalendarEventAttachedFileMapper.ToResponse(file);
     }
 
     /// <inheritdoc />
-    public async Task<IEnumerable<CalendarEventReminderResponse>> GetCalendarEventRemindersAsync(long calendarEventId, CancellationToken ct = default)
+    public async Task<IEnumerable<CalendarEventReminderDto>> GetCalendarEventRemindersAsync(long calendarEventId, CancellationToken ct = default)
         => (await _calendarEventReminderRepository.GetByCalendarEventIdAsync(calendarEventId, ct)).Select(CalendarEventReminderMapper.ToResponse);
 
     /// <inheritdoc />

@@ -1105,7 +1105,7 @@ public class ManagementController : Controller
             };
 
             BoardResponse? privateNoteBoard = await _boardService.GetBoardByIdAsync(boardId ?? 0, HttpContext.RequestAborted);
-            BoardAttachedFileResponse? attachedFile = await _boardService.GetAttachedFileByBoardIdAsync(boardId ?? 0, HttpContext.RequestAborted);
+            BoardAttachedFileDto? attachedFile = await _boardService.GetAttachedFileByBoardIdAsync(boardId ?? 0, HttpContext.RequestAborted);
 
             try
             {
@@ -1184,7 +1184,7 @@ public class ManagementController : Controller
             AccountResponse loggedInAccount = _sessionService.GetAccount()!;
 
             BoardResponse? privateNoteBoard = await _boardService.GetBoardByIdAsync(boardId ?? 0, HttpContext.RequestAborted);
-            BoardAttachedFileResponse? attachedFile = await _boardService.GetAttachedFileByBoardIdAsync(boardId ?? 0, HttpContext.RequestAborted);
+            BoardAttachedFileDto? attachedFile = await _boardService.GetAttachedFileByBoardIdAsync(boardId ?? 0, HttpContext.RequestAborted);
 
             try
             {
@@ -1330,12 +1330,12 @@ public class ManagementController : Controller
 
             List<long> boardIds = privateNoteOutputViewModel.Boards.Select(b => b.Id).ToList();
             Dictionary<long, int> commentCounts = await _boardService.GetCommentCountsForBoardsAsync(boardIds, HttpContext.RequestAborted);
-            Dictionary<long, BoardAttachedFileResponse?> attachedFiles = await _boardService.GetAttachedFilesForBoardsAsync(boardIds, HttpContext.RequestAborted);
+            Dictionary<long, BoardAttachedFileDto?> attachedFiles = await _boardService.GetAttachedFilesForBoardsAsync(boardIds, HttpContext.RequestAborted);
 
             foreach (var board in privateNoteOutputViewModel.Boards)
             {
                 privateNoteOutputViewModel.CommentCountByBoardId[board.Id] = commentCounts.GetValueOrDefault(board.Id, 0);
-                BoardAttachedFileResponse? af = attachedFiles.GetValueOrDefault(board.Id);
+                BoardAttachedFileDto? af = attachedFiles.GetValueOrDefault(board.Id);
                 privateNoteOutputViewModel.AttachedFilesByBoardId[board.Id] = af != null && !string.IsNullOrEmpty(af.Name) ? [af] : [];
             }
             #endregion

@@ -377,7 +377,7 @@
                             @foreach (BoardResponse noticeBoard in Model.NoticeBoards)
                             {
                                 int commentsOfUndeletedSelectedBoardCount = Model.CommentCountByBoardId.GetValueOrDefault(noticeBoard.Id, 0);
-                                List<BoardAttachedFileResponse> boardAttachedFilesWithName = Model.AttachedFilesByBoardId.GetValueOrDefault(noticeBoard.Id, []);
+                                List<BoardAttachedFileDto> boardAttachedFilesWithName = Model.AttachedFilesByBoardId.GetValueOrDefault(noticeBoard.Id, []);
 
                                 <tr style="background-color: lightgray;">
                                     <td style="color:green;font-weight:bold;">@Localizer["Notice"]</td>
@@ -426,7 +426,7 @@
                             @foreach (BoardResponse board in Model.Boards)
                             {
                                 int commentsOfUndeletedSelectedBoardCount = Model.CommentCountByBoardId.GetValueOrDefault(board.Id, 0);
-                                List<BoardAttachedFileResponse> attachedFilesWithName = Model.AttachedFilesByBoardId.GetValueOrDefault(board.Id, []);
+                                List<BoardAttachedFileDto> attachedFilesWithName = Model.AttachedFilesByBoardId.GetValueOrDefault(board.Id, []);
 
                                 <tr>
                                     <td>@Localizer["Free Forum"]</td>

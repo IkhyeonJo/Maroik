@@ -71,19 +71,19 @@ public class BoardService : IBoardService
     }
 
     /// <inheritdoc />
-    public async Task<BoardAttachedFileResponse?> GetAttachedFileByBoardIdAsync(long boardId, CancellationToken ct = default)
+    public async Task<BoardAttachedFileDto?> GetAttachedFileByBoardIdAsync(long boardId, CancellationToken ct = default)
     {
         BoardAttachedFile? file = await _boardAttachedFileRepository.FindByBoardIdAsync(boardId, ct);
         return file == null ? null : BoardAttachedFileMapper.ToResponse(file);
     }
 
     /// <inheritdoc />
-    public async Task<Dictionary<long, BoardAttachedFileResponse?>> GetAttachedFilesForBoardsAsync(IEnumerable<long> boardIds, CancellationToken ct = default)
+    public async Task<Dictionary<long, BoardAttachedFileDto?>> GetAttachedFilesForBoardsAsync(IEnumerable<long> boardIds, CancellationToken ct = default)
     {
         Dictionary<long, BoardAttachedFile?> domain = await _boardAttachedFileRepository.GetByBoardIdsAsync(boardIds, ct);
         return domain.ToDictionary(
             kvp => kvp.Key,
-            kvp => kvp.Value == null ? null : (BoardAttachedFileResponse?)BoardAttachedFileMapper.ToResponse(kvp.Value));
+            kvp => kvp.Value == null ? null : (BoardAttachedFileDto?)BoardAttachedFileMapper.ToResponse(kvp.Value));
     }
 
     /// <inheritdoc />

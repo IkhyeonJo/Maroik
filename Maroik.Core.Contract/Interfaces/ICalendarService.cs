@@ -21,10 +21,10 @@ public interface ICalendarService
     Task<CalendarEventResponse?> GetCalendarEventAsync(long id, CancellationToken ct = default);
 
     /// <summary>Returns the file attached to the given calendar event, or null.</summary>
-    Task<CalendarEventAttachedFileResponse?> GetCalendarEventAttachedFileAsync(long calendarEventId, CancellationToken ct = default);
+    Task<CalendarEventAttachedFileDto?> GetCalendarEventAttachedFileAsync(long calendarEventId, CancellationToken ct = default);
 
     /// <summary>Returns all reminder settings for the given calendar event.</summary>
-    Task<IEnumerable<CalendarEventReminderResponse>> GetCalendarEventRemindersAsync(long calendarEventId, CancellationToken ct = default);
+    Task<IEnumerable<CalendarEventReminderDto>> GetCalendarEventRemindersAsync(long calendarEventId, CancellationToken ct = default);
 
     /// <summary>Returns calendars that the given account has subscribed to from other users.</summary>
     Task<List<OtherCalendarResponse>> GetOtherCalendarsAsync(string email, CancellationToken ct = default);
