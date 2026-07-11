@@ -20,8 +20,9 @@ public class ClamavClient : IClamavClient
 
             // Open a TCP connection to the ClamAV daemon
             using var client = new TcpClient(clamavHost, clamavPort);
-            using var stream = client.GetStream();
-            using var writer = new StreamWriter(stream, leaveOpen: true) { AutoFlush = true };
+            await using var stream = client.GetStream();
+            await using var writer = new StreamWriter(stream, leaveOpen: true);
+            writer.AutoFlush = true;
 
             // Initiate a streaming scan session with the INSTREAM command
             await writer.WriteLineAsync("nINSTREAM");
@@ -43,7 +44,7 @@ public class ClamavClient : IClamavClient
 
             // Read the single-line scan result (e.g. "stream: OK" or "stream: Virus FOUND")
             using var reader = new StreamReader(stream);
-            string response = await reader.ReadLineAsync() ?? string.Empty;
+            string response = await reader.ReadLineAsync(ct) ?? string.Empty;
 
             // "OK" in the response means the file passed the virus scan
             return response.Contains("OK");

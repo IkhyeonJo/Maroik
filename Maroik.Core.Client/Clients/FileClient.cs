@@ -25,7 +25,7 @@ public class FileClient(IHttpClientFactory httpClientFactory) : IFileClient
     }
 
     /// <inheritdoc />
-    public async Task<bool> UploadAsync(byte[] fileData, string contentType, string filePath, string fileStorageBaseUrl, CancellationToken ct = default)
+    public async Task<bool> UploadAsync(byte[]? fileData, string contentType, string filePath, string fileStorageBaseUrl, CancellationToken ct = default)
     {
         try
         {
@@ -33,30 +33,28 @@ public class FileClient(IHttpClientFactory httpClientFactory) : IFileClient
             string sanitizedFileName = Path.GetFileName(filePath);
 
             // Reject empty uploads immediately
-            if (fileData != null && fileData.Length > 0)
-            {
-                using HttpClient httpClient = httpClientFactory.CreateClient();
-                using MultipartFormDataContent content = [];
-
-                // Wrap raw bytes with the correct MIME type
-                ByteArrayContent fileContent = new(fileData);
-                fileContent.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue(contentType);
-
-                // Attach the file bytes under the "file" field name
-                content.Add(fileContent, "file", sanitizedFileName);
-
-                // Tell the storage service where to save the file (directory path only)
-                content.Add(new StringContent(Path.GetDirectoryName(filePath ?? "") ?? ""), "filePath");
-
-                HttpResponseMessage response = await httpClient.PostAsync($"{fileStorageBaseUrl}/api/File/upload", content, ct);
-                _ = response.EnsureSuccessStatusCode();
-
-                return response.StatusCode == HttpStatusCode.OK;
-            }
-            else
+            if (fileData is not { Length: > 0 })
             {
                 return false;
             }
+
+            using HttpClient httpClient = httpClientFactory.CreateClient();
+            using MultipartFormDataContent content = [];
+
+            // Wrap raw bytes with the correct MIME type
+            ByteArrayContent fileContent = new(fileData);
+            fileContent.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue(contentType);
+
+            // Attach the file bytes under the "file" field name
+            content.Add(fileContent, "file", sanitizedFileName);
+
+            // Tell the storage service where to save the file (directory path only)
+            content.Add(new StringContent(Path.GetDirectoryName(filePath) ?? ""), "filePath");
+
+            HttpResponseMessage response = await httpClient.PostAsync($"{fileStorageBaseUrl}/api/File/upload", content, ct);
+            _ = response.EnsureSuccessStatusCode();
+
+            return response.StatusCode == HttpStatusCode.OK;
         }
         catch
         {

@@ -27,7 +27,7 @@ public sealed class RabbitMqEmailPublisher : IEmailPublisher, IAsyncDisposable
     {
         IConnection connection = await GetConnectionAsync(ct);
 
-        using IChannel channel = await connection.CreateChannelAsync(cancellationToken: ct);
+        await using IChannel channel = await connection.CreateChannelAsync(cancellationToken: ct);
         await channel.QueueDeclareAsync(
             queue: QueueNames.Email,
             durable: true,

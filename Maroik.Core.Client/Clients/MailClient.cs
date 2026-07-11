@@ -20,12 +20,14 @@ public class MailClient : IMailClient
         string url = $"{domainName}Account/ConfirmEmail?registrationToken={Uri.EscapeDataString(registrationToken)}";
 
         // Return a centred HTML block containing the confirmation link
-        return @$"<div style='text-align:center;'>
-                        <h1>{title}<h1>
-                        <h3>{content0}<h3>
-                        <h3>{content1}<h3>
-                        <a href='{url}' target='_blank' rel='noopener noreferrer'>{url}</a>
-                      </div>";
+        return $"""
+                <div style='text-align:center;'>
+                                        <h1>{title}<h1>
+                                        <h3>{content0}<h3>
+                                        <h3>{content1}<h3>
+                                        <a href='{url}' target='_blank' rel='noopener noreferrer'>{url}</a>
+                                      </div>
+                """;
     }
 
     /// <inheritdoc />
@@ -35,34 +37,40 @@ public class MailClient : IMailClient
         string url = $"{domainName}Account/ResetPassword?resetPasswordToken={Uri.EscapeDataString(resetPasswordToken)}";
 
         // Return a centred HTML block containing the password-reset link
-        return @$"<div style='text-align:center;'>
-                        <h1>{title}<h1>
-                        <h3>{content0}<h3>
-                        <h3>{content1}<h3>
-                        <a href='{url}' target='_blank' rel='noopener noreferrer'>{url}</a>
-                      </div>";
+        return $"""
+                <div style='text-align:center;'>
+                                        <h1>{title}<h1>
+                                        <h3>{content0}<h3>
+                                        <h3>{content1}<h3>
+                                        <a href='{url}' target='_blank' rel='noopener noreferrer'>{url}</a>
+                                      </div>
+                """;
     }
 
     /// <inheritdoc />
     public string GetMailAccountLockedBody(string domainName)
     {
         string url = $"{domainName}Account/ForgotPassword";
-        return @$"<div style='text-align:center;'>
-                        <h1>Your account has been locked</h1>
-                        <h3>Too many consecutive failed login attempts have triggered an automatic account lock.</h3>
-                        <h3>Reset your password using the link below to regain access.</h3>
-                        <a href='{url}' target='_blank' rel='noopener noreferrer'>{url}</a>
-                      </div>";
+        return $"""
+                <div style='text-align:center;'>
+                                        <h1>Your account has been locked</h1>
+                                        <h3>Too many consecutive failed login attempts have triggered an automatic account lock.</h3>
+                                        <h3>Reset your password using the link below to regain access.</h3>
+                                        <a href='{url}' target='_blank' rel='noopener noreferrer'>{url}</a>
+                                      </div>
+                """;
     }
 
     /// <inheritdoc />
     public string GetMailWelcomeBody(string nickname)
     {
-        return @$"<div style='text-align:center;'>
-                        <h1>Welcome, {nickname}!</h1>
-                        <h3>Your email has been confirmed and your account is now active.</h3>
-                        <h3>You can now log in and start using the service.</h3>
-                      </div>";
+        return $"""
+                <div style='text-align:center;'>
+                                        <h1>Welcome, {nickname}!</h1>
+                                        <h3>Your email has been confirmed and your account is now active.</h3>
+                                        <h3>You can now log in and start using the service.</h3>
+                                      </div>
+                """;
     }
 
     /// <inheritdoc />
