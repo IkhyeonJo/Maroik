@@ -5,7 +5,7 @@ namespace Maroik.Core.Contract.Dtos;
 /// when a file is uploaded along with a form submission (e.g. board post attachment,
 /// calendar event attachment, Summernote inline image).
 /// </summary>
-public class AttachedFileInfo
+public class AttachedFileDto
 {
     /// <summary>Raw file bytes read from the uploaded stream.</summary>
     public byte[] Bytes { get; init; } = [];

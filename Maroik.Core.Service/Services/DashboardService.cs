@@ -41,7 +41,7 @@ public class DashboardService : IDashboardService
     }
 
     /// <inheritdoc />
-    public async Task<DashboardSummary> GetSummaryAsync(string accountEmail, string year, string month, string timeZoneId, CancellationToken ct = default)
+    public async Task<DashboardDto> GetSummaryAsync(string accountEmail, string year, string month, string timeZoneId, CancellationToken ct = default)
     {
         // Normalize year/month
         if (!int.TryParse(year, out int yearInt)) yearInt = DateTime.UtcNow.Year;
@@ -55,7 +55,7 @@ public class DashboardService : IDashboardService
 
         string? defaultMonetaryUnit = GetEffectiveMonetaryUnit(account, assets);
 
-        var summary = new DashboardSummary
+        var summary = new DashboardDto
         {
             DefaultMonetaryUnit = defaultMonetaryUnit,
             Assets = assets.Select(AssetMapper.ToResponse).ToList(),
@@ -126,7 +126,7 @@ public class DashboardService : IDashboardService
     }
 
     /// <inheritdoc />
-    public async Task<NotificationCounts> GetNoticeCountsAsync(string email, int noticeMaturityDateDay, CancellationToken ct = default)
+    public async Task<NotificationDto> GetNoticeCountsAsync(string email, int noticeMaturityDateDay, CancellationToken ct = default)
     {
         int incomesNoticed = 0, expendituresNoticed = 0;
         int incomesExpired = 0, expendituresExpired = 0;
@@ -149,7 +149,7 @@ public class DashboardService : IDashboardService
                 expendituresExpired++;
         }
 
-        return new NotificationCounts
+        return new NotificationDto
         {
             FixedIncomesNoticed = incomesNoticed,
             FixedExpendituresNoticed = expendituresNoticed,
@@ -178,7 +178,7 @@ public class DashboardService : IDashboardService
     }
 
     /// <inheritdoc />
-    public ServerResourceSummary GetServerResourceSummary(string hostResourceFilePath, string dockerResourceFilePath)
+    public ServerResourceDto GetServerResourceSummary(string hostResourceFilePath, string dockerResourceFilePath)
     {
         string hostText = File.Exists(hostResourceFilePath) ? File.ReadAllText(hostResourceFilePath) : string.Empty;
         string dockerText = File.Exists(dockerResourceFilePath) ? File.ReadAllText(dockerResourceFilePath) : string.Empty;
@@ -236,7 +236,7 @@ public class DashboardService : IDashboardService
             new string(hostCpuInfo.Where(c => char.IsDigit(c) || c == '.').ToArray()),
             out double hostCpuNumeric);
 
-        return new ServerResourceSummary
+        return new ServerResourceDto
         {
             HostCpuNumeric = hostCpuNumeric,
             HostCpuInfo = hostCpuInfo,

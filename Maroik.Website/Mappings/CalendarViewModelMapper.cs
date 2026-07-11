@@ -92,7 +92,7 @@ public static class CalendarViewModelMapper
     /// Serialises reminder response objects to the JSON array the client edit-form expects.
     /// </summary>
     public static string ToSerializedReminders(this IEnumerable<CalendarEventReminderDto> reminders)
-        => JsonConvert.SerializeObject(reminders.Select(x => new CalendarReminderInfo
+        => JsonConvert.SerializeObject(reminders.Select(x => new CalendarReminderDto
         {
             Method = x.Method ?? "",
             MinutesBeforeEvent = (int?)x.MinutesBeforeEvent,
@@ -161,14 +161,14 @@ public static class CalendarViewModelMapper
     /// Deserialises the JSON reminder list from the form submission into a strongly-typed list.
     /// Returns an empty list when <paramref name="serialized"/> is null or empty.
     /// </summary>
-    public static List<CalendarReminderInfo> ToReminderInfoList(this string? serialized)
+    public static List<CalendarReminderDto> ToReminderInfoList(this string? serialized)
     {
-        List<CalendarReminderInfo> reminders = [];
+        List<CalendarReminderDto> reminders = [];
         List<Dictionary<string, object>> raw = JsonConvert.DeserializeObject<List<Dictionary<string, object>>>(serialized ?? "[]") ?? [];
         foreach (Dictionary<string, object> r in raw)
         {
             string? tempTimes = r["TimesBeforeEvent"]?.ToString();
-            reminders.Add(new CalendarReminderInfo
+            reminders.Add(new CalendarReminderDto
             {
                 Method = r["Method"]?.ToString() ?? "",
                 MinutesBeforeEvent = r["MinutesBeforeEvent"] != null ? Convert.ToInt32(r["MinutesBeforeEvent"]) : null,

@@ -41,7 +41,7 @@ public class AttachmentContentService : IAttachmentContentService
     }
 
     /// <inheritdoc />
-    public ServiceResult? ValidateAttachedFile(AttachedFileInfo? attachedFile)
+    public ServiceResult? ValidateAttachedFile(AttachedFileDto? attachedFile)
     {
         if (attachedFile == null) return null;
         if (Path.GetExtension(attachedFile.FileName) != ".zip")
@@ -53,7 +53,7 @@ public class AttachmentContentService : IAttachmentContentService
     }
 
     /// <inheritdoc />
-    public async Task<SummernoteUploadResult> UploadSummernoteImageAsync(AttachedFileInfo file, string area, string subArea, CancellationToken ct = default)
+    public async Task<SummernoteUploadResult> UploadSummernoteImageAsync(AttachedFileDto file, string area, string subArea, CancellationToken ct = default)
     {
         if (!_imageValidator.IsValidImage(file.Bytes))
             return SummernoteUploadResult.Fail("Invalid image file.");

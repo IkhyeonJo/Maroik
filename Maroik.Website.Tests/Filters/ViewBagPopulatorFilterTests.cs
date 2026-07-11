@@ -153,7 +153,7 @@ public class ViewBagPopulatorFilterTests
             .ReturnsAsync(dbAccount);
         _dashboardService
             .Setup(d => d.GetNoticeCountsAsync("user@test.com", 7, It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new NotificationCounts { FixedIncomesNoticed = 2, FixedExpendituresNoticed = 3, FixedIncomesExpired = 1, FixedExpendituresExpired = 4 });
+            .ReturnsAsync(new NotificationDto { FixedIncomesNoticed = 2, FixedExpendituresNoticed = 3, FixedIncomesExpired = 1, FixedExpendituresExpired = 4 });
 
         var (context, controller) = BuildContext();
 
@@ -177,7 +177,7 @@ public class ViewBagPopulatorFilterTests
             .ReturnsAsync(dbAccount);
         _dashboardService
             .Setup(d => d.GetNoticeCountsAsync("user@test.com", 7, It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new NotificationCounts { FixedIncomesNoticed = 2, FixedExpendituresNoticed = 3, FixedIncomesExpired = 1, FixedExpendituresExpired = 4 });
+            .ReturnsAsync(new NotificationDto { FixedIncomesNoticed = 2, FixedExpendituresNoticed = 3, FixedIncomesExpired = 1, FixedExpendituresExpired = 4 });
 
         var (context, controller) = BuildContext();
 

@@ -941,12 +941,12 @@ public class ManagementController : Controller
                 Noticed = loggedInAccount.Role == Role.Admin && boardInputViewModel.Noticed
             };
 
-            AttachedFileInfo? attachedFile = null;
+            AttachedFileDto? attachedFile = null;
             if (boardInputViewModel.UploadedFile != null)
             {
                 using MemoryStream ms = new();
                 await boardInputViewModel.UploadedFile.CopyToAsync(ms);
-                attachedFile = new AttachedFileInfo
+                attachedFile = new AttachedFileDto
                 {
                     Bytes = ms.ToArray(),
                     ContentType = boardInputViewModel.UploadedFile.ContentType,
@@ -1042,7 +1042,7 @@ public class ManagementController : Controller
             bytes = ms.ToArray();
         }
 
-        var file = new AttachedFileInfo
+        var file = new AttachedFileDto
         {
             Bytes = bytes,
             ContentType = summernoteImageFile.ContentType,
@@ -1411,12 +1411,12 @@ public class ManagementController : Controller
                 Content = boardInputViewModel.Content
             };
 
-            AttachedFileInfo? attachedFile = null;
+            AttachedFileDto? attachedFile = null;
             if (boardInputViewModel.UploadedFile != null)
             {
                 using MemoryStream ms = new();
                 await boardInputViewModel.UploadedFile.CopyToAsync(ms);
-                attachedFile = new AttachedFileInfo
+                attachedFile = new AttachedFileDto
                 {
                     Bytes = ms.ToArray(),
                     ContentType = boardInputViewModel.UploadedFile.ContentType,

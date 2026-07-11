@@ -6,7 +6,7 @@ namespace Maroik.Core.Contract.Dtos;
 /// Aggregated data object used to populate the user dashboard page.
 /// Carries income, expenditure, and asset data for the selected year and month.
 /// </summary>
-public class DashboardSummary
+public class DashboardDto
 {
     /// <summary>The user's preferred currency unit, used to filter displayed amounts.</summary>
     public string? DefaultMonetaryUnit { get; set; }

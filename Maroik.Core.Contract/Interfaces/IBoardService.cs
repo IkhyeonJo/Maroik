@@ -33,13 +33,13 @@ public interface IBoardService
     Task<Dictionary<long, int>> GetCommentCountsForBoardsAsync(IEnumerable<long> boardIds, CancellationToken ct = default);
 
     /// <summary>Creates a new board post and optionally saves an attached file.</summary>
-    Task<ServiceResult> WriteBoardAsync(BoardRequest request, AttachedFileInfo? attachedFile, CancellationToken ct = default);
+    Task<ServiceResult> WriteBoardAsync(BoardRequest request, AttachedFileDto? attachedFile, CancellationToken ct = default);
 
     /// <summary>
     /// Edits an existing post. Only the original author (matched by <paramref name="writerNickname"/>) may edit.
     /// Replaces the attached file if <paramref name="newFile"/> is provided.
     /// </summary>
-    Task<ServiceResult> EditBoardAsync(BoardRequest request, string writerNickname, AttachedFileInfo? newFile, CancellationToken ct = default);
+    Task<ServiceResult> EditBoardAsync(BoardRequest request, string writerNickname, AttachedFileDto? newFile, CancellationToken ct = default);
 
     /// <summary>
     /// Soft-deletes a board post. Admins can delete any post; regular users can only delete their own.
@@ -62,7 +62,7 @@ public interface IBoardService
     /// Validates and stores an image uploaded from the Summernote editor.
     /// Returns the stored file data so the editor can render an inline preview.
     /// </summary>
-    Task<SummernoteUploadResult> UploadSummernoteImageAsync(AttachedFileInfo file, string area, string boardType, CancellationToken ct = default);
+    Task<SummernoteUploadResult> UploadSummernoteImageAsync(AttachedFileDto file, string area, string boardType, CancellationToken ct = default);
 
     /// <summary>Downloads the raw bytes of a stored file by its server-side path.</summary>
     Task<byte[]?> DownloadFileAsync(string filePath, CancellationToken ct = default);

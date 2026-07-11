@@ -155,7 +155,7 @@ public class CalendarController : Controller
         var loggedInAccount = _sessionService.GetAccount()!;
         string roleIndex = $"{loggedInAccount.Role}Index";
 
-        var file = new AttachedFileInfo
+        var file = new AttachedFileDto
         {
             Bytes = bytes,
             ContentType = summernoteImageFile.ContentType,

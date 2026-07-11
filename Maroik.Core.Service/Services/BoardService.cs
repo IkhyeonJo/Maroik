@@ -95,7 +95,7 @@ public class BoardService : IBoardService
         => await _boardCommentRepository.GetCommentCountsByBoardIdsAsync(boardIds, ct);
 
     /// <inheritdoc />
-    public async Task<ServiceResult> WriteBoardAsync(BoardRequest request, AttachedFileInfo? attachedFile, CancellationToken ct = default)
+    public async Task<ServiceResult> WriteBoardAsync(BoardRequest request, AttachedFileDto? attachedFile, CancellationToken ct = default)
     {
         var fileError = _attachmentContent.ValidateAttachedFile(attachedFile);
         if (fileError != null) return fileError;
@@ -139,7 +139,7 @@ public class BoardService : IBoardService
     }
 
     /// <inheritdoc />
-    public async Task<ServiceResult> EditBoardAsync(BoardRequest request, string writerNickname, AttachedFileInfo? newFile, CancellationToken ct = default)
+    public async Task<ServiceResult> EditBoardAsync(BoardRequest request, string writerNickname, AttachedFileDto? newFile, CancellationToken ct = default)
     {
         var fileError = _attachmentContent.ValidateAttachedFile(newFile);
         if (fileError != null) return fileError;
@@ -300,7 +300,7 @@ public class BoardService : IBoardService
     /// Handles the four possible attachment states when editing a board post:
     /// replace (previous + new), clear (previous only), add (new only), or no-op (neither).
     /// </summary>
-    private async Task HandleAttachmentAsync(string boardType, long boardId, BoardAttachedFile? previous, AttachedFileInfo? newFile, CancellationToken ct = default)
+    private async Task HandleAttachmentAsync(string boardType, long boardId, BoardAttachedFile? previous, AttachedFileDto? newFile, CancellationToken ct = default)
     {
         if (previous != null && newFile != null)
         {
@@ -334,7 +334,7 @@ public class BoardService : IBoardService
     }
 
     /// <inheritdoc />
-    public Task<SummernoteUploadResult> UploadSummernoteImageAsync(AttachedFileInfo file, string area, string boardType, CancellationToken ct = default)
+    public Task<SummernoteUploadResult> UploadSummernoteImageAsync(AttachedFileDto file, string area, string boardType, CancellationToken ct = default)
         => _attachmentContent.UploadSummernoteImageAsync(file, area, boardType, ct);
 
     /// <inheritdoc />

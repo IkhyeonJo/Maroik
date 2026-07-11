@@ -5,7 +5,7 @@ using Maroik.Website.Models.ViewModels.Dashboard;
 namespace Maroik.Website.Mappings;
 
 /// <summary>
-/// Converts a <see cref="DashboardSummary"/> returned by <c>IDashboardService</c> into the
+/// Converts a <see cref="DashboardDto"/> returned by <c>IDashboardService</c> into the
 /// <see cref="UserIndexOutputViewModel"/> expected by the Dashboard view.
 /// Handles response-to-ViewModel mapping (with timezone conversion and currency lookup)
 /// and all per-category aggregation and percentage calculations, keeping this logic
@@ -14,7 +14,7 @@ namespace Maroik.Website.Mappings;
 public static class DashboardViewModelMapper
 {
     /// <summary>Maps <paramref name="summary"/> to a fully-populated <see cref="UserIndexOutputViewModel"/>.</summary>
-    public static UserIndexOutputViewModel ToViewModel(this DashboardSummary summary, string timeZoneId)
+    public static UserIndexOutputViewModel ToViewModel(this DashboardDto summary, string timeZoneId)
     {
         var vm = new UserIndexOutputViewModel
         {

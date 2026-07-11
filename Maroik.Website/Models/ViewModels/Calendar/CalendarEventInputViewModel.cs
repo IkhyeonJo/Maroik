@@ -49,7 +49,7 @@ public class CalendarEventInputViewModel
     public string? Status { get; set; }
 
     /// <summary>
-    /// JSON-serialized list of <c>CalendarReminderInfo</c> objects representing the reminders
+    /// JSON-serialized list of <c>CalendarReminderDto</c> objects representing the reminders
     /// configured for this event. Serialized on the client and deserialized in the service layer.
     /// </summary>
     public string? SerializedCalendarReminders { get; set; }

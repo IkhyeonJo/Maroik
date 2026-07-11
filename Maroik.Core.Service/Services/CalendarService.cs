@@ -283,7 +283,7 @@ public class CalendarService : ICalendarService
     /// <inheritdoc />
     public async Task<ServiceResult> CreateCalendarEventAsync(
         CalendarEventRequest request, string email, string roleIndex,
-        List<CalendarReminderInfo> reminders, AttachedFileInfo? attachedFile, CancellationToken ct = default)
+        List<CalendarReminderDto> reminders, AttachedFileDto? attachedFile, CancellationToken ct = default)
     {
         var fileError = _attachmentContent.ValidateAttachedFile(attachedFile);
         if (fileError != null) return fileError;
@@ -332,7 +332,7 @@ public class CalendarService : ICalendarService
             }
 
             // Create all reminder entries for the event within the same transaction.
-            foreach (CalendarReminderInfo r in reminders)
+            foreach (CalendarReminderDto r in reminders)
             {
                 var reminderResult = CalendarEventReminder.Create(eventId, r.Method,
                     r.MinutesBeforeEvent, r.HoursBeforeEvent, r.DaysBeforeEvent, r.WeeksBeforeEvent,
@@ -359,7 +359,7 @@ public class CalendarService : ICalendarService
     /// <inheritdoc />
     public async Task<ServiceResult> UpdateCalendarEventAsync(
         CalendarEventRequest request, string email, string roleIndex,
-        List<CalendarReminderInfo> reminders, AttachedFileInfo? attachedFile, CancellationToken ct = default)
+        List<CalendarReminderDto> reminders, AttachedFileDto? attachedFile, CancellationToken ct = default)
     {
         var fileError = _attachmentContent.ValidateAttachedFile(attachedFile);
         if (fileError != null) return fileError;
@@ -420,7 +420,7 @@ public class CalendarService : ICalendarService
 
             // Replace reminders: delete all existing then re-create from the updated list.
             await _calendarEventReminderRepository.DeleteByCalendarEventIdAsync(existing.Id, ct);
-            foreach (CalendarReminderInfo r in reminders)
+            foreach (CalendarReminderDto r in reminders)
             {
                 var reminderResult = CalendarEventReminder.Create(existing.Id, r.Method,
                     r.MinutesBeforeEvent, r.HoursBeforeEvent, r.DaysBeforeEvent, r.WeeksBeforeEvent,
@@ -478,7 +478,7 @@ public class CalendarService : ICalendarService
     }
 
     /// <inheritdoc />
-    public Task<SummernoteUploadResult> UploadSummernoteImageAsync(AttachedFileInfo file, string roleIndex, CancellationToken ct = default)
+    public Task<SummernoteUploadResult> UploadSummernoteImageAsync(AttachedFileDto file, string roleIndex, CancellationToken ct = default)
         => _attachmentContent.UploadSummernoteImageAsync(file, "Calendar", roleIndex, ct);
 
     /// <inheritdoc />

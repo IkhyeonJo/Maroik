@@ -113,7 +113,7 @@ public class BoardServiceTests
         _attachedFileRepo.Setup(r => r.CreateAsync(It.IsAny<BoardAttachedFile>(), It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
         var sut = CreateSut();
 
-        var file = new AttachedFileInfo { FileName = "doc.zip", ContentType = "application/zip", Bytes = [1, 2], Size = 2 };
+        var file = new AttachedFileDto { FileName = "doc.zip", ContentType = "application/zip", Bytes = [1, 2], Size = 2 };
         ServiceResult result = await sut.WriteBoardAsync(
             new BoardRequest { Type = nameof(BoardType.FreeForum), Title = "Test Title", Writer = "Alice" }, file, TestContext.Current.CancellationToken);
 

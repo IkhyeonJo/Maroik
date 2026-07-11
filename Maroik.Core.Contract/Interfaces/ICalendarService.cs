@@ -57,16 +57,16 @@ public interface ICalendarService
     Task<ServiceResult> EnsureDefaultCalendarAsync(CalendarRequest request, CancellationToken ct = default);
 
     /// <summary>Creates a new calendar event with optional reminders and an optional file attachment.</summary>
-    Task<ServiceResult> CreateCalendarEventAsync(CalendarEventRequest request, string email, string roleIndex, List<CalendarReminderInfo> reminders, AttachedFileInfo? attachedFile, CancellationToken ct = default);
+    Task<ServiceResult> CreateCalendarEventAsync(CalendarEventRequest request, string email, string roleIndex, List<CalendarReminderDto> reminders, AttachedFileDto? attachedFile, CancellationToken ct = default);
 
     /// <summary>Updates an existing calendar event, replacing reminders and the attachment if provided.</summary>
-    Task<ServiceResult> UpdateCalendarEventAsync(CalendarEventRequest request, string email, string roleIndex, List<CalendarReminderInfo> reminders, AttachedFileInfo? attachedFile, CancellationToken ct = default);
+    Task<ServiceResult> UpdateCalendarEventAsync(CalendarEventRequest request, string email, string roleIndex, List<CalendarReminderDto> reminders, AttachedFileDto? attachedFile, CancellationToken ct = default);
 
     /// <summary>Deletes a calendar event and its associated reminders and attachment.</summary>
     Task<ServiceResult> DeleteCalendarEventAsync(long calendarEventId, string email, CancellationToken ct = default);
 
     /// <summary>Validates and stores an image uploaded from the Summernote editor inside a calendar event description.</summary>
-    Task<SummernoteUploadResult> UploadSummernoteImageAsync(AttachedFileInfo file, string roleIndex, CancellationToken ct = default);
+    Task<SummernoteUploadResult> UploadSummernoteImageAsync(AttachedFileDto file, string roleIndex, CancellationToken ct = default);
 
     /// <summary>Downloads the raw bytes of a stored file by its server-side path.</summary>
     Task<byte[]?> DownloadFileAsync(string filePath, CancellationToken ct = default);

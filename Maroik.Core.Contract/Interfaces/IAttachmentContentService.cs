@@ -14,10 +14,10 @@ public interface IAttachmentContentService
     /// Validates a zip attachment against the configured extension and size policy.
     /// Returns <see langword="null"/> when the file passes validation (or when no file is provided).
     /// </summary>
-    ServiceResult? ValidateAttachedFile(AttachedFileInfo? attachedFile);
+    ServiceResult? ValidateAttachedFile(AttachedFileDto? attachedFile);
 
     /// <summary>Validates, uploads, and re-downloads a Summernote inline image for preview.</summary>
-    Task<SummernoteUploadResult> UploadSummernoteImageAsync(AttachedFileInfo file, string area, string subArea, CancellationToken ct = default);
+    Task<SummernoteUploadResult> UploadSummernoteImageAsync(AttachedFileDto file, string area, string subArea, CancellationToken ct = default);
 
     /// <summary>
     /// Downloads a file from file storage. Returns <see langword="null"/> (and logs) on failure

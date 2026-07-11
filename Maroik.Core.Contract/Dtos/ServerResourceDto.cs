@@ -5,7 +5,7 @@ namespace Maroik.Core.Contract.Dtos;
 /// written by the host monitoring script.
 /// Consumed by the admin dashboard view.
 /// </summary>
-public class ServerResourceSummary
+public class ServerResourceDto
 {
     /// <summary>CPU usage as a numeric percentage (e.g. 12.5).</summary>
     public double HostCpuNumeric { get; init; }

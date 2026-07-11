@@ -91,7 +91,7 @@ public class ForumController : Controller
                 Noticed = loggedInAccount.Role == Role.Admin && boardInputViewModel.Noticed
             };
 
-            AttachedFileInfo? attachedFile = await boardInputViewModel.UploadedFile.ToAttachedFileInfoAsync(ct);
+            AttachedFileDto? attachedFile = await boardInputViewModel.UploadedFile.ToAttachedFileInfoAsync(ct);
 
             ServiceResult result = await _boardService.WriteBoardAsync(boardRequest, attachedFile, ct);
             return result.Success
@@ -176,7 +176,7 @@ public class ForumController : Controller
             bytes = ms.ToArray();
         }
 
-        var file = new AttachedFileInfo
+        var file = new AttachedFileDto
         {
             Bytes = bytes,
             ContentType = summernoteImageFile.ContentType,
@@ -475,7 +475,7 @@ public class ForumController : Controller
                 Locked = boardInputViewModel.Locked
             };
 
-            AttachedFileInfo? attachedFile = await boardInputViewModel.UploadedFile.ToAttachedFileInfoAsync(ct);
+            AttachedFileDto? attachedFile = await boardInputViewModel.UploadedFile.ToAttachedFileInfoAsync(ct);
 
             ServiceResult result = await _boardService.EditBoardAsync(boardRequest, loggedInAccount.Nickname!, attachedFile, ct);
             return result.Success

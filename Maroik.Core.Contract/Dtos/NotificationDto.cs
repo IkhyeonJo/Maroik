@@ -4,7 +4,7 @@ namespace Maroik.Core.Contract.Dtos;
 /// Badge counts displayed in the navigation header to alert the user about
 /// upcoming or overdue fixed income / expenditure items.
 /// </summary>
-public class NotificationCounts
+public class NotificationDto
 {
     /// <summary>Number of fixed income items whose deposit day is approaching within the notice period.</summary>
     public int FixedIncomesNoticed { get; init; }

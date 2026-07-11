@@ -9,15 +9,15 @@ namespace Maroik.Website.Extensions;
 public static class FormFileExtensions
 {
     /// <summary>
-    /// Reads the uploaded file into an <see cref="AttachedFileInfo"/>.
+    /// Reads the uploaded file into an <see cref="AttachedFileDto"/>.
     /// Returns <see langword="null"/> when <paramref name="file"/> is <see langword="null"/>.
     /// </summary>
-    public static async Task<AttachedFileInfo?> ToAttachedFileInfoAsync(this IFormFile? file, CancellationToken ct = default)
+    public static async Task<AttachedFileDto?> ToAttachedFileInfoAsync(this IFormFile? file, CancellationToken ct = default)
     {
         if (file == null) return null;
         using MemoryStream ms = new();
         await file.CopyToAsync(ms, ct);
-        return new AttachedFileInfo
+        return new AttachedFileDto
         {
             Bytes = ms.ToArray(),
             ContentType = file.ContentType,

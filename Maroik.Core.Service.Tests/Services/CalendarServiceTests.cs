@@ -311,7 +311,7 @@ public class CalendarServiceTests
         _reminderRepo.Setup(r => r.CreateAsync(It.IsAny<CalendarEventReminder>(), It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
         var sut = CreateSut();
 
-        var reminders = new List<CalendarReminderInfo>
+        var reminders = new List<CalendarReminderDto>
         {
             new() { Method = "Email", MinutesBeforeEvent = 30 },
             new() { Method = "Popup", MinutesBeforeEvent = 10 }
