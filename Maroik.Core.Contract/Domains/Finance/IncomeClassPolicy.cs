@@ -3,7 +3,7 @@ using ErrorOr;
 namespace Maroik.Core.Contract.Domains.Finance;
 
 /// <summary>
-/// Domain policy that validates income main/sub-class combinations.
+/// Domain policy that validates income main/subclass combinations.
 /// Returns <see cref="Result.Success"/> when the combination is recognized,
 /// or a validation error when it is not.
 /// </summary>

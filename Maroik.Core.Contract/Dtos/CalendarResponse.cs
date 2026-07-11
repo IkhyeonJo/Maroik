@@ -22,7 +22,7 @@ public class CalendarResponse
     /// <summary>Default IANA time-zone ID for events in this calendar.</summary>
     public string? TimeZoneIanaId { get; set; }
 
-    /// <summary>HTML colour code (e.g. "#FF5733") used to render calendar events.</summary>
+    /// <summary>HTML color code (e.g. "#FF5733") used to render calendar events.</summary>
     public string? HtmlColorCode { get; set; }
 
     /// <summary>UTC creation timestamp.</summary>

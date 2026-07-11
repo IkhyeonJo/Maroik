@@ -4,7 +4,7 @@ namespace Maroik.Core.Contract.Dtos;
 
 /// <summary>
 /// Data transfer object used to create or update a calendar.
-/// A calendar groups multiple events and has its own colour and time zone.
+/// A calendar groups multiple events and has its own color and time zone.
 /// </summary>
 public class CalendarRequest
 {
@@ -23,6 +23,6 @@ public class CalendarRequest
     /// <summary>Default IANA time-zone ID for events in this calendar (e.g. "Asia/Seoul").</summary>
     public string? TimeZoneIanaId { get; set; }
 
-    /// <summary>HTML colour code used to visually distinguish this calendar (e.g. "#FF5733").</summary>
+    /// <summary>HTML color code used to visually distinguish this calendar (e.g. "#FF5733").</summary>
     public string? HtmlColorCode { get; set; }
 }
