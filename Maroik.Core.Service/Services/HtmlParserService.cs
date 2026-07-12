@@ -3,8 +3,8 @@ using Maroik.Core.Contract.Interfaces;
 
 namespace Maroik.Core.Service.Services;
 
-/// <summary>HtmlAgilityPack-backed implementation of <see cref="IHtmlParser"/>.</summary>
-public class HtmlParser : IHtmlParser
+/// <summary>HtmlAgilityPack-backed implementation of <see cref="IHtmlParserService"/>.</summary>
+public class HtmlParserService : IHtmlParserService
 {
     /// <inheritdoc />
     public async Task<(string Html, bool HasImages)> TransformImageAttributesAsync(

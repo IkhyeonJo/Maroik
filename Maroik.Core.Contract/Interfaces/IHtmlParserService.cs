@@ -4,7 +4,7 @@ namespace Maroik.Core.Contract.Interfaces;
 /// Traverses and patches <c>&lt;img&gt;</c> attributes in an HTML string
 /// without coupling callers to a specific HTML parsing library.
 /// </summary>
-public interface IHtmlParser
+public interface IHtmlParserService
 {
     /// <summary>
     /// Calls <paramref name="patchFactory"/> for each <c>&lt;img&gt;</c> tag's <c>alt</c> value

@@ -34,9 +34,9 @@ public static class ServiceCollectionExtensions
             services.AddScoped<IAttachmentContentService, AttachmentContentService>();
 
             services.AddSingleton<IRsaService, RsaService>();
-            services.AddSingleton<IImageValidator, ImageValidator>();
-            services.AddSingleton<IHtmlContentSanitizer, HtmlContentSanitizer>();
-            services.AddSingleton<IHtmlParser, HtmlParser>();
+            services.AddSingleton<IImageValidatorService, ImageValidatorService>();
+            services.AddSingleton<IHtmlContentSanitizerService, HtmlContentSanitizerService>();
+            services.AddSingleton<IHtmlParserService, HtmlParserService>();
         }
     }
 }

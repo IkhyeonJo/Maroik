@@ -22,7 +22,7 @@ public class ProfileServiceTests
     private readonly Mock<IAssetRepository> _assetRepo = new();
     private readonly Mock<IPasswordService> _passwordService = new();
     private readonly Mock<IClamavClient> _clamavClient = new();
-    private readonly Mock<IImageValidator> _imageValidator = new();
+    private readonly Mock<IImageValidatorService> _imageValidator = new();
     private readonly IOptions<ServerSetting> _settings =
         Options.Create(new ServerSetting { ClamavHost = "localhost", ClamavPort = 3310 });
 

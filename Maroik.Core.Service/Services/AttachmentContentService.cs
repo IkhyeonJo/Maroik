@@ -15,9 +15,9 @@ public class AttachmentContentService : IAttachmentContentService
 {
     private readonly IFileClient _fileClient;
     private readonly IRsaService _rsa;
-    private readonly IImageValidator _imageValidator;
-    private readonly IHtmlContentSanitizer _htmlSanitizer;
-    private readonly IHtmlParser _htmlParser;
+    private readonly IImageValidatorService _imageValidator;
+    private readonly IHtmlContentSanitizerService _htmlSanitizer;
+    private readonly IHtmlParserService _htmlParser;
     private readonly IOptions<ServerSetting> _settings;
     private readonly ILogger<AttachmentContentService> _logger;
 
@@ -25,9 +25,9 @@ public class AttachmentContentService : IAttachmentContentService
     public AttachmentContentService(
         IFileClient fileClient,
         IRsaService rsa,
-        IImageValidator imageValidator,
-        IHtmlContentSanitizer htmlSanitizer,
-        IHtmlParser htmlParser,
+        IImageValidatorService imageValidator,
+        IHtmlContentSanitizerService htmlSanitizer,
+        IHtmlParserService htmlParser,
         IOptions<ServerSetting> settings,
         ILogger<AttachmentContentService> logger)
     {

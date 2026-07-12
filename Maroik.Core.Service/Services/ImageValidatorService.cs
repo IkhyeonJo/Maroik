@@ -3,8 +3,8 @@ using Maroik.Core.Contract.Interfaces;
 
 namespace Maroik.Core.Service.Services;
 
-/// <summary>ImageMagick-backed implementation of <see cref="IImageValidator"/>.</summary>
-public class ImageValidator : IImageValidator
+/// <summary>ImageMagick-backed implementation of <see cref="IImageValidatorService"/>.</summary>
+public class ImageValidatorService : IImageValidatorService
 {
     /// <inheritdoc />
     public bool IsValidImage(byte[] bytes)

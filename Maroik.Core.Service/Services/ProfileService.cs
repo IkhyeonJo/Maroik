@@ -23,7 +23,7 @@ public class ProfileService : IProfileService
     private readonly IAssetRepository _assetRepository;
     private readonly IPasswordService _passwordService;
     private readonly IClamavClient _clamavClient;
-    private readonly IImageValidator _imageValidator;
+    private readonly IImageValidatorService _imageValidator;
     private readonly IOptions<ServerSetting> _settings;
     private readonly ILogger<ProfileService> _logger;
 
@@ -33,7 +33,7 @@ public class ProfileService : IProfileService
         IAssetRepository assetRepository,
         IPasswordService passwordService,
         IClamavClient clamavClient,
-        IImageValidator imageValidator,
+        IImageValidatorService imageValidator,
         IOptions<ServerSetting> settings,
         ILogger<ProfileService> logger)
     {
