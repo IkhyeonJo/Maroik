@@ -3,11 +3,11 @@ using Maroik.Core.Contract.Extensions;
 namespace Maroik.Core.Contract.Tests.Extensions;
 
 /// <summary>
-/// Unit tests for <see cref="Maroik.Core.Contract.Extensions.StringExtension"/>.
+/// Unit tests for <see cref="Maroik.Core.Contract.Extensions.StringExtensions"/>.
 /// Verifies the <c>GetAmountLabel</c> helper that formats a decimal value
 /// with its currency unit for display in the dashboard and account-book views.
 /// </summary>
-public class StringExtensionTests
+public class StringExtensionsTests
 {
     // -- GetAmountLabel -------------------------------------------------------
 

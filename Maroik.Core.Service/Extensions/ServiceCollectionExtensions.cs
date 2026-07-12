@@ -9,32 +9,34 @@ namespace Maroik.Core.Service.Extensions;
 /// </summary>
 public static class ServiceCollectionExtensions
 {
-    /// <summary>
-    /// Registers all application service implementations as scoped (or singleton where appropriate)
-    /// so they are available for constructor injection throughout the application.
-    /// </summary>
-    /// <param name="services">The <see cref="IServiceCollection"/> to add the services to.</param>
-    public static void AddApplicationServices(this IServiceCollection services)
+    extension(IServiceCollection services)
     {
-        services.AddScoped<IPasswordService, PasswordService>();
-        services.AddScoped<IAccountService, AccountService>();
-        services.AddScoped<IAssetService, AssetService>();
-        services.AddScoped<IAssetBalanceDomainService, AssetBalanceDomainService>();
-        services.AddScoped<IIncomeService, IncomeService>();
-        services.AddScoped<IExpenditureService, ExpenditureService>();
-        services.AddScoped<IFixedIncomeService, FixedIncomeService>();
-        services.AddScoped<IFixedExpenditureService, FixedExpenditureService>();
-        services.AddScoped<IDashboardService, DashboardService>();
-        services.AddScoped<IProfileService, ProfileService>();
-        services.AddScoped<IManagementAccountService, ManagementAccountService>();
-        services.AddScoped<IMenuService, MenuService>();
-        services.AddScoped<IBoardService, BoardService>();
-        services.AddScoped<ICalendarService, CalendarService>();
-        services.AddScoped<IAttachmentContentService, AttachmentContentService>();
+        /// <summary>
+        /// Registers all application service implementations as scoped (or singleton where appropriate)
+        /// so they are available for constructor injection throughout the application.
+        /// </summary>
+        public void AddApplicationServices()
+        {
+            services.AddScoped<IPasswordService, PasswordService>();
+            services.AddScoped<IAccountService, AccountService>();
+            services.AddScoped<IAssetService, AssetService>();
+            services.AddScoped<IAssetBalanceDomainService, AssetBalanceDomainService>();
+            services.AddScoped<IIncomeService, IncomeService>();
+            services.AddScoped<IExpenditureService, ExpenditureService>();
+            services.AddScoped<IFixedIncomeService, FixedIncomeService>();
+            services.AddScoped<IFixedExpenditureService, FixedExpenditureService>();
+            services.AddScoped<IDashboardService, DashboardService>();
+            services.AddScoped<IProfileService, ProfileService>();
+            services.AddScoped<IManagementAccountService, ManagementAccountService>();
+            services.AddScoped<IMenuService, MenuService>();
+            services.AddScoped<IBoardService, BoardService>();
+            services.AddScoped<ICalendarService, CalendarService>();
+            services.AddScoped<IAttachmentContentService, AttachmentContentService>();
 
-        services.AddSingleton<IRsaService, RsaService>();
-        services.AddSingleton<IImageValidator, ImageValidator>();
-        services.AddSingleton<IHtmlContentSanitizer, HtmlContentSanitizer>();
-        services.AddSingleton<IHtmlParser, HtmlParser>();
+            services.AddSingleton<IRsaService, RsaService>();
+            services.AddSingleton<IImageValidator, ImageValidator>();
+            services.AddSingleton<IHtmlContentSanitizer, HtmlContentSanitizer>();
+            services.AddSingleton<IHtmlParser, HtmlParser>();
+        }
     }
 }

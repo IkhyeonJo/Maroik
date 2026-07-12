@@ -10,67 +10,70 @@ namespace Maroik.Website.Extensions;
 /// </summary>
 public static class AccountBookSearchExtensions
 {
-    /// <summary>
-    /// Filters <paramref name="items"/> to those that contain <paramref name="search"/>
-    /// in any display field. Returns all items when <paramref name="search"/> is null or empty.
-    /// </summary>
-    public static IEnumerable<AssetOutputViewModel> ApplySearch(
-        this IEnumerable<AssetOutputViewModel> items,
-        string? search)
+    extension(IEnumerable<AssetOutputViewModel> items)
     {
-        if (string.IsNullOrEmpty(search)) return items;
-        return items.Where(i =>
-            Has(i.ProductName, search) ||
-            Has(i.Item, search) ||
-            Has(i.Amount.TrimTrailingZeros(), search) ||
-            Has(i.MonetaryUnit, search) ||
-            Has(i.Created.ToString(), search) ||
-            Has(i.Updated.ToString(), search) ||
-            Has(i.Note, search) ||
-            Has(i.Deleted.ToString(), search));
+        /// <summary>
+        /// Filters <paramref name="items"/> to those that contain <paramref name="search"/>
+        /// in any display field. Returns all items when <paramref name="search"/> is null or empty.
+        /// </summary>
+        public IEnumerable<AssetOutputViewModel> ApplySearch(string? search)
+        {
+            if (string.IsNullOrEmpty(search)) return items;
+            return items.Where(i =>
+                Has(i.ProductName, search) ||
+                Has(i.Item, search) ||
+                Has(i.Amount.TrimTrailingZeros(), search) ||
+                Has(i.MonetaryUnit, search) ||
+                Has(i.Created.ToString(), search) ||
+                Has(i.Updated.ToString(), search) ||
+                Has(i.Note, search) ||
+                Has(i.Deleted.ToString(), search));
+        }
     }
 
-    /// <summary>
-    /// Filters <paramref name="items"/> to those that contain <paramref name="search"/>
-    /// in any display field. Returns all items when <paramref name="search"/> is null or empty.
-    /// </summary>
-    public static IEnumerable<IncomeOutputViewModel> ApplySearch(
-        this IEnumerable<IncomeOutputViewModel> items,
-        string? search)
+    extension(IEnumerable<IncomeOutputViewModel> items)
     {
-        if (string.IsNullOrEmpty(search)) return items;
-        return items.Where(i =>
-            Has(i.MainClass, search) ||
-            Has(i.SubClass, search) ||
-            Has(i.Content, search) ||
-            Has(i.Amount.TrimTrailingZeros(), search) ||
-            Has(i.MonetaryUnit, search) ||
-            Has(i.DepositMyAssetProductName, search) ||
-            Has(i.Created.ToString(), search) ||
-            Has(i.Updated.ToString(), search) ||
-            Has(i.Note, search));
+        /// <summary>
+        /// Filters <paramref name="items"/> to those that contain <paramref name="search"/>
+        /// in any display field. Returns all items when <paramref name="search"/> is null or empty.
+        /// </summary>
+        public IEnumerable<IncomeOutputViewModel> ApplySearch(string? search)
+        {
+            if (string.IsNullOrEmpty(search)) return items;
+            return items.Where(i =>
+                Has(i.MainClass, search) ||
+                Has(i.SubClass, search) ||
+                Has(i.Content, search) ||
+                Has(i.Amount.TrimTrailingZeros(), search) ||
+                Has(i.MonetaryUnit, search) ||
+                Has(i.DepositMyAssetProductName, search) ||
+                Has(i.Created.ToString(), search) ||
+                Has(i.Updated.ToString(), search) ||
+                Has(i.Note, search));
+        }
     }
 
-    /// <summary>
-    /// Filters <paramref name="items"/> to those that contain <paramref name="search"/>
-    /// in any display field. Returns all items when <paramref name="search"/> is null or empty.
-    /// </summary>
-    public static IEnumerable<ExpenditureOutputViewModel> ApplySearch(
-        this IEnumerable<ExpenditureOutputViewModel> items,
-        string? search)
+    extension(IEnumerable<ExpenditureOutputViewModel> items)
     {
-        if (string.IsNullOrEmpty(search)) return items;
-        return items.Where(i =>
-            Has(i.MainClass, search) ||
-            Has(i.SubClass, search) ||
-            Has(i.Content, search) ||
-            Has(i.Amount.TrimTrailingZeros(), search) ||
-            Has(i.MonetaryUnit, search) ||
-            Has(i.PaymentMethod, search) ||
-            Has(i.Note, search) ||
-            Has(i.MyDepositAsset, search) ||
-            Has(i.Created.ToString(), search) ||
-            Has(i.Updated.ToString(), search));
+        /// <summary>
+        /// Filters <paramref name="items"/> to those that contain <paramref name="search"/>
+        /// in any display field. Returns all items when <paramref name="search"/> is null or empty.
+        /// </summary>
+        public IEnumerable<ExpenditureOutputViewModel> ApplySearch(string? search)
+        {
+            if (string.IsNullOrEmpty(search)) return items;
+            return items.Where(i =>
+                Has(i.MainClass, search) ||
+                Has(i.SubClass, search) ||
+                Has(i.Content, search) ||
+                Has(i.Amount.TrimTrailingZeros(), search) ||
+                Has(i.MonetaryUnit, search) ||
+                Has(i.PaymentMethod, search) ||
+                Has(i.Note, search) ||
+                Has(i.MyDepositAsset, search) ||
+                Has(i.Created.ToString(), search) ||
+                Has(i.Updated.ToString(), search));
+        }
     }
 
     private static bool Has(string? value, string search)

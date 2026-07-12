@@ -3,11 +3,11 @@ using Maroik.Core.Contract.Extensions;
 namespace Maroik.Core.Contract.Tests.Extensions;
 
 /// <summary>
-/// Unit tests for <see cref="Maroik.Core.Contract.Extensions.DateTimeExtension"/>.
+/// Unit tests for <see cref="Maroik.Core.Contract.Extensions.DateTimeExtensions"/>.
 /// Verifies UTC-to-local conversion using IANA time-zone IDs and graceful handling
 /// of unknown or null zone identifiers.
 /// </summary>
-public class DateTimeExtensionTests
+public class DateTimeExtensionsTests
 {
     // -- ConvertTimeByTimeZoneIanaId ------------------------------------------
 

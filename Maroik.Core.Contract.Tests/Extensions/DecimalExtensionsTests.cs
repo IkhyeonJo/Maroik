@@ -3,11 +3,11 @@ using Maroik.Core.Contract.Extensions;
 namespace Maroik.Core.Contract.Tests.Extensions;
 
 /// <summary>
-/// Unit tests for <see cref="Maroik.Core.Contract.Extensions.DecimalExtension"/>.
+/// Unit tests for <see cref="Maroik.Core.Contract.Extensions.DecimalExtensions"/>.
 /// Verifies trailing-zero trimming for <see cref="decimal"/> values
 /// (e.g. <c>1000.00 → "1000"</c>) used when formatting currency amounts.
 /// </summary>
-public class DecimalExtensionTests
+public class DecimalExtensionsTests
 {
     // -- TrimTrailingZeros (decimal) ------------------------------------------
 

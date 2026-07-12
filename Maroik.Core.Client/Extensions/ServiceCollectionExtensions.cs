@@ -10,26 +10,28 @@ namespace Maroik.Core.Client.Extensions;
 /// </summary>
 public static class ServiceCollectionExtensions
 {
-    /// <summary>
-    /// Registers the mail, file-storage, ClamAV, and RabbitMQ email-publisher client implementations.
-    /// </summary>
-    /// <param name="services">The service collection to add to.</param>
-    /// <param name="rabbitMqConnectionString">
-    /// AMQP connection string (e.g. "amqp://user:pass@host:5672/") used by <see cref="IEmailPublisher"/>.
-    /// </param>
-    public static void AddClientServices(this IServiceCollection services, string rabbitMqConnectionString)
+    extension(IServiceCollection services)
     {
-        // Register the SMTP email client
-        services.AddScoped<IMailClient, MailClient>();
+        /// <summary>
+        /// Registers the mail, file-storage, ClamAV, and RabbitMQ email-publisher client implementations.
+        /// </summary>
+        /// <param name="rabbitMqConnectionString">
+        /// AMQP connection string (e.g. "amqp://user:pass@host:5672/") used by <see cref="IEmailPublisher"/>.
+        /// </param>
+        public void AddClientServices(string rabbitMqConnectionString)
+        {
+            // Register the SMTP email client
+            services.AddScoped<IMailClient, MailClient>();
 
-        // Register the HTTP file-storage proxy client
-        services.AddScoped<IFileClient, FileClient>();
+            // Register the HTTP file-storage proxy client
+            services.AddScoped<IFileClient, FileClient>();
 
-        // Register the ClamAV antivirus scanning client
-        services.AddScoped<IClamavClient, ClamavClient>();
+            // Register the ClamAV antivirus scanning client
+            services.AddScoped<IClamavClient, ClamavClient>();
 
-        // Register the RabbitMQ email publisher. Singleton: owns one long-lived AMQP connection,
-        // opened lazily on first publish so a RabbitMQ outage doesn't block app startup.
-        services.AddSingleton<IEmailPublisher>(_ => new RabbitMqEmailPublisher(rabbitMqConnectionString));
+            // Register the RabbitMQ email publisher. Singleton: owns one long-lived AMQP connection,
+            // opened lazily on first publish so a RabbitMQ outage doesn't block app startup.
+            services.AddSingleton<IEmailPublisher>(_ => new RabbitMqEmailPublisher(rabbitMqConnectionString));
+        }
     }
 }

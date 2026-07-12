@@ -6,31 +6,34 @@ namespace Maroik.Website.Extensions;
 /// </summary>
 public static class StaticAssetExtensions
 {
-    /// <summary>
-    /// Registers <see cref="Microsoft.AspNetCore.StaticFiles.StaticFileMiddleware"/> with explicit
-    /// MIME-type mappings for .js and .css files, and adds the
-    /// <c>X-Content-Type-Options: nosniff</c> security header to every static-file response.
-    /// </summary>
-    public static IApplicationBuilder MapStaticAssets(this IApplicationBuilder app)
+    extension(IApplicationBuilder app)
     {
-        app.UseStaticFiles(new StaticFileOptions
+        /// <summary>
+        /// Registers <see cref="Microsoft.AspNetCore.StaticFiles.StaticFileMiddleware"/> with explicit
+        /// MIME-type mappings for .js and .css files, and adds the
+        /// <c>X-Content-Type-Options: nosniff</c> security header to every static-file response.
+        /// </summary>
+        public IApplicationBuilder MapStaticAssets()
         {
-            // Explicitly map common web asset extensions to prevent MIME sniffing issues
-            ContentTypeProvider = new FileExtensionContentTypeProvider
+            app.UseStaticFiles(new StaticFileOptions
             {
-                Mappings =
+                // Explicitly map common web asset extensions to prevent MIME sniffing issues
+                ContentTypeProvider = new FileExtensionContentTypeProvider
                 {
-                    [".js"] = "application/javascript",
-                    [".css"] = "text/css"
+                    Mappings =
+                    {
+                        [".js"] = "application/javascript",
+                        [".css"] = "text/css"
+                    }
+                },
+                // Add X-Content-Type-Options: nosniff to prevent browsers from MIME-sniffing responses
+                OnPrepareResponse = ctx =>
+                {
+                    ctx.Context.Response.Headers["X-Content-Type-Options"] = "nosniff";
                 }
-            },
-            // Add X-Content-Type-Options: nosniff to prevent browsers from MIME-sniffing responses
-            OnPrepareResponse = ctx =>
-            {
-                ctx.Context.Response.Headers["X-Content-Type-Options"] = "nosniff";
-            }
-        });
+            });
 
-        return app;
+            return app;
+        }
     }
 }
