@@ -46,9 +46,6 @@ public class DashboardService : IDashboardService
         // Normalize year/month
         if (!int.TryParse(year, out int yearInt)) yearInt = DateTime.UtcNow.Year;
         if (!int.TryParse(month, out int monthInt)) monthInt = DateTime.UtcNow.Month;
-        string normalizedYear = yearInt.ToString();
-        string normalizedMonth = monthInt.ToString("00");
-        string normalizedYearMonth = $"{normalizedYear}-{normalizedMonth}";
 
         List<Asset> assets = await _assetRepository.GetByAccountEmailAsync(accountEmail, ct);
         Account? account = await _accountRepository.FindByEmailAsync(accountEmail, ct);
@@ -206,7 +203,10 @@ public class DashboardService : IDashboardService
                     dockerContainerResult.Add($"{name}||{r[1]}||{r[2]} {r[3]} {r[4]}");
             }
         }
-        catch { }
+        catch
+        {
+            // ignored
+        }
 
         string memUsageLimit = string.Empty;
         if (!string.IsNullOrEmpty(hostMemoryInfo))
@@ -217,7 +217,10 @@ public class DashboardService : IDashboardService
                 if (temp.Length >= 2)
                     memUsageLimit = temp[1].Trim() + " / " + temp[0].Trim();
             }
-            catch { }
+            catch
+            {
+                // ignored
+            }
         }
 
         string diskUsageLimit = string.Empty;
@@ -229,10 +232,15 @@ public class DashboardService : IDashboardService
                 if (temp.Length >= 2)
                     diskUsageLimit = temp[1].Trim() + " / " + temp[0].Trim();
             }
-            catch { }
+            catch
+            {
+                // ignored
+            }
         }
 
+#pragma warning disable CA1806
         double.TryParse(
+#pragma warning restore CA1806
             new string(hostCpuInfo.Where(c => char.IsDigit(c) || c == '.').ToArray()),
             out double hostCpuNumeric);
 
@@ -258,8 +266,8 @@ public class DashboardService : IDashboardService
     {
         try
         {
-            int startIndex = input.IndexOf(startMarker) + startMarker.Length;
-            int endIndex = endMarker != null ? input.IndexOf(endMarker, startIndex) : input.Length;
+            int startIndex = input.IndexOf(startMarker, StringComparison.Ordinal) + startMarker.Length;
+            int endIndex = endMarker != null ? input.IndexOf(endMarker, startIndex, StringComparison.Ordinal) : input.Length;
             return input.Substring(startIndex, endIndex - startIndex).Trim();
         }
         catch { return string.Empty; }

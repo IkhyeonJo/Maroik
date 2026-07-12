@@ -1,4 +1,3 @@
-using Maroik.Core.Contract.Enums;
 using Maroik.Core.Contract.Interfaces;
 using Maroik.Core.Contract.Settings;
 using Microsoft.Extensions.Options;
@@ -25,9 +24,10 @@ public class RsaService : IRsaService
             settings.Value.RsaPublicKey);
     }
 
-    /// <inheritdoc />
+    /// <inheritdoc cref="data" />
     public string Sign(string data) => _rsa.Sign(data);
-    /// <inheritdoc />
+
+    /// <inheritdoc cref="data" />
     public bool Verify(string data, string sign) => _rsa.Verify(data, sign);
     /// <inheritdoc />
     public string Decrypt(string cipherText) => _rsa.Decrypt(cipherText);

@@ -143,7 +143,11 @@ public class AccountService : IAccountService
             // Encrypt the registration token before embedding it in the confirmation URL.
             string body = _mailClient.GetMailConfirmationBody(_rsa.Encrypt(account.RegistrationToken!), emailTitle, emailContent0, emailContent1, _settings.Value.DomainName ?? string.Empty);
             bool published = await PublishMailAsync(account.Email.Value, emailSubject, body, ct);
-            if (!published)
+            if (published)
+            {
+                return RegisterResult.Ok(showResendEmail: true, email: account.Email.Value);
+            }
+
             {
                 try
                 {
@@ -154,7 +158,6 @@ public class AccountService : IAccountService
                 return RegisterResult.Fail("Error occurred while processing about sending account authentication mail");
             }
 
-            return RegisterResult.Ok(showResendEmail: true, email: account.Email.Value);
         }
 
         if (!existing.EmailConfirmed)
@@ -288,15 +291,16 @@ public class AccountService : IAccountService
 
         if (confirmResult.IsError)
         {
-            if (confirmResult.FirstError.Type == ErrorOr.ErrorType.Conflict)
+            if (confirmResult.FirstError.Type != ErrorOr.ErrorType.Conflict)
             {
-                // Email was already confirmed by a previous request.
-                account.SetMessage(EnumHelper.GetDescription(AccountMessage.UserAlreadyCreated));
-                try { await _accountRepository.UpdateEntityAsync(account, ct); }
-                catch (Exception e) { _logger.LogError(e, "Failed to update account status for {Email}", account.Email.Value); }
-                return new ConfirmEmailResult { InvalidToken = false, AccountCreated = false };
+                return new ConfirmEmailResult { InvalidToken = true, AccountCreated = true };
             }
-            return new ConfirmEmailResult { InvalidToken = true, AccountCreated = true };
+
+            // Email was already confirmed by a previous request.
+            account.SetMessage(EnumHelper.GetDescription(AccountMessage.UserAlreadyCreated));
+            try { await _accountRepository.UpdateEntityAsync(account, ct); }
+            catch (Exception e) { _logger.LogError(e, "Failed to update account status for {Email}", account.Email.Value); }
+            return new ConfirmEmailResult { InvalidToken = false, AccountCreated = false };
         }
 
         account.SetMessage(EnumHelper.GetDescription(AccountMessage.Success));
@@ -443,7 +447,9 @@ public class AccountService : IAccountService
     /// Used to detect duplicate nickname conflicts during account creation.
     /// </summary>
     private static bool IsUniqueViolation(Exception e)
-        => e.InnerException?.Message?.Contains("23505") == true
-           || (e.InnerException?.GetType().Name.Contains("NpgsqlException") == true
-               && e.InnerException.Message.Contains("unique", StringComparison.OrdinalIgnoreCase));
+    {
+        return (e.InnerException?.Message.Contains("23505") ?? false) ||
+               (e.InnerException?.GetType().Name.Contains("NpgsqlException") ?? false) &&
+               (e.InnerException?.Message.Contains("unique", StringComparison.OrdinalIgnoreCase) ?? false);
+    }
 }

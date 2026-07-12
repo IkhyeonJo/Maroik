@@ -95,20 +95,21 @@ public class FixedIncomeService : IFixedIncomeService
     /// <summary>
     /// Validates the income class, deposit month/day, and maturity date format of a fixed-income request.
     /// </summary>
+    /// <exception cref="ArgumentException"></exception>
+    /// <exception cref="ArgumentNullException"></exception>
+    /// <exception cref="RegexMatchTimeoutException"></exception>
     private static ServiceResult ValidateRequest(FixedIncomeRequest request)
     {
-        if (IncomeClassPolicy.Validate(request.MainClass, request.SubClass).IsError)
-            return ServiceResult.Fail("Input is invalid");
-
-        if (request.DepositMonth is < 1 or > 12)
+        if (IncomeClassPolicy.Validate(request.MainClass, request.SubClass).IsError || request.DepositMonth is < 1 or > 12)
             return ServiceResult.Fail("Input is invalid");
 
         int maxDay = request.DepositMonth switch { 2 => 29, 4 or 6 or 9 or 11 => 30, _ => 31 };
-        if (request.DepositDay < 1 || request.DepositDay > maxDay)
-            return ServiceResult.Fail("Input is invalid");
-
-        if (!Regex.IsMatch(request.MaturityDate.ToString("yyyy-MM-dd"),
-            @"^\d{4}-((0[1-9])|(1[012]))-((0[1-9]|[12]\d)|3[01])$"))
+        if (request.DepositDay < 1 ||
+            request.DepositDay > maxDay ||
+#pragma warning disable SYSLIB1045
+            !Regex.IsMatch(request.MaturityDate.ToString("yyyy-MM-dd"),
+#pragma warning restore SYSLIB1045
+                @"^\d{4}-((0[1-9])|(1[012]))-((0[1-9]|[12]\d)|3[01])$"))
             return ServiceResult.Fail("Input is invalid");
 
         return ServiceResult.Ok();

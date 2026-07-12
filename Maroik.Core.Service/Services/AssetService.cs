@@ -76,14 +76,14 @@ public class AssetService : IAssetService
         {
             if (!IsValidAssetItem(request.Item))
             {
-                await _unitOfWork.RollbackAsync();
+                await _unitOfWork.RollbackAsync(ct);
                 return ServiceResult.Fail("Input is invalid");
             }
 
             Asset? asset = await FindAssetAsync(accountEmail, originalProductName, ct);
             if (asset == null)
             {
-                await _unitOfWork.RollbackAsync();
+                await _unitOfWork.RollbackAsync(ct);
                 return ServiceResult.Fail("Fail to find the asset by given product name");
             }
 
@@ -92,14 +92,14 @@ public class AssetService : IAssetService
             var updateResult = asset.Update(request.ProductName ?? originalProductName, request.Item ?? asset.Item, request.Amount, currency, request.Note, request.Deleted);
             if (updateResult.IsError)
             {
-                await _unitOfWork.RollbackAsync();
+                await _unitOfWork.RollbackAsync(ct);
                 return ServiceResult.Fail(updateResult.FirstError.Description);
             }
 
             int updated = await _assetRepository.UpdateAssetWithProductNameAsync(asset, originalProductName, ct);
             if (updated <= 0)
             {
-                await _unitOfWork.RollbackAsync();
+                await _unitOfWork.RollbackAsync(ct);
                 return ServiceResult.Fail("Input is invalid");
             }
 
@@ -112,7 +112,7 @@ public class AssetService : IAssetService
         }
         catch
         {
-            await _unitOfWork.RollbackAsync();
+            await _unitOfWork.RollbackAsync(ct);
             return ServiceResult.Fail("Input is invalid");
         }
     }
@@ -135,7 +135,7 @@ public class AssetService : IAssetService
         => _assetRepository.FindByEmailAndProductNameAsync(accountEmail, productName, ct);
 
     /// <summary>
-    /// Returns <see langword="true"/> when <paramref name="item"/> is one of the recognised asset category values.
+    /// Returns <see langword="true"/> when <paramref name="item"/> is one of the recognized asset category values.
     /// Prevents invalid category strings from reaching the domain layer.
     /// </summary>
     private static bool IsValidAssetItem(string? item) =>

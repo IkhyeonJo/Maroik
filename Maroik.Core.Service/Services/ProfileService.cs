@@ -53,7 +53,7 @@ public class ProfileService : IProfileService
         return account == null ? null : AccountMapper.ToResponse(account);
     }
 
-    /// <inheritdoc />
+    /// <inheritdoc cref="avatarPath" />
     public async Task<ServiceResult> UpdateAvatarAsync(string email, string avatarPath, CancellationToken ct = default)
     {
         try

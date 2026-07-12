@@ -32,7 +32,7 @@ public class BoardService : IBoardService
     /// Maps each board type name to its corresponding file-storage area folder name.
     /// Used when building attachment storage paths.
     /// </summary>
-    private static readonly Dictionary<string, string> BoardAreaMap = new(StringComparer.OrdinalIgnoreCase)
+    private static readonly Dictionary<string, string> _boardAreaMap = new(StringComparer.OrdinalIgnoreCase)
     {
         [nameof(BoardType.FreeForum)] = "Forum",
         [nameof(BoardType.PrivateNote)] = "Management"
@@ -108,7 +108,7 @@ public class BoardService : IBoardService
             var boardResult = Board.Create(request.Type, request.Title, content, request.Writer);
             if (boardResult.IsError)
             {
-                await _unitOfWork.RollbackAsync();
+                await _unitOfWork.RollbackAsync(ct);
                 return ServiceResult.Fail(boardResult.FirstError.Description);
             }
 
@@ -124,7 +124,7 @@ public class BoardService : IBoardService
                     BoardAttachedFile.Reconstitute(0, boardId, attachedFile.Size,
                         Path.GetFileNameWithoutExtension(attachedFile.FileName),
                         Path.GetExtension(attachedFile.FileName),
-                        filePath.Replace('\\', '/')), ct); // Normalise path separators for URL use.
+                        filePath.Replace('\\', '/')), ct); // Normalize path separators for URL use.
             }
 
             await _unitOfWork.CommitAsync(ct);
@@ -133,7 +133,7 @@ public class BoardService : IBoardService
         catch (Exception e)
         {
             _logger.LogError(e, "Failed to write board post (Type={Type})", request.Type);
-            await _unitOfWork.RollbackAsync();
+            await _unitOfWork.RollbackAsync(ct);
             return ServiceResult.Fail("Input is invalid");
         }
     }
@@ -153,21 +153,21 @@ public class BoardService : IBoardService
 
             if (board == null || board.Deleted)
             {
-                await _unitOfWork.RollbackAsync();
+                await _unitOfWork.RollbackAsync(ct);
                 return ServiceResult.Fail("Input is invalid");
             }
 
             // Only the original writer may edit their own post.
             if (board.Writer != writerNickname)
             {
-                await _unitOfWork.RollbackAsync();
+                await _unitOfWork.RollbackAsync(ct);
                 return ServiceResult.Fail("Input is invalid");
             }
 
             var updateResult = board.Update(request.Title, content);
             if (updateResult.IsError)
             {
-                await _unitOfWork.RollbackAsync();
+                await _unitOfWork.RollbackAsync(ct);
                 return ServiceResult.Fail(updateResult.FirstError.Description);
             }
 
@@ -186,7 +186,7 @@ public class BoardService : IBoardService
         catch (Exception e)
         {
             _logger.LogError(e, "Failed to edit board post {BoardId}", request.Id);
-            await _unitOfWork.RollbackAsync();
+            await _unitOfWork.RollbackAsync(ct);
             return ServiceResult.Fail("Input is invalid");
         }
     }
@@ -237,7 +237,7 @@ public class BoardService : IBoardService
             IEnumerable<BoardComment> existing = await _boardCommentRepository.GetByBoardIdOrderedAsync(request.BoardId, ct);
 
             // The comment order is the current count, giving sequential ordering starting at 0.
-            long order = (long)(existing?.Count() ?? 0);
+            long order = existing.Count();
 
             var commentResult = BoardComment.Create(request.BoardId, order, request.AvatarImagePath, request.Writer, content);
             if (commentResult.IsError)
@@ -348,7 +348,7 @@ public class BoardService : IBoardService
     private static string BuildAttachedFilePath(string boardType, long boardId, string fileName)
     {
         // Map the board type to the correct storage area; default to "Forum" for unknown types.
-        string area = BoardAreaMap.TryGetValue(boardType, out string? a) ? a : "Forum";
+        string area = _boardAreaMap.GetValueOrDefault(boardType, "Forum");
         string guid = Guid.NewGuid().ToString().ToUpper();
         string ext = Path.GetExtension(fileName);
         return Path.Combine("upload", area, boardType, "boardAttachedFiles", $"{boardId}", $"{guid}{ext}");

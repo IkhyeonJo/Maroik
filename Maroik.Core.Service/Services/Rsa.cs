@@ -13,10 +13,10 @@ namespace Maroik.Core.Service.Services;
 /// Date: 2017-10-30 15:50:14
 /// QQ: 501232752
 /// </summary>
-internal class Rsa
+internal sealed class Rsa
 {
-    private readonly System.Security.Cryptography.RSA? _privateKeyRsaProvider;
-    private readonly System.Security.Cryptography.RSA? _publicKeyRsaProvider;
+    private readonly RSA? _privateKeyRsaProvider;
+    private readonly RSA? _publicKeyRsaProvider;
     private readonly HashAlgorithmName _hashAlgorithmName;
     private readonly Encoding _encoding;
 
@@ -108,21 +108,22 @@ internal class Rsa
     #region Create RSA instance from private key
 
     /// <summary>Parses a DER-encoded PKCS#1 private key (Base64) and returns an <see cref="System.Security.Cryptography.RSA"/> instance.</summary>
-    public System.Security.Cryptography.RSA CreateRsaProviderFromPrivateKey(string privateKey)
+    private static RSA CreateRsaProviderFromPrivateKey(string privateKey)
     {
         byte[] privateKeyBits = Convert.FromBase64String(privateKey);
 
-        System.Security.Cryptography.RSA rsa = System.Security.Cryptography.RSA.Create();
+        RSA rsa = RSA.Create();
         RSAParameters rsaParameters = new();
 
         using (BinaryReader binr = new(new MemoryStream(privateKeyBits)))
         {
-            byte bt = 0;
-            ushort twobytes = 0;
-            twobytes = binr.ReadUInt16();
-            _ = twobytes == 0x8130
-                ? binr.ReadByte()
-                : twobytes == 0x8230 ? binr.ReadInt16() : throw new Exception("Unexpected value read binr.ReadUInt16()");
+            var twobytes = binr.ReadUInt16();
+            _ = twobytes switch
+            {
+                0x8130 => binr.ReadByte(),
+                0x8230 => binr.ReadInt16(),
+                _ => throw new Exception("Unexpected value read binr.ReadUInt16()")
+            };
 
             twobytes = binr.ReadUInt16();
             if (twobytes != 0x0102)
@@ -130,7 +131,7 @@ internal class Rsa
                 throw new Exception("Unexpected version");
             }
 
-            bt = binr.ReadByte();
+            var bt = binr.ReadByte();
             if (bt != 0x00)
             {
                 throw new Exception("Unexpected value read binr.ReadByte()");
@@ -155,10 +156,10 @@ internal class Rsa
     #region Create RSA instance from public key
 
     /// <summary>Parses a DER-encoded X.509 SubjectPublicKeyInfo public key (Base64) and returns an <see cref="System.Security.Cryptography.RSA"/> instance.</summary>
-    public System.Security.Cryptography.RSA? CreateRsaProviderFromPublicKey(string publicKeyString)
+    private static RSA? CreateRsaProviderFromPublicKey(string publicKeyString)
     {
         // encoded OID sequence for  PKCS #1 rsaEncryption szOID_RSA_RSA = "1.2.840.113549.1.1.1"
-        byte[] seqOid = { 0x30, 0x0D, 0x06, 0x09, 0x2A, 0x86, 0x48, 0x86, 0xF7, 0x0D, 0x01, 0x01, 0x01, 0x05, 0x00 };
+        byte[] seqOid = [0x30, 0x0D, 0x06, 0x09, 0x2A, 0x86, 0x48, 0x86, 0xF7, 0x0D, 0x01, 0x01, 0x01, 0x05, 0x00];
         _ = new byte[15];
 
         byte[] x509Key = Convert.FromBase64String(publicKeyString);
@@ -166,21 +167,19 @@ internal class Rsa
         // ---------  Set up stream to read the asn.1 encoded SubjectPublicKeyInfo blob  ------
         using MemoryStream mem = new(x509Key);
         using BinaryReader binr = new(mem);  //wrap Memory Stream with BinaryReader for easy reading
-        byte bt = 0;
-        ushort twobytes = 0;
 
-        twobytes = binr.ReadUInt16();
-        if (twobytes == 0x8130) //data read as little endian order (actual data order for Sequence is 30 81)
+        var twobytes = binr.ReadUInt16();
+        switch (twobytes)
         {
-            _ = binr.ReadByte();    //advance 1 byte
-        }
-        else if (twobytes == 0x8230)
-        {
-            _ = binr.ReadInt16();   //advance 2 bytes
-        }
-        else
-        {
-            return null;
+            //data read as little endian order (actual data order for Sequence is 30 81)
+            case 0x8130:
+                _ = binr.ReadByte();    //advance 1 byte
+                break;
+            case 0x8230:
+                _ = binr.ReadInt16();   //advance 2 bytes
+                break;
+            default:
+                return null;
         }
 
         byte[] seq = binr.ReadBytes(15);
@@ -190,58 +189,58 @@ internal class Rsa
         }
 
         twobytes = binr.ReadUInt16();
-        if (twobytes == 0x8103) //data read as little endian order (actual data order for Bit String is 03 81)
+        switch (twobytes)
         {
-            _ = binr.ReadByte();    //advance 1 byte
-        }
-        else if (twobytes == 0x8203)
-        {
-            _ = binr.ReadInt16();   //advance 2 bytes
-        }
-        else
-        {
-            return null;
+            //data read as little endian order (actual data order for Bit String is 03 81)
+            case 0x8103:
+                _ = binr.ReadByte();    //advance 1 byte
+                break;
+            case 0x8203:
+                _ = binr.ReadInt16();   //advance 2 bytes
+                break;
+            default:
+                return null;
         }
 
-        bt = binr.ReadByte();
+        var bt = binr.ReadByte();
         if (bt != 0x00)     //expect null byte next
         {
             return null;
         }
 
         twobytes = binr.ReadUInt16();
-        if (twobytes == 0x8130) //data read as little endian order (actual data order for Sequence is 30 81)
+        switch (twobytes)
         {
-            _ = binr.ReadByte();    //advance 1 byte
-        }
-        else if (twobytes == 0x8230)
-        {
-            _ = binr.ReadInt16();   //advance 2 bytes
-        }
-        else
-        {
-            return null;
+            //data read as little endian order (actual data order for Sequence is 30 81)
+            case 0x8130:
+                _ = binr.ReadByte();    //advance 1 byte
+                break;
+            case 0x8230:
+                _ = binr.ReadInt16();   //advance 2 bytes
+                break;
+            default:
+                return null;
         }
 
         twobytes = binr.ReadUInt16();
-        byte lowbyte = 0x00;
         byte highbyte = 0x00;
 
-        if (twobytes == 0x8102) //data read as little endian order (actual data order for Integer is 02 81)
+        switch (twobytes)
         {
-            lowbyte = binr.ReadByte();  // read next bytes which is bytes in modulus
-        }
-        else if (twobytes == 0x8202)
-        {
-            highbyte = binr.ReadByte(); //advance 2 bytes
-            lowbyte = binr.ReadByte();
-        }
-        else
-        {
-            return null;
+            //data read as little endian order (actual data order for Integer is 02 81)
+            case 0x8102:
+                // read next bytes which is bytes in modulus
+                break;
+            case 0x8202:
+                highbyte = binr.ReadByte(); //advance 2 bytes
+                break;
+            default:
+                return null;
         }
 
-        byte[] modint = { lowbyte, highbyte, 0x00, 0x00 };   //reverse byte order since asn.1 key uses big endian order
+        var lowbyte = binr.ReadByte(); // read next bytes which is bytes in modulus
+
+        byte[] modint = [lowbyte, highbyte, 0x00, 0x00];   //reverse byte order since asn.1 key uses big endian order
         int modsize = BitConverter.ToInt32(modint, 0);
 
         int firstbyte = binr.PeekChar();
@@ -262,7 +261,7 @@ internal class Rsa
         byte[] exponent = binr.ReadBytes(expbytes);
 
         // ------- create RSACryptoServiceProvider instance and initialize with public key -----
-        System.Security.Cryptography.RSA rsa = System.Security.Cryptography.RSA.Create();
+        RSA rsa = RSA.Create();
         RSAParameters rsaKeyInfo = new()
         {
             Modulus = modulus,
@@ -282,7 +281,7 @@ internal class Rsa
     /// Handles single-byte (0x81) and two-byte (0x82) length encodings and
     /// skips any leading zero padding bytes included by DER for sign-safety.
     /// </summary>
-    private int GetIntegerSize(BinaryReader binr)
+    private static int GetIntegerSize(BinaryReader binr)
     {
         byte bt = binr.ReadByte();
         if (bt != 0x02)
@@ -292,22 +291,23 @@ internal class Rsa
 
         bt = binr.ReadByte();
         int count;
-        if (bt == 0x81)
+        switch (bt)
         {
-            count = binr.ReadByte();
-        }
-        else
-            if (bt == 0x82)
+            case 0x81:
+                count = binr.ReadByte();
+                break;
+            case 0x82:
             {
                 byte highbyte = binr.ReadByte();
                 byte lowbyte = binr.ReadByte();
-                byte[] modint = { lowbyte, highbyte, 0x00, 0x00 };
+                byte[] modint = [lowbyte, highbyte, 0x00, 0x00];
                 count = BitConverter.ToInt32(modint, 0);
+                break;
             }
-            else
-            {
+            default:
                 count = bt;
-            }
+                break;
+        }
 
         while (binr.ReadByte() == 0x00)
         {
@@ -318,7 +318,7 @@ internal class Rsa
     }
 
     /// <summary>Returns <see langword="true"/> when arrays <paramref name="a"/> and <paramref name="b"/> are equal in length and content.</summary>
-    private bool CompareBytearrays(byte[] a, byte[] b)
+    private static bool CompareBytearrays(byte[] a, byte[] b)
     {
         if (a.Length != b.Length)
         {

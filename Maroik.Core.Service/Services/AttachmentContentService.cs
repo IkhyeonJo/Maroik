@@ -90,8 +90,7 @@ public class AttachmentContentService : IAttachmentContentService
     {
         return await _htmlParser.TransformImageAttributesAsync(html, async (alt, token) =>
         {
-            byte[]? fileData = await _fileClient.DownloadAsync(alt, _settings.Value.FileStorageBaseUrl ?? string.Empty, token);
-            if (fileData == null) return null;
+            byte[] fileData = await _fileClient.DownloadAsync(alt, _settings.Value.FileStorageBaseUrl ?? string.Empty, token);
             return new HtmlImgPatch(
                 NewAlt: _rsa.Encrypt(alt),
                 DataFile: Convert.ToBase64String(fileData),

@@ -18,10 +18,7 @@ public class PasswordService : IPasswordService
     /// <returns>BCrypt hashed password</returns>
     public string HashPassword(string password)
     {
-        if (string.IsNullOrWhiteSpace(password))
-            throw new ArgumentException("Password cannot be null or empty.", nameof(password));
-
-        return BCrypt.Net.BCrypt.HashPassword(password, WorkFactor);
+        return string.IsNullOrWhiteSpace(password) ? throw new ArgumentException("Password cannot be null or empty.", nameof(password)) : BCrypt.Net.BCrypt.HashPassword(password, WorkFactor);
     }
 
     /// <summary>

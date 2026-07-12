@@ -16,7 +16,7 @@ public class HtmlParser : IHtmlParser
         doc.LoadHtml(html);
         bool hasImages = false;
 
-        foreach (HtmlNode imgTag in doc.DocumentNode.Descendants("img") ?? [])
+        foreach (HtmlNode imgTag in doc.DocumentNode.Descendants("img"))
         {
             hasImages = true;
             string alt = imgTag.GetAttributeValue("alt", "");
@@ -36,12 +36,11 @@ public class HtmlParser : IHtmlParser
         var doc = new HtmlDocument();
         doc.LoadHtml(html);
 
-        foreach (HtmlNode imgTag in doc.DocumentNode.Descendants("img") ?? [])
+        foreach (HtmlNode imgTag in doc.DocumentNode.Descendants("img"))
         {
             string alt = imgTag.GetAttributeValue("alt", "");
             HtmlImgPatch? patch = patchFactory(alt);
-            if (patch == null) continue;
-            if (patch.NewAlt != null) imgTag.SetAttributeValue("alt", patch.NewAlt);
+            if (patch?.NewAlt != null) imgTag.SetAttributeValue("alt", patch.NewAlt);
         }
 
         return doc.DocumentNode.OuterHtml;

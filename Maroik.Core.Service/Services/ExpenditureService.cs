@@ -52,14 +52,14 @@ public class ExpenditureService : IExpenditureService
             var classResult = ExpenditureClassPolicy.Validate(request.MainClass, request.SubClass);
             if (classResult.IsError)
             {
-                await _unitOfWork.RollbackAsync();
+                await _unitOfWork.RollbackAsync(ct);
                 return ServiceResult.Fail("Input is invalid");
             }
 
             bool isTransfer = classResult.Value;
             if (isTransfer && request.PaymentMethod == request.MyDepositAsset)
             {
-                await _unitOfWork.RollbackAsync();
+                await _unitOfWork.RollbackAsync(ct);
                 return ServiceResult.Fail("The PaymentMethod and MyDepositAsset value cannot be the same.");
             }
 
@@ -74,12 +74,12 @@ public class ExpenditureService : IExpenditureService
 
             if (paymentAsset == null)
             {
-                await _unitOfWork.RollbackAsync();
+                await _unitOfWork.RollbackAsync(ct);
                 return ServiceResult.Fail("Input is invalid");
             }
             if (paymentAsset.Deleted)
             {
-                await _unitOfWork.RollbackAsync();
+                await _unitOfWork.RollbackAsync(ct);
                 return ServiceResult.Fail("Actions cannot be executed with assets that have already been deleted.");
             }
 
@@ -87,17 +87,17 @@ public class ExpenditureService : IExpenditureService
             {
                 if (depositAsset == null)
                 {
-                    await _unitOfWork.RollbackAsync();
+                    await _unitOfWork.RollbackAsync(ct);
                     return ServiceResult.Fail("Input is invalid");
                 }
                 if (depositAsset.Deleted)
                 {
-                    await _unitOfWork.RollbackAsync();
+                    await _unitOfWork.RollbackAsync(ct);
                     return ServiceResult.Fail("Actions cannot be executed with assets that have already been deleted.");
                 }
                 if (paymentAsset.Balance.Currency != depositAsset.Balance.Currency)
                 {
-                    await _unitOfWork.RollbackAsync();
+                    await _unitOfWork.RollbackAsync(ct);
                     return ServiceResult.Fail("PaymentMethod MonetaryUnit must be same as MyDepositAsset MonetaryUnit.");
                 }
             }
@@ -109,7 +109,7 @@ public class ExpenditureService : IExpenditureService
                 request.Content, Math.Abs(request.Amount), currency, request.PaymentMethod, myDepositAsset, request.Note);
             if (expenditureResult.IsError)
             {
-                await _unitOfWork.RollbackAsync();
+                await _unitOfWork.RollbackAsync(ct);
                 return ServiceResult.Fail(expenditureResult.FirstError.Description);
             }
 
@@ -131,7 +131,7 @@ public class ExpenditureService : IExpenditureService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to create expenditure for account {AccountEmail}", accountEmail);
-            await _unitOfWork.RollbackAsync();
+            await _unitOfWork.RollbackAsync(ct);
             return ServiceResult.Fail("Input is invalid");
         }
     }
@@ -145,13 +145,13 @@ public class ExpenditureService : IExpenditureService
             var classResult = ExpenditureClassPolicy.Validate(request.MainClass, request.SubClass);
             if (classResult.IsError)
             {
-                await _unitOfWork.RollbackAsync();
+                await _unitOfWork.RollbackAsync(ct);
                 return ServiceResult.Fail("Input is invalid");
             }
 
             if (classResult.Value && request.PaymentMethod == request.MyDepositAsset)
             {
-                await _unitOfWork.RollbackAsync();
+                await _unitOfWork.RollbackAsync(ct);
                 return ServiceResult.Fail("The PaymentMethod and MyDepositAsset value cannot be the same.");
             }
 
@@ -159,7 +159,7 @@ public class ExpenditureService : IExpenditureService
             Expenditure? previous = expenditures.FirstOrDefault(x => x.Id == request.Id);
             if (previous == null)
             {
-                await _unitOfWork.RollbackAsync();
+                await _unitOfWork.RollbackAsync(ct);
                 return ServiceResult.Fail("Input is invalid");
             }
 
@@ -175,12 +175,12 @@ public class ExpenditureService : IExpenditureService
                 Asset? newDepAsset = !string.IsNullOrEmpty(request.MyDepositAsset) && touchedAssets.TryGetValue(request.MyDepositAsset, out var nd) ? nd : null;
                 if (newPayAsset == null || newDepAsset == null)
                 {
-                    await _unitOfWork.RollbackAsync();
+                    await _unitOfWork.RollbackAsync(ct);
                     return ServiceResult.Fail("Input is invalid");
                 }
                 if (newPayAsset.Balance.Currency != newDepAsset.Balance.Currency)
                 {
-                    await _unitOfWork.RollbackAsync();
+                    await _unitOfWork.RollbackAsync(ct);
                     return ServiceResult.Fail("PaymentMethod MonetaryUnit must be same as MyDepositAsset MonetaryUnit.");
                 }
             }
@@ -188,15 +188,15 @@ public class ExpenditureService : IExpenditureService
             Asset? prevPayAsset = !string.IsNullOrEmpty(previous.PaymentMethod) && touchedAssets.TryGetValue(previous.PaymentMethod, out var pp) ? pp : null;
             if (prevPayAsset?.Deleted == true)
             {
-                await _unitOfWork.RollbackAsync();
+                await _unitOfWork.RollbackAsync(ct);
                 return ServiceResult.Fail("Actions cannot be executed with assets that have already been deleted.");
             }
             if (!string.IsNullOrEmpty(previous.MyDepositAsset))
             {
-                Asset? prevDepAsset = touchedAssets.TryGetValue(previous.MyDepositAsset, out var pd) ? pd : null;
+                Asset? prevDepAsset = touchedAssets.GetValueOrDefault(previous.MyDepositAsset);
                 if (prevDepAsset?.Deleted == true)
                 {
-                    await _unitOfWork.RollbackAsync();
+                    await _unitOfWork.RollbackAsync(ct);
                     return ServiceResult.Fail("Actions cannot be executed with assets that have already been deleted.");
                 }
             }
@@ -210,7 +210,7 @@ public class ExpenditureService : IExpenditureService
                 Math.Abs(request.Amount), newCurrency, request.PaymentMethod, myDepositAsset, request.Note);
             if (updateResult.IsError)
             {
-                await _unitOfWork.RollbackAsync();
+                await _unitOfWork.RollbackAsync(ct);
                 return ServiceResult.Fail(updateResult.FirstError.Description);
             }
 
@@ -224,7 +224,7 @@ public class ExpenditureService : IExpenditureService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to update expenditure {ExpenditureId} for account {AccountEmail}", request.Id, accountEmail);
-            await _unitOfWork.RollbackAsync();
+            await _unitOfWork.RollbackAsync(ct);
             return ServiceResult.Fail("Input is invalid");
         }
     }
@@ -239,7 +239,7 @@ public class ExpenditureService : IExpenditureService
             Expenditure? expenditure = expenditures.FirstOrDefault(x => x.Id == id);
             if (expenditure == null)
             {
-                await _unitOfWork.RollbackAsync();
+                await _unitOfWork.RollbackAsync(ct);
                 return ServiceResult.Fail("Input is invalid");
             }
 
@@ -254,7 +254,7 @@ public class ExpenditureService : IExpenditureService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to delete expenditure {ExpenditureId} for account {AccountEmail}", id, accountEmail);
-            await _unitOfWork.RollbackAsync();
+            await _unitOfWork.RollbackAsync(ct);
             return ServiceResult.Fail("Input is invalid");
         }
     }

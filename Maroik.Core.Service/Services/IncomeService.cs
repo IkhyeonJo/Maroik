@@ -47,19 +47,19 @@ public class IncomeService : IIncomeService
         {
             if (IncomeClassPolicy.Validate(request.MainClass, request.SubClass).IsError)
             {
-                await _unitOfWork.RollbackAsync();
+                await _unitOfWork.RollbackAsync(ct);
                 return ServiceResult.Fail("Input is invalid");
             }
 
             Asset? depositAsset = await _assetBalance.GetAssetAsync(accountEmail, request.DepositMyAssetProductName ?? "", ct);
             if (depositAsset == null)
             {
-                await _unitOfWork.RollbackAsync();
+                await _unitOfWork.RollbackAsync(ct);
                 return ServiceResult.Fail("Input is invalid");
             }
             if (depositAsset.Deleted)
             {
-                await _unitOfWork.RollbackAsync();
+                await _unitOfWork.RollbackAsync(ct);
                 return ServiceResult.Fail("Actions cannot be executed with assets that have already been deleted.");
             }
 
@@ -68,7 +68,7 @@ public class IncomeService : IIncomeService
                 request.Content, Math.Abs(request.Amount), currency, request.DepositMyAssetProductName, request.Note);
             if (incomeResult.IsError)
             {
-                await _unitOfWork.RollbackAsync();
+                await _unitOfWork.RollbackAsync(ct);
                 return ServiceResult.Fail(incomeResult.FirstError.Description);
             }
 
@@ -84,7 +84,7 @@ public class IncomeService : IIncomeService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to create income for account {AccountEmail}", accountEmail);
-            await _unitOfWork.RollbackAsync();
+            await _unitOfWork.RollbackAsync(ct);
             return ServiceResult.Fail("Input is invalid");
         }
     }
@@ -97,7 +97,7 @@ public class IncomeService : IIncomeService
         {
             if (IncomeClassPolicy.Validate(request.MainClass, request.SubClass).IsError)
             {
-                await _unitOfWork.RollbackAsync();
+                await _unitOfWork.RollbackAsync(ct);
                 return ServiceResult.Fail("Input is invalid");
             }
 
@@ -105,7 +105,7 @@ public class IncomeService : IIncomeService
             Income? previous = incomes.FirstOrDefault(x => x.Id == request.Id);
             if (previous == null)
             {
-                await _unitOfWork.RollbackAsync();
+                await _unitOfWork.RollbackAsync(ct);
                 return ServiceResult.Fail("Input is invalid");
             }
 
@@ -118,14 +118,14 @@ public class IncomeService : IIncomeService
             Asset? prevAsset = !string.IsNullOrEmpty(previous.DepositMyAssetProductName) && touchedAssets.TryGetValue(previous.DepositMyAssetProductName, out var pa) ? pa : null;
             if (prevAsset?.Deleted == true)
             {
-                await _unitOfWork.RollbackAsync();
+                await _unitOfWork.RollbackAsync(ct);
                 return ServiceResult.Fail("Actions cannot be executed with assets that have already been deleted.");
             }
 
             Asset? newAsset = !string.IsNullOrEmpty(request.DepositMyAssetProductName) && touchedAssets.TryGetValue(request.DepositMyAssetProductName, out var na) ? na : null;
             string newCurrency = newAsset?.Balance.Currency ?? prevAsset?.Balance.Currency ?? string.Empty;
 
-            string previousAssetName = previous.DepositMyAssetProductName ?? "";
+            string previousAssetName = previous.DepositMyAssetProductName;
             decimal previousAmount = previous.Amount.Amount;
             string previousCurrency = prevAsset?.Balance.Currency ?? string.Empty;
 
@@ -133,7 +133,7 @@ public class IncomeService : IIncomeService
                 Math.Abs(request.Amount), newCurrency, request.DepositMyAssetProductName, request.Note);
             if (updateResult.IsError)
             {
-                await _unitOfWork.RollbackAsync();
+                await _unitOfWork.RollbackAsync(ct);
                 return ServiceResult.Fail(updateResult.FirstError.Description);
             }
 
@@ -168,7 +168,7 @@ public class IncomeService : IIncomeService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to update income {IncomeId} for account {AccountEmail}", request.Id, accountEmail);
-            await _unitOfWork.RollbackAsync();
+            await _unitOfWork.RollbackAsync(ct);
             return ServiceResult.Fail("Input is invalid");
         }
     }
@@ -183,14 +183,14 @@ public class IncomeService : IIncomeService
             Income? income = incomes.FirstOrDefault(x => x.Id == id);
             if (income == null)
             {
-                await _unitOfWork.RollbackAsync();
+                await _unitOfWork.RollbackAsync(ct);
                 return ServiceResult.Fail("Input is invalid");
             }
 
-            Asset? asset = await _assetBalance.GetAssetAsync(accountEmail, income.DepositMyAssetProductName ?? "", ct);
+            Asset? asset = await _assetBalance.GetAssetAsync(accountEmail, income.DepositMyAssetProductName, ct);
             if (asset?.Deleted == true)
             {
-                await _unitOfWork.RollbackAsync();
+                await _unitOfWork.RollbackAsync(ct);
                 return ServiceResult.Fail("Actions cannot be executed with assets that have already been deleted.");
             }
 
@@ -208,7 +208,7 @@ public class IncomeService : IIncomeService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to delete income {IncomeId} for account {AccountEmail}", id, accountEmail);
-            await _unitOfWork.RollbackAsync();
+            await _unitOfWork.RollbackAsync(ct);
             return ServiceResult.Fail("Input is invalid");
         }
     }

@@ -122,6 +122,9 @@ public class FixedExpenditureService : IFixedExpenditureService
     /// Validates the MainClass/SubClass combination and the deposit date fields of a fixed-expenditure request.
     /// Also determines whether the entry requires a deposit asset (e.g., savings or debt repayment categories).
     /// </summary>
+    /// <exception cref="ArgumentException"></exception>
+    /// <exception cref="ArgumentNullException"></exception>
+    /// <exception cref="RegexMatchTimeoutException"></exception>
     private static (bool IsValid, bool RequiresDepositAsset) ValidateClassAndDate(FixedExpenditureRequest req)
     {
         bool requiresDeposit;
@@ -132,9 +135,17 @@ public class FixedExpenditureService : IFixedExpenditureService
                 requiresDeposit = true;
                 break;
             case "NonConsumerSpending":
-                if (req.SubClass is "PublicPension" or "DebtRepayment") requiresDeposit = true;
-                else if (req.SubClass is "Tax" or "SocialInsurance" or "InterHouseholdTranserExpenses" or "NonProfitOrganizationTransfer") requiresDeposit = false;
-                else return (false, false);
+                switch (req.SubClass)
+                {
+                    case "PublicPension" or "DebtRepayment":
+                        requiresDeposit = true;
+                        break;
+                    case "Tax" or "SocialInsurance" or "InterHouseholdTranserExpenses" or "NonProfitOrganizationTransfer":
+                        requiresDeposit = false;
+                        break;
+                    default:
+                        return (false, false);
+                }
                 break;
             case "ConsumerSpending":
                 if (req.SubClass is not ("MealOrEatOutExpenses" or "HousingOrSuppliesCost" or "EducationExpenses" or
@@ -149,11 +160,10 @@ public class FixedExpenditureService : IFixedExpenditureService
 
         if (req.DepositMonth is < 1 or > 12) return (false, false);
         int maxDay = req.DepositMonth switch { 2 => 29, 4 or 6 or 9 or 11 => 30, _ => 31 };
-        if (req.DepositDay < 1 || req.DepositDay > maxDay) return (false, false);
-
-        if (!Regex.IsMatch(req.MaturityDate.ToString("yyyy-MM-dd"),
-            @"^\d{4}-((0[1-9])|(1[012]))-((0[1-9]|[12]\d)|3[01])$"))
-            return (false, false);
+#pragma warning disable SYSLIB1045
+        if (req.DepositDay < 1 || req.DepositDay > maxDay || !Regex.IsMatch(req.MaturityDate.ToString("yyyy-MM-dd"),
+#pragma warning restore SYSLIB1045
+                @"^\d{4}-((0[1-9])|(1[012]))-((0[1-9]|[12]\d)|3[01])$")) return (false, false);
 
         return (true, requiresDeposit);
     }
