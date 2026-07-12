@@ -11,8 +11,8 @@ namespace Maroik.Core.Service.Tests.Services;
 ///
 /// Keys are generated in-test using <see cref="System.Security.Cryptography.RSA"/> .NET APIs:
 /// <list type="bullet">
-///   <item><see cref="RSA.ExportRSAPrivateKey"/> → PKCS#1 DER → Base64 (matches <c>Rsa.CreateRsaProviderFromPrivateKey</c>)</item>
-///   <item><see cref="RSA.ExportSubjectPublicKeyInfo"/> → X.509 SubjectPublicKeyInfo DER → Base64 (matches <c>Rsa.CreateRsaProviderFromPublicKey</c>)</item>
+///   <item><see cref="RSA.ExportRSAPrivateKey"/> → PKCS#1 DER → Base64 (matches <see cref="RSA.ImportRSAPrivateKey"/>)</item>
+///   <item><see cref="RSA.ExportSubjectPublicKeyInfo"/> → X.509 SubjectPublicKeyInfo DER → Base64 (matches <see cref="RSA.ImportSubjectPublicKeyInfo"/>)</item>
 /// </list>
 /// A 2048-bit key pair is generated once per test class (class-level static) to keep individual tests fast.
 /// </summary>
