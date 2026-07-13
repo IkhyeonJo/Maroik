@@ -14,9 +14,10 @@ namespace Maroik.Website.Tests.Architecture;
 ///              Repository + Client implementations
 ///
 /// Website must only consume the service layer via interfaces declared in
-/// Maroik.Core.Contract. Direct dependencies on Maroik.Core.Repository or
-/// Maroik.Core.Client are forbidden for all types except Program (the
-/// composition root), which wires up implementations into the DI container.
+/// Maroik.Core.Contract. Direct dependencies on Maroik.Core.Repository,
+/// Maroik.Core.Client, or Maroik.Core.Service (the implementations) are
+/// forbidden for all types except Program (the composition root), which
+/// wires up implementations into the DI container.
 /// </summary>
 public class WebsiteArchitectureTests
 {
@@ -24,6 +25,7 @@ public class WebsiteArchitectureTests
 
     private const string RepositoryNamespace = "Maroik.Core.Repository";
     private const string ClientNamespace = "Maroik.Core.Client";
+    private const string ServiceNamespace = "Maroik.Core.Service";
 
     [Fact]
     public void WebsiteTypes_ExceptCompositionRoot_ShouldNot_DependOnRepositoryNamespace()
@@ -62,7 +64,25 @@ public class WebsiteArchitectureTests
     }
 
     [Fact]
-    public void Controllers_ShouldNot_DependOnRepositoryOrClientNamespace()
+    public void WebsiteTypes_ExceptCompositionRoot_ShouldNot_DependOnServiceNamespace()
+    {
+        NetArchTest.Rules.TestResult result = Types.InAssembly(WebsiteAssembly)
+            .That()
+            .DoNotHaveName("Program")
+            .ShouldNot()
+            .HaveDependencyOn(ServiceNamespace)
+            .GetResult();
+
+        Assert.True(
+            result.IsSuccessful,
+            "Non-composition-root types in Maroik.Website must not reference " +
+            "Maroik.Core.Service implementations directly. " +
+            "Use service interfaces from Maroik.Core.Contract instead.\n" +
+            "Failing types: " + string.Join(", ", result.FailingTypeNames ?? []));
+    }
+
+    [Fact]
+    public void Controllers_ShouldNot_DependOnRepositoryOrClientOrServiceNamespace()
     {
         NetArchTest.Rules.TestResult repoResult = Types.InAssembly(WebsiteAssembly)
             .That()
@@ -78,6 +98,13 @@ public class WebsiteArchitectureTests
             .HaveDependencyOn(ClientNamespace)
             .GetResult();
 
+        NetArchTest.Rules.TestResult serviceResult = Types.InAssembly(WebsiteAssembly)
+            .That()
+            .ResideInNamespace("Maroik.Website.Controllers")
+            .ShouldNot()
+            .HaveDependencyOn(ServiceNamespace)
+            .GetResult();
+
         Assert.True(
             repoResult.IsSuccessful,
             "Controllers must not reference Maroik.Core.Repository directly. " +
@@ -89,5 +116,62 @@ public class WebsiteArchitectureTests
             "Controllers must not reference Maroik.Core.Client directly. " +
             "Inject IXxxService interfaces instead.\n" +
             "Failing types: " + string.Join(", ", clientResult.FailingTypeNames ?? []));
+
+        Assert.True(
+            serviceResult.IsSuccessful,
+            "Controllers must not reference Maroik.Core.Service implementations directly. " +
+            "Inject IXxxService interfaces from Maroik.Core.Contract instead.\n" +
+            "Failing types: " + string.Join(", ", serviceResult.FailingTypeNames ?? []));
+    }
+
+    /// <summary>
+    /// Razor views are compiled into classes under the <c>AspNetCoreGeneratedDocument</c>
+    /// namespace. Views must only render the ViewModel/DTO already handed to them by the
+    /// controller — they must not reach into Repository, Client, or Service implementations
+    /// (e.g. via <c>@inject</c>) to fetch or mutate data themselves.
+    /// </summary>
+    [Fact]
+    public void Views_ShouldNot_DependOnRepositoryOrClientOrServiceNamespace()
+    {
+        const string generatedViewNamespace = "AspNetCoreGeneratedDocument";
+
+        NetArchTest.Rules.TestResult repoResult = Types.InAssembly(WebsiteAssembly)
+            .That()
+            .ResideInNamespace(generatedViewNamespace)
+            .ShouldNot()
+            .HaveDependencyOn(RepositoryNamespace)
+            .GetResult();
+
+        NetArchTest.Rules.TestResult clientResult = Types.InAssembly(WebsiteAssembly)
+            .That()
+            .ResideInNamespace(generatedViewNamespace)
+            .ShouldNot()
+            .HaveDependencyOn(ClientNamespace)
+            .GetResult();
+
+        NetArchTest.Rules.TestResult serviceResult = Types.InAssembly(WebsiteAssembly)
+            .That()
+            .ResideInNamespace(generatedViewNamespace)
+            .ShouldNot()
+            .HaveDependencyOn(ServiceNamespace)
+            .GetResult();
+
+        Assert.True(
+            repoResult.IsSuccessful,
+            "Views must not reference Maroik.Core.Repository directly (e.g. via @inject). " +
+            "Pass all data through the controller's ViewModel instead.\n" +
+            "Failing types: " + string.Join(", ", repoResult.FailingTypeNames ?? []));
+
+        Assert.True(
+            clientResult.IsSuccessful,
+            "Views must not reference Maroik.Core.Client directly (e.g. via @inject). " +
+            "Pass all data through the controller's ViewModel instead.\n" +
+            "Failing types: " + string.Join(", ", clientResult.FailingTypeNames ?? []));
+
+        Assert.True(
+            serviceResult.IsSuccessful,
+            "Views must not reference Maroik.Core.Service implementations directly (e.g. via @inject). " +
+            "Pass all data through the controller's ViewModel instead.\n" +
+            "Failing types: " + string.Join(", ", serviceResult.FailingTypeNames ?? []));
     }
 }
