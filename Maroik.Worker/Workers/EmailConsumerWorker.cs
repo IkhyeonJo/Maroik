@@ -3,6 +3,7 @@ using Maroik.Core.Contract.Messaging;
 using Maroik.Worker.Handlers;
 using RabbitMQ.Client;
 using RabbitMQ.Client.Events;
+using Serilog.Context;
 
 namespace Maroik.Worker.Workers;
 
@@ -81,23 +82,33 @@ public sealed class EmailConsumerWorker : BackgroundService
     /// </summary>
     private async Task OnMessageReceivedAsync(object sender, BasicDeliverEventArgs ea)
     {
-        try
+        // DeliveryTag alone keeps concurrently-processed messages (prefetch 10) distinguishable
+        // in the logs even if deserialization fails before a CorrelationId is known.
+        using (LogContext.PushProperty("DeliveryTag", ea.DeliveryTag))
         {
-            SendEmailMessage message = JsonSerializer.Deserialize<SendEmailMessage>(ea.Body.Span)
-                ?? throw new InvalidOperationException("Deserialized email message was null");
+            try
+            {
+                SendEmailMessage message = JsonSerializer.Deserialize<SendEmailMessage>(ea.Body.Span)
+                    ?? throw new InvalidOperationException("Deserialized email message was null");
 
-            await using AsyncServiceScope scope = _scopeFactory.CreateAsyncScope();
-            var handler = scope.ServiceProvider.GetRequiredService<IEmailMessageHandler>();
-            await handler.HandleAsync(message);
+                // Threads the originating Website request's id through so this message's logs
+                // can be traced back to the request that published it.
+                using (LogContext.PushProperty("CorrelationId", message.CorrelationId))
+                {
+                    await using AsyncServiceScope scope = _scopeFactory.CreateAsyncScope();
+                    var handler = scope.ServiceProvider.GetRequiredService<IEmailMessageHandler>();
+                    await handler.HandleAsync(message);
+                }
 
-            await _channel!.BasicAckAsync(ea.DeliveryTag, multiple: false);
-        }
-        catch (Exception ex)
-        {
-            // Poison message or unexpected failure: drop rather than requeue forever.
-            // A dead-letter exchange would be the next step if this needs to be inspected/retried.
-            _logger.LogError(ex, "Failed to process email message (delivery tag {DeliveryTag})", ea.DeliveryTag);
-            await _channel!.BasicNackAsync(ea.DeliveryTag, multiple: false, requeue: false);
+                await _channel!.BasicAckAsync(ea.DeliveryTag, multiple: false);
+            }
+            catch (Exception ex)
+            {
+                // Poison message or unexpected failure: drop rather than requeue forever.
+                // A dead-letter exchange would be the next step if this needs to be inspected/retried.
+                _logger.LogError(ex, "Failed to process email message (delivery tag {DeliveryTag})", ea.DeliveryTag);
+                await _channel!.BasicNackAsync(ea.DeliveryTag, multiple: false, requeue: false);
+            }
         }
     }
 

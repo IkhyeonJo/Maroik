@@ -1,6 +1,8 @@
 using System.Net;
 using System.Net.Http.Headers;
 using Maroik.Core.Contract.Interfaces;
+using Maroik.FileStorage.Contracts;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.Extensions.DependencyInjection;
 using Moq;
@@ -265,6 +267,35 @@ public class FileControllerTests : IClassFixture<WebApplicationFactory<Program>>
         fileContent.Headers.ContentType = MediaTypeHeaderValue.Parse("application/zip");
         content.Add(fileContent, "file", "encrypted.zip");
         content.Add(new StringContent("/tmp/uploads"), "filePath");
+
+        var response = await client.PostAsync("/api/File/upload", content, TestContext.Current.CancellationToken);
+
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+    }
+
+    // -- Upload: unexpected exception (logging path) --------------------------
+
+    /// <summary>Verifies that <c>Upload</c> returns bad request — and doesn't fail DI resolution
+    /// now that <see cref="Maroik.FileStorage.Controllers.FileController"/> takes an
+    /// <c>ILogger</c> — when the validation service throws, with a correlationId form field present.</summary>
+    [Fact]
+    public async Task Upload_ReturnsBadRequest_WhenValidationServiceThrows()
+    {
+        var factory = _baseFactory.WithWebHostBuilder(b => b.ConfigureServices(services =>
+        {
+            RemoveService<IFileValidationService>(services);
+            var mock = new Mock<IFileValidationService>();
+            mock.Setup(v => v.ValidateAndSaveAsync(It.IsAny<IFormFile>(), It.IsAny<string>()))
+                .ThrowsAsync(new InvalidOperationException("disk full"));
+            services.AddScoped<IFileValidationService>(_ => mock.Object);
+        }));
+        var client = factory.CreateClient();
+        using var content = new MultipartFormDataContent();
+        var fileContent = new ByteArrayContent([0xFF, 0xD8, 0xFF, 0xE0]);
+        fileContent.Headers.ContentType = MediaTypeHeaderValue.Parse("image/jpeg");
+        content.Add(fileContent, "file", "test.jpg");
+        content.Add(new StringContent("/tmp/uploads"), "filePath");
+        content.Add(new StringContent("test-correlation-123"), "correlationId");
 
         var response = await client.PostAsync("/api/File/upload", content, TestContext.Current.CancellationToken);
 

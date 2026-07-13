@@ -15,11 +15,13 @@ namespace Maroik.FileStorage.Controllers;
 public class FileController : ControllerBase
 {
     private readonly IFileValidationService _fileValidationService;
+    private readonly ILogger<FileController> _logger;
 
     /// <summary>Initializes a new instance of <see cref="FileController"/>.</summary>
-    public FileController(IFileValidationService fileValidationService)
+    public FileController(IFileValidationService fileValidationService, ILogger<FileController> logger)
     {
         _fileValidationService = fileValidationService;
+        _logger = logger;
     }
 
     /// <summary>
@@ -28,15 +30,20 @@ public class FileController : ControllerBase
     /// </summary>
     [AllowAnonymous]
     [HttpPost("upload")]
-    public async Task<IActionResult> UploadAsync([FromForm] IFormFile file, [FromForm] string filePath)
+    public async Task<IActionResult> UploadAsync([FromForm] IFormFile file, [FromForm] string filePath, [FromForm] string? correlationId = null)
     {
         try
         {
             var (success, error) = await _fileValidationService.ValidateAndSaveAsync(file, filePath);
-            return success ? Ok("File uploaded successfully.") : BadRequest(error);
+            if (!success)
+                return BadRequest(error);
+
+            _logger.LogInformation("File uploaded: {FilePath}. CorrelationId={CorrelationId}", filePath, correlationId);
+            return Ok("File uploaded successfully.");
         }
-        catch
+        catch (Exception ex)
         {
+            _logger.LogError(ex, "File upload failed for {FilePath}. CorrelationId={CorrelationId}", filePath, correlationId);
             return BadRequest("File upload failed.");
         }
     }
@@ -44,7 +51,7 @@ public class FileController : ControllerBase
     /// <summary>Reads the file at the given server-side <paramref name="filePath"/> and returns its raw bytes.</summary>
     [AllowAnonymous]
     [HttpPost("download")]
-    public async Task<IActionResult> DownloadAsync([FromForm] string filePath)
+    public async Task<IActionResult> DownloadAsync([FromForm] string filePath, [FromForm] string? correlationId = null)
     {
         try
         {
@@ -62,10 +69,12 @@ public class FileController : ControllerBase
             if (!provider.TryGetContentType(sanitizedFileName, out var contentType))
                 contentType = "application/octet-stream";
 
+            _logger.LogInformation("File downloaded: {FilePath}. CorrelationId={CorrelationId}", filePath, correlationId);
             return File(fileData, contentType, sanitizedFileName);
         }
-        catch
+        catch (Exception ex)
         {
+            _logger.LogError(ex, "File download failed for {FilePath}. CorrelationId={CorrelationId}", filePath, correlationId);
             return BadRequest("Invalid file");
         }
     }

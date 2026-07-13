@@ -1,5 +1,7 @@
+using System.Diagnostics;
 using System.Net;
 using Maroik.Core.Contract.Interfaces;
+using Microsoft.Extensions.Logging;
 
 namespace Maroik.Core.Client.Clients;
 
@@ -7,16 +9,21 @@ namespace Maroik.Core.Client.Clients;
 /// Concrete implementation of <see cref="IFileClient"/> that communicates with the
 /// Maroik.FileStorage microservice via HTTP multipart/form-data requests.
 /// </summary>
-public class FileClient(IHttpClientFactory httpClientFactory) : IFileClient
+public class FileClient(IHttpClientFactory httpClientFactory, ILogger<FileClient> logger) : IFileClient
 {
     /// <inheritdoc />
     public async Task<byte[]> DownloadAsync(string filePath, string fileStorageBaseUrl, CancellationToken ct = default)
     {
+        var correlationId = Activity.Current?.Id ?? "";
+        logger.LogInformation("Requesting file download: {FilePath}. CorrelationId={CorrelationId}", filePath, correlationId);
+
         using HttpClient httpClient = httpClientFactory.CreateClient();
         using MultipartFormDataContent content = [];
 
         // Pass the server-side file path to the storage service
         content.Add(new StringContent(filePath), "filePath");
+        // So Maroik.FileStorage's failure logs for this call can be traced back to this request.
+        content.Add(new StringContent(correlationId), "correlationId");
 
         HttpResponseMessage response = await httpClient.PostAsync($"{fileStorageBaseUrl}/api/File/download", content, ct);
 
@@ -38,6 +45,9 @@ public class FileClient(IHttpClientFactory httpClientFactory) : IFileClient
                 return false;
             }
 
+            var correlationId = Activity.Current?.Id ?? "";
+            logger.LogInformation("Requesting file upload: {FilePath}. CorrelationId={CorrelationId}", filePath, correlationId);
+
             using HttpClient httpClient = httpClientFactory.CreateClient();
             using MultipartFormDataContent content = [];
 
@@ -50,14 +60,17 @@ public class FileClient(IHttpClientFactory httpClientFactory) : IFileClient
 
             // Tell the storage service where to save the file (directory path only)
             content.Add(new StringContent(Path.GetDirectoryName(filePath) ?? ""), "filePath");
+            // So Maroik.FileStorage's failure logs for this call can be traced back to this request.
+            content.Add(new StringContent(correlationId), "correlationId");
 
             HttpResponseMessage response = await httpClient.PostAsync($"{fileStorageBaseUrl}/api/File/upload", content, ct);
             _ = response.EnsureSuccessStatusCode();
 
             return response.StatusCode == HttpStatusCode.OK;
         }
-        catch
+        catch (Exception ex)
         {
+            logger.LogError(ex, "File upload request failed for {FilePath}", filePath);
             return false;
         }
     }

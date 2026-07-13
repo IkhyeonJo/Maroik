@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using Maroik.Core.Contract.Constants;
 using Maroik.Core.Contract.Domains.Account;
 using Maroik.Core.Contract.Dtos;
@@ -430,9 +431,11 @@ public class AccountService : IAccountService
     /// </summary>
     private async Task<bool> PublishMailAsync(string to, string subject, string body, CancellationToken ct = default)
     {
+        var correlationId = Activity.Current?.Id ?? "";
         try
         {
-            await _emailPublisher.PublishAsync(new SendEmailMessage(to, subject, body), ct);
+            _logger.LogInformation("Publishing email to {Email}. CorrelationId={CorrelationId}", to, correlationId);
+            await _emailPublisher.PublishAsync(new SendEmailMessage(to, subject, body, correlationId), ct);
             return true;
         }
         catch (Exception e)

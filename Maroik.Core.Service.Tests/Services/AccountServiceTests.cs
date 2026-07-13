@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using Maroik.Core.Contract.Constants;
 using Maroik.Core.Contract.Domains.Account;
 using Maroik.Core.Contract.Dtos;
@@ -245,6 +246,35 @@ public class AccountServiceTests
         Assert.True(result.Success);
         Assert.True(result.ShowResendEmail);
         _accountRepo.Verify(r => r.CreateAsync(It.IsAny<Account>(), It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    /// <summary>Verifies that <c>RegisterAsync</c> stamps the published email with the ambient
+    /// <see cref="Activity.Current"/> id, so Worker-side logs for that message can be traced
+    /// back to this request.</summary>
+    [Fact]
+    public async Task RegisterAsync_PublishesEmail_WithCurrentActivityId()
+    {
+        _accountRepo.Setup(r => r.FindByEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync((Account?)null);
+        _passwordService.Setup(p => p.HashPassword(It.IsAny<string>())).Returns("$2a$13$hashed");
+        _accountRepo.Setup(r => r.CreateAsync(It.IsAny<Account>(), It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
+        _rsa.Setup(r => r.Encrypt(It.IsAny<string>())).Returns("enc-token");
+        SetupMailSuccess();
+        using var activity = new Activity("test-request").Start();
+        var sut = CreateSut();
+
+        var request = new AccountRequest
+        {
+            Email = "new@example.com",
+            HashedPassword = "plain-password",
+            Nickname = "TestUser",
+            RegistrationToken = GuidToken.Generate()
+        };
+
+        await sut.RegisterAsync(request, "subject", "title", "c0", "c1", TestContext.Current.CancellationToken);
+
+        _emailPublisher.Verify(p => p.PublishAsync(
+            It.Is<SendEmailMessage>(m => m.CorrelationId == activity.Id),
+            It.IsAny<CancellationToken>()), Times.Once);
     }
 
     /// <summary>Verifies that <c>RegisterAsync</c> returns fail when email sending fails.</summary>
