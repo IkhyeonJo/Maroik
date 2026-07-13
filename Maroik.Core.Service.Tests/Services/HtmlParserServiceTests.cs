@@ -1,0 +1,95 @@
+using Maroik.Core.Contract.Interfaces;
+using Maroik.Core.Service.Services;
+
+namespace Maroik.Core.Service.Tests.Services;
+
+/// <summary>Unit tests for <see cref="HtmlParserService"/>.</summary>
+public class HtmlParserServiceTests
+{
+    private readonly HtmlParserService _sut = new();
+
+    // -- TransformImageAttributesAsync -------------------------------------------
+
+    /// <summary>Verifies that HasImages is false when the HTML has no &lt;img&gt; tags.</summary>
+    [Fact]
+    public async Task TransformImageAttributesAsync_ReturnsHasImagesFalse_WhenNoImgTags()
+    {
+        (_, bool hasImages) = await _sut.TransformImageAttributesAsync(
+            "<p>no images</p>", (_, _) => Task.FromResult<HtmlImgPatch?>(null), TestContext.Current.CancellationToken);
+
+        Assert.False(hasImages);
+    }
+
+    /// <summary>Verifies that HasImages is true when an &lt;img&gt; tag is present.</summary>
+    [Fact]
+    public async Task TransformImageAttributesAsync_ReturnsHasImagesTrue_WhenImgTagPresent()
+    {
+        (_, bool hasImages) = await _sut.TransformImageAttributesAsync(
+            "<img alt=\"x\" />", (_, _) => Task.FromResult<HtmlImgPatch?>(null), TestContext.Current.CancellationToken);
+
+        Assert.True(hasImages);
+    }
+
+    /// <summary>Verifies that the tag's current alt value is passed to the patch factory.</summary>
+    [Fact]
+    public async Task TransformImageAttributesAsync_PassesAltValue_ToPatchFactory()
+    {
+        string? capturedAlt = null;
+        await _sut.TransformImageAttributesAsync(
+            "<img alt=\"path/to/file.png\" />",
+            (alt, _) =>
+            {
+                capturedAlt = alt;
+                return Task.FromResult<HtmlImgPatch?>(null);
+            },
+            TestContext.Current.CancellationToken);
+
+        Assert.Equal("path/to/file.png", capturedAlt);
+    }
+
+    /// <summary>Verifies that a non-null patch's fields are applied to the tag's attributes.</summary>
+    [Fact]
+    public async Task TransformImageAttributesAsync_AppliesPatch_ToAltDataFileDataContentType()
+    {
+        var patch = new HtmlImgPatch(NewAlt: "encrypted", DataFile: "base64data", DataContentType: "image/png");
+
+        (string html, _) = await _sut.TransformImageAttributesAsync(
+            "<img alt=\"original\" />", (_, _) => Task.FromResult<HtmlImgPatch?>(patch), TestContext.Current.CancellationToken);
+
+        Assert.Contains("alt=\"encrypted\"", html);
+        Assert.Contains("data-file=\"base64data\"", html);
+        Assert.Contains("data-contenttype=\"image/png\"", html);
+    }
+
+    /// <summary>Verifies that the tag is left unchanged when the patch factory returns null.</summary>
+    [Fact]
+    public async Task TransformImageAttributesAsync_LeavesTagUnchanged_WhenPatchIsNull()
+    {
+        (string html, _) = await _sut.TransformImageAttributesAsync(
+            "<img alt=\"original\" />", (_, _) => Task.FromResult<HtmlImgPatch?>(null), TestContext.Current.CancellationToken);
+
+        Assert.Contains("alt=\"original\"", html);
+        Assert.DoesNotContain("data-file", html);
+    }
+
+    // -- TransformImageAttributes (sync) -----------------------------------------
+
+    /// <summary>Verifies that the sync overload applies NewAlt from the patch.</summary>
+    [Fact]
+    public void TransformImageAttributes_AppliesNewAlt_FromPatch()
+    {
+        string html = _sut.TransformImageAttributes(
+            "<img alt=\"original\" />", _ => new HtmlImgPatch(NewAlt: "decrypted"));
+
+        Assert.Contains("alt=\"decrypted\"", html);
+    }
+
+    /// <summary>Verifies that the sync overload leaves alt unchanged when the patch factory returns null.</summary>
+    [Fact]
+    public void TransformImageAttributes_LeavesAlt_WhenPatchIsNull()
+    {
+        string html = _sut.TransformImageAttributes("<img alt=\"original\" />", _ => null);
+
+        Assert.Contains("alt=\"original\"", html);
+    }
+}

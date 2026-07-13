@@ -1,0 +1,243 @@
+using Maroik.Core.Contract.Dtos;
+using Maroik.Core.Contract.Interfaces;
+using Maroik.Core.Contract.Settings;
+using Maroik.Core.Service.Services;
+using Microsoft.Extensions.Logging.Abstractions;
+using Microsoft.Extensions.Options;
+using Moq;
+
+namespace Maroik.Core.Service.Tests.Services;
+
+/// <summary>
+/// Unit tests for <see cref="AttachmentContentService"/>.
+/// All external dependencies (file client, RSA, image validation, HTML sanitizing/parsing)
+/// are replaced with Moq mocks. Covers attachment validation, Summernote image upload,
+/// file download, and HTML display/persist transforms.
+/// </summary>
+public class AttachmentContentServiceTests
+{
+    private readonly Mock<IFileClient> _fileClient = new();
+    private readonly Mock<IRsaService> _rsa = new();
+    private readonly Mock<IImageValidatorService> _imageValidator = new();
+    private readonly Mock<IHtmlContentSanitizerService> _htmlSanitizer = new();
+    private readonly Mock<IHtmlParserService> _htmlParser = new();
+    private readonly IOptions<ServerSetting> _settings = Options.Create(new ServerSetting
+    {
+        MaxAttachedFileSizeBytes = 1024,
+        FileStorageBaseUrl = "http://filestorage.local"
+    });
+
+    private AttachmentContentService CreateSut() => new(
+        _fileClient.Object,
+        _rsa.Object,
+        _imageValidator.Object,
+        _htmlSanitizer.Object,
+        _htmlParser.Object,
+        _settings,
+        NullLogger<AttachmentContentService>.Instance);
+
+    // -- ValidateAttachedFile ---------------------------------------------------
+
+    /// <summary>Verifies that a null file is treated as "nothing to validate".</summary>
+    [Fact]
+    public void ValidateAttachedFile_ReturnsNull_WhenFileIsNull()
+    {
+        var result = CreateSut().ValidateAttachedFile(null);
+
+        Assert.Null(result);
+    }
+
+    /// <summary>Verifies that non-zip extensions are rejected.</summary>
+    [Fact]
+    public void ValidateAttachedFile_ReturnsFail_WhenExtensionIsNotZip()
+    {
+        var file = new AttachedFileDto { FileName = "document.pdf", Size = 100 };
+
+        var result = CreateSut().ValidateAttachedFile(file);
+
+        Assert.NotNull(result);
+        Assert.False(result!.Success);
+    }
+
+    /// <summary>Verifies that files larger than the configured limit are rejected.</summary>
+    [Fact]
+    public void ValidateAttachedFile_ReturnsFail_WhenSizeExceedsMax()
+    {
+        var file = new AttachedFileDto { FileName = "archive.zip", Size = 2048 };
+
+        var result = CreateSut().ValidateAttachedFile(file);
+
+        Assert.NotNull(result);
+        Assert.False(result!.Success);
+    }
+
+    /// <summary>Verifies that a zero-byte file is rejected.</summary>
+    [Fact]
+    public void ValidateAttachedFile_ReturnsFail_WhenSizeIsZero()
+    {
+        var file = new AttachedFileDto { FileName = "archive.zip", Size = 0 };
+
+        var result = CreateSut().ValidateAttachedFile(file);
+
+        Assert.NotNull(result);
+        Assert.False(result!.Success);
+    }
+
+    /// <summary>Verifies that a zip file within the size limit passes validation.</summary>
+    [Fact]
+    public void ValidateAttachedFile_ReturnsNull_WhenValid()
+    {
+        var file = new AttachedFileDto { FileName = "archive.zip", Size = 512 };
+
+        var result = CreateSut().ValidateAttachedFile(file);
+
+        Assert.Null(result);
+    }
+
+    // -- UploadSummernoteImageAsync ----------------------------------------------
+
+    /// <summary>Verifies that an invalid image is rejected before ever calling the file client.</summary>
+    [Fact]
+    public async Task UploadSummernoteImageAsync_ReturnsFail_WhenImageIsInvalid()
+    {
+        _imageValidator.Setup(v => v.IsValidImage(It.IsAny<byte[]>())).Returns(false);
+        var file = new AttachedFileDto { Bytes = [1, 2, 3], ContentType = "image/png", FileName = "x.png" };
+
+        var result = await CreateSut().UploadSummernoteImageAsync(file, "board", "post", TestContext.Current.CancellationToken);
+
+        Assert.False(result.Success);
+        _fileClient.Verify(f => f.UploadAsync(
+            It.IsAny<byte[]>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    /// <summary>Verifies that a failed upload short-circuits before attempting the re-download.</summary>
+    [Fact]
+    public async Task UploadSummernoteImageAsync_ReturnsFail_WhenUploadFails()
+    {
+        _imageValidator.Setup(v => v.IsValidImage(It.IsAny<byte[]>())).Returns(true);
+        _fileClient.Setup(f => f.UploadAsync(
+            It.IsAny<byte[]>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(false);
+        var file = new AttachedFileDto { Bytes = [1, 2, 3], ContentType = "image/png", FileName = "x.png" };
+
+        var result = await CreateSut().UploadSummernoteImageAsync(file, "board", "post", TestContext.Current.CancellationToken);
+
+        Assert.False(result.Success);
+        _fileClient.Verify(f => f.DownloadAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    /// <summary>Verifies that a successful upload+re-download returns the downloaded bytes and content type.</summary>
+    [Fact]
+    public async Task UploadSummernoteImageAsync_ReturnsOk_WhenUploadAndDownloadSucceed()
+    {
+        _imageValidator.Setup(v => v.IsValidImage(It.IsAny<byte[]>())).Returns(true);
+        _fileClient.Setup(f => f.UploadAsync(
+            It.IsAny<byte[]>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(true);
+        byte[] downloaded = [9, 9, 9];
+        _fileClient.Setup(f => f.DownloadAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(downloaded);
+        var file = new AttachedFileDto { Bytes = [1, 2, 3], ContentType = "image/png", FileName = "x.png" };
+
+        var result = await CreateSut().UploadSummernoteImageAsync(file, "board", "post", TestContext.Current.CancellationToken);
+
+        Assert.True(result.Success);
+        Assert.Equal(downloaded, result.FileBytes);
+        Assert.Equal("image/png", result.ContentType);
+    }
+
+    // -- DownloadFileAsync ---------------------------------------------------------
+
+    /// <summary>Verifies that downloaded bytes are returned as-is on success.</summary>
+    [Fact]
+    public async Task DownloadFileAsync_ReturnsBytes_WhenSuccessful()
+    {
+        byte[] data = [1, 2, 3];
+        _fileClient.Setup(f => f.DownloadAsync("path", It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(data);
+
+        var result = await CreateSut().DownloadFileAsync("path", TestContext.Current.CancellationToken);
+
+        Assert.Equal(data, result);
+    }
+
+    /// <summary>Verifies that a file-client failure is swallowed (and logged) rather than thrown.</summary>
+    [Fact]
+    public async Task DownloadFileAsync_ReturnsNull_WhenFileClientThrows()
+    {
+        _fileClient.Setup(f => f.DownloadAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new InvalidOperationException("boom"));
+
+        var result = await CreateSut().DownloadFileAsync("path", TestContext.Current.CancellationToken);
+
+        Assert.Null(result);
+    }
+
+    // -- PrepareHtmlForDisplayAsync -------------------------------------------------
+
+    /// <summary>
+    /// Verifies the patch-factory callback passed to <see cref="IHtmlParserService"/>: it should
+    /// download the image at the given (encrypted) path and re-encrypt that same path for the
+    /// new alt attribute, embedding the downloaded bytes as base64 with the correct content type.
+    /// </summary>
+    [Fact]
+    public async Task PrepareHtmlForDisplayAsync_PatchFactory_DownloadsAndEncryptsAlt()
+    {
+        Func<string, CancellationToken, Task<HtmlImgPatch?>>? capturedFactory = null;
+        _htmlParser.Setup(p => p.TransformImageAttributesAsync(
+                It.IsAny<string>(), It.IsAny<Func<string, CancellationToken, Task<HtmlImgPatch?>>>(), It.IsAny<CancellationToken>()))
+            .Callback<string, Func<string, CancellationToken, Task<HtmlImgPatch?>>, CancellationToken>(
+                (_, factory, _) => capturedFactory = factory)
+            .ReturnsAsync(("<html/>", true));
+        byte[] fileData = [5, 6, 7];
+        _fileClient.Setup(f => f.DownloadAsync("upload/img.png", It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(fileData);
+        _rsa.Setup(r => r.Encrypt("upload/img.png")).Returns("encrypted-path");
+
+        (string html, bool hasImages) = await CreateSut().PrepareHtmlForDisplayAsync("<html/>", TestContext.Current.CancellationToken);
+
+        Assert.NotNull(capturedFactory);
+        HtmlImgPatch? patch = await capturedFactory!("upload/img.png", TestContext.Current.CancellationToken);
+        Assert.Equal("encrypted-path", patch!.NewAlt);
+        Assert.Equal(Convert.ToBase64String(fileData), patch.DataFile);
+        Assert.Equal("image/png", patch.DataContentType);
+        Assert.True(hasImages);
+        Assert.Equal("<html/>", html);
+    }
+
+    // -- SanitizeAndDecryptContent ---------------------------------------------------
+
+    /// <summary>
+    /// Verifies that content is sanitized first, then handed to the parser with a patch factory
+    /// that decrypts each image's stored (encrypted) alt path.
+    /// </summary>
+    [Fact]
+    public void SanitizeAndDecryptContent_SanitizesThenDecryptsAlt()
+    {
+        _htmlSanitizer.Setup(s => s.Sanitize("<raw/>")).Returns("<clean/>");
+        Func<string, HtmlImgPatch?>? capturedFactory = null;
+        _htmlParser.Setup(p => p.TransformImageAttributes("<clean/>", It.IsAny<Func<string, HtmlImgPatch?>>()))
+            .Callback<string, Func<string, HtmlImgPatch?>>((_, factory) => capturedFactory = factory)
+            .Returns("<final/>");
+        _rsa.Setup(r => r.Decrypt("encrypted-alt")).Returns("decrypted-alt");
+
+        string result = CreateSut().SanitizeAndDecryptContent("<raw/>");
+
+        Assert.Equal("<final/>", result);
+        Assert.NotNull(capturedFactory);
+        HtmlImgPatch? patch = capturedFactory!("encrypted-alt");
+        Assert.Equal("decrypted-alt", patch!.NewAlt);
+    }
+
+    // -- SanitizeContent -----------------------------------------------------------
+
+    /// <summary>Verifies that content with no image handling is passed straight to the sanitizer.</summary>
+    [Fact]
+    public void SanitizeContent_DelegatesToSanitizer()
+    {
+        _htmlSanitizer.Setup(s => s.Sanitize("<raw/>")).Returns("<clean/>");
+
+        string result = CreateSut().SanitizeContent("<raw/>");
+
+        Assert.Equal("<clean/>", result);
+    }
+}
