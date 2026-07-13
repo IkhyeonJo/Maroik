@@ -5,9 +5,9 @@ using NetArchTest.Rules;
 namespace Maroik.Core.Client.Tests.Architecture;
 
 /// <summary>
-/// Architecture test enforcing that Maroik.Core.Client and Maroik.Core.Repository
-/// remain sibling infrastructure layers: both depend only on Maroik.Core.Contract
-/// and must not reference each other.
+/// Architecture test enforcing that Maroik.Core.Client, Maroik.Core.Repository, and
+/// Maroik.Core.Service remain sibling layers built on Maroik.Core.Contract and must
+/// not reference each other.
 /// </summary>
 public class ClientArchitectureTests
 {
@@ -25,6 +25,21 @@ public class ClientArchitectureTests
             result.IsSuccessful,
             "Maroik.Core.Client must not reference Maroik.Core.Repository directly. " +
             "These are sibling infrastructure layers and must not depend on each other.\n" +
+            "Failing types: " + string.Join(", ", result.FailingTypeNames ?? []));
+    }
+
+    [Fact]
+    public void Client_ShouldNot_DependOnServiceNamespace()
+    {
+        NetArchTest.Rules.TestResult result = Types.InAssembly(ClientAssembly)
+            .ShouldNot()
+            .HaveDependencyOn("Maroik.Core.Service")
+            .GetResult();
+
+        Assert.True(
+            result.IsSuccessful,
+            "Maroik.Core.Client must not reference Maroik.Core.Service directly. " +
+            "Client is an infrastructure layer and must not depend on the service layer.\n" +
             "Failing types: " + string.Join(", ", result.FailingTypeNames ?? []));
     }
 }
