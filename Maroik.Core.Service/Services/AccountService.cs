@@ -434,7 +434,9 @@ public class AccountService : IAccountService
         var correlationId = Activity.Current?.Id ?? "";
         try
         {
+#pragma warning disable CA1873
             _logger.LogInformation("Publishing email to {Email}. CorrelationId={CorrelationId}", to, correlationId);
+#pragma warning restore CA1873
             await _emailPublisher.PublishAsync(new SendEmailMessage(to, subject, body, correlationId), ct);
             return true;
         }

@@ -38,7 +38,9 @@ public class FileController : ControllerBase
             if (!success)
                 return BadRequest(error);
 
+#pragma warning disable CA1873
             _logger.LogInformation("File uploaded: {FilePath}. CorrelationId={CorrelationId}", filePath, correlationId);
+#pragma warning restore CA1873
             return Ok("File uploaded successfully.");
         }
         catch (Exception ex)
@@ -56,7 +58,7 @@ public class FileController : ControllerBase
         try
         {
             var sanitizedFileName = Path.GetFileName(filePath);
-            filePath = Path.Combine(Path.GetDirectoryName(filePath ?? "") ?? string.Empty, sanitizedFileName);
+            filePath = Path.Combine(Path.GetDirectoryName(filePath) ?? string.Empty, sanitizedFileName);
 
             if (!System.IO.File.Exists(filePath)) return NotFound("File not found");
             // filePath was rebuilt above from Path.GetFileName(filePath) + the original directory,
@@ -69,7 +71,9 @@ public class FileController : ControllerBase
             if (!provider.TryGetContentType(sanitizedFileName, out var contentType))
                 contentType = "application/octet-stream";
 
+#pragma warning disable CA1873
             _logger.LogInformation("File downloaded: {FilePath}. CorrelationId={CorrelationId}", filePath, correlationId);
+#pragma warning restore CA1873
             return File(fileData, contentType, sanitizedFileName);
         }
         catch (Exception ex)

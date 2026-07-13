@@ -35,7 +35,7 @@ public sealed class EmailConsumerWorker : BackgroundService
 
     /// <summary>
     /// Opens the RabbitMQ connection, declares the durable email queue, and starts consuming.
-    /// Runs for the lifetime of the host; returns only when <paramref name="stoppingToken"/> is cancelled.
+    /// Runs for the lifetime of the host; returns only when <paramref name="stoppingToken"/> is canceled.
     /// </summary>
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
@@ -63,7 +63,9 @@ public sealed class EmailConsumerWorker : BackgroundService
             consumer: consumer,
             cancellationToken: stoppingToken);
 
+#pragma warning disable CA1873
         _logger.LogInformation("Email consumer started, listening on queue '{Queue}'", QueueNames.Email);
+#pragma warning restore CA1873
 
         try
         {

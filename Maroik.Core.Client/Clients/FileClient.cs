@@ -15,7 +15,9 @@ public class FileClient(IHttpClientFactory httpClientFactory, ILogger<FileClient
     public async Task<byte[]> DownloadAsync(string filePath, string fileStorageBaseUrl, CancellationToken ct = default)
     {
         var correlationId = Activity.Current?.Id ?? "";
+#pragma warning disable CA1873
         logger.LogInformation("Requesting file download: {FilePath}. CorrelationId={CorrelationId}", filePath, correlationId);
+#pragma warning restore CA1873
 
         using HttpClient httpClient = httpClientFactory.CreateClient();
         using MultipartFormDataContent content = [];
@@ -46,7 +48,9 @@ public class FileClient(IHttpClientFactory httpClientFactory, ILogger<FileClient
             }
 
             var correlationId = Activity.Current?.Id ?? "";
+#pragma warning disable CA1873
             logger.LogInformation("Requesting file upload: {FilePath}. CorrelationId={CorrelationId}", filePath, correlationId);
+#pragma warning restore CA1873
 
             using HttpClient httpClient = httpClientFactory.CreateClient();
             using MultipartFormDataContent content = [];
