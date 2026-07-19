@@ -10,10 +10,10 @@ namespace Maroik.Website.Mappings;
 /// </summary>
 public static class ManagementViewModelMapper
 {
-    /// <summary>Maps a single <see cref="AccountResponse"/> to an <see cref="AccountOutputViewModel"/> for display.</summary>
-    public static AccountOutputViewModel ToDisplayViewModel(
-        this AccountResponse item,
-        string timeZoneIanaId) => new()
+    extension(AccountResponse item)
+    {
+        /// <summary>Maps a single <see cref="AccountResponse"/> to an <see cref="AccountOutputViewModel"/> for display.</summary>
+        private AccountOutputViewModel ToDisplayViewModel(string timeZoneIanaId) => new()
         {
             Email = item.Email,
             HashedPassword = item.HashedPassword,
@@ -32,10 +32,12 @@ public static class ManagementViewModelMapper
             Message = item.Message,
             Deleted = item.Deleted
         };
+    }
 
-    /// <summary>Maps all <see cref="AccountResponse"/> items to display view models.</summary>
-    public static List<AccountOutputViewModel> ToDisplayViewModels(
-        this IEnumerable<AccountResponse> items,
-        string timeZoneIanaId)
-        => items.Select(i => i.ToDisplayViewModel(timeZoneIanaId)).ToList();
+    extension(IEnumerable<AccountResponse> items)
+    {
+        /// <summary>Maps all <see cref="AccountResponse"/> items to display view models.</summary>
+        public List<AccountOutputViewModel> ToDisplayViewModels(string timeZoneIanaId)
+            => items.Select(i => i.ToDisplayViewModel(timeZoneIanaId)).ToList();
+    }
 }

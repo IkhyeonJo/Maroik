@@ -13,33 +13,36 @@ namespace Maroik.Website.Mappings;
 /// </summary>
 public static class DashboardViewModelMapper
 {
-    /// <summary>Maps <paramref name="summary"/> to a fully-populated <see cref="UserIndexOutputViewModel"/>.</summary>
-    public static UserIndexOutputViewModel ToViewModel(this DashboardDto summary, string timeZoneId)
+    extension(DashboardDto summary)
     {
-        var vm = new UserIndexOutputViewModel
+        /// <summary>Maps the summary to a fully-populated <see cref="UserIndexOutputViewModel"/>.</summary>
+        public UserIndexOutputViewModel ToViewModel(string timeZoneId)
         {
-            DefaultMonetaryUnit = summary.DefaultMonetaryUnit,
-            MonetaryUnits = summary.MonetaryUnits?.Where(x => x != null).Select(x => x!) ?? [],
-            StartYear = summary.StartYear,
-            EndYear = summary.EndYear,
-            SelectedYear = summary.SelectedYear,
-            SelectedMonth = summary.SelectedMonth
-        };
+            var vm = new UserIndexOutputViewModel
+            {
+                DefaultMonetaryUnit = summary.DefaultMonetaryUnit,
+                MonetaryUnits = summary.MonetaryUnits.Where(x => x != null).Select(x => x!),
+                StartYear = summary.StartYear,
+                EndYear = summary.EndYear,
+                SelectedYear = summary.SelectedYear,
+                SelectedMonth = summary.SelectedMonth
+            };
 
-        if (summary.DefaultMonetaryUnit == null) return vm;
+            if (summary.DefaultMonetaryUnit == null) return vm;
 
-        var currencyByProduct = summary.Assets
-            .ToDictionary(a => a.ProductName ?? "", a => (string?)a.MonetaryUnit);
+            var currencyByProduct = summary.Assets
+                .ToDictionary(a => a.ProductName ?? "", a => a.MonetaryUnit);
 
-        vm.IncomeYearOutputViewModels = MapIncomes(summary.YearIncomes, currencyByProduct, timeZoneId);
-        vm.ExpenditureYearOutputViewModels = MapExpenditures(summary.YearExpenditures, currencyByProduct, timeZoneId);
-        vm.IncomeYearMonthOutputViewModels = MapIncomes(summary.YearMonthIncomes, currencyByProduct, timeZoneId);
-        vm.ExpenditureYearMonthOutputViewModels = MapExpenditures(summary.YearMonthExpenditures, currencyByProduct, timeZoneId);
+            vm.IncomeYearOutputViewModels = MapIncomes(summary.YearIncomes, currencyByProduct, timeZoneId);
+            vm.ExpenditureYearOutputViewModels = MapExpenditures(summary.YearExpenditures, currencyByProduct, timeZoneId);
+            vm.IncomeYearMonthOutputViewModels = MapIncomes(summary.YearMonthIncomes, currencyByProduct, timeZoneId);
+            vm.ExpenditureYearMonthOutputViewModels = MapExpenditures(summary.YearMonthExpenditures, currencyByProduct, timeZoneId);
 
-        AggregateIncomes(vm);
-        AggregateExpenditures(vm);
+            AggregateIncomes(vm);
+            AggregateExpenditures(vm);
 
-        return vm;
+            return vm;
+        }
     }
 
     // ── Mapping helpers ──────────────────────────────────────────────────────
@@ -125,11 +128,13 @@ public static class DashboardViewModelMapper
             }
             vm.IrregularIncomeLaborIncomeYear = irregularLabor;
             vm.IrregularIncomeOtherIncomeYear = irregularOther;
-            if (totalIrregular != 0)
+            if (totalIrregular == 0)
             {
-                vm.PercentageOfIrregularIncomeLaborIncomeYear = Pct(irregularLabor, totalIrregular);
-                vm.PercentageOfIrregularIncomeOtherIncomeYear = Pct(irregularOther, totalIrregular);
+                return;
             }
+
+            vm.PercentageOfIrregularIncomeLaborIncomeYear = Pct(irregularLabor, totalIrregular);
+            vm.PercentageOfIrregularIncomeOtherIncomeYear = Pct(irregularOther, totalIrregular);
         }
         else
         {
@@ -150,11 +155,13 @@ public static class DashboardViewModelMapper
             }
             vm.IrregularIncomeLaborIncomeYearMonth = irregularLabor;
             vm.IrregularIncomeOtherIncomeYearMonth = irregularOther;
-            if (totalIrregular != 0)
+            if (totalIrregular == 0)
             {
-                vm.PercentageOfIrregularIncomeLaborIncomeYearMonth = Pct(irregularLabor, totalIrregular);
-                vm.PercentageOfIrregularIncomeOtherIncomeYearMonth = Pct(irregularOther, totalIrregular);
+                return;
             }
+
+            vm.PercentageOfIrregularIncomeLaborIncomeYearMonth = Pct(irregularLabor, totalIrregular);
+            vm.PercentageOfIrregularIncomeOtherIncomeYearMonth = Pct(irregularOther, totalIrregular);
         }
     }
 
@@ -222,7 +229,12 @@ public static class DashboardViewModelMapper
             vm.ConsumerSpendingProtectionTypeInsuranceYear = cInsurance;
             vm.ConsumerSpendingOtherExpensesYear = cOther;
             vm.ConsumerSpendingUnknownExpenditureYear = cUnknown;
-            if (totalConsumer != 0) { vm.PercentageOfConsumerSpendingMealOrEatOutExpensesYear = Pct(cMeal, totalConsumer); vm.PercentageOfConsumerSpendingHousingOrSuppliesCostYear = Pct(cHousing, totalConsumer); vm.PercentageOfConsumerSpendingEducationExpensesYear = Pct(cEducation, totalConsumer); vm.PercentageOfConsumerSpendingMedicalExpensesYear = Pct(cMedical, totalConsumer); vm.PercentageOfConsumerSpendingTransportationCostYear = Pct(cTransport, totalConsumer); vm.PercentageOfConsumerSpendingCommunicationCostYear = Pct(cComm, totalConsumer); vm.PercentageOfConsumerSpendingLeisureOrCultureYear = Pct(cLeisure, totalConsumer); vm.PercentageOfConsumerSpendingClothingOrShoesYear = Pct(cClothing, totalConsumer); vm.PercentageOfConsumerSpendingPinMoneyYear = Pct(cPin, totalConsumer); vm.PercentageOfConsumerSpendingProtectionTypeInsuranceYear = Pct(cInsurance, totalConsumer); vm.PercentageOfConsumerSpendingOtherExpensesYear = Pct(cOther, totalConsumer); vm.PercentageOfConsumerSpendingUnknownExpenditureYear = Pct(cUnknown, totalConsumer); }
+            if (totalConsumer == 0)
+            {
+                return;
+            }
+
+            vm.PercentageOfConsumerSpendingMealOrEatOutExpensesYear = Pct(cMeal, totalConsumer); vm.PercentageOfConsumerSpendingHousingOrSuppliesCostYear = Pct(cHousing, totalConsumer); vm.PercentageOfConsumerSpendingEducationExpensesYear = Pct(cEducation, totalConsumer); vm.PercentageOfConsumerSpendingMedicalExpensesYear = Pct(cMedical, totalConsumer); vm.PercentageOfConsumerSpendingTransportationCostYear = Pct(cTransport, totalConsumer); vm.PercentageOfConsumerSpendingCommunicationCostYear = Pct(cComm, totalConsumer); vm.PercentageOfConsumerSpendingLeisureOrCultureYear = Pct(cLeisure, totalConsumer); vm.PercentageOfConsumerSpendingClothingOrShoesYear = Pct(cClothing, totalConsumer); vm.PercentageOfConsumerSpendingPinMoneyYear = Pct(cPin, totalConsumer); vm.PercentageOfConsumerSpendingProtectionTypeInsuranceYear = Pct(cInsurance, totalConsumer); vm.PercentageOfConsumerSpendingOtherExpensesYear = Pct(cOther, totalConsumer); vm.PercentageOfConsumerSpendingUnknownExpenditureYear = Pct(cUnknown, totalConsumer);
         }
         else
         {
@@ -250,7 +262,12 @@ public static class DashboardViewModelMapper
             vm.ConsumerSpendingProtectionTypeInsuranceYearMonth = cInsurance;
             vm.ConsumerSpendingOtherExpensesYearMonth = cOther;
             vm.ConsumerSpendingUnknownExpenditureYearMonth = cUnknown;
-            if (totalConsumer != 0) { vm.PercentageOfConsumerSpendingMealOrEatOutExpensesYearMonth = Pct(cMeal, totalConsumer); vm.PercentageOfConsumerSpendingHousingOrSuppliesCostYearMonth = Pct(cHousing, totalConsumer); vm.PercentageOfConsumerSpendingEducationExpensesYearMonth = Pct(cEducation, totalConsumer); vm.PercentageOfConsumerSpendingMedicalExpensesYearMonth = Pct(cMedical, totalConsumer); vm.PercentageOfConsumerSpendingTransportationCostYearMonth = Pct(cTransport, totalConsumer); vm.PercentageOfConsumerSpendingLeisureOrCultureYearMonth = Pct(cLeisure, totalConsumer); vm.PercentageOfConsumerSpendingClothingOrShoesYearMonth = Pct(cClothing, totalConsumer); vm.PercentageOfConsumerSpendingPinMoneyYearMonth = Pct(cPin, totalConsumer); vm.PercentageOfConsumerSpendingProtectionTypeInsuranceYearMonth = Pct(cInsurance, totalConsumer); vm.PercentageOfConsumerSpendingOtherExpensesYearMonth = Pct(cOther, totalConsumer); vm.PercentageOfConsumerSpendingUnknownExpenditureYearMonth = Pct(cUnknown, totalConsumer); }
+            if (totalConsumer == 0)
+            {
+                return;
+            }
+
+            vm.PercentageOfConsumerSpendingMealOrEatOutExpensesYearMonth = Pct(cMeal, totalConsumer); vm.PercentageOfConsumerSpendingHousingOrSuppliesCostYearMonth = Pct(cHousing, totalConsumer); vm.PercentageOfConsumerSpendingEducationExpensesYearMonth = Pct(cEducation, totalConsumer); vm.PercentageOfConsumerSpendingMedicalExpensesYearMonth = Pct(cMedical, totalConsumer); vm.PercentageOfConsumerSpendingTransportationCostYearMonth = Pct(cTransport, totalConsumer); vm.PercentageOfConsumerSpendingLeisureOrCultureYearMonth = Pct(cLeisure, totalConsumer); vm.PercentageOfConsumerSpendingClothingOrShoesYearMonth = Pct(cClothing, totalConsumer); vm.PercentageOfConsumerSpendingPinMoneyYearMonth = Pct(cPin, totalConsumer); vm.PercentageOfConsumerSpendingProtectionTypeInsuranceYearMonth = Pct(cInsurance, totalConsumer); vm.PercentageOfConsumerSpendingOtherExpensesYearMonth = Pct(cOther, totalConsumer); vm.PercentageOfConsumerSpendingUnknownExpenditureYearMonth = Pct(cUnknown, totalConsumer);
         }
     }
 
