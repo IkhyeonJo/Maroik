@@ -2,7 +2,6 @@ using System.Reflection;
 using System.Text.Json;
 using Maroik.Core.Contract.Constants;
 using Maroik.Core.Contract.Dtos;
-using Maroik.Core.Contract.Enums;
 using Maroik.Core.Contract.Interfaces;
 using Maroik.Website.Attributes;
 using Maroik.Website.Constants;
@@ -409,7 +408,7 @@ public class AuthorizationFilter : ActionFilterAttribute
                                      from namedArgument in customAttribute.NamedArguments
                                      select namedArgument).Any(namedArgument =>
                                      (namedArgument.MemberName == nameof(RequiredHttpPostAccessAttribute.Role)) &&
-                                     ((namedArgument.TypedValue.Value as string) == loggedInAccount!.Role)))
+                                     ((namedArgument.TypedValue.Value as string) == loggedInAccount.Role)))
                                 {
                                     await next(); // Do Action!!
                                     return;
@@ -443,7 +442,7 @@ public class AuthorizationFilter : ActionFilterAttribute
                                      from namedArgument in customAttribute.NamedArguments
                                      select namedArgument).Any(namedArgument =>
                                      (namedArgument.MemberName == nameof(RequiredHttpPostAccessAttribute.Role)) &&
-                                     ((namedArgument.TypedValue.Value as string) == loggedInAccount!.Role)))
+                                     ((namedArgument.TypedValue.Value as string) == loggedInAccount.Role)))
                                 {
                                     await next(); // Do Action!!
                                     return;
