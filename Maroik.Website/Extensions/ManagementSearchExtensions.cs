@@ -1,3 +1,4 @@
+using System.Globalization;
 using Maroik.Website.Models.ViewModels.Management;
 
 namespace Maroik.Website.Extensions;
@@ -29,8 +30,8 @@ public static class ManagementSearchExtensions
                 Has(i.AgreedServiceTerms.ToString(), search) ||
                 Has(i.RegistrationToken, search) ||
                 Has(i.ResetPasswordToken, search) ||
-                Has(i.Created.ToString(), search) ||
-                Has(i.Updated.ToString(), search) ||
+                Has(i.Created.ToString(CultureInfo.InvariantCulture), search) ||
+                Has(i.Updated.ToString(CultureInfo.InvariantCulture), search) ||
                 Has(i.Message, search) ||
                 Has(i.Deleted.ToString(), search));
         }

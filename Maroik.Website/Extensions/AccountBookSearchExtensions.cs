@@ -1,3 +1,4 @@
+using System.Globalization;
 using Maroik.Core.Contract.Extensions;
 using Maroik.Website.Models.ViewModels.AccountBook;
 
@@ -24,8 +25,8 @@ public static class AccountBookSearchExtensions
                 Has(i.Item, search) ||
                 Has(i.Amount.TrimTrailingZeros(), search) ||
                 Has(i.MonetaryUnit, search) ||
-                Has(i.Created.ToString(), search) ||
-                Has(i.Updated.ToString(), search) ||
+                Has(i.Created.ToString(CultureInfo.InvariantCulture), search) ||
+                Has(i.Updated.ToString(CultureInfo.InvariantCulture), search) ||
                 Has(i.Note, search) ||
                 Has(i.Deleted.ToString(), search));
         }
@@ -47,8 +48,8 @@ public static class AccountBookSearchExtensions
                 Has(i.Amount.TrimTrailingZeros(), search) ||
                 Has(i.MonetaryUnit, search) ||
                 Has(i.DepositMyAssetProductName, search) ||
-                Has(i.Created.ToString(), search) ||
-                Has(i.Updated.ToString(), search) ||
+                Has(i.Created.ToString(CultureInfo.InvariantCulture), search) ||
+                Has(i.Updated.ToString(CultureInfo.InvariantCulture), search) ||
                 Has(i.Note, search));
         }
     }
@@ -71,8 +72,8 @@ public static class AccountBookSearchExtensions
                 Has(i.PaymentMethod, search) ||
                 Has(i.Note, search) ||
                 Has(i.MyDepositAsset, search) ||
-                Has(i.Created.ToString(), search) ||
-                Has(i.Updated.ToString(), search));
+                Has(i.Created.ToString(CultureInfo.InvariantCulture), search) ||
+                Has(i.Updated.ToString(CultureInfo.InvariantCulture), search));
         }
     }
 

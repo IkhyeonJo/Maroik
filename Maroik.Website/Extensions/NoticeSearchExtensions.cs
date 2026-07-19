@@ -1,3 +1,4 @@
+using System.Globalization;
 using Maroik.Core.Contract.Extensions;
 using Maroik.Website.Models.ViewModels.Notice;
 
@@ -28,8 +29,8 @@ public static class NoticeSearchExtensions
                 Has(i.MaturityDate, search) ||
                 Has(i.Note, search) ||
                 Has(i.DepositMyAssetProductName, search) ||
-                Has(i.Created.ToString(), search) ||
-                Has(i.Updated.ToString(), search));
+                Has(i.Created.ToString(CultureInfo.InvariantCulture), search) ||
+                Has(i.Updated.ToString(CultureInfo.InvariantCulture), search));
         }
     }
 
@@ -53,8 +54,8 @@ public static class NoticeSearchExtensions
                 Has(i.DepositMonth.ToString(), search) ||
                 Has(i.DepositDay.ToString(), search) ||
                 Has(i.MaturityDate, search) ||
-                Has(i.Created.ToString(), search) ||
-                Has(i.Updated.ToString(), search) ||
+                Has(i.Created.ToString(CultureInfo.InvariantCulture), search) ||
+                Has(i.Updated.ToString(CultureInfo.InvariantCulture), search) ||
                 Has(i.Note, search));
         }
     }

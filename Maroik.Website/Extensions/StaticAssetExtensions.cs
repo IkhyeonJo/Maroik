@@ -13,7 +13,7 @@ public static class StaticAssetExtensions
         /// MIME-type mappings for .js and .css files, and adds the
         /// <c>X-Content-Type-Options: nosniff</c> security header to every static-file response.
         /// </summary>
-        public IApplicationBuilder MapStaticAssets()
+        public void MapStaticAssets()
         {
             app.UseStaticFiles(new StaticFileOptions
             {
@@ -29,11 +29,9 @@ public static class StaticAssetExtensions
                 // Add X-Content-Type-Options: nosniff to prevent browsers from MIME-sniffing responses
                 OnPrepareResponse = ctx =>
                 {
-                    ctx.Context.Response.Headers["X-Content-Type-Options"] = "nosniff";
+                    ctx.Context.Response.Headers.XContentTypeOptions = "nosniff";
                 }
             });
-
-            return app;
         }
     }
 }

@@ -31,8 +31,7 @@ public static class CalendarEventViewModelExtensions
             List<CalendarEventOutputViewModel> items = [];
             foreach (CalendarResponse calendar in calendars)
             {
-                foreach (CalendarEventResponse evt in await calendarService.GetCalendarEventsAsync(calendar.Id, ct) ?? [])
-                    items.Add(evt.ToDisplayViewModel(userTimeZoneIanaId, calendar.HtmlColorCode, calendarType));
+                items.AddRange(from evt in await calendarService.GetCalendarEventsAsync(calendar.Id, ct) select evt.ToDisplayViewModel(userTimeZoneIanaId, calendar.HtmlColorCode, calendarType));
             }
             return items;
         }
