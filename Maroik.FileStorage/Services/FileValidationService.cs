@@ -12,7 +12,7 @@ namespace Maroik.FileStorage.Services;
 /// </summary>
 public class FileValidationService : IFileValidationService
 {
-    private static readonly string[] AllowedExtensions = [".zip", ".jpg", ".jpeg", ".png"];
+    private static readonly string[] _allowedExtensions = [".zip", ".jpg", ".jpeg", ".png"];
     private const long MaxFileSizeBytes = 10 * 1024 * 1024; // 10 MB
 
     private readonly IClamavClient _clamavClient;
@@ -34,7 +34,7 @@ public class FileValidationService : IFileValidationService
         var safeDir = Path.GetFullPath(filePath);
         var safePath = Path.Combine(safeDir, fileName);
 
-        if (!AllowedExtensions.Contains(ext))
+        if (!_allowedExtensions.Contains(ext))
             return (false, "Unsupported file extension.");
 
         if (file.Length > MaxFileSizeBytes)
