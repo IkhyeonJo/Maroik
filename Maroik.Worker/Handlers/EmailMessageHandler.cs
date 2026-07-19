@@ -4,7 +4,6 @@ using Maroik.Core.Contract.Helpers;
 using Maroik.Core.Contract.Interfaces;
 using Maroik.Core.Contract.Messaging;
 using Maroik.Core.Contract.Settings;
-using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
 namespace Maroik.Worker.Handlers;
