@@ -1,6 +1,6 @@
 using System.Text.Json;
 using Maroik.Core.Contract.Messaging;
-using Maroik.Worker.Handlers;
+using Maroik.Worker.Contracts;
 using RabbitMQ.Client;
 using RabbitMQ.Client.Events;
 using Serilog.Context;
