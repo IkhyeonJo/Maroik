@@ -82,6 +82,7 @@ public class ViewBagPopulatorFilter : IAsyncActionFilter
                 var counts = await _dashboardService.GetNoticeCountsAsync(
                     loggedInAccount.Email ?? "",
                     _serverSettings.Value.NoticeMaturityDateDay,
+                    loggedInAccount.TimeZoneIanaId ?? "UTC",
                     context.HttpContext.RequestAborted);
 
                 fixedIncomesNoticedCount = counts.FixedIncomesNoticed;

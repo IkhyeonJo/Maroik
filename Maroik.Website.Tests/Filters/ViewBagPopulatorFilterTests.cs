@@ -152,7 +152,7 @@ public class ViewBagPopulatorFilterTests
             .Setup(a => a.GetAccountByEmailAsync("user@test.com", It.IsAny<CancellationToken>()))
             .ReturnsAsync(dbAccount);
         _dashboardService
-            .Setup(d => d.GetNoticeCountsAsync("user@test.com", 7, It.IsAny<CancellationToken>()))
+            .Setup(d => d.GetNoticeCountsAsync("user@test.com", 7, It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(new NotificationDto { FixedIncomesNoticed = 2, FixedExpendituresNoticed = 3, FixedIncomesExpired = 1, FixedExpendituresExpired = 4 });
 
         var (context, controller) = BuildContext();
@@ -176,7 +176,7 @@ public class ViewBagPopulatorFilterTests
             .Setup(a => a.GetAccountByEmailAsync("user@test.com", It.IsAny<CancellationToken>()))
             .ReturnsAsync(dbAccount);
         _dashboardService
-            .Setup(d => d.GetNoticeCountsAsync("user@test.com", 7, It.IsAny<CancellationToken>()))
+            .Setup(d => d.GetNoticeCountsAsync("user@test.com", 7, It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(new NotificationDto { FixedIncomesNoticed = 2, FixedExpendituresNoticed = 3, FixedIncomesExpired = 1, FixedExpendituresExpired = 4 });
 
         var (context, controller) = BuildContext();
@@ -260,7 +260,7 @@ public class ViewBagPopulatorFilterTests
             .Setup(a => a.GetAccountByEmailAsync("user@test.com", It.IsAny<CancellationToken>()))
             .ReturnsAsync(dbAccount);
         _dashboardService
-            .Setup(d => d.GetNoticeCountsAsync(It.IsAny<string>(), It.IsAny<int>(), It.IsAny<CancellationToken>()))
+            .Setup(d => d.GetNoticeCountsAsync(It.IsAny<string>(), It.IsAny<int>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ThrowsAsync(new InvalidOperationException("db down"));
 
         var (context, controller) = BuildContext();

@@ -18,9 +18,10 @@ public interface IDashboardService : IQueryService
     /// <summary>
     /// Counts fixed income and expenditure items that are approaching their deposit day
     /// within <paramref name="noticeMaturityDateDay"/> days, or whose maturity date has passed.
+    /// "Today" is evaluated in the user's <paramref name="timeZoneId"/>.
     /// Used to populate the navigation header badges.
     /// </summary>
-    Task<NotificationDto> GetNoticeCountsAsync(string email, int noticeMaturityDateDay, CancellationToken ct = default);
+    Task<NotificationDto> GetNoticeCountsAsync(string email, int noticeMaturityDateDay, string timeZoneId, CancellationToken ct = default);
 
     /// <summary>
     /// Reads the host and Docker resource log files and returns the parsed metrics

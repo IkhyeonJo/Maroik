@@ -1,6 +1,7 @@
 using Maroik.Core.Contract.Domains.Account;
 using Maroik.Core.Contract.Domains.Finance;
 using Maroik.Core.Contract.Dtos;
+using Maroik.Core.Contract.Extensions;
 using Maroik.Core.Contract.Interfaces;
 using Maroik.Core.Contract.Policies;
 using Maroik.Core.Service.Mappers;
@@ -44,8 +45,9 @@ public class DashboardService : IDashboardService
     public async Task<DashboardDto> GetSummaryAsync(string accountEmail, string year, string month, string timeZoneId, CancellationToken ct = default)
     {
         // Normalize year/month
-        if (!int.TryParse(year, out int yearInt)) yearInt = DateTime.UtcNow.Year;
-        if (!int.TryParse(month, out int monthInt)) monthInt = DateTime.UtcNow.Month;
+        DateTime accountToday = DateTime.UtcNow.ConvertTimeByTimeZoneIanaId(timeZoneId);
+        if (!int.TryParse(year, out int yearInt)) yearInt = accountToday.Year;
+        if (!int.TryParse(month, out int monthInt)) monthInt = accountToday.Month;
 
         List<Asset> assets = await _assetRepository.GetByAccountEmailAsync(accountEmail, ct);
         Account? account = await _accountRepository.FindByEmailAsync(accountEmail, ct);
@@ -58,7 +60,7 @@ public class DashboardService : IDashboardService
             Assets = assets.Select(AssetMapper.ToResponse).ToList(),
             SelectedYear = yearInt,
             SelectedMonth = monthInt,
-            EndYear = DateTime.UtcNow.Year,
+            EndYear = accountToday.Year,
             MonetaryUnits = assets.Select(x => x.Balance.Currency).Distinct()
         };
 
@@ -123,12 +125,12 @@ public class DashboardService : IDashboardService
     }
 
     /// <inheritdoc />
-    public async Task<NotificationDto> GetNoticeCountsAsync(string email, int noticeMaturityDateDay, CancellationToken ct = default)
+    public async Task<NotificationDto> GetNoticeCountsAsync(string email, int noticeMaturityDateDay, string timeZoneId, CancellationToken ct = default)
     {
         int incomesNoticed = 0, expendituresNoticed = 0;
         int incomesExpired = 0, expendituresExpired = 0;
 
-        DateTime currentDate = DateTime.UtcNow.Date;
+        DateTime currentDate = DateTime.UtcNow.ConvertTimeByTimeZoneIanaId(timeZoneId).Date;
 
         foreach (var item in await _fixedIncomeRepository.GetByAccountEmailAsync(email, ct))
         {

@@ -171,7 +171,7 @@ public class DashboardServiceTests
         _fixedExpenditureRepo.Setup(r => r.GetByAccountEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync([]);
         var sut = CreateSut();
 
-        NotificationDto counts = await sut.GetNoticeCountsAsync(email, 7, TestContext.Current.CancellationToken);
+        NotificationDto counts = await sut.GetNoticeCountsAsync(email, 7, "UTC", TestContext.Current.CancellationToken);
 
         Assert.Equal(0, counts.FixedIncomesNoticed);
         Assert.Equal(0, counts.FixedExpendituresNoticed);
@@ -227,7 +227,7 @@ public class DashboardServiceTests
         ]);
         var sut = CreateSut();
 
-        NotificationDto counts = await sut.GetNoticeCountsAsync(email, 7, TestContext.Current.CancellationToken);
+        NotificationDto counts = await sut.GetNoticeCountsAsync(email, 7, "UTC", TestContext.Current.CancellationToken);
 
         Assert.Equal(1, counts.FixedIncomesExpired);
         Assert.Equal(1, counts.FixedExpendituresExpired);
@@ -262,7 +262,7 @@ public class DashboardServiceTests
         _fixedExpenditureRepo.Setup(r => r.GetByAccountEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync([]);
         var sut = CreateSut();
 
-        NotificationDto counts = await sut.GetNoticeCountsAsync(email, 7, TestContext.Current.CancellationToken);
+        NotificationDto counts = await sut.GetNoticeCountsAsync(email, 7, "UTC", TestContext.Current.CancellationToken);
 
         Assert.Equal(1, counts.FixedIncomesNoticed);
     }
