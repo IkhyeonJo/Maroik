@@ -83,9 +83,12 @@ public class DashBoardController(
         #endregion
         
         #region Year & Month
+        DateTime loginedAccountCurrentDate =
+            DateTime.UtcNow.ConvertTimeByTimeZoneIanaId(loginedAccountTimeZoneIanaId);
+
         if (string.IsNullOrEmpty(year))
         {
-            year = DateTime.UtcNow.Year.ToString();
+            year = loginedAccountCurrentDate.Year.ToString();
         }
         else
         {
@@ -95,13 +98,13 @@ public class DashBoardController(
             }
             catch
             {
-                year = DateTime.UtcNow.Year.ToString();
+                year = loginedAccountCurrentDate.Year.ToString();
             }
         }
 
         if (string.IsNullOrEmpty(month))
         {
-            month = DateTime.UtcNow.Month.ToString("00");
+            month = loginedAccountCurrentDate.Month.ToString("00");
         }
         else
         {
@@ -111,7 +114,7 @@ public class DashBoardController(
             }
             catch
             {
-                month = DateTime.UtcNow.Month.ToString("00");
+                month = loginedAccountCurrentDate.Month.ToString("00");
             }
         }
         #endregion
