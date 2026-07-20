@@ -220,10 +220,7 @@ public class NoticeController : Controller
             string loginedAccountTimeZoneIanaId = JsonConvert
                 .DeserializeObject<Account>(Encoding.UTF8.GetString(resultByte)).TimeZoneIanaId;
 
-            DateTime currentDate =
-                new(Convert.ToInt32(Regex.Split(DateTime.UtcNow.ToLocalTime().ToString("yyyy-MM-dd"), "-")[0]),
-                    Convert.ToInt32(Regex.Split(DateTime.UtcNow.ToLocalTime().ToString("yyyy-MM-dd"), "-")[1]),
-                    Convert.ToInt32(Regex.Split(DateTime.UtcNow.ToLocalTime().ToString("yyyy-MM-dd"), "-")[2]));
+            DateTime currentDate = DateTime.UtcNow.ConvertTimeByTimeZoneIanaId(loginedAccountTimeZoneIanaId).Date;
 
             List<Asset> assets = await _assetRepository.GetAssetsAsync(JsonConvert
                 .DeserializeObject<Account>(Encoding.UTF8.GetString(resultByte)).Email);
@@ -237,15 +234,10 @@ public class NoticeController : Controller
 
                     try
                     {
-                        noticedResult =
-                            currentDate.Subtract(new DateTime(
-                                Convert.ToInt32(Regex.Split(DateTime.UtcNow.ToLocalTime().ToString("yyyy-MM-dd"),
-                                    "-")[0]), item.DepositMonth, item.DepositDay)).TotalDays <= 0 && Math.Abs(
-                                currentDate.Subtract(new DateTime(
-                                    Convert.ToInt32(
-                                        Regex.Split(DateTime.UtcNow.ToLocalTime().ToString("yyyy-MM-dd"), "-")[0]),
-                                    item.DepositMonth, item.DepositDay)).TotalDays) <=
-                            ServerSetting.NoticeMaturityDateDay;
+                        DateTime maturityDate = new(currentDate.Year, item.DepositMonth, item.DepositDay);
+                        noticedResult = currentDate.Subtract(maturityDate).TotalDays <= 0 &&
+                                        Math.Abs(currentDate.Subtract(maturityDate).TotalDays) <=
+                                        ServerSetting.NoticeMaturityDateDay;
                     }
                     catch // Exception occurs when initialized to February 29th in a non-leap year
                     {
@@ -300,16 +292,10 @@ public class NoticeController : Controller
 
                         try
                         {
-                            noticedResult =
-                                currentDate.Subtract(new DateTime(
-                                    Convert.ToInt32(
-                                        Regex.Split(DateTime.UtcNow.ToLocalTime().ToString("yyyy-MM-dd"), "-")[0]),
-                                    item.DepositMonth, item.DepositDay)).TotalDays <= 0 && Math.Abs(currentDate
-                                    .Subtract(new DateTime(
-                                        Convert.ToInt32(
-                                            Regex.Split(DateTime.UtcNow.ToLocalTime().ToString("yyyy-MM-dd"), "-")
-                                                [0]), item.DepositMonth, item.DepositDay)).TotalDays) <=
-                                ServerSetting.NoticeMaturityDateDay;
+                            DateTime maturityDate = new(currentDate.Year, item.DepositMonth, item.DepositDay);
+                            noticedResult = currentDate.Subtract(maturityDate).TotalDays <= 0 &&
+                                            Math.Abs(currentDate.Subtract(maturityDate).TotalDays) <=
+                                            ServerSetting.NoticeMaturityDateDay;
                         }
                         catch // Exception occurs when initialized to February 29th in a non-leap year
                         {
@@ -686,7 +672,7 @@ public class NoticeController : Controller
             ? resultByte
             : Array.Empty<byte>()));
         string loginedAccountTimeZoneIanaId = account.TimeZoneIanaId;
-        DateTime currentDate = DateTime.UtcNow.ToLocalTime();
+        DateTime currentDate = DateTime.UtcNow.ConvertTimeByTimeZoneIanaId(loginedAccountTimeZoneIanaId).Date;
 
         List<Asset> assets = await _assetRepository.GetAssetsAsync(account.Email);
         var fixedIncomeList = await _fixedIncomeRepository.GetFixedIncomesAsync(account.Email);
@@ -1184,10 +1170,7 @@ public class NoticeController : Controller
             string loginedAccountTimeZoneIanaId = JsonConvert
                 .DeserializeObject<Account>(Encoding.UTF8.GetString(resultByte)).TimeZoneIanaId;
 
-            DateTime currentDate =
-                new(Convert.ToInt32(Regex.Split(DateTime.UtcNow.ToLocalTime().ToString("yyyy-MM-dd"), "-")[0]),
-                    Convert.ToInt32(Regex.Split(DateTime.UtcNow.ToLocalTime().ToString("yyyy-MM-dd"), "-")[1]),
-                    Convert.ToInt32(Regex.Split(DateTime.UtcNow.ToLocalTime().ToString("yyyy-MM-dd"), "-")[2]));
+            DateTime currentDate = DateTime.UtcNow.ConvertTimeByTimeZoneIanaId(loginedAccountTimeZoneIanaId).Date;
 
             List<Asset> assets = await _assetRepository.GetAssetsAsync(JsonConvert
                 .DeserializeObject<Account>(Encoding.UTF8.GetString(resultByte)).Email);
@@ -1201,15 +1184,10 @@ public class NoticeController : Controller
 
                     try
                     {
-                        noticedResult =
-                            currentDate.Subtract(new DateTime(
-                                Convert.ToInt32(Regex.Split(DateTime.UtcNow.ToLocalTime().ToString("yyyy-MM-dd"),
-                                    "-")[0]), item.DepositMonth, item.DepositDay)).TotalDays <= 0 && Math.Abs(
-                                currentDate.Subtract(new DateTime(
-                                    Convert.ToInt32(
-                                        Regex.Split(DateTime.UtcNow.ToLocalTime().ToString("yyyy-MM-dd"), "-")[0]),
-                                    item.DepositMonth, item.DepositDay)).TotalDays) <=
-                            ServerSetting.NoticeMaturityDateDay;
+                        DateTime maturityDate = new(currentDate.Year, item.DepositMonth, item.DepositDay);
+                        noticedResult = currentDate.Subtract(maturityDate).TotalDays <= 0 &&
+                                        Math.Abs(currentDate.Subtract(maturityDate).TotalDays) <=
+                                        ServerSetting.NoticeMaturityDateDay;
                     }
                     catch // Exception occurs when initialized to February 29th in a non-leap year
                     {
@@ -1266,16 +1244,10 @@ public class NoticeController : Controller
 
                         try
                         {
-                            noticedResult =
-                                currentDate.Subtract(new DateTime(
-                                    Convert.ToInt32(
-                                        Regex.Split(DateTime.UtcNow.ToLocalTime().ToString("yyyy-MM-dd"), "-")[0]),
-                                    item.DepositMonth, item.DepositDay)).TotalDays <= 0 && Math.Abs(currentDate
-                                    .Subtract(new DateTime(
-                                        Convert.ToInt32(
-                                            Regex.Split(DateTime.UtcNow.ToLocalTime().ToString("yyyy-MM-dd"), "-")
-                                                [0]), item.DepositMonth, item.DepositDay)).TotalDays) <=
-                                ServerSetting.NoticeMaturityDateDay;
+                            DateTime maturityDate = new(currentDate.Year, item.DepositMonth, item.DepositDay);
+                            noticedResult = currentDate.Subtract(maturityDate).TotalDays <= 0 &&
+                                            Math.Abs(currentDate.Subtract(maturityDate).TotalDays) <=
+                                            ServerSetting.NoticeMaturityDateDay;
                         }
                         catch // Exception occurs when initialized to February 29th in a non-leap year
                         {
@@ -1841,10 +1813,7 @@ public class NoticeController : Controller
         string loginedAccountTimeZoneIanaId = JsonConvert
             .DeserializeObject<Account>(Encoding.UTF8.GetString(resultByte)).TimeZoneIanaId;
 
-        DateTime currentDate =
-            new(Convert.ToInt32(Regex.Split(DateTime.UtcNow.ToLocalTime().ToString("yyyy-MM-dd"), "-")[0]),
-                Convert.ToInt32(Regex.Split(DateTime.UtcNow.ToLocalTime().ToString("yyyy-MM-dd"), "-")[1]),
-                Convert.ToInt32(Regex.Split(DateTime.UtcNow.ToLocalTime().ToString("yyyy-MM-dd"), "-")[2]));
+        DateTime currentDate = DateTime.UtcNow.ConvertTimeByTimeZoneIanaId(loginedAccountTimeZoneIanaId).Date;
 
         List<Asset> assets = await _assetRepository.GetAssetsAsync(JsonConvert
             .DeserializeObject<Account>(Encoding.UTF8.GetString(resultByte)).Email);
@@ -1856,14 +1825,10 @@ public class NoticeController : Controller
 
             try
             {
-                noticedResult =
-                    currentDate.Subtract(new DateTime(
-                        Convert.ToInt32(Regex.Split(DateTime.UtcNow.ToLocalTime().ToString("yyyy-MM-dd"), "-")[0]),
-                        item.DepositMonth, item.DepositDay)).TotalDays <= 0 && Math.Abs(currentDate
-                        .Subtract(new DateTime(
-                            Convert.ToInt32(
-                                Regex.Split(DateTime.UtcNow.ToLocalTime().ToString("yyyy-MM-dd"), "-")[0]),
-                            item.DepositMonth, item.DepositDay)).TotalDays) <= ServerSetting.NoticeMaturityDateDay;
+                DateTime maturityDate = new(currentDate.Year, item.DepositMonth, item.DepositDay);
+                noticedResult = currentDate.Subtract(maturityDate).TotalDays <= 0 &&
+                                Math.Abs(currentDate.Subtract(maturityDate).TotalDays) <=
+                                ServerSetting.NoticeMaturityDateDay;
             }
             catch // Exception occurs when initialized to February 29th in a non-leap year
             {
