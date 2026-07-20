@@ -63,7 +63,8 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseNpgsql(
         builder.Configuration.GetConnectionString("DefaultConnection"),
         npgsqlOptions => npgsqlOptions.EnableRetryOnFailure(0) // Set to 0 to disable
-    ).EnableSensitiveDataLogging()
+    )
+    //.EnableSensitiveDataLogging() // Logs actual parameter values - turn on locally when needed, never in production
 );
 #endregion
 
