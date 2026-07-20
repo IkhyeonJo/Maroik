@@ -51,7 +51,7 @@ public static class NoticeViewModelMapper
             int noticeWindowDays)
         {
             var currencyByProduct = assets.ToDictionary(a => a.ProductName ?? "", a => a.MonetaryUnit);
-            var today = DateTime.Today;
+            var today = DateTime.UtcNow.ConvertTimeByTimeZoneIanaId(timeZoneIanaId).Date;
             return items.Select(i => i.ToDisplayViewModel(currencyByProduct, localize, timeZoneIanaId, today, noticeWindowDays)).ToList();
         }
     }
@@ -96,7 +96,7 @@ public static class NoticeViewModelMapper
             int noticeWindowDays)
         {
             var currencyByProduct = assets.ToDictionary(a => a.ProductName ?? "", a => a.MonetaryUnit);
-            var today = DateTime.Today;
+            var today = DateTime.UtcNow.ConvertTimeByTimeZoneIanaId(timeZoneIanaId).Date;
             return items.Select(i => i.ToDisplayViewModel(currencyByProduct, localize, timeZoneIanaId, today, noticeWindowDays)).ToList();
         }
     }
