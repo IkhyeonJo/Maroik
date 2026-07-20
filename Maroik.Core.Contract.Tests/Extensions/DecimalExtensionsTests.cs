@@ -41,6 +41,15 @@ public class DecimalExtensionsTests
         Assert.Equal("1000000", result);
     }
 
+    /// <summary>Verifies that <c>TrimTrailingZeros</c> does not overflow for whole numbers beyond <see cref="int.MaxValue"/> (e.g. real-estate-scale KRW asset amounts), matching the column's <c>numeric(18,2)</c> range.</summary>
+    [Fact]
+    public void TrimTrailingZeros_HandlesWholeNumber_BeyondIntMaxValue()
+    {
+        decimal value = 3_000_000_000m;
+        string result = value.TrimTrailingZeros();
+        Assert.Equal("3000000000", result);
+    }
+
     // -- TrimTrailingZeros (decimal?) -----------------------------------------
 
     /// <summary>Verifies that <c>TrimTrailingZeros</c> nullable treats null as zero.</summary>
