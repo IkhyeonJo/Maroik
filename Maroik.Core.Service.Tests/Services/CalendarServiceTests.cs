@@ -248,7 +248,7 @@ public class CalendarServiceTests
         _sharedRepo.Setup(r => r.CreateAsync(It.IsAny<CalendarShared>(), It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
         var sut = CreateSut();
 
-        ServiceResult result = await sut.EnsureCalendarSharedAsync(1, TestContext.Current.CancellationToken);
+        ServiceResult result = await sut.EnsureCalendarSharedAsync([1L], TestContext.Current.CancellationToken);
 
         Assert.True(result.Success);
         _sharedRepo.Verify(r => r.CreateAsync(It.Is<CalendarShared>(s => s.Id == 1), It.IsAny<CancellationToken>()), Times.Once);
@@ -262,10 +262,29 @@ public class CalendarServiceTests
             .ReturnsAsync([CalendarShared.Reconstitute(1, false, false)]);
         var sut = CreateSut();
 
-        ServiceResult result = await sut.EnsureCalendarSharedAsync(1, TestContext.Current.CancellationToken);
+        ServiceResult result = await sut.EnsureCalendarSharedAsync([1L], TestContext.Current.CancellationToken);
 
         Assert.True(result.Success);
         _sharedRepo.Verify(r => r.CreateAsync(It.IsAny<CalendarShared>(), It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    /// <summary>Verifies that <c>EnsureCalendarSharedAsync</c> fetches the shared table once and only
+    /// creates rows for the IDs that don't already have one, even across multiple calendars.</summary>
+    [Fact]
+    public async Task EnsureCalendarSharedAsync_Batch_OnlyCreatesMissingIds_WithSingleFetch()
+    {
+        _sharedRepo.Setup(r => r.GetAllAsync(It.IsAny<CancellationToken>()))
+            .ReturnsAsync([CalendarShared.Reconstitute(2, false, false)]);
+        _sharedRepo.Setup(r => r.CreateAsync(It.IsAny<CalendarShared>(), It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
+        var sut = CreateSut();
+
+        ServiceResult result = await sut.EnsureCalendarSharedAsync([1L, 2L, 3L], TestContext.Current.CancellationToken);
+
+        Assert.True(result.Success);
+        _sharedRepo.Verify(r => r.GetAllAsync(It.IsAny<CancellationToken>()), Times.Once);
+        _sharedRepo.Verify(r => r.CreateAsync(It.Is<CalendarShared>(s => s.Id == 1), It.IsAny<CancellationToken>()), Times.Once);
+        _sharedRepo.Verify(r => r.CreateAsync(It.Is<CalendarShared>(s => s.Id == 2), It.IsAny<CancellationToken>()), Times.Never);
+        _sharedRepo.Verify(r => r.CreateAsync(It.Is<CalendarShared>(s => s.Id == 3), It.IsAny<CancellationToken>()), Times.Once);
     }
 
     // -- CreateCalendarEventAsync ---------------------------------------------

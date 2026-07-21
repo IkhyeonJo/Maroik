@@ -601,11 +601,8 @@ public class CalendarController : Controller
             List<CalendarResponse> calendars = (await _calendarService.GetCalendarsAsync(_sessionService.GetAccount()!.Email!, HttpContext.RequestAborted) ?? []).ToList();
 
             // A CalendarShared row may not exist yet for calendars created before sharing was
-            // configured, so backfill one for each owned calendar before reading the list below.
-            foreach (CalendarResponse calendar in calendars)
-            {
-                await _calendarService.EnsureCalendarSharedAsync(calendar.Id, HttpContext.RequestAborted);
-            }
+            // configured, so backfill any missing ones (single query) before reading the list below.
+            await _calendarService.EnsureCalendarSharedAsync(calendars.Select(c => c.Id), HttpContext.RequestAborted);
 
             List<CalendarSharedResponse> tempCalendarShareds = [];
 

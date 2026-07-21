@@ -101,21 +101,23 @@ public class CalendarService : ICalendarService
         => (await _calendarSharedRepository.GetAllAsync(ct)).Select(CalendarSharedMapper.ToResponse).ToList();
 
     /// <inheritdoc />
-    public async Task<ServiceResult> EnsureCalendarSharedAsync(long calendarId, CancellationToken ct = default)
+    public async Task<ServiceResult> EnsureCalendarSharedAsync(IEnumerable<long> calendarIds, CancellationToken ct = default)
     {
+        List<long> ids = calendarIds.ToList();
         try
         {
+            // Single fetch of the whole table, reused for every ID instead of one full scan per calendar.
             List<CalendarShared> shares = await _calendarSharedRepository.GetAllAsync(ct);
+            HashSet<long> existingIds = shares.Select(s => s.Id).ToHashSet();
 
-            // Only create a sharing record if one does not already exist for this calendar.
-            if (shares.All(s => s.Id != calendarId))
-                await _calendarSharedRepository.CreateAsync(CalendarShared.CreatePrivate(calendarId), ct);
+            foreach (long id in ids.Where(id => !existingIds.Contains(id)))
+                await _calendarSharedRepository.CreateAsync(CalendarShared.CreatePrivate(id), ct);
 
             return ServiceResult.Ok();
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Failed to ensure calendar shared record for calendar {CalendarId}", calendarId);
+            _logger.LogError(ex, "Failed to ensure calendar shared records for calendars {CalendarIds}", string.Join(",", ids));
             return ServiceResult.Fail("Input is invalid");
         }
     }

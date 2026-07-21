@@ -38,8 +38,11 @@ public interface ICalendarService
     /// <summary>Returns the sharing-permission rows for all calendars.</summary>
     Task<List<CalendarSharedResponse>> GetCalendarSharedAsync(CancellationToken ct = default);
 
-    /// <summary>Creates the CalendarShared row for a calendar if it does not already exist.</summary>
-    Task<ServiceResult> EnsureCalendarSharedAsync(long calendarId, CancellationToken ct = default);
+    /// <summary>
+    /// Creates the CalendarShared row for each of the given calendars that doesn't already have one.
+    /// Fetches the sharing table once and reuses it for every ID, instead of one full scan per calendar.
+    /// </summary>
+    Task<ServiceResult> EnsureCalendarSharedAsync(IEnumerable<long> calendarIds, CancellationToken ct = default);
 
     /// <summary>Creates a new calendar for the requesting user.</summary>
     Task<ServiceResult> CreateCalendarAsync(CalendarRequest request, CancellationToken ct = default);
