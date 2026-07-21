@@ -429,9 +429,17 @@ public class ForumController : Controller
         try
         {
             BoardResponse? board = await _boardService.GetBoardByIdAsync(id, ct);
-            return board == null || board.Deleted
-                ? Json(new { result = false, error = _localizer["Input is invalid"].Value })
-                : Json(new { result = true, freeBoard = board });
+            if (board == null || board.Deleted)
+                return Json(new { result = false, error = _localizer["Input is invalid"].Value });
+
+            if (board.Locked)
+            {
+                AccountResponse loggedInAccount = _sessionService.GetAccount()!;
+                if (loggedInAccount.Nickname != board.Writer && loggedInAccount.Role != Role.Admin)
+                    return Json(new { result = false, error = _localizer["Input is invalid"].Value });
+            }
+
+            return Json(new { result = true, freeBoard = board });
         }
         catch (Exception ex)
         {
