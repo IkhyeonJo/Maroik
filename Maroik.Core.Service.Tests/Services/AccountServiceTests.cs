@@ -137,37 +137,46 @@ public class AccountServiceTests
         Assert.Contains("Locked", result.ErrorKey, StringComparison.OrdinalIgnoreCase);
     }
 
-    /// <summary>Verifies that <c>LoginAsync</c> returns a failure result and increments the login attempt count when the password is wrong.</summary>
+    /// <summary>Verifies that <c>LoginAsync</c> returns a failure result and records the login failure atomically when the password is wrong.</summary>
     [Fact]
-    public async Task LoginAsync_ReturnsFail_AndIncrementsAttemptCount_WhenPasswordIsWrong()
+    public async Task LoginAsync_ReturnsFail_AndRecordsLoginFailure_WhenPasswordIsWrong()
     {
         var account = ActiveAccount(loginAttempt: 1);
-        _accountRepo.Setup(r => r.FindByEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(account);
+        // Second FindByEmailAsync call re-reads post-failure state (still unlocked here).
+        _accountRepo.SetupSequence(r => r.FindByEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(account)
+            .ReturnsAsync(ActiveAccount(loginAttempt: 2));
         _passwordService.Setup(p => p.VerifyPassword(It.IsAny<string>(), It.IsAny<string>())).Returns(false);
-        _accountRepo.Setup(r => r.UpdateEntityAsync(It.IsAny<Account>(), It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
+        _accountRepo.Setup(r => r.RecordLoginFailureAsync(It.IsAny<string>(), It.IsAny<int>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .Returns(Task.CompletedTask);
         var sut = CreateSut();
 
         LoginResult result = await sut.LoginAsync(account.Email.Value, "wrong", TestContext.Current.CancellationToken);
 
         Assert.False(result.Success);
-        // Verify UpdateAccountAsync was called (attempt count incremented)
-        _accountRepo.Verify(r => r.UpdateEntityAsync(It.Is<Account>(a => a.LoginAttempt == 2), It.IsAny<CancellationToken>()), Times.Once);
+        // The failure must be recorded via the atomic increment, not a read-then-write UpdateEntityAsync.
+        _accountRepo.Verify(r => r.RecordLoginFailureAsync(account.Email.Value, _settings.Value.MaxLoginAttempt, It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Once);
+        _accountRepo.Verify(r => r.UpdateEntityAsync(It.IsAny<Account>(), It.IsAny<CancellationToken>()), Times.Never);
     }
 
-    /// <summary>Verifies that <c>LoginAsync</c> locks account when max login attempts reached.</summary>
+    /// <summary>Verifies that <c>LoginAsync</c> reports the account as locked when the atomic increment reaches max login attempts.</summary>
     [Fact]
     public async Task LoginAsync_LocksAccount_WhenMaxLoginAttemptsReached()
     {
         var account = ActiveAccount(loginAttempt: _settings.Value.MaxLoginAttempt - 1);
-        _accountRepo.Setup(r => r.FindByEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(account);
+        // Second FindByEmailAsync call re-reads post-failure state, now locked by the atomic update.
+        _accountRepo.SetupSequence(r => r.FindByEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(account)
+            .ReturnsAsync(ActiveAccount(loginAttempt: _settings.Value.MaxLoginAttempt, locked: true));
         _passwordService.Setup(p => p.VerifyPassword(It.IsAny<string>(), It.IsAny<string>())).Returns(false);
-        _accountRepo.Setup(r => r.UpdateEntityAsync(It.IsAny<Account>(), It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
+        _accountRepo.Setup(r => r.RecordLoginFailureAsync(It.IsAny<string>(), It.IsAny<int>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .Returns(Task.CompletedTask);
         var sut = CreateSut();
 
         LoginResult result = await sut.LoginAsync(account.Email.Value, "wrong", TestContext.Current.CancellationToken);
 
         Assert.False(result.Success);
-        _accountRepo.Verify(r => r.UpdateEntityAsync(It.Is<Account>(a => a.Locked == true), It.IsAny<CancellationToken>()), Times.Once);
+        Assert.Contains("Locked", result.ErrorKey, StringComparison.OrdinalIgnoreCase);
     }
 
     /// <summary>Verifies that <c>LoginAsync</c> returns fail when email not confirmed.</summary>

@@ -259,4 +259,7 @@ public class AccountRepositoryTests : IDisposable
         Assert.Equal(Role.Admin, updated.Role);
         Assert.Equal("Asia/Seoul", updated.TimeZoneIanaId);
     }
+
+    // RecordLoginFailureAsync is covered in AccountRepositoryIntegrationTests: it uses ExecuteUpdateAsync,
+    // which the InMemory provider used by this test class does not support.
 }

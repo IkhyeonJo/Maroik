@@ -20,4 +20,13 @@ public interface IAccountRepository : IGenericRepository<Account>
 
     /// <summary>Returns accounts whose nickname matches any of the given values.</summary>
     Task<List<Account>> FindByNicknamesAsync(IEnumerable<string> nicknames, CancellationToken ct = default);
+
+    /// <summary>
+    /// Atomically increments the account's failed-login counter in a single UPDATE statement,
+    /// locking the account (and setting <paramref name="lockedMessage"/>) if the new count reaches
+    /// <paramref name="maxAttempts"/>. Safe under concurrent calls for the same account, unlike a
+    /// read-then-write update, since the increment is computed by the database from its own current
+    /// row value rather than from a value read earlier by the caller.
+    /// </summary>
+    Task RecordLoginFailureAsync(string email, int maxAttempts, string lockedMessage, CancellationToken ct = default);
 }

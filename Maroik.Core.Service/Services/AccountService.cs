@@ -82,10 +82,13 @@ public class AccountService : IAccountService
 
         if (!_passwordService.VerifyPassword(password, account.HashedPassword))
         {
-            account.RecordLoginFailure(_settings.Value.MaxLoginAttempt);
-            await _accountRepository.UpdateEntityAsync(account, ct);
+            // Atomic DB-level increment so concurrent failed attempts for the same account can't
+            // race and clobber each other's counter update (see IAccountRepository.RecordLoginFailureAsync).
+            await _accountRepository.RecordLoginFailureAsync(
+                account.Email.Value, _settings.Value.MaxLoginAttempt, EnumHelper.GetDescription(AccountMessage.AccountLocked), ct);
 
-            return account.Locked
+            Account? afterFailure = await FindByEmailAsync(account.Email.Value, ct);
+            return afterFailure is { Locked: true }
                 ? LoginResult.Fail("Your Account is Locked, Please reset your password by clicking Forgot password Button")
                 : LoginResult.Fail("Email or Password is wrong");
         }

@@ -68,4 +68,14 @@ public class AccountRepository(ApplicationDbContext context)
         var list = nicknames.ToList();
         return QueryAsync(e => list.Contains(e.Nickname!), ct: ct);
     }
+
+    /// <inheritdoc />
+    public async Task RecordLoginFailureAsync(string email, int maxAttempts, string lockedMessage, CancellationToken ct = default)
+        => await Context.Accounts
+            .Where(a => a.Email == email)
+            .ExecuteUpdateAsync(s => s
+                .SetProperty(a => a.LoginAttempt, a => a.LoginAttempt + 1)
+                .SetProperty(a => a.Locked, a => a.Locked || a.LoginAttempt + 1 >= maxAttempts)
+                .SetProperty(a => a.Message, a => a.LoginAttempt + 1 >= maxAttempts ? lockedMessage : a.Message)
+                .SetProperty(a => a.Updated, DateTime.UtcNow), ct);
 }

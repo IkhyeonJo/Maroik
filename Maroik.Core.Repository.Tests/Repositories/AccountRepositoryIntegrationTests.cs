@@ -203,4 +203,66 @@ public class AccountRepositoryIntegrationTests : IAsyncLifetime
         Assert.DoesNotContain(result, a => a.Email.Value == "deleted@example.com" && !a.Deleted);
         Assert.Contains(result, a => a.Email.Value == "active@example.com");
     }
+
+    // -- RecordLoginFailureAsync ------------------------------------------------
+
+    [Fact]
+    public async Task RecordLoginFailureAsync_IncrementsCounter_WithoutLocking_WhenBelowThreshold()
+    {
+        var account = MakeOrm("alice@example.com", "Alice");
+        account.LoginAttempt = 1;
+        await SeedAsync(account);
+
+        await _sut.RecordLoginFailureAsync("alice@example.com", maxAttempts: 5, "locked", TestContext.Current.CancellationToken);
+        _context.ChangeTracker.Clear();
+
+        Account? updated = await _sut.FindByEmailAsync("alice@example.com", TestContext.Current.CancellationToken);
+        Assert.NotNull(updated);
+        Assert.Equal(2, updated.LoginAttempt);
+        Assert.False(updated.Locked);
+    }
+
+    [Fact]
+    public async Task RecordLoginFailureAsync_LocksAccount_WhenThresholdReached()
+    {
+        var account = MakeOrm("alice@example.com", "Alice");
+        account.LoginAttempt = 4;
+        await SeedAsync(account);
+
+        await _sut.RecordLoginFailureAsync("alice@example.com", maxAttempts: 5, "This account is locked", TestContext.Current.CancellationToken);
+        _context.ChangeTracker.Clear();
+
+        Account? updated = await _sut.FindByEmailAsync("alice@example.com", TestContext.Current.CancellationToken);
+        Assert.NotNull(updated);
+        Assert.Equal(5, updated.LoginAttempt);
+        Assert.True(updated.Locked);
+    }
+
+    /// <summary>
+    /// Verifies that concurrent failures for the same account all accumulate correctly against real
+    /// PostgreSQL — the bug this method fixes was a read-then-write pattern where concurrent calls
+    /// could clobber each other's increment because each read the same stale counter value before
+    /// any of them wrote back. Each concurrent call uses its own <see cref="ApplicationDbContext"/>
+    /// (a context instance is not thread-safe for concurrent operations) against the same database.
+    /// </summary>
+    [Fact]
+    public async Task RecordLoginFailureAsync_AccumulatesCorrectly_WhenCalledConcurrently()
+    {
+        await SeedAsync(MakeOrm("alice@example.com", "Alice"));
+        string connectionString = _postgres.GetConnectionString();
+
+        IEnumerable<Task> tasks = Enumerable.Range(0, 5).Select(async _ =>
+        {
+            var options = new DbContextOptionsBuilder<ApplicationDbContext>().UseNpgsql(connectionString).Options;
+            await using var context = new ApplicationDbContext(options);
+            await new AccountRepository(context).RecordLoginFailureAsync(
+                "alice@example.com", maxAttempts: 100, "locked", TestContext.Current.CancellationToken);
+        });
+        await Task.WhenAll(tasks);
+
+        _context.ChangeTracker.Clear();
+        Account? updated = await _sut.FindByEmailAsync("alice@example.com", TestContext.Current.CancellationToken);
+        Assert.NotNull(updated);
+        Assert.Equal(5, updated.LoginAttempt);
+    }
 }
