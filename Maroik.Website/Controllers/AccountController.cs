@@ -4,6 +4,7 @@ using Maroik.Core.Contract.Enums;
 using Maroik.Core.Contract.Helpers;
 using Maroik.Core.Contract.Interfaces;
 using Maroik.Core.Contract.Tokens;
+using Maroik.Website.Attributes;
 using Maroik.Website.Contracts;
 using Maroik.Website.Models.ViewModels.Account;
 using Microsoft.AspNetCore.Mvc;
@@ -46,6 +47,7 @@ public class AccountController : Controller
     /// <summary>Displays the login form (GET) or processes login credentials (POST).</summary>
     [HttpPost]
     [ValidateAntiForgeryToken]
+    [RegenerateSessionOnEntry]
     public async Task<IActionResult> Login(LoginInputViewModel loginInputViewModel, CancellationToken ct)
     {
         string userAgent = Request.Headers.UserAgent.ToString();
@@ -68,10 +70,6 @@ public class AccountController : Controller
             return View();
         }
 
-        // Issue a brand-new session ID on every successful authentication so a session ID that
-        // could have been known/set before login (session fixation) is never carried into an
-        // authenticated session.
-        _sessionService.RegenerateSessionId();
         _sessionService.SetAccount(result.Account!);
         return RedirectToAction("AnonymousIndex", "Dashboard");
     }

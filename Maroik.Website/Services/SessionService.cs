@@ -4,11 +4,7 @@ using Maroik.Core.Contract.Dtos;
 using Maroik.Core.Contract.Enums;
 using Maroik.Core.Contract.Helpers;
 using Maroik.Website.Contracts;
-using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Http.Features;
-using Microsoft.AspNetCore.Session;
-using Microsoft.Extensions.Options;
 
 namespace Maroik.Website.Services;
 
@@ -22,15 +18,11 @@ namespace Maroik.Website.Services;
 public class SessionService : ISessionService
 {
     private readonly IHttpContextAccessor _httpContextAccessor;
-    private readonly ISessionStore _sessionStore;
-    private readonly SessionOptions _sessionOptions;
 
     /// <summary>Initializes a new instance of <see cref="SessionService"/> with the supplied dependencies.</summary>
-    public SessionService(IHttpContextAccessor httpContextAccessor, ISessionStore sessionStore, IOptions<SessionOptions> sessionOptions)
+    public SessionService(IHttpContextAccessor httpContextAccessor)
     {
         _httpContextAccessor = httpContextAccessor;
-        _sessionStore = sessionStore;
-        _sessionOptions = sessionOptions.Value;
     }
 
     /// <inheritdoc />
@@ -66,24 +58,5 @@ public class SessionService : ISessionService
     {
         var session = _httpContextAccessor.HttpContext?.Session;
         session?.Remove(EnumHelper.GetDescription(Session.Account));
-    }
-
-    /// <inheritdoc />
-    public void RegenerateSessionId()
-    {
-        HttpContext? httpContext = _httpContextAccessor.HttpContext;
-        if (httpContext == null) return;
-
-        // ISession has no "regenerate ID" API, so a genuinely new session (and thus a new session
-        // cookie) is created by swapping out the ISessionFeature for one backed by a fresh session
-        // key, rather than reusing whatever session (and ID) the request arrived with.
-        ISession freshSession = _sessionStore.Create(
-            Guid.NewGuid().ToString("N"),
-            _sessionOptions.IdleTimeout,
-            _sessionOptions.IOTimeout,
-            () => true,
-            isNewSessionKey: true);
-
-        httpContext.Features.Set<ISessionFeature>(new SessionFeature { Session = freshSession });
     }
 }
