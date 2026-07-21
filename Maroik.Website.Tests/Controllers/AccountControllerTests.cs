@@ -1,5 +1,11 @@
+using System.Text.RegularExpressions;
+using Maroik.Core.Contract.Constants;
+using Maroik.Core.Contract.Interfaces;
+using Maroik.Core.PostgreSQL.Data;
+using Maroik.Core.PostgreSQL.Models;
 using Maroik.Website.Tests.Infrastructure;
 using Microsoft.AspNetCore.Mvc.Testing;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace Maroik.Website.Tests.Controllers;
 
@@ -11,10 +17,12 @@ namespace Maroik.Website.Tests.Controllers;
 [Collection("Website Integration")]
 public class AccountControllerTests
 {
+    private readonly MaroikWebApplicationFactory _factory;
     private readonly HttpClient _client;
 
     public AccountControllerTests(MaroikWebApplicationFactory factory)
     {
+        _factory = factory;
         _client = factory.CreateTestClient(followRedirects: false);
     }
 
@@ -38,6 +46,106 @@ public class AccountControllerTests
         var response = await _client.GetAsync("/Account/Login", TestContext.Current.CancellationToken);
 
         Assert.Equal(System.Net.HttpStatusCode.OK, response.StatusCode);
+    }
+
+    /// <summary>
+    /// Verifies the session-fixation fix end-to-end: the session cookie issued to an
+    /// unauthenticated visitor must NOT still be valid as the session cookie after that same
+    /// browser session logs in — a fresh session (and thus a different cookie value) must be
+    /// issued on successful authentication.
+    /// </summary>
+    [Fact]
+    public async Task Login_Post_IssuesADifferentSessionCookie_ThanThePreLoginSession()
+    {
+        const string email = "fixation-test@example.com";
+        const string password = "TestPassword1!";
+
+        using (var scope = _factory.Services.CreateScope())
+        {
+            var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+            var passwordService = scope.ServiceProvider.GetRequiredService<IPasswordService>();
+            db.Accounts.Add(new Account
+            {
+                Email = email,
+                HashedPassword = passwordService.HashPassword(password),
+                Nickname = "FixationTester",
+                AvatarImagePath = "/upload/Management/Profile/default-avatar.jpg",
+                Role = Role.User,
+                TimeZoneIanaId = "UTC",
+                Locked = false,
+                LoginAttempt = 0,
+                EmailConfirmed = true,
+                AgreedServiceTerms = true,
+                Deleted = false,
+                Created = DateTime.UtcNow,
+                Updated = DateTime.UtcNow
+            });
+            db.SaveChanges();
+        }
+
+        // Simulate a fixation attacker who has already planted a known session cookie in the
+        // victim's browser before the victim ever logs in (a plain unauthenticated visit does not
+        // get a session cookie by default — ASP.NET Core only issues one once something is written
+        // to session — so the attack precondition is reproduced directly rather than relying on that).
+        const string attackerChosenSessionId = "attacker-fixed-session-id-0123456789abcdef";
+
+        using var getRequest = new HttpRequestMessage(HttpMethod.Get, "/Account/Login");
+        getRequest.Headers.Add("Cookie", $"{SessionCookieName}={attackerChosenSessionId}");
+        var getResponse = await _client.SendAsync(getRequest, TestContext.Current.CancellationToken);
+        string html = await getResponse.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+        string antiForgeryToken = ExtractAntiForgeryToken(html);
+        string? antiForgeryCookie = ExtractCookieValue(getResponse, AntiForgeryCookieName);
+        Assert.False(string.IsNullOrEmpty(antiForgeryCookie));
+
+        // POST valid credentials while still presenting the attacker's session cookie, exactly as
+        // the victim's browser would (it has no way to know that cookie was planted by an attacker).
+        using var postRequest = new HttpRequestMessage(HttpMethod.Post, "/Account/Login");
+        postRequest.Headers.Add("Cookie", $"{SessionCookieName}={attackerChosenSessionId}; {AntiForgeryCookieName}={antiForgeryCookie}");
+        postRequest.Content = new FormUrlEncodedContent(new Dictionary<string, string>
+        {
+            ["Email"] = email,
+            ["Password"] = password,
+            ["__RequestVerificationToken"] = antiForgeryToken
+        });
+        var postResponse = await _client.SendAsync(postRequest, TestContext.Current.CancellationToken);
+
+        Assert.Equal(System.Net.HttpStatusCode.Redirect, postResponse.StatusCode); // confirms login actually succeeded (failure re-renders the form as 200)
+        string? postLoginSessionCookie = ExtractCookieValue(postResponse, SessionCookieName);
+        Assert.False(string.IsNullOrEmpty(postLoginSessionCookie));
+        // The core assertion: the attacker's pre-chosen session ID must never become the
+        // authenticated session — if it did, the attacker's own copy of that same cookie would
+        // now be logged in as the victim.
+        Assert.NotEqual(attackerChosenSessionId, postLoginSessionCookie);
+    }
+
+    // -- Test helpers -----------------------------------------------------------
+
+    // Matches Program.cs: const cookiePrefix = "__Secure-" + SessionDefaults.CookieName / AntiforgeryOptions.DefaultCookiePrefix.
+    private const string SessionCookieName = "__Secure-.AspNetCore.Session";
+    private const string AntiForgeryCookieName = "__Secure-.AspNetCore.Antiforgery.";
+
+    /// <summary>Extracts the value of a specific cookie from a response's Set-Cookie headers, or null if absent.</summary>
+    private static string? ExtractCookieValue(HttpResponseMessage response, string cookieName)
+    {
+        if (!response.Headers.TryGetValues("Set-Cookie", out var setCookieHeaders)) return null;
+
+        foreach (string header in setCookieHeaders)
+        {
+            string namePart = header.Split(';', 2)[0];
+            int eq = namePart.IndexOf('=');
+            if (eq <= 0) continue;
+            if (namePart[..eq] == cookieName) return namePart[(eq + 1)..];
+        }
+
+        return null;
+    }
+
+    /// <summary>Extracts the antiforgery hidden-input value from a rendered form's HTML.</summary>
+    private static string ExtractAntiForgeryToken(string html)
+    {
+        Match match = Regex.Match(html, "name=\"__RequestVerificationToken\"[^>]*value=\"([^\"]+)\"");
+        Assert.True(match.Success, "Could not find __RequestVerificationToken in the login page HTML.");
+        return match.Groups[1].Value;
     }
 
     // -- Logout ---------------------------------------------------------------

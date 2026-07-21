@@ -68,6 +68,10 @@ public class AccountController : Controller
             return View();
         }
 
+        // Issue a brand-new session ID on every successful authentication so a session ID that
+        // could have been known/set before login (session fixation) is never carried into an
+        // authenticated session.
+        _sessionService.RegenerateSessionId();
         _sessionService.SetAccount(result.Account!);
         return RedirectToAction("AnonymousIndex", "Dashboard");
     }

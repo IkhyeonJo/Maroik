@@ -1,7 +1,11 @@
 using Maroik.Core.Contract.Constants;
 using Maroik.Core.Contract.Dtos;
 using Maroik.Website.Services;
+using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Http.Features;
+using Microsoft.AspNetCore.Session;
+using Microsoft.Extensions.Options;
 using Moq;
 
 namespace Maroik.Website.Tests.Services;
@@ -16,8 +20,10 @@ public class SessionServiceTests
 {
     private readonly Mock<IHttpContextAccessor> _httpContextAccessor = new();
     private readonly Mock<ISession> _session = new();
+    private readonly Mock<ISessionStore> _sessionStore = new();
+    private readonly IOptions<SessionOptions> _sessionOptions = Options.Create(new SessionOptions());
 
-    private SessionService CreateSut() => new(_httpContextAccessor.Object);
+    private SessionService CreateSut() => new(_httpContextAccessor.Object, _sessionStore.Object, _sessionOptions);
 
     private void SetupContext()
     {
@@ -158,6 +164,66 @@ public class SessionServiceTests
         var sut = CreateSut();
 
         var ex = Record.Exception(() => sut.RemoveAccount());
+        Assert.Null(ex);
+    }
+
+    // -- RegenerateSessionId ----------------------------------------------------
+
+    /// <summary>
+    /// Verifies that <c>RegenerateSessionId</c> replaces the request's session with a freshly
+    /// created one (via <see cref="ISessionStore"/>) rather than reusing whatever session the
+    /// request arrived with — this is the session-fixation defense itself, so it is asserted
+    /// directly rather than through an implementation detail.
+    /// </summary>
+    [Fact]
+    public void RegenerateSessionId_ReplacesSessionFeature_WithNewlyCreatedSession()
+    {
+        // DefaultHttpContext is used here (instead of the Mock<HttpContext> the other tests use)
+        // because it has a real, working Features collection, which Set<T>/Get<T> need.
+        var httpContext = new DefaultHttpContext();
+        var originalSession = new Mock<ISession>().Object;
+        httpContext.Features.Set<ISessionFeature>(new SessionFeature { Session = originalSession });
+        _httpContextAccessor.Setup(a => a.HttpContext).Returns(httpContext);
+
+        var freshSession = new Mock<ISession>().Object;
+        _sessionStore
+            .Setup(s => s.Create(It.IsAny<string>(), It.IsAny<TimeSpan>(), It.IsAny<TimeSpan>(), It.IsAny<Func<bool>>(), true))
+            .Returns(freshSession);
+        var sut = CreateSut();
+
+        sut.RegenerateSessionId();
+
+        ISession? resultingSession = httpContext.Features.Get<ISessionFeature>()?.Session;
+        Assert.Same(freshSession, resultingSession);
+        Assert.NotSame(originalSession, resultingSession);
+    }
+
+    /// <summary>Verifies that <c>RegenerateSessionId</c> requests a new session key each time, not a reused/fixed one.</summary>
+    [Fact]
+    public void RegenerateSessionId_RequestsANewSessionKey()
+    {
+        var httpContext = new DefaultHttpContext();
+        _httpContextAccessor.Setup(a => a.HttpContext).Returns(httpContext);
+        string? capturedKey = null;
+        _sessionStore
+            .Setup(s => s.Create(It.IsAny<string>(), It.IsAny<TimeSpan>(), It.IsAny<TimeSpan>(), It.IsAny<Func<bool>>(), true))
+            .Callback<string, TimeSpan, TimeSpan, Func<bool>, bool>((key, _, _, _, _) => capturedKey = key)
+            .Returns(new Mock<ISession>().Object);
+        var sut = CreateSut();
+
+        sut.RegenerateSessionId();
+
+        Assert.False(string.IsNullOrEmpty(capturedKey));
+    }
+
+    /// <summary>Verifies that <c>RegenerateSessionId</c> does not throw when http context is null.</summary>
+    [Fact]
+    public void RegenerateSessionId_DoesNotThrow_WhenHttpContextIsNull()
+    {
+        _httpContextAccessor.Setup(a => a.HttpContext).Returns(((HttpContext?)null)!);
+        var sut = CreateSut();
+
+        var ex = Record.Exception(() => sut.RegenerateSessionId());
         Assert.Null(ex);
     }
 }

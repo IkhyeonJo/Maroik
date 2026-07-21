@@ -16,4 +16,12 @@ public interface ISessionService
 
     /// <summary>Clears the account from the session (called on logout).</summary>
     void RemoveAccount();
+
+    /// <summary>
+    /// Replaces the current session with a brand-new one under a freshly generated ID, discarding
+    /// any data (and cookie) tied to the previous session. Must be called on successful login,
+    /// before <see cref="SetAccount"/>, so a session ID that existed prior to authentication can
+    /// never be reused post-authentication (defends against session fixation).
+    /// </summary>
+    void RegenerateSessionId();
 }
