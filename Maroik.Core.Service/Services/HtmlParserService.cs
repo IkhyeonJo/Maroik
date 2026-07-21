@@ -14,20 +14,24 @@ public class HtmlParserService : IHtmlParserService
     {
         var doc = new HtmlDocument();
         doc.LoadHtml(html);
-        bool hasImages = false;
+        List<HtmlNode> imgTags = doc.DocumentNode.Descendants("img").ToList();
 
-        foreach (HtmlNode imgTag in doc.DocumentNode.Descendants("img"))
+        // Fetch every image's patch concurrently instead of awaiting one at a time,
+        // since patchFactory typically makes a network call to the file-storage service.
+        HtmlImgPatch?[] patches = await Task.WhenAll(
+            imgTags.Select(imgTag => patchFactory(imgTag.GetAttributeValue("alt", ""), ct)));
+
+        for (int i = 0; i < imgTags.Count; i++)
         {
-            hasImages = true;
-            string alt = imgTag.GetAttributeValue("alt", "");
-            HtmlImgPatch? patch = await patchFactory(alt, ct);
+            HtmlImgPatch? patch = patches[i];
             if (patch == null) continue;
+            HtmlNode imgTag = imgTags[i];
             if (patch.NewAlt != null) imgTag.SetAttributeValue("alt", patch.NewAlt);
             if (patch.DataFile != null) imgTag.SetAttributeValue("data-file", patch.DataFile);
             if (patch.DataContentType != null) imgTag.SetAttributeValue("data-contenttype", patch.DataContentType);
         }
 
-        return (doc.DocumentNode.OuterHtml, hasImages);
+        return (doc.DocumentNode.OuterHtml, imgTags.Count > 0);
     }
 
     /// <inheritdoc />

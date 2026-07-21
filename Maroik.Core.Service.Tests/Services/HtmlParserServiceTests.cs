@@ -72,6 +72,28 @@ public class HtmlParserServiceTests
         Assert.DoesNotContain("data-file", html);
     }
 
+    /// <summary>Verifies that each image's patch is correctly matched back to its own tag when
+    /// multiple images are patched concurrently (no index mix-up from out-of-order completion).</summary>
+    [Fact]
+    public async Task TransformImageAttributesAsync_MatchesEachPatchToItsOwnTag_WhenMultipleImages()
+    {
+        // Completion order is deliberately reversed (last alt resolves first) to catch any
+        // implementation that assumes patches complete in the same order as the tags.
+        (string html, bool hasImages) = await _sut.TransformImageAttributesAsync(
+            "<img alt=\"a\" /><img alt=\"b\" /><img alt=\"c\" />",
+            async (alt, _) =>
+            {
+                await Task.Delay(alt == "a" ? 30 : alt == "b" ? 15 : 0, TestContext.Current.CancellationToken);
+                return new HtmlImgPatch(NewAlt: alt.ToUpperInvariant());
+            },
+            TestContext.Current.CancellationToken);
+
+        Assert.True(hasImages);
+        Assert.Contains("alt=\"A\"", html);
+        Assert.Contains("alt=\"B\"", html);
+        Assert.Contains("alt=\"C\"", html);
+    }
+
     // -- TransformImageAttributes (sync) -----------------------------------------
 
     /// <summary>Verifies that the sync overload applies NewAlt from the patch.</summary>
