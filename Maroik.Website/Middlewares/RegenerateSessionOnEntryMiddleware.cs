@@ -1,5 +1,4 @@
 using Maroik.Website.Attributes;
-using Microsoft.AspNetCore.Session;
 using Microsoft.Extensions.Options;
 using Microsoft.Net.Http.Headers;
 
@@ -8,8 +7,8 @@ namespace Maroik.Website.Middlewares;
 /// <summary>
 /// Strips the session cookie from the incoming request when the resolved endpoint carries
 /// <see cref="RegenerateSessionOnEntryAttribute"/>, before the session middleware (<c>UseSession</c>)
-/// gets a chance to read it. Must run after <c>UseRouting</c> (so <see cref="HttpContext.GetEndpoint"/>
-/// is populated) and before <c>UseSession</c>.
+/// gets a chance to read it. Must run after <c>UseRouting</c>
+/// (so HttpContext.GetEndpoint is populated) and before <c>UseSession</c>.
 /// With no valid session cookie on the request, ASP.NET Core's session middleware always establishes
 /// a brand-new session — new ID, freshly wired cookie-issuing — for the response. That is the only
 /// reliable way to guarantee a fresh session ID for these endpoints: <c>ISession</c> has no supported
