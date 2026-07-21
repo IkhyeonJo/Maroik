@@ -499,11 +499,13 @@ public class CalendarServiceTests
 
     // -- UpdateOtherCalendarAsync ---------------------------------------------
 
-    /// <summary>Verifies that <c>UpdateOtherCalendarAsync</c> clears existing and creates new.</summary>
+    /// <summary>Verifies that <c>UpdateOtherCalendarAsync</c> clears existing and creates new subscriptions for calendars shared to Users.</summary>
     [Fact]
     public async Task UpdateOtherCalendarAsync_ClearsExistingAndCreatesNew()
     {
         const string email = "user@example.com";
+        _sharedRepo.Setup(r => r.GetAllAsync(It.IsAny<CancellationToken>()))
+            .ReturnsAsync([CalendarShared.Reconstitute(20, user: true, anonymous: false)]);
         _otherCalendarRepo.Setup(r => r.DeleteByAccountEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
         _otherCalendarRepo.Setup(r => r.CreateAsync(It.IsAny<OtherCalendar>(), It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
         var sut = CreateSut();
@@ -515,5 +517,28 @@ public class CalendarServiceTests
         _otherCalendarRepo.Verify(r => r.DeleteByAccountEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Once);
         _otherCalendarRepo.Verify(r => r.CreateAsync(It.IsAny<OtherCalendar>(), It.IsAny<CancellationToken>()), Times.Once);
         _unitOfWork.Verify(u => u.CommitAsync(It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    /// <summary>
+    /// Verifies the IDOR fix: subscribing to a calendar that was never marked shared to Users
+    /// (<see cref="CalendarShared.User"/>) is rejected instead of silently creating the subscription,
+    /// which previously let any account grant itself read access to any calendar's events by
+    /// supplying an arbitrary <c>CalendarId</c>.
+    /// </summary>
+    [Fact]
+    public async Task UpdateOtherCalendarAsync_RejectsSubscriptionToCalendarNotSharedToUsers()
+    {
+        const string email = "user@example.com";
+        _sharedRepo.Setup(r => r.GetAllAsync(It.IsAny<CancellationToken>()))
+            .ReturnsAsync([CalendarShared.Reconstitute(20, user: false, anonymous: false)]);
+        _otherCalendarRepo.Setup(r => r.DeleteByAccountEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
+        var sut = CreateSut();
+
+        var newEntries = new List<OtherCalendarRequest> { new() { CalendarId = 20 } };
+        ServiceResult result = await sut.UpdateOtherCalendarAsync(email, newEntries, TestContext.Current.CancellationToken);
+
+        Assert.False(result.Success);
+        _otherCalendarRepo.Verify(r => r.CreateAsync(It.IsAny<OtherCalendar>(), It.IsAny<CancellationToken>()), Times.Never);
+        _unitOfWork.Verify(u => u.RollbackAsync(It.IsAny<CancellationToken>()), Times.Once);
     }
 }

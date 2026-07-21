@@ -226,11 +226,25 @@ public class CalendarService : ICalendarService
         await _unitOfWork.BeginAsync(ct);
         try
         {
+            // A subscription must only ever be created for a calendar an admin has explicitly
+            // marked shared to Users (CalendarShared.User) — otherwise any account could grant
+            // itself read access to any calendar's events by supplying an arbitrary CalendarId.
+            HashSet<long> shareableCalendarIds = (await _calendarSharedRepository.GetAllAsync(ct))
+                .Where(shared => shared.User)
+                .Select(shared => shared.Id)
+                .ToHashSet();
+
             // Replace-all strategy: delete existing subscriptions then re-insert from the new list.
             await _otherCalendarRepository.DeleteByAccountEmailAsync(email, ct);
 
             foreach (OtherCalendarRequest req in requests)
             {
+                if (!shareableCalendarIds.Contains(req.CalendarId))
+                {
+                    await _unitOfWork.RollbackAsync(ct);
+                    return ServiceResult.Fail("Input is invalid");
+                }
+
                 var createResult = OtherCalendar.Create(email, req.CalendarId);
                 if (createResult.IsError)
                 {
