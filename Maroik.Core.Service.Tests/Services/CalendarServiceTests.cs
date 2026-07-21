@@ -324,6 +324,41 @@ public class CalendarServiceTests
         _reminderRepo.Verify(r => r.CreateAsync(It.IsAny<CalendarEventReminder>(), It.IsAny<CancellationToken>()), Times.Exactly(2));
     }
 
+    // -- GetCalendarEventsAsync (batch) ----------------------------------------
+
+    /// <summary>Verifies that the batch overload fetches events in a single repository call and groups them by calendar ID.</summary>
+    [Fact]
+    public async Task GetCalendarEventsAsync_Batch_GroupsEventsByCalendarId()
+    {
+        _eventRepo.Setup(r => r.GetByCalendarIdsAsync(It.IsAny<IEnumerable<long>>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(
+            [
+                MakeCalendarEvent(id: 1, calendarId: 1, title: "A"),
+                MakeCalendarEvent(id: 2, calendarId: 1, title: "B"),
+                MakeCalendarEvent(id: 3, calendarId: 2, title: "C")
+            ]);
+        var sut = CreateSut();
+
+        ILookup<long, CalendarEventResponse> result = await sut.GetCalendarEventsAsync([1L, 2L], TestContext.Current.CancellationToken);
+
+        Assert.Equal(2, result[1L].Count());
+        Assert.Single(result[2L]);
+        _eventRepo.Verify(r => r.GetByCalendarIdsAsync(It.IsAny<IEnumerable<long>>(), It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    /// <summary>Verifies that the batch overload returns an empty lookup when the repository finds no events.</summary>
+    [Fact]
+    public async Task GetCalendarEventsAsync_Batch_ReturnsEmptyLookup_WhenNoEventsFound()
+    {
+        _eventRepo.Setup(r => r.GetByCalendarIdsAsync(It.IsAny<IEnumerable<long>>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync([]);
+        var sut = CreateSut();
+
+        ILookup<long, CalendarEventResponse> result = await sut.GetCalendarEventsAsync([1L], TestContext.Current.CancellationToken);
+
+        Assert.Empty(result[1L]);
+    }
+
     // -- UpdateCalendarEventAsync ---------------------------------------------
 
     /// <summary>Verifies that <c>UpdateCalendarEventAsync</c> returns fail when calendar not found.</summary>

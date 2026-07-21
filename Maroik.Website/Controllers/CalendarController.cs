@@ -554,12 +554,21 @@ public class CalendarController : Controller
             string userTz = loggedInAccount.TimeZoneIanaId ?? "UTC";
             List<CalendarEventOutputViewModel> calendarEvents = [];
 
+            // Ignore any requested calendar the account doesn't own and isn't subscribed to,
+            // so a tampered request body can't be used to read another user's private events.
+            List<long> authorizedCalendarIds = (calendarInputViewModel?.Calendars ?? [])
+                .Select(c => c.Id)
+                .Where(id => ownedCalendars.Any(x => x.Id == id) || otherCalendars.Any(x => x.Id == id))
+                .ToList();
+
+            // Fetch every authorized calendar's events in a single query instead of one round trip per calendar.
+            ILookup<long, CalendarEventResponse> eventsByCalendarId =
+                await _calendarService.GetCalendarEventsAsync(authorizedCalendarIds, HttpContext.RequestAborted);
+
             foreach (CalendarRequest inputCalendar in calendarInputViewModel?.Calendars ?? [])
             {
                 bool isOwned = ownedCalendars.Any(x => x.Id == inputCalendar.Id);
                 bool isOther = !isOwned && otherCalendars.Any(x => x.Id == inputCalendar.Id);
-                // Ignore any requested calendar the account doesn't own and isn't subscribed to,
-                // so a tampered request body can't be used to read another user's private events.
                 if (!isOwned && !isOther) continue;
 
                 string? calendarType = isOwned
@@ -569,7 +578,7 @@ public class CalendarController : Controller
                     ? ownedCalendars.FirstOrDefault(x => x.Id == inputCalendar.Id)?.HtmlColorCode
                     : otherCalendars.FirstOrDefault(x => x.Id == inputCalendar.Id)?.HtmlColorCode;
 
-                foreach (CalendarEventResponse evt in await _calendarService.GetCalendarEventsAsync(inputCalendar.Id, HttpContext.RequestAborted))
+                foreach (CalendarEventResponse evt in eventsByCalendarId[inputCalendar.Id])
                     calendarEvents.Add(evt.ToDisplayViewModel(userTz, htmlColorCode, calendarType));
             }
 

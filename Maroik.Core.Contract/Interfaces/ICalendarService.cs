@@ -17,6 +17,12 @@ public interface ICalendarService
     /// <summary>Returns all events belonging to the specified calendar.</summary>
     Task<IEnumerable<CalendarEventResponse>> GetCalendarEventsAsync(long calendarId, CancellationToken ct = default);
 
+    /// <summary>
+    /// Returns all events belonging to any of the given calendars, fetched in a single query
+    /// and grouped by calendar ID for per-calendar lookup.
+    /// </summary>
+    Task<ILookup<long, CalendarEventResponse>> GetCalendarEventsAsync(IEnumerable<long> calendarIds, CancellationToken ct = default);
+
     /// <summary>Returns a single calendar event by ID, or null.</summary>
     Task<CalendarEventResponse?> GetCalendarEventAsync(long id, CancellationToken ct = default);
 

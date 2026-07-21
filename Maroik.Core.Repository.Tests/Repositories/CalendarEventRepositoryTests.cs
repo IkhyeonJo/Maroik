@@ -74,6 +74,47 @@ public class CalendarEventRepositoryTests : IDisposable
         Assert.Empty(result);
     }
 
+    // -- GetByCalendarIdsAsync --------------------------------------------------
+
+    /// <summary>Verifies that <c>GetByCalendarIdsAsync</c> returns events for every requested calendar in one query.</summary>
+    [Fact]
+    public async Task GetByCalendarIdsAsync_ReturnsEventsForAllRequestedCalendars()
+    {
+        await SeedAsync(
+            MakeEvent(1, "Event A"),
+            MakeEvent(2, "Event B"),
+            MakeEvent(3, "Not Requested"));
+
+        List<CalendarEvent> result = await _sut.GetByCalendarIdsAsync([1L, 2L], TestContext.Current.CancellationToken);
+
+        Assert.Equal(2, result.Count);
+        Assert.Contains(result, e => e.CalendarId == 1);
+        Assert.Contains(result, e => e.CalendarId == 2);
+        Assert.DoesNotContain(result, e => e.CalendarId == 3);
+    }
+
+    /// <summary>Verifies that <c>GetByCalendarIdsAsync</c> returns empty when no calendar IDs match.</summary>
+    [Fact]
+    public async Task GetByCalendarIdsAsync_ReturnsEmpty_WhenNoCalendarIdsMatch()
+    {
+        await SeedAsync(MakeEvent(1, "Event A"));
+
+        List<CalendarEvent> result = await _sut.GetByCalendarIdsAsync([98L, 99L], TestContext.Current.CancellationToken);
+
+        Assert.Empty(result);
+    }
+
+    /// <summary>Verifies that <c>GetByCalendarIdsAsync</c> returns empty when given an empty ID collection.</summary>
+    [Fact]
+    public async Task GetByCalendarIdsAsync_ReturnsEmpty_WhenCalendarIdsEmpty()
+    {
+        await SeedAsync(MakeEvent(1, "Event A"));
+
+        List<CalendarEvent> result = await _sut.GetByCalendarIdsAsync([], TestContext.Current.CancellationToken);
+
+        Assert.Empty(result);
+    }
+
     // -- GetCalendarEventAsync ------------------------------------------------
 
     /// <summary>Verifies that <c>GetCalendarEventAsync</c> returns event when found.</summary>

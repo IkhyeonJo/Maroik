@@ -69,6 +69,12 @@ public class CalendarService : ICalendarService
         => (await _calendarEventRepository.GetByCalendarIdAsync(calendarId, ct)).Select(CalendarEventMapper.ToResponse);
 
     /// <inheritdoc />
+    public async Task<ILookup<long, CalendarEventResponse>> GetCalendarEventsAsync(IEnumerable<long> calendarIds, CancellationToken ct = default)
+        => (await _calendarEventRepository.GetByCalendarIdsAsync(calendarIds, ct))
+            .Select(CalendarEventMapper.ToResponse)
+            .ToLookup(e => e.CalendarId);
+
+    /// <inheritdoc />
     public async Task<CalendarEventResponse?> GetCalendarEventAsync(long id, CancellationToken ct = default)
     {
         CalendarEvent? evt = await _calendarEventRepository.FindByIdAsync(id, ct);
