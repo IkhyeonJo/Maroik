@@ -63,9 +63,13 @@ public class RsaService : IRsaService
     /// <inheritdoc />
     public string Decrypt(string cipherText)
     {
+        // OAEP, not PKCS#1 v1.5: the latter is vulnerable to Bleichenbacher padding-oracle attacks
+        // when a decrypt failure is distinguishable (by response or timing) from a decrypt success,
+        // which is the case here since this decrypts attacker-suppliable email-confirmation/
+        // password-reset tokens.
         return _privateKeyRsa == null
             ? throw new InvalidOperationException("RSA private key is not configured.")
-            : Encoding.UTF8.GetString(_privateKeyRsa.Decrypt(Convert.FromBase64String(cipherText), RSAEncryptionPadding.Pkcs1));
+            : Encoding.UTF8.GetString(_privateKeyRsa.Decrypt(Convert.FromBase64String(cipherText), RSAEncryptionPadding.CreateOaep(_hashAlgorithmName)));
     }
 
     /// <inheritdoc />
@@ -73,6 +77,6 @@ public class RsaService : IRsaService
     {
         return _publicKeyRsa == null
             ? throw new InvalidOperationException("RSA public key is not configured.")
-            : Convert.ToBase64String(_publicKeyRsa.Encrypt(Encoding.UTF8.GetBytes(text), RSAEncryptionPadding.Pkcs1));
+            : Convert.ToBase64String(_publicKeyRsa.Encrypt(Encoding.UTF8.GetBytes(text), RSAEncryptionPadding.CreateOaep(_hashAlgorithmName)));
     }
 }

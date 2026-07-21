@@ -91,7 +91,7 @@ public class RsaServiceTests
         string c1 = sut.Encrypt(plaintext);
         string c2 = sut.Encrypt(plaintext);
 
-        // PKCS#1 v1.5 uses random padding → different ciphertext per call
+        // OAEP includes a random seed → different ciphertext per call
         Assert.NotEqual(c1, c2);
     }
 
