@@ -1,0 +1,379 @@
+using System.Text.RegularExpressions;
+using Maroik.Core.Contract.Constants;
+using Maroik.Core.Contract.Interfaces;
+using Maroik.Core.Contract.Tokens;
+using Maroik.Core.PostgreSQL.Data;
+using Maroik.Core.PostgreSQL.Models;
+using Maroik.Website.Tests.Infrastructure;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
+
+namespace Maroik.Website.Tests.Controllers;
+
+/// <summary>
+/// Integration tests for the business-logic-bearing POST actions of <c>AccountController</c> —
+/// <c>Register</c>, <c>ConfirmEmail</c>, <c>ForgotPassword</c>, <c>ResetPassword</c> — that
+/// <c>AccountControllerTests</c> deliberately left uncovered beyond their GET/invalid-token
+/// smoke tests. These four flows carry real controller-level branching (consent/timezone
+/// checks, the shared <c>LoginInputViewModel</c>'s per-action <c>ModelState.Remove</c> calls,
+/// register-vs-resend routing) that this session has repeatedly found bugs in elsewhere
+/// (<c>ManagementController</c>'s TimeZoneIanaId/Password dead-code fixes), so they were worth
+/// closing rather than leaving as smoke-only.
+///
+/// Two things had to be fixed in <see cref="MaroikWebApplicationFactory"/> before any of this
+/// was even testable: the RSA key settings were empty strings (every one of these flows
+/// encrypts/decrypts a token, so all four would throw "RSA private/public key is not
+/// configured"), and there was no substitute for the RabbitMQ-backed <c>IEmailPublisher</c>
+/// (Register/ForgotPassword both publish a confirmation/reset email). Both are now real: a
+/// freshly generated RSA keypair, and <see cref="FakeEmailPublisher"/> recording what would have
+/// been sent.
+/// </summary>
+[Collection("Website Integration")]
+public class AccountControllerRegistrationTests
+{
+    private readonly MaroikWebApplicationFactory _factory;
+    private readonly HttpClient _client;
+
+    public AccountControllerRegistrationTests(MaroikWebApplicationFactory factory)
+    {
+        _factory = factory;
+        _client = factory.CreateTestClient(followRedirects: false);
+    }
+
+    private static string UniqueEmail([System.Runtime.CompilerServices.CallerMemberName] string testName = "") =>
+        $"{testName.ToLowerInvariant()}-{Guid.NewGuid():N}@test.com";
+
+    /// <summary>Fetches a page's antiforgery cookie + hidden-input token pair for an anonymous POST.</summary>
+    private async Task<(string Cookie, string Token)> GetAntiForgeryAsync(string getUrl)
+    {
+        var response = await _client.GetAsync(getUrl, TestContext.Current.CancellationToken);
+        string html = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+        string token = ExtractAntiForgeryToken(html);
+        string? cookie = ExtractCookieValue(response, AntiForgeryCookieName);
+        Assert.False(string.IsNullOrEmpty(cookie));
+        return (cookie!, token);
+    }
+
+    private async Task<HttpResponseMessage> PostFormAsync(string url, Dictionary<string, string> fields)
+    {
+        var (cookie, token) = await GetAntiForgeryAsync(url);
+        using var request = new HttpRequestMessage(HttpMethod.Post, url);
+        request.Headers.Add("Cookie", $"{AntiForgeryCookieName}={cookie}");
+        fields["__RequestVerificationToken"] = token;
+        request.Content = new FormUrlEncodedContent(fields);
+        return await _client.SendAsync(request, TestContext.Current.CancellationToken);
+    }
+
+    private const string AntiForgeryCookieName = "__Secure-.AspNetCore.Antiforgery.";
+
+    private static string? ExtractCookieValue(HttpResponseMessage response, string cookieName)
+    {
+        if (!response.Headers.TryGetValues("Set-Cookie", out var setCookieHeaders)) return null;
+        foreach (string header in setCookieHeaders)
+        {
+            string namePart = header.Split(';', 2)[0];
+            int eq = namePart.IndexOf('=');
+            if (eq <= 0) continue;
+            if (namePart[..eq] == cookieName) return namePart[(eq + 1)..];
+        }
+        return null;
+    }
+
+    private static string ExtractAntiForgeryToken(string html)
+    {
+        Match match = Regex.Match(html, "name=\"__RequestVerificationToken\"[^>]*value=\"([^\"]+)\"");
+        Assert.True(match.Success, "Could not find __RequestVerificationToken in the page HTML.");
+        return match.Groups[1].Value;
+    }
+
+    private async Task SeedAccountAsync(string email, bool emailConfirmed, string? registrationToken = null, string? resetPasswordToken = null)
+    {
+        using var scope = _factory.Services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+        var passwordService = scope.ServiceProvider.GetRequiredService<IPasswordService>();
+        db.Accounts.Add(new Account
+        {
+            Email = email,
+            HashedPassword = passwordService.HashPassword("OldPassword1!"),
+            Nickname = "RegTest_" + email.Replace("@", "_").Replace(".", "_"),
+            AvatarImagePath = "/upload/Management/Profile/default-avatar.jpg",
+            Role = Role.User,
+            TimeZoneIanaId = "UTC",
+            Locked = false,
+            LoginAttempt = 0,
+            EmailConfirmed = emailConfirmed,
+            AgreedServiceTerms = true,
+            RegistrationToken = registrationToken,
+            ResetPasswordToken = resetPasswordToken,
+            Deleted = false,
+            Created = DateTime.UtcNow,
+            Updated = DateTime.UtcNow
+        });
+        await db.SaveChangesAsync();
+    }
+
+    // -- Register: success path -----------------------------------------------------
+
+    [Fact]
+    public async Task Register_NewAccount_CreatesUnconfirmedAccountAndPublishesEmail()
+    {
+        string email = UniqueEmail();
+        var response = await PostFormAsync("/Account/Register", new Dictionary<string, string>
+        {
+            ["Email"] = email,
+            ["Password"] = "NewPassword1!",
+            ["Nickname"] = "RegSuccess_" + Guid.NewGuid().ToString("N")[..8],
+            ["AgreedServiceTerms"] = "true",
+            ["TimeZoneIanaId"] = "UTC"
+        });
+
+        Assert.Equal(System.Net.HttpStatusCode.OK, response.StatusCode);
+
+        using var scope = _factory.Services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+        var created = db.Accounts.Single(a => a.Email == email);
+        Assert.False(created.EmailConfirmed);
+        Assert.False(string.IsNullOrEmpty(created.RegistrationToken));
+
+        var publisher = scope.ServiceProvider.GetRequiredService<FakeEmailPublisher>();
+        Assert.Contains(publisher.PublishedMessages, m => m.ToEmail == email);
+    }
+
+    [Fact]
+    public async Task Register_MissingConsent_DoesNotCreateAccount()
+    {
+        string email = UniqueEmail();
+        var response = await PostFormAsync("/Account/Register", new Dictionary<string, string>
+        {
+            ["Email"] = email,
+            ["Password"] = "NewPassword1!",
+            ["Nickname"] = "RegNoConsent_" + Guid.NewGuid().ToString("N")[..8],
+            ["AgreedServiceTerms"] = "false",
+            ["TimeZoneIanaId"] = "UTC"
+        });
+
+        Assert.Equal(System.Net.HttpStatusCode.OK, response.StatusCode);
+
+        using var scope = _factory.Services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+        Assert.False(db.Accounts.Any(a => a.Email == email));
+    }
+
+    [Fact]
+    public async Task Register_MissingTimeZone_DoesNotCreateAccount()
+    {
+        string email = UniqueEmail();
+        var response = await PostFormAsync("/Account/Register", new Dictionary<string, string>
+        {
+            ["Email"] = email,
+            ["Password"] = "NewPassword1!",
+            ["Nickname"] = "RegNoTz_" + Guid.NewGuid().ToString("N")[..8],
+            ["AgreedServiceTerms"] = "true",
+            ["TimeZoneIanaId"] = ""
+        });
+
+        Assert.Equal(System.Net.HttpStatusCode.OK, response.StatusCode);
+
+        using var scope = _factory.Services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+        Assert.False(db.Accounts.Any(a => a.Email == email));
+    }
+
+    [Fact]
+    public async Task Register_AlreadyConfirmedEmail_DoesNotOverwriteAccount()
+    {
+        string email = UniqueEmail();
+        await SeedAccountAsync(email, emailConfirmed: true);
+
+        var response = await PostFormAsync("/Account/Register", new Dictionary<string, string>
+        {
+            ["Email"] = email,
+            ["Password"] = "AnotherPassword1!",
+            ["Nickname"] = "RegDup_" + Guid.NewGuid().ToString("N")[..8],
+            ["AgreedServiceTerms"] = "true",
+            ["TimeZoneIanaId"] = "UTC"
+        });
+
+        Assert.Equal(System.Net.HttpStatusCode.OK, response.StatusCode);
+
+        using var scope = _factory.Services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+        var account = db.Accounts.Single(a => a.Email == email);
+        Assert.True(account.EmailConfirmed); // unchanged
+    }
+
+    [Fact]
+    public async Task Register_UnconfirmedEmail_ResendsConfirmationOnResubmission()
+    {
+        string email = UniqueEmail();
+        await SeedAccountAsync(email, emailConfirmed: false, registrationToken: null);
+
+        // Resend path: submitting with an empty Password re-triggers the confirmation email
+        // rather than attempting to create a second account.
+        var response = await PostFormAsync("/Account/Register", new Dictionary<string, string>
+        {
+            ["Email"] = email,
+            ["Password"] = "",
+            ["Nickname"] = "",
+            ["AgreedServiceTerms"] = "false",
+            ["TimeZoneIanaId"] = ""
+        });
+
+        Assert.Equal(System.Net.HttpStatusCode.OK, response.StatusCode);
+
+        using var scope = _factory.Services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+        var account = db.Accounts.Single(a => a.Email == email);
+        Assert.False(string.IsNullOrEmpty(account.RegistrationToken)); // regenerated
+
+        var publisher = scope.ServiceProvider.GetRequiredService<FakeEmailPublisher>();
+        Assert.Contains(publisher.PublishedMessages, m => m.ToEmail == email);
+    }
+
+    // -- ConfirmEmail -----------------------------------------------------------------
+
+    [Fact]
+    public async Task ConfirmEmail_ValidToken_ActivatesAccount()
+    {
+        string email = UniqueEmail();
+        string rawToken = GuidToken.Generate();
+        await SeedAccountAsync(email, emailConfirmed: false, registrationToken: rawToken);
+
+        using var scope = _factory.Services.CreateScope();
+        var rsa = scope.ServiceProvider.GetRequiredService<IRsaService>();
+        string encryptedToken = rsa.Encrypt(rawToken);
+
+        var response = await _client.GetAsync($"/Account/ConfirmEmail?registrationToken={Uri.EscapeDataString(encryptedToken)}", TestContext.Current.CancellationToken);
+        Assert.Equal(System.Net.HttpStatusCode.OK, response.StatusCode);
+
+        using var verifyScope = _factory.Services.CreateScope();
+        var db = verifyScope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+        var account = db.Accounts.Single(a => a.Email == email);
+        Assert.True(account.EmailConfirmed);
+    }
+
+    [Fact]
+    public async Task ConfirmEmail_AlreadyConfirmed_DoesNotError()
+    {
+        string email = UniqueEmail();
+        string rawToken = GuidToken.Generate();
+        await SeedAccountAsync(email, emailConfirmed: true, registrationToken: rawToken);
+
+        using var scope = _factory.Services.CreateScope();
+        var rsa = scope.ServiceProvider.GetRequiredService<IRsaService>();
+        string encryptedToken = rsa.Encrypt(rawToken);
+
+        var response = await _client.GetAsync($"/Account/ConfirmEmail?registrationToken={Uri.EscapeDataString(encryptedToken)}", TestContext.Current.CancellationToken);
+
+        Assert.Equal(System.Net.HttpStatusCode.OK, response.StatusCode);
+    }
+
+    // -- ForgotPassword -----------------------------------------------------------------
+
+    [Fact]
+    public async Task ForgotPassword_ConfirmedAccount_SetsResetTokenAndPublishesEmail()
+    {
+        string email = UniqueEmail();
+        await SeedAccountAsync(email, emailConfirmed: true);
+
+        var response = await PostFormAsync("/Account/ForgotPassword", new Dictionary<string, string> { ["Email"] = email });
+
+        Assert.Equal(System.Net.HttpStatusCode.OK, response.StatusCode);
+
+        using var scope = _factory.Services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+        var account = db.Accounts.Single(a => a.Email == email);
+        Assert.False(string.IsNullOrEmpty(account.ResetPasswordToken));
+
+        var publisher = scope.ServiceProvider.GetRequiredService<FakeEmailPublisher>();
+        Assert.Contains(publisher.PublishedMessages, m => m.ToEmail == email);
+    }
+
+    [Fact]
+    public async Task ForgotPassword_UnknownEmail_SilentlySucceedsWithoutPublishing()
+    {
+        string email = UniqueEmail();
+
+        var response = await PostFormAsync("/Account/ForgotPassword", new Dictionary<string, string> { ["Email"] = email });
+
+        // Silently succeeds (200) to avoid user enumeration, even though the account doesn't exist.
+        Assert.Equal(System.Net.HttpStatusCode.OK, response.StatusCode);
+
+        using var scope = _factory.Services.CreateScope();
+        var publisher = scope.ServiceProvider.GetRequiredService<FakeEmailPublisher>();
+        Assert.DoesNotContain(publisher.PublishedMessages, m => m.ToEmail == email);
+    }
+
+    // -- ResetPassword ------------------------------------------------------------------
+
+    [Fact]
+    public async Task ResetPassword_Get_ValidToken_DoesNotFail()
+    {
+        string email = UniqueEmail();
+        string rawToken = GuidToken.Generate();
+        await SeedAccountAsync(email, emailConfirmed: true, resetPasswordToken: rawToken);
+
+        using var scope = _factory.Services.CreateScope();
+        var rsa = scope.ServiceProvider.GetRequiredService<IRsaService>();
+        string encryptedToken = rsa.Encrypt(rawToken);
+
+        var response = await _client.GetAsync($"/Account/ResetPassword?resetPasswordToken={Uri.EscapeDataString(encryptedToken)}", TestContext.Current.CancellationToken);
+        string html = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+
+        Assert.Equal(System.Net.HttpStatusCode.OK, response.StatusCode);
+        // A valid token renders the new-password form (id="resetPasswordForm"); an invalid one
+        // renders "The authentication token is invalid." instead — see ResetPassword.cshtml.
+        Assert.Contains("resetPasswordForm", html);
+    }
+
+    [Fact]
+    public async Task ResetPassword_Post_ValidToken_ChangesPasswordAndAllowsLoginWithNewPassword()
+    {
+        string email = UniqueEmail();
+        string rawToken = GuidToken.Generate();
+        await SeedAccountAsync(email, emailConfirmed: true, resetPasswordToken: rawToken);
+
+        using var scope = _factory.Services.CreateScope();
+        var rsa = scope.ServiceProvider.GetRequiredService<IRsaService>();
+        string encryptedToken = rsa.Encrypt(rawToken);
+
+        var response = await PostFormAsync("/Account/ResetPassword", new Dictionary<string, string>
+        {
+            ["ResetPasswordToken"] = encryptedToken,
+            ["Password"] = "BrandNewPassword1!"
+        });
+        Assert.Equal(System.Net.HttpStatusCode.OK, response.StatusCode);
+
+        // Prove the new password actually works end-to-end via the real Login action.
+        var (loginCookie, loginToken) = await GetAntiForgeryAsync("/Account/Login");
+        using var loginRequest = new HttpRequestMessage(HttpMethod.Post, "/Account/Login");
+        loginRequest.Headers.Add("Cookie", $"{AntiForgeryCookieName}={loginCookie}");
+        loginRequest.Content = new FormUrlEncodedContent(new Dictionary<string, string>
+        {
+            ["Email"] = email,
+            ["Password"] = "BrandNewPassword1!",
+            ["__RequestVerificationToken"] = loginToken
+        });
+        var loginResponse = await _client.SendAsync(loginRequest, TestContext.Current.CancellationToken);
+
+        Assert.Equal(System.Net.HttpStatusCode.Redirect, loginResponse.StatusCode); // login success redirects; failure re-renders as 200
+    }
+
+    [Fact]
+    public async Task ResetPassword_Post_UnknownToken_ReturnsFailToReset()
+    {
+        using var scope = _factory.Services.CreateScope();
+        var rsa = scope.ServiceProvider.GetRequiredService<IRsaService>();
+        string encryptedToken = rsa.Encrypt(GuidToken.Generate()); // well-formed but not stored on any account
+
+        var response = await PostFormAsync("/Account/ResetPassword", new Dictionary<string, string>
+        {
+            ["ResetPasswordToken"] = encryptedToken,
+            ["Password"] = "WontBeApplied1!"
+        });
+        string html = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+
+        Assert.Equal(System.Net.HttpStatusCode.OK, response.StatusCode);
+        Assert.Contains("The authentication token is invalid.", html);
+    }
+}

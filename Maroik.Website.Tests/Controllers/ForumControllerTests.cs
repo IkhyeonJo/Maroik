@@ -148,6 +148,103 @@ public class ForumControllerTests
         Assert.DoesNotContain(secretContent, body);
     }
 
+    // -- WriteFreeComment -----------------------------------------------------------
+
+    [Fact]
+    public async Task WriteFreeComment_ValidPayload_PersistsComment()
+    {
+        long boardId;
+        using (var scope = _factory.Services.CreateScope())
+        {
+            var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+            var board = new Board
+            {
+                Type = "FreeForum",
+                Title = "Commentable post",
+                Content = "Body",
+                Writer = "SomeoneElse",
+                Created = DateTime.UtcNow,
+                Updated = DateTime.UtcNow,
+                View = 0,
+                Deleted = false,
+                Locked = false
+            };
+            db.Boards.Add(board);
+            db.SaveChanges();
+            boardId = board.Id;
+        }
+
+        var session = await AuthenticatedSessionHelper.LoginAsync(_factory, _client, "forum-writecomment-user@test.com", "UserPassword1!", Role.User, TestContext.Current.CancellationToken);
+        using var request = session.BuildJsonPostRequest("/Forum/WriteFreeComment", new { BoardId = boardId, Content = "Nice post!", DetailCurrentPage = 1 });
+
+        var response = await _client.SendAsync(request, TestContext.Current.CancellationToken);
+        string json = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+        Assert.Contains("\"result\":true", json);
+
+        using var verifyScope = _factory.Services.CreateScope();
+        var verifyDb = verifyScope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+        Assert.Contains(verifyDb.BoardComments, c => c.BoardId == boardId && c.Writer == session.Nickname && c.Content == "Nice post!");
+    }
+
+    [Fact]
+    public async Task WriteFreeComment_EmptyContent_ReturnsFailureResult()
+    {
+        var session = await AuthenticatedSessionHelper.LoginAsync(_factory, _client, "forum-writecomment-empty@test.com", "UserPassword1!", Role.User, TestContext.Current.CancellationToken);
+        using var request = session.BuildJsonPostRequest("/Forum/WriteFreeComment", new { BoardId = 1, Content = "", DetailCurrentPage = 1 });
+
+        var response = await _client.SendAsync(request, TestContext.Current.CancellationToken);
+        string json = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+
+        Assert.Contains("\"result\":false", json);
+    }
+
+    [Fact]
+    public async Task WriteFreeComment_AnonymousSession_IsForbidden()
+    {
+        using var request = new HttpRequestMessage(HttpMethod.Post, "/Forum/WriteFreeComment");
+        request.Content = System.Net.Http.Json.JsonContent.Create(new { BoardId = 1, Content = "x", DetailCurrentPage = 1 });
+
+        var response = await _client.SendAsync(request, TestContext.Current.CancellationToken);
+
+        Assert.NotEqual(System.Net.HttpStatusCode.OK, response.StatusCode);
+    }
+
+    // -- UploadImageFile: validation only ------------------------------------------------
+    // Success requires a live Maroik.FileStorage instance (AttachmentContentService.
+    // UploadSummernoteImageAsync calls out to IFileClient with no fallback), which isn't
+    // available in this test environment — only the pre-upload validation branches are covered.
+
+    [Fact]
+    public async Task UploadImageFile_NoFileAttached_ReturnsFailureResult()
+    {
+        var session = await AuthenticatedSessionHelper.LoginAsync(_factory, _client, "forum-uploadimage-nofile@test.com", "UserPassword1!", Role.User, TestContext.Current.CancellationToken);
+        var form = new MultipartFormDataContent();
+        using var request = session.BuildFormPostRequest("/Forum/UploadImageFile", form);
+
+        var response = await _client.SendAsync(request, TestContext.Current.CancellationToken);
+        string json = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+
+        Assert.Equal(System.Net.HttpStatusCode.OK, response.StatusCode);
+        Assert.Contains("\"result\":false", json);
+    }
+
+    [Fact]
+    public async Task UploadImageFile_DisallowedExtension_ReturnsFailureResult()
+    {
+        var session = await AuthenticatedSessionHelper.LoginAsync(_factory, _client, "forum-uploadimage-badext@test.com", "UserPassword1!", Role.User, TestContext.Current.CancellationToken);
+        var form = new MultipartFormDataContent();
+        var fileContent = new ByteArrayContent([1, 2, 3, 4]);
+        fileContent.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue("text/plain");
+        form.Add(fileContent, "summernoteImageFile", "notanimage.txt");
+        using var request = session.BuildFormPostRequest("/Forum/UploadImageFile", form);
+
+        var response = await _client.SendAsync(request, TestContext.Current.CancellationToken);
+        string json = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+
+        Assert.Equal(System.Net.HttpStatusCode.OK, response.StatusCode);
+        Assert.Contains("\"result\":false", json);
+    }
+
     // -- Test helpers -----------------------------------------------------------
 
     // Matches Program.cs: const cookiePrefix = "__Secure-" + SessionDefaults.CookieName / AntiforgeryOptions.DefaultCookiePrefix.

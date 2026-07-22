@@ -1,4 +1,6 @@
+using System.Security.Cryptography;
 using Maroik.Core.Contract.Constants;
+using Maroik.Core.Contract.Interfaces;
 using Maroik.Core.Contract.Settings;
 using Maroik.Core.PostgreSQL.Data;
 using Maroik.Core.PostgreSQL.Models;
@@ -38,6 +40,17 @@ namespace Maroik.Website.Tests.Infrastructure;
 /// </summary>
 public class MaroikWebApplicationFactory : WebApplicationFactory<Program>, IAsyncLifetime
 {
+    /// <summary>
+    /// A real, freshly-generated RSA keypair (not the empty strings production leaves out of
+    /// source control) so <c>RsaService</c>'s <c>Encrypt</c>/<c>Decrypt</c> — used for
+    /// registration/password-reset tokens and, separately, file-storage paths (see project
+    /// memory: paths are RSA-encrypted with a server-only key) — work for real. Without this,
+    /// every flow that round-trips a token (Register's confirmation email, ConfirmEmail,
+    /// ForgotPassword, ResetPassword) would throw "RSA private/public key is not configured"
+    /// the moment it tried to encrypt or decrypt a token.
+    /// </summary>
+    private static readonly RSA RsaKeyPair = RSA.Create(2048);
+
     private readonly PostgreSqlContainer _postgres = new PostgreSqlBuilder("postgres:17")
         // Schema comes from the real production init script (not EF's EnsureCreated, which
         // builds from the EF model's Fluent API config — a config that turned out to omit the
@@ -94,8 +107,8 @@ public class MaroikWebApplicationFactory : WebApplicationFactory<Program>, IAsyn
                 ["ServerSetting:SessionExpireMinutes"] = "60",
                 ["ServerSetting:MaxLoginAttempt"] = "5",
                 ["ServerSetting:NoticeMaturityDateDay"] = "7",
-                ["ServerSetting:RsaPrivateKey"] = "",
-                ["ServerSetting:RsaPublicKey"] = "",
+                ["ServerSetting:RsaPrivateKey"] = Convert.ToBase64String(RsaKeyPair.ExportRSAPrivateKey()),
+                ["ServerSetting:RsaPublicKey"] = Convert.ToBase64String(RsaKeyPair.ExportSubjectPublicKeyInfo()),
                 ["ServerSetting:RsaAlgorithm"] = "Rsa2",
                 ["ServerSetting:FileStorageBaseUrl"] = "http://localhost:5001",
 
@@ -135,6 +148,14 @@ public class MaroikWebApplicationFactory : WebApplicationFactory<Program>, IAsyn
             if (dbContextDescriptor != null) services.Remove(dbContextDescriptor);
 
             services.AddDbContext<ApplicationDbContext>(options => options.UseNpgsql(_connectionString));
+
+            // Replace the RabbitMQ-backed email publisher with an in-memory fake so Register/
+            // ForgotPassword flows can be exercised without a live broker (RabbitMqEmailPublisher
+            // itself is already unit-tested for real in Maroik.Core.Client.Tests).
+            var emailPublisherDescriptor = services.SingleOrDefault(d => d.ServiceType == typeof(IEmailPublisher));
+            if (emailPublisherDescriptor != null) services.Remove(emailPublisherDescriptor);
+            services.AddSingleton<FakeEmailPublisher>();
+            services.AddSingleton<IEmailPublisher>(sp => sp.GetRequiredService<FakeEmailPublisher>());
 
             // Replace Valkey distributed cache with in-memory so tests run without a Valkey instance.
             var distributedCacheDescriptors = services
