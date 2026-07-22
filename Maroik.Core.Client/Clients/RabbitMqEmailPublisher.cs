@@ -12,14 +12,14 @@ namespace Maroik.Core.Client.Clients;
 /// </summary>
 public sealed class RabbitMqEmailPublisher : IEmailPublisher, IAsyncDisposable
 {
-    private readonly ConnectionFactory _factory;
+    private readonly IConnectionFactory _factory;
     private readonly SemaphoreSlim _connectionLock = new(1, 1);
     private IConnection? _connection;
 
     /// <summary>Initializes a new instance of <see cref="RabbitMqEmailPublisher"/>. Does not open a connection yet.</summary>
-    public RabbitMqEmailPublisher(string connectionString)
+    public RabbitMqEmailPublisher(IConnectionFactory factory)
     {
-        _factory = new ConnectionFactory { Uri = new Uri(connectionString) };
+        _factory = factory;
     }
 
     /// <inheritdoc />

@@ -1,3 +1,4 @@
+using System.Globalization;
 using Maroik.Core.Contract.Constants;
 using Maroik.Core.Contract.Extensions;
 
@@ -82,7 +83,7 @@ public class DateTimeExtensionsTests
 
         string result = utcNoon.ToViewerFormattedString(Role.Admin, "Asia/Seoul");
 
-        Assert.Equal(utcNoon.ConvertTimeByTimeZoneIanaId("Asia/Seoul").ToString(), result);
+        Assert.Equal(utcNoon.ConvertTimeByTimeZoneIanaId("Asia/Seoul").ToString(CultureInfo.InvariantCulture), result);
     }
 
     /// <summary>Verifies that User viewers see the value converted to their local time zone, same as Admin.</summary>
@@ -93,7 +94,7 @@ public class DateTimeExtensionsTests
 
         string result = utcNoon.ToViewerFormattedString(Role.User, "Asia/Seoul");
 
-        Assert.Equal(utcNoon.ConvertTimeByTimeZoneIanaId("Asia/Seoul").ToString(), result);
+        Assert.Equal(utcNoon.ConvertTimeByTimeZoneIanaId("Asia/Seoul").ToString(CultureInfo.InvariantCulture), result);
     }
 
     /// <summary>Verifies that Anonymous viewers see the raw, unconverted UTC value in ISO-8601 form.</summary>

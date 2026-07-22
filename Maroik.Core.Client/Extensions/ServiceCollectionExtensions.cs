@@ -1,6 +1,7 @@
 using Maroik.Core.Client.Clients;
 using Maroik.Core.Contract.Interfaces;
 using Microsoft.Extensions.DependencyInjection;
+using RabbitMQ.Client;
 
 namespace Maroik.Core.Client.Extensions;
 
@@ -31,7 +32,8 @@ public static class ServiceCollectionExtensions
 
             // Register the RabbitMQ email publisher. Singleton: owns one long-lived AMQP connection,
             // opened lazily on first publish so a RabbitMQ outage doesn't block app startup.
-            services.AddSingleton<IEmailPublisher>(_ => new RabbitMqEmailPublisher(rabbitMqConnectionString));
+            services.AddSingleton<IEmailPublisher>(_ => new RabbitMqEmailPublisher(
+                new ConnectionFactory { Uri = new Uri(rabbitMqConnectionString) }));
         }
     }
 }
