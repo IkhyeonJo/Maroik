@@ -35,6 +35,20 @@ public sealed class AuthenticatedSession(string sessionCookieValue, string antif
         if (body != null) request.Content = JsonContent.Create(body);
         return request;
     }
+
+    /// <summary>
+    /// Builds a POST request against a <c>[FromForm]</c>/model-bound-without-attribute endpoint
+    /// (i.e. one accepting an <see cref="IFormFile"/>), with the session cookie and antiforgery
+    /// header already attached.
+    /// </summary>
+    public HttpRequestMessage BuildFormPostRequest(string url, MultipartFormDataContent content)
+    {
+        var request = new HttpRequestMessage(HttpMethod.Post, url);
+        request.Headers.Add("Cookie", CookieHeader);
+        request.Headers.Add("RequestVerificationToken", antiforgeryToken);
+        request.Content = content;
+        return request;
+    }
 }
 
 /// <summary>Seeds an account and drives the real <c>/Account/Login</c> flow to produce an <see cref="AuthenticatedSession"/>.</summary>
