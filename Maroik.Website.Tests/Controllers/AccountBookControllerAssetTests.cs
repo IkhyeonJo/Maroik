@@ -8,9 +8,11 @@ namespace Maroik.Website.Tests.Controllers;
 
 /// <summary>
 /// Integration tests for the Asset CRUD action group of <c>AccountBookController</c>
-/// (all <c>[RequiredHttpPostAccess(Role = Role.User)]</c>-gated). Representative of the
-/// three near-identical resource groups on this controller (Asset/Income/Expenditure);
-/// Income and Expenditure are not separately covered here.
+/// (all <c>[RequiredHttpPostAccess(Role = Role.User)]</c>-gated). Runs against a real
+/// PostgreSQL instance (via <see cref="MaroikWebApplicationFactory"/>'s Testcontainers setup),
+/// so <c>UpdateAsset</c>'s <c>IUnitOfWork</c> transaction — which the EF Core InMemory provider
+/// cannot execute — is exercised directly, including its Income-record cascade rename. See
+/// <c>AccountBookControllerIncomeExpenditureTests</c> for Income/Expenditure themselves.
 /// </summary>
 [Collection("Website Integration")]
 public class AccountBookControllerAssetTests
@@ -150,12 +152,120 @@ public class AccountBookControllerAssetTests
     //
     // AssetService.UpdateAsync wraps its entire body in an IUnitOfWork transaction
     // (BeginAsync/CommitAsync/RollbackAsync) because renaming an asset cascades updates to
-    // Income/Expenditure records atomically. The EF Core InMemory provider used by this test
-    // factory does not support transactions at all ("Transactions are not supported by the
-    // in-memory store."), so every call — success or not-found — throws before UpdateAsset's
-    // own logic runs. This is a provider limitation, not exercisable through this harness; it
-    // works against the real PostgreSQL provider. See ManagementControllerAccountTests for the
-    // analogous HasDefaultValueSql limitation on CreateAccount.
+    // Income/Expenditure records atomically — real PostgreSQL only, hence these tests running
+    // against the Testcontainers-backed factory rather than EF Core InMemory (which cannot
+    // execute transactions at all).
+
+    [Fact]
+    public async Task UpdateAsset_ExistingAsset_ReturnsSuccessResult()
+    {
+        var session = await LoginAsUserAsync();
+        const string productName = "to-update-asset";
+        SeedAsset("accountbook-user@test.com", productName);
+
+        using var request = session.BuildJsonPostRequest("/AccountBook/UpdateAsset", new
+        {
+            ProductName = productName,
+            OriginalProductName = productName,
+            Item = "SavingsAsset",
+            Amount = 2000,
+            MonetaryUnit = "USD",
+            Note = "updated",
+            Deleted = false
+        });
+        var response = await _client.SendAsync(request, TestContext.Current.CancellationToken);
+        string json = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+
+        Assert.Contains("\"result\":true", json);
+
+        using var scope = _factory.Services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+        var updated = db.Assets.Single(a => a.AccountEmail == "accountbook-user@test.com" && a.ProductName == productName);
+        Assert.Equal(2000m, updated.Amount);
+        Assert.Equal("updated", updated.Note);
+    }
+
+    /// <summary>
+    /// Renaming an asset that has a linked Income row succeeds, and the Income row's
+    /// <c>DepositMyAssetProductName</c> follows automatically. <c>Income_fk_0</c> (like the
+    /// other three Asset foreign keys) is declared <c>ON UPDATE CASCADE</c> in the real schema
+    /// (<c>Maroik.DB/.../Production/Init.sql</c>), so Postgres itself renames every referencing
+    /// row the moment the Asset's ProductName changes — <c>AssetService.UpdateAsync</c>'s own
+    /// cascade calls for Expenditure/FixedExpenditure are consequently redundant (the DB already
+    /// did it) but harmless, and Income/FixedIncome need no equivalent C# call at all.
+    /// (An earlier version of this test, run against a schema built from EF's
+    /// <c>EnsureCreated()</c> instead of the real init script, wrongly concluded this was
+    /// broken — EF's Fluent API config omits the <c>ON UPDATE CASCADE</c> clause, so
+    /// <c>EnsureCreated()</c> produces a schema that behaves differently from production here.)
+    /// </summary>
+    [Fact]
+    public async Task UpdateAsset_RenameWithExistingIncomeReference_CascadesAutomatically()
+    {
+        var session = await LoginAsUserAsync();
+        const string email = "accountbook-user@test.com";
+        const string oldName = "wallet-to-rename";
+        const string newName = "wallet-renamed";
+        SeedAsset(email, oldName);
+
+        using (var scope = _factory.Services.CreateScope())
+        {
+            var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+            db.Incomes.Add(new Income
+            {
+                AccountEmail = email,
+                MainClass = "RegularIncome",
+                SubClass = "LaborIncome",
+                Content = "Salary",
+                Amount = 100,
+                DepositMyAssetProductName = oldName,
+                Created = DateTime.UtcNow,
+                Updated = DateTime.UtcNow
+            });
+            db.SaveChanges();
+        }
+
+        using var request = session.BuildJsonPostRequest("/AccountBook/UpdateAsset", new
+        {
+            ProductName = newName,
+            OriginalProductName = oldName,
+            Item = "CashAsset",
+            Amount = 1000,
+            MonetaryUnit = "KRW",
+            Note = "",
+            Deleted = false
+        });
+        var response = await _client.SendAsync(request, TestContext.Current.CancellationToken);
+        string json = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+
+        Assert.Contains("\"result\":true", json);
+
+        using var verifyScope = _factory.Services.CreateScope();
+        var verifyDb = verifyScope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+        Assert.True(verifyDb.Assets.Any(a => a.AccountEmail == email && a.ProductName == newName));
+        var income = verifyDb.Incomes.Single(i => i.AccountEmail == email && i.Content == "Salary");
+        Assert.Equal(newName, income.DepositMyAssetProductName);
+    }
+
+    [Fact]
+    public async Task UpdateAsset_UnknownOriginalProductName_ReturnsFailureResult()
+    {
+        var session = await LoginAsUserAsync();
+
+        using var request = session.BuildJsonPostRequest("/AccountBook/UpdateAsset", new
+        {
+            ProductName = "irrelevant",
+            OriginalProductName = "does-not-exist-asset",
+            Item = "CashAsset",
+            Amount = 100,
+            MonetaryUnit = "KRW",
+            Note = "",
+            Deleted = false
+        });
+        var response = await _client.SendAsync(request, TestContext.Current.CancellationToken);
+        string json = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+
+        Assert.Contains("Fail to find the asset by given product name", json);
+    }
 
     // -- DeleteAsset ---------------------------------------------------------------
 

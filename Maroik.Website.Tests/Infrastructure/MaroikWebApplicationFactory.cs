@@ -1,5 +1,4 @@
 using Maroik.Core.Contract.Constants;
-using Maroik.Core.Contract.Enums;
 using Maroik.Core.Contract.Settings;
 using Maroik.Core.PostgreSQL.Data;
 using Maroik.Core.PostgreSQL.Models;
@@ -13,6 +12,7 @@ using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Testcontainers.PostgreSql;
 
 namespace Maroik.Website.Tests.Infrastructure;
 
@@ -22,13 +22,62 @@ namespace Maroik.Website.Tests.Infrastructure;
 /// Overrides applied for testing:
 /// <list type="bullet">
 ///   <item>Configuration: empty cert paths (skips TLS hot-swap logic), test domain, short session timeout.</item>
-///   <item>Database: replaces PostgreSQL with an EF Core InMemory database so tests need no real DB.</item>
+///   <item>Database: a real PostgreSQL instance spun up via Testcontainers, schema loaded from
+///       the actual production init script (<c>Maroik.DB/PostgreSQL/SQL_Init_Script/Production/Init.sql</c>)
+///       rather than EF Core's InMemory provider or <c>EnsureCreated()</c> — both of the latter
+///       build schema from the EF model's Fluent API config, which does not necessarily match
+///       the hand-authored SQL (it omits the <c>ON UPDATE CASCADE</c> clauses the real script
+///       has on the Asset foreign keys, for one). Running the real script means transaction-
+///       wrapped service methods, raw-SQL repository queries (<c>FOR UPDATE</c> row locks,
+///       composite-key updates), and constraint behavior all work exactly as in production.</item>
 ///   <item>Base address: <c>https://www.localhost/</c> so the <c>UseHttpsRedirection</c> and
 ///       <c>AddRedirectToWww</c> middleware do not trigger additional redirects.</item>
 /// </list>
+/// One container is started per test run (shared via <see cref="WebsiteIntegrationCollection"/>'s
+/// <c>ICollectionFixture</c>) and is disposed when the collection finishes.
 /// </summary>
-public class MaroikWebApplicationFactory : WebApplicationFactory<Program>
+public class MaroikWebApplicationFactory : WebApplicationFactory<Program>, IAsyncLifetime
 {
+    private readonly PostgreSqlContainer _postgres = new PostgreSqlBuilder("postgres:17")
+        // Schema comes from the real production init script (not EF's EnsureCreated, which
+        // builds from the EF model's Fluent API config — a config that turned out to omit the
+        // ON UPDATE CASCADE clauses the real script defines on Income_fk_0/Expenditure_fk_0/
+        // FixedIncome_fk_0/FixedExpenditure_fk_0). Files under docker-entrypoint-initdb.d/ are
+        // run automatically via psql on first container startup, which correctly understands
+        // pg_dump's \restrict/\unrestrict meta-commands (a raw ADO.NET batch would not).
+        .WithResourceMapping(new FileInfo(FindInitSqlPath()), new FileInfo("/docker-entrypoint-initdb.d/init.sql"))
+        .Build();
+    private string _connectionString = string.Empty;
+
+    private static string FindInitSqlPath()
+    {
+        var dir = new DirectoryInfo(AppContext.BaseDirectory);
+        while (dir != null && !File.Exists(Path.Combine(dir.FullName, "Maroik.sln")))
+            dir = dir.Parent;
+        if (dir == null)
+            throw new InvalidOperationException("Could not locate the repository root (Maroik.sln) from " + AppContext.BaseDirectory);
+        return Path.Combine(dir.FullName, "Maroik.DB", "PostgreSQL", "SQL_Init_Script", "Production", "Init.sql");
+    }
+
+    /// <summary>Starts the Testcontainers PostgreSQL instance before any test in the collection runs.</summary>
+    public async ValueTask InitializeAsync()
+    {
+        // Npgsql 9+ requires DateTimeKind.Unspecified for timestamp-without-timezone columns;
+        // this restores the lenient behavior the seed helpers across these tests rely on
+        // (they all pass DateTimeKind.Utc via DateTime.UtcNow).
+        AppContext.SetSwitch("Npgsql.EnableLegacyTimestampBehavior", true);
+
+        await _postgres.StartAsync();
+        _connectionString = _postgres.GetConnectionString();
+    }
+
+    /// <summary>Stops the Testcontainers PostgreSQL instance after the collection finishes.</summary>
+    public new async ValueTask DisposeAsync()
+    {
+        await _postgres.DisposeAsync();
+        await base.DisposeAsync();
+    }
+
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
         // -- Override configuration -------------------------------------------
@@ -73,7 +122,7 @@ public class MaroikWebApplicationFactory : WebApplicationFactory<Program>
             }!);
         });
 
-        // -- Replace PostgreSQL with InMemory --------------------------------
+        // -- Point PostgreSQL at the Testcontainers instance ------------------
         builder.ConfigureServices(services =>
         {
             // Remove existing DbContext registrations registered by AddRepositoryContext()
@@ -85,21 +134,7 @@ public class MaroikWebApplicationFactory : WebApplicationFactory<Program>
                 d => d.ServiceType == typeof(ApplicationDbContext));
             if (dbContextDescriptor != null) services.Remove(dbContextDescriptor);
 
-            // Use an explicit internal service provider so EF Core does not scan the app's
-            // DI container and find both Npgsql (from AddRepositoryContext) and InMemory,
-            // which would throw "multiple database providers registered".
-            var internalServiceProvider = new ServiceCollection()
-                .AddEntityFrameworkInMemoryDatabase()
-                .BuildServiceProvider();
-
-            // Capture the DB name once per factory instance so all request scopes share
-            // the same in-memory database (DbContextOptions is Scoped, so Guid.NewGuid()
-            // inside the lambda would produce a new database name on every request).
-            var dbName = $"WebsiteIntegration_{Guid.NewGuid()}";
-            services.AddDbContext<ApplicationDbContext>(options =>
-                options
-                    .UseInternalServiceProvider(internalServiceProvider)
-                    .UseInMemoryDatabase(dbName));
+            services.AddDbContext<ApplicationDbContext>(options => options.UseNpgsql(_connectionString));
 
             // Replace Valkey distributed cache with in-memory so tests run without a Valkey instance.
             var distributedCacheDescriptors = services
@@ -119,6 +154,12 @@ public class MaroikWebApplicationFactory : WebApplicationFactory<Program>
         });
     }
 
+    /// <summary>
+    /// Extra Category rows for menu areas the real production dump doesn't seed at all
+    /// (Drive is unlaunched — see project memory) but that a handful of tests still need a
+    /// Controller-name menu match for. IDs start well above the dump's real range (currently
+    /// tops out at 21) to avoid colliding with its actual Category_pk values.
+    /// </summary>
     protected override IHost CreateHost(IHostBuilder builder)
     {
         var host = base.CreateHost(builder);
@@ -127,31 +168,9 @@ public class MaroikWebApplicationFactory : WebApplicationFactory<Program>
         {
             var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
             db.Categories.AddRange(
-                new Category { Id = 1, Name = "Dashboard", DisplayName = "Dashboard", IconPath = "", Controller = "Dashboard", Action = "AnonymousIndex", Role = Role.Anonymous, Order = 1 },
-                new Category { Id = 2, Name = "Calendar", DisplayName = "Calendar", IconPath = "", Controller = "Calendar", Action = "AnonymousIndex", Role = Role.Anonymous, Order = 2 },
-                new Category { Id = 3, Name = "Forum", DisplayName = "Forum", IconPath = "", Controller = "Forum", Action = nameof(BoardType.FreeForum), Role = Role.Anonymous, Order = 3 },
-                new Category { Id = 4, Name = "DriveAnon", DisplayName = "Drive", IconPath = "", Controller = "Drive", Action = "AnonymousIndex", Role = Role.Anonymous, Order = 4 },
-                new Category { Id = 5, Name = "DriveAdmin", DisplayName = "Drive (Admin)", IconPath = "", Controller = "Drive", Action = "AdminIndex", Role = Role.Anonymous, Order = 5 },
-                new Category { Id = 6, Name = "DriveUser", DisplayName = "Drive (User)", IconPath = "", Controller = "Drive", Action = "UserIndex", Role = Role.Anonymous, Order = 6 },
-                new Category { Id = 7, Name = "Asset", DisplayName = "Asset", IconPath = "", Controller = "AccountBook", Action = "Asset", Role = Role.Anonymous, Order = 7 },
-                new Category { Id = 8, Name = "Income", DisplayName = "Income", IconPath = "", Controller = "AccountBook", Action = "Income", Role = Role.Anonymous, Order = 8 },
-                new Category { Id = 9, Name = "Expenditure", DisplayName = "Expenditure", IconPath = "", Controller = "AccountBook", Action = "Expenditure", Role = Role.Anonymous, Order = 9 },
-                new Category { Id = 10, Name = "ManageAccount", DisplayName = "Accounts", IconPath = "", Controller = "Management", Action = "Account", Role = Role.Anonymous, Order = 10 },
-                new Category { Id = 11, Name = "ManageMenu", DisplayName = "Menu", IconPath = "", Controller = "Management", Action = "Menu", Role = Role.Anonymous, Order = 11 },
-                new Category { Id = 12, Name = "FixedIncome", DisplayName = "Fixed Income", IconPath = "", Controller = "Notice", Action = "FixedIncome", Role = Role.Anonymous, Order = 12 },
-                new Category { Id = 13, Name = "FixedExpenditure", DisplayName = "Fixed Expend", IconPath = "", Controller = "Notice", Action = "FixedExpenditure", Role = Role.Anonymous, Order = 13 },
-
-                // Admin/User-role entries so AuthorizationFilter's POST-path menu match (which is
-                // keyed on Controller name only, not Action) allows authenticated integration tests
-                // to reach [RequiredHttpPostAccess]-gated actions on these controllers.
-                new Category { Id = 14, Name = "ManageAccountAdmin", DisplayName = "Accounts", IconPath = "", Controller = "Management", Action = "Account", Role = Role.Admin, Order = 1 },
-                new Category { Id = 15, Name = "ProfileUser", DisplayName = "Profile", IconPath = "", Controller = "Management", Action = "Profile", Role = Role.User, Order = 1 },
-                new Category { Id = 16, Name = "AccountBookUser", DisplayName = "Account Book", IconPath = "", Controller = "AccountBook", Action = "Income", Role = Role.User, Order = 1 },
-                new Category { Id = 17, Name = "CalendarUser", DisplayName = "Calendar", IconPath = "", Controller = "Calendar", Action = "UserIndex", Role = Role.User, Order = 1 },
-                new Category { Id = 18, Name = "CalendarAdmin", DisplayName = "Calendar", IconPath = "", Controller = "Calendar", Action = "AdminIndex", Role = Role.Admin, Order = 1 },
-                new Category { Id = 19, Name = "ForumUser", DisplayName = "Forum", IconPath = "", Controller = "Forum", Action = nameof(BoardType.FreeForum), Role = Role.User, Order = 1 },
-                new Category { Id = 20, Name = "ForumAdmin", DisplayName = "Forum", IconPath = "", Controller = "Forum", Action = nameof(BoardType.FreeForum), Role = Role.Admin, Order = 1 },
-                new Category { Id = 21, Name = "NoticeUser", DisplayName = "Notice", IconPath = "", Controller = "Notice", Action = "FixedIncome", Role = Role.User, Order = 1 }
+                new Category { Id = 9001, Name = "DriveAnon", DisplayName = "Drive", IconPath = "", Controller = "Drive", Action = "AnonymousIndex", Role = Role.Anonymous, Order = 100 },
+                new Category { Id = 9002, Name = "DriveAdmin", DisplayName = "Drive (Admin)", IconPath = "", Controller = "Drive", Action = "AdminIndex", Role = Role.Admin, Order = 101 },
+                new Category { Id = 9003, Name = "DriveUser", DisplayName = "Drive (User)", IconPath = "", Controller = "Drive", Action = "UserIndex", Role = Role.User, Order = 102 }
             );
             db.SaveChanges();
         }

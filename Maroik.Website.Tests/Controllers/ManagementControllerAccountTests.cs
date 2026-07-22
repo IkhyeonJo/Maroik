@@ -12,15 +12,10 @@ namespace Maroik.Website.Tests.Controllers;
 /// Drives a real authenticated session via <see cref="AuthenticatedSessionHelper"/> so the
 /// inline validation and role-gating logic in the controller is exercised end-to-end.
 ///
-/// Note on <c>CreateAccount</c>'s DB-write success path: <c>Account.Create()</c> deliberately
-/// leaves <c>AvatarImagePath</c> unset, relying on the column's <c>HasDefaultValueSql</c> in
-/// PostgreSQL to fill it in on insert. The EF Core InMemory provider used by this test factory
-/// does not evaluate SQL defaults, so it throws "required properties are missing" for that one
-/// property — a InMemory-provider limitation, not an application bug (confirmed by reproducing
-/// the same call directly against <c>IAccountRepository</c>, bypassing the controller entirely).
-/// Accordingly, tests here that need an existing account seed it directly (as every other
-/// integration test in this suite already does) rather than routing through the real
-/// <c>CreateAccount</c> endpoint.
+/// Runs against a real PostgreSQL instance (via <see cref="MaroikWebApplicationFactory"/>'s
+/// Testcontainers setup), so <c>CreateAccount</c>'s reliance on the <c>AvatarImagePath</c>
+/// column's <c>HasDefaultValueSql</c> — a SQL default the EF Core InMemory provider cannot
+/// evaluate — works exactly as in production and is exercised directly below.
 /// </summary>
 [Collection("Website Integration")]
 public class ManagementControllerAccountTests
@@ -64,11 +59,13 @@ public class ManagementControllerAccountTests
         db.SaveChanges();
     }
 
+    // Nickname carries a real unique constraint under Postgres, so it must vary per email
+    // rather than being a fixed literal shared by every call site.
     private static object ValidAccountPayload(string email) => new
     {
         Email = email,
         Password = "NewAccountPw1!",
-        Nickname = "Newcomer",
+        Nickname = "Newcomer_" + email.Replace("@", "_").Replace(".", "_"),
         AvatarImagePath = "",
         Role = Role.User,
         TimeZoneIanaId = "UTC",
@@ -166,6 +163,64 @@ public class ManagementControllerAccountTests
         var json = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
 
         Assert.Contains("Please select time zone", json);
+    }
+
+    // -- CreateAccount: success path ---------------------------------------------
+
+    /// <summary>
+    /// Verifies the real DB-write path end-to-end, including that <c>AvatarImagePath</c> —
+    /// left unset by <c>Account.Create()</c> — gets filled in by the column's
+    /// <c>HasDefaultValueSql</c> default rather than persisting as null.
+    /// </summary>
+    [Fact]
+    public async Task CreateAccount_ValidPayload_PersistsAccountWithDefaultAvatarPath()
+    {
+        var session = await LoginAsAdminAsync();
+        const string email = "created-account@test.com";
+        using var request = session.BuildJsonPostRequest("/Management/CreateAccount", ValidAccountPayload(email));
+
+        var response = await _client.SendAsync(request, TestContext.Current.CancellationToken);
+        string json = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+
+        Assert.Contains("\"result\":true", json);
+
+        using var scope = _factory.Services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+        var account = db.Accounts.Single(a => a.Email == email);
+        Assert.Equal("/upload/Management/Profile/default-avatar.jpg", account.AvatarImagePath);
+        Assert.Equal(Role.User, account.Role);
+        Assert.False(account.Deleted);
+    }
+
+    [Fact]
+    public async Task CreateAccount_DuplicateEmail_ReturnsAlreadyCreatedError()
+    {
+        var session = await LoginAsAdminAsync();
+        const string email = "duplicate-account@test.com";
+        using var firstRequest = session.BuildJsonPostRequest("/Management/CreateAccount", ValidAccountPayload(email));
+        await _client.SendAsync(firstRequest, TestContext.Current.CancellationToken);
+
+        using var secondRequest = session.BuildJsonPostRequest("/Management/CreateAccount", new
+        {
+            Email = email,
+            Password = "AnotherPassw0rd!",
+            Nickname = "SecondNickname",
+            AvatarImagePath = "",
+            Role = Role.User,
+            TimeZoneIanaId = "UTC",
+            Locked = false,
+            LoginAttempt = 0,
+            EmailConfirmed = true,
+            AgreedServiceTerms = true,
+            RegistrationToken = "",
+            ResetPasswordToken = "",
+            Message = "",
+            Deleted = false
+        });
+        var response = await _client.SendAsync(secondRequest, TestContext.Current.CancellationToken);
+        string json = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+
+        Assert.Contains("This account has already been created.", json);
     }
 
     // -- IsAccountExists ---------------------------------------------------------

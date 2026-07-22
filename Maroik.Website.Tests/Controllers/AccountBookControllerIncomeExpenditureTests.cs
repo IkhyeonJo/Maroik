@@ -9,24 +9,16 @@ namespace Maroik.Website.Tests.Controllers;
 /// <summary>
 /// Integration tests for the Income and Expenditure action groups of
 /// <c>AccountBookController</c> (all <c>[RequiredHttpPostAccess(Role = Role.User)]</c>-gated).
-///
-/// Unlike Asset, <c>IncomeService</c>/<c>ExpenditureService</c> call
-/// <c>_unitOfWork.BeginAsync</c> as the very first statement in Create/Update/Delete — before
-/// their own try/catch even starts — so under the EF Core InMemory provider (which cannot
-/// execute transactions) that throws immediately, and neither the service's catch block nor
-/// the controller (no try/catch on these three actions) can intercept it. The exception
-/// reaches <c>UseExceptionHandler("/Exception/Error")</c>, which re-executes the pipeline
-/// against that GET-only path while preserving the original POST verb, surfacing as an
-/// unrelated-looking 405 (same root cause as documented in
-/// <c>NoticeControllerFixedIncomeTests</c>). So Create/Update/Delete are only exercised here up
-/// to the point of ModelState validation (which runs, and returns cleanly, before the service is
-/// ever called); IsIncomeExists/IsExpenditureExists/GetAmountLabel use plain reads with no
-/// transaction and are fully covered.
+/// Runs against a real PostgreSQL instance (via <see cref="MaroikWebApplicationFactory"/>'s
+/// Testcontainers setup, schema loaded from the real production init script), so
+/// <c>IncomeService</c>/<c>ExpenditureService</c>'s <c>IUnitOfWork</c> transactions are
+/// exercised for real, including their Asset-balance side effects.
 /// </summary>
 [Collection("Website Integration")]
 public class AccountBookControllerIncomeExpenditureTests
 {
     private const string Email = "accountbook-incexp-user@test.com";
+    private const string AssetProductName = "some-asset";
 
     private readonly MaroikWebApplicationFactory _factory;
     private readonly HttpClient _client;
@@ -40,12 +32,12 @@ public class AccountBookControllerIncomeExpenditureTests
     private Task<AuthenticatedSession> LoginAsync() =>
         AuthenticatedSessionHelper.LoginAsync(_factory, _client, Email, "UserPassword1!", Role.User, TestContext.Current.CancellationToken);
 
-    private void SeedAssetIfMissing(ApplicationDbContext db)
+    private void SeedAssetIfMissing(ApplicationDbContext db, string productName = AssetProductName)
     {
-        if (db.Assets.Any(a => a.AccountEmail == Email && a.ProductName == "some-asset")) return;
+        if (db.Assets.Any(a => a.AccountEmail == Email && a.ProductName == productName)) return;
         db.Assets.Add(new Asset
         {
-            ProductName = "some-asset",
+            ProductName = productName,
             AccountEmail = Email,
             Item = "CashAsset",
             Amount = 1000,
@@ -57,19 +49,31 @@ public class AccountBookControllerIncomeExpenditureTests
         db.SaveChanges();
     }
 
-    private long SeedIncome()
+    private decimal GetAssetBalance(string productName = AssetProductName)
     {
         using var scope = _factory.Services.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-        SeedAssetIfMissing(db);
+        return db.Assets.Single(a => a.AccountEmail == Email && a.ProductName == productName).Amount;
+    }
+
+    /// <summary>A unique product name per call, so balance-delta assertions in a single test
+    /// can't be perturbed by other tests in this class concurrently touching the shared asset.</summary>
+    private static string UniqueAssetName([System.Runtime.CompilerServices.CallerMemberName] string testName = "") =>
+        $"{testName}-{Guid.NewGuid():N}";
+
+    private long SeedIncome(decimal amount = 1000, string productName = AssetProductName)
+    {
+        using var scope = _factory.Services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+        SeedAssetIfMissing(db, productName);
         var income = new Income
         {
             AccountEmail = Email,
             MainClass = "RegularIncome",
             SubClass = "LaborIncome",
             Content = "Salary",
-            Amount = 1000,
-            DepositMyAssetProductName = "some-asset",
+            Amount = amount,
+            DepositMyAssetProductName = productName,
             Created = DateTime.UtcNow,
             Updated = DateTime.UtcNow
         };
@@ -78,20 +82,25 @@ public class AccountBookControllerIncomeExpenditureTests
         return income.Id;
     }
 
-    private long SeedExpenditure()
+    private long SeedExpenditure(decimal amount = 50, string productName = AssetProductName)
     {
         using var scope = _factory.Services.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-        SeedAssetIfMissing(db);
+        SeedAssetIfMissing(db, productName);
         var expenditure = new Expenditure
         {
             AccountEmail = Email,
             MainClass = "ConsumerSpending",
             SubClass = "MealOrEatOutExpenses",
             Content = "Lunch",
-            Amount = 50,
-            PaymentMethod = "some-asset",
-            MyDepositAsset = "some-asset",
+            Amount = amount,
+            PaymentMethod = productName,
+            // Left empty (not equal to PaymentMethod): MyDepositAsset only has meaning for
+            // "transfer"-classified expenditures (moving money between two assets). Setting it
+            // to the same value as PaymentMethod — which the real CreateExpenditure flow never
+            // does for a non-transfer category like this one — would make
+            // AdjustAssetBalancesAsync deposit and withdraw the *same* asset on revert, net zero.
+            MyDepositAsset = null,
             Created = DateTime.UtcNow,
             Updated = DateTime.UtcNow
         };
@@ -125,6 +134,75 @@ public class AccountBookControllerIncomeExpenditureTests
 
         Assert.Equal(System.Net.HttpStatusCode.OK, response.StatusCode);
         Assert.Contains("\"result\":false", json);
+    }
+
+    // -- CreateIncome: success path — verifies the Asset-balance side effect too -----
+
+    [Fact]
+    public async Task CreateIncome_ValidPayload_DepositsIntoAssetBalance()
+    {
+        string asset = UniqueAssetName();
+        using (var scope = _factory.Services.CreateScope())
+            SeedAssetIfMissing(scope.ServiceProvider.GetRequiredService<ApplicationDbContext>(), asset);
+        decimal before = GetAssetBalance(asset);
+
+        var session = await LoginAsync();
+        var payload = new
+        {
+            Id = 0, MainClass = "RegularIncome", SubClass = "LaborIncome", Content = "Bonus",
+            Amount = 300, DepositMyAssetProductName = asset, Note = ""
+        };
+        using var request = session.BuildJsonPostRequest("/AccountBook/CreateIncome", payload);
+        var response = await _client.SendAsync(request, TestContext.Current.CancellationToken);
+        string json = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+
+        Assert.Contains("\"result\":true", json);
+        Assert.Equal(before + 300, GetAssetBalance(asset));
+    }
+
+    // -- UpdateIncome / DeleteIncome: success path ------------------------------------
+
+    [Fact]
+    public async Task UpdateIncome_ExistingRecord_ReturnsSuccessResult()
+    {
+        var session = await LoginAsync();
+        long id = SeedIncome();
+
+        using var request = session.BuildJsonPostRequest("/AccountBook/UpdateIncome", new
+        {
+            Id = id, MainClass = "RegularIncome", SubClass = "BusinessIncome", Content = "Updated",
+            Amount = 1200, DepositMyAssetProductName = AssetProductName, Note = "updated"
+        });
+        var response = await _client.SendAsync(request, TestContext.Current.CancellationToken);
+        string json = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+
+        Assert.Contains("\"result\":true", json);
+
+        using var scope = _factory.Services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+        var income = db.Incomes.Single(i => i.Id == id);
+        Assert.Equal("BusinessIncome", income.SubClass);
+        Assert.Equal("updated", income.Note);
+    }
+
+    [Fact]
+    public async Task DeleteIncome_ExistingRecord_RemovesItAndRefundsAssetBalance()
+    {
+        string asset = UniqueAssetName();
+        long id = SeedIncome(amount: 500, productName: asset);
+        decimal balanceAfterDeposit = GetAssetBalance(asset);
+        var session = await LoginAsync();
+
+        using var request = session.BuildJsonPostRequest("/AccountBook/DeleteIncome", new { Id = id });
+        var response = await _client.SendAsync(request, TestContext.Current.CancellationToken);
+        string json = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+
+        Assert.Contains("\"result\":true", json);
+
+        using var scope = _factory.Services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+        Assert.False(db.Incomes.Any(i => i.Id == id));
+        Assert.Equal(balanceAfterDeposit - 500, GetAssetBalance(asset));
     }
 
     // -- IsIncomeExists -------------------------------------------------------------
@@ -180,6 +258,75 @@ public class AccountBookControllerIncomeExpenditureTests
 
         Assert.Equal(System.Net.HttpStatusCode.OK, response.StatusCode);
         Assert.Contains("\"result\":false", json);
+    }
+
+    // -- CreateExpenditure: success path — verifies the Asset-balance side effect ----
+
+    [Fact]
+    public async Task CreateExpenditure_ValidPayload_WithdrawsFromAssetBalance()
+    {
+        string asset = UniqueAssetName();
+        using (var scope = _factory.Services.CreateScope())
+            SeedAssetIfMissing(scope.ServiceProvider.GetRequiredService<ApplicationDbContext>(), asset);
+        decimal before = GetAssetBalance(asset);
+
+        var session = await LoginAsync();
+        var payload = new
+        {
+            Id = 0, MainClass = "ConsumerSpending", SubClass = "MealOrEatOutExpenses", Content = "Dinner",
+            Amount = 40, PaymentMethod = asset, MyDepositAsset = "N/A", Note = ""
+        };
+        using var request = session.BuildJsonPostRequest("/AccountBook/CreateExpenditure", payload);
+        var response = await _client.SendAsync(request, TestContext.Current.CancellationToken);
+        string json = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+
+        Assert.Contains("\"result\":true", json);
+        Assert.Equal(before - 40, GetAssetBalance(asset));
+    }
+
+    // -- UpdateExpenditure / DeleteExpenditure: success path --------------------------
+
+    [Fact]
+    public async Task UpdateExpenditure_ExistingRecord_ReturnsSuccessResult()
+    {
+        var session = await LoginAsync();
+        long id = SeedExpenditure();
+
+        using var request = session.BuildJsonPostRequest("/AccountBook/UpdateExpenditure", new
+        {
+            Id = id, MainClass = "ConsumerSpending", SubClass = "TransportationCost", Content = "Updated",
+            Amount = 60, PaymentMethod = AssetProductName, MyDepositAsset = "N/A", Note = "updated"
+        });
+        var response = await _client.SendAsync(request, TestContext.Current.CancellationToken);
+        string json = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+
+        Assert.Contains("\"result\":true", json);
+
+        using var scope = _factory.Services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+        var expenditure = db.Expenditures.Single(e => e.Id == id);
+        Assert.Equal("TransportationCost", expenditure.SubClass);
+        Assert.Equal("updated", expenditure.Note);
+    }
+
+    [Fact]
+    public async Task DeleteExpenditure_ExistingRecord_RemovesItAndRefundsAssetBalance()
+    {
+        string asset = UniqueAssetName();
+        long id = SeedExpenditure(amount: 75, productName: asset);
+        decimal balanceAfterWithdrawal = GetAssetBalance(asset);
+        var session = await LoginAsync();
+
+        using var request = session.BuildJsonPostRequest("/AccountBook/DeleteExpenditure", new { Id = id });
+        var response = await _client.SendAsync(request, TestContext.Current.CancellationToken);
+        string json = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+
+        Assert.Contains("\"result\":true", json);
+
+        using var scope = _factory.Services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+        Assert.False(db.Expenditures.Any(e => e.Id == id));
+        Assert.Equal(balanceAfterWithdrawal + 75, GetAssetBalance(asset));
     }
 
     // -- IsExpenditureExists ----------------------------------------------------------

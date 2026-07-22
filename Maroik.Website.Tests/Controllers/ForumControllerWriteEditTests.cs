@@ -1,16 +1,18 @@
 using Maroik.Core.Contract.Constants;
+using Maroik.Core.PostgreSQL.Data;
 using Maroik.Website.Tests.Infrastructure;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace Maroik.Website.Tests.Controllers;
 
 /// <summary>
 /// Integration tests for <c>WriteFreeBoard</c>/<c>EditFreeBoard</c> on <c>ForumController</c> —
 /// the multipart-form counterparts to the JSON-bodied actions covered in
-/// <c>ForumControllerBoardTests</c>. <c>BoardService.WriteBoardAsync</c>/<c>EditBoardAsync</c>
-/// wrap their entire body in an <c>IUnitOfWork</c> transaction, which the EF Core InMemory
-/// provider used by this test factory cannot execute, so only the ModelState validation branch
-/// (which returns before the service is ever called) is exercised here — see
-/// <c>AccountBookControllerAssetTests</c> for the same limitation on a simpler action.
+/// <c>ForumControllerBoardTests</c>. Runs against a real PostgreSQL instance (via
+/// <see cref="MaroikWebApplicationFactory"/>'s Testcontainers setup), so
+/// <c>BoardService.WriteBoardAsync</c>/<c>EditBoardAsync</c>'s <c>IUnitOfWork</c> transactions —
+/// unusable under EF Core InMemory (see <c>AccountBookControllerAssetTests</c>) — are exercised
+/// for real on the success paths, not just the ModelState validation branch.
 /// </summary>
 [Collection("Website Integration")]
 public class ForumControllerWriteEditTests
@@ -36,6 +38,9 @@ public class ForumControllerWriteEditTests
         form.Add(new StringContent(noticed.ToString()), "Noticed");
         return form;
     }
+
+    private static string UniqueTitle([System.Runtime.CompilerServices.CallerMemberName] string testName = "") =>
+        $"{testName}-{Guid.NewGuid():N}";
 
     [Fact]
     public async Task WriteFreeBoard_AnonymousSession_IsForbidden()
@@ -80,6 +85,113 @@ public class ForumControllerWriteEditTests
         using var request = session.BuildFormPostRequest("/Forum/EditFreeBoard", form);
 
         var response = await _client.SendAsync(request, TestContext.Current.CancellationToken);
+        string json = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+
+        Assert.Contains("\"result\":false", json);
+    }
+
+    // -- WriteFreeBoard: success path ---------------------------------------------
+
+    [Fact]
+    public async Task WriteFreeBoard_ValidPayload_PersistsBoard()
+    {
+        var session = await LoginAsUserAsync();
+        string title = UniqueTitle();
+        using var request = session.BuildFormPostRequest("/Forum/WriteFreeBoard", BoardForm(title, content: "Hello world", locked: true));
+
+        var response = await _client.SendAsync(request, TestContext.Current.CancellationToken);
+        string json = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+        Assert.Contains("\"result\":true", json);
+
+        using var scope = _factory.Services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+        var created = db.Boards.Single(b => b.Title == title);
+        Assert.Equal(session.Nickname, created.Writer);
+        Assert.Contains("Hello world", created.Content);
+        Assert.True(created.Locked);
+        // Noticed is only honored for Admin writers, ignored here since this session is Role.User.
+        Assert.False(created.Noticed);
+    }
+
+    [Fact]
+    public async Task WriteFreeBoard_NoticedRequestedByNonAdmin_IsIgnored()
+    {
+        var session = await LoginAsUserAsync();
+        string title = UniqueTitle();
+        using var request = session.BuildFormPostRequest("/Forum/WriteFreeBoard", BoardForm(title, noticed: true));
+
+        var response = await _client.SendAsync(request, TestContext.Current.CancellationToken);
+        string json = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+        Assert.Contains("\"result\":true", json);
+
+        using var scope = _factory.Services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+        var created = db.Boards.Single(b => b.Title == title);
+        Assert.False(created.Noticed);
+    }
+
+    // -- EditFreeBoard: success path / ownership -----------------------------------
+
+    [Fact]
+    public async Task EditFreeBoard_ByOwner_UpdatesBoard()
+    {
+        var session = await LoginAsUserAsync();
+        string title = UniqueTitle();
+        using var createRequest = session.BuildFormPostRequest("/Forum/WriteFreeBoard", BoardForm(title, content: "Original"));
+        await _client.SendAsync(createRequest, TestContext.Current.CancellationToken);
+
+        using var scope = _factory.Services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+        var created = db.Boards.Single(b => b.Title == title);
+
+        string updatedTitle = UniqueTitle();
+        var editForm = BoardForm(updatedTitle, content: "Edited", locked: true);
+        editForm.Add(new StringContent(created.Id.ToString()), "Id");
+        using var editRequest = session.BuildFormPostRequest("/Forum/EditFreeBoard", editForm);
+
+        var response = await _client.SendAsync(editRequest, TestContext.Current.CancellationToken);
+        string json = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+        Assert.Contains("\"result\":true", json);
+
+        using var verifyScope = _factory.Services.CreateScope();
+        var verifyDb = verifyScope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+        var updated = verifyDb.Boards.Single(b => b.Id == created.Id);
+        Assert.Equal(updatedTitle, updated.Title);
+        Assert.Contains("Edited", updated.Content);
+        Assert.True(updated.Locked);
+    }
+
+    [Fact]
+    public async Task EditFreeBoard_ByNonOwner_ReturnsFailureResult()
+    {
+        var session = await LoginAsUserAsync();
+        long boardId;
+        using (var scope = _factory.Services.CreateScope())
+        {
+            var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+            var board = new Maroik.Core.PostgreSQL.Models.Board
+            {
+                Type = "FreeForum",
+                Title = "Someone Else's Post",
+                Content = "Body",
+                Writer = "SomeoneElse",
+                Locked = false,
+                Noticed = false,
+                Deleted = false,
+                View = 0,
+                Created = DateTime.UtcNow,
+                Updated = DateTime.UtcNow
+            };
+            db.Boards.Add(board);
+            db.SaveChanges();
+            boardId = board.Id;
+        }
+
+        var editForm = BoardForm(UniqueTitle());
+        editForm.Add(new StringContent(boardId.ToString()), "Id");
+        using var editRequest = session.BuildFormPostRequest("/Forum/EditFreeBoard", editForm);
+
+        var response = await _client.SendAsync(editRequest, TestContext.Current.CancellationToken);
         string json = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
 
         Assert.Contains("\"result\":false", json);

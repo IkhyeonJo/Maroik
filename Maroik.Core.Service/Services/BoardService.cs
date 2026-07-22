@@ -113,6 +113,9 @@ public class BoardService : IBoardService
             }
 
             var board = boardResult.Value;
+            if (request.Locked) board.Lock();
+            if (request.Noticed) board.Pin();
+
             long boardId = await _boardRepository.WriteBoardAsync(board, ct);
 
             if (attachedFile != null)

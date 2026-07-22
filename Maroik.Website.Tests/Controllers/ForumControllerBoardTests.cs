@@ -17,9 +17,10 @@ namespace Maroik.Website.Tests.Controllers;
 /// <c>DeleteBoard</c>, and <c>DeleteComment</c> use plain repository calls with no transaction,
 /// so those are covered here instead, including the owner-vs-non-owner permission check.
 ///
-/// <see cref="AuthenticatedSessionHelper.LoginAsync"/> always seeds accounts with the nickname
-/// "TestUser", so board/comment ownership is simulated by seeding <c>Writer = "TestUser"</c>
-/// (owner) or a different name (non-owner) rather than varying the logged-in account's nickname.
+/// <see cref="AuthenticatedSessionHelper.LoginAsync"/> derives each seeded account's nickname
+/// from its email (real Postgres enforces a unique index on Nickname), so board/comment
+/// ownership tests seed <c>Writer = session.Nickname</c> (owner) or a fixed different string
+/// (non-owner) rather than a hardcoded nickname.
 /// </summary>
 [Collection("Website Integration")]
 public class ForumControllerBoardTests
@@ -139,7 +140,7 @@ public class ForumControllerBoardTests
     public async Task IsBoardExists_LockedBoard_Owner_ReturnsSuccessResult()
     {
         var session = await LoginAsUserAsync();
-        long boardId = SeedBoard(writer: "TestUser", locked: true); // matches the seeded session account's nickname
+        long boardId = SeedBoard(writer: session.Nickname, locked: true);
 
         using var request = session.BuildJsonPostRequest($"/Forum/IsBoardExists?id={boardId}");
         var response = await _client.SendAsync(request, TestContext.Current.CancellationToken);
@@ -167,7 +168,7 @@ public class ForumControllerBoardTests
     public async Task DeleteBoard_Owner_SoftDeletesSuccessfully()
     {
         var session = await LoginAsUserAsync();
-        long boardId = SeedBoard(writer: "TestUser");
+        long boardId = SeedBoard(writer: session.Nickname);
 
         using var request = session.BuildJsonPostRequest("/Forum/DeleteBoard", new { Id = boardId });
         var response = await _client.SendAsync(request, TestContext.Current.CancellationToken);
@@ -225,7 +226,7 @@ public class ForumControllerBoardTests
     {
         var session = await LoginAsUserAsync();
         long boardId = SeedBoard(writer: "SomeoneElse");
-        long commentId = SeedComment(boardId, writer: "TestUser");
+        long commentId = SeedComment(boardId, writer: session.Nickname);
 
         using var request = session.BuildJsonPostRequest($"/Forum/DeleteComment?id={commentId}");
         var response = await _client.SendAsync(request, TestContext.Current.CancellationToken);

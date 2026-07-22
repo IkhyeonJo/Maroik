@@ -1,52 +1,70 @@
+using Maroik.Core.Contract.Constants;
 using Maroik.Website.Tests.Infrastructure;
 
 namespace Maroik.Website.Tests.Controllers;
 
 /// <summary>
 /// Integration smoke tests for <c>AccountBookController</c>.
-/// The Asset, Income, and Expenditure GET actions return <c>View()</c> for non-AJAX requests
-/// (no session dependency for the non-AJAX path), so they must respond 200 OK.
+/// Asset/Income/Expenditure are User-role-gated in the real production menu (Category
+/// Controller="AccountBook", Role=User — loaded from the real Init.sql this test factory now
+/// seeds from), so an anonymous GET is correctly redirected rather than rendering; these tests
+/// authenticate as a User first.
 /// </summary>
 [Collection("Website Integration")]
 public class AccountBookControllerTests
 {
+    private readonly MaroikWebApplicationFactory _factory;
     private readonly HttpClient _client;
 
     public AccountBookControllerTests(MaroikWebApplicationFactory factory)
     {
+        _factory = factory;
         _client = factory.CreateTestClient(followRedirects: false);
+    }
+
+    private async Task<HttpResponseMessage> GetAsUserAsync(string url)
+    {
+        var session = await AuthenticatedSessionHelper.LoginAsync(
+            _factory, _client, "accountbook-smoke-user@test.com", "UserPassword1!", Role.User, TestContext.Current.CancellationToken);
+        using var request = new HttpRequestMessage(HttpMethod.Get, url);
+        request.Headers.Add("Cookie", session.CookieHeader);
+        return await _client.SendAsync(request, TestContext.Current.CancellationToken);
     }
 
     // -- Asset ----------------------------------------------------------------
 
-    /// <summary>Verifies that <c>Asset</c> get when non ajax returns 200.</summary>
     [Fact]
-    public async Task Asset_Get_NonAjax_Returns200()
+    public async Task Asset_Get_LoggedInUser_Returns200()
     {
-        // Non-AJAX GET falls through to return View() without accessing session
-        var response = await _client.GetAsync("/AccountBook/Asset", TestContext.Current.CancellationToken);
+        var response = await GetAsUserAsync("/AccountBook/Asset");
 
         Assert.Equal(System.Net.HttpStatusCode.OK, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task Asset_Get_Anonymous_RedirectsToLogin()
+    {
+        var response = await _client.GetAsync("/AccountBook/Asset", TestContext.Current.CancellationToken);
+
+        Assert.Equal(System.Net.HttpStatusCode.Redirect, response.StatusCode);
     }
 
     // -- Income ---------------------------------------------------------------
 
-    /// <summary>Verifies that <c>Income</c> get when non ajax returns 200.</summary>
     [Fact]
-    public async Task Income_Get_NonAjax_Returns200()
+    public async Task Income_Get_LoggedInUser_Returns200()
     {
-        var response = await _client.GetAsync("/AccountBook/Income", TestContext.Current.CancellationToken);
+        var response = await GetAsUserAsync("/AccountBook/Income");
 
         Assert.Equal(System.Net.HttpStatusCode.OK, response.StatusCode);
     }
 
-    // -- Expenditure ----------------------------------------------------------
+    // -- Expenditure ------------------------------------------------------------
 
-    /// <summary>Verifies that <c>Expenditure</c> get when non ajax returns 200.</summary>
     [Fact]
-    public async Task Expenditure_Get_NonAjax_Returns200()
+    public async Task Expenditure_Get_LoggedInUser_Returns200()
     {
-        var response = await _client.GetAsync("/AccountBook/Expenditure", TestContext.Current.CancellationToken);
+        var response = await GetAsUserAsync("/AccountBook/Expenditure");
 
         Assert.Equal(System.Net.HttpStatusCode.OK, response.StatusCode);
     }

@@ -4,14 +4,14 @@ using Maroik.Website.Tests.Infrastructure;
 namespace Maroik.Website.Tests.Controllers;
 
 /// <summary>
-/// Integration tests for the remaining read-oriented actions of <c>CalendarController</c>
-/// that don't touch <c>CalendarService</c>'s transaction-wrapped write paths
-/// (CalendarEvent/OtherCalendar/CalendarShared create/update/delete — see
-/// <c>CalendarControllerCalendarTests</c> for why those are out of scope under the EF Core
-/// InMemory provider used by this test factory). <c>GetCalendarEventAsync</c> and
-/// <c>GetCalendarsAsync</c> are plain reads, so the not-found branches of
-/// <c>IsCalendarEventExists</c>/<c>IsOtherCalendarEventExists</c> and the empty-result path of
-/// <c>GetCalendarShareds</c>/<c>GetBrowseCalendarsOfInterest</c> are safe to exercise here.
+/// Integration tests for the remaining read-oriented actions of <c>CalendarController</c>:
+/// the not-found branches of <c>IsCalendarEventExists</c>/<c>IsOtherCalendarEventExists</c> and
+/// the role-gating/empty-result paths of <c>GetCalendarShareds</c>/<c>GetBrowseCalendarsOfInterest</c>.
+/// The corresponding success-path/write coverage for CalendarEvent lives in
+/// <c>CalendarControllerEventTests</c>, and for OtherCalendar/CalendarShared in
+/// <c>CalendarControllerSharingTests</c> — both now run against real PostgreSQL via
+/// <see cref="MaroikWebApplicationFactory"/>'s Testcontainers setup, so the <c>IUnitOfWork</c>
+/// transactions those actions wrap (unusable under EF Core InMemory) are exercised for real.
 /// </summary>
 [Collection("Website Integration")]
 public class CalendarControllerReadOnlyTests

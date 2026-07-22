@@ -14,7 +14,7 @@ namespace Maroik.Website.Tests.Infrastructure;
 /// to be attached to subsequent authenticated requests against role-gated JSON endpoints
 /// (the pattern every <c>[RequiredHttpPostAccess]</c> action requires).
 /// </summary>
-public sealed class AuthenticatedSession(string sessionCookieValue, string antiforgeryCookieValue, string antiforgeryToken)
+public sealed class AuthenticatedSession(string sessionCookieValue, string antiforgeryCookieValue, string antiforgeryToken, string nickname)
 {
     /// <summary>Cookie header value combining the session and antiforgery cookies.</summary>
     public string CookieHeader =>
@@ -22,6 +22,9 @@ public sealed class AuthenticatedSession(string sessionCookieValue, string antif
 
     /// <summary>The raw antiforgery token to send via the <c>RequestVerificationToken</c> header on AJAX/JSON POSTs.</summary>
     public string AntiforgeryToken => antiforgeryToken;
+
+    /// <summary>The seeded account's nickname (derived from its email — see <see cref="AuthenticatedSessionHelper.LoginAsync"/>).</summary>
+    public string Nickname => nickname;
 
     /// <summary>
     /// Builds a POST request against a JSON <c>[FromBody]</c> endpoint, with the session
@@ -64,6 +67,11 @@ public static class AuthenticatedSessionHelper
     public static async Task<AuthenticatedSession> LoginAsync(
         MaroikWebApplicationFactory factory, HttpClient client, string email, string password, string role, CancellationToken ct)
     {
+        // Account_Nickname_unique is a real, enforced constraint (Postgres), so every seeded
+        // account needs a distinct nickname — derive it from the (already-unique) email rather
+        // than a fixed placeholder.
+        string nickname = "TestUser_" + email.Replace("@", "_").Replace(".", "_");
+
         using (var scope = factory.Services.CreateScope())
         {
             var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
@@ -74,7 +82,7 @@ public static class AuthenticatedSessionHelper
                 {
                     Email = email,
                     HashedPassword = passwordService.HashPassword(password),
-                    Nickname = "TestUser",
+                    Nickname = nickname,
                     AvatarImagePath = "/upload/Management/Profile/default-avatar.jpg",
                     Role = role,
                     TimeZoneIanaId = "UTC",
@@ -122,7 +130,7 @@ public static class AuthenticatedSessionHelper
         // AuthorizationFilter's menu-match fallback rather than rendering a page.)
         string antiforgeryCookie = ExtractCookieValue(postResponse, AntiforgeryCookieName) ?? loginAntiforgeryCookie;
 
-        return new AuthenticatedSession(sessionCookie, antiforgeryCookie, loginToken);
+        return new AuthenticatedSession(sessionCookie, antiforgeryCookie, loginToken, nickname);
     }
 
     private static string? ExtractCookieValue(HttpResponseMessage response, string cookieName)

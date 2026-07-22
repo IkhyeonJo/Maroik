@@ -7,12 +7,9 @@ namespace Maroik.Website.Tests.Controllers;
 /// Integration tests for the Calendar (not CalendarEvent) CRUD action group of
 /// <c>CalendarController</c> — <c>CreateCalendar</c>/<c>IsCalendarExists</c>/
 /// <c>UpdateCalendar</c>/<c>DeleteCalendar</c>, all <c>[RequiredHttpPostAccess]</c>-gated for
-/// both Admin and User. <c>CalendarService</c>'s "own calendar" methods use plain repository
-/// calls with no transaction, unlike almost everything else on this controller
-/// (CalendarEvent/OtherCalendar/CalendarShared all wrap <c>IUnitOfWork</c> transactions the EF
-/// Core InMemory provider can't execute — see <c>AccountBookControllerAssetTests</c> for the
-/// same limitation elsewhere), so this is the one action group on <c>CalendarController</c>
-/// testable end-to-end under this harness.
+/// both Admin and User. See <c>CalendarControllerEventTests</c> and
+/// <c>CalendarControllerSharingTests</c> for the CalendarEvent/OtherCalendar/CalendarShared
+/// action groups, which wrap <c>IUnitOfWork</c> transactions.
 /// </summary>
 [Collection("Website Integration")]
 public class CalendarControllerCalendarTests
