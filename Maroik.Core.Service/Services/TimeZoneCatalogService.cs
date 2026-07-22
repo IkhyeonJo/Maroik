@@ -1,7 +1,7 @@
 using Maroik.Core.Contract.Dtos;
-using Maroik.Website.Contracts;
+using Maroik.Core.Contract.Interfaces;
 
-namespace Maroik.Website.Services;
+namespace Maroik.Core.Service.Services;
 
 /// <inheritdoc cref="ITimeZoneCatalogService" />
 public class TimeZoneCatalogService : ITimeZoneCatalogService

@@ -1,6 +1,6 @@
-using Maroik.Website.Services;
+using Maroik.Core.Service.Services;
 
-namespace Maroik.Website.Tests.Services;
+namespace Maroik.Core.Service.Tests.Services;
 
 /// <summary>
 /// Unit tests for <see cref="TimeZoneCatalogService"/> — the server-side replacement

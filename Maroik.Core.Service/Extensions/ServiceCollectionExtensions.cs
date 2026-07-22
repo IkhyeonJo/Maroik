@@ -37,6 +37,7 @@ public static class ServiceCollectionExtensions
             services.AddSingleton<IImageValidatorService, ImageValidatorService>();
             services.AddSingleton<IHtmlContentSanitizerService, HtmlContentSanitizerService>();
             services.AddSingleton<IHtmlParserService, HtmlParserService>();
+            services.AddSingleton<ITimeZoneCatalogService, TimeZoneCatalogService>();
         }
     }
 }
