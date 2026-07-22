@@ -1,3 +1,4 @@
+using System.Globalization;
 using Maroik.Core.Contract.Constants;
 
 namespace Maroik.Core.Contract.Extensions;
@@ -35,7 +36,7 @@ public static class DateTimeExtensions
         /// </summary>
         public string ToViewerFormattedString(string? viewerRole, string timeZoneIanaId) =>
             viewerRole is Role.Admin or Role.User
-                ? value.ConvertTimeByTimeZoneIanaId(timeZoneIanaId).ToString()
+                ? value.ConvertTimeByTimeZoneIanaId(timeZoneIanaId).ToString(CultureInfo.InvariantCulture)
                 : value.ToString("yyyy-MM-ddTHH:mm:ssZ");
     }
 }
