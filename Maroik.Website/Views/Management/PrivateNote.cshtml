@@ -341,24 +341,24 @@
                             {
                                 int commentsOfUndeletedSelectedBoardCount = Model.CommentCountByBoardId.GetValueOrDefault(noticeBoard.Id, 0);
                                 List<BoardAttachedFileDto> boardAttachedFilesWithName = Model.AttachedFilesByBoardId.GetValueOrDefault(noticeBoard.Id, []);
+                                bool noticeBoardTitleVisible = noticeBoard.IsTitleVisibleToOwner(loggedInAccount);
 
                                 <tr style="background-color: lightgray;">
                                     <td style="font-weight:bold;">@Localizer["Notice"]</td>
-                                    @if (noticeBoard.Locked)
-                                    {
-                                        @if (loggedInAccount.IsOwner(noticeBoard.Writer))@*If the visitor is the author*@
+                                    <td>
+                                        @if (noticeBoard.Locked)
                                         {
-                                            <td><i class="fa fa-lock-open" aria-hidden="true"></i>@Html!.ActionLink($"{noticeBoard.Title} [{commentsOfUndeletedSelectedBoardCount}]", "PrivateNote", new {method = "detail", boardId = noticeBoard.Id, page = Model.Pager!.CurrentPage}, new { style = "font-weight: bold;" })</td>
+                                            <i class="fa @(noticeBoardTitleVisible ? "fa-lock-open" : "fa-lock")" aria-hidden="true"></i>
+                                        }
+                                        @if (noticeBoardTitleVisible)
+                                        {
+                                            <text>@Html!.ActionLink($"{noticeBoard.Title} [{commentsOfUndeletedSelectedBoardCount}]", "PrivateNote", new {method = "detail", boardId = noticeBoard.Id, page = Model.Pager!.CurrentPage}, new { style = "font-weight: bold;" })</text>
                                         }
                                         else
                                         {
-                                            <td><i class="fa fa-lock" aria-hidden="true"></i><span style="font-weight:bold;"> @Localizer["Only a writer and admin can see it."].Value</span></td>
+                                            <span style="font-weight:bold;"> @Localizer["Only a writer and admin can see it."].Value</span>
                                         }
-                                    }
-                                    else
-                                    {
-                                        <td>@Html!.ActionLink($"{noticeBoard.Title} [{commentsOfUndeletedSelectedBoardCount}]", "PrivateNote", new {method = "detail", boardId = noticeBoard.Id, page = Model.Pager!.CurrentPage}, new { style = "font-weight: bold;" })</td>
-                                    }
+                                    </td>
 
                                     <td><span style="font-weight:bold;">@noticeBoard.Writer</span></td>
 
@@ -379,24 +379,24 @@
                             {
                                 int commentsOfUndeletedSelectedBoardCount = Model.CommentCountByBoardId.GetValueOrDefault(board.Id, 0);
                                 List<BoardAttachedFileDto> attachedFilesWithName = Model.AttachedFilesByBoardId.GetValueOrDefault(board.Id, []);
+                                bool boardTitleVisible = board.IsTitleVisibleToOwner(loggedInAccount);
 
                                 <tr>
                                     <td>@Localizer["Private Note"]</td>
-                                    @if (board.Locked)
-                                    {
-                                        @if (loggedInAccount.IsOwner(board.Writer))@*If the visitor is the author*@
+                                    <td>
+                                        @if (board.Locked)
                                         {
-                                            <td><i class="fa fa-lock-open" aria-hidden="true"></i> @Html!.ActionLink($"{board.Title} [{commentsOfUndeletedSelectedBoardCount}]", "PrivateNote", new {method = "detail", boardId = board.Id, page = Model.Pager!.CurrentPage})</td>
+                                            <i class="fa @(boardTitleVisible ? "fa-lock-open" : "fa-lock")" aria-hidden="true"></i>
+                                        }
+                                        @if (boardTitleVisible)
+                                        {
+                                            <text>@Html!.ActionLink($"{board.Title} [{commentsOfUndeletedSelectedBoardCount}]", "PrivateNote", new {method = "detail", boardId = board.Id, page = Model.Pager!.CurrentPage})</text>
                                         }
                                         else
                                         {
-                                            <td><i class="fa fa-lock" aria-hidden="true"></i> @Localizer["Only a writer can see it."].Value</td>
+                                            <text>@Localizer["Only a writer can see it."].Value</text>
                                         }
-                                    }
-                                    else
-                                    {
-                                        <td>@Html!.ActionLink($"{board.Title} [{commentsOfUndeletedSelectedBoardCount}]", "PrivateNote", new {method = "detail", boardId = board.Id, page = Model.Pager!.CurrentPage})</td>
-                                    }
+                                    </td>
 
                                     @if (Model.AdminNicknames.Contains(board.Writer ?? "")) @*If the post was written by an admin*@
                                     {
