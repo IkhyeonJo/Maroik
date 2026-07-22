@@ -45,7 +45,7 @@
                         *@
                         <ul class="list-group list-group-unbordered mb-3">
                             <li class="list-group-item">
-                                <b>@Localizer["Create"]</b> <font class="float-right">@Model.Created.ToString("d")</font>
+                                <b>@Localizer["Create"]</b> <font class="float-right">@Model.Created.ConvertTimeByTimeZoneIanaId(Model.TimeZoneIanaId ?? "").ToString("d")</font>
                             </li>
                         </ul>
                     </div>
