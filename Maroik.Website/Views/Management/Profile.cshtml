@@ -471,23 +471,9 @@
                                                             <label asp-for="TimeZoneIanaId" class="col-sm-2 col-form-label">@Localizer["Time zone"]</label>
                                                             <div class="col-sm-10">
                                                                 <select asp-for="TimeZoneIanaId" class="form-control" style="max-width:100%;text-overflow:ellipsis;">
-                                                                    @foreach (TimeZoneInfo systemTimeZone in TimeZoneInfo.GetSystemTimeZones())
+                                                                    @foreach (var timeZoneOption in (IEnumerable<TimeZoneOptionDto>)ViewBag.TimeZoneOptions)
                                                                     {
-                                                                        string systemTimeZoneIanaId = string.Empty;
-
-                                                                        if (systemTimeZone.HasIanaId)
-                                                                        {
-                                                                            systemTimeZoneIanaId = systemTimeZone.Id;  // no conversion necessary
-                                                                        }
-                                                                        else if (TimeZoneInfo.TryConvertWindowsIdToIanaId(systemTimeZone.Id, out string? ianaId))
-                                                                        {
-                                                                            systemTimeZoneIanaId = ianaId;  // use the converted ID
-                                                                        }
-
-                                                                        if (string.IsNullOrEmpty(systemTimeZoneIanaId))
-                                                                            continue;
-
-                                                                        <option value="@systemTimeZoneIanaId">@systemTimeZone.DisplayName</option>
+                                                                        <option value="@timeZoneOption.IanaId">@timeZoneOption.DisplayName</option>
                                                                     }
                                                                 </select>
                                                                 <span class="text-danger"></span>

@@ -229,15 +229,7 @@
                                 <select id="createExpenditurePaymentMethod" name="createExpenditurePaymentMethod" class="form-control form-control-sm" style="max-width:100%;text-overflow:ellipsis;">
                                     @foreach (var item in assets)
                                     {
-                                        if (assets.First() == item)
-                                        {
-                                            <option value="@item.ProductName" selected="selected">@item.ProductName</option>
-                                        }
-                                        else
-                                        {
-                                            <option value="@item.ProductName">@item.ProductName</option>
-
-                                        }
+                                        <option value="@item.ProductName" selected="@(item.ProductName == Model.DefaultAssetProductName ? "selected" : null)">@item.ProductName</option>
                                     }
                                 </select>
                             </div>

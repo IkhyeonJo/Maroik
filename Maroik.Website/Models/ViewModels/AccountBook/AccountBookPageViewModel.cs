@@ -12,6 +12,9 @@ public class AccountBookPageViewModel
     /// <summary>Active (non-deleted) assets belonging to the logged-in user, used to populate the asset-selection dropdowns.</summary>
     public List<AssetResponse> Assets { get; set; } = [];
 
+    /// <summary>Product name of the asset that should be pre-selected in the asset-selection dropdowns.</summary>
+    public string? DefaultAssetProductName => Assets.FirstOrDefault()?.ProductName;
+
     /// <summary>Today's date string (date-picker format) in the user's local time zone.</summary>
     public string CurrentDate { get; set; } = "";
 

@@ -220,37 +220,9 @@
                         <div class="form-row">
                             <label for="createCalendarTimeZone">@Localizer["TimeZone"].Value</label>
                             <select id="createCalendarTimeZone" name="createCalendarTimeZone" class="form-control form-control-sm" style="max-width:100%;text-overflow:ellipsis;">
-                                @foreach (TimeZoneInfo systemTimeZone in TimeZoneInfo.GetSystemTimeZones())
+                                @foreach (var timeZoneOption in (IEnumerable<TimeZoneOptionDto>)ViewBag.TimeZoneOptions)
                                 {
-                                    string systemTimeZoneIanaId = string.Empty;
-
-                                    if (systemTimeZone.HasIanaId)
-                                    {
-                                        systemTimeZoneIanaId = systemTimeZone.Id;  // no conversion necessary
-                                    }
-                                    else if (TimeZoneInfo.TryConvertWindowsIdToIanaId(systemTimeZone.Id, out string? ianaId))
-                                    {
-                                        systemTimeZoneIanaId = ianaId;  // use the converted ID
-                                    }
-
-                                    if (string.IsNullOrEmpty(systemTimeZoneIanaId))
-                                        continue;
-
-                                    if (!string.IsNullOrEmpty(loggedInAccount.TimeZoneIanaId))
-                                    {
-                                        if (loggedInAccount.TimeZoneIanaId == systemTimeZoneIanaId)
-                                        {
-                                            <option value="@systemTimeZoneIanaId" selected>@systemTimeZone.DisplayName</option>
-                                        }
-                                        else
-                                        {
-                                            <option value="@systemTimeZoneIanaId">@systemTimeZone.DisplayName</option>
-                                        }
-                                    }
-                                    else
-                                    {
-                                        <option value="@systemTimeZoneIanaId">@systemTimeZone.DisplayName</option>
-                                    }
+                                    <option value="@timeZoneOption.IanaId" selected="@(timeZoneOption.IanaId == loggedInAccount.TimeZoneIanaId ? "selected" : null)">@timeZoneOption.DisplayName</option>
                                 }
                             </select>
                             <br />
@@ -306,37 +278,9 @@
                         <div class="form-row">
                             <label for="editCalendarTimeZone">@Localizer["TimeZone"].Value</label>
                             <select id="editCalendarTimeZone" name="editCalendarTimeZone" class="form-control form-control-sm" style="max-width:100%;text-overflow:ellipsis;">
-                                @foreach (TimeZoneInfo systemTimeZone in TimeZoneInfo.GetSystemTimeZones())
+                                @foreach (var timeZoneOption in (IEnumerable<TimeZoneOptionDto>)ViewBag.TimeZoneOptions)
                                 {
-                                    string systemTimeZoneIanaId = string.Empty;
-
-                                    if (systemTimeZone.HasIanaId)
-                                    {
-                                        systemTimeZoneIanaId = systemTimeZone.Id;  // no conversion necessary
-                                    }
-                                    else if (TimeZoneInfo.TryConvertWindowsIdToIanaId(systemTimeZone.Id, out string? ianaId))
-                                    {
-                                        systemTimeZoneIanaId = ianaId;  // use the converted ID
-                                    }
-
-                                    if (string.IsNullOrEmpty(systemTimeZoneIanaId))
-                                        continue;
-
-                                    if (!string.IsNullOrEmpty(loggedInAccount.TimeZoneIanaId))
-                                    {
-                                        if (loggedInAccount.TimeZoneIanaId == systemTimeZoneIanaId)
-                                        {
-                                            <option value="@systemTimeZoneIanaId" selected>@systemTimeZone.DisplayName</option>
-                                        }
-                                        else
-                                        {
-                                            <option value="@systemTimeZoneIanaId">@systemTimeZone.DisplayName</option>
-                                        }
-                                    }
-                                    else
-                                    {
-                                        <option value="@systemTimeZoneIanaId">@systemTimeZone.DisplayName</option>
-                                    }
+                                    <option value="@timeZoneOption.IanaId" selected="@(timeZoneOption.IanaId == loggedInAccount.TimeZoneIanaId ? "selected" : null)">@timeZoneOption.DisplayName</option>
                                 }
                             </select>
                         </div>
@@ -473,46 +417,18 @@
                                 <div class="form-group col-md-6 mb-3">
                                     <label for="createCalendarEventAllDayUncheckedStartTimeZone">@Localizer["StartTimeZone"].Value</label>
                                     <select id="createCalendarEventAllDayUncheckedStartTimeZone" name="createCalendarEventAllDayUncheckedStartTimeZone" class="form-control form-control-sm" style="max-width:100%;text-overflow:ellipsis;">
-                                        @foreach (TimeZoneInfo systemTimeZone in TimeZoneInfo.GetSystemTimeZones())
+                                        @foreach (var timeZoneOption in (IEnumerable<TimeZoneOptionDto>)ViewBag.TimeZoneOptions)
                                         {
-                                            string systemTimeZoneIanaId = string.Empty;
-
-                                            if (systemTimeZone.HasIanaId)
-                                            {
-                                                systemTimeZoneIanaId = systemTimeZone.Id;  // no conversion necessary
-                                            }
-                                            else if (TimeZoneInfo.TryConvertWindowsIdToIanaId(systemTimeZone.Id, out string? ianaId))
-                                            {
-                                                systemTimeZoneIanaId = ianaId;  // use the converted ID
-                                            }
-
-                                            if (string.IsNullOrEmpty(systemTimeZoneIanaId))
-                                                continue;
-
-                                            <option value="@systemTimeZoneIanaId">@systemTimeZone.DisplayName</option>
+                                            <option value="@timeZoneOption.IanaId">@timeZoneOption.DisplayName</option>
                                         }
                                     </select>
                                 </div>
                                 <div class="form-group col-md-6 mb-3">
                                     <label for="createCalendarEventAllDayUncheckedEndTimeZone">@Localizer["EndTimeZone"].Value</label>
                                     <select id="createCalendarEventAllDayUncheckedEndTimeZone" name="createCalendarEventAllDayUncheckedEndTimeZone" class="form-control form-control-sm" style="max-width:100%;text-overflow:ellipsis;">
-                                        @foreach (TimeZoneInfo systemTimeZone in TimeZoneInfo.GetSystemTimeZones())
+                                        @foreach (var timeZoneOption in (IEnumerable<TimeZoneOptionDto>)ViewBag.TimeZoneOptions)
                                         {
-                                            string systemTimeZoneIanaId = string.Empty;
-
-                                            if (systemTimeZone.HasIanaId)
-                                            {
-                                                systemTimeZoneIanaId = systemTimeZone.Id;  // no conversion necessary
-                                            }
-                                            else if (TimeZoneInfo.TryConvertWindowsIdToIanaId(systemTimeZone.Id, out string? ianaId))
-                                            {
-                                                systemTimeZoneIanaId = ianaId;  // use the converted ID
-                                            }
-
-                                            if (string.IsNullOrEmpty(systemTimeZoneIanaId))
-                                                continue;
-
-                                            <option value="@systemTimeZoneIanaId">@systemTimeZone.DisplayName</option>
+                                            <option value="@timeZoneOption.IanaId">@timeZoneOption.DisplayName</option>
                                         }
                                     </select>
                                 </div>
@@ -747,46 +663,18 @@
                                 <div class="form-group col-md-6 mb-3">
                                     <label for="editCalendarEventAllDayUncheckedStartTimeZone">@Localizer["StartTimeZone"].Value</label>
                                     <select id="editCalendarEventAllDayUncheckedStartTimeZone" name="editCalendarEventAllDayUncheckedStartTimeZone" class="form-control form-control-sm" style="max-width:100%;text-overflow:ellipsis;">
-                                        @foreach (TimeZoneInfo systemTimeZone in TimeZoneInfo.GetSystemTimeZones())
+                                        @foreach (var timeZoneOption in (IEnumerable<TimeZoneOptionDto>)ViewBag.TimeZoneOptions)
                                         {
-                                            string systemTimeZoneIanaId = string.Empty;
-
-                                            if (systemTimeZone.HasIanaId)
-                                            {
-                                                systemTimeZoneIanaId = systemTimeZone.Id;  // no conversion necessary
-                                            }
-                                            else if (TimeZoneInfo.TryConvertWindowsIdToIanaId(systemTimeZone.Id, out string? ianaId))
-                                            {
-                                                systemTimeZoneIanaId = ianaId;  // use the converted ID
-                                            }
-
-                                            if (string.IsNullOrEmpty(systemTimeZoneIanaId))
-                                                continue;
-
-                                            <option value="@systemTimeZoneIanaId">@systemTimeZone.DisplayName</option>
+                                            <option value="@timeZoneOption.IanaId">@timeZoneOption.DisplayName</option>
                                         }
                                     </select>
                                 </div>
                                 <div class="form-group col-md-6 mb-3">
                                     <label for="editCalendarEventAllDayUncheckedEndTimeZone">@Localizer["EndTimeZone"].Value</label>
                                     <select id="editCalendarEventAllDayUncheckedEndTimeZone" name="editCalendarEventAllDayUncheckedEndTimeZone" class="form-control form-control-sm" style="max-width:100%;text-overflow:ellipsis;">
-                                        @foreach (TimeZoneInfo systemTimeZone in TimeZoneInfo.GetSystemTimeZones())
+                                        @foreach (var timeZoneOption in (IEnumerable<TimeZoneOptionDto>)ViewBag.TimeZoneOptions)
                                         {
-                                            string systemTimeZoneIanaId = string.Empty;
-
-                                            if (systemTimeZone.HasIanaId)
-                                            {
-                                                systemTimeZoneIanaId = systemTimeZone.Id;  // no conversion necessary
-                                            }
-                                            else if (TimeZoneInfo.TryConvertWindowsIdToIanaId(systemTimeZone.Id, out string? ianaId))
-                                            {
-                                                systemTimeZoneIanaId = ianaId;  // use the converted ID
-                                            }
-
-                                            if (string.IsNullOrEmpty(systemTimeZoneIanaId))
-                                                continue;
-
-                                            <option value="@systemTimeZoneIanaId">@systemTimeZone.DisplayName</option>
+                                            <option value="@timeZoneOption.IanaId">@timeZoneOption.DisplayName</option>
                                         }
                                     </select>
                                 </div>
@@ -1032,46 +920,18 @@
                                 <div class="form-group col-md-6 mb-3">
                                     <label for="viewCalendarEventAllDayUncheckedStartTimeZone">@Localizer["StartTimeZone"].Value</label>
                                     <select id="viewCalendarEventAllDayUncheckedStartTimeZone" name="viewCalendarEventAllDayUncheckedStartTimeZone" class="form-control form-control-sm" style="max-width:100%;text-overflow:ellipsis;" disabled>
-                                        @foreach (TimeZoneInfo systemTimeZone in TimeZoneInfo.GetSystemTimeZones())
+                                        @foreach (var timeZoneOption in (IEnumerable<TimeZoneOptionDto>)ViewBag.TimeZoneOptions)
                                         {
-                                            string systemTimeZoneIanaId = string.Empty;
-
-                                            if (systemTimeZone.HasIanaId)
-                                            {
-                                                systemTimeZoneIanaId = systemTimeZone.Id;  // no conversion necessary
-                                            }
-                                            else if (TimeZoneInfo.TryConvertWindowsIdToIanaId(systemTimeZone.Id, out string? ianaId))
-                                            {
-                                                systemTimeZoneIanaId = ianaId;  // use the converted ID
-                                            }
-
-                                            if (string.IsNullOrEmpty(systemTimeZoneIanaId))
-                                                continue;
-
-                                            <option value="@systemTimeZoneIanaId">@systemTimeZone.DisplayName</option>
+                                            <option value="@timeZoneOption.IanaId">@timeZoneOption.DisplayName</option>
                                         }
                                     </select>
                                 </div>
                                 <div class="form-group col-md-6 mb-3">
                                     <label for="viewCalendarEventAllDayUncheckedEndTimeZone">@Localizer["EndTimeZone"].Value</label>
                                     <select id="viewCalendarEventAllDayUncheckedEndTimeZone" name="viewCalendarEventAllDayUncheckedEndTimeZone" class="form-control form-control-sm" style="max-width:100%;text-overflow:ellipsis;" disabled>
-                                        @foreach (TimeZoneInfo systemTimeZone in TimeZoneInfo.GetSystemTimeZones())
+                                        @foreach (var timeZoneOption in (IEnumerable<TimeZoneOptionDto>)ViewBag.TimeZoneOptions)
                                         {
-                                            string systemTimeZoneIanaId = string.Empty;
-
-                                            if (systemTimeZone.HasIanaId)
-                                            {
-                                                systemTimeZoneIanaId = systemTimeZone.Id;  // no conversion necessary
-                                            }
-                                            else if (TimeZoneInfo.TryConvertWindowsIdToIanaId(systemTimeZone.Id, out string? ianaId))
-                                            {
-                                                systemTimeZoneIanaId = ianaId;  // use the converted ID
-                                            }
-
-                                            if (string.IsNullOrEmpty(systemTimeZoneIanaId))
-                                                continue;
-
-                                            <option value="@systemTimeZoneIanaId">@systemTimeZone.DisplayName</option>
+                                            <option value="@timeZoneOption.IanaId">@timeZoneOption.DisplayName</option>
                                         }
                                     </select>
                                 </div>

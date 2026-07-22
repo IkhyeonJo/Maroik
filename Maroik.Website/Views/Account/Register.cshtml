@@ -55,23 +55,9 @@
                                 @Localizer["Please select time zone"]
                             </option>
 
-                            @foreach(TimeZoneInfo systemTimeZone in TimeZoneInfo.GetSystemTimeZones())
+                            @foreach (var timeZoneOption in (IEnumerable<TimeZoneOptionDto>)ViewBag.TimeZoneOptions)
                             {
-                                string systemTimeZoneIanaId = string.Empty;
-
-                                if (systemTimeZone.HasIanaId)
-                                {
-                                    systemTimeZoneIanaId = systemTimeZone.Id;  // no conversion necessary
-                                }
-                                else if (TimeZoneInfo.TryConvertWindowsIdToIanaId(systemTimeZone.Id, out string? ianaId))
-                                {
-                                    systemTimeZoneIanaId = ianaId;  // use the converted ID
-                                }
-
-                                if (string.IsNullOrEmpty(systemTimeZoneIanaId))
-                                    continue;
-
-                                <option value="@systemTimeZoneIanaId">@systemTimeZone.DisplayName</option>
+                                <option value="@timeZoneOption.IanaId">@timeZoneOption.DisplayName</option>
                             }
                         </select>
                     </div>

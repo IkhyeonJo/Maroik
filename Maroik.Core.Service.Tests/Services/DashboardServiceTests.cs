@@ -308,4 +308,46 @@ public class DashboardServiceTests
             File.Delete(dockerFile);
         }
     }
+
+    /// <summary>Verifies that <c>GetServerResourceSummary</c> parses each docker container row into a typed <see cref="DockerContainerResourceDto"/>.</summary>
+    [Fact]
+    public void GetServerResourceSummary_ParsesDockerContainers_IntoTypedDtos()
+    {
+        string hostFile = Path.GetTempFileName();
+        string dockerFile = Path.GetTempFileName();
+        try
+        {
+            File.WriteAllText(hostFile, "Host CPU Information: 1%\nHost Memory Information: Memory: 1GB/2GB\nHost Disk Information: Disk: 1GB/2GB");
+            File.WriteAllText(dockerFile,
+                "Docker Resource Usage:\n" +
+                "NAME CPU% MEM USED / LIMIT\n" +
+                "web 12.3% 100MiB / 512MiB\n" +
+                "db 4.5% 1GiB / 2GiB");
+
+            var sut = CreateSut();
+            ServerResourceDto summary = sut.GetServerResourceSummary(hostFile, dockerFile);
+
+            Assert.Equal(2, summary.DockerContainerResult.Count);
+            Assert.Equal("web", summary.DockerContainerResult[0].Name);
+            Assert.Equal("12.3%", summary.DockerContainerResult[0].CpuPercent);
+            Assert.Equal("100MiB / 512MiB", summary.DockerContainerResult[0].MemUsageDisplay);
+            Assert.Equal("db", summary.DockerContainerResult[1].Name);
+        }
+        finally
+        {
+            File.Delete(hostFile);
+            File.Delete(dockerFile);
+        }
+    }
+
+    /// <summary>Verifies that <c>GetServerResourceSummary</c> returns an empty (not null) docker container list when the docker file is missing.</summary>
+    [Fact]
+    public void GetServerResourceSummary_ReturnsEmptyDockerContainerList_WhenDockerFileMissing()
+    {
+        var sut = CreateSut();
+
+        ServerResourceDto summary = sut.GetServerResourceSummary("nonexistent_host.txt", "nonexistent_docker.txt");
+
+        Assert.Empty(summary.DockerContainerResult);
+    }
 }

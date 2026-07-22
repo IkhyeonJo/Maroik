@@ -126,7 +126,8 @@ try
     builder.Services.AddApplicationServices();
     builder.Services
         .AddScoped<Maroik.Website.Contracts.IExcelExportService, Maroik.Website.Services.ExcelExportService>()
-        .AddScoped<Maroik.Website.Contracts.ISessionService, Maroik.Website.Services.SessionService>();
+        .AddScoped<Maroik.Website.Contracts.ISessionService, Maroik.Website.Services.SessionService>()
+        .AddSingleton<Maroik.Website.Contracts.ITimeZoneCatalogService, Maroik.Website.Services.TimeZoneCatalogService>();
 
     #endregion
 

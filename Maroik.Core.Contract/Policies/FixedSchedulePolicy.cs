@@ -41,4 +41,11 @@ public static class FixedSchedulePolicy
     /// </summary>
     public static bool IsExpired(DateTime maturityDate, DateTime today)
         => (maturityDate - today).TotalDays < 0;
+
+    /// <summary>
+    /// Returns the notice-grid row CSS class for a schedule, prioritizing
+    /// <paramref name="expired"/> over <paramref name="noticed"/> over the default state.
+    /// </summary>
+    public static string GetRowCssClass(bool expired, bool noticed) =>
+        expired ? "table-danger clsGridRow" : noticed ? "table-info clsGridRow" : "table-inactive clsGridRow";
 }

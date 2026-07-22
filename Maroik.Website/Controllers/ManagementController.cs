@@ -1136,7 +1136,9 @@ public class ManagementController : Controller
                         BoardAttachedFileExtension = attachedFile?.Extension ?? "",
                         BoardAttachedFileSize = attachedFile?.Size ?? 0,
                         BoardAttachedFilePath = attachedFile?.Path ?? "",
-                        IsImgTagIncluded = isImgTagIncluded
+                        IsImgTagIncluded = isImgTagIncluded,
+                        CanModify = loggedInAccount.IsOwner(privateNoteBoard.Writer),
+                        CanDelete = loggedInAccount.IsOwnerOrAdmin(privateNoteBoard.Writer)
                     };
 
                 if (!string.IsNullOrEmpty(privateNoteOutputViewModel?.BoardOutputViewModel?.BoardAttachedFilePath ?? ""))
@@ -1154,6 +1156,7 @@ public class ManagementController : Controller
                     // Preload comments and accounts for detail view
                     privateNoteOutputViewModel!.DetailBoardComments = (await _boardService.GetCommentsByBoardIdAsync(boardId ?? 0, HttpContext.RequestAborted))?.ToList() ?? [];
                     privateNoteOutputViewModel.AllAccounts = await _accountService.GetAllAccountsAsync(HttpContext.RequestAborted) ?? [];
+                    privateNoteOutputViewModel.AdminNicknames = privateNoteOutputViewModel.AllAccounts.ToAdminNicknameSet();
                     privateNoteOutputViewModel.LoggedInAccount = loggedInAccount;
                     privateNoteOutputViewModel.LoggedInAccountTimeZoneIanaId = loggedInAccount?.TimeZoneIanaId ?? "";
 
@@ -1327,6 +1330,7 @@ public class ManagementController : Controller
             privateNoteOutputViewModel.LoggedInAccount = loggedInAccount;
             privateNoteOutputViewModel.LoggedInAccountTimeZoneIanaId = loggedInAccount?.TimeZoneIanaId ?? "";
             privateNoteOutputViewModel.AllAccounts = await _accountService.GetAllAccountsAsync(HttpContext.RequestAborted) ?? [];
+            privateNoteOutputViewModel.AdminNicknames = privateNoteOutputViewModel.AllAccounts.ToAdminNicknameSet();
 
             List<long> boardIds = privateNoteOutputViewModel.Boards.Select(b => b.Id).ToList();
             Dictionary<long, int> commentCounts = await _boardService.GetCommentCountsForBoardsAsync(boardIds, HttpContext.RequestAborted);

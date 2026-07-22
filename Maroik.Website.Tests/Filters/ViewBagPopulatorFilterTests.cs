@@ -27,6 +27,7 @@ public class ViewBagPopulatorFilterTests
 {
     private readonly Mock<IAccountService> _accountService = new();
     private readonly Mock<IDashboardService> _dashboardService = new();
+    private readonly Mock<ITimeZoneCatalogService> _timeZoneCatalogService = new();
     private readonly Mock<ISessionService> _sessionService = new();
     private readonly IOptions<ServerSetting> _serverSettings = Options.Create(new ServerSetting
     {
@@ -36,11 +37,13 @@ public class ViewBagPopulatorFilterTests
     });
 
     private ViewBagPopulatorFilter CreateSut() =>
-        new(_accountService.Object, _dashboardService.Object, _serverSettings, _sessionService.Object);
+        new(_accountService.Object, _dashboardService.Object, _timeZoneCatalogService.Object, _serverSettings, _sessionService.Object);
 
     private static (ActionExecutingContext context, Controller controller) BuildContext(
         string path = "/Test/Index",
-        string? cultureName = null)
+        string? cultureName = null,
+        string? controllerName = null,
+        string? actionName = null)
     {
         var services = new ServiceCollection();
         services.AddLogging();
@@ -58,7 +61,14 @@ public class ViewBagPopulatorFilterTests
         }
 
         var controller = new FakeController();
-        var actionDescriptor = new ControllerActionDescriptor();
+        var actionDescriptor = new ControllerActionDescriptor
+        {
+            RouteValues = new Dictionary<string, string?>
+            {
+                ["controller"] = controllerName,
+                ["action"] = actionName
+            }
+        };
         controller.ControllerContext = new ControllerContext
         {
             HttpContext = httpContext,
@@ -225,6 +235,106 @@ public class ViewBagPopulatorFilterTests
         await CreateSut().OnActionExecutionAsync(context, EmptyNext());
 
         Assert.Equal("/Forum/FreeForum", controller.ViewBag.ReturnUri);
+    }
+
+    // -- TimeZone options & notice total ---------------------------------------
+
+    /// <summary>Verifies that <c>ViewBag.TimeZoneOptions</c> is populated from the time zone catalog service.</summary>
+    [Fact]
+    public async Task OnActionExecutionAsync_SetsTimeZoneOptions_FromCatalogService()
+    {
+        var options = new List<TimeZoneOptionDto> { new() { IanaId = "Asia/Seoul", DisplayName = "Seoul" } };
+        _timeZoneCatalogService.Setup(t => t.GetTimeZoneOptions()).Returns(options);
+        _sessionService.Setup(s => s.GetAccount()).Returns((AccountResponse?)null);
+        var (context, controller) = BuildContext();
+
+        await CreateSut().OnActionExecutionAsync(context, EmptyNext());
+
+        Assert.Same(options, controller.ViewBag.TimeZoneOptions);
+    }
+
+    /// <summary>Verifies that <c>ViewBag.TotalNoticeCount</c> is the sum of all four individual notice counts.</summary>
+    [Fact]
+    public async Task OnActionExecutionAsync_SetsTotalNoticeCount_AsSumOfIndividualCounts()
+    {
+        var sessionAccount = new AccountResponse { Email = "user@test.com", Role = Role.User };
+        var dbAccount = new AccountResponse { Email = "user@test.com", Role = Role.User };
+
+        _sessionService.Setup(s => s.GetAccount()).Returns(sessionAccount);
+        _accountService
+            .Setup(a => a.GetAccountByEmailAsync("user@test.com", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(dbAccount);
+        _dashboardService
+            .Setup(d => d.GetNoticeCountsAsync("user@test.com", 7, It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new NotificationDto { FixedIncomesNoticed = 2, FixedExpendituresNoticed = 3, FixedIncomesExpired = 1, FixedExpendituresExpired = 4 });
+
+        var (context, controller) = BuildContext();
+
+        await CreateSut().OnActionExecutionAsync(context, EmptyNext());
+
+        Assert.Equal(10, controller.ViewBag.TotalNoticeCount);
+    }
+
+    // -- Active menu resolution -------------------------------------------------
+
+    /// <summary>Verifies that ViewBag.ActiveCategory/ActiveSubCategory are resolved from the role-appropriate
+    /// categories that AuthorizationFilter (running earlier in the pipeline) already published to ViewBag.</summary>
+    [Fact]
+    public async Task OnActionExecutionAsync_SetsActiveCategory_FromRolePublishedCategories()
+    {
+        var sessionAccount = new AccountResponse { Email = "user@test.com", Role = Role.User };
+        var dbAccount = new AccountResponse { Email = "user@test.com", Role = Role.User };
+        _sessionService.Setup(s => s.GetAccount()).Returns(sessionAccount);
+        _accountService.Setup(a => a.GetAccountByEmailAsync("user@test.com", It.IsAny<CancellationToken>())).ReturnsAsync(dbAccount);
+
+        var (context, controller) = BuildContext(controllerName: "AccountBook", actionName: "Income");
+        // Simulate AuthorizationFilter, which runs earlier in the pipeline, having already published these.
+        controller.ViewBag.UserCategories = new List<CategoryResponse>
+        {
+            new() { Id = 1, DisplayName = "AccountBook", Controller = "AccountBook", Action = "Income" }
+        };
+        controller.ViewBag.UserSubCategories = new List<SubCategoryResponse>();
+
+        await CreateSut().OnActionExecutionAsync(context, EmptyNext());
+
+        CategoryResponse activeCategory = controller.ViewBag.ActiveCategory;
+        Assert.Equal(1, activeCategory.Id);
+        Assert.Null(controller.ViewBag.ActiveSubCategory);
+    }
+
+    /// <summary>Verifies that ViewBag.ActiveCategory is left unset when the current route matches no published category.</summary>
+    [Fact]
+    public async Task OnActionExecutionAsync_LeavesActiveCategoryUnset_WhenNoRouteMatch()
+    {
+        var sessionAccount = new AccountResponse { Email = "user@test.com", Role = Role.User };
+        var dbAccount = new AccountResponse { Email = "user@test.com", Role = Role.User };
+        _sessionService.Setup(s => s.GetAccount()).Returns(sessionAccount);
+        _accountService.Setup(a => a.GetAccountByEmailAsync("user@test.com", It.IsAny<CancellationToken>())).ReturnsAsync(dbAccount);
+
+        var (context, controller) = BuildContext(controllerName: "Forum", actionName: "FreeForum");
+        controller.ViewBag.UserCategories = new List<CategoryResponse>
+        {
+            new() { Id = 1, DisplayName = "AccountBook", Controller = "AccountBook", Action = "Income" }
+        };
+        controller.ViewBag.UserSubCategories = new List<SubCategoryResponse>();
+
+        await CreateSut().OnActionExecutionAsync(context, EmptyNext());
+
+        Assert.Null(controller.ViewBag.ActiveCategory);
+    }
+
+    /// <summary>Verifies that a missing role-category ViewBag entry (e.g. AuthorizationFilter did not run) does not throw.</summary>
+    [Fact]
+    public async Task OnActionExecutionAsync_DoesNotThrow_WhenRoleCategoriesNotPublished()
+    {
+        _sessionService.Setup(s => s.GetAccount()).Returns((AccountResponse?)null);
+        var (context, controller) = BuildContext(controllerName: "Dashboard", actionName: "AnonymousIndex");
+        // Deliberately do not set controller.ViewBag.AnonymousCategories/AnonymousSubCategories.
+
+        var ex = await Record.ExceptionAsync(() => CreateSut().OnActionExecutionAsync(context, EmptyNext()));
+
+        Assert.Null(ex);
+        Assert.Null(controller.ViewBag.ActiveCategory);
     }
 
     // -- Resilience -----------------------------------------------------------

@@ -1,17 +1,33 @@
-﻿@*
+@*
     Shared/_MainLeftSideBar.cshtml
     AdminLTE left sidebar partial rendered once per page via _Layout.
     Model: AccountResponse of the logged-in user.
     Renders the brand logo (links to the role-appropriate dashboard) and the dynamic navigation menu.
-    Menu items are loaded from ViewBag.{Role}Categories / ViewBag.{Role}SubCategories,
-    sorted by Order, and matched against the current controller/action to apply the active highlight.
-    Uses a Razor "goto Finish" jump label to break out of nested foreach loops once the active item is found.
+    Menu items come from ViewBag.{Role}Categories / ViewBag.{Role}SubCategories, resolved into a
+    sorted, active-flagged tree by MenuNavigationMapper.ToSidebarMenu (shared with _BodyPageHeader
+    and the matching logic in AuthorizationFilter) — this partial only renders the result.
 *@
+@using Maroik.Website.Mappings
 @model Maroik.Core.Contract.Dtos.AccountResponse
 
 @{
     var currentControllerName = ViewContext.RouteData.Values["Controller"]?.ToString() ?? string.Empty;
     var currentActionName = ViewContext.RouteData.Values["Action"]?.ToString() ?? string.Empty;
+
+    var roleCategories = Model.Role switch
+    {
+        Role.Admin => (IEnumerable<CategoryResponse>)ViewBag.AdminCategories,
+        Role.User => (IEnumerable<CategoryResponse>)ViewBag.UserCategories,
+        _ => (IEnumerable<CategoryResponse>)ViewBag.AnonymousCategories
+    };
+    var roleSubCategories = Model.Role switch
+    {
+        Role.Admin => (IEnumerable<SubCategoryResponse>)ViewBag.AdminSubCategories,
+        Role.User => (IEnumerable<SubCategoryResponse>)ViewBag.UserSubCategories,
+        _ => (IEnumerable<SubCategoryResponse>)ViewBag.AnonymousSubCategories
+    };
+
+    var sidebarMenu = roleCategories.ToSidebarMenu(roleSubCategories, currentControllerName, currentActionName);
 }
 
 <aside class="main-sidebar sidebar-dark-primary elevation-4">
@@ -40,62 +56,7 @@
 
     @*<!-- Sidebar -->*@
     <div class="sidebar">
-        @*<!-- Sidebar user panel (optional) -->*@
-        @*
-        <div class="user-panel mt-3 pb-3 mb-3 d-flex">
-            <div class="image">
-                @if (Model.Role == Role.Admin)
-                {
-                    <img src="@Model.AvatarImagePath" class="img-circle elevation-2" alt="User Image">
-                }
-                else if (Model.Role == Role.User)
-                {
-                    <img src="@Model.AvatarImagePath" class="img-circle elevation-2" alt="User Image">
-                }
-                else if (Model.Role == Role.Anonymous)
-                {
-                    <img src="@Model.AvatarImagePath" class="img-circle elevation-2" alt="User Image">
-                }
-                else
-                {
-
-                }
-            </div>
-            <div class="info">
-                @if (Model.Role == Role.Admin)
-                {
-                    <a href="#" class="d-block">@Model.Nickname</a>
-                }
-                else if (Model.Role == Role.User)
-                {
-                    <a href="#" class="d-block">@Model.Nickname</a>
-                }
-                else if (Model.Role == Role.Anonymous)
-                {
-                    <a href="#" class="d-block">@Model.Nickname</a>
-                }
-                else
-                {
-
-                }
-            </div>
-        </div>
-        *@
-
         @*<!-- SidebarSearch Form -->*@
-
-        @*
-        <div class="form-inline">
-        <div class="input-group" data-widget="sidebar-search">
-        <input class="form-control form-control-sidebar" type="search" placeholder="Search" aria-label="Search">
-        <div class="input-group-append">
-        <button class="btn btn-sidebar">
-        <i class="fas fa-search fa-fw"></i>
-        </button>
-        </div>
-        </div>
-        </div>
-        *@
 
         @*<!-- Sidebar Menu -->*@
         <nav class="mt-2">
@@ -103,353 +64,42 @@
                 @*<!-- Add icons to the links using the .nav-icon class
                 with font-awesome or any other icon font library -->*@
 
-                @switch (Model.Role)
+                @foreach (var categoryItem in sidebarMenu.Categories)
                 {
-                    // If the logged-in user has Admin role
-                    case Role.Admin:
+                    if (categoryItem.SubCategories.Count == 0)
                     {
-                        var tempAdminCategories = from adminCategory in (IEnumerable<CategoryResponse>)ViewBag.AdminCategories
-                            orderby adminCategory.Order
-                            select adminCategory;
-                        var tempAdminSubCategories = ((IEnumerable<SubCategoryResponse>)ViewBag.AdminSubCategories).ToList();
-
-                        foreach (var tempAdminCategory in tempAdminCategories)
-                        {
-                            if (!string.IsNullOrEmpty(tempAdminCategory.Action)) // Single category (no subcategories)
-                            {
-                                if (tempAdminCategory.Controller == currentControllerName && tempAdminCategory.Action == currentActionName) // If this is the currently selected item
-                                {
-                                    <li class="nav-item">
-                                        <a asp-controller="@tempAdminCategory.Controller" asp-action="@tempAdminCategory.Action" class="nav-link active">
-                                            <i class="@tempAdminCategory.IconPath"></i>
-                                            <p>
-                                                @Localizer[tempAdminCategory.DisplayName!]
-                                            </p>
-                                        </a>
-                                    </li>
-                                }
-                                else // If this item is not selected
-                                {
-                                    <li class="nav-item">
-                                        <a asp-controller="@tempAdminCategory.Controller" asp-action="@tempAdminCategory.Action" class="nav-link">
-                                            <i class="@tempAdminCategory.IconPath"></i>
-                                            <p>
-                                                @Localizer[tempAdminCategory.DisplayName!]
-                                            </p>
-                                        </a>
-                                    </li>
-                                }
-                            }
-                            else 
-                            {
-                                if (string.IsNullOrEmpty(tempAdminCategory.Action)) // Multi-level category (has subcategories)
-                                {
-                                    var tempAdminSelectedSubCategories = (from tempAdminSubCategory in tempAdminSubCategories
-                                        where tempAdminCategory.Id == tempAdminSubCategory.CategoryId
-                                        orderby tempAdminSubCategory.Order
-                                        select tempAdminSubCategory).ToList();
-
-                                    var isExistSelectedSubCategoryInCategory = tempAdminSelectedSubCategories.Any(tempAdminSelectedSubCategory => tempAdminCategory.Controller == currentControllerName && tempAdminSelectedSubCategory.Action == currentActionName);
-
-                                    switch (isExistSelectedSubCategoryInCategory)
-                                    {
-                                        case true:
-                                        {
-                                            <li class="nav-item menu-open">
-                                                <a href="#" class="nav-link active">
-                                                    <i class="@tempAdminCategory.IconPath"></i>
-                                                    <p>
-                                                        @Localizer[tempAdminCategory.DisplayName!]
-                                                        <i class="right fas fa-angle-left"></i>
-                                                    </p>
-                                                </a>
-                                                <ul class="nav nav-treeview">
-                                                    @foreach (var tempAdminSelectedSubCategory in tempAdminSelectedSubCategories)
-                                                    {
-                                                        if (tempAdminSelectedSubCategory.Action == currentActionName)
-                                                        {
-                                                            <li class="nav-item">
-                                                                <a asp-controller="@tempAdminCategory.Controller" asp-action="@tempAdminSelectedSubCategory.Action" class="nav-link active">
-                                                                    <i class="@tempAdminSelectedSubCategory.IconPath"></i>
-                                                                    <p>@Localizer[tempAdminSelectedSubCategory.DisplayName!]</p>
-                                                                </a>
-                                                            </li>
-                                                        }
-                                                        else
-                                                        {
-                                                            <li class="nav-item">
-                                                                <a asp-controller="@tempAdminCategory.Controller" asp-action="@tempAdminSelectedSubCategory.Action" class="nav-link">
-                                                                    <i class="@tempAdminSelectedSubCategory.IconPath"></i>
-                                                                    <p>@Localizer[tempAdminSelectedSubCategory.DisplayName!]</p>
-                                                                </a>
-                                                            </li>
-                                                        }
-                                                    }
-                                                </ul>
-                                            </li>
-                                            break;
-                                        }
-                                        case false:
-                                        {
-                                            <li class="nav-item">
-                                                <a href="#" class="nav-link">
-                                                    <i class="@tempAdminCategory.IconPath"></i>
-                                                    <p>
-                                                        @Localizer[tempAdminCategory.DisplayName!]
-                                                        <i class="fas fa-angle-left right"></i>
-                                                    </p>
-                                                </a>
-                                                <ul class="nav nav-treeview">
-                                                    @foreach (var tempAdminSelectedSubCategory in tempAdminSelectedSubCategories)
-                                                    {
-                                                        <li class="nav-item">
-                                                            <a asp-controller="@tempAdminCategory.Controller" asp-action="@tempAdminSelectedSubCategory.Action" class="nav-link">
-                                                                <i class="@tempAdminSelectedSubCategory.IconPath"></i>
-                                                                <p>@Localizer[tempAdminSelectedSubCategory.DisplayName!]</p>
-                                                            </a>
-                                                        </li>
-                                                    }
-                                                </ul>
-                                            </li>
-                                            break;
-                                        }
-                                    }
-                                }
-                            }
-                        }
-
-                        break;
+                        <li class="nav-item">
+                            <a asp-controller="@categoryItem.Category.Controller" asp-action="@categoryItem.Category.Action" class="nav-link@(categoryItem.IsActive ? " active" : "")">
+                                <i class="@categoryItem.Category.IconPath"></i>
+                                <p>
+                                    @Localizer[categoryItem.Category.DisplayName!]
+                                </p>
+                            </a>
+                        </li>
                     }
-                    // If the logged-in user has User role
-                    case Role.User:
+                    else
                     {
-                        var tempUserCategories = from userCategory in (IEnumerable<CategoryResponse>)ViewBag.UserCategories
-                            orderby userCategory.Order
-                            select userCategory;
-                        var tempUserSubCategories = ((IEnumerable<SubCategoryResponse>)ViewBag.UserSubCategories).ToList();
-
-                        foreach (var tempUserCategory in tempUserCategories)
-                        {
-                            if (!string.IsNullOrEmpty(tempUserCategory.Action)) // Single category (no subcategories)
-                            {
-                                if (tempUserCategory.Controller == currentControllerName && tempUserCategory.Action == currentActionName) // If this is the currently selected item
+                        <li class="nav-item@(categoryItem.IsActive ? " menu-open" : "")">
+                            <a href="#" class="nav-link@(categoryItem.IsActive ? " active" : "")">
+                                <i class="@categoryItem.Category.IconPath"></i>
+                                <p>
+                                    @Localizer[categoryItem.Category.DisplayName!]
+                                    <i class="right fas fa-angle-left"></i>
+                                </p>
+                            </a>
+                            <ul class="nav nav-treeview">
+                                @foreach (var subCategoryItem in categoryItem.SubCategories)
                                 {
                                     <li class="nav-item">
-                                        <a asp-controller="@tempUserCategory.Controller" asp-action="@tempUserCategory.Action" class="nav-link active">
-                                            <i class="@tempUserCategory.IconPath"></i>
-                                            <p>
-                                                @Localizer[tempUserCategory.DisplayName!]
-                                            </p>
+                                        <a asp-controller="@categoryItem.Category.Controller" asp-action="@subCategoryItem.SubCategory.Action" class="nav-link@(subCategoryItem.IsActive ? " active" : "")">
+                                            <i class="@subCategoryItem.SubCategory.IconPath"></i>
+                                            <p>@Localizer[subCategoryItem.SubCategory.DisplayName!]</p>
                                         </a>
                                     </li>
                                 }
-                                else // If this item is not selected
-                                {
-                                    <li class="nav-item">
-                                        <a asp-controller="@tempUserCategory.Controller" asp-action="@tempUserCategory.Action" class="nav-link">
-                                            <i class="@tempUserCategory.IconPath"></i>
-                                            <p>
-                                                @Localizer[tempUserCategory.DisplayName!]
-                                            </p>
-                                        </a>
-                                    </li>
-                                }
-                            }
-                            else 
-                            {
-                                if (string.IsNullOrEmpty(tempUserCategory.Action)) // Multi-level category (has subcategories)
-                                {
-                                    var tempUserSelectedSubCategories = (from tempUserSubCategory in tempUserSubCategories
-                                        where tempUserCategory.Id == tempUserSubCategory.CategoryId
-                                        orderby tempUserSubCategory.Order
-                                        select tempUserSubCategory).ToList();
-
-                                    var isExistSelectedSubCategoryInCategory = tempUserSelectedSubCategories.Any(tempUserSelectedSubCategory => tempUserCategory.Controller == currentControllerName && tempUserSelectedSubCategory.Action == currentActionName);
-
-                                    switch (isExistSelectedSubCategoryInCategory)
-                                    {
-                                        case true:
-                                        {
-                                            <li class="nav-item menu-open">
-                                                <a href="#" class="nav-link active">
-                                                    <i class="@tempUserCategory.IconPath"></i>
-                                                    <p>
-                                                        @Localizer[tempUserCategory.DisplayName!]
-                                                        <i class="right fas fa-angle-left"></i>
-                                                    </p>
-                                                </a>
-                                                <ul class="nav nav-treeview">
-                                                    @foreach (var tempUserSelectedSubCategory in tempUserSelectedSubCategories)
-                                                    {
-                                                        if (tempUserSelectedSubCategory.Action == currentActionName)
-                                                        {
-                                                            <li class="nav-item">
-                                                                <a asp-controller="@tempUserCategory.Controller" asp-action="@tempUserSelectedSubCategory.Action" class="nav-link active">
-                                                                    <i class="@tempUserSelectedSubCategory.IconPath"></i>
-                                                                    <p>@Localizer[tempUserSelectedSubCategory.DisplayName!]</p>
-                                                                </a>
-                                                            </li>
-                                                        }
-                                                        else
-                                                        {
-                                                            <li class="nav-item">
-                                                                <a asp-controller="@tempUserCategory.Controller" asp-action="@tempUserSelectedSubCategory.Action" class="nav-link">
-                                                                    <i class="@tempUserSelectedSubCategory.IconPath"></i>
-                                                                    <p>@Localizer[tempUserSelectedSubCategory.DisplayName!]</p>
-                                                                </a>
-                                                            </li>
-                                                        }
-                                                    }
-                                                </ul>
-                                            </li>
-                                            break;
-                                        }
-                                        case false:
-                                        {
-                                            <li class="nav-item">
-                                                <a href="#" class="nav-link">
-                                                    <i class="@tempUserCategory.IconPath"></i>
-                                                    <p>
-                                                        @Localizer[tempUserCategory.DisplayName!]
-                                                        <i class="fas fa-angle-left right"></i>
-                                                    </p>
-                                                </a>
-                                                <ul class="nav nav-treeview">
-                                                    @foreach (SubCategoryResponse tempUserSelectedSubCategory in tempUserSelectedSubCategories)
-                                                    {
-                                                        <li class="nav-item">
-                                                            <a asp-controller="@tempUserCategory.Controller" asp-action="@tempUserSelectedSubCategory.Action" class="nav-link">
-                                                                <i class="@tempUserSelectedSubCategory.IconPath"></i>
-                                                                <p>@Localizer[tempUserSelectedSubCategory.DisplayName!]</p>
-                                                            </a>
-                                                        </li>
-                                                    }
-                                                </ul>
-                                            </li>
-                                            break;
-                                        }
-                                    }
-                                }
-                            }
-                        }
-
-                        break;
+                            </ul>
+                        </li>
                     }
-                    // If the user is not logged in (Anonymous)
-                    case Role.Anonymous:
-                    {
-                        var tempAnonymousCategories = from anonymousCategory in (IEnumerable<CategoryResponse>)ViewBag.AnonymousCategories
-                            orderby anonymousCategory.Order
-                            select anonymousCategory;
-                        var tempAnonymousSubCategories = ((IEnumerable<SubCategoryResponse>)ViewBag.AnonymousSubCategories).ToList();
-
-                        foreach (var tempAnonymousCategory in tempAnonymousCategories)
-                        {
-                            if (!string.IsNullOrEmpty(tempAnonymousCategory.Action)) // Single category (no subcategories)
-                            {
-                                if (tempAnonymousCategory.Controller == currentControllerName && tempAnonymousCategory.Action == currentActionName) // If this is the currently selected item
-                                {
-                                    <li class="nav-item">
-                                        <a asp-controller="@tempAnonymousCategory.Controller" asp-action="@tempAnonymousCategory.Action" class="nav-link active">
-                                            <i class="@tempAnonymousCategory.IconPath"></i>
-                                            <p>
-                                                @Localizer[tempAnonymousCategory.DisplayName!]
-                                            </p>
-                                        </a>
-                                    </li>
-                                }
-                                else // If this item is not selected
-                                {
-                                    <li class="nav-item">
-                                        <a asp-controller="@tempAnonymousCategory.Controller" asp-action="@tempAnonymousCategory.Action" class="nav-link">
-                                            <i class="@tempAnonymousCategory.IconPath"></i>
-                                            <p>
-                                                @Localizer[tempAnonymousCategory.DisplayName!]
-                                            </p>
-                                        </a>
-                                    </li>
-                                }
-                            }
-                            else 
-                            {
-                                if (string.IsNullOrEmpty(tempAnonymousCategory.Action)) // Multi-level category (has subcategories)
-                                {
-                                    var tempAnonymousSelectedSubCategories = (from tempAnonymousSubCategory in tempAnonymousSubCategories
-                                        where tempAnonymousCategory.Id == tempAnonymousSubCategory.CategoryId
-                                        orderby tempAnonymousSubCategory.Order
-                                        select tempAnonymousSubCategory).ToList();
-
-                                    var isExistSelectedSubCategoryInCategory = tempAnonymousSelectedSubCategories.Any(tempUserSelectedSubCategory => tempAnonymousCategory.Controller == currentControllerName && tempUserSelectedSubCategory.Action == currentActionName);
-
-                                    switch (isExistSelectedSubCategoryInCategory)
-                                    {
-                                        case true:
-                                        {
-                                            <li class="nav-item menu-open">
-                                                <a href="#" class="nav-link active">
-                                                    <i class="@tempAnonymousCategory.IconPath"></i>
-                                                    <p>
-                                                        @Localizer[tempAnonymousCategory.DisplayName!]
-                                                        <i class="right fas fa-angle-left"></i>
-                                                    </p>
-                                                </a>
-                                                <ul class="nav nav-treeview">
-                                                    @foreach (var tempAnonymousSelectedSubCategory in tempAnonymousSelectedSubCategories)
-                                                    {
-                                                        if (tempAnonymousSelectedSubCategory.Action == currentActionName)
-                                                        {
-                                                            <li class="nav-item">
-                                                                <a asp-controller="@tempAnonymousCategory.Controller" asp-action="@tempAnonymousSelectedSubCategory.Action" class="nav-link active">
-                                                                    <i class="@tempAnonymousSelectedSubCategory.IconPath"></i>
-                                                                    <p>@Localizer[tempAnonymousSelectedSubCategory.DisplayName!]</p>
-                                                                </a>
-                                                            </li>
-                                                        }
-                                                        else
-                                                        {
-                                                            <li class="nav-item">
-                                                                <a asp-controller="@tempAnonymousCategory.Controller" asp-action="@tempAnonymousSelectedSubCategory.Action" class="nav-link">
-                                                                    <i class="@tempAnonymousSelectedSubCategory.IconPath"></i>
-                                                                    <p>@Localizer[tempAnonymousSelectedSubCategory.DisplayName!]</p>
-                                                                </a>
-                                                            </li>
-                                                        }
-                                                    }
-                                                </ul>
-                                            </li>
-                                            break;
-                                        }
-                                        case false:
-                                        {
-                                            <li class="nav-item">
-                                                <a href="#" class="nav-link">
-                                                    <i class="@tempAnonymousCategory.IconPath"></i>
-                                                    <p>
-                                                        @Localizer[tempAnonymousCategory.DisplayName!]
-                                                        <i class="fas fa-angle-left right"></i>
-                                                    </p>
-                                                </a>
-                                                <ul class="nav nav-treeview">
-                                                    @foreach (var tempAnonymousSelectedSubCategory in tempAnonymousSelectedSubCategories)
-                                                    {
-                                                        <li class="nav-item">
-                                                            <a asp-controller="@tempAnonymousCategory.Controller" asp-action="@tempAnonymousSelectedSubCategory.Action" class="nav-link">
-                                                                <i class="@tempAnonymousSelectedSubCategory.IconPath"></i>
-                                                                <p>@Localizer[tempAnonymousSelectedSubCategory.DisplayName!]</p>
-                                                            </a>
-                                                        </li>
-                                                    }
-                                                </ul>
-                                            </li>
-                                            break;
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                        break;
-                    }
-                    // Should never reach here.
                 }
             </ul>
         </nav>

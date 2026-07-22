@@ -6,6 +6,7 @@ using Maroik.Core.Contract.Interfaces;
 using Maroik.Website.Attributes;
 using Maroik.Website.Constants;
 using Maroik.Website.Contracts;
+using Maroik.Website.Mappings;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
 using Microsoft.Extensions.Caching.Distributed;
@@ -166,42 +167,14 @@ public class AuthorizationFilter : ActionFilterAttribute
                             return;
                     }
 
-                    #region If Category without SubCategory
+                    var anonymousMatch = anonymousCategories.ResolveActiveMenuItem(
+                        anonymousSubCategories, currentControllerName, currentActionName);
 
-                    var singleCategories = from anonymousCategory in anonymousCategories
-                                           where !string.IsNullOrEmpty(anonymousCategory.Action)
-                                           select anonymousCategory; // Collection of categories without sub-categories
-
-                    if (singleCategories.Any(singleCategory =>
-                            singleCategory.Controller == currentControllerName &&
-                            singleCategory.Action == currentActionName))
+                    if (anonymousMatch.IsMatch)
                     {
                         await next(); // Do Action!!
                         return;
                     }
-
-                    #endregion
-
-                    #region If Category with SubCategory
-
-                    var nonSingleCategories = from anonymousCategory in anonymousCategories
-                                              where string.IsNullOrEmpty(anonymousCategory.Action)
-                                              select anonymousCategory; // Collection of categories with sub-categories
-
-                    if ((from nonSingleCategory in nonSingleCategories
-                         let nonSingleCategoriesSubCategories = from anonymousSubCategory in anonymousSubCategories
-                                                                where anonymousSubCategory.CategoryId == nonSingleCategory.Id
-                                                                select anonymousSubCategory
-                         from nonSingleCategoriesSubCategory in nonSingleCategoriesSubCategories
-                         where nonSingleCategory.Controller == currentControllerName &&
-                               nonSingleCategoriesSubCategory.Action == currentActionName
-                         select nonSingleCategory).Any())
-                    {
-                        await next(); // Do Action!!
-                        return;
-                    }
-
-                    #endregion
 
                     //context.Result = new UnauthorizedObjectResult("User is unauthorized");
                     context.Result = new RedirectResult("/Dashboard/AnonymousIndex");
@@ -226,42 +199,14 @@ public class AuthorizationFilter : ActionFilterAttribute
                         // If logged-in user has Admin role
                         case Role.Admin:
                             {
-                                #region If Category without SubCategory
+                                var adminMatch = adminCategories.ResolveActiveMenuItem(
+                                    adminSubCategories, currentControllerName, currentActionName);
 
-                                var singleCategories = from adminCategory in adminCategories
-                                                       where !string.IsNullOrEmpty(adminCategory.Action)
-                                                       select adminCategory; // Collection of categories without sub-categories
-
-                                if (singleCategories.Any(singleCategory =>
-                                        singleCategory.Controller == currentControllerName &&
-                                        singleCategory.Action == currentActionName))
+                                if (adminMatch.IsMatch)
                                 {
                                     await next(); // Do Action!!
                                     return;
                                 }
-
-                                #endregion
-
-                                #region If Category with SubCategory
-
-                                var nonSingleCategories = from adminCategory in adminCategories
-                                                          where string.IsNullOrEmpty(adminCategory.Action)
-                                                          select adminCategory; // Collection of categories with sub-categories
-
-                                if ((from nonSingleCategory in nonSingleCategories
-                                     let nonSingleCategoriesSubCategories = from adminSubCategory in adminSubCategories
-                                                                            where adminSubCategory.CategoryId == nonSingleCategory.Id
-                                                                            select adminSubCategory
-                                     from nonSingleCategoriesSubCategory in nonSingleCategoriesSubCategories
-                                     where nonSingleCategory.Controller == currentControllerName &&
-                                           nonSingleCategoriesSubCategory.Action == currentActionName
-                                     select nonSingleCategory).Any())
-                                {
-                                    await next(); // Do Action!!
-                                    return;
-                                }
-
-                                #endregion
 
                                 //context.Result = new UnauthorizedObjectResult("User is unauthorized"); // If not found after all checks, it doesn't exist in DB
                                 context.Result = new RedirectResult("/Dashboard/AnonymousIndex");
@@ -272,42 +217,14 @@ public class AuthorizationFilter : ActionFilterAttribute
                         // If logged-in user has User role
                         case Role.User:
                             {
-                                #region If Category without SubCategory
+                                var userMatch = userCategories.ResolveActiveMenuItem(
+                                    userSubCategories, currentControllerName, currentActionName);
 
-                                var singleCategories = from userCategory in userCategories
-                                                       where !string.IsNullOrEmpty(userCategory.Action)
-                                                       select userCategory; // Collection of categories without sub-categories
-
-                                if (singleCategories.Any(singleCategory =>
-                                        singleCategory.Controller == currentControllerName &&
-                                        singleCategory.Action == currentActionName))
+                                if (userMatch.IsMatch)
                                 {
                                     await next(); // Do Action!!
                                     return;
                                 }
-
-                                #endregion
-
-                                #region If Category with SubCategory
-
-                                var nonSingleCategories = from userCategory in userCategories
-                                                          where string.IsNullOrEmpty(userCategory.Action)
-                                                          select userCategory; // Collection of categories with sub-categories
-
-                                if ((from nonSingleCategory in nonSingleCategories
-                                     let nonSingleCategoriesSubCategories = from userSubCategory in userSubCategories
-                                                                            where userSubCategory.CategoryId == nonSingleCategory.Id
-                                                                            select userSubCategory
-                                     from nonSingleCategoriesSubCategory in nonSingleCategoriesSubCategories
-                                     where nonSingleCategory.Controller == currentControllerName &&
-                                           nonSingleCategoriesSubCategory.Action == currentActionName
-                                     select nonSingleCategory).Any())
-                                {
-                                    await next(); // Do Action!!
-                                    return;
-                                }
-
-                                #endregion
 
                                 //context.Result = new UnauthorizedObjectResult("User is unauthorized"); // If not found after all checks, it doesn't exist in DB
                                 context.Result = new RedirectResult("/Dashboard/AnonymousIndex");

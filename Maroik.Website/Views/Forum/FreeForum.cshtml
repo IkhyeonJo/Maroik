@@ -64,7 +64,7 @@
                     </div>
 
                     <div class="form-group">
-                        <input type="file" id="writeUploadedFile" name="writeUploadedFile" accept=".zip" data-errorMessage="@Localizer["File size must be smaller than {0}MB.", (maxAttachedFileSizeBytes / 1048576.0).ToString("0.#")]">
+                        <input type="file" id="writeUploadedFile" name="writeUploadedFile" accept=".zip" data-errorMessage="@Localizer["File size must be smaller than {0}MB.", maxAttachedFileSizeBytes.ToMegabytesLabel()]">
                         <p class="help-block">@Localizer["Only zip extension allowed."].Value</p>
                     </div>
 
@@ -85,22 +85,9 @@
                     </h6>
                     <span class="mailbox-read-time float-left">@Localizer["Views"].Value: @Model.BoardOutputViewModel!.Views</span>
 
-                    @if (loggedInAccount.Role == Role.Admin || loggedInAccount.Role == Role.User)
-                    {
-                        <span class="mailbox-read-time float-right">
-                            @Localizer["Updated"].Value: [<span id="free_forum_detail_updated">@Model.BoardOutputViewModel.Updated.ConvertTimeByTimeZoneIanaId(loggedInAccountTimeZoneIanaId)</span>]
-                        </span>
-                    }
-                    else if (loggedInAccount.Role == Role.Anonymous)
-                    {
-                        <span class="mailbox-read-time float-right">
-                            @Localizer["Updated"].Value: [<span id="free_forum_detail_updated">@Model.BoardOutputViewModel.Updated.ToString("yyyy-MM-ddTHH:mm:ssZ")</span>]
-                        </span>
-                    }
-                    else
-                    {
-
-                    }
+                    <span class="mailbox-read-time float-right">
+                        @Localizer["Updated"].Value: [<span id="free_forum_detail_updated">@Model.BoardOutputViewModel.Updated.ToViewerFormattedString(loggedInAccount.Role, loggedInAccountTimeZoneIanaId)</span>]
+                    </span>
                     <br />
                 </div>
 
@@ -120,9 +107,7 @@
                                     <a id="aDetailBoardAttachedFile" href="#" class="mailbox-attachment-name" data-file="@Model.BoardOutputViewModel.BoardAttachedFileBase64Data" data-contenttype="@Model.BoardOutputViewModel.BoardAttachedFileContentType" data-name="@($"{Model.BoardOutputViewModel.BoardAttachedFileName}{Model.BoardOutputViewModel.BoardAttachedFileExtension}")"><i class="fas fa-paperclip"></i>@Model.BoardOutputViewModel.BoardAttachedFileName@Model.BoardOutputViewModel.BoardAttachedFileExtension</a>
                                     <span class="mailbox-attachment-size clearfix mt-1">
                                         <span>
-                                            @(
-                                                string.Format("{0:#,###0.#}", (int)(Model.BoardOutputViewModel.BoardAttachedFileSize / 1024))
-                                                )KB
+                                            @(Model.BoardOutputViewModel.BoardAttachedFileSize.ToKilobytesLabel())KB
                                         </span>
                                     </span>
                                 </div>
@@ -133,11 +118,11 @@
                 </div>
                 <div class="card-footer bg-dark">
                     <div class="float-right">
-                        @if (loggedInAccount.Nickname == Model.BoardOutputViewModel.Writer)@*If the visitor is the author*@
+                        @if (Model.BoardOutputViewModel.CanModify)
                         {
                             <button id="btnFreeForumModify" type="button" class="btn btn-primary" data-link="@Url.Action("FreeForum", "Forum", new { method = "edit", boardId = Model.DetailBoardId, page = Model.DetailCurrentPage })">@Localizer["Modify"].Value</button>
                         }
-                        @if ((loggedInAccount.Nickname == Model.BoardOutputViewModel.Writer) || loggedInAccount.Role == Role.Admin)@*If the visitor is the author or admin*@
+                        @if (Model.BoardOutputViewModel.CanDelete)
                         {
                             <button id="btnFreeForumConfirmDeleteBoard" type="button" class="btn btn-danger">@Localizer["Delete"].Value</button>
                         }
@@ -158,7 +143,7 @@
                                     <div class="comment-text">
                                         <span class="username">
 
-                                            @if (accounts.Where(m => m.Role == Role.Admin).Where(m => m.Nickname == comment.Writer).FirstOrDefault() != null)@*If the comment was written by an admin*@
+                                            @if (Model.AdminNicknames.Contains(comment.Writer ?? ""))@*If the comment was written by an admin*@
                                             {
                                                 <span style="font-weight:bold; color:green;">@comment.Writer</span>
                                             }
@@ -167,24 +152,11 @@
                                                 <span>@comment.Writer</span>
                                             }
 
-                                            @if (loggedInAccount.Role == Role.Admin || loggedInAccount.Role == Role.User)
-                                            {
-                                                <span class="text-muted float-middle">
-                                                    @Localizer["Created"].Value: [<span class="free_forum_detail_comment_created">@comment.Created.ConvertTimeByTimeZoneIanaId(loggedInAccountTimeZoneIanaId)</span>] 
-                                                </span>
-                                            }
-                                            else if (loggedInAccount.Role == Role.Anonymous)
-                                            {
-                                                <span class="text-muted float-middle">
-                                                    @Localizer["Created"].Value: [<span class="free_forum_detail_comment_created">@comment.Created.ToString("yyyy-MM-ddTHH:mm:ssZ")</span>]
-                                                </span>
-                                            }
-                                            else
-                                            {
+                                            <span class="text-muted float-middle">
+                                                @Localizer["Created"].Value: [<span class="free_forum_detail_comment_created">@comment.Created.ToViewerFormattedString(loggedInAccount.Role, loggedInAccountTimeZoneIanaId)</span>]
+                                            </span>
 
-                                            }
-
-                                            @if (loggedInAccount.Nickname == comment.Writer || loggedInAccount.Role == Role.Admin)@*If the visitor is the author or admin*@
+                                            @if (loggedInAccount.IsOwnerOrAdmin(comment.Writer))@*If the visitor is the author or admin*@
                                             {
                                                 <span class="text-muted float-right" style="margin: 0px 0px 0px 3px"><a class="hover aFreeForumDeleteComment" href="#" data-commentId="@(comment.Id)" data-detailBoardId="@(Model.DetailBoardId)" data-detailCurrentPage="@(Model.DetailCurrentPage)">@Localizer["Delete"].Value</a></span>
                                             }
@@ -201,7 +173,7 @@
                                     <div class="comment-text">
                                         <span class="username">
 
-                                            @if (accounts.Where(m => m.Role == Role.Admin).Where(m => m.Nickname == comment.Writer).FirstOrDefault() != null)@*If the comment was written by an admin*@
+                                            @if (Model.AdminNicknames.Contains(comment.Writer ?? ""))@*If the comment was written by an admin*@
                                             {
                                                 <span style="font-weight:bold; color:green;">@comment.Writer</span>
                                             }
@@ -210,24 +182,11 @@
                                                 <span>@comment.Writer</span>
                                             }
 
-                                            @if (loggedInAccount.Role == Role.Admin || loggedInAccount.Role == Role.User)
-                                            {
-                                                <span class="text-muted float-middle">
-                                                    @Localizer["Created"].Value: [<span class="free_forum_detail_comment_created">@comment.Created.ConvertTimeByTimeZoneIanaId(loggedInAccountTimeZoneIanaId)</span>]
-                                                </span>
-                                            }
-                                            else if (loggedInAccount.Role == Role.Anonymous)
-                                            {
-                                                <span class="text-muted float-middle">
-                                                    @Localizer["Created"].Value: [<span class="free_forum_detail_comment_created">@comment.Created.ToString("yyyy-MM-ddTHH:mm:ssZ")</span>]
-                                                </span>
-                                            }
-                                            else
-                                            {
+                                            <span class="text-muted float-middle">
+                                                @Localizer["Created"].Value: [<span class="free_forum_detail_comment_created">@comment.Created.ToViewerFormattedString(loggedInAccount.Role, loggedInAccountTimeZoneIanaId)</span>]
+                                            </span>
 
-                                            }
-
-                                            @if (loggedInAccount.Nickname == comment.Writer || loggedInAccount.Role == Role.Admin)@*If the visitor is the author or admin*@
+                                            @if (loggedInAccount.IsOwnerOrAdmin(comment.Writer))@*If the visitor is the author or admin*@
                                             {
                                                 <span class="text-muted float-right" style="margin: 0px 0px 0px 3px"><a class="hover aFreeForumDeleteComment" href="#" data-commentId="@(comment.Id)" data-detailBoardId="@(Model.DetailBoardId)" data-detailCurrentPage="@(Model.DetailCurrentPage)">@Localizer["Delete"].Value</a></span>
                                             }
@@ -301,9 +260,7 @@
                                         <a id="aEditBoardAttachedFile" href="#" class="mailbox-attachment-name" data-file="@Model.BoardOutputViewModel.BoardAttachedFileBase64Data" data-contenttype="@Model.BoardOutputViewModel.BoardAttachedFileContentType" data-name="@($"{Model.BoardOutputViewModel.BoardAttachedFileName}{Model.BoardOutputViewModel.BoardAttachedFileExtension}")"><i class="fas fa-paperclip"></i>@Model.BoardOutputViewModel.BoardAttachedFileName@Model.BoardOutputViewModel.BoardAttachedFileExtension</a>
                                         <span class="mailbox-attachment-size clearfix mt-1">
                                             <span>
-                                                @(
-                                                    string.Format("{0:#,###0.#}", (int)(Model.BoardOutputViewModel.BoardAttachedFileSize / 1024))
-                                                    )KB
+                                                @(Model.BoardOutputViewModel.BoardAttachedFileSize.ToKilobytesLabel())KB
                                             </span>
                                         </span>
                                     </div>
@@ -313,7 +270,7 @@
                     </div>
 
                     <div class="form-group">
-                        <input type="file" id="editUploadedFile" name="editUploadedFile" accept=".zip" data-errorMessage="@Localizer["File size must be smaller than {0}MB.", (maxAttachedFileSizeBytes / 1048576.0).ToString("0.#")]">
+                        <input type="file" id="editUploadedFile" name="editUploadedFile" accept=".zip" data-errorMessage="@Localizer["File size must be smaller than {0}MB.", maxAttachedFileSizeBytes.ToMegabytesLabel()]">
                         <p class="help-block">@Localizer["Only zip extension allowed."].Value</p>
                     </div>
 
@@ -383,7 +340,7 @@
                                     <td style="color:green;font-weight:bold;">@Localizer["Notice"]</td>
                                     @if (noticeBoard.Locked)
                                     {
-                                        @if (loggedInAccount.Nickname == noticeBoard.Writer || loggedInAccount.Role == Role.Admin)@*If the visitor is the author or admin*@
+                                        @if (loggedInAccount.IsOwnerOrAdmin(noticeBoard.Writer))@*If the visitor is the author or admin*@
                                         {
                                             <td><i class="fa fa-lock-open" aria-hidden="true"></i>@Html!.ActionLink($"{noticeBoard.Title} [{commentsOfUndeletedSelectedBoardCount}]", "FreeForum", new {method = "detail", boardId = noticeBoard.Id, page = Model.Pager!.CurrentPage}, new { style = "color: green; font-weight: bold;" })</td>
                                         }
@@ -399,19 +356,8 @@
 
                                     <td><span style="font-weight:bold; color:green;">@noticeBoard.Writer</span></td>
 
-                                    @if (loggedInAccount.Role == Role.Admin || loggedInAccount.Role == Role.User)
-                                    {
-                                        <td class="free_forum_board_created"><span style="font-weight:bold; color:green;">@noticeBoard.Created.ConvertTimeByTimeZoneIanaId(loggedInAccountTimeZoneIanaId)</span></td>
-                                    }
-                                    else if (loggedInAccount.Role == Role.Anonymous)
-                                    {
-                                        <td class="free_forum_board_created"><span style="font-weight:bold; color:green;">@noticeBoard.Created.ToString("yyyy-MM-ddTHH:mm:ssZ")</span></td>
-                                    }
-                                    else
-                                    {
-                                        
-                                    }
-                                    
+                                    <td class="free_forum_board_created"><span style="font-weight:bold; color:green;">@noticeBoard.Created.ToViewerFormattedString(loggedInAccount.Role, loggedInAccountTimeZoneIanaId)</span></td>
+
                                     <td><span style="font-weight:bold; color:green;">@noticeBoard.View</span></td>
                                     @if (boardAttachedFilesWithName.Count != 0)
                                     {
@@ -432,7 +378,7 @@
                                     <td>@Localizer["Free Forum"]</td>
                                     @if (board.Locked)
                                     {
-                                        @if (loggedInAccount.Nickname == board.Writer || loggedInAccount.Role == Role.Admin)@*If the visitor is the author or admin*@
+                                        @if (loggedInAccount.IsOwnerOrAdmin(board.Writer))@*If the visitor is the author or admin*@
                                         {
                                             <td><i class="fa fa-lock-open" aria-hidden="true"></i> @Html!.ActionLink($"{board.Title} [{commentsOfUndeletedSelectedBoardCount}]", "FreeForum", new {method = "detail", boardId = board.Id, page = Model.Pager!.CurrentPage})</td>
                                         }
@@ -446,7 +392,7 @@
                                         <td>@Html!.ActionLink($"{board.Title} [{commentsOfUndeletedSelectedBoardCount}]", "FreeForum", new {method = "detail", boardId = board.Id, page = Model.Pager!.CurrentPage})</td>
                                     }
 
-                                    @if (accounts.Where(m => m.Role == Role.Admin).Where(m => m.Nickname == board.Writer).FirstOrDefault() != null) @*If the post was written by an admin*@
+                                    @if (Model.AdminNicknames.Contains(board.Writer ?? "")) @*If the post was written by an admin*@
                                     {
                                         <td><span style="font-weight:bold; color:green;">@board.Writer</span></td>
                                     }
@@ -455,19 +401,8 @@
                                         <td><span>@board.Writer</span></td>
                                     }
 
-                                    @if (loggedInAccount.Role == Role.Admin || loggedInAccount.Role == Role.User)
-                                    {
-                                        <td class="free_forum_board_created">@board.Created.ConvertTimeByTimeZoneIanaId(loggedInAccountTimeZoneIanaId)</td>
-                                    }
-                                    else if (loggedInAccount.Role == Role.Anonymous)
-                                    {
-                                        <td class="free_forum_board_created">@board.Created.ToString("yyyy-MM-ddTHH:mm:ssZ")</td>
-                                    }
-                                    else
-                                    {
-                                        
-                                    }
-                                    
+                                    <td class="free_forum_board_created">@board.Created.ToViewerFormattedString(loggedInAccount.Role, loggedInAccountTimeZoneIanaId)</td>
+
                                     <td>@board.View</td>
                                     @if (attachedFilesWithName.Count != 0)
                                     {

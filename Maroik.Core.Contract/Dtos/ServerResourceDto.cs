@@ -25,9 +25,6 @@ public class ServerResourceDto
     /// <summary>Raw disk information string extracted from the log file.</summary>
     public string HostDiskInfo { get; init; } = string.Empty;
 
-    /// <summary>
-    /// Docker container resource rows. The first entry is always the header
-    /// <c>"Name||CPU %||MEM Usage / LIMIT"</c>; subsequent entries are pipe-delimited data rows.
-    /// </summary>
-    public List<string> DockerContainerResult { get; init; } = ["Name||CPU %||MEM Usage / LIMIT"];
+    /// <summary>Per-container resource usage rows, one entry per running Docker container.</summary>
+    public List<DockerContainerResourceDto> DockerContainerResult { get; init; } = [];
 }

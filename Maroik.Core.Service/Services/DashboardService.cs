@@ -187,7 +187,7 @@ public class DashboardService : IDashboardService
         string hostDiskInfo = ExtractSection(hostText, "Host Disk Information:");
         string dockerResourceUsage = ExtractSection(dockerText, "Docker Resource Usage:");
 
-        var dockerContainerResult = new List<string> { "Name||CPU %||MEM Usage / LIMIT" };
+        var dockerContainerResult = new List<DockerContainerResourceDto>();
         try
         {
             var lines = dockerResourceUsage.Split('\n', StringSplitOptions.RemoveEmptyEntries);
@@ -202,7 +202,14 @@ public class DashboardService : IDashboardService
                 var cols = lines[i].Split(' ', StringSplitOptions.RemoveEmptyEntries);
                 string name = cols[0];
                 if (resourceMap.TryGetValue(name, out var r))
-                    dockerContainerResult.Add($"{name}||{r[1]}||{r[2]} {r[3]} {r[4]}");
+                {
+                    dockerContainerResult.Add(new DockerContainerResourceDto
+                    {
+                        Name = name,
+                        CpuPercent = r[1],
+                        MemUsageDisplay = $"{r[2]} {r[3]} {r[4]}"
+                    });
+                }
             }
         }
         catch

@@ -1,3 +1,5 @@
+using Maroik.Core.Contract.Constants;
+
 namespace Maroik.Core.Contract.Extensions;
 
 /// <summary>
@@ -25,5 +27,15 @@ public static class DateTimeExtensions
                 return value;
             }
         }
+
+        /// <summary>
+        /// Formats a UTC timestamp for display based on the viewer's role: logged-in Admin/User viewers
+        /// see it converted to their local time zone, Anonymous viewers see the raw UTC value in
+        /// ISO-8601 ("yyyy-MM-ddTHH:mm:ssZ") form.
+        /// </summary>
+        public string ToViewerFormattedString(string? viewerRole, string timeZoneIanaId) =>
+            viewerRole is Role.Admin or Role.User
+                ? value.ConvertTimeByTimeZoneIanaId(timeZoneIanaId).ToString()
+                : value.ToString("yyyy-MM-ddTHH:mm:ssZ");
     }
 }

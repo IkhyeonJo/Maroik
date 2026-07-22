@@ -109,8 +109,10 @@ public class NoticeController : Controller
         }
 
         var loggedInAccount = _sessionService.GetAccount() ?? new AccountResponse();
-        ViewBag.Assets = (await _assetService.GetAssetsAsync(loggedInAccount.Email!, ct))
+        var fixedIncomeAssets = (await _assetService.GetAssetsAsync(loggedInAccount.Email!, ct))
             .Where(x => !x.Deleted).OrderBy(x => x.ProductName).ToList();
+        ViewBag.Assets = fixedIncomeAssets;
+        ViewBag.DefaultAssetProductName = fixedIncomeAssets.FirstOrDefault()?.ProductName;
         return View();
     }
 
@@ -306,8 +308,10 @@ public class NoticeController : Controller
         }
 
         var loggedInAccount = _sessionService.GetAccount() ?? new AccountResponse();
-        ViewBag.Assets = (await _assetService.GetAssetsAsync(loggedInAccount.Email!, ct))
+        var fixedExpenditureAssets = (await _assetService.GetAssetsAsync(loggedInAccount.Email!, ct))
             .Where(x => !x.Deleted).OrderBy(x => x.ProductName).ToList();
+        ViewBag.Assets = fixedExpenditureAssets;
+        ViewBag.DefaultAssetProductName = fixedExpenditureAssets.FirstOrDefault()?.ProductName;
         return View();
     }
 

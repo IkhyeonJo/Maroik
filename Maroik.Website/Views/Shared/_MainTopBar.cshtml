@@ -16,6 +16,7 @@
     var fixedExpenditureNoticedCount = ViewBag.FixedExpenditureNoticedCount as int? ?? 0;
     var fixedIncomesExpiredCount = ViewBag.FixedIncomesExpiredCount as int? ?? 0;
     var fixedExpenditureExpiredCount = ViewBag.FixedExpenditureExpiredCount as int? ?? 0;
+    var totalNoticeCount = ViewBag.TotalNoticeCount as int? ?? 0;
 }
 
 @*<!-- Navbar -->*@
@@ -208,15 +209,15 @@
                 break;
             case Role.User:
             {
-                if (fixedIncomesNoticedCount + fixedIncomesExpiredCount + fixedExpenditureNoticedCount + fixedExpenditureExpiredCount > 0)
+                if (totalNoticeCount > 0)
                 {
                     <li class="nav-item dropdown">
                         <a class="nav-link" data-toggle="dropdown" href="#">
                             <i class="far fa-bell"></i>
-                            <span class="badge badge-warning navbar-badge">@(fixedIncomesNoticedCount + fixedIncomesExpiredCount + fixedExpenditureNoticedCount + fixedExpenditureExpiredCount)</span>
+                            <span class="badge badge-warning navbar-badge">@(totalNoticeCount)</span>
                         </a>
                         <div class="dropdown-menu dropdown-menu-lg dropdown-menu-right">
-                            <span class="dropdown-item dropdown-header">@(fixedIncomesNoticedCount + fixedIncomesExpiredCount + fixedExpenditureNoticedCount + fixedExpenditureExpiredCount) @Localizer["Notifications"].Value</span>
+                            <span class="dropdown-item dropdown-header">@(totalNoticeCount) @Localizer["Notifications"].Value</span>
                             <div class="dropdown-divider"></div>
                             @if (fixedIncomesNoticedCount + fixedIncomesExpiredCount > 0)
                             {

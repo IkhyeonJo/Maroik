@@ -55,4 +55,10 @@ public class BoardOutputViewModel
     /// (embedded by Summernote), so the view can skip adding an additional image preview.
     /// </summary>
     public bool IsImgTagIncluded { get; set; }
+
+    /// <summary>When <see langword="true"/> the current viewer wrote this post and may modify it.</summary>
+    public bool CanModify { get; set; }
+
+    /// <summary>When <see langword="true"/> the current viewer wrote this post or is an Admin, and may delete it.</summary>
+    public bool CanDelete { get; set; }
 }

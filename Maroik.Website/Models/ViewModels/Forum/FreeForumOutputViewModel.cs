@@ -51,6 +51,9 @@ public class FreeForumOutputViewModel
     /// <summary>All registered accounts; used to look up writer nicknames when rendering the post list.</summary>
     public List<Maroik.Core.Contract.Dtos.AccountResponse> AllAccounts { get; set; } = [];
 
+    /// <summary>Nicknames of every Admin account in <see cref="AllAccounts"/>, for highlighting admin-authored posts/comments.</summary>
+    public HashSet<string> AdminNicknames { get; set; } = [];
+
     /// <summary>Maps each board post ID to its comment count for the comment badge in the post list.</summary>
     public Dictionary<long, int> CommentCountByBoardId { get; set; } = new();
 

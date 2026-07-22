@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using Maroik.Core.Contract.Policies;
 
 namespace Maroik.Website.Models.ViewModels.Notice;
 
@@ -88,4 +89,7 @@ public class FixedIncomeOutputViewModel
     /// </summary>
     [Display(Name = "Unpunctuality")]
     public bool Unpunctuality { get; set; }
+
+    /// <summary>CSS row class for the grid, prioritizing Expired over Noticed over the default state.</summary>
+    public string RowCssClass => FixedSchedulePolicy.GetRowCssClass(Expired, Noticed);
 }

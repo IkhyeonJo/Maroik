@@ -1,6 +1,7 @@
 using Maroik.Core.Contract.Constants;
 using Maroik.Core.Contract.Dtos;
 using Maroik.Core.Contract.Enums;
+using Maroik.Core.Contract.Extensions;
 using Maroik.Core.Contract.Helpers;
 using Maroik.Core.Contract.Interfaces;
 using Maroik.Core.Contract.Settings;
@@ -245,6 +246,9 @@ public class ForumController : Controller
 
                 (freeBoard.Content, bool isImgTagIncluded) = await _boardService.PrepareHtmlForDisplayAsync(freeBoard.Content ?? "", ct);
 
+                freeForumOutputViewModel.LoggedInAccount = _sessionService.GetAccount() ?? new AccountResponse { Role = Role.Anonymous };
+                freeForumOutputViewModel.LoggedInAccountTimeZoneIanaId = freeForumOutputViewModel.LoggedInAccount.TimeZoneIanaId ?? "";
+
                 freeForumOutputViewModel.BoardOutputViewModel = new Maroik.Website.Models.ViewModels.Forum.BoardOutputViewModel()
                 {
                     Title = freeBoard.Title,
@@ -256,7 +260,9 @@ public class ForumController : Controller
                     BoardAttachedFileExtension = boardAttachedFile?.Extension ?? "",
                     BoardAttachedFileSize = boardAttachedFile?.Size ?? 0,
                     BoardAttachedFilePath = boardAttachedFile?.Path ?? "",
-                    IsImgTagIncluded = isImgTagIncluded
+                    IsImgTagIncluded = isImgTagIncluded,
+                    CanModify = freeForumOutputViewModel.LoggedInAccount.IsOwner(freeBoard.Writer),
+                    CanDelete = freeForumOutputViewModel.LoggedInAccount.IsOwnerOrAdmin(freeBoard.Writer)
                 };
 
                 if (!string.IsNullOrEmpty(freeForumOutputViewModel?.BoardOutputViewModel?.BoardAttachedFilePath ?? ""))
@@ -276,8 +282,7 @@ public class ForumController : Controller
                     .Select(w => w!)
                     .Distinct();
                 freeForumOutputViewModel.AllAccounts = await _accountService.GetAccountsByNicknamesAsync(detailNicknames, ct) ?? [];
-                freeForumOutputViewModel.LoggedInAccount = _sessionService.GetAccount() ?? new AccountResponse { Role = Role.Anonymous };
-                freeForumOutputViewModel.LoggedInAccountTimeZoneIanaId = freeForumOutputViewModel.LoggedInAccount.TimeZoneIanaId ?? "";
+                freeForumOutputViewModel.AdminNicknames = freeForumOutputViewModel.AllAccounts.ToAdminNicknameSet();
 
                 return View(freeForumOutputViewModel);
             }
@@ -390,6 +395,7 @@ public class ForumController : Controller
                 .Select(w => w!)
                 .Distinct();
             freeForumOutputViewModel.AllAccounts = await _accountService.GetAccountsByNicknamesAsync(listNicknames, ct) ?? [];
+            freeForumOutputViewModel.AdminNicknames = freeForumOutputViewModel.AllAccounts.ToAdminNicknameSet();
 
             List<long> allBoardIds = freeForumOutputViewModel.NoticeBoards.Select(b => b.Id)
                 .Concat(freeForumOutputViewModel.Boards.Select(b => b.Id))

@@ -77,6 +77,29 @@ public class NoticeViewModelMapperTests
         Assert.False(result);
     }
 
+    // ── FixedSchedulePolicy.GetRowCssClass ────────────────────────────────────
+
+    [Fact]
+    public void GetRowCssClass_Expired_TakesPriorityOverNoticed()
+    {
+        var result = FixedSchedulePolicy.GetRowCssClass(expired: true, noticed: true);
+        Assert.Equal("table-danger clsGridRow", result);
+    }
+
+    [Fact]
+    public void GetRowCssClass_NoticedNotExpired_ReturnsInfoClass()
+    {
+        var result = FixedSchedulePolicy.GetRowCssClass(expired: false, noticed: true);
+        Assert.Equal("table-info clsGridRow", result);
+    }
+
+    [Fact]
+    public void GetRowCssClass_NeitherExpiredNorNoticed_ReturnsInactiveClass()
+    {
+        var result = FixedSchedulePolicy.GetRowCssClass(expired: false, noticed: false);
+        Assert.Equal("table-inactive clsGridRow", result);
+    }
+
     // ── NoticeViewModelMapper.ToDisplayViewModels ────────────────────────────
 
     [Fact]
