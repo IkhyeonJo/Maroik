@@ -125,6 +125,8 @@ public class ViewBagPopulatorFilter : IAsyncActionFilter
         controller.ViewBag.FixedExpenditureNoticedCount = fixedExpenditureNoticedCount;
         controller.ViewBag.FixedIncomesExpiredCount = fixedIncomesExpiredCount;
         controller.ViewBag.FixedExpenditureExpiredCount = fixedExpenditureExpiredCount;
+        controller.ViewBag.FixedIncomesTotalNoticeCount = fixedIncomesNoticedCount + fixedIncomesExpiredCount;
+        controller.ViewBag.FixedExpenditureTotalNoticeCount = fixedExpenditureNoticedCount + fixedExpenditureExpiredCount;
         controller.ViewBag.TotalNoticeCount = fixedIncomesNoticedCount + fixedExpenditureNoticedCount +
                                                fixedIncomesExpiredCount + fixedExpenditureExpiredCount;
 

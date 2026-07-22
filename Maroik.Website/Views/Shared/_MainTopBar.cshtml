@@ -12,10 +12,8 @@
 @model Maroik.Core.Contract.Dtos.AccountResponse
 @{
     var currentCulture = ViewBag.CurrentCulture as string ?? "en-US";
-    var fixedIncomesNoticedCount = ViewBag.FixedIncomesNoticedCount as int? ?? 0;
-    var fixedExpenditureNoticedCount = ViewBag.FixedExpenditureNoticedCount as int? ?? 0;
-    var fixedIncomesExpiredCount = ViewBag.FixedIncomesExpiredCount as int? ?? 0;
-    var fixedExpenditureExpiredCount = ViewBag.FixedExpenditureExpiredCount as int? ?? 0;
+    var fixedIncomesTotalNoticeCount = ViewBag.FixedIncomesTotalNoticeCount as int? ?? 0;
+    var fixedExpenditureTotalNoticeCount = ViewBag.FixedExpenditureTotalNoticeCount as int? ?? 0;
     var totalNoticeCount = ViewBag.TotalNoticeCount as int? ?? 0;
 }
 
@@ -219,17 +217,17 @@
                         <div class="dropdown-menu dropdown-menu-lg dropdown-menu-right">
                             <span class="dropdown-item dropdown-header">@(totalNoticeCount) @Localizer["Notifications"].Value</span>
                             <div class="dropdown-divider"></div>
-                            @if (fixedIncomesNoticedCount + fixedIncomesExpiredCount > 0)
+                            @if (fixedIncomesTotalNoticeCount > 0)
                             {
                                 <a href="@Url.Action("FixedIncome", "Notice")" class="dropdown-item">
-                                    <i class="fas fa-file mr-2"></i>[@(fixedIncomesNoticedCount + fixedIncomesExpiredCount)] @Localizer["FixedIncome new message"].Value
+                                    <i class="fas fa-file mr-2"></i>[@(fixedIncomesTotalNoticeCount)] @Localizer["FixedIncome new message"].Value
                                 </a>
                                 <div class="dropdown-divider"></div>
                             }
-                            @if (fixedExpenditureNoticedCount + fixedExpenditureExpiredCount > 0)
+                            @if (fixedExpenditureTotalNoticeCount > 0)
                             {
                                 <a href="@Url.Action("FixedExpenditure", "Notice")" class="dropdown-item">
-                                    <i class="fas fa-file mr-2"></i>[@(fixedExpenditureNoticedCount + fixedExpenditureExpiredCount)] @Localizer["FixedExpenditure new message"].Value
+                                    <i class="fas fa-file mr-2"></i>[@(fixedExpenditureTotalNoticeCount)] @Localizer["FixedExpenditure new message"].Value
                                 </a>
                                 <div class="dropdown-divider"></div>
                             }

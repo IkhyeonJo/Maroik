@@ -275,6 +275,31 @@ public class ViewBagPopulatorFilterTests
         Assert.Equal(10, controller.ViewBag.TotalNoticeCount);
     }
 
+    /// <summary>Verifies that <c>ViewBag.FixedIncomesTotalNoticeCount</c>/<c>FixedExpenditureTotalNoticeCount</c>
+    /// are each the sum of that type's noticed and expired counts, precomputed for the navbar badge so the view
+    /// doesn't need to add the two counts together itself.</summary>
+    [Fact]
+    public async Task OnActionExecutionAsync_SetsPerTypeTotalNoticeCounts_AsSumOfNoticedAndExpired()
+    {
+        var sessionAccount = new AccountResponse { Email = "user@test.com", Role = Role.User };
+        var dbAccount = new AccountResponse { Email = "user@test.com", Role = Role.User };
+
+        _sessionService.Setup(s => s.GetAccount()).Returns(sessionAccount);
+        _accountService
+            .Setup(a => a.GetAccountByEmailAsync("user@test.com", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(dbAccount);
+        _dashboardService
+            .Setup(d => d.GetNoticeCountsAsync("user@test.com", 7, It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new NotificationDto { FixedIncomesNoticed = 2, FixedExpendituresNoticed = 3, FixedIncomesExpired = 1, FixedExpendituresExpired = 4 });
+
+        var (context, controller) = BuildContext();
+
+        await CreateSut().OnActionExecutionAsync(context, EmptyNext());
+
+        Assert.Equal(3, controller.ViewBag.FixedIncomesTotalNoticeCount);
+        Assert.Equal(7, controller.ViewBag.FixedExpenditureTotalNoticeCount);
+    }
+
     // -- Active menu resolution -------------------------------------------------
 
     /// <summary>Verifies that ViewBag.ActiveCategory/ActiveSubCategory are resolved from the role-appropriate
