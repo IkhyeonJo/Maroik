@@ -158,7 +158,7 @@ public class BoardService : IBoardService
             }
 
             // Only the original writer may edit their own post.
-            if (board.Writer != writerNickname)
+            if (!board.CanBeEditedBy(writerNickname))
             {
                 await _unitOfWork.RollbackAsync(ct);
                 return ServiceResult.Fail("Input is invalid");
@@ -202,7 +202,7 @@ public class BoardService : IBoardService
                 return ServiceResult.Fail("Input is invalid");
 
             // Admins may delete any post; non-admins may only delete their own.
-            if (board.Writer != requesterNickname && !isAdmin)
+            if (!board.CanBeDeletedBy(requesterNickname, isAdmin))
                 return ServiceResult.Fail("You do not have permission to delete.");
 
             var deleteResult = board.SoftDelete();
@@ -231,7 +231,7 @@ public class BoardService : IBoardService
                 return ServiceResult.Fail("Input is invalid");
 
             // When requiredOwnerNickname is set, restrict commenting to the post owner only.
-            if (requiredOwnerNickname != null && board.Writer != requiredOwnerNickname)
+            if (requiredOwnerNickname != null && !board.IsOwnedBy(requiredOwnerNickname))
                 return ServiceResult.Fail("You do not have permission to write a comment.");
 
             IEnumerable<BoardComment> existing = await _boardCommentRepository.GetByBoardIdOrderedAsync(request.BoardId, ct);
@@ -282,7 +282,7 @@ public class BoardService : IBoardService
                 return ServiceResult.Fail("Input is invalid");
 
             // Admins may delete any comment; non-admins may only delete their own.
-            if (comment.Writer != requesterNickname && !isAdmin)
+            if (!comment.CanBeDeletedBy(requesterNickname, isAdmin))
                 return ServiceResult.Fail("You do not have permission to delete.");
 
             comment.SoftDelete();

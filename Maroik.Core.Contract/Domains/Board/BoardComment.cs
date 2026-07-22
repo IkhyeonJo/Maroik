@@ -90,4 +90,10 @@ public sealed class BoardComment : Entity<long>
     {
         Deleted = true;
     }
+
+    /// <summary>Returns true when <paramref name="nickname"/> is this comment's author.</summary>
+    public bool IsOwnedBy(string nickname) => Writer == nickname;
+
+    /// <summary>Returns true when <paramref name="nickname"/> may delete this comment (owner, or any admin).</summary>
+    public bool CanBeDeletedBy(string nickname, bool isAdmin) => IsOwnedBy(nickname) || isAdmin;
 }

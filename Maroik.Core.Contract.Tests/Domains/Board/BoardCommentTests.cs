@@ -55,4 +55,46 @@ public class BoardCommentTests
 
         Assert.True(comment.Deleted);
     }
+
+    // -- IsOwnedBy / CanBeDeletedBy ----------------------------------------------
+
+    [Fact]
+    public void IsOwnedBy_ReturnsTrue_ForWriter()
+    {
+        var comment = BoardComment.Create(10, 1, null, "Alice", "Hello!").Value;
+
+        Assert.True(comment.IsOwnedBy("Alice"));
+    }
+
+    [Fact]
+    public void IsOwnedBy_ReturnsFalse_ForNonWriter()
+    {
+        var comment = BoardComment.Create(10, 1, null, "Alice", "Hello!").Value;
+
+        Assert.False(comment.IsOwnedBy("Bob"));
+    }
+
+    [Fact]
+    public void CanBeDeletedBy_ReturnsTrue_ForWriter()
+    {
+        var comment = BoardComment.Create(10, 1, null, "Alice", "Hello!").Value;
+
+        Assert.True(comment.CanBeDeletedBy("Alice", isAdmin: false));
+    }
+
+    [Fact]
+    public void CanBeDeletedBy_ReturnsTrue_ForNonWriterAdmin()
+    {
+        var comment = BoardComment.Create(10, 1, null, "Alice", "Hello!").Value;
+
+        Assert.True(comment.CanBeDeletedBy("Bob", isAdmin: true));
+    }
+
+    [Fact]
+    public void CanBeDeletedBy_ReturnsFalse_ForNonWriterNonAdmin()
+    {
+        var comment = BoardComment.Create(10, 1, null, "Alice", "Hello!").Value;
+
+        Assert.False(comment.CanBeDeletedBy("Bob", isAdmin: false));
+    }
 }

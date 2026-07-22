@@ -234,4 +234,13 @@ public sealed class Board : AggregateRoot<long>
         Updated = DateTime.UtcNow;
         return Result.Success;
     }
+
+    /// <summary>Returns true when <paramref name="nickname"/> is this post's author.</summary>
+    public bool IsOwnedBy(string nickname) => Writer == nickname;
+
+    /// <summary>Returns true when <paramref name="nickname"/> may edit this post (owner only, no admin bypass).</summary>
+    public bool CanBeEditedBy(string nickname) => IsOwnedBy(nickname);
+
+    /// <summary>Returns true when <paramref name="nickname"/> may delete this post (owner, or any admin).</summary>
+    public bool CanBeDeletedBy(string nickname, bool isAdmin) => IsOwnedBy(nickname) || isAdmin;
 }

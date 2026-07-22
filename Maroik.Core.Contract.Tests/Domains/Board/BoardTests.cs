@@ -302,4 +302,63 @@ public class BoardTests
         Assert.True(result.IsError);
         Assert.Equal("Board.AlreadyDeleted", result.FirstError.Code);
     }
+
+    // -- IsOwnedBy / CanBeEditedBy / CanBeDeletedBy -----------------------------
+
+    [Fact]
+    public void IsOwnedBy_ReturnsTrue_ForWriter()
+    {
+        var board = ValidBoard();
+
+        Assert.True(board.IsOwnedBy("Alice"));
+    }
+
+    [Fact]
+    public void IsOwnedBy_ReturnsFalse_ForNonWriter()
+    {
+        var board = ValidBoard();
+
+        Assert.False(board.IsOwnedBy("Bob"));
+    }
+
+    [Fact]
+    public void CanBeEditedBy_ReturnsTrue_ForWriter()
+    {
+        var board = ValidBoard();
+
+        Assert.True(board.CanBeEditedBy("Alice"));
+    }
+
+    [Fact]
+    public void CanBeEditedBy_ReturnsFalse_ForAdminNonWriter()
+    {
+        // Editing is owner-only, unlike deleting — no admin bypass.
+        var board = ValidBoard();
+
+        Assert.False(board.CanBeEditedBy("Bob"));
+    }
+
+    [Fact]
+    public void CanBeDeletedBy_ReturnsTrue_ForWriter()
+    {
+        var board = ValidBoard();
+
+        Assert.True(board.CanBeDeletedBy("Alice", isAdmin: false));
+    }
+
+    [Fact]
+    public void CanBeDeletedBy_ReturnsTrue_ForNonWriterAdmin()
+    {
+        var board = ValidBoard();
+
+        Assert.True(board.CanBeDeletedBy("Bob", isAdmin: true));
+    }
+
+    [Fact]
+    public void CanBeDeletedBy_ReturnsFalse_ForNonWriterNonAdmin()
+    {
+        var board = ValidBoard();
+
+        Assert.False(board.CanBeDeletedBy("Bob", isAdmin: false));
+    }
 }
