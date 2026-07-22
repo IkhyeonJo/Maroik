@@ -15,20 +15,20 @@ namespace Maroik.Worker.Workers;
 /// </summary>
 public sealed class EmailConsumerWorker : BackgroundService
 {
-    private readonly string _connectionString;
+    private readonly IConnectionFactory _connectionFactory;
     private readonly IServiceScopeFactory _scopeFactory;
     private readonly ILogger<EmailConsumerWorker> _logger;
 
     private IConnection? _connection;
-    private IChannel? _channel;
+    internal IChannel? _channel;
 
     /// <summary>Initializes a new instance of <see cref="EmailConsumerWorker"/> with the supplied dependencies.</summary>
     public EmailConsumerWorker(
-        IConfiguration configuration,
+        IConnectionFactory connectionFactory,
         IServiceScopeFactory scopeFactory,
         ILogger<EmailConsumerWorker> logger)
     {
-        _connectionString = configuration.GetConnectionString("RabbitMQ") ?? "amqp://guest:guest@localhost:5672/";
+        _connectionFactory = connectionFactory;
         _scopeFactory = scopeFactory;
         _logger = logger;
     }
@@ -39,8 +39,7 @@ public sealed class EmailConsumerWorker : BackgroundService
     /// </summary>
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
-        var factory = new ConnectionFactory { Uri = new Uri(_connectionString) };
-        _connection = await factory.CreateConnectionAsync(stoppingToken);
+        _connection = await _connectionFactory.CreateConnectionAsync(stoppingToken);
         _channel = await _connection.CreateChannelAsync(cancellationToken: stoppingToken);
 
         await _channel.QueueDeclareAsync(
@@ -82,7 +81,7 @@ public sealed class EmailConsumerWorker : BackgroundService
     /// Any failure (bad JSON, handler exception) nacks without requeue, so a single poison
     /// message cannot block the queue forever.
     /// </summary>
-    private async Task OnMessageReceivedAsync(object sender, BasicDeliverEventArgs ea)
+    internal async Task OnMessageReceivedAsync(object sender, BasicDeliverEventArgs ea)
     {
         // DeliveryTag alone keeps concurrently-processed messages (prefetch 10) distinguishable
         // in the logs even if deserialization fails before a CorrelationId is known.

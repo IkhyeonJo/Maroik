@@ -256,6 +256,9 @@ public class ManagementController : Controller
             _ = ModelState.Remove(nameof(accountInputViewModel.RegistrationToken));
             _ = ModelState.Remove(nameof(accountInputViewModel.ResetPasswordToken));
             _ = ModelState.Remove(nameof(accountInputViewModel.Message));
+            // TimeZoneIanaId's [Required] would otherwise reject an empty value before the
+            // friendlier "Please select time zone" check further down ever runs.
+            _ = ModelState.Remove(nameof(accountInputViewModel.TimeZoneIanaId));
 
             if (ModelState.IsValid)
             {
@@ -421,6 +424,11 @@ public class ManagementController : Controller
             _ = ModelState.Remove(nameof(accountInputViewModel.AvatarImagePath));
             _ = ModelState.Remove(nameof(accountInputViewModel.RegistrationToken));
             _ = ModelState.Remove(nameof(accountInputViewModel.ResetPasswordToken));
+            // Password/Message are optional on update — an empty Password means "leave the
+            // current password unchanged" (the service only calls ChangePassword when non-empty),
+            // and Message has no [Required]-worthy business meaning here.
+            _ = ModelState.Remove(nameof(accountInputViewModel.Password));
+            _ = ModelState.Remove(nameof(accountInputViewModel.Message));
 
             if (!ModelState.IsValid)
                 return Json(new { result = false, error = _localizer["Input is invalid"].Value });

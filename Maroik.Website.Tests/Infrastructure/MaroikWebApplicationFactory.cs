@@ -139,7 +139,19 @@ public class MaroikWebApplicationFactory : WebApplicationFactory<Program>
                 new Category { Id = 10, Name = "ManageAccount", DisplayName = "Accounts", IconPath = "", Controller = "Management", Action = "Account", Role = Role.Anonymous, Order = 10 },
                 new Category { Id = 11, Name = "ManageMenu", DisplayName = "Menu", IconPath = "", Controller = "Management", Action = "Menu", Role = Role.Anonymous, Order = 11 },
                 new Category { Id = 12, Name = "FixedIncome", DisplayName = "Fixed Income", IconPath = "", Controller = "Notice", Action = "FixedIncome", Role = Role.Anonymous, Order = 12 },
-                new Category { Id = 13, Name = "FixedExpenditure", DisplayName = "Fixed Expend", IconPath = "", Controller = "Notice", Action = "FixedExpenditure", Role = Role.Anonymous, Order = 13 }
+                new Category { Id = 13, Name = "FixedExpenditure", DisplayName = "Fixed Expend", IconPath = "", Controller = "Notice", Action = "FixedExpenditure", Role = Role.Anonymous, Order = 13 },
+
+                // Admin/User-role entries so AuthorizationFilter's POST-path menu match (which is
+                // keyed on Controller name only, not Action) allows authenticated integration tests
+                // to reach [RequiredHttpPostAccess]-gated actions on these controllers.
+                new Category { Id = 14, Name = "ManageAccountAdmin", DisplayName = "Accounts", IconPath = "", Controller = "Management", Action = "Account", Role = Role.Admin, Order = 1 },
+                new Category { Id = 15, Name = "ProfileUser", DisplayName = "Profile", IconPath = "", Controller = "Management", Action = "Profile", Role = Role.User, Order = 1 },
+                new Category { Id = 16, Name = "AccountBookUser", DisplayName = "Account Book", IconPath = "", Controller = "AccountBook", Action = "Income", Role = Role.User, Order = 1 },
+                new Category { Id = 17, Name = "CalendarUser", DisplayName = "Calendar", IconPath = "", Controller = "Calendar", Action = "UserIndex", Role = Role.User, Order = 1 },
+                new Category { Id = 18, Name = "CalendarAdmin", DisplayName = "Calendar", IconPath = "", Controller = "Calendar", Action = "AdminIndex", Role = Role.Admin, Order = 1 },
+                new Category { Id = 19, Name = "ForumUser", DisplayName = "Forum", IconPath = "", Controller = "Forum", Action = nameof(BoardType.FreeForum), Role = Role.User, Order = 1 },
+                new Category { Id = 20, Name = "ForumAdmin", DisplayName = "Forum", IconPath = "", Controller = "Forum", Action = nameof(BoardType.FreeForum), Role = Role.Admin, Order = 1 },
+                new Category { Id = 21, Name = "NoticeUser", DisplayName = "Notice", IconPath = "", Controller = "Notice", Action = "FixedIncome", Role = Role.User, Order = 1 }
             );
             db.SaveChanges();
         }
@@ -156,6 +168,11 @@ public class MaroikWebApplicationFactory : WebApplicationFactory<Program>
         CreateClient(new WebApplicationFactoryClientOptions
         {
             BaseAddress = new Uri("https://www.localhost/"),
-            AllowAutoRedirect = followRedirects
+            AllowAutoRedirect = followRedirects,
+            // Every test manages cookies explicitly (session + antiforgery), so the client's own
+            // auto-tracking CookieContainer must stay off — otherwise it re-attaches cookies from
+            // earlier responses alongside the ones a test sets manually, sending a duplicate
+            // Cookie header that can confuse request parsing/routing on some requests.
+            HandleCookies = false
         });
 }

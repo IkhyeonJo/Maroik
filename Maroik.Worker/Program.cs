@@ -9,6 +9,7 @@ using Maroik.Core.Repository.Extensions;
 using Maroik.Worker.Contracts;
 using Maroik.Worker.Handlers;
 using Maroik.Worker.Workers;
+using RabbitMQ.Client;
 using Serilog;
 using Serilog.Events;
 
@@ -54,6 +55,11 @@ try
 
     builder.Services.AddScoped<IMailClient, MailClient>();
     builder.Services.AddScoped<IEmailMessageHandler, EmailMessageHandler>();
+
+    string rabbitMqConnectionString = builder.Configuration.GetConnectionString("RabbitMQ")
+        ?? "amqp://guest:guest@localhost:5672/";
+    builder.Services.AddSingleton<IConnectionFactory>(
+        new ConnectionFactory { Uri = new Uri(rabbitMqConnectionString) });
     builder.Services.AddHostedService<EmailConsumerWorker>();
 
     var host = builder.Build();
