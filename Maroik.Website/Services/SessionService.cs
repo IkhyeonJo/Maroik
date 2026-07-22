@@ -4,7 +4,6 @@ using Maroik.Core.Contract.Dtos;
 using Maroik.Core.Contract.Enums;
 using Maroik.Core.Contract.Helpers;
 using Maroik.Website.Contracts;
-using Microsoft.AspNetCore.Http;
 
 namespace Maroik.Website.Services;
 
