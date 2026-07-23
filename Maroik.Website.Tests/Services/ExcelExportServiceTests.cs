@@ -26,10 +26,12 @@ public class ExcelExportServiceTests
         stream.Position = 0;
         using var document = SpreadsheetDocument.Open(stream, false);
         var worksheetPart = document.WorkbookPart!.WorksheetParts.First();
-        var sheetData = worksheetPart.Worksheet.Elements<SheetData>().First();
-        return sheetData.Elements<Row>()
-            .Select(row => row.Elements<Cell>().Select(c => c.CellValue?.Text ?? "").ToList())
-            .ToList();
+        var sheetData = worksheetPart.Worksheet?.Elements<SheetData>().First() ?? [];
+        return
+        [
+            .. sheetData.Elements<Row>()
+                .Select(row => row.Elements<Cell>().Select(c => c.CellValue?.Text ?? "").ToList())
+        ];
     }
 
     // ── CreateAssetExcel ──────────────────────────────────────────────────────
