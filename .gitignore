@@ -411,7 +411,7 @@ FodyWeavers.xsd
 **/SQL_Init_Script/Production/*.sql
 
 # Cloudflare configuration
-**/cloudflare.init
+**/cloudflare.ini
 
 # SSL/Certificate files
 *.pem
