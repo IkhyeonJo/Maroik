@@ -96,7 +96,7 @@ public class RSA
     {
         return _privateKeyRsaProvider == null
             ? throw new Exception("_privateKeyRsaProvider is null")
-            : Encoding.UTF8.GetString(_privateKeyRsaProvider.Decrypt(Convert.FromBase64String(cipherText), RSAEncryptionPadding.Pkcs1));
+            : Encoding.UTF8.GetString(_privateKeyRsaProvider.Decrypt(Convert.FromBase64String(cipherText), EncryptionPadding));
     }
 
     #endregion
@@ -107,8 +107,12 @@ public class RSA
     {
         return _publicKeyRsaProvider == null
             ? throw new Exception("_publicKeyRsaProvider is null")
-            : Convert.ToBase64String(_publicKeyRsaProvider.Encrypt(Encoding.UTF8.GetBytes(text), RSAEncryptionPadding.Pkcs1));
+            : Convert.ToBase64String(_publicKeyRsaProvider.Encrypt(Encoding.UTF8.GetBytes(text), EncryptionPadding));
     }
+
+    // OAEP instead of PKCS#1 v1.5 to avoid Bleichenbacher-style padding-oracle attacks on encryption
+    private RSAEncryptionPadding EncryptionPadding =>
+        _hashAlgorithmName == HashAlgorithmName.SHA256 ? RSAEncryptionPadding.OaepSHA256 : RSAEncryptionPadding.OaepSHA1;
 
     #endregion
 
