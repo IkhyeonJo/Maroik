@@ -247,6 +247,11 @@ public class ForumController : Controller
                             return Json(new { result = false, error = _localizer["Input is invalid"].Value });
                         }
 
+                        if (freeForumBoard.Locked && !(loginedAccount.Nickname == freeForumBoard.Writer || loginedAccount.Role == Role.Admin)) // If not writer or administrator
+                        {
+                            return Json(new { result = false, error = _localizer["Input is invalid"].Value });
+                        }
+
                         IEnumerable<BoardComment> totalBoardCommentsInSelectedBoard = await _boardCommentRepository.GetOneBoardCommentsAsync(boardCommentInputViewModel.BoardId);
 
                         BoardComment boardComment = new()
@@ -698,9 +703,23 @@ public class ForumController : Controller
             {
                 Board tempFreeBoard = freeBoards.Where(a => a.Id == id).FirstOrDefault();
 
-                return tempFreeBoard == null
-                    ? Json(new { result = false, error = _localizer["Input is invalid"].Value })
-                    : (IActionResult)Json(new { result = true, freeBoard = tempFreeBoard });
+                if (tempFreeBoard == null)
+                {
+                    return Json(new { result = false, error = _localizer["Input is invalid"].Value });
+                }
+
+                if (tempFreeBoard.Locked) // If writer or administrator
+                {
+                    _ = HttpContext.Session.TryGetValue(Maroik.Core.Common.Utilities.EnumHelper.GetDescription(Maroik.Core.Common.Utilities.Session.Account), out byte[] resultByte);
+                    Account loginedAccount = JsonConvert.DeserializeObject<Account>(Encoding.UTF8.GetString(resultByte)); // Get Session
+
+                    if (!(loginedAccount.Nickname == tempFreeBoard.Writer || loginedAccount.Role == Role.Admin))
+                    {
+                        return Json(new { result = false, error = _localizer["Input is invalid"].Value });
+                    }
+                }
+
+                return Json(new { result = true, freeBoard = tempFreeBoard });
             }
         }
         catch
