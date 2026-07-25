@@ -78,7 +78,7 @@ public class MenuService : IMenuService
         {
             // GenericRepository.UpdateEntityAsync silently no-ops when the row doesn't exist
             // (it looks the row up and returns early rather than throwing), so without this check
-            // an unknown Id would report "successfully updated" while changing nothing.
+            // an unknown ID would report "successfully updated" while changing nothing.
             bool exists = (await _categoryRepository.GetAllAsync(ct)).Any(c => c.Id == request.Id);
             if (!exists)
                 return ServiceResult.Fail("Input is invalid");
@@ -137,7 +137,7 @@ public class MenuService : IMenuService
     {
         try
         {
-            // See UpdateCategoryAsync: without this check, an unknown Id would silently no-op
+            // See UpdateCategoryAsync: without this check, an unknown ID would silently no-op
             // yet still report success.
             bool exists = (await _subCategoryRepository.GetAllAsync(ct)).Any(s => s.Id == request.Id);
             if (!exists)

@@ -20,7 +20,7 @@ public sealed class EmailConsumerWorker : BackgroundService
     private readonly ILogger<EmailConsumerWorker> _logger;
 
     private IConnection? _connection;
-    internal IChannel? _channel;
+    internal IChannel? Channel;
 
     /// <summary>Initializes a new instance of <see cref="EmailConsumerWorker"/> with the supplied dependencies.</summary>
     public EmailConsumerWorker(
@@ -40,9 +40,9 @@ public sealed class EmailConsumerWorker : BackgroundService
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
         _connection = await _connectionFactory.CreateConnectionAsync(stoppingToken);
-        _channel = await _connection.CreateChannelAsync(cancellationToken: stoppingToken);
+        Channel = await _connection.CreateChannelAsync(cancellationToken: stoppingToken);
 
-        await _channel.QueueDeclareAsync(
+        await Channel.QueueDeclareAsync(
             queue: QueueNames.Email,
             durable: true,
             exclusive: false,
@@ -51,12 +51,12 @@ public sealed class EmailConsumerWorker : BackgroundService
 
         // Cap in-flight (unacked) messages per consumer so one slow SMTP send doesn't
         // let unbounded messages pile up in memory.
-        await _channel.BasicQosAsync(prefetchSize: 0, prefetchCount: 10, global: false, cancellationToken: stoppingToken);
+        await Channel.BasicQosAsync(prefetchSize: 0, prefetchCount: 10, global: false, cancellationToken: stoppingToken);
 
-        var consumer = new AsyncEventingBasicConsumer(_channel);
+        var consumer = new AsyncEventingBasicConsumer(Channel);
         consumer.ReceivedAsync += OnMessageReceivedAsync;
 
-        await _channel.BasicConsumeAsync(
+        await Channel.BasicConsumeAsync(
             queue: QueueNames.Email,
             autoAck: false,
             consumer: consumer,
@@ -101,14 +101,14 @@ public sealed class EmailConsumerWorker : BackgroundService
                     await handler.HandleAsync(message);
                 }
 
-                await _channel!.BasicAckAsync(ea.DeliveryTag, multiple: false);
+                await Channel!.BasicAckAsync(ea.DeliveryTag, multiple: false);
             }
             catch (Exception ex)
             {
                 // Poison message or unexpected failure: drop rather than requeue forever.
                 // A dead-letter exchange would be the next step if this needs to be inspected/retried.
                 _logger.LogError(ex, "Failed to process email message (delivery tag {DeliveryTag})", ea.DeliveryTag);
-                await _channel!.BasicNackAsync(ea.DeliveryTag, multiple: false, requeue: false);
+                await Channel!.BasicNackAsync(ea.DeliveryTag, multiple: false, requeue: false);
             }
         }
     }
@@ -118,8 +118,8 @@ public sealed class EmailConsumerWorker : BackgroundService
     {
         await base.StopAsync(cancellationToken);
 
-        if (_channel != null)
-            await _channel.DisposeAsync();
+        if (Channel != null)
+            await Channel.DisposeAsync();
         if (_connection != null)
             await _connection.DisposeAsync();
     }

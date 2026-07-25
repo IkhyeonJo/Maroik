@@ -34,7 +34,7 @@ public class EmailConsumerWorkerTests
         var factory = new Mock<IConnectionFactory>();
         var worker = new EmailConsumerWorker(factory.Object, BuildScopeFactory(handler), Mock.Of<ILogger<EmailConsumerWorker>>());
         channel = new Mock<IChannel>();
-        worker._channel = channel.Object;
+        worker.Channel = channel.Object;
         return worker;
     }
 
