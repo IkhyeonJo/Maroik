@@ -3,7 +3,7 @@ using Maroik.Core.PostgreSQL.Models;
 using Maroik.Core.Common.Extensions;
 using Maroik.Core.Common.Utilities;
 using Maroik.WebSite.Models.ViewModels.Account;
-using Maroik.WebSite.Models.ViewModels.DashBoard;
+using Maroik.WebSite.Models.ViewModels.Dashboard;
 using Microsoft.AspNetCore.Localization;
 using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json;
@@ -11,7 +11,7 @@ using System.Text;
 
 namespace Maroik.WebSite.Controllers;
 
-public class DashBoardController(
+public class DashboardController(
     IIncomeRepository incomeRepository,
     IExpenditureRepository expenditureRepository,
     IAssetRepository assetRepository,
@@ -353,8 +353,8 @@ public class DashBoardController(
         var loginedAccount = JsonConvert.DeserializeObject<Account>(Encoding.UTF8.GetString(resultByte));
         return loginedAccount.Role switch
         {
-            Role.Admin => RedirectToAction("AdminIndex", "DashBoard"),
-            Role.User => RedirectToAction("UserIndex", "DashBoard"),
+            Role.Admin => RedirectToAction("AdminIndex", "Dashboard"),
+            Role.User => RedirectToAction("UserIndex", "Dashboard"),
             _ => null
         };
     }

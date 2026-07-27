@@ -714,7 +714,7 @@ https://ink1234.tistory.com/14
 #Restart the containers using the following command:
 #4. docker-compose up -d
 
-DashBoard Donut Chart
+Dashboard Donut Chart
 
 https://www.chartjs.org/
 https://stackoverflow.com/questions/20966817/how-to-add-text-inside-the-doughnut-chart-using-chart-js
@@ -953,7 +953,7 @@ public async Task<IActionResult> UploadImageFile(IFormFile summernoteImageFile)
 
 private readonly HttpClient _httpClient;
 
-public DashBoardController(ILogger<DashBoardController> logger, IIncomeRepository incomeRepository, IExpenditureRepository expenditureRepository, IAssetRepository assetRepository, IAccountRepository accountRepository, HttpClient httpClient)
+public DashboardController(ILogger<DashboardController> logger, IIncomeRepository incomeRepository, IExpenditureRepository expenditureRepository, IAssetRepository assetRepository, IAccountRepository accountRepository, HttpClient httpClient)
 {
     _logger = logger;
     _incomeRepository = incomeRepository;

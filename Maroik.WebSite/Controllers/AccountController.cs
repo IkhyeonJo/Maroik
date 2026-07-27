@@ -46,11 +46,11 @@ public class AccountController : Controller
             Account loginedAccount = JsonConvert.DeserializeObject<Account>(Encoding.UTF8.GetString(resultByte)); // Get Session
             if (loginedAccount.Role == Role.Admin) // If logged-in user role is Admin
             {
-                return RedirectToAction("AdminIndex", "DashBoard");
+                return RedirectToAction("AdminIndex", "Dashboard");
             }
             else if (loginedAccount.Role == Role.User) // If logged-in user role is User
             {
-                return RedirectToAction("UserIndex", "DashBoard");
+                return RedirectToAction("UserIndex", "Dashboard");
             }
             else // If logged-in user role is neither Admin nor User, it's a DB Insert error
             {
@@ -136,8 +136,8 @@ public class AccountController : Controller
 
                 #region DB Cache
                 return tempAccount.Role == Role.Admin
-                    ? RedirectToAction("AdminIndex", "DashBoard")
-                    : tempAccount.Role == Role.User ? RedirectToAction("UserIndex", "DashBoard") : (IActionResult)null;
+                    ? RedirectToAction("AdminIndex", "Dashboard")
+                    : tempAccount.Role == Role.User ? RedirectToAction("UserIndex", "Dashboard") : (IActionResult)null;
                 #endregion
             }
             else
@@ -171,7 +171,7 @@ public class AccountController : Controller
     public IActionResult Logout()
     {
         HttpContext.Session.Remove(Maroik.Core.Common.Utilities.EnumHelper.GetDescription(Maroik.Core.Common.Utilities.Session.Account));
-        return RedirectToAction("AnonymousIndex", "DashBoard");
+        return RedirectToAction("AnonymousIndex", "Dashboard");
     }
     #endregion
 
@@ -186,11 +186,11 @@ public class AccountController : Controller
             Account loginedAccount = JsonConvert.DeserializeObject<Account>(Encoding.UTF8.GetString(resultByte)); // Get Session
             if (loginedAccount.Role == Role.Admin) // If logged-in user has Admin role
             {
-                return RedirectToAction("AdminIndex", "DashBoard");
+                return RedirectToAction("AdminIndex", "Dashboard");
             }
             else if (loginedAccount.Role == Role.User) // If logged-in user has User role
             {
-                return RedirectToAction("UserIndex", "DashBoard");
+                return RedirectToAction("UserIndex", "Dashboard");
             }
             else // If logged-in user role is neither Admin nor User, it's a DB Insert error
             {
@@ -528,11 +528,11 @@ public class AccountController : Controller
             Account loginedAccount = JsonConvert.DeserializeObject<Account>(Encoding.UTF8.GetString(resultByte)); // Get Session
             if (loginedAccount.Role == Role.Admin) // If logged-in user role is Admin
             {
-                return RedirectToAction("AdminIndex", "DashBoard");
+                return RedirectToAction("AdminIndex", "Dashboard");
             }
             else if (loginedAccount.Role == Role.User) // If logged-in user role is User
             {
-                return RedirectToAction("UserIndex", "DashBoard");
+                return RedirectToAction("UserIndex", "Dashboard");
             }
             else // If logged-in user role is neither Admin nor User, it's a DB Insert error
             {
@@ -639,11 +639,11 @@ public class AccountController : Controller
             Account loginedAccount = JsonConvert.DeserializeObject<Account>(Encoding.UTF8.GetString(resultByte)); // Get Session
             if (loginedAccount.Role == Role.Admin) // If logged-in user role is Admin
             {
-                return RedirectToAction("AdminIndex", "DashBoard");
+                return RedirectToAction("AdminIndex", "Dashboard");
             }
             else if (loginedAccount.Role == Role.User) // If logged-in user role is User
             {
-                return RedirectToAction("UserIndex", "DashBoard");
+                return RedirectToAction("UserIndex", "Dashboard");
             }
             else // If logged-in user role is neither Admin nor User, it's a DB Insert error
             {
@@ -744,11 +744,11 @@ public class AccountController : Controller
             Account loginedAccount = JsonConvert.DeserializeObject<Account>(Encoding.UTF8.GetString(resultByte)); // Get Session
             if (loginedAccount.Role == Role.Admin) // If logged-in user role is Admin
             {
-                return RedirectToAction("AdminIndex", "DashBoard");
+                return RedirectToAction("AdminIndex", "Dashboard");
             }
             else if (loginedAccount.Role == Role.User) // If logged-in user role is User
             {
-                return RedirectToAction("UserIndex", "DashBoard");
+                return RedirectToAction("UserIndex", "Dashboard");
             }
             else // If logged-in user role is neither Admin nor User, it's a DB Insert error
             {

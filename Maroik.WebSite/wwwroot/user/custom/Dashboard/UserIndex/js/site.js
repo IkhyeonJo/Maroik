@@ -28,16 +28,16 @@
 };
 
 $('#year').off('change').on('change', function () {
-    window.location.href = "/DashBoard/UserIndex?year=" + $('#year').find(":selected").val() + "&month=" + $('#month').find(":selected").val();
+    window.location.href = "/Dashboard/UserIndex?year=" + $('#year').find(":selected").val() + "&month=" + $('#month').find(":selected").val();
 });
 
 $('#month').off('change').on('change', function () {
-    window.location.href = "/DashBoard/UserIndex?year=" + $('#year').find(":selected").val() + "&month=" + $('#month').find(":selected").val();
+    window.location.href = "/Dashboard/UserIndex?year=" + $('#year').find(":selected").val() + "&month=" + $('#month').find(":selected").val();
 });
 
 $('#monetaryUnit').off('change').on('change', function () {
     $.ajax({
-        url: '/DashBoard/UserUpdateDefaultMonetary',
+        url: '/Dashboard/UserUpdateDefaultMonetary',
         type: 'POST',
         headers: { "RequestVerificationToken": $('input[name="__RequestVerificationToken"]').val() },
         dataType: 'json',
@@ -47,10 +47,10 @@ $('#monetaryUnit').off('change').on('change', function () {
         contentType: 'application/json; charset=utf-8',
         success: function (data) {
             if (data.result) {
-                window.location.href = "/DashBoard/UserIndex?year=" + $('#year').find(":selected").val() + "&month=" + $('#month').find(":selected").val();
+                window.location.href = "/Dashboard/UserIndex?year=" + $('#year').find(":selected").val() + "&month=" + $('#month').find(":selected").val();
             }
             else {
-                window.location.href = "/DashBoard/UserIndex?year=" + $('#year').find(":selected").val() + "&month=" + $('#month').find(":selected").val();
+                window.location.href = "/Dashboard/UserIndex?year=" + $('#year').find(":selected").val() + "&month=" + $('#month').find(":selected").val();
             }
         }
     });
