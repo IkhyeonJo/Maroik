@@ -433,7 +433,7 @@ app.UseRequestLocalization(localizationOptions);
 
 app.MapControllerRoute(
     name: "default",
-    pattern: "{controller=Dashboard}/{action=AnonymousIndex}/{id?}");
+    pattern: "{controller=DashBoard}/{action=AnonymousIndex}/{id?}");
 app.UseMiddleware<RoleBasedStaticFileMiddleware>();
 app.MapStaticAssets();
 

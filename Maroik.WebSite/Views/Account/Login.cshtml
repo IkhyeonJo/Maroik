@@ -10,7 +10,7 @@
 <div class="login-box">
     <div class="card card-outline card-primary">
         <div class="card-header text-center">
-            <a asp-controller="Dashboard" asp-action="AnonymousIndex" class="h1"><b>Maroik</b></a>
+            <a asp-controller="DashBoard" asp-action="AnonymousIndex" class="h1"><b>Maroik</b></a>
         </div>
         <div class="card-body">
             <p class="login-box-msg">@localizer["Sign in to start your session"]</p>
@@ -47,7 +47,7 @@
                 <a asp-controller="Account" asp-action="ForgotPassword" class="btn btn-block btn-danger">
                     <i class="fas fa-key" style="padding-right:3px;"></i>@localizer["Forgot password"]
                 </a>
-                <a asp-controller="Dashboard" asp-action="AnonymousIndex" class="btn btn-block btn-info">
+                <a asp-controller="DashBoard" asp-action="AnonymousIndex" class="btn btn-block btn-info">
                     <i class="fas fa-sign-out-alt" style="padding-right:3px;"></i>@localizer["Go to main page"]
                 </a>
             </div>

@@ -1,5 +1,5 @@
 ﻿$(document).off('ajaxError._Layout').on('ajaxError._Layout', function () {
-    window.location.href = '/Dashboard/AnonymousIndex';
+    window.location.href = '/DashBoard/AnonymousIndex';
 });
 
 function ChangeCulture(culture) {
@@ -9,7 +9,7 @@ function ChangeCulture(culture) {
     });
 
     $.ajax({
-        url: '/Dashboard/CultureManagement',
+        url: '/DashBoard/CultureManagement',
         type: 'POST',
         headers: { 'RequestVerificationToken': $('input[name="__RequestVerificationToken"]').val() },
         dataType: 'json',

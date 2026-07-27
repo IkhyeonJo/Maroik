@@ -1,4 +1,4 @@
-﻿namespace Maroik.WebSite.Models.ViewModels.Dashboard;
+﻿namespace Maroik.WebSite.Models.ViewModels.DashBoard;
 
 public class UserIndexInputViewModel
 {

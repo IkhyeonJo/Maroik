@@ -1,6 +1,6 @@
 ﻿using Maroik.Core.PostgreSQL.Models;
 
-namespace Maroik.WebSite.Models.ViewModels.Dashboard;
+namespace Maroik.WebSite.Models.ViewModels.DashBoard;
 
 public class UserIndexOutputViewModel
 {

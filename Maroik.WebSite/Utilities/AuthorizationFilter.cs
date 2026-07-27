@@ -156,7 +156,7 @@ public class AuthorizationFilter : ActionFilterAttribute
                 }
                 #endregion
                 //context.Result = new UnauthorizedObjectResult("User is unauthorized");
-                context.Result = new RedirectResult("/Dashboard/AnonymousIndex");
+                context.Result = new RedirectResult("/DashBoard/AnonymousIndex");
                 return;
             }
             else if (isAccountSessionExist == true) // If logged in
@@ -171,7 +171,7 @@ public class AuthorizationFilter : ActionFilterAttribute
                     await next(); // Do Action!!
                     return;
                 }
-                else if (currentControllerName == "Dashboard" && currentActionName == "AnonymousIndex") // Initial screen
+                else if (currentControllerName == "DashBoard" && currentActionName == "AnonymousIndex") // Initial screen
                 {
                     await next(); // Do Action!!
                     return;
@@ -218,7 +218,7 @@ public class AuthorizationFilter : ActionFilterAttribute
                     }
                     #endregion
                     //context.Result = new UnauthorizedObjectResult("User is unauthorized"); // If not found after all checks, it doesn't exist in DB
-                    context.Result = new RedirectResult("/Dashboard/AnonymousIndex");
+                    context.Result = new RedirectResult("/DashBoard/AnonymousIndex");
                     return;
                     //Extract all DB Categories & SubCategories, compare with current accessed Controller & Action, proceed if match or output UnauthorizedObjectResult (Cancel Action!!)
                 }
@@ -263,7 +263,7 @@ public class AuthorizationFilter : ActionFilterAttribute
                     }
                     #endregion
                     //context.Result = new UnauthorizedObjectResult("User is unauthorized"); // If not found after all checks, it doesn't exist in DB
-                    context.Result = new RedirectResult("/Dashboard/AnonymousIndex");
+                    context.Result = new RedirectResult("/DashBoard/AnonymousIndex");
                     return;
                     //Extract all DB Categories & SubCategories, compare with current accessed Controller & Action, proceed if match or output UnauthorizedObjectResult (Cancel Action!!)
                 }
@@ -321,7 +321,7 @@ public class AuthorizationFilter : ActionFilterAttribute
                 }
 
                 //context.Result = new UnauthorizedObjectResult("Access is not allowed"); // If not found after all checks, execution is not allowed!
-                context.Result = new RedirectResult("/Dashboard/AnonymousIndex");
+                context.Result = new RedirectResult("/DashBoard/AnonymousIndex");
                 return;
             }
             else if (isAccountSessionExist == true) // If logged in
@@ -358,7 +358,7 @@ public class AuthorizationFilter : ActionFilterAttribute
                         }
                     }
                     //context.Result = new UnauthorizedObjectResult("Access is not allowed"); // If not found after all checks, execution is not allowed!
-                    context.Result = new RedirectResult("/Dashboard/AnonymousIndex");
+                    context.Result = new RedirectResult("/DashBoard/AnonymousIndex");
                     return;
                 }
                 else if (loginedAccount.Role == Role.User) // If logged-in user has User role
@@ -393,7 +393,7 @@ public class AuthorizationFilter : ActionFilterAttribute
                         }
                     }
                     //context.Result = new UnauthorizedObjectResult("Access is not allowed"); // If not found after all checks, execution is not allowed!
-                    context.Result = new RedirectResult("/Dashboard/AnonymousIndex");
+                    context.Result = new RedirectResult("/DashBoard/AnonymousIndex");
                     return;
                 }
             }
@@ -402,7 +402,7 @@ public class AuthorizationFilter : ActionFilterAttribute
         {
             //await next(); // Do Action!!
             //context.Result = new UnauthorizedObjectResult("Access is not allowed [Only Allowed GET/POST Method]");
-            context.Result = new RedirectResult("/Dashboard/AnonymousIndex");
+            context.Result = new RedirectResult("/DashBoard/AnonymousIndex");
             return;
         }
     }
