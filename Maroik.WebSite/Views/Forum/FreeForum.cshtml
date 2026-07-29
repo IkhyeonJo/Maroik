@@ -18,7 +18,7 @@
 
     try
     {
-        loginedAccountTimeZoneIanaId = JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).TimeZoneIanaId;
+        loginedAccountTimeZoneIanaId = JsonConvert.DeserializeObject<Account>(Encoding.UTF8.GetString(resultByte)).TimeZoneIanaId;
     }
     catch
     {
@@ -29,7 +29,7 @@
 
     if (resultByte != null) // 로그인이 된 상태라면
     {
-        loginedAccount = await accountRepository.GetAccountByEmailAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email);
+        loginedAccount = await accountRepository.GetAccountByEmailAsync(JsonConvert.DeserializeObject<Account>(Encoding.UTF8.GetString(resultByte)).Email);
     }
     else // 로그인이 되지 않은 상태라면
     {

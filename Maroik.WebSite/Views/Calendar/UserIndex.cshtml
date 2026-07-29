@@ -9,13 +9,13 @@
 @{
     string currentCulture = Context.Features.Get<Microsoft.AspNetCore.Localization.IRequestCultureFeature>().RequestCulture.Culture.Name;
     Context.Session.TryGetValue(Maroik.Core.Common.Utilities.EnumHelper.GetDescription(Maroik.Core.Common.Utilities.Session.Account), out byte[] resultByte);
-    string loginedAccountTimeZoneIanaId = JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).TimeZoneIanaId;
+    string loginedAccountTimeZoneIanaId = JsonConvert.DeserializeObject<Account>(Encoding.UTF8.GetString(resultByte)).TimeZoneIanaId;
 
     Account loginedAccount = new Account();
 
     if (resultByte != null) // 로그인이 된 상태라면
     {
-        loginedAccount = await accountRepository.GetAccountByEmailAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email);
+        loginedAccount = await accountRepository.GetAccountByEmailAsync(JsonConvert.DeserializeObject<Account>(Encoding.UTF8.GetString(resultByte)).Email);
     }
     else // 로그인이 되지 않은 상태라면
     {

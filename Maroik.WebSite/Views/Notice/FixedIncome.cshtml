@@ -6,7 +6,7 @@
     string currentCulture = Context.Features.Get<Microsoft.AspNetCore.Localization.IRequestCultureFeature>().RequestCulture.Culture.Name;
     Context.Session.TryGetValue(Maroik.Core.Common.Utilities.EnumHelper.GetDescription(Maroik.Core.Common.Utilities.Session.Account), out byte[] resultByte);
 
-    List<Asset> assets = (await assetRepository.GetAssetsAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte ?? [])).Email)).Where(x => !x.Deleted).OrderBy(x => x.ProductName).ToList();
+    List<Asset> assets = (await assetRepository.GetAssetsAsync(JsonConvert.DeserializeObject<Account>(Encoding.UTF8.GetString(resultByte ?? [])).Email)).Where(x => !x.Deleted).OrderBy(x => x.ProductName).ToList();
 }
 
 @Html.Hidden("localizerPrevText", localizer["PrevText"].Value)

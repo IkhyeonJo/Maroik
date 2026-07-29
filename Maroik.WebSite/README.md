@@ -376,7 +376,7 @@ var tempAccount = accountRepository.GetAccount(loginInputViewModel.Email);
 HttpContext.Session.Set(Maroik.Core.Common.Utilities.EnumHelper.GetDescription(Maroik.Core.Common.Utilities.Session.Account), Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(tempAccount))); // Set Session
 
 var isExist = HttpContext.Session.TryGetValue(Maroik.Core.Common.Utilities.EnumHelper.GetDescription(Maroik.Core.Common.Utilities.Session.Account), out byte[] resultByte);
-var loginedAccount = JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)); // Get Session
+var loginedAccount = JsonConvert.DeserializeObject<Account>(Encoding.UTF8.GetString(resultByte)); // Get Session
 
 
 
