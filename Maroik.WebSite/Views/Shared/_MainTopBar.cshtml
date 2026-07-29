@@ -4,7 +4,6 @@
 @using System.Text
 @using Newtonsoft.Json
 @using Maroik.WebSite.Models.ViewModels.Notice
-@using System.Text.RegularExpressions
 @inject Maroik.Core.Repository.Contracts.IFixedIncomeRepository fixedIncomeRepository
 @inject Maroik.Core.Repository.Contracts.IFixedExpenditureRepository fixedExpenditureRepository
 @{
@@ -19,7 +18,7 @@
     {
         loginedAccountTimeZoneIanaId = string.Empty;
     }
-    DateTime currentDate = new DateTime(Convert.ToInt32(Regex.Split(DateTime.UtcNow.ToLocalTime().ToString("yyyy-MM-dd"), "-")[0]), Convert.ToInt32(Regex.Split(DateTime.UtcNow.ToLocalTime().ToString("yyyy-MM-dd"), "-")[1]), Convert.ToInt32(Regex.Split(DateTime.UtcNow.ToLocalTime().ToString("yyyy-MM-dd"), "-")[2]));
+    DateTime currentDate = DateTime.UtcNow.ConvertTimeByTimeZoneIanaId(loginedAccountTimeZoneIanaId).Date;
     List<FixedIncomeOutputViewModel> fixedIncomeOutputViewModels = new List<FixedIncomeOutputViewModel>();
     List<FixedExpenditureOutputViewModel> fixedExpenditureOutputViewModels = new List<FixedExpenditureOutputViewModel>();
     int fixedIncomesNoticedCount = 0;
@@ -30,13 +29,16 @@
 
     if (resultByte != null) // 로그인이 된 상태라면
     {
-        foreach (FixedIncome item in await fixedIncomeRepository.GetFixedIncomesAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email))
+        foreach (FixedIncome item in await fixedIncomeRepository.GetFixedIncomesAsync(JsonConvert.DeserializeObject<Account>(Encoding.UTF8.GetString(resultByte)).Email))
         {
             bool noticedResult = false;
 
             try
             {
-                noticedResult = currentDate.Subtract(new DateTime(Convert.ToInt32(Regex.Split(DateTime.UtcNow.ToLocalTime().ToString("yyyy-MM-dd"), "-")[0]), item.DepositMonth, item.DepositDay)).TotalDays <= 0 && Math.Abs(currentDate.Subtract(new DateTime(Convert.ToInt32(Regex.Split(DateTime.UtcNow.ToLocalTime().ToString("yyyy-MM-dd"), "-")[0]), item.DepositMonth, item.DepositDay)).TotalDays) <= ServerSetting.NoticeMaturityDateDay;
+                DateTime maturityDate = new(currentDate.Year, item.DepositMonth, item.DepositDay);
+                noticedResult = currentDate.Subtract(maturityDate).TotalDays <= 0 &&
+                                Math.Abs(currentDate.Subtract(maturityDate).TotalDays) <=
+                                ServerSetting.NoticeMaturityDateDay;
             }
             catch // 윤년이 아닌데 2월 29일로 초기화 했을 때 예외 발생
             {
@@ -67,13 +69,16 @@
             });
         }
 
-        foreach (FixedExpenditure item in await fixedExpenditureRepository.GetFixedExpendituresAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email))
+        foreach (FixedExpenditure item in await fixedExpenditureRepository.GetFixedExpendituresAsync(JsonConvert.DeserializeObject<Account>(Encoding.UTF8.GetString(resultByte)).Email))
         {
             bool noticedResult = false;
 
             try
             {
-                noticedResult = currentDate.Subtract(new DateTime(Convert.ToInt32(Regex.Split(DateTime.UtcNow.ToLocalTime().ToString("yyyy-MM-dd"), "-")[0]), item.DepositMonth, item.DepositDay)).TotalDays <= 0 && Math.Abs(currentDate.Subtract(new DateTime(Convert.ToInt32(Regex.Split(DateTime.UtcNow.ToLocalTime().ToString("yyyy-MM-dd"), "-")[0]), item.DepositMonth, item.DepositDay)).TotalDays) <= ServerSetting.NoticeMaturityDateDay;
+                DateTime maturityDate = new(currentDate.Year, item.DepositMonth, item.DepositDay);
+                noticedResult = currentDate.Subtract(maturityDate).TotalDays <= 0 &&
+                                Math.Abs(currentDate.Subtract(maturityDate).TotalDays) <=
+                                ServerSetting.NoticeMaturityDateDay;
             }
             catch // 윤년이 아닌데 2월 29일로 초기화 했을 때 예외 발생
             {
