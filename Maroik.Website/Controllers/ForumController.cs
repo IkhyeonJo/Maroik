@@ -155,8 +155,11 @@ public class ForumController : Controller
     [ValidateAntiForgeryToken]
     [RequiredHttpPostAccess(Role = Role.Admin)]
     [RequiredHttpPostAccess(Role = Role.User)]
-    public async Task<IActionResult> UploadImageFile(IFormFile summernoteImageFile, CancellationToken ct)
+    public async Task<IActionResult> UploadImageFile(IFormFile? summernoteImageFile, CancellationToken ct)
     {
+        if (summernoteImageFile == null)
+            return Ok(new { result = false, errorMessage = _localizer["Please attach a file."].Value });
+
         if (summernoteImageFile.Length <= 0 || summernoteImageFile.Length > _serverSettings.Value.MaxAttachedFileSizeBytes)
             return Ok(new { result = false, errorMessage = _localizer["File Size must be smaller than {0}MB.", _serverSettings.Value.MaxAttachedFileSizeBytes / (1024 * 1024)].Value });
 
