@@ -33,6 +33,7 @@ Log.Logger = new LoggerConfiguration()
 try
 {
     var builder = WebApplication.CreateBuilder(args);
+    WebApplication? app = null; // assigned after Build() below; captured by the Kestrel cert selector closure
 
     builder.Host.UseSerilog((_, _, configuration) => configuration
         .MinimumLevel.Information()
@@ -114,8 +115,10 @@ try
         .AddScoped<Maroik.Website.Contracts.IExcelExportService, Maroik.Website.Services.ExcelExportService>()
         .AddScoped<Maroik.Website.Contracts.ISessionService, Maroik.Website.Services.SessionService>();
 
-    // Registered here (before Build()) so it goes through DI like the other services;
-    // actually resolved and wired up in the Hot Swap Cert region below, after the app is built.
+    // Registered here (before Build()) so it goes through DI like the other services. ConfigureKestrel
+    // below must also run before Build() - the service collection becomes read-only once Build() runs.
+    // The selector closure captures `app`, which is only assigned after Build() (see below), but the
+    // selector itself isn't invoked until the first TLS handshake, long after that.
     if (!string.IsNullOrEmpty(cfgDockerCertPath) && !string.IsNullOrEmpty(cfgDockerKeyPath))
     {
         builder.Services.AddSingleton<Maroik.Website.Contracts.ICertificateManager>(sp =>
@@ -123,6 +126,18 @@ try
                 cfgDockerCertPath,
                 cfgDockerKeyPath,
                 sp.GetRequiredService<ILogger<Maroik.Website.Services.CertificateManager>>()));
+
+        builder.WebHost.ConfigureKestrel(options =>
+        {
+            options.ConfigureHttpsDefaults(https =>
+            {
+                // ReSharper disable once AccessToModifiedClosure - `app` is assigned exactly once
+                // (right after Build(), below) before this selector can ever be invoked.
+                https.ServerCertificateSelector = (_, _) =>
+                    app!.Services.GetRequiredService<Maroik.Website.Contracts.ICertificateManager>()
+                        .SelectCertificate();
+            });
+        });
     }
 
     #endregion
@@ -247,22 +262,13 @@ try
             new AutoValidateAntiforgeryTokenAttribute()); // Globally enables token validation for all requests except for GET, HEAD, OPTIONS, and TRACE
     });
 
-    var app = builder.Build();
+    app = builder.Build();
 
     #region Hot Swap Cert
 
     if (!string.IsNullOrEmpty(cfgDockerCertPath) && !string.IsNullOrEmpty(cfgDockerKeyPath))
     {
         var certManager = app.Services.GetRequiredService<Maroik.Website.Contracts.ICertificateManager>();
-
-        // Configure Kestrel SSL settings
-        builder.WebHost.ConfigureKestrel(options =>
-        {
-            options.ConfigureHttpsDefaults(https =>
-            {
-                https.ServerCertificateSelector = (_, _) => certManager.SelectCertificate();
-            });
-        });
 
         var certTimer = new System.Timers.Timer(TimeSpan.FromHours(1).TotalMilliseconds)
         {
