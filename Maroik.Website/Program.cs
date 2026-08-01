@@ -4,9 +4,6 @@
 // sets up hot-swap TLS certificate polling for Docker deployments, and builds the ASP.NET Core pipeline.
 
 using System.Globalization;
-using System.Runtime.InteropServices;
-using System.Security.Cryptography;
-using System.Security.Cryptography.X509Certificates;
 using Mapster;
 using Maroik.Core.Client.Extensions;
 using Maroik.Core.Contract.Enums;
@@ -35,17 +32,6 @@ Log.Logger = new LoggerConfiguration()
 
 try
 {
-    X509Certificate2 currentCert;
-    string previousCertHash;
-    string previousCertKeyHash;
-    object certLock = new();
-    var isReloading = false;
-    // ReSharper disable once TooWideLocalVariableScope
-    System.Timers.Timer certTimer;
-
-    // Serilog context logger for the certificate manager (used before host DI is available).
-    var certLogger = Log.ForContext("SourceContext", "CertificateManager");
-
     var builder = WebApplication.CreateBuilder(args);
 
     builder.Host.UseSerilog((_, _, configuration) => configuration
@@ -127,6 +113,17 @@ try
     builder.Services
         .AddScoped<Maroik.Website.Contracts.IExcelExportService, Maroik.Website.Services.ExcelExportService>()
         .AddScoped<Maroik.Website.Contracts.ISessionService, Maroik.Website.Services.SessionService>();
+
+    // Registered here (before Build()) so it goes through DI like the other services;
+    // actually resolved and wired up in the Hot Swap Cert region below, after the app is built.
+    if (!string.IsNullOrEmpty(cfgDockerCertPath) && !string.IsNullOrEmpty(cfgDockerKeyPath))
+    {
+        builder.Services.AddSingleton<Maroik.Website.Contracts.ICertificateManager>(sp =>
+            new Maroik.Website.Services.CertificateManager(
+                cfgDockerCertPath,
+                cfgDockerKeyPath,
+                sp.GetRequiredService<ILogger<Maroik.Website.Services.CertificateManager>>()));
+    }
 
     #endregion
 
@@ -254,137 +251,27 @@ try
 
     #region Hot Swap Cert
 
-    string ComputeFileHash(string filePath)
-    {
-        using var sha256 = SHA256.Create();
-        using var stream = new FileStream(
-            filePath,
-            FileMode.Open,
-            FileAccess.Read,
-            FileShare.ReadWrite,
-            bufferSize: 8192,
-            FileOptions.SequentialScan);
-
-        var hashBytes = sha256.ComputeHash(stream);
-        return Convert.ToHexString(hashBytes); // .NET 5+
-    }
-
-    // Certificate loading function definition using X509CertificateLoader
-    X509Certificate2 LoadCertificate(string certPath, string keyPath)
-    {
-        try
-        {
-            var realCertPem = "";
-            var realKeyPem = "";
-
-            // Read certificate and key as string (pem format)
-            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
-            {
-                var linkCertPem = File.ReadAllText(certPath);
-                var linkKeyPem = File.ReadAllText(keyPath);
-
-                var realCertName = Path.GetFileName(linkCertPem);
-                var realKeyName = Path.GetFileName(linkKeyPem);
-
-                var realCertPath = certPath.Replace("/live/", "/archive/").Replace("cert.pem", realCertName);
-                var realKeyPath = keyPath.Replace("/live/", "/archive/").Replace("privkey.pem", realKeyName);
-
-                realCertPem = File.ReadAllText(realCertPath);
-                realKeyPem = File.ReadAllText(realKeyPath);
-            }
-            else if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux) ||
-                     RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
-            {
-                realCertPem = File.ReadAllText(certPath);
-                realKeyPem = File.ReadAllText(keyPath);
-            }
-
-            // Create the certificate using X509Certificate2.CreateFromPem
-            var cert = X509Certificate2.CreateFromPem(realCertPem);
-
-            // Load private key from PEM manually
-            using var ecdsaPrivateKey = ECDsa.Create();
-            ecdsaPrivateKey.ImportFromPem(realKeyPem);
-
-            // Combine certificate plus private key
-            var certWithKey = cert.CopyWithPrivateKey(ecdsaPrivateKey);
-
-            return certWithKey;
-        }
-        catch (Exception ex)
-        {
-            certLogger.Error(ex, "Failed to load certificate from {CertPath} and {KeyPath}", certPath, keyPath);
-            throw;
-        }
-    }
-
     if (!string.IsNullOrEmpty(cfgDockerCertPath) && !string.IsNullOrEmpty(cfgDockerKeyPath))
     {
-        // Load certificate
-        currentCert = LoadCertificate(cfgDockerCertPath, cfgDockerKeyPath);
-        previousCertHash = ComputeFileHash(cfgDockerCertPath);
-        previousCertKeyHash = ComputeFileHash(cfgDockerKeyPath);
+        var certManager = app.Services.GetRequiredService<Maroik.Website.Contracts.ICertificateManager>();
 
         // Configure Kestrel SSL settings
         builder.WebHost.ConfigureKestrel(options =>
         {
             options.ConfigureHttpsDefaults(https =>
             {
-                https.ServerCertificateSelector = (_, _) =>
-                {
-                    lock (certLock)
-                    {
-                        return currentCert;
-                    }
-                };
+                https.ServerCertificateSelector = (_, _) => certManager.SelectCertificate();
             });
         });
 
-        certTimer = new System.Timers.Timer(TimeSpan.FromHours(1)
-            .TotalMilliseconds); // for debug [TimeSpan.FromSeconds(5)]
-        certTimer.AutoReset = true;
-
-        var logger = app.Logger;
-        certTimer.Elapsed += (_, _) =>
+        var certTimer = new System.Timers.Timer(TimeSpan.FromHours(1).TotalMilliseconds)
         {
-            if (isReloading) return;
-            isReloading = true;
-
-            try
-            {
-                var currentCertHash = ComputeFileHash(cfgDockerCertPath);
-                var currentCertKeyHash = ComputeFileHash(cfgDockerKeyPath);
-                // ReSharper disable once InvertIf
-                if (currentCertHash != previousCertHash &&
-                    currentCertKeyHash != previousCertKeyHash)
-                {
-                    logger.LogInformation("Certificate file changed, reloading...");
-
-                    var newCert = LoadCertificate(cfgDockerCertPath, cfgDockerKeyPath);
-
-                    lock (certLock)
-                    {
-                        currentCert.Dispose();
-                        currentCert = newCert;
-                        previousCertHash = currentCertHash;
-                        previousCertKeyHash = currentCertKeyHash;
-                    }
-
-                    logger.LogInformation("Certificate reloaded successfully.");
-                }
-            }
-            catch (Exception ex)
-            {
-                logger.LogError(ex, "Failed to reload certificate");
-            }
-            finally
-            {
-                isReloading = false;
-            }
+            AutoReset = true
         };
-
+        certTimer.Elapsed += (_, _) => certManager.TryReload();
         certTimer.Start();
-        certLogger.Information("Certificate polling started.");
+
+        app.Logger.LogInformation("Certificate polling started.");
     }
 
     #endregion
