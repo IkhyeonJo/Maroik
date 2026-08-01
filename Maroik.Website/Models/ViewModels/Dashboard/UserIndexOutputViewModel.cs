@@ -1,3 +1,4 @@
+// ReSharper disable PropertyCanBeMadeInitOnly.Global
 namespace Maroik.Website.Models.ViewModels.Dashboard;
 
 /// <summary>
@@ -124,7 +125,7 @@ public class UserIndexOutputViewModel
     /// <summary>Total inter-household transfer expenses (e.g. remittances) for the selected year.</summary>
     public decimal NonConsumerSpendingInterHouseholdTransferExpensesYear { get; set; }
 
-    /// <summary>Total donations to non-profit organisations for the selected year.</summary>
+    /// <summary>Total donations to non-profit organizations for the selected year.</summary>
     public decimal NonConsumerSpendingNonProfitOrganizationTransferYear { get; set; }
 
     /// <summary>Public pension as a percentage of total non-consumer spending for the selected year.</summary>
@@ -302,7 +303,7 @@ public class UserIndexOutputViewModel
     /// <summary>Total inter-household transfer expenses for the selected year-month.</summary>
     public decimal NonConsumerSpendingInterHouseholdTransferExpensesYearMonth { get; set; }
 
-    /// <summary>Total donations to non-profit organisations for the selected year-month.</summary>
+    /// <summary>Total donations to non-profit organizations for the selected year-month.</summary>
     public decimal NonConsumerSpendingNonProfitOrganizationTransferYearMonth { get; set; }
 
     /// <summary>Public pension as a percentage of total non-consumer spending for the selected year-month.</summary>

@@ -1,3 +1,4 @@
+// ReSharper disable PropertyCanBeMadeInitOnly.Global
 using System.ComponentModel.DataAnnotations;
 using Maroik.Core.Contract.Policies;
 
@@ -95,6 +96,8 @@ public class FixedExpenditureOutputViewModel
     [Display(Name = "Unpunctuality")]
     public bool Unpunctuality { get; set; }
 
-    /// <summary>CSS row class for the grid, prioritizing Expired over Noticed over the default state.</summary>
+    /// <summary>
+    /// CSS row class for the grid, prioritizing Expired over Noticed the default state.
+    /// </summary>
     public string RowCssClass => FixedSchedulePolicy.GetRowCssClass(Expired, Noticed);
 }

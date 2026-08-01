@@ -1,3 +1,5 @@
+// ReSharper disable UnusedAutoPropertyAccessor.Global
+// ReSharper disable PropertyCanBeMadeInitOnly.Global
 using System.ComponentModel.DataAnnotations;
 
 namespace Maroik.Website.Models.ViewModels.Management;
@@ -52,7 +54,7 @@ public class BoardOutputViewModel
 
     /// <summary>
     /// When <see langword="true"/> the post content already contains <c>&lt;img&gt;</c> tags
-    /// (embedded by Summernote), so the view skips adding an additional image preview.
+    /// (embedded by Summernote), so the view skips additional image preview.
     /// </summary>
     public bool IsImgTagIncluded { get; set; }
 

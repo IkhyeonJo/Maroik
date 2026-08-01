@@ -1,3 +1,5 @@
+using Maroik.Core.Contract.Dtos;
+    
 namespace Maroik.Website.Models.ViewModels.Calendar;
 
 /// <summary>
@@ -8,5 +10,5 @@ namespace Maroik.Website.Models.ViewModels.Calendar;
 public class CalendarInputViewModel
 {
     /// <summary>All calendars owned by the logged-in user; pre-populated by the controller.</summary>
-    public IEnumerable<Maroik.Core.Contract.Dtos.CalendarRequest> Calendars { get; set; } = [];
+    public IEnumerable<CalendarRequest> Calendars { get; } = [];
 }

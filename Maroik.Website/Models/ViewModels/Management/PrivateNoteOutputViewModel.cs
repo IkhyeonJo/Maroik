@@ -1,3 +1,4 @@
+// ReSharper disable PropertyCanBeMadeInitOnly.Global
 using Maroik.Core.Contract.Dtos;
 
 namespace Maroik.Website.Models.ViewModels.Management;
@@ -45,13 +46,13 @@ public class PrivateNoteOutputViewModel
     // Populated by controller - consumed by view
 
     /// <summary>Full account record of the currently logged-in admin.</summary>
-    public Maroik.Core.Contract.Dtos.AccountResponse LoggedInAccount { get; set; } = new();
+    public AccountResponse LoggedInAccount { get; set; } = new();
 
     /// <summary>IANA time-zone ID of the logged-in admin, used to display post timestamps in local time.</summary>
     public string LoggedInAccountTimeZoneIanaId { get; set; } = "";
 
     /// <summary>All registered accounts; used to look up writer nicknames when rendering the post list.</summary>
-    public List<Maroik.Core.Contract.Dtos.AccountResponse> AllAccounts { get; set; } = [];
+    public List<AccountResponse> AllAccounts { get; set; } = [];
 
     /// <summary>Nicknames of every Admin account in <see cref="AllAccounts"/>, for highlighting admin-authored posts/comments.</summary>
     public HashSet<string> AdminNicknames { get; set; } = [];
@@ -60,10 +61,10 @@ public class PrivateNoteOutputViewModel
     public Dictionary<long, int> CommentCountByBoardId { get; set; } = new();
 
     /// <summary>Maps each board post ID to its list of attached files for the attachment icon in the post list.</summary>
-    public Dictionary<long, List<Maroik.Core.Contract.Dtos.BoardAttachedFileDto>> AttachedFilesByBoardId { get; set; } = new();
+    public Dictionary<long, List<BoardAttachedFileDto>> AttachedFilesByBoardId { get; set; } = new();
 
     /// <summary>Comments on the currently open detail post, rendered in the detail panel.</summary>
-    public List<Maroik.Core.Contract.Dtos.BoardCommentResponse> DetailBoardComments { get; set; } = [];
+    public List<BoardCommentResponse> DetailBoardComments { get; set; } = [];
 
     /// <summary>The search field selected by the user (e.g. "Title", "Content", "Writer").</summary>
     public string SelectedSearchType { get; set; } = "";

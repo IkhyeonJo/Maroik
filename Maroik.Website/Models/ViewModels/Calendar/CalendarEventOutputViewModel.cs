@@ -1,10 +1,12 @@
+// ReSharper disable UnusedAutoPropertyAccessor.Global
+// ReSharper disable PropertyCanBeMadeInitOnly.Global
 using Maroik.Core.Contract.Dtos;
 
 namespace Maroik.Website.Models.ViewModels.Calendar;
 
 /// <summary>
 /// Read-only view model for a calendar event as rendered in the calendar grid or event detail panel.
-/// Extends the raw DTO with pre-formatted display strings, the calendar colour, and the
+/// Extends the raw DTO with pre-formatted display strings, the calendar color, and the
 /// Base64-encoded attachment so the view can embed the file without a separate download request.
 /// </summary>
 public class CalendarEventOutputViewModel
@@ -51,7 +53,7 @@ public class CalendarEventOutputViewModel
     /// <summary>All calendars available to the user, used to populate the calendar selector when editing this event.</summary>
     public List<CalendarResponse> Calendars { get; set; } = [];
 
-    /// <summary>Event status string (e.g. "Confirmed", "Tentative", "Cancelled").</summary>
+    /// <summary>Event status string (e.g. "Confirmed", "Tentative", "Canceled").</summary>
     public string? Status { get; set; }
 
     /// <summary>
@@ -60,7 +62,7 @@ public class CalendarEventOutputViewModel
     /// </summary>
     public string? SerializedCalendarReminders { get; set; }
 
-    /// <summary>HTML colour code (e.g. "#3788d8") inherited from the parent calendar, used for event chip styling.</summary>
+    /// <summary>HTML color code (e.g. "#3788d8") inherited from the parent calendar, used for event chip styling.</summary>
     public string? HtmlColorCode { get; set; }
 
     /// <summary>Human-readable start date-time string already formatted in the user's local time zone.</summary>
