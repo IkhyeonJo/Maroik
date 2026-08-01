@@ -66,6 +66,11 @@ services:
         - "5432"
       networks:
         - backend
+      healthcheck:
+        test: ["CMD-SHELL", "pg_isready -U postgres -d Maroik"]
+        interval: 5s
+        timeout: 3s
+        retries: 5
 
     maroik.website:
         build :
@@ -86,7 +91,7 @@ services:
           - dataprotection-keys:/root/.aspnet/DataProtection-Keys
         depends_on:
           postgresql:
-            condition: service_started
+            condition: service_healthy
           valkey:
             condition: service_healthy
           rabbitmq:
@@ -124,7 +129,7 @@ services:
           - ./Maroik.Log/:/app/Maroik.Log:rw
         depends_on:
           postgresql:
-            condition: service_started
+            condition: service_healthy
           rabbitmq:
             condition: service_healthy
 

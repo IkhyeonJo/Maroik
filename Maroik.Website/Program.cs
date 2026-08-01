@@ -249,7 +249,17 @@ try
 
     #endregion
 
-    builder.Services.AddHealthChecks();
+    // Custom checks (not the AspNetCore health checks.* NuGet packages) so /health actually reflects
+    // whether the app can reach its dependencies, for the CI/CD post-deploy health check.
+    var healthChecksBuilder = builder.Services.AddHealthChecks()
+        .AddCheck<Maroik.Core.Repository.HealthChecks.DatabaseHealthCheck>("database")
+        .AddTypeActivatedCheck<Maroik.Core.Client.HealthChecks.RabbitMqHealthCheck>(
+            "rabbitmq", args: [rabbitMqConnectionString]);
+
+    if (valkey != null)
+    {
+        healthChecksBuilder.AddCheck<Maroik.Website.HealthChecks.ValkeyHealthCheck>("valkey");
+    }
 
     builder.Services.AddScoped<ViewBagPopulatorFilter>();
     builder.Services.AddControllersWithViews(options =>

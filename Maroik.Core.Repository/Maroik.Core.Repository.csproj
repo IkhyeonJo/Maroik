@@ -9,6 +9,7 @@
   <ItemGroup>
     <PackageReference Include="Mapster" />
     <PackageReference Include="Mapster.DependencyInjection" />
+    <PackageReference Include="Microsoft.Extensions.Diagnostics.HealthChecks.Abstractions" />
     <PackageReference Include="Microsoft.EntityFrameworkCore" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.Design">
       <PrivateAssets>all</PrivateAssets>
