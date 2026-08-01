@@ -1,4 +1,3 @@
-using System.Text;
 using Maroik.Core.Contract.Constants;
 using Maroik.Core.Contract.Domains.ValueObjects;
 using Maroik.Core.Contract.Dtos;
@@ -151,7 +150,7 @@ public class ManagementController : Controller
             {
                 "virus-detected" => BadRequest("File may be infected with a virus."),
                 "svg-not-allowed" => Ok(new { result = false, errorMessage = _localizer["SVG format is not allowed"].Value }),
-                "invalid-image" => Ok(new { result = false, errorMessage = _localizer["Invalid image file."].Value }),
+                "invalid-image" => Ok(new { result = false, errorMessage = _localizer["Invalid image file"].Value }),
                 _ => Ok(new { result = false, errorMessage = _localizer["Input is invalid"].Value })
             };
         }
@@ -174,23 +173,25 @@ public class ManagementController : Controller
         _ = ModelState.Remove(nameof(profileInputViewModel.Password));
         _ = ModelState.Remove(nameof(profileInputViewModel.NewPassword));
 
-        if (ModelState.IsValid)
+        if (!ModelState.IsValid)
         {
-            try
-            {
-                string? email = _sessionService.GetAccount()!.Email;
-                await _profileService.UpdateTimeZoneAsync(email!, profileInputViewModel.TimeZoneIanaId!, HttpContext.RequestAborted);
+            return RedirectToAction("Profile", "Management");
+        }
 
-                // Refresh session with updated timezone
-                AccountResponse? updatedAccount = await _profileService.GetProfileAsync(email!, HttpContext.RequestAborted);
-                _sessionService.RemoveAccount();
-                updatedAccount!.HashedPassword = null;
-                _sessionService.SetAccount(updatedAccount);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Failed to update time zone for account {AccountEmail}", _sessionService.GetAccount()?.Email);
-            }
+        try
+        {
+            string? email = _sessionService.GetAccount()!.Email;
+            await _profileService.UpdateTimeZoneAsync(email!, profileInputViewModel.TimeZoneIanaId!, HttpContext.RequestAborted);
+
+            // Refresh session with updated timezone
+            AccountResponse? updatedAccount = await _profileService.GetProfileAsync(email!, HttpContext.RequestAborted);
+            _sessionService.RemoveAccount();
+            updatedAccount!.HashedPassword = null;
+            _sessionService.SetAccount(updatedAccount);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to update time zone for account {AccountEmail}", _sessionService.GetAccount()?.Email);
         }
 
         return RedirectToAction("Profile", "Management");
@@ -225,7 +226,7 @@ public class ManagementController : Controller
 
             return result.Success
                 ? Json(new { result = true, message = _localizer["Password change successfully done."].Value })
-                : Json(new { result = false, error = _localizer[result.ErrorKey ?? "Input is invalid"].Value });
+                : Json(new { result = false, error = _localizer[result.ErrorKey].Value });
         }
         catch (Exception ex)
         {
@@ -260,97 +261,97 @@ public class ManagementController : Controller
             // friendlier "Please select time zone" check further down ever runs.
             _ = ModelState.Remove(nameof(accountInputViewModel.TimeZoneIanaId));
 
-            if (ModelState.IsValid)
-            {
-                #region Email format check
-
-                if (Email.Create(accountInputViewModel.Email).IsError) // Invalid email format
-                {
-                    return Json(new { result = false, error = _localizer["Invalid email form"].Value });
-                }
-
-                #endregion
-
-                #region Password format check
-
-                if (!PasswordPolicy.IsValid(accountInputViewModel.Password))
-                {
-                    return Json(new
-                    {
-                        result = false,
-                        error = _localizer[
-                                "Password must be at least 8 characters and contain at 3 of 4 of the following: upper case (A-Z), lower case (a-z), number (0-9) and special character (e.g. !@#$%^&*)"]
-                            .Value
-                    });
-                }
-
-                #endregion
-
-                #region Nickname format check
-
-                if (string.IsNullOrEmpty(accountInputViewModel.Nickname))
-                {
-                    return Json(new { result = false, error = _localizer["Please enter Nickname"].Value });
-                }
-                else if (accountInputViewModel.Nickname.Length is not (>= 1 and <= 255))
-                {
-                    return Json(new
-                    {
-                        result = false,
-                        error = _localizer["Nickname is must be between 1 and 255 characters"].Value
-                    });
-                }
-
-                #endregion
-
-                #region Role check
-
-                if (accountInputViewModel.Role is not (Role.Admin or Role.User))
-                {
-                    accountInputViewModel.Role = Role.User;
-                }
-
-                #endregion
-
-                #region TimeZone format check
-
-                if (string.IsNullOrEmpty(accountInputViewModel.TimeZoneIanaId))
-                {
-                    return Json(new { result = false, error = _localizer["Please select time zone"].Value });
-                }
-
-                #endregion
-
-                #region Create account
-
-                ServiceResult createResult = await _managementAccountService.CreateAccountAsync(new AccountRequest
-                {
-                    Email = accountInputViewModel.Email,
-                    HashedPassword = accountInputViewModel.Password, // service will hash
-                    Nickname = accountInputViewModel.Nickname,
-                    AvatarImagePath = "/upload/Management/Profile/default-avatar.jpg",
-                    Role = accountInputViewModel.Role,
-                    TimeZoneIanaId = accountInputViewModel.TimeZoneIanaId,
-                    Locked = false,
-                    LoginAttempt = 0,
-                    EmailConfirmed = true,
-                    AgreedServiceTerms = true,
-                    Created = DateTime.UtcNow,
-                    Updated = DateTime.UtcNow,
-                    Message = EnumHelper.GetDescription(AccountMessage.Success),
-                    Deleted = false
-                }, HttpContext.RequestAborted);
-
-                return createResult.Success
-                    ? Json(new { result = true, message = _localizer["Account create successfully done."].Value })
-                    : Json(new { result = false, error = _localizer[createResult.ErrorKey ?? "Input is invalid"].Value });
-
-                #endregion
-            }
-            else
+            if (!ModelState.IsValid)
             {
                 return Json(new { result = false, error = _localizer["Input is invalid"].Value });
             }
+
+            #region Email format check
+
+            if (Email.Create(accountInputViewModel.Email).IsError) // Invalid email format
+            {
+                return Json(new { result = false, error = _localizer["Invalid email form"].Value });
+            }
+
+            #endregion
+
+            #region Password format check
+
+            if (!PasswordPolicy.IsValid(accountInputViewModel.Password))
+            {
+                return Json(new
+                {
+                    result = false,
+                    error = _localizer[
+                            "Password must be at least 8 characters and contain at 3 of 4 of the following: upper case (A-Z), lower case (a-z), number (0-9) and special character (e.g. !@#$%^&*)"]
+                        .Value
+                });
+            }
+
+            #endregion
+
+            #region Nickname format check
+
+            if (string.IsNullOrEmpty(accountInputViewModel.Nickname))
+            {
+                return Json(new { result = false, error = _localizer["Please enter Nickname"].Value });
+            }
+
+            if (accountInputViewModel.Nickname.Length is not (>= 1 and <= 255))
+            {
+                return Json(new
+                {
+                    result = false,
+                    error = _localizer["Nickname is must be between 1 and 255 characters"].Value
+                });
+            }
+
+            #endregion
+
+            #region Role check
+
+            if (accountInputViewModel.Role is not (Role.Admin or Role.User))
+            {
+                accountInputViewModel.Role = Role.User;
+            }
+
+            #endregion
+
+            #region TimeZone format check
+
+            if (string.IsNullOrEmpty(accountInputViewModel.TimeZoneIanaId))
+            {
+                return Json(new { result = false, error = _localizer["Please select time zone"].Value });
+            }
+
+            #endregion
+
+            #region Create account
+
+            ServiceResult createResult = await _managementAccountService.CreateAccountAsync(new AccountRequest
+            {
+                Email = accountInputViewModel.Email,
+                HashedPassword = accountInputViewModel.Password, // service will hash
+                Nickname = accountInputViewModel.Nickname,
+                AvatarImagePath = "/upload/Management/Profile/default-avatar.jpg",
+                Role = accountInputViewModel.Role,
+                TimeZoneIanaId = accountInputViewModel.TimeZoneIanaId,
+                Locked = false,
+                LoginAttempt = 0,
+                EmailConfirmed = true,
+                AgreedServiceTerms = true,
+                Created = DateTime.UtcNow,
+                Updated = DateTime.UtcNow,
+                Message = EnumHelper.GetDescription(AccountMessage.Success),
+                Deleted = false
+            }, HttpContext.RequestAborted);
+
+            return createResult.Success
+                ? Json(new { result = true, message = _localizer["Account create successfully done."].Value })
+                : Json(new { result = false, error = _localizer[createResult.ErrorKey].Value });
+
+            #endregion
+
         }
         catch (Exception ex)
         {
@@ -367,20 +368,23 @@ public class ManagementController : Controller
     [HttpGet]
     public async Task<IActionResult> Account(string wholeSearch)
     {
-        if (HttpContext.Request.Headers["X-Requested-With"] == "XMLHttpRequest")
+#pragma warning disable ASP0015
+        if (HttpContext.Request.Headers["X-Requested-With"] != "XMLHttpRequest")
+#pragma warning restore ASP0015
         {
-            string tz = _sessionService.GetAccount()!.TimeZoneIanaId!;
-            var accounts = await _managementAccountService.GetAllAccountsAsync(HttpContext.RequestAborted);
-            var viewModels = accounts
-                .ToDisplayViewModels(tz)
-                .ApplySearch(wholeSearch)
-                .OrderBy(m => m.Email).ThenBy(m => m.Nickname)
-                .ThenByDescending(m => m.Created).ThenByDescending(m => m.Updated)
-                .AsQueryable();
-            return PartialView("_AccountGrid", viewModels);
+            return View();
         }
 
-        return View();
+        string tz = _sessionService.GetAccount()!.TimeZoneIanaId!;
+        var accounts = await _managementAccountService.GetAllAccountsAsync(HttpContext.RequestAborted);
+        var viewModels = accounts
+            .ToDisplayViewModels(tz)
+            .ApplySearch(wholeSearch)
+            .OrderBy(m => m.Email).ThenBy(m => m.Nickname)
+            .ThenByDescending(m => m.Created).ThenByDescending(m => m.Updated)
+            .AsQueryable();
+        return PartialView("_AccountGrid", viewModels);
+
     }
 
     /// <summary>Checks whether an account with the given email exists.</summary>
@@ -450,7 +454,7 @@ public class ManagementController : Controller
 
             return updateResult.Success
                 ? Json(new { result = true, message = _localizer["Successfully updated the account"].Value })
-                : Json(new { result = false, error = _localizer[updateResult.ErrorKey ?? "Input is invalid"].Value });
+                : Json(new { result = false, error = _localizer[updateResult.ErrorKey].Value });
         }
         catch (Exception ex)
         {
@@ -474,7 +478,7 @@ public class ManagementController : Controller
             ServiceResult deleteResult = await _managementAccountService.DeleteAccountAsync(accountInputViewModel.Email!, HttpContext.RequestAborted);
             return deleteResult.Success
                 ? Json(new { result = true, message = _localizer["Successfully deleted the account"].Value })
-                : Json(new { result = false, error = _localizer[deleteResult.ErrorKey ?? "Input is invalid"].Value });
+                : Json(new { result = false, error = _localizer[deleteResult.ErrorKey].Value });
         }
         catch (Exception ex)
         {
@@ -588,78 +592,58 @@ public class ManagementController : Controller
     [HttpGet]
     public async Task<IActionResult> Menu(string wholeSearch)
     {
-        if (HttpContext.Request.Headers["X-Requested-With"] == "XMLHttpRequest") // ajax
+#pragma warning disable ASP0015
+        if (HttpContext.Request.Headers["X-Requested-With"] != "XMLHttpRequest") // ajax
+#pragma warning restore ASP0015
         {
-            List<MenuOutputViewModel> menuOutputViewModels = [];
-
-            #region Categories
-
-            foreach (CategoryResponse item in await _menuService.GetAllCategoriesAsync(HttpContext.RequestAborted))
-            {
-                if (string.IsNullOrEmpty(wholeSearch) ||
-                    item.Id.ToString().Contains(wholeSearch) ||
-                    (item.Name?.ToString() ?? "").Contains(wholeSearch) ||
-                    (item.DisplayName?.ToString() ?? "").Contains(wholeSearch) ||
-                    (item.IconPath?.ToString() ?? "").Contains(wholeSearch) ||
-                    (item.Controller?.ToString() ?? "").Contains(wholeSearch) ||
-                    (item.Action?.ToString() ?? "").Contains(wholeSearch) ||
-                    (item.Role?.ToString() ?? "").Contains(wholeSearch) ||
-                    item.Order.ToString().Contains(wholeSearch))
-                {
-                    menuOutputViewModels.Add(new MenuOutputViewModel()
-                    {
-                        Id = item.Id,
-                        CategoryId = null,
-                        Name = item.Name,
-                        DisplayName = item.DisplayName,
-                        IconPath = item.IconPath,
-                        Controller = item.Controller,
-                        Action = item.Action,
-                        Role = item.Role,
-                        Order = item.Order
-                    });
-                }
-            }
-
-            #endregion
-
-            #region SubCategories
-
-            foreach (SubCategoryResponse item in await _menuService.GetAllSubCategoriesAsync(HttpContext.RequestAborted))
-            {
-                if (string.IsNullOrEmpty(wholeSearch) ||
-                    item.Id.ToString().Contains(wholeSearch) ||
-                    item.CategoryId.ToString().Contains(wholeSearch) ||
-                    (item.Name?.ToString() ?? "").Contains(wholeSearch) ||
-                    (item.DisplayName?.ToString() ?? "").Contains(wholeSearch) ||
-                    (item.IconPath?.ToString() ?? "").Contains(wholeSearch) ||
-                    (item.Action?.ToString() ?? "").Contains(wholeSearch) ||
-                    (item.Role?.ToString() ?? "").Contains(wholeSearch) ||
-                    item.Order.ToString().Contains(wholeSearch))
-                {
-                    menuOutputViewModels.Add(new MenuOutputViewModel()
-                    {
-                        Id = item.Id,
-                        CategoryId = item.CategoryId,
-                        Name = item.Name,
-                        DisplayName = item.DisplayName,
-                        IconPath = item.IconPath,
-                        Controller = null,
-                        Action = item.Action,
-                        Role = item.Role,
-                        Order = item.Order
-                    });
-                }
-            }
-
-            #endregion
-
-            IQueryable<MenuOutputViewModel> result = menuOutputViewModels.OrderByDescending(m => m.Id)
-                .ThenByDescending(m => m.CategoryId).AsQueryable();
-            return PartialView("_MenuGrid", result);
+            return View();
         }
 
-        return View();
+        List<MenuOutputViewModel> menuOutputViewModels =
+        [
+            .. from item in await _menuService.GetAllCategoriesAsync(HttpContext.RequestAborted)
+            where string.IsNullOrEmpty(wholeSearch) || item.Id.ToString().Contains(wholeSearch) ||
+                  (item.Name ?? "").Contains(wholeSearch) || (item.DisplayName ?? "").Contains(wholeSearch) ||
+                  (item.IconPath ?? "").Contains(wholeSearch) || (item.Controller ?? "").Contains(wholeSearch) ||
+                  (item.Action ?? "").Contains(wholeSearch) || (item.Role ?? "").Contains(wholeSearch) ||
+                  item.Order.ToString().Contains(wholeSearch)
+            select new MenuOutputViewModel
+            {
+                Id = item.Id,
+                CategoryId = null,
+                Name = item.Name,
+                DisplayName = item.DisplayName,
+                IconPath = item.IconPath,
+                Controller = item.Controller,
+                Action = item.Action,
+                Role = item.Role,
+                Order = item.Order
+            },
+
+            .. from item in await _menuService.GetAllSubCategoriesAsync(HttpContext.RequestAborted)
+            where string.IsNullOrEmpty(wholeSearch) || item.Id.ToString().Contains(wholeSearch) ||
+                  item.CategoryId.ToString().Contains(wholeSearch) || (item.Name ?? "").Contains(wholeSearch) ||
+                  (item.DisplayName ?? "").Contains(wholeSearch) || (item.IconPath ?? "").Contains(wholeSearch) ||
+                  (item.Action ?? "").Contains(wholeSearch) || (item.Role ?? "").Contains(wholeSearch) ||
+                  item.Order.ToString().Contains(wholeSearch)
+            select new MenuOutputViewModel
+            {
+                Id = item.Id,
+                CategoryId = item.CategoryId,
+                Name = item.Name,
+                DisplayName = item.DisplayName,
+                IconPath = item.IconPath,
+                Controller = null,
+                Action = item.Action,
+                Role = item.Role,
+                Order = item.Order
+            }
+        ];
+
+        IQueryable<MenuOutputViewModel> result = menuOutputViewModels.OrderByDescending(m => m.Id)
+            .ThenByDescending(m => m.CategoryId).AsQueryable();
+        return PartialView("_MenuGrid", result);
+
     }
 
     /// <summary>Checks whether a category with the given ID exists.</summary>
@@ -1033,9 +1017,6 @@ public class ManagementController : Controller
     [RequiredHttpPostAccess(Role = Role.User)]
     public async Task<IActionResult> UploadImageFile(IFormFile summernoteImageFile)
     {
-        if (summernoteImageFile == null)
-            return Ok(new { result = false, errorMessage = _localizer["Please attach a file."].Value });
-
         if (summernoteImageFile.Length <= 0 || summernoteImageFile.Length > _serverSettings.Value.MaxAttachedFileSizeBytes)
             return Ok(new { result = false, errorMessage = _localizer["File Size must be smaller than {0}MB.", _serverSettings.Value.MaxAttachedFileSizeBytes / (1024 * 1024)].Value });
 
@@ -1082,279 +1063,306 @@ public class ManagementController : Controller
     public async Task<IActionResult> PrivateNote(string method = "list", int? boardId = null, int page = 1,
         string searchType = "", string searchText = "")
     {
-        if (method == "write") // Write
+        switch (method)
         {
-            PrivateNoteOutputViewModel privateNoteOutputViewModel = new();
-
-            #region Write board
-
-            privateNoteOutputViewModel.Method = method;
-
-            #endregion
-
-            bool isAccountSessionExist = _sessionService.GetAccount() != null; // Check if account session exists after login
-
-            return isAccountSessionExist ? View(privateNoteOutputViewModel) : RedirectToAction("Login", "Account");
-        }
-        else if (method == "detail") // Detail view
-        {
-            AccountResponse loggedInAccount = _sessionService.GetAccount()!; // Get Session
-
-            if (boardId == null)
+            // Write
+            case "write":
             {
-                return RedirectToAction(nameof(BoardType.PrivateNote), "Management");
+                PrivateNoteOutputViewModel privateNoteOutputViewModel = new() { Method = method };
+                bool isAccountSessionExist = _sessionService.GetAccount() != null; // Check if account session exists after login
+                return isAccountSessionExist ? View(privateNoteOutputViewModel) : RedirectToAction("Login", "Account");
             }
-
-            PrivateNoteOutputViewModel privateNoteOutputViewModel = new()
+            // Detail view
+            case "detail":
             {
-                Method = method,
-                DetailCurrentPage = page,
-                DetailBoardId = boardId ?? default
-            };
+                AccountResponse loggedInAccount = _sessionService.GetAccount()!; // Get Session
 
-            BoardResponse? privateNoteBoard = await _boardService.GetBoardByIdAsync(boardId ?? 0, HttpContext.RequestAborted);
-            BoardAttachedFileDto? attachedFile = await _boardService.GetAttachedFileByBoardIdAsync(boardId ?? 0, HttpContext.RequestAborted);
-
-            try
-            {
-                if (privateNoteBoard == null || privateNoteBoard.Deleted || privateNoteBoard.Writer != loggedInAccount.Nickname)
-                    return RedirectToAction(nameof(BoardType.PrivateNote), "Management");
-
-                if (privateNoteBoard.Locked)
+                if (boardId == null)
                 {
-                    if (!(loggedInAccount.Nickname == privateNoteBoard.Writer || loggedInAccount.Role == Role.Admin))
-                    {
-                        return RedirectToAction(nameof(BoardType.PrivateNote), "Management");
-                    }
+                    return RedirectToAction(nameof(BoardType.PrivateNote), "Management");
                 }
 
-                await _boardService.IncrementBoardViewAsync(boardId ?? 0, HttpContext.RequestAborted);
-
-                (privateNoteBoard.Content, bool isImgTagIncluded) = await _boardService.PrepareHtmlForDisplayAsync(privateNoteBoard.Content ?? "", HttpContext.RequestAborted);
-
-                privateNoteOutputViewModel.BoardOutputViewModel =
-                    new Maroik.Website.Models.ViewModels.Management.BoardOutputViewModel()
-                    {
-                        Title = privateNoteBoard.Title,
-                        Writer = privateNoteBoard.Writer,
-                        Views = privateNoteBoard.View,
-                        Content = privateNoteBoard.Content,
-                        Updated = privateNoteBoard.Updated,
-                        BoardAttachedFileName = attachedFile?.Name ?? "",
-                        BoardAttachedFileExtension = attachedFile?.Extension ?? "",
-                        BoardAttachedFileSize = attachedFile?.Size ?? 0,
-                        BoardAttachedFilePath = attachedFile?.Path ?? "",
-                        IsImgTagIncluded = isImgTagIncluded,
-                        CanModify = loggedInAccount.IsOwner(privateNoteBoard.Writer),
-                        CanDelete = loggedInAccount.IsOwnerOrAdmin(privateNoteBoard.Writer)
-                    };
-
-                if (!string.IsNullOrEmpty(privateNoteOutputViewModel?.BoardOutputViewModel?.BoardAttachedFilePath ?? ""))
+                PrivateNoteOutputViewModel privateNoteOutputViewModel = new()
                 {
+                    Method = method,
+                    DetailCurrentPage = page,
+                    DetailBoardId = (int)boardId
+                };
+
+                BoardResponse? privateNoteBoard = await _boardService.GetBoardByIdAsync((long)boardId, HttpContext.RequestAborted);
+                BoardAttachedFileDto? attachedFile = await _boardService.GetAttachedFileByBoardIdAsync((long)boardId, HttpContext.RequestAborted);
+
+                try
+                {
+                    if (privateNoteBoard == null || privateNoteBoard.Deleted || privateNoteBoard.Writer != loggedInAccount.Nickname)
+                        return RedirectToAction(nameof(BoardType.PrivateNote), "Management");
+
+                    if (privateNoteBoard.Locked)
+                    {
+                        if (!(loggedInAccount.Nickname == privateNoteBoard.Writer || loggedInAccount.Role == Role.Admin))
+                        {
+                            return RedirectToAction(nameof(BoardType.PrivateNote), "Management");
+                        }
+                    }
+
+                    await _boardService.IncrementBoardViewAsync((long)boardId, HttpContext.RequestAborted);
+
+                    (privateNoteBoard.Content, bool isImgTagIncluded) = await _boardService.PrepareHtmlForDisplayAsync(privateNoteBoard.Content ?? "", HttpContext.RequestAborted);
+
+                    privateNoteOutputViewModel.BoardOutputViewModel =
+                        new BoardOutputViewModel
+                        {
+                            Title = privateNoteBoard.Title,
+                            Writer = privateNoteBoard.Writer,
+                            Views = privateNoteBoard.View,
+                            Content = privateNoteBoard.Content,
+                            Updated = privateNoteBoard.Updated,
+                            BoardAttachedFileName = attachedFile?.Name ?? "",
+                            BoardAttachedFileExtension = attachedFile?.Extension ?? "",
+                            BoardAttachedFileSize = attachedFile?.Size ?? 0,
+                            BoardAttachedFilePath = attachedFile?.Path ?? "",
+                            IsImgTagIncluded = isImgTagIncluded,
+                            CanModify = loggedInAccount.IsOwner(privateNoteBoard.Writer),
+                            CanDelete = loggedInAccount.IsOwnerOrAdmin(privateNoteBoard.Writer)
+                        };
+
+                    if (string.IsNullOrEmpty(privateNoteOutputViewModel.BoardOutputViewModel?.BoardAttachedFilePath ?? ""))
+                    {
+                        return View(privateNoteOutputViewModel);
+                    }
+
                     byte[]? fileData = await _boardService.DownloadFileAsync(
-                        privateNoteOutputViewModel?.BoardOutputViewModel?.BoardAttachedFilePath ?? "", HttpContext.RequestAborted);
+                        privateNoteOutputViewModel.BoardOutputViewModel?.BoardAttachedFilePath ?? "", HttpContext.RequestAborted);
 
                     if (fileData != null)
                     {
-                        privateNoteOutputViewModel!.BoardOutputViewModel.BoardAttachedFileBase64Data =
+                        privateNoteOutputViewModel.BoardOutputViewModel?.BoardAttachedFileBase64Data =
                             Convert.ToBase64String(fileData);
-                        privateNoteOutputViewModel.BoardOutputViewModel.BoardAttachedFileContentType = "application/octet-stream";
+                        privateNoteOutputViewModel.BoardOutputViewModel?.BoardAttachedFileContentType = "application/octet-stream";
                     }
 
                     // Preload comments and accounts for detail view
-                    privateNoteOutputViewModel!.DetailBoardComments = (await _boardService.GetCommentsByBoardIdAsync(boardId ?? 0, HttpContext.RequestAborted))?.ToList() ?? [];
-                    privateNoteOutputViewModel.AllAccounts = await _accountService.GetAllAccountsAsync(HttpContext.RequestAborted) ?? [];
+                    privateNoteOutputViewModel.DetailBoardComments =
+                    [
+                        .. await _boardService.GetCommentsByBoardIdAsync((long)boardId, HttpContext.RequestAborted)
+                    ];
+                    privateNoteOutputViewModel.AllAccounts = await _accountService.GetAllAccountsAsync(HttpContext.RequestAborted);
                     privateNoteOutputViewModel.AdminNicknames = privateNoteOutputViewModel.AllAccounts.ToAdminNicknameSet();
                     privateNoteOutputViewModel.LoggedInAccount = loggedInAccount;
-                    privateNoteOutputViewModel.LoggedInAccountTimeZoneIanaId = loggedInAccount?.TimeZoneIanaId ?? "";
+                    privateNoteOutputViewModel.LoggedInAccountTimeZoneIanaId = loggedInAccount.TimeZoneIanaId ?? "";
 
+                    return View(privateNoteOutputViewModel);
                 }
-
-                return View(privateNoteOutputViewModel);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Failed to load private note board detail for board {BoardId}", boardId);
-                return RedirectToAction(nameof(BoardType.PrivateNote), "Management");
-            }
-        }
-        else if (method == "edit") // Edit
-        {
-            if (boardId == null)
-            {
-                return RedirectToAction(nameof(BoardType.PrivateNote), "Management");
-            }
-
-            PrivateNoteOutputViewModel privateNoteOutputViewModel = new()
-            {
-                Method = method,
-                EditCurrentPage = page,
-                EditBoardId = boardId ?? default
-            };
-
-            AccountResponse loggedInAccount = _sessionService.GetAccount()!;
-
-            BoardResponse? privateNoteBoard = await _boardService.GetBoardByIdAsync(boardId ?? 0, HttpContext.RequestAborted);
-            BoardAttachedFileDto? attachedFile = await _boardService.GetAttachedFileByBoardIdAsync(boardId ?? 0, HttpContext.RequestAborted);
-
-            try
-            {
-                if (privateNoteBoard == null || privateNoteBoard.Deleted || privateNoteBoard.Writer != loggedInAccount.Nickname)
+                catch (Exception ex)
                 {
+                    _logger.LogError(ex, "Failed to load private note board detail for board {BoardId}", boardId);
                     return RedirectToAction(nameof(BoardType.PrivateNote), "Management");
                 }
-
-                (privateNoteBoard.Content, bool isImgTagIncluded) = await _boardService.PrepareHtmlForDisplayAsync(privateNoteBoard.Content ?? "", HttpContext.RequestAborted);
-
-                privateNoteOutputViewModel.BoardOutputViewModel =
-                    new Maroik.Website.Models.ViewModels.Management.BoardOutputViewModel()
-                    {
-                        Title = privateNoteBoard.Title,
-                        Writer = privateNoteBoard.Writer,
-                        Views = privateNoteBoard.View,
-                        Content = privateNoteBoard.Content,
-                        Locked = privateNoteBoard.Locked,
-                        Updated = privateNoteBoard.Updated,
-                        BoardAttachedFileName = attachedFile?.Name ?? "",
-                        BoardAttachedFileExtension = attachedFile?.Extension ?? "",
-                        BoardAttachedFileSize = attachedFile?.Size ?? 0,
-                        BoardAttachedFilePath = attachedFile?.Path ?? "",
-                        IsImgTagIncluded = isImgTagIncluded
-                    };
-
-                if (!string.IsNullOrEmpty(privateNoteOutputViewModel?.BoardOutputViewModel?.BoardAttachedFilePath ?? ""))
+            }
+            // Edit
+            case "edit" when boardId == null:
+                return RedirectToAction(nameof(BoardType.PrivateNote), "Management");
+            case "edit":
+            {
+                PrivateNoteOutputViewModel privateNoteOutputViewModel = new()
                 {
-                    byte[]? fileData = await _boardService.DownloadFileAsync(
-                        privateNoteOutputViewModel?.BoardOutputViewModel?.BoardAttachedFilePath ?? "", HttpContext.RequestAborted);
+                    Method = method,
+                    EditCurrentPage = page,
+                    EditBoardId = (int)boardId
+                };
 
-                    if (fileData != null)
+                AccountResponse loggedInAccount = _sessionService.GetAccount()!;
+
+                BoardResponse? privateNoteBoard = await _boardService.GetBoardByIdAsync((long)boardId, HttpContext.RequestAborted);
+                BoardAttachedFileDto? attachedFile = await _boardService.GetAttachedFileByBoardIdAsync((long)boardId, HttpContext.RequestAborted);
+
+                try
+                {
+                    if (privateNoteBoard == null || privateNoteBoard.Deleted || privateNoteBoard.Writer != loggedInAccount.Nickname)
                     {
-                        privateNoteOutputViewModel!.BoardOutputViewModel.BoardAttachedFileBase64Data =
-                            Convert.ToBase64String(fileData);
-                        privateNoteOutputViewModel.BoardOutputViewModel.BoardAttachedFileContentType = "application/octet-stream";
+                        return RedirectToAction(nameof(BoardType.PrivateNote), "Management");
                     }
+
+                    (privateNoteBoard.Content, bool isImgTagIncluded) = await _boardService.PrepareHtmlForDisplayAsync(privateNoteBoard.Content ?? "", HttpContext.RequestAborted);
+
+                    privateNoteOutputViewModel.BoardOutputViewModel =
+                        new BoardOutputViewModel
+                        {
+                            Title = privateNoteBoard.Title,
+                            Writer = privateNoteBoard.Writer,
+                            Views = privateNoteBoard.View,
+                            Content = privateNoteBoard.Content,
+                            Locked = privateNoteBoard.Locked,
+                            Updated = privateNoteBoard.Updated,
+                            BoardAttachedFileName = attachedFile?.Name ?? "",
+                            BoardAttachedFileExtension = attachedFile?.Extension ?? "",
+                            BoardAttachedFileSize = attachedFile?.Size ?? 0,
+                            BoardAttachedFilePath = attachedFile?.Path ?? "",
+                            IsImgTagIncluded = isImgTagIncluded
+                        };
+
+                    if (string.IsNullOrEmpty(privateNoteOutputViewModel.BoardOutputViewModel?.BoardAttachedFilePath ?? ""))
+                    {
+                        return View(privateNoteOutputViewModel);
+                    }
+
+                    byte[]? fileData = await _boardService.DownloadFileAsync(
+                        privateNoteOutputViewModel.BoardOutputViewModel?.BoardAttachedFilePath ?? "", HttpContext.RequestAborted);
+
+                    if (fileData == null)
+                    {
+                        return View(privateNoteOutputViewModel);
+                    }
+
+                    privateNoteOutputViewModel.BoardOutputViewModel?.BoardAttachedFileBase64Data = Convert.ToBase64String(fileData);
+                    privateNoteOutputViewModel.BoardOutputViewModel?.BoardAttachedFileContentType = "application/octet-stream";
+
+                    return View(privateNoteOutputViewModel);
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, "Failed to load private note board edit form for board {BoardId}", boardId);
+                    return RedirectToAction(nameof(BoardType.PrivateNote), "Management");
+                }
+            }
+            // List
+            default:
+            {
+                bool isAccountSessionExist = _sessionService.GetAccount() != null;
+                AccountResponse loggedInAccount = _sessionService.GetAccount()!;
+
+                #region Board default paging logic
+
+                const int pageSize = 5;
+                if (page < 1)
+                {
+                    page = 1;
                 }
 
+                #endregion
+
+                #region Logic to get all related board data
+
+                var privateNoteBoards =
+                    (await _boardService.GetBoardsAsync(EnumHelper.GetDescription(BoardType.PrivateNote), HttpContext.RequestAborted)).ToList();
+                privateNoteBoards =
+                [
+                    .. privateNoteBoards.Where(m => m.Writer == loggedInAccount.Nickname)
+                        .Where(m => m is { Deleted: false, Noticed: false }).OrderByDescending(a => a.Id)
+                ];
+
+                #endregion
+
+                #region Search keyword logic
+
+                switch (searchType)
+                {
+                    case "Title" when !string.IsNullOrEmpty(searchText):
+                    {
+                        if (isAccountSessionExist) // If logged in
+                        {
+                            switch (loggedInAccount.Role)
+                            {
+                                // Administrator can see all posts
+                                case Role.Admin:
+                                    privateNoteBoards =
+                                        [.. privateNoteBoards.Where(a => a.Title!.Contains(searchText))];
+                                    break;
+                                // User can see regular posts + their own private posts
+                                case Role.User:
+                                {
+                                    List<BoardResponse> searchPrivateNoteBoards = [];
+                                    List<BoardResponse> noLockedPrivateNoteBoards =
+                                    [
+                                        .. privateNoteBoards
+                                            .Where(a => a.Title!.Contains(searchText)).Where(a => !a.Locked)
+                                    ];
+                                    List<BoardResponse> myLockedPrivateNoteBoards =
+                                    [
+                                        .. privateNoteBoards
+                                            .Where(a => a.Title!.Contains(searchText))
+                                            .Where(a => a.Locked && a.Writer == loggedInAccount.Nickname)
+                                    ];
+                                    searchPrivateNoteBoards.AddRange(noLockedPrivateNoteBoards);
+                                    searchPrivateNoteBoards.AddRange(myLockedPrivateNoteBoards);
+
+                                    privateNoteBoards = searchPrivateNoteBoards;
+                                    break;
+                                }
+                                // If logged in but has neither Admin nor User role, it's a bug
+                            }
+                        }
+                        else // If not logged in
+                        {
+                            privateNoteBoards =
+                            [
+                                .. privateNoteBoards.Where(a => a.Title!.Contains(searchText))
+                                    .Where(a => !a.Locked)
+                            ]; // When not logged in, private posts should not be searchable
+                        }
+
+                        break;
+                    }
+                    case "Writer" when !string.IsNullOrEmpty(searchText):
+                        privateNoteBoards = [.. privateNoteBoards.Where(a => a.Writer!.Contains(searchText))];
+                        break;
+                }
+
+                #endregion
+
+                PrivateNoteOutputViewModel privateNoteOutputViewModel = new();
+
+                #region Notice
+
+                privateNoteOutputViewModel.NoticeBoards = [];
+
+                #endregion
+
+                #region Board list
+
+                privateNoteOutputViewModel.Method = "list";
+
+                #endregion
+
+                #region Board paging logic
+
+                privateNoteOutputViewModel.Pager = new Pager(privateNoteBoards.Count, page, pageSize);
+
+                #endregion
+
+                #region Board data logic
+
+                privateNoteOutputViewModel.Boards =
+                [
+                    .. privateNoteBoards.Skip((page - 1) * pageSize)
+                        .Take(privateNoteOutputViewModel.Pager.PageSize)
+                ];
+
+                #endregion
+
+                #region Preload comment counts and attached files for view
+                privateNoteOutputViewModel.LoggedInAccount = loggedInAccount;
+                privateNoteOutputViewModel.LoggedInAccountTimeZoneIanaId = loggedInAccount.TimeZoneIanaId ?? "";
+                privateNoteOutputViewModel.AllAccounts = await _accountService.GetAllAccountsAsync(HttpContext.RequestAborted);
+                privateNoteOutputViewModel.AdminNicknames = privateNoteOutputViewModel.AllAccounts.ToAdminNicknameSet();
+
+                var boardResponses = privateNoteOutputViewModel.Boards.ToList();
+                List<long> boardIds = [.. boardResponses.Select(b => b.Id)];
+                Dictionary<long, int> commentCounts = await _boardService.GetCommentCountsForBoardsAsync(boardIds, HttpContext.RequestAborted);
+                Dictionary<long, BoardAttachedFileDto?> attachedFiles = await _boardService.GetAttachedFilesForBoardsAsync(boardIds, HttpContext.RequestAborted);
+
+                foreach (var board in boardResponses)
+                {
+                    privateNoteOutputViewModel.CommentCountByBoardId[board.Id] = commentCounts.GetValueOrDefault(board.Id, 0);
+                    BoardAttachedFileDto? af = attachedFiles.GetValueOrDefault(board.Id);
+                    privateNoteOutputViewModel.AttachedFilesByBoardId[board.Id] = af != null && !string.IsNullOrEmpty(af.Name) ? [af] : [];
+                }
+                #endregion
+
+                privateNoteOutputViewModel.SelectedSearchType = searchType;
+                privateNoteOutputViewModel.TypedSearchText = searchText;
                 return View(privateNoteOutputViewModel);
             }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Failed to load private note board edit form for board {BoardId}", boardId);
-                return RedirectToAction(nameof(BoardType.PrivateNote), "Management");
-            }
-        }
-        else // List
-        {
-            bool isAccountSessionExist = _sessionService.GetAccount() != null;
-            AccountResponse loggedInAccount = _sessionService.GetAccount()!;
-
-            #region Board default paging logic
-
-            const int pageSize = 5;
-            if (page < 1)
-            {
-                page = 1;
-            }
-
-            #endregion
-
-            #region Logic to get all related board data
-
-            IEnumerable<BoardResponse> privateNoteBoards =
-                await _boardService.GetBoardsAsync(EnumHelper.GetDescription(BoardType.PrivateNote), HttpContext.RequestAborted);
-            privateNoteBoards = privateNoteBoards.Where(m => m.Writer == loggedInAccount.Nickname)
-                .Where(m => m.Deleted == false && m.Noticed == false).OrderByDescending(a => a.Id);
-
-            #endregion
-
-            #region Search keyword logic
-
-            if (searchType == "Title" && !string.IsNullOrEmpty(searchText))
-            {
-                if (isAccountSessionExist) // If logged in
-                {
-                    if (loggedInAccount.Role == Role.Admin) // Administrator can see all posts
-                    {
-                        privateNoteBoards = privateNoteBoards.Where(a => a.Title!.Contains(searchText));
-                    }
-                    else if (loggedInAccount.Role == Role.User) // User can see regular posts + their own private posts
-                    {
-                        List<BoardResponse> searchPrivateNoteBoards = [];
-                        List<BoardResponse> noLockedPrivateNoteBoards = privateNoteBoards
-                            .Where(a => a.Title!.Contains(searchText)).Where(a => !a.Locked).ToList();
-                        List<BoardResponse> myLockedPrivateNoteBoards = privateNoteBoards
-                            .Where(a => a.Title!.Contains(searchText))
-                            .Where(a => a.Locked && a.Writer == loggedInAccount.Nickname).ToList();
-                        searchPrivateNoteBoards.AddRange(noLockedPrivateNoteBoards);
-                        searchPrivateNoteBoards.AddRange(myLockedPrivateNoteBoards);
-
-                        privateNoteBoards = searchPrivateNoteBoards;
-                    }
-                    else // If logged in but has neither Admin nor User role, it's a bug
-                    {
-                    }
-                }
-                else // If not logged in
-                {
-                    privateNoteBoards = privateNoteBoards.Where(a => a.Title!.Contains(searchText))
-                        .Where(a => !a.Locked); // When not logged in, private posts should not be searchable
-                }
-            }
-            else if (searchType == "Writer" && !string.IsNullOrEmpty(searchText))
-            {
-                privateNoteBoards = privateNoteBoards.Where(a => a.Writer!.Contains(searchText));
-            }
-
-            #endregion
-
-            PrivateNoteOutputViewModel privateNoteOutputViewModel = new();
-
-            #region Notice
-
-            privateNoteOutputViewModel.NoticeBoards = [];
-
-            #endregion
-
-            #region Board list
-
-            privateNoteOutputViewModel.Method = "list";
-
-            #endregion
-
-            #region Board paging logic
-
-            privateNoteOutputViewModel.Pager = new Pager(privateNoteBoards.Count(), page, pageSize);
-
-            #endregion
-
-            #region Board data logic
-
-            privateNoteOutputViewModel.Boards = privateNoteBoards.Skip((page - 1) * pageSize)
-                .Take(privateNoteOutputViewModel.Pager.PageSize).ToList();
-
-            #endregion
-
-            #region Preload comment counts and attached files for view
-            privateNoteOutputViewModel.LoggedInAccount = loggedInAccount;
-            privateNoteOutputViewModel.LoggedInAccountTimeZoneIanaId = loggedInAccount?.TimeZoneIanaId ?? "";
-            privateNoteOutputViewModel.AllAccounts = await _accountService.GetAllAccountsAsync(HttpContext.RequestAborted) ?? [];
-            privateNoteOutputViewModel.AdminNicknames = privateNoteOutputViewModel.AllAccounts.ToAdminNicknameSet();
-
-            List<long> boardIds = privateNoteOutputViewModel.Boards.Select(b => b.Id).ToList();
-            Dictionary<long, int> commentCounts = await _boardService.GetCommentCountsForBoardsAsync(boardIds, HttpContext.RequestAborted);
-            Dictionary<long, BoardAttachedFileDto?> attachedFiles = await _boardService.GetAttachedFilesForBoardsAsync(boardIds, HttpContext.RequestAborted);
-
-            foreach (var board in privateNoteOutputViewModel.Boards)
-            {
-                privateNoteOutputViewModel.CommentCountByBoardId[board.Id] = commentCounts.GetValueOrDefault(board.Id, 0);
-                BoardAttachedFileDto? af = attachedFiles.GetValueOrDefault(board.Id);
-                privateNoteOutputViewModel.AttachedFilesByBoardId[board.Id] = af != null && !string.IsNullOrEmpty(af.Name) ? [af] : [];
-            }
-            #endregion
-
-            privateNoteOutputViewModel.SelectedSearchType = searchType;
-            privateNoteOutputViewModel.TypedSearchText = searchText;
-            return View(privateNoteOutputViewModel);
         }
     }
 

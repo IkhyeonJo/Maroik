@@ -75,7 +75,7 @@ public class AccountBookController : Controller
         var result = await _assetService.CreateAsync(email, request, ct);
         return result.Success
             ? Json(new { result = true, message = _localizer["The asset has been successfully created."].Value })
-            : Json(new { result = false, error = _localizer[result.ErrorKey!].Value });
+            : Json(new { result = false, error = _localizer[result.ErrorKey].Value });
     }
 
     #endregion
@@ -86,7 +86,9 @@ public class AccountBookController : Controller
     [HttpGet]
     public async Task<IActionResult> Asset(string wholeSearch, CancellationToken ct)
     {
+#pragma warning disable ASP0015
         if (HttpContext.Request.Headers["X-Requested-With"] == "XMLHttpRequest")
+#pragma warning restore ASP0015
         {
             var account = _sessionService.GetAccount()!;
             var assets = await _assetService.GetAssetsAsync(account.Email!, ct);
@@ -102,8 +104,11 @@ public class AccountBookController : Controller
         string tz = pageAccount.TimeZoneIanaId ?? "UTC";
         var vm = new AccountBookPageViewModel
         {
-            Assets = (await _assetService.GetAssetsAsync(pageAccount.Email!, ct))
-                .Where(x => !x.Deleted).OrderBy(x => x.ProductName).ToList()
+            Assets =
+            [
+                .. (await _assetService.GetAssetsAsync(pageAccount.Email!, ct))
+                .Where(x => !x.Deleted).OrderBy(x => x.ProductName)
+            ]
         };
         vm.PopulateTimeData(tz);
         return View(vm);
@@ -160,7 +165,7 @@ public class AccountBookController : Controller
         var result = await _assetService.UpdateAsync(email, request, assetInputViewModel.OriginalProductName!, ct);
         return result.Success
             ? Json(new { result = true, message = _localizer["The asset has been successfully updated."].Value })
-            : Json(new { result = false, error = _localizer[result.ErrorKey!].Value });
+            : Json(new { result = false, error = _localizer[result.ErrorKey].Value });
     }
 
     #endregion
@@ -177,7 +182,7 @@ public class AccountBookController : Controller
         var result = await _assetService.DeleteAsync(email, assetInputViewModel.ProductName!, ct);
         return result.Success
             ? Json(new { result = true, message = _localizer["The asset has been successfully deleted."].Value })
-            : Json(new { result = false, error = _localizer[result.ErrorKey!].Value });
+            : Json(new { result = false, error = _localizer[result.ErrorKey].Value });
     }
 
     #endregion
@@ -230,7 +235,7 @@ public class AccountBookController : Controller
         var result = await _incomeService.CreateAsync(email, request, ct);
         return result.Success
             ? Json(new { result = true, message = _localizer["The income has been successfully created."].Value })
-            : Json(new { result = false, error = _localizer[result.ErrorKey!].Value });
+            : Json(new { result = false, error = _localizer[result.ErrorKey].Value });
     }
 
     #endregion
@@ -241,7 +246,9 @@ public class AccountBookController : Controller
     [HttpGet]
     public async Task<IActionResult> Income(string wholeSearch, CancellationToken ct)
     {
+#pragma warning disable ASP0015
         if (HttpContext.Request.Headers["X-Requested-With"] == "XMLHttpRequest")
+#pragma warning restore ASP0015
         {
             var account = _sessionService.GetAccount()!;
             var assets = await _assetService.GetAssetsAsync(account.Email!, ct);
@@ -259,8 +266,11 @@ public class AccountBookController : Controller
         string tz = pageAccount.TimeZoneIanaId ?? "UTC";
         var vm = new AccountBookPageViewModel
         {
-            Assets = (await _assetService.GetAssetsAsync(pageAccount.Email!, ct))
-                .Where(x => !x.Deleted).OrderBy(x => x.ProductName).ToList()
+            Assets =
+            [
+                .. (await _assetService.GetAssetsAsync(pageAccount.Email!, ct))
+                .Where(x => !x.Deleted).OrderBy(x => x.ProductName)
+            ]
         };
         vm.PopulateTimeData(tz);
         return View(vm);
@@ -346,7 +356,7 @@ public class AccountBookController : Controller
         var result = await _incomeService.UpdateAsync(email, request, ct);
         return result.Success
             ? Json(new { result = true, message = _localizer["The income has been successfully updated."].Value })
-            : Json(new { result = false, error = _localizer[result.ErrorKey!].Value });
+            : Json(new { result = false, error = _localizer[result.ErrorKey].Value });
     }
 
     #endregion
@@ -363,7 +373,7 @@ public class AccountBookController : Controller
         var result = await _incomeService.DeleteAsync(email, incomeInputViewModel.Id, ct);
         return result.Success
             ? Json(new { result = true, message = _localizer["The income has been successfully deleted."].Value })
-            : Json(new { result = false, error = _localizer[result.ErrorKey!].Value });
+            : Json(new { result = false, error = _localizer[result.ErrorKey].Value });
     }
 
     #endregion
@@ -419,7 +429,7 @@ public class AccountBookController : Controller
         var result = await _expenditureService.CreateAsync(email, request, ct);
         return result.Success
             ? Json(new { result = true, message = _localizer["The expenditure has been successfully created."].Value })
-            : Json(new { result = false, error = _localizer[result.ErrorKey!].Value });
+            : Json(new { result = false, error = _localizer[result.ErrorKey].Value });
     }
 
     #endregion
@@ -430,7 +440,9 @@ public class AccountBookController : Controller
     [HttpGet]
     public async Task<IActionResult> Expenditure(string wholeSearch, CancellationToken ct)
     {
+#pragma warning disable ASP0015
         if (HttpContext.Request.Headers["X-Requested-With"] == "XMLHttpRequest")
+#pragma warning restore ASP0015
         {
             var account = _sessionService.GetAccount()!;
             var assets = await _assetService.GetAssetsAsync(account.Email!, ct);
@@ -448,8 +460,11 @@ public class AccountBookController : Controller
         string tz = pageAccount.TimeZoneIanaId ?? "UTC";
         var vm = new AccountBookPageViewModel
         {
-            Assets = (await _assetService.GetAssetsAsync(pageAccount.Email!, ct))
-                .Where(x => !x.Deleted).OrderBy(x => x.ProductName).ToList()
+            Assets =
+            [
+                .. (await _assetService.GetAssetsAsync(pageAccount.Email!, ct))
+                .Where(x => !x.Deleted).OrderBy(x => x.ProductName)
+            ]
         };
         vm.PopulateTimeData(tz);
         return View(vm);
@@ -537,7 +552,7 @@ public class AccountBookController : Controller
         var result = await _expenditureService.UpdateAsync(email, request, ct);
         return result.Success
             ? Json(new { result = true, message = _localizer["The expenditure has been successfully updated."].Value })
-            : Json(new { result = false, error = _localizer[result.ErrorKey!].Value });
+            : Json(new { result = false, error = _localizer[result.ErrorKey].Value });
     }
 
     #endregion
@@ -555,7 +570,7 @@ public class AccountBookController : Controller
         var result = await _expenditureService.DeleteAsync(email, expenditureInputViewModel.Id, ct);
         return result.Success
             ? Json(new { result = true, message = _localizer["The expenditure has been successfully deleted."].Value })
-            : Json(new { result = false, error = _localizer[result.ErrorKey!].Value });
+            : Json(new { result = false, error = _localizer[result.ErrorKey].Value });
     }
 
     #endregion

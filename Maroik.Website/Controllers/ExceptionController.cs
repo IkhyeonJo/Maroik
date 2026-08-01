@@ -7,12 +7,9 @@ namespace Maroik.Website.Controllers;
 /// <summary>Handles application error and access-denied pages.</summary>
 public class ExceptionController : Controller
 {
-    private readonly ILogger<ExceptionController> _logger;
-
     /// <summary>Initializes a new instance of <see cref="ExceptionController"/> with the supplied dependencies.</summary>
-    public ExceptionController(ILogger<ExceptionController> logger)
+    public ExceptionController()
     {
-        _logger = logger;
     }
 
     /// <summary>Returns the access-denied view.</summary>

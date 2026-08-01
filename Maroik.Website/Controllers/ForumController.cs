@@ -25,7 +25,6 @@ public class ForumController : Controller
     private readonly IRsaService _rsa;
     private readonly IHtmlLocalizer<ForumController> _localizer;
     private readonly ILogger<ForumController> _logger;
-    private readonly IHostEnvironment _hostEnvironment;
     private readonly IBoardService _boardService;
     private readonly IAccountService _accountService;
     private readonly ISessionService _sessionService;
@@ -35,7 +34,6 @@ public class ForumController : Controller
     public ForumController(
         IHtmlLocalizer<ForumController> localizer,
         ILogger<ForumController> logger,
-        IHostEnvironment hostEnvironment,
         IBoardService boardService,
         IAccountService accountService,
         IRsaService rsa,
@@ -46,7 +44,6 @@ public class ForumController : Controller
         _sessionService = sessionService;
         _localizer = localizer;
         _logger = logger;
-        _hostEnvironment = hostEnvironment;
         _boardService = boardService;
         _accountService = accountService;
         _serverSettings = serverSettings;
@@ -121,11 +118,11 @@ public class ForumController : Controller
                 return Json(new { result = false, error = _localizer["Input is invalid"].Value });
 
             if (string.IsNullOrEmpty(boardCommentInputViewModel.Content))
-                return Json(new { result = false, error = _localizer["Please enter a boardComment."].Value });
+                return Json(new { result = false, error = _localizer["Please enter a comment."].Value });
 
             bool isAccountSessionExist = _sessionService.GetAccount() != null;
             if (!isAccountSessionExist)
-                return Json(new { result = false, error = _localizer["Please Login to write boardComment."].Value });
+                return Json(new { result = false, error = _localizer["Please Login to write comment."].Value });
 
             AccountResponse loggedInAccount = _sessionService.GetAccount()!;
 
@@ -160,9 +157,6 @@ public class ForumController : Controller
     [RequiredHttpPostAccess(Role = Role.User)]
     public async Task<IActionResult> UploadImageFile(IFormFile summernoteImageFile, CancellationToken ct)
     {
-        if (summernoteImageFile == null)
-            return Ok(new { result = false, errorMessage = _localizer["Please attach a file."].Value });
-
         if (summernoteImageFile.Length <= 0 || summernoteImageFile.Length > _serverSettings.Value.MaxAttachedFileSizeBytes)
             return Ok(new { result = false, errorMessage = _localizer["File Size must be smaller than {0}MB.", _serverSettings.Value.MaxAttachedFileSizeBytes / (1024 * 1024)].Value });
 
@@ -207,219 +201,253 @@ public class ForumController : Controller
     /// <summary>Displays the free-forum list or a single post (list / write / view / edit).</summary>
     public async Task<IActionResult> FreeForum(string method = "list", int? boardId = null, int page = 1, string searchType = "", string searchText = "", CancellationToken ct = default)
     {
-        if (method == "write") // Write
+        switch (method)
         {
-            FreeForumOutputViewModel freeForumOutputViewModel = new();
-            freeForumOutputViewModel.Method = method;
+            // Write
+            case "write":
+            {
+                FreeForumOutputViewModel freeForumOutputViewModel = new() { Method = method };
 
-            bool isAccountSessionExist = _sessionService.GetAccount() != null;
-            return isAccountSessionExist ? View(freeForumOutputViewModel) : RedirectToAction("Login", "Account");
-        }
-        else if (method == "detail") // Detail view
-        {
-            if (boardId == null)
+                bool isAccountSessionExist = _sessionService.GetAccount() != null;
+                return isAccountSessionExist ? View(freeForumOutputViewModel) : RedirectToAction("Login", "Account");
+            }
+            // Detail view
+            case "detail" when boardId == null:
                 return RedirectToAction(nameof(BoardType.FreeForum), "Forum");
-
-            FreeForumOutputViewModel freeForumOutputViewModel = new()
+            case "detail":
             {
-                Method = method,
-                DetailCurrentPage = page,
-                DetailBoardId = boardId ?? default
-            };
-
-            BoardResponse? freeBoard = await _boardService.GetBoardByIdAsync(boardId ?? 0, ct);
-            BoardAttachedFileDto? boardAttachedFile = await _boardService.GetAttachedFileByBoardIdAsync(boardId ?? 0, ct);
-
-            try
-            {
-                if (freeBoard == null || freeBoard.Deleted)
-                    return RedirectToAction(nameof(BoardType.FreeForum), "Forum");
-
-                if (freeBoard.Locked)
+                FreeForumOutputViewModel freeForumOutputViewModel = new()
                 {
-                    AccountResponse loggedInAccount = _sessionService.GetAccount()!;
-                    if (!(loggedInAccount.Nickname == freeBoard.Writer || loggedInAccount.Role == Role.Admin))
+                    Method = method,
+                    DetailCurrentPage = page,
+                    DetailBoardId = (int)boardId
+                };
+
+                BoardResponse? freeBoard = await _boardService.GetBoardByIdAsync((long)boardId, ct);
+                BoardAttachedFileDto? boardAttachedFile = await _boardService.GetAttachedFileByBoardIdAsync((long)boardId, ct);
+
+                try
+                {
+                    if (freeBoard == null || freeBoard.Deleted)
                         return RedirectToAction(nameof(BoardType.FreeForum), "Forum");
+
+                    if (freeBoard.Locked)
+                    {
+                        AccountResponse loggedInAccount = _sessionService.GetAccount()!;
+                        if (!(loggedInAccount.Nickname == freeBoard.Writer || loggedInAccount.Role == Role.Admin))
+                            return RedirectToAction(nameof(BoardType.FreeForum), "Forum");
+                    }
+
+                    await _boardService.IncrementBoardViewAsync((long)boardId, ct);
+
+                    (freeBoard.Content, bool isImgTagIncluded) = await _boardService.PrepareHtmlForDisplayAsync(freeBoard.Content ?? "", ct);
+
+                    freeForumOutputViewModel.LoggedInAccount = _sessionService.GetAccount() ?? new AccountResponse { Role = Role.Anonymous };
+                    freeForumOutputViewModel.LoggedInAccountTimeZoneIanaId = freeForumOutputViewModel.LoggedInAccount.TimeZoneIanaId ?? "";
+
+                    freeForumOutputViewModel.BoardOutputViewModel = new BoardOutputViewModel
+                    {
+                        Title = freeBoard.Title,
+                        Writer = freeBoard.Writer,
+                        Views = freeBoard.View,
+                        Content = freeBoard.Content,
+                        Updated = freeBoard.Updated,
+                        BoardAttachedFileName = boardAttachedFile?.Name ?? "",
+                        BoardAttachedFileExtension = boardAttachedFile?.Extension ?? "",
+                        BoardAttachedFileSize = boardAttachedFile?.Size ?? 0,
+                        BoardAttachedFilePath = boardAttachedFile?.Path ?? "",
+                        IsImgTagIncluded = isImgTagIncluded,
+                        CanModify = freeForumOutputViewModel.LoggedInAccount.IsOwner(freeBoard.Writer),
+                        CanDelete = freeForumOutputViewModel.LoggedInAccount.IsOwnerOrAdmin(freeBoard.Writer)
+                    };
+
+                    if (!string.IsNullOrEmpty(freeForumOutputViewModel.BoardOutputViewModel?.BoardAttachedFilePath ?? ""))
+                    {
+                        byte[]? fileData = await _boardService.DownloadFileAsync(freeForumOutputViewModel.BoardOutputViewModel?.BoardAttachedFilePath ?? "", ct);
+                        if (fileData != null)
+                        {
+                            freeForumOutputViewModel.BoardOutputViewModel?.BoardAttachedFileBase64Data = Convert.ToBase64String(fileData);
+                            freeForumOutputViewModel.BoardOutputViewModel?.BoardAttachedFileContentType = "application/octet-stream";
+                        }
+                    }
+
+                    freeForumOutputViewModel.DetailBoardComments =
+                        [.. await _boardService.GetCommentsByBoardIdAsync((long)boardId, ct)];
+                    var detailNicknames = freeForumOutputViewModel.DetailBoardComments.Select(c => c.Writer)
+                        .Append(freeBoard.Writer ?? "")
+                        .Where(w => !string.IsNullOrEmpty(w))
+                        .Select(w => w!)
+                        .Distinct();
+                    freeForumOutputViewModel.AllAccounts = await _accountService.GetAccountsByNicknamesAsync(detailNicknames, ct);
+                    freeForumOutputViewModel.AdminNicknames = freeForumOutputViewModel.AllAccounts.ToAdminNicknameSet();
+
+                    return View(freeForumOutputViewModel);
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, "Unhandled exception in FreeForum action");
+                    return RedirectToAction(nameof(BoardType.FreeForum), "Forum");
+                }
+            }
+            // Edit
+            case "edit" when boardId == null:
+                return RedirectToAction(nameof(BoardType.FreeForum), "Forum");
+            case "edit":
+            {
+                FreeForumOutputViewModel freeForumOutputViewModel = new()
+                {
+                    Method = method,
+                    EditCurrentPage = page,
+                    EditBoardId = (int)boardId
+                };
+
+                BoardResponse? freeBoard = await _boardService.GetBoardByIdAsync((long)boardId, ct);
+                BoardAttachedFileDto? boardAttachedFile = await _boardService.GetAttachedFileByBoardIdAsync((long)boardId, ct);
+
+                try
+                {
+                    if (freeBoard == null || freeBoard.Deleted)
+                        return RedirectToAction(nameof(BoardType.FreeForum), "Forum");
+
+                    AccountResponse loggedInAccount = _sessionService.GetAccount()!;
+                    if (freeBoard.Writer != loggedInAccount.Nickname)
+                        return RedirectToAction(nameof(BoardType.FreeForum), "Forum");
+
+                    (freeBoard.Content, bool isImgTagIncluded) = await _boardService.PrepareHtmlForDisplayAsync(freeBoard.Content ?? "", ct);
+
+                    freeForumOutputViewModel.BoardOutputViewModel = new BoardOutputViewModel
+                    {
+                        Title = freeBoard.Title,
+                        Writer = freeBoard.Writer,
+                        Views = freeBoard.View,
+                        Content = freeBoard.Content,
+                        Locked = freeBoard.Locked,
+                        Updated = freeBoard.Updated,
+                        BoardAttachedFileName = boardAttachedFile?.Name ?? "",
+                        BoardAttachedFileExtension = boardAttachedFile?.Extension ?? "",
+                        BoardAttachedFileSize = boardAttachedFile?.Size ?? 0,
+                        BoardAttachedFilePath = boardAttachedFile?.Path ?? "",
+                        IsImgTagIncluded = isImgTagIncluded
+                    };
+
+                    if (string.IsNullOrEmpty(freeForumOutputViewModel.BoardOutputViewModel?.BoardAttachedFilePath ?? ""))
+                    {
+                        return View(freeForumOutputViewModel);
+                    }
+
+                    byte[]? fileData = await _boardService.DownloadFileAsync(freeForumOutputViewModel.BoardOutputViewModel?.BoardAttachedFilePath ?? "", ct);
+                    if (fileData == null)
+                    {
+                        return View(freeForumOutputViewModel);
+                    }
+
+                    freeForumOutputViewModel.BoardOutputViewModel?.BoardAttachedFileBase64Data = Convert.ToBase64String(fileData);
+                    freeForumOutputViewModel.BoardOutputViewModel?.BoardAttachedFileContentType = "application/octet-stream";
+
+                    return View(freeForumOutputViewModel);
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, "Unhandled exception in FreeForum action");
+                    return RedirectToAction(nameof(BoardType.FreeForum), "Forum");
+                }
+            }
+            // List
+            default:
+            {
+                const int pageSize = 5;
+                if (page < 1) page = 1;
+
+                var allFreeBoards = (await _boardService.GetBoardsAsync(EnumHelper.GetDescription(BoardType.FreeForum), ct)).ToList();
+                var freeBoards = allFreeBoards.Where(m => m is { Deleted: false, Noticed: false }).OrderByDescending(a => a.Id).ToList();
+
+                switch (searchType)
+                {
+                    case "Title" when !string.IsNullOrEmpty(searchText):
+                    {
+                        bool isAccountSessionExist = _sessionService.GetAccount() != null;
+                        if (isAccountSessionExist)
+                        {
+                            AccountResponse loggedInAccount = _sessionService.GetAccount()!;
+                            switch (loggedInAccount.Role)
+                            {
+                                // Administrator can search all posts, including locked ones
+                                case Role.Admin:
+                                    freeBoards = [.. freeBoards.Where(a => (a.Title ?? "").Contains(searchText))];
+                                    break;
+                                // User can search regular posts plus their own locked posts
+                                case Role.User:
+                                {
+                                    List<BoardResponse> searchFreeBoards =
+                                    [
+                                        .. freeBoards.Where(a => (a.Title ?? "").Contains(searchText))
+                                            .Where(a => !a.Locked),
+                                        .. freeBoards.Where(a => (a.Title ?? "").Contains(searchText)).Where(a =>
+                                            a.Locked && a.Writer == loggedInAccount.Nickname)
+                                    ];
+                                    freeBoards = searchFreeBoards;
+                                    break;
+                                }
+                            }
+                        }
+                        else // When not logged in, locked posts should never appear in search results
+                            freeBoards = [.. freeBoards.Where(a => (a.Title ?? "").Contains(searchText)).Where(a => !a.Locked)];
+                        break;
+                    }
+                    case "Writer" when !string.IsNullOrEmpty(searchText):
+                        freeBoards = [.. freeBoards.Where(a => (a.Writer ?? "").Contains(searchText))];
+                        break;
                 }
 
-                await _boardService.IncrementBoardViewAsync(boardId ?? 0, ct);
-
-                (freeBoard.Content, bool isImgTagIncluded) = await _boardService.PrepareHtmlForDisplayAsync(freeBoard.Content ?? "", ct);
+                FreeForumOutputViewModel freeForumOutputViewModel = new()
+                {
+                    NoticeBoards =
+                        allFreeBoards.Where(m => m is { Deleted: false, Noticed: true })
+                            .OrderByDescending(a => a.Id),
+                    Method = "list",
+                    Pager = new Pager(freeBoards.Count, page, pageSize)
+                };
+                freeForumOutputViewModel.Boards = [.. freeBoards.Skip((page - 1) * pageSize).Take(freeForumOutputViewModel.Pager.PageSize)];
 
                 freeForumOutputViewModel.LoggedInAccount = _sessionService.GetAccount() ?? new AccountResponse { Role = Role.Anonymous };
                 freeForumOutputViewModel.LoggedInAccountTimeZoneIanaId = freeForumOutputViewModel.LoggedInAccount.TimeZoneIanaId ?? "";
-
-                freeForumOutputViewModel.BoardOutputViewModel = new Maroik.Website.Models.ViewModels.Forum.BoardOutputViewModel()
-                {
-                    Title = freeBoard.Title,
-                    Writer = freeBoard.Writer,
-                    Views = freeBoard.View,
-                    Content = freeBoard.Content,
-                    Updated = freeBoard.Updated,
-                    BoardAttachedFileName = boardAttachedFile?.Name ?? "",
-                    BoardAttachedFileExtension = boardAttachedFile?.Extension ?? "",
-                    BoardAttachedFileSize = boardAttachedFile?.Size ?? 0,
-                    BoardAttachedFilePath = boardAttachedFile?.Path ?? "",
-                    IsImgTagIncluded = isImgTagIncluded,
-                    CanModify = freeForumOutputViewModel.LoggedInAccount.IsOwner(freeBoard.Writer),
-                    CanDelete = freeForumOutputViewModel.LoggedInAccount.IsOwnerOrAdmin(freeBoard.Writer)
-                };
-
-                if (!string.IsNullOrEmpty(freeForumOutputViewModel?.BoardOutputViewModel?.BoardAttachedFilePath ?? ""))
-                {
-                    byte[]? fileData = await _boardService.DownloadFileAsync(freeForumOutputViewModel?.BoardOutputViewModel?.BoardAttachedFilePath ?? "", ct);
-                    if (fileData != null)
-                    {
-                        freeForumOutputViewModel!.BoardOutputViewModel.BoardAttachedFileBase64Data = Convert.ToBase64String(fileData);
-                        freeForumOutputViewModel.BoardOutputViewModel.BoardAttachedFileContentType = "application/octet-stream";
-                    }
-                }
-
-                freeForumOutputViewModel!.DetailBoardComments = (await _boardService.GetCommentsByBoardIdAsync(boardId ?? 0, ct))?.ToList() ?? [];
-                var detailNicknames = freeForumOutputViewModel.DetailBoardComments.Select(c => c.Writer)
-                    .Append(freeBoard.Writer ?? "")
+                var boardResponses = freeForumOutputViewModel.Boards as BoardResponse[] ?? [.. freeForumOutputViewModel.Boards];
+                var listNicknames = freeForumOutputViewModel.NoticeBoards.Select(b => b.Writer)
+                    .Concat(boardResponses.Select(b => b.Writer))
                     .Where(w => !string.IsNullOrEmpty(w))
                     .Select(w => w!)
                     .Distinct();
-                freeForumOutputViewModel.AllAccounts = await _accountService.GetAccountsByNicknamesAsync(detailNicknames, ct) ?? [];
+                freeForumOutputViewModel.AllAccounts = await _accountService.GetAccountsByNicknamesAsync(listNicknames, ct);
                 freeForumOutputViewModel.AdminNicknames = freeForumOutputViewModel.AllAccounts.ToAdminNicknameSet();
 
-                return View(freeForumOutputViewModel);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Unhandled exception in FreeForum action");
-                return RedirectToAction(nameof(BoardType.FreeForum), "Forum");
-            }
-        }
-        else if (method == "edit") // Edit
-        {
-            if (boardId == null)
-                return RedirectToAction(nameof(BoardType.FreeForum), "Forum");
+                List<long> allBoardIds =
+                [
+                    .. freeForumOutputViewModel.NoticeBoards.Select(b => b.Id)
+                        .Concat(boardResponses.Select(b => b.Id))
+                        .Distinct()
+                ];
 
-            FreeForumOutputViewModel freeForumOutputViewModel = new()
-            {
-                Method = method,
-                EditCurrentPage = page,
-                EditBoardId = boardId ?? default
-            };
+                Dictionary<long, int> commentCounts = await _boardService.GetCommentCountsForBoardsAsync(allBoardIds, ct);
+                Dictionary<long, BoardAttachedFileDto?> attachedFiles = await _boardService.GetAttachedFilesForBoardsAsync(allBoardIds, ct);
 
-            BoardResponse? freeBoard = await _boardService.GetBoardByIdAsync(boardId ?? 0, ct);
-            BoardAttachedFileDto? boardAttachedFile = await _boardService.GetAttachedFileByBoardIdAsync(boardId ?? 0, ct);
-
-            try
-            {
-                if (freeBoard == null || freeBoard.Deleted)
-                    return RedirectToAction(nameof(BoardType.FreeForum), "Forum");
-
-                AccountResponse loggedInAccount = _sessionService.GetAccount()!;
-                if (freeBoard.Writer != loggedInAccount.Nickname)
-                    return RedirectToAction(nameof(BoardType.FreeForum), "Forum");
-
-                (freeBoard.Content, bool isImgTagIncluded) = await _boardService.PrepareHtmlForDisplayAsync(freeBoard.Content ?? "", ct);
-
-                freeForumOutputViewModel.BoardOutputViewModel = new Maroik.Website.Models.ViewModels.Forum.BoardOutputViewModel()
+                foreach (var board in freeForumOutputViewModel.NoticeBoards)
                 {
-                    Title = freeBoard.Title,
-                    Writer = freeBoard.Writer,
-                    Views = freeBoard.View,
-                    Content = freeBoard.Content,
-                    Locked = freeBoard.Locked,
-                    Updated = freeBoard.Updated,
-                    BoardAttachedFileName = boardAttachedFile?.Name ?? "",
-                    BoardAttachedFileExtension = boardAttachedFile?.Extension ?? "",
-                    BoardAttachedFileSize = boardAttachedFile?.Size ?? 0,
-                    BoardAttachedFilePath = boardAttachedFile?.Path ?? "",
-                    IsImgTagIncluded = isImgTagIncluded
-                };
-
-                if (!string.IsNullOrEmpty(freeForumOutputViewModel?.BoardOutputViewModel?.BoardAttachedFilePath ?? ""))
+                    freeForumOutputViewModel.CommentCountByBoardId[board.Id] = commentCounts.GetValueOrDefault(board.Id, 0);
+                    BoardAttachedFileDto? af = attachedFiles.GetValueOrDefault(board.Id);
+                    freeForumOutputViewModel.AttachedFilesByBoardId[board.Id] = af != null && !string.IsNullOrEmpty(af.Name) ? [af] : [];
+                }
+                
+                foreach (var board in boardResponses)
                 {
-                    byte[]? fileData = await _boardService.DownloadFileAsync(freeForumOutputViewModel?.BoardOutputViewModel?.BoardAttachedFilePath ?? "", ct);
-                    if (fileData != null)
-                    {
-                        freeForumOutputViewModel!.BoardOutputViewModel.BoardAttachedFileBase64Data = Convert.ToBase64String(fileData);
-                        freeForumOutputViewModel.BoardOutputViewModel.BoardAttachedFileContentType = "application/octet-stream";
-                    }
+                    freeForumOutputViewModel.CommentCountByBoardId[board.Id] = commentCounts.GetValueOrDefault(board.Id, 0);
+                    BoardAttachedFileDto? af = attachedFiles.GetValueOrDefault(board.Id);
+                    freeForumOutputViewModel.AttachedFilesByBoardId[board.Id] = af != null && !string.IsNullOrEmpty(af.Name) ? [af] : [];
                 }
 
+                freeForumOutputViewModel.SelectedSearchType = searchType;
+                freeForumOutputViewModel.TypedSearchText = searchText;
                 return View(freeForumOutputViewModel);
             }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Unhandled exception in FreeForum action");
-                return RedirectToAction(nameof(BoardType.FreeForum), "Forum");
-            }
-        }
-        else // List
-        {
-            const int pageSize = 5;
-            if (page < 1) page = 1;
-
-            IEnumerable<BoardResponse> allFreeBoards = await _boardService.GetBoardsAsync(EnumHelper.GetDescription(BoardType.FreeForum), ct);
-            IEnumerable<BoardResponse> freeBoards = allFreeBoards.Where(m => m.Deleted == false && m.Noticed == false).OrderByDescending(a => a.Id);
-
-            if (searchType == "Title" && !string.IsNullOrEmpty(searchText))
-            {
-                bool isAccountSessionExist = _sessionService.GetAccount() != null;
-                if (isAccountSessionExist)
-                {
-                    AccountResponse loggedInAccount = _sessionService.GetAccount()!;
-                    if (loggedInAccount.Role == Role.Admin) // Administrator can search all posts, including locked ones
-                        freeBoards = freeBoards.Where(a => (a.Title ?? "").Contains(searchText));
-                    else if (loggedInAccount.Role == Role.User) // User can search regular posts plus their own locked posts
-                    {
-                        List<BoardResponse> searchFreeBoards = [];
-                        searchFreeBoards.AddRange(freeBoards.Where(a => (a.Title ?? "").Contains(searchText)).Where(a => !a.Locked));
-                        searchFreeBoards.AddRange(freeBoards.Where(a => (a.Title ?? "").Contains(searchText)).Where(a => a.Locked && a.Writer == loggedInAccount.Nickname));
-                        freeBoards = searchFreeBoards;
-                    }
-                }
-                else // When not logged in, locked posts should never appear in search results
-                    freeBoards = freeBoards.Where(a => (a.Title ?? "").Contains(searchText)).Where(a => !a.Locked);
-            }
-            else if (searchType == "Writer" && !string.IsNullOrEmpty(searchText))
-                freeBoards = freeBoards.Where(a => (a.Writer ?? "").Contains(searchText));
-
-            FreeForumOutputViewModel freeForumOutputViewModel = new();
-            freeForumOutputViewModel.NoticeBoards = allFreeBoards.Where(m => m.Deleted == false && m.Noticed == true).OrderByDescending(a => a.Id);
-            freeForumOutputViewModel.Method = "list";
-            freeForumOutputViewModel.Pager = new Pager(freeBoards.Count(), page, pageSize);
-            freeForumOutputViewModel.Boards = freeBoards.Skip((page - 1) * pageSize).Take(freeForumOutputViewModel.Pager.PageSize).ToList();
-
-            freeForumOutputViewModel.LoggedInAccount = _sessionService.GetAccount() ?? new AccountResponse { Role = Role.Anonymous };
-            freeForumOutputViewModel.LoggedInAccountTimeZoneIanaId = freeForumOutputViewModel.LoggedInAccount.TimeZoneIanaId ?? "";
-            var listNicknames = freeForumOutputViewModel.NoticeBoards.Select(b => b.Writer)
-                .Concat(freeForumOutputViewModel.Boards.Select(b => b.Writer))
-                .Where(w => !string.IsNullOrEmpty(w))
-                .Select(w => w!)
-                .Distinct();
-            freeForumOutputViewModel.AllAccounts = await _accountService.GetAccountsByNicknamesAsync(listNicknames, ct) ?? [];
-            freeForumOutputViewModel.AdminNicknames = freeForumOutputViewModel.AllAccounts.ToAdminNicknameSet();
-
-            List<long> allBoardIds = freeForumOutputViewModel.NoticeBoards.Select(b => b.Id)
-                .Concat(freeForumOutputViewModel.Boards.Select(b => b.Id))
-                .Distinct().ToList();
-
-            Dictionary<long, int> commentCounts = await _boardService.GetCommentCountsForBoardsAsync(allBoardIds, ct);
-            Dictionary<long, BoardAttachedFileDto?> attachedFiles = await _boardService.GetAttachedFilesForBoardsAsync(allBoardIds, ct);
-
-            foreach (var board in freeForumOutputViewModel.NoticeBoards)
-            {
-                freeForumOutputViewModel.CommentCountByBoardId[board.Id] = commentCounts.GetValueOrDefault(board.Id, 0);
-                BoardAttachedFileDto? af = attachedFiles.GetValueOrDefault(board.Id);
-                freeForumOutputViewModel.AttachedFilesByBoardId[board.Id] = af != null && !string.IsNullOrEmpty(af.Name) ? [af] : [];
-            }
-            foreach (var board in freeForumOutputViewModel.Boards)
-            {
-                freeForumOutputViewModel.CommentCountByBoardId[board.Id] = commentCounts.GetValueOrDefault(board.Id, 0);
-                BoardAttachedFileDto? af = attachedFiles.GetValueOrDefault(board.Id);
-                freeForumOutputViewModel.AttachedFilesByBoardId[board.Id] = af != null && !string.IsNullOrEmpty(af.Name) ? [af] : [];
-            }
-
-            freeForumOutputViewModel.SelectedSearchType = searchType;
-            freeForumOutputViewModel.TypedSearchText = searchText;
-            return View(freeForumOutputViewModel);
         }
     }
     #endregion
@@ -438,12 +466,14 @@ public class ForumController : Controller
             if (board == null || board.Deleted)
                 return Json(new { result = false, error = _localizer["Input is invalid"].Value });
 
-            if (board.Locked)
+            if (!board.Locked)
             {
-                AccountResponse loggedInAccount = _sessionService.GetAccount()!;
-                if (loggedInAccount.Nickname != board.Writer && loggedInAccount.Role != Role.Admin)
-                    return Json(new { result = false, error = _localizer["Input is invalid"].Value });
+                return Json(new { result = true, freeBoard = board });
             }
+
+            AccountResponse loggedInAccount = _sessionService.GetAccount()!;
+            if (loggedInAccount.Nickname != board.Writer && loggedInAccount.Role != Role.Admin)
+                return Json(new { result = false, error = _localizer["Input is invalid"].Value });
 
             return Json(new { result = true, freeBoard = board });
         }
@@ -476,7 +506,7 @@ public class ForumController : Controller
 
             bool isAccountSessionExist = _sessionService.GetAccount() != null;
             if (!isAccountSessionExist)
-                return Json(new { result = false, error = _localizer["Please Login to edit board"].Value });
+                return Json(new { result = false, error = _localizer["Please Login to edit board."].Value });
 
             AccountResponse loggedInAccount = _sessionService.GetAccount()!;
 

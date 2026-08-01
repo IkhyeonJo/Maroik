@@ -147,7 +147,6 @@ public class AccountController : Controller
 
             ViewBag.ResendEmail = result.ShowResendEmail;
             ViewBag.ResentEmailAddress = result.EmailAddress;
-            return View();
         }
         else // Email resend path
         {
@@ -173,8 +172,9 @@ public class AccountController : Controller
             ViewBag.ResendEmail = result.ShowResendEmail;
             ViewBag.ResentEmailAddress = result.EmailAddress;
             ViewBag.RepeatEmailSend = result.RepeatEmailSend;
-            return View();
         }
+
+        return View();
     }
     #endregion
 

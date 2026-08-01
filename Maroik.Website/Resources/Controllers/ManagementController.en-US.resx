@@ -222,9 +222,6 @@
   <data name="Role" xml:space="preserve">
     <value>Role</value>
   </data>
-  <data name="Role1" xml:space="preserve">
-    <value>Role</value>
-  </data>
   <data name="Successfully created the category" xml:space="preserve">
     <value>Successfully created the category</value>
   </data>
@@ -308,5 +305,11 @@
   </data>
   <data name="You do not have permission to delete." xml:space="preserve">
     <value>You do not have permission to delete.</value>
+  </data>
+  <data name="SVG format is not allowed" xml:space="preserve">
+    <value>SVG format is not allowed</value>
+  </data>
+  <data name="Invalid image file" xml:space="preserve">
+    <value>Invalid image file</value>
   </data>
 </root>
