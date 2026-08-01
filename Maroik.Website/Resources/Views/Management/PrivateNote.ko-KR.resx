@@ -201,4 +201,7 @@
   <data name="IETFLanguageTag" xml:space="preserve">
     <value>ko-KR</value>
   </data>
+  <data name="Only a writer can see it." xml:space="preserve">
+    <value>작성자만 볼 수 있습니다.</value>
+  </data>
 </root>

@@ -201,4 +201,7 @@
   <data name="IETFLanguageTag" xml:space="preserve">
     <value>en-US</value>
   </data>
+  <data name="Only a writer can see it." xml:space="preserve">
+    <value>Only a writer can see it.</value>
+  </data>
 </root>

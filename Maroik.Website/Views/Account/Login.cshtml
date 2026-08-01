@@ -11,8 +11,8 @@
 @model LoginOutputViewModel
 
 @{
-    string currentCulture = (ViewBag.CurrentCulture as string) ?? "en-US";
-    string error = (TempData["Error"] as string) ?? string.Empty;
+    var currentCulture = ViewBag.CurrentCulture as string ?? "en-US";
+    var error = TempData["Error"] as string ?? string.Empty;
 }
 
 <div class="login-box">
@@ -61,13 +61,13 @@
             </div>
 
             <p class="mb-0">
-                <font style="font-weight:bold" color="red">@error</font>
+                <span style="font-weight:bold; color: red; ">@error</span>
             </p>
         </div>
     </div>
 </div>
 <div class="modal" id="loading">
-    <img src="~/anonymous/custom/Account/img/ajax-loader.gif" />
+    <img alt="" src="~/anonymous/custom/Account/img/ajax-loader.gif" />
 </div>
 @* Page-specific JavaScript: site.js *@
 @section Scripts {

@@ -8,8 +8,8 @@
 *@
 
 @{
-    var returnUri = (ViewBag.ReturnUri as string) ?? "/";
-    var loggedInAccount = (ViewBag.LoggedInAccount as AccountResponse) ?? new AccountResponse
+    var returnUri = ViewBag.ReturnUri as string ?? "/";
+    var loggedInAccount = ViewBag.LoggedInAccount as AccountResponse ?? new AccountResponse
     {
         Nickname = Localizer["Login"].Value,
         Role = Role.Anonymous,

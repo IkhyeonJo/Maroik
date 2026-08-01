@@ -13,11 +13,11 @@
 @using Maroik.Website.Models.ViewModels.AccountBook
 @model AccountBookPageViewModel
 @{
-    var assets       = Model.Assets;
-    string currentDate = Model.CurrentDate;
-    int currentHour    = Model.CurrentHour;
-    int currentMinute  = Model.CurrentMinute;
-    int currentSecond  = Model.CurrentSecond;
+    var assets = Model.Assets;
+    var currentDate = Model.CurrentDate;
+    var currentHour = Model.CurrentHour;
+    var currentMinute = Model.CurrentMinute;
+    var currentSecond = Model.CurrentSecond;
 }
 
 @Html.Hidden("localizerPrevText", Localizer["PrevText"].Value)
@@ -66,7 +66,7 @@
 @Html.Hidden("localizerTh", Localizer["Th"].Value)
 @Html.Hidden("localizerFr", Localizer["Fr"].Value)
 @Html.Hidden("localizerSa", Localizer["Sa"].Value)
-@Html.Hidden("localizerYearSuffix", Localizer["YearSuffix"]?.Value ?? "")
+@Html.Hidden("localizerYearSuffix", Localizer["YearSuffix"].Value)
 
 <section class="content">
     <div class="card card-primary">
@@ -136,7 +136,7 @@
                         <div class="form-row">
                             <div class="form-group col-md-6 mb-3">
                                 <label for="createIncomeContent">@Localizer["Content"].Value</label>
-                                <input class="form-control form-control-sm" type="text" data-val="true" data-val-required="@Localizer["Please enter Content"].Value" id="createIncomeContent" name="createIncomeContent" value="">
+                                <input class="form-control form-control-sm" type="text" data-val="true" data-val-required="@Localizer["Please enter Contents"].Value" id="createIncomeContent" name="createIncomeContent" value="">
                                 <span class="field-validation-valid text-danger" data-valmsg-for="createIncomeContent" data-valmsg-replace="true"></span>
                             </div>
                             <div class="form-group col-md-6 mb-3">
@@ -154,15 +154,17 @@
                                 <label for="createIncomeHour">@Localizer["Hour"].Value</label>
                                 <br />
                                 <select id="createIncomeHour" name="createIncomeHour" class="form-control form-control-sm" style="max-width:100%;text-overflow:ellipsis;">
-                                    @for (int i = 0; i < 24; i++)
+                                    @for (var i = 0; i < 24; i++)
                                     {
                                         if (i == currentHour)
                                         {
-                                            <option value="@i" selected="selected">@i</option>
+                                            var i1 = i;
+                                            <option value="@i" selected="selected">@i1</option>
                                         }
                                         else
                                         {
-                                            <option value="@i">@i</option>
+                                            var i1 = i;
+                                            <option value="@i">@i1</option>
                                         }
                                     }
                                 </select>
@@ -173,15 +175,17 @@
                                 <label for="createIncomeMinute">@Localizer["Minute"].Value</label>
                                 <br />
                                 <select id="createIncomeMinute" name="createIncomeMinute" class="form-control form-control-sm" style="max-width:100%;text-overflow:ellipsis;">
-                                    @for (int i = 0; i < 60; i++)
+                                    @for (var i = 0; i < 60; i++)
                                     {
                                         if (i == currentMinute)
                                         {
-                                            <option value="@i" selected="selected">@i</option>
+                                            var i1 = i;
+                                            <option value="@i" selected="selected">@i1</option>
                                         }
                                         else
                                         {
-                                            <option value="@i">@i</option>
+                                            var i1 = i;
+                                            <option value="@i">@i1</option>
                                         }
                                     }
                                 </select>
@@ -190,15 +194,17 @@
                                 <label for="createIncomeSecond">@Localizer["Second"].Value</label>
                                 <br />
                                 <select id="createIncomeSecond" name="createIncomeSecond" class="form-control form-control-sm" style="max-width:100%;text-overflow:ellipsis;">
-                                    @for (int i = 0; i < 60; i++)
+                                    @for (var i = 0; i < 60; i++)
                                     {
                                         if (i == currentSecond)
                                         {
-                                            <option value="@i" selected="selected">@i</option>
+                                            var i1 = i;
+                                            <option value="@i" selected="selected">@i1</option>
                                         }
                                         else
                                         {
-                                            <option value="@i">@i</option>
+                                            var i1 = i;
+                                            <option value="@i">@i1</option>
                                         }
                                     }
                                 </select>
@@ -269,7 +275,7 @@
                         <div class="form-row">
                             <div class="form-group col-md-6 mb-3">
                                 <label for="editIncomeContent">@Localizer["Content"].Value</label>
-                                <input class="form-control form-control-sm" type="text" data-val="true" data-val-required="@Localizer["Please enter Content"].Value" id="editIncomeContent" name="editIncomeContent" value="">
+                                <input class="form-control form-control-sm" type="text" data-val="true" data-val-required="@Localizer["Please enter Contents"].Value" id="editIncomeContent" name="editIncomeContent" value="">
                                 <span class="field-validation-valid text-danger" data-valmsg-for="editIncomeContent" data-valmsg-replace="true"></span>
                             </div>
                             <div class="form-group col-md-6 mb-3">
@@ -288,9 +294,10 @@
                                 <br />
                                 <select id="editIncomeHour" name="editIncomeHour" class="form-control form-control-sm" style="max-width:100%;text-overflow:ellipsis;">
                                     <option value="0" selected="selected">0</option>
-                                    @for (int i = 1; i < 24; i++)
+                                    @for (var i = 1; i < 24; i++)
                                     {
-                                        <option value="@i">@i</option>
+                                        var i1 = i;
+                                        <option value="@i">@i1</option>
                                     }
                                 </select>
                             </div>
@@ -301,9 +308,10 @@
                                 <br />
                                 <select id="editIncomeMinute" name="editIncomeMinute" class="form-control form-control-sm" style="max-width:100%;text-overflow:ellipsis;">
                                     <option value="0" selected="selected">0</option>
-                                    @for (int i = 1; i < 60; i++)
+                                    @for (var i = 1; i < 60; i++)
                                     {
-                                        <option value="@i">@i</option>
+                                        var i1 = i;
+                                        <option value="@i">@i1</option>
                                     }
                                 </select>
                             </div>
@@ -312,9 +320,10 @@
                                 <br />
                                 <select id="editIncomeSecond" name="editIncomeSecond" class="form-control form-control-sm" style="max-width:100%;text-overflow:ellipsis;">
                                     <option value="0" selected="selected">0</option>
-                                    @for (int i = 1; i < 60; i++)
+                                    @for (var i = 1; i < 60; i++)
                                     {
-                                        <option value="@i">@i</option>
+                                        var i1 = i;
+                                        <option value="@i">@i1</option>
                                     }
                                 </select>
                             </div>

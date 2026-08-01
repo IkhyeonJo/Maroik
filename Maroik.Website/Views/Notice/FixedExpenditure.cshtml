@@ -10,8 +10,8 @@
     localization strings for the calendar widget are injected as hidden form fields.
 *@
 @{
-    List<AssetResponse> assets = (ViewBag.Assets as List<AssetResponse>) ?? [];
-    string? defaultAssetProductName = ViewBag.DefaultAssetProductName as string;
+    var assets = ViewBag.Assets as List<AssetResponse> ?? [];
+    var defaultAssetProductName = ViewBag.DefaultAssetProductName as string;
 }
 
 @Html.Hidden("localizerPrevText", Localizer["PrevText"].Value)
@@ -60,7 +60,7 @@
 @Html.Hidden("localizerTh", Localizer["Th"].Value)
 @Html.Hidden("localizerFr", Localizer["Fr"].Value)
 @Html.Hidden("localizerSa", Localizer["Sa"].Value)
-@Html.Hidden("localizerYearSuffix", Localizer["YearSuffix"]?.Value ?? "")
+@Html.Hidden("localizerYearSuffix", Localizer["YearSuffix"].Value)
 @Html.Hidden("localizerNoMaturityDate", Localizer["No MaturityDate"].Value)
 @Html.Hidden("localizerToday", Localizer["Today"].Value)
 @Html.Hidden("localizerMaturityDateError", Localizer["The maturity date cannot be earlier than the current date."].Value)
@@ -155,7 +155,7 @@
                         <div class="form-row">
                             <div class="form-group col-md-6 mb-3">
                                 <label for="createFixedExpenditureContent">@Localizer["Content"].Value</label>
-                                <input class="form-control form-control-sm" type="text" data-val="true" data-val-required="@Localizer["Please enter Content"].Value" id="createFixedExpenditureContent" name="createFixedExpenditureContent" value="">
+                                <input class="form-control form-control-sm" type="text" data-val="true" data-val-required="@Localizer["Please enter Contents"].Value" id="createFixedExpenditureContent" name="createFixedExpenditureContent" value="">
                                 <span class="field-validation-valid text-danger" data-valmsg-for="createFixedExpenditureContent" data-valmsg-replace="true"></span>
                             </div>
                             <div class="form-group col-md-6 mb-3">
@@ -169,10 +169,10 @@
                                 <br />
                                 <select id="createFixedExpenditureDepositMonth" name="createFixedExpenditureDepositMonth" class="form-control form-control-sm" style="max-width:100%;text-overflow:ellipsis;">
                                     <option value="1" selected="selected">1</option>
-                                    @for (int i = 2; i <= 12; i++)
+                                    @for (var i = 2; i <= 12; i++)
                                     {
-
-                                        <option value="@i">@i</option>
+                                        var i1 = i;
+                                        <option value="@i">@i1</option>
                                     }
                                 </select>
                             </div>
@@ -181,9 +181,10 @@
                                 <br />
                                 <select id="createFixedExpenditureDepositDay" name="createFixedExpenditureDepositDay" class="form-control form-control-sm" style="max-width:100%;text-overflow:ellipsis;">
                                     <option value="1" selected="selected">1</option>
-                                    @for (int i = 2; i <= 31; i++)
+                                    @for (var i = 2; i <= 31; i++)
                                     {
-                                        <option value="@i">@i</option>
+                                        var i1 = i;
+                                        <option value="@i">@i1</option>
                                     }
                                 </select>
                             </div>
@@ -288,7 +289,7 @@
                         <div class="form-row">
                             <div class="form-group col-md-6 mb-3">
                                 <label for="editFixedExpenditureContent">@Localizer["Content"].Value</label>
-                                <input class="form-control form-control-sm" type="text" data-val="true" data-val-required="@Localizer["Please enter Content"].Value" id="editFixedExpenditureContent" name="editFixedExpenditureContent" value="">
+                                <input class="form-control form-control-sm" type="text" data-val="true" data-val-required="@Localizer["Please enter Contents"].Value" id="editFixedExpenditureContent" name="editFixedExpenditureContent" value="">
                                 <span class="field-validation-valid text-danger" data-valmsg-for="editFixedExpenditureContent" data-valmsg-replace="true"></span>
                             </div>
                             <div class="form-group col-md-6 mb-3">
@@ -302,10 +303,10 @@
                                 <br />
                                 <select id="editFixedExpenditureDepositMonth" name="editFixedExpenditureDepositMonth" class="form-control form-control-sm" style="max-width:100%;text-overflow:ellipsis;">
                                     <option value="1" selected="selected">1</option>
-                                    @for (int i = 2; i <= 12; i++)
+                                    @for (var i = 2; i <= 12; i++)
                                     {
-
-                                        <option value="@i">@i</option>
+                                        var i1 = i;
+                                        <option value="@i">@i1</option>
                                     }
                                 </select>
                             </div>
@@ -314,9 +315,10 @@
                                 <br />
                                 <select id="editFixedExpenditureDepositDay" name="editFixedExpenditureDepositDay" class="form-control form-control-sm" style="max-width:100%;text-overflow:ellipsis;">
                                     <option value="1" selected="selected">1</option>
-                                    @for (int i = 2; i <= 31; i++)
+                                    @for (var i = 2; i <= 31; i++)
                                     {
-                                        <option value="@i">@i</option>
+                                        var i1 = i;
+                                        <option value="@i">@i1</option>
                                     }
                                 </select>
                             </div>

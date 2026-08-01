@@ -13,14 +13,10 @@
 
 @{
     var loggedInAccount = Model.LoggedInAccount;
-    string loggedInAccountTimeZoneIanaId = Model.LoggedInAccountTimeZoneIanaId;
-    string currentDate = Model.CurrentDate;
-    int currentHour = Model.CurrentHour;
-    int currentMinute = Model.CurrentMinute;
-    int currentSecond = Model.CurrentSecond;
-    List<string> timeIntervals = Model.TimeIntervals;
-    string currentInterval = Model.CurrentInterval;
-    long maxAttachedFileSizeBytes = (long)ViewBag.MaxAttachedFileSizeBytes;
+    var currentDate = Model.CurrentDate;
+    var timeIntervals = Model.TimeIntervals;
+    var currentInterval = Model.CurrentInterval;
+    var maxAttachedFileSizeBytes = (long)ViewBag.MaxAttachedFileSizeBytes;
 }
 @Html.Hidden(nameof(maxAttachedFileSizeBytes), maxAttachedFileSizeBytes)
 @Html.Hidden("loggedInAccountTimeZoneIanaId", loggedInAccount.TimeZoneIanaId)
@@ -77,7 +73,7 @@
 @Html.Hidden("localizerTh", Localizer["Th"].Value)
 @Html.Hidden("localizerFr", Localizer["Fr"].Value)
 @Html.Hidden("localizerSa", Localizer["Sa"].Value)
-@Html.Hidden("localizerYearSuffix", Localizer["YearSuffix"]?.Value ?? "")
+@Html.Hidden("localizerYearSuffix", Localizer["YearSuffix"].Value)
 @Html.Hidden("localizerIETFLanguageTag", Localizer["IETFLanguageTag"].Value)
 @Html.Hidden("localizerPrev", Localizer["Prev"].Value)
 @Html.Hidden("localizerNext", Localizer["Next"].Value)
@@ -128,7 +124,7 @@
                         </div>
                         <div class="card-body">
                             <div id="myCalendars">
-                                @foreach (CalendarResponse calendar in Model.Calendars)
+                                @foreach (var calendar in Model.Calendars)
                                 {
                                     <label id="@($"lblCalendar{calendar.Id}")" style="position: relative; border:1px solid #ccc; padding:10px; margin:0 0 10px; display:block">
                                         <input type="checkbox" class="chkCalendar" style="accent-color:@calendar.HtmlColorCode" checked />
@@ -152,7 +148,7 @@
                         </div>
                         <div class="card-body">
                             <div id="otherCalendars">
-                                @foreach (CalendarResponse otherCalendar in Model.OtherCalendars)
+                                @foreach (var otherCalendar in Model.OtherCalendars)
                                 {
                                     <label id="@($"lblOtherCalendar{otherCalendar.Id}")" style="position: relative; border:1px solid #ccc; padding:10px; margin:0 0 10px; display:block">
                                         <input type="checkbox" class="chkOtherCalendar" style="accent-color:@otherCalendar.HtmlColorCode" checked />
@@ -500,7 +496,7 @@
                                 <label for="createCalendarEventMyCalendar">@Localizer["My Calendar"].Value</label>
                                 <br />
                                 <select id="createCalendarEventMyCalendar" name="createCalendarEventMyCalendar" class="form-control form-control-sm" style="max-width:100%;text-overflow:ellipsis;">
-                                    @foreach (CalendarResponse calendar in Model.Calendars)
+                                    @foreach (var calendar in Model.Calendars)
                                     {
                                         <option value="@calendar.Id">@calendar.Name</option>
                                     }
