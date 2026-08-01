@@ -1,3 +1,5 @@
+// ReSharper disable UnusedAutoPropertyAccessor.Global
+// ReSharper disable PropertyCanBeMadeInitOnly.Global
 using Maroik.Core.Contract.Dtos;
     
 namespace Maroik.Website.Models.ViewModels.Calendar;
@@ -10,5 +12,5 @@ namespace Maroik.Website.Models.ViewModels.Calendar;
 public class CalendarInputViewModel
 {
     /// <summary>All calendars owned by the logged-in user; pre-populated by the controller.</summary>
-    public IEnumerable<CalendarRequest> Calendars { get; } = [];
+    public IEnumerable<CalendarRequest> Calendars { get; set; } = [];
 }
