@@ -81,6 +81,7 @@ try
 catch (Exception ex)
 {
     Log.Fatal(ex, "Maroik.FileStorage terminated unexpectedly");
+    throw;
 }
 finally
 {

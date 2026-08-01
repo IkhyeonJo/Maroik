@@ -47,6 +47,7 @@ services:
     clamav:
       image: clamav/clamav:latest
       container_name: Maroik.Clamav
+      restart: unless-stopped
       expose:
         - "3310"
       networks:
@@ -55,6 +56,7 @@ services:
     postgresql:
       image: postgres:17
       container_name: Maroik.PostgreSQL
+      restart: unless-stopped
       env_file:
         - .env.prod
       volumes:
@@ -70,8 +72,9 @@ services:
          context : .
          dockerfile : Maroik.Website/Dockerfile
         container_name: Maroik.Website
+        restart: unless-stopped
         networks :
-          - backend          
+          - backend
         ports:
           - "80:80"
           - "443:443"
@@ -94,6 +97,7 @@ services:
          context : .
          dockerfile : Maroik.FileStorage/Dockerfile
         container_name: Maroik.FileStorage
+        restart: unless-stopped
         networks :
           - backend
         expose:
@@ -111,6 +115,7 @@ services:
          context : .
          dockerfile : Maroik.Worker/Dockerfile
         container_name: Maroik.Worker
+        restart: unless-stopped
         networks :
           - backend
         env_file:
