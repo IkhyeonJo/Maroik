@@ -17,7 +17,7 @@
     <PackageReference Include="BCrypt.Net-Next" Version="4.2.0" />
     <PackageReference Include="DocumentFormat.OpenXml" Version="3.5.1" />
     <PackageReference Include="HtmlAgilityPack" Version="1.12.4" />
-    <PackageReference Include="HtmlSanitizer" Version="9.1.981" />
+    <PackageReference Include="HtmlSanitizer" Version="9.1.982" />
     <PackageReference Include="Magick.NET-Q8-AnyCPU" Version="14.16.0" />
     <PackageReference Include="MailKit" Version="4.17.0" />
     <PackageReference Include="Microsoft.AspNetCore.Mvc.Razor.RuntimeCompilation" Version="10.0.10" />
