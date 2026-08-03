@@ -128,7 +128,7 @@ public class ProfileService : IProfileService
     {
         using var memoryStream = new MemoryStream(imageBytes);
 
-        if (!await _clamavClient.ScanWithClamavAsync(memoryStream, _settings.Value.ClamavHost ?? string.Empty, _settings.Value.ClamavPort, ct))
+        if (!await _clamavClient.ScanWithClamavAsync(memoryStream, _settings.Value.ClamavHost ?? "", _settings.Value.ClamavPort, ct))
             return ServiceResult.Fail("virus-detected");
 
         memoryStream.Position = 0;

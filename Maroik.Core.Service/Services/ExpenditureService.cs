@@ -103,7 +103,7 @@ public class ExpenditureService : IExpenditureService
             }
 
             string currency = paymentAsset.Balance.Currency;
-            string? myDepositAsset = isTransfer ? request.MyDepositAsset : string.Empty;
+            string? myDepositAsset = isTransfer ? request.MyDepositAsset : "";
 
             var expenditureResult = Expenditure.Record(accountEmail, request.MainClass, request.SubClass,
                 request.Content, Math.Abs(request.Amount), currency, request.PaymentMethod, myDepositAsset, request.Note);
@@ -201,8 +201,8 @@ public class ExpenditureService : IExpenditureService
                 }
             }
 
-            string newCurrency = newPayAsset?.Balance.Currency ?? prevPayAsset?.Balance.Currency ?? string.Empty;
-            string? myDepositAsset = classResult.Value ? request.MyDepositAsset : string.Empty;
+            string newCurrency = newPayAsset?.Balance.Currency ?? prevPayAsset?.Balance.Currency ?? "";
+            string? myDepositAsset = classResult.Value ? request.MyDepositAsset : "";
 
             var oldSnapshot = new ExpenditureSnapshot(previous.PaymentMethod, previous.MyDepositAsset, previous.Amount.Amount);
 

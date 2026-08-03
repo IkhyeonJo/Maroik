@@ -39,13 +39,13 @@ public sealed class EmailMessageHandler : IEmailMessageHandler
             message.ToEmail,
             message.Subject,
             message.Body,
-            settings.SmtpHost ?? string.Empty,
+            settings.SmtpHost ?? "",
             settings.SmtpPort.ToString(),
-            settings.SmtpUserName ?? string.Empty,
-            settings.SmtpPassword ?? string.Empty,
+            settings.SmtpUserName ?? "",
+            settings.SmtpPassword ?? "",
             settings.SmtpSsl.ToString(),
-            settings.FromEmail ?? string.Empty,
-            settings.FromFullName ?? string.Empty,
+            settings.FromEmail ?? "",
+            settings.FromFullName ?? "",
             ct);
 
         if (result == EnumHelper.GetDescription(AccountMessage.MailSent))

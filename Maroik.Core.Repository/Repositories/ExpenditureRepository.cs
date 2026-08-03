@@ -23,9 +23,9 @@ public class ExpenditureRepository(ApplicationDbContext context)
 
     /// <summary>Maps a persisted <see cref="OrmExpenditure"/> row to the <see cref="Expenditure"/> domain object.</summary>
     protected override Expenditure ToDomain(OrmExpenditure e) => Expenditure.Reconstitute(
-        e.Id, e.AccountEmail ?? string.Empty, e.MainClass ?? string.Empty,
-        e.SubClass ?? string.Empty, e.Content, e.Amount, e.Asset?.MonetaryUnit ?? string.Empty,
-        e.PaymentMethod ?? string.Empty, e.MyDepositAsset, e.Note,
+        e.Id, e.AccountEmail ?? "", e.MainClass ?? "",
+        e.SubClass ?? "", e.Content, e.Amount, e.Asset?.MonetaryUnit ?? "",
+        e.PaymentMethod ?? "", e.MyDepositAsset, e.Note,
         e.Created, e.Updated);
 
     /// <summary>Maps an <see cref="Expenditure"/> domain object to its <see cref="OrmExpenditure"/> persistence representation.</summary>

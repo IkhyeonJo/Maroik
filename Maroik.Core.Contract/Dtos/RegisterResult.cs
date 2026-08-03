@@ -13,7 +13,7 @@ public class RegisterResult
     public bool Success { get; init; }
 
     /// <summary>Localization key describing the error (empty string on success).</summary>
-    public string ErrorKey { get; init; } = string.Empty;
+    public string ErrorKey { get; init; } = "";
 
     /// <summary>True when the UI should display the "resend confirmation email" button.</summary>
     public bool ShowResendEmail { get; init; }

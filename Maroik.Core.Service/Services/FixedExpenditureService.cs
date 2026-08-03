@@ -95,7 +95,7 @@ public class FixedExpenditureService : IFixedExpenditureService
 
         Asset? payAssetForCurrency = await _assetBalance.GetAssetAsync(accountEmail, request.PaymentMethod ?? "", ct);
         string currency = payAssetForCurrency?.Balance.Currency ?? fe.Amount.Currency;
-        string? myDepositAsset = validation.RequiresDepositAsset ? request.MyDepositAsset : string.Empty;
+        string? myDepositAsset = validation.RequiresDepositAsset ? request.MyDepositAsset : "";
 
         var updateResult = fe.Update(request.MainClass, request.SubClass, request.Content,
             Math.Abs(request.Amount), currency, request.PaymentMethod, myDepositAsset,

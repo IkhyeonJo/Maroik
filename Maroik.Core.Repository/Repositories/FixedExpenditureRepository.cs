@@ -24,9 +24,9 @@ public class FixedExpenditureRepository(ApplicationDbContext context)
 
     /// <summary>Maps a persisted <see cref="OrmFixedExpenditure"/> row to the <see cref="FixedExpenditure"/> domain object.</summary>
     protected override FixedExpenditure ToDomain(OrmFixedExpenditure e) => FixedExpenditure.Reconstitute(
-        e.Id, e.AccountEmail ?? string.Empty, e.MainClass ?? string.Empty,
-        e.SubClass ?? string.Empty, e.Content, e.Amount, e.Asset?.MonetaryUnit ?? string.Empty,
-        e.PaymentMethod ?? string.Empty, e.MyDepositAsset, e.DepositMonth, e.DepositDay,
+        e.Id, e.AccountEmail ?? "", e.MainClass ?? "",
+        e.SubClass ?? "", e.Content, e.Amount, e.Asset?.MonetaryUnit ?? "",
+        e.PaymentMethod ?? "", e.MyDepositAsset, e.DepositMonth, e.DepositDay,
         e.MaturityDate, e.Note, e.Unpunctuality, e.Created, e.Updated);
 
     /// <summary>Maps a <see cref="FixedExpenditure"/> domain object to its <see cref="OrmFixedExpenditure"/> persistence representation.</summary>

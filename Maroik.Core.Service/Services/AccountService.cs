@@ -117,9 +117,9 @@ public class AccountService : IAccountService
             newAccount.HashedPassword = _passwordService.HashPassword(newAccount.HashedPassword ?? "");
 
             var createResult = Account.Create(
-                newAccount.Email ?? string.Empty,
+                newAccount.Email ?? "",
                 newAccount.HashedPassword,
-                newAccount.Nickname ?? string.Empty,
+                newAccount.Nickname ?? "",
                 newAccount.Role ?? Role.User,
                 newAccount.TimeZoneIanaId ?? "UTC",
                 newAccount.DefaultMonetaryUnit,
@@ -145,7 +145,7 @@ public class AccountService : IAccountService
             }
 
             // Encrypt the registration token before embedding it in the confirmation URL.
-            string body = _mailClient.GetMailConfirmationBody(_rsa.Encrypt(account.RegistrationToken!), emailTitle, emailContent0, emailContent1, _settings.Value.DomainName ?? string.Empty);
+            string body = _mailClient.GetMailConfirmationBody(_rsa.Encrypt(account.RegistrationToken!), emailTitle, emailContent0, emailContent1, _settings.Value.DomainName ?? "");
             bool published = await PublishMailAsync(account.Email.Value, emailSubject, body, ct);
             if (published)
             {
@@ -169,7 +169,7 @@ public class AccountService : IAccountService
             // Account exists but email was never confirmed: regenerate the token if missing and resend.
             existing.RegenerateRegistrationTokenIfEmpty(GuidToken.Generate());
 
-            string body = _mailClient.GetMailConfirmationBody(_rsa.Encrypt(existing.RegistrationToken!), emailTitle, emailContent0, emailContent1, _settings.Value.DomainName ?? string.Empty);
+            string body = _mailClient.GetMailConfirmationBody(_rsa.Encrypt(existing.RegistrationToken!), emailTitle, emailContent0, emailContent1, _settings.Value.DomainName ?? "");
             bool published = await PublishMailAsync(existing.Email.Value, emailSubject, body, ct);
 
             if (!published)
@@ -225,7 +225,7 @@ public class AccountService : IAccountService
             // Ensure a valid token exists before building the confirmation URL.
             account.RegenerateRegistrationTokenIfEmpty(GuidToken.Generate());
 
-            string body = _mailClient.GetMailConfirmationBody(_rsa.Encrypt(account.RegistrationToken!), emailTitle, emailContent0, emailContent1, _settings.Value.DomainName ?? string.Empty);
+            string body = _mailClient.GetMailConfirmationBody(_rsa.Encrypt(account.RegistrationToken!), emailTitle, emailContent0, emailContent1, _settings.Value.DomainName ?? "");
             bool published = await PublishMailAsync(email, emailSubject, body, ct);
             if (!published)
             {
@@ -338,7 +338,7 @@ public class AccountService : IAccountService
 
         try
         {
-            string body = _mailClient.GetMailResetPasswordBody(_rsa.Encrypt(resetPasswordToken), emailTitle, emailContent0, emailContent1, _settings.Value.DomainName ?? string.Empty);
+            string body = _mailClient.GetMailResetPasswordBody(_rsa.Encrypt(resetPasswordToken), emailTitle, emailContent0, emailContent1, _settings.Value.DomainName ?? "");
             bool published = await PublishMailAsync(account.Email.Value, emailSubject, body, ct);
 
             if (!published)

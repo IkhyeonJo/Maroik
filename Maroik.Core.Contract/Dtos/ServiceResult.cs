@@ -11,7 +11,7 @@ public class ServiceResult
     public bool Success { get; private init; }
 
     /// <summary>Localization key that describes the error (empty string on success).</summary>
-    public string ErrorKey { get; private init; } = string.Empty;
+    public string ErrorKey { get; private init; } = "";
 
     /// <summary>Creates a successful result.</summary>
     public static ServiceResult Ok() => new() { Success = true };

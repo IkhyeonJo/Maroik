@@ -50,7 +50,7 @@ try
 
     // Capture config values needed before DI container is built (for middleware/Kestrel configuration)
     var serverConfig = builder.Configuration.GetSection("ServerSetting");
-    var cfgDomainName = serverConfig["DomainName"] ?? string.Empty;
+    var cfgDomainName = serverConfig["DomainName"] ?? "";
     var cfgSessionExpireMinutes = Convert.ToInt32(serverConfig["SessionExpireMinutes"]);
     var cfgDockerCertPath = serverConfig["DockerCertPath"];
     var cfgDockerKeyPath = serverConfig["DockerKeyPath"];

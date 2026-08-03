@@ -23,9 +23,9 @@ public class IncomeRepository(ApplicationDbContext context)
 
     /// <summary>Maps a persisted <see cref="OrmIncome"/> row to the <see cref="Income"/> domain object.</summary>
     protected override Income ToDomain(OrmIncome e) => Income.Reconstitute(
-        e.Id, e.AccountEmail ?? string.Empty, e.MainClass ?? string.Empty,
-        e.SubClass ?? string.Empty, e.Content, e.Amount, e.Asset?.MonetaryUnit ?? string.Empty,
-        e.DepositMyAssetProductName ?? string.Empty, e.Note, e.Created, e.Updated);
+        e.Id, e.AccountEmail ?? "", e.MainClass ?? "",
+        e.SubClass ?? "", e.Content, e.Amount, e.Asset?.MonetaryUnit ?? "",
+        e.DepositMyAssetProductName ?? "", e.Note, e.Created, e.Updated);
 
     /// <summary>Maps an <see cref="Income"/> domain object to its <see cref="OrmIncome"/> persistence representation.</summary>
     protected override OrmIncome ToEntity(Income i) => new()

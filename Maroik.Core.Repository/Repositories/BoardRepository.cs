@@ -33,8 +33,8 @@ public class BoardRepository(ApplicationDbContext context)
 
     /// <summary>Maps a persisted <see cref="OrmBoard"/> row to the <see cref="Board"/> domain object.</summary>
     protected override Board ToDomain(OrmBoard e) => Board.Reconstitute(
-        e.Id, e.Type ?? string.Empty, e.Title ?? string.Empty, e.Content,
-        e.Writer ?? string.Empty, e.Created, e.Updated, e.View, e.Deleted, e.Locked, e.Noticed);
+        e.Id, e.Type ?? "", e.Title ?? "", e.Content,
+        e.Writer ?? "", e.Created, e.Updated, e.View, e.Deleted, e.Locked, e.Noticed);
 
     /// <summary>Maps a <see cref="Board"/> domain object to its <see cref="OrmBoard"/> persistence representation.</summary>
     protected override OrmBoard ToEntity(Board b) => new()

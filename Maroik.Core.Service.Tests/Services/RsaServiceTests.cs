@@ -200,13 +200,13 @@ public class RsaServiceTests
         var sut = new RsaService(Options.Create(new ServerSetting
         {
             RsaAlgorithm = RsaType.Rsa2,
-            RsaPrivateKey = string.Empty,
+            RsaPrivateKey = "",
             RsaPublicKey = PublicKeyBase64
         }));
 
         string result = sut.Sign("data");
 
-        Assert.Equal(string.Empty, result);
+        Assert.Equal("", result);
     }
 
     /// <summary>Verifies that <c>Verify</c> returns false when public key is not configured.</summary>

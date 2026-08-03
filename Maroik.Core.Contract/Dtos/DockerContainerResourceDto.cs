@@ -4,11 +4,11 @@ namespace Maroik.Core.Contract.Dtos;
 public class DockerContainerResourceDto
 {
     /// <summary>Container name.</summary>
-    public string Name { get; init; } = string.Empty;
+    public string Name { get; init; } = "";
 
     /// <summary>CPU usage percentage, formatted (e.g. "12.3%").</summary>
-    public string CpuPercent { get; init; } = string.Empty;
+    public string CpuPercent { get; init; } = "";
 
     /// <summary>Formatted memory usage/limit string (e.g. "100MiB / 512MiB").</summary>
-    public string MemUsageDisplay { get; init; } = string.Empty;
+    public string MemUsageDisplay { get; init; } = "";
 }

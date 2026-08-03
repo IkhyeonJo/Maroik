@@ -9,5 +9,5 @@ namespace Maroik.Website.Attributes;
 public class RequiredHttpPostAccessAttribute : Attribute
 {
     /// <summary>The role string (e.g. "Admin", "User") that is allowed to call the decorated action.</summary>
-    public string Role { get; set; } = string.Empty;
+    public string Role { get; set; } = "";
 }

@@ -18,8 +18,8 @@ public class CalendarRepository(ApplicationDbContext context)
 
     /// <summary>Maps a persisted <see cref="OrmCalendar"/> row to the <see cref="Calendar"/> domain object.</summary>
     protected override Calendar ToDomain(OrmCalendar e) => Calendar.Reconstitute(
-        e.Id, e.AccountEmail ?? string.Empty, e.Name ?? string.Empty,
-        e.Description, e.TimeZoneIanaId ?? "UTC", e.HtmlColorCode ?? string.Empty,
+        e.Id, e.AccountEmail ?? "", e.Name ?? "",
+        e.Description, e.TimeZoneIanaId ?? "UTC", e.HtmlColorCode ?? "",
         e.Created, e.Updated);
 
     /// <summary>Maps a <see cref="Calendar"/> domain object to its <see cref="OrmCalendar"/> persistence representation.</summary>

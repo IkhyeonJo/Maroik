@@ -18,7 +18,7 @@ public class OtherCalendarRepository(ApplicationDbContext context)
 
     /// <summary>Maps a persisted <see cref="OrmOtherCalendar"/> row to the <see cref="OtherCalendar"/> domain object.</summary>
     protected override OtherCalendar ToDomain(OrmOtherCalendar e)
-        => OtherCalendar.Reconstitute(e.AccountEmail ?? string.Empty, e.CalendarId);
+        => OtherCalendar.Reconstitute(e.AccountEmail ?? "", e.CalendarId);
 
     /// <summary>Maps an <see cref="OtherCalendar"/> domain object to its <see cref="OrmOtherCalendar"/> persistence representation.</summary>
     protected override OrmOtherCalendar ToEntity(OtherCalendar o) => new()

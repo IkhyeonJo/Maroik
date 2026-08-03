@@ -52,9 +52,9 @@ public class ManagementAccountService : IManagementAccountService
             string hashedPassword = _passwordService.HashPassword(request.HashedPassword ?? "");
 
             var createResult = Account.Create(
-                request.Email ?? string.Empty,
+                request.Email ?? "",
                 hashedPassword,
-                request.Nickname ?? string.Empty,
+                request.Nickname ?? "",
                 request.Role ?? Role.User,
                 request.TimeZoneIanaId ?? "UTC",
                 request.DefaultMonetaryUnit,

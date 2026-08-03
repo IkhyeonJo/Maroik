@@ -44,7 +44,7 @@ public class ClamavClient : IClamavClient
 
             // Read the single-line scan result (e.g. "stream: OK" or "stream: Virus FOUND")
             using var reader = new StreamReader(stream);
-            string response = await reader.ReadLineAsync(ct) ?? string.Empty;
+            string response = await reader.ReadLineAsync(ct) ?? "";
 
             // "OK" in the response means the file passed the virus scan
             return response.Contains("OK");

@@ -45,7 +45,7 @@ public sealed class BoardAttachedFile : Entity<long>
     /// </summary>
     public static BoardAttachedFile Reconstitute(
         long id, long boardId, long size, string? name, string? extension, string? path)
-        => new(id, boardId, size, name ?? string.Empty, extension, path ?? string.Empty);
+        => new(id, boardId, size, name ?? "", extension, path ?? "");
 
     /// <summary>Creates a new attached-file entity after validating required fields.</summary>
     public static ErrorOr<BoardAttachedFile> Create(

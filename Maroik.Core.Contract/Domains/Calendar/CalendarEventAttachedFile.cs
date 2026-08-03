@@ -45,7 +45,7 @@ public sealed class CalendarEventAttachedFile : Entity<long>
     /// </summary>
     public static CalendarEventAttachedFile Reconstitute(
         long id, long calendarEventId, long size, string? name, string? extension, string? path)
-        => new(id, calendarEventId, size, name ?? string.Empty, extension, path ?? string.Empty);
+        => new(id, calendarEventId, size, name ?? "", extension, path ?? "");
 
     /// <summary>Creates a new attached-file entity after validating required fields.</summary>
     public static ErrorOr<CalendarEventAttachedFile> Create(

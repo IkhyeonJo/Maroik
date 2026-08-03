@@ -51,8 +51,8 @@ public static class CalendarViewModelMapper
                 item.EndDateTimeZoneIanaId = userTimeZoneIanaId;
                 item.DisplayStartDate = localStart.ToString("yyyy-MM-dd");
                 item.DisplayEndDate = localEnd.ToString("yyyy-MM-dd");
-                item.DisplayStartDateTimeZone = string.Empty;
-                item.DisplayEndDateTimeZone = string.Empty;
+                item.DisplayStartDateTimeZone = "";
+                item.DisplayEndDateTimeZone = "";
 
                 if (forGrid)
                 {
@@ -208,7 +208,7 @@ public static class CalendarViewModelMapper
         {
             string tzIanaId = tz.HasIanaId
                 ? tz.Id
-                : (TimeZoneInfo.TryConvertWindowsIdToIanaId(tz.Id, out string? id) ? id : string.Empty);
+                : (TimeZoneInfo.TryConvertWindowsIdToIanaId(tz.Id, out string? id) ? id : "");
 
             if (!string.IsNullOrEmpty(tzIanaId) && tzIanaId == ianaId)
                 return tz.StandardName;
@@ -233,7 +233,7 @@ public static class CalendarViewModelMapper
         foreach (TimeZoneInfo tz in TimeZoneInfo.GetSystemTimeZones())
         {
             string tzId = tz.HasIanaId ? tz.Id :
-                (TimeZoneInfo.TryConvertWindowsIdToIanaId(tz.Id, out string? id) ? id : string.Empty);
+                (TimeZoneInfo.TryConvertWindowsIdToIanaId(tz.Id, out string? id) ? id : "");
             if (!string.IsNullOrEmpty(tzId) && tzId == ianaId)
                 return TimeZoneInfo.ConvertTime(local, tz, TimeZoneInfo.Utc);
         }

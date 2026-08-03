@@ -60,7 +60,7 @@ public class MaroikWebApplicationFactory : WebApplicationFactory<Program>, IAsyn
         // pg_dump's \restrict/\unrestrict meta-commands (a raw ADO.NET batch would not).
         .WithResourceMapping(new FileInfo(FindInitSqlPath()), new FileInfo("/docker-entrypoint-initdb.d/init.sql"))
         .Build();
-    private string _connectionString = string.Empty;
+    private string _connectionString = "";
 
     private static string FindInitSqlPath()
     {

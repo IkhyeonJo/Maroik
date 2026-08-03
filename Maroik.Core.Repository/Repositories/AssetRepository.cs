@@ -39,8 +39,8 @@ public class AssetRepository(ApplicationDbContext context)
 
     /// <summary>Maps a persisted <see cref="OrmAsset"/> row to the <see cref="Asset"/> domain object.</summary>
     protected override Asset ToDomain(OrmAsset e) => Asset.Reconstitute(
-        e.ProductName ?? string.Empty, e.AccountEmail ?? string.Empty, e.Item ?? string.Empty,
-        e.Amount, e.MonetaryUnit ?? string.Empty, e.Note, e.Deleted, e.Created, e.Updated);
+        e.ProductName ?? "", e.AccountEmail ?? "", e.Item ?? "",
+        e.Amount, e.MonetaryUnit ?? "", e.Note, e.Deleted, e.Created, e.Updated);
 
     /// <summary>Maps an <see cref="Asset"/> domain object to its <see cref="OrmAsset"/> persistence representation.</summary>
     protected override OrmAsset ToEntity(Asset a) => new()

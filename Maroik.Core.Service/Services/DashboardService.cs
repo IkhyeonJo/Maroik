@@ -179,8 +179,8 @@ public class DashboardService : IDashboardService
     /// <inheritdoc />
     public ServerResourceDto GetServerResourceSummary(string hostResourceFilePath, string dockerResourceFilePath)
     {
-        string hostText = File.Exists(hostResourceFilePath) ? File.ReadAllText(hostResourceFilePath) : string.Empty;
-        string dockerText = File.Exists(dockerResourceFilePath) ? File.ReadAllText(dockerResourceFilePath) : string.Empty;
+        string hostText = File.Exists(hostResourceFilePath) ? File.ReadAllText(hostResourceFilePath) : "";
+        string dockerText = File.Exists(dockerResourceFilePath) ? File.ReadAllText(dockerResourceFilePath) : "";
 
         string hostCpuInfo = ExtractSection(hostText, "Host CPU Information:", "Host Memory Information:");
         string hostMemoryInfo = ExtractSection(hostText, "Host Memory Information:", "Host Disk Information:");
@@ -217,7 +217,7 @@ public class DashboardService : IDashboardService
             // ignored
         }
 
-        string memUsageLimit = string.Empty;
+        string memUsageLimit = "";
         if (!string.IsNullOrEmpty(hostMemoryInfo))
         {
             try
@@ -232,7 +232,7 @@ public class DashboardService : IDashboardService
             }
         }
 
-        string diskUsageLimit = string.Empty;
+        string diskUsageLimit = "";
         if (!string.IsNullOrEmpty(hostDiskInfo))
         {
             try
@@ -279,6 +279,6 @@ public class DashboardService : IDashboardService
             int endIndex = endMarker != null ? input.IndexOf(endMarker, startIndex, StringComparison.Ordinal) : input.Length;
             return input.Substring(startIndex, endIndex - startIndex).Trim();
         }
-        catch { return string.Empty; }
+        catch { return ""; }
     }
 }

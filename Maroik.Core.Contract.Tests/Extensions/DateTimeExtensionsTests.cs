@@ -44,7 +44,7 @@ public class DateTimeExtensionsTests
     {
         var original = new DateTime(2025, 3, 15, 8, 30, 0);
 
-        DateTime result = original.ConvertTimeByTimeZoneIanaId(string.Empty);
+        DateTime result = original.ConvertTimeByTimeZoneIanaId("");
 
         Assert.Equal(original, result);
     }

@@ -58,7 +58,7 @@ public class FileController : ControllerBase
         try
         {
             var sanitizedFileName = Path.GetFileName(filePath);
-            filePath = Path.Combine(Path.GetDirectoryName(filePath) ?? string.Empty, sanitizedFileName);
+            filePath = Path.Combine(Path.GetDirectoryName(filePath) ?? "", sanitizedFileName);
 
             if (!System.IO.File.Exists(filePath)) return NotFound("File not found");
             // filePath was rebuilt above from Path.GetFileName(filePath) + the original directory,

@@ -76,8 +76,8 @@ public class CalendarEventAttachedFileTests
     {
         var file = CalendarEventAttachedFile.Reconstitute(1, 1, 0, null, null, null);
 
-        Assert.Equal(string.Empty, file.Name);
-        Assert.Equal(string.Empty, file.Path);
+        Assert.Equal("", file.Name);
+        Assert.Equal("", file.Path);
         Assert.Null(file.Extension);
     }
 }

@@ -66,7 +66,7 @@ try
     {
         c.SwaggerEndpoint("./swagger/v1/swagger.json", "Maroik.FileStorage");
         c.DocumentTitle = "Maroik.FileStorage";
-        c.RoutePrefix = string.Empty; // Serve Swagger UI at "/" instead of "/swagger".
+        c.RoutePrefix = ""; // Serve Swagger UI at "/" instead of "/swagger".
     });
 
     app.UseSerilogRequestLogging(); // Log each HTTP request (method, path, status, duration) via Serilog

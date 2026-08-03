@@ -98,6 +98,6 @@ public class CalendarEventReminderTests
     {
         var reminder = CalendarEventReminder.Reconstitute(1, 1, null, null, null, null, null, null);
 
-        Assert.Equal(string.Empty, reminder.Method);
+        Assert.Equal("", reminder.Method);
     }
 }

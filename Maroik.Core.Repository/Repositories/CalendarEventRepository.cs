@@ -27,7 +27,7 @@ public class CalendarEventRepository(ApplicationDbContext context)
 
     /// <summary>Maps a persisted <see cref="OrmCalendarEvent"/> row to the <see cref="CalendarEvent"/> domain object.</summary>
     protected override CalendarEvent ToDomain(OrmCalendarEvent e) => CalendarEvent.Reconstitute(
-        e.Id, e.CalendarId, e.Title ?? string.Empty, e.Description,
+        e.Id, e.CalendarId, e.Title ?? "", e.Description,
         e.AllDay, e.StartDate, e.EndDate,
         e.StartDateTimeZoneIanaId, e.EndDateTimeZoneIanaId,
         e.Location, e.Status, e.RecurrenceId, e.Created, e.Updated);

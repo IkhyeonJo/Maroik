@@ -39,7 +39,7 @@ public sealed class RabbitMqEmailPublisher : IEmailPublisher, IAsyncDisposable
         var properties = new BasicProperties { Persistent = true };
 
         await channel.BasicPublishAsync(
-            exchange: string.Empty,
+            exchange: "",
             routingKey: QueueNames.Email,
             mandatory: false,
             basicProperties: properties,

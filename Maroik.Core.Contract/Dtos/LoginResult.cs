@@ -13,7 +13,7 @@ public class LoginResult
     public bool Success { get; init; }
 
     /// <summary>Localization key describing the error (empty string on success).</summary>
-    public string ErrorKey { get; init; } = string.Empty;
+    public string ErrorKey { get; init; } = "";
 
     /// <summary>The authenticated account data (null on failure).</summary>
     public AccountResponse? Account { get; init; }

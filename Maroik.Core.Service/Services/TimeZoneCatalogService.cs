@@ -17,7 +17,7 @@ public class TimeZoneCatalogService : ITimeZoneCatalogService
 
         foreach (var systemTimeZone in TimeZoneInfo.GetSystemTimeZones())
         {
-            string systemTimeZoneIanaId = string.Empty;
+            string systemTimeZoneIanaId = "";
             if (systemTimeZone.HasIanaId)
             {
                 systemTimeZoneIanaId = systemTimeZone.Id;

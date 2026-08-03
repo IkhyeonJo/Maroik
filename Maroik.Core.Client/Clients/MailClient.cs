@@ -80,7 +80,7 @@ public class MailClient : IMailClient
         {
             var message = new MimeMessage();
             message.From.Add(new MailboxAddress(fromFullName, fromEmail));
-            message.To.Add(new MailboxAddress(string.Empty, toEmail));
+            message.To.Add(new MailboxAddress("", toEmail));
             message.Subject = subject;
             message.Body = new BodyBuilder { HtmlBody = body }.ToMessageBody();
 

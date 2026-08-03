@@ -45,7 +45,7 @@ public sealed class Email : ValueObject
         if (hostParts.Length == 1)
             return false;
 
-        if (hostParts.Any(p => p == string.Empty))
+        if (hostParts.Any(p => p == ""))
             return false;
 
         if (hostParts[^1].Length < 2)
@@ -54,7 +54,7 @@ public sealed class Email : ValueObject
         if (address.User.Contains(' '))
             return false;
 
-        if (address.User.Split('.').Any(p => p == string.Empty))
+        if (address.User.Split('.').Any(p => p == ""))
             return false;
 
         return true;

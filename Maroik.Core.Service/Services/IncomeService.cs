@@ -123,11 +123,11 @@ public class IncomeService : IIncomeService
             }
 
             Asset? newAsset = !string.IsNullOrEmpty(request.DepositMyAssetProductName) && touchedAssets.TryGetValue(request.DepositMyAssetProductName, out var na) ? na : null;
-            string newCurrency = newAsset?.Balance.Currency ?? prevAsset?.Balance.Currency ?? string.Empty;
+            string newCurrency = newAsset?.Balance.Currency ?? prevAsset?.Balance.Currency ?? "";
 
             string previousAssetName = previous.DepositMyAssetProductName;
             decimal previousAmount = previous.Amount.Amount;
-            string previousCurrency = prevAsset?.Balance.Currency ?? string.Empty;
+            string previousCurrency = prevAsset?.Balance.Currency ?? "";
 
             var updateResult = previous.Update(request.MainClass, request.SubClass, request.Content,
                 Math.Abs(request.Amount), newCurrency, request.DepositMyAssetProductName, request.Note);

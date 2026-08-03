@@ -11,10 +11,10 @@ public class AttachedFileDto
     public byte[] Bytes { get; init; } = [];
 
     /// <summary>MIME content type detected from the upload (e.g. "image/png", "application/pdf").</summary>
-    public string ContentType { get; init; } = string.Empty;
+    public string ContentType { get; init; } = "";
 
     /// <summary>Sanitised original file name provided by the client.</summary>
-    public string FileName { get; init; } = string.Empty;
+    public string FileName { get; init; } = "";
 
     /// <summary>File size in bytes.</summary>
     public long Size { get; init; }

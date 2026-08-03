@@ -63,11 +63,11 @@ public class AttachmentContentService : IAttachmentContentService
         string imageFile = $"{Guid.NewGuid():N}{ext}";
         string filePath = Path.Combine("upload", area, subArea, "summernote", "images", imageFile);
 
-        bool uploaded = await _fileClient.UploadAsync(file.Bytes, file.ContentType, filePath, _settings.Value.FileStorageBaseUrl ?? string.Empty, ct);
+        bool uploaded = await _fileClient.UploadAsync(file.Bytes, file.ContentType, filePath, _settings.Value.FileStorageBaseUrl ?? "", ct);
         if (!uploaded)
             return SummernoteUploadResult.Fail("Input is invalid");
 
-        byte[] fileBytes = await _fileClient.DownloadAsync(filePath, _settings.Value.FileStorageBaseUrl ?? string.Empty, ct);
+        byte[] fileBytes = await _fileClient.DownloadAsync(filePath, _settings.Value.FileStorageBaseUrl ?? "", ct);
         return SummernoteUploadResult.Ok(fileBytes, file.ContentType, imageFile, filePath);
     }
 
@@ -76,7 +76,7 @@ public class AttachmentContentService : IAttachmentContentService
     {
         try
         {
-            return await _fileClient.DownloadAsync(filePath, _settings.Value.FileStorageBaseUrl ?? string.Empty, ct);
+            return await _fileClient.DownloadAsync(filePath, _settings.Value.FileStorageBaseUrl ?? "", ct);
         }
         catch (Exception ex)
         {
@@ -90,7 +90,7 @@ public class AttachmentContentService : IAttachmentContentService
     {
         return await _htmlParser.TransformImageAttributesAsync(html, async (alt, token) =>
         {
-            byte[] fileData = await _fileClient.DownloadAsync(alt, _settings.Value.FileStorageBaseUrl ?? string.Empty, token);
+            byte[] fileData = await _fileClient.DownloadAsync(alt, _settings.Value.FileStorageBaseUrl ?? "", token);
             return new HtmlImgPatch(
                 NewAlt: _rsa.Encrypt(alt),
                 DataFile: Convert.ToBase64String(fileData),

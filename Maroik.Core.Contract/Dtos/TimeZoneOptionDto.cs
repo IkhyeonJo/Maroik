@@ -4,8 +4,8 @@ namespace Maroik.Core.Contract.Dtos;
 public class TimeZoneOptionDto
 {
     /// <summary>IANA time zone identifier (e.g. "Asia/Seoul"), suitable for <c>DateTimeExtensions.ConvertTimeByTimeZoneIanaId</c>.</summary>
-    public string IanaId { get; init; } = string.Empty;
+    public string IanaId { get; init; } = "";
 
     /// <summary>Human-readable label shown in the dropdown (e.g. "(UTC+09:00) Seoul").</summary>
-    public string DisplayName { get; init; } = string.Empty;
+    public string DisplayName { get; init; } = "";
 }

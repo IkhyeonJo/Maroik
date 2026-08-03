@@ -57,7 +57,7 @@ public sealed class CalendarEventReminder : Entity<long>
     public static CalendarEventReminder Reconstitute(
         long id, long calendarEventId, string? method,
         long? minutesBefore, long? hoursBefore, long? daysBefore, long? weeksBefore, TimeOnly? timesBefore)
-        => new(id, calendarEventId, method ?? string.Empty, minutesBefore, hoursBefore, daysBefore, weeksBefore, timesBefore);
+        => new(id, calendarEventId, method ?? "", minutesBefore, hoursBefore, daysBefore, weeksBefore, timesBefore);
 
     /// <summary>
     /// Creates a new reminder.

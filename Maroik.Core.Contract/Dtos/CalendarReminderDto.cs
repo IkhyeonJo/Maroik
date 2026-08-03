@@ -9,7 +9,7 @@ namespace Maroik.Core.Contract.Dtos;
 public class CalendarReminderDto
 {
     /// <summary>Notification delivery method (e.g. "Email", "Push").</summary>
-    public string Method { get; init; } = string.Empty;
+    public string Method { get; init; } = "";
 
     /// <summary>Minutes before the event to fire the reminder. Null if another unit is used.</summary>
     public int? MinutesBeforeEvent { get; init; }

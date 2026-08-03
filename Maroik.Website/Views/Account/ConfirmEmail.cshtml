@@ -10,7 +10,7 @@
 @{
     bool invalidToken = ViewBag.InvalidToken ?? false;
     bool accountCreated = ViewBag.AccountCreated ?? false;
-    var error = TempData["Error"] as string ?? string.Empty;
+    var error = TempData["Error"] as string ?? "";
 }
 
 

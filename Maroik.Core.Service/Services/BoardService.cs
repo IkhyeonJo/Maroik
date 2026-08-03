@@ -122,7 +122,7 @@ public class BoardService : IBoardService
             {
                 // Build a unique storage path and upload the file, then persist the attachment record.
                 string filePath = BuildAttachedFilePath(request.Type!, boardId, attachedFile.FileName);
-                await _fileClient.UploadAsync(attachedFile.Bytes, attachedFile.ContentType, filePath, _settings.Value.FileStorageBaseUrl ?? string.Empty, ct);
+                await _fileClient.UploadAsync(attachedFile.Bytes, attachedFile.ContentType, filePath, _settings.Value.FileStorageBaseUrl ?? "", ct);
                 await _boardAttachedFileRepository.CreateAsync(
                     BoardAttachedFile.Reconstitute(0, boardId, attachedFile.Size,
                         Path.GetFileNameWithoutExtension(attachedFile.FileName),
@@ -309,7 +309,7 @@ public class BoardService : IBoardService
         {
             // Replace: upload the new file and overwrite the existing attachment record.
             string filePath = BuildAttachedFilePath(boardType, boardId, newFile.FileName);
-            await _fileClient.UploadAsync(newFile.Bytes, newFile.ContentType, filePath, _settings.Value.FileStorageBaseUrl ?? string.Empty, ct);
+            await _fileClient.UploadAsync(newFile.Bytes, newFile.ContentType, filePath, _settings.Value.FileStorageBaseUrl ?? "", ct);
             await _boardAttachedFileRepository.UpdateEntityAsync(
                 BoardAttachedFile.Reconstitute(previous.Id, previous.BoardId, newFile.Size,
                     Path.GetFileNameWithoutExtension(newFile.FileName),
@@ -326,7 +326,7 @@ public class BoardService : IBoardService
         {
             // Add: upload and create a new attachment record for a post that had none before.
             string filePath = BuildAttachedFilePath(boardType, boardId, newFile.FileName);
-            await _fileClient.UploadAsync(newFile.Bytes, newFile.ContentType, filePath, _settings.Value.FileStorageBaseUrl ?? string.Empty, ct);
+            await _fileClient.UploadAsync(newFile.Bytes, newFile.ContentType, filePath, _settings.Value.FileStorageBaseUrl ?? "", ct);
             await _boardAttachedFileRepository.CreateAsync(
                 BoardAttachedFile.Reconstitute(0, boardId, newFile.Size,
                     Path.GetFileNameWithoutExtension(newFile.FileName),

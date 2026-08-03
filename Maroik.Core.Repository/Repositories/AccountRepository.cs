@@ -18,8 +18,8 @@ public class AccountRepository(ApplicationDbContext context)
 
     /// <summary>Maps a persisted <see cref="OrmAccount"/> row to the <see cref="Account"/> domain aggregate.</summary>
     protected override Account ToDomain(OrmAccount e) => Account.Reconstitute(
-        e.Email ?? string.Empty, e.HashedPassword ?? string.Empty, e.Nickname ?? string.Empty,
-        e.AvatarImagePath, e.Role ?? string.Empty, e.TimeZoneIanaId ?? "UTC",
+        e.Email ?? "", e.HashedPassword ?? "", e.Nickname ?? "",
+        e.AvatarImagePath, e.Role ?? "", e.TimeZoneIanaId ?? "UTC",
         e.DefaultMonetaryUnit, e.Locked, e.LoginAttempt, e.EmailConfirmed,
         e.AgreedServiceTerms, e.RegistrationToken, e.ResetPasswordToken,
         e.Created, e.Updated, e.Message, e.Deleted);

@@ -35,7 +35,7 @@ public class BoardCommentRepository(ApplicationDbContext context)
 
     /// <summary>Maps a persisted <see cref="OrmBoardComment"/> row to the <see cref="BoardComment"/> domain object.</summary>
     protected override BoardComment ToDomain(OrmBoardComment e) => BoardComment.Reconstitute(
-        e.Id, e.BoardId, e.Order, e.AvatarImagePath, e.Writer ?? string.Empty,
+        e.Id, e.BoardId, e.Order, e.AvatarImagePath, e.Writer ?? "",
         e.Content, e.Created, e.Deleted);
 
     /// <summary>Maps a <see cref="BoardComment"/> domain object to its <see cref="OrmBoardComment"/> persistence representation.</summary>

@@ -50,7 +50,7 @@ public class RabbitMqEmailPublisherTests
 
         _factory.Verify(f => f.CreateConnectionAsync(It.IsAny<CancellationToken>()), Times.Once);
         channel.Verify(c => c.BasicPublishAsync(
-                string.Empty,
+                "",
                 QueueNames.Email,
                 false,
                 It.Is<BasicProperties>(p => p.Persistent == true),

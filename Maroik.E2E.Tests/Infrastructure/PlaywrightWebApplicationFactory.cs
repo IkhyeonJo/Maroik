@@ -31,7 +31,7 @@ public sealed class PlaywrightWebApplicationFactory : WebApplicationFactory<Prog
     private IHost? _realHost;
 
     /// <summary>Base URL of the real Kestrel server (e.g. <c>http://localhost:57432</c>).</summary>
-    public string ServerBaseUrl { get; private set; } = string.Empty;
+    public string ServerBaseUrl { get; private set; } = "";
 
     // -- WebApplicationFactory overrides --------------------------------------
 

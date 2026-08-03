@@ -12,5 +12,5 @@ public class ConfirmEmailResult
     public bool AccountCreated { get; init; }
 
     /// <summary>Localization key describing the error (empty string on success).</summary>
-    public string ErrorKey { get; init; } = string.Empty;
+    public string ErrorKey { get; init; } = "";
 }

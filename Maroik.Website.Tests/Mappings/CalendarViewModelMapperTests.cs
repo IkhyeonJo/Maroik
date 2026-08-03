@@ -60,8 +60,8 @@ public class CalendarViewModelMapperTests
 
         Assert.Equal("2025-06-10", vm.DisplayStartDate);
         Assert.Equal("2025-06-10", vm.DisplayEndDate);
-        Assert.Equal(string.Empty, vm.DisplayStartDateTimeZone);
-        Assert.Equal(string.Empty, vm.DisplayEndDateTimeZone);
+        Assert.Equal("", vm.DisplayStartDateTimeZone);
+        Assert.Equal("", vm.DisplayEndDateTimeZone);
         Assert.Equal("UTC", vm.StartDateTimeZoneIanaId);
         Assert.Equal("UTC", vm.EndDateTimeZoneIanaId);
     }
@@ -195,7 +195,7 @@ public class CalendarViewModelMapperTests
         string json = reminders.ToSerializedReminders();
         var roundTripped = JsonConvert.DeserializeObject<List<CalendarReminderDto>>(json)!;
 
-        Assert.Equal(string.Empty, roundTripped[0].Method);
+        Assert.Equal("", roundTripped[0].Method);
     }
 
     // -- PopulateTimeData ---------------------------------------------------------

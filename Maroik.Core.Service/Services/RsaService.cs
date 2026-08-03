@@ -48,7 +48,7 @@ public class RsaService : IRsaService
 
         byte[]? signatureBytes = _privateKeyRsa?.SignData(dataBytes, _hashAlgorithmName, RSASignaturePadding.Pkcs1);
 
-        return signatureBytes != null ? Convert.ToBase64String(signatureBytes) : string.Empty;
+        return signatureBytes != null ? Convert.ToBase64String(signatureBytes) : "";
     }
 
     /// <inheritdoc cref="data" />
