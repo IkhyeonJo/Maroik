@@ -3,6 +3,7 @@ using Maroik.Core.PostgreSQL.Models;
 using Maroik.Core.Common.Utilities;
 using Maroik.Core.Service.Contracts;
 using Maroik.Core.Client.Contracts;
+using Maroik.WebSite.Extensions;
 using Maroik.WebSite.Models.ViewModels.Account;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Localization;
@@ -132,7 +133,14 @@ public class AccountController : Controller
                 tempAccount.LoginAttempt = 0;
                 await _accountRepository.UpdateAccountAsync(tempAccount);
                 tempAccount.HashedPassword = null;
+
+                // Session fixation mitigation: mint a fresh, unpredictable session id before attaching the
+                // account to it, so a session id an attacker fixated before login never becomes authenticated.
+                HttpContext.RegenerateSession();
                 HttpContext.Session.Set(Maroik.Core.Common.Utilities.EnumHelper.GetDescription(Maroik.Core.Common.Utilities.Session.Account), Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(tempAccount)));
+                // The new session created by RegenerateSession() above isn't the one SessionMiddleware
+                // auto-commits at the end of the request, so it must be saved explicitly here.
+                await HttpContext.Session.CommitAsync();
 
                 #region DB Cache
                 return tempAccount.Role == Role.Admin
