@@ -4,8 +4,8 @@ using Maroik.Core.Contract.Enums;
 using Maroik.Core.Contract.Helpers;
 using Maroik.Core.Contract.Interfaces;
 using Maroik.Core.Contract.Tokens;
-using Maroik.Website.Attributes;
 using Maroik.Website.Contracts;
+using Maroik.Website.Extensions;
 using Maroik.Website.Models.ViewModels.Account;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Localization;
@@ -47,7 +47,6 @@ public class AccountController : Controller
     /// <summary>Displays the login form (GET) or processes login credentials (POST).</summary>
     [HttpPost]
     [ValidateAntiForgeryToken]
-    [RegenerateSessionOnEntry]
     public async Task<IActionResult> Login(LoginInputViewModel loginInputViewModel, CancellationToken ct)
     {
         string userAgent = Request.Headers.UserAgent.ToString();
@@ -70,7 +69,13 @@ public class AccountController : Controller
             return View();
         }
 
+        // Session fixation mitigation: mint a fresh, unpredictable session id before attaching the
+        // account to it, so a session id an attacker fixated before login never becomes authenticated.
+        HttpContext.RegenerateSession();
         _sessionService.SetAccount(result.Account!);
+        // The new session created by RegenerateSession() above isn't the one SessionMiddleware
+        // auto-commits at the end of the request, so it must be saved explicitly here.
+        await HttpContext.Session.CommitAsync(ct);
         return RedirectToAction("AnonymousIndex", "Dashboard");
     }
     #endregion

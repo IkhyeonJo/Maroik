@@ -339,7 +339,6 @@ try
 
     #region Login
 
-    app.UseMiddleware<RegenerateSessionOnEntryMiddleware>(); // Strips the session cookie for endpoints marked [RegenerateSessionOnEntry] (e.g. login) so UseSession below always establishes a brand-new session for them, defending against session fixation.
     app.UseSession(); // 6. Session middleware (UseSession) establishes and maintains session state. If the app uses session state, call Session Middleware after Cookie Policy Middleware and before MVC Middleware.
     app.UseAuthentication(); // 7. Authentication middleware (UseAuthentication) attempts to authenticate the user before they're allowed access to secure resources.
     app.UseAuthorization(); // 8. Authorization middleware (UseAuthorization) authorizes a user to access secure resources.
