@@ -260,6 +260,7 @@ public class AccountRepositoryTests : IDisposable
         Assert.Equal("Asia/Seoul", updated.TimeZoneIanaId);
     }
 
-    // RecordLoginFailureAsync is covered in AccountRepositoryIntegrationTests: it uses ExecuteUpdateAsync,
-    // which the InMemory provider used by this test class does not support.
+    // FindByEmailForUpdateAsync is covered in AccountRepositoryIntegrationTests: it uses a raw
+    // FromSqlInterpolated query (FOR UPDATE), which the InMemory provider used by this test class
+    // does not support.
 }

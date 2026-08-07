@@ -28,6 +28,7 @@ public class AccountServiceTests
     private readonly Mock<IMailClient> _mailClient = new();
     private readonly Mock<IEmailPublisher> _emailPublisher = new();
     private readonly Mock<IRsaService> _rsa = new();
+    private readonly Mock<IUnitOfWork> _unitOfWork = new();
     private readonly IOptions<ServerSetting> _settings =
         Options.Create(new ServerSetting { MaxLoginAttempt = 5, DomainName = "https://example.com" });
 
@@ -38,7 +39,8 @@ public class AccountServiceTests
         _emailPublisher.Object,
         _settings,
         _rsa.Object,
-        NullLogger<AccountService>.Instance);
+        NullLogger<AccountService>.Instance,
+        _unitOfWork.Object);
 
     // -- Helpers --------------------------------------------------------------
 
@@ -100,7 +102,7 @@ public class AccountServiceTests
     [Fact]
     public async Task LoginAsync_ReturnsFail_WhenAccountNotFound()
     {
-        _accountRepo.Setup(r => r.FindByEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync((Account?)null);
+        _accountRepo.Setup(r => r.FindByEmailForUpdateAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync((Account?)null);
         var sut = CreateSut();
 
         LoginResult result = await sut.LoginAsync("missing@example.com", "any", TestContext.Current.CancellationToken);
@@ -114,7 +116,7 @@ public class AccountServiceTests
     public async Task LoginAsync_ReturnsFail_WhenAccountIsDeleted()
     {
         var account = ActiveAccount(deleted: true);
-        _accountRepo.Setup(r => r.FindByEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(account);
+        _accountRepo.Setup(r => r.FindByEmailForUpdateAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(account);
         var sut = CreateSut();
 
         LoginResult result = await sut.LoginAsync(account.Email.Value, "any", TestContext.Current.CancellationToken);
@@ -128,55 +130,54 @@ public class AccountServiceTests
     public async Task LoginAsync_ReturnsFail_WhenAccountIsLocked()
     {
         var account = ActiveAccount(locked: true);
-        _accountRepo.Setup(r => r.FindByEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(account);
+        _accountRepo.Setup(r => r.FindByEmailForUpdateAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(account);
         var sut = CreateSut();
 
         LoginResult result = await sut.LoginAsync(account.Email.Value, "any", TestContext.Current.CancellationToken);
 
         Assert.False(result.Success);
         Assert.Contains("Locked", result.ErrorKey, StringComparison.OrdinalIgnoreCase);
+        // Already locked: must be rejected before ever checking the password.
+        _passwordService.Verify(p => p.VerifyPassword(It.IsAny<string>(), It.IsAny<string>()), Times.Never);
     }
 
-    /// <summary>Verifies that <c>LoginAsync</c> returns a failure result and records the login failure atomically when the password is wrong.</summary>
+    /// <summary>Verifies that <c>LoginAsync</c> returns a failure result and persists the incremented counter when the password is wrong.</summary>
     [Fact]
-    public async Task LoginAsync_ReturnsFail_AndRecordsLoginFailure_WhenPasswordIsWrong()
+    public async Task LoginAsync_ReturnsFail_AndPersistsIncrementedCounter_WhenPasswordIsWrong()
     {
         var account = ActiveAccount(loginAttempt: 1);
-        // Second FindByEmailAsync call re-reads post-failure state (still unlocked here).
-        _accountRepo.SetupSequence(r => r.FindByEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(account)
-            .ReturnsAsync(ActiveAccount(loginAttempt: 2));
+        _accountRepo.Setup(r => r.FindByEmailForUpdateAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(account);
         _passwordService.Setup(p => p.VerifyPassword(It.IsAny<string>(), It.IsAny<string>())).Returns(false);
-        _accountRepo.Setup(r => r.RecordLoginFailureAsync(It.IsAny<string>(), It.IsAny<int>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
-            .Returns(Task.CompletedTask);
+        _accountRepo.Setup(r => r.UpdateEntityAsync(It.IsAny<Account>(), It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
         var sut = CreateSut();
 
         LoginResult result = await sut.LoginAsync(account.Email.Value, "wrong", TestContext.Current.CancellationToken);
 
         Assert.False(result.Success);
-        // The failure must be recorded via the atomic increment, not a read-then-write UpdateEntityAsync.
-        _accountRepo.Verify(r => r.RecordLoginFailureAsync(account.Email.Value, _settings.Value.MaxLoginAttempt, It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Once);
-        _accountRepo.Verify(r => r.UpdateEntityAsync(It.IsAny<Account>(), It.IsAny<CancellationToken>()), Times.Never);
+        Assert.Contains("wrong", result.ErrorKey, StringComparison.OrdinalIgnoreCase);
+        // The row-locked account is mutated in memory and persisted within the same transaction,
+        // not via a separate atomic UPDATE.
+        _accountRepo.Verify(r => r.UpdateEntityAsync(
+            It.Is<Account>(a => a.LoginAttempt == 2 && !a.Locked), It.IsAny<CancellationToken>()), Times.Once);
+        _unitOfWork.Verify(u => u.CommitAsync(It.IsAny<CancellationToken>()), Times.Once);
     }
 
-    /// <summary>Verifies that <c>LoginAsync</c> reports the account as locked when the atomic increment reaches max login attempts.</summary>
+    /// <summary>Verifies that <c>LoginAsync</c> locks the account when the failed attempt reaches max login attempts.</summary>
     [Fact]
     public async Task LoginAsync_LocksAccount_WhenMaxLoginAttemptsReached()
     {
         var account = ActiveAccount(loginAttempt: _settings.Value.MaxLoginAttempt - 1);
-        // Second FindByEmailAsync call re-reads post-failure state, now locked by the atomic update.
-        _accountRepo.SetupSequence(r => r.FindByEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(account)
-            .ReturnsAsync(ActiveAccount(loginAttempt: _settings.Value.MaxLoginAttempt, locked: true));
+        _accountRepo.Setup(r => r.FindByEmailForUpdateAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(account);
         _passwordService.Setup(p => p.VerifyPassword(It.IsAny<string>(), It.IsAny<string>())).Returns(false);
-        _accountRepo.Setup(r => r.RecordLoginFailureAsync(It.IsAny<string>(), It.IsAny<int>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
-            .Returns(Task.CompletedTask);
+        _accountRepo.Setup(r => r.UpdateEntityAsync(It.IsAny<Account>(), It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
         var sut = CreateSut();
 
         LoginResult result = await sut.LoginAsync(account.Email.Value, "wrong", TestContext.Current.CancellationToken);
 
         Assert.False(result.Success);
         Assert.Contains("Locked", result.ErrorKey, StringComparison.OrdinalIgnoreCase);
+        _accountRepo.Verify(r => r.UpdateEntityAsync(
+            It.Is<Account>(a => a.Locked && a.LoginAttempt == _settings.Value.MaxLoginAttempt), It.IsAny<CancellationToken>()), Times.Once);
     }
 
     /// <summary>Verifies that <c>LoginAsync</c> returns fail when email not confirmed.</summary>
@@ -184,7 +185,7 @@ public class AccountServiceTests
     public async Task LoginAsync_ReturnsFail_WhenEmailNotConfirmed()
     {
         var account = ActiveAccount(emailConfirmed: false);
-        _accountRepo.Setup(r => r.FindByEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(account);
+        _accountRepo.Setup(r => r.FindByEmailForUpdateAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(account);
         _passwordService.Setup(p => p.VerifyPassword(It.IsAny<string>(), It.IsAny<string>())).Returns(true);
         _accountRepo.Setup(r => r.UpdateEntityAsync(It.IsAny<Account>(), It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
         var sut = CreateSut();
@@ -200,7 +201,7 @@ public class AccountServiceTests
     public async Task LoginAsync_ReturnsFail_WhenServiceTermsNotAgreed()
     {
         var account = ActiveAccount(agreedServiceTerms: false);
-        _accountRepo.Setup(r => r.FindByEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(account);
+        _accountRepo.Setup(r => r.FindByEmailForUpdateAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(account);
         _passwordService.Setup(p => p.VerifyPassword(It.IsAny<string>(), It.IsAny<string>())).Returns(true);
         _accountRepo.Setup(r => r.UpdateEntityAsync(It.IsAny<Account>(), It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
         var sut = CreateSut();
@@ -216,7 +217,7 @@ public class AccountServiceTests
     public async Task LoginAsync_ReturnsSuccessWithAccount_AndClearsHashedPassword_WhenCredentialsValid()
     {
         var account = ActiveAccount();
-        _accountRepo.Setup(r => r.FindByEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(account);
+        _accountRepo.Setup(r => r.FindByEmailForUpdateAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(account);
         _passwordService.Setup(p => p.VerifyPassword(It.IsAny<string>(), It.IsAny<string>())).Returns(true);
         _accountRepo.Setup(r => r.UpdateEntityAsync(It.IsAny<Account>(), It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
         var sut = CreateSut();
@@ -227,6 +228,7 @@ public class AccountServiceTests
         Assert.NotNull(result.Account);
         Assert.Equal(account.Email.Value, result.Account.Email);
         Assert.Null(result.Account.HashedPassword); // must be cleared
+        _unitOfWork.Verify(u => u.CommitAsync(It.IsAny<CancellationToken>()), Times.Once);
     }
 
     // -- RegisterAsync --------------------------------------------------------

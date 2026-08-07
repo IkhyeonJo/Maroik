@@ -22,11 +22,10 @@ public interface IAccountRepository : IGenericRepository<Account>
     Task<List<Account>> FindByNicknamesAsync(IEnumerable<string> nicknames, CancellationToken ct = default);
 
     /// <summary>
-    /// Atomically increments the account's failed-login counter in a single UPDATE statement,
-    /// locking the account (and setting <paramref name="lockedMessage"/>) if the new count reaches
-    /// <paramref name="maxAttempts"/>. Safe under concurrent calls for the same account, unlike a
-    /// read-then-write update, since the increment is computed by the database from its own current
-    /// row value rather than from a value read earlier by the caller.
+    /// Returns the account with the given email, locked with SELECT ... FOR UPDATE. Must be called
+    /// inside an active unit-of-work transaction; the row lock is held until commit/rollback, so
+    /// concurrent calls for the same email (e.g. parallel login attempts) queue up and each sees the
+    /// latest committed state instead of racing on a stale read.
     /// </summary>
-    Task RecordLoginFailureAsync(string email, int maxAttempts, string lockedMessage, CancellationToken ct = default);
+    Task<Account?> FindByEmailForUpdateAsync(string email, CancellationToken ct = default);
 }

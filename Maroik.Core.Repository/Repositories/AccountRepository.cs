@@ -70,12 +70,21 @@ public class AccountRepository(ApplicationDbContext context)
     }
 
     /// <inheritdoc />
-    public async Task RecordLoginFailureAsync(string email, int maxAttempts, string lockedMessage, CancellationToken ct = default)
-        => await Context.Accounts
-            .Where(a => a.Email == email)
-            .ExecuteUpdateAsync(s => s
-                .SetProperty(a => a.LoginAttempt, a => a.LoginAttempt + 1)
-                .SetProperty(a => a.Locked, a => a.Locked || a.LoginAttempt + 1 >= maxAttempts)
-                .SetProperty(a => a.Message, a => a.LoginAttempt + 1 >= maxAttempts ? lockedMessage : a.Message)
-                .SetProperty(a => a.Updated, DateTime.UtcNow), ct);
+    public async Task<Account?> FindByEmailForUpdateAsync(string email, CancellationToken ct = default)
+    {
+        // Raw SQL is required because EF Core LINQ cannot emit FOR UPDATE.
+        // ToListAsync on the raw root executes the SQL verbatim (no composition),
+        // keeping FOR UPDATE at the top level of the statement.
+        var entities = await Set.FromSqlInterpolated(
+            $"""
+             SELECT *
+             FROM "Account"
+             WHERE "Email" = {email}
+             LIMIT 1
+             FOR UPDATE
+             """).ToListAsync(ct);
+
+        var entity = entities.FirstOrDefault();
+        return entity == null ? null : ToDomain(entity);
+    }
 }

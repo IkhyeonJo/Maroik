@@ -32,6 +32,7 @@ public class AccountService : IAccountService
     private readonly IRsaService _rsa;
     private readonly IOptions<ServerSetting> _settings;
     private readonly ILogger<AccountService> _logger;
+    private readonly IUnitOfWork _unitOfWork;
 
     /// <summary>Initializes a new instance of <see cref="AccountService"/> with the supplied dependencies.</summary>
     public AccountService(
@@ -41,7 +42,8 @@ public class AccountService : IAccountService
         IEmailPublisher emailPublisher,
         IOptions<ServerSetting> settings,
         IRsaService rsa,
-        ILogger<AccountService> logger)
+        ILogger<AccountService> logger,
+        IUnitOfWork unitOfWork)
     {
         _accountRepository = accountRepository;
         _passwordService = passwordService;
@@ -50,6 +52,7 @@ public class AccountService : IAccountService
         _settings = settings;
         _rsa = rsa;
         _logger = logger;
+        _unitOfWork = unitOfWork;
     }
 
     /// <inheritdoc />
@@ -70,40 +73,67 @@ public class AccountService : IAccountService
     /// <inheritdoc />
     public async Task<LoginResult> LoginAsync(string email, string password, CancellationToken ct = default)
     {
-        Account? account = await FindByEmailAsync(email, ct);
-        if (account == null)
-            return LoginResult.Fail("Email or Password is wrong");
-
-        if (account.Deleted)
-            return LoginResult.Fail("Your Account is Deleted, Please create your new account by clicking Sign up Button");
-
-        if (account.Locked)
-            return LoginResult.Fail("Your Account is Locked, Please reset your password by clicking Forgot password Button");
-
-        if (!_passwordService.VerifyPassword(password, account.HashedPassword))
+        await _unitOfWork.BeginAsync(ct);
+        try
         {
-            // Atomic DB-level increment so concurrent failed attempts for the same account can't
-            // race and clobber each other's counter update (see IAccountRepository.RecordLoginFailureAsync).
-            await _accountRepository.RecordLoginFailureAsync(
-                account.Email.Value, _settings.Value.MaxLoginAttempt, EnumHelper.GetDescription(AccountMessage.AccountLocked), ct);
+            // Row lock (FOR UPDATE) held until commit/rollback below, so concurrent login attempts
+            // against the same account are fully serialized: each one sees the latest committed
+            // LoginAttempt/Locked state rather than a stale pre-lock read, and once the row is locked,
+            // an already-locked account is rejected here before ever calling VerifyPassword.
+            Account? account = await _accountRepository.FindByEmailForUpdateAsync(email, ct);
+            if (account == null)
+            {
+                await _unitOfWork.RollbackAsync(ct);
+                return LoginResult.Fail("Email or Password is wrong");
+            }
 
-            Account? afterFailure = await FindByEmailAsync(account.Email.Value, ct);
-            return afterFailure is { Locked: true }
-                ? LoginResult.Fail("Your Account is Locked, Please reset your password by clicking Forgot password Button")
-                : LoginResult.Fail("Email or Password is wrong");
+            if (account.Deleted)
+            {
+                await _unitOfWork.RollbackAsync(ct);
+                return LoginResult.Fail("Your Account is Deleted, Please create your new account by clicking Sign up Button");
+            }
+
+            if (account.Locked)
+            {
+                await _unitOfWork.RollbackAsync(ct);
+                return LoginResult.Fail("Your Account is Locked, Please reset your password by clicking Forgot password Button");
+            }
+
+            if (!_passwordService.VerifyPassword(password, account.HashedPassword))
+            {
+                account.RecordLoginFailure(_settings.Value.MaxLoginAttempt);
+                await _accountRepository.UpdateEntityAsync(account, ct);
+                await _unitOfWork.CommitAsync(ct);
+
+                return account.Locked
+                    ? LoginResult.Fail("Your Account is Locked, Please reset your password by clicking Forgot password Button")
+                    : LoginResult.Fail("Email or Password is wrong");
+            }
+
+            if (!account.EmailConfirmed)
+            {
+                await _unitOfWork.RollbackAsync(ct);
+                return LoginResult.Fail("Email verification was not completed. Please try sign up again.");
+            }
+
+            if (!account.AgreedServiceTerms)
+            {
+                await _unitOfWork.RollbackAsync(ct);
+                return LoginResult.Fail("Agreed Service Terms was not checked. Please try sign up again and login again.");
+            }
+
+            // Successful login: clear any prior failed attempt counter.
+            account.ResetLoginAttempt();
+            await _accountRepository.UpdateEntityAsync(account, ct);
+            await _unitOfWork.CommitAsync(ct);
+
+            return LoginResult.Ok(AccountMapper.ToResponse(account));
         }
-
-        if (!account.EmailConfirmed)
-            return LoginResult.Fail("Email verification was not completed. Please try sign up again.");
-
-        if (!account.AgreedServiceTerms)
-            return LoginResult.Fail("Agreed Service Terms was not checked. Please try sign up again and login again.");
-
-        // Successful login: clear any prior failed attempt counter.
-        account.ResetLoginAttempt();
-        await _accountRepository.UpdateEntityAsync(account, ct);
-
-        return LoginResult.Ok(AccountMapper.ToResponse(account));
+        catch
+        {
+            await _unitOfWork.RollbackAsync(ct);
+            throw;
+        }
     }
 
     /// <inheritdoc />
