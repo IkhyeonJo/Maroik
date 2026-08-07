@@ -29,4 +29,14 @@ public interface IAccountRepository
     /// <param name="account"></param>
     /// <returns></returns>
     public Task UpdateAccountAsync(Account account);
+    /// <summary>
+    /// Atomically increments the failed-login counter for an account and locks it once
+    /// maxLoginAttempt is reached. Runs as a single UPDATE so concurrent login attempts
+    /// against the same account cannot race and lose increments.
+    /// </summary>
+    /// <param name="email"></param>
+    /// <param name="maxLoginAttempt"></param>
+    /// <param name="lockedMessage"></param>
+    /// <returns>The account row after the update, or null if no account matches the email.</returns>
+    public Task<Account> IncrementLoginAttemptAsync(string email, long maxLoginAttempt, string lockedMessage);
 }

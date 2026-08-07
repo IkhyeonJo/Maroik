@@ -110,22 +110,17 @@ public class AccountController : Controller
 
             if (!_passwordService.VerifyPassword(loginInputViewModel.Password ?? "", tempAccount.HashedPassword)) // Wrong password
             {
-                tempAccount.LoginAttempt++;
+                // Atomic UPDATE (not a read-modify-write on tempAccount) so concurrent login
+                // attempts against the same account can't race past MaxLoginAttempt.
+                Account accountAfterFailedAttempt = await _accountRepository.IncrementLoginAttemptAsync(
+                    tempAccount.Email,
+                    ServerSetting.MaxLoginAttempt,
+                    EnumHelper.GetDescription(AccountMessage.AccountLocked));
 
-                if (tempAccount.LoginAttempt >= ServerSetting.MaxLoginAttempt)
-                {
-                    tempAccount.Locked = true;
-                    tempAccount.Message = EnumHelper.GetDescription(AccountMessage.AccountLocked);
-                    await _accountRepository.UpdateAccountAsync(tempAccount);
-                    TempData["Error"] = _localizer["Your Account is Locked, Please reset your password by clicking Forgot password Button"].Value;
-                    return View();
-                }
-                else
-                {
-                    await _accountRepository.UpdateAccountAsync(tempAccount);
-                    TempData["Error"] = _localizer["Email or Password is wrong"].Value;
-                    return View();
-                }
+                TempData["Error"] = accountAfterFailedAttempt is { Locked: true }
+                    ? _localizer["Your Account is Locked, Please reset your password by clicking Forgot password Button"].Value
+                    : _localizer["Email or Password is wrong"].Value;
+                return View();
             }
 
             if (tempAccount.EmailConfirmed == true && tempAccount.AgreedServiceTerms == true)

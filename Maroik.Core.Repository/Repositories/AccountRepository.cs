@@ -52,4 +52,32 @@ public class AccountRepository : IAccountRepository
         _ = _context.Accounts.Update(account);
         _ = await _context.SaveChangesAsync();
     }
+    /// <summary>
+    /// Atomically increments the failed-login counter and locks the account once
+    /// maxLoginAttempt is reached. A single UPDATE statement makes the read-increment-write
+    /// atomic at the database level, so concurrent login attempts against the same account
+    /// cannot race and lose increments the way a GetAccountByEmailAsync + UpdateAccountAsync
+    /// pair would.
+    /// </summary>
+    /// <param name="email"></param>
+    /// <param name="maxLoginAttempt"></param>
+    /// <param name="lockedMessage"></param>
+    /// <returns></returns>
+    public async Task<Account> IncrementLoginAttemptAsync(string email, long maxLoginAttempt, string lockedMessage)
+    {
+        return await _context.Accounts.FromSqlInterpolated(
+            $"""
+             WITH updated AS (
+                 UPDATE "Account"
+                 SET
+                     "LoginAttempt" = "LoginAttempt" + 1,
+                     "Locked" = CASE WHEN "LoginAttempt" + 1 >= {maxLoginAttempt} THEN true ELSE "Locked" END,
+                     "Message" = CASE WHEN "LoginAttempt" + 1 >= {maxLoginAttempt} THEN {lockedMessage} ELSE "Message" END
+                 WHERE "Email" = {email}
+                 RETURNING *
+             )
+             SELECT * FROM updated
+             """
+        ).FirstOrDefaultAsync();
+    }
 }
