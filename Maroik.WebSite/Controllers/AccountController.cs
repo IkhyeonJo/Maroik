@@ -1,4 +1,5 @@
 ﻿using Maroik.Core.Repository.Contracts;
+using Maroik.Core.PostgreSQL.Data;
 using Maroik.Core.PostgreSQL.Models;
 using Maroik.Core.Common.Utilities;
 using Maroik.Core.Service.Contracts;
@@ -23,8 +24,9 @@ public class AccountController : Controller
     private readonly ISubCategoryRepository _subCategoryRepository;
     private readonly IMailClient _mailClient;
     private readonly IPasswordService _passwordService;
+    private readonly ApplicationDbContext _context;
 
-    public AccountController(IHtmlLocalizer<AccountController> localizer, ILogger<AccountController> logger, IAccountRepository accountRepository, ICategoryRepository categoryRepository, ISubCategoryRepository subCategoryRepository, IMailClient mailClient, IPasswordService passwordService)
+    public AccountController(IHtmlLocalizer<AccountController> localizer, ILogger<AccountController> logger, IAccountRepository accountRepository, ICategoryRepository categoryRepository, ISubCategoryRepository subCategoryRepository, IMailClient mailClient, IPasswordService passwordService, ApplicationDbContext context)
     {
         _rsa = new RSA(ServerSetting.RSAAlgorithm, Encoding.UTF8, ServerSetting.RSAPrivateKey, ServerSetting.RSAPublicKey);
         _localizer = localizer;
@@ -34,6 +36,7 @@ public class AccountController : Controller
         _subCategoryRepository = subCategoryRepository;
         _mailClient = mailClient;
         _passwordService = passwordService;
+        _context = context;
     }
 
     #region ConsentForm
@@ -88,7 +91,14 @@ public class AccountController : Controller
 
         if (ModelState.IsValid)
         {
-            Account tempAccount = await _accountRepository.GetAccountByEmailAsync(loginInputViewModel.Email);
+            // Locks the account row (FOR UPDATE) until commit/rollback, so concurrent login
+            // attempts against the same account queue up instead of racing: each one sees the
+            // latest committed LoginAttempt/Locked state rather than a stale pre-lock read,
+            // and once the row is locked, an already-locked account is rejected here before
+            // ever calling VerifyPassword.
+            await using var transaction = await _context.Database.BeginTransactionAsync();
+
+            Account tempAccount = await _accountRepository.GetAccountForUpdateAsync(loginInputViewModel.Email);
 
             if (tempAccount == null) // no account exist
             {
@@ -110,23 +120,31 @@ public class AccountController : Controller
 
             if (!_passwordService.VerifyPassword(loginInputViewModel.Password ?? "", tempAccount.HashedPassword)) // Wrong password
             {
-                // Atomic UPDATE (not a read-modify-write on tempAccount) so concurrent login
-                // attempts against the same account can't race past MaxLoginAttempt.
-                Account accountAfterFailedAttempt = await _accountRepository.IncrementLoginAttemptAsync(
-                    tempAccount.Email,
-                    ServerSetting.MaxLoginAttempt,
-                    EnumHelper.GetDescription(AccountMessage.AccountLocked));
+                tempAccount.LoginAttempt++;
 
-                TempData["Error"] = accountAfterFailedAttempt is { Locked: true }
-                    ? _localizer["Your Account is Locked, Please reset your password by clicking Forgot password Button"].Value
-                    : _localizer["Email or Password is wrong"].Value;
-                return View();
+                if (tempAccount.LoginAttempt >= ServerSetting.MaxLoginAttempt)
+                {
+                    tempAccount.Locked = true;
+                    tempAccount.Message = EnumHelper.GetDescription(AccountMessage.AccountLocked);
+                    await _accountRepository.UpdateAccountAsync(tempAccount);
+                    await transaction.CommitAsync();
+                    TempData["Error"] = _localizer["Your Account is Locked, Please reset your password by clicking Forgot password Button"].Value;
+                    return View();
+                }
+                else
+                {
+                    await _accountRepository.UpdateAccountAsync(tempAccount);
+                    await transaction.CommitAsync();
+                    TempData["Error"] = _localizer["Email or Password is wrong"].Value;
+                    return View();
+                }
             }
 
             if (tempAccount.EmailConfirmed == true && tempAccount.AgreedServiceTerms == true)
             {
                 tempAccount.LoginAttempt = 0;
                 await _accountRepository.UpdateAccountAsync(tempAccount);
+                await transaction.CommitAsync();
                 tempAccount.HashedPassword = null;
 
                 // Session fixation mitigation: mint a fresh, unpredictable session id before attaching the

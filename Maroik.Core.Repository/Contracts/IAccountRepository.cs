@@ -30,13 +30,10 @@ public interface IAccountRepository
     /// <returns></returns>
     public Task UpdateAccountAsync(Account account);
     /// <summary>
-    /// Atomically increments the failed-login counter for an account and locks it once
-    /// maxLoginAttempt is reached. Runs as a single UPDATE so concurrent login attempts
-    /// against the same account cannot race and lose increments.
+    /// Gets an account by email with a database row lock (SELECT ... FOR UPDATE).
+    /// Must be called inside an active transaction; the lock is held until commit/rollback.
     /// </summary>
     /// <param name="email"></param>
-    /// <param name="maxLoginAttempt"></param>
-    /// <param name="lockedMessage"></param>
-    /// <returns>The account row after the update, or null if no account matches the email.</returns>
-    public Task<Account> IncrementLoginAttemptAsync(string email, long maxLoginAttempt, string lockedMessage);
+    /// <returns></returns>
+    public Task<Account> GetAccountForUpdateAsync(string email);
 }

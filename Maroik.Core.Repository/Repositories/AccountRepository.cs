@@ -53,31 +53,21 @@ public class AccountRepository : IAccountRepository
         _ = await _context.SaveChangesAsync();
     }
     /// <summary>
-    /// Atomically increments the failed-login counter and locks the account once
-    /// maxLoginAttempt is reached. A single UPDATE statement makes the read-increment-write
-    /// atomic at the database level, so concurrent login attempts against the same account
-    /// cannot race and lose increments the way a GetAccountByEmailAsync + UpdateAccountAsync
-    /// pair would.
+    /// Gets an account by email with a database row lock (SELECT ... FOR UPDATE).
+    /// Must be called inside an active transaction; the lock is held until commit/rollback,
+    /// so concurrent requests against the same account (e.g. parallel login attempts) queue
+    /// up and each sees the latest committed state instead of racing on a stale read.
     /// </summary>
     /// <param name="email"></param>
-    /// <param name="maxLoginAttempt"></param>
-    /// <param name="lockedMessage"></param>
     /// <returns></returns>
-    public async Task<Account> IncrementLoginAttemptAsync(string email, long maxLoginAttempt, string lockedMessage)
+    public async Task<Account> GetAccountForUpdateAsync(string email)
     {
         return await _context.Accounts.FromSqlInterpolated(
             $"""
-             WITH updated AS (
-                 UPDATE "Account"
-                 SET
-                     "LoginAttempt" = "LoginAttempt" + 1,
-                     "Locked" = CASE WHEN "LoginAttempt" + 1 >= {maxLoginAttempt} THEN true ELSE "Locked" END,
-                     "Message" = CASE WHEN "LoginAttempt" + 1 >= {maxLoginAttempt} THEN {lockedMessage} ELSE "Message" END
-                 WHERE "Email" = {email}
-                 RETURNING *
-             )
-             SELECT * FROM updated
-             """
-        ).FirstOrDefaultAsync();
+             SELECT *
+             FROM "Account"
+             WHERE "Email" = {email}
+             FOR UPDATE
+             """).FirstOrDefaultAsync();
     }
 }
