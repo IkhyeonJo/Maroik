@@ -1,4 +1,4 @@
-using Maroik.Core.Contract.Domains.Board;
+using Maroik.Core.Domain.Board;
 using Maroik.Core.Contract.Enums;
 using Maroik.Core.PostgreSQL.Data;
 using Maroik.Core.Repository.Repositories;

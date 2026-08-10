@@ -1,5 +1,5 @@
 using System.Text.RegularExpressions;
-using Maroik.Core.Contract.Domains.Finance;
+using Maroik.Core.Domain.Finance;
 using Maroik.Core.Contract.Dtos;
 using Maroik.Core.Contract.Interfaces;
 using Maroik.Core.Service.Mappers;

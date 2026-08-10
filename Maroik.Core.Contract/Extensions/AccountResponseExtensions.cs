@@ -7,7 +7,7 @@ namespace Maroik.Core.Contract.Extensions;
 /// Extension methods encoding the "owner" and "owner-or-admin" authorization rules
 /// used to gate edit/delete UI affordances for board posts, comments, and private notes.
 /// These mirror <c>Board.IsOwnedBy</c>/<c>CanBeDeletedBy</c> and <c>BoardComment.IsOwnedBy</c>/
-/// <c>CanBeDeletedBy</c> (<see cref="Maroik.Core.Contract.Domains.Board"/>) rather than reusing
+/// <c>CanBeDeletedBy</c> (<see cref="Maroik.Core.Domain.Board"/>) rather than reusing
 /// them directly, because by the time a view is rendering, the data has already crossed the
 /// service boundary into <see cref="Dtos.BoardResponse"/>/<see cref="Dtos.BoardCommentResponse"/> —
 /// the domain entities are gone. Real authorization is enforced server-side by

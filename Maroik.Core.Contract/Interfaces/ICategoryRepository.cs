@@ -1,4 +1,4 @@
-using Maroik.Core.Contract.Domains.Menu;
+using Maroik.Core.Domain.Menu;
 namespace Maroik.Core.Contract.Interfaces;
 
 /// <summary>

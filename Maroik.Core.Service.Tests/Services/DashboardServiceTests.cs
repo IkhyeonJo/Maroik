@@ -1,6 +1,6 @@
 using Maroik.Core.Contract.Constants;
-using Maroik.Core.Contract.Domains.Account;
-using Maroik.Core.Contract.Domains.Finance;
+using Maroik.Core.Domain.Account;
+using Maroik.Core.Domain.Finance;
 using Maroik.Core.Contract.Dtos;
 using Maroik.Core.Contract.Interfaces;
 using Maroik.Core.Service.Services;

@@ -1,4 +1,4 @@
-using Maroik.Core.Contract.Domains.Finance;
+using Maroik.Core.Domain.Finance;
 using Maroik.Core.Contract.Dtos;
 
 namespace Maroik.Core.Service.Mappers;

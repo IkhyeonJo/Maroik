@@ -1,6 +1,6 @@
 using Maroik.Core.Contract.Dtos;
 using Maroik.Core.Service.Mappers;
-using CalendarEntity = Maroik.Core.Contract.Domains.Calendar.Calendar;
+using CalendarEntity = Maroik.Core.Domain.Calendar.Calendar;
 
 namespace Maroik.Core.Service.Tests.Mappers;
 

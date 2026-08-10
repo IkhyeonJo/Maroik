@@ -1,4 +1,4 @@
-using Maroik.Core.Contract.Domains.Account;
+using Maroik.Core.Domain.Account;
 namespace Maroik.Core.Contract.Interfaces;
 
 /// <summary>

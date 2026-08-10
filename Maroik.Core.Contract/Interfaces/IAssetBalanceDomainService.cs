@@ -1,4 +1,4 @@
-using Maroik.Core.Contract.Domains.Finance;
+using Maroik.Core.Domain.Finance;
 
 namespace Maroik.Core.Contract.Interfaces;
 

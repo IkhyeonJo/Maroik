@@ -1,4 +1,4 @@
-using Maroik.Core.Contract.Domains.Menu;
+using Maroik.Core.Domain.Menu;
 using Maroik.Core.Contract.Interfaces;
 using Maroik.Core.PostgreSQL.Data;
 using Microsoft.EntityFrameworkCore;

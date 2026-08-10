@@ -1,4 +1,4 @@
-using Maroik.Core.Contract.Domains.Finance;
+using Maroik.Core.Domain.Finance;
 using Maroik.Core.PostgreSQL.Data;
 using Maroik.Core.Repository.Repositories;
 using Microsoft.EntityFrameworkCore;

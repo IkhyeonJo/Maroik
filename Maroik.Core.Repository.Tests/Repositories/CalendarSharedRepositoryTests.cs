@@ -1,4 +1,4 @@
-using Maroik.Core.Contract.Domains.Calendar;
+using Maroik.Core.Domain.Calendar;
 using Maroik.Core.PostgreSQL.Data;
 using Maroik.Core.Repository.Repositories;
 using Microsoft.EntityFrameworkCore;

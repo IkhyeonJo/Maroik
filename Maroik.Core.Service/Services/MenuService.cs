@@ -1,4 +1,4 @@
-using Maroik.Core.Contract.Domains.Menu;
+using Maroik.Core.Domain.Menu;
 using Maroik.Core.Contract.Dtos;
 using Maroik.Core.Contract.Interfaces;
 using Maroik.Core.Service.Mappers;

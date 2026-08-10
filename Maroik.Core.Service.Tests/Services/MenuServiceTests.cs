@@ -1,5 +1,5 @@
 using Maroik.Core.Contract.Constants;
-using Maroik.Core.Contract.Domains.Menu;
+using Maroik.Core.Domain.Menu;
 using Maroik.Core.Contract.Dtos;
 using Maroik.Core.Contract.Enums;
 using Maroik.Core.Contract.Interfaces;

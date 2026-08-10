@@ -1,5 +1,5 @@
 using Maroik.Core.Contract.Constants;
-using Maroik.Core.Contract.Domains.ValueObjects;
+using Maroik.Core.Domain.ValueObjects;
 using Maroik.Core.Contract.Dtos;
 using Maroik.Core.Contract.Enums;
 using Maroik.Core.Contract.Extensions;

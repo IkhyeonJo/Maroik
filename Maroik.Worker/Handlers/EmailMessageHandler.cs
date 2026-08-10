@@ -1,4 +1,4 @@
-using Maroik.Core.Contract.Domains.Account;
+using Maroik.Core.Domain.Account;
 using Maroik.Core.Contract.Enums;
 using Maroik.Core.Contract.Helpers;
 using Maroik.Core.Contract.Interfaces;
