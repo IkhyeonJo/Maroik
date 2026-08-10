@@ -1,6 +1,6 @@
 using System.Globalization;
 
-namespace Maroik.Core.Contract.Extensions;
+namespace Maroik.Core.Contract.Misc.Extensions;
 
 /// <summary>
 /// Extension methods for <see cref="decimal"/> to produce clean display strings

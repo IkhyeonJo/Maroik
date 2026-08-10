@@ -1,7 +1,7 @@
 using System.Text.RegularExpressions;
-using Maroik.Core.Contract.Constants;
+using Maroik.Core.Contract.Misc.Constants;
 using Maroik.Core.Contract.Interfaces;
-using Maroik.Core.Contract.Tokens;
+using Maroik.Core.Contract.Misc.Tokens;
 using Maroik.Core.PostgreSQL.Data;
 using Maroik.Core.PostgreSQL.Models;
 using Maroik.Website.Tests.Infrastructure;

@@ -1,4 +1,4 @@
-using Maroik.Core.Contract.Extensions;
+using Maroik.Core.Contract.Misc.Extensions;
 
 namespace Maroik.Core.Contract.Tests.Extensions;
 

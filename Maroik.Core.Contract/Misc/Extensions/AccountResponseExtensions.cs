@@ -1,7 +1,7 @@
-using Maroik.Core.Contract.Constants;
+using Maroik.Core.Contract.Misc.Constants;
 using Maroik.Core.Contract.Dtos;
 
-namespace Maroik.Core.Contract.Extensions;
+namespace Maroik.Core.Contract.Misc.Extensions;
 
 /// <summary>
 /// Extension methods encoding the "owner" and "owner-or-admin" authorization rules

@@ -1,6 +1,6 @@
 using System.Security.Cryptography;
-using Maroik.Core.Contract.Enums;
-using Maroik.Core.Contract.Settings;
+using Maroik.Core.Contract.Misc.Enums;
+using Maroik.Core.Contract.Misc.Settings;
 using Maroik.Core.Service.Services;
 using Microsoft.Extensions.Options;
 

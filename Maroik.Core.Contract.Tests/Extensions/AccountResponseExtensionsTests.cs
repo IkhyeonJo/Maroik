@@ -1,6 +1,6 @@
-using Maroik.Core.Contract.Constants;
+using Maroik.Core.Contract.Misc.Constants;
 using Maroik.Core.Contract.Dtos;
-using Maroik.Core.Contract.Extensions;
+using Maroik.Core.Contract.Misc.Extensions;
 
 namespace Maroik.Core.Contract.Tests.Extensions;
 

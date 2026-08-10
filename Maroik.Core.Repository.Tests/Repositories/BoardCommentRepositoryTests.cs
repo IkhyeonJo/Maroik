@@ -1,5 +1,5 @@
 using Maroik.Core.Domain.Board;
-using Maroik.Core.Contract.Enums;
+using Maroik.Core.Contract.Misc.Enums;
 using Maroik.Core.PostgreSQL.Data;
 using Maroik.Core.Repository.Repositories;
 using Microsoft.EntityFrameworkCore;

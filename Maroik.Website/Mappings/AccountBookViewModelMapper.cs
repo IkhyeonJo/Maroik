@@ -1,5 +1,5 @@
 using Maroik.Core.Contract.Dtos;
-using Maroik.Core.Contract.Extensions;
+using Maroik.Core.Contract.Misc.Extensions;
 using Maroik.Website.Models.ViewModels.AccountBook;
 
 namespace Maroik.Website.Mappings;

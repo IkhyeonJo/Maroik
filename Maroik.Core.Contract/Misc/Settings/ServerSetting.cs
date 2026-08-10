@@ -1,8 +1,8 @@
 // ReSharper disable PropertyCanBeMadeInitOnly.Global
 // ReSharper disable UnusedAutoPropertyAccessor.Global
-using Maroik.Core.Contract.Enums;
+using Maroik.Core.Contract.Misc.Enums;
 
-namespace Maroik.Core.Contract.Settings;
+namespace Maroik.Core.Contract.Misc.Settings;
 
 /// <summary>
 /// Strongly-typed configuration class bound to the "ServerSetting" section of appsettings.json.

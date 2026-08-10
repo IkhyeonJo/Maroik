@@ -1,4 +1,4 @@
-namespace Maroik.Core.Contract.Messaging;
+namespace Maroik.Core.Contract.Misc.Messaging;
 
 /// <summary>
 /// Queue message carrying a fully-built email ready to be sent by a consumer.

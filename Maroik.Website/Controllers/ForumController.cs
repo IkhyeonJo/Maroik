@@ -1,10 +1,10 @@
-using Maroik.Core.Contract.Constants;
+using Maroik.Core.Contract.Misc.Constants;
 using Maroik.Core.Contract.Dtos;
-using Maroik.Core.Contract.Enums;
-using Maroik.Core.Contract.Extensions;
-using Maroik.Core.Contract.Helpers;
+using Maroik.Core.Contract.Misc.Enums;
+using Maroik.Core.Contract.Misc.Extensions;
+using Maroik.Core.Contract.Misc.Helpers;
 using Maroik.Core.Contract.Interfaces;
-using Maroik.Core.Contract.Settings;
+using Maroik.Core.Contract.Misc.Settings;
 using Maroik.Website.Attributes;
 using Maroik.Website.Contracts;
 using Maroik.Website.Extensions;

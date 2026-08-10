@@ -1,5 +1,5 @@
 using Maroik.Core.Client.Clients;
-using Maroik.Core.Contract.Messaging;
+using Maroik.Core.Contract.Misc.Messaging;
 using Moq;
 using RabbitMQ.Client;
 

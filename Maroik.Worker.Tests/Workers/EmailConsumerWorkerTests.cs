@@ -1,6 +1,6 @@
 using System.Text;
 using System.Text.Json;
-using Maroik.Core.Contract.Messaging;
+using Maroik.Core.Contract.Misc.Messaging;
 using Maroik.Worker.Contracts;
 using Maroik.Worker.Workers;
 using Microsoft.Extensions.DependencyInjection;

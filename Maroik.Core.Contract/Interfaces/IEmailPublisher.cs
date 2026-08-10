@@ -1,4 +1,4 @@
-using Maroik.Core.Contract.Messaging;
+using Maroik.Core.Contract.Misc.Messaging;
 
 namespace Maroik.Core.Contract.Interfaces;
 

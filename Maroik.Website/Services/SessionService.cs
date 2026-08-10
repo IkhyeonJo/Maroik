@@ -1,8 +1,8 @@
 using System.Text;
 using System.Text.Json;
 using Maroik.Core.Contract.Dtos;
-using Maroik.Core.Contract.Enums;
-using Maroik.Core.Contract.Helpers;
+using Maroik.Core.Contract.Misc.Enums;
+using Maroik.Core.Contract.Misc.Helpers;
 using Maroik.Website.Contracts;
 
 namespace Maroik.Website.Services;

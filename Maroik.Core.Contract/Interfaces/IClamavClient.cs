@@ -2,7 +2,7 @@ namespace Maroik.Core.Contract.Interfaces;
 
 /// <summary>
 /// Client interface for scanning file streams with a ClamAV antivirus daemon.
-/// The daemon address is configured in <see cref="Maroik.Core.Contract.Settings.ServerSetting"/>.
+/// The daemon address is configured in <see cref="Maroik.Core.Contract.Misc.Settings.ServerSetting"/>.
 /// </summary>
 public interface IClamavClient
 {

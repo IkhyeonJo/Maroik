@@ -1,7 +1,7 @@
 using System.Security.Cryptography;
-using Maroik.Core.Contract.Constants;
+using Maroik.Core.Contract.Misc.Constants;
 using Maroik.Core.Contract.Interfaces;
-using Maroik.Core.Contract.Settings;
+using Maroik.Core.Contract.Misc.Settings;
 using Maroik.Core.PostgreSQL.Data;
 using Maroik.Core.PostgreSQL.Models;
 using Microsoft.AspNetCore.Antiforgery;

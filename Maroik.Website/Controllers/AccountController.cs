@@ -1,9 +1,9 @@
-using Maroik.Core.Contract.Constants;
+using Maroik.Core.Contract.Misc.Constants;
 using Maroik.Core.Contract.Dtos;
-using Maroik.Core.Contract.Enums;
-using Maroik.Core.Contract.Helpers;
+using Maroik.Core.Contract.Misc.Enums;
+using Maroik.Core.Contract.Misc.Helpers;
 using Maroik.Core.Contract.Interfaces;
-using Maroik.Core.Contract.Tokens;
+using Maroik.Core.Contract.Misc.Tokens;
 using Maroik.Website.Contracts;
 using Maroik.Website.Extensions;
 using Maroik.Website.Models.ViewModels.Account;

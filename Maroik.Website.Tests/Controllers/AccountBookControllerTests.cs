@@ -1,4 +1,4 @@
-using Maroik.Core.Contract.Constants;
+using Maroik.Core.Contract.Misc.Constants;
 using Maroik.Website.Tests.Infrastructure;
 
 namespace Maroik.Website.Tests.Controllers;

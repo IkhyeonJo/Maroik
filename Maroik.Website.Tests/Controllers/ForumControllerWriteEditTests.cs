@@ -1,4 +1,4 @@
-using Maroik.Core.Contract.Constants;
+using Maroik.Core.Contract.Misc.Constants;
 using Maroik.Core.PostgreSQL.Data;
 using Maroik.Website.Tests.Infrastructure;
 using Microsoft.Extensions.DependencyInjection;

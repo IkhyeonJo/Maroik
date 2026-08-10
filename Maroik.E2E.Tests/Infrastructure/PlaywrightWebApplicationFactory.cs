@@ -1,6 +1,6 @@
-using Maroik.Core.Contract.Constants;
-using Maroik.Core.Contract.Enums;
-using Maroik.Core.Contract.Settings;
+using Maroik.Core.Contract.Misc.Constants;
+using Maroik.Core.Contract.Misc.Enums;
+using Maroik.Core.Contract.Misc.Settings;
 using Maroik.Core.PostgreSQL.Data;
 using Maroik.Core.PostgreSQL.Models;
 using Microsoft.AspNetCore.DataProtection;

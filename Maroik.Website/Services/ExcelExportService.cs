@@ -3,7 +3,7 @@ using DocumentFormat.OpenXml;
 using DocumentFormat.OpenXml.Packaging;
 using DocumentFormat.OpenXml.Spreadsheet;
 using Maroik.Core.Contract.Dtos;
-using Maroik.Core.Contract.Extensions;
+using Maroik.Core.Contract.Misc.Extensions;
 using Maroik.Website.Contracts;
 using Maroik.Website.Mappings;
 using Maroik.Website.Models.ViewModels.AccountBook;

@@ -1,10 +1,10 @@
 using System.ComponentModel;
 
-namespace Maroik.Core.Contract.Enums;
+namespace Maroik.Core.Contract.Misc.Enums;
 
 /// <summary>
 /// Result/status messages for account operations.
-/// Use <see cref="Maroik.Core.Contract.Helpers.EnumHelper.GetDescription"/> to retrieve the human-readable string.
+/// Use <see cref="Maroik.Core.Contract.Misc.Helpers.EnumHelper.GetDescription"/> to retrieve the human-readable string.
 /// </summary>
 public enum AccountMessage
 {

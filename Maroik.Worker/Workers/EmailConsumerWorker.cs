@@ -1,5 +1,5 @@
 using System.Text.Json;
-using Maroik.Core.Contract.Messaging;
+using Maroik.Core.Contract.Misc.Messaging;
 using Maroik.Worker.Contracts;
 using RabbitMQ.Client;
 using RabbitMQ.Client.Events;

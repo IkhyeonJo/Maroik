@@ -1,6 +1,6 @@
 using System.Collections.Concurrent;
 using Maroik.Core.Contract.Interfaces;
-using Maroik.Core.Contract.Messaging;
+using Maroik.Core.Contract.Misc.Messaging;
 
 namespace Maroik.Website.Tests.Infrastructure;
 

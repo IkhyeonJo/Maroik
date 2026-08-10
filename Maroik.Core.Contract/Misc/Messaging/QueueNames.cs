@@ -1,4 +1,4 @@
-namespace Maroik.Core.Contract.Messaging;
+namespace Maroik.Core.Contract.Misc.Messaging;
 
 /// <summary>Well-known RabbitMQ queue names shared between publishers and Maroik.Worker consumers.</summary>
 public static class QueueNames

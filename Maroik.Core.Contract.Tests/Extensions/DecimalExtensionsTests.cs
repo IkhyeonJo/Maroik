@@ -1,9 +1,9 @@
-using Maroik.Core.Contract.Extensions;
+using Maroik.Core.Contract.Misc.Extensions;
 
 namespace Maroik.Core.Contract.Tests.Extensions;
 
 /// <summary>
-/// Unit tests for <see cref="Maroik.Core.Contract.Extensions.DecimalExtensions"/>.
+/// Unit tests for <see cref="Maroik.Core.Contract.Misc.Extensions.DecimalExtensions"/>.
 /// Verifies trailing-zero trimming for <see cref="decimal"/> values
 /// (e.g. <c>1000.00 → "1000"</c>) used when formatting currency amounts.
 /// </summary>

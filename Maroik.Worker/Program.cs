@@ -4,7 +4,7 @@
 
 using Maroik.Core.Client.Clients;
 using Maroik.Core.Contract.Interfaces;
-using Maroik.Core.Contract.Settings;
+using Maroik.Core.Contract.Misc.Settings;
 using Maroik.Core.Repository.Extensions;
 using Maroik.Worker.Contracts;
 using Maroik.Worker.Handlers;

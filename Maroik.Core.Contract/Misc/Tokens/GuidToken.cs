@@ -1,4 +1,4 @@
-namespace Maroik.Core.Contract.Tokens;
+namespace Maroik.Core.Contract.Misc.Tokens;
 
 /// <summary>
 /// Utility class for generating and validating time-stamped tokens used in

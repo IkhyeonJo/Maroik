@@ -2,7 +2,7 @@ using System.Globalization;
 using DocumentFormat.OpenXml.Packaging;
 using DocumentFormat.OpenXml.Spreadsheet;
 using Maroik.Core.Contract.Dtos;
-using Maroik.Core.Contract.Extensions;
+using Maroik.Core.Contract.Misc.Extensions;
 using Maroik.Website.Services;
 
 namespace Maroik.Website.Tests.Services;
