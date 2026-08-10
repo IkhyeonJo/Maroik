@@ -46,7 +46,7 @@ public class CalendarEventInputViewModel
     public IFormFile? CalendarEventUploadedFile { get; set; }
 
     /// <summary>
-    /// Event status string (e.g. "Confirmed", "Tentative", "Cancelled") shown on the event card.
+    /// Event status string (e.g. "Confirmed", "Tentative", "Canceled") shown on the event card.
     /// </summary>
     public string? Status { get; set; }
 
