@@ -21,7 +21,6 @@
     <ProjectReference Include="..\Maroik.Core.Contract\Maroik.Core.Contract.csproj" />
     <ProjectReference Include="..\Maroik.Core.Client\Maroik.Core.Client.csproj" />
     <ProjectReference Include="..\Maroik.Core.Repository\Maroik.Core.Repository.csproj" />
-    <ProjectReference Include="..\Maroik.Core.PostgreSQL\Maroik.Core.PostgreSQL.csproj" />
   </ItemGroup>
 
 </Project>
