@@ -56,4 +56,49 @@ public class DomainArchitectureTests
             "Maroik.Core.Domain must only depend on the BCL and ErrorOr. " +
             "Unexpected assembly references: " + string.Join(", ", unexpected));
     }
+
+    /// <summary>
+    /// Bounded contexts recognized within Maroik.Core.Domain. Each one models a distinct
+    /// area of the business (Account, Board, Calendar, Finance, Menu) and must stay
+    /// independent of the others — cross-context collaboration, if ever needed, should go
+    /// through an explicit integration pattern (e.g. a loosely-coupled reference such as
+    /// Board.Writer being a plain string instead of an Account reference) rather than a
+    /// direct type dependency.
+    /// </summary>
+    private static readonly string[] BoundedContextNamespaces =
+    [
+        "Maroik.Core.Domain.Account",
+        "Maroik.Core.Domain.Board",
+        "Maroik.Core.Domain.Calendar",
+        "Maroik.Core.Domain.Finance",
+        "Maroik.Core.Domain.Menu"
+    ];
+
+    [Theory]
+    [InlineData("Maroik.Core.Domain.Account")]
+    [InlineData("Maroik.Core.Domain.Board")]
+    [InlineData("Maroik.Core.Domain.Calendar")]
+    [InlineData("Maroik.Core.Domain.Finance")]
+    [InlineData("Maroik.Core.Domain.Menu")]
+    public void BoundedContext_ShouldNot_DependOnAnotherBoundedContext(string boundedContextNamespace)
+    {
+        string[] otherContexts = BoundedContextNamespaces
+            .Where(ns => ns != boundedContextNamespace)
+            .ToArray();
+
+        NetArchTest.Rules.TestResult result = Types.InAssembly(DomainAssembly)
+            .That()
+            .ResideInNamespace(boundedContextNamespace)
+            .ShouldNot()
+            .HaveDependencyOnAny(otherContexts)
+            .GetResult();
+
+        Assert.True(
+            result.IsSuccessful,
+            $"Types in {boundedContextNamespace} must not depend on another bounded context " +
+            $"({string.Join(", ", otherContexts)}). Bounded contexts must stay independent; " +
+            "use a loosely-coupled reference (e.g. a plain identifier/string) instead of a " +
+            "direct type dependency if cross-context data is needed.\n" +
+            "Failing types: " + string.Join(", ", result.FailingTypeNames ?? []));
+    }
 }
