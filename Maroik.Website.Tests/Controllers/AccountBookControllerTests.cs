@@ -16,6 +16,7 @@ public class AccountBookControllerTests
     private readonly MaroikWebApplicationFactory _factory;
     private readonly HttpClient _client;
 
+    /// <summary>Initializes a new instance of AccountBookControllerTests, sharing the MaroikWebApplicationFactory fixture across the tests in this class.</summary>
     public AccountBookControllerTests(MaroikWebApplicationFactory factory)
     {
         _factory = factory;
@@ -33,6 +34,7 @@ public class AccountBookControllerTests
 
     // -- Asset ----------------------------------------------------------------
 
+    /// <summary>Asset get logged in user returns200.</summary>
     [Fact]
     public async Task Asset_Get_LoggedInUser_Returns200()
     {
@@ -41,6 +43,7 @@ public class AccountBookControllerTests
         Assert.Equal(System.Net.HttpStatusCode.OK, response.StatusCode);
     }
 
+    /// <summary>Asset get anonymous redirects to login.</summary>
     [Fact]
     public async Task Asset_Get_Anonymous_RedirectsToLogin()
     {
@@ -51,6 +54,7 @@ public class AccountBookControllerTests
 
     // -- Income ---------------------------------------------------------------
 
+    /// <summary>Income get logged in user returns200.</summary>
     [Fact]
     public async Task Income_Get_LoggedInUser_Returns200()
     {
@@ -61,6 +65,7 @@ public class AccountBookControllerTests
 
     // -- Expenditure ------------------------------------------------------------
 
+    /// <summary>Expenditure get logged in user returns200.</summary>
     [Fact]
     public async Task Expenditure_Get_LoggedInUser_Returns200()
     {

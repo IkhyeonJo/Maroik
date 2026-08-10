@@ -13,6 +13,7 @@ public class AccountResponseExtensionsTests
 {
     // -- IsOwner ----------------------------------------------------------------
 
+    /// <summary>Is owner same nickname true.</summary>
     [Fact]
     public void IsOwner_SameNickname_True()
     {
@@ -20,6 +21,7 @@ public class AccountResponseExtensionsTests
         Assert.True(viewer.IsOwner("Alice"));
     }
 
+    /// <summary>Is owner different nickname false.</summary>
     [Fact]
     public void IsOwner_DifferentNickname_False()
     {
@@ -27,6 +29,7 @@ public class AccountResponseExtensionsTests
         Assert.False(viewer.IsOwner("Bob"));
     }
 
+    /// <summary>Is owner admin but not writer false.</summary>
     [Fact]
     public void IsOwner_AdminButNotWriter_False()
     {
@@ -35,6 +38,7 @@ public class AccountResponseExtensionsTests
         Assert.False(admin.IsOwner("Bob"));
     }
 
+    /// <summary>Is owner null viewer nickname false.</summary>
     [Fact]
     public void IsOwner_NullViewerNickname_False()
     {
@@ -44,6 +48,7 @@ public class AccountResponseExtensionsTests
 
     // -- IsOwnerOrAdmin -----------------------------------------------------------
 
+    /// <summary>Is owner or admin same nickname true.</summary>
     [Fact]
     public void IsOwnerOrAdmin_SameNickname_True()
     {
@@ -51,6 +56,7 @@ public class AccountResponseExtensionsTests
         Assert.True(viewer.IsOwnerOrAdmin("Alice"));
     }
 
+    /// <summary>Is owner or admin admin not writer true.</summary>
     [Fact]
     public void IsOwnerOrAdmin_AdminNotWriter_True()
     {
@@ -58,6 +64,7 @@ public class AccountResponseExtensionsTests
         Assert.True(admin.IsOwnerOrAdmin("Bob"));
     }
 
+    /// <summary>Is owner or admin regular user not writer false.</summary>
     [Fact]
     public void IsOwnerOrAdmin_RegularUserNotWriter_False()
     {
@@ -65,6 +72,7 @@ public class AccountResponseExtensionsTests
         Assert.False(viewer.IsOwnerOrAdmin("Bob"));
     }
 
+    /// <summary>Is owner or admin anonymous not writer false.</summary>
     [Fact]
     public void IsOwnerOrAdmin_AnonymousNotWriter_False()
     {
@@ -74,6 +82,7 @@ public class AccountResponseExtensionsTests
 
     // -- ToAdminNicknameSet -------------------------------------------------------
 
+    /// <summary>To admin nickname set returns only admin nicknames.</summary>
     [Fact]
     public void ToAdminNicknameSet_ReturnsOnlyAdminNicknames()
     {
@@ -89,6 +98,7 @@ public class AccountResponseExtensionsTests
         Assert.Equal(new HashSet<string> { "Alice", "Carol" }, result);
     }
 
+    /// <summary>To admin nickname set excludes admins with null or empty nickname.</summary>
     [Fact]
     public void ToAdminNicknameSet_ExcludesAdminsWithNullOrEmptyNickname()
     {
@@ -104,6 +114,7 @@ public class AccountResponseExtensionsTests
         Assert.Equal(new HashSet<string> { "Dave" }, result);
     }
 
+    /// <summary>To admin nickname set empty collection returns empty set.</summary>
     [Fact]
     public void ToAdminNicknameSet_EmptyCollection_ReturnsEmptySet()
     {

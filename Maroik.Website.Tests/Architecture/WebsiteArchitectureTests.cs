@@ -27,6 +27,7 @@ public class WebsiteArchitectureTests
     private const string ClientNamespace = "Maroik.Core.Client";
     private const string ServiceNamespace = "Maroik.Core.Service";
 
+    /// <summary>Website types except composition root should not depend on repository namespace.</summary>
     [Fact]
     public void WebsiteTypes_ExceptCompositionRoot_ShouldNot_DependOnRepositoryNamespace()
     {
@@ -45,6 +46,7 @@ public class WebsiteArchitectureTests
             "Failing types: " + string.Join(", ", result.FailingTypeNames ?? []));
     }
 
+    /// <summary>Website types except composition root should not depend on client namespace.</summary>
     [Fact]
     public void WebsiteTypes_ExceptCompositionRoot_ShouldNot_DependOnClientNamespace()
     {
@@ -63,6 +65,7 @@ public class WebsiteArchitectureTests
             "Failing types: " + string.Join(", ", result.FailingTypeNames ?? []));
     }
 
+    /// <summary>Website types except composition root should not depend on service namespace.</summary>
     [Fact]
     public void WebsiteTypes_ExceptCompositionRoot_ShouldNot_DependOnServiceNamespace()
     {
@@ -81,6 +84,7 @@ public class WebsiteArchitectureTests
             "Failing types: " + string.Join(", ", result.FailingTypeNames ?? []));
     }
 
+    /// <summary>Controllers should not depend on repository or client or service namespace.</summary>
     [Fact]
     public void Controllers_ShouldNot_DependOnRepositoryOrClientOrServiceNamespace()
     {

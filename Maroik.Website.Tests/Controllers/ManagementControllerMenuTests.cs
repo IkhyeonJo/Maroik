@@ -23,6 +23,7 @@ public class ManagementControllerMenuTests
     private readonly MaroikWebApplicationFactory _factory;
     private readonly HttpClient _client;
 
+    /// <summary>Initializes a new instance of ManagementControllerMenuTests, sharing the MaroikWebApplicationFactory fixture across the tests in this class.</summary>
     public ManagementControllerMenuTests(MaroikWebApplicationFactory factory)
     {
         _factory = factory;
@@ -65,6 +66,7 @@ public class ManagementControllerMenuTests
 
     // -- CreateCategory: role gating --------------------------------------------
 
+    /// <summary>Create category user session is forbidden.</summary>
     [Fact]
     public async Task CreateCategory_UserSession_IsForbidden()
     {
@@ -78,6 +80,7 @@ public class ManagementControllerMenuTests
 
     // -- CreateCategory / IsCategoryExists: success path ------------------------
 
+    /// <summary>Create category then is category exists finds the new category.</summary>
     [Fact]
     public async Task CreateCategory_ThenIsCategoryExists_FindsTheNewCategory()
     {
@@ -99,6 +102,7 @@ public class ManagementControllerMenuTests
         Assert.Contains("\"result\":true", existsJson);
     }
 
+    /// <summary>Is category exists unknown id returns failure result.</summary>
     [Fact]
     public async Task IsCategoryExists_UnknownId_ReturnsFailureResult()
     {
@@ -113,6 +117,7 @@ public class ManagementControllerMenuTests
 
     // -- UpdateCategory ----------------------------------------------------------
 
+    /// <summary>Update category existing category persists changes.</summary>
     [Fact]
     public async Task UpdateCategory_ExistingCategory_PersistsChanges()
     {
@@ -155,6 +160,7 @@ public class ManagementControllerMenuTests
 
     // -- DeleteCategory ------------------------------------------------------------
 
+    /// <summary>Delete category existing category removes it.</summary>
     [Fact]
     public async Task DeleteCategory_ExistingCategory_RemovesIt()
     {
@@ -180,6 +186,7 @@ public class ManagementControllerMenuTests
 
     // -- CreateSubCategory / IsSubCategoryExists: success path -------------------
 
+    /// <summary>Create sub category then is sub category exists finds the new sub category.</summary>
     [Fact]
     public async Task CreateSubCategory_ThenIsSubCategoryExists_FindsTheNewSubCategory()
     {
@@ -209,6 +216,7 @@ public class ManagementControllerMenuTests
         Assert.Contains("\"result\":true", existsJson);
     }
 
+    /// <summary>Is sub category exists unknown id returns failure result.</summary>
     [Fact]
     public async Task IsSubCategoryExists_UnknownId_ReturnsFailureResult()
     {
@@ -223,6 +231,7 @@ public class ManagementControllerMenuTests
 
     // -- UpdateSubCategory ----------------------------------------------------------
 
+    /// <summary>Update sub category unknown id returns failure result.</summary>
     [Fact]
     public async Task UpdateSubCategory_UnknownId_ReturnsFailureResult()
     {
@@ -237,6 +246,7 @@ public class ManagementControllerMenuTests
 
     // -- DeleteSubCategory ------------------------------------------------------------
 
+    /// <summary>Delete sub category existing sub category removes it.</summary>
     [Fact]
     public async Task DeleteSubCategory_ExistingSubCategory_RemovesIt()
     {

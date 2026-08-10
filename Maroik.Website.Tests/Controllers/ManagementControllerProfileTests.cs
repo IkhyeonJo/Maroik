@@ -25,6 +25,7 @@ public class ManagementControllerProfileTests
     private readonly MaroikWebApplicationFactory _factory;
     private readonly HttpClient _client;
 
+    /// <summary>Initializes a new instance of ManagementControllerProfileTests, sharing the MaroikWebApplicationFactory fixture across the tests in this class.</summary>
     public ManagementControllerProfileTests(MaroikWebApplicationFactory factory)
     {
         _factory = factory;
@@ -36,6 +37,7 @@ public class ManagementControllerProfileTests
 
     // -- Profile: GET -----------------------------------------------------------------
 
+    /// <summary>Profile get logged in user returns200.</summary>
     [Fact]
     public async Task Profile_Get_LoggedInUser_Returns200()
     {
@@ -50,6 +52,7 @@ public class ManagementControllerProfileTests
 
     // -- UpdateProfileTimeZone ----------------------------------------------------------
 
+    /// <summary>Update profile time zone valid id persists change.</summary>
     [Fact]
     public async Task UpdateProfileTimeZone_ValidId_PersistsChange()
     {
@@ -67,6 +70,7 @@ public class ManagementControllerProfileTests
         Assert.Equal("Asia/Seoul", account.TimeZoneIanaId);
     }
 
+    /// <summary>Update profile time zone invalid time zone leaves account unchanged.</summary>
     [Fact]
     public async Task UpdateProfileTimeZone_InvalidTimeZone_LeavesAccountUnchanged()
     {
@@ -86,6 +90,7 @@ public class ManagementControllerProfileTests
 
     // -- UpdateProfilePassword ----------------------------------------------------------
 
+    /// <summary>Update profile password correct current password changes password.</summary>
     [Fact]
     public async Task UpdateProfilePassword_CorrectCurrentPassword_ChangesPassword()
     {
@@ -110,6 +115,7 @@ public class ManagementControllerProfileTests
         Assert.True(passwordService.VerifyPassword("BrandNewPassword1!", account.HashedPassword!));
     }
 
+    /// <summary>Update profile password wrong current password returns failure result.</summary>
     [Fact]
     public async Task UpdateProfilePassword_WrongCurrentPassword_ReturnsFailureResult()
     {
@@ -136,6 +142,7 @@ public class ManagementControllerProfileTests
 
     // -- UpdateProfileAvatar: validation only (see class doc comment) -------------------
 
+    /// <summary>Update profile avatar no file attached returns failure result.</summary>
     [Fact]
     public async Task UpdateProfileAvatar_NoFileAttached_ReturnsFailureResult()
     {
@@ -153,6 +160,7 @@ public class ManagementControllerProfileTests
         Assert.Contains("\"result\":false", json);
     }
 
+    /// <summary>Update profile avatar disallowed extension returns failure result.</summary>
     [Fact]
     public async Task UpdateProfileAvatar_DisallowedExtension_ReturnsFailureResult()
     {

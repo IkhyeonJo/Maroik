@@ -33,6 +33,7 @@ public class ManagementViewModelMapperTests
 
     // -- ToDisplayViewModels: field mapping ------------------------------------
 
+    /// <summary>To display view models copies all non timestamp fields.</summary>
     [Fact]
     public void ToDisplayViewModels_CopiesAllNonTimestampFields()
     {
@@ -61,6 +62,7 @@ public class ManagementViewModelMapperTests
 
     // -- ToDisplayViewModels: timezone conversion -------------------------------
 
+    /// <summary>To display view models utc leaves timestamps unchanged.</summary>
     [Fact]
     public void ToDisplayViewModels_Utc_LeavesTimestampsUnchanged()
     {
@@ -74,6 +76,7 @@ public class ManagementViewModelMapperTests
         Assert.Equal(updated, vm.Updated);
     }
 
+    /// <summary>To display view models asia seoul converts created and updated nine hours ahead.</summary>
     [Fact]
     public void ToDisplayViewModels_AsiaSeoul_ConvertsCreatedAndUpdatedNineHoursAhead()
     {
@@ -90,6 +93,7 @@ public class ManagementViewModelMapperTests
         Assert.Equal(updated.ConvertTimeByTimeZoneIanaId("Asia/Seoul"), vm.Updated);
     }
 
+    /// <summary>To display view models different time zones produce different converted timestamps.</summary>
     [Fact]
     public void ToDisplayViewModels_DifferentTimeZones_ProduceDifferentConvertedTimestamps()
     {
@@ -106,6 +110,7 @@ public class ManagementViewModelMapperTests
 
     // -- ToDisplayViewModels: multiple items ------------------------------------
 
+    /// <summary>To display view models maps each item in the sequence.</summary>
     [Fact]
     public void ToDisplayViewModels_MapsEachItemInTheSequence()
     {
@@ -121,6 +126,7 @@ public class ManagementViewModelMapperTests
         Assert.Equal("b@example.com", vms[1].Email);
     }
 
+    /// <summary>To display view models empty sequence returns empty list.</summary>
     [Fact]
     public void ToDisplayViewModels_EmptySequence_ReturnsEmptyList()
     {

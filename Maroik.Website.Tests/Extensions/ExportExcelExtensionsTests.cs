@@ -6,6 +6,7 @@ namespace Maroik.Website.Tests.Extensions;
 /// <summary>Unit tests for <see cref="ExportExcelExtensions"/>.</summary>
 public class ExportExcelExtensionsTests
 {
+    /// <summary>To excel file name starts with prefix and ends with xlsx extension.</summary>
     [Fact]
     public void ToExcelFileName_StartsWithPrefixAndEndsWithXlsxExtension()
     {
@@ -15,6 +16,7 @@ public class ExportExcelExtensionsTests
         Assert.EndsWith(".xlsx", fileName);
     }
 
+    /// <summary>To excel file name matches timestamp pattern.</summary>
     [Fact]
     public void ToExcelFileName_MatchesTimestampPattern()
     {

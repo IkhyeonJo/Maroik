@@ -10,6 +10,7 @@ public class CalendarSharedTests
 {
     // -- CreatePrivate -----------------------------------------------------------
 
+    /// <summary>Create private sets both flags false.</summary>
     [Fact]
     public void CreatePrivate_SetsBothFlagsFalse()
     {
@@ -22,6 +23,7 @@ public class CalendarSharedTests
 
     // -- Reconstitute -----------------------------------------------------------
 
+    /// <summary>Reconstitute rebuilds shared settings without validation.</summary>
     [Fact]
     public void Reconstitute_RebuildsSharedSettings_WithoutValidation()
     {
@@ -34,6 +36,7 @@ public class CalendarSharedTests
 
     // -- Update ---------------------------------------------------------------
 
+    /// <summary>Update sets both flags.</summary>
     [Fact]
     public void Update_SetsBothFlags()
     {
@@ -46,6 +49,7 @@ public class CalendarSharedTests
         Assert.Same(shared, result);
     }
 
+    /// <summary>Update can turn flags back off.</summary>
     [Fact]
     public void Update_CanTurnFlagsBackOff()
     {

@@ -22,6 +22,7 @@ public class CalendarControllerEventTests
     private readonly MaroikWebApplicationFactory _factory;
     private readonly HttpClient _client;
 
+    /// <summary>Initializes a new instance of CalendarControllerEventTests, sharing the MaroikWebApplicationFactory fixture across the tests in this class.</summary>
     public CalendarControllerEventTests(MaroikWebApplicationFactory factory)
     {
         _factory = factory;
@@ -77,6 +78,7 @@ public class CalendarControllerEventTests
 
     // -- CreateCalendarEvent: role gating ------------------------------------------
 
+    /// <summary>Create calendar event anonymous session is forbidden.</summary>
     [Fact]
     public async Task CreateCalendarEvent_AnonymousSession_IsForbidden()
     {
@@ -89,6 +91,7 @@ public class CalendarControllerEventTests
 
     // -- CreateCalendarEvent: validation --------------------------------------------
 
+    /// <summary>Create calendar event unowned calendar id returns failure result.</summary>
     [Fact]
     public async Task CreateCalendarEvent_UnownedCalendarId_ReturnsFailureResult()
     {
@@ -103,6 +106,7 @@ public class CalendarControllerEventTests
 
     // -- CreateCalendarEvent / IsCalendarEventExists: success path ------------------
 
+    /// <summary>Create calendar event then is calendar event exists finds the new event.</summary>
     [Fact]
     public async Task CreateCalendarEvent_ThenIsCalendarEventExists_FindsTheNewEvent()
     {
@@ -126,6 +130,7 @@ public class CalendarControllerEventTests
         Assert.Contains("\"result\":true", existsJson);
     }
 
+    /// <summary>Is calendar event exists unknown id returns failure result.</summary>
     [Fact]
     public async Task IsCalendarEventExists_UnknownId_ReturnsFailureResult()
     {
@@ -140,6 +145,7 @@ public class CalendarControllerEventTests
 
     // -- UpdateCalendarEvent ---------------------------------------------------------
 
+    /// <summary>Update calendar event own event returns success result.</summary>
     [Fact]
     public async Task UpdateCalendarEvent_OwnEvent_ReturnsSuccessResult()
     {
@@ -168,6 +174,7 @@ public class CalendarControllerEventTests
         Assert.Equal(new DateTime(2030, 7, 1, 0, 0, 0, DateTimeKind.Utc), updated.StartDate);
     }
 
+    /// <summary>Update calendar event unknown id returns failure result.</summary>
     [Fact]
     public async Task UpdateCalendarEvent_UnknownId_ReturnsFailureResult()
     {
@@ -181,6 +188,7 @@ public class CalendarControllerEventTests
         Assert.Contains("\"result\":false", json);
     }
 
+    /// <summary>Update calendar event not owned by caller returns failure result.</summary>
     [Fact]
     public async Task UpdateCalendarEvent_NotOwnedByCaller_ReturnsFailureResult()
     {
@@ -207,6 +215,7 @@ public class CalendarControllerEventTests
 
     // -- DeleteCalendarEvent -----------------------------------------------------------
 
+    /// <summary>Delete calendar event own event returns success result.</summary>
     [Fact]
     public async Task DeleteCalendarEvent_OwnEvent_ReturnsSuccessResult()
     {
@@ -231,6 +240,7 @@ public class CalendarControllerEventTests
         Assert.False(verifyDb.CalendarEvents.Any(e => e.Id == created.Id));
     }
 
+    /// <summary>Delete calendar event unknown id returns failure result.</summary>
     [Fact]
     public async Task DeleteCalendarEvent_UnknownId_ReturnsFailureResult()
     {

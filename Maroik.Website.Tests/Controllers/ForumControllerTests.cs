@@ -19,6 +19,7 @@ public class ForumControllerTests
     private readonly MaroikWebApplicationFactory _factory;
     private readonly HttpClient _client;
 
+    /// <summary>Initializes a new instance of ForumControllerTests, sharing the MaroikWebApplicationFactory fixture across the tests in this class.</summary>
     public ForumControllerTests(MaroikWebApplicationFactory factory)
     {
         _factory = factory;
@@ -150,6 +151,7 @@ public class ForumControllerTests
 
     // -- WriteFreeComment -----------------------------------------------------------
 
+    /// <summary>Write free comment valid payload persists comment.</summary>
     [Fact]
     public async Task WriteFreeComment_ValidPayload_PersistsComment()
     {
@@ -186,6 +188,7 @@ public class ForumControllerTests
         Assert.Contains(verifyDb.BoardComments, c => c.BoardId == boardId && c.Writer == session.Nickname && c.Content == "Nice post!");
     }
 
+    /// <summary>Write free comment empty content returns failure result.</summary>
     [Fact]
     public async Task WriteFreeComment_EmptyContent_ReturnsFailureResult()
     {
@@ -198,6 +201,7 @@ public class ForumControllerTests
         Assert.Contains("\"result\":false", json);
     }
 
+    /// <summary>Write free comment anonymous session is forbidden.</summary>
     [Fact]
     public async Task WriteFreeComment_AnonymousSession_IsForbidden()
     {
@@ -214,6 +218,7 @@ public class ForumControllerTests
     // UploadSummernoteImageAsync calls out to IFileClient with no fallback), which isn't
     // available in this test environment — only the pre-upload validation branches are covered.
 
+    /// <summary>Upload image file no file attached returns failure result.</summary>
     [Fact]
     public async Task UploadImageFile_NoFileAttached_ReturnsFailureResult()
     {
@@ -228,6 +233,7 @@ public class ForumControllerTests
         Assert.Contains("\"result\":false", json);
     }
 
+    /// <summary>Upload image file disallowed extension returns failure result.</summary>
     [Fact]
     public async Task UploadImageFile_DisallowedExtension_ReturnsFailureResult()
     {

@@ -20,6 +20,7 @@ public sealed class FakeEmailPublisher : IEmailPublisher
     /// <summary>All messages published so far, across every test that shares this factory instance.</summary>
     public IReadOnlyCollection<SendEmailMessage> PublishedMessages => _published;
 
+    /// <summary>Publish async.</summary>
     public Task PublishAsync(SendEmailMessage message, CancellationToken ct = default)
     {
         _published.Add(message);

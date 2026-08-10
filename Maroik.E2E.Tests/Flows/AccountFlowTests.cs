@@ -14,6 +14,7 @@ namespace Maroik.E2E.Tests.Flows;
 [Collection("E2E")]
 public class AccountFlowTests : E2ETestBase
 {
+    /// <summary>Initializes a new instance of AccountFlowTests, sharing the E2ESharedFixture fixture across the tests in this class.</summary>
     public AccountFlowTests(E2ESharedFixture fixture) : base(fixture) { }
 
     // -- Login ----------------------------------------------------------------

@@ -14,7 +14,10 @@ public class FileClientTests
 {
     private sealed class FakeHttpClientFactory : IHttpClientFactory
     {
+        /// <summary>The handler the created <see cref="HttpClient"/> should use, or null for a default client.</summary>
         public HttpMessageHandler? InnerHandler { get; set; }
+
+        /// <summary>Creates an <see cref="HttpClient"/> wrapping <see cref="InnerHandler"/> when one is set.</summary>
         public HttpClient CreateClient(string name) => InnerHandler is null ? new HttpClient() : new HttpClient(InnerHandler);
     }
 
@@ -26,8 +29,10 @@ public class FileClientTests
     /// </summary>
     private sealed class CapturingHandler : HttpMessageHandler
     {
+        /// <summary>The body of the most recently captured request, or null if it had no content.</summary>
         public string? LastRequestBody { get; private set; }
 
+        /// <summary>Captures the request body and returns a canned 200 OK response.</summary>
         protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
         {
             LastRequestBody = request.Content is null ? null : await request.Content.ReadAsStringAsync(cancellationToken);

@@ -12,6 +12,7 @@ public class ServiceArchitectureTests
 {
     private static readonly Assembly ServiceAssembly = typeof(AccountService).Assembly;
 
+    /// <summary>Service should not depend on client namespace.</summary>
     [Fact]
     public void Service_ShouldNot_DependOnClientNamespace()
     {
@@ -27,6 +28,7 @@ public class ServiceArchitectureTests
             "Failing types: " + string.Join(", ", result.FailingTypeNames ?? []));
     }
 
+    /// <summary>Service should not depend on repository namespace.</summary>
     [Fact]
     public void Service_ShouldNot_DependOnRepositoryNamespace()
     {

@@ -97,6 +97,7 @@ public class CertificateManagerTests : IDisposable
         Assert.Equal(thumbprint, sut.SelectCertificate().Thumbprint);
     }
 
+    /// <summary>Dispose.</summary>
     public void Dispose()
     {
         Directory.Delete(_tempDir, recursive: true);

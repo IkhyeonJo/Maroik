@@ -21,6 +21,7 @@ public class AssetBalanceOrdinalLockExtensionsTests
     private static Asset MakeAsset(string productName) =>
         Asset.Reconstitute(productName, Email, "Deposit", 100m, "KRW", null, false, DateTime.UtcNow, DateTime.UtcNow);
 
+    /// <summary>Get assets ordinal async fetches names in ordinal order regardless of input order.</summary>
     [Fact]
     public async Task GetAssetsOrdinalAsync_FetchesNames_InOrdinalOrder_RegardlessOfInputOrder()
     {
@@ -43,6 +44,7 @@ public class AssetBalanceOrdinalLockExtensionsTests
         Assert.Equal("apple", result["apple"].ProductName);
     }
 
+    /// <summary>Get assets ordinal async fetches duplicate names only once.</summary>
     [Fact]
     public async Task GetAssetsOrdinalAsync_FetchesDuplicateNames_OnlyOnce()
     {
@@ -62,6 +64,7 @@ public class AssetBalanceOrdinalLockExtensionsTests
         Assert.Equal(2, result.Count);
     }
 
+    /// <summary>Get assets ordinal async filters out null or empty names without calling get asset async.</summary>
     [Fact]
     public async Task GetAssetsOrdinalAsync_FiltersOutNullOrEmptyNames_WithoutCallingGetAssetAsync()
     {
@@ -81,6 +84,7 @@ public class AssetBalanceOrdinalLockExtensionsTests
         Assert.True(result.ContainsKey("Banana"));
     }
 
+    /// <summary>Get assets ordinal async excludes name, when get asset async returns null.</summary>
     [Fact]
     public async Task GetAssetsOrdinalAsync_ExcludesName_WhenGetAssetAsyncReturnsNull()
     {

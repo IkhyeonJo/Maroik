@@ -10,6 +10,7 @@ public class SubCategoryTests
 {
     // -- Create ---------------------------------------------------------------
 
+    /// <summary>Create returns sub category, when valid.</summary>
     [Fact]
     public void Create_ReturnsSubCategory_WhenValid()
     {
@@ -23,6 +24,7 @@ public class SubCategoryTests
         Assert.Equal(1, result.Value.Order);
     }
 
+    /// <summary>Create returns error, when name empty.</summary>
     [Theory]
     [InlineData(null)]
     [InlineData("")]
@@ -37,6 +39,7 @@ public class SubCategoryTests
 
     // -- Reconstitute -----------------------------------------------------------
 
+    /// <summary>Reconstitute rebuilds sub category without validation.</summary>
     [Fact]
     public void Reconstitute_RebuildsSubCategory_WithoutValidation()
     {
@@ -52,6 +55,7 @@ public class SubCategoryTests
         Assert.Equal(2, subCategory.Order);
     }
 
+    /// <summary>Reconstitute allows null name.</summary>
     [Fact]
     public void Reconstitute_AllowsNullName()
     {

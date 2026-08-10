@@ -72,6 +72,7 @@ public class AccountRepositoryIntegrationTests : IAsyncLifetime
 
     // -- GetAllAsync ----------------------------------------------------------
 
+    /// <summary>Get all async returns all accounts from postgre SQL.</summary>
     [Fact]
     public async Task GetAllAsync_ReturnsAllAccounts_FromPostgreSQL()
     {
@@ -86,6 +87,7 @@ public class AccountRepositoryIntegrationTests : IAsyncLifetime
 
     // -- CreateAccountAsync ---------------------------------------------------
 
+    /// <summary>Create account async persists to postgre SQL and is retrievable.</summary>
     [Fact]
     public async Task CreateAccountAsync_PersistsToPostgreSQL_AndIsRetrievable()
     {
@@ -120,6 +122,7 @@ public class AccountRepositoryIntegrationTests : IAsyncLifetime
 
     // -- UpdateEntityAsync ---------------------------------------------------
 
+    /// <summary>Update entity async changes are persisted in postgre SQL.</summary>
     [Fact]
     public async Task UpdateEntityAsync_ChangesArePersisted_InPostgreSQL()
     {
@@ -156,6 +159,7 @@ public class AccountRepositoryIntegrationTests : IAsyncLifetime
 
     // -- Unique constraint ----------------------------------------------------
 
+    /// <summary>Create account async throws db update exception, when email already exists.</summary>
     [Fact]
     public async Task CreateAccountAsync_ThrowsDbUpdateException_WhenEmailAlreadyExists()
     {
@@ -187,6 +191,7 @@ public class AccountRepositoryIntegrationTests : IAsyncLifetime
 
     // -- Soft delete visibility -----------------------------------------------
 
+    /// <summary>Find async with deleted filter excludes soft deleted accounts in postgre SQL.</summary>
     [Fact]
     public async Task FindAsync_WithDeletedFilter_ExcludesSoftDeletedAccounts_InPostgreSQL()
     {
@@ -206,6 +211,7 @@ public class AccountRepositoryIntegrationTests : IAsyncLifetime
 
     // -- FindByEmailForUpdateAsync ------------------------------------------------
 
+    /// <summary>Find by email for update async returns account, when exists.</summary>
     [Fact]
     public async Task FindByEmailForUpdateAsync_ReturnsAccount_WhenExists()
     {
@@ -220,6 +226,7 @@ public class AccountRepositoryIntegrationTests : IAsyncLifetime
         Assert.Equal("Alice", result.Nickname);
     }
 
+    /// <summary>Find by email for update async returns null, when not found.</summary>
     [Fact]
     public async Task FindByEmailForUpdateAsync_ReturnsNull_WhenNotFound()
     {

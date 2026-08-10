@@ -10,6 +10,7 @@ public class OtherCalendarTests
 {
     // -- Create ---------------------------------------------------------------
 
+    /// <summary>Create returns other calendar, when valid.</summary>
     [Fact]
     public void Create_ReturnsOtherCalendar_WhenValid()
     {
@@ -20,6 +21,7 @@ public class OtherCalendarTests
         Assert.Equal(1, result.Value.CalendarId);
     }
 
+    /// <summary>Create returns error, when email invalid.</summary>
     [Theory]
     [InlineData(null)]
     [InlineData("")]
@@ -32,6 +34,7 @@ public class OtherCalendarTests
         Assert.True(result.IsError);
     }
 
+    /// <summary>Create returns error, when calendar id not positive.</summary>
     [Theory]
     [InlineData(0)]
     [InlineData(-1)]
@@ -45,6 +48,7 @@ public class OtherCalendarTests
 
     // -- Reconstitute -----------------------------------------------------------
 
+    /// <summary>Reconstitute rebuilds other calendar without validation.</summary>
     [Fact]
     public void Reconstitute_RebuildsOtherCalendar_WithoutValidation()
     {

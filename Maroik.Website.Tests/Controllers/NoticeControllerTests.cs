@@ -16,6 +16,7 @@ public class NoticeControllerTests
     private readonly MaroikWebApplicationFactory _factory;
     private readonly HttpClient _client;
 
+    /// <summary>Initializes a new instance of NoticeControllerTests, sharing the MaroikWebApplicationFactory fixture across the tests in this class.</summary>
     public NoticeControllerTests(MaroikWebApplicationFactory factory)
     {
         _factory = factory;
@@ -33,6 +34,7 @@ public class NoticeControllerTests
 
     // -- FixedIncome ------------------------------------------------------------
 
+    /// <summary>Fixed income get logged in user returns200.</summary>
     [Fact]
     public async Task FixedIncome_Get_LoggedInUser_Returns200()
     {
@@ -41,6 +43,7 @@ public class NoticeControllerTests
         Assert.Equal(System.Net.HttpStatusCode.OK, response.StatusCode);
     }
 
+    /// <summary>Fixed income get anonymous redirects to login.</summary>
     [Fact]
     public async Task FixedIncome_Get_Anonymous_RedirectsToLogin()
     {
@@ -51,6 +54,7 @@ public class NoticeControllerTests
 
     // -- FixedExpenditure ---------------------------------------------------------
 
+    /// <summary>Fixed expenditure get logged in user returns200.</summary>
     [Fact]
     public async Task FixedExpenditure_Get_LoggedInUser_Returns200()
     {

@@ -16,6 +16,7 @@ public class FixedExpenditureTests
 
     // -- Register -------------------------------------------------------------
 
+    /// <summary>Register returns fixed expenditure, when valid.</summary>
     [Fact]
     public void Register_ReturnsFixedExpenditure_WhenValid()
     {
@@ -27,6 +28,7 @@ public class FixedExpenditureTests
         Assert.Equal("My Card", result.Value.PaymentMethod);
     }
 
+    /// <summary>Register returns error, when deposit day out of range.</summary>
     [Theory]
     [InlineData(0)]
     [InlineData(32)]
@@ -39,6 +41,7 @@ public class FixedExpenditureTests
         Assert.Equal("FixedExpenditure.InvalidDepositDay", result.FirstError.Code);
     }
 
+    /// <summary>Register returns error, when deposit month out of range.</summary>
     [Theory]
     [InlineData(-1)]
     [InlineData(13)]
@@ -51,6 +54,7 @@ public class FixedExpenditureTests
         Assert.Equal("FixedExpenditure.InvalidDepositMonth", result.FirstError.Code);
     }
 
+    /// <summary>Register returns error, when payment method empty.</summary>
     [Theory]
     [InlineData(null)]
     [InlineData("")]
@@ -65,6 +69,7 @@ public class FixedExpenditureTests
 
     // -- MarkUnpunctual / ClearUnpunctuality -----------------------------------
 
+    /// <summary>Mark unpunctual sets flag.</summary>
     [Fact]
     public void MarkUnpunctual_SetsFlag()
     {
@@ -75,6 +80,7 @@ public class FixedExpenditureTests
         Assert.True(fe.Unpunctuality);
     }
 
+    /// <summary>Clear unpunctuality clears flag.</summary>
     [Fact]
     public void ClearUnpunctuality_ClearsFlag()
     {
@@ -88,6 +94,7 @@ public class FixedExpenditureTests
 
     // -- Update ----------------------------------------------------------------
 
+    /// <summary>Update succeeds, when valid.</summary>
     [Fact]
     public void Update_Succeeds_WhenValid()
     {
@@ -100,6 +107,7 @@ public class FixedExpenditureTests
         Assert.Equal(15, fe.DepositDay);
     }
 
+    /// <summary>Update returns error, when deposit day out of range.</summary>
     [Theory]
     [InlineData(0)]
     [InlineData(32)]

@@ -40,6 +40,7 @@ public class MenuNavigationMapperTests
 
     // -- ResolveActiveMenuItem ----------------------------------------------------
 
+    /// <summary>Resolve active menu item single category matches returns match with no sub category.</summary>
     [Fact]
     public void ResolveActiveMenuItem_SingleCategoryMatches_ReturnsMatchWithNoSubCategory()
     {
@@ -52,6 +53,7 @@ public class MenuNavigationMapperTests
         Assert.Null(match.SubCategory);
     }
 
+    /// <summary>Resolve active menu item sub category matches returns match with both category and sub category.</summary>
     [Fact]
     public void ResolveActiveMenuItem_SubCategoryMatches_ReturnsMatchWithBothCategoryAndSubCategory()
     {
@@ -65,6 +67,7 @@ public class MenuNavigationMapperTests
         Assert.Equal(10, match.SubCategory!.Id);
     }
 
+    /// <summary>Resolve active menu item no match returns is match false.</summary>
     [Fact]
     public void ResolveActiveMenuItem_NoMatch_ReturnsIsMatchFalse()
     {
@@ -77,6 +80,7 @@ public class MenuNavigationMapperTests
         Assert.Null(match.SubCategory);
     }
 
+    /// <summary>Resolve active menu item sub category belongs to different category does not match.</summary>
     [Fact]
     public void ResolveActiveMenuItem_SubCategoryBelongsToDifferentCategory_DoesNotMatch()
     {
@@ -89,6 +93,7 @@ public class MenuNavigationMapperTests
         Assert.False(match.IsMatch);
     }
 
+    /// <summary>Resolve active menu item action matches but controller does not does not match.</summary>
     [Fact]
     public void ResolveActiveMenuItem_ActionMatchesButControllerDoesNot_DoesNotMatch()
     {
@@ -99,6 +104,7 @@ public class MenuNavigationMapperTests
         Assert.False(match.IsMatch);
     }
 
+    /// <summary>Resolve active menu item empty categories returns is match false.</summary>
     [Fact]
     public void ResolveActiveMenuItem_EmptyCategories_ReturnsIsMatchFalse()
     {
@@ -109,6 +115,7 @@ public class MenuNavigationMapperTests
 
     // -- ToSidebarMenu -------------------------------------------------------------
 
+    /// <summary>To sidebar menu sorts categories by order.</summary>
     [Fact]
     public void ToSidebarMenu_SortsCategoriesByOrder()
     {
@@ -124,6 +131,7 @@ public class MenuNavigationMapperTests
         Assert.Equal(1, menu.Categories[1].Category.Id);
     }
 
+    /// <summary>To sidebar menu single category is active when controller and action match.</summary>
     [Fact]
     public void ToSidebarMenu_SingleCategory_IsActiveWhenControllerAndActionMatch()
     {
@@ -135,6 +143,7 @@ public class MenuNavigationMapperTests
         Assert.Empty(menu.Categories[0].SubCategories);
     }
 
+    /// <summary>To sidebar menu single category not active when route differs.</summary>
     [Fact]
     public void ToSidebarMenu_SingleCategory_NotActiveWhenRouteDiffers()
     {
@@ -145,6 +154,7 @@ public class MenuNavigationMapperTests
         Assert.False(menu.Categories[0].IsActive);
     }
 
+    /// <summary>To sidebar menu parent category is active when any child matches.</summary>
     [Fact]
     public void ToSidebarMenu_ParentCategory_IsActiveWhenAnyChildMatches()
     {
@@ -162,6 +172,7 @@ public class MenuNavigationMapperTests
         Assert.True(menu.Categories[0].SubCategories.Single(s => s.SubCategory.Id == 11).IsActive);
     }
 
+    /// <summary>To sidebar menu parent category not active when no child matches.</summary>
     [Fact]
     public void ToSidebarMenu_ParentCategory_NotActiveWhenNoChildMatches()
     {
@@ -174,6 +185,7 @@ public class MenuNavigationMapperTests
         Assert.All(menu.Categories[0].SubCategories, sub => Assert.False(sub.IsActive));
     }
 
+    /// <summary>To sidebar menu sub categories sorted by order.</summary>
     [Fact]
     public void ToSidebarMenu_SubCategories_SortedByOrder()
     {

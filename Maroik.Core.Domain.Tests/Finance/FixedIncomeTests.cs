@@ -16,6 +16,7 @@ public class FixedIncomeTests
 
     // -- Register -------------------------------------------------------------
 
+    /// <summary>Register returns fixed income, when valid.</summary>
     [Fact]
     public void Register_ReturnsFixedIncome_WhenValid()
     {
@@ -27,6 +28,7 @@ public class FixedIncomeTests
         Assert.Equal(0, result.Value.DepositMonth);
     }
 
+    /// <summary>Register returns error, when deposit day out of range.</summary>
     [Theory]
     [InlineData(0)]
     [InlineData(32)]
@@ -39,6 +41,7 @@ public class FixedIncomeTests
         Assert.Equal("FixedIncome.InvalidDepositDay", result.FirstError.Code);
     }
 
+    /// <summary>Register returns error, when deposit month out of range.</summary>
     [Theory]
     [InlineData(-1)]
     [InlineData(13)]
@@ -51,6 +54,7 @@ public class FixedIncomeTests
         Assert.Equal("FixedIncome.InvalidDepositMonth", result.FirstError.Code);
     }
 
+    /// <summary>Register returns error, when main class empty.</summary>
     [Theory]
     [InlineData(null)]
     [InlineData("")]
@@ -65,6 +69,7 @@ public class FixedIncomeTests
 
     // -- MarkUnpunctual / ClearUnpunctuality -----------------------------------
 
+    /// <summary>Mark unpunctual sets flag.</summary>
     [Fact]
     public void MarkUnpunctual_SetsFlag()
     {
@@ -75,6 +80,7 @@ public class FixedIncomeTests
         Assert.True(fi.Unpunctuality);
     }
 
+    /// <summary>Clear unpunctuality clears flag.</summary>
     [Fact]
     public void ClearUnpunctuality_ClearsFlag()
     {
@@ -88,6 +94,7 @@ public class FixedIncomeTests
 
     // -- Update ----------------------------------------------------------------
 
+    /// <summary>Update succeeds, when valid.</summary>
     [Fact]
     public void Update_Succeeds_WhenValid()
     {
@@ -100,6 +107,7 @@ public class FixedIncomeTests
         Assert.Equal(10, fi.DepositDay);
     }
 
+    /// <summary>Update returns error, when deposit day out of range.</summary>
     [Theory]
     [InlineData(0)]
     [InlineData(32)]

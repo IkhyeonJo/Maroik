@@ -91,6 +91,7 @@ public class MaroikWebApplicationFactory : WebApplicationFactory<Program>, IAsyn
         await base.DisposeAsync();
     }
 
+    /// <summary>Points the application at the Testcontainers PostgreSQL instance and applies test-only configuration overrides.</summary>
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
         // -- Override configuration -------------------------------------------

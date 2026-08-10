@@ -30,6 +30,7 @@ public class ForumControllerBoardTests
     private readonly MaroikWebApplicationFactory _factory;
     private readonly HttpClient _client;
 
+    /// <summary>Initializes a new instance of ForumControllerBoardTests, sharing the MaroikWebApplicationFactory fixture across the tests in this class.</summary>
     public ForumControllerBoardTests(MaroikWebApplicationFactory factory)
     {
         _factory = factory;
@@ -85,6 +86,7 @@ public class ForumControllerBoardTests
 
     // -- IsBoardExists ------------------------------------------------------------
 
+    /// <summary>Is board exists active unlocked board returns success result.</summary>
     [Fact]
     public async Task IsBoardExists_ActiveUnlockedBoard_ReturnsSuccessResult()
     {
@@ -98,6 +100,7 @@ public class ForumControllerBoardTests
         Assert.Contains("\"result\":true", json);
     }
 
+    /// <summary>Is board exists unknown id returns failure result.</summary>
     [Fact]
     public async Task IsBoardExists_UnknownId_ReturnsFailureResult()
     {
@@ -110,6 +113,7 @@ public class ForumControllerBoardTests
         Assert.Contains("\"result\":false", json);
     }
 
+    /// <summary>Is board exists deleted board returns failure result.</summary>
     [Fact]
     public async Task IsBoardExists_DeletedBoard_ReturnsFailureResult()
     {
@@ -123,6 +127,7 @@ public class ForumControllerBoardTests
         Assert.Contains("\"result\":false", json);
     }
 
+    /// <summary>Is board exists locked board non owner non admin returns failure result.</summary>
     [Fact]
     public async Task IsBoardExists_LockedBoard_NonOwnerNonAdmin_ReturnsFailureResult()
     {
@@ -136,6 +141,7 @@ public class ForumControllerBoardTests
         Assert.Contains("\"result\":false", json);
     }
 
+    /// <summary>Is board exists locked board owner returns success result.</summary>
     [Fact]
     public async Task IsBoardExists_LockedBoard_Owner_ReturnsSuccessResult()
     {
@@ -149,6 +155,7 @@ public class ForumControllerBoardTests
         Assert.Contains("\"result\":true", json);
     }
 
+    /// <summary>Is board exists locked board admin returns success result regardless of ownership.</summary>
     [Fact]
     public async Task IsBoardExists_LockedBoard_Admin_ReturnsSuccessResultRegardlessOfOwnership()
     {
@@ -164,6 +171,7 @@ public class ForumControllerBoardTests
 
     // -- DeleteBoard ----------------------------------------------------------------
 
+    /// <summary>Delete board owner soft deletes successfully.</summary>
     [Fact]
     public async Task DeleteBoard_Owner_SoftDeletesSuccessfully()
     {
@@ -177,6 +185,7 @@ public class ForumControllerBoardTests
         Assert.Contains("\"result\":true", json);
     }
 
+    /// <summary>Delete board non owner non admin is denied.</summary>
     [Fact]
     public async Task DeleteBoard_NonOwnerNonAdmin_IsDenied()
     {
@@ -194,6 +203,7 @@ public class ForumControllerBoardTests
         Assert.False(db.Boards.Single(b => b.Id == boardId).Deleted);
     }
 
+    /// <summary>Delete board admin can delete anyones board.</summary>
     [Fact]
     public async Task DeleteBoard_Admin_CanDeleteAnyonesBoard()
     {
@@ -207,6 +217,7 @@ public class ForumControllerBoardTests
         Assert.Contains("\"result\":true", json);
     }
 
+    /// <summary>Delete board unknown id returns failure result.</summary>
     [Fact]
     public async Task DeleteBoard_UnknownId_ReturnsFailureResult()
     {
@@ -221,6 +232,7 @@ public class ForumControllerBoardTests
 
     // -- DeleteComment ----------------------------------------------------------------
 
+    /// <summary>Delete comment owner soft deletes successfully.</summary>
     [Fact]
     public async Task DeleteComment_Owner_SoftDeletesSuccessfully()
     {
@@ -235,6 +247,7 @@ public class ForumControllerBoardTests
         Assert.Contains("\"result\":true", json);
     }
 
+    /// <summary>Delete comment non owner non admin is denied.</summary>
     [Fact]
     public async Task DeleteComment_NonOwnerNonAdmin_IsDenied()
     {

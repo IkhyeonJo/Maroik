@@ -25,6 +25,7 @@ public class ManagementControllerPrivateNoteTests
     private readonly MaroikWebApplicationFactory _factory;
     private readonly HttpClient _client;
 
+    /// <summary>Initializes a new instance of ManagementControllerPrivateNoteTests, sharing the MaroikWebApplicationFactory fixture across the tests in this class.</summary>
     public ManagementControllerPrivateNoteTests(MaroikWebApplicationFactory factory)
     {
         _factory = factory;
@@ -70,6 +71,7 @@ public class ManagementControllerPrivateNoteTests
 
     // -- WritePrivateNoteBoard: success path ----------------------------------------
 
+    /// <summary>Write private note board valid payload persists board.</summary>
     [Fact]
     public async Task WritePrivateNoteBoard_ValidPayload_PersistsBoard()
     {
@@ -89,6 +91,7 @@ public class ManagementControllerPrivateNoteTests
         Assert.Contains("My private thoughts", created.Content);
     }
 
+    /// <summary>Write private note board missing title returns input invalid.</summary>
     [Fact]
     public async Task WritePrivateNoteBoard_MissingTitle_ReturnsInputInvalid()
     {
@@ -103,6 +106,7 @@ public class ManagementControllerPrivateNoteTests
 
     // -- IsBoardExists: owner-only visibility ----------------------------------------
 
+    /// <summary>Is board exists own board returns success result.</summary>
     [Fact]
     public async Task IsBoardExists_OwnBoard_ReturnsSuccessResult()
     {
@@ -116,6 +120,7 @@ public class ManagementControllerPrivateNoteTests
         Assert.Contains("\"result\":true", json);
     }
 
+    /// <summary>Is board exists others board returns failure result.</summary>
     [Fact]
     public async Task IsBoardExists_OthersBoard_ReturnsFailureResult()
     {
@@ -132,6 +137,7 @@ public class ManagementControllerPrivateNoteTests
 
     // -- EditPrivateNoteBoard ------------------------------------------------------------
 
+    /// <summary>Edit private note board by owner updates board.</summary>
     [Fact]
     public async Task EditPrivateNoteBoard_ByOwner_UpdatesBoard()
     {
@@ -154,6 +160,7 @@ public class ManagementControllerPrivateNoteTests
         Assert.Contains("Edited", updated.Content);
     }
 
+    /// <summary>Edit private note board by non owner returns failure result.</summary>
     [Fact]
     public async Task EditPrivateNoteBoard_ByNonOwner_ReturnsFailureResult()
     {
@@ -172,6 +179,7 @@ public class ManagementControllerPrivateNoteTests
 
     // -- DeleteBoard ----------------------------------------------------------------
 
+    /// <summary>Delete board owner soft deletes successfully.</summary>
     [Fact]
     public async Task DeleteBoard_Owner_SoftDeletesSuccessfully()
     {
@@ -189,6 +197,7 @@ public class ManagementControllerPrivateNoteTests
         Assert.True(db.Boards.Single(b => b.Id == boardId).Deleted);
     }
 
+    /// <summary>Delete board non owner non admin is denied.</summary>
     [Fact]
     public async Task DeleteBoard_NonOwnerNonAdmin_IsDenied()
     {
@@ -208,6 +217,7 @@ public class ManagementControllerPrivateNoteTests
 
     // -- WritePrivateNoteComment / DeleteComment ----------------------------------------
 
+    /// <summary>Write private note comment then delete comment by owner succeeds.</summary>
     [Fact]
     public async Task WritePrivateNoteComment_ThenDeleteComment_ByOwner_Succeeds()
     {
@@ -231,6 +241,7 @@ public class ManagementControllerPrivateNoteTests
         Assert.Contains("\"result\":true", deleteJson);
     }
 
+    /// <summary>Write private note comment empty content returns failure result.</summary>
     [Fact]
     public async Task WritePrivateNoteComment_EmptyContent_ReturnsFailureResult()
     {

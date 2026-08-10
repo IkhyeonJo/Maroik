@@ -26,6 +26,7 @@ public class RoleBasedStaticFileMiddlewareTests
             .Returns(role == null ? null : new AccountResponse { Email = "test@test.com", Nickname = "Test", Role = role });
     }
 
+    /// <summary>Invoke async admin path admin session forwards.</summary>
     [Fact]
     public async Task InvokeAsync_AdminPath_AdminSession_Forwards()
     {
@@ -40,6 +41,7 @@ public class RoleBasedStaticFileMiddlewareTests
         Assert.Equal(200, context.Response.StatusCode);
     }
 
+    /// <summary>Invoke async admin path user session blocks.</summary>
     [Fact]
     public async Task InvokeAsync_AdminPath_UserSession_Blocks()
     {
@@ -54,6 +56,7 @@ public class RoleBasedStaticFileMiddlewareTests
         Assert.Equal(403, context.Response.StatusCode);
     }
 
+    /// <summary>Invoke async admin path no session blocks.</summary>
     [Fact]
     public async Task InvokeAsync_AdminPath_NoSession_Blocks()
     {
@@ -68,6 +71,7 @@ public class RoleBasedStaticFileMiddlewareTests
         Assert.Equal(403, context.Response.StatusCode);
     }
 
+    /// <summary>Invoke async user path user session forwards.</summary>
     [Fact]
     public async Task InvokeAsync_UserPath_UserSession_Forwards()
     {
@@ -82,6 +86,7 @@ public class RoleBasedStaticFileMiddlewareTests
         Assert.Equal(200, context.Response.StatusCode);
     }
 
+    /// <summary>Invoke async user path admin session blocks.</summary>
     [Fact]
     public async Task InvokeAsync_UserPath_AdminSession_Blocks()
     {
@@ -96,6 +101,7 @@ public class RoleBasedStaticFileMiddlewareTests
         Assert.Equal(403, context.Response.StatusCode);
     }
 
+    /// <summary>Invoke async user path no session blocks.</summary>
     [Fact]
     public async Task InvokeAsync_UserPath_NoSession_Blocks()
     {
@@ -110,6 +116,7 @@ public class RoleBasedStaticFileMiddlewareTests
         Assert.Equal(403, context.Response.StatusCode);
     }
 
+    /// <summary>Invoke async unrestricted path no session forwards.</summary>
     [Fact]
     public async Task InvokeAsync_UnrestrictedPath_NoSession_Forwards()
     {
@@ -124,6 +131,7 @@ public class RoleBasedStaticFileMiddlewareTests
         Assert.Equal(200, context.Response.StatusCode);
     }
 
+    /// <summary>Invoke async empty path forwards.</summary>
     [Fact]
     public async Task InvokeAsync_EmptyPath_Forwards()
     {

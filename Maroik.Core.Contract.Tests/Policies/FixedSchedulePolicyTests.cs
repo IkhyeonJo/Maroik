@@ -11,6 +11,7 @@ public class FixedSchedulePolicyTests
 {
     // -- IsNoticed --------------------------------------------------------------
 
+    /// <summary>Is noticed returns true, when deposit date within window.</summary>
     [Fact]
     public void IsNoticed_ReturnsTrue_WhenDepositDateWithinWindow()
     {
@@ -21,6 +22,7 @@ public class FixedSchedulePolicyTests
         Assert.True(result);
     }
 
+    /// <summary>Is noticed returns true, when deposit date is exactly at window boundary.</summary>
     [Fact]
     public void IsNoticed_ReturnsTrue_WhenDepositDateIsExactlyAtWindowBoundary()
     {
@@ -31,6 +33,7 @@ public class FixedSchedulePolicyTests
         Assert.True(result);
     }
 
+    /// <summary>Is noticed returns false, when deposit date just outside window.</summary>
     [Fact]
     public void IsNoticed_ReturnsFalse_WhenDepositDateJustOutsideWindow()
     {
@@ -41,6 +44,7 @@ public class FixedSchedulePolicyTests
         Assert.False(result);
     }
 
+    /// <summary>Is noticed returns false, when deposit date already passed.</summary>
     [Fact]
     public void IsNoticed_ReturnsFalse_WhenDepositDateAlreadyPassed()
     {
@@ -51,6 +55,7 @@ public class FixedSchedulePolicyTests
         Assert.False(result);
     }
 
+    /// <summary>Is noticed returns true when unpunctuality true regardless of date.</summary>
     [Fact]
     public void IsNoticed_ReturnsTrue_WhenUnpunctualityTrue_RegardlessOfDate()
     {
@@ -61,6 +66,7 @@ public class FixedSchedulePolicyTests
         Assert.True(result);
     }
 
+    /// <summary>Is noticed returns false for invalid date combination.</summary>
     [Fact]
     public void IsNoticed_ReturnsFalse_ForInvalidDateCombination()
     {
@@ -74,6 +80,7 @@ public class FixedSchedulePolicyTests
 
     // -- IsExpired ----------------------------------------------------------------
 
+    /// <summary>Is expired returns true, when maturity date before today.</summary>
     [Fact]
     public void IsExpired_ReturnsTrue_WhenMaturityDateBeforeToday()
     {
@@ -83,6 +90,7 @@ public class FixedSchedulePolicyTests
         Assert.True(FixedSchedulePolicy.IsExpired(maturityDate, today));
     }
 
+    /// <summary>Is expired returns false, when maturity date equals today.</summary>
     [Fact]
     public void IsExpired_ReturnsFalse_WhenMaturityDateEqualsToday()
     {
@@ -91,6 +99,7 @@ public class FixedSchedulePolicyTests
         Assert.False(FixedSchedulePolicy.IsExpired(date, date));
     }
 
+    /// <summary>Is expired returns false, when maturity date after today.</summary>
     [Fact]
     public void IsExpired_ReturnsFalse_WhenMaturityDateAfterToday()
     {
@@ -102,18 +111,21 @@ public class FixedSchedulePolicyTests
 
     // -- GetRowCssClass -------------------------------------------------------------
 
+    /// <summary>Get row css class returns danger when expired even if also noticed.</summary>
     [Fact]
     public void GetRowCssClass_ReturnsDanger_WhenExpired_EvenIfAlsoNoticed()
     {
         Assert.Equal("table-danger clsGridRow", FixedSchedulePolicy.GetRowCssClass(expired: true, noticed: true));
     }
 
+    /// <summary>Get row css class returns info, when noticed and not expired.</summary>
     [Fact]
     public void GetRowCssClass_ReturnsInfo_WhenNoticedAndNotExpired()
     {
         Assert.Equal("table-info clsGridRow", FixedSchedulePolicy.GetRowCssClass(expired: false, noticed: true));
     }
 
+    /// <summary>Get row css class returns inactive, when neither expired nor noticed.</summary>
     [Fact]
     public void GetRowCssClass_ReturnsInactive_WhenNeitherExpiredNorNoticed()
     {

@@ -39,6 +39,7 @@ public class RabbitMqEmailPublisherTests
 
     private RabbitMqEmailPublisher CreateSut() => new(_factory.Object);
 
+    /// <summary>Publish async no cached connection opens connection and publishes.</summary>
     [Fact]
     public async Task PublishAsync_NoCachedConnection_OpensConnectionAndPublishes()
     {
@@ -59,6 +60,7 @@ public class RabbitMqEmailPublisherTests
             Times.Once);
     }
 
+    /// <summary>Publish async publishes message body as json.</summary>
     [Fact]
     public async Task PublishAsync_PublishesMessageBodyAsJson()
     {
@@ -78,6 +80,7 @@ public class RabbitMqEmailPublisherTests
         Assert.Equal(Message, deserialized);
     }
 
+    /// <summary>Publish async connection stays open reuses connection across calls.</summary>
     [Fact]
     public async Task PublishAsync_ConnectionStaysOpen_ReusesConnectionAcrossCalls()
     {
@@ -96,6 +99,7 @@ public class RabbitMqEmailPublisherTests
             Times.Exactly(2));
     }
 
+    /// <summary>Publish async cached connection closed disposes it and opens a new one.</summary>
     [Fact]
     public async Task PublishAsync_CachedConnectionClosed_DisposesItAndOpensANewOne()
     {
@@ -119,6 +123,7 @@ public class RabbitMqEmailPublisherTests
             Times.Once);
     }
 
+    /// <summary>Dispose async with open connection disposes connection.</summary>
     [Fact]
     public async Task DisposeAsync_WithOpenConnection_DisposesConnection()
     {
@@ -133,6 +138,7 @@ public class RabbitMqEmailPublisherTests
         connection.Verify(c => c.DisposeAsync(), Times.Once);
     }
 
+    /// <summary>Dispose async never published does not throw.</summary>
     [Fact]
     public async Task DisposeAsync_NeverPublished_DoesNotThrow()
     {

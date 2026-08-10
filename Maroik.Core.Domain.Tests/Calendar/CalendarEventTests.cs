@@ -22,6 +22,7 @@ public class CalendarEventTests
 
     // -- Create ---------------------------------------------------------------
 
+    /// <summary>Create returns calendar event, when valid.</summary>
     [Fact]
     public void Create_ReturnsCalendarEvent_WhenValid()
     {
@@ -32,6 +33,7 @@ public class CalendarEventTests
         Assert.Equal(10, result.Value.CalendarId);
     }
 
+    /// <summary>Create returns error, when title empty.</summary>
     [Theory]
     [InlineData(null)]
     [InlineData("")]
@@ -44,6 +46,7 @@ public class CalendarEventTests
         Assert.Equal("CalendarEvent.TitleEmpty", result.FirstError.Code);
     }
 
+    /// <summary>Create returns error, when title too long.</summary>
     [Fact]
     public void Create_ReturnsError_WhenTitleTooLong()
     {
@@ -53,6 +56,7 @@ public class CalendarEventTests
         Assert.Equal("CalendarEvent.TitleTooLong", result.FirstError.Code);
     }
 
+    /// <summary>Create returns error, when description too long.</summary>
     [Fact]
     public void Create_ReturnsError_WhenDescriptionTooLong()
     {
@@ -62,6 +66,7 @@ public class CalendarEventTests
         Assert.Equal("CalendarEvent.DescriptionTooLong", result.FirstError.Code);
     }
 
+    /// <summary>Create returns error when end before start and not all day.</summary>
     [Fact]
     public void Create_ReturnsError_WhenEndBeforeStart_AndNotAllDay()
     {
@@ -71,6 +76,7 @@ public class CalendarEventTests
         Assert.Equal("CalendarEvent.InvalidDateRange", result.FirstError.Code);
     }
 
+    /// <summary>Create succeeds when end before start and all day.</summary>
     [Fact]
     public void Create_Succeeds_WhenEndBeforeStart_AndAllDay()
     {
@@ -81,6 +87,7 @@ public class CalendarEventTests
 
     // -- Update ---------------------------------------------------------------
 
+    /// <summary>Update succeeds, when valid.</summary>
     [Fact]
     public void Update_Succeeds_WhenValid()
     {
@@ -94,6 +101,7 @@ public class CalendarEventTests
         Assert.Equal("Room 1", ev.Location);
     }
 
+    /// <summary>Update returns error, when end before start.</summary>
     [Fact]
     public void Update_ReturnsError_WhenEndBeforeStart()
     {
@@ -107,6 +115,7 @@ public class CalendarEventTests
 
     // -- AddReminder -----------------------------------------------------------
 
+    /// <summary>Add reminder succeeds, when reminder matches event.</summary>
     [Fact]
     public void AddReminder_Succeeds_WhenReminderMatchesEvent()
     {
@@ -118,6 +127,7 @@ public class CalendarEventTests
         Assert.Single(ev.Reminders);
     }
 
+    /// <summary>Add reminder returns error, when mismatch.</summary>
     [Fact]
     public void AddReminder_ReturnsError_WhenMismatch()
     {
@@ -131,6 +141,7 @@ public class CalendarEventTests
 
     // -- RemoveReminder --------------------------------------------------------
 
+    /// <summary>Remove reminder succeeds, when reminder exists.</summary>
     [Fact]
     public void RemoveReminder_Succeeds_WhenReminderExists()
     {
@@ -143,6 +154,7 @@ public class CalendarEventTests
         Assert.Empty(ev.Reminders);
     }
 
+    /// <summary>Remove reminder returns error, when not found.</summary>
     [Fact]
     public void RemoveReminder_ReturnsError_WhenNotFound()
     {
@@ -156,6 +168,7 @@ public class CalendarEventTests
 
     // -- AttachFile ------------------------------------------------------------
 
+    /// <summary>Attach file succeeds, when file matches event.</summary>
     [Fact]
     public void AttachFile_Succeeds_WhenFileMatchesEvent()
     {
@@ -167,6 +180,7 @@ public class CalendarEventTests
         Assert.Single(ev.AttachedFiles);
     }
 
+    /// <summary>Attach file returns error, when mismatch.</summary>
     [Fact]
     public void AttachFile_ReturnsError_WhenMismatch()
     {
@@ -180,6 +194,7 @@ public class CalendarEventTests
 
     // -- RemoveFile ------------------------------------------------------------
 
+    /// <summary>Remove file succeeds, when file exists.</summary>
     [Fact]
     public void RemoveFile_Succeeds_WhenFileExists()
     {
@@ -192,6 +207,7 @@ public class CalendarEventTests
         Assert.Empty(ev.AttachedFiles);
     }
 
+    /// <summary>Remove file returns error, when not found.</summary>
     [Fact]
     public void RemoveFile_ReturnsError_WhenNotFound()
     {

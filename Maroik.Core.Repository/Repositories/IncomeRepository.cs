@@ -17,6 +17,8 @@ public class IncomeRepository(ApplicationDbContext context)
     /// <summary>The underlying <see cref="DbSet{TEntity}"/> for <see cref="OrmIncome"/> rows.</summary>
     protected override DbSet<OrmIncome> Set => Context.Incomes;
 
+    /// <inheritdoc />
+    /// <inheritdoc />
     // Always join the Asset navigation property so query results carry the monetary unit.
     protected override IQueryable<OrmIncome> ApplyIncludes(IQueryable<OrmIncome> query)
         => query.Include(x => x.Asset);

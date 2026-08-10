@@ -13,6 +13,7 @@ public class ExpenditureTests
 
     // -- Record ---------------------------------------------------------------
 
+    /// <summary>Record returns expenditure, when valid.</summary>
     [Fact]
     public void Record_ReturnsExpenditure_WhenValid()
     {
@@ -23,6 +24,7 @@ public class ExpenditureTests
         Assert.Equal(15000m, result.Value.Amount.Amount);
     }
 
+    /// <summary>Record returns error, when main class empty.</summary>
     [Theory]
     [InlineData(null)]
     [InlineData("")]
@@ -35,6 +37,7 @@ public class ExpenditureTests
         Assert.Equal("Expenditure.MainClassEmpty", result.FirstError.Code);
     }
 
+    /// <summary>Record returns error, when sub class empty.</summary>
     [Theory]
     [InlineData(null)]
     [InlineData("")]
@@ -47,6 +50,7 @@ public class ExpenditureTests
         Assert.Equal("Expenditure.SubClassEmpty", result.FirstError.Code);
     }
 
+    /// <summary>Record returns error, when payment method empty.</summary>
     [Theory]
     [InlineData(null)]
     [InlineData("")]
@@ -59,6 +63,7 @@ public class ExpenditureTests
         Assert.Equal("Expenditure.PaymentMethodEmpty", result.FirstError.Code);
     }
 
+    /// <summary>Record returns error, when email invalid.</summary>
     [Fact]
     public void Record_ReturnsError_WhenEmailInvalid()
     {
@@ -69,6 +74,7 @@ public class ExpenditureTests
 
     // -- Update ---------------------------------------------------------------
 
+    /// <summary>Update succeeds, when valid.</summary>
     [Fact]
     public void Update_Succeeds_WhenValid()
     {
@@ -81,6 +87,7 @@ public class ExpenditureTests
         Assert.Equal(300000m, expenditure.Amount.Amount);
     }
 
+    /// <summary>Update returns error, when payment method empty.</summary>
     [Fact]
     public void Update_ReturnsError_WhenPaymentMethodEmpty()
     {

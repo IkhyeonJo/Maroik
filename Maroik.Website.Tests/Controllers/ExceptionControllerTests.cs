@@ -14,6 +14,7 @@ public class ExceptionControllerTests
     private readonly MaroikWebApplicationFactory _factory;
     private readonly HttpClient _client;
 
+    /// <summary>Initializes a new instance of ExceptionControllerTests, sharing the MaroikWebApplicationFactory fixture across the tests in this class.</summary>
     public ExceptionControllerTests(MaroikWebApplicationFactory factory)
     {
         _factory = factory;
@@ -22,6 +23,7 @@ public class ExceptionControllerTests
 
     // -- Error ----------------------------------------------------------------
 
+    /// <summary>Error anonymous session returns200 and request id.</summary>
     [Fact]
     public async Task Error_AnonymousSession_Returns200AndRequestId()
     {
@@ -34,6 +36,7 @@ public class ExceptionControllerTests
         Assert.Contains("Request ID:", html);
     }
 
+    /// <summary>Error logged in user returns200.</summary>
     [Fact]
     public async Task Error_LoggedInUser_Returns200()
     {
@@ -48,6 +51,7 @@ public class ExceptionControllerTests
         Assert.Equal(System.Net.HttpStatusCode.OK, response.StatusCode);
     }
 
+    /// <summary>Error response is not cached.</summary>
     [Fact]
     public async Task Error_ResponseIsNotCached()
     {
@@ -58,6 +62,7 @@ public class ExceptionControllerTests
 
     // -- AccessDenied -----------------------------------------------------------
 
+    /// <summary>Access denied anonymous session is redirected by authorization filter.</summary>
     [Fact]
     public async Task AccessDenied_AnonymousSession_IsRedirectedByAuthorizationFilter()
     {
@@ -69,6 +74,7 @@ public class ExceptionControllerTests
         Assert.Contains("/Dashboard/AnonymousIndex", response.Headers.Location!.ToString());
     }
 
+    /// <summary>Access denied logged in user is redirected by authorization filter.</summary>
     [Fact]
     public async Task AccessDenied_LoggedInUser_IsRedirectedByAuthorizationFilter()
     {

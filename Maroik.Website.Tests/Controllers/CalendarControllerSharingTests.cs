@@ -21,6 +21,7 @@ public class CalendarControllerSharingTests
     private readonly MaroikWebApplicationFactory _factory;
     private readonly HttpClient _client;
 
+    /// <summary>Initializes a new instance of CalendarControllerSharingTests, sharing the MaroikWebApplicationFactory fixture across the tests in this class.</summary>
     public CalendarControllerSharingTests(MaroikWebApplicationFactory factory)
     {
         _factory = factory;
@@ -71,6 +72,7 @@ public class CalendarControllerSharingTests
 
     // -- UpdateCalendarShared: role gating -------------------------------------------
 
+    /// <summary>Update calendar shared user session is forbidden.</summary>
     [Fact]
     public async Task UpdateCalendarShared_UserSession_IsForbidden()
     {
@@ -84,6 +86,7 @@ public class CalendarControllerSharingTests
 
     // -- UpdateCalendarShared: success path --------------------------------------------
 
+    /// <summary>Update calendar shared existing calendar persists sharing flags.</summary>
     [Fact]
     public async Task UpdateCalendarShared_ExistingCalendar_PersistsSharingFlags()
     {
@@ -106,6 +109,7 @@ public class CalendarControllerSharingTests
 
     // -- UpdateOtherCalendar: role gating ----------------------------------------------
 
+    /// <summary>Update other calendar anonymous session is forbidden.</summary>
     [Fact]
     public async Task UpdateOtherCalendar_AnonymousSession_IsForbidden()
     {
@@ -119,6 +123,7 @@ public class CalendarControllerSharingTests
 
     // -- UpdateOtherCalendar: success path / validation --------------------------------
 
+    /// <summary>Update other calendar shared calendar persists subscription.</summary>
     [Fact]
     public async Task UpdateOtherCalendar_SharedCalendar_PersistsSubscription()
     {
@@ -144,6 +149,7 @@ public class CalendarControllerSharingTests
         Assert.True(db.OtherCalendars.Any(o => o.AccountEmail == subscriberEmail && o.CalendarId == calendarId));
     }
 
+    /// <summary>Update other calendar not shared to users returns failure result.</summary>
     [Fact]
     public async Task UpdateOtherCalendar_NotSharedToUsers_ReturnsFailureResult()
     {

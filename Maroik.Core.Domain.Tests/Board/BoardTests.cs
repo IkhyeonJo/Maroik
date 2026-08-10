@@ -19,6 +19,7 @@ public class BoardTests
 
     // -- Create ---------------------------------------------------------------
 
+    /// <summary>Create returns board, when valid.</summary>
     [Fact]
     public void Create_ReturnsBoard_WhenValid()
     {
@@ -29,6 +30,7 @@ public class BoardTests
         Assert.Equal("Alice", result.Value.Writer);
     }
 
+    /// <summary>Create returns error, when type empty.</summary>
     [Theory]
     [InlineData(null)]
     [InlineData("")]
@@ -41,6 +43,7 @@ public class BoardTests
         Assert.Equal("Board.TypeEmpty", result.FirstError.Code);
     }
 
+    /// <summary>Create returns error, when title empty.</summary>
     [Theory]
     [InlineData(null)]
     [InlineData("")]
@@ -53,6 +56,7 @@ public class BoardTests
         Assert.Equal("Board.TitleEmpty", result.FirstError.Code);
     }
 
+    /// <summary>Create returns error, when title too long.</summary>
     [Fact]
     public void Create_ReturnsError_WhenTitleTooLong()
     {
@@ -62,6 +66,7 @@ public class BoardTests
         Assert.Equal("Board.TitleTooLong", result.FirstError.Code);
     }
 
+    /// <summary>Create returns error, when content too long.</summary>
     [Fact]
     public void Create_ReturnsError_WhenContentTooLong()
     {
@@ -71,6 +76,7 @@ public class BoardTests
         Assert.Equal("Board.ContentTooLong", result.FirstError.Code);
     }
 
+    /// <summary>Create returns error, when writer empty.</summary>
     [Theory]
     [InlineData(null)]
     [InlineData("")]
@@ -85,6 +91,7 @@ public class BoardTests
 
     // -- Update ---------------------------------------------------------------
 
+    /// <summary>Update succeeds, when valid.</summary>
     [Fact]
     public void Update_Succeeds_WhenValid()
     {
@@ -96,6 +103,7 @@ public class BoardTests
         Assert.Equal("New Title", board.Title);
     }
 
+    /// <summary>Update returns error, when deleted.</summary>
     [Fact]
     public void Update_ReturnsError_WhenDeleted()
     {
@@ -108,6 +116,7 @@ public class BoardTests
         Assert.Equal("Board.Deleted", result.FirstError.Code);
     }
 
+    /// <summary>Update returns error, when title too long.</summary>
     [Fact]
     public void Update_ReturnsError_WhenTitleTooLong()
     {
@@ -121,6 +130,7 @@ public class BoardTests
 
     // -- IncrementView ---------------------------------------------------------
 
+    /// <summary>Increment view increments counter.</summary>
     [Fact]
     public void IncrementView_IncrementsCounter()
     {
@@ -134,6 +144,7 @@ public class BoardTests
 
     // -- AddComment ------------------------------------------------------------
 
+    /// <summary>Add comment succeeds, when not locked or deleted.</summary>
     [Fact]
     public void AddComment_Succeeds_WhenNotLockedOrDeleted()
     {
@@ -146,6 +157,7 @@ public class BoardTests
         Assert.Single(board.Comments);
     }
 
+    /// <summary>Add comment returns error, when locked.</summary>
     [Fact]
     public void AddComment_ReturnsError_WhenLocked()
     {
@@ -158,6 +170,7 @@ public class BoardTests
         Assert.Equal("Board.Locked", result.FirstError.Code);
     }
 
+    /// <summary>Add comment returns error, when deleted.</summary>
     [Fact]
     public void AddComment_ReturnsError_WhenDeleted()
     {
@@ -170,6 +183,7 @@ public class BoardTests
         Assert.Equal("Board.Deleted", result.FirstError.Code);
     }
 
+    /// <summary>Add comment returns error, when comment board id mismatch.</summary>
     [Fact]
     public void AddComment_ReturnsError_WhenCommentBoardIdMismatch()
     {
@@ -184,6 +198,7 @@ public class BoardTests
 
     // -- DeleteComment ---------------------------------------------------------
 
+    /// <summary>Delete comment succeeds, when comment exists.</summary>
     [Fact]
     public void DeleteComment_Succeeds_WhenCommentExists()
     {
@@ -196,6 +211,7 @@ public class BoardTests
         Assert.True(board.Comments[0].Deleted);
     }
 
+    /// <summary>Delete comment returns error, when comment not found.</summary>
     [Fact]
     public void DeleteComment_ReturnsError_WhenCommentNotFound()
     {
@@ -209,6 +225,7 @@ public class BoardTests
 
     // -- AttachFile ------------------------------------------------------------
 
+    /// <summary>Attach file succeeds, when file matches board.</summary>
     [Fact]
     public void AttachFile_Succeeds_WhenFileMatchesBoard()
     {
@@ -220,6 +237,7 @@ public class BoardTests
         Assert.Single(board.AttachedFiles);
     }
 
+    /// <summary>Attach file returns error, when file board id mismatch.</summary>
     [Fact]
     public void AttachFile_ReturnsError_WhenFileBoardIdMismatch()
     {
@@ -233,6 +251,7 @@ public class BoardTests
 
     // -- Lock / Unlock ---------------------------------------------------------
 
+    /// <summary>Lock sets locked true.</summary>
     [Fact]
     public void Lock_SetsLockedTrue()
     {
@@ -243,6 +262,7 @@ public class BoardTests
         Assert.True(board.Locked);
     }
 
+    /// <summary>Unlock sets locked false.</summary>
     [Fact]
     public void Unlock_SetsLockedFalse()
     {
@@ -256,6 +276,7 @@ public class BoardTests
 
     // -- Pin / Unpin -----------------------------------------------------------
 
+    /// <summary>Pin sets noticed true.</summary>
     [Fact]
     public void Pin_SetsNoticedTrue()
     {
@@ -266,6 +287,7 @@ public class BoardTests
         Assert.True(board.Noticed);
     }
 
+    /// <summary>Unpin sets noticed false.</summary>
     [Fact]
     public void Unpin_SetsNoticedFalse()
     {
@@ -279,6 +301,7 @@ public class BoardTests
 
     // -- SoftDelete ------------------------------------------------------------
 
+    /// <summary>Soft delete succeeds, when not deleted.</summary>
     [Fact]
     public void SoftDelete_Succeeds_WhenNotDeleted()
     {
@@ -290,6 +313,7 @@ public class BoardTests
         Assert.True(board.Deleted);
     }
 
+    /// <summary>Soft delete returns error, when already deleted.</summary>
     [Fact]
     public void SoftDelete_ReturnsError_WhenAlreadyDeleted()
     {
@@ -304,6 +328,7 @@ public class BoardTests
 
     // -- IsOwnedBy / CanBeEditedBy / CanBeDeletedBy -----------------------------
 
+    /// <summary>Is owned by returns true for writer.</summary>
     [Fact]
     public void IsOwnedBy_ReturnsTrue_ForWriter()
     {
@@ -312,6 +337,7 @@ public class BoardTests
         Assert.True(board.IsOwnedBy("Alice"));
     }
 
+    /// <summary>Is owned by returns false for non writer.</summary>
     [Fact]
     public void IsOwnedBy_ReturnsFalse_ForNonWriter()
     {
@@ -320,6 +346,7 @@ public class BoardTests
         Assert.False(board.IsOwnedBy("Bob"));
     }
 
+    /// <summary>Can be edited by returns true for writer.</summary>
     [Fact]
     public void CanBeEditedBy_ReturnsTrue_ForWriter()
     {
@@ -328,6 +355,7 @@ public class BoardTests
         Assert.True(board.CanBeEditedBy("Alice"));
     }
 
+    /// <summary>Can be edited by returns false for admin non writer.</summary>
     [Fact]
     public void CanBeEditedBy_ReturnsFalse_ForAdminNonWriter()
     {
@@ -337,6 +365,7 @@ public class BoardTests
         Assert.False(board.CanBeEditedBy("Bob"));
     }
 
+    /// <summary>Can be deleted by returns true for writer.</summary>
     [Fact]
     public void CanBeDeletedBy_ReturnsTrue_ForWriter()
     {
@@ -345,6 +374,7 @@ public class BoardTests
         Assert.True(board.CanBeDeletedBy("Alice", isAdmin: false));
     }
 
+    /// <summary>Can be deleted by returns true for non writer admin.</summary>
     [Fact]
     public void CanBeDeletedBy_ReturnsTrue_ForNonWriterAdmin()
     {
@@ -353,6 +383,7 @@ public class BoardTests
         Assert.True(board.CanBeDeletedBy("Bob", isAdmin: true));
     }
 
+    /// <summary>Can be deleted by returns false for non writer non admin.</summary>
     [Fact]
     public void CanBeDeletedBy_ReturnsFalse_ForNonWriterNonAdmin()
     {

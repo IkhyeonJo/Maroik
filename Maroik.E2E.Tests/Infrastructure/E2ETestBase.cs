@@ -15,6 +15,7 @@ public abstract class E2ETestBase
 
     protected string BaseUrl => _fixture.ServerBaseUrl;
 
+    /// <summary>Initializes the base class with the shared fixture supplied by the test collection.</summary>
     protected E2ETestBase(E2ESharedFixture fixture)
     {
         _fixture = fixture;

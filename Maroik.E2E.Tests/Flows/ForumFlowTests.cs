@@ -10,6 +10,7 @@ namespace Maroik.E2E.Tests.Flows;
 [Collection("E2E")]
 public class ForumFlowTests : E2ETestBase
 {
+    /// <summary>Initializes a new instance of ForumFlowTests, sharing the E2ESharedFixture fixture across the tests in this class.</summary>
     public ForumFlowTests(E2ESharedFixture fixture) : base(fixture) { }
 
     // -- Forum list -----------------------------------------------------------

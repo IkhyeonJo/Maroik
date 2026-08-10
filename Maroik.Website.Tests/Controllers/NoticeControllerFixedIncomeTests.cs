@@ -26,6 +26,7 @@ public class NoticeControllerFixedIncomeTests
     private readonly MaroikWebApplicationFactory _factory;
     private readonly HttpClient _client;
 
+    /// <summary>Initializes a new instance of NoticeControllerFixedIncomeTests, sharing the MaroikWebApplicationFactory fixture across the tests in this class.</summary>
     public NoticeControllerFixedIncomeTests(MaroikWebApplicationFactory factory)
     {
         _factory = factory;
@@ -77,6 +78,7 @@ public class NoticeControllerFixedIncomeTests
 
     // -- CreateFixedIncome: role gating -----------------------------------------
 
+    /// <summary>Create fixed income anonymous session is forbidden.</summary>
     [Fact]
     public async Task CreateFixedIncome_AnonymousSession_IsForbidden()
     {
@@ -90,6 +92,7 @@ public class NoticeControllerFixedIncomeTests
 
     // -- CreateFixedIncome: validation --------------------------------------------
 
+    /// <summary>Create fixed income invalid deposit month returns input invalid.</summary>
     [Fact]
     public async Task CreateFixedIncome_InvalidDepositMonth_ReturnsInputInvalid()
     {
@@ -108,6 +111,7 @@ public class NoticeControllerFixedIncomeTests
         Assert.Contains("Input is invalid", json);
     }
 
+    /// <summary>Create fixed income unknown deposit asset returns input invalid.</summary>
     [Fact]
     public async Task CreateFixedIncome_UnknownDepositAsset_ReturnsInputInvalid()
     {
@@ -128,6 +132,7 @@ public class NoticeControllerFixedIncomeTests
 
     // -- CreateFixedIncome / IsFixedIncomeExists: success path --------------------
 
+    /// <summary>Create fixed income then is fixed income exists finds the new record.</summary>
     [Fact]
     public async Task CreateFixedIncome_ThenIsFixedIncomeExists_FindsTheNewRecord()
     {
@@ -149,6 +154,7 @@ public class NoticeControllerFixedIncomeTests
         Assert.Contains("\"result\":true", existsJson);
     }
 
+    /// <summary>Is fixed income exists unknown id returns failure result.</summary>
     [Fact]
     public async Task IsFixedIncomeExists_UnknownId_ReturnsFailureResult()
     {
@@ -163,6 +169,7 @@ public class NoticeControllerFixedIncomeTests
 
     // -- UpdateFixedIncome ---------------------------------------------------------
 
+    /// <summary>Update fixed income existing record returns success result.</summary>
     [Fact]
     public async Task UpdateFixedIncome_ExistingRecord_ReturnsSuccessResult()
     {
@@ -200,6 +207,7 @@ public class NoticeControllerFixedIncomeTests
         // a checkbox for it — that would be a silent no-op from the user's perspective.
     }
 
+    /// <summary>Update fixed income unknown id returns failure result.</summary>
     [Fact]
     public async Task UpdateFixedIncome_UnknownId_ReturnsFailureResult()
     {
@@ -214,6 +222,7 @@ public class NoticeControllerFixedIncomeTests
 
     // -- DeleteFixedIncome ----------------------------------------------------------
 
+    /// <summary>Delete fixed income existing record returns success result.</summary>
     [Fact]
     public async Task DeleteFixedIncome_ExistingRecord_ReturnsSuccessResult()
     {

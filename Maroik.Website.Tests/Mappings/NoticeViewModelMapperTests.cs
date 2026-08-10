@@ -12,6 +12,7 @@ public class NoticeViewModelMapperTests
 {
     // ── FixedSchedulePolicy.IsNoticed ─────────────────────────────────────────
 
+    /// <summary>Is noticed unpunctuality always true.</summary>
     [Fact]
     public void IsNoticed_Unpunctuality_AlwaysTrue()
     {
@@ -19,6 +20,7 @@ public class NoticeViewModelMapperTests
         Assert.True(result);
     }
 
+    /// <summary>Is noticed deposit today within window true.</summary>
     [Fact]
     public void IsNoticed_DepositTodayWithinWindow_True()
     {
@@ -27,6 +29,7 @@ public class NoticeViewModelMapperTests
         Assert.True(result);
     }
 
+    /// <summary>Is noticed deposit beyond window false.</summary>
     [Fact]
     public void IsNoticed_DepositBeyondWindow_False()
     {
@@ -35,6 +38,7 @@ public class NoticeViewModelMapperTests
         Assert.False(result);
     }
 
+    /// <summary>Is noticed deposit already past false.</summary>
     [Fact]
     public void IsNoticed_DepositAlreadyPast_False()
     {
@@ -43,6 +47,7 @@ public class NoticeViewModelMapperTests
         Assert.False(result);
     }
 
+    /// <summary>Is noticed feb29 non leap year false.</summary>
     [Fact]
     public void IsNoticed_Feb29NonLeapYear_False()
     {
@@ -53,6 +58,7 @@ public class NoticeViewModelMapperTests
 
     // ── FixedSchedulePolicy.IsExpired ─────────────────────────────────────────
 
+    /// <summary>Is expired maturity in past true.</summary>
     [Fact]
     public void IsExpired_MaturityInPast_True()
     {
@@ -61,6 +67,7 @@ public class NoticeViewModelMapperTests
         Assert.True(result);
     }
 
+    /// <summary>Is expired maturity today false.</summary>
     [Fact]
     public void IsExpired_MaturityToday_False()
     {
@@ -69,6 +76,7 @@ public class NoticeViewModelMapperTests
         Assert.False(result);
     }
 
+    /// <summary>Is expired maturity in future false.</summary>
     [Fact]
     public void IsExpired_MaturityInFuture_False()
     {
@@ -79,6 +87,7 @@ public class NoticeViewModelMapperTests
 
     // ── FixedSchedulePolicy.GetRowCssClass ────────────────────────────────────
 
+    /// <summary>Get row css class expired takes priority over noticed.</summary>
     [Fact]
     public void GetRowCssClass_Expired_TakesPriorityOverNoticed()
     {
@@ -86,6 +95,7 @@ public class NoticeViewModelMapperTests
         Assert.Equal("table-danger clsGridRow", result);
     }
 
+    /// <summary>Get row css class noticed not expired returns info class.</summary>
     [Fact]
     public void GetRowCssClass_NoticedNotExpired_ReturnsInfoClass()
     {
@@ -93,6 +103,7 @@ public class NoticeViewModelMapperTests
         Assert.Equal("table-info clsGridRow", result);
     }
 
+    /// <summary>Get row css class neither expired nor noticed returns inactive class.</summary>
     [Fact]
     public void GetRowCssClass_NeitherExpiredNorNoticed_ReturnsInactiveClass()
     {
@@ -102,6 +113,7 @@ public class NoticeViewModelMapperTests
 
     // ── NoticeViewModelMapper.ToDisplayViewModels ────────────────────────────
 
+    /// <summary>Fixed incomes to display view models localizes class fields.</summary>
     [Fact]
     public void FixedIncomesToDisplayViewModels_LocalizesClassFields()
     {
@@ -111,6 +123,7 @@ public class NoticeViewModelMapperTests
         Assert.Equal("L:LaborIncome", vms[0].SubClass);
     }
 
+    /// <summary>Fixed incomes to display view models populates monetary unit.</summary>
     [Fact]
     public void FixedIncomesToDisplayViewModels_PopulatesMonetaryUnit()
     {

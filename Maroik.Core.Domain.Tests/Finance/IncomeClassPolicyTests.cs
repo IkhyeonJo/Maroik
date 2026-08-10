@@ -11,6 +11,7 @@ public class IncomeClassPolicyTests
 {
     // -- RegularIncome ---------------------------------------------------------
 
+    /// <summary>Validate returns success for all regular income sub classes.</summary>
     [Theory]
     [InlineData("LaborIncome")]
     [InlineData("BusinessIncome")]
@@ -25,6 +26,7 @@ public class IncomeClassPolicyTests
         Assert.False(result.IsError);
     }
 
+    /// <summary>Validate returns error, when regular income sub class invalid.</summary>
     [Theory]
     [InlineData("UnknownSub")]
     [InlineData("")]
@@ -39,6 +41,7 @@ public class IncomeClassPolicyTests
 
     // -- IrregularIncome -------------------------------------------------------
 
+    /// <summary>Validate returns success for all irregular income sub classes.</summary>
     [Theory]
     [InlineData("LaborIncome")]
     [InlineData("OtherIncome")]
@@ -49,6 +52,7 @@ public class IncomeClassPolicyTests
         Assert.False(result.IsError);
     }
 
+    /// <summary>Validate returns error, when irregular income sub class invalid.</summary>
     [Theory]
     [InlineData("BusinessIncome")]
     [InlineData("PensionIncome")]
@@ -64,6 +68,7 @@ public class IncomeClassPolicyTests
 
     // -- Unknown main class ----------------------------------------------------
 
+    /// <summary>Validate returns error, when main class unknown.</summary>
     [Theory]
     [InlineData("Unknown")]
     [InlineData("")]

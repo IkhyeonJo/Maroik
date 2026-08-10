@@ -8,6 +8,7 @@ namespace Maroik.Core.DomainTests.ValueObjects;
 /// </summary>
 public class EmailTests
 {
+    /// <summary>Create returns email, when valid.</summary>
     [Theory]
     [InlineData("user@example.com")]
     [InlineData("USER@EXAMPLE.COM")]
@@ -20,6 +21,7 @@ public class EmailTests
         Assert.Equal(input.ToLowerInvariant(), result.Value.Value);
     }
 
+    /// <summary>Create returns error, when empty.</summary>
     [Theory]
     [InlineData(null)]
     [InlineData("")]
@@ -32,6 +34,7 @@ public class EmailTests
         Assert.Equal("Email.Empty", result.FirstError.Code);
     }
 
+    /// <summary>Create returns error, when invalid format.</summary>
     [Theory]
     [InlineData("notanemail")]
     [InlineData("@nodomain")]
@@ -45,6 +48,7 @@ public class EmailTests
         Assert.Equal("Email.Invalid", result.FirstError.Code);
     }
 
+    /// <summary>Create normalizes to lower case.</summary>
     [Fact]
     public void Create_NormalizesToLowerCase()
     {
@@ -54,6 +58,7 @@ public class EmailTests
         Assert.Equal("user@example.com", result.Value.Value);
     }
 
+    /// <summary>Equality same value are equal.</summary>
     [Fact]
     public void Equality_SameValue_AreEqual()
     {
@@ -63,6 +68,7 @@ public class EmailTests
         Assert.Equal(a, b);
     }
 
+    /// <summary>Equality different values are not equal.</summary>
     [Fact]
     public void Equality_DifferentValues_AreNotEqual()
     {

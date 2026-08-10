@@ -14,6 +14,7 @@ public class DashboardControllerTests
     private readonly MaroikWebApplicationFactory _factory;
     private readonly HttpClient _client;
 
+    /// <summary>Initializes a new instance of DashboardControllerTests, sharing the MaroikWebApplicationFactory fixture across the tests in this class.</summary>
     public DashboardControllerTests(MaroikWebApplicationFactory factory)
     {
         _factory = factory;
@@ -47,6 +48,7 @@ public class DashboardControllerTests
         Assert.Equal(System.Net.HttpStatusCode.OK, response.StatusCode);
     }
 
+    /// <summary>Anonymous index logged in user redirects to user index.</summary>
     [Fact]
     public async Task AnonymousIndex_LoggedInUser_RedirectsToUserIndex()
     {
@@ -60,6 +62,7 @@ public class DashboardControllerTests
         Assert.Contains("UserIndex", response.Headers.Location!.ToString());
     }
 
+    /// <summary>Anonymous index logged in admin redirects to admin index.</summary>
     [Fact]
     public async Task AnonymousIndex_LoggedInAdmin_RedirectsToAdminIndex()
     {
@@ -75,6 +78,7 @@ public class DashboardControllerTests
 
     // -- AdminIndex -------------------------------------------------------------
 
+    /// <summary>Admin index logged in admin returns200.</summary>
     [Fact]
     public async Task AdminIndex_LoggedInAdmin_Returns200()
     {
@@ -92,6 +96,7 @@ public class DashboardControllerTests
 
     // -- UserIndex ----------------------------------------------------------------
 
+    /// <summary>User index logged in user returns200.</summary>
     [Fact]
     public async Task UserIndex_LoggedInUser_Returns200()
     {
@@ -106,6 +111,7 @@ public class DashboardControllerTests
 
     // -- UserUpdateDefaultMonetary --------------------------------------------------
 
+    /// <summary>User update default monetary logged in user returns success result.</summary>
     [Fact]
     public async Task UserUpdateDefaultMonetary_LoggedInUser_ReturnsSuccessResult()
     {
@@ -118,6 +124,7 @@ public class DashboardControllerTests
         Assert.Contains("\"result\":true", json);
     }
 
+    /// <summary>User update default monetary anonymous session is forbidden.</summary>
     [Fact]
     public async Task UserUpdateDefaultMonetary_AnonymousSession_IsForbidden()
     {
@@ -131,6 +138,7 @@ public class DashboardControllerTests
 
     // -- CultureManagement ----------------------------------------------------------
 
+    /// <summary>Culture management anonymous session sets culture cookie.</summary>
     [Fact]
     public async Task CultureManagement_AnonymousSession_SetsCultureCookie()
     {

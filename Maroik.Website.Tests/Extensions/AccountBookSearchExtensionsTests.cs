@@ -15,6 +15,7 @@ public class AccountBookSearchExtensionsTests
         new() { ProductName = "Cash",       Item = "Cash",    MonetaryUnit = "KRW", Note = ""      }
     ];
 
+    /// <summary>Asset empty search returns all.</summary>
     [Theory]
     [InlineData(null)]
     [InlineData("")]
@@ -24,6 +25,7 @@ public class AccountBookSearchExtensionsTests
         Assert.Equal(3, result.Count());
     }
 
+    /// <summary>Asset matches product name.</summary>
     [Fact]
     public void Asset_MatchesProductName()
     {
@@ -32,6 +34,7 @@ public class AccountBookSearchExtensionsTests
         Assert.Equal("Savings", result[0].ProductName);
     }
 
+    /// <summary>Asset matches monetary unit.</summary>
     [Fact]
     public void Asset_MatchesMonetaryUnit()
     {
@@ -40,6 +43,7 @@ public class AccountBookSearchExtensionsTests
         Assert.Equal("Stock Fund", result[0].ProductName);
     }
 
+    /// <summary>Asset no match returns empty.</summary>
     [Fact]
     public void Asset_NoMatch_ReturnsEmpty()
     {
@@ -55,6 +59,7 @@ public class AccountBookSearchExtensionsTests
         new() { MainClass = "IrregularIncome", SubClass = "FinancialIncome", Content = "dividend", MonetaryUnit = "USD" }
     ];
 
+    /// <summary>Income empty search returns all.</summary>
     [Theory]
     [InlineData(null)]
     [InlineData("")]
@@ -64,6 +69,7 @@ public class AccountBookSearchExtensionsTests
         Assert.Equal(2, result.Count());
     }
 
+    /// <summary>Income matches content.</summary>
     [Fact]
     public void Income_MatchesContent()
     {
@@ -72,6 +78,7 @@ public class AccountBookSearchExtensionsTests
         Assert.Equal("salary", result[0].Content);
     }
 
+    /// <summary>Income matches monetary unit.</summary>
     [Fact]
     public void Income_MatchesMonetaryUnit()
     {
@@ -88,6 +95,7 @@ public class AccountBookSearchExtensionsTests
         new() { MainClass = "NonConsumerSpending", SubClass = "Tax",                  Content = "income tax", PaymentMethod = "BankTransfer" }
     ];
 
+    /// <summary>Expenditure empty search returns all.</summary>
     [Theory]
     [InlineData(null)]
     [InlineData("")]
@@ -97,6 +105,7 @@ public class AccountBookSearchExtensionsTests
         Assert.Equal(2, result.Count());
     }
 
+    /// <summary>Expenditure matches payment method.</summary>
     [Fact]
     public void Expenditure_MatchesPaymentMethod()
     {
@@ -105,6 +114,7 @@ public class AccountBookSearchExtensionsTests
         Assert.Equal("lunch", result[0].Content);
     }
 
+    /// <summary>Expenditure matches sub class.</summary>
     [Fact]
     public void Expenditure_MatchesSubClass()
     {
@@ -113,6 +123,7 @@ public class AccountBookSearchExtensionsTests
         Assert.Equal("income tax", result[0].Content);
     }
 
+    /// <summary>Expenditure no match returns empty.</summary>
     [Fact]
     public void Expenditure_NoMatch_ReturnsEmpty()
     {

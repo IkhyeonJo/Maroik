@@ -36,6 +36,7 @@ public class ExcelExportServiceTests
 
     // ── CreateAssetExcel ──────────────────────────────────────────────────────
 
+    /// <summary>Create asset excel localizes headers.</summary>
     [Fact]
     public void CreateAssetExcel_LocalizesHeaders()
     {
@@ -48,6 +49,7 @@ public class ExcelExportServiceTests
             rows[0]);
     }
 
+    /// <summary>Create asset excel orders rows by product name ascending.</summary>
     [Fact]
     public void CreateAssetExcel_OrdersRowsByProductNameAscending()
     {
@@ -63,6 +65,7 @@ public class ExcelExportServiceTests
         Assert.Equal("Zeta", rows[2][0]);
     }
 
+    /// <summary>Create asset excel localizes item column and trims amount trailing zeros.</summary>
     [Fact]
     public void CreateAssetExcel_LocalizesItemColumn_AndTrimsAmountTrailingZeros()
     {
@@ -76,6 +79,7 @@ public class ExcelExportServiceTests
         Assert.Equal("KRW", row[3]);
     }
 
+    /// <summary>Create asset excel converts created and updated to the given time zone.</summary>
     [Fact]
     public void CreateAssetExcel_ConvertsCreatedAndUpdatedToTheGivenTimeZone()
     {
@@ -92,6 +96,7 @@ public class ExcelExportServiceTests
         Assert.Contains("00:00:00", row[5]);
     }
 
+    /// <summary>Create asset excel renders note and deleted flag.</summary>
     [Fact]
     public void CreateAssetExcel_RendersNoteAndDeletedFlag()
     {
@@ -105,6 +110,7 @@ public class ExcelExportServiceTests
 
     // ── CreateIncomeExcel ─────────────────────────────────────────────────────
 
+    /// <summary>Create income excel localizes headers and class fields.</summary>
     [Fact]
     public void CreateIncomeExcel_LocalizesHeadersAndClassFields()
     {
@@ -118,6 +124,7 @@ public class ExcelExportServiceTests
         Assert.Equal("salary", rows[1][2]);
     }
 
+    /// <summary>Create income excel populates monetary unit from matching deposit asset.</summary>
     [Fact]
     public void CreateIncomeExcel_PopulatesMonetaryUnitFromMatchingDepositAsset()
     {
@@ -130,6 +137,7 @@ public class ExcelExportServiceTests
         Assert.Equal("Bank", row[5]);
     }
 
+    /// <summary>Create income excel no matching asset monetary unit is empty.</summary>
     [Fact]
     public void CreateIncomeExcel_NoMatchingAsset_MonetaryUnitIsEmpty()
     {
@@ -140,6 +148,7 @@ public class ExcelExportServiceTests
         Assert.Equal("", row[4]);
     }
 
+    /// <summary>Create income excel orders by created then updated descending.</summary>
     [Fact]
     public void CreateIncomeExcel_OrdersByCreatedThenUpdatedDescending()
     {
@@ -155,6 +164,7 @@ public class ExcelExportServiceTests
         Assert.Equal("older", rows[2][2]);
     }
 
+    /// <summary>Create income excel trims amount trailing zeros.</summary>
     [Fact]
     public void CreateIncomeExcel_TrimsAmountTrailingZeros()
     {
@@ -167,6 +177,7 @@ public class ExcelExportServiceTests
 
     // ── CreateExpenditureExcel ────────────────────────────────────────────────
 
+    /// <summary>Create expenditure excel localizes headers and class fields.</summary>
     [Fact]
     public void CreateExpenditureExcel_LocalizesHeadersAndClassFields()
     {
@@ -179,6 +190,7 @@ public class ExcelExportServiceTests
         Assert.Equal("L:Tax", rows[1][1]);
     }
 
+    /// <summary>Create expenditure excel populates monetary unit from asset matching payment method.</summary>
     [Fact]
     public void CreateExpenditureExcel_PopulatesMonetaryUnitFromAssetMatchingPaymentMethod()
     {
@@ -193,6 +205,7 @@ public class ExcelExportServiceTests
         Assert.Equal("Bank", row[7]);
     }
 
+    /// <summary>Create expenditure excel orders by created then updated descending.</summary>
     [Fact]
     public void CreateExpenditureExcel_OrdersByCreatedThenUpdatedDescending()
     {
@@ -210,6 +223,7 @@ public class ExcelExportServiceTests
 
     // ── CreateFixedIncomeExcel ────────────────────────────────────────────────
 
+    /// <summary>Create fixed income excel localizes headers.</summary>
     [Fact]
     public void CreateFixedIncomeExcel_LocalizesHeaders()
     {
@@ -220,6 +234,7 @@ public class ExcelExportServiceTests
         Assert.Equal("L:Expired", rows[0][13]);
     }
 
+    /// <summary>Create fixed income excel localizes class field values.</summary>
     [Fact]
     public void CreateFixedIncomeExcel_LocalizesClassFieldValues()
     {
@@ -234,6 +249,7 @@ public class ExcelExportServiceTests
         Assert.Equal("L:LaborIncome", row[1]);
     }
 
+    /// <summary>Create fixed income excel populates monetary unit from deposit asset.</summary>
     [Fact]
     public void CreateFixedIncomeExcel_PopulatesMonetaryUnitFromDepositAsset()
     {
@@ -248,6 +264,7 @@ public class ExcelExportServiceTests
         Assert.Equal("KRW", row[4]);
     }
 
+    /// <summary>Create fixed income excel expired rows are ordered before active rows.</summary>
     [Fact]
     public void CreateFixedIncomeExcel_ExpiredRowsAreOrderedBeforeActiveRows()
     {
@@ -265,6 +282,7 @@ public class ExcelExportServiceTests
         Assert.Equal("False", rows[2][13]);
     }
 
+    /// <summary>Create fixed income excel renders maturity date and deposit month day.</summary>
     [Fact]
     public void CreateFixedIncomeExcel_RendersMaturityDateAndDepositMonthDay()
     {
@@ -280,6 +298,7 @@ public class ExcelExportServiceTests
         Assert.Equal("2030-12-31", row[7]);
     }
 
+    /// <summary>Create fixed income excel unpunctuality always marks noticed true.</summary>
     [Fact]
     public void CreateFixedIncomeExcel_UnpunctualityAlwaysMarksNoticedTrue()
     {
@@ -295,6 +314,7 @@ public class ExcelExportServiceTests
 
     // ── CreateFixedExpenditureExcel ───────────────────────────────────────────
 
+    /// <summary>Create fixed expenditure excel localizes headers and class fields.</summary>
     [Fact]
     public void CreateFixedExpenditureExcel_LocalizesHeadersAndClassFields()
     {
@@ -310,6 +330,7 @@ public class ExcelExportServiceTests
         Assert.Equal("L:Tax", rows[1][1]);
     }
 
+    /// <summary>Create fixed expenditure excel trims amount trailing zeros and populates monetary unit.</summary>
     [Fact]
     public void CreateFixedExpenditureExcel_TrimsAmountTrailingZeros_AndPopulatesMonetaryUnit()
     {
@@ -325,6 +346,7 @@ public class ExcelExportServiceTests
         Assert.Equal("USD", row[4]);
     }
 
+    /// <summary>Create fixed expenditure excel expired rows are ordered before active rows.</summary>
     [Fact]
     public void CreateFixedExpenditureExcel_ExpiredRowsAreOrderedBeforeActiveRows()
     {
@@ -342,6 +364,7 @@ public class ExcelExportServiceTests
 
     // ── CreateAccountExcel ────────────────────────────────────────────────────
 
+    /// <summary>Create account excel localizes headers.</summary>
     [Fact]
     public void CreateAccountExcel_LocalizesHeaders()
     {
@@ -351,6 +374,7 @@ public class ExcelExportServiceTests
         Assert.Equal("L:HashedPassword", rows[0][1]);
     }
 
+    /// <summary>Create account excel orders by email then nickname ascending.</summary>
     [Fact]
     public void CreateAccountExcel_OrdersByEmailThenNicknameAscending()
     {
@@ -366,6 +390,7 @@ public class ExcelExportServiceTests
         Assert.Equal("z@example.com", rows[2][0]);
     }
 
+    /// <summary>Create account excel converts created and updated to given time zone.</summary>
     [Fact]
     public void CreateAccountExcel_ConvertsCreatedAndUpdatedToGivenTimeZone()
     {
@@ -378,6 +403,7 @@ public class ExcelExportServiceTests
         Assert.Contains("09:00:00", row[12]);
     }
 
+    /// <summary>Create account excel renders boolean and numeric fields as strings.</summary>
     [Fact]
     public void CreateAccountExcel_RendersBooleanAndNumericFieldsAsStrings()
     {
@@ -394,6 +420,7 @@ public class ExcelExportServiceTests
 
     // ── CreateMenuExcel ───────────────────────────────────────────────────────
 
+    /// <summary>Create menu excel localizes headers.</summary>
     [Fact]
     public void CreateMenuExcel_LocalizesHeaders()
     {
@@ -404,6 +431,7 @@ public class ExcelExportServiceTests
             rows[0]);
     }
 
+    /// <summary>Create menu excel category row has empty category id column.</summary>
     [Fact]
     public void CreateMenuExcel_CategoryRow_HasEmptyCategoryIdColumn()
     {
@@ -416,6 +444,7 @@ public class ExcelExportServiceTests
         Assert.Equal("Dashboard", row[5]); // Controller column
     }
 
+    /// <summary>Create menu excel sub category row has empty controller column and carries category id.</summary>
     [Fact]
     public void CreateMenuExcel_SubCategoryRow_HasEmptyControllerColumn_AndCarriesCategoryId()
     {
@@ -428,6 +457,7 @@ public class ExcelExportServiceTests
         Assert.Equal("", row[5]); // Controller column is blank for sub-categories
     }
 
+    /// <summary>Create menu excel orders combined rows by id descending.</summary>
     [Fact]
     public void CreateMenuExcel_OrdersCombinedRowsByIdDescending()
     {

@@ -21,6 +21,7 @@ public class NoticeControllerFixedExpenditureTests
     private readonly MaroikWebApplicationFactory _factory;
     private readonly HttpClient _client;
 
+    /// <summary>Initializes a new instance of NoticeControllerFixedExpenditureTests, sharing the MaroikWebApplicationFactory fixture across the tests in this class.</summary>
     public NoticeControllerFixedExpenditureTests(MaroikWebApplicationFactory factory)
     {
         _factory = factory;
@@ -75,6 +76,7 @@ public class NoticeControllerFixedExpenditureTests
 
     // -- CreateFixedExpenditure: role gating ------------------------------------
 
+    /// <summary>Create fixed expenditure anonymous session is forbidden.</summary>
     [Fact]
     public async Task CreateFixedExpenditure_AnonymousSession_IsForbidden()
     {
@@ -88,6 +90,7 @@ public class NoticeControllerFixedExpenditureTests
 
     // -- CreateFixedExpenditure: validation --------------------------------------
 
+    /// <summary>Create fixed expenditure invalid deposit month returns input invalid.</summary>
     [Fact]
     public async Task CreateFixedExpenditure_InvalidDepositMonth_ReturnsInputInvalid()
     {
@@ -106,6 +109,7 @@ public class NoticeControllerFixedExpenditureTests
         Assert.Contains("Input is invalid", json);
     }
 
+    /// <summary>Create fixed expenditure invalid deposit day for month returns input invalid.</summary>
     [Fact]
     public async Task CreateFixedExpenditure_InvalidDepositDayForMonth_ReturnsInputInvalid()
     {
@@ -126,6 +130,7 @@ public class NoticeControllerFixedExpenditureTests
 
     // -- CreateFixedExpenditure / IsFixedExpenditureExists: success path ---------
 
+    /// <summary>Create fixed expenditure then is fixed expenditure exists finds the new record.</summary>
     [Fact]
     public async Task CreateFixedExpenditure_ThenIsFixedExpenditureExists_FindsTheNewRecord()
     {
@@ -147,6 +152,7 @@ public class NoticeControllerFixedExpenditureTests
         Assert.Contains("\"result\":true", existsJson);
     }
 
+    /// <summary>Is fixed expenditure exists unknown id returns failure result.</summary>
     [Fact]
     public async Task IsFixedExpenditureExists_UnknownId_ReturnsFailureResult()
     {
@@ -161,6 +167,7 @@ public class NoticeControllerFixedExpenditureTests
 
     // -- UpdateFixedExpenditure ------------------------------------------------------
 
+    /// <summary>Update fixed expenditure existing record returns success result.</summary>
     [Fact]
     public async Task UpdateFixedExpenditure_ExistingRecord_ReturnsSuccessResult()
     {
@@ -192,6 +199,7 @@ public class NoticeControllerFixedExpenditureTests
         Assert.Equal("updated", updated.Note);
     }
 
+    /// <summary>Update fixed expenditure unknown id returns failure result.</summary>
     [Fact]
     public async Task UpdateFixedExpenditure_UnknownId_ReturnsFailureResult()
     {
@@ -206,6 +214,7 @@ public class NoticeControllerFixedExpenditureTests
 
     // -- DeleteFixedExpenditure ---------------------------------------------------------
 
+    /// <summary>Delete fixed expenditure existing record returns success result.</summary>
     [Fact]
     public async Task DeleteFixedExpenditure_ExistingRecord_ReturnsSuccessResult()
     {

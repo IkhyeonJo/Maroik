@@ -20,6 +20,7 @@ public class AssetTests
 
     // -- Create ---------------------------------------------------------------
 
+    /// <summary>Create returns asset, when valid.</summary>
     [Fact]
     public void Create_ReturnsAsset_WhenValid()
     {
@@ -30,6 +31,7 @@ public class AssetTests
         Assert.Equal(5000m, result.Value.Balance.Amount);
     }
 
+    /// <summary>Create returns error, when product name empty.</summary>
     [Theory]
     [InlineData(null)]
     [InlineData("")]
@@ -42,6 +44,7 @@ public class AssetTests
         Assert.Equal("Asset.ProductNameEmpty", result.FirstError.Code);
     }
 
+    /// <summary>Create returns error, when item empty.</summary>
     [Theory]
     [InlineData(null)]
     [InlineData("")]
@@ -54,6 +57,7 @@ public class AssetTests
         Assert.Equal("Asset.ItemEmpty", result.FirstError.Code);
     }
 
+    /// <summary>Create returns error, when email invalid.</summary>
     [Fact]
     public void Create_ReturnsError_WhenEmailInvalid()
     {
@@ -62,6 +66,7 @@ public class AssetTests
         Assert.True(result.IsError);
     }
 
+    /// <summary>Create returns error, when currency empty.</summary>
     [Fact]
     public void Create_ReturnsError_WhenCurrencyEmpty()
     {
@@ -73,6 +78,7 @@ public class AssetTests
 
     // -- Deposit / Withdraw ----------------------------------------------------
 
+    /// <summary>Deposit increases balance.</summary>
     [Fact]
     public void Deposit_IncreasesBalance()
     {
@@ -83,6 +89,7 @@ public class AssetTests
         Assert.Equal(1500m, asset.Balance.Amount);
     }
 
+    /// <summary>Withdraw decreases balance.</summary>
     [Fact]
     public void Withdraw_DecreasesBalance()
     {
@@ -95,6 +102,7 @@ public class AssetTests
 
     // -- SetBalance ------------------------------------------------------------
 
+    /// <summary>Set balance succeeds, when same currency.</summary>
     [Fact]
     public void SetBalance_Succeeds_WhenSameCurrency()
     {
@@ -107,6 +115,7 @@ public class AssetTests
         Assert.Equal(9999m, asset.Balance.Amount);
     }
 
+    /// <summary>Set balance returns error, when currency mismatch.</summary>
     [Fact]
     public void SetBalance_ReturnsError_WhenCurrencyMismatch()
     {
@@ -121,6 +130,7 @@ public class AssetTests
 
     // -- Update ----------------------------------------------------------------
 
+    /// <summary>Update succeeds, when valid.</summary>
     [Fact]
     public void Update_Succeeds_WhenValid()
     {
@@ -134,6 +144,7 @@ public class AssetTests
         Assert.Equal(2000m, asset.Balance.Amount);
     }
 
+    /// <summary>Update returns error, when product name empty.</summary>
     [Fact]
     public void Update_ReturnsError_WhenProductNameEmpty()
     {
@@ -147,6 +158,7 @@ public class AssetTests
 
     // -- Update (item validation) ----------------------------------------------
 
+    /// <summary>Update returns error, when item empty.</summary>
     [Fact]
     public void Update_ReturnsError_WhenItemEmpty()
     {
@@ -160,6 +172,7 @@ public class AssetTests
 
     // -- UpdateNote ------------------------------------------------------------
 
+    /// <summary>Update note sets note.</summary>
     [Fact]
     public void UpdateNote_SetsNote()
     {
@@ -170,6 +183,7 @@ public class AssetTests
         Assert.Equal("memo text", asset.Note);
     }
 
+    /// <summary>Update note clears note, when null.</summary>
     [Fact]
     public void UpdateNote_ClearsNote_WhenNull()
     {
@@ -183,6 +197,7 @@ public class AssetTests
 
     // -- SoftDelete ------------------------------------------------------------
 
+    /// <summary>Soft delete sets deleted true.</summary>
     [Fact]
     public void SoftDelete_SetsDeletedTrue()
     {

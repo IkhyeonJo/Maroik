@@ -14,6 +14,7 @@ public class FormFileExtensionsTests
         return new FormFile(stream, 0, bytes.Length, "file", fileName) { Headers = new HeaderDictionary(), ContentType = contentType };
     }
 
+    /// <summary>To attached file info async null file returns null.</summary>
     [Fact]
     public async Task ToAttachedFileInfoAsync_NullFile_ReturnsNull()
     {
@@ -24,6 +25,7 @@ public class FormFileExtensionsTests
         Assert.Null(result);
     }
 
+    /// <summary>To attached file info async reads bytes content type file name and size.</summary>
     [Fact]
     public async Task ToAttachedFileInfoAsync_ReadsBytesContentTypeFileNameAndSize()
     {

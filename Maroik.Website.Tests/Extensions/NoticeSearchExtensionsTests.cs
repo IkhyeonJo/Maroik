@@ -14,12 +14,14 @@ public class NoticeSearchExtensionsTests
         new() { MainClass = "IrregularIncome", SubClass = "OtherIncome",    Content = "bonus",   MonetaryUnit = "USD", DepositMonth = 6, DepositDay = 15, MaturityDate = "2025-06-15" }
     ];
 
+    /// <summary>Fixed income empty search returns all.</summary>
     [Theory]
     [InlineData(null)]
     [InlineData("")]
     public void FixedIncome_EmptySearch_ReturnsAll(string? search)
         => Assert.Equal(2, SampleIncomes().ApplySearch(search).Count());
 
+    /// <summary>Fixed income matches content.</summary>
     [Fact]
     public void FixedIncome_MatchesContent()
     {
@@ -28,6 +30,7 @@ public class NoticeSearchExtensionsTests
         Assert.Equal("salary", result[0].Content);
     }
 
+    /// <summary>Fixed income matches monetary unit.</summary>
     [Fact]
     public void FixedIncome_MatchesMonetaryUnit()
     {
@@ -36,6 +39,7 @@ public class NoticeSearchExtensionsTests
         Assert.Equal("bonus", result[0].Content);
     }
 
+    /// <summary>Fixed income no match returns empty.</summary>
     [Fact]
     public void FixedIncome_NoMatch_ReturnsEmpty()
         => Assert.Empty(SampleIncomes().ApplySearch("zzz"));
@@ -48,12 +52,14 @@ public class NoticeSearchExtensionsTests
         new() { MainClass = "NonConsumerSpending", SubClass = "Tax",                     Content = "tax",       PaymentMethod = "Wire",  MonetaryUnit = "USD", DepositMonth = 5, DepositDay = 31, MaturityDate = "2026-01-01" }
     ];
 
+    /// <summary>Fixed expenditure empty search returns all.</summary>
     [Theory]
     [InlineData(null)]
     [InlineData("")]
     public void FixedExpenditure_EmptySearch_ReturnsAll(string? search)
         => Assert.Equal(2, SampleExpenditures().ApplySearch(search).Count());
 
+    /// <summary>Fixed expenditure matches payment method.</summary>
     [Fact]
     public void FixedExpenditure_MatchesPaymentMethod()
     {
@@ -62,6 +68,7 @@ public class NoticeSearchExtensionsTests
         Assert.Equal("insurance", result[0].Content);
     }
 
+    /// <summary>Fixed expenditure no match returns empty.</summary>
     [Fact]
     public void FixedExpenditure_NoMatch_ReturnsEmpty()
         => Assert.Empty(SampleExpenditures().ApplySearch("zzz"));

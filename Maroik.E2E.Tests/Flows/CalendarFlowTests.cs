@@ -11,6 +11,7 @@ namespace Maroik.E2E.Tests.Flows;
 [Collection("E2E")]
 public class CalendarFlowTests : E2ETestBase
 {
+    /// <summary>Initializes a new instance of CalendarFlowTests, sharing the E2ESharedFixture fixture across the tests in this class.</summary>
     public CalendarFlowTests(E2ESharedFixture fixture) : base(fixture) { }
 
     /// <summary>Verifies that <c>AnonymousCalendar</c> loads with non empty body.</summary>

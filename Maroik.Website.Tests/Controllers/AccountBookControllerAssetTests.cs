@@ -20,6 +20,7 @@ public class AccountBookControllerAssetTests
     private readonly MaroikWebApplicationFactory _factory;
     private readonly HttpClient _client;
 
+    /// <summary>Initializes a new instance of AccountBookControllerAssetTests, sharing the MaroikWebApplicationFactory fixture across the tests in this class.</summary>
     public AccountBookControllerAssetTests(MaroikWebApplicationFactory factory)
     {
         _factory = factory;
@@ -63,6 +64,7 @@ public class AccountBookControllerAssetTests
 
     // -- CreateAsset: role gating -----------------------------------------------
 
+    /// <summary>Create asset admin session is forbidden.</summary>
     [Fact]
     public async Task CreateAsset_AdminSession_IsForbidden()
     {
@@ -76,6 +78,7 @@ public class AccountBookControllerAssetTests
 
     // -- CreateAsset: validation --------------------------------------------------
 
+    /// <summary>Create asset missing product name fails model state.</summary>
     [Fact]
     public async Task CreateAsset_MissingProductName_FailsModelState()
     {
@@ -89,6 +92,7 @@ public class AccountBookControllerAssetTests
         Assert.Contains("\"result\":false", json);
     }
 
+    /// <summary>Create asset unrecognized item returns input invalid.</summary>
     [Fact]
     public async Task CreateAsset_UnrecognizedItem_ReturnsInputInvalid()
     {
@@ -104,6 +108,7 @@ public class AccountBookControllerAssetTests
 
     // -- CreateAsset / IsAssetExists: success path --------------------------------
 
+    /// <summary>Create asset then is asset exists finds the new asset.</summary>
     [Fact]
     public async Task CreateAsset_ThenIsAssetExists_FindsTheNewAsset()
     {
@@ -121,6 +126,7 @@ public class AccountBookControllerAssetTests
         Assert.Contains("\"result\":true", existsJson);
     }
 
+    /// <summary>Create asset duplicate product name returns already exists error.</summary>
     [Fact]
     public async Task CreateAsset_DuplicateProductName_ReturnsAlreadyExistsError()
     {
@@ -136,6 +142,7 @@ public class AccountBookControllerAssetTests
         Assert.Contains("The asset already exists.", json);
     }
 
+    /// <summary>Is asset exists unknown product name returns failure result.</summary>
     [Fact]
     public async Task IsAssetExists_UnknownProductName_ReturnsFailureResult()
     {
@@ -156,6 +163,7 @@ public class AccountBookControllerAssetTests
     // against the Testcontainers-backed factory rather than EF Core InMemory (which cannot
     // execute transactions at all).
 
+    /// <summary>Update asset existing asset returns success result.</summary>
     [Fact]
     public async Task UpdateAsset_ExistingAsset_ReturnsSuccessResult()
     {
@@ -246,6 +254,7 @@ public class AccountBookControllerAssetTests
         Assert.Equal(newName, income.DepositMyAssetProductName);
     }
 
+    /// <summary>Update asset unknown original product name returns failure result.</summary>
     [Fact]
     public async Task UpdateAsset_UnknownOriginalProductName_ReturnsFailureResult()
     {
@@ -269,6 +278,7 @@ public class AccountBookControllerAssetTests
 
     // -- DeleteAsset ---------------------------------------------------------------
 
+    /// <summary>Delete asset existing asset returns success result.</summary>
     [Fact]
     public async Task DeleteAsset_ExistingAsset_ReturnsSuccessResult()
     {

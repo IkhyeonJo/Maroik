@@ -34,6 +34,7 @@ public class CalendarEventViewModelExtensionsTests
 
     // -- GetCalendarEventViewModelsAsync ---------------------------------------
 
+    /// <summary>No calendars returns empty list.</summary>
     [Fact]
     public async Task NoCalendars_ReturnsEmptyList()
     {
@@ -46,6 +47,7 @@ public class CalendarEventViewModelExtensionsTests
             Times.Never);
     }
 
+    /// <summary>Single calendar returns its events as view models.</summary>
     [Fact]
     public async Task SingleCalendar_ReturnsItsEventsAsViewModels()
     {
@@ -63,6 +65,7 @@ public class CalendarEventViewModelExtensionsTests
         Assert.Equal("Meeting", result[1].Title);
     }
 
+    /// <summary>Multiple calendars fetches events for each and concatenates in calendar order.</summary>
     [Fact]
     public async Task MultipleCalendars_FetchesEventsForEachAndConcatenatesInCalendarOrder()
     {
@@ -85,6 +88,7 @@ public class CalendarEventViewModelExtensionsTests
         _calendarService.Verify(s => s.GetCalendarEventsAsync(2L, It.IsAny<CancellationToken>()), Times.Once);
     }
 
+    /// <summary>Passes each calendars html color code to its own events.</summary>
     [Fact]
     public async Task PassesEachCalendarsHtmlColorCodeToItsOwnEvents()
     {
@@ -104,6 +108,7 @@ public class CalendarEventViewModelExtensionsTests
         Assert.Equal("#222222", result[1].HtmlColorCode);
     }
 
+    /// <summary>Passes calendar type through to each view model.</summary>
     [Fact]
     public async Task PassesCalendarTypeThroughToEachViewModel()
     {
@@ -118,6 +123,7 @@ public class CalendarEventViewModelExtensionsTests
         Assert.Equal("Other", result[0].CalendarType);
     }
 
+    /// <summary>Applies user time zone conversion to each event.</summary>
     [Fact]
     public async Task AppliesUserTimeZoneConversionToEachEvent()
     {
@@ -134,6 +140,7 @@ public class CalendarEventViewModelExtensionsTests
         Assert.Equal("Asia/Seoul", result[0].StartDateTimeZoneIanaId);
     }
 
+    /// <summary>Passes cancellation token through to the service.</summary>
     [Fact]
     public async Task PassesCancellationTokenThroughToTheService()
     {

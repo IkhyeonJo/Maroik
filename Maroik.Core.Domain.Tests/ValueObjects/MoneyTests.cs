@@ -9,6 +9,7 @@ namespace Maroik.Core.DomainTests.ValueObjects;
 /// </summary>
 public class MoneyTests
 {
+    /// <summary>Create returns money, when valid.</summary>
     [Fact]
     public void Create_ReturnsMoney_WhenValid()
     {
@@ -19,6 +20,7 @@ public class MoneyTests
         Assert.Equal("KRW", result.Value.Currency);
     }
 
+    /// <summary>Create returns error, when currency empty.</summary>
     [Theory]
     [InlineData(null)]
     [InlineData("")]
@@ -31,6 +33,7 @@ public class MoneyTests
         Assert.Equal("Money.CurrencyEmpty", result.FirstError.Code);
     }
 
+    /// <summary>Create normalizes to upper case.</summary>
     [Fact]
     public void Create_NormalizesToUpperCase()
     {
@@ -40,6 +43,7 @@ public class MoneyTests
         Assert.Equal("USD", result.Value.Currency);
     }
 
+    /// <summary>Zero returns zero balance.</summary>
     [Fact]
     public void Zero_ReturnsZeroBalance()
     {
@@ -49,6 +53,7 @@ public class MoneyTests
         Assert.Equal("KRW", money.Currency);
     }
 
+    /// <summary>Add returns sum money, when same currency.</summary>
     [Fact]
     public void Add_ReturnsSumMoney_WhenSameCurrency()
     {
@@ -61,6 +66,7 @@ public class MoneyTests
         Assert.Equal("KRW", result.Currency);
     }
 
+    /// <summary>Add throws, when different currency.</summary>
     [Fact]
     public void Add_Throws_WhenDifferentCurrency()
     {
@@ -70,6 +76,7 @@ public class MoneyTests
         Assert.Throws<InvalidOperationException>(() => krw.Add(usd));
     }
 
+    /// <summary>Subtract returns remainder, when same currency.</summary>
     [Fact]
     public void Subtract_ReturnsRemainder_WhenSameCurrency()
     {
@@ -82,6 +89,7 @@ public class MoneyTests
         Assert.Equal("KRW", result.Currency);
     }
 
+    /// <summary>Subtract throws, when different currency.</summary>
     [Fact]
     public void Subtract_Throws_WhenDifferentCurrency()
     {
@@ -91,6 +99,7 @@ public class MoneyTests
         Assert.Throws<InvalidOperationException>(() => krw.Subtract(usd));
     }
 
+    /// <summary>Equality same amount and currency are equal.</summary>
     [Fact]
     public void Equality_SameAmountAndCurrency_AreEqual()
     {
@@ -100,6 +109,7 @@ public class MoneyTests
         Assert.Equal(a, b);
     }
 
+    /// <summary>Equality different amount are not equal.</summary>
     [Fact]
     public void Equality_DifferentAmount_AreNotEqual()
     {

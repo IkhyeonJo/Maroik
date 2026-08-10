@@ -16,6 +16,7 @@ public class ManagementControllerTests
     private readonly MaroikWebApplicationFactory _factory;
     private readonly HttpClient _client;
 
+    /// <summary>Initializes a new instance of ManagementControllerTests, sharing the MaroikWebApplicationFactory fixture across the tests in this class.</summary>
     public ManagementControllerTests(MaroikWebApplicationFactory factory)
     {
         _factory = factory;
@@ -33,6 +34,7 @@ public class ManagementControllerTests
 
     // -- Account --------------------------------------------------------------
 
+    /// <summary>Account get logged in admin returns200.</summary>
     [Fact]
     public async Task Account_Get_LoggedInAdmin_Returns200()
     {
@@ -41,6 +43,7 @@ public class ManagementControllerTests
         Assert.Equal(System.Net.HttpStatusCode.OK, response.StatusCode);
     }
 
+    /// <summary>Account get anonymous redirects to login.</summary>
     [Fact]
     public async Task Account_Get_Anonymous_RedirectsToLogin()
     {
@@ -51,6 +54,7 @@ public class ManagementControllerTests
 
     // -- Menu -----------------------------------------------------------------
 
+    /// <summary>Menu get logged in admin returns200.</summary>
     [Fact]
     public async Task Menu_Get_LoggedInAdmin_Returns200()
     {

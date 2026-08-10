@@ -10,6 +10,7 @@ public class CategoryTests
 {
     // -- Create ---------------------------------------------------------------
 
+    /// <summary>Create returns category, when valid.</summary>
     [Fact]
     public void Create_ReturnsCategory_WhenValid()
     {
@@ -23,6 +24,7 @@ public class CategoryTests
         Assert.Equal(1, result.Value.Order);
     }
 
+    /// <summary>Create returns error, when name empty.</summary>
     [Theory]
     [InlineData(null)]
     [InlineData("")]
@@ -37,6 +39,7 @@ public class CategoryTests
 
     // -- Reconstitute -----------------------------------------------------------
 
+    /// <summary>Reconstitute rebuilds category without validation.</summary>
     [Fact]
     public void Reconstitute_RebuildsCategory_WithoutValidation()
     {
@@ -52,6 +55,7 @@ public class CategoryTests
         Assert.Equal(2, category.Order);
     }
 
+    /// <summary>Reconstitute allows null name.</summary>
     [Fact]
     public void Reconstitute_AllowsNullName()
     {

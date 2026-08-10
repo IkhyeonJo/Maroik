@@ -20,6 +20,7 @@ public class AccountControllerTests
     private readonly MaroikWebApplicationFactory _factory;
     private readonly HttpClient _client;
 
+    /// <summary>Initializes a new instance of AccountControllerTests, sharing the MaroikWebApplicationFactory fixture across the tests in this class.</summary>
     public AccountControllerTests(MaroikWebApplicationFactory factory)
     {
         _factory = factory;

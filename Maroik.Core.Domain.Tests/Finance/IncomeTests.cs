@@ -13,6 +13,7 @@ public class IncomeTests
 
     // -- Record ---------------------------------------------------------------
 
+    /// <summary>Record returns income, when valid.</summary>
     [Fact]
     public void Record_ReturnsIncome_WhenValid()
     {
@@ -23,6 +24,7 @@ public class IncomeTests
         Assert.Equal(3000000m, result.Value.Amount.Amount);
     }
 
+    /// <summary>Record returns error, when main class empty.</summary>
     [Theory]
     [InlineData(null)]
     [InlineData("")]
@@ -35,6 +37,7 @@ public class IncomeTests
         Assert.Equal("Income.MainClassEmpty", result.FirstError.Code);
     }
 
+    /// <summary>Record returns error, when sub class empty.</summary>
     [Theory]
     [InlineData(null)]
     [InlineData("")]
@@ -47,6 +50,7 @@ public class IncomeTests
         Assert.Equal("Income.SubClassEmpty", result.FirstError.Code);
     }
 
+    /// <summary>Record returns error, when deposit asset empty.</summary>
     [Theory]
     [InlineData(null)]
     [InlineData("")]
@@ -59,6 +63,7 @@ public class IncomeTests
         Assert.Equal("Income.DepositAssetEmpty", result.FirstError.Code);
     }
 
+    /// <summary>Record returns error, when email invalid.</summary>
     [Fact]
     public void Record_ReturnsError_WhenEmailInvalid()
     {
@@ -69,6 +74,7 @@ public class IncomeTests
 
     // -- Update ---------------------------------------------------------------
 
+    /// <summary>Update succeeds, when valid.</summary>
     [Fact]
     public void Update_Succeeds_WhenValid()
     {
@@ -82,6 +88,7 @@ public class IncomeTests
         Assert.Equal("note", income.Note);
     }
 
+    /// <summary>Update returns error, when main class empty.</summary>
     [Fact]
     public void Update_ReturnsError_WhenMainClassEmpty()
     {

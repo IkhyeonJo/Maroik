@@ -17,6 +17,7 @@ public class ExpenditureRepository(ApplicationDbContext context)
     /// <summary>The underlying <see cref="DbSet{TEntity}"/> for <see cref="OrmExpenditure"/> rows.</summary>
     protected override DbSet<OrmExpenditure> Set => Context.Expenditures;
 
+    /// <inheritdoc />
     // Always join the Asset navigation property so query results carry the monetary unit.
     protected override IQueryable<OrmExpenditure> ApplyIncludes(IQueryable<OrmExpenditure> query)
         => query.Include(x => x.Asset);

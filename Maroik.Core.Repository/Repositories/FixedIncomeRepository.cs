@@ -18,6 +18,8 @@ public class FixedIncomeRepository(ApplicationDbContext context)
     /// <summary>The underlying <see cref="DbSet{TEntity}"/> for <see cref="OrmFixedIncome"/> rows.</summary>
     protected override DbSet<OrmFixedIncome> Set => Context.FixedIncomes;
 
+    /// <inheritdoc />
+    /// <inheritdoc />
     // Always join the Asset navigation property so query results carry the monetary unit.
     protected override IQueryable<OrmFixedIncome> ApplyIncludes(IQueryable<OrmFixedIncome> query)
         => query.Include(x => x.Asset);

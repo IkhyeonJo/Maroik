@@ -8,6 +8,7 @@ namespace Maroik.Core.DomainTests.ValueObjects;
 /// </summary>
 public class HtmlColorCodeTests
 {
+    /// <summary>Create returns code and normalizes to upper case.</summary>
     [Theory]
     [InlineData("#FF5733", "#FF5733")]
     [InlineData("#ff5733", "#FF5733")]
@@ -21,6 +22,7 @@ public class HtmlColorCodeTests
         Assert.Equal(expected, result.Value.Value);
     }
 
+    /// <summary>Create returns error, when empty.</summary>
     [Theory]
     [InlineData(null)]
     [InlineData("")]
@@ -33,6 +35,7 @@ public class HtmlColorCodeTests
         Assert.Equal("HtmlColorCode.Empty", result.FirstError.Code);
     }
 
+    /// <summary>Create returns error, when invalid format.</summary>
     [Theory]
     [InlineData("FF5733")]
     [InlineData("#GGGGGG")]
@@ -47,6 +50,7 @@ public class HtmlColorCodeTests
         Assert.Equal("HtmlColorCode.Invalid", result.FirstError.Code);
     }
 
+    /// <summary>Equality same value are equal.</summary>
     [Fact]
     public void Equality_SameValue_AreEqual()
     {

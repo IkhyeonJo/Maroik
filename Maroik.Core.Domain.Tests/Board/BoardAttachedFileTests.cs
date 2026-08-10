@@ -10,6 +10,7 @@ public class BoardAttachedFileTests
 {
     // -- Create ---------------------------------------------------------------
 
+    /// <summary>Create returns file, when valid.</summary>
     [Fact]
     public void Create_ReturnsFile_WhenValid()
     {
@@ -23,6 +24,7 @@ public class BoardAttachedFileTests
         Assert.Equal("/files/doc.pdf", result.Value.Path);
     }
 
+    /// <summary>Create returns error, when name empty.</summary>
     [Theory]
     [InlineData(null)]
     [InlineData("")]
@@ -35,6 +37,7 @@ public class BoardAttachedFileTests
         Assert.Equal("BoardAttachedFile.NameEmpty", result.FirstError.Code);
     }
 
+    /// <summary>Create returns error, when path empty.</summary>
     [Theory]
     [InlineData(null)]
     [InlineData("")]
@@ -47,6 +50,7 @@ public class BoardAttachedFileTests
         Assert.Equal("BoardAttachedFile.PathEmpty", result.FirstError.Code);
     }
 
+    /// <summary>Create returns error, when size negative.</summary>
     [Fact]
     public void Create_ReturnsError_WhenSizeNegative()
     {
@@ -58,6 +62,7 @@ public class BoardAttachedFileTests
 
     // -- Reconstitute -----------------------------------------------------------
 
+    /// <summary>Reconstitute rebuilds file without validation.</summary>
     [Fact]
     public void Reconstitute_RebuildsFile_WithoutValidation()
     {
@@ -71,6 +76,7 @@ public class BoardAttachedFileTests
         Assert.Equal("/files/image.png", file.Path);
     }
 
+    /// <summary>Reconstitute defaults null name and path to empty string.</summary>
     [Fact]
     public void Reconstitute_DefaultsNullNameAndPath_ToEmptyString()
     {

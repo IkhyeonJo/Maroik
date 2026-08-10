@@ -23,6 +23,7 @@ public class AccountBookControllerIncomeExpenditureTests
     private readonly MaroikWebApplicationFactory _factory;
     private readonly HttpClient _client;
 
+    /// <summary>Initializes a new instance of AccountBookControllerIncomeExpenditureTests, sharing the MaroikWebApplicationFactory fixture across the tests in this class.</summary>
     public AccountBookControllerIncomeExpenditureTests(MaroikWebApplicationFactory factory)
     {
         _factory = factory;
@@ -111,6 +112,7 @@ public class AccountBookControllerIncomeExpenditureTests
 
     // -- CreateIncome: role gating + ModelState validation ------------------------
 
+    /// <summary>Create income admin session is forbidden.</summary>
     [Fact]
     public async Task CreateIncome_AdminSession_IsForbidden()
     {
@@ -122,6 +124,7 @@ public class AccountBookControllerIncomeExpenditureTests
         Assert.NotEqual(System.Net.HttpStatusCode.OK, response.StatusCode);
     }
 
+    /// <summary>Create income missing main class fails model state cleanly.</summary>
     [Fact]
     public async Task CreateIncome_MissingMainClass_FailsModelStateCleanly()
     {
@@ -138,6 +141,7 @@ public class AccountBookControllerIncomeExpenditureTests
 
     // -- CreateIncome: success path — verifies the Asset-balance side effect too -----
 
+    /// <summary>Create income valid payload deposits into asset balance.</summary>
     [Fact]
     public async Task CreateIncome_ValidPayload_DepositsIntoAssetBalance()
     {
@@ -162,6 +166,7 @@ public class AccountBookControllerIncomeExpenditureTests
 
     // -- UpdateIncome / DeleteIncome: success path ------------------------------------
 
+    /// <summary>Update income existing record returns success result.</summary>
     [Fact]
     public async Task UpdateIncome_ExistingRecord_ReturnsSuccessResult()
     {
@@ -185,6 +190,7 @@ public class AccountBookControllerIncomeExpenditureTests
         Assert.Equal("updated", income.Note);
     }
 
+    /// <summary>Delete income existing record removes it and refunds asset balance.</summary>
     [Fact]
     public async Task DeleteIncome_ExistingRecord_RemovesItAndRefundsAssetBalance()
     {
@@ -207,6 +213,7 @@ public class AccountBookControllerIncomeExpenditureTests
 
     // -- IsIncomeExists -------------------------------------------------------------
 
+    /// <summary>Is income exists seeded record returns success result.</summary>
     [Fact]
     public async Task IsIncomeExists_SeededRecord_ReturnsSuccessResult()
     {
@@ -220,6 +227,7 @@ public class AccountBookControllerIncomeExpenditureTests
         Assert.Contains("\"result\":true", json);
     }
 
+    /// <summary>Is income exists unknown id returns failure result.</summary>
     [Fact]
     public async Task IsIncomeExists_UnknownId_ReturnsFailureResult()
     {
@@ -232,6 +240,7 @@ public class AccountBookControllerIncomeExpenditureTests
         Assert.Contains("\"result\":false", json);
     }
 
+    /// <summary>Get income amount label unknown product returns base label.</summary>
     [Fact]
     public async Task GetIncomeAmountLabel_UnknownProduct_ReturnsBaseLabel()
     {
@@ -246,6 +255,7 @@ public class AccountBookControllerIncomeExpenditureTests
 
     // -- CreateExpenditure: role gating + ModelState validation --------------------
 
+    /// <summary>Create expenditure missing payment method fails model state cleanly.</summary>
     [Fact]
     public async Task CreateExpenditure_MissingPaymentMethod_FailsModelStateCleanly()
     {
@@ -262,6 +272,7 @@ public class AccountBookControllerIncomeExpenditureTests
 
     // -- CreateExpenditure: success path — verifies the Asset-balance side effect ----
 
+    /// <summary>Create expenditure valid payload withdraws from asset balance.</summary>
     [Fact]
     public async Task CreateExpenditure_ValidPayload_WithdrawsFromAssetBalance()
     {
@@ -286,6 +297,7 @@ public class AccountBookControllerIncomeExpenditureTests
 
     // -- UpdateExpenditure / DeleteExpenditure: success path --------------------------
 
+    /// <summary>Update expenditure existing record returns success result.</summary>
     [Fact]
     public async Task UpdateExpenditure_ExistingRecord_ReturnsSuccessResult()
     {
@@ -309,6 +321,7 @@ public class AccountBookControllerIncomeExpenditureTests
         Assert.Equal("updated", expenditure.Note);
     }
 
+    /// <summary>Delete expenditure existing record removes it and refunds asset balance.</summary>
     [Fact]
     public async Task DeleteExpenditure_ExistingRecord_RemovesItAndRefundsAssetBalance()
     {
@@ -331,6 +344,7 @@ public class AccountBookControllerIncomeExpenditureTests
 
     // -- IsExpenditureExists ----------------------------------------------------------
 
+    /// <summary>Is expenditure exists seeded record returns success result.</summary>
     [Fact]
     public async Task IsExpenditureExists_SeededRecord_ReturnsSuccessResult()
     {
@@ -344,6 +358,7 @@ public class AccountBookControllerIncomeExpenditureTests
         Assert.Contains("\"result\":true", json);
     }
 
+    /// <summary>Is expenditure exists unknown id returns failure result.</summary>
     [Fact]
     public async Task IsExpenditureExists_UnknownId_ReturnsFailureResult()
     {
@@ -356,6 +371,7 @@ public class AccountBookControllerIncomeExpenditureTests
         Assert.Contains("\"result\":false", json);
     }
 
+    /// <summary>Get expenditure amount label unknown product returns base label.</summary>
     [Fact]
     public async Task GetExpenditureAmountLabel_UnknownProduct_ReturnsBaseLabel()
     {

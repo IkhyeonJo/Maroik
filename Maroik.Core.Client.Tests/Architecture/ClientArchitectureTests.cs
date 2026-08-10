@@ -13,6 +13,7 @@ public class ClientArchitectureTests
 {
     private static readonly Assembly ClientAssembly = typeof(FileClient).Assembly;
 
+    /// <summary>Client should not depend on repository namespace.</summary>
     [Fact]
     public void Client_ShouldNot_DependOnRepositoryNamespace()
     {
@@ -28,6 +29,7 @@ public class ClientArchitectureTests
             "Failing types: " + string.Join(", ", result.FailingTypeNames ?? []));
     }
 
+    /// <summary>Client should not depend on service namespace.</summary>
     [Fact]
     public void Client_ShouldNot_DependOnServiceNamespace()
     {

@@ -22,6 +22,7 @@ public class AccountTests
 
     // -- Create ---------------------------------------------------------------
 
+    /// <summary>Create returns account, when all inputs valid.</summary>
     [Fact]
     public void Create_ReturnsAccount_WhenAllInputsValid()
     {
@@ -32,6 +33,7 @@ public class AccountTests
         Assert.Equal("Nick", result.Value.Nickname);
     }
 
+    /// <summary>Create returns error, when email invalid.</summary>
     [Theory]
     [InlineData("notanemail")]
     [InlineData("")]
@@ -43,6 +45,7 @@ public class AccountTests
         Assert.True(result.IsError);
     }
 
+    /// <summary>Create returns error, when nickname empty.</summary>
     [Theory]
     [InlineData("")]
     [InlineData("   ")]
@@ -55,6 +58,7 @@ public class AccountTests
         Assert.Equal("Account.NicknameEmpty", result.FirstError.Code);
     }
 
+    /// <summary>Create returns error, when password empty.</summary>
     [Theory]
     [InlineData("")]
     [InlineData("   ")]
@@ -67,6 +71,7 @@ public class AccountTests
         Assert.Equal("Account.PasswordEmpty", result.FirstError.Code);
     }
 
+    /// <summary>Create returns error, when time zone invalid.</summary>
     [Fact]
     public void Create_ReturnsError_WhenTimeZoneInvalid()
     {
@@ -78,6 +83,7 @@ public class AccountTests
 
     // -- ConfirmEmail ---------------------------------------------------------
 
+    /// <summary>Confirm email succeeds, when token matches.</summary>
     [Fact]
     public void ConfirmEmail_Succeeds_WhenTokenMatches()
     {
@@ -90,6 +96,7 @@ public class AccountTests
         Assert.Null(account.RegistrationToken);
     }
 
+    /// <summary>Confirm email returns error, when already confirmed.</summary>
     [Fact]
     public void ConfirmEmail_ReturnsError_WhenAlreadyConfirmed()
     {
@@ -102,6 +109,7 @@ public class AccountTests
         Assert.Equal("Account.AlreadyConfirmed", result.FirstError.Code);
     }
 
+    /// <summary>Confirm email returns error, when token mismatch.</summary>
     [Fact]
     public void ConfirmEmail_ReturnsError_WhenTokenMismatch()
     {
@@ -116,6 +124,7 @@ public class AccountTests
 
     // -- RequestPasswordReset -------------------------------------------------
 
+    /// <summary>Request password reset succeeds, when email confirmed.</summary>
     [Fact]
     public void RequestPasswordReset_Succeeds_WhenEmailConfirmed()
     {
@@ -128,6 +137,7 @@ public class AccountTests
         Assert.Equal("reset-token", account.ResetPasswordToken);
     }
 
+    /// <summary>Request password reset returns error, when email not confirmed.</summary>
     [Fact]
     public void RequestPasswordReset_ReturnsError_WhenEmailNotConfirmed()
     {
@@ -139,6 +149,7 @@ public class AccountTests
         Assert.Equal("Account.NotConfirmed", result.FirstError.Code);
     }
 
+    /// <summary>Request password reset returns error, when locked.</summary>
     [Fact]
     public void RequestPasswordReset_ReturnsError_WhenLocked()
     {
@@ -154,6 +165,7 @@ public class AccountTests
 
     // -- ResetPassword --------------------------------------------------------
 
+    /// <summary>Reset password succeeds, when token valid.</summary>
     [Fact]
     public void ResetPassword_Succeeds_WhenTokenValid()
     {
@@ -168,6 +180,7 @@ public class AccountTests
         Assert.Null(account.ResetPasswordToken);
     }
 
+    /// <summary>Reset password returns error, when token invalid.</summary>
     [Fact]
     public void ResetPassword_ReturnsError_WhenTokenInvalid()
     {
@@ -181,6 +194,7 @@ public class AccountTests
         Assert.Equal("Account.InvalidToken", result.FirstError.Code);
     }
 
+    /// <summary>Reset password returns error, when new password empty.</summary>
     [Fact]
     public void ResetPassword_ReturnsError_WhenNewPasswordEmpty()
     {
@@ -196,6 +210,7 @@ public class AccountTests
 
     // -- Login attempt tracking ------------------------------------------------
 
+    /// <summary>Record login failure increments counter.</summary>
     [Fact]
     public void RecordLoginFailure_IncrementsCounter()
     {
@@ -208,6 +223,7 @@ public class AccountTests
         Assert.False(account.Locked);
     }
 
+    /// <summary>Record login failure locks account, when max attempts reached.</summary>
     [Fact]
     public void RecordLoginFailure_LocksAccount_WhenMaxAttemptsReached()
     {
@@ -221,6 +237,7 @@ public class AccountTests
         Assert.True(account.Locked);
     }
 
+    /// <summary>Record login failure locks account, when counter exceeds max.</summary>
     [Fact]
     public void RecordLoginFailure_LocksAccount_WhenCounterExceedsMax()
     {
@@ -233,6 +250,7 @@ public class AccountTests
         Assert.True(account.Locked);
     }
 
+    /// <summary>Reset login attempt sets counter to zero.</summary>
     [Fact]
     public void ResetLoginAttempt_SetsCounterToZero()
     {
@@ -247,6 +265,7 @@ public class AccountTests
 
     // -- Lock / Unlock --------------------------------------------------------
 
+    /// <summary>Lock sets locked true and stores message.</summary>
     [Fact]
     public void Lock_SetsLockedTrueAndStoresMessage()
     {
@@ -258,6 +277,7 @@ public class AccountTests
         Assert.Equal("spam", account.Message);
     }
 
+    /// <summary>Unlock sets locked false and resets attempts.</summary>
     [Fact]
     public void Unlock_SetsLockedFalseAndResetsAttempts()
     {
@@ -273,6 +293,7 @@ public class AccountTests
 
     // -- AdminUpdate ----------------------------------------------------------
 
+    /// <summary>Admin update returns success, when valid.</summary>
     [Fact]
     public void AdminUpdate_ReturnsSuccess_WhenValid()
     {
@@ -285,6 +306,7 @@ public class AccountTests
         Assert.True(account.EmailConfirmed);
     }
 
+    /// <summary>Admin update resets login attempt, when unlocked.</summary>
     [Fact]
     public void AdminUpdate_ResetsLoginAttempt_WhenUnlocked()
     {
@@ -297,6 +319,7 @@ public class AccountTests
         Assert.Equal(0, account.LoginAttempt);
     }
 
+    /// <summary>Admin update returns error, when time zone invalid.</summary>
     [Fact]
     public void AdminUpdate_ReturnsError_WhenTimeZoneInvalid()
     {
@@ -310,6 +333,7 @@ public class AccountTests
 
     // -- SoftDelete -----------------------------------------------------------
 
+    /// <summary>Soft delete sets deleted true.</summary>
     [Fact]
     public void SoftDelete_SetsDeletedTrue()
     {
@@ -322,6 +346,7 @@ public class AccountTests
 
     // -- RegenerateRegistrationTokenIfEmpty -----------------------------------
 
+    /// <summary>Regenerate registration token if empty sets token, when current is null.</summary>
     [Fact]
     public void RegenerateRegistrationTokenIfEmpty_SetsToken_WhenCurrentIsNull()
     {
@@ -334,6 +359,7 @@ public class AccountTests
         Assert.Equal("new-tok", account.RegistrationToken);
     }
 
+    /// <summary>Regenerate registration token if empty does not overwrite, when token exists.</summary>
     [Fact]
     public void RegenerateRegistrationTokenIfEmpty_DoesNotOverwrite_WhenTokenExists()
     {
@@ -346,6 +372,7 @@ public class AccountTests
 
     // -- UpdateProfile --------------------------------------------------------
 
+    /// <summary>Update profile updates all fields.</summary>
     [Fact]
     public void UpdateProfile_UpdatesAllFields()
     {
@@ -360,6 +387,7 @@ public class AccountTests
         Assert.Equal("USD", account.DefaultMonetaryUnit);
     }
 
+    /// <summary>Update profile clears avatar and currency, when null.</summary>
     [Fact]
     public void UpdateProfile_ClearsAvatarAndCurrency_WhenNull()
     {
@@ -375,6 +403,7 @@ public class AccountTests
 
     // -- ChangePassword -------------------------------------------------------
 
+    /// <summary>Change password replaces hashed password.</summary>
     [Fact]
     public void ChangePassword_ReplacesHashedPassword()
     {
@@ -387,6 +416,7 @@ public class AccountTests
 
     // -- SetMessage -----------------------------------------------------------
 
+    /// <summary>Set message stores text.</summary>
     [Fact]
     public void SetMessage_StoresText()
     {
@@ -397,6 +427,7 @@ public class AccountTests
         Assert.Equal("Under review", account.Message);
     }
 
+    /// <summary>Set message clears message, when null.</summary>
     [Fact]
     public void SetMessage_ClearsMessage_WhenNull()
     {
@@ -410,6 +441,7 @@ public class AccountTests
 
     // -- ForceConfirmEmail ----------------------------------------------------
 
+    /// <summary>Force confirm email confirms email and clears token.</summary>
     [Fact]
     public void ForceConfirmEmail_ConfirmsEmailAndClearsToken()
     {
@@ -421,6 +453,7 @@ public class AccountTests
         Assert.Null(account.RegistrationToken);
     }
 
+    /// <summary>Force confirm email is idempotent, when already confirmed.</summary>
     [Fact]
     public void ForceConfirmEmail_IsIdempotent_WhenAlreadyConfirmed()
     {
@@ -434,6 +467,7 @@ public class AccountTests
 
     // -- AcceptServiceTerms ---------------------------------------------------
 
+    /// <summary>Accept service terms sets agreed to true.</summary>
     [Fact]
     public void AcceptServiceTerms_SetsAgreedToTrue()
     {

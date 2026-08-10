@@ -15,6 +15,7 @@ public class DriveControllerTests
     private readonly MaroikWebApplicationFactory _factory;
     private readonly HttpClient _client;
 
+    /// <summary>Initializes a new instance of DriveControllerTests, sharing the MaroikWebApplicationFactory fixture across the tests in this class.</summary>
     public DriveControllerTests(MaroikWebApplicationFactory factory)
     {
         _factory = factory;
@@ -33,6 +34,7 @@ public class DriveControllerTests
         return await _client.SendAsync(request, TestContext.Current.CancellationToken);
     }
 
+    /// <summary>Anonymous index get returns200.</summary>
     [Fact]
     public async Task AnonymousIndex_Get_Returns200()
     {
@@ -41,6 +43,7 @@ public class DriveControllerTests
         Assert.Equal(System.Net.HttpStatusCode.OK, response.StatusCode);
     }
 
+    /// <summary>Admin index get logged in admin returns200.</summary>
     [Fact]
     public async Task AdminIndex_Get_LoggedInAdmin_Returns200()
     {
@@ -49,6 +52,7 @@ public class DriveControllerTests
         Assert.Equal(System.Net.HttpStatusCode.OK, response.StatusCode);
     }
 
+    /// <summary>User index get logged in user returns200.</summary>
     [Fact]
     public async Task UserIndex_Get_LoggedInUser_Returns200()
     {

@@ -14,9 +14,13 @@ public sealed class E2ESharedFixture : IAsyncLifetime
     private readonly PlaywrightWebApplicationFactory _factory = new();
     private IPlaywright? _playwright;
 
+    /// <summary>The shared headless Chromium browser instance used by every test.</summary>
     public IBrowser Browser { get; private set; } = null!;
+
+    /// <summary>Base URL of the in-process test server hosting the application.</summary>
     public string ServerBaseUrl => _factory.ServerBaseUrl;
 
+    /// <summary>Starts the in-process server and launches the shared browser instance.</summary>
     public async ValueTask InitializeAsync()
     {
         _factory.CreateClient();
@@ -29,6 +33,7 @@ public sealed class E2ESharedFixture : IAsyncLifetime
         });
     }
 
+    /// <summary>Tears down the browser, Playwright driver, and in-process server.</summary>
     public async ValueTask DisposeAsync()
     {
         await Browser.DisposeAsync();

@@ -17,6 +17,7 @@ public class CalendarControllerCalendarTests
     private readonly MaroikWebApplicationFactory _factory;
     private readonly HttpClient _client;
 
+    /// <summary>Initializes a new instance of CalendarControllerCalendarTests, sharing the MaroikWebApplicationFactory fixture across the tests in this class.</summary>
     public CalendarControllerCalendarTests(MaroikWebApplicationFactory factory)
     {
         _factory = factory;
@@ -36,6 +37,7 @@ public class CalendarControllerCalendarTests
 
     // -- CreateCalendar: role gating ----------------------------------------------
 
+    /// <summary>Create calendar anonymous session is forbidden.</summary>
     [Fact]
     public async Task CreateCalendar_AnonymousSession_IsForbidden()
     {
@@ -49,6 +51,7 @@ public class CalendarControllerCalendarTests
 
     // -- CreateCalendar / IsCalendarExists: success path --------------------------
 
+    /// <summary>Create calendar then is calendar exists finds the new calendar.</summary>
     [Fact]
     public async Task CreateCalendar_ThenIsCalendarExists_FindsTheNewCalendar()
     {
@@ -65,6 +68,7 @@ public class CalendarControllerCalendarTests
         Assert.Contains("Work", getJson);
     }
 
+    /// <summary>Create calendar duplicate name returns already exists error.</summary>
     [Fact]
     public async Task CreateCalendar_DuplicateName_ReturnsAlreadyExistsError()
     {
@@ -79,6 +83,7 @@ public class CalendarControllerCalendarTests
         Assert.Contains("The calendar already exists.", json);
     }
 
+    /// <summary>Is calendar exists unknown id returns failure result.</summary>
     [Fact]
     public async Task IsCalendarExists_UnknownId_ReturnsFailureResult()
     {
@@ -93,6 +98,7 @@ public class CalendarControllerCalendarTests
 
     // -- UpdateCalendar -------------------------------------------------------------
 
+    /// <summary>Update calendar existing calendar returns success result.</summary>
     [Fact]
     public async Task UpdateCalendar_ExistingCalendar_ReturnsSuccessResult()
     {
@@ -115,6 +121,7 @@ public class CalendarControllerCalendarTests
         Assert.Contains("\"result\":true", json);
     }
 
+    /// <summary>Update calendar unknown id returns failure result.</summary>
     [Fact]
     public async Task UpdateCalendar_UnknownId_ReturnsFailureResult()
     {
@@ -136,6 +143,7 @@ public class CalendarControllerCalendarTests
 
     // -- DeleteCalendar ---------------------------------------------------------------
 
+    /// <summary>Delete calendar existing calendar returns success result.</summary>
     [Fact]
     public async Task DeleteCalendar_ExistingCalendar_ReturnsSuccessResult()
     {
@@ -152,6 +160,7 @@ public class CalendarControllerCalendarTests
         Assert.Contains("\"result\":true", json);
     }
 
+    /// <summary>Delete calendar unknown id returns failure result.</summary>
     [Fact]
     public async Task DeleteCalendar_UnknownId_ReturnsFailureResult()
     {

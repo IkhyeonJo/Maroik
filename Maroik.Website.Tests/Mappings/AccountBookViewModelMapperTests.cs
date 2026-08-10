@@ -11,6 +11,7 @@ public class AccountBookViewModelMapperTests
 
     // ── Asset ─────────────────────────────────────────────────────────────────
 
+    /// <summary>Asset to display view model localizes item.</summary>
     [Fact]
     public void AssetToDisplayViewModel_LocalizesItem()
     {
@@ -19,6 +20,7 @@ public class AccountBookViewModelMapperTests
         Assert.Equal("L:Deposit", vm.Item);
     }
 
+    /// <summary>Asset to display view model copies scalar fields.</summary>
     [Fact]
     public void AssetToDisplayViewModel_CopiesScalarFields()
     {
@@ -38,6 +40,7 @@ public class AccountBookViewModelMapperTests
         Assert.True(vm.Deleted);
     }
 
+    /// <summary>Asset to display view model converts timestamp to seoul.</summary>
     [Fact]
     public void AssetToDisplayViewModel_ConvertsTimestamp_ToSeoul()
     {
@@ -49,6 +52,7 @@ public class AccountBookViewModelMapperTests
         Assert.Equal(9, vm.Updated.Hour);
     }
 
+    /// <summary>Assets to display view models maps all.</summary>
     [Fact]
     public void AssetsToDisplayViewModels_MapsAll()
     {
@@ -63,6 +67,7 @@ public class AccountBookViewModelMapperTests
 
     // ── Income ────────────────────────────────────────────────────────────────
 
+    /// <summary>Income to display view model localizes class fields.</summary>
     [Fact]
     public void IncomeToDisplayViewModel_LocalizesClassFields()
     {
@@ -75,6 +80,7 @@ public class AccountBookViewModelMapperTests
         Assert.Equal("L:LaborIncome", vm.SubClass);
     }
 
+    /// <summary>Income to display view model populates monetary unit from asset.</summary>
     [Fact]
     public void IncomeToDisplayViewModel_PopulatesMonetaryUnitFromAsset()
     {
@@ -84,6 +90,7 @@ public class AccountBookViewModelMapperTests
         Assert.Equal("USD", vm.MonetaryUnit);
     }
 
+    /// <summary>Income to display view model monetary unit null when asset not found.</summary>
     [Fact]
     public void IncomeToDisplayViewModel_MonetaryUnit_NullWhenAssetNotFound()
     {
@@ -94,6 +101,7 @@ public class AccountBookViewModelMapperTests
 
     // ── Expenditure ───────────────────────────────────────────────────────────
 
+    /// <summary>Expenditure to display view model localizes class fields.</summary>
     [Fact]
     public void ExpenditureToDisplayViewModel_LocalizesClassFields()
     {
@@ -106,6 +114,7 @@ public class AccountBookViewModelMapperTests
         Assert.Equal("L:MealOrEatOutExpenses", vm.SubClass);
     }
 
+    /// <summary>Expenditure to display view model populates monetary unit from payment method.</summary>
     [Fact]
     public void ExpenditureToDisplayViewModel_PopulatesMonetaryUnitFromPaymentMethod()
     {

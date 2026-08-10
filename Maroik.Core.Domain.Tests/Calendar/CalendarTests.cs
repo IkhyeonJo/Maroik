@@ -16,6 +16,7 @@ public class CalendarTests
 
     // -- Create ---------------------------------------------------------------
 
+    /// <summary>Create returns calendar, when valid.</summary>
     [Fact]
     public void Create_ReturnsCalendar_WhenValid()
     {
@@ -26,6 +27,7 @@ public class CalendarTests
         Assert.Equal("user@example.com", result.Value.AccountEmail.Value);
     }
 
+    /// <summary>Create returns error, when name empty.</summary>
     [Theory]
     [InlineData(null)]
     [InlineData("")]
@@ -38,6 +40,7 @@ public class CalendarTests
         Assert.Equal("Calendar.NameEmpty", result.FirstError.Code);
     }
 
+    /// <summary>Create returns error, when email invalid.</summary>
     [Fact]
     public void Create_ReturnsError_WhenEmailInvalid()
     {
@@ -46,6 +49,7 @@ public class CalendarTests
         Assert.True(result.IsError);
     }
 
+    /// <summary>Create returns error, when time zone invalid.</summary>
     [Fact]
     public void Create_ReturnsError_WhenTimeZoneInvalid()
     {
@@ -55,6 +59,7 @@ public class CalendarTests
         Assert.Equal("TimeZoneId.Invalid", result.FirstError.Code);
     }
 
+    /// <summary>Create returns error, when color code invalid.</summary>
     [Fact]
     public void Create_ReturnsError_WhenColorCodeInvalid()
     {
@@ -66,6 +71,7 @@ public class CalendarTests
 
     // -- Update ---------------------------------------------------------------
 
+    /// <summary>Update succeeds, when valid.</summary>
     [Fact]
     public void Update_Succeeds_WhenValid()
     {
@@ -79,6 +85,7 @@ public class CalendarTests
         Assert.Equal("#E74C3C", calendar.ColorCode.Value);
     }
 
+    /// <summary>Update returns error, when name empty.</summary>
     [Fact]
     public void Update_ReturnsError_WhenNameEmpty()
     {
@@ -92,6 +99,7 @@ public class CalendarTests
 
     // -- UpdateSharing ---------------------------------------------------------
 
+    /// <summary>Update sharing creates shared, when shared is null.</summary>
     [Fact]
     public void UpdateSharing_CreatesShared_WhenSharedIsNull()
     {
@@ -105,6 +113,7 @@ public class CalendarTests
         Assert.False(calendar.Shared.Anonymous);
     }
 
+    /// <summary>Update sharing updates existing shared.</summary>
     [Fact]
     public void UpdateSharing_UpdatesExistingShared()
     {
@@ -118,6 +127,7 @@ public class CalendarTests
 
     // -- AddSubscriber ---------------------------------------------------------
 
+    /// <summary>Add subscriber succeeds, when not already subscribed.</summary>
     [Fact]
     public void AddSubscriber_Succeeds_WhenNotAlreadySubscribed()
     {
@@ -130,6 +140,7 @@ public class CalendarTests
         Assert.Single(calendar.Subscribers);
     }
 
+    /// <summary>Add subscriber returns error, when already subscribed.</summary>
     [Fact]
     public void AddSubscriber_ReturnsError_WhenAlreadySubscribed()
     {
@@ -142,6 +153,7 @@ public class CalendarTests
         Assert.Equal("Calendar.AlreadySubscribed", result.FirstError.Code);
     }
 
+    /// <summary>Add subscriber returns error, when calendar id mismatch.</summary>
     [Fact]
     public void AddSubscriber_ReturnsError_WhenCalendarIdMismatch()
     {
@@ -156,6 +168,7 @@ public class CalendarTests
 
     // -- RemoveSubscriber ------------------------------------------------------
 
+    /// <summary>Remove subscriber succeeds, when subscriber exists.</summary>
     [Fact]
     public void RemoveSubscriber_Succeeds_WhenSubscriberExists()
     {
@@ -168,6 +181,7 @@ public class CalendarTests
         Assert.Empty(calendar.Subscribers);
     }
 
+    /// <summary>Remove subscriber returns error, when not found.</summary>
     [Fact]
     public void RemoveSubscriber_ReturnsError_WhenNotFound()
     {

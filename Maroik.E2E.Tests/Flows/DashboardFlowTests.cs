@@ -11,6 +11,7 @@ namespace Maroik.E2E.Tests.Flows;
 [Collection("E2E")]
 public class DashboardFlowTests : E2ETestBase
 {
+    /// <summary>Initializes a new instance of DashboardFlowTests, sharing the E2ESharedFixture fixture across the tests in this class.</summary>
     public DashboardFlowTests(E2ESharedFixture fixture) : base(fixture) { }
 
     // -- Anonymous dashboard --------------------------------------------------

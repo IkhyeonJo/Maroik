@@ -12,11 +12,13 @@ public class StaticAssetExtensionsTests
 {
     private readonly HttpClient _client;
 
+    /// <summary>Initializes a new instance of StaticAssetExtensionsTests, sharing the MaroikWebApplicationFactory fixture across the tests in this class.</summary>
     public StaticAssetExtensionsTests(MaroikWebApplicationFactory factory)
     {
         _client = factory.CreateTestClient(followRedirects: false);
     }
 
+    /// <summary>Static file java script has explicit application javascript content type.</summary>
     [Fact]
     public async Task StaticFile_JavaScript_HasExplicitApplicationJavascriptContentType()
     {
@@ -26,6 +28,7 @@ public class StaticAssetExtensionsTests
         Assert.Equal("application/javascript", response.Content.Headers.ContentType?.MediaType);
     }
 
+    /// <summary>Static file css has explicit text css content type.</summary>
     [Fact]
     public async Task StaticFile_Css_HasExplicitTextCssContentType()
     {
@@ -35,6 +38,7 @@ public class StaticAssetExtensionsTests
         Assert.Equal("text/css", response.Content.Headers.ContentType?.MediaType);
     }
 
+    /// <summary>Static file response includes no sniff header.</summary>
     [Fact]
     public async Task StaticFile_Response_IncludesNoSniffHeader()
     {
@@ -44,6 +48,7 @@ public class StaticAssetExtensionsTests
         Assert.Contains("nosniff", values!);
     }
 
+    /// <summary>Static file unknown path returns404.</summary>
     [Fact]
     public async Task StaticFile_UnknownPath_Returns404()
     {

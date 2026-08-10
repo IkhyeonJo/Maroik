@@ -81,6 +81,7 @@ public class FileValidationServiceTests
 
     // -- Happy path ------------------------------------------------------------
 
+    /// <summary>Validate and save async saves file with correct bytes and permissions, when jpg is valid.</summary>
     [Fact]
     public async Task ValidateAndSaveAsync_SavesFileWithCorrectBytesAndPermissions_WhenJpgIsValid()
     {
@@ -119,6 +120,7 @@ public class FileValidationServiceTests
         }
     }
 
+    /// <summary>Validate and save async saves file with correct bytes, when png is valid.</summary>
     [Fact]
     public async Task ValidateAndSaveAsync_SavesFileWithCorrectBytes_WhenPngIsValid()
     {
@@ -146,6 +148,7 @@ public class FileValidationServiceTests
 
     // -- Invalid / empty file ---------------------------------------------------
 
+    /// <summary>Validate and save async returns invalid file, when file is null.</summary>
     [Fact]
     public async Task ValidateAndSaveAsync_ReturnsInvalidFile_WhenFileIsNull()
     {
@@ -157,6 +160,7 @@ public class FileValidationServiceTests
         Assert.Equal("Invalid file.", error);
     }
 
+    /// <summary>Validate and save async returns invalid file, when file is zero length.</summary>
     [Fact]
     public async Task ValidateAndSaveAsync_ReturnsInvalidFile_WhenFileIsZeroLength()
     {
@@ -171,6 +175,7 @@ public class FileValidationServiceTests
 
     // -- Extension allowlist ------------------------------------------------------
 
+    /// <summary>Validate and save async returns unsupported extension, when extension is not allowed.</summary>
     [Theory]
     [InlineData("malware.exe")]
     [InlineData("script.sh")]
@@ -188,6 +193,7 @@ public class FileValidationServiceTests
 
     // -- Size cap ------------------------------------------------------------------
 
+    /// <summary>Validate and save async returns file too large, when over10 MB.</summary>
     [Fact]
     public async Task ValidateAndSaveAsync_ReturnsFileTooLarge_WhenOver10MB()
     {
@@ -205,6 +211,7 @@ public class FileValidationServiceTests
 
     // -- Magic bytes ----------------------------------------------------------------
 
+    /// <summary>Validate and save async returns invalid format, when jpg has wrong magic bytes.</summary>
     [Fact]
     public async Task ValidateAndSaveAsync_ReturnsInvalidFormat_WhenJpgHasWrongMagicBytes()
     {
@@ -219,6 +226,7 @@ public class FileValidationServiceTests
 
     // -- ClamAV -----------------------------------------------------------------------
 
+    /// <summary>Validate and save async returns virus message, when clamav reports infected.</summary>
     [Fact]
     public async Task ValidateAndSaveAsync_ReturnsVirusMessage_WhenClamavReportsInfected()
     {
@@ -234,6 +242,7 @@ public class FileValidationServiceTests
 
     // -- ZIP handling -------------------------------------------------------------------
 
+    /// <summary>Validate and save async saves file, when zip is valid and not encrypted.</summary>
     [Fact]
     public async Task ValidateAndSaveAsync_SavesFile_WhenZipIsValidAndNotEncrypted()
     {
@@ -259,6 +268,7 @@ public class FileValidationServiceTests
         }
     }
 
+    /// <summary>Validate and save async returns encrypted zip message, when zip built with sharp zip lib is encrypted.</summary>
     [Fact]
     public async Task ValidateAndSaveAsync_ReturnsEncryptedZipMessage_WhenZipBuiltWithSharpZipLibIsEncrypted()
     {

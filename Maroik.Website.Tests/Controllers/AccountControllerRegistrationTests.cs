@@ -34,6 +34,7 @@ public class AccountControllerRegistrationTests
     private readonly MaroikWebApplicationFactory _factory;
     private readonly HttpClient _client;
 
+    /// <summary>Initializes a new instance of AccountControllerRegistrationTests, sharing the MaroikWebApplicationFactory fixture across the tests in this class.</summary>
     public AccountControllerRegistrationTests(MaroikWebApplicationFactory factory)
     {
         _factory = factory;
@@ -114,6 +115,7 @@ public class AccountControllerRegistrationTests
 
     // -- Register: success path -----------------------------------------------------
 
+    /// <summary>Register new account creates unconfirmed account and publishes email.</summary>
     [Fact]
     public async Task Register_NewAccount_CreatesUnconfirmedAccountAndPublishesEmail()
     {
@@ -139,6 +141,7 @@ public class AccountControllerRegistrationTests
         Assert.Contains(publisher.PublishedMessages, m => m.ToEmail == email);
     }
 
+    /// <summary>Register missing consent does not create account.</summary>
     [Fact]
     public async Task Register_MissingConsent_DoesNotCreateAccount()
     {
@@ -159,6 +162,7 @@ public class AccountControllerRegistrationTests
         Assert.False(db.Accounts.Any(a => a.Email == email));
     }
 
+    /// <summary>Register missing time zone does not create account.</summary>
     [Fact]
     public async Task Register_MissingTimeZone_DoesNotCreateAccount()
     {
@@ -179,6 +183,7 @@ public class AccountControllerRegistrationTests
         Assert.False(db.Accounts.Any(a => a.Email == email));
     }
 
+    /// <summary>Register already confirmed email does not overwrite account.</summary>
     [Fact]
     public async Task Register_AlreadyConfirmedEmail_DoesNotOverwriteAccount()
     {
@@ -202,6 +207,7 @@ public class AccountControllerRegistrationTests
         Assert.True(account.EmailConfirmed); // unchanged
     }
 
+    /// <summary>Register unconfirmed email resends confirmation on resubmission.</summary>
     [Fact]
     public async Task Register_UnconfirmedEmail_ResendsConfirmationOnResubmission()
     {
@@ -232,6 +238,7 @@ public class AccountControllerRegistrationTests
 
     // -- ConfirmEmail -----------------------------------------------------------------
 
+    /// <summary>Confirm email valid token activates account.</summary>
     [Fact]
     public async Task ConfirmEmail_ValidToken_ActivatesAccount()
     {
@@ -252,6 +259,7 @@ public class AccountControllerRegistrationTests
         Assert.True(account.EmailConfirmed);
     }
 
+    /// <summary>Confirm email already confirmed does not error.</summary>
     [Fact]
     public async Task ConfirmEmail_AlreadyConfirmed_DoesNotError()
     {
@@ -270,6 +278,7 @@ public class AccountControllerRegistrationTests
 
     // -- ForgotPassword -----------------------------------------------------------------
 
+    /// <summary>Forgot password confirmed account sets reset token and publishes email.</summary>
     [Fact]
     public async Task ForgotPassword_ConfirmedAccount_SetsResetTokenAndPublishesEmail()
     {
@@ -289,6 +298,7 @@ public class AccountControllerRegistrationTests
         Assert.Contains(publisher.PublishedMessages, m => m.ToEmail == email);
     }
 
+    /// <summary>Forgot password unknown email silently succeeds without publishing.</summary>
     [Fact]
     public async Task ForgotPassword_UnknownEmail_SilentlySucceedsWithoutPublishing()
     {
@@ -306,6 +316,7 @@ public class AccountControllerRegistrationTests
 
     // -- ResetPassword ------------------------------------------------------------------
 
+    /// <summary>Reset password get valid token does not fail.</summary>
     [Fact]
     public async Task ResetPassword_Get_ValidToken_DoesNotFail()
     {
@@ -326,6 +337,7 @@ public class AccountControllerRegistrationTests
         Assert.Contains("resetPasswordForm", html);
     }
 
+    /// <summary>Reset password post valid token changes password and allows login with new password.</summary>
     [Fact]
     public async Task ResetPassword_Post_ValidToken_ChangesPasswordAndAllowsLoginWithNewPassword()
     {
@@ -359,6 +371,7 @@ public class AccountControllerRegistrationTests
         Assert.Equal(System.Net.HttpStatusCode.Redirect, loginResponse.StatusCode); // login success redirects; failure re-renders as 200
     }
 
+    /// <summary>Reset password post unknown token returns fail to reset.</summary>
     [Fact]
     public async Task ResetPassword_Post_UnknownToken_ReturnsFailToReset()
     {

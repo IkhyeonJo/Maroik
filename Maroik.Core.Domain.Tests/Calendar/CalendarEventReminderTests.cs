@@ -10,6 +10,7 @@ public class CalendarEventReminderTests
 {
     // -- Create ---------------------------------------------------------------
 
+    /// <summary>Create returns reminder, when valid.</summary>
     [Fact]
     public void Create_ReturnsReminder_WhenValid()
     {
@@ -21,6 +22,7 @@ public class CalendarEventReminderTests
         Assert.Equal(30, result.Value.MinutesBeforeEvent);
     }
 
+    /// <summary>Create returns error, when method empty.</summary>
     [Theory]
     [InlineData(null)]
     [InlineData("")]
@@ -33,6 +35,7 @@ public class CalendarEventReminderTests
         Assert.Equal("Reminder.MethodEmpty", result.FirstError.Code);
     }
 
+    /// <summary>Create returns error, when no lead time set.</summary>
     [Fact]
     public void Create_ReturnsError_WhenNoLeadTimeSet()
     {
@@ -42,6 +45,7 @@ public class CalendarEventReminderTests
         Assert.Equal("Reminder.NoLeadTime", result.FirstError.Code);
     }
 
+    /// <summary>Create succeeds, when only hours before set.</summary>
     [Fact]
     public void Create_Succeeds_WhenOnlyHoursBeforeSet()
     {
@@ -51,6 +55,7 @@ public class CalendarEventReminderTests
         Assert.Equal(2, result.Value.HoursBeforeEvent);
     }
 
+    /// <summary>Create succeeds, when only days before set.</summary>
     [Fact]
     public void Create_Succeeds_WhenOnlyDaysBeforeSet()
     {
@@ -60,6 +65,7 @@ public class CalendarEventReminderTests
         Assert.Equal(1, result.Value.DaysBeforeEvent);
     }
 
+    /// <summary>Create succeeds, when only weeks before set.</summary>
     [Fact]
     public void Create_Succeeds_WhenOnlyWeeksBeforeSet()
     {
@@ -69,6 +75,7 @@ public class CalendarEventReminderTests
         Assert.Equal(1, result.Value.WeeksBeforeEvent);
     }
 
+    /// <summary>Create allows optional times before event.</summary>
     [Fact]
     public void Create_AllowsOptionalTimesBeforeEvent()
     {
@@ -82,6 +89,7 @@ public class CalendarEventReminderTests
 
     // -- Reconstitute -----------------------------------------------------------
 
+    /// <summary>Reconstitute rebuilds reminder without validation.</summary>
     [Fact]
     public void Reconstitute_RebuildsReminder_WithoutValidation()
     {
@@ -93,6 +101,7 @@ public class CalendarEventReminderTests
         Assert.Equal(30, reminder.MinutesBeforeEvent);
     }
 
+    /// <summary>Reconstitute defaults null method to empty string.</summary>
     [Fact]
     public void Reconstitute_DefaultsNullMethod_ToEmptyString()
     {

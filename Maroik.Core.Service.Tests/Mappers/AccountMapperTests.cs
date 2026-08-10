@@ -7,6 +7,7 @@ namespace Maroik.Core.Service.Tests.Mappers;
 /// <summary>Unit tests for <see cref="AccountMapper"/>.</summary>
 public class AccountMapperTests
 {
+    /// <summary>To response maps all fields.</summary>
     [Fact]
     public void ToResponse_MapsAllFields()
     {

@@ -18,6 +18,8 @@ public class FixedExpenditureRepository(ApplicationDbContext context)
     /// <summary>The underlying <see cref="DbSet{TEntity}"/> for <see cref="OrmFixedExpenditure"/> rows.</summary>
     protected override DbSet<OrmFixedExpenditure> Set => Context.FixedExpenditures;
 
+    /// <inheritdoc />
+    /// <inheritdoc />
     // Always join the Asset navigation property so query results carry the monetary unit.
     protected override IQueryable<OrmFixedExpenditure> ApplyIncludes(IQueryable<OrmFixedExpenditure> query)
         => query.Include(x => x.Asset);

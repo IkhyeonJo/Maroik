@@ -12,6 +12,7 @@ public class BoardResponseExtensionsTests
 {
     // -- IsTitleVisibleToOwnerOrAdmin ---------------------------------------------
 
+    /// <summary>Is title visible to owner or admin not locked any viewer true.</summary>
     [Fact]
     public void IsTitleVisibleToOwnerOrAdmin_NotLocked_AnyViewer_True()
     {
@@ -21,6 +22,7 @@ public class BoardResponseExtensionsTests
         Assert.True(board.IsTitleVisibleToOwnerOrAdmin(viewer));
     }
 
+    /// <summary>Is title visible to owner or admin locked and writer true.</summary>
     [Fact]
     public void IsTitleVisibleToOwnerOrAdmin_LockedAndWriter_True()
     {
@@ -30,6 +32,7 @@ public class BoardResponseExtensionsTests
         Assert.True(board.IsTitleVisibleToOwnerOrAdmin(viewer));
     }
 
+    /// <summary>Is title visible to owner or admin locked and admin not writer true.</summary>
     [Fact]
     public void IsTitleVisibleToOwnerOrAdmin_LockedAndAdminNotWriter_True()
     {
@@ -39,6 +42,7 @@ public class BoardResponseExtensionsTests
         Assert.True(board.IsTitleVisibleToOwnerOrAdmin(admin));
     }
 
+    /// <summary>Is title visible to owner or admin locked and regular user not writer false.</summary>
     [Fact]
     public void IsTitleVisibleToOwnerOrAdmin_LockedAndRegularUserNotWriter_False()
     {
@@ -48,6 +52,7 @@ public class BoardResponseExtensionsTests
         Assert.False(board.IsTitleVisibleToOwnerOrAdmin(viewer));
     }
 
+    /// <summary>Is title visible to owner or admin locked and anonymous false.</summary>
     [Fact]
     public void IsTitleVisibleToOwnerOrAdmin_LockedAndAnonymous_False()
     {
@@ -59,6 +64,7 @@ public class BoardResponseExtensionsTests
 
     // -- IsTitleVisibleToOwner ------------------------------------------------------
 
+    /// <summary>Is title visible to owner not locked any viewer true.</summary>
     [Fact]
     public void IsTitleVisibleToOwner_NotLocked_AnyViewer_True()
     {
@@ -68,6 +74,7 @@ public class BoardResponseExtensionsTests
         Assert.True(board.IsTitleVisibleToOwner(viewer));
     }
 
+    /// <summary>Is title visible to owner locked and writer true.</summary>
     [Fact]
     public void IsTitleVisibleToOwner_LockedAndWriter_True()
     {
@@ -77,6 +84,7 @@ public class BoardResponseExtensionsTests
         Assert.True(board.IsTitleVisibleToOwner(viewer));
     }
 
+    /// <summary>Is title visible to owner locked and admin not writer false.</summary>
     [Fact]
     public void IsTitleVisibleToOwner_LockedAndAdminNotWriter_False()
     {
@@ -87,6 +95,7 @@ public class BoardResponseExtensionsTests
         Assert.False(board.IsTitleVisibleToOwner(admin));
     }
 
+    /// <summary>Is title visible to owner locked and regular user not writer false.</summary>
     [Fact]
     public void IsTitleVisibleToOwner_LockedAndRegularUserNotWriter_False()
     {
@@ -96,6 +105,7 @@ public class BoardResponseExtensionsTests
         Assert.False(board.IsTitleVisibleToOwner(viewer));
     }
 
+    /// <summary>Is title visible to owner locked and anonymous false.</summary>
     [Fact]
     public void IsTitleVisibleToOwner_LockedAndAnonymous_False()
     {

@@ -7,6 +7,7 @@ namespace Maroik.Core.Service.Tests.Mappers;
 /// <summary>Unit tests for <see cref="SubCategoryMapper"/>.</summary>
 public class SubCategoryMapperTests
 {
+    /// <summary>To response maps all fields.</summary>
     [Fact]
     public void ToResponse_MapsAllFields()
     {

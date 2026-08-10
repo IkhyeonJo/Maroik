@@ -23,6 +23,7 @@ public class ManagementControllerAccountTests
     private readonly MaroikWebApplicationFactory _factory;
     private readonly HttpClient _client;
 
+    /// <summary>Initializes a new instance of ManagementControllerAccountTests, sharing the MaroikWebApplicationFactory fixture across the tests in this class.</summary>
     public ManagementControllerAccountTests(MaroikWebApplicationFactory factory)
     {
         _factory = factory;
@@ -81,6 +82,7 @@ public class ManagementControllerAccountTests
 
     // -- CreateAccount: role gating --------------------------------------------
 
+    /// <summary>Create account user session is forbidden.</summary>
     [Fact]
     public async Task CreateAccount_UserSession_IsForbidden()
     {
@@ -94,6 +96,7 @@ public class ManagementControllerAccountTests
 
     // -- CreateAccount: inline validation ---------------------------------------
 
+    /// <summary>Create account invalid email format returns specific error.</summary>
     [Fact]
     public async Task CreateAccount_InvalidEmailFormat_ReturnsSpecificError()
     {
@@ -107,6 +110,7 @@ public class ManagementControllerAccountTests
         Assert.Contains("Invalid email form", json);
     }
 
+    /// <summary>Create account weak password returns password policy error.</summary>
     [Fact]
     public async Task CreateAccount_WeakPassword_ReturnsPasswordPolicyError()
     {
@@ -136,6 +140,7 @@ public class ManagementControllerAccountTests
         Assert.Contains("Password must be at least 8 characters", json);
     }
 
+    /// <summary>Create account missing time zone returns specific error.</summary>
     [Fact]
     public async Task CreateAccount_MissingTimeZone_ReturnsSpecificError()
     {
@@ -192,6 +197,7 @@ public class ManagementControllerAccountTests
         Assert.False(account.Deleted);
     }
 
+    /// <summary>Create account duplicate email returns already created error.</summary>
     [Fact]
     public async Task CreateAccount_DuplicateEmail_ReturnsAlreadyCreatedError()
     {
@@ -225,6 +231,7 @@ public class ManagementControllerAccountTests
 
     // -- IsAccountExists ---------------------------------------------------------
 
+    /// <summary>Is account exists seeded account returns success result.</summary>
     [Fact]
     public async Task IsAccountExists_SeededAccount_ReturnsSuccessResult()
     {
@@ -239,6 +246,7 @@ public class ManagementControllerAccountTests
         Assert.Contains("\"result\":true", json);
     }
 
+    /// <summary>Is account exists unknown email returns failure result.</summary>
     [Fact]
     public async Task IsAccountExists_UnknownEmail_ReturnsFailureResult()
     {
@@ -253,6 +261,7 @@ public class ManagementControllerAccountTests
 
     // -- UpdateAccount ------------------------------------------------------------
 
+    /// <summary>Update account existing account returns success result.</summary>
     [Fact]
     public async Task UpdateAccount_ExistingAccount_ReturnsSuccessResult()
     {
@@ -318,6 +327,7 @@ public class ManagementControllerAccountTests
         Assert.Equal("irrelevant-hash", account.HashedPassword); // unchanged from SeedAccount
     }
 
+    /// <summary>Update account unknown email returns failure result.</summary>
     [Fact]
     public async Task UpdateAccount_UnknownEmail_ReturnsFailureResult()
     {
@@ -343,6 +353,7 @@ public class ManagementControllerAccountTests
 
     // -- DeleteAccount ------------------------------------------------------------
 
+    /// <summary>Delete account existing account soft deletes it.</summary>
     [Fact]
     public async Task DeleteAccount_ExistingAccount_SoftDeletesIt()
     {
@@ -364,6 +375,7 @@ public class ManagementControllerAccountTests
         Assert.True(account.Deleted);
     }
 
+    /// <summary>Delete account unknown email returns failure result.</summary>
     [Fact]
     public async Task DeleteAccount_UnknownEmail_ReturnsFailureResult()
     {

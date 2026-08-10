@@ -20,6 +20,7 @@ public class ForumControllerWriteEditTests
     private readonly MaroikWebApplicationFactory _factory;
     private readonly HttpClient _client;
 
+    /// <summary>Initializes a new instance of ForumControllerWriteEditTests, sharing the MaroikWebApplicationFactory fixture across the tests in this class.</summary>
     public ForumControllerWriteEditTests(MaroikWebApplicationFactory factory)
     {
         _factory = factory;
@@ -42,6 +43,7 @@ public class ForumControllerWriteEditTests
     private static string UniqueTitle([System.Runtime.CompilerServices.CallerMemberName] string testName = "") =>
         $"{testName}-{Guid.NewGuid():N}";
 
+    /// <summary>Write free board anonymous session is forbidden.</summary>
     [Fact]
     public async Task WriteFreeBoard_AnonymousSession_IsForbidden()
     {
@@ -52,6 +54,7 @@ public class ForumControllerWriteEditTests
         Assert.NotEqual(System.Net.HttpStatusCode.OK, response.StatusCode);
     }
 
+    /// <summary>Write free board missing title returns input invalid.</summary>
     [Fact]
     public async Task WriteFreeBoard_MissingTitle_ReturnsInputInvalid()
     {
@@ -64,6 +67,7 @@ public class ForumControllerWriteEditTests
         Assert.Contains("\"result\":false", json);
     }
 
+    /// <summary>Write free board title too long returns input invalid.</summary>
     [Fact]
     public async Task WriteFreeBoard_TitleTooLong_ReturnsInputInvalid()
     {
@@ -76,6 +80,7 @@ public class ForumControllerWriteEditTests
         Assert.Contains("\"result\":false", json);
     }
 
+    /// <summary>Edit free board missing title returns input invalid.</summary>
     [Fact]
     public async Task EditFreeBoard_MissingTitle_ReturnsInputInvalid()
     {
@@ -92,6 +97,7 @@ public class ForumControllerWriteEditTests
 
     // -- WriteFreeBoard: success path ---------------------------------------------
 
+    /// <summary>Write free board valid payload persists board.</summary>
     [Fact]
     public async Task WriteFreeBoard_ValidPayload_PersistsBoard()
     {
@@ -113,6 +119,7 @@ public class ForumControllerWriteEditTests
         Assert.False(created.Noticed);
     }
 
+    /// <summary>Write free board noticed requested by non admin is ignored.</summary>
     [Fact]
     public async Task WriteFreeBoard_NoticedRequestedByNonAdmin_IsIgnored()
     {
@@ -132,6 +139,7 @@ public class ForumControllerWriteEditTests
 
     // -- EditFreeBoard: success path / ownership -----------------------------------
 
+    /// <summary>Edit free board by owner updates board.</summary>
     [Fact]
     public async Task EditFreeBoard_ByOwner_UpdatesBoard()
     {
@@ -161,6 +169,7 @@ public class ForumControllerWriteEditTests
         Assert.True(updated.Locked);
     }
 
+    /// <summary>Edit free board by non owner returns failure result.</summary>
     [Fact]
     public async Task EditFreeBoard_ByNonOwner_ReturnsFailureResult()
     {

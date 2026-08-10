@@ -47,6 +47,7 @@ public class DashboardViewModelMapperTests
 
     // -- Early-exit / basic field mapping -------------------------------------
 
+    /// <summary>To view model default monetary unit null returns basic fields only with no aggregation.</summary>
     [Fact]
     public void ToViewModel_DefaultMonetaryUnitNull_ReturnsBasicFieldsOnlyWithNoAggregation()
     {
@@ -60,6 +61,7 @@ public class DashboardViewModelMapperTests
         Assert.Equal(0m, vm.RegularIncomeLaborIncomeYear);
     }
 
+    /// <summary>To view model copies year selectors and default monetary unit.</summary>
     [Fact]
     public void ToViewModel_CopiesYearSelectorsAndDefaultMonetaryUnit()
     {
@@ -74,6 +76,7 @@ public class DashboardViewModelMapperTests
         Assert.Equal("KRW", vm.DefaultMonetaryUnit);
     }
 
+    /// <summary>To view model filters null monetary units.</summary>
     [Fact]
     public void ToViewModel_FiltersNullMonetaryUnits()
     {
@@ -86,6 +89,7 @@ public class DashboardViewModelMapperTests
 
     // -- Currency lookup + timezone conversion --------------------------------
 
+    /// <summary>To view model maps income monetary unit from asset lookup by deposit product name.</summary>
     [Fact]
     public void ToViewModel_MapsIncomeMonetaryUnit_FromAssetLookupByDepositProductName()
     {
@@ -98,6 +102,7 @@ public class DashboardViewModelMapperTests
         Assert.Equal("USD", vm.IncomeYearOutputViewModels[0].MonetaryUnit);
     }
 
+    /// <summary>To view model maps expenditure monetary unit from asset lookup by payment method.</summary>
     [Fact]
     public void ToViewModel_MapsExpenditureMonetaryUnit_FromAssetLookupByPaymentMethod()
     {
@@ -110,6 +115,7 @@ public class DashboardViewModelMapperTests
         Assert.Equal("USD", vm.ExpenditureYearOutputViewModels[0].MonetaryUnit);
     }
 
+    /// <summary>To view model converts income created and updated to target time zone.</summary>
     [Fact]
     public void ToViewModel_ConvertsIncomeCreatedAndUpdated_ToTargetTimeZone()
     {
@@ -125,6 +131,7 @@ public class DashboardViewModelMapperTests
 
     // -- Income aggregation: RegularIncome / IrregularIncome ------------------
 
+    /// <summary>To view model aggregates regular income sub classes and percentages year.</summary>
     [Fact]
     public void ToViewModel_AggregatesRegularIncomeSubClassesAndPercentages_Year()
     {
@@ -148,6 +155,7 @@ public class DashboardViewModelMapperTests
         Assert.Equal(10.0, vm.PercentageOfRegularIncomePensionIncomeYear);
     }
 
+    /// <summary>To view model aggregates irregular income sub classes and percentages year.</summary>
     [Fact]
     public void ToViewModel_AggregatesIrregularIncomeSubClassesAndPercentages_Year()
     {
@@ -166,6 +174,7 @@ public class DashboardViewModelMapperTests
         Assert.Equal(25.0, vm.PercentageOfIrregularIncomeOtherIncomeYear);
     }
 
+    /// <summary>To view model regular income total zero percentages stay at default.</summary>
     [Fact]
     public void ToViewModel_RegularIncomeTotalZero_PercentagesStayAtDefault()
     {
@@ -178,6 +187,7 @@ public class DashboardViewModelMapperTests
         Assert.Equal(0.0, vm.PercentageOfRegularIncomeBusinessIncomeYear);
     }
 
+    /// <summary>To view model aggregates regular income for year month list independently.</summary>
     [Fact]
     public void ToViewModel_AggregatesRegularIncome_ForYearMonthList_Independently()
     {
@@ -195,6 +205,7 @@ public class DashboardViewModelMapperTests
 
     // -- Expenditure aggregation: RegularSavings -------------------------------
 
+    /// <summary>To view model aggregates regular savings sub classes and percentages year.</summary>
     [Fact]
     public void ToViewModel_AggregatesRegularSavingsSubClassesAndPercentages_Year()
     {
@@ -215,6 +226,7 @@ public class DashboardViewModelMapperTests
 
     // -- Expenditure aggregation: NonConsumerSpending --------------------------
 
+    /// <summary>To view model aggregates non consumer spending sub classes and percentages year.</summary>
     [Fact]
     public void ToViewModel_AggregatesNonConsumerSpendingSubClassesAndPercentages_Year()
     {
@@ -243,6 +255,7 @@ public class DashboardViewModelMapperTests
 
     // -- Expenditure aggregation: ConsumerSpending (all 12 sub-classes) --------
 
+    /// <summary>To view model aggregates consumer spending sub classes and percentages year.</summary>
     [Fact]
     public void ToViewModel_AggregatesConsumerSpendingSubClassesAndPercentages_Year()
     {
@@ -272,6 +285,7 @@ public class DashboardViewModelMapperTests
         Assert.Equal(100.0 / 12.0, vm.PercentageOfConsumerSpendingUnknownExpenditureYear, precision: 10);
     }
 
+    /// <summary>To view model expenditure totals zero percentages stay at default.</summary>
     [Fact]
     public void ToViewModel_ExpenditureTotalsZero_PercentagesStayAtDefault()
     {

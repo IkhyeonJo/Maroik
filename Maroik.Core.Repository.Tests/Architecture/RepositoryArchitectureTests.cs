@@ -13,6 +13,7 @@ public class RepositoryArchitectureTests
 {
     private static readonly Assembly RepositoryAssembly = typeof(AccountRepository).Assembly;
 
+    /// <summary>Repository should not depend on client namespace.</summary>
     [Fact]
     public void Repository_ShouldNot_DependOnClientNamespace()
     {
@@ -28,6 +29,7 @@ public class RepositoryArchitectureTests
             "Failing types: " + string.Join(", ", result.FailingTypeNames ?? []));
     }
 
+    /// <summary>Repository should not depend on service namespace.</summary>
     [Fact]
     public void Repository_ShouldNot_DependOnServiceNamespace()
     {

@@ -22,6 +22,7 @@ public class FileControllerTests : IClassFixture<WebApplicationFactory<Program>>
 {
     private readonly WebApplicationFactory<Program> _baseFactory;
 
+    /// <summary>Initializes a new instance of FileControllerTests, sharing the WebApplicationFactory&lt;Program&gt; fixture across the tests in this class.</summary>
     public FileControllerTests(WebApplicationFactory<Program> factory)
     {
         _baseFactory = factory;

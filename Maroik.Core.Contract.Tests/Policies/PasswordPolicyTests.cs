@@ -14,11 +14,13 @@ public class PasswordPolicyTests
     [InlineData("ABCDEFG1!")] // upper + digit + special
     [InlineData("abcdefg1!")] // lower + digit + special
     [InlineData("Sup3r$ecurePwd")] // all four criteria
+    /// <summary>Is valid returns true, when password meets three of four criteria.</summary>
     public void IsValid_ReturnsTrue_WhenPasswordMeetsThreeOfFourCriteria(string password)
     {
         Assert.True(PasswordPolicy.IsValid(password));
     }
 
+    /// <summary>Is valid returns false, when password null or empty.</summary>
     [Theory]
     [InlineData(null)]
     [InlineData("")]
@@ -33,6 +35,7 @@ public class PasswordPolicyTests
     [InlineData("abcdefgh1")] // only lower + digit (2 criteria)
     [InlineData("abcdefghijk")] // only lowercase (1 criterion)
     [InlineData("12345678")] // only digits (1 criterion)
+    /// <summary>Is valid returns false, when password fails complexity rule.</summary>
     public void IsValid_ReturnsFalse_WhenPasswordFailsComplexityRule(string password)
     {
         Assert.False(PasswordPolicy.IsValid(password));

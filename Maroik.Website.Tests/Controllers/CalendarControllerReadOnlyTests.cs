@@ -19,6 +19,7 @@ public class CalendarControllerReadOnlyTests
     private readonly MaroikWebApplicationFactory _factory;
     private readonly HttpClient _client;
 
+    /// <summary>Initializes a new instance of CalendarControllerReadOnlyTests, sharing the MaroikWebApplicationFactory fixture across the tests in this class.</summary>
     public CalendarControllerReadOnlyTests(MaroikWebApplicationFactory factory)
     {
         _factory = factory;
@@ -31,6 +32,7 @@ public class CalendarControllerReadOnlyTests
     private Task<AuthenticatedSession> LoginAsAdminAsync(string email = "calendar-readonly-admin@test.com") =>
         AuthenticatedSessionHelper.LoginAsync(_factory, _client, email, "AdminPassword1!", Role.Admin, TestContext.Current.CancellationToken);
 
+    /// <summary>Is calendar event exists unknown id returns failure result.</summary>
     [Fact]
     public async Task IsCalendarEventExists_UnknownId_ReturnsFailureResult()
     {
@@ -43,6 +45,7 @@ public class CalendarControllerReadOnlyTests
         Assert.Contains("\"result\":false", json);
     }
 
+    /// <summary>Is other calendar event exists unknown id returns failure result.</summary>
     [Fact]
     public async Task IsOtherCalendarEventExists_UnknownId_ReturnsFailureResult()
     {
@@ -55,6 +58,7 @@ public class CalendarControllerReadOnlyTests
         Assert.Contains("\"result\":false", json);
     }
 
+    /// <summary>Get calendar shareds user session is forbidden.</summary>
     [Fact]
     public async Task GetCalendarShareds_UserSession_IsForbidden()
     {
@@ -66,6 +70,7 @@ public class CalendarControllerReadOnlyTests
         Assert.NotEqual(System.Net.HttpStatusCode.OK, response.StatusCode);
     }
 
+    /// <summary>Get calendar shareds admin session returns success result.</summary>
     [Fact]
     public async Task GetCalendarShareds_AdminSession_ReturnsSuccessResult()
     {
@@ -78,6 +83,7 @@ public class CalendarControllerReadOnlyTests
         Assert.Contains("\"result\":true", json);
     }
 
+    /// <summary>Get browse calendars of interest user session returns success result.</summary>
     [Fact]
     public async Task GetBrowseCalendarsOfInterest_UserSession_ReturnsSuccessResult()
     {

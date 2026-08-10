@@ -10,6 +10,7 @@ public class BoardCommentTests
 {
     // -- Create ---------------------------------------------------------------
 
+    /// <summary>Create returns comment, when valid.</summary>
     [Fact]
     public void Create_ReturnsComment_WhenValid()
     {
@@ -20,6 +21,7 @@ public class BoardCommentTests
         Assert.Equal("Hello!", result.Value.Content);
     }
 
+    /// <summary>Create returns error, when writer empty.</summary>
     [Theory]
     [InlineData(null)]
     [InlineData("")]
@@ -32,6 +34,7 @@ public class BoardCommentTests
         Assert.Equal("BoardComment.WriterEmpty", result.FirstError.Code);
     }
 
+    /// <summary>Create returns error, when content empty.</summary>
     [Theory]
     [InlineData(null)]
     [InlineData("")]
@@ -46,6 +49,7 @@ public class BoardCommentTests
 
     // -- SoftDelete ------------------------------------------------------------
 
+    /// <summary>Soft delete sets deleted true.</summary>
     [Fact]
     public void SoftDelete_SetsDeletedTrue()
     {
@@ -58,6 +62,7 @@ public class BoardCommentTests
 
     // -- IsOwnedBy / CanBeDeletedBy ----------------------------------------------
 
+    /// <summary>Is owned by returns true for writer.</summary>
     [Fact]
     public void IsOwnedBy_ReturnsTrue_ForWriter()
     {
@@ -66,6 +71,7 @@ public class BoardCommentTests
         Assert.True(comment.IsOwnedBy("Alice"));
     }
 
+    /// <summary>Is owned by returns false for non writer.</summary>
     [Fact]
     public void IsOwnedBy_ReturnsFalse_ForNonWriter()
     {
@@ -74,6 +80,7 @@ public class BoardCommentTests
         Assert.False(comment.IsOwnedBy("Bob"));
     }
 
+    /// <summary>Can be deleted by returns true for writer.</summary>
     [Fact]
     public void CanBeDeletedBy_ReturnsTrue_ForWriter()
     {
@@ -82,6 +89,7 @@ public class BoardCommentTests
         Assert.True(comment.CanBeDeletedBy("Alice", isAdmin: false));
     }
 
+    /// <summary>Can be deleted by returns true for non writer admin.</summary>
     [Fact]
     public void CanBeDeletedBy_ReturnsTrue_ForNonWriterAdmin()
     {
@@ -90,6 +98,7 @@ public class BoardCommentTests
         Assert.True(comment.CanBeDeletedBy("Bob", isAdmin: true));
     }
 
+    /// <summary>Can be deleted by returns false for non writer non admin.</summary>
     [Fact]
     public void CanBeDeletedBy_ReturnsFalse_ForNonWriterNonAdmin()
     {

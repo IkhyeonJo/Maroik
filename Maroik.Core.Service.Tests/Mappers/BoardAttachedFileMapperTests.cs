@@ -7,6 +7,7 @@ namespace Maroik.Core.Service.Tests.Mappers;
 /// <summary>Unit tests for <see cref="BoardAttachedFileMapper"/>.</summary>
 public class BoardAttachedFileMapperTests
 {
+    /// <summary>To response maps all fields.</summary>
     [Fact]
     public void ToResponse_MapsAllFields()
     {

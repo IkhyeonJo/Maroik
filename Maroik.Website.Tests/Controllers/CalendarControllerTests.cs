@@ -12,6 +12,7 @@ public class CalendarControllerTests
 {
     private readonly HttpClient _client;
 
+    /// <summary>Initializes a new instance of CalendarControllerTests, sharing the MaroikWebApplicationFactory fixture across the tests in this class.</summary>
     public CalendarControllerTests(MaroikWebApplicationFactory factory)
     {
         _client = factory.CreateTestClient(followRedirects: false);

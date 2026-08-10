@@ -30,6 +30,7 @@ public class AuthorizationFilterTests
     private readonly Mock<ISessionService> _sessionService = new();
     private readonly Mock<IAccountService> _accountService = new();
 
+    /// <summary>Initializes a new instance of AuthorizationFilterTests.</summary>
     public AuthorizationFilterTests()
     {
         _cache.Setup(c => c.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
@@ -113,6 +114,7 @@ public class AuthorizationFilterTests
 
     // -- GET, not logged in -------------------------------------------------------
 
+    /// <summary>On action execution async get not logged in bypass route always allowed.</summary>
     [Fact]
     public async Task OnActionExecutionAsync_Get_NotLoggedIn_BypassRoute_AlwaysAllowed()
     {
@@ -127,6 +129,7 @@ public class AuthorizationFilterTests
         Assert.Null(context.Result);
     }
 
+    /// <summary>On action execution async get not logged in single category match allows.</summary>
     [Fact]
     public async Task OnActionExecutionAsync_Get_NotLoggedIn_SingleCategoryMatch_Allows()
     {
@@ -142,6 +145,7 @@ public class AuthorizationFilterTests
         Assert.Null(context.Result);
     }
 
+    /// <summary>On action execution async get not logged in sub category match allows.</summary>
     [Fact]
     public async Task OnActionExecutionAsync_Get_NotLoggedIn_SubCategoryMatch_Allows()
     {
@@ -157,6 +161,7 @@ public class AuthorizationFilterTests
         Assert.True(nextCalled);
     }
 
+    /// <summary>On action execution async get not logged in no match redirects.</summary>
     [Fact]
     public async Task OnActionExecutionAsync_Get_NotLoggedIn_NoMatch_Redirects()
     {
@@ -175,6 +180,7 @@ public class AuthorizationFilterTests
 
     // -- GET, Admin logged in ------------------------------------------------------
 
+    /// <summary>On action execution async get admin logged in single category match allows.</summary>
     [Fact]
     public async Task OnActionExecutionAsync_Get_AdminLoggedIn_SingleCategoryMatch_Allows()
     {
@@ -191,6 +197,7 @@ public class AuthorizationFilterTests
         Assert.True(nextCalled);
     }
 
+    /// <summary>On action execution async get admin logged in sub category match allows.</summary>
     [Fact]
     public async Task OnActionExecutionAsync_Get_AdminLoggedIn_SubCategoryMatch_Allows()
     {
@@ -208,6 +215,7 @@ public class AuthorizationFilterTests
         Assert.True(nextCalled);
     }
 
+    /// <summary>On action execution async get admin logged in no match redirects.</summary>
     [Fact]
     public async Task OnActionExecutionAsync_Get_AdminLoggedIn_NoMatch_Redirects()
     {
@@ -228,6 +236,7 @@ public class AuthorizationFilterTests
 
     // -- GET, User logged in --------------------------------------------------------
 
+    /// <summary>On action execution async get user logged in single category match allows.</summary>
     [Fact]
     public async Task OnActionExecutionAsync_Get_UserLoggedIn_SingleCategoryMatch_Allows()
     {
@@ -244,6 +253,7 @@ public class AuthorizationFilterTests
         Assert.True(nextCalled);
     }
 
+    /// <summary>On action execution async get user logged in no match redirects.</summary>
     [Fact]
     public async Task OnActionExecutionAsync_Get_UserLoggedIn_NoMatch_Redirects()
     {
@@ -262,6 +272,7 @@ public class AuthorizationFilterTests
 
     // -- Session validity (unrelated to menu resolution, still gated by this filter) --
 
+    /// <summary>On action execution async logged in account deleted in db redirects to login and clears session.</summary>
     [Fact]
     public async Task OnActionExecutionAsync_LoggedInAccountDeletedInDb_RedirectsToLoginAndClearsSession()
     {

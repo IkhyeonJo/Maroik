@@ -11,6 +11,7 @@ public class ExpenditureClassPolicyTests
 {
     // -- RegularSavings --------------------------------------------------------
 
+    /// <summary>Validate returns true for regular savings sub classes.</summary>
     [Theory]
     [InlineData("Deposit")]
     [InlineData("Investment")]
@@ -22,6 +23,7 @@ public class ExpenditureClassPolicyTests
         Assert.True(result.Value);
     }
 
+    /// <summary>Validate returns error, when regular savings sub class invalid.</summary>
     [Theory]
     [InlineData("Unknown")]
     [InlineData("")]
@@ -36,6 +38,7 @@ public class ExpenditureClassPolicyTests
 
     // -- NonConsumerSpending ---------------------------------------------------
 
+    /// <summary>Validate returns true for non consumer spending with deposit asset.</summary>
     [Theory]
     [InlineData("PublicPension")]
     [InlineData("DebtRepayment")]
@@ -47,6 +50,7 @@ public class ExpenditureClassPolicyTests
         Assert.True(result.Value);
     }
 
+    /// <summary>Validate returns false for non consumer spending without deposit asset.</summary>
     [Theory]
     [InlineData("Tax")]
     [InlineData("SocialInsurance")]
@@ -60,6 +64,7 @@ public class ExpenditureClassPolicyTests
         Assert.False(result.Value);
     }
 
+    /// <summary>Validate returns error, when non consumer spending sub class invalid.</summary>
     [Theory]
     [InlineData("Unknown")]
     [InlineData("")]
@@ -74,6 +79,7 @@ public class ExpenditureClassPolicyTests
 
     // -- ConsumerSpending ------------------------------------------------------
 
+    /// <summary>Validate returns false for all consumer spending sub classes.</summary>
     [Theory]
     [InlineData("MealOrEatOutExpenses")]
     [InlineData("HousingOrSuppliesCost")]
@@ -95,6 +101,7 @@ public class ExpenditureClassPolicyTests
         Assert.False(result.Value);
     }
 
+    /// <summary>Validate returns error, when consumer spending sub class invalid.</summary>
     [Theory]
     [InlineData("Unknown")]
     [InlineData("")]
@@ -109,6 +116,7 @@ public class ExpenditureClassPolicyTests
 
     // -- Unknown main class ----------------------------------------------------
 
+    /// <summary>Validate returns error, when main class unknown.</summary>
     [Theory]
     [InlineData("Unknown")]
     [InlineData("")]

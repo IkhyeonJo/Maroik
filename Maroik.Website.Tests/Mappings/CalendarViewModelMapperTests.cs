@@ -36,6 +36,7 @@ public class CalendarViewModelMapperTests
 
     // -- ToDisplayViewModel: all-day events -----------------------------------
 
+    /// <summary>To display view model all day for grid end date is midnight of day after local end.</summary>
     [Fact]
     public void ToDisplayViewModel_AllDay_ForGrid_EndDateIsMidnightOfDayAfterLocalEnd()
     {
@@ -49,6 +50,7 @@ public class CalendarViewModelMapperTests
         Assert.Equal(new DateTime(2025, 6, 13), vm.EndDate); // exclusive end: day after the local end date
     }
 
+    /// <summary>To display view model all day for grid sets display strings and empty time zone labels.</summary>
     [Fact]
     public void ToDisplayViewModel_AllDay_ForGrid_SetsDisplayStringsAndEmptyTimeZoneLabels()
     {
@@ -66,6 +68,7 @@ public class CalendarViewModelMapperTests
         Assert.Equal("UTC", vm.EndDateTimeZoneIanaId);
     }
 
+    /// <summary>To display view model all day not for grid does not set grid start end date.</summary>
     [Fact]
     public void ToDisplayViewModel_AllDay_NotForGrid_DoesNotSetGridStartEndDate()
     {
@@ -82,6 +85,7 @@ public class CalendarViewModelMapperTests
 
     // -- ToDisplayViewModel: timed events --------------------------------------
 
+    /// <summary>To display view model timed for grid end date is midnight of day after local end.</summary>
     [Fact]
     public void ToDisplayViewModel_Timed_ForGrid_EndDateIsMidnightOfDayAfterLocalEnd()
     {
@@ -98,6 +102,7 @@ public class CalendarViewModelMapperTests
         Assert.Equal("2025-06-10 17:30", vm.DisplayEndDate);
     }
 
+    /// <summary>To display view model timed not for grid returns before setting grid dates.</summary>
     [Fact]
     public void ToDisplayViewModel_Timed_NotForGrid_ReturnsBeforeSettingGridDates()
     {
@@ -112,6 +117,7 @@ public class CalendarViewModelMapperTests
         Assert.Equal(default, vm.EndDate);
     }
 
+    /// <summary>To display view model timed missing event time zone falls back to viewer time zone.</summary>
     [Fact]
     public void ToDisplayViewModel_Timed_MissingEventTimeZone_FallsBackToViewerTimeZone()
     {
@@ -126,6 +132,7 @@ public class CalendarViewModelMapperTests
         Assert.Equal("UTC", vm.EndDateTimeZoneIanaId);
     }
 
+    /// <summary>To display view model unrecognized time zone display time zone falls back to raw iana id.</summary>
     [Fact]
     public void ToDisplayViewModel_UnrecognizedTimeZone_DisplayTimeZoneFallsBackToRawIanaId()
     {
@@ -140,6 +147,7 @@ public class CalendarViewModelMapperTests
         Assert.Equal("Not/ARealZone", vm.DisplayEndDateTimeZone);
     }
 
+    /// <summary>To display view model copies id and color and calendar type.</summary>
     [Fact]
     public void ToDisplayViewModel_CopiesIdAndColorAndCalendarType()
     {
@@ -160,6 +168,7 @@ public class CalendarViewModelMapperTests
 
     // -- ToSerializedReminders --------------------------------------------------
 
+    /// <summary>To serialized reminders serializes all fields.</summary>
     [Fact]
     public void ToSerializedReminders_SerializesAllFields()
     {
@@ -187,6 +196,7 @@ public class CalendarViewModelMapperTests
         Assert.Equal(new TimeSpan(9, 0, 0), roundTripped[0].TimesBeforeEvent);
     }
 
+    /// <summary>To serialized reminders null method defaults to empty string.</summary>
     [Fact]
     public void ToSerializedReminders_NullMethod_DefaultsToEmptyString()
     {
@@ -200,6 +210,7 @@ public class CalendarViewModelMapperTests
 
     // -- PopulateTimeData ---------------------------------------------------------
 
+    /// <summary>Populate time data generates A24 hour grid in fifteen minute increments.</summary>
     [Fact]
     public void PopulateTimeData_GeneratesA24HourGridInFifteenMinuteIncrements()
     {
@@ -212,6 +223,7 @@ public class CalendarViewModelMapperTests
         Assert.Equal("23:45", vm.TimeIntervals[^1]);
     }
 
+    /// <summary>Populate time data current interval is consistent with current hour and minute.</summary>
     [Fact]
     public void PopulateTimeData_CurrentIntervalIsConsistentWithCurrentHourAndMinute()
     {
@@ -229,6 +241,7 @@ public class CalendarViewModelMapperTests
 
     // -- ToCalendarEventRequest: all-day ------------------------------------------
 
+    /// <summary>To calendar event request all day parses dates as utc midnight and clears time zones.</summary>
     [Fact]
     public void ToCalendarEventRequest_AllDay_ParsesDatesAsUtcMidnightAndClearsTimeZones()
     {
@@ -251,6 +264,7 @@ public class CalendarViewModelMapperTests
 
     // -- ToCalendarEventRequest: timed --------------------------------------------
 
+    /// <summary>To calendar event request timed converts local date time to utc using supplied time zone.</summary>
     [Fact]
     public void ToCalendarEventRequest_Timed_ConvertsLocalDateTimeToUtcUsingSuppliedTimeZone()
     {
@@ -270,6 +284,7 @@ public class CalendarViewModelMapperTests
         Assert.Equal("UTC", req.StartDateTimeZoneIanaId);
     }
 
+    /// <summary>To calendar event request timed unrecognized time zone returns parsed local value unchanged.</summary>
     [Fact]
     public void ToCalendarEventRequest_Timed_UnrecognizedTimeZone_ReturnsParsedLocalValueUnchanged()
     {
@@ -287,6 +302,7 @@ public class CalendarViewModelMapperTests
         Assert.Equal(new DateTime(2025, 6, 10, 9, 0, 0), req.StartDate);
     }
 
+    /// <summary>To calendar event request copies title description location status.</summary>
     [Fact]
     public void ToCalendarEventRequest_CopiesTitleDescriptionLocationStatus()
     {
@@ -315,6 +331,7 @@ public class CalendarViewModelMapperTests
 
     // -- ToReminderInfoList --------------------------------------------------------
 
+    /// <summary>To reminder info list null or empty returns empty list.</summary>
     [Fact]
     public void ToReminderInfoList_NullOrEmpty_ReturnsEmptyList()
     {
@@ -322,6 +339,7 @@ public class CalendarViewModelMapperTests
         Assert.Empty("".ToReminderInfoList());
     }
 
+    /// <summary>To reminder info list parses fields and time of day.</summary>
     [Fact]
     public void ToReminderInfoList_ParsesFieldsAndTimeOfDay()
     {
@@ -347,6 +365,7 @@ public class CalendarViewModelMapperTests
         Assert.Equal(new TimeSpan(9, 30, 0), reminders[0].TimesBeforeEvent);
     }
 
+    /// <summary>To reminder info list empty times before event leaves times before event null.</summary>
     [Fact]
     public void ToReminderInfoList_EmptyTimesBeforeEvent_LeavesTimesBeforeEventNull()
     {

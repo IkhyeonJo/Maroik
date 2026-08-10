@@ -14,6 +14,7 @@ public class DomainArchitectureTests
 {
     private static readonly Assembly DomainAssembly = typeof(Account).Assembly;
 
+    /// <summary>Domain should not depend on any other layer.</summary>
     [Theory]
     [InlineData("Maroik.Core.Contract")]
     [InlineData("Maroik.Core.Client")]
@@ -38,6 +39,7 @@ public class DomainArchitectureTests
             "Failing types: " + string.Join(", ", result.FailingTypeNames ?? []));
     }
 
+    /// <summary>Domain should only depend on system or error or.</summary>
     [Fact]
     public void Domain_ShouldOnly_DependOn_SystemOrErrorOr()
     {
@@ -74,6 +76,7 @@ public class DomainArchitectureTests
         "Maroik.Core.Domain.Menu"
     ];
 
+    /// <summary>Bounded context should not depend on another bounded context.</summary>
     [Theory]
     [InlineData("Maroik.Core.Domain.Account")]
     [InlineData("Maroik.Core.Domain.Board")]

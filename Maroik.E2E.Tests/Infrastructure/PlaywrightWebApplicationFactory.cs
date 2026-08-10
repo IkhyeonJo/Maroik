@@ -35,6 +35,7 @@ public sealed class PlaywrightWebApplicationFactory : WebApplicationFactory<Prog
 
     // -- WebApplicationFactory overrides --------------------------------------
 
+    /// <summary>Configures the "Testing" environment: in-memory settings overrides and an in-memory database.</summary>
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
         builder.UseEnvironment("Testing");
@@ -111,6 +112,12 @@ public sealed class PlaywrightWebApplicationFactory : WebApplicationFactory<Prog
         });
     }
 
+    /// <summary>
+    /// Builds the standard in-process test host, then additionally starts a real Kestrel
+    /// HTTPS server on <see cref="ServerBaseUrl"/> so Playwright's browser (a separate OS
+    /// process) can actually connect over the network, which the in-process test server alone
+    /// does not allow.
+    /// </summary>
     protected override IHost CreateHost(IHostBuilder builder)
     {
         // Build the standard in-process test host (used by base-class HttpClient helpers)
@@ -150,6 +157,7 @@ public sealed class PlaywrightWebApplicationFactory : WebApplicationFactory<Prog
         return testHost;
     }
 
+    /// <summary>Disposes the real Kestrel host created in <see cref="CreateHost"/> alongside the base host.</summary>
     protected override void Dispose(bool disposing)
     {
         _realHost?.Dispose();

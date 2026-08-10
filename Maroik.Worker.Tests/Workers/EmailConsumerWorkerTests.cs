@@ -42,6 +42,7 @@ public class EmailConsumerWorkerTests
         new("consumer-tag", deliveryTag, redelivered: false, exchange: "", routingKey: QueueNames.Email,
             new BasicProperties(), body, CancellationToken.None);
 
+    /// <summary>On message received async valid message invokes handler and acks.</summary>
     [Fact]
     public async Task OnMessageReceivedAsync_ValidMessage_InvokesHandlerAndAcks()
     {
@@ -57,6 +58,7 @@ public class EmailConsumerWorkerTests
         channel.Verify(c => c.BasicNackAsync(It.IsAny<ulong>(), It.IsAny<bool>(), It.IsAny<bool>(), It.IsAny<CancellationToken>()), Times.Never);
     }
 
+    /// <summary>On message received async invalid json nacks without requeue and never calls handler.</summary>
     [Fact]
     public async Task OnMessageReceivedAsync_InvalidJson_NacksWithoutRequeueAndNeverCallsHandler()
     {
@@ -71,6 +73,7 @@ public class EmailConsumerWorkerTests
         channel.Verify(c => c.BasicAckAsync(It.IsAny<ulong>(), It.IsAny<bool>(), It.IsAny<CancellationToken>()), Times.Never);
     }
 
+    /// <summary>On message received async null json body nacks without requeue.</summary>
     [Fact]
     public async Task OnMessageReceivedAsync_NullJsonBody_NacksWithoutRequeue()
     {
@@ -83,6 +86,7 @@ public class EmailConsumerWorkerTests
         channel.Verify(c => c.BasicNackAsync(4, false, false, It.IsAny<CancellationToken>()), Times.Once);
     }
 
+    /// <summary>On message received async handler throws nacks without requeue.</summary>
     [Fact]
     public async Task OnMessageReceivedAsync_HandlerThrows_NacksWithoutRequeue()
     {

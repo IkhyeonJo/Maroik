@@ -8,6 +8,7 @@ namespace Maroik.Core.DomainTests.ValueObjects;
 /// </summary>
 public class TimeZoneIdTests
 {
+    /// <summary>Create returns time zone id, when valid.</summary>
     [Theory]
     [InlineData("UTC")]
     [InlineData("Asia/Seoul")]
@@ -20,6 +21,7 @@ public class TimeZoneIdTests
         Assert.Equal(input, result.Value.Value);
     }
 
+    /// <summary>Create returns error, when empty.</summary>
     [Theory]
     [InlineData(null)]
     [InlineData("")]
@@ -32,6 +34,7 @@ public class TimeZoneIdTests
         Assert.Equal("TimeZoneId.Empty", result.FirstError.Code);
     }
 
+    /// <summary>Create returns error, when unrecognised.</summary>
     [Fact]
     public void Create_ReturnsError_WhenUnrecognised()
     {
@@ -41,6 +44,7 @@ public class TimeZoneIdTests
         Assert.Equal("TimeZoneId.Invalid", result.FirstError.Code);
     }
 
+    /// <summary>Equality same value are equal.</summary>
     [Fact]
     public void Equality_SameValue_AreEqual()
     {

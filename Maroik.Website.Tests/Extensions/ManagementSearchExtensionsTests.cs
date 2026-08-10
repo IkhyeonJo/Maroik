@@ -20,6 +20,7 @@ public class ManagementSearchExtensionsTests
         }
     ];
 
+    /// <summary>Empty search returns all.</summary>
     [Theory]
     [InlineData(null)]
     [InlineData("")]
@@ -29,6 +30,7 @@ public class ManagementSearchExtensionsTests
         Assert.Equal(2, result.Count());
     }
 
+    /// <summary>Matches email.</summary>
     [Fact]
     public void MatchesEmail()
     {
@@ -37,6 +39,7 @@ public class ManagementSearchExtensionsTests
         Assert.Equal("Admin", result[0].Nickname);
     }
 
+    /// <summary>Matches nickname.</summary>
     [Fact]
     public void MatchesNickname()
     {
@@ -45,6 +48,7 @@ public class ManagementSearchExtensionsTests
         Assert.Equal("user@test.com", result[0].Email);
     }
 
+    /// <summary>Matches role.</summary>
     [Fact]
     public void MatchesRole()
     {
@@ -54,6 +58,7 @@ public class ManagementSearchExtensionsTests
         Assert.Equal("user@test.com", result[0].Email);
     }
 
+    /// <summary>Matches time zone iana id.</summary>
     [Fact]
     public void MatchesTimeZoneIanaId()
     {
@@ -62,6 +67,7 @@ public class ManagementSearchExtensionsTests
         Assert.Equal("admin@test.com", result[0].Email);
     }
 
+    /// <summary>Matches locked boolean as string.</summary>
     [Fact]
     public void MatchesLockedBooleanAsString()
     {
@@ -70,6 +76,7 @@ public class ManagementSearchExtensionsTests
         Assert.Equal("user@test.com", result[0].Email);
     }
 
+    /// <summary>Matches login attempt number as string.</summary>
     [Fact]
     public void MatchesLoginAttemptNumberAsString()
     {
@@ -78,6 +85,7 @@ public class ManagementSearchExtensionsTests
         Assert.Equal("user@test.com", result[0].Email);
     }
 
+    /// <summary>No match returns empty.</summary>
     [Fact]
     public void NoMatch_ReturnsEmpty()
     {
