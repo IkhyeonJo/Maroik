@@ -1,6 +1,6 @@
 using System.Text.RegularExpressions;
 
-namespace Maroik.Core.Contract.Misc.Policies;
+namespace Maroik.Core.Domain.Account;
 
 /// <summary>
 /// Centralizes the password-complexity rule used across the application.

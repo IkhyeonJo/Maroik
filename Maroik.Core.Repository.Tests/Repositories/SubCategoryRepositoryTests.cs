@@ -1,4 +1,4 @@
-using Maroik.Core.Contract.Misc.Constants;
+using Maroik.Core.Domain.Account;
 using Maroik.Core.Domain.Menu;
 using Maroik.Core.PostgreSQL.Data;
 using Maroik.Core.Repository.Repositories;

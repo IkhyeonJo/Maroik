@@ -1,5 +1,5 @@
 using System.Text.RegularExpressions;
-using Maroik.Core.Contract.Misc.Constants;
+using Maroik.Core.Domain.Account;
 using Maroik.Core.Contract.Interfaces;
 using Maroik.Core.PostgreSQL.Data;
 using Maroik.Core.PostgreSQL.Models;
@@ -257,7 +257,7 @@ public class ForumControllerTests
     private const string SessionCookieName = "__Secure-.AspNetCore.Session";
     private const string AntiForgeryCookieName = "__Secure-.AspNetCore.Antiforgery.";
 
-    private static Account NewAccount(string email, string nickname, string hashedPassword) => new()
+    private static Maroik.Core.PostgreSQL.Models.Account NewAccount(string email, string nickname, string hashedPassword) => new()
     {
         Email = email,
         HashedPassword = hashedPassword,

@@ -1,6 +1,6 @@
 // ReSharper disable UnusedAutoPropertyAccessor.Global
 using System.ComponentModel.DataAnnotations;
-using Maroik.Core.Contract.Misc.Policies;
+using Maroik.Core.Domain.Account;
 
 namespace Maroik.Website.Models.ViewModels.Account;
 

@@ -1,5 +1,5 @@
 using System.Globalization;
-using Maroik.Core.Contract.Misc.Constants;
+using Maroik.Core.Domain.Account;
 using Maroik.Core.Contract.Misc.Extensions;
 
 namespace Maroik.Core.Contract.Tests.Extensions;

@@ -1,4 +1,4 @@
-using Maroik.Core.Contract.Misc.Constants;
+using Maroik.Core.Domain.Account;
 using Maroik.Core.PostgreSQL.Data;
 using Maroik.Core.PostgreSQL.Models;
 using Maroik.Website.Tests.Infrastructure;
@@ -41,7 +41,7 @@ public class ManagementControllerAccountTests
         using var scope = _factory.Services.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
         if (db.Accounts.Any(a => a.Email == email)) return;
-        db.Accounts.Add(new Account
+        db.Accounts.Add(new Maroik.Core.PostgreSQL.Models.Account
         {
             Email = email,
             HashedPassword = "irrelevant-hash",

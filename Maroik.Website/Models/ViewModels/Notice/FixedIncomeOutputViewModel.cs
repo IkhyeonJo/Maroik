@@ -1,6 +1,6 @@
 // ReSharper disable PropertyCanBeMadeInitOnly.Global
 using System.ComponentModel.DataAnnotations;
-using Maroik.Core.Contract.Misc.Policies;
+using Maroik.Core.Domain.Finance;
 
 namespace Maroik.Website.Models.ViewModels.Notice;
 

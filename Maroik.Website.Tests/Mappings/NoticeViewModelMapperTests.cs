@@ -1,5 +1,5 @@
 using Maroik.Core.Contract.Dtos;
-using Maroik.Core.Contract.Misc.Policies;
+using Maroik.Core.Domain.Finance;
 using Maroik.Website.Mappings;
 
 namespace Maroik.Website.Tests.Mappings;

@@ -1,5 +1,5 @@
 using System.Text.RegularExpressions;
-using Maroik.Core.Contract.Misc.Constants;
+using Maroik.Core.Domain.Account;
 using Maroik.Core.Contract.Interfaces;
 using Maroik.Core.Contract.Misc.Tokens;
 using Maroik.Core.PostgreSQL.Data;
@@ -92,7 +92,7 @@ public class AccountControllerRegistrationTests
         using var scope = _factory.Services.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
         var passwordService = scope.ServiceProvider.GetRequiredService<IPasswordService>();
-        db.Accounts.Add(new Account
+        db.Accounts.Add(new Maroik.Core.PostgreSQL.Models.Account
         {
             Email = email,
             HashedPassword = passwordService.HashPassword("OldPassword1!"),

@@ -1,6 +1,6 @@
-using Maroik.Core.Contract.Misc.Policies;
+using Maroik.Core.Domain.Finance;
 
-namespace Maroik.Core.Contract.Tests.Policies;
+namespace Maroik.Core.DomainTests.Finance;
 
 /// <summary>
 /// Unit tests for <see cref="FixedSchedulePolicy"/>.

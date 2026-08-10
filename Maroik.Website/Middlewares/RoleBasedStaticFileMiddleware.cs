@@ -1,4 +1,4 @@
-using Maroik.Core.Contract.Misc.Constants;
+using Maroik.Core.Domain.Account;
 using Maroik.Website.Contracts;
 
 namespace Maroik.Website.Middlewares;

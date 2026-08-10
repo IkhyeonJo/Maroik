@@ -1,6 +1,6 @@
-using Maroik.Core.Contract.Misc.Policies;
+using Maroik.Core.Domain.Account;
 
-namespace Maroik.Core.Contract.Tests.Policies;
+namespace Maroik.Core.DomainTests.AccountDomain;
 
 /// <summary>
 /// Unit tests for <see cref="PasswordPolicy"/>.

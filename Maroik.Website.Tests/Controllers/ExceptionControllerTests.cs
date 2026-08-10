@@ -41,7 +41,7 @@ public class ExceptionControllerTests
     public async Task Error_LoggedInUser_Returns200()
     {
         var session = await AuthenticatedSessionHelper.LoginAsync(
-            _factory, _client, "exception-error-user@test.com", "UserPassword1!", Maroik.Core.Contract.Misc.Constants.Role.User,
+            _factory, _client, "exception-error-user@test.com", "UserPassword1!", Maroik.Core.Domain.Account.Role.User,
             TestContext.Current.CancellationToken);
         using var request = new HttpRequestMessage(HttpMethod.Get, "/Exception/Error");
         request.Headers.Add("Cookie", session.CookieHeader);
@@ -79,7 +79,7 @@ public class ExceptionControllerTests
     public async Task AccessDenied_LoggedInUser_IsRedirectedByAuthorizationFilter()
     {
         var session = await AuthenticatedSessionHelper.LoginAsync(
-            _factory, _client, "exception-accessdenied-user@test.com", "UserPassword1!", Maroik.Core.Contract.Misc.Constants.Role.User,
+            _factory, _client, "exception-accessdenied-user@test.com", "UserPassword1!", Maroik.Core.Domain.Account.Role.User,
             TestContext.Current.CancellationToken);
         using var request = new HttpRequestMessage(HttpMethod.Get, "/Exception/AccessDenied");
         request.Headers.Add("Cookie", session.CookieHeader);

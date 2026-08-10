@@ -1,6 +1,6 @@
 using System.Net.Http.Json;
 using System.Text.RegularExpressions;
-using Maroik.Core.Contract.Misc.Constants;
+using Maroik.Core.Domain.Account;
 using Maroik.Core.Contract.Interfaces;
 using Maroik.Core.PostgreSQL.Data;
 using Maroik.Core.PostgreSQL.Models;
@@ -78,7 +78,7 @@ public static class AuthenticatedSessionHelper
             var passwordService = scope.ServiceProvider.GetRequiredService<IPasswordService>();
             if (!db.Accounts.Any(a => a.Email == email))
             {
-                db.Accounts.Add(new Account
+                db.Accounts.Add(new Maroik.Core.PostgreSQL.Models.Account
                 {
                     Email = email,
                     HashedPassword = passwordService.HashPassword(password),
