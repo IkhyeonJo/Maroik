@@ -94,7 +94,7 @@ public sealed class CalendarEvent : AggregateRoot<long>
     /// <summary>
     /// Rebuilds a <see cref="CalendarEvent"/> from trusted raw values from the repository layer.
     /// Bypasses validation — use only with data from the trusted repository layer.
-    /// Does NOT raise domain events. Child reminders and files must be loaded separately.
+    /// Child reminders and files must be loaded separately.
     /// </summary>
     public static CalendarEvent Reconstitute(
         long id,

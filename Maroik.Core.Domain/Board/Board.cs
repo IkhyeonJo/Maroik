@@ -70,7 +70,7 @@ public sealed class Board : AggregateRoot<long>
     /// <summary>
     /// Rebuilds a <see cref="Board"/> from trusted raw values from the repository layer.
     /// Bypasses validation — use only with data from the trusted repository layer.
-    /// Does NOT raise domain events. Child comments and attached files must be loaded separately.
+    /// Child comments and attached files must be loaded separately.
     /// </summary>
     public static Board Reconstitute(
         long id,

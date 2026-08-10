@@ -83,7 +83,6 @@ public sealed class FixedIncome : AggregateRoot<long>
     /// <summary>
     /// Rebuilds a <see cref="FixedIncome"/> from trusted raw values from the repository layer.
     /// Bypasses validation — use only with data from the trusted repository layer.
-    /// Does NOT raise domain events.
     /// </summary>
     public static FixedIncome Reconstitute(
         long id,

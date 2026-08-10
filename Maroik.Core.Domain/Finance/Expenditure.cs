@@ -71,7 +71,6 @@ public sealed class Expenditure : AggregateRoot<long>
     /// <summary>
     /// Rebuilds an <see cref="Expenditure"/> from trusted raw values from the repository layer.
     /// Bypasses validation — use only with data from the trusted repository layer.
-    /// Does NOT raise domain events.
     /// </summary>
     public static Expenditure Reconstitute(
         long id,

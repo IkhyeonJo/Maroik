@@ -64,7 +64,6 @@ public sealed class Calendar : AggregateRoot<long>
     /// <summary>
     /// Rebuilds a <see cref="Calendar"/> from trusted raw values from the repository layer.
     /// Bypasses validation — use only with data from the trusted repository layer.
-    /// Does NOT raise domain events.
     /// </summary>
     public static Calendar Reconstitute(
         long id,

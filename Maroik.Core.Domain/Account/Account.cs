@@ -6,8 +6,7 @@ namespace Maroik.Core.Domain.Account;
 
 /// <summary>
 /// Aggregate root for user accounts.
-/// All state changes are performed through domain methods that enforce business rules
-/// and raise domain events for cross-cutting concerns (email dispatch, audit, etc.).
+/// All state changes are performed through domain methods that enforce business rules.
 /// </summary>
 public sealed class Account : AggregateRoot<string>
 {
@@ -94,7 +93,6 @@ public sealed class Account : AggregateRoot<string>
     /// <summary>
     /// Rebuilds an <see cref="Account"/> from trusted raw values from the repository layer.
     /// Bypasses validation — use only with data from the trusted repository layer.
-    /// Does NOT raise domain events.
     /// </summary>
     public static Account Reconstitute(
         string email,
