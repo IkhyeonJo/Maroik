@@ -261,11 +261,10 @@ try
         healthChecksBuilder.AddCheck<Maroik.Website.HealthChecks.ValkeyHealthCheck>("valkey");
     }
 
-    builder.Services.AddScoped<ViewBagPopulatorFilter>();
     builder.Services.AddControllersWithViews(options =>
     {
 #pragma warning disable CA2263
-        _ = options.Filters.Add(typeof(AuthorizationFilter)); // An instance
+        _ = options.Filters.Add(typeof(AuthorizationFilter));
         _ = options.Filters.Add(typeof(ViewBagPopulatorFilter));
 #pragma warning restore CA2263
         options.Filters.Add(
