@@ -76,7 +76,7 @@ public abstract class GenericRepository<TDomain, TEntity>(ApplicationDbContext c
     {
         var query = ApplyIncludes(Set.Where(predicate));
         if (orderBy != null) query = orderBy(query);
-        return (await query.ToListAsync(ct)).Select(ToDomain).ToList();
+        return [.. (await query.ToListAsync(ct)).Select(ToDomain)];
     }
 
     /// <summary>Returns every row in <see cref="Set"/> (with optional <paramref name="orderBy"/>), mapped to <typeparamref name="TDomain"/>.</summary>
@@ -86,7 +86,7 @@ public abstract class GenericRepository<TDomain, TEntity>(ApplicationDbContext c
     {
         var query = ApplyIncludes(Set.AsQueryable());
         if (orderBy != null) query = orderBy(query);
-        return (await query.ToListAsync(ct)).Select(ToDomain).ToList();
+        return [.. (await query.ToListAsync(ct)).Select(ToDomain)];
     }
 
     /// <summary>Returns the first row matching <paramref name="predicate"/> mapped to <typeparamref name="TDomain"/>, or <see langword="default"/> if none exists.</summary>
