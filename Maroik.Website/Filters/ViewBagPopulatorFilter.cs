@@ -4,7 +4,7 @@ using Maroik.Core.Contract.Misc.Extensions;
 using Maroik.Core.Contract.Interfaces;
 using Maroik.Core.Contract.Misc.Settings;
 using Maroik.Website.Contracts;
-using Maroik.Website.Mappings;
+using Maroik.Website.Extensions;
 using Microsoft.AspNetCore.Localization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;

@@ -6,7 +6,7 @@ using Maroik.Core.Contract.Interfaces;
 using Maroik.Website.Attributes;
 using Maroik.Website.Constants;
 using Maroik.Website.Contracts;
-using Maroik.Website.Mappings;
+using Maroik.Website.Extensions;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
 using Microsoft.Extensions.Caching.Distributed;

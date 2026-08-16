@@ -3,7 +3,7 @@
     AdminLTE content-header partial rendered once per page via _Layout.
     Displays the page title (h1) and a breadcrumb trail based on the currently active menu item.
     The active Category/SubCategory match is resolved once per request by ViewBagPopulatorFilter
-    (via MenuNavigationMapper.ResolveActiveMenuItem) and exposed as ViewBag.ActiveCategory /
+    (via MenuNavigationMatcher.ResolveActiveMenuItem) and exposed as ViewBag.ActiveCategory /
     ViewBag.ActiveSubCategory, so this partial only renders — it no longer re-derives the match.
 *@
 @model Maroik.Core.Contract.Dtos.AccountResponse

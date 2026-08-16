@@ -17,7 +17,7 @@ namespace Maroik.Website.Tests.Filters;
 
 /// <summary>
 /// Unit tests for <see cref="AuthorizationFilter"/>, focused purely on the GET/POST allow/deny
-/// gating driven by <c>MenuNavigationMapper.ResolveActiveMenuItem</c>. This filter no longer sets
+/// gating driven by <c>MenuNavigationMatcher.ResolveActiveMenuItem</c>. This filter no longer sets
 /// any view-rendering ViewBag values itself (that responsibility moved to
 /// <c>ViewBagPopulatorFilter</c>, which runs after it) — it only decides whether the request is
 /// allowed to proceed. All service dependencies are replaced with Moq mocks; the distributed
