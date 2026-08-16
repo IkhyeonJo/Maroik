@@ -21,7 +21,7 @@ public static class MenuNavigationMapper
         public ActiveMenuMatch ResolveActiveMenuItem(
             IEnumerable<SubCategoryResponse> subCategories, string controllerName, string actionName)
         {
-            var subCategoryList = subCategories as IReadOnlyCollection<SubCategoryResponse> ?? subCategories.ToList();
+            var subCategoryList = subCategories as IReadOnlyCollection<SubCategoryResponse> ?? [.. subCategories];
 
             foreach (var category in categories)
             {
