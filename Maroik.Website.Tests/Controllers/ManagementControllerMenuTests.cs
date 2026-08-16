@@ -1,7 +1,9 @@
 using Maroik.Core.Domain.Account;
 using Maroik.Core.PostgreSQL.Data;
+using Maroik.Website.Constants;
 using Maroik.Website.Tests.Infrastructure;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace Maroik.Website.Tests.Controllers;
@@ -276,5 +278,162 @@ public class ManagementControllerMenuTests
         using var finalScope = _factory.Services.CreateScope();
         var finalDb = finalScope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
         Assert.False(finalDb.SubCategories.Any(s => s.Id == createdSub.Id));
+    }
+
+    // -- Cache invalidation --------------------------------------------------------
+
+    private static readonly string[] NavigationCacheKeyList =
+    [
+        NavigationCacheKeys.AdminCategories,
+        NavigationCacheKeys.AdminSubCategories,
+        NavigationCacheKeys.UserCategories,
+        NavigationCacheKeys.UserSubCategories,
+        NavigationCacheKeys.AnonymousCategories,
+        NavigationCacheKeys.AnonymousSubCategories
+    ];
+
+    /// <summary>
+    /// Warms the navigation cache with real data (via an unrelated admin request), sends
+    /// <paramref name="request"/>, asserts it reported success, then asserts every navigation
+    /// cache entry was cleared by it. Used to guard each menu-mutating action's call to
+    /// ManagementController's InvalidateNavigationCacheAsync — these edits must clear the
+    /// distributed-cache entries, not rely solely on the 10-minute sliding TTL in
+    /// AuthorizationFilter to eventually pick up the change.
+    /// </summary>
+    private async Task AssertClearsNavigationCacheAsync(AuthenticatedSession admin, HttpRequestMessage request)
+    {
+        var cache = _factory.Services.GetRequiredService<IDistributedCache>();
+
+        // Warm the cache with real data via any admin request — AuthorizationFilter populates
+        // it from the DB on first miss for every request, not just menu-editing ones.
+        using var warmupRequest = new HttpRequestMessage(HttpMethod.Get, "/Management/Profile");
+        warmupRequest.Headers.Add("Cookie", admin.CookieHeader);
+        var warmupResponse = await _client.SendAsync(warmupRequest, TestContext.Current.CancellationToken);
+        Assert.Equal(System.Net.HttpStatusCode.OK, warmupResponse.StatusCode);
+
+        foreach (var key in NavigationCacheKeyList)
+        {
+            Assert.NotNull(await cache.GetAsync(key, TestContext.Current.CancellationToken));
+        }
+
+        var response = await _client.SendAsync(request, TestContext.Current.CancellationToken);
+        string json = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+        Assert.Contains("\"result\":true", json);
+
+        foreach (var key in NavigationCacheKeyList)
+        {
+            Assert.Null(await cache.GetAsync(key, TestContext.Current.CancellationToken));
+        }
+    }
+
+    /// <summary>Create category clears navigation cache entries.</summary>
+    [Fact]
+    public async Task CreateCategory_ClearsNavigationCacheEntries()
+    {
+        var admin = await LoginAsAdminAsync();
+
+        using var request = admin.BuildJsonPostRequest("/Management/CreateCategory", ValidCategoryPayload(UniqueName()));
+        await AssertClearsNavigationCacheAsync(admin, request);
+    }
+
+    /// <summary>Update category clears navigation cache entries.</summary>
+    [Fact]
+    public async Task UpdateCategory_ClearsNavigationCacheEntries()
+    {
+        var admin = await LoginAsAdminAsync();
+        string name = UniqueName();
+        using var createRequest = admin.BuildJsonPostRequest("/Management/CreateCategory", ValidCategoryPayload(name));
+        await _client.SendAsync(createRequest, TestContext.Current.CancellationToken);
+
+        using var scope = _factory.Services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+        var created = db.Categories.Single(c => c.Name == name);
+
+        using var request = admin.BuildJsonPostRequest("/Management/UpdateCategory", ValidCategoryPayload(UniqueName(), (int)created.Id));
+        await AssertClearsNavigationCacheAsync(admin, request);
+    }
+
+    /// <summary>Delete category clears navigation cache entries.</summary>
+    [Fact]
+    public async Task DeleteCategory_ClearsNavigationCacheEntries()
+    {
+        var admin = await LoginAsAdminAsync();
+        string name = UniqueName();
+        using var createRequest = admin.BuildJsonPostRequest("/Management/CreateCategory", ValidCategoryPayload(name));
+        await _client.SendAsync(createRequest, TestContext.Current.CancellationToken);
+
+        using var scope = _factory.Services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+        var created = db.Categories.Single(c => c.Name == name);
+
+        using var request = admin.BuildJsonPostRequest("/Management/DeleteCategory", ValidCategoryPayload(name, (int)created.Id));
+        await AssertClearsNavigationCacheAsync(admin, request);
+    }
+
+    /// <summary>Create sub category clears navigation cache entries.</summary>
+    [Fact]
+    public async Task CreateSubCategory_ClearsNavigationCacheEntries()
+    {
+        var admin = await LoginAsAdminAsync();
+        string catName = UniqueName("cat");
+        using var createCatRequest = admin.BuildJsonPostRequest("/Management/CreateCategory", ValidCategoryPayload(catName));
+        await _client.SendAsync(createCatRequest, TestContext.Current.CancellationToken);
+
+        using var scope = _factory.Services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+        var category = db.Categories.Single(c => c.Name == catName);
+
+        using var request = admin.BuildJsonPostRequest("/Management/CreateSubCategory", ValidSubCategoryPayload(UniqueName(), category.Id));
+        await AssertClearsNavigationCacheAsync(admin, request);
+    }
+
+    /// <summary>Update sub category clears navigation cache entries.</summary>
+    [Fact]
+    public async Task UpdateSubCategory_ClearsNavigationCacheEntries()
+    {
+        var admin = await LoginAsAdminAsync();
+        string catName = UniqueName("cat");
+        using var createCatRequest = admin.BuildJsonPostRequest("/Management/CreateCategory", ValidCategoryPayload(catName));
+        await _client.SendAsync(createCatRequest, TestContext.Current.CancellationToken);
+
+        using var scope = _factory.Services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+        var category = db.Categories.Single(c => c.Name == catName);
+
+        string subName = UniqueName();
+        using var createSubRequest = admin.BuildJsonPostRequest("/Management/CreateSubCategory", ValidSubCategoryPayload(subName, category.Id));
+        await _client.SendAsync(createSubRequest, TestContext.Current.CancellationToken);
+
+        using var verifyScope = _factory.Services.CreateScope();
+        var verifyDb = verifyScope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+        var createdSub = verifyDb.SubCategories.Single(s => s.Name == subName);
+
+        using var request = admin.BuildJsonPostRequest("/Management/UpdateSubCategory", ValidSubCategoryPayload(UniqueName(), category.Id, (int)createdSub.Id));
+        await AssertClearsNavigationCacheAsync(admin, request);
+    }
+
+    /// <summary>Delete sub category clears navigation cache entries.</summary>
+    [Fact]
+    public async Task DeleteSubCategory_ClearsNavigationCacheEntries()
+    {
+        var admin = await LoginAsAdminAsync();
+        string catName = UniqueName("cat");
+        using var createCatRequest = admin.BuildJsonPostRequest("/Management/CreateCategory", ValidCategoryPayload(catName));
+        await _client.SendAsync(createCatRequest, TestContext.Current.CancellationToken);
+
+        using var scope = _factory.Services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+        var category = db.Categories.Single(c => c.Name == catName);
+
+        string subName = UniqueName();
+        using var createSubRequest = admin.BuildJsonPostRequest("/Management/CreateSubCategory", ValidSubCategoryPayload(subName, category.Id));
+        await _client.SendAsync(createSubRequest, TestContext.Current.CancellationToken);
+
+        using var verifyScope = _factory.Services.CreateScope();
+        var verifyDb = verifyScope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+        var createdSub = verifyDb.SubCategories.Single(s => s.Name == subName);
+
+        using var request = admin.BuildJsonPostRequest("/Management/DeleteSubCategory", ValidSubCategoryPayload(subName, category.Id, (int)createdSub.Id));
+        await AssertClearsNavigationCacheAsync(admin, request);
     }
 }
