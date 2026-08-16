@@ -11,7 +11,7 @@ public class TimeZoneCatalogService : ITimeZoneCatalogService
     /// <inheritdoc />
     public IReadOnlyList<TimeZoneOptionDto> GetTimeZoneOptions() => _timeZoneOptions.Value;
 
-    private static IReadOnlyList<TimeZoneOptionDto> BuildTimeZoneOptions()
+    private static List<TimeZoneOptionDto> BuildTimeZoneOptions()
     {
         var options = new List<TimeZoneOptionDto>();
 
