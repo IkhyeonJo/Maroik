@@ -54,12 +54,14 @@ public static class CalendarViewModelMapper
                 item.DisplayStartDateTimeZone = "";
                 item.DisplayEndDateTimeZone = "";
 
-                if (forGrid)
+                if (!forGrid)
                 {
-                    item.StartDate = localStart;
-                    DateTime nextDay = localEnd.AddDays(1);
-                    item.EndDate = new DateTime(nextDay.Year, nextDay.Month, nextDay.Day, 0, 0, 0, nextDay.Kind);
+                    return item;
                 }
+
+                item.StartDate = localStart;
+                DateTime nextDay = localEnd.AddDays(1);
+                item.EndDate = new DateTime(nextDay.Year, nextDay.Month, nextDay.Day, 0, 0, 0, nextDay.Kind);
             }
             else
             {
