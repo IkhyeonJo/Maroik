@@ -259,8 +259,8 @@ public class CalendarController : Controller
     [HttpGet]
     public async Task<IActionResult> AnonymousIndex()
     {
-        const string userTz = "UTC";
-        AccountResponse loggedInAccount = new() { Role = Role.Anonymous, TimeZoneIanaId = userTz };
+        const string userTimezone = "UTC";
+        AccountResponse loggedInAccount = new() { Role = Role.Anonymous, TimeZoneIanaId = userTimezone };
 
         List<CalendarResponse> allCalendars = await _calendarService.GetAllCalendarsAsync(HttpContext.RequestAborted);
         List<CalendarSharedResponse> sharedCalendars = await _calendarService.GetCalendarSharedAsync(HttpContext.RequestAborted);
@@ -275,11 +275,11 @@ public class CalendarController : Controller
         CalendarOutputViewModel vm = new()
         {
             OtherCalendars = otherCalendars,
-            OtherCalendarEventOutputViewModels = await _calendarService.GetCalendarEventViewModelsAsync(otherCalendars, userTz, null, HttpContext.RequestAborted),
+            OtherCalendarEventOutputViewModels = await _calendarService.GetCalendarEventViewModelsAsync(otherCalendars, userTimezone, null, HttpContext.RequestAborted),
             LoggedInAccount = loggedInAccount,
-            LoggedInAccountTimeZoneIanaId = userTz
+            LoggedInAccountTimeZoneIanaId = userTimezone
         };
-        vm.PopulateTimeData(userTz);
+        vm.PopulateTimeData(userTimezone);
         return View(vm);
     }
 
