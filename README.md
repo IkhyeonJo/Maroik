@@ -101,7 +101,7 @@ Maroik is a modern web application built with ASP.NET Core MVC, featuring a comp
 
 ## Deployment
 
-### Ubuntu Server 26.04.4
+### Ubuntu Server 24.04.4
 1. Configure .env.prod with domain name and mail settings
 2. Set email credentials in DBBackup.sh and UploadFileBackup.sh
 3. Copy Maroik folder to /home/ubuntu/
