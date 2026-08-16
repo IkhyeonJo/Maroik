@@ -217,7 +217,7 @@ try
     #endregion
 
     builder.Services.AddHttpContextAccessor();
-    builder.Services.AddMemoryCache(); // For IMemoryCache DI
+    // builder.Services.AddMemoryCache(); // For IMemoryCache DI - unused; IDistributedCache(Valkey) used instead for scale-out
     builder.Services.AddResponseCaching(); // For HTTP Header Setting
 
     builder.Services.AddHsts(options => // https://blog.elmah.io/the-asp-net-core-security-headers-guide/
