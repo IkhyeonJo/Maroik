@@ -62,12 +62,12 @@ public class AuthorizationFilter : ActionFilterAttribute
             _cache.GetAsync(AnonymousCategoriesCacheKey),
             _cache.GetAsync(AnonymousSubCategoriesCacheKey));
 
-        IEnumerable<CategoryResponse> adminCategories;
-        IEnumerable<SubCategoryResponse> adminSubCategories;
-        IEnumerable<CategoryResponse> userCategories;
-        IEnumerable<SubCategoryResponse> userSubCategories;
-        IEnumerable<CategoryResponse> anonymousCategories;
-        IEnumerable<SubCategoryResponse> anonymousSubCategories;
+        List<CategoryResponse> adminCategories;
+        List<SubCategoryResponse> adminSubCategories;
+        List<CategoryResponse> userCategories;
+        List<SubCategoryResponse> userSubCategories;
+        List<CategoryResponse> anonymousCategories;
+        List<SubCategoryResponse> anonymousSubCategories;
 
         if (results[0] == null || results[1] == null || results[2] == null ||
             results[3] == null || results[4] == null || results[5] == null)
@@ -78,12 +78,12 @@ public class AuthorizationFilter : ActionFilterAttribute
             var entryOptions = new DistributedCacheEntryOptions()
                 .SetSlidingExpiration(TimeSpan.FromMinutes(10));
 
-            adminCategories = categories.Where(c => c.Role == Role.Admin).ToList();
-            adminSubCategories = subCategories.Where(s => s.Role == Role.Admin).ToList();
-            userCategories = categories.Where(c => c.Role == Role.User).ToList();
-            userSubCategories = subCategories.Where(s => s.Role == Role.User).ToList();
-            anonymousCategories = categories.Where(c => c.Role == Role.Anonymous).ToList();
-            anonymousSubCategories = subCategories.Where(s => s.Role == Role.Anonymous).ToList();
+            adminCategories = [.. categories.Where(c => c.Role == Role.Admin)];
+            adminSubCategories = [.. subCategories.Where(s => s.Role == Role.Admin)];
+            userCategories = [.. categories.Where(c => c.Role == Role.User)];
+            userSubCategories = [.. subCategories.Where(s => s.Role == Role.User)];
+            anonymousCategories = [.. categories.Where(c => c.Role == Role.Anonymous)];
+            anonymousSubCategories = [.. subCategories.Where(s => s.Role == Role.Anonymous)];
 
             await Task.WhenAll(
                 _cache.SetAsync(AdminCategoriesCacheKey, JsonSerializer.SerializeToUtf8Bytes(adminCategories),
