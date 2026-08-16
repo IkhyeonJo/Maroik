@@ -33,9 +33,10 @@ public class AuthorizationFilter : ActionFilterAttribute
     private const string AnonymousSubCategoriesCacheKey = NavigationCacheKeys.AnonymousSubCategories;
 
     private static readonly IReadOnlyList<Type> _cachedControllerTypes =
-        Assembly.GetExecutingAssembly().GetTypes()
+    [
+        .. Assembly.GetExecutingAssembly().GetTypes()
             .Where(type => typeof(Controller).IsAssignableFrom(type))
-            .ToList();
+    ];
 
     /// <summary>Initializes a new instance of <see cref="AuthorizationFilter"/> with the required dependencies.</summary>
     /// <param name="menuService">Service used to load category and sub-category navigation data.</param>
