@@ -58,11 +58,15 @@ public class CalendarService : ICalendarService
 
     /// <inheritdoc />
     public async Task<List<CalendarResponse>> GetCalendarsAsync(string email, CancellationToken ct = default)
-        => (await _calendarRepository.GetByAccountEmailAsync(email, ct)).OrderBy(c => c.Name).Select(CalendarMapper.ToResponse).ToList();
+        =>
+        [
+            .. (await _calendarRepository.GetByAccountEmailAsync(email, ct)).OrderBy(c => c.Name)
+            .Select(CalendarMapper.ToResponse)
+        ];
 
     /// <inheritdoc />
     public async Task<List<CalendarResponse>> GetAllCalendarsAsync(CancellationToken ct = default)
-        => (await _calendarRepository.GetAllOrderedByNameAsync(ct)).Select(CalendarMapper.ToResponse).ToList();
+        => [.. (await _calendarRepository.GetAllOrderedByNameAsync(ct)).Select(CalendarMapper.ToResponse)];
 
     /// <inheritdoc />
     public async Task<IEnumerable<CalendarEventResponse>> GetCalendarEventsAsync(long calendarId, CancellationToken ct = default)
@@ -94,11 +98,14 @@ public class CalendarService : ICalendarService
 
     /// <inheritdoc />
     public async Task<List<OtherCalendarResponse>> GetOtherCalendarsAsync(string email, CancellationToken ct = default)
-        => (await _otherCalendarRepository.GetByAccountEmailAsync(email, ct)).Select(OtherCalendarMapper.ToResponse).ToList();
+        =>
+        [
+            .. (await _otherCalendarRepository.GetByAccountEmailAsync(email, ct)).Select(OtherCalendarMapper.ToResponse)
+        ];
 
     /// <inheritdoc />
     public async Task<List<CalendarSharedResponse>> GetCalendarSharedAsync(CancellationToken ct = default)
-        => (await _calendarSharedRepository.GetAllAsync(ct)).Select(CalendarSharedMapper.ToResponse).ToList();
+        => [.. (await _calendarSharedRepository.GetAllAsync(ct)).Select(CalendarSharedMapper.ToResponse)];
 
     /// <inheritdoc />
     public async Task<ServiceResult> EnsureCalendarSharedAsync(IEnumerable<long> calendarIds, CancellationToken ct = default)
@@ -108,7 +115,7 @@ public class CalendarService : ICalendarService
         {
             // Single fetch of the whole table, reused for every ID instead of one full scan per calendar.
             List<CalendarShared> shares = await _calendarSharedRepository.GetAllAsync(ct);
-            HashSet<long> existingIds = shares.Select(s => s.Id).ToHashSet();
+            HashSet<long> existingIds = [.. shares.Select(s => s.Id)];
 
             foreach (long id in ids.Where(id => !existingIds.Contains(id)))
                 await _calendarSharedRepository.CreateAsync(CalendarShared.CreatePrivate(id), ct);
@@ -229,10 +236,12 @@ public class CalendarService : ICalendarService
             // A subscription must only ever be created for a calendar an admin has explicitly
             // marked shared to Users (CalendarShared.User) — otherwise any account could grant
             // itself read access to any calendar's events by supplying an arbitrary CalendarId.
-            HashSet<long> shareableCalendarIds = (await _calendarSharedRepository.GetAllAsync(ct))
+            HashSet<long> shareableCalendarIds =
+            [
+                .. (await _calendarSharedRepository.GetAllAsync(ct))
                 .Where(shared => shared.User)
                 .Select(shared => shared.Id)
-                .ToHashSet();
+            ];
 
             // Replace-all strategy: delete existing subscriptions then re-insert from the new list.
             await _otherCalendarRepository.DeleteByAccountEmailAsync(email, ct);
