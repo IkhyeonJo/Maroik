@@ -110,7 +110,7 @@ public class CalendarService : ICalendarService
     /// <inheritdoc />
     public async Task<ServiceResult> EnsureCalendarSharedAsync(IEnumerable<long> calendarIds, CancellationToken ct = default)
     {
-        List<long> ids = calendarIds.ToList();
+        List<long> ids = [.. calendarIds];
         try
         {
             // Single fetch of the whole table, reused for every ID instead of one full scan per calendar.
