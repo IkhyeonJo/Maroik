@@ -132,7 +132,7 @@ public class CalendarController : Controller
     [RequiredHttpPostAccess(Role = Role.User)]
     public async Task<IActionResult> UploadImageFile(IFormFile? summernoteImageFile)
     {
-        if (summernoteImageFile == null || summernoteImageFile.Length <= 0)
+        if (summernoteImageFile is not { Length: > 0 })
             return Ok(new { result = false, errorMessage = _localizer["Please attach a file."].Value });
 
         if (summernoteImageFile.Length > _serverSettings.Value.MaxAttachedFileSizeBytes)
