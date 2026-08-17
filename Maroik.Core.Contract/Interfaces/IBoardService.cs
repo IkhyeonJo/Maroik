@@ -14,6 +14,13 @@ public interface IBoardService
     /// <summary>Returns a single post by ID.</summary>
     Task<BoardResponse?> GetBoardByIdAsync(long id, CancellationToken ct = default);
 
+    /// <summary>
+    /// True when <paramref name="viewer"/> may view <paramref name="board"/>. Private notes are
+    /// visible only to their author; other board types are visible to anyone unless locked, in
+    /// which case only the author or an Admin may view them.
+    /// </summary>
+    bool CanView(BoardResponse board, AccountResponse? viewer);
+
     /// <summary>Returns the attached file metadata for the given board post, or null if none.</summary>
     Task<BoardAttachedFileDto?> GetAttachedFileByBoardIdAsync(long boardId, CancellationToken ct = default);
 

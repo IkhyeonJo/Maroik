@@ -1,6 +1,7 @@
 using Maroik.Core.Domain.Board;
 using Maroik.Core.Contract.Dtos;
 using Maroik.Core.Contract.Misc.Enums;
+using Maroik.Core.Contract.Misc.Extensions;
 using Maroik.Core.Contract.Interfaces;
 using Maroik.Core.Contract.Misc.Settings;
 using Maroik.Core.Service.Mappers;
@@ -69,6 +70,12 @@ public class BoardService : IBoardService
         Board? board = await _boardRepository.FindActiveByIdAsync(id, ct);
         return board == null ? null : BoardMapper.ToResponse(board);
     }
+
+    /// <inheritdoc />
+    public bool CanView(BoardResponse board, AccountResponse? viewer) =>
+        board.Type == nameof(BoardType.PrivateNote)
+            ? viewer?.IsOwner(board.Writer) ?? false
+            : !board.Locked || (viewer?.IsOwnerOrAdmin(board.Writer) ?? false);
 
     /// <inheritdoc />
     public async Task<BoardAttachedFileDto?> GetAttachedFileByBoardIdAsync(long boardId, CancellationToken ct = default)

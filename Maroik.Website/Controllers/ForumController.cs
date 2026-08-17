@@ -234,18 +234,15 @@ public class ForumController : Controller
                     if (freeBoard == null || freeBoard.Deleted)
                         return RedirectToAction(nameof(BoardType.FreeForum), "Forum");
 
-                    if (freeBoard.Locked)
-                    {
-                        AccountResponse? loggedInAccount = _sessionService.GetAccount();
-                        if (loggedInAccount == null || !(loggedInAccount.Nickname == freeBoard.Writer || loggedInAccount.Role == Role.Admin))
-                            return RedirectToAction(nameof(BoardType.FreeForum), "Forum");
-                    }
+                    AccountResponse? loggedInAccount = _sessionService.GetAccount();
+                    if (!_boardService.CanView(freeBoard, loggedInAccount))
+                        return RedirectToAction(nameof(BoardType.FreeForum), "Forum");
 
                     await _boardService.IncrementBoardViewAsync((long)boardId, ct);
 
                     (freeBoard.Content, bool isImgTagIncluded) = await _boardService.PrepareHtmlForDisplayAsync(freeBoard.Content ?? "", ct);
 
-                    freeForumOutputViewModel.LoggedInAccount = _sessionService.GetAccount() ?? new AccountResponse { Role = Role.Anonymous };
+                    freeForumOutputViewModel.LoggedInAccount = loggedInAccount ?? new AccountResponse { Role = Role.Anonymous };
                     freeForumOutputViewModel.LoggedInAccountTimeZoneIanaId = freeForumOutputViewModel.LoggedInAccount.TimeZoneIanaId ?? "";
 
                     freeForumOutputViewModel.BoardOutputViewModel = new BoardOutputViewModel
@@ -313,7 +310,7 @@ public class ForumController : Controller
                         return RedirectToAction(nameof(BoardType.FreeForum), "Forum");
 
                     AccountResponse? loggedInAccount = _sessionService.GetAccount();
-                    if (loggedInAccount == null || freeBoard.Writer != loggedInAccount.Nickname)
+                    if (loggedInAccount == null || !loggedInAccount.IsOwner(freeBoard.Writer))
                         return RedirectToAction(nameof(BoardType.FreeForum), "Forum");
 
                     (freeBoard.Content, bool isImgTagIncluded) = await _boardService.PrepareHtmlForDisplayAsync(freeBoard.Content ?? "", ct);

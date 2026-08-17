@@ -1,3 +1,4 @@
+using Maroik.Core.Domain.Account;
 using Maroik.Core.Domain.Board;
 using Maroik.Core.Contract.Dtos;
 using Maroik.Core.Contract.Misc.Enums;
@@ -85,6 +86,87 @@ public class BoardServiceTests
 
         Assert.NotNull(result);
         Assert.Equal(1, result.Id);
+    }
+
+    // -- CanView ----------------------------------------------------------------
+
+    private static BoardResponse MakeBoardResponse(string type, string writer = "Alice", bool locked = false) =>
+        new() { Type = type, Writer = writer, Locked = locked };
+
+    private static AccountResponse MakeAccount(string nickname, string role = Role.User) =>
+        new() { Nickname = nickname, Role = role };
+
+    [Fact]
+    public void CanView_ReturnsTrue_ForUnlockedFreeForumBoard_WhenViewerIsAnonymous()
+    {
+        var sut = CreateSut();
+        var board = MakeBoardResponse(nameof(BoardType.FreeForum), locked: false);
+
+        Assert.True(sut.CanView(board, null));
+    }
+
+    [Fact]
+    public void CanView_ReturnsFalse_ForLockedFreeForumBoard_WhenViewerIsAnonymous()
+    {
+        var sut = CreateSut();
+        var board = MakeBoardResponse(nameof(BoardType.FreeForum), locked: true);
+
+        Assert.False(sut.CanView(board, null));
+    }
+
+    [Fact]
+    public void CanView_ReturnsTrue_ForLockedFreeForumBoard_WhenViewerIsWriter()
+    {
+        var sut = CreateSut();
+        var board = MakeBoardResponse(nameof(BoardType.FreeForum), writer: "Alice", locked: true);
+
+        Assert.True(sut.CanView(board, MakeAccount("Alice")));
+    }
+
+    [Fact]
+    public void CanView_ReturnsTrue_ForLockedFreeForumBoard_WhenViewerIsAdmin()
+    {
+        var sut = CreateSut();
+        var board = MakeBoardResponse(nameof(BoardType.FreeForum), writer: "Alice", locked: true);
+
+        Assert.True(sut.CanView(board, MakeAccount("Bob", Role.Admin)));
+    }
+
+    [Fact]
+    public void CanView_ReturnsFalse_ForLockedFreeForumBoard_WhenViewerIsUnrelatedUser()
+    {
+        var sut = CreateSut();
+        var board = MakeBoardResponse(nameof(BoardType.FreeForum), writer: "Alice", locked: true);
+
+        Assert.False(sut.CanView(board, MakeAccount("Bob")));
+    }
+
+    [Fact]
+    public void CanView_ReturnsTrue_ForPrivateNoteBoard_WhenViewerIsWriter()
+    {
+        var sut = CreateSut();
+        var board = MakeBoardResponse(nameof(BoardType.PrivateNote), writer: "Alice", locked: false);
+
+        Assert.True(sut.CanView(board, MakeAccount("Alice")));
+    }
+
+    [Fact]
+    public void CanView_ReturnsFalse_ForPrivateNoteBoard_WhenViewerIsAnonymous()
+    {
+        var sut = CreateSut();
+        var board = MakeBoardResponse(nameof(BoardType.PrivateNote), writer: "Alice", locked: false);
+
+        Assert.False(sut.CanView(board, null));
+    }
+
+    /// <summary>Private notes are visible only to their author — unlike FreeForum, Admin does not bypass this.</summary>
+    [Fact]
+    public void CanView_ReturnsFalse_ForPrivateNoteBoard_WhenViewerIsAdminButNotWriter()
+    {
+        var sut = CreateSut();
+        var board = MakeBoardResponse(nameof(BoardType.PrivateNote), writer: "Alice", locked: false);
+
+        Assert.False(sut.CanView(board, MakeAccount("Bob", Role.Admin)));
     }
 
     // -- WriteBoardAsync ------------------------------------------------------

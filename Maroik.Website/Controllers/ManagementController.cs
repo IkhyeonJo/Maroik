@@ -1096,16 +1096,8 @@ public class ManagementController : Controller
 
                 try
                 {
-                    if (privateNoteBoard == null || privateNoteBoard.Deleted || privateNoteBoard.Writer != loggedInAccount.Nickname)
+                    if (privateNoteBoard == null || privateNoteBoard.Deleted || !_boardService.CanView(privateNoteBoard, loggedInAccount))
                         return RedirectToAction(nameof(BoardType.PrivateNote), "Management");
-
-                    if (privateNoteBoard.Locked)
-                    {
-                        if (!(loggedInAccount.Nickname == privateNoteBoard.Writer || loggedInAccount.Role == Role.Admin))
-                        {
-                            return RedirectToAction(nameof(BoardType.PrivateNote), "Management");
-                        }
-                    }
 
                     await _boardService.IncrementBoardViewAsync((long)boardId, HttpContext.RequestAborted);
 
@@ -1180,7 +1172,7 @@ public class ManagementController : Controller
 
                 try
                 {
-                    if (privateNoteBoard == null || privateNoteBoard.Deleted || privateNoteBoard.Writer != loggedInAccount.Nickname)
+                    if (privateNoteBoard == null || privateNoteBoard.Deleted || !loggedInAccount.IsOwner(privateNoteBoard.Writer))
                     {
                         return RedirectToAction(nameof(BoardType.PrivateNote), "Management");
                     }
