@@ -38,19 +38,15 @@ $('#btnMainTopBarLogin').off('click').on('click', function () {
     location.href = "/Account/Login";
 });
 
-// ===== Double-submit guard =====
-// While a POST request is in flight, submit buttons stay disabled so a double-click
-// cannot fire the same mutation twice. Buttons are re-enabled when the last
-// in-flight POST completes (success, error, or abort).
 let inFlightPostCount = 0;
 
-$(document).off('ajaxSend._DoubleSubmitGuard').on('ajaxSend._DoubleSubmitGuard', function (_event, _xhr, settings) {
+$(document).off('ajaxSend._Layout').on('ajaxSend._Layout', function (_event, _xhr, settings) {
     if ((settings.type || 'GET').toUpperCase() !== 'POST') return;
     inFlightPostCount++;
     $('button[type="submit"], input[type="submit"]').prop('disabled', true);
 });
 
-$(document).off('ajaxComplete._DoubleSubmitGuard').on('ajaxComplete._DoubleSubmitGuard', function (_event, _xhr, settings) {
+$(document).off('ajaxComplete._Layout').on('ajaxComplete._Layout', function (_event, _xhr, settings) {
     if ((settings.type || 'GET').toUpperCase() !== 'POST') return;
     inFlightPostCount = Math.max(0, inFlightPostCount - 1);
     if (inFlightPostCount === 0) {
@@ -58,17 +54,11 @@ $(document).off('ajaxComplete._DoubleSubmitGuard').on('ajaxComplete._DoubleSubmi
     }
 });
 
-// Full-page form posts (e.g. login): disable the submit button once the submit event
-// is actually dispatched (after client-side validation passed). AJAX forms stop
-// propagation via "return false", so they never reach this delegated handler and
-// are covered by the in-flight guard above instead.
-$(document).off('submit._DoubleSubmitGuard', 'form').on('submit._DoubleSubmitGuard', 'form', function () {
+$(document).off('submit._Layout', 'form').on('submit._Layout', 'form', function () {
     $(this).find('button[type="submit"], input[type="submit"]').prop('disabled', true);
 });
 
-// Back/forward cache restores the DOM snapshot including disabled buttons and the
-// #loading overlay (Account/Forum/PrivateNote pages) shown at submit time — reset both.
-$(window).off('pageshow._DoubleSubmitGuard').on('pageshow._DoubleSubmitGuard', function () {
+$(window).off('pageshow._Layout').on('pageshow._Layout', function () {
     inFlightPostCount = 0;
     $('button[type="submit"], input[type="submit"]').prop('disabled', false);
     $('#loading').hide();
