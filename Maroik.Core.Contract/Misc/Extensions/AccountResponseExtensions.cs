@@ -28,8 +28,9 @@ public static class AccountResponseExtensions
     {
         /// <summary>Nicknames of every Admin account in the collection, for O(1) "is this writer an admin?" lookups.</summary>
         public HashSet<string> ToAdminNicknameSet() =>
-            accounts.Where(account => account.Role == Role.Admin && !string.IsNullOrEmpty(account.Nickname))
+        [
+            .. accounts.Where(account => account.Role == Role.Admin && !string.IsNullOrEmpty(account.Nickname))
                 .Select(account => account.Nickname!)
-                .ToHashSet();
+        ];
     }
 }
