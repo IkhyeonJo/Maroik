@@ -146,11 +146,11 @@ public class AccountBookControllerIncomeExpenditureTests
     public async Task CreateIncome_ValidPayload_DepositsIntoAssetBalance()
     {
         string asset = UniqueAssetName();
+        var session = await LoginAsync();
         using (var scope = _factory.Services.CreateScope())
             SeedAssetIfMissing(scope.ServiceProvider.GetRequiredService<ApplicationDbContext>(), asset);
         decimal before = GetAssetBalance(asset);
 
-        var session = await LoginAsync();
         var payload = new
         {
             Id = 0, MainClass = "RegularIncome", SubClass = "LaborIncome", Content = "Bonus",
@@ -195,9 +195,9 @@ public class AccountBookControllerIncomeExpenditureTests
     public async Task DeleteIncome_ExistingRecord_RemovesItAndRefundsAssetBalance()
     {
         string asset = UniqueAssetName();
+        var session = await LoginAsync();
         long id = SeedIncome(amount: 500, productName: asset);
         decimal balanceAfterDeposit = GetAssetBalance(asset);
-        var session = await LoginAsync();
 
         using var request = session.BuildJsonPostRequest("/AccountBook/DeleteIncome", new { Id = id });
         var response = await _client.SendAsync(request, TestContext.Current.CancellationToken);
@@ -277,11 +277,11 @@ public class AccountBookControllerIncomeExpenditureTests
     public async Task CreateExpenditure_ValidPayload_WithdrawsFromAssetBalance()
     {
         string asset = UniqueAssetName();
+        var session = await LoginAsync();
         using (var scope = _factory.Services.CreateScope())
             SeedAssetIfMissing(scope.ServiceProvider.GetRequiredService<ApplicationDbContext>(), asset);
         decimal before = GetAssetBalance(asset);
 
-        var session = await LoginAsync();
         var payload = new
         {
             Id = 0, MainClass = "ConsumerSpending", SubClass = "MealOrEatOutExpenses", Content = "Dinner",
@@ -326,9 +326,9 @@ public class AccountBookControllerIncomeExpenditureTests
     public async Task DeleteExpenditure_ExistingRecord_RemovesItAndRefundsAssetBalance()
     {
         string asset = UniqueAssetName();
+        var session = await LoginAsync();
         long id = SeedExpenditure(amount: 75, productName: asset);
         decimal balanceAfterWithdrawal = GetAssetBalance(asset);
-        var session = await LoginAsync();
 
         using var request = session.BuildJsonPostRequest("/AccountBook/DeleteExpenditure", new { Id = id });
         var response = await _client.SendAsync(request, TestContext.Current.CancellationToken);

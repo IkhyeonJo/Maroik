@@ -14,6 +14,10 @@ namespace Maroik.FileStorage.Controllers;
 [Route("api/[controller]")]
 public class FileController : ControllerBase
 {
+    // Its constructor builds a ~400-entry default extension-to-MIME-type map; instantiating it
+    // per request is wasted work, and the type is documented as safe for concurrent reads.
+    private static readonly FileExtensionContentTypeProvider _contentTypeProvider = new();
+
     private readonly IFileValidationService _fileValidationService;
     private readonly ILogger<FileController> _logger;
 
@@ -70,8 +74,7 @@ public class FileController : ControllerBase
             var fileData = await System.IO.File.ReadAllBytesAsync(filePath);
 #pragma warning restore SCS0018
 
-            var provider = new FileExtensionContentTypeProvider();
-            if (!provider.TryGetContentType(sanitizedFileName, out var contentType))
+            if (!_contentTypeProvider.TryGetContentType(sanitizedFileName, out var contentType))
                 contentType = "application/octet-stream";
 
 #pragma warning disable CA1873

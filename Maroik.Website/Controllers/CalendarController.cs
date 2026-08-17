@@ -23,6 +23,10 @@ namespace Maroik.Website.Controllers;
 /// </summary>
 public class CalendarController : Controller
 {
+    // Its constructor builds a ~400-entry default extension-to-MIME-type map; instantiating it
+    // per request is wasted work, and the type is documented as safe for concurrent reads.
+    private static readonly FileExtensionContentTypeProvider _contentTypeProvider = new();
+
     private readonly IRsaService _rsa;
     private readonly IHtmlLocalizer<CalendarController> _localizer;
     private readonly ICalendarService _calendarService;
@@ -418,8 +422,7 @@ public class CalendarController : Controller
                 byte[]? fileData = await _calendarService.DownloadFileAsync(calendarEvent.CalendarEventAttachedFile.Path, HttpContext.RequestAborted);
                 if (fileData != null)
                 {
-                    FileExtensionContentTypeProvider provider = new();
-                    if (!provider.TryGetContentType(calendarEvent.CalendarEventAttachedFile.Path, out string? contentType))
+                    if (!_contentTypeProvider.TryGetContentType(calendarEvent.CalendarEventAttachedFile.Path, out string? contentType))
                         contentType = "application/octet-stream";
                     calendarEvent.CalendarEventAttachedFileBase64Data = Convert.ToBase64String(fileData);
                     calendarEvent.CalendarEventAttachedFileContentType = contentType;
@@ -501,8 +504,7 @@ public class CalendarController : Controller
                 byte[]? fileData = await _calendarService.DownloadFileAsync(calendarEvent.CalendarEventAttachedFile.Path, HttpContext.RequestAborted);
                 if (fileData != null)
                 {
-                    FileExtensionContentTypeProvider provider = new();
-                    if (!provider.TryGetContentType(calendarEvent.CalendarEventAttachedFile.Path, out string? contentType))
+                    if (!_contentTypeProvider.TryGetContentType(calendarEvent.CalendarEventAttachedFile.Path, out string? contentType))
                         contentType = "application/octet-stream";
                     calendarEvent.CalendarEventAttachedFileBase64Data = Convert.ToBase64String(fileData);
                     calendarEvent.CalendarEventAttachedFileContentType = contentType;

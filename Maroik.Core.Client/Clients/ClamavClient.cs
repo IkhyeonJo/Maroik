@@ -18,8 +18,12 @@ public class ClamavClient : IClamavClient
             // Rewind the stream so we read from the beginning
             fileStream.Position = 0;
 
-            // Open a TCP connection to the ClamAV daemon
-            using var client = new TcpClient(clamavHost, clamavPort);
+            // Open a TCP connection to the ClamAV daemon. ConnectAsync (rather than the
+            // TcpClient(host, port) constructor, which blocks the calling thread for the OS
+            // connect timeout) honors ct so a network-unreachable host can't pin a thread-pool
+            // thread for tens of seconds under concurrent uploads.
+            using var client = new TcpClient();
+            await client.ConnectAsync(clamavHost, clamavPort, ct);
             await using var stream = client.GetStream();
             await using var writer = new StreamWriter(stream, leaveOpen: true);
             writer.AutoFlush = true;
