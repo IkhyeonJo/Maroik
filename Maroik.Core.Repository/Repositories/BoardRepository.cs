@@ -59,4 +59,23 @@ public class BoardRepository(ApplicationDbContext context)
     /// <inheritdoc />
     public Task<Board?> FindActiveByIdAsync(long id, CancellationToken ct = default)
         => QueryFirstAsync(e => e.Id == id && e.Deleted == false, ct);
+
+    /// <inheritdoc />
+    public async Task<Board?> FindActiveByIdForUpdateAsync(long id, CancellationToken ct = default)
+    {
+        // Raw SQL is required because EF Core LINQ cannot emit FOR UPDATE.
+        // ToListAsync on the raw root executes the SQL verbatim (no composition),
+        // keeping FOR UPDATE at the top level of the statement.
+        var entities = await Set.FromSqlInterpolated(
+            $"""
+             SELECT *
+             FROM "Board"
+             WHERE "Id" = {id} AND "Deleted" = false
+             LIMIT 1
+             FOR UPDATE
+             """).ToListAsync(ct);
+
+        var entity = entities.FirstOrDefault();
+        return entity == null ? null : ToDomain(entity);
+    }
 }

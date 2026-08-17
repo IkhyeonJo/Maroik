@@ -55,6 +55,31 @@ public class FixedSchedulePolicyTests
         Assert.False(result);
     }
 
+    /// <summary>
+    /// Regression test: when today is late in the year and the deposit date is early next year,
+    /// the upcoming occurrence is next year's, not this year's (which has already long passed).
+    /// </summary>
+    [Fact]
+    public void IsNoticed_ReturnsTrue_WhenDepositDateIsEarlyNextYear_WithinWindow()
+    {
+        var today = new DateTime(2026, 12, 20);
+
+        var result = FixedSchedulePolicy.IsNoticed(depositMonth: 1, depositDay: 5, today, noticeWindowDays: 30, unpunctuality: false);
+
+        Assert.True(result);
+    }
+
+    /// <summary>Same year-boundary scenario, but the next-year occurrence falls outside the notice window.</summary>
+    [Fact]
+    public void IsNoticed_ReturnsFalse_WhenDepositDateIsNextYear_OutsideWindow()
+    {
+        var today = new DateTime(2026, 12, 20);
+
+        var result = FixedSchedulePolicy.IsNoticed(depositMonth: 3, depositDay: 1, today, noticeWindowDays: 30, unpunctuality: false);
+
+        Assert.False(result);
+    }
+
     /// <summary>Is noticed returns true when unpunctuality true regardless of date.</summary>
     [Fact]
     public void IsNoticed_ReturnsTrue_WhenUnpunctualityTrue_RegardlessOfDate()

@@ -276,6 +276,32 @@ public class BoardServiceTests
         _unitOfWork.Verify(u => u.CommitAsync(It.IsAny<CancellationToken>()), Times.Once);
     }
 
+    /// <summary>
+    /// Regression test: no edit form exposes a "Noticed" control, so <c>BoardRequest.Noticed</c>
+    /// is always false on an edit request. Editing must not un-pin an already-pinned post.
+    /// </summary>
+    [Fact]
+    public async Task EditBoardAsync_PreservesNoticed_WhenRequestDoesNotSpecifyIt()
+    {
+        Board pinnedBoard = Board.Reconstitute(1, nameof(BoardType.FreeForum), "Test Title", "Test Content", "Alice",
+            DateTime.UtcNow, DateTime.UtcNow, 0L, deleted: false, locked: false, noticed: true);
+        _boardRepo.Setup(r => r.FindActiveByIdAsync(It.IsAny<long>(), It.IsAny<CancellationToken>())).ReturnsAsync(pinnedBoard);
+        _attachedFileRepo.Setup(r => r.FindByBoardIdAsync(It.IsAny<long>(), It.IsAny<CancellationToken>())).ReturnsAsync((BoardAttachedFile?)null);
+        Board? savedBoard = null;
+        _boardRepo.Setup(r => r.UpdateEntityAsync(It.IsAny<Board>(), It.IsAny<CancellationToken>()))
+            .Callback<Board, CancellationToken>((b, _) => savedBoard = b)
+            .Returns(Task.CompletedTask);
+        var sut = CreateSut();
+
+        ServiceResult result = await sut.EditBoardAsync(
+            new BoardRequest { Id = 1, Type = nameof(BoardType.FreeForum), Title = "New Title", Content = "New Content", Noticed = false },
+            "Alice", null, TestContext.Current.CancellationToken);
+
+        Assert.True(result.Success);
+        Assert.NotNull(savedBoard);
+        Assert.True(savedBoard.Noticed);
+    }
+
     // -- DeleteBoardAsync -----------------------------------------------------
 
     /// <summary>Verifies that <c>DeleteBoardAsync</c> returns fail when board not found.</summary>
@@ -335,7 +361,7 @@ public class BoardServiceTests
     [Fact]
     public async Task WriteCommentAsync_ReturnsFail_WhenBoardNotFound()
     {
-        _boardRepo.Setup(r => r.FindActiveByIdAsync(It.IsAny<long>(), It.IsAny<CancellationToken>())).ReturnsAsync((Board?)null);
+        _boardRepo.Setup(r => r.FindActiveByIdForUpdateAsync(It.IsAny<long>(), It.IsAny<CancellationToken>())).ReturnsAsync((Board?)null);
         var sut = CreateSut();
 
         ServiceResult result = await sut.WriteCommentAsync(new BoardCommentRequest { BoardId = 99 }, ct: TestContext.Current.CancellationToken);
@@ -347,7 +373,7 @@ public class BoardServiceTests
     [Fact]
     public async Task WriteCommentAsync_ReturnsFail_WhenRequiredOwnerDoesNotMatch()
     {
-        _boardRepo.Setup(r => r.FindActiveByIdAsync(It.IsAny<long>(), It.IsAny<CancellationToken>())).ReturnsAsync(MakeBoard(writer: "Alice"));
+        _boardRepo.Setup(r => r.FindActiveByIdForUpdateAsync(It.IsAny<long>(), It.IsAny<CancellationToken>())).ReturnsAsync(MakeBoard(writer: "Alice"));
         var sut = CreateSut();
 
         ServiceResult result = await sut.WriteCommentAsync(new BoardCommentRequest { BoardId = 1 }, "Bob", TestContext.Current.CancellationToken);
@@ -360,7 +386,7 @@ public class BoardServiceTests
     [Fact]
     public async Task WriteCommentAsync_ReturnsSuccess_WhenOwnerMatchesAndNoOwnerRestriction()
     {
-        _boardRepo.Setup(r => r.FindActiveByIdAsync(It.IsAny<long>(), It.IsAny<CancellationToken>())).ReturnsAsync(MakeBoard(writer: "Alice"));
+        _boardRepo.Setup(r => r.FindActiveByIdForUpdateAsync(It.IsAny<long>(), It.IsAny<CancellationToken>())).ReturnsAsync(MakeBoard(writer: "Alice"));
         _commentRepo.Setup(r => r.GetByBoardIdOrderedAsync(It.IsAny<long>(), It.IsAny<CancellationToken>())).ReturnsAsync([]);
         _commentRepo.Setup(r => r.CreateAsync(It.IsAny<BoardComment>(), It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
         var sut = CreateSut();
@@ -374,7 +400,7 @@ public class BoardServiceTests
     [Fact]
     public async Task WriteCommentAsync_SetsOrderBasedOnExistingCommentCount()
     {
-        _boardRepo.Setup(r => r.FindActiveByIdAsync(It.IsAny<long>(), It.IsAny<CancellationToken>())).ReturnsAsync(MakeBoard());
+        _boardRepo.Setup(r => r.FindActiveByIdForUpdateAsync(It.IsAny<long>(), It.IsAny<CancellationToken>())).ReturnsAsync(MakeBoard());
         _commentRepo.Setup(r => r.GetByBoardIdOrderedAsync(It.IsAny<long>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(new List<BoardComment> { MakeComment(1), MakeComment(2) });
 
@@ -388,6 +414,27 @@ public class BoardServiceTests
 
         Assert.NotNull(captured);
         Assert.Equal(2L, captured.Order);
+    }
+
+    /// <summary>
+    /// Regression test: comment writes must lock the parent post row (FOR UPDATE) inside a
+    /// transaction, so concurrent commenters on the same post serialize instead of racing to
+    /// read the same <c>Count()</c> and insert duplicate <c>Order</c> values.
+    /// </summary>
+    [Fact]
+    public async Task WriteCommentAsync_LocksBoardRowInTransaction()
+    {
+        _boardRepo.Setup(r => r.FindActiveByIdForUpdateAsync(It.IsAny<long>(), It.IsAny<CancellationToken>())).ReturnsAsync(MakeBoard());
+        _commentRepo.Setup(r => r.GetByBoardIdOrderedAsync(It.IsAny<long>(), It.IsAny<CancellationToken>())).ReturnsAsync([]);
+        _commentRepo.Setup(r => r.CreateAsync(It.IsAny<BoardComment>(), It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
+        var sut = CreateSut();
+
+        ServiceResult result = await sut.WriteCommentAsync(new BoardCommentRequest { BoardId = 1, Writer = "Bob", Content = "Hi" }, ct: TestContext.Current.CancellationToken);
+
+        Assert.True(result.Success);
+        _boardRepo.Verify(r => r.FindActiveByIdForUpdateAsync(1, It.IsAny<CancellationToken>()), Times.Once);
+        _unitOfWork.Verify(u => u.BeginAsync(It.IsAny<CancellationToken>()), Times.Once);
+        _unitOfWork.Verify(u => u.CommitAsync(It.IsAny<CancellationToken>()), Times.Once);
     }
 
     // -- DeleteCommentAsync ---------------------------------------------------

@@ -7,6 +7,7 @@ using Maroik.Core.Contract.Interfaces;
 using Maroik.Core.Contract.Misc.Messaging;
 using Maroik.Core.Contract.Misc.Settings;
 using Maroik.Core.Contract.Misc.Tokens;
+using Maroik.Core.Service.Extensions;
 using Maroik.Core.Service.Mappers;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
@@ -167,7 +168,7 @@ public class AccountService : IAccountService
             catch (Exception e)
             {
                 // A unique constraint violation means the nickname is already taken.
-                if (IsUniqueViolation(e))
+                if (e.IsPostgresUniqueViolation())
                     return RegisterResult.Fail($"'{newAccount.Nickname}' is a Nickname that already exists. Please enter another Nickname.");
                 _logger.LogError(e, "Failed to create account for {Email}", newAccount.Email);
                 return RegisterResult.Fail("Error occurred while processing about account registration");
@@ -477,16 +478,5 @@ public class AccountService : IAccountService
             _logger.LogError(e, "Failed to publish email message for {Email}", to);
             return false;
         }
-    }
-
-    /// <summary>
-    /// Returns <see langword="true"/> when the exception represents a PostgreSQL unique-constraint violation (error code 23505).
-    /// Used to detect duplicate nickname conflicts during account creation.
-    /// </summary>
-    private static bool IsUniqueViolation(Exception e)
-    {
-        return (e.InnerException?.Message.Contains("23505") ?? false) ||
-               (e.InnerException?.GetType().Name.Contains("NpgsqlException") ?? false) &&
-               (e.InnerException?.Message.Contains("unique", StringComparison.OrdinalIgnoreCase) ?? false);
     }
 }

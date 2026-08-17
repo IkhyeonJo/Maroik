@@ -17,4 +17,12 @@ public interface IBoardRepository : IGenericRepository<Board>
 
     /// <summary>Returns the non-deleted post with the given ID, or null if not found.</summary>
     Task<Board?> FindActiveByIdAsync(long id, CancellationToken ct = default);
+
+    /// <summary>
+    /// Returns the non-deleted post with the given ID, row-locked (<c>SELECT ... FOR UPDATE</c>)
+    /// for the duration of the current transaction. Callers must hold an open
+    /// <see cref="IUnitOfWork"/> transaction. Used to serialize concurrent writers against the
+    /// same post (e.g. comment ordering) instead of allowing a read-then-write race.
+    /// </summary>
+    Task<Board?> FindActiveByIdForUpdateAsync(long id, CancellationToken ct = default);
 }

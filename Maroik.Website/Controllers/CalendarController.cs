@@ -130,9 +130,9 @@ public class CalendarController : Controller
     [ValidateAntiForgeryToken]
     [RequiredHttpPostAccess(Role = Role.Admin)]
     [RequiredHttpPostAccess(Role = Role.User)]
-    public async Task<IActionResult> UploadImageFile(IFormFile summernoteImageFile)
+    public async Task<IActionResult> UploadImageFile(IFormFile? summernoteImageFile)
     {
-        if (summernoteImageFile.Length <= 0)
+        if (summernoteImageFile == null || summernoteImageFile.Length <= 0)
             return Ok(new { result = false, errorMessage = _localizer["Please attach a file."].Value });
 
         if (summernoteImageFile.Length > _serverSettings.Value.MaxAttachedFileSizeBytes)

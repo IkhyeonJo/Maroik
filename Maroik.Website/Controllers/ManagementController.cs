@@ -1422,7 +1422,8 @@ public class ManagementController : Controller
                 Id = boardInputViewModel.Id,
                 Type = EnumHelper.GetDescription(BoardType.PrivateNote),
                 Title = boardInputViewModel.Title,
-                Content = boardInputViewModel.Content
+                Content = boardInputViewModel.Content,
+                Locked = boardInputViewModel.Locked
             };
 
             AttachedFileDto? attachedFile = null;

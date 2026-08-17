@@ -181,9 +181,11 @@ public class BoardService : IBoardService
                 return ServiceResult.Fail(updateResult.FirstError.Description);
             }
 
-            // Apply lock and pin toggles from the request.
+            // Apply the lock toggle from the request. Noticed (notice-pin) is set only at write
+            // time (see WriteBoardAsync) — no edit form exposes a control for it, so editing must
+            // never change it; toggling it here based on an always-absent request field would
+            // silently un-pin every notice on its next edit.
             if (request.Locked) board.Lock(); else board.Unlock();
-            if (request.Noticed) board.Pin(); else board.Unpin();
 
             await _boardRepository.UpdateEntityAsync(board, ct);
 
@@ -234,15 +236,25 @@ public class BoardService : IBoardService
     {
         string content = _attachmentContent.SanitizeContent(request.Content ?? "");
 
+        await _unitOfWork.BeginAsync(ct);
         try
         {
-            Board? board = await _boardRepository.FindActiveByIdAsync(request.BoardId, ct);
+            // Row-locks the post for the rest of this transaction, so concurrent commenters on
+            // the same post serialize instead of both reading the same Count() and racing to
+            // insert duplicate Order values.
+            Board? board = await _boardRepository.FindActiveByIdForUpdateAsync(request.BoardId, ct);
             if (board == null)
+            {
+                await _unitOfWork.RollbackAsync(ct);
                 return ServiceResult.Fail("Input is invalid");
+            }
 
             // When requiredOwnerNickname is set, restrict commenting to the post owner only.
             if (requiredOwnerNickname != null && !board.IsOwnedBy(requiredOwnerNickname))
+            {
+                await _unitOfWork.RollbackAsync(ct);
                 return ServiceResult.Fail("You do not have permission to write a comment.");
+            }
 
             IEnumerable<BoardComment> existing = await _boardCommentRepository.GetByBoardIdOrderedAsync(request.BoardId, ct);
 
@@ -251,18 +263,26 @@ public class BoardService : IBoardService
 
             var commentResult = BoardComment.Create(request.BoardId, order, request.AvatarImagePath, request.Writer, content);
             if (commentResult.IsError)
+            {
+                await _unitOfWork.RollbackAsync(ct);
                 return ServiceResult.Fail(commentResult.FirstError.Description);
+            }
 
             var addResult = board.AddComment(commentResult.Value);
             if (addResult.IsError)
+            {
+                await _unitOfWork.RollbackAsync(ct);
                 return ServiceResult.Fail(addResult.FirstError.Description);
+            }
 
             await _boardCommentRepository.CreateAsync(commentResult.Value, ct);
+            await _unitOfWork.CommitAsync(ct);
             return ServiceResult.Ok();
         }
         catch (Exception e)
         {
             _logger.LogError(e, "Failed to write comment on board {BoardId}", request.BoardId);
+            await _unitOfWork.RollbackAsync(ct);
             return ServiceResult.Fail("Input is invalid");
         }
     }

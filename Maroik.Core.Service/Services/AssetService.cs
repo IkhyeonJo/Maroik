@@ -1,6 +1,7 @@
 using Maroik.Core.Domain.Finance;
 using Maroik.Core.Contract.Dtos;
 using Maroik.Core.Contract.Interfaces;
+using Maroik.Core.Service.Extensions;
 using Maroik.Core.Service.Mappers;
 
 namespace Maroik.Core.Service.Services;
@@ -64,7 +65,20 @@ public class AssetService : IAssetService
             return ServiceResult.Fail(createResult.FirstError.Description);
 
         var asset = createResult.Value;
-        await _assetRepository.CreateAsync(asset, ct);
+
+        try
+        {
+            await _assetRepository.CreateAsync(asset, ct);
+        }
+        catch (Exception e) when (e.IsPostgresUniqueViolation())
+        {
+            // The prior FindAssetAsync check above is a read-then-write race: two concurrent
+            // requests for the same (ProductName, AccountEmail) can both pass it. The primary
+            // key constraint on that pair still rejects the second insert — turn that into the
+            // same friendly result instead of letting the raw DB exception escape.
+            return ServiceResult.Fail("The asset already exists.");
+        }
+
         return ServiceResult.Ok();
     }
 

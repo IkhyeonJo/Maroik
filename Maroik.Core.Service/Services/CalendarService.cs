@@ -301,7 +301,13 @@ public class CalendarService : ICalendarService
                 {
                     await _otherCalendarRepository.DeleteByAccountEmailAndCalendarIdAsync(other.AccountEmail.Value, other.CalendarId, ct);
                 }
-                catch { /* best effort: subscription removal is non-critical */ }
+                catch (Exception ex)
+                {
+                    // Best effort: a stale subscription is not worth failing the whole request over,
+                    // but a swallowed failure here (transient or otherwise) should still be visible.
+                    _logger.LogWarning(ex, "Failed to remove stale calendar subscription for {AccountEmail} to calendar {CalendarId}",
+                        other.AccountEmail.Value, other.CalendarId);
+                }
             }
 
             await _unitOfWork.CommitAsync(ct);

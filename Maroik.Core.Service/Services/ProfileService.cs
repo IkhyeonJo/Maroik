@@ -166,7 +166,8 @@ public class ProfileService : IProfileService
         };
         using (var process = Process.Start(chmod))
         {
-            await process?.WaitForExitAsync(ct)!;
+            if (process != null)
+                await process.WaitForExitAsync(ct);
         }
 
         return await UpdateAvatarAsync(email, $"/upload/Management/Profile/Avatar/{avatarFile}", ct);

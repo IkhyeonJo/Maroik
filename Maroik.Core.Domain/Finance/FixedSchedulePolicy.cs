@@ -26,6 +26,11 @@ public static class FixedSchedulePolicy
         try
         {
             var depositDate = new DateTime(today.Year, depositMonth, depositDay);
+            // If this year's occurrence has already passed, the next one is next year
+            // (e.g. today = Dec 20, depositMonth/Day = Jan 5 — the upcoming deposit is
+            // next January, not the one that already happened last January).
+            if (depositDate < today.Date)
+                depositDate = depositDate.AddYears(1);
             double daysUntil = (depositDate - today).TotalDays;
             return daysUntil >= 0 && daysUntil <= noticeWindowDays;
         }

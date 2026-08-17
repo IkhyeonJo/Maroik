@@ -63,27 +63,35 @@ public class NoticeController : Controller
         if (!ModelState.IsValid)
             return Json(new { result = false, error = _localizer["Input is invalid"].Value });
 
-        string email = _sessionService.GetAccount()!.Email!;
-
-        var request = new FixedIncomeRequest
+        try
         {
-            Id = fixedIncomeInputViewModel.Id,
-            MainClass = fixedIncomeInputViewModel.MainClass,
-            SubClass = fixedIncomeInputViewModel.SubClass,
-            Content = fixedIncomeInputViewModel.Content ?? "",
-            Amount = fixedIncomeInputViewModel.Amount,
-            DepositMyAssetProductName = fixedIncomeInputViewModel.DepositMyAssetProductName,
-            DepositMonth = fixedIncomeInputViewModel.DepositMonth,
-            DepositDay = fixedIncomeInputViewModel.DepositDay,
-            MaturityDate = DateTime.Parse(fixedIncomeInputViewModel.MaturityDate!),
-            Note = fixedIncomeInputViewModel.Note ?? "",
-            Unpunctuality = fixedIncomeInputViewModel.Unpunctuality
-        };
+            string email = _sessionService.GetAccount()!.Email!;
 
-        var result = await _fixedIncomeService.CreateAsync(email, request, ct);
-        return result.Success
-            ? Json(new { result = true, message = _localizer["The fixedIncome has been successfully created."].Value })
-            : Json(new { result = false, error = _localizer[result.ErrorKey].Value });
+            var request = new FixedIncomeRequest
+            {
+                Id = fixedIncomeInputViewModel.Id,
+                MainClass = fixedIncomeInputViewModel.MainClass,
+                SubClass = fixedIncomeInputViewModel.SubClass,
+                Content = fixedIncomeInputViewModel.Content ?? "",
+                Amount = fixedIncomeInputViewModel.Amount,
+                DepositMyAssetProductName = fixedIncomeInputViewModel.DepositMyAssetProductName,
+                DepositMonth = fixedIncomeInputViewModel.DepositMonth,
+                DepositDay = fixedIncomeInputViewModel.DepositDay,
+                MaturityDate = DateTime.Parse(fixedIncomeInputViewModel.MaturityDate!),
+                Note = fixedIncomeInputViewModel.Note ?? "",
+                Unpunctuality = fixedIncomeInputViewModel.Unpunctuality
+            };
+
+            var result = await _fixedIncomeService.CreateAsync(email, request, ct);
+            return result.Success
+                ? Json(new { result = true, message = _localizer["The fixedIncome has been successfully created."].Value })
+                : Json(new { result = false, error = _localizer[result.ErrorKey].Value });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to create fixed-income record");
+            return Json(new { result = false, error = _localizer["Input is invalid"].Value });
+        }
     }
     #endregion
 
@@ -192,27 +200,35 @@ public class NoticeController : Controller
         if (!ModelState.IsValid)
             return Json(new { result = false, error = _localizer["Input is invalid"].Value });
 
-        string email = _sessionService.GetAccount()!.Email!;
-
-        var request = new FixedIncomeRequest
+        try
         {
-            Id = fixedIncomeInputViewModel.Id,
-            MainClass = fixedIncomeInputViewModel.MainClass,
-            SubClass = fixedIncomeInputViewModel.SubClass,
-            Content = fixedIncomeInputViewModel.Content ?? "",
-            Amount = fixedIncomeInputViewModel.Amount,
-            DepositMyAssetProductName = fixedIncomeInputViewModel.DepositMyAssetProductName,
-            DepositMonth = fixedIncomeInputViewModel.DepositMonth,
-            DepositDay = fixedIncomeInputViewModel.DepositDay,
-            MaturityDate = DateTime.Parse(fixedIncomeInputViewModel.MaturityDate!),
-            Note = fixedIncomeInputViewModel.Note ?? "",
-            Unpunctuality = fixedIncomeInputViewModel.Unpunctuality
-        };
+            string email = _sessionService.GetAccount()!.Email!;
 
-        var result = await _fixedIncomeService.UpdateAsync(email, request, ct);
-        return result.Success
-            ? Json(new { result = true, message = _localizer["The fixedIncome has been successfully updated."].Value })
-            : Json(new { result = false, error = _localizer[result.ErrorKey].Value });
+            var request = new FixedIncomeRequest
+            {
+                Id = fixedIncomeInputViewModel.Id,
+                MainClass = fixedIncomeInputViewModel.MainClass,
+                SubClass = fixedIncomeInputViewModel.SubClass,
+                Content = fixedIncomeInputViewModel.Content ?? "",
+                Amount = fixedIncomeInputViewModel.Amount,
+                DepositMyAssetProductName = fixedIncomeInputViewModel.DepositMyAssetProductName,
+                DepositMonth = fixedIncomeInputViewModel.DepositMonth,
+                DepositDay = fixedIncomeInputViewModel.DepositDay,
+                MaturityDate = DateTime.Parse(fixedIncomeInputViewModel.MaturityDate!),
+                Note = fixedIncomeInputViewModel.Note ?? "",
+                Unpunctuality = fixedIncomeInputViewModel.Unpunctuality
+            };
+
+            var result = await _fixedIncomeService.UpdateAsync(email, request, ct);
+            return result.Success
+                ? Json(new { result = true, message = _localizer["The fixedIncome has been successfully updated."].Value })
+                : Json(new { result = false, error = _localizer[result.ErrorKey].Value });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to update fixed-income record {FixedIncomeId}", fixedIncomeInputViewModel.Id);
+            return Json(new { result = false, error = _localizer["Input is invalid"].Value });
+        }
     }
     #endregion
 
@@ -263,28 +279,36 @@ public class NoticeController : Controller
         if (!ModelState.IsValid)
             return Json(new { result = false, error = _localizer["Input is invalid"].Value });
 
-        string email = _sessionService.GetAccount()!.Email!;
-
-        var request = new FixedExpenditureRequest
+        try
         {
-            Id = fixedExpenditureInputViewModel.Id,
-            MainClass = fixedExpenditureInputViewModel.MainClass,
-            SubClass = fixedExpenditureInputViewModel.SubClass,
-            Content = fixedExpenditureInputViewModel.Content ?? "",
-            Amount = fixedExpenditureInputViewModel.Amount,
-            PaymentMethod = fixedExpenditureInputViewModel.PaymentMethod,
-            MyDepositAsset = fixedExpenditureInputViewModel.MyDepositAsset ?? "",
-            DepositMonth = fixedExpenditureInputViewModel.DepositMonth,
-            DepositDay = fixedExpenditureInputViewModel.DepositDay,
-            MaturityDate = DateTime.Parse(fixedExpenditureInputViewModel.MaturityDate!),
-            Note = fixedExpenditureInputViewModel.Note ?? "",
-            Unpunctuality = fixedExpenditureInputViewModel.Unpunctuality
-        };
+            string email = _sessionService.GetAccount()!.Email!;
 
-        var result = await _fixedExpenditureService.CreateAsync(email, request, ct);
-        return result.Success
-            ? Json(new { result = true, message = _localizer["The fixedExpenditure has been successfully created."].Value })
-            : Json(new { result = false, error = _localizer[result.ErrorKey].Value });
+            var request = new FixedExpenditureRequest
+            {
+                Id = fixedExpenditureInputViewModel.Id,
+                MainClass = fixedExpenditureInputViewModel.MainClass,
+                SubClass = fixedExpenditureInputViewModel.SubClass,
+                Content = fixedExpenditureInputViewModel.Content ?? "",
+                Amount = fixedExpenditureInputViewModel.Amount,
+                PaymentMethod = fixedExpenditureInputViewModel.PaymentMethod,
+                MyDepositAsset = fixedExpenditureInputViewModel.MyDepositAsset ?? "",
+                DepositMonth = fixedExpenditureInputViewModel.DepositMonth,
+                DepositDay = fixedExpenditureInputViewModel.DepositDay,
+                MaturityDate = DateTime.Parse(fixedExpenditureInputViewModel.MaturityDate!),
+                Note = fixedExpenditureInputViewModel.Note ?? "",
+                Unpunctuality = fixedExpenditureInputViewModel.Unpunctuality
+            };
+
+            var result = await _fixedExpenditureService.CreateAsync(email, request, ct);
+            return result.Success
+                ? Json(new { result = true, message = _localizer["The fixedExpenditure has been successfully created."].Value })
+                : Json(new { result = false, error = _localizer[result.ErrorKey].Value });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to create fixed-expenditure record");
+            return Json(new { result = false, error = _localizer["Input is invalid"].Value });
+        }
     }
     #endregion
 
@@ -394,28 +418,36 @@ public class NoticeController : Controller
         if (!ModelState.IsValid)
             return Json(new { result = false, error = _localizer["Input is invalid"].Value });
 
-        string email = _sessionService.GetAccount()!.Email!;
-
-        var request = new FixedExpenditureRequest
+        try
         {
-            Id = fixedExpenditureInputViewModel.Id,
-            MainClass = fixedExpenditureInputViewModel.MainClass,
-            SubClass = fixedExpenditureInputViewModel.SubClass,
-            Content = fixedExpenditureInputViewModel.Content ?? "",
-            Amount = fixedExpenditureInputViewModel.Amount,
-            PaymentMethod = fixedExpenditureInputViewModel.PaymentMethod,
-            MyDepositAsset = fixedExpenditureInputViewModel.MyDepositAsset ?? "",
-            DepositMonth = fixedExpenditureInputViewModel.DepositMonth,
-            DepositDay = fixedExpenditureInputViewModel.DepositDay,
-            MaturityDate = DateTime.Parse(fixedExpenditureInputViewModel.MaturityDate!),
-            Note = fixedExpenditureInputViewModel.Note ?? "",
-            Unpunctuality = fixedExpenditureInputViewModel.Unpunctuality
-        };
+            string email = _sessionService.GetAccount()!.Email!;
 
-        var result = await _fixedExpenditureService.UpdateAsync(email, request, ct);
-        return result.Success
-            ? Json(new { result = true, message = _localizer["The fixedExpenditure has been successfully updated."].Value })
-            : Json(new { result = false, error = _localizer[result.ErrorKey].Value });
+            var request = new FixedExpenditureRequest
+            {
+                Id = fixedExpenditureInputViewModel.Id,
+                MainClass = fixedExpenditureInputViewModel.MainClass,
+                SubClass = fixedExpenditureInputViewModel.SubClass,
+                Content = fixedExpenditureInputViewModel.Content ?? "",
+                Amount = fixedExpenditureInputViewModel.Amount,
+                PaymentMethod = fixedExpenditureInputViewModel.PaymentMethod,
+                MyDepositAsset = fixedExpenditureInputViewModel.MyDepositAsset ?? "",
+                DepositMonth = fixedExpenditureInputViewModel.DepositMonth,
+                DepositDay = fixedExpenditureInputViewModel.DepositDay,
+                MaturityDate = DateTime.Parse(fixedExpenditureInputViewModel.MaturityDate!),
+                Note = fixedExpenditureInputViewModel.Note ?? "",
+                Unpunctuality = fixedExpenditureInputViewModel.Unpunctuality
+            };
+
+            var result = await _fixedExpenditureService.UpdateAsync(email, request, ct);
+            return result.Success
+                ? Json(new { result = true, message = _localizer["The fixedExpenditure has been successfully updated."].Value })
+                : Json(new { result = false, error = _localizer[result.ErrorKey].Value });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to update fixed-expenditure record {FixedExpenditureId}", fixedExpenditureInputViewModel.Id);
+            return Json(new { result = false, error = _localizer["Input is invalid"].Value });
+        }
     }
     #endregion
 

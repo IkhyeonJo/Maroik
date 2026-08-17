@@ -105,6 +105,28 @@ public class AssetServiceTests
         Assert.True(result.Success);
     }
 
+    /// <summary>
+    /// Regression test: FindAssetAsync + CreateAsync is a read-then-write race (two concurrent
+    /// requests for the same product name can both pass the prior existence check). The DB's
+    /// primary key on (ProductName, AccountEmail) still rejects the second insert — verify that
+    /// failure is translated to the same friendly "already exists" result instead of propagating
+    /// the raw DB exception to the caller.
+    /// </summary>
+    [Fact]
+    public async Task CreateAsync_ReturnsFail_WhenConcurrentInsertViolatesUniqueConstraint()
+    {
+        SetupFindAsset("MyBank", null);
+        var pgException = new Exception("duplicate key value violates unique constraint \"Asset_pk\" (23505)");
+        _assetRepo.Setup(r => r.CreateAsync(It.IsAny<Asset>(), It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new InvalidOperationException("insert failed", pgException));
+        var sut = CreateSut();
+
+        ServiceResult result = await sut.CreateAsync("user@example.com", ValidRequest("MyBank"), TestContext.Current.CancellationToken);
+
+        Assert.False(result.Success);
+        Assert.Contains("already exists", result.ErrorKey, StringComparison.OrdinalIgnoreCase);
+    }
+
     /// <summary>Verifies that <c>CreateAsync</c> sets account email and timestamps before inserting.</summary>
     [Fact]
     public async Task CreateAsync_SetsAccountEmailAndTimestamps_BeforeInserting()

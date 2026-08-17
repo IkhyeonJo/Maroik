@@ -55,10 +55,16 @@ public class FileValidationService : IFileValidationService
         if (!Directory.Exists(safeDir))
             Directory.CreateDirectory(safeDir);
 
+        // Every caller generates a fresh GUID-based file name per upload (see BoardService/
+        // CalendarService/AttachmentContentService), so a path collision here means something
+        // is wrong upstream — fail loudly instead of silently overwriting existing data.
+        if (File.Exists(safePath))
+            return (false, "A file already exists at the target path.");
+
         // safePath is built from Path.GetFileName(file.FileName) combined into safeDir above,
         // so it cannot escape the target directory; suppress the path-traversal false positive.
 #pragma warning disable SCS0018
-        await using var stream = new FileStream(safePath, FileMode.Create);
+        await using var stream = new FileStream(safePath, FileMode.CreateNew);
 #pragma warning restore SCS0018
         memStream.Position = 0;
         await memStream.CopyToAsync(stream);

@@ -58,11 +58,14 @@ public class FileController : ControllerBase
         try
         {
             var sanitizedFileName = Path.GetFileName(filePath);
-            filePath = Path.Combine(Path.GetDirectoryName(filePath) ?? "", sanitizedFileName);
 
             if (!System.IO.File.Exists(filePath)) return NotFound("File not found");
-            // filePath was rebuilt above from Path.GetFileName(filePath) + the original directory,
-            // stripping any "..\" segments, so this is not a path-traversal read.
+            // filePath is not attacker-suppliable: this endpoint is only reachable from the
+            // internal "backend" Docker network (see docker-compose.prod.yml — the service is
+            // `expose`d, not `ports`-published), and every current caller (BoardService,
+            // CalendarService, AttachmentContentService) builds filePath from a server-generated
+            // GUID, never from client input. Recombining via GetDirectoryName+GetFileName does
+            // NOT strip ".." segments — do not rely on this line for path-traversal protection.
 #pragma warning disable SCS0018
             var fileData = await System.IO.File.ReadAllBytesAsync(filePath);
 #pragma warning restore SCS0018
