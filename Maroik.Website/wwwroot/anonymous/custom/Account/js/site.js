@@ -1,5 +1,5 @@
 ﻿$(function () {
-    if ($('#_currentCulture').val() === "ko-KR") {
+    if ($('#currentCulture').val() === "ko-KR") {
         $('#TimeZoneIanaId').val('Asia/Seoul');
     }
 });
