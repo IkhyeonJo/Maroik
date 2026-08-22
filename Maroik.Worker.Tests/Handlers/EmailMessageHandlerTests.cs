@@ -68,7 +68,8 @@ public class EmailMessageHandlerTests
         var sut = CreateSut();
         var message = new SendEmailMessage("user@example.com", "subject", "body");
 
-        await sut.HandleAsync(message, TestContext.Current.CancellationToken);
+        await Assert.ThrowsAsync<InvalidOperationException>(
+            () => sut.HandleAsync(message, TestContext.Current.CancellationToken));
 
         _accountMailStatusService.Verify(
             s => s.MarkMailSendFailedAsync("user@example.com", It.IsAny<CancellationToken>()),
@@ -89,7 +90,7 @@ public class EmailMessageHandlerTests
         using var cts = new CancellationTokenSource();
         var message = new SendEmailMessage("user@example.com", "subject", "body");
 
-        await sut.HandleAsync(message, cts.Token);
+        await Assert.ThrowsAsync<InvalidOperationException>(() => sut.HandleAsync(message, cts.Token));
 
         _accountMailStatusService.Verify(
             s => s.MarkMailSendFailedAsync("user@example.com", cts.Token),

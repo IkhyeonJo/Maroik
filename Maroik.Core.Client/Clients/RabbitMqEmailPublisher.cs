@@ -27,7 +27,13 @@ public sealed class RabbitMqEmailPublisher : IEmailPublisher, IAsyncDisposable
     {
         IConnection connection = await GetConnectionAsync(ct);
 
-        await using IChannel channel = await connection.CreateChannelAsync(cancellationToken: ct);
+        // Publisher confirms make BasicPublishAsync wait for the broker to actually accept the
+        // message (and throw PublishException on a nack/basic.return) instead of returning as
+        // soon as the frame is locally buffered, so PublishAsync's "enqueued" contract is real.
+        var channelOptions = new CreateChannelOptions(
+            publisherConfirmationsEnabled: true,
+            publisherConfirmationTrackingEnabled: true);
+        await using IChannel channel = await connection.CreateChannelAsync(channelOptions, ct);
         await channel.QueueDeclareAsync(
             queue: QueueNames.Email,
             durable: true,

@@ -1,3 +1,4 @@
+using System.Collections.Concurrent;
 using System.Text.Json;
 using Maroik.Core.Contract.Misc.Messaging;
 using Maroik.Worker.Contracts;
@@ -21,6 +22,10 @@ public sealed class EmailConsumerWorker : BackgroundService
 
     private IConnection? _connection;
     internal IChannel? Channel;
+
+    // Tracks delivery tags currently being processed, so StopAsync can wait for them to finish
+    // acking/nacking before the channel is disposed out from under them.
+    private readonly ConcurrentDictionary<ulong, byte> _inFlight = new();
 
     /// <summary>Initializes a new instance of <see cref="EmailConsumerWorker"/> with the supplied dependencies.</summary>
     public EmailConsumerWorker(
@@ -87,6 +92,7 @@ public sealed class EmailConsumerWorker : BackgroundService
         // in the logs even if deserialization fails before a CorrelationId is known.
         using (LogContext.PushProperty("DeliveryTag", ea.DeliveryTag))
         {
+            _inFlight[ea.DeliveryTag] = 0;
             try
             {
                 SendEmailMessage message = JsonSerializer.Deserialize<SendEmailMessage>(ea.Body.Span)
@@ -110,13 +116,26 @@ public sealed class EmailConsumerWorker : BackgroundService
                 _logger.LogError(ex, "Failed to process email message (delivery tag {DeliveryTag})", ea.DeliveryTag);
                 await Channel!.BasicNackAsync(ea.DeliveryTag, multiple: false, requeue: false);
             }
+            finally
+            {
+                _inFlight.TryRemove(ea.DeliveryTag, out _);
+            }
         }
     }
 
-    /// <summary>Stops the base <see cref="BackgroundService"/> and releases the RabbitMQ channel and connection.</summary>
+    /// <summary>
+    /// Stops the base <see cref="BackgroundService"/>, waits (up to a bounded grace period) for any
+    /// in-flight messages to finish being acked/nacked, and then releases the RabbitMQ channel and
+    /// connection. Disposing immediately would pull the channel out from under a handler that is
+    /// still mid-send, causing its ack/nack to throw and the message to be redelivered and resent.
+    /// </summary>
     public override async Task StopAsync(CancellationToken cancellationToken)
     {
         await base.StopAsync(cancellationToken);
+
+        var drainDeadline = DateTime.UtcNow + TimeSpan.FromSeconds(25);
+        while (!_inFlight.IsEmpty && DateTime.UtcNow < drainDeadline)
+            await Task.Delay(100, CancellationToken.None);
 
         if (Channel != null)
             await Channel.DisposeAsync();

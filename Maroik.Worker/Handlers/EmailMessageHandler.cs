@@ -57,5 +57,9 @@ public sealed class EmailMessageHandler : IEmailMessageHandler
         _logger.LogWarning("SMTP send failed for {Email}: {Result}", message.ToEmail, result.ErrorKey);
 
         await _accountMailStatusService.MarkMailSendFailedAsync(message.ToEmail, ct);
+
+        // Surface the failure to the consumer so it nacks instead of acking a message that was
+        // never actually delivered (see IEmailMessageHandler.HandleAsync's documented contract).
+        throw new InvalidOperationException($"SMTP send failed for {message.ToEmail}: {result.ErrorKey}");
     }
 }

@@ -21,6 +21,9 @@ public interface IExpenditureRepository : IGenericRepository<Expenditure>
     /// <summary>Deletes the expenditure record with the given ID.</summary>
     Task DeleteByIdAsync(long id, CancellationToken ct = default);
 
-    /// <summary>Renames the deposit-asset reference on all accounts expenditure records (cascades an asset product-name change).</summary>
-    Task UpdateMyDepositAssetNameAsync(string accountEmail, string oldName, string newName, CancellationToken ct = default);
+    /// <summary>
+    /// Renames every reference to the given asset name on the account's expenditure records —
+    /// both <c>PaymentMethod</c> and <c>MyDepositAsset</c> — cascading an asset product-name change.
+    /// </summary>
+    Task UpdateAssetNameReferencesAsync(string accountEmail, string oldName, string newName, CancellationToken ct = default);
 }

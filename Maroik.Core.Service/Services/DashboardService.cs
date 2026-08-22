@@ -48,6 +48,14 @@ public class DashboardService : IDashboardService
         if (!int.TryParse(year, out int yearInt)) yearInt = accountToday.Year;
         if (!int.TryParse(month, out int monthInt)) monthInt = accountToday.Month;
 
+        // An out-of-range month (or year outside DateTime's valid range) must be caught here rather
+        // than left to throw from `new DateTime(yearInt, monthInt, 1)` below — the catch block there
+        // only guards against an invalid timeZoneId and reconstructs the same DateTime with the same
+        // values, so an invalid month would throw a second time, unhandled.
+        if (monthInt is < 1 or > 12) monthInt = accountToday.Month;
+        // Capped one below DateTime.MaxValue's year: yearEnd below computes `new DateTime(yearInt + 1, ...)`.
+        if (yearInt is < 1 or > 9998) yearInt = accountToday.Year;
+
         // Deleted assets must not surface in the dashboard's asset list, monetary-unit options,
         // or effective-currency calculation, even though GetByAccountEmailAsync itself returns
         // them (the account-book management grid needs to see deleted assets too).

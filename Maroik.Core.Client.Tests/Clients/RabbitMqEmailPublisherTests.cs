@@ -60,6 +60,28 @@ public class RabbitMqEmailPublisherTests
             Times.Once);
     }
 
+    /// <summary>
+    /// Regression test: without publisher confirmations enabled, BasicPublishAsync returns as
+    /// soon as the message is locally buffered, so a dropped connection right after the write
+    /// silently loses the message even though PublishAsync reported success. Verifies the channel
+    /// is created with confirmations (and tracking) enabled so BasicPublishAsync actually waits
+    /// for and validates the broker's ack.
+    /// </summary>
+    [Fact]
+    public async Task PublishAsync_CreatesChannel_WithPublisherConfirmationsEnabled()
+    {
+        var channel = MakeChannelMock();
+        var connection = MakeConnectionMock(channel, isOpen: true);
+        _factory.Setup(f => f.CreateConnectionAsync(It.IsAny<CancellationToken>())).ReturnsAsync(connection.Object);
+
+        await CreateSut().PublishAsync(Message, TestContext.Current.CancellationToken);
+
+        connection.Verify(c => c.CreateChannelAsync(
+                It.Is<CreateChannelOptions>(o => o.PublisherConfirmationsEnabled && o.PublisherConfirmationTrackingEnabled),
+                It.IsAny<CancellationToken>()),
+            Times.Once);
+    }
+
     /// <summary>Publish async publishes message body as json.</summary>
     [Fact]
     public async Task PublishAsync_PublishesMessageBodyAsJson()

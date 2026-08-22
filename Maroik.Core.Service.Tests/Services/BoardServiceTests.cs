@@ -204,6 +204,25 @@ public class BoardServiceTests
         _unitOfWork.Verify(u => u.CommitAsync(It.IsAny<CancellationToken>()), Times.Once);
     }
 
+    /// <summary>Verifies that <c>WriteBoardAsync</c> rolls back and fails when the file upload itself fails, instead of committing an attachment record for a file that was never saved.</summary>
+    [Fact]
+    public async Task WriteBoardAsync_RollsBackAndFails_WhenUploadFails()
+    {
+        _boardRepo.Setup(r => r.WriteBoardAsync(It.IsAny<Board>(), It.IsAny<CancellationToken>())).ReturnsAsync(1L);
+        _fileClient.Setup(f => f.UploadAsync(It.IsAny<byte[]>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(false);
+        var sut = CreateSut();
+
+        var file = new AttachedFileDto { FileName = "doc.zip", ContentType = "application/zip", Bytes = [1, 2], Size = 2 };
+        ServiceResult result = await sut.WriteBoardAsync(
+            new BoardRequest { Type = nameof(BoardType.FreeForum), Title = "Test Title", Writer = "Alice" }, file, TestContext.Current.CancellationToken);
+
+        Assert.False(result.Success);
+        _attachedFileRepo.Verify(r => r.CreateAsync(It.IsAny<BoardAttachedFile>(), It.IsAny<CancellationToken>()), Times.Never);
+        _unitOfWork.Verify(u => u.RollbackAsync(It.IsAny<CancellationToken>()), Times.Once);
+        _unitOfWork.Verify(u => u.CommitAsync(It.IsAny<CancellationToken>()), Times.Never);
+    }
+
     /// <summary>Verifies that <c>WriteBoardAsync</c> returns fail when repository throws.</summary>
     [Fact]
     public async Task WriteBoardAsync_ReturnsFail_WhenRepositoryThrows()
@@ -274,6 +293,27 @@ public class BoardServiceTests
 
         Assert.True(result.Success);
         _unitOfWork.Verify(u => u.CommitAsync(It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    /// <summary>Verifies that <c>EditBoardAsync</c> rolls back and fails when the new attachment's upload fails, instead of committing an attachment record for a file that was never saved.</summary>
+    [Fact]
+    public async Task EditBoardAsync_RollsBackAndFails_WhenUploadFails()
+    {
+        _boardRepo.Setup(r => r.FindActiveByIdAsync(It.IsAny<long>(), It.IsAny<CancellationToken>())).ReturnsAsync(MakeBoard(writer: "Alice"));
+        _boardRepo.Setup(r => r.UpdateEntityAsync(It.IsAny<Board>(), It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
+        _attachedFileRepo.Setup(r => r.FindByBoardIdAsync(It.IsAny<long>(), It.IsAny<CancellationToken>())).ReturnsAsync((BoardAttachedFile?)null);
+        _fileClient.Setup(f => f.UploadAsync(It.IsAny<byte[]>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(false);
+        var sut = CreateSut();
+
+        var file = new AttachedFileDto { FileName = "doc.zip", ContentType = "application/zip", Bytes = [1, 2], Size = 2 };
+        ServiceResult result = await sut.EditBoardAsync(
+            new BoardRequest { Id = 1, Type = nameof(BoardType.FreeForum), Title = "New Title", Content = "New Content" }, "Alice", file, TestContext.Current.CancellationToken);
+
+        Assert.False(result.Success);
+        _attachedFileRepo.Verify(r => r.CreateAsync(It.IsAny<BoardAttachedFile>(), It.IsAny<CancellationToken>()), Times.Never);
+        _unitOfWork.Verify(u => u.RollbackAsync(It.IsAny<CancellationToken>()), Times.Once);
+        _unitOfWork.Verify(u => u.CommitAsync(It.IsAny<CancellationToken>()), Times.Never);
     }
 
     /// <summary>

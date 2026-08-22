@@ -129,7 +129,13 @@ public class BoardService : IBoardService
             {
                 // Build a unique storage path and upload the file, then persist the attachment record.
                 string filePath = BuildAttachedFilePath(request.Type!, boardId, attachedFile.FileName);
-                await _fileClient.UploadAsync(attachedFile.Bytes, attachedFile.ContentType, filePath, _settings.Value.FileStorageBaseUrl ?? "", ct);
+                bool uploaded = await _fileClient.UploadAsync(attachedFile.Bytes, attachedFile.ContentType, filePath, _settings.Value.FileStorageBaseUrl ?? "", ct);
+                if (!uploaded)
+                {
+                    await _unitOfWork.RollbackAsync(ct);
+                    return ServiceResult.Fail("Failed to upload the attached file.");
+                }
+
                 await _boardAttachedFileRepository.CreateAsync(
                     BoardAttachedFile.Reconstitute(0, boardId, attachedFile.Size,
                         Path.GetFileNameWithoutExtension(attachedFile.FileName),
@@ -190,7 +196,12 @@ public class BoardService : IBoardService
             await _boardRepository.UpdateEntityAsync(board, ct);
 
             BoardAttachedFile? previous = await _boardAttachedFileRepository.FindByBoardIdAsync(request.Id, ct);
-            await HandleAttachmentAsync(board.Type, board.Id, previous, newFile, ct);
+            bool attachmentOk = await HandleAttachmentAsync(board.Type, board.Id, previous, newFile, ct);
+            if (!attachmentOk)
+            {
+                await _unitOfWork.RollbackAsync(ct);
+                return ServiceResult.Fail("Failed to upload the attached file.");
+            }
 
             await _unitOfWork.CommitAsync(ct);
             return ServiceResult.Ok();
@@ -329,14 +340,18 @@ public class BoardService : IBoardService
     /// <summary>
     /// Handles the four possible attachment states when editing a board post:
     /// replace (previous + new), clear (previous only), add (new only), or no-op (neither).
+    /// Returns <see langword="false"/> when a required upload fails, so the caller can roll back
+    /// the transaction instead of persisting an attachment record for a file that was never saved.
     /// </summary>
-    private async Task HandleAttachmentAsync(string boardType, long boardId, BoardAttachedFile? previous, AttachedFileDto? newFile, CancellationToken ct = default)
+    private async Task<bool> HandleAttachmentAsync(string boardType, long boardId, BoardAttachedFile? previous, AttachedFileDto? newFile, CancellationToken ct = default)
     {
         if (previous != null && newFile != null)
         {
             // Replace: upload the new file and overwrite the existing attachment record.
             string filePath = BuildAttachedFilePath(boardType, boardId, newFile.FileName);
-            await _fileClient.UploadAsync(newFile.Bytes, newFile.ContentType, filePath, _settings.Value.FileStorageBaseUrl ?? "", ct);
+            bool uploaded = await _fileClient.UploadAsync(newFile.Bytes, newFile.ContentType, filePath, _settings.Value.FileStorageBaseUrl ?? "", ct);
+            if (!uploaded) return false;
+
             await _boardAttachedFileRepository.UpdateEntityAsync(
                 BoardAttachedFile.Reconstitute(previous.Id, previous.BoardId, newFile.Size,
                     Path.GetFileNameWithoutExtension(newFile.FileName),
@@ -353,7 +368,9 @@ public class BoardService : IBoardService
         {
             // Add: upload and create a new attachment record for a post that had none before.
             string filePath = BuildAttachedFilePath(boardType, boardId, newFile.FileName);
-            await _fileClient.UploadAsync(newFile.Bytes, newFile.ContentType, filePath, _settings.Value.FileStorageBaseUrl ?? "", ct);
+            bool uploaded = await _fileClient.UploadAsync(newFile.Bytes, newFile.ContentType, filePath, _settings.Value.FileStorageBaseUrl ?? "", ct);
+            if (!uploaded) return false;
+
             await _boardAttachedFileRepository.CreateAsync(
                 BoardAttachedFile.Reconstitute(0, boardId, newFile.Size,
                     Path.GetFileNameWithoutExtension(newFile.FileName),
@@ -361,6 +378,8 @@ public class BoardService : IBoardService
                     filePath.Replace('\\', '/')), ct);
         }
         // previous == null && newFile == null: nothing to do.
+
+        return true;
     }
 
     /// <inheritdoc />

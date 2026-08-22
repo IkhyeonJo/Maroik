@@ -162,9 +162,12 @@ public sealed class Asset : AggregateRoot<(string ProductName, string AccountEma
         if (string.IsNullOrWhiteSpace(item))
             return Error.Validation("Asset.ItemEmpty", "Asset category cannot be empty.");
 
+        var moneyResult = Money.Create(amount, currency);
+        if (moneyResult.IsError) return moneyResult.Errors;
+
         ProductName = productName;
         Item = item;
-        Balance = Money.FromTrustedSource(amount, currency);
+        Balance = moneyResult.Value;
         Note = note;
         Deleted = deleted;
         Updated = DateTime.UtcNow;

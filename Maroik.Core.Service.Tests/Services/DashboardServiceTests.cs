@@ -116,6 +116,29 @@ public class DashboardServiceTests
         Assert.Equal(DateTime.UtcNow.Month, summary.SelectedMonth);
     }
 
+    /// <summary>
+    /// Regression test: month=13 parses successfully as an int but is out of DateTime's valid
+    /// range, so <c>new DateTime(yearInt, monthInt, 1)</c> would throw. An asset must be present
+    /// (giving a non-null DefaultMonetaryUnit) so the code path that builds that DateTime actually
+    /// runs. Verifies the out-of-range month is caught by falling back to the current month
+    /// rather than crashing the summary endpoint.
+    /// </summary>
+    [Fact]
+    public async Task GetSummaryAsync_FallsBackToCurrentMonth_WhenMonthIsOutOfRange()
+    {
+        const string email = "user@example.com";
+        var account = MakeAccount(unit: "KRW");
+        _accountRepo.Setup(r => r.FindByEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(account);
+        _assetRepo.Setup(r => r.GetByAccountEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync([MakeAsset("Bank")]);
+        SetupEmptyFinancials(email);
+        var sut = CreateSut();
+
+        DashboardDto summary = await sut.GetSummaryAsync(email, "2025", "13", "UTC", TestContext.Current.CancellationToken);
+
+        Assert.Equal(2025, summary.SelectedYear);
+        Assert.Equal(DateTime.UtcNow.Month, summary.SelectedMonth);
+    }
+
     /// <summary>Verifies that <c>GetSummaryAsync</c> sets default monetary unit when account has none but assets exist.</summary>
     [Fact]
     public async Task GetSummaryAsync_SetsDefaultMonetaryUnit_WhenAccountHasNoneButAssetsExist()

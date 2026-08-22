@@ -20,4 +20,7 @@ public interface IIncomeRepository : IGenericRepository<Income>
 
     /// <summary>Deletes the income record with the given ID.</summary>
     Task DeleteByIdAsync(long id, CancellationToken ct = default);
+
+    /// <summary>Renames the deposit-asset reference on all of the account's income records (cascades an asset product-name change).</summary>
+    Task UpdateAssetNameReferencesAsync(string accountEmail, string oldName, string newName, CancellationToken ct = default);
 }

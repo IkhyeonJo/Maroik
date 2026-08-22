@@ -10,7 +10,7 @@ namespace Maroik.Core.Repository.Tests.Repositories;
 
 /// <summary>
 /// Integration tests for <see cref="FixedExpenditureRepository"/> against a real PostgreSQL instance.
-/// Focuses on <c>UpdateMyDepositAssetNameAsync</c> — EF Core's <c>HasDefaultValueSql</c> on the
+/// Focuses on <c>UpdateAssetNameReferencesAsync</c> — EF Core's <c>HasDefaultValueSql</c> on the
 /// <c>MyDepositAsset</c> column causes the InMemory provider to omit the value on INSERT,
 /// making the LINQ Where clause always return zero rows in unit tests.
 /// </summary>
@@ -125,18 +125,18 @@ public class FixedExpenditureRepositoryIntegrationTests : IAsyncLifetime
         _context.ChangeTracker.Clear();
     }
 
-    // -- UpdateMyDepositAssetNameAsync ----------------------------------------
+    // -- UpdateAssetNameReferencesAsync ----------------------------------------
 
-    /// <summary>Verifies that <c>UpdateMyDepositAssetNameAsync</c> renames all matching deposit assets.</summary>
+    /// <summary>Verifies that <c>UpdateAssetNameReferencesAsync</c> renames all matching deposit assets.</summary>
     [Fact]
-    public async Task UpdateMyDepositAssetNameAsync_RenamesAllMatchingItems()
+    public async Task UpdateAssetNameReferencesAsync_RenamesAllMatchingItems()
     {
         await SeedAsync(
             MakeOrm("alice@example.com", "Netflix", "OldWallet", 12m),
             MakeOrm("alice@example.com", "Spotify", "OldWallet", 10m),
             MakeOrm("alice@example.com", "Gym", "OtherAsset", 30m));
 
-        await _sut.UpdateMyDepositAssetNameAsync("alice@example.com", "OldWallet", "NewWallet", TestContext.Current.CancellationToken);
+        await _sut.UpdateAssetNameReferencesAsync("alice@example.com", "OldWallet", "NewWallet", TestContext.Current.CancellationToken);
         _context.ChangeTracker.Clear();
 
         List<EfFixedExpenditure> all = await _context.FixedExpenditures.AsNoTracking().ToListAsync(TestContext.Current.CancellationToken);
@@ -145,30 +145,60 @@ public class FixedExpenditureRepositoryIntegrationTests : IAsyncLifetime
         Assert.DoesNotContain(all, fe => fe.MyDepositAsset == "OldWallet");
     }
 
-    /// <summary>Verifies that <c>UpdateMyDepositAssetNameAsync</c> does not affect other users' items.</summary>
+    /// <summary>Verifies that <c>UpdateAssetNameReferencesAsync</c> also renames the <c>PaymentMethod</c> reference, not just <c>MyDepositAsset</c>.</summary>
     [Fact]
-    public async Task UpdateMyDepositAssetNameAsync_DoesNotAffect_OtherUsersItems()
+    public async Task UpdateAssetNameReferencesAsync_AlsoRenamesPaymentMethod()
+    {
+        await SeedAsync(MakeOrm("alice@example.com", "Netflix", depositAsset: "OtherAsset"));
+
+        // Mirrors AssetService.UpdateAsync's ordering: the Asset row is renamed to the new name
+        // before the cascade runs, so the PaymentMethod FK (Expenditure_fk_0) has a target to
+        // point at once PaymentMethod itself is rewritten below.
+        await _context.Assets.AddAsync(MakeAsset("NewWallet", "alice@example.com"), TestContext.Current.CancellationToken);
+        await _context.SaveChangesAsync(TestContext.Current.CancellationToken);
+        _context.ChangeTracker.Clear();
+
+        await _sut.UpdateAssetNameReferencesAsync("alice@example.com", "Wallet", "NewWallet", TestContext.Current.CancellationToken);
+        _context.ChangeTracker.Clear();
+
+        EfFixedExpenditure? item = await _context.FixedExpenditures.AsNoTracking()
+            .FirstOrDefaultAsync(TestContext.Current.CancellationToken);
+        Assert.NotNull(item);
+        Assert.Equal("NewWallet", item.PaymentMethod);
+        Assert.Equal("OtherAsset", item.MyDepositAsset);
+    }
+
+    /// <summary>Verifies that <c>UpdateAssetNameReferencesAsync</c> does not affect other users' items.</summary>
+    [Fact]
+    public async Task UpdateAssetNameReferencesAsync_DoesNotAffect_OtherUsersItems()
     {
         await SeedAsync(
             MakeOrm("alice@example.com", "Netflix", "Wallet"),
             MakeOrm("bob@example.com", "Gym", "Wallet"));
 
-        await _sut.UpdateMyDepositAssetNameAsync("alice@example.com", "Wallet", "AliceNewWallet", TestContext.Current.CancellationToken);
+        // Mirrors AssetService.UpdateAsync's ordering: the Asset row is renamed to the new name
+        // before the cascade runs, so the PaymentMethod FK has a target to point at.
+        await _context.Assets.AddAsync(MakeAsset("AliceNewWallet", "alice@example.com"), TestContext.Current.CancellationToken);
+        await _context.SaveChangesAsync(TestContext.Current.CancellationToken);
+        _context.ChangeTracker.Clear();
+
+        await _sut.UpdateAssetNameReferencesAsync("alice@example.com", "Wallet", "AliceNewWallet", TestContext.Current.CancellationToken);
         _context.ChangeTracker.Clear();
 
         EfFixedExpenditure? bobItem = await _context.FixedExpenditures.AsNoTracking()
             .FirstOrDefaultAsync(fe => fe.AccountEmail == "bob@example.com", TestContext.Current.CancellationToken);
         Assert.NotNull(bobItem);
+        Assert.Equal("Wallet", bobItem.PaymentMethod);
         Assert.Equal("Wallet", bobItem.MyDepositAsset);
     }
 
-    /// <summary>Verifies that <c>UpdateMyDepositAssetNameAsync</c> does nothing when no items match.</summary>
+    /// <summary>Verifies that <c>UpdateAssetNameReferencesAsync</c> does nothing when no items match.</summary>
     [Fact]
-    public async Task UpdateMyDepositAssetNameAsync_DoesNothing_WhenNoItemsMatch()
+    public async Task UpdateAssetNameReferencesAsync_DoesNothing_WhenNoItemsMatch()
     {
         await SeedAsync(MakeOrm("alice@example.com", "Netflix", "ExistingWallet"));
 
-        await _sut.UpdateMyDepositAssetNameAsync("alice@example.com", "NonExistent", "NewWallet", TestContext.Current.CancellationToken);
+        await _sut.UpdateAssetNameReferencesAsync("alice@example.com", "NonExistent", "NewWallet", TestContext.Current.CancellationToken);
         _context.ChangeTracker.Clear();
 
         EfFixedExpenditure? found = await _context.FixedExpenditures.AsNoTracking()

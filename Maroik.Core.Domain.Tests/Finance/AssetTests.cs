@@ -196,6 +196,20 @@ public class AssetTests
         Assert.Equal("Asset.ItemEmpty", result.FirstError.Code);
     }
 
+    /// <summary>Update returns error and leaves the balance unchanged, when currency is empty.</summary>
+    [Fact]
+    public void Update_ReturnsError_WhenCurrencyEmpty()
+    {
+        var asset = ValidAsset();
+        string originalCurrency = asset.Balance.Currency;
+
+        var result = asset.Update("Name", "Deposit", 1000m, "", null, false);
+
+        Assert.True(result.IsError);
+        Assert.Equal("Money.CurrencyEmpty", result.FirstError.Code);
+        Assert.Equal(originalCurrency, asset.Balance.Currency);
+    }
+
     // -- UpdateNote ------------------------------------------------------------
 
     /// <summary>Update note sets note.</summary>
