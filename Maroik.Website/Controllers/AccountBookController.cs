@@ -25,6 +25,7 @@ public class AccountBookController : Controller
     private readonly IExpenditureService _expenditureService;
     private readonly ISessionService _sessionService;
     private readonly IExcelExportService _excelExportService;
+    private readonly Func<string, string> _localize;
 
     /// <summary>Initializes a new instance of <see cref="AccountBookController"/> with the supplied dependencies.</summary>
     public AccountBookController(
@@ -43,9 +44,8 @@ public class AccountBookController : Controller
         _expenditureService = expenditureService;
         _sessionService = sessionService;
         _excelExportService = excelExportService;
+        _localize = key => _localizer[key].Value;
     }
-
-    private Func<string, string> Localize => key => _localizer[key].Value;
 
     #region Asset
 
@@ -93,7 +93,7 @@ public class AccountBookController : Controller
             var account = _sessionService.GetAccount()!;
             var assets = await _assetService.GetAssetsAsync(account.Email!, ct);
             var viewModels = assets
-                .ToDisplayViewModels(Localize, account.TimeZoneIanaId!)
+                .ToDisplayViewModels(_localize, account.TimeZoneIanaId!)
                 .ApplySearch(wholeSearch)
                 .OrderBy(m => m.ProductName)
                 .AsQueryable();
@@ -197,7 +197,7 @@ public class AccountBookController : Controller
     {
         var account = _sessionService.GetAccount()!;
         var assets = await _assetService.GetAssetsAsync(account.Email!, ct);
-        var stream = _excelExportService.CreateAssetExcel(assets, Localize, account.TimeZoneIanaId!);
+        var stream = _excelExportService.CreateAssetExcel(assets, _localize, account.TimeZoneIanaId!);
         string name = fileName.ToExcelFileName(account.TimeZoneIanaId!);
         return File(stream, "application/octet-stream", name);
     }
@@ -254,7 +254,7 @@ public class AccountBookController : Controller
             var assets = await _assetService.GetAssetsAsync(account.Email!, ct);
             var incomes = await _incomeService.GetIncomesAsync(account.Email!, ct);
             var viewModels = incomes
-                .ToDisplayViewModels(assets, Localize, account.TimeZoneIanaId!)
+                .ToDisplayViewModels(assets, _localize, account.TimeZoneIanaId!)
                 .ApplySearch(wholeSearch)
                 .OrderByDescending(m => m.Created)
                 .ThenByDescending(m => m.Updated)
@@ -389,7 +389,7 @@ public class AccountBookController : Controller
         var account = _sessionService.GetAccount()!;
         var assets = await _assetService.GetAssetsAsync(account.Email!, ct);
         var incomes = await _incomeService.GetIncomesAsync(account.Email!, ct);
-        var stream = _excelExportService.CreateIncomeExcel(incomes, assets, Localize, account.TimeZoneIanaId!);
+        var stream = _excelExportService.CreateIncomeExcel(incomes, assets, _localize, account.TimeZoneIanaId!);
         string name = fileName.ToExcelFileName(account.TimeZoneIanaId!);
         return File(stream, "application/octet-stream", name);
     }
@@ -448,7 +448,7 @@ public class AccountBookController : Controller
             var assets = await _assetService.GetAssetsAsync(account.Email!, ct);
             var expenditures = await _expenditureService.GetExpendituresAsync(account.Email!, ct);
             var viewModels = expenditures
-                .ToDisplayViewModels(assets, Localize, account.TimeZoneIanaId!)
+                .ToDisplayViewModels(assets, _localize, account.TimeZoneIanaId!)
                 .ApplySearch(wholeSearch)
                 .OrderByDescending(m => m.Created)
                 .ThenByDescending(m => m.Updated)
@@ -586,7 +586,7 @@ public class AccountBookController : Controller
         var account = _sessionService.GetAccount()!;
         var assets = await _assetService.GetAssetsAsync(account.Email!, ct);
         var expenditures = await _expenditureService.GetExpendituresAsync(account.Email!, ct);
-        var stream = _excelExportService.CreateExpenditureExcel(expenditures, assets, Localize, account.TimeZoneIanaId!);
+        var stream = _excelExportService.CreateExpenditureExcel(expenditures, assets, _localize, account.TimeZoneIanaId!);
         string name = fileName.ToExcelFileName(account.TimeZoneIanaId!);
         return File(stream, "application/octet-stream", name);
     }

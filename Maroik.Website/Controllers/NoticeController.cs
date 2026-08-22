@@ -25,6 +25,7 @@ public class NoticeController : Controller
     private readonly IOptions<ServerSetting> _settings;
     private readonly ISessionService _sessionService;
     private readonly IExcelExportService _excelExportService;
+    private readonly Func<string, string> _localize;
 
     /// <summary>Initializes a new instance of <see cref="NoticeController"/> with the supplied dependencies.</summary>
     public NoticeController(
@@ -45,9 +46,9 @@ public class NoticeController : Controller
         _settings = settings;
         _sessionService = sessionService;
         _excelExportService = excelExportService;
+        _localize = key => _localizer[key].Value;
     }
 
-    private Func<string, string> Localize => key => _localizer[key].Value;
     private int NoticeWindowDays => _settings.Value.NoticeMaturityDateDay;
 
     #region FixedIncome
@@ -109,7 +110,7 @@ public class NoticeController : Controller
             var assets = await _assetService.GetAssetsAsync(account.Email!, ct);
             var incomes = await _fixedIncomeService.GetFixedIncomesAsync(account.Email!, ct);
             var viewModels = incomes
-                .ToDisplayViewModels(assets, Localize, account.TimeZoneIanaId!, NoticeWindowDays)
+                .ToDisplayViewModels(assets, _localize, account.TimeZoneIanaId!, NoticeWindowDays)
                 .ApplySearch(wholeSearch)
                 .OrderByDescending(a => a.Expired).ThenByDescending(m => m.Noticed)
                 .ThenByDescending(m => m.Unpunctuality).ThenByDescending(a => a.Created)
@@ -258,7 +259,7 @@ public class NoticeController : Controller
         var account = _sessionService.GetAccount()!;
         var assets = await _assetService.GetAssetsAsync(account.Email!, ct);
         var incomes = await _fixedIncomeService.GetFixedIncomesAsync(account.Email!, ct);
-        var stream = _excelExportService.CreateFixedIncomeExcel(incomes, assets, Localize, account.TimeZoneIanaId!, NoticeWindowDays);
+        var stream = _excelExportService.CreateFixedIncomeExcel(incomes, assets, _localize, account.TimeZoneIanaId!, NoticeWindowDays);
         string name = fileName.ToExcelFileName(account.TimeZoneIanaId!);
         return File(stream, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", name);
     }
@@ -326,7 +327,7 @@ public class NoticeController : Controller
             var assets = await _assetService.GetAssetsAsync(account.Email!, ct);
             var expenditures = await _fixedExpenditureService.GetFixedExpendituresAsync(account.Email!, ct);
             var viewModels = expenditures
-                .ToDisplayViewModels(assets, Localize, account.TimeZoneIanaId!, NoticeWindowDays)
+                .ToDisplayViewModels(assets, _localize, account.TimeZoneIanaId!, NoticeWindowDays)
                 .ApplySearch(wholeSearch)
                 .OrderByDescending(a => a.Expired).ThenByDescending(m => m.Noticed)
                 .ThenByDescending(m => m.Unpunctuality).ThenByDescending(a => a.Created)
@@ -477,7 +478,7 @@ public class NoticeController : Controller
         var account = _sessionService.GetAccount()!;
         var assets = await _assetService.GetAssetsAsync(account.Email!, ct);
         var expenditures = await _fixedExpenditureService.GetFixedExpendituresAsync(account.Email!, ct);
-        var stream = _excelExportService.CreateFixedExpenditureExcel(expenditures, assets, Localize, account.TimeZoneIanaId!, NoticeWindowDays);
+        var stream = _excelExportService.CreateFixedExpenditureExcel(expenditures, assets, _localize, account.TimeZoneIanaId!, NoticeWindowDays);
         string name = fileName.ToExcelFileName(account.TimeZoneIanaId!);
         return File(stream, "application/octet-stream", name);
     }

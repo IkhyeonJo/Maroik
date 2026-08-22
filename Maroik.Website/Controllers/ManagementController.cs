@@ -39,6 +39,7 @@ public class ManagementController : Controller
     private readonly IExcelExportService _excelExportService;
     private readonly IDistributedCache _cache;
     private readonly IOptions<ServerSetting> _serverSettings;
+    private readonly Func<string, string> _localize;
 
     /// <summary>Initializes a new instance of <see cref="ManagementController"/> with the supplied dependencies.</summary>
     public ManagementController(
@@ -69,9 +70,8 @@ public class ManagementController : Controller
         _excelExportService = excelExportService;
         _cache = cache;
         _serverSettings = serverSettings;
+        _localize = key => _localizer[key].Value;
     }
-
-    private Func<string, string> Localize => key => _localizer[key].Value;
 
     #region Profile
 
@@ -489,7 +489,7 @@ public class ManagementController : Controller
     {
         var account = _sessionService.GetAccount()!;
         var accounts = await _managementAccountService.GetAllAccountsAsync(HttpContext.RequestAborted);
-        var stream = _excelExportService.CreateAccountExcel(accounts, Localize, account.TimeZoneIanaId!);
+        var stream = _excelExportService.CreateAccountExcel(accounts, _localize, account.TimeZoneIanaId!);
         string name = fileName.ToExcelFileName(account.TimeZoneIanaId!);
         return File(stream, "application/octet-stream", name);
     }
@@ -872,7 +872,7 @@ public class ManagementController : Controller
         var account = _sessionService.GetAccount()!;
         var categories = await _menuService.GetAllCategoriesAsync(HttpContext.RequestAborted);
         var subCats = await _menuService.GetAllSubCategoriesAsync(HttpContext.RequestAborted);
-        var stream = _excelExportService.CreateMenuExcel(categories, subCats, Localize);
+        var stream = _excelExportService.CreateMenuExcel(categories, subCats, _localize);
         string name = fileName.ToExcelFileName(account.TimeZoneIanaId!);
         return File(stream, "application/octet-stream", name);
     }
