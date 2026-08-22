@@ -282,7 +282,40 @@ public class DashboardViewModelMapperTests
         Assert.Equal(100m, vm.ConsumerSpendingMealOrEatOutExpensesYear);
         Assert.Equal(100m, vm.ConsumerSpendingUnknownExpenditureYear);
         Assert.Equal(100.0 / 12.0, vm.PercentageOfConsumerSpendingMealOrEatOutExpensesYear, precision: 10);
+        Assert.Equal(100.0 / 12.0, vm.PercentageOfConsumerSpendingCommunicationCostYear, precision: 10);
         Assert.Equal(100.0 / 12.0, vm.PercentageOfConsumerSpendingUnknownExpenditureYear, precision: 10);
+    }
+
+    /// <summary>To view model aggregates consumer spending sub classes and percentages year month.</summary>
+    [Fact]
+    public void ToViewModel_AggregatesConsumerSpendingSubClassesAndPercentages_YearMonth()
+    {
+        var dto = BaseDto();
+        dto.YearMonthExpenditures =
+        [
+            Expenditure("ConsumerSpending", "MealOrEatOutExpenses", 100),
+            Expenditure("ConsumerSpending", "HousingOrSuppliesCost", 100),
+            Expenditure("ConsumerSpending", "EducationExpenses", 100),
+            Expenditure("ConsumerSpending", "MedicalExpenses", 100),
+            Expenditure("ConsumerSpending", "TransportationCost", 100),
+            Expenditure("ConsumerSpending", "CommunicationCost", 100),
+            Expenditure("ConsumerSpending", "LeisureOrCulture", 100),
+            Expenditure("ConsumerSpending", "ClothingOrShoes", 100),
+            Expenditure("ConsumerSpending", "PinMoney", 100),
+            Expenditure("ConsumerSpending", "ProtectionTypeInsurance", 100),
+            Expenditure("ConsumerSpending", "OtherExpenses", 100),
+            Expenditure("ConsumerSpending", "UnknownExpenditure", 100)
+        ];
+
+        var vm = dto.ToViewModel(Utc);
+
+        // 12 equal sub-classes -> each is exactly 1/12 of the total
+        Assert.Equal(100m, vm.ConsumerSpendingMealOrEatOutExpensesYearMonth);
+        Assert.Equal(100m, vm.ConsumerSpendingCommunicationCostYearMonth);
+        Assert.Equal(100m, vm.ConsumerSpendingUnknownExpenditureYearMonth);
+        Assert.Equal(100.0 / 12.0, vm.PercentageOfConsumerSpendingMealOrEatOutExpensesYearMonth, precision: 10);
+        Assert.Equal(100.0 / 12.0, vm.PercentageOfConsumerSpendingCommunicationCostYearMonth, precision: 10);
+        Assert.Equal(100.0 / 12.0, vm.PercentageOfConsumerSpendingUnknownExpenditureYearMonth, precision: 10);
     }
 
     /// <summary>To view model expenditure totals zero percentages stay at default.</summary>
