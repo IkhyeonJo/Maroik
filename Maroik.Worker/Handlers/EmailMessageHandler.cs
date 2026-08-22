@@ -50,7 +50,9 @@ public sealed class EmailMessageHandler : IEmailMessageHandler
 
         if (result == EnumHelper.GetDescription(AccountMessage.MailSent))
         {
+#pragma warning disable CA1873
             _logger.LogInformation("Email sent to {Email}", message.ToEmail);
+#pragma warning restore CA1873
             return;
         }
 
