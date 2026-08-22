@@ -19,6 +19,7 @@ public class DashboardController : Controller
     private readonly IDashboardService _dashboardService;
     private readonly IProfileService _profileService;
     private readonly ISessionService _sessionService;
+    private readonly ILogger<DashboardController> _logger;
 
     private const string HostResourceFilePath = "/app/Maroik.Log/HostResourceInfo.txt";
     private const string DockerResourceFilePath = "/app/Maroik.Log/DockerResourceInfo.txt";
@@ -27,11 +28,13 @@ public class DashboardController : Controller
     public DashboardController(
         IDashboardService dashboardService,
         IProfileService profileService,
-        ISessionService sessionService)
+        ISessionService sessionService,
+        ILogger<DashboardController> logger)
     {
         _dashboardService = dashboardService;
         _profileService = profileService;
         _sessionService = sessionService;
+        _logger = logger;
     }
 
     #region Language change
@@ -102,8 +105,9 @@ public class DashboardController : Controller
             await _profileService.UpdateDefaultMonetaryUnitAsync(email, userIndexInputViewModel.DefaultMonetaryUnit, ct);
             return Json(new { result = true });
         }
-        catch
+        catch (Exception ex)
         {
+            _logger.LogError(ex, "Failed to update default monetary unit for account {AccountEmail}", _sessionService.GetAccount()?.Email);
             return Json(new { result = false });
         }
     }
