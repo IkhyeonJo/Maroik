@@ -69,6 +69,22 @@ public class GuidTokenTests
         Assert.False(GuidToken.IsTokenAlive(token));
     }
 
+    /// <summary>Verifies that <c>IsTokenAlive</c> returns false, not an exception, for non-Base64 input.</summary>
+    [Fact]
+    public void IsTokenAlive_ReturnsFalse_ForNonBase64Token()
+    {
+        Assert.False(GuidToken.IsTokenAlive("not-valid-base64!!"));
+    }
+
+    /// <summary>Verifies that <c>IsTokenAlive</c> returns false, not an exception, for a too-short token.</summary>
+    [Fact]
+    public void IsTokenAlive_ReturnsFalse_ForTooShortToken()
+    {
+        string tooShort = Convert.ToBase64String([1, 2, 3]);
+
+        Assert.False(GuidToken.IsTokenAlive(tooShort));
+    }
+
     /// <summary>
     /// Builds a token using the same encoding as <see cref="GuidToken.Generate"/>
     /// but with a timestamp offset by the given number of hours from UtcNow.

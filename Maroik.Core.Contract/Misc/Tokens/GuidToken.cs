@@ -39,8 +39,20 @@ public static class GuidToken
     /// <returns>True if the token was created less than 24 hours ago; false if expired or malformed.</returns>
     public static bool IsTokenAlive(string token)
     {
-        // Decode and extract the UTC creation timestamp from the first 8 bytes
-        byte[] data = Convert.FromBase64String(token);
+        byte[] data;
+        try
+        {
+            // Decode and extract the UTC creation timestamp from the first 8 bytes
+            data = Convert.FromBase64String(token);
+        }
+        catch (FormatException)
+        {
+            return false;
+        }
+
+        if (data.Length < sizeof(long))
+            return false;
+
         DateTime when = DateTime.FromBinary(BitConverter.ToInt64(data, 0));
 
         return when >= DateTime.UtcNow.AddHours(-24);

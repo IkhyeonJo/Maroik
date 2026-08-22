@@ -75,7 +75,12 @@ public class IncomeService : IIncomeService
             var income = incomeResult.Value;
             await _incomeRepository.CreateAsync(income, ct);
 
-            depositAsset.Deposit(income.Amount.Amount, currency);
+            var depositResult = depositAsset.Deposit(income.Amount.Amount, currency);
+            if (depositResult.IsError)
+            {
+                await _unitOfWork.RollbackAsync(ct);
+                return ServiceResult.Fail(depositResult.FirstError.Description);
+            }
             await _assetBalance.SaveAsync(depositAsset, ct);
 
             await _unitOfWork.CommitAsync(ct);
@@ -143,8 +148,18 @@ public class IncomeService : IIncomeService
             {
                 if (prevAsset != null)
                 {
-                    prevAsset.Withdraw(Math.Abs(previousAmount), previousCurrency);
-                    prevAsset.Deposit(previous.Amount.Amount, previousCurrency);
+                    var withdrawResult = prevAsset.Withdraw(Math.Abs(previousAmount), previousCurrency);
+                    if (withdrawResult.IsError)
+                    {
+                        await _unitOfWork.RollbackAsync(ct);
+                        return ServiceResult.Fail(withdrawResult.FirstError.Description);
+                    }
+                    var depositResult = prevAsset.Deposit(previous.Amount.Amount, previousCurrency);
+                    if (depositResult.IsError)
+                    {
+                        await _unitOfWork.RollbackAsync(ct);
+                        return ServiceResult.Fail(depositResult.FirstError.Description);
+                    }
                     await _assetBalance.SaveAsync(prevAsset, ct);
                 }
             }
@@ -152,12 +167,22 @@ public class IncomeService : IIncomeService
             {
                 if (prevAsset != null)
                 {
-                    prevAsset.Withdraw(Math.Abs(previousAmount), previousCurrency);
+                    var withdrawResult = prevAsset.Withdraw(Math.Abs(previousAmount), previousCurrency);
+                    if (withdrawResult.IsError)
+                    {
+                        await _unitOfWork.RollbackAsync(ct);
+                        return ServiceResult.Fail(withdrawResult.FirstError.Description);
+                    }
                     await _assetBalance.SaveAsync(prevAsset, ct);
                 }
                 if (newAsset != null)
                 {
-                    newAsset.Deposit(previous.Amount.Amount, newCurrency);
+                    var depositResult = newAsset.Deposit(previous.Amount.Amount, newCurrency);
+                    if (depositResult.IsError)
+                    {
+                        await _unitOfWork.RollbackAsync(ct);
+                        return ServiceResult.Fail(depositResult.FirstError.Description);
+                    }
                     await _assetBalance.SaveAsync(newAsset, ct);
                 }
             }
@@ -196,7 +221,12 @@ public class IncomeService : IIncomeService
 
             if (asset != null)
             {
-                asset.Withdraw(Math.Abs(income.Amount.Amount), asset.Balance.Currency);
+                var withdrawResult = asset.Withdraw(Math.Abs(income.Amount.Amount), asset.Balance.Currency);
+                if (withdrawResult.IsError)
+                {
+                    await _unitOfWork.RollbackAsync(ct);
+                    return ServiceResult.Fail(withdrawResult.FirstError.Description);
+                }
                 await _assetBalance.SaveAsync(asset, ct);
             }
 

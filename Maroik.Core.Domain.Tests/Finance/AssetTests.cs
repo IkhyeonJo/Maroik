@@ -100,6 +100,32 @@ public class AssetTests
         Assert.Equal(700m, asset.Balance.Amount);
     }
 
+    /// <summary>Deposit returns error, when currency mismatch.</summary>
+    [Fact]
+    public void Deposit_ReturnsError_WhenCurrencyMismatch()
+    {
+        var asset = ValidAsset(amount: 1000m, currency: "KRW");
+
+        var result = asset.Deposit(500m, "USD");
+
+        Assert.True(result.IsError);
+        Assert.Equal("Asset.CurrencyMismatch", result.FirstError.Code);
+        Assert.Equal(1000m, asset.Balance.Amount);
+    }
+
+    /// <summary>Withdraw returns error, when currency mismatch.</summary>
+    [Fact]
+    public void Withdraw_ReturnsError_WhenCurrencyMismatch()
+    {
+        var asset = ValidAsset(amount: 1000m, currency: "KRW");
+
+        var result = asset.Withdraw(300m, "USD");
+
+        Assert.True(result.IsError);
+        Assert.Equal("Asset.CurrencyMismatch", result.FirstError.Code);
+        Assert.Equal(1000m, asset.Balance.Amount);
+    }
+
     // -- SetBalance ------------------------------------------------------------
 
     /// <summary>Set balance succeeds, when same currency.</summary>

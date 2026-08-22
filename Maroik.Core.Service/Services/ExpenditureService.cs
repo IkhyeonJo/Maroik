@@ -1,3 +1,4 @@
+using ErrorOr;
 using Maroik.Core.Domain.Finance;
 using Maroik.Core.Contract.Dtos;
 using Maroik.Core.Contract.Interfaces;
@@ -116,12 +117,22 @@ public class ExpenditureService : IExpenditureService
             var expenditure = expenditureResult.Value;
             await _expenditureRepository.CreateAsync(expenditure, ct);
 
-            paymentAsset.Withdraw(expenditure.Amount.Amount, currency);
+            var withdrawResult = paymentAsset.Withdraw(expenditure.Amount.Amount, currency);
+            if (withdrawResult.IsError)
+            {
+                await _unitOfWork.RollbackAsync(ct);
+                return ServiceResult.Fail(withdrawResult.FirstError.Description);
+            }
             await _assetBalance.SaveAsync(paymentAsset, ct);
 
             if (depositAsset != null)
             {
-                depositAsset.Deposit(expenditure.Amount.Amount, currency);
+                var depositResult = depositAsset.Deposit(expenditure.Amount.Amount, currency);
+                if (depositResult.IsError)
+                {
+                    await _unitOfWork.RollbackAsync(ct);
+                    return ServiceResult.Fail(depositResult.FirstError.Description);
+                }
                 await _assetBalance.SaveAsync(depositAsset, ct);
             }
 
@@ -215,8 +226,13 @@ public class ExpenditureService : IExpenditureService
             }
 
             await _expenditureRepository.UpdateEntityAsync(previous, ct);
-            await AdjustAssetBalancesAsync(accountEmail, oldSnapshot,
+            var adjustResult = await AdjustAssetBalancesAsync(accountEmail, oldSnapshot,
                 new ExpenditureSnapshot(previous.PaymentMethod, previous.MyDepositAsset, previous.Amount.Amount), ct);
+            if (adjustResult.IsError)
+            {
+                await _unitOfWork.RollbackAsync(ct);
+                return ServiceResult.Fail(adjustResult.FirstError.Description);
+            }
 
             await _unitOfWork.CommitAsync(ct);
             return ServiceResult.Ok();
@@ -243,9 +259,15 @@ public class ExpenditureService : IExpenditureService
                 return ServiceResult.Fail("Input is invalid");
             }
 
-            await AdjustAssetBalancesAsync(accountEmail,
+            var adjustResult = await AdjustAssetBalancesAsync(accountEmail,
                 new ExpenditureSnapshot(expenditure.PaymentMethod, expenditure.MyDepositAsset, expenditure.Amount.Amount),
                 null, ct);
+            if (adjustResult.IsError)
+            {
+                await _unitOfWork.RollbackAsync(ct);
+                return ServiceResult.Fail(adjustResult.FirstError.Description);
+            }
+
             await _expenditureRepository.DeleteByIdAsync(expenditure.Id, ct);
 
             await _unitOfWork.CommitAsync(ct);
@@ -264,28 +286,42 @@ public class ExpenditureService : IExpenditureService
     /// Pass null for toApply when deleting.
     /// Uses a dictionary to batch all asset fetches and avoid double-fetch issues.
     /// </summary>
-    private async Task AdjustAssetBalancesAsync(string accountEmail, ExpenditureSnapshot toRevert, ExpenditureSnapshot? toApply, CancellationToken ct = default)
+    private async Task<ErrorOr<Success>> AdjustAssetBalancesAsync(string accountEmail, ExpenditureSnapshot toRevert, ExpenditureSnapshot? toApply, CancellationToken ct = default)
     {
         Dictionary<string, Asset> assets = await _assetBalance.GetAssetsOrdinalAsync(accountEmail,
             [toRevert.PaymentMethod, toRevert.MyDepositAsset, toApply?.PaymentMethod, toApply?.MyDepositAsset], ct);
 
         if (!string.IsNullOrEmpty(toRevert.PaymentMethod) && assets.TryGetValue(toRevert.PaymentMethod, out var rp))
-            rp.Deposit(Math.Abs(toRevert.Amount), rp.Balance.Currency);
+        {
+            var result = rp.Deposit(Math.Abs(toRevert.Amount), rp.Balance.Currency);
+            if (result.IsError) return result.Errors;
+        }
 
         if (!string.IsNullOrEmpty(toRevert.MyDepositAsset) && assets.TryGetValue(toRevert.MyDepositAsset, out var rd))
-            rd.Withdraw(Math.Abs(toRevert.Amount), rd.Balance.Currency);
+        {
+            var result = rd.Withdraw(Math.Abs(toRevert.Amount), rd.Balance.Currency);
+            if (result.IsError) return result.Errors;
+        }
 
         if (toApply.HasValue)
         {
             if (!string.IsNullOrEmpty(toApply.Value.PaymentMethod) && assets.TryGetValue(toApply.Value.PaymentMethod, out var ap))
-                ap.Withdraw(Math.Abs(toApply.Value.Amount), ap.Balance.Currency);
+            {
+                var result = ap.Withdraw(Math.Abs(toApply.Value.Amount), ap.Balance.Currency);
+                if (result.IsError) return result.Errors;
+            }
 
             if (!string.IsNullOrEmpty(toApply.Value.MyDepositAsset) && assets.TryGetValue(toApply.Value.MyDepositAsset, out var ad))
-                ad.Deposit(Math.Abs(toApply.Value.Amount), ad.Balance.Currency);
+            {
+                var result = ad.Deposit(Math.Abs(toApply.Value.Amount), ad.Balance.Currency);
+                if (result.IsError) return result.Errors;
+            }
         }
 
         foreach (var asset in assets.Values)
             await _assetBalance.SaveAsync(asset, ct);
+
+        return Result.Success;
     }
 
     /// <summary>
