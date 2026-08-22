@@ -57,7 +57,10 @@ public abstract class GenericRepository<TDomain, TEntity>(ApplicationDbContext c
         var pk = Context.Model.FindEntityType(typeof(TEntity))!.FindPrimaryKey()!.Properties;
         var keyValues = pk.Select(p => p.PropertyInfo!.GetValue(newEntity)).ToArray();
         var existing = await Set.FindAsync(keyValues, ct);
-        if (existing is null) return;
+        if (existing is null)
+            throw new InvalidOperationException(
+                $"Cannot update {typeof(TEntity).Name}: no row found for key ({string.Join(", ", keyValues)}). " +
+                "It may have been deleted concurrently.");
         var entry = Context.Entry(existing);
         if (entry.State == EntityState.Detached) entry.State = EntityState.Unchanged;
         // Copy all scalar values from the mapped domain object onto the tracked entity, then mark

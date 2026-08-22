@@ -1,5 +1,4 @@
-using Maroik.Core.Contract.Misc.Enums;
-using Maroik.Core.Contract.Misc.Helpers;
+using Maroik.Core.Contract.Dtos;
 using Maroik.Core.Contract.Interfaces;
 using Maroik.Core.Contract.Misc.Messaging;
 using Maroik.Core.Contract.Misc.Settings;
@@ -34,7 +33,7 @@ public sealed class EmailMessageHandler : IEmailMessageHandler
     {
         ServerSetting settings = _settings.Value;
 
-        string result = await _mailClient.SendMailAsync(
+        ServiceResult result = await _mailClient.SendMailAsync(
             message.ToEmail,
             message.Subject,
             message.Body,
@@ -47,7 +46,7 @@ public sealed class EmailMessageHandler : IEmailMessageHandler
             settings.FromFullName ?? "",
             ct);
 
-        if (result == EnumHelper.GetDescription(AccountMessage.MailSent))
+        if (result.Success)
         {
 #pragma warning disable CA1873
             _logger.LogInformation("Email sent to {Email}", message.ToEmail);
@@ -55,7 +54,7 @@ public sealed class EmailMessageHandler : IEmailMessageHandler
             return;
         }
 
-        _logger.LogWarning("SMTP send failed for {Email}: {Result}", message.ToEmail, result);
+        _logger.LogWarning("SMTP send failed for {Email}: {Result}", message.ToEmail, result.ErrorKey);
 
         await _accountMailStatusService.MarkMailSendFailedAsync(message.ToEmail, ct);
     }

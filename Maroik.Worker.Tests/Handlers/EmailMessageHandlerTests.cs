@@ -1,5 +1,4 @@
-using Maroik.Core.Contract.Misc.Enums;
-using Maroik.Core.Contract.Misc.Helpers;
+using Maroik.Core.Contract.Dtos;
 using Maroik.Core.Contract.Interfaces;
 using Maroik.Core.Contract.Misc.Messaging;
 using Maroik.Core.Contract.Misc.Settings;
@@ -44,7 +43,7 @@ public class EmailMessageHandlerTests
                 It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(),
                 It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(),
                 It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(EnumHelper.GetDescription(AccountMessage.MailSent));
+            .ReturnsAsync(ServiceResult.Ok());
 
         var sut = CreateSut();
         var message = new SendEmailMessage("user@example.com", "subject", "body");
@@ -64,7 +63,7 @@ public class EmailMessageHandlerTests
                 It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(),
                 It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(),
                 It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync("SMTP connection refused");
+            .ReturnsAsync(ServiceResult.Fail("SMTP connection refused"));
 
         var sut = CreateSut();
         var message = new SendEmailMessage("user@example.com", "subject", "body");
@@ -84,7 +83,7 @@ public class EmailMessageHandlerTests
                 It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(),
                 It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(),
                 It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync("SMTP connection refused");
+            .ReturnsAsync(ServiceResult.Fail("SMTP connection refused"));
 
         var sut = CreateSut();
         using var cts = new CancellationTokenSource();

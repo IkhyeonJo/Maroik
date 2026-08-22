@@ -259,6 +259,33 @@ public class AccountRepositoryTests : IDisposable
         Assert.Equal("Asia/Seoul", updated.TimeZoneIanaId);
     }
 
+    /// <summary>Verifies that <c>UpdateEntityAsync</c> throws, rather than silently no-op'ing, when the row no longer exists.</summary>
+    [Fact]
+    public async Task UpdateEntityAsync_Throws_WhenAccountNoLongerExists()
+    {
+        var account = Account.Reconstitute(
+            email: "ghost@example.com",
+            hashedPassword: "$2a$13$hash",
+            nickname: "Ghost",
+            avatarImagePath: null,
+            role: Role.User,
+            timeZoneIanaId: "UTC",
+            defaultMonetaryUnit: null,
+            locked: false,
+            loginAttempt: 0,
+            emailConfirmed: true,
+            agreedServiceTerms: true,
+            registrationToken: null,
+            resetPasswordToken: null,
+            created: DateTime.UtcNow,
+            updated: DateTime.UtcNow,
+            message: null,
+            deleted: false);
+
+        await Assert.ThrowsAsync<InvalidOperationException>(
+            () => _sut.UpdateEntityAsync(account, TestContext.Current.CancellationToken));
+    }
+
     // FindByEmailForUpdateAsync is covered in AccountRepositoryIntegrationTests: it uses a raw
     // FromSqlInterpolated query (FOR UPDATE), which the InMemory provider used by this test class
     // does not support.
