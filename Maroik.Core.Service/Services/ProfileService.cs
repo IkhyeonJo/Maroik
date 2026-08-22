@@ -126,51 +126,59 @@ public class ProfileService : IProfileService
     /// <inheritdoc />
     public async Task<ServiceResult> UploadAndUpdateAvatarAsync(string email, byte[] imageBytes, string extension, string avatarDirectoryPath, CancellationToken ct = default)
     {
-        using var memoryStream = new MemoryStream(imageBytes);
+        try
+        {
+            using var memoryStream = new MemoryStream(imageBytes);
 
-        if (!await _clamavClient.ScanWithClamavAsync(memoryStream, _settings.Value.ClamavHost ?? "", _settings.Value.ClamavPort, ct))
-            return ServiceResult.Fail("virus-detected");
+            if (!await _clamavClient.ScanWithClamavAsync(memoryStream, _settings.Value.ClamavHost ?? "", _settings.Value.ClamavPort, ct))
+                return ServiceResult.Fail("virus-detected");
 
-        memoryStream.Position = 0;
-        if (!_imageValidator.IsValidImage(memoryStream.ToArray()))
-            return ServiceResult.Fail("invalid-image");
-        if (_imageValidator.IsSvg(memoryStream.ToArray()))
-            return ServiceResult.Fail("svg-not-allowed");
+            memoryStream.Position = 0;
+            if (!_imageValidator.IsValidImage(memoryStream.ToArray()))
+                return ServiceResult.Fail("invalid-image");
+            if (_imageValidator.IsSvg(memoryStream.ToArray()))
+                return ServiceResult.Fail("svg-not-allowed");
 
-        if (!Directory.Exists(avatarDirectoryPath))
-            Directory.CreateDirectory(avatarDirectoryPath);
+            if (!Directory.Exists(avatarDirectoryPath))
+                Directory.CreateDirectory(avatarDirectoryPath);
 
-        string guid = Guid.NewGuid().ToString().ToUpper();
-        string avatarFile = $"{guid}{extension}";
-        string filePath = Path.Combine(avatarDirectoryPath, avatarFile);
+            string guid = Guid.NewGuid().ToString().ToUpper();
+            string avatarFile = $"{guid}{extension}";
+            string filePath = Path.Combine(avatarDirectoryPath, avatarFile);
 
 #pragma warning disable SCS0018
-        await using (var stream = new FileStream(filePath, FileMode.Create))
+            await using (var stream = new FileStream(filePath, FileMode.Create))
 #pragma warning restore SCS0018
-        {
-            memoryStream.Position = 0;
-            await memoryStream.CopyToAsync(stream, ct);
-            await stream.FlushAsync(ct);
-        }
+            {
+                memoryStream.Position = 0;
+                await memoryStream.CopyToAsync(stream, ct);
+                await stream.FlushAsync(ct);
+            }
 
-        var chmod = new ProcessStartInfo
-        {
-            FileName = "/bin/chmod",
+            var chmod = new ProcessStartInfo
+            {
+                FileName = "/bin/chmod",
 #pragma warning disable SCS0001
-            Arguments = $"644 \"{filePath}\"",
+                Arguments = $"644 \"{filePath}\"",
 #pragma warning restore SCS0001
-            RedirectStandardOutput = true,
-            RedirectStandardError = true,
-            UseShellExecute = false,
-            CreateNoWindow = true
-        };
-        using (var process = Process.Start(chmod))
-        {
-            if (process != null)
-                await process.WaitForExitAsync(ct);
-        }
+                RedirectStandardOutput = true,
+                RedirectStandardError = true,
+                UseShellExecute = false,
+                CreateNoWindow = true
+            };
+            using (var process = Process.Start(chmod))
+            {
+                if (process != null)
+                    await process.WaitForExitAsync(ct);
+            }
 
-        return await UpdateAvatarAsync(email, $"/upload/Management/Profile/Avatar/{avatarFile}", ct);
+            return await UpdateAvatarAsync(email, $"/upload/Management/Profile/Avatar/{avatarFile}", ct);
+        }
+        catch (Exception e)
+        {
+            _logger.LogError(e, "Failed to upload and update avatar for {Email}", email);
+            return ServiceResult.Fail("Input is invalid");
+        }
     }
 
     private Task<Account?> FindByEmailAsync(string email, CancellationToken ct = default)
