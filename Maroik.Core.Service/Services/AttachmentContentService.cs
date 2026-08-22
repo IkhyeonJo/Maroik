@@ -67,8 +67,16 @@ public class AttachmentContentService : IAttachmentContentService
         if (!uploaded)
             return SummernoteUploadResult.Fail("Input is invalid");
 
-        byte[] fileBytes = await _fileClient.DownloadAsync(filePath, _settings.Value.FileStorageBaseUrl ?? "", ct);
-        return SummernoteUploadResult.Ok(fileBytes, file.ContentType, imageFile, filePath);
+        try
+        {
+            byte[] fileBytes = await _fileClient.DownloadAsync(filePath, _settings.Value.FileStorageBaseUrl ?? "", ct);
+            return SummernoteUploadResult.Ok(fileBytes, file.ContentType, imageFile, filePath);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to download file {FilePath} immediately after upload", filePath);
+            return SummernoteUploadResult.Fail("Input is invalid");
+        }
     }
 
     /// <inheritdoc />

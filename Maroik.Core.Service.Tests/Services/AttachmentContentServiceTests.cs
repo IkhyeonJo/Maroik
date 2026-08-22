@@ -146,6 +146,23 @@ public class AttachmentContentServiceTests
         Assert.Equal("image/png", result.ContentType);
     }
 
+    /// <summary>Verifies that an exception from the post-upload re-download is caught and returned as a failure, not propagated.</summary>
+    [Fact]
+    public async Task UploadSummernoteImageAsync_ReturnsFail_WhenDownloadThrows()
+    {
+        _imageValidator.Setup(v => v.IsValidImage(It.IsAny<byte[]>())).Returns(true);
+        _fileClient.Setup(f => f.UploadAsync(
+            It.IsAny<byte[]>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(true);
+        _fileClient.Setup(f => f.DownloadAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new HttpRequestException("storage unreachable"));
+        var file = new AttachedFileDto { Bytes = [1, 2, 3], ContentType = "image/png", FileName = "x.png" };
+
+        var result = await CreateSut().UploadSummernoteImageAsync(file, "board", "post", TestContext.Current.CancellationToken);
+
+        Assert.False(result.Success);
+    }
+
     // -- DownloadFileAsync ---------------------------------------------------------
 
     /// <summary>Verifies that downloaded bytes are returned as-is on success.</summary>

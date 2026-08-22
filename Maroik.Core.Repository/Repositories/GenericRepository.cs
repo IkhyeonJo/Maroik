@@ -103,16 +103,33 @@ public abstract class GenericRepository<TDomain, TEntity>(ApplicationDbContext c
         Expression<Func<TEntity, bool>> predicate,
         CancellationToken ct = default)
     {
-        // AsNoTracking() here is belt-and-suspenders (the context already defaults to no-tracking):
-        // it just identifies which rows to remove. Each match is then re-fetched via Set.FindAsync,
-        // which returns (or attaches) a tracked instance, since Set.Remove requires a tracked entity.
+        // Fetch the matching rows once (untracked, since the context defaults to no-tracking
+        // for queries). Set.Remove requires a tracked entity. If this context already has a
+        // tracked instance for a given row (e.g. it was just added/queried earlier in the same
+        // unit of work), that instance is removed directly — attaching the freshly-fetched
+        // no-tracking copy instead would conflict with it (same key, two instances). Otherwise
+        // the fetched row is attached in memory (no DB round trip) before being removed. Both
+        // paths avoid the DB round trip that a per-row Set.FindAsync would incur.
         var toRemove = await Set.AsNoTracking().Where(predicate).ToListAsync(ct);
         var pk = Context.Model.FindEntityType(typeof(TEntity))!.FindPrimaryKey()!.Properties;
-        foreach (var keyValues in toRemove.Select(entity => pk.Select(p => p.PropertyInfo!.GetValue(entity)).ToArray()))
+
+        foreach (var entity in toRemove)
         {
-            var tracked = await Set.FindAsync(keyValues, ct);
-            if (tracked is not null) Set.Remove(tracked);
+            var keyValues = pk.Select(p => p.PropertyInfo!.GetValue(entity)).ToArray();
+            var trackedEntry = Context.ChangeTracker.Entries<TEntity>()
+                .FirstOrDefault(e => pk.Select(p => p.PropertyInfo!.GetValue(e.Entity)).SequenceEqual(keyValues));
+
+            if (trackedEntry != null)
+            {
+                Set.Remove(trackedEntry.Entity);
+            }
+            else
+            {
+                Set.Attach(entity);
+                Set.Remove(entity);
+            }
         }
+
         _ = await Context.SaveChangesAsync(ct);
     }
 }
