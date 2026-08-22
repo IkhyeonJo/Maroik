@@ -42,7 +42,17 @@ public class CalendarEventReminderTests
         var result = CalendarEventReminder.Create(1, "Email", null, null, null, null, null);
 
         Assert.True(result.IsError);
-        Assert.Equal("Reminder.NoLeadTime", result.FirstError.Code);
+        Assert.Equal("Reminder.InvalidLeadTime", result.FirstError.Code);
+    }
+
+    /// <summary>Create returns error, when more than one lead-time field is set.</summary>
+    [Fact]
+    public void Create_ReturnsError_WhenMultipleLeadTimeFieldsSet()
+    {
+        var result = CalendarEventReminder.Create(1, "Email", 30, 2, null, null, null);
+
+        Assert.True(result.IsError);
+        Assert.Equal("Reminder.InvalidLeadTime", result.FirstError.Code);
     }
 
     /// <summary>Create succeeds, when only hours before set.</summary>

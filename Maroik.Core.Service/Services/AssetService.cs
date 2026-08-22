@@ -48,10 +48,29 @@ public class AssetService : IAssetService
         if (!IsValidAssetItem(request.Item))
             return ServiceResult.Fail("Input is invalid");
 
-        // Reject duplicate product names within the same account.
+        // Reject duplicate product names within the same account. A soft-deleted asset under the
+        // same name doesn't block recreation from the user's perspective, but its row still
+        // occupies the (ProductName, AccountEmail) primary key, so it must be revived (UPDATE)
+        // below rather than inserted as a new row.
         Asset? existing = await FindAssetAsync(accountEmail, request.ProductName ?? "", ct);
-        if (existing != null)
+        if (existing is { Deleted: false })
             return ServiceResult.Fail("The asset already exists.");
+
+        if (existing != null)
+        {
+            var reviveResult = existing.Update(
+                request.ProductName ?? existing.ProductName,
+                request.Item!,
+                request.Amount,
+                request.MonetaryUnit ?? existing.Balance.Currency,
+                request.Note,
+                deleted: false);
+            if (reviveResult.IsError)
+                return ServiceResult.Fail(reviveResult.FirstError.Description);
+
+            await _assetRepository.UpdateEntityAsync(existing, ct);
+            return ServiceResult.Ok();
+        }
 
         var createResult = Asset.Create(
             request.ProductName,

@@ -44,8 +44,6 @@ try
         c.SwaggerDoc("v1", new OpenApiInfo { Title = "Maroik.FileStorage", Version = "v1" });
     });
 
-    // Open CORS policy — the file-storage service is called from the Website origin only in production;
-    // the permissive policy here is intentional for local development convenience.
     builder.Services.AddCors(options =>
     {
         options.AddPolicy("AllowAll",
@@ -54,11 +52,7 @@ try
 
     var app = builder.Build();
 
-    // Show detailed error pages in development; production errors propagate as 500 responses.
-    if (app.Environment.IsDevelopment())
-    {
-        _ = app.UseDeveloperExceptionPage();
-    }
+    _ = app.UseDeveloperExceptionPage();
 
     // Mount the Swagger JSON endpoint and the interactive Swagger UI at the app root.
     app.UseSwagger();

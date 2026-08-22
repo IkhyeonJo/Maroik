@@ -32,7 +32,7 @@ public class DashboardServiceTests
 
     // -- Helpers --------------------------------------------------------------
 
-    private static Asset MakeAsset(string name, string unit = "KRW") =>
+    private static Asset MakeAsset(string name, string unit = "KRW", bool deleted = false) =>
         Asset.Reconstitute(
             productName: name,
             accountEmail: "user@example.com",
@@ -40,7 +40,7 @@ public class DashboardServiceTests
             amount: 1000m,
             monetaryUnit: unit,
             note: null,
-            deleted: false,
+            deleted: deleted,
             created: DateTime.UtcNow,
             updated: DateTime.UtcNow);
 
@@ -157,6 +157,35 @@ public class DashboardServiceTests
 
         Assert.Null(summary.DefaultMonetaryUnit);
         _accountRepo.Verify(r => r.UpdateEntityAsync(It.IsAny<Account>(), It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    /// <summary>
+    /// Verifies that a soft-deleted asset's currency does not appear in the dashboard's asset
+    /// list, monetary-unit options, or effective-currency calculation — even though
+    /// GetByAccountEmailAsync itself returns deleted assets (the account-book management
+    /// grid needs to see them for restoration).
+    /// </summary>
+    [Fact]
+    public async Task GetSummaryAsync_ExcludesDeletedAssets_FromAssetsAndMonetaryUnits()
+    {
+        const string email = "user@example.com";
+        var account = MakeAccount(unit: null);
+        var assets = new List<Asset>
+        {
+            MakeAsset("Wallet", "KRW"),
+            MakeAsset("OldForeignAccount", "USD", deleted: true)
+        };
+
+        _accountRepo.Setup(r => r.FindByEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(account);
+        _assetRepo.Setup(r => r.GetByAccountEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(assets);
+        SetupEmptyFinancials(email);
+        var sut = CreateSut();
+
+        DashboardDto summary = await sut.GetSummaryAsync(email, "2025", "1", "UTC", TestContext.Current.CancellationToken);
+
+        Assert.Single(summary.Assets);
+        Assert.DoesNotContain("USD", summary.MonetaryUnits);
+        Assert.Equal("KRW", summary.DefaultMonetaryUnit);
     }
 
     // -- GetNoticeCountsAsync -------------------------------------------------

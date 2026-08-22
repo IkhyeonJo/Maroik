@@ -31,6 +31,12 @@ public class FileValidationService : IFileValidationService
 
         var fileName = Path.GetFileName(file.FileName);
         var ext = Path.GetExtension(fileName).ToLowerInvariant();
+        // filePath is not attacker-suppliable: this endpoint is only reachable from the internal
+        // "backend" Docker network (see docker-compose.prod.yml — the service is `expose`d, not
+        // `ports`-published), and every current caller (BoardService, CalendarService,
+        // AttachmentContentService) builds filePath from a server-generated GUID, never from
+        // client input. Path.GetFullPath does NOT strip ".." segments — do not rely on this line
+        // for path-traversal protection (mirrors the equivalent note in FileController.DownloadAsync).
         var safeDir = Path.GetFullPath(filePath);
         var safePath = Path.Combine(safeDir, fileName);
 

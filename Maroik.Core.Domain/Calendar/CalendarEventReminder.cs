@@ -75,11 +75,14 @@ public sealed class CalendarEventReminder : Entity<long>
         if (string.IsNullOrWhiteSpace(method))
             return Error.Validation("Reminder.MethodEmpty", "Notification method cannot be empty.");
 
-        bool hasLeadTime = minutesBefore.HasValue || hoursBefore.HasValue
-                           || daysBefore.HasValue || weeksBefore.HasValue;
+        // The client models each reminder as a single unit+value pair (a dropdown picks minutes/
+        // hours/days/weeks, then one value field) — multiple simultaneous lead-time fields have no
+        // defined meaning, so exactly one must be set.
+        int leadTimeFieldCount = (minutesBefore.HasValue ? 1 : 0) + (hoursBefore.HasValue ? 1 : 0)
+                                  + (daysBefore.HasValue ? 1 : 0) + (weeksBefore.HasValue ? 1 : 0);
 
-        if (!hasLeadTime)
-            return Error.Validation("Reminder.NoLeadTime", "At least one lead-time field (minutes/hours/days/weeks) must be set.");
+        if (leadTimeFieldCount != 1)
+            return Error.Validation("Reminder.InvalidLeadTime", "Exactly one lead-time field (minutes/hours/days/weeks) must be set.");
 
         return new CalendarEventReminder(0, calendarEventId, method,
             minutesBefore, hoursBefore, daysBefore, weeksBefore, timesBefore);

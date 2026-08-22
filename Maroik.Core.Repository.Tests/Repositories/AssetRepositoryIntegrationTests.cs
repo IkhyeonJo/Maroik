@@ -59,14 +59,14 @@ public class AssetRepositoryIntegrationTests : IAsyncLifetime
     };
 
     private static OrmAsset MakeOrm(string productName, string email, string item = "FreeDepositAndWithdrawal",
-        decimal amount = 1000m, string unit = "KRW") => new()
+        decimal amount = 1000m, string unit = "KRW", bool deleted = false) => new()
         {
             ProductName = productName,
             AccountEmail = email,
             Item = item,
             Amount = amount,
             MonetaryUnit = unit,
-            Deleted = false,
+            Deleted = deleted,
             Created = DateTime.UtcNow,
             Updated = DateTime.UtcNow
         };
@@ -201,6 +201,24 @@ public class AssetRepositoryIntegrationTests : IAsyncLifetime
         Assert.NotNull(found);
         Assert.Equal(750m, found.Balance.Amount);
         Assert.Null(missing);
+    }
+
+    /// <summary>
+    /// Verifies that a soft-deleted asset is still returned (not filtered) — callers rely on
+    /// this to distinguish "doesn't exist" from "exists but deleted" and report the latter
+    /// with its own specific message (see IncomeService/ExpenditureService's explicit
+    /// `.Deleted` checks after calling this method).
+    /// </summary>
+    [Fact]
+    public async Task FindByEmailAndProductNameForUpdateAsync_ReturnsDeletedAsset_NotFiltered()
+    {
+        await SeedAsync(MakeOrm("RemovedWallet", "alice@example.com", deleted: true));
+
+        Asset? found = await _sut.FindByEmailAndProductNameForUpdateAsync(
+            "alice@example.com", "RemovedWallet", TestContext.Current.CancellationToken);
+
+        Assert.NotNull(found);
+        Assert.True(found.Deleted);
     }
 
     /// <summary>

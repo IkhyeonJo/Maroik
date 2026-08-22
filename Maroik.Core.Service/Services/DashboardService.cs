@@ -48,7 +48,11 @@ public class DashboardService : IDashboardService
         if (!int.TryParse(year, out int yearInt)) yearInt = accountToday.Year;
         if (!int.TryParse(month, out int monthInt)) monthInt = accountToday.Month;
 
-        List<Asset> assets = await _assetRepository.GetByAccountEmailAsync(accountEmail, ct);
+        // Deleted assets must not surface in the dashboard's asset list, monetary-unit options,
+        // or effective-currency calculation, even though GetByAccountEmailAsync itself returns
+        // them (the account-book management grid needs to see deleted assets too).
+        List<Asset> assets =
+            [.. (await _assetRepository.GetByAccountEmailAsync(accountEmail, ct)).Where(a => !a.Deleted)];
         Account? account = await _accountRepository.FindByEmailAsync(accountEmail, ct);
 
         string? defaultMonetaryUnit = GetEffectiveMonetaryUnit(account, assets);

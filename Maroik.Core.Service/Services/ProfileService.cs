@@ -183,7 +183,8 @@ public class ProfileService : IProfileService
         Account? account = await FindByEmailAsync(accountEmail, ct);
         if (account == null) return;
 
-        string? newUnit = assets.Select(x => x.Balance.Currency).Distinct().Contains(monetaryUnit)
+        // A deleted asset's currency must not remain selectable as the default monetary unit.
+        string? newUnit = assets.Where(x => !x.Deleted).Select(x => x.Balance.Currency).Distinct().Contains(monetaryUnit)
             ? monetaryUnit
             : null;
         account.UpdateProfile(account.Nickname, account.AvatarImagePath, account.TimeZone, newUnit);

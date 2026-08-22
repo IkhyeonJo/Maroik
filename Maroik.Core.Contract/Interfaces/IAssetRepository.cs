@@ -22,7 +22,9 @@ public interface IAssetRepository : IGenericRepository<Asset>
     /// Same lookup as <see cref="FindByEmailAndProductNameAsync"/> but takes a row-level
     /// database lock (SELECT ... FOR UPDATE). Within an active <see cref="IUnitOfWork"/>
     /// transaction the lock is held until commit/rollback, serializing concurrent
-    /// balance mutations of the same asset (e.g. double-submitted requests).
+    /// balance mutations of the same asset (e.g. double-submitted requests). Deliberately
+    /// returns a deleted asset too (not filtered) so callers can distinguish "doesn't exist"
+    /// from "exists but deleted" and report the latter with a specific message.
     /// </summary>
     Task<Asset?> FindByEmailAndProductNameForUpdateAsync(string accountEmail, string productName, CancellationToken ct = default);
 }

@@ -82,6 +82,22 @@ public class AssetServiceTests
         Assert.Contains("already exists", result.ErrorKey, StringComparison.OrdinalIgnoreCase);
     }
 
+    /// <summary>Verifies that <c>CreateAsync</c> revives a soft-deleted asset under the same name instead of failing or attempting an insert.</summary>
+    [Fact]
+    public async Task CreateAsync_RevivesSoftDeletedAsset_WhenSameNameIsDeleted()
+    {
+        SetupFindAsset("MyBank", MakeAsset("MyBank", amount: 500m, currency: "KRW", deleted: true));
+        _assetRepo.Setup(r => r.UpdateEntityAsync(It.IsAny<Asset>(), It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
+        var sut = CreateSut();
+
+        ServiceResult result = await sut.CreateAsync("user@example.com", ValidRequest("MyBank"), TestContext.Current.CancellationToken);
+
+        Assert.True(result.Success);
+        _assetRepo.Verify(r => r.UpdateEntityAsync(
+            It.Is<Asset>(a => a.ProductName == "MyBank" && !a.Deleted), It.IsAny<CancellationToken>()), Times.Once);
+        _assetRepo.Verify(r => r.CreateAsync(It.IsAny<Asset>(), It.IsAny<CancellationToken>()), Times.Never);
+    }
+
     /// <summary>Verifies that <c>CreateAsync</c> returns success for all valid item types.</summary>
     [Theory]
     [InlineData("FreeDepositAndWithdrawal")]

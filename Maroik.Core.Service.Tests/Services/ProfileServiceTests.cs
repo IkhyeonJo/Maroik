@@ -37,7 +37,7 @@ public class ProfileServiceTests
 
     // -- Helpers --------------------------------------------------------------
 
-    private static Asset MakeAsset(string name, string unit = "KRW") =>
+    private static Asset MakeAsset(string name, string unit = "KRW", bool deleted = false) =>
         Asset.Reconstitute(
             productName: name,
             accountEmail: "user@example.com",
@@ -45,7 +45,7 @@ public class ProfileServiceTests
             amount: 1000m,
             monetaryUnit: unit,
             note: null,
-            deleted: false,
+            deleted: deleted,
             created: DateTime.UtcNow,
             updated: DateTime.UtcNow);
 
@@ -234,6 +234,23 @@ public class ProfileServiceTests
         var sut = CreateSut();
 
         await sut.UpdateDefaultMonetaryUnitAsync(account.Email.Value, "KRW", TestContext.Current.CancellationToken);
+
+        _accountRepo.Verify(r => r.UpdateEntityAsync(
+            It.Is<Account>(a => a.DefaultMonetaryUnit == null), It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    /// <summary>Verifies that <c>UpdateDefaultMonetaryUnitAsync</c> ignores a soft-deleted asset's currency.</summary>
+    [Fact]
+    public async Task UpdateDefaultMonetaryUnitAsync_SetsNull_WhenUnitOnlyExistsOnDeletedAsset()
+    {
+        var account = ActiveAccount();
+        _assetRepo.Setup(r => r.GetByAccountEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync([MakeAsset("OldForeignAccount", "USD", deleted: true)]);
+        _accountRepo.Setup(r => r.FindByEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(account);
+        _accountRepo.Setup(r => r.UpdateEntityAsync(It.IsAny<Account>(), It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
+        var sut = CreateSut();
+
+        await sut.UpdateDefaultMonetaryUnitAsync(account.Email.Value, "USD", TestContext.Current.CancellationToken);
 
         _accountRepo.Verify(r => r.UpdateEntityAsync(
             It.Is<Account>(a => a.DefaultMonetaryUnit == null), It.IsAny<CancellationToken>()), Times.Once);
