@@ -9,9 +9,6 @@ public interface ICalendarEventRepository : IGenericRepository<CalendarEvent>
     /// <summary>Inserts a new calendar event and returns its generated ID.</summary>
     Task<long> CreateCalendarEventAsync(CalendarEvent calendarEvent, CancellationToken ct = default);
 
-    /// <summary>Returns all events belonging to the given calendar.</summary>
-    Task<List<CalendarEvent>> GetByCalendarIdAsync(long calendarId, CancellationToken ct = default);
-
     /// <summary>Returns all events belonging to any of the given calendars, in a single query.</summary>
     Task<List<CalendarEvent>> GetByCalendarIdsAsync(IEnumerable<long> calendarIds, CancellationToken ct = default);
 

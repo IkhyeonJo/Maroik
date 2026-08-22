@@ -32,6 +32,11 @@ public class CalendarEventViewModelExtensionsTests
         EndDate = new DateTime(2025, 6, 10, 0, 0, 0, DateTimeKind.Utc)
     };
 
+    private void SetUpEvents(params CalendarEventResponse[] events) =>
+        _calendarService
+            .Setup(s => s.GetCalendarEventsAsync(It.IsAny<IEnumerable<long>>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(events.ToLookup(e => e.CalendarId));
+
     // -- GetCalendarEventViewModelsAsync ---------------------------------------
 
     /// <summary>No calendars returns empty list.</summary>
@@ -42,9 +47,6 @@ public class CalendarEventViewModelExtensionsTests
             [], "UTC", null, TestContext.Current.CancellationToken);
 
         Assert.Empty(result);
-        _calendarService.Verify(
-            s => s.GetCalendarEventsAsync(It.IsAny<long>(), It.IsAny<CancellationToken>()),
-            Times.Never);
     }
 
     /// <summary>Single calendar returns its events as view models.</summary>
@@ -52,10 +54,7 @@ public class CalendarEventViewModelExtensionsTests
     public async Task SingleCalendar_ReturnsItsEventsAsViewModels()
     {
         var calendar = MakeCalendar(1);
-        _calendarService
-            .Setup(s => s.GetCalendarEventsAsync(1L, It.IsAny<CancellationToken>()))
-            .ReturnsAsync((IEnumerable<CalendarEventResponse>)
-                [MakeEvent(100, 1, "Trip"), MakeEvent(101, 1, "Meeting")]);
+        SetUpEvents(MakeEvent(100, 1, "Trip"), MakeEvent(101, 1, "Meeting"));
 
         var result = await _calendarService.Object.GetCalendarEventViewModelsAsync(
             [calendar], "UTC", null, TestContext.Current.CancellationToken);
@@ -65,18 +64,13 @@ public class CalendarEventViewModelExtensionsTests
         Assert.Equal("Meeting", result[1].Title);
     }
 
-    /// <summary>Multiple calendars fetches events for each and concatenates in calendar order.</summary>
+    /// <summary>Multiple calendars fetches events for all calendars in a single batch call and concatenates in calendar order.</summary>
     [Fact]
-    public async Task MultipleCalendars_FetchesEventsForEachAndConcatenatesInCalendarOrder()
+    public async Task MultipleCalendars_FetchesEventsInSingleBatchCallAndConcatenatesInCalendarOrder()
     {
         var calendar1 = MakeCalendar(1);
         var calendar2 = MakeCalendar(2);
-        _calendarService
-            .Setup(s => s.GetCalendarEventsAsync(1L, It.IsAny<CancellationToken>()))
-            .ReturnsAsync((IEnumerable<CalendarEventResponse>)[MakeEvent(100, 1, "FromCal1")]);
-        _calendarService
-            .Setup(s => s.GetCalendarEventsAsync(2L, It.IsAny<CancellationToken>()))
-            .ReturnsAsync((IEnumerable<CalendarEventResponse>)[MakeEvent(200, 2, "FromCal2")]);
+        SetUpEvents(MakeEvent(100, 1, "FromCal1"), MakeEvent(200, 2, "FromCal2"));
 
         var result = await _calendarService.Object.GetCalendarEventViewModelsAsync(
             [calendar1, calendar2], "UTC", null, TestContext.Current.CancellationToken);
@@ -84,8 +78,9 @@ public class CalendarEventViewModelExtensionsTests
         Assert.Equal(2, result.Count);
         Assert.Equal("FromCal1", result[0].Title);
         Assert.Equal("FromCal2", result[1].Title);
-        _calendarService.Verify(s => s.GetCalendarEventsAsync(1L, It.IsAny<CancellationToken>()), Times.Once);
-        _calendarService.Verify(s => s.GetCalendarEventsAsync(2L, It.IsAny<CancellationToken>()), Times.Once);
+        _calendarService.Verify(
+            s => s.GetCalendarEventsAsync(It.IsAny<IEnumerable<long>>(), It.IsAny<CancellationToken>()),
+            Times.Once);
     }
 
     /// <summary>Passes each calendars html color code to its own events.</summary>
@@ -94,12 +89,7 @@ public class CalendarEventViewModelExtensionsTests
     {
         var calendar1 = MakeCalendar(1, "#111111");
         var calendar2 = MakeCalendar(2, "#222222");
-        _calendarService
-            .Setup(s => s.GetCalendarEventsAsync(1L, It.IsAny<CancellationToken>()))
-            .ReturnsAsync((IEnumerable<CalendarEventResponse>)[MakeEvent(100, 1, "FromCal1")]);
-        _calendarService
-            .Setup(s => s.GetCalendarEventsAsync(2L, It.IsAny<CancellationToken>()))
-            .ReturnsAsync((IEnumerable<CalendarEventResponse>)[MakeEvent(200, 2, "FromCal2")]);
+        SetUpEvents(MakeEvent(100, 1, "FromCal1"), MakeEvent(200, 2, "FromCal2"));
 
         var result = await _calendarService.Object.GetCalendarEventViewModelsAsync(
             [calendar1, calendar2], "UTC", null, TestContext.Current.CancellationToken);
@@ -113,9 +103,7 @@ public class CalendarEventViewModelExtensionsTests
     public async Task PassesCalendarTypeThroughToEachViewModel()
     {
         var calendar = MakeCalendar(1);
-        _calendarService
-            .Setup(s => s.GetCalendarEventsAsync(1L, It.IsAny<CancellationToken>()))
-            .ReturnsAsync((IEnumerable<CalendarEventResponse>)[MakeEvent(100, 1, "Trip")]);
+        SetUpEvents(MakeEvent(100, 1, "Trip"));
 
         var result = await _calendarService.Object.GetCalendarEventViewModelsAsync(
             [calendar], "UTC", "Other", TestContext.Current.CancellationToken);
@@ -128,9 +116,7 @@ public class CalendarEventViewModelExtensionsTests
     public async Task AppliesUserTimeZoneConversionToEachEvent()
     {
         var calendar = MakeCalendar(1);
-        _calendarService
-            .Setup(s => s.GetCalendarEventsAsync(1L, It.IsAny<CancellationToken>()))
-            .ReturnsAsync((IEnumerable<CalendarEventResponse>)[MakeEvent(100, 1, "Trip")]);
+        SetUpEvents(MakeEvent(100, 1, "Trip"));
 
         var result = await _calendarService.Object.GetCalendarEventViewModelsAsync(
             [calendar], "Asia/Seoul", null, TestContext.Current.CancellationToken);
@@ -147,11 +133,13 @@ public class CalendarEventViewModelExtensionsTests
         var calendar = MakeCalendar(1);
         using var cts = new CancellationTokenSource();
         _calendarService
-            .Setup(s => s.GetCalendarEventsAsync(1L, cts.Token))
-            .ReturnsAsync((IEnumerable<CalendarEventResponse>)[]);
+            .Setup(s => s.GetCalendarEventsAsync(It.IsAny<IEnumerable<long>>(), cts.Token))
+            .ReturnsAsync(Array.Empty<CalendarEventResponse>().ToLookup(e => e.CalendarId));
 
         await _calendarService.Object.GetCalendarEventViewModelsAsync([calendar], "UTC", null, cts.Token);
 
-        _calendarService.Verify(s => s.GetCalendarEventsAsync(1L, cts.Token), Times.Once);
+        _calendarService.Verify(
+            s => s.GetCalendarEventsAsync(It.IsAny<IEnumerable<long>>(), cts.Token),
+            Times.Once);
     }
 }

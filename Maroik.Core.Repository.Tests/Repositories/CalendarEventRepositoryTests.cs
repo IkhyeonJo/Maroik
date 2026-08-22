@@ -48,32 +48,6 @@ public class CalendarEventRepositoryTests : IDisposable
         await _context.SaveChangesAsync();
     }
 
-    // -- GetCalendarEventsAsync -----------------------------------------------
-
-    /// <summary>Verifies that <c>GetCalendarEventsAsync</c> returns only events for given calendar.</summary>
-    [Fact]
-    public async Task GetCalendarEventsAsync_ReturnsOnlyEventsForGivenCalendar()
-    {
-        await SeedAsync(
-            MakeEvent(1, "Event A"),
-            MakeEvent(1, "Event B"),
-            MakeEvent(2, "Other Calendar Event"));
-
-        IEnumerable<CalendarEvent> result = await _sut.GetByCalendarIdAsync(1L, TestContext.Current.CancellationToken);
-
-        Assert.Equal(2, result.Count());
-        Assert.All(result, e => Assert.Equal(1, e.CalendarId));
-    }
-
-    /// <summary>Verifies that <c>GetCalendarEventsAsync</c> returns empty when no events for calendar.</summary>
-    [Fact]
-    public async Task GetCalendarEventsAsync_ReturnsEmpty_WhenNoEventsForCalendar()
-    {
-        IEnumerable<CalendarEvent> result = await _sut.GetByCalendarIdAsync(99L, TestContext.Current.CancellationToken);
-
-        Assert.Empty(result);
-    }
-
     // -- GetByCalendarIdsAsync --------------------------------------------------
 
     /// <summary>Verifies that <c>GetByCalendarIdsAsync</c> returns events for every requested calendar in one query.</summary>

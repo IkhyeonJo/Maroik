@@ -28,12 +28,18 @@ public static class CalendarEventViewModelExtensions
             string? calendarType,
             CancellationToken ct)
         {
-            List<CalendarEventOutputViewModel> items = [];
-            foreach (CalendarResponse calendar in calendars)
-            {
-                items.AddRange(from evt in await calendarService.GetCalendarEventsAsync(calendar.Id, ct) select evt.ToDisplayViewModel(userTimeZoneIanaId, calendar.HtmlColorCode, calendarType));
-            }
-            return items;
+            List<CalendarResponse> calendarList = [.. calendars];
+
+            // Fetch every calendar's events in a single query instead of one round trip per calendar.
+            ILookup<long, CalendarEventResponse> eventsByCalendarId =
+                await calendarService.GetCalendarEventsAsync(calendarList.Select(c => c.Id), ct);
+
+            return
+            [
+                .. from calendar in calendarList
+                   from evt in eventsByCalendarId[calendar.Id]
+                   select evt.ToDisplayViewModel(userTimeZoneIanaId, calendar.HtmlColorCode, calendarType)
+            ];
         }
     }
 }

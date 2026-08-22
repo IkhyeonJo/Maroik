@@ -52,10 +52,6 @@ public class CalendarEventRepository(ApplicationDbContext context)
     };
 
     /// <inheritdoc />
-    public Task<List<CalendarEvent>> GetByCalendarIdAsync(long calendarId, CancellationToken ct = default)
-        => QueryAsync(e => e.CalendarId == calendarId, ct: ct);
-
-    /// <inheritdoc />
     public Task<List<CalendarEvent>> GetByCalendarIdsAsync(IEnumerable<long> calendarIds, CancellationToken ct = default)
     {
         var ids = calendarIds.ToList();

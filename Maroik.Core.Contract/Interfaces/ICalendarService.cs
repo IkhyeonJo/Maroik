@@ -14,9 +14,6 @@ public interface ICalendarService
     /// <summary>Returns every calendar in the system (used for shared-calendar discovery).</summary>
     Task<List<CalendarResponse>> GetAllCalendarsAsync(CancellationToken ct = default);
 
-    /// <summary>Returns all events belonging to the specified calendar.</summary>
-    Task<IEnumerable<CalendarEventResponse>> GetCalendarEventsAsync(long calendarId, CancellationToken ct = default);
-
     /// <summary>
     /// Returns all events belonging to any of the given calendars, fetched in a single query
     /// and grouped by calendar ID for per-calendar lookup.
