@@ -222,7 +222,6 @@ public class AccountController : Controller
         await _accountService.ForgotPasswordAsync(loginInputViewModel.Email!, emailSubject, emailTitle, emailContent0, emailContent1, ct);
 
         ViewBag.MailSent = true;
-        ViewBag.SentEmailAddress = loginInputViewModel.Email;
         return View();
     }
 
