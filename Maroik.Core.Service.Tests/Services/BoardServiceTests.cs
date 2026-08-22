@@ -55,8 +55,8 @@ public class BoardServiceTests
         Board.Reconstitute(id, nameof(BoardType.FreeForum), "Test Title", "Test Content", writer,
             DateTime.UtcNow, DateTime.UtcNow, 0L, deleted, false, false);
 
-    private static BoardComment MakeComment(long id = 1, string writer = "Alice") =>
-        BoardComment.Reconstitute(id, 1L, 0L, null, writer, "Comment", DateTime.UtcNow, false);
+    private static BoardComment MakeComment(long id = 1, string writer = "Alice", long order = 0L) =>
+        BoardComment.Reconstitute(id, 1L, order, null, writer, "Comment", DateTime.UtcNow, false);
 
     // -- GetBoardsAsync -------------------------------------------------------
 
@@ -438,11 +438,11 @@ public class BoardServiceTests
 
     /// <summary>Verifies that <c>WriteCommentAsync</c> sets order based on existing comment count.</summary>
     [Fact]
-    public async Task WriteCommentAsync_SetsOrderBasedOnExistingCommentCount()
+    public async Task WriteCommentAsync_SetsOrderBasedOnHighestExistingCommentOrder()
     {
         _boardRepo.Setup(r => r.FindActiveByIdForUpdateAsync(It.IsAny<long>(), It.IsAny<CancellationToken>())).ReturnsAsync(MakeBoard());
         _commentRepo.Setup(r => r.GetByBoardIdOrderedAsync(It.IsAny<long>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new List<BoardComment> { MakeComment(1), MakeComment(2) });
+            .ReturnsAsync(new List<BoardComment> { MakeComment(1, order: 0L), MakeComment(2, order: 1L) });
 
         BoardComment? captured = null;
         _commentRepo.Setup(r => r.CreateAsync(It.IsAny<BoardComment>(), It.IsAny<CancellationToken>()))
@@ -454,6 +454,32 @@ public class BoardServiceTests
 
         Assert.NotNull(captured);
         Assert.Equal(2L, captured.Order);
+    }
+
+    /// <summary>
+    /// Regression test: after a comment is soft-deleted, <c>GetByBoardIdOrderedAsync</c> excludes it,
+    /// so the remaining comments' count is no longer <c>max(Order) + 1</c>. The new comment's Order
+    /// must still be derived from the highest surviving Order, not the count, or it collides with an
+    /// existing comment's Order.
+    /// </summary>
+    [Fact]
+    public async Task WriteCommentAsync_DoesNotCollideWithExistingOrder_AfterAPriorCommentWasDeleted()
+    {
+        _boardRepo.Setup(r => r.FindActiveByIdForUpdateAsync(It.IsAny<long>(), It.IsAny<CancellationToken>())).ReturnsAsync(MakeBoard());
+        // Order 1 is "missing" here, simulating a soft-deleted comment excluded by the repository query.
+        _commentRepo.Setup(r => r.GetByBoardIdOrderedAsync(It.IsAny<long>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<BoardComment> { MakeComment(1, order: 0L), MakeComment(3, order: 2L) });
+
+        BoardComment? captured = null;
+        _commentRepo.Setup(r => r.CreateAsync(It.IsAny<BoardComment>(), It.IsAny<CancellationToken>()))
+            .Callback<BoardComment, CancellationToken>((c, _) => captured = c)
+            .Returns(Task.CompletedTask);
+        var sut = CreateSut();
+
+        await sut.WriteCommentAsync(new BoardCommentRequest { BoardId = 1, Writer = "Bob", Content = "Hi" }, ct: TestContext.Current.CancellationToken);
+
+        Assert.NotNull(captured);
+        Assert.Equal(3L, captured.Order);
     }
 
     /// <summary>

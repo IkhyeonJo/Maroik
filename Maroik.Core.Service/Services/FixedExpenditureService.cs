@@ -43,6 +43,8 @@ public class FixedExpenditureService : IFixedExpenditureService
 
         Asset? payAsset = await _assetBalance.GetAssetAsync(accountEmail, request.PaymentMethod ?? "", ct);
         if (payAsset == null) return ServiceResult.Fail("Input is invalid");
+        if (payAsset.Deleted)
+            return ServiceResult.Fail("Actions cannot be executed with assets that have already been deleted.");
 
         string? myDepositAsset = null;
         if (validation.RequiresDepositAsset)
@@ -52,6 +54,8 @@ public class FixedExpenditureService : IFixedExpenditureService
 
             Asset? depAsset = await _assetBalance.GetAssetAsync(accountEmail, request.MyDepositAsset ?? "", ct);
             if (depAsset == null) return ServiceResult.Fail("Input is invalid");
+            if (depAsset.Deleted)
+                return ServiceResult.Fail("Actions cannot be executed with assets that have already been deleted.");
             if (payAsset.Balance.Currency != depAsset.Balance.Currency)
                 return ServiceResult.Fail("PaymentMethod MonetaryUnit must be same as MyDepositAsset MonetaryUnit.");
 
@@ -85,6 +89,8 @@ public class FixedExpenditureService : IFixedExpenditureService
             var payAsset = await _assetBalance.GetAssetAsync(accountEmail, request.PaymentMethod ?? "", ct);
             var depAsset = await _assetBalance.GetAssetAsync(accountEmail, request.MyDepositAsset ?? "", ct);
             if (payAsset == null || depAsset == null) return ServiceResult.Fail("Input is invalid");
+            if (payAsset.Deleted || depAsset.Deleted)
+                return ServiceResult.Fail("Actions cannot be executed with assets that have already been deleted.");
             if (payAsset.Balance.Currency != depAsset.Balance.Currency)
                 return ServiceResult.Fail("PaymentMethod MonetaryUnit must be same as MyDepositAsset MonetaryUnit.");
         }
@@ -94,6 +100,8 @@ public class FixedExpenditureService : IFixedExpenditureService
         if (fe == null) return ServiceResult.Fail("Input is invalid");
 
         Asset? payAssetForCurrency = await _assetBalance.GetAssetAsync(accountEmail, request.PaymentMethod ?? "", ct);
+        if (payAssetForCurrency is { Deleted: true })
+            return ServiceResult.Fail("Actions cannot be executed with assets that have already been deleted.");
         string currency = payAssetForCurrency?.Balance.Currency ?? fe.Amount.Currency;
         string? myDepositAsset = validation.RequiresDepositAsset ? request.MyDepositAsset : "";
 

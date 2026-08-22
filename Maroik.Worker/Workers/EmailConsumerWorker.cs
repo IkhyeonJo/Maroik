@@ -22,6 +22,7 @@ public sealed class EmailConsumerWorker : BackgroundService
 
     private IConnection? _connection;
     internal IChannel? Channel;
+    private string? _consumerTag;
 
     // Tracks delivery tags currently being processed, so StopAsync can wait for them to finish
     // acking/nacking before the channel is disposed out from under them.
@@ -61,7 +62,7 @@ public sealed class EmailConsumerWorker : BackgroundService
         var consumer = new AsyncEventingBasicConsumer(Channel);
         consumer.ReceivedAsync += OnMessageReceivedAsync;
 
-        await Channel.BasicConsumeAsync(
+        _consumerTag = await Channel.BasicConsumeAsync(
             queue: QueueNames.Email,
             autoAck: false,
             consumer: consumer,
@@ -124,18 +125,40 @@ public sealed class EmailConsumerWorker : BackgroundService
     }
 
     /// <summary>
-    /// Stops the base <see cref="BackgroundService"/>, waits (up to a bounded grace period) for any
-    /// in-flight messages to finish being acked/nacked, and then releases the RabbitMQ channel and
-    /// connection. Disposing immediately would pull the channel out from under a handler that is
-    /// still mid-send, causing its ack/nack to throw and the message to be redelivered and resent.
+    /// Cancels the consumer so no new deliveries arrive, stops the base <see cref="BackgroundService"/>,
+    /// waits (up to a bounded grace period or the host's own shutdown deadline, whichever comes first)
+    /// for any already-in-flight messages to finish being acked/nacked, and then releases the RabbitMQ
+    /// channel and connection. Disposing immediately would pull the channel out from under a handler
+    /// that is still mid-send, causing its ack/nack to throw and the message to be redelivered and resent.
     /// </summary>
     public override async Task StopAsync(CancellationToken cancellationToken)
     {
+        if (Channel != null && _consumerTag != null)
+        {
+            try
+            {
+                await Channel.BasicCancelAsync(_consumerTag, noWait: false, cancellationToken: cancellationToken);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Failed to cancel RabbitMQ consumer '{ConsumerTag}' during shutdown", _consumerTag);
+            }
+        }
+
         await base.StopAsync(cancellationToken);
 
-        var drainDeadline = DateTime.UtcNow + TimeSpan.FromSeconds(25);
-        while (!_inFlight.IsEmpty && DateTime.UtcNow < drainDeadline)
-            await Task.Delay(100, CancellationToken.None);
+        using var drainCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+        drainCts.CancelAfter(TimeSpan.FromSeconds(25));
+        try
+        {
+            while (!_inFlight.IsEmpty)
+                await Task.Delay(100, drainCts.Token);
+        }
+        catch (OperationCanceledException)
+        {
+            // Either the host's own shutdown deadline or the 25s drain deadline was reached;
+            // proceed to dispose regardless.
+        }
 
         if (Channel != null)
             await Channel.DisposeAsync();

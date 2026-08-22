@@ -62,18 +62,4 @@ public class FixedExpenditureRepository(ApplicationDbContext context)
     /// <inheritdoc />
     public Task DeleteByIdAsync(long id, CancellationToken ct = default)
         => DeleteWhereAsync(e => e.Id == id, ct);
-
-    /// <inheritdoc />
-    public async Task UpdateAssetNameReferencesAsync(string accountEmail, string oldName, string newName, CancellationToken ct = default)
-    {
-        // Context uses NoTracking + AutoDetectChangesEnabled=false, so LINQ-tracked update won't work.
-        // ExecuteUpdateAsync issues a direct SQL UPDATE, bypassing the change tracker entirely.
-        // PaymentMethod and MyDepositAsset are independent asset references (a transfer's two legs),
-        // so both must be renamed wherever they match — not just MyDepositAsset.
-        _ = await Context.FixedExpenditures
-            .Where(e => e.AccountEmail == accountEmail && (e.PaymentMethod == oldName || e.MyDepositAsset == oldName))
-            .ExecuteUpdateAsync(s => s
-                .SetProperty(e => e.PaymentMethod, e => e.PaymentMethod == oldName ? newName : e.PaymentMethod)
-                .SetProperty(e => e.MyDepositAsset, e => e.MyDepositAsset == oldName ? newName : e.MyDepositAsset), ct);
-    }
 }

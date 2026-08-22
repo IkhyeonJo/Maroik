@@ -21,9 +21,9 @@ public class MailClient : IMailClient
         // Return a centred HTML block containing the confirmation link
         return $"""
                 <div style='text-align:center;'>
-                                        <h1>{title}<h1>
-                                        <h3>{content0}<h3>
-                                        <h3>{content1}<h3>
+                                        <h1>{title}</h1>
+                                        <h3>{content0}</h3>
+                                        <h3>{content1}</h3>
                                         <a href='{url}' target='_blank' rel='noopener noreferrer'>{url}</a>
                                       </div>
                 """;
@@ -38,9 +38,9 @@ public class MailClient : IMailClient
         // Return a centred HTML block containing the password-reset link
         return $"""
                 <div style='text-align:center;'>
-                                        <h1>{title}<h1>
-                                        <h3>{content0}<h3>
-                                        <h3>{content1}<h3>
+                                        <h1>{title}</h1>
+                                        <h3>{content0}</h3>
+                                        <h3>{content1}</h3>
                                         <a href='{url}' target='_blank' rel='noopener noreferrer'>{url}</a>
                                       </div>
                 """;

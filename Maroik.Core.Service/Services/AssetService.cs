@@ -9,32 +9,18 @@ namespace Maroik.Core.Service.Services;
 /// <summary>
 /// Implementation of <see cref="IAssetService"/> for managing personal financial assets.
 /// Rename operations use a database transaction (via <see cref="IUnitOfWork"/>) to atomically
-/// update the asset name and cascade the rename to all linked income, fixed-income, expenditure,
-/// and fixed-expenditure records.
+/// update the asset name; the rename to linked income, fixed-income, expenditure, and
+/// fixed-expenditure records is handled by the database's <c>ON UPDATE CASCADE</c> foreign keys.
 /// </summary>
 public class AssetService : IAssetService
 {
     private readonly IAssetRepository _assetRepository;
-    private readonly IExpenditureRepository _expenditureRepository;
-    private readonly IFixedExpenditureRepository _fixedExpenditureRepository;
-    private readonly IIncomeRepository _incomeRepository;
-    private readonly IFixedIncomeRepository _fixedIncomeRepository;
     private readonly IUnitOfWork _unitOfWork;
 
     /// <summary>Initializes a new instance of <see cref="AssetService"/> with the supplied dependencies.</summary>
-    public AssetService(
-        IAssetRepository assetRepository,
-        IExpenditureRepository expenditureRepository,
-        IFixedExpenditureRepository fixedExpenditureRepository,
-        IIncomeRepository incomeRepository,
-        IFixedIncomeRepository fixedIncomeRepository,
-        IUnitOfWork unitOfWork)
+    public AssetService(IAssetRepository assetRepository, IUnitOfWork unitOfWork)
     {
         _assetRepository = assetRepository;
-        _expenditureRepository = expenditureRepository;
-        _fixedExpenditureRepository = fixedExpenditureRepository;
-        _incomeRepository = incomeRepository;
-        _fixedIncomeRepository = fixedIncomeRepository;
         _unitOfWork = unitOfWork;
     }
 
@@ -142,12 +128,6 @@ public class AssetService : IAssetService
                 await _unitOfWork.RollbackAsync(ct);
                 return ServiceResult.Fail("Input is invalid");
             }
-
-            // Cascade the renamed product name to all related income/expenditure records within the same transaction.
-            await _fixedExpenditureRepository.UpdateAssetNameReferencesAsync(accountEmail, originalProductName, asset.ProductName, ct);
-            await _expenditureRepository.UpdateAssetNameReferencesAsync(accountEmail, originalProductName, asset.ProductName, ct);
-            await _fixedIncomeRepository.UpdateAssetNameReferencesAsync(accountEmail, originalProductName, asset.ProductName, ct);
-            await _incomeRepository.UpdateAssetNameReferencesAsync(accountEmail, originalProductName, asset.ProductName, ct);
 
             await _unitOfWork.CommitAsync(ct);
             return ServiceResult.Ok();

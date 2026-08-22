@@ -14,7 +14,4 @@ public interface IFixedIncomeRepository : IGenericRepository<FixedIncome>
 
     /// <summary>Deletes the fixed income record with the given ID.</summary>
     Task DeleteByIdAsync(long id, CancellationToken ct = default);
-
-    /// <summary>Renames the deposit-asset reference on all of the account's fixed income records (cascades an asset product-name change).</summary>
-    Task UpdateAssetNameReferencesAsync(string accountEmail, string oldName, string newName, CancellationToken ct = default);
 }

@@ -44,6 +44,8 @@ public class FixedIncomeService : IFixedIncomeService
 
         Asset? asset = await _assetBalance.GetAssetAsync(accountEmail, request.DepositMyAssetProductName ?? "", ct);
         if (asset == null) return ServiceResult.Fail("Input is invalid");
+        if (asset.Deleted)
+            return ServiceResult.Fail("Actions cannot be executed with assets that have already been deleted.");
 
         string currency = asset.Balance.Currency;
         var registerResult = FixedIncome.Register(accountEmail, request.MainClass, request.SubClass,
@@ -70,6 +72,8 @@ public class FixedIncomeService : IFixedIncomeService
         if (fi == null) return ServiceResult.Fail("Input is invalid");
 
         Asset? asset = await _assetBalance.GetAssetAsync(accountEmail, request.DepositMyAssetProductName ?? "", ct);
+        if (asset is { Deleted: true })
+            return ServiceResult.Fail("Actions cannot be executed with assets that have already been deleted.");
         string currency = asset?.Balance.Currency ?? fi.Amount.Currency;
 
         var updateResult = fi.Update(request.MainClass, request.SubClass, request.Content,

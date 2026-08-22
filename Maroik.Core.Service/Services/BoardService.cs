@@ -268,9 +268,12 @@ public class BoardService : IBoardService
             }
 
             IEnumerable<BoardComment> existing = await _boardCommentRepository.GetByBoardIdOrderedAsync(request.BoardId, ct);
+            List<BoardComment> existingList = existing.ToList();
 
-            // The comment order is the current count, giving sequential ordering starting at 0.
-            long order = existing.Count();
+            // The comment order continues from the highest existing order, so that a prior
+            // soft-deleted comment (excluded from existingList) cannot cause a new comment to
+            // collide with the Order of one still active.
+            long order = existingList.Count == 0 ? 0 : existingList.Max(c => c.Order) + 1;
 
             var commentResult = BoardComment.Create(request.BoardId, order, request.AvatarImagePath, request.Writer, content);
             if (commentResult.IsError)

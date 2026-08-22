@@ -15,19 +15,9 @@ namespace Maroik.Core.Service.Tests.Services;
 public class AssetServiceTests
 {
     private readonly Mock<IAssetRepository> _assetRepo = new();
-    private readonly Mock<IExpenditureRepository> _expenditureRepo = new();
-    private readonly Mock<IFixedExpenditureRepository> _fixedExpenditureRepo = new();
-    private readonly Mock<IIncomeRepository> _incomeRepo = new();
-    private readonly Mock<IFixedIncomeRepository> _fixedIncomeRepo = new();
     private readonly Mock<IUnitOfWork> _unitOfWork = new();
 
-    private AssetService CreateSut() => new(
-        _assetRepo.Object,
-        _expenditureRepo.Object,
-        _fixedExpenditureRepo.Object,
-        _incomeRepo.Object,
-        _fixedIncomeRepo.Object,
-        _unitOfWork.Object);
+    private AssetService CreateSut() => new(_assetRepo.Object, _unitOfWork.Object);
 
     /// <summary>Initializes the test fixture, setting up all required test doubles and the system under test.</summary>
     public AssetServiceTests()
@@ -36,10 +26,6 @@ public class AssetServiceTests
         _unitOfWork.Setup(u => u.CommitAsync(It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
         _unitOfWork.Setup(u => u.RollbackAsync(It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
         _unitOfWork.Setup(u => u.DisposeAsync()).Returns(ValueTask.CompletedTask);
-        _fixedExpenditureRepo.Setup(r => r.UpdateAssetNameReferencesAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
-        _expenditureRepo.Setup(r => r.UpdateAssetNameReferencesAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
-        _incomeRepo.Setup(r => r.UpdateAssetNameReferencesAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
-        _fixedIncomeRepo.Setup(r => r.UpdateAssetNameReferencesAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
     }
 
     // -- Helpers --------------------------------------------------------------
@@ -215,9 +201,9 @@ public class AssetServiceTests
         _unitOfWork.Verify(u => u.RollbackAsync(It.IsAny<CancellationToken>()), Times.Once);
     }
 
-    /// <summary>Verifies that <c>UpdateAsync</c> cascades rename to income, fixed income, expenditure, and fixed expenditure when successful.</summary>
+    /// <summary>Verifies that <c>UpdateAsync</c> commits the rename when successful (cascading to linked income/expenditure records is handled by the database's ON UPDATE CASCADE foreign keys, not application code).</summary>
     [Fact]
-    public async Task UpdateAsync_CascadesRenameToIncomeAndExpenditureRecords_WhenSuccessful()
+    public async Task UpdateAsync_Commits_WhenSuccessful()
     {
         const string email = "user@example.com";
         SetupFindAsset("OldName", MakeAsset("OldName"));
@@ -227,10 +213,6 @@ public class AssetServiceTests
         ServiceResult result = await sut.UpdateAsync(email, ValidRequest("NewName"), "OldName", TestContext.Current.CancellationToken);
 
         Assert.True(result.Success);
-        _fixedExpenditureRepo.Verify(r => r.UpdateAssetNameReferencesAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Once);
-        _expenditureRepo.Verify(r => r.UpdateAssetNameReferencesAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Once);
-        _incomeRepo.Verify(r => r.UpdateAssetNameReferencesAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Once);
-        _fixedIncomeRepo.Verify(r => r.UpdateAssetNameReferencesAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Once);
         _unitOfWork.Verify(u => u.CommitAsync(It.IsAny<CancellationToken>()), Times.Once);
     }
 

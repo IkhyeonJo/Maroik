@@ -61,14 +61,4 @@ public class FixedIncomeRepository(ApplicationDbContext context)
     /// <inheritdoc />
     public Task DeleteByIdAsync(long id, CancellationToken ct = default)
         => DeleteWhereAsync(e => e.Id == id, ct);
-
-    /// <inheritdoc />
-    public async Task UpdateAssetNameReferencesAsync(string accountEmail, string oldName, string newName, CancellationToken ct = default)
-    {
-        // Context uses NoTracking + AutoDetectChangesEnabled=false, so LINQ-tracked update won't work.
-        // ExecuteUpdateAsync issues a direct SQL UPDATE, bypassing the change tracker entirely.
-        _ = await Context.FixedIncomes
-            .Where(e => e.AccountEmail == accountEmail && e.DepositMyAssetProductName == oldName)
-            .ExecuteUpdateAsync(s => s.SetProperty(e => e.DepositMyAssetProductName, newName), ct);
-    }
 }
