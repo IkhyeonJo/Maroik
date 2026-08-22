@@ -1,6 +1,8 @@
 using System.Reflection;
+using System.Runtime.CompilerServices;
 using Maroik.Core.Contract.Interfaces;
 using Maroik.Website.Filters;
+using Microsoft.AspNetCore.Mvc;
 using NetArchTest.Rules;
 
 namespace Maroik.Website.Tests.Architecture;
@@ -167,6 +169,44 @@ public class WebsiteArchitectureTests
             "Controllers must not reference Maroik.Core.Service implementations directly. " +
             "Inject IXxxService interfaces from Maroik.Core.Contract instead.\n" +
             "Failing types: " + string.Join(", ", serviceResult.FailingTypeNames ?? []));
+    }
+
+    /// <summary>
+    /// Controllers must not declare non-public helper methods. Every method the routing system can
+    /// dispatch to must be a fully public action, because the set of Controller/Action pairs the app
+    /// exposes is exactly what's driven by the Category/SubCategory rows seeded in Init.sql (which
+    /// AuthorizationFilter matches against for GET requests) and the [RequiredHttpPostAccess]
+    /// attribute (for POST). A private helper method can't itself become a route, but it blurs that
+    /// "every controller method is a seeded action" invariant and invites logic creep into the
+    /// controller. Shared logic across actions belongs in a service or a Website/Extensions method
+    /// instead (see CalendarEventViewModelExtensions.GetCalendarEventDetailViewModelAsync).
+    /// </summary>
+    [Fact]
+    public void Controllers_ShouldNot_DeclareNonPublicMethods()
+    {
+        List<string> violations = [];
+
+        foreach (Type controllerType in WebsiteAssembly.GetTypes()
+                     .Where(t => t is { IsClass: true, IsAbstract: false } && typeof(Controller).IsAssignableFrom(t)))
+        {
+            List<string> nonPublicMethods =
+            [
+                .. controllerType
+                    .GetMethods(BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.Static | BindingFlags.DeclaredOnly)
+                    .Where(m => !m.IsSpecialName) // exclude property/event accessors
+                    .Where(m => m.GetCustomAttribute<CompilerGeneratedAttribute>() == null) // exclude lambda bodies etc.
+                    .Select(m => m.Name)
+            ];
+
+            if (nonPublicMethods.Count > 0)
+                violations.Add($"{controllerType.Name}: {string.Join(", ", nonPublicMethods)}");
+        }
+
+        Assert.True(
+            violations.Count == 0,
+            "Controllers must not declare non-public helper methods — move shared logic into a " +
+            "service or a Website/Extensions method instead.\n" +
+            "Violations: " + string.Join("; ", violations));
     }
 
     /// <summary>

@@ -142,4 +142,104 @@ public class CalendarEventViewModelExtensionsTests
             s => s.GetCalendarEventsAsync(It.IsAny<IEnumerable<long>>(), cts.Token),
             Times.Once);
     }
+
+    // -- GetCalendarEventDetailViewModelAsync ----------------------------------
+
+    private void SetUpDetailEvent(CalendarEventResponse? evt)
+    {
+        _calendarService
+            .Setup(s => s.GetCalendarEventAsync(It.IsAny<long>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(evt);
+        _calendarService
+            .Setup(s => s.PrepareHtmlForDisplayAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(("<p>desc</p>", false));
+        _calendarService
+            .Setup(s => s.GetCalendarEventAttachedFileAsync(It.IsAny<long>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((CalendarEventAttachedFileDto?)null);
+        _calendarService
+            .Setup(s => s.GetCalendarEventRemindersAsync(It.IsAny<long>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync([]);
+    }
+
+    /// <summary>Returns null when the event doesn't exist.</summary>
+    [Fact]
+    public async Task GetCalendarEventDetailViewModelAsync_ReturnsNull_WhenEventNotFound()
+    {
+        SetUpDetailEvent(null);
+
+        var result = await _calendarService.Object.GetCalendarEventDetailViewModelAsync(
+            [MakeCalendar(1)], "UTC", 999, TestContext.Current.CancellationToken);
+
+        Assert.Null(result);
+    }
+
+    /// <summary>Returns null when the event's calendar isn't in the given calendars.</summary>
+    [Fact]
+    public async Task GetCalendarEventDetailViewModelAsync_ReturnsNull_WhenEventDoesNotBelongToGivenCalendars()
+    {
+        SetUpDetailEvent(MakeEvent(100, calendarId: 2, "Trip"));
+
+        var result = await _calendarService.Object.GetCalendarEventDetailViewModelAsync(
+            [MakeCalendar(1)], "UTC", 100, TestContext.Current.CancellationToken);
+
+        Assert.Null(result);
+    }
+
+    /// <summary>Returns a populated view model when the event belongs to one of the given calendars.</summary>
+    [Fact]
+    public async Task GetCalendarEventDetailViewModelAsync_ReturnsPopulatedViewModel_WhenEventBelongsToGivenCalendar()
+    {
+        SetUpDetailEvent(MakeEvent(100, calendarId: 1, "Trip"));
+
+        var result = await _calendarService.Object.GetCalendarEventDetailViewModelAsync(
+            [MakeCalendar(1, "#3788d8")], "UTC", 100, TestContext.Current.CancellationToken);
+
+        Assert.NotNull(result);
+        Assert.Equal("Trip", result!.Title);
+        Assert.Equal("#3788d8", result.HtmlColorCode);
+        Assert.Equal("<p>desc</p>", result.Description);
+    }
+
+    /// <summary>Populates attachment base64 data and content type when the file downloads successfully.</summary>
+    [Fact]
+    public async Task GetCalendarEventDetailViewModelAsync_PopulatesAttachedFileData_WhenFileDownloadSucceeds()
+    {
+        SetUpDetailEvent(MakeEvent(100, calendarId: 1, "Trip"));
+        _calendarService
+            .Setup(s => s.GetCalendarEventAttachedFileAsync(100, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new CalendarEventAttachedFileDto { Id = 1, CalendarEventId = 100, Path = "attachments/file.png" });
+        _calendarService
+            .Setup(s => s.DownloadFileAsync("attachments/file.png", It.IsAny<CancellationToken>()))
+            .ReturnsAsync([1, 2, 3]);
+
+        var result = await _calendarService.Object.GetCalendarEventDetailViewModelAsync(
+            [MakeCalendar(1)], "UTC", 100, TestContext.Current.CancellationToken);
+
+        Assert.NotNull(result);
+        Assert.Equal(Convert.ToBase64String([1, 2, 3]), result!.CalendarEventAttachedFileBase64Data);
+        Assert.Equal("image/png", result.CalendarEventAttachedFileContentType);
+    }
+
+    /// <summary>Passes cancellation token through to the service.</summary>
+    [Fact]
+    public async Task GetCalendarEventDetailViewModelAsync_PassesCancellationTokenThroughToTheService()
+    {
+        using var cts = new CancellationTokenSource();
+        _calendarService
+            .Setup(s => s.GetCalendarEventAsync(It.IsAny<long>(), cts.Token))
+            .ReturnsAsync(MakeEvent(100, calendarId: 1, "Trip"));
+        _calendarService
+            .Setup(s => s.PrepareHtmlForDisplayAsync(It.IsAny<string>(), cts.Token))
+            .ReturnsAsync(("", false));
+        _calendarService
+            .Setup(s => s.GetCalendarEventAttachedFileAsync(It.IsAny<long>(), cts.Token))
+            .ReturnsAsync((CalendarEventAttachedFileDto?)null);
+        _calendarService
+            .Setup(s => s.GetCalendarEventRemindersAsync(It.IsAny<long>(), cts.Token))
+            .ReturnsAsync([]);
+
+        await _calendarService.Object.GetCalendarEventDetailViewModelAsync([MakeCalendar(1)], "UTC", 100, cts.Token);
+
+        _calendarService.Verify(s => s.GetCalendarEventAsync(100, cts.Token), Times.Once);
+    }
 }

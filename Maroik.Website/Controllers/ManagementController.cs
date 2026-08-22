@@ -7,7 +7,6 @@ using Maroik.Core.Contract.Interfaces;
 using Maroik.Core.Domain.Account;
 using Maroik.Core.Contract.Misc.Settings;
 using Maroik.Website.Attributes;
-using Maroik.Website.Constants;
 using Maroik.Website.Contracts;
 using Maroik.Website.Extensions;
 using Maroik.Website.Mappings;
@@ -73,14 +72,6 @@ public class ManagementController : Controller
     }
 
     private Func<string, string> Localize => key => _localizer[key].Value;
-
-    private Task InvalidateNavigationCacheAsync() => Task.WhenAll(
-        _cache.RemoveAsync(NavigationCacheKeys.AdminCategories),
-        _cache.RemoveAsync(NavigationCacheKeys.AdminSubCategories),
-        _cache.RemoveAsync(NavigationCacheKeys.UserCategories),
-        _cache.RemoveAsync(NavigationCacheKeys.UserSubCategories),
-        _cache.RemoveAsync(NavigationCacheKeys.AnonymousCategories),
-        _cache.RemoveAsync(NavigationCacheKeys.AnonymousSubCategories));
 
     #region Profile
 
@@ -537,7 +528,7 @@ public class ManagementController : Controller
             }, HttpContext.RequestAborted);
             if (!createCatResult.Success)
                 return Json(new { result = false, error = _localizer["Input is invalid"].Value });
-            await InvalidateNavigationCacheAsync();
+            await _cache.InvalidateNavigationMenuCacheAsync();
             return Json(new { result = true, message = _localizer["Successfully created the category"].Value });
         }
         catch (Exception ex)
@@ -573,7 +564,7 @@ public class ManagementController : Controller
             }, HttpContext.RequestAborted);
             if (!createSubCatResult.Success)
                 return Json(new { result = false, error = _localizer["Input is invalid"].Value });
-            await InvalidateNavigationCacheAsync();
+            await _cache.InvalidateNavigationMenuCacheAsync();
             return Json(new { result = true, message = _localizer["Successfully created the subCategory"].Value });
         }
         catch (Exception ex)
@@ -742,7 +733,7 @@ public class ManagementController : Controller
             }, HttpContext.RequestAborted);
             if (!updateCatResult.Success)
                 return Json(new { result = false, error = _localizer["Input is invalid"].Value });
-            await InvalidateNavigationCacheAsync();
+            await _cache.InvalidateNavigationMenuCacheAsync();
             return Json(new { result = true, message = _localizer["Successfully updated the category"].Value });
         }
         catch (Exception ex)
@@ -779,7 +770,7 @@ public class ManagementController : Controller
             }, HttpContext.RequestAborted);
             if (!updateSubCatResult.Success)
                 return Json(new { result = false, error = _localizer["Input is invalid"].Value });
-            await InvalidateNavigationCacheAsync();
+            await _cache.InvalidateNavigationMenuCacheAsync();
             return Json(new { result = true, message = _localizer["Successfully updated the subCategory"].Value });
         }
         catch (Exception ex)
@@ -820,7 +811,7 @@ public class ManagementController : Controller
             }, HttpContext.RequestAborted);
             if (!deleteCatResult.Success)
                 return Json(new { result = false, error = _localizer["Input is invalid"].Value });
-            await InvalidateNavigationCacheAsync();
+            await _cache.InvalidateNavigationMenuCacheAsync();
             return Json(new { result = true, message = _localizer["Successfully deleted the category"].Value });
         }
         catch (Exception ex)
@@ -858,7 +849,7 @@ public class ManagementController : Controller
 
             if (!deleteSubCatResult.Success)
                 return Json(new { result = false, error = _localizer["Input is invalid"].Value });
-            await InvalidateNavigationCacheAsync();
+            await _cache.InvalidateNavigationMenuCacheAsync();
             return Json(new { result = true, message = _localizer["Successfully deleted the subCategory"].Value });
         }
         catch (Exception ex)

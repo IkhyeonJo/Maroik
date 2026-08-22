@@ -11,7 +11,6 @@ using Maroik.Website.Mappings;
 using Maroik.Website.Models.ViewModels.Calendar;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Localization;
-using Microsoft.AspNetCore.StaticFiles;
 using Microsoft.Extensions.Options;
 using Newtonsoft.Json;
 
@@ -23,10 +22,6 @@ namespace Maroik.Website.Controllers;
 /// </summary>
 public class CalendarController : Controller
 {
-    // Its constructor builds a ~400-entry default extension-to-MIME-type map; instantiating it
-    // per request is wasted work, and the type is documented as safe for concurrent reads.
-    private static readonly FileExtensionContentTypeProvider _contentTypeProvider = new();
-
     private readonly IRsaService _rsa;
     private readonly IHtmlLocalizer<CalendarController> _localizer;
     private readonly ILogger<CalendarController> _logger;
@@ -408,41 +403,12 @@ public class CalendarController : Controller
             AccountResponse loggedInAccount = _sessionService.GetAccount()!;
             List<CalendarResponse> calendars = await _calendarService.GetCalendarsAsync(loggedInAccount.Email!, HttpContext.RequestAborted);
 
-            CalendarEventResponse? tempCalendarEvent = await _calendarService.GetCalendarEventAsync(id, HttpContext.RequestAborted);
+            CalendarEventOutputViewModel? calendarEvent = await _calendarService.GetCalendarEventDetailViewModelAsync(
+                calendars, loggedInAccount.TimeZoneIanaId ?? "UTC", id, HttpContext.RequestAborted);
 
-            if (tempCalendarEvent is not { Id: > 0 })
-                return Json(new { result = false, error = _localizer["Input is invalid"].Value });
-
-            CalendarResponse tempCalendar = calendars.FirstOrDefault(x => x.Id == tempCalendarEvent.CalendarId) ?? new CalendarResponse();
-            if (!(tempCalendar.Id > 0))
-                return Json(new { result = false, error = _localizer["Input is invalid"].Value });
-
-            CalendarEventOutputViewModel calendarEvent = tempCalendarEvent.ToDisplayViewModel(
-                loggedInAccount.TimeZoneIanaId ?? "UTC", null, forGrid: false);
-
-            (calendarEvent.Description, _) = await _calendarService.PrepareHtmlForDisplayAsync(tempCalendarEvent.Description ?? "", HttpContext.RequestAborted);
-            calendarEvent.Location = tempCalendarEvent.Location;
-            calendarEvent.Status = tempCalendarEvent.Status;
-            calendarEvent.CalendarEventAttachedFile = await _calendarService.GetCalendarEventAttachedFileAsync(tempCalendarEvent.Id, HttpContext.RequestAborted);
-
-            if (!string.IsNullOrEmpty(calendarEvent.CalendarEventAttachedFile?.Path))
-            {
-                byte[]? fileData = await _calendarService.DownloadFileAsync(calendarEvent.CalendarEventAttachedFile.Path, HttpContext.RequestAborted);
-                if (fileData != null)
-                {
-                    if (!_contentTypeProvider.TryGetContentType(calendarEvent.CalendarEventAttachedFile.Path, out string? contentType))
-                        contentType = "application/octet-stream";
-                    calendarEvent.CalendarEventAttachedFileBase64Data = Convert.ToBase64String(fileData);
-                    calendarEvent.CalendarEventAttachedFileContentType = contentType;
-                }
-            }
-
-            calendarEvent.Calendars =
-                [.. calendars.Select(x => new CalendarResponse { Id = x.Id, Name = x.Name }).OrderBy(x => x.Name)];
-            calendarEvent.SerializedCalendarReminders = (await _calendarService.GetCalendarEventRemindersAsync(tempCalendarEvent.Id, HttpContext.RequestAborted)).ToSerializedReminders();
-            calendarEvent.HtmlColorCode = calendars.FirstOrDefault(x => x.Id == tempCalendarEvent.CalendarId)?.HtmlColorCode;
-
-            return Json(new { result = true, calendarEvent });
+            return calendarEvent == null
+                ? Json(new { result = false, error = _localizer["Input is invalid"].Value })
+                : Json(new { result = true, calendarEvent });
         }
         catch (Exception ex)
         {
@@ -491,41 +457,12 @@ public class CalendarController : Controller
                 ];
             }
 
-            CalendarEventResponse? tempCalendarEvent = await _calendarService.GetCalendarEventAsync(id, HttpContext.RequestAborted);
+            CalendarEventOutputViewModel? calendarEvent = await _calendarService.GetCalendarEventDetailViewModelAsync(
+                calendars, loggedInAccount.TimeZoneIanaId ?? "UTC", id, HttpContext.RequestAborted);
 
-            if (tempCalendarEvent is not { Id: > 0 })
-                return Json(new { result = false, error = _localizer["Input is invalid"].Value });
-
-            CalendarResponse tempCalendar = calendars.FirstOrDefault(x => x.Id == tempCalendarEvent.CalendarId) ?? new CalendarResponse();
-            if (!(tempCalendar.Id > 0))
-                return Json(new { result = false, error = _localizer["Input is invalid"].Value });
-
-            CalendarEventOutputViewModel calendarEvent = tempCalendarEvent.ToDisplayViewModel(
-                loggedInAccount.TimeZoneIanaId ?? "UTC", null, forGrid: false);
-
-            (calendarEvent.Description, _) = await _calendarService.PrepareHtmlForDisplayAsync(tempCalendarEvent.Description ?? "", HttpContext.RequestAborted);
-            calendarEvent.Location = tempCalendarEvent.Location;
-            calendarEvent.Status = tempCalendarEvent.Status;
-            calendarEvent.CalendarEventAttachedFile = await _calendarService.GetCalendarEventAttachedFileAsync(tempCalendarEvent.Id, HttpContext.RequestAborted);
-
-            if (!string.IsNullOrEmpty(calendarEvent.CalendarEventAttachedFile?.Path))
-            {
-                byte[]? fileData = await _calendarService.DownloadFileAsync(calendarEvent.CalendarEventAttachedFile.Path, HttpContext.RequestAborted);
-                if (fileData != null)
-                {
-                    if (!_contentTypeProvider.TryGetContentType(calendarEvent.CalendarEventAttachedFile.Path, out string? contentType))
-                        contentType = "application/octet-stream";
-                    calendarEvent.CalendarEventAttachedFileBase64Data = Convert.ToBase64String(fileData);
-                    calendarEvent.CalendarEventAttachedFileContentType = contentType;
-                }
-            }
-
-            calendarEvent.Calendars =
-                [.. calendars.Select(x => new CalendarResponse { Id = x.Id, Name = x.Name }).OrderBy(x => x.Name)];
-            calendarEvent.SerializedCalendarReminders = (await _calendarService.GetCalendarEventRemindersAsync(tempCalendarEvent.Id, HttpContext.RequestAborted)).ToSerializedReminders();
-            calendarEvent.HtmlColorCode = calendars.FirstOrDefault(x => x.Id == tempCalendarEvent.CalendarId)?.HtmlColorCode;
-
-            return Json(new { result = true, calendarEvent });
+            return calendarEvent == null
+                ? Json(new { result = false, error = _localizer["Input is invalid"].Value })
+                : Json(new { result = true, calendarEvent });
         }
         catch (Exception ex)
         {
