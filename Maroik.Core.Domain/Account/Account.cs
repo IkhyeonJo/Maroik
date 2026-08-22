@@ -190,14 +190,13 @@ public sealed class Account : AggregateRoot<string>
     /// <summary>
     /// Stores a password-reset token
     /// so an email can be dispatched by the application layer.
+    /// Available even when the account is locked, since resetting the password
+    /// is the intended way for a user to recover from a login lockout.
     /// </summary>
     public ErrorOr<Success> RequestPasswordReset(string resetToken)
     {
         if (!EmailConfirmed)
             return Error.Failure("Account.NotConfirmed", "Email must be confirmed before resetting the password.");
-
-        if (Locked)
-            return Error.Failure("Account.Locked", "Password reset is not available for a locked account.");
 
         ResetPasswordToken = resetToken;
         Updated = DateTime.UtcNow;

@@ -500,6 +500,25 @@ public class AccountServiceTests
             It.Is<Account>(a => a.ResetPasswordToken != null), It.IsAny<CancellationToken>()), Times.Once);
     }
 
+    /// <summary>Verifies that <c>ForgotPasswordAsync</c> still sends a reset email when the account is locked,
+    /// since resetting the password is the intended way to recover from a login lockout.</summary>
+    [Fact]
+    public async Task ForgotPasswordAsync_SendsResetEmail_WhenAccountIsLocked()
+    {
+        var account = ActiveAccount(locked: true);
+        _accountRepo.Setup(r => r.FindByEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(account);
+        _accountRepo.Setup(r => r.UpdateEntityAsync(It.IsAny<Account>(), It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
+        _rsa.Setup(r => r.Encrypt(It.IsAny<string>())).Returns("enc-reset-token");
+        SetupMailSuccess();
+        var sut = CreateSut();
+
+        bool result = await sut.ForgotPasswordAsync(account.Email.Value, "s", "t", "c0", "c1", TestContext.Current.CancellationToken);
+
+        Assert.True(result);
+        _accountRepo.Verify(r => r.UpdateEntityAsync(
+            It.Is<Account>(a => a.ResetPasswordToken != null), It.IsAny<CancellationToken>()), Times.Once);
+    }
+
     // -- ValidateResetPasswordTokenAsync -------------------------------------
 
     /// <summary>Verifies that <c>ValidateResetPasswordTokenAsync</c> returns fail to reset when decryption fails.</summary>

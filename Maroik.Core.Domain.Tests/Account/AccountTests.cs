@@ -149,9 +149,9 @@ public class AccountTests
         Assert.Equal("Account.NotConfirmed", result.FirstError.Code);
     }
 
-    /// <summary>Request password reset returns error, when locked.</summary>
+    /// <summary>Request password reset succeeds, when locked, since it is the way a locked account is recovered.</summary>
     [Fact]
-    public void RequestPasswordReset_ReturnsError_WhenLocked()
+    public void RequestPasswordReset_Succeeds_WhenLocked()
     {
         var account = ValidAccount(registrationToken: "tok");
         account.ConfirmEmail("tok");
@@ -159,8 +159,8 @@ public class AccountTests
 
         var result = account.RequestPasswordReset("reset-token");
 
-        Assert.True(result.IsError);
-        Assert.Equal("Account.Locked", result.FirstError.Code);
+        Assert.False(result.IsError);
+        Assert.Equal("reset-token", account.ResetPasswordToken);
     }
 
     // -- ResetPassword --------------------------------------------------------
