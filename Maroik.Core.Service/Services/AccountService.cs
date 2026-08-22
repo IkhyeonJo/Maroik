@@ -381,6 +381,7 @@ public class AccountService : IAccountService
                 return true;
             }
 
+            // RequestPasswordReset only errors when EmailConfirmed is false, already ruled out above.
             var resetResult = account.RequestPasswordReset(resetPasswordToken);
             if (!resetResult.IsError)
             {
