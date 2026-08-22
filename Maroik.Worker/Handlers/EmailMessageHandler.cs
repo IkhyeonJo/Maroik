@@ -1,4 +1,3 @@
-using Maroik.Core.Domain.Account;
 using Maroik.Core.Contract.Misc.Enums;
 using Maroik.Core.Contract.Misc.Helpers;
 using Maroik.Core.Contract.Interfaces;
@@ -13,19 +12,19 @@ namespace Maroik.Worker.Handlers;
 public sealed class EmailMessageHandler : IEmailMessageHandler
 {
     private readonly IMailClient _mailClient;
-    private readonly IAccountRepository _accountRepository;
+    private readonly IAccountMailStatusService _accountMailStatusService;
     private readonly IOptions<ServerSetting> _settings;
     private readonly ILogger<EmailMessageHandler> _logger;
 
     /// <summary>Initializes a new instance of <see cref="EmailMessageHandler"/> with the supplied dependencies.</summary>
     public EmailMessageHandler(
         IMailClient mailClient,
-        IAccountRepository accountRepository,
+        IAccountMailStatusService accountMailStatusService,
         IOptions<ServerSetting> settings,
         ILogger<EmailMessageHandler> logger)
     {
         _mailClient = mailClient;
-        _accountRepository = accountRepository;
+        _accountMailStatusService = accountMailStatusService;
         _settings = settings;
         _logger = logger;
     }
@@ -58,11 +57,6 @@ public sealed class EmailMessageHandler : IEmailMessageHandler
 
         _logger.LogWarning("SMTP send failed for {Email}: {Result}", message.ToEmail, result);
 
-        Account? account = await _accountRepository.FindByEmailAsync(message.ToEmail, ct);
-        if (account == null)
-            return;
-
-        account.SetMessage(EnumHelper.GetDescription(AccountMessage.FailToMailSent));
-        await _accountRepository.UpdateEntityAsync(account, ct);
+        await _accountMailStatusService.MarkMailSendFailedAsync(message.ToEmail, ct);
     }
 }
