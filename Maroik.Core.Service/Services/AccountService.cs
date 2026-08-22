@@ -167,9 +167,18 @@ public class AccountService : IAccountService
             }
             catch (Exception e)
             {
-                // A unique constraint violation means the nickname is already taken.
                 if (e.IsPostgresUniqueViolation())
-                    return RegisterResult.Fail($"'{newAccount.Nickname}' is a Nickname that already exists. Please enter another Nickname.");
+                {
+                    // The prior FindByEmailAsync check above is a read-then-write race: two concurrent
+                    // registrations for the same not-yet-registered email can both pass it. Email is the
+                    // actual primary key (Account_pk), while Nickname has its own separate unique
+                    // constraint (Account_Nickname_unique) — report whichever one actually collided
+                    // instead of always blaming the nickname.
+                    bool isNicknameConflict = e.InnerException?.Message.Contains("Account_Nickname_unique", StringComparison.Ordinal) ?? false;
+                    return isNicknameConflict
+                        ? RegisterResult.Fail($"'{newAccount.Nickname}' is a Nickname that already exists. Please enter another Nickname.")
+                        : RegisterResult.Fail($"'{newAccount.Email}' is an Email that already exists.");
+                }
                 _logger.LogError(e, "Failed to create account for {Email}", newAccount.Email);
                 return RegisterResult.Fail("Error occurred while processing about account registration");
             }

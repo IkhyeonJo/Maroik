@@ -15,12 +15,10 @@
   <ItemGroup>
     <PackageReference Include="AngleSharp" />
     <PackageReference Include="Serilog.AspNetCore" />
-    <PackageReference Include="Mapster" />
     <PackageReference Include="DocumentFormat.OpenXml" />
     <PackageReference Include="HtmlAgilityPack" />
     <PackageReference Include="HtmlSanitizer" />
     <PackageReference Include="Magick.NET-Q8-AnyCPU" />
-    <PackageReference Include="Mapster.DependencyInjection" />
     <PackageReference Include="Microsoft.AspNetCore.Mvc.Razor.RuntimeCompilation" />
     <PackageReference Include="Microsoft.AspNetCore.DataProtection.StackExchangeRedis" />
     <PackageReference Include="Microsoft.Extensions.Caching.StackExchangeRedis" />

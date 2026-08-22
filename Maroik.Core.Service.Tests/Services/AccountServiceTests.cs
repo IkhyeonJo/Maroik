@@ -317,9 +317,9 @@ public class AccountServiceTests
     {
         _accountRepo.Setup(r => r.FindByEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync((Account?)null);
         _passwordService.Setup(p => p.HashPassword(It.IsAny<string>())).Returns("$2a$13$hashed");
-        // Simulate unique constraint violation (Npgsql error code 23505)
+        // Simulate a unique constraint violation (Npgsql error code 23505) on the Nickname constraint specifically.
         _accountRepo.Setup(r => r.CreateAsync(It.IsAny<Account>(), It.IsAny<CancellationToken>()))
-            .ThrowsAsync(new Exception("duplicate key", new Exception("23505 unique")));
+            .ThrowsAsync(new Exception("duplicate key", new Exception("23505 unique constraint \"Account_Nickname_unique\"")));
         var sut = CreateSut();
 
         var request = new AccountRequest
@@ -334,6 +334,37 @@ public class AccountServiceTests
 
         Assert.False(result.Success);
         Assert.Contains("TakenNick", result.ErrorKey);
+    }
+
+    /// <summary>
+    /// Regression test: two concurrent registrations for the same not-yet-registered email can both
+    /// pass the prior <c>FindByEmailAsync</c> check and race on <c>CreateAsync</c>. The loser hits the
+    /// Email primary-key violation (<c>Account_pk</c>), not the Nickname constraint, and must be told
+    /// the email is taken — not incorrectly blamed on the nickname.
+    /// </summary>
+    [Fact]
+    public async Task RegisterAsync_ReturnsEmailAlreadyExists_WhenEmailPrimaryKeyViolationRaces()
+    {
+        _accountRepo.Setup(r => r.FindByEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync((Account?)null);
+        _passwordService.Setup(p => p.HashPassword(It.IsAny<string>())).Returns("$2a$13$hashed");
+        // Simulate a unique constraint violation on the Email primary key, not the Nickname constraint.
+        _accountRepo.Setup(r => r.CreateAsync(It.IsAny<Account>(), It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new Exception("duplicate key", new Exception("23505 unique constraint \"Account_pk\"")));
+        var sut = CreateSut();
+
+        var request = new AccountRequest
+        {
+            Email = "raced@example.com",
+            HashedPassword = "plain-password",
+            Nickname = "SomeNick",
+            RegistrationToken = GuidToken.Generate()
+        };
+
+        RegisterResult result = await sut.RegisterAsync(request, "subject", "title", "c0", "c1", TestContext.Current.CancellationToken);
+
+        Assert.False(result.Success);
+        Assert.Contains("raced@example.com", result.ErrorKey);
+        Assert.DoesNotContain("Nickname", result.ErrorKey);
     }
 
     /// <summary>Verifies that <c>RegisterAsync</c> resends confirmation email when account exists but not confirmed.</summary>

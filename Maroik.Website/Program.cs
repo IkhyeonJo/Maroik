@@ -4,7 +4,6 @@
 // sets up hot-swap TLS certificate polling for Docker deployments, and builds the ASP.NET Core pipeline.
 
 using System.Globalization;
-using Mapster;
 using Maroik.Core.Client.Extensions;
 using Maroik.Core.Contract.Misc.Enums;
 using Maroik.Core.Contract.Misc.Settings;
@@ -89,16 +88,6 @@ try
     #region AddDbContext
 
     builder.Services.AddRepositoryContext(builder.Configuration);
-
-    #endregion
-
-    #region Mapster
-
-    var globalConfig = TypeAdapterConfig.GlobalSettings;
-    globalConfig.Scan(
-        typeof(Maroik.Website.Mappings.MappingConfig).Assembly // Website mappings (DTO <-> ViewModel)
-    );
-    builder.Services.AddSingleton(globalConfig);
 
     #endregion
 
