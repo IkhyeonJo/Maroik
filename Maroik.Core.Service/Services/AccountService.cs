@@ -321,6 +321,9 @@ public class AccountService : IAccountService
         if (!GuidToken.IsTokenAlive(rawToken))
             return new ConfirmEmailResult { InvalidToken = true, AccountCreated = false };
 
+        // account was already looked up by RegistrationToken == rawToken above, so the
+        // token check inside ConfirmEmail is redundant here; kept because the domain
+        // method enforces its own invariant regardless of how the caller found the account.
         var confirmResult = account.ConfirmEmail(rawToken);
 
         if (confirmResult.IsError)
