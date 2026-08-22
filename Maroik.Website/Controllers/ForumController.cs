@@ -359,7 +359,7 @@ public class ForumController : Controller
                 if (page < 1) page = 1;
 
                 var allFreeBoards = (await _boardService.GetBoardsAsync(EnumHelper.GetDescription(BoardType.FreeForum), ct)).ToList();
-                var freeBoards = allFreeBoards.Where(m => m is { Deleted: false, Noticed: false }).OrderByDescending(a => a.Id).ToList();
+                var freeBoards = allFreeBoards.Where(m => !m.Noticed).OrderByDescending(a => a.Id).ToList();
 
                 switch (searchType)
                 {
@@ -402,7 +402,7 @@ public class ForumController : Controller
                 FreeForumOutputViewModel freeForumOutputViewModel = new()
                 {
                     NoticeBoards =
-                        allFreeBoards.Where(m => m is { Deleted: false, Noticed: true })
+                        allFreeBoards.Where(m => m.Noticed)
                             .OrderByDescending(a => a.Id),
                     Method = "list",
                     Pager = new Pager(freeBoards.Count, page, pageSize)

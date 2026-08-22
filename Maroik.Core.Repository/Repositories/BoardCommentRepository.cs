@@ -53,9 +53,9 @@ public class BoardCommentRepository(ApplicationDbContext context)
 
     /// <inheritdoc />
     public Task<List<BoardComment>> GetByBoardIdOrderedAsync(long boardId, CancellationToken ct = default)
-        => QueryAsync(e => e.BoardId == boardId, q => q.OrderBy(e => e.Order), ct);
+        => QueryAsync(e => e.BoardId == boardId && !e.Deleted, q => q.OrderBy(e => e.Order), ct);
 
     /// <inheritdoc />
     public Task<BoardComment?> FindByIdAsync(long id, CancellationToken ct = default)
-        => QueryFirstAsync(e => e.Id == id, ct);
+        => QueryFirstAsync(e => e.Id == id && !e.Deleted, ct);
 }

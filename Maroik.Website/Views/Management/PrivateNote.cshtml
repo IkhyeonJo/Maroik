@@ -128,7 +128,7 @@
                     </div>
 
                     <div class="card-footer card-comments">
-                        @foreach (var comment in Model.DetailBoardComments.Where(comment => !comment.Deleted))
+                        @foreach (var comment in Model.DetailBoardComments)
                         {
                             if (Model.BoardOutputViewModel.Writer == comment.Writer) /*Change background color if the commenter is the post author*/
                             {

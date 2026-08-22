@@ -355,7 +355,12 @@ public class CalendarService : ICalendarService
             if (attachedFile != null)
             {
                 string filePath = BuildEventFilePath(roleIndex, eventId, attachedFile.FileName);
-                await _fileClient.UploadAsync(attachedFile.Bytes, attachedFile.ContentType, filePath, _settings.Value.FileStorageBaseUrl ?? "", ct);
+                bool uploaded = await _fileClient.UploadAsync(attachedFile.Bytes, attachedFile.ContentType, filePath, _settings.Value.FileStorageBaseUrl ?? "", ct);
+                if (!uploaded)
+                {
+                    await _unitOfWork.RollbackAsync(ct);
+                    return ServiceResult.Fail("Input is invalid");
+                }
                 var fileResult = CalendarEventAttachedFile.Create(eventId, attachedFile.Size,
                     Path.GetFileNameWithoutExtension(attachedFile.FileName),
                     Path.GetExtension(attachedFile.FileName),
@@ -441,7 +446,12 @@ public class CalendarService : ICalendarService
             if (attachedFile != null)
             {
                 string filePath = BuildEventFilePath(roleIndex, existing.Id, attachedFile.FileName);
-                await _fileClient.UploadAsync(attachedFile.Bytes, attachedFile.ContentType, filePath, _settings.Value.FileStorageBaseUrl ?? "", ct);
+                bool uploaded = await _fileClient.UploadAsync(attachedFile.Bytes, attachedFile.ContentType, filePath, _settings.Value.FileStorageBaseUrl ?? "", ct);
+                if (!uploaded)
+                {
+                    await _unitOfWork.RollbackAsync(ct);
+                    return ServiceResult.Fail("Input is invalid");
+                }
                 var fileResult = CalendarEventAttachedFile.Create(existing.Id, attachedFile.Size,
                     Path.GetFileNameWithoutExtension(attachedFile.FileName),
                     Path.GetExtension(attachedFile.FileName),

@@ -77,6 +77,20 @@ public class BoardRepositoryTests : IDisposable
         Assert.Empty(result);
     }
 
+    /// <summary>Verifies that <c>GetOneTypeBoardsAsync</c> excludes soft-deleted boards.</summary>
+    [Fact]
+    public async Task GetOneTypeBoardsAsync_ExcludesDeletedBoards()
+    {
+        await SeedAsync(
+            MakeBoard(nameof(BoardType.FreeForum), "Visible"),
+            MakeBoard(nameof(BoardType.FreeForum), "Removed", deleted: true));
+
+        IEnumerable<Board> result = await _sut.GetByTypeAsync(nameof(BoardType.FreeForum), TestContext.Current.CancellationToken);
+
+        Assert.Single(result);
+        Assert.Equal("Visible", result.Single().Title);
+    }
+
     // -- GetBoardByIdAsync ----------------------------------------------------
 
     /// <summary>Verifies that <c>GetBoardByIdAsync</c> returns board when found and not deleted.</summary>

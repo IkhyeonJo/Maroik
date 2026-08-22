@@ -112,6 +112,21 @@ public class BoardCommentRepositoryTests : IDisposable
         Assert.Empty(result);
     }
 
+    /// <summary>Verifies that <c>GetOneBoardCommentsAsync</c> excludes soft-deleted comments.</summary>
+    [Fact]
+    public async Task GetOneBoardCommentsAsync_ExcludesDeletedComments()
+    {
+        long boardId = await SeedBoardAsync();
+        await SeedAsync(
+            MakeComment(boardId, 1, writer: "Visible"),
+            MakeComment(boardId, 2, writer: "Removed", deleted: true));
+
+        IEnumerable<BoardComment> result = await _sut.GetByBoardIdOrderedAsync(boardId, TestContext.Current.CancellationToken);
+
+        Assert.Single(result);
+        Assert.Equal("Visible", result.Single().Writer);
+    }
+
     // -- GetBoardCommentAsync -------------------------------------------------
 
     /// <summary>Verifies that <c>GetBoardCommentAsync</c> returns comment when found.</summary>
@@ -133,6 +148,19 @@ public class BoardCommentRepositoryTests : IDisposable
     public async Task GetBoardCommentAsync_ReturnsNull_WhenNotFound()
     {
         BoardComment? result = await _sut.FindByIdAsync(99999L, TestContext.Current.CancellationToken);
+
+        Assert.Null(result);
+    }
+
+    /// <summary>Verifies that <c>GetBoardCommentAsync</c> returns null for a soft-deleted comment.</summary>
+    [Fact]
+    public async Task GetBoardCommentAsync_ReturnsNull_WhenCommentIsDeleted()
+    {
+        long boardId = await SeedBoardAsync();
+        await SeedAsync(MakeComment(boardId, 1, deleted: true));
+        EfBoardComment comment = await _context.BoardComments.FirstAsync(TestContext.Current.CancellationToken);
+
+        BoardComment? result = await _sut.FindByIdAsync(comment.Id, TestContext.Current.CancellationToken);
 
         Assert.Null(result);
     }

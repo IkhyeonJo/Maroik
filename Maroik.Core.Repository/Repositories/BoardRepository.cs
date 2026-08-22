@@ -54,7 +54,7 @@ public class BoardRepository(ApplicationDbContext context)
 
     /// <inheritdoc />
     public Task<List<Board>> GetByTypeAsync(string type, CancellationToken ct = default)
-        => QueryAsync(e => e.Type == type, ct: ct);
+        => QueryAsync(e => e.Type == type && !e.Deleted, ct: ct);
 
     /// <inheritdoc />
     public Task<Board?> FindActiveByIdAsync(long id, CancellationToken ct = default)

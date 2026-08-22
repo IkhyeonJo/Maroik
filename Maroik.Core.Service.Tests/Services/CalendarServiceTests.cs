@@ -320,6 +320,47 @@ public class CalendarServiceTests
         _unitOfWork.Verify(u => u.CommitAsync(It.IsAny<CancellationToken>()), Times.Once);
     }
 
+    /// <summary>Verifies that <c>CreateCalendarEventAsync</c> creates the attachment record when the file upload succeeds.</summary>
+    [Fact]
+    public async Task CreateCalendarEventAsync_CreatesAttachment_WhenFileUploadSucceeds()
+    {
+        _calendarRepo.Setup(r => r.GetByAccountEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync([MakeCalendar(id: 1)]);
+        _eventRepo.Setup(r => r.CreateCalendarEventAsync(It.IsAny<CalendarEvent>(), It.IsAny<CancellationToken>())).ReturnsAsync(1L);
+        _fileClient.Setup(f => f.UploadAsync(It.IsAny<byte[]>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(true);
+        var sut = CreateSut();
+        var attachedFile = new AttachedFileDto { Bytes = [1, 2, 3], ContentType = "application/zip", FileName = "a.zip", Size = 3 };
+
+        ServiceResult result = await sut.CreateCalendarEventAsync(
+            new CalendarEventRequest { CalendarId = 1, Title = "Meeting" }, "user@example.com", "1", [], attachedFile, TestContext.Current.CancellationToken);
+
+        Assert.True(result.Success);
+        _eventFileRepo.Verify(r => r.CreateAsync(It.IsAny<CalendarEventAttachedFile>(), It.IsAny<CancellationToken>()), Times.Once);
+        _unitOfWork.Verify(u => u.CommitAsync(It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    /// <summary>Verifies that <c>CreateCalendarEventAsync</c> rolls back and fails, rather than creating a dangling record, when the file upload fails.</summary>
+    [Fact]
+    public async Task CreateCalendarEventAsync_RollsBackAndFails_WhenFileUploadFails()
+    {
+        _calendarRepo.Setup(r => r.GetByAccountEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync([MakeCalendar(id: 1)]);
+        _eventRepo.Setup(r => r.CreateCalendarEventAsync(It.IsAny<CalendarEvent>(), It.IsAny<CancellationToken>())).ReturnsAsync(1L);
+        _fileClient.Setup(f => f.UploadAsync(It.IsAny<byte[]>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(false);
+        var sut = CreateSut();
+        var attachedFile = new AttachedFileDto { Bytes = [1, 2, 3], ContentType = "application/zip", FileName = "a.zip", Size = 3 };
+
+        ServiceResult result = await sut.CreateCalendarEventAsync(
+            new CalendarEventRequest { CalendarId = 1, Title = "Meeting" }, "user@example.com", "1", [], attachedFile, TestContext.Current.CancellationToken);
+
+        Assert.False(result.Success);
+        _eventFileRepo.Verify(r => r.CreateAsync(It.IsAny<CalendarEventAttachedFile>(), It.IsAny<CancellationToken>()), Times.Never);
+        _unitOfWork.Verify(u => u.RollbackAsync(It.IsAny<CancellationToken>()), Times.Once);
+        _unitOfWork.Verify(u => u.CommitAsync(It.IsAny<CancellationToken>()), Times.Never);
+    }
+
     /// <summary>Verifies that <c>CreateCalendarEventAsync</c> creates reminders when provided.</summary>
     [Fact]
     public async Task CreateCalendarEventAsync_CreatesReminders_WhenProvided()
@@ -428,6 +469,55 @@ public class CalendarServiceTests
 
         Assert.True(result.Success);
         _unitOfWork.Verify(u => u.CommitAsync(It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    /// <summary>Verifies that <c>UpdateCalendarEventAsync</c> creates the attachment record when the file upload succeeds.</summary>
+    [Fact]
+    public async Task UpdateCalendarEventAsync_CreatesAttachment_WhenFileUploadSucceeds()
+    {
+        _calendarRepo.Setup(r => r.GetByAccountEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync([MakeCalendar(id: 1)]);
+        _eventRepo.Setup(r => r.FindByIdAsync(It.IsAny<long>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(MakeCalendarEvent(id: 1, calendarId: 1, title: "Old"));
+        _eventRepo.Setup(r => r.UpdateEntityAsync(It.IsAny<CalendarEvent>(), It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
+        _eventFileRepo.Setup(r => r.DeleteByCalendarEventIdAsync(It.IsAny<long>(), It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
+        _reminderRepo.Setup(r => r.DeleteByCalendarEventIdAsync(It.IsAny<long>(), It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
+        _fileClient.Setup(f => f.UploadAsync(It.IsAny<byte[]>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(true);
+        var sut = CreateSut();
+        var attachedFile = new AttachedFileDto { Bytes = [1, 2, 3], ContentType = "application/zip", FileName = "a.zip", Size = 3 };
+
+        ServiceResult result = await sut.UpdateCalendarEventAsync(
+            new CalendarEventRequest { Id = 1, CalendarId = 1, Title = "New Title" }, "user@example.com", "1", [], attachedFile, TestContext.Current.CancellationToken);
+
+        Assert.True(result.Success);
+        _eventFileRepo.Verify(r => r.CreateAsync(It.IsAny<CalendarEventAttachedFile>(), It.IsAny<CancellationToken>()), Times.Once);
+        _unitOfWork.Verify(u => u.CommitAsync(It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    /// <summary>Verifies that <c>UpdateCalendarEventAsync</c> rolls back and fails, rather than creating a dangling record, when the file upload fails.</summary>
+    [Fact]
+    public async Task UpdateCalendarEventAsync_RollsBackAndFails_WhenFileUploadFails()
+    {
+        _calendarRepo.Setup(r => r.GetByAccountEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync([MakeCalendar(id: 1)]);
+        _eventRepo.Setup(r => r.FindByIdAsync(It.IsAny<long>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(MakeCalendarEvent(id: 1, calendarId: 1, title: "Old"));
+        _eventRepo.Setup(r => r.UpdateEntityAsync(It.IsAny<CalendarEvent>(), It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
+        _eventFileRepo.Setup(r => r.DeleteByCalendarEventIdAsync(It.IsAny<long>(), It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
+        _reminderRepo.Setup(r => r.DeleteByCalendarEventIdAsync(It.IsAny<long>(), It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
+        _fileClient.Setup(f => f.UploadAsync(It.IsAny<byte[]>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(false);
+        var sut = CreateSut();
+        var attachedFile = new AttachedFileDto { Bytes = [1, 2, 3], ContentType = "application/zip", FileName = "a.zip", Size = 3 };
+
+        ServiceResult result = await sut.UpdateCalendarEventAsync(
+            new CalendarEventRequest { Id = 1, CalendarId = 1, Title = "New Title" }, "user@example.com", "1", [], attachedFile, TestContext.Current.CancellationToken);
+
+        Assert.False(result.Success);
+        _eventFileRepo.Verify(r => r.CreateAsync(It.IsAny<CalendarEventAttachedFile>(), It.IsAny<CancellationToken>()), Times.Never);
+        _unitOfWork.Verify(u => u.RollbackAsync(It.IsAny<CancellationToken>()), Times.Once);
+        _unitOfWork.Verify(u => u.CommitAsync(It.IsAny<CancellationToken>()), Times.Never);
     }
 
     /// <summary>Verifies that <c>UpdateCalendarEventAsync</c> returns fail and does not mutate when the

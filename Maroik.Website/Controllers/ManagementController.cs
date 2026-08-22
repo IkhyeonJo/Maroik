@@ -1233,7 +1233,7 @@ public class ManagementController : Controller
                 privateNoteBoards =
                 [
                     .. privateNoteBoards.Where(m => m.Writer == loggedInAccount.Nickname)
-                        .Where(m => m is { Deleted: false, Noticed: false }).OrderByDescending(a => a.Id)
+                        .Where(m => !m.Noticed).OrderByDescending(a => a.Id)
                 ];
 
                 #endregion
