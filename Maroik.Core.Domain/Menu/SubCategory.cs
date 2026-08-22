@@ -65,24 +65,4 @@ public sealed class SubCategory : Entity<long>
 
         return new SubCategory(id, categoryId, name, displayName, iconPath, action, role, order);
     }
-
-/*
-    /// <summary>Updates the mutable fields of this sub-category.</summary>
-    public ErrorOr<SubCategory> Update(
-        long categoryId, string? name, string? displayName,
-        string? iconPath, string? action, string? role, long order)
-    {
-        if (string.IsNullOrWhiteSpace(name))
-            return Error.Validation("SubCategory.NameEmpty", "Sub-category name cannot be empty.");
-
-        CategoryId = categoryId;
-        Name = name;
-        DisplayName = displayName;
-        IconPath = iconPath;
-        Action = action;
-        Role = role;
-        Order = order;
-        return this;
-    }
-*/
 }

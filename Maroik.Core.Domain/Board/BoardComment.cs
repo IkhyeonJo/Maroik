@@ -6,7 +6,7 @@ namespace Maroik.Core.Domain.Board;
 /// <summary>
 /// Entity representing a comment on a <see cref="Board"/> post.
 /// Owned by the <see cref="Board"/> aggregate root.
-/// Supports soft-deletion so deleted comments show a placeholder instead of disappearing.
+/// Supports soft-deletion; deleted comments are excluded entirely from reads rather than shown as a placeholder.
 /// </summary>
 public sealed class BoardComment : Entity<long>
 {

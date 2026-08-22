@@ -65,24 +65,4 @@ public sealed class Category : Entity<long>
 
         return new Category(id, name, displayName, iconPath, controller, action, role, order);
     }
-
-/*
-    /// <summary>Updates the mutable fields of this category.</summary>
-    public ErrorOr<Category> Update(
-        string? name, string? displayName, string? iconPath,
-        string? controller, string? action, string? role, long order)
-    {
-        if (string.IsNullOrWhiteSpace(name))
-            return Error.Validation("Category.NameEmpty", "Category name cannot be empty.");
-
-        Name = name;
-        DisplayName = displayName;
-        IconPath = iconPath;
-        Controller = controller;
-        Action = action;
-        Role = role;
-        Order = order;
-        return this;
-    }
-*/
 }

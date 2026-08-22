@@ -8,9 +8,10 @@ namespace Maroik.Core.Service.Services;
 
 /// <summary>
 /// Implementation of <see cref="IFixedIncomeService"/> for managing recurring income entries.
-/// Validates the <c>MaturityDate</c> format (yyyy-MM-dd) and the deposit day (1–28 to avoid
-/// month-boundary issues) before persisting. Computes <c>Noticed</c> and <c>Expired</c> flags
-/// based on the current date relative to the recurrence schedule and maturity date.
+/// Validates the <c>MaturityDate</c> format (yyyy-MM-dd) and the deposit day against the
+/// deposit month's actual maximum (28–31, per calendar month) before persisting. Computes
+/// <c>Noticed</c> and <c>Expired</c> flags based on the current date relative to the
+/// recurrence schedule and maturity date.
 /// </summary>
 public class FixedIncomeService : IFixedIncomeService
 {
