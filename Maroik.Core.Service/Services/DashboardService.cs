@@ -286,9 +286,12 @@ public class DashboardService : IDashboardService
     {
         try
         {
-            int startIndex = input.IndexOf(startMarker, StringComparison.Ordinal) + startMarker.Length;
+            int markerIndex = input.IndexOf(startMarker, StringComparison.Ordinal);
+            if (markerIndex < 0) return "";
+
+            int startIndex = markerIndex + startMarker.Length;
             int endIndex = endMarker != null ? input.IndexOf(endMarker, startIndex, StringComparison.Ordinal) : input.Length;
-            return input.Substring(startIndex, endIndex - startIndex).Trim();
+            return endIndex < 0 ? "" : input.Substring(startIndex, endIndex - startIndex).Trim();
         }
         catch { return ""; }
     }

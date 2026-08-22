@@ -48,7 +48,11 @@ public class AttachmentContentService : IAttachmentContentService
             return ServiceResult.Fail("Only zip extension allowed.");
         long maxBytes = _settings.Value.MaxAttachedFileSizeBytes;
         if (attachedFile.Size <= 0 || attachedFile.Size > maxBytes)
-            return ServiceResult.Fail($"Uploaded file size must be smaller than {maxBytes / (1024 * 1024)}MB.");
+            // Lowercase "uploaded" and the MB value must match the resx key text exactly
+            // (ForumController/ManagementController/CalendarController .resx) for this to
+            // localize instead of falling back to this raw English string — keep both in sync
+            // if MaxAttachedFileSizeBytes is ever reconfigured to a value other than 10MB.
+            return ServiceResult.Fail($"uploaded file size must be smaller than {maxBytes / (1024 * 1024)}MB.");
         return null;
     }
 

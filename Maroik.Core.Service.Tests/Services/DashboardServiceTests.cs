@@ -401,4 +401,43 @@ public class DashboardServiceTests
 
         Assert.Empty(summary.DockerContainerResult);
     }
+
+    /// <summary>
+    /// Regression test: when the docker resource file's content doesn't contain the
+    /// "Docker Resource Usage:" marker at all (e.g. the collection script's output format
+    /// changed, or it just wrote an error message), <c>ExtractSection</c> must return an empty
+    /// section instead of a garbage substring taken from near the start of the unrelated content —
+    /// a missing start marker previously still produced a non-empty slice when no end marker was
+    /// given, because the "not found" (-1) IndexOf result was silently added to the marker length
+    /// instead of being treated as "not found".
+    /// </summary>
+    [Fact]
+    public void GetServerResourceSummary_ReturnsEmptyDockerContainerList_WhenStartMarkerMissingFromDockerFile()
+    {
+        string hostFile = Path.GetTempFileName();
+        string dockerFile = Path.GetTempFileName();
+        try
+        {
+            // No "Docker Resource Usage:" marker anywhere in this content. The leading junk line is
+            // longer than the marker text so that, under the pre-fix bug, the wrongly-computed start
+            // index still lands inside it — leaving the real header/data lines below intact in the
+            // (incorrectly non-empty) extracted section, which would otherwise get parsed into fake
+            // container rows despite the marker never having been found.
+            File.WriteAllText(dockerFile,
+                new string('x', 50) + "\n" +
+                "NAME CPU% MEM USED / LIMIT\n" +
+                "web 12.3% 100MiB / 512MiB\n" +
+                "db 4.5% 1GiB / 2GiB");
+
+            var sut = CreateSut();
+            ServerResourceDto summary = sut.GetServerResourceSummary(hostFile, dockerFile);
+
+            Assert.Empty(summary.DockerContainerResult);
+        }
+        finally
+        {
+            File.Delete(hostFile);
+            File.Delete(dockerFile);
+        }
+    }
 }
