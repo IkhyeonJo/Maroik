@@ -51,13 +51,7 @@ public sealed class Email : ValueObject
         if (hostParts[^1].Length < 2)
             return false;
 
-        if (address.User.Contains(' '))
-            return false;
-
-        if (address.User.Split('.').Any(p => p == ""))
-            return false;
-
-        return true;
+        return !address.User.Contains(' ') && address.User.Split('.').All(p => p != "");
     }
 
     /// <inheritdoc/>
