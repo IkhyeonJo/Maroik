@@ -77,6 +77,6 @@ public class CalendarEventOutputViewModel
     /// <summary>Display-friendly name of the end time zone (derived from <see cref="EndDateTimeZoneIanaId"/>).</summary>
     public string? DisplayEndDateTimeZone { get; set; }
 
-    /// <summary>String representation of the <c>CalendarType</c> enum (e.g. "User", "Anonymous") for this event's calendar.</summary>
+    /// <summary>String representation of the <c>CalendarType</c> enum (e.g. "My", "Other") for this event's calendar.</summary>
     public string? CalendarType { get; set; }
 }
