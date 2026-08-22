@@ -187,7 +187,7 @@ public class CalendarController : Controller
     public async Task<IActionResult> AdminIndex()
     {
         AccountResponse loggedInAccount = _sessionService.GetAccount()!;
-        string userTz = loggedInAccount.TimeZoneIanaId ?? "UTC";
+        string userTimezone = loggedInAccount.TimeZoneIanaId ?? "UTC";
 
         List<CalendarResponse> calendars = await _calendarService.GetCalendarsAsync(loggedInAccount.Email!, HttpContext.RequestAborted);
         if (calendars.Count == 0)
@@ -207,11 +207,11 @@ public class CalendarController : Controller
         CalendarOutputViewModel vm = new()
         {
             Calendars = calendars,
-            CalendarEventOutputViewModels = await _calendarService.GetCalendarEventViewModelsAsync(calendars, userTz, null, HttpContext.RequestAborted),
+            CalendarEventOutputViewModels = await _calendarService.GetCalendarEventViewModelsAsync(calendars, userTimezone, null, HttpContext.RequestAborted),
             LoggedInAccount = loggedInAccount,
-            LoggedInAccountTimeZoneIanaId = userTz
+            LoggedInAccountTimeZoneIanaId = userTimezone
         };
-        vm.PopulateTimeData(userTz);
+        vm.PopulateTimeData(userTimezone);
         return View(vm);
     }
 
@@ -220,7 +220,7 @@ public class CalendarController : Controller
     public async Task<IActionResult> UserIndex()
     {
         AccountResponse loggedInAccount = _sessionService.GetAccount()!;
-        string userTz = loggedInAccount.TimeZoneIanaId ?? "UTC";
+        string userTimezone = loggedInAccount.TimeZoneIanaId ?? "UTC";
 
         List<CalendarResponse> calendars = await _calendarService.GetCalendarsAsync(loggedInAccount.Email!, HttpContext.RequestAborted);
         if (calendars.Count == 0)
@@ -249,13 +249,13 @@ public class CalendarController : Controller
         CalendarOutputViewModel vm = new()
         {
             Calendars = calendars,
-            CalendarEventOutputViewModels = await _calendarService.GetCalendarEventViewModelsAsync(calendars, userTz, null, HttpContext.RequestAborted),
+            CalendarEventOutputViewModels = await _calendarService.GetCalendarEventViewModelsAsync(calendars, userTimezone, null, HttpContext.RequestAborted),
             OtherCalendars = otherCalendars,
-            OtherCalendarEventOutputViewModels = await _calendarService.GetCalendarEventViewModelsAsync(otherCalendars, userTz, null, HttpContext.RequestAborted),
+            OtherCalendarEventOutputViewModels = await _calendarService.GetCalendarEventViewModelsAsync(otherCalendars, userTimezone, null, HttpContext.RequestAborted),
             LoggedInAccount = loggedInAccount,
-            LoggedInAccountTimeZoneIanaId = userTz
+            LoggedInAccountTimeZoneIanaId = userTimezone
         };
-        vm.PopulateTimeData(userTz);
+        vm.PopulateTimeData(userTimezone);
         return View(vm);
     }
 
@@ -572,7 +572,7 @@ public class CalendarController : Controller
                 ];
             }
 
-            string userTz = loggedInAccount.TimeZoneIanaId ?? "UTC";
+            string userTimezone = loggedInAccount.TimeZoneIanaId ?? "UTC";
             List<CalendarEventOutputViewModel> calendarEvents = [];
 
             // Ignore any requested calendar the account doesn't own and isn't subscribed to,
@@ -599,7 +599,7 @@ public class CalendarController : Controller
                     ? ownedCalendars.FirstOrDefault(x => x.Id == inputCalendar.Id)?.HtmlColorCode
                     : otherCalendars.FirstOrDefault(x => x.Id == inputCalendar.Id)?.HtmlColorCode
                 from evt in eventsByCalendarId[inputCalendar.Id]
-                select evt.ToDisplayViewModel(userTz, htmlColorCode, calendarType));
+                select evt.ToDisplayViewModel(userTimezone, htmlColorCode, calendarType));
 
             return Json(new { result = true, calendarEvents = JsonConvert.SerializeObject(calendarEvents) });
         }
