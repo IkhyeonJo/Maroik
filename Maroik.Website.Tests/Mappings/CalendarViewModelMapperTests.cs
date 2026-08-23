@@ -386,4 +386,27 @@ public class CalendarViewModelMapperTests
 
         Assert.Null(reminders[0].TimesBeforeEvent);
     }
+
+    /// <summary>
+    /// The client only ever fills in the one lead-time field the user picked and sends the other
+    /// three (plus TimesBeforeEvent, for a non-all-day event) as JSON null. Every unselected field
+    /// must round-trip as null rather than 0, or the reminder's "exactly one lead-time field set"
+    /// domain invariant is violated on every save.
+    /// </summary>
+    [Fact]
+    public void ToReminderInfoList_UnselectedFieldsAsJsonNull_RemainNull()
+    {
+        const string json = """
+            [{"Method":"Push","MinutesBeforeEvent":15,"HoursBeforeEvent":null,"DaysBeforeEvent":null,"WeeksBeforeEvent":null,"TimesBeforeEvent":null}]
+            """;
+
+        var reminders = json.ToReminderInfoList();
+
+        Assert.Single(reminders);
+        Assert.Equal(15, reminders[0].MinutesBeforeEvent);
+        Assert.Null(reminders[0].HoursBeforeEvent);
+        Assert.Null(reminders[0].DaysBeforeEvent);
+        Assert.Null(reminders[0].WeeksBeforeEvent);
+        Assert.Null(reminders[0].TimesBeforeEvent);
+    }
 }

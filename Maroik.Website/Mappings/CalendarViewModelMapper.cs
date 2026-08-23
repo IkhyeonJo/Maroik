@@ -183,7 +183,7 @@ public static class CalendarViewModelMapper
             List<CalendarReminderDto> reminders = [];
             List<Dictionary<string, object>> raw = JsonConvert.DeserializeObject<List<Dictionary<string, object>>>(serialized ?? "[]") ?? [];
             reminders.AddRange(from r in raw
-                let tempTimes = r["TimesBeforeEvent"].ToString()
+                let tempTimes = r["TimesBeforeEvent"]?.ToString()
                 select new CalendarReminderDto
                 {
                     Method = r["Method"].ToString() ?? "",

@@ -1113,7 +1113,9 @@ public class ManagementController : Controller
                             BoardAttachedFilePath = attachedFile?.Path ?? "",
                             IsImgTagIncluded = isImgTagIncluded,
                             CanModify = loggedInAccount.IsOwner(privateNoteBoard.Writer),
-                            CanDelete = loggedInAccount.IsOwnerOrAdmin(privateNoteBoard.Writer)
+                            // Private notes are single-owner: unlike the free forum, an admin may not
+                            // delete another account's private note (server enforces this in DeleteBoard).
+                            CanDelete = loggedInAccount.IsOwner(privateNoteBoard.Writer)
                         };
 
                     if (string.IsNullOrEmpty(privateNoteOutputViewModel.BoardOutputViewModel?.BoardAttachedFilePath ?? ""))
