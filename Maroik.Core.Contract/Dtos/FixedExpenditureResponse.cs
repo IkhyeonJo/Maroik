@@ -31,7 +31,7 @@ public class FixedExpenditureResponse
     /// <summary>Debited asset product name.</summary>
     public string? MyDepositAsset { get; set; }
 
-    /// <summary>Billing month (1–12; 0 = every month).</summary>
+    /// <summary>Billing month (1–12).</summary>
     public short DepositMonth { get; set; }
 
     /// <summary>Billing day of the month.</summary>

@@ -84,8 +84,8 @@ public sealed class EmailConsumerWorker : BackgroundService
 
     /// <summary>
     /// Deserializes and processes one delivered message in a fresh DI scope, then acks it.
-    /// Any failure (bad JSON, handler exception) nacks without requeue, so a single poison
-    /// message cannot block the queue forever.
+    /// A failure on first delivery is requeued once (to survive a transient SMTP/network blip);
+    /// a failure on the retry nacks without requeue, so a poison message cannot block the queue forever.
     /// </summary>
     internal async Task OnMessageReceivedAsync(object sender, BasicDeliverEventArgs ea)
     {
@@ -112,10 +112,19 @@ public sealed class EmailConsumerWorker : BackgroundService
             }
             catch (Exception ex)
             {
-                // Poison message or unexpected failure: drop rather than requeue forever.
-                // A dead-letter exchange would be the next step if this needs to be inspected/retried.
-                _logger.LogError(ex, "Failed to process email message (delivery tag {DeliveryTag})", ea.DeliveryTag);
-                await Channel!.BasicNackAsync(ea.DeliveryTag, multiple: false, requeue: false);
+                // Give a message one redelivery so a transient SMTP/network blip doesn't permanently
+                // drop the email; only give up once it has already come back around once and failed
+                // again, so a genuinely poison message still can't block the queue forever.
+                if (!ea.Redelivered)
+                {
+                    _logger.LogWarning(ex, "Failed to process email message (delivery tag {DeliveryTag}); requeuing for one retry", ea.DeliveryTag);
+                    await Channel!.BasicNackAsync(ea.DeliveryTag, multiple: false, requeue: true);
+                }
+                else
+                {
+                    _logger.LogError(ex, "Failed to process email message (delivery tag {DeliveryTag}) on retry; dropping", ea.DeliveryTag);
+                    await Channel!.BasicNackAsync(ea.DeliveryTag, multiple: false, requeue: false);
+                }
             }
             finally
             {

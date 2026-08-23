@@ -31,7 +31,7 @@ public sealed class FixedExpenditure : AggregateRoot<long>
     /// <summary>Asset product name that is debited.</summary>
     public string? MyDepositAsset { get; private set; }
 
-    /// <summary>Month of the billing cycle (1–12; 0 means every month).</summary>
+    /// <summary>Month of the billing cycle (1–12).</summary>
     public short DepositMonth { get; private set; }
 
     /// <summary>Day of the month the charge is deducted.</summary>
@@ -153,8 +153,8 @@ public sealed class FixedExpenditure : AggregateRoot<long>
         if (depositDay is < 1 or > 31)
             return Error.Validation("FixedExpenditure.InvalidDepositDay", "Deposit day must be between 1 and 31.");
 
-        if (depositMonth is < 0 or > 12)
-            return Error.Validation("FixedExpenditure.InvalidDepositMonth", "Deposit month must be between 0 (every month) and 12.");
+        if (depositMonth is < 1 or > 12)
+            return Error.Validation("FixedExpenditure.InvalidDepositMonth", "Deposit month must be between 1 and 12.");
 
         var emailResult = Email.Create(accountEmailValue);
         if (emailResult.IsError) return emailResult.Errors;
@@ -212,8 +212,8 @@ public sealed class FixedExpenditure : AggregateRoot<long>
         if (depositDay is < 1 or > 31)
             return Error.Validation("FixedExpenditure.InvalidDepositDay", "Deposit day must be between 1 and 31.");
 
-        if (depositMonth is < 0 or > 12)
-            return Error.Validation("FixedExpenditure.InvalidDepositMonth", "Deposit month must be between 0 and 12.");
+        if (depositMonth is < 1 or > 12)
+            return Error.Validation("FixedExpenditure.InvalidDepositMonth", "Deposit month must be between 1 and 12.");
 
         var moneyResult = Money.Create(amount, currency);
         if (moneyResult.IsError) return moneyResult.Errors;

@@ -29,7 +29,7 @@ public class FixedIncomeRequest
     /// <summary>Asset where the income will be deposited (foreign key to Asset.ProductName).</summary>
     public string? DepositMyAssetProductName { get; set; }
 
-    /// <summary>Month of the income cycle (1–12; 0 means every month).</summary>
+    /// <summary>Month of the income cycle (1–12).</summary>
     public short DepositMonth { get; set; }
 
     /// <summary>Day of the month the income is credited.</summary>

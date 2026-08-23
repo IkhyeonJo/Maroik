@@ -32,7 +32,7 @@ public class FixedExpenditureRequest
     /// <summary>Debited asset product name.</summary>
     public string? MyDepositAsset { get; set; }
 
-    /// <summary>Month of the billing cycle (1–12; 0 means "every month").</summary>
+    /// <summary>Month of the billing cycle (1–12).</summary>
     public short DepositMonth { get; set; }
 
     /// <summary>Day of the month the charge is deducted.</summary>

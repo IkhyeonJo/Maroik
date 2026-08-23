@@ -28,7 +28,7 @@ public class FixedIncomeResponse
     /// <summary>Target deposit asset product name.</summary>
     public string? DepositMyAssetProductName { get; set; }
 
-    /// <summary>Income cycle month (1–12; 0 = every month).</summary>
+    /// <summary>Income cycle month (1–12).</summary>
     public short DepositMonth { get; set; }
 
     /// <summary>Income credit day of the month.</summary>

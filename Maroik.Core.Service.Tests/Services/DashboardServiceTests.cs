@@ -3,6 +3,7 @@ using Maroik.Core.Domain.Finance;
 using Maroik.Core.Contract.Dtos;
 using Maroik.Core.Contract.Interfaces;
 using Maroik.Core.Service.Services;
+using Microsoft.Extensions.Logging.Abstractions;
 using Moq;
 
 namespace Maroik.Core.Service.Tests.Services;
@@ -28,7 +29,8 @@ public class DashboardServiceTests
         _incomeRepo.Object,
         _expenditureRepo.Object,
         _fixedIncomeRepo.Object,
-        _fixedExpenditureRepo.Object);
+        _fixedExpenditureRepo.Object,
+        NullLogger<DashboardService>.Instance);
 
     // -- Helpers --------------------------------------------------------------
 

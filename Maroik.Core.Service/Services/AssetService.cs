@@ -3,6 +3,7 @@ using Maroik.Core.Contract.Dtos;
 using Maroik.Core.Contract.Interfaces;
 using Maroik.Core.Service.Extensions;
 using Maroik.Core.Service.Mappers;
+using Microsoft.Extensions.Logging;
 
 namespace Maroik.Core.Service.Services;
 
@@ -16,12 +17,14 @@ public class AssetService : IAssetService
 {
     private readonly IAssetRepository _assetRepository;
     private readonly IUnitOfWork _unitOfWork;
+    private readonly ILogger<AssetService> _logger;
 
     /// <summary>Initializes a new instance of <see cref="AssetService"/> with the supplied dependencies.</summary>
-    public AssetService(IAssetRepository assetRepository, IUnitOfWork unitOfWork)
+    public AssetService(IAssetRepository assetRepository, IUnitOfWork unitOfWork, ILogger<AssetService> logger)
     {
         _assetRepository = assetRepository;
         _unitOfWork = unitOfWork;
+        _logger = logger;
     }
 
     /// <inheritdoc />
@@ -132,8 +135,9 @@ public class AssetService : IAssetService
             await _unitOfWork.CommitAsync(ct);
             return ServiceResult.Ok();
         }
-        catch
+        catch (Exception ex)
         {
+            _logger.LogError(ex, "Failed to update asset {OriginalProductName} for account {AccountEmail}", originalProductName, accountEmail);
             await _unitOfWork.RollbackAsync(ct);
             return ServiceResult.Fail("Input is invalid");
         }

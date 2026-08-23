@@ -4,6 +4,7 @@ using Maroik.Core.Contract.Dtos;
 using Maroik.Core.Contract.Misc.Extensions;
 using Maroik.Core.Contract.Interfaces;
 using Maroik.Core.Service.Mappers;
+using Microsoft.Extensions.Logging;
 
 namespace Maroik.Core.Service.Services;
 
@@ -22,6 +23,7 @@ public class DashboardService : IDashboardService
     private readonly IExpenditureRepository _expenditureRepository;
     private readonly IFixedIncomeRepository _fixedIncomeRepository;
     private readonly IFixedExpenditureRepository _fixedExpenditureRepository;
+    private readonly ILogger<DashboardService> _logger;
 
     /// <summary>Initializes a new instance of <see cref="DashboardService"/> with the supplied dependencies.</summary>
     public DashboardService(
@@ -30,7 +32,8 @@ public class DashboardService : IDashboardService
         IIncomeRepository incomeRepository,
         IExpenditureRepository expenditureRepository,
         IFixedIncomeRepository fixedIncomeRepository,
-        IFixedExpenditureRepository fixedExpenditureRepository)
+        IFixedExpenditureRepository fixedExpenditureRepository,
+        ILogger<DashboardService> logger)
     {
         _accountRepository = accountRepository;
         _assetRepository = assetRepository;
@@ -38,6 +41,7 @@ public class DashboardService : IDashboardService
         _expenditureRepository = expenditureRepository;
         _fixedIncomeRepository = fixedIncomeRepository;
         _fixedExpenditureRepository = fixedExpenditureRepository;
+        _logger = logger;
     }
 
     /// <inheritdoc />
@@ -206,11 +210,13 @@ public class DashboardService : IDashboardService
             for (int i = 1; i < lines.Length; i++)
             {
                 var cols = lines[i].Split(' ', StringSplitOptions.RemoveEmptyEntries);
+                if (cols.Length < 5) continue;
                 resourceMap[cols[0]] = cols;
             }
             for (int i = 1; i < lines.Length; i++)
             {
                 var cols = lines[i].Split(' ', StringSplitOptions.RemoveEmptyEntries);
+                if (cols.Length < 5) continue;
                 string name = cols[0];
                 if (resourceMap.TryGetValue(name, out var r))
                 {
@@ -223,9 +229,9 @@ public class DashboardService : IDashboardService
                 }
             }
         }
-        catch
+        catch (Exception ex)
         {
-            // ignored
+            _logger.LogWarning(ex, "Failed to parse Docker container resource usage");
         }
 
         string memUsageLimit = "";

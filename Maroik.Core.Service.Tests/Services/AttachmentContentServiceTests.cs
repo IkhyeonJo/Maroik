@@ -94,6 +94,17 @@ public class AttachmentContentServiceTests
         Assert.Null(result);
     }
 
+    /// <summary>Verifies that the zip extension check is case-insensitive (e.g. Windows-style "Archive.ZIP").</summary>
+    [Fact]
+    public void ValidateAttachedFile_ReturnsNull_WhenExtensionIsUppercaseZip()
+    {
+        var file = new AttachedFileDto { FileName = "Archive.ZIP", Size = 512 };
+
+        var result = CreateSut().ValidateAttachedFile(file);
+
+        Assert.Null(result);
+    }
+
     // -- UploadSummernoteImageAsync ----------------------------------------------
 
     /// <summary>Verifies that an invalid image is rejected before ever calling the file client.</summary>

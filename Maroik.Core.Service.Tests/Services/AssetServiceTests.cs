@@ -2,6 +2,7 @@ using Maroik.Core.Domain.Finance;
 using Maroik.Core.Contract.Dtos;
 using Maroik.Core.Contract.Interfaces;
 using Maroik.Core.Service.Services;
+using Microsoft.Extensions.Logging.Abstractions;
 using Moq;
 
 namespace Maroik.Core.Service.Tests.Services;
@@ -17,7 +18,7 @@ public class AssetServiceTests
     private readonly Mock<IAssetRepository> _assetRepo = new();
     private readonly Mock<IUnitOfWork> _unitOfWork = new();
 
-    private AssetService CreateSut() => new(_assetRepo.Object, _unitOfWork.Object);
+    private AssetService CreateSut() => new(_assetRepo.Object, _unitOfWork.Object, NullLogger<AssetService>.Instance);
 
     /// <summary>Initializes the test fixture, setting up all required test doubles and the system under test.</summary>
     public AssetServiceTests()

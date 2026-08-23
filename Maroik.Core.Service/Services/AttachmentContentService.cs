@@ -44,7 +44,7 @@ public class AttachmentContentService : IAttachmentContentService
     public ServiceResult? ValidateAttachedFile(AttachedFileDto? attachedFile)
     {
         if (attachedFile == null) return null;
-        if (Path.GetExtension(attachedFile.FileName) != ".zip")
+        if (!string.Equals(Path.GetExtension(attachedFile.FileName), ".zip", StringComparison.OrdinalIgnoreCase))
             return ServiceResult.Fail("Only zip extension allowed.");
         long maxBytes = _settings.Value.MaxAttachedFileSizeBytes;
         if (attachedFile.Size <= 0 || attachedFile.Size > maxBytes)

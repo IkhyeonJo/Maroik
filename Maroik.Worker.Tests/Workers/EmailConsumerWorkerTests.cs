@@ -38,8 +38,8 @@ public class EmailConsumerWorkerTests
         return worker;
     }
 
-    private static BasicDeliverEventArgs MakeDeliverArgs(byte[] body, ulong deliveryTag = 1) =>
-        new("consumer-tag", deliveryTag, redelivered: false, exchange: "", routingKey: QueueNames.Email,
+    private static BasicDeliverEventArgs MakeDeliverArgs(byte[] body, ulong deliveryTag = 1, bool redelivered = false) =>
+        new("consumer-tag", deliveryTag, redelivered, exchange: "", routingKey: QueueNames.Email,
             new BasicProperties(), body, CancellationToken.None);
 
     /// <summary>On message received async valid message invokes handler and acks.</summary>
@@ -58,37 +58,65 @@ public class EmailConsumerWorkerTests
         channel.Verify(c => c.BasicNackAsync(It.IsAny<ulong>(), It.IsAny<bool>(), It.IsAny<bool>(), It.IsAny<CancellationToken>()), Times.Never);
     }
 
-    /// <summary>On message received async invalid json nacks without requeue and never calls handler.</summary>
+    /// <summary>On message received async invalid json on first delivery nacks with requeue (one retry) and never calls handler.</summary>
     [Fact]
-    public async Task OnMessageReceivedAsync_InvalidJson_NacksWithoutRequeueAndNeverCallsHandler()
+    public async Task OnMessageReceivedAsync_InvalidJson_FirstDelivery_NacksWithRequeueAndNeverCallsHandler()
     {
         var handler = new Mock<IEmailMessageHandler>();
         var worker = CreateSut(handler.Object, out var channel);
         byte[] body = Encoding.UTF8.GetBytes("not valid json");
 
-        await worker.OnMessageReceivedAsync(this, MakeDeliverArgs(body, deliveryTag: 3));
+        await worker.OnMessageReceivedAsync(this, MakeDeliverArgs(body, deliveryTag: 3, redelivered: false));
+
+        handler.Verify(h => h.HandleAsync(It.IsAny<SendEmailMessage>(), It.IsAny<CancellationToken>()), Times.Never);
+        channel.Verify(c => c.BasicNackAsync(3, false, true, It.IsAny<CancellationToken>()), Times.Once);
+        channel.Verify(c => c.BasicAckAsync(It.IsAny<ulong>(), It.IsAny<bool>(), It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    /// <summary>On message received async invalid json on redelivery nacks without requeue and never calls handler.</summary>
+    [Fact]
+    public async Task OnMessageReceivedAsync_InvalidJson_Redelivered_NacksWithoutRequeueAndNeverCallsHandler()
+    {
+        var handler = new Mock<IEmailMessageHandler>();
+        var worker = CreateSut(handler.Object, out var channel);
+        byte[] body = Encoding.UTF8.GetBytes("not valid json");
+
+        await worker.OnMessageReceivedAsync(this, MakeDeliverArgs(body, deliveryTag: 3, redelivered: true));
 
         handler.Verify(h => h.HandleAsync(It.IsAny<SendEmailMessage>(), It.IsAny<CancellationToken>()), Times.Never);
         channel.Verify(c => c.BasicNackAsync(3, false, false, It.IsAny<CancellationToken>()), Times.Once);
         channel.Verify(c => c.BasicAckAsync(It.IsAny<ulong>(), It.IsAny<bool>(), It.IsAny<CancellationToken>()), Times.Never);
     }
 
-    /// <summary>On message received async null json body nacks without requeue.</summary>
+    /// <summary>On message received async null json body on first delivery nacks with requeue (one retry).</summary>
     [Fact]
-    public async Task OnMessageReceivedAsync_NullJsonBody_NacksWithoutRequeue()
+    public async Task OnMessageReceivedAsync_NullJsonBody_FirstDelivery_NacksWithRequeue()
     {
         var handler = new Mock<IEmailMessageHandler>();
         var worker = CreateSut(handler.Object, out var channel);
         byte[] body = "null"u8.ToArray();
 
-        await worker.OnMessageReceivedAsync(this, MakeDeliverArgs(body, deliveryTag: 4));
+        await worker.OnMessageReceivedAsync(this, MakeDeliverArgs(body, deliveryTag: 4, redelivered: false));
+
+        channel.Verify(c => c.BasicNackAsync(4, false, true, It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    /// <summary>On message received async null json body on redelivery nacks without requeue.</summary>
+    [Fact]
+    public async Task OnMessageReceivedAsync_NullJsonBody_Redelivered_NacksWithoutRequeue()
+    {
+        var handler = new Mock<IEmailMessageHandler>();
+        var worker = CreateSut(handler.Object, out var channel);
+        byte[] body = "null"u8.ToArray();
+
+        await worker.OnMessageReceivedAsync(this, MakeDeliverArgs(body, deliveryTag: 4, redelivered: true));
 
         channel.Verify(c => c.BasicNackAsync(4, false, false, It.IsAny<CancellationToken>()), Times.Once);
     }
 
-    /// <summary>On message received async handler throws nacks without requeue.</summary>
+    /// <summary>On message received async handler throws on first delivery nacks with requeue (one retry), giving a transient SMTP blip a second chance.</summary>
     [Fact]
-    public async Task OnMessageReceivedAsync_HandlerThrows_NacksWithoutRequeue()
+    public async Task OnMessageReceivedAsync_HandlerThrows_FirstDelivery_NacksWithRequeue()
     {
         var handler = new Mock<IEmailMessageHandler>();
         handler.Setup(h => h.HandleAsync(It.IsAny<SendEmailMessage>(), It.IsAny<CancellationToken>()))
@@ -96,7 +124,23 @@ public class EmailConsumerWorkerTests
         var worker = CreateSut(handler.Object, out var channel);
         byte[] body = JsonSerializer.SerializeToUtf8Bytes(Message);
 
-        await worker.OnMessageReceivedAsync(this, MakeDeliverArgs(body, deliveryTag: 9));
+        await worker.OnMessageReceivedAsync(this, MakeDeliverArgs(body, deliveryTag: 9, redelivered: false));
+
+        channel.Verify(c => c.BasicNackAsync(9, false, true, It.IsAny<CancellationToken>()), Times.Once);
+        channel.Verify(c => c.BasicAckAsync(It.IsAny<ulong>(), It.IsAny<bool>(), It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    /// <summary>On message received async handler throws on redelivery nacks without requeue, so a genuinely poison message can't block the queue forever.</summary>
+    [Fact]
+    public async Task OnMessageReceivedAsync_HandlerThrows_Redelivered_NacksWithoutRequeue()
+    {
+        var handler = new Mock<IEmailMessageHandler>();
+        handler.Setup(h => h.HandleAsync(It.IsAny<SendEmailMessage>(), It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new InvalidOperationException("SMTP down"));
+        var worker = CreateSut(handler.Object, out var channel);
+        byte[] body = JsonSerializer.SerializeToUtf8Bytes(Message);
+
+        await worker.OnMessageReceivedAsync(this, MakeDeliverArgs(body, deliveryTag: 9, redelivered: true));
 
         channel.Verify(c => c.BasicNackAsync(9, false, false, It.IsAny<CancellationToken>()), Times.Once);
         channel.Verify(c => c.BasicAckAsync(It.IsAny<ulong>(), It.IsAny<bool>(), It.IsAny<CancellationToken>()), Times.Never);

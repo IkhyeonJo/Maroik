@@ -327,6 +327,42 @@ public class ManagementControllerAccountTests
         Assert.Equal("irrelevant-hash", account.HashedPassword); // unchanged from SeedAccount
     }
 
+    /// <summary>
+    /// Regression test: an out-of-range Role value must be clamped to <c>Role.User</c> rather
+    /// than persisted as-is, mirroring the same clamp <c>CreateAccount</c> already applies.
+    /// Without this, a malformed request could leave an account with a Role the
+    /// authorization filter doesn't recognize.
+    /// </summary>
+    [Fact]
+    public async Task UpdateAccount_InvalidRole_ClampsToUser()
+    {
+        var session = await LoginAsAdminAsync();
+        const string email = "invalid-role-update@test.com";
+        SeedAccount(email);
+
+        using var updateRequest = session.BuildJsonPostRequest("/Management/UpdateAccount", new
+        {
+            Email = email,
+            Password = "",
+            Role = "NotARealRole",
+            TimeZoneIanaId = "Asia/Seoul",
+            Locked = false,
+            EmailConfirmed = true,
+            AgreedServiceTerms = true,
+            Message = "",
+            Deleted = false
+        });
+        var response = await _client.SendAsync(updateRequest, TestContext.Current.CancellationToken);
+        string json = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+
+        Assert.Contains("\"result\":true", json);
+
+        using var scope = _factory.Services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+        var account = db.Accounts.Single(a => a.Email == email);
+        Assert.Equal(Role.User, account.Role);
+    }
+
     /// <summary>Update account unknown email returns failure result.</summary>
     [Fact]
     public async Task UpdateAccount_UnknownEmail_ReturnsFailureResult()

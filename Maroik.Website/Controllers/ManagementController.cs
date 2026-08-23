@@ -427,6 +427,11 @@ public class ManagementController : Controller
             if (!ModelState.IsValid)
                 return Json(new { result = false, error = _localizer["Input is invalid"].Value });
 
+            if (accountInputViewModel.Role is not (Role.Admin or Role.User))
+            {
+                accountInputViewModel.Role = Role.User;
+            }
+
             ServiceResult updateResult = await _managementAccountService.UpdateAccountAsync(
                 new AccountRequest
                 {

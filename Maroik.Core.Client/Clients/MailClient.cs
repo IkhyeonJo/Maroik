@@ -58,6 +58,10 @@ public class MailClient : IMailClient
             message.Body = new BodyBuilder { HtmlBody = body }.ToMessageBody();
 
             using SmtpClient smtp = new();
+            // Bounded well under the worker's shutdown drain budget so a hung connection
+            // can't outlive it and get killed mid-send (which would cause a duplicate
+            // send on redelivery). MailKit's default is ~100s.
+            smtp.Timeout = 20_000;
             SecureSocketOptions socketOptions = bool.Parse(smtpSsl) ? SecureSocketOptions.Auto : SecureSocketOptions.None;
             await smtp.ConnectAsync(smtpHost, int.Parse(smtpPort), socketOptions, ct);
             await smtp.AuthenticateAsync(smtpUserName, smtpPassword, ct);
