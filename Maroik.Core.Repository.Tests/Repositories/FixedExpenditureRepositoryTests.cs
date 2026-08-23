@@ -8,8 +8,9 @@ namespace Maroik.Core.Repository.Tests.Repositories;
 
 /// <summary>
 /// Tests for <see cref="FixedExpenditureRepository"/> using an EF Core InMemory database.
-/// UpdateMyDepositAssetWithProductNameAsync is not tested here because it uses raw SQL
-/// incompatible with the InMemory provider.
+/// <c>UpdateMyDepositAssetWithProductNameAsync</c> is not tested here because the InMemory
+/// provider does not support <c>ExecuteUpdateAsync</c> — see <see cref="FixedExpenditureRepositoryIntegrationTests"/>,
+/// which exercises it against a real PostgreSQL instance instead.
 /// </summary>
 public class FixedExpenditureRepositoryTests : IDisposable
 {
@@ -188,8 +189,4 @@ public class FixedExpenditureRepositoryTests : IDisposable
         Assert.Single(remaining);
         Assert.Equal(efItem2.Id, remaining[0].Id);
     }
-
-    // UpdateMyDepositAssetNameAsync — tested in FixedExpenditureRepositoryIntegrationTests
-    // because HasDefaultValueSql on MyDepositAsset causes EF Core InMemory to omit the column
-    // on INSERT, making the Where clause always return zero rows.
 }

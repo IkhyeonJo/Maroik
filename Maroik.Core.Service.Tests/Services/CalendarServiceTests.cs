@@ -631,4 +631,48 @@ public class CalendarServiceTests
         _otherCalendarRepo.Verify(r => r.CreateAsync(It.IsAny<OtherCalendar>(), It.IsAny<CancellationToken>()), Times.Never);
         _unitOfWork.Verify(u => u.RollbackAsync(It.IsAny<CancellationToken>()), Times.Once);
     }
+
+    // -- UpdateCalendarSharedAsync ---------------------------------------------
+
+    /// <summary>
+    /// Verifies the ownership fix: submitting a <see cref="CalendarSharedRequest"/> for a calendar
+    /// not owned by <paramref name="email"/> is rejected instead of silently updating it, which
+    /// previously let one admin change another admin's calendar's sharing (public/anonymous
+    /// visibility) by supplying an arbitrary <c>CalendarId</c>.
+    /// </summary>
+    [Fact]
+    public async Task UpdateCalendarSharedAsync_RejectsCalendarNotOwnedByCaller()
+    {
+        const string email = "admin-a@example.com";
+        _calendarRepo.Setup(r => r.GetByAccountEmailAsync(email, It.IsAny<CancellationToken>()))
+            .ReturnsAsync([MakeCalendar(id: 1, email: email)]);
+        var sut = CreateSut();
+
+        // CalendarId 99 belongs to a different account (not returned by GetByAccountEmailAsync above).
+        var requests = new List<CalendarSharedRequest> { new() { CalendarId = 99, User = true, Anonymous = true } };
+        ServiceResult result = await sut.UpdateCalendarSharedAsync(email, requests, TestContext.Current.CancellationToken);
+
+        Assert.False(result.Success);
+        _sharedRepo.Verify(r => r.UpdateEntityAsync(It.IsAny<CalendarShared>(), It.IsAny<CancellationToken>()), Times.Never);
+        _unitOfWork.Verify(u => u.BeginAsync(It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    /// <summary>Verifies that updating the sharing settings of a calendar the caller owns succeeds.</summary>
+    [Fact]
+    public async Task UpdateCalendarSharedAsync_Succeeds_WhenCallerOwnsCalendar()
+    {
+        const string email = "admin-a@example.com";
+        _calendarRepo.Setup(r => r.GetByAccountEmailAsync(email, It.IsAny<CancellationToken>()))
+            .ReturnsAsync([MakeCalendar(id: 1, email: email)]);
+        _sharedRepo.Setup(r => r.UpdateEntityAsync(It.IsAny<CalendarShared>(), It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
+        _otherCalendarRepo.Setup(r => r.GetAllAsync(It.IsAny<CancellationToken>())).ReturnsAsync([]);
+        var sut = CreateSut();
+
+        var requests = new List<CalendarSharedRequest> { new() { CalendarId = 1, User = true, Anonymous = false } };
+        ServiceResult result = await sut.UpdateCalendarSharedAsync(email, requests, TestContext.Current.CancellationToken);
+
+        Assert.True(result.Success);
+        _sharedRepo.Verify(r => r.UpdateEntityAsync(It.IsAny<CalendarShared>(), It.IsAny<CancellationToken>()), Times.Once);
+        _unitOfWork.Verify(u => u.CommitAsync(It.IsAny<CancellationToken>()), Times.Once);
+    }
 }

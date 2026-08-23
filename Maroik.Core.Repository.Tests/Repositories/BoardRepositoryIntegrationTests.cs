@@ -65,6 +65,35 @@ public class BoardRepositoryIntegrationTests : IAsyncLifetime
         return board.Id;
     }
 
+    // -- IncrementViewAsync (ExecuteUpdateAsync) -------------------------------------
+
+    /// <summary>
+    /// Verifies that <c>IncrementViewAsync</c> increments the view counter by one via
+    /// <c>ExecuteUpdateAsync</c> — a translation the EF Core InMemory provider does not support,
+    /// so this must run against a real PostgreSQL instance.
+    /// </summary>
+    [Fact]
+    public async Task IncrementViewAsync_IncrementsViewByOne()
+    {
+        var board = MakeOrm();
+        board.View = 5;
+        long id = await SeedAsync(board);
+
+        await _sut.IncrementViewAsync(id, TestContext.Current.CancellationToken);
+        _context.ChangeTracker.Clear();
+
+        OrmBoard? result = await _context.Boards.FirstOrDefaultAsync(b => b.Id == id, TestContext.Current.CancellationToken);
+        Assert.NotNull(result);
+        Assert.Equal(6, result.View);
+    }
+
+    /// <summary>Verifies that incrementing a non-existent board's view count is a no-op.</summary>
+    [Fact]
+    public async Task IncrementViewAsync_IsNoOp_WhenBoardDoesNotExist()
+    {
+        await _sut.IncrementViewAsync(999, TestContext.Current.CancellationToken);
+    }
+
     // -- FindActiveByIdForUpdateAsync ------------------------------------------------
 
     /// <summary>Returns the board when it exists and is not deleted.</summary>

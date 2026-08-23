@@ -9,9 +9,9 @@ namespace Maroik.Core.Repository.Tests.Repositories;
 
 /// <summary>
 /// Tests for <see cref="ExpenditureRepository"/> using an EF Core InMemory database.
-/// Raw SQL methods (GetCurrentYearExpendituresAsync, GetCurrentYearMonthExpendituresAsync,
-/// UpdateMyDepositAssetWithProductNameAsync) are not tested here because they use
-/// PostgreSQL-specific SQL syntax incompatible with the InMemory provider.
+/// <c>UpdateMyDepositAssetWithProductNameAsync</c> is not tested here because the InMemory
+/// provider does not support <c>ExecuteUpdateAsync</c> — see <see cref="ExpenditureRepositoryIntegrationTests"/>,
+/// which exercises it against a real PostgreSQL instance instead.
 /// </summary>
 public class ExpenditureRepositoryTests : IDisposable
 {

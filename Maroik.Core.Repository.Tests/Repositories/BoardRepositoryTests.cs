@@ -9,7 +9,9 @@ namespace Maroik.Core.Repository.Tests.Repositories;
 
 /// <summary>
 /// Tests for <see cref="BoardRepository"/> using an EF Core InMemory database.
-/// IncrementViewAsync uses ExecuteUpdateAsync which is supported by the InMemory provider.
+/// <c>IncrementViewAsync</c> is not tested here because the InMemory provider does not support
+/// <c>ExecuteUpdateAsync</c> — see <see cref="BoardRepositoryIntegrationTests"/>, which exercises
+/// it against a real PostgreSQL instance instead.
 /// </summary>
 public class BoardRepositoryTests : IDisposable
 {
