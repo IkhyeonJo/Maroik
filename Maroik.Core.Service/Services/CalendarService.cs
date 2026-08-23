@@ -271,12 +271,19 @@ public class CalendarService : ICalendarService
     }
 
     /// <inheritdoc />
-    public async Task<ServiceResult> UpdateCalendarSharedAsync(IEnumerable<CalendarSharedRequest> requests, CancellationToken ct = default)
+    public async Task<ServiceResult> UpdateCalendarSharedAsync(string email, IEnumerable<CalendarSharedRequest> requests, CancellationToken ct = default)
     {
+        var calendarSharedRequests = requests.ToList();
+
+        List<Calendar> ownedCalendars = await _calendarRepository.GetByAccountEmailAsync(email, ct);
+        if (calendarSharedRequests.Any(req => ownedCalendars.All(c => c.Id != req.CalendarId)))
+        {
+            return ServiceResult.Fail("Input is invalid");
+        }
+
         await _unitOfWork.BeginAsync(ct);
         try
         {
-            var calendarSharedRequests = requests.ToList();
             foreach (var shared in calendarSharedRequests.Select(req => CalendarShared.CreatePrivate(req.CalendarId).Update(req.User, req.Anonymous)))
             {
                 await _calendarSharedRepository.UpdateEntityAsync(shared, ct);

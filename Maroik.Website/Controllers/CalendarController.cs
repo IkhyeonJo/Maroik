@@ -732,7 +732,7 @@ public class CalendarController : Controller
                 return Json(new { result = false, error = _localizer["Input is invalid"].Value });
             }
 
-            ServiceResult sharedResult = await _calendarService.UpdateCalendarSharedAsync(calendarShareds, HttpContext.RequestAborted);
+            ServiceResult sharedResult = await _calendarService.UpdateCalendarSharedAsync(_sessionService.GetAccount()!.Email!, calendarShareds, HttpContext.RequestAborted);
 
             return !sharedResult.Success ? Json(new { result = false, error = _localizer[sharedResult.ErrorKey].Value }) : Json(new { result = true, message = _localizer["The calendar shared has been successfully updated."].Value });
         }

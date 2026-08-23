@@ -134,7 +134,7 @@ public class ForumController : Controller
                 Content = boardCommentInputViewModel.Content
             };
 
-            ServiceResult result = await _boardService.WriteCommentAsync(commentRequest, ct: ct);
+            ServiceResult result = await _boardService.WriteCommentAsync(commentRequest, isAdmin: loggedInAccount.Role == Role.Admin, ct: ct);
             return result.Success
                 ? Json(new { result = true, boardId = boardCommentInputViewModel.BoardId, page = boardCommentInputViewModel.DetailCurrentPage })
                 : Json(new { result = false, error = _localizer["Input is invalid"].Value });

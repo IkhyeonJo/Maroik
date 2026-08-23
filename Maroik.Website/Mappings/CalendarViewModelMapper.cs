@@ -187,10 +187,10 @@ public static class CalendarViewModelMapper
                 select new CalendarReminderDto
                 {
                     Method = r["Method"].ToString() ?? "",
-                    MinutesBeforeEvent = Convert.ToInt32(r["MinutesBeforeEvent"]),
-                    HoursBeforeEvent = Convert.ToInt32(r["HoursBeforeEvent"]),
-                    DaysBeforeEvent = Convert.ToInt32(r["DaysBeforeEvent"]),
-                    WeeksBeforeEvent = Convert.ToInt32(r["WeeksBeforeEvent"]),
+                    MinutesBeforeEvent = r["MinutesBeforeEvent"] != null ? Convert.ToInt32(r["MinutesBeforeEvent"]) : null,
+                    HoursBeforeEvent = r["HoursBeforeEvent"] != null ? Convert.ToInt32(r["HoursBeforeEvent"]) : null,
+                    DaysBeforeEvent = r["DaysBeforeEvent"] != null ? Convert.ToInt32(r["DaysBeforeEvent"]) : null,
+                    WeeksBeforeEvent = r["WeeksBeforeEvent"] != null ? Convert.ToInt32(r["WeeksBeforeEvent"]) : null,
                     TimesBeforeEvent = !string.IsNullOrEmpty(tempTimes)
                         ? new TimeSpan(Convert.ToInt32(tempTimes.Split(':')[0]), Convert.ToInt32(tempTimes.Split(':')[1]), 0)
                         : null

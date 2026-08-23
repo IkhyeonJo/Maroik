@@ -56,8 +56,11 @@ public interface ICalendarService
     /// </summary>
     Task<ServiceResult> UpdateOtherCalendarAsync(string email, IEnumerable<OtherCalendarRequest> requests, CancellationToken ct = default);
 
-    /// <summary>Bulk-updates the sharing permissions for the provided calendars.</summary>
-    Task<ServiceResult> UpdateCalendarSharedAsync(IEnumerable<CalendarSharedRequest> requests, CancellationToken ct = default);
+    /// <summary>
+    /// Bulk-updates the sharing permissions for the provided calendars.
+    /// Fails validation if any requested calendar is not owned by <paramref name="email"/>.
+    /// </summary>
+    Task<ServiceResult> UpdateCalendarSharedAsync(string email, IEnumerable<CalendarSharedRequest> requests, CancellationToken ct = default);
 
     /// <summary>Creates a default calendar for a new account if one does not already exist.</summary>
     Task<ServiceResult> EnsureDefaultCalendarAsync(CalendarRequest request, CancellationToken ct = default);

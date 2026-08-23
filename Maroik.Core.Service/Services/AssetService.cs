@@ -10,19 +10,31 @@ namespace Maroik.Core.Service.Services;
 /// <summary>
 /// Implementation of <see cref="IAssetService"/> for managing personal financial assets.
 /// Rename operations use a database transaction (via <see cref="IUnitOfWork"/>) to atomically
-/// update the asset name; the rename to linked income, fixed-income, expenditure, and
-/// fixed-expenditure records is handled by the database's <c>ON UPDATE CASCADE</c> foreign keys.
+/// update the asset name; the rename to linked income and fixed-income records referencing it as
+/// a deposit target is handled by the database's <c>ON UPDATE CASCADE</c> foreign keys, but
+/// expenditure and fixed-expenditure records reference it via the FK-less <c>MyDepositAsset</c>
+/// column (which also holds an empty string for transfer-less entries), so those are cascaded
+/// here explicitly.
 /// </summary>
 public class AssetService : IAssetService
 {
     private readonly IAssetRepository _assetRepository;
+    private readonly IExpenditureRepository _expenditureRepository;
+    private readonly IFixedExpenditureRepository _fixedExpenditureRepository;
     private readonly IUnitOfWork _unitOfWork;
     private readonly ILogger<AssetService> _logger;
 
     /// <summary>Initializes a new instance of <see cref="AssetService"/> with the supplied dependencies.</summary>
-    public AssetService(IAssetRepository assetRepository, IUnitOfWork unitOfWork, ILogger<AssetService> logger)
+    public AssetService(
+        IAssetRepository assetRepository,
+        IExpenditureRepository expenditureRepository,
+        IFixedExpenditureRepository fixedExpenditureRepository,
+        IUnitOfWork unitOfWork,
+        ILogger<AssetService> logger)
     {
         _assetRepository = assetRepository;
+        _expenditureRepository = expenditureRepository;
+        _fixedExpenditureRepository = fixedExpenditureRepository;
         _unitOfWork = unitOfWork;
         _logger = logger;
     }
@@ -130,6 +142,14 @@ public class AssetService : IAssetService
             {
                 await _unitOfWork.RollbackAsync(ct);
                 return ServiceResult.Fail("Input is invalid");
+            }
+
+            // MyDepositAsset has no foreign key to Asset (it holds "" for transfer-less entries),
+            // so a rename must be cascaded here explicitly rather than relying on the DB.
+            if (asset.ProductName != originalProductName)
+            {
+                await _expenditureRepository.UpdateMyDepositAssetWithProductNameAsync(accountEmail, originalProductName, asset.ProductName, ct);
+                await _fixedExpenditureRepository.UpdateMyDepositAssetWithProductNameAsync(accountEmail, originalProductName, asset.ProductName, ct);
             }
 
             await _unitOfWork.CommitAsync(ct);

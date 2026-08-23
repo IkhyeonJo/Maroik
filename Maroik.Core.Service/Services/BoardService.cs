@@ -243,7 +243,7 @@ public class BoardService : IBoardService
     }
 
     /// <inheritdoc />
-    public async Task<ServiceResult> WriteCommentAsync(BoardCommentRequest request, string? requiredOwnerNickname = null, CancellationToken ct = default)
+    public async Task<ServiceResult> WriteCommentAsync(BoardCommentRequest request, string? requiredOwnerNickname = null, bool isAdmin = false, CancellationToken ct = default)
     {
         string content = _attachmentContent.SanitizeContent(request.Content ?? "");
 
@@ -282,7 +282,7 @@ public class BoardService : IBoardService
                 return ServiceResult.Fail(commentResult.FirstError.Description);
             }
 
-            var addResult = board.AddComment(commentResult.Value);
+            var addResult = board.AddComment(commentResult.Value, request.Writer, isAdmin);
             if (addResult.IsError)
             {
                 await _unitOfWork.RollbackAsync(ct);

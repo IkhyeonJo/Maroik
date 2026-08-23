@@ -51,9 +51,9 @@ public class BoardServiceTests
 
     // -- Helpers --------------------------------------------------------------
 
-    private static Board MakeBoard(long id = 1, string writer = "Alice", bool deleted = false) =>
+    private static Board MakeBoard(long id = 1, string writer = "Alice", bool deleted = false, bool locked = false) =>
         Board.Reconstitute(id, nameof(BoardType.FreeForum), "Test Title", "Test Content", writer,
-            DateTime.UtcNow, DateTime.UtcNow, 0L, deleted, false, false);
+            DateTime.UtcNow, DateTime.UtcNow, 0L, deleted, locked, false);
 
     private static BoardComment MakeComment(long id = 1, string writer = "Alice", long order = 0L) =>
         BoardComment.Reconstitute(id, 1L, order, null, writer, "Comment", DateTime.UtcNow, false);
@@ -416,7 +416,7 @@ public class BoardServiceTests
         _boardRepo.Setup(r => r.FindActiveByIdForUpdateAsync(It.IsAny<long>(), It.IsAny<CancellationToken>())).ReturnsAsync(MakeBoard(writer: "Alice"));
         var sut = CreateSut();
 
-        ServiceResult result = await sut.WriteCommentAsync(new BoardCommentRequest { BoardId = 1 }, "Bob", TestContext.Current.CancellationToken);
+        ServiceResult result = await sut.WriteCommentAsync(new BoardCommentRequest { BoardId = 1 }, "Bob", ct: TestContext.Current.CancellationToken);
 
         Assert.False(result.Success);
         Assert.Contains("permission", result.ErrorKey, StringComparison.OrdinalIgnoreCase);
@@ -432,6 +432,46 @@ public class BoardServiceTests
         var sut = CreateSut();
 
         ServiceResult result = await sut.WriteCommentAsync(new BoardCommentRequest { BoardId = 1, Writer = "Bob", Content = "Hello" }, ct: TestContext.Current.CancellationToken);
+
+        Assert.True(result.Success);
+    }
+
+    /// <summary>Verifies that <c>WriteCommentAsync</c> fails on a locked board when the commenter is neither owner nor admin.</summary>
+    [Fact]
+    public async Task WriteCommentAsync_ReturnsFail_WhenBoardLockedAndCommenterIsNotOwnerOrAdmin()
+    {
+        _boardRepo.Setup(r => r.FindActiveByIdForUpdateAsync(It.IsAny<long>(), It.IsAny<CancellationToken>())).ReturnsAsync(MakeBoard(writer: "Alice", locked: true));
+        var sut = CreateSut();
+
+        ServiceResult result = await sut.WriteCommentAsync(new BoardCommentRequest { BoardId = 1, Writer = "Bob", Content = "Hi" }, ct: TestContext.Current.CancellationToken);
+
+        Assert.False(result.Success);
+    }
+
+    /// <summary>Verifies that <c>WriteCommentAsync</c> still succeeds on a locked board when the commenter is the post's owner.</summary>
+    [Fact]
+    public async Task WriteCommentAsync_ReturnsSuccess_WhenBoardLockedAndCommenterIsOwner()
+    {
+        _boardRepo.Setup(r => r.FindActiveByIdForUpdateAsync(It.IsAny<long>(), It.IsAny<CancellationToken>())).ReturnsAsync(MakeBoard(writer: "Alice", locked: true));
+        _commentRepo.Setup(r => r.GetByBoardIdOrderedAsync(It.IsAny<long>(), It.IsAny<CancellationToken>())).ReturnsAsync([]);
+        _commentRepo.Setup(r => r.CreateAsync(It.IsAny<BoardComment>(), It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
+        var sut = CreateSut();
+
+        ServiceResult result = await sut.WriteCommentAsync(new BoardCommentRequest { BoardId = 1, Writer = "Alice", Content = "Hi" }, ct: TestContext.Current.CancellationToken);
+
+        Assert.True(result.Success);
+    }
+
+    /// <summary>Verifies that <c>WriteCommentAsync</c> still succeeds on a locked board when the commenter is an admin.</summary>
+    [Fact]
+    public async Task WriteCommentAsync_ReturnsSuccess_WhenBoardLockedAndCommenterIsAdmin()
+    {
+        _boardRepo.Setup(r => r.FindActiveByIdForUpdateAsync(It.IsAny<long>(), It.IsAny<CancellationToken>())).ReturnsAsync(MakeBoard(writer: "Alice", locked: true));
+        _commentRepo.Setup(r => r.GetByBoardIdOrderedAsync(It.IsAny<long>(), It.IsAny<CancellationToken>())).ReturnsAsync([]);
+        _commentRepo.Setup(r => r.CreateAsync(It.IsAny<BoardComment>(), It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
+        var sut = CreateSut();
+
+        ServiceResult result = await sut.WriteCommentAsync(new BoardCommentRequest { BoardId = 1, Writer = "Bob", Content = "Hi" }, isAdmin: true, ct: TestContext.Current.CancellationToken);
 
         Assert.True(result.Success);
     }

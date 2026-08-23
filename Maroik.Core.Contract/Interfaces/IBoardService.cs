@@ -56,8 +56,9 @@ public interface IBoardService
     /// <summary>
     /// Adds a comment to a board post.
     /// When <paramref name="requiredOwnerNickname"/> is set, only that user may comment (used for private notes).
+    /// A locked post still accepts comments from its owner (<paramref name="request"/>.Writer) or an admin.
     /// </summary>
-    Task<ServiceResult> WriteCommentAsync(BoardCommentRequest request, string? requiredOwnerNickname = null, CancellationToken ct = default);
+    Task<ServiceResult> WriteCommentAsync(BoardCommentRequest request, string? requiredOwnerNickname = null, bool isAdmin = false, CancellationToken ct = default);
 
     /// <summary>Soft-deletes a comment. Admins can delete any comment; regular users can only delete their own.</summary>
     Task<ServiceResult> DeleteCommentAsync(long commentId, string requesterNickname, bool isAdmin, CancellationToken ct = default);

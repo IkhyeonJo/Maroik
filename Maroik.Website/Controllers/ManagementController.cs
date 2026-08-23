@@ -988,7 +988,7 @@ public class ManagementController : Controller
                 Content = boardCommentInputViewModel.Content
             };
 
-            ServiceResult result = await _boardService.WriteCommentAsync(commentRequest, loggedInAccount.Nickname!, HttpContext.RequestAborted);
+            ServiceResult result = await _boardService.WriteCommentAsync(commentRequest, loggedInAccount.Nickname!, ct: HttpContext.RequestAborted);
             return result.Success
                 ? Json(new { result = true, boardId = boardCommentInputViewModel.BoardId, page = boardCommentInputViewModel.DetailCurrentPage })
                 : Json(new { result = false, error = _localizer["Input is invalid"].Value });
@@ -1467,11 +1467,13 @@ public class ManagementController : Controller
         {
             AccountResponse loggedInAccount = _sessionService.GetAccount()!;
 
+            // Private notes are single-owner: unlike the free forum, an admin may not delete
+            // another account's private note board.
             ServiceResult result = await _boardService.DeleteBoardAsync(
                 boardInputViewModel.Id,
                 EnumHelper.GetDescription(BoardType.PrivateNote),
                 loggedInAccount.Nickname!,
-                loggedInAccount.Role == Role.Admin,
+                false,
                 HttpContext.RequestAborted);
 
             return result.Success
@@ -1500,10 +1502,12 @@ public class ManagementController : Controller
         {
             AccountResponse loggedInAccount = _sessionService.GetAccount()!;
 
+            // Private notes are single-owner: unlike the free forum, an admin may not delete
+            // another account's private note comments.
             ServiceResult result = await _boardService.DeleteCommentAsync(
                 id,
                 loggedInAccount.Nickname!,
-                loggedInAccount.Role == Role.Admin,
+                false,
                 HttpContext.RequestAborted);
 
             return result.Success

@@ -170,6 +170,45 @@ public class BoardTests
         Assert.Equal("Board.Locked", result.FirstError.Code);
     }
 
+    /// <summary>Add comment returns error, when locked and commenter is neither the owner nor an admin.</summary>
+    [Fact]
+    public void AddComment_ReturnsError_WhenLockedAndCommenterIsNotOwnerOrAdmin()
+    {
+        var board = ValidBoard(id: 1);
+        board.Lock();
+
+        var result = board.AddComment(ValidComment(boardId: 1), commenterNickname: "Bob", isAdmin: false);
+
+        Assert.True(result.IsError);
+        Assert.Equal("Board.Locked", result.FirstError.Code);
+    }
+
+    /// <summary>Add comment succeeds on a locked post, when the commenter is the post's owner.</summary>
+    [Fact]
+    public void AddComment_Succeeds_WhenLockedAndCommenterIsOwner()
+    {
+        var board = ValidBoard(id: 1);
+        board.Lock();
+
+        var result = board.AddComment(ValidComment(boardId: 1), commenterNickname: "Alice", isAdmin: false);
+
+        Assert.False(result.IsError);
+        Assert.Single(board.Comments);
+    }
+
+    /// <summary>Add comment succeeds on a locked post, when the commenter is an admin.</summary>
+    [Fact]
+    public void AddComment_Succeeds_WhenLockedAndCommenterIsAdmin()
+    {
+        var board = ValidBoard(id: 1);
+        board.Lock();
+
+        var result = board.AddComment(ValidComment(boardId: 1), commenterNickname: "Bob", isAdmin: true);
+
+        Assert.False(result.IsError);
+        Assert.Single(board.Comments);
+    }
+
     /// <summary>Add comment returns error, when deleted.</summary>
     [Fact]
     public void AddComment_ReturnsError_WhenDeleted()

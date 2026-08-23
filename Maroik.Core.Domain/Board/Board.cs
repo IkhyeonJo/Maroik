@@ -155,11 +155,12 @@ public sealed class Board : AggregateRoot<long>
     }
 
     /// <summary>
-    /// Adds a comment to this post.
+    /// Adds a comment to this post. A locked post rejects new comments from anyone except its
+    /// owner or an admin, mirroring who is still allowed to view a locked post at all.
     /// </summary>
-    public ErrorOr<Success> AddComment(BoardComment comment)
+    public ErrorOr<Success> AddComment(BoardComment comment, string? commenterNickname = null, bool isAdmin = false)
     {
-        if (Locked)
+        if (Locked && !((commenterNickname != null && IsOwnedBy(commenterNickname)) || isAdmin))
             return Error.Conflict("Board.Locked", "Cannot add a comment to a locked post.");
 
         if (Deleted)
