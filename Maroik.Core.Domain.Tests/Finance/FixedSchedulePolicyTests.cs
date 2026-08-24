@@ -56,22 +56,23 @@ public class FixedSchedulePolicyTests
     }
 
     /// <summary>
-    /// Regression test: when today is late in the year and the deposit date is early next year,
-    /// the upcoming occurrence is next year's, not this year's (which has already long passed).
+    /// The maturity date is always computed against the current calendar year (no rollover to
+    /// next year): a January occurrence that already passed this year stays un-noticed for the
+    /// rest of the year, even though the deposit date "looks" close by day/month alone.
     /// </summary>
     [Fact]
-    public void IsNoticed_ReturnsTrue_WhenDepositDateIsEarlyNextYear_WithinWindow()
+    public void IsNoticed_ReturnsFalse_WhenThisYearsOccurrenceAlreadyPassed_EvenIfDayMonthLooksClose()
     {
         var today = new DateTime(2026, 12, 20);
 
         var result = FixedSchedulePolicy.IsNoticed(depositMonth: 1, depositDay: 5, today, noticeWindowDays: 30, unpunctuality: false);
 
-        Assert.True(result);
+        Assert.False(result);
     }
 
-    /// <summary>Same year-boundary scenario, but the next-year occurrence falls outside the notice window.</summary>
+    /// <summary>Same year-end scenario for a different already-passed month/day combination.</summary>
     [Fact]
-    public void IsNoticed_ReturnsFalse_WhenDepositDateIsNextYear_OutsideWindow()
+    public void IsNoticed_ReturnsFalse_WhenThisYearsOccurrenceAlreadyPassed_March()
     {
         var today = new DateTime(2026, 12, 20);
 

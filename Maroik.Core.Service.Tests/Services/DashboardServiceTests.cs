@@ -161,9 +161,11 @@ public class DashboardServiceTests
 
         DashboardDto summary = await sut.GetSummaryAsync(email, "2025", "1", "UTC", TestContext.Current.CancellationToken);
 
-        // Most-used unit is KRW (2 assets) — computed in-memory, no DB write
+        // Most-used unit is KRW (2 assets), and the self-correction is persisted back to the
+        // account (matches main) so other screens reading Account.DefaultMonetaryUnit directly
+        // stay in sync with what the dashboard displays.
         Assert.Equal("KRW", summary.DefaultMonetaryUnit);
-        _accountRepo.Verify(r => r.UpdateEntityAsync(It.IsAny<Account>(), It.IsAny<CancellationToken>()), Times.Never);
+        _accountRepo.Verify(r => r.UpdateEntityAsync(It.IsAny<Account>(), It.IsAny<CancellationToken>()), Times.Once);
     }
 
     /// <summary>Verifies that <c>GetSummaryAsync</c> clears default monetary unit when no assets exist.</summary>
@@ -181,7 +183,7 @@ public class DashboardServiceTests
         DashboardDto summary = await sut.GetSummaryAsync(email, "2025", "1", "UTC", TestContext.Current.CancellationToken);
 
         Assert.Null(summary.DefaultMonetaryUnit);
-        _accountRepo.Verify(r => r.UpdateEntityAsync(It.IsAny<Account>(), It.IsAny<CancellationToken>()), Times.Never);
+        _accountRepo.Verify(r => r.UpdateEntityAsync(It.IsAny<Account>(), It.IsAny<CancellationToken>()), Times.Once);
     }
 
     /// <summary>

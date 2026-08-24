@@ -71,6 +71,15 @@ public class DashboardService : IDashboardService
 
         string? defaultMonetaryUnit = GetEffectiveMonetaryUnit(account, assets);
 
+        // Persist the self-corrected value (matches main): other screens that read
+        // Account.DefaultMonetaryUnit directly (e.g. account management) must not see a
+        // stale/empty value while the dashboard itself already shows the resolved one.
+        if (account != null && account.DefaultMonetaryUnit != defaultMonetaryUnit)
+        {
+            account.SetDefaultMonetaryUnit(defaultMonetaryUnit);
+            await _accountRepository.UpdateEntityAsync(account, ct);
+        }
+
         var summary = new DashboardDto
         {
             DefaultMonetaryUnit = defaultMonetaryUnit,

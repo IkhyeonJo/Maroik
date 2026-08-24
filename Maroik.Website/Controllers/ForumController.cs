@@ -12,6 +12,7 @@ using Maroik.Website.Models;
 using Maroik.Website.Models.ViewModels.Forum;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Localization;
+using Microsoft.AspNetCore.StaticFiles;
 using Microsoft.Extensions.Options;
 
 namespace Maroik.Website.Controllers;
@@ -29,6 +30,7 @@ public class ForumController : Controller
     private readonly IAccountService _accountService;
     private readonly ISessionService _sessionService;
     private readonly IOptions<ServerSetting> _serverSettings;
+    private static readonly FileExtensionContentTypeProvider _contentTypeProvider = new();
 
     /// <summary>Initializes a new instance of <see cref="ForumController"/> with the supplied dependencies.</summary>
     public ForumController(
@@ -267,7 +269,9 @@ public class ForumController : Controller
                         if (fileData != null)
                         {
                             freeForumOutputViewModel.BoardOutputViewModel?.BoardAttachedFileBase64Data = Convert.ToBase64String(fileData);
-                            freeForumOutputViewModel.BoardOutputViewModel?.BoardAttachedFileContentType = "application/octet-stream";
+                            freeForumOutputViewModel.BoardOutputViewModel?.BoardAttachedFileContentType =
+                                _contentTypeProvider.TryGetContentType(freeForumOutputViewModel.BoardOutputViewModel?.BoardAttachedFilePath ?? "", out string? contentType)
+                                    ? contentType : "application/octet-stream";
                         }
                     }
 
@@ -309,8 +313,11 @@ public class ForumController : Controller
                     if (freeBoard == null || freeBoard.Deleted)
                         return RedirectToAction(nameof(BoardType.FreeForum), "Forum");
 
-                    AccountResponse? loggedInAccount = _sessionService.GetAccount();
-                    if (loggedInAccount == null || !loggedInAccount.IsOwner(freeBoard.Writer))
+                    // ViewBag.LoggedInAccount is re-fetched from the database by ViewBagPopulatorFilter
+                    // on every request (not the session-cached snapshot), so a mid-session ownership-
+                    // relevant change (e.g. nickname edit) is reflected immediately here.
+                    AccountResponse loggedInAccount = ViewBag.LoggedInAccount;
+                    if (!loggedInAccount.IsOwner(freeBoard.Writer))
                         return RedirectToAction(nameof(BoardType.FreeForum), "Forum");
 
                     (freeBoard.Content, bool isImgTagIncluded) = await _boardService.PrepareHtmlForDisplayAsync(freeBoard.Content ?? "", ct);
@@ -342,7 +349,9 @@ public class ForumController : Controller
                     }
 
                     freeForumOutputViewModel.BoardOutputViewModel?.BoardAttachedFileBase64Data = Convert.ToBase64String(fileData);
-                    freeForumOutputViewModel.BoardOutputViewModel?.BoardAttachedFileContentType = "application/octet-stream";
+                    freeForumOutputViewModel.BoardOutputViewModel?.BoardAttachedFileContentType =
+                        _contentTypeProvider.TryGetContentType(freeForumOutputViewModel.BoardOutputViewModel?.BoardAttachedFilePath ?? "", out string? contentType)
+                            ? contentType : "application/octet-stream";
 
                     return View(freeForumOutputViewModel);
                 }
@@ -471,7 +480,8 @@ public class ForumController : Controller
                 return Json(new { result = true, freeBoard = board });
             }
 
-            AccountResponse loggedInAccount = _sessionService.GetAccount()!;
+            // Re-fetched from the database by ViewBagPopulatorFilter on every request.
+            AccountResponse loggedInAccount = ViewBag.LoggedInAccount;
             if (loggedInAccount.Nickname != board.Writer && loggedInAccount.Role != Role.Admin)
                 return Json(new { result = false, error = _localizer["Input is invalid"].Value });
 
@@ -548,7 +558,8 @@ public class ForumController : Controller
     {
         try
         {
-            AccountResponse loggedInAccount = _sessionService.GetAccount()!;
+            // Re-fetched from the database by ViewBagPopulatorFilter on every request.
+            AccountResponse loggedInAccount = ViewBag.LoggedInAccount;
 
             ServiceResult result = await _boardService.DeleteBoardAsync(
                 boardInputViewModel.Id,
@@ -559,7 +570,7 @@ public class ForumController : Controller
 
             return result.Success
                 ? Json(new { result = true, message = _localizer["The board has been successfully deleted."].Value })
-                : Json(new { result = false, error = result.ErrorKey });
+                : Json(new { result = false, error = _localizer[result.ErrorKey].Value });
         }
         catch (Exception ex)
         {
@@ -579,7 +590,8 @@ public class ForumController : Controller
     {
         try
         {
-            AccountResponse loggedInAccount = _sessionService.GetAccount()!;
+            // Re-fetched from the database by ViewBagPopulatorFilter on every request.
+            AccountResponse loggedInAccount = ViewBag.LoggedInAccount;
 
             ServiceResult result = await _boardService.DeleteCommentAsync(
                 id,
@@ -590,7 +602,7 @@ public class ForumController : Controller
 
             return result.Success
                 ? Json(new { result = true })
-                : Json(new { result = false, error = result.ErrorKey });
+                : Json(new { result = false, error = _localizer[result.ErrorKey].Value });
         }
         catch (Exception ex)
         {

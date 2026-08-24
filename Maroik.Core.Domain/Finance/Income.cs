@@ -104,7 +104,8 @@ public sealed class Income : AggregateRoot<long>
         decimal amount,
         string? currency,
         string? depositMyAssetProductName,
-        string? note = null)
+        string? note = null,
+        DateTime? created = null)
     {
         if (string.IsNullOrWhiteSpace(mainClass))
             return Error.Validation("Income.MainClassEmpty", "Main income category cannot be empty.");
@@ -124,6 +125,9 @@ public sealed class Income : AggregateRoot<long>
         var income = new Income(0, emailResult.Value, mainClass, subClass, content,
             moneyResult.Value, depositMyAssetProductName, note);
 
+        if (created.HasValue)
+            income.Created = created.Value;
+
         return income;
     }
 
@@ -139,7 +143,8 @@ public sealed class Income : AggregateRoot<long>
         decimal amount,
         string? currency,
         string? depositMyAssetProductName,
-        string? note)
+        string? note,
+        DateTime? created = null)
     {
         if (string.IsNullOrWhiteSpace(mainClass))
             return Error.Validation("Income.MainClassEmpty", "Main income category cannot be empty.");
@@ -159,6 +164,8 @@ public sealed class Income : AggregateRoot<long>
         Amount = moneyResult.Value;
         DepositMyAssetProductName = depositMyAssetProductName;
         Note = note;
+        if (created.HasValue)
+            Created = created.Value;
         Updated = DateTime.UtcNow;
         return Result.Success;
     }

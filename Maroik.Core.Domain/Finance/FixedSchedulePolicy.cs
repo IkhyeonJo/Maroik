@@ -9,10 +9,11 @@ namespace Maroik.Core.Domain.Finance;
 public static class FixedSchedulePolicy
 {
     /// <summary>
-    /// Returns <see langword="true"/> when the next scheduled deposit for
-    /// (<paramref name="depositMonth"/>, <paramref name="depositDay"/>) falls within
-    /// <paramref name="noticeWindowDays"/> days of <paramref name="today"/>,
+    /// Returns <see langword="true"/> when this year's scheduled deposit for
+    /// (<paramref name="depositMonth"/>, <paramref name="depositDay"/>) has not yet passed and
+    /// falls within <paramref name="noticeWindowDays"/> days of <paramref name="today"/>,
     /// or when <paramref name="unpunctuality"/> is set.
+    /// Once this year's occurrence has passed, it stays un-noticed until next year (matches main).
     /// Returns <see langword="false"/> for invalid date combinations (e.g. Feb 29 in a non-leap year).
     /// </summary>
     public static bool IsNoticed(
@@ -26,11 +27,6 @@ public static class FixedSchedulePolicy
         try
         {
             var depositDate = new DateTime(today.Year, depositMonth, depositDay);
-            // If this year's occurrence has already passed, the next one is next year
-            // (e.g. today = Dec 20, depositMonth/Day = Jan 5 — the upcoming deposit is
-            // next January, not the one that already happened last January).
-            if (depositDate < today.Date)
-                depositDate = depositDate.AddYears(1);
             double daysUntil = (depositDate - today).TotalDays;
             return daysUntil >= 0 && daysUntil <= noticeWindowDays;
         }

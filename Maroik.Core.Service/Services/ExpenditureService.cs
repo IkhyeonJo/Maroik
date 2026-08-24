@@ -107,7 +107,7 @@ public class ExpenditureService : IExpenditureService
             string? myDepositAsset = isTransfer ? request.MyDepositAsset : "";
 
             var expenditureResult = Expenditure.Record(accountEmail, request.MainClass, request.SubClass,
-                request.Content, Math.Abs(request.Amount), currency, request.PaymentMethod, myDepositAsset, request.Note);
+                request.Content, Math.Abs(request.Amount), currency, request.PaymentMethod, myDepositAsset, request.Note, request.Created);
             if (expenditureResult.IsError)
             {
                 await _unitOfWork.RollbackAsync(ct);
@@ -218,7 +218,7 @@ public class ExpenditureService : IExpenditureService
             var oldSnapshot = new ExpenditureSnapshot(previous.PaymentMethod, previous.MyDepositAsset, previous.Amount.Amount);
 
             var updateResult = previous.Update(request.MainClass, request.SubClass, request.Content,
-                Math.Abs(request.Amount), newCurrency, request.PaymentMethod, myDepositAsset, request.Note);
+                Math.Abs(request.Amount), newCurrency, request.PaymentMethod, myDepositAsset, request.Note, request.Created);
             if (updateResult.IsError)
             {
                 await _unitOfWork.RollbackAsync(ct);

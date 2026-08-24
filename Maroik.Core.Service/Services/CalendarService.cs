@@ -94,10 +94,18 @@ public class CalendarService : ICalendarService
 
     /// <inheritdoc />
     public async Task<List<OtherCalendarResponse>> GetOtherCalendarsAsync(string email, CancellationToken ct = default)
-        =>
-        [
-            .. (await _otherCalendarRepository.GetByAccountEmailAsync(email, ct)).Select(OtherCalendarMapper.ToResponse)
-        ];
+    {
+        List<OtherCalendarResponse> subscriptions =
+            [.. (await _otherCalendarRepository.GetByAccountEmailAsync(email, ct)).Select(OtherCalendarMapper.ToResponse)];
+
+        // Re-check current sharing status at read time (not just at unsubscribe/unshare time) so a
+        // calendar that was turned private stops showing up here even if the subscription-cleanup
+        // in UpdateCalendarSharedAsync failed to remove the stale OtherCalendar row.
+        HashSet<long> currentlySharedCalendarIds =
+            [.. (await _calendarSharedRepository.GetAllAsync(ct)).Where(s => s.User).Select(s => s.Id)];
+
+        return [.. subscriptions.Where(s => currentlySharedCalendarIds.Contains(s.CalendarId))];
+    }
 
     /// <inheritdoc />
     public async Task<List<CalendarSharedResponse>> GetCalendarSharedAsync(CancellationToken ct = default)

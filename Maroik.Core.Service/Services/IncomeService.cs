@@ -65,7 +65,7 @@ public class IncomeService : IIncomeService
 
             string currency = depositAsset.Balance.Currency;
             var incomeResult = Income.Record(accountEmail, request.MainClass, request.SubClass,
-                request.Content, Math.Abs(request.Amount), currency, request.DepositMyAssetProductName, request.Note);
+                request.Content, Math.Abs(request.Amount), currency, request.DepositMyAssetProductName, request.Note, request.Created);
             if (incomeResult.IsError)
             {
                 await _unitOfWork.RollbackAsync(ct);
@@ -135,7 +135,7 @@ public class IncomeService : IIncomeService
             string previousCurrency = prevAsset?.Balance.Currency ?? "";
 
             var updateResult = previous.Update(request.MainClass, request.SubClass, request.Content,
-                Math.Abs(request.Amount), newCurrency, request.DepositMyAssetProductName, request.Note);
+                Math.Abs(request.Amount), newCurrency, request.DepositMyAssetProductName, request.Note, request.Created);
             if (updateResult.IsError)
             {
                 await _unitOfWork.RollbackAsync(ct);

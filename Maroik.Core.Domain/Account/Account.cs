@@ -267,6 +267,16 @@ public sealed class Account : AggregateRoot<string>
         Updated = DateTime.UtcNow;
     }
 
+    /// <summary>
+    /// Self-corrects the stored default monetary unit (e.g. when it no longer matches any
+    /// remaining asset, or a unit can now be inferred from the account's assets). Does not
+    /// bump <see cref="Updated"/> — this is a background auto-correction, not a user edit.
+    /// </summary>
+    public void SetDefaultMonetaryUnit(string? defaultMonetaryUnit)
+    {
+        DefaultMonetaryUnit = defaultMonetaryUnit;
+    }
+
     /// <summary>Replaces the stored BCrypt hash (used after an admin password override).</summary>
     public void ChangePassword(string newHashedPassword)
     {

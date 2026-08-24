@@ -112,7 +112,8 @@ public sealed class Expenditure : AggregateRoot<long>
         string? currency,
         string? paymentMethod,
         string? myDepositAsset,
-        string? note = null)
+        string? note = null,
+        DateTime? created = null)
     {
         if (string.IsNullOrWhiteSpace(mainClass))
             return Error.Validation("Expenditure.MainClassEmpty", "Main expense category cannot be empty.");
@@ -132,6 +133,9 @@ public sealed class Expenditure : AggregateRoot<long>
         var expenditure = new Expenditure(0, emailResult.Value, mainClass, subClass, content,
             moneyResult.Value, paymentMethod, myDepositAsset, note);
 
+        if (created.HasValue)
+            expenditure.Created = created.Value;
+
         return expenditure;
     }
 
@@ -148,7 +152,8 @@ public sealed class Expenditure : AggregateRoot<long>
         string? currency,
         string? paymentMethod,
         string? myDepositAsset,
-        string? note)
+        string? note,
+        DateTime? created = null)
     {
         if (string.IsNullOrWhiteSpace(mainClass))
             return Error.Validation("Expenditure.MainClassEmpty", "Main expense category cannot be empty.");
@@ -169,6 +174,8 @@ public sealed class Expenditure : AggregateRoot<long>
         PaymentMethod = paymentMethod;
         MyDepositAsset = myDepositAsset;
         Note = note;
+        if (created.HasValue)
+            Created = created.Value;
         Updated = DateTime.UtcNow;
         return Result.Success;
     }
