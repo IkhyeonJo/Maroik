@@ -238,6 +238,26 @@ public class AccountRepositoryIntegrationTests : IAsyncLifetime
     }
 
     /// <summary>
+    /// Email is always persisted lower-case (see Email.Create), but the login path (which uses this
+    /// method against real PostgreSQL's case-sensitive `=`) can receive a differently-cased lookup —
+    /// must still match, or a user who registered as "Foo@Bar.com" could be locked out re-typing the
+    /// same case at login.
+    /// </summary>
+    [Fact]
+    public async Task FindByEmailForUpdateAsync_IsCaseInsensitive()
+    {
+        await SeedAsync(MakeOrm("alice@example.com", "Alice"));
+
+        await using var unitOfWork = new UnitOfWork(_context);
+        await unitOfWork.BeginAsync(TestContext.Current.CancellationToken);
+        Account? result = await _sut.FindByEmailForUpdateAsync("Alice@Example.com", TestContext.Current.CancellationToken);
+        await unitOfWork.CommitAsync(TestContext.Current.CancellationToken);
+
+        Assert.NotNull(result);
+        Assert.Equal("Alice", result.Nickname);
+    }
+
+    /// <summary>
     /// Verifies that concurrent failed-login sequences for the same account all accumulate correctly
     /// against real PostgreSQL when each is wrapped in its own transaction around
     /// FindByEmailForUpdateAsync + UpdateEntityAsync (mirroring how AccountService.LoginAsync uses

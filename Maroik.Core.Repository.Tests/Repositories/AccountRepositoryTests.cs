@@ -100,6 +100,23 @@ public class AccountRepositoryTests : IDisposable
         Assert.Null(result);
     }
 
+    /// <summary>
+    /// Email is always persisted lower-case (see Email.Create), but a lookup can arrive with a
+    /// different case (e.g. a login form auto-capitalized by the browser) — the lookup must still
+    /// match, or a user who registered as "Foo@Bar.com" (stored "foo@bar.com") could be locked out
+    /// of their own account by re-typing the same case at login.
+    /// </summary>
+    [Fact]
+    public async Task FindByEmailAsync_IsCaseInsensitive()
+    {
+        await SeedAsync(MakeAccount("alice@example.com", "Alice"));
+
+        Account? result = await _sut.FindByEmailAsync("Alice@Example.com", TestContext.Current.CancellationToken);
+
+        Assert.NotNull(result);
+        Assert.Equal("Alice", result.Nickname);
+    }
+
     // -- GetAccountByRegistrationTokenAsync -----------------------------------
 
     /// <summary>Verifies that <c>GetAccountByRegistrationTokenAsync</c> returns account when token matches.</summary>

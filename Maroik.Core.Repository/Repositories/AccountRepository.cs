@@ -52,7 +52,13 @@ public class AccountRepository(ApplicationDbContext context)
 
     /// <inheritdoc />
     public Task<Account?> FindByEmailAsync(string email, CancellationToken ct = default)
-        => QueryFirstAsync(e => e.Email == email, ct);
+    {
+        // Email is always persisted lower-cased (see Email.Create), but callers here pass raw,
+        // un-normalized user input (login form, forgot-password form, etc.) — normalize the
+        // lookup key too, or a differently-cased-but-identical email never matches.
+        string normalizedEmail = email.ToLowerInvariant();
+        return QueryFirstAsync(e => e.Email == normalizedEmail, ct);
+    }
 
     /// <inheritdoc />
     public Task<Account?> FindByRegistrationTokenAsync(string token, CancellationToken ct = default)
@@ -72,6 +78,9 @@ public class AccountRepository(ApplicationDbContext context)
     /// <inheritdoc />
     public async Task<Account?> FindByEmailForUpdateAsync(string email, CancellationToken ct = default)
     {
+        // Normalize for the same reason as FindByEmailAsync above (this is the login lookup path).
+        string normalizedEmail = email.ToLowerInvariant();
+
         // Raw SQL is required because EF Core LINQ cannot emit FOR UPDATE.
         // ToListAsync on the raw root executes the SQL verbatim (no composition),
         // keeping FOR UPDATE at the top level of the statement.
@@ -79,7 +88,7 @@ public class AccountRepository(ApplicationDbContext context)
             $"""
              SELECT *
              FROM "Account"
-             WHERE "Email" = {email}
+             WHERE "Email" = {normalizedEmail}
              LIMIT 1
              FOR UPDATE
              """).ToListAsync(ct);
