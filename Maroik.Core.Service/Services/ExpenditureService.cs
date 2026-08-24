@@ -259,6 +259,23 @@ public class ExpenditureService : IExpenditureService
                 return ServiceResult.Fail("Input is invalid");
             }
 
+            // An expenditure referencing a since-archived (soft-deleted) asset must not be
+            // deletable, matching Create/Update: a deleted asset's balance must not be touched.
+            Dictionary<string, Asset> assetsToCheck = await _assetBalance.GetAssetsOrdinalAsync(
+                accountEmail, [expenditure.PaymentMethod, expenditure.MyDepositAsset], ct);
+            if (!string.IsNullOrEmpty(expenditure.PaymentMethod) &&
+                assetsToCheck.TryGetValue(expenditure.PaymentMethod, out var payAssetToCheck) && payAssetToCheck.Deleted)
+            {
+                await _unitOfWork.RollbackAsync(ct);
+                return ServiceResult.Fail("Actions cannot be executed with assets that have already been deleted.");
+            }
+            if (!string.IsNullOrEmpty(expenditure.MyDepositAsset) &&
+                assetsToCheck.TryGetValue(expenditure.MyDepositAsset, out var depAssetToCheck) && depAssetToCheck.Deleted)
+            {
+                await _unitOfWork.RollbackAsync(ct);
+                return ServiceResult.Fail("Actions cannot be executed with assets that have already been deleted.");
+            }
+
             var adjustResult = await AdjustAssetBalancesAsync(accountEmail,
                 new ExpenditureSnapshot(expenditure.PaymentMethod, expenditure.MyDepositAsset, expenditure.Amount.Amount),
                 null, ct);

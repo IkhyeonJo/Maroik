@@ -134,7 +134,7 @@ public class ForumController : Controller
                 Content = boardCommentInputViewModel.Content
             };
 
-            ServiceResult result = await _boardService.WriteCommentAsync(commentRequest, isAdmin: loggedInAccount.Role == Role.Admin, ct: ct);
+            ServiceResult result = await _boardService.WriteCommentAsync(commentRequest, isAdmin: loggedInAccount.Role == Role.Admin, requiredType: EnumHelper.GetDescription(BoardType.FreeForum), ct: ct);
             return result.Success
                 ? Json(new { result = true, boardId = boardCommentInputViewModel.BoardId, page = boardCommentInputViewModel.DetailCurrentPage })
                 : Json(new { result = false, error = _localizer["Input is invalid"].Value });
@@ -585,6 +585,7 @@ public class ForumController : Controller
                 id,
                 loggedInAccount.Nickname!,
                 loggedInAccount.Role == Role.Admin,
+                EnumHelper.GetDescription(BoardType.FreeForum),
                 ct);
 
             return result.Success

@@ -160,6 +160,7 @@ public class AccountService : IAccountService
                 return RegisterResult.Fail(createResult.FirstError.Description);
 
             var account = createResult.Value;
+            account.SetMessage(EnumHelper.GetDescription(AccountMessage.UserCreatedVerifyEmail));
 
             try
             {

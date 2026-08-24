@@ -37,8 +37,14 @@ public class AssetServiceTests
         Asset.Reconstitute(name, "user@example.com", "FreeDepositAndWithdrawal", amount, currency, null, deleted, DateTime.UtcNow, DateTime.UtcNow);
 
     private void SetupFindAsset(string productName, Asset? asset)
-        => _assetRepo.Setup(r => r.FindByEmailAndProductNameAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+    {
+        _assetRepo.Setup(r => r.FindByEmailAndProductNameAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(asset);
+        // UpdateAsync row-locks its read via the ForUpdate variant (see AssetService.UpdateAsync);
+        // stub it too so Update-path tests using this same helper still find the asset.
+        _assetRepo.Setup(r => r.FindByEmailAndProductNameForUpdateAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(asset);
+    }
 
     private static AssetRequest ValidRequest(string name = "MyBank") => new()
     {
@@ -79,19 +85,23 @@ public class AssetServiceTests
         Assert.Contains("already exists", result.ErrorKey, StringComparison.OrdinalIgnoreCase);
     }
 
-    /// <summary>Verifies that <c>CreateAsync</c> revives a soft-deleted asset under the same name instead of failing or attempting an insert.</summary>
+    /// <summary>
+    /// Verifies that <c>CreateAsync</c> rejects a name that belongs to a soft-deleted asset rather
+    /// than reviving it — a freed-up-looking name must never be reusable, since reviving the row
+    /// would silently re-attach its old transaction history to what the user believes is a new,
+    /// unrelated asset.
+    /// </summary>
     [Fact]
-    public async Task CreateAsync_RevivesSoftDeletedAsset_WhenSameNameIsDeleted()
+    public async Task CreateAsync_ReturnsFail_WhenSameNameIsSoftDeleted()
     {
         SetupFindAsset("MyBank", MakeAsset("MyBank", amount: 500m, currency: "KRW", deleted: true));
-        _assetRepo.Setup(r => r.UpdateEntityAsync(It.IsAny<Asset>(), It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
         var sut = CreateSut();
 
         ServiceResult result = await sut.CreateAsync("user@example.com", ValidRequest("MyBank"), TestContext.Current.CancellationToken);
 
-        Assert.True(result.Success);
-        _assetRepo.Verify(r => r.UpdateEntityAsync(
-            It.Is<Asset>(a => a.ProductName == "MyBank" && !a.Deleted), It.IsAny<CancellationToken>()), Times.Once);
+        Assert.False(result.Success);
+        Assert.Contains("already exists", result.ErrorKey, StringComparison.OrdinalIgnoreCase);
+        _assetRepo.Verify(r => r.UpdateEntityAsync(It.IsAny<Asset>(), It.IsAny<CancellationToken>()), Times.Never);
         _assetRepo.Verify(r => r.CreateAsync(It.IsAny<Asset>(), It.IsAny<CancellationToken>()), Times.Never);
     }
 

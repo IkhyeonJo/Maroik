@@ -221,7 +221,7 @@ public class BoardService : IBoardService
         {
             Board? board = await _boardRepository.FindActiveByIdAsync(boardId, ct);
 
-            if (board == null || board.Deleted)
+            if (board == null || board.Deleted || board.Type != boardType)
                 return ServiceResult.Fail("Input is invalid");
 
             // Admins may delete any post; non-admins may only delete their own.
@@ -243,7 +243,7 @@ public class BoardService : IBoardService
     }
 
     /// <inheritdoc />
-    public async Task<ServiceResult> WriteCommentAsync(BoardCommentRequest request, string? requiredOwnerNickname = null, bool isAdmin = false, CancellationToken ct = default)
+    public async Task<ServiceResult> WriteCommentAsync(BoardCommentRequest request, string? requiredOwnerNickname = null, bool isAdmin = false, string? requiredType = null, CancellationToken ct = default)
     {
         string content = _attachmentContent.SanitizeContent(request.Content ?? "");
 
@@ -254,7 +254,7 @@ public class BoardService : IBoardService
             // the same post serialize instead of both reading the same Count() and racing to
             // insert duplicate Order values.
             Board? board = await _boardRepository.FindActiveByIdForUpdateAsync(request.BoardId, ct);
-            if (board == null)
+            if (board == null || (requiredType != null && board.Type != requiredType))
             {
                 await _unitOfWork.RollbackAsync(ct);
                 return ServiceResult.Fail("Input is invalid");
@@ -317,13 +317,23 @@ public class BoardService : IBoardService
     }
 
     /// <inheritdoc />
-    public async Task<ServiceResult> DeleteCommentAsync(long commentId, string requesterNickname, bool isAdmin, CancellationToken ct = default)
+    public async Task<ServiceResult> DeleteCommentAsync(long commentId, string requesterNickname, bool isAdmin, string? requiredType = null, CancellationToken ct = default)
     {
         try
         {
             BoardComment? comment = await _boardCommentRepository.FindByIdAsync(commentId, ct);
             if (comment == null)
                 return ServiceResult.Fail("Input is invalid");
+
+            if (requiredType != null)
+            {
+                // The comment's parent post must belong to the caller's board type — otherwise a
+                // caller scoped to one board type could delete a comment on a post of a different
+                // type just by supplying its comment ID.
+                Board? parent = await _boardRepository.FindActiveByIdAsync(comment.BoardId, ct);
+                if (parent == null || parent.Type != requiredType)
+                    return ServiceResult.Fail("Input is invalid");
+            }
 
             // Admins may delete any comment; non-admins may only delete their own.
             if (!comment.CanBeDeletedBy(requesterNickname, isAdmin))

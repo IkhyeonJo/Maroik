@@ -50,18 +50,29 @@ public interface IBoardService
 
     /// <summary>
     /// Soft-deletes a board post. Admins can delete any post; regular users can only delete their own.
+    /// <paramref name="boardType"/> must match the post's actual type, so a caller scoped to one
+    /// board type (e.g. the public Forum endpoint) cannot target a post of a different type
+    /// (e.g. another account's PrivateNote) just by supplying its ID.
     /// </summary>
     Task<ServiceResult> DeleteBoardAsync(long boardId, string boardType, string requesterNickname, bool isAdmin, CancellationToken ct = default);
 
     /// <summary>
     /// Adds a comment to a board post.
     /// When <paramref name="requiredOwnerNickname"/> is set, only that user may comment (used for private notes).
+    /// When <paramref name="requiredType"/> is set, the target post must be of that board type — so a
+    /// caller scoped to one board type (e.g. the public Forum endpoint) cannot comment on a post of a
+    /// different type (e.g. another account's PrivateNote) just by supplying its ID.
     /// A locked post still accepts comments from its owner (<paramref name="request"/>.Writer) or an admin.
     /// </summary>
-    Task<ServiceResult> WriteCommentAsync(BoardCommentRequest request, string? requiredOwnerNickname = null, bool isAdmin = false, CancellationToken ct = default);
+    Task<ServiceResult> WriteCommentAsync(BoardCommentRequest request, string? requiredOwnerNickname = null, bool isAdmin = false, string? requiredType = null, CancellationToken ct = default);
 
-    /// <summary>Soft-deletes a comment. Admins can delete any comment; regular users can only delete their own.</summary>
-    Task<ServiceResult> DeleteCommentAsync(long commentId, string requesterNickname, bool isAdmin, CancellationToken ct = default);
+    /// <summary>
+    /// Soft-deletes a comment. Admins can delete any comment; regular users can only delete their own.
+    /// When <paramref name="requiredType"/> is set, the comment's parent post must be of that board
+    /// type — so a caller scoped to one board type cannot delete a comment belonging to a post of a
+    /// different type just by supplying its comment ID.
+    /// </summary>
+    Task<ServiceResult> DeleteCommentAsync(long commentId, string requesterNickname, bool isAdmin, string? requiredType = null, CancellationToken ct = default);
 
     /// <summary>Increments the view counter of a board post by 1.</summary>
     Task<ServiceResult> IncrementBoardViewAsync(long boardId, CancellationToken ct = default);

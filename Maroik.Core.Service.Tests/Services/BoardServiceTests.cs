@@ -552,7 +552,7 @@ public class BoardServiceTests
         _commentRepo.Setup(r => r.FindByIdAsync(It.IsAny<long>(), It.IsAny<CancellationToken>())).ReturnsAsync((BoardComment?)null);
         var sut = CreateSut();
 
-        ServiceResult result = await sut.DeleteCommentAsync(99, "Alice", false, TestContext.Current.CancellationToken);
+        ServiceResult result = await sut.DeleteCommentAsync(99, "Alice", false, ct: TestContext.Current.CancellationToken);
 
         Assert.False(result.Success);
     }
@@ -564,7 +564,7 @@ public class BoardServiceTests
         _commentRepo.Setup(r => r.FindByIdAsync(It.IsAny<long>(), It.IsAny<CancellationToken>())).ReturnsAsync(MakeComment(writer: "Alice"));
         var sut = CreateSut();
 
-        ServiceResult result = await sut.DeleteCommentAsync(1, "Bob", false, TestContext.Current.CancellationToken);
+        ServiceResult result = await sut.DeleteCommentAsync(1, "Bob", false, ct: TestContext.Current.CancellationToken);
 
         Assert.False(result.Success);
         Assert.Contains("permission", result.ErrorKey, StringComparison.OrdinalIgnoreCase);
@@ -578,7 +578,7 @@ public class BoardServiceTests
         _commentRepo.Setup(r => r.UpdateEntityAsync(It.IsAny<BoardComment>(), It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
         var sut = CreateSut();
 
-        ServiceResult result = await sut.DeleteCommentAsync(1, "Alice", false, TestContext.Current.CancellationToken);
+        ServiceResult result = await sut.DeleteCommentAsync(1, "Alice", false, ct: TestContext.Current.CancellationToken);
 
         Assert.True(result.Success);
     }

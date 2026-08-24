@@ -208,7 +208,21 @@ public class CalendarService : ICalendarService
                 return ServiceResult.Ok();
             }
 
-            var calendarResult = Calendar.Create(request.AccountEmail, request.Name, request.Description, request.TimeZoneIanaId, request.HtmlColorCode);
+            // This first-visit auto-provisioning must always succeed so the calendar grid is never
+            // permanently empty — fall back to UTC if the account's own TimeZoneIanaId is missing
+            // or unrecognized, rather than letting Calendar.Create's normal (and deliberately
+            // strict) validation silently fail an action the user didn't request.
+            string timeZoneIanaId = request.TimeZoneIanaId ?? "";
+            try
+            {
+                _ = TimeZoneInfo.FindSystemTimeZoneById(timeZoneIanaId);
+            }
+            catch (Exception)
+            {
+                timeZoneIanaId = "UTC";
+            }
+
+            var calendarResult = Calendar.Create(request.AccountEmail, request.Name, request.Description, timeZoneIanaId, request.HtmlColorCode);
             if (calendarResult.IsError)
                 return ServiceResult.Fail(calendarResult.FirstError.Description);
 
@@ -291,25 +305,24 @@ public class CalendarService : ICalendarService
 
             List<OtherCalendar> allOtherCalendars = await _otherCalendarRepository.GetAllAsync(ct);
 
-            // When a calendar is set to non-user-visible, remove any existing subscriptions to it.
+            // When a calendar is set to non-user-visible, remove ALL existing subscriptions to it
+            // (every account that had subscribed), not just one — otherwise leftover subscription
+            // rows silently reactivate the moment the calendar is shared again.
             foreach (CalendarSharedRequest req in calendarSharedRequests.Where(r => !r.User))
             {
-                OtherCalendar? other = allOtherCalendars.FirstOrDefault(o => o.CalendarId == req.CalendarId);
-                if (other == null)
+                foreach (OtherCalendar other in allOtherCalendars.Where(o => o.CalendarId == req.CalendarId))
                 {
-                    continue;
-                }
-
-                try
-                {
-                    await _otherCalendarRepository.DeleteByAccountEmailAndCalendarIdAsync(other.AccountEmail.Value, other.CalendarId, ct);
-                }
-                catch (Exception ex)
-                {
-                    // Best effort: a stale subscription is not worth failing the whole request over,
-                    // but a swallowed failure here (transient or otherwise) should still be visible.
-                    _logger.LogWarning(ex, "Failed to remove stale calendar subscription for {AccountEmail} to calendar {CalendarId}",
-                        other.AccountEmail.Value, other.CalendarId);
+                    try
+                    {
+                        await _otherCalendarRepository.DeleteByAccountEmailAndCalendarIdAsync(other.AccountEmail.Value, other.CalendarId, ct);
+                    }
+                    catch (Exception ex)
+                    {
+                        // Best effort: a stale subscription is not worth failing the whole request over,
+                        // but a swallowed failure here (transient or otherwise) should still be visible.
+                        _logger.LogWarning(ex, "Failed to remove stale calendar subscription for {AccountEmail} to calendar {CalendarId}",
+                            other.AccountEmail.Value, other.CalendarId);
+                    }
                 }
             }
 
@@ -380,15 +393,17 @@ public class CalendarService : ICalendarService
                 await _calendarEventAttachedFileRepository.CreateAsync(fileResult.Value, ct);
             }
 
-            // Create all reminder entries for the event within the same transaction.
+            // Create all reminder entries for the event within the same transaction. A malformed
+            // reminder is skipped rather than failing the whole save — matching main, where the
+            // event (and its other, valid reminders) is never blocked by one bad reminder.
             foreach (var reminderResult in reminders.Select(r => CalendarEventReminder.Create(eventId, r.Method,
                          r.MinutesBeforeEvent, r.HoursBeforeEvent, r.DaysBeforeEvent, r.WeeksBeforeEvent,
                          r.TimesBeforeEvent.HasValue ? TimeOnly.FromTimeSpan(r.TimesBeforeEvent.Value) : null)))
             {
                 if (reminderResult.IsError)
                 {
-                    await _unitOfWork.RollbackAsync(ct);
-                    return ServiceResult.Fail(reminderResult.FirstError.Description);
+                    _logger.LogWarning("Skipped invalid reminder on calendar event {EventId}: {Error}", eventId, reminderResult.FirstError.Description);
+                    continue;
                 }
                 await _calendarEventReminderRepository.CreateAsync(reminderResult.Value, ct);
             }
@@ -471,7 +486,9 @@ public class CalendarService : ICalendarService
                 await _calendarEventAttachedFileRepository.CreateAsync(fileResult.Value, ct);
             }
 
-            // Replace reminders: delete all existing then re-create from the updated list.
+            // Replace reminders: delete all existing then re-create from the updated list. A
+            // malformed reminder is skipped rather than failing the whole save — matching main,
+            // where the event update is never blocked by one bad reminder.
             await _calendarEventReminderRepository.DeleteByCalendarEventIdAsync(existing.Id, ct);
             foreach (var reminderResult in reminders.Select(r => CalendarEventReminder.Create(existing.Id, r.Method,
                          r.MinutesBeforeEvent, r.HoursBeforeEvent, r.DaysBeforeEvent, r.WeeksBeforeEvent,
@@ -479,8 +496,8 @@ public class CalendarService : ICalendarService
             {
                 if (reminderResult.IsError)
                 {
-                    await _unitOfWork.RollbackAsync(ct);
-                    return ServiceResult.Fail(reminderResult.FirstError.Description);
+                    _logger.LogWarning("Skipped invalid reminder on calendar event {EventId}: {Error}", existing.Id, reminderResult.FirstError.Description);
+                    continue;
                 }
                 await _calendarEventReminderRepository.CreateAsync(reminderResult.Value, ct);
             }
@@ -502,6 +519,9 @@ public class CalendarService : ICalendarService
         try
         {
             List<Calendar> calendars = await _calendarRepository.GetByAccountEmailAsync(email, ct);
+            if (calendars.Count == 0)
+                return ServiceResult.Fail("No calendar exists");
+
             CalendarEvent? evt = await _calendarEventRepository.FindByIdAsync(calendarEventId, ct);
 
             // Ensure the event exists and belongs to one of the requesting user's calendars.

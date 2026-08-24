@@ -60,11 +60,13 @@ public class DashboardService : IDashboardService
         // Capped one below DateTime.MaxValue's year: yearEnd below computes `new DateTime(yearInt + 1, ...)`.
         if (yearInt is < 1 or > 9998) yearInt = accountToday.Year;
 
-        // Deleted assets must not surface in the dashboard's asset list, monetary-unit options,
-        // or effective-currency calculation, even though GetByAccountEmailAsync itself returns
-        // them (the account-book management grid needs to see deleted assets too).
-        List<Asset> assets =
-            [.. (await _assetRepository.GetByAccountEmailAsync(accountEmail, ct)).Where(a => !a.Deleted)];
+        // Deleted assets must not surface in the dashboard's visible asset list, monetary-unit
+        // options, or effective-currency calculation. But a historical Income/Expenditure can still
+        // reference a since-deleted asset by product name (main never filters this lookup), so the
+        // currency-resolution below uses the unfiltered list — otherwise transactions tied to a
+        // deleted asset would resolve to no currency and silently drop out of the totals.
+        List<Asset> allAssets = await _assetRepository.GetByAccountEmailAsync(accountEmail, ct);
+        List<Asset> assets = [.. allAssets.Where(a => !a.Deleted)];
         Account? account = await _accountRepository.FindByEmailAsync(accountEmail, ct);
 
         string? defaultMonetaryUnit = GetEffectiveMonetaryUnit(account, assets);
@@ -103,19 +105,21 @@ public class DashboardService : IDashboardService
             List<Income> ymIncomes = await _incomeRepository.GetByAccountEmailAndDateRangeAsync(accountEmail, ymStart, ymEnd, ct);
             List<Expenditure> ymExpenditures = await _expenditureRepository.GetByAccountEmailAndDateRangeAsync(accountEmail, ymStart, ymEnd, ct);
 
-            // Filter by default monetary unit via asset lookup
+            // Filter by default monetary unit via asset lookup. Uses allAssets (not the
+            // deleted-filtered `assets`) so a transaction tied to a since-deleted asset still
+            // resolves its currency correctly instead of being dropped from the totals.
             string defaultUnit = summary.DefaultMonetaryUnit;
             summary.YearIncomes = yearIncomes
-                .Where(x => assets.FirstOrDefault(a => a.ProductName == x.DepositMyAssetProductName)?.Balance.Currency == defaultUnit)
+                .Where(x => allAssets.FirstOrDefault(a => a.ProductName == x.DepositMyAssetProductName)?.Balance.Currency == defaultUnit)
                 .Select(IncomeMapper.ToResponse).ToList();
             summary.YearExpenditures = yearExpenditures
-                .Where(x => assets.FirstOrDefault(a => a.ProductName == x.PaymentMethod)?.Balance.Currency == defaultUnit)
+                .Where(x => allAssets.FirstOrDefault(a => a.ProductName == x.PaymentMethod)?.Balance.Currency == defaultUnit)
                 .Select(ExpenditureMapper.ToResponse).ToList();
             summary.YearMonthIncomes = ymIncomes
-                .Where(x => assets.FirstOrDefault(a => a.ProductName == x.DepositMyAssetProductName)?.Balance.Currency == defaultUnit)
+                .Where(x => allAssets.FirstOrDefault(a => a.ProductName == x.DepositMyAssetProductName)?.Balance.Currency == defaultUnit)
                 .Select(IncomeMapper.ToResponse).ToList();
             summary.YearMonthExpenditures = ymExpenditures
-                .Where(x => assets.FirstOrDefault(a => a.ProductName == x.PaymentMethod)?.Balance.Currency == defaultUnit)
+                .Where(x => allAssets.FirstOrDefault(a => a.ProductName == x.PaymentMethod)?.Balance.Currency == defaultUnit)
                 .Select(ExpenditureMapper.ToResponse).ToList();
         }
 

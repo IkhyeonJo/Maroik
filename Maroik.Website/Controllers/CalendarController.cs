@@ -548,7 +548,11 @@ public class CalendarController : Controller
                 from evt in eventsByCalendarId[inputCalendar.Id]
                 select evt.ToDisplayViewModel(userTimezone, htmlColorCode, calendarType));
 
-            return Json(new { result = true, calendarEvents = JsonConvert.SerializeObject(calendarEvents) });
+            // Matches main: an empty result set for the requested range/calendars is reported the
+            // same way as any other "nothing to return" case, not as a distinct success payload.
+            return calendarEvents.Count > 0
+                ? Json(new { result = true, calendarEvents = JsonConvert.SerializeObject(calendarEvents) })
+                : Json(new { result = false, error = _localizer["Input is invalid"].Value });
         }
         catch (Exception ex)
         {

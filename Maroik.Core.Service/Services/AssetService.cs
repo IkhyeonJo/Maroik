@@ -56,29 +56,14 @@ public class AssetService : IAssetService
         if (!IsValidAssetItem(request.Item))
             return ServiceResult.Fail("Input is invalid");
 
-        // Reject duplicate product names within the same account. A soft-deleted asset under the
-        // same name doesn't block recreation from the user's perspective, but its row still
-        // occupies the (ProductName, AccountEmail) primary key, so it must be revived (UPDATE)
-        // below rather than inserted as a new row.
+        // Reject duplicate product names within the same account, including a soft-deleted asset
+        // under that name: its row still occupies the (ProductName, AccountEmail) primary key, and
+        // reviving it in place would silently re-attach that old row's historical transaction
+        // history (Expenditure/FixedExpenditure/Income/FixedIncome references) to a "new" asset the
+        // user believes is unrelated. A name freed up by soft-deletion is never reusable.
         Asset? existing = await FindAssetAsync(accountEmail, request.ProductName ?? "", ct);
-        if (existing is { Deleted: false })
-            return ServiceResult.Fail("The asset already exists.");
-
         if (existing != null)
-        {
-            var reviveResult = existing.Update(
-                request.ProductName ?? existing.ProductName,
-                request.Item!,
-                request.Amount,
-                request.MonetaryUnit ?? existing.Balance.Currency,
-                request.Note,
-                deleted: false);
-            if (reviveResult.IsError)
-                return ServiceResult.Fail(reviveResult.FirstError.Description);
-
-            await _assetRepository.UpdateEntityAsync(existing, ct);
-            return ServiceResult.Ok();
-        }
+            return ServiceResult.Fail("The asset already exists.");
 
         var createResult = Asset.Create(
             request.ProductName,
@@ -121,7 +106,10 @@ public class AssetService : IAssetService
                 return ServiceResult.Fail("Input is invalid");
             }
 
-            Asset? asset = await FindAssetAsync(accountEmail, originalProductName, ct);
+            // Row-locks the asset for the rest of this transaction (held until commit/rollback),
+            // so a concurrent Income/Expenditure balance mutation on the same asset can't be lost
+            // under this action's absolute-overwrite of Balance.
+            Asset? asset = await _assetRepository.FindByEmailAndProductNameForUpdateAsync(accountEmail, originalProductName, ct);
             if (asset == null)
             {
                 await _unitOfWork.RollbackAsync(ct);
@@ -183,7 +171,10 @@ public class AssetService : IAssetService
     /// <summary>
     /// Returns <see langword="true"/> when <paramref name="item"/> is one of the recognized asset category values.
     /// Prevents invalid category strings from reaching the domain layer.
+    /// Compares against the exact defined member names (not <see cref="Enum.TryParse{TEnum}(string,out TEnum)"/>,
+    /// which also accepts arbitrary numeric strings like "0" or "999" regardless of whether that
+    /// underlying value has a defined name).
     /// </summary>
     private static bool IsValidAssetItem(string? item) =>
-        item != null && Enum.TryParse<AssetItemType>(item, out _);
+        item != null && Enum.GetNames<AssetItemType>().Contains(item, StringComparer.Ordinal);
 }

@@ -24,4 +24,20 @@ internal static class AccountMapper
         Message = account.Message,
         Deleted = account.Deleted
     };
+
+    /// <summary>
+    /// Same as <see cref="ToResponse"/> but additionally populates <see cref="AccountResponse.HashedPassword"/>,
+    /// <see cref="AccountResponse.RegistrationToken"/>, and <see cref="AccountResponse.ResetPasswordToken"/>.
+    /// Use ONLY for the admin account-management grid/search/export (matching main's behavior there) —
+    /// never for the logged-in user's own session-stored <see cref="AccountResponse"/>, since that would
+    /// put the password hash into the session payload.
+    /// </summary>
+    internal static AccountResponse ToAdminResponse(Account account)
+    {
+        AccountResponse response = ToResponse(account);
+        response.HashedPassword = account.HashedPassword;
+        response.RegistrationToken = account.RegistrationToken;
+        response.ResetPasswordToken = account.ResetPasswordToken;
+        return response;
+    }
 }

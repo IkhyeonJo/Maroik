@@ -988,7 +988,7 @@ public class ManagementController : Controller
                 Content = boardCommentInputViewModel.Content
             };
 
-            ServiceResult result = await _boardService.WriteCommentAsync(commentRequest, loggedInAccount.Nickname!, ct: HttpContext.RequestAborted);
+            ServiceResult result = await _boardService.WriteCommentAsync(commentRequest, loggedInAccount.Nickname!, requiredType: EnumHelper.GetDescription(BoardType.PrivateNote), ct: HttpContext.RequestAborted);
             return result.Success
                 ? Json(new { result = true, boardId = boardCommentInputViewModel.BoardId, page = boardCommentInputViewModel.DetailCurrentPage })
                 : Json(new { result = false, error = _localizer["Input is invalid"].Value });
@@ -1510,6 +1510,7 @@ public class ManagementController : Controller
                 id,
                 loggedInAccount.Nickname!,
                 false,
+                EnumHelper.GetDescription(BoardType.PrivateNote),
                 HttpContext.RequestAborted);
 
             return result.Success

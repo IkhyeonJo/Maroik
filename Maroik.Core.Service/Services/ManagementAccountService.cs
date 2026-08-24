@@ -31,13 +31,13 @@ public class ManagementAccountService : IManagementAccountService
 
     /// <inheritdoc />
     public async Task<List<AccountResponse>> GetAllAccountsAsync(CancellationToken ct = default)
-        => (await _accountRepository.GetAllAsync(ct)).Select(AccountMapper.ToResponse).ToList();
+        => (await _accountRepository.GetAllAsync(ct)).Select(AccountMapper.ToAdminResponse).ToList();
 
     /// <inheritdoc />
     public async Task<AccountResponse?> GetAccountByEmailAsync(string email, CancellationToken ct = default)
     {
         Account? account = await FindByEmailAsync(email, ct);
-        return account == null ? null : AccountMapper.ToResponse(account);
+        return account == null ? null : AccountMapper.ToAdminResponse(account);
     }
 
     /// <inheritdoc />
@@ -91,11 +91,14 @@ public class ManagementAccountService : IManagementAccountService
             if (!string.IsNullOrEmpty(newPassword))
                 account.ChangePassword(_passwordService.HashPassword(newPassword));
 
+            // The admin UI has no LoginAttempt input, so request.LoginAttempt is always the request
+            // DTO's default (0) — pass the account's own current value instead, so AdminUpdate's
+            // "preserve while locked, reset on unlock" logic has a real count to preserve.
             var updateResult = account.AdminUpdate(
                 request.Role,
                 request.TimeZoneIanaId,
                 request.Locked,
-                request.LoginAttempt,
+                account.LoginAttempt,
                 request.EmailConfirmed,
                 request.AgreedServiceTerms,
                 request.Message,

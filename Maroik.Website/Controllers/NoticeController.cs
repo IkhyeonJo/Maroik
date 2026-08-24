@@ -11,6 +11,7 @@ using Maroik.Website.Models.ViewModels.Notice;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Localization;
 using Microsoft.Extensions.Options;
+using System.Globalization;
 
 namespace Maroik.Website.Controllers;
 
@@ -78,7 +79,9 @@ public class NoticeController : Controller
                 DepositMyAssetProductName = fixedIncomeInputViewModel.DepositMyAssetProductName,
                 DepositMonth = fixedIncomeInputViewModel.DepositMonth,
                 DepositDay = fixedIncomeInputViewModel.DepositDay,
-                MaturityDate = DateTime.Parse(fixedIncomeInputViewModel.MaturityDate!),
+                // ParseExact (not Parse) so only a strict yyyy-MM-dd string is accepted, matching
+                // main's format-locked validation instead of culture-dependent free-form parsing.
+                MaturityDate = DateTime.ParseExact(fixedIncomeInputViewModel.MaturityDate!, "yyyy-MM-dd", CultureInfo.InvariantCulture),
                 Note = fixedIncomeInputViewModel.Note ?? "",
                 Unpunctuality = fixedIncomeInputViewModel.Unpunctuality
             };
@@ -215,7 +218,9 @@ public class NoticeController : Controller
                 DepositMyAssetProductName = fixedIncomeInputViewModel.DepositMyAssetProductName,
                 DepositMonth = fixedIncomeInputViewModel.DepositMonth,
                 DepositDay = fixedIncomeInputViewModel.DepositDay,
-                MaturityDate = DateTime.Parse(fixedIncomeInputViewModel.MaturityDate!),
+                // ParseExact (not Parse) so only a strict yyyy-MM-dd string is accepted, matching
+                // main's format-locked validation instead of culture-dependent free-form parsing.
+                MaturityDate = DateTime.ParseExact(fixedIncomeInputViewModel.MaturityDate!, "yyyy-MM-dd", CultureInfo.InvariantCulture),
                 Note = fixedIncomeInputViewModel.Note ?? "",
                 Unpunctuality = fixedIncomeInputViewModel.Unpunctuality
             };
@@ -295,7 +300,9 @@ public class NoticeController : Controller
                 MyDepositAsset = fixedExpenditureInputViewModel.MyDepositAsset ?? "",
                 DepositMonth = fixedExpenditureInputViewModel.DepositMonth,
                 DepositDay = fixedExpenditureInputViewModel.DepositDay,
-                MaturityDate = DateTime.Parse(fixedExpenditureInputViewModel.MaturityDate!),
+                // ParseExact (not Parse) so only a strict yyyy-MM-dd string is accepted, matching
+                // main's format-locked validation instead of culture-dependent free-form parsing.
+                MaturityDate = DateTime.ParseExact(fixedExpenditureInputViewModel.MaturityDate!, "yyyy-MM-dd", CultureInfo.InvariantCulture),
                 Note = fixedExpenditureInputViewModel.Note ?? "",
                 Unpunctuality = fixedExpenditureInputViewModel.Unpunctuality
             };
@@ -434,7 +441,9 @@ public class NoticeController : Controller
                 MyDepositAsset = fixedExpenditureInputViewModel.MyDepositAsset ?? "",
                 DepositMonth = fixedExpenditureInputViewModel.DepositMonth,
                 DepositDay = fixedExpenditureInputViewModel.DepositDay,
-                MaturityDate = DateTime.Parse(fixedExpenditureInputViewModel.MaturityDate!),
+                // ParseExact (not Parse) so only a strict yyyy-MM-dd string is accepted, matching
+                // main's format-locked validation instead of culture-dependent free-form parsing.
+                MaturityDate = DateTime.ParseExact(fixedExpenditureInputViewModel.MaturityDate!, "yyyy-MM-dd", CultureInfo.InvariantCulture),
                 Note = fixedExpenditureInputViewModel.Note ?? "",
                 Unpunctuality = fixedExpenditureInputViewModel.Unpunctuality
             };
