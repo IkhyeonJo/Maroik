@@ -219,6 +219,15 @@ public class IncomeService : IIncomeService
                 return ServiceResult.Fail("Actions cannot be executed with assets that have already been deleted.");
             }
 
+            // A non-empty asset reference that fails to resolve must abort the delete rather than
+            // silently skip the balance reversal, which would otherwise leave the asset's balance
+            // permanently wrong with no error surfaced.
+            if (!string.IsNullOrEmpty(income.DepositMyAssetProductName) && asset == null)
+            {
+                await _unitOfWork.RollbackAsync(ct);
+                return ServiceResult.Fail("Input is invalid");
+            }
+
             if (asset != null)
             {
                 var withdrawResult = asset.Withdraw(Math.Abs(income.Amount.Amount), asset.Balance.Currency);

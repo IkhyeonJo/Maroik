@@ -308,28 +308,39 @@ public class ExpenditureService : IExpenditureService
         Dictionary<string, Asset> assets = await _assetBalance.GetAssetsOrdinalAsync(accountEmail,
             [toRevert.PaymentMethod, toRevert.MyDepositAsset, toApply?.PaymentMethod, toApply?.MyDepositAsset], ct);
 
-        if (!string.IsNullOrEmpty(toRevert.PaymentMethod) && assets.TryGetValue(toRevert.PaymentMethod, out var rp))
+        // A non-empty asset reference that fails to resolve (e.g. stale data left behind by an
+        // incomplete rename cascade) must abort the operation rather than silently skip the
+        // balance adjustment, which would otherwise leave the asset's balance permanently wrong.
+        if (!string.IsNullOrEmpty(toRevert.PaymentMethod))
         {
+            if (!assets.TryGetValue(toRevert.PaymentMethod, out var rp))
+                return Error.NotFound("Expenditure.AssetNotFound", "The asset referenced by this expenditure could not be found.");
             var result = rp.Deposit(Math.Abs(toRevert.Amount), rp.Balance.Currency);
             if (result.IsError) return result.Errors;
         }
 
-        if (!string.IsNullOrEmpty(toRevert.MyDepositAsset) && assets.TryGetValue(toRevert.MyDepositAsset, out var rd))
+        if (!string.IsNullOrEmpty(toRevert.MyDepositAsset))
         {
+            if (!assets.TryGetValue(toRevert.MyDepositAsset, out var rd))
+                return Error.NotFound("Expenditure.AssetNotFound", "The asset referenced by this expenditure could not be found.");
             var result = rd.Withdraw(Math.Abs(toRevert.Amount), rd.Balance.Currency);
             if (result.IsError) return result.Errors;
         }
 
         if (toApply.HasValue)
         {
-            if (!string.IsNullOrEmpty(toApply.Value.PaymentMethod) && assets.TryGetValue(toApply.Value.PaymentMethod, out var ap))
+            if (!string.IsNullOrEmpty(toApply.Value.PaymentMethod))
             {
+                if (!assets.TryGetValue(toApply.Value.PaymentMethod, out var ap))
+                    return Error.NotFound("Expenditure.AssetNotFound", "The asset referenced by this expenditure could not be found.");
                 var result = ap.Withdraw(Math.Abs(toApply.Value.Amount), ap.Balance.Currency);
                 if (result.IsError) return result.Errors;
             }
 
-            if (!string.IsNullOrEmpty(toApply.Value.MyDepositAsset) && assets.TryGetValue(toApply.Value.MyDepositAsset, out var ad))
+            if (!string.IsNullOrEmpty(toApply.Value.MyDepositAsset))
             {
+                if (!assets.TryGetValue(toApply.Value.MyDepositAsset, out var ad))
+                    return Error.NotFound("Expenditure.AssetNotFound", "The asset referenced by this expenditure could not be found.");
                 var result = ad.Deposit(Math.Abs(toApply.Value.Amount), ad.Balance.Currency);
                 if (result.IsError) return result.Errors;
             }

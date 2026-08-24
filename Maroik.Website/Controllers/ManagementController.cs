@@ -1375,6 +1375,7 @@ public class ManagementController : Controller
             BoardResponse? board = await _boardService.GetBoardByIdAsync(id, HttpContext.RequestAborted);
 
             return board == null || board.Deleted || board.Writer != nickname
+                   || board.Type != EnumHelper.GetDescription(BoardType.PrivateNote)
                 ? Json(new { result = false, error = _localizer["Input is invalid"].Value })
                 : Json(new { result = true, PrivateNoteBoard = board });
         }

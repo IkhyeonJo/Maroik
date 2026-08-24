@@ -246,11 +246,19 @@ public class NoticeController : Controller
     public async Task<IActionResult> DeleteFixedIncome(
         [FromBody] FixedIncomeInputViewModel fixedIncomeInputViewModel, CancellationToken ct)
     {
-        string email = _sessionService.GetAccount()!.Email!;
-        var result = await _fixedIncomeService.DeleteAsync(email, fixedIncomeInputViewModel.Id, ct);
-        return result.Success
-            ? Json(new { result = true, message = _localizer["The fixedIncome has been successfully deleted."].Value })
-            : Json(new { result = false, error = _localizer[result.ErrorKey].Value });
+        try
+        {
+            string email = _sessionService.GetAccount()!.Email!;
+            var result = await _fixedIncomeService.DeleteAsync(email, fixedIncomeInputViewModel.Id, ct);
+            return result.Success
+                ? Json(new { result = true, message = _localizer["The fixedIncome has been successfully deleted."].Value })
+                : Json(new { result = false, error = _localizer[result.ErrorKey].Value });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to delete fixed-income record {FixedIncomeId}", fixedIncomeInputViewModel.Id);
+            return Json(new { result = false, error = _localizer["Input is invalid"].Value });
+        }
     }
     #endregion
 
@@ -469,11 +477,19 @@ public class NoticeController : Controller
     public async Task<IActionResult> DeleteFixedExpenditure(
         [FromBody] FixedExpenditureInputViewModel fixedExpenditureInputViewModel, CancellationToken ct)
     {
-        string email = _sessionService.GetAccount()!.Email!;
-        var result = await _fixedExpenditureService.DeleteAsync(email, fixedExpenditureInputViewModel.Id, ct);
-        return result.Success
-            ? Json(new { result = true, message = _localizer["The fixedExpenditure has been successfully deleted."].Value })
-            : Json(new { result = false, error = _localizer[result.ErrorKey].Value });
+        try
+        {
+            string email = _sessionService.GetAccount()!.Email!;
+            var result = await _fixedExpenditureService.DeleteAsync(email, fixedExpenditureInputViewModel.Id, ct);
+            return result.Success
+                ? Json(new { result = true, message = _localizer["The fixedExpenditure has been successfully deleted."].Value })
+                : Json(new { result = false, error = _localizer[result.ErrorKey].Value });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to delete fixed-expenditure record {FixedExpenditureId}", fixedExpenditureInputViewModel.Id);
+            return Json(new { result = false, error = _localizer["Input is invalid"].Value });
+        }
     }
     #endregion
 

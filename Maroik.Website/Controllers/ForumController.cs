@@ -472,7 +472,7 @@ public class ForumController : Controller
         try
         {
             BoardResponse? board = await _boardService.GetBoardByIdAsync(id, ct);
-            if (board == null || board.Deleted)
+            if (board == null || board.Deleted || board.Type != EnumHelper.GetDescription(BoardType.FreeForum))
                 return Json(new { result = false, error = _localizer["Input is invalid"].Value });
 
             if (!board.Locked)

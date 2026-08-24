@@ -20,7 +20,12 @@ public static class DateTimeExtensions
         {
             try
             {
-                return TimeZoneInfo.ConvertTimeBySystemTimeZoneId(value, timeZoneIanaId);
+                // The source value is always UTC regardless of its DateTimeKind (e.g. Npgsql
+                // returns Unspecified for "timestamp without time zone" columns), so the source
+                // must be pinned to UTC explicitly rather than relying on ConvertTimeBySystemTimeZoneId's
+                // Kind-based inference, which would otherwise silently fall back to the OS local zone.
+                TimeZoneInfo targetZone = TimeZoneInfo.FindSystemTimeZoneById(timeZoneIanaId);
+                return TimeZoneInfo.ConvertTimeFromUtc(DateTime.SpecifyKind(value, DateTimeKind.Utc), targetZone);
             }
             catch
             {

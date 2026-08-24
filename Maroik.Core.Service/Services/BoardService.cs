@@ -167,7 +167,10 @@ public class BoardService : IBoardService
         {
             Board? board = await _boardRepository.FindActiveByIdAsync(request.Id, ct);
 
-            if (board == null || board.Deleted)
+            // A caller always states the type it expects to edit (see WriteCommentAsync's
+            // requiredType for the same pattern); without this check a post owned by the same
+            // user under one board type could be edited through another type's endpoint.
+            if (board == null || board.Deleted || (request.Type != null && board.Type != request.Type))
             {
                 await _unitOfWork.RollbackAsync(ct);
                 return ServiceResult.Fail("Input is invalid");
