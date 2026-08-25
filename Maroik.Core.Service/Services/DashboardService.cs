@@ -60,16 +60,16 @@ public class DashboardService : IDashboardService
         // Capped one below DateTime.MaxValue's year: yearEnd below computes `new DateTime(yearInt + 1, ...)`.
         if (yearInt is < 1 or > 9998) yearInt = accountToday.Year;
 
-        // Deleted assets must not surface in the dashboard's visible asset list, monetary-unit
-        // options, or effective-currency calculation. But a historical Income/Expenditure can still
-        // reference a since-deleted asset by product name (main never filters this lookup), so the
-        // currency-resolution below uses the unfiltered list — otherwise transactions tied to a
-        // deleted asset would resolve to no currency and silently drop out of the totals.
+        // main computes DefaultMonetaryUnit/MonetaryUnits from the account's full asset list,
+        // including deleted ones (AssetRepository.GetAssetsAsync never filters Deleted) — so a
+        // user whose only assets happen to be deleted still resolves the same effective currency
+        // and sees the same MonetaryUnits options main would show. Only the visible asset card
+        // list (`assets` below) is deleted-filtered, since main has no such list to match.
         List<Asset> allAssets = await _assetRepository.GetByAccountEmailAsync(accountEmail, ct);
         List<Asset> assets = [.. allAssets.Where(a => !a.Deleted)];
         Account? account = await _accountRepository.FindByEmailAsync(accountEmail, ct);
 
-        string? defaultMonetaryUnit = GetEffectiveMonetaryUnit(account, assets);
+        string? defaultMonetaryUnit = GetEffectiveMonetaryUnit(account, allAssets);
 
         // Persist the self-corrected value (matches main): other screens that read
         // Account.DefaultMonetaryUnit directly (e.g. account management) must not see a
@@ -87,7 +87,7 @@ public class DashboardService : IDashboardService
             SelectedYear = yearInt,
             SelectedMonth = monthInt,
             EndYear = accountToday.Year,
-            MonetaryUnits = assets.Select(x => x.Balance.Currency).Distinct()
+            MonetaryUnits = allAssets.Select(x => x.Balance.Currency).Distinct()
         };
 
         if (summary.DefaultMonetaryUnit != null)
@@ -187,21 +187,23 @@ public class DashboardService : IDashboardService
 
     /// <summary>
     /// Computes the monetary unit the dashboard should display without persisting any changes.
-    /// When the stored unit is missing or no longer valid (asset deleted, no assets), returns
+    /// When the stored unit is missing or no longer valid (no matching asset, no assets), returns
     /// the best available unit so the view remains consistent until the user explicitly saves.
+    /// <paramref name="allAssets"/> must be the account's full asset list (deleted included), to
+    /// match main's <c>AssetRepository.GetAssetsAsync</c>, which never filters on Deleted.
     /// </summary>
-    private static string? GetEffectiveMonetaryUnit(Account? account, List<Asset> assets)
+    private static string? GetEffectiveMonetaryUnit(Account? account, List<Asset> allAssets)
     {
         if (account == null) return null;
 
         string? currentUnit = account.DefaultMonetaryUnit;
-        HashSet<string> availableUnits = assets.Select(a => a.Balance.Currency).ToHashSet();
+        HashSet<string> availableUnits = allAssets.Select(a => a.Balance.Currency).ToHashSet();
 
         if (availableUnits.Count == 0) return null;
 
         if (currentUnit != null && availableUnits.Contains(currentUnit)) return currentUnit;
 
-        return assets.GroupBy(a => a.Balance.Currency).OrderByDescending(g => g.Count()).FirstOrDefault()?.Key;
+        return allAssets.GroupBy(a => a.Balance.Currency).OrderByDescending(g => g.Count()).FirstOrDefault()?.Key;
     }
 
     /// <inheritdoc />

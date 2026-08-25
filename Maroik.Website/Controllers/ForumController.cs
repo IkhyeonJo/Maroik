@@ -228,7 +228,7 @@ public class ForumController : Controller
                     DetailBoardId = (int)boardId
                 };
 
-                BoardResponse? freeBoard = await _boardService.GetBoardByIdAsync((long)boardId, ct);
+                BoardResponse? freeBoard = await _boardService.GetBoardByIdAsync((long)boardId, EnumHelper.GetDescription(BoardType.FreeForum), ct);
                 BoardAttachedFileDto? boardAttachedFile = await _boardService.GetAttachedFileByBoardIdAsync((long)boardId, ct);
 
                 try
@@ -305,7 +305,7 @@ public class ForumController : Controller
                     EditBoardId = (int)boardId
                 };
 
-                BoardResponse? freeBoard = await _boardService.GetBoardByIdAsync((long)boardId, ct);
+                BoardResponse? freeBoard = await _boardService.GetBoardByIdAsync((long)boardId, EnumHelper.GetDescription(BoardType.FreeForum), ct);
                 BoardAttachedFileDto? boardAttachedFile = await _boardService.GetAttachedFileByBoardIdAsync((long)boardId, ct);
 
                 try
@@ -471,8 +471,8 @@ public class ForumController : Controller
     {
         try
         {
-            BoardResponse? board = await _boardService.GetBoardByIdAsync(id, ct);
-            if (board == null || board.Deleted || board.Type != EnumHelper.GetDescription(BoardType.FreeForum))
+            BoardResponse? board = await _boardService.GetBoardByIdAsync(id, EnumHelper.GetDescription(BoardType.FreeForum), ct);
+            if (board == null || board.Deleted)
                 return Json(new { result = false, error = _localizer["Input is invalid"].Value });
 
             if (!board.Locked)

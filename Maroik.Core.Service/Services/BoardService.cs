@@ -65,10 +65,13 @@ public class BoardService : IBoardService
         => (await _boardRepository.GetByTypeAsync(type, ct)).Select(BoardMapper.ToResponse);
 
     /// <inheritdoc />
-    public async Task<BoardResponse?> GetBoardByIdAsync(long id, CancellationToken ct = default)
+    public async Task<BoardResponse?> GetBoardByIdAsync(long id, string? requiredType = null, CancellationToken ct = default)
     {
         Board? board = await _boardRepository.FindActiveByIdAsync(id, ct);
-        return board == null ? null : BoardMapper.ToResponse(board);
+        if (board == null || (requiredType != null && board.Type != requiredType))
+            return null;
+
+        return BoardMapper.ToResponse(board);
     }
 
     /// <inheritdoc />

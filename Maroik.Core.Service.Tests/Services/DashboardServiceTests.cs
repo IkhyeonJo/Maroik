@@ -187,13 +187,12 @@ public class DashboardServiceTests
     }
 
     /// <summary>
-    /// Verifies that a soft-deleted asset's currency does not appear in the dashboard's asset
-    /// list, monetary-unit options, or effective-currency calculation — even though
-    /// GetByAccountEmailAsync itself returns deleted assets (the account-book management
-    /// grid needs to see them for restoration).
+    /// Verifies that a soft-deleted asset is excluded from the dashboard's visible asset card
+    /// list, but — matching main's <c>AssetRepository.GetAssetsAsync</c>, which never filters
+    /// Deleted — still counts toward the MonetaryUnit options and effective-currency calculation.
     /// </summary>
     [Fact]
-    public async Task GetSummaryAsync_ExcludesDeletedAssets_FromAssetsAndMonetaryUnits()
+    public async Task GetSummaryAsync_ExcludesDeletedAssets_FromVisibleAssetsListOnly()
     {
         const string email = "user@example.com";
         var account = MakeAccount(unit: null);
@@ -210,8 +209,37 @@ public class DashboardServiceTests
 
         DashboardDto summary = await sut.GetSummaryAsync(email, "2025", "1", "UTC", TestContext.Current.CancellationToken);
 
+        // The visible asset card list excludes deleted assets (main has no equivalent list).
         Assert.Single(summary.Assets);
-        Assert.DoesNotContain("USD", summary.MonetaryUnits);
+
+        // main's AssetRepository.GetAssetsAsync never filters Deleted, so the MonetaryUnit
+        // options and effective-currency resolution must still see the deleted asset's currency —
+        // otherwise an account whose only assets are deleted would resolve to no currency and its
+        // whole income/expenditure section would silently disappear from the dashboard.
+        Assert.Contains("USD", summary.MonetaryUnits);
+        Assert.Equal("KRW", summary.DefaultMonetaryUnit);
+    }
+
+    /// <summary>
+    /// Verifies that when an account's only asset has been soft-deleted, the dashboard still
+    /// resolves a DefaultMonetaryUnit (matching main) instead of going empty, since the currency
+    /// resolution must consider deleted assets the same way main's unfiltered asset list does.
+    /// </summary>
+    [Fact]
+    public async Task GetSummaryAsync_ResolvesDefaultMonetaryUnit_WhenOnlyAssetIsDeleted()
+    {
+        const string email = "user@example.com";
+        var account = MakeAccount(unit: "KRW");
+        var assets = new List<Asset> { MakeAsset("OldWallet", "KRW", deleted: true) };
+
+        _accountRepo.Setup(r => r.FindByEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(account);
+        _assetRepo.Setup(r => r.GetByAccountEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(assets);
+        SetupEmptyFinancials(email);
+        var sut = CreateSut();
+
+        DashboardDto summary = await sut.GetSummaryAsync(email, "2025", "1", "UTC", TestContext.Current.CancellationToken);
+
+        Assert.Empty(summary.Assets);
         Assert.Equal("KRW", summary.DefaultMonetaryUnit);
     }
 

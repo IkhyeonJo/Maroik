@@ -82,10 +82,27 @@ public class BoardServiceTests
         _boardRepo.Setup(r => r.FindActiveByIdAsync(It.IsAny<long>(), It.IsAny<CancellationToken>())).ReturnsAsync(MakeBoard());
         var sut = CreateSut();
 
-        BoardResponse? result = await sut.GetBoardByIdAsync(1, TestContext.Current.CancellationToken);
+        BoardResponse? result = await sut.GetBoardByIdAsync(1, ct: TestContext.Current.CancellationToken);
 
         Assert.NotNull(result);
         Assert.Equal(1, result.Id);
+    }
+
+    /// <summary>
+    /// Verifies that <c>GetBoardByIdAsync</c> returns null when the post's type doesn't match
+    /// <paramref name="requiredType"/> — e.g. a caller scoped to PrivateNote must not be able to
+    /// read a FreeForum post (or vice versa) just by supplying its ID.
+    /// </summary>
+    [Fact]
+    public async Task GetBoardByIdAsync_ReturnsNull_WhenTypeDoesNotMatchRequiredType()
+    {
+        _boardRepo.Setup(r => r.FindActiveByIdAsync(It.IsAny<long>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(MakeBoard()); // Type = nameof(BoardType.FreeForum)
+        var sut = CreateSut();
+
+        BoardResponse? result = await sut.GetBoardByIdAsync(1, nameof(BoardType.PrivateNote), TestContext.Current.CancellationToken);
+
+        Assert.Null(result);
     }
 
     // -- CanView ----------------------------------------------------------------

@@ -1087,7 +1087,7 @@ public class ManagementController : Controller
                     DetailBoardId = (int)boardId
                 };
 
-                BoardResponse? privateNoteBoard = await _boardService.GetBoardByIdAsync((long)boardId, HttpContext.RequestAborted);
+                BoardResponse? privateNoteBoard = await _boardService.GetBoardByIdAsync((long)boardId, EnumHelper.GetDescription(BoardType.PrivateNote), HttpContext.RequestAborted);
                 BoardAttachedFileDto? attachedFile = await _boardService.GetAttachedFileByBoardIdAsync((long)boardId, HttpContext.RequestAborted);
 
                 try
@@ -1165,7 +1165,7 @@ public class ManagementController : Controller
 
                 AccountResponse loggedInAccount = _sessionService.GetAccount()!;
 
-                BoardResponse? privateNoteBoard = await _boardService.GetBoardByIdAsync((long)boardId, HttpContext.RequestAborted);
+                BoardResponse? privateNoteBoard = await _boardService.GetBoardByIdAsync((long)boardId, EnumHelper.GetDescription(BoardType.PrivateNote), HttpContext.RequestAborted);
                 BoardAttachedFileDto? attachedFile = await _boardService.GetAttachedFileByBoardIdAsync((long)boardId, HttpContext.RequestAborted);
 
                 try
@@ -1372,10 +1372,9 @@ public class ManagementController : Controller
         try
         {
             string? nickname = _sessionService.GetAccount()!.Nickname;
-            BoardResponse? board = await _boardService.GetBoardByIdAsync(id, HttpContext.RequestAborted);
+            BoardResponse? board = await _boardService.GetBoardByIdAsync(id, EnumHelper.GetDescription(BoardType.PrivateNote), HttpContext.RequestAborted);
 
             return board == null || board.Deleted || board.Writer != nickname
-                   || board.Type != EnumHelper.GetDescription(BoardType.PrivateNote)
                 ? Json(new { result = false, error = _localizer["Input is invalid"].Value })
                 : Json(new { result = true, PrivateNoteBoard = board });
         }

@@ -11,8 +11,13 @@ public interface IBoardService
     /// <summary>Returns all visible posts of the specified board type.</summary>
     Task<IEnumerable<BoardResponse>> GetBoardsAsync(string type, CancellationToken ct = default);
 
-    /// <summary>Returns a single post by ID.</summary>
-    Task<BoardResponse?> GetBoardByIdAsync(long id, CancellationToken ct = default);
+    /// <summary>
+    /// Returns a single post by ID. When <paramref name="requiredType"/> is set, the post must be
+    /// of that board type — so a caller scoped to one board type (e.g. the public Forum endpoint)
+    /// cannot read a post of a different type (e.g. another account's PrivateNote) just by
+    /// supplying its ID.
+    /// </summary>
+    Task<BoardResponse?> GetBoardByIdAsync(long id, string? requiredType = null, CancellationToken ct = default);
 
     /// <summary>
     /// True when <paramref name="viewer"/> may view <paramref name="board"/>. Private notes are
