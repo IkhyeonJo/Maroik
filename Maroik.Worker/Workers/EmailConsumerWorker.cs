@@ -48,11 +48,24 @@ public sealed class EmailConsumerWorker : BackgroundService
         _connection = await _connectionFactory.CreateConnectionAsync(stoppingToken);
         Channel = await _connection.CreateChannelAsync(cancellationToken: stoppingToken);
 
+        // Dead-letter queue first, so it exists before the main queue can route a rejected
+        // message to it.
+        await Channel.QueueDeclareAsync(
+            queue: QueueNames.EmailDeadLetter,
+            durable: true,
+            exclusive: false,
+            autoDelete: false,
+            cancellationToken: stoppingToken);
+
+        // Arguments must match the Website publisher's declaration of the same queue exactly, or
+        // whichever side declares second fails with PRECONDITION_FAILED. The policy dead-letters
+        // reject-without-requeue messages to QueueNames.EmailDeadLetter.
         await Channel.QueueDeclareAsync(
             queue: QueueNames.Email,
             durable: true,
             exclusive: false,
             autoDelete: false,
+            arguments: QueueNames.CreateEmailQueueArguments(),
             cancellationToken: stoppingToken);
 
         // Cap in-flight (unacked) messages per consumer so one slow SMTP send doesn't
@@ -85,7 +98,9 @@ public sealed class EmailConsumerWorker : BackgroundService
     /// <summary>
     /// Deserializes and processes one delivered message in a fresh DI scope, then acks it.
     /// A failure on first delivery is requeued once (to survive a transient SMTP/network blip);
-    /// a failure on the retry nacks without requeue, so a poison message cannot block the queue forever.
+    /// a failure on the retry nacks without requeue, so a poison message cannot block the queue
+    /// forever — the queue's dead-letter policy then routes it to <see cref="QueueNames.EmailDeadLetter"/>
+    /// for inspection instead of discarding it.
     /// </summary>
     internal async Task OnMessageReceivedAsync(object sender, BasicDeliverEventArgs ea)
     {
@@ -122,7 +137,9 @@ public sealed class EmailConsumerWorker : BackgroundService
                 }
                 else
                 {
-                    _logger.LogError(ex, "Failed to process email message (delivery tag {DeliveryTag}) on retry; dropping", ea.DeliveryTag);
+                    // requeue: false triggers the queue's dead-letter policy, so the message is
+                    // routed to QueueNames.EmailDeadLetter rather than discarded.
+                    _logger.LogError(ex, "Failed to process email message (delivery tag {DeliveryTag}) on retry; dead-lettering to '{DeadLetterQueue}'", ea.DeliveryTag, QueueNames.EmailDeadLetter);
                     await Channel!.BasicNackAsync(ea.DeliveryTag, multiple: false, requeue: false);
                 }
             }

@@ -34,11 +34,14 @@ public sealed class RabbitMqEmailPublisher : IEmailPublisher, IAsyncDisposable
             publisherConfirmationsEnabled: true,
             publisherConfirmationTrackingEnabled: true);
         await using IChannel channel = await connection.CreateChannelAsync(channelOptions, ct);
+        // Arguments must match the Worker's declaration of the same queue exactly, or whichever
+        // side declares second fails with PRECONDITION_FAILED (see QueueNames.CreateEmailQueueArguments).
         await channel.QueueDeclareAsync(
             queue: QueueNames.Email,
             durable: true,
             exclusive: false,
             autoDelete: false,
+            arguments: QueueNames.CreateEmailQueueArguments(),
             cancellationToken: ct);
 
         byte[] body = JsonSerializer.SerializeToUtf8Bytes(message);

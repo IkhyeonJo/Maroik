@@ -7,9 +7,10 @@ namespace Maroik.Core.Repository.Tests.Repositories;
 /// <summary>
 /// Tests for <see cref="UnitOfWork"/>.
 /// Only the null-guard / no-transaction paths are tested here because those exercise our
-/// code (the <c>if (_transaction != null)</c> guards and the <c>_committed</c> flag).
-/// Tests that require an actual database transaction are not included — they would only
-/// verify that EF Core's own transaction API works, not our code.
+/// code (the <c>if (_transaction == null) return;</c> guards). Paths that need a real
+/// transaction — the re-entrancy guard and sequential reuse — live in
+/// <see cref="UnitOfWorkIntegrationTests"/>, since the EF Core InMemory provider used here
+/// cannot begin a transaction.
 /// </summary>
 public class UnitOfWorkTests : IDisposable
 {
