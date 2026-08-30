@@ -26,4 +26,18 @@ public class AccountMailStatusService : IAccountMailStatusService
         account.SetMessage(EnumHelper.GetDescription(AccountMessage.FailToMailSent));
         await _accountRepository.UpdateEntityAsync(account, ct);
     }
+
+    /// <inheritdoc />
+    public async Task ClearMailSendFailedAsync(string email, CancellationToken ct = default)
+    {
+        Account? account = await _accountRepository.FindByEmailAsync(email, ct);
+        if (account == null)
+            return;
+
+        if (account.Message != EnumHelper.GetDescription(AccountMessage.FailToMailSent))
+            return;
+
+        account.SetMessage(null);
+        await _accountRepository.UpdateEntityAsync(account, ct);
+    }
 }

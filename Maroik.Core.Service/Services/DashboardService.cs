@@ -111,8 +111,13 @@ public class DashboardService : IDashboardService
 
             List<Income> yearIncomes = await _incomeRepository.GetByAccountEmailAndDateRangeAsync(accountEmail, yearStart, yearEnd, ct);
             List<Expenditure> yearExpenditures = await _expenditureRepository.GetByAccountEmailAndDateRangeAsync(accountEmail, yearStart, yearEnd, ct);
-            List<Income> ymIncomes = await _incomeRepository.GetByAccountEmailAndDateRangeAsync(accountEmail, ymStart, ymEnd, ct);
-            List<Expenditure> ymExpenditures = await _expenditureRepository.GetByAccountEmailAndDateRangeAsync(accountEmail, ymStart, ymEnd, ct);
+
+            // ymStart/ymEnd always fall within [yearStart, yearEnd), so the year-month totals can
+            // be derived from the year totals already fetched above instead of two more DB round
+            // trips (repositories share a single scoped DbContext, so these calls cannot run
+            // concurrently via Task.WhenAll either).
+            List<Income> ymIncomes = [.. yearIncomes.Where(x => x.Created >= ymStart && x.Created < ymEnd)];
+            List<Expenditure> ymExpenditures = [.. yearExpenditures.Where(x => x.Created >= ymStart && x.Created < ymEnd)];
 
             // Filter by default monetary unit via asset lookup. Uses allAssets (not the
             // deleted-filtered `assets`) so a transaction tied to a since-deleted asset still

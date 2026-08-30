@@ -35,7 +35,7 @@ public class EmailMessageHandlerTests
         _settings,
         NullLogger<EmailMessageHandler>.Instance);
 
-    /// <summary>Verifies that <c>HandleAsync</c> does not touch the account when the SMTP send succeeds.</summary>
+    /// <summary>Verifies that <c>HandleAsync</c> does not mark the account failed when the SMTP send succeeds.</summary>
     [Fact]
     public async Task HandleAsync_DoesNotUpdateAccount_WhenMailSentSuccessfully()
     {
@@ -53,6 +53,26 @@ public class EmailMessageHandlerTests
         _accountMailStatusService.Verify(
             s => s.MarkMailSendFailedAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()),
             Times.Never);
+    }
+
+    /// <summary>Verifies that <c>HandleAsync</c> clears a previously recorded failure once the send succeeds.</summary>
+    [Fact]
+    public async Task HandleAsync_ClearsMailSendFailed_WhenMailSentSuccessfully()
+    {
+        _mailClient.Setup(m => m.SendMailAsync(
+                It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(),
+                It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(),
+                It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(ServiceResult.Ok());
+
+        var sut = CreateSut();
+        var message = new SendEmailMessage("user@example.com", "subject", "body");
+
+        await sut.HandleAsync(message, TestContext.Current.CancellationToken);
+
+        _accountMailStatusService.Verify(
+            s => s.ClearMailSendFailedAsync("user@example.com", It.IsAny<CancellationToken>()),
+            Times.Once);
     }
 
     /// <summary>Verifies that <c>HandleAsync</c> marks the account as FailToMailSent when SMTP fails.</summary>
@@ -74,6 +94,9 @@ public class EmailMessageHandlerTests
         _accountMailStatusService.Verify(
             s => s.MarkMailSendFailedAsync("user@example.com", It.IsAny<CancellationToken>()),
             Times.Once);
+        _accountMailStatusService.Verify(
+            s => s.ClearMailSendFailedAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()),
+            Times.Never);
     }
 
     /// <summary>Passes cancellation token through to the account service.</summary>

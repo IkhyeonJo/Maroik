@@ -104,6 +104,67 @@ public class FixedSchedulePolicyTests
         Assert.False(result);
     }
 
+    // -- IsValidDepositDate -------------------------------------------------------
+
+    /// <summary>Is valid deposit date returns true, for the last day of a 31-day month.</summary>
+    [Theory]
+    [InlineData(1)]
+    [InlineData(3)]
+    [InlineData(5)]
+    [InlineData(7)]
+    [InlineData(8)]
+    [InlineData(10)]
+    [InlineData(12)]
+    public void IsValidDepositDate_ReturnsTrue_ForDay31Of31DayMonth(int month)
+    {
+        Assert.True(FixedSchedulePolicy.IsValidDepositDate(month, 31));
+    }
+
+    /// <summary>Is valid deposit date returns false, for day 31 of a 30-day month.</summary>
+    [Theory]
+    [InlineData(4)]
+    [InlineData(6)]
+    [InlineData(9)]
+    [InlineData(11)]
+    public void IsValidDepositDate_ReturnsFalse_ForDay31Of30DayMonth(int month)
+    {
+        Assert.False(FixedSchedulePolicy.IsValidDepositDate(month, 31));
+    }
+
+    /// <summary>Is valid deposit date returns true, for day 30 of a 30-day month.</summary>
+    [Theory]
+    [InlineData(4)]
+    [InlineData(6)]
+    [InlineData(9)]
+    [InlineData(11)]
+    public void IsValidDepositDate_ReturnsTrue_ForDay30Of30DayMonth(int month)
+    {
+        Assert.True(FixedSchedulePolicy.IsValidDepositDate(month, 30));
+    }
+
+    /// <summary>Is valid deposit date returns true, for day 29 in February (independent of leap year).</summary>
+    [Fact]
+    public void IsValidDepositDate_ReturnsTrue_ForFebruary29()
+    {
+        Assert.True(FixedSchedulePolicy.IsValidDepositDate(2, 29));
+    }
+
+    /// <summary>Is valid deposit date returns false, for day 30 in February.</summary>
+    [Fact]
+    public void IsValidDepositDate_ReturnsFalse_ForFebruary30()
+    {
+        Assert.False(FixedSchedulePolicy.IsValidDepositDate(2, 30));
+    }
+
+    /// <summary>Is valid deposit date returns false, for an out-of-range month.</summary>
+    [Theory]
+    [InlineData(0)]
+    [InlineData(13)]
+    public void IsValidDepositDate_ReturnsFalse_ForMonthOutOfRange(int month)
+    {
+        Assert.False(FixedSchedulePolicy.IsValidDepositDate(month, 1));
+    }
+
     // -- IsExpired ----------------------------------------------------------------
 
     /// <summary>Is expired returns true, when maturity date before today.</summary>

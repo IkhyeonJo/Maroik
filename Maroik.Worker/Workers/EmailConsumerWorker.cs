@@ -100,7 +100,10 @@ public sealed class EmailConsumerWorker : BackgroundService
     /// A failure on first delivery is requeued once (to survive a transient SMTP/network blip);
     /// a failure on the retry nacks without requeue, so a poison message cannot block the queue
     /// forever — the queue's dead-letter policy then routes it to <see cref="QueueNames.EmailDeadLetter"/>
-    /// for inspection instead of discarding it.
+    /// for inspection instead of discarding it. A failure to ack a message that was already
+    /// handled successfully is logged and left unacked rather than nacked, since nacking it would
+    /// requeue and resend an email that was already delivered (there is no idempotency key to
+    /// suppress the duplicate).
     /// </summary>
     internal async Task OnMessageReceivedAsync(object sender, BasicDeliverEventArgs ea)
     {
@@ -123,7 +126,17 @@ public sealed class EmailConsumerWorker : BackgroundService
                     await handler.HandleAsync(message);
                 }
 
-                await Channel!.BasicAckAsync(ea.DeliveryTag, multiple: false);
+                try
+                {
+                    await Channel!.BasicAckAsync(ea.DeliveryTag, multiple: false);
+                }
+                catch (Exception ackEx)
+                {
+                    // The email was already sent successfully by this point, so this catch must
+                    // not fall through to the outer catch's requeue/nack logic below — doing so
+                    // would resend an email that already went out.
+                    _logger.LogError(ackEx, "Failed to ack email message (delivery tag {DeliveryTag}) after a successful send; leaving it unacked", ea.DeliveryTag);
+                }
             }
             catch (Exception ex)
             {

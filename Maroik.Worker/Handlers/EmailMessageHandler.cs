@@ -51,6 +51,7 @@ public sealed class EmailMessageHandler : IEmailMessageHandler
 #pragma warning disable CA1873
             _logger.LogInformation("Email sent to {Email}", message.ToEmail);
 #pragma warning restore CA1873
+            await _accountMailStatusService.ClearMailSendFailedAsync(message.ToEmail, ct);
             return;
         }
 

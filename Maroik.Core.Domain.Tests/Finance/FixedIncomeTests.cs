@@ -41,6 +41,22 @@ public class FixedIncomeTests
         Assert.Equal("FixedIncome.InvalidDepositDay", result.FirstError.Code);
     }
 
+    /// <summary>Register returns error, when the day doesn't exist in the given month (e.g. April 31, February 30).</summary>
+    [Theory]
+    [InlineData(4, 31)]
+    [InlineData(6, 31)]
+    [InlineData(9, 31)]
+    [InlineData(11, 31)]
+    [InlineData(2, 30)]
+    public void Register_ReturnsError_WhenDepositDayInvalidForMonth(short month, short day)
+    {
+        var result = FixedIncome.Register("user@example.com", "RegularIncome", "LaborIncome", null,
+            0m, "KRW", "My Bank", month, day, Maturity);
+
+        Assert.True(result.IsError);
+        Assert.Equal("FixedIncome.InvalidDepositDay", result.FirstError.Code);
+    }
+
     /// <summary>Register returns error, when deposit month out of range.</summary>
     [Theory]
     [InlineData(0)]
@@ -116,6 +132,18 @@ public class FixedIncomeTests
         var fi = ValidFixedIncome();
 
         var result = fi.Update("RegularIncome", "LaborIncome", null, 0m, "KRW", "My Bank", 1, day, Maturity, null);
+
+        Assert.True(result.IsError);
+        Assert.Equal("FixedIncome.InvalidDepositDay", result.FirstError.Code);
+    }
+
+    /// <summary>Update returns error, when the day doesn't exist in the given month (e.g. April 31).</summary>
+    [Fact]
+    public void Update_ReturnsError_WhenDepositDayInvalidForMonth()
+    {
+        var fi = ValidFixedIncome();
+
+        var result = fi.Update("RegularIncome", "LaborIncome", null, 0m, "KRW", "My Bank", 4, 31, Maturity, null);
 
         Assert.True(result.IsError);
         Assert.Equal("FixedIncome.InvalidDepositDay", result.FirstError.Code);

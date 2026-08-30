@@ -17,7 +17,7 @@ public class AccountMailStatusServiceTests
 
     private AccountMailStatusService CreateSut() => new(_accountRepo.Object);
 
-    private static Account ActiveAccount(string email = "user@example.com") => Account.Reconstitute(
+    private static Account ActiveAccount(string email = "user@example.com", string? message = null) => Account.Reconstitute(
         email: email,
         hashedPassword: "$2a$13$placeholder",
         nickname: "User",
@@ -33,7 +33,7 @@ public class AccountMailStatusServiceTests
         resetPasswordToken: null,
         created: DateTime.UtcNow,
         updated: DateTime.UtcNow,
-        message: null,
+        message: message,
         deleted: false);
 
     /// <summary>Verifies that <c>MarkMailSendFailedAsync</c> sets the FailToMailSent message and persists it.</summary>
@@ -75,5 +75,45 @@ public class AccountMailStatusServiceTests
         await sut.MarkMailSendFailedAsync(account.Email.Value, cts.Token);
 
         _accountRepo.Verify(r => r.UpdateEntityAsync(It.IsAny<Account>(), cts.Token), Times.Once);
+    }
+
+    /// <summary>Verifies that <c>ClearMailSendFailedAsync</c> clears a FailToMailSent message and persists it.</summary>
+    [Fact]
+    public async Task ClearMailSendFailedAsync_ClearsMessage_WhenAccountWasFailToMailSent()
+    {
+        var account = ActiveAccount(message: EnumHelper.GetDescription(AccountMessage.FailToMailSent));
+        _accountRepo.Setup(r => r.FindByEmailAsync(account.Email.Value, It.IsAny<CancellationToken>())).ReturnsAsync(account);
+        var sut = CreateSut();
+
+        await sut.ClearMailSendFailedAsync(account.Email.Value, TestContext.Current.CancellationToken);
+
+        _accountRepo.Verify(r => r.UpdateEntityAsync(
+            It.Is<Account>(a => a.Message == null),
+            It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    /// <summary>Verifies that <c>ClearMailSendFailedAsync</c> does nothing when no matching account exists.</summary>
+    [Fact]
+    public async Task ClearMailSendFailedAsync_DoesNothing_WhenAccountNotFound()
+    {
+        _accountRepo.Setup(r => r.FindByEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync((Account?)null);
+        var sut = CreateSut();
+
+        await sut.ClearMailSendFailedAsync("ghost@example.com", TestContext.Current.CancellationToken);
+
+        _accountRepo.Verify(r => r.UpdateEntityAsync(It.IsAny<Account>(), It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    /// <summary>Verifies that <c>ClearMailSendFailedAsync</c> leaves an unrelated message untouched.</summary>
+    [Fact]
+    public async Task ClearMailSendFailedAsync_DoesNothing_WhenAccountMessageIsNotFailToMailSent()
+    {
+        var account = ActiveAccount(message: EnumHelper.GetDescription(AccountMessage.MailSent));
+        _accountRepo.Setup(r => r.FindByEmailAsync(account.Email.Value, It.IsAny<CancellationToken>())).ReturnsAsync(account);
+        var sut = CreateSut();
+
+        await sut.ClearMailSendFailedAsync(account.Email.Value, TestContext.Current.CancellationToken);
+
+        _accountRepo.Verify(r => r.UpdateEntityAsync(It.IsAny<Account>(), It.IsAny<CancellationToken>()), Times.Never);
     }
 }

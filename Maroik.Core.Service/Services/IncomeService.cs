@@ -128,6 +128,11 @@ public class IncomeService : IIncomeService
             }
 
             Asset? newAsset = !string.IsNullOrEmpty(request.DepositMyAssetProductName) && touchedAssets.TryGetValue(request.DepositMyAssetProductName, out var na) ? na : null;
+            if (!string.IsNullOrEmpty(request.DepositMyAssetProductName) && newAsset == null)
+            {
+                await _unitOfWork.RollbackAsync(ct);
+                return ServiceResult.Fail("Input is invalid");
+            }
             string newCurrency = newAsset?.Balance.Currency ?? prevAsset?.Balance.Currency ?? "";
 
             string previousAssetName = previous.DepositMyAssetProductName;

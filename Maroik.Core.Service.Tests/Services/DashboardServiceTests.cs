@@ -243,6 +243,40 @@ public class DashboardServiceTests
         Assert.Equal("KRW", summary.DefaultMonetaryUnit);
     }
 
+    /// <summary>
+    /// Verifies that the year-month totals are correctly derived by filtering the already-fetched
+    /// year-range results in memory, and that only one date-range query per repository is issued —
+    /// regression test for a fix that dropped two of four sequential DB round trips.
+    /// </summary>
+    [Fact]
+    public async Task GetSummaryAsync_DerivesYearMonthTotals_FromSingleYearRangeQueryPerRepository()
+    {
+        const string email = "user@example.com";
+        var account = MakeAccount(unit: "KRW");
+        _accountRepo.Setup(r => r.FindByEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(account);
+        _assetRepo.Setup(r => r.GetByAccountEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync([MakeAsset("Wallet")]);
+
+        var inMonth = Income.Reconstitute(1, email, "RegularIncome", "LaborIncome", null, 100m, "KRW", "Wallet", null,
+            new DateTime(2025, 3, 15, 0, 0, 0, DateTimeKind.Utc), DateTime.UtcNow);
+        var outOfMonth = Income.Reconstitute(2, email, "RegularIncome", "LaborIncome", null, 200m, "KRW", "Wallet", null,
+            new DateTime(2025, 7, 1, 0, 0, 0, DateTimeKind.Utc), DateTime.UtcNow);
+
+        _incomeRepo.Setup(r => r.GetByAccountEmailAndDateRangeAsync(email, It.IsAny<DateTime>(), It.IsAny<DateTime>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync([inMonth, outOfMonth]);
+        _expenditureRepo.Setup(r => r.GetByAccountEmailAndDateRangeAsync(email, It.IsAny<DateTime>(), It.IsAny<DateTime>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync([]);
+        _incomeRepo.Setup(r => r.GetFirstByAccountEmailOrderedByCreatedAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync((Income?)null);
+        _expenditureRepo.Setup(r => r.GetFirstByAccountEmailOrderedByCreatedAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync((Expenditure?)null);
+        var sut = CreateSut();
+
+        DashboardDto summary = await sut.GetSummaryAsync(email, "2025", "3", "UTC", TestContext.Current.CancellationToken);
+
+        Assert.Equal(2, summary.YearIncomes.Count);
+        Assert.Single(summary.YearMonthIncomes);
+        _incomeRepo.Verify(r => r.GetByAccountEmailAndDateRangeAsync(email, It.IsAny<DateTime>(), It.IsAny<DateTime>(), It.IsAny<CancellationToken>()), Times.Once);
+        _expenditureRepo.Verify(r => r.GetByAccountEmailAndDateRangeAsync(email, It.IsAny<DateTime>(), It.IsAny<DateTime>(), It.IsAny<CancellationToken>()), Times.Once);
+    }
+
     // -- GetNoticeCountsAsync -------------------------------------------------
 
     /// <summary>Verifies that <c>GetNoticeCountsAsync</c> returns zero counts when no fixed items.</summary>

@@ -150,11 +150,11 @@ public sealed class FixedExpenditure : AggregateRoot<long>
         if (string.IsNullOrWhiteSpace(paymentMethod))
             return Error.Validation("FixedExpenditure.PaymentMethodEmpty", "Payment method cannot be empty.");
 
-        if (depositDay is < 1 or > 31)
-            return Error.Validation("FixedExpenditure.InvalidDepositDay", "Deposit day must be between 1 and 31.");
-
         if (depositMonth is < 1 or > 12)
             return Error.Validation("FixedExpenditure.InvalidDepositMonth", "Deposit month must be between 1 and 12.");
+
+        if (!FixedSchedulePolicy.IsValidDepositDate(depositMonth, depositDay))
+            return Error.Validation("FixedExpenditure.InvalidDepositDay", "Deposit day is not valid for the selected month.");
 
         var emailResult = Email.Create(accountEmailValue);
         if (emailResult.IsError) return emailResult.Errors;
@@ -209,11 +209,11 @@ public sealed class FixedExpenditure : AggregateRoot<long>
         if (string.IsNullOrWhiteSpace(paymentMethod))
             return Error.Validation("FixedExpenditure.PaymentMethodEmpty", "Payment method cannot be empty.");
 
-        if (depositDay is < 1 or > 31)
-            return Error.Validation("FixedExpenditure.InvalidDepositDay", "Deposit day must be between 1 and 31.");
-
         if (depositMonth is < 1 or > 12)
             return Error.Validation("FixedExpenditure.InvalidDepositMonth", "Deposit month must be between 1 and 12.");
+
+        if (!FixedSchedulePolicy.IsValidDepositDate(depositMonth, depositDay))
+            return Error.Validation("FixedExpenditure.InvalidDepositDay", "Deposit day is not valid for the selected month.");
 
         var moneyResult = Money.Create(amount, currency);
         if (moneyResult.IsError) return moneyResult.Errors;

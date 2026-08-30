@@ -130,6 +130,23 @@ public class EmailConsumerWorkerTests
         channel.Verify(c => c.BasicAckAsync(It.IsAny<ulong>(), It.IsAny<bool>(), It.IsAny<CancellationToken>()), Times.Never);
     }
 
+    /// <summary>On message received async, when the handler succeeds but the ack itself throws, the message is neither nacked nor requeued — it must not be resent since the email already went out.</summary>
+    [Fact]
+    public async Task OnMessageReceivedAsync_AckThrowsAfterSuccessfulHandle_DoesNotNack()
+    {
+        var handler = new Mock<IEmailMessageHandler>();
+        var worker = CreateSut(handler.Object, out var channel);
+        channel.Setup(c => c.BasicAckAsync(It.IsAny<ulong>(), It.IsAny<bool>(), It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new InvalidOperationException("channel closed"));
+        byte[] body = JsonSerializer.SerializeToUtf8Bytes(Message);
+
+        await worker.OnMessageReceivedAsync(this, MakeDeliverArgs(body, deliveryTag: 11));
+
+        handler.Verify(h => h.HandleAsync(
+            It.Is<SendEmailMessage>(m => m == Message), It.IsAny<CancellationToken>()), Times.Once);
+        channel.Verify(c => c.BasicNackAsync(It.IsAny<ulong>(), It.IsAny<bool>(), It.IsAny<bool>(), It.IsAny<CancellationToken>()), Times.Never);
+    }
+
     /// <summary>On message received async handler throws on redelivery nacks without requeue, so a genuinely poison message can't block the queue forever.</summary>
     [Fact]
     public async Task OnMessageReceivedAsync_HandlerThrows_Redelivered_NacksWithoutRequeue()

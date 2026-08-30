@@ -142,11 +142,11 @@ public sealed class FixedIncome : AggregateRoot<long>
         if (string.IsNullOrWhiteSpace(depositMyAssetProductName))
             return Error.Validation("FixedIncome.DepositAssetEmpty", "Deposit asset product name cannot be empty.");
 
-        if (depositDay is < 1 or > 31)
-            return Error.Validation("FixedIncome.InvalidDepositDay", "Deposit day must be between 1 and 31.");
-
         if (depositMonth is < 1 or > 12)
             return Error.Validation("FixedIncome.InvalidDepositMonth", "Deposit month must be between 1 and 12.");
+
+        if (!FixedSchedulePolicy.IsValidDepositDate(depositMonth, depositDay))
+            return Error.Validation("FixedIncome.InvalidDepositDay", "Deposit day is not valid for the selected month.");
 
         var emailResult = Email.Create(accountEmailValue);
         if (emailResult.IsError) return emailResult.Errors;
@@ -200,11 +200,11 @@ public sealed class FixedIncome : AggregateRoot<long>
         if (string.IsNullOrWhiteSpace(depositMyAssetProductName))
             return Error.Validation("FixedIncome.DepositAssetEmpty", "Deposit asset product name cannot be empty.");
 
-        if (depositDay is < 1 or > 31)
-            return Error.Validation("FixedIncome.InvalidDepositDay", "Deposit day must be between 1 and 31.");
-
         if (depositMonth is < 1 or > 12)
             return Error.Validation("FixedIncome.InvalidDepositMonth", "Deposit month must be between 1 and 12.");
+
+        if (!FixedSchedulePolicy.IsValidDepositDate(depositMonth, depositDay))
+            return Error.Validation("FixedIncome.InvalidDepositDay", "Deposit day is not valid for the selected month.");
 
         var moneyResult = Money.Create(amount, currency);
         if (moneyResult.IsError) return moneyResult.Errors;

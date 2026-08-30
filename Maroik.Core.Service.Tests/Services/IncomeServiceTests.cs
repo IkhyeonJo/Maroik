@@ -318,6 +318,31 @@ public class IncomeServiceTests
         Assert.Equal(["Apple", "Zebra"], callOrder.Distinct());
     }
 
+    /// <summary>Verifies that <c>UpdateAsync</c> fails and never withdraws from the old asset when
+    /// the new deposit asset name doesn't resolve to an owned asset — regression test for a bug
+    /// where the withdrawal from the old asset ran unconditionally while the deposit into the
+    /// unresolved new asset was silently skipped, losing money.</summary>
+    [Fact]
+    public async Task UpdateAsync_ReturnsFail_WhenNewAssetNotFound_AndAssetNameChanges()
+    {
+        const string email = "user@example.com";
+        var existing = MakeIncome(1, "OldAsset", 200m);
+        var oldAsset = MakeAsset("OldAsset", amount: 500m);
+        _incomeRepo.Setup(r => r.GetByAccountEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync([existing]);
+        _assetBalance.Setup(r => r.GetAssetAsync(email, "OldAsset", It.IsAny<CancellationToken>())).ReturnsAsync(oldAsset);
+        _assetBalance.Setup(r => r.GetAssetAsync(email, "GhostAsset", It.IsAny<CancellationToken>())).ReturnsAsync((Asset?)null);
+        var sut = CreateSut();
+
+        var request = ValidRequest("GhostAsset");
+        request.Id = 1;
+        ServiceResult result = await sut.UpdateAsync(email, request, TestContext.Current.CancellationToken);
+
+        Assert.False(result.Success);
+        _assetBalance.Verify(r => r.SaveAsync(It.IsAny<Asset>(), It.IsAny<CancellationToken>()), Times.Never);
+        _unitOfWork.Verify(u => u.RollbackAsync(It.IsAny<CancellationToken>()), Times.Once);
+        _unitOfWork.Verify(u => u.CommitAsync(It.IsAny<CancellationToken>()), Times.Never);
+    }
+
     // -- DeleteAsync ----------------------------------------------------------
 
     /// <summary>Verifies that <c>DeleteAsync</c> returns fail when income not found.</summary>
