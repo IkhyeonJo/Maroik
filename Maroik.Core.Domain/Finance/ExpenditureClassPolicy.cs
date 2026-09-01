@@ -6,36 +6,55 @@ namespace Maroik.Core.Domain.Finance;
 /// Domain policy that validates and classifies expenditure main/subclass combinations.
 /// Returns <c>true</c> when the combination requires a deposit asset (transfer-type spending),
 /// <c>false</c> when no deposit asset is involved, or an error when the combination is invalid.
+/// <para>
+/// <see cref="SubClassesByMainClass"/> and <see cref="DepositAssetSubClasses"/> are the single
+/// source of truth; <see cref="Validate"/> is derived from them, and the presentation layer
+/// serializes them into the create/edit forms so the client no longer hard-codes the same lists.
+/// </para>
 /// </summary>
 public static class ExpenditureClassPolicy
 {
+    /// <summary>
+    /// The recognized sub-classes for each expenditure main class, in display order.
+    /// </summary>
+    public static readonly IReadOnlyDictionary<string, IReadOnlyList<string>> SubClassesByMainClass =
+        new Dictionary<string, IReadOnlyList<string>>
+        {
+            ["RegularSavings"] = new[] { "Deposit", "Investment" },
+            ["NonConsumerSpending"] = new[]
+            {
+                "PublicPension", "DebtRepayment", "Tax", "SocialInsurance",
+                "InterHouseholdTranserExpenses", "NonProfitOrganizationTransfer"
+            },
+            ["ConsumerSpending"] = new[]
+            {
+                "MealOrEatOutExpenses", "HousingOrSuppliesCost", "EducationExpenses",
+                "MedicalExpenses", "TransportationCost", "CommunicationCost",
+                "LeisureOrCulture", "ClothingOrShoes", "PinMoney",
+                "ProtectionTypeInsurance", "OtherExpenses", "UnknownExpenditure"
+            }
+        };
+
+    /// <summary>
+    /// Sub-classes that represent a transfer into an asset and therefore require the user to
+    /// pick a deposit asset. Every other recognized sub-class does not.
+    /// </summary>
+    public static readonly IReadOnlyList<string> DepositAssetSubClasses =
+        new[] { "Deposit", "Investment", "PublicPension", "DebtRepayment" };
+
     /// <summary>
     /// Validates <paramref name="mainClass"/> / <paramref name="subClass"/> and returns whether
     /// the expenditure requires a deposit asset (<c>true</c>) or not (<c>false</c>).
     /// Returns a validation error if the combination is not recognized.
     /// </summary>
-    public static ErrorOr<bool> Validate(string? mainClass, string? subClass) => mainClass switch
+    public static ErrorOr<bool> Validate(string? mainClass, string? subClass)
     {
-        "RegularSavings" => subClass is "Deposit" or "Investment"
-            ? true
-            : Error.Validation("ExpenditureClass.Invalid", "Invalid sub-class for RegularSavings."),
+        if (mainClass is null || !SubClassesByMainClass.TryGetValue(mainClass, out var subClasses))
+            return Error.Validation("ExpenditureClass.Invalid", "Unknown expenditure main class.");
 
-        "NonConsumerSpending" => subClass switch
-        {
-            "PublicPension" or "DebtRepayment" => true,
-            "Tax" or "SocialInsurance" or "InterHouseholdTranserExpenses"
-                or "NonProfitOrganizationTransfer" => false,
-            _ => Error.Validation("ExpenditureClass.Invalid", "Invalid sub-class for NonConsumerSpending.")
-        },
+        if (subClass is null || !subClasses.Contains(subClass))
+            return Error.Validation("ExpenditureClass.Invalid", $"Invalid sub-class for {mainClass}.");
 
-        "ConsumerSpending" => subClass is
-            "MealOrEatOutExpenses" or "HousingOrSuppliesCost" or "EducationExpenses" or
-            "MedicalExpenses" or "TransportationCost" or "CommunicationCost" or
-            "LeisureOrCulture" or "ClothingOrShoes" or "PinMoney" or
-            "ProtectionTypeInsurance" or "OtherExpenses" or "UnknownExpenditure"
-                ? false
-                : Error.Validation("ExpenditureClass.Invalid", "Invalid sub-class for ConsumerSpending."),
-
-        _ => Error.Validation("ExpenditureClass.Invalid", "Unknown expenditure main class.")
-    };
+        return DepositAssetSubClasses.Contains(subClass);
+    }
 }

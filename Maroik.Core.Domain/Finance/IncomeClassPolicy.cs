@@ -6,24 +6,39 @@ namespace Maroik.Core.Domain.Finance;
 /// Domain policy that validates income main/subclass combinations.
 /// Returns <see cref="Result.Success"/> when the combination is recognized,
 /// or a validation error when it is not.
+/// <para>
+/// <see cref="SubClassesByMainClass"/> is the single source of truth for the taxonomy;
+/// <see cref="Validate"/> is derived from it, and the presentation layer serializes it
+/// into the create/edit forms so the client no longer hard-codes the same lists.
+/// </para>
 /// </summary>
 public static class IncomeClassPolicy
 {
     /// <summary>
+    /// The recognized sub-classes for each income main class, in display order.
+    /// </summary>
+    public static readonly IReadOnlyDictionary<string, IReadOnlyList<string>> SubClassesByMainClass =
+        new Dictionary<string, IReadOnlyList<string>>
+        {
+            ["RegularIncome"] = new[]
+            {
+                "LaborIncome", "BusinessIncome", "PensionIncome",
+                "FinancialIncome", "RentalIncome", "OtherIncome"
+            },
+            ["IrregularIncome"] = new[] { "LaborIncome", "OtherIncome" }
+        };
+
+    /// <summary>
     /// Validates <paramref name="mainClass"/> / <paramref name="subClass"/>.
     /// Returns a validation error if the combination is not recognized.
     /// </summary>
-    public static ErrorOr<Success> Validate(string? mainClass, string? subClass) => mainClass switch
+    public static ErrorOr<Success> Validate(string? mainClass, string? subClass)
     {
-        "RegularIncome" => subClass is "LaborIncome" or "BusinessIncome" or "PensionIncome"
-            or "FinancialIncome" or "RentalIncome" or "OtherIncome"
-                ? Result.Success
-                : Error.Validation("IncomeClass.Invalid", "Invalid sub-class for RegularIncome."),
+        if (mainClass is null || !SubClassesByMainClass.TryGetValue(mainClass, out var subClasses))
+            return Error.Validation("IncomeClass.Invalid", "Unknown income main class.");
 
-        "IrregularIncome" => subClass is "LaborIncome" or "OtherIncome"
+        return subClass is not null && subClasses.Contains(subClass)
             ? Result.Success
-            : Error.Validation("IncomeClass.Invalid", "Invalid sub-class for IrregularIncome."),
-
-        _ => Error.Validation("IncomeClass.Invalid", "Unknown income main class.")
-    };
+            : Error.Validation("IncomeClass.Invalid", $"Invalid sub-class for {mainClass}.");
+    }
 }

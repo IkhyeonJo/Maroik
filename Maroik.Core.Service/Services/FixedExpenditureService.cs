@@ -135,41 +135,14 @@ public class FixedExpenditureService : IFixedExpenditureService
     /// <exception cref="RegexMatchTimeoutException"></exception>
     private static (bool IsValid, bool RequiresDepositAsset) ValidateClassAndDate(FixedExpenditureRequest req)
     {
-        bool requiresDeposit;
-        switch (req.MainClass)
-        {
-            case "RegularSavings":
-                if (req.SubClass is not ("Deposit" or "Investment")) return (false, false);
-                requiresDeposit = true;
-                break;
-            case "NonConsumerSpending":
-                switch (req.SubClass)
-                {
-                    case "PublicPension" or "DebtRepayment":
-                        requiresDeposit = true;
-                        break;
-                    case "Tax" or "SocialInsurance" or "InterHouseholdTranserExpenses" or "NonProfitOrganizationTransfer":
-                        requiresDeposit = false;
-                        break;
-                    default:
-                        return (false, false);
-                }
-                break;
-            case "ConsumerSpending":
-                if (req.SubClass is not ("MealOrEatOutExpenses" or "HousingOrSuppliesCost" or "EducationExpenses" or
-                    "MedicalExpenses" or "TransportationCost" or "CommunicationCost" or "LeisureOrCulture" or
-                    "ClothingOrShoes" or "PinMoney" or "ProtectionTypeInsurance" or "OtherExpenses" or "UnknownExpenditure"))
-                    return (false, false);
-                requiresDeposit = false;
-                break;
-            default:
-                return (false, false);
-        }
+        var classResult = ExpenditureClassPolicy.Validate(req.MainClass, req.SubClass);
+        if (classResult.IsError) return (false, false);
+        bool requiresDeposit = classResult.Value;
 
         if (req.DepositMonth is < 1 or > 12) return (false, false);
-        int maxDay = req.DepositMonth switch { 2 => 29, 4 or 6 or 9 or 11 => 30, _ => 31 };
 #pragma warning disable SYSLIB1045
-        if (req.DepositDay < 1 || req.DepositDay > maxDay || !Regex.IsMatch(req.MaturityDate.ToString("yyyy-MM-dd"),
+        if (req.DepositDay < 1 || req.DepositDay > FixedSchedulePolicy.MaxDepositDay(req.DepositMonth) ||
+            !Regex.IsMatch(req.MaturityDate.ToString("yyyy-MM-dd"),
 #pragma warning restore SYSLIB1045
                 @"^\d{4}-((0[1-9])|(1[012]))-((0[1-9]|[12]\d)|3[01])$")) return (false, false);
 

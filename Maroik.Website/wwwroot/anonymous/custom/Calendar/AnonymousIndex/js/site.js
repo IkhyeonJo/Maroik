@@ -40,6 +40,19 @@ const $viewCalendarEventTaskDialogModal = $('#viewCalendarEventTaskDialogModal')
 const $otherCalendarEventOutputViewModels = $('#otherCalendarEventOutputViewModels');
 const $otherCalendars = $('#otherCalendars');
 
+// Reminder lead-time bounds + time-of-day granularity — authoritative in CalendarReminderPolicy,
+// serialized by AnonymousIndex.cshtml. This page only displays reminders, so these feed the
+// (disabled) inputs' max attribute.
+const maxMinutesBeforeEvent = parseInt($('#maxMinutesBeforeEvent').val(), 10) || 40320;
+const maxHoursBeforeEvent = parseInt($('#maxHoursBeforeEvent').val(), 10) || 672;
+const maxDaysBeforeEvent = parseInt($('#maxDaysBeforeEvent').val(), 10) || 28;
+const maxWeeksBeforeEvent = parseInt($('#maxWeeksBeforeEvent').val(), 10) || 4;
+// "Notify at HH:MM" options for all-day reminders and the default selection, both published
+// by the server (CalendarViewModelMapper / CalendarReminderPolicy). Was regenerated inline
+// as Array.from({length:96}) in several places.
+const reminderTimeIntervals = JSON.parse($('#reminderTimeIntervals').val() || '[]');
+const defaultBeforeAt = $('#defaultReminderTimeOfDay').val() || '09:00';
+
 function base64ToBlob(base64, mime) {
     const byteCharacters = atob(base64);
     const byteNumbers = new Array(byteCharacters.length);
@@ -322,11 +335,7 @@ $(function () {
                                     $divViewEventNotificationAllDayChecked.show();
 
                                     if (data.calendarEvent.serializedCalendarReminders !== '[]') {
-                                        const timeIntervals = Array.from({ length: 96 }, (_, i) => {
-                                            const hours = String(Math.floor(i / 4)).padStart(2, '0');
-                                            const minutes = String((i % 4) * 15).padStart(2, '0');
-                                            return `${hours}:${minutes}`;
-                                        });
+                                        const timeIntervals = reminderTimeIntervals;
 
                                         JSON.parse(data.calendarEvent.serializedCalendarReminders).forEach(reminder => {
                                             if (reminder.Method !== 'Email') {
@@ -336,7 +345,7 @@ $(function () {
                                                 `;
 
                                                 let value = reminder.DaysBeforeEvent !== null ? reminder.DaysBeforeEvent : reminder.WeeksBeforeEvent;
-                                                let max = reminder.DaysBeforeEvent !== null ? 28 : 4;
+                                                let max = reminder.DaysBeforeEvent !== null ? maxDaysBeforeEvent : maxWeeksBeforeEvent;
                                                 let selectedDays = reminder.DaysBeforeEvent !== null ? 'selected' : '';
                                                 let selectedWeeks = reminder.WeeksBeforeEvent !== null ? 'selected' : '';
 
@@ -384,7 +393,7 @@ $(function () {
                                                 `;
 
                                                 let value = reminder.MinutesBeforeEvent !== null ? reminder.MinutesBeforeEvent : reminder.HoursBeforeEvent !== null ? reminder.HoursBeforeEvent : reminder.DaysBeforeEvent !== null ? reminder.DaysBeforeEvent : reminder.WeeksBeforeEvent;
-                                                let max = reminder.MinutesBeforeEvent !== null ? 40320 : reminder.HoursBeforeEvent !== null ? 672 : reminder.DaysBeforeEvent !== null ? 28 : 4;
+                                                let max = reminder.MinutesBeforeEvent !== null ? maxMinutesBeforeEvent : reminder.HoursBeforeEvent !== null ? maxHoursBeforeEvent : reminder.DaysBeforeEvent !== null ? maxDaysBeforeEvent : maxWeeksBeforeEvent;
 
                                                 let selectedMinutes = reminder.MinutesBeforeEvent !== null ? 'selected' : '';
                                                 let selectedHours = reminder.HoursBeforeEvent !== null ? 'selected' : '';

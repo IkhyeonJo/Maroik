@@ -7,12 +7,23 @@
     No create/edit/delete controls are shown; the calendar is read-only.
 *@
 @using Maroik.Website.Models.ViewModels.Calendar
+@using Maroik.Core.Domain.Calendar
 @using Newtonsoft.Json
 @model CalendarOutputViewModel
 
 @{
     var timeIntervals = Model.TimeIntervals;
 }
+
+@* Reminder lead-time bounds + the "notify at HH:MM" list — authoritative in CalendarReminderPolicy
+   / the view model. This page only displays reminders (disabled inputs), but it reads the same
+   values so it never drifts from the create/edit pages. *@
+@Html.Hidden("maxMinutesBeforeEvent", CalendarReminderPolicy.MaxMinutesBeforeEvent)
+@Html.Hidden("maxHoursBeforeEvent", CalendarReminderPolicy.MaxHoursBeforeEvent)
+@Html.Hidden("maxDaysBeforeEvent", CalendarReminderPolicy.MaxDaysBeforeEvent)
+@Html.Hidden("maxWeeksBeforeEvent", CalendarReminderPolicy.MaxWeeksBeforeEvent)
+@Html.Hidden("reminderTimeIntervals", JsonConvert.SerializeObject(Model.TimeIntervals))
+@Html.Hidden("defaultReminderTimeOfDay", CalendarReminderPolicy.DefaultReminderTimeOfDay)
 
 @Html.Hidden("localizerEmail", Localizer["Email"].Value)
 @Html.Hidden("localizerNotification", Localizer["Notification"].Value)

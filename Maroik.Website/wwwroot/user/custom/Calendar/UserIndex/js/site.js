@@ -5,7 +5,11 @@ const maxMinutesBeforeEvent = parseInt($('#maxMinutesBeforeEvent').val(), 10);
 const maxHoursBeforeEvent = parseInt($('#maxHoursBeforeEvent').val(), 10);
 const maxDaysBeforeEvent = parseInt($('#maxDaysBeforeEvent').val(), 10);
 const maxWeeksBeforeEvent = parseInt($('#maxWeeksBeforeEvent').val(), 10);
-const defaultBeforeAt = '09:00';
+// "Notify at HH:MM" options for all-day reminders and the default selection, both published
+// by the server (CalendarViewModelMapper / CalendarReminderPolicy). Was regenerated inline
+// as Array.from({length:96}) in several places.
+const reminderTimeIntervals = JSON.parse($('#reminderTimeIntervals').val() || '[]');
+const defaultBeforeAt = $('#defaultReminderTimeOfDay').val() || '09:00';
 const $createCalendarEventDescription = $('#createCalendarEventDescription');
 const $createCalendarEventTaskDialogModal = $('#createCalendarEventTaskDialogModal');
 const $editCalendarEventDescription = $('#editCalendarEventDescription');
@@ -734,11 +738,7 @@ $(function () {
                                     $divEditEventNotificationAllDayChecked.show();
 
                                     if (data.calendarEvent.serializedCalendarReminders !== '[]') {
-                                        const timeIntervals = Array.from({ length: 96 }, (_, i) => {
-                                            const hours = String(Math.floor(i / 4)).padStart(2, '0');
-                                            const minutes = String((i % 4) * 15).padStart(2, '0');
-                                            return `${hours}:${minutes}`;
-                                        });
+                                        const timeIntervals = reminderTimeIntervals;
 
                                         JSON.parse(data.calendarEvent.serializedCalendarReminders).forEach(reminder => {
 
@@ -1043,11 +1043,7 @@ $(function () {
                                     $divViewEventNotificationAllDayChecked.show();
 
                                     if (data.calendarEvent.serializedCalendarReminders !== '[]') {
-                                        const timeIntervals = Array.from({ length: 96 }, (_, i) => {
-                                            const hours = String(Math.floor(i / 4)).padStart(2, '0');
-                                            const minutes = String((i % 4) * 15).padStart(2, '0');
-                                            return `${hours}:${minutes}`;
-                                        });
+                                        const timeIntervals = reminderTimeIntervals;
 
                                         JSON.parse(data.calendarEvent.serializedCalendarReminders).forEach(reminder => {
 
@@ -2349,11 +2345,7 @@ $editCalendarEventAllDay.off('click').on('click', function () {
 });
 
 $createCalendarEventNotificationAllDayChecked.off('click').on('click', function () {
-    const timeIntervals = Array.from({ length: 96 }, (_, i) => {
-        const hours = String(Math.floor(i / 4)).padStart(2, '0');
-        const minutes = String((i % 4) * 15).padStart(2, '0');
-        return `${hours}:${minutes}`;
-    });
+    const timeIntervals = reminderTimeIntervals;
 
     const htmlString = String.raw`
     <div class="divCreateEventNotificationAllDayCheckedRow">
@@ -2413,11 +2405,7 @@ $createCalendarEventNotificationAllDayUnchecked.off('click').on('click', functio
 });
 
 $editCalendarEventNotificationAllDayChecked.off('click').on('click', function () {
-    const timeIntervals = Array.from({ length: 96 }, (_, i) => {
-        const hours = String(Math.floor(i / 4)).padStart(2, '0');
-        const minutes = String((i % 4) * 15).padStart(2, '0');
-        return `${hours}:${minutes}`;
-    });
+    const timeIntervals = reminderTimeIntervals;
 
     const htmlString = String.raw`
     <div class="divEditEventNotificationAllDayCheckedRow">

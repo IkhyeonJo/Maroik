@@ -165,6 +165,38 @@ public class FixedSchedulePolicyTests
         Assert.False(FixedSchedulePolicy.IsValidDepositDate(month, 1));
     }
 
+    // -- MaxDepositDay ----------------------------------------------------------
+
+    /// <summary>Max deposit day matches the 31/30/29 month groups and 0 outside 1–12.</summary>
+    [Theory]
+    [InlineData(1, 31)]
+    [InlineData(2, 29)]
+    [InlineData(3, 31)]
+    [InlineData(4, 30)]
+    [InlineData(5, 31)]
+    [InlineData(6, 30)]
+    [InlineData(7, 31)]
+    [InlineData(8, 31)]
+    [InlineData(9, 30)]
+    [InlineData(10, 31)]
+    [InlineData(11, 30)]
+    [InlineData(12, 31)]
+    [InlineData(0, 0)]
+    [InlineData(13, 0)]
+    public void MaxDepositDay_MatchesMonthGroups(int month, int expected)
+    {
+        Assert.Equal(expected, FixedSchedulePolicy.MaxDepositDay(month));
+    }
+
+    /// <summary>The serialized month→day map has one entry per calendar month, each equal to <see cref="FixedSchedulePolicy.MaxDepositDay"/>.</summary>
+    [Fact]
+    public void MaxDepositDayByMonth_CoversEveryMonth_AndAgreesWithMaxDepositDay()
+    {
+        Assert.Equal(12, FixedSchedulePolicy.MaxDepositDayByMonth.Count);
+        for (int month = 1; month <= 12; month++)
+            Assert.Equal(FixedSchedulePolicy.MaxDepositDay(month), FixedSchedulePolicy.MaxDepositDayByMonth[month]);
+    }
+
     // -- IsExpired ----------------------------------------------------------------
 
     /// <summary>Is expired returns true, when maturity date before today.</summary>

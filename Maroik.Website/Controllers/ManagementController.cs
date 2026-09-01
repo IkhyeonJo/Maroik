@@ -1,3 +1,4 @@
+using Maroik.Core.Domain.Media;
 using Maroik.Core.Domain.ValueObjects;
 using Maroik.Core.Contract.Dtos;
 using Maroik.Core.Contract.Misc.Enums;
@@ -117,9 +118,8 @@ public class ManagementController : Controller
         if (file.Length <= 0 || file.Length > _serverSettings.Value.MaxAttachedFileSizeBytes)
             return Ok(new { result = false, errorMessage = _localizer["File Size must be smaller than {0}MB.", _serverSettings.Value.MaxAttachedFileSizeBytes / (1024 * 1024)].Value });
 
-        var allowedExtensions = new[] { ".jpg", ".jpeg", ".png" };
         var extension = Path.GetExtension(file.FileName).ToLowerInvariant();
-        if (!allowedExtensions.Contains(extension))
+        if (!ImageUploadPolicy.IsAllowedExtension(extension))
             return Ok(new { result = false, errorMessage = _localizer["Only .jpg or jpeg or .png file allowed"].Value });
 
         byte[] imageBytes;
@@ -1019,7 +1019,7 @@ public class ManagementController : Controller
             return Ok(new { result = false, errorMessage = _localizer["File Size must be smaller than {0}MB.", _serverSettings.Value.MaxAttachedFileSizeBytes / (1024 * 1024)].Value });
 
         var ext = Path.GetExtension(summernoteImageFile.FileName).ToLowerInvariant();
-        if (ext != ".png" && ext != ".jpg" && ext != ".jpeg")
+        if (!ImageUploadPolicy.IsAllowedExtension(ext))
             return Ok(new { result = false, errorMessage = _localizer["Only .jpg or jpeg or .png file allowed."].Value });
 
         byte[] bytes;

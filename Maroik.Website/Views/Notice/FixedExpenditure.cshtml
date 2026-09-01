@@ -9,6 +9,8 @@
     Noticed/Expired flags are computed server-side and shown as coloured badges in the grid.
     localization strings for the calendar widget are injected as hidden form fields.
 *@
+@using Maroik.Core.Domain.Finance
+@using Newtonsoft.Json
 @{
     var assets = ViewBag.Assets as List<AssetResponse> ?? [];
     var defaultAssetProductName = ViewBag.DefaultAssetProductName as string;
@@ -64,6 +66,13 @@
 @Html.Hidden("localizerNoMaturityDate", Localizer["No MaturityDate"].Value)
 @Html.Hidden("localizerToday", Localizer["Today"].Value)
 @Html.Hidden("localizerMaturityDateError", Localizer["The maturity date cannot be earlier than the current date."].Value)
+
+@* Expenditure main→sub-class taxonomy, the deposit-asset sub-class set and the deposit
+   month→max-day rule — authoritative in ExpenditureClassPolicy / FixedSchedulePolicy;
+   the form reads these instead of hardcoding them. *@
+@Html.Hidden("expenditureSubClassMap", JsonConvert.SerializeObject(ExpenditureClassPolicy.SubClassesByMainClass))
+@Html.Hidden("expenditureDepositAssetSubClasses", JsonConvert.SerializeObject(ExpenditureClassPolicy.DepositAssetSubClasses))
+@Html.Hidden("maxDepositDayByMonth", JsonConvert.SerializeObject(FixedSchedulePolicy.MaxDepositDayByMonth))
 
 <section class="content">
     <div class="card card-primary">

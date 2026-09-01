@@ -15,13 +15,8 @@ function ChangeCulture(culture) {
         dataType: 'json',
         data: paramValue,
         contentType: 'application/json; charset=utf-8',
-        success: function (data) {
-            if (data.result) {
-                window.location.href = $('#returnUri').val();
-            }
-            else {
-                window.location.href = $('#returnUri').val();
-            }
+        success: function () {
+            window.location.href = $("#returnUri").val();
         }
     });
 }

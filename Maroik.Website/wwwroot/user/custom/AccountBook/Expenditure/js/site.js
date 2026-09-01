@@ -39,6 +39,39 @@ const $btnEditExpenditureGridRow = $('#btnEditExpenditureGridRow');
 const $labelCreateExpenditureAmount = $('#labelCreateExpenditureAmount');
 const $labelEditExpenditureAmount = $('#labelEditExpenditureAmount');
 
+// Server-published expenditure taxonomy (Expenditure.cshtml). Authoritative in
+// ExpenditureClassPolicy; mirrored here for form UX only, the server re-validates on save.
+const expenditureSubClassMap = JSON.parse($('#expenditureSubClassMap').val() || '{}');
+const expenditureDepositAssetSubClasses = JSON.parse($('#expenditureDepositAssetSubClasses').val() || '[]');
+
+// Enables/shows only the options in allowedValues (disabling+hiding the rest) and selects
+// valueToSelect when it is allowed, otherwise the first allowed option.
+function ApplyAllowedOptions($select, allowedValues, valueToSelect) {
+    $select.find('option').each(function () {
+        const allowed = allowedValues.indexOf(this.value) !== -1;
+        $(this).prop('disabled', !allowed).prop('hidden', !allowed);
+    });
+    const target = (valueToSelect != null && allowedValues.indexOf(valueToSelect) !== -1)
+        ? valueToSelect
+        : allowedValues[0];
+    if (target != null) {
+        $select.val(target).change();
+    }
+}
+
+// The "deposit asset" field is only relevant for transfer-type sub-classes.
+function ToggleCreateExpenditureMyDepositAsset(subClassValue) {
+    expenditureDepositAssetSubClasses.indexOf(subClassValue) !== -1
+        ? $divCreateExpenditureMyDepositAsset.show()
+        : $divCreateExpenditureMyDepositAsset.hide();
+}
+
+function ToggleEditExpenditureMyDepositAsset(subClassValue) {
+    expenditureDepositAssetSubClasses.indexOf(subClassValue) !== -1
+        ? $divEditExpenditureMyDepositAsset.show()
+        : $divEditExpenditureMyDepositAsset.hide();
+}
+
 const localizer = {
     PrevText: $('#localizerPrevText').val(),
     NextText: $('#localizerNextText').val(),
@@ -186,133 +219,12 @@ $gridSearch.off('input').on('input', function () {
 });
 
 function CreateFormShowExpenditureSubClassBySelectedExpenditureMainClass(createExpenditureMainClass) {
-
-    if (createExpenditureMainClass.value === "RegularSavings") {
-        $createExpenditureSubClass.find('option[value=Deposit]').prop('disabled', true).prop('hidden', true);
-        $createExpenditureSubClass.find('option[value=Investment]').prop('disabled', true).prop('hidden', true);
-
-        $createExpenditureSubClass.find('option[value=PublicPension]').prop('disabled', true).prop('hidden', true);
-        $createExpenditureSubClass.find('option[value=DebtRepayment]').prop('disabled', true).prop('hidden', true);
-        $createExpenditureSubClass.find('option[value=Tax]').prop('disabled', true).prop('hidden', true);
-        $createExpenditureSubClass.find('option[value=SocialInsurance]').prop('disabled', true).prop('hidden', true);
-        $createExpenditureSubClass.find('option[value=InterHouseholdTranserExpenses]').prop('disabled', true).prop('hidden', true);
-        $createExpenditureSubClass.find('option[value=NonProfitOrganizationTransfer]').prop('disabled', true).prop('hidden', true);
-
-        $createExpenditureSubClass.find('option[value=MealOrEatOutExpenses]').prop('disabled', true).prop('hidden', true);
-        $createExpenditureSubClass.find('option[value=HousingOrSuppliesCost]').prop('disabled', true).prop('hidden', true);
-        $createExpenditureSubClass.find('option[value=EducationExpenses]').prop('disabled', true).prop('hidden', true);
-        $createExpenditureSubClass.find('option[value=MedicalExpenses]').prop('disabled', true).prop('hidden', true);
-        $createExpenditureSubClass.find('option[value=TransportationCost]').prop('disabled', true).prop('hidden', true);
-        $createExpenditureSubClass.find('option[value=CommunicationCost]').prop('disabled', true).prop('hidden', true);
-        $createExpenditureSubClass.find('option[value=LeisureOrCulture]').prop('disabled', true).prop('hidden', true);
-        $createExpenditureSubClass.find('option[value=ClothingOrShoes]').prop('disabled', true).prop('hidden', true);
-        $createExpenditureSubClass.find('option[value=PinMoney]').prop('disabled', true).prop('hidden', true);
-        $createExpenditureSubClass.find('option[value=ProtectionTypeInsurance]').prop('disabled', true).prop('hidden', true);
-        $createExpenditureSubClass.find('option[value=OtherExpenses]').prop('disabled', true).prop('hidden', true);
-        $createExpenditureSubClass.find('option[value=UnknownExpenditure]').prop('disabled', true).prop('hidden', true);
-
-        $createExpenditureSubClass.find('option:selected').removeAttr("selected");
-
-        $createExpenditureSubClass.find('option[value=Deposit]').prop('disabled', false).prop('hidden', false).attr('selected', 'selected');
-        $createExpenditureSubClass.find('option[value=Investment]').prop('disabled', false).prop('hidden', false);
-
-        $createExpenditureSubClass.val("Deposit").change();
-
-        $divCreateExpenditureMyDepositAsset.show();
-    }
-    else if (createExpenditureMainClass.value === "NonConsumerSpending") {
-        $createExpenditureSubClass.find('option[value=Deposit]').prop('disabled', true).prop('hidden', true);
-        $createExpenditureSubClass.find('option[value=Investment]').prop('disabled', true).prop('hidden', true);
-
-        $createExpenditureSubClass.find('option[value=PublicPension]').prop('disabled', true).prop('hidden', true);
-        $createExpenditureSubClass.find('option[value=DebtRepayment]').prop('disabled', true).prop('hidden', true);
-        $createExpenditureSubClass.find('option[value=Tax]').prop('disabled', true).prop('hidden', true);
-        $createExpenditureSubClass.find('option[value=SocialInsurance]').prop('disabled', true).prop('hidden', true);
-        $createExpenditureSubClass.find('option[value=InterHouseholdTranserExpenses]').prop('disabled', true).prop('hidden', true);
-        $createExpenditureSubClass.find('option[value=NonProfitOrganizationTransfer]').prop('disabled', true).prop('hidden', true);
-
-        $createExpenditureSubClass.find('option[value=MealOrEatOutExpenses]').prop('disabled', true).prop('hidden', true);
-        $createExpenditureSubClass.find('option[value=HousingOrSuppliesCost]').prop('disabled', true).prop('hidden', true);
-        $createExpenditureSubClass.find('option[value=EducationExpenses]').prop('disabled', true).prop('hidden', true);
-        $createExpenditureSubClass.find('option[value=MedicalExpenses]').prop('disabled', true).prop('hidden', true);
-        $createExpenditureSubClass.find('option[value=TransportationCost]').prop('disabled', true).prop('hidden', true);
-        $createExpenditureSubClass.find('option[value=CommunicationCost]').prop('disabled', true).prop('hidden', true);
-        $createExpenditureSubClass.find('option[value=LeisureOrCulture]').prop('disabled', true).prop('hidden', true);
-        $createExpenditureSubClass.find('option[value=ClothingOrShoes]').prop('disabled', true).prop('hidden', true);
-        $createExpenditureSubClass.find('option[value=PinMoney]').prop('disabled', true).prop('hidden', true);
-        $createExpenditureSubClass.find('option[value=ProtectionTypeInsurance]').prop('disabled', true).prop('hidden', true);
-        $createExpenditureSubClass.find('option[value=OtherExpenses]').prop('disabled', true).prop('hidden', true);
-        $createExpenditureSubClass.find('option[value=UnknownExpenditure]').prop('disabled', true).prop('hidden', true);
-
-        $createExpenditureSubClass.find('option:selected').removeAttr('selected');
-
-        $createExpenditureSubClass.find('option[value=PublicPension]').prop('disabled', false).prop('hidden', false).attr('selected', 'selected');
-        $createExpenditureSubClass.find('option[value=DebtRepayment]').prop('disabled', false).prop('hidden', false);
-        $createExpenditureSubClass.find('option[value=Tax]').prop('disabled', false).prop('hidden', false);
-        $createExpenditureSubClass.find('option[value=SocialInsurance]').prop('disabled', false).prop('hidden', false);
-        $createExpenditureSubClass.find('option[value=InterHouseholdTranserExpenses]').prop('disabled', false).prop('hidden', false);
-        $createExpenditureSubClass.find('option[value=NonProfitOrganizationTransfer]').prop('disabled', false).prop('hidden', false);
-
-        $createExpenditureSubClass.val('PublicPension').change();
-
-        $divCreateExpenditureMyDepositAsset.show();
-    }
-    else if (createExpenditureMainClass.value === "ConsumerSpending") {
-        $createExpenditureSubClass.find('option[value=Deposit]').prop('disabled', true).prop('hidden', true);
-        $createExpenditureSubClass.find('option[value=Investment]').prop('disabled', true).prop('hidden', true);
-
-        $createExpenditureSubClass.find('option[value=PublicPension]').prop('disabled', true).prop('hidden', true);
-        $createExpenditureSubClass.find('option[value=DebtRepayment]').prop('disabled', true).prop('hidden', true);
-        $createExpenditureSubClass.find('option[value=Tax]').prop('disabled', true).prop('hidden', true);
-        $createExpenditureSubClass.find('option[value=SocialInsurance]').prop('disabled', true).prop('hidden', true);
-        $createExpenditureSubClass.find('option[value=InterHouseholdTranserExpenses]').prop('disabled', true).prop('hidden', true);
-        $createExpenditureSubClass.find('option[value=NonProfitOrganizationTransfer]').prop('disabled', true).prop('hidden', true);
-
-        $createExpenditureSubClass.find('option[value=MealOrEatOutExpenses]').prop('disabled', true).prop('hidden', true);
-        $createExpenditureSubClass.find('option[value=HousingOrSuppliesCost]').prop('disabled', true).prop('hidden', true);
-        $createExpenditureSubClass.find('option[value=EducationExpenses]').prop('disabled', true).prop('hidden', true);
-        $createExpenditureSubClass.find('option[value=MedicalExpenses]').prop('disabled', true).prop('hidden', true);
-        $createExpenditureSubClass.find('option[value=TransportationCost]').prop('disabled', true).prop('hidden', true);
-        $createExpenditureSubClass.find('option[value=CommunicationCost]').prop('disabled', true).prop('hidden', true);
-        $createExpenditureSubClass.find('option[value=LeisureOrCulture]').prop('disabled', true).prop('hidden', true);
-        $createExpenditureSubClass.find('option[value=ClothingOrShoes]').prop('disabled', true).prop('hidden', true);
-        $createExpenditureSubClass.find('option[value=PinMoney]').prop('disabled', true).prop('hidden', true);
-        $createExpenditureSubClass.find('option[value=ProtectionTypeInsurance]').prop('disabled', true).prop('hidden', true);
-        $createExpenditureSubClass.find('option[value=OtherExpenses]').prop('disabled', true).prop('hidden', true);
-        $createExpenditureSubClass.find('option[value=UnknownExpenditure]').prop('disabled', true).prop('hidden', true);
-
-        $createExpenditureSubClass.find('option:selected').removeAttr('selected');
-
-        $createExpenditureSubClass.find('option[value=MealOrEatOutExpenses]').prop('disabled', false).prop('hidden', false).attr('selected', 'selected');
-        $createExpenditureSubClass.find('option[value=HousingOrSuppliesCost]').prop('disabled', false).prop('hidden', false);
-        $createExpenditureSubClass.find('option[value=EducationExpenses]').prop('disabled', false).prop('hidden', false);
-        $createExpenditureSubClass.find('option[value=MedicalExpenses]').prop('disabled', false).prop('hidden', false);
-        $createExpenditureSubClass.find('option[value=TransportationCost]').prop('disabled', false).prop('hidden', false);
-        $createExpenditureSubClass.find('option[value=CommunicationCost]').prop('disabled', false).prop('hidden', false);
-        $createExpenditureSubClass.find('option[value=LeisureOrCulture]').prop('disabled', false).prop('hidden', false);
-        $createExpenditureSubClass.find('option[value=ClothingOrShoes]').prop('disabled', false).prop('hidden', false);
-        $createExpenditureSubClass.find('option[value=PinMoney]').prop('disabled', false).prop('hidden', false);
-        $createExpenditureSubClass.find('option[value=ProtectionTypeInsurance]').prop('disabled', false).prop('hidden', false);
-        $createExpenditureSubClass.find('option[value=OtherExpenses]').prop('disabled', false).prop('hidden', false);
-        $createExpenditureSubClass.find('option[value=UnknownExpenditure]').prop('disabled', false).prop('hidden', false);
-
-        $createExpenditureSubClass.val("MealOrEatOutExpenses").change();
-
-        $divCreateExpenditureMyDepositAsset.hide();
-    }
+    ApplyAllowedOptions($createExpenditureSubClass, expenditureSubClassMap[createExpenditureMainClass.value] || [], null);
+    ToggleCreateExpenditureMyDepositAsset($createExpenditureSubClass.val());
 }
 
 function CreateFormShowExpenditureDivCreateExpenditureMyDepositAssetBySelectedExpenditureSubClass(createExpenditureSubClass) {
-
-    if (createExpenditureSubClass.value === "Deposit" ||
-        createExpenditureSubClass.value === "Investment" ||
-        createExpenditureSubClass.value === "PublicPension" ||
-        createExpenditureSubClass.value === "DebtRepayment") {
-        $divCreateExpenditureMyDepositAsset.show();
-    }
-    else {
-        $divCreateExpenditureMyDepositAsset.hide();
-    }
+    ToggleCreateExpenditureMyDepositAsset(createExpenditureSubClass.value);
 }
 
 function CreateExpenditure() {
@@ -403,123 +315,8 @@ function EditExpenditureGridRow(errorMessageSelectGridRow) {
                 $editExpenditureId.val(data.expenditure.id);
                 $editExpenditureMainClass.val(data.expenditure.mainClass).change();
 
-                if (data.expenditure.mainClass === "RegularSavings") {
-                    $editExpenditureSubClass.find('option[value=Deposit]').prop('disabled', true).prop('hidden', true);
-                    $editExpenditureSubClass.find('option[value=Investment]').prop('disabled', true).prop('hidden', true);
-
-                    $editExpenditureSubClass.find('option[value=PublicPension]').prop('disabled', true).prop('hidden', true);
-                    $editExpenditureSubClass.find('option[value=DebtRepayment]').prop('disabled', true).prop('hidden', true);
-                    $editExpenditureSubClass.find('option[value=Tax]').prop('disabled', true).prop('hidden', true);
-                    $editExpenditureSubClass.find('option[value=SocialInsurance]').prop('disabled', true).prop('hidden', true);
-                    $editExpenditureSubClass.find('option[value=InterHouseholdTranserExpenses]').prop('disabled', true).prop('hidden', true);
-                    $editExpenditureSubClass.find('option[value=NonProfitOrganizationTransfer]').prop('disabled', true).prop('hidden', true);
-
-                    $editExpenditureSubClass.find('option[value=MealOrEatOutExpenses]').prop('disabled', true).prop('hidden', true);
-                    $editExpenditureSubClass.find('option[value=HousingOrSuppliesCost]').prop('disabled', true).prop('hidden', true);
-                    $editExpenditureSubClass.find('option[value=EducationExpenses]').prop('disabled', true).prop('hidden', true);
-                    $editExpenditureSubClass.find('option[value=MedicalExpenses]').prop('disabled', true).prop('hidden', true);
-                    $editExpenditureSubClass.find('option[value=TransportationCost]').prop('disabled', true).prop('hidden', true);
-                    $editExpenditureSubClass.find('option[value=CommunicationCost]').prop('disabled', true).prop('hidden', true);
-                    $editExpenditureSubClass.find('option[value=LeisureOrCulture]').prop('disabled', true).prop('hidden', true);
-                    $editExpenditureSubClass.find('option[value=ClothingOrShoes]').prop('disabled', true).prop('hidden', true);
-                    $editExpenditureSubClass.find('option[value=PinMoney]').prop('disabled', true).prop('hidden', true);
-                    $editExpenditureSubClass.find('option[value=ProtectionTypeInsurance]').prop('disabled', true).prop('hidden', true);
-                    $editExpenditureSubClass.find('option[value=OtherExpenses]').prop('disabled', true).prop('hidden', true);
-                    $editExpenditureSubClass.find('option[value=UnknownExpenditure]').prop('disabled', true).prop('hidden', true);
-
-                    $editExpenditureSubClass.find('option:selected').removeAttr('selected');
-
-                    $editExpenditureSubClass.find('option[value=Deposit]').prop('disabled', false).prop('hidden', false);
-                    $editExpenditureSubClass.find('option[value=Investment]').prop('disabled', false).prop('hidden', false);
-
-                    $editExpenditureSubClass.val(data.expenditure.subClass).change();
-                }
-                else if (data.expenditure.mainClass === "NonConsumerSpending") {
-                    $editExpenditureSubClass.find('option[value=Deposit]').prop('disabled', true).prop('hidden', true);
-                    $editExpenditureSubClass.find('option[value=Investment]').prop('disabled', true).prop('hidden', true);
-
-                    $editExpenditureSubClass.find('option[value=PublicPension]').prop('disabled', true).prop('hidden', true);
-                    $editExpenditureSubClass.find('option[value=DebtRepayment]').prop('disabled', true).prop('hidden', true);
-                    $editExpenditureSubClass.find('option[value=Tax]').prop('disabled', true).prop('hidden', true);
-                    $editExpenditureSubClass.find('option[value=SocialInsurance]').prop('disabled', true).prop('hidden', true);
-                    $editExpenditureSubClass.find('option[value=InterHouseholdTranserExpenses]').prop('disabled', true).prop('hidden', true);
-                    $editExpenditureSubClass.find('option[value=NonProfitOrganizationTransfer]').prop('disabled', true).prop('hidden', true);
-
-                    $editExpenditureSubClass.find('option[value=MealOrEatOutExpenses]').prop('disabled', true).prop('hidden', true);
-                    $editExpenditureSubClass.find('option[value=HousingOrSuppliesCost]').prop('disabled', true).prop('hidden', true);
-                    $editExpenditureSubClass.find('option[value=EducationExpenses]').prop('disabled', true).prop('hidden', true);
-                    $editExpenditureSubClass.find('option[value=MedicalExpenses]').prop('disabled', true).prop('hidden', true);
-                    $editExpenditureSubClass.find('option[value=TransportationCost]').prop('disabled', true).prop('hidden', true);
-                    $editExpenditureSubClass.find('option[value=CommunicationCost]').prop('disabled', true).prop('hidden', true);
-                    $editExpenditureSubClass.find('option[value=LeisureOrCulture]').prop('disabled', true).prop('hidden', true);
-                    $editExpenditureSubClass.find('option[value=ClothingOrShoes]').prop('disabled', true).prop('hidden', true);
-                    $editExpenditureSubClass.find('option[value=PinMoney]').prop('disabled', true).prop('hidden', true);
-                    $editExpenditureSubClass.find('option[value=ProtectionTypeInsurance]').prop('disabled', true).prop('hidden', true);
-                    $editExpenditureSubClass.find('option[value=OtherExpenses]').prop('disabled', true).prop('hidden', true);
-                    $editExpenditureSubClass.find('option[value=UnknownExpenditure]').prop('disabled', true).prop('hidden', true);
-
-                    $editExpenditureSubClass.find('option:selected').removeAttr('selected');
-
-                    $editExpenditureSubClass.find('option[value=PublicPension]').prop('disabled', false).prop('hidden', false);
-                    $editExpenditureSubClass.find('option[value=DebtRepayment]').prop('disabled', false).prop('hidden', false);
-                    $editExpenditureSubClass.find('option[value=Tax]').prop('disabled', false).prop('hidden', false);
-                    $editExpenditureSubClass.find('option[value=SocialInsurance]').prop('disabled', false).prop('hidden', false);
-                    $editExpenditureSubClass.find('option[value=InterHouseholdTranserExpenses]').prop('disabled', false).prop('hidden', false);
-                    $editExpenditureSubClass.find('option[value=NonProfitOrganizationTransfer]').prop('disabled', false).prop('hidden', false);
-
-                    $editExpenditureSubClass.val(data.expenditure.subClass).change();
-                }
-                else if (data.expenditure.mainClass === "ConsumerSpending") {
-                    $editExpenditureSubClass.find('option[value=Deposit]').prop('disabled', true).prop('hidden', true);
-                    $editExpenditureSubClass.find('option[value=Investment]').prop('disabled', true).prop('hidden', true);
-
-                    $editExpenditureSubClass.find('option[value=PublicPension]').prop('disabled', true).prop('hidden', true);
-                    $editExpenditureSubClass.find('option[value=DebtRepayment]').prop('disabled', true).prop('hidden', true);
-                    $editExpenditureSubClass.find('option[value=Tax]').prop('disabled', true).prop('hidden', true);
-                    $editExpenditureSubClass.find('option[value=SocialInsurance]').prop('disabled', true).prop('hidden', true);
-                    $editExpenditureSubClass.find('option[value=InterHouseholdTranserExpenses]').prop('disabled', true).prop('hidden', true);
-                    $editExpenditureSubClass.find('option[value=NonProfitOrganizationTransfer]').prop('disabled', true).prop('hidden', true);
-
-                    $editExpenditureSubClass.find('option[value=MealOrEatOutExpenses]').prop('disabled', true).prop('hidden', true);
-                    $editExpenditureSubClass.find('option[value=HousingOrSuppliesCost]').prop('disabled', true).prop('hidden', true);
-                    $editExpenditureSubClass.find('option[value=EducationExpenses]').prop('disabled', true).prop('hidden', true);
-                    $editExpenditureSubClass.find('option[value=MedicalExpenses]').prop('disabled', true).prop('hidden', true);
-                    $editExpenditureSubClass.find('option[value=TransportationCost]').prop('disabled', true).prop('hidden', true);
-                    $editExpenditureSubClass.find('option[value=CommunicationCost]').prop('disabled', true).prop('hidden', true);
-                    $editExpenditureSubClass.find('option[value=LeisureOrCulture]').prop('disabled', true).prop('hidden', true);
-                    $editExpenditureSubClass.find('option[value=ClothingOrShoes]').prop('disabled', true).prop('hidden', true);
-                    $editExpenditureSubClass.find('option[value=PinMoney]').prop('disabled', true).prop('hidden', true);
-                    $editExpenditureSubClass.find('option[value=ProtectionTypeInsurance]').prop('disabled', true).prop('hidden', true);
-                    $editExpenditureSubClass.find('option[value=OtherExpenses]').prop('disabled', true).prop('hidden', true);
-                    $editExpenditureSubClass.find('option[value=UnknownExpenditure]').prop('disabled', true).prop('hidden', true);
-
-                    $editExpenditureSubClass.find('option:selected').removeAttr('selected');
-
-                    $editExpenditureSubClass.find('option[value=MealOrEatOutExpenses]').prop('disabled', false).prop('hidden', false);
-                    $editExpenditureSubClass.find('option[value=HousingOrSuppliesCost]').prop('disabled', false).prop('hidden', false);
-                    $editExpenditureSubClass.find('option[value=EducationExpenses]').prop('disabled', false).prop('hidden', false);
-                    $editExpenditureSubClass.find('option[value=MedicalExpenses]').prop('disabled', false).prop('hidden', false);
-                    $editExpenditureSubClass.find('option[value=TransportationCost]').prop('disabled', false).prop('hidden', false);
-                    $editExpenditureSubClass.find('option[value=CommunicationCost]').prop('disabled', false).prop('hidden', false);
-                    $editExpenditureSubClass.find('option[value=LeisureOrCulture]').prop('disabled', false).prop('hidden', false);
-                    $editExpenditureSubClass.find('option[value=ClothingOrShoes]').prop('disabled', false).prop('hidden', false);
-                    $editExpenditureSubClass.find('option[value=PinMoney]').prop('disabled', false).prop('hidden', false);
-                    $editExpenditureSubClass.find('option[value=ProtectionTypeInsurance]').prop('disabled', false).prop('hidden', false);
-                    $editExpenditureSubClass.find('option[value=OtherExpenses]').prop('disabled', false).prop('hidden', false);
-                    $editExpenditureSubClass.find('option[value=UnknownExpenditure]').prop('disabled', false).prop('hidden', false);
-
-                    $editExpenditureSubClass.val(data.expenditure.subClass).change();
-                }
-
-                if (data.expenditure.subClass === "Deposit" ||
-                    data.expenditure.subClass === "Investment" ||
-                    data.expenditure.subClass === "PublicPension" ||
-                    data.expenditure.subClass === "DebtRepayment") {
-                    $divEditExpenditureMyDepositAsset.show();
-                }
-                else {
-                    $divEditExpenditureMyDepositAsset.hide();
-                }
+                ApplyAllowedOptions($editExpenditureSubClass, expenditureSubClassMap[data.expenditure.mainClass] || [], data.expenditure.subClass);
+                ToggleEditExpenditureMyDepositAsset(data.expenditure.subClass);
 
                 $editExpenditureContent.val(data.expenditure.content);
                 $editExpenditureAmount.val(data.expenditure.amount);
@@ -554,133 +351,12 @@ function EditExpenditureGridRow(errorMessageSelectGridRow) {
 }
 
 function EditFormShowExpenditureSubClassBySelectedExpenditureMainClass(editExpenditureMainClass) {
-
-    if (editExpenditureMainClass.value === "RegularSavings") {
-        $editExpenditureSubClass.find('option[value=Deposit]').prop('disabled', true).prop('hidden', true);
-        $editExpenditureSubClass.find('option[value=Investment]').prop('disabled', true).prop('hidden', true);
-
-        $editExpenditureSubClass.find('option[value=PublicPension]').prop('disabled', true).prop('hidden', true);
-        $editExpenditureSubClass.find('option[value=DebtRepayment]').prop('disabled', true).prop('hidden', true);
-        $editExpenditureSubClass.find('option[value=Tax]').prop('disabled', true).prop('hidden', true);
-        $editExpenditureSubClass.find('option[value=SocialInsurance]').prop('disabled', true).prop('hidden', true);
-        $editExpenditureSubClass.find('option[value=InterHouseholdTranserExpenses]').prop('disabled', true).prop('hidden', true);
-        $editExpenditureSubClass.find('option[value=NonProfitOrganizationTransfer]').prop('disabled', true).prop('hidden', true);
-
-        $editExpenditureSubClass.find('option[value=MealOrEatOutExpenses]').prop('disabled', true).prop('hidden', true);
-        $editExpenditureSubClass.find('option[value=HousingOrSuppliesCost]').prop('disabled', true).prop('hidden', true);
-        $editExpenditureSubClass.find('option[value=EducationExpenses]').prop('disabled', true).prop('hidden', true);
-        $editExpenditureSubClass.find('option[value=MedicalExpenses]').prop('disabled', true).prop('hidden', true);
-        $editExpenditureSubClass.find('option[value=TransportationCost]').prop('disabled', true).prop('hidden', true);
-        $editExpenditureSubClass.find('option[value=CommunicationCost]').prop('disabled', true).prop('hidden', true);
-        $editExpenditureSubClass.find('option[value=LeisureOrCulture]').prop('disabled', true).prop('hidden', true);
-        $editExpenditureSubClass.find('option[value=ClothingOrShoes]').prop('disabled', true).prop('hidden', true);
-        $editExpenditureSubClass.find('option[value=PinMoney]').prop('disabled', true).prop('hidden', true);
-        $editExpenditureSubClass.find('option[value=ProtectionTypeInsurance]').prop('disabled', true).prop('hidden', true);
-        $editExpenditureSubClass.find('option[value=OtherExpenses]').prop('disabled', true).prop('hidden', true);
-        $editExpenditureSubClass.find('option[value=UnknownExpenditure]').prop('disabled', true).prop('hidden', true);
-
-        $editExpenditureSubClass.find('option:selected').removeAttr('selected');
-
-        $editExpenditureSubClass.find('option[value=Deposit]').prop('disabled', false).prop('hidden', false).attr('selected', 'selected');
-        $editExpenditureSubClass.find('option[value=Investment]').prop('disabled', false).prop('hidden', false);
-
-        $editExpenditureSubClass.val("Deposit").change();
-
-        $divEditExpenditureMyDepositAsset.show();
-    }
-    else if (editExpenditureMainClass.value === "NonConsumerSpending") {
-        $editExpenditureSubClass.find('option[value=Deposit]').prop('disabled', true).prop('hidden', true);
-        $editExpenditureSubClass.find('option[value=Investment]').prop('disabled', true).prop('hidden', true);
-
-        $editExpenditureSubClass.find('option[value=PublicPension]').prop('disabled', true).prop('hidden', true);
-        $editExpenditureSubClass.find('option[value=DebtRepayment]').prop('disabled', true).prop('hidden', true);
-        $editExpenditureSubClass.find('option[value=Tax]').prop('disabled', true).prop('hidden', true);
-        $editExpenditureSubClass.find('option[value=SocialInsurance]').prop('disabled', true).prop('hidden', true);
-        $editExpenditureSubClass.find('option[value=InterHouseholdTranserExpenses]').prop('disabled', true).prop('hidden', true);
-        $editExpenditureSubClass.find('option[value=NonProfitOrganizationTransfer]').prop('disabled', true).prop('hidden', true);
-
-        $editExpenditureSubClass.find('option[value=MealOrEatOutExpenses]').prop('disabled', true).prop('hidden', true);
-        $editExpenditureSubClass.find('option[value=HousingOrSuppliesCost]').prop('disabled', true).prop('hidden', true);
-        $editExpenditureSubClass.find('option[value=EducationExpenses]').prop('disabled', true).prop('hidden', true);
-        $editExpenditureSubClass.find('option[value=MedicalExpenses]').prop('disabled', true).prop('hidden', true);
-        $editExpenditureSubClass.find('option[value=TransportationCost]').prop('disabled', true).prop('hidden', true);
-        $editExpenditureSubClass.find('option[value=CommunicationCost]').prop('disabled', true).prop('hidden', true);
-        $editExpenditureSubClass.find('option[value=LeisureOrCulture]').prop('disabled', true).prop('hidden', true);
-        $editExpenditureSubClass.find('option[value=ClothingOrShoes]').prop('disabled', true).prop('hidden', true);
-        $editExpenditureSubClass.find('option[value=PinMoney]').prop('disabled', true).prop('hidden', true);
-        $editExpenditureSubClass.find('option[value=ProtectionTypeInsurance]').prop('disabled', true).prop('hidden', true);
-        $editExpenditureSubClass.find('option[value=OtherExpenses]').prop('disabled', true).prop('hidden', true);
-        $editExpenditureSubClass.find('option[value=UnknownExpenditure]').prop('disabled', true).prop('hidden', true);
-
-        $editExpenditureSubClass.find('option:selected').removeAttr('selected');
-
-        $editExpenditureSubClass.find('option[value=PublicPension]').prop('disabled', false).prop('hidden', false).attr('selected', 'selected');
-        $editExpenditureSubClass.find('option[value=DebtRepayment]').prop('disabled', false).prop('hidden', false);
-        $editExpenditureSubClass.find('option[value=Tax]').prop('disabled', false).prop('hidden', false);
-        $editExpenditureSubClass.find('option[value=SocialInsurance]').prop('disabled', false).prop('hidden', false);
-        $editExpenditureSubClass.find('option[value=InterHouseholdTranserExpenses]').prop('disabled', false).prop('hidden', false);
-        $editExpenditureSubClass.find('option[value=NonProfitOrganizationTransfer]').prop('disabled', false).prop('hidden', false);
-
-        $editExpenditureSubClass.val("PublicPension").change();
-
-        $divEditExpenditureMyDepositAsset.show();
-    }
-    else if (editExpenditureMainClass.value === "ConsumerSpending") {
-        $editExpenditureSubClass.find('option[value=Deposit]').prop('disabled', true).prop('hidden', true);
-        $editExpenditureSubClass.find('option[value=Investment]').prop('disabled', true).prop('hidden', true);
-
-        $editExpenditureSubClass.find('option[value=PublicPension]').prop('disabled', true).prop('hidden', true);
-        $editExpenditureSubClass.find('option[value=DebtRepayment]').prop('disabled', true).prop('hidden', true);
-        $editExpenditureSubClass.find('option[value=Tax]').prop('disabled', true).prop('hidden', true);
-        $editExpenditureSubClass.find('option[value=SocialInsurance]').prop('disabled', true).prop('hidden', true);
-        $editExpenditureSubClass.find('option[value=InterHouseholdTranserExpenses]').prop('disabled', true).prop('hidden', true);
-        $editExpenditureSubClass.find('option[value=NonProfitOrganizationTransfer]').prop('disabled', true).prop('hidden', true);
-
-        $editExpenditureSubClass.find('option[value=MealOrEatOutExpenses]').prop('disabled', true).prop('hidden', true);
-        $editExpenditureSubClass.find('option[value=HousingOrSuppliesCost]').prop('disabled', true).prop('hidden', true);
-        $editExpenditureSubClass.find('option[value=EducationExpenses]').prop('disabled', true).prop('hidden', true);
-        $editExpenditureSubClass.find('option[value=MedicalExpenses]').prop('disabled', true).prop('hidden', true);
-        $editExpenditureSubClass.find('option[value=TransportationCost]').prop('disabled', true).prop('hidden', true);
-        $editExpenditureSubClass.find('option[value=CommunicationCost]').prop('disabled', true).prop('hidden', true);
-        $editExpenditureSubClass.find('option[value=LeisureOrCulture]').prop('disabled', true).prop('hidden', true);
-        $editExpenditureSubClass.find('option[value=ClothingOrShoes]').prop('disabled', true).prop('hidden', true);
-        $editExpenditureSubClass.find('option[value=PinMoney]').prop('disabled', true).prop('hidden', true);
-        $editExpenditureSubClass.find('option[value=ProtectionTypeInsurance]').prop('disabled', true).prop('hidden', true);
-        $editExpenditureSubClass.find('option[value=OtherExpenses]').prop('disabled', true).prop('hidden', true);
-        $editExpenditureSubClass.find('option[value=UnknownExpenditure]').prop('disabled', true).prop('hidden', true);
-
-        $editExpenditureSubClass.find('option:selected').removeAttr('selected');
-
-        $editExpenditureSubClass.find('option[value=MealOrEatOutExpenses]').prop('disabled', false).prop('hidden', false).attr('selected', 'selected');
-        $editExpenditureSubClass.find('option[value=HousingOrSuppliesCost]').prop('disabled', false).prop('hidden', false);
-        $editExpenditureSubClass.find('option[value=EducationExpenses]').prop('disabled', false).prop('hidden', false);
-        $editExpenditureSubClass.find('option[value=MedicalExpenses]').prop('disabled', false).prop('hidden', false);
-        $editExpenditureSubClass.find('option[value=TransportationCost]').prop('disabled', false).prop('hidden', false);
-        $editExpenditureSubClass.find('option[value=CommunicationCost]').prop('disabled', false).prop('hidden', false);
-        $editExpenditureSubClass.find('option[value=LeisureOrCulture]').prop('disabled', false).prop('hidden', false);
-        $editExpenditureSubClass.find('option[value=ClothingOrShoes]').prop('disabled', false).prop('hidden', false);
-        $editExpenditureSubClass.find('option[value=PinMoney]').prop('disabled', false).prop('hidden', false);
-        $editExpenditureSubClass.find('option[value=ProtectionTypeInsurance]').prop('disabled', false).prop('hidden', false);
-        $editExpenditureSubClass.find('option[value=OtherExpenses]').prop('disabled', false).prop('hidden', false);
-        $editExpenditureSubClass.find('option[value=UnknownExpenditure]').prop('disabled', false).prop('hidden', false);
-
-        $editExpenditureSubClass.val("MealOrEatOutExpenses").change();
-
-        $divEditExpenditureMyDepositAsset.hide();
-    }
+    ApplyAllowedOptions($editExpenditureSubClass, expenditureSubClassMap[editExpenditureMainClass.value] || [], null);
+    ToggleEditExpenditureMyDepositAsset($editExpenditureSubClass.val());
 }
 
 function EditFormShowExpenditureDivCreateExpenditureMyDepositAssetBySelectedExpenditureSubClass(editExpenditureSubClass) {
-
-    if (editExpenditureSubClass.value === "Deposit" ||
-        editExpenditureSubClass.value === "Investment" ||
-        editExpenditureSubClass.value === "PublicPension" ||
-        editExpenditureSubClass.value === "DebtRepayment") {
-        $divEditExpenditureMyDepositAsset.show();
-    }
-    else {
-        $divEditExpenditureMyDepositAsset.hide();
-    }
+    ToggleEditExpenditureMyDepositAsset(editExpenditureSubClass.value);
 }
 
 function UpdateExpenditure() {

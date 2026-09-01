@@ -128,4 +128,37 @@ public class ExpenditureClassPolicyTests
         Assert.True(result.IsError);
         Assert.Equal("ExpenditureClass.Invalid", result.FirstError.Code);
     }
+
+    // -- SubClassesByMainClass / DepositAssetSubClasses (serialized into forms) ---
+
+    /// <summary>The published taxonomy has exactly the three known main classes.</summary>
+    [Fact]
+    public void SubClassesByMainClass_HasTheKnownMainClasses()
+    {
+        Assert.Equal(
+            new[] { "RegularSavings", "NonConsumerSpending", "ConsumerSpending" }.OrderBy(x => x),
+            ExpenditureClassPolicy.SubClassesByMainClass.Keys.OrderBy(x => x));
+    }
+
+    /// <summary>
+    /// Every published (main, sub) pair validates, its deposit-asset result matches membership
+    /// in <see cref="ExpenditureClassPolicy.DepositAssetSubClasses"/>, and every deposit-asset
+    /// sub-class is itself part of the published taxonomy.
+    /// </summary>
+    [Theory]
+    [InlineData("RegularSavings")]
+    [InlineData("NonConsumerSpending")]
+    [InlineData("ConsumerSpending")]
+    public void SubClassesByMainClass_AgreesWithValidate_AndDepositAssetSet(string mainClass)
+    {
+        foreach (var sub in ExpenditureClassPolicy.SubClassesByMainClass[mainClass])
+        {
+            var result = ExpenditureClassPolicy.Validate(mainClass, sub);
+            Assert.False(result.IsError);
+            Assert.Equal(ExpenditureClassPolicy.DepositAssetSubClasses.Contains(sub), result.Value);
+        }
+
+        var allPublished = ExpenditureClassPolicy.SubClassesByMainClass.Values.SelectMany(x => x).ToHashSet();
+        Assert.All(ExpenditureClassPolicy.DepositAssetSubClasses, sub => Assert.Contains(sub, allPublished));
+    }
 }

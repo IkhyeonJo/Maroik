@@ -34,6 +34,38 @@ const $btnConfirmDeleteFixedIncome = $('#btnConfirmDeleteFixedIncome');
 const $btnExportExcelFixedIncome = $('#btnExportExcelFixedIncome');
 const $btnDeleteFixedIncome = $('#btnDeleteFixedIncome');
 
+// Server-published rules (FixedIncome.cshtml). Authoritative in IncomeClassPolicy /
+// FixedSchedulePolicy; mirrored here for form UX only, the server re-validates on save.
+const incomeSubClassMap = JSON.parse($('#incomeSubClassMap').val() || '{}');
+const maxDepositDayByMonth = JSON.parse($('#maxDepositDayByMonth').val() || '{}');
+// Far-future stand-in for "no maturity date" (must stay in sync with the "No MaturityDate" button).
+const NO_MATURITY_DATE = new Date(9999, 11, 31);
+
+// Enables/shows only the options in allowedValues (disabling+hiding the rest) and selects
+// valueToSelect when it is allowed, otherwise the first allowed option.
+function ApplyAllowedOptions($select, allowedValues, valueToSelect) {
+    $select.find('option').each(function () {
+        const allowed = allowedValues.indexOf(this.value) !== -1;
+        $(this).prop('disabled', !allowed).prop('hidden', !allowed);
+    });
+    const target = (valueToSelect != null && allowedValues.indexOf(valueToSelect) !== -1)
+        ? valueToSelect
+        : allowedValues[0];
+    if (target != null) {
+        $select.val(target).change();
+    }
+}
+
+// The valid deposit-day option values ("1".."maxDay") for the given deposit month.
+function DepositDayValues(monthValue) {
+    const maxDay = parseInt(maxDepositDayByMonth[String(monthValue)], 10) || 31;
+    const values = [];
+    for (let day = 1; day <= maxDay; day++) {
+        values.push(String(day));
+    }
+    return values;
+}
+
 const localizer = {
     PrevText: $('#localizerPrevText').val(),
     NextText: $('#localizerNextText').val(),
@@ -105,6 +137,7 @@ $(function () {
     $editFixedIncomeTabs.tabs();
     $createFixedIncomeMaturityDate.datepicker({
         showButtonPanel: true,
+        minDate: 0,
         beforeShow: function (input) {
             setTimeout(function () {
                 let buttonPane = $(input)
@@ -115,7 +148,7 @@ $(function () {
                     text: localizer.NoMaturityDate,
                     click: function () {
                         $.datepicker._clearDate(input);
-                        $createFixedIncomeMaturityDate.datepicker("setDate", new Date('9999', '11', '31'));
+                        $createFixedIncomeMaturityDate.datepicker("setDate", NO_MATURITY_DATE);
                     }
                 }).appendTo(buttonPane).addClass("ui-datepicker-clear ui-state-default ui-priority-primary ui-corner-all");
 
@@ -139,7 +172,7 @@ $(function () {
                     text: localizer.NoMaturityDate,
                     click: function () {
                         $.datepicker._clearDate(instance.input);
-                        $createFixedIncomeMaturityDate.datepicker("setDate", new Date('9999', '11', '31'));
+                        $createFixedIncomeMaturityDate.datepicker("setDate", NO_MATURITY_DATE);
                     }
                 }).appendTo(buttonPane).addClass("ui-datepicker-clear ui-state-default ui-priority-primary ui-corner-all");
 
@@ -152,29 +185,12 @@ $(function () {
                 }).appendTo(buttonPane).addClass("ui-datepicker-clear ui-state-default ui-priority-primary ui-corner-all");
 
             }, 1);
-        },
-        onSelect: function (date) {
-            if (!date) {
-                date = '9999-12-31';
-            }
-            let tempCurrentDate = new Date();
-            let month = tempCurrentDate.getMonth() + 1;
-            let day = tempCurrentDate.getDate();
-
-            month = month >= 10 ? month : '0' + month;
-            day = day >= 10 ? day : '0' + day;
-
-            let currentDate = tempCurrentDate.getFullYear() + '-' + month + '-' + day;
-
-            if (date < currentDate) {
-                alert(localizer.MaturityDateError);
-                $createFixedIncomeMaturityDate.datepicker("setDate", new Date());
-            }
         }
     });
 
     $editFixedIncomeMaturityDate.datepicker({
         showButtonPanel: true,
+        minDate: 0,
         beforeShow: function (input) {
             setTimeout(function () {
                 let buttonPane = $(input)
@@ -185,7 +201,7 @@ $(function () {
                     text: localizer.NoMaturityDate,
                     click: function () {
                         $.datepicker._clearDate(input);
-                        $editFixedIncomeMaturityDate.datepicker("setDate", new Date('9999', '11', '31'));
+                        $editFixedIncomeMaturityDate.datepicker("setDate", NO_MATURITY_DATE);
                     }
                 }).appendTo(buttonPane).addClass("ui-datepicker-clear ui-state-default ui-priority-primary ui-corner-all");
 
@@ -209,7 +225,7 @@ $(function () {
                     text: localizer.NoMaturityDate,
                     click: function () {
                         $.datepicker._clearDate(instance.input);
-                        $editFixedIncomeMaturityDate.datepicker("setDate", new Date('9999', '11', '31'));
+                        $editFixedIncomeMaturityDate.datepicker("setDate", NO_MATURITY_DATE);
                     }
                 }).appendTo(buttonPane).addClass("ui-datepicker-clear ui-state-default ui-priority-primary ui-corner-all");
 
@@ -222,24 +238,6 @@ $(function () {
                 }).appendTo(buttonPane).addClass("ui-datepicker-clear ui-state-default ui-priority-primary ui-corner-all");
 
             }, 1);
-        },
-        onSelect: function (date) {
-            if (!date) {
-                date = '9999-12-31';
-            }
-            let tempCurrentDate = new Date();
-            let month = tempCurrentDate.getMonth() + 1;
-            let day = tempCurrentDate.getDate();
-
-            month = month >= 10 ? month : '0' + month;
-            day = day >= 10 ? day : '0' + day;
-
-            let currentDate = tempCurrentDate.getFullYear() + '-' + month + '-' + day;
-
-            if (date < currentDate) {
-                alert(localizer.MaturityDateError);
-                $editFixedIncomeMaturityDate.datepicker("setDate", new Date());
-            }
         }
     });
 
@@ -295,187 +293,19 @@ $gridSearch.off('input').on('input', function () {
 });
 
 function CreateFormShowFixedIncomeSubClassBySelectedFixedIncomeMainClass(createFixedIncomeMainClass) {
-
-    if (createFixedIncomeMainClass.value === "RegularIncome") {
-        $createFixedIncomeSubClass.find('option[value=LaborIncome]').prop('disabled', true).prop('hidden', true);
-        $createFixedIncomeSubClass.find('option[value=BusinessIncome]').prop('disabled', true).prop('hidden', true);
-        $createFixedIncomeSubClass.find('option[value=PensionIncome]').prop('disabled', true).prop('hidden', true);
-        $createFixedIncomeSubClass.find('option[value=FinancialIncome]').prop('disabled', true).prop('hidden', true);
-        $createFixedIncomeSubClass.find('option[value=RentalIncome]').prop('disabled', true).prop('hidden', true);
-        $createFixedIncomeSubClass.find('option[value=OtherIncome]').prop('disabled', true).prop('hidden', true);
-
-        $createFixedIncomeSubClass.find('option:selected').removeAttr('selected');
-
-        $createFixedIncomeSubClass.find('option[value=LaborIncome]').prop('disabled', false).prop('hidden', false).attr('selected', 'selected');
-        $createFixedIncomeSubClass.find('option[value=BusinessIncome]').prop('disabled', false).prop('hidden', false);
-        $createFixedIncomeSubClass.find('option[value=PensionIncome]').prop('disabled', false).prop('hidden', false);
-        $createFixedIncomeSubClass.find('option[value=FinancialIncome]').prop('disabled', false).prop('hidden', false);
-        $createFixedIncomeSubClass.find('option[value=RentalIncome]').prop('disabled', false).prop('hidden', false);
-        $createFixedIncomeSubClass.find('option[value=OtherIncome]').prop('disabled', false).prop('hidden', false);
-
-        $createFixedIncomeSubClass.val("LaborIncome").change();
-    }
-    else if (createFixedIncomeMainClass.value === "IrregularIncome") {
-        $createFixedIncomeSubClass.find('option[value=LaborIncome]').prop('disabled', true).prop('hidden', true);
-        $createFixedIncomeSubClass.find('option[value=BusinessIncome]').prop('disabled', true).prop('hidden', true);
-        $createFixedIncomeSubClass.find('option[value=PensionIncome]').prop('disabled', true).prop('hidden', true);
-        $createFixedIncomeSubClass.find('option[value=FinancialIncome]').prop('disabled', true).prop('hidden', true);
-        $createFixedIncomeSubClass.find('option[value=RentalIncome]').prop('disabled', true).prop('hidden', true);
-        $createFixedIncomeSubClass.find('option[value=OtherIncome]').prop('disabled', true).prop('hidden', true);
-
-        $createFixedIncomeSubClass.find('option:selected').removeAttr('selected');
-
-        $createFixedIncomeSubClass.find('option[value=LaborIncome]').prop('disabled', false).prop('hidden', false).attr('selected', 'selected');
-        $createFixedIncomeSubClass.find('option[value=OtherIncome]').prop('disabled', false).prop('hidden', false);
-
-        $createFixedIncomeSubClass.val("LaborIncome").change();
-    }
+    ApplyAllowedOptions($createFixedIncomeSubClass, incomeSubClassMap[createFixedIncomeMainClass.value] || [], null);
 }
 
 function CreateFormShowFixedIncomeDepositDayBySelectedFixedIncomeDepositMonth(createFixedIncomeDepositMonth) {
-
-    if (createFixedIncomeDepositMonth.value === "1" ||
-        createFixedIncomeDepositMonth.value === "3" ||
-        createFixedIncomeDepositMonth.value === "5" ||
-        createFixedIncomeDepositMonth.value === "7" ||
-        createFixedIncomeDepositMonth.value === "8" ||
-        createFixedIncomeDepositMonth.value === "10" ||
-        createFixedIncomeDepositMonth.value === "12"
-    ) {
-        $createFixedIncomeDepositDay.find('option[value=29]').prop('disabled', true).prop('hidden', true);
-        $createFixedIncomeDepositDay.find('option[value=30]').prop('disabled', true).prop('hidden', true);
-        $createFixedIncomeDepositDay.find('option[value=31]').prop('disabled', true).prop('hidden', true);
-
-        $createFixedIncomeDepositDay.find('option:selected').removeAttr('selected');
-
-        $createFixedIncomeDepositDay.find('option[value=1]').attr('selected', 'selected');
-        $createFixedIncomeDepositDay.find('option[value=29]').prop('disabled', false).prop('hidden', false);
-        $createFixedIncomeDepositDay.find('option[value=30]').prop('disabled', false).prop('hidden', false);
-        $createFixedIncomeDepositDay.find('option[value=31]').prop('disabled', false).prop('hidden', false);
-
-        $createFixedIncomeDepositDay.val("1").change();
-    }
-    else if (createFixedIncomeDepositMonth.value === "2") {
-        $createFixedIncomeDepositDay.find('option[value=29]').prop('disabled', true).prop('hidden', true);
-        $createFixedIncomeDepositDay.find('option[value=30]').prop('disabled', true).prop('hidden', true);
-        $createFixedIncomeDepositDay.find('option[value=31]').prop('disabled', true).prop('hidden', true);
-
-        $createFixedIncomeDepositDay.find('option:selected').removeAttr('selected');
-
-        $createFixedIncomeDepositDay.find('option[value=1]').attr('selected', 'selected');
-        $createFixedIncomeDepositDay.find('option[value=29]').prop('disabled', false).prop('hidden', false);
-
-        $createFixedIncomeDepositDay.val("1").change();
-    }
-    else if (createFixedIncomeDepositMonth.value === "4" ||
-        createFixedIncomeDepositMonth.value === "6" ||
-        createFixedIncomeDepositMonth.value === "9" ||
-        createFixedIncomeDepositMonth.value === "11"
-    ) {
-        $createFixedIncomeDepositDay.find('option[value=29]').prop('disabled', true).prop('hidden', true);
-        $createFixedIncomeDepositDay.find('option[value=30]').prop('disabled', true).prop('hidden', true);
-        $createFixedIncomeDepositDay.find('option[value=31]').prop('disabled', true).prop('hidden', true);
-
-        $createFixedIncomeDepositDay.find('option:selected').removeAttr('selected');
-
-        $createFixedIncomeDepositDay.find('option[value=1]').attr('selected', 'selected');
-        $createFixedIncomeDepositDay.find('option[value=29]').prop('disabled', false).prop('hidden', false);
-        $createFixedIncomeDepositDay.find('option[value=30]').prop('disabled', false).prop('hidden', false);
-
-        $createFixedIncomeDepositDay.val("1").change();
-    }
+    ApplyAllowedOptions($createFixedIncomeDepositDay, DepositDayValues(createFixedIncomeDepositMonth.value), null);
 }
 
 function EditFormShowFixedIncomeSubClassBySelectedFixedIncomeMainClass(editFixedIncomeMainClass) {
-
-    if (editFixedIncomeMainClass.value === "RegularIncome") {
-        $editFixedIncomeSubClass.find('option[value=LaborIncome]').prop('disabled', true).prop('hidden', true);
-        $editFixedIncomeSubClass.find('option[value=BusinessIncome]').prop('disabled', true).prop('hidden', true);
-        $editFixedIncomeSubClass.find('option[value=PensionIncome]').prop('disabled', true).prop('hidden', true);
-        $editFixedIncomeSubClass.find('option[value=FinancialIncome]').prop('disabled', true).prop('hidden', true);
-        $editFixedIncomeSubClass.find('option[value=RentalIncome]').prop('disabled', true).prop('hidden', true);
-        $editFixedIncomeSubClass.find('option[value=OtherIncome]').prop('disabled', true).prop('hidden', true);
-
-        $editFixedIncomeSubClass.find('option:selected').removeAttr('selected');
-
-        $editFixedIncomeSubClass.find('option[value=LaborIncome]').prop('disabled', false).prop('hidden', false).attr('selected', 'selected');
-        $editFixedIncomeSubClass.find('option[value=BusinessIncome]').prop('disabled', false).prop('hidden', false);
-        $editFixedIncomeSubClass.find('option[value=PensionIncome]').prop('disabled', false).prop('hidden', false);
-        $editFixedIncomeSubClass.find('option[value=FinancialIncome]').prop('disabled', false).prop('hidden', false);
-        $editFixedIncomeSubClass.find('option[value=RentalIncome]').prop('disabled', false).prop('hidden', false);
-        $editFixedIncomeSubClass.find('option[value=OtherIncome]').prop('disabled', false).prop('hidden', false);
-
-        $editFixedIncomeSubClass.val("LaborIncome").change();
-    }
-    else if (editFixedIncomeMainClass.value === "IrregularIncome") {
-        $editFixedIncomeSubClass.find('option[value=LaborIncome]').prop('disabled', true).prop('hidden', true);
-        $editFixedIncomeSubClass.find('option[value=BusinessIncome]').prop('disabled', true).prop('hidden', true);
-        $editFixedIncomeSubClass.find('option[value=PensionIncome]').prop('disabled', true).prop('hidden', true);
-        $editFixedIncomeSubClass.find('option[value=FinancialIncome]').prop('disabled', true).prop('hidden', true);
-        $editFixedIncomeSubClass.find('option[value=RentalIncome]').prop('disabled', true).prop('hidden', true);
-        $editFixedIncomeSubClass.find('option[value=OtherIncome]').prop('disabled', true).prop('hidden', true);
-
-        $editFixedIncomeSubClass.find('option:selected').removeAttr('selected');
-
-        $editFixedIncomeSubClass.find('option[value=LaborIncome]').prop('disabled', false).prop('hidden', false).attr('selected', 'selected');
-        $editFixedIncomeSubClass.find('option[value=OtherIncome]').prop('disabled', false).prop('hidden', false);
-
-        $editFixedIncomeSubClass.val("LaborIncome").change();
-    }
+    ApplyAllowedOptions($editFixedIncomeSubClass, incomeSubClassMap[editFixedIncomeMainClass.value] || [], null);
 }
 
 function EditFormShowFixedIncomeDepositDayBySelectedFixedIncomeDepositMonth(editFixedIncomeDepositMonth) {
-
-    if (editFixedIncomeDepositMonth.value === "1" ||
-        editFixedIncomeDepositMonth.value === "3" ||
-        editFixedIncomeDepositMonth.value === "5" ||
-        editFixedIncomeDepositMonth.value === "7" ||
-        editFixedIncomeDepositMonth.value === "8" ||
-        editFixedIncomeDepositMonth.value === "10" ||
-        editFixedIncomeDepositMonth.value === "12"
-    ) {
-        $editFixedIncomeDepositDay.find('option[value=29]').prop('disabled', true).prop('hidden', true);
-        $editFixedIncomeDepositDay.find('option[value=30]').prop('disabled', true).prop('hidden', true);
-        $editFixedIncomeDepositDay.find('option[value=31]').prop('disabled', true).prop('hidden', true);
-
-        $editFixedIncomeDepositDay.find('option:selected').removeAttr('selected');
-
-        $editFixedIncomeDepositDay.find('option[value=1]').attr('selected', 'selected');
-        $editFixedIncomeDepositDay.find('option[value=29]').prop('disabled', false).prop('hidden', false);
-        $editFixedIncomeDepositDay.find('option[value=30]').prop('disabled', false).prop('hidden', false);
-        $editFixedIncomeDepositDay.find('option[value=31]').prop('disabled', false).prop('hidden', false);
-
-        $editFixedIncomeDepositDay.val("1").change();
-    }
-    else if (editFixedIncomeDepositMonth.value === "2") {
-        $editFixedIncomeDepositDay.find('option[value=29]').prop('disabled', true).prop('hidden', true);
-        $editFixedIncomeDepositDay.find('option[value=30]').prop('disabled', true).prop('hidden', true);
-        $editFixedIncomeDepositDay.find('option[value=31]').prop('disabled', true).prop('hidden', true);
-
-        $editFixedIncomeDepositDay.find('option:selected').removeAttr('selected');
-
-        $editFixedIncomeDepositDay.find('option[value=1]').attr('selected', 'selected');
-        $editFixedIncomeDepositDay.find('option[value=29]').prop('disabled', false).prop('hidden', false);
-
-        $editFixedIncomeDepositDay.val("1").change();
-    }
-    else if (editFixedIncomeDepositMonth.value === "4" ||
-        editFixedIncomeDepositMonth.value === "6" ||
-        editFixedIncomeDepositMonth.value === "9" ||
-        editFixedIncomeDepositMonth.value === "11"
-    ) {
-        $editFixedIncomeDepositDay.find('option[value=29]').prop('disabled', true).prop('hidden', true);
-        $editFixedIncomeDepositDay.find('option[value=30]').prop('disabled', true).prop('hidden', true);
-        $editFixedIncomeDepositDay.find('option[value=31]').prop('disabled', true).prop('hidden', true);
-
-        $editFixedIncomeDepositDay.find('option:selected').removeAttr('selected');
-
-        $editFixedIncomeDepositDay.find('option[value=1]').attr('selected', 'selected');
-        $editFixedIncomeDepositDay.find('option[value=29]').prop('disabled', false).prop('hidden', false);
-        $editFixedIncomeDepositDay.find('option[value=30]').prop('disabled', false).prop('hidden', false);
-
-        $editFixedIncomeDepositDay.val("1").change();
-    }
+    ApplyAllowedOptions($editFixedIncomeDepositDay, DepositDayValues(editFixedIncomeDepositMonth.value), null);
 }
 
 function CreateFixedIncome() {
@@ -559,93 +389,14 @@ function EditFixedIncomeGridRow(errorMessageSelectGridRow) {
                 $editFixedIncomeId.val(data.fixedIncome.id);
                 $editFixedIncomeMainClass.val(data.fixedIncome.mainClass).change();
 
-                if (data.fixedIncome.mainClass === "RegularIncome") {
-                    $editFixedIncomeSubClass.find('option[value=LaborIncome]').prop('disabled', true).prop('hidden', true);
-                    $editFixedIncomeSubClass.find('option[value=BusinessIncome]').prop('disabled', true).prop('hidden', true);
-                    $editFixedIncomeSubClass.find('option[value=PensionIncome]').prop('disabled', true).prop('hidden', true);
-                    $editFixedIncomeSubClass.find('option[value=FinancialIncome]').prop('disabled', true).prop('hidden', true);
-                    $editFixedIncomeSubClass.find('option[value=RentalIncome]').prop('disabled', true).prop('hidden', true);
-                    $editFixedIncomeSubClass.find('option[value=OtherIncome]').prop('disabled', true).prop('hidden', true);
-
-                    $editFixedIncomeSubClass.find('option:selected').removeAttr('selected');
-
-                    $editFixedIncomeSubClass.find('option[value=LaborIncome]').prop('disabled', false).prop('hidden', false);
-                    $editFixedIncomeSubClass.find('option[value=BusinessIncome]').prop('disabled', false).prop('hidden', false);
-                    $editFixedIncomeSubClass.find('option[value=PensionIncome]').prop('disabled', false).prop('hidden', false);
-                    $editFixedIncomeSubClass.find('option[value=FinancialIncome]').prop('disabled', false).prop('hidden', false);
-                    $editFixedIncomeSubClass.find('option[value=RentalIncome]').prop('disabled', false).prop('hidden', false);
-                    $editFixedIncomeSubClass.find('option[value=OtherIncome]').prop('disabled', false).prop('hidden', false);
-
-                    $editFixedIncomeSubClass.val(data.fixedIncome.subClass).change();
-                }
-                else if (data.fixedIncome.mainClass === "IrregularIncome") {
-                    $editFixedIncomeSubClass.find('option[value=LaborIncome]').prop('disabled', true).prop('hidden', true);
-                    $editFixedIncomeSubClass.find('option[value=BusinessIncome]').prop('disabled', true).prop('hidden', true);
-                    $editFixedIncomeSubClass.find('option[value=PensionIncome]').prop('disabled', true).prop('hidden', true);
-                    $editFixedIncomeSubClass.find('option[value=FinancialIncome]').prop('disabled', true).prop('hidden', true);
-                    $editFixedIncomeSubClass.find('option[value=RentalIncome]').prop('disabled', true).prop('hidden', true);
-                    $editFixedIncomeSubClass.find('option[value=OtherIncome]').prop('disabled', true).prop('hidden', true);
-
-                    $editFixedIncomeSubClass.find('option:selected').removeAttr('selected');
-
-                    $editFixedIncomeSubClass.find('option[value=LaborIncome]').prop('disabled', false).prop('hidden', false);
-                    $editFixedIncomeSubClass.find('option[value=OtherIncome]').prop('disabled', false).prop('hidden', false);
-
-                    $editFixedIncomeSubClass.val(data.fixedIncome.subClass).change();
-                }
+                ApplyAllowedOptions($editFixedIncomeSubClass, incomeSubClassMap[data.fixedIncome.mainClass] || [], data.fixedIncome.subClass);
 
                 $editFixedIncomeContent.val(data.fixedIncome.content);
                 $editFixedIncomeAmount.val(data.fixedIncome.amount);
 
                 $editFixedIncomeDepositMonth.val(data.fixedIncome.depositMonth.toString()).change();
 
-                if (data.fixedIncome.depositMonth.toString() === "1" ||
-                    data.fixedIncome.depositMonth.toString() === "3" ||
-                    data.fixedIncome.depositMonth.toString() === "5" ||
-                    data.fixedIncome.depositMonth.toString() === "7" ||
-                    data.fixedIncome.depositMonth.toString() === "8" ||
-                    data.fixedIncome.depositMonth.toString() === "10" ||
-                    data.fixedIncome.depositMonth.toString() === "12"
-                ) {
-                    $editFixedIncomeDepositDay.find('option[value=29]').prop('disabled', true).prop('hidden', true);
-                    $editFixedIncomeDepositDay.find('option[value=30]').prop('disabled', true).prop('hidden', true);
-                    $editFixedIncomeDepositDay.find('option[value=31]').prop('disabled', true).prop('hidden', true);
-
-                    $editFixedIncomeDepositDay.find('option:selected').removeAttr('selected');
-
-                    $editFixedIncomeDepositDay.find('option[value=29]').prop('disabled', false).prop('hidden', false);
-                    $editFixedIncomeDepositDay.find('option[value=30]').prop('disabled', false).prop('hidden', false);
-                    $editFixedIncomeDepositDay.find('option[value=31]').prop('disabled', false).prop('hidden', false);
-
-                    $editFixedIncomeDepositDay.val(data.fixedIncome.depositDay.toString()).change();
-                }
-                else if (data.fixedIncome.depositMonth.toString() === "2") {
-                    $editFixedIncomeDepositDay.find('option[value=29]').prop('disabled', true).prop('hidden', true);
-                    $editFixedIncomeDepositDay.find('option[value=30]').prop('disabled', true).prop('hidden', true);
-                    $editFixedIncomeDepositDay.find('option[value=31]').prop('disabled', true).prop('hidden', true);
-
-                    $editFixedIncomeDepositDay.find('option:selected').removeAttr('selected');
-
-                    $editFixedIncomeDepositDay.find('option[value=29]').prop('disabled', false).prop('hidden', false);
-
-                    $editFixedIncomeDepositDay.val(data.fixedIncome.depositDay.toString()).change();
-                }
-                else if (data.fixedIncome.depositMonth.toString() === "4" ||
-                    data.fixedIncome.depositMonth.toString() === "6" ||
-                    data.fixedIncome.depositMonth.toString() === "9" ||
-                    data.fixedIncome.depositMonth.toString() === "11"
-                ) {
-                    $editFixedIncomeDepositDay.find('option[value=29]').prop('disabled', true).prop('hidden', true);
-                    $editFixedIncomeDepositDay.find('option[value=30]').prop('disabled', true).prop('hidden', true);
-                    $editFixedIncomeDepositDay.find('option[value=31]').prop('disabled', true).prop('hidden', true);
-
-                    $editFixedIncomeDepositDay.find('option:selected').removeAttr('selected');
-
-                    $editFixedIncomeDepositDay.find('option[value=29]').prop('disabled', false).prop('hidden', false);
-                    $editFixedIncomeDepositDay.find('option[value=30]').prop('disabled', false).prop('hidden', false);
-
-                    $editFixedIncomeDepositDay.val(data.fixedIncome.depositDay.toString()).change();
-                }
+                ApplyAllowedOptions($editFixedIncomeDepositDay, DepositDayValues(data.fixedIncome.depositMonth.toString()), data.fixedIncome.depositDay.toString());
 
                 $editFixedIncomeMaturityDate.val(data.fixedIncome.maturityDate);
                 $editFixedIncomeNote.val(data.fixedIncome.note);

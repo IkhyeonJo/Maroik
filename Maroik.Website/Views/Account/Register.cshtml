@@ -13,7 +13,6 @@
 @model LoginOutputViewModel
 
 @{
-    var currentCulture = ViewBag.CurrentCulture as string ?? "en-US";
     bool repeatEmailSend = ViewBag.RepeatEmailSend ?? false;
     bool resendEmail = ViewBag.ResendEmail ?? false;
     var resentEmailAddress = ViewBag.ResentEmailAddress as string ?? "";
@@ -22,7 +21,6 @@
 
 @if (!resendEmail)
 {
-    <input id="currentCulture" type="hidden" value="@(currentCulture)" />
     <div class="register-box">
         <div class="card card-outline card-primary">
             <div class="card-header text-center">
@@ -51,7 +49,7 @@
 
                     <div class="form-group has-feedback">
                         <select asp-for="TimeZoneIanaId" required class="form-control" style="max-width:100%;text-overflow:ellipsis;">
-                            <option value="" disabled selected hidden>
+                            <option value="" disabled hidden>
                                 @Localizer["Please select time zone"]
                             </option>
 

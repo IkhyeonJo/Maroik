@@ -35,6 +35,26 @@ const $btnConfirmDeleteIncome = $('#btnConfirmDeleteIncome');
 const $btnExportExcelIncome = $('#btnExportExcelIncome');
 const $btnDeleteIncome = $('#btnDeleteIncome');
 
+// Income main-class -> allowed sub-classes. Authoritative in IncomeClassPolicy (server),
+// serialized into the page by Income.cshtml. Mirrored here for form UX only; the server
+// re-validates every combination on save.
+const incomeSubClassMap = JSON.parse($('#incomeSubClassMap').val() || '{}');
+
+// Enables/shows only the options in allowedValues (disabling+hiding the rest) and selects
+// valueToSelect when it is allowed, otherwise the first allowed option.
+function ApplyAllowedOptions($select, allowedValues, valueToSelect) {
+    $select.find('option').each(function () {
+        const allowed = allowedValues.indexOf(this.value) !== -1;
+        $(this).prop('disabled', !allowed).prop('hidden', !allowed);
+    });
+    const target = (valueToSelect != null && allowedValues.indexOf(valueToSelect) !== -1)
+        ? valueToSelect
+        : allowedValues[0];
+    if (target != null) {
+        $select.val(target).change();
+    }
+}
+
 const localizer = {
     PrevText: $('#localizerPrevText').val(),
     NextText: $('#localizerNextText').val(),
@@ -179,79 +199,11 @@ $gridSearch.off('input').on('input', function () {
 });
 
 function CreateFormShowIncomeSubClassBySelectedIncomeMainClass(createIncomeMainClass) {
-
-    if (createIncomeMainClass.value === "RegularIncome") {
-        $createIncomeSubClass.find('option[value=LaborIncome]').prop('disabled', true).prop('hidden', true);
-        $createIncomeSubClass.find('option[value=BusinessIncome]').prop('disabled', true).prop('hidden', true);
-        $createIncomeSubClass.find('option[value=PensionIncome]').prop('disabled', true).prop('hidden', true);
-        $createIncomeSubClass.find('option[value=FinancialIncome]').prop('disabled', true).prop('hidden', true);
-        $createIncomeSubClass.find('option[value=RentalIncome]').prop('disabled', true).prop('hidden', true);
-        $createIncomeSubClass.find('option[value=OtherIncome]').prop('disabled', true).prop('hidden', true);
-
-        $createIncomeSubClass.find('option:selected').removeAttr('selected');
-
-        $createIncomeSubClass.find('option[value=LaborIncome]').prop('disabled', false).prop('hidden', false).attr('selected', 'selected');
-        $createIncomeSubClass.find('option[value=BusinessIncome]').prop('disabled', false).prop('hidden', false);
-        $createIncomeSubClass.find('option[value=PensionIncome]').prop('disabled', false).prop('hidden', false);
-        $createIncomeSubClass.find('option[value=FinancialIncome]').prop('disabled', false).prop('hidden', false);
-        $createIncomeSubClass.find('option[value=RentalIncome]').prop('disabled', false).prop('hidden', false);
-        $createIncomeSubClass.find('option[value=OtherIncome]').prop('disabled', false).prop('hidden', false);
-
-        $createIncomeSubClass.val("LaborIncome").change();
-    }
-    else if (createIncomeMainClass.value === "IrregularIncome") {
-        $createIncomeSubClass.find('option[value=LaborIncome]').prop('disabled', true).prop('hidden', true);
-        $createIncomeSubClass.find('option[value=BusinessIncome]').prop('disabled', true).prop('hidden', true);
-        $createIncomeSubClass.find('option[value=PensionIncome]').prop('disabled', true).prop('hidden', true);
-        $createIncomeSubClass.find('option[value=FinancialIncome]').prop('disabled', true).prop('hidden', true);
-        $createIncomeSubClass.find('option[value=RentalIncome]').prop('disabled', true).prop('hidden', true);
-        $createIncomeSubClass.find('option[value=OtherIncome]').prop('disabled', true).prop('hidden', true);
-
-        $createIncomeSubClass.find('option:selected').removeAttr('selected');
-
-        $createIncomeSubClass.find('option[value=LaborIncome]').prop('disabled', false).prop('hidden', false).attr('selected', 'selected');
-        $createIncomeSubClass.find('option[value=OtherIncome]').prop('disabled', false).prop('hidden', false);
-
-        $createIncomeSubClass.val("LaborIncome").change();
-    }
+    ApplyAllowedOptions($createIncomeSubClass, incomeSubClassMap[createIncomeMainClass.value] || [], null);
 }
 
-function EditFormShowIncomeSubClassBySelectedIncomeMainClass(createIncomeMainClass) {
-
-    if (createIncomeMainClass.value === "RegularIncome") {
-        $editIncomeSubClass.find('option[value=LaborIncome]').prop('disabled', true).prop('hidden', true);
-        $editIncomeSubClass.find('option[value=BusinessIncome]').prop('disabled', true).prop('hidden', true);
-        $editIncomeSubClass.find('option[value=PensionIncome]').prop('disabled', true).prop('hidden', true);
-        $editIncomeSubClass.find('option[value=FinancialIncome]').prop('disabled', true).prop('hidden', true);
-        $editIncomeSubClass.find('option[value=RentalIncome]').prop('disabled', true).prop('hidden', true);
-        $editIncomeSubClass.find('option[value=OtherIncome]').prop('disabled', true).prop('hidden', true);
-
-        $editIncomeSubClass.find('option:selected').removeAttr('selected');
-
-        $editIncomeSubClass.find('option[value=LaborIncome]').prop('disabled', false).prop('hidden', false).attr('selected', 'selected');
-        $editIncomeSubClass.find('option[value=BusinessIncome]').prop('disabled', false).prop('hidden', false);
-        $editIncomeSubClass.find('option[value=PensionIncome]').prop('disabled', false).prop('hidden', false);
-        $editIncomeSubClass.find('option[value=FinancialIncome]').prop('disabled', false).prop('hidden', false);
-        $editIncomeSubClass.find('option[value=RentalIncome]').prop('disabled', false).prop('hidden', false);
-        $editIncomeSubClass.find('option[value=OtherIncome]').prop('disabled', false).prop('hidden', false);
-
-        $editIncomeSubClass.val("LaborIncome").change();
-    }
-    else if (createIncomeMainClass.value === "IrregularIncome") {
-        $editIncomeSubClass.find('option[value=LaborIncome]').prop('disabled', true).prop('hidden', true);
-        $editIncomeSubClass.find('option[value=BusinessIncome]').prop('disabled', true).prop('hidden', true);
-        $editIncomeSubClass.find('option[value=PensionIncome]').prop('disabled', true).prop('hidden', true);
-        $editIncomeSubClass.find('option[value=FinancialIncome]').prop('disabled', true).prop('hidden', true);
-        $editIncomeSubClass.find('option[value=RentalIncome]').prop('disabled', true).prop('hidden', true);
-        $editIncomeSubClass.find('option[value=OtherIncome]').prop('disabled', true).prop('hidden', true);
-
-        $editIncomeSubClass.find('option:selected').removeAttr('selected');
-
-        $editIncomeSubClass.find('option[value=LaborIncome]').prop('disabled', false).prop('hidden', false).attr('selected', 'selected');
-        $editIncomeSubClass.find('option[value=OtherIncome]').prop('disabled', false).prop('hidden', false);
-
-        $editIncomeSubClass.val("LaborIncome").change();
-    }
+function EditFormShowIncomeSubClassBySelectedIncomeMainClass(editIncomeMainClass) {
+    ApplyAllowedOptions($editIncomeSubClass, incomeSubClassMap[editIncomeMainClass.value] || [], null);
 }
 
 function CreateIncome() {
@@ -339,40 +291,7 @@ function EditIncomeGridRow(errorMessageSelectGridRow) {
                 $editIncomeId.val(data.income.id);
                 $editIncomeMainClass.val(data.income.mainClass).change();
 
-                if (data.income.mainClass === "RegularIncome") {
-                    $editIncomeSubClass.find('option[value=LaborIncome]').prop('disabled', true).prop('hidden', true);
-                    $editIncomeSubClass.find('option[value=BusinessIncome]').prop('disabled', true).prop('hidden', true);
-                    $editIncomeSubClass.find('option[value=PensionIncome]').prop('disabled', true).prop('hidden', true);
-                    $editIncomeSubClass.find('option[value=FinancialIncome]').prop('disabled', true).prop('hidden', true);
-                    $editIncomeSubClass.find('option[value=RentalIncome]').prop('disabled', true).prop('hidden', true);
-                    $editIncomeSubClass.find('option[value=OtherIncome]').prop('disabled', true).prop('hidden', true);
-
-                    $editIncomeSubClass.find('option:selected').removeAttr('selected');
-
-                    $editIncomeSubClass.find('option[value=LaborIncome]').prop('disabled', false).prop('hidden', false);
-                    $editIncomeSubClass.find('option[value=BusinessIncome]').prop('disabled', false).prop('hidden', false);
-                    $editIncomeSubClass.find('option[value=PensionIncome]').prop('disabled', false).prop('hidden', false);
-                    $editIncomeSubClass.find('option[value=FinancialIncome]').prop('disabled', false).prop('hidden', false);
-                    $editIncomeSubClass.find('option[value=RentalIncome]').prop('disabled', false).prop('hidden', false);
-                    $editIncomeSubClass.find('option[value=OtherIncome]').prop('disabled', false).prop('hidden', false);
-
-                    $editIncomeSubClass.val(data.income.subClass).change();
-                }
-                else if (data.income.mainClass === "IrregularIncome") {
-                    $editIncomeSubClass.find('option[value=LaborIncome]').prop('disabled', true).prop('hidden', true);
-                    $editIncomeSubClass.find('option[value=BusinessIncome]').prop('disabled', true).prop('hidden', true);
-                    $editIncomeSubClass.find('option[value=PensionIncome]').prop('disabled', true).prop('hidden', true);
-                    $editIncomeSubClass.find('option[value=FinancialIncome]').prop('disabled', true).prop('hidden', true);
-                    $editIncomeSubClass.find('option[value=RentalIncome]').prop('disabled', true).prop('hidden', true);
-                    $editIncomeSubClass.find('option[value=OtherIncome]').prop('disabled', true).prop('hidden', true);
-
-                    $editIncomeSubClass.find('option:selected').removeAttr('selected');
-
-                    $editIncomeSubClass.find('option[value=LaborIncome]').prop('disabled', false).prop('hidden', false);
-                    $editIncomeSubClass.find('option[value=OtherIncome]').prop('disabled', false).prop('hidden', false);
-
-                    $editIncomeSubClass.val(data.income.subClass).change();
-                }
+                ApplyAllowedOptions($editIncomeSubClass, incomeSubClassMap[data.income.mainClass] || [], data.income.subClass);
 
                 $editIncomeContent.val(data.income.content);
                 $editIncomeAmount.val(data.income.amount);

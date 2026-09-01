@@ -1,5 +1,6 @@
 using Maroik.Core.Contract.Dtos;
 using Maroik.Core.Contract.Misc.Extensions;
+using Maroik.Core.Domain.Calendar;
 using Maroik.Website.Models.ViewModels.Calendar;
 using Newtonsoft.Json;
 
@@ -123,12 +124,13 @@ public static class CalendarViewModelMapper
             vm.CurrentHour = ct.Hour;
             vm.CurrentMinute = ct.Minute;
             vm.CurrentSecond = ct.Second;
+            int step = CalendarReminderPolicy.ReminderTimeOfDayStepMinutes;
             List<string> ti = [];
             for (int h = 0; h < 24; h++)
-                for (int m = 0; m < 60; m += 15)
+                for (int m = 0; m < 60; m += step)
                     ti.Add($"{h:D2}:{m:D2}");
             vm.TimeIntervals = ti;
-            int nm = (int)Math.Round(ct.Minute / 15.0) * 15;
+            int nm = (int)Math.Round(ct.Minute / (double)step) * step;
             if (nm == 60) { ct = ct.AddHours(1); nm = 0; }
             vm.CurrentInterval = $"{ct.Hour:D2}:{nm:D2}";
         }

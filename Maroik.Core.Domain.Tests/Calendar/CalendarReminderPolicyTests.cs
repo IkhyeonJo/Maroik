@@ -68,4 +68,19 @@ public class CalendarReminderPolicyTests
     {
         Assert.True(CalendarReminderPolicy.IsLeadTimeWithinRange(null, null, null, null));
     }
+
+    // -- Time-of-day picker settings (serialized into the calendar pages) --------
+
+    /// <summary>The reminder time-of-day step divides an hour evenly and the default lands on it.</summary>
+    [Fact]
+    public void ReminderTimeOfDaySettings_AreConsistent()
+    {
+        Assert.True(CalendarReminderPolicy.ReminderTimeOfDayStepMinutes > 0);
+        Assert.Equal(0, 60 % CalendarReminderPolicy.ReminderTimeOfDayStepMinutes);
+
+        var parts = CalendarReminderPolicy.DefaultReminderTimeOfDay.Split(':');
+        Assert.Equal(2, parts.Length);
+        int minute = int.Parse(parts[1]);
+        Assert.Equal(0, minute % CalendarReminderPolicy.ReminderTimeOfDayStepMinutes);
+    }
 }

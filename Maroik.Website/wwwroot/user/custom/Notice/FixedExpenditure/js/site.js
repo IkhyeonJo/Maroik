@@ -38,6 +38,51 @@ const $createFixedExpenditureAmount = $('#createFixedExpenditureAmount');
 const $createFixedExpenditureNote = $('#createFixedExpenditureNote');
 const $createFixedExpenditureMyDepositAsset = $('#createFixedExpenditureMyDepositAsset');
 
+// Server-published rules (FixedExpenditure.cshtml). Authoritative in ExpenditureClassPolicy /
+// FixedSchedulePolicy; mirrored here for form UX only, the server re-validates on save.
+const expenditureSubClassMap = JSON.parse($('#expenditureSubClassMap').val() || '{}');
+const expenditureDepositAssetSubClasses = JSON.parse($('#expenditureDepositAssetSubClasses').val() || '[]');
+const maxDepositDayByMonth = JSON.parse($('#maxDepositDayByMonth').val() || '{}');
+// Far-future stand-in for "no maturity date" (must stay in sync with the "No MaturityDate" button).
+const NO_MATURITY_DATE = new Date(9999, 11, 31);
+
+// Enables/shows only the options in allowedValues (disabling+hiding the rest) and selects
+// valueToSelect when it is allowed, otherwise the first allowed option.
+function ApplyAllowedOptions($select, allowedValues, valueToSelect) {
+    $select.find('option').each(function () {
+        const allowed = allowedValues.indexOf(this.value) !== -1;
+        $(this).prop('disabled', !allowed).prop('hidden', !allowed);
+    });
+    const target = (valueToSelect != null && allowedValues.indexOf(valueToSelect) !== -1)
+        ? valueToSelect
+        : allowedValues[0];
+    if (target != null) {
+        $select.val(target).change();
+    }
+}
+
+// The valid deposit-day option values ("1".."maxDay") for the given deposit month.
+function DepositDayValues(monthValue) {
+    const maxDay = parseInt(maxDepositDayByMonth[String(monthValue)], 10) || 31;
+    const values = [];
+    for (let day = 1; day <= maxDay; day++) {
+        values.push(String(day));
+    }
+    return values;
+}
+
+function ToggleCreateFixedExpenditureMyDepositAsset(subClassValue) {
+    expenditureDepositAssetSubClasses.indexOf(subClassValue) !== -1
+        ? $divCreateFixedExpenditureMyDepositAsset.show()
+        : $divCreateFixedExpenditureMyDepositAsset.hide();
+}
+
+function ToggleEditFixedExpenditureMyDepositAsset(subClassValue) {
+    expenditureDepositAssetSubClasses.indexOf(subClassValue) !== -1
+        ? $divEditFixedExpenditureMyDepositAsset.show()
+        : $divEditFixedExpenditureMyDepositAsset.hide();
+}
+
 const localizer = {
     PrevText: $('#localizerPrevText').val(),
     NextText: $('#localizerNextText').val(),
@@ -109,6 +154,7 @@ $(function () {
     $editFixedExpenditureTabs.tabs();
     $createFixedExpenditureMaturityDate.datepicker({
         showButtonPanel: true,
+        minDate: 0,
         beforeShow: function (input) {
             setTimeout(function () {
                 let buttonPane = $(input)
@@ -119,7 +165,7 @@ $(function () {
                     text: localizer.NoMaturityDate,
                     click: function () {
                         $.datepicker._clearDate(input);
-                        $createFixedExpenditureMaturityDate.datepicker("setDate", new Date('9999', '11', '31'));
+                        $createFixedExpenditureMaturityDate.datepicker("setDate", NO_MATURITY_DATE);
                     }
                 }).appendTo(buttonPane).addClass("ui-datepicker-clear ui-state-default ui-priority-primary ui-corner-all");
 
@@ -143,7 +189,7 @@ $(function () {
                     text: localizer.NoMaturityDate,
                     click: function () {
                         $.datepicker._clearDate(instance.input);
-                        $createFixedExpenditureMaturityDate.datepicker("setDate", new Date('9999', '11', '31'));
+                        $createFixedExpenditureMaturityDate.datepicker("setDate", NO_MATURITY_DATE);
                     }
                 }).appendTo(buttonPane).addClass("ui-datepicker-clear ui-state-default ui-priority-primary ui-corner-all");
 
@@ -156,29 +202,12 @@ $(function () {
                 }).appendTo(buttonPane).addClass("ui-datepicker-clear ui-state-default ui-priority-primary ui-corner-all");
 
             }, 1);
-        },
-        onSelect: function (date) {
-            if (!date) {
-                date = '9999-12-31';
-            }
-            let tempCurrentDate = new Date();
-            let month = tempCurrentDate.getMonth() + 1;
-            let day = tempCurrentDate.getDate();
-
-            month = month >= 10 ? month : '0' + month;
-            day = day >= 10 ? day : '0' + day;
-
-            let currentDate = tempCurrentDate.getFullYear() + '-' + month + '-' + day;
-
-            if (date < currentDate) {
-                alert(localizer.MaturityDateError);
-                $createFixedExpenditureMaturityDate.datepicker("setDate", new Date());
-            }
         }
     });
 
     $editFixedExpenditureMaturityDate.datepicker({
         showButtonPanel: true,
+        minDate: 0,
         beforeShow: function (input) {
             setTimeout(function () {
                 let buttonPane = $(input)
@@ -189,7 +218,7 @@ $(function () {
                     text: localizer.NoMaturityDate,
                     click: function () {
                         $.datepicker._clearDate(input);
-                        $editFixedExpenditureMaturityDate.datepicker("setDate", new Date('9999', '11', '31'));
+                        $editFixedExpenditureMaturityDate.datepicker("setDate", NO_MATURITY_DATE);
                     }
                 }).appendTo(buttonPane).addClass("ui-datepicker-clear ui-state-default ui-priority-primary ui-corner-all");
 
@@ -213,7 +242,7 @@ $(function () {
                     text: localizer.NoMaturityDate,
                     click: function () {
                         $.datepicker._clearDate(instance.input);
-                        $editFixedExpenditureMaturityDate.datepicker("setDate", new Date('9999', '11', '31'));
+                        $editFixedExpenditureMaturityDate.datepicker("setDate", NO_MATURITY_DATE);
                     }
                 }).appendTo(buttonPane).addClass("ui-datepicker-clear ui-state-default ui-priority-primary ui-corner-all");
 
@@ -226,24 +255,6 @@ $(function () {
                 }).appendTo(buttonPane).addClass("ui-datepicker-clear ui-state-default ui-priority-primary ui-corner-all");
 
             }, 1);
-        },
-        onSelect: function (date) {
-            if (!date) {
-                date = '9999-12-31';
-            }
-            let tempCurrentDate = new Date();
-            let month = tempCurrentDate.getMonth() + 1;
-            let day = tempCurrentDate.getDate();
-
-            month = month >= 10 ? month : '0' + month;
-            day = day >= 10 ? day : '0' + day;
-
-            let currentDate = tempCurrentDate.getFullYear() + '-' + month + '-' + day;
-
-            if (date < currentDate) {
-                alert(localizer.MaturityDateError);
-                $editFixedExpenditureMaturityDate.datepicker("setDate", new Date());
-            }
         }
     });
 
@@ -300,372 +311,31 @@ $gridSearch.off('input').on('input', function () {
 });
 
 function CreateFormShowFixedExpenditureSubClassBySelectedFixedExpenditureMainClass(createFixedExpenditureMainClass) {
-
-    if (createFixedExpenditureMainClass.value === "RegularSavings") {
-        $createFixedExpenditureSubClass.find('option[value=Deposit]').prop('disabled', true).prop('hidden', true);
-        $createFixedExpenditureSubClass.find('option[value=Investment]').prop('disabled', true).prop('hidden', true);
-
-        $createFixedExpenditureSubClass.find('option[value=PublicPension]').prop('disabled', true).prop('hidden', true);
-        $createFixedExpenditureSubClass.find('option[value=DebtRepayment]').prop('disabled', true).prop('hidden', true);
-        $createFixedExpenditureSubClass.find('option[value=Tax]').prop('disabled', true).prop('hidden', true);
-        $createFixedExpenditureSubClass.find('option[value=SocialInsurance]').prop('disabled', true).prop('hidden', true);
-        $createFixedExpenditureSubClass.find('option[value=InterHouseholdTranserExpenses]').prop('disabled', true).prop('hidden', true);
-        $createFixedExpenditureSubClass.find('option[value=NonProfitOrganizationTransfer]').prop('disabled', true).prop('hidden', true);
-
-        $createFixedExpenditureSubClass.find('option[value=MealOrEatOutExpenses]').prop('disabled', true).prop('hidden', true);
-        $createFixedExpenditureSubClass.find('option[value=HousingOrSuppliesCost]').prop('disabled', true).prop('hidden', true);
-        $createFixedExpenditureSubClass.find('option[value=EducationExpenses]').prop('disabled', true).prop('hidden', true);
-        $createFixedExpenditureSubClass.find('option[value=MedicalExpenses]').prop('disabled', true).prop('hidden', true);
-        $createFixedExpenditureSubClass.find('option[value=TransportationCost]').prop('disabled', true).prop('hidden', true);
-        $createFixedExpenditureSubClass.find('option[value=CommunicationCost]').prop('disabled', true).prop('hidden', true);
-        $createFixedExpenditureSubClass.find('option[value=LeisureOrCulture]').prop('disabled', true).prop('hidden', true);
-        $createFixedExpenditureSubClass.find('option[value=ClothingOrShoes]').prop('disabled', true).prop('hidden', true);
-        $createFixedExpenditureSubClass.find('option[value=PinMoney]').prop('disabled', true).prop('hidden', true);
-        $createFixedExpenditureSubClass.find('option[value=ProtectionTypeInsurance]').prop('disabled', true).prop('hidden', true);
-        $createFixedExpenditureSubClass.find('option[value=OtherExpenses]').prop('disabled', true).prop('hidden', true);
-        $createFixedExpenditureSubClass.find('option[value=UnknownExpenditure]').prop('disabled', true).prop('hidden', true);
-
-        $createFixedExpenditureSubClass.find('option:selected').removeAttr("selected");
-
-        $createFixedExpenditureSubClass.find('option[value=Deposit]').prop('disabled', false).prop('hidden', false).attr('selected', 'selected');
-        $createFixedExpenditureSubClass.find('option[value=Investment]').prop('disabled', false).prop('hidden', false);
-
-        $createFixedExpenditureSubClass.val("Deposit").change();
-
-        $divCreateFixedExpenditureMyDepositAsset.show();
-    }
-    else if (createFixedExpenditureMainClass.value === "NonConsumerSpending") {
-        $createFixedExpenditureSubClass.find('option[value=Deposit]').prop('disabled', true).prop('hidden', true);
-        $createFixedExpenditureSubClass.find('option[value=Investment]').prop('disabled', true).prop('hidden', true);
-
-        $createFixedExpenditureSubClass.find('option[value=PublicPension]').prop('disabled', true).prop('hidden', true);
-        $createFixedExpenditureSubClass.find('option[value=DebtRepayment]').prop('disabled', true).prop('hidden', true);
-        $createFixedExpenditureSubClass.find('option[value=Tax]').prop('disabled', true).prop('hidden', true);
-        $createFixedExpenditureSubClass.find('option[value=SocialInsurance]').prop('disabled', true).prop('hidden', true);
-        $createFixedExpenditureSubClass.find('option[value=InterHouseholdTranserExpenses]').prop('disabled', true).prop('hidden', true);
-        $createFixedExpenditureSubClass.find('option[value=NonProfitOrganizationTransfer]').prop('disabled', true).prop('hidden', true);
-
-        $createFixedExpenditureSubClass.find('option[value=MealOrEatOutExpenses]').prop('disabled', true).prop('hidden', true);
-        $createFixedExpenditureSubClass.find('option[value=HousingOrSuppliesCost]').prop('disabled', true).prop('hidden', true);
-        $createFixedExpenditureSubClass.find('option[value=EducationExpenses]').prop('disabled', true).prop('hidden', true);
-        $createFixedExpenditureSubClass.find('option[value=MedicalExpenses]').prop('disabled', true).prop('hidden', true);
-        $createFixedExpenditureSubClass.find('option[value=TransportationCost]').prop('disabled', true).prop('hidden', true);
-        $createFixedExpenditureSubClass.find('option[value=CommunicationCost]').prop('disabled', true).prop('hidden', true);
-        $createFixedExpenditureSubClass.find('option[value=LeisureOrCulture]').prop('disabled', true).prop('hidden', true);
-        $createFixedExpenditureSubClass.find('option[value=ClothingOrShoes]').prop('disabled', true).prop('hidden', true);
-        $createFixedExpenditureSubClass.find('option[value=PinMoney]').prop('disabled', true).prop('hidden', true);
-        $createFixedExpenditureSubClass.find('option[value=ProtectionTypeInsurance]').prop('disabled', true).prop('hidden', true);
-        $createFixedExpenditureSubClass.find('option[value=OtherExpenses]').prop('disabled', true).prop('hidden', true);
-        $createFixedExpenditureSubClass.find('option[value=UnknownExpenditure]').prop('disabled', true).prop('hidden', true);
-
-        $createFixedExpenditureSubClass.find('option:selected').removeAttr("selected");
-
-        $createFixedExpenditureSubClass.find('option[value=PublicPension]').prop('disabled', false).prop('hidden', false).attr('selected', 'selected');
-        $createFixedExpenditureSubClass.find('option[value=DebtRepayment]').prop('disabled', false).prop('hidden', false);
-        $createFixedExpenditureSubClass.find('option[value=Tax]').prop('disabled', false).prop('hidden', false);
-        $createFixedExpenditureSubClass.find('option[value=SocialInsurance]').prop('disabled', false).prop('hidden', false);
-        $createFixedExpenditureSubClass.find('option[value=InterHouseholdTranserExpenses]').prop('disabled', false).prop('hidden', false);
-        $createFixedExpenditureSubClass.find('option[value=NonProfitOrganizationTransfer]').prop('disabled', false).prop('hidden', false);
-
-        $createFixedExpenditureSubClass.val("PublicPension").change();
-
-        $divCreateFixedExpenditureMyDepositAsset.show();
-    }
-    else if (createFixedExpenditureMainClass.value === "ConsumerSpending") {
-        $createFixedExpenditureSubClass.find('option[value=Deposit]').prop('disabled', true).prop('hidden', true);
-        $createFixedExpenditureSubClass.find('option[value=Investment]').prop('disabled', true).prop('hidden', true);
-
-        $createFixedExpenditureSubClass.find('option[value=PublicPension]').prop('disabled', true).prop('hidden', true);
-        $createFixedExpenditureSubClass.find('option[value=DebtRepayment]').prop('disabled', true).prop('hidden', true);
-        $createFixedExpenditureSubClass.find('option[value=Tax]').prop('disabled', true).prop('hidden', true);
-        $createFixedExpenditureSubClass.find('option[value=SocialInsurance]').prop('disabled', true).prop('hidden', true);
-        $createFixedExpenditureSubClass.find('option[value=InterHouseholdTranserExpenses]').prop('disabled', true).prop('hidden', true);
-        $createFixedExpenditureSubClass.find('option[value=NonProfitOrganizationTransfer]').prop('disabled', true).prop('hidden', true);
-
-        $createFixedExpenditureSubClass.find('option[value=MealOrEatOutExpenses]').prop('disabled', true).prop('hidden', true);
-        $createFixedExpenditureSubClass.find('option[value=HousingOrSuppliesCost]').prop('disabled', true).prop('hidden', true);
-        $createFixedExpenditureSubClass.find('option[value=EducationExpenses]').prop('disabled', true).prop('hidden', true);
-        $createFixedExpenditureSubClass.find('option[value=MedicalExpenses]').prop('disabled', true).prop('hidden', true);
-        $createFixedExpenditureSubClass.find('option[value=TransportationCost]').prop('disabled', true).prop('hidden', true);
-        $createFixedExpenditureSubClass.find('option[value=CommunicationCost]').prop('disabled', true).prop('hidden', true);
-        $createFixedExpenditureSubClass.find('option[value=LeisureOrCulture]').prop('disabled', true).prop('hidden', true);
-        $createFixedExpenditureSubClass.find('option[value=ClothingOrShoes]').prop('disabled', true).prop('hidden', true);
-        $createFixedExpenditureSubClass.find('option[value=PinMoney]').prop('disabled', true).prop('hidden', true);
-        $createFixedExpenditureSubClass.find('option[value=ProtectionTypeInsurance]').prop('disabled', true).prop('hidden', true);
-        $createFixedExpenditureSubClass.find('option[value=OtherExpenses]').prop('disabled', true).prop('hidden', true);
-        $createFixedExpenditureSubClass.find('option[value=UnknownExpenditure]').prop('disabled', true).prop('hidden', true);
-
-        $createFixedExpenditureSubClass.find('option:selected').removeAttr("selected");
-
-        $createFixedExpenditureSubClass.find('option[value=MealOrEatOutExpenses]').prop('disabled', false).prop('hidden', false).attr('selected', 'selected');
-        $createFixedExpenditureSubClass.find('option[value=HousingOrSuppliesCost]').prop('disabled', false).prop('hidden', false);
-        $createFixedExpenditureSubClass.find('option[value=EducationExpenses]').prop('disabled', false).prop('hidden', false);
-        $createFixedExpenditureSubClass.find('option[value=MedicalExpenses]').prop('disabled', false).prop('hidden', false);
-        $createFixedExpenditureSubClass.find('option[value=TransportationCost]').prop('disabled', false).prop('hidden', false);
-        $createFixedExpenditureSubClass.find('option[value=CommunicationCost]').prop('disabled', false).prop('hidden', false);
-        $createFixedExpenditureSubClass.find('option[value=LeisureOrCulture]').prop('disabled', false).prop('hidden', false);
-        $createFixedExpenditureSubClass.find('option[value=ClothingOrShoes]').prop('disabled', false).prop('hidden', false);
-        $createFixedExpenditureSubClass.find('option[value=PinMoney]').prop('disabled', false).prop('hidden', false);
-        $createFixedExpenditureSubClass.find('option[value=ProtectionTypeInsurance]').prop('disabled', false).prop('hidden', false);
-        $createFixedExpenditureSubClass.find('option[value=OtherExpenses]').prop('disabled', false).prop('hidden', false);
-        $createFixedExpenditureSubClass.find('option[value=UnknownExpenditure]').prop('disabled', false).prop('hidden', false);
-
-        $createFixedExpenditureSubClass.val("MealOrEatOutExpenses").change();
-
-        $divCreateFixedExpenditureMyDepositAsset.hide();
-    }
+    ApplyAllowedOptions($createFixedExpenditureSubClass, expenditureSubClassMap[createFixedExpenditureMainClass.value] || [], null);
+    ToggleCreateFixedExpenditureMyDepositAsset($createFixedExpenditureSubClass.val());
 }
 
 function CreateFormShowFixedExpenditureDivCreateFixedExpenditureMyDepositAssetBySelectedFixedExpenditureSubClass(createFixedExpenditureSubClass) {
-
-    if (createFixedExpenditureSubClass.value === "Deposit" ||
-        createFixedExpenditureSubClass.value === "Investment" ||
-        createFixedExpenditureSubClass.value === "PublicPension" ||
-        createFixedExpenditureSubClass.value === "DebtRepayment") {
-        $divCreateFixedExpenditureMyDepositAsset.show();
-    }
-    else {
-        $divCreateFixedExpenditureMyDepositAsset.hide();
-    }
+    ToggleCreateFixedExpenditureMyDepositAsset(createFixedExpenditureSubClass.value);
 }
 
 function CreateFormShowFixedExpenditureDepositDayBySelectedFixedExpenditureDepositMonth(createFixedExpenditureDepositMonth) {
-
-    if (createFixedExpenditureDepositMonth.value === "1" ||
-        createFixedExpenditureDepositMonth.value === "3" ||
-        createFixedExpenditureDepositMonth.value === "5" ||
-        createFixedExpenditureDepositMonth.value === "7" ||
-        createFixedExpenditureDepositMonth.value === "8" ||
-        createFixedExpenditureDepositMonth.value === "10" ||
-        createFixedExpenditureDepositMonth.value === "12"
-    ) {
-        $createFixedExpenditureDepositDay.find('option[value=29]').prop('disabled', true).prop('hidden', true);
-        $createFixedExpenditureDepositDay.find('option[value=30]').prop('disabled', true).prop('hidden', true);
-        $createFixedExpenditureDepositDay.find('option[value=31]').prop('disabled', true).prop('hidden', true);
-
-        $createFixedExpenditureDepositDay.find('option:selected').removeAttr("selected");
-
-        $createFixedExpenditureDepositDay.find('option[value=1]').attr('selected', 'selected');
-        $createFixedExpenditureDepositDay.find('option[value=29]').prop('disabled', false).prop('hidden', false);
-        $createFixedExpenditureDepositDay.find('option[value=30]').prop('disabled', false).prop('hidden', false);
-        $createFixedExpenditureDepositDay.find('option[value=31]').prop('disabled', false).prop('hidden', false);
-
-        $createFixedExpenditureDepositDay.val("1").change();
-    }
-    else if (createFixedExpenditureDepositMonth.value === "2") {
-        $createFixedExpenditureDepositDay.find('option[value=29]').prop('disabled', true).prop('hidden', true);
-        $createFixedExpenditureDepositDay.find('option[value=30]').prop('disabled', true).prop('hidden', true);
-        $createFixedExpenditureDepositDay.find('option[value=31]').prop('disabled', true).prop('hidden', true);
-
-        $createFixedExpenditureDepositDay.find('option:selected').removeAttr("selected");
-
-        $createFixedExpenditureDepositDay.find('option[value=1]').attr('selected', 'selected');
-        $createFixedExpenditureDepositDay.find('option[value=29]').prop('disabled', false).prop('hidden', false);
-
-        $createFixedExpenditureDepositDay.val("1").change();
-    }
-    else if (createFixedExpenditureDepositMonth.value === "4" ||
-        createFixedExpenditureDepositMonth.value === "6" ||
-        createFixedExpenditureDepositMonth.value === "9" ||
-        createFixedExpenditureDepositMonth.value === "11"
-    ) {
-        $createFixedExpenditureDepositDay.find('option[value=29]').prop('disabled', true).prop('hidden', true);
-        $createFixedExpenditureDepositDay.find('option[value=30]').prop('disabled', true).prop('hidden', true);
-        $createFixedExpenditureDepositDay.find('option[value=31]').prop('disabled', true).prop('hidden', true);
-
-        $createFixedExpenditureDepositDay.find('option:selected').removeAttr("selected");
-
-        $createFixedExpenditureDepositDay.find('option[value=1]').attr('selected', 'selected');
-        $createFixedExpenditureDepositDay.find('option[value=29]').prop('disabled', false).prop('hidden', false);
-        $createFixedExpenditureDepositDay.find('option[value=30]').prop('disabled', false).prop('hidden', false);
-
-        $createFixedExpenditureDepositDay.val("1").change();
-    }
+    ApplyAllowedOptions($createFixedExpenditureDepositDay, DepositDayValues(createFixedExpenditureDepositMonth.value), null);
 }
 
 function EditFormShowFixedExpenditureSubClassBySelectedFixedExpenditureMainClass(editFixedExpenditureMainClass) {
-
-    if (editFixedExpenditureMainClass.value === "RegularSavings") {
-        $editFixedExpenditureSubClass.find('option[value=Deposit]').prop('disabled', true).prop('hidden', true);
-        $editFixedExpenditureSubClass.find('option[value=Investment]').prop('disabled', true).prop('hidden', true);
-
-        $editFixedExpenditureSubClass.find('option[value=PublicPension]').prop('disabled', true).prop('hidden', true);
-        $editFixedExpenditureSubClass.find('option[value=DebtRepayment]').prop('disabled', true).prop('hidden', true);
-        $editFixedExpenditureSubClass.find('option[value=Tax]').prop('disabled', true).prop('hidden', true);
-        $editFixedExpenditureSubClass.find('option[value=SocialInsurance]').prop('disabled', true).prop('hidden', true);
-        $editFixedExpenditureSubClass.find('option[value=InterHouseholdTranserExpenses]').prop('disabled', true).prop('hidden', true);
-        $editFixedExpenditureSubClass.find('option[value=NonProfitOrganizationTransfer]').prop('disabled', true).prop('hidden', true);
-
-        $editFixedExpenditureSubClass.find('option[value=MealOrEatOutExpenses]').prop('disabled', true).prop('hidden', true);
-        $editFixedExpenditureSubClass.find('option[value=HousingOrSuppliesCost]').prop('disabled', true).prop('hidden', true);
-        $editFixedExpenditureSubClass.find('option[value=EducationExpenses]').prop('disabled', true).prop('hidden', true);
-        $editFixedExpenditureSubClass.find('option[value=MedicalExpenses]').prop('disabled', true).prop('hidden', true);
-        $editFixedExpenditureSubClass.find('option[value=TransportationCost]').prop('disabled', true).prop('hidden', true);
-        $editFixedExpenditureSubClass.find('option[value=CommunicationCost]').prop('disabled', true).prop('hidden', true);
-        $editFixedExpenditureSubClass.find('option[value=LeisureOrCulture]').prop('disabled', true).prop('hidden', true);
-        $editFixedExpenditureSubClass.find('option[value=ClothingOrShoes]').prop('disabled', true).prop('hidden', true);
-        $editFixedExpenditureSubClass.find('option[value=PinMoney]').prop('disabled', true).prop('hidden', true);
-        $editFixedExpenditureSubClass.find('option[value=ProtectionTypeInsurance]').prop('disabled', true).prop('hidden', true);
-        $editFixedExpenditureSubClass.find('option[value=OtherExpenses]').prop('disabled', true).prop('hidden', true);
-        $editFixedExpenditureSubClass.find('option[value=UnknownExpenditure]').prop('disabled', true).prop('hidden', true);
-
-        $editFixedExpenditureSubClass.find('option:selected').removeAttr("selected");
-
-        $editFixedExpenditureSubClass.find('option[value=Deposit]').prop('disabled', false).prop('hidden', false).attr('selected', 'selected');
-        $editFixedExpenditureSubClass.find('option[value=Investment]').prop('disabled', false).prop('hidden', false);
-
-        $editFixedExpenditureSubClass.val("Deposit").change();
-
-        $divEditFixedExpenditureMyDepositAsset.show();
-    }
-    else if (editFixedExpenditureMainClass.value === "NonConsumerSpending") {
-        $editFixedExpenditureSubClass.find('option[value=Deposit]').prop('disabled', true).prop('hidden', true);
-        $editFixedExpenditureSubClass.find('option[value=Investment]').prop('disabled', true).prop('hidden', true);
-
-        $editFixedExpenditureSubClass.find('option[value=PublicPension]').prop('disabled', true).prop('hidden', true);
-        $editFixedExpenditureSubClass.find('option[value=DebtRepayment]').prop('disabled', true).prop('hidden', true);
-        $editFixedExpenditureSubClass.find('option[value=Tax]').prop('disabled', true).prop('hidden', true);
-        $editFixedExpenditureSubClass.find('option[value=SocialInsurance]').prop('disabled', true).prop('hidden', true);
-        $editFixedExpenditureSubClass.find('option[value=InterHouseholdTranserExpenses]').prop('disabled', true).prop('hidden', true);
-        $editFixedExpenditureSubClass.find('option[value=NonProfitOrganizationTransfer]').prop('disabled', true).prop('hidden', true);
-
-        $editFixedExpenditureSubClass.find('option[value=MealOrEatOutExpenses]').prop('disabled', true).prop('hidden', true);
-        $editFixedExpenditureSubClass.find('option[value=HousingOrSuppliesCost]').prop('disabled', true).prop('hidden', true);
-        $editFixedExpenditureSubClass.find('option[value=EducationExpenses]').prop('disabled', true).prop('hidden', true);
-        $editFixedExpenditureSubClass.find('option[value=MedicalExpenses]').prop('disabled', true).prop('hidden', true);
-        $editFixedExpenditureSubClass.find('option[value=TransportationCost]').prop('disabled', true).prop('hidden', true);
-        $editFixedExpenditureSubClass.find('option[value=CommunicationCost]').prop('disabled', true).prop('hidden', true);
-        $editFixedExpenditureSubClass.find('option[value=LeisureOrCulture]').prop('disabled', true).prop('hidden', true);
-        $editFixedExpenditureSubClass.find('option[value=ClothingOrShoes]').prop('disabled', true).prop('hidden', true);
-        $editFixedExpenditureSubClass.find('option[value=PinMoney]').prop('disabled', true).prop('hidden', true);
-        $editFixedExpenditureSubClass.find('option[value=ProtectionTypeInsurance]').prop('disabled', true).prop('hidden', true);
-        $editFixedExpenditureSubClass.find('option[value=OtherExpenses]').prop('disabled', true).prop('hidden', true);
-        $editFixedExpenditureSubClass.find('option[value=UnknownExpenditure]').prop('disabled', true).prop('hidden', true);
-
-        $editFixedExpenditureSubClass.find('option:selected').removeAttr("selected");
-
-        $editFixedExpenditureSubClass.find('option[value=PublicPension]').prop('disabled', false).prop('hidden', false).attr('selected', 'selected');
-        $editFixedExpenditureSubClass.find('option[value=DebtRepayment]').prop('disabled', false).prop('hidden', false);
-        $editFixedExpenditureSubClass.find('option[value=Tax]').prop('disabled', false).prop('hidden', false);
-        $editFixedExpenditureSubClass.find('option[value=SocialInsurance]').prop('disabled', false).prop('hidden', false);
-        $editFixedExpenditureSubClass.find('option[value=InterHouseholdTranserExpenses]').prop('disabled', false).prop('hidden', false);
-        $editFixedExpenditureSubClass.find('option[value=NonProfitOrganizationTransfer]').prop('disabled', false).prop('hidden', false);
-
-        $editFixedExpenditureSubClass.val("PublicPension").change();
-
-        $divEditFixedExpenditureMyDepositAsset.show();
-    }
-    else if (editFixedExpenditureMainClass.value === "ConsumerSpending") {
-        $editFixedExpenditureSubClass.find('option[value=Deposit]').prop('disabled', true).prop('hidden', true);
-        $editFixedExpenditureSubClass.find('option[value=Investment]').prop('disabled', true).prop('hidden', true);
-
-        $editFixedExpenditureSubClass.find('option[value=PublicPension]').prop('disabled', true).prop('hidden', true);
-        $editFixedExpenditureSubClass.find('option[value=DebtRepayment]').prop('disabled', true).prop('hidden', true);
-        $editFixedExpenditureSubClass.find('option[value=Tax]').prop('disabled', true).prop('hidden', true);
-        $editFixedExpenditureSubClass.find('option[value=SocialInsurance]').prop('disabled', true).prop('hidden', true);
-        $editFixedExpenditureSubClass.find('option[value=InterHouseholdTranserExpenses]').prop('disabled', true).prop('hidden', true);
-        $editFixedExpenditureSubClass.find('option[value=NonProfitOrganizationTransfer]').prop('disabled', true).prop('hidden', true);
-
-        $editFixedExpenditureSubClass.find('option[value=MealOrEatOutExpenses]').prop('disabled', true).prop('hidden', true);
-        $editFixedExpenditureSubClass.find('option[value=HousingOrSuppliesCost]').prop('disabled', true).prop('hidden', true);
-        $editFixedExpenditureSubClass.find('option[value=EducationExpenses]').prop('disabled', true).prop('hidden', true);
-        $editFixedExpenditureSubClass.find('option[value=MedicalExpenses]').prop('disabled', true).prop('hidden', true);
-        $editFixedExpenditureSubClass.find('option[value=TransportationCost]').prop('disabled', true).prop('hidden', true);
-        $editFixedExpenditureSubClass.find('option[value=CommunicationCost]').prop('disabled', true).prop('hidden', true);
-        $editFixedExpenditureSubClass.find('option[value=LeisureOrCulture]').prop('disabled', true).prop('hidden', true);
-        $editFixedExpenditureSubClass.find('option[value=ClothingOrShoes]').prop('disabled', true).prop('hidden', true);
-        $editFixedExpenditureSubClass.find('option[value=PinMoney]').prop('disabled', true).prop('hidden', true);
-        $editFixedExpenditureSubClass.find('option[value=ProtectionTypeInsurance]').prop('disabled', true).prop('hidden', true);
-        $editFixedExpenditureSubClass.find('option[value=OtherExpenses]').prop('disabled', true).prop('hidden', true);
-        $editFixedExpenditureSubClass.find('option[value=UnknownExpenditure]').prop('disabled', true).prop('hidden', true);
-
-        $editFixedExpenditureSubClass.find('option:selected').removeAttr("selected");
-
-        $editFixedExpenditureSubClass.find('option[value=MealOrEatOutExpenses]').prop('disabled', false).prop('hidden', false).attr('selected', 'selected');
-        $editFixedExpenditureSubClass.find('option[value=HousingOrSuppliesCost]').prop('disabled', false).prop('hidden', false);
-        $editFixedExpenditureSubClass.find('option[value=EducationExpenses]').prop('disabled', false).prop('hidden', false);
-        $editFixedExpenditureSubClass.find('option[value=MedicalExpenses]').prop('disabled', false).prop('hidden', false);
-        $editFixedExpenditureSubClass.find('option[value=TransportationCost]').prop('disabled', false).prop('hidden', false);
-        $editFixedExpenditureSubClass.find('option[value=CommunicationCost]').prop('disabled', false).prop('hidden', false);
-        $editFixedExpenditureSubClass.find('option[value=LeisureOrCulture]').prop('disabled', false).prop('hidden', false);
-        $editFixedExpenditureSubClass.find('option[value=ClothingOrShoes]').prop('disabled', false).prop('hidden', false);
-        $editFixedExpenditureSubClass.find('option[value=PinMoney]').prop('disabled', false).prop('hidden', false);
-        $editFixedExpenditureSubClass.find('option[value=ProtectionTypeInsurance]').prop('disabled', false).prop('hidden', false);
-        $editFixedExpenditureSubClass.find('option[value=OtherExpenses]').prop('disabled', false).prop('hidden', false);
-        $editFixedExpenditureSubClass.find('option[value=UnknownExpenditure]').prop('disabled', false).prop('hidden', false);
-
-        $editFixedExpenditureSubClass.val("MealOrEatOutExpenses").change();
-
-        $divEditFixedExpenditureMyDepositAsset.hide();
-    }
+    ApplyAllowedOptions($editFixedExpenditureSubClass, expenditureSubClassMap[editFixedExpenditureMainClass.value] || [], null);
+    ToggleEditFixedExpenditureMyDepositAsset($editFixedExpenditureSubClass.val());
 }
 
 function EditFormShowFixedExpenditureDivCreateFixedExpenditureMyDepositAssetBySelectedFixedExpenditureSubClass(editFixedExpenditureSubClass) {
-
-    if (editFixedExpenditureSubClass.value === "Deposit" ||
-        editFixedExpenditureSubClass.value === "Investment" ||
-        editFixedExpenditureSubClass.value === "PublicPension" ||
-        editFixedExpenditureSubClass.value === "DebtRepayment") {
-        $divEditFixedExpenditureMyDepositAsset.show();
-    }
-    else {
-        $divEditFixedExpenditureMyDepositAsset.hide();
-    }
+    ToggleEditFixedExpenditureMyDepositAsset(editFixedExpenditureSubClass.value);
 }
 
 function EditFormShowFixedExpenditureDepositDayBySelectedFixedExpenditureDepositMonth(editFixedExpenditureDepositMonth) {
-
-    if (editFixedExpenditureDepositMonth.value === "1" ||
-        editFixedExpenditureDepositMonth.value === "3" ||
-        editFixedExpenditureDepositMonth.value === "5" ||
-        editFixedExpenditureDepositMonth.value === "7" ||
-        editFixedExpenditureDepositMonth.value === "8" ||
-        editFixedExpenditureDepositMonth.value === "10" ||
-        editFixedExpenditureDepositMonth.value === "12"
-    ) {
-        $editFixedExpenditureDepositDay.find('option[value=29]').prop('disabled', true).prop('hidden', true);
-        $editFixedExpenditureDepositDay.find('option[value=30]').prop('disabled', true).prop('hidden', true);
-        $editFixedExpenditureDepositDay.find('option[value=31]').prop('disabled', true).prop('hidden', true);
-
-        $editFixedExpenditureDepositDay.find('option:selected').removeAttr("selected");
-
-        $editFixedExpenditureDepositDay.find('option[value=1]').attr('selected', 'selected');
-        $editFixedExpenditureDepositDay.find('option[value=29]').prop('disabled', false).prop('hidden', false);
-        $editFixedExpenditureDepositDay.find('option[value=30]').prop('disabled', false).prop('hidden', false);
-        $editFixedExpenditureDepositDay.find('option[value=31]').prop('disabled', false).prop('hidden', false);
-
-        $editFixedExpenditureDepositDay.val("1").change();
-    }
-    else if (editFixedExpenditureDepositMonth.value === "2") {
-        $editFixedExpenditureDepositDay.find('option[value=29]').prop('disabled', true).prop('hidden', true);
-        $editFixedExpenditureDepositDay.find('option[value=30]').prop('disabled', true).prop('hidden', true);
-        $editFixedExpenditureDepositDay.find('option[value=31]').prop('disabled', true).prop('hidden', true);
-
-        $editFixedExpenditureDepositDay.find('option:selected').removeAttr("selected");
-
-        $editFixedExpenditureDepositDay.find('option[value=1]').attr('selected', 'selected');
-        $editFixedExpenditureDepositDay.find('option[value=29]').prop('disabled', false).prop('hidden', false);
-
-        $editFixedExpenditureDepositDay.val("1").change();
-    }
-    else if (editFixedExpenditureDepositMonth.value === "4" ||
-        editFixedExpenditureDepositMonth.value === "6" ||
-        editFixedExpenditureDepositMonth.value === "9" ||
-        editFixedExpenditureDepositMonth.value === "11"
-    ) {
-        $editFixedExpenditureDepositDay.find('option[value=29]').prop('disabled', true).prop('hidden', true);
-        $editFixedExpenditureDepositDay.find('option[value=30]').prop('disabled', true).prop('hidden', true);
-        $editFixedExpenditureDepositDay.find('option[value=31]').prop('disabled', true).prop('hidden', true);
-
-        $editFixedExpenditureDepositDay.find('option:selected').removeAttr("selected");
-
-        $editFixedExpenditureDepositDay.find('option[value=1]').attr('selected', 'selected');
-        $editFixedExpenditureDepositDay.find('option[value=29]').prop('disabled', false).prop('hidden', false);
-        $editFixedExpenditureDepositDay.find('option[value=30]').prop('disabled', false).prop('hidden', false);
-
-        $editFixedExpenditureDepositDay.val("1").change();
-    }
+    ApplyAllowedOptions($editFixedExpenditureDepositDay, DepositDayValues(editFixedExpenditureDepositMonth.value), null);
 }
+
 
 function CreateFixedExpenditure() {
 
@@ -750,166 +420,16 @@ function EditFixedExpenditureGridRow(errorMessageSelectGridRow) {
                 $editFixedExpenditureId.val(data.fixedExpenditure.id);
                 $editFixedExpenditureMainClass.val(data.fixedExpenditure.mainClass).change();
 
-                if (data.fixedExpenditure.mainClass === "RegularSavings") {
-                    $editFixedExpenditureSubClass.find('option[value=Deposit]').prop('disabled', true).prop('hidden', true);
-                    $editFixedExpenditureSubClass.find('option[value=Investment]').prop('disabled', true).prop('hidden', true);
+                ApplyAllowedOptions($editFixedExpenditureSubClass, expenditureSubClassMap[data.fixedExpenditure.mainClass] || [], data.fixedExpenditure.subClass);
 
-                    $editFixedExpenditureSubClass.find('option[value=PublicPension]').prop('disabled', true).prop('hidden', true);
-                    $editFixedExpenditureSubClass.find('option[value=DebtRepayment]').prop('disabled', true).prop('hidden', true);
-                    $editFixedExpenditureSubClass.find('option[value=Tax]').prop('disabled', true).prop('hidden', true);
-                    $editFixedExpenditureSubClass.find('option[value=SocialInsurance]').prop('disabled', true).prop('hidden', true);
-                    $editFixedExpenditureSubClass.find('option[value=InterHouseholdTranserExpenses]').prop('disabled', true).prop('hidden', true);
-                    $editFixedExpenditureSubClass.find('option[value=NonProfitOrganizationTransfer]').prop('disabled', true).prop('hidden', true);
-
-                    $editFixedExpenditureSubClass.find('option[value=MealOrEatOutExpenses]').prop('disabled', true).prop('hidden', true);
-                    $editFixedExpenditureSubClass.find('option[value=HousingOrSuppliesCost]').prop('disabled', true).prop('hidden', true);
-                    $editFixedExpenditureSubClass.find('option[value=EducationExpenses]').prop('disabled', true).prop('hidden', true);
-                    $editFixedExpenditureSubClass.find('option[value=MedicalExpenses]').prop('disabled', true).prop('hidden', true);
-                    $editFixedExpenditureSubClass.find('option[value=TransportationCost]').prop('disabled', true).prop('hidden', true);
-                    $editFixedExpenditureSubClass.find('option[value=CommunicationCost]').prop('disabled', true).prop('hidden', true);
-                    $editFixedExpenditureSubClass.find('option[value=LeisureOrCulture]').prop('disabled', true).prop('hidden', true);
-                    $editFixedExpenditureSubClass.find('option[value=ClothingOrShoes]').prop('disabled', true).prop('hidden', true);
-                    $editFixedExpenditureSubClass.find('option[value=PinMoney]').prop('disabled', true).prop('hidden', true);
-                    $editFixedExpenditureSubClass.find('option[value=ProtectionTypeInsurance]').prop('disabled', true).prop('hidden', true);
-                    $editFixedExpenditureSubClass.find('option[value=OtherExpenses]').prop('disabled', true).prop('hidden', true);
-                    $editFixedExpenditureSubClass.find('option[value=UnknownExpenditure]').prop('disabled', true).prop('hidden', true);
-
-                    $editFixedExpenditureSubClass.find('option:selected').removeAttr("selected");
-
-                    $editFixedExpenditureSubClass.find('option[value=Deposit]').prop('disabled', false).prop('hidden', false);
-                    $editFixedExpenditureSubClass.find('option[value=Investment]').prop('disabled', false).prop('hidden', false);
-
-                    $editFixedExpenditureSubClass.val(data.fixedExpenditure.subClass).change();
-                }
-                else if (data.fixedExpenditure.mainClass === "NonConsumerSpending") {
-                    $editFixedExpenditureSubClass.find('option[value=Deposit]').prop('disabled', true).prop('hidden', true);
-                    $editFixedExpenditureSubClass.find('option[value=Investment]').prop('disabled', true).prop('hidden', true);
-
-                    $editFixedExpenditureSubClass.find('option[value=PublicPension]').prop('disabled', true).prop('hidden', true);
-                    $editFixedExpenditureSubClass.find('option[value=DebtRepayment]').prop('disabled', true).prop('hidden', true);
-                    $editFixedExpenditureSubClass.find('option[value=Tax]').prop('disabled', true).prop('hidden', true);
-                    $editFixedExpenditureSubClass.find('option[value=SocialInsurance]').prop('disabled', true).prop('hidden', true);
-                    $editFixedExpenditureSubClass.find('option[value=InterHouseholdTranserExpenses]').prop('disabled', true).prop('hidden', true);
-                    $editFixedExpenditureSubClass.find('option[value=NonProfitOrganizationTransfer]').prop('disabled', true).prop('hidden', true);
-
-                    $editFixedExpenditureSubClass.find('option[value=MealOrEatOutExpenses]').prop('disabled', true).prop('hidden', true);
-                    $editFixedExpenditureSubClass.find('option[value=HousingOrSuppliesCost]').prop('disabled', true).prop('hidden', true);
-                    $editFixedExpenditureSubClass.find('option[value=EducationExpenses]').prop('disabled', true).prop('hidden', true);
-                    $editFixedExpenditureSubClass.find('option[value=MedicalExpenses]').prop('disabled', true).prop('hidden', true);
-                    $editFixedExpenditureSubClass.find('option[value=TransportationCost]').prop('disabled', true).prop('hidden', true);
-                    $editFixedExpenditureSubClass.find('option[value=CommunicationCost]').prop('disabled', true).prop('hidden', true);
-                    $editFixedExpenditureSubClass.find('option[value=LeisureOrCulture]').prop('disabled', true).prop('hidden', true);
-                    $editFixedExpenditureSubClass.find('option[value=ClothingOrShoes]').prop('disabled', true).prop('hidden', true);
-                    $editFixedExpenditureSubClass.find('option[value=PinMoney]').prop('disabled', true).prop('hidden', true);
-                    $editFixedExpenditureSubClass.find('option[value=ProtectionTypeInsurance]').prop('disabled', true).prop('hidden', true);
-                    $editFixedExpenditureSubClass.find('option[value=OtherExpenses]').prop('disabled', true).prop('hidden', true);
-                    $editFixedExpenditureSubClass.find('option[value=UnknownExpenditure]').prop('disabled', true).prop('hidden', true);
-
-                    $editFixedExpenditureSubClass.find('option:selected').removeAttr("selected");
-
-                    $editFixedExpenditureSubClass.find('option[value=PublicPension]').prop('disabled', false).prop('hidden', false);
-                    $editFixedExpenditureSubClass.find('option[value=DebtRepayment]').prop('disabled', false).prop('hidden', false);
-                    $editFixedExpenditureSubClass.find('option[value=Tax]').prop('disabled', false).prop('hidden', false);
-                    $editFixedExpenditureSubClass.find('option[value=SocialInsurance]').prop('disabled', false).prop('hidden', false);
-                    $editFixedExpenditureSubClass.find('option[value=InterHouseholdTranserExpenses]').prop('disabled', false).prop('hidden', false);
-                    $editFixedExpenditureSubClass.find('option[value=NonProfitOrganizationTransfer]').prop('disabled', false).prop('hidden', false);
-
-                    $editFixedExpenditureSubClass.val(data.fixedExpenditure.subClass).change();
-                }
-                else if (data.fixedExpenditure.mainClass === "ConsumerSpending") {
-                    $editFixedExpenditureSubClass.find('option[value=Deposit]').prop('disabled', true).prop('hidden', true);
-                    $editFixedExpenditureSubClass.find('option[value=Investment]').prop('disabled', true).prop('hidden', true);
-
-                    $editFixedExpenditureSubClass.find('option[value=PublicPension]').prop('disabled', true).prop('hidden', true);
-                    $editFixedExpenditureSubClass.find('option[value=DebtRepayment]').prop('disabled', true).prop('hidden', true);
-                    $editFixedExpenditureSubClass.find('option[value=Tax]').prop('disabled', true).prop('hidden', true);
-                    $editFixedExpenditureSubClass.find('option[value=SocialInsurance]').prop('disabled', true).prop('hidden', true);
-                    $editFixedExpenditureSubClass.find('option[value=InterHouseholdTranserExpenses]').prop('disabled', true).prop('hidden', true);
-                    $editFixedExpenditureSubClass.find('option[value=NonProfitOrganizationTransfer]').prop('disabled', true).prop('hidden', true);
-
-                    $editFixedExpenditureSubClass.find('option[value=MealOrEatOutExpenses]').prop('disabled', true).prop('hidden', true);
-                    $editFixedExpenditureSubClass.find('option[value=HousingOrSuppliesCost]').prop('disabled', true).prop('hidden', true);
-                    $editFixedExpenditureSubClass.find('option[value=EducationExpenses]').prop('disabled', true).prop('hidden', true);
-                    $editFixedExpenditureSubClass.find('option[value=MedicalExpenses]').prop('disabled', true).prop('hidden', true);
-                    $editFixedExpenditureSubClass.find('option[value=TransportationCost]').prop('disabled', true).prop('hidden', true);
-                    $editFixedExpenditureSubClass.find('option[value=CommunicationCost]').prop('disabled', true).prop('hidden', true);
-                    $editFixedExpenditureSubClass.find('option[value=LeisureOrCulture]').prop('disabled', true).prop('hidden', true);
-                    $editFixedExpenditureSubClass.find('option[value=ClothingOrShoes]').prop('disabled', true).prop('hidden', true);
-                    $editFixedExpenditureSubClass.find('option[value=PinMoney]').prop('disabled', true).prop('hidden', true);
-                    $editFixedExpenditureSubClass.find('option[value=ProtectionTypeInsurance]').prop('disabled', true).prop('hidden', true);
-                    $editFixedExpenditureSubClass.find('option[value=OtherExpenses]').prop('disabled', true).prop('hidden', true);
-                    $editFixedExpenditureSubClass.find('option[value=UnknownExpenditure]').prop('disabled', true).prop('hidden', true);
-
-                    $editFixedExpenditureSubClass.find('option:selected').removeAttr("selected");
-
-                    $editFixedExpenditureSubClass.find('option[value=MealOrEatOutExpenses]').prop('disabled', false).prop('hidden', false);
-                    $editFixedExpenditureSubClass.find('option[value=HousingOrSuppliesCost]').prop('disabled', false).prop('hidden', false);
-                    $editFixedExpenditureSubClass.find('option[value=EducationExpenses]').prop('disabled', false).prop('hidden', false);
-                    $editFixedExpenditureSubClass.find('option[value=MedicalExpenses]').prop('disabled', false).prop('hidden', false);
-                    $editFixedExpenditureSubClass.find('option[value=TransportationCost]').prop('disabled', false).prop('hidden', false);
-                    $editFixedExpenditureSubClass.find('option[value=CommunicationCost]').prop('disabled', false).prop('hidden', false);
-                    $editFixedExpenditureSubClass.find('option[value=LeisureOrCulture]').prop('disabled', false).prop('hidden', false);
-                    $editFixedExpenditureSubClass.find('option[value=ClothingOrShoes]').prop('disabled', false).prop('hidden', false);
-                    $editFixedExpenditureSubClass.find('option[value=PinMoney]').prop('disabled', false).prop('hidden', false);
-                    $editFixedExpenditureSubClass.find('option[value=ProtectionTypeInsurance]').prop('disabled', false).prop('hidden', false);
-                    $editFixedExpenditureSubClass.find('option[value=OtherExpenses]').prop('disabled', false).prop('hidden', false);
-                    $editFixedExpenditureSubClass.find('option[value=UnknownExpenditure]').prop('disabled', false).prop('hidden', false);
-
-                    $editFixedExpenditureSubClass.val(data.fixedExpenditure.subClass).change();
-                }
 
                 $editFixedExpenditureContent.val(data.fixedExpenditure.content);
                 $editFixedExpenditureAmount.val(data.fixedExpenditure.amount);
 
                 $editFixedExpenditureDepositMonth.val(data.fixedExpenditure.depositMonth.toString()).change();
 
-                if (data.fixedExpenditure.depositMonth.toString() === "1" ||
-                    data.fixedExpenditure.depositMonth.toString() === "3" ||
-                    data.fixedExpenditure.depositMonth.toString() === "5" ||
-                    data.fixedExpenditure.depositMonth.toString() === "7" ||
-                    data.fixedExpenditure.depositMonth.toString() === "8" ||
-                    data.fixedExpenditure.depositMonth.toString() === "10" ||
-                    data.fixedExpenditure.depositMonth.toString() === "12"
-                ) {
-                    $editFixedExpenditureDepositDay.find('option[value=29]').prop('disabled', true).prop('hidden', true);
-                    $editFixedExpenditureDepositDay.find('option[value=30]').prop('disabled', true).prop('hidden', true);
-                    $editFixedExpenditureDepositDay.find('option[value=31]').prop('disabled', true).prop('hidden', true);
+                ApplyAllowedOptions($editFixedExpenditureDepositDay, DepositDayValues(data.fixedExpenditure.depositMonth.toString()), data.fixedExpenditure.depositDay.toString());
 
-                    $editFixedExpenditureDepositDay.find('option:selected').removeAttr("selected");
-
-                    $editFixedExpenditureDepositDay.find('option[value=29]').prop('disabled', false).prop('hidden', false);
-                    $editFixedExpenditureDepositDay.find('option[value=30]').prop('disabled', false).prop('hidden', false);
-                    $editFixedExpenditureDepositDay.find('option[value=31]').prop('disabled', false).prop('hidden', false);
-
-                    $editFixedExpenditureDepositDay.val(data.fixedExpenditure.depositDay.toString()).change();
-                }
-                else if (data.fixedExpenditure.depositMonth.toString() === "2") {
-                    $editFixedExpenditureDepositDay.find('option[value=29]').prop('disabled', true).prop('hidden', true);
-                    $editFixedExpenditureDepositDay.find('option[value=30]').prop('disabled', true).prop('hidden', true);
-                    $editFixedExpenditureDepositDay.find('option[value=31]').prop('disabled', true).prop('hidden', true);
-
-                    $editFixedExpenditureDepositDay.find('option:selected').removeAttr("selected");
-
-                    $editFixedExpenditureDepositDay.find('option[value=29]').prop('disabled', false).prop('hidden', false);
-
-                    $editFixedExpenditureDepositDay.val(data.fixedExpenditure.depositDay.toString()).change();
-                }
-                else if (data.fixedExpenditure.depositMonth.toString() === "4" ||
-                    data.fixedExpenditure.depositMonth.toString() === "6" ||
-                    data.fixedExpenditure.depositMonth.toString() === "9" ||
-                    data.fixedExpenditure.depositMonth.toString() === "11"
-                ) {
-                    $editFixedExpenditureDepositDay.find('option[value=29]').prop('disabled', true).prop('hidden', true);
-                    $editFixedExpenditureDepositDay.find('option[value=30]').prop('disabled', true).prop('hidden', true);
-                    $editFixedExpenditureDepositDay.find('option[value=31]').prop('disabled', true).prop('hidden', true);
-
-                    $editFixedExpenditureDepositDay.find('option:selected').removeAttr("selected");
-
-                    $editFixedExpenditureDepositDay.find('option[value=29]').prop('disabled', false).prop('hidden', false);
-                    $editFixedExpenditureDepositDay.find('option[value=30]').prop('disabled', false).prop('hidden', false);
-
-                    $editFixedExpenditureDepositDay.val(data.fixedExpenditure.depositDay.toString()).change();
-                }
 
                 $editFixedExpenditureMaturityDate.val(data.fixedExpenditure.maturityDate);
                 $editFixedExpenditureNote.val(data.fixedExpenditure.note);
@@ -922,15 +442,7 @@ function EditFixedExpenditureGridRow(errorMessageSelectGridRow) {
                     $editFixedExpenditureMyDepositAsset.val(data.fixedExpenditure.paymentMethod).change();
                 }
 
-                if (data.fixedExpenditure.subClass === "Deposit" ||
-                    data.fixedExpenditure.subClass === "Investment" ||
-                    data.fixedExpenditure.subClass === "PublicPension" ||
-                    data.fixedExpenditure.subClass === "DebtRepayment") {
-                    $divEditFixedExpenditureMyDepositAsset.show();
-                }
-                else {
-                    $divEditFixedExpenditureMyDepositAsset.hide();
-                }
+                ToggleEditFixedExpenditureMyDepositAsset(data.fixedExpenditure.subClass);
 
                 $editFixedExpenditureUnpunctuality.prop("checked", data.fixedExpenditure.unpunctuality);
 

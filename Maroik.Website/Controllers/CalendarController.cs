@@ -1,3 +1,4 @@
+using Maroik.Core.Domain.Media;
 using Maroik.Core.Domain.Account;
 using Maroik.Core.Contract.Dtos;
 using Maroik.Core.Contract.Misc.Enums;
@@ -143,7 +144,7 @@ public class CalendarController : Controller
             return Ok(new { result = false, errorMessage = _localizer["File Size must be smaller than {0}MB.", _serverSettings.Value.MaxAttachedFileSizeBytes / (1024 * 1024)].Value });
 
         var ext = Path.GetExtension(summernoteImageFile.FileName).ToLowerInvariant();
-        if (ext != ".png" && ext != ".jpg" && ext != ".jpeg")
+        if (!ImageUploadPolicy.IsAllowedExtension(ext))
             return Ok(new { result = false, errorMessage = _localizer["Only .jpg or jpeg or .png file allowed."].Value });
 
         byte[] bytes;

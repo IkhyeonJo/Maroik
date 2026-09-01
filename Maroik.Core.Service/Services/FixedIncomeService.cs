@@ -108,9 +108,8 @@ public class FixedIncomeService : IFixedIncomeService
         if (IncomeClassPolicy.Validate(request.MainClass, request.SubClass).IsError || request.DepositMonth is < 1 or > 12)
             return ServiceResult.Fail("Input is invalid");
 
-        int maxDay = request.DepositMonth switch { 2 => 29, 4 or 6 or 9 or 11 => 30, _ => 31 };
         if (request.DepositDay < 1 ||
-            request.DepositDay > maxDay ||
+            request.DepositDay > FixedSchedulePolicy.MaxDepositDay(request.DepositMonth) ||
 #pragma warning disable SYSLIB1045
             !Regex.IsMatch(request.MaturityDate.ToString("yyyy-MM-dd"),
 #pragma warning restore SYSLIB1045

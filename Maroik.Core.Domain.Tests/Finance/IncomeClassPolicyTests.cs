@@ -80,4 +80,30 @@ public class IncomeClassPolicyTests
         Assert.True(result.IsError);
         Assert.Equal("IncomeClass.Invalid", result.FirstError.Code);
     }
+
+    // -- SubClassesByMainClass (serialized into the create/edit forms) --------
+
+    /// <summary>The published taxonomy has exactly the two known main classes.</summary>
+    [Fact]
+    public void SubClassesByMainClass_HasTheKnownMainClasses()
+    {
+        Assert.Equal(
+            new[] { "RegularIncome", "IrregularIncome" }.OrderBy(x => x),
+            IncomeClassPolicy.SubClassesByMainClass.Keys.OrderBy(x => x));
+    }
+
+    /// <summary>Every published (main, sub) pair validates, and nothing outside it does.</summary>
+    [Theory]
+    [InlineData("RegularIncome")]
+    [InlineData("IrregularIncome")]
+    public void SubClassesByMainClass_AgreesWithValidate(string mainClass)
+    {
+        var published = IncomeClassPolicy.SubClassesByMainClass[mainClass];
+
+        Assert.All(published, sub => Assert.False(IncomeClassPolicy.Validate(mainClass, sub).IsError));
+
+        var everySubClass = IncomeClassPolicy.SubClassesByMainClass.Values.SelectMany(x => x).Distinct();
+        foreach (var sub in everySubClass.Except(published))
+            Assert.True(IncomeClassPolicy.Validate(mainClass, sub).IsError);
+    }
 }

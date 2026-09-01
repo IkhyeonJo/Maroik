@@ -23,6 +23,15 @@ public static class CalendarReminderPolicy
     public const long MaxWeeksBeforeEvent = 4;
 
     /// <summary>
+    /// Granularity, in minutes, of the "notify at HH:MM" picker for all-day reminders
+    /// (the client builds a 00:00..23:45 list from this).
+    /// </summary>
+    public const int ReminderTimeOfDayStepMinutes = 15;
+
+    /// <summary>Default "notify at" time-of-day pre-selected for a new all-day reminder.</summary>
+    public const string DefaultReminderTimeOfDay = "09:00";
+
+    /// <summary>
     /// Returns <see langword="true"/> when the single non-null lead-time value falls within
     /// <c>0</c>..its per-unit maximum (inclusive). Returns <see langword="true"/> when no
     /// lead-time field is set — the "exactly one must be set" rule is enforced separately by

@@ -44,21 +44,36 @@ public static class FixedSchedulePolicy
         => (maturityDate - today).TotalDays < 0;
 
     /// <summary>
+    /// The highest valid deposit day for <paramref name="depositMonth"/> (1–12): 31 for 31-day
+    /// months, 30 for 30-day months, 29 for February (regardless of leap year — matches main's
+    /// per-month day-range validation), and 0 for an out-of-range month.
+    /// <para>
+    /// Single source of truth for the month→day rule: <see cref="IsValidDepositDate"/> is derived
+    /// from it, and the presentation layer serializes <see cref="MaxDepositDayByMonth"/> into the
+    /// create/edit forms so the client no longer hard-codes the same month groups.
+    /// </para>
+    /// </summary>
+    public static int MaxDepositDay(int depositMonth) => depositMonth switch
+    {
+        1 or 3 or 5 or 7 or 8 or 10 or 12 => 31,
+        4 or 6 or 9 or 11 => 30,
+        2 => 29,
+        _ => 0
+    };
+
+    /// <summary>
+    /// <see cref="MaxDepositDay(int)"/> for every month 1–12, for serialization into the UI.
+    /// </summary>
+    public static readonly IReadOnlyDictionary<int, int> MaxDepositDayByMonth =
+        Enumerable.Range(1, 12).ToDictionary(month => month, MaxDepositDay);
+
+    /// <summary>
     /// Returns <see langword="true"/> when <paramref name="depositDay"/> is a valid day for
     /// <paramref name="depositMonth"/> (30/31-day months, and February capped at 29 regardless
     /// of leap year — matches main's per-month day-range validation).
     /// </summary>
     public static bool IsValidDepositDate(int depositMonth, int depositDay)
-    {
-        int maxDay = depositMonth switch
-        {
-            1 or 3 or 5 or 7 or 8 or 10 or 12 => 31,
-            4 or 6 or 9 or 11 => 30,
-            2 => 29,
-            _ => 0
-        };
-        return depositDay >= 1 && depositDay <= maxDay;
-    }
+        => depositDay >= 1 && depositDay <= MaxDepositDay(depositMonth);
 
     /// <summary>
     /// Returns the notice-grid row CSS class for a schedule, prioritizing

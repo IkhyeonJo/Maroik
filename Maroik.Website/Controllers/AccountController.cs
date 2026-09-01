@@ -1,4 +1,5 @@
 using Maroik.Core.Domain.Account;
+using Maroik.Core.Domain.Localization;
 using Maroik.Core.Contract.Dtos;
 using Maroik.Core.Contract.Misc.Enums;
 using Maroik.Core.Contract.Misc.Helpers;
@@ -93,7 +94,18 @@ public class AccountController : Controller
     #region Register
     /// <summary>Displays the registration form (GET) or processes new-account / resend-email requests (POST).</summary>
     [HttpGet]
-    public IActionResult Register() => View();
+    public IActionResult Register()
+    {
+        // Pre-select the time zone implied by the request culture (e.g. ko-KR -> Asia/Seoul);
+        // the rule lives in CulturePolicy so the client no longer does it.
+        var culture = HttpContext.Features
+            .Get<Microsoft.AspNetCore.Localization.IRequestCultureFeature>()?
+            .RequestCulture.Culture.Name;
+        return View(new LoginOutputViewModel
+        {
+            TimeZoneIanaId = CulturePolicy.DefaultTimeZoneIanaId(culture)
+        });
+    }
 
     /// <summary>Displays the registration form (GET) or processes new-account / resend-email requests (POST).</summary>
     [HttpPost]

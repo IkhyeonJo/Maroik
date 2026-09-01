@@ -1,10 +1,4 @@
-﻿$(function () {
-    if ($('#currentCulture').val() === "ko-KR") {
-        $('#TimeZoneIanaId').val('Asia/Seoul');
-    }
-});
-
-function ShowRegisterLoading() {
+﻿function ShowRegisterLoading() {
     if (!$('#registerForm').valid()) {
         $('#loading').hide();
         return false;
@@ -61,13 +55,8 @@ function ChangeCulture(culture) {
         dataType: 'json',
         data: paramValue,
         contentType: 'application/json; charset=utf-8',
-        success: function (data) {
-            if (data.result) {
-                window.location.href = $("#returnUri").val();
-            }
-            else {
-                window.location.href = $("#returnUri").val();
-            }
+        success: function () {
+            window.location.href = $("#returnUri").val();
         }
     });
 }

@@ -1,4 +1,7 @@
 ﻿const maxFileSize = parseInt($('#maxAttachedFileSizeBytes').val()) || 10485760;
+// Accepted avatar image MIME types, published by Profile.cshtml (ImageUploadPolicy). The
+// server re-validates by extension; this is the client mirror.
+const allowedImageContentTypes = (JSON.parse($('#allowedImageContentTypes').val() || '[]')).map(function (t) { return t.toLowerCase(); });
 const $formUpdateProfileAvatar = $('#formUpdateProfileAvatar');
 const $formUpdateProfilePassword = $('#formUpdateProfilePassword');
 const $password = $('#Password');
@@ -18,7 +21,7 @@ function UpdateProfileAvatar(noFileAttachedErrorMessage, fileSizeLimitationError
             window.location.href = "/Management/Profile";
         }
         else if (files.size > 0 && files.size <= maxFileSize) {
-            if (files.type.toUpperCase() === "image/jpeg".toUpperCase() || files.type.toUpperCase() === "image/png".toUpperCase()) {
+            if (allowedImageContentTypes.indexOf((files.type || '').toLowerCase()) !== -1) {
                 let form = $formUpdateProfileAvatar[0];
                 let formData = new FormData(form);
                 $.ajax({
