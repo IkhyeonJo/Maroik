@@ -8,6 +8,7 @@
     The time grid is scrolled to the admin's current local time on page load.
 *@
 @using Maroik.Website.Models.ViewModels.Calendar
+@using Maroik.Core.Domain.Calendar
 @using Newtonsoft.Json
 @model CalendarOutputViewModel
 
@@ -20,6 +21,11 @@
 }
 @Html.Hidden(nameof(maxAttachedFileSizeBytes), maxAttachedFileSizeBytes)
 @Html.Hidden("loggedInAccountTimeZoneIanaId", loggedInAccount.TimeZoneIanaId)
+@* Reminder lead-time bounds — authoritative in CalendarReminderPolicy; the client check reads these instead of hardcoding. *@
+@Html.Hidden("maxMinutesBeforeEvent", CalendarReminderPolicy.MaxMinutesBeforeEvent)
+@Html.Hidden("maxHoursBeforeEvent", CalendarReminderPolicy.MaxHoursBeforeEvent)
+@Html.Hidden("maxDaysBeforeEvent", CalendarReminderPolicy.MaxDaysBeforeEvent)
+@Html.Hidden("maxWeeksBeforeEvent", CalendarReminderPolicy.MaxWeeksBeforeEvent)
 @Html.Hidden("localizerEmail", Localizer["Email"].Value)
 @Html.Hidden("localizerNotification", Localizer["Notification"].Value)
 @Html.Hidden("localizerMinutes", Localizer["Minutes"].Value)

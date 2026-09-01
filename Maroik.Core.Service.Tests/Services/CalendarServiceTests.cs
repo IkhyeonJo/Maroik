@@ -384,6 +384,32 @@ public class CalendarServiceTests
         _reminderRepo.Verify(r => r.CreateAsync(It.IsAny<CalendarEventReminder>(), It.IsAny<CancellationToken>()), Times.Exactly(2));
     }
 
+    /// <summary>Verifies that <c>CreateCalendarEventAsync</c> rolls back and fails, rather than silently
+    /// dropping the reminder, when a reminder's lead time is outside the range allowed by CalendarReminderPolicy.</summary>
+    [Fact]
+    public async Task CreateCalendarEventAsync_RollsBackAndFails_WhenReminderLeadTimeOutOfRange()
+    {
+        _calendarRepo.Setup(r => r.GetByAccountEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync([MakeCalendar(id: 1)]);
+        _eventRepo.Setup(r => r.CreateCalendarEventAsync(It.IsAny<CalendarEvent>(), It.IsAny<CancellationToken>())).ReturnsAsync(1L);
+        _reminderRepo.Setup(r => r.CreateAsync(It.IsAny<CalendarEventReminder>(), It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
+        var sut = CreateSut();
+
+        var reminders = new List<CalendarReminderDto>
+        {
+            new() { Method = "Email", MinutesBeforeEvent = 30 },
+            new() { Method = "Email", DaysBeforeEvent = 29 } // exceeds the 28-day ceiling
+        };
+
+        ServiceResult result = await sut.CreateCalendarEventAsync(
+            new CalendarEventRequest { CalendarId = 1, Title = "Meeting" }, "user@example.com", "1", reminders, null, TestContext.Current.CancellationToken);
+
+        Assert.False(result.Success);
+        Assert.Contains("range", result.ErrorKey, StringComparison.OrdinalIgnoreCase);
+        _unitOfWork.Verify(u => u.RollbackAsync(It.IsAny<CancellationToken>()), Times.Once);
+        _unitOfWork.Verify(u => u.CommitAsync(It.IsAny<CancellationToken>()), Times.Never);
+    }
+
     // -- GetCalendarEventsAsync (batch) ----------------------------------------
 
     /// <summary>Verifies that the batch overload fetches events in a single repository call and groups them by calendar ID.</summary>
@@ -516,6 +542,34 @@ public class CalendarServiceTests
 
         Assert.False(result.Success);
         _eventFileRepo.Verify(r => r.CreateAsync(It.IsAny<CalendarEventAttachedFile>(), It.IsAny<CancellationToken>()), Times.Never);
+        _unitOfWork.Verify(u => u.RollbackAsync(It.IsAny<CancellationToken>()), Times.Once);
+        _unitOfWork.Verify(u => u.CommitAsync(It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    /// <summary>Verifies that <c>UpdateCalendarEventAsync</c> rolls back and fails, rather than silently
+    /// dropping the reminder, when a reminder's lead time is outside the range allowed by CalendarReminderPolicy.</summary>
+    [Fact]
+    public async Task UpdateCalendarEventAsync_RollsBackAndFails_WhenReminderLeadTimeOutOfRange()
+    {
+        _calendarRepo.Setup(r => r.GetByAccountEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync([MakeCalendar(id: 1)]);
+        _eventRepo.Setup(r => r.FindByIdAsync(It.IsAny<long>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(MakeCalendarEvent(id: 1, calendarId: 1, title: "Old"));
+        _eventRepo.Setup(r => r.UpdateEntityAsync(It.IsAny<CalendarEvent>(), It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
+        _eventFileRepo.Setup(r => r.DeleteByCalendarEventIdAsync(It.IsAny<long>(), It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
+        _reminderRepo.Setup(r => r.DeleteByCalendarEventIdAsync(It.IsAny<long>(), It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
+        var sut = CreateSut();
+
+        var reminders = new List<CalendarReminderDto>
+        {
+            new() { Method = "Email", WeeksBeforeEvent = 5 } // exceeds the 4-week ceiling
+        };
+
+        ServiceResult result = await sut.UpdateCalendarEventAsync(
+            new CalendarEventRequest { Id = 1, CalendarId = 1, Title = "New Title" }, "user@example.com", "1", reminders, null, TestContext.Current.CancellationToken);
+
+        Assert.False(result.Success);
+        Assert.Contains("range", result.ErrorKey, StringComparison.OrdinalIgnoreCase);
         _unitOfWork.Verify(u => u.RollbackAsync(It.IsAny<CancellationToken>()), Times.Once);
         _unitOfWork.Verify(u => u.CommitAsync(It.IsAny<CancellationToken>()), Times.Never);
     }

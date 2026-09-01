@@ -94,10 +94,11 @@ const $dropdownContent = $('#dropdown-content');
 const $dropdownIcon = $('#dropdown-icon');
 const $__RequestVerificationToken = $('input[name="__RequestVerificationToken"]');
 const maxFileSize = parseInt($('#maxAttachedFileSizeBytes').val()) || 10485760;
-const maxMinutesBeforeEvent = 40320;
-const maxHoursBeforeEvent = 672;
-const maxDaysBeforeEvent = 28;
-const maxWeeksBeforeEvent = 4;
+// Authoritative in CalendarReminderPolicy (server); rendered into hidden inputs by the view.
+const maxMinutesBeforeEvent = parseInt($('#maxMinutesBeforeEvent').val(), 10);
+const maxHoursBeforeEvent = parseInt($('#maxHoursBeforeEvent').val(), 10);
+const maxDaysBeforeEvent = parseInt($('#maxDaysBeforeEvent').val(), 10);
+const maxWeeksBeforeEvent = parseInt($('#maxWeeksBeforeEvent').val(), 10);
 const defaultBeforeAt = '09:00';
 
 function base64ToBlob(base64, mime) {

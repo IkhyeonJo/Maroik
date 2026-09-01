@@ -4,7 +4,7 @@ namespace Maroik.Core.DomainTests.CalendarDomain;
 
 /// <summary>
 /// Unit tests for <see cref="CalendarEventReminder"/>.
-/// Covers creation validation (method empty guard, at-least-one-lead-time guard) and reconstitution from trusted data.
+/// Covers creation validation (method empty guard, exactly-one-lead-time guard, lead-time range guard) and reconstitution from trusted data.
 /// </summary>
 public class CalendarEventReminderTests
 {
@@ -53,6 +53,43 @@ public class CalendarEventReminderTests
 
         Assert.True(result.IsError);
         Assert.Equal("Reminder.InvalidLeadTime", result.FirstError.Code);
+    }
+
+    /// <summary>Create returns error, when the lead time is past the allowed maximum for its unit.</summary>
+    [Theory]
+    [InlineData(40321L, null, null, null)]
+    [InlineData(null, 673L, null, null)]
+    [InlineData(null, null, 29L, null)]
+    [InlineData(null, null, null, 5L)]
+    public void Create_ReturnsError_WhenLeadTimeOutOfRange(long? minutes, long? hours, long? days, long? weeks)
+    {
+        var result = CalendarEventReminder.Create(1, "Email", minutes, hours, days, weeks, null);
+
+        Assert.True(result.IsError);
+        Assert.Equal("Reminder.LeadTimeOutOfRange", result.FirstError.Code);
+    }
+
+    /// <summary>Create returns error, when the lead time is negative.</summary>
+    [Fact]
+    public void Create_ReturnsError_WhenLeadTimeNegative()
+    {
+        var result = CalendarEventReminder.Create(1, "Email", -1, null, null, null, null);
+
+        Assert.True(result.IsError);
+        Assert.Equal("Reminder.LeadTimeOutOfRange", result.FirstError.Code);
+    }
+
+    /// <summary>Create succeeds, when the lead time sits exactly on the allowed maximum for its unit.</summary>
+    [Theory]
+    [InlineData(40320L, null, null, null)]
+    [InlineData(null, 672L, null, null)]
+    [InlineData(null, null, 28L, null)]
+    [InlineData(null, null, null, 4L)]
+    public void Create_Succeeds_WhenLeadTimeAtMaxBoundary(long? minutes, long? hours, long? days, long? weeks)
+    {
+        var result = CalendarEventReminder.Create(1, "Push", minutes, hours, days, weeks, null);
+
+        Assert.False(result.IsError);
     }
 
     /// <summary>Create succeeds, when only hours before set.</summary>

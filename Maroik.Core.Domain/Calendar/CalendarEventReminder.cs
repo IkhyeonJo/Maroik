@@ -61,7 +61,8 @@ public sealed class CalendarEventReminder : Entity<long>
 
     /// <summary>
     /// Creates a new reminder.
-    /// Exactly one of the "before" parameters must be non-null.
+    /// Exactly one of the "before" parameters must be non-null, and it must sit within the
+    /// lead-time range allowed by <see cref="CalendarReminderPolicy"/>.
     /// </summary>
     public static ErrorOr<CalendarEventReminder> Create(
         long calendarEventId,
@@ -83,6 +84,10 @@ public sealed class CalendarEventReminder : Entity<long>
 
         if (leadTimeFieldCount != 1)
             return Error.Validation("Reminder.InvalidLeadTime", "Exactly one lead-time field (minutes/hours/days/weeks) must be set.");
+
+        if (!CalendarReminderPolicy.IsLeadTimeWithinRange(minutesBefore, hoursBefore, daysBefore, weeksBefore))
+            return Error.Validation("Reminder.LeadTimeOutOfRange",
+                "Reminder lead time is outside the allowed range (0 to 28 days before the event).");
 
         return new CalendarEventReminder(0, calendarEventId, method,
             minutesBefore, hoursBefore, daysBefore, weeksBefore, timesBefore);

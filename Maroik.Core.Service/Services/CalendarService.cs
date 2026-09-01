@@ -401,17 +401,20 @@ public class CalendarService : ICalendarService
                 await _calendarEventAttachedFileRepository.CreateAsync(fileResult.Value, ct);
             }
 
-            // Create all reminder entries for the event within the same transaction. A malformed
-            // reminder is skipped rather than failing the whole save — matching main, where the
-            // event (and its other, valid reminders) is never blocked by one bad reminder.
-            foreach (var reminderResult in reminders.Select(r => CalendarEventReminder.Create(eventId, r.Method,
-                         r.MinutesBeforeEvent, r.HoursBeforeEvent, r.DaysBeforeEvent, r.WeeksBeforeEvent,
-                         r.TimesBeforeEvent.HasValue ? TimeOnly.FromTimeSpan(r.TimesBeforeEvent.Value) : null)))
+            // Create all reminder entries for the event within the same transaction. Any invalid
+            // reminder (empty method, wrong lead-time field count, or an out-of-range lead time —
+            // see CalendarEventReminder.Create / CalendarReminderPolicy) fails the whole save and
+            // rolls back, so the caller can surface the problem instead of a reminder being
+            // silently dropped.
+            foreach (var reminderDto in reminders)
             {
+                var reminderResult = CalendarEventReminder.Create(eventId, reminderDto.Method,
+                    reminderDto.MinutesBeforeEvent, reminderDto.HoursBeforeEvent, reminderDto.DaysBeforeEvent, reminderDto.WeeksBeforeEvent,
+                    reminderDto.TimesBeforeEvent.HasValue ? TimeOnly.FromTimeSpan(reminderDto.TimesBeforeEvent.Value) : null);
                 if (reminderResult.IsError)
                 {
-                    _logger.LogWarning("Skipped invalid reminder on calendar event {EventId}: {Error}", eventId, reminderResult.FirstError.Description);
-                    continue;
+                    await _unitOfWork.RollbackAsync(ct);
+                    return ServiceResult.Fail(reminderResult.FirstError.Description);
                 }
                 await _calendarEventReminderRepository.CreateAsync(reminderResult.Value, ct);
             }
@@ -494,18 +497,21 @@ public class CalendarService : ICalendarService
                 await _calendarEventAttachedFileRepository.CreateAsync(fileResult.Value, ct);
             }
 
-            // Replace reminders: delete all existing then re-create from the updated list. A
-            // malformed reminder is skipped rather than failing the whole save — matching main,
-            // where the event update is never blocked by one bad reminder.
+            // Replace reminders: delete all existing then re-create from the updated list. Any
+            // invalid reminder (empty method, wrong lead-time field count, or an out-of-range lead
+            // time — see CalendarEventReminder.Create / CalendarReminderPolicy) fails the whole
+            // save and rolls back (restoring the deleted reminders), so the caller can surface the
+            // problem instead of a reminder being silently dropped.
             await _calendarEventReminderRepository.DeleteByCalendarEventIdAsync(existing.Id, ct);
-            foreach (var reminderResult in reminders.Select(r => CalendarEventReminder.Create(existing.Id, r.Method,
-                         r.MinutesBeforeEvent, r.HoursBeforeEvent, r.DaysBeforeEvent, r.WeeksBeforeEvent,
-                         r.TimesBeforeEvent.HasValue ? TimeOnly.FromTimeSpan(r.TimesBeforeEvent.Value) : null)))
+            foreach (var reminderDto in reminders)
             {
+                var reminderResult = CalendarEventReminder.Create(existing.Id, reminderDto.Method,
+                    reminderDto.MinutesBeforeEvent, reminderDto.HoursBeforeEvent, reminderDto.DaysBeforeEvent, reminderDto.WeeksBeforeEvent,
+                    reminderDto.TimesBeforeEvent.HasValue ? TimeOnly.FromTimeSpan(reminderDto.TimesBeforeEvent.Value) : null);
                 if (reminderResult.IsError)
                 {
-                    _logger.LogWarning("Skipped invalid reminder on calendar event {EventId}: {Error}", existing.Id, reminderResult.FirstError.Description);
-                    continue;
+                    await _unitOfWork.RollbackAsync(ct);
+                    return ServiceResult.Fail(reminderResult.FirstError.Description);
                 }
                 await _calendarEventReminderRepository.CreateAsync(reminderResult.Value, ct);
             }
