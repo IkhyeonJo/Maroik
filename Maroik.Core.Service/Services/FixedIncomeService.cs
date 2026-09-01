@@ -1,4 +1,3 @@
-using System.Text.RegularExpressions;
 using Maroik.Core.Domain.Finance;
 using Maroik.Core.Contract.Dtos;
 using Maroik.Core.Contract.Interfaces;
@@ -8,10 +7,9 @@ namespace Maroik.Core.Service.Services;
 
 /// <summary>
 /// Implementation of <see cref="IFixedIncomeService"/> for managing recurring income entries.
-/// Validates the <c>MaturityDate</c> format (yyyy-MM-dd) and the deposit day against the
-/// deposit month's actual maximum (28–31, per calendar month) before persisting. Computes
-/// <c>Noticed</c> and <c>Expired</c> flags based on the current date relative to the
-/// recurrence schedule and maturity date.
+/// Validates the income class and the deposit day against the deposit month's actual maximum
+/// (28–31, per calendar month) before persisting. Computes <c>Noticed</c> and <c>Expired</c>
+/// flags based on the current date relative to the recurrence schedule and maturity date.
 /// </summary>
 public class FixedIncomeService : IFixedIncomeService
 {
@@ -98,22 +96,17 @@ public class FixedIncomeService : IFixedIncomeService
     }
 
     /// <summary>
-    /// Validates the income class, deposit month/day, and maturity date format of a fixed-income request.
+    /// Validates the income class and deposit month/day of a fixed-income request.
+    /// (The maturity date is already a parsed <see cref="DateTime"/> by this point — the
+    /// controller enforces its yyyy-MM-dd string format via ParseExact.)
     /// </summary>
-    /// <exception cref="ArgumentException"></exception>
-    /// <exception cref="ArgumentNullException"></exception>
-    /// <exception cref="RegexMatchTimeoutException"></exception>
     private static ServiceResult ValidateRequest(FixedIncomeRequest request)
     {
         if (IncomeClassPolicy.Validate(request.MainClass, request.SubClass).IsError || request.DepositMonth is < 1 or > 12)
             return ServiceResult.Fail("Input is invalid");
 
         if (request.DepositDay < 1 ||
-            request.DepositDay > FixedSchedulePolicy.MaxDepositDay(request.DepositMonth) ||
-#pragma warning disable SYSLIB1045
-            !Regex.IsMatch(request.MaturityDate.ToString("yyyy-MM-dd"),
-#pragma warning restore SYSLIB1045
-                @"^\d{4}-((0[1-9])|(1[012]))-((0[1-9]|[12]\d)|3[01])$"))
+            request.DepositDay > FixedSchedulePolicy.MaxDepositDay(request.DepositMonth))
             return ServiceResult.Fail("Input is invalid");
 
         return ServiceResult.Ok();

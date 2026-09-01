@@ -49,7 +49,10 @@
 
                     <div class="form-group has-feedback">
                         <select asp-for="TimeZoneIanaId" required class="form-control" style="max-width:100%;text-overflow:ellipsis;">
-                            <option value="" disabled hidden>
+                            @* Hardcoded selected = fallback when the model carries no time zone (e.g. en-US);
+                               the tag helper adds its own selected to the matching option for ko-KR, which
+                               wins by document order. *@
+                            <option value="" disabled selected hidden>
                                 @Localizer["Please select time zone"]
                             </option>
 

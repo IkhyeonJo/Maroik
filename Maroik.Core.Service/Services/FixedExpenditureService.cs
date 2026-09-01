@@ -1,4 +1,3 @@
-using System.Text.RegularExpressions;
 using Maroik.Core.Domain.Finance;
 using Maroik.Core.Contract.Dtos;
 using Maroik.Core.Contract.Interfaces;
@@ -8,7 +7,7 @@ namespace Maroik.Core.Service.Services;
 
 /// <summary>
 /// Implementation of <see cref="IFixedExpenditureService"/> for managing recurring expenditure entries.
-/// Validates the <c>MaturityDate</c> format and deposit day before persisting.
+/// Validates the expenditure class and deposit day before persisting.
 /// Computes <c>Noticed</c> and <c>Expired</c> flags based on the current date,
 /// and verifies asset ownership before write operations.
 /// </summary>
@@ -127,12 +126,11 @@ public class FixedExpenditureService : IFixedExpenditureService
     }
 
     /// <summary>
-    /// Validates the MainClass/SubClass combination and the deposit date fields of a fixed-expenditure request.
-    /// Also determines whether the entry requires a deposit asset (e.g., savings or debt repayment categories).
+    /// Validates the MainClass/SubClass combination and the deposit month/day of a fixed-expenditure
+    /// request, and reports whether the entry requires a deposit asset (savings / debt-repayment
+    /// categories). The maturity date is already a parsed <see cref="DateTime"/> here — the
+    /// controller enforces its yyyy-MM-dd string format via ParseExact.
     /// </summary>
-    /// <exception cref="ArgumentException"></exception>
-    /// <exception cref="ArgumentNullException"></exception>
-    /// <exception cref="RegexMatchTimeoutException"></exception>
     private static (bool IsValid, bool RequiresDepositAsset) ValidateClassAndDate(FixedExpenditureRequest req)
     {
         var classResult = ExpenditureClassPolicy.Validate(req.MainClass, req.SubClass);
@@ -140,11 +138,8 @@ public class FixedExpenditureService : IFixedExpenditureService
         bool requiresDeposit = classResult.Value;
 
         if (req.DepositMonth is < 1 or > 12) return (false, false);
-#pragma warning disable SYSLIB1045
-        if (req.DepositDay < 1 || req.DepositDay > FixedSchedulePolicy.MaxDepositDay(req.DepositMonth) ||
-            !Regex.IsMatch(req.MaturityDate.ToString("yyyy-MM-dd"),
-#pragma warning restore SYSLIB1045
-                @"^\d{4}-((0[1-9])|(1[012]))-((0[1-9]|[12]\d)|3[01])$")) return (false, false);
+        if (req.DepositDay < 1 || req.DepositDay > FixedSchedulePolicy.MaxDepositDay(req.DepositMonth))
+            return (false, false);
 
         return (true, requiresDeposit);
     }
