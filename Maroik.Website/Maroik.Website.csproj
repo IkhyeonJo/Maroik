@@ -12,6 +12,26 @@
     <RootNamespace>Maroik.Website</RootNamespace>
   </PropertyGroup>
 
+  <!--
+    The Node / TypeScript toolchain for the custom client scripts (TypeScripts/, see
+    TypeScripts/README.md) lives inside this project folder. Keep it out of the .NET
+    project so `node_modules` (~75 packages) doesn't drown Solution Explorer and — more
+    importantly — isn't swept into `dotnet publish` by the Web SDK's `**\*.json` Content
+    rule. The compiled wwwroot/**/site.js still publishes as normal `wwwroot` content.
+  -->
+  <PropertyGroup>
+    <DefaultItemExcludes>$(DefaultItemExcludes);node_modules\**</DefaultItemExcludes>
+    <!-- `tsc` runs via the CompileClientTypeScript target below; stop VS's bundled
+         TypeScript MSBuild build from also compiling TypeScripts/**. -->
+    <TypeScriptCompileBlocked>true</TypeScriptCompileBlocked>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- toolchain files: still visible in the tree (as None), but not web content / not published -->
+    <Content Remove="package.json;package-lock.json;tsconfig.json;vitest.config.mts;TypeScripts\**;TypeScripts.Tests\**" />
+    <None Include="package.json;package-lock.json;tsconfig.json" />   <!-- .mts already covered by the SDK None glob -->
+  </ItemGroup>
+
   <ItemGroup>
     <PackageReference Include="AngleSharp" />
     <PackageReference Include="Serilog.AspNetCore" />
@@ -40,5 +60,53 @@
     <ProjectReference Include="..\Maroik.Core.Repository\Maroik.Core.Repository.csproj" />
     <ProjectReference Include="..\Maroik.Core.Service\Maroik.Core.Service.csproj" />
   </ItemGroup>
+
+  <!--
+    Custom client scripts: TypeScripts/**/*.ts  ->(tsc)->  wwwroot/**/*.js  (1:1, no bundler).
+    See TypeScripts/README.md.
+
+    This target compiles them as part of `dotnet build` / `dotnet run`, but ONLY where the
+    npm toolchain has been installed (Maroik.Website/node_modules/typescript present), or when
+    `-p:BuildClientTypeScript=true` is passed. Environments without Node - the Docker `build`
+    stage, a plain `dotnet publish`, CI that skips npm - use the committed wwwroot/**/*.js
+    instead (the Dockerfile has a dedicated `tsbuild` Node stage that regenerates them).
+    npm's exit code propagates, so a TypeScript error fails the .NET build on dev machines.
+  -->
+  <Target Name="CompileClientTypeScript"
+          BeforeTargets="BeforeBuild"
+          Condition="Exists('$(MSBuildProjectDirectory)/node_modules/typescript') Or '$(BuildClientTypeScript)' == 'true'">
+    <Message Importance="high" Text="tsc: compiling TypeScripts/**/*.ts -> wwwroot/**/*.js" />
+    <Exec Command="npm run build" WorkingDirectory="$(MSBuildProjectDirectory)" />
+  </Target>
+
+  <!--
+    Run the jsdom test suite for the client scripts (Maroik.Website/TypeScripts.Tests)
+    after the build. ON by default for local / Rider / VS builds (i.e. any `dotnet build`
+    where `npm ci` has been run). Incremental: it re-runs only when a *.ts source, a test,
+    or a toolchain config actually changed since the last run, so a C#-only edit + build
+    skips it. Force off for a one-off fast build with `-p:RunClientScriptTests=false`.
+
+    Skipped automatically where `node_modules/vitest` is absent (the .NET SDK Docker
+    stage, CI that doesn't `npm ci` here); the Dockerfile `tsbuild` stage covers Docker.
+  -->
+  <PropertyGroup Condition="'$(RunClientScriptTests)' == ''">
+    <RunClientScriptTests>true</RunClientScriptTests>
+  </PropertyGroup>
+
+  <ItemGroup Condition="'$(RunClientScriptTests)' == 'true'">
+    <_ClientScriptTestInput Include="TypeScripts/**/*.ts;TypeScripts.Tests/**/*.ts" />
+    <_ClientScriptTestInput Include="tsconfig.json;vitest.config.mts;package.json" />
+  </ItemGroup>
+
+  <Target Name="RunClientScriptTests"
+          AfterTargets="Build"
+          Condition="'$(RunClientScriptTests)' == 'true' And Exists('$(MSBuildProjectDirectory)/node_modules/vitest')"
+          Inputs="@(_ClientScriptTestInput)"
+          Outputs="$(IntermediateOutputPath)clientscripttests.stamp">
+    <Message Importance="high" Text="vitest: running TypeScripts.Tests" />
+    <Exec Command="npx vitest run" WorkingDirectory="$(MSBuildProjectDirectory)" />
+    <MakeDir Directories="$(IntermediateOutputPath)" />
+    <Touch Files="$(IntermediateOutputPath)clientscripttests.stamp" AlwaysCreate="true" />
+  </Target>
 
 </Project>

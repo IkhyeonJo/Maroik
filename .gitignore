@@ -435,3 +435,9 @@ Maroik.Log/**
 # Upload directories (user uploaded files)
 Maroik.Website/wwwroot/upload/**
 Maroik.FileStorage/upload/**
+
+# TypeScript client-scripts toolchain (Maroik.Website/TypeScripts, see its README).
+# Compiled Maroik.Website/wwwroot/**/site.js IS committed (publish/Docker without Node fall back to it).
+*.tsbuildinfo
+.vitest/
+

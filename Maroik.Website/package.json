@@ -1,0 +1,30 @@
+{
+  "name": "maroik-website-clientscripts",
+  "version": "1.0.0",
+  "private": true,
+  "description": "TypeScript sources for Maroik.Website custom client scripts. tsc compiles TypeScripts/**/*.ts -> wwwroot/**/*.js 1:1. No bundler: each site.ts is a self-contained IIFE global script with no imports. See TypeScripts/README.md.",
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "watch": "tsc -p tsconfig.json --watch",
+    "check": "tsc -p tsconfig.json --noEmit",
+    "pretest": "npm run build",
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
+  "devDependencies": {
+    "typescript": "7.0.2",
+    "@types/jquery": "3.5.34",
+    "@types/jqueryui": "1.12.24",
+    "@types/jquery.validation": "1.17.1",
+    "@types/bootstrap": "4.6.6",
+    "@types/toastr": "2.1.44",
+    "@types/summernote": "0.8.10",
+    "@types/chart.js": "2.9.41",
+    "@fullcalendar/core": "5.5.1",
+    "moment": "2.29.1",
+    "vitest": "4.1.11",
+    "jsdom": "30.0.1",
+    "jquery": "3.6.0",
+    "@types/jsdom": "27.0.0"
+  }
+}
