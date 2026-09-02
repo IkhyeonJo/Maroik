@@ -11,6 +11,9 @@
     "test": "vitest run",
     "test:watch": "vitest"
   },
+  "engines": {
+    "node": ">=22.22.2 <23"
+  },
   "devDependencies": {
     "@fullcalendar/core": "5.5.1",
     "@types/chart.js": "2.9.41",

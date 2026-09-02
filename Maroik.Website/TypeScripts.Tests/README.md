@@ -7,11 +7,17 @@ jQuery and the `typescript` compiler are npm **devDependencies of
 `Maroik.Website/package.json`**, and the tests run from **`Maroik.Website/`** via
 that file's `scripts`. Nothing here runs without Node on the machine.
 
-1. **Install Node.js** — use **v22.x** (matches the `node:22-alpine` Docker
-   `tsbuild` stage; v20+ works). `npm` ships with it.
+1. **Install Node.js 22.x** — match the version the build already uses:
+   `Maroik.Website/Dockerfile` compiles + tests this tree in a
+   `FROM node:22-alpine` stage (`tsbuild`), and the GitHub Actions CI doesn't run
+   Node at all, so that line is the reference. `package.json` `engines` pins it
+   as `node: ">=22.22.2 <23"` (the `22.22.2` floor is `jsdom@30`'s own
+   requirement), and `Maroik.Website/.npmrc` sets `engine-strict=true` — so
+   `npm ci` / `npm install` **fails fast with `EBADENGINE`** on any other Node.
+   `npm` ships with it.
    * nvm: `nvm install 22 && nvm use 22`
    * or a package manager / the installer from <https://nodejs.org>
-   * verify: `node -v` (≥ v20) and `npm -v` both print a version.
+   * verify: `node -v` → `v22.22.2` or newer 22.x, and `npm -v` prints a version.
 2. From **`Maroik.Website/`** (the folder with `package.json`) — the **one**
    `npm ci` covers both `TypeScripts/` and this test tree:
 

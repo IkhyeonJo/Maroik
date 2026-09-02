@@ -17,7 +17,7 @@ EXPOSE 443
 FROM node:22-alpine AS tsbuild
 ARG RUN_CLIENT_TESTS=false
 WORKDIR /ts
-COPY ["Maroik.Website/package.json", "Maroik.Website/package-lock.json", "./"]
+COPY ["Maroik.Website/package.json", "Maroik.Website/package-lock.json", "Maroik.Website/.npmrc", "./"]
 RUN npm ci --no-audit --no-fund
 COPY ["Maroik.Website/tsconfig.json", "Maroik.Website/vitest.config.mts", "./"]
 COPY ["Maroik.Website/TypeScripts", "./TypeScripts"]
