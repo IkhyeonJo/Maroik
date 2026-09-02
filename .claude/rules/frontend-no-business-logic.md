@@ -95,4 +95,6 @@ script (no `import`/`export`); keep it that way.
   not a fresh migration.
 * The 22 client scripts were migrated JS → TypeScript (`TypeScripts/`), byte-faithful,
   with jsdom tests in `TypeScripts.Tests/`. `wwwroot/**/site.js` is now generated.
-* CSS/Sass migration of `site.css` is a separate future effort — out of scope here.
+* Modernising `site.css` (native nesting, custom properties, `@layer` — no Sass
+  build or other toolchain assumed, unlike the TypeScript move) is a separate
+  future effort — out of scope here.
