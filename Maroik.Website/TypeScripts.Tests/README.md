@@ -1,38 +1,39 @@
 # TypeScripts.Tests/ — client-script tests
 
-## Prerequisites — install Node.js first
+## Prerequisites — Node.js (written for a non-JS dev)
 
-This suite has **no `.csproj`** and is **not** its own npm package. Vitest, jsdom,
-jQuery and the `typescript` compiler are npm **devDependencies of
-`Maroik.Website/package.json`**, and the tests run from **`Maroik.Website/`** via
-that file's `scripts`. Nothing here runs without Node on the machine.
+This suite has **no `.csproj`**, is **not** its own npm package, and is not in
+`Maroik.sln`. Vitest, jsdom, jQuery and the `typescript` compiler are npm
+**devDependencies of `Maroik.Website/package.json`**, and every command below is
+run from **`Maroik.Website/`** (the folder with `package.json` — *not* the
+capital-**S** `Maroik.WebSite/` at the repo root). Nothing here runs without
+Node.js on the machine.
 
-1. **Install Node.js 22.x** — match the version the build already uses:
-   `Maroik.Website/Dockerfile` compiles + tests this tree in a
-   `FROM node:22-alpine` stage (`tsbuild`), and the GitHub Actions CI doesn't run
-   Node at all, so that line is the reference. `package.json` `engines` pins it
-   as `node: ">=22.22.2 <23"` (the `22.22.2` floor is `jsdom@30`'s own
-   requirement), and `Maroik.Website/.npmrc` sets `engine-strict=true` — so
-   `npm ci` / `npm install` **fails fast with `EBADENGINE`** on any other Node.
-   `npm` ships with it.
-   * nvm: `nvm install 22 && nvm use 22`
-   * or a package manager / the installer from <https://nodejs.org>
-   * verify: `node -v` → `v22.22.2` or newer 22.x, and `npm -v` prints a version.
-2. From **`Maroik.Website/`** (the folder with `package.json`) — the **one**
-   `npm ci` covers both `TypeScripts/` and this test tree:
+**Full install walkthrough — with expected output for each step — is in
+[`../TypeScripts/README.md`](../TypeScripts/README.md) ("Prerequisites").** The
+short version:
 
-   ```bash
-   npm ci            # once after checkout — creates node_modules/ (vitest, jsdom, tsc)
-   npm test          # runs `npm run build` (pretest) then `vitest run`
-   npm run test:watch
-   npx vitest run TypeScripts.Tests/user/custom/AccountBook   # a subset
-   ```
+1. **Install Node.js 22** (LTS). The build uses Node 22 everywhere
+   (`Maroik.Website/Dockerfile` → `FROM node:22-alpine`; CI doesn't use Node).
+   `package.json` `"engines"` requires `node >=22.22.2 <23` and
+   `Maroik.Website/.npmrc` has `engine-strict=true`, so any other version makes
+   the next step stop with `npm error code EBADENGINE` (nothing installed — just
+   switch Node and retry). On Windows, install the **LTS** build from
+   <https://nodejs.org>, then open a **new terminal**. Check: `node -v` prints
+   `v22.22.2` or newer 22.x.
+
+2. **`npm ci`** from `Maroik.Website/` — installs ~105 packages into
+   `node_modules/` (git-ignored). This **one** install covers both `TypeScripts/`
+   and this test tree. Success ends with `found 0 vulnerabilities`.
+
+3. **`npm test`** from `Maroik.Website/` — see **Running** below.
 
 `TypeScripts.Tests/tsconfig.json` is standalone for **editor / `tsc --noEmit`
 type-checking only** — it emits nothing and needs no separate install.
 
-Without `node_modules/vitest`, `dotnet build` skips the suite (see **Running →
-In a build** below) rather than failing, so a missing Node install is silent.
+If you never run `npm ci`, `dotnet build` still succeeds — with `node_modules/`
+absent the MSBuild target that would run the suite is a silent no-op (see
+**Running → In a build**), so a missing Node install is quiet, not a build error.
 
 ---
 
@@ -138,6 +139,20 @@ npm test          # from Maroik.Website/ — runs `npm run build` (pretest) then
 npm run test:watch
 npx vitest run TypeScripts.Tests/user/custom/AccountBook   # a subset
 ```
+
+`npm test` recompiles the `.ts` first (the `pretest` hook) because the suite runs
+the **compiled** `site.js`, then runs Vitest. A successful run ends with:
+
+```
+ Test Files  22 passed (22)
+      Tests  58 passed (58)
+```
+
+Expect ~30 lines of `Not implemented: HTMLCanvasElement's getContext() ...` to
+scroll past on the way — that is **not a failure**, just jsdom reporting it has
+no `<canvas>` engine for the Chart.js code to use. Only the
+`Test Files … passed` / `Tests … passed` summary matters; a real failure prints
+`FAIL` and names the test file.
 
 **In a build:**
 

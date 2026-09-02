@@ -1,39 +1,121 @@
 # TypeScripts/ — custom client scripts
 
-## Prerequisites — install Node.js first
+## Prerequisites — Node.js (one-time setup, written for a non-JS dev)
 
-`tsc` is **not** a system-wide tool here. The compiler (`typescript@7.0.2`, the
-native build), plus every `@types/*` package, are npm **devDependencies** of
-`Maroik.Website/package.json` and only run through its `scripts`. With no Node
-on the machine, nothing in this tree compiles — that is the whole reason a fresh
-checkout "doesn't work".
+**You can skip all of this if you only touch C#.** `dotnet build` still succeeds
+with no Node installed — it just reuses the `wwwroot/**/site.js` that is already
+committed to git instead of recompiling it (see **Build integration**). You need
+the steps below only to **edit a `.ts` file and regenerate its `.js`**, or to
+**run the client-script tests**.
 
-1. **Install Node.js 22.x** — match the version the build already uses:
-   `Maroik.Website/Dockerfile` compiles this tree in a `FROM node:22-alpine`
-   stage (`tsbuild`), and the GitHub Actions CI doesn't run Node at all, so that
-   line is the reference. `package.json` `engines` pins it as
-   `node: ">=22.22.2 <23"` (the `22.22.2` floor is `jsdom@30`'s own requirement),
-   and `Maroik.Website/.npmrc` sets `engine-strict=true` — so `npm ci` / `npm install`
-   **fails fast with `EBADENGINE`** on any other Node. `npm` ships with it.
-   * nvm: `nvm install 22 && nvm use 22`
-   * or a package manager / the installer from <https://nodejs.org>
-   * verify: `node -v` → `v22.22.2` or newer 22.x, and `npm -v` prints a version.
-2. From **`Maroik.Website/`** (the folder with `package.json`):
+**Why it isn't automatic:** `tsc` (the TypeScript compiler) is not a system-wide
+tool here. `tsc`, Vitest, jsdom and every `@types/*` package are listed in
+`Maroik.Website/package.json` and get downloaded into a local `node_modules/`
+folder by `npm`. `npm` is bundled with Node.js. No Node ⇒ nothing to run ⇒ a
+fresh checkout's `.ts` files can't be compiled.
 
-   ```bash
-   npm ci            # once after checkout — creates node_modules/ (tsc + @types/*)
-   npm run build     # tsc -p tsconfig.json  → writes wwwroot/**/site.js
-   npm run check     # tsc --noEmit  (type-check only)
-   npm run watch     # rebuild on save
-   ```
+### 1. Install Node.js 22
+
+The build uses Node 22 everywhere else (`Maroik.Website/Dockerfile` →
+`FROM node:22-alpine`; there is no other pinned version and CI doesn't use Node),
+so match it. `package.json` `"engines"` requires `node >=22.22.2 <23` and
+`Maroik.Website/.npmrc` sets `engine-strict=true`, so **any other version stops
+`npm ci` immediately** with `npm error code EBADENGINE` — nothing gets installed,
+just switch Node and re-run.
+
+* **Windows / macOS:** download the **LTS** build from <https://nodejs.org> (the
+  left, green "…LTS" button — **not** "Current", which is Node 23/24 and will be
+  rejected). Run the installer, then **open a brand-new terminal window** so that
+  `node` is picked up on `PATH`.
+* **Linux, or macOS via [nvm](https://github.com/nvm-sh/nvm):**
+  `nvm install 22 && nvm use 22`
+  (Windows has a separate tool,
+  [nvm-windows](https://github.com/coreybutler/nvm-windows): `nvm install 22.22.2`).
+* **Confirm it worked** — both commands must print a version:
+
+  ```console
+  $ node -v
+  v22.22.2      ← any v22.x, as long as it is 22.22.2 or higher
+  $ npm -v
+  10.9.8        ← any number is fine
+  ```
+
+### 2. Download the toolchain — `npm ci`
+
+Do this from the **`Maroik.Website/`** folder (the one containing `package.json`).
+
+> ⚠️ The repo root also has a `Maroik.WebSite/` with a capital **S** — a
+> different, unrelated folder. Make sure you are in **`Maroik.Website/`**.
+
+```console
+$ npm ci
+```
+
+`npm ci` reads `package-lock.json` and installs those exact package versions into
+`Maroik.Website/node_modules/` (~105 packages; the folder is git-ignored). Run it
+**once after a fresh checkout**, and again whenever `package.json` or
+`package-lock.json` changes. A successful run looks like:
+
+```
+added 105 packages, and audited 106 packages in 1s
+
+29 packages are looking for funding
+  run `npm fund` for details
+
+found 0 vulnerabilities
+```
+
+`N packages are looking for funding` is just an advert for donation links — it is
+not a warning, ignore it. `found 0 vulnerabilities` is the line that matters.
+
+### 3. Compile `.ts` → `.js` — `npm run build`
+
+```console
+$ npm run build
+```
+
+Runs `tsc`, which (re)writes
+`wwwroot/{area}/custom/{Feature}/{Page}/js/site.js` for every matching `.ts`.
+**A clean build prints nothing and just returns to the prompt.** A type error
+prints `path/file.ts(line,col): error TS####: <message>` and exits non-zero — fix
+the `.ts` and re-run.
+
+Related: `npm run watch` (stay running, recompile on every save),
+`npm run check` (type-check only, writes no files).
+
+### 4. Run the tests — `npm test`
+
+```console
+$ npm test
+```
+
+This first re-runs `npm run build` (an automatic `pretest` step), then runs the
+Vitest + jsdom suite in `TypeScripts.Tests/`. A successful run ends with:
+
+```
+ Test Files  22 passed (22)
+      Tests  58 passed (58)
+```
+
+While it runs you will also see ~30 lines of
+`Not implemented: HTMLCanvasElement's getContext() ...` scroll past. **That is
+not a failure** — it is jsdom saying it has no `<canvas>` engine, which the
+Chart.js code brushes against. Only the `Test Files … passed` / `Tests … passed`
+summary at the end counts; a genuine failure prints `FAIL` and names the test.
+
+Run a subset while iterating:
+`npx vitest run TypeScripts.Tests/user/custom/AccountBook`.
 
 `TypeScripts.Tests/` is **not** a separate npm package — it shares this same
-`package.json` / `node_modules/`, so the one `npm ci` above also sets up the
-tests (`npm test`, see `../TypeScripts.Tests/README.md`).
+`package.json` / `node_modules/`, so the one `npm ci` from step 2 already set it
+up. Its own **`README.md`** has the details.
 
-Without `node_modules/`, `dotnet build` silently skips the TypeScript compile and
-falls back to the committed `wwwroot/**/site.js` (see **Build integration** below),
-so a missing Node install fails quietly rather than loudly.
+### If you skip this
+
+`dotnet build` / `dotnet run` still work — with no `node_modules/` present the
+MSBuild target that would call `tsc` is a silent no-op, so you simply get the
+already-committed `wwwroot/**/site.js` (see **Build integration**). The failure
+mode is "my `.ts` edit didn't show up in the browser", not a build error.
 
 ---
 
@@ -69,7 +151,7 @@ carries the few ReSharper-side JS/TS toggles that aren't editorconfig-backed
 
 | Purpose | Tool | Version | Notes |
 |---|---|---|---|
-| Type-check **and** emit | **TypeScript** (`tsc`) | **7.0.2** | The native (Go) compiler — the whole `TypeScripts/` tree type-checks + emits in ~6 s. No Babel, no bundler. |
+| Type-check **and** emit | **TypeScript** (`tsc`) | **7.0.2** | The native (Go) compiler — the whole `TypeScripts/` tree type-checks + emits in well under a second. No Babel, no bundler. |
 | Type-check-only gate | `tsc --noEmit` | — | `npm run check`; use in CI. |
 | Tests | **Vitest** + **jsdom** + real **jQuery 3.6.0** | 4.1.11 / 30.0.1 / 3.6.0 | See `../TypeScripts.Tests/`. |
 
