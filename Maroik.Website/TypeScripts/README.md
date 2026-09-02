@@ -258,11 +258,41 @@ Run from `Maroik.Website/`:
 
 ```bash
 npm ci            # once, after checkout
-npm run build     # tsc -p tsconfig.json   → writes wwwroot/**/site.js
-npm run watch     # same, --watch
+npm run build     # tsc -p tsconfig.build.json → writes wwwroot/**/site.js  (release: NO source maps)
+npm run build:debug  # tsc -p tsconfig.json    → same + wwwroot/**/custom/**/site.js.map  (for Chrome)
+npm run watch     # build:debug, --watch
 npm run check     # tsc --noEmit  (type-check only, for CI)
 npm test          # npm run build + vitest run   (see ../TypeScripts.Tests)
 ```
+
+## Debugging in Chrome
+
+Building with `tsconfig.json` (`sourceMap` + `inlineSources`) writes `site.js.map` next to
+each `wwwroot/{area}/custom/{Feature}/{Page}/js/site.js`, appends a
+`//# sourceMappingURL=site.js.map` comment to the `site.js`, and embeds the original `.ts`
+text in the map. ASP.NET Core's static-file middleware serves the `.map`, so Chrome
+DevTools → **Sources** shows the real `site.ts` — breakpoints, stepping, original
+identifiers. Nothing from `TypeScripts/` needs to be served; the source is inside the map.
+
+**Running locally (`dotnet run`):** `npm run watch` in `Maroik.Website/` alongside it, then
+hard-reload the page (DevTools open, "Disable cache" on). `npm run build:debug` is the
+one-shot equivalent.
+
+**Debugging in the container (`docker-compose.debug.yml`, Rider/VS):** that compose file
+passes `--build-arg TS_SOURCEMAPS=true`, so the Dockerfile `tsbuild` stage runs
+`npm run build:debug` and the maps are baked into the image and published as normal
+`wwwroot` content. Nothing else to do — rebuild the `maroik.website` image after changing
+this and the maps are there. `docker-compose.prod.yml` passes `TS_SOURCEMAPS=false`.
+
+**Nothing debug-related reaches production.** With `TS_SOURCEMAPS` unset/`false` —
+`npm run build`, the `.csproj` `CompileClientTypeScript` target, the prod Docker build, the
+no-Node `dotnet publish` fallback — `tsc` runs `tsconfig.build.json`: no `.map`, no
+`sourceMappingURL` comment. On top of that `Maroik.DeployOps/Deploy.sh` deletes any
+`site.js.map` and strips the comment from the server checkout before `docker-compose up`,
+and `.dockerignore` keeps host maps out of the build context.
+`Maroik.Website/wwwroot/**/custom/**/*.js.map` is git-ignored — don't commit it, and don't
+commit a `site.js` that has picked up the `sourceMappingURL` comment (re-run
+`npm run build` to drop it).
 
 ## Build integration
 
@@ -286,9 +316,12 @@ npm test          # npm run build + vitest run   (see ../TypeScripts.Tests)
 doesn't drag ~75 packages' `package.json` files in via the Web SDK's `**\*.json`
 Content rule, and Solution Explorer doesn't choke), `TypeScriptCompileBlocked=true`
 stops VS's bundled TypeScript build from double-compiling `TypeScripts/**`, and
-`package.json` / `tsconfig.json` / `TypeScripts/**` / `TypeScripts.Tests/**` are
-`<Content Remove>`d — still visible in the tree (as `None`), just not shipped.
-The compiled `wwwroot/**/site.js` publishes as normal `wwwroot` content.
+`package.json` / `tsconfig.json` / `tsconfig.build.json` / `TypeScripts/**` /
+`TypeScripts.Tests/**` are `<Content Remove>`d — still visible in the tree (as `None`),
+just not shipped. The compiled `wwwroot/**/site.js` publishes as normal `wwwroot` content,
+and so does `wwwroot/**/custom/**/site.js.map` **when present** — it is deliberately not
+`<Content Remove>`d, because the container-debug build (`TS_SOURCEMAPS=true`) needs it
+published; a release build simply produces no `.map`.
 
 ---
 

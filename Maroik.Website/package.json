@@ -4,7 +4,8 @@
   "private": true,
   "description": "TypeScript sources for Maroik.Website custom client scripts. tsc compiles TypeScripts/**/*.ts -> wwwroot/**/*.js 1:1. No bundler: each site.ts is a self-contained IIFE global script with no imports. See TypeScripts/README.md.",
   "scripts": {
-    "build": "tsc -p tsconfig.json",
+    "build": "tsc -p tsconfig.build.json",
+    "build:debug": "tsc -p tsconfig.json",
     "watch": "tsc -p tsconfig.json --watch",
     "check": "tsc -p tsconfig.json --noEmit",
     "pretest": "npm run build",

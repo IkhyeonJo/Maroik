@@ -1,39 +1,58 @@
-volumes:
-      datasource:
-      dataprotection-keys:
-      valkey-data:
-      rabbitmq-data:
+# ─────────────────────────────────────────────────────────────────────────────
+# Maroik — PRODUCTION compose stack (maroik.com, home server behind Cloudflare).
+#
+# Brought up by Maroik.DeployOps/Deploy.sh:
+#   sudo docker-compose -f docker-compose.prod.yml up -d
+# Differences from docker-compose.debug.yml: reads .env.prod, seeds the DB from the
+# Production SQL scripts, `restart: unless-stopped` on every long-running service,
+# a real Let's Encrypt cert managed by the certbot service, and the website image
+# is built WITHOUT TypeScript source maps (TS_SOURCEMAPS=false).
+# ─────────────────────────────────────────────────────────────────────────────
 
+# Named volumes — Docker-managed, survive `down`; wiped only by `down -v`.
+# (Hourly backups of the DB + upload files go to an external HDD via Maroik.Crontab.)
+volumes:
+      datasource:            # PostgreSQL data directory (/var/lib/postgresql/data)
+      dataprotection-keys:   # ASP.NET Core Data Protection key ring, shared by website + filestorage so encrypted payloads/cookies validate across both
+      valkey-data:           # Valkey (Redis-compatible) append-only file persistence
+      rabbitmq-data:         # RabbitMQ node data (durable queues, definitions)
+
+# Private bridge network. Only maroik.website publishes ports to the host (80/443,
+# fronted by Cloudflare); everything else is reachable by service name on `backend`.
 networks:
        backend:
 
 services:
+    # ── Valkey ────────────────────────────────────────────────────────────────
+    # Redis-compatible cache / data store (sessions, transient app state).
     valkey:
       image: valkey/valkey:9-alpine
       container_name: Maroik.Valkey
       restart: unless-stopped
       expose:
-        - "6379"
+        - "6379"                       # visible to other containers on `backend`, NOT published to the host
       volumes:
         - valkey-data:/data
       networks:
         - backend
-      command: valkey-server --appendonly yes
-      healthcheck:
+      command: valkey-server --appendonly yes   # enable AOF persistence to valkey-data
+      healthcheck:                     # `depends_on: condition: service_healthy` gates the app on this
         test: ["CMD", "valkey-cli", "ping"]
         interval: 5s
         timeout: 3s
         retries: 5
 
+    # ── RabbitMQ ─────────────────────────────────────────────────────────────
+    # Message broker for Maroik.Worker (e.g. outbound email jobs).
     rabbitmq:
-      image: rabbitmq:4-management-alpine
+      image: rabbitmq:4-management-alpine   # -management = adds the web UI / rabbitmqadmin on 15672
       container_name: Maroik.RabbitMQ
       restart: unless-stopped
       expose:
-        - "5672"
-        - "15672"
+        - "5672"                       # AMQP protocol port
+        - "15672"                      # management UI (still only on `backend`, not published)
       env_file:
-        - .env.prod
+        - .env.prod                    # RABBITMQ_DEFAULT_USER / _PASS etc.
       volumes:
         - rabbitmq-data:/var/lib/rabbitmq
       networks:
@@ -44,24 +63,31 @@ services:
         timeout: 5s
         retries: 5
 
+    # ── ClamAV ───────────────────────────────────────────────────────────────
+    # Virus scanner; Maroik.FileStorage streams every upload to it over TCP 3310.
+    # No healthcheck here — the signature-DB load makes first readiness slow and
+    # nothing uses `depends_on` on it — but it does auto-restart.
     clamav:
       image: clamav/clamav:latest
       container_name: Maroik.Clamav
       restart: unless-stopped
       expose:
-        - "3310"
+        - "3310"                       # clamd TCP socket
       networks:
         - backend
 
+    # ── PostgreSQL ───────────────────────────────────────────────────────────
+    # Primary database. Schema is DB-first: the mounted SQL scripts run once, on an
+    # empty data volume, via the postgres image's /docker-entrypoint-initdb.d hook.
     postgresql:
       image: postgres:17
       container_name: Maroik.PostgreSQL
       restart: unless-stopped
       env_file:
-        - .env.prod
+        - .env.prod                    # POSTGRES_PASSWORD, POSTGRES_DB=Maroik, ...
       volumes:
         - datasource:/var/lib/postgresql/data
-        - ./Maroik.DB/PostgreSQL/SQL_Init_Script/Production:/docker-entrypoint-initdb.d
+        - ./Maroik.DB/PostgreSQL/SQL_Init_Script/Production:/docker-entrypoint-initdb.d   # PRODUCTION schema/seed (debug uses .../Debugging)
       expose:
         - "5432"
       networks:
@@ -72,24 +98,37 @@ services:
         timeout: 3s
         retries: 5
 
+    # ── Maroik.Website ───────────────────────────────────────────────────────
+    # The ASP.NET Core MVC app. Ports 80/443 are published to the host and sit
+    # behind Cloudflare; Deploy.sh's ufw rules only allow Cloudflare IPs to reach them.
     maroik.website:
         build :
-         context : .
+         context : .                                  # build context = repo root (Dockerfile COPYs across projects)
          dockerfile : Maroik.Website/Dockerfile
+         # TS_SOURCEMAPS=false -> the Dockerfile "tsbuild" stage runs `npm run build`
+         # (tsconfig.build.json), which emits NO site.js.map and NO //# sourceMappingURL=
+         # comment: the production image carries no TypeScript debug artifact. This is the
+         # Dockerfile default; it is pinned here so the prod build is explicit and can't drift
+         # if the default changes. docker-compose.debug.yml sets "true" for container debugging.
+         # Belt-and-braces: Maroik.DeployOps/Deploy.sh also strips any stray *.js.map and the
+         # sourceMappingURL comment from the checkout before `docker-compose up`.
+         # See Maroik.Website/TypeScripts/README.md ("Debugging in Chrome").
+         args :
+           TS_SOURCEMAPS : "false"
         container_name: Maroik.Website
         restart: unless-stopped
         networks :
           - backend
         ports:
-          - "80:80"
+          - "80:80"                    # host:container — published, reached via Cloudflare
           - "443:443"
         env_file:
           - .env.prod
         volumes:
-          - ./Maroik.SSL/conf:/etc/letsencrypt:ro
-          - ./Maroik.Log/:/app/Maroik.Log:rw
-          - dataprotection-keys:/root/.aspnet/DataProtection-Keys
-        depends_on:
+          - ./Maroik.SSL/conf:/etc/letsencrypt:ro                  # real Let's Encrypt cert tree, written by certbot, read-only here
+          - ./Maroik.Log/:/app/Maroik.Log:rw                       # app writes logs to the host tree
+          - dataprotection-keys:/root/.aspnet/DataProtection-Keys  # same key ring as filestorage
+        depends_on:                    # wait for each dependency's healthcheck to pass before starting
           postgresql:
             condition: service_healthy
           valkey:
@@ -97,6 +136,9 @@ services:
           rabbitmq:
             condition: service_healthy
 
+    # ── Maroik.FileStorage ───────────────────────────────────────────────────
+    # Internal file-serving/upload API. Not published; reached only from
+    # maroik.website over `backend`. Runs plain HTTP on 80 (TLS ends at the edge).
     maroik.filestorage:
         build :
          context : .
@@ -110,11 +152,14 @@ services:
         env_file:
           - .env.prod
         environment:
-          - ASPNETCORE_URLS=http://+:80
+          - ASPNETCORE_URLS=http://+:80   # bind HTTP only; TLS is not used on the private network
         volumes:
-          - ./Maroik.FileStorage/upload/:/app/upload:rw
-          - dataprotection-keys:/root/.aspnet/DataProtection-Keys
+          - ./Maroik.FileStorage/upload/:/app/upload:rw            # uploaded files persisted to the host tree (backed up hourly)
+          - dataprotection-keys:/root/.aspnet/DataProtection-Keys  # shared ring so website-encrypted tokens validate here
 
+    # ── Maroik.Worker ────────────────────────────────────────────────────────
+    # Headless background service: consumes RabbitMQ messages (e.g. sends email).
+    # No network ports at all. Needs only postgresql + rabbitmq.
     maroik.worker:
         build :
          context : .
@@ -136,10 +181,14 @@ services:
           rabbitmq:
             condition: service_healthy
 
+    # ── certbot ──────────────────────────────────────────────────────────────
+    # Let's Encrypt client using the Cloudflare DNS-01 plugin (wildcard cert).
+    # One-shot on `up`; the actual renew/issue cadence is driven from Maroik.Crontab.
+    # Writes into the same ./Maroik.SSL/conf tree that maroik.website mounts read-only.
     certbot:
         image: certbot/dns-cloudflare
         container_name: certbot
         volumes:
-          - ./Maroik.SSL/conf:/etc/letsencrypt
+          - ./Maroik.SSL/conf:/etc/letsencrypt                      # cert output (read-write for certbot)
           - ./Maroik.SSL/logs:/var/log/letsencrypt
-          - ./Maroik.SSL/cloudflare.ini:/etc/letsencrypt/cloudflare.ini:ro
+          - ./Maroik.SSL/cloudflare.ini:/etc/letsencrypt/cloudflare.ini:ro   # Cloudflare API token for DNS-01

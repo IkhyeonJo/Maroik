@@ -440,4 +440,7 @@ Maroik.FileStorage/upload/**
 # Compiled Maroik.Website/wwwroot/**/site.js IS committed (publish/Docker without Node fall back to it).
 *.tsbuildinfo
 .vitest/
+# Source maps are debug-only: produced by `npm run build:debug` / `npm run watch`, never
+# committed, stripped from release builds (tsconfig.build.json) and by Maroik.DeployOps/Deploy.sh.
+Maroik.Website/wwwroot/**/custom/**/*.js.map
 

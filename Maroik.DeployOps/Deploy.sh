@@ -1,5 +1,18 @@
 #!/bin/bash
 
+# Strip TypeScript debug artifacts from the custom client scripts before deploy.
+# site.js.map files and the trailing `//# sourceMappingURL=` comment are produced only by
+# `npm run build:debug` / `npm run watch` for local Chrome DevTools debugging and must never
+# ship. Release builds (tsconfig.build.json, used by `npm run build`, the .csproj target and
+# the Docker tsbuild stage) already omit them; this is the safety net for a checkout that was
+# built in debug mode on the box. See Maroik.Website/TypeScripts/README.md.
+WWWROOT="/home/ubuntu/Maroik/Maroik.Website/wwwroot"
+if [ -d "$WWWROOT" ]; then
+  find "$WWWROOT" -path '*/custom/*' -name '*.js.map' -type f -delete
+  find "$WWWROOT" -path '*/custom/*' -name '*.js' -type f -exec \
+    sed -i '/^\/\/# sourceMappingURL=/d' {} +
+fi
+
 # Target upload directories
 paths=(
   "/home/ubuntu/Maroik/Maroik.Website/wwwroot/upload"

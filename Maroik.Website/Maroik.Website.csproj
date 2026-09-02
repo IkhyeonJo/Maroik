@@ -28,8 +28,12 @@
 
   <ItemGroup>
     <!-- toolchain files: still visible in the tree (as None), but not web content / not published -->
-    <Content Remove="package.json;package-lock.json;tsconfig.json;vitest.config.mts;TypeScripts\**;TypeScripts.Tests\**" />
-    <None Include="package.json;package-lock.json;tsconfig.json" />   <!-- .mts already covered by the SDK None glob -->
+    <Content Remove="package.json;package-lock.json;tsconfig.json;tsconfig.build.json;vitest.config.mts;TypeScripts\**;TypeScripts.Tests\**" />
+    <None Include="package.json;package-lock.json;tsconfig.json;tsconfig.build.json" />   <!-- .mts already covered by the SDK None glob -->
+    <!-- site.js.map is published as-is when present (container debug build), and is simply
+         absent from a release build (tsconfig.build.json emits none). Do NOT <Content Remove>
+         it here: the debug and prod Docker builds share one `dotnet publish -c Release`. -->
+
   </ItemGroup>
 
   <ItemGroup>

@@ -10,19 +10,26 @@ EXPOSE 443
 # SDK image has no Node, so this dedicated stage regenerates them; the committed
 # wwwroot/**/*.js are the fallback. See Maroik.Website/TypeScripts/README.md.
 #
+# TS_SOURCEMAPS: default "false" -> `npm run build` (tsconfig.build.json): no site.js.map,
+# no sourceMappingURL comment -> nothing to strip from a production image.
+# docker-compose.debug.yml sets it "true" -> `npm run build:debug` (tsconfig.json) also
+# emits wwwroot/**/custom/**/site.js.map (with .ts inlined), so container debugging in
+# Rider/VS maps site.js back to site.ts. docker-compose.prod.yml leaves it "false".
+#
 # The jsdom test suite is OFF by default so Rider/VS "regular mode" docker-compose
 # debug builds aren't gated on a ~40s test run. CI opts in:
 #     docker build --build-arg RUN_CLIENT_TESTS=true ...
 #     docker compose -f docker-compose.yml -f docker-compose.ci.yml build
 FROM node:22-alpine AS tsbuild
 ARG RUN_CLIENT_TESTS=false
+ARG TS_SOURCEMAPS=false
 WORKDIR /ts
 COPY ["Maroik.Website/package.json", "Maroik.Website/package-lock.json", "Maroik.Website/.npmrc", "./"]
 RUN npm ci --no-audit --no-fund
-COPY ["Maroik.Website/tsconfig.json", "Maroik.Website/vitest.config.mts", "./"]
+COPY ["Maroik.Website/tsconfig.json", "Maroik.Website/tsconfig.build.json", "Maroik.Website/vitest.config.mts", "./"]
 COPY ["Maroik.Website/TypeScripts", "./TypeScripts"]
 COPY ["Maroik.Website/TypeScripts.Tests", "./TypeScripts.Tests"]
-RUN npm run build && \
+RUN if [ "$TS_SOURCEMAPS" = "true" ]; then npm run build:debug; else npm run build; fi && \
     if [ "$RUN_CLIENT_TESTS" = "true" ]; then npx vitest run; \
     else echo "skipping client-script tests (build with --build-arg RUN_CLIENT_TESTS=true to run them)"; fi
 
