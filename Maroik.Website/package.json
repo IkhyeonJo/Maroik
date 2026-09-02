@@ -13,7 +13,6 @@
   },
   "devDependencies": {
     "@fullcalendar/core": "5.5.1",
-    "@types/bootstrap": "4.6.6",
     "@types/chart.js": "2.9.41",
     "@types/jquery": "3.5.34",
     "@types/jquery.validation": "1.17.1",

@@ -25,7 +25,7 @@
     "skipLibCheck": true,
 
     // TS 7 no longer auto-includes node_modules/@types; list every ambient plugin type.
-    "types": ["jquery", "jqueryui", "jquery.validation", "bootstrap", "toastr", "summernote", "chart.js"]
+    "types": ["jquery", "jqueryui", "jquery.validation", "toastr", "summernote", "chart.js"]
   },
   "include": ["TypeScripts/**/*.ts"],
   "exclude": ["node_modules", "wwwroot", "bin", "obj", "TypeScripts.Tests"]

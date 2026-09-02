@@ -21,6 +21,22 @@ declare class MvcGrid {
 // Backed (type-only) by the @fullcalendar/core@5.5.1 dev dependency.
 declare const FullCalendar: typeof import("@fullcalendar/core");
 
-// moment 2.29.1 global build — wwwroot/{area}/plugins/moment/moment.min.js.
-// Backed (type-only) by the moment@2.29.1 dev dependency (ships its own d.ts).
+// moment 2.30.1 global build — wwwroot/{area}/plugins/moment/moment.min.js.
+// Backed (type-only) by the moment@2.30.1 dev dependency (ships its own d.ts).
 declare const moment: typeof import("moment");
+
+// Bootstrap 4 modal plugin — wwwroot/{area}/plugins/bootstrap/js/bootstrap.bundle.min.js
+// (Popper v1 bundled in). The custom scripts only ever call `$el.modal(...)`, so it's
+// typed here rather than via `@types/bootstrap`, which pulls in the deprecated
+// `popper.js@1` package for the rest of the Bootstrap 4 surface we never touch.
+interface BootstrapModalOptions {
+    backdrop?: boolean | "static";
+    keyboard?: boolean;
+    focus?: boolean;
+    show?: boolean;
+}
+
+interface JQuery<TElement = HTMLElement> {
+    modal(action?: "show" | "hide" | "toggle" | "handleUpdate" | "dispose"): this;
+    modal(options: BootstrapModalOptions): this;
+}
