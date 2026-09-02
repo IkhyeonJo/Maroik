@@ -24,10 +24,3 @@ declare const FullCalendar: typeof import("@fullcalendar/core");
 // moment 2.29.1 global build — wwwroot/{area}/plugins/moment/moment.min.js.
 // Backed (type-only) by the moment@2.29.1 dev dependency (ships its own d.ts).
 declare const moment: typeof import("moment");
-
-// Pre-existing latent bug: the FullCalendar `select` handler in admin & user
-// Calendar/*Index/site.js references a free `data` identifier (copy-paste from the
-// `eventClick` handler). At runtime this throws ReferenceError on that code path,
-// exactly as before. This ambient keeps the port byte-identical without a code
-// change or a // @ts-ignore comment; every real `data` param shadows it.
-declare const data: any;

@@ -2,14 +2,10 @@
 (function () {
     const $__RequestVerificationToken = $('input[name="__RequestVerificationToken"]');
     const maxFileSize = parseInt($('#maxAttachedFileSizeBytes').val()) || 10485760;
-    // Authoritative in CalendarReminderPolicy (server); rendered into hidden inputs by the view.
     const maxMinutesBeforeEvent = parseInt($('#maxMinutesBeforeEvent').val(), 10);
     const maxHoursBeforeEvent = parseInt($('#maxHoursBeforeEvent').val(), 10);
     const maxDaysBeforeEvent = parseInt($('#maxDaysBeforeEvent').val(), 10);
     const maxWeeksBeforeEvent = parseInt($('#maxWeeksBeforeEvent').val(), 10);
-    // "Notify at HH:MM" options for all-day reminders and the default selection, both published
-    // by the server (CalendarViewModelMapper / CalendarReminderPolicy). Was regenerated inline
-    // as Array.from({length:96}) in several places.
     const reminderTimeIntervals = JSON.parse($('#reminderTimeIntervals').val() || '[]');
     const defaultBeforeAt = $('#defaultReminderTimeOfDay').val() || '09:00';
     const $createCalendarEventDescription = $('#createCalendarEventDescription');
@@ -528,7 +524,6 @@
                                     text: calendar.name
                                 }));
                             });
-                            $createCalendarEventMyCalendar.val(data.calendarEvent.calendarId);
                         }
                     }
                 });

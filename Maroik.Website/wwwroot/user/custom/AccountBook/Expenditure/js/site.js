@@ -40,12 +40,8 @@
     const $btnEditExpenditureGridRow = $('#btnEditExpenditureGridRow');
     const $labelCreateExpenditureAmount = $('#labelCreateExpenditureAmount');
     const $labelEditExpenditureAmount = $('#labelEditExpenditureAmount');
-    // Server-published expenditure taxonomy (Expenditure.cshtml). Authoritative in
-    // ExpenditureClassPolicy; mirrored here for form UX only, the server re-validates on save.
     const expenditureSubClassMap = JSON.parse($('#expenditureSubClassMap').val() || '{}');
     const expenditureDepositAssetSubClasses = JSON.parse($('#expenditureDepositAssetSubClasses').val() || '[]');
-    // Enables/shows only the options in allowedValues (disabling+hiding the rest) and selects
-    // valueToSelect when it is allowed, otherwise the first allowed option.
     function ApplyAllowedOptions($select, allowedValues, valueToSelect) {
         $select.find('option').each(function () {
             const allowed = allowedValues.indexOf(this.value) !== -1;
@@ -58,7 +54,6 @@
             $select.val(target).change();
         }
     }
-    // The "deposit asset" field is only relevant for transfer-type sub-classes.
     function ToggleCreateExpenditureMyDepositAsset(subClassValue) {
         expenditureDepositAssetSubClasses.indexOf(subClassValue) !== -1
             ? $divCreateExpenditureMyDepositAsset.show()

@@ -1,8 +1,6 @@
 "use strict";
 (function () {
     const maxFileSize = parseInt($('#maxAttachedFileSizeBytes').val()) || 10485760;
-    // Accepted avatar image MIME types, published by Profile.cshtml (ImageUploadPolicy). The
-    // server re-validates by extension; this is the client mirror.
     const allowedImageContentTypes = (JSON.parse($('#allowedImageContentTypes').val() || '[]')).map(function (t) { return t.toLowerCase(); });
     const $formUpdateProfileAvatar = $('#formUpdateProfileAvatar');
     const $formUpdateProfilePassword = $('#formUpdateProfilePassword');

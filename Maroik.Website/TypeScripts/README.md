@@ -52,9 +52,8 @@ carries the few ReSharper-side JS/TS toggles that aren't editorconfig-backed
 | `js/mvc-grid/nonfactors-mvc-grid.js` | NonFactors.Grid.Mvc6 companion JS | not on npm → hand-written ambient in `global.d.ts` |
 | `dist/js/adminlte.js` | AdminLTE 3.1.0 | no types — the custom scripts never call the AdminLTE JS API directly |
 
-`global.d.ts` declares the four globals with no matching `@types`:
-`MvcGrid`, `FullCalendar`, `moment`, and `data` (the last covers the free `data`
-identifier noted under "Notes on two odd spots" below).
+`global.d.ts` declares three globals with no matching `@types`: `MvcGrid`, `FullCalendar`,
+and `moment`.
 
 ---
 
@@ -66,17 +65,20 @@ the emitted `site.js` is byte-for-byte the original **modulo**:
 
 * a leading `"use strict";` (from `alwaysStrict`),
 * the `(function () { … })();` wrapper,
+* **comments dropped** (`removeComments: true`) — write freely in the `.ts`; the shipped
+  `.js` carries none,
 * `tsc`'s own reformatting — it drops blank lines, splits `if (x) return;` onto two lines,
   parenthesises single arrow params `(e) =>`, strips the UTF-8 BOM, and adds ASI semicolons.
 
 None of that changes semantics. At migration time every one of the 22 files was proved
 equivalent by normalising the pre-migration original and the compiled output to a
-whitespace-/semicolon-free token stream (minus the wrapper) and diffing — all matched.
-One deliberate follow-up change has since landed: the `localizer.prevText` / `.nextText`
-casing fix (see the `localizer` row below), so those 6 files' compiled `site.js` no
-longer token-matches the pre-migration original — that divergence is intentional.
-Going forward, `tsc` (types) and `../TypeScripts.Tests` (behaviour) are the guards; a
-plain `git diff wwwroot/**/site.js` shows exactly what a `.ts` edit changed in the output.
+whitespace-/semicolon-/comment-free token stream (minus the wrapper) and diffing — all matched.
+Two deliberate follow-up changes have since landed (see "Deliberate post-port changes" below):
+the `localizer.prevText` / `.nextText` casing fix, and removal of the dead `data.calendarEvent.calendarId`
+line from the two Calendar `select` handlers — so those files' compiled `site.js` no longer
+token-matches the pre-migration original, which is intentional. Going forward, `tsc` (types)
+and `../TypeScripts.Tests` (behaviour) are the guards; a plain `git diff wwwroot/**/site.js`
+shows exactly what a `.ts` edit changed in the output.
 
 ### Why an IIFE and no `Common/` module
 
@@ -97,26 +99,37 @@ per file (just typed); there is deliberately no shared module.
 | `$(this).attr('x')` assigned to a `string` / before `.includes()` | `$(this).attr('x')!` | `.attr()` is `string \| undefined`; the attribute is always present |
 | `$.ajax({ data: null })` | `data: null as any` | jQuery's `AjaxSettings.data` excludes `null` |
 | `toastr.error(msg)` where `msg?: string` | `toastr.error(msg!)` (inside the guard where it's set) | `toastr.error`'s message param is non-optional |
-| `const localizer = { … 44 × $(sel).val() }` | `const localizer: any = { … }` | one cast instead of 44 errors. **Post-port fix:** `$.datepicker.setDefaults` read `localizer.prevText` / `.nextText`, but the object keys are `PrevText` / `NextText` — the reads were corrected to the right casing in the 6 files that call `setDefaults` (`admin/Calendar/AdminIndex`, `user/Calendar/UserIndex`, `user/Notice/FixedIncome`, `user/Notice/FixedExpenditure`, `user/AccountBook/Income`, `user/AccountBook/Expenditure`). |
+| `const localizer = { … 44 × $(sel).val() }` | `const localizer: any = { … }` | one cast instead of 44 errors (see the casing fix under "Deliberate post-port changes"). |
 | `.datepicker({ … beforeShow/onSelect … })` instance call | `.datepicker({ … } as any)` + `onSelect: function (this: any)` | `@types/jqueryui` demands the callbacks return `DatepickerOptions` |
 | `new FullCalendar.Calendar(document.getElementById('calendar'), {…})` | `… getElementById('calendar')!, {…} as any` + `select/eventClick: function (arg: any)` | null-guard + `CalendarOptions` friction on `themeSystem` etc. |
 | `$.datepicker._clearDate(x)` | `($.datepicker as any)._clearDate(x)` | undocumented method |
 | `let x;` (no initialiser) / `let arr = [];` reused | `let x: any;` / `let arr: any[] = [];` | `noImplicitAny` on evolving types |
 | `htmlDoc.querySelectorAll('img[data-file]')` then `imgTag.src` | `.querySelectorAll<HTMLImageElement>('img[data-file]')` | `Element` has no `.src` |
 
-### Notes on two odd spots
+### Deliberate post-port changes
 
-**The `localizer.prevText` / `.nextText` casing** — the `localizer` object defines
-`PrevText` / `NextText` but `$.datepicker.setDefaults` read them with a lower-case first
-letter. Corrected to the matching casing in the 6 files that call `setDefaults` (listed in
-the `localizer` row above). This is the one deliberate behaviour change on top of the port.
+Two fixes on top of the byte-faithful port. Both are DOM/widget glue, not business rules,
+so they stay here and not in `Maroik.Core.*`. Every other `.ts` still compiles to its
+pre-migration `site.js` modulo the formatting listed above.
 
-**The free `data` identifier** — the FullCalendar `select` handler in
-`admin/Calendar/AdminIndex` and `user/Calendar/UserIndex` reads a free `data` identifier,
-a copy-paste from the sibling `eventClick` handler. This is **not** treated as a bug and is
-left exactly as the original source has it; the migration changes nothing on that path.
-`global.d.ts` carries `declare const data: any;` so `tsc` accepts the reference (an ambient
-declaration emits nothing, and every real `data` parameter shadows it).
+1. **`localizer.prevText` / `.nextText` casing** — the `localizer` object defines
+   `PrevText` / `NextText`, but `$.datepicker.setDefaults` read them with a lower-case
+   first letter. Corrected to the matching casing in the 6 files that call `setDefaults`
+   (`admin/Calendar/AdminIndex`, `user/Calendar/UserIndex`, `user/Notice/FixedIncome`,
+   `user/Notice/FixedExpenditure`, `user/AccountBook/Income`, `user/AccountBook/Expenditure`).
+
+2. **Dead `data.calendarEvent.calendarId` line removed** from the FullCalendar `select`
+   handler in `admin/Calendar/AdminIndex` and `user/Calendar/UserIndex`. The line
+   `$createCalendarEventMyCalendar.val(data.calendarEvent.calendarId)` was copy-pasted
+   from the sibling `eventClick` (edit) handler, where `data` is the AJAX `success`
+   parameter. In `select` that callback is named `response` (the endpoint,
+   `CalendarController.GetCalendars`, returns `{ result: true, calendars }` — no
+   `calendarEvent`), and no enclosing scope or global binds `data`, so the line threw
+   `ReferenceError` and aborted the rest of the synchronous handler (the modal never
+   opened on drag-select). Removed; a brand-new event has no calendar to pre-select and
+   the `<select>` is freshly repopulated. The `eventClick` uses of `data.calendarEvent.*`
+   are untouched — `data` is a real parameter there. With no free `data` left,
+   `declare const data: any;` was dropped from `global.d.ts`.
 
 ---
 

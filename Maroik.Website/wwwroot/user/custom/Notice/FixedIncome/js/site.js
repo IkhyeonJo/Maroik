@@ -35,14 +35,9 @@
     const $btnConfirmDeleteFixedIncome = $('#btnConfirmDeleteFixedIncome');
     const $btnExportExcelFixedIncome = $('#btnExportExcelFixedIncome');
     const $btnDeleteFixedIncome = $('#btnDeleteFixedIncome');
-    // Server-published rules (FixedIncome.cshtml). Authoritative in IncomeClassPolicy /
-    // FixedSchedulePolicy; mirrored here for form UX only, the server re-validates on save.
     const incomeSubClassMap = JSON.parse($('#incomeSubClassMap').val() || '{}');
     const maxDepositDayByMonth = JSON.parse($('#maxDepositDayByMonth').val() || '{}');
-    // Far-future stand-in for "no maturity date" (must stay in sync with the "No MaturityDate" button).
     const NO_MATURITY_DATE = new Date(9999, 11, 31);
-    // Enables/shows only the options in allowedValues (disabling+hiding the rest) and selects
-    // valueToSelect when it is allowed, otherwise the first allowed option.
     function ApplyAllowedOptions($select, allowedValues, valueToSelect) {
         $select.find('option').each(function () {
             const allowed = allowedValues.indexOf(this.value) !== -1;
@@ -55,7 +50,6 @@
             $select.val(target).change();
         }
     }
-    // The valid deposit-day option values ("1".."maxDay") for the given deposit month.
     function DepositDayValues(monthValue) {
         const maxDay = parseInt(maxDepositDayByMonth[String(monthValue)], 10) || 31;
         const values = [];

@@ -20,7 +20,7 @@
     "noFallthroughCasesInSwitch": true,
     "forceConsistentCasingInFileNames": true,
 
-    "removeComments": false,
+    "removeComments": true,
     "newLine": "lf",
     "skipLibCheck": true,
 

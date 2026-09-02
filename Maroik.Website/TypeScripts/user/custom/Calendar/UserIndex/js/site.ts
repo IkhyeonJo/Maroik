@@ -558,8 +558,6 @@
                                     text: calendar.name
                                 }));
                             });
-
-                            $createCalendarEventMyCalendar.val(data.calendarEvent.calendarId);
                         }
                     }
                 });

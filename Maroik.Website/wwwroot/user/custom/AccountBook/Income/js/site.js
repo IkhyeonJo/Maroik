@@ -36,12 +36,7 @@
     const $btnConfirmDeleteIncome = $('#btnConfirmDeleteIncome');
     const $btnExportExcelIncome = $('#btnExportExcelIncome');
     const $btnDeleteIncome = $('#btnDeleteIncome');
-    // Income main-class -> allowed sub-classes. Authoritative in IncomeClassPolicy (server),
-    // serialized into the page by Income.cshtml. Mirrored here for form UX only; the server
-    // re-validates every combination on save.
     const incomeSubClassMap = JSON.parse($('#incomeSubClassMap').val() || '{}');
-    // Enables/shows only the options in allowedValues (disabling+hiding the rest) and selects
-    // valueToSelect when it is allowed, otherwise the first allowed option.
     function ApplyAllowedOptions($select, allowedValues, valueToSelect) {
         $select.find('option').each(function () {
             const allowed = allowedValues.indexOf(this.value) !== -1;

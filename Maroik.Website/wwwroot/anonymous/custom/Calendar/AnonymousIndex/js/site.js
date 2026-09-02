@@ -41,16 +41,10 @@
     const $viewCalendarEventTaskDialogModal = $('#viewCalendarEventTaskDialogModal');
     const $otherCalendarEventOutputViewModels = $('#otherCalendarEventOutputViewModels');
     const $otherCalendars = $('#otherCalendars');
-    // Reminder lead-time bounds + time-of-day granularity — authoritative in CalendarReminderPolicy,
-    // serialized by AnonymousIndex.cshtml. This page only displays reminders, so these feed the
-    // (disabled) inputs' max attribute.
     const maxMinutesBeforeEvent = parseInt($('#maxMinutesBeforeEvent').val(), 10) || 40320;
     const maxHoursBeforeEvent = parseInt($('#maxHoursBeforeEvent').val(), 10) || 672;
     const maxDaysBeforeEvent = parseInt($('#maxDaysBeforeEvent').val(), 10) || 28;
     const maxWeeksBeforeEvent = parseInt($('#maxWeeksBeforeEvent').val(), 10) || 4;
-    // "Notify at HH:MM" options for all-day reminders and the default selection, both published
-    // by the server (CalendarViewModelMapper / CalendarReminderPolicy). Was regenerated inline
-    // as Array.from({length:96}) in several places.
     const reminderTimeIntervals = JSON.parse($('#reminderTimeIntervals').val() || '[]');
     const defaultBeforeAt = $('#defaultReminderTimeOfDay').val() || '09:00';
     function base64ToBlob(base64, mime) {
