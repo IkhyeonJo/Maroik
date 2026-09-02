@@ -3,9 +3,14 @@
 ## Architecture: DDD + Clean Architecture
 
 Business logic lives **only** in `.cs` under `Maroik.Core.*`, never in
-`.cshtml` views or `wwwroot/**/custom/**/site.js`. Views render a ready-made
-view model; `site.js` does DOM wiring, widgets, and AJAX transport only.
+`.cshtml` views or the custom client scripts. Views render a ready-made
+view model; the client scripts do DOM wiring, widgets, and AJAX transport only.
 Client-side rule checks are UX mirrors — the server always re-validates.
+
+The custom client scripts are authored in **TypeScript** at
+`Maroik.Website/TypeScripts/**/custom/**/site.ts` and compiled 1:1 by `tsc` to
+`Maroik.Website/wwwroot/**/custom/**/site.js` — **that `.js` is generated; edit the
+`.ts`** (see `Maroik.Website/TypeScripts/README.md`).
 
 Layer map (dependency direction: Website → Service → Domain; Domain depends on nothing):
 
