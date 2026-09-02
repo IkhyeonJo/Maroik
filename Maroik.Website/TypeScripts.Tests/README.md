@@ -1,5 +1,35 @@
 # TypeScripts.Tests/ — client-script tests
 
+## Prerequisites — install Node.js first
+
+This suite has **no `.csproj`** and is **not** its own npm package. Vitest, jsdom,
+jQuery and the `typescript` compiler are npm **devDependencies of
+`Maroik.Website/package.json`**, and the tests run from **`Maroik.Website/`** via
+that file's `scripts`. Nothing here runs without Node on the machine.
+
+1. **Install Node.js** — use **v22.x** (matches the `node:22-alpine` Docker
+   `tsbuild` stage; v20+ works). `npm` ships with it.
+   * nvm: `nvm install 22 && nvm use 22`
+   * or a package manager / the installer from <https://nodejs.org>
+   * verify: `node -v` (≥ v20) and `npm -v` both print a version.
+2. From **`Maroik.Website/`** (the folder with `package.json`) — the **one**
+   `npm ci` covers both `TypeScripts/` and this test tree:
+
+   ```bash
+   npm ci            # once after checkout — creates node_modules/ (vitest, jsdom, tsc)
+   npm test          # runs `npm run build` (pretest) then `vitest run`
+   npm run test:watch
+   npx vitest run TypeScripts.Tests/user/custom/AccountBook   # a subset
+   ```
+
+`TypeScripts.Tests/tsconfig.json` is standalone for **editor / `tsc --noEmit`
+type-checking only** — it emits nothing and needs no separate install.
+
+Without `node_modules/vitest`, `dotnet build` skips the suite (see **Running →
+In a build** below) rather than failing, so a missing Node install is silent.
+
+---
+
 Vitest + jsdom tests for the custom client scripts. They run the **compiled**
 `wwwroot/{role}/custom/{Feature}/{Page}/js/site.js` (not the `.ts`) inside a jsdom
 window against a minimal DOM fixture, so they exercise the exact script that ships.

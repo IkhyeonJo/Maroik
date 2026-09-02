@@ -1,5 +1,37 @@
 # TypeScripts/ — custom client scripts
 
+## Prerequisites — install Node.js first
+
+`tsc` is **not** a system-wide tool here. The compiler (`typescript@7.0.2`, the
+native build), plus every `@types/*` package, are npm **devDependencies** of
+`Maroik.Website/package.json` and only run through its `scripts`. With no Node
+on the machine, nothing in this tree compiles — that is the whole reason a fresh
+checkout "doesn't work".
+
+1. **Install Node.js** — use **v22.x** (matches the `node:22-alpine` Docker
+   `tsbuild` stage; v20+ works). `npm` ships with it.
+   * nvm: `nvm install 22 && nvm use 22`
+   * or a package manager / the installer from <https://nodejs.org>
+   * verify: `node -v` (≥ v20) and `npm -v` both print a version.
+2. From **`Maroik.Website/`** (the folder with `package.json`):
+
+   ```bash
+   npm ci            # once after checkout — creates node_modules/ (tsc + @types/*)
+   npm run build     # tsc -p tsconfig.json  → writes wwwroot/**/site.js
+   npm run check     # tsc --noEmit  (type-check only)
+   npm run watch     # rebuild on save
+   ```
+
+`TypeScripts.Tests/` is **not** a separate npm package — it shares this same
+`package.json` / `node_modules/`, so the one `npm ci` above also sets up the
+tests (`npm test`, see `../TypeScripts.Tests/README.md`).
+
+Without `node_modules/`, `dotnet build` silently skips the TypeScript compile and
+falls back to the committed `wwwroot/**/site.js` (see **Build integration** below),
+so a missing Node install fails quietly rather than loudly.
+
+---
+
 The 22 hand-written client scripts under `wwwroot/{admin,anonymous,user}/custom/**/js/site.js`
 are authored here as TypeScript and compiled back to the exact same paths.
 
