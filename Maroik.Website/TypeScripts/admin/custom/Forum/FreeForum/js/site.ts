@@ -1,4 +1,26 @@
+/**
+ * Script for the **admin** Free Forum page (`Views/Forum/FreeForum.cshtml`).
+ * One `.cshtml` renders several sub-views by a `method` query-string param
+ * (list / write / edit / detail); this script wires whichever controls are on
+ * the page.
+ *
+ * Features:
+ *   • Rich-text post body via summernote, including image upload (each pasted
+ *     image is POSTed, returned as base64, and re-inserted as an object URL).
+ *   • Attachment upload with a client-side size check; the chosen `File` is
+ *     stashed and sent with the form as multipart `FormData`.
+ *   • Write / edit / delete board, write / delete comment — all AJAX, each
+ *     redirecting on success. Server rule failures come back as
+ *     `{ result:false, error }` and become `toastr.error`.
+ *   • Search, "back to list", inline-image rehydration and attachment download,
+ *     shared with the anonymous version of this page.
+ *
+ * IIFE-wrapped, no `import` / `export`. Client checks are UX mirrors; the
+ * controller re-validates everything.
+ */
 (function () {
+    // Cached element references. Many of these exist only on one sub-view, so
+    // their `.length` is checked before use.
     const $writeBoardContent = $('#writeBoardContent');
     const $editBoardContent = $('#editBoardContent');
     const $confirmDeleteBoardDialogModal = $('#confirmDeleteBoardDialogModal');
@@ -30,9 +52,11 @@
     const $aEditBoardAttachedFile = $('#aEditBoardAttachedFile');
     const $aFreeForumDeleteComment = $('.aFreeForumDeleteComment');
     const $__RequestVerificationToken = $('input[name="__RequestVerificationToken"]');
+    // Attachment size limit in bytes, published by the view; 10 MB fallback.
     const maxFileSize = parseInt($('#maxAttachedFileSizeBytes').val() as string) || 10485760;
     const boardHeight = 300;
 
+    /** base64 -> Blob, for turning server-embedded image/attachment payloads into object URLs. */
     function base64ToBlob(base64: string, mime: string) {
         const byteCharacters = atob(base64);
         const byteNumbers = new Array(byteCharacters.length);
@@ -43,10 +67,14 @@
         return new Blob([byteArray], { type: mime });
     }
 
+    // Only one localized value is needed here — the summernote UI language.
+    // `any` avoids typing a one-off bag of `.val()` strings.
     const localizer: any = {
         IETFLanguageTag: $('#localizerIETFLanguageTag').val()
     };
 
+    // Rich-text editor for the "write" body. `onImageUpload` fires for every
+    // image the user drops/pastes; each is uploaded and re-inserted below.
     $writeBoardContent.summernote({
         height: boardHeight,
         lang: localizer.IETFLanguageTag,
@@ -59,6 +87,7 @@
         }
     });
 
+    // Rich-text editor for the "edit" body — same wiring.
     $editBoardContent.summernote({
         height: boardHeight,
         lang: localizer.IETFLanguageTag,
@@ -71,9 +100,15 @@
         }
     });
 
+    // The attachment chosen in each form, held until the form is submitted.
     let writeUploadedFile: any;
     let editUploadedFile: any;
 
+    /**
+     * `change` handler for the write-form attachment input: reject the file (and
+     * clear the input) if it exceeds `maxFileSize`, otherwise stash it in
+     * `writeUploadedFile` for `WriteBoard` to send.
+     */
     function WriteUploadFile(obj: HTMLInputElement, errorMessage?: string) {
         if (obj.files![0].size > maxFileSize) {
             alert(errorMessage);
@@ -85,6 +120,7 @@
         }
     }
 
+    /** Same as `WriteUploadFile` for the edit form. */
     function EditUploadFile(obj: HTMLInputElement, errorMessage?: string) {
         if (obj.files![0].size > maxFileSize) {
             alert(errorMessage);
@@ -96,11 +132,13 @@
         }
     }
 
+    /** Reloads the list filtered by the chosen search type + text. */
     function SearchBoard() {
         window.location.href = "/Forum/FreeForum?searchType=" + encodeURIComponent($searchType.val() as string) + "&searchText=" + encodeURIComponent($btnFreeForumSearchText.val() as string);
     }
 
 
+    /** Write form: show the `#loading` overlay only if the form validates. */
     function ShowWriteBoardLoading() {
         if (!$formWriteBoard.valid()) {
             $loading.hide();
@@ -112,6 +150,7 @@
         }
     }
 
+    /** Edit form: show the `#loading` overlay only if the form validates. */
     function ShowEditBoardLoading() {
         if (!$formEditBoard.valid()) {
             $loading.hide();
@@ -123,6 +162,13 @@
         }
     }
 
+    /**
+     * summernote `onImageUpload` for the write editor: POST the raw image file,
+     * get `{ file: { fileContents(base64), contentType }, filePath }` back, then
+     * insert it into the editor as a size-capped `<img>` backed by an object URL
+     * (revoked once the browser has decoded it). `filePath` is stored as `alt`
+     * so the server can resolve the real stored image on save.
+     */
     function WriteUploadImageFile(file: File) {
 
         let formData = new FormData();
@@ -163,6 +209,7 @@
         });
     }
 
+    /** Same as `WriteUploadImageFile` for the edit editor. */
     function EditUploadImageFile(file: File) {
 
         let formData = new FormData();
@@ -203,6 +250,14 @@
         });
     }
 
+    /**
+     * Submits a new post. Validates, then builds multipart `FormData` (title,
+     * body HTML, the two flags, and the stashed attachment) and POSTs it. On
+     * success alerts and returns to the list; on failure toasts and hides the
+     * overlay. The `as any` casts are because `FormData.append` wants
+     * `string | Blob` and `.val()` / booleans are wider. Returns `false` so the
+     * form never navigates on its own.
+     */
     function WriteBoard() {
 
         if (!$formWriteBoard.valid()) {
@@ -213,7 +268,7 @@
         let content = $writeBoardContent.val();
         let noticed = $writeBoardNoticed.is(':checked');
         let locked = $writeBoardLocked.is(':checked');
-    
+
         let formData = new FormData();
         formData.append('Title', title as any);
         formData.append('Content', content as any);
@@ -244,6 +299,14 @@
         return false;
     }
 
+    /**
+     * Submits an edit to an existing post. Same multipart shape as `WriteBoard`
+     * plus the board `Id`; on success returns to that post's detail view at the
+     * caller's page.
+     *
+     * @param editBoardId    id of the post being edited (from a `data-*` attribute).
+     * @param editCurrentPage list page to return to.
+     */
     function EditBoard(editBoardId?: string, editCurrentPage?: string) {
 
         if (!$formEditBoard.valid()) {
@@ -285,6 +348,7 @@
         return false;
     }
 
+    /** Opens the "delete this post?" confirm modal (static backdrop, no Esc). */
     function ConfirmDeleteBoard() {
         $confirmDeleteBoardDialogModal.modal({
             keyboard: false,
@@ -295,6 +359,11 @@
         $confirmDeleteBoardDialogModal.modal('show');
     }
 
+    /**
+     * Confirmed post delete: verify the post still exists (`IsBoardExists`), then
+     * POST `DeleteBoard` with the server's current id. Nested so a stale id in
+     * the markup can't be used.
+     */
     function DeleteBoard(detailBoardId?: string) {
 
         $.ajax({
@@ -337,6 +406,11 @@
         });
     }
 
+    /**
+     * Posts a comment on the detail view. The non-empty check is a UX mirror
+     * (the server rejects blank comments too); on success reloads the detail
+     * view so the new comment appears.
+     */
     function WriteFreeComment(detailBoardId?: string, detailCurrentPage?: string, errorMessage?: string) {
 
         let content = $writeFreeCommentContent.val();
@@ -371,6 +445,7 @@
 
         return false;
     }
+    /** Deletes one comment by id, then reloads the detail view. */
     function DeleteComment(commentId?: string, boardId?: string, page?: string) {
         $.ajax({
             url: '/Forum/DeleteComment' + '?id=' + commentId,
@@ -389,6 +464,10 @@
             }
         });
     }
+
+    // --- Button / form wiring -------------------------------------------
+    // Every handler is cleared with `.off` first so a re-run cannot double-bind.
+    // Buttons that just navigate carry their target in a `data-*` attribute.
 
     $btnFreeForumShowWriteBoardLoading.off('click').on('click', function () {
         return ShowWriteBoardLoading();
@@ -422,6 +501,7 @@
         DeleteBoard($(this).attr('data-boardId'));
     });
 
+    // Enter in the search box runs the search.
     $btnFreeForumSearchText.off('keypress').on('keypress', function (event) {
         if (event.key === 'Enter') {
             SearchBoard();
@@ -440,6 +520,7 @@
         return EditBoard($(this).attr('data-editBoardId'), $(this).attr('data-editCurrentPage'));
     });
 
+    // Attachment inputs: validate + stash on selection.
     $writeUploadedFile.off('change').on('change', function (this: HTMLInputElement) {
         return WriteUploadFile(this, $(this).attr('data-errorMessage'));
     });
@@ -448,12 +529,16 @@
         return EditUploadFile(this, $(this).attr('data-errorMessage'));
     });
 
+    // Per-comment delete links (a NodeList, hence the class selector).
     $aFreeForumDeleteComment.off('click').on('click', function (event) {
         event.preventDefault();
         DeleteComment($(this).attr('data-commentId'), $(this).attr('data-detailBoardId'), $(this).attr('data-detailCurrentPage'));
     });
 
+    // --- On ready: rehydrate embedded images + wire attachment download ---
     $(function () {
+        // Detail view: the body is rendered hidden with base64 `data-file`
+        // images; swap each to an object URL in a detached document, then reveal.
         if ($detailBoardContent.length > 0 && $detailBoardContent.is(':hidden')) {
             const parser = new DOMParser();
             const htmlDoc = parser.parseFromString($detailBoardContent.html(), 'text/html');
@@ -486,6 +571,8 @@
             $detailBoardContent.html(updatedHtml);
             $detailBoardContent.show();
         } else if ($editBoardContent.length > 0 && $divEditBoardContent.is(':hidden')) {
+            // Edit view: same rehydration, but the HTML lives inside summernote
+            // (`summernote('code')` gets/sets it) rather than a plain element.
             const parser = new DOMParser();
             const htmlDoc = parser.parseFromString($editBoardContent.summernote('code'), 'text/html');
 
@@ -518,6 +605,8 @@
             $divEditBoardContent.show();
         }
 
+        // Attachment download link (detail or edit view): base64 -> Blob -> a
+        // throwaway `<a download>` that is clicked and cleaned up.
         if ($aDetailBoardAttachedFile.length > 0) {
             $aDetailBoardAttachedFile.off('click').on('click', function (event) {
                 event.preventDefault();

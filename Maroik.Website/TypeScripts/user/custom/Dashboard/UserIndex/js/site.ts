@@ -1,4 +1,31 @@
+/**
+ * Script for the user **Dashboard** (`Views/Dashboard/UserIndex.cshtml`).
+ *
+ * It does two things:
+ *
+ *   1. Period / currency pickers — changing the year, month, or monetary-unit
+ *      select reloads the dashboard for that period (the monetary-unit change
+ *      first POSTs the new default so the server remembers it).
+ *   2. Draws **10 Chart.js doughnut charts** — five spending/income categories,
+ *      each shown for the whole year and for the selected month:
+ *
+ *        regular income · irregular income · regular savings ·
+ *        non-consumer spending · consumer spending          × { Year, YearMonth }
+ *
+ * All the numbers are computed on the server and rendered into hidden inputs
+ * (`#<seriesName>Year` for the slice value, `#percentageOf<seriesName>Year` for
+ * its share). This script only reads those inputs and plots them — no maths
+ * beyond `Number(...)` and `toLocaleString()` for display.
+ *
+ * Every chart block has the identical shape (see the first one, which is fully
+ * commented); the rest carry only a one-line marker. `donutChartCanvas* /
+ * donutData* / donutOptions*` are typed `any` because Chart.js 2's config
+ * objects and the `getContext('2d')` result are awkward to type precisely and
+ * gain nothing here. IIFE-wrapped, no `import` / `export`.
+ */
 (function () {
+    // Localized category names, read from hidden inputs the view rendered from
+    // the resource files. Used as the chart slice labels below.
     const localizer: any = {
         LaborIncome: $('#localizerLaborIncome').val(),
         BusinessIncome: $('#localizerBusinessIncome').val(),
@@ -28,6 +55,8 @@
         UnknownExpenditure: $('#localizerUnknownExpenditure').val()
     };
 
+    // --- Period / currency pickers -------------------------------------
+    // Year / month changes just reload the dashboard for the new period.
     $('#year').off('change').on('change', function () {
         window.location.href = "/Dashboard/UserIndex?year=" + $('#year').find(":selected").val() + "&month=" + $('#month').find(":selected").val();
     });
@@ -36,6 +65,8 @@
         window.location.href = "/Dashboard/UserIndex?year=" + $('#year').find(":selected").val() + "&month=" + $('#month').find(":selected").val();
     });
 
+    // Monetary-unit change first persists the choice, then reloads. Both `if`
+    // branches reload, so a failed save just re-renders in the old currency.
     $('#monetaryUnit').off('change').on('change', function () {
         $.ajax({
             url: '/Dashboard/UserUpdateDefaultMonetary',
@@ -57,7 +88,10 @@
         });
     });
 
+    // --- Charts (drawn once the DOM is ready) -------------------------
     $(function () {
+        // ===== Chart 1/10: regular income, whole year =====
+        // 1. Read each slice's value from its hidden input.
         let regularIncomeLaborIncomeYear = Number($("#regularIncomeLaborIncomeYear").val());
         let regularIncomeBusinessIncomeYear = Number($("#regularIncomeBusinessIncomeYear").val());
         let regularIncomePensionIncomeYear = Number($("#regularIncomePensionIncomeYear").val());
@@ -65,6 +99,8 @@
         let regularIncomeRentalIncomeYear = Number($("#regularIncomeRentalIncomeYear").val());
         let regularIncomeOtherIncomeYear = Number($("#regularIncomeOtherIncomeYear").val());
 
+        // 2. Grab the <canvas> 2D context and build the Chart.js data object
+        //    (localized labels + one dataset of the values, with fixed colours).
         let donutChartCanvasRegularIncomeYear: any = ($('#regularIncomeYear').get(0) as HTMLCanvasElement).getContext('2d')
         let donutDataRegularIncomeYear: any = {
             labels: [
@@ -82,7 +118,10 @@
                 }
             ]
         }
-    
+
+        // 3. Options: white legend text; the tooltip `label` callback formats
+        //    each slice as "Label: 1,234 (12.34%)" using the server-supplied
+        //    percentage for that slice index.
         let donutOptionsRegularIncomeYear: any = {
             maintainAspectRatio: false,
             responsive: true,
@@ -114,15 +153,17 @@
             }
         }
 
+        // 4. Draw it.
         new Chart(donutChartCanvasRegularIncomeYear, {
             type: 'doughnut',
             data: donutDataRegularIncomeYear,
             options: donutOptionsRegularIncomeYear
         })
 
+        // ===== Chart 2/10: irregular income, whole year (same shape as chart 1) =====
         let irregularIncomeLaborIncomeYear = Number($("#irregularIncomeLaborIncomeYear").val());
         let irregularIncomeOtherIncomeYear = Number($("#irregularIncomeOtherIncomeYear").val());
-    
+
         let donutChartCanvasIrregularIncomeYear: any = ($('#irregularIncomeYear').get(0) as HTMLCanvasElement).getContext('2d')
         let donutDataIrregularIncomeYear: any = {
             labels: [
@@ -136,7 +177,7 @@
                 }
             ]
         }
-    
+
         let donutOptionsIrregularIncomeYear: any = {
             maintainAspectRatio: false,
             responsive: true,
@@ -172,6 +213,7 @@
 
 
 
+        // ===== Chart 3/10: regular savings, whole year (same shape as chart 1) =====
         let regularSavingsDepositYear = Number($("#regularSavingsDepositYear").val());
         let regularSavingsInvestmentYear = Number($("#regularSavingsInvestmentYear").val());
 
@@ -223,6 +265,7 @@
 
 
 
+        // ===== Chart 4/10: non-consumer spending, whole year (same shape as chart 1) =====
         let nonConsumerSpendingPublicPensionYear = Number($("#nonConsumerSpendingPublicPensionYear").val());
         let nonConsumerSpendingDebtRepaymentYear = Number($("#nonConsumerSpendingDebtRepaymentYear").val());
         let nonConsumerSpendingTaxYear = Number($("#nonConsumerSpendingTaxYear").val());
@@ -286,6 +329,7 @@
 
 
 
+        // ===== Chart 5/10: consumer spending, whole year (same shape as chart 1) =====
         let consumerSpendingMealOrEatOutExpensesYear = Number($("#consumerSpendingMealOrEatOutExpensesYear").val());
         let consumerSpendingHousingOrSuppliesCostYear = Number($("#consumerSpendingHousingOrSuppliesCostYear").val());
         let consumerSpendingEducationExpensesYear = Number($("#consumerSpendingEducationExpensesYear").val());
@@ -364,8 +408,9 @@
             data: donutDataConsumerSpendingYear,
             options: donutOptionsConsumerSpendingYear
         })
-    
 
+
+        // ===== Chart 6/10: regular income, selected month (same shape as chart 1) =====
         let regularIncomeLaborIncomeYearMonth = Number($("#regularIncomeLaborIncomeYearMonth").val());
         let regularIncomeBusinessIncomeYearMonth = Number($("#regularIncomeBusinessIncomeYearMonth").val());
         let regularIncomePensionIncomeYearMonth = Number($("#regularIncomePensionIncomeYearMonth").val());
@@ -428,6 +473,7 @@
             options: donutOptionsRegularIncomeYearMonth
         })
 
+        // ===== Chart 7/10: irregular income, selected month (same shape as chart 1) =====
         let irregularIncomeLaborIncomeYearMonth = Number($("#irregularIncomeLaborIncomeYearMonth").val());
         let irregularIncomeOtherIncomeYearMonth = Number($("#irregularIncomeOtherIncomeYearMonth").val());
 
@@ -480,6 +526,7 @@
 
 
 
+        // ===== Chart 8/10: regular savings, selected month (same shape as chart 1) =====
         let regularSavingsDepositYearMonth = Number($("#regularSavingsDepositYearMonth").val());
         let regularSavingsInvestmentYearMonth = Number($("#regularSavingsInvestmentYearMonth").val());
 
@@ -531,6 +578,7 @@
 
 
 
+        // ===== Chart 9/10: non-consumer spending, selected month (same shape as chart 1) =====
         let nonConsumerSpendingPublicPensionYearMonth = Number($("#nonConsumerSpendingPublicPensionYearMonth").val());
         let nonConsumerSpendingDebtRepaymentYearMonth = Number($("#nonConsumerSpendingDebtRepaymentYearMonth").val());
         let nonConsumerSpendingTaxYearMonth = Number($("#nonConsumerSpendingTaxYearMonth").val());
@@ -594,6 +642,7 @@
 
 
 
+        // ===== Chart 10/10: consumer spending, selected month (same shape as chart 1) =====
         let consumerSpendingMealOrEatOutExpensesYearMonth = Number($("#consumerSpendingMealOrEatOutExpensesYearMonth").val());
         let consumerSpendingHousingOrSuppliesCostYearMonth = Number($("#consumerSpendingHousingOrSuppliesCostYearMonth").val());
         let consumerSpendingEducationExpensesYearMonth = Number($("#consumerSpendingEducationExpensesYearMonth").val());

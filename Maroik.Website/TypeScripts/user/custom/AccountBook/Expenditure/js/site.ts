@@ -1,4 +1,23 @@
+/**
+ * Script for the account book **Expenditure** page
+ * (`Views/AccountBook/Expenditure.cshtml`). A NonFactors MVC.Grid list with
+ * create / edit / delete modals and Excel export — the standard grid-CRUD
+ * pattern (see `AccountBook/Asset`) plus:
+ *
+ *   • A localized jQuery-UI datepicker on the "date" fields.
+ *   • A dependent `<select>`: choosing a main class narrows the sub-class
+ *     options to those `ExpenditureClassPolicy` allows.
+ *   • A "deposit asset" block that is only shown for transfer-type sub-classes
+ *     (`expenditureDepositAssetSubClasses`).
+ *   • The amount field's label follows the chosen payment method.
+ *
+ * Client checks are UX mirrors; the controller re-validates every field and
+ * class combination on save. IIFE-wrapped, no `import` / `export`.
+ */
 (function () {
+    // Cached references: tab containers, grid search box, the deposit-asset
+    // wrapper divs, every field of both modals, the amount labels, and the
+    // anti-forgery input.
     const $createExpenditureDate = $('#createExpenditureDate');
     const $createExpenditureTabs = $('#createExpenditureTabs');
     const $editExpenditureTabs = $('#editExpenditureTabs');
@@ -67,12 +86,17 @@
             : $divCreateExpenditureMyDepositAsset.hide();
     }
 
+    /** Same as `ToggleCreateExpenditureMyDepositAsset` for the edit modal. */
     function ToggleEditExpenditureMyDepositAsset(subClassValue: string) {
         expenditureDepositAssetSubClasses.indexOf(subClassValue) !== -1
             ? $divEditExpenditureMyDepositAsset.show()
             : $divEditExpenditureMyDepositAsset.hide();
     }
 
+    // Localized month / day names for the datepicker, from hidden inputs the view
+    // rendered from the resource files. Typed `any` so the ~40 `.val()` unions
+    // don't each need a cast. `PrevText` / `NextText` are read PascalCase to
+    // match the object keys.
     const localizer: any = {
         PrevText: $('#localizerPrevText').val(),
         NextText: $('#localizerNextText').val(),
@@ -123,6 +147,7 @@
         YearSuffix: $('#localizerYearSuffix').val()
     };
 
+    // Apply the localized names to every datepicker on the page.
     $.datepicker.setDefaults({
         dateFormat: 'yy-mm-dd',
         prevText: localizer.PrevText,
@@ -136,6 +161,9 @@
         yearSuffix: localizer.YearSuffix
     });
 
+    // Today's date parts, split from the create-form date field's default value.
+    // (Declared here; `currentMonth` / `currentDay` are unused elsewhere but kept
+    // as-is from the original.)
     const currentYear = ($createExpenditureDate.val() as string).split('-')[0];
     const currentMonth = ($createExpenditureDate.val() as string).split('-')[1];
     const currentDay = ($createExpenditureDate.val() as string).split('-')[2];
@@ -143,6 +171,9 @@
     $(function () {
         $createExpenditureTabs.tabs();
         $editExpenditureTabs.tabs();
+        // The empty `setTimeout(fn, 1)` callbacks are a jQuery-UI datepicker
+        // nudge (defer a repaint so the button panel lays out). Cast `as any`
+        // because `@types/jqueryui` insists these return `DatepickerOptions`.
         $createExpenditureDate.datepicker({
             showButtonPanel: true,
             beforeShow: function () {
@@ -171,12 +202,15 @@
             }
         } as any);
 
+        // Hide the datepicker's built-in "Close" / "Today" buttons via injected CSS.
         $('<style> .ui-datepicker-close { display: none; } </style>').appendTo("head");
         $('<style> .ui-datepicker-current { display: none; } </style>').appendTo("head");
     });
 
+    // Bootstrap table class that marks the currently selected grid row.
     let selectedRowColor = "table-primary";
 
+    // MvcGrid `rowclick`: move the highlight to the row whose `data-id` matches.
     $(document).off('rowclick.Expenditure').on('rowclick.Expenditure', (e: any) => {
         let selectedRow = e.detail;
         let selectedRowId = selectedRow.data.Id;
@@ -194,6 +228,7 @@
         });
     });
 
+    // MvcGrid lifecycle events — intentional no-ops, bound only as hook points.
     $(document).off('reloadstart.Expenditure').on('reloadstart.Expenditure', _ => {
     });
 
@@ -206,6 +241,7 @@
     $(document).off('gridconfigure.Expenditure').on('gridconfigure.Expenditure', _ => {
     });
 
+    // Double-click the highlighted row to open its edit modal.
     $(document).off('dblclick.Expenditure', '.clsGridRow').on('dblclick.Expenditure', '.clsGridRow', function () {
         $('.clsGridRow').each(function () {
             if ($(this).attr("class")!.includes(selectedRowColor)) {
@@ -213,21 +249,30 @@
             }
         });
     });
+    // Free-text search: push the term into the grid query string and reload.
     $gridSearch.off('input').on('input', function (this: HTMLInputElement) {
         const grid = new MvcGrid(document.querySelector('.mvc-grid'));
         grid.url.searchParams.set("wholeSearch", this.value);
         grid.reload();
     });
 
+    /** Create form main-class change: re-filter the sub-class options and re-evaluate the deposit-asset block. */
     function CreateFormShowExpenditureSubClassBySelectedExpenditureMainClass(createExpenditureMainClass: HTMLSelectElement) {
         ApplyAllowedOptions($createExpenditureSubClass, expenditureSubClassMap[createExpenditureMainClass.value] || [], null);
         ToggleCreateExpenditureMyDepositAsset($createExpenditureSubClass.val() as string);
     }
 
+    /** Create form sub-class change: show/hide the deposit-asset block for it. */
     function CreateFormShowExpenditureDivCreateExpenditureMyDepositAssetBySelectedExpenditureSubClass(createExpenditureSubClass: HTMLSelectElement) {
         ToggleCreateExpenditureMyDepositAsset(createExpenditureSubClass.value);
     }
 
+    /**
+     * Create-expenditure modal submit: validate, assemble the `Created`
+     * timestamp from the separate date / time fields (`month - 1` for 0-indexed
+     * JS months, `.toISOString()` local -> UTC), POST as JSON, then close /
+     * reload / toast.
+     */
     function CreateExpenditure() {
 
         if (!$formCreateExpenditure.valid()) {
@@ -288,6 +333,14 @@
         return false;
     }
 
+    /**
+     * Opens the edit modal for the selected grid row. Fetches the record
+     * (`IsExpenditureExists`), fills the form, re-filters the sub-class select
+     * and toggles the deposit-asset block. When the record has no explicit
+     * `myDepositAsset` the payment method is used as the fallback selection.
+     *
+     * @param errorMessageSelectGridRow localized "pick a row first" text from a `data-*` attribute.
+     */
     function EditExpenditureGridRow(errorMessageSelectGridRow?: string) {
 
         let selectedRowId = "";
@@ -321,6 +374,8 @@
 
                     $editExpenditureContent.val(data.expenditure.content);
                     $editExpenditureAmount.val(data.expenditure.amount);
+                    // Split the `created` ISO string into the date field and the
+                    // hour / minute / second selects.
                     $editExpenditureDate.val(data.expenditure.created.split('T')[0]);
                     $editExpenditureHour.val(parseInt(data.expenditure.created.split('T')[1].substring(0, 2))).change();
                     $editExpenditureMinute.val(parseInt(data.expenditure.created.split('T')[1].substring(3, 5))).change();
@@ -351,15 +406,18 @@
         });
     }
 
+    /** Edit form main-class change: re-filter the sub-class options and re-evaluate the deposit-asset block. */
     function EditFormShowExpenditureSubClassBySelectedExpenditureMainClass(editExpenditureMainClass: HTMLSelectElement) {
         ApplyAllowedOptions($editExpenditureSubClass, expenditureSubClassMap[editExpenditureMainClass.value] || [], null);
         ToggleEditExpenditureMyDepositAsset($editExpenditureSubClass.val() as string);
     }
 
+    /** Edit form sub-class change: show/hide the deposit-asset block for it. */
     function EditFormShowExpenditureDivCreateExpenditureMyDepositAssetBySelectedExpenditureSubClass(editExpenditureSubClass: HTMLSelectElement) {
         ToggleEditExpenditureMyDepositAsset(editExpenditureSubClass.value);
     }
 
+    /** Edit-expenditure modal submit: same shape as `CreateExpenditure` plus `Id`. */
     function UpdateExpenditure() {
 
         if (!$formEditExpenditure.valid()) {
@@ -420,6 +478,7 @@
         return false;
     }
 
+    /** "Delete" button: require a selected row, then just open the confirm modal. */
     function ConfirmDeleteExpenditure(errorMessageSelectGridRow?: string) {
 
         let selectedRowId = "";
@@ -444,6 +503,7 @@
         $confirmDeleteExpenditureDialogModal.modal('show');
     }
 
+    /** Confirmed delete: re-check selection, confirm the record exists, then POST `DeleteExpenditure`. */
     function DeleteExpenditure(errorMessageSelectGridRow?: string) {
 
         let selectedRowId = "";
@@ -502,6 +562,10 @@
         });
     }
 
+    /**
+     * "Export to Excel": submit a throwaway `<form>` as a real POST so the
+     * browser downloads the binary response (`$.ajax` can't save it).
+     */
     function ExportExcelExpenditure() {
         let form = document.createElement("form");
         let element1 = document.createElement("input");
@@ -523,6 +587,11 @@
         form.submit();
     }
 
+    /**
+     * Updates the create-form amount label to match the chosen payment method
+     * (e.g. its currency). Both `if` branches set the same thing, so a failure
+     * just shows whatever fallback label the server sent.
+     */
     function ChangeCreateExpenditureAmountLabel(productName: string) {
         $.ajax({
             url: '/AccountBook/GetExpenditureAmountLabel' + '?productName=' + productName,
@@ -542,6 +611,7 @@
         });
     }
 
+    /** Same as `ChangeCreateExpenditureAmountLabel` for the edit form. */
     function ChangeEditExpenditureAmountLabel(productName: string) {
         $.ajax({
             url: '/AccountBook/GetExpenditureAmountLabel' + '?productName=' + productName,
@@ -561,6 +631,7 @@
         });
     }
 
+    // --- Button / form / select wiring --------------------------------
     $btnEditExpenditureGridRow.off('click').on('click', function () {
         EditExpenditureGridRow($(this).attr("data-errorMessageSelectGridRow"));
     });
@@ -585,10 +656,12 @@
         return UpdateExpenditure();
     });
 
+    // Main-class change -> re-filter sub-class + deposit-asset visibility.
     $createExpenditureMainClass.off('change').on('change', function (this: HTMLSelectElement) {
         CreateFormShowExpenditureSubClassBySelectedExpenditureMainClass(this);
     });
 
+    // Sub-class change -> deposit-asset visibility only.
     $createExpenditureSubClass.off('change').on('change', function (this: HTMLSelectElement) {
         CreateFormShowExpenditureDivCreateExpenditureMyDepositAssetBySelectedExpenditureSubClass(this);
     });
@@ -601,6 +674,7 @@
         EditFormShowExpenditureDivCreateExpenditureMyDepositAssetBySelectedExpenditureSubClass(this);
     });
 
+    // Payment-method change -> refresh the amount label.
     $createExpenditurePaymentMethod.off('change').on('change', function (this: HTMLSelectElement) {
         ChangeCreateExpenditureAmountLabel(this.value);
     });
@@ -609,6 +683,7 @@
         ChangeEditExpenditureAmountLabel(this.value);
     });
 
+    // On load, set the create-form amount label for whichever method is preselected.
     $(function () {
         ChangeCreateExpenditureAmountLabel($createExpenditurePaymentMethod.find('option:selected').val() as string);
     })

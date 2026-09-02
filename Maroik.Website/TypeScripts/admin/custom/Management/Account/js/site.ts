@@ -1,4 +1,25 @@
+/**
+ * Script for the admin **Account** management page
+ * (`Views/Management/Account.cshtml`). A NonFactors MVC.Grid list of user
+ * accounts with create / edit / delete modals and Excel export.
+ *
+ * Same shape as every grid-backed CRUD page in the app (see
+ * `AccountBook/Asset` for the fullest commentary):
+ *
+ *   • MvcGrid raises native `CustomEvent`s on `document` (`rowclick`,
+ *     `reloadstart/end/fail`, `gridconfigure`) — handled with `e: any` / `e.detail`.
+ *   • The selected row is tracked only by the `selectedRowColor` CSS class on
+ *     one `.clsGridRow`; the identity key here is the account e-mail
+ *     (`data-email`).
+ *   • Each mutation validates its form, POSTs JSON, then on success hides the
+ *     modal, reloads the grid and toasts; `{ result:false, error }` becomes a
+ *     `toastr.error`. Every rule is re-enforced server-side.
+ *
+ * IIFE-wrapped, no `import` / `export`.
+ */
 (function () {
+    // Cached references: the jQuery-UI tab containers, the grid search box, and
+    // every field of the create / edit modals plus the anti-forgery input.
     const $createAccountTabs = $("#createAccountTabs");
     const $editAccountTabs = $("#editAccountTabs");
     const $gridSearch = $('#gridSearch');
@@ -27,13 +48,17 @@
     const $btnDeleteAccount = $('#btnDeleteAccount');
     const $editAccountDialogModal = $('#editAccountDialogModal');
     const $confirmDeleteAccountDialogModal = $('#confirmDeleteAccountDialogModal');
+    // Bootstrap table class that marks the currently selected grid row.
     const selectedRowColor = "table-primary";
 
+    // Initialise the jQuery-UI tab widgets inside the two modals.
     $(function () {
         $createAccountTabs.tabs();
         $editAccountTabs.tabs();
     });
 
+    // MvcGrid `rowclick` (native CustomEvent): move the selection highlight to
+    // the row whose `data-email` matches the clicked record.
     $(document).off('rowclick.Account').on('rowclick.Account', (e: any) => {
         let selectedRow = e.detail;
         let selectedRowEmail = selectedRow.data.Email;
@@ -51,6 +76,7 @@
         });
     });
 
+    // MvcGrid lifecycle events — intentional no-ops, bound only as explicit hook points.
     $(document).off('reloadstart.Account').on('reloadstart.Account', _ => {
     });
 
@@ -63,6 +89,8 @@
     $(document).off('gridconfigure.Account').on('gridconfigure.Account', _ => {
     });
 
+    // Double-click the highlighted row to open its edit modal (delegated because
+    // rows are re-rendered on every grid reload).
     $(document).off('dblclick.Account', '.clsGridRow').on('dblclick.Account', '.clsGridRow', function () {
         $('.clsGridRow').each(function () {
             if ($(this).attr('class')!.includes(selectedRowColor)) {
@@ -71,12 +99,14 @@
         });
     });
 
+    // Free-text search: push the term into the grid query string and reload.
     $gridSearch.off('input').on('input', function (this: HTMLInputElement) {
         const grid = new MvcGrid(document.querySelector('.mvc-grid'));
         grid.url.searchParams.set('wholeSearch', this.value);
         grid.reload();
     });
 
+    /** Create-account modal submit: validate, POST the fields as JSON, then close / reload / toast. */
     function CreateAccount() {
 
         if (!$formCreateAccount.valid()) {
@@ -122,6 +152,15 @@
         return false;
     }
 
+    /**
+     * Opens the edit modal for the selected account. Reads the selection from
+     * the row CSS class, aborts with a toast if none is selected, fetches the
+     * record (`IsAccountExists`) and fills the form. The e-mail is the identity
+     * key; the boolean flags (locked / confirmed / agreed / deleted) map to
+     * checkboxes.
+     *
+     * @param errorMessageSelectGridRow localized "pick a row first" text from a `data-*` attribute.
+     */
     function EditAccountGridRow(errorMessageSelectGridRow?: string) {
 
         let selectedRowEmail = "";
@@ -149,6 +188,7 @@
 
                     $editAccountEmail.val(data.account.email);
                     $editAccountNickname.val(data.account.nickname);
+                    // `.change()` so select-dependent UI (role / timezone) re-syncs.
                     $editAccountRole.val(data.account.role).change();
                     $editAccountTimeZone.val(data.account.timeZoneIanaId).change();
                     $editAccountLocked.prop('checked', data.account.locked);
@@ -157,6 +197,8 @@
                     $editMessage.val(data.account.message);
                     $editAccountDeleted.prop('checked', data.account.deleted);
 
+                    // Static backdrop + no keyboard dismiss; `toggle` then `show`
+                    // forces it open even mid-transition.
                     $editAccountDialogModal.modal({
                         keyboard: false,
                         backdrop: "static"
@@ -172,6 +214,7 @@
         });
     }
 
+    /** Edit-account modal submit: validate, POST every field + flag as JSON, then close / reload / toast. */
     function UpdateAccount() {
         if (!$formEditAccount.valid()) {
             return false;
@@ -223,6 +266,7 @@
         return false;
     }
 
+    /** "Delete" button: require a selected row, then just open the confirm modal. */
     function ConfirmDeleteAccount(errorMessageSelectGridRow?: string) {
 
         let selectedRowEmail = "";
@@ -247,6 +291,7 @@
         $confirmDeleteAccountDialogModal.modal('show');
     }
 
+    /** Confirmed delete: re-check selection, confirm the record exists, then POST `DeleteAccount`. */
     function DeleteAccount(errorMessageSelectGridRow?: string) {
 
         let selectedRowEmail = "";
@@ -305,6 +350,11 @@
         });
     }
 
+    /**
+     * "Export to Excel": the response is a binary file `$.ajax` cannot save, so
+     * submit a throwaway `<form>` as a real POST and let the browser download it.
+     * The anti-forgery token rides along as a hidden input.
+     */
     function ExportExcelAccount() {
         let form = document.createElement('form');
         let element1 = document.createElement('input');
@@ -326,6 +376,7 @@
         form.submit();
     }
 
+    // --- Button wiring ---------------------------------------------------
     $btnEditAccountGridRow.off('click').on('click', function () {
         EditAccountGridRow($(this).attr('data-errorMessageSelectGridRow'));
     });

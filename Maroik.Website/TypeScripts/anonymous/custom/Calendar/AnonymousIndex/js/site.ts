@@ -1,4 +1,31 @@
+/**
+ * Script for the **anonymous** (public) Calendar page
+ * (`Views/Calendar/AnonymousIndex.cshtml`). A read-only FullCalendar view of the
+ * "other" (shared / public) calendars — visitors can look at events but not
+ * create, edit or delete them.
+ *
+ * Flow:
+ *   • Build the FullCalendar instance and seed it with the events the server
+ *     rendered into `#otherCalendarEventOutputViewModels`.
+ *   • `eventClick` on an "Other" event pops up a small summary; clicking
+ *     "view" in the popup fetches the full event (`IsOtherCalendarEventExists`)
+ *     and fills a **read-only** modal (summernote disabled, every input
+ *     `disabled`), rebuilding the reminder rows from the event's
+ *     `serializedCalendarReminders` — `Email`-method reminders are skipped
+ *     because anonymous visitors don't see those.
+ *   • Toggling an "other calendars" checkbox reloads the visible events
+ *     (`RefreshCalendarEvents`).
+ *   • Inline images and the attachment are base64 payloads turned into object
+ *     URLs client-side.
+ *
+ * The reminder lead-time bounds only feed the (disabled) inputs' `max`
+ * attribute here — the authoritative rules live in `CalendarReminderPolicy`.
+ * IIFE-wrapped, no `import` / `export`.
+ */
 (function () {
+    // Cached element references — the "other event" popup and every field of the
+    // read-only "view event" modal, plus the anti-forgery input and the two
+    // hidden inputs the view uses to hand data to this script.
     const $viewCalendarEventTaskTabs = $("#viewCalendarEventTaskTabs");
     const $otherCalendarEventPopup = $('#otherCalendarEventPopup');
     const $otherCalendarEventPopupTitle = $('#otherCalendarEventPopupTitle');
@@ -54,6 +81,7 @@
     const reminderTimeIntervals = JSON.parse(($('#reminderTimeIntervals').val() as string) || '[]');
     const defaultBeforeAt = ($('#defaultReminderTimeOfDay').val() as string) || '09:00';
 
+    /** base64 -> Blob, for turning the server-embedded image / attachment payloads into object URLs. */
     function base64ToBlob(base64: string, mime: string) {
         const byteCharacters = atob(base64);
         const byteNumbers = new Array(byteCharacters.length);
@@ -64,6 +92,9 @@
         return new Blob([byteArray], { type: mime });
     }
 
+    // Localized FullCalendar UI strings + reminder labels + validation messages,
+    // each from a hidden input the view rendered from the resource files. Typed
+    // `any` so the ~70 `.val()` unions don't each need a cast.
     const localizer: any = {
         Email: $('#localizerEmail').val(),
         Notification: $('#localizerNotification').val(),
@@ -147,11 +178,15 @@
         ErrorRangeWeek: $('#localizerErrorRangeWeek').val()
     };
 
+    // Module-scope FullCalendar instance, assigned inside `$(function)` below and
+    // used by `RefreshCalendarEvents`. Typed `any` (the global `<script>` build's
+    // `FullCalendar.Calendar` is loosely typed here).
     let calendar: any;
 
     $(function () {
         $viewCalendarEventTaskTabs.tabs();
 
+        // --- Build the read-only FullCalendar --------------------------------
         calendar = new FullCalendar.Calendar(document.getElementById('calendar')!, {
             locale: localizer.IETFLanguageTag,
             headerToolbar: {
@@ -168,6 +203,8 @@
             editable: false,
             selectable: true,
             selectMirror: true,
+            // Clicking an "Other" event: show a small summary popup anchored to
+            // the event element. Clicking again on the same event closes it.
             eventClick: function (arg: any) {
                 if (arg.event.extendedProps.calendarType === 'Other') {
                     let eventEl = $(arg.el);
@@ -180,6 +217,8 @@
                         return;
                     }
 
+                    // Fill the popup from the event's `extendedProps` (already on
+                    // the client) — all-day vs timed layout.
                     $otherCalendarEventPopupTitle.text(arg.event.title);
                     $divOtherCalendarEventPopupAllDayChecked.hide();
                     $divOtherCalendarEventPopupAllDayUnchecked.hide();
@@ -196,6 +235,7 @@
                         $divOtherCalendarEventPopupAllDayUnchecked.show();
                     }
 
+                    // Position the popup at the event's bottom-right corner.
                     popup.css({
                         top: offset.top + eventEl.outerHeight()!,
                         left: offset.left + eventEl.outerWidth()!,
@@ -204,6 +244,7 @@
 
                     $viewOtherCalendarEventPopup.focus();
 
+                    // Click anywhere outside the popup / an event closes it.
                     $(document).off('click.AnonymousIndex').on('click.AnonymousIndex', function (e) {
                         if (!$(e.target).closest($otherCalendarEventPopup).length && !$(e.target).closest('.fc-event').length) {
                             popup.hide();
@@ -214,6 +255,7 @@
                         popup.hide();
                     });
 
+                    // "View" button: fetch the full event and open the read-only modal.
                     $viewOtherCalendarEventPopup.off('click').on('click', function () {
                         $.ajax({
                             url: '/Calendar/IsOtherCalendarEventExists' + '?id=' + popup.data('event-id'),
@@ -224,6 +266,7 @@
                             contentType: 'application/json; charset=utf-8',
                             success: function (data) {
                                 if (data.result) {
+                                    // --- Fill the read-only modal from `data.calendarEvent` ---
                                     $viewCalendarEventId.val(data.calendarEvent.id);
                                     $viewCalendarEventName.val(data.calendarEvent.title);
                                     $viewCalendarEventAllDay.val(data.calendarEvent.allDay);
@@ -243,6 +286,8 @@
 
                                         $viewCalendarEventAllDay.prop('checked', false);
 
+                                        // `displayStartDate` is "YYYY-MM-DD HH:mm:ss" — split
+                                        // into the date field and the HH:mm time field.
                                         $viewCalendarEventAllDayUncheckedStartDate.val(data.calendarEvent.displayStartDate.split(' ')[0]);
                                         $viewCalendarEventAllDayUncheckedStartTime.val(data.calendarEvent.displayStartDate.split(' ')[1].substring(0, 5));
                                         $viewCalendarEventAllDayUncheckedStartTimeZone.val(data.calendarEvent.startDateTimeZoneIanaId);
@@ -254,6 +299,9 @@
 
                                     $viewCalendarEventLocation.val(data.calendarEvent.location);
 
+                                    // Rehydrate the description's inline base64 images to object
+                                    // URLs in a detached document, then load it into a disabled
+                                    // summernote (read-only rich text).
                                     const parser = new DOMParser();
                                     const htmlDoc = parser.parseFromString(data.calendarEvent.description, 'text/html');
 
@@ -286,6 +334,8 @@
                                     $viewCalendarEventDescription.summernote('code', updatedHtml);
                                     $viewCalendarEventDescription.summernote('disable');
 
+                                    // Attachment: show the link (base64 kept in `data-*` for the
+                                    // download handler at the bottom of the file) + a KB size.
                                     $divViewCalendarEventAttachedFile.hide();
 
                                     if (data.calendarEvent.calendarEventAttachedFile !== null) {
@@ -302,6 +352,10 @@
                                     }
 
 
+                                    // Populate the (disabled) "calendar" select with the
+                                    // visitor-visible "other" calendars. `async: false` so the
+                                    // select is filled before `.val(...)` sets the selection.
+                                    // `data` here is the outer `success(data)` param — valid.
                                     $.ajax({
                                         url: '/Calendar/GetOtherCalendars',
                                         method: 'POST',
@@ -328,6 +382,9 @@
 
                                     $viewCalendarEventStatus.val(data.calendarEvent.status);
 
+                                    // --- Rebuild the reminder rows (read-only) ---
+                                    // Every generated control is `disabled`, and `Email`-method
+                                    // reminders are skipped (not shown to anonymous visitors).
                                     $divViewEventNotificationAllDayChecked.hide();
                                     $divViewEventNotificationAllDayUnchecked.hide();
 
@@ -345,6 +402,7 @@
                                                         <option value='Notification' ${reminder.Method === 'Notification' ? 'selected' : ''}>${localizer.Notification}</option>
                                                     `;
 
+                                                    // All-day reminders use days / weeks lead time.
                                                     let value = reminder.DaysBeforeEvent !== null ? reminder.DaysBeforeEvent : reminder.WeeksBeforeEvent;
                                                     let max = reminder.DaysBeforeEvent !== null ? maxDaysBeforeEvent : maxWeeksBeforeEvent;
                                                     let selectedDays = reminder.DaysBeforeEvent !== null ? 'selected' : '';
@@ -393,6 +451,8 @@
                                                         <option value='Notification' ${reminder.Method === 'Notification' ? 'selected' : ''}>${localizer.Notification}</option>
                                                     `;
 
+                                                    // Timed reminders can be minutes / hours / days / weeks;
+                                                    // pick the first non-null and its matching max.
                                                     let value = reminder.MinutesBeforeEvent !== null ? reminder.MinutesBeforeEvent : reminder.HoursBeforeEvent !== null ? reminder.HoursBeforeEvent : reminder.DaysBeforeEvent !== null ? reminder.DaysBeforeEvent : reminder.WeeksBeforeEvent;
                                                     let max = reminder.MinutesBeforeEvent !== null ? maxMinutesBeforeEvent : reminder.HoursBeforeEvent !== null ? maxHoursBeforeEvent : reminder.DaysBeforeEvent !== null ? maxDaysBeforeEvent : maxWeeksBeforeEvent;
 
@@ -429,6 +489,7 @@
                                         }
                                     }
 
+                                    // Force the modal open (static backdrop, no Esc).
                                     $viewCalendarEventTaskDialogModal.modal({
                                         keyboard: false,
                                         backdrop: "static"
@@ -451,6 +512,7 @@
             }
         });
 
+        // --- Seed the calendar with the server-rendered events ---------------
         JSON.parse($otherCalendarEventOutputViewModels.val() as string).forEach((item: any) => {
             calendar.addEvent({
                 id: item.Id,
@@ -473,6 +535,11 @@
 
         calendar.render();
 
+        /**
+         * Reloads the visible events from the set of currently-checked "other
+         * calendars": clears everything, gathers the checked calendar ids, POSTs
+         * `GetCalendarEvents`, and re-adds whatever comes back.
+         */
         function RefreshCalendarEvents() {
 
             calendar.removeAllEvents();
@@ -482,6 +549,7 @@
             };
 
             $otherCalendars.find('input[type="checkbox"]').filter(':checked').each(function () {
+                // Each checkbox's `<label id="lblOtherCalendar123">` encodes the id.
                 let calendarsArray = [
                     { Id: Number($(this).closest('label').attr('id')!.replace('lblOtherCalendar', '')) }
                 ];
@@ -524,11 +592,15 @@
             });
         }
 
+        // Toggling any "other calendar" checkbox reloads the events (delegated).
         $(document).off('change.AnonymousIndex', '.chkOtherCalendar').on('change.AnonymousIndex', '.chkOtherCalendar', function () {
             RefreshCalendarEvents();
         });
     });
 
+    // Attachment download: base64 -> Blob -> a throwaway `<a download>` that is
+    // clicked and cleaned up. (Bound once at load; the link's `data-*` payload is
+    // filled when the view modal opens.)
     $aViewCalendarEventAttachedFile.off('click').on('click', function (event) {
         event.preventDefault();
         let base64Data = $(this).attr('data-file');

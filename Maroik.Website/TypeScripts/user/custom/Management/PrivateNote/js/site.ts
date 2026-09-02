@@ -1,6 +1,23 @@
+/**
+ * Script for the **user** Private Note page (`Views/Management/PrivateNote.cshtml`
+ * rendered for a signed-in user — their personal notes). Same shape as the Free
+ * Forum script (list / write / edit / detail sub-views chosen by a `method`
+ * query-string param), pointed at the `/Management/PrivateNote*` endpoints.
+ * Unlike the admin version there is no "notice" flag.
+ *
+ * Features: summernote rich-text body with image upload (each image POSTed,
+ * returned as base64, re-inserted as an object URL); attachment upload with a
+ * client-side size check; write / edit / delete note, write / delete comment
+ * (all AJAX, redirecting on success; `{ result:false, error }` -> `toastr.error`);
+ * search, "back to list", inline-image rehydration and attachment download.
+ *
+ * IIFE-wrapped, no `import` / `export`. Client checks mirror server rules.
+ */
 (function () {
+    // Cached references. Many exist only on one sub-view, so `.length` is checked.
     const $writeBoardContent = $('#writeBoardContent');
     const $editBoardContent = $('#editBoardContent');
+    // Attachment size limit in bytes, published by the view; 10 MB fallback.
     const maxFileSize = parseInt($('#maxAttachedFileSizeBytes').val() as string) || 10485760;
     const $searchType = $('#searchType');
     const $btnPrivateNoteSearchText = $('#btnPrivateNoteSearchText');
@@ -30,6 +47,7 @@
     const $aDetailBoardAttachedFile = $('#aDetailBoardAttachedFile');
     const $aEditBoardAttachedFile = $('#aEditBoardAttachedFile');
 
+    /** base64 -> Blob, for turning server-embedded image/attachment payloads into object URLs. */
     function base64ToBlob(base64: string, mime: string) {
         const byteCharacters = atob(base64);
         const byteNumbers = new Array(byteCharacters.length);
@@ -40,10 +58,13 @@
         return new Blob([byteArray], { type: mime });
     }
 
+    // Only the summernote UI language is needed; `any` avoids typing a one-off bag.
     const localizer: any = {
         IETFLanguageTag: $('#localizerIETFLanguageTag').val()
     };
 
+    // Rich-text editors for the write / edit bodies; each pasted image is
+    // uploaded and re-inserted by the helpers below.
     $writeBoardContent.summernote({
         height: 300,
         lang: localizer.IETFLanguageTag,
@@ -68,9 +89,11 @@
         }
     });
 
+    // The attachment chosen in each form, held until submit.
     let writeUploadedFile: any;
     let editUploadedFile: any;
 
+    /** Write-form attachment `change`: reject + clear if over `maxFileSize`, else stash the `File`. */
     function WriteUploadFile(obj: HTMLInputElement, errorMessage?: string) {
         if (obj.files![0].size > maxFileSize) {
             alert(errorMessage);
@@ -82,6 +105,7 @@
         }
     }
 
+    /** Same as `WriteUploadFile` for the edit form. */
     function EditUploadFile(obj: HTMLInputElement, errorMessage?: string) {
         if (obj.files![0].size > maxFileSize) {
             alert(errorMessage);
@@ -93,11 +117,13 @@
         }
     }
 
+    /** Reloads the list filtered by the chosen search type + text. */
     function SearchBoard() {
         window.location.href = "/Management/PrivateNote?searchType=" + encodeURIComponent($searchType.val() as string) + "&searchText=" + encodeURIComponent($btnPrivateNoteSearchText.val() as string);
     }
 
 
+    /** Write form: show the `#loading` overlay only if the form validates. */
     function ShowWriteBoardLoading() {
         if (!$formWriteBoard.valid()) {
             $loading.hide();
@@ -109,6 +135,7 @@
         }
     }
 
+    /** Edit form: show the `#loading` overlay only if the form validates. */
     function ShowEditBoardLoading() {
         if (!$formEditBoard.valid()) {
             $loading.hide();
@@ -120,6 +147,12 @@
         }
     }
 
+    /**
+     * summernote `onImageUpload` for the write editor: POST the raw image, get
+     * `{ file: { fileContents(base64), contentType }, filePath }` back, insert it
+     * as a size-capped `<img>` on an object URL (revoked once decoded). `filePath`
+     * goes in `alt` so the server can resolve the stored image on save.
+     */
     function WriteUploadImageFile(file: File) {
 
         let formData = new FormData();
@@ -160,6 +193,7 @@
         });
     }
 
+    /** Same as `WriteUploadImageFile` for the edit editor. */
     function EditUploadImageFile(file: File) {
 
         let formData = new FormData();
@@ -200,6 +234,12 @@
         });
     }
 
+    /**
+     * Submits a new note as multipart `FormData` (title, body HTML, the locked
+     * flag, the stashed attachment). On success alerts and returns to the list;
+     * on failure toasts and hides the overlay. `as any` casts because
+     * `FormData.append` wants `string | Blob`. Returns `false`.
+     */
     function WriteBoard() {
 
         if (!$formWriteBoard.valid()) {
@@ -239,6 +279,10 @@
         return false;
     }
 
+    /**
+     * Submits an edit to an existing note (same multipart shape plus `Id`); on
+     * success returns to that note's detail view at the caller's page.
+     */
     function EditBoard(editBoardId?: string, editCurrentPage?: string) {
 
         if (!$formEditBoard.valid()) {
@@ -280,6 +324,7 @@
         return false;
     }
 
+    /** Opens the "delete this note?" confirm modal (static backdrop, no Esc). */
     function ConfirmDeleteBoard() {
         $confirmDeleteBoardDialogModal.modal({
             keyboard: false,
@@ -290,6 +335,10 @@
         $confirmDeleteBoardDialogModal.modal('show');
     }
 
+    /**
+     * Confirmed note delete: verify it still exists (`IsBoardExists`), then POST
+     * `DeleteBoard` with the server's current id. Nested so a stale id can't be used.
+     */
     function DeleteBoard(detailBoardId?: string) {
 
         $.ajax({
@@ -332,6 +381,10 @@
         });
     }
 
+    /**
+     * Posts a comment on the detail view (non-empty check is a UX mirror); on
+     * success reloads the detail view so the comment appears.
+     */
     function WritePrivateNoteComment(detailBoardId?: string, detailCurrentPage?: string, errorMessage?: string) {
 
         let content = $writePrivateNoteCommentContent.val();
@@ -366,6 +419,7 @@
 
         return false;
     }
+    /** Deletes one comment by id, then reloads the detail view. */
     function DeleteComment(commentId?: string, boardId?: string, page?: string) {
         $.ajax({
             url: '/Management/DeleteComment' + '?id=' + commentId,
@@ -384,6 +438,10 @@
             }
         });
     }
+
+    // --- Button / form wiring -----------------------------------------
+    // Every handler is cleared with `.off` first. Navigation buttons carry their
+    // target in a `data-*` attribute.
 
     $btnPrivateNoteShowWriteBoardLoading.off('click').on('click', function () {
         return ShowWriteBoardLoading();
@@ -417,12 +475,14 @@
         DeleteBoard($(this).attr("data-boardId"));
     });
 
+    // Enter (keyCode 13) in the search box runs the search.
     $btnPrivateNoteSearchText.off('keypress').on('keypress', function (event) {
         if (event.keyCode === 13 || event.which === 13) {
             SearchBoard();
         }
     });
 
+    // Per-comment delete links (a NodeList, hence the class selector).
     $('.aPrivateNoteDeleteComment').off('click').on('click', function (event) {
         event.preventDefault();
         DeleteComment($(this).attr("data-commentId"), $(this).attr("data-detailBoardId"), $(this).attr("data-detailCurrentPage"));
@@ -440,6 +500,7 @@
         return EditBoard($(this).attr('data-editBoardId'), $(this).attr('data-editCurrentPage'));
     });
 
+    // Attachment inputs: validate + stash on selection.
     $writeUploadedFile.off('change').on('change', function (this: HTMLInputElement) {
         return WriteUploadFile(this, $(this).attr('data-errorMessage'));
     });
@@ -448,7 +509,10 @@
         return EditUploadFile(this, $(this).attr('data-errorMessage'));
     });
 
+    // --- On ready: rehydrate embedded images + wire attachment download ---
     $(function () {
+        // Detail view: body rendered hidden with base64 `data-file` images; swap
+        // each to an object URL in a detached document, then reveal.
         if ($detailBoardContent.length > 0 && $detailBoardContent.is(":hidden")) {
             const parser = new DOMParser();
             const htmlDoc = parser.parseFromString($detailBoardContent.html(), 'text/html');
@@ -481,6 +545,7 @@
             $detailBoardContent.html(updatedHtml);
             $detailBoardContent.show();
         } else if ($editBoardContent.length > 0 && $divEditBoardContent.is(":hidden")) {
+            // Edit view: same rehydration, but the HTML lives inside summernote.
             const parser = new DOMParser();
             const htmlDoc = parser.parseFromString($editBoardContent.summernote('code'), 'text/html');
 
@@ -513,6 +578,8 @@
             $divEditBoardContent.show();
         }
 
+        // Attachment download link (detail or edit view): base64 -> Blob -> a
+        // throwaway `<a download>` that is clicked and cleaned up.
         if ($aDetailBoardAttachedFile.length > 0) {
             $aDetailBoardAttachedFile.off('click').on('click', function (event) {
                 event.preventDefault();

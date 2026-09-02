@@ -1,4 +1,26 @@
+/**
+ * Script for the admin **Menu** management page (`Views/Management/Menu.cshtml`).
+ * A NonFactors MVC.Grid list of the navigation tree with create / edit / delete
+ * modals and Excel export.
+ *
+ * The tree has two levels — **Category** and **SubCategory** — shown flat in one
+ * grid. A row is a Category when its `data-categoryid` is empty / `"-1"`, and a
+ * SubCategory otherwise, so the row identity is the *pair* (`data-id`,
+ * `data-categoryid`) and the edit / delete functions branch on it to hit the
+ * Category or SubCategory endpoint.
+ *
+ * Otherwise this follows the standard grid-CRUD pattern (see
+ * `AccountBook/Asset` for the fullest commentary): native MvcGrid
+ * `CustomEvent`s, selection tracked by the `selectedRowColor` CSS class, each
+ * mutation = validate -> POST JSON -> hide modal / reload grid / toast, every
+ * rule re-enforced server-side.
+ *
+ * IIFE-wrapped, no `import` / `export`.
+ */
 (function () {
+    // Cached references: jQuery-UI tab containers, the grid search box, and every
+    // field of the four modals (create category / sub, edit category / sub) plus
+    // the anti-forgery input.
     const $createMenuTabs = $('#createMenuTabs');
     const $editCategoryTabs = $('#editCategoryTabs');
     const $editSubCategoryTabs = $('#editSubCategoryTabs');
@@ -46,14 +68,19 @@
     const $btnConfirmDeleteMenu = $('#btnConfirmDeleteMenu');
     const $btnExportExcelMenu = $('#btnExportExcelMenu');
     const $btnDeleteMenu = $('#btnDeleteMenu');
+    // Bootstrap table class that marks the currently selected grid row.
     const selectedRowColor = 'table-primary';
 
+    // Initialise the jQuery-UI tab widgets inside the modals.
     $(function () {
         $createMenuTabs.tabs();
         $editCategoryTabs.tabs();
         $editSubCategoryTabs.tabs();
     });
 
+    // MvcGrid `rowclick`: highlight the row matching the compound key
+    // (Id + CategoryId). An empty CategoryId is normalised to "-1" so the
+    // comparison is stable for Category rows.
     $(document).off('rowclick.Menu').on('rowclick.Menu', (e: any) => {
         let selectedRow = e.detail;
         let selectedRowId = selectedRow.data.Id;
@@ -76,6 +103,7 @@
         });
     });
 
+    // MvcGrid lifecycle events — intentional no-ops, bound only as hook points.
     $(document).off('reloadstart.Menu').on('reloadstart.Menu', _ => {
     });
 
@@ -88,6 +116,7 @@
     $(document).off('gridconfigure.Menu').on('gridconfigure.Menu', _ => {
     });
 
+    // Double-click the highlighted row to open its edit modal.
     $(document).off('dblclick.Menu', '.clsGridRow').on('dblclick.Menu', '.clsGridRow', function () {
         $('.clsGridRow').each(function () {
             if ($(this).attr('class')!.includes(selectedRowColor)) {
@@ -96,12 +125,14 @@
         });
     });
 
+    // Free-text search: push the term into the grid query string and reload.
     $gridSearch.off('input').on('input', function (this: HTMLInputElement) {
         const grid = new MvcGrid(document.querySelector('.mvc-grid'));
         grid.url.searchParams.set('wholeSearch', this.value);
         grid.reload();
     });
 
+    /** Create-category modal submit: validate, POST the fields as JSON, then close / reload / toast. */
     function CreateCategory() {
 
         if (!$formCreateCategory.valid()) {
@@ -150,6 +181,10 @@
         return false;
     }
 
+    /**
+     * Create-subcategory modal submit: like `CreateCategory` but nested under a
+     * `CategoryId` and without its own `Controller` (subcategories inherit it).
+     */
     function CreateSubCategory() {
 
         if (!$formCreateSubCategory.valid()) {
@@ -198,6 +233,14 @@
         return false;
     }
 
+    /**
+     * Opens the correct edit modal for the selected grid row. Reads the compound
+     * selection key from the row CSS class; a `-1` `selectedRowCategoryId` means
+     * the row is a top-level Category, so `IsCategoryExists` fills the category
+     * modal — otherwise `IsSubCategoryExists` fills the subcategory modal.
+     *
+     * @param errorMessageSelectGridRow localized "pick a row first" text from a `data-*` attribute.
+     */
     function EditMenuGridRow(errorMessageSelectGridRow?: string) {
 
         let selectedRowId = "-1";
@@ -216,7 +259,7 @@
         }
 
         if (selectedRowCategoryId === "-1") {
-
+            // Top-level category.
             $.ajax({
                 url: '/Management/IsCategoryExists' + '?id=' + selectedRowId,
                 type: 'POST',
@@ -251,6 +294,7 @@
             });
         }
         else {
+            // Subcategory.
             $.ajax({
                 url: '/Management/IsSubCategoryExists' + '?id=' + selectedRowId,
                 type: 'POST',
@@ -286,6 +330,7 @@
         }
     }
 
+    /** Edit-category modal submit: validate, POST every field as JSON, then close / reload / toast. */
     function UpdateCategory() {
         if (!$formEditCategory.valid()) {
             return false;
@@ -335,6 +380,7 @@
         return false;
     }
 
+    /** Edit-subcategory modal submit. */
     function UpdateSubCategory() {
         if (!$formEditSubCategory.valid()) {
             return false;
@@ -384,6 +430,7 @@
         return false;
     }
 
+    /** "Delete" button: require a selected row, then just open the confirm modal. */
     function ConfirmDeleteMenu(errorMessageSelectGridRow?: string) {
 
         let selectedRowId = "-1";
@@ -408,6 +455,13 @@
         $confirmDeleteMenuDialogModal.modal('show');
     }
 
+    /**
+     * Confirmed delete. Branches on the compound key just like `EditMenuGridRow`:
+     * a Category is verified with `IsCategoryExists` then removed with
+     * `DeleteCategory` (the full record is echoed back into the delete payload);
+     * a SubCategory goes through `IsSubCategoryExists` / `DeleteSubCategory`.
+     * Nested so the delete always uses the server's current record.
+     */
     function DeleteMenu(errorMessageSelectGridRow?: string) {
         let selectedRowId = "-1";
         let selectedRowCategoryId = "-1";
@@ -527,6 +581,11 @@
         }
     }
 
+    /**
+     * "Export to Excel": submit a throwaway `<form>` as a real POST so the
+     * browser downloads the binary response (`$.ajax` can't save it). The
+     * anti-forgery token rides along as a hidden input.
+     */
     function ExportExcelMenu() {
         let form = document.createElement('form');
         let element1 = document.createElement('input');
@@ -548,6 +607,7 @@
         form.submit();
     }
 
+    // --- Button / form wiring ------------------------------------------
     $btnEditMenuGridRow.off('click').on('click', function () {
         EditMenuGridRow($(this).attr('data-errorMessageSelectGridRow'));
     });

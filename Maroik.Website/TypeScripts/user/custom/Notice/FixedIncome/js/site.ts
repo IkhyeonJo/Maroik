@@ -1,4 +1,25 @@
+/**
+ * Script for the **Fixed Income** page (`Views/Notice/FixedIncome.cshtml`) —
+ * recurring/scheduled income entries. A NonFactors MVC.Grid list with create /
+ * edit / delete modals and Excel export, following the standard grid-CRUD
+ * pattern (see `AccountBook/Asset`) plus:
+ *
+ *   • A localized jQuery-UI datepicker on the "maturity date" fields, with two
+ *     extra buttons injected into its button panel: "No maturity date" (sets the
+ *     `NO_MATURITY_DATE` sentinel) and "Today".
+ *   • Dependent `<select>`s: main class -> allowed sub-classes
+ *     (`IncomeClassPolicy`); deposit month -> valid deposit days 1..maxDay
+ *     (`FixedSchedulePolicy`, via `maxDepositDayByMonth`).
+ *   • The amount field's label follows the chosen deposit asset.
+ *
+ * Client checks are UX mirrors; the controller re-validates on save.
+ * IIFE-wrapped, no `import` / `export`.
+ */
 (function () {
+    // Cached references: tab containers, grid search box, the two maturity-date
+    // inputs, every field of both modals, the amount labels, and the
+    // anti-forgery input. (`$btnEditFixedExpenditureGridRow` keeps the id typo
+    // from the original markup — it is this page's "edit" button.)
     const $createFixedIncomeTabs = $('#createFixedIncomeTabs');
     const $editFixedIncomeTabs = $('#editFixedIncomeTabs');
     const $createFixedIncomeMaturityDate = $('#createFixedIncomeMaturityDate');
@@ -67,6 +88,9 @@
         return values;
     }
 
+    // Localized month / day names for the datepicker plus the two extra button
+    // captions and the maturity-date error message. `any` avoids ~45 `.val()`
+    // casts; `PrevText` / `NextText` are read PascalCase to match the keys.
     const localizer: any = {
         PrevText: $('#localizerPrevText').val(),
         NextText: $('#localizerNextText').val(),
@@ -120,6 +144,7 @@
         MaturityDateError: $('#localizerMaturityDateError').val(),
     };
 
+    // Apply the localized names to every datepicker on the page.
     $.datepicker.setDefaults({
         dateFormat: 'yy-mm-dd',
         prevText: localizer.PrevText,
@@ -136,6 +161,13 @@
     $(function () {
         $createFixedIncomeTabs.tabs();
         $editFixedIncomeTabs.tabs();
+        // Maturity-date pickers. `minDate: 0` forbids past dates. `beforeShow`
+        // and `onChangeMonthYear` (deferred a tick with `setTimeout` so the
+        // widget exists) append two custom buttons to the button panel:
+        // "No maturity date" -> sets the far-future `NO_MATURITY_DATE` sentinel,
+        // and "Today". `_clearDate` is an undocumented jQuery-UI internal that
+        // wipes the field first, hence the `as any`. The whole options object is
+        // cast `as any` because `@types/jqueryui` rejects void-returning callbacks.
         $createFixedIncomeMaturityDate.datepicker({
             showButtonPanel: true,
             minDate: 0,
@@ -242,15 +274,19 @@
             }
         } as any);
 
+        // Default both pickers to today.
         $createFixedIncomeMaturityDate.datepicker("setDate", new Date());
         $editFixedIncomeMaturityDate.datepicker("setDate", new Date());
 
+        // Hide the datepicker's built-in "Close" / "Today" buttons via injected CSS.
         $('<style> .ui-datepicker-close { display: none; } </style>').appendTo("head");
         $('<style> .ui-datepicker-current { display: none; } </style>').appendTo("head");
     });
 
+    // Bootstrap table class that marks the currently selected grid row.
     let selectedRowColor = "table-primary";
 
+    // MvcGrid `rowclick`: move the highlight to the row whose `data-id` matches.
     $(document).off('rowclick.FixedIncome').on('rowclick.FixedIncome', (e: any) => {
         let selectedRow = e.detail;
         let selectedRowId = selectedRow.data.Id;
@@ -267,6 +303,7 @@
         });
     });
 
+    // MvcGrid lifecycle events — intentional no-ops, bound only as hook points.
     $(document).off('reloadstart.FixedIncome').on('reloadstart.FixedIncome', _ => {
     });
 
@@ -279,6 +316,7 @@
     $(document).off('gridconfigure.FixedIncome').on('gridconfigure.FixedIncome', _ => {
     });
 
+    // Double-click the highlighted row to open its edit modal.
     $(document).off('dblclick.FixedIncome', '.clsGridRow').on('dblclick.FixedIncome', '.clsGridRow', function () {
         $('.clsGridRow').each(function () {
             if ($(this).attr("class")!.includes(selectedRowColor)) {
@@ -287,28 +325,34 @@
         });
     });
 
+    // Free-text search: push the term into the grid query string and reload.
     $gridSearch.off('input').on('input', function (this: HTMLInputElement) {
         const grid = new MvcGrid(document.querySelector('.mvc-grid'));
         grid.url.searchParams.set("wholeSearch", this.value);
         grid.reload();
     });
 
+    /** Create form main-class change: narrow the sub-class options to those allowed for it. */
     function CreateFormShowFixedIncomeSubClassBySelectedFixedIncomeMainClass(createFixedIncomeMainClass: HTMLSelectElement) {
         ApplyAllowedOptions($createFixedIncomeSubClass, incomeSubClassMap[createFixedIncomeMainClass.value] || [], null);
     }
 
+    /** Create form deposit-month change: re-fill the deposit-day options 1..maxDay for that month. */
     function CreateFormShowFixedIncomeDepositDayBySelectedFixedIncomeDepositMonth(createFixedIncomeDepositMonth: HTMLSelectElement) {
         ApplyAllowedOptions($createFixedIncomeDepositDay, DepositDayValues(createFixedIncomeDepositMonth.value), null);
     }
 
+    /** Edit form main-class change: same as the create-form version. */
     function EditFormShowFixedIncomeSubClassBySelectedFixedIncomeMainClass(editFixedIncomeMainClass: HTMLSelectElement) {
         ApplyAllowedOptions($editFixedIncomeSubClass, incomeSubClassMap[editFixedIncomeMainClass.value] || [], null);
     }
 
+    /** Edit form deposit-month change: same as the create-form version. */
     function EditFormShowFixedIncomeDepositDayBySelectedFixedIncomeDepositMonth(editFixedIncomeDepositMonth: HTMLSelectElement) {
         ApplyAllowedOptions($editFixedIncomeDepositDay, DepositDayValues(editFixedIncomeDepositMonth.value), null);
     }
 
+    /** Create-fixed-income modal submit: validate, POST the fields as JSON, then close / reload / toast. */
     function CreateFixedIncome() {
 
         if (!$formCreateFixedIncome.valid()) {
@@ -362,6 +406,14 @@
         return false;
     }
 
+    /**
+     * Opens the edit modal for the selected grid row. Fetches the record
+     * (`IsFixedIncomeExists`), fills the form, re-filters the sub-class and
+     * deposit-day selects for the record's main class / deposit month, and
+     * checks the "unpunctuality" box.
+     *
+     * @param errorMessageSelectGridRow localized "pick a row first" text from a `data-*` attribute.
+     */
     function EditFixedIncomeGridRow(errorMessageSelectGridRow?: string) {
 
         let selectedRowId = "";
@@ -419,6 +471,7 @@
         });
     }
 
+    /** Edit-fixed-income modal submit: same shape as `CreateFixedIncome` plus `Id` and `Unpunctuality`. */
     function UpdateFixedIncome() {
 
         if (!$formEditFixedIncome.valid()) {
@@ -476,6 +529,7 @@
         return false;
     }
 
+    /** "Delete" button: require a selected row, then just open the confirm modal. */
     function ConfirmDeleteFixedIncome(errorMessageSelectGridRow?: string) {
 
         let selectedRowId = "";
@@ -500,6 +554,7 @@
         $confirmDeleteFixedIncomeDialogModal.modal('show');
     }
 
+    /** Confirmed delete: re-check selection, confirm the record exists, then POST `DeleteFixedIncome`. */
     function DeleteFixedIncome(errorMessageSelectGridRow?: string) {
 
         let selectedRowId = "";
@@ -558,6 +613,10 @@
         });
     }
 
+    /**
+     * "Export to Excel": submit a throwaway `<form>` as a real POST so the
+     * browser downloads the binary response (`$.ajax` can't save it).
+     */
     function ExportExcelFixedIncome() {
         let form = document.createElement("form");
         let element1 = document.createElement("input");
@@ -579,6 +638,10 @@
         form.submit();
     }
 
+    /**
+     * Updates the create-form amount label to match the chosen deposit asset
+     * (its currency). Both `if` branches set the same thing.
+     */
     function ChangeCreateFixedIncomeAmountLabel(productName: string) {
         $.ajax({
             url: '/Notice/GetFixedIncomeAmountLabel' + '?productName=' + productName,
@@ -598,6 +661,7 @@
         });
     }
 
+    /** Same as `ChangeCreateFixedIncomeAmountLabel` for the edit form. */
     function ChangeEditFixedIncomeAmountLabel(productName: string) {
         $.ajax({
             url: '/Notice/GetFixedIncomeAmountLabel' + '?productName=' + productName,
@@ -617,6 +681,7 @@
         });
     }
 
+    // --- Button / form / select wiring --------------------------------
     $btnEditFixedExpenditureGridRow.off('click').on('click', function () {
         EditFixedIncomeGridRow($(this).attr('data-errorMessageSelectGridRow'));
     });
@@ -641,10 +706,12 @@
         return UpdateFixedIncome();
     });
 
+    // Main-class change -> re-filter sub-class options.
     $createFixedIncomeMainClass.off('change').on('change', function (this: HTMLSelectElement) {
         return CreateFormShowFixedIncomeSubClassBySelectedFixedIncomeMainClass(this);
     });
 
+    // Deposit-month change -> re-fill deposit-day options.
     $createFixedIncomeDepositMonth.off('change').on('change', function (this: HTMLSelectElement) {
         return CreateFormShowFixedIncomeDepositDayBySelectedFixedIncomeDepositMonth(this);
     });
@@ -657,6 +724,7 @@
         return EditFormShowFixedIncomeDepositDayBySelectedFixedIncomeDepositMonth(this);
     });
 
+    // Deposit-asset change -> refresh the amount label.
     $createFixedIncomeDepositMyAssetProductName.off('change').on('change', function (this: HTMLSelectElement) {
         ChangeCreateFixedIncomeAmountLabel(this.value);
     });
@@ -665,6 +733,7 @@
         ChangeEditFixedIncomeAmountLabel(this.value);
     });
 
+    // On load, set the create-form amount label for whichever asset is preselected.
     $(function () {
         ChangeCreateFixedIncomeAmountLabel($createFixedIncomeDepositMyAssetProductName.find('option:selected').val() as string);
     })

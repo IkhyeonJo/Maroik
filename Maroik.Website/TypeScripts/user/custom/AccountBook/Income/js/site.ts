@@ -1,4 +1,21 @@
+/**
+ * Script for the account book **Income** page (`Views/AccountBook/Income.cshtml`).
+ * A NonFactors MVC.Grid list of income entries with create / edit / delete
+ * modals and Excel export — the standard grid-CRUD pattern (see
+ * `AccountBook/Asset` for the fullest commentary) plus three page-specific bits:
+ *
+ *   • A localized jQuery-UI datepicker on the "date" fields.
+ *   • A dependent `<select>`: choosing a main income class narrows the
+ *     sub-class options to those `IncomeClassPolicy` allows for it.
+ *   • The amount field's label follows the chosen deposit asset (its currency).
+ *
+ * Client checks (allowed sub-classes, required fields) are UX mirrors — the
+ * controller re-validates every field and every class combination on save.
+ * IIFE-wrapped, no `import` / `export`.
+ */
 (function () {
+    // Cached references: jQuery-UI tab containers, the grid search box, both
+    // modals' fields, the amount labels, and the anti-forgery input.
     const $createIncomeTabs = $('#createIncomeTabs');
     const $editIncomeTabs = $('#editIncomeTabs');
     const $createIncomeDate = $('#createIncomeDate');
@@ -56,6 +73,10 @@
         }
     }
 
+    // Localized month / day names for the datepicker, each read from a hidden
+    // input the view rendered from the resource files. Typed `any` so the ~40
+    // `.val()` unions don't each need a cast. `PrevText` / `NextText` are read
+    // PascalCase to match the object keys (a casing fix committed separately).
     const localizer: any = {
         PrevText: $('#localizerPrevText').val(),
         NextText: $('#localizerNextText').val(),
@@ -106,6 +127,7 @@
         YearSuffix: $('#localizerYearSuffix').val()
     };
 
+    // Apply the localized names to every datepicker on the page.
     $.datepicker.setDefaults({
         dateFormat: 'yy-mm-dd',
         prevText: localizer.PrevText,
@@ -122,6 +144,10 @@
     $(function () {
         $createIncomeTabs.tabs();
         $editIncomeTabs.tabs();
+        // The empty `setTimeout(fn, 1)` in `beforeShow` / `onChangeMonthYear` is
+        // a jQuery-UI datepicker nudge — it defers a repaint so the button panel
+        // lays out correctly. Cast `as any` because `@types/jqueryui` insists
+        // those callbacks return `DatepickerOptions`.
         $createIncomeDate.datepicker({
             showButtonPanel: true,
             beforeShow: function () {
@@ -150,12 +176,16 @@
             }
         } as any);
 
+        // Hide the datepicker's built-in "Close" / "Today" buttons via injected CSS.
         $('<style> .ui-datepicker-close { display: none; } </style>').appendTo("head");
         $('<style> .ui-datepicker-current { display: none; } </style>').appendTo("head");
     });
 
+    // Bootstrap table class that marks the currently selected grid row.
     let selectedRowColor = "table-primary";
 
+    // MvcGrid `rowclick` (native CustomEvent): move the highlight to the row
+    // whose `data-id` matches the clicked record.
     $(document).off('rowclick.Income').on('rowclick.Income', (e: any) => {
         let selectedRow = e.detail;
         let selectedRowId = selectedRow.data.Id;
@@ -173,6 +203,7 @@
         });
     });
 
+    // MvcGrid lifecycle events — intentional no-ops, bound only as hook points.
     $(document).off('reloadstart.Income').on('reloadstart.Income', _ => {
     });
 
@@ -185,6 +216,7 @@
     $(document).off('gridconfigure.Income').on('gridconfigure.Income', _ => {
     });
 
+    // Double-click the highlighted row to open its edit modal.
     $(document).off('dblclick.Income', '.clsGridRow').on('dblclick.Income', '.clsGridRow', function () {
         $('.clsGridRow').each(function () {
             if ($(this).attr("class")!.includes(selectedRowColor)) {
@@ -193,20 +225,32 @@
         });
     });
 
+    // Free-text search: push the term into the grid query string and reload.
     $gridSearch.off('input').on('input', function (this: HTMLInputElement) {
         const grid = new MvcGrid(document.querySelector('.mvc-grid'));
         grid.url.searchParams.set('wholeSearch', this.value);
         grid.reload();
     });
 
+    /** Create form: on main-class change, narrow the sub-class options to those allowed for it. */
     function CreateFormShowIncomeSubClassBySelectedIncomeMainClass(createIncomeMainClass: HTMLSelectElement) {
         ApplyAllowedOptions($createIncomeSubClass, incomeSubClassMap[createIncomeMainClass.value] || [], null);
     }
 
+    /** Edit form: same as above for the edit modal. */
     function EditFormShowIncomeSubClassBySelectedIncomeMainClass(editIncomeMainClass: HTMLSelectElement) {
         ApplyAllowedOptions($editIncomeSubClass, incomeSubClassMap[editIncomeMainClass.value] || [], null);
     }
 
+    /**
+     * Create-income modal submit: validate, assemble the `Created` timestamp
+     * from the separate date / hour / minute / second fields, POST as JSON, then
+     * close / reload / toast.
+     *
+     * `new Date(y, m-1, d, ...)` uses `month - 1` because JS months are
+     * 0-indexed; `.toISOString()` converts that *local* time to UTC for the
+     * server. TypeScript does not catch a mistake in this arithmetic.
+     */
     function CreateIncome() {
 
         if (!$formCreateIncome.valid()) {
@@ -264,6 +308,14 @@
         return false;
     }
 
+    /**
+     * Opens the edit modal for the selected grid row. Fetches the record
+     * (`IsIncomeExists`) and fills the form; the `Created` ISO string is split
+     * back into the separate date / time-part inputs, and `ApplyAllowedOptions`
+     * re-populates the sub-class select for the record's main class.
+     *
+     * @param errorMessageSelectGridRow localized "pick a row first" text from a `data-*` attribute.
+     */
     function EditIncomeGridRow(errorMessageSelectGridRow?: string) {
 
         let selectedRowId = "";
@@ -296,6 +348,9 @@
 
                     $editIncomeContent.val(data.income.content);
                     $editIncomeAmount.val(data.income.amount);
+                    // `created` is `YYYY-MM-DDTHH:mm:ss`; split into the date field
+                    // and the hour / minute / second selects (`.change()` so any
+                    // listener fires).
                     $editIncomeDate.val(data.income.created.split('T')[0]);
                     $editIncomeHour.val(parseInt(data.income.created.split('T')[1].substring(0, 2))).change();
                     $editIncomeMinute.val(parseInt(data.income.created.split('T')[1].substring(3, 5))).change();
@@ -318,6 +373,7 @@
         });
     }
 
+    /** Edit-income modal submit: same shape as `CreateIncome` plus `Id`. */
     function UpdateIncome() {
 
         if (!$formEditIncome.valid()) {
@@ -376,6 +432,7 @@
         return false;
     }
 
+    /** "Delete" button: require a selected row, then just open the confirm modal. */
     function ConfirmDeleteIncome(errorMessageSelectGridRow?: string) {
 
         let selectedRowId = "";
@@ -400,6 +457,7 @@
         $confirmDeleteIncomeDialogModal.modal('show');
     }
 
+    /** Confirmed delete: re-check selection, confirm the record exists, then POST `DeleteIncome`. */
     function DeleteIncome(errorMessageSelectGridRow?: string) {
 
         let selectedRowId = "";
@@ -458,6 +516,10 @@
         });
     }
 
+    /**
+     * "Export to Excel": submit a throwaway `<form>` as a real POST so the
+     * browser downloads the binary response (`$.ajax` can't save it).
+     */
     function ExportExcelIncome() {
         let form = document.createElement("form");
         let element1 = document.createElement("input");
@@ -479,6 +541,12 @@
         form.submit();
     }
 
+    /**
+     * Updates the create-form's amount label to match the chosen deposit asset
+     * (e.g. its currency name). The server returns the label in `data.label`;
+     * both `if` branches set the same thing, so a failure just shows whatever
+     * fallback label the server sent.
+     */
     function ChangeCreateIncomeAmountLabel(productName: string) {
         $.ajax({
             url: '/AccountBook/GetIncomeAmountLabel' + '?productName=' + productName,
@@ -498,6 +566,7 @@
         });
     }
 
+    /** Same as `ChangeCreateIncomeAmountLabel` for the edit form. */
     function ChangeEditIncomeAmountLabel(productName: string) {
         $.ajax({
             url: '/AccountBook/GetIncomeAmountLabel' + '?productName=' + productName,
@@ -517,6 +586,7 @@
         });
     }
 
+    // --- Button / form / select wiring --------------------------------
     $btnEditIncomeGridRow.off('click').on('click', function () {
         EditIncomeGridRow($(this).attr("data-errorMessageSelectGridRow"));
     });
@@ -541,6 +611,7 @@
         return UpdateIncome();
     });
 
+    // Main-class change -> re-filter the sub-class options.
     $createIncomeMainClass.off('change').on('change', function (this: HTMLSelectElement) {
         CreateFormShowIncomeSubClassBySelectedIncomeMainClass(this);
     });
@@ -549,6 +620,7 @@
         EditFormShowIncomeSubClassBySelectedIncomeMainClass(this);
     });
 
+    // Deposit-asset change -> refresh the amount label.
     $createIncomeDepositMyAssetProductName.off('change').on('change', function (this: HTMLSelectElement) {
         ChangeCreateIncomeAmountLabel(this.value);
     });
@@ -557,6 +629,7 @@
         ChangeEditIncomeAmountLabel(this.value);
     });
 
+    // On load, set the create-form amount label for whichever asset is preselected.
     $(function () {
         ChangeCreateIncomeAmountLabel($createIncomeDepositMyAssetProductName.find('option:selected').val() as string);
     })

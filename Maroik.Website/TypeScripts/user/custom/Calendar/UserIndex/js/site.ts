@@ -1,4 +1,37 @@
+/**
+ * Script for the **user** Calendar page (`Views/Calendar/UserIndex.cshtml`) —
+ * the largest client script in the app. It is the admin Calendar page
+ * (`admin/Calendar/AdminIndex`) plus a read-only path for **shared** ("Other")
+ * calendars:
+ *
+ *   • **My calendars** — create / edit / delete (colour, timezone), and the
+ *     coloured checkboxes toggle which of them show on the grid.
+ *   • **My events** — create / edit / delete in a tabbed modal: all-day vs
+ *     timed, summernote description with inline image upload, an attachment,
+ *     and any number of reminders (email / notification; N minutes/hours/days/
+ *     weeks before; "notify at HH:MM" for all-day). Drag-select opens the
+ *     create modal; clicking a "My" event shows an edit/delete popup.
+ *   • **Other (shared) calendars** — clicking an "Other" event opens a
+ *     **read-only** "view" modal (every input disabled), like the anonymous
+ *     Calendar page. A "browse calendars of interest" dialog subscribes /
+ *     unsubscribes the user to shared calendars.
+ *
+ * Server contract: every bound / max (`maxMinutesBeforeEvent`,
+ * `reminderTimeIntervals`, …) comes from a hidden input a Domain policy
+ * (`CalendarReminderPolicy`) produced; the `Validate*` functions are UX mirrors
+ * and the controller re-validates every write. Local date strings are converted
+ * to UTC (`moment.utc(...)`) before sending.
+ *
+ * Structure: a long `const $x = $('#x')` element cache, then helpers, then one
+ * big `$(function)` that builds the datepickers, the FullCalendar instance and
+ * the event-form handlers, then a tail of standalone click handlers. IIFE-wrapped,
+ * no `import` / `export`; every jQuery handler is namespaced `.UserIndex` and
+ * re-bound with `.off().on()`.
+ */
 (function () {
+    // --- Element cache: every field of the create/edit-calendar,
+    // create/edit/view-event and browse-calendars modals, plus the two event
+    // popups ("My" and "Other") and the anti-forgery input.
     const $__RequestVerificationToken = $('input[name="__RequestVerificationToken"]');
     const maxFileSize = parseInt($('#maxAttachedFileSizeBytes').val() as string) || 10485760;
     // Authoritative in CalendarReminderPolicy (server); rendered into hidden inputs by the view.
@@ -147,6 +180,7 @@
     const $createCalendarEventAllDayUncheckedStartTime = $('#createCalendarEventAllDayUncheckedStartTime');
     const $createCalendarEventName = $('#createCalendarEventName');
 
+    /** base64 -> Blob, for turning server-embedded image / attachment payloads into object URLs. */
     function base64ToBlob(base64: string, mime: string) {
         const byteCharacters = atob(base64);
         const byteNumbers = new Array(byteCharacters.length);
@@ -157,6 +191,9 @@
         return new Blob([byteArray], { type: mime });
     }
 
+    // Localized FullCalendar UI strings, month/day names, reminder labels and
+    // validation messages — each from a hidden input the view rendered from the
+    // resource files. Typed `any` so the ~80 `.val()` unions don't each need a cast.
     const localizer: any = {
         Email: $('#localizerEmail').val(),
         Notification: $('#localizerNotification').val(),
@@ -240,8 +277,11 @@
         ErrorRangeWeek: $('#localizerErrorRangeWeek').val()
     };
 
+    // Module-scope FullCalendar instance, assigned inside `$(function)` below and
+    // closed over by the form handlers and `RefreshCalendarEvents`. Typed `any`.
     let calendar: any;
 
+    // Apply the localized names to every jQuery-UI datepicker on the page.
     $.datepicker.setDefaults({
         dateFormat: 'yy-mm-dd',
         prevText: localizer.PrevText,
@@ -255,6 +295,10 @@
         yearSuffix: localizer.YearSuffix
     });
 
+    // Rich-text editors for the create / edit event descriptions. `onImageUpload`
+    // uploads each dropped/pasted image and re-inserts it as an object URL (via
+    // `CreateUploadImageFile` / `EditUploadImageFile` near the bottom); the
+    // `overflow: scroll` keeps the modal scrollable as summernote grows.
     $createCalendarEventDescription.summernote({
         lang: localizer.IETFLanguageTag,
         callbacks: {
@@ -279,9 +323,15 @@
         }
     });
 
+    // The attachment chosen in each event form, held until the form is submitted.
     let createCalendarEventUploadedFile: any;
     let editCalendarEventUploadedFile: any;
 
+    /**
+     * `change` handler for the create-event attachment input: reject + clear the
+     * input if the file exceeds `maxFileSize`, otherwise stash the `File` in
+     * `createCalendarEventUploadedFile` for the submit to send.
+     */
     function CreateCalendarEventUploadedFile(obj: HTMLInputElement, errorMessage?: string) {
         if (obj.files![0].size > maxFileSize) {
             alert(errorMessage);
@@ -293,6 +343,7 @@
         }
     }
 
+    /** Same as `CreateCalendarEventUploadedFile` for the edit-event form. */
     function EditCalendarEventUploadedFile(obj: HTMLInputElement, errorMessage?: string) {
         if (obj.files![0].size > maxFileSize) {
             alert(errorMessage);
@@ -312,6 +363,10 @@
         return EditCalendarEventUploadedFile(this, $(this).attr('data-errorMessage'));
     });
 
+    // ================================================================
+    // DOM-ready: build the datepickers, the FullCalendar instance and the
+    // event-form handlers.
+    // ================================================================
     $(function () {
         $createCalendarTabs.tabs();
         $editCalendarTabs.tabs();
@@ -320,6 +375,12 @@
         $viewCalendarEventTaskTabs.tabs();
         $browseCalendarsOfInterestTabs.tabs();
 
+        // --- Start/end datepicker pairs (create & edit, all-day & timed) ---
+        // Each start picker's `onSelect` bumps the paired end picker forward if it
+        // fell behind and sets its `minDate`; each end picker's `onSelect` snaps
+        // back to the start if the user picked earlier. The empty
+        // `setTimeout(fn, 1)` callbacks are a jQuery-UI repaint nudge; the options
+        // object is cast `as any` (`@types/jqueryui` rejects the void callbacks).
         $createCalendarEventAllDayUncheckedStartDate.datepicker({
             showButtonPanel: true,
             beforeShow: function () {
@@ -476,6 +537,9 @@
             }
         } as any);
 
+        // Hide the datepicker's built-in "Close" / "Today" buttons; then show only
+        // the timed-vs-all-day section that matches each "all day" checkbox's
+        // current state (the click handlers near the bottom repeat this on toggle).
         $('<style> .ui-datepicker-close { display: none; } </style>').appendTo("head");
         $('<style> .ui-datepicker-current { display: none; } </style>').appendTo("head");
 
@@ -517,6 +581,12 @@
             $divEditEventNotificationAllDayUnchecked.show();
         }
 
+        // --- The FullCalendar instance --------------------------------------
+        // Read-only grid (`editable: false`) but `selectable` so a drag opens the
+        // create-event modal. Events carry `calendarType` ('My' | 'Other') in
+        // `extendedProps`; `eventClick` branches on it (edit/delete vs read-only
+        // view). `calendar` is the module-scope var, closed over by the form
+        // handlers and `RefreshCalendarEvents`.
         calendar = new FullCalendar.Calendar(document.getElementById('calendar')!, {
             locale: localizer.IETFLanguageTag,
             headerToolbar: {
@@ -533,6 +603,10 @@
             editable: false,
             selectable: true,
             selectMirror: true,
+            // Drag-select a date range: pre-fill the create-event start/end date
+            // fields (UTC, +1 day on the start to match the grid), load the
+            // user's calendars into the "my calendar" select, default the
+            // timezone to the signed-in account's, and open the modal.
             select: function (arg: any) {
                 $createCalendarEventAllDayUncheckedStartDate.val(moment.utc(arg.start).add(1, 'days').format("YYYY-MM-DD"));
                 $createCalendarEventAllDayCheckedStartDate.val(moment.utc(arg.start).add(1, 'days').format("YYYY-MM-DD"));
@@ -569,6 +643,16 @@
 
                 calendar.unselect();
             },
+            // Click an event. Two branches on `calendarType`:
+            //   'My'    -> summary popup with edit / delete. Edit fetches the
+            //              event (`IsCalendarEventExists`), fills the tabbed edit
+            //              modal (all-day/timed, description into summernote with
+            //              images rehydrated, attachment, calendar select,
+            //              reminder rows rebuilt); delete confirms then POSTs
+            //              `DeleteCalendarEvent` and removes it from the grid.
+            //   'Other' -> summary popup with a single "view" that opens a
+            //              read-only modal (every input disabled), like the
+            //              anonymous Calendar page.
             eventClick: function (arg: any) {
                 if (arg.event.extendedProps.calendarType === 'My') {
 
@@ -875,6 +959,7 @@
                     });
 
                     return false;
+                // --- "Other" (shared) event: read-only view path ---
                 } else if (arg.event.extendedProps.calendarType === 'Other') {
                     let eventEl = $(arg.el);
                     let offset = eventEl.offset()!;
@@ -1155,6 +1240,10 @@
             }
         });
 
+        // Seed the calendar: the user's own events (`calendarType: 'My'`) then
+        // the subscribed shared events (`calendarType: 'Other'`), both from
+        // hidden inputs. `extendedProps` carries the pre-formatted display
+        // strings the popups show.
         JSON.parse($calendarEventOutputViewModels.val() as string).forEach((item: any) => {
             calendar.addEvent({
                 id: item.Id,
@@ -1197,6 +1286,12 @@
 
         calendar.render();
 
+        /**
+         * Reloads the visible events from the set of currently-checked calendar
+         * checkboxes (each `<label id="lblCalendar123">` / `lblOtherCalendar123`
+         * encodes the id): clears the grid, gathers the ids, POSTs
+         * `GetCalendarEvents`, and re-adds whatever comes back.
+         */
         function RefreshCalendarEvents() {
             calendar.removeAllEvents();
 
@@ -1257,6 +1352,11 @@
             });
         }
 
+        // --- Reminder-row validators (UX mirrors of CalendarReminderPolicy) ---
+        // One per (create/edit) × (all-day/timed). Each reads a reminder row's
+        // "number" input, checks it's a non-negative integer within the max for
+        // the chosen unit, underlines it red + shows the row's `.error-message`
+        // on failure, and returns the bool. The server re-checks on save.
         function ValidateCreateEventInputAllDayChecked(row: JQuery) {
             let numberInput = row.find('.createCalendarEventSelNotificationNumberAllDayChecked');
             let value: any = (numberInput.val() as string).trim();
@@ -1496,6 +1596,13 @@
             row.find('.error-message').hide();
         });
 
+        // --- Create-event submit -----------------------------------------
+        // Validate every reminder row + jquery-validation, then assemble the
+        // payload: start/end as "date" or "date time" strings, blank timezones
+        // for all-day, the reminder list (one shape per unit), the description,
+        // and the stashed attachment — all into multipart `FormData`. On success
+        // reload the visible events, toast and close the modal. `as any` on the
+        // `FormData.append` values (it wants `string|Blob`).
         $formCreateCalendarEvent.off('submit').on('submit', function (event) {
             event.preventDefault();
 
@@ -1734,6 +1841,10 @@
 
         });
 
+        // --- Edit-event submit -----------------------------------------
+        // Same shape as create-event submit, plus the event `Id` and
+        // `CalendarId`; POSTs `UpdateCalendarEvent`, then reloads the visible
+        // events, toasts and closes the modal.
         $formEditCalendarEvent.off('submit').on('submit', function (event) {
             event.preventDefault();
 
@@ -1974,6 +2085,12 @@
 
         });
 
+        /**
+         * Edit-calendar submit: POST `{ Calendars: [{ Id, Name, Description,
+         * HtmlColorCode, TimeZoneIanaId }] }`. On success update the side-list
+         * label + checkbox accent colour, recolour that calendar's events in the
+         * grid, and re-sort the side list by name.
+         */
         function UpdateCalendar() {
 
             if (!$formEditCalendar.valid()) {
@@ -2057,6 +2174,12 @@
             return UpdateCalendar();
         });
 
+        /**
+         * Confirmed calendar delete: verify it exists (`IsCalendarExists`), POST
+         * `DeleteCalendar`, then remove its side-list label and all of its events
+         * from the grid. The id is stashed on the confirm modal by the
+         * `.delete-calendar` click handler near the bottom of the file.
+         */
         function DeleteCalendar() {
             let selectedCalendarId = $confirmDeleteCalendarDialogModal.data('calendar-id');
 
@@ -2120,6 +2243,16 @@
         });
     });
 
+    // ================================================================
+    // Standalone handlers (outside the DOM-ready block above).
+    // ================================================================
+
+    /**
+     * summernote `onImageUpload` for the create-event editor: POST the image,
+     * get `{ file: { fileContents(base64), contentType }, filePath }` back, and
+     * insert it as a size-capped `<img>` on an object URL (revoked once decoded).
+     * `filePath` goes in `alt` so the server resolves the stored image on save.
+     */
     function CreateUploadImageFile(file: File) {
 
         let formData = new FormData();
@@ -2160,6 +2293,7 @@
         });
     }
 
+    /** Same as `CreateUploadImageFile` for the edit-event editor. */
     function EditUploadImageFile(file: File) {
 
         let formData = new FormData();
@@ -2200,6 +2334,12 @@
         });
     }
 
+    /**
+     * Create-calendar submit: POST `{ Calendars: [{ Name, Description,
+     * HtmlColorCode, TimeZoneIanaId }] }`. On success append a new side-list
+     * `<label id="lblCalendar{id}">` (coloured checkbox + edit / delete icons)
+     * and re-sort the list by name.
+     */
     function CreateCalendar() {
 
         if (!$formCreateCalendar.valid()) {
@@ -2265,6 +2405,9 @@
         return CreateCalendar();
     });
 
+    // "New event" button (not via drag-select): load the user's calendars into
+    // the select, default the timezone, open the modal, set the date fields to
+    // today. `async: false` so the select is filled before the modal shows.
     $aCreateCalendarEvent.off('click').on('click', function () {
 
         $.ajax({
@@ -2301,6 +2444,8 @@
         $createCalendarEventAllDayCheckedEndDate.val(moment().format("YYYY-MM-DD"));
     });
 
+    // "All day" checkboxes: swap between the timed and all-day date/reminder
+    // sections of each event modal (same logic the DOM-ready block ran once).
     $createCalendarEventAllDay.off('click').on('click', function () {
         if ($(this).is(':checked')) {
             $divCreateEventAllDayUnchecked.hide();
@@ -2343,6 +2488,11 @@
         }
     });
 
+    // "Add reminder" buttons (one per create/edit × all-day/timed): build a new
+    // reminder row (method select, number input capped at the relevant max, unit
+    // select, and for all-day a "notify at" select defaulted to `defaultBeforeAt`)
+    // and insert it before the button. Removed by the `.a*DeleteNotification*`
+    // delegated handlers below.
     $createCalendarEventNotificationAllDayChecked.off('click').on('click', function () {
         const timeIntervals = reminderTimeIntervals;
 
@@ -2464,6 +2614,8 @@
         $(htmlString).insertBefore(this);
     });
 
+    // "Remove reminder" (the trash icon in each row) — delegated because rows are
+    // added dynamically.
     $(document).off('click.UserIndex', '.aCreateCalendarDeleteNotificationAllDayChecked').on('click.UserIndex', '.aCreateCalendarDeleteNotificationAllDayChecked', function () {
         $(this).parent().remove();
     });
@@ -2499,6 +2651,10 @@
         $createCalendarDialogModal.modal('show');
     });
 
+    // --- "Browse calendars of interest" dialog ---
+    // Opening it lists the shared calendars available to subscribe to; the
+    // "check all" box toggles them all; submitting POSTs the chosen set so the
+    // user starts/stops seeing those calendars' events.
     $aBrowseCalendarsOfInterest.off('click').on('click', function () {
         $.ajax({
             url: '/Calendar/GetBrowseCalendarsOfInterest',
@@ -2664,6 +2820,11 @@
         return false;
     });
 
+    // --- Side-list calendar edit / delete icons ---
+    // Pencil fetches the calendar (`IsCalendarExists`) and fills the edit modal;
+    // trash stashes the id on the confirm modal and opens it (delete runs in
+    // `DeleteCalendar`). Delegated + `stopPropagation` so they don't toggle the
+    // checkbox.
     $(document).off('click.UserIndex', '.edit-calendar').on('click.UserIndex', '.edit-calendar', function (e) {
         e.preventDefault();
         e.stopPropagation();
@@ -2732,6 +2893,8 @@
         $(this).css('color', '');
     });
 
+    // Attachment download from the edit-event ("My") modal: base64 -> Blob -> a
+    // throwaway `<a download>` that is clicked and cleaned up.
     $aEditCalendarEventAttachedFile.off('click').on('click', function (event) {
         event.preventDefault();
         let base64Data = $(this).attr('data-file');
@@ -2753,6 +2916,7 @@
         }
     });
 
+    // Same, for the read-only "view" modal opened for "Other" (shared) events.
     $aViewCalendarEventAttachedFile.off('click').on('click', function (event) {
         event.preventDefault();
         let base64Data = $(this).attr('data-file');

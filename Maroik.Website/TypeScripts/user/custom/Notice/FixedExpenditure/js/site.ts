@@ -1,4 +1,28 @@
+/**
+ * Script for the **Fixed Expenditure** page
+ * (`Views/Notice/FixedExpenditure.cshtml`) — recurring/scheduled expenditure
+ * entries. A NonFactors MVC.Grid list with create / edit / delete modals and
+ * Excel export, following the standard grid-CRUD pattern (see
+ * `AccountBook/Asset`). It combines everything the Fixed Income and Expenditure
+ * pages do:
+ *
+ *   • A localized jQuery-UI datepicker on the "maturity date" fields, with two
+ *     injected button-panel buttons: "No maturity date" (`NO_MATURITY_DATE`
+ *     sentinel) and "Today".
+ *   • Dependent `<select>`s: main class -> allowed sub-classes
+ *     (`ExpenditureClassPolicy`); deposit month -> valid deposit days 1..maxDay
+ *     (`FixedSchedulePolicy`, via `maxDepositDayByMonth`).
+ *   • A "deposit asset" block shown only for transfer-type sub-classes
+ *     (`expenditureDepositAssetSubClasses`).
+ *   • The amount field's label follows the chosen payment method.
+ *
+ * Client checks are UX mirrors; the controller re-validates on save.
+ * IIFE-wrapped, no `import` / `export`.
+ */
 (function () {
+    // Cached references: tab containers, grid search box, the two maturity-date
+    // inputs, the deposit-asset wrapper divs, every field of both modals, the
+    // amount labels, and the anti-forgery input.
     const $createFixedExpenditureTabs = $("#createFixedExpenditureTabs");
     const $editFixedExpenditureTabs = $("#editFixedExpenditureTabs");
     const $createFixedExpenditureMaturityDate = $("#createFixedExpenditureMaturityDate");
@@ -72,18 +96,23 @@
         return values;
     }
 
+    // The "deposit asset" field is only relevant for transfer-type sub-classes.
     function ToggleCreateFixedExpenditureMyDepositAsset(subClassValue: string) {
         expenditureDepositAssetSubClasses.indexOf(subClassValue) !== -1
             ? $divCreateFixedExpenditureMyDepositAsset.show()
             : $divCreateFixedExpenditureMyDepositAsset.hide();
     }
 
+    /** Same as `ToggleCreateFixedExpenditureMyDepositAsset` for the edit modal. */
     function ToggleEditFixedExpenditureMyDepositAsset(subClassValue: string) {
         expenditureDepositAssetSubClasses.indexOf(subClassValue) !== -1
             ? $divEditFixedExpenditureMyDepositAsset.show()
             : $divEditFixedExpenditureMyDepositAsset.hide();
     }
 
+    // Localized month / day names for the datepicker plus the two extra button
+    // captions and the maturity-date error message. `any` avoids ~45 `.val()`
+    // casts; `PrevText` / `NextText` are read PascalCase to match the keys.
     const localizer: any = {
         PrevText: $('#localizerPrevText').val(),
         NextText: $('#localizerNextText').val(),
@@ -137,6 +166,7 @@
         MaturityDateError: $('#localizerMaturityDateError').val(),
     };
 
+    // Apply the localized names to every datepicker on the page.
     $.datepicker.setDefaults({
         dateFormat: 'yy-mm-dd',
         prevText: localizer.PrevText,
@@ -153,6 +183,12 @@
     $(function () {
         $createFixedExpenditureTabs.tabs();
         $editFixedExpenditureTabs.tabs();
+        // Maturity-date pickers. `minDate: 0` forbids past dates. `beforeShow` /
+        // `onChangeMonthYear` (deferred a tick with `setTimeout`) append two
+        // custom buttons: "No maturity date" -> the far-future `NO_MATURITY_DATE`
+        // sentinel, and "Today". `_clearDate` is an undocumented jQuery-UI
+        // internal (hence `as any`), and the whole options object is cast `as
+        // any` because `@types/jqueryui` rejects void-returning callbacks.
         $createFixedExpenditureMaturityDate.datepicker({
             showButtonPanel: true,
             minDate: 0,
@@ -259,15 +295,19 @@
             }
         } as any);
 
+        // Default both pickers to today.
         $createFixedExpenditureMaturityDate.datepicker("setDate", new Date());
         $editFixedExpenditureMaturityDate.datepicker("setDate", new Date());
 
+        // Hide the datepicker's built-in "Close" / "Today" buttons via injected CSS.
         $('<style> .ui-datepicker-close { display: none; } </style>').appendTo("head");
         $('<style> .ui-datepicker-current { display: none; } </style>').appendTo("head");
     });
 
+    // Bootstrap table class that marks the currently selected grid row.
     let selectedRowColor = "table-primary";
 
+    // MvcGrid `rowclick`: move the highlight to the row whose `data-id` matches.
     $(document).off('rowclick.FixedExpenditure').on('rowclick.FixedExpenditure', (e: any) => {
         let selectedRow = e.detail;
         let selectedRowId = selectedRow.data.Id;
@@ -285,6 +325,7 @@
         });
     });
 
+    // MvcGrid lifecycle events — intentional no-ops, bound only as hook points.
     $(document).off('reloadstart.FixedExpenditure').on('reloadstart.FixedExpenditure', _ => {
     });
 
@@ -297,6 +338,7 @@
     $(document).off('gridconfigure.FixedExpenditure').on('gridconfigure.FixedExpenditure', _ => {
     });
 
+    // Double-click the highlighted row to open its edit modal.
     $(document).off('dblclick.FixedExpenditure', '.clsGridRow').on('dblclick.FixedExpenditure', '.clsGridRow', function () {
         $('.clsGridRow').each(function () {
             if ($(this).attr('class')!.includes(selectedRowColor)) {
@@ -305,39 +347,47 @@
         });
     });
 
+    // Free-text search: push the term into the grid query string and reload.
     $gridSearch.off('input').on('input', function (this: HTMLInputElement) {
         const grid = new MvcGrid(document.querySelector('.mvc-grid'));
         grid.url.searchParams.set('wholeSearch', this.value);
         grid.reload();
     });
 
+    /** Create form main-class change: re-filter the sub-class options and re-evaluate the deposit-asset block. */
     function CreateFormShowFixedExpenditureSubClassBySelectedFixedExpenditureMainClass(createFixedExpenditureMainClass: HTMLSelectElement) {
         ApplyAllowedOptions($createFixedExpenditureSubClass, expenditureSubClassMap[createFixedExpenditureMainClass.value] || [], null);
         ToggleCreateFixedExpenditureMyDepositAsset($createFixedExpenditureSubClass.val() as string);
     }
 
+    /** Create form sub-class change: show/hide the deposit-asset block for it. */
     function CreateFormShowFixedExpenditureDivCreateFixedExpenditureMyDepositAssetBySelectedFixedExpenditureSubClass(createFixedExpenditureSubClass: HTMLSelectElement) {
         ToggleCreateFixedExpenditureMyDepositAsset(createFixedExpenditureSubClass.value);
     }
 
+    /** Create form deposit-month change: re-fill the deposit-day options 1..maxDay for that month. */
     function CreateFormShowFixedExpenditureDepositDayBySelectedFixedExpenditureDepositMonth(createFixedExpenditureDepositMonth: HTMLSelectElement) {
         ApplyAllowedOptions($createFixedExpenditureDepositDay, DepositDayValues(createFixedExpenditureDepositMonth.value), null);
     }
 
+    /** Edit form main-class change: same as the create-form version. */
     function EditFormShowFixedExpenditureSubClassBySelectedFixedExpenditureMainClass(editFixedExpenditureMainClass: HTMLSelectElement) {
         ApplyAllowedOptions($editFixedExpenditureSubClass, expenditureSubClassMap[editFixedExpenditureMainClass.value] || [], null);
         ToggleEditFixedExpenditureMyDepositAsset($editFixedExpenditureSubClass.val() as string);
     }
 
+    /** Edit form sub-class change: show/hide the deposit-asset block for it. */
     function EditFormShowFixedExpenditureDivCreateFixedExpenditureMyDepositAssetBySelectedFixedExpenditureSubClass(editFixedExpenditureSubClass: HTMLSelectElement) {
         ToggleEditFixedExpenditureMyDepositAsset(editFixedExpenditureSubClass.value);
     }
 
+    /** Edit form deposit-month change: same as the create-form version. */
     function EditFormShowFixedExpenditureDepositDayBySelectedFixedExpenditureDepositMonth(editFixedExpenditureDepositMonth: HTMLSelectElement) {
         ApplyAllowedOptions($editFixedExpenditureDepositDay, DepositDayValues(editFixedExpenditureDepositMonth.value), null);
     }
 
 
+    /** Create-fixed-expenditure modal submit: validate, POST the fields as JSON, then close / reload / toast. */
     function CreateFixedExpenditure() {
 
         if (!$formCreateFixedExpenditure.valid()) {
@@ -393,6 +443,15 @@
         return false;
     }
 
+    /**
+     * Opens the edit modal for the selected grid row. Fetches the record
+     * (`IsFixedExpenditureExists`), fills the form, re-filters the sub-class and
+     * deposit-day selects, toggles the deposit-asset block, and (when the record
+     * has no explicit `myDepositAsset`) falls back to the payment method for
+     * that select.
+     *
+     * @param errorMessageSelectGridRow localized "pick a row first" text from a `data-*` attribute.
+     */
     function EditFixedExpenditureGridRow(errorMessageSelectGridRow?: string) {
 
         let selectedRowId = "";
@@ -462,6 +521,7 @@
         });
     }
 
+    /** Edit-fixed-expenditure modal submit: same shape as `CreateFixedExpenditure` plus `Id` and `Unpunctuality`. */
     function UpdateFixedExpenditure() {
 
         if (!$formEditFixedExpenditure.valid()) {
@@ -520,6 +580,7 @@
         return false;
     }
 
+    /** "Delete" button: require a selected row, then just open the confirm modal. */
     function ConfirmDeleteFixedExpenditure(errorMessageSelectGridRow?: string) {
 
         let selectedRowId = "";
@@ -544,6 +605,7 @@
         $confirmDeleteFixedExpenditureDialogModal.modal('show');
     }
 
+    /** Confirmed delete: re-check selection, confirm the record exists, then POST `DeleteFixedExpenditure`. */
     function DeleteFixedExpenditure(errorMessageSelectGridRow?: string) {
 
         let selectedRowId = "";
@@ -602,6 +664,10 @@
         });
     }
 
+    /**
+     * "Export to Excel": submit a throwaway `<form>` as a real POST so the
+     * browser downloads the binary response (`$.ajax` can't save it).
+     */
     function ExportExcelFixedExpenditure() {
         let form = document.createElement("form");
         let element1 = document.createElement("input");
@@ -623,6 +689,10 @@
         form.submit();
     }
 
+    /**
+     * Updates the create-form amount label to match the chosen payment method
+     * (its currency). Both `if` branches set the same thing.
+     */
     function ChangeCreateFixedExpenditureAmountLabel(productName: string) {
         $.ajax({
             url: '/Notice/GetFixedExpenditureAmountLabel' + '?productName=' + productName,
@@ -642,6 +712,7 @@
         });
     }
 
+    /** Same as `ChangeCreateFixedExpenditureAmountLabel` for the edit form. */
     function ChangeEditFixedExpenditureAmountLabel(productName: string) {
         $.ajax({
             url: '/Notice/GetFixedExpenditureAmountLabel' + '?productName=' + productName,
@@ -661,6 +732,7 @@
         });
     }
 
+    // --- Button / form / select wiring --------------------------------
     $btnEditFixedExpenditureGridRow.off('click').on('click', function () {
         EditFixedExpenditureGridRow($(this).attr('data-errorMessageSelectGridRow'));
     });
@@ -685,14 +757,17 @@
         return UpdateFixedExpenditure();
     });
 
+    // Main-class change -> re-filter sub-class + deposit-asset visibility.
     $createFixedExpenditureMainClass.off('change').on('change', function (this: HTMLSelectElement) {
         return CreateFormShowFixedExpenditureSubClassBySelectedFixedExpenditureMainClass(this);
     });
 
+    // Sub-class change -> deposit-asset visibility only.
     $createFixedExpenditureSubClass.off('change').on('change', function (this: HTMLSelectElement) {
         return CreateFormShowFixedExpenditureDivCreateFixedExpenditureMyDepositAssetBySelectedFixedExpenditureSubClass(this);
     });
 
+    // Deposit-month change -> re-fill deposit-day options.
     $createFixedExpenditureDepositMonth.off('change').on('change', function (this: HTMLSelectElement) {
         return CreateFormShowFixedExpenditureDepositDayBySelectedFixedExpenditureDepositMonth(this);
     });
@@ -709,6 +784,7 @@
         return EditFormShowFixedExpenditureDepositDayBySelectedFixedExpenditureDepositMonth(this);
     });
 
+    // Payment-method change -> refresh the amount label.
     $createFixedExpenditurePaymentMethod.off('change').on('change', function (this: HTMLSelectElement) {
         ChangeCreateFixedExpenditureAmountLabel(this.value);
     });
@@ -717,6 +793,7 @@
         ChangeEditFixedExpenditureAmountLabel(this.value);
     });
 
+    // On load, set the create-form amount label for whichever method is preselected.
     $(function () {
         ChangeCreateFixedExpenditureAmountLabel($createFixedExpenditurePaymentMethod.find('option:selected').val() as string);
     })
