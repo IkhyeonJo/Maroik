@@ -1,6 +1,7 @@
 using Maroik.Core.Contract.Dtos;
 using Maroik.Core.Contract.Interfaces;
 using Maroik.Core.Contract.Misc.Settings;
+using Maroik.Core.Domain.Media;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
@@ -44,10 +45,10 @@ public class AttachmentContentService : IAttachmentContentService
     public ServiceResult? ValidateAttachedFile(AttachedFileDto? attachedFile)
     {
         if (attachedFile == null) return null;
-        if (!string.Equals(Path.GetExtension(attachedFile.FileName), ".zip", StringComparison.OrdinalIgnoreCase))
+        if (!AttachmentUploadPolicy.IsAllowedExtension(Path.GetExtension(attachedFile.FileName)))
             return ServiceResult.Fail("Only zip extension allowed.");
         long maxBytes = _settings.Value.MaxAttachedFileSizeBytes;
-        if (attachedFile.Size <= 0 || attachedFile.Size > maxBytes)
+        if (!AttachmentUploadPolicy.IsValidSize(attachedFile.Size, maxBytes))
             // Stable, value-independent key (same one ManagementController/ForumController/
             // CalendarController already use for the avatar/Summernote-image size errors) so the
             // resx lookup still matches when MaxAttachedFileSizeBytes is configured away from

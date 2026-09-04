@@ -2,6 +2,7 @@ using MailKit.Net.Smtp;
 using MailKit.Security;
 using Maroik.Core.Contract.Dtos;
 using Maroik.Core.Contract.Interfaces;
+using Microsoft.Extensions.Logging;
 using MimeKit;
 
 namespace Maroik.Core.Client.Clients;
@@ -10,7 +11,7 @@ namespace Maroik.Core.Client.Clients;
 /// Concrete implementation of <see cref="IMailClient"/> that builds transactional email bodies
 /// and delivers them via SMTP using MailKit.
 /// </summary>
-public class MailClient : IMailClient
+public class MailClient(ILogger<MailClient> logger) : IMailClient
 {
     /// <inheritdoc />
     public string GetMailConfirmationBody(string registrationToken, string title, string content0, string content1, string domainName)
@@ -72,6 +73,7 @@ public class MailClient : IMailClient
         }
         catch (Exception ex)
         {
+            logger.LogError(ex, "Failed to send mail to {ToEmail}", toEmail);
             return ServiceResult.Fail(ex.Message);
         }
     }

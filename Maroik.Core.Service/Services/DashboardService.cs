@@ -69,7 +69,7 @@ public class DashboardService : IDashboardService
         List<Asset> assets = [.. allAssets.Where(a => !a.Deleted)];
         Account? account = await _accountRepository.FindByEmailAsync(accountEmail, ct);
 
-        string? defaultMonetaryUnit = GetEffectiveMonetaryUnit(account, allAssets);
+        string? defaultMonetaryUnit = account == null ? null : DefaultMonetaryUnitPolicy.Resolve(account.DefaultMonetaryUnit, allAssets);
 
         // Persist the self-corrected value (matches main): other screens that read
         // Account.DefaultMonetaryUnit directly (e.g. account management) must not see a
@@ -188,27 +188,6 @@ public class DashboardService : IDashboardService
             FixedIncomesExpired = incomesExpired,
             FixedExpendituresExpired = expendituresExpired
         };
-    }
-
-    /// <summary>
-    /// Computes the monetary unit the dashboard should display without persisting any changes.
-    /// When the stored unit is missing or no longer valid (no matching asset, no assets), returns
-    /// the best available unit so the view remains consistent until the user explicitly saves.
-    /// <paramref name="allAssets"/> must be the account's full asset list (deleted included), to
-    /// match main's <c>AssetRepository.GetAssetsAsync</c>, which never filters on Deleted.
-    /// </summary>
-    private static string? GetEffectiveMonetaryUnit(Account? account, List<Asset> allAssets)
-    {
-        if (account == null) return null;
-
-        string? currentUnit = account.DefaultMonetaryUnit;
-        HashSet<string> availableUnits = allAssets.Select(a => a.Balance.Currency).ToHashSet();
-
-        if (availableUnits.Count == 0) return null;
-
-        if (currentUnit != null && availableUnits.Contains(currentUnit)) return currentUnit;
-
-        return allAssets.GroupBy(a => a.Balance.Currency).OrderByDescending(g => g.Count()).FirstOrDefault()?.Key;
     }
 
     /// <inheritdoc />

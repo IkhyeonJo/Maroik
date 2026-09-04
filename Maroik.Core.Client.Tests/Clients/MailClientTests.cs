@@ -1,4 +1,5 @@
 using Maroik.Core.Client.Clients;
+using Microsoft.Extensions.Logging.Abstractions;
 
 namespace Maroik.Core.Client.Tests.Clients;
 
@@ -9,7 +10,7 @@ namespace Maroik.Core.Client.Tests.Clients;
 /// </summary>
 public class MailClientTests
 {
-    private readonly MailClient _sut = new();
+    private readonly MailClient _sut = new(NullLogger<MailClient>.Instance);
 
     // -- GetMailConfirmationBody ----------------------------------------------
 

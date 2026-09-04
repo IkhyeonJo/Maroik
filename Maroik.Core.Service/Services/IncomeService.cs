@@ -1,3 +1,4 @@
+using ErrorOr;
 using Maroik.Core.Domain.Finance;
 using Maroik.Core.Contract.Dtos;
 using Maroik.Core.Contract.Interfaces;
@@ -135,9 +136,7 @@ public class IncomeService : IIncomeService
             }
             string newCurrency = newAsset?.Balance.Currency ?? prevAsset?.Balance.Currency ?? "";
 
-            string previousAssetName = previous.DepositMyAssetProductName;
-            decimal previousAmount = previous.Amount.Amount;
-            string previousCurrency = prevAsset?.Balance.Currency ?? "";
+            var oldSnapshot = new IncomeSnapshot(previous.DepositMyAssetProductName, previous.Amount.Amount);
 
             var updateResult = previous.Update(request.MainClass, request.SubClass, request.Content,
                 Math.Abs(request.Amount), newCurrency, request.DepositMyAssetProductName, request.Note, request.Created);
@@ -148,48 +147,12 @@ public class IncomeService : IIncomeService
             }
 
             await _incomeRepository.UpdateEntityAsync(previous, ct);
-
-            if (previous.DepositMyAssetProductName == previousAssetName)
+            var adjustResult = await AdjustAssetBalancesAsync(accountEmail, oldSnapshot,
+                new IncomeSnapshot(previous.DepositMyAssetProductName, previous.Amount.Amount), ct);
+            if (adjustResult.IsError)
             {
-                if (prevAsset != null)
-                {
-                    var withdrawResult = prevAsset.Withdraw(Math.Abs(previousAmount), previousCurrency);
-                    if (withdrawResult.IsError)
-                    {
-                        await _unitOfWork.RollbackAsync(ct);
-                        return ServiceResult.Fail(withdrawResult.FirstError.Description);
-                    }
-                    var depositResult = prevAsset.Deposit(previous.Amount.Amount, previousCurrency);
-                    if (depositResult.IsError)
-                    {
-                        await _unitOfWork.RollbackAsync(ct);
-                        return ServiceResult.Fail(depositResult.FirstError.Description);
-                    }
-                    await _assetBalance.SaveAsync(prevAsset, ct);
-                }
-            }
-            else
-            {
-                if (prevAsset != null)
-                {
-                    var withdrawResult = prevAsset.Withdraw(Math.Abs(previousAmount), previousCurrency);
-                    if (withdrawResult.IsError)
-                    {
-                        await _unitOfWork.RollbackAsync(ct);
-                        return ServiceResult.Fail(withdrawResult.FirstError.Description);
-                    }
-                    await _assetBalance.SaveAsync(prevAsset, ct);
-                }
-                if (newAsset != null)
-                {
-                    var depositResult = newAsset.Deposit(previous.Amount.Amount, newCurrency);
-                    if (depositResult.IsError)
-                    {
-                        await _unitOfWork.RollbackAsync(ct);
-                        return ServiceResult.Fail(depositResult.FirstError.Description);
-                    }
-                    await _assetBalance.SaveAsync(newAsset, ct);
-                }
+                await _unitOfWork.RollbackAsync(ct);
+                return ServiceResult.Fail(adjustResult.FirstError.Description);
             }
 
             await _unitOfWork.CommitAsync(ct);
@@ -217,31 +180,23 @@ public class IncomeService : IIncomeService
                 return ServiceResult.Fail("Input is invalid");
             }
 
-            Asset? asset = await _assetBalance.GetAssetAsync(accountEmail, income.DepositMyAssetProductName, ct);
-            if (asset?.Deleted == true)
+            // An income referencing a since-archived (soft-deleted) asset must not be deletable,
+            // matching Create/Update: a deleted asset's balance must not be touched.
+            Dictionary<string, Asset> assetsToCheck = await _assetBalance.GetAssetsOrdinalAsync(
+                accountEmail, [income.DepositMyAssetProductName], ct);
+            if (!string.IsNullOrEmpty(income.DepositMyAssetProductName) &&
+                assetsToCheck.TryGetValue(income.DepositMyAssetProductName, out var assetToCheck) && assetToCheck.Deleted)
             {
                 await _unitOfWork.RollbackAsync(ct);
                 return ServiceResult.Fail("Actions cannot be executed with assets that have already been deleted.");
             }
 
-            // A non-empty asset reference that fails to resolve must abort the delete rather than
-            // silently skip the balance reversal, which would otherwise leave the asset's balance
-            // permanently wrong with no error surfaced.
-            if (!string.IsNullOrEmpty(income.DepositMyAssetProductName) && asset == null)
+            var adjustResult = await AdjustAssetBalancesAsync(accountEmail,
+                new IncomeSnapshot(income.DepositMyAssetProductName, income.Amount.Amount), null, ct);
+            if (adjustResult.IsError)
             {
                 await _unitOfWork.RollbackAsync(ct);
-                return ServiceResult.Fail("Input is invalid");
-            }
-
-            if (asset != null)
-            {
-                var withdrawResult = asset.Withdraw(Math.Abs(income.Amount.Amount), asset.Balance.Currency);
-                if (withdrawResult.IsError)
-                {
-                    await _unitOfWork.RollbackAsync(ct);
-                    return ServiceResult.Fail(withdrawResult.FirstError.Description);
-                }
-                await _assetBalance.SaveAsync(asset, ct);
+                return ServiceResult.Fail(adjustResult.FirstError.Description);
             }
 
             await _incomeRepository.DeleteByIdAsync(income.Id, ct);
@@ -256,4 +211,46 @@ public class IncomeService : IIncomeService
             return ServiceResult.Fail("Input is invalid");
         }
     }
+
+    /// <summary>
+    /// Reverts <paramref name="toRevert"/>'s asset impact and applies <paramref name="toApply"/>'s asset impact.
+    /// Pass null for toApply when deleting.
+    /// Uses a dictionary to batch all asset fetches and avoid double-fetch issues.
+    /// Mirrors <c>ExpenditureService.AdjustAssetBalancesAsync</c>.
+    /// </summary>
+    private async Task<ErrorOr<Success>> AdjustAssetBalancesAsync(string accountEmail, IncomeSnapshot toRevert, IncomeSnapshot? toApply, CancellationToken ct = default)
+    {
+        Dictionary<string, Asset> assets = await _assetBalance.GetAssetsOrdinalAsync(accountEmail,
+            [toRevert.DepositAssetName, toApply?.DepositAssetName], ct);
+
+        // A non-empty asset reference that fails to resolve (e.g. stale data left behind by an
+        // incomplete rename cascade) must abort the operation rather than silently skip the
+        // balance adjustment, which would otherwise leave the asset's balance permanently wrong.
+        if (!string.IsNullOrEmpty(toRevert.DepositAssetName))
+        {
+            if (!assets.TryGetValue(toRevert.DepositAssetName, out var ra))
+                return Error.NotFound("Income.AssetNotFound", "The asset referenced by this income could not be found.");
+            var result = ra.Withdraw(Math.Abs(toRevert.Amount), ra.Balance.Currency);
+            if (result.IsError) return result.Errors;
+        }
+
+        if (toApply.HasValue && !string.IsNullOrEmpty(toApply.Value.DepositAssetName))
+        {
+            if (!assets.TryGetValue(toApply.Value.DepositAssetName, out var aa))
+                return Error.NotFound("Income.AssetNotFound", "The asset referenced by this income could not be found.");
+            var result = aa.Deposit(Math.Abs(toApply.Value.Amount), aa.Balance.Currency);
+            if (result.IsError) return result.Errors;
+        }
+
+        foreach (var asset in assets.Values)
+            await _assetBalance.SaveAsync(asset, ct);
+
+        return Result.Success;
+    }
+
+    /// <summary>
+    /// Captures the asset-related fields of an <see cref="Income"/> at a point in time so that
+    /// the corresponding asset balance can be correctly reversed during update or delete operations.
+    /// </summary>
+    private readonly record struct IncomeSnapshot(string? DepositAssetName, decimal Amount);
 }

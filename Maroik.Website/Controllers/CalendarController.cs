@@ -348,42 +348,10 @@ public class CalendarController : Controller
     {
         try
         {
-            bool isAccountSessionExist = _sessionService.GetAccount() != null;
-            if (isAccountSessionExist)
-            {
-                List<CalendarResponse> calendars = await _calendarService.GetAllCalendarsAsync(HttpContext.RequestAborted);
-                List<OtherCalendarResponse> otherCalendars = await _calendarService.GetOtherCalendarsAsync(_sessionService.GetAccount()!.Email!, HttpContext.RequestAborted);
+            List<CalendarResponse> tempOtherCalendars =
+                await _calendarService.GetVisibleOtherCalendarsAsync(_sessionService.GetAccount(), HttpContext.RequestAborted);
 
-                List<CalendarResponse> tempOtherCalendars =
-                [
-                    .. (from calendar in calendars
-                        join otherCalendar in otherCalendars
-                            on calendar.Id equals otherCalendar.CalendarId
-                        select new CalendarResponse()
-                        {
-                            Id = calendar.Id, Name = calendar.Name, HtmlColorCode = calendar.HtmlColorCode,
-                        }).OrderBy(x => x.Name)
-                ];
-
-                return Json(new { result = true, tempOtherCalendars });
-            }
-            else
-            {
-                List<CalendarResponse> tempOtherCalendars = [];
-                var temporaryOtherCalendars = (from calendar in await _calendarService.GetAllCalendarsAsync(HttpContext.RequestAborted)
-                                               join calendarShared in (await _calendarService.GetCalendarSharedAsync(HttpContext.RequestAborted)).Where(x => x.Anonymous).ToList()
-                                               on calendar.Id equals calendarShared.CalendarId
-                                               select new
-                                               {
-                                                   calendar.Id,
-                                                   calendar.Name,
-                                                   calendar.HtmlColorCode
-                                               }).OrderBy(x => x.Name).ToList();
-
-                tempOtherCalendars.AddRange(temporaryOtherCalendars.Select(tempOtherCalendar => new CalendarResponse { Id = tempOtherCalendar.Id, Name = tempOtherCalendar.Name, HtmlColorCode = tempOtherCalendar.HtmlColorCode }));
-
-                return Json(new { result = true, tempOtherCalendars });
-            }
+            return Json(new { result = true, tempOtherCalendars });
         }
         catch (Exception ex)
         {
@@ -428,35 +396,10 @@ public class CalendarController : Controller
     {
         try
         {
-            bool isAccountSessionExist = _sessionService.GetAccount() != null;
-            AccountResponse loggedInAccount;
-            List<CalendarResponse> calendars;
-
-            if (isAccountSessionExist)
-            {
-                loggedInAccount = _sessionService.GetAccount()!;
-                calendars =
-                [
-                    .. from c in await _calendarService.GetAllCalendarsAsync(HttpContext.RequestAborted)
-                    join oc in await _calendarService.GetOtherCalendarsAsync(loggedInAccount.Email!,
-                            HttpContext.RequestAborted)
-                        on c.Id equals oc.CalendarId
-                    select c
-                ];
-            }
-            else
-            {
-                loggedInAccount = new AccountResponse { Role = Role.Anonymous, TimeZoneIanaId = "UTC" };
-                calendars =
-                [
-                    .. (from c in await _calendarService.GetAllCalendarsAsync(HttpContext.RequestAborted)
-                        join cs in (await _calendarService.GetCalendarSharedAsync(HttpContext.RequestAborted))
-                            .Where(x => x.Anonymous).ToList()
-                            on c.Id equals cs.CalendarId
-                        select new CalendarResponse { Id = c.Id, Name = c.Name, HtmlColorCode = c.HtmlColorCode })
-                    .OrderBy(x => x.Name)
-                ];
-            }
+            AccountResponse? sessionAccount = _sessionService.GetAccount();
+            AccountResponse loggedInAccount = sessionAccount ?? new AccountResponse { Role = Role.Anonymous, TimeZoneIanaId = "UTC" };
+            List<CalendarResponse> calendars =
+                await _calendarService.GetVisibleOtherCalendarsAsync(sessionAccount, HttpContext.RequestAborted);
 
             CalendarEventOutputViewModel? calendarEvent = await _calendarService.GetCalendarEventDetailViewModelAsync(
                 calendars, loggedInAccount.TimeZoneIanaId ?? "UTC", id, HttpContext.RequestAborted);
@@ -485,40 +428,13 @@ public class CalendarController : Controller
             if (!ModelState.IsValid)
                 return Json(new { result = false, error = _localizer["Input is invalid"].Value });
 
-            bool isAccountSessionExist = _sessionService.GetAccount() != null;
-            AccountResponse loggedInAccount;
-            List<CalendarResponse> ownedCalendars;
-            List<CalendarResponse> otherCalendars;
-
-            if (isAccountSessionExist)
-            {
-                loggedInAccount = _sessionService.GetAccount()!;
-                ownedCalendars = await _calendarService.GetCalendarsAsync(loggedInAccount.Email!, HttpContext.RequestAborted);
-
-                otherCalendars =
-                [
-                    .. (from c in await _calendarService.GetAllCalendarsAsync(HttpContext.RequestAborted)
-                        join oc in await _calendarService.GetOtherCalendarsAsync(loggedInAccount.Email!,
-                                HttpContext.RequestAborted)
-                            on c.Id equals oc.CalendarId
-                        select new CalendarResponse { Id = c.Id, Name = c.Name, HtmlColorCode = c.HtmlColorCode })
-                    .OrderBy(x => x.Name)
-                ];
-            }
-            else
-            {
-                loggedInAccount = new AccountResponse { Role = Role.Anonymous, TimeZoneIanaId = "UTC" };
-                ownedCalendars = [];
-                otherCalendars =
-                [
-                    .. (from c in await _calendarService.GetAllCalendarsAsync(HttpContext.RequestAborted)
-                        join cs in (await _calendarService.GetCalendarSharedAsync(HttpContext.RequestAborted))
-                            .Where(x => x.Anonymous).ToList()
-                            on c.Id equals cs.CalendarId
-                        select new CalendarResponse { Id = c.Id, Name = c.Name, HtmlColorCode = c.HtmlColorCode })
-                    .OrderBy(x => x.Name)
-                ];
-            }
+            AccountResponse? sessionAccount = _sessionService.GetAccount();
+            AccountResponse loggedInAccount = sessionAccount ?? new AccountResponse { Role = Role.Anonymous, TimeZoneIanaId = "UTC" };
+            List<CalendarResponse> ownedCalendars = sessionAccount != null
+                ? await _calendarService.GetCalendarsAsync(sessionAccount.Email!, HttpContext.RequestAborted)
+                : [];
+            List<CalendarResponse> otherCalendars =
+                await _calendarService.GetVisibleOtherCalendarsAsync(sessionAccount, HttpContext.RequestAborted);
 
             string userTimezone = loggedInAccount.TimeZoneIanaId ?? "UTC";
             List<CalendarEventOutputViewModel> calendarEvents = [];

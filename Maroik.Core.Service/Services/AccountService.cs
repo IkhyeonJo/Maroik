@@ -185,24 +185,11 @@ public class AccountService : IAccountService
                 return RegisterResult.Fail("Error occurred while processing about account registration");
             }
 
-            // Encrypt the registration token before embedding it in the confirmation URL.
-            string body = _mailClient.GetMailConfirmationBody(_rsa.Encrypt(account.RegistrationToken!), emailTitle, emailContent0, emailContent1, _settings.Value.DomainName ?? "");
-            bool published = await PublishMailAsync(account.Email.Value, emailSubject, body, ct);
-            if (published)
-            {
-                return RegisterResult.Ok(showResendEmail: true, email: account.Email.Value);
-            }
-
-            {
-                try
-                {
-                    account.SetMessage(EnumHelper.GetDescription(AccountMessage.FailToMailSent));
-                    await _accountRepository.UpdateEntityAsync(account, ct);
-                }
-                catch (Exception e) { _logger.LogWarning(e, "Failed to update account message after mail send failure"); }
-                return RegisterResult.Fail("Error occurred while processing about sending account authentication mail");
-            }
-
+            // The account was just created with UserCreatedVerifyEmail already set above, so a
+            // successful send should not overwrite it with VerifyEmail.
+            return await SendConfirmationEmailAndUpdateStatusAsync(
+                account, emailSubject, emailTitle, emailContent0, emailContent1,
+                setVerifyEmailMessageOnSuccess: false, repeat: false, ct);
         }
 
         if (!existing.EmailConfirmed)
@@ -210,32 +197,9 @@ public class AccountService : IAccountService
             // Account exists but email was never confirmed: regenerate the token if missing and resend.
             existing.RegenerateRegistrationTokenIfEmpty(GuidToken.Generate());
 
-            string body = _mailClient.GetMailConfirmationBody(_rsa.Encrypt(existing.RegistrationToken!), emailTitle, emailContent0, emailContent1, _settings.Value.DomainName ?? "");
-            bool published = await PublishMailAsync(existing.Email.Value, emailSubject, body, ct);
-
-            if (!published)
-            {
-                try
-                {
-                    existing.SetMessage(EnumHelper.GetDescription(AccountMessage.FailToMailSent));
-                    await _accountRepository.UpdateEntityAsync(existing, ct);
-                }
-                catch (Exception e) { _logger.LogWarning(e, "Failed to update account message after mail send failure for {Email}", existing.Email.Value); }
-                return RegisterResult.Fail("Error occurred while processing about sending account authentication mail");
-            }
-
-            try
-            {
-                existing.SetMessage(EnumHelper.GetDescription(AccountMessage.VerifyEmail));
-                await _accountRepository.UpdateEntityAsync(existing, ct);
-            }
-            catch (Exception e)
-            {
-                _logger.LogError(e, "Failed to update account status for {Email}", existing.Email.Value);
-                return RegisterResult.Fail("Error occurred while processing about account status");
-            }
-
-            return RegisterResult.Ok(showResendEmail: true, email: existing.Email.Value);
+            return await SendConfirmationEmailAndUpdateStatusAsync(
+                existing, emailSubject, emailTitle, emailContent0, emailContent1,
+                setVerifyEmailMessageOnSuccess: true, repeat: false, ct);
         }
 
         // Account is fully confirmed: mark it as already created and return a failure so the user knows.
@@ -266,36 +230,10 @@ public class AccountService : IAccountService
             // Ensure a valid token exists before building the confirmation URL.
             account.RegenerateRegistrationTokenIfEmpty(GuidToken.Generate());
 
-            string body = _mailClient.GetMailConfirmationBody(_rsa.Encrypt(account.RegistrationToken!), emailTitle, emailContent0, emailContent1, _settings.Value.DomainName ?? "");
-            bool published = await PublishMailAsync(email, emailSubject, body, ct);
-            if (!published)
-            {
-                try
-                {
-                    account.SetMessage(EnumHelper.GetDescription(AccountMessage.FailToMailSent));
-                    await _accountRepository.UpdateEntityAsync(account, ct);
-                }
-                catch (Exception e)
-                {
-                    _logger.LogError(e, "Failed to update account status for {Email}", email);
-                    return RegisterResult.Fail("Error occurred while processing about account status");
-                }
-                return RegisterResult.Fail("Error occurred while processing about sending account authentication mail");
-            }
-
-            try
-            {
-                account.SetMessage(EnumHelper.GetDescription(AccountMessage.VerifyEmail));
-                await _accountRepository.UpdateEntityAsync(account, ct);
-            }
-            catch (Exception e)
-            {
-                _logger.LogError(e, "Failed to update account status for {Email}", email);
-                return RegisterResult.Fail("Error occurred while processing about mail send account status");
-            }
-
             // repeat: true signals the UI that this is a resend, not the first confirmation.
-            return RegisterResult.Ok(showResendEmail: true, email: account.Email.Value, repeat: true);
+            return await SendConfirmationEmailAndUpdateStatusAsync(
+                account, emailSubject, emailTitle, emailContent0, emailContent1,
+                setVerifyEmailMessageOnSuccess: true, repeat: true, ct);
         }
 
         // Email is already confirmed: inform the caller the account is fully created.
@@ -471,6 +409,51 @@ public class AccountService : IAccountService
 
     private Task<Account?> FindByResetPasswordTokenAsync(string token, CancellationToken ct = default)
         => _accountRepository.FindByResetPasswordTokenAsync(token, ct);
+
+    /// <summary>
+    /// Builds and publishes a registration-confirmation email for <paramref name="account"/>, then
+    /// persists its outcome: on publish failure, marks <see cref="AccountMessage.FailToMailSent"/>
+    /// and returns a failure result; on success, marks <see cref="AccountMessage.VerifyEmail"/>
+    /// (unless <paramref name="setVerifyEmailMessageOnSuccess"/> is false — the newly-created-account
+    /// caller already set a more specific message and doesn't need it overwritten) before returning
+    /// a success result. Shared by <see cref="RegisterAsync"/> (both branches) and
+    /// <see cref="ResendConfirmationEmailAsync"/>, which otherwise repeated this send/persist/report
+    /// sequence three times with the same failure modes to keep in sync.
+    /// </summary>
+    private async Task<RegisterResult> SendConfirmationEmailAndUpdateStatusAsync(
+        Account account, string emailSubject, string emailTitle, string emailContent0, string emailContent1,
+        bool setVerifyEmailMessageOnSuccess, bool repeat, CancellationToken ct)
+    {
+        string body = _mailClient.GetMailConfirmationBody(_rsa.Encrypt(account.RegistrationToken!), emailTitle, emailContent0, emailContent1, _settings.Value.DomainName ?? "");
+        bool published = await PublishMailAsync(account.Email.Value, emailSubject, body, ct);
+
+        if (!published)
+        {
+            try
+            {
+                account.SetMessage(EnumHelper.GetDescription(AccountMessage.FailToMailSent));
+                await _accountRepository.UpdateEntityAsync(account, ct);
+            }
+            catch (Exception e) { _logger.LogWarning(e, "Failed to update account message after mail send failure for {Email}", account.Email.Value); }
+            return RegisterResult.Fail("Error occurred while processing about sending account authentication mail");
+        }
+
+        if (setVerifyEmailMessageOnSuccess)
+        {
+            try
+            {
+                account.SetMessage(EnumHelper.GetDescription(AccountMessage.VerifyEmail));
+                await _accountRepository.UpdateEntityAsync(account, ct);
+            }
+            catch (Exception e)
+            {
+                _logger.LogError(e, "Failed to update account status for {Email}", account.Email.Value);
+                return RegisterResult.Fail("Error occurred while processing about account status");
+            }
+        }
+
+        return RegisterResult.Ok(showResendEmail: true, email: account.Email.Value, repeat: repeat);
+    }
 
     /// <summary>
     /// Enqueues a mail via <see cref="IEmailPublisher"/> for asynchronous delivery by Maroik.Worker.
