@@ -48,11 +48,12 @@ public class AttachmentContentService : IAttachmentContentService
             return ServiceResult.Fail("Only zip extension allowed.");
         long maxBytes = _settings.Value.MaxAttachedFileSizeBytes;
         if (attachedFile.Size <= 0 || attachedFile.Size > maxBytes)
-            // Lowercase "uploaded" and the MB value must match the resx key text exactly
-            // (ForumController/ManagementController/CalendarController .resx) for this to
-            // localize instead of falling back to this raw English string — keep both in sync
-            // if MaxAttachedFileSizeBytes is ever reconfigured to a value other than 10MB.
-            return ServiceResult.Fail($"uploaded file size must be smaller than {maxBytes / (1024 * 1024)}MB.");
+            // Stable, value-independent key (same one ManagementController/ForumController/
+            // CalendarController already use for the avatar/Summernote-image size errors) so the
+            // resx lookup still matches when MaxAttachedFileSizeBytes is configured away from
+            // 10MB. Callers that display this to the user must pass maxBytes/(1024*1024) as the
+            // localizer's format argument instead of reading a pre-baked number out of the key.
+            return ServiceResult.Fail("File Size must be smaller than {0}MB.");
         return null;
     }
 

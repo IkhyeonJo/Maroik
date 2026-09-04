@@ -6,6 +6,7 @@ using Maroik.Core.Client.Clients;
 using Maroik.Core.Contract.Interfaces;
 using Maroik.FileStorage.Contracts;
 using Maroik.FileStorage.Services;
+using Maroik.FileStorage.Settings;
 using Microsoft.OpenApi;
 using Serilog;
 using Serilog.Events;
@@ -29,6 +30,10 @@ try
 
     // Register MVC controllers (FileController and any future controllers).
     builder.Services.AddControllers();
+
+    // Bind the upload size cap from the "ServerSetting" config section (see FileStorageSetting
+    // for why it shares its name with Maroik.Website's ServerSetting).
+    builder.Services.Configure<FileStorageSetting>(builder.Configuration.GetSection("ServerSetting"));
 
     // Register the ClamAV virus-scan client so FileController can inject it.
     builder.Services.AddScoped<IClamavClient, ClamavClient>();

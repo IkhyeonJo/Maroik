@@ -162,9 +162,6 @@
   <data name="Title length is must be between 1 and 100 characters." xml:space="preserve">
     <value>제목 길이는 1~100 글자이여야 합니다.</value>
   </data>
-  <data name="uploaded file size must be smaller than 10MB." xml:space="preserve">
-    <value>업로드 파일 크기는 10MB 보다 작아야 합니다.</value>
-  </data>
   <data name="You do not have permission to delete." xml:space="preserve">
     <value>삭제할 권한이 없습니다.</value>
   </data>

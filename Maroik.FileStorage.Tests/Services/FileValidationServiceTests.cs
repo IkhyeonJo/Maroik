@@ -1,7 +1,9 @@
 using ICSharpCode.SharpZipLib.Zip;
 using Maroik.Core.Contract.Interfaces;
 using Maroik.FileStorage.Services;
+using Maroik.FileStorage.Settings;
 using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.Options;
 using Moq;
 
 namespace Maroik.FileStorage.Tests.Services;
@@ -31,6 +33,9 @@ public class FileValidationServiceTests
             .ReturnsAsync(false);
         return mock;
     }
+
+    /// <summary>Options wrapping the default 10 MB size cap, matching production's unconfigured default.</summary>
+    private static IOptions<FileStorageSetting> DefaultSettings() => Options.Create(new FileStorageSetting());
 
     private static FormFile MakeFormFile(byte[] bytes, string fileName)
     {
@@ -90,7 +95,7 @@ public class FileValidationServiceTests
         {
             byte[] jpegBytes = [0xFF, 0xD8, 0xFF, 0xE0, 0x00, 0x10, 0x4A, 0x46, 0x49, 0x46, 0x00];
             var file = MakeFormFile(jpegBytes, "photo.jpg");
-            var service = new FileValidationService(CleanScanMock().Object);
+            var service = new FileValidationService(CleanScanMock().Object, DefaultSettings());
 
             var (success, error) = await service.ValidateAndSaveAsync(file, tempDir);
 
@@ -129,7 +134,7 @@ public class FileValidationServiceTests
         {
             byte[] pngBytes = [0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A, 0x01, 0x02];
             var file = MakeFormFile(pngBytes, "picture.png");
-            var service = new FileValidationService(CleanScanMock().Object);
+            var service = new FileValidationService(CleanScanMock().Object, DefaultSettings());
 
             var (success, error) = await service.ValidateAndSaveAsync(file, tempDir);
 
@@ -152,7 +157,7 @@ public class FileValidationServiceTests
     [Fact]
     public async Task ValidateAndSaveAsync_ReturnsInvalidFile_WhenFileIsNull()
     {
-        var service = new FileValidationService(CleanScanMock().Object);
+        var service = new FileValidationService(CleanScanMock().Object, DefaultSettings());
 
         var (success, error) = await service.ValidateAndSaveAsync(null!, Path.GetTempPath());
 
@@ -165,7 +170,7 @@ public class FileValidationServiceTests
     public async Task ValidateAndSaveAsync_ReturnsInvalidFile_WhenFileIsZeroLength()
     {
         var file = MakeFormFile([], "empty.jpg");
-        var service = new FileValidationService(CleanScanMock().Object);
+        var service = new FileValidationService(CleanScanMock().Object, DefaultSettings());
 
         var (success, error) = await service.ValidateAndSaveAsync(file, Path.GetTempPath());
 
@@ -183,7 +188,7 @@ public class FileValidationServiceTests
     public async Task ValidateAndSaveAsync_ReturnsUnsupportedExtension_WhenExtensionIsNotAllowed(string fileName)
     {
         var file = MakeFormFile([0x01, 0x02, 0x03], fileName);
-        var service = new FileValidationService(CleanScanMock().Object);
+        var service = new FileValidationService(CleanScanMock().Object, DefaultSettings());
 
         var (success, error) = await service.ValidateAndSaveAsync(file, Path.GetTempPath());
 
@@ -201,7 +206,7 @@ public class FileValidationServiceTests
         largeBytes[0] = 0xFF;
         largeBytes[1] = 0xD8;
         var file = MakeFormFile(largeBytes, "large.jpg");
-        var service = new FileValidationService(CleanScanMock().Object);
+        var service = new FileValidationService(CleanScanMock().Object, DefaultSettings());
 
         var (success, error) = await service.ValidateAndSaveAsync(file, Path.GetTempPath());
 
@@ -216,7 +221,7 @@ public class FileValidationServiceTests
     public async Task ValidateAndSaveAsync_ReturnsInvalidFormat_WhenJpgHasWrongMagicBytes()
     {
         var file = MakeFormFile([0x00, 0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06], "fake.jpg");
-        var service = new FileValidationService(CleanScanMock().Object);
+        var service = new FileValidationService(CleanScanMock().Object, DefaultSettings());
 
         var (success, error) = await service.ValidateAndSaveAsync(file, Path.GetTempPath());
 
@@ -232,7 +237,7 @@ public class FileValidationServiceTests
     {
         byte[] jpegBytes = [0xFF, 0xD8, 0xFF, 0xE0, 0x00, 0x10, 0x4A, 0x46, 0x49, 0x46, 0x00];
         var file = MakeFormFile(jpegBytes, "infected.jpg");
-        var service = new FileValidationService(InfectedScanMock().Object);
+        var service = new FileValidationService(InfectedScanMock().Object, DefaultSettings());
 
         var (success, error) = await service.ValidateAndSaveAsync(file, Path.GetTempPath());
 
@@ -251,7 +256,7 @@ public class FileValidationServiceTests
         {
             var zipBytes = BuildValidZipBytes();
             var file = MakeFormFile(zipBytes, "archive.zip");
-            var service = new FileValidationService(CleanScanMock().Object);
+            var service = new FileValidationService(CleanScanMock().Object, DefaultSettings());
 
             var (success, error) = await service.ValidateAndSaveAsync(file, tempDir);
 
@@ -274,7 +279,7 @@ public class FileValidationServiceTests
     {
         var encryptedZipBytes = BuildEncryptedZipBytes();
         var file = MakeFormFile(encryptedZipBytes, "encrypted.zip");
-        var service = new FileValidationService(CleanScanMock().Object);
+        var service = new FileValidationService(CleanScanMock().Object, DefaultSettings());
 
         var (success, error) = await service.ValidateAndSaveAsync(file, Path.GetTempPath());
 

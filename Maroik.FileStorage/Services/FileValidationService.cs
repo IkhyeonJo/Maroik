@@ -2,6 +2,8 @@ using System.Diagnostics;
 using ICSharpCode.SharpZipLib.Zip;
 using Maroik.Core.Contract.Interfaces;
 using Maroik.FileStorage.Contracts;
+using Maroik.FileStorage.Settings;
+using Microsoft.Extensions.Options;
 
 namespace Maroik.FileStorage.Services;
 
@@ -13,14 +15,15 @@ namespace Maroik.FileStorage.Services;
 public class FileValidationService : IFileValidationService
 {
     private static readonly string[] _allowedExtensions = [".zip", ".jpg", ".jpeg", ".png"];
-    private const long MaxFileSizeBytes = 10 * 1024 * 1024; // 10 MB
 
     private readonly IClamavClient _clamavClient;
+    private readonly IOptions<FileStorageSetting> _settings;
 
     /// <summary>Initializes a new instance of <see cref="FileValidationService"/>.</summary>
-    public FileValidationService(IClamavClient clamavClient)
+    public FileValidationService(IClamavClient clamavClient, IOptions<FileStorageSetting> settings)
     {
         _clamavClient = clamavClient;
+        _settings = settings;
     }
 
     /// <inheritdoc />
@@ -43,7 +46,7 @@ public class FileValidationService : IFileValidationService
         if (!_allowedExtensions.Contains(ext))
             return (false, "Unsupported file extension.");
 
-        if (file.Length > MaxFileSizeBytes)
+        if (file.Length > _settings.Value.MaxAttachedFileSizeBytes)
             return (false, "File too large.");
 
         using var memStream = new MemoryStream();

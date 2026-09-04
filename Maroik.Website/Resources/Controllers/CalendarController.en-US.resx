@@ -135,17 +135,14 @@
   <data name="Only zip extension allowed." xml:space="preserve">
     <value>Only zip extension allowed.</value>
   </data>
-  <data name="uploaded file size must be smaller than 10MB." xml:space="preserve">
-    <value>uploaded file size must be smaller than 10MB.</value>
+  <data name="File Size must be smaller than {0}MB." xml:space="preserve">
+    <value>File Size must be smaller than {0}MB.</value>
   </data>
   <data name="The calendar does not exists." xml:space="preserve">
     <value>The calendar does not exists.</value>
   </data>
   <data name="Please Login to create calendar event" xml:space="preserve">
     <value>Please Login to create calendar event</value>
-  </data>
-  <data name="File size must be smaller than {0}MB." xml:space="preserve">
-    <value>File size must be smaller than {0}MB.</value>
   </data>
   <data name="The calendar event has been successfully created." xml:space="preserve">
     <value>The calendar event has been successfully created.</value>

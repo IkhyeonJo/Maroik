@@ -119,7 +119,7 @@ public class CalendarController : Controller
                 await calendarEventInputViewModel.CalendarEventUploadedFile.ToAttachedFileInfoAsync(HttpContext.RequestAborted),
                 HttpContext.RequestAborted);
 
-            return !createEventResult.Success ? Json(new { result = false, error = _localizer[createEventResult.ErrorKey].Value }) : Json(new { result = true, message = _localizer["The calendar event has been successfully created."].Value });
+            return !createEventResult.Success ? Json(new { result = false, error = _localizer[createEventResult.ErrorKey, _serverSettings.Value.MaxAttachedFileSizeBytes / (1024 * 1024)].Value }) : Json(new { result = true, message = _localizer["The calendar event has been successfully created."].Value });
         }
         catch (Exception ex)
         {
@@ -713,7 +713,7 @@ public class CalendarController : Controller
                 await calendarEventInputViewModel.CalendarEventUploadedFile.ToAttachedFileInfoAsync(HttpContext.RequestAborted),
                 HttpContext.RequestAborted);
 
-            return !updateEventResult.Success ? Json(new { result = false, error = _localizer[updateEventResult.ErrorKey].Value }) : Json(new { result = true, message = _localizer["The calendar event has been successfully updated."].Value });
+            return !updateEventResult.Success ? Json(new { result = false, error = _localizer[updateEventResult.ErrorKey, _serverSettings.Value.MaxAttachedFileSizeBytes / (1024 * 1024)].Value }) : Json(new { result = true, message = _localizer["The calendar event has been successfully updated."].Value });
         }
         catch (Exception ex)
         {
