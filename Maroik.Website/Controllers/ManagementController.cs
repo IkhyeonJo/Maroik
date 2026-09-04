@@ -1220,7 +1220,6 @@ public class ManagementController : Controller
             // List
             default:
             {
-                bool isAccountSessionExist = _sessionService.GetAccount() != null;
                 AccountResponse loggedInAccount = _sessionService.GetAccount()!;
 
                 #region Board default paging logic
@@ -1249,52 +1248,14 @@ public class ManagementController : Controller
 
                 switch (searchType)
                 {
+                    // privateNoteBoards is already scoped to the caller's own notes (see the
+                    // Writer filter above), unlike FreeForum's equivalent search — so there is no
+                    // role/lock split to make here. Every branch of the role-based version this
+                    // replaced narrowed to the exact same "own notes matching title" result, since
+                    // it operated on a collection that only ever contains the caller's own boards.
                     case "Title" when !string.IsNullOrEmpty(searchText):
-                    {
-                        if (isAccountSessionExist) // If logged in
-                        {
-                            switch (loggedInAccount.Role)
-                            {
-                                // Administrator can see all posts
-                                case Role.Admin:
-                                    privateNoteBoards =
-                                        [.. privateNoteBoards.Where(a => a.Title!.Contains(searchText))];
-                                    break;
-                                // User can see regular posts + their own private posts
-                                case Role.User:
-                                {
-                                    List<BoardResponse> searchPrivateNoteBoards = [];
-                                    List<BoardResponse> noLockedPrivateNoteBoards =
-                                    [
-                                        .. privateNoteBoards
-                                            .Where(a => a.Title!.Contains(searchText)).Where(a => !a.Locked)
-                                    ];
-                                    List<BoardResponse> myLockedPrivateNoteBoards =
-                                    [
-                                        .. privateNoteBoards
-                                            .Where(a => a.Title!.Contains(searchText))
-                                            .Where(a => a.Locked && a.Writer == loggedInAccount.Nickname)
-                                    ];
-                                    searchPrivateNoteBoards.AddRange(noLockedPrivateNoteBoards);
-                                    searchPrivateNoteBoards.AddRange(myLockedPrivateNoteBoards);
-
-                                    privateNoteBoards = searchPrivateNoteBoards;
-                                    break;
-                                }
-                                // If logged in but has neither Admin nor User role, it's a bug
-                            }
-                        }
-                        else // If not logged in
-                        {
-                            privateNoteBoards =
-                            [
-                                .. privateNoteBoards.Where(a => a.Title!.Contains(searchText))
-                                    .Where(a => !a.Locked)
-                            ]; // When not logged in, private posts should not be searchable
-                        }
-
+                        privateNoteBoards = [.. privateNoteBoards.Where(a => a.Title!.Contains(searchText))];
                         break;
-                    }
                     case "Writer" when !string.IsNullOrEmpty(searchText):
                         privateNoteBoards = [.. privateNoteBoards.Where(a => a.Writer!.Contains(searchText))];
                         break;
