@@ -26,17 +26,17 @@ public partial class BoardComment
     /// <summary>
     /// AvatarImagePath
     /// </summary>
-    public string AvatarImagePath { get; set; } = null!;
+    public string? AvatarImagePath { get; set; }
 
     /// <summary>
     /// Writer
     /// </summary>
-    public string Writer { get; set; } = null!;
+    public string? Writer { get; set; }
 
     /// <summary>
     /// Content
     /// </summary>
-    public string Content { get; set; } = null!;
+    public string? Content { get; set; }
 
     /// <summary>
     /// Created
@@ -48,5 +48,5 @@ public partial class BoardComment
     /// </summary>
     public bool Deleted { get; set; }
 
-    public virtual Board Board { get; set; } = null!;
+    public virtual Board? Board { get; set; }
 }

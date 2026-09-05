@@ -16,7 +16,7 @@ public partial class CalendarRecurrence
     /// <summary>
     /// Frequency
     /// </summary>
-    public string Frequency { get; set; } = null!;
+    public string? Frequency { get; set; }
 
     /// <summary>
     /// Interval

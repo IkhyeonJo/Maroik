@@ -21,7 +21,7 @@ public partial class CalendarEventReminder
     /// <summary>
     /// Method
     /// </summary>
-    public string Method { get; set; } = null!;
+    public string? Method { get; set; }
 
     /// <summary>
     /// MinutesBeforeEvent
@@ -48,5 +48,5 @@ public partial class CalendarEventReminder
     /// </summary>
     public TimeOnly? TimesBeforeEvent { get; set; }
 
-    public virtual CalendarEvent CalendarEvent { get; set; } = null!;
+    public virtual CalendarEvent? CalendarEvent { get; set; }
 }

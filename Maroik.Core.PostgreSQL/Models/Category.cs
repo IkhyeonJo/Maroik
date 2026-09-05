@@ -16,22 +16,22 @@ public partial class Category
     /// <summary>
     /// Name
     /// </summary>
-    public string Name { get; set; } = null!;
+    public string? Name { get; set; }
 
     /// <summary>
     /// DisplayName
     /// </summary>
-    public string DisplayName { get; set; } = null!;
+    public string? DisplayName { get; set; }
 
     /// <summary>
     /// IconPath
     /// </summary>
-    public string IconPath { get; set; } = null!;
+    public string? IconPath { get; set; }
 
     /// <summary>
     /// Controller
     /// </summary>
-    public string Controller { get; set; } = null!;
+    public string? Controller { get; set; }
 
     /// <summary>
     /// Action
@@ -41,7 +41,7 @@ public partial class Category
     /// <summary>
     /// Role
     /// </summary>
-    public string Role { get; set; } = null!;
+    public string? Role { get; set; }
 
     /// <summary>
     /// Order

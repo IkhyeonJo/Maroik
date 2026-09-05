@@ -16,22 +16,22 @@ public partial class Expenditure
     /// <summary>
     /// Account Email (ID)
     /// </summary>
-    public string AccountEmail { get; set; } = null!;
+    public string? AccountEmail { get; set; }
 
     /// <summary>
     /// MainClass
     /// </summary>
-    public string MainClass { get; set; } = null!;
+    public string? MainClass { get; set; }
 
     /// <summary>
     /// SubClass
     /// </summary>
-    public string SubClass { get; set; } = null!;
+    public string? SubClass { get; set; }
 
     /// <summary>
     /// Content
     /// </summary>
-    public string Content { get; set; } = null!;
+    public string? Content { get; set; }
 
     /// <summary>
     /// Amount
@@ -41,7 +41,7 @@ public partial class Expenditure
     /// <summary>
     /// PaymentMethod
     /// </summary>
-    public string PaymentMethod { get; set; } = null!;
+    public string? PaymentMethod { get; set; }
 
     /// <summary>
     /// MyDepositAsset
@@ -61,9 +61,7 @@ public partial class Expenditure
     /// <summary>
     /// Note
     /// </summary>
-    public string Note { get; set; } = null!;
+    public string? Note { get; set; }
 
     public virtual Asset? Asset { get; set; }
-
-    public virtual Asset AssetNavigation { get; set; } = null!;
 }

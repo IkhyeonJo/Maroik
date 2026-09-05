@@ -68,16 +68,6 @@ public class CalendarController : Controller
     {
         try
         {
-            // AccountEmail/AccountEmailNavigation are server-set (from session), never submitted by the
-            // client — remove them so implicit-required validation on the now-non-nullable Calendar model
-            // properties doesn't fail ModelState.
-            int createCalendarCount = calendarInputViewModel?.Calendars?.Count() ?? 0;
-            for (int i = 0; i < createCalendarCount; i++)
-            {
-                _ = ModelState.Remove($"{nameof(CalendarInputViewModel.Calendars)}[{i}].{nameof(Calendar.AccountEmail)}");
-                _ = ModelState.Remove($"{nameof(CalendarInputViewModel.Calendars)}[{i}].{nameof(Calendar.AccountEmailNavigation)}");
-            }
-
             if (ModelState.IsValid)
             {
                 try
@@ -1772,19 +1762,6 @@ public class CalendarController : Controller
     {
         try
         {
-            // The client only ever sends { Id } here (see site.js RefreshCalendarEvents) — every other
-            // Calendar reference-type property is now non-nullable post-scaffold, so implicit-required
-            // validation would flag all of them as missing. Only Id is actually used below.
-            int getCalendarEventsCount = calendarInputViewModel?.Calendars?.Count() ?? 0;
-            for (int i = 0; i < getCalendarEventsCount; i++)
-            {
-                _ = ModelState.Remove($"{nameof(CalendarInputViewModel.Calendars)}[{i}].{nameof(Calendar.AccountEmail)}");
-                _ = ModelState.Remove($"{nameof(CalendarInputViewModel.Calendars)}[{i}].{nameof(Calendar.AccountEmailNavigation)}");
-                _ = ModelState.Remove($"{nameof(CalendarInputViewModel.Calendars)}[{i}].{nameof(Calendar.Name)}");
-                _ = ModelState.Remove($"{nameof(CalendarInputViewModel.Calendars)}[{i}].{nameof(Calendar.TimeZoneIanaId)}");
-                _ = ModelState.Remove($"{nameof(CalendarInputViewModel.Calendars)}[{i}].{nameof(Calendar.HtmlColorCode)}");
-            }
-
             if (ModelState.IsValid)
             {
                 try
@@ -2144,16 +2121,6 @@ public class CalendarController : Controller
     {
         try
         {
-            // AccountEmail/AccountEmailNavigation are server-set (from session), never submitted by the
-            // client — remove them so implicit-required validation on the now-non-nullable Calendar model
-            // properties doesn't fail ModelState.
-            int updateCalendarCount = calendarInputViewModel?.Calendars?.Count() ?? 0;
-            for (int i = 0; i < updateCalendarCount; i++)
-            {
-                _ = ModelState.Remove($"{nameof(CalendarInputViewModel.Calendars)}[{i}].{nameof(Calendar.AccountEmail)}");
-                _ = ModelState.Remove($"{nameof(CalendarInputViewModel.Calendars)}[{i}].{nameof(Calendar.AccountEmailNavigation)}");
-            }
-
             if (ModelState.IsValid)
             {
                 try
@@ -2503,14 +2470,6 @@ public class CalendarController : Controller
     {
         try
         {
-            // Calendar is a server-side navigation, never submitted by the client — remove it so
-            // implicit-required validation on the now-non-nullable property doesn't fail ModelState.
-            int updateCalendarSharedCount = calendarShareds?.Count() ?? 0;
-            for (int i = 0; i < updateCalendarSharedCount; i++)
-            {
-                _ = ModelState.Remove($"[{i}].{nameof(CalendarShared.Calendar)}");
-            }
-
             if (ModelState.IsValid)
             {
                 _ = HttpContext.Session.TryGetValue(Maroik.Core.Common.Utilities.EnumHelper.GetDescription(Maroik.Core.Common.Utilities.Session.Account), out byte[] resultByte);

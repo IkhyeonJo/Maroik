@@ -16,22 +16,22 @@ public partial class FixedIncome
     /// <summary>
     /// Account Email (ID)
     /// </summary>
-    public string AccountEmail { get; set; } = null!;
+    public string? AccountEmail { get; set; }
 
     /// <summary>
     /// MainClass
     /// </summary>
-    public string MainClass { get; set; } = null!;
+    public string? MainClass { get; set; }
 
     /// <summary>
     /// SubClass
     /// </summary>
-    public string SubClass { get; set; } = null!;
+    public string? SubClass { get; set; }
 
     /// <summary>
     /// Content
     /// </summary>
-    public string Content { get; set; } = null!;
+    public string? Content { get; set; }
 
     /// <summary>
     /// Amount
@@ -41,7 +41,7 @@ public partial class FixedIncome
     /// <summary>
     /// DepositMyAssetProductName
     /// </summary>
-    public string DepositMyAssetProductName { get; set; } = null!;
+    public string? DepositMyAssetProductName { get; set; }
 
     /// <summary>
     /// DepositMonth
@@ -71,12 +71,12 @@ public partial class FixedIncome
     /// <summary>
     /// Note
     /// </summary>
-    public string Note { get; set; } = null!;
+    public string? Note { get; set; }
 
     /// <summary>
     /// Unpunctuality
     /// </summary>
     public bool Unpunctuality { get; set; }
 
-    public virtual Asset Asset { get; set; } = null!;
+    public virtual Asset? Asset { get; set; }
 }

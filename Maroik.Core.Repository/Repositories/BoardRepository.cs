@@ -18,42 +18,12 @@ public class BoardRepository : IBoardRepository
     }
 
     /// <summary>
-    /// Returns a queryable of active (non-deleted) posts of one type.
+    /// Gets all posts of one type.
     /// </summary>
     /// <returns></returns>
-    public IQueryable<Board> QueryActiveByType(string type)
+    public async Task<IEnumerable<Board>> GetOneTypeBoardsAsync(string type)
     {
-        return _context.Boards.Where(x => x.Type == type && !x.Deleted);
-    }
-
-    /// <summary>
-    /// Gets one active (non-deleted) post by its Id directly.
-    /// </summary>
-    /// <returns></returns>
-    public async Task<Board> GetActiveByIdAsync(long id, string type)
-    {
-        return await _context.Boards.FirstOrDefaultAsync(x => x.Id == id && x.Type == type && !x.Deleted);
-    }
-
-    /// <summary>
-    /// Gets one active (non-deleted) post by its Id, scoped to both type and writer.
-    /// </summary>
-    /// <returns></returns>
-    public async Task<Board> GetActiveByIdForWriterAsync(long id, string type, string writer)
-    {
-        return await _context.Boards.FirstOrDefaultAsync(x => x.Id == id && x.Type == type && !x.Deleted && x.Writer == writer);
-    }
-
-    /// <summary>
-    /// Gets all active (non-deleted), pinned ("Noticed") posts of one type.
-    /// </summary>
-    /// <returns></returns>
-    public async Task<IEnumerable<Board>> GetNoticedBoardsAsync(string type)
-    {
-        return await _context.Boards
-            .Where(x => x.Type == type && !x.Deleted && x.Noticed)
-            .OrderByDescending(x => x.Id)
-            .ToListAsync();
+        return await _context.Boards.Where(x => x.Type == type).ToListAsync();
     }
 
     /// <summary>

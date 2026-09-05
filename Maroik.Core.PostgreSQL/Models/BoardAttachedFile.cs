@@ -26,7 +26,7 @@ public partial class BoardAttachedFile
     /// <summary>
     /// Name
     /// </summary>
-    public string Name { get; set; } = null!;
+    public string? Name { get; set; }
 
     /// <summary>
     /// Extension
@@ -36,7 +36,7 @@ public partial class BoardAttachedFile
     /// <summary>
     /// Path
     /// </summary>
-    public string Path { get; set; } = null!;
+    public string? Path { get; set; }
 
-    public virtual Board Board { get; set; } = null!;
+    public virtual Board? Board { get; set; }
 }

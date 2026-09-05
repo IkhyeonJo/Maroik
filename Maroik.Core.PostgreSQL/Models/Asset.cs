@@ -11,17 +11,17 @@ public partial class Asset
     /// <summary>
     /// ProductName
     /// </summary>
-    public string ProductName { get; set; } = null!;
+    public string? ProductName { get; set; }
 
     /// <summary>
     /// AccountEmail (ID)
     /// </summary>
-    public string AccountEmail { get; set; } = null!;
+    public string? AccountEmail { get; set; }
 
     /// <summary>
     /// Item
     /// </summary>
-    public string Item { get; set; } = null!;
+    public string? Item { get; set; }
 
     /// <summary>
     /// Amount
@@ -31,7 +31,7 @@ public partial class Asset
     /// <summary>
     /// MonetaryUnit (KRW, USD, ETC)
     /// </summary>
-    public string MonetaryUnit { get; set; } = null!;
+    public string? MonetaryUnit { get; set; }
 
     /// <summary>
     /// Created
@@ -46,22 +46,18 @@ public partial class Asset
     /// <summary>
     /// Note
     /// </summary>
-    public string Note { get; set; } = null!;
+    public string? Note { get; set; }
 
     /// <summary>
     /// Deleted
     /// </summary>
     public bool Deleted { get; set; }
 
-    public virtual Account AccountEmailNavigation { get; set; } = null!;
+    public virtual Account? AccountEmailNavigation { get; set; }
 
-    public virtual ICollection<Expenditure> ExpenditureAssetNavigations { get; set; } = new List<Expenditure>();
+    public virtual ICollection<Expenditure> Expenditures { get; set; } = new List<Expenditure>();
 
-    public virtual ICollection<Expenditure> ExpenditureAssets { get; set; } = new List<Expenditure>();
-
-    public virtual ICollection<FixedExpenditure> FixedExpenditureAssetNavigations { get; set; } = new List<FixedExpenditure>();
-
-    public virtual ICollection<FixedExpenditure> FixedExpenditureAssets { get; set; } = new List<FixedExpenditure>();
+    public virtual ICollection<FixedExpenditure> FixedExpenditures { get; set; } = new List<FixedExpenditure>();
 
     public virtual ICollection<FixedIncome> FixedIncomes { get; set; } = new List<FixedIncome>();
 

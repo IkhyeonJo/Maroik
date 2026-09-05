@@ -21,7 +21,7 @@ public partial class CalendarEvent
     /// <summary>
     /// Title
     /// </summary>
-    public string Title { get; set; } = null!;
+    public string? Title { get; set; }
 
     /// <summary>
     /// Description
@@ -61,7 +61,7 @@ public partial class CalendarEvent
     /// <summary>
     /// Status
     /// </summary>
-    public string Status { get; set; } = null!;
+    public string? Status { get; set; }
 
     /// <summary>
     /// Recurrence ID (Option)
@@ -78,7 +78,7 @@ public partial class CalendarEvent
     /// </summary>
     public DateTime Updated { get; set; }
 
-    public virtual Calendar Calendar { get; set; } = null!;
+    public virtual Calendar? Calendar { get; set; }
 
     public virtual ICollection<CalendarEventAttachedFile> CalendarEventAttachedFiles { get; set; } = new List<CalendarEventAttachedFile>();
 

@@ -1024,7 +1024,7 @@ public class NoticeController : Controller
                                     Content = fixedExpenditureInputViewModel.Content ?? "",
                                     Amount = Math.Abs(fixedExpenditureInputViewModel.Amount),
                                     PaymentMethod = fixedExpenditureInputViewModel.PaymentMethod,
-                                    MyDepositAsset = null,
+                                    MyDepositAsset = "",
                                     DepositMonth = fixedExpenditureInputViewModel.DepositMonth,
                                     DepositDay = fixedExpenditureInputViewModel.DepositDay,
                                     MaturityDate = new DateTime(
@@ -1093,7 +1093,7 @@ public class NoticeController : Controller
                                     Content = fixedExpenditureInputViewModel.Content ?? "",
                                     Amount = Math.Abs(fixedExpenditureInputViewModel.Amount),
                                     PaymentMethod = fixedExpenditureInputViewModel.PaymentMethod,
-                                    MyDepositAsset = null,
+                                    MyDepositAsset = "",
                                     DepositMonth = fixedExpenditureInputViewModel.DepositMonth,
                                     DepositDay = fixedExpenditureInputViewModel.DepositDay,
                                     MaturityDate = new DateTime(
@@ -1473,7 +1473,7 @@ public class NoticeController : Controller
                             tempFixedExpenditure.Note = fixedExpenditureInputViewModel?.Note ?? "";
                             tempFixedExpenditure.PaymentMethod = fixedExpenditureInputViewModel.PaymentMethod;
                             tempFixedExpenditure.MyDepositAsset =
-                                fixedExpenditureInputViewModel.MyDepositAsset;
+                                fixedExpenditureInputViewModel.MyDepositAsset ?? "";
                             tempFixedExpenditure.Updated = DateTime.UtcNow;
                             tempFixedExpenditure.Unpunctuality = fixedExpenditureInputViewModel.Unpunctuality;
 
@@ -1570,7 +1570,7 @@ public class NoticeController : Controller
                             tempFixedExpenditure.Note = fixedExpenditureInputViewModel?.Note ?? "";
                             tempFixedExpenditure.PaymentMethod = fixedExpenditureInputViewModel.PaymentMethod;
                             tempFixedExpenditure.MyDepositAsset =
-                                fixedExpenditureInputViewModel.MyDepositAsset;
+                                fixedExpenditureInputViewModel.MyDepositAsset ?? "";
                             tempFixedExpenditure.Updated = DateTime.UtcNow;
                             tempFixedExpenditure.Unpunctuality = fixedExpenditureInputViewModel.Unpunctuality;
 
@@ -1623,7 +1623,7 @@ public class NoticeController : Controller
                                     .ToString()));
                             tempFixedExpenditure.Note = fixedExpenditureInputViewModel?.Note ?? "";
                             tempFixedExpenditure.PaymentMethod = fixedExpenditureInputViewModel.PaymentMethod;
-                            tempFixedExpenditure.MyDepositAsset = null;
+                            tempFixedExpenditure.MyDepositAsset = "";
                             tempFixedExpenditure.Updated = DateTime.UtcNow;
                             tempFixedExpenditure.Unpunctuality = fixedExpenditureInputViewModel.Unpunctuality;
 
@@ -1696,7 +1696,7 @@ public class NoticeController : Controller
                                     .ToString()));
                             tempFixedExpenditure.Note = fixedExpenditureInputViewModel?.Note ?? "";
                             tempFixedExpenditure.PaymentMethod = fixedExpenditureInputViewModel.PaymentMethod;
-                            tempFixedExpenditure.MyDepositAsset = null;
+                            tempFixedExpenditure.MyDepositAsset = "";
                             tempFixedExpenditure.Updated = DateTime.UtcNow;
                             tempFixedExpenditure.Unpunctuality = fixedExpenditureInputViewModel.Unpunctuality;
 
