@@ -32,13 +32,29 @@ public abstract class E2ETestBase
         return await context.NewPageAsync();
     }
 
-    /// <summary>Navigates <paramref name="page"/> to <paramref name="path"/> and waits for the DOM to be ready.</summary>
+    /// <summary>
+    /// Navigates <paramref name="page"/> to <paramref name="path"/> and waits for the DOM to be ready.
+    /// Retries on transient network errors (e.g. <c>net::ERR_NETWORK_CHANGED</c>) that Chromium's
+    /// network-change notifier can spuriously raise in sandboxed/virtualized CI environments.
+    /// </summary>
     protected static async Task GotoAsync(IPage page, string path)
     {
-        await page.GotoAsync(path, new PageGotoOptions
+        const int maxAttempts = 3;
+        for (var attempt = 1; ; attempt++)
         {
-            WaitUntil = WaitUntilState.DOMContentLoaded,
-            Timeout = 30_000
-        });
+            try
+            {
+                await page.GotoAsync(path, new PageGotoOptions
+                {
+                    WaitUntil = WaitUntilState.DOMContentLoaded,
+                    Timeout = 30_000
+                });
+                return;
+            }
+            catch (PlaywrightException ex) when (attempt < maxAttempts && ex.Message.Contains("net::ERR_NETWORK_CHANGED"))
+            {
+                await Task.Delay(500 * attempt);
+            }
+        }
     }
 }

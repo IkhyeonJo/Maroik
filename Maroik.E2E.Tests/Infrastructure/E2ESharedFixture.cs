@@ -29,7 +29,8 @@ public sealed class E2ESharedFixture : IAsyncLifetime
         Browser = await _playwright.Chromium.LaunchAsync(new BrowserTypeLaunchOptions
         {
             Headless = true,
-            Channel = "chrome"
+            Channel = "chrome",
+            Args = ["--no-sandbox"]
         });
     }
 
