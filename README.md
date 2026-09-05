@@ -62,6 +62,14 @@ Maroik is a modern web application built with ASP.NET Core MVC, featuring a comp
 - jQuery 3.7
 - HTML5/CSS3
 - JavaScript ES2024
+- TypeScript 7.0
+  - The custom client scripts are authored in TypeScript at `Maroik.Website/TypeScripts/{admin,anonymous,user}/custom/**/site.ts` and compiled 1:1 by `tsc` to `Maroik.Website/wwwroot/**/custom/**/site.js` (no bundler, no Babel — the emitted `.js` is byte-faithful to the original, minus comments and an IIFE wrapper).
+  - Compiled under `--strict`; each file is an IIFE-wrapped global script (no `import`/`export`).
+  - Scripts keep only DOM wiring, widget init, AJAX transport, and notifications — business logic lives in `Maroik.Core.*` (DDD + Clean Architecture). Client-side rule checks are UX mirrors; the server always re-validates.
+  - `wwwroot/**/site.js` is generated and committed, so `dotnet build` / `dotnet publish` work with no Node installed; editing a `.ts` and regenerating its `.js` needs Node 22 + `npm ci` in `Maroik.Website/`.
+  - MSBuild runs `tsc` on `dotnet build` when `node_modules/` is present; Docker builds run it in a dedicated `node:22-alpine` stage.
+  - Unit-tested with Vitest + jsdom in `Maroik.Website/TypeScripts.Tests/` (one `*.test.ts` per script, exercising the compiled `site.js`).
+  - Details: `Maroik.Website/TypeScripts/README.md`.
 - NonfactorGrid
 - Chart.js 4.4
 - Font Awesome 6
