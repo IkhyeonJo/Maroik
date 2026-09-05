@@ -11,32 +11,32 @@ public partial class Account
     /// <summary>
     /// Email (ID)
     /// </summary>
-    public string? Email { get; set; }
+    public string Email { get; set; } = null!;
 
     /// <summary>
     /// HashedPassword
     /// </summary>
-    public string? HashedPassword { get; set; }
+    public string HashedPassword { get; set; } = null!;
 
     /// <summary>
     /// Nickname
     /// </summary>
-    public string? Nickname { get; set; }
+    public string Nickname { get; set; } = null!;
 
     /// <summary>
     /// AvatarImagePath
     /// </summary>
-    public string? AvatarImagePath { get; set; }
+    public string AvatarImagePath { get; set; } = null!;
 
     /// <summary>
     /// Role (Admin or User)
     /// </summary>
-    public string? Role { get; set; }
+    public string Role { get; set; } = null!;
 
     /// <summary>
     /// IANA TimeZone ID
     /// </summary>
-    public string? TimeZoneIanaId { get; set; }
+    public string TimeZoneIanaId { get; set; } = null!;
 
     /// <summary>
     /// Default monetary unit (KRW, USD, ETC)
@@ -97,6 +97,5 @@ public partial class Account
 
     public virtual ICollection<Calendar> Calendars { get; set; } = new List<Calendar>();
 
-    public virtual ICollection<Calendar> CalendarsNavigation { get; set; } = new List<Calendar>();
-    public virtual ICollection<OtherCalendar>? OtherCalendars { get; set; }
+    public virtual ICollection<OtherCalendar> OtherCalendars { get; set; } = new List<OtherCalendar>();
 }

@@ -16,22 +16,22 @@ public partial class FixedExpenditure
     /// <summary>
     /// Account Email (ID)
     /// </summary>
-    public string? AccountEmail { get; set; }
+    public string AccountEmail { get; set; } = null!;
 
     /// <summary>
     /// MainClass
     /// </summary>
-    public string? MainClass { get; set; }
+    public string MainClass { get; set; } = null!;
 
     /// <summary>
     /// SubClass
     /// </summary>
-    public string? SubClass { get; set; }
+    public string SubClass { get; set; } = null!;
 
     /// <summary>
     /// Content
     /// </summary>
-    public string? Content { get; set; }
+    public string Content { get; set; } = null!;
 
     /// <summary>
     /// Amount
@@ -41,7 +41,7 @@ public partial class FixedExpenditure
     /// <summary>
     /// PaymentMethod
     /// </summary>
-    public string? PaymentMethod { get; set; }
+    public string PaymentMethod { get; set; } = null!;
 
     /// <summary>
     /// MyDepositAsset
@@ -76,7 +76,7 @@ public partial class FixedExpenditure
     /// <summary>
     /// Note
     /// </summary>
-    public string? Note { get; set; }
+    public string Note { get; set; } = null!;
 
     /// <summary>
     /// Unpunctuality
@@ -84,4 +84,6 @@ public partial class FixedExpenditure
     public bool Unpunctuality { get; set; }
 
     public virtual Asset? Asset { get; set; }
+
+    public virtual Asset AssetNavigation { get; set; } = null!;
 }
