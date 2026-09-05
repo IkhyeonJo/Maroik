@@ -477,4 +477,70 @@ public class AccountTests
 
         Assert.True(account.AgreedServiceTerms);
     }
+
+    // -- SecurityStamp / MustChangePassword ------------------------------------
+
+    /// <summary>A newly created account gets a non-empty security stamp and is not forced to change its password.</summary>
+    [Fact]
+    public void Create_SetsNonEmptySecurityStamp_AndMustChangePasswordFalse()
+    {
+        var account = ValidAccount();
+
+        Assert.False(string.IsNullOrEmpty(account.SecurityStamp));
+        Assert.False(account.MustChangePassword);
+    }
+
+    /// <summary>Self-service change password regenerates the security stamp.</summary>
+    [Fact]
+    public void ChangePassword_RegeneratesSecurityStamp()
+    {
+        var account = ValidAccount();
+        string originalStamp = account.SecurityStamp;
+
+        account.ChangePassword("newHash");
+
+        Assert.NotEqual(originalStamp, account.SecurityStamp);
+    }
+
+    /// <summary>Self-service change password clears a pending forced password change.</summary>
+    [Fact]
+    public void ChangePassword_ClearsMustChangePassword()
+    {
+        var account = ValidAccount();
+        account.AdminResetPassword("tempHash");
+
+        account.ChangePassword("newHash");
+
+        Assert.False(account.MustChangePassword);
+    }
+
+    /// <summary>Admin reset password replaces the hash, forces a password change, and regenerates the security stamp.</summary>
+    [Fact]
+    public void AdminResetPassword_SetsHashForcesChange_AndRegeneratesSecurityStamp()
+    {
+        var account = ValidAccount();
+        string originalStamp = account.SecurityStamp;
+
+        account.AdminResetPassword("tempHash");
+
+        Assert.Equal("tempHash", account.HashedPassword);
+        Assert.True(account.MustChangePassword);
+        Assert.NotEqual(originalStamp, account.SecurityStamp);
+    }
+
+    /// <summary>Token-based password reset regenerates the security stamp and clears a pending forced password change.</summary>
+    [Fact]
+    public void ResetPassword_RegeneratesSecurityStamp_AndClearsMustChangePassword()
+    {
+        var account = ValidAccount(registrationToken: "tok");
+        account.ConfirmEmail("tok");
+        account.RequestPasswordReset("reset-tok");
+        account.AdminResetPassword("tempHash");
+        string stampBeforeReset = account.SecurityStamp;
+
+        account.ResetPassword("reset-tok", "newHash");
+
+        Assert.NotEqual(stampBeforeReset, account.SecurityStamp);
+        Assert.False(account.MustChangePassword);
+    }
 }

@@ -43,7 +43,8 @@ public class AccountRepositoryTests : IDisposable
         Locked = false,
         EmailConfirmed = true,
         AgreedServiceTerms = true,
-        LoginAttempt = 0
+        LoginAttempt = 0,
+        SecurityStamp = "stamp"
     };
 
     private async Task SeedAsync(params OrmAccount[] accounts)
@@ -192,7 +193,9 @@ public class AccountRepositoryTests : IDisposable
             created: DateTime.UtcNow,
             updated: DateTime.UtcNow,
             message: null,
-            deleted: false);
+            deleted: false,
+            securityStamp: "stamp",
+            mustChangePassword: false);
 
         await _sut.CreateAsync(account, TestContext.Current.CancellationToken);
 
@@ -266,7 +269,9 @@ public class AccountRepositoryTests : IDisposable
             created: DateTime.UtcNow,
             updated: DateTime.UtcNow,
             message: null,
-            deleted: false);
+            deleted: false,
+            securityStamp: "stamp",
+            mustChangePassword: false);
 
         await _sut.UpdateEntityAsync(account, TestContext.Current.CancellationToken);
 
@@ -297,7 +302,9 @@ public class AccountRepositoryTests : IDisposable
             created: DateTime.UtcNow,
             updated: DateTime.UtcNow,
             message: null,
-            deleted: false);
+            deleted: false,
+            securityStamp: "stamp",
+            mustChangePassword: false);
 
         await Assert.ThrowsAsync<InvalidOperationException>(
             () => _sut.UpdateEntityAsync(account, TestContext.Current.CancellationToken));

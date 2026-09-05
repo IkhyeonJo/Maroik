@@ -88,8 +88,10 @@ public class ManagementAccountService : IManagementAccountService
             if (account == null)
                 return ServiceResult.Fail("Email address is wrong");
 
+            // An admin-set password always forces the account to pick its own new one (meeting
+            // PasswordPolicy) at next login — see Account.AdminResetPassword.
             if (!string.IsNullOrEmpty(newPassword))
-                account.ChangePassword(_passwordService.HashPassword(newPassword));
+                account.AdminResetPassword(_passwordService.HashPassword(newPassword));
 
             // The admin UI has no LoginAttempt input, so request.LoginAttempt is always the request
             // DTO's default (0) — pass the account's own current value instead, so AdminUpdate's

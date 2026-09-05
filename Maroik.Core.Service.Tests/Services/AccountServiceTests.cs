@@ -69,7 +69,9 @@ public class AccountServiceTests
             created: DateTime.UtcNow,
             updated: DateTime.UtcNow,
             message: null,
-            deleted: deleted);
+            deleted: deleted,
+            securityStamp: "stamp",
+            mustChangePassword: false);
 
     private void SetupMailSuccess()
     {

@@ -64,7 +64,9 @@ public class DashboardServiceTests
             created: DateTime.UtcNow,
             updated: DateTime.UtcNow,
             message: null,
-            deleted: false);
+            deleted: false,
+            securityStamp: "stamp",
+            mustChangePassword: false);
 
     private void SetupEmptyFinancials(string email)
     {

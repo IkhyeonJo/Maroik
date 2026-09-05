@@ -31,7 +31,9 @@ public class AccountMapperTests
             created: created,
             updated: updated,
             message: "locked for review",
-            deleted: false);
+            deleted: false,
+            securityStamp: "stamp",
+            mustChangePassword: false);
 
         AccountResponse response = AccountMapper.ToResponse(account);
 

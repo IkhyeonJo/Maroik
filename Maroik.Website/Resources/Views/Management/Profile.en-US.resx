@@ -171,4 +171,7 @@
   <data name="Time zone" xml:space="preserve">
     <value>Time zone</value>
   </data>
+  <data name="Your password was reset by an administrator. Please set a new password below before continuing." xml:space="preserve">
+    <value>Your password was reset by an administrator. Please set a new password below before continuing.</value>
+  </data>
 </root>

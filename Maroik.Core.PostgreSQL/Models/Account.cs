@@ -93,6 +93,16 @@ public partial class Account
     /// </summary>
     public bool Deleted { get; set; }
 
+    /// <summary>
+    /// SecurityStamp
+    /// </summary>
+    public string SecurityStamp { get; set; } = null!;
+
+    /// <summary>
+    /// MustChangePassword
+    /// </summary>
+    public bool MustChangePassword { get; set; }
+
     public virtual ICollection<Asset> Assets { get; set; } = new List<Asset>();
 
     public virtual ICollection<Calendar> Calendars { get; set; } = new List<Calendar>();

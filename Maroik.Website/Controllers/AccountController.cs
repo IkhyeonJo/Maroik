@@ -77,7 +77,13 @@ public class AccountController : Controller
         // The new session created by RegenerateSession() above isn't the one SessionMiddleware
         // auto-commits at the end of the request, so it must be saved explicitly here.
         await HttpContext.Session.CommitAsync(ct);
-        return RedirectToAction("AnonymousIndex", "Dashboard");
+
+        // AuthorizationFilter is the actual enforcement (it re-checks MustChangePassword from the
+        // DB on every request); this redirect is just so a forced account lands there directly
+        // instead of bouncing through the normal dashboard first.
+        return result.Account!.MustChangePassword
+            ? RedirectToAction("Profile", "Management")
+            : RedirectToAction("AnonymousIndex", "Dashboard");
     }
     #endregion
 

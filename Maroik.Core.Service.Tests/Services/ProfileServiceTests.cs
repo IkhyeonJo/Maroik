@@ -67,7 +67,9 @@ public class ProfileServiceTests
             created: DateTime.UtcNow,
             updated: DateTime.UtcNow,
             message: null,
-            deleted: false);
+            deleted: false,
+            securityStamp: "stamp",
+            mustChangePassword: false);
 
     // -- GetProfileAsync ------------------------------------------------------
 

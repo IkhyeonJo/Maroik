@@ -107,7 +107,9 @@ public class AccountRepositoryIntegrationTests : IAsyncLifetime
             created: DateTime.UtcNow,
             updated: DateTime.UtcNow,
             message: null,
-            deleted: false);
+            deleted: false,
+            securityStamp: "stamp",
+            mustChangePassword: false);
 
         await _sut.CreateAsync(account, TestContext.Current.CancellationToken);
         _context.ChangeTracker.Clear();
@@ -144,7 +146,9 @@ public class AccountRepositoryIntegrationTests : IAsyncLifetime
             created: DateTime.UtcNow,
             updated: DateTime.UtcNow,
             message: null,
-            deleted: false);
+            deleted: false,
+            securityStamp: "stamp",
+            mustChangePassword: false);
 
         await _sut.UpdateEntityAsync(updated, TestContext.Current.CancellationToken);
         _context.ChangeTracker.Clear();
@@ -181,7 +185,9 @@ public class AccountRepositoryIntegrationTests : IAsyncLifetime
             created: DateTime.UtcNow,
             updated: DateTime.UtcNow,
             message: null,
-            deleted: false);
+            deleted: false,
+            securityStamp: "stamp",
+            mustChangePassword: false);
 
         // PostgreSQL enforces the PK/unique constraint — InMemory does not
         await Assert.ThrowsAsync<DbUpdateException>(

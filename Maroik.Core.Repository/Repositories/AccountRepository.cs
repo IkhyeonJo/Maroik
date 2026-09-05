@@ -22,7 +22,8 @@ public class AccountRepository(ApplicationDbContext context)
         e.AvatarImagePath, e.Role ?? "", e.TimeZoneIanaId ?? "UTC",
         e.DefaultMonetaryUnit, e.Locked, e.LoginAttempt, e.EmailConfirmed,
         e.AgreedServiceTerms, e.RegistrationToken, e.ResetPasswordToken,
-        e.Created, e.Updated, e.Message, e.Deleted);
+        e.Created, e.Updated, e.Message, e.Deleted,
+        e.SecurityStamp, e.MustChangePassword);
 
     /// <summary>Maps an <see cref="Account"/> domain aggregate to its <see cref="OrmAccount"/> persistence representation.</summary>
     protected override OrmAccount ToEntity(Account a) => new()
@@ -43,7 +44,9 @@ public class AccountRepository(ApplicationDbContext context)
         Created = a.Created,
         Updated = a.Updated,
         Message = a.Message,
-        Deleted = a.Deleted
+        Deleted = a.Deleted,
+        SecurityStamp = a.SecurityStamp,
+        MustChangePassword = a.MustChangePassword
     };
 
     /// <inheritdoc />

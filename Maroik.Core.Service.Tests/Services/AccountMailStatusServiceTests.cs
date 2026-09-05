@@ -34,7 +34,9 @@ public class AccountMailStatusServiceTests
         created: DateTime.UtcNow,
         updated: DateTime.UtcNow,
         message: message,
-        deleted: false);
+        deleted: false,
+        securityStamp: "stamp",
+        mustChangePassword: false);
 
     /// <summary>Verifies that <c>MarkMailSendFailedAsync</c> sets the FailToMailSent message and persists it.</summary>
     [Fact]

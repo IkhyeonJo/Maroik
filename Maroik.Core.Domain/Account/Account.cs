@@ -64,6 +64,23 @@ public sealed class Account : AggregateRoot<string>
     /// <summary>Soft-delete flag — the row is kept but the account is treated as deleted.</summary>
     public bool Deleted { get; private set; }
 
+    /// <summary>
+    /// Opaque value that changes every time the password changes (self-service, forgot-password
+    /// reset, or admin override). The Website layer captures this in the session at login and
+    /// invalidates the session on its next request once it no longer matches the stored value.
+    /// </summary>
+    public string SecurityStamp { get; private set; }
+
+    /// <summary>
+    /// When true, the account must set a new password (meeting <see cref="PasswordPolicy"/>) before
+    /// it can do anything else. Set by <see cref="AdminResetPassword"/>; cleared by any successful
+    /// password change.
+    /// </summary>
+    public bool MustChangePassword { get; private set; }
+
+    /// <summary>Generates a fresh, unpredictable security stamp value.</summary>
+    private static string GenerateSecurityStamp() => Guid.NewGuid().ToString("N");
+
     private Account(
         Email email,
         string hashedPassword,
@@ -82,6 +99,7 @@ public sealed class Account : AggregateRoot<string>
         DefaultMonetaryUnit = defaultMonetaryUnit;
         RegistrationToken = registrationToken;
         AgreedServiceTerms = agreedServiceTerms;
+        SecurityStamp = GenerateSecurityStamp();
         Created = DateTime.UtcNow;
         Updated = DateTime.UtcNow;
     }
@@ -111,7 +129,9 @@ public sealed class Account : AggregateRoot<string>
         DateTime created,
         DateTime updated,
         string? message,
-        bool deleted)
+        bool deleted,
+        string securityStamp,
+        bool mustChangePassword)
     {
         var account = new Account(
             Email.FromTrustedSource(email),
@@ -128,7 +148,9 @@ public sealed class Account : AggregateRoot<string>
             Created = created,
             Updated = updated,
             Message = message,
-            Deleted = deleted
+            Deleted = deleted,
+            SecurityStamp = securityStamp,
+            MustChangePassword = mustChangePassword
         };
 
         return account;
@@ -216,6 +238,8 @@ public sealed class Account : AggregateRoot<string>
 
         HashedPassword = newHashedPassword;
         ResetPasswordToken = null;
+        SecurityStamp = GenerateSecurityStamp();
+        MustChangePassword = false;
         Updated = DateTime.UtcNow;
         return Result.Success;
     }
@@ -277,10 +301,31 @@ public sealed class Account : AggregateRoot<string>
         DefaultMonetaryUnit = defaultMonetaryUnit;
     }
 
-    /// <summary>Replaces the stored BCrypt hash (used after an admin password override).</summary>
+    /// <summary>
+    /// Replaces the stored BCrypt hash for a self-service password change. Regenerates
+    /// <see cref="SecurityStamp"/> (invalidating any other open session on its next request) and
+    /// clears <see cref="MustChangePassword"/>, since supplying a new hash here always goes through
+    /// the password-policy-validated self-service flow.
+    /// </summary>
     public void ChangePassword(string newHashedPassword)
     {
         HashedPassword = newHashedPassword;
+        SecurityStamp = GenerateSecurityStamp();
+        MustChangePassword = false;
+        Updated = DateTime.UtcNow;
+    }
+
+    /// <summary>
+    /// Admin override: replaces the stored BCrypt hash and forces the account to choose its own
+    /// new password (meeting <see cref="PasswordPolicy"/>) the next time it logs in. Regenerates
+    /// <see cref="SecurityStamp"/> so any session already open under the old password is
+    /// invalidated on its next request.
+    /// </summary>
+    public void AdminResetPassword(string newHashedPassword)
+    {
+        HashedPassword = newHashedPassword;
+        SecurityStamp = GenerateSecurityStamp();
+        MustChangePassword = true;
         Updated = DateTime.UtcNow;
     }
 

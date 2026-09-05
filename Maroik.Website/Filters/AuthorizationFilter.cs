@@ -130,7 +130,11 @@ public class AuthorizationFilter : ActionFilterAttribute
         {
             loggedInAccount = await _accountService.GetAccountByEmailAsync(sessionAccount.Email ?? "", context.HttpContext.RequestAborted); // Re-check account state from DB so that Locked/Deleted/Role changes take effect on the next request, not only at login
 
-            if (loggedInAccount == null || loggedInAccount.Deleted || loggedInAccount.Locked)
+            // SecurityStamp mismatch means the password changed (self-service, forgot-password
+            // reset, or admin override) after this session was minted — the session was captured
+            // by value at login, so it never sees the new stamp on its own.
+            if (loggedInAccount == null || loggedInAccount.Deleted || loggedInAccount.Locked ||
+                loggedInAccount.SecurityStamp != sessionAccount.SecurityStamp)
             {
                 _sessionService.RemoveAccount(); // Invalidate this session immediately
                 context.Result = new RedirectResult("/Account/Login");
@@ -139,6 +143,27 @@ public class AuthorizationFilter : ActionFilterAttribute
         }
 
         var isAccountSessionExist = loggedInAccount != null;
+
+        // An admin-forced password change locks the account to the profile page (where the
+        // change-password form lives) and logout, until UpdateProfilePassword clears the flag.
+        if (isAccountSessionExist && loggedInAccount!.MustChangePassword)
+        {
+            bool isAllowedWhileForced =
+                (currentControllerName == "Management" && currentActionName is "Profile" or "UpdateProfilePassword") ||
+                (currentControllerName == "Account" && currentActionName == "Logout") ||
+                (currentControllerName == "Exception" && currentActionName == "Error");
+
+            if (!isAllowedWhileForced)
+            {
+                context.Result = currentRequestMethod.ToUpper() == "GET"
+                    ? new RedirectResult("/Management/Profile")
+                    : new RedirectResult("/Dashboard/AnonymousIndex");
+                return;
+            }
+
+            await next();
+            return;
+        }
 
         switch (currentRequestMethod.ToUpper())
         {

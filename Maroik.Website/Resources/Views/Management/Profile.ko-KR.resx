@@ -171,4 +171,7 @@
   <data name="Time zone" xml:space="preserve">
     <value>시간대</value>
   </data>
+  <data name="Your password was reset by an administrator. Please set a new password below before continuing." xml:space="preserve">
+    <value>관리자가 비밀번호를 초기화했습니다. 계속하시려면 아래에서 새 비밀번호를 설정해 주세요.</value>
+  </data>
 </root>

@@ -22,6 +22,10 @@
     const $newPassword = $('#NewPassword');
     const $password = $('#Password');
     const $__RequestVerificationToken = $('input[name="__RequestVerificationToken"]');
+    // Set by the view when an admin password reset is forcing this account to change its
+    // password before doing anything else — server-authoritative (AuthorizationFilter enforces
+    // this on every request); only used here to decide whether to leave the page on success.
+    const mustChangePassword = $('#MustChangePassword').val() === 'true';
     // Max upload size in bytes, published by the view; `|| 10485760` (10 MB) is a
     // fallback if the hidden field is missing or unparseable.
     const maxFileSize = parseInt($('#maxAttachedFileSizeBytes').val() as string) || 10485760;
@@ -128,6 +132,12 @@
             success: function (data) {
                 if (data.result) {
                     toastr.success(data.message);
+                    // An admin-forced password change is now satisfied — leave the page the
+                    // server was otherwise pinning this account to (AuthorizationFilter re-checks
+                    // MustChangePassword from the DB, so this is just a navigation convenience).
+                    if (mustChangePassword) {
+                        window.location.href = "/Dashboard/AnonymousIndex";
+                    }
                 }
                 else {
                     // Server-side rule failure (e.g. wrong current password,

@@ -22,7 +22,9 @@ internal static class AccountMapper
         Created = account.Created,
         Updated = account.Updated,
         Message = account.Message,
-        Deleted = account.Deleted
+        Deleted = account.Deleted,
+        SecurityStamp = account.SecurityStamp,
+        MustChangePassword = account.MustChangePassword
     };
 
     /// <summary>

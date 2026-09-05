@@ -65,4 +65,10 @@ public class ProfileOutputViewModel
     [Required(ErrorMessage = "Please select time zone")]
     [Display(Name = "Time zone")]
     public string? TimeZoneIanaId { get; set; }
+
+    /// <summary>
+    /// When true, an admin has reset this account's password and the user must set a new one
+    /// (meeting the password policy) before continuing. Drives the forced-change notice banner.
+    /// </summary>
+    public bool MustChangePassword { get; set; }
 }

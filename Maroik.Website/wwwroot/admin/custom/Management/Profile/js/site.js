@@ -6,6 +6,7 @@
     const $newPassword = $('#NewPassword');
     const $password = $('#Password');
     const $__RequestVerificationToken = $('input[name="__RequestVerificationToken"]');
+    const mustChangePassword = $('#MustChangePassword').val() === 'true';
     const maxFileSize = parseInt($('#maxAttachedFileSizeBytes').val()) || 10485760;
     const allowedImageContentTypes = (JSON.parse($('#allowedImageContentTypes').val() || '[]')).map(function (t) { return t.toLowerCase(); });
     function UpdateProfileAvatar(noFileAttachedErrorMessage, fileSizeLimitationErrorMessage, fileTypeErrorMessage) {
@@ -74,6 +75,9 @@
             success: function (data) {
                 if (data.result) {
                     toastr.success(data.message);
+                    if (mustChangePassword) {
+                        window.location.href = "/Dashboard/AnonymousIndex";
+                    }
                 }
                 else {
                     toastr.error(data.error);

@@ -46,7 +46,9 @@ public class ManagementAccountServiceTests
             created: DateTime.UtcNow,
             updated: DateTime.UtcNow,
             message: null,
-            deleted: false);
+            deleted: false,
+            securityStamp: "stamp",
+            mustChangePassword: false);
 
     // -- GetAllAccountsAsync --------------------------------------------------
 
@@ -166,6 +168,24 @@ public class ManagementAccountServiceTests
         Assert.True(result.Success);
         _accountRepo.Verify(r => r.UpdateEntityAsync(
             It.Is<Account>(a => a.HashedPassword == "$2a$13$newhash"), It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    /// <summary>An admin-set password forces the account to choose its own new one at next login.</summary>
+    [Fact]
+    public async Task UpdateAccountAsync_ForcesPasswordChange_WhenNewPasswordProvided()
+    {
+        var account = ActiveAccount();
+        string originalStamp = account.SecurityStamp;
+        _accountRepo.Setup(r => r.FindByEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(account);
+        _passwordService.Setup(p => p.HashPassword("newpass")).Returns("$2a$13$newhash");
+        _accountRepo.Setup(r => r.UpdateEntityAsync(It.IsAny<Account>(), It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
+        var sut = CreateSut();
+
+        await sut.UpdateAccountAsync(
+            new AccountRequest { Email = account.Email.Value, Role = "User" }, "newpass", TestContext.Current.CancellationToken);
+
+        Assert.True(account.MustChangePassword);
+        Assert.NotEqual(originalStamp, account.SecurityStamp);
     }
 
     /// <summary>Verifies that <c>UpdateAccountAsync</c> resets login attempt when unlocking.</summary>

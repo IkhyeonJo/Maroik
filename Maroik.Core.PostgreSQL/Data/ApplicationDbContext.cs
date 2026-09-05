@@ -97,6 +97,12 @@ public partial class ApplicationDbContext : DbContext
                 .HasDefaultValueSql("now()")
                 .HasComment("Updated")
                 .HasColumnType("timestamp without time zone");
+            entity.Property(e => e.SecurityStamp)
+                .HasDefaultValueSql("gen_random_uuid()")
+                .HasComment("Opaque value that changes on every password change; invalidates other open sessions");
+            entity.Property(e => e.MustChangePassword)
+                .HasDefaultValue(false)
+                .HasComment("Forces a password change on next login (set by an admin password override)");
 
         });
 

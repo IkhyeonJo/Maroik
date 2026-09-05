@@ -91,7 +91,8 @@ public class ManagementController : Controller
             AvatarImagePath = tempAccount.AvatarImagePath,
             Nickname = tempAccount.Nickname,
             Created = tempAccount.Created.ConvertTimeByTimeZoneIanaId(loggedInAccountTimeZoneIanaId!),
-            TimeZoneIanaId = tempAccount.TimeZoneIanaId
+            TimeZoneIanaId = tempAccount.TimeZoneIanaId,
+            MustChangePassword = tempAccount.MustChangePassword
         });
     }
 
@@ -213,6 +214,17 @@ public class ManagementController : Controller
                 profileInputViewModel.Password ?? "",
                 profileInputViewModel.NewPassword ?? "",
                 HttpContext.RequestAborted);
+
+            if (result.Success)
+            {
+                // ChangePassword regenerates the account's SecurityStamp, which would otherwise
+                // make AuthorizationFilter log this very session out on its next request — refresh
+                // the session copy with the new stamp so only *other* sessions are invalidated.
+                AccountResponse? updatedAccount = await _profileService.GetProfileAsync(email!, HttpContext.RequestAborted);
+                _sessionService.RemoveAccount();
+                updatedAccount!.HashedPassword = null;
+                _sessionService.SetAccount(updatedAccount);
+            }
 
             return result.Success
                 ? Json(new { result = true, message = _localizer["Password change successfully done."].Value })

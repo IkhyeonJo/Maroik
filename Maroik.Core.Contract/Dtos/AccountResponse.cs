@@ -58,4 +58,14 @@ public class AccountResponse
 
     /// <summary>One-time token used to authorize a password-reset request.</summary>
     public string? ResetPasswordToken { get; set; }
+
+    /// <summary>
+    /// Opaque value that changes on every password change. Carried in the session and compared
+    /// against the current DB value on every request to invalidate stale sessions after a
+    /// password change (self-service, forgot-password reset, or admin override).
+    /// </summary>
+    public string? SecurityStamp { get; set; }
+
+    /// <summary>When true, the account must set a new password before it can do anything else.</summary>
+    public bool MustChangePassword { get; set; }
 }

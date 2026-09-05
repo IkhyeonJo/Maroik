@@ -291,4 +291,114 @@ public class AuthorizationFilterTests
         Assert.Equal("/Account/Login", redirect.Url);
         _sessionService.Verify(s => s.RemoveAccount(), Times.Once);
     }
+
+    /// <summary>A stale security stamp (password changed since this session was minted) redirects to login and clears the session.</summary>
+    [Fact]
+    public async Task OnActionExecutionAsync_SecurityStampMismatch_RedirectsToLoginAndClearsSession()
+    {
+        var sessionAccount = new AccountResponse { Email = "user@test.com", Nickname = "User", Role = Role.User, SecurityStamp = "old-stamp" };
+        var dbAccount = new AccountResponse { Email = "user@test.com", Nickname = "User", Role = Role.User, SecurityStamp = "new-stamp" };
+        _sessionService.Setup(s => s.GetAccount()).Returns(sessionAccount);
+        _accountService.Setup(a => a.GetAccountByEmailAsync("user@test.com", It.IsAny<CancellationToken>())).ReturnsAsync(dbAccount);
+        SetupMenu([], []);
+        var (context, _) = BuildContext("Dashboard", "UserIndex");
+        bool nextCalled = false;
+
+        await CreateSut().OnActionExecutionAsync(context, NextCalled(() => nextCalled = true));
+
+        Assert.False(nextCalled);
+        var redirect = Assert.IsType<RedirectResult>(context.Result);
+        Assert.Equal("/Account/Login", redirect.Url);
+        _sessionService.Verify(s => s.RemoveAccount(), Times.Once);
+    }
+
+    // -- MustChangePassword forced flow --------------------------------------------
+
+    /// <summary>A pending forced password change redirects any other GET page to the profile page.</summary>
+    [Fact]
+    public async Task OnActionExecutionAsync_MustChangePassword_OtherGet_RedirectsToProfile()
+    {
+        var account = new AccountResponse { Email = "user@test.com", Nickname = "User", Role = Role.User, MustChangePassword = true };
+        _sessionService.Setup(s => s.GetAccount()).Returns(account);
+        _accountService.Setup(a => a.GetAccountByEmailAsync("user@test.com", It.IsAny<CancellationToken>())).ReturnsAsync(account);
+        var category = MakeCategory(1, Role.User, "AccountBook", "Income");
+        SetupMenu([category], []);
+        var (context, _) = BuildContext("AccountBook", "Income");
+        bool nextCalled = false;
+
+        await CreateSut().OnActionExecutionAsync(context, NextCalled(() => nextCalled = true));
+
+        Assert.False(nextCalled);
+        var redirect = Assert.IsType<RedirectResult>(context.Result);
+        Assert.Equal("/Management/Profile", redirect.Url);
+    }
+
+    /// <summary>A pending forced password change blocks any other POST (redirected, not logged out).</summary>
+    [Fact]
+    public async Task OnActionExecutionAsync_MustChangePassword_OtherPost_Blocks()
+    {
+        var account = new AccountResponse { Email = "user@test.com", Nickname = "User", Role = Role.User, MustChangePassword = true };
+        _sessionService.Setup(s => s.GetAccount()).Returns(account);
+        _accountService.Setup(a => a.GetAccountByEmailAsync("user@test.com", It.IsAny<CancellationToken>())).ReturnsAsync(account);
+        SetupMenu([], []);
+        var (context, _) = BuildContext("AccountBook", "CreateIncome", "POST");
+        bool nextCalled = false;
+
+        await CreateSut().OnActionExecutionAsync(context, NextCalled(() => nextCalled = true));
+
+        Assert.False(nextCalled);
+        var redirect = Assert.IsType<RedirectResult>(context.Result);
+        Assert.Equal("/Dashboard/AnonymousIndex", redirect.Url);
+    }
+
+    /// <summary>A pending forced password change still allows the profile page itself.</summary>
+    [Fact]
+    public async Task OnActionExecutionAsync_MustChangePassword_ProfileGet_Allows()
+    {
+        var account = new AccountResponse { Email = "user@test.com", Nickname = "User", Role = Role.User, MustChangePassword = true };
+        _sessionService.Setup(s => s.GetAccount()).Returns(account);
+        _accountService.Setup(a => a.GetAccountByEmailAsync("user@test.com", It.IsAny<CancellationToken>())).ReturnsAsync(account);
+        SetupMenu([], []);
+        var (context, _) = BuildContext("Management", "Profile");
+        bool nextCalled = false;
+
+        await CreateSut().OnActionExecutionAsync(context, NextCalled(() => nextCalled = true));
+
+        Assert.True(nextCalled);
+        Assert.Null(context.Result);
+    }
+
+    /// <summary>A pending forced password change still allows submitting the change-password form.</summary>
+    [Fact]
+    public async Task OnActionExecutionAsync_MustChangePassword_UpdateProfilePasswordPost_Allows()
+    {
+        var account = new AccountResponse { Email = "user@test.com", Nickname = "User", Role = Role.User, MustChangePassword = true };
+        _sessionService.Setup(s => s.GetAccount()).Returns(account);
+        _accountService.Setup(a => a.GetAccountByEmailAsync("user@test.com", It.IsAny<CancellationToken>())).ReturnsAsync(account);
+        SetupMenu([], []);
+        var (context, _) = BuildContext("Management", "UpdateProfilePassword", "POST");
+        bool nextCalled = false;
+
+        await CreateSut().OnActionExecutionAsync(context, NextCalled(() => nextCalled = true));
+
+        Assert.True(nextCalled);
+        Assert.Null(context.Result);
+    }
+
+    /// <summary>A pending forced password change still allows logging out.</summary>
+    [Fact]
+    public async Task OnActionExecutionAsync_MustChangePassword_LogoutGet_Allows()
+    {
+        var account = new AccountResponse { Email = "user@test.com", Nickname = "User", Role = Role.User, MustChangePassword = true };
+        _sessionService.Setup(s => s.GetAccount()).Returns(account);
+        _accountService.Setup(a => a.GetAccountByEmailAsync("user@test.com", It.IsAny<CancellationToken>())).ReturnsAsync(account);
+        SetupMenu([], []);
+        var (context, _) = BuildContext("Account", "Logout");
+        bool nextCalled = false;
+
+        await CreateSut().OnActionExecutionAsync(context, NextCalled(() => nextCalled = true));
+
+        Assert.True(nextCalled);
+        Assert.Null(context.Result);
+    }
 }

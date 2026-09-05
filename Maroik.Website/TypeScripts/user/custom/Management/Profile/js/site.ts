@@ -28,6 +28,10 @@
     const $newPassword = $('#NewPassword');
     const $__RequestVerificationToken = $('input[name="__RequestVerificationToken"]');
     const $profileAvatarFiles = $('#ProfileAvatarFiles');
+    // Set by the view when an admin password reset is forcing this account to change its
+    // password before doing anything else — server-authoritative (AuthorizationFilter enforces
+    // this on every request); only used here to decide whether to leave the page on success.
+    const mustChangePassword = $('#MustChangePassword').val() === 'true';
 
     /**
      * Validates the freshly chosen avatar file and, if it passes, uploads the
@@ -128,6 +132,12 @@
             success: function (data) {
                 if (data.result) {
                     toastr.success(data.message);
+                    // An admin-forced password change is now satisfied — leave the page the
+                    // server was otherwise pinning this account to (AuthorizationFilter re-checks
+                    // MustChangePassword from the DB, so this is just a navigation convenience).
+                    if (mustChangePassword) {
+                        window.location.href = "/Dashboard/AnonymousIndex";
+                    }
                 }
                 else {
                     // Server-side rule failure (e.g. wrong current password,
