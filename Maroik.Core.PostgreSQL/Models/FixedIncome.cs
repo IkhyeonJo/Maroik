@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 
 namespace Maroik.Core.PostgreSQL.Models;
@@ -16,22 +16,22 @@ public partial class FixedIncome
     /// <summary>
     /// Account Email (ID)
     /// </summary>
-    public string? AccountEmail { get; set; }
+    public string AccountEmail { get; set; } = null!;
 
     /// <summary>
     /// MainClass
     /// </summary>
-    public string? MainClass { get; set; }
+    public string MainClass { get; set; } = null!;
 
     /// <summary>
     /// SubClass
     /// </summary>
-    public string? SubClass { get; set; }
+    public string SubClass { get; set; } = null!;
 
     /// <summary>
     /// Content
     /// </summary>
-    public string? Content { get; set; }
+    public string Content { get; set; } = null!;
 
     /// <summary>
     /// Amount
@@ -41,7 +41,7 @@ public partial class FixedIncome
     /// <summary>
     /// DepositMyAssetProductName
     /// </summary>
-    public string? DepositMyAssetProductName { get; set; }
+    public string DepositMyAssetProductName { get; set; } = null!;
 
     /// <summary>
     /// DepositMonth
@@ -71,12 +71,12 @@ public partial class FixedIncome
     /// <summary>
     /// Note
     /// </summary>
-    public string? Note { get; set; }
+    public string Note { get; set; } = null!;
 
     /// <summary>
     /// Unpunctuality
     /// </summary>
     public bool Unpunctuality { get; set; }
 
-    public virtual Asset? Asset { get; set; }
+    public virtual Asset Asset { get; set; } = null!;
 }

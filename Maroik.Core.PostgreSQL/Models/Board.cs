@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 
 namespace Maroik.Core.PostgreSQL.Models;
@@ -16,22 +16,22 @@ public partial class Board
     /// <summary>
     /// Type
     /// </summary>
-    public string? Type { get; set; }
+    public string Type { get; set; } = null!;
 
     /// <summary>
     /// Title
     /// </summary>
-    public string? Title { get; set; }
+    public string Title { get; set; } = null!;
 
     /// <summary>
     /// Content
     /// </summary>
-    public string? Content { get; set; }
+    public string Content { get; set; } = null!;
 
     /// <summary>
     /// Writer
     /// </summary>
-    public string? Writer { get; set; }
+    public string Writer { get; set; } = null!;
 
     /// <summary>
     /// Created

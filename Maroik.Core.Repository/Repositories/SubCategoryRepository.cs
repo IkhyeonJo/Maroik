@@ -25,11 +25,11 @@ public class SubCategoryRepository(ApplicationDbContext context)
     {
         Id = s.Id,
         CategoryId = s.CategoryId,
-        Name = s.Name,
-        DisplayName = s.DisplayName,
-        IconPath = s.IconPath,
-        Action = s.Action,
-        Role = s.Role,
+        Name = s.Name ?? "",
+        DisplayName = s.DisplayName ?? "",
+        IconPath = s.IconPath ?? "",
+        Action = s.Action ?? "",
+        Role = s.Role ?? "Admin",
         Order = s.Order
     };
 

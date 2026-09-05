@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 
 namespace Maroik.Core.PostgreSQL.Models;
@@ -16,7 +16,7 @@ public partial class CalendarRecurrence
     /// <summary>
     /// Frequency
     /// </summary>
-    public string? Frequency { get; set; }
+    public string Frequency { get; set; } = null!;
 
     /// <summary>
     /// Interval

@@ -24,12 +24,12 @@ public class CategoryRepository(ApplicationDbContext context)
     protected override OrmCategory ToEntity(Category c) => new()
     {
         Id = c.Id,
-        Name = c.Name,
-        DisplayName = c.DisplayName,
-        IconPath = c.IconPath,
-        Controller = c.Controller,
+        Name = c.Name ?? "",
+        DisplayName = c.DisplayName ?? "",
+        IconPath = c.IconPath ?? "",
+        Controller = c.Controller ?? "",
         Action = c.Action,
-        Role = c.Role,
+        Role = c.Role ?? "Admin",
         Order = c.Order
     };
 

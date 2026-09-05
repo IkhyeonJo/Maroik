@@ -102,7 +102,7 @@ public class FixedExpenditureService : IFixedExpenditureService
         if (payAssetForCurrency is { Deleted: true })
             return ServiceResult.Fail("Actions cannot be executed with assets that have already been deleted.");
         string currency = payAssetForCurrency?.Balance.Currency ?? fe.Amount.Currency;
-        string? myDepositAsset = validation.RequiresDepositAsset ? request.MyDepositAsset : "";
+        string? myDepositAsset = validation.RequiresDepositAsset ? request.MyDepositAsset : null;
 
         var updateResult = fe.Update(request.MainClass, request.SubClass, request.Content,
             Math.Abs(request.Amount), currency, request.PaymentMethod, myDepositAsset,

@@ -66,6 +66,7 @@ public class AssetRepositoryIntegrationTests : IAsyncLifetime
             Item = item,
             Amount = amount,
             MonetaryUnit = unit,
+            Note = "",
             Deleted = deleted,
             Created = DateTime.UtcNow,
             Updated = DateTime.UtcNow

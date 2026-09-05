@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 
 namespace Maroik.Core.PostgreSQL.Models;
@@ -26,7 +26,7 @@ public partial class CalendarEventAttachedFile
     /// <summary>
     /// Name
     /// </summary>
-    public string? Name { get; set; }
+    public string Name { get; set; } = null!;
 
     /// <summary>
     /// Extension
@@ -36,7 +36,7 @@ public partial class CalendarEventAttachedFile
     /// <summary>
     /// Path
     /// </summary>
-    public string? Path { get; set; }
+    public string Path { get; set; } = null!;
 
-    public virtual CalendarEvent? CalendarEvent { get; set; }
+    public virtual CalendarEvent CalendarEvent { get; set; } = null!;
 }

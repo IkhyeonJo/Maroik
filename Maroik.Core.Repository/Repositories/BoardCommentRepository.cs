@@ -44,9 +44,9 @@ public class BoardCommentRepository(ApplicationDbContext context)
         Id = c.Id,
         BoardId = c.BoardId,
         Order = c.Order,
-        AvatarImagePath = c.AvatarImagePath,
+        AvatarImagePath = c.AvatarImagePath ?? "",
         Writer = c.Writer,
-        Content = c.Content,
+        Content = c.Content ?? "",
         Created = c.Created,
         Deleted = c.Deleted
     };

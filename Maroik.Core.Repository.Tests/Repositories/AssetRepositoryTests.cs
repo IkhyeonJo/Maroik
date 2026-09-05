@@ -38,6 +38,7 @@ public class AssetRepositoryTests : IDisposable
         Item = "FreeDepositAndWithdrawal",
         Amount = amount,
         MonetaryUnit = unit,
+        Note = "",
         Deleted = false,
         Created = DateTime.UtcNow,
         Updated = DateTime.UtcNow

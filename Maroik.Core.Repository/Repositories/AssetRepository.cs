@@ -28,7 +28,7 @@ public class AssetRepository(ApplicationDbContext context)
                  "Item" = {asset.Item},
                  "Amount" = {asset.Balance.Amount},
                  "MonetaryUnit" = {asset.Balance.Currency},
-                 "Note" = {asset.Note},
+                 "Note" = {asset.Note ?? ""},
                  "Deleted" = {asset.Deleted},
                  "Updated" = {asset.Updated}
              WHERE
@@ -50,7 +50,7 @@ public class AssetRepository(ApplicationDbContext context)
         Item = a.Item,
         Amount = a.Balance.Amount,
         MonetaryUnit = a.Balance.Currency,
-        Note = a.Note,
+        Note = a.Note ?? "",
         Deleted = a.Deleted,
         Created = a.Created,
         Updated = a.Updated

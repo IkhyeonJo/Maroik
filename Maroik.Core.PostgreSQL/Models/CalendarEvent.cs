@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 
 namespace Maroik.Core.PostgreSQL.Models;
@@ -21,7 +21,7 @@ public partial class CalendarEvent
     /// <summary>
     /// Title
     /// </summary>
-    public string? Title { get; set; }
+    public string Title { get; set; } = null!;
 
     /// <summary>
     /// Description
@@ -61,7 +61,7 @@ public partial class CalendarEvent
     /// <summary>
     /// Status
     /// </summary>
-    public string? Status { get; set; }
+    public string Status { get; set; } = null!;
 
     /// <summary>
     /// Recurrence ID (Option)
@@ -78,7 +78,7 @@ public partial class CalendarEvent
     /// </summary>
     public DateTime Updated { get; set; }
 
-    public virtual Calendar? Calendar { get; set; }
+    public virtual Calendar Calendar { get; set; } = null!;
 
     public virtual ICollection<CalendarEventAttachedFile> CalendarEventAttachedFiles { get; set; } = new List<CalendarEventAttachedFile>();
 

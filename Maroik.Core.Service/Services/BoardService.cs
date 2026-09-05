@@ -65,6 +65,17 @@ public class BoardService : IBoardService
         => (await _boardRepository.GetByTypeAsync(type, ct)).Select(BoardMapper.ToResponse);
 
     /// <inheritdoc />
+    public async Task<(IEnumerable<BoardResponse> Items, int TotalCount)> GetBoardPageAsync(BoardPageQuery query, CancellationToken ct = default)
+    {
+        var (items, totalCount) = await _boardRepository.QueryPageAsync(query, ct);
+        return (items.Select(BoardMapper.ToResponse), totalCount);
+    }
+
+    /// <inheritdoc />
+    public async Task<IEnumerable<BoardResponse>> GetNoticedBoardsAsync(string type, CancellationToken ct = default)
+        => (await _boardRepository.GetNoticedAsync(type, ct)).Select(BoardMapper.ToResponse);
+
+    /// <inheritdoc />
     public async Task<BoardResponse?> GetBoardByIdAsync(long id, string? requiredType = null, CancellationToken ct = default)
     {
         Board? board = await _boardRepository.FindActiveByIdAsync(id, ct);

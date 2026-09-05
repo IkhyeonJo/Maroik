@@ -36,10 +36,10 @@ public class IncomeRepository(ApplicationDbContext context)
         AccountEmail = i.AccountEmail.Value,
         MainClass = i.MainClass,
         SubClass = i.SubClass,
-        Content = i.Content,
+        Content = i.Content ?? "",
         Amount = i.Amount.Amount,
         DepositMyAssetProductName = i.DepositMyAssetProductName,
-        Note = i.Note,
+        Note = i.Note ?? "",
         Created = i.Created,
         Updated = i.Updated
     };

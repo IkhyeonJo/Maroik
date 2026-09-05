@@ -39,6 +39,7 @@ public class IncomeRepositoryTests : IDisposable
         SubClass = "LaborIncome",
         Content = "Salary",
         Amount = amount,
+        Note = "",
         Created = DateTime.UtcNow,
         Updated = DateTime.UtcNow
     };
@@ -58,9 +59,9 @@ public class IncomeRepositoryTests : IDisposable
         // IncomeRepository eager-loads Asset (required relationship), so matching Asset rows
         // must exist for the InMemory provider to return the Income rows via Include.
         await _context.Assets.AddRangeAsync(
-            new Maroik.Core.PostgreSQL.Models.Asset { ProductName = "SavingsA", AccountEmail = "alice@example.com", Item = "Savings", MonetaryUnit = "KRW", Amount = 0, Created = DateTime.UtcNow, Updated = DateTime.UtcNow },
-            new Maroik.Core.PostgreSQL.Models.Asset { ProductName = "SavingsB", AccountEmail = "alice@example.com", Item = "Savings", MonetaryUnit = "KRW", Amount = 0, Created = DateTime.UtcNow, Updated = DateTime.UtcNow },
-            new Maroik.Core.PostgreSQL.Models.Asset { ProductName = "BobSavings", AccountEmail = "bob@example.com", Item = "Savings", MonetaryUnit = "KRW", Amount = 0, Created = DateTime.UtcNow, Updated = DateTime.UtcNow });
+            new Maroik.Core.PostgreSQL.Models.Asset { ProductName = "SavingsA", AccountEmail = "alice@example.com", Item = "Savings", MonetaryUnit = "KRW", Amount = 0, Note = "", Created = DateTime.UtcNow, Updated = DateTime.UtcNow },
+            new Maroik.Core.PostgreSQL.Models.Asset { ProductName = "SavingsB", AccountEmail = "alice@example.com", Item = "Savings", MonetaryUnit = "KRW", Amount = 0, Note = "", Created = DateTime.UtcNow, Updated = DateTime.UtcNow },
+            new Maroik.Core.PostgreSQL.Models.Asset { ProductName = "BobSavings", AccountEmail = "bob@example.com", Item = "Savings", MonetaryUnit = "KRW", Amount = 0, Note = "", Created = DateTime.UtcNow, Updated = DateTime.UtcNow });
         await _context.SaveChangesAsync(TestContext.Current.CancellationToken);
 
         await SeedAsync(

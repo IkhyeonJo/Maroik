@@ -45,7 +45,7 @@ public class CalendarEventRepository(ApplicationDbContext context)
         StartDateTimeZoneIanaId = ce.StartDateTimeZoneIanaId,
         EndDateTimeZoneIanaId = ce.EndDateTimeZoneIanaId,
         Location = ce.Location,
-        Status = ce.Status,
+        Status = ce.Status ?? "Busy",
         RecurrenceId = ce.RecurrenceId,
         Created = ce.Created,
         Updated = ce.Updated

@@ -368,56 +368,28 @@ public class ForumController : Controller
                 const int pageSize = 5;
                 if (page < 1) page = 1;
 
-                var allFreeBoards = (await _boardService.GetBoardsAsync(EnumHelper.GetDescription(BoardType.FreeForum), ct)).ToList();
-                var freeBoards = allFreeBoards.Where(m => !m.Noticed).OrderByDescending(a => a.Id).ToList();
-
-                switch (searchType)
-                {
-                    case "Title" when !string.IsNullOrEmpty(searchText):
-                    {
-                        bool isAccountSessionExist = _sessionService.GetAccount() != null;
-                        if (isAccountSessionExist)
-                        {
-                            AccountResponse loggedInAccount = _sessionService.GetAccount()!;
-                            switch (loggedInAccount.Role)
-                            {
-                                // Administrator can search all posts, including locked ones
-                                case Role.Admin:
-                                    freeBoards = [.. freeBoards.Where(a => (a.Title ?? "").Contains(searchText))];
-                                    break;
-                                // User can search regular posts plus their own locked posts
-                                case Role.User:
-                                {
-                                    List<BoardResponse> searchFreeBoards =
-                                    [
-                                        .. freeBoards.Where(a => (a.Title ?? "").Contains(searchText))
-                                            .Where(a => !a.Locked),
-                                        .. freeBoards.Where(a => (a.Title ?? "").Contains(searchText)).Where(a =>
-                                            a.Locked && a.Writer == loggedInAccount.Nickname)
-                                    ];
-                                    freeBoards = searchFreeBoards;
-                                    break;
-                                }
-                            }
-                        }
-                        else // When not logged in, locked posts should never appear in search results
-                            freeBoards = [.. freeBoards.Where(a => (a.Title ?? "").Contains(searchText)).Where(a => !a.Locked)];
-                        break;
-                    }
-                    case "Writer" when !string.IsNullOrEmpty(searchText):
-                        freeBoards = [.. freeBoards.Where(a => (a.Writer ?? "").Contains(searchText))];
-                        break;
-                }
+                // Filtering, search/visibility rules, ordering, and paging are all pushed down into
+                // one SQL query (see BoardRepository.QueryPageAsync) instead of materializing the
+                // whole board-type bucket into memory first.
+                AccountResponse? loggedInAccountForQuery = _sessionService.GetAccount();
+                (IEnumerable<BoardResponse> pageItems, int totalCount) = await _boardService.GetBoardPageAsync(new BoardPageQuery(
+                    Type: EnumHelper.GetDescription(BoardType.FreeForum),
+                    OwnerNickname: null,
+                    SearchType: searchType,
+                    SearchText: searchText,
+                    IsLoggedIn: loggedInAccountForQuery != null,
+                    ViewerRole: loggedInAccountForQuery?.Role,
+                    ViewerNickname: loggedInAccountForQuery?.Nickname,
+                    Page: page,
+                    PageSize: pageSize), ct);
 
                 FreeForumOutputViewModel freeForumOutputViewModel = new()
                 {
-                    NoticeBoards =
-                        allFreeBoards.Where(m => m.Noticed)
-                            .OrderByDescending(a => a.Id),
+                    NoticeBoards = await _boardService.GetNoticedBoardsAsync(EnumHelper.GetDescription(BoardType.FreeForum), ct),
                     Method = "list",
-                    Pager = new Pager(freeBoards.Count, page, pageSize)
+                    Pager = new Pager(totalCount, page, pageSize)
                 };
-                freeForumOutputViewModel.Boards = [.. freeBoards.Skip((page - 1) * pageSize).Take(freeForumOutputViewModel.Pager.PageSize)];
+                freeForumOutputViewModel.Boards = [.. pageItems];
 
                 freeForumOutputViewModel.LoggedInAccount = _sessionService.GetAccount() ?? new AccountResponse { Role = Role.Anonymous };
                 freeForumOutputViewModel.LoggedInAccountTimeZoneIanaId = freeForumOutputViewModel.LoggedInAccount.TimeZoneIanaId ?? "";

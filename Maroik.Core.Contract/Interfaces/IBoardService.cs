@@ -12,6 +12,16 @@ public interface IBoardService
     Task<IEnumerable<BoardResponse>> GetBoardsAsync(string type, CancellationToken ct = default);
 
     /// <summary>
+    /// Returns one page of posts matching <paramref name="query"/>, plus the total matching count
+    /// (for pagination), executed as a single SQL query rather than materializing the whole
+    /// board-type bucket into memory first.
+    /// </summary>
+    Task<(IEnumerable<BoardResponse> Items, int TotalCount)> GetBoardPageAsync(BoardPageQuery query, CancellationToken ct = default);
+
+    /// <summary>Returns all non-deleted, pinned ("Noticed") posts of the specified board type, newest first.</summary>
+    Task<IEnumerable<BoardResponse>> GetNoticedBoardsAsync(string type, CancellationToken ct = default);
+
+    /// <summary>
     /// Returns a single post by ID. When <paramref name="requiredType"/> is set, the post must be
     /// of that board type — so a caller scoped to one board type (e.g. the public Forum endpoint)
     /// cannot read a post of a different type (e.g. another account's PrivateNote) just by

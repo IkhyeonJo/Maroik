@@ -63,6 +63,7 @@ public class FixedExpenditureRepositoryIntegrationTests : IAsyncLifetime
         DepositMonth = 0,
         DepositDay = 25,
         MaturityDate = DateTime.UtcNow.AddYears(1),
+        Note = "",
         Created = DateTime.UtcNow,
         Updated = DateTime.UtcNow,
         Unpunctuality = false
@@ -70,7 +71,8 @@ public class FixedExpenditureRepositoryIntegrationTests : IAsyncLifetime
 
     /// <summary>
     /// Seeds the Account and Asset rows a given <see cref="OrmFixedExpenditure.PaymentMethod"/>
-    /// requires (FixedExpenditure_fk_0), then the fixed expenditure rows themselves.
+    /// (FixedExpenditure_fk_0) and non-null <see cref="OrmFixedExpenditure.MyDepositAsset"/>
+    /// (FixedExpenditure_fk_1) require, then the fixed expenditure rows themselves.
     /// </summary>
     private async Task SeedAsync(params OrmFixedExpenditure[] items)
     {
@@ -85,9 +87,11 @@ public class FixedExpenditureRepositoryIntegrationTests : IAsyncLifetime
             await _context.SaveChangesAsync();
         }
 
-        var paymentMethods = items.Select(e => (e.PaymentMethod!, e.AccountEmail!)).Distinct().ToList();
+        var neededAssets = items.Select(e => (e.PaymentMethod!, e.AccountEmail!))
+            .Concat(items.Where(e => !string.IsNullOrEmpty(e.MyDepositAsset)).Select(e => (e.MyDepositAsset!, e.AccountEmail!)))
+            .Distinct().ToList();
         var existingAssets = await _context.Assets.Select(a => new { a.ProductName, a.AccountEmail }).ToListAsync();
-        var newAssets = paymentMethods
+        var newAssets = neededAssets
             .Where(pm => !existingAssets.Any(a => a.ProductName == pm.Item1 && a.AccountEmail == pm.Item2))
             .Select(pm => new OrmAsset
             {
@@ -96,6 +100,7 @@ public class FixedExpenditureRepositoryIntegrationTests : IAsyncLifetime
                 Item = "FreeDepositAndWithdrawal",
                 MonetaryUnit = "KRW",
                 Amount = 0,
+                Note = "",
                 Created = DateTime.UtcNow,
                 Updated = DateTime.UtcNow
             })
@@ -125,6 +130,23 @@ public class FixedExpenditureRepositoryIntegrationTests : IAsyncLifetime
         var fe3 = MakeOrm("alice@example.com", "Wallet", "OtherAsset", "Unrelated");
         await SeedAsync(fe1, fe2, fe3);
 
+        // Mirrors AssetService's ordering: by the time this cascade runs, AssetService has
+        // already renamed the Asset row, so the target name already exists as an Asset for
+        // this account — satisfying FixedExpenditure_fk_1 at commit time.
+        await _context.Assets.AddAsync(new OrmAsset
+        {
+            ProductName = "NewName",
+            AccountEmail = "alice@example.com",
+            Item = "FreeDepositAndWithdrawal",
+            MonetaryUnit = "KRW",
+            Amount = 0,
+            Note = "",
+            Created = DateTime.UtcNow,
+            Updated = DateTime.UtcNow
+        }, TestContext.Current.CancellationToken);
+        await _context.SaveChangesAsync(TestContext.Current.CancellationToken);
+        _context.ChangeTracker.Clear();
+
         int updated = await _sut.UpdateMyDepositAssetWithProductNameAsync("alice@example.com", "OldName", "NewName", TestContext.Current.CancellationToken);
         _context.ChangeTracker.Clear();
 
@@ -144,6 +166,22 @@ public class FixedExpenditureRepositoryIntegrationTests : IAsyncLifetime
         var mine = MakeOrm("alice@example.com", "AliceWallet", "SharedName", "Mine");
         var someoneElses = MakeOrm("bob@example.com", "BobWallet", "SharedName", "Not mine");
         await SeedAsync(mine, someoneElses);
+
+        // Only alice gets a "Renamed" Asset (bob keeps his "SharedName"), matching AssetService's
+        // per-account rename ordering before the MyDepositAsset cascade runs.
+        await _context.Assets.AddAsync(new OrmAsset
+        {
+            ProductName = "Renamed",
+            AccountEmail = "alice@example.com",
+            Item = "FreeDepositAndWithdrawal",
+            MonetaryUnit = "KRW",
+            Amount = 0,
+            Note = "",
+            Created = DateTime.UtcNow,
+            Updated = DateTime.UtcNow
+        }, TestContext.Current.CancellationToken);
+        await _context.SaveChangesAsync(TestContext.Current.CancellationToken);
+        _context.ChangeTracker.Clear();
 
         int updated = await _sut.UpdateMyDepositAssetWithProductNameAsync("alice@example.com", "SharedName", "Renamed", TestContext.Current.CancellationToken);
         _context.ChangeTracker.Clear();

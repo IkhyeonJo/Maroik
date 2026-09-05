@@ -1234,32 +1234,22 @@ public class ManagementController : Controller
 
                 #region Logic to get all related board data
 
-                var privateNoteBoards =
-                    (await _boardService.GetBoardsAsync(EnumHelper.GetDescription(BoardType.PrivateNote), HttpContext.RequestAborted)).ToList();
-                privateNoteBoards =
-                [
-                    .. privateNoteBoards.Where(m => m.Writer == loggedInAccount.Nickname)
-                        .Where(m => !m.Noticed).OrderByDescending(a => a.Id)
-                ];
-
-                #endregion
-
-                #region Search keyword logic
-
-                switch (searchType)
-                {
-                    // privateNoteBoards is already scoped to the caller's own notes (see the
-                    // Writer filter above), unlike FreeForum's equivalent search — so there is no
-                    // role/lock split to make here. Every branch of the role-based version this
-                    // replaced narrowed to the exact same "own notes matching title" result, since
-                    // it operated on a collection that only ever contains the caller's own boards.
-                    case "Title" when !string.IsNullOrEmpty(searchText):
-                        privateNoteBoards = [.. privateNoteBoards.Where(a => a.Title!.Contains(searchText))];
-                        break;
-                    case "Writer" when !string.IsNullOrEmpty(searchText):
-                        privateNoteBoards = [.. privateNoteBoards.Where(a => a.Writer!.Contains(searchText))];
-                        break;
-                }
+                // Ownership scope, search, ordering, and paging are all pushed down into one SQL
+                // query (see BoardRepository.QueryPageAsync) instead of materializing every
+                // PrivateNote row into memory first. OwnerNickname being set means the repository
+                // applies no further role/lock visibility split — every candidate row already
+                // belongs to the caller (same "already scoped to the caller's own notes" behavior
+                // this replaced).
+                (IEnumerable<BoardResponse> pageItems, int totalCount) = await _boardService.GetBoardPageAsync(new BoardPageQuery(
+                    Type: EnumHelper.GetDescription(BoardType.PrivateNote),
+                    OwnerNickname: loggedInAccount.Nickname,
+                    SearchType: searchType,
+                    SearchText: searchText,
+                    IsLoggedIn: true,
+                    ViewerRole: loggedInAccount.Role,
+                    ViewerNickname: loggedInAccount.Nickname,
+                    Page: page,
+                    PageSize: pageSize), HttpContext.RequestAborted);
 
                 #endregion
 
@@ -1279,17 +1269,13 @@ public class ManagementController : Controller
 
                 #region Board paging logic
 
-                privateNoteOutputViewModel.Pager = new Pager(privateNoteBoards.Count, page, pageSize);
+                privateNoteOutputViewModel.Pager = new Pager(totalCount, page, pageSize);
 
                 #endregion
 
                 #region Board data logic
 
-                privateNoteOutputViewModel.Boards =
-                [
-                    .. privateNoteBoards.Skip((page - 1) * pageSize)
-                        .Take(privateNoteOutputViewModel.Pager.PageSize)
-                ];
+                privateNoteOutputViewModel.Boards = [.. pageItems];
 
                 #endregion
 

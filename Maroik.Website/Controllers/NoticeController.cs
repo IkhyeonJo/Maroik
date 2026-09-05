@@ -305,7 +305,7 @@ public class NoticeController : Controller
                 Content = fixedExpenditureInputViewModel.Content ?? "",
                 Amount = fixedExpenditureInputViewModel.Amount,
                 PaymentMethod = fixedExpenditureInputViewModel.PaymentMethod,
-                MyDepositAsset = fixedExpenditureInputViewModel.MyDepositAsset ?? "",
+                MyDepositAsset = fixedExpenditureInputViewModel.MyDepositAsset,
                 DepositMonth = fixedExpenditureInputViewModel.DepositMonth,
                 DepositDay = fixedExpenditureInputViewModel.DepositDay,
                 // ParseExact (not Parse) so only a strict yyyy-MM-dd string is accepted, matching
@@ -446,7 +446,7 @@ public class NoticeController : Controller
                 Content = fixedExpenditureInputViewModel.Content ?? "",
                 Amount = fixedExpenditureInputViewModel.Amount,
                 PaymentMethod = fixedExpenditureInputViewModel.PaymentMethod,
-                MyDepositAsset = fixedExpenditureInputViewModel.MyDepositAsset ?? "",
+                MyDepositAsset = fixedExpenditureInputViewModel.MyDepositAsset,
                 DepositMonth = fixedExpenditureInputViewModel.DepositMonth,
                 DepositDay = fixedExpenditureInputViewModel.DepositDay,
                 // ParseExact (not Parse) so only a strict yyyy-MM-dd string is accepted, matching

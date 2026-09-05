@@ -421,7 +421,7 @@ public class AccountBookController : Controller
             Content = expenditureInputViewModel.Content ?? "",
             Amount = expenditureInputViewModel.Amount,
             PaymentMethod = expenditureInputViewModel.PaymentMethod,
-            MyDepositAsset = expenditureInputViewModel.MyDepositAsset ?? "",
+            MyDepositAsset = expenditureInputViewModel.MyDepositAsset,
             Created = expenditureInputViewModel.Created,
             Note = expenditureInputViewModel.Note ?? ""
         };
@@ -544,7 +544,7 @@ public class AccountBookController : Controller
             Content = expenditureInputViewModel.Content ?? "",
             Amount = expenditureInputViewModel.Amount,
             PaymentMethod = expenditureInputViewModel.PaymentMethod,
-            MyDepositAsset = expenditureInputViewModel.MyDepositAsset ?? "",
+            MyDepositAsset = expenditureInputViewModel.MyDepositAsset,
             Created = expenditureInputViewModel.Created,
             Note = expenditureInputViewModel.Note ?? ""
         };

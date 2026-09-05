@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 
 namespace Maroik.Core.PostgreSQL.Models;
@@ -23,5 +23,5 @@ public partial class CalendarShared
     /// </summary>
     public bool Anonymous { get; set; }
 
-    public virtual Calendar? Calendar { get; set; }
+    public virtual Calendar Calendar { get; set; } = null!;
 }

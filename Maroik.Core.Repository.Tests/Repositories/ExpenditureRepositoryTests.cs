@@ -42,6 +42,7 @@ public class ExpenditureRepositoryTests : IDisposable
         Amount = amount,
         PaymentMethod = "Wallet",
         MyDepositAsset = "Wallet",
+        Note = "",
         Created = DateTime.UtcNow,
         Updated = DateTime.UtcNow
     };
@@ -60,8 +61,8 @@ public class ExpenditureRepositoryTests : IDisposable
     {
         // Include(x => x.Asset) requires matching Asset rows to exist in InMemory; seed them first.
         await _context.Assets.AddRangeAsync(
-            new EfAsset { ProductName = "Wallet", AccountEmail = "alice@example.com", Item = "Wallet", MonetaryUnit = "KRW", Amount = 0, Created = DateTime.UtcNow, Updated = DateTime.UtcNow },
-            new EfAsset { ProductName = "Wallet", AccountEmail = "bob@example.com", Item = "Wallet", MonetaryUnit = "KRW", Amount = 0, Created = DateTime.UtcNow, Updated = DateTime.UtcNow });
+            new EfAsset { ProductName = "Wallet", AccountEmail = "alice@example.com", Item = "Wallet", MonetaryUnit = "KRW", Amount = 0, Note = "", Created = DateTime.UtcNow, Updated = DateTime.UtcNow },
+            new EfAsset { ProductName = "Wallet", AccountEmail = "bob@example.com", Item = "Wallet", MonetaryUnit = "KRW", Amount = 0, Note = "", Created = DateTime.UtcNow, Updated = DateTime.UtcNow });
         await _context.SaveChangesAsync(TestContext.Current.CancellationToken);
 
         await SeedAsync(

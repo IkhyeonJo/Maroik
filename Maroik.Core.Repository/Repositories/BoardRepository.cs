@@ -1,3 +1,5 @@
+using Maroik.Core.Contract.Dtos;
+using Maroik.Core.Domain.Account;
 using Maroik.Core.Domain.Board;
 using Maroik.Core.Contract.Interfaces;
 using Maroik.Core.PostgreSQL.Data;
@@ -42,7 +44,7 @@ public class BoardRepository(ApplicationDbContext context)
         Id = b.Id,
         Type = b.Type,
         Title = b.Title,
-        Content = b.Content,
+        Content = b.Content ?? "",
         Writer = b.Writer,
         Created = b.Created,
         Updated = b.Updated,
@@ -55,6 +57,85 @@ public class BoardRepository(ApplicationDbContext context)
     /// <inheritdoc />
     public Task<List<Board>> GetByTypeAsync(string type, CancellationToken ct = default)
         => QueryAsync(e => e.Type == type && !e.Deleted, ct: ct);
+
+    /// <inheritdoc />
+    public Task<List<Board>> GetNoticedAsync(string type, CancellationToken ct = default)
+        => QueryAsync(e => e.Type == type && !e.Deleted && e.Noticed,
+            q => q.OrderByDescending(e => e.Id), ct);
+
+    /// <inheritdoc />
+    public async Task<(List<Board> Items, int TotalCount)> QueryPageAsync(BoardPageQuery query, CancellationToken ct = default)
+    {
+        IQueryable<OrmBoard> baseQuery = Set.Where(x => x.Type == query.Type && !x.Deleted && !x.Noticed);
+        if (query.OwnerNickname != null)
+            baseQuery = baseQuery.Where(x => x.Writer == query.OwnerNickname);
+
+        IQueryable<OrmBoard> filtered;
+
+        if (query.OwnerNickname != null)
+        {
+            // Already scoped to the caller's own posts (PrivateNote) — no role/Locked visibility
+            // split needed, matching ManagementController's PrivateNote list action.
+            IQueryable<OrmBoard> scoped = query.SearchType switch
+            {
+                "Title" when !string.IsNullOrEmpty(query.SearchText) => baseQuery.Where(x => x.Title.Contains(query.SearchText)),
+                "Writer" when !string.IsNullOrEmpty(query.SearchText) => baseQuery.Where(x => x.Writer.Contains(query.SearchText)),
+                _ => baseQuery
+            };
+            filtered = scoped.OrderByDescending(x => x.Id);
+        }
+        else if (query.SearchType == "Title" && !string.IsNullOrEmpty(query.SearchText))
+        {
+            IQueryable<OrmBoard> titleMatches = baseQuery.Where(x => x.Title.Contains(query.SearchText));
+
+            if (query.IsLoggedIn)
+            {
+                if (query.ViewerRole == Role.Admin)
+                {
+                    // Administrator can search all posts, including locked ones.
+                    filtered = titleMatches.OrderByDescending(x => x.Id);
+                }
+                else if (query.ViewerRole == Role.User)
+                {
+                    // User can search regular posts plus their own locked posts. Preserves the
+                    // original's group order (non-locked matches first, then the searcher's own
+                    // locked matches after — not a single Id ordering) via SQL UNION ALL (Concat),
+                    // instead of materializing two lists in memory.
+                    IQueryable<OrmBoard> noLocked = titleMatches.Where(x => !x.Locked);
+                    IQueryable<OrmBoard> ownLocked = titleMatches.Where(x => x.Locked && x.Writer == query.ViewerNickname);
+
+                    filtered = noLocked.Select(x => new { Board = x, Group = 0 })
+                        .Concat(ownLocked.Select(x => new { Board = x, Group = 1 }))
+                        .OrderBy(x => x.Group).ThenByDescending(x => x.Board.Id)
+                        .Select(x => x.Board);
+                }
+                else
+                {
+                    // Logged in but neither Admin nor User (Role only ever has these two values for
+                    // an active session — unreachable in practice). Matches the original code: no
+                    // case fires, so the list is left as the unfiltered, unsearched base query.
+                    filtered = baseQuery.OrderByDescending(x => x.Id);
+                }
+            }
+            else
+            {
+                // Not logged in — private (locked) posts are never searchable.
+                filtered = titleMatches.Where(x => !x.Locked).OrderByDescending(x => x.Id);
+            }
+        }
+        else if (query.SearchType == "Writer" && !string.IsNullOrEmpty(query.SearchText))
+        {
+            filtered = baseQuery.Where(x => x.Writer.Contains(query.SearchText)).OrderByDescending(x => x.Id);
+        }
+        else
+        {
+            filtered = baseQuery.OrderByDescending(x => x.Id);
+        }
+
+        int totalCount = await filtered.CountAsync(ct);
+        List<OrmBoard> page = await filtered.Skip((query.Page - 1) * query.PageSize).Take(query.PageSize).ToListAsync(ct);
+        return (page.Select(ToDomain).ToList(), totalCount);
+    }
 
     /// <inheritdoc />
     public Task<Board?> FindActiveByIdAsync(long id, CancellationToken ct = default)

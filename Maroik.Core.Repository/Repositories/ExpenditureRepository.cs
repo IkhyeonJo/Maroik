@@ -36,11 +36,11 @@ public class ExpenditureRepository(ApplicationDbContext context)
         AccountEmail = e.AccountEmail.Value,
         MainClass = e.MainClass,
         SubClass = e.SubClass,
-        Content = e.Content,
+        Content = e.Content ?? "",
         Amount = e.Amount.Amount,
         PaymentMethod = e.PaymentMethod,
         MyDepositAsset = e.MyDepositAsset,
-        Note = e.Note,
+        Note = e.Note ?? "",
         Created = e.Created,
         Updated = e.Updated
     };

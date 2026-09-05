@@ -44,6 +44,7 @@ public class FixedExpenditureRepositoryTests : IDisposable
         DepositMonth = 0,
         DepositDay = 25,
         MaturityDate = DateTime.UtcNow.AddYears(1),
+        Note = "",
         Created = DateTime.UtcNow,
         Updated = DateTime.UtcNow,
         Unpunctuality = false
@@ -64,8 +65,8 @@ public class FixedExpenditureRepositoryTests : IDisposable
         // FixedExpenditureRepository eager-loads Asset (required relationship), so a matching Asset
         // row must exist for the InMemory provider to return the FixedExpenditure rows via Include.
         await _context.Assets.AddRangeAsync(
-            new Maroik.Core.PostgreSQL.Models.Asset { ProductName = "Wallet", AccountEmail = "alice@example.com", Item = "Wallet", MonetaryUnit = "KRW", Amount = 0, Created = DateTime.UtcNow, Updated = DateTime.UtcNow },
-            new Maroik.Core.PostgreSQL.Models.Asset { ProductName = "Wallet", AccountEmail = "bob@example.com", Item = "Wallet", MonetaryUnit = "KRW", Amount = 0, Created = DateTime.UtcNow, Updated = DateTime.UtcNow });
+            new Maroik.Core.PostgreSQL.Models.Asset { ProductName = "Wallet", AccountEmail = "alice@example.com", Item = "Wallet", MonetaryUnit = "KRW", Amount = 0, Note = "", Created = DateTime.UtcNow, Updated = DateTime.UtcNow },
+            new Maroik.Core.PostgreSQL.Models.Asset { ProductName = "Wallet", AccountEmail = "bob@example.com", Item = "Wallet", MonetaryUnit = "KRW", Amount = 0, Note = "", Created = DateTime.UtcNow, Updated = DateTime.UtcNow });
         await _context.SaveChangesAsync(TestContext.Current.CancellationToken);
 
         await SeedAsync(
