@@ -12,6 +12,7 @@ using Maroik.WebSite.Models.ViewModels.Forum;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Localization;
 using Microsoft.AspNetCore.StaticFiles;
+using Microsoft.EntityFrameworkCore;
 using Newtonsoft.Json;
 using System.Text;
 
@@ -238,9 +239,7 @@ public class ForumController : Controller
                     {
                         Account loginedAccount = JsonConvert.DeserializeObject<Account>(Encoding.UTF8.GetString(resultByte)); // Get Session
 
-                        IEnumerable<Board> freeForumBoards = await _boardRepository.GetOneTypeBoardsAsync(EnumHelper.GetDescription(BoardType.FreeForum));
-                        freeForumBoards = freeForumBoards.Where(m => m.Deleted == false).OrderByDescending(a => a.Id);
-                        Board freeForumBoard = freeForumBoards.FirstOrDefault(m => m.Id == boardCommentInputViewModel.BoardId);
+                        Board freeForumBoard = await _boardRepository.GetActiveByIdAsync(boardCommentInputViewModel.BoardId, EnumHelper.GetDescription(BoardType.FreeForum));
 
                         if (freeForumBoard.Id != boardCommentInputViewModel.BoardId)
                         {
@@ -389,13 +388,11 @@ public class ForumController : Controller
                 DetailBoardId = boardId ?? default
             };
 
-            IEnumerable<Board> freeBoards = await _boardRepository.GetOneTypeBoardsAsync(EnumHelper.GetDescription(BoardType.FreeForum));
-            freeBoards = freeBoards.Where(m => m.Deleted == false).OrderByDescending(a => a.Id);
             List<BoardAttachedFile> boardAttachedFiles = await _boardAttachedFileRepository.GetAllAsync();
 
             try
             {
-                Board freeBoard = freeBoards.FirstOrDefault(m => m.Id == boardId);
+                Board freeBoard = await _boardRepository.GetActiveByIdAsync(boardId ?? default, EnumHelper.GetDescription(BoardType.FreeForum));
 
                 if (freeBoard.Locked)
                 {
@@ -505,13 +502,11 @@ public class ForumController : Controller
                 EditBoardId = boardId ?? default
             };
 
-            IEnumerable<Board> freeBoards = await _boardRepository.GetOneTypeBoardsAsync(EnumHelper.GetDescription(BoardType.FreeForum));
-            freeBoards = freeBoards.Where(m => m.Deleted == false).OrderByDescending(a => a.Id);
             List<BoardAttachedFile> boardAttachedFiles = await _boardAttachedFileRepository.GetAllAsync();
 
             try
             {
-                Board freeBoard = freeBoards.FirstOrDefault(m => m.Id == boardId);
+                Board freeBoard = await _boardRepository.GetActiveByIdAsync(boardId ?? default, EnumHelper.GetDescription(BoardType.FreeForum));
 
                 _ = HttpContext.Session.TryGetValue(Maroik.Core.Common.Utilities.EnumHelper.GetDescription(Maroik.Core.Common.Utilities.Session.Account), out byte[] resultByte);
                 Account loginedAccount = await _accountRepository.GetAccountByEmailAsync(JsonConvert.DeserializeObject<Account>(Encoding.UTF8.GetString(resultByte)).Email);
@@ -615,8 +610,10 @@ public class ForumController : Controller
             #endregion
 
             #region Logic to get all related board data
-            IEnumerable<Board> freeBoards = await _boardRepository.GetOneTypeBoardsAsync(EnumHelper.GetDescription(BoardType.FreeForum));
-            freeBoards = freeBoards.Where(m => m.Deleted == false && m.Noticed == false).OrderByDescending(a => a.Id);
+            // Queryable, not materialized yet — filtering/ordering/paging below all
+            // compose into one SQL query, executed only at Pager/Boards below.
+            IQueryable<Board> freeBoards = _boardRepository.QueryActiveByType(EnumHelper.GetDescription(BoardType.FreeForum))
+                .Where(m => !m.Noticed).OrderByDescending(a => a.Id);
             #endregion
 
             #region Search keyword logic
@@ -634,13 +631,16 @@ public class ForumController : Controller
                     }
                     else if (loginedAccount.Role == Role.User) // User can see regular posts + their own private posts
                     {
-                        List<Board> searchFreeBoards = [];
-                        List<Board> noLockedFreeBoards = freeBoards.Where(a => a.Title.Contains(searchText)).Where(a => !a.Locked).ToList();
-                        List<Board> myLockedFreeBoards = freeBoards.Where(a => a.Title.Contains(searchText)).Where(a => a.Locked && a.Writer == loginedAccount.Nickname).ToList();
-                        searchFreeBoards.AddRange(noLockedFreeBoards);
-                        searchFreeBoards.AddRange(myLockedFreeBoards);
+                        // Preserves the original's group order (non-locked matches first, then
+                        // the searcher's own locked matches after — not a single Id ordering)
+                        // via SQL UNION ALL (Concat), instead of materializing two lists in memory.
+                        IQueryable<Board> noLockedFreeBoards = freeBoards.Where(a => a.Title.Contains(searchText)).Where(a => !a.Locked);
+                        IQueryable<Board> myLockedFreeBoards = freeBoards.Where(a => a.Title.Contains(searchText)).Where(a => a.Locked && a.Writer == loginedAccount.Nickname);
 
-                        freeBoards = searchFreeBoards;
+                        freeBoards = noLockedFreeBoards.Select(a => new { Board = a, Group = 0 })
+                            .Concat(myLockedFreeBoards.Select(a => new { Board = a, Group = 1 }))
+                            .OrderBy(x => x.Group).ThenByDescending(x => x.Board.Id)
+                            .Select(x => x.Board);
                     }
                     else // If logged in but has neither Admin nor User role, it's a bug
                     {
@@ -661,19 +661,16 @@ public class ForumController : Controller
             FreeForumOutputViewModel freeForumOutputViewModel = new();
 
             #region Notice
-            freeForumOutputViewModel.NoticeBoards = (await _boardRepository.GetOneTypeBoardsAsync(EnumHelper.GetDescription(BoardType.FreeForum))).Where(m => m.Deleted == false && m.Noticed == true).OrderByDescending(a => a.Id);
+            freeForumOutputViewModel.NoticeBoards = await _boardRepository.GetNoticedBoardsAsync(EnumHelper.GetDescription(BoardType.FreeForum));
             #endregion
 
             #region Board list
             freeForumOutputViewModel.Method = "list";
             #endregion
 
-            #region Board paging logic
-            freeForumOutputViewModel.Pager = new Pager(freeBoards.Count(), page, pageSize);
-            #endregion
-
-            #region Board data logic
-            freeForumOutputViewModel.Boards = freeBoards.Skip((page - 1) * pageSize).Take(freeForumOutputViewModel.Pager.PageSize).ToList();
+            #region Board paging + data logic
+            freeForumOutputViewModel.Pager = new Pager(await freeBoards.CountAsync(), page, pageSize);
+            freeForumOutputViewModel.Boards = await freeBoards.Skip((page - 1) * pageSize).Take(freeForumOutputViewModel.Pager.PageSize).ToListAsync();
             #endregion
 
             ViewBag.SelectedSearchType = searchType;
@@ -692,35 +689,25 @@ public class ForumController : Controller
     {
         try
         {
-            IEnumerable<Board> freeBoards = await _boardRepository.GetOneTypeBoardsAsync(EnumHelper.GetDescription(BoardType.FreeForum));
-            freeBoards = freeBoards.Where(m => m.Deleted == false).OrderByDescending(a => a.Id);
+            Board tempFreeBoard = await _boardRepository.GetActiveByIdAsync(id, EnumHelper.GetDescription(BoardType.FreeForum));
 
-            if (freeBoards == null)
+            if (tempFreeBoard == null)
             {
-                return Json(new { result = false, error = _localizer["No freeBoard exists"].Value });
+                return Json(new { result = false, error = _localizer["Input is invalid"].Value });
             }
-            else
-            {
-                Board tempFreeBoard = freeBoards.Where(a => a.Id == id).FirstOrDefault();
 
-                if (tempFreeBoard == null)
+            if (tempFreeBoard.Locked) // If writer or administrator
+            {
+                _ = HttpContext.Session.TryGetValue(Maroik.Core.Common.Utilities.EnumHelper.GetDescription(Maroik.Core.Common.Utilities.Session.Account), out byte[] resultByte);
+                Account loginedAccount = JsonConvert.DeserializeObject<Account>(Encoding.UTF8.GetString(resultByte)); // Get Session
+
+                if (!(loginedAccount.Nickname == tempFreeBoard.Writer || loginedAccount.Role == Role.Admin))
                 {
                     return Json(new { result = false, error = _localizer["Input is invalid"].Value });
                 }
-
-                if (tempFreeBoard.Locked) // If writer or administrator
-                {
-                    _ = HttpContext.Session.TryGetValue(Maroik.Core.Common.Utilities.EnumHelper.GetDescription(Maroik.Core.Common.Utilities.Session.Account), out byte[] resultByte);
-                    Account loginedAccount = JsonConvert.DeserializeObject<Account>(Encoding.UTF8.GetString(resultByte)); // Get Session
-
-                    if (!(loginedAccount.Nickname == tempFreeBoard.Writer || loginedAccount.Role == Role.Admin))
-                    {
-                        return Json(new { result = false, error = _localizer["Input is invalid"].Value });
-                    }
-                }
-
-                return Json(new { result = true, freeBoard = tempFreeBoard });
             }
+
+            return Json(new { result = true, freeBoard = tempFreeBoard });
         }
         catch
         {
@@ -797,10 +784,7 @@ public class ForumController : Controller
                     {
                         Account loginedAccount = JsonConvert.DeserializeObject<Account>(Encoding.UTF8.GetString(resultByte)); // Get Session
 
-                        IEnumerable<Board> freeBoards = await _boardRepository.GetOneTypeBoardsAsync(EnumHelper.GetDescription(BoardType.FreeForum));
-                        freeBoards = freeBoards.Where(m => m.Deleted == false).OrderByDescending(a => a.Id);
-
-                        Board tempFreeBoard = freeBoards.Where(a => a.Id == boardInputViewModel.Id).FirstOrDefault();
+                        Board tempFreeBoard = await _boardRepository.GetActiveByIdAsync(boardInputViewModel.Id, EnumHelper.GetDescription(BoardType.FreeForum));
 
                         if (tempFreeBoard.Writer != loginedAccount.Nickname)
                         {
@@ -947,39 +931,29 @@ public class ForumController : Controller
     {
         try
         {
-            IEnumerable<Board> freeBoards = await _boardRepository.GetOneTypeBoardsAsync(EnumHelper.GetDescription(BoardType.FreeForum));
-            freeBoards = freeBoards.Where(m => m.Deleted == false).OrderByDescending(a => a.Id);
+            Board tempFreeBoard = await _boardRepository.GetActiveByIdAsync(boardInputViewModel.Id, EnumHelper.GetDescription(BoardType.FreeForum));
 
-            if (freeBoards == null)
+            if (tempFreeBoard == null)
             {
                 return Json(new { result = false, error = _localizer["Input is invalid"].Value });
             }
             else
             {
-                Board tempFreeBoard = freeBoards.Where(a => a.Id == boardInputViewModel.Id).FirstOrDefault();
+                _ = HttpContext.Session.TryGetValue(Maroik.Core.Common.Utilities.EnumHelper.GetDescription(Maroik.Core.Common.Utilities.Session.Account), out byte[] resultByte);
+                Account loginedAccount = await _accountRepository.GetAccountByEmailAsync(JsonConvert.DeserializeObject<Account>(Encoding.UTF8.GetString(resultByte)).Email);
 
-                if (tempFreeBoard == null)
+                if ((loginedAccount.Nickname == tempFreeBoard.Writer) || loginedAccount.Role == Role.Admin) // If visitor is writer or administrator
                 {
-                    return Json(new { result = false, error = _localizer["Input is invalid"].Value });
+                    #region Delete board
+                    tempFreeBoard.Deleted = true;
+                    await _boardRepository.DeleteBoardAsync(tempFreeBoard);
+                    #endregion
+
+                    return Json(new { result = true, message = _localizer["The board has been successfully deleted."].Value });
                 }
                 else
                 {
-                    _ = HttpContext.Session.TryGetValue(Maroik.Core.Common.Utilities.EnumHelper.GetDescription(Maroik.Core.Common.Utilities.Session.Account), out byte[] resultByte);
-                    Account loginedAccount = await _accountRepository.GetAccountByEmailAsync(JsonConvert.DeserializeObject<Account>(Encoding.UTF8.GetString(resultByte)).Email);
-
-                    if ((loginedAccount.Nickname == tempFreeBoard.Writer) || loginedAccount.Role == Role.Admin) // If visitor is writer or administrator
-                    {
-                        #region Delete board
-                        tempFreeBoard.Deleted = true;
-                        await _boardRepository.DeleteBoardAsync(tempFreeBoard);
-                        #endregion
-
-                        return Json(new { result = true, message = _localizer["The board has been successfully deleted."].Value });
-                    }
-                    else
-                    {
-                        return Json(new { result = true, message = _localizer["You do not have permission to delete."].Value });
-                    }
+                    return Json(new { result = true, message = _localizer["You do not have permission to delete."].Value });
                 }
             }
         }

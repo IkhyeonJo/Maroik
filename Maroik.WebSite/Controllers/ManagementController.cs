@@ -16,6 +16,7 @@ using Maroik.WebSite.Models.ViewModels.Management;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Localization;
 using Microsoft.AspNetCore.StaticFiles;
+using Microsoft.EntityFrameworkCore;
 using Newtonsoft.Json;
 using System.Diagnostics;
 using System.Net.Mail;
@@ -1982,13 +1983,9 @@ public class ManagementController : Controller
                             JsonConvert.DeserializeObject<Account>(
                                 Encoding.UTF8.GetString(resultByte)); // Get Session
 
-                        IEnumerable<Board> privateNoteBoards =
-                            await _boardRepository.GetOneTypeBoardsAsync(
-                                EnumHelper.GetDescription(BoardType.PrivateNote));
-                        privateNoteBoards = privateNoteBoards.Where(m => m.Writer == loginedAccount.Nickname)
-                            .Where(m => m.Deleted == false).OrderByDescending(a => a.Id);
                         Board privateNoteBoard =
-                            privateNoteBoards.FirstOrDefault(m => m.Id == boardCommentInputViewModel.BoardId);
+                            await _boardRepository.GetActiveByIdForWriterAsync(
+                                boardCommentInputViewModel.BoardId, EnumHelper.GetDescription(BoardType.PrivateNote), loginedAccount.Nickname);
 
                         if (privateNoteBoard.Id != boardCommentInputViewModel.BoardId)
                         {
@@ -2153,15 +2150,11 @@ public class ManagementController : Controller
                 DetailBoardId = boardId ?? default
             };
 
-            IEnumerable<Board> privateNoteBoards =
-                await _boardRepository.GetOneTypeBoardsAsync(EnumHelper.GetDescription(BoardType.PrivateNote));
-            privateNoteBoards = privateNoteBoards.Where(m => m.Writer == loginedAccount.Nickname)
-                .Where(m => m.Deleted == false).OrderByDescending(a => a.Id);
             List<BoardAttachedFile> boardAttachedFiles = await _boardAttachedFileRepository.GetAllAsync();
 
             try
             {
-                Board privateNoteBoard = privateNoteBoards.FirstOrDefault(m => m.Id == boardId);
+                Board privateNoteBoard = await _boardRepository.GetActiveByIdForWriterAsync(boardId ?? default, EnumHelper.GetDescription(BoardType.PrivateNote), loginedAccount.Nickname);
 
                 if (privateNoteBoard.Locked)
                 {
@@ -2282,15 +2275,11 @@ public class ManagementController : Controller
             Account loginedAccount = await _accountRepository.GetAccountByEmailAsync(JsonConvert
                 .DeserializeObject<Account>(Encoding.UTF8.GetString(resultByte)).Email);
 
-            IEnumerable<Board> privateNoteBoards =
-                await _boardRepository.GetOneTypeBoardsAsync(EnumHelper.GetDescription(BoardType.PrivateNote));
-            privateNoteBoards = privateNoteBoards.Where(m => m.Writer == loginedAccount.Nickname)
-                .Where(m => m.Deleted == false).OrderByDescending(a => a.Id);
             List<BoardAttachedFile> boardAttachedFiles = await _boardAttachedFileRepository.GetAllAsync();
 
             try
             {
-                Board privateNoteBoard = privateNoteBoards.FirstOrDefault(m => m.Id == boardId);
+                Board privateNoteBoard = await _boardRepository.GetActiveByIdForWriterAsync(boardId ?? default, EnumHelper.GetDescription(BoardType.PrivateNote), loginedAccount.Nickname);
 
                 if (privateNoteBoard.Writer != loginedAccount.Nickname) // If writer and logged-in user are not the same
                 {
@@ -2407,10 +2396,12 @@ public class ManagementController : Controller
 
             #region Logic to get all related board data
 
-            IEnumerable<Board> privateNoteBoards =
-                await _boardRepository.GetOneTypeBoardsAsync(EnumHelper.GetDescription(BoardType.PrivateNote));
-            privateNoteBoards = privateNoteBoards.Where(m => m.Writer == loginedAccount.Nickname)
-                .Where(m => m.Deleted == false && m.Noticed == false).OrderByDescending(a => a.Id);
+            // Queryable, not materialized yet — filtering/ordering/paging below all
+            // compose into one SQL query, executed only at Pager/Boards below.
+            IQueryable<Board> privateNoteBoards = _boardRepository
+                .QueryActiveByType(EnumHelper.GetDescription(BoardType.PrivateNote))
+                .Where(m => m.Writer == loginedAccount.Nickname && !m.Noticed)
+                .OrderByDescending(a => a.Id);
 
             #endregion
 
@@ -2426,16 +2417,19 @@ public class ManagementController : Controller
                     }
                     else if (loginedAccount.Role == Role.User) // User can see regular posts + their own private posts
                     {
-                        List<Board> searchPrivateNoteBoards = [];
-                        List<Board> noLockedPrivateNoteBoards = privateNoteBoards
-                            .Where(a => a.Title.Contains(searchText)).Where(a => !a.Locked).ToList();
-                        List<Board> myLockedPrivateNoteBoards = privateNoteBoards
+                        // Preserves the original's group order (non-locked matches first, then
+                        // the searcher's own locked matches after — not a single Id ordering)
+                        // via SQL UNION ALL (Concat), instead of materializing two lists in memory.
+                        IQueryable<Board> noLockedPrivateNoteBoards = privateNoteBoards
+                            .Where(a => a.Title.Contains(searchText)).Where(a => !a.Locked);
+                        IQueryable<Board> myLockedPrivateNoteBoards = privateNoteBoards
                             .Where(a => a.Title.Contains(searchText))
-                            .Where(a => a.Locked && a.Writer == loginedAccount.Nickname).ToList();
-                        searchPrivateNoteBoards.AddRange(noLockedPrivateNoteBoards);
-                        searchPrivateNoteBoards.AddRange(myLockedPrivateNoteBoards);
+                            .Where(a => a.Locked && a.Writer == loginedAccount.Nickname);
 
-                        privateNoteBoards = searchPrivateNoteBoards;
+                        privateNoteBoards = noLockedPrivateNoteBoards.Select(a => new { Board = a, Group = 0 })
+                            .Concat(myLockedPrivateNoteBoards.Select(a => new { Board = a, Group = 1 }))
+                            .OrderBy(x => x.Group).ThenByDescending(x => x.Board.Id)
+                            .Select(x => x.Board);
                     }
                     else // If logged in but has neither Admin nor User role, it's a bug
                     {
@@ -2468,16 +2462,11 @@ public class ManagementController : Controller
 
             #endregion
 
-            #region Board paging logic
+            #region Board paging + data logic
 
-            privateNoteOutputViewModel.Pager = new Pager(privateNoteBoards.Count(), page, pageSize);
-
-            #endregion
-
-            #region Board data logic
-
-            privateNoteOutputViewModel.Boards = privateNoteBoards.Skip((page - 1) * pageSize)
-                .Take(privateNoteOutputViewModel.Pager.PageSize).ToList();
+            privateNoteOutputViewModel.Pager = new Pager(await privateNoteBoards.CountAsync(), page, pageSize);
+            privateNoteOutputViewModel.Boards = await privateNoteBoards.Skip((page - 1) * pageSize)
+                .Take(privateNoteOutputViewModel.Pager.PageSize).ToListAsync();
 
             #endregion
 
@@ -2505,23 +2494,11 @@ public class ManagementController : Controller
             Account loginedAccount = await _accountRepository.GetAccountByEmailAsync(JsonConvert
                 .DeserializeObject<Account>(Encoding.UTF8.GetString(resultByte)).Email);
 
-            IEnumerable<Board> privateNoteBoards =
-                await _boardRepository.GetOneTypeBoardsAsync(EnumHelper.GetDescription(BoardType.PrivateNote));
-            privateNoteBoards = privateNoteBoards.Where(m => m.Writer == loginedAccount.Nickname)
-                .Where(m => m.Deleted == false).OrderByDescending(a => a.Id);
+            Board tempPrivateNoteBoard = await _boardRepository.GetActiveByIdForWriterAsync(id, EnumHelper.GetDescription(BoardType.PrivateNote), loginedAccount.Nickname);
 
-            if (privateNoteBoards == null)
-            {
-                return Json(new { result = false, error = _localizer["No PrivateNoteBoard exists"].Value });
-            }
-            else
-            {
-                Board tempPrivateNoteBoard = privateNoteBoards.Where(a => a.Id == id).FirstOrDefault();
-
-                return tempPrivateNoteBoard == null
-                    ? Json(new { result = false, error = _localizer["Input is invalid"].Value })
-                    : (IActionResult)Json(new { result = true, PrivateNoteBoard = tempPrivateNoteBoard });
-            }
+            return tempPrivateNoteBoard == null
+                ? Json(new { result = false, error = _localizer["Input is invalid"].Value })
+                : (IActionResult)Json(new { result = true, PrivateNoteBoard = tempPrivateNoteBoard });
         }
         catch
         {
@@ -2623,14 +2600,8 @@ public class ManagementController : Controller
                             JsonConvert.DeserializeObject<Account>(
                                 Encoding.UTF8.GetString(resultByte)); // Get Session
 
-                        IEnumerable<Board> privateNoteBoards =
-                            await _boardRepository.GetOneTypeBoardsAsync(
-                                EnumHelper.GetDescription(BoardType.PrivateNote));
-                        privateNoteBoards = privateNoteBoards.Where(m => m.Writer == loginedAccount.Nickname)
-                            .Where(m => m.Deleted == false).OrderByDescending(a => a.Id);
-
-                        Board tempPrivateNoteBoard = privateNoteBoards.Where(a => a.Id == boardInputViewModel.Id)
-                            .FirstOrDefault();
+                        Board tempPrivateNoteBoard = await _boardRepository.GetActiveByIdForWriterAsync(
+                            boardInputViewModel.Id, EnumHelper.GetDescription(BoardType.PrivateNote), loginedAccount.Nickname);
 
                         if (tempPrivateNoteBoard.Writer != loginedAccount.Nickname)
                         {
@@ -2842,45 +2813,33 @@ public class ManagementController : Controller
             Account loginedAccount = await _accountRepository.GetAccountByEmailAsync(JsonConvert
                 .DeserializeObject<Account>(Encoding.UTF8.GetString(resultByte)).Email);
 
-            IEnumerable<Board> privateNoteBoards =
-                await _boardRepository.GetOneTypeBoardsAsync(EnumHelper.GetDescription(BoardType.PrivateNote));
-            privateNoteBoards = privateNoteBoards.Where(m => m.Writer == loginedAccount.Nickname)
-                .Where(m => m.Deleted == false).OrderByDescending(a => a.Id);
+            Board tempPrivateNoteBoard =
+                await _boardRepository.GetActiveByIdForWriterAsync(boardInputViewModel.Id, EnumHelper.GetDescription(BoardType.PrivateNote), loginedAccount.Nickname);
 
-            if (privateNoteBoards == null)
+            if (tempPrivateNoteBoard == null)
             {
                 return Json(new { result = false, error = _localizer["Input is invalid"].Value });
             }
             else
             {
-                Board tempPrivateNoteBoard =
-                    privateNoteBoards.Where(a => a.Id == boardInputViewModel.Id).FirstOrDefault();
-
-                if (tempPrivateNoteBoard == null)
+                if (loginedAccount.Nickname == tempPrivateNoteBoard.Writer) // If visitor is writer
                 {
-                    return Json(new { result = false, error = _localizer["Input is invalid"].Value });
+                    #region Delete board
+
+                    tempPrivateNoteBoard.Deleted = true;
+                    await _boardRepository.DeleteBoardAsync(tempPrivateNoteBoard);
+
+                    #endregion
+
+                    return Json(new
+                    {
+                        result = true, message = _localizer["The board has been successfully deleted."].Value
+                    });
                 }
                 else
                 {
-                    if (loginedAccount.Nickname == tempPrivateNoteBoard.Writer) // If visitor is writer
-                    {
-                        #region Delete board
-
-                        tempPrivateNoteBoard.Deleted = true;
-                        await _boardRepository.DeleteBoardAsync(tempPrivateNoteBoard);
-
-                        #endregion
-
-                        return Json(new
-                        {
-                            result = true, message = _localizer["The board has been successfully deleted."].Value
-                        });
-                    }
-                    else
-                    {
-                        return Json(new
-                            { result = true, message = _localizer["You do not have permission to delete."].Value });
-                    }
+                    return Json(new
+                        { result = true, message = _localizer["You do not have permission to delete."].Value });
                 }
             }
         }
