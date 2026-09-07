@@ -12,6 +12,14 @@ public interface IExpenditureRepository : IGenericRepository<Expenditure>
     /// <summary>Returns the expenditure record identified by account email and ID, or null if not found.</summary>
     Task<Expenditure?> FindByEmailAndIdAsync(string accountEmail, long id, CancellationToken ct = default);
 
+    /// <summary>
+    /// Same as <see cref="FindByEmailAndIdAsync"/> but takes a row lock (<c>SELECT … FOR UPDATE</c>)
+    /// on the matched row, held until the ambient <see cref="IUnitOfWork"/> transaction ends. Used by
+    /// update/delete flows so two concurrent edits of the same record cannot both read a stale
+    /// amount and drift the linked asset balance. Must be called inside an open transaction.
+    /// </summary>
+    Task<Expenditure?> FindByEmailAndIdForUpdateAsync(string accountEmail, long id, CancellationToken ct = default);
+
     /// <summary>Returns expenditure records for the given account whose date falls within the given range.</summary>
     Task<List<Expenditure>> GetByAccountEmailAndDateRangeAsync(string accountEmail, DateTime from, DateTime to, CancellationToken ct = default);
 

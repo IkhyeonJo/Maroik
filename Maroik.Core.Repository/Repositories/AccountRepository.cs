@@ -31,7 +31,7 @@ public class AccountRepository(ApplicationDbContext context)
         Email = a.Email.Value,
         HashedPassword = a.HashedPassword,
         Nickname = a.Nickname,
-        AvatarImagePath = a.AvatarImagePath ?? "/upload/Management/Profile/default-avatar.jpg",
+        AvatarImagePath = a.AvatarImagePath ?? Account.DefaultAvatarImagePath,
         Role = a.Role,
         TimeZoneIanaId = a.TimeZone.Value,
         DefaultMonetaryUnit = a.DefaultMonetaryUnit,

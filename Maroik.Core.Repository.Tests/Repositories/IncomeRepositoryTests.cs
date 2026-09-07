@@ -96,6 +96,84 @@ public sealed class IncomeRepositoryTests(DatabaseFixture database) : Repository
         Assert.Null(result);
     }
 
+    // -- FindByEmailAndIdForUpdateAsync (SELECT ... FOR UPDATE) --------------
+
+    /// <summary>The row-locking lookup finds an existing income and returns null for a missing id.</summary>
+    [Fact]
+    public async Task FindByEmailAndIdForUpdateAsync_FindsIncome_OrReturnsNull()
+    {
+        string alice = UniqueEmail("alice");
+        var ef = MakeIncome(alice, "LockedSavings", amount: 640m);
+        await SeedAsync(ef);
+
+        Income? found = await Sut.FindByEmailAndIdForUpdateAsync(alice, ef.Id, TestContext.Current.CancellationToken);
+        Income? missing = await Sut.FindByEmailAndIdForUpdateAsync(alice, long.MaxValue, TestContext.Current.CancellationToken);
+
+        Assert.NotNull(found);
+        Assert.Equal(640m, found.Amount.Amount);
+        Assert.Null(missing);
+    }
+
+    /// <summary>
+    /// The FOR UPDATE lookup re-reads through the included path, so the returned domain object still
+    /// carries the monetary unit from the linked <c>Asset</c> — a bare <c>SELECT * … FOR UPDATE</c>
+    /// row on its own would leave it blank.
+    /// </summary>
+    [Fact]
+    public async Task FindByEmailAndIdForUpdateAsync_CarriesMonetaryUnit_FromAssetInclude()
+    {
+        string alice = UniqueEmail("alice");
+        var ef = MakeIncome(alice, "SavingsAccount", amount: 300m);
+        await SeedAsync(ef); // EnsureAssetsAsync seeds the asset with MonetaryUnit "KRW"
+
+        Income? found = await Sut.FindByEmailAndIdForUpdateAsync(alice, ef.Id, TestContext.Current.CancellationToken);
+
+        Assert.NotNull(found);
+        Assert.Equal("KRW", found.Amount.Currency);
+    }
+
+    /// <summary>
+    /// Reproduces the concurrent-edit race: two parallel transactions each read the same income,
+    /// overlap, then write back an incremented amount. Without FOR UPDATE the second write is based
+    /// on a stale read and clobbers the first (final 600); with it the reads serialize and both
+    /// increments survive (final 700).
+    /// </summary>
+    [Fact]
+    public async Task FindByEmailAndIdForUpdateAsync_SerializesConcurrentRecordEdits()
+    {
+        string alice = UniqueEmail("alice");
+        var ef = MakeIncome(alice, "RaceSavings", amount: 500m);
+        await SeedAsync(ef);
+
+        async Task BumpAsync()
+        {
+            await using var context = NewDbContext();
+            var repo = new IncomeRepository(context);
+            await using var tx = await context.Database.BeginTransactionAsync(TestContext.Current.CancellationToken);
+
+            Income? income = await repo.FindByEmailAndIdForUpdateAsync(alice, ef.Id, TestContext.Current.CancellationToken);
+            Assert.NotNull(income);
+
+            await Task.Delay(300, TestContext.Current.CancellationToken);
+
+            income.Update("RegularIncome", "LaborIncome", income.Content, income.Amount.Amount + 100m,
+                income.Amount.Currency, income.DepositMyAssetProductName, income.Note);
+            await repo.UpdateEntityAsync(income, TestContext.Current.CancellationToken);
+            // The repository defers its flush while a transaction is open on the context; this test
+            // drives the transaction directly, so it flushes the pending UPDATE itself before commit.
+            await context.SaveChangesAsync(TestContext.Current.CancellationToken);
+            await tx.CommitAsync(TestContext.Current.CancellationToken);
+        }
+
+        await Task.WhenAll(BumpAsync(), BumpAsync());
+
+        Context.ChangeTracker.Clear();
+        EfIncome? result = await Context.Incomes.AsNoTracking()
+            .FirstOrDefaultAsync(i => i.Id == ef.Id, TestContext.Current.CancellationToken);
+        Assert.NotNull(result);
+        Assert.Equal(700m, result.Amount); // 500 + 100 + 100: no lost update
+    }
+
     // -- CreateAsync --------------------------------------------------------------
 
     /// <summary>Verifies that <c>CreateAsync</c> inserts an income row (DB generates its id).</summary>

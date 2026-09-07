@@ -34,10 +34,15 @@ public class ExpenditureServiceTests
         _unitOfWork.Setup(u => u.DisposeAsync()).Returns(ValueTask.CompletedTask);
 
         // UpdateAsync/DeleteAsync now fetch a single record by id; bridge it to the list-based
-        // setups the tests already declare via GetByAccountEmailAsync.
+        // setups the tests already declare via GetByAccountEmailAsync. UpdateAsync/DeleteAsync use
+        // the FOR UPDATE variant — the row lock itself is covered by the repository tests, so here
+        // it resolves identically.
+        Func<string, long, CancellationToken, Task<Expenditure?>> findById = async (e, id, c) =>
+            (await _expenditureRepo.Object.GetByAccountEmailAsync(e, c)).FirstOrDefault(x => x.Id == id);
         _expenditureRepo.Setup(r => r.FindByEmailAndIdAsync(It.IsAny<string>(), It.IsAny<long>(), It.IsAny<CancellationToken>()))
-            .Returns(async (string e, long id, CancellationToken c) =>
-                (await _expenditureRepo.Object.GetByAccountEmailAsync(e, c)).FirstOrDefault(x => x.Id == id));
+            .Returns(findById);
+        _expenditureRepo.Setup(r => r.FindByEmailAndIdForUpdateAsync(It.IsAny<string>(), It.IsAny<long>(), It.IsAny<CancellationToken>()))
+            .Returns(findById);
     }
 
     // -- Helpers --------------------------------------------------------------

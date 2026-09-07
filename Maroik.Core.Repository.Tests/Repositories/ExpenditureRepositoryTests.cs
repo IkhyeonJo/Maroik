@@ -115,6 +115,85 @@ public sealed class ExpenditureRepositoryTests(DatabaseFixture database) : Repos
         Assert.Null(result);
     }
 
+    // -- FindByEmailAndIdForUpdateAsync (SELECT ... FOR UPDATE) --------------
+
+    /// <summary>The row-locking lookup finds an existing expenditure and returns null for a missing id.</summary>
+    [Fact]
+    public async Task FindByEmailAndIdForUpdateAsync_FindsExpenditure_OrReturnsNull()
+    {
+        string alice = UniqueEmail("alice");
+        var ef = MakeExpenditure(alice, "Lunch", amount: 42m);
+        await SeedAsync(ef);
+
+        Expenditure? found = await Sut.FindByEmailAndIdForUpdateAsync(alice, ef.Id, TestContext.Current.CancellationToken);
+        Expenditure? missing = await Sut.FindByEmailAndIdForUpdateAsync(alice, long.MaxValue, TestContext.Current.CancellationToken);
+
+        Assert.NotNull(found);
+        Assert.Equal(42m, found.Amount.Amount);
+        Assert.Null(missing);
+    }
+
+    /// <summary>
+    /// The FOR UPDATE lookup re-reads through the included path, so the returned domain object still
+    /// carries the monetary unit from the linked payment <c>Asset</c> — a bare
+    /// <c>SELECT * … FOR UPDATE</c> row on its own would leave it blank.
+    /// </summary>
+    [Fact]
+    public async Task FindByEmailAndIdForUpdateAsync_CarriesMonetaryUnit_FromAssetInclude()
+    {
+        string alice = UniqueEmail("alice");
+        var ef = MakeExpenditure(alice, "Lunch", amount: 20m);
+        await SeedAsync(ef); // EnsureAssetsAsync seeds the asset with MonetaryUnit "KRW"
+
+        Expenditure? found = await Sut.FindByEmailAndIdForUpdateAsync(alice, ef.Id, TestContext.Current.CancellationToken);
+
+        Assert.NotNull(found);
+        Assert.Equal("KRW", found.Amount.Currency);
+    }
+
+    /// <summary>
+    /// Reproduces the concurrent-edit race: two parallel transactions each read the same
+    /// expenditure, overlap, then write back an incremented amount. Without FOR UPDATE the second
+    /// write is based on a stale read and clobbers the first (final 300); with it the reads
+    /// serialize and both increments survive (final 500).
+    /// </summary>
+    [Fact]
+    public async Task FindByEmailAndIdForUpdateAsync_SerializesConcurrentRecordEdits()
+    {
+        string alice = UniqueEmail("alice");
+        var ef = MakeExpenditure(alice, "RaceSpend", amount: 300m);
+        await SeedAsync(ef);
+
+        async Task BumpAsync()
+        {
+            await using var context = NewDbContext();
+            var repo = new ExpenditureRepository(context);
+            await using var tx = await context.Database.BeginTransactionAsync(TestContext.Current.CancellationToken);
+
+            Expenditure? expenditure = await repo.FindByEmailAndIdForUpdateAsync(alice, ef.Id, TestContext.Current.CancellationToken);
+            Assert.NotNull(expenditure);
+
+            await Task.Delay(300, TestContext.Current.CancellationToken);
+
+            expenditure.Update("ConsumerSpending", "MealOrEatOutExpenses", expenditure.Content,
+                expenditure.Amount.Amount + 100m, expenditure.Amount.Currency,
+                expenditure.PaymentMethod, expenditure.MyDepositAsset, expenditure.Note);
+            await repo.UpdateEntityAsync(expenditure, TestContext.Current.CancellationToken);
+            // The repository defers its flush while a transaction is open on the context; this test
+            // drives the transaction directly, so it flushes the pending UPDATE itself before commit.
+            await context.SaveChangesAsync(TestContext.Current.CancellationToken);
+            await tx.CommitAsync(TestContext.Current.CancellationToken);
+        }
+
+        await Task.WhenAll(BumpAsync(), BumpAsync());
+
+        Context.ChangeTracker.Clear();
+        EfExpenditure? result = await Context.Expenditures.AsNoTracking()
+            .FirstOrDefaultAsync(e => e.Id == ef.Id, TestContext.Current.CancellationToken);
+        Assert.NotNull(result);
+        Assert.Equal(500m, result.Amount); // 300 + 100 + 100: no lost update
+    }
+
     // -- CreateAsync --------------------------------------------------------------
 
     /// <summary>Verifies that <c>CreateAsync</c> inserts an expenditure row.</summary>

@@ -13,6 +13,13 @@ public sealed class Account : AggregateRoot<string>
     /// <summary>Admin-facing note set on an account when it is locked out after too many failed login attempts.</summary>
     private const string AccountLockedMessage = "This account is locked";
 
+    /// <summary>
+    /// Relative path stored in <see cref="AvatarImagePath"/> for an account that has not uploaded
+    /// its own avatar. Single source of truth for the value the persistence and presentation layers
+    /// would otherwise each hard-code.
+    /// </summary>
+    public const string DefaultAvatarImagePath = "/upload/Management/Profile/default-avatar.jpg";
+
     /// <summary>Validated email address (also serves as the primary key).</summary>
     public Email Email { get; private set; }
 

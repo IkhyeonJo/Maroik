@@ -141,7 +141,7 @@ public class AccountController : Controller
                 Email = loginInputViewModel.Email,
                 PlainPassword = loginInputViewModel.Password, // service validates + hashes
                 Nickname = loginInputViewModel.Nickname,
-                AvatarImagePath = "/upload/Management/Profile/default-avatar.jpg",
+                AvatarImagePath = Account.DefaultAvatarImagePath,
                 Role = Role.User,
                 TimeZoneIanaId = loginInputViewModel.TimeZoneIanaId,
                 Locked = false,

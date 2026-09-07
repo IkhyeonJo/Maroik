@@ -279,7 +279,9 @@ public class ManagementController : Controller
                 Email = accountInputViewModel.Email,
                 PlainPassword = accountInputViewModel.Password, // service validates + hashes
                 Nickname = accountInputViewModel.Nickname,
-                AvatarImagePath = "/upload/Management/Profile/default-avatar.jpg",
+                // Fully qualified: this controller also has an "Account" action method, which
+                // shadows the domain type name in this context.
+                AvatarImagePath = Maroik.Core.Domain.Account.Account.DefaultAvatarImagePath,
                 Role = accountInputViewModel.Role,
                 TimeZoneIanaId = accountInputViewModel.TimeZoneIanaId,
                 Locked = false,

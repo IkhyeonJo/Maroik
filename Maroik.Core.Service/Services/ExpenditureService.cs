@@ -129,7 +129,10 @@ public class ExpenditureService : IExpenditureService
             if (classResult.Value && request.PaymentMethod == request.MyDepositAsset)
                 return await FailAsync(SameAssetResult, ct);
 
-            Expenditure? previous = await _expenditureRepository.FindByEmailAndIdAsync(accountEmail, request.Id, ct);
+            // FOR UPDATE: lock the record for the rest of the transaction so a concurrent
+            // UpdateAsync/DeleteAsync of the same expenditure cannot read a stale amount here and
+            // drift the linked asset balances.
+            Expenditure? previous = await _expenditureRepository.FindByEmailAndIdForUpdateAsync(accountEmail, request.Id, ct);
             if (previous == null)
                 return await FailAsync(ServiceResult.NotFound("Expenditure.NotFound", "The expenditure record could not be found."), ct);
 
@@ -196,7 +199,9 @@ public class ExpenditureService : IExpenditureService
         await _unitOfWork.BeginAsync(ct);
         try
         {
-            Expenditure? expenditure = await _expenditureRepository.FindByEmailAndIdAsync(accountEmail, id, ct);
+            // FOR UPDATE: see UpdateAsync — lock the record so a concurrent edit/delete of the
+            // same expenditure cannot reverse its asset impact twice or from a stale amount.
+            Expenditure? expenditure = await _expenditureRepository.FindByEmailAndIdForUpdateAsync(accountEmail, id, ct);
             if (expenditure == null)
                 return await FailAsync(ServiceResult.NotFound("Expenditure.NotFound", "The expenditure record could not be found."), ct);
 

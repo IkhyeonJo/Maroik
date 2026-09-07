@@ -91,7 +91,10 @@ public class IncomeService : IIncomeService
             if (classResult.IsError)
                 return await FailAsync(classResult.FirstError, ct);
 
-            Income? previous = await _incomeRepository.FindByEmailAndIdAsync(accountEmail, request.Id, ct);
+            // FOR UPDATE: lock the record for the rest of the transaction so a concurrent
+            // UpdateAsync/DeleteAsync of the same income cannot read a stale amount here and
+            // drift the linked asset balance.
+            Income? previous = await _incomeRepository.FindByEmailAndIdForUpdateAsync(accountEmail, request.Id, ct);
             if (previous == null)
                 return await FailAsync(ServiceResult.NotFound("Income.NotFound", "The income record could not be found."), ct);
 
@@ -144,7 +147,9 @@ public class IncomeService : IIncomeService
         await _unitOfWork.BeginAsync(ct);
         try
         {
-            Income? income = await _incomeRepository.FindByEmailAndIdAsync(accountEmail, id, ct);
+            // FOR UPDATE: see UpdateAsync — lock the record so a concurrent edit/delete of the
+            // same income cannot reverse its asset impact twice or from a stale amount.
+            Income? income = await _incomeRepository.FindByEmailAndIdForUpdateAsync(accountEmail, id, ct);
             if (income == null)
                 return await FailAsync(ServiceResult.NotFound("Income.NotFound", "The income record could not be found."), ct);
 

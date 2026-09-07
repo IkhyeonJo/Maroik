@@ -53,6 +53,31 @@ public class IncomeRepository(ApplicationDbContext context)
         => QueryFirstAsync(e => e.AccountEmail == accountEmail && e.Id == id, ct);
 
     /// <inheritdoc />
+    public async Task<Income?> FindByEmailAndIdForUpdateAsync(string accountEmail, long id, CancellationToken ct = default)
+    {
+        // Raw SQL is required because EF Core LINQ cannot emit FOR UPDATE; ToListAsync on the raw
+        // root runs the statement verbatim so FOR UPDATE stays at the top level. AsNoTracking so the
+        // lock read is never satisfied from a stale already-tracked instance. This first call only
+        // takes the lock — nothing is tracked here.
+        var locked = await Set.FromSqlInterpolated(
+            $"""
+             SELECT *
+             FROM "Income"
+             WHERE "AccountEmail" = {accountEmail} AND "Id" = {id}
+             LIMIT 1
+             FOR UPDATE
+             """).AsNoTracking().ToListAsync(ct);
+
+        if (locked.Count == 0)
+            return null;
+
+        // Re-read through the normal included path so the returned domain object carries the
+        // monetary unit from the Asset navigation. The FOR UPDATE lock above is held until the
+        // ambient transaction ends, so this second read sees the same committed row.
+        return await FindByEmailAndIdAsync(accountEmail, id, ct);
+    }
+
+    /// <inheritdoc />
     public Task<List<Income>> GetByAccountEmailAndDateRangeAsync(string accountEmail, DateTime from, DateTime to, CancellationToken ct = default)
         => QueryAsync(e => e.AccountEmail == accountEmail && e.Created >= from && e.Created < to, ct: ct);
 
