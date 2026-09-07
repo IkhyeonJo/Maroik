@@ -444,3 +444,6 @@ Maroik.FileStorage/upload/**
 # committed, stripped from release builds (tsconfig.build.json) and by Maroik.DeployOps/Deploy.sh.
 Maroik.Website/wwwroot/**/custom/**/*.js.map
 
+
+# Merged code-coverage output (CI regenerates it)
+/coverage/

@@ -24,24 +24,31 @@ jobs:
         run: dotnet build Maroik.sln --no-restore --configuration Release
 
       # ── Unit & Integration Tests ─────────────────────────────────────────────
+      # The test projects run on Microsoft.Testing.Platform (xunit.v3); `dotnet test`
+      # is opted into MTP mode by global.json, so it takes --project (not a filter over
+      # the solution) and --coverage (not the VSTest-only "XPlat Code Coverage" collector).
+      # E2E is excluded here and runs in its own step below.
       - name: Unit & Integration Tests
         run: |
-          dotnet test Maroik.sln \
-            --no-build \
-            --configuration Release \
-            --filter "FullyQualifiedName!~E2E" \
-            --logger "github;annotations.format=json" \
-            --collect:"XPlat Code Coverage" \
-            --results-directory ./coverage
+          set -euo pipefail
+          mkdir -p ./coverage
+          for proj in $(find . -name '*.Tests.csproj' ! -name 'Maroik.E2E.Tests.csproj' | sort); do
+            name=$(basename "$proj" .csproj)
+            echo "::group::$name"
+            dotnet test --project "$proj" --no-build --configuration Release \
+              --coverage --coverage-output-format cobertura \
+              --coverage-output "$PWD/coverage/$name.cobertura.xml"
+            echo "::endgroup::"
+          done
 
       # ── Coverage Threshold ───────────────────────────────────────────────────
       - name: Install ReportGenerator
         run: dotnet tool install --global dotnet-reportgenerator-globaltool
 
-      - name: Check Coverage Threshold (60%)
+      - name: Check Coverage Threshold (line >= 80%, branch >= 65%)
         run: |
           reportgenerator \
-            -reports:"./coverage/**/coverage.cobertura.xml" \
+            -reports:"./coverage/*.cobertura.xml" \
             -targetdir:"./coverage/report" \
             -reporttypes:"TextSummary;Html" \
             -assemblyfilters:"-*Tests*;-*E2E*" \
@@ -51,17 +58,24 @@ jobs:
           import re, sys
           with open('./coverage/report/Summary.txt') as f:
               content = f.read()
-          m = re.search(r'Line coverage:\s+([\d.]+)%', content)
-          if not m:
-              print('ERROR: Could not parse line coverage', file=sys.stderr)
-              sys.exit(1)
-          cov = float(m.group(1))
-          threshold = 60.0
-          print(f'Line coverage: {cov}%')
-          if cov < threshold:
-              print(f'::error::Coverage {cov}% is below the {threshold}% minimum threshold', file=sys.stderr)
-              sys.exit(1)
-          print(f'Coverage check passed: {cov}% >= {threshold}%')
+          def pct(label):
+              m = re.search(label + r' coverage:\s+([\d.]+)%', content)
+              if not m:
+                  print(f'ERROR: Could not parse {label} coverage', file=sys.stderr)
+                  sys.exit(1)
+              return float(m.group(1))
+          line_cov, branch_cov = pct('Line'), pct('Branch')
+          line_min, branch_min = 80.0, 65.0
+          print(f'Line coverage:   {line_cov}%  (min {line_min}%)')
+          print(f'Branch coverage: {branch_cov}%  (min {branch_min}%)')
+          failed = False
+          if line_cov < line_min:
+              print(f'::error::Line coverage {line_cov}% is below the {line_min}% minimum', file=sys.stderr)
+              failed = True
+          if branch_cov < branch_min:
+              print(f'::error::Branch coverage {branch_cov}% is below the {branch_min}% minimum', file=sys.stderr)
+              failed = True
+          sys.exit(1 if failed else 0)
           "
 
       - name: Upload Coverage Report
@@ -73,12 +87,12 @@ jobs:
           retention-days: 30
 
       # ── E2E Tests (Playwright) ───────────────────────────────────────────────
+      # Needs Docker for the Testcontainers PostgreSQL instance (ubuntu-latest has it).
       - name: Install Playwright browsers
         run: pwsh Maroik.E2E.Tests/bin/Release/net10.0/playwright.ps1 install --with-deps chromium
 
       - name: E2E Tests
         run: |
-          dotnet test Maroik.E2E.Tests/Maroik.E2E.Tests.csproj \
+          dotnet test --project Maroik.E2E.Tests/Maroik.E2E.Tests.csproj \
             --no-build \
-            --configuration Release \
-            --logger "github;annotations.format=json"
+            --configuration Release
