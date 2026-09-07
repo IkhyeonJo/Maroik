@@ -30,3 +30,19 @@ logic into the Core layers:
 
 - `main` — production. No test suite / CI, but carries real security fixes.
 - `refactor-code` — the DDD + Clean Architecture rewrite (current work).
+
+## TODO
+
+- **Reclassify 6 entities from `Entity<T>` to `AggregateRoot<T>`**: `BoardComment`,
+  `BoardAttachedFile`, `CalendarEventReminder`, `CalendarEventAttachedFile`,
+  `CalendarShared`, `OtherCalendar`. Each is persisted independently via its own
+  repository (not hydrated/cascaded through a parent aggregate), which is exactly
+  the criterion already used to reclassify `Category`/`SubCategory` as
+  `AggregateRoot<long>` (see `Maroik.Core.Domain/Menu/Category.cs` and
+  `SubCategory.cs` for the pattern, and commit `284dc52f` for that reclassification).
+  This is a mechanical, low-risk change (base class only — parent-reference fields
+  already use plain IDs, not object references). Left unfinished after commit
+  `38d66bfe` removed the nine dead aggregate-invariant methods (`Board.DeleteComment`/
+  `AttachFile`, `CalendarEvent.AddReminder`/`RemoveReminder`/`AttachFile`/`RemoveFile`,
+  `Calendar.AddSubscriber`/`RemoveSubscriber`/`UpdateSharing`) that had falsely implied
+  these were child-managed entities.
