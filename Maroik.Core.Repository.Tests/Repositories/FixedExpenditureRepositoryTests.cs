@@ -1,5 +1,4 @@
 using Maroik.Core.Domain.Finance;
-using Maroik.Core.PostgreSQL.Data;
 using Maroik.Core.Repository.Repositories;
 using Microsoft.EntityFrameworkCore;
 using EfFixedExpenditure = Maroik.Core.PostgreSQL.Models.FixedExpenditure;
@@ -7,41 +6,29 @@ using EfFixedExpenditure = Maroik.Core.PostgreSQL.Models.FixedExpenditure;
 namespace Maroik.Core.Repository.Tests.Repositories;
 
 /// <summary>
-/// Tests for <see cref="FixedExpenditureRepository"/> using an EF Core InMemory database.
-/// <c>UpdateMyDepositAssetWithProductNameAsync</c> is not tested here because the InMemory
-/// provider does not support <c>ExecuteUpdateAsync</c> — see <see cref="FixedExpenditureRepositoryIntegrationTests"/>,
-/// which exercises it against a real PostgreSQL instance instead.
+/// Tests for <see cref="FixedExpenditureRepository"/> against a real PostgreSQL database
+/// (Testcontainers) pre-loaded with the production <c>Init.sql</c> schema and seed data.
+/// <c>FixedExpenditure</c> carries the composite FKs <c>FixedExpenditure_fk_0</c> on
+/// <c>(PaymentMethod, AccountEmail)</c> and <c>FixedExpenditure_fk_1</c> on
+/// <c>(MyDepositAsset, AccountEmail)</c>. Includes <c>UpdateMyDepositAssetWithProductNameAsync</c>
+/// (<c>ExecuteUpdateAsync</c>), which the EF Core InMemory provider could not run.
 /// </summary>
-public class FixedExpenditureRepositoryTests : IDisposable
+public sealed class FixedExpenditureRepositoryTests(DatabaseFixture database) : RepositoryTestBase(database)
 {
-    private readonly ApplicationDbContext _context;
-    private readonly FixedExpenditureRepository _sut;
+    private FixedExpenditureRepository Sut => new(Context);
 
-    /// <summary>Initializes the test fixture, setting up all required test doubles and the system under test.</summary>
-    public FixedExpenditureRepositoryTests()
-    {
-        var options = new DbContextOptionsBuilder<ApplicationDbContext>()
-            .UseInMemoryDatabase(Guid.NewGuid().ToString())
-            .Options;
-        _context = new ApplicationDbContext(options);
-        _sut = new FixedExpenditureRepository(_context);
-    }
-
-    /// <summary>Releases resources allocated by this test fixture (disposes the database context).</summary>
-    public void Dispose() => _context.Dispose();
-
-    // -- Helpers --------------------------------------------------------------
-
-    private static EfFixedExpenditure MakeFixedExpenditure(string email, string content, decimal amount = 50m) => new()
+    private static EfFixedExpenditure MakeFixedExpenditure(
+        string email, string content, string paymentMethod = "Wallet", string? myDepositAsset = "Wallet",
+        decimal amount = 50m) => new()
     {
         AccountEmail = email,
         MainClass = "ConsumerSpending",
         SubClass = "Tax",
         Content = content,
         Amount = amount,
-        PaymentMethod = "Wallet",
-        MyDepositAsset = "Wallet",
-        DepositMonth = 0,
+        PaymentMethod = paymentMethod,
+        MyDepositAsset = myDepositAsset,
+        DepositMonth = 1,
         DepositDay = 25,
         MaturityDate = DateTime.UtcNow.AddYears(1),
         Note = "",
@@ -52,71 +39,91 @@ public class FixedExpenditureRepositoryTests : IDisposable
 
     private async Task SeedAsync(params EfFixedExpenditure[] items)
     {
-        await _context.FixedExpenditures.AddRangeAsync(items);
-        await _context.SaveChangesAsync();
+        foreach (var group in items.GroupBy(e => e.AccountEmail!))
+            await EnsureAssetsAsync(group.Key, [.. group.SelectMany(e => new[] { e.PaymentMethod, e.MyDepositAsset })]);
+
+        await Context.FixedExpenditures.AddRangeAsync(items);
+        await Context.SaveChangesAsync();
+        Context.ChangeTracker.Clear();
     }
 
-    // -- GetFixedExpendituresAsync --------------------------------------------
+    // -- GetByAccountEmailAsync --------------------------------------------------
 
-    /// <summary>Verifies that <c>GetFixedExpendituresAsync</c> returns only items for given email.</summary>
+    /// <summary>Verifies that <c>GetByAccountEmailAsync</c> returns only items for the given e-mail.</summary>
     [Fact]
-    public async Task GetFixedExpendituresAsync_ReturnsOnlyItemsForGivenEmail()
+    public async Task GetByAccountEmailAsync_ReturnsOnlyItemsForGivenEmail()
     {
-        // FixedExpenditureRepository eager-loads Asset (required relationship), so a matching Asset
-        // row must exist for the InMemory provider to return the FixedExpenditure rows via Include.
-        await _context.Assets.AddRangeAsync(
-            new Maroik.Core.PostgreSQL.Models.Asset { ProductName = "Wallet", AccountEmail = "alice@example.com", Item = "Wallet", MonetaryUnit = "KRW", Amount = 0, Note = "", Created = DateTime.UtcNow, Updated = DateTime.UtcNow },
-            new Maroik.Core.PostgreSQL.Models.Asset { ProductName = "Wallet", AccountEmail = "bob@example.com", Item = "Wallet", MonetaryUnit = "KRW", Amount = 0, Note = "", Created = DateTime.UtcNow, Updated = DateTime.UtcNow });
-        await _context.SaveChangesAsync(TestContext.Current.CancellationToken);
-
+        string alice = UniqueEmail("alice");
+        string bob = UniqueEmail("bob");
         await SeedAsync(
-            MakeFixedExpenditure("alice@example.com", "Netflix"),
-            MakeFixedExpenditure("alice@example.com", "Insurance"),
-            MakeFixedExpenditure("bob@example.com", "Gym"));
+            MakeFixedExpenditure(alice, "Netflix"),
+            MakeFixedExpenditure(alice, "Insurance"),
+            MakeFixedExpenditure(bob, "Gym"));
 
-        List<FixedExpenditure> result = await _sut.GetByAccountEmailAsync("alice@example.com", TestContext.Current.CancellationToken);
+        List<FixedExpenditure> result = await Sut.GetByAccountEmailAsync(alice, TestContext.Current.CancellationToken);
 
         Assert.Equal(2, result.Count);
-        Assert.All(result, fe => Assert.Equal("alice@example.com", fe.AccountEmail.Value));
+        Assert.All(result, fe => Assert.Equal(alice, fe.AccountEmail.Value));
     }
 
-    /// <summary>Verifies that <c>GetFixedExpendituresAsync</c> returns empty when no items for email.</summary>
+    /// <summary>Verifies that <c>GetByAccountEmailAsync</c> returns empty when the e-mail has no items.</summary>
     [Fact]
-    public async Task GetFixedExpendituresAsync_ReturnsEmpty_WhenNoItemsForEmail()
+    public async Task GetByAccountEmailAsync_ReturnsEmpty_WhenNoItemsForEmail()
     {
-        List<FixedExpenditure> result = await _sut.GetByAccountEmailAsync("nobody@example.com", TestContext.Current.CancellationToken);
+        List<FixedExpenditure> result = await Sut.GetByAccountEmailAsync(UniqueEmail("nobody"), TestContext.Current.CancellationToken);
 
         Assert.Empty(result);
     }
 
-    // -- CreateFixedExpenditureAsync ------------------------------------------
+    // -- FindByEmailAndIdAsync -------------------------------------------------
 
-    /// <summary>Verifies that <c>CreateFixedExpenditureAsync</c> adds item to database.</summary>
+    /// <summary>Verifies that <c>FindByEmailAndIdAsync</c> returns the item when owned by the e-mail.</summary>
     [Fact]
-    public async Task CreateFixedExpenditureAsync_AddsItemToDatabase()
+    public async Task FindByEmailAndIdAsync_ReturnsItem_WhenOwnedByEmail()
     {
+        string alice = UniqueEmail("alice");
+        var ef = MakeFixedExpenditure(alice, "Netflix", amount: 17m);
+        await SeedAsync(ef);
+
+        FixedExpenditure? result = await Sut.FindByEmailAndIdAsync(alice, ef.Id, TestContext.Current.CancellationToken);
+
+        Assert.NotNull(result);
+        Assert.Equal(17m, result.Amount.Amount);
+    }
+
+    /// <summary>Verifies that <c>FindByEmailAndIdAsync</c> returns null for another account's id.</summary>
+    [Fact]
+    public async Task FindByEmailAndIdAsync_ReturnsNull_WhenNotOwnedByEmail()
+    {
+        var ef = MakeFixedExpenditure(UniqueEmail("bob"), "Gym");
+        await SeedAsync(ef);
+
+        FixedExpenditure? result = await Sut.FindByEmailAndIdAsync(UniqueEmail("alice"), ef.Id, TestContext.Current.CancellationToken);
+
+        Assert.Null(result);
+    }
+
+    // -- CreateAsync ------------------------------------------
+
+    /// <summary>Verifies that <c>CreateAsync</c> inserts a fixed-expenditure row.</summary>
+    [Fact]
+    public async Task CreateAsync_AddsItemToDatabase()
+    {
+        string alice = UniqueEmail("alice");
+        await EnsureAssetsAsync(alice, "BankAccount");
+
         var fixedExpenditure = FixedExpenditure.Reconstitute(
-            id: 0,
-            accountEmail: "alice@example.com",
-            mainClass: "ConsumerSpending",
-            subClass: "Tax",
-            content: "Property tax",
-            amount: 200m,
-            monetaryUnit: "",
-            paymentMethod: "BankAccount",
-            myDepositAsset: "BankAccount",
-            depositMonth: 3,
-            depositDay: 31,
-            maturityDate: DateTime.UtcNow.AddYears(1),
-            note: null,
-            unpunctuality: false,
-            created: DateTime.UtcNow,
-            updated: DateTime.UtcNow);
+            id: 0, accountEmail: alice, mainClass: "ConsumerSpending", subClass: "Tax",
+            content: "Property tax", amount: 200m, monetaryUnit: "",
+            paymentMethod: "BankAccount", myDepositAsset: "BankAccount", depositMonth: 3, depositDay: 31,
+            maturityDate: DateTime.UtcNow.AddYears(1), note: null, unpunctuality: false,
+            created: DateTime.UtcNow, updated: DateTime.UtcNow);
 
-        await _sut.CreateAsync(fixedExpenditure, TestContext.Current.CancellationToken);
+        await Sut.CreateAsync(fixedExpenditure, TestContext.Current.CancellationToken);
+        Context.ChangeTracker.Clear();
 
-        EfFixedExpenditure? saved = await _context.FixedExpenditures.FirstOrDefaultAsync(
-            fe => fe.AccountEmail == "alice@example.com" && fe.Content == "Property tax", TestContext.Current.CancellationToken);
+        EfFixedExpenditure? saved = await Context.FixedExpenditures.FirstOrDefaultAsync(
+            fe => fe.AccountEmail == alice && fe.Content == "Property tax", TestContext.Current.CancellationToken);
         Assert.NotNull(saved);
         Assert.Equal(200m, saved.Amount);
         Assert.Equal((short)3, saved.DepositMonth);
@@ -125,35 +132,25 @@ public class FixedExpenditureRepositoryTests : IDisposable
 
     // -- UpdateEntityAsync ------------------------------------------
 
-    /// <summary>Verifies that <c>UpdateEntityAsync</c> updates existing item.</summary>
+    /// <summary>Verifies that <c>UpdateEntityAsync</c> persists changes to an existing item.</summary>
     [Fact]
     public async Task UpdateEntityAsync_UpdatesExistingItem()
     {
-        var efItem = MakeFixedExpenditure("alice@example.com", "Netflix", amount: 50m);
-        await SeedAsync(efItem);
-        long id = efItem.Id;
+        string alice = UniqueEmail("alice");
+        var ef = MakeFixedExpenditure(alice, "Netflix", amount: 50m);
+        await SeedAsync(ef);
 
         var fixedExpenditure = FixedExpenditure.Reconstitute(
-            id: id,
-            accountEmail: "alice@example.com",
-            mainClass: "ConsumerSpending",
-            subClass: "Tax",
-            content: "Netflix Premium",
-            amount: 75m,
-            monetaryUnit: "",
-            paymentMethod: "Wallet",
-            myDepositAsset: "Wallet",
-            depositMonth: 0,
-            depositDay: 25,
-            maturityDate: efItem.MaturityDate,
-            note: null,
-            unpunctuality: true,
-            created: efItem.Created,
-            updated: DateTime.UtcNow);
+            id: ef.Id, accountEmail: alice, mainClass: "ConsumerSpending", subClass: "Tax",
+            content: "Netflix Premium", amount: 75m, monetaryUnit: "",
+            paymentMethod: "Wallet", myDepositAsset: "Wallet", depositMonth: 1, depositDay: 25,
+            maturityDate: ef.MaturityDate, note: null, unpunctuality: true,
+            created: ef.Created, updated: DateTime.UtcNow);
 
-        await _sut.UpdateEntityAsync(fixedExpenditure, TestContext.Current.CancellationToken);
+        await Sut.UpdateEntityAsync(fixedExpenditure, TestContext.Current.CancellationToken);
+        Context.ChangeTracker.Clear();
 
-        EfFixedExpenditure? updated = await _context.FixedExpenditures.FirstOrDefaultAsync(fe => fe.Id == id, TestContext.Current.CancellationToken);
+        EfFixedExpenditure? updated = await Context.FixedExpenditures.FirstOrDefaultAsync(fe => fe.Id == ef.Id, TestContext.Current.CancellationToken);
         Assert.NotNull(updated);
         Assert.Equal(75m, updated.Amount);
         Assert.Equal("Netflix Premium", updated.Content);
@@ -162,32 +159,87 @@ public class FixedExpenditureRepositoryTests : IDisposable
 
     // -- DeleteByIdAsync ------------------------------------------
 
-    /// <summary>Verifies that <c>DeleteByIdAsync</c> removes item from database.</summary>
+    /// <summary>Verifies that <c>DeleteByIdAsync</c> removes the item row.</summary>
     [Fact]
-    public async Task DeleteFixedExpenditureAsync_RemovesItemFromDatabase()
+    public async Task DeleteByIdAsync_RemovesItemFromDatabase()
     {
-        var efItem = MakeFixedExpenditure("alice@example.com", "Spotify");
-        await SeedAsync(efItem);
-        long id = efItem.Id;
+        string alice = UniqueEmail("alice");
+        var ef = MakeFixedExpenditure(alice, "Spotify");
+        await SeedAsync(ef);
 
-        await _sut.DeleteByIdAsync(id, TestContext.Current.CancellationToken);
+        await Sut.DeleteByIdAsync(ef.Id, TestContext.Current.CancellationToken);
+        Context.ChangeTracker.Clear();
 
-        EfFixedExpenditure? deleted = await _context.FixedExpenditures.FirstOrDefaultAsync(fe => fe.Id == id, TestContext.Current.CancellationToken);
-        Assert.Null(deleted);
+        Assert.Null(await Context.FixedExpenditures.FirstOrDefaultAsync(fe => fe.Id == ef.Id, TestContext.Current.CancellationToken));
     }
 
     /// <summary>Verifies that <c>DeleteByIdAsync</c> does not affect other items.</summary>
     [Fact]
-    public async Task DeleteFixedExpenditureAsync_DoesNotAffectOtherItems()
+    public async Task DeleteByIdAsync_DoesNotAffectOtherItems()
     {
-        var efItem1 = MakeFixedExpenditure("alice@example.com", "Netflix");
-        var efItem2 = MakeFixedExpenditure("alice@example.com", "Spotify");
-        await SeedAsync(efItem1, efItem2);
+        string alice = UniqueEmail("alice");
+        var keep = MakeFixedExpenditure(alice, "Netflix");
+        var remove = MakeFixedExpenditure(alice, "Spotify");
+        await SeedAsync(keep, remove);
 
-        await _sut.DeleteByIdAsync(efItem1.Id, TestContext.Current.CancellationToken);
+        await Sut.DeleteByIdAsync(remove.Id, TestContext.Current.CancellationToken);
+        Context.ChangeTracker.Clear();
 
-        List<EfFixedExpenditure> remaining = await _context.FixedExpenditures.ToListAsync(TestContext.Current.CancellationToken);
-        Assert.Single(remaining);
-        Assert.Equal(efItem2.Id, remaining[0].Id);
+        List<EfFixedExpenditure> remaining = await Context.FixedExpenditures
+            .Where(fe => fe.AccountEmail == alice).ToListAsync(TestContext.Current.CancellationToken);
+        Assert.Equal(keep.Id, Assert.Single(remaining).Id);
+    }
+
+    // -- UpdateMyDepositAssetWithProductNameAsync (ExecuteUpdateAsync) --------
+
+    /// <summary>Verifies that renaming an asset cascades to every matching fixed expenditure for that account.</summary>
+    [Fact]
+    public async Task UpdateMyDepositAssetWithProductNameAsync_RenamesMatchingRows()
+    {
+        string alice = UniqueEmail("alice");
+        var fe1 = MakeFixedExpenditure(alice, "Netflix", myDepositAsset: "OldName");
+        var fe2 = MakeFixedExpenditure(alice, "Spotify", myDepositAsset: "OldName");
+        var fe3 = MakeFixedExpenditure(alice, "Unrelated", myDepositAsset: "OtherAsset");
+        await SeedAsync(fe1, fe2, fe3);
+        await EnsureAssetsAsync(alice, "NewName");
+
+        int updated = await Sut.UpdateMyDepositAssetWithProductNameAsync(alice, "OldName", "NewName", TestContext.Current.CancellationToken);
+        Context.ChangeTracker.Clear();
+
+        Assert.Equal(2, updated);
+        Assert.Equal("NewName", (await Context.FixedExpenditures.FirstAsync(e => e.Id == fe1.Id, TestContext.Current.CancellationToken)).MyDepositAsset);
+        Assert.Equal("NewName", (await Context.FixedExpenditures.FirstAsync(e => e.Id == fe2.Id, TestContext.Current.CancellationToken)).MyDepositAsset);
+        Assert.Equal("OtherAsset", (await Context.FixedExpenditures.FirstAsync(e => e.Id == fe3.Id, TestContext.Current.CancellationToken)).MyDepositAsset);
+    }
+
+    /// <summary>Verifies that the cascade is scoped to the given account.</summary>
+    [Fact]
+    public async Task UpdateMyDepositAssetWithProductNameAsync_DoesNotAffectOtherAccounts()
+    {
+        string alice = UniqueEmail("alice");
+        string bob = UniqueEmail("bob");
+        var mine = MakeFixedExpenditure(alice, "Mine", paymentMethod: "AliceWallet", myDepositAsset: "SharedName");
+        var theirs = MakeFixedExpenditure(bob, "Not mine", paymentMethod: "BobWallet", myDepositAsset: "SharedName");
+        await SeedAsync(mine, theirs);
+        await EnsureAssetsAsync(alice, "Renamed");
+
+        int updated = await Sut.UpdateMyDepositAssetWithProductNameAsync(alice, "SharedName", "Renamed", TestContext.Current.CancellationToken);
+        Context.ChangeTracker.Clear();
+
+        Assert.Equal(1, updated);
+        Assert.Equal("Renamed", (await Context.FixedExpenditures.FirstAsync(e => e.Id == mine.Id, TestContext.Current.CancellationToken)).MyDepositAsset);
+        Assert.Equal("SharedName", (await Context.FixedExpenditures.FirstAsync(e => e.Id == theirs.Id, TestContext.Current.CancellationToken)).MyDepositAsset);
+    }
+
+    /// <summary>Verifies that renaming a name with no matching rows affects zero rows.</summary>
+    [Fact]
+    public async Task UpdateMyDepositAssetWithProductNameAsync_ReturnsZero_WhenNoMatch()
+    {
+        string alice = UniqueEmail("alice");
+        await SeedAsync(MakeFixedExpenditure(alice, "Only", myDepositAsset: "SomeAsset"));
+
+        int updated = await Sut.UpdateMyDepositAssetWithProductNameAsync(alice, "DoesNotExist", "NewName", TestContext.Current.CancellationToken);
+
+        Assert.Equal(0, updated);
     }
 }

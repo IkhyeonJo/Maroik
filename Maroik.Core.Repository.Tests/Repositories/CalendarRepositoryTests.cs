@@ -1,5 +1,4 @@
 using Maroik.Core.Domain.Calendar;
-using Maroik.Core.PostgreSQL.Data;
 using Maroik.Core.Repository.Repositories;
 using Microsoft.EntityFrameworkCore;
 using EfCalendar = Maroik.Core.PostgreSQL.Models.Calendar;
@@ -7,29 +6,18 @@ using EfCalendar = Maroik.Core.PostgreSQL.Models.Calendar;
 namespace Maroik.Core.Repository.Tests.Repositories;
 
 /// <summary>
-/// Tests for <see cref="CalendarRepository"/> using an EF Core InMemory database.
+/// Tests for <see cref="CalendarRepository"/> against a real PostgreSQL database (Testcontainers)
+/// pre-loaded with the production <c>Init.sql</c> schema and seed data (4 calendars). <c>Calendar</c>
+/// has the FK <c>Calendar_fk_0</c> to <c>Account.Email</c> and the checks
+/// <c>Calendar_HtmlColorCode_check</c> (<c>^#[0-9A-Fa-f]{6}$</c>) and <c>Calendar_Name_check</c>.
+/// The global <c>GetAllOrderedByNameAsync</c> also returns the seed rows, so its assertions are
+/// scoped to this test's own account.
 /// </summary>
-public class CalendarRepositoryTests : IDisposable
+public sealed class CalendarRepositoryTests(DatabaseFixture database) : RepositoryTestBase(database)
 {
-    private readonly ApplicationDbContext _context;
-    private readonly CalendarRepository _sut;
+    private CalendarRepository Sut => new(Context);
 
-    /// <summary>Initializes the test fixture, setting up all required test doubles and the system under test.</summary>
-    public CalendarRepositoryTests()
-    {
-        var options = new DbContextOptionsBuilder<ApplicationDbContext>()
-            .UseInMemoryDatabase(Guid.NewGuid().ToString())
-            .Options;
-        _context = new ApplicationDbContext(options);
-        _sut = new CalendarRepository(_context);
-    }
-
-    /// <summary>Releases resources allocated by this test fixture (disposes the database context).</summary>
-    public void Dispose() => _context.Dispose();
-
-    // -- Helpers --------------------------------------------------------------
-
-    private static EfCalendar MakeCalendar(string email, string name, string color = "#FF5733") => new()
+    private EfCalendar MakeCalendar(string email, string name, string color = "#FF5733") => new()
     {
         AccountEmail = email,
         Name = name,
@@ -42,174 +30,163 @@ public class CalendarRepositoryTests : IDisposable
 
     private async Task SeedAsync(params EfCalendar[] calendars)
     {
-        await _context.Calendars.AddRangeAsync(calendars);
-        await _context.SaveChangesAsync();
+        await EnsureAccountsAsync([.. calendars.Select(c => c.AccountEmail!)]);
+        await Context.Calendars.AddRangeAsync(calendars);
+        await Context.SaveChangesAsync();
+        Context.ChangeTracker.Clear();
     }
 
-    // -- GetAllCalendarsAsync -------------------------------------------------
+    // -- GetAllOrderedByNameAsync -----------------------------------------------
 
-    /// <summary>Verifies that <c>GetAllCalendarsAsync</c> returns all calendars.</summary>
+    /// <summary>Verifies that <c>GetAllOrderedByNameAsync</c> includes every calendar this test inserted.</summary>
     [Fact]
-    public async Task GetAllCalendarsAsync_ReturnsAllCalendars()
+    public async Task GetAllOrderedByNameAsync_ReturnsInsertedCalendars()
     {
-        await SeedAsync(
-            MakeCalendar("alice@example.com", "Work"),
-            MakeCalendar("bob@example.com", "Personal"));
+        string alice = UniqueEmail("alice");
+        await SeedAsync(MakeCalendar(alice, Unique("Work")), MakeCalendar(alice, Unique("Personal")));
 
-        List<Calendar> result = await _sut.GetAllOrderedByNameAsync(TestContext.Current.CancellationToken);
+        List<Calendar> result = await Sut.GetAllOrderedByNameAsync(TestContext.Current.CancellationToken);
+
+        Assert.Equal(2, result.Count(c => c.AccountEmail.Value == alice));
+    }
+
+    /// <summary>Verifies that <c>GetAllOrderedByNameAsync</c> returns rows in <c>Name</c> order.</summary>
+    [Fact]
+    public async Task GetAllOrderedByNameAsync_ReturnsOrderedByName()
+    {
+        string alice = UniqueEmail("alice");
+        // Prefix with the token so the pair sorts adjacently regardless of seed names.
+        await SeedAsync(MakeCalendar(alice, Token + "-Work"), MakeCalendar(alice, Token + "-Personal"));
+
+        List<string?> mine = (await Sut.GetAllOrderedByNameAsync(TestContext.Current.CancellationToken))
+            .Where(c => c.AccountEmail.Value == alice)
+            .Select(c => c.Name)
+            .ToList();
+
+        Assert.Equal([Token + "-Personal", Token + "-Work"], mine);
+    }
+
+    // -- GetByAccountEmailAsync ------------------------------------------------
+
+    /// <summary>Verifies that <c>GetByAccountEmailAsync</c> returns only calendars for the given e-mail.</summary>
+    [Fact]
+    public async Task GetByAccountEmailAsync_ReturnsOnlyCalendarsForGivenEmail()
+    {
+        string alice = UniqueEmail("alice");
+        string bob = UniqueEmail("bob");
+        await SeedAsync(
+            MakeCalendar(alice, Unique("Work")),
+            MakeCalendar(alice, Unique("Personal")),
+            MakeCalendar(bob, Unique("Bob")));
+
+        List<Calendar> result = await Sut.GetByAccountEmailAsync(alice, TestContext.Current.CancellationToken);
 
         Assert.Equal(2, result.Count);
+        Assert.All(result, c => Assert.Equal(alice, c.AccountEmail.Value));
     }
 
-    /// <summary>Verifies that <c>GetAllCalendarsAsync</c> returns empty when no calendars.</summary>
+    /// <summary>Verifies that <c>GetByAccountEmailAsync</c> returns empty when the e-mail has no calendars.</summary>
     [Fact]
-    public async Task GetAllCalendarsAsync_ReturnsEmpty_WhenNoCalendars()
+    public async Task GetByAccountEmailAsync_ReturnsEmpty_WhenNoCalendarsForEmail()
     {
-        List<Calendar> result = await _sut.GetAllOrderedByNameAsync(TestContext.Current.CancellationToken);
+        List<Calendar> result = await Sut.GetByAccountEmailAsync(UniqueEmail("nobody"), TestContext.Current.CancellationToken);
 
         Assert.Empty(result);
     }
 
-    /// <summary>Verifies that <c>GetAllCalendarsAsync</c> returns ordered by name.</summary>
+    // -- CreateAsync --------------------------------------------------------------
+
+    /// <summary>Verifies that <c>CreateAsync</c> inserts a calendar row.</summary>
     [Fact]
-    public async Task GetAllCalendarsAsync_ReturnsOrderedByName()
+    public async Task CreateAsync_AddsCalendarToDatabase()
     {
-        await SeedAsync(
-            MakeCalendar("alice@example.com", "Work"),
-            MakeCalendar("alice@example.com", "Personal"));
+        string alice = UniqueEmail("alice");
+        await EnsureAccountsAsync(alice);
 
-        List<Calendar> result = await _sut.GetAllOrderedByNameAsync(TestContext.Current.CancellationToken);
-
-        Assert.Equal("Personal", result[0].Name);
-        Assert.Equal("Work", result[1].Name);
-    }
-
-    // -- GetCalendarsAsync ----------------------------------------------------
-
-    /// <summary>Verifies that <c>GetCalendarsAsync</c> returns only calendars for given email.</summary>
-    [Fact]
-    public async Task GetCalendarsAsync_ReturnsOnlyCalendarsForGivenEmail()
-    {
-        await SeedAsync(
-            MakeCalendar("alice@example.com", "Work"),
-            MakeCalendar("alice@example.com", "Personal"),
-            MakeCalendar("bob@example.com", "Bob Calendar"));
-
-        List<Calendar> result = await _sut.GetByAccountEmailAsync("alice@example.com", TestContext.Current.CancellationToken);
-
-        Assert.Equal(2, result.Count);
-        Assert.All(result, c => Assert.Equal("alice@example.com", c.AccountEmail.Value));
-    }
-
-    /// <summary>Verifies that <c>GetCalendarsAsync</c> returns empty when no calendars for email.</summary>
-    [Fact]
-    public async Task GetCalendarsAsync_ReturnsEmpty_WhenNoCalendarsForEmail()
-    {
-        List<Calendar> result = await _sut.GetByAccountEmailAsync("nobody@example.com", TestContext.Current.CancellationToken);
-
-        Assert.Empty(result);
-    }
-
-    // -- CreateCalendarAsync --------------------------------------------------
-
-    /// <summary>Verifies that <c>CreateCalendarAsync</c> adds calendar to database.</summary>
-    [Fact]
-    public async Task CreateCalendarAsync_AddsCalendarToDatabase()
-    {
         var calendar = Calendar.Reconstitute(
-            id: 0,
-            accountEmail: "alice@example.com",
-            name: "New Calendar",
-            description: "My new calendar",
-            timeZoneIanaId: "Asia/Seoul",
-            htmlColorCode: "#3498DB",
-            created: DateTime.UtcNow,
-            updated: DateTime.UtcNow);
+            id: 0, accountEmail: alice, name: Unique("New Calendar"), description: "My new calendar",
+            timeZoneIanaId: "Asia/Seoul", htmlColorCode: "#3498DB",
+            created: DateTime.UtcNow, updated: DateTime.UtcNow);
 
-        await _sut.CreateAsync(calendar, TestContext.Current.CancellationToken);
+        await Sut.CreateAsync(calendar, TestContext.Current.CancellationToken);
+        Context.ChangeTracker.Clear();
 
-        EfCalendar? saved = await _context.Calendars.FirstOrDefaultAsync(
-            c => c.AccountEmail == "alice@example.com" && c.Name == "New Calendar", TestContext.Current.CancellationToken);
+        EfCalendar? saved = await Context.Calendars.FirstOrDefaultAsync(
+            c => c.AccountEmail == alice, TestContext.Current.CancellationToken);
         Assert.NotNull(saved);
         Assert.Equal("#3498DB", saved.HtmlColorCode);
         Assert.Equal("Asia/Seoul", saved.TimeZoneIanaId);
     }
 
+    /// <summary>PostgreSQL enforces <c>Calendar_HtmlColorCode_check</c> — a malformed colour throws (InMemory did not).</summary>
+    [Fact]
+    public async Task CreateAsync_Throws_WhenColourCodeIsMalformed()
+    {
+        string alice = UniqueEmail("alice");
+        await EnsureAccountsAsync(alice);
+
+        var calendar = Calendar.Reconstitute(
+            id: 0, accountEmail: alice, name: Unique("Bad"), description: null,
+            timeZoneIanaId: "UTC", htmlColorCode: "#GGGGGG",
+            created: DateTime.UtcNow, updated: DateTime.UtcNow);
+
+        await Assert.ThrowsAsync<DbUpdateException>(
+            () => Sut.CreateAsync(calendar, TestContext.Current.CancellationToken));
+    }
+
     // -- UpdateEntityAsync --------------------------------------------------
 
-    /// <summary>Verifies that <c>UpdateEntityAsync</c> updates existing calendar.</summary>
+    /// <summary>Verifies that <c>UpdateEntityAsync</c> persists changes to an existing calendar.</summary>
     [Fact]
     public async Task UpdateEntityAsync_UpdatesExistingCalendar()
     {
-        await SeedAsync(MakeCalendar("alice@example.com", "Work", color: "#FF5733"));
-        EfCalendar efCalendar = await _context.Calendars.FirstAsync(TestContext.Current.CancellationToken);
+        string alice = UniqueEmail("alice");
+        var seed = MakeCalendar(alice, Unique("Work"), color: "#FF5733");
+        await SeedAsync(seed);
 
         var calendar = Calendar.Reconstitute(
-            id: efCalendar.Id,
-            accountEmail: "alice@example.com",
-            name: "Work Updated",
-            description: "Updated description",
-            timeZoneIanaId: "Asia/Seoul",
-            htmlColorCode: "#2ECC71",
-            created: efCalendar.Created,
-            updated: DateTime.UtcNow);
+            id: seed.Id, accountEmail: alice, name: Unique("Work Updated"), description: "Updated",
+            timeZoneIanaId: "Asia/Seoul", htmlColorCode: "#2ECC71",
+            created: seed.Created, updated: DateTime.UtcNow);
 
-        await _sut.UpdateEntityAsync(calendar, TestContext.Current.CancellationToken);
+        await Sut.UpdateEntityAsync(calendar, TestContext.Current.CancellationToken);
+        Context.ChangeTracker.Clear();
 
-        EfCalendar? updated = await _context.Calendars.FirstOrDefaultAsync(c => c.Id == efCalendar.Id, TestContext.Current.CancellationToken);
+        EfCalendar? updated = await Context.Calendars.FirstOrDefaultAsync(c => c.Id == seed.Id, TestContext.Current.CancellationToken);
         Assert.NotNull(updated);
-        Assert.Equal("Work Updated", updated.Name);
         Assert.Equal("#2ECC71", updated.HtmlColorCode);
     }
 
-    // -- DeleteCalendarAsync --------------------------------------------------
+    // -- DeleteByIdAsync --------------------------------------------------
 
-    /// <summary>Verifies that <c>DeleteCalendarAsync</c> removes calendar from database.</summary>
+    /// <summary>Verifies that <c>DeleteByIdAsync</c> removes the calendar row.</summary>
     [Fact]
-    public async Task DeleteCalendarAsync_RemovesCalendarFromDatabase()
+    public async Task DeleteByIdAsync_RemovesCalendarFromDatabase()
     {
-        await SeedAsync(MakeCalendar("alice@example.com", "ToDelete"));
-        EfCalendar efCalendar = await _context.Calendars.FirstAsync(TestContext.Current.CancellationToken);
+        string alice = UniqueEmail("alice");
+        var seed = MakeCalendar(alice, Unique("ToDelete"));
+        await SeedAsync(seed);
 
-        var calendar = Calendar.Reconstitute(
-            id: efCalendar.Id,
-            accountEmail: "alice@example.com",
-            name: "ToDelete",
-            description: null,
-            timeZoneIanaId: "UTC",
-            htmlColorCode: "#FF5733",
-            created: efCalendar.Created,
-            updated: efCalendar.Updated);
+        await Sut.DeleteByIdAsync(seed.Id, TestContext.Current.CancellationToken);
+        Context.ChangeTracker.Clear();
 
-        await _sut.DeleteByIdAsync(calendar.Id, TestContext.Current.CancellationToken);
-
-        EfCalendar? deleted = await _context.Calendars.FirstOrDefaultAsync(c => c.Id == efCalendar.Id, TestContext.Current.CancellationToken);
-        Assert.Null(deleted);
+        Assert.Null(await Context.Calendars.FirstOrDefaultAsync(c => c.Id == seed.Id, TestContext.Current.CancellationToken));
     }
 
-    /// <summary>Verifies that <c>DeleteCalendarAsync</c> does not affect other calendars.</summary>
+    /// <summary>Verifies that <c>DeleteByIdAsync</c> does not affect other calendars.</summary>
     [Fact]
-    public async Task DeleteCalendarAsync_DoesNotAffectOtherCalendars()
+    public async Task DeleteByIdAsync_DoesNotAffectOtherCalendars()
     {
-        await SeedAsync(
-            MakeCalendar("alice@example.com", "Cal1"),
-            MakeCalendar("alice@example.com", "Cal2"));
-        List<EfCalendar> all = await _context.Calendars.ToListAsync(TestContext.Current.CancellationToken);
+        string alice = UniqueEmail("alice");
+        var keep = MakeCalendar(alice, Unique("Keep"));
+        var remove = MakeCalendar(alice, Unique("Remove"));
+        await SeedAsync(keep, remove);
 
-        var calendar = Calendar.Reconstitute(
-            id: all[0].Id,
-            accountEmail: all[0].AccountEmail ?? "",
-            name: all[0].Name ?? "",
-            description: all[0].Description,
-            timeZoneIanaId: all[0].TimeZoneIanaId ?? "UTC",
-            htmlColorCode: all[0].HtmlColorCode ?? "#000000",
-            created: all[0].Created,
-            updated: all[0].Updated);
+        await Sut.DeleteByIdAsync(remove.Id, TestContext.Current.CancellationToken);
+        Context.ChangeTracker.Clear();
 
-        await _sut.DeleteByIdAsync(calendar.Id, TestContext.Current.CancellationToken);
-
-        List<EfCalendar> remaining = await _context.Calendars.ToListAsync(TestContext.Current.CancellationToken);
-        Assert.Single(remaining);
-        Assert.Equal(all[1].Id, remaining[0].Id);
+        List<EfCalendar> remaining = await Context.Calendars
+            .Where(c => c.AccountEmail == alice).ToListAsync(TestContext.Current.CancellationToken);
+        Assert.Equal(keep.Id, Assert.Single(remaining).Id);
     }
 }

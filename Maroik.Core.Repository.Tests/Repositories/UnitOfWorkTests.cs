@@ -1,68 +1,93 @@
-using Maroik.Core.PostgreSQL.Data;
 using Maroik.Core.Repository.Repositories;
-using Microsoft.EntityFrameworkCore;
 
 namespace Maroik.Core.Repository.Tests.Repositories;
 
 /// <summary>
-/// Tests for <see cref="UnitOfWork"/>.
-/// Only the null-guard / no-transaction paths are tested here because those exercise our
-/// code (the <c>if (_transaction == null) return;</c> guards). Paths that need a real
-/// transaction — the re-entrancy guard and sequential reuse — live in
-/// <see cref="UnitOfWorkIntegrationTests"/>, since the EF Core InMemory provider used here
-/// cannot begin a transaction.
+/// Tests for <see cref="UnitOfWork"/> against a real, transaction-capable PostgreSQL provider
+/// (Testcontainers). Covers both the null-guard paths (<c>if (_transaction == null) return;</c>)
+/// and — now that a real transaction can actually begin, unlike under the removed EF Core InMemory
+/// provider — the re-entrancy guard and the sequential-reuse path.
 /// </summary>
-public class UnitOfWorkTests : IDisposable
+public sealed class UnitOfWorkTests(DatabaseFixture database) : RepositoryTestBase(database)
 {
-    private readonly ApplicationDbContext _context;
+    private UnitOfWork NewUnitOfWork() => new(NewDbContext());
 
-    /// <summary>Initializes the test fixture with an EF Core InMemory database.</summary>
-    public UnitOfWorkTests()
-    {
-        var options = new DbContextOptionsBuilder<ApplicationDbContext>()
-            .UseInMemoryDatabase(Guid.NewGuid().ToString())
-            .Options;
-        _context = new ApplicationDbContext(options);
-    }
-
-    /// <summary>Releases resources allocated by this test fixture.</summary>
-    public void Dispose() => _context.Dispose();
-
-    // -- CommitAsync ----------------------------------------------------------
+    // -- Null-guard paths (no BeginAsync) -------------------------------------
 
     /// <summary>Verifies that <c>CommitAsync</c> does not throw when begin was not called.</summary>
     [Fact]
     public async Task CommitAsync_DoesNotThrow_WhenBeginWasNotCalled()
     {
-        await using var uow = new UnitOfWork(_context);
+        await using var uow = NewUnitOfWork();
 
-        var ex = await Record.ExceptionAsync(() => uow.CommitAsync(TestContext.Current.CancellationToken));
+        Exception? ex = await Record.ExceptionAsync(() => uow.CommitAsync(TestContext.Current.CancellationToken));
 
         Assert.Null(ex);
     }
-
-    // -- RollbackAsync --------------------------------------------------------
 
     /// <summary>Verifies that <c>RollbackAsync</c> does not throw when begin was not called.</summary>
     [Fact]
     public async Task RollbackAsync_DoesNotThrow_WhenBeginWasNotCalled()
     {
-        await using var uow = new UnitOfWork(_context);
+        await using var uow = NewUnitOfWork();
 
-        var ex = await Record.ExceptionAsync(() => uow.RollbackAsync(TestContext.Current.CancellationToken));
+        Exception? ex = await Record.ExceptionAsync(() => uow.RollbackAsync(TestContext.Current.CancellationToken));
 
         Assert.Null(ex);
     }
-
-    // -- DisposeAsync ---------------------------------------------------------
 
     /// <summary>Verifies that <c>DisposeAsync</c> does not throw when no transaction was started.</summary>
     [Fact]
     public async Task DisposeAsync_DoesNotThrow_WhenNoTransactionWasStarted()
     {
-        var uow = new UnitOfWork(_context);
+        var uow = NewUnitOfWork();
 
-        var ex = await Record.ExceptionAsync(async () => await uow.DisposeAsync());
+        Exception? ex = await Record.ExceptionAsync(async () => await uow.DisposeAsync());
+
+        Assert.Null(ex);
+    }
+
+    // -- Real-transaction paths --------------------------------------------------
+
+    /// <summary>A second <c>BeginAsync</c> while a transaction is still live throws instead of discarding the first.</summary>
+    [Fact]
+    public async Task BeginAsync_WhileTransactionActive_Throws()
+    {
+        await using var uow = NewUnitOfWork();
+        await uow.BeginAsync(TestContext.Current.CancellationToken);
+
+        await Assert.ThrowsAsync<InvalidOperationException>(
+            () => uow.BeginAsync(TestContext.Current.CancellationToken));
+
+        await uow.RollbackAsync(TestContext.Current.CancellationToken);
+    }
+
+    /// <summary>After a commit the slot is cleared, so the same instance can run a second Begin→Commit cycle.</summary>
+    [Fact]
+    public async Task BeginAsync_AfterCommit_CanStartAnotherTransaction()
+    {
+        await using var uow = NewUnitOfWork();
+        await uow.BeginAsync(TestContext.Current.CancellationToken);
+        await uow.CommitAsync(TestContext.Current.CancellationToken);
+
+        Exception? ex = await Record.ExceptionAsync(async () =>
+        {
+            await uow.BeginAsync(TestContext.Current.CancellationToken);
+            await uow.CommitAsync(TestContext.Current.CancellationToken);
+        });
+
+        Assert.Null(ex);
+    }
+
+    /// <summary>Calling <c>RollbackAsync</c> after a commit is a harmless no-op (the catch-block pattern in services).</summary>
+    [Fact]
+    public async Task RollbackAsync_AfterCommit_DoesNotThrow()
+    {
+        await using var uow = NewUnitOfWork();
+        await uow.BeginAsync(TestContext.Current.CancellationToken);
+        await uow.CommitAsync(TestContext.Current.CancellationToken);
+
+        Exception? ex = await Record.ExceptionAsync(() => uow.RollbackAsync(TestContext.Current.CancellationToken));
 
         Assert.Null(ex);
     }

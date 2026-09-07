@@ -1,5 +1,4 @@
 using Maroik.Core.Domain.Calendar;
-using Maroik.Core.PostgreSQL.Data;
 using Maroik.Core.Repository.Repositories;
 using Microsoft.EntityFrameworkCore;
 using EfCalendarEventReminder = Maroik.Core.PostgreSQL.Models.CalendarEventReminder;
@@ -7,116 +6,133 @@ using EfCalendarEventReminder = Maroik.Core.PostgreSQL.Models.CalendarEventRemin
 namespace Maroik.Core.Repository.Tests.Repositories;
 
 /// <summary>
-/// Tests for <see cref="CalendarEventReminderRepository"/> using an EF Core InMemory database.
+/// Tests for <see cref="CalendarEventReminderRepository"/> against a real PostgreSQL database
+/// (Testcontainers) pre-loaded with the production <c>Init.sql</c> schema. <c>CalendarEventReminder</c>
+/// carries the FK <c>CalendarEventReminder_fk_0</c> to <c>CalendarEvent.Id</c> and several checks the
+/// EF Core InMemory provider ignored: <c>Method</c> must be <c>Email</c>/<c>Notification</c>, and
+/// <c>CalendarEventReminder_BeforeEvent_check</c> requires exactly one of
+/// Minutes/Hours/Days/Weeks-before to be set. Every test creates a real parent event.
 /// </summary>
-public class CalendarEventReminderRepositoryTests : IDisposable
+public sealed class CalendarEventReminderRepositoryTests(DatabaseFixture database) : RepositoryTestBase(database)
 {
-    private readonly ApplicationDbContext _context;
-    private readonly CalendarEventReminderRepository _sut;
+    private CalendarEventReminderRepository Sut => new(Context);
 
-    /// <summary>Initializes the test fixture, setting up all required test doubles and the system under test.</summary>
-    public CalendarEventReminderRepositoryTests()
+    private static EfCalendarEventReminder MakeReminder(long calendarEventId, string method = "Email", long minutesBefore = 30) => new()
     {
-        var options = new DbContextOptionsBuilder<ApplicationDbContext>()
-            .UseInMemoryDatabase(Guid.NewGuid().ToString())
-            .Options;
-        _context = new ApplicationDbContext(options);
-        _sut = new CalendarEventReminderRepository(_context);
-    }
-
-    /// <summary>Releases resources allocated by this test fixture (disposes the database context).</summary>
-    public void Dispose() => _context.Dispose();
-
-    // -- Helpers --------------------------------------------------------------
-
-    private static EfCalendarEventReminder MakeReminder(long calendarEventId, string method = "Email",
-        long minutesBefore = 30) => new()
-        {
-            CalendarEventId = calendarEventId,
-            Method = method,
-            MinutesBeforeEvent = minutesBefore
-        };
+        CalendarEventId = calendarEventId,
+        Method = method,
+        MinutesBeforeEvent = minutesBefore
+    };
 
     private async Task SeedAsync(params EfCalendarEventReminder[] reminders)
     {
-        await _context.CalendarEventReminders.AddRangeAsync(reminders);
-        await _context.SaveChangesAsync();
+        await Context.CalendarEventReminders.AddRangeAsync(reminders);
+        await Context.SaveChangesAsync();
+        Context.ChangeTracker.Clear();
     }
 
-    // -- GetCalendarEventRemindersAsync ---------------------------------------
+    // -- GetByCalendarEventIdAsync ---------------------------------------------
 
-    /// <summary>Verifies that <c>GetCalendarEventRemindersAsync</c> returns only reminders for given event.</summary>
+    /// <summary>Verifies that <c>GetByCalendarEventIdAsync</c> returns only reminders for the given event.</summary>
     [Fact]
-    public async Task GetCalendarEventRemindersAsync_ReturnsOnlyRemindersForGivenEvent()
+    public async Task GetByCalendarEventIdAsync_ReturnsOnlyRemindersForGivenEvent()
     {
+        long event1 = await InsertCalendarEventAsync();
+        long event2 = await InsertCalendarEventAsync();
         await SeedAsync(
-            MakeReminder(1, "Email", 15),
-            MakeReminder(1, "Push", 60),
-            MakeReminder(2, "Email", 30));
+            MakeReminder(event1, "Email", 15),
+            MakeReminder(event1, "Notification", 60),
+            MakeReminder(event2, "Email", 30));
 
-        IEnumerable<CalendarEventReminder> result = await _sut.GetByCalendarEventIdAsync(1L, TestContext.Current.CancellationToken);
+        List<CalendarEventReminder> result = await Sut.GetByCalendarEventIdAsync(event1, TestContext.Current.CancellationToken);
 
-        Assert.Equal(2, result.Count());
-        Assert.All(result, r => Assert.Equal(1, r.CalendarEventId));
+        Assert.Equal(2, result.Count);
+        Assert.All(result, r => Assert.Equal(event1, r.CalendarEventId));
     }
 
-    /// <summary>Verifies that <c>GetCalendarEventRemindersAsync</c> returns empty when no reminders for event.</summary>
+    /// <summary>Verifies that <c>GetByCalendarEventIdAsync</c> returns empty when the event has no reminders.</summary>
     [Fact]
-    public async Task GetCalendarEventRemindersAsync_ReturnsEmpty_WhenNoRemindersForEvent()
+    public async Task GetByCalendarEventIdAsync_ReturnsEmpty_WhenNoRemindersForEvent()
     {
-        IEnumerable<CalendarEventReminder> result = await _sut.GetByCalendarEventIdAsync(99L, TestContext.Current.CancellationToken);
+        List<CalendarEventReminder> result = await Sut.GetByCalendarEventIdAsync(long.MaxValue, TestContext.Current.CancellationToken);
 
         Assert.Empty(result);
     }
 
-    // -- CreateCalendarEventReminderAsync -------------------------------------
+    // -- CreateAsync --------------------------------------------------------------
 
-    /// <summary>Verifies that <c>CreateCalendarEventReminderAsync</c> persists reminder.</summary>
+    /// <summary>Verifies that <c>CreateAsync</c> inserts a reminder row.</summary>
     [Fact]
-    public async Task CreateCalendarEventReminderAsync_PersistsReminder()
+    public async Task CreateAsync_PersistsReminder()
     {
+        long eventId = await InsertCalendarEventAsync();
+
         var reminder = CalendarEventReminder.Reconstitute(
-            id: 0,
-            calendarEventId: 5,
-            method: "Push",
-            minutesBefore: null,
-            hoursBefore: 2,
-            daysBefore: null,
-            weeksBefore: null,
-            timesBefore: null);
+            id: 0, calendarEventId: eventId, method: "Notification",
+            minutesBefore: null, hoursBefore: 2, daysBefore: null, weeksBefore: null, timesBefore: null);
 
-        await _sut.CreateAsync(reminder, TestContext.Current.CancellationToken);
+        await Sut.CreateAsync(reminder, TestContext.Current.CancellationToken);
+        Context.ChangeTracker.Clear();
 
-        EfCalendarEventReminder? saved = await _context.CalendarEventReminders
-            .FirstOrDefaultAsync(r => r.CalendarEventId == 5, TestContext.Current.CancellationToken);
+        EfCalendarEventReminder? saved = await Context.CalendarEventReminders
+            .FirstOrDefaultAsync(r => r.CalendarEventId == eventId, TestContext.Current.CancellationToken);
         Assert.NotNull(saved);
-        Assert.Equal("Push", saved.Method);
+        Assert.Equal("Notification", saved.Method);
         Assert.Equal(2, saved.HoursBeforeEvent);
     }
 
-    // -- DeleteCalendarEventReminderAsync -------------------------------------
-
-    /// <summary>Verifies that <c>DeleteCalendarEventReminderAsync</c> removes reminders by event id.</summary>
+    /// <summary>PostgreSQL enforces <c>CalendarEventReminder_Method_check</c> — an unknown method throws (InMemory did not).</summary>
     [Fact]
-    public async Task DeleteCalendarEventReminderAsync_RemovesRemindersByEventId()
+    public async Task CreateAsync_Throws_WhenMethodIsNotAllowed()
     {
-        await SeedAsync(
-            MakeReminder(10, "Email", 10),
-            MakeReminder(10, "Push", 20),
-            MakeReminder(20, "Email", 30));
+        long eventId = await InsertCalendarEventAsync();
 
-        await _sut.DeleteByCalendarEventIdAsync(10L, TestContext.Current.CancellationToken);
+        var reminder = CalendarEventReminder.Reconstitute(
+            id: 0, calendarEventId: eventId, method: "Push",
+            minutesBefore: 10, hoursBefore: null, daysBefore: null, weeksBefore: null, timesBefore: null);
 
-        Assert.False(await _context.CalendarEventReminders.AnyAsync(r => r.CalendarEventId == 10, TestContext.Current.CancellationToken));
-        Assert.True(await _context.CalendarEventReminders.AnyAsync(r => r.CalendarEventId == 20, TestContext.Current.CancellationToken));
+        await Assert.ThrowsAsync<DbUpdateException>(
+            () => Sut.CreateAsync(reminder, TestContext.Current.CancellationToken));
     }
 
-    /// <summary>Verifies that <c>DeleteCalendarEventReminderAsync</c> does nothing when no reminders match.</summary>
+    /// <summary>PostgreSQL enforces <c>CalendarEventReminder_BeforeEvent_check</c> — more than one lead-time throws (InMemory did not).</summary>
     [Fact]
-    public async Task DeleteCalendarEventReminderAsync_ReturnsZero_WhenNoRemindersMatch()
+    public async Task CreateAsync_Throws_WhenMoreThanOneLeadTimeSet()
     {
-        await _sut.DeleteByCalendarEventIdAsync(999L, TestContext.Current.CancellationToken);
+        long eventId = await InsertCalendarEventAsync();
 
-        Assert.False(await _context.CalendarEventReminders.AnyAsync(TestContext.Current.CancellationToken));
+        var reminder = CalendarEventReminder.Reconstitute(
+            id: 0, calendarEventId: eventId, method: "Email",
+            minutesBefore: 10, hoursBefore: 1, daysBefore: null, weeksBefore: null, timesBefore: null);
+
+        await Assert.ThrowsAsync<DbUpdateException>(
+            () => Sut.CreateAsync(reminder, TestContext.Current.CancellationToken));
+    }
+
+    // -- DeleteByCalendarEventIdAsync -------------------------------------------
+
+    /// <summary>Verifies that <c>DeleteByCalendarEventIdAsync</c> removes only the target event's reminders.</summary>
+    [Fact]
+    public async Task DeleteByCalendarEventIdAsync_RemovesRemindersByEventId()
+    {
+        long keepEvent = await InsertCalendarEventAsync();
+        long removeEvent = await InsertCalendarEventAsync();
+        await SeedAsync(
+            MakeReminder(removeEvent, "Email", 10),
+            MakeReminder(removeEvent, "Notification", 20),
+            MakeReminder(keepEvent, "Email", 30));
+
+        await Sut.DeleteByCalendarEventIdAsync(removeEvent, TestContext.Current.CancellationToken);
+        Context.ChangeTracker.Clear();
+
+        Assert.False(await Context.CalendarEventReminders.AnyAsync(r => r.CalendarEventId == removeEvent, TestContext.Current.CancellationToken));
+        Assert.True(await Context.CalendarEventReminders.AnyAsync(r => r.CalendarEventId == keepEvent, TestContext.Current.CancellationToken));
+    }
+
+    /// <summary>Verifies that <c>DeleteByCalendarEventIdAsync</c> is a no-op when nothing matches.</summary>
+    [Fact]
+    public async Task DeleteByCalendarEventIdAsync_IsNoOp_WhenNoRemindersMatch()
+    {
+        await Sut.DeleteByCalendarEventIdAsync(long.MaxValue, TestContext.Current.CancellationToken);
     }
 }

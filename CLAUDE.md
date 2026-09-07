@@ -43,6 +43,25 @@ are plain IDs, not object references), the same criterion applied to
 `Category`/`SubCategory` in commit `284dc52f`. Enforced by
 `ContractArchitectureTests.EveryRepositoryInterface_MustPersist_AnAggregateRoot`.
 
+## Repository tests
+
+`Maroik.Core.Repository.Tests` runs entirely against a real PostgreSQL 17 database
+(Testcontainers) — there is no EF Core InMemory provider. One container is shared by
+the whole assembly (`Infrastructure/PostgresContainerFixture`, an xUnit v3 assembly
+fixture); it loads the real production schema **and seed data** from
+`Maroik.DB/PostgreSQL/SQL_Init_Script/Debugging/Init.sql` into a template database,
+and each test class gets its own throwaway DB cloned from that template
+(`DatabaseFixture` + `RepositoryTestBase`). Docker must be available (CI's
+`ubuntu-latest` has it); test-collection parallelism is off (`xunit.runner.json`).
+
+Because every test starts from the full seed (~19k rows), a test must not assume an
+empty table: insert under keys unique to the test (`RepositoryTestBase.UniqueEmail`
+/ `Unique`, or `EnsureAccountsAsync` / `EnsureAssetsAsync` / `InsertCalendarAsync` /
+`InsertCalendarEventAsync` for FK parents) and scope "list/count" assertions to the
+rows or account the test itself created. Real CHECK / FK / composite-PK behaviour is
+now exercised (e.g. `FixedIncome_DepositDayMonth_check`,
+`CalendarEventReminder_Method_check`, `Board_Type_check`).
+
 ## Architecture validation tests
 
 The layering / ArchNet rules are enforced by NetArchTest-based `*ArchitectureTests`

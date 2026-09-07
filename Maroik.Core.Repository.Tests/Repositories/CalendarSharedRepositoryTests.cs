@@ -1,5 +1,4 @@
 using Maroik.Core.Domain.Calendar;
-using Maroik.Core.PostgreSQL.Data;
 using Maroik.Core.Repository.Repositories;
 using Microsoft.EntityFrameworkCore;
 using EfCalendarShared = Maroik.Core.PostgreSQL.Models.CalendarShared;
@@ -7,29 +6,16 @@ using EfCalendarShared = Maroik.Core.PostgreSQL.Models.CalendarShared;
 namespace Maroik.Core.Repository.Tests.Repositories;
 
 /// <summary>
-/// Tests for <see cref="CalendarSharedRepository"/> using an EF Core InMemory database.
-/// CalendarShared has CalendarId as its primary key (1-to-1 with Calendar).
-/// FK constraints are not enforced by InMemory, so Calendar parent records are omitted.
+/// Tests for <see cref="CalendarSharedRepository"/> against a real PostgreSQL database
+/// (Testcontainers) pre-loaded with the production <c>Init.sql</c> schema and seed data (one shared
+/// calendar). <c>CalendarShared.CalendarId</c> is both the primary key and the FK
+/// <c>CalendarShared_fk_0</c> to <c>Calendar.Id</c> (unenforced by InMemory), so every test creates
+/// a real parent calendar; the global <c>GetAllAsync</c> assertions are scoped to the ids this test
+/// created.
 /// </summary>
-public class CalendarSharedRepositoryTests : IDisposable
+public sealed class CalendarSharedRepositoryTests(DatabaseFixture database) : RepositoryTestBase(database)
 {
-    private readonly ApplicationDbContext _context;
-    private readonly CalendarSharedRepository _sut;
-
-    /// <summary>Initializes the test fixture, setting up all required test doubles and the system under test.</summary>
-    public CalendarSharedRepositoryTests()
-    {
-        var options = new DbContextOptionsBuilder<ApplicationDbContext>()
-            .UseInMemoryDatabase(Guid.NewGuid().ToString())
-            .Options;
-        _context = new ApplicationDbContext(options);
-        _sut = new CalendarSharedRepository(_context);
-    }
-
-    /// <summary>Releases resources allocated by this test fixture (disposes the database context).</summary>
-    public void Dispose() => _context.Dispose();
-
-    // -- Helpers --------------------------------------------------------------
+    private CalendarSharedRepository Sut => new(Context);
 
     private static EfCalendarShared MakeShared(long calendarId, bool user = false, bool anonymous = false) => new()
     {
@@ -40,70 +26,74 @@ public class CalendarSharedRepositoryTests : IDisposable
 
     private async Task SeedAsync(params EfCalendarShared[] entries)
     {
-        await _context.CalendarShareds.AddRangeAsync(entries);
-        await _context.SaveChangesAsync();
+        await Context.CalendarShareds.AddRangeAsync(entries);
+        await Context.SaveChangesAsync();
+        Context.ChangeTracker.Clear();
     }
 
-    // -- GetCalendarSharedAsync -----------------------------------------------
+    // -- GetAllAsync ------------------------------------------------------
 
-    /// <summary>Verifies that <c>GetCalendarSharedAsync</c> returns all entries.</summary>
+    /// <summary>Verifies that <c>GetAllAsync</c> includes every entry this test inserted.</summary>
     [Fact]
-    public async Task GetCalendarSharedAsync_ReturnsAllEntries()
+    public async Task GetAllAsync_ReturnsInsertedEntries()
     {
-        await SeedAsync(
-            MakeShared(3, user: true),
-            MakeShared(1, anonymous: true),
-            MakeShared(2));
+        long c1 = await InsertCalendarAsync();
+        long c2 = await InsertCalendarAsync();
+        long c3 = await InsertCalendarAsync();
+        await SeedAsync(MakeShared(c1, user: true), MakeShared(c2, anonymous: true), MakeShared(c3));
 
-        List<CalendarShared> result = await _sut.GetAllAsync(TestContext.Current.CancellationToken);
+        List<CalendarShared> result = await Sut.GetAllAsync(TestContext.Current.CancellationToken);
 
-        Assert.Equal(3, result.Count);
+        long[] mine = [c1, c2, c3];
+        Assert.Equal(3, result.Count(s => mine.Contains(s.Id)));
     }
 
-    /// <summary>Verifies that <c>GetCalendarSharedAsync</c> returns empty when no entries exist.</summary>
+    // -- CreateAsync --------------------------------------------------
+
+    /// <summary>Verifies that <c>CreateAsync</c> inserts a shared-calendar entry.</summary>
     [Fact]
-    public async Task GetCalendarSharedAsync_ReturnsEmpty_WhenNoEntriesExist()
+    public async Task CreateAsync_PersistsEntry()
     {
-        List<CalendarShared> result = await _sut.GetAllAsync(TestContext.Current.CancellationToken);
+        long calendarId = await InsertCalendarAsync();
 
-        Assert.Empty(result);
-    }
+        var shared = CalendarShared.Reconstitute(calendarId: calendarId, user: true, anonymous: false);
 
-    // -- CreateCalendarSharedAsync --------------------------------------------
+        await Sut.CreateAsync(shared, TestContext.Current.CancellationToken);
+        Context.ChangeTracker.Clear();
 
-    /// <summary>Verifies that <c>CreateCalendarSharedAsync</c> persists entry.</summary>
-    [Fact]
-    public async Task CreateCalendarSharedAsync_PersistsEntry()
-    {
-        var shared = CalendarShared.Reconstitute(
-            calendarId: 10,
-            user: true,
-            anonymous: false);
-
-        await _sut.CreateAsync(shared, TestContext.Current.CancellationToken);
-
-        EfCalendarShared? saved = await _context.CalendarShareds.FindAsync(new object[] { 10L }, TestContext.Current.CancellationToken);
+        EfCalendarShared? saved = await Context.CalendarShareds
+            .FirstOrDefaultAsync(s => s.CalendarId == calendarId, TestContext.Current.CancellationToken);
         Assert.NotNull(saved);
         Assert.True(saved.User);
         Assert.False(saved.Anonymous);
     }
 
+    /// <summary>PostgreSQL enforces <c>CalendarShared_fk_0</c> — a share for an unknown calendar throws (InMemory did not).</summary>
+    [Fact]
+    public async Task CreateAsync_Throws_WhenParentCalendarDoesNotExist()
+    {
+        var shared = CalendarShared.Reconstitute(calendarId: long.MaxValue, user: true, anonymous: false);
+
+        await Assert.ThrowsAsync<DbUpdateException>(
+            () => Sut.CreateAsync(shared, TestContext.Current.CancellationToken));
+    }
+
     // -- UpdateEntityAsync --------------------------------------------
 
-    /// <summary>Verifies that <c>UpdateEntityAsync</c> updates existing entry.</summary>
+    /// <summary>Verifies that <c>UpdateEntityAsync</c> persists changes to an existing entry.</summary>
     [Fact]
     public async Task UpdateEntityAsync_UpdatesExistingEntry()
     {
-        await SeedAsync(MakeShared(20, user: false, anonymous: false));
+        long calendarId = await InsertCalendarAsync();
+        await SeedAsync(MakeShared(calendarId, user: false, anonymous: false));
 
-        var shared = CalendarShared.Reconstitute(
-            calendarId: 20,
-            user: true,
-            anonymous: true);
+        var shared = CalendarShared.Reconstitute(calendarId: calendarId, user: true, anonymous: true);
 
-        await _sut.UpdateEntityAsync(shared, TestContext.Current.CancellationToken);
+        await Sut.UpdateEntityAsync(shared, TestContext.Current.CancellationToken);
+        Context.ChangeTracker.Clear();
 
-        EfCalendarShared? updated = await _context.CalendarShareds.FindAsync(new object[] { 20L }, TestContext.Current.CancellationToken);
+        EfCalendarShared? updated = await Context.CalendarShareds
+            .FirstOrDefaultAsync(s => s.CalendarId == calendarId, TestContext.Current.CancellationToken);
         Assert.NotNull(updated);
         Assert.True(updated.User);
         Assert.True(updated.Anonymous);

@@ -1,5 +1,4 @@
 using Maroik.Core.Domain.Calendar;
-using Maroik.Core.PostgreSQL.Data;
 using Maroik.Core.Repository.Repositories;
 using Microsoft.EntityFrameworkCore;
 using EfCalendarEvent = Maroik.Core.PostgreSQL.Models.CalendarEvent;
@@ -7,33 +6,21 @@ using EfCalendarEvent = Maroik.Core.PostgreSQL.Models.CalendarEvent;
 namespace Maroik.Core.Repository.Tests.Repositories;
 
 /// <summary>
-/// Tests for <see cref="CalendarEventRepository"/> using an EF Core InMemory database.
-/// FK constraints are not enforced by InMemory, so Calendar parent records are omitted.
+/// Tests for <see cref="CalendarEventRepository"/> against a real PostgreSQL database
+/// (Testcontainers) pre-loaded with the production <c>Init.sql</c> schema and seed data
+/// (~1,880 events). <c>CalendarEvent</c> has the FK <c>CalendarEvent_fk_0</c> to <c>Calendar.Id</c>
+/// (unenforced by InMemory) plus the checks <c>CalendarEvent_Status_check</c> (Busy/Free),
+/// <c>CalendarEvent_EndDate_check</c> (<c>EndDate &gt;= StartDate</c>) and
+/// <c>CalendarEvent_Title_check</c>. Every test creates a real parent calendar and scopes to its id.
 /// </summary>
-public class CalendarEventRepositoryTests : IDisposable
+public sealed class CalendarEventRepositoryTests(DatabaseFixture database) : RepositoryTestBase(database)
 {
-    private readonly ApplicationDbContext _context;
-    private readonly CalendarEventRepository _sut;
+    private CalendarEventRepository Sut => new(Context);
 
-    /// <summary>Initializes the test fixture, setting up all required test doubles and the system under test.</summary>
-    public CalendarEventRepositoryTests()
-    {
-        var options = new DbContextOptionsBuilder<ApplicationDbContext>()
-            .UseInMemoryDatabase(Guid.NewGuid().ToString())
-            .Options;
-        _context = new ApplicationDbContext(options);
-        _sut = new CalendarEventRepository(_context);
-    }
-
-    /// <summary>Releases resources allocated by this test fixture (disposes the database context).</summary>
-    public void Dispose() => _context.Dispose();
-
-    // -- Helpers --------------------------------------------------------------
-
-    private static EfCalendarEvent MakeEvent(long calendarId, string title = "Meeting") => new()
+    private EfCalendarEvent MakeEvent(long calendarId, string? title = null) => new()
     {
         CalendarId = calendarId,
-        Title = title,
+        Title = title ?? Unique("Meeting"),
         AllDay = false,
         StartDate = DateTime.UtcNow,
         EndDate = DateTime.UtcNow.AddHours(1),
@@ -44,8 +31,9 @@ public class CalendarEventRepositoryTests : IDisposable
 
     private async Task SeedAsync(params EfCalendarEvent[] events)
     {
-        await _context.CalendarEvents.AddRangeAsync(events);
-        await _context.SaveChangesAsync();
+        await Context.CalendarEvents.AddRangeAsync(events);
+        await Context.SaveChangesAsync();
+        Context.ChangeTracker.Clear();
     }
 
     // -- GetByCalendarIdsAsync --------------------------------------------------
@@ -54,158 +42,139 @@ public class CalendarEventRepositoryTests : IDisposable
     [Fact]
     public async Task GetByCalendarIdsAsync_ReturnsEventsForAllRequestedCalendars()
     {
-        await SeedAsync(
-            MakeEvent(1, "Event A"),
-            MakeEvent(2, "Event B"),
-            MakeEvent(3, "Not Requested"));
+        long cal1 = await InsertCalendarAsync();
+        long cal2 = await InsertCalendarAsync();
+        long cal3 = await InsertCalendarAsync();
+        await SeedAsync(MakeEvent(cal1, "Event A"), MakeEvent(cal2, "Event B"), MakeEvent(cal3, "Not Requested"));
 
-        List<CalendarEvent> result = await _sut.GetByCalendarIdsAsync([1L, 2L], TestContext.Current.CancellationToken);
+        List<CalendarEvent> result = await Sut.GetByCalendarIdsAsync([cal1, cal2], TestContext.Current.CancellationToken);
 
         Assert.Equal(2, result.Count);
-        Assert.Contains(result, e => e.CalendarId == 1);
-        Assert.Contains(result, e => e.CalendarId == 2);
-        Assert.DoesNotContain(result, e => e.CalendarId == 3);
+        Assert.Contains(result, e => e.CalendarId == cal1);
+        Assert.Contains(result, e => e.CalendarId == cal2);
+        Assert.DoesNotContain(result, e => e.CalendarId == cal3);
     }
 
-    /// <summary>Verifies that <c>GetByCalendarIdsAsync</c> returns empty when no calendar IDs match.</summary>
+    /// <summary>Verifies that <c>GetByCalendarIdsAsync</c> returns empty when no calendar ids match.</summary>
     [Fact]
     public async Task GetByCalendarIdsAsync_ReturnsEmpty_WhenNoCalendarIdsMatch()
     {
-        await SeedAsync(MakeEvent(1, "Event A"));
-
-        List<CalendarEvent> result = await _sut.GetByCalendarIdsAsync([98L, 99L], TestContext.Current.CancellationToken);
+        List<CalendarEvent> result = await Sut.GetByCalendarIdsAsync([long.MaxValue - 1, long.MaxValue], TestContext.Current.CancellationToken);
 
         Assert.Empty(result);
     }
 
-    /// <summary>Verifies that <c>GetByCalendarIdsAsync</c> returns empty when given an empty ID collection.</summary>
+    /// <summary>Verifies that <c>GetByCalendarIdsAsync</c> returns empty for an empty id collection.</summary>
     [Fact]
     public async Task GetByCalendarIdsAsync_ReturnsEmpty_WhenCalendarIdsEmpty()
     {
-        await SeedAsync(MakeEvent(1, "Event A"));
-
-        List<CalendarEvent> result = await _sut.GetByCalendarIdsAsync([], TestContext.Current.CancellationToken);
+        List<CalendarEvent> result = await Sut.GetByCalendarIdsAsync([], TestContext.Current.CancellationToken);
 
         Assert.Empty(result);
     }
 
-    // -- GetCalendarEventAsync ------------------------------------------------
+    // -- FindByIdAsync ------------------------------------------------------
 
-    /// <summary>Verifies that <c>GetCalendarEventAsync</c> returns event when found.</summary>
+    /// <summary>Verifies that <c>FindByIdAsync</c> returns the event when found.</summary>
     [Fact]
-    public async Task GetCalendarEventAsync_ReturnsEvent_WhenFound()
+    public async Task FindByIdAsync_ReturnsEvent_WhenFound()
     {
-        await SeedAsync(MakeEvent(1, "Team Standup"));
+        long cal = await InsertCalendarAsync();
+        var ef = MakeEvent(cal, "Team Standup");
+        await SeedAsync(ef);
 
-        long id = (await _context.CalendarEvents.FirstAsync(TestContext.Current.CancellationToken)).Id;
-        CalendarEvent? result = await _sut.FindByIdAsync(id, TestContext.Current.CancellationToken);
+        CalendarEvent? result = await Sut.FindByIdAsync(ef.Id, TestContext.Current.CancellationToken);
 
         Assert.NotNull(result);
         Assert.Equal("Team Standup", result.Title);
     }
 
-    /// <summary>Verifies that <c>GetCalendarEventAsync</c> returns null when not found.</summary>
+    /// <summary>Verifies that <c>FindByIdAsync</c> returns null when not found.</summary>
     [Fact]
-    public async Task GetCalendarEventAsync_ReturnsNull_WhenNotFound()
+    public async Task FindByIdAsync_ReturnsNull_WhenNotFound()
     {
-        CalendarEvent? result = await _sut.FindByIdAsync(999L, TestContext.Current.CancellationToken);
+        CalendarEvent? result = await Sut.FindByIdAsync(long.MaxValue, TestContext.Current.CancellationToken);
 
         Assert.Null(result);
     }
 
     // -- CreateCalendarEventAsync ---------------------------------------------
 
-    /// <summary>Verifies that <c>CreateCalendarEventAsync</c> persists event.</summary>
+    /// <summary>Verifies that <c>CreateCalendarEventAsync</c> inserts an event and returns its DB-generated id.</summary>
     [Fact]
     public async Task CreateCalendarEventAsync_PersistsEvent()
     {
+        long cal = await InsertCalendarAsync();
+
         var calendarEvent = CalendarEvent.Reconstitute(
-            id: 0,
-            calendarId: 5,
-            title: "New Event",
-            description: null,
-            allDay: true,
-            startDate: DateTime.UtcNow.Date,
-            endDate: DateTime.UtcNow.Date.AddDays(1),
-            startTz: null,
-            endTz: null,
-            location: null,
-            status: "Busy",
-            recurrenceId: null,
-            created: DateTime.UtcNow,
-            updated: DateTime.UtcNow);
+            id: 0, calendarId: cal, title: Unique("New Event"), description: null, allDay: true,
+            startDate: DateTime.UtcNow.Date, endDate: DateTime.UtcNow.Date.AddDays(1),
+            startTz: null, endTz: null, location: null, status: "Busy", recurrenceId: null,
+            created: DateTime.UtcNow, updated: DateTime.UtcNow);
 
-        await _sut.CreateCalendarEventAsync(calendarEvent, TestContext.Current.CancellationToken);
+        long id = await Sut.CreateCalendarEventAsync(calendarEvent, TestContext.Current.CancellationToken);
+        Context.ChangeTracker.Clear();
 
-        EfCalendarEvent? saved = await _context.CalendarEvents.FirstOrDefaultAsync(e => e.CalendarId == 5, TestContext.Current.CancellationToken);
+        Assert.True(id > 0);
+        EfCalendarEvent? saved = await Context.CalendarEvents.FirstOrDefaultAsync(e => e.Id == id, TestContext.Current.CancellationToken);
         Assert.NotNull(saved);
-        Assert.Equal("New Event", saved.Title);
         Assert.True(saved.AllDay);
+    }
+
+    /// <summary>PostgreSQL enforces <c>CalendarEvent_EndDate_check</c> — an end before the start throws (InMemory did not).</summary>
+    [Fact]
+    public async Task CreateCalendarEventAsync_Throws_WhenEndBeforeStart()
+    {
+        long cal = await InsertCalendarAsync();
+
+        var calendarEvent = CalendarEvent.Reconstitute(
+            id: 0, calendarId: cal, title: Unique("Backwards"), description: null, allDay: false,
+            startDate: DateTime.UtcNow, endDate: DateTime.UtcNow.AddHours(-1),
+            startTz: null, endTz: null, location: null, status: "Busy", recurrenceId: null,
+            created: DateTime.UtcNow, updated: DateTime.UtcNow);
+
+        await Assert.ThrowsAsync<DbUpdateException>(
+            () => Sut.CreateCalendarEventAsync(calendarEvent, TestContext.Current.CancellationToken));
     }
 
     // -- UpdateEntityAsync ---------------------------------------------
 
-    /// <summary>Verifies that <c>UpdateEntityAsync</c> updates existing event.</summary>
+    /// <summary>Verifies that <c>UpdateEntityAsync</c> persists changes to an existing event.</summary>
     [Fact]
     public async Task UpdateEntityAsync_UpdatesExistingEvent()
     {
-        await SeedAsync(MakeEvent(3, "Old Title"));
-
-        EfCalendarEvent efEvent = await _context.CalendarEvents.FirstAsync(e => e.CalendarId == 3, TestContext.Current.CancellationToken);
+        long cal = await InsertCalendarAsync();
+        var ef = MakeEvent(cal, "Old Title");
+        await SeedAsync(ef);
 
         var calendarEvent = CalendarEvent.Reconstitute(
-            id: efEvent.Id,
-            calendarId: 3,
-            title: "Updated Title",
-            description: null,
-            allDay: false,
-            startDate: DateTime.UtcNow,
-            endDate: DateTime.UtcNow.AddHours(2),
-            startTz: null,
-            endTz: null,
-            location: null,
-            status: "Free",
-            recurrenceId: null,
-            created: efEvent.Created,
-            updated: DateTime.UtcNow);
+            id: ef.Id, calendarId: cal, title: "Updated Title", description: null, allDay: false,
+            startDate: DateTime.UtcNow, endDate: DateTime.UtcNow.AddHours(2),
+            startTz: null, endTz: null, location: null, status: "Free", recurrenceId: null,
+            created: ef.Created, updated: DateTime.UtcNow);
 
-        await _sut.UpdateEntityAsync(calendarEvent, TestContext.Current.CancellationToken);
+        await Sut.UpdateEntityAsync(calendarEvent, TestContext.Current.CancellationToken);
+        Context.ChangeTracker.Clear();
 
-        EfCalendarEvent? updated = await _context.CalendarEvents.FindAsync(new object[] { efEvent.Id }, TestContext.Current.CancellationToken);
+        EfCalendarEvent? updated = await Context.CalendarEvents.FirstOrDefaultAsync(e => e.Id == ef.Id, TestContext.Current.CancellationToken);
         Assert.NotNull(updated);
         Assert.Equal("Updated Title", updated.Title);
         Assert.Equal("Free", updated.Status);
     }
 
-    // -- DeleteCalendarEventAsync ---------------------------------------------
+    // -- DeleteByIdAsync ---------------------------------------------
 
-    /// <summary>Verifies that <c>DeleteCalendarEventAsync</c> removes event.</summary>
+    /// <summary>Verifies that <c>DeleteByIdAsync</c> removes the event row.</summary>
     [Fact]
-    public async Task DeleteCalendarEventAsync_RemovesEvent()
+    public async Task DeleteByIdAsync_RemovesEvent()
     {
-        await SeedAsync(MakeEvent(4, "To Be Deleted"));
+        long cal = await InsertCalendarAsync();
+        var ef = MakeEvent(cal, "To Be Deleted");
+        await SeedAsync(ef);
 
-        EfCalendarEvent efEvent = await _context.CalendarEvents.FirstAsync(e => e.CalendarId == 4, TestContext.Current.CancellationToken);
+        await Sut.DeleteByIdAsync(ef.Id, TestContext.Current.CancellationToken);
+        Context.ChangeTracker.Clear();
 
-        var calendarEvent = CalendarEvent.Reconstitute(
-            id: efEvent.Id,
-            calendarId: efEvent.CalendarId,
-            title: efEvent.Title ?? "",
-            description: efEvent.Description,
-            allDay: efEvent.AllDay,
-            startDate: efEvent.StartDate,
-            endDate: efEvent.EndDate,
-            startTz: efEvent.StartDateTimeZoneIanaId,
-            endTz: efEvent.EndDateTimeZoneIanaId,
-            location: efEvent.Location,
-            status: efEvent.Status,
-            recurrenceId: efEvent.RecurrenceId,
-            created: efEvent.Created,
-            updated: efEvent.Updated);
-
-        await _sut.DeleteByIdAsync(calendarEvent.Id, TestContext.Current.CancellationToken);
-
-        bool exists = await _context.CalendarEvents.AnyAsync(e => e.Id == efEvent.Id, TestContext.Current.CancellationToken);
-        Assert.False(exists);
+        Assert.False(await Context.CalendarEvents.AnyAsync(e => e.Id == ef.Id, TestContext.Current.CancellationToken));
     }
 }

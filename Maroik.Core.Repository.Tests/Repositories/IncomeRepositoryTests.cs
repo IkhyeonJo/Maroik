@@ -1,5 +1,4 @@
 using Maroik.Core.Domain.Finance;
-using Maroik.Core.PostgreSQL.Data;
 using Maroik.Core.Repository.Repositories;
 using Microsoft.EntityFrameworkCore;
 using EfIncome = Maroik.Core.PostgreSQL.Models.Income;
@@ -7,37 +6,24 @@ using EfIncome = Maroik.Core.PostgreSQL.Models.Income;
 namespace Maroik.Core.Repository.Tests.Repositories;
 
 /// <summary>
-/// Tests for <see cref="IncomeRepository"/> using an EF Core InMemory database.
-/// Raw SQL methods (GetCurrentYearIncomesAsync, GetCurrentYearMonthIncomesAsync) are not tested
-/// here because they use PostgreSQL-specific SQL syntax incompatible with the InMemory provider.
+/// Tests for <see cref="IncomeRepository"/> against a real PostgreSQL database (Testcontainers)
+/// pre-loaded with the production <c>Init.sql</c> schema and seed data. <c>Income</c> carries the
+/// composite FK <c>Income_fk_0</c> to <c>Asset(ProductName, AccountEmail)</c>, which the repository
+/// eager-loads via <c>Include(x =&gt; x.Asset)</c> — so every test seeds the owning account and
+/// asset first (<see cref="RepositoryTestBase.EnsureAssetsAsync"/>) and scopes queries to its own
+/// unique account e-mail.
 /// </summary>
-public class IncomeRepositoryTests : IDisposable
+public sealed class IncomeRepositoryTests(DatabaseFixture database) : RepositoryTestBase(database)
 {
-    private readonly ApplicationDbContext _context;
-    private readonly IncomeRepository _sut;
+    private IncomeRepository Sut => new(Context);
 
-    /// <summary>Initializes the test fixture, setting up all required test doubles and the system under test.</summary>
-    public IncomeRepositoryTests()
-    {
-        var options = new DbContextOptionsBuilder<ApplicationDbContext>()
-            .UseInMemoryDatabase(Guid.NewGuid().ToString())
-            .Options;
-        _context = new ApplicationDbContext(options);
-        _sut = new IncomeRepository(_context);
-    }
-
-    /// <summary>Releases resources allocated by this test fixture (disposes the database context).</summary>
-    public void Dispose() => _context.Dispose();
-
-    // -- Helpers --------------------------------------------------------------
-
-    private static EfIncome MakeIncome(string email, string assetName, decimal amount = 500m) => new()
+    private static EfIncome MakeIncome(string email, string assetName, string content = "Salary", decimal amount = 500m) => new()
     {
         AccountEmail = email,
         DepositMyAssetProductName = assetName,
         MainClass = "RegularIncome",
         SubClass = "LaborIncome",
-        Content = "Salary",
+        Content = content,
         Amount = amount,
         Note = "",
         Created = DateTime.UtcNow,
@@ -46,97 +32,132 @@ public class IncomeRepositoryTests : IDisposable
 
     private async Task SeedAsync(params EfIncome[] incomes)
     {
-        await _context.Incomes.AddRangeAsync(incomes);
-        await _context.SaveChangesAsync();
+        foreach (var group in incomes.GroupBy(i => i.AccountEmail!))
+            await EnsureAssetsAsync(group.Key, [.. group.Select(i => i.DepositMyAssetProductName)]);
+
+        await Context.Incomes.AddRangeAsync(incomes);
+        await Context.SaveChangesAsync();
+        Context.ChangeTracker.Clear();
     }
 
-    // -- GetIncomesAsync ------------------------------------------------------
+    // -- GetByAccountEmailAsync ---------------------------------------------------
 
-    /// <summary>Verifies that <c>GetIncomesAsync</c> returns only incomes for given email.</summary>
+    /// <summary>Verifies that <c>GetByAccountEmailAsync</c> returns only incomes for the given e-mail.</summary>
     [Fact]
-    public async Task GetIncomesAsync_ReturnsOnlyIncomesForGivenEmail()
+    public async Task GetByAccountEmailAsync_ReturnsOnlyIncomesForGivenEmail()
     {
-        // IncomeRepository eager-loads Asset (required relationship), so matching Asset rows
-        // must exist for the InMemory provider to return the Income rows via Include.
-        await _context.Assets.AddRangeAsync(
-            new Maroik.Core.PostgreSQL.Models.Asset { ProductName = "SavingsA", AccountEmail = "alice@example.com", Item = "Savings", MonetaryUnit = "KRW", Amount = 0, Note = "", Created = DateTime.UtcNow, Updated = DateTime.UtcNow },
-            new Maroik.Core.PostgreSQL.Models.Asset { ProductName = "SavingsB", AccountEmail = "alice@example.com", Item = "Savings", MonetaryUnit = "KRW", Amount = 0, Note = "", Created = DateTime.UtcNow, Updated = DateTime.UtcNow },
-            new Maroik.Core.PostgreSQL.Models.Asset { ProductName = "BobSavings", AccountEmail = "bob@example.com", Item = "Savings", MonetaryUnit = "KRW", Amount = 0, Note = "", Created = DateTime.UtcNow, Updated = DateTime.UtcNow });
-        await _context.SaveChangesAsync(TestContext.Current.CancellationToken);
-
+        string alice = UniqueEmail("alice");
+        string bob = UniqueEmail("bob");
         await SeedAsync(
-            MakeIncome("alice@example.com", "SavingsA"),
-            MakeIncome("alice@example.com", "SavingsB"),
-            MakeIncome("bob@example.com", "BobSavings"));
+            MakeIncome(alice, "SavingsA"),
+            MakeIncome(alice, "SavingsB"),
+            MakeIncome(bob, "BobSavings"));
 
-        List<Income> result = await _sut.GetByAccountEmailAsync("alice@example.com", TestContext.Current.CancellationToken);
+        List<Income> result = await Sut.GetByAccountEmailAsync(alice, TestContext.Current.CancellationToken);
 
         Assert.Equal(2, result.Count);
-        Assert.All(result, i => Assert.Equal("alice@example.com", i.AccountEmail.Value));
+        Assert.All(result, i => Assert.Equal(alice, i.AccountEmail.Value));
     }
 
-    /// <summary>Verifies that <c>GetIncomesAsync</c> returns empty when no incomes for email.</summary>
+    /// <summary>Verifies that <c>GetByAccountEmailAsync</c> returns empty when the e-mail has no incomes.</summary>
     [Fact]
-    public async Task GetIncomesAsync_ReturnsEmpty_WhenNoIncomesForEmail()
+    public async Task GetByAccountEmailAsync_ReturnsEmpty_WhenNoIncomesForEmail()
     {
-        List<Income> result = await _sut.GetByAccountEmailAsync("nobody@example.com", TestContext.Current.CancellationToken);
+        List<Income> result = await Sut.GetByAccountEmailAsync(UniqueEmail("nobody"), TestContext.Current.CancellationToken);
 
         Assert.Empty(result);
     }
 
-    // -- CreateIncomeAsync ----------------------------------------------------
+    // -- FindByEmailAndIdAsync -------------------------------------------------
 
-    /// <summary>Verifies that <c>CreateIncomeAsync</c> adds income to database.</summary>
+    /// <summary>Verifies that <c>FindByEmailAndIdAsync</c> returns the income when the e-mail and id match.</summary>
     [Fact]
-    public async Task CreateIncomeAsync_AddsIncomeToDatabase()
+    public async Task FindByEmailAndIdAsync_ReturnsIncome_WhenOwnedByEmail()
     {
+        string alice = UniqueEmail("alice");
+        var ef = MakeIncome(alice, "Savings", amount: 900m);
+        await SeedAsync(ef);
+
+        Income? result = await Sut.FindByEmailAndIdAsync(alice, ef.Id, TestContext.Current.CancellationToken);
+
+        Assert.NotNull(result);
+        Assert.Equal(900m, result.Amount.Amount);
+    }
+
+    /// <summary>Verifies that <c>FindByEmailAndIdAsync</c> returns null for another account's income id.</summary>
+    [Fact]
+    public async Task FindByEmailAndIdAsync_ReturnsNull_WhenNotOwnedByEmail()
+    {
+        var ef = MakeIncome(UniqueEmail("bob"), "Savings");
+        await SeedAsync(ef);
+
+        Income? result = await Sut.FindByEmailAndIdAsync(UniqueEmail("alice"), ef.Id, TestContext.Current.CancellationToken);
+
+        Assert.Null(result);
+    }
+
+    // -- CreateAsync --------------------------------------------------------------
+
+    /// <summary>Verifies that <c>CreateAsync</c> inserts an income row (DB generates its id).</summary>
+    [Fact]
+    public async Task CreateAsync_AddsIncomeToDatabase()
+    {
+        string alice = UniqueEmail("alice");
+        await EnsureAssetsAsync(alice, "SavingsAccount");
+
         var income = Income.Reconstitute(
-            id: 0,
-            accountEmail: "alice@example.com",
-            mainClass: "RegularIncome",
-            subClass: "LaborIncome",
-            content: "Monthly salary",
-            amount: 3000m,
-            monetaryUnit: "",
-            depositMyAssetProductName: "SavingsAccount",
-            note: null,
-            created: DateTime.UtcNow,
-            updated: DateTime.UtcNow);
+            id: 0, accountEmail: alice, mainClass: "RegularIncome", subClass: "LaborIncome",
+            content: "Monthly salary", amount: 3000m, monetaryUnit: "",
+            depositMyAssetProductName: "SavingsAccount", note: null,
+            created: DateTime.UtcNow, updated: DateTime.UtcNow);
 
-        await _sut.CreateAsync(income, TestContext.Current.CancellationToken);
+        await Sut.CreateAsync(income, TestContext.Current.CancellationToken);
+        Context.ChangeTracker.Clear();
 
-        EfIncome? saved = await _context.Incomes.FirstOrDefaultAsync(
-            i => i.AccountEmail == "alice@example.com" && i.Content == "Monthly salary", TestContext.Current.CancellationToken);
+        EfIncome? saved = await Context.Incomes.FirstOrDefaultAsync(
+            i => i.AccountEmail == alice && i.Content == "Monthly salary", TestContext.Current.CancellationToken);
         Assert.NotNull(saved);
         Assert.Equal(3000m, saved.Amount);
+        Assert.True(saved.Id > 0);
+    }
+
+    /// <summary>PostgreSQL enforces <c>Income_fk_0</c> — an income pointing at a non-existent asset throws (InMemory did not).</summary>
+    [Fact]
+    public async Task CreateAsync_Throws_WhenDepositAssetDoesNotExist()
+    {
+        string alice = UniqueEmail("alice");
+        await EnsureAccountsAsync(alice);
+
+        var income = Income.Reconstitute(
+            id: 0, accountEmail: alice, mainClass: "RegularIncome", subClass: "LaborIncome",
+            content: "Orphan", amount: 1m, monetaryUnit: "",
+            depositMyAssetProductName: "NoSuchAsset", note: null,
+            created: DateTime.UtcNow, updated: DateTime.UtcNow);
+
+        await Assert.ThrowsAsync<DbUpdateException>(
+            () => Sut.CreateAsync(income, TestContext.Current.CancellationToken));
     }
 
     // -- UpdateEntityAsync ----------------------------------------------------
 
-    /// <summary>Verifies that <c>UpdateEntityAsync</c> updates existing income.</summary>
+    /// <summary>Verifies that <c>UpdateEntityAsync</c> persists changes to an existing income.</summary>
     [Fact]
     public async Task UpdateEntityAsync_UpdatesExistingIncome()
     {
-        var efIncome = MakeIncome("alice@example.com", "SavingsAccount", amount: 500m);
-        await SeedAsync(efIncome);
-        long id = efIncome.Id;
+        string alice = UniqueEmail("alice");
+        var ef = MakeIncome(alice, "SavingsAccount", amount: 500m);
+        await SeedAsync(ef);
 
         var income = Income.Reconstitute(
-            id: id,
-            accountEmail: "alice@example.com",
-            mainClass: "RegularIncome",
-            subClass: "BusinessIncome",
-            content: "Updated Content",
-            amount: 750m,
-            monetaryUnit: "",
-            depositMyAssetProductName: "SavingsAccount",
-            note: null,
-            created: efIncome.Created,
-            updated: DateTime.UtcNow);
+            id: ef.Id, accountEmail: alice, mainClass: "RegularIncome", subClass: "BusinessIncome",
+            content: "Updated Content", amount: 750m, monetaryUnit: "",
+            depositMyAssetProductName: "SavingsAccount", note: null,
+            created: ef.Created, updated: DateTime.UtcNow);
 
-        await _sut.UpdateEntityAsync(income, TestContext.Current.CancellationToken);
+        await Sut.UpdateEntityAsync(income, TestContext.Current.CancellationToken);
+        Context.ChangeTracker.Clear();
 
-        EfIncome? updated = await _context.Incomes.FirstOrDefaultAsync(i => i.Id == id, TestContext.Current.CancellationToken);
+        EfIncome? updated = await Context.Incomes.FirstOrDefaultAsync(i => i.Id == ef.Id, TestContext.Current.CancellationToken);
         Assert.NotNull(updated);
         Assert.Equal(750m, updated.Amount);
         Assert.Equal("BusinessIncome", updated.SubClass);
@@ -144,32 +165,34 @@ public class IncomeRepositoryTests : IDisposable
 
     // -- DeleteByIdAsync ----------------------------------------------------
 
-    /// <summary>Verifies that <c>DeleteByIdAsync</c> removes income from database.</summary>
+    /// <summary>Verifies that <c>DeleteByIdAsync</c> removes the income row.</summary>
     [Fact]
-    public async Task DeleteIncomeAsync_RemovesIncomeFromDatabase()
+    public async Task DeleteByIdAsync_RemovesIncomeFromDatabase()
     {
-        var efIncome = MakeIncome("alice@example.com", "SavingsAccount");
-        await SeedAsync(efIncome);
-        long id = efIncome.Id;
+        string alice = UniqueEmail("alice");
+        var ef = MakeIncome(alice, "SavingsAccount");
+        await SeedAsync(ef);
 
-        await _sut.DeleteByIdAsync(id, TestContext.Current.CancellationToken);
+        await Sut.DeleteByIdAsync(ef.Id, TestContext.Current.CancellationToken);
+        Context.ChangeTracker.Clear();
 
-        EfIncome? deleted = await _context.Incomes.FirstOrDefaultAsync(i => i.Id == id, TestContext.Current.CancellationToken);
-        Assert.Null(deleted);
+        Assert.Null(await Context.Incomes.FirstOrDefaultAsync(i => i.Id == ef.Id, TestContext.Current.CancellationToken));
     }
 
     /// <summary>Verifies that <c>DeleteByIdAsync</c> does not affect other incomes.</summary>
     [Fact]
-    public async Task DeleteIncomeAsync_DoesNotAffectOtherIncomes()
+    public async Task DeleteByIdAsync_DoesNotAffectOtherIncomes()
     {
-        var efIncome1 = MakeIncome("alice@example.com", "SavingsA");
-        var efIncome2 = MakeIncome("alice@example.com", "SavingsB");
-        await SeedAsync(efIncome1, efIncome2);
+        string alice = UniqueEmail("alice");
+        var keep = MakeIncome(alice, "SavingsA");
+        var remove = MakeIncome(alice, "SavingsB");
+        await SeedAsync(keep, remove);
 
-        await _sut.DeleteByIdAsync(efIncome1.Id, TestContext.Current.CancellationToken);
+        await Sut.DeleteByIdAsync(remove.Id, TestContext.Current.CancellationToken);
+        Context.ChangeTracker.Clear();
 
-        List<EfIncome> remaining = await _context.Incomes.ToListAsync(TestContext.Current.CancellationToken);
-        Assert.Single(remaining);
-        Assert.Equal(efIncome2.Id, remaining[0].Id);
+        List<EfIncome> remaining = await Context.Incomes
+            .Where(i => i.AccountEmail == alice).ToListAsync(TestContext.Current.CancellationToken);
+        Assert.Equal(keep.Id, Assert.Single(remaining).Id);
     }
 }

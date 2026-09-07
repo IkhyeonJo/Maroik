@@ -7,310 +7,369 @@ using OrmAccount = Maroik.Core.PostgreSQL.Models.Account;
 namespace Maroik.Core.Repository.Tests.Repositories;
 
 /// <summary>
-/// Tests for <see cref="AccountRepository"/> using an EF Core InMemory database.
-/// Covers CRUD operations, soft-delete behaviour, login-attempt tracking,
-/// email-confirmation token handling, and password-reset token flows.
+/// Tests for <see cref="AccountRepository"/> against a real PostgreSQL database (Testcontainers)
+/// pre-loaded with the production <c>Init.sql</c> schema and seed data. Exercises real SQL
+/// behaviour the EF Core InMemory provider could not: the <c>Account_Nickname_unique</c> index,
+/// the case-sensitive <c>=</c> lookup, the <c>Account_Role_check</c> constraint, column defaults
+/// and <c>SELECT ... FOR UPDATE</c> row-lock semantics.
+/// Each test inserts under keys unique to itself (<see cref="RepositoryTestBase.UniqueEmail"/> /
+/// <see cref="RepositoryTestBase.Unique"/>) so it never collides with the seed or a sibling test.
 /// </summary>
-public class AccountRepositoryTests : IDisposable
+public sealed class AccountRepositoryTests(DatabaseFixture database) : RepositoryTestBase(database)
 {
-    private readonly ApplicationDbContext _context;
-    private readonly AccountRepository _sut;
-
-    /// <summary>Initializes the test fixture, setting up all required test doubles and the system under test.</summary>
-    public AccountRepositoryTests()
-    {
-        var options = new DbContextOptionsBuilder<ApplicationDbContext>()
-            .UseInMemoryDatabase(Guid.NewGuid().ToString())
-            .Options;
-        _context = new ApplicationDbContext(options);
-        _sut = new AccountRepository(_context);
-    }
-
-    /// <summary>Releases resources allocated by this test fixture (disposes the database context).</summary>
-    public void Dispose() => _context.Dispose();
+    private AccountRepository Sut => new(Context);
 
     // -- Helpers --------------------------------------------------------------
 
-    private static OrmAccount MakeAccount(string email, string nickname) => new()
+    private OrmAccount NewAccount(
+        string? email = null,
+        string? nickname = null,
+        bool deleted = false,
+        bool locked = false,
+        long loginAttempt = 0,
+        string role = Role.User,
+        string? registrationToken = null,
+        string? resetPasswordToken = null) => new()
     {
-        Email = email,
-        Nickname = nickname,
+        Email = email ?? UniqueEmail("a" + Guid.NewGuid().ToString("N")[..8]),
+        Nickname = nickname ?? Unique("Nick-" + Guid.NewGuid().ToString("N")[..8]),
         HashedPassword = "$2a$13$placeholder",
         AvatarImagePath = "/upload/Management/Profile/default-avatar.jpg",
-        Role = Role.User,
+        Role = role,
         TimeZoneIanaId = "UTC",
-        Deleted = false,
-        Locked = false,
+        DefaultMonetaryUnit = null,
+        Deleted = deleted,
+        Locked = locked,
         EmailConfirmed = true,
         AgreedServiceTerms = true,
-        LoginAttempt = 0,
+        LoginAttempt = loginAttempt,
+        RegistrationToken = registrationToken,
+        ResetPasswordToken = resetPasswordToken,
+        Created = DateTime.UtcNow,
+        Updated = DateTime.UtcNow,
         SecurityStamp = "stamp"
     };
 
+    private Account NewDomainAccount(string email, string nickname, string role = Role.User, string timeZone = "UTC") =>
+        Account.Reconstitute(
+            email: email, hashedPassword: "$2a$13$hash", nickname: nickname, avatarImagePath: null,
+            role: role, timeZoneIanaId: timeZone, defaultMonetaryUnit: null, locked: false, loginAttempt: 0,
+            emailConfirmed: true, agreedServiceTerms: true, registrationToken: null, resetPasswordToken: null,
+            created: DateTime.UtcNow, updated: DateTime.UtcNow, message: null, deleted: false,
+            securityStamp: "stamp", mustChangePassword: false);
+
     private async Task SeedAsync(params OrmAccount[] accounts)
     {
-        await _context.Accounts.AddRangeAsync(accounts);
-        await _context.SaveChangesAsync();
+        await Context.Accounts.AddRangeAsync(accounts);
+        await Context.SaveChangesAsync();
+        Context.ChangeTracker.Clear();
     }
 
-    // -- GetAllAsync ----------------------------------------------------------
+    // -- GetAllAsync --------------------------------------------------------------
 
-    /// <summary>Verifies that <c>GetAllAsync</c> returns all accounts.</summary>
+    /// <summary>Verifies that <c>GetAllAsync</c> returns every account row this test inserted.</summary>
     [Fact]
-    public async Task GetAllAsync_ReturnsAllAccounts()
+    public async Task GetAllAsync_ReturnsInsertedAccounts()
     {
-        await SeedAsync(
-            MakeAccount("alice@example.com", "Alice"),
-            MakeAccount("bob@example.com", "Bob"));
+        string a = UniqueEmail("alice");
+        string b = UniqueEmail("bob");
+        await SeedAsync(NewAccount(a, Unique("Alice")), NewAccount(b, Unique("Bob")));
 
-        List<Account> result = await _sut.GetAllAsync(TestContext.Current.CancellationToken);
+        List<Account> result = await Sut.GetAllAsync(TestContext.Current.CancellationToken);
 
-        Assert.Equal(2, result.Count);
+        Assert.Equal(2, result.Count(x => x.Email.Value == a || x.Email.Value == b));
     }
 
-    /// <summary>Verifies that <c>GetAllAsync</c> returns empty list when no accounts.</summary>
+    /// <summary>Verifies that <c>GetAllAsync</c> also returns the accounts already present in the seed data.</summary>
     [Fact]
-    public async Task GetAllAsync_ReturnsEmptyList_WhenNoAccounts()
+    public async Task GetAllAsync_IncludesSeededAccounts()
     {
-        List<Account> result = await _sut.GetAllAsync(TestContext.Current.CancellationToken);
+        List<Account> result = await Sut.GetAllAsync(TestContext.Current.CancellationToken);
 
-        Assert.Empty(result);
+        Assert.Contains(result, x => x.Email.Value == "admin@maroik.com" && x.Role == Role.Admin);
+        Assert.Contains(result, x => x.Email.Value == "user@maroik.com");
     }
 
-    // -- GetAccountByEmailAsync -----------------------------------------------
-
-    /// <summary>Verifies that <c>GetAccountByEmailAsync</c> returns account when found.</summary>
+    /// <summary>Repository applies no implicit soft-delete filter: a seeded, deleted account is still returned.</summary>
     [Fact]
-    public async Task GetAccountByEmailAsync_ReturnsAccount_WhenFound()
+    public async Task GetAllAsync_ReturnsSoftDeletedAccounts_NotFiltered()
     {
-        await SeedAsync(MakeAccount("alice@example.com", "Alice"));
+        var deleted = NewAccount(UniqueEmail("gone"), Unique("Gone"), deleted: true);
+        await SeedAsync(deleted);
 
-        Account? result = await _sut.FindByEmailAsync("alice@example.com", TestContext.Current.CancellationToken);
+        List<Account> result = await Sut.GetAllAsync(TestContext.Current.CancellationToken);
+
+        Assert.Contains(result, x => x.Email.Value == deleted.Email && x.Deleted);
+        // The seed's own soft-deleted account (maroik@maroik.com) proves the point independently.
+        Assert.Contains(result, x => x.Email.Value == "maroik@maroik.com" && x.Deleted);
+    }
+
+    // -- FindByEmailAsync -------------------------------------------------------
+
+    /// <summary>Verifies that <c>FindByEmailAsync</c> returns the account when found.</summary>
+    [Fact]
+    public async Task FindByEmailAsync_ReturnsAccount_WhenFound()
+    {
+        string email = UniqueEmail("alice");
+        await SeedAsync(NewAccount(email, Unique("Alice")));
+
+        Account? result = await Sut.FindByEmailAsync(email, TestContext.Current.CancellationToken);
 
         Assert.NotNull(result);
-        Assert.Equal("alice@example.com", result.Email.Value);
-        Assert.Equal("Alice", result.Nickname);
+        Assert.Equal(email, result.Email.Value);
     }
 
-    /// <summary>Verifies that <c>GetAccountByEmailAsync</c> returns null when not found.</summary>
+    /// <summary>Verifies that <c>FindByEmailAsync</c> returns null when not found.</summary>
     [Fact]
-    public async Task GetAccountByEmailAsync_ReturnsNull_WhenNotFound()
+    public async Task FindByEmailAsync_ReturnsNull_WhenNotFound()
     {
-        Account? result = await _sut.FindByEmailAsync("ghost@example.com", TestContext.Current.CancellationToken);
+        Account? result = await Sut.FindByEmailAsync(UniqueEmail("ghost"), TestContext.Current.CancellationToken);
 
         Assert.Null(result);
     }
 
     /// <summary>
     /// Email is always persisted lower-case (see Email.Create), but a lookup can arrive with a
-    /// different case (e.g. a login form auto-capitalized by the browser) — the lookup must still
-    /// match, or a user who registered as "Foo@Bar.com" (stored "foo@bar.com") could be locked out
-    /// of their own account by re-typing the same case at login.
+    /// different case (e.g. a login form auto-capitalized by the browser). Against PostgreSQL's
+    /// case-sensitive <c>=</c> it must still match, or a user who registered as "Foo@Bar.com"
+    /// (stored "foo@bar.com") is locked out re-typing the same case at login.
     /// </summary>
     [Fact]
     public async Task FindByEmailAsync_IsCaseInsensitive()
     {
-        await SeedAsync(MakeAccount("alice@example.com", "Alice"));
+        string email = UniqueEmail("alice");
+        await SeedAsync(NewAccount(email, Unique("Alice")));
 
-        Account? result = await _sut.FindByEmailAsync("Alice@Example.com", TestContext.Current.CancellationToken);
-
-        Assert.NotNull(result);
-        Assert.Equal("Alice", result.Nickname);
-    }
-
-    // -- GetAccountByRegistrationTokenAsync -----------------------------------
-
-    /// <summary>Verifies that <c>GetAccountByRegistrationTokenAsync</c> returns account when token matches.</summary>
-    [Fact]
-    public async Task GetAccountByRegistrationTokenAsync_ReturnsAccount_WhenTokenMatches()
-    {
-        const string token = "unique-registration-token";
-        var account = MakeAccount("alice@example.com", "Alice");
-        account.RegistrationToken = token;
-        await SeedAsync(account);
-
-        Account? result = await _sut.FindByRegistrationTokenAsync(token, TestContext.Current.CancellationToken);
+        Account? result = await Sut.FindByEmailAsync(email.ToUpperInvariant(), TestContext.Current.CancellationToken);
 
         Assert.NotNull(result);
-        Assert.Equal("alice@example.com", result.Email.Value);
+        Assert.Equal(email, result.Email.Value);
     }
 
-    /// <summary>Verifies that <c>GetAccountByRegistrationTokenAsync</c> returns null when token does not match.</summary>
+    // -- FindByRegistrationTokenAsync / FindByResetPasswordTokenAsync ----------
+
+    /// <summary>Verifies that <c>FindByRegistrationTokenAsync</c> returns the account when the token matches.</summary>
     [Fact]
-    public async Task GetAccountByRegistrationTokenAsync_ReturnsNull_WhenTokenDoesNotMatch()
+    public async Task FindByRegistrationTokenAsync_ReturnsAccount_WhenTokenMatches()
     {
-        Account? result = await _sut.FindByRegistrationTokenAsync("nonexistent-token", TestContext.Current.CancellationToken);
+        string token = Unique("reg-token");
+        await SeedAsync(NewAccount(registrationToken: token));
+
+        Account? result = await Sut.FindByRegistrationTokenAsync(token, TestContext.Current.CancellationToken);
+
+        Assert.NotNull(result);
+    }
+
+    /// <summary>Verifies that <c>FindByRegistrationTokenAsync</c> returns null when no token matches.</summary>
+    [Fact]
+    public async Task FindByRegistrationTokenAsync_ReturnsNull_WhenTokenDoesNotMatch()
+    {
+        Account? result = await Sut.FindByRegistrationTokenAsync(Unique("nope"), TestContext.Current.CancellationToken);
 
         Assert.Null(result);
     }
 
-    // -- GetAccountByResetPasswordTokenAsync ---------------------------------
-
-    /// <summary>Verifies that <c>GetAccountByResetPasswordTokenAsync</c> returns account when token matches.</summary>
+    /// <summary>Verifies that <c>FindByResetPasswordTokenAsync</c> returns the account when the token matches.</summary>
     [Fact]
-    public async Task GetAccountByResetPasswordTokenAsync_ReturnsAccount_WhenTokenMatches()
+    public async Task FindByResetPasswordTokenAsync_ReturnsAccount_WhenTokenMatches()
     {
-        const string token = "reset-password-token-xyz";
-        var account = MakeAccount("alice@example.com", "Alice");
-        account.ResetPasswordToken = token;
-        await SeedAsync(account);
+        string token = Unique("reset-token");
+        await SeedAsync(NewAccount(resetPasswordToken: token));
 
-        Account? result = await _sut.FindByResetPasswordTokenAsync(token, TestContext.Current.CancellationToken);
+        Account? result = await Sut.FindByResetPasswordTokenAsync(token, TestContext.Current.CancellationToken);
 
         Assert.NotNull(result);
-        Assert.Equal("alice@example.com", result.Email.Value);
     }
 
-    /// <summary>Verifies that <c>GetAccountByResetPasswordTokenAsync</c> returns null when token not found.</summary>
+    /// <summary>Verifies that <c>FindByResetPasswordTokenAsync</c> returns null when the token is not found.</summary>
     [Fact]
-    public async Task GetAccountByResetPasswordTokenAsync_ReturnsNull_WhenTokenNotFound()
+    public async Task FindByResetPasswordTokenAsync_ReturnsNull_WhenTokenNotFound()
     {
-        Account? result = await _sut.FindByResetPasswordTokenAsync("no-such-token", TestContext.Current.CancellationToken);
+        Account? result = await Sut.FindByResetPasswordTokenAsync(Unique("no-such"), TestContext.Current.CancellationToken);
 
         Assert.Null(result);
     }
 
-    // -- CreateAccountAsync ---------------------------------------------------
+    // -- FindByNicknamesAsync -------------------------------------------------
 
-    /// <summary>Verifies that <c>CreateAccountAsync</c> adds account to database.</summary>
+    /// <summary>Verifies that <c>FindByNicknamesAsync</c> returns exactly the matching accounts.</summary>
     [Fact]
-    public async Task CreateAccountAsync_AddsAccountToDatabase()
+    public async Task FindByNicknamesAsync_ReturnsMatchingAccounts()
     {
-        var account = Account.Reconstitute(
-            email: "new@example.com",
-            hashedPassword: "$2a$13$hash",
-            nickname: "NewUser",
-            avatarImagePath: "/upload/Management/Profile/default-avatar.jpg",
-            role: Role.User,
-            timeZoneIanaId: "UTC",
-            defaultMonetaryUnit: null,
-            locked: false,
-            loginAttempt: 0,
-            emailConfirmed: true,
-            agreedServiceTerms: true,
-            registrationToken: null,
-            resetPasswordToken: null,
-            created: DateTime.UtcNow,
-            updated: DateTime.UtcNow,
-            message: null,
-            deleted: false,
-            securityStamp: "stamp",
-            mustChangePassword: false);
-
-        await _sut.CreateAsync(account, TestContext.Current.CancellationToken);
-
-        OrmAccount? saved = await _context.Accounts.FirstOrDefaultAsync(a => a.Email == "new@example.com", TestContext.Current.CancellationToken);
-        Assert.NotNull(saved);
-        Assert.Equal("NewUser", saved.Nickname);
-    }
-
-    // -- GetAccountsByNicknamesAsync -----------------------------------------
-
-    /// <summary>Verifies that <c>GetAccountsByNicknamesAsync</c> returns matching accounts.</summary>
-    [Fact]
-    public async Task GetAccountsByNicknamesAsync_ReturnsMatchingAccounts()
-    {
+        string n1 = Unique("Alice");
+        string n2 = Unique("Carol");
         await SeedAsync(
-            MakeAccount("alice@example.com", "Alice"),
-            MakeAccount("bob@example.com", "Bob"),
-            MakeAccount("carol@example.com", "Carol"));
+            NewAccount(nickname: n1),
+            NewAccount(nickname: Unique("Bob")),
+            NewAccount(nickname: n2));
 
-        List<Account> result = await _sut.FindByNicknamesAsync(new[] { "Alice", "Carol" }, TestContext.Current.CancellationToken);
+        List<Account> result = await Sut.FindByNicknamesAsync(new[] { n1, n2 }, TestContext.Current.CancellationToken);
 
         Assert.Equal(2, result.Count);
-        Assert.Contains(result, a => a.Nickname == "Alice");
-        Assert.Contains(result, a => a.Nickname == "Carol");
+        Assert.Contains(result, a => a.Nickname == n1);
+        Assert.Contains(result, a => a.Nickname == n2);
     }
 
-    /// <summary>Verifies that <c>GetAccountsByNicknamesAsync</c> returns empty when none match.</summary>
+    /// <summary>Verifies that <c>FindByNicknamesAsync</c> returns empty when none match.</summary>
     [Fact]
-    public async Task GetAccountsByNicknamesAsync_ReturnsEmpty_WhenNoneMatch()
+    public async Task FindByNicknamesAsync_ReturnsEmpty_WhenNoneMatch()
     {
-        await SeedAsync(MakeAccount("alice@example.com", "Alice"));
-
-        List<Account> result = await _sut.FindByNicknamesAsync(new[] { "Ghost" }, TestContext.Current.CancellationToken);
+        List<Account> result = await Sut.FindByNicknamesAsync(new[] { Unique("Ghost") }, TestContext.Current.CancellationToken);
 
         Assert.Empty(result);
     }
 
-    /// <summary>Verifies that <c>GetAccountsByNicknamesAsync</c> returns empty when list is empty.</summary>
+    /// <summary>Verifies that <c>FindByNicknamesAsync</c> returns empty when the name list is empty.</summary>
     [Fact]
-    public async Task GetAccountsByNicknamesAsync_ReturnsEmpty_WhenListIsEmpty()
+    public async Task FindByNicknamesAsync_ReturnsEmpty_WhenListIsEmpty()
     {
-        await SeedAsync(MakeAccount("alice@example.com", "Alice"));
-
-        List<Account> result = await _sut.FindByNicknamesAsync(Array.Empty<string>(), TestContext.Current.CancellationToken);
+        List<Account> result = await Sut.FindByNicknamesAsync(Array.Empty<string>(), TestContext.Current.CancellationToken);
 
         Assert.Empty(result);
+    }
+
+    // -- CreateAsync --------------------------------------------------------------
+
+    /// <summary>Verifies that <c>CreateAsync</c> persists a new account row that is then retrievable.</summary>
+    [Fact]
+    public async Task CreateAsync_PersistsAccount_AndIsRetrievable()
+    {
+        string email = UniqueEmail("new");
+        await Sut.CreateAsync(NewDomainAccount(email, Unique("NewUser"), timeZone: "Asia/Seoul"), TestContext.Current.CancellationToken);
+        Context.ChangeTracker.Clear();
+
+        Account? retrieved = await Sut.FindByEmailAsync(email, TestContext.Current.CancellationToken);
+
+        Assert.NotNull(retrieved);
+        Assert.Equal("Asia/Seoul", retrieved.TimeZone.Value);
+    }
+
+    /// <summary>PostgreSQL enforces the <c>Account</c> primary key — a duplicate e-mail throws (InMemory did not).</summary>
+    [Fact]
+    public async Task CreateAsync_Throws_WhenEmailAlreadyExists()
+    {
+        string email = UniqueEmail("dup");
+        await SeedAsync(NewAccount(email, Unique("First")));
+
+        await Assert.ThrowsAsync<DbUpdateException>(
+            () => Sut.CreateAsync(NewDomainAccount(email, Unique("Second")), TestContext.Current.CancellationToken));
+    }
+
+    /// <summary>PostgreSQL enforces <c>Account_Nickname_unique</c> — a duplicate nickname throws (InMemory did not).</summary>
+    [Fact]
+    public async Task CreateAsync_Throws_WhenNicknameAlreadyExists()
+    {
+        string nickname = Unique("Twin");
+        await SeedAsync(NewAccount(nickname: nickname));
+
+        await Assert.ThrowsAsync<DbUpdateException>(
+            () => Sut.CreateAsync(NewDomainAccount(UniqueEmail("other"), nickname), TestContext.Current.CancellationToken));
     }
 
     // -- UpdateEntityAsync ---------------------------------------------------
 
-    /// <summary>Verifies that <c>UpdateEntityAsync</c> updates existing account.</summary>
+    /// <summary>Verifies that <c>UpdateEntityAsync</c> persists changes to an existing account.</summary>
     [Fact]
     public async Task UpdateEntityAsync_UpdatesExistingAccount()
     {
-        await SeedAsync(MakeAccount("alice@example.com", "Alice"));
+        string email = UniqueEmail("alice");
+        await SeedAsync(NewAccount(email, Unique("Alice")));
 
-        var account = Account.Reconstitute(
-            email: "alice@example.com",
-            hashedPassword: "$2a$13$newhash",
-            nickname: "Alice",
-            avatarImagePath: "/upload/Management/Profile/default-avatar.jpg",
-            role: Role.Admin,
-            timeZoneIanaId: "Asia/Seoul",
-            defaultMonetaryUnit: null,
-            locked: false,
-            loginAttempt: 0,
-            emailConfirmed: true,
-            agreedServiceTerms: true,
-            registrationToken: null,
-            resetPasswordToken: null,
-            created: DateTime.UtcNow,
-            updated: DateTime.UtcNow,
-            message: null,
-            deleted: false,
-            securityStamp: "stamp",
-            mustChangePassword: false);
+        Account updated = NewDomainAccount(email, Unique("Alice"), role: Role.Admin, timeZone: "Asia/Seoul");
+        await Sut.UpdateEntityAsync(updated, TestContext.Current.CancellationToken);
+        Context.ChangeTracker.Clear();
 
-        await _sut.UpdateEntityAsync(account, TestContext.Current.CancellationToken);
-
-        OrmAccount? updated = await _context.Accounts.FirstOrDefaultAsync(a => a.Email == "alice@example.com", TestContext.Current.CancellationToken);
-        Assert.NotNull(updated);
-        Assert.Equal(Role.Admin, updated.Role);
-        Assert.Equal("Asia/Seoul", updated.TimeZoneIanaId);
+        Account? result = await Sut.FindByEmailAsync(email, TestContext.Current.CancellationToken);
+        Assert.NotNull(result);
+        Assert.Equal(Role.Admin, result.Role);
+        Assert.Equal("Asia/Seoul", result.TimeZone.Value);
     }
 
     /// <summary>Verifies that <c>UpdateEntityAsync</c> throws, rather than silently no-op'ing, when the row no longer exists.</summary>
     [Fact]
     public async Task UpdateEntityAsync_Throws_WhenAccountNoLongerExists()
     {
-        var account = Account.Reconstitute(
-            email: "ghost@example.com",
-            hashedPassword: "$2a$13$hash",
-            nickname: "Ghost",
-            avatarImagePath: null,
-            role: Role.User,
-            timeZoneIanaId: "UTC",
-            defaultMonetaryUnit: null,
-            locked: false,
-            loginAttempt: 0,
-            emailConfirmed: true,
-            agreedServiceTerms: true,
-            registrationToken: null,
-            resetPasswordToken: null,
-            created: DateTime.UtcNow,
-            updated: DateTime.UtcNow,
-            message: null,
-            deleted: false,
-            securityStamp: "stamp",
-            mustChangePassword: false);
-
         await Assert.ThrowsAsync<InvalidOperationException>(
-            () => _sut.UpdateEntityAsync(account, TestContext.Current.CancellationToken));
+            () => Sut.UpdateEntityAsync(NewDomainAccount(UniqueEmail("ghost"), Unique("Ghost")), TestContext.Current.CancellationToken));
     }
 
-    // FindByEmailForUpdateAsync is covered in AccountRepositoryIntegrationTests: it uses a raw
-    // FromSqlInterpolated query (FOR UPDATE), which the InMemory provider used by this test class
-    // does not support.
+    // -- FindByEmailForUpdateAsync (raw SELECT ... FOR UPDATE) ----------------
+
+    /// <summary>Verifies that the row-locking lookup returns the account when it exists.</summary>
+    [Fact]
+    public async Task FindByEmailForUpdateAsync_ReturnsAccount_WhenExists()
+    {
+        string email = UniqueEmail("alice");
+        string nickname = Unique("Alice");
+        await SeedAsync(NewAccount(email, nickname));
+
+        await using var unitOfWork = new UnitOfWork(Context);
+        await unitOfWork.BeginAsync(TestContext.Current.CancellationToken);
+        Account? result = await Sut.FindByEmailForUpdateAsync(email, TestContext.Current.CancellationToken);
+        await unitOfWork.CommitAsync(TestContext.Current.CancellationToken);
+
+        Assert.NotNull(result);
+        Assert.Equal(nickname, result.Nickname);
+    }
+
+    /// <summary>Verifies that the row-locking lookup returns null when the account is not found.</summary>
+    [Fact]
+    public async Task FindByEmailForUpdateAsync_ReturnsNull_WhenNotFound()
+    {
+        await using var unitOfWork = new UnitOfWork(Context);
+        await unitOfWork.BeginAsync(TestContext.Current.CancellationToken);
+        Account? result = await Sut.FindByEmailForUpdateAsync(UniqueEmail("missing"), TestContext.Current.CancellationToken);
+        await unitOfWork.CommitAsync(TestContext.Current.CancellationToken);
+
+        Assert.Null(result);
+    }
+
+    /// <summary>The FOR UPDATE login lookup must also match a differently-cased address (see <see cref="FindByEmailAsync_IsCaseInsensitive"/>).</summary>
+    [Fact]
+    public async Task FindByEmailForUpdateAsync_IsCaseInsensitive()
+    {
+        string email = UniqueEmail("alice");
+        await SeedAsync(NewAccount(email, Unique("Alice")));
+
+        await using var unitOfWork = new UnitOfWork(Context);
+        await unitOfWork.BeginAsync(TestContext.Current.CancellationToken);
+        Account? result = await Sut.FindByEmailForUpdateAsync(email.ToUpperInvariant(), TestContext.Current.CancellationToken);
+        await unitOfWork.CommitAsync(TestContext.Current.CancellationToken);
+
+        Assert.NotNull(result);
+    }
+
+    /// <summary>
+    /// Concurrent failed-login sequences for the same account, each wrapped in its own transaction
+    /// around <c>FindByEmailForUpdateAsync</c> + <c>UpdateEntityAsync</c> (mirroring
+    /// <c>AccountService.LoginAsync</c>). The row lock serializes the transactions — each blocks
+    /// until the prior commits, then re-reads the current counter — so all five increments survive
+    /// instead of racing on a stale read.
+    /// </summary>
+    [Fact]
+    public async Task FindByEmailForUpdateAsync_SerializesConcurrentIncrements_AccumulatingCorrectly()
+    {
+        string email = UniqueEmail("race");
+        await SeedAsync(NewAccount(email, Unique("Race")));
+
+        // Contexts created up front: RepositoryTestBase tracks them for disposal and the tracking
+        // list is not safe to append from parallel tasks.
+        ApplicationDbContext[] contexts = [.. Enumerable.Range(0, 5).Select(_ => NewDbContext())];
+
+        await Task.WhenAll(contexts.Select(async context =>
+        {
+            var repo = new AccountRepository(context);
+            await using var unitOfWork = new UnitOfWork(context);
+            await unitOfWork.BeginAsync(TestContext.Current.CancellationToken);
+            Account account = (await repo.FindByEmailForUpdateAsync(email, TestContext.Current.CancellationToken))!;
+            account.RecordLoginFailure(maxAttempts: 100);
+            await repo.UpdateEntityAsync(account, TestContext.Current.CancellationToken);
+            await unitOfWork.CommitAsync(TestContext.Current.CancellationToken);
+        }));
+
+        Context.ChangeTracker.Clear();
+        Account? updated = await Sut.FindByEmailAsync(email, TestContext.Current.CancellationToken);
+        Assert.NotNull(updated);
+        Assert.Equal(5, updated.LoginAttempt);
+    }
 }

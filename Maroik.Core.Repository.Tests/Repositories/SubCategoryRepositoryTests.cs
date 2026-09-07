@@ -1,6 +1,5 @@
 using Maroik.Core.Domain.Account;
 using Maroik.Core.Domain.Menu;
-using Maroik.Core.PostgreSQL.Data;
 using Maroik.Core.Repository.Repositories;
 using Microsoft.EntityFrameworkCore;
 using EfCategory = Maroik.Core.PostgreSQL.Models.Category;
@@ -9,29 +8,17 @@ using EfSubCategory = Maroik.Core.PostgreSQL.Models.SubCategory;
 namespace Maroik.Core.Repository.Tests.Repositories;
 
 /// <summary>
-/// Tests for <see cref="SubCategoryRepository"/> using an EF Core InMemory database.
+/// Tests for <see cref="SubCategoryRepository"/> against a real PostgreSQL database (Testcontainers)
+/// pre-loaded with the production <c>Init.sql</c> schema and seed data (14 sub-categories).
+/// <c>SubCategory</c> carries the FK <c>SubCategory_fk_0</c> to <c>Category.Id</c> (unenforced by
+/// InMemory) plus <c>SubCategory_Role_check</c> / <c>SubCategory_Order_check</c>. Every test creates
+/// a real parent category and scopes the global <c>GetAllAsync</c> assertions to its own rows.
 /// </summary>
-public class SubCategoryRepositoryTests : IDisposable
+public sealed class SubCategoryRepositoryTests(DatabaseFixture database) : RepositoryTestBase(database)
 {
-    private readonly ApplicationDbContext _context;
-    private readonly SubCategoryRepository _sut;
+    private SubCategoryRepository Sut => new(Context);
 
-    /// <summary>Initializes the test fixture, setting up all required test doubles and the system under test.</summary>
-    public SubCategoryRepositoryTests()
-    {
-        var options = new DbContextOptionsBuilder<ApplicationDbContext>()
-            .UseInMemoryDatabase(Guid.NewGuid().ToString())
-            .Options;
-        _context = new ApplicationDbContext(options);
-        _sut = new SubCategoryRepository(_context);
-    }
-
-    /// <summary>Releases resources allocated by this test fixture (disposes the database context).</summary>
-    public void Dispose() => _context.Dispose();
-
-    // -- Helpers --------------------------------------------------------------
-
-    private static EfSubCategory MakeSubCategory(long categoryId, string name, string role = Role.User, long order = 1) => new()
+    private EfSubCategory MakeSubCategory(long categoryId, string name, string role = Role.User, long order = 1) => new()
     {
         CategoryId = categoryId,
         Name = name,
@@ -42,138 +29,136 @@ public class SubCategoryRepositoryTests : IDisposable
         Order = order
     };
 
+    /// <summary>Inserts a real parent <c>Category</c> and returns its id.</summary>
     private async Task<long> SeedCategoryAsync()
     {
         var category = new EfCategory
         {
-            Name = "ParentCategory",
+            Name = Unique("ParentCategory"),
             DisplayName = "Parent",
-            Controller = "ParentCategory",
+            Controller = Unique("ParentController"),
             IconPath = "/icons/icon.svg",
+            Action = "Index",
             Role = Role.User,
             Order = 1
         };
-        await _context.Categories.AddAsync(category);
-        await _context.SaveChangesAsync();
+        await Context.Categories.AddAsync(category);
+        await Context.SaveChangesAsync();
+        Context.ChangeTracker.Clear();
         return category.Id;
     }
 
     private async Task SeedAsync(params EfSubCategory[] items)
     {
-        await _context.SubCategories.AddRangeAsync(items);
-        await _context.SaveChangesAsync();
+        await Context.SubCategories.AddRangeAsync(items);
+        await Context.SaveChangesAsync();
+        Context.ChangeTracker.Clear();
     }
 
     // -- GetAllAsync ----------------------------------------------------------
 
-    /// <summary>Verifies that <c>GetAllAsync</c> returns all sub categories.</summary>
+    /// <summary>Verifies that <c>GetAllAsync</c> includes every sub-category this test inserted.</summary>
     [Fact]
-    public async Task GetSubCategoryAsync_ReturnsAllSubCategories()
+    public async Task GetAllAsync_ReturnsInsertedSubCategories()
     {
         long catId = await SeedCategoryAsync();
-        await SeedAsync(
-            MakeSubCategory(catId, "SubA", order: 1),
-            MakeSubCategory(catId, "SubB", order: 2));
+        string a = Unique("SubA");
+        string b = Unique("SubB");
+        await SeedAsync(MakeSubCategory(catId, a, order: 1), MakeSubCategory(catId, b, order: 2));
 
-        IEnumerable<SubCategory> result = await _sut.GetAllAsync(TestContext.Current.CancellationToken);
+        List<SubCategory> result = [.. await Sut.GetAllAsync(TestContext.Current.CancellationToken)];
 
-        Assert.Equal(2, result.Count());
+        Assert.Equal(2, result.Count(sc => sc.Name == a || sc.Name == b));
     }
 
-    /// <summary>Verifies that <c>GetAllAsync</c> returns empty when no sub categories.</summary>
+    // -- CreateAsync -----------------------------------------------
+
+    /// <summary>Verifies that <c>CreateAsync</c> inserts a sub-category row.</summary>
     [Fact]
-    public async Task GetSubCategoryAsync_ReturnsEmpty_WhenNoSubCategories()
-    {
-        IEnumerable<SubCategory> result = await _sut.GetAllAsync(TestContext.Current.CancellationToken);
-
-        Assert.Empty(result);
-    }
-
-    // -- CreateSubCategoryAsync -----------------------------------------------
-
-    /// <summary>Verifies that <c>CreateSubCategoryAsync</c> adds sub category to database.</summary>
-    [Fact]
-    public async Task CreateSubCategoryAsync_AddsSubCategoryToDatabase()
+    public async Task CreateAsync_AddsSubCategoryToDatabase()
     {
         long catId = await SeedCategoryAsync();
+        string name = Unique("NewSubMenu");
 
         var subCategory = SubCategory.Reconstitute(
-            id: 0,
-            categoryId: catId,
-            name: "NewSubMenu",
-            displayName: "New Sub Menu",
-            iconPath: "/icons/new.svg",
-            action: "NewAction",
-            role: Role.User,
-            order: 5);
+            id: 0, categoryId: catId, name: name, displayName: "New Sub Menu",
+            iconPath: "/icons/new.svg", action: "NewAction", role: Role.User, order: 5);
 
-        await _sut.CreateAsync(subCategory, TestContext.Current.CancellationToken);
+        await Sut.CreateAsync(subCategory, TestContext.Current.CancellationToken);
+        Context.ChangeTracker.Clear();
 
-        EfSubCategory? saved = await _context.SubCategories.FirstOrDefaultAsync(sc => sc.Name == "NewSubMenu", TestContext.Current.CancellationToken);
+        EfSubCategory? saved = await Context.SubCategories.FirstOrDefaultAsync(sc => sc.Name == name, TestContext.Current.CancellationToken);
         Assert.NotNull(saved);
         Assert.Equal(catId, saved.CategoryId);
         Assert.Equal(Role.User, saved.Role);
     }
 
+    /// <summary>PostgreSQL enforces <c>SubCategory_fk_0</c> — a sub-category under a non-existent category throws (InMemory did not).</summary>
+    [Fact]
+    public async Task CreateAsync_Throws_WhenParentCategoryDoesNotExist()
+    {
+        var subCategory = SubCategory.Reconstitute(
+            id: 0, categoryId: long.MaxValue, name: Unique("Orphan"), displayName: "x",
+            iconPath: "/x", action: "x", role: Role.User, order: 0);
+
+        await Assert.ThrowsAsync<DbUpdateException>(
+            () => Sut.CreateAsync(subCategory, TestContext.Current.CancellationToken));
+    }
+
     // -- UpdateEntityAsync -----------------------------------------------
 
-    /// <summary>Verifies that <c>UpdateEntityAsync</c> updates existing sub category.</summary>
+    /// <summary>Verifies that <c>UpdateEntityAsync</c> persists changes to an existing sub-category.</summary>
     [Fact]
     public async Task UpdateEntityAsync_UpdatesExistingSubCategory()
     {
         long catId = await SeedCategoryAsync();
-        await SeedAsync(MakeSubCategory(catId, "OldSub", order: 1));
-        EfSubCategory efSub = await _context.SubCategories.FirstAsync(TestContext.Current.CancellationToken);
+        var seed = MakeSubCategory(catId, Unique("OldSub"), order: 1);
+        await SeedAsync(seed);
 
+        string newName = Unique("UpdatedSub");
         var subCategory = SubCategory.Reconstitute(
-            id: efSub.Id,
-            categoryId: catId,
-            name: "UpdatedSub",
-            displayName: "Updated Sub",
-            iconPath: "/icons/updated.svg",
-            action: "UpdatedAction",
-            role: Role.Admin,
-            order: 10);
+            id: seed.Id, categoryId: catId, name: newName, displayName: "Updated Sub",
+            iconPath: "/icons/updated.svg", action: "UpdatedAction", role: Role.Admin, order: 10);
 
-        await _sut.UpdateEntityAsync(subCategory, TestContext.Current.CancellationToken);
+        await Sut.UpdateEntityAsync(subCategory, TestContext.Current.CancellationToken);
+        Context.ChangeTracker.Clear();
 
-        EfSubCategory? updated = await _context.SubCategories.FirstOrDefaultAsync(sc => sc.Id == efSub.Id, TestContext.Current.CancellationToken);
+        EfSubCategory? updated = await Context.SubCategories.FirstOrDefaultAsync(sc => sc.Id == seed.Id, TestContext.Current.CancellationToken);
         Assert.NotNull(updated);
-        Assert.Equal("UpdatedSub", updated.Name);
+        Assert.Equal(newName, updated.Name);
         Assert.Equal(Role.Admin, updated.Role);
         Assert.Equal(10, updated.Order);
     }
 
     // -- DeleteByIdAsync -----------------------------------------------
 
-    /// <summary>Verifies that <c>DeleteByIdAsync</c> removes sub category from database.</summary>
+    /// <summary>Verifies that <c>DeleteByIdAsync</c> removes the sub-category row.</summary>
     [Fact]
-    public async Task DeleteSubCategoryAsync_RemovesSubCategoryFromDatabase()
+    public async Task DeleteByIdAsync_RemovesSubCategoryFromDatabase()
     {
         long catId = await SeedCategoryAsync();
-        await SeedAsync(MakeSubCategory(catId, "ToDelete"));
-        EfSubCategory efSub = await _context.SubCategories.FirstAsync(TestContext.Current.CancellationToken);
+        var seed = MakeSubCategory(catId, Unique("ToDelete"));
+        await SeedAsync(seed);
 
-        await _sut.DeleteByIdAsync(efSub.Id, TestContext.Current.CancellationToken);
+        await Sut.DeleteByIdAsync(seed.Id, TestContext.Current.CancellationToken);
+        Context.ChangeTracker.Clear();
 
-        EfSubCategory? deleted = await _context.SubCategories.FirstOrDefaultAsync(sc => sc.Id == efSub.Id, TestContext.Current.CancellationToken);
-        Assert.Null(deleted);
+        Assert.Null(await Context.SubCategories.FirstOrDefaultAsync(sc => sc.Id == seed.Id, TestContext.Current.CancellationToken));
     }
 
-    /// <summary>Verifies that <c>DeleteByIdAsync</c> does not affect other sub categories.</summary>
+    /// <summary>Verifies that <c>DeleteByIdAsync</c> does not affect other sub-categories.</summary>
     [Fact]
-    public async Task DeleteSubCategoryAsync_DoesNotAffectOtherSubCategories()
+    public async Task DeleteByIdAsync_DoesNotAffectOtherSubCategories()
     {
         long catId = await SeedCategoryAsync();
-        await SeedAsync(
-            MakeSubCategory(catId, "Sub1", order: 1),
-            MakeSubCategory(catId, "Sub2", order: 2));
-        List<EfSubCategory> all = await _context.SubCategories.ToListAsync(TestContext.Current.CancellationToken);
+        var keep = MakeSubCategory(catId, Unique("Sub1"), order: 1);
+        var remove = MakeSubCategory(catId, Unique("Sub2"), order: 2);
+        await SeedAsync(keep, remove);
 
-        await _sut.DeleteByIdAsync(all[0].Id, TestContext.Current.CancellationToken);
+        await Sut.DeleteByIdAsync(remove.Id, TestContext.Current.CancellationToken);
+        Context.ChangeTracker.Clear();
 
-        List<EfSubCategory> remaining = await _context.SubCategories.ToListAsync(TestContext.Current.CancellationToken);
-        Assert.Single(remaining);
-        Assert.Equal(all[1].Id, remaining[0].Id);
+        Assert.True(await Context.SubCategories.AnyAsync(sc => sc.Id == keep.Id, TestContext.Current.CancellationToken));
+        Assert.False(await Context.SubCategories.AnyAsync(sc => sc.Id == remove.Id, TestContext.Current.CancellationToken));
     }
 }

@@ -1,5 +1,4 @@
 using Maroik.Core.Domain.Calendar;
-using Maroik.Core.PostgreSQL.Data;
 using Maroik.Core.Repository.Repositories;
 using Microsoft.EntityFrameworkCore;
 using EfCalendarEventAttachedFile = Maroik.Core.PostgreSQL.Models.CalendarEventAttachedFile;
@@ -7,27 +6,14 @@ using EfCalendarEventAttachedFile = Maroik.Core.PostgreSQL.Models.CalendarEventA
 namespace Maroik.Core.Repository.Tests.Repositories;
 
 /// <summary>
-/// Tests for <see cref="CalendarEventAttachedFileRepository"/> using an EF Core InMemory database.
+/// Tests for <see cref="CalendarEventAttachedFileRepository"/> against a real PostgreSQL database
+/// (Testcontainers) pre-loaded with the production <c>Init.sql</c> schema and seed data.
+/// <c>CalendarEventAttachedFile</c> carries the FK <c>CalendarEventAttachedFile_fk_0</c> to
+/// <c>CalendarEvent.Id</c> (unenforced by InMemory), so every test creates a real parent event.
 /// </summary>
-public class CalendarEventAttachedFileRepositoryTests : IDisposable
+public sealed class CalendarEventAttachedFileRepositoryTests(DatabaseFixture database) : RepositoryTestBase(database)
 {
-    private readonly ApplicationDbContext _context;
-    private readonly CalendarEventAttachedFileRepository _sut;
-
-    /// <summary>Initializes the test fixture, setting up all required test doubles and the system under test.</summary>
-    public CalendarEventAttachedFileRepositoryTests()
-    {
-        var options = new DbContextOptionsBuilder<ApplicationDbContext>()
-            .UseInMemoryDatabase(Guid.NewGuid().ToString())
-            .Options;
-        _context = new ApplicationDbContext(options);
-        _sut = new CalendarEventAttachedFileRepository(_context);
-    }
-
-    /// <summary>Releases resources allocated by this test fixture (disposes the database context).</summary>
-    public void Dispose() => _context.Dispose();
-
-    // -- Helpers --------------------------------------------------------------
+    private CalendarEventAttachedFileRepository Sut => new(Context);
 
     private static EfCalendarEventAttachedFile MakeFile(long calendarEventId, string name = "doc.pdf") => new()
     {
@@ -40,101 +26,114 @@ public class CalendarEventAttachedFileRepositoryTests : IDisposable
 
     private async Task SeedAsync(params EfCalendarEventAttachedFile[] files)
     {
-        await _context.CalendarEventAttachedFiles.AddRangeAsync(files);
-        await _context.SaveChangesAsync();
+        await Context.CalendarEventAttachedFiles.AddRangeAsync(files);
+        await Context.SaveChangesAsync();
+        Context.ChangeTracker.Clear();
     }
 
-    // -- GetCalendarEventAttachedFileAsync ------------------------------------
+    // -- FindByCalendarEventIdAsync -----------------------------------------
 
-    /// <summary>Verifies that <c>GetCalendarEventAttachedFileAsync</c> returns file when found.</summary>
+    /// <summary>Verifies that <c>FindByCalendarEventIdAsync</c> returns the file when found.</summary>
     [Fact]
-    public async Task GetCalendarEventAttachedFileAsync_ReturnsFile_WhenFound()
+    public async Task FindByCalendarEventIdAsync_ReturnsFile_WhenFound()
     {
-        await SeedAsync(MakeFile(10, "slide.pdf"));
+        long eventId = await InsertCalendarEventAsync();
+        await SeedAsync(MakeFile(eventId, "slide.pdf"));
 
-        CalendarEventAttachedFile? result = await _sut.FindByCalendarEventIdAsync(10L, TestContext.Current.CancellationToken);
+        CalendarEventAttachedFile? result = await Sut.FindByCalendarEventIdAsync(eventId, TestContext.Current.CancellationToken);
 
         Assert.NotNull(result);
-        Assert.Equal(10, result.CalendarEventId);
+        Assert.Equal(eventId, result.CalendarEventId);
         Assert.Equal("slide.pdf", result.Name);
     }
 
-    /// <summary>Verifies that <c>GetCalendarEventAttachedFileAsync</c> returns null when not found.</summary>
+    /// <summary>Verifies that <c>FindByCalendarEventIdAsync</c> returns null when not found.</summary>
     [Fact]
-    public async Task GetCalendarEventAttachedFileAsync_ReturnsNull_WhenNotFound()
+    public async Task FindByCalendarEventIdAsync_ReturnsNull_WhenNotFound()
     {
-        CalendarEventAttachedFile? result = await _sut.FindByCalendarEventIdAsync(999L, TestContext.Current.CancellationToken);
+        CalendarEventAttachedFile? result = await Sut.FindByCalendarEventIdAsync(long.MaxValue, TestContext.Current.CancellationToken);
 
         Assert.Null(result);
     }
 
-    // -- SaveCalendarEventAttachedFileAsync -----------------------------------
+    // -- CreateAsync -----------------------------------------
 
-    /// <summary>Verifies that <c>SaveCalendarEventAttachedFileAsync</c> persists file.</summary>
+    /// <summary>Verifies that <c>CreateAsync</c> persists an attached-file row.</summary>
     [Fact]
-    public async Task SaveCalendarEventAttachedFileAsync_PersistsFile()
+    public async Task CreateAsync_PersistsFile()
     {
+        long eventId = await InsertCalendarEventAsync();
+
         var file = CalendarEventAttachedFile.Reconstitute(
-            id: 0,
-            calendarEventId: 5,
-            size: 2048,
-            name: "new.pdf",
-            extension: ".pdf",
-            path: "/upload/calendar/new.pdf");
+            id: 0, calendarEventId: eventId, size: 2048, name: "new.pdf",
+            extension: ".pdf", path: "/upload/calendar/new.pdf");
 
-        await _sut.CreateAsync(file, TestContext.Current.CancellationToken);
+        await Sut.CreateAsync(file, TestContext.Current.CancellationToken);
+        Context.ChangeTracker.Clear();
 
-        EfCalendarEventAttachedFile? saved = await _context.CalendarEventAttachedFiles
-            .FirstOrDefaultAsync(f => f.CalendarEventId == 5, TestContext.Current.CancellationToken);
+        EfCalendarEventAttachedFile? saved = await Context.CalendarEventAttachedFiles
+            .FirstOrDefaultAsync(f => f.CalendarEventId == eventId, TestContext.Current.CancellationToken);
         Assert.NotNull(saved);
         Assert.Equal("new.pdf", saved.Name);
     }
 
+    /// <summary>PostgreSQL enforces <c>CalendarEventAttachedFile_fk_0</c> — a file for an unknown event throws (InMemory did not).</summary>
+    [Fact]
+    public async Task CreateAsync_Throws_WhenParentEventDoesNotExist()
+    {
+        var file = CalendarEventAttachedFile.Reconstitute(
+            id: 0, calendarEventId: long.MaxValue, size: 1, name: "orphan.pdf",
+            extension: ".pdf", path: "/x");
+
+        await Assert.ThrowsAsync<DbUpdateException>(
+            () => Sut.CreateAsync(file, TestContext.Current.CancellationToken));
+    }
+
     // -- UpdateEntityAsync ---------------------------------
 
-    /// <summary>Verifies that <c>UpdateEntityAsync</c> updates existing file.</summary>
+    /// <summary>Verifies that <c>UpdateEntityAsync</c> persists changes to an existing file.</summary>
     [Fact]
     public async Task UpdateEntityAsync_UpdatesExistingFile()
     {
-        await SeedAsync(MakeFile(7, "old.pdf"));
-        long id = (await _context.CalendarEventAttachedFiles.FirstAsync(f => f.CalendarEventId == 7, TestContext.Current.CancellationToken)).Id;
+        long eventId = await InsertCalendarEventAsync();
+        var seed = MakeFile(eventId, "old.pdf");
+        await SeedAsync(seed);
 
         var file = CalendarEventAttachedFile.Reconstitute(
-            id: id,
-            calendarEventId: 7,
-            size: 9999,
-            name: "updated.pdf",
-            extension: ".pdf",
-            path: "/upload/calendar/updated.pdf");
+            id: seed.Id, calendarEventId: eventId, size: 9999, name: "updated.pdf",
+            extension: ".pdf", path: "/upload/calendar/updated.pdf");
 
-        await _sut.UpdateEntityAsync(file, TestContext.Current.CancellationToken);
+        await Sut.UpdateEntityAsync(file, TestContext.Current.CancellationToken);
+        Context.ChangeTracker.Clear();
 
-        EfCalendarEventAttachedFile? updated = await _context.CalendarEventAttachedFiles.FindAsync(new object[] { id }, TestContext.Current.CancellationToken);
+        EfCalendarEventAttachedFile? updated = await Context.CalendarEventAttachedFiles
+            .FirstOrDefaultAsync(f => f.Id == seed.Id, TestContext.Current.CancellationToken);
         Assert.NotNull(updated);
         Assert.Equal("updated.pdf", updated.Name);
         Assert.Equal(9999, updated.Size);
     }
 
-    // -- DeleteCalendarEventAttachedFileAsync ---------------------------------
+    // -- DeleteByCalendarEventIdAsync ---------------------------------------
 
-    /// <summary>Verifies that <c>DeleteCalendarEventAttachedFileAsync</c> removes files by event id.</summary>
+    /// <summary>Verifies that <c>DeleteByCalendarEventIdAsync</c> removes only the target event's files.</summary>
     [Fact]
-    public async Task DeleteCalendarEventAttachedFileAsync_RemovesFilesByEventId()
+    public async Task DeleteByCalendarEventIdAsync_RemovesFilesByEventId()
     {
-        await SeedAsync(MakeFile(20, "x.pdf"), MakeFile(20, "y.pdf"), MakeFile(30, "z.pdf"));
+        long removeEvent = await InsertCalendarEventAsync();
+        long keepEvent = await InsertCalendarEventAsync();
+        await SeedAsync(MakeFile(removeEvent, "x.pdf"), MakeFile(removeEvent, "y.pdf"), MakeFile(keepEvent, "z.pdf"));
 
-        await _sut.DeleteByCalendarEventIdAsync(20L, TestContext.Current.CancellationToken);
+        await Sut.DeleteByCalendarEventIdAsync(removeEvent, TestContext.Current.CancellationToken);
+        Context.ChangeTracker.Clear();
 
-        Assert.False(await _context.CalendarEventAttachedFiles.AnyAsync(f => f.CalendarEventId == 20, TestContext.Current.CancellationToken));
-        Assert.True(await _context.CalendarEventAttachedFiles.AnyAsync(f => f.CalendarEventId == 30, TestContext.Current.CancellationToken));
+        Assert.False(await Context.CalendarEventAttachedFiles.AnyAsync(f => f.CalendarEventId == removeEvent, TestContext.Current.CancellationToken));
+        Assert.True(await Context.CalendarEventAttachedFiles.AnyAsync(f => f.CalendarEventId == keepEvent, TestContext.Current.CancellationToken));
     }
 
-    /// <summary>Verifies that <c>DeleteCalendarEventAttachedFileAsync</c> does nothing when no files match.</summary>
+    /// <summary>Verifies that <c>DeleteByCalendarEventIdAsync</c> is a no-op when nothing matches.</summary>
     [Fact]
-    public async Task DeleteCalendarEventAttachedFileAsync_ReturnsZero_WhenNoFilesMatch()
+    public async Task DeleteByCalendarEventIdAsync_IsNoOp_WhenNoFilesMatch()
     {
-        await _sut.DeleteByCalendarEventIdAsync(999L, TestContext.Current.CancellationToken);
-
-        Assert.False(await _context.CalendarEventAttachedFiles.AnyAsync(TestContext.Current.CancellationToken));
+        await Sut.DeleteByCalendarEventIdAsync(long.MaxValue, TestContext.Current.CancellationToken);
     }
 }

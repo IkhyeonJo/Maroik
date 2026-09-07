@@ -1,5 +1,4 @@
 using Maroik.Core.Domain.Calendar;
-using Maroik.Core.PostgreSQL.Data;
 using Maroik.Core.Repository.Repositories;
 using Microsoft.EntityFrameworkCore;
 using EfOtherCalendar = Maroik.Core.PostgreSQL.Models.OtherCalendar;
@@ -7,139 +6,141 @@ using EfOtherCalendar = Maroik.Core.PostgreSQL.Models.OtherCalendar;
 namespace Maroik.Core.Repository.Tests.Repositories;
 
 /// <summary>
-/// Tests for <see cref="OtherCalendarRepository"/> using an EF Core InMemory database.
-/// OtherCalendar uses a composite PK (AccountEmail, CalendarId).
-/// FK constraints are not enforced by InMemory, so Account/Calendar parent records are omitted.
+/// Tests for <see cref="OtherCalendarRepository"/> against a real PostgreSQL database (Testcontainers)
+/// pre-loaded with the production <c>Init.sql</c> schema and seed data (two subscriptions).
+/// <c>OtherCalendar</c> has the composite PK <c>(AccountEmail, CalendarId)</c> and the FKs
+/// <c>OtherCalendar_fk_0</c> to <c>Account.Email</c> and <c>OtherCalendar_fk_1</c> to
+/// <c>Calendar.Id</c> (both unenforced by InMemory). The global <c>GetAllAsync</c> assertion is
+/// scoped to the rows this test created.
 /// </summary>
-public class OtherCalendarRepositoryTests : IDisposable
+public sealed class OtherCalendarRepositoryTests(DatabaseFixture database) : RepositoryTestBase(database)
 {
-    private readonly ApplicationDbContext _context;
-    private readonly OtherCalendarRepository _sut;
+    private OtherCalendarRepository Sut => new(Context);
 
-    /// <summary>Initializes the test fixture, setting up all required test doubles and the system under test.</summary>
-    public OtherCalendarRepositoryTests()
+    private async Task SeedAsync(string email, params long[] calendarIds)
     {
-        var options = new DbContextOptionsBuilder<ApplicationDbContext>()
-            .UseInMemoryDatabase(Guid.NewGuid().ToString())
-            .Options;
-        _context = new ApplicationDbContext(options);
-        _sut = new OtherCalendarRepository(_context);
+        await EnsureAccountsAsync(email);
+        await Context.OtherCalendars.AddRangeAsync(calendarIds.Select(id => new EfOtherCalendar
+        {
+            AccountEmail = email,
+            CalendarId = id
+        }));
+        await Context.SaveChangesAsync();
+        Context.ChangeTracker.Clear();
     }
 
-    /// <summary>Releases resources allocated by this test fixture (disposes the database context).</summary>
-    public void Dispose() => _context.Dispose();
+    // -- GetAllAsync --------------------------------------------
 
-    // -- Helpers --------------------------------------------------------------
-
-    private static EfOtherCalendar MakeOtherCalendar(string email, long calendarId) => new()
-    {
-        AccountEmail = email,
-        CalendarId = calendarId
-    };
-
-    private async Task SeedAsync(params EfOtherCalendar[] entries)
-    {
-        await _context.OtherCalendars.AddRangeAsync(entries);
-        await _context.SaveChangesAsync();
-    }
-
-    // -- GetAllOtherCalendarsAsync --------------------------------------------
-
-    /// <summary>Verifies that <c>GetAllOtherCalendarsAsync</c> returns all entries.</summary>
+    /// <summary>Verifies that <c>GetAllAsync</c> includes every subscription this test inserted.</summary>
     [Fact]
-    public async Task GetAllOtherCalendarsAsync_ReturnsAll()
+    public async Task GetAllAsync_ReturnsInsertedEntries()
     {
-        await SeedAsync(
-            MakeOtherCalendar("alice@example.com", 3),
-            MakeOtherCalendar("bob@example.com", 1),
-            MakeOtherCalendar("alice@example.com", 2));
+        string alice = UniqueEmail("alice");
+        string bob = UniqueEmail("bob");
+        long c1 = await InsertCalendarAsync();
+        long c2 = await InsertCalendarAsync();
+        long c3 = await InsertCalendarAsync();
+        await SeedAsync(alice, c1, c2);
+        await SeedAsync(bob, c3);
 
-        List<OtherCalendar> result = await _sut.GetAllAsync(TestContext.Current.CancellationToken);
+        List<OtherCalendar> result = await Sut.GetAllAsync(TestContext.Current.CancellationToken);
 
-        Assert.Equal(3, result.Count);
+        string[] mine = [alice, bob];
+        Assert.Equal(3, result.Count(oc => mine.Contains(oc.AccountEmail.Value)));
     }
 
-    /// <summary>Verifies that <c>GetAllOtherCalendarsAsync</c> returns empty when no entries.</summary>
+    // -- GetByAccountEmailAsync -----------------------------------------------
+
+    /// <summary>Verifies that <c>GetByAccountEmailAsync</c> returns only subscriptions for the given e-mail.</summary>
     [Fact]
-    public async Task GetAllOtherCalendarsAsync_ReturnsEmpty_WhenNoEntries()
+    public async Task GetByAccountEmailAsync_ReturnsOnlySubscriptionsForGivenEmail()
     {
-        List<OtherCalendar> result = await _sut.GetAllAsync(TestContext.Current.CancellationToken);
+        string alice = UniqueEmail("alice");
+        string bob = UniqueEmail("bob");
+        long c1 = await InsertCalendarAsync();
+        long c2 = await InsertCalendarAsync();
+        long c3 = await InsertCalendarAsync();
+        await SeedAsync(alice, c1, c2);
+        await SeedAsync(bob, c3);
 
-        Assert.Empty(result);
-    }
-
-    // -- GetOtherCalendarsAsync -----------------------------------------------
-
-    /// <summary>Verifies that <c>GetOtherCalendarsAsync</c> returns only calendars for given email.</summary>
-    [Fact]
-    public async Task GetOtherCalendarsAsync_ReturnsOnlyCalendarsForGivenEmail()
-    {
-        await SeedAsync(
-            MakeOtherCalendar("alice@example.com", 1),
-            MakeOtherCalendar("alice@example.com", 2),
-            MakeOtherCalendar("bob@example.com", 3));
-
-        List<OtherCalendar> result = await _sut.GetByAccountEmailAsync("alice@example.com", TestContext.Current.CancellationToken);
+        List<OtherCalendar> result = await Sut.GetByAccountEmailAsync(alice, TestContext.Current.CancellationToken);
 
         Assert.Equal(2, result.Count);
-        Assert.All(result, r => Assert.Equal("alice@example.com", r.AccountEmail.Value));
+        Assert.All(result, r => Assert.Equal(alice, r.AccountEmail.Value));
     }
 
-    /// <summary>Verifies that <c>GetOtherCalendarsAsync</c> returns empty when email not found.</summary>
+    /// <summary>Verifies that <c>GetByAccountEmailAsync</c> returns empty when the e-mail is not found.</summary>
     [Fact]
-    public async Task GetOtherCalendarsAsync_ReturnsEmpty_WhenEmailNotFound()
+    public async Task GetByAccountEmailAsync_ReturnsEmpty_WhenEmailNotFound()
     {
-        List<OtherCalendar> result = await _sut.GetByAccountEmailAsync("ghost@example.com", TestContext.Current.CancellationToken);
+        List<OtherCalendar> result = await Sut.GetByAccountEmailAsync(UniqueEmail("ghost"), TestContext.Current.CancellationToken);
 
         Assert.Empty(result);
     }
 
-    // -- CreateOtherCalendarAsync ---------------------------------------------
+    // -- CreateAsync ---------------------------------------------
 
-    /// <summary>Verifies that <c>CreateOtherCalendarAsync</c> persists entry.</summary>
+    /// <summary>Verifies that <c>CreateAsync</c> inserts a subscription row.</summary>
     [Fact]
-    public async Task CreateOtherCalendarAsync_PersistsEntry()
+    public async Task CreateAsync_PersistsEntry()
     {
-        var otherCalendar = OtherCalendar.Reconstitute(
-            accountEmail: "carol@example.com",
-            calendarId: 10);
+        string carol = UniqueEmail("carol");
+        await EnsureAccountsAsync(carol);
+        long calendarId = await InsertCalendarAsync();
 
-        await _sut.CreateAsync(otherCalendar, TestContext.Current.CancellationToken);
+        await Sut.CreateAsync(OtherCalendar.Reconstitute(accountEmail: carol, calendarId: calendarId), TestContext.Current.CancellationToken);
+        Context.ChangeTracker.Clear();
 
-        bool exists = await _context.OtherCalendars.AnyAsync(
-            oc => oc.AccountEmail == "carol@example.com" && oc.CalendarId == 10, TestContext.Current.CancellationToken);
-        Assert.True(exists);
+        Assert.True(await Context.OtherCalendars.AnyAsync(
+            oc => oc.AccountEmail == carol && oc.CalendarId == calendarId, TestContext.Current.CancellationToken));
     }
 
-    // -- DeleteOtherCalendarAsync ---------------------------------------------
-
-    /// <summary>Verifies that <c>DeleteOtherCalendarAsync</c> removes entry by email and calendar id.</summary>
+    /// <summary>PostgreSQL enforces <c>OtherCalendar_fk_1</c> — a subscription to an unknown calendar throws (InMemory did not).</summary>
     [Fact]
-    public async Task DeleteOtherCalendarAsync_RemovesEntry()
+    public async Task CreateAsync_Throws_WhenParentCalendarDoesNotExist()
     {
-        await SeedAsync(MakeOtherCalendar("dave@example.com", 7));
+        string carol = UniqueEmail("carol");
+        await EnsureAccountsAsync(carol);
 
-        await _sut.DeleteByAccountEmailAndCalendarIdAsync("dave@example.com", 7, TestContext.Current.CancellationToken);
+        await Assert.ThrowsAsync<DbUpdateException>(
+            () => Sut.CreateAsync(OtherCalendar.Reconstitute(accountEmail: carol, calendarId: long.MaxValue), TestContext.Current.CancellationToken));
+    }
 
-        bool exists = await _context.OtherCalendars.AnyAsync(
-            oc => oc.AccountEmail == "dave@example.com" && oc.CalendarId == 7, TestContext.Current.CancellationToken);
-        Assert.False(exists);
+    // -- DeleteByAccountEmailAndCalendarIdAsync ------------------------------
+
+    /// <summary>Verifies that <c>DeleteByAccountEmailAndCalendarIdAsync</c> removes the one matching row.</summary>
+    [Fact]
+    public async Task DeleteByAccountEmailAndCalendarIdAsync_RemovesEntry()
+    {
+        string dave = UniqueEmail("dave");
+        long calendarId = await InsertCalendarAsync();
+        await SeedAsync(dave, calendarId);
+
+        await Sut.DeleteByAccountEmailAndCalendarIdAsync(dave, calendarId, TestContext.Current.CancellationToken);
+        Context.ChangeTracker.Clear();
+
+        Assert.False(await Context.OtherCalendars.AnyAsync(
+            oc => oc.AccountEmail == dave && oc.CalendarId == calendarId, TestContext.Current.CancellationToken));
     }
 
     // -- DeleteByAccountEmailAsync --------------------------------------------
 
-    /// <summary>Verifies that <c>DeleteByAccountEmailAsync</c> removes all entries for given email.</summary>
+    /// <summary>Verifies that <c>DeleteByAccountEmailAsync</c> removes all subscriptions for the e-mail.</summary>
     [Fact]
     public async Task DeleteByAccountEmailAsync_RemovesAllEntriesForEmail()
     {
-        await SeedAsync(
-            MakeOtherCalendar("alice@example.com", 1),
-            MakeOtherCalendar("alice@example.com", 2),
-            MakeOtherCalendar("bob@example.com", 3));
+        string alice = UniqueEmail("alice");
+        string bob = UniqueEmail("bob");
+        long c1 = await InsertCalendarAsync();
+        long c2 = await InsertCalendarAsync();
+        long c3 = await InsertCalendarAsync();
+        await SeedAsync(alice, c1, c2);
+        await SeedAsync(bob, c3);
 
-        await _sut.DeleteByAccountEmailAsync("alice@example.com", TestContext.Current.CancellationToken);
+        await Sut.DeleteByAccountEmailAsync(alice, TestContext.Current.CancellationToken);
+        Context.ChangeTracker.Clear();
 
-        Assert.False(await _context.OtherCalendars.AnyAsync(oc => oc.AccountEmail == "alice@example.com", TestContext.Current.CancellationToken));
-        Assert.True(await _context.OtherCalendars.AnyAsync(oc => oc.AccountEmail == "bob@example.com", TestContext.Current.CancellationToken));
+        Assert.False(await Context.OtherCalendars.AnyAsync(oc => oc.AccountEmail == alice, TestContext.Current.CancellationToken));
+        Assert.True(await Context.OtherCalendars.AnyAsync(oc => oc.AccountEmail == bob, TestContext.Current.CancellationToken));
     }
 }

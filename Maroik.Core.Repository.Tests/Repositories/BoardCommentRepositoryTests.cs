@@ -1,5 +1,4 @@
 using Maroik.Core.Domain.Board;
-using Maroik.Core.PostgreSQL.Data;
 using Maroik.Core.Repository.Repositories;
 using Microsoft.EntityFrameworkCore;
 using EfBoard = Maroik.Core.PostgreSQL.Models.Board;
@@ -8,34 +7,21 @@ using EfBoardComment = Maroik.Core.PostgreSQL.Models.BoardComment;
 namespace Maroik.Core.Repository.Tests.Repositories;
 
 /// <summary>
-/// Tests for <see cref="BoardCommentRepository"/> using an EF Core InMemory database.
+/// Tests for <see cref="BoardCommentRepository"/> against a real PostgreSQL database (Testcontainers)
+/// pre-loaded with the production <c>Init.sql</c> schema and seed data. <c>BoardComment</c> carries
+/// the FK <c>BoardComment_fk_0</c> to <c>Board.Id</c> and the check <c>BoardComment_Order_check</c>
+/// (<c>Order &gt;= 0</c>), so every test creates a real parent board and scopes to its id.
 /// </summary>
-public class BoardCommentRepositoryTests : IDisposable
+public sealed class BoardCommentRepositoryTests(DatabaseFixture database) : RepositoryTestBase(database)
 {
-    private readonly ApplicationDbContext _context;
-    private readonly BoardCommentRepository _sut;
+    private BoardCommentRepository Sut => new(Context);
 
-    /// <summary>Initializes the test fixture, setting up all required test doubles and the system under test.</summary>
-    public BoardCommentRepositoryTests()
-    {
-        var options = new DbContextOptionsBuilder<ApplicationDbContext>()
-            .UseInMemoryDatabase(Guid.NewGuid().ToString())
-            .Options;
-        _context = new ApplicationDbContext(options);
-        _sut = new BoardCommentRepository(_context);
-    }
-
-    /// <summary>Releases resources allocated by this test fixture (disposes the database context).</summary>
-    public void Dispose() => _context.Dispose();
-
-    // -- Helpers --------------------------------------------------------------
-
-    private static EfBoardComment MakeComment(long boardId, long order, string writer = "Alice", bool deleted = false) => new()
+    private EfBoardComment MakeComment(long boardId, long order, string? writer = null, bool deleted = false) => new()
     {
         BoardId = boardId,
         Order = order,
         AvatarImagePath = "/upload/default.jpg",
-        Writer = writer,
+        Writer = writer ?? Unique("writer"),
         Content = "Comment content",
         Created = DateTime.UtcNow,
         Deleted = deleted
@@ -46,45 +32,51 @@ public class BoardCommentRepositoryTests : IDisposable
         var board = new EfBoard
         {
             Type = BoardTypes.FreeForum,
-            Title = "Parent Board",
+            Title = Unique("Parent Board"),
             Content = "Content",
-            Writer = "Alice",
+            Writer = Unique("writer"),
             Created = DateTime.UtcNow,
-            Updated = DateTime.UtcNow
+            Updated = DateTime.UtcNow,
+            View = 0,
+            Deleted = false,
+            Locked = false,
+            Noticed = false
         };
-        await _context.Boards.AddAsync(board);
-        await _context.SaveChangesAsync();
+        await Context.Boards.AddAsync(board);
+        await Context.SaveChangesAsync();
+        Context.ChangeTracker.Clear();
         return board.Id;
     }
 
     private async Task SeedAsync(params EfBoardComment[] comments)
     {
-        await _context.BoardComments.AddRangeAsync(comments);
-        await _context.SaveChangesAsync();
+        await Context.BoardComments.AddRangeAsync(comments);
+        await Context.SaveChangesAsync();
+        Context.ChangeTracker.Clear();
     }
 
-    // -- GetOneBoardCommentsAsync ---------------------------------------------
+    // -- GetByBoardIdOrderedAsync -------------------------------------------------
 
-    /// <summary>Verifies that <c>GetOneBoardCommentsAsync</c> returns only comments for given board.</summary>
+    /// <summary>Verifies that <c>GetByBoardIdOrderedAsync</c> returns only comments for the given board.</summary>
     [Fact]
-    public async Task GetOneBoardCommentsAsync_ReturnsOnlyCommentsForGivenBoard()
+    public async Task GetByBoardIdOrderedAsync_ReturnsOnlyCommentsForGivenBoard()
     {
-        long board1Id = await SeedBoardAsync();
-        long board2Id = await SeedBoardAsync();
+        long board1 = await SeedBoardAsync();
+        long board2 = await SeedBoardAsync();
         await SeedAsync(
-            MakeComment(board1Id, 1),
-            MakeComment(board1Id, 2),
-            MakeComment(board2Id, 1));
+            MakeComment(board1, 1),
+            MakeComment(board1, 2),
+            MakeComment(board2, 1));
 
-        IEnumerable<BoardComment> result = await _sut.GetByBoardIdOrderedAsync(board1Id, TestContext.Current.CancellationToken);
+        List<BoardComment> result = await Sut.GetByBoardIdOrderedAsync(board1, TestContext.Current.CancellationToken);
 
-        Assert.Equal(2, result.Count());
-        Assert.All(result, c => Assert.Equal(board1Id, c.BoardId));
+        Assert.Equal(2, result.Count);
+        Assert.All(result, c => Assert.Equal(board1, c.BoardId));
     }
 
-    /// <summary>Verifies that <c>GetOneBoardCommentsAsync</c> returns ordered by order.</summary>
+    /// <summary>Verifies that <c>GetByBoardIdOrderedAsync</c> returns comments ordered by <c>Order</c>.</summary>
     [Fact]
-    public async Task GetOneBoardCommentsAsync_ReturnsOrderedByOrder()
+    public async Task GetByBoardIdOrderedAsync_ReturnsOrderedByOrder()
     {
         long boardId = await SeedBoardAsync();
         await SeedAsync(
@@ -92,96 +84,92 @@ public class BoardCommentRepositoryTests : IDisposable
             MakeComment(boardId, 1),
             MakeComment(boardId, 2));
 
-        IEnumerable<BoardComment> result = await _sut.GetByBoardIdOrderedAsync(boardId, TestContext.Current.CancellationToken);
-        List<BoardComment> list = result.ToList();
+        List<BoardComment> result = await Sut.GetByBoardIdOrderedAsync(boardId, TestContext.Current.CancellationToken);
 
-        Assert.Equal(1, list[0].Order);
-        Assert.Equal(2, list[1].Order);
-        Assert.Equal(3, list[2].Order);
+        Assert.Equal([1L, 2L, 3L], result.Select(c => c.Order));
     }
 
-    /// <summary>Verifies that <c>GetOneBoardCommentsAsync</c> returns empty when no board comments.</summary>
+    /// <summary>Verifies that <c>GetByBoardIdOrderedAsync</c> returns empty when the board has no comments.</summary>
     [Fact]
-    public async Task GetOneBoardCommentsAsync_ReturnsEmpty_WhenNoBoardComments()
+    public async Task GetByBoardIdOrderedAsync_ReturnsEmpty_WhenNoBoardComments()
     {
         long boardId = await SeedBoardAsync();
 
-        IEnumerable<BoardComment> result = await _sut.GetByBoardIdOrderedAsync(boardId, TestContext.Current.CancellationToken);
+        List<BoardComment> result = await Sut.GetByBoardIdOrderedAsync(boardId, TestContext.Current.CancellationToken);
 
         Assert.Empty(result);
     }
 
-    /// <summary>Verifies that <c>GetOneBoardCommentsAsync</c> excludes soft-deleted comments.</summary>
+    /// <summary>Verifies that <c>GetByBoardIdOrderedAsync</c> excludes soft-deleted comments.</summary>
     [Fact]
-    public async Task GetOneBoardCommentsAsync_ExcludesDeletedComments()
+    public async Task GetByBoardIdOrderedAsync_ExcludesDeletedComments()
     {
         long boardId = await SeedBoardAsync();
         await SeedAsync(
-            MakeComment(boardId, 1, writer: "Visible"),
-            MakeComment(boardId, 2, writer: "Removed", deleted: true));
+            MakeComment(boardId, 1, writer: "Visible" + Token),
+            MakeComment(boardId, 2, writer: "Removed" + Token, deleted: true));
 
-        IEnumerable<BoardComment> result = await _sut.GetByBoardIdOrderedAsync(boardId, TestContext.Current.CancellationToken);
+        List<BoardComment> result = await Sut.GetByBoardIdOrderedAsync(boardId, TestContext.Current.CancellationToken);
 
-        Assert.Single(result);
-        Assert.Equal("Visible", result.Single().Writer);
+        Assert.Equal("Visible" + Token, Assert.Single(result).Writer);
     }
 
-    // -- GetBoardCommentAsync -------------------------------------------------
+    // -- FindByIdAsync -------------------------------------------------------
 
-    /// <summary>Verifies that <c>GetBoardCommentAsync</c> returns comment when found.</summary>
+    /// <summary>Verifies that <c>FindByIdAsync</c> returns the comment when found.</summary>
     [Fact]
-    public async Task GetBoardCommentAsync_ReturnsComment_WhenFound()
+    public async Task FindByIdAsync_ReturnsComment_WhenFound()
     {
         long boardId = await SeedBoardAsync();
-        await SeedAsync(MakeComment(boardId, 1, writer: "Bob"));
-        EfBoardComment comment = await _context.BoardComments.FirstAsync(TestContext.Current.CancellationToken);
+        var ef = MakeComment(boardId, 1, writer: "Bob" + Token);
+        await SeedAsync(ef);
 
-        BoardComment? result = await _sut.FindByIdAsync(comment.Id, TestContext.Current.CancellationToken);
+        BoardComment? result = await Sut.FindByIdAsync(ef.Id, TestContext.Current.CancellationToken);
 
         Assert.NotNull(result);
-        Assert.Equal("Bob", result.Writer);
+        Assert.Equal("Bob" + Token, result.Writer);
     }
 
-    /// <summary>Verifies that <c>GetBoardCommentAsync</c> returns null when not found.</summary>
+    /// <summary>Verifies that <c>FindByIdAsync</c> returns null when not found.</summary>
     [Fact]
-    public async Task GetBoardCommentAsync_ReturnsNull_WhenNotFound()
+    public async Task FindByIdAsync_ReturnsNull_WhenNotFound()
     {
-        BoardComment? result = await _sut.FindByIdAsync(99999L, TestContext.Current.CancellationToken);
+        BoardComment? result = await Sut.FindByIdAsync(long.MaxValue, TestContext.Current.CancellationToken);
 
         Assert.Null(result);
     }
 
-    /// <summary>Verifies that <c>GetBoardCommentAsync</c> returns null for a soft-deleted comment.</summary>
+    /// <summary>Verifies that <c>FindByIdAsync</c> returns null for a soft-deleted comment.</summary>
     [Fact]
-    public async Task GetBoardCommentAsync_ReturnsNull_WhenCommentIsDeleted()
+    public async Task FindByIdAsync_ReturnsNull_WhenCommentIsDeleted()
     {
         long boardId = await SeedBoardAsync();
-        await SeedAsync(MakeComment(boardId, 1, deleted: true));
-        EfBoardComment comment = await _context.BoardComments.FirstAsync(TestContext.Current.CancellationToken);
+        var ef = MakeComment(boardId, 1, deleted: true);
+        await SeedAsync(ef);
 
-        BoardComment? result = await _sut.FindByIdAsync(comment.Id, TestContext.Current.CancellationToken);
+        BoardComment? result = await Sut.FindByIdAsync(ef.Id, TestContext.Current.CancellationToken);
 
         Assert.Null(result);
     }
 
-    // -- GetCommentCountsByBoardIdsAsync --------------------------------------
+    // -- GetCommentCountsByBoardIdsAsync ------------------------------------------
 
-    /// <summary>Verifies that <c>GetCommentCountsByBoardIdsAsync</c> returns correct counts.</summary>
+    /// <summary>Verifies that <c>GetCommentCountsByBoardIdsAsync</c> counts only non-deleted comments.</summary>
     [Fact]
     public async Task GetCommentCountsByBoardIdsAsync_ReturnsCorrectCounts()
     {
-        long boardId1 = await SeedBoardAsync();
-        long boardId2 = await SeedBoardAsync();
+        long board1 = await SeedBoardAsync();
+        long board2 = await SeedBoardAsync();
         await SeedAsync(
-            MakeComment(boardId1, 1, deleted: false),
-            MakeComment(boardId1, 2, deleted: false),
-            MakeComment(boardId1, 3, deleted: true),  // deleted, not counted
-            MakeComment(boardId2, 1, deleted: false));
+            MakeComment(board1, 1),
+            MakeComment(board1, 2),
+            MakeComment(board1, 3, deleted: true),
+            MakeComment(board2, 1));
 
-        Dictionary<long, int> counts = await _sut.GetCommentCountsByBoardIdsAsync([boardId1, boardId2], TestContext.Current.CancellationToken);
+        Dictionary<long, int> counts = await Sut.GetCommentCountsByBoardIdsAsync([board1, board2], TestContext.Current.CancellationToken);
 
-        Assert.Equal(2, counts[boardId1]);  // 2 non-deleted
-        Assert.Equal(1, counts[boardId2]);
+        Assert.Equal(2, counts[board1]);
+        Assert.Equal(1, counts[board2]);
     }
 
     /// <summary>Verifies that <c>GetCommentCountsByBoardIdsAsync</c> returns zero for boards with no comments.</summary>
@@ -190,60 +178,62 @@ public class BoardCommentRepositoryTests : IDisposable
     {
         long boardId = await SeedBoardAsync();
 
-        Dictionary<long, int> counts = await _sut.GetCommentCountsByBoardIdsAsync([boardId], TestContext.Current.CancellationToken);
+        Dictionary<long, int> counts = await Sut.GetCommentCountsByBoardIdsAsync([boardId], TestContext.Current.CancellationToken);
 
         Assert.Equal(0, counts[boardId]);
     }
 
-    // -- WriteBoardCommentAsync -----------------------------------------------
+    // -- CreateAsync -----------------------------------------------
 
-    /// <summary>Verifies that <c>WriteBoardCommentAsync</c> adds comment to database.</summary>
+    /// <summary>Verifies that <c>CreateAsync</c> inserts a comment row.</summary>
     [Fact]
-    public async Task WriteBoardCommentAsync_AddsCommentToDatabase()
+    public async Task CreateAsync_AddsCommentToDatabase()
     {
         long boardId = await SeedBoardAsync();
 
         var comment = BoardComment.Reconstitute(
-            id: 0,
-            boardId: boardId,
-            order: 1,
-            avatarImagePath: "/upload/alice.jpg",
-            writer: "Alice",
-            content: "Great post!",
-            created: DateTime.UtcNow,
-            deleted: false);
+            id: 0, boardId: boardId, order: 1, avatarImagePath: "/upload/alice.jpg",
+            writer: "Alice" + Token, content: "Great post!", created: DateTime.UtcNow, deleted: false);
 
-        await _sut.CreateAsync(comment, TestContext.Current.CancellationToken);
+        await Sut.CreateAsync(comment, TestContext.Current.CancellationToken);
+        Context.ChangeTracker.Clear();
 
-        EfBoardComment? saved = await _context.BoardComments.FirstOrDefaultAsync(
+        EfBoardComment? saved = await Context.BoardComments.FirstOrDefaultAsync(
             c => c.BoardId == boardId && c.Content == "Great post!", TestContext.Current.CancellationToken);
         Assert.NotNull(saved);
-        Assert.Equal("Alice", saved.Writer);
+        Assert.Equal("Alice" + Token, saved.Writer);
+    }
+
+    /// <summary>PostgreSQL enforces <c>BoardComment_fk_0</c> — a comment on a non-existent board throws (InMemory did not).</summary>
+    [Fact]
+    public async Task CreateAsync_Throws_WhenParentBoardDoesNotExist()
+    {
+        var comment = BoardComment.Reconstitute(
+            id: 0, boardId: long.MaxValue, order: 0, avatarImagePath: "/x",
+            writer: "Ghost" + Token, content: "orphan", created: DateTime.UtcNow, deleted: false);
+
+        await Assert.ThrowsAsync<DbUpdateException>(
+            () => Sut.CreateAsync(comment, TestContext.Current.CancellationToken));
     }
 
     // -- UpdateEntityAsync ----------------------------------------------
 
-    /// <summary>Verifies that <c>UpdateEntityAsync</c> soft deletes comment.</summary>
+    /// <summary>Verifies that <c>UpdateEntityAsync</c> is how a comment is soft-deleted.</summary>
     [Fact]
     public async Task UpdateEntityAsync_SoftDeletesComment()
     {
         long boardId = await SeedBoardAsync();
-        await SeedAsync(MakeComment(boardId, 1));
-        EfBoardComment efComment = await _context.BoardComments.FirstAsync(TestContext.Current.CancellationToken);
+        var ef = MakeComment(boardId, 1);
+        await SeedAsync(ef);
 
         var comment = BoardComment.Reconstitute(
-            id: efComment.Id,
-            boardId: efComment.BoardId,
-            order: efComment.Order,
-            avatarImagePath: efComment.AvatarImagePath,
-            writer: efComment.Writer ?? "",
-            content: efComment.Content,
-            created: efComment.Created,
-            deleted: true);   // soft-delete
+            id: ef.Id, boardId: ef.BoardId, order: ef.Order, avatarImagePath: ef.AvatarImagePath,
+            writer: ef.Writer ?? "", content: ef.Content, created: ef.Created, deleted: true);
 
-        await _sut.UpdateEntityAsync(comment, TestContext.Current.CancellationToken);
+        await Sut.UpdateEntityAsync(comment, TestContext.Current.CancellationToken);
+        Context.ChangeTracker.Clear();
 
-        EfBoardComment? result = await _context.BoardComments.FirstOrDefaultAsync(c => c.Id == efComment.Id, TestContext.Current.CancellationToken);
+        EfBoardComment? result = await Context.BoardComments.FirstOrDefaultAsync(c => c.Id == ef.Id, TestContext.Current.CancellationToken);
         Assert.NotNull(result);
         Assert.True(result.Deleted);
     }
