@@ -276,7 +276,7 @@ public class ManagementController : Controller
             ServiceResult createResult = await _managementAccountService.CreateAccountAsync(new AccountRequest
             {
                 Email = accountInputViewModel.Email,
-                HashedPassword = accountInputViewModel.Password, // service will hash
+                PlainPassword = accountInputViewModel.Password, // service validates + hashes
                 Nickname = accountInputViewModel.Nickname,
                 AvatarImagePath = "/upload/Management/Profile/default-avatar.jpg",
                 Role = accountInputViewModel.Role,

@@ -1,3 +1,4 @@
+using Maroik.Core.Domain.Account;
 using Maroik.Core.Domain.Board;
 using Maroik.Core.Contract.Dtos;
 using Maroik.Core.Contract.Misc.Enums;
@@ -87,9 +88,9 @@ public class BoardService : IBoardService
 
     /// <inheritdoc />
     public bool CanView(BoardResponse board, AccountResponse? viewer) =>
-        board.Type == nameof(BoardType.PrivateNote)
-            ? viewer?.IsOwner(board.Writer) ?? false
-            : !board.Locked || (viewer?.IsOwnerOrAdmin(board.Writer) ?? false);
+        Board.CanBeViewedBy(
+            board.Type, board.Deleted, board.Locked, board.Writer,
+            viewer?.Nickname, viewer?.Role == Role.Admin);
 
     /// <inheritdoc />
     public async Task<BoardAttachedFileDto?> GetAttachedFileByBoardIdAsync(long boardId, CancellationToken ct = default)

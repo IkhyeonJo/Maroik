@@ -90,7 +90,7 @@ public class ManagementAccountServiceTests
         ServiceResult result = await sut.CreateAccountAsync(new AccountRequest
         {
             Email = "existing@example.com",
-            HashedPassword = "plain"
+            PlainPassword = "plain"
         }, TestContext.Current.CancellationToken);
 
         Assert.False(result.Success);
@@ -109,7 +109,7 @@ public class ManagementAccountServiceTests
         ServiceResult result = await sut.CreateAccountAsync(new AccountRequest
         {
             Email = "new@example.com",
-            HashedPassword = "Plain1234!",
+            PlainPassword = "Plain1234!",
             Nickname = "NewUser",
             EmailConfirmed = true
         }, TestContext.Current.CancellationToken);

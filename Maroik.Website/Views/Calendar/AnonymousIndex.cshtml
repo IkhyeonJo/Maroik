@@ -8,7 +8,7 @@
 *@
 @using Maroik.Website.Models.ViewModels.Calendar
 @using Maroik.Core.Domain.Calendar
-@using Newtonsoft.Json
+@using Maroik.Website.Extensions
 @model CalendarOutputViewModel
 
 @{
@@ -22,7 +22,7 @@
 @Html.Hidden("maxHoursBeforeEvent", CalendarReminderPolicy.MaxHoursBeforeEvent)
 @Html.Hidden("maxDaysBeforeEvent", CalendarReminderPolicy.MaxDaysBeforeEvent)
 @Html.Hidden("maxWeeksBeforeEvent", CalendarReminderPolicy.MaxWeeksBeforeEvent)
-@Html.Hidden("reminderTimeIntervals", JsonConvert.SerializeObject(Model.TimeIntervals))
+@Html.Hidden("reminderTimeIntervals", JsonSerialization.ToClientJson(Model.TimeIntervals))
 @Html.Hidden("defaultReminderTimeOfDay", CalendarReminderPolicy.DefaultReminderTimeOfDay)
 
 @Html.Hidden("localizerEmail", Localizer["Email"].Value)
@@ -105,7 +105,7 @@
 @Html.Hidden("localizerErrorRangeHour", Localizer["ErrorRangeHour"].Value)
 @Html.Hidden("localizerErrorRangeDay", Localizer["ErrorRangeDay"].Value)
 @Html.Hidden("localizerErrorRangeWeek", Localizer["ErrorRangeWeek"].Value)
-@Html.Hidden("otherCalendarEventOutputViewModels", JsonConvert.SerializeObject(Model.OtherCalendarEventOutputViewModels))
+@Html.Hidden("otherCalendarEventOutputViewModels", JsonSerialization.ToClientJson(Model.OtherCalendarEventOutputViewModels))
 
 <section class="content">
     <div class="container-fluid">

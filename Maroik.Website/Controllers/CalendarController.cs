@@ -13,7 +13,6 @@ using Maroik.Website.Models.ViewModels.Calendar;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Localization;
 using Microsoft.Extensions.Options;
-using Newtonsoft.Json;
 
 namespace Maroik.Website.Controllers;
 
@@ -466,7 +465,7 @@ public class CalendarController : Controller
             // Matches main: an empty result set for the requested range/calendars is reported the
             // same way as any other "nothing to return" case, not as a distinct success payload.
             return calendarEvents.Count > 0
-                ? Json(new { result = true, calendarEvents = JsonConvert.SerializeObject(calendarEvents) })
+                ? Json(new { result = true, calendarEvents = JsonSerialization.ToClientJson(calendarEvents) })
                 : Json(new { result = false, error = _localizer["Input is invalid"].Value });
         }
         catch (Exception ex)

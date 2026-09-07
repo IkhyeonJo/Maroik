@@ -139,7 +139,7 @@ public class AccountController : Controller
             var newAccount = new AccountRequest
             {
                 Email = loginInputViewModel.Email,
-                HashedPassword = loginInputViewModel.Password, // service will hash
+                PlainPassword = loginInputViewModel.Password, // service validates + hashes
                 Nickname = loginInputViewModel.Nickname,
                 AvatarImagePath = "/upload/Management/Profile/default-avatar.jpg",
                 Role = Role.User,

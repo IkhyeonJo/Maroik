@@ -11,8 +11,18 @@ public class AccountRequest
     /// <summary>Email address used as the primary key / login ID.</summary>
     public string? Email { get; set; }
 
-    /// <summary>BCrypt-hashed password. Never store plain-text passwords.</summary>
+    /// <summary>
+    /// Always a BCrypt hash — never a plain-text password. On the create/register path this stays
+    /// null and <see cref="PlainPassword"/> carries the raw value for the service to hash.
+    /// </summary>
     public string? HashedPassword { get; set; }
+
+    /// <summary>
+    /// Plain-text password as typed by the user, used only on the create/register path. The service
+    /// layer validates it against the password policy and hashes it into <see cref="HashedPassword"/>
+    /// before the domain sees it; it is never persisted or returned.
+    /// </summary>
+    public string? PlainPassword { get; set; }
 
     /// <summary>Unique display name shown throughout the UI.</summary>
     public string? Nickname { get; set; }

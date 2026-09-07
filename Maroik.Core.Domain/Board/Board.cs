@@ -217,8 +217,38 @@ public sealed class Board : AggregateRoot<long>
         return Result.Success;
     }
 
+    /// <summary>True when this post is a private note (visible to its author only).</summary>
+    public bool IsPrivateNote => string.Equals(Type, BoardTypes.PrivateNote, StringComparison.Ordinal);
+
     /// <summary>Returns true when <paramref name="nickname"/> is this post's author.</summary>
     public bool IsOwnedBy(string nickname) => Writer == nickname;
+
+    /// <summary>
+    /// Returns true when a viewer identified by <paramref name="viewerNickname"/> (<see langword="null"/>
+    /// = anonymous) with <paramref name="viewerIsAdmin"/> may open this post. A private note is visible
+    /// only to its author (no admin bypass); any other board type is public unless locked, and a locked
+    /// post is visible only to its author or an admin. A soft-deleted post is never viewable.
+    /// </summary>
+    public bool CanBeViewedBy(string? viewerNickname, bool viewerIsAdmin) =>
+        CanBeViewedBy(Type, Deleted, Locked, Writer, viewerNickname, viewerIsAdmin);
+
+    /// <summary>
+    /// Field-level overload of <see cref="CanBeViewedBy(string?, bool)"/> for callers that only hold a
+    /// projection of a post (e.g. a service working from a read DTO) rather than a full aggregate.
+    /// </summary>
+    public static bool CanBeViewedBy(
+        string? type, bool deleted, bool locked, string? writer,
+        string? viewerNickname, bool viewerIsAdmin)
+    {
+        if (deleted)
+            return false;
+
+        bool isOwner = viewerNickname != null && string.Equals(writer, viewerNickname, StringComparison.Ordinal);
+
+        return string.Equals(type, BoardTypes.PrivateNote, StringComparison.Ordinal)
+            ? isOwner
+            : !locked || isOwner || viewerIsAdmin;
+    }
 
     /// <summary>Returns true when <paramref name="nickname"/> may edit this post (owner only, no admin bypass).</summary>
     public bool CanBeEditedBy(string nickname) => IsOwnedBy(nickname);

@@ -152,11 +152,11 @@ public class AccountService : IAccountService
         if (existing == null)
         {
             // Brand-new account: hash the plain-text password and create the domain entity.
-            newAccount.HashedPassword = _passwordService.HashPassword(newAccount.HashedPassword ?? "");
+            string hashedPassword = _passwordService.HashPassword(newAccount.PlainPassword ?? "");
 
             var createResult = Account.Create(
                 newAccount.Email ?? "",
-                newAccount.HashedPassword,
+                hashedPassword,
                 newAccount.Nickname ?? "",
                 newAccount.Role ?? Role.User,
                 newAccount.TimeZoneIanaId ?? "UTC",

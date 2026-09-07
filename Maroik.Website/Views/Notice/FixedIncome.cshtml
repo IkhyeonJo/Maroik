@@ -10,7 +10,7 @@
     localization strings for the calendar widget are injected as hidden form fields.
 *@
 @using Maroik.Core.Domain.Finance
-@using Newtonsoft.Json
+@using Maroik.Website.Extensions
 @{
     var assets = ViewBag.Assets as List<AssetResponse> ?? [];
     var defaultAssetProductName = ViewBag.DefaultAssetProductName as string;
@@ -69,8 +69,8 @@
 
 @* Income main→sub-class taxonomy and the deposit month→max-day rule — authoritative in
    IncomeClassPolicy / FixedSchedulePolicy; the form reads these instead of hardcoding them. *@
-@Html.Hidden("incomeSubClassMap", JsonConvert.SerializeObject(IncomeClassPolicy.SubClassesByMainClass))
-@Html.Hidden("maxDepositDayByMonth", JsonConvert.SerializeObject(FixedSchedulePolicy.MaxDepositDayByMonth))
+@Html.Hidden("incomeSubClassMap", JsonSerialization.ToClientJson(IncomeClassPolicy.SubClassesByMainClass))
+@Html.Hidden("maxDepositDayByMonth", JsonSerialization.ToClientJson(FixedSchedulePolicy.MaxDepositDayByMonth))
 
 <section class="content">
     <div class="card card-primary">

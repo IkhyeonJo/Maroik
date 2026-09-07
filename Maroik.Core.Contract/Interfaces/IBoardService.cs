@@ -30,9 +30,10 @@ public interface IBoardService
     Task<BoardResponse?> GetBoardByIdAsync(long id, string? requiredType = null, CancellationToken ct = default);
 
     /// <summary>
-    /// True when <paramref name="viewer"/> may view <paramref name="board"/>. Private notes are
+    /// True when <paramref name="viewer"/> may view <paramref name="board"/>. Thin projection-based
+    /// wrapper over the authoritative <c>Board.CanBeViewedBy</c> domain rule: private notes are
     /// visible only to their author; other board types are visible to anyone unless locked, in
-    /// which case only the author or an Admin may view them.
+    /// which case only the author or an Admin may view them; a deleted post is never viewable.
     /// </summary>
     bool CanView(BoardResponse board, AccountResponse? viewer);
 

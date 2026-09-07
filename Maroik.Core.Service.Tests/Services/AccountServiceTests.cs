@@ -275,7 +275,7 @@ public class AccountServiceTests
         var request = new AccountRequest
         {
             Email = "new@example.com",
-            HashedPassword = "plain-password",
+            PlainPassword = "plain-password",
             Nickname = "TestUser",
             RegistrationToken = GuidToken.Generate()
         };
@@ -304,7 +304,7 @@ public class AccountServiceTests
         var request = new AccountRequest
         {
             Email = "new@example.com",
-            HashedPassword = "plain-password",
+            PlainPassword = "plain-password",
             Nickname = "TestUser",
             RegistrationToken = GuidToken.Generate()
         };
@@ -331,7 +331,7 @@ public class AccountServiceTests
         var request = new AccountRequest
         {
             Email = "new@example.com",
-            HashedPassword = "plain-password",
+            PlainPassword = "plain-password",
             RegistrationToken = GuidToken.Generate()
         };
 
@@ -354,7 +354,7 @@ public class AccountServiceTests
         var request = new AccountRequest
         {
             Email = "new@example.com",
-            HashedPassword = "plain-password",
+            PlainPassword = "plain-password",
             Nickname = "TakenNick",
             RegistrationToken = GuidToken.Generate()
         };
@@ -384,7 +384,7 @@ public class AccountServiceTests
         var request = new AccountRequest
         {
             Email = "raced@example.com",
-            HashedPassword = "plain-password",
+            PlainPassword = "plain-password",
             Nickname = "SomeNick",
             RegistrationToken = GuidToken.Generate()
         };

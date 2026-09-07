@@ -374,4 +374,69 @@ public class BoardTests
 
         Assert.False(board.CanBeDeletedBy("Bob", isAdmin: false));
     }
+
+    // -- CanBeViewedBy ------------------------------------------------------------
+
+    private static Board ViewBoard(string type, string writer = "Alice", bool locked = false, bool deleted = false) =>
+        Board.Reconstitute(1, type, "Title", "body", writer, DateTime.UtcNow, DateTime.UtcNow, 0, deleted, locked, false);
+
+    /// <summary>An unlocked free-forum post is viewable by anyone, including anonymous visitors.</summary>
+    [Fact]
+    public void CanBeViewedBy_UnlockedFreeForum_ViewableByAnonymous()
+    {
+        var board = ViewBoard(BoardTypes.FreeForum);
+
+        Assert.True(board.CanBeViewedBy(viewerNickname: null, viewerIsAdmin: false));
+    }
+
+    /// <summary>A locked free-forum post is hidden from an unrelated viewer.</summary>
+    [Fact]
+    public void CanBeViewedBy_LockedFreeForum_HiddenFromUnrelatedViewer()
+    {
+        var board = ViewBoard(BoardTypes.FreeForum, locked: true);
+
+        Assert.False(board.CanBeViewedBy("Bob", viewerIsAdmin: false));
+        Assert.False(board.CanBeViewedBy(viewerNickname: null, viewerIsAdmin: false));
+    }
+
+    /// <summary>A locked free-forum post stays visible to its author and to any admin.</summary>
+    [Fact]
+    public void CanBeViewedBy_LockedFreeForum_VisibleToOwnerOrAdmin()
+    {
+        var board = ViewBoard(BoardTypes.FreeForum, locked: true);
+
+        Assert.True(board.CanBeViewedBy("Alice", viewerIsAdmin: false));
+        Assert.True(board.CanBeViewedBy("Bob", viewerIsAdmin: true));
+    }
+
+    /// <summary>A private note is visible only to its author — no admin bypass.</summary>
+    [Fact]
+    public void CanBeViewedBy_PrivateNote_AuthorOnly_NoAdminBypass()
+    {
+        var board = ViewBoard(BoardTypes.PrivateNote);
+
+        Assert.True(board.CanBeViewedBy("Alice", viewerIsAdmin: false));
+        Assert.False(board.CanBeViewedBy("Bob", viewerIsAdmin: true));
+        Assert.False(board.CanBeViewedBy(viewerNickname: null, viewerIsAdmin: false));
+    }
+
+    /// <summary>A soft-deleted post is never viewable, not even by its author.</summary>
+    [Fact]
+    public void CanBeViewedBy_DeletedPost_NeverViewable()
+    {
+        var board = ViewBoard(BoardTypes.FreeForum, deleted: true);
+
+        Assert.False(board.CanBeViewedBy("Alice", viewerIsAdmin: true));
+    }
+
+    /// <summary>The instance rule and the field-level overload agree.</summary>
+    [Fact]
+    public void CanBeViewedBy_StaticOverload_MatchesInstanceRule()
+    {
+        var board = ViewBoard(BoardTypes.FreeForum, locked: true);
+
+        Assert.Equal(
+            board.CanBeViewedBy("Alice", viewerIsAdmin: false),
+            Board.CanBeViewedBy(board.Type, board.Deleted, board.Locked, board.Writer, "Alice", viewerIsAdmin: false));
+    }
 }

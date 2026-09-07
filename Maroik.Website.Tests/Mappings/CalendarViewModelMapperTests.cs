@@ -1,7 +1,7 @@
 using Maroik.Core.Contract.Dtos;
 using Maroik.Website.Mappings;
 using Maroik.Website.Models.ViewModels.Calendar;
-using Newtonsoft.Json;
+using System.Text.Json;
 
 namespace Maroik.Website.Tests.Mappings;
 
@@ -186,7 +186,7 @@ public class CalendarViewModelMapperTests
         ];
 
         string json = reminders.ToSerializedReminders();
-        var roundTripped = JsonConvert.DeserializeObject<List<CalendarReminderDto>>(json)!;
+        var roundTripped = JsonSerializer.Deserialize<List<CalendarReminderDto>>(json)!;
 
         Assert.Equal("Email", roundTripped[0].Method);
         Assert.Equal(30, roundTripped[0].MinutesBeforeEvent);
@@ -203,7 +203,7 @@ public class CalendarViewModelMapperTests
         List<CalendarEventReminderDto> reminders = [new CalendarEventReminderDto { Method = null }];
 
         string json = reminders.ToSerializedReminders();
-        var roundTripped = JsonConvert.DeserializeObject<List<CalendarReminderDto>>(json)!;
+        var roundTripped = JsonSerializer.Deserialize<List<CalendarReminderDto>>(json)!;
 
         Assert.Equal("", roundTripped[0].Method);
     }
@@ -343,7 +343,7 @@ public class CalendarViewModelMapperTests
     [Fact]
     public void ToReminderInfoList_ParsesFieldsAndTimeOfDay()
     {
-        string json = JsonConvert.SerializeObject(new[]
+        string json = JsonSerializer.Serialize(new[]
         {
             new
             {
@@ -369,7 +369,7 @@ public class CalendarViewModelMapperTests
     [Fact]
     public void ToReminderInfoList_EmptyTimesBeforeEvent_LeavesTimesBeforeEventNull()
     {
-        string json = JsonConvert.SerializeObject(new[]
+        string json = JsonSerializer.Serialize(new[]
         {
             new
             {

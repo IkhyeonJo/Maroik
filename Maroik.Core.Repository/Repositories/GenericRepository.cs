@@ -1,4 +1,5 @@
 using System.Linq.Expressions;
+using System.Reflection;
 using Maroik.Core.Contract.Interfaces;
 using Maroik.Core.PostgreSQL.Data;
 using Microsoft.EntityFrameworkCore;
@@ -43,6 +44,33 @@ public abstract class GenericRepository<TDomain, TEntity>(ApplicationDbContext c
     /// </summary>
     protected virtual IQueryable<TEntity> ApplyIncludes(IQueryable<TEntity> query) => query;
 
+    /// <summary>
+    /// Compiled getters for <typeparamref name="TEntity"/>'s primary-key properties, built once per
+    /// closed generic type and reused for every <see cref="UpdateEntityAsync"/> /
+    /// <see cref="DeleteWhereAsync"/> call. This replaces a per-call <see cref="PropertyInfo.GetValue"/>
+    /// reflection walk; the key-property list still comes from the EF model (itself cached by EF Core),
+    /// only the value extraction is compiled. Assigned via <c>??=</c> — a benign race just rebuilds an
+    /// identical delegate array.
+    /// </summary>
+    private static Func<TEntity, object?>[]? _primaryKeyGetters;
+
+    private Func<TEntity, object?>[] BuildPrimaryKeyGetters()
+    {
+        var keyProperties = Context.Model.FindEntityType(typeof(TEntity))!.FindPrimaryKey()!.Properties;
+
+        return [.. keyProperties.Select(property =>
+        {
+            var entity = Expression.Parameter(typeof(TEntity), "e");
+            Expression access = Expression.Property(entity, property.PropertyInfo!);
+            return Expression.Lambda<Func<TEntity, object?>>(
+                Expression.Convert(access, typeof(object)), entity).Compile();
+        })];
+    }
+
+    /// <summary>Reads <paramref name="entity"/>'s primary-key values (simple or composite) in key order.</summary>
+    private object?[] GetPrimaryKeyValues(TEntity entity) =>
+        [.. (_primaryKeyGetters ??= BuildPrimaryKeyGetters()).Select(getter => getter(entity))];
+
     /// <inheritdoc />
     public async Task CreateAsync(TDomain domain, CancellationToken ct = default)
     {
@@ -55,11 +83,10 @@ public abstract class GenericRepository<TDomain, TEntity>(ApplicationDbContext c
     {
         var newEntity = ToEntity(domain);
         // ToEntity always builds a brand-new instance that this context has never seen, so it starts
-        // out Detached regardless of the context's tracking mode. Look up the primary key reflectively
-        // (works for both simple and composite keys) to re-find the row via Set.FindAsync, which
-        // returns a tracked instance we can then overwrite.
-        var pk = Context.Model.FindEntityType(typeof(TEntity))!.FindPrimaryKey()!.Properties;
-        var keyValues = pk.Select(p => p.PropertyInfo!.GetValue(newEntity)).ToArray();
+        // out Detached regardless of the context's tracking mode. Read the primary key (works for
+        // both simple and composite keys) via the compiled per-type getters, then re-find the row
+        // via Set.FindAsync, which returns a tracked instance we can then overwrite.
+        var keyValues = GetPrimaryKeyValues(newEntity);
         var existing = await Set.FindAsync(keyValues, ct);
         if (existing is null)
             throw new InvalidOperationException(
@@ -119,13 +146,12 @@ public abstract class GenericRepository<TDomain, TEntity>(ApplicationDbContext c
         // before being removed. Both paths avoid the DB round trip that a per-row Set.FindAsync
         // would incur.
         var toRemove = await Set.AsNoTracking().Where(predicate).ToListAsync(ct);
-        var pk = Context.Model.FindEntityType(typeof(TEntity))!.FindPrimaryKey()!.Properties;
 
         foreach (var entity in toRemove)
         {
-            var keyValues = pk.Select(p => p.PropertyInfo!.GetValue(entity)).ToArray();
+            var keyValues = GetPrimaryKeyValues(entity);
             var trackedEntry = Context.ChangeTracker.Entries<TEntity>()
-                .FirstOrDefault(e => pk.Select(p => p.PropertyInfo!.GetValue(e.Entity)).SequenceEqual(keyValues));
+                .FirstOrDefault(e => GetPrimaryKeyValues(e.Entity).SequenceEqual(keyValues));
 
             if (trackedEntry != null)
             {

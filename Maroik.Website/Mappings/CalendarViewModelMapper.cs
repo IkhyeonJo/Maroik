@@ -1,8 +1,10 @@
+using System.Text.Json;
+using System.Text.Json.Serialization;
 using Maroik.Core.Contract.Dtos;
 using Maroik.Core.Contract.Misc.Extensions;
 using Maroik.Core.Domain.Calendar;
+using Maroik.Website.Extensions;
 using Maroik.Website.Models.ViewModels.Calendar;
-using Newtonsoft.Json;
 
 namespace Maroik.Website.Mappings;
 
@@ -99,7 +101,7 @@ public static class CalendarViewModelMapper
         /// Serializes reminder response objects to the JSON array the client edit-form expects.
         /// </summary>
         public string ToSerializedReminders()
-            => JsonConvert.SerializeObject(reminders.Select(x => new CalendarReminderDto
+            => JsonSerialization.ToClientJson(reminders.Select(x => new CalendarReminderDto
             {
                 Method = x.Method ?? "",
                 MinutesBeforeEvent = (int?)x.MinutesBeforeEvent,
@@ -182,23 +184,52 @@ public static class CalendarViewModelMapper
         /// </summary>
         public List<CalendarReminderDto> ToReminderInfoList()
         {
-            List<CalendarReminderDto> reminders = [];
-            List<Dictionary<string, object>> raw = JsonConvert.DeserializeObject<List<Dictionary<string, object>>>(serialized ?? "[]") ?? [];
-            reminders.AddRange(from r in raw
-                let tempTimes = r["TimesBeforeEvent"]?.ToString()
-                select new CalendarReminderDto
-                {
-                    Method = r["Method"].ToString() ?? "",
-                    MinutesBeforeEvent = r["MinutesBeforeEvent"] != null ? Convert.ToInt32(r["MinutesBeforeEvent"]) : null,
-                    HoursBeforeEvent = r["HoursBeforeEvent"] != null ? Convert.ToInt32(r["HoursBeforeEvent"]) : null,
-                    DaysBeforeEvent = r["DaysBeforeEvent"] != null ? Convert.ToInt32(r["DaysBeforeEvent"]) : null,
-                    WeeksBeforeEvent = r["WeeksBeforeEvent"] != null ? Convert.ToInt32(r["WeeksBeforeEvent"]) : null,
-                    TimesBeforeEvent = !string.IsNullOrEmpty(tempTimes)
-                        ? new TimeSpan(Convert.ToInt32(tempTimes.Split(':')[0]), Convert.ToInt32(tempTimes.Split(':')[1]), 0)
-                        : null
-                });
-            return reminders;
+            List<ReminderFormItem> raw = string.IsNullOrEmpty(serialized)
+                ? []
+                : JsonSerializer.Deserialize<List<ReminderFormItem>>(serialized, _reminderFormOptions) ?? [];
+
+            return [.. raw.Select(r => new CalendarReminderDto
+            {
+                Method = r.Method ?? "",
+                MinutesBeforeEvent = r.MinutesBeforeEvent,
+                HoursBeforeEvent = r.HoursBeforeEvent,
+                DaysBeforeEvent = r.DaysBeforeEvent,
+                WeeksBeforeEvent = r.WeeksBeforeEvent,
+                TimesBeforeEvent = ParseTimeOfDay(r.TimesBeforeEvent)
+            })];
         }
+    }
+
+    /// <summary>
+    /// Deserialization options for the reminder rows posted by the calendar edit form. The client
+    /// sends verbatim PascalCase keys; a lead-time number may arrive as a JSON string, so reading
+    /// numbers from strings stays permitted (the previous <c>Convert.ToInt32</c> path tolerated both).
+    /// </summary>
+    private static readonly JsonSerializerOptions _reminderFormOptions = new()
+    {
+        PropertyNameCaseInsensitive = true,
+        NumberHandling = JsonNumberHandling.AllowReadingFromString
+    };
+
+    /// <summary>Parses an <c>"HH:mm"</c> time-of-day string; null/empty yields <see langword="null"/>.</summary>
+    private static TimeSpan? ParseTimeOfDay(string? value)
+    {
+        if (string.IsNullOrEmpty(value))
+            return null;
+
+        string[] parts = value.Split(':');
+        return new TimeSpan(Convert.ToInt32(parts[0]), Convert.ToInt32(parts[1]), 0);
+    }
+
+    /// <summary>Wire shape of one reminder row in the calendar edit form's hidden JSON field.</summary>
+    private sealed class ReminderFormItem
+    {
+        public string? Method { get; set; }
+        public int? MinutesBeforeEvent { get; set; }
+        public int? HoursBeforeEvent { get; set; }
+        public int? DaysBeforeEvent { get; set; }
+        public int? WeeksBeforeEvent { get; set; }
+        public string? TimesBeforeEvent { get; set; }
     }
 
     /// <summary>Parses a "yyyy-MM-dd HH:mm" string into an unspecified-kind local <see cref="DateTime"/>.</summary>

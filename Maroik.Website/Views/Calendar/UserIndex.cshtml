@@ -9,7 +9,7 @@
 *@
 @using Maroik.Website.Models.ViewModels.Calendar
 @using Maroik.Core.Domain.Calendar
-@using Newtonsoft.Json
+@using Maroik.Website.Extensions
 @model CalendarOutputViewModel
 
 @{
@@ -27,7 +27,7 @@
 @Html.Hidden("maxDaysBeforeEvent", CalendarReminderPolicy.MaxDaysBeforeEvent)
 @Html.Hidden("maxWeeksBeforeEvent", CalendarReminderPolicy.MaxWeeksBeforeEvent)
 @* "Notify at HH:MM" options + default, from CalendarReminderPolicy / the view model, so the client stops regenerating the 15-minute list. *@
-@Html.Hidden("reminderTimeIntervals", JsonConvert.SerializeObject(Model.TimeIntervals))
+@Html.Hidden("reminderTimeIntervals", JsonSerialization.ToClientJson(Model.TimeIntervals))
 @Html.Hidden("defaultReminderTimeOfDay", CalendarReminderPolicy.DefaultReminderTimeOfDay)
 @Html.Hidden("localizerEmail", Localizer["Email"].Value)
 @Html.Hidden("localizerNotification", Localizer["Notification"].Value)
@@ -109,8 +109,8 @@
 @Html.Hidden("localizerErrorRangeHour", Localizer["ErrorRangeHour"].Value)
 @Html.Hidden("localizerErrorRangeDay", Localizer["ErrorRangeDay"].Value)
 @Html.Hidden("localizerErrorRangeWeek", Localizer["ErrorRangeWeek"].Value)
-@Html.Hidden("calendarEventOutputViewModels", JsonConvert.SerializeObject(Model.CalendarEventOutputViewModels))
-@Html.Hidden("otherCalendarEventOutputViewModels", JsonConvert.SerializeObject(Model.OtherCalendarEventOutputViewModels))
+@Html.Hidden("calendarEventOutputViewModels", JsonSerialization.ToClientJson(Model.CalendarEventOutputViewModels))
+@Html.Hidden("otherCalendarEventOutputViewModels", JsonSerialization.ToClientJson(Model.OtherCalendarEventOutputViewModels))
 
 <section class="content">
     <div class="container-fluid">

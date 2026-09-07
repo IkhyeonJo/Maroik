@@ -49,15 +49,14 @@ public class ManagementAccountService : IManagementAccountService
             if (await FindByEmailAsync(request.Email ?? "", ct) != null)
                 return ServiceResult.Conflict("Account.AlreadyExists", "This account has already been created.");
 
-            // request.HashedPassword carries the plain-text password at this point (the caller passes
-            // it un-hashed and this service hashes it). The complexity rule is checked here, before
-            // hashing, so the controller no longer has to — Account.Create only ever sees the hash.
-            if (!PasswordPolicy.IsValid(request.HashedPassword))
+            // request.PlainPassword carries the raw password. The complexity rule is checked here,
+            // before hashing, so the controller no longer has to — Account.Create only ever sees the hash.
+            if (!PasswordPolicy.IsValid(request.PlainPassword))
                 return ServiceResult.Fail(
                     "Password must be at least 8 characters and contain at least 3 of 4 of the following: " +
                     "upper case (A-Z), lower case (a-z), number (0-9) and special character (e.g. !@#$%^&*).");
 
-            string hashedPassword = _passwordService.HashPassword(request.HashedPassword ?? "");
+            string hashedPassword = _passwordService.HashPassword(request.PlainPassword ?? "");
 
             var createResult = Account.Create(
                 request.Email ?? "",
