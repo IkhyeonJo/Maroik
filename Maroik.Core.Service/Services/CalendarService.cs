@@ -288,14 +288,14 @@ public class CalendarService : ICalendarService
                 if (!shareableCalendarIds.Contains(req.CalendarId))
                 {
                     await _unitOfWork.RollbackAsync(ct);
-                    return ServiceResult.Fail("Input is invalid");
+                    return ServiceResult.Failure("Calendar.UpdateOtherCalendarsFailed", "Input is invalid");
                 }
 
                 var createResult = OtherCalendar.Create(email, req.CalendarId);
                 if (createResult.IsError)
                 {
                     await _unitOfWork.RollbackAsync(ct);
-                    return ServiceResult.Fail(createResult.FirstError.Description);
+                    return ServiceResult.FromError(createResult.FirstError);
                 }
                 await _otherCalendarRepository.CreateAsync(createResult.Value, ct);
             }
@@ -307,7 +307,7 @@ public class CalendarService : ICalendarService
         {
             _logger.LogError(ex, "Failed to update other-calendar subscriptions for account {AccountEmail}", email);
             await _unitOfWork.RollbackAsync(ct);
-            return ServiceResult.Fail("Input is invalid");
+            return ServiceResult.Failure("Calendar.UpdateOtherCalendarsFailed", "Input is invalid");
         }
     }
 
@@ -319,7 +319,7 @@ public class CalendarService : ICalendarService
         List<Calendar> ownedCalendars = await _calendarRepository.GetByAccountEmailAsync(email, ct);
         if (calendarSharedRequests.Any(req => ownedCalendars.All(c => c.Id != req.CalendarId)))
         {
-            return ServiceResult.Fail("Input is invalid");
+            return ServiceResult.Validation("CalendarShared.InvalidTarget", "Input is invalid");
         }
 
         await _unitOfWork.BeginAsync(ct);
@@ -360,7 +360,7 @@ public class CalendarService : ICalendarService
         {
             _logger.LogError(ex, "Failed to update calendar shared settings");
             await _unitOfWork.RollbackAsync(ct);
-            return ServiceResult.Fail("Input is invalid");
+            return ServiceResult.Failure("Calendar.UpdateSharedFailed", "Input is invalid");
         }
     }
 
@@ -383,7 +383,7 @@ public class CalendarService : ICalendarService
             if (calendars.All(c => c.Id != request.CalendarId))
             {
                 await _unitOfWork.RollbackAsync(ct);
-                return ServiceResult.Fail("The calendar does not exists.");
+                return ServiceResult.NotFound("Calendar.NotFound", "The calendar does not exists.");
             }
 
             var eventResult = CalendarEvent.Create(request.CalendarId, request.Title, description,
@@ -393,7 +393,7 @@ public class CalendarService : ICalendarService
             if (eventResult.IsError)
             {
                 await _unitOfWork.RollbackAsync(ct);
-                return ServiceResult.Fail(eventResult.FirstError.Description);
+                return ServiceResult.FromError(eventResult.FirstError);
             }
 
             var calendarEvent = eventResult.Value;
@@ -423,7 +423,7 @@ public class CalendarService : ICalendarService
         {
             _logger.LogError(ex, "Failed to create calendar event for calendar {CalendarId} and account {AccountEmail}", request.CalendarId, email);
             await _unitOfWork.RollbackAsync(ct);
-            return ServiceResult.Fail("Input is invalid");
+            return ServiceResult.Failure("CalendarEvent.CreateFailed", "Input is invalid");
         }
     }
 
@@ -446,7 +446,7 @@ public class CalendarService : ICalendarService
             if (calendars.All(c => c.Id != request.CalendarId))
             {
                 await _unitOfWork.RollbackAsync(ct);
-                return ServiceResult.Fail("The calendar does not exists.");
+                return ServiceResult.NotFound("Calendar.NotFound", "The calendar does not exists.");
             }
 
             CalendarEvent? existing = await _calendarEventRepository.FindByIdAsync(request.Id, ct);
@@ -455,7 +455,7 @@ public class CalendarService : ICalendarService
             if (existing == null || existing.Id <= 0 || calendars.All(c => c.Id != existing.CalendarId))
             {
                 await _unitOfWork.RollbackAsync(ct);
-                return ServiceResult.Fail("Input is invalid");
+                return ServiceResult.Validation("CalendarEvent.InvalidRequest", "Input is invalid");
             }
 
             var updateResult = existing.Update(request.Title, description, request.AllDay,
@@ -465,7 +465,7 @@ public class CalendarService : ICalendarService
             if (updateResult.IsError)
             {
                 await _unitOfWork.RollbackAsync(ct);
-                return ServiceResult.Fail(updateResult.FirstError.Description);
+                return ServiceResult.FromError(updateResult.FirstError);
             }
 
             existing.Reassign(request.CalendarId, request.RecurrenceId);
@@ -499,7 +499,7 @@ public class CalendarService : ICalendarService
         {
             _logger.LogError(ex, "Failed to update calendar event {EventId} for account {AccountEmail}", request.Id, email);
             await _unitOfWork.RollbackAsync(ct);
-            return ServiceResult.Fail("Input is invalid");
+            return ServiceResult.Failure("CalendarEvent.UpdateFailed", "Input is invalid");
         }
     }
 
@@ -566,14 +566,14 @@ public class CalendarService : ICalendarService
         string filePath = BuildEventFilePath(roleIndex, calendarEventId, attachedFile.FileName);
         bool uploaded = await _fileClient.UploadAsync(attachedFile.Bytes, attachedFile.ContentType, filePath, _settings.Value.FileStorageBaseUrl ?? "", ct);
         if (!uploaded)
-            return ServiceResult.Fail("Input is invalid");
+            return ServiceResult.Failure("CalendarEvent.AttachmentUploadFailed", "Input is invalid");
 
         var fileResult = CalendarEventAttachedFile.Create(calendarEventId, attachedFile.Size,
             Path.GetFileNameWithoutExtension(attachedFile.FileName),
             Path.GetExtension(attachedFile.FileName),
             filePath.Replace('\\', '/')); // Normalize path separators for URL use.
         if (fileResult.IsError)
-            return ServiceResult.Fail(fileResult.FirstError.Description);
+            return ServiceResult.FromError(fileResult.FirstError);
 
         await _calendarEventAttachedFileRepository.CreateAsync(fileResult.Value, ct);
         return ServiceResult.Ok();
@@ -593,7 +593,7 @@ public class CalendarService : ICalendarService
                 reminderDto.MinutesBeforeEvent, reminderDto.HoursBeforeEvent, reminderDto.DaysBeforeEvent, reminderDto.WeeksBeforeEvent,
                 reminderDto.TimesBeforeEvent.HasValue ? TimeOnly.FromTimeSpan(reminderDto.TimesBeforeEvent.Value) : null);
             if (reminderResult.IsError)
-                return ServiceResult.Fail(reminderResult.FirstError.Description);
+                return ServiceResult.FromError(reminderResult.FirstError);
 
             await _calendarEventReminderRepository.CreateAsync(reminderResult.Value, ct);
         }

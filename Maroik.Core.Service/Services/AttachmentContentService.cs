@@ -46,7 +46,7 @@ public class AttachmentContentService : IAttachmentContentService
     {
         if (attachedFile == null) return null;
         if (!AttachmentUploadPolicy.IsAllowedExtension(Path.GetExtension(attachedFile.FileName)))
-            return ServiceResult.Fail("Only zip extension allowed.");
+            return ServiceResult.Validation("Attachment.ExtensionNotAllowed", "Only zip extension allowed.");
         long maxBytes = _settings.Value.MaxAttachedFileSizeBytes;
         if (!AttachmentUploadPolicy.IsValidSize(attachedFile.Size, maxBytes))
             // Stable, value-independent key (same one ManagementController/ForumController/
@@ -54,7 +54,7 @@ public class AttachmentContentService : IAttachmentContentService
             // resx lookup still matches when MaxAttachedFileSizeBytes is configured away from
             // 10MB. Callers that display this to the user must pass maxBytes/(1024*1024) as the
             // localizer's format argument instead of reading a pre-baked number out of the key.
-            return ServiceResult.Fail("File Size must be smaller than {0}MB.");
+            return ServiceResult.Validation("Attachment.TooLarge", "File Size must be smaller than {0}MB.");
         return null;
     }
 

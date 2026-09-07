@@ -60,7 +60,7 @@ public class ProfileService : IProfileService
         {
             Account? account = await FindByEmailAsync(email, ct);
             if (account == null)
-                return ServiceResult.Fail("Input is invalid");
+                return ServiceResult.NotFound("Account.NotFound", "Input is invalid");
 
             account.UpdateProfile(avatarPath, account.TimeZone, account.DefaultMonetaryUnit);
 
@@ -70,7 +70,7 @@ public class ProfileService : IProfileService
         catch (Exception e)
         {
             _logger.LogError(e, "Failed to update avatar for {Email}", email);
-            return ServiceResult.Fail("Input is invalid");
+            return ServiceResult.Failure("Profile.UpdateAvatarFailed", "Input is invalid");
         }
     }
 
@@ -81,11 +81,11 @@ public class ProfileService : IProfileService
         {
             Account? account = await FindByEmailAsync(email, ct);
             if (account == null)
-                return ServiceResult.Fail("Input is invalid");
+                return ServiceResult.NotFound("Account.NotFound", "Input is invalid");
 
             var tzResult = TimeZoneId.Create(timeZoneIanaId);
             if (tzResult.IsError)
-                return ServiceResult.Fail(tzResult.FirstError.Description);
+                return ServiceResult.FromError(tzResult.FirstError);
 
             account.UpdateProfile(account.AvatarImagePath, tzResult.Value, account.DefaultMonetaryUnit);
 
@@ -95,7 +95,7 @@ public class ProfileService : IProfileService
         catch (Exception e)
         {
             _logger.LogError(e, "Failed to update timezone for {Email}", email);
-            return ServiceResult.Fail("Input is invalid");
+            return ServiceResult.Failure("Profile.UpdateTimezoneFailed", "Input is invalid");
         }
     }
 
@@ -106,10 +106,10 @@ public class ProfileService : IProfileService
         {
             Account? account = await FindByEmailAsync(email, ct);
             if (account == null)
-                return ServiceResult.Fail("Input is invalid");
+                return ServiceResult.NotFound("Account.NotFound", "Input is invalid");
 
             if (!_passwordService.VerifyPassword(currentPassword, account.HashedPassword))
-                return ServiceResult.Fail("Invalid password. Please check again.");
+                return ServiceResult.Validation("Profile.WrongPassword", "Invalid password. Please check again.");
 
             account.ChangePassword(_passwordService.HashPassword(newPassword));
 
@@ -119,7 +119,7 @@ public class ProfileService : IProfileService
         catch (Exception e)
         {
             _logger.LogError(e, "Failed to update password for {Email}", email);
-            return ServiceResult.Fail("Input is invalid");
+            return ServiceResult.Failure("Profile.UpdatePasswordFailed", "Input is invalid");
         }
     }
 
@@ -131,13 +131,13 @@ public class ProfileService : IProfileService
             using var memoryStream = new MemoryStream(imageBytes);
 
             if (!await _clamavClient.ScanWithClamavAsync(memoryStream, _settings.Value.ClamavHost ?? "", _settings.Value.ClamavPort, ct))
-                return ServiceResult.Fail("virus-detected");
+                return ServiceResult.Validation("Profile.VirusDetected", "virus-detected");
 
             memoryStream.Position = 0;
             if (!_imageValidator.IsValidImage(memoryStream.ToArray()))
-                return ServiceResult.Fail("invalid-image");
+                return ServiceResult.Validation("Profile.InvalidImage", "invalid-image");
             if (_imageValidator.IsSvg(memoryStream.ToArray()))
-                return ServiceResult.Fail("svg-not-allowed");
+                return ServiceResult.Validation("Profile.SvgNotAllowed", "svg-not-allowed");
 
             if (!Directory.Exists(avatarDirectoryPath))
                 Directory.CreateDirectory(avatarDirectoryPath);
@@ -177,7 +177,7 @@ public class ProfileService : IProfileService
         catch (Exception e)
         {
             _logger.LogError(e, "Failed to upload and update avatar for {Email}", email);
-            return ServiceResult.Fail("Input is invalid");
+            return ServiceResult.Failure("Profile.UploadAvatarFailed", "Input is invalid");
         }
     }
 

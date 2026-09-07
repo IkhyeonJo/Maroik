@@ -50,16 +50,22 @@ public class ServiceResult
     public static ServiceResult Ok() => new() { Success = true };
 
     /// <summary>
-    /// Creates a failed result with the given error key. Kept for source compatibility with the
-    /// many existing call sites; the category defaults to <see cref="ServiceErrorType.Validation"/>.
-    /// Prefer <see cref="NotFound"/> / <see cref="Conflict"/> / <see cref="Failure"/> /
-    /// <see cref="FromError"/> when the category is known.
+    /// Creates a plain <see cref="ServiceErrorType.Validation"/> failure carrying only a
+    /// localization key / message. Use this only when the failure genuinely is "the input is
+    /// invalid" and there is no machine code to report. When the category is known, or a domain
+    /// <see cref="Error"/> is in hand, prefer <see cref="Validation"/> / <see cref="NotFound"/> /
+    /// <see cref="Conflict"/> / <see cref="Failure"/> / <see cref="FromError"/>, all of which also
+    /// populate <see cref="ErrorCode"/>.
     /// </summary>
     public static ServiceResult Fail(string errorKey) => Fail(errorKey, ServiceErrorType.Validation);
 
     /// <summary>Creates a failed result with the given error key and category.</summary>
     public static ServiceResult Fail(string errorKey, ServiceErrorType type) =>
         new() { Success = false, ErrorKey = errorKey, ErrorType = type };
+
+    /// <summary>Creates a <see cref="ServiceErrorType.Validation"/> failure with a machine code and message.</summary>
+    public static ServiceResult Validation(string code, string message) =>
+        new() { Success = false, ErrorCode = code, ErrorKey = message, ErrorType = ServiceErrorType.Validation };
 
     /// <summary>Creates a <see cref="ServiceErrorType.NotFound"/> failure.</summary>
     public static ServiceResult NotFound(string code, string message) =>

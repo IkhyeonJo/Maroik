@@ -229,11 +229,11 @@ public class ExpenditureService : IExpenditureService
         }
     }
 
-    private static ServiceResult SameAssetResult => ServiceResult.Fail(
-        "The PaymentMethod and MyDepositAsset value cannot be the same.");
+    private static ServiceResult SameAssetResult => ServiceResult.Validation(
+        "Expenditure.SameAsset", "The PaymentMethod and MyDepositAsset value cannot be the same.");
 
-    private static ServiceResult CurrencyMismatchResult => ServiceResult.Fail(
-        "PaymentMethod MonetaryUnit must be same as MyDepositAsset MonetaryUnit.");
+    private static ServiceResult CurrencyMismatchResult => ServiceResult.Validation(
+        "Expenditure.CurrencyMismatch", "PaymentMethod MonetaryUnit must be same as MyDepositAsset MonetaryUnit.");
 
     private static ServiceResult AssetNotFoundResult => ServiceResult.NotFound(
         "Expenditure.AssetNotFound", "The selected asset could not be found.");

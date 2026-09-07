@@ -402,7 +402,7 @@ public class AccountService : IAccountService
         catch (Exception e)
         {
             _logger.LogError(e, "Failed to reset password for {Email}", account.Email.Value);
-            return ServiceResult.Fail("Error occurred while processing about reset password");
+            return ServiceResult.Failure("Account.ResetPasswordFailed", "Error occurred while processing about reset password");
         }
 
         return ServiceResult.Ok();

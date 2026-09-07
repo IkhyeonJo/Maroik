@@ -54,7 +54,7 @@ public class AssetService : IAssetService
     public async Task<ServiceResult> CreateAsync(string accountEmail, AssetRequest request, CancellationToken ct = default)
     {
         if (!IsValidAssetItem(request.Item))
-            return ServiceResult.Fail("Input is invalid");
+            return ServiceResult.Validation("Asset.InvalidItem", "Input is invalid");
 
         // Reject duplicate product names within the same account, including a soft-deleted asset
         // under that name: its row still occupies the (ProductName, AccountEmail) primary key, and
@@ -63,7 +63,7 @@ public class AssetService : IAssetService
         // user believes is unrelated. A name freed up by soft-deletion is never reusable.
         Asset? existing = await FindAssetAsync(accountEmail, request.ProductName ?? "", ct);
         if (existing != null)
-            return ServiceResult.Fail("The asset already exists.");
+            return ServiceResult.Conflict("Asset.Duplicate", "The asset already exists.");
 
         var createResult = Asset.Create(
             request.ProductName,
@@ -74,7 +74,7 @@ public class AssetService : IAssetService
             request.Note);
 
         if (createResult.IsError)
-            return ServiceResult.Fail(createResult.FirstError.Description);
+            return ServiceResult.FromError(createResult.FirstError);
 
         var asset = createResult.Value;
 
@@ -88,7 +88,7 @@ public class AssetService : IAssetService
             // requests for the same (ProductName, AccountEmail) can both pass it. The primary
             // key constraint on that pair still rejects the second insert — turn that into the
             // same friendly result instead of letting the raw DB exception escape.
-            return ServiceResult.Fail("The asset already exists.");
+            return ServiceResult.Conflict("Asset.Duplicate", "The asset already exists.");
         }
 
         return ServiceResult.Ok();
@@ -103,7 +103,7 @@ public class AssetService : IAssetService
             if (!IsValidAssetItem(request.Item))
             {
                 await _unitOfWork.RollbackAsync(ct);
-                return ServiceResult.Fail("Input is invalid");
+                return ServiceResult.Validation("Asset.InvalidItem", "Input is invalid");
             }
 
             // Row-locks the asset for the rest of this transaction (held until commit/rollback),
@@ -113,7 +113,7 @@ public class AssetService : IAssetService
             if (asset == null)
             {
                 await _unitOfWork.RollbackAsync(ct);
-                return ServiceResult.Fail("Fail to find the asset by given product name");
+                return ServiceResult.NotFound("Asset.NotFound", "Fail to find the asset by given product name");
             }
 
             // Fall back to the existing currency when the request does not specify one.
@@ -122,14 +122,14 @@ public class AssetService : IAssetService
             if (updateResult.IsError)
             {
                 await _unitOfWork.RollbackAsync(ct);
-                return ServiceResult.Fail(updateResult.FirstError.Description);
+                return ServiceResult.FromError(updateResult.FirstError);
             }
 
             int updated = await _assetRepository.UpdateAssetWithProductNameAsync(asset, originalProductName, ct);
             if (updated <= 0)
             {
                 await _unitOfWork.RollbackAsync(ct);
-                return ServiceResult.Fail("Input is invalid");
+                return ServiceResult.Failure("Asset.UpdateFailed", "Input is invalid");
             }
 
             // MyDepositAsset has no foreign key to Asset (it holds "" for transfer-less entries),
@@ -149,13 +149,13 @@ public class AssetService : IAssetService
             // (ProductName, AccountEmail) primary key CreateAsync guards against — report the
             // same friendly message instead of the generic fallback below.
             await _unitOfWork.RollbackAsync(ct);
-            return ServiceResult.Fail("The asset already exists.");
+            return ServiceResult.Conflict("Asset.Duplicate", "The asset already exists.");
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to update asset {OriginalProductName} for account {AccountEmail}", originalProductName, accountEmail);
             await _unitOfWork.RollbackAsync(ct);
-            return ServiceResult.Fail("Input is invalid");
+            return ServiceResult.Failure("Asset.UpdateFailed", "Input is invalid");
         }
     }
 
@@ -164,7 +164,7 @@ public class AssetService : IAssetService
     {
         Asset? asset = await FindAssetAsync(accountEmail, productName, ct);
         if (asset == null)
-            return ServiceResult.Fail("Fail to find the asset by given product name");
+            return ServiceResult.NotFound("Asset.NotFound", "Fail to find the asset by given product name");
 
         // Soft-delete preserves the record for historical reporting while hiding it from active use.
         asset.SoftDelete();
