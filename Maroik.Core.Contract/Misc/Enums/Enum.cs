@@ -72,34 +72,6 @@ public enum Session
 }
 
 /// <summary>
-/// Identifies the type of board post, determining which list the post appears in.
-/// </summary>
-public enum BoardType
-{
-    /// <summary>Public free-discussion forum visible to all users.</summary>
-    [Description("FreeForum")]
-    FreeForum,
-
-    /// <summary>Private note visible only to the author.</summary>
-    [Description("PrivateNote")]
-    PrivateNote
-}
-
-/// <summary>
-/// Distinguishes between a calendar owned by the current user and one subscribed to from another user.
-/// </summary>
-public enum CalendarType
-{
-    /// <summary>Calendar owned by the current user.</summary>
-    [Description("My")]
-    My,
-
-    /// <summary>Calendar owned by another user that the current user has subscribed to.</summary>
-    [Description("Other")]
-    Other
-}
-
-/// <summary>
 /// Selects the RSA signature/encryption algorithm variant used by <c>IRsaService</c>.
 /// </summary>
 public enum RsaType

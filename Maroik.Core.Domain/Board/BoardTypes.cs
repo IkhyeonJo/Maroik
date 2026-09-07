@@ -2,9 +2,10 @@ namespace Maroik.Core.Domain.Board;
 
 /// <summary>
 /// Canonical board-type discriminator strings stored verbatim in <see cref="Board.Type"/>.
-/// The presentation layer has its own <c>BoardType</c> enum (with <c>[Description]</c> values that
-/// match these strings); the domain keeps its own copy so board rules such as
-/// <see cref="Board.CanBeViewedBy(string?, bool)"/> do not depend on a Contract/Website type.
+/// This is the single source of truth for board-type values across every layer — the service,
+/// presentation, and test code all reference these constants directly rather than keeping a
+/// parallel enum. Living in the domain keeps board rules such as
+/// <see cref="Board.CanBeViewedBy(string?, bool)"/> free of any Contract/Website dependency.
 /// </summary>
 public static class BoardTypes
 {

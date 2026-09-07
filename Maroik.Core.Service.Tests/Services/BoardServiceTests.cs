@@ -1,7 +1,6 @@
 using Maroik.Core.Domain.Account;
 using Maroik.Core.Domain.Board;
 using Maroik.Core.Contract.Dtos;
-using Maroik.Core.Contract.Misc.Enums;
 using Maroik.Core.Contract.Interfaces;
 using Maroik.Core.Contract.Misc.Settings;
 using Maroik.Core.Service.Services;
@@ -52,7 +51,7 @@ public class BoardServiceTests
     // -- Helpers --------------------------------------------------------------
 
     private static Board MakeBoard(long id = 1, string writer = "Alice", bool deleted = false, bool locked = false) =>
-        Board.Reconstitute(id, nameof(BoardType.FreeForum), "Test Title", "Test Content", writer,
+        Board.Reconstitute(id, BoardTypes.FreeForum, "Test Title", "Test Content", writer,
             DateTime.UtcNow, DateTime.UtcNow, 0L, deleted, locked, false);
 
     private static BoardComment MakeComment(long id = 1, string writer = "Alice", long order = 0L) =>
@@ -68,7 +67,7 @@ public class BoardServiceTests
         _boardRepo.Setup(r => r.GetByTypeAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(list);
         var sut = CreateSut();
 
-        IEnumerable<BoardResponse> result = await sut.GetBoardsAsync(nameof(BoardType.FreeForum), TestContext.Current.CancellationToken);
+        IEnumerable<BoardResponse> result = await sut.GetBoardsAsync(BoardTypes.FreeForum, TestContext.Current.CancellationToken);
 
         Assert.Single(result);
     }
@@ -97,10 +96,10 @@ public class BoardServiceTests
     public async Task GetBoardByIdAsync_ReturnsNull_WhenTypeDoesNotMatchRequiredType()
     {
         _boardRepo.Setup(r => r.FindActiveByIdAsync(It.IsAny<long>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(MakeBoard()); // Type = nameof(BoardType.FreeForum)
+            .ReturnsAsync(MakeBoard()); // Type = BoardTypes.FreeForum
         var sut = CreateSut();
 
-        BoardResponse? result = await sut.GetBoardByIdAsync(1, nameof(BoardType.PrivateNote), TestContext.Current.CancellationToken);
+        BoardResponse? result = await sut.GetBoardByIdAsync(1, BoardTypes.PrivateNote, TestContext.Current.CancellationToken);
 
         Assert.Null(result);
     }
@@ -117,7 +116,7 @@ public class BoardServiceTests
     public void CanView_ReturnsTrue_ForUnlockedFreeForumBoard_WhenViewerIsAnonymous()
     {
         var sut = CreateSut();
-        var board = MakeBoardResponse(nameof(BoardType.FreeForum), locked: false);
+        var board = MakeBoardResponse(BoardTypes.FreeForum, locked: false);
 
         Assert.True(sut.CanView(board, null));
     }
@@ -126,7 +125,7 @@ public class BoardServiceTests
     public void CanView_ReturnsFalse_ForLockedFreeForumBoard_WhenViewerIsAnonymous()
     {
         var sut = CreateSut();
-        var board = MakeBoardResponse(nameof(BoardType.FreeForum), locked: true);
+        var board = MakeBoardResponse(BoardTypes.FreeForum, locked: true);
 
         Assert.False(sut.CanView(board, null));
     }
@@ -135,7 +134,7 @@ public class BoardServiceTests
     public void CanView_ReturnsTrue_ForLockedFreeForumBoard_WhenViewerIsWriter()
     {
         var sut = CreateSut();
-        var board = MakeBoardResponse(nameof(BoardType.FreeForum), writer: "Alice", locked: true);
+        var board = MakeBoardResponse(BoardTypes.FreeForum, writer: "Alice", locked: true);
 
         Assert.True(sut.CanView(board, MakeAccount("Alice")));
     }
@@ -144,7 +143,7 @@ public class BoardServiceTests
     public void CanView_ReturnsTrue_ForLockedFreeForumBoard_WhenViewerIsAdmin()
     {
         var sut = CreateSut();
-        var board = MakeBoardResponse(nameof(BoardType.FreeForum), writer: "Alice", locked: true);
+        var board = MakeBoardResponse(BoardTypes.FreeForum, writer: "Alice", locked: true);
 
         Assert.True(sut.CanView(board, MakeAccount("Bob", Role.Admin)));
     }
@@ -153,7 +152,7 @@ public class BoardServiceTests
     public void CanView_ReturnsFalse_ForLockedFreeForumBoard_WhenViewerIsUnrelatedUser()
     {
         var sut = CreateSut();
-        var board = MakeBoardResponse(nameof(BoardType.FreeForum), writer: "Alice", locked: true);
+        var board = MakeBoardResponse(BoardTypes.FreeForum, writer: "Alice", locked: true);
 
         Assert.False(sut.CanView(board, MakeAccount("Bob")));
     }
@@ -162,7 +161,7 @@ public class BoardServiceTests
     public void CanView_ReturnsTrue_ForPrivateNoteBoard_WhenViewerIsWriter()
     {
         var sut = CreateSut();
-        var board = MakeBoardResponse(nameof(BoardType.PrivateNote), writer: "Alice", locked: false);
+        var board = MakeBoardResponse(BoardTypes.PrivateNote, writer: "Alice", locked: false);
 
         Assert.True(sut.CanView(board, MakeAccount("Alice")));
     }
@@ -171,7 +170,7 @@ public class BoardServiceTests
     public void CanView_ReturnsFalse_ForPrivateNoteBoard_WhenViewerIsAnonymous()
     {
         var sut = CreateSut();
-        var board = MakeBoardResponse(nameof(BoardType.PrivateNote), writer: "Alice", locked: false);
+        var board = MakeBoardResponse(BoardTypes.PrivateNote, writer: "Alice", locked: false);
 
         Assert.False(sut.CanView(board, null));
     }
@@ -181,7 +180,7 @@ public class BoardServiceTests
     public void CanView_ReturnsFalse_ForPrivateNoteBoard_WhenViewerIsAdminButNotWriter()
     {
         var sut = CreateSut();
-        var board = MakeBoardResponse(nameof(BoardType.PrivateNote), writer: "Alice", locked: false);
+        var board = MakeBoardResponse(BoardTypes.PrivateNote, writer: "Alice", locked: false);
 
         Assert.False(sut.CanView(board, MakeAccount("Bob", Role.Admin)));
     }
@@ -196,7 +195,7 @@ public class BoardServiceTests
         var sut = CreateSut();
 
         ServiceResult result = await sut.WriteBoardAsync(
-            new BoardRequest { Type = nameof(BoardType.FreeForum), Title = "Test Title", Writer = "Alice" }, null, TestContext.Current.CancellationToken);
+            new BoardRequest { Type = BoardTypes.FreeForum, Title = "Test Title", Writer = "Alice" }, null, TestContext.Current.CancellationToken);
 
         Assert.True(result.Success);
         _unitOfWork.Verify(u => u.CommitAsync(It.IsAny<CancellationToken>()), Times.Once);
@@ -214,7 +213,7 @@ public class BoardServiceTests
 
         var file = new AttachedFileDto { FileName = "doc.zip", ContentType = "application/zip", Bytes = [1, 2], Size = 2 };
         ServiceResult result = await sut.WriteBoardAsync(
-            new BoardRequest { Type = nameof(BoardType.FreeForum), Title = "Test Title", Writer = "Alice" }, file, TestContext.Current.CancellationToken);
+            new BoardRequest { Type = BoardTypes.FreeForum, Title = "Test Title", Writer = "Alice" }, file, TestContext.Current.CancellationToken);
 
         Assert.True(result.Success);
         _attachedFileRepo.Verify(r => r.CreateAsync(It.IsAny<BoardAttachedFile>(), It.IsAny<CancellationToken>()), Times.Once);
@@ -232,7 +231,7 @@ public class BoardServiceTests
 
         var file = new AttachedFileDto { FileName = "doc.zip", ContentType = "application/zip", Bytes = [1, 2], Size = 2 };
         ServiceResult result = await sut.WriteBoardAsync(
-            new BoardRequest { Type = nameof(BoardType.FreeForum), Title = "Test Title", Writer = "Alice" }, file, TestContext.Current.CancellationToken);
+            new BoardRequest { Type = BoardTypes.FreeForum, Title = "Test Title", Writer = "Alice" }, file, TestContext.Current.CancellationToken);
 
         Assert.False(result.Success);
         _attachedFileRepo.Verify(r => r.CreateAsync(It.IsAny<BoardAttachedFile>(), It.IsAny<CancellationToken>()), Times.Never);
@@ -257,7 +256,7 @@ public class BoardServiceTests
 
         var file = new AttachedFileDto { FileName = ".zip", ContentType = "application/zip", Bytes = [1, 2], Size = 2 };
         ServiceResult result = await sut.WriteBoardAsync(
-            new BoardRequest { Type = nameof(BoardType.FreeForum), Title = "Test Title", Writer = "Alice" }, file, TestContext.Current.CancellationToken);
+            new BoardRequest { Type = BoardTypes.FreeForum, Title = "Test Title", Writer = "Alice" }, file, TestContext.Current.CancellationToken);
 
         Assert.False(result.Success);
         _attachedFileRepo.Verify(r => r.CreateAsync(It.IsAny<BoardAttachedFile>(), It.IsAny<CancellationToken>()), Times.Never);
@@ -272,7 +271,7 @@ public class BoardServiceTests
         var sut = CreateSut();
 
         ServiceResult result = await sut.WriteBoardAsync(
-            new BoardRequest { Type = nameof(BoardType.FreeForum), Title = "Test Title", Writer = "Alice" }, null, TestContext.Current.CancellationToken);
+            new BoardRequest { Type = BoardTypes.FreeForum, Title = "Test Title", Writer = "Alice" }, null, TestContext.Current.CancellationToken);
 
         Assert.False(result.Success);
         _unitOfWork.Verify(u => u.RollbackAsync(It.IsAny<CancellationToken>()), Times.Once);
@@ -287,7 +286,7 @@ public class BoardServiceTests
         _boardRepo.Setup(r => r.FindActiveByIdAsync(It.IsAny<long>(), It.IsAny<CancellationToken>())).ReturnsAsync((Board?)null);
         var sut = CreateSut();
 
-        ServiceResult result = await sut.EditBoardAsync(new BoardRequest { Id = 99, Type = nameof(BoardType.FreeForum) }, "Alice", null, TestContext.Current.CancellationToken);
+        ServiceResult result = await sut.EditBoardAsync(new BoardRequest { Id = 99, Type = BoardTypes.FreeForum }, "Alice", null, TestContext.Current.CancellationToken);
 
         Assert.False(result.Success);
         _unitOfWork.Verify(u => u.RollbackAsync(It.IsAny<CancellationToken>()), Times.Once);
@@ -301,7 +300,7 @@ public class BoardServiceTests
         _boardRepo.Setup(r => r.FindActiveByIdAsync(It.IsAny<long>(), It.IsAny<CancellationToken>())).ReturnsAsync((Board?)null);
         var sut = CreateSut();
 
-        ServiceResult result = await sut.EditBoardAsync(new BoardRequest { Id = 1, Type = nameof(BoardType.FreeForum) }, "Alice", null, TestContext.Current.CancellationToken);
+        ServiceResult result = await sut.EditBoardAsync(new BoardRequest { Id = 1, Type = BoardTypes.FreeForum }, "Alice", null, TestContext.Current.CancellationToken);
 
         Assert.False(result.Success);
         _unitOfWork.Verify(u => u.RollbackAsync(It.IsAny<CancellationToken>()), Times.Once);
@@ -314,7 +313,7 @@ public class BoardServiceTests
         _boardRepo.Setup(r => r.FindActiveByIdAsync(It.IsAny<long>(), It.IsAny<CancellationToken>())).ReturnsAsync(MakeBoard(writer: "Alice"));
         var sut = CreateSut();
 
-        ServiceResult result = await sut.EditBoardAsync(new BoardRequest { Id = 1, Type = nameof(BoardType.FreeForum) }, "Bob", null, TestContext.Current.CancellationToken);
+        ServiceResult result = await sut.EditBoardAsync(new BoardRequest { Id = 1, Type = BoardTypes.FreeForum }, "Bob", null, TestContext.Current.CancellationToken);
 
         Assert.False(result.Success);
         _unitOfWork.Verify(u => u.RollbackAsync(It.IsAny<CancellationToken>()), Times.Once);
@@ -330,7 +329,7 @@ public class BoardServiceTests
         var sut = CreateSut();
 
         ServiceResult result = await sut.EditBoardAsync(
-            new BoardRequest { Id = 1, Type = nameof(BoardType.FreeForum), Title = "New Title", Content = "New Content" }, "Alice", null, TestContext.Current.CancellationToken);
+            new BoardRequest { Id = 1, Type = BoardTypes.FreeForum, Title = "New Title", Content = "New Content" }, "Alice", null, TestContext.Current.CancellationToken);
 
         Assert.True(result.Success);
         _unitOfWork.Verify(u => u.CommitAsync(It.IsAny<CancellationToken>()), Times.Once);
@@ -349,7 +348,7 @@ public class BoardServiceTests
 
         var file = new AttachedFileDto { FileName = "doc.zip", ContentType = "application/zip", Bytes = [1, 2], Size = 2 };
         ServiceResult result = await sut.EditBoardAsync(
-            new BoardRequest { Id = 1, Type = nameof(BoardType.FreeForum), Title = "New Title", Content = "New Content" }, "Alice", file, TestContext.Current.CancellationToken);
+            new BoardRequest { Id = 1, Type = BoardTypes.FreeForum, Title = "New Title", Content = "New Content" }, "Alice", file, TestContext.Current.CancellationToken);
 
         Assert.False(result.Success);
         _attachedFileRepo.Verify(r => r.CreateAsync(It.IsAny<BoardAttachedFile>(), It.IsAny<CancellationToken>()), Times.Never);
@@ -364,7 +363,7 @@ public class BoardServiceTests
     [Fact]
     public async Task EditBoardAsync_PreservesNoticed_WhenRequestDoesNotSpecifyIt()
     {
-        Board pinnedBoard = Board.Reconstitute(1, nameof(BoardType.FreeForum), "Test Title", "Test Content", "Alice",
+        Board pinnedBoard = Board.Reconstitute(1, BoardTypes.FreeForum, "Test Title", "Test Content", "Alice",
             DateTime.UtcNow, DateTime.UtcNow, 0L, deleted: false, locked: false, noticed: true);
         _boardRepo.Setup(r => r.FindActiveByIdAsync(It.IsAny<long>(), It.IsAny<CancellationToken>())).ReturnsAsync(pinnedBoard);
         _attachedFileRepo.Setup(r => r.FindByBoardIdAsync(It.IsAny<long>(), It.IsAny<CancellationToken>())).ReturnsAsync((BoardAttachedFile?)null);
@@ -375,7 +374,7 @@ public class BoardServiceTests
         var sut = CreateSut();
 
         ServiceResult result = await sut.EditBoardAsync(
-            new BoardRequest { Id = 1, Type = nameof(BoardType.FreeForum), Title = "New Title", Content = "New Content", Noticed = false },
+            new BoardRequest { Id = 1, Type = BoardTypes.FreeForum, Title = "New Title", Content = "New Content", Noticed = false },
             "Alice", null, TestContext.Current.CancellationToken);
 
         Assert.True(result.Success);
@@ -392,7 +391,7 @@ public class BoardServiceTests
         _boardRepo.Setup(r => r.FindActiveByIdAsync(It.IsAny<long>(), It.IsAny<CancellationToken>())).ReturnsAsync((Board?)null);
         var sut = CreateSut();
 
-        ServiceResult result = await sut.DeleteBoardAsync(99, nameof(BoardType.FreeForum), "Alice", false, TestContext.Current.CancellationToken);
+        ServiceResult result = await sut.DeleteBoardAsync(99, BoardTypes.FreeForum, "Alice", false, TestContext.Current.CancellationToken);
 
         Assert.False(result.Success);
     }
@@ -404,7 +403,7 @@ public class BoardServiceTests
         _boardRepo.Setup(r => r.FindActiveByIdAsync(It.IsAny<long>(), It.IsAny<CancellationToken>())).ReturnsAsync(MakeBoard(writer: "Alice"));
         var sut = CreateSut();
 
-        ServiceResult result = await sut.DeleteBoardAsync(1, nameof(BoardType.FreeForum), "Bob", false, TestContext.Current.CancellationToken);
+        ServiceResult result = await sut.DeleteBoardAsync(1, BoardTypes.FreeForum, "Bob", false, TestContext.Current.CancellationToken);
 
         Assert.False(result.Success);
         Assert.Contains("permission", result.ErrorKey, StringComparison.OrdinalIgnoreCase);
@@ -418,7 +417,7 @@ public class BoardServiceTests
         _boardRepo.Setup(r => r.UpdateEntityAsync(It.IsAny<Board>(), It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
         var sut = CreateSut();
 
-        ServiceResult result = await sut.DeleteBoardAsync(1, nameof(BoardType.FreeForum), "Alice", false, TestContext.Current.CancellationToken);
+        ServiceResult result = await sut.DeleteBoardAsync(1, BoardTypes.FreeForum, "Alice", false, TestContext.Current.CancellationToken);
 
         Assert.True(result.Success);
     }
@@ -431,7 +430,7 @@ public class BoardServiceTests
         _boardRepo.Setup(r => r.UpdateEntityAsync(It.IsAny<Board>(), It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
         var sut = CreateSut();
 
-        ServiceResult result = await sut.DeleteBoardAsync(1, nameof(BoardType.FreeForum), "Admin", true, TestContext.Current.CancellationToken);
+        ServiceResult result = await sut.DeleteBoardAsync(1, BoardTypes.FreeForum, "Admin", true, TestContext.Current.CancellationToken);
 
         Assert.True(result.Success);
     }

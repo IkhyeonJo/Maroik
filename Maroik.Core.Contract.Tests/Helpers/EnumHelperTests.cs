@@ -33,28 +33,6 @@ public class EnumHelperTests
         Assert.Equal(expected, result);
     }
 
-    /// <summary>Verifies that <c>GetDescription</c> returns description attribute for board type.</summary>
-    [Theory]
-    [InlineData(BoardType.FreeForum, "FreeForum")]
-    [InlineData(BoardType.PrivateNote, "PrivateNote")]
-    public void GetDescription_ReturnsDescriptionAttribute_ForBoardType(BoardType value, string expected)
-    {
-        string result = EnumHelper.GetDescription(value);
-
-        Assert.Equal(expected, result);
-    }
-
-    /// <summary>Verifies that <c>GetDescription</c> returns description attribute for calendar type.</summary>
-    [Theory]
-    [InlineData(CalendarType.My, "My")]
-    [InlineData(CalendarType.Other, "Other")]
-    public void GetDescription_ReturnsDescriptionAttribute_ForCalendarType(CalendarType value, string expected)
-    {
-        string result = EnumHelper.GetDescription(value);
-
-        Assert.Equal(expected, result);
-    }
-
     /// <summary>Verifies that <c>GetDescription</c> returns description attribute for session.</summary>
     [Theory]
     [InlineData(Session.Account, "Account")]

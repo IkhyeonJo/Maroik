@@ -1,9 +1,8 @@
 using Maroik.Core.Domain.Media;
 using Maroik.Core.Domain.Account;
+using Maroik.Core.Domain.Board;
 using Maroik.Core.Contract.Dtos;
-using Maroik.Core.Contract.Misc.Enums;
 using Maroik.Core.Contract.Misc.Extensions;
-using Maroik.Core.Contract.Misc.Helpers;
 using Maroik.Core.Contract.Interfaces;
 using Maroik.Core.Contract.Misc.Settings;
 using Maroik.Website.Attributes;
@@ -84,7 +83,7 @@ public class ForumController : Controller
 
             BoardRequest boardRequest = new()
             {
-                Type = EnumHelper.GetDescription(BoardType.FreeForum),
+                Type = BoardTypes.FreeForum,
                 Title = boardInputViewModel.Title,
                 Content = boardInputViewModel.Content,
                 Writer = loggedInAccount.Nickname!,
@@ -137,7 +136,7 @@ public class ForumController : Controller
                 Content = boardCommentInputViewModel.Content
             };
 
-            ServiceResult result = await _boardService.WriteCommentAsync(commentRequest, isAdmin: loggedInAccount.Role == Role.Admin, requiredType: EnumHelper.GetDescription(BoardType.FreeForum), ct: ct);
+            ServiceResult result = await _boardService.WriteCommentAsync(commentRequest, isAdmin: loggedInAccount.Role == Role.Admin, requiredType: BoardTypes.FreeForum, ct: ct);
             return result.Success
                 ? Json(new { result = true, boardId = boardCommentInputViewModel.BoardId, page = boardCommentInputViewModel.DetailCurrentPage })
                 : Json(new { result = false, error = _localizer["Input is invalid"].Value });
@@ -185,7 +184,7 @@ public class ForumController : Controller
             Size = summernoteImageFile.Length
         };
 
-        SummernoteUploadResult uploadResult = await _boardService.UploadSummernoteImageAsync(file, "Forum", EnumHelper.GetDescription(BoardType.FreeForum), ct);
+        SummernoteUploadResult uploadResult = await _boardService.UploadSummernoteImageAsync(file, "Forum", BoardTypes.FreeForum, ct);
 
         if (!uploadResult.Success)
             return Ok(new { result = false, errorMessage = _localizer[uploadResult.ErrorKey ?? "Input is invalid"].Value });
@@ -219,7 +218,7 @@ public class ForumController : Controller
             }
             // Detail view
             case "detail" when boardId == null:
-                return RedirectToAction(nameof(BoardType.FreeForum), "Forum");
+                return RedirectToAction(BoardTypes.FreeForum, "Forum");
             case "detail":
             {
                 FreeForumOutputViewModel freeForumOutputViewModel = new()
@@ -231,15 +230,15 @@ public class ForumController : Controller
 
                 try
                 {
-                    BoardResponse? freeBoard = await _boardService.GetBoardByIdAsync((long)boardId, EnumHelper.GetDescription(BoardType.FreeForum), ct);
+                    BoardResponse? freeBoard = await _boardService.GetBoardByIdAsync((long)boardId, BoardTypes.FreeForum, ct);
                     BoardAttachedFileDto? boardAttachedFile = await _boardService.GetAttachedFileByBoardIdAsync((long)boardId, ct);
 
                     if (freeBoard == null || freeBoard.Deleted)
-                        return RedirectToAction(nameof(BoardType.FreeForum), "Forum");
+                        return RedirectToAction(BoardTypes.FreeForum, "Forum");
 
                     AccountResponse? loggedInAccount = _sessionService.GetAccount();
                     if (!_boardService.CanView(freeBoard, loggedInAccount))
-                        return RedirectToAction(nameof(BoardType.FreeForum), "Forum");
+                        return RedirectToAction(BoardTypes.FreeForum, "Forum");
 
                     await _boardService.IncrementBoardViewAsync((long)boardId, ct);
 
@@ -291,12 +290,12 @@ public class ForumController : Controller
                 catch (Exception ex)
                 {
                     _logger.LogError(ex, "Unhandled exception in FreeForum action");
-                    return RedirectToAction(nameof(BoardType.FreeForum), "Forum");
+                    return RedirectToAction(BoardTypes.FreeForum, "Forum");
                 }
             }
             // Edit
             case "edit" when boardId == null:
-                return RedirectToAction(nameof(BoardType.FreeForum), "Forum");
+                return RedirectToAction(BoardTypes.FreeForum, "Forum");
             case "edit":
             {
                 FreeForumOutputViewModel freeForumOutputViewModel = new()
@@ -308,18 +307,18 @@ public class ForumController : Controller
 
                 try
                 {
-                    BoardResponse? freeBoard = await _boardService.GetBoardByIdAsync((long)boardId, EnumHelper.GetDescription(BoardType.FreeForum), ct);
+                    BoardResponse? freeBoard = await _boardService.GetBoardByIdAsync((long)boardId, BoardTypes.FreeForum, ct);
                     BoardAttachedFileDto? boardAttachedFile = await _boardService.GetAttachedFileByBoardIdAsync((long)boardId, ct);
 
                     if (freeBoard == null || freeBoard.Deleted)
-                        return RedirectToAction(nameof(BoardType.FreeForum), "Forum");
+                        return RedirectToAction(BoardTypes.FreeForum, "Forum");
 
                     // ViewBag.LoggedInAccount is re-fetched from the database by ViewBagPopulatorFilter
                     // on every request (not the session-cached snapshot), so a mid-session ownership-
                     // relevant change (e.g. nickname edit) is reflected immediately here.
                     AccountResponse loggedInAccount = ViewBag.LoggedInAccount;
                     if (!loggedInAccount.IsOwner(freeBoard.Writer))
-                        return RedirectToAction(nameof(BoardType.FreeForum), "Forum");
+                        return RedirectToAction(BoardTypes.FreeForum, "Forum");
 
                     (freeBoard.Content, bool isImgTagIncluded) = await _boardService.PrepareHtmlForDisplayAsync(freeBoard.Content ?? "", ct);
 
@@ -359,7 +358,7 @@ public class ForumController : Controller
                 catch (Exception ex)
                 {
                     _logger.LogError(ex, "Unhandled exception in FreeForum action");
-                    return RedirectToAction(nameof(BoardType.FreeForum), "Forum");
+                    return RedirectToAction(BoardTypes.FreeForum, "Forum");
                 }
             }
             // List
@@ -373,7 +372,7 @@ public class ForumController : Controller
                 // whole board-type bucket into memory first.
                 AccountResponse? loggedInAccountForQuery = _sessionService.GetAccount();
                 (IEnumerable<BoardResponse> pageItems, int totalCount) = await _boardService.GetBoardPageAsync(new BoardPageQuery(
-                    Type: EnumHelper.GetDescription(BoardType.FreeForum),
+                    Type: BoardTypes.FreeForum,
                     OwnerNickname: null,
                     SearchType: searchType,
                     SearchText: searchText,
@@ -385,7 +384,7 @@ public class ForumController : Controller
 
                 FreeForumOutputViewModel freeForumOutputViewModel = new()
                 {
-                    NoticeBoards = await _boardService.GetNoticedBoardsAsync(EnumHelper.GetDescription(BoardType.FreeForum), ct),
+                    NoticeBoards = await _boardService.GetNoticedBoardsAsync(BoardTypes.FreeForum, ct),
                     Method = "list",
                     Pager = new Pager(totalCount, page, pageSize)
                 };
@@ -444,7 +443,7 @@ public class ForumController : Controller
     {
         try
         {
-            BoardResponse? board = await _boardService.GetBoardByIdAsync(id, EnumHelper.GetDescription(BoardType.FreeForum), ct);
+            BoardResponse? board = await _boardService.GetBoardByIdAsync(id, BoardTypes.FreeForum, ct);
             if (board == null || board.Deleted)
                 return Json(new { result = false, error = _localizer["Input is invalid"].Value });
 
@@ -496,7 +495,7 @@ public class ForumController : Controller
             BoardRequest boardRequest = new()
             {
                 Id = boardInputViewModel.Id,
-                Type = EnumHelper.GetDescription(BoardType.FreeForum),
+                Type = BoardTypes.FreeForum,
                 Title = boardInputViewModel.Title,
                 Content = boardInputViewModel.Content,
                 Locked = boardInputViewModel.Locked
@@ -536,7 +535,7 @@ public class ForumController : Controller
 
             ServiceResult result = await _boardService.DeleteBoardAsync(
                 boardInputViewModel.Id,
-                EnumHelper.GetDescription(BoardType.FreeForum),
+                BoardTypes.FreeForum,
                 loggedInAccount.Nickname!,
                 loggedInAccount.Role == Role.Admin,
                 ct);
@@ -570,7 +569,7 @@ public class ForumController : Controller
                 id,
                 loggedInAccount.Nickname!,
                 loggedInAccount.Role == Role.Admin,
-                EnumHelper.GetDescription(BoardType.FreeForum),
+                BoardTypes.FreeForum,
                 ct);
 
             return result.Success

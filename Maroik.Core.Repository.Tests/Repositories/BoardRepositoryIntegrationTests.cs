@@ -1,4 +1,3 @@
-using Maroik.Core.Contract.Misc.Enums;
 using Maroik.Core.Domain.Board;
 using Maroik.Core.PostgreSQL.Data;
 using Maroik.Core.Repository.Repositories;
@@ -48,7 +47,7 @@ public class BoardRepositoryIntegrationTests : IAsyncLifetime
 
     private static OrmBoard MakeOrm(string writer = "Alice") => new()
     {
-        Type = nameof(BoardType.FreeForum),
+        Type = BoardTypes.FreeForum,
         Title = "Test Title",
         Content = "Test Content",
         Writer = writer,

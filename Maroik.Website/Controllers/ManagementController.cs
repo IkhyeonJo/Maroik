@@ -1,5 +1,6 @@
 using Maroik.Core.Domain.Media;
 using Maroik.Core.Domain.ValueObjects;
+using Maroik.Core.Domain.Board;
 using Maroik.Core.Contract.Dtos;
 using Maroik.Core.Contract.Misc.Enums;
 using Maroik.Core.Contract.Misc.Extensions;
@@ -876,7 +877,7 @@ public class ManagementController : Controller
 
             BoardRequest boardRequest = new()
             {
-                Type = EnumHelper.GetDescription(BoardType.PrivateNote),
+                Type = BoardTypes.PrivateNote,
                 Title = boardInputViewModel.Title,
                 Content = boardInputViewModel.Content,
                 Writer = loggedInAccount.Nickname!,
@@ -931,7 +932,7 @@ public class ManagementController : Controller
                 Content = boardCommentInputViewModel.Content
             };
 
-            ServiceResult result = await _boardService.WriteCommentAsync(commentRequest, loggedInAccount.Nickname!, requiredType: EnumHelper.GetDescription(BoardType.PrivateNote), ct: HttpContext.RequestAborted);
+            ServiceResult result = await _boardService.WriteCommentAsync(commentRequest, loggedInAccount.Nickname!, requiredType: BoardTypes.PrivateNote, ct: HttpContext.RequestAborted);
             return result.Success
                 ? Json(new { result = true, boardId = boardCommentInputViewModel.BoardId, page = boardCommentInputViewModel.DetailCurrentPage })
                 : Json(new { result = false, error = _localizer["Input is invalid"].Value });
@@ -980,7 +981,7 @@ public class ManagementController : Controller
             Size = summernoteImageFile.Length
         };
 
-        SummernoteUploadResult uploadResult = await _boardService.UploadSummernoteImageAsync(file, "Management", EnumHelper.GetDescription(BoardType.PrivateNote), HttpContext.RequestAborted);
+        SummernoteUploadResult uploadResult = await _boardService.UploadSummernoteImageAsync(file, "Management", BoardTypes.PrivateNote, HttpContext.RequestAborted);
 
         if (!uploadResult.Success)
             return Ok(new { result = false, errorMessage = _localizer[uploadResult.ErrorKey ?? "Input is invalid"].Value });
@@ -1020,7 +1021,7 @@ public class ManagementController : Controller
 
                 if (boardId == null)
                 {
-                    return RedirectToAction(nameof(BoardType.PrivateNote), "Management");
+                    return RedirectToAction(BoardTypes.PrivateNote, "Management");
                 }
 
                 PrivateNoteOutputViewModel privateNoteOutputViewModel = new()
@@ -1032,11 +1033,11 @@ public class ManagementController : Controller
 
                 try
                 {
-                    BoardResponse? privateNoteBoard = await _boardService.GetBoardByIdAsync((long)boardId, EnumHelper.GetDescription(BoardType.PrivateNote), HttpContext.RequestAborted);
+                    BoardResponse? privateNoteBoard = await _boardService.GetBoardByIdAsync((long)boardId, BoardTypes.PrivateNote, HttpContext.RequestAborted);
                     BoardAttachedFileDto? attachedFile = await _boardService.GetAttachedFileByBoardIdAsync((long)boardId, HttpContext.RequestAborted);
 
                     if (privateNoteBoard == null || privateNoteBoard.Deleted || !_boardService.CanView(privateNoteBoard, loggedInAccount))
-                        return RedirectToAction(nameof(BoardType.PrivateNote), "Management");
+                        return RedirectToAction(BoardTypes.PrivateNote, "Management");
 
                     await _boardService.IncrementBoardViewAsync((long)boardId, HttpContext.RequestAborted);
 
@@ -1091,12 +1092,12 @@ public class ManagementController : Controller
                 catch (Exception ex)
                 {
                     _logger.LogError(ex, "Failed to load private note board detail for board {BoardId}", boardId);
-                    return RedirectToAction(nameof(BoardType.PrivateNote), "Management");
+                    return RedirectToAction(BoardTypes.PrivateNote, "Management");
                 }
             }
             // Edit
             case "edit" when boardId == null:
-                return RedirectToAction(nameof(BoardType.PrivateNote), "Management");
+                return RedirectToAction(BoardTypes.PrivateNote, "Management");
             case "edit":
             {
                 PrivateNoteOutputViewModel privateNoteOutputViewModel = new()
@@ -1110,12 +1111,12 @@ public class ManagementController : Controller
 
                 try
                 {
-                    BoardResponse? privateNoteBoard = await _boardService.GetBoardByIdAsync((long)boardId, EnumHelper.GetDescription(BoardType.PrivateNote), HttpContext.RequestAborted);
+                    BoardResponse? privateNoteBoard = await _boardService.GetBoardByIdAsync((long)boardId, BoardTypes.PrivateNote, HttpContext.RequestAborted);
                     BoardAttachedFileDto? attachedFile = await _boardService.GetAttachedFileByBoardIdAsync((long)boardId, HttpContext.RequestAborted);
 
                     if (privateNoteBoard == null || privateNoteBoard.Deleted || !loggedInAccount.IsOwner(privateNoteBoard.Writer))
                     {
-                        return RedirectToAction(nameof(BoardType.PrivateNote), "Management");
+                        return RedirectToAction(BoardTypes.PrivateNote, "Management");
                     }
 
                     (privateNoteBoard.Content, bool isImgTagIncluded) = await _boardService.PrepareHtmlForDisplayAsync(privateNoteBoard.Content ?? "", HttpContext.RequestAborted);
@@ -1157,7 +1158,7 @@ public class ManagementController : Controller
                 catch (Exception ex)
                 {
                     _logger.LogError(ex, "Failed to load private note board edit form for board {BoardId}", boardId);
-                    return RedirectToAction(nameof(BoardType.PrivateNote), "Management");
+                    return RedirectToAction(BoardTypes.PrivateNote, "Management");
                 }
             }
             // List
@@ -1184,7 +1185,7 @@ public class ManagementController : Controller
                 // belongs to the caller (same "already scoped to the caller's own notes" behavior
                 // this replaced).
                 (IEnumerable<BoardResponse> pageItems, int totalCount) = await _boardService.GetBoardPageAsync(new BoardPageQuery(
-                    Type: EnumHelper.GetDescription(BoardType.PrivateNote),
+                    Type: BoardTypes.PrivateNote,
                     OwnerNickname: loggedInAccount.Nickname,
                     SearchType: searchType,
                     SearchText: searchText,
@@ -1262,7 +1263,7 @@ public class ManagementController : Controller
         try
         {
             string? nickname = _sessionService.GetAccount()!.Nickname;
-            BoardResponse? board = await _boardService.GetBoardByIdAsync(id, EnumHelper.GetDescription(BoardType.PrivateNote), HttpContext.RequestAborted);
+            BoardResponse? board = await _boardService.GetBoardByIdAsync(id, BoardTypes.PrivateNote, HttpContext.RequestAborted);
 
             return board == null || board.Deleted || board.Writer != nickname
                 ? Json(new { result = false, error = _localizer["Input is invalid"].Value })
@@ -1308,7 +1309,7 @@ public class ManagementController : Controller
             BoardRequest boardRequest = new()
             {
                 Id = boardInputViewModel.Id,
-                Type = EnumHelper.GetDescription(BoardType.PrivateNote),
+                Type = BoardTypes.PrivateNote,
                 Title = boardInputViewModel.Title,
                 Content = boardInputViewModel.Content,
                 Locked = boardInputViewModel.Locked
@@ -1351,7 +1352,7 @@ public class ManagementController : Controller
             // another account's private note board.
             ServiceResult result = await _boardService.DeleteBoardAsync(
                 boardInputViewModel.Id,
-                EnumHelper.GetDescription(BoardType.PrivateNote),
+                BoardTypes.PrivateNote,
                 loggedInAccount.Nickname!,
                 false,
                 HttpContext.RequestAborted);
@@ -1388,7 +1389,7 @@ public class ManagementController : Controller
                 id,
                 loggedInAccount.Nickname!,
                 false,
-                EnumHelper.GetDescription(BoardType.PrivateNote),
+                BoardTypes.PrivateNote,
                 HttpContext.RequestAborted);
 
             return result.Success

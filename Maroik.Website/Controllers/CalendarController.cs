@@ -1,8 +1,7 @@
 using Maroik.Core.Domain.Media;
 using Maroik.Core.Domain.Account;
+using Maroik.Core.Domain.Calendar;
 using Maroik.Core.Contract.Dtos;
-using Maroik.Core.Contract.Misc.Enums;
-using Maroik.Core.Contract.Misc.Helpers;
 using Maroik.Core.Contract.Interfaces;
 using Maroik.Core.Contract.Misc.Settings;
 using Maroik.Website.Attributes;
@@ -454,8 +453,8 @@ public class CalendarController : Controller
                 let isOther = !isOwned && otherCalendars.Any(x => x.Id == inputCalendar.Id)
                 where isOwned || isOther
                 let calendarType = isOwned
-                    ? EnumHelper.GetDescription(CalendarType.My)
-                    : EnumHelper.GetDescription(CalendarType.Other)
+                    ? CalendarTypes.My
+                    : CalendarTypes.Other
                 let htmlColorCode = isOwned
                     ? ownedCalendars.FirstOrDefault(x => x.Id == inputCalendar.Id)?.HtmlColorCode
                     : otherCalendars.FirstOrDefault(x => x.Id == inputCalendar.Id)?.HtmlColorCode

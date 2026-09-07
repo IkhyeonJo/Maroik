@@ -1,7 +1,7 @@
 using Maroik.Core.Domain.Account;
+using Maroik.Core.Domain.Board;
 using Maroik.Core.Domain.Menu;
 using Maroik.Core.Contract.Dtos;
-using Maroik.Core.Contract.Misc.Enums;
 using Maroik.Core.Contract.Interfaces;
 using Maroik.Core.Service.Services;
 using Microsoft.Extensions.Logging.Abstractions;
@@ -29,7 +29,7 @@ public class MenuServiceTests
     private static Category MakeCategory(long id = 1, string name = "Forum") =>
         Category.Reconstitute(id, name, name, "/icons/forum.png", "Board", "Index", Role.User, 0L);
 
-    private static SubCategory MakeSubCategory(long id = 1, string name = nameof(BoardType.FreeForum), long categoryId = 1) =>
+    private static SubCategory MakeSubCategory(long id = 1, string name = BoardTypes.FreeForum, long categoryId = 1) =>
         SubCategory.Reconstitute(id, categoryId, name, name, "/icons/forum.png", "Index", Role.User, 0L);
 
     // -- GetAllCategoriesAsync ------------------------------------------------
@@ -94,7 +94,7 @@ public class MenuServiceTests
     [Fact]
     public async Task GetSubCategoryByIdAsync_ReturnsSubCategory_WhenFound()
     {
-        _subCategoryRepo.Setup(r => r.GetAllAsync(It.IsAny<CancellationToken>())).ReturnsAsync([MakeSubCategory(id: 3, name: nameof(BoardType.PrivateNote))]);
+        _subCategoryRepo.Setup(r => r.GetAllAsync(It.IsAny<CancellationToken>())).ReturnsAsync([MakeSubCategory(id: 3, name: BoardTypes.PrivateNote)]);
         var sut = CreateSut();
 
         SubCategoryResponse? result = await sut.GetSubCategoryByIdAsync(3, TestContext.Current.CancellationToken);

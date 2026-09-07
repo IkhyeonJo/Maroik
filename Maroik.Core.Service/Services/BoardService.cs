@@ -1,7 +1,6 @@
 using Maroik.Core.Domain.Account;
 using Maroik.Core.Domain.Board;
 using Maroik.Core.Contract.Dtos;
-using Maroik.Core.Contract.Misc.Enums;
 using Maroik.Core.Contract.Misc.Extensions;
 using Maroik.Core.Contract.Interfaces;
 using Maroik.Core.Contract.Misc.Settings;
@@ -36,8 +35,8 @@ public class BoardService : IBoardService
     /// </summary>
     private static readonly Dictionary<string, string> _boardAreaMap = new(StringComparer.OrdinalIgnoreCase)
     {
-        [nameof(BoardType.FreeForum)] = "Forum",
-        [nameof(BoardType.PrivateNote)] = "Management"
+        [BoardTypes.FreeForum] = "Forum",
+        [BoardTypes.PrivateNote] = "Management"
     };
 
     /// <summary>Initializes a new instance of <see cref="BoardService"/> with the supplied dependencies.</summary>

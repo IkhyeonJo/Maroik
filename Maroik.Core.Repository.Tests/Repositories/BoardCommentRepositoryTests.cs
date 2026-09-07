@@ -1,5 +1,4 @@
 using Maroik.Core.Domain.Board;
-using Maroik.Core.Contract.Misc.Enums;
 using Maroik.Core.PostgreSQL.Data;
 using Maroik.Core.Repository.Repositories;
 using Microsoft.EntityFrameworkCore;
@@ -46,7 +45,7 @@ public class BoardCommentRepositoryTests : IDisposable
     {
         var board = new EfBoard
         {
-            Type = nameof(BoardType.FreeForum),
+            Type = BoardTypes.FreeForum,
             Title = "Parent Board",
             Content = "Content",
             Writer = "Alice",

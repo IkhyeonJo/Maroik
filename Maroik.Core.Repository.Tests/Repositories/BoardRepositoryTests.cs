@@ -1,5 +1,4 @@
 using Maroik.Core.Domain.Board;
-using Maroik.Core.Contract.Misc.Enums;
 using Maroik.Core.PostgreSQL.Data;
 using Maroik.Core.Repository.Repositories;
 using Microsoft.EntityFrameworkCore;
@@ -60,14 +59,14 @@ public class BoardRepositoryTests : IDisposable
     public async Task GetOneTypeBoardsAsync_ReturnsOnlyBoardsOfGivenType()
     {
         await SeedAsync(
-            MakeBoard(nameof(BoardType.FreeForum), "Hello"),
-            MakeBoard(nameof(BoardType.FreeForum), "World"),
-            MakeBoard(nameof(BoardType.PrivateNote), "Note1"));
+            MakeBoard(BoardTypes.FreeForum, "Hello"),
+            MakeBoard(BoardTypes.FreeForum, "World"),
+            MakeBoard(BoardTypes.PrivateNote, "Note1"));
 
-        IEnumerable<Board> result = await _sut.GetByTypeAsync(nameof(BoardType.FreeForum), TestContext.Current.CancellationToken);
+        IEnumerable<Board> result = await _sut.GetByTypeAsync(BoardTypes.FreeForum, TestContext.Current.CancellationToken);
 
         Assert.Equal(2, result.Count());
-        Assert.All(result, b => Assert.Equal(nameof(BoardType.FreeForum), b.Type));
+        Assert.All(result, b => Assert.Equal(BoardTypes.FreeForum, b.Type));
     }
 
     /// <summary>Verifies that <c>GetOneTypeBoardsAsync</c> returns empty when no matching type.</summary>
@@ -84,10 +83,10 @@ public class BoardRepositoryTests : IDisposable
     public async Task GetOneTypeBoardsAsync_ExcludesDeletedBoards()
     {
         await SeedAsync(
-            MakeBoard(nameof(BoardType.FreeForum), "Visible"),
-            MakeBoard(nameof(BoardType.FreeForum), "Removed", deleted: true));
+            MakeBoard(BoardTypes.FreeForum, "Visible"),
+            MakeBoard(BoardTypes.FreeForum, "Removed", deleted: true));
 
-        IEnumerable<Board> result = await _sut.GetByTypeAsync(nameof(BoardType.FreeForum), TestContext.Current.CancellationToken);
+        IEnumerable<Board> result = await _sut.GetByTypeAsync(BoardTypes.FreeForum, TestContext.Current.CancellationToken);
 
         Assert.Single(result);
         Assert.Equal("Visible", result.Single().Title);
@@ -99,7 +98,7 @@ public class BoardRepositoryTests : IDisposable
     [Fact]
     public async Task GetBoardByIdAsync_ReturnsBoard_WhenFoundAndNotDeleted()
     {
-        await SeedAsync(MakeBoard(nameof(BoardType.FreeForum), "My Post"));
+        await SeedAsync(MakeBoard(BoardTypes.FreeForum, "My Post"));
         EfBoard efBoard = await _context.Boards.FirstAsync(TestContext.Current.CancellationToken);
 
         Board? result = await _sut.FindActiveByIdAsync(efBoard.Id, TestContext.Current.CancellationToken);
@@ -112,7 +111,7 @@ public class BoardRepositoryTests : IDisposable
     [Fact]
     public async Task GetBoardByIdAsync_ReturnsNull_WhenBoardIsDeleted()
     {
-        await SeedAsync(MakeBoard(nameof(BoardType.FreeForum), "Deleted Post", deleted: true));
+        await SeedAsync(MakeBoard(BoardTypes.FreeForum, "Deleted Post", deleted: true));
         EfBoard efBoard = await _context.Boards.FirstAsync(TestContext.Current.CancellationToken);
 
         Board? result = await _sut.FindActiveByIdAsync(efBoard.Id, TestContext.Current.CancellationToken);
@@ -137,7 +136,7 @@ public class BoardRepositoryTests : IDisposable
     {
         var board = Board.Reconstitute(
             id: 0,
-            type: nameof(BoardType.FreeForum),
+            type: BoardTypes.FreeForum,
             title: "New Post",
             content: "Post content",
             writer: "Alice",
@@ -161,12 +160,12 @@ public class BoardRepositoryTests : IDisposable
     [Fact]
     public async Task UpdateEntityAsync_UpdatesExistingBoard()
     {
-        await SeedAsync(MakeBoard(nameof(BoardType.FreeForum), "Original Title"));
+        await SeedAsync(MakeBoard(BoardTypes.FreeForum, "Original Title"));
         EfBoard efBoard = await _context.Boards.FirstAsync(TestContext.Current.CancellationToken);
 
         var board = Board.Reconstitute(
             id: efBoard.Id,
-            type: nameof(BoardType.FreeForum),
+            type: BoardTypes.FreeForum,
             title: "Updated Title",
             content: "Updated content",
             writer: "Alice",
@@ -191,7 +190,7 @@ public class BoardRepositoryTests : IDisposable
     public async Task UpdateEntityAsync_SetsDeletedFlag_OnBoard()
     {
         // UpdateEntityAsync uses Update (soft delete) rather than Remove
-        await SeedAsync(MakeBoard(nameof(BoardType.FreeForum), "Post to Delete"));
+        await SeedAsync(MakeBoard(BoardTypes.FreeForum, "Post to Delete"));
         EfBoard efBoard = await _context.Boards.FirstAsync(TestContext.Current.CancellationToken);
 
         var board = Board.Reconstitute(
