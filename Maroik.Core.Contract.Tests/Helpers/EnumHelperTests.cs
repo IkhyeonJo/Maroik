@@ -32,14 +32,4 @@ public class EnumHelperTests
 
         Assert.Equal(expected, result);
     }
-
-    /// <summary>Verifies that <c>GetDescription</c> returns description attribute for session.</summary>
-    [Theory]
-    [InlineData(Session.Account, "Account")]
-    public void GetDescription_ReturnsDescriptionAttribute_ForSession(Session value, string expected)
-    {
-        string result = EnumHelper.GetDescription(value);
-
-        Assert.Equal(expected, result);
-    }
 }

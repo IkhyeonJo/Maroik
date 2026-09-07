@@ -62,16 +62,6 @@ public enum AccountMessage
 }
 
 /// <summary>
-/// Keys used to store data in the server-side session store.
-/// </summary>
-public enum Session
-{
-    /// <summary>Session key that holds the serialised <c>AccountResponse</c> for the logged-in user.</summary>
-    [Description("Account")]
-    Account
-}
-
-/// <summary>
 /// Selects the RSA signature/encryption algorithm variant used by <c>IRsaService</c>.
 /// </summary>
 public enum RsaType
