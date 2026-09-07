@@ -4,7 +4,7 @@ namespace Maroik.Core.DomainTests.BoardDomain;
 
 /// <summary>
 /// Unit tests for <see cref="Maroik.Core.Domain.Board.Board"/>.
-/// Covers board creation, update, view incrementing, comment management, file attachment, lock/pin, and soft-delete.
+/// Covers board creation, update, view incrementing, comment management, lock/pin, and soft-delete.
 /// </summary>
 public class BoardTests
 {
@@ -13,9 +13,6 @@ public class BoardTests
 
     private static BoardComment ValidComment(long boardId = 1) =>
         BoardComment.Reconstitute(1, boardId, 1, null, "Bob", "Nice post!", DateTime.UtcNow, false);
-
-    private static BoardAttachedFile ValidFile(long boardId = 1) =>
-        BoardAttachedFile.Create(boardId, 1024, "doc.pdf", ".pdf", "/files/doc.pdf").Value;
 
     // -- Create ---------------------------------------------------------------
 
@@ -233,59 +230,6 @@ public class BoardTests
 
         Assert.True(result.IsError);
         Assert.Equal("Board.CommentMismatch", result.FirstError.Code);
-    }
-
-    // -- DeleteComment ---------------------------------------------------------
-
-    /// <summary>Delete comment succeeds, when comment exists.</summary>
-    [Fact]
-    public void DeleteComment_Succeeds_WhenCommentExists()
-    {
-        var board = ValidBoard(id: 1);
-        board.AddComment(ValidComment(boardId: 1));
-
-        var result = board.DeleteComment(1);
-
-        Assert.False(result.IsError);
-        Assert.True(board.Comments[0].Deleted);
-    }
-
-    /// <summary>Delete comment returns error, when comment not found.</summary>
-    [Fact]
-    public void DeleteComment_ReturnsError_WhenCommentNotFound()
-    {
-        var board = ValidBoard(id: 1);
-
-        var result = board.DeleteComment(999);
-
-        Assert.True(result.IsError);
-        Assert.Equal("Board.CommentNotFound", result.FirstError.Code);
-    }
-
-    // -- AttachFile ------------------------------------------------------------
-
-    /// <summary>Attach file succeeds, when file matches board.</summary>
-    [Fact]
-    public void AttachFile_Succeeds_WhenFileMatchesBoard()
-    {
-        var board = ValidBoard(id: 1);
-
-        var result = board.AttachFile(ValidFile(boardId: 1));
-
-        Assert.False(result.IsError);
-        Assert.Single(board.AttachedFiles);
-    }
-
-    /// <summary>Attach file returns error, when file board id mismatch.</summary>
-    [Fact]
-    public void AttachFile_ReturnsError_WhenFileBoardIdMismatch()
-    {
-        var board = ValidBoard(id: 1);
-
-        var result = board.AttachFile(ValidFile(boardId: 99));
-
-        Assert.True(result.IsError);
-        Assert.Equal("Board.FileMismatch", result.FirstError.Code);
     }
 
     // -- Lock / Unlock ---------------------------------------------------------

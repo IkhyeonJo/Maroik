@@ -34,7 +34,7 @@ public sealed class TimeZoneId : ValueObject
         {
             _ = TimeZoneInfo.FindSystemTimeZoneById(value);
         }
-        catch (TimeZoneNotFoundException)
+        catch (Exception ex) when (ex is TimeZoneNotFoundException or InvalidTimeZoneException)
         {
             return Error.Validation("TimeZoneId.Invalid", $"'{value}' is not a recognised time-zone ID.");
         }

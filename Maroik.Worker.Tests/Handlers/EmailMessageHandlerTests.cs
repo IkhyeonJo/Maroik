@@ -40,9 +40,8 @@ public class EmailMessageHandlerTests
     public async Task HandleAsync_DoesNotUpdateAccount_WhenMailSentSuccessfully()
     {
         _mailClient.Setup(m => m.SendMailAsync(
-                It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(),
-                It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(),
-                It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+                It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(),
+                It.IsAny<ServerSetting>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(ServiceResult.Ok());
 
         var sut = CreateSut();
@@ -60,9 +59,8 @@ public class EmailMessageHandlerTests
     public async Task HandleAsync_ClearsMailSendFailed_WhenMailSentSuccessfully()
     {
         _mailClient.Setup(m => m.SendMailAsync(
-                It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(),
-                It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(),
-                It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+                It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(),
+                It.IsAny<ServerSetting>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(ServiceResult.Ok());
 
         var sut = CreateSut();
@@ -80,9 +78,8 @@ public class EmailMessageHandlerTests
     public async Task HandleAsync_MarksAccountFailToMailSent_WhenSmtpFails()
     {
         _mailClient.Setup(m => m.SendMailAsync(
-                It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(),
-                It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(),
-                It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+                It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(),
+                It.IsAny<ServerSetting>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(ServiceResult.Fail("SMTP connection refused"));
 
         var sut = CreateSut();
@@ -104,9 +101,8 @@ public class EmailMessageHandlerTests
     public async Task HandleAsync_PassesCancellationTokenThroughToAccountService()
     {
         _mailClient.Setup(m => m.SendMailAsync(
-                It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(),
-                It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(),
-                It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+                It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(),
+                It.IsAny<ServerSetting>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(ServiceResult.Fail("SMTP connection refused"));
 
         var sut = CreateSut();

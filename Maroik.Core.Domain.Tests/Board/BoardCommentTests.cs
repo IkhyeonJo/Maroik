@@ -49,15 +49,29 @@ public class BoardCommentTests
 
     // -- SoftDelete ------------------------------------------------------------
 
-    /// <summary>Soft delete sets deleted true.</summary>
+    /// <summary>Soft delete succeeds, when not deleted.</summary>
     [Fact]
-    public void SoftDelete_SetsDeletedTrue()
+    public void SoftDelete_Succeeds_WhenNotDeleted()
     {
         var comment = BoardComment.Create(10, 1, null, "Alice", "Hello!").Value;
 
+        var result = comment.SoftDelete();
+
+        Assert.False(result.IsError);
+        Assert.True(comment.Deleted);
+    }
+
+    /// <summary>Soft delete returns error, when already deleted.</summary>
+    [Fact]
+    public void SoftDelete_ReturnsError_WhenAlreadyDeleted()
+    {
+        var comment = BoardComment.Create(10, 1, null, "Alice", "Hello!").Value;
         comment.SoftDelete();
 
-        Assert.True(comment.Deleted);
+        var result = comment.SoftDelete();
+
+        Assert.True(result.IsError);
+        Assert.Equal("BoardComment.AlreadyDeleted", result.FirstError.Code);
     }
 
     // -- IsOwnedBy / CanBeDeletedBy ----------------------------------------------

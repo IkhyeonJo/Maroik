@@ -8,8 +8,9 @@ namespace Maroik.Core.Repository.Repositories;
 
 /// <summary>
 /// EF Core repository for <see cref="Expenditure"/> domain objects.
-/// Always eager-loads the linked <see cref="OrmExpenditure.Asset"/> so that the monetary unit
-/// is available without a separate query.
+/// Always eager-loads the linked <see cref="OrmExpenditure.AssetNavigation"/> (the PaymentMethod
+/// asset, not the MyDepositAsset transfer target) so the amount's monetary unit is available
+/// without a separate query.
 /// </summary>
 public class ExpenditureRepository(ApplicationDbContext context)
     : GenericRepository<Expenditure, OrmExpenditure>(context), IExpenditureRepository
@@ -18,14 +19,16 @@ public class ExpenditureRepository(ApplicationDbContext context)
     protected override DbSet<OrmExpenditure> Set => Context.Expenditures;
 
     /// <inheritdoc />
-    // Always join the Asset navigation property so query results carry the monetary unit.
+    // AssetNavigation (keyed by PaymentMethod) carries the currency the Amount is denominated in.
+    // Asset (keyed by MyDepositAsset) is the transfer target and is null for a non-transfer
+    // expenditure, so joining that one instead leaves MonetaryUnit blank for the common case.
     protected override IQueryable<OrmExpenditure> ApplyIncludes(IQueryable<OrmExpenditure> query)
-        => query.Include(x => x.Asset);
+        => query.Include(x => x.AssetNavigation);
 
     /// <summary>Maps a persisted <see cref="OrmExpenditure"/> row to the <see cref="Expenditure"/> domain object.</summary>
     protected override Expenditure ToDomain(OrmExpenditure e) => Expenditure.Reconstitute(
         e.Id, e.AccountEmail ?? "", e.MainClass ?? "",
-        e.SubClass ?? "", e.Content, e.Amount, e.Asset?.MonetaryUnit ?? "",
+        e.SubClass ?? "", e.Content, e.Amount, e.AssetNavigation?.MonetaryUnit ?? "",
         e.PaymentMethod ?? "", e.MyDepositAsset, e.Note,
         e.Created, e.Updated);
 

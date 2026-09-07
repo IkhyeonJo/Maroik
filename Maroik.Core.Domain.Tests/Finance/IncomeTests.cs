@@ -80,10 +80,10 @@ public class IncomeTests
     {
         var income = ValidIncome();
 
-        var result = income.Update("IrregularIncome", "FinancialIncome", "Dividend", 500000m, "KRW", "Stock Account", "note");
+        var result = income.Update("RegularIncome", "FinancialIncome", "Dividend", 500000m, "KRW", "Stock Account", "note");
 
         Assert.False(result.IsError);
-        Assert.Equal("IrregularIncome", income.MainClass);
+        Assert.Equal("RegularIncome", income.MainClass);
         Assert.Equal(500000m, income.Amount.Amount);
         Assert.Equal("note", income.Note);
     }

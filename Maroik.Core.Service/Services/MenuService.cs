@@ -100,9 +100,7 @@ public class MenuService : IMenuService
     {
         try
         {
-            var category = Category.Reconstitute(request.Id, request.Name, request.DisplayName, request.IconPath,
-                request.Controller, request.Action, request.Role, request.Order);
-            await _categoryRepository.DeleteByIdAsync(category.Id, ct);
+            await _categoryRepository.DeleteByIdAsync(request.Id, ct);
             return ServiceResult.Ok();
         }
         catch (Exception e)
@@ -161,9 +159,7 @@ public class MenuService : IMenuService
     {
         try
         {
-            var subCategory = SubCategory.Reconstitute(request.Id, request.CategoryId, request.Name,
-                request.DisplayName, request.IconPath, request.Action, request.Role, request.Order);
-            await _subCategoryRepository.DeleteByIdAsync(subCategory.Id, ct);
+            await _subCategoryRepository.DeleteByIdAsync(request.Id, ct);
             return ServiceResult.Ok();
         }
         catch (Exception e)

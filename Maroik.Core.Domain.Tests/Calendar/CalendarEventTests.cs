@@ -4,7 +4,7 @@ namespace Maroik.Core.DomainTests.CalendarDomain;
 
 /// <summary>
 /// Unit tests for <see cref="Maroik.Core.Domain.Calendar.CalendarEvent"/>.
-/// Covers event creation, update, reminder management, and file attachment.
+/// Covers event creation and update.
 /// </summary>
 public class CalendarEventTests
 {
@@ -13,12 +13,6 @@ public class CalendarEventTests
 
     private static CalendarEvent ValidEvent(long id = 1, long calendarId = 10) =>
         CalendarEvent.Reconstitute(id, calendarId, "Team Meeting", null, false, Start, End, "UTC", "UTC", null, null, null, DateTime.UtcNow, DateTime.UtcNow);
-
-    private static CalendarEventReminder ValidReminder(long eventId = 1) =>
-        CalendarEventReminder.Reconstitute(1, eventId, "Email", 30, null, null, null, null);
-
-    private static CalendarEventAttachedFile ValidFile(long eventId = 1) =>
-        CalendarEventAttachedFile.Reconstitute(1, eventId, 512, "agenda.pdf", ".pdf", "/files/agenda.pdf");
 
     // -- Create ---------------------------------------------------------------
 
@@ -113,109 +107,4 @@ public class CalendarEventTests
         Assert.Equal("CalendarEvent.InvalidDateRange", result.FirstError.Code);
     }
 
-    // -- AddReminder -----------------------------------------------------------
-
-    /// <summary>Add reminder succeeds, when reminder matches event.</summary>
-    [Fact]
-    public void AddReminder_Succeeds_WhenReminderMatchesEvent()
-    {
-        var ev = ValidEvent(id: 1);
-
-        var result = ev.AddReminder(ValidReminder(eventId: 1));
-
-        Assert.False(result.IsError);
-        Assert.Single(ev.Reminders);
-    }
-
-    /// <summary>Add reminder returns error, when mismatch.</summary>
-    [Fact]
-    public void AddReminder_ReturnsError_WhenMismatch()
-    {
-        var ev = ValidEvent(id: 1);
-
-        var result = ev.AddReminder(ValidReminder(eventId: 99));
-
-        Assert.True(result.IsError);
-        Assert.Equal("CalendarEvent.ReminderMismatch", result.FirstError.Code);
-    }
-
-    // -- RemoveReminder --------------------------------------------------------
-
-    /// <summary>Remove reminder succeeds, when reminder exists.</summary>
-    [Fact]
-    public void RemoveReminder_Succeeds_WhenReminderExists()
-    {
-        var ev = ValidEvent(id: 1);
-        ev.AddReminder(ValidReminder(eventId: 1));
-
-        var result = ev.RemoveReminder(1);
-
-        Assert.False(result.IsError);
-        Assert.Empty(ev.Reminders);
-    }
-
-    /// <summary>Remove reminder returns error, when not found.</summary>
-    [Fact]
-    public void RemoveReminder_ReturnsError_WhenNotFound()
-    {
-        var ev = ValidEvent(id: 1);
-
-        var result = ev.RemoveReminder(999);
-
-        Assert.True(result.IsError);
-        Assert.Equal("CalendarEvent.ReminderNotFound", result.FirstError.Code);
-    }
-
-    // -- AttachFile ------------------------------------------------------------
-
-    /// <summary>Attach file succeeds, when file matches event.</summary>
-    [Fact]
-    public void AttachFile_Succeeds_WhenFileMatchesEvent()
-    {
-        var ev = ValidEvent(id: 1);
-
-        var result = ev.AttachFile(ValidFile(eventId: 1));
-
-        Assert.False(result.IsError);
-        Assert.Single(ev.AttachedFiles);
-    }
-
-    /// <summary>Attach file returns error, when mismatch.</summary>
-    [Fact]
-    public void AttachFile_ReturnsError_WhenMismatch()
-    {
-        var ev = ValidEvent(id: 1);
-
-        var result = ev.AttachFile(ValidFile(eventId: 99));
-
-        Assert.True(result.IsError);
-        Assert.Equal("CalendarEvent.FileMismatch", result.FirstError.Code);
-    }
-
-    // -- RemoveFile ------------------------------------------------------------
-
-    /// <summary>Remove file succeeds, when file exists.</summary>
-    [Fact]
-    public void RemoveFile_Succeeds_WhenFileExists()
-    {
-        var ev = ValidEvent(id: 1);
-        ev.AttachFile(ValidFile(eventId: 1));
-
-        var result = ev.RemoveFile(1);
-
-        Assert.False(result.IsError);
-        Assert.Empty(ev.AttachedFiles);
-    }
-
-    /// <summary>Remove file returns error, when not found.</summary>
-    [Fact]
-    public void RemoveFile_ReturnsError_WhenNotFound()
-    {
-        var ev = ValidEvent(id: 1);
-
-        var result = ev.RemoveFile(999);
-
-        Assert.True(result.IsError);
-        Assert.Equal("CalendarEvent.FileNotFound", result.FirstError.Code);
-    }
 }

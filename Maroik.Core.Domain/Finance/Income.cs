@@ -116,6 +116,9 @@ public sealed class Income : AggregateRoot<long>
         if (string.IsNullOrWhiteSpace(depositMyAssetProductName))
             return Error.Validation("Income.DepositAssetEmpty", "Deposit asset product name cannot be empty.");
 
+        var classResult = IncomeClassPolicy.Validate(mainClass, subClass);
+        if (classResult.IsError) return classResult.Errors;
+
         var emailResult = Email.Create(accountEmailValue);
         if (emailResult.IsError) return emailResult.Errors;
 
@@ -154,6 +157,9 @@ public sealed class Income : AggregateRoot<long>
 
         if (string.IsNullOrWhiteSpace(depositMyAssetProductName))
             return Error.Validation("Income.DepositAssetEmpty", "Deposit asset product name cannot be empty.");
+
+        var classResult = IncomeClassPolicy.Validate(mainClass, subClass);
+        if (classResult.IsError) return classResult.Errors;
 
         var moneyResult = Money.Create(amount, currency);
         if (moneyResult.IsError) return moneyResult.Errors;

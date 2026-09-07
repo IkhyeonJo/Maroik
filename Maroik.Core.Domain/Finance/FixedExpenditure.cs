@@ -156,6 +156,9 @@ public sealed class FixedExpenditure : AggregateRoot<long>
         if (!FixedSchedulePolicy.IsValidDepositDate(depositMonth, depositDay))
             return Error.Validation("FixedExpenditure.InvalidDepositDay", "Deposit day is not valid for the selected month.");
 
+        var classResult = ExpenditureClassPolicy.Validate(mainClass, subClass);
+        if (classResult.IsError) return classResult.Errors;
+
         var emailResult = Email.Create(accountEmailValue);
         if (emailResult.IsError) return emailResult.Errors;
 
@@ -214,6 +217,9 @@ public sealed class FixedExpenditure : AggregateRoot<long>
 
         if (!FixedSchedulePolicy.IsValidDepositDate(depositMonth, depositDay))
             return Error.Validation("FixedExpenditure.InvalidDepositDay", "Deposit day is not valid for the selected month.");
+
+        var classResult = ExpenditureClassPolicy.Validate(mainClass, subClass);
+        if (classResult.IsError) return classResult.Errors;
 
         var moneyResult = Money.Create(amount, currency);
         if (moneyResult.IsError) return moneyResult.Errors;

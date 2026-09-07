@@ -239,9 +239,14 @@ public class AuthorizationFilter : ActionFilterAttribute
                                 context.Result = new RedirectResult("/Dashboard/AnonymousIndex");
                                 return;
                             }
+                        // Role is a plain string, not an enum — an account somehow persisted with
+                        // neither Admin nor User must still get an explicit result instead of
+                        // falling through with next() never called and context.Result never set,
+                        // which would silently short-circuit the pipeline with an empty response.
+                        default:
+                            context.Result = new RedirectResult("/Dashboard/AnonymousIndex");
+                            return;
                     }
-
-                    break;
                 }
             // POST method — not logged in
             case "POST" when !isAccountSessionExist:
@@ -345,9 +350,14 @@ public class AuthorizationFilter : ActionFilterAttribute
                                 context.Result = new RedirectResult("/Dashboard/AnonymousIndex");
                                 return;
                             }
+                        // Role is a plain string, not an enum — an account somehow persisted with
+                        // neither Admin nor User must still get an explicit result instead of
+                        // falling through with next() never called and context.Result never set,
+                        // which would silently short-circuit the pipeline with an empty response.
+                        default:
+                            context.Result = new RedirectResult("/Dashboard/AnonymousIndex");
+                            return;
                     }
-
-                    break;
                 }
             // (Reject all methods like PATCH / DELETE etc.)
             default:

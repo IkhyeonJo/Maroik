@@ -1,4 +1,5 @@
 using Maroik.Core.Contract.Dtos;
+using Maroik.Core.Contract.Misc.Settings;
 
 namespace Maroik.Core.Contract.Interfaces;
 
@@ -31,5 +32,5 @@ public interface IMailClient
     /// Sends an HTML email via SMTP. Returns a successful <see cref="ServiceResult"/>, or a failed one
     /// carrying the exception message in <see cref="ServiceResult.ErrorKey"/>.
     /// </summary>
-    public Task<ServiceResult> SendMailAsync(string toEmail, string subject, string body, string smtpHost, string smtpPort, string smtpUserName, string smtpPassword, string smtpSsl, string fromEmail, string fromFullName, CancellationToken ct = default);
+    public Task<ServiceResult> SendMailAsync(string toEmail, string subject, string body, ServerSetting settings, CancellationToken ct = default);
 }

@@ -230,6 +230,28 @@ public class AssetServiceTests
     }
 
     /// <summary>
+    /// Regression test: renaming an asset to a product name that already exists for this account
+    /// hits the same (ProductName, AccountEmail) primary key CreateAsync guards against. Verify
+    /// that failure is translated to the same friendly "already exists" result instead of the
+    /// generic fallback message.
+    /// </summary>
+    [Fact]
+    public async Task UpdateAsync_ReturnsFail_WhenRenameViolatesUniqueConstraint()
+    {
+        SetupFindAsset("OldName", MakeAsset("OldName"));
+        var pgException = new Exception("duplicate key value violates unique constraint \"Asset_pk\" (23505)");
+        _assetRepo.Setup(r => r.UpdateAssetWithProductNameAsync(It.IsAny<Asset>(), "OldName", It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new InvalidOperationException("rename failed", pgException));
+        var sut = CreateSut();
+
+        ServiceResult result = await sut.UpdateAsync("user@example.com", ValidRequest("NewName"), "OldName", TestContext.Current.CancellationToken);
+
+        Assert.False(result.Success);
+        Assert.Contains("already exists", result.ErrorKey, StringComparison.OrdinalIgnoreCase);
+        _unitOfWork.Verify(u => u.RollbackAsync(It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    /// <summary>
     /// Verifies that a rename cascades to expenditure/fixed-expenditure records that reference the
     /// asset via <c>MyDepositAsset</c> — a column with no foreign key (it also holds an empty string
     /// for transfer-less entries), so the application must propagate the rename itself.

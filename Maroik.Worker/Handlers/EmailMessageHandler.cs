@@ -31,19 +31,11 @@ public sealed class EmailMessageHandler : IEmailMessageHandler
     /// <inheritdoc />
     public async Task HandleAsync(SendEmailMessage message, CancellationToken ct = default)
     {
-        ServerSetting settings = _settings.Value;
-
         ServiceResult result = await _mailClient.SendMailAsync(
             message.ToEmail,
             message.Subject,
             message.Body,
-            settings.SmtpHost ?? "",
-            settings.SmtpPort.ToString(),
-            settings.SmtpUserName ?? "",
-            settings.SmtpPassword ?? "",
-            settings.SmtpSsl.ToString(),
-            settings.FromEmail ?? "",
-            settings.FromFullName ?? "",
+            _settings.Value,
             ct);
 
         if (result.Success)

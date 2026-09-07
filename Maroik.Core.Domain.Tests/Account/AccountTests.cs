@@ -81,6 +81,19 @@ public class AccountTests
         Assert.Equal("TimeZoneId.Invalid", result.FirstError.Code);
     }
 
+    /// <summary>Create returns error, when role is not Admin or User.</summary>
+    [Theory]
+    [InlineData("Anonymous")]
+    [InlineData("SuperAdmin")]
+    [InlineData("")]
+    public void Create_ReturnsError_WhenRoleInvalid(string role)
+    {
+        var result = Account.Create("user@example.com", "hashed", "Nick", role, "UTC", null, null, true);
+
+        Assert.True(result.IsError);
+        Assert.Equal("Account.RoleInvalid", result.FirstError.Code);
+    }
+
     // -- ConfirmEmail ---------------------------------------------------------
 
     /// <summary>Confirm email succeeds, when token matches.</summary>
@@ -379,9 +392,8 @@ public class AccountTests
         var account = ValidAccount();
         var newTz = TimeZoneId.Create("Asia/Seoul").Value;
 
-        account.UpdateProfile("NewNick", "/avatar.png", newTz, "USD");
+        account.UpdateProfile("/avatar.png", newTz, "USD");
 
-        Assert.Equal("NewNick", account.Nickname);
         Assert.Equal("/avatar.png", account.AvatarImagePath);
         Assert.Equal("Asia/Seoul", account.TimeZone.Value);
         Assert.Equal("USD", account.DefaultMonetaryUnit);
@@ -393,9 +405,9 @@ public class AccountTests
     {
         var account = ValidAccount();
         var tz = TimeZoneId.Create("UTC").Value;
-        account.UpdateProfile("Nick", "/avatar.png", tz, "KRW");
+        account.UpdateProfile("/avatar.png", tz, "KRW");
 
-        account.UpdateProfile("Nick", null, tz, null);
+        account.UpdateProfile(null, tz, null);
 
         Assert.Null(account.AvatarImagePath);
         Assert.Null(account.DefaultMonetaryUnit);

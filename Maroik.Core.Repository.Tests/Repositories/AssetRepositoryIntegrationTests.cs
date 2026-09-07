@@ -264,4 +264,46 @@ public class AssetRepositoryIntegrationTests : IAsyncLifetime
         Assert.NotNull(result);
         Assert.Equal(800m, result.Amount); // 1000 - 100 - 100: no lost update
     }
+
+    /// <summary>
+    /// Regression test: EF Core tracking queries perform identity resolution — if a row is
+    /// already tracked in this DbContext (e.g. loaded earlier via an unrelated Include, as
+    /// ExpenditureService/IncomeService do before calling this method), a second tracking query
+    /// for the same key hands back the already-tracked (stale) instance instead of the row just
+    /// (re-)read, silently defeating the point of taking the FOR UPDATE lock. This asserts the
+    /// method returns the true current row even when the same asset is already tracked and a
+    /// concurrent, already-committed write changed it in between.
+    /// </summary>
+    [Fact]
+    public async Task FindByEmailAndProductNameForUpdateAsync_ReturnsFreshValue_WhenSameRowAlreadyTrackedInThisContext()
+    {
+        await SeedAsync(MakeOrm("Wallet", "alice@example.com", amount: 1000m));
+
+        // Track the row in _context via an ordinary (tracking) query, simulating an earlier
+        // Include on an unrelated query within the same unit-of-work scope.
+        OrmAsset tracked = await _context.Assets
+            .FirstAsync(a => a.ProductName == "Wallet" && a.AccountEmail == "alice@example.com",
+                TestContext.Current.CancellationToken);
+        Assert.Equal(1000m, tracked.Amount);
+
+        // A separate, already-committed transaction changes the balance. _context's tracked
+        // instance above still shows 1000 — it has no way to know about this write.
+        var options = new DbContextOptionsBuilder<ApplicationDbContext>()
+            .UseNpgsql(_postgres.GetConnectionString())
+            .Options;
+        await using (var otherContext = new ApplicationDbContext(options))
+        {
+            OrmAsset other = await otherContext.Assets
+                .FirstAsync(a => a.ProductName == "Wallet" && a.AccountEmail == "alice@example.com",
+                    TestContext.Current.CancellationToken);
+            other.Amount = 900m;
+            await otherContext.SaveChangesAsync(TestContext.Current.CancellationToken);
+        }
+
+        Asset? found = await _sut.FindByEmailAndProductNameForUpdateAsync(
+            "alice@example.com", "Wallet", TestContext.Current.CancellationToken);
+
+        Assert.NotNull(found);
+        Assert.Equal(900m, found.Balance.Amount);
+    }
 }

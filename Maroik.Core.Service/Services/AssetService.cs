@@ -143,6 +143,14 @@ public class AssetService : IAssetService
             await _unitOfWork.CommitAsync(ct);
             return ServiceResult.Ok();
         }
+        catch (Exception ex) when (ex.IsPostgresUniqueViolation())
+        {
+            // Renaming to a product name that already exists for this account hits the same
+            // (ProductName, AccountEmail) primary key CreateAsync guards against — report the
+            // same friendly message instead of the generic fallback below.
+            await _unitOfWork.RollbackAsync(ct);
+            return ServiceResult.Fail("The asset already exists.");
+        }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to update asset {OriginalProductName} for account {AccountEmail}", originalProductName, accountEmail);

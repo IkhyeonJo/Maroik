@@ -87,6 +87,11 @@ public class AccountRepository(ApplicationDbContext context)
         // Raw SQL is required because EF Core LINQ cannot emit FOR UPDATE.
         // ToListAsync on the raw root executes the SQL verbatim (no composition),
         // keeping FOR UPDATE at the top level of the statement.
+        // AsNoTracking is required too: if this Account's row was already tracked earlier in the
+        // same DbContext scope, a tracking query performs identity resolution and hands back that
+        // already-tracked (pre-lock) instance instead of the row this FOR UPDATE just (re-)read —
+        // silently defeating the lock's whole purpose. AsNoTracking always materializes a fresh
+        // instance from what was actually just selected, bypassing that snap-back.
         var entities = await Set.FromSqlInterpolated(
             $"""
              SELECT *
@@ -94,7 +99,7 @@ public class AccountRepository(ApplicationDbContext context)
              WHERE "Email" = {normalizedEmail}
              LIMIT 1
              FOR UPDATE
-             """).ToListAsync(ct);
+             """).AsNoTracking().ToListAsync(ct);
 
         var entity = entities.FirstOrDefault();
         return entity == null ? null : ToDomain(entity);

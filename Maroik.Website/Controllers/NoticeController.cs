@@ -505,7 +505,7 @@ public class NoticeController : Controller
         var expenditures = await _fixedExpenditureService.GetFixedExpendituresAsync(account.Email!, ct);
         var stream = _excelExportService.CreateFixedExpenditureExcel(expenditures, assets, _localize, account.TimeZoneIanaId!, NoticeWindowDays);
         string name = fileName.ToExcelFileName(account.TimeZoneIanaId!);
-        return File(stream, "application/octet-stream", name);
+        return File(stream, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", name);
     }
     #endregion
 

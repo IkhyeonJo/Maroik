@@ -16,9 +16,12 @@ namespace Maroik.Core.Repository.Repositories;
 /// Subclasses must implement <see cref="Set"/>, <see cref="ToDomain"/>, and <see cref="ToEntity"/> to
 /// wire up the concrete <see cref="DbSet{TEntity}"/> and the domain/entity mapping in both directions,
 /// and may override <see cref="ApplyIncludes"/> to eager-load navigation properties needed by <see cref="ToDomain"/>.
-/// Because <see cref="ApplicationDbContext"/> disables change tracking and auto-detection by default,
-/// all mutations here go through explicit <see cref="Microsoft.EntityFrameworkCore.ChangeTracking.EntityEntry"/>
-/// state assignment rather than relying on tracked-entity mutation.
+/// <see cref="ApplicationDbContext"/> uses EF Core's default (tracking) query behavior — it does NOT
+/// disable change tracking globally — so <see cref="UpdateEntityAsync"/> goes through explicit
+/// <see cref="Microsoft.EntityFrameworkCore.ChangeTracking.EntityEntry"/> state assignment (rather than
+/// relying on auto-detect-changes against an entity mutated in place) simply because the freshly-mapped
+/// entity built from the domain object is always a new, Detached instance, not because tracking itself
+/// is off.
 /// </remarks>
 public abstract class GenericRepository<TDomain, TEntity>(ApplicationDbContext context) : IGenericRepository<TDomain>
     where TEntity : class

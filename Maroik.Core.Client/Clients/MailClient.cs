@@ -2,6 +2,7 @@ using MailKit.Net.Smtp;
 using MailKit.Security;
 using Maroik.Core.Contract.Dtos;
 using Maroik.Core.Contract.Interfaces;
+using Maroik.Core.Contract.Misc.Settings;
 using Microsoft.Extensions.Logging;
 using MimeKit;
 
@@ -48,12 +49,12 @@ public class MailClient(ILogger<MailClient> logger) : IMailClient
     }
 
     /// <inheritdoc />
-    public async Task<ServiceResult> SendMailAsync(string toEmail, string subject, string body, string smtpHost, string smtpPort, string smtpUserName, string smtpPassword, string smtpSsl, string fromEmail, string fromFullName, CancellationToken ct = default)
+    public async Task<ServiceResult> SendMailAsync(string toEmail, string subject, string body, ServerSetting settings, CancellationToken ct = default)
     {
         try
         {
             var message = new MimeMessage();
-            message.From.Add(new MailboxAddress(fromFullName, fromEmail));
+            message.From.Add(new MailboxAddress(settings.FromFullName ?? "", settings.FromEmail ?? ""));
             message.To.Add(new MailboxAddress("", toEmail));
             message.Subject = subject;
             message.Body = new BodyBuilder { HtmlBody = body }.ToMessageBody();
@@ -63,9 +64,9 @@ public class MailClient(ILogger<MailClient> logger) : IMailClient
             // can't outlive it and get killed mid-send (which would cause a duplicate
             // send on redelivery). MailKit's default is ~100s.
             smtp.Timeout = 20_000;
-            SecureSocketOptions socketOptions = bool.Parse(smtpSsl) ? SecureSocketOptions.Auto : SecureSocketOptions.None;
-            await smtp.ConnectAsync(smtpHost, int.Parse(smtpPort), socketOptions, ct);
-            await smtp.AuthenticateAsync(smtpUserName, smtpPassword, ct);
+            SecureSocketOptions socketOptions = settings.SmtpSsl ? SecureSocketOptions.Auto : SecureSocketOptions.None;
+            await smtp.ConnectAsync(settings.SmtpHost ?? "", settings.SmtpPort, socketOptions, ct);
+            await smtp.AuthenticateAsync(settings.SmtpUserName ?? "", settings.SmtpPassword ?? "", ct);
             await smtp.SendAsync(message, ct);
             await smtp.DisconnectAsync(true, ct);
 

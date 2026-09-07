@@ -11,7 +11,7 @@ public class FixedExpenditureTests
     private static readonly DateTime Maturity = DateTime.UtcNow.AddYears(1);
 
     private static FixedExpenditure ValidFixedExpenditure() =>
-        FixedExpenditure.Register("user@example.com", "ConsumerSpending", "SubscriptionService", "Netflix",
+        FixedExpenditure.Register("user@example.com", "ConsumerSpending", "LeisureOrCulture", "Netflix",
             15000m, "KRW", "My Card", null, 1, 1, Maturity).Value;
 
     // -- Register -------------------------------------------------------------
@@ -20,7 +20,7 @@ public class FixedExpenditureTests
     [Fact]
     public void Register_ReturnsFixedExpenditure_WhenValid()
     {
-        var result = FixedExpenditure.Register("user@example.com", "ConsumerSpending", "SubscriptionService", "Netflix",
+        var result = FixedExpenditure.Register("user@example.com", "ConsumerSpending", "LeisureOrCulture", "Netflix",
             15000m, "KRW", "My Card", null, 1, 1, Maturity);
 
         Assert.False(result.IsError);
@@ -34,7 +34,7 @@ public class FixedExpenditureTests
     [InlineData(32)]
     public void Register_ReturnsError_WhenDepositDayOutOfRange(short day)
     {
-        var result = FixedExpenditure.Register("user@example.com", "ConsumerSpending", "SubscriptionService", null,
+        var result = FixedExpenditure.Register("user@example.com", "ConsumerSpending", "LeisureOrCulture", null,
             0m, "KRW", "My Card", null, 1, day, Maturity);
 
         Assert.True(result.IsError);
@@ -50,7 +50,7 @@ public class FixedExpenditureTests
     [InlineData(2, 30)]
     public void Register_ReturnsError_WhenDepositDayInvalidForMonth(short month, short day)
     {
-        var result = FixedExpenditure.Register("user@example.com", "ConsumerSpending", "SubscriptionService", null,
+        var result = FixedExpenditure.Register("user@example.com", "ConsumerSpending", "LeisureOrCulture", null,
             0m, "KRW", "My Card", null, month, day, Maturity);
 
         Assert.True(result.IsError);
@@ -63,7 +63,7 @@ public class FixedExpenditureTests
     [InlineData(13)]
     public void Register_ReturnsError_WhenDepositMonthOutOfRange(short month)
     {
-        var result = FixedExpenditure.Register("user@example.com", "ConsumerSpending", "SubscriptionService", null,
+        var result = FixedExpenditure.Register("user@example.com", "ConsumerSpending", "LeisureOrCulture", null,
             0m, "KRW", "My Card", null, month, 1, Maturity);
 
         Assert.True(result.IsError);
@@ -76,7 +76,7 @@ public class FixedExpenditureTests
     [InlineData("")]
     public void Register_ReturnsError_WhenPaymentMethodEmpty(string? method)
     {
-        var result = FixedExpenditure.Register("user@example.com", "ConsumerSpending", "SubscriptionService", null,
+        var result = FixedExpenditure.Register("user@example.com", "ConsumerSpending", "LeisureOrCulture", null,
             0m, "KRW", method, null, 1, 1, Maturity);
 
         Assert.True(result.IsError);
@@ -116,10 +116,10 @@ public class FixedExpenditureTests
     {
         var fe = ValidFixedExpenditure();
 
-        var result = fe.Update("ConsumerSpending", "InsurancePremium", "Car insurance", 80000m, "KRW", "Bank Account", null, 1, 15, Maturity, "note");
+        var result = fe.Update("ConsumerSpending", "ProtectionTypeInsurance", "Car insurance", 80000m, "KRW", "Bank Account", null, 1, 15, Maturity, "note");
 
         Assert.False(result.IsError);
-        Assert.Equal("InsurancePremium", fe.SubClass);
+        Assert.Equal("ProtectionTypeInsurance", fe.SubClass);
         Assert.Equal(15, fe.DepositDay);
     }
 
@@ -131,7 +131,7 @@ public class FixedExpenditureTests
     {
         var fe = ValidFixedExpenditure();
 
-        var result = fe.Update("ConsumerSpending", "SubscriptionService", null, 0m, "KRW", "My Card", null, 1, day, Maturity, null);
+        var result = fe.Update("ConsumerSpending", "LeisureOrCulture", null, 0m, "KRW", "My Card", null, 1, day, Maturity, null);
 
         Assert.True(result.IsError);
         Assert.Equal("FixedExpenditure.InvalidDepositDay", result.FirstError.Code);
@@ -143,7 +143,7 @@ public class FixedExpenditureTests
     {
         var fe = ValidFixedExpenditure();
 
-        var result = fe.Update("ConsumerSpending", "SubscriptionService", null, 0m, "KRW", "My Card", null, 4, 31, Maturity, null);
+        var result = fe.Update("ConsumerSpending", "LeisureOrCulture", null, 0m, "KRW", "My Card", null, 4, 31, Maturity, null);
 
         Assert.True(result.IsError);
         Assert.Equal("FixedExpenditure.InvalidDepositDay", result.FirstError.Code);

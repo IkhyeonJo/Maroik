@@ -62,7 +62,7 @@ public class ProfileService : IProfileService
             if (account == null)
                 return ServiceResult.Fail("Input is invalid");
 
-            account.UpdateProfile(account.Nickname, avatarPath, account.TimeZone, account.DefaultMonetaryUnit);
+            account.UpdateProfile(avatarPath, account.TimeZone, account.DefaultMonetaryUnit);
 
             await _accountRepository.UpdateEntityAsync(account, ct);
             return ServiceResult.Ok();
@@ -87,7 +87,7 @@ public class ProfileService : IProfileService
             if (tzResult.IsError)
                 return ServiceResult.Fail(tzResult.FirstError.Description);
 
-            account.UpdateProfile(account.Nickname, account.AvatarImagePath, tzResult.Value, account.DefaultMonetaryUnit);
+            account.UpdateProfile(account.AvatarImagePath, tzResult.Value, account.DefaultMonetaryUnit);
 
             await _accountRepository.UpdateEntityAsync(account, ct);
             return ServiceResult.Ok();
@@ -195,7 +195,7 @@ public class ProfileService : IProfileService
         string? newUnit = assets.Where(x => !x.Deleted).Select(x => x.Balance.Currency).Distinct().Contains(monetaryUnit)
             ? monetaryUnit
             : null;
-        account.UpdateProfile(account.Nickname, account.AvatarImagePath, account.TimeZone, newUnit);
+        account.UpdateProfile(account.AvatarImagePath, account.TimeZone, newUnit);
         await _accountRepository.UpdateEntityAsync(account, ct);
     }
 }

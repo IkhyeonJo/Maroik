@@ -5,12 +5,14 @@ namespace Maroik.Core.Domain.Board;
 
 /// <summary>
 /// Aggregate root for a board post (FreeForum or PrivateNote).
-/// Owns its comments and attached files as child entities.
+/// Comments and attached files are persisted independently via their own repositories
+/// (<see cref="BoardComment"/>, <see cref="BoardAttachedFile"/>) rather than hydrated as part of
+/// this aggregate, so this class does not mediate their persistence beyond the validation
+/// <see cref="AddComment"/> performs at write time.
 /// </summary>
 public sealed class Board : AggregateRoot<long>
 {
     private readonly List<BoardComment> _comments = [];
-    private readonly List<BoardAttachedFile> _attachedFiles = [];
 
     /// <summary>Board type identifier (e.g. "FreeForum", "PrivateNote").</summary>
     public string Type { get; private set; }
@@ -42,11 +44,13 @@ public sealed class Board : AggregateRoot<long>
     /// <summary>When true, the post is pinned at the top of the list as a notice.</summary>
     public bool Noticed { get; private set; }
 
-    /// <summary>Read-only view of comments on this post.</summary>
+    /// <summary>
+    /// Comments added to this post via <see cref="AddComment"/> during the current call, exposed for
+    /// inspection immediately after adding one. Not hydrated from the repository on a normal load
+    /// (comments are fetched separately, e.g. via <c>IBoardCommentRepository</c>), so this is empty
+    /// on a freshly-loaded post and must not be treated as the full comment list.
+    /// </summary>
     public IReadOnlyList<BoardComment> Comments => _comments.AsReadOnly();
-
-    /// <summary>Read-only view of files attached to this post.</summary>
-    public IReadOnlyList<BoardAttachedFile> AttachedFiles => _attachedFiles.AsReadOnly();
 
     private Board(
         long id,
@@ -170,29 +174,6 @@ public sealed class Board : AggregateRoot<long>
             return Error.Validation("Board.CommentMismatch", "Comment does not belong to this post.");
 
         _comments.Add(comment);
-        Updated = DateTime.UtcNow;
-        return Result.Success;
-    }
-
-    /// <summary>Soft-deletes the comment with the given ID.</summary>
-    public ErrorOr<Success> DeleteComment(long commentId)
-    {
-        var comment = _comments.Find(c => c.Id == commentId);
-        if (comment is null)
-            return Error.NotFound("Board.CommentNotFound", $"Comment {commentId} not found on this post.");
-
-        comment.SoftDelete();
-        Updated = DateTime.UtcNow;
-        return Result.Success;
-    }
-
-    /// <summary>Attaches a file to this post.</summary>
-    public ErrorOr<Success> AttachFile(BoardAttachedFile file)
-    {
-        if (file.BoardId != Id)
-            return Error.Validation("Board.FileMismatch", "Attached file does not belong to this post.");
-
-        _attachedFiles.Add(file);
         Updated = DateTime.UtcNow;
         return Result.Success;
     }

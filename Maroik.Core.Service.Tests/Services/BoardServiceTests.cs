@@ -240,6 +240,30 @@ public class BoardServiceTests
         _unitOfWork.Verify(u => u.CommitAsync(It.IsAny<CancellationToken>()), Times.Never);
     }
 
+    /// <summary>
+    /// Regression test: a file whose name is only an extension (e.g. ".zip") produces an empty
+    /// Path.GetFileNameWithoutExtension result. The attachment used to be persisted via
+    /// BoardAttachedFile.Reconstitute (a validation-bypass method meant only for trusted
+    /// repository data), so this empty name slipped through uncaught; it must now go through
+    /// BoardAttachedFile.Create and be rejected.
+    /// </summary>
+    [Fact]
+    public async Task WriteBoardAsync_RollsBackAndFails_WhenAttachmentNameIsEmpty()
+    {
+        _boardRepo.Setup(r => r.WriteBoardAsync(It.IsAny<Board>(), It.IsAny<CancellationToken>())).ReturnsAsync(1L);
+        _fileClient.Setup(f => f.UploadAsync(It.IsAny<byte[]>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(true);
+        var sut = CreateSut();
+
+        var file = new AttachedFileDto { FileName = ".zip", ContentType = "application/zip", Bytes = [1, 2], Size = 2 };
+        ServiceResult result = await sut.WriteBoardAsync(
+            new BoardRequest { Type = nameof(BoardType.FreeForum), Title = "Test Title", Writer = "Alice" }, file, TestContext.Current.CancellationToken);
+
+        Assert.False(result.Success);
+        _attachedFileRepo.Verify(r => r.CreateAsync(It.IsAny<BoardAttachedFile>(), It.IsAny<CancellationToken>()), Times.Never);
+        _unitOfWork.Verify(u => u.RollbackAsync(It.IsAny<CancellationToken>()), Times.Once);
+    }
+
     /// <summary>Verifies that <c>WriteBoardAsync</c> returns fail when repository throws.</summary>
     [Fact]
     public async Task WriteBoardAsync_ReturnsFail_WhenRepositoryThrows()

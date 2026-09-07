@@ -85,6 +85,40 @@ public class ExpenditureRepositoryTests : IDisposable
         Assert.Empty(result);
     }
 
+    /// <summary>
+    /// Regression test: a non-transfer expenditure (MyDepositAsset null) must still resolve its
+    /// currency from the PaymentMethod asset. ApplyIncludes/ToDomain used to join the wrong
+    /// navigation (Asset, keyed by MyDepositAsset) instead of AssetNavigation (keyed by
+    /// PaymentMethod), so MonetaryUnit silently came back empty for every non-transfer record —
+    /// the common case, since most expenditures don't set MyDepositAsset at all.
+    /// </summary>
+    [Fact]
+    public async Task GetExpendituresAsync_ResolvesCurrency_FromPaymentMethodAsset_ForNonTransferExpenditure()
+    {
+        await _context.Assets.AddAsync(new EfAsset
+        {
+            ProductName = "Wallet", AccountEmail = "alice@example.com", Item = "Wallet",
+            MonetaryUnit = "KRW", Amount = 0, Note = "", Created = DateTime.UtcNow, Updated = DateTime.UtcNow
+        }, TestContext.Current.CancellationToken);
+        await SeedAsync(new EfExpenditure
+        {
+            AccountEmail = "alice@example.com",
+            MainClass = "ConsumerSpending",
+            SubClass = "MealOrEatOutExpenses",
+            Content = "Lunch",
+            Amount = 100m,
+            PaymentMethod = "Wallet",
+            MyDepositAsset = null,
+            Note = "",
+            Created = DateTime.UtcNow,
+            Updated = DateTime.UtcNow
+        });
+
+        List<Expenditure> result = await _sut.GetByAccountEmailAsync("alice@example.com", TestContext.Current.CancellationToken);
+
+        Assert.Equal("KRW", Assert.Single(result).Amount.Currency);
+    }
+
     // -- CreateExpenditureAsync -----------------------------------------------
 
     /// <summary>Verifies that <c>CreateExpenditureAsync</c> adds expenditure to database.</summary>

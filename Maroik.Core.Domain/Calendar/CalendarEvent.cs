@@ -5,14 +5,13 @@ namespace Maroik.Core.Domain.Calendar;
 
 /// <summary>
 /// Aggregate root for a calendar event.
-/// Owns its reminders and attached files as child entities.
+/// Reminders and attached files are persisted independently via their own repositories
+/// (<see cref="CalendarEventReminder"/>, <see cref="CalendarEventAttachedFile"/>) rather than
+/// hydrated as part of this aggregate, so this class does not mediate their persistence.
 /// References the parent <see cref="Calendar"/> by <see cref="CalendarId"/> (no object reference).
 /// </summary>
 public sealed class CalendarEvent : AggregateRoot<long>
 {
-    private readonly List<CalendarEventReminder> _reminders = [];
-    private readonly List<CalendarEventAttachedFile> _attachedFiles = [];
-
     /// <summary>ID of the calendar this event belongs to.</summary>
     public long CalendarId { get; private set; }
 
@@ -51,12 +50,6 @@ public sealed class CalendarEvent : AggregateRoot<long>
 
     /// <summary>UTC timestamp of the most recent update.</summary>
     public DateTime Updated { get; private set; }
-
-    /// <summary>Read-only view of the reminders owned by this event.</summary>
-    public IReadOnlyList<CalendarEventReminder> Reminders => _reminders.AsReadOnly();
-
-    /// <summary>Read-only view of the files attached to this event.</summary>
-    public IReadOnlyList<CalendarEventAttachedFile> AttachedFiles => _attachedFiles.AsReadOnly();
 
     private CalendarEvent(
         long id,
@@ -202,49 +195,4 @@ public sealed class CalendarEvent : AggregateRoot<long>
         return Result.Success;
     }
 
-    /// <summary>Adds a reminder to this event.</summary>
-    public ErrorOr<Success> AddReminder(CalendarEventReminder reminder)
-    {
-        if (reminder.CalendarEventId != Id)
-            return Error.Validation("CalendarEvent.ReminderMismatch", "Reminder does not belong to this event.");
-
-        _reminders.Add(reminder);
-        Updated = DateTime.UtcNow;
-        return Result.Success;
-    }
-
-    /// <summary>Removes the reminder with the given ID from this event.</summary>
-    public ErrorOr<Success> RemoveReminder(long reminderId)
-    {
-        var reminder = _reminders.Find(r => r.Id == reminderId);
-        if (reminder is null)
-            return Error.NotFound("CalendarEvent.ReminderNotFound", $"Reminder {reminderId} not found on this event.");
-
-        _reminders.Remove(reminder);
-        Updated = DateTime.UtcNow;
-        return Result.Success;
-    }
-
-    /// <summary>Attaches a file to this event.</summary>
-    public ErrorOr<Success> AttachFile(CalendarEventAttachedFile file)
-    {
-        if (file.CalendarEventId != Id)
-            return Error.Validation("CalendarEvent.FileMismatch", "Attached file does not belong to this event.");
-
-        _attachedFiles.Add(file);
-        Updated = DateTime.UtcNow;
-        return Result.Success;
-    }
-
-    /// <summary>Removes the attached file with the given ID.</summary>
-    public ErrorOr<Success> RemoveFile(long fileId)
-    {
-        var file = _attachedFiles.Find(f => f.Id == fileId);
-        if (file is null)
-            return Error.NotFound("CalendarEvent.FileNotFound", $"Attached file {fileId} not found on this event.");
-
-        _attachedFiles.Remove(file);
-        Updated = DateTime.UtcNow;
-        return Result.Success;
-    }
 }

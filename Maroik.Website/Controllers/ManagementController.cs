@@ -508,7 +508,7 @@ public class ManagementController : Controller
         var accounts = await _managementAccountService.GetAllAccountsAsync(HttpContext.RequestAborted);
         var stream = _excelExportService.CreateAccountExcel(accounts, _localize, account.TimeZoneIanaId!);
         string name = fileName.ToExcelFileName(account.TimeZoneIanaId!);
-        return File(stream, "application/octet-stream", name);
+        return File(stream, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", name);
     }
 
     #endregion
@@ -891,7 +891,7 @@ public class ManagementController : Controller
         var subCats = await _menuService.GetAllSubCategoriesAsync(HttpContext.RequestAborted);
         var stream = _excelExportService.CreateMenuExcel(categories, subCats, _localize);
         string name = fileName.ToExcelFileName(account.TimeZoneIanaId!);
-        return File(stream, "application/octet-stream", name);
+        return File(stream, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", name);
     }
 
     #endregion
@@ -940,19 +940,7 @@ public class ManagementController : Controller
                 Noticed = loggedInAccount.Role == Role.Admin && boardInputViewModel.Noticed
             };
 
-            AttachedFileDto? attachedFile = null;
-            if (boardInputViewModel.UploadedFile != null)
-            {
-                using MemoryStream ms = new();
-                await boardInputViewModel.UploadedFile.CopyToAsync(ms);
-                attachedFile = new AttachedFileDto
-                {
-                    Bytes = ms.ToArray(),
-                    ContentType = boardInputViewModel.UploadedFile.ContentType,
-                    FileName = boardInputViewModel.UploadedFile.FileName,
-                    Size = boardInputViewModel.UploadedFile.Length
-                };
-            }
+            AttachedFileDto? attachedFile = await boardInputViewModel.UploadedFile.ToAttachedFileInfoAsync(HttpContext.RequestAborted);
 
             ServiceResult result = await _boardService.WriteBoardAsync(boardRequest, attachedFile, HttpContext.RequestAborted);
             return result.Success
@@ -1099,11 +1087,11 @@ public class ManagementController : Controller
                     DetailBoardId = (int)boardId
                 };
 
-                BoardResponse? privateNoteBoard = await _boardService.GetBoardByIdAsync((long)boardId, EnumHelper.GetDescription(BoardType.PrivateNote), HttpContext.RequestAborted);
-                BoardAttachedFileDto? attachedFile = await _boardService.GetAttachedFileByBoardIdAsync((long)boardId, HttpContext.RequestAborted);
-
                 try
                 {
+                    BoardResponse? privateNoteBoard = await _boardService.GetBoardByIdAsync((long)boardId, EnumHelper.GetDescription(BoardType.PrivateNote), HttpContext.RequestAborted);
+                    BoardAttachedFileDto? attachedFile = await _boardService.GetAttachedFileByBoardIdAsync((long)boardId, HttpContext.RequestAborted);
+
                     if (privateNoteBoard == null || privateNoteBoard.Deleted || !_boardService.CanView(privateNoteBoard, loggedInAccount))
                         return RedirectToAction(nameof(BoardType.PrivateNote), "Management");
 
@@ -1177,11 +1165,11 @@ public class ManagementController : Controller
 
                 AccountResponse loggedInAccount = _sessionService.GetAccount()!;
 
-                BoardResponse? privateNoteBoard = await _boardService.GetBoardByIdAsync((long)boardId, EnumHelper.GetDescription(BoardType.PrivateNote), HttpContext.RequestAborted);
-                BoardAttachedFileDto? attachedFile = await _boardService.GetAttachedFileByBoardIdAsync((long)boardId, HttpContext.RequestAborted);
-
                 try
                 {
+                    BoardResponse? privateNoteBoard = await _boardService.GetBoardByIdAsync((long)boardId, EnumHelper.GetDescription(BoardType.PrivateNote), HttpContext.RequestAborted);
+                    BoardAttachedFileDto? attachedFile = await _boardService.GetAttachedFileByBoardIdAsync((long)boardId, HttpContext.RequestAborted);
+
                     if (privateNoteBoard == null || privateNoteBoard.Deleted || !loggedInAccount.IsOwner(privateNoteBoard.Writer))
                     {
                         return RedirectToAction(nameof(BoardType.PrivateNote), "Management");
@@ -1383,19 +1371,7 @@ public class ManagementController : Controller
                 Locked = boardInputViewModel.Locked
             };
 
-            AttachedFileDto? attachedFile = null;
-            if (boardInputViewModel.UploadedFile != null)
-            {
-                using MemoryStream ms = new();
-                await boardInputViewModel.UploadedFile.CopyToAsync(ms);
-                attachedFile = new AttachedFileDto
-                {
-                    Bytes = ms.ToArray(),
-                    ContentType = boardInputViewModel.UploadedFile.ContentType,
-                    FileName = boardInputViewModel.UploadedFile.FileName,
-                    Size = boardInputViewModel.UploadedFile.Length
-                };
-            }
+            AttachedFileDto? attachedFile = await boardInputViewModel.UploadedFile.ToAttachedFileInfoAsync(HttpContext.RequestAborted);
 
             ServiceResult result = await _boardService.EditBoardAsync(boardRequest, loggedInAccount.Nickname!, attachedFile, HttpContext.RequestAborted);
             return result.Success

@@ -6,13 +6,14 @@ namespace Maroik.Core.Domain.Calendar;
 
 /// <summary>
 /// Aggregate root for a calendar.
-/// Controls calendar metadata, sharing permissions, and subscriber relationships.
+/// Controls calendar metadata. Sharing permissions (<see cref="CalendarShared"/>) and subscriber
+/// relationships (<see cref="OtherCalendar"/>) are persisted independently via their own
+/// repositories rather than hydrated as part of this aggregate, so this class does not mediate
+/// their persistence.
 /// Calendar events are separate aggregate roots (referenced by CalendarId).
 /// </summary>
 public sealed class Calendar : AggregateRoot<long>
 {
-    private readonly List<OtherCalendar> _subscribers = [];
-
     /// <summary>Email of the account that owns this calendar.</summary>
     public Email AccountEmail { get; private set; }
 
@@ -33,12 +34,6 @@ public sealed class Calendar : AggregateRoot<long>
 
     /// <summary>UTC timestamp of the most recent update.</summary>
     public DateTime Updated { get; private set; }
-
-    /// <summary>Sharing permissions for this calendar. Null until explicitly configured.</summary>
-    public CalendarShared? Shared { get; private set; }
-
-    /// <summary>Read-only view of accounts subscribed to this calendar.</summary>
-    public IReadOnlyList<OtherCalendar> Subscribers => _subscribers.AsReadOnly();
 
     private Calendar(
         long id,
@@ -140,41 +135,4 @@ public sealed class Calendar : AggregateRoot<long>
         return Result.Success;
     }
 
-    /// <summary>
-    /// Updates the sharing permissions for this calendar.
-    /// </summary>
-    public void UpdateSharing(bool sharedWithUsers, bool sharedWithAnonymous)
-    {
-        Shared ??= CalendarShared.CreatePrivate(Id);
-
-        Shared.Update(sharedWithUsers, sharedWithAnonymous);
-        Updated = DateTime.UtcNow;
-    }
-
-    /// <summary>Adds a subscriber to this calendar (another account subscribing).</summary>
-    public ErrorOr<Success> AddSubscriber(OtherCalendar subscription)
-    {
-        if (subscription.CalendarId != Id)
-            return Error.Validation("Calendar.SubscriberMismatch", "Subscription does not reference this calendar.");
-
-        bool alreadySubscribed = _subscribers.Exists(s => s.AccountEmail.Value == subscription.AccountEmail.Value);
-        if (alreadySubscribed)
-            return Error.Conflict("Calendar.AlreadySubscribed", "This account is already subscribed to the calendar.");
-
-        _subscribers.Add(subscription);
-        Updated = DateTime.UtcNow;
-        return Result.Success;
-    }
-
-    /// <summary>Removes a subscriber by their email address.</summary>
-    public ErrorOr<Success> RemoveSubscriber(string accountEmail)
-    {
-        var subscription = _subscribers.Find(s => s.AccountEmail.Value == accountEmail.ToLowerInvariant());
-        if (subscription is null)
-            return Error.NotFound("Calendar.SubscriberNotFound", "The specified account is not subscribed to this calendar.");
-
-        _subscribers.Remove(subscription);
-        Updated = DateTime.UtcNow;
-        return Result.Success;
-    }
 }

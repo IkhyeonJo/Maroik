@@ -181,6 +181,9 @@ public sealed class Account : AggregateRoot<string>
         if (string.IsNullOrWhiteSpace(hashedPassword))
             return Error.Validation("Account.PasswordEmpty", "Hashed password cannot be empty.");
 
+        if (role is not (Maroik.Core.Domain.Account.Role.Admin or Maroik.Core.Domain.Account.Role.User))
+            return Error.Validation("Account.RoleInvalid", "Role must be either Admin or User.");
+
         var account = new Account(
             emailResult.Value, hashedPassword, nickname, role,
             tzResult.Value, defaultMonetaryUnit, registrationToken, agreedServiceTerms);
@@ -281,10 +284,12 @@ public sealed class Account : AggregateRoot<string>
         Updated = DateTime.UtcNow;
     }
 
-    /// <summary>Updates the account's profile fields.</summary>
-    public void UpdateProfile(string nickname, string? avatarImagePath, TimeZoneId timeZone, string? defaultMonetaryUnit)
+    /// <summary>
+    /// Updates the account's profile fields. Nickname is not included — it is set once at
+    /// registration and never changed afterward (the profile edit UI shows it read-only).
+    /// </summary>
+    public void UpdateProfile(string? avatarImagePath, TimeZoneId timeZone, string? defaultMonetaryUnit)
     {
-        Nickname = nickname;
         AvatarImagePath = avatarImagePath;
         TimeZone = timeZone;
         DefaultMonetaryUnit = defaultMonetaryUnit;
@@ -395,6 +400,9 @@ public sealed class Account : AggregateRoot<string>
     {
         var tzResult = TimeZoneId.Create(timeZoneIanaId ?? TimeZone.Value);
         if (tzResult.IsError) return tzResult.Errors;
+
+        if (role is not (null or Maroik.Core.Domain.Account.Role.Admin or Maroik.Core.Domain.Account.Role.User))
+            return Error.Validation("Account.RoleInvalid", "Role must be either Admin or User.");
 
         Role = role ?? Role;
         TimeZone = tzResult.Value;

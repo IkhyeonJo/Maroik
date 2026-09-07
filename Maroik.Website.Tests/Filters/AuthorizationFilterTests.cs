@@ -270,6 +270,27 @@ public class AuthorizationFilterTests
         Assert.Equal("/Dashboard/AnonymousIndex", redirect.Url);
     }
 
+    /// <summary>
+    /// Regression test: Role is a plain string, not an enum, so an account persisted with neither
+    /// Admin nor User must still produce an explicit result. Before the role switch had a default
+    /// case, this fell through with next() never called and context.Result never set, silently
+    /// short-circuiting the pipeline with an empty response instead of redirecting.
+    /// </summary>
+    [Fact]
+    public async Task OnActionExecutionAsync_Get_UnrecognizedRole_Redirects()
+    {
+        var account = new AccountResponse { Email = "weird@test.com", Nickname = "Weird", Role = "SuperAdmin" };
+        _sessionService.Setup(s => s.GetAccount()).Returns(account);
+        _accountService.Setup(a => a.GetAccountByEmailAsync("weird@test.com", It.IsAny<CancellationToken>())).ReturnsAsync(account);
+        SetupMenu([], []);
+        var (context, _) = BuildContext("AccountBook", "Income");
+
+        await CreateSut().OnActionExecutionAsync(context, NextCalled(() => { }));
+
+        var redirect = Assert.IsType<RedirectResult>(context.Result);
+        Assert.Equal("/Dashboard/AnonymousIndex", redirect.Url);
+    }
+
     // -- Session validity (unrelated to menu resolution, still gated by this filter) --
 
     /// <summary>On action execution async logged in account deleted in db redirects to login and clears session.</summary>

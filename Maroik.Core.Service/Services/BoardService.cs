@@ -150,11 +150,16 @@ public class BoardService : IBoardService
                     return ServiceResult.Fail("Failed to upload the attached file.");
                 }
 
-                await _boardAttachedFileRepository.CreateAsync(
-                    BoardAttachedFile.Reconstitute(0, boardId, attachedFile.Size,
-                        Path.GetFileNameWithoutExtension(attachedFile.FileName),
-                        Path.GetExtension(attachedFile.FileName),
-                        filePath.Replace('\\', '/')), ct); // Normalize path separators for URL use.
+                var fileResult = BoardAttachedFile.Create(boardId, attachedFile.Size,
+                    Path.GetFileNameWithoutExtension(attachedFile.FileName),
+                    Path.GetExtension(attachedFile.FileName),
+                    filePath.Replace('\\', '/')); // Normalize path separators for URL use.
+                if (fileResult.IsError)
+                {
+                    await _unitOfWork.RollbackAsync(ct);
+                    return ServiceResult.Fail(fileResult.FirstError.Description);
+                }
+                await _boardAttachedFileRepository.CreateAsync(fileResult.Value, ct);
             }
 
             await _unitOfWork.CommitAsync(ct);
@@ -213,11 +218,11 @@ public class BoardService : IBoardService
             await _boardRepository.UpdateEntityAsync(board, ct);
 
             BoardAttachedFile? previous = await _boardAttachedFileRepository.FindByBoardIdAsync(request.Id, ct);
-            bool attachmentOk = await HandleAttachmentAsync(board.Type, board.Id, previous, newFile, ct);
-            if (!attachmentOk)
+            ServiceResult attachmentResult = await HandleAttachmentAsync(board.Type, board.Id, previous, newFile, ct);
+            if (!attachmentResult.Success)
             {
                 await _unitOfWork.RollbackAsync(ct);
-                return ServiceResult.Fail("Failed to upload the attached file.");
+                return attachmentResult;
             }
 
             await _unitOfWork.CommitAsync(ct);
@@ -356,7 +361,10 @@ public class BoardService : IBoardService
             if (!comment.CanBeDeletedBy(requesterNickname, isAdmin))
                 return ServiceResult.Fail("You do not have permission to delete.");
 
-            comment.SoftDelete();
+            var deleteResult = comment.SoftDelete();
+            if (deleteResult.IsError)
+                return ServiceResult.Fail(deleteResult.FirstError.Description);
+
             await _boardCommentRepository.UpdateEntityAsync(comment, ct);
             return ServiceResult.Ok();
         }
@@ -370,27 +378,34 @@ public class BoardService : IBoardService
     /// <summary>
     /// Handles the four possible attachment states when editing a board post:
     /// replace (previous + new), clear (previous only), add (new only), or no-op (neither).
-    /// Returns <see langword="false"/> when a required upload fails, so the caller can roll back
-    /// the transaction instead of persisting an attachment record for a file that was never saved.
+    /// Returns a failed <see cref="ServiceResult"/> when a required upload or validation fails,
+    /// so the caller can roll back the transaction instead of persisting an attachment record
+    /// for a file that was never saved or is otherwise invalid.
     /// </summary>
-    private async Task<bool> HandleAttachmentAsync(string boardType, long boardId, BoardAttachedFile? previous, AttachedFileDto? newFile, CancellationToken ct = default)
+    private async Task<ServiceResult> HandleAttachmentAsync(string boardType, long boardId, BoardAttachedFile? previous, AttachedFileDto? newFile, CancellationToken ct = default)
     {
         if (previous != null && newFile != null)
         {
             // Replace: upload the new file and overwrite the existing attachment record.
             string filePath = BuildAttachedFilePath(boardType, boardId, newFile.FileName);
             bool uploaded = await _fileClient.UploadAsync(newFile.Bytes, newFile.ContentType, filePath, _settings.Value.FileStorageBaseUrl ?? "", ct);
-            if (!uploaded) return false;
+            if (!uploaded) return ServiceResult.Fail("Failed to upload the attached file.");
+
+            var fileResult = BoardAttachedFile.Create(previous.BoardId, newFile.Size,
+                Path.GetFileNameWithoutExtension(newFile.FileName),
+                Path.GetExtension(newFile.FileName),
+                filePath.Replace('\\', '/'));
+            if (fileResult.IsError) return ServiceResult.Fail(fileResult.FirstError.Description);
 
             await _boardAttachedFileRepository.UpdateEntityAsync(
-                BoardAttachedFile.Reconstitute(previous.Id, previous.BoardId, newFile.Size,
-                    Path.GetFileNameWithoutExtension(newFile.FileName),
-                    Path.GetExtension(newFile.FileName),
-                    filePath.Replace('\\', '/')), ct);
+                BoardAttachedFile.Reconstitute(previous.Id, fileResult.Value.BoardId, fileResult.Value.Size,
+                    fileResult.Value.Name, fileResult.Value.Extension, fileResult.Value.Path), ct);
         }
         else if (previous != null && newFile == null)
         {
-            // Clear: zero-out the attachment record without uploading anything.
+            // Clear: zero-out the attachment record without uploading anything. Name/Path are
+            // intentionally empty here as an empty-attachment sentinel, not user-submitted data,
+            // so Reconstitute (not Create, which would reject an empty name/path) is correct.
             await _boardAttachedFileRepository.UpdateEntityAsync(
                 BoardAttachedFile.Reconstitute(previous.Id, previous.BoardId, 0, "", "", ""), ct);
         }
@@ -399,17 +414,19 @@ public class BoardService : IBoardService
             // Add: upload and create a new attachment record for a post that had none before.
             string filePath = BuildAttachedFilePath(boardType, boardId, newFile.FileName);
             bool uploaded = await _fileClient.UploadAsync(newFile.Bytes, newFile.ContentType, filePath, _settings.Value.FileStorageBaseUrl ?? "", ct);
-            if (!uploaded) return false;
+            if (!uploaded) return ServiceResult.Fail("Failed to upload the attached file.");
 
-            await _boardAttachedFileRepository.CreateAsync(
-                BoardAttachedFile.Reconstitute(0, boardId, newFile.Size,
-                    Path.GetFileNameWithoutExtension(newFile.FileName),
-                    Path.GetExtension(newFile.FileName),
-                    filePath.Replace('\\', '/')), ct);
+            var fileResult = BoardAttachedFile.Create(boardId, newFile.Size,
+                Path.GetFileNameWithoutExtension(newFile.FileName),
+                Path.GetExtension(newFile.FileName),
+                filePath.Replace('\\', '/'));
+            if (fileResult.IsError) return ServiceResult.Fail(fileResult.FirstError.Description);
+
+            await _boardAttachedFileRepository.CreateAsync(fileResult.Value, ct);
         }
         // previous == null && newFile == null: nothing to do.
 
-        return true;
+        return ServiceResult.Ok();
     }
 
     /// <inheritdoc />

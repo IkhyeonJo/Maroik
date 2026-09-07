@@ -4,15 +4,12 @@ namespace Maroik.Core.DomainTests.CalendarDomain;
 
 /// <summary>
 /// Unit tests for <see cref="Maroik.Core.Domain.Calendar.Calendar"/>.
-/// Covers calendar creation, update, sharing settings, and subscriber management.
+/// Covers calendar creation and update.
 /// </summary>
 public class CalendarTests
 {
     private static Calendar ValidCalendar(long id = 1) =>
         Calendar.Reconstitute(id, "user@example.com", "Work", "My work calendar", "UTC", "#3498DB", DateTime.UtcNow, DateTime.UtcNow);
-
-    private static OtherCalendar ValidSubscription(string email = "sub@example.com", long calendarId = 1) =>
-        OtherCalendar.Create(email, calendarId).Value;
 
     // -- Create ---------------------------------------------------------------
 
@@ -97,99 +94,4 @@ public class CalendarTests
         Assert.Equal("Calendar.NameEmpty", result.FirstError.Code);
     }
 
-    // -- UpdateSharing ---------------------------------------------------------
-
-    /// <summary>Update sharing creates shared, when shared is null.</summary>
-    [Fact]
-    public void UpdateSharing_CreatesShared_WhenSharedIsNull()
-    {
-        var calendar = ValidCalendar();
-        Assert.Null(calendar.Shared);
-
-        calendar.UpdateSharing(true, false);
-
-        Assert.NotNull(calendar.Shared);
-        Assert.True(calendar.Shared!.User);
-        Assert.False(calendar.Shared.Anonymous);
-    }
-
-    /// <summary>Update sharing updates existing shared.</summary>
-    [Fact]
-    public void UpdateSharing_UpdatesExistingShared()
-    {
-        var calendar = ValidCalendar();
-        calendar.UpdateSharing(true, false);
-
-        calendar.UpdateSharing(true, true);
-
-        Assert.True(calendar.Shared!.Anonymous);
-    }
-
-    // -- AddSubscriber ---------------------------------------------------------
-
-    /// <summary>Add subscriber succeeds, when not already subscribed.</summary>
-    [Fact]
-    public void AddSubscriber_Succeeds_WhenNotAlreadySubscribed()
-    {
-        var calendar = ValidCalendar(id: 1);
-        var subscription = ValidSubscription("sub@example.com", calendarId: 1);
-
-        var result = calendar.AddSubscriber(subscription);
-
-        Assert.False(result.IsError);
-        Assert.Single(calendar.Subscribers);
-    }
-
-    /// <summary>Add subscriber returns error, when already subscribed.</summary>
-    [Fact]
-    public void AddSubscriber_ReturnsError_WhenAlreadySubscribed()
-    {
-        var calendar = ValidCalendar(id: 1);
-        calendar.AddSubscriber(ValidSubscription("sub@example.com", calendarId: 1));
-
-        var result = calendar.AddSubscriber(ValidSubscription("sub@example.com", calendarId: 1));
-
-        Assert.True(result.IsError);
-        Assert.Equal("Calendar.AlreadySubscribed", result.FirstError.Code);
-    }
-
-    /// <summary>Add subscriber returns error, when calendar id mismatch.</summary>
-    [Fact]
-    public void AddSubscriber_ReturnsError_WhenCalendarIdMismatch()
-    {
-        var calendar = ValidCalendar(id: 1);
-        var subscription = ValidSubscription("sub@example.com", calendarId: 99);
-
-        var result = calendar.AddSubscriber(subscription);
-
-        Assert.True(result.IsError);
-        Assert.Equal("Calendar.SubscriberMismatch", result.FirstError.Code);
-    }
-
-    // -- RemoveSubscriber ------------------------------------------------------
-
-    /// <summary>Remove subscriber succeeds, when subscriber exists.</summary>
-    [Fact]
-    public void RemoveSubscriber_Succeeds_WhenSubscriberExists()
-    {
-        var calendar = ValidCalendar(id: 1);
-        calendar.AddSubscriber(ValidSubscription("sub@example.com", calendarId: 1));
-
-        var result = calendar.RemoveSubscriber("sub@example.com");
-
-        Assert.False(result.IsError);
-        Assert.Empty(calendar.Subscribers);
-    }
-
-    /// <summary>Remove subscriber returns error, when not found.</summary>
-    [Fact]
-    public void RemoveSubscriber_ReturnsError_WhenNotFound()
-    {
-        var calendar = ValidCalendar(id: 1);
-
-        var result = calendar.RemoveSubscriber("nobody@example.com");
-
-        Assert.True(result.IsError);
-        Assert.Equal("Calendar.SubscriberNotFound", result.FirstError.Code);
-    }
 }

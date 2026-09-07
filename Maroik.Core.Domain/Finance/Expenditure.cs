@@ -124,6 +124,9 @@ public sealed class Expenditure : AggregateRoot<long>
         if (string.IsNullOrWhiteSpace(paymentMethod))
             return Error.Validation("Expenditure.PaymentMethodEmpty", "Payment method (asset name) cannot be empty.");
 
+        var classResult = ExpenditureClassPolicy.Validate(mainClass, subClass);
+        if (classResult.IsError) return classResult.Errors;
+
         var emailResult = Email.Create(accountEmailValue);
         if (emailResult.IsError) return emailResult.Errors;
 
@@ -163,6 +166,9 @@ public sealed class Expenditure : AggregateRoot<long>
 
         if (string.IsNullOrWhiteSpace(paymentMethod))
             return Error.Validation("Expenditure.PaymentMethodEmpty", "Payment method cannot be empty.");
+
+        var classResult = ExpenditureClassPolicy.Validate(mainClass, subClass);
+        if (classResult.IsError) return classResult.Errors;
 
         var moneyResult = Money.Create(amount, currency);
         if (moneyResult.IsError) return moneyResult.Errors;

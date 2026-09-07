@@ -229,11 +229,11 @@ public class ForumController : Controller
                     DetailBoardId = (int)boardId
                 };
 
-                BoardResponse? freeBoard = await _boardService.GetBoardByIdAsync((long)boardId, EnumHelper.GetDescription(BoardType.FreeForum), ct);
-                BoardAttachedFileDto? boardAttachedFile = await _boardService.GetAttachedFileByBoardIdAsync((long)boardId, ct);
-
                 try
                 {
+                    BoardResponse? freeBoard = await _boardService.GetBoardByIdAsync((long)boardId, EnumHelper.GetDescription(BoardType.FreeForum), ct);
+                    BoardAttachedFileDto? boardAttachedFile = await _boardService.GetAttachedFileByBoardIdAsync((long)boardId, ct);
+
                     if (freeBoard == null || freeBoard.Deleted)
                         return RedirectToAction(nameof(BoardType.FreeForum), "Forum");
 
@@ -306,11 +306,11 @@ public class ForumController : Controller
                     EditBoardId = (int)boardId
                 };
 
-                BoardResponse? freeBoard = await _boardService.GetBoardByIdAsync((long)boardId, EnumHelper.GetDescription(BoardType.FreeForum), ct);
-                BoardAttachedFileDto? boardAttachedFile = await _boardService.GetAttachedFileByBoardIdAsync((long)boardId, ct);
-
                 try
                 {
+                    BoardResponse? freeBoard = await _boardService.GetBoardByIdAsync((long)boardId, EnumHelper.GetDescription(BoardType.FreeForum), ct);
+                    BoardAttachedFileDto? boardAttachedFile = await _boardService.GetAttachedFileByBoardIdAsync((long)boardId, ct);
+
                     if (freeBoard == null || freeBoard.Deleted)
                         return RedirectToAction(nameof(BoardType.FreeForum), "Forum");
 

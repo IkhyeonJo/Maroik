@@ -199,7 +199,7 @@ public class AccountBookController : Controller
         var assets = await _assetService.GetAssetsAsync(account.Email!, ct);
         var stream = _excelExportService.CreateAssetExcel(assets, _localize, account.TimeZoneIanaId!);
         string name = fileName.ToExcelFileName(account.TimeZoneIanaId!);
-        return File(stream, "application/octet-stream", name);
+        return File(stream, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", name);
     }
 
     #endregion
@@ -391,7 +391,7 @@ public class AccountBookController : Controller
         var incomes = await _incomeService.GetIncomesAsync(account.Email!, ct);
         var stream = _excelExportService.CreateIncomeExcel(incomes, assets, _localize, account.TimeZoneIanaId!);
         string name = fileName.ToExcelFileName(account.TimeZoneIanaId!);
-        return File(stream, "application/octet-stream", name);
+        return File(stream, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", name);
     }
 
     #endregion
@@ -588,7 +588,7 @@ public class AccountBookController : Controller
         var expenditures = await _expenditureService.GetExpendituresAsync(account.Email!, ct);
         var stream = _excelExportService.CreateExpenditureExcel(expenditures, assets, _localize, account.TimeZoneIanaId!);
         string name = fileName.ToExcelFileName(account.TimeZoneIanaId!);
-        return File(stream, "application/octet-stream", name);
+        return File(stream, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", name);
     }
 
     #endregion

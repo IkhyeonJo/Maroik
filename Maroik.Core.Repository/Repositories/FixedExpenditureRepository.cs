@@ -9,7 +9,8 @@ namespace Maroik.Core.Repository.Repositories;
 /// <summary>
 /// EF Core repository for <see cref="FixedExpenditure"/> domain objects,
 /// representing recurring monthly expenditures with a scheduled deposit day.
-/// Always eager-loads the linked <see cref="OrmFixedExpenditure.Asset"/> so that the monetary unit
+/// Always eager-loads the linked <see cref="OrmFixedExpenditure.AssetNavigation"/> (the
+/// PaymentMethod asset, not the MyDepositAsset transfer target) so the amount's monetary unit
 /// is available without a separate query.
 /// </summary>
 public class FixedExpenditureRepository(ApplicationDbContext context)
@@ -19,15 +20,16 @@ public class FixedExpenditureRepository(ApplicationDbContext context)
     protected override DbSet<OrmFixedExpenditure> Set => Context.FixedExpenditures;
 
     /// <inheritdoc />
-    /// <inheritdoc />
-    // Always join the Asset navigation property so query results carry the monetary unit.
+    // AssetNavigation (keyed by PaymentMethod) carries the currency the Amount is denominated in.
+    // Asset (keyed by MyDepositAsset) is the transfer target and is null for a non-transfer
+    // fixed expenditure, so joining that one instead leaves MonetaryUnit blank for the common case.
     protected override IQueryable<OrmFixedExpenditure> ApplyIncludes(IQueryable<OrmFixedExpenditure> query)
-        => query.Include(x => x.Asset);
+        => query.Include(x => x.AssetNavigation);
 
     /// <summary>Maps a persisted <see cref="OrmFixedExpenditure"/> row to the <see cref="FixedExpenditure"/> domain object.</summary>
     protected override FixedExpenditure ToDomain(OrmFixedExpenditure e) => FixedExpenditure.Reconstitute(
         e.Id, e.AccountEmail ?? "", e.MainClass ?? "",
-        e.SubClass ?? "", e.Content, e.Amount, e.Asset?.MonetaryUnit ?? "",
+        e.SubClass ?? "", e.Content, e.Amount, e.AssetNavigation?.MonetaryUnit ?? "",
         e.PaymentMethod ?? "", e.MyDepositAsset, e.DepositMonth, e.DepositDay,
         e.MaturityDate, e.Note, e.Unpunctuality, e.Created, e.Updated);
 

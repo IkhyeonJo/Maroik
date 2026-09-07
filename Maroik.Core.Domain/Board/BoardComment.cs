@@ -86,9 +86,13 @@ public sealed class BoardComment : Entity<long>
     }
 
     /// <summary>Marks the comment as soft-deleted (content is retained in the database).</summary>
-    public void SoftDelete()
+    public ErrorOr<Success> SoftDelete()
     {
+        if (Deleted)
+            return Error.Conflict("BoardComment.AlreadyDeleted", "Comment is already deleted.");
+
         Deleted = true;
+        return Result.Success;
     }
 
     /// <summary>Returns true when <paramref name="nickname"/> is this comment's author.</summary>

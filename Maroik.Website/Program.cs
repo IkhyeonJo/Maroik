@@ -283,26 +283,6 @@ try
 
     #endregion
 
-    //1.Exception / error handling
-
-    //When the app is running in the development environment:
-    //The developer exception page middleware (UseDeveloperExceptionPage) reports app runtime errors.
-    //The database error page middleware reports database runtime errors.
-    //When the app is running in the production environment:
-    //The exception handler middleware (UseExceptionHandler) catches exceptions thrown in the following middleware.
-    //The HSTS (HTTP Strict Transport Security Protocol) middleware (UseHsts) adds the Strict-Transport-Security header.
-
-    //if (!app.Environment.IsDevelopment())
-    //{
-    //    app.UseDeveloperExceptionPage();
-    //}
-    //else
-    //{
-    //    app.UseExceptionHandler("/Exception/Error");
-    //    // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
-    //    app.UseHsts();
-    //}
-
     app.UseCookiePolicy(new CookiePolicyOptions
     {
         HttpOnly = HttpOnlyPolicy.Always,
