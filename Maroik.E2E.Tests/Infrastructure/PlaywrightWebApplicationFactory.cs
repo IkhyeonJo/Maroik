@@ -1,14 +1,9 @@
-using Maroik.Core.Domain.Account;
-using Maroik.Core.Domain.Board;
-using Maroik.Core.Contract.Misc.Settings;
 using Maroik.Core.PostgreSQL.Data;
-using Maroik.Core.PostgreSQL.Models;
 using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Hosting.Server;
 using Microsoft.AspNetCore.Hosting.Server.Features;
 using Microsoft.AspNetCore.Mvc.Testing;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -25,17 +20,35 @@ namespace Maroik.E2E.Tests.Infrastructure;
 /// is an in-process, socket-less transport that Playwright cannot access.  By overriding
 /// <see cref="CreateHost"/> we spin up a <em>second</em> host that binds a real port while
 /// still returning the original test-host so the base-class HttpClient helpers work normally.
+///
+/// The application talks to a real PostgreSQL 17 database (<see cref="E2EPostgresContainer"/>,
+/// loaded from the production <c>Init.sql</c>) — not the EF Core InMemory provider — so the
+/// browser tests exercise the real schema, constraints and seeded navigation menu.
 /// </summary>
 public sealed class PlaywrightWebApplicationFactory : WebApplicationFactory<Program>
 {
+    private readonly string _connectionString;
     private IHost? _realHost;
 
     /// <summary>Base URL of the real Kestrel server (e.g. <c>http://localhost:57432</c>).</summary>
     public string ServerBaseUrl { get; private set; } = "";
 
+    /// <param name="connectionString">
+    /// Npgsql connection string to the seeded E2E database (from <see cref="E2EPostgresContainer"/>).
+    /// </param>
+    public PlaywrightWebApplicationFactory(string connectionString)
+    {
+        _connectionString = connectionString;
+
+        // The schema uses `timestamp without time zone`; Npgsql needs the legacy switch to accept
+        // Utc/Local DateTime values. Program.cs sets it too, but the container may be queried
+        // before the host is built.
+        AppContext.SetSwitch("Npgsql.EnableLegacyTimestampBehavior", true);
+    }
+
     // -- WebApplicationFactory overrides --------------------------------------
 
-    /// <summary>Configures the "Testing" environment: in-memory settings overrides and an in-memory database.</summary>
+    /// <summary>Configures the "Testing" environment: in-memory settings overrides and the real Postgres connection string.</summary>
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
         builder.UseEnvironment("Testing");
@@ -66,12 +79,14 @@ public sealed class PlaywrightWebApplicationFactory : WebApplicationFactory<Prog
                 ["Clamav:Host"] = "localhost",
                 ["Clamav:Port"] = "3310",
                 ["FileStorage:BaseUrl"] = "http://localhost:5001",
-                ["ConnectionStrings:DefaultConnection"] = "Host=localhost;Database=test;Username=test;Password=test",
+                // Real seeded PostgreSQL container — AddRepositoryContext() in Program.cs picks
+                // this up and wires the DbContext to Npgsql, so no service-level DB swap is needed.
+                ["ConnectionStrings:DefaultConnection"] = _connectionString,
                 ["ConnectionStrings:Valkey"] = ""
             }!);
         });
 
-        // -- Replace PostgreSQL with InMemory, Valkey with in-memory distributed cache -------
+        // -- Replace only the external infra that has no container here (Valkey) -------
         builder.ConfigureServices(services =>
         {
             // Replace Valkey distributed cache with in-memory so tests run without a Valkey instance.
@@ -83,32 +98,6 @@ public sealed class PlaywrightWebApplicationFactory : WebApplicationFactory<Prog
 
             // Replace Valkey-backed Data Protection with ephemeral in-memory keys.
             services.AddDataProtection().UseEphemeralDataProtectionProvider();
-
-            var dbOptionsDescriptor = services.SingleOrDefault(
-                d => d.ServiceType == typeof(DbContextOptions<ApplicationDbContext>));
-            if (dbOptionsDescriptor != null) services.Remove(dbOptionsDescriptor);
-
-            var dbContextDescriptor = services.SingleOrDefault(
-                d => d.ServiceType == typeof(ApplicationDbContext));
-            if (dbContextDescriptor != null) services.Remove(dbContextDescriptor);
-
-            // Provide an explicit internal service provider so that the double-build
-            // pattern (builder.Build() called twice) does not trigger EF Core's
-            // "multiple providers registered" error from the shared provider cache.
-            var internalServiceProvider = new ServiceCollection()
-                .AddEntityFrameworkInMemoryDatabase()
-                .BuildServiceProvider();
-
-            // Capture the DB name here (once per Build() call) so every request scope
-            // in _realHost hits the same in-memory database that was seeded below.
-            // If the name were inside the options lambda it would re-evaluate Guid.NewGuid()
-            // on every scope creation (DbContextOptions is Scoped by default), giving each
-            // request an empty database and causing AuthorizationFilter to redirect forever.
-            var dbName = $"E2EIntegration_{Guid.NewGuid()}";
-            services.AddDbContext<ApplicationDbContext>(options =>
-                options
-                    .UseInternalServiceProvider(internalServiceProvider)
-                    .UseInMemoryDatabase(dbName));
         });
     }
 
@@ -132,19 +121,8 @@ public sealed class PlaywrightWebApplicationFactory : WebApplicationFactory<Prog
         _realHost = builder.Build();
         _realHost.Start();
 
-        // Seed the anonymous categories required by AuthorizationFilter.
-        // With an empty in-memory database every page redirects back to AnonymousIndex,
-        // so we insert the minimum set of rows that the tests actually navigate to.
-        using (var scope = _realHost.Services.CreateScope())
-        {
-            var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-            db.Categories.AddRange(
-                new Category { Id = 1, Name = "Dashboard", DisplayName = "Dashboard", IconPath = "", Controller = "Dashboard", Action = "AnonymousIndex", Role = Role.Anonymous, Order = 1 },
-                new Category { Id = 2, Name = "Calendar", DisplayName = "Calendar", IconPath = "", Controller = "Calendar", Action = "AnonymousIndex", Role = Role.Anonymous, Order = 2 },
-                new Category { Id = 3, Name = "Forum", DisplayName = "Forum", IconPath = "", Controller = "Forum", Action = BoardTypes.FreeForum, Role = Role.Anonymous, Order = 3 }
-            );
-            db.SaveChanges();
-        }
+        // The anonymous Category / SubCategory rows AuthorizationFilter resolves against are
+        // already present from Init.sql — no manual seeding needed.
 
         // Discover the actual port that Kestrel chose.
         // Use www.localhost directly so AddRedirectToWww() in Program.cs never fires
