@@ -23,6 +23,13 @@ namespace Maroik.Core.Repository.Repositories;
 /// relying on auto-detect-changes against an entity mutated in place) simply because the freshly-mapped
 /// entity built from the domain object is always a new, Detached instance, not because tracking itself
 /// is off.
+/// <para>
+/// Flush behaviour: when no <see cref="IUnitOfWork"/> transaction is open on the context, each
+/// write is persisted immediately (a single-write service method, or a repository integration
+/// test, behaves exactly as before). When a transaction <em>is</em> open, the write is left
+/// pending so that <see cref="IUnitOfWork.CommitAsync"/> flushes the whole unit of work as one
+/// round trip instead of one per repository call.
+/// </para>
 /// </remarks>
 public abstract class GenericRepository<TDomain, TEntity>(ApplicationDbContext context) : IGenericRepository<TDomain>
     where TEntity : class
@@ -71,11 +78,22 @@ public abstract class GenericRepository<TDomain, TEntity>(ApplicationDbContext c
     private object?[] GetPrimaryKeyValues(TEntity entity) =>
         [.. (_primaryKeyGetters ??= BuildPrimaryKeyGetters()).Select(getter => getter(entity))];
 
+    /// <summary>
+    /// Persists the context's pending changes unless a <see cref="IUnitOfWork"/> transaction is
+    /// currently open — in that case the caller's <see cref="IUnitOfWork.CommitAsync"/> owns the
+    /// flush, so every repository call in the unit of work reaches the database as a single batch.
+    /// </summary>
+    private async Task FlushUnlessInTransactionAsync(CancellationToken ct)
+    {
+        if (Context.Database.CurrentTransaction is null)
+            _ = await Context.SaveChangesAsync(ct);
+    }
+
     /// <inheritdoc />
     public async Task CreateAsync(TDomain domain, CancellationToken ct = default)
     {
         _ = await Set.AddAsync(ToEntity(domain), ct);
-        _ = await Context.SaveChangesAsync(ct);
+        await FlushUnlessInTransactionAsync(ct);
     }
 
     /// <inheritdoc />
@@ -99,7 +117,7 @@ public abstract class GenericRepository<TDomain, TEntity>(ApplicationDbContext c
         // which individual values actually changed.
         entry.CurrentValues.SetValues(newEntity);
         entry.State = EntityState.Modified;
-        _ = await Context.SaveChangesAsync(ct);
+        await FlushUnlessInTransactionAsync(ct);
     }
 
     /// <summary>Runs <paramref name="predicate"/> (with optional <paramref name="orderBy"/>) and maps every matching row to <typeparamref name="TDomain"/>.</summary>
@@ -164,6 +182,6 @@ public abstract class GenericRepository<TDomain, TEntity>(ApplicationDbContext c
             }
         }
 
-        _ = await Context.SaveChangesAsync(ct);
+        await FlushUnlessInTransactionAsync(ct);
     }
 }

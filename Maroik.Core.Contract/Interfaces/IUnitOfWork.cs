@@ -11,7 +11,14 @@ public interface IUnitOfWork : IAsyncDisposable
     /// <summary>Opens a new database transaction.</summary>
     Task BeginAsync(CancellationToken ct = default);
 
-    /// <summary>Commits all changes made within the current transaction.</summary>
+    /// <summary>
+    /// Flushes every change tracked by the current context to the database without ending the
+    /// transaction. <see cref="CommitAsync"/> already does this, so call it directly only when a
+    /// generated key is needed before the transaction is committed.
+    /// </summary>
+    Task SaveChangesAsync(CancellationToken ct = default);
+
+    /// <summary>Flushes any pending changes and commits the current transaction.</summary>
     Task CommitAsync(CancellationToken ct = default);
 
     /// <summary>Rolls back all changes made within the current transaction.</summary>

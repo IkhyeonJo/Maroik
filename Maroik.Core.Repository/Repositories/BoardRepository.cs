@@ -29,6 +29,9 @@ public class BoardRepository(ApplicationDbContext context)
     {
         OrmBoard entity = ToEntity(board);
         _ = await Context.Boards.AddAsync(entity, ct);
+        // Unlike the deferred CreateAsync, this flush is unconditional: the caller needs the
+        // database-generated Id immediately (to build the attachment's storage path within the
+        // same unit of work). Inside a transaction the INSERT is still uncommitted until commit.
         _ = await Context.SaveChangesAsync(ct);
         return entity.Id;
     }

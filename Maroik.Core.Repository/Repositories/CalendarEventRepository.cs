@@ -21,6 +21,9 @@ public class CalendarEventRepository(ApplicationDbContext context)
     {
         OrmCalendarEvent entity = ToEntity(calendarEvent);
         _ = await Context.CalendarEvents.AddAsync(entity, ct);
+        // Flushed unconditionally (unlike the deferred CreateAsync): the caller needs the
+        // database-generated Id for the reminder / attached-file rows it writes next in the same
+        // unit of work. The INSERT stays uncommitted until the transaction commits.
         _ = await Context.SaveChangesAsync(ct);
         return entity.Id;
     }

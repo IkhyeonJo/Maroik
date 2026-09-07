@@ -44,6 +44,9 @@ public class UnitOfWork : IUnitOfWork
     }
 
     /// <inheritdoc />
+    public Task SaveChangesAsync(CancellationToken ct = default) => _context.SaveChangesAsync(ct);
+
+    /// <inheritdoc />
     public async Task CommitAsync(CancellationToken ct = default)
     {
         if (_transaction == null)
@@ -51,6 +54,10 @@ public class UnitOfWork : IUnitOfWork
 
         try
         {
+            // Flush the writes the repositories left pending for the duration of the transaction
+            // (see GenericRepository) so the whole unit of work reaches the database as one batch,
+            // then commit.
+            await _context.SaveChangesAsync(ct);
             await _transaction.CommitAsync(ct);
         }
         finally
