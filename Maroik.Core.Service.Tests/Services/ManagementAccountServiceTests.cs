@@ -102,20 +102,20 @@ public class ManagementAccountServiceTests
     public async Task CreateAccountAsync_HashesPasswordAndCreatesAccount_WhenEmailIsNew()
     {
         _accountRepo.Setup(r => r.FindByEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync((Account?)null);
-        _passwordService.Setup(p => p.HashPassword("plain")).Returns("$2a$13$hashed");
+        _passwordService.Setup(p => p.HashPassword("Plain1234!")).Returns("$2a$13$hashedvalue");
         _accountRepo.Setup(r => r.CreateAsync(It.IsAny<Account>(), It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
         var sut = CreateSut();
 
         ServiceResult result = await sut.CreateAccountAsync(new AccountRequest
         {
             Email = "new@example.com",
-            HashedPassword = "plain",
+            HashedPassword = "Plain1234!",
             Nickname = "NewUser",
             EmailConfirmed = true
         }, TestContext.Current.CancellationToken);
 
         Assert.True(result.Success);
-        _accountRepo.Verify(r => r.CreateAsync(It.Is<Account>(a => a.HashedPassword == "$2a$13$hashed"), It.IsAny<CancellationToken>()), Times.Once);
+        _accountRepo.Verify(r => r.CreateAsync(It.Is<Account>(a => a.HashedPassword == "$2a$13$hashedvalue"), It.IsAny<CancellationToken>()), Times.Once);
     }
 
     // -- UpdateAccountAsync ---------------------------------------------------

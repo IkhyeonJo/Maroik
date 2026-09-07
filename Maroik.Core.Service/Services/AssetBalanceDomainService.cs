@@ -26,6 +26,10 @@ public class AssetBalanceDomainService : IAssetBalanceDomainService
         => _assetRepository.FindByEmailAndProductNameForUpdateAsync(accountEmail, productName, ct);
 
     /// <inheritdoc />
+    public Task<Asset?> GetAssetForReadAsync(string accountEmail, string productName, CancellationToken ct = default)
+        => _assetRepository.FindByEmailAndProductNameAsync(accountEmail, productName, ct);
+
+    /// <inheritdoc />
     public Task SaveAsync(Asset asset, CancellationToken ct = default)
         => _assetRepository.UpdateEntityAsync(asset, ct);
 }

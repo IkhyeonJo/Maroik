@@ -17,6 +17,15 @@ public interface IAssetBalanceDomainService
     /// </summary>
     Task<Asset?> GetAssetAsync(string accountEmail, string productName, CancellationToken ct = default);
 
+    /// <summary>
+    /// Returns the asset identified by the composite key (email + productName), or null if not found,
+    /// <b>without</b> taking a row lock. Use this from read-only / schedule flows (e.g. fixed
+    /// income/expenditure) that never mutate a balance and run outside an <see cref="IUnitOfWork"/>
+    /// transaction — there, a <c>SELECT ... FOR UPDATE</c> would acquire a lock that is released
+    /// immediately at end of statement, so it buys nothing and only adds contention.
+    /// </summary>
+    Task<Asset?> GetAssetForReadAsync(string accountEmail, string productName, CancellationToken ct = default);
+
     /// <summary>Persists changes to the given asset (insert or update).</summary>
     Task SaveAsync(Asset asset, CancellationToken ct = default);
 }

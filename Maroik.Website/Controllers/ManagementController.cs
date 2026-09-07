@@ -268,68 +268,11 @@ public class ManagementController : Controller
                 return Json(new { result = false, error = _localizer["Input is invalid"].Value });
             }
 
-            #region Email format check
-
-            if (Email.Create(accountInputViewModel.Email).IsError) // Invalid email format
-            {
-                return Json(new { result = false, error = _localizer["Invalid email form"].Value });
-            }
-
-            #endregion
-
-            #region Password format check
-
-            if (!PasswordPolicy.IsValid(accountInputViewModel.Password))
-            {
-                return Json(new
-                {
-                    result = false,
-                    error = _localizer[
-                            "Password must be at least 8 characters and contain at 3 of 4 of the following: upper case (A-Z), lower case (a-z), number (0-9) and special character (e.g. !@#$%^&*)"]
-                        .Value
-                });
-            }
-
-            #endregion
-
-            #region Nickname format check
-
-            if (string.IsNullOrEmpty(accountInputViewModel.Nickname))
-            {
-                return Json(new { result = false, error = _localizer["Please enter Nickname"].Value });
-            }
-
-            if (accountInputViewModel.Nickname.Length is not (>= 1 and <= 255))
-            {
-                return Json(new
-                {
-                    result = false,
-                    error = _localizer["Nickname is must be between 1 and 255 characters"].Value
-                });
-            }
-
-            #endregion
-
-            #region Role check
-
-            if (accountInputViewModel.Role is not (Role.Admin or Role.User))
-            {
-                accountInputViewModel.Role = Role.User;
-            }
-
-            #endregion
-
-            #region TimeZone format check
-
-            if (string.IsNullOrEmpty(accountInputViewModel.TimeZoneIanaId))
-            {
-                return Json(new { result = false, error = _localizer["Please select time zone"].Value });
-            }
-
-            #endregion
-
             #region Create account
 
+            // Email format, password complexity, nickname length, role and time-zone are all
+            // validated by ManagementAccountService / Account.Create / PasswordPolicy in the Core
+            // layers — the controller only binds the request and renders the result.
             ServiceResult createResult = await _managementAccountService.CreateAccountAsync(new AccountRequest
             {
                 Email = accountInputViewModel.Email,

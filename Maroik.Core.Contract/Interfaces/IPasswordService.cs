@@ -20,4 +20,12 @@ public interface IPasswordService
     /// <param name="hashedPassword">The stored BCrypt hash to compare against.</param>
     /// <returns>True if the password matches; otherwise false.</returns>
     public bool VerifyPassword(string password, string hashedPassword);
+
+    /// <summary>
+    /// Runs a full password verification against a fixed internal dummy hash and always returns
+    /// <see langword="false"/>. Call this on an "account not found" login path so its response time
+    /// matches the "wrong password" path — otherwise an attacker can enumerate valid emails by
+    /// timing (a missing account skips the ~2^work-factor BCrypt work entirely).
+    /// </summary>
+    public bool VerifyDummy(string password);
 }

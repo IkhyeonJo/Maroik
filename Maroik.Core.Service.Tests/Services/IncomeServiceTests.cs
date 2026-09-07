@@ -32,6 +32,12 @@ public class IncomeServiceTests
         _unitOfWork.Setup(u => u.CommitAsync(It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
         _unitOfWork.Setup(u => u.RollbackAsync(It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
         _unitOfWork.Setup(u => u.DisposeAsync()).Returns(ValueTask.CompletedTask);
+
+        // UpdateAsync/DeleteAsync now fetch a single record by id; bridge it to the list-based
+        // setups the tests already declare via GetByAccountEmailAsync.
+        _incomeRepo.Setup(r => r.FindByEmailAndIdAsync(It.IsAny<string>(), It.IsAny<long>(), It.IsAny<CancellationToken>()))
+            .Returns(async (string e, long id, CancellationToken c) =>
+                (await _incomeRepo.Object.GetByAccountEmailAsync(e, c)).FirstOrDefault(x => x.Id == id));
     }
 
     // -- Helpers --------------------------------------------------------------

@@ -106,7 +106,7 @@ public class NoticeControllerFixedExpenditureTests
         var response = await _client.SendAsync(request, TestContext.Current.CancellationToken);
         string json = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
 
-        Assert.Contains("Input is invalid", json);
+        Assert.Contains("\"result\":false", json); // service now returns a specific reason, not a generic "Input is invalid"
     }
 
     /// <summary>Create fixed expenditure invalid deposit day for month returns input invalid.</summary>
@@ -125,7 +125,7 @@ public class NoticeControllerFixedExpenditureTests
         var response = await _client.SendAsync(request, TestContext.Current.CancellationToken);
         string json = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
 
-        Assert.Contains("Input is invalid", json);
+        Assert.Contains("\"result\":false", json); // service now returns a specific reason, not a generic "Input is invalid"
     }
 
     // -- CreateFixedExpenditure / IsFixedExpenditureExists: success path ---------

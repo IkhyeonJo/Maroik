@@ -79,13 +79,31 @@ public class AccountService : IAccountService
         {
             // Row lock (FOR UPDATE) held until commit/rollback below, so concurrent login attempts
             // against the same account are fully serialized: each one sees the latest committed
-            // LoginAttempt/Locked state rather than a stale pre-lock read, and once the row is locked,
-            // an already-locked account is rejected here before ever calling VerifyPassword.
+            // LoginAttempt/Locked state rather than a stale pre-lock read.
             Account? account = await _accountRepository.FindByEmailForUpdateAsync(email, ct);
+
+            const string genericLoginError = "Email or Password is wrong";
+
             if (account == null)
             {
+                // Spend the same CPU as a real verification so "no such account" and "wrong
+                // password" take the same time — otherwise the response time enumerates valid emails.
+                _passwordService.VerifyDummy(password);
                 await _unitOfWork.RollbackAsync(ct);
-                return LoginResult.Fail("Email or Password is wrong");
+                return LoginResult.Fail(genericLoginError);
+            }
+
+            // Verify the password FIRST, for every account regardless of its state. The account-state
+            // messages below (deleted / locked / unconfirmed / terms) are only disclosed to a caller
+            // that has proven it owns the account, so a wrong password can no longer be used to probe
+            // whether an email exists or what state it is in — every wrong guess returns the same
+            // generic error.
+            if (!_passwordService.VerifyPassword(password, account.HashedPassword))
+            {
+                account.RecordLoginFailure(_settings.Value.MaxLoginAttempt);
+                await _accountRepository.UpdateEntityAsync(account, ct);
+                await _unitOfWork.CommitAsync(ct);
+                return LoginResult.Fail(genericLoginError);
             }
 
             if (account.Deleted)
@@ -98,17 +116,6 @@ public class AccountService : IAccountService
             {
                 await _unitOfWork.RollbackAsync(ct);
                 return LoginResult.Fail("Your Account is Locked, Please reset your password by clicking Forgot password Button");
-            }
-
-            if (!_passwordService.VerifyPassword(password, account.HashedPassword))
-            {
-                account.RecordLoginFailure(_settings.Value.MaxLoginAttempt);
-                await _accountRepository.UpdateEntityAsync(account, ct);
-                await _unitOfWork.CommitAsync(ct);
-
-                return account.Locked
-                    ? LoginResult.Fail("Your Account is Locked, Please reset your password by clicking Forgot password Button")
-                    : LoginResult.Fail("Email or Password is wrong");
             }
 
             if (!account.EmailConfirmed)

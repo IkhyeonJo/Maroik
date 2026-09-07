@@ -120,12 +120,31 @@ public class AccountServiceTests
     {
         var account = ActiveAccount(deleted: true);
         _accountRepo.Setup(r => r.FindByEmailForUpdateAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(account);
+        // The account-state message is only disclosed once the password proves account ownership.
+        _passwordService.Setup(p => p.VerifyPassword(It.IsAny<string>(), It.IsAny<string>())).Returns(true);
         var sut = CreateSut();
 
-        LoginResult result = await sut.LoginAsync(account.Email.Value, "any", TestContext.Current.CancellationToken);
+        LoginResult result = await sut.LoginAsync(account.Email.Value, "correct", TestContext.Current.CancellationToken);
 
         Assert.False(result.Success);
         Assert.Contains("Deleted", result.ErrorKey, StringComparison.OrdinalIgnoreCase);
+    }
+
+    /// <summary>Verifies that <c>LoginAsync</c> does not disclose a deleted account to a wrong password.</summary>
+    [Fact]
+    public async Task LoginAsync_ReturnsGenericError_WhenAccountIsDeleted_AndPasswordIsWrong()
+    {
+        var account = ActiveAccount(deleted: true);
+        _accountRepo.Setup(r => r.FindByEmailForUpdateAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(account);
+        _passwordService.Setup(p => p.VerifyPassword(It.IsAny<string>(), It.IsAny<string>())).Returns(false);
+        _accountRepo.Setup(r => r.UpdateEntityAsync(It.IsAny<Account>(), It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
+        var sut = CreateSut();
+
+        LoginResult result = await sut.LoginAsync(account.Email.Value, "wrong", TestContext.Current.CancellationToken);
+
+        Assert.False(result.Success);
+        Assert.Contains("wrong", result.ErrorKey, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain("Deleted", result.ErrorKey, StringComparison.OrdinalIgnoreCase);
     }
 
     /// <summary>Verifies that <c>LoginAsync</c> returns fail when account is locked.</summary>
@@ -134,14 +153,17 @@ public class AccountServiceTests
     {
         var account = ActiveAccount(locked: true);
         _accountRepo.Setup(r => r.FindByEmailForUpdateAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(account);
+        // The account-state message is only disclosed once the password proves account ownership.
+        _passwordService.Setup(p => p.VerifyPassword(It.IsAny<string>(), It.IsAny<string>())).Returns(true);
         var sut = CreateSut();
 
-        LoginResult result = await sut.LoginAsync(account.Email.Value, "any", TestContext.Current.CancellationToken);
+        LoginResult result = await sut.LoginAsync(account.Email.Value, "correct", TestContext.Current.CancellationToken);
 
         Assert.False(result.Success);
         Assert.Contains("Locked", result.ErrorKey, StringComparison.OrdinalIgnoreCase);
-        // Already locked: must be rejected before ever checking the password.
-        _passwordService.Verify(p => p.VerifyPassword(It.IsAny<string>(), It.IsAny<string>()), Times.Never);
+        // The password is now verified for every account regardless of state, so a wrong guess
+        // cannot be used to probe whether the account exists or is locked (see B3).
+        _passwordService.Verify(p => p.VerifyPassword(It.IsAny<string>(), It.IsAny<string>()), Times.Once);
     }
 
     /// <summary>Verifies that <c>LoginAsync</c> returns a failure result and persists the incremented counter when the password is wrong.</summary>
@@ -178,7 +200,10 @@ public class AccountServiceTests
         LoginResult result = await sut.LoginAsync(account.Email.Value, "wrong", TestContext.Current.CancellationToken);
 
         Assert.False(result.Success);
-        Assert.Contains("Locked", result.ErrorKey, StringComparison.OrdinalIgnoreCase);
+        // The wrong-password response is always the generic error — it must not reveal that this
+        // failed attempt just locked the account (that would enumerate valid emails). The account
+        // is still locked in persisted state; the user learns that on their next attempt.
+        Assert.Contains("wrong", result.ErrorKey, StringComparison.OrdinalIgnoreCase);
         _accountRepo.Verify(r => r.UpdateEntityAsync(
             It.Is<Account>(a => a.Locked && a.LoginAttempt == _settings.Value.MaxLoginAttempt), It.IsAny<CancellationToken>()), Times.Once);
     }

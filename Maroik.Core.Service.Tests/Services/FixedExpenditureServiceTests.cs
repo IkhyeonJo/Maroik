@@ -17,6 +17,17 @@ public class FixedExpenditureServiceTests
     private readonly Mock<IFixedExpenditureRepository> _fixedExpenditureRepo = new();
     private readonly Mock<IAssetBalanceDomainService> _assetBalance = new();
 
+    /// <summary>Bridges the id-lookup and no-lock asset read the service now uses to the list-/lock-based
+    /// setups these tests already declare.</summary>
+    public FixedExpenditureServiceTests()
+    {
+        _fixedExpenditureRepo.Setup(r => r.FindByEmailAndIdAsync(It.IsAny<string>(), It.IsAny<long>(), It.IsAny<CancellationToken>()))
+            .Returns(async (string e, long id, CancellationToken c) =>
+                (await _fixedExpenditureRepo.Object.GetByAccountEmailAsync(e, c)).FirstOrDefault(x => x.Id == id));
+        _assetBalance.Setup(a => a.GetAssetForReadAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .Returns((string e, string p, CancellationToken c) => _assetBalance.Object.GetAssetAsync(e, p, c));
+    }
+
     private FixedExpenditureService CreateSut() => new(
         _fixedExpenditureRepo.Object,
         _assetBalance.Object);

@@ -65,9 +65,9 @@ public class CalendarController : Controller
                 return Json(new { result = false, error = _localizer["Input is invalid"].Value });
 
             CalendarRequest tempCalendar = calendarInputViewModel.Calendars.FirstOrDefault() ?? new CalendarRequest();
-            tempCalendar.AccountEmail = _sessionService.GetAccount()!.Email!;
+            string accountEmail = _sessionService.GetAccount()!.Email!;
 
-            ServiceResult result = await _calendarService.CreateCalendarAsync(tempCalendar, HttpContext.RequestAborted);
+            ServiceResult result = await _calendarService.CreateCalendarAsync(accountEmail, tempCalendar, HttpContext.RequestAborted);
 
             if (!result.Success)
                 return Json(new { result = false, error = _localizer[result.ErrorKey].Value });
@@ -195,9 +195,8 @@ public class CalendarController : Controller
         {
             // First visit for this account: auto-provision a default personal calendar
             // so the grid is never empty and events can be created immediately.
-            await _calendarService.EnsureDefaultCalendarAsync(new CalendarRequest
+            await _calendarService.EnsureDefaultCalendarAsync(loggedInAccount.Email!, new CalendarRequest
             {
-                AccountEmail = loggedInAccount.Email!,
                 Name = loggedInAccount.Nickname!,
                 TimeZoneIanaId = loggedInAccount.TimeZoneIanaId,
                 HtmlColorCode = "#fc330e"
@@ -227,9 +226,8 @@ public class CalendarController : Controller
         if (calendars.Count == 0)
         {
             // Same first-visit provisioning as AdminIndex (see comment there).
-            await _calendarService.EnsureDefaultCalendarAsync(new CalendarRequest
+            await _calendarService.EnsureDefaultCalendarAsync(loggedInAccount.Email!, new CalendarRequest
             {
-                AccountEmail = loggedInAccount.Email!,
                 Name = loggedInAccount.Nickname!,
                 TimeZoneIanaId = loggedInAccount.TimeZoneIanaId,
                 HtmlColorCode = "#fc330e"
@@ -583,9 +581,9 @@ public class CalendarController : Controller
             }
 
             CalendarRequest calendarRequest = calendarInputViewModel.Calendars.FirstOrDefault() ?? new CalendarRequest();
-            calendarRequest.AccountEmail = _sessionService.GetAccount()!.Email;
+            string accountEmail = _sessionService.GetAccount()!.Email!;
 
-            ServiceResult updateResult = await _calendarService.UpdateCalendarAsync(calendarRequest, HttpContext.RequestAborted);
+            ServiceResult updateResult = await _calendarService.UpdateCalendarAsync(accountEmail, calendarRequest, HttpContext.RequestAborted);
 
             return !updateResult.Success ? Json(new { result = false, error = _localizer[updateResult.ErrorKey].Value }) : Json(new { result = true, message = _localizer["The calendar has been successfully updated."].Value, calendar = new CalendarRequest { Id = calendarRequest.Id, Name = calendarRequest.Name, HtmlColorCode = calendarRequest.HtmlColorCode } });
         }
@@ -716,9 +714,9 @@ public class CalendarController : Controller
         try
         {
             CalendarRequest tempCalendar = calendarInputViewModel.Calendars.FirstOrDefault() ?? new CalendarRequest();
-            tempCalendar.AccountEmail = _sessionService.GetAccount()!.Email!;
+            string accountEmail = _sessionService.GetAccount()!.Email!;
 
-            ServiceResult deleteCalendarResult = await _calendarService.DeleteCalendarAsync(tempCalendar, HttpContext.RequestAborted);
+            ServiceResult deleteCalendarResult = await _calendarService.DeleteCalendarAsync(accountEmail, tempCalendar, HttpContext.RequestAborted);
 
             return !deleteCalendarResult.Success ? Json(new { result = false, error = _localizer[deleteCalendarResult.ErrorKey].Value }) : Json(new { result = true, message = _localizer["The calendar has been successfully deleted."].Value, calendar = new CalendarRequest { Id = tempCalendar.Id } });
         }

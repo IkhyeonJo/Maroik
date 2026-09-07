@@ -178,6 +178,9 @@ public sealed class Account : AggregateRoot<string>
         if (string.IsNullOrWhiteSpace(nickname))
             return Error.Validation("Account.NicknameEmpty", "Nickname cannot be empty.");
 
+        if (nickname.Length > 255)
+            return Error.Validation("Account.NicknameTooLong", "Nickname must be 255 characters or fewer.");
+
         if (string.IsNullOrWhiteSpace(hashedPassword))
             return Error.Validation("Account.PasswordEmpty", "Hashed password cannot be empty.");
 

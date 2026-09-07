@@ -1,21 +1,90 @@
+using ErrorOr;
+
 namespace Maroik.Core.Contract.Dtos;
 
 /// <summary>
+/// Broad category of a failed <see cref="ServiceResult"/>. Lets a caller (e.g. a controller)
+/// translate an outcome into the right shape — an HTTP 400/404/409/500, a specific toast — instead
+/// of treating every failure the same. Mirrors the subset of <see cref="ErrorType"/> the app uses.
+/// </summary>
+public enum ServiceErrorType
+{
+    /// <summary>The result is a success; no error.</summary>
+    None = 0,
+
+    /// <summary>The caller supplied invalid input or violated a business rule (maps to HTTP 400).</summary>
+    Validation,
+
+    /// <summary>A referenced entity does not exist or is not visible to the caller (maps to HTTP 404).</summary>
+    NotFound,
+
+    /// <summary>The request conflicts with current state — duplicate, already deleted, … (maps to HTTP 409).</summary>
+    Conflict,
+
+    /// <summary>An unexpected/infrastructure failure the caller cannot fix by changing input (maps to HTTP 500).</summary>
+    Failure,
+}
+
+/// <summary>
 /// Generic operation result used by service methods that do not need to return data.
-/// Indicates success or failure and carries a localization error key on failure.
-/// Use the static factory methods <see cref="Ok"/> and <see cref="Fail"/> to create instances.
+/// Indicates success or failure and, on failure, carries a localization key / message, an optional
+/// machine error code, and a <see cref="ServiceErrorType"/> so the caller can react to the
+/// <em>kind</em> of failure rather than only "it failed".
+/// Use the static factory methods to create instances.
 /// </summary>
 public class ServiceResult
 {
     /// <summary>True when the operation completed successfully.</summary>
     public bool Success { get; private init; }
 
-    /// <summary>Localization key that describes the error (empty string on success).</summary>
+    /// <summary>Localization key / message that describes the error (empty string on success).</summary>
     public string ErrorKey { get; private init; } = "";
+
+    /// <summary>Machine-readable error code (e.g. <c>"Income.AssetDeleted"</c>); empty when not set.</summary>
+    public string ErrorCode { get; private init; } = "";
+
+    /// <summary>Category of the failure; <see cref="ServiceErrorType.None"/> on success.</summary>
+    public ServiceErrorType ErrorType { get; private init; } = ServiceErrorType.None;
 
     /// <summary>Creates a successful result.</summary>
     public static ServiceResult Ok() => new() { Success = true };
 
-    /// <summary>Creates a failed result with the given error key.</summary>
-    public static ServiceResult Fail(string errorKey) => new() { Success = false, ErrorKey = errorKey };
+    /// <summary>
+    /// Creates a failed result with the given error key. Kept for source compatibility with the
+    /// many existing call sites; the category defaults to <see cref="ServiceErrorType.Validation"/>.
+    /// Prefer <see cref="NotFound"/> / <see cref="Conflict"/> / <see cref="Failure"/> /
+    /// <see cref="FromError"/> when the category is known.
+    /// </summary>
+    public static ServiceResult Fail(string errorKey) => Fail(errorKey, ServiceErrorType.Validation);
+
+    /// <summary>Creates a failed result with the given error key and category.</summary>
+    public static ServiceResult Fail(string errorKey, ServiceErrorType type) =>
+        new() { Success = false, ErrorKey = errorKey, ErrorType = type };
+
+    /// <summary>Creates a <see cref="ServiceErrorType.NotFound"/> failure.</summary>
+    public static ServiceResult NotFound(string code, string message) =>
+        new() { Success = false, ErrorCode = code, ErrorKey = message, ErrorType = ServiceErrorType.NotFound };
+
+    /// <summary>Creates a <see cref="ServiceErrorType.Conflict"/> failure.</summary>
+    public static ServiceResult Conflict(string code, string message) =>
+        new() { Success = false, ErrorCode = code, ErrorKey = message, ErrorType = ServiceErrorType.Conflict };
+
+    /// <summary>Creates a <see cref="ServiceErrorType.Failure"/> (unexpected/infrastructure) failure.</summary>
+    public static ServiceResult Failure(string code, string message) =>
+        new() { Success = false, ErrorCode = code, ErrorKey = message, ErrorType = ServiceErrorType.Failure };
+
+    /// <summary>Maps a domain <see cref="Error"/> to a <see cref="ServiceResult"/>, preserving its category.</summary>
+    public static ServiceResult FromError(Error error) => new()
+    {
+        Success = false,
+        ErrorCode = error.Code,
+        ErrorKey = error.Description,
+        ErrorType = error.Type switch
+        {
+            ErrorOr.ErrorType.Validation => ServiceErrorType.Validation,
+            ErrorOr.ErrorType.NotFound => ServiceErrorType.NotFound,
+            ErrorOr.ErrorType.Conflict => ServiceErrorType.Conflict,
+            _ => ServiceErrorType.Failure,
+        },
+    };
 }

@@ -14,9 +14,19 @@ using Microsoft.Extensions.Caching.Distributed;
 namespace Maroik.Website.Filters;
 
 /// <summary>
-/// Action filter that loads and caches the navigation menu (categories and sub-categories)
-/// for all three roles (Admin, User, Anonymous) and sets them on ViewBag before each action.
-/// The menu data is cached with a 10-minute sliding expiration to reduce database load.
+/// Global action filter with two jobs, run before every action:
+/// <list type="bullet">
+///   <item><b>Authorization.</b> Decides whether the current request may run, given the visitor's
+///   session role and the seeded navigation menu (a GET must resolve to a menu item for the role;
+///   a POST must carry a matching <see cref="RequiredHttpPostAccessAttribute"/> and target a
+///   controller present in the role's menu). Denied requests are redirected instead of executing.</item>
+///   <item><b>Navigation.</b> Loads the category / sub-category menu for all three roles (Admin,
+///   User, Anonymous) — cached in the distributed cache with a 10-minute sliding expiration — and
+///   puts it on <c>ViewBag</c>. This data is also the input to the authorization decision above,
+///   which is why the two concerns share one filter.</item>
+/// </list>
+/// The controller/action → role map used for POST authorization is derived once from the compiled
+/// controllers (see <see cref="PostActionRoles"/>) rather than re-reflected on every request.
 /// </summary>
 public class AuthorizationFilter : ActionFilterAttribute
 {
@@ -37,6 +47,67 @@ public class AuthorizationFilter : ActionFilterAttribute
         .. Assembly.GetExecutingAssembly().GetTypes()
             .Where(type => typeof(Controller).IsAssignableFrom(type))
     ];
+
+    /// <summary>
+    /// (controller, action) POST endpoint → the set of role strings its
+    /// <see cref="RequiredHttpPostAccessAttribute"/> attributes grant. Only actions that also carry
+    /// <c>[HttpPost]</c> and <c>[ValidateAntiForgeryToken]</c> are included. The compiled set of
+    /// actions and their attributes never changes at runtime, so this is built once instead of
+    /// re-scanning every controller's methods and custom attributes on every POST request.
+    /// </summary>
+    private static readonly IReadOnlyDictionary<(string Controller, string Action), IReadOnlySet<string>> PostActionRoles =
+        BuildPostActionRoleMap();
+
+    /// <summary>
+    /// (controller, action) pairs for every <c>AccountController</c> POST action carrying
+    /// <c>[HttpPost]</c> and <c>[ValidateAntiForgeryToken]</c> — the endpoints an unauthenticated
+    /// visitor may POST to (login, register, forgot / reset password, …) without a menu match.
+    /// </summary>
+    private static readonly IReadOnlySet<(string Controller, string Action)> AnonymousAccountPostActions =
+        BuildAnonymousAccountPostActions();
+
+    private static string ControllerName(Type controllerType) =>
+        controllerType.Name.EndsWith("Controller", StringComparison.Ordinal)
+            ? controllerType.Name[..^"Controller".Length]
+            : controllerType.Name;
+
+    private static bool HasPostGuards(MethodInfo method) =>
+        method.IsPublic
+        && !method.IsDefined(typeof(NonActionAttribute))
+        && method.IsDefined(typeof(HttpPostAttribute))
+        && method.IsDefined(typeof(ValidateAntiForgeryTokenAttribute));
+
+    private static IReadOnlyDictionary<(string, string), IReadOnlySet<string>> BuildPostActionRoleMap()
+    {
+        var map = new Dictionary<(string, string), IReadOnlySet<string>>();
+        foreach (Type controller in _cachedControllerTypes)
+        {
+            foreach (MethodInfo method in controller.GetMethods())
+            {
+                if (!HasPostGuards(method) || !method.IsDefined(typeof(RequiredHttpPostAccessAttribute)))
+                    continue;
+
+                IReadOnlySet<string> roles = method.GetCustomAttributes<RequiredHttpPostAccessAttribute>()
+                    .Select(attr => attr.Role)
+                    .Where(role => !string.IsNullOrEmpty(role))
+                    .ToHashSet(StringComparer.Ordinal);
+
+                if (roles.Count > 0)
+                    map[(ControllerName(controller), method.Name)] = roles;
+            }
+        }
+        return map;
+    }
+
+    private static IReadOnlySet<(string, string)> BuildAnonymousAccountPostActions()
+    {
+        var set = new HashSet<(string, string)>();
+        foreach (Type controller in _cachedControllerTypes.Where(type => type.Name == "AccountController"))
+            foreach (MethodInfo method in controller.GetMethods())
+                if (HasPostGuards(method))
+                    set.Add((ControllerName(controller), method.Name));
+        return set;
+    }
 
     /// <summary>Initializes a new instance of <see cref="AuthorizationFilter"/> with the required dependencies.</summary>
     /// <param name="menuService">Service used to load category and sub-category navigation data.</param>
@@ -251,53 +322,22 @@ public class AuthorizationFilter : ActionFilterAttribute
             // POST method — not logged in
             case "POST" when !isAccountSessionExist:
                 {
-                    var existingControllers = _cachedControllerTypes;
+                    (string, string) endpoint = (currentControllerName, currentActionName);
 
-                    var existingHttpPostMethods = existingControllers
-                        .Where(type => type.Name == "AccountController") // Check AccountController
-                        .SelectMany(type => type.GetMethods()) // Get methods
-                        .Where(method => method.IsPublic && !method.IsDefined(typeof(NonActionAttribute)) &&
-                                         method.IsDefined(typeof(HttpPostAttribute)) &&
-                                         method.IsDefined(typeof(ValidateAntiForgeryTokenAttribute)));
-                    // Get methods with public access modifier, without NonAction attribute, with HttpPost and ValidateAntiForgeryToken attributes
-
-                    if (existingHttpPostMethods.Any(existingHttpPostMethod =>
-                            currentControllerName ==
-                            existingHttpPostMethod.DeclaringType?.Name.Replace("Controller", "") &&
-                            currentActionName == existingHttpPostMethod.Name))
+                    // AccountController's own POST actions (login, register, forgot/reset password …)
+                    // are always reachable to an anonymous visitor.
+                    if (AnonymousAccountPostActions.Contains(endpoint))
                     {
                         await next(); // Do Action!!
                         return;
                     }
 
-                    foreach (var anonymousCategory in anonymousCategories ?? [])
+                    // Otherwise the action must be explicitly marked for the Anonymous role AND live
+                    // on a controller that appears in the anonymous navigation menu.
+                    if (PostActionRoles.TryGetValue(endpoint, out IReadOnlySet<string>? anonRoles)
+                        && anonRoles.Contains(Role.Anonymous)
+                        && anonymousCategories.Any(category => category.Controller == currentControllerName))
                     {
-                        existingHttpPostMethods = existingControllers
-                            .Where(type =>
-                                type.Name ==
-                                $"{anonymousCategory.Controller}Controller") // When permission is AnonymousCategory, only registered Category's Controller name is accessible
-                            .SelectMany(type => type.GetMethods()) // Get methods
-                            .Where(method => method.IsPublic && !method.IsDefined(typeof(NonActionAttribute)) &&
-                                             method.IsDefined(typeof(HttpPostAttribute)) &&
-                                             method.IsDefined(typeof(ValidateAntiForgeryTokenAttribute)) &&
-                                             method.IsDefined(typeof(RequiredHttpPostAccessAttribute)));
-                        // Get methods with public access modifier, without NonAction attribute, with HttpPost, ValidateAntiForgeryToken, and RequiredHttpPostAccess attributes
-
-                        if (!(from existingHttpPostMethod in existingHttpPostMethods
-                              where currentControllerName ==
-                                    existingHttpPostMethod.DeclaringType?.Name.Replace("Controller", "") &&
-                                    currentActionName == existingHttpPostMethod.Name
-                              from customAttribute in existingHttpPostMethod.CustomAttributes
-                              where customAttribute.AttributeType.FullName ==
-                                    typeof(RequiredHttpPostAccessAttribute).ToString()
-                              from namedArgument in customAttribute.NamedArguments
-                              select namedArgument).Any(namedArgument =>
-                              (namedArgument.MemberName == nameof(RequiredHttpPostAccessAttribute.Role)) &&
-                              ((namedArgument.TypedValue.Value as string) == Role.Anonymous)))
-                        {
-                            continue;
-                        }
-
                         await next(); // Do Action!!
                         return;
                     }
@@ -308,8 +348,6 @@ public class AuthorizationFilter : ActionFilterAttribute
             // POST method — logged in
             case "POST" when isAccountSessionExist:
                 {
-                    var existingControllers = _cachedControllerTypes;
-
                     switch (loggedInAccount!.Role)
                     {
                         // Admin and User share identical resolution logic — only which category
@@ -320,28 +358,11 @@ public class AuthorizationFilter : ActionFilterAttribute
                             {
                                 var categories = loggedInAccount.Role == Role.Admin ? adminCategories : userCategories;
 
-                                if ((from category in categories ?? []
-                                     from existingHttpPostMethod in existingControllers
-                                         .Where(type =>
-                                             type.Name ==
-                                             $"{category.Controller}Controller") // Only registered category's Controller name is accessible
-                                         .SelectMany(type => type.GetMethods()) // Get methods
-                                         .Where(method =>
-                                             method.IsPublic && !method.IsDefined(typeof(NonActionAttribute)) &&
-                                             method.IsDefined(typeof(HttpPostAttribute)) &&
-                                             method.IsDefined(typeof(ValidateAntiForgeryTokenAttribute)) &&
-                                             method.IsDefined(typeof(RequiredHttpPostAccessAttribute)))
-                                     where
-                                         currentControllerName ==
-                                         existingHttpPostMethod.DeclaringType?.Name.Replace("Controller", "") &&
-                                         currentActionName == existingHttpPostMethod.Name
-                                     from customAttribute in existingHttpPostMethod.CustomAttributes
-                                     where customAttribute.AttributeType.FullName ==
-                                           typeof(RequiredHttpPostAccessAttribute).ToString()
-                                     from namedArgument in customAttribute.NamedArguments
-                                     select namedArgument).Any(namedArgument =>
-                                     (namedArgument.MemberName == nameof(RequiredHttpPostAccessAttribute.Role)) &&
-                                     ((namedArgument.TypedValue.Value as string) == loggedInAccount.Role)))
+                                // The action must carry [RequiredHttpPostAccess(Role = <this role>)]
+                                // AND its controller must appear in this role's navigation menu.
+                                if (PostActionRoles.TryGetValue((currentControllerName, currentActionName), out IReadOnlySet<string>? allowedRoles)
+                                    && allowedRoles.Contains(loggedInAccount.Role)
+                                    && categories.Any(category => category.Controller == currentControllerName))
                                 {
                                     await next(); // Do Action!!
                                     return;

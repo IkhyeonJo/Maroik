@@ -107,7 +107,7 @@ public class ManagementControllerAccountTests
         var json = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
 
         Assert.Equal(System.Net.HttpStatusCode.OK, response.StatusCode);
-        Assert.Contains("Invalid email form", json);
+        Assert.Contains("not a valid email address", json); // Email.Create (Core) message, not a controller-local string
     }
 
     /// <summary>Create account weak password returns password policy error.</summary>
@@ -167,7 +167,7 @@ public class ManagementControllerAccountTests
         var response = await _client.SendAsync(request, TestContext.Current.CancellationToken);
         var json = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
 
-        Assert.Contains("Please select time zone", json);
+        Assert.Contains("Time-zone ID cannot be empty", json); // TimeZoneId.Create (Core) message, not a controller-local string
     }
 
     // -- CreateAccount: success path ---------------------------------------------

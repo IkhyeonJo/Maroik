@@ -58,6 +58,25 @@ public class AccountTests
         Assert.Equal("Account.NicknameEmpty", result.FirstError.Code);
     }
 
+    /// <summary>Create returns error, when nickname exceeds 255 characters.</summary>
+    [Fact]
+    public void Create_ReturnsError_WhenNicknameTooLong()
+    {
+        var result = Account.Create("user@example.com", "hashed", new string('n', 256), "User", "UTC", null, null, true);
+
+        Assert.True(result.IsError);
+        Assert.Equal("Account.NicknameTooLong", result.FirstError.Code);
+    }
+
+    /// <summary>Create succeeds when nickname is exactly at the 255-character limit.</summary>
+    [Fact]
+    public void Create_ReturnsAccount_WhenNicknameAtMaxLength()
+    {
+        var result = Account.Create("user@example.com", "hashed", new string('n', 255), "User", "UTC", null, null, true);
+
+        Assert.False(result.IsError);
+    }
+
     /// <summary>Create returns error, when password empty.</summary>
     [Theory]
     [InlineData("")]

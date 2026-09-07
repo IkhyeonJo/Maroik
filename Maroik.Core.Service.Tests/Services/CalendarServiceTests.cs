@@ -91,7 +91,7 @@ public class CalendarServiceTests
             .ReturnsAsync([MakeCalendar(name: "MyCalendar")]);
         var sut = CreateSut();
 
-        ServiceResult result = await sut.CreateCalendarAsync(new CalendarRequest
+        ServiceResult result = await sut.CreateCalendarAsync("user@example.com", new CalendarRequest
         {
             AccountEmail = "user@example.com",
             Name = "MyCalendar"
@@ -109,7 +109,7 @@ public class CalendarServiceTests
         _calendarRepo.Setup(r => r.CreateAsync(It.IsAny<Calendar>(), It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
         var sut = CreateSut();
 
-        ServiceResult result = await sut.CreateCalendarAsync(new CalendarRequest
+        ServiceResult result = await sut.CreateCalendarAsync("user@example.com", new CalendarRequest
         {
             AccountEmail = "user@example.com",
             Name = "NewCalendar",
@@ -130,7 +130,7 @@ public class CalendarServiceTests
         _calendarRepo.Setup(r => r.GetByAccountEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync([]);
         var sut = CreateSut();
 
-        ServiceResult result = await sut.UpdateCalendarAsync(new CalendarRequest
+        ServiceResult result = await sut.UpdateCalendarAsync("user@example.com", new CalendarRequest
         {
             AccountEmail = "user@example.com",
             Id = 99,
@@ -149,7 +149,7 @@ public class CalendarServiceTests
         _calendarRepo.Setup(r => r.UpdateEntityAsync(It.IsAny<Calendar>(), It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
         var sut = CreateSut();
 
-        ServiceResult result = await sut.UpdateCalendarAsync(new CalendarRequest
+        ServiceResult result = await sut.UpdateCalendarAsync("user@example.com", new CalendarRequest
         {
             AccountEmail = "user@example.com",
             Id = 1,
@@ -171,7 +171,7 @@ public class CalendarServiceTests
         _calendarRepo.Setup(r => r.GetByAccountEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync([]);
         var sut = CreateSut();
 
-        ServiceResult result = await sut.DeleteCalendarAsync(new CalendarRequest
+        ServiceResult result = await sut.DeleteCalendarAsync("user@example.com", new CalendarRequest
         {
             AccountEmail = "user@example.com",
             Id = 99
@@ -189,7 +189,7 @@ public class CalendarServiceTests
         _calendarRepo.Setup(r => r.DeleteByIdAsync(It.IsAny<long>(), It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
         var sut = CreateSut();
 
-        ServiceResult result = await sut.DeleteCalendarAsync(new CalendarRequest
+        ServiceResult result = await sut.DeleteCalendarAsync("user@example.com", new CalendarRequest
         {
             AccountEmail = "user@example.com",
             Id = 1
@@ -208,7 +208,7 @@ public class CalendarServiceTests
         _calendarRepo.Setup(r => r.CreateAsync(It.IsAny<Calendar>(), It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
         var sut = CreateSut();
 
-        ServiceResult result = await sut.EnsureDefaultCalendarAsync(new CalendarRequest
+        ServiceResult result = await sut.EnsureDefaultCalendarAsync("user@example.com", new CalendarRequest
         {
             AccountEmail = "user@example.com",
             Name = "Default",
@@ -228,7 +228,7 @@ public class CalendarServiceTests
             .ReturnsAsync([MakeCalendar()]);
         var sut = CreateSut();
 
-        ServiceResult result = await sut.EnsureDefaultCalendarAsync(new CalendarRequest
+        ServiceResult result = await sut.EnsureDefaultCalendarAsync("user@example.com", new CalendarRequest
         {
             AccountEmail = "user@example.com",
             Name = "Default"

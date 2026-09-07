@@ -52,11 +52,11 @@ public class ExpenditureService : IExpenditureService
         {
             var classResult = ExpenditureClassPolicy.Validate(request.MainClass, request.SubClass);
             if (classResult.IsError)
-                return await FailAsync("Input is invalid", ct);
+                return await FailAsync(classResult.FirstError, ct);
 
             bool isTransfer = classResult.Value;
             if (isTransfer && request.PaymentMethod == request.MyDepositAsset)
-                return await FailAsync("The PaymentMethod and MyDepositAsset value cannot be the same.", ct);
+                return await FailAsync(SameAssetResult, ct);
 
             // GetAssetsOrdinalAsync takes row locks held until commit/rollback, always in ordinal
             // name order, so that concurrent transactions touching the same asset pair (here,
@@ -68,18 +68,18 @@ public class ExpenditureService : IExpenditureService
             Asset? depositAsset = isTransfer && !string.IsNullOrEmpty(request.MyDepositAsset) && touchedAssets.TryGetValue(request.MyDepositAsset, out var dep) ? dep : null;
 
             if (paymentAsset == null)
-                return await FailAsync("Input is invalid", ct);
+                return await FailAsync(AssetNotFoundResult, ct);
             if (paymentAsset.Deleted)
-                return await FailAsync("Actions cannot be executed with assets that have already been deleted.", ct);
+                return await FailAsync(DeletedAssetResult, ct);
 
             if (isTransfer)
             {
                 if (depositAsset == null)
-                    return await FailAsync("Input is invalid", ct);
+                    return await FailAsync(AssetNotFoundResult, ct);
                 if (depositAsset.Deleted)
-                    return await FailAsync("Actions cannot be executed with assets that have already been deleted.", ct);
+                    return await FailAsync(DeletedAssetResult, ct);
                 if (paymentAsset.Balance.Currency != depositAsset.Balance.Currency)
-                    return await FailAsync("PaymentMethod MonetaryUnit must be same as MyDepositAsset MonetaryUnit.", ct);
+                    return await FailAsync(CurrencyMismatchResult, ct);
             }
 
             string currency = paymentAsset.Balance.Currency;
@@ -88,21 +88,21 @@ public class ExpenditureService : IExpenditureService
             var expenditureResult = Expenditure.Record(accountEmail, request.MainClass, request.SubClass,
                 request.Content, Math.Abs(request.Amount), currency, request.PaymentMethod, myDepositAsset, request.Note, request.Created);
             if (expenditureResult.IsError)
-                return await FailAsync(expenditureResult.FirstError.Description, ct);
+                return await FailAsync(expenditureResult.FirstError, ct);
 
             var expenditure = expenditureResult.Value;
             await _expenditureRepository.CreateAsync(expenditure, ct);
 
             var withdrawResult = paymentAsset.Withdraw(expenditure.Amount);
             if (withdrawResult.IsError)
-                return await FailAsync(withdrawResult.FirstError.Description, ct);
+                return await FailAsync(withdrawResult.FirstError, ct);
             await _assetBalance.SaveAsync(paymentAsset, ct);
 
             if (depositAsset != null)
             {
                 var depositResult = depositAsset.Deposit(expenditure.Amount);
                 if (depositResult.IsError)
-                    return await FailAsync(depositResult.FirstError.Description, ct);
+                    return await FailAsync(depositResult.FirstError, ct);
                 await _assetBalance.SaveAsync(depositAsset, ct);
             }
 
@@ -112,7 +112,7 @@ public class ExpenditureService : IExpenditureService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to create expenditure for account {AccountEmail}", accountEmail);
-            return await FailAsync("Input is invalid", ct);
+            return await FailAsync(UnexpectedFailure, ct);
         }
     }
 
@@ -124,15 +124,14 @@ public class ExpenditureService : IExpenditureService
         {
             var classResult = ExpenditureClassPolicy.Validate(request.MainClass, request.SubClass);
             if (classResult.IsError)
-                return await FailAsync("Input is invalid", ct);
+                return await FailAsync(classResult.FirstError, ct);
 
             if (classResult.Value && request.PaymentMethod == request.MyDepositAsset)
-                return await FailAsync("The PaymentMethod and MyDepositAsset value cannot be the same.", ct);
+                return await FailAsync(SameAssetResult, ct);
 
-            List<Expenditure> expenditures = await _expenditureRepository.GetByAccountEmailAsync(accountEmail, ct);
-            Expenditure? previous = expenditures.FirstOrDefault(x => x.Id == request.Id);
+            Expenditure? previous = await _expenditureRepository.FindByEmailAndIdAsync(accountEmail, request.Id, ct);
             if (previous == null)
-                return await FailAsync("Input is invalid", ct);
+                return await FailAsync(ServiceResult.NotFound("Expenditure.NotFound", "The expenditure record could not be found."), ct);
 
             // Lock every asset this update can touch (old + new payment/deposit) in a single
             // ordinal-ordered batch so concurrent transactions on the same asset pair cannot deadlock.
@@ -140,24 +139,29 @@ public class ExpenditureService : IExpenditureService
                 [request.PaymentMethod, classResult.Value ? request.MyDepositAsset : null, previous.PaymentMethod, previous.MyDepositAsset], ct);
 
             Asset? newPayAsset = !string.IsNullOrEmpty(request.PaymentMethod) && touchedAssets.TryGetValue(request.PaymentMethod, out var np) ? np : null;
+            Asset? newDepAsset = classResult.Value && !string.IsNullOrEmpty(request.MyDepositAsset) && touchedAssets.TryGetValue(request.MyDepositAsset, out var nd) ? nd : null;
+
+            // A record must not be retargeted onto a since-archived asset, matching Create: a
+            // deleted asset's balance must never be touched.
+            if (newPayAsset?.Deleted == true || newDepAsset?.Deleted == true)
+                return await FailAsync(DeletedAssetResult, ct);
 
             if (classResult.Value)
             {
-                Asset? newDepAsset = !string.IsNullOrEmpty(request.MyDepositAsset) && touchedAssets.TryGetValue(request.MyDepositAsset, out var nd) ? nd : null;
                 if (newPayAsset == null || newDepAsset == null)
-                    return await FailAsync("Input is invalid", ct);
+                    return await FailAsync(AssetNotFoundResult, ct);
                 if (newPayAsset.Balance.Currency != newDepAsset.Balance.Currency)
-                    return await FailAsync("PaymentMethod MonetaryUnit must be same as MyDepositAsset MonetaryUnit.", ct);
+                    return await FailAsync(CurrencyMismatchResult, ct);
             }
 
             Asset? prevPayAsset = !string.IsNullOrEmpty(previous.PaymentMethod) && touchedAssets.TryGetValue(previous.PaymentMethod, out var pp) ? pp : null;
             if (prevPayAsset?.Deleted == true)
-                return await FailAsync("Actions cannot be executed with assets that have already been deleted.", ct);
+                return await FailAsync(DeletedAssetResult, ct);
             if (!string.IsNullOrEmpty(previous.MyDepositAsset))
             {
                 Asset? prevDepAsset = touchedAssets.GetValueOrDefault(previous.MyDepositAsset);
                 if (prevDepAsset?.Deleted == true)
-                    return await FailAsync("Actions cannot be executed with assets that have already been deleted.", ct);
+                    return await FailAsync(DeletedAssetResult, ct);
             }
 
             string newCurrency = newPayAsset?.Balance.Currency ?? prevPayAsset?.Balance.Currency ?? "";
@@ -168,13 +172,13 @@ public class ExpenditureService : IExpenditureService
             var updateResult = previous.Update(request.MainClass, request.SubClass, request.Content,
                 Math.Abs(request.Amount), newCurrency, request.PaymentMethod, myDepositAsset, request.Note, request.Created);
             if (updateResult.IsError)
-                return await FailAsync(updateResult.FirstError.Description, ct);
+                return await FailAsync(updateResult.FirstError, ct);
 
             await _expenditureRepository.UpdateEntityAsync(previous, ct);
             var adjustResult = await AdjustAssetBalancesAsync(accountEmail, oldSnapshot,
                 new ExpenditureSnapshot(previous.PaymentMethod, previous.MyDepositAsset, previous.Amount.Amount), ct);
             if (adjustResult.IsError)
-                return await FailAsync(adjustResult.FirstError.Description, ct);
+                return await FailAsync(adjustResult.FirstError, ct);
 
             await _unitOfWork.CommitAsync(ct);
             return ServiceResult.Ok();
@@ -182,7 +186,7 @@ public class ExpenditureService : IExpenditureService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to update expenditure {ExpenditureId} for account {AccountEmail}", request.Id, accountEmail);
-            return await FailAsync("Input is invalid", ct);
+            return await FailAsync(UnexpectedFailure, ct);
         }
     }
 
@@ -192,10 +196,9 @@ public class ExpenditureService : IExpenditureService
         await _unitOfWork.BeginAsync(ct);
         try
         {
-            List<Expenditure> expenditures = await _expenditureRepository.GetByAccountEmailAsync(accountEmail, ct);
-            Expenditure? expenditure = expenditures.FirstOrDefault(x => x.Id == id);
+            Expenditure? expenditure = await _expenditureRepository.FindByEmailAndIdAsync(accountEmail, id, ct);
             if (expenditure == null)
-                return await FailAsync("Input is invalid", ct);
+                return await FailAsync(ServiceResult.NotFound("Expenditure.NotFound", "The expenditure record could not be found."), ct);
 
             // An expenditure referencing a since-archived (soft-deleted) asset must not be
             // deletable, matching Create/Update: a deleted asset's balance must not be touched.
@@ -203,16 +206,16 @@ public class ExpenditureService : IExpenditureService
                 accountEmail, [expenditure.PaymentMethod, expenditure.MyDepositAsset], ct);
             if (!string.IsNullOrEmpty(expenditure.PaymentMethod) &&
                 assetsToCheck.TryGetValue(expenditure.PaymentMethod, out var payAssetToCheck) && payAssetToCheck.Deleted)
-                return await FailAsync("Actions cannot be executed with assets that have already been deleted.", ct);
+                return await FailAsync(DeletedAssetResult, ct);
             if (!string.IsNullOrEmpty(expenditure.MyDepositAsset) &&
                 assetsToCheck.TryGetValue(expenditure.MyDepositAsset, out var depAssetToCheck) && depAssetToCheck.Deleted)
-                return await FailAsync("Actions cannot be executed with assets that have already been deleted.", ct);
+                return await FailAsync(DeletedAssetResult, ct);
 
             var adjustResult = await AdjustAssetBalancesAsync(accountEmail,
                 new ExpenditureSnapshot(expenditure.PaymentMethod, expenditure.MyDepositAsset, expenditure.Amount.Amount),
                 null, ct);
             if (adjustResult.IsError)
-                return await FailAsync(adjustResult.FirstError.Description, ct);
+                return await FailAsync(adjustResult.FirstError, ct);
 
             await _expenditureRepository.DeleteByIdAsync(expenditure.Id, ct);
 
@@ -222,16 +225,34 @@ public class ExpenditureService : IExpenditureService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to delete expenditure {ExpenditureId} for account {AccountEmail}", id, accountEmail);
-            return await FailAsync("Input is invalid", ct);
+            return await FailAsync(UnexpectedFailure, ct);
         }
     }
 
-    /// <summary>Rolls back the current transaction and returns a failure <see cref="ServiceResult"/> with <paramref name="message"/>.</summary>
-    private async Task<ServiceResult> FailAsync(string message, CancellationToken ct)
+    private static ServiceResult SameAssetResult => ServiceResult.Fail(
+        "The PaymentMethod and MyDepositAsset value cannot be the same.");
+
+    private static ServiceResult CurrencyMismatchResult => ServiceResult.Fail(
+        "PaymentMethod MonetaryUnit must be same as MyDepositAsset MonetaryUnit.");
+
+    private static ServiceResult AssetNotFoundResult => ServiceResult.NotFound(
+        "Expenditure.AssetNotFound", "The selected asset could not be found.");
+
+    private static ServiceResult DeletedAssetResult => ServiceResult.Conflict(
+        "Expenditure.AssetDeleted", "Actions cannot be executed with assets that have already been deleted.");
+
+    private static ServiceResult UnexpectedFailure => ServiceResult.Failure(
+        "Expenditure.Unexpected", "The operation could not be completed. Please try again.");
+
+    /// <summary>Rolls back the current transaction and returns <paramref name="result"/>.</summary>
+    private async Task<ServiceResult> FailAsync(ServiceResult result, CancellationToken ct)
     {
         await _unitOfWork.RollbackAsync(ct);
-        return ServiceResult.Fail(message);
+        return result;
     }
+
+    /// <summary>Rolls back the current transaction and returns a failure mapped from <paramref name="error"/>.</summary>
+    private Task<ServiceResult> FailAsync(Error error, CancellationToken ct) => FailAsync(ServiceResult.FromError(error), ct);
 
     /// <summary>
     /// Reverts <paramref name="toRevert"/>'s asset impact and applies <paramref name="toApply"/>'s asset impact.

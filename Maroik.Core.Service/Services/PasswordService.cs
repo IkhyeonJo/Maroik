@@ -12,6 +12,14 @@ public class PasswordService : IPasswordService
     private const int WorkFactor = 13; // BCrypt work factor
 
     /// <summary>
+    /// A valid BCrypt hash of an unguessable random value, computed once per process. Used only by
+    /// <see cref="VerifyDummy"/> to spend the same CPU as a real verification on the
+    /// "account not found" path, so login timing does not reveal whether an email exists.
+    /// </summary>
+    private static readonly string DummyHash =
+        BCrypt.Net.BCrypt.HashPassword("maroik-timing-equalizer-" + Guid.NewGuid().ToString("N"), WorkFactor);
+
+    /// <summary>
     /// Hashes the password using BCrypt.
     /// </summary>
     /// <param name="password">Original password</param>
@@ -40,5 +48,12 @@ public class PasswordService : IPasswordService
         {
             return false;
         }
+    }
+
+    /// <inheritdoc />
+    public bool VerifyDummy(string password)
+    {
+        _ = VerifyPassword(password, DummyHash);
+        return false;
     }
 }

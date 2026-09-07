@@ -115,104 +115,121 @@ public class CalendarService : ICalendarService
     public async Task<ServiceResult> EnsureCalendarSharedAsync(IEnumerable<long> calendarIds, CancellationToken ct = default)
     {
         List<long> ids = [.. calendarIds];
+        await _unitOfWork.BeginAsync(ct);
         try
         {
             // Single fetch of the whole table, reused for every ID instead of one full scan per calendar.
+            // The read + the inserts run in one transaction so two concurrent callers can't both pass
+            // the "not present" check for the same id and then race on the CalendarShared primary key.
             List<CalendarShared> shares = await _calendarSharedRepository.GetAllAsync(ct);
             HashSet<long> existingIds = [.. shares.Select(s => s.Id)];
 
             foreach (long id in ids.Where(id => !existingIds.Contains(id)))
                 await _calendarSharedRepository.CreateAsync(CalendarShared.CreatePrivate(id), ct);
 
+            await _unitOfWork.CommitAsync(ct);
             return ServiceResult.Ok();
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to ensure calendar shared records for calendars {CalendarIds}", string.Join(",", ids));
-            return ServiceResult.Fail("Input is invalid");
+            await _unitOfWork.RollbackAsync(ct);
+            return UnexpectedFailure;
         }
     }
 
     /// <inheritdoc />
-    public async Task<ServiceResult> CreateCalendarAsync(CalendarRequest request, CancellationToken ct = default)
+    public async Task<ServiceResult> CreateCalendarAsync(string accountEmail, CalendarRequest request, CancellationToken ct = default)
     {
+        await _unitOfWork.BeginAsync(ct);
         try
         {
-            List<Calendar> calendars = await _calendarRepository.GetByAccountEmailAsync(request.AccountEmail ?? "", ct);
+            List<Calendar> calendars = await _calendarRepository.GetByAccountEmailAsync(accountEmail, ct);
 
-            // Prevent duplicate calendar names for the same account.
+            // Prevent duplicate calendar names for the same account. The read + insert run in one
+            // transaction so two concurrent creates of the same name can't both pass this check.
             if (calendars.Any(c => c.Name == request.Name))
-                return ServiceResult.Fail("The calendar already exists.");
+                return await FailAsync(ServiceResult.Conflict("Calendar.NameExists", "The calendar already exists."), ct);
 
-            var calendarResult = Calendar.Create(request.AccountEmail, request.Name, request.Description, request.TimeZoneIanaId, request.HtmlColorCode);
+            var calendarResult = Calendar.Create(accountEmail, request.Name, request.Description, request.TimeZoneIanaId, request.HtmlColorCode);
             if (calendarResult.IsError)
-                return ServiceResult.Fail(calendarResult.FirstError.Description);
+                return await FailAsync(calendarResult.FirstError, ct);
 
             var calendar = calendarResult.Value;
             await _calendarRepository.CreateAsync(calendar, ct);
+            await _unitOfWork.CommitAsync(ct);
             return ServiceResult.Ok();
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Failed to create calendar {CalendarName} for account {AccountEmail}", request.Name, request.AccountEmail);
-            return ServiceResult.Fail("Input is invalid");
+            _logger.LogError(ex, "Failed to create calendar {CalendarName} for account {AccountEmail}", request.Name, accountEmail);
+            await _unitOfWork.RollbackAsync(ct);
+            return UnexpectedFailure;
         }
     }
 
     /// <inheritdoc />
-    public async Task<ServiceResult> UpdateCalendarAsync(CalendarRequest request, CancellationToken ct = default)
+    public async Task<ServiceResult> UpdateCalendarAsync(string accountEmail, CalendarRequest request, CancellationToken ct = default)
     {
+        await _unitOfWork.BeginAsync(ct);
         try
         {
-            List<Calendar> calendars = await _calendarRepository.GetByAccountEmailAsync(request.AccountEmail ?? "", ct);
+            List<Calendar> calendars = await _calendarRepository.GetByAccountEmailAsync(accountEmail, ct);
             Calendar? previous = calendars.FirstOrDefault(c => c.Id == request.Id);
             if (previous == null)
-                return ServiceResult.Fail("Input is invalid");
+                return await FailAsync(ServiceResult.NotFound("Calendar.NotFound", "The calendar could not be found."), ct);
 
             var updateResult = previous.Update(request.Name, request.Description, request.TimeZoneIanaId, request.HtmlColorCode);
             if (updateResult.IsError)
-                return ServiceResult.Fail(updateResult.FirstError.Description);
+                return await FailAsync(updateResult.FirstError, ct);
 
             await _calendarRepository.UpdateEntityAsync(previous, ct);
+            await _unitOfWork.CommitAsync(ct);
             return ServiceResult.Ok();
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Failed to update calendar {CalendarId}", request.Id);
-            return ServiceResult.Fail("Input is invalid");
+            _logger.LogError(ex, "Failed to update calendar {CalendarId} for account {AccountEmail}", request.Id, accountEmail);
+            await _unitOfWork.RollbackAsync(ct);
+            return UnexpectedFailure;
         }
     }
 
     /// <inheritdoc />
-    public async Task<ServiceResult> DeleteCalendarAsync(CalendarRequest request, CancellationToken ct = default)
+    public async Task<ServiceResult> DeleteCalendarAsync(string accountEmail, CalendarRequest request, CancellationToken ct = default)
     {
+        await _unitOfWork.BeginAsync(ct);
         try
         {
-            List<Calendar> calendars = await _calendarRepository.GetByAccountEmailAsync(request.AccountEmail ?? "", ct);
+            List<Calendar> calendars = await _calendarRepository.GetByAccountEmailAsync(accountEmail, ct);
             Calendar? existing = calendars.FirstOrDefault(c => c.Id == request.Id);
             if (existing == null)
-                return ServiceResult.Fail("Input is invalid");
+                return await FailAsync(ServiceResult.NotFound("Calendar.NotFound", "The calendar could not be found."), ct);
 
             await _calendarRepository.DeleteByIdAsync(existing.Id, ct);
+            await _unitOfWork.CommitAsync(ct);
             return ServiceResult.Ok();
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Failed to delete calendar {CalendarId}", request.Id);
-            return ServiceResult.Fail("Input is invalid");
+            _logger.LogError(ex, "Failed to delete calendar {CalendarId} for account {AccountEmail}", request.Id, accountEmail);
+            await _unitOfWork.RollbackAsync(ct);
+            return UnexpectedFailure;
         }
     }
 
     /// <inheritdoc />
-    public async Task<ServiceResult> EnsureDefaultCalendarAsync(CalendarRequest request, CancellationToken ct = default)
+    public async Task<ServiceResult> EnsureDefaultCalendarAsync(string accountEmail, CalendarRequest request, CancellationToken ct = default)
     {
+        await _unitOfWork.BeginAsync(ct);
         try
         {
-            List<Calendar> calendars = await _calendarRepository.GetByAccountEmailAsync(request.AccountEmail ?? "", ct);
+            List<Calendar> calendars = await _calendarRepository.GetByAccountEmailAsync(accountEmail, ct);
 
             // Create the default calendar only when the user has none yet (e.g., first login).
             if (calendars.Count != 0)
             {
+                await _unitOfWork.RollbackAsync(ct);
                 return ServiceResult.Ok();
             }
 
@@ -230,18 +247,20 @@ public class CalendarService : ICalendarService
                 timeZoneIanaId = "UTC";
             }
 
-            var calendarResult = Calendar.Create(request.AccountEmail, request.Name, request.Description, timeZoneIanaId, request.HtmlColorCode);
+            var calendarResult = Calendar.Create(accountEmail, request.Name, request.Description, timeZoneIanaId, request.HtmlColorCode);
             if (calendarResult.IsError)
-                return ServiceResult.Fail(calendarResult.FirstError.Description);
+                return await FailAsync(calendarResult.FirstError, ct);
 
             var calendar = calendarResult.Value;
             await _calendarRepository.CreateAsync(calendar, ct);
+            await _unitOfWork.CommitAsync(ct);
             return ServiceResult.Ok();
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Failed to ensure default calendar for account {AccountEmail}", request.AccountEmail);
-            return ServiceResult.Fail("Input is invalid");
+            _logger.LogError(ex, "Failed to ensure default calendar for account {AccountEmail}", accountEmail);
+            await _unitOfWork.RollbackAsync(ct);
+            return UnexpectedFailure;
         }
     }
 
@@ -487,27 +506,43 @@ public class CalendarService : ICalendarService
     /// <inheritdoc />
     public async Task<ServiceResult> DeleteCalendarEventAsync(long calendarEventId, string email, CancellationToken ct = default)
     {
+        await _unitOfWork.BeginAsync(ct);
         try
         {
             List<Calendar> calendars = await _calendarRepository.GetByAccountEmailAsync(email, ct);
             if (calendars.Count == 0)
-                return ServiceResult.Fail("No calendar exists");
+                return await FailAsync(ServiceResult.NotFound("Calendar.None", "No calendar exists."), ct);
 
             CalendarEvent? evt = await _calendarEventRepository.FindByIdAsync(calendarEventId, ct);
 
             // Ensure the event exists and belongs to one of the requesting user's calendars.
             if (evt == null || calendars.All(c => c.Id != evt.CalendarId))
-                return ServiceResult.Fail("Input is invalid");
+                return await FailAsync(ServiceResult.NotFound("CalendarEvent.NotFound", "The calendar event could not be found."), ct);
 
             await _calendarEventRepository.DeleteByIdAsync(evt.Id, ct);
+            await _unitOfWork.CommitAsync(ct);
             return ServiceResult.Ok();
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to delete calendar event {EventId} for account {AccountEmail}", calendarEventId, email);
-            return ServiceResult.Fail("Input is invalid");
+            await _unitOfWork.RollbackAsync(ct);
+            return UnexpectedFailure;
         }
     }
+
+    private static ServiceResult UnexpectedFailure => ServiceResult.Failure(
+        "Calendar.Unexpected", "The operation could not be completed. Please try again.");
+
+    /// <summary>Rolls back the current transaction and returns <paramref name="result"/>.</summary>
+    private async Task<ServiceResult> FailAsync(ServiceResult result, CancellationToken ct)
+    {
+        await _unitOfWork.RollbackAsync(ct);
+        return result;
+    }
+
+    /// <summary>Rolls back the current transaction and returns a failure mapped from <paramref name="error"/>.</summary>
+    private Task<ServiceResult> FailAsync(ErrorOr.Error error, CancellationToken ct) => FailAsync(ServiceResult.FromError(error), ct);
 
     /// <summary>
     /// Builds the remote storage path for a calendar event attachment.

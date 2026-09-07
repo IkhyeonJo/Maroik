@@ -41,14 +41,18 @@ public interface ICalendarService
     /// </summary>
     Task<ServiceResult> EnsureCalendarSharedAsync(IEnumerable<long> calendarIds, CancellationToken ct = default);
 
-    /// <summary>Creates a new calendar for the requesting user.</summary>
-    Task<ServiceResult> CreateCalendarAsync(CalendarRequest request, CancellationToken ct = default);
+    /// <summary>
+    /// Creates a new calendar owned by <paramref name="accountEmail"/>. The owner is taken as an
+    /// explicit argument (from the authenticated session), never from the request body, so a
+    /// form-bound value cannot make one account create a calendar under another's identity.
+    /// </summary>
+    Task<ServiceResult> CreateCalendarAsync(string accountEmail, CalendarRequest request, CancellationToken ct = default);
 
-    /// <summary>Updates an existing calendar's metadata.</summary>
-    Task<ServiceResult> UpdateCalendarAsync(CalendarRequest request, CancellationToken ct = default);
+    /// <summary>Updates an existing calendar owned by <paramref name="accountEmail"/>.</summary>
+    Task<ServiceResult> UpdateCalendarAsync(string accountEmail, CalendarRequest request, CancellationToken ct = default);
 
-    /// <summary>Deletes a calendar and all its events.</summary>
-    Task<ServiceResult> DeleteCalendarAsync(CalendarRequest request, CancellationToken ct = default);
+    /// <summary>Deletes a calendar owned by <paramref name="accountEmail"/> and all its events.</summary>
+    Task<ServiceResult> DeleteCalendarAsync(string accountEmail, CalendarRequest request, CancellationToken ct = default);
 
     /// <summary>
     /// Replaces the set of other-user calendars that the account subscribes to
@@ -62,8 +66,8 @@ public interface ICalendarService
     /// </summary>
     Task<ServiceResult> UpdateCalendarSharedAsync(string email, IEnumerable<CalendarSharedRequest> requests, CancellationToken ct = default);
 
-    /// <summary>Creates a default calendar for a new account if one does not already exist.</summary>
-    Task<ServiceResult> EnsureDefaultCalendarAsync(CalendarRequest request, CancellationToken ct = default);
+    /// <summary>Creates a default calendar for <paramref name="accountEmail"/> if one does not already exist.</summary>
+    Task<ServiceResult> EnsureDefaultCalendarAsync(string accountEmail, CalendarRequest request, CancellationToken ct = default);
 
     /// <summary>Creates a new calendar event with optional reminders and an optional file attachment.</summary>
     Task<ServiceResult> CreateCalendarEventAsync(CalendarEventRequest request, string email, string roleIndex, List<CalendarReminderDto> reminders, AttachedFileDto? attachedFile, CancellationToken ct = default);
