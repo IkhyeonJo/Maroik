@@ -54,9 +54,10 @@ public abstract class GenericRepository<TDomain, TEntity>(ApplicationDbContext c
     public async Task UpdateEntityAsync(TDomain domain, CancellationToken ct = default)
     {
         var newEntity = ToEntity(domain);
-        // The context's query tracking is disabled globally, so a freshly-mapped entity is always
-        // Detached. Look up the primary key reflectively (works for both simple and composite keys)
-        // to re-find the row via Set.FindAsync, which returns a tracked instance we can then overwrite.
+        // ToEntity always builds a brand-new instance that this context has never seen, so it starts
+        // out Detached regardless of the context's tracking mode. Look up the primary key reflectively
+        // (works for both simple and composite keys) to re-find the row via Set.FindAsync, which
+        // returns a tracked instance we can then overwrite.
         var pk = Context.Model.FindEntityType(typeof(TEntity))!.FindPrimaryKey()!.Properties;
         var keyValues = pk.Select(p => p.PropertyInfo!.GetValue(newEntity)).ToArray();
         var existing = await Set.FindAsync(keyValues, ct);
@@ -67,8 +68,8 @@ public abstract class GenericRepository<TDomain, TEntity>(ApplicationDbContext c
         var entry = Context.Entry(existing);
         if (entry.State == EntityState.Detached) entry.State = EntityState.Unchanged;
         // Copy all scalar values from the mapped domain object onto the tracked entity, then mark
-        // the whole entry Modified (rather than relying on AutoDetectChanges, which is disabled) so
-        // SaveChanges issues an UPDATE for every column.
+        // the whole entry Modified so SaveChanges issues an UPDATE for every column regardless of
+        // which individual values actually changed.
         entry.CurrentValues.SetValues(newEntity);
         entry.State = EntityState.Modified;
         _ = await Context.SaveChangesAsync(ct);
@@ -109,13 +110,14 @@ public abstract class GenericRepository<TDomain, TEntity>(ApplicationDbContext c
         Expression<Func<TEntity, bool>> predicate,
         CancellationToken ct = default)
     {
-        // Fetch the matching rows once (untracked, since the context defaults to no-tracking
-        // for queries). Set.Remove requires a tracked entity. If this context already has a
-        // tracked instance for a given row (e.g. it was just added/queried earlier in the same
-        // unit of work), that instance is removed directly — attaching the freshly-fetched
-        // no-tracking copy instead would conflict with it (same key, two instances). Otherwise
-        // the fetched row is attached in memory (no DB round trip) before being removed. Both
-        // paths avoid the DB round trip that a per-row Set.FindAsync would incur.
+        // Fetch the matching rows once, explicitly AsNoTracking so this lookup never disturbs
+        // entities already tracked in the current unit of work. Set.Remove requires a tracked
+        // entity. If this context already has a tracked instance for a given row (e.g. it was
+        // just added/queried earlier in the same unit of work), that instance is removed directly
+        // — attaching the freshly-fetched no-tracking copy instead would conflict with it (same
+        // key, two instances). Otherwise the fetched row is attached in memory (no DB round trip)
+        // before being removed. Both paths avoid the DB round trip that a per-row Set.FindAsync
+        // would incur.
         var toRemove = await Set.AsNoTracking().Where(predicate).ToListAsync(ct);
         var pk = Context.Model.FindEntityType(typeof(TEntity))!.FindPrimaryKey()!.Properties;
 
