@@ -58,7 +58,7 @@ public sealed class CalendarRepositoryTests(DatabaseFixture database) : Reposito
         // Prefix with the token so the pair sorts adjacently regardless of seed names.
         await SeedAsync(MakeCalendar(alice, Token + "-Work"), MakeCalendar(alice, Token + "-Personal"));
 
-        List<string?> mine = (await Sut.GetAllOrderedByNameAsync(TestContext.Current.CancellationToken))
+        List<string> mine = (await Sut.GetAllOrderedByNameAsync(TestContext.Current.CancellationToken))
             .Where(c => c.AccountEmail.Value == alice)
             .Select(c => c.Name)
             .ToList();
