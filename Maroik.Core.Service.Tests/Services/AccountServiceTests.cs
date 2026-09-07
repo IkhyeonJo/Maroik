@@ -31,6 +31,8 @@ public class AccountServiceTests
     private readonly IOptions<ServerSetting> _settings =
         Options.Create(new ServerSetting { MaxLoginAttempt = 5, DomainName = "https://example.com" });
 
+    private static readonly EmailTemplate _emailTemplate = new() { Subject = "subject", Title = "title", Content0 = "c0", Content1 = "c1" };
+
     private AccountService CreateSut() => new(
         _accountRepo.Object,
         _passwordService.Object,
@@ -253,7 +255,7 @@ public class AccountServiceTests
             RegistrationToken = GuidToken.Generate()
         };
 
-        RegisterResult result = await sut.RegisterAsync(request, "subject", "title", "c0", "c1", TestContext.Current.CancellationToken);
+        RegisterResult result = await sut.RegisterAsync(request, _emailTemplate, TestContext.Current.CancellationToken);
 
         Assert.True(result.Success);
         Assert.True(result.ShowResendEmail);
@@ -282,7 +284,7 @@ public class AccountServiceTests
             RegistrationToken = GuidToken.Generate()
         };
 
-        await sut.RegisterAsync(request, "subject", "title", "c0", "c1", TestContext.Current.CancellationToken);
+        await sut.RegisterAsync(request, _emailTemplate, TestContext.Current.CancellationToken);
 
         _emailPublisher.Verify(p => p.PublishAsync(
             It.Is<SendEmailMessage>(m => m.CorrelationId == activity.Id),
@@ -308,7 +310,7 @@ public class AccountServiceTests
             RegistrationToken = GuidToken.Generate()
         };
 
-        RegisterResult result = await sut.RegisterAsync(request, "subject", "title", "c0", "c1", TestContext.Current.CancellationToken);
+        RegisterResult result = await sut.RegisterAsync(request, _emailTemplate, TestContext.Current.CancellationToken);
 
         Assert.False(result.Success);
     }
@@ -332,7 +334,7 @@ public class AccountServiceTests
             RegistrationToken = GuidToken.Generate()
         };
 
-        RegisterResult result = await sut.RegisterAsync(request, "subject", "title", "c0", "c1", TestContext.Current.CancellationToken);
+        RegisterResult result = await sut.RegisterAsync(request, _emailTemplate, TestContext.Current.CancellationToken);
 
         Assert.False(result.Success);
         Assert.Contains("TakenNick", result.ErrorKey);
@@ -362,7 +364,7 @@ public class AccountServiceTests
             RegistrationToken = GuidToken.Generate()
         };
 
-        RegisterResult result = await sut.RegisterAsync(request, "subject", "title", "c0", "c1", TestContext.Current.CancellationToken);
+        RegisterResult result = await sut.RegisterAsync(request, _emailTemplate, TestContext.Current.CancellationToken);
 
         Assert.False(result.Success);
         Assert.Contains("raced@example.com", result.ErrorKey);
@@ -382,7 +384,7 @@ public class AccountServiceTests
         var sut = CreateSut();
 
         var request = new AccountRequest { Email = existing.Email.Value, HashedPassword = "pw" };
-        RegisterResult result = await sut.RegisterAsync(request, "subject", "title", "c0", "c1", TestContext.Current.CancellationToken);
+        RegisterResult result = await sut.RegisterAsync(request, _emailTemplate, TestContext.Current.CancellationToken);
 
         Assert.True(result.Success);
         Assert.True(result.ShowResendEmail);
@@ -398,7 +400,7 @@ public class AccountServiceTests
         var sut = CreateSut();
 
         var request = new AccountRequest { Email = existing.Email.Value, HashedPassword = "pw" };
-        RegisterResult result = await sut.RegisterAsync(request, "subject", "title", "c0", "c1", TestContext.Current.CancellationToken);
+        RegisterResult result = await sut.RegisterAsync(request, _emailTemplate, TestContext.Current.CancellationToken);
 
         Assert.False(result.Success);
         Assert.Contains("already", result.ErrorKey, StringComparison.OrdinalIgnoreCase);
@@ -495,7 +497,7 @@ public class AccountServiceTests
         _accountRepo.Setup(r => r.FindByEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync((Account?)null);
         var sut = CreateSut();
 
-        bool result = await sut.ForgotPasswordAsync("ghost@example.com", "s", "t", "c0", "c1", TestContext.Current.CancellationToken);
+        bool result = await sut.ForgotPasswordAsync("ghost@example.com", _emailTemplate, TestContext.Current.CancellationToken);
 
         Assert.True(result);
         _emailPublisher.Verify(p => p.PublishAsync(It.IsAny<SendEmailMessage>(), It.IsAny<CancellationToken>()), Times.Never);
@@ -509,7 +511,7 @@ public class AccountServiceTests
         _accountRepo.Setup(r => r.FindByEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(account);
         var sut = CreateSut();
 
-        bool result = await sut.ForgotPasswordAsync(account.Email.Value, "s", "t", "c0", "c1", TestContext.Current.CancellationToken);
+        bool result = await sut.ForgotPasswordAsync(account.Email.Value, _emailTemplate, TestContext.Current.CancellationToken);
 
         Assert.True(result);
         _emailPublisher.Verify(p => p.PublishAsync(It.IsAny<SendEmailMessage>(), It.IsAny<CancellationToken>()), Times.Never);
@@ -526,7 +528,7 @@ public class AccountServiceTests
         SetupMailSuccess();
         var sut = CreateSut();
 
-        bool result = await sut.ForgotPasswordAsync(account.Email.Value, "s", "t", "c0", "c1", TestContext.Current.CancellationToken);
+        bool result = await sut.ForgotPasswordAsync(account.Email.Value, _emailTemplate, TestContext.Current.CancellationToken);
 
         Assert.True(result);
         _accountRepo.Verify(r => r.UpdateEntityAsync(
@@ -545,7 +547,7 @@ public class AccountServiceTests
         SetupMailSuccess();
         var sut = CreateSut();
 
-        bool result = await sut.ForgotPasswordAsync(account.Email.Value, "s", "t", "c0", "c1", TestContext.Current.CancellationToken);
+        bool result = await sut.ForgotPasswordAsync(account.Email.Value, _emailTemplate, TestContext.Current.CancellationToken);
 
         Assert.True(result);
         _accountRepo.Verify(r => r.UpdateEntityAsync(

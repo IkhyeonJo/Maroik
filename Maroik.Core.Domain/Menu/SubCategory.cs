@@ -4,7 +4,7 @@ using Maroik.Core.Domain.Primitives;
 namespace Maroik.Core.Domain.Menu;
 
 /// <summary>Sidebar dropdown sub-menu item belonging to a <see cref="Category"/>.</summary>
-public sealed class SubCategory : Entity<long>
+public sealed class SubCategory : AggregateRoot<long>
 {
     /// <summary>ID of the parent category.</summary>
     public long CategoryId { get; private set; }
@@ -64,5 +64,23 @@ public sealed class SubCategory : Entity<long>
             return Error.Validation("SubCategory.NameEmpty", "Sub-category name cannot be empty.");
 
         return new SubCategory(id, categoryId, name, displayName, iconPath, action, role, order);
+    }
+
+    /// <summary>Updates this sub-category's fields after validating the new name.</summary>
+    public ErrorOr<Success> Update(
+        long categoryId, string? name, string? displayName,
+        string? iconPath, string? action, string? role, long order)
+    {
+        if (string.IsNullOrWhiteSpace(name))
+            return Error.Validation("SubCategory.NameEmpty", "Sub-category name cannot be empty.");
+
+        CategoryId = categoryId;
+        Name = name;
+        DisplayName = displayName;
+        IconPath = iconPath;
+        Action = action;
+        Role = role;
+        Order = order;
+        return Result.Success;
     }
 }

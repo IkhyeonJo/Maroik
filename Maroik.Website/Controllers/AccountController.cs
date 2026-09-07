@@ -134,10 +134,7 @@ public class AccountController : Controller
                 return View();
             }
 
-            string emailSubject = _localizer["Maroik Email Confirmation"].Value;
-            string emailTitle = _localizer["Welcome to Maroik"].Value;
-            string emailContent0 = _localizer["Click the link below to verify your Email"].Value;
-            string emailContent1 = _localizer["If this link does not work, please copy & paste this link to your Internet URL"].Value;
+            var emailTemplate = _localizer.ToConfirmationEmailTemplate();
 
             var newAccount = new AccountRequest
             {
@@ -159,7 +156,7 @@ public class AccountController : Controller
                 Deleted = false
             };
 
-            var result = await _accountService.RegisterAsync(newAccount, emailSubject, emailTitle, emailContent0, emailContent1, ct);
+            var result = await _accountService.RegisterAsync(newAccount, emailTemplate, ct);
 
             if (!result.Success)
             {
@@ -178,12 +175,9 @@ public class AccountController : Controller
 
             if (!ModelState.IsValid) return RedirectToAction("Register", "Account");
 
-            string emailSubject = _localizer["Maroik Email Confirmation"].Value;
-            string emailTitle = _localizer["Welcome to Maroik"].Value;
-            string emailContent0 = _localizer["Click the link below to verify your Email"].Value;
-            string emailContent1 = _localizer["If this link does not work, please copy & paste this link to your Internet URL"].Value;
+            var emailTemplate = _localizer.ToConfirmationEmailTemplate();
 
-            var result = await _accountService.ResendConfirmationEmailAsync(loginInputViewModel.Email!, emailSubject, emailTitle, emailContent0, emailContent1, ct);
+            var result = await _accountService.ResendConfirmationEmailAsync(loginInputViewModel.Email!, emailTemplate, ct);
 
             if (!result.Success)
             {
@@ -232,12 +226,9 @@ public class AccountController : Controller
 
         if (!ModelState.IsValid) return RedirectToAction("ForgotPassword", "Account");
 
-        string emailSubject = _localizer["Maroik Reset Password"].Value;
-        string emailTitle = _localizer["Welcome to Maroik"].Value;
-        string emailContent0 = _localizer["Click the link below to reset your password"].Value;
-        string emailContent1 = _localizer["If this link does not work, please copy & paste this link to your Internet URL"].Value;
+        var emailTemplate = _localizer.ToResetPasswordEmailTemplate();
 
-        await _accountService.ForgotPasswordAsync(loginInputViewModel.Email!, emailSubject, emailTitle, emailContent0, emailContent1, ct);
+        await _accountService.ForgotPasswordAsync(loginInputViewModel.Email!, emailTemplate, ct);
 
         ViewBag.MailSent = true;
         return View();

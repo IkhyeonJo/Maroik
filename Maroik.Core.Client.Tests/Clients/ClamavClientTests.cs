@@ -2,6 +2,7 @@ using System.Net;
 using System.Net.Sockets;
 using System.Text;
 using Maroik.Core.Client.Clients;
+using Microsoft.Extensions.Logging.Abstractions;
 
 namespace Maroik.Core.Client.Tests.Clients;
 
@@ -13,7 +14,7 @@ namespace Maroik.Core.Client.Tests.Clients;
 /// </summary>
 public class ClamavClientTests
 {
-    private readonly ClamavClient _sut = new();
+    private readonly ClamavClient _sut = new(NullLogger<ClamavClient>.Instance);
 
     // -- ScanWithClamavAsync --------------------------------------------------
 

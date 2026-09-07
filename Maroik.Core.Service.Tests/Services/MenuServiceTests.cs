@@ -182,6 +182,24 @@ public class MenuServiceTests
         Assert.False(result.Success);
     }
 
+    /// <summary>
+    /// Regression test: an update request with an empty name must be rejected, not silently
+    /// persisted. Update used to rebuild the entity via Category.Reconstitute (which skips
+    /// validation and is meant only for trusted repository data), so an empty name from the
+    /// request would previously pass straight through.
+    /// </summary>
+    [Fact]
+    public async Task UpdateCategoryAsync_ReturnsFail_WhenNameEmpty()
+    {
+        _categoryRepo.Setup(r => r.GetAllAsync(It.IsAny<CancellationToken>())).ReturnsAsync([MakeCategory(id: 1)]);
+        var sut = CreateSut();
+
+        ServiceResult result = await sut.UpdateCategoryAsync(new CategoryRequest { Id = 1, Name = "" }, TestContext.Current.CancellationToken);
+
+        Assert.False(result.Success);
+        _categoryRepo.Verify(r => r.UpdateEntityAsync(It.IsAny<Category>(), It.IsAny<CancellationToken>()), Times.Never);
+    }
+
     // -- DeleteCategoryAsync --------------------------------------------------
 
     /// <summary>Verifies that <c>DeleteCategoryAsync</c> returns success when repository succeeds.</summary>
@@ -273,6 +291,22 @@ public class MenuServiceTests
         ServiceResult result = await sut.UpdateSubCategoryAsync(new SubCategoryRequest { Id = 1 }, TestContext.Current.CancellationToken);
 
         Assert.False(result.Success);
+    }
+
+    /// <summary>
+    /// Regression test: an update request with an empty name must be rejected, not silently
+    /// persisted (see the matching Category regression test for why).
+    /// </summary>
+    [Fact]
+    public async Task UpdateSubCategoryAsync_ReturnsFail_WhenNameEmpty()
+    {
+        _subCategoryRepo.Setup(r => r.GetAllAsync(It.IsAny<CancellationToken>())).ReturnsAsync([MakeSubCategory(id: 1)]);
+        var sut = CreateSut();
+
+        ServiceResult result = await sut.UpdateSubCategoryAsync(new SubCategoryRequest { Id = 1, Name = "" }, TestContext.Current.CancellationToken);
+
+        Assert.False(result.Success);
+        _subCategoryRepo.Verify(r => r.UpdateEntityAsync(It.IsAny<SubCategory>(), It.IsAny<CancellationToken>()), Times.Never);
     }
 
     // -- DeleteSubCategoryAsync -----------------------------------------------

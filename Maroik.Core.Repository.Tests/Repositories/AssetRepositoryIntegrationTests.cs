@@ -250,7 +250,7 @@ public class AssetRepositoryIntegrationTests : IAsyncLifetime
             // Hold the row long enough that both tasks overlap inside the read-modify-write window.
             await Task.Delay(300, TestContext.Current.CancellationToken);
 
-            asset.Withdraw(amount, asset.Balance.Currency);
+            asset.Withdraw(asset.Balance.WithAmount(amount));
             await repo.UpdateEntityAsync(asset, TestContext.Current.CancellationToken);
             await tx.CommitAsync(TestContext.Current.CancellationToken);
         }

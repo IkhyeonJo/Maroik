@@ -382,41 +382,19 @@ public class CalendarService : ICalendarService
 
             if (attachedFile != null)
             {
-                string filePath = BuildEventFilePath(roleIndex, eventId, attachedFile.FileName);
-                bool uploaded = await _fileClient.UploadAsync(attachedFile.Bytes, attachedFile.ContentType, filePath, _settings.Value.FileStorageBaseUrl ?? "", ct);
-                if (!uploaded)
+                var attachmentResult = await SaveEventAttachmentAsync(roleIndex, eventId, attachedFile, ct);
+                if (!attachmentResult.Success)
                 {
                     await _unitOfWork.RollbackAsync(ct);
-                    return ServiceResult.Fail("Input is invalid");
+                    return attachmentResult;
                 }
-                var fileResult = CalendarEventAttachedFile.Create(eventId, attachedFile.Size,
-                    Path.GetFileNameWithoutExtension(attachedFile.FileName),
-                    Path.GetExtension(attachedFile.FileName),
-                    filePath.Replace('\\', '/')); // Normalize path separators for URL use.
-                if (fileResult.IsError)
-                {
-                    await _unitOfWork.RollbackAsync(ct);
-                    return ServiceResult.Fail(fileResult.FirstError.Description);
-                }
-                await _calendarEventAttachedFileRepository.CreateAsync(fileResult.Value, ct);
             }
 
-            // Create all reminder entries for the event within the same transaction. Any invalid
-            // reminder (empty method, wrong lead-time field count, or an out-of-range lead time —
-            // see CalendarEventReminder.Create / CalendarReminderPolicy) fails the whole save and
-            // rolls back, so the caller can surface the problem instead of a reminder being
-            // silently dropped.
-            foreach (var reminderDto in reminders)
+            var remindersResult = await CreateEventRemindersAsync(eventId, reminders, ct);
+            if (!remindersResult.Success)
             {
-                var reminderResult = CalendarEventReminder.Create(eventId, reminderDto.Method,
-                    reminderDto.MinutesBeforeEvent, reminderDto.HoursBeforeEvent, reminderDto.DaysBeforeEvent, reminderDto.WeeksBeforeEvent,
-                    reminderDto.TimesBeforeEvent.HasValue ? TimeOnly.FromTimeSpan(reminderDto.TimesBeforeEvent.Value) : null);
-                if (reminderResult.IsError)
-                {
-                    await _unitOfWork.RollbackAsync(ct);
-                    return ServiceResult.Fail(reminderResult.FirstError.Description);
-                }
-                await _calendarEventReminderRepository.CreateAsync(reminderResult.Value, ct);
+                await _unitOfWork.RollbackAsync(ct);
+                return remindersResult;
             }
 
             await _unitOfWork.CommitAsync(ct);
@@ -478,42 +456,21 @@ public class CalendarService : ICalendarService
             await _calendarEventAttachedFileRepository.DeleteByCalendarEventIdAsync(existing.Id, ct);
             if (attachedFile != null)
             {
-                string filePath = BuildEventFilePath(roleIndex, existing.Id, attachedFile.FileName);
-                bool uploaded = await _fileClient.UploadAsync(attachedFile.Bytes, attachedFile.ContentType, filePath, _settings.Value.FileStorageBaseUrl ?? "", ct);
-                if (!uploaded)
+                var attachmentResult = await SaveEventAttachmentAsync(roleIndex, existing.Id, attachedFile, ct);
+                if (!attachmentResult.Success)
                 {
                     await _unitOfWork.RollbackAsync(ct);
-                    return ServiceResult.Fail("Input is invalid");
+                    return attachmentResult;
                 }
-                var fileResult = CalendarEventAttachedFile.Create(existing.Id, attachedFile.Size,
-                    Path.GetFileNameWithoutExtension(attachedFile.FileName),
-                    Path.GetExtension(attachedFile.FileName),
-                    filePath.Replace('\\', '/'));
-                if (fileResult.IsError)
-                {
-                    await _unitOfWork.RollbackAsync(ct);
-                    return ServiceResult.Fail(fileResult.FirstError.Description);
-                }
-                await _calendarEventAttachedFileRepository.CreateAsync(fileResult.Value, ct);
             }
 
-            // Replace reminders: delete all existing then re-create from the updated list. Any
-            // invalid reminder (empty method, wrong lead-time field count, or an out-of-range lead
-            // time — see CalendarEventReminder.Create / CalendarReminderPolicy) fails the whole
-            // save and rolls back (restoring the deleted reminders), so the caller can surface the
-            // problem instead of a reminder being silently dropped.
+            // Replace reminders: delete all existing then re-create from the updated list.
             await _calendarEventReminderRepository.DeleteByCalendarEventIdAsync(existing.Id, ct);
-            foreach (var reminderDto in reminders)
+            var remindersResult = await CreateEventRemindersAsync(existing.Id, reminders, ct);
+            if (!remindersResult.Success)
             {
-                var reminderResult = CalendarEventReminder.Create(existing.Id, reminderDto.Method,
-                    reminderDto.MinutesBeforeEvent, reminderDto.HoursBeforeEvent, reminderDto.DaysBeforeEvent, reminderDto.WeeksBeforeEvent,
-                    reminderDto.TimesBeforeEvent.HasValue ? TimeOnly.FromTimeSpan(reminderDto.TimesBeforeEvent.Value) : null);
-                if (reminderResult.IsError)
-                {
-                    await _unitOfWork.RollbackAsync(ct);
-                    return ServiceResult.Fail(reminderResult.FirstError.Description);
-                }
-                await _calendarEventReminderRepository.CreateAsync(reminderResult.Value, ct);
+                await _unitOfWork.RollbackAsync(ct);
+                return remindersResult;
             }
 
             await _unitOfWork.CommitAsync(ct);
@@ -561,6 +518,51 @@ public class CalendarService : ICalendarService
         string guid = Guid.NewGuid().ToString().ToUpper();
         string ext = Path.GetExtension(fileName);
         return Path.Combine("upload", "Calendar", roleIndex, "calendarEventAttachedFiles", $"{eventId}", $"{guid}{ext}");
+    }
+
+    /// <summary>
+    /// Uploads <paramref name="attachedFile"/> to file storage and creates its
+    /// <see cref="CalendarEventAttachedFile"/> record for <paramref name="calendarEventId"/>.
+    /// Used by both create and update (the caller is responsible for deleting any prior
+    /// attachment record before calling this on update).
+    /// </summary>
+    private async Task<ServiceResult> SaveEventAttachmentAsync(string roleIndex, long calendarEventId, AttachedFileDto attachedFile, CancellationToken ct)
+    {
+        string filePath = BuildEventFilePath(roleIndex, calendarEventId, attachedFile.FileName);
+        bool uploaded = await _fileClient.UploadAsync(attachedFile.Bytes, attachedFile.ContentType, filePath, _settings.Value.FileStorageBaseUrl ?? "", ct);
+        if (!uploaded)
+            return ServiceResult.Fail("Input is invalid");
+
+        var fileResult = CalendarEventAttachedFile.Create(calendarEventId, attachedFile.Size,
+            Path.GetFileNameWithoutExtension(attachedFile.FileName),
+            Path.GetExtension(attachedFile.FileName),
+            filePath.Replace('\\', '/')); // Normalize path separators for URL use.
+        if (fileResult.IsError)
+            return ServiceResult.Fail(fileResult.FirstError.Description);
+
+        await _calendarEventAttachedFileRepository.CreateAsync(fileResult.Value, ct);
+        return ServiceResult.Ok();
+    }
+
+    /// <summary>
+    /// Creates a <see cref="CalendarEventReminder"/> for each entry in <paramref name="reminders"/> for
+    /// <paramref name="calendarEventId"/>. Any invalid reminder (empty method, wrong lead-time field
+    /// count, or an out-of-range lead time — see CalendarEventReminder.Create / CalendarReminderPolicy)
+    /// stops immediately so the caller can roll back instead of silently dropping a reminder.
+    /// </summary>
+    private async Task<ServiceResult> CreateEventRemindersAsync(long calendarEventId, List<CalendarReminderDto> reminders, CancellationToken ct)
+    {
+        foreach (var reminderDto in reminders)
+        {
+            var reminderResult = CalendarEventReminder.Create(calendarEventId, reminderDto.Method,
+                reminderDto.MinutesBeforeEvent, reminderDto.HoursBeforeEvent, reminderDto.DaysBeforeEvent, reminderDto.WeeksBeforeEvent,
+                reminderDto.TimesBeforeEvent.HasValue ? TimeOnly.FromTimeSpan(reminderDto.TimesBeforeEvent.Value) : null);
+            if (reminderResult.IsError)
+                return ServiceResult.Fail(reminderResult.FirstError.Description);
+
+            await _calendarEventReminderRepository.CreateAsync(reminderResult.Value, ct);
+        }
+        return ServiceResult.Ok();
     }
 
     /// <inheritdoc />

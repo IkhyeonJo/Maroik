@@ -12,4 +12,10 @@ public class FileStorageSetting
 {
     /// <summary>Maximum allowed upload file size in bytes. Defaults to 10 MB when not configured.</summary>
     public long MaxAttachedFileSizeBytes { get; set; } = 10L * 1024 * 1024;
+
+    /// <summary>Host name or IP address of the ClamAV antivirus daemon. Bound from the "Clamav" section.</summary>
+    public string? ClamavHost { get; set; }
+
+    /// <summary>TCP port of the ClamAV daemon (default: 3310). Bound from the "Clamav" section.</summary>
+    public int ClamavPort { get; set; }
 }

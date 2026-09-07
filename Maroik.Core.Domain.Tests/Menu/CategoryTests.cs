@@ -63,4 +63,40 @@ public class CategoryTests
 
         Assert.Null(category.Name);
     }
+
+    // -- Update -----------------------------------------------------------------
+
+    /// <summary>Update replaces all fields, when valid.</summary>
+    [Fact]
+    public void Update_ReplacesAllFields_WhenValid()
+    {
+        var category = Category.Reconstitute(1, "Old", "Old", "/old.svg", "Old", "Old", "User", 1);
+
+        var result = category.Update("New", "New", "/new.svg", "New", "New", "Admin", 2);
+
+        Assert.False(result.IsError);
+        Assert.Equal("New", category.Name);
+        Assert.Equal("New", category.DisplayName);
+        Assert.Equal("/new.svg", category.IconPath);
+        Assert.Equal("New", category.Controller);
+        Assert.Equal("New", category.Action);
+        Assert.Equal("Admin", category.Role);
+        Assert.Equal(2, category.Order);
+    }
+
+    /// <summary>Update returns error and leaves fields unchanged, when name empty.</summary>
+    [Theory]
+    [InlineData(null)]
+    [InlineData("")]
+    [InlineData("   ")]
+    public void Update_ReturnsError_WhenNameEmpty(string? name)
+    {
+        var category = Category.Reconstitute(1, "Old", "Old", "/old.svg", "Old", "Old", "User", 1);
+
+        var result = category.Update(name, "New", "/new.svg", "New", "New", "Admin", 2);
+
+        Assert.True(result.IsError);
+        Assert.Equal("Category.NameEmpty", result.FirstError.Code);
+        Assert.Equal("Old", category.Name);
+    }
 }

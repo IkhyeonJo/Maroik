@@ -116,25 +116,23 @@ public sealed class Asset : AggregateRoot<(string ProductName, string AccountEma
     // ------------------------------------------------------------------------
 
     /// <summary>Adds the given amount to the balance (e.g. on income deposit).</summary>
-    public ErrorOr<Success> Deposit(decimal amount, string currency)
+    public ErrorOr<Success> Deposit(Money amount)
     {
-        Money money = Money.FromTrustedSource(amount, currency);
-        if (money.Currency != Balance.Currency)
+        if (amount.Currency != Balance.Currency)
             return Error.Validation("Asset.CurrencyMismatch", "Cannot deposit a different currency into this asset.");
 
-        Balance = Balance.Add(money);
+        Balance = Balance.Add(amount);
         Updated = DateTime.UtcNow;
         return Result.Success;
     }
 
     /// <summary>Subtracts the given amount from the balance (e.g. on expenditure payment).</summary>
-    public ErrorOr<Success> Withdraw(decimal amount, string currency)
+    public ErrorOr<Success> Withdraw(Money amount)
     {
-        Money money = Money.FromTrustedSource(amount, currency);
-        if (money.Currency != Balance.Currency)
+        if (amount.Currency != Balance.Currency)
             return Error.Validation("Asset.CurrencyMismatch", "Cannot withdraw a different currency from this asset.");
 
-        Balance = Balance.Subtract(money);
+        Balance = Balance.Subtract(amount);
         Updated = DateTime.UtcNow;
         return Result.Success;
     }

@@ -2,8 +2,10 @@ using Maroik.Core.Domain.Account;
 using Maroik.Core.Domain.Finance;
 using Maroik.Core.Contract.Dtos;
 using Maroik.Core.Contract.Interfaces;
+using Maroik.Core.Contract.Misc.Settings;
 using Maroik.Core.Service.Services;
 using Microsoft.Extensions.Logging.Abstractions;
+using Microsoft.Extensions.Options;
 using Moq;
 
 namespace Maroik.Core.Service.Tests.Services;
@@ -23,13 +25,14 @@ public class DashboardServiceTests
     private readonly Mock<IFixedIncomeRepository> _fixedIncomeRepo = new();
     private readonly Mock<IFixedExpenditureRepository> _fixedExpenditureRepo = new();
 
-    private DashboardService CreateSut() => new(
+    private DashboardService CreateSut(ServerSetting? settings = null) => new(
         _accountRepo.Object,
         _assetRepo.Object,
         _incomeRepo.Object,
         _expenditureRepo.Object,
         _fixedIncomeRepo.Object,
         _fixedExpenditureRepo.Object,
+        Options.Create(settings ?? new ServerSetting()),
         NullLogger<DashboardService>.Instance);
 
     // -- Helpers --------------------------------------------------------------
@@ -100,6 +103,55 @@ public class DashboardServiceTests
 
         Assert.Equal(2025, summary.SelectedYear);
         Assert.Equal(3, summary.SelectedMonth);
+    }
+
+    /// <summary>
+    /// Verifies that the configured demo account always sees the configured fixed period,
+    /// regardless of the year/month it was actually requested with.
+    /// </summary>
+    [Fact]
+    public async Task GetSummaryAsync_OverridesYearAndMonth_ForConfiguredDemoAccount()
+    {
+        const string email = "demo@maroik.com";
+        var account = MakeAccount(unit: null);
+        _accountRepo.Setup(r => r.FindByEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(account);
+        _assetRepo.Setup(r => r.GetByAccountEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync([]);
+        _incomeRepo.Setup(r => r.GetFirstByAccountEmailOrderedByCreatedAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync((Income?)null);
+        _expenditureRepo.Setup(r => r.GetFirstByAccountEmailOrderedByCreatedAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync((Expenditure?)null);
+        var sut = CreateSut(new ServerSetting
+        {
+            DemoAccountEmail = email,
+            DemoDashboardYear = "2025",
+            DemoDashboardMonth = "6"
+        });
+
+        DashboardDto summary = await sut.GetSummaryAsync(email, "1999", "1", "UTC", TestContext.Current.CancellationToken);
+
+        Assert.Equal(2025, summary.SelectedYear);
+        Assert.Equal(6, summary.SelectedMonth);
+    }
+
+    /// <summary>Verifies that a non-demo account is unaffected by a configured demo account override.</summary>
+    [Fact]
+    public async Task GetSummaryAsync_DoesNotOverrideYearAndMonth_ForNonDemoAccount()
+    {
+        const string email = "user@example.com";
+        var account = MakeAccount(unit: null);
+        _accountRepo.Setup(r => r.FindByEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(account);
+        _assetRepo.Setup(r => r.GetByAccountEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync([]);
+        _incomeRepo.Setup(r => r.GetFirstByAccountEmailOrderedByCreatedAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync((Income?)null);
+        _expenditureRepo.Setup(r => r.GetFirstByAccountEmailOrderedByCreatedAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync((Expenditure?)null);
+        var sut = CreateSut(new ServerSetting
+        {
+            DemoAccountEmail = "demo@maroik.com",
+            DemoDashboardYear = "2025",
+            DemoDashboardMonth = "6"
+        });
+
+        DashboardDto summary = await sut.GetSummaryAsync(email, "2020", "4", "UTC", TestContext.Current.CancellationToken);
+
+        Assert.Equal(2020, summary.SelectedYear);
+        Assert.Equal(4, summary.SelectedMonth);
     }
 
     /// <summary>Verifies that <c>GetSummaryAsync</c> uses current year and month when invalid input given.</summary>

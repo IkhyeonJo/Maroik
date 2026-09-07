@@ -63,4 +63,41 @@ public class SubCategoryTests
 
         Assert.Null(subCategory.Name);
     }
+
+    // -- Update -----------------------------------------------------------------
+
+    /// <summary>Update replaces all fields, when valid.</summary>
+    [Fact]
+    public void Update_ReplacesAllFields_WhenValid()
+    {
+        var subCategory = SubCategory.Reconstitute(1, 10, "Old", "Old", "/old.svg", "Old", "User", 1);
+
+        var result = subCategory.Update(20, "New", "New", "/new.svg", "New", "Admin", 2);
+
+        Assert.False(result.IsError);
+        Assert.Equal(20, subCategory.CategoryId);
+        Assert.Equal("New", subCategory.Name);
+        Assert.Equal("New", subCategory.DisplayName);
+        Assert.Equal("/new.svg", subCategory.IconPath);
+        Assert.Equal("New", subCategory.Action);
+        Assert.Equal("Admin", subCategory.Role);
+        Assert.Equal(2, subCategory.Order);
+    }
+
+    /// <summary>Update returns error and leaves fields unchanged, when name empty.</summary>
+    [Theory]
+    [InlineData(null)]
+    [InlineData("")]
+    [InlineData("   ")]
+    public void Update_ReturnsError_WhenNameEmpty(string? name)
+    {
+        var subCategory = SubCategory.Reconstitute(1, 10, "Old", "Old", "/old.svg", "Old", "User", 1);
+
+        var result = subCategory.Update(20, name, "New", "/new.svg", "New", "Admin", 2);
+
+        Assert.True(result.IsError);
+        Assert.Equal("SubCategory.NameEmpty", result.FirstError.Code);
+        Assert.Equal("Old", subCategory.Name);
+        Assert.Equal(10, subCategory.CategoryId);
+    }
 }

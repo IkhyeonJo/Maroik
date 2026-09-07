@@ -76,8 +76,8 @@ public static class CalendarViewModelMapper
                 item.EndDateTimeZoneIanaId = endTzId;
                 item.DisplayStartDate = localStart.ToString("yyyy-MM-dd HH:mm");
                 item.DisplayEndDate = localEnd.ToString("yyyy-MM-dd HH:mm");
-                item.DisplayStartDateTimeZone = GetStandardName(startTzId);
-                item.DisplayEndDateTimeZone = GetStandardName(endTzId);
+                item.DisplayStartDateTimeZone = startTzId.ToTimeZoneStandardName();
+                item.DisplayEndDateTimeZone = endTzId.ToTimeZoneStandardName();
 
                 if (!forGrid)
                 {
@@ -158,8 +158,8 @@ public static class CalendarViewModelMapper
             }
             else
             {
-                req.StartDate = ParseDateTimeToUtc(vm.StartDate!, vm.StartDateTimeZoneIanaId!);
-                req.EndDate = ParseDateTimeToUtc(vm.EndDate!, vm.EndDateTimeZoneIanaId!);
+                req.StartDate = ParseLocalDateTime(vm.StartDate!).ConvertToUtcByTimeZoneIanaId(vm.StartDateTimeZoneIanaId!);
+                req.EndDate = ParseLocalDateTime(vm.EndDate!).ConvertToUtcByTimeZoneIanaId(vm.EndDateTimeZoneIanaId!);
                 req.StartDateTimeZoneIanaId = vm.StartDateTimeZoneIanaId;
                 req.EndDateTimeZoneIanaId = vm.EndDateTimeZoneIanaId;
             }
@@ -201,46 +201,14 @@ public static class CalendarViewModelMapper
         }
     }
 
-    /// <summary>
-    /// Returns the <see cref="TimeZoneInfo.StandardName"/> for an IANA timezone ID by scanning
-    /// system timezones (cross-platform Windows/IANA ID mapping included).
-    /// Falls back to the raw IANA ID string if no match is found.
-    /// </summary>
-    private static string GetStandardName(string ianaId)
-    {
-        foreach (TimeZoneInfo tz in TimeZoneInfo.GetSystemTimeZones())
-        {
-            string tzIanaId = tz.HasIanaId
-                ? tz.Id
-                : (TimeZoneInfo.TryConvertWindowsIdToIanaId(tz.Id, out string? id) ? id : "");
-
-            if (!string.IsNullOrEmpty(tzIanaId) && tzIanaId == ianaId)
-                return tz.StandardName;
-        }
-        return ianaId;
-    }
-
-    /// <summary>
-    /// Parses a "yyyy-MM-dd HH:mm" local datetime string and converts it to UTC
-    /// using the supplied IANA timezone ID.
-    /// Returns the parsed local value unchanged if the timezone is not found.
-    /// </summary>
-    private static DateTime ParseDateTimeToUtc(string dateTimeStr, string ianaId)
+    /// <summary>Parses a "yyyy-MM-dd HH:mm" string into an unspecified-kind local <see cref="DateTime"/>.</summary>
+    private static DateTime ParseLocalDateTime(string dateTimeStr)
     {
         string[] parts = dateTimeStr.Split(' ');
         string[] dateParts = parts[0].Split('-');
         string[] timeParts = parts[1].Split(':');
-        DateTime local = new(
+        return new DateTime(
             int.Parse(dateParts[0]), int.Parse(dateParts[1]), int.Parse(dateParts[2]),
             int.Parse(timeParts[0]), int.Parse(timeParts[1]), 0, DateTimeKind.Unspecified);
-
-        foreach (TimeZoneInfo tz in TimeZoneInfo.GetSystemTimeZones())
-        {
-            string tzId = tz.HasIanaId ? tz.Id :
-                (TimeZoneInfo.TryConvertWindowsIdToIanaId(tz.Id, out string? id) ? id : "");
-            if (!string.IsNullOrEmpty(tzId) && tzId == ianaId)
-                return TimeZoneInfo.ConvertTime(local, tz, TimeZoneInfo.Utc);
-        }
-        return local;
     }
 }

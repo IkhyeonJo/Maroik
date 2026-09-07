@@ -4,7 +4,7 @@ using Maroik.Core.Domain.Primitives;
 namespace Maroik.Core.Domain.Menu;
 
 /// <summary>Top-level sidebar navigation menu item.</summary>
-public sealed class Category : Entity<long>
+public sealed class Category : AggregateRoot<long>
 {
     /// <summary>Internal code name (e.g. "Dashboard").</summary>
     public string? Name { get; private set; }
@@ -64,5 +64,23 @@ public sealed class Category : Entity<long>
             return Error.Validation("Category.NameEmpty", "Category name cannot be empty.");
 
         return new Category(id, name, displayName, iconPath, controller, action, role, order);
+    }
+
+    /// <summary>Updates this category's fields after validating the new name.</summary>
+    public ErrorOr<Success> Update(
+        string? name, string? displayName, string? iconPath,
+        string? controller, string? action, string? role, long order)
+    {
+        if (string.IsNullOrWhiteSpace(name))
+            return Error.Validation("Category.NameEmpty", "Category name cannot be empty.");
+
+        Name = name;
+        DisplayName = displayName;
+        IconPath = iconPath;
+        Controller = controller;
+        Action = action;
+        Role = role;
+        Order = order;
+        return Result.Success;
     }
 }

@@ -138,7 +138,7 @@ public class AccountService : IAccountService
     }
 
     /// <inheritdoc />
-    public async Task<RegisterResult> RegisterAsync(AccountRequest newAccount, string emailSubject, string emailTitle, string emailContent0, string emailContent1, CancellationToken ct = default)
+    public async Task<RegisterResult> RegisterAsync(AccountRequest newAccount, EmailTemplate emailTemplate, CancellationToken ct = default)
     {
         Account? existing = await FindByEmailAsync(newAccount.Email ?? "", ct);
 
@@ -188,7 +188,7 @@ public class AccountService : IAccountService
             // The account was just created with UserCreatedVerifyEmail already set above, so a
             // successful send should not overwrite it with VerifyEmail.
             return await SendConfirmationEmailAndUpdateStatusAsync(
-                account, emailSubject, emailTitle, emailContent0, emailContent1,
+                account, emailTemplate,
                 setVerifyEmailMessageOnSuccess: false, repeat: false, ct);
         }
 
@@ -198,7 +198,7 @@ public class AccountService : IAccountService
             existing.RegenerateRegistrationTokenIfEmpty(GuidToken.Generate());
 
             return await SendConfirmationEmailAndUpdateStatusAsync(
-                existing, emailSubject, emailTitle, emailContent0, emailContent1,
+                existing, emailTemplate,
                 setVerifyEmailMessageOnSuccess: true, repeat: false, ct);
         }
 
@@ -219,7 +219,7 @@ public class AccountService : IAccountService
     }
 
     /// <inheritdoc />
-    public async Task<RegisterResult> ResendConfirmationEmailAsync(string email, string emailSubject, string emailTitle, string emailContent0, string emailContent1, CancellationToken ct = default)
+    public async Task<RegisterResult> ResendConfirmationEmailAsync(string email, EmailTemplate emailTemplate, CancellationToken ct = default)
     {
         Account? account = await FindByEmailAsync(email, ct);
         if (account == null)
@@ -232,7 +232,7 @@ public class AccountService : IAccountService
 
             // repeat: true signals the UI that this is a resend, not the first confirmation.
             return await SendConfirmationEmailAndUpdateStatusAsync(
-                account, emailSubject, emailTitle, emailContent0, emailContent1,
+                account, emailTemplate,
                 setVerifyEmailMessageOnSuccess: true, repeat: true, ct);
         }
 
@@ -308,7 +308,7 @@ public class AccountService : IAccountService
     }
 
     /// <inheritdoc />
-    public async Task<bool> ForgotPasswordAsync(string email, string emailSubject, string emailTitle, string emailContent0, string emailContent1, CancellationToken ct = default)
+    public async Task<bool> ForgotPasswordAsync(string email, EmailTemplate emailTemplate, CancellationToken ct = default)
     {
         Account? account = await FindByEmailAsync(email, ct);
 
@@ -320,8 +320,8 @@ public class AccountService : IAccountService
 
         try
         {
-            string body = _mailClient.GetMailResetPasswordBody(_rsa.Encrypt(resetPasswordToken), emailTitle, emailContent0, emailContent1, _settings.Value.DomainName ?? "");
-            bool published = await PublishMailAsync(account.Email.Value, emailSubject, body, ct);
+            string body = _mailClient.GetMailResetPasswordBody(_rsa.Encrypt(resetPasswordToken), emailTemplate.Title, emailTemplate.Content0, emailTemplate.Content1, _settings.Value.DomainName ?? "");
+            bool published = await PublishMailAsync(account.Email.Value, emailTemplate.Subject, body, ct);
 
             if (!published)
             {
@@ -421,11 +421,11 @@ public class AccountService : IAccountService
     /// sequence three times with the same failure modes to keep in sync.
     /// </summary>
     private async Task<RegisterResult> SendConfirmationEmailAndUpdateStatusAsync(
-        Account account, string emailSubject, string emailTitle, string emailContent0, string emailContent1,
+        Account account, EmailTemplate emailTemplate,
         bool setVerifyEmailMessageOnSuccess, bool repeat, CancellationToken ct)
     {
-        string body = _mailClient.GetMailConfirmationBody(_rsa.Encrypt(account.RegistrationToken!), emailTitle, emailContent0, emailContent1, _settings.Value.DomainName ?? "");
-        bool published = await PublishMailAsync(account.Email.Value, emailSubject, body, ct);
+        string body = _mailClient.GetMailConfirmationBody(_rsa.Encrypt(account.RegistrationToken!), emailTemplate.Title, emailTemplate.Content0, emailTemplate.Content1, _settings.Value.DomainName ?? "");
+        bool published = await PublishMailAsync(account.Email.Value, emailTemplate.Subject, body, ct);
 
         if (!published)
         {

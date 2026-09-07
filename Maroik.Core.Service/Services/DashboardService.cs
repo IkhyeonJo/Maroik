@@ -2,9 +2,11 @@ using Maroik.Core.Domain.Account;
 using Maroik.Core.Domain.Finance;
 using Maroik.Core.Contract.Dtos;
 using Maroik.Core.Contract.Misc.Extensions;
+using Maroik.Core.Contract.Misc.Settings;
 using Maroik.Core.Contract.Interfaces;
 using Maroik.Core.Service.Mappers;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 
 namespace Maroik.Core.Service.Services;
 
@@ -23,6 +25,7 @@ public class DashboardService : IDashboardService
     private readonly IExpenditureRepository _expenditureRepository;
     private readonly IFixedIncomeRepository _fixedIncomeRepository;
     private readonly IFixedExpenditureRepository _fixedExpenditureRepository;
+    private readonly IOptions<ServerSetting> _settings;
     private readonly ILogger<DashboardService> _logger;
 
     /// <summary>Initializes a new instance of <see cref="DashboardService"/> with the supplied dependencies.</summary>
@@ -33,6 +36,7 @@ public class DashboardService : IDashboardService
         IExpenditureRepository expenditureRepository,
         IFixedIncomeRepository fixedIncomeRepository,
         IFixedExpenditureRepository fixedExpenditureRepository,
+        IOptions<ServerSetting> settings,
         ILogger<DashboardService> logger)
     {
         _accountRepository = accountRepository;
@@ -41,12 +45,23 @@ public class DashboardService : IDashboardService
         _expenditureRepository = expenditureRepository;
         _fixedIncomeRepository = fixedIncomeRepository;
         _fixedExpenditureRepository = fixedExpenditureRepository;
+        _settings = settings;
         _logger = logger;
     }
 
     /// <inheritdoc />
     public async Task<DashboardDto> GetSummaryAsync(string accountEmail, string year, string month, string timeZoneId, CancellationToken ct = default)
     {
+        // The public demo account always shows a fixed, pre-seeded period (configured via
+        // ServerSetting.DemoAccountEmail/DemoDashboardYear/DemoDashboardMonth) so visitors see
+        // consistent sample data regardless of when they browse the demo.
+        ServerSetting settings = _settings.Value;
+        if (!string.IsNullOrEmpty(settings.DemoAccountEmail) && accountEmail == settings.DemoAccountEmail)
+        {
+            year = settings.DemoDashboardYear ?? year;
+            month = settings.DemoDashboardMonth ?? month;
+        }
+
         // Normalize year/month
         DateTime accountToday = DateTime.UtcNow.ConvertTimeByTimeZoneIanaId(timeZoneId);
         if (!int.TryParse(year, out int yearInt)) yearInt = accountToday.Year;
@@ -242,9 +257,9 @@ public class DashboardService : IDashboardService
                 if (temp.Length >= 2)
                     memUsageLimit = temp[1].Trim() + " / " + temp[0].Trim();
             }
-            catch
+            catch (Exception ex)
             {
-                // ignored
+                _logger.LogWarning(ex, "Failed to parse host memory usage/limit from resource log");
             }
         }
 
@@ -257,9 +272,9 @@ public class DashboardService : IDashboardService
                 if (temp.Length >= 2)
                     diskUsageLimit = temp[1].Trim() + " / " + temp[0].Trim();
             }
-            catch
+            catch (Exception ex)
             {
-                // ignored
+                _logger.LogWarning(ex, "Failed to parse host disk usage/limit from resource log");
             }
         }
 
@@ -287,7 +302,7 @@ public class DashboardService : IDashboardService
     /// Returns an empty string when a marker is missing or any parsing error occurs, instead of throwing,
     /// so a malformed resource log never breaks the whole summary.
     /// </summary>
-    private static string ExtractSection(string input, string startMarker, string? endMarker = null)
+    private string ExtractSection(string input, string startMarker, string? endMarker = null)
     {
         try
         {
@@ -298,6 +313,10 @@ public class DashboardService : IDashboardService
             int endIndex = endMarker != null ? input.IndexOf(endMarker, startIndex, StringComparison.Ordinal) : input.Length;
             return endIndex < 0 ? "" : input.Substring(startIndex, endIndex - startIndex).Trim();
         }
-        catch { return ""; }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Failed to extract section {StartMarker} from resource log", startMarker);
+            return "";
+        }
     }
 }

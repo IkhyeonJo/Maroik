@@ -202,7 +202,6 @@ public class AuthorizationFilter : ActionFilterAttribute
                         return;
                     }
 
-                    //context.Result = new UnauthorizedObjectResult("User is unauthorized");
                     context.Result = new RedirectResult("/Dashboard/AnonymousIndex");
                     return;
                 }
@@ -222,41 +221,23 @@ public class AuthorizationFilter : ActionFilterAttribute
 
                     switch (loggedInAccount!.Role)
                     {
-                        // If logged-in user has Admin role
+                        // Admin and User share identical resolution logic — only which
+                        // category/sub-category list is searched differs by role.
                         case Role.Admin:
-                            {
-                                var adminMatch = adminCategories.ResolveActiveMenuItem(
-                                    adminSubCategories, currentControllerName, currentActionName);
-
-                                if (adminMatch.IsMatch)
-                                {
-                                    await next(); // Do Action!!
-                                    return;
-                                }
-
-                                //context.Result = new UnauthorizedObjectResult("User is unauthorized"); // If not found after all checks, it doesn't exist in DB
-                                context.Result = new RedirectResult("/Dashboard/AnonymousIndex");
-                                return;
-                                //Extract all DB Categories & SubCategories, compare with current accessed Controller & Action,
-                                //proceed if match or output UnauthorizedObjectResult (Cancel Action!!)
-                            }
-                        // If logged-in user has User role
                         case Role.User:
                             {
-                                var userMatch = userCategories.ResolveActiveMenuItem(
-                                    userSubCategories, currentControllerName, currentActionName);
+                                bool isAdmin = loggedInAccount.Role == Role.Admin;
+                                var match = (isAdmin ? adminCategories : userCategories).ResolveActiveMenuItem(
+                                    isAdmin ? adminSubCategories : userSubCategories, currentControllerName, currentActionName);
 
-                                if (userMatch.IsMatch)
+                                if (match.IsMatch)
                                 {
                                     await next(); // Do Action!!
                                     return;
                                 }
 
-                                //context.Result = new UnauthorizedObjectResult("User is unauthorized"); // If not found after all checks, it doesn't exist in DB
                                 context.Result = new RedirectResult("/Dashboard/AnonymousIndex");
                                 return;
-                                //Extract all DB Categories & SubCategories, compare with current accessed Controller & Action,
-                                //proceed if match or output UnauthorizedObjectResult (Cancel Action!!)
                             }
                     }
 
@@ -316,7 +297,6 @@ public class AuthorizationFilter : ActionFilterAttribute
                         return;
                     }
 
-                    //context.Result = new UnauthorizedObjectResult("Access is not allowed"); // If not found after all checks, execution is not allowed!
                     context.Result = new RedirectResult("/Dashboard/AnonymousIndex");
                     return;
                 }
@@ -327,48 +307,19 @@ public class AuthorizationFilter : ActionFilterAttribute
 
                     switch (loggedInAccount!.Role)
                     {
-                        // If logged-in user has Admin role
+                        // Admin and User share identical resolution logic — only which category
+                        // list is searched for a controller with a matching RequiredHttpPostAccess
+                        // role differs.
                         case Role.Admin:
-                            {
-                                if ((from adminCategory in adminCategories ?? []
-                                     from existingHttpPostMethod in existingControllers
-                                         .Where(type =>
-                                             type.Name ==
-                                             $"{adminCategory.Controller}Controller") // When permission is Admin, only registered Category's Controller name is accessible
-                                         .SelectMany(type => type.GetMethods()) // Get methods
-                                         .Where(method =>
-                                             method.IsPublic && !method.IsDefined(typeof(NonActionAttribute)) &&
-                                             method.IsDefined(typeof(HttpPostAttribute)) &&
-                                             method.IsDefined(typeof(ValidateAntiForgeryTokenAttribute)) &&
-                                             method.IsDefined(typeof(RequiredHttpPostAccessAttribute)))
-                                     where
-                                         currentControllerName ==
-                                         existingHttpPostMethod.DeclaringType?.Name.Replace("Controller", "") &&
-                                         currentActionName == existingHttpPostMethod.Name
-                                     from customAttribute in existingHttpPostMethod.CustomAttributes
-                                     where customAttribute.AttributeType.FullName ==
-                                           typeof(RequiredHttpPostAccessAttribute).ToString()
-                                     from namedArgument in customAttribute.NamedArguments
-                                     select namedArgument).Any(namedArgument =>
-                                     (namedArgument.MemberName == nameof(RequiredHttpPostAccessAttribute.Role)) &&
-                                     ((namedArgument.TypedValue.Value as string) == loggedInAccount.Role)))
-                                {
-                                    await next(); // Do Action!!
-                                    return;
-                                }
-
-                                //context.Result = new UnauthorizedObjectResult("Access is not allowed"); // If not found after all checks, execution is not allowed!
-                                context.Result = new RedirectResult("/Dashboard/AnonymousIndex");
-                                return;
-                            }
-                        // If logged-in user has User role
                         case Role.User:
                             {
-                                if ((from userCategory in userCategories ?? []
+                                var categories = loggedInAccount.Role == Role.Admin ? adminCategories : userCategories;
+
+                                if ((from category in categories ?? []
                                      from existingHttpPostMethod in existingControllers
                                          .Where(type =>
                                              type.Name ==
-                                             $"{userCategory.Controller}Controller") // When permission is User, only registered Category's Controller name is accessible
+                                             $"{category.Controller}Controller") // Only registered category's Controller name is accessible
                                          .SelectMany(type => type.GetMethods()) // Get methods
                                          .Where(method =>
                                              method.IsPublic && !method.IsDefined(typeof(NonActionAttribute)) &&
@@ -391,7 +342,6 @@ public class AuthorizationFilter : ActionFilterAttribute
                                     return;
                                 }
 
-                                //context.Result = new UnauthorizedObjectResult("Access is not allowed"); // If not found after all checks, execution is not allowed!
                                 context.Result = new RedirectResult("/Dashboard/AnonymousIndex");
                                 return;
                             }
@@ -401,8 +351,6 @@ public class AuthorizationFilter : ActionFilterAttribute
                 }
             // (Reject all methods like PATCH / DELETE etc.)
             default:
-                //await next(); // Do Action!!
-                //context.Result = new UnauthorizedObjectResult("Access is not allowed [Only Allowed GET/POST Method]");
                 context.Result = new RedirectResult("/Dashboard/AnonymousIndex");
                 return;
         }

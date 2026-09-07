@@ -43,5 +43,46 @@ public static class DateTimeExtensions
             viewerRole is Role.Admin or Role.User
                 ? value.ConvertTimeByTimeZoneIanaId(timeZoneIanaId).ToString(CultureInfo.InvariantCulture)
                 : value.ToString("yyyy-MM-ddTHH:mm:ssZ");
+
+        /// <summary>
+        /// Converts a local (<see cref="DateTimeKind.Unspecified"/>) <see cref="DateTime"/> value to UTC,
+        /// treating it as wall-clock time in the time zone specified by the IANA ID.
+        /// Returns the original value unchanged if the time-zone ID is invalid or the conversion fails.
+        /// The inverse of <see cref="ConvertTimeByTimeZoneIanaId"/>.
+        /// </summary>
+        /// <param name="timeZoneIanaId">A valid IANA time-zone ID (e.g. "Asia/Seoul", "America/New_York").</param>
+        public DateTime ConvertToUtcByTimeZoneIanaId(string timeZoneIanaId)
+        {
+            try
+            {
+                TimeZoneInfo sourceZone = TimeZoneInfo.FindSystemTimeZoneById(timeZoneIanaId);
+                return TimeZoneInfo.ConvertTimeToUtc(DateTime.SpecifyKind(value, DateTimeKind.Unspecified), sourceZone);
+            }
+            catch
+            {
+                // Return the original value if the IANA ID is unrecognized or conversion fails
+                return value;
+            }
+        }
+    }
+
+    extension(string timeZoneIanaId)
+    {
+        /// <summary>
+        /// Returns the <see cref="TimeZoneInfo.StandardName"/> for an IANA time-zone ID
+        /// (e.g. "Asia/Seoul" → "Korea Standard Time").
+        /// Falls back to the raw IANA ID string if the ID is invalid or unrecognized.
+        /// </summary>
+        public string ToTimeZoneStandardName()
+        {
+            try
+            {
+                return TimeZoneInfo.FindSystemTimeZoneById(timeZoneIanaId).StandardName;
+            }
+            catch
+            {
+                return timeZoneIanaId;
+            }
+        }
     }
 }

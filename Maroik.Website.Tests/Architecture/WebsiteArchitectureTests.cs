@@ -1,5 +1,6 @@
 using System.Reflection;
 using System.Runtime.CompilerServices;
+using System.Text.RegularExpressions;
 using Maroik.Core.Contract.Interfaces;
 using Maroik.Website.Filters;
 using Microsoft.AspNetCore.Mvc;
@@ -207,6 +208,45 @@ public class WebsiteArchitectureTests
             "Controllers must not declare non-public helper methods — move shared logic into a " +
             "service or a Website/Extensions method instead.\n" +
             "Violations: " + string.Join("; ", violations));
+    }
+
+    /// <summary>
+    /// Controllers must be declared as a single, non-partial class — a large controller must not be
+    /// split across multiple files via the <c>partial</c> keyword. This can't be checked the way the
+    /// other rules in this file are: the C# compiler merges every partial declaration into one type
+    /// before it's ever emitted to the assembly, so by the time NetArchTest/reflection can see the
+    /// type, "was this partial, and across how many files" information no longer exists. This test
+    /// scans the actual .cs source files instead of the compiled assembly for that reason.
+    /// </summary>
+    [Fact]
+    public void ControllerFiles_ShouldNot_BeDeclaredAsPartialClasses()
+    {
+        string controllersDirectory = Path.Combine(FindRepositoryRoot(), "Maroik.Website", "Controllers");
+
+        List<string> offendingFiles =
+        [
+            .. Directory.GetFiles(controllersDirectory, "*.cs", SearchOption.AllDirectories)
+                .Where(path => Regex.IsMatch(File.ReadAllText(path), @"\bpartial\s+class\s+\w*Controller\b"))
+        ];
+
+        Assert.True(
+            offendingFiles.Count == 0,
+            "A controller must be declared as a single, non-partial class — do not split a large " +
+            "controller across multiple files via 'partial'. Extract shared logic to a service or " +
+            "a Website/Extensions method instead, or split into separate controllers if the actions " +
+            "are genuinely independent.\n" +
+            "Offending files: " + string.Join(", ", offendingFiles));
+    }
+
+    /// <summary>Walks up from the test assembly's output directory to find the repository root (identified by Maroik.sln).</summary>
+    private static string FindRepositoryRoot()
+    {
+        var dir = new DirectoryInfo(AppContext.BaseDirectory);
+        while (dir != null && !File.Exists(Path.Combine(dir.FullName, "Maroik.sln")))
+            dir = dir.Parent;
+        if (dir == null)
+            throw new InvalidOperationException("Could not locate the repository root (Maroik.sln) from " + AppContext.BaseDirectory);
+        return dir.FullName;
     }
 
     /// <summary>

@@ -81,6 +81,9 @@ try
         cfg.ClamavHost = builder.Configuration.GetSection("Clamav")["Host"];
         cfg.ClamavPort = Convert.ToInt32(builder.Configuration.GetSection("Clamav")["Port"]);
         cfg.FileStorageBaseUrl = builder.Configuration.GetSection("FileStorage")["BaseUrl"];
+        cfg.DemoAccountEmail = section["DemoAccountEmail"];
+        cfg.DemoDashboardYear = section["DemoDashboardYear"];
+        cfg.DemoDashboardMonth = section["DemoDashboardMonth"];
     });
 
     #endregion

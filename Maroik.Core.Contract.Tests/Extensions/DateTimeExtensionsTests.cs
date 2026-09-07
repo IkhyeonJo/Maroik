@@ -118,4 +118,63 @@ public class DateTimeExtensionsTests
 
         Assert.Equal("2025-06-15T12:00:00Z", result);
     }
+
+    // -- ConvertToUtcByTimeZoneIanaId --------------------------------------------
+
+    /// <summary>Verifies that <c>ConvertToUtcByTimeZoneIanaId</c> converts local time to UTC for a valid IANA id.</summary>
+    [Fact]
+    public void ConvertToUtcByTimeZoneIanaId_ConvertsLocalToUtc_ForValidIanaId()
+    {
+        // 21:00 in Asia/Seoul (UTC+9) should be noon UTC
+        var localSeoul = new DateTime(2025, 6, 15, 21, 0, 0, DateTimeKind.Unspecified);
+
+        DateTime result = localSeoul.ConvertToUtcByTimeZoneIanaId("Asia/Seoul");
+
+        Assert.Equal(12, result.Hour);
+        Assert.Equal(0, result.Minute);
+    }
+
+    /// <summary>Verifies that <c>ConvertToUtcByTimeZoneIanaId</c> is the inverse of <c>ConvertTimeByTimeZoneIanaId</c>.</summary>
+    [Fact]
+    public void ConvertToUtcByTimeZoneIanaId_RoundTrips_WithConvertTimeByTimeZoneIanaId()
+    {
+        var utcNoon = new DateTime(2025, 6, 15, 12, 0, 0, DateTimeKind.Utc);
+
+        DateTime local = utcNoon.ConvertTimeByTimeZoneIanaId("America/New_York");
+        DateTime roundTripped = local.ConvertToUtcByTimeZoneIanaId("America/New_York");
+
+        Assert.Equal(utcNoon.Hour, roundTripped.Hour);
+        Assert.Equal(utcNoon.Minute, roundTripped.Minute);
+    }
+
+    /// <summary>Verifies that <c>ConvertToUtcByTimeZoneIanaId</c> returns original value for invalid iana id.</summary>
+    [Fact]
+    public void ConvertToUtcByTimeZoneIanaId_ReturnsOriginalValue_ForInvalidIanaId()
+    {
+        var original = new DateTime(2025, 1, 1, 10, 0, 0);
+
+        DateTime result = original.ConvertToUtcByTimeZoneIanaId("Invalid/Timezone/ID");
+
+        Assert.Equal(original, result);
+    }
+
+    // -- ToTimeZoneStandardName ---------------------------------------------------
+
+    /// <summary>Verifies that <c>ToTimeZoneStandardName</c> returns the standard display name for a valid IANA id.</summary>
+    [Fact]
+    public void ToTimeZoneStandardName_ReturnsStandardName_ForValidIanaId()
+    {
+        string result = "Asia/Seoul".ToTimeZoneStandardName();
+
+        Assert.Equal(TimeZoneInfo.FindSystemTimeZoneById("Asia/Seoul").StandardName, result);
+    }
+
+    /// <summary>Verifies that <c>ToTimeZoneStandardName</c> falls back to the raw id for an invalid IANA id.</summary>
+    [Fact]
+    public void ToTimeZoneStandardName_ReturnsRawId_ForInvalidIanaId()
+    {
+        string result = "Invalid/Timezone/ID".ToTimeZoneStandardName();
+
+        Assert.Equal("Invalid/Timezone/ID", result);
+    }
 }

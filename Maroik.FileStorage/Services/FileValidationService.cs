@@ -55,7 +55,7 @@ public class FileValidationService : IFileValidationService
         if (!HasValidMagicBytes(memStream, ext))
             return (false, "Invalid or unsupported file format.");
 
-        if (!await _clamavClient.ScanWithClamavAsync(memStream, "Maroik.Clamav", 3310))
+        if (!await _clamavClient.ScanWithClamavAsync(memStream, _settings.Value.ClamavHost ?? "", _settings.Value.ClamavPort))
             return (false, "File may be infected with a virus.");
 
         if (ext == ".zip" && IsZipEncrypted(memStream))

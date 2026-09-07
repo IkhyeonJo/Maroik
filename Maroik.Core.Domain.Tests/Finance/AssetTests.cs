@@ -84,7 +84,7 @@ public class AssetTests
     {
         var asset = ValidAsset(amount: 1000m);
 
-        asset.Deposit(500m, "KRW");
+        asset.Deposit(Money.Create(500m, "KRW").Value);
 
         Assert.Equal(1500m, asset.Balance.Amount);
     }
@@ -95,7 +95,7 @@ public class AssetTests
     {
         var asset = ValidAsset(amount: 1000m);
 
-        asset.Withdraw(300m, "KRW");
+        asset.Withdraw(Money.Create(300m, "KRW").Value);
 
         Assert.Equal(700m, asset.Balance.Amount);
     }
@@ -106,7 +106,7 @@ public class AssetTests
     {
         var asset = ValidAsset(amount: 1000m, currency: "KRW");
 
-        var result = asset.Deposit(500m, "USD");
+        var result = asset.Deposit(Money.Create(500m, "USD").Value);
 
         Assert.True(result.IsError);
         Assert.Equal("Asset.CurrencyMismatch", result.FirstError.Code);
@@ -119,7 +119,7 @@ public class AssetTests
     {
         var asset = ValidAsset(amount: 1000m, currency: "KRW");
 
-        var result = asset.Withdraw(300m, "USD");
+        var result = asset.Withdraw(Money.Create(300m, "USD").Value);
 
         Assert.True(result.IsError);
         Assert.Equal("Asset.CurrencyMismatch", result.FirstError.Code);

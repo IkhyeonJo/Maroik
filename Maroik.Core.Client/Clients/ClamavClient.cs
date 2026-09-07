@@ -1,6 +1,7 @@
 using System.Net;
 using System.Net.Sockets;
 using Maroik.Core.Contract.Interfaces;
+using Microsoft.Extensions.Logging;
 
 namespace Maroik.Core.Client.Clients;
 
@@ -8,7 +9,7 @@ namespace Maroik.Core.Client.Clients;
 /// Concrete implementation of <see cref="IClamavClient"/> that streams file data to a
 /// ClamAV antivirus daemon using the INSTREAM protocol over a raw TCP connection.
 /// </summary>
-public class ClamavClient : IClamavClient
+public class ClamavClient(ILogger<ClamavClient> logger) : IClamavClient
 {
     // Bounds the whole scan (connect + stream + result) so a stalled or overloaded ClamAV daemon
     // can't pin the calling request thread forever — callers such as FileValidationService don't
@@ -62,9 +63,12 @@ public class ClamavClient : IClamavClient
             // "OK" in the response means the file passed the virus scan
             return response.Contains("OK");
         }
-        catch
+        catch (Exception ex)
         {
-            // Treat any connection, protocol, or timeout error as a scan failure (fail-safe)
+            // Treat any connection, protocol, or timeout error as a scan failure (fail-safe), but
+            // log it so an outage of the ClamAV daemon itself is distinguishable from an actual
+            // virus detection instead of silently rejecting every upload with no trace.
+            logger.LogWarning(ex, "ClamAV scan failed against {ClamavHost}:{ClamavPort}", clamavHost, clamavPort);
             return false;
         }
     }

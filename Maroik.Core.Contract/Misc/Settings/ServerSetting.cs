@@ -77,4 +77,17 @@ public class ServerSetting
     /// Applies to attached files in Calendar events, Board posts, and Summernote image uploads.
     /// </summary>
     public long MaxAttachedFileSizeBytes { get; set; } = 10L * 1024 * 1024;
+
+    /// <summary>
+    /// Email of the public demo account, if one is configured for this deployment. When the
+    /// dashboard is requested for this account, <see cref="DemoDashboardYear"/>/<see cref="DemoDashboardMonth"/>
+    /// are shown instead of the requested period, so visitors always see the same pre-seeded sample data.
+    /// </summary>
+    public string? DemoAccountEmail { get; set; }
+
+    /// <summary>Fixed dashboard year shown to <see cref="DemoAccountEmail"/>.</summary>
+    public string? DemoDashboardYear { get; set; }
+
+    /// <summary>Fixed dashboard month shown to <see cref="DemoAccountEmail"/>.</summary>
+    public string? DemoDashboardMonth { get; set; }
 }

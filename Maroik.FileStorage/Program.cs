@@ -35,6 +35,16 @@ try
     // for why it shares its name with Maroik.Website's ServerSetting).
     builder.Services.Configure<FileStorageSetting>(builder.Configuration.GetSection("ServerSetting"));
 
+    // ClamAV daemon address lives in its own "Clamav" section (mirrors Maroik.Website's
+    // Program.cs binding of the same section into ServerSetting.ClamavHost/ClamavPort), so bind
+    // it separately here rather than nesting it under "ServerSetting".
+    builder.Services.Configure<FileStorageSetting>(cfg =>
+    {
+        var clamavSection = builder.Configuration.GetSection("Clamav");
+        cfg.ClamavHost = clamavSection["Host"];
+        cfg.ClamavPort = Convert.ToInt32(clamavSection["Port"]);
+    });
+
     // Register the ClamAV virus-scan client so FileController can inject it.
     builder.Services.AddScoped<IClamavClient, ClamavClient>();
     builder.Services.AddScoped<IFileValidationService, FileValidationService>();

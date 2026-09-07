@@ -20,16 +20,16 @@ public interface IAccountService
     Task<LoginResult> LoginAsync(string email, string password, CancellationToken ct = default);
 
     /// <summary>Creates a new account and sends a confirmation email. Returns a <see cref="RegisterResult"/> with status details.</summary>
-    Task<RegisterResult> RegisterAsync(AccountRequest newAccount, string emailSubject, string emailTitle, string emailContent0, string emailContent1, CancellationToken ct = default);
+    Task<RegisterResult> RegisterAsync(AccountRequest newAccount, EmailTemplate emailTemplate, CancellationToken ct = default);
 
     /// <summary>Re-sends the confirmation email to an unverified account.</summary>
-    Task<RegisterResult> ResendConfirmationEmailAsync(string email, string emailSubject, string emailTitle, string emailContent0, string emailContent1, CancellationToken ct = default);
+    Task<RegisterResult> ResendConfirmationEmailAsync(string email, EmailTemplate emailTemplate, CancellationToken ct = default);
 
     /// <summary>Activates an account after the user clicks the confirmation link in their email.</summary>
     Task<ConfirmEmailResult> ConfirmEmailAsync(string registrationToken, CancellationToken ct = default);
 
     /// <summary>Sends a password-reset email if the address belongs to a valid account.</summary>
-    Task<bool> ForgotPasswordAsync(string email, string emailSubject, string emailTitle, string emailContent0, string emailContent1, CancellationToken ct = default);
+    Task<bool> ForgotPasswordAsync(string email, EmailTemplate emailTemplate, CancellationToken ct = default);
 
     /// <summary>Checks whether the password-reset token is still valid before showing the reset form.</summary>
     Task<ResetPasswordValidationResult> ValidateResetPasswordTokenAsync(string resetPasswordToken, CancellationToken ct = default);

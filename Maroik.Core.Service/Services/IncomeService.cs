@@ -76,7 +76,7 @@ public class IncomeService : IIncomeService
             var income = incomeResult.Value;
             await _incomeRepository.CreateAsync(income, ct);
 
-            var depositResult = depositAsset.Deposit(income.Amount.Amount, currency);
+            var depositResult = depositAsset.Deposit(income.Amount);
             if (depositResult.IsError)
             {
                 await _unitOfWork.RollbackAsync(ct);
@@ -215,37 +215,15 @@ public class IncomeService : IIncomeService
     /// <summary>
     /// Reverts <paramref name="toRevert"/>'s asset impact and applies <paramref name="toApply"/>'s asset impact.
     /// Pass null for toApply when deleting.
-    /// Uses a dictionary to batch all asset fetches and avoid double-fetch issues.
-    /// Mirrors <c>ExpenditureService.AdjustAssetBalancesAsync</c>.
     /// </summary>
     private async Task<ErrorOr<Success>> AdjustAssetBalancesAsync(string accountEmail, IncomeSnapshot toRevert, IncomeSnapshot? toApply, CancellationToken ct = default)
     {
-        Dictionary<string, Asset> assets = await _assetBalance.GetAssetsOrdinalAsync(accountEmail,
-            [toRevert.DepositAssetName, toApply?.DepositAssetName], ct);
+        List<AssetBalanceAdjustment> adjustments = [new(toRevert.DepositAssetName, toRevert.Amount, IsDeposit: false)];
+        if (toApply.HasValue)
+            adjustments.Add(new(toApply.Value.DepositAssetName, toApply.Value.Amount, IsDeposit: true));
 
-        // A non-empty asset reference that fails to resolve (e.g. stale data left behind by an
-        // incomplete rename cascade) must abort the operation rather than silently skip the
-        // balance adjustment, which would otherwise leave the asset's balance permanently wrong.
-        if (!string.IsNullOrEmpty(toRevert.DepositAssetName))
-        {
-            if (!assets.TryGetValue(toRevert.DepositAssetName, out var ra))
-                return Error.NotFound("Income.AssetNotFound", "The asset referenced by this income could not be found.");
-            var result = ra.Withdraw(Math.Abs(toRevert.Amount), ra.Balance.Currency);
-            if (result.IsError) return result.Errors;
-        }
-
-        if (toApply.HasValue && !string.IsNullOrEmpty(toApply.Value.DepositAssetName))
-        {
-            if (!assets.TryGetValue(toApply.Value.DepositAssetName, out var aa))
-                return Error.NotFound("Income.AssetNotFound", "The asset referenced by this income could not be found.");
-            var result = aa.Deposit(Math.Abs(toApply.Value.Amount), aa.Balance.Currency);
-            if (result.IsError) return result.Errors;
-        }
-
-        foreach (var asset in assets.Values)
-            await _assetBalance.SaveAsync(asset, ct);
-
-        return Result.Success;
+        return await _assetBalance.ApplyAssetBalanceAdjustmentsAsync(
+            accountEmail, adjustments, "Income.AssetNotFound", "The asset referenced by this income could not be found.", ct);
     }
 
     /// <summary>

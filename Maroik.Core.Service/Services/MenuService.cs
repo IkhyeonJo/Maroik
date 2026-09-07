@@ -76,15 +76,15 @@ public class MenuService : IMenuService
     {
         try
         {
-            // GenericRepository.UpdateEntityAsync silently no-ops when the row doesn't exist
-            // (it looks the row up and returns early rather than throwing), so without this check
-            // an unknown ID would report "successfully updated" while changing nothing.
-            bool exists = (await _categoryRepository.GetAllAsync(ct)).Any(c => c.Id == request.Id);
-            if (!exists)
+            Category? category = (await _categoryRepository.GetAllAsync(ct)).FirstOrDefault(c => c.Id == request.Id);
+            if (category == null)
                 return ServiceResult.Fail("Input is invalid");
 
-            var category = Category.Reconstitute(request.Id, request.Name, request.DisplayName, request.IconPath,
+            var updateResult = category.Update(request.Name, request.DisplayName, request.IconPath,
                 request.Controller, request.Action, request.Role, request.Order);
+            if (updateResult.IsError)
+                return ServiceResult.Fail(updateResult.FirstError.Description);
+
             await _categoryRepository.UpdateEntityAsync(category, ct);
             return ServiceResult.Ok();
         }
@@ -137,14 +137,15 @@ public class MenuService : IMenuService
     {
         try
         {
-            // See UpdateCategoryAsync: without this check, an unknown ID would silently no-op
-            // yet still report success.
-            bool exists = (await _subCategoryRepository.GetAllAsync(ct)).Any(s => s.Id == request.Id);
-            if (!exists)
+            SubCategory? subCategory = (await _subCategoryRepository.GetAllAsync(ct)).FirstOrDefault(s => s.Id == request.Id);
+            if (subCategory == null)
                 return ServiceResult.Fail("Input is invalid");
 
-            var subCategory = SubCategory.Reconstitute(request.Id, request.CategoryId, request.Name,
+            var updateResult = subCategory.Update(request.CategoryId, request.Name,
                 request.DisplayName, request.IconPath, request.Action, request.Role, request.Order);
+            if (updateResult.IsError)
+                return ServiceResult.Fail(updateResult.FirstError.Description);
+
             await _subCategoryRepository.UpdateEntityAsync(subCategory, ct);
             return ServiceResult.Ok();
         }
