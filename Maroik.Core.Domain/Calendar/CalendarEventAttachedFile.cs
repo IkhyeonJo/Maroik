@@ -4,10 +4,12 @@ using Maroik.Core.Domain.Primitives;
 namespace Maroik.Core.Domain.Calendar;
 
 /// <summary>
-/// Entity representing a file attached to a <see cref="CalendarEvent"/>.
-/// Owned by the <see cref="CalendarEvent"/> aggregate root.
+/// Aggregate root representing a file attached to a <see cref="CalendarEvent"/>.
+/// Persisted independently via its own <c>ICalendarEventAttachedFileRepository</c> (not hydrated
+/// or cascaded through the <see cref="CalendarEvent"/> aggregate), which is why it is an aggregate
+/// root rather than a child entity; it references its event by <see cref="CalendarEventId"/> only.
 /// </summary>
-public sealed class CalendarEventAttachedFile : Entity<long>
+public sealed class CalendarEventAttachedFile : AggregateRoot<long>
 {
     /// <summary>ID of the parent calendar event.</summary>
     public long CalendarEventId { get; private set; }

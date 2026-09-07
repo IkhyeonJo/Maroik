@@ -36,14 +36,46 @@ public class ServiceArchitectureTests
     }
 
     /// <summary>
-    /// Repositories for entities that live only as children of an aggregate root
-    /// (BoardComment/BoardAttachedFile under Board, CalendarEventReminder/CalendarEventAttachedFile/
-    /// CalendarShared under Calendar) expose Create/UpdateEntityAsync directly on the child type via
-    /// IGenericRepository, the same shape as a top-level aggregate repository. Nothing in the type
-    /// system stops some other service from injecting one of these and persisting a child mutation
-    /// that never went through the parent aggregate's own invariant-enforcing methods (Board.AddComment,
-    /// etc.) — so this test is the guard rail instead: only the one service that owns the parent
-    /// aggregate may reference each child repository's interface at all.
+    /// Third-party libraries that a service is allowed to use in-process for pure computation
+    /// (hashing, HTML sanitising/parsing, image inspection) — but never for talking to an external
+    /// <em>system</em>. Reaching a database, an SMTP server or a message broker is infrastructure
+    /// work: it happens in Maroik.Core.Repository / Maroik.Core.Client behind a Contract interface,
+    /// so the service layer must not reference EF Core, the Postgres driver, the mail client or the
+    /// RabbitMQ client at all.
+    /// </summary>
+    [Theory]
+    [InlineData("Microsoft.EntityFrameworkCore")]
+    [InlineData("Npgsql")]
+    [InlineData("MailKit")]
+    [InlineData("MimeKit")]
+    [InlineData("RabbitMQ.Client")]
+    public void Service_ShouldNot_DependOn_ExternalSystemClientLibrary(string forbiddenNamespace)
+    {
+        NetArchTest.Rules.TestResult result = Types.InAssembly(ServiceAssembly)
+            .ShouldNot()
+            .HaveDependencyOn(forbiddenNamespace)
+            .GetResult();
+
+        Assert.True(
+            result.IsSuccessful,
+            $"Maroik.Core.Service must not reference {forbiddenNamespace}. Talking to an external " +
+            "system (database, SMTP, message broker) is infrastructure work — do it in " +
+            "Maroik.Core.Repository / Maroik.Core.Client behind a Maroik.Core.Contract interface " +
+            "and inject that interface into the service.\n" +
+            "Failing types: " + string.Join(", ", result.FailingTypeNames ?? []));
+    }
+
+    /// <summary>
+    /// <see cref="BoardComment"/>, <see cref="BoardAttachedFile"/>, <see cref="CalendarEventReminder"/>,
+    /// <see cref="CalendarEventAttachedFile"/>, <see cref="CalendarShared"/> and
+    /// <see cref="OtherCalendar"/> are persisted independently through their own repositories, but
+    /// each one still sits inside the consistency boundary of a parent aggregate (Board or Calendar)
+    /// and must only be written after that parent's own domain methods have had their say. Their
+    /// repositories expose Create/UpdateEntityAsync via IGenericRepository, the same shape as a
+    /// top-level aggregate repository, so nothing in the type system stops another service from
+    /// injecting one and persisting a mutation that skipped the parent. This test is the guard rail
+    /// instead: only the service that owns the parent aggregate may reference each repository's
+    /// interface at all.
     /// </summary>
     [Theory]
     [InlineData("BoardService", "IBoardCommentRepository")]
@@ -51,6 +83,7 @@ public class ServiceArchitectureTests
     [InlineData("CalendarService", "ICalendarEventReminderRepository")]
     [InlineData("CalendarService", "ICalendarEventAttachedFileRepository")]
     [InlineData("CalendarService", "ICalendarSharedRepository")]
+    [InlineData("CalendarService", "IOtherCalendarRepository")]
     public void OnlyOwningAggregateService_ShouldDependOn_ChildEntityRepository(string owningServiceName, string childRepositoryInterfaceName)
     {
         NetArchTest.Rules.TestResult result = Types.InAssembly(ServiceAssembly)

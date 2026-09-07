@@ -31,6 +31,7 @@ public class WebsiteArchitectureTests
     private const string RepositoryNamespace = "Maroik.Core.Repository";
     private const string ClientNamespace = "Maroik.Core.Client";
     private const string ServiceNamespace = "Maroik.Core.Service";
+    private const string PostgreSqlNamespace = "Maroik.Core.PostgreSQL";
 
     /// <summary>
     /// Full names of every repository interface (<c>I*Repository</c>) declared in
@@ -125,6 +126,29 @@ public class WebsiteArchitectureTests
             "Non-composition-root types in Maroik.Website must not reference " +
             "Maroik.Core.Service implementations directly. " +
             "Use service interfaces from Maroik.Core.Contract instead.\n" +
+            "Failing types: " + string.Join(", ", result.FailingTypeNames ?? []));
+    }
+
+    /// <summary>
+    /// No type in Maroik.Website, including Program, should depend on Maroik.Core.PostgreSQL.
+    /// Website does not even project-reference the PostgreSQL model project; the composition root
+    /// registers EF Core via <c>AddRepositoryContext</c> in Maroik.Core.Repository. Mirrors
+    /// <c>WorkerArchitectureTests.WorkerTypes_ShouldNot_DependOnPostgreSqlNamespace</c>.
+    /// </summary>
+    [Fact]
+    public void WebsiteTypes_ShouldNot_DependOnPostgreSqlNamespace()
+    {
+        NetArchTest.Rules.TestResult result = Types.InAssembly(WebsiteAssembly)
+            .That()
+            .ResideInNamespaceStartingWith("Maroik.Website")
+            .ShouldNot()
+            .HaveDependencyOn(PostgreSqlNamespace)
+            .GetResult();
+
+        Assert.True(
+            result.IsSuccessful,
+            "Maroik.Website must not reference Maroik.Core.PostgreSQL directly, not even from " +
+            "Program. Register EF Core via AddRepositoryContext in Maroik.Core.Repository instead.\n" +
             "Failing types: " + string.Join(", ", result.FailingTypeNames ?? []));
     }
 

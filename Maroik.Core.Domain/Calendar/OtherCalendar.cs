@@ -5,10 +5,13 @@ using Maroik.Core.Domain.ValueObjects;
 namespace Maroik.Core.Domain.Calendar;
 
 /// <summary>
-/// Entity representing a subscription from an account to another user's shared calendar.
+/// Aggregate root representing a subscription from an account to another user's shared calendar.
 /// The composite identity is (<see cref="AccountEmail"/>, <see cref="CalendarId"/>).
+/// Persisted independently via its own <c>IOtherCalendarRepository</c> (not hydrated or cascaded
+/// through the <see cref="Calendar"/> aggregate), which is why it is an aggregate root rather than
+/// a child entity.
 /// </summary>
-public sealed class OtherCalendar : Entity<(string AccountEmail, long CalendarId)>
+public sealed class OtherCalendar : AggregateRoot<(string AccountEmail, long CalendarId)>
 {
     /// <summary>Email of the subscriber account.</summary>
     public Email AccountEmail { get; private set; }

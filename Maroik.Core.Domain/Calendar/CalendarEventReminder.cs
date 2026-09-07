@@ -4,11 +4,13 @@ using Maroik.Core.Domain.Primitives;
 namespace Maroik.Core.Domain.Calendar;
 
 /// <summary>
-/// Entity representing a reminder attached to a <see cref="CalendarEvent"/>.
+/// Aggregate root representing a reminder attached to a <see cref="CalendarEvent"/>.
 /// Exactly one "BeforeEvent" field should carry a non-null value to define the lead time.
-/// Owned by the <see cref="CalendarEvent"/> aggregate root.
+/// Persisted independently via its own <c>ICalendarEventReminderRepository</c> (not hydrated or
+/// cascaded through the <see cref="CalendarEvent"/> aggregate), which is why it is an aggregate
+/// root rather than a child entity; it references its event by <see cref="CalendarEventId"/> only.
 /// </summary>
-public sealed class CalendarEventReminder : Entity<long>
+public sealed class CalendarEventReminder : AggregateRoot<long>
 {
     /// <summary>ID of the parent calendar event.</summary>
     public long CalendarEventId { get; private set; }

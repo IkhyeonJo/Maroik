@@ -31,18 +31,27 @@ logic into the Core layers:
 - `main` — production. No test suite / CI, but carries real security fixes.
 - `refactor-code` — the DDD + Clean Architecture rewrite (current work).
 
+## Aggregate model
+
+Every domain type persisted independently through its own `I*Repository`
+(`IGenericRepository<T>` — its own `CreateAsync`/`UpdateEntityAsync`, not a cascade
+through a parent) is an `AggregateRoot<TId>`, never a bare `Entity<TId>`. This
+includes `BoardComment`, `BoardAttachedFile`, `CalendarEventReminder`,
+`CalendarEventAttachedFile`, `CalendarShared` and `OtherCalendar` — reclassified
+from `Entity<T>` to `AggregateRoot<T>` (base class only; parent-reference fields
+are plain IDs, not object references), the same criterion applied to
+`Category`/`SubCategory` in commit `284dc52f`. Enforced by
+`ContractArchitectureTests.EveryRepositoryInterface_MustPersist_AnAggregateRoot`.
+
+## Architecture validation tests
+
+The layering / ArchNet rules are enforced by NetArchTest-based `*ArchitectureTests`
+classes in each `*.Tests` project's `Architecture/` folder, plus the solution-wide
+`SolutionLayeringArchitectureTests` (in `Maroik.Core.Contract.Tests`) that validates
+the `.csproj` project- and package-reference graph itself. They run under
+`dotnet test` in CI, so a violation fails the build. Keep them green; extend them
+when the layer model changes.
+
 ## TODO
 
-- **Reclassify 6 entities from `Entity<T>` to `AggregateRoot<T>`**: `BoardComment`,
-  `BoardAttachedFile`, `CalendarEventReminder`, `CalendarEventAttachedFile`,
-  `CalendarShared`, `OtherCalendar`. Each is persisted independently via its own
-  repository (not hydrated/cascaded through a parent aggregate), which is exactly
-  the criterion already used to reclassify `Category`/`SubCategory` as
-  `AggregateRoot<long>` (see `Maroik.Core.Domain/Menu/Category.cs` and
-  `SubCategory.cs` for the pattern, and commit `284dc52f` for that reclassification).
-  This is a mechanical, low-risk change (base class only — parent-reference fields
-  already use plain IDs, not object references). Left unfinished after commit
-  `38d66bfe` removed the nine dead aggregate-invariant methods (`Board.DeleteComment`/
-  `AttachFile`, `CalendarEvent.AddReminder`/`RemoveReminder`/`AttachFile`/`RemoveFile`,
-  `Calendar.AddSubscriber`/`RemoveSubscriber`/`UpdateSharing`) that had falsely implied
-  these were child-managed entities.
+_(none)_

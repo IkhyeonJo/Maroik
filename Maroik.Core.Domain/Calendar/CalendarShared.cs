@@ -3,11 +3,13 @@ using Maroik.Core.Domain.Primitives;
 namespace Maroik.Core.Domain.Calendar;
 
 /// <summary>
-/// Entity that holds the sharing permissions for a <see cref="Calendar"/>.
+/// Aggregate root that holds the sharing permissions for a <see cref="Calendar"/>.
 /// One-to-one with Calendar (CalendarId is both the PK and FK).
-/// Owned by the <see cref="Calendar"/> aggregate root.
+/// Persisted independently via its own <c>ICalendarSharedRepository</c> (not hydrated or cascaded
+/// through the <see cref="Calendar"/> aggregate), which is why it is an aggregate root rather than
+/// a child entity.
 /// </summary>
-public sealed class CalendarShared : Entity<long>
+public sealed class CalendarShared : AggregateRoot<long>
 {
     /// <summary>When true, registered users can view this calendar.</summary>
     public bool User { get; private set; }

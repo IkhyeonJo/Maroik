@@ -4,11 +4,13 @@ using Maroik.Core.Domain.Primitives;
 namespace Maroik.Core.Domain.Board;
 
 /// <summary>
-/// Entity representing a comment on a <see cref="Board"/> post.
-/// Owned by the <see cref="Board"/> aggregate root.
+/// Aggregate root representing a comment on a <see cref="Board"/> post.
+/// Persisted independently via its own <c>IBoardCommentRepository</c> (not hydrated or cascaded
+/// through the <see cref="Board"/> aggregate), which is why it is an aggregate root rather than a
+/// child entity; it references its post by <see cref="BoardId"/> only (no object reference).
 /// Supports soft-deletion; deleted comments are excluded entirely from reads rather than shown as a placeholder.
 /// </summary>
-public sealed class BoardComment : Entity<long>
+public sealed class BoardComment : AggregateRoot<long>
 {
     /// <summary>ID of the parent board post.</summary>
     public long BoardId { get; private set; }

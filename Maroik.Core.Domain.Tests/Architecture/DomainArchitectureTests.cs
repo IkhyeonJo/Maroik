@@ -60,6 +60,57 @@ public class DomainArchitectureTests
     }
 
     /// <summary>
+    /// Domain must not touch any infrastructure or third-party library used elsewhere in the
+    /// solution (EF Core, ASP.NET Core, MailKit, RabbitMQ, JSON/HTML/image libraries, DI and
+    /// hosting abstractions, …). Business logic in the innermost layer stays framework-free; the
+    /// single deliberate exception is <c>ErrorOr</c>, the lightweight <c>ErrorOr&lt;T&gt;</c> /
+    /// <c>Error</c> result type used to report outcomes without throwing. This overlaps
+    /// <see cref="Domain_ShouldOnly_DependOn_SystemOrErrorOr"/> (an assembly-reference check); it is
+    /// kept separately so a violation names the exact library and the exact offending type.
+    /// </summary>
+    [Theory]
+    [InlineData("Microsoft.EntityFrameworkCore")]
+    [InlineData("Microsoft.AspNetCore")]
+    [InlineData("Microsoft.Extensions.DependencyInjection")]
+    [InlineData("Microsoft.Extensions.Configuration")]
+    [InlineData("Microsoft.Extensions.Logging")]
+    [InlineData("Microsoft.Extensions.Options")]
+    [InlineData("Microsoft.Extensions.Hosting")]
+    [InlineData("Microsoft.Extensions.Caching")]
+    [InlineData("Npgsql")]
+    [InlineData("MailKit")]
+    [InlineData("MimeKit")]
+    [InlineData("RabbitMQ.Client")]
+    [InlineData("Newtonsoft.Json")]
+    [InlineData("HtmlAgilityPack")]
+    [InlineData("Ganss.Xss")]
+    [InlineData("AngleSharp")]
+    [InlineData("ImageMagick")]
+    [InlineData("BCrypt.Net")]
+    [InlineData("DocumentFormat.OpenXml")]
+    [InlineData("ICSharpCode.SharpZipLib")]
+    [InlineData("Serilog")]
+    [InlineData("Swashbuckle")]
+    [InlineData("NonFactors.Grid")]
+    [InlineData("Dapper")]
+    [InlineData("AutoMapper")]
+    [InlineData("MediatR")]
+    public void Domain_ShouldNot_DependOn_ExternalInfrastructureLibrary(string forbiddenNamespace)
+    {
+        NetArchTest.Rules.TestResult result = Types.InAssembly(DomainAssembly)
+            .ShouldNot()
+            .HaveDependencyOn(forbiddenNamespace)
+            .GetResult();
+
+        Assert.True(
+            result.IsSuccessful,
+            $"Maroik.Core.Domain must not reference {forbiddenNamespace}. The domain layer must " +
+            "stay pure: business rules, invariants and policies are plain C# with no framework or " +
+            "third-party dependency (the sole exception is the ErrorOr result type).\n" +
+            "Failing types: " + string.Join(", ", result.FailingTypeNames ?? []));
+    }
+
+    /// <summary>
     /// Bounded contexts recognized within Maroik.Core.Domain. Each one models a distinct
     /// area of the business (Account, Board, Calendar, Finance, Menu) and must stay
     /// independent of the others — cross-context collaboration, if ever needed, should go
