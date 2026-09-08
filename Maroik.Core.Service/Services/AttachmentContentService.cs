@@ -61,10 +61,19 @@ public class AttachmentContentService : IAttachmentContentService
     /// <inheritdoc />
     public async Task<SummernoteUploadResult> UploadSummernoteImageAsync(AttachedFileDto file, string area, string subArea, CancellationToken ct = default)
     {
-        if (!_imageValidator.IsValidImage(file.Bytes))
+        string ext = Path.GetExtension(file.FileName).ToLowerInvariant();
+
+        // Same allow-list gate the avatar upload path enforces (ImageUploadPolicy is the single
+        // source of truth): reject anything outside jpg/png by extension or declared content type,
+        // and reject SVG outright, BEFORE the Magick decode check — .gif/.bmp/.tiff/.svg all decode
+        // fine, so IsValidImage alone let them through and they were stored under their original
+        // extension.
+        if (!ImageUploadPolicy.IsAllowedExtension(ext) || !ImageUploadPolicy.IsAllowedContentType(file.ContentType))
             return SummernoteUploadResult.Fail("Invalid image file.");
 
-        string ext = Path.GetExtension(file.FileName).ToLowerInvariant();
+        if (!_imageValidator.IsValidImage(file.Bytes) || _imageValidator.IsSvg(file.Bytes))
+            return SummernoteUploadResult.Fail("Invalid image file.");
+
         // Use a GUID-based file name to avoid collisions and prevent path traversal via the original name.
         string imageFile = $"{Guid.NewGuid():N}{ext}";
         string filePath = Path.Combine("upload", area, subArea, "summernote", "images", imageFile);

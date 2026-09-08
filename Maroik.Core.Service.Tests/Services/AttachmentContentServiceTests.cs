@@ -121,6 +121,39 @@ public class AttachmentContentServiceTests
             It.IsAny<byte[]>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
     }
 
+    /// <summary>A file whose extension / content type is outside the jpg-png allow-list is rejected before the decode check.</summary>
+    [Theory]
+    [InlineData("photo.gif", "image/gif")]
+    [InlineData("photo.svg", "image/svg+xml")]
+    [InlineData("photo.png", "text/html")]
+    [InlineData("photo.bmp", "image/bmp")]
+    public async Task UploadSummernoteImageAsync_ReturnsFail_WhenExtensionOrContentTypeNotAllowed(string fileName, string contentType)
+    {
+        _imageValidator.Setup(v => v.IsValidImage(It.IsAny<byte[]>())).Returns(true);
+        var file = new AttachedFileDto { Bytes = [1, 2, 3], ContentType = contentType, FileName = fileName };
+
+        var result = await CreateSut().UploadSummernoteImageAsync(file, "board", "post", TestContext.Current.CancellationToken);
+
+        Assert.False(result.Success);
+        _fileClient.Verify(f => f.UploadAsync(
+            It.IsAny<byte[]>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    /// <summary>A jpg/png-labelled file that decodes as SVG is rejected (SVG can carry script).</summary>
+    [Fact]
+    public async Task UploadSummernoteImageAsync_ReturnsFail_WhenBytesAreSvg()
+    {
+        _imageValidator.Setup(v => v.IsValidImage(It.IsAny<byte[]>())).Returns(true);
+        _imageValidator.Setup(v => v.IsSvg(It.IsAny<byte[]>())).Returns(true);
+        var file = new AttachedFileDto { Bytes = [1, 2, 3], ContentType = "image/png", FileName = "x.png" };
+
+        var result = await CreateSut().UploadSummernoteImageAsync(file, "board", "post", TestContext.Current.CancellationToken);
+
+        Assert.False(result.Success);
+        _fileClient.Verify(f => f.UploadAsync(
+            It.IsAny<byte[]>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
+    }
+
     /// <summary>Verifies that a failed upload short-circuits before attempting the re-download.</summary>
     [Fact]
     public async Task UploadSummernoteImageAsync_ReturnsFail_WhenUploadFails()
