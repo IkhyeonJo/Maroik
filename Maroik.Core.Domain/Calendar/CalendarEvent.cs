@@ -1,5 +1,6 @@
 using ErrorOr;
 using Maroik.Core.Domain.Primitives;
+using Maroik.Core.Domain.ValueObjects;
 
 namespace Maroik.Core.Domain.Calendar;
 
@@ -137,13 +138,36 @@ public sealed class CalendarEvent : AggregateRoot<long>
         if (description?.Length > 16384)
             return Error.Validation("CalendarEvent.DescriptionTooLong", "Event description must be 16384 characters or fewer.");
 
-        if (!allDay && endDate < startDate)
-            return Error.Validation("CalendarEvent.InvalidDateRange", "End date must not be earlier than start date.");
+        var timesResult = ValidateDatesAndZones(allDay, startDate, endDate, startTz, endTz);
+        if (timesResult.IsError) return timesResult.Errors;
 
         var calendarEvent = new CalendarEvent(0, calendarId, title, description, allDay,
             startDate, endDate, startTz, endTz, location, status, recurrenceId);
 
         return calendarEvent;
+    }
+
+    /// <summary>
+    /// Shared validation for the date range and the optional per-endpoint time-zone IDs, run by
+    /// both <see cref="Create"/> and <see cref="Update"/>. The range is checked for an all-day
+    /// event too (on the date part) — a "no end before start" rule that only fired for timed
+    /// events let an all-day event be saved end-before-start. A non-null start/end zone must
+    /// resolve to a known zone on the host (null means UTC).
+    /// </summary>
+    private static ErrorOr<Success> ValidateDatesAndZones(
+        bool allDay, DateTime startDate, DateTime endDate, string? startTz, string? endTz)
+    {
+        bool rangeInvalid = allDay ? endDate.Date < startDate.Date : endDate < startDate;
+        if (rangeInvalid)
+            return Error.Validation("CalendarEvent.InvalidDateRange", "End date must not be earlier than start date.");
+
+        foreach (string? tz in new[] { startTz, endTz })
+        {
+            if (!string.IsNullOrWhiteSpace(tz) && TimeZoneId.Create(tz).IsError)
+                return Error.Validation("CalendarEvent.InvalidTimeZone", $"'{tz}' is not a recognised time-zone ID.");
+        }
+
+        return Result.Success;
     }
 
     // ------------------------------------------------------------------------
@@ -179,8 +203,8 @@ public sealed class CalendarEvent : AggregateRoot<long>
         if (description?.Length > 16384)
             return Error.Validation("CalendarEvent.DescriptionTooLong", "Event description must be 16384 characters or fewer.");
 
-        if (!allDay && endDate < startDate)
-            return Error.Validation("CalendarEvent.InvalidDateRange", "End date must not be earlier than start date.");
+        var timesResult = ValidateDatesAndZones(allDay, startDate, endDate, startTz, endTz);
+        if (timesResult.IsError) return timesResult.Errors;
 
         Title = title;
         Description = description;

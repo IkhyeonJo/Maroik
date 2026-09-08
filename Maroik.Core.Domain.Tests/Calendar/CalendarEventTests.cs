@@ -70,13 +70,33 @@ public class CalendarEventTests
         Assert.Equal("CalendarEvent.InvalidDateRange", result.FirstError.Code);
     }
 
-    /// <summary>Create succeeds when end before start and all day.</summary>
+    /// <summary>Create succeeds when the end time is before the start time on the same day and the event is all-day.</summary>
     [Fact]
     public void Create_Succeeds_WhenEndBeforeStart_AndAllDay()
     {
         var result = CalendarEvent.Create(10, "All Day", null, true, End, Start, null, null, null, null);
 
         Assert.False(result.IsError);
+    }
+
+    /// <summary>Create rejects an all-day event whose end date is on an earlier day than the start date.</summary>
+    [Fact]
+    public void Create_ReturnsError_WhenEndDateBeforeStartDate_AndAllDay()
+    {
+        var result = CalendarEvent.Create(10, "All Day", null, true, Start, Start.AddDays(-1), null, null, null, null);
+
+        Assert.True(result.IsError);
+        Assert.Equal("CalendarEvent.InvalidDateRange", result.FirstError.Code);
+    }
+
+    /// <summary>Create rejects an unrecognised per-endpoint time-zone ID.</summary>
+    [Fact]
+    public void Create_ReturnsError_WhenTimeZoneIdInvalid()
+    {
+        var result = CalendarEvent.Create(10, "Title", null, false, Start, End, "Not/AZone", "UTC", null, null);
+
+        Assert.True(result.IsError);
+        Assert.Equal("CalendarEvent.InvalidTimeZone", result.FirstError.Code);
     }
 
     // -- Update ---------------------------------------------------------------
