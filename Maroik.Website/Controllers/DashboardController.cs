@@ -46,7 +46,15 @@ public class DashboardController : Controller
     [RequiredHttpPostAccess(Role = Role.Anonymous)]
     public IActionResult CultureManagement([FromBody] LoginInputViewModel loginInputViewModel)
     {
-        Response.Cookies.Append(CookieRequestCultureProvider.DefaultCookieName, CookieRequestCultureProvider.MakeCookieValue(new RequestCulture(loginInputViewModel.Culture!)),
+        // Only the cultures the app actually supports. Anything else (a bogus value would make
+        // new RequestCulture(...) / new CultureInfo(...) throw an unhandled CultureNotFoundException)
+        // is rejected here rather than written to the cookie.
+        string[] supportedCultures = ["en-US", "ko-KR"];
+        string? culture = loginInputViewModel.Culture;
+        if (string.IsNullOrEmpty(culture) || !supportedCultures.Contains(culture, StringComparer.OrdinalIgnoreCase))
+            return Json(new { result = false });
+
+        Response.Cookies.Append(CookieRequestCultureProvider.DefaultCookieName, CookieRequestCultureProvider.MakeCookieValue(new RequestCulture(culture)),
             new CookieOptions { Expires = DateTimeOffset.Now.AddDays(30), Secure = true, HttpOnly = true, SameSite = SameSiteMode.Strict });
 
         return Json(new { result = true });

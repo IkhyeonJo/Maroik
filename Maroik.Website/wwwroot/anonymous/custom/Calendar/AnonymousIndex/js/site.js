@@ -41,10 +41,10 @@
     const $viewCalendarEventTaskDialogModal = $('#viewCalendarEventTaskDialogModal');
     const $otherCalendarEventOutputViewModels = $('#otherCalendarEventOutputViewModels');
     const $otherCalendars = $('#otherCalendars');
-    const maxMinutesBeforeEvent = parseInt($('#maxMinutesBeforeEvent').val(), 10) || 40320;
-    const maxHoursBeforeEvent = parseInt($('#maxHoursBeforeEvent').val(), 10) || 672;
-    const maxDaysBeforeEvent = parseInt($('#maxDaysBeforeEvent').val(), 10) || 28;
-    const maxWeeksBeforeEvent = parseInt($('#maxWeeksBeforeEvent').val(), 10) || 4;
+    const maxMinutesBeforeEvent = parseInt($('#maxMinutesBeforeEvent').val(), 10);
+    const maxHoursBeforeEvent = parseInt($('#maxHoursBeforeEvent').val(), 10);
+    const maxDaysBeforeEvent = parseInt($('#maxDaysBeforeEvent').val(), 10);
+    const maxWeeksBeforeEvent = parseInt($('#maxWeeksBeforeEvent').val(), 10);
     const reminderTimeIntervals = JSON.parse($('#reminderTimeIntervals').val() || '[]');
     const defaultBeforeAt = $('#defaultReminderTimeOfDay').val() || '09:00';
     function base64ToBlob(base64, mime) {

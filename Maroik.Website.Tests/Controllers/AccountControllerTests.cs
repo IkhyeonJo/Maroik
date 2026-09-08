@@ -151,14 +151,41 @@ public class AccountControllerTests
 
     // -- Logout ---------------------------------------------------------------
 
-    /// <summary>Verifies that <c>Logout</c> get when redirects to dash board.</summary>
+    /// <summary>
+    /// Verifies that <c>Logout</c> is a POST + antiforgery endpoint (so it cannot be triggered by a
+    /// cross-site link/image) and, when called correctly, clears the session and redirects to the
+    /// dashboard.
+    /// </summary>
     [Fact]
-    public async Task Logout_Get_RedirectsToDashboard()
+    public async Task Logout_Post_WithAntiforgery_RedirectsToDashboard()
     {
-        var response = await _client.GetAsync("/Account/Logout", TestContext.Current.CancellationToken);
+        // Grab an antiforgery cookie/token pair from any GET page.
+        using var getRequest = new HttpRequestMessage(HttpMethod.Get, "/Account/Login");
+        var getResponse = await _client.SendAsync(getRequest, TestContext.Current.CancellationToken);
+        string html = await getResponse.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+        string antiForgeryToken = ExtractAntiForgeryToken(html);
+        string? antiForgeryCookie = ExtractCookieValue(getResponse, AntiForgeryCookieName);
+        Assert.False(string.IsNullOrEmpty(antiForgeryCookie));
+
+        using var postRequest = new HttpRequestMessage(HttpMethod.Post, "/Account/Logout");
+        postRequest.Headers.Add("Cookie", $"{AntiForgeryCookieName}={antiForgeryCookie}");
+        postRequest.Content = new FormUrlEncodedContent(new Dictionary<string, string>
+        {
+            ["__RequestVerificationToken"] = antiForgeryToken
+        });
+        var response = await _client.SendAsync(postRequest, TestContext.Current.CancellationToken);
 
         // Logout clears session and redirects to "/" (default route resolves Dashboard/AnonymousIndex)
         Assert.Equal(System.Net.HttpStatusCode.Redirect, response.StatusCode);
+    }
+
+    /// <summary>A bare GET to <c>/Account/Logout</c> must not log anyone out — the action is POST-only now.</summary>
+    [Fact]
+    public async Task Logout_Get_IsNotAllowed()
+    {
+        var response = await _client.GetAsync("/Account/Logout", TestContext.Current.CancellationToken);
+
+        Assert.NotEqual(System.Net.HttpStatusCode.Redirect, response.StatusCode);
     }
 
     // -- Register -------------------------------------------------------------

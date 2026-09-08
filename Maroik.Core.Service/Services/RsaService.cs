@@ -25,7 +25,14 @@ public class RsaService : IRsaService
 {
     private readonly byte[]? _privateKeyDer;
     private readonly byte[]? _publicKeyDer;
-    private readonly HashAlgorithmName _hashAlgorithmName;
+
+    /// <summary>
+    /// Hash used for OAEP padding and PKCS#1 signatures. Always SHA-256: SHA-1 is collision-broken
+    /// (fatal for signatures) and needlessly weak for OAEP. The legacy <see cref="RsaType.Rsa"/>
+    /// config value (which used to select SHA-1) is accepted but ignored — the tokens this service
+    /// round-trips are short-lived (24 h TTL), so nothing depends on the old hash.
+    /// </summary>
+    private static readonly HashAlgorithmName _hashAlgorithmName = HashAlgorithmName.SHA256;
 
     /// <summary>Initializes a new instance of <see cref="RsaService"/> with the supplied dependencies.</summary>
     public RsaService(IOptions<ServerSetting> settings)
@@ -39,8 +46,6 @@ public class RsaService : IRsaService
         _publicKeyDer = string.IsNullOrEmpty(setting.RsaPublicKey)
             ? null
             : Convert.FromBase64String(setting.RsaPublicKey);
-
-        _hashAlgorithmName = setting.RsaAlgorithm == RsaType.Rsa ? HashAlgorithmName.SHA1 : HashAlgorithmName.SHA256;
     }
 
     private RSA? CreatePrivateKeyRsa()

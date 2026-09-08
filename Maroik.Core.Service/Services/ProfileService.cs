@@ -1,5 +1,6 @@
 using Maroik.Core.Domain.Account;
 using Maroik.Core.Domain.Finance;
+using Maroik.Core.Domain.Media;
 using Maroik.Core.Domain.ValueObjects;
 using Maroik.Core.Contract.Dtos;
 using Maroik.Core.Contract.Interfaces;
@@ -137,6 +138,12 @@ public class ProfileService : IProfileService
     {
         try
         {
+            // Re-assert the allow-list here (not just in the controller): ImageUploadPolicy is the
+            // single source of truth, and a stored avatar must never end up under an arbitrary
+            // caller-chosen extension even if a future caller skips the controller-side check.
+            if (!ImageUploadPolicy.IsAllowedExtension(extension))
+                return ServiceResult.Validation("Profile.InvalidImage", "invalid-image");
+
             if (!_imageValidator.IsValidImage(imageBytes))
                 return ServiceResult.Validation("Profile.InvalidImage", "invalid-image");
             if (_imageValidator.IsSvg(imageBytes))

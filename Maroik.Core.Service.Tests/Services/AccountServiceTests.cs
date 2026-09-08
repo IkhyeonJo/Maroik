@@ -550,7 +550,8 @@ public class AccountServiceTests
     {
         var account = ActiveAccount();
         _accountRepo.Setup(r => r.FindByEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(account);
-        _accountRepo.Setup(r => r.UpdateEntityAsync(It.IsAny<Account>(), It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
+        _accountRepo.Setup(r => r.UpdateResetPasswordTokenAsync(It.IsAny<string>(), It.IsAny<string?>(), It.IsAny<DateTime>(), It.IsAny<CancellationToken>())).ReturnsAsync(1);
+        _accountRepo.Setup(r => r.UpdateMessageAsync(It.IsAny<string>(), It.IsAny<string?>(), It.IsAny<DateTime>(), It.IsAny<CancellationToken>())).ReturnsAsync(1);
         _rsa.Setup(r => r.Encrypt(It.IsAny<string>())).Returns("enc-reset-token");
         SetupMailSuccess();
         var sut = CreateSut();
@@ -558,8 +559,13 @@ public class AccountServiceTests
         bool result = await sut.ForgotPasswordAsync(account.Email.Value, _emailTemplate, TestContext.Current.CancellationToken);
 
         Assert.True(result);
-        _accountRepo.Verify(r => r.UpdateEntityAsync(
-            It.Is<Account>(a => a.ResetPasswordToken != null), It.IsAny<CancellationToken>()), Times.Exactly(2));
+        // Column-scoped writes (not a full-row UpdateEntityAsync): the reset token first, then the
+        // "mail sent" status message.
+        _accountRepo.Verify(r => r.UpdateResetPasswordTokenAsync(
+            account.Email.Value, It.Is<string?>(t => t != null), It.IsAny<DateTime>(), It.IsAny<CancellationToken>()), Times.Once);
+        _accountRepo.Verify(r => r.UpdateMessageAsync(
+            account.Email.Value, It.IsAny<string?>(), It.IsAny<DateTime>(), It.IsAny<CancellationToken>()), Times.Once);
+        _accountRepo.Verify(r => r.UpdateEntityAsync(It.IsAny<Account>(), It.IsAny<CancellationToken>()), Times.Never);
     }
 
     /// <summary>Verifies that <c>ForgotPasswordAsync</c> still sends a reset email when the account is locked,
@@ -569,7 +575,8 @@ public class AccountServiceTests
     {
         var account = ActiveAccount(locked: true);
         _accountRepo.Setup(r => r.FindByEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(account);
-        _accountRepo.Setup(r => r.UpdateEntityAsync(It.IsAny<Account>(), It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
+        _accountRepo.Setup(r => r.UpdateResetPasswordTokenAsync(It.IsAny<string>(), It.IsAny<string?>(), It.IsAny<DateTime>(), It.IsAny<CancellationToken>())).ReturnsAsync(1);
+        _accountRepo.Setup(r => r.UpdateMessageAsync(It.IsAny<string>(), It.IsAny<string?>(), It.IsAny<DateTime>(), It.IsAny<CancellationToken>())).ReturnsAsync(1);
         _rsa.Setup(r => r.Encrypt(It.IsAny<string>())).Returns("enc-reset-token");
         SetupMailSuccess();
         var sut = CreateSut();
@@ -577,8 +584,11 @@ public class AccountServiceTests
         bool result = await sut.ForgotPasswordAsync(account.Email.Value, _emailTemplate, TestContext.Current.CancellationToken);
 
         Assert.True(result);
-        _accountRepo.Verify(r => r.UpdateEntityAsync(
-            It.Is<Account>(a => a.ResetPasswordToken != null), It.IsAny<CancellationToken>()), Times.Exactly(2));
+        _accountRepo.Verify(r => r.UpdateResetPasswordTokenAsync(
+            account.Email.Value, It.Is<string?>(t => t != null), It.IsAny<DateTime>(), It.IsAny<CancellationToken>()), Times.Once);
+        _accountRepo.Verify(r => r.UpdateMessageAsync(
+            account.Email.Value, It.IsAny<string?>(), It.IsAny<DateTime>(), It.IsAny<CancellationToken>()), Times.Once);
+        _accountRepo.Verify(r => r.UpdateEntityAsync(It.IsAny<Account>(), It.IsAny<CancellationToken>()), Times.Never);
     }
 
     // -- ValidateResetPasswordTokenAsync -------------------------------------

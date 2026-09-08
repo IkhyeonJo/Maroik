@@ -275,8 +275,6 @@ public class AuthorizationFilter : ActionFilterAttribute
                         case "Account" when currentActionName == "ForgotPassword":
                         // If password reset page
                         case "Account" when currentActionName == "ResetPassword":
-                        // If logout
-                        case "Account" when currentActionName == "Logout":
                             await next(); // Do Action!!
                             return;
                     }
@@ -299,8 +297,6 @@ public class AuthorizationFilter : ActionFilterAttribute
                     {
                         // Allow exception resource access (Error)
                         case "Exception" when currentActionName == "Error":
-                        // Logout
-                        case "Account" when currentActionName == "Logout":
                         // Initial screen
                         case "Dashboard" when currentActionName == "AnonymousIndex":
                             await next(); // Do Action!!
@@ -365,6 +361,15 @@ public class AuthorizationFilter : ActionFilterAttribute
             // POST method — logged in
             case "POST" when isAccountSessionExist:
                 {
+                    // Logout is a POST (antiforgery-protected) endpoint on AccountController, which is
+                    // not part of any role's navigation menu — allow it explicitly for any signed-in
+                    // account regardless of role.
+                    if (currentControllerName == "Account" && currentActionName == "Logout")
+                    {
+                        await next();
+                        return;
+                    }
+
                     switch (loggedInAccount!.Role)
                     {
                         // Admin and User share identical resolution logic — only which category

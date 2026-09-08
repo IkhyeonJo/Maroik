@@ -153,6 +153,16 @@ public class AccountRepository(ApplicationDbContext context)
     }
 
     /// <inheritdoc />
+    public Task<int> UpdateResetPasswordTokenAsync(string email, string? resetPasswordToken, DateTime updated, CancellationToken ct = default)
+    {
+        string normalizedEmail = email.ToLowerInvariant();
+        return Set.Where(e => e.Email == normalizedEmail)
+            .ExecuteUpdateAsync(s => s
+                .SetProperty(e => e.ResetPasswordToken, resetPasswordToken)
+                .SetProperty(e => e.Updated, updated), ct);
+    }
+
+    /// <inheritdoc />
     public Task<int> UpdateMessageAsync(string email, string? message, DateTime updated, CancellationToken ct = default)
     {
         string normalizedEmail = email.ToLowerInvariant();

@@ -189,10 +189,17 @@ public class ForumController : Controller
         if (!uploadResult.Success)
             return Ok(new { result = false, errorMessage = _localizer[uploadResult.ErrorKey ?? "Input is invalid"].Value });
 
+        // The Summernote editor only needs the raw bytes (base64) + content type to build an object
+        // URL for the inserted <img>; return those explicitly rather than serialising a whole
+        // FileContentResult and relying on its property names.
         return Ok(new
         {
             result = true,
-            file = File(uploadResult.FileBytes!, uploadResult.ContentType!, uploadResult.FileName!),
+            file = new
+            {
+                fileContents = Convert.ToBase64String(uploadResult.FileBytes!),
+                contentType = uploadResult.ContentType!
+            },
             filePath = _rsa.Encrypt(uploadResult.FilePath!)
         });
     }

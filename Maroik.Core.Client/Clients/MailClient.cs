@@ -1,3 +1,4 @@
+using System.Net.Security;
 using MailKit.Net.Smtp;
 using MailKit.Security;
 using Maroik.Core.Contract.Dtos;
@@ -64,18 +65,41 @@ public class MailClient(ILogger<MailClient> logger) : IMailClient
             // can't outlive it and get killed mid-send (which would cause a duplicate
             // send on redelivery). MailKit's default is ~100s.
             smtp.Timeout = 20_000;
-            // SmtpSsl on => negotiate the best available (implicit TLS or STARTTLS) AND validate the
-            // server certificate normally. SmtpSsl off => still upgrade opportunistically via
-            // STARTTLS when the server advertises it (so credentials are never sent in the clear
-            // against a relay that offers TLS), but do NOT let an untrusted / self-signed relay
-            // certificate turn that opportunistic upgrade into a hard failure — the operator has
-            // already declared this link non-secure, and the alternative (StartTlsWhenAvailable
-            // aborting on a bad cert) silently drops every confirmation / reset email.
+            // SmtpSsl on  => negotiate the best available (implicit TLS or STARTTLS) AND validate the
+            //               server certificate normally.
+            // SmtpSsl off => still upgrade opportunistically via STARTTLS when the server advertises
+            //               it (so credentials are never sent in the clear against a relay that
+            //               offers TLS). The certificate check is relaxed only for an untrusted /
+            //               self-signed chain — the realistic "operator's own relay" case. A
+            //               hostname mismatch or a missing certificate is still rejected, since both
+            //               are the signature of an active man-in-the-middle rather than a benign
+            //               self-signed relay.
             SecureSocketOptions socketOptions = settings.SmtpSsl
                 ? SecureSocketOptions.Auto
                 : SecureSocketOptions.StartTlsWhenAvailable;
             if (!settings.SmtpSsl)
-                smtp.ServerCertificateValidationCallback = static (_, _, _, _) => true;
+            {
+                smtp.ServerCertificateValidationCallback = (_, _, _, errors) =>
+                {
+                    if (errors == SslPolicyErrors.None)
+                        return true;
+
+                    // Accept only a bare chain / self-signed-root problem; reject name mismatch and
+                    // "no certificate" outright.
+                    if (errors == SslPolicyErrors.RemoteCertificateChainErrors)
+                    {
+                        logger.LogWarning(
+                            "Accepting an untrusted SMTP server certificate for {SmtpHost} because SmtpSsl is disabled for this relay",
+                            settings.SmtpHost);
+                        return true;
+                    }
+
+                    logger.LogWarning(
+                        "Rejecting the SMTP server certificate for {SmtpHost}: {SslPolicyErrors}",
+                        settings.SmtpHost, errors);
+                    return false;
+                };
+            }
             await smtp.ConnectAsync(settings.SmtpHost ?? "", settings.SmtpPort, socketOptions, ct);
             await smtp.AuthenticateAsync(settings.SmtpUserName ?? "", settings.SmtpPassword ?? "", ct);
             await smtp.SendAsync(message, ct);

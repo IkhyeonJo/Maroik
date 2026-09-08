@@ -60,7 +60,10 @@ public class ServerSetting
     /// <summary>PEM-encoded RSA public key used for verification and encryption.</summary>
     public string? RsaPublicKey { get; set; }
 
-    /// <summary>RSA algorithm variant (<see cref="RsaType.Rsa"/> = SHA-1, <see cref="RsaType.Rsa2"/> = SHA-256).</summary>
+    /// <summary>
+    /// Legacy RSA algorithm variant. Retained for configuration back-compat only — <c>RsaService</c>
+    /// now always uses SHA-256 for OAEP and signatures regardless of this value (SHA-1 is broken).
+    /// </summary>
     public RsaType RsaAlgorithm { get; set; }
 
     /// <summary>Host name or IP address of the ClamAV antivirus daemon.</summary>

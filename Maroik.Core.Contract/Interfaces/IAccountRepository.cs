@@ -51,6 +51,9 @@ public interface IAccountRepository : IGenericRepository<Account>
     /// <summary>Writes only <c>DefaultMonetaryUnit</c>. Does not touch <c>Updated</c> — this is a background self-correction, not a user edit.</summary>
     Task<int> UpdateDefaultMonetaryUnitAsync(string email, string? defaultMonetaryUnit, CancellationToken ct = default);
 
+    /// <summary>Writes only <c>ResetPasswordToken</c> and <c>Updated</c>.</summary>
+    Task<int> UpdateResetPasswordTokenAsync(string email, string? resetPasswordToken, DateTime updated, CancellationToken ct = default);
+
     /// <summary>Writes only <c>Message</c> and <c>Updated</c>.</summary>
     Task<int> UpdateMessageAsync(string email, string? message, DateTime updated, CancellationToken ct = default);
 }

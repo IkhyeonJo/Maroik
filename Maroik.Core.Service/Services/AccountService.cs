@@ -346,13 +346,19 @@ public class AccountService : IAccountService
             // RequestPasswordReset only errors when EmailConfirmed is false, already ruled out above.
             if (account.RequestPasswordReset(resetPasswordToken).IsError)
                 return true;
-            await _accountRepository.UpdateEntityAsync(account, ct);
+
+            // Column-scoped writes (ResetPasswordToken/Message + Updated), not a full-row
+            // UpdateEntityAsync: this runs off an un-locked read, so a concurrent self-service
+            // profile change (avatar/timezone/password) on the same account must not be reverted by
+            // a stale full-row snapshot — same rationale as every other Account write path.
+            await _accountRepository.UpdateResetPasswordTokenAsync(
+                account.Email.Value, account.ResetPasswordToken, account.Updated, ct);
 
             string body = _mailClient.GetMailResetPasswordBody(_rsa.Encrypt(resetPasswordToken), emailTemplate.Title, emailTemplate.Content0, emailTemplate.Content1, _settings.Value.DomainName ?? "");
             bool published = await PublishMailAsync(account.Email.Value, emailTemplate.Subject, body, ct);
 
             account.SetMessage(EnumHelper.GetDescription(published ? AccountMessage.ResetPasswordMail : AccountMessage.FailToMailSent));
-            await _accountRepository.UpdateEntityAsync(account, ct);
+            await _accountRepository.UpdateMessageAsync(account.Email.Value, account.Message, account.Updated, ct);
         }
         catch (Exception e) { _logger.LogWarning(e, "ForgotPassword failed for {Email}", email); }
 

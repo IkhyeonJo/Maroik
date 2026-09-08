@@ -88,8 +88,12 @@ public class AccountController : Controller
     #endregion
 
     #region Logout
-    /// <summary>Clears the session and redirects to the anonymous dashboard.</summary>
-    [HttpGet]
+    /// <summary>
+    /// Clears the session and redirects to the anonymous dashboard. POST + antiforgery so a
+    /// cross-site page cannot force-log-out a signed-in user with a bare link / image tag.
+    /// </summary>
+    [HttpPost]
+    [ValidateAntiForgeryToken]
     public IActionResult Logout()
     {
         _sessionService.RemoveAccount();
