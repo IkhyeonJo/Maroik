@@ -31,7 +31,8 @@ public static class DashboardViewModelMapper
             if (summary.DefaultMonetaryUnit == null) return vm;
 
             var currencyByProduct = summary.Assets
-                .ToDictionary(a => a.ProductName ?? "", a => a.MonetaryUnit);
+                .GroupBy(a => a.ProductName ?? "")
+                .ToDictionary(g => g.Key, g => g.Last().MonetaryUnit);
 
             vm.IncomeYearOutputViewModels = MapIncomes(summary.YearIncomes, currencyByProduct, timeZoneId);
             vm.ExpenditureYearOutputViewModels = MapExpenditures(summary.YearExpenditures, currencyByProduct, timeZoneId);

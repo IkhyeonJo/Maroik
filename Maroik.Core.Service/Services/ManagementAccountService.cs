@@ -19,16 +19,19 @@ public class ManagementAccountService : IManagementAccountService
 {
     private readonly IAccountRepository _accountRepository;
     private readonly IPasswordService _passwordService;
+    private readonly IUnitOfWork _unitOfWork;
     private readonly ILogger<ManagementAccountService> _logger;
 
     /// <summary>Initializes a new instance of <see cref="ManagementAccountService"/> with the supplied dependencies.</summary>
     public ManagementAccountService(
         IAccountRepository accountRepository,
         IPasswordService passwordService,
+        IUnitOfWork unitOfWork,
         ILogger<ManagementAccountService> logger)
     {
         _accountRepository = accountRepository;
         _passwordService = passwordService;
+        _unitOfWork = unitOfWork;
         _logger = logger;
     }
 
@@ -90,22 +93,36 @@ public class ManagementAccountService : IManagementAccountService
     /// <inheritdoc />
     public async Task<ServiceResult> UpdateAccountAsync(AccountRequest request, string? newPassword, CancellationToken ct = default)
     {
+        // An admin-set password always forces the account to pick its own new one (meeting
+        // PasswordPolicy) at next login — see Account.AdminResetPassword. It must still meet the
+        // policy itself so there is no weak-password window before that forced change. Hash it up
+        // front, outside the transaction, so the row lock below isn't held across the (deliberately
+        // slow) BCrypt work.
+        string? newHashedPassword = null;
+        if (!string.IsNullOrEmpty(newPassword))
+        {
+            if (!PasswordPolicy.IsValid(newPassword))
+                return ServiceResult.Validation("Account.PasswordPolicy", PasswordPolicy.ViolationMessage);
+
+            newHashedPassword = _passwordService.HashPassword(newPassword);
+        }
+
+        await _unitOfWork.BeginAsync(ct);
         try
         {
-            Account? account = await FindByEmailAsync(request.Email ?? "", ct);
+            // FOR UPDATE: hold the row lock from read to commit so a concurrent self-service
+            // column-scoped write (profile avatar/timezone/password change) on the same account
+            // serializes behind this admin edit instead of being silently reverted by the full-row
+            // write below.
+            Account? account = await _accountRepository.FindByEmailForUpdateAsync(request.Email ?? "", ct);
             if (account == null)
-                return ServiceResult.NotFound("Account.NotFound", "Email address is wrong");
-
-            // An admin-set password always forces the account to pick its own new one (meeting
-            // PasswordPolicy) at next login — see Account.AdminResetPassword. It must still meet the
-            // policy itself so there is no weak-password window before that forced change.
-            if (!string.IsNullOrEmpty(newPassword))
             {
-                if (!PasswordPolicy.IsValid(newPassword))
-                    return ServiceResult.Validation("Account.PasswordPolicy", PasswordPolicy.ViolationMessage);
-
-                account.AdminResetPassword(_passwordService.HashPassword(newPassword));
+                await _unitOfWork.RollbackAsync(ct);
+                return ServiceResult.NotFound("Account.NotFound", "Email address is wrong");
             }
+
+            if (newHashedPassword != null)
+                account.AdminResetPassword(newHashedPassword);
 
             // The admin UI has no LoginAttempt input, so request.LoginAttempt is always the request
             // DTO's default (0) — pass the account's own current value instead, so AdminUpdate's
@@ -121,14 +138,19 @@ public class ManagementAccountService : IManagementAccountService
                 request.Deleted);
 
             if (updateResult.IsError)
+            {
+                await _unitOfWork.RollbackAsync(ct);
                 return ServiceResult.FromError(updateResult.FirstError);
+            }
 
             await _accountRepository.UpdateEntityAsync(account, ct);
+            await _unitOfWork.CommitAsync(ct);
             return ServiceResult.Ok();
         }
         catch (Exception e)
         {
             _logger.LogError(e, "Failed to update account for {Email}", request.Email);
+            await _unitOfWork.RollbackAsync(ct);
             return ServiceResult.Failure("ManagementAccount.UpdateFailed", "Input is invalid");
         }
     }
@@ -139,20 +161,29 @@ public class ManagementAccountService : IManagementAccountService
     /// <inheritdoc />
     public async Task<ServiceResult> DeleteAccountAsync(string email, CancellationToken ct = default)
     {
+        await _unitOfWork.BeginAsync(ct);
         try
         {
-            Account? account = await FindByEmailAsync(email, ct);
+            // FOR UPDATE, same reason as UpdateAccountAsync: SoftDelete is persisted as a full-row
+            // write, so the row must stay locked from read to commit or a concurrent self-service
+            // column-scoped change would be reverted.
+            Account? account = await _accountRepository.FindByEmailForUpdateAsync(email, ct);
             if (account == null)
+            {
+                await _unitOfWork.RollbackAsync(ct);
                 return ServiceResult.NotFound("Account.NotFound", "Fail to find the account by given email address");
+            }
 
             account.SoftDelete();
 
             await _accountRepository.UpdateEntityAsync(account, ct);
+            await _unitOfWork.CommitAsync(ct);
             return ServiceResult.Ok();
         }
         catch (Exception e)
         {
             _logger.LogError(e, "Failed to delete account for {Email}", email);
+            await _unitOfWork.RollbackAsync(ct);
             return ServiceResult.Failure("ManagementAccount.DeleteFailed", "Input is invalid");
         }
     }

@@ -89,7 +89,11 @@ public class AccountService : IAccountService
                 // Spend the same CPU as a real verification so "no such account" and "wrong
                 // password" take the same time — otherwise the response time enumerates valid emails.
                 _passwordService.VerifyDummy(password);
-                await _unitOfWork.RollbackAsync(ct);
+                // ...and issue an equivalent (0-row) column write + commit so this path's DB cost
+                // matches the wrong-password path below (which persists the failed-attempt counter),
+                // instead of returning early after a bare rollback.
+                _ = await _accountRepository.UpdateMessageAsync(email, null, DateTime.UtcNow, ct);
+                await _unitOfWork.CommitAsync(ct);
                 return LoginResult.Fail(genericLoginError);
             }
 
@@ -387,8 +391,8 @@ public class AccountService : IAccountService
             return ServiceResult.Fail("reset-password-invalid");
         }
 
-        Account? account = await FindByResetPasswordTokenAsync(rawToken, ct);
-        if (account == null || !GuidToken.IsTokenAlive(rawToken) || !account.EmailConfirmed)
+        Account? found = await FindByResetPasswordTokenAsync(rawToken, ct);
+        if (found == null || !GuidToken.IsTokenAlive(rawToken) || !found.EmailConfirmed)
             return ServiceResult.Fail("reset-password-invalid");
 
         // Enforce the complexity rule server-side, before hashing — Account.ResetPassword only sees the hash.
@@ -396,25 +400,44 @@ public class AccountService : IAccountService
             return ServiceResult.Validation("Account.PasswordPolicy", PasswordPolicy.ViolationMessage);
 
         string newHashedPassword = _passwordService.HashPassword(newPassword);
-        var resetResult = account.ResetPassword(rawToken, newHashedPassword);
-        if (resetResult.IsError)
-            return ServiceResult.Fail("reset-password-invalid");
 
-        // Unlock the account so the user can log in immediately after resetting their password.
-        account.Unlock();
-        account.SetMessage(EnumHelper.GetDescription(AccountMessage.SuccessToResetPassword));
-
+        await _unitOfWork.BeginAsync(ct);
         try
         {
+            // The lookup above was by token and unlocked. Re-read the row under FOR UPDATE before
+            // writing: this touches HashedPassword / SecurityStamp / Locked, so it must not run as a
+            // stale full-row overwrite that reverts a concurrent self-service change on the same
+            // account (the user may be signed in on another device).
+            Account? account = await _accountRepository.FindByEmailForUpdateAsync(found.Email.Value, ct);
+            if (account == null)
+            {
+                await _unitOfWork.RollbackAsync(ct);
+                return ServiceResult.Fail("reset-password-invalid");
+            }
+
+            // ResetPassword re-checks the stored token, so a concurrent reset that already consumed
+            // it between the lookup and this lock is rejected here (compare-and-swap).
+            var resetResult = account.ResetPassword(rawToken, newHashedPassword);
+            if (resetResult.IsError)
+            {
+                await _unitOfWork.RollbackAsync(ct);
+                return ServiceResult.Fail("reset-password-invalid");
+            }
+
+            // Unlock the account so the user can log in immediately after resetting their password.
+            account.Unlock();
+            account.SetMessage(EnumHelper.GetDescription(AccountMessage.SuccessToResetPassword));
+
             await _accountRepository.UpdateEntityAsync(account, ct);
+            await _unitOfWork.CommitAsync(ct);
+            return ServiceResult.Ok();
         }
         catch (Exception e)
         {
-            _logger.LogError(e, "Failed to reset password for {Email}", account.Email.Value);
+            _logger.LogError(e, "Failed to reset password for {Email}", found.Email.Value);
+            await _unitOfWork.RollbackAsync(ct);
             return ServiceResult.Failure("Account.ResetPasswordFailed", "Error occurred while processing about reset password");
         }
-
-        return ServiceResult.Ok();
     }
 
     private Task<Account?> FindByEmailAsync(string email, CancellationToken ct = default)

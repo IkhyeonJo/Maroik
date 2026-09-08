@@ -1,5 +1,4 @@
 using System.Diagnostics;
-using System.Net;
 using Maroik.Core.Contract.Interfaces;
 using Microsoft.Extensions.Logging;
 
@@ -99,9 +98,16 @@ public class FileClient(IHttpClientFactory httpClientFactory, ILogger<FileClient
             content.Add(new StringContent(correlationId), "correlationId");
 
             HttpResponseMessage response = await httpClient.PostAsync($"{fileStorageBaseUrl}/api/File/upload", content, ct);
-            _ = response.EnsureSuccessStatusCode();
 
-            return response.StatusCode == HttpStatusCode.OK;
+            // Any 2xx means the storage service accepted the file — don't treat a 201/204 as a
+            // failure (which would make the caller roll back over a file that was actually stored).
+            if (!response.IsSuccessStatusCode)
+            {
+                logger.LogWarning("File upload returned {StatusCode} for {FilePath}", (int)response.StatusCode, filePath);
+                return false;
+            }
+
+            return true;
         }
         catch (Exception ex)
         {

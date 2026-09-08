@@ -1,4 +1,5 @@
 using System.Globalization;
+using System.Text;
 using DocumentFormat.OpenXml;
 using DocumentFormat.OpenXml.Packaging;
 using DocumentFormat.OpenXml.Spreadsheet;
@@ -62,7 +63,9 @@ public class ExcelExportService : IExcelExportService
         Func<string, string> localize,
         string timeZoneIanaId)
     {
-        var currencyByProduct = assets.ToDictionary(a => a.ProductName ?? "", a => a.MonetaryUnit ?? "");
+        var currencyByProduct = assets
+            .GroupBy(a => a.ProductName ?? "")
+            .ToDictionary(g => g.Key, g => g.Last().MonetaryUnit ?? "");
         var ordered = items.OrderByDescending(x => x.Created).ThenByDescending(x => x.Updated).ToList();
 
         var headers = new[]
@@ -101,7 +104,9 @@ public class ExcelExportService : IExcelExportService
         Func<string, string> localize,
         string timeZoneIanaId)
     {
-        var currencyByProduct = assets.ToDictionary(a => a.ProductName ?? "", a => a.MonetaryUnit ?? "");
+        var currencyByProduct = assets
+            .GroupBy(a => a.ProductName ?? "")
+            .ToDictionary(g => g.Key, g => g.Last().MonetaryUnit ?? "");
         var ordered = items.OrderByDescending(x => x.Created).ThenByDescending(x => x.Updated).ToList();
 
         var headers = new[]
@@ -257,10 +262,12 @@ public class ExcelExportService : IExcelExportService
             .ThenByDescending(m => m.Created).ThenByDescending(m => m.Updated)
             .ToList();
 
+        // Deliberately excludes HashedPassword, RegistrationToken and ResetPasswordToken: a live
+        // reset/registration token in a downloadable spreadsheet is account-takeover-grade material,
+        // and the password hash has no place in a human-readable report.
         var headers = new[]
         {
             localize(nameof(AccountOutputViewModel.Email)),
-            localize(nameof(AccountOutputViewModel.HashedPassword)),
             localize(nameof(AccountOutputViewModel.Nickname)),
             localize(nameof(AccountOutputViewModel.AvatarImagePath)),
             localize(nameof(AccountOutputViewModel.Role)),
@@ -269,8 +276,6 @@ public class ExcelExportService : IExcelExportService
             localize(nameof(AccountOutputViewModel.LoginAttempt)),
             localize(nameof(AccountOutputViewModel.EmailConfirmed)),
             localize(nameof(AccountOutputViewModel.AgreedServiceTerms)),
-            localize(nameof(AccountOutputViewModel.RegistrationToken)),
-            localize(nameof(AccountOutputViewModel.ResetPasswordToken)),
             localize(nameof(AccountOutputViewModel.Created)),
             localize(nameof(AccountOutputViewModel.Updated)),
             localize(nameof(AccountOutputViewModel.Message)),
@@ -280,7 +285,6 @@ public class ExcelExportService : IExcelExportService
         var rows = ordered.Select(item => (IEnumerable<string>)
         [
             item.Email ?? "",
-            item.HashedPassword ?? "",
             item.Nickname ?? "",
             item.AvatarImagePath ?? "",
             item.Role ?? "",
@@ -289,8 +293,6 @@ public class ExcelExportService : IExcelExportService
             item.LoginAttempt.ToString(),
             item.EmailConfirmed.ToString(),
             item.AgreedServiceTerms.ToString(),
-            item.RegistrationToken ?? "",
-            item.ResetPasswordToken ?? "",
             item.Created.ToString(CultureInfo.InvariantCulture),
             item.Updated.ToString(CultureInfo.InvariantCulture),
             item.Message ?? "",
@@ -378,7 +380,29 @@ public class ExcelExportService : IExcelExportService
 
     private static Cell StringCell(string value) => new()
     {
-        CellValue = new CellValue(value),
+        CellValue = new CellValue(StripXmlInvalidChars(value)),
         DataType = CellValues.String
     };
+
+    /// <summary>
+    /// Removes characters that are illegal in XML 1.0 (C0 control characters other than tab/CR/LF,
+    /// plus U+FFFE/U+FFFF). User-entered fields such as Note/Content/Nickname can contain a stray
+    /// control byte from pasted text; left in, <see cref="Workbook.Save"/> throws or produces a
+    /// workbook Excel reports as corrupt, breaking the whole export over one row.
+    /// </summary>
+    private static string StripXmlInvalidChars(string value)
+    {
+        if (string.IsNullOrEmpty(value) || !value.Any(IsXmlInvalid))
+            return value ?? "";
+
+        var sb = new StringBuilder(value.Length);
+        foreach (char c in value)
+        {
+            if (!IsXmlInvalid(c)) sb.Append(c);
+        }
+        return sb.ToString();
+    }
+
+    private static bool IsXmlInvalid(char c) =>
+        (c < 0x20 && c != '\t' && c != '\n' && c != '\r') || c == '\uFFFE' || c == '\uFFFF';
 }

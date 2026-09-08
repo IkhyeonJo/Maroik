@@ -325,9 +325,18 @@ public class CalendarService : ICalendarService
         await _unitOfWork.BeginAsync(ct);
         try
         {
-            foreach (var shared in calendarSharedRequests.Select(req => CalendarShared.CreatePrivate(req.CalendarId).Update(req.User, req.Anonymous)))
+            // Upsert: a CalendarShared row may not exist yet for a calendar being shared for the
+            // first time (EnsureCalendarSharedAsync is not guaranteed to have run). UpdateEntityAsync
+            // throws when the row is missing, which previously failed the whole request.
+            HashSet<long> existingShareIds = [.. (await _calendarSharedRepository.GetAllAsync(ct)).Select(s => s.Id)];
+
+            foreach (CalendarSharedRequest req in calendarSharedRequests)
             {
-                await _calendarSharedRepository.UpdateEntityAsync(shared, ct);
+                CalendarShared shared = CalendarShared.CreatePrivate(req.CalendarId).Update(req.User, req.Anonymous);
+                if (existingShareIds.Contains(req.CalendarId))
+                    await _calendarSharedRepository.UpdateEntityAsync(shared, ct);
+                else
+                    await _calendarSharedRepository.CreateAsync(shared, ct);
             }
 
             List<OtherCalendar> allOtherCalendars = await _otherCalendarRepository.GetAllAsync(ct);

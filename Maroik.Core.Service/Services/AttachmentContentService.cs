@@ -125,7 +125,28 @@ public class AttachmentContentService : IAttachmentContentService
     public string SanitizeAndDecryptContent(string html)
     {
         string sanitized = _htmlSanitizer.Sanitize(html);
-        return _htmlParser.TransformImageAttributes(sanitized, alt => new HtmlImgPatch(NewAlt: _rsa.Decrypt(alt)));
+        return _htmlParser.TransformImageAttributes(sanitized, alt => new HtmlImgPatch(NewAlt: TryDecryptImageAlt(alt)));
+    }
+
+    /// <summary>
+    /// An <c>&lt;img&gt;</c>'s <c>alt</c> is normally the RSA-OAEP token this method round-trips back
+    /// to the real storage path. A hand-edited or forged post can carry an <c>alt</c> that is not a
+    /// valid token; <see cref="IRsaService.Decrypt"/> would then throw (FormatException /
+    /// CryptographicException) and turn the save into an unhandled 500. Leave such an attribute
+    /// untouched instead — the same guarded-decrypt shape the account-token flows already use.
+    /// </summary>
+    private string? TryDecryptImageAlt(string alt)
+    {
+        if (string.IsNullOrEmpty(alt)) return null;
+        try
+        {
+            return _rsa.Decrypt(alt);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Ignoring an image alt that is not a decryptable storage token");
+            return null;
+        }
     }
 
     /// <inheritdoc />

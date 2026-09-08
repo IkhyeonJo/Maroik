@@ -371,7 +371,11 @@ public class ExcelExportServiceTests
         var rows = ReadRows(_sut.CreateAccountExcel([], Localize, "UTC"));
 
         Assert.Equal("L:Email", rows[0][0]);
-        Assert.Equal("L:HashedPassword", rows[0][1]);
+        Assert.Equal("L:Nickname", rows[0][1]);
+        // Secrets (HashedPassword / RegistrationToken / ResetPasswordToken) are deliberately absent.
+        Assert.DoesNotContain("L:HashedPassword", rows[0]);
+        Assert.DoesNotContain("L:RegistrationToken", rows[0]);
+        Assert.DoesNotContain("L:ResetPasswordToken", rows[0]);
     }
 
     /// <summary>Create account excel orders by email then nickname ascending.</summary>
@@ -399,8 +403,8 @@ public class ExcelExportServiceTests
 
         var row = ReadRows(_sut.CreateAccountExcel(items, Identity, "Asia/Seoul"))[1];
 
-        Assert.Equal(created.ConvertTimeByTimeZoneIanaId("Asia/Seoul").ToString(CultureInfo.InvariantCulture), row[12]);
-        Assert.Contains("09:00:00", row[12]);
+        Assert.Equal(created.ConvertTimeByTimeZoneIanaId("Asia/Seoul").ToString(CultureInfo.InvariantCulture), row[9]);
+        Assert.Contains("09:00:00", row[9]);
     }
 
     /// <summary>Create account excel renders boolean and numeric fields as strings.</summary>
@@ -411,11 +415,11 @@ public class ExcelExportServiceTests
 
         var row = ReadRows(_sut.CreateAccountExcel(items, Identity, "UTC"))[1];
 
-        Assert.Equal("True", row[6]);  // Locked
-        Assert.Equal("5", row[7]);     // LoginAttempt
-        Assert.Equal("False", row[8]); // EmailConfirmed
-        Assert.Equal("True", row[9]);  // AgreedServiceTerms
-        Assert.Equal("True", row[15]); // Deleted
+        Assert.Equal("True", row[5]);  // Locked
+        Assert.Equal("5", row[6]);     // LoginAttempt
+        Assert.Equal("False", row[7]); // EmailConfirmed
+        Assert.Equal("True", row[8]);  // AgreedServiceTerms
+        Assert.Equal("True", row[12]); // Deleted
     }
 
     // ── CreateMenuExcel ───────────────────────────────────────────────────────

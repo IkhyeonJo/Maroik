@@ -69,7 +69,8 @@ public static class AccountBookViewModelMapper
             string timeZoneIanaId)
         {
             var currencyByProduct = assets
-                .ToDictionary(a => a.ProductName ?? "", a => a.MonetaryUnit);
+                .GroupBy(a => a.ProductName ?? "")
+                .ToDictionary(g => g.Key, g => g.Last().MonetaryUnit);
             return items.Select(i => i.ToDisplayViewModel(currencyByProduct, localize, timeZoneIanaId)).ToList();
         }
     }
@@ -108,7 +109,8 @@ public static class AccountBookViewModelMapper
             string timeZoneIanaId)
         {
             var currencyByProduct = assets
-                .ToDictionary(a => a.ProductName ?? "", a => a.MonetaryUnit);
+                .GroupBy(a => a.ProductName ?? "")
+                .ToDictionary(g => g.Key, g => g.Last().MonetaryUnit);
             return items.Select(i => i.ToDisplayViewModel(currencyByProduct, localize, timeZoneIanaId)).ToList();
         }
     }

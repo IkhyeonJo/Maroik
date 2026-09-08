@@ -711,14 +711,20 @@ public class CalendarServiceTests
         _unitOfWork.Verify(u => u.BeginAsync(It.IsAny<CancellationToken>()), Times.Never);
     }
 
-    /// <summary>Verifies that updating the sharing settings of a calendar the caller owns succeeds.</summary>
+    /// <summary>
+    /// Verifies that updating the sharing settings of a calendar the caller owns succeeds and, when a
+    /// <c>CalendarShared</c> row already exists for it, goes through the update path.
+    /// </summary>
     [Fact]
     public async Task UpdateCalendarSharedAsync_Succeeds_WhenCallerOwnsCalendar()
     {
         const string email = "admin-a@example.com";
         _calendarRepo.Setup(r => r.GetByAccountEmailAsync(email, It.IsAny<CancellationToken>()))
             .ReturnsAsync([MakeCalendar(id: 1, email: email)]);
+        _sharedRepo.Setup(r => r.GetAllAsync(It.IsAny<CancellationToken>()))
+            .ReturnsAsync([CalendarShared.Reconstitute(1, false, false)]);
         _sharedRepo.Setup(r => r.UpdateEntityAsync(It.IsAny<CalendarShared>(), It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
+        _sharedRepo.Setup(r => r.CreateAsync(It.IsAny<CalendarShared>(), It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
         _otherCalendarRepo.Setup(r => r.GetAllAsync(It.IsAny<CancellationToken>())).ReturnsAsync([]);
         var sut = CreateSut();
 
@@ -727,6 +733,32 @@ public class CalendarServiceTests
 
         Assert.True(result.Success);
         _sharedRepo.Verify(r => r.UpdateEntityAsync(It.IsAny<CalendarShared>(), It.IsAny<CancellationToken>()), Times.Once);
+        _sharedRepo.Verify(r => r.CreateAsync(It.IsAny<CalendarShared>(), It.IsAny<CancellationToken>()), Times.Never);
+        _unitOfWork.Verify(u => u.CommitAsync(It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    /// <summary>
+    /// Verifies that sharing a calendar the caller owns for which no <c>CalendarShared</c> row exists
+    /// yet inserts one instead of failing (UpdateEntityAsync throws on a missing row).
+    /// </summary>
+    [Fact]
+    public async Task UpdateCalendarSharedAsync_InsertsSharedRow_WhenNoneExistsYet()
+    {
+        const string email = "admin-a@example.com";
+        _calendarRepo.Setup(r => r.GetByAccountEmailAsync(email, It.IsAny<CancellationToken>()))
+            .ReturnsAsync([MakeCalendar(id: 1, email: email)]);
+        _sharedRepo.Setup(r => r.GetAllAsync(It.IsAny<CancellationToken>())).ReturnsAsync([]);
+        _sharedRepo.Setup(r => r.UpdateEntityAsync(It.IsAny<CalendarShared>(), It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
+        _sharedRepo.Setup(r => r.CreateAsync(It.IsAny<CalendarShared>(), It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
+        _otherCalendarRepo.Setup(r => r.GetAllAsync(It.IsAny<CancellationToken>())).ReturnsAsync([]);
+        var sut = CreateSut();
+
+        var requests = new List<CalendarSharedRequest> { new() { CalendarId = 1, User = true, Anonymous = false } };
+        ServiceResult result = await sut.UpdateCalendarSharedAsync(email, requests, TestContext.Current.CancellationToken);
+
+        Assert.True(result.Success);
+        _sharedRepo.Verify(r => r.CreateAsync(It.Is<CalendarShared>(s => s.Id == 1 && s.User), It.IsAny<CancellationToken>()), Times.Once);
+        _sharedRepo.Verify(r => r.UpdateEntityAsync(It.IsAny<CalendarShared>(), It.IsAny<CancellationToken>()), Times.Never);
         _unitOfWork.Verify(u => u.CommitAsync(It.IsAny<CancellationToken>()), Times.Once);
     }
 }

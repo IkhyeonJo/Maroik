@@ -24,6 +24,10 @@ public static class FixedSchedulePolicy
         bool unpunctuality)
     {
         if (unpunctuality) return true;
+
+        // Compare on whole calendar days, independent of the caller's time-of-day: a non-midnight
+        // "today" would otherwise flip the "noticed on the deposit day itself" result.
+        today = today.Date;
         try
         {
             var depositDate = new DateTime(today.Year, depositMonth, depositDay);
@@ -41,7 +45,7 @@ public static class FixedSchedulePolicy
     /// before <paramref name="today"/> (i.e. the schedule has expired).
     /// </summary>
     public static bool IsExpired(DateTime maturityDate, DateTime today)
-        => (maturityDate - today).TotalDays < 0;
+        => maturityDate.Date < today.Date;
 
     /// <summary>
     /// The highest valid deposit day for <paramref name="depositMonth"/> (1–12): 31 for 31-day

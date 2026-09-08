@@ -40,8 +40,17 @@ public class Pager
     /// <param name="pageSize">Number of records per page (default: 10).</param>
     public Pager(int totalItems, int page, int pageSize = 10)
     {
+        // Guard the raw inputs: pageSize <= 0 would throw from the decimal division below, and a
+        // negative totalItems has no meaning.
+        if (pageSize < 1) pageSize = 1;
+        if (totalItems < 0) totalItems = 0;
+
         int totalPages = (int)Math.Ceiling(totalItems / (decimal)pageSize);
-        int currentPage = page;
+
+        // Clamp the requested page into the real range. An out-of-range ?page= (0, negative, or far
+        // past the last page) would otherwise leave CurrentPage as a nonsense value and produce a
+        // broken / empty link window.
+        int currentPage = Math.Clamp(page, 1, Math.Max(totalPages, 1));
 
         // Build a window of ±2 pages around the current page
         int startPage = currentPage - 2;
