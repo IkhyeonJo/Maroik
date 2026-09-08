@@ -85,9 +85,13 @@ public class CalendarViewModelMapperTests
 
     // -- ToDisplayViewModel: timed events --------------------------------------
 
-    /// <summary>To display view model timed for grid end date is midnight of day after local end.</summary>
+    /// <summary>
+    /// A timed event's grid end is its real local end instant, NOT midnight of the next day —
+    /// the exclusive-end-at-midnight rule is an all-day convention only. Applying it to timed
+    /// events rendered every one as a block running to the following midnight.
+    /// </summary>
     [Fact]
-    public void ToDisplayViewModel_Timed_ForGrid_EndDateIsMidnightOfDayAfterLocalEnd()
+    public void ToDisplayViewModel_Timed_ForGrid_EndDateIsRealLocalEndInstant()
     {
         var evt = TimedEvent(
             new DateTime(2025, 6, 10, 9, 0, 0, DateTimeKind.Utc),
@@ -97,9 +101,29 @@ public class CalendarViewModelMapperTests
         var vm = evt.ToDisplayViewModel("UTC", "#3788d8");
 
         Assert.Equal(new DateTime(2025, 6, 10, 9, 0, 0), vm.StartDate);
-        Assert.Equal(new DateTime(2025, 6, 11, 0, 0, 0), vm.EndDate);
+        Assert.Equal(new DateTime(2025, 6, 10, 17, 30, 0), vm.EndDate);
         Assert.Equal("2025-06-10 09:00", vm.DisplayStartDate);
         Assert.Equal("2025-06-10 17:30", vm.DisplayEndDate);
+    }
+
+    /// <summary>
+    /// An all-day event is stored as midnight UTC standing in for a bare calendar date; it must
+    /// not be time-zone converted for display, or a viewer west of UTC sees the date a day early
+    /// (and every open/save cycle walks it back further).
+    /// </summary>
+    [Fact]
+    public void ToDisplayViewModel_AllDay_WestOfUtcViewer_DoesNotShiftDate()
+    {
+        var evt = AllDayEvent(
+            new DateTime(2026, 1, 15, 0, 0, 0, DateTimeKind.Utc),
+            new DateTime(2026, 1, 15, 0, 0, 0, DateTimeKind.Utc));
+
+        var vm = evt.ToDisplayViewModel("America/New_York", "#3788d8");
+
+        Assert.Equal("2026-01-15", vm.DisplayStartDate);
+        Assert.Equal("2026-01-15", vm.DisplayEndDate);
+        Assert.Equal(new DateTime(2026, 1, 15), vm.StartDate);
+        Assert.Equal(new DateTime(2026, 1, 16), vm.EndDate); // exclusive end, no tz shift
     }
 
     /// <summary>To display view model timed not for grid returns before setting grid dates.</summary>

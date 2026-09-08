@@ -385,22 +385,59 @@ public class ExcelExportService : IExcelExportService
     };
 
     /// <summary>
-    /// Removes characters that are illegal in XML 1.0 (C0 control characters other than tab/CR/LF,
-    /// plus U+FFFE/U+FFFF). User-entered fields such as Note/Content/Nickname can contain a stray
-    /// control byte from pasted text; left in, <see cref="Workbook.Save"/> throws or produces a
-    /// workbook Excel reports as corrupt, breaking the whole export over one row.
+    /// Removes characters that are illegal in XML 1.0: C0 control characters other than tab/CR/LF,
+    /// U+FFFE/U+FFFF, and <em>unpaired</em> UTF-16 surrogate code units (a lone high or low
+    /// surrogate \u2014 e.g. from a truncated emoji or bad clipboard data). User-entered fields such as
+    /// Note/Content/Nickname can carry any of these from pasted text; left in, the OpenXml
+    /// <see cref="System.Xml.XmlWriter"/> throws during <see cref="Workbook.Save"/>, breaking the
+    /// whole export over one row. Valid surrogate pairs (real astral-plane characters) are kept.
     /// </summary>
     private static string StripXmlInvalidChars(string value)
     {
-        if (string.IsNullOrEmpty(value) || !value.Any(IsXmlInvalid))
+        if (string.IsNullOrEmpty(value) || !ContainsXmlInvalid(value))
             return value ?? "";
 
         var sb = new StringBuilder(value.Length);
-        foreach (char c in value)
+        for (int i = 0; i < value.Length; i++)
         {
-            if (!IsXmlInvalid(c)) sb.Append(c);
+            char c = value[i];
+
+            if (char.IsHighSurrogate(c))
+            {
+                if (i + 1 < value.Length && char.IsLowSurrogate(value[i + 1]))
+                {
+                    sb.Append(c);
+                    sb.Append(value[i + 1]);
+                    i++;
+                }
+                // else: drop the unpaired high surrogate
+                continue;
+            }
+
+            if (char.IsLowSurrogate(c))
+                continue; // unpaired low surrogate
+
+            if (!IsXmlInvalid(c))
+                sb.Append(c);
         }
         return sb.ToString();
+    }
+
+    /// <summary>True when <paramref name="value"/> holds any char <see cref="StripXmlInvalidChars"/> would remove.</summary>
+    private static bool ContainsXmlInvalid(string value)
+    {
+        for (int i = 0; i < value.Length; i++)
+        {
+            char c = value[i];
+            if (char.IsHighSurrogate(c))
+            {
+                if (i + 1 < value.Length && char.IsLowSurrogate(value[i + 1])) { i++; continue; }
+                return true; // unpaired high surrogate
+            }
+            if (char.IsLowSurrogate(c) || IsXmlInvalid(c))
+                return true;
+        }
+        return false;
     }
 
     private static bool IsXmlInvalid(char c) =>

@@ -158,6 +158,23 @@ public class DateTimeExtensionsTests
         Assert.Equal(original, result);
     }
 
+    /// <summary>
+    /// A wall-clock time inside the spring-forward DST gap does not exist; it must be rolled
+    /// forward past the skipped hour, not persisted verbatim as if it were already UTC. In
+    /// America/New_York on 2026-03-08 the clocks jump 02:00 → 03:00, so 02:30 local is really
+    /// 03:30 EDT = 07:30 UTC.
+    /// </summary>
+    [Fact]
+    public void ConvertToUtcByTimeZoneIanaId_RollsForward_ForDstGapLocalTime()
+    {
+        var gap = new DateTime(2026, 3, 8, 2, 30, 0, DateTimeKind.Unspecified);
+
+        DateTime result = gap.ConvertToUtcByTimeZoneIanaId("America/New_York");
+
+        Assert.Equal(new DateTime(2026, 3, 8, 7, 30, 0), result);
+        Assert.NotEqual(gap, result); // not the silently-passed-through wall-clock value
+    }
+
     // -- ToTimeZoneStandardName ---------------------------------------------------
 
     /// <summary>Verifies that <c>ToTimeZoneStandardName</c> returns the standard display name for a valid IANA id.</summary>

@@ -221,11 +221,17 @@ public class AccountService : IAccountService
         }
 
         // Account is fully confirmed: mark it as already created and return a failure so the user knows.
+        // This runs off an un-locked FindByEmailAsync read against another user's row (the caller is
+        // unauthenticated), so it must NOT go through the full-row UpdateEntityAsync — that would
+        // revert a concurrent self-service change (e.g. a password + SecurityStamp rotation) on the
+        // victim's account from the stale snapshot. Column-scoped writes only, like every other
+        // Account write path.
         try
         {
-            existing.SetMessage(EnumHelper.GetDescription(AccountMessage.UserAlreadyCreated));
             existing.AcceptServiceTerms();
-            await _accountRepository.UpdateEntityAsync(existing, ct);
+            existing.SetMessage(EnumHelper.GetDescription(AccountMessage.UserAlreadyCreated));
+            await _accountRepository.UpdateAgreedServiceTermsAsync(existing.Email.Value, existing.AgreedServiceTerms, existing.Updated, ct);
+            await _accountRepository.UpdateMessageAsync(existing.Email.Value, existing.Message, existing.Updated, ct);
         }
         catch (Exception e)
         {
@@ -256,11 +262,13 @@ public class AccountService : IAccountService
                 setVerifyEmailMessageOnSuccess: true, repeat: true, ct);
         }
 
-        // Email is already confirmed: inform the caller the account is fully created.
+        // Email is already confirmed: inform the caller the account is fully created. Column-scoped
+        // write (not full-row UpdateEntityAsync) — this path runs off an un-locked read and must not
+        // clobber a concurrent self-service change on the same row.
         try
         {
             account.SetMessage(EnumHelper.GetDescription(AccountMessage.UserAlreadyCreated));
-            await _accountRepository.UpdateEntityAsync(account, ct);
+            await _accountRepository.UpdateMessageAsync(account.Email.Value, account.Message, account.Updated, ct);
         }
         catch (Exception e)
         {
@@ -302,9 +310,11 @@ public class AccountService : IAccountService
                 return new ConfirmEmailResult { InvalidToken = true, AccountCreated = true };
             }
 
-            // Email was already confirmed by a previous request.
+            // Email was already confirmed by a previous request. Column-scoped write (not full-row
+            // UpdateEntityAsync): this runs off an un-locked token lookup and must not overwrite a
+            // concurrent self-service change on the same row.
             account.SetMessage(EnumHelper.GetDescription(AccountMessage.UserAlreadyCreated));
-            try { await _accountRepository.UpdateEntityAsync(account, ct); }
+            try { await _accountRepository.UpdateMessageAsync(account.Email.Value, account.Message, account.Updated, ct); }
             catch (Exception e) { _logger.LogError(e, "Failed to update account status for {Email}", account.Email.Value); }
             return new ConfirmEmailResult { InvalidToken = false, AccountCreated = false };
         }
@@ -332,9 +342,23 @@ public class AccountService : IAccountService
     {
         Account? account = await FindByEmailAsync(email, ct);
 
-        // Silently succeed even when the email is unknown to avoid user enumeration attacks.
+        // Silently succeed even when the email is unknown / unconfirmed to avoid user enumeration.
+        // The response body is already identical, but the success path below spends a token
+        // generation, an RSA encrypt and two column writes that an early `return true` would skip —
+        // a measurable timing oracle for "is this a registered, confirmed address?". Spend the
+        // equivalent work here first, mirroring LoginAsync's VerifyDummy + dummy-write hardening.
+        // (The async mail publish on the success path is the only residual asymmetry, the same
+        // trade-off LoginAsync accepts.)
         if (account == null || !account.EmailConfirmed)
+        {
+            try
+            {
+                _ = _rsa.Encrypt(GuidToken.Generate());
+                _ = await _accountRepository.UpdateResetPasswordTokenAsync(email, null, DateTime.UtcNow, ct);
+            }
+            catch (Exception e) { _logger.LogWarning(e, "ForgotPassword equalization failed for {Email}", email); }
             return true;
+        }
 
         string resetPasswordToken = GuidToken.Generate();
 
@@ -469,6 +493,24 @@ public class AccountService : IAccountService
         Account account, EmailTemplate emailTemplate,
         bool setVerifyEmailMessageOnSuccess, bool repeat, CancellationToken ct)
     {
+        // Persist the (possibly just-regenerated) registration token BEFORE the mail goes out, so a
+        // link that reaches the user always corresponds to a token FindByRegistrationTokenAsync can
+        // match. Emailing first and persisting after — inside a swallow-and-log catch — can queue a
+        // mail carrying a token the database never stored, leaving the account permanently
+        // un-confirmable. Same persist-first rule ForgotPasswordAsync was restructured to follow.
+        // (Brand-new-account callers already persisted it via CreateAsync; this write is then a
+        // harmless idempotent re-set of the same value.)
+        try
+        {
+            await _accountRepository.UpdateRegistrationTokenAsync(
+                account.Email.Value, account.RegistrationToken, account.Updated, ct);
+        }
+        catch (Exception e)
+        {
+            _logger.LogError(e, "Failed to persist registration token for {Email}", account.Email.Value);
+            return RegisterResult.Fail("Error occurred while processing about account status");
+        }
+
         string body = _mailClient.GetMailConfirmationBody(_rsa.Encrypt(account.RegistrationToken!), emailTemplate.Title, emailTemplate.Content0, emailTemplate.Content1, _settings.Value.DomainName ?? "");
         bool published = await PublishMailAsync(account.Email.Value, emailTemplate.Subject, body, ct);
 
@@ -477,7 +519,7 @@ public class AccountService : IAccountService
             try
             {
                 account.SetMessage(EnumHelper.GetDescription(AccountMessage.FailToMailSent));
-                await _accountRepository.UpdateEntityAsync(account, ct);
+                await _accountRepository.UpdateMessageAsync(account.Email.Value, account.Message, account.Updated, ct);
             }
             catch (Exception e) { _logger.LogWarning(e, "Failed to update account message after mail send failure for {Email}", account.Email.Value); }
             return RegisterResult.Fail("Error occurred while processing about sending account authentication mail");
@@ -488,7 +530,7 @@ public class AccountService : IAccountService
             try
             {
                 account.SetMessage(EnumHelper.GetDescription(AccountMessage.VerifyEmail));
-                await _accountRepository.UpdateEntityAsync(account, ct);
+                await _accountRepository.UpdateMessageAsync(account.Email.Value, account.Message, account.Updated, ct);
             }
             catch (Exception e)
             {

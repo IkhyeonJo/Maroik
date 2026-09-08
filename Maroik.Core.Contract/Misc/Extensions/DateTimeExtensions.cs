@@ -27,9 +27,11 @@ public static class DateTimeExtensions
                 TimeZoneInfo targetZone = TimeZoneInfo.FindSystemTimeZoneById(timeZoneIanaId);
                 return TimeZoneInfo.ConvertTimeFromUtc(DateTime.SpecifyKind(value, DateTimeKind.Utc), targetZone);
             }
-            catch
+            catch (Exception e) when (e is TimeZoneNotFoundException or InvalidTimeZoneException)
             {
-                // Return the original value if the IANA ID is unrecognized or conversion fails
+                // Unrecognized / corrupt zone id: fall back to the value unchanged (documented, and
+                // relied on by display paths). A null id or any other unexpected failure is no
+                // longer silently swallowed — it propagates so the real bug surfaces.
                 return value;
             }
         }
@@ -47,7 +49,9 @@ public static class DateTimeExtensions
         /// <summary>
         /// Converts a local (<see cref="DateTimeKind.Unspecified"/>) <see cref="DateTime"/> value to UTC,
         /// treating it as wall-clock time in the time zone specified by the IANA ID.
-        /// Returns the original value unchanged if the time-zone ID is invalid or the conversion fails.
+        /// Returns the original value unchanged only if the time-zone ID is unrecognized. A wall-clock
+        /// time that falls in the zone's spring-forward DST gap is rolled forward past the gap rather
+        /// than persisted verbatim as if it were already UTC.
         /// The inverse of <see cref="ConvertTimeByTimeZoneIanaId"/>.
         /// </summary>
         /// <param name="timeZoneIanaId">A valid IANA time-zone ID (e.g. "Asia/Seoul", "America/New_York").</param>
@@ -56,11 +60,21 @@ public static class DateTimeExtensions
             try
             {
                 TimeZoneInfo sourceZone = TimeZoneInfo.FindSystemTimeZoneById(timeZoneIanaId);
-                return TimeZoneInfo.ConvertTimeToUtc(DateTime.SpecifyKind(value, DateTimeKind.Unspecified), sourceZone);
+                DateTime local = DateTime.SpecifyKind(value, DateTimeKind.Unspecified);
+
+                // A wall-clock time inside the DST gap does not exist in this zone;
+                // TimeZoneInfo.ConvertTimeToUtc would throw and the old bare catch then persisted
+                // the wall-clock value AS IF it were UTC (event shows hours off for every viewer).
+                // Advance past the skipped hour instead (DST deltas are 1h in every zone in use).
+                if (sourceZone.IsInvalidTime(local))
+                    local = local.AddHours(1);
+
+                return TimeZoneInfo.ConvertTimeToUtc(local, sourceZone);
             }
-            catch
+            catch (Exception e) when (e is TimeZoneNotFoundException or InvalidTimeZoneException)
             {
-                // Return the original value if the IANA ID is unrecognized or conversion fails
+                // Unrecognized / corrupt zone id only. A null id or any other unexpected failure
+                // now propagates instead of silently storing wall-clock time as UTC.
                 return value;
             }
         }

@@ -85,6 +85,12 @@ public class UnitOfWork : IUnitOfWork
         {
             await _transaction.DisposeAsync();
             _transaction = null;
+            // Discard every entity the aborted unit of work left tracked. Since GenericRepository
+            // defers its writes while a transaction is open, a rolled-back UpdateEntityAsync /
+            // CreateAsync otherwise leaves a Modified/Added entry on the request-scoped DbContext
+            // that the next SaveChanges (e.g. a second Begin→Commit cycle in the same request —
+            // IncomeService/ExpenditureService adjust-then-fail paths) would silently persist.
+            _context.ChangeTracker.Clear();
         }
     }
 
@@ -100,6 +106,9 @@ public class UnitOfWork : IUnitOfWork
             catch { /* Ignore if the transaction has already been rolled back or committed */ }
             await _transaction.DisposeAsync();
             _transaction = null;
+            // Same reason as RollbackAsync: drop any deferred writes so they cannot be flushed by
+            // a later SaveChanges on the same scoped context.
+            _context.ChangeTracker.Clear();
         }
         GC.SuppressFinalize(this);
     }

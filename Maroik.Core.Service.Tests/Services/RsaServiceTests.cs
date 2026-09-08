@@ -110,6 +110,58 @@ public class RsaServiceTests
         Assert.Equal(plaintext, recovered);
     }
 
+    /// <summary>
+    /// Regression: ciphertext produced under the old RsaAlgorithm=Rsa (SHA-1 OAEP) config must
+    /// still decrypt after the service moved its own output to SHA-256 — reset/confirm links in
+    /// inboxes and, more importantly, file-path ciphertext embedded in historical stored HTML
+    /// (which never expires) would otherwise be permanently unreadable.
+    /// </summary>
+    [Fact]
+    public void Decrypt_RecoversCiphertext_ProducedWithLegacySha1Oaep()
+    {
+        const string plaintext = "legacy-sha1-oaep-blob";
+
+        using var rsa = RSA.Create(2048);
+        string privateKey = Convert.ToBase64String(rsa.ExportRSAPrivateKey());
+        string publicKey = Convert.ToBase64String(rsa.ExportSubjectPublicKeyInfo());
+
+        // Encrypt exactly the way the old SHA-1 code path did.
+        string legacyCipher = Convert.ToBase64String(
+            rsa.Encrypt(System.Text.Encoding.UTF8.GetBytes(plaintext), RSAEncryptionPadding.CreateOaep(HashAlgorithmName.SHA1)));
+
+        var sut = new RsaService(Options.Create(new ServerSetting
+        {
+            RsaAlgorithm = RsaType.Rsa2,
+            RsaPrivateKey = privateKey,
+            RsaPublicKey = publicKey
+        }));
+
+        Assert.Equal(plaintext, sut.Decrypt(legacyCipher));
+    }
+
+    /// <summary>Verifies that <c>Verify</c> accepts a signature made with the legacy SHA-1 hash.</summary>
+    [Fact]
+    public void Verify_AcceptsSignature_MadeWithLegacySha1()
+    {
+        const string data = "legacy-sha1-signed";
+
+        using var rsa = RSA.Create(2048);
+        string privateKey = Convert.ToBase64String(rsa.ExportRSAPrivateKey());
+        string publicKey = Convert.ToBase64String(rsa.ExportSubjectPublicKeyInfo());
+
+        string legacySignature = Convert.ToBase64String(
+            rsa.SignData(System.Text.Encoding.UTF8.GetBytes(data), HashAlgorithmName.SHA1, RSASignaturePadding.Pkcs1));
+
+        var sut = new RsaService(Options.Create(new ServerSetting
+        {
+            RsaAlgorithm = RsaType.Rsa2,
+            RsaPrivateKey = privateKey,
+            RsaPublicKey = publicKey
+        }));
+
+        Assert.True(sut.Verify(data, legacySignature));
+    }
+
     /// <summary>Verifies that <c>Decrypt</c> throws when ciphertext is invalid.</summary>
     [Fact]
     public void Decrypt_Throws_WhenCiphertextIsInvalid()

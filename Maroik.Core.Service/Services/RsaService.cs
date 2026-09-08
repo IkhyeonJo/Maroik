@@ -27,12 +27,20 @@ public class RsaService : IRsaService
     private readonly byte[]? _publicKeyDer;
 
     /// <summary>
-    /// Hash used for OAEP padding and PKCS#1 signatures. Always SHA-256: SHA-1 is collision-broken
-    /// (fatal for signatures) and needlessly weak for OAEP. The legacy <see cref="RsaType.Rsa"/>
-    /// config value (which used to select SHA-1) is accepted but ignored — the tokens this service
-    /// round-trips are short-lived (24 h TTL), so nothing depends on the old hash.
+    /// Hash used for OAEP padding and PKCS#1 signatures on everything this service <b>produces</b>.
+    /// Always SHA-256: SHA-1 is collision-broken (fatal for signatures) and needlessly weak for OAEP.
     /// </summary>
     private static readonly HashAlgorithmName _hashAlgorithmName = HashAlgorithmName.SHA256;
+
+    /// <summary>
+    /// Legacy hash the old config value <see cref="RsaType.Rsa"/> selected. Ciphertext / signatures
+    /// produced under it are not all short-lived: besides the 24 h reset/confirm tokens, the same
+    /// <see cref="Encrypt"/>/<see cref="Decrypt"/> pair protects storage-path ciphertext embedded in
+    /// historical Board/Forum/Calendar HTML content, which never expires. <see cref="Decrypt"/> and
+    /// <see cref="Verify"/> therefore fall back to it so a deployment migrating off the old config
+    /// can still read everything it wrote; nothing new is ever produced with it.
+    /// </summary>
+    private static readonly HashAlgorithmName _legacyHashAlgorithmName = HashAlgorithmName.SHA1;
 
     /// <summary>Initializes a new instance of <see cref="RsaService"/> with the supplied dependencies.</summary>
     public RsaService(IOptions<ServerSetting> settings)
@@ -76,8 +84,16 @@ public class RsaService : IRsaService
     public bool Verify(string data, string sign)
     {
         using RSA? rsa = CreatePublicKeyRsa();
-        return rsa?.VerifyData(
-            Encoding.UTF8.GetBytes(data), Convert.FromBase64String(sign), _hashAlgorithmName, RSASignaturePadding.Pkcs1) ?? false;
+        if (rsa == null)
+            return false;
+
+        byte[] dataBytes = Encoding.UTF8.GetBytes(data);
+        byte[] signBytes = Convert.FromBase64String(sign);
+
+        // SHA-256 first (everything Sign now produces); SHA-1 fallback for signatures made under the
+        // old RsaAlgorithm=Rsa config.
+        return rsa.VerifyData(dataBytes, signBytes, _hashAlgorithmName, RSASignaturePadding.Pkcs1)
+            || rsa.VerifyData(dataBytes, signBytes, _legacyHashAlgorithmName, RSASignaturePadding.Pkcs1);
     }
 
     /// <inheritdoc />
@@ -88,9 +104,22 @@ public class RsaService : IRsaService
         // which is the case here since this decrypts attacker-suppliable email-confirmation/
         // password-reset tokens.
         using RSA? rsa = CreatePrivateKeyRsa();
-        return rsa == null
-            ? throw new InvalidOperationException("RSA private key is not configured.")
-            : Encoding.UTF8.GetString(rsa.Decrypt(Convert.FromBase64String(cipherText), RSAEncryptionPadding.CreateOaep(_hashAlgorithmName)));
+        if (rsa == null)
+            throw new InvalidOperationException("RSA private key is not configured.");
+
+        byte[] cipherBytes = Convert.FromBase64String(cipherText);
+        try
+        {
+            return Encoding.UTF8.GetString(rsa.Decrypt(cipherBytes, RSAEncryptionPadding.CreateOaep(_hashAlgorithmName)));
+        }
+        catch (CryptographicException)
+        {
+            // Ciphertext produced under the old RsaAlgorithm=Rsa (SHA-1 OAEP) config. Retry once
+            // with SHA-1 so reset/confirm links already in inboxes AND file-path ciphertext stored
+            // inside historical HTML content stay decryptable after the move to SHA-256. A genuinely
+            // bad ciphertext still throws here (both attempts fail).
+            return Encoding.UTF8.GetString(rsa.Decrypt(cipherBytes, RSAEncryptionPadding.CreateOaep(_legacyHashAlgorithmName)));
+        }
     }
 
     /// <inheritdoc />

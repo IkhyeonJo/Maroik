@@ -47,13 +47,18 @@ public static class CalendarViewModelMapper
 
             if (calendarEvent.AllDay)
             {
-                DateTime localStart = calendarEvent.StartDate.ConvertTimeByTimeZoneIanaId(userTimeZoneIanaId);
-                DateTime localEnd = calendarEvent.EndDate.ConvertTimeByTimeZoneIanaId(userTimeZoneIanaId);
+                // An all-day event is stored as midnight UTC standing in for a bare calendar date
+                // (see ToCalendarEventRequest) — it carries no time-of-day, so it must NOT be
+                // time-zone converted. Converting it shifts the date a day earlier for any viewer
+                // west of UTC, and because the edit form is pre-filled from these values every
+                // open/save cycle walks the event one more day back.
+                DateTime start = DateTime.SpecifyKind(calendarEvent.StartDate, DateTimeKind.Unspecified);
+                DateTime end = DateTime.SpecifyKind(calendarEvent.EndDate, DateTimeKind.Unspecified);
 
                 item.StartDateTimeZoneIanaId = userTimeZoneIanaId;
                 item.EndDateTimeZoneIanaId = userTimeZoneIanaId;
-                item.DisplayStartDate = localStart.ToString("yyyy-MM-dd");
-                item.DisplayEndDate = localEnd.ToString("yyyy-MM-dd");
+                item.DisplayStartDate = start.ToString("yyyy-MM-dd");
+                item.DisplayEndDate = end.ToString("yyyy-MM-dd");
                 item.DisplayStartDateTimeZone = "";
                 item.DisplayEndDateTimeZone = "";
 
@@ -62,9 +67,11 @@ public static class CalendarViewModelMapper
                     return item;
                 }
 
-                item.StartDate = localStart;
-                DateTime nextDay = localEnd.AddDays(1);
-                item.EndDate = new DateTime(nextDay.Year, nextDay.Month, nextDay.Day, 0, 0, 0, nextDay.Kind);
+                // FullCalendar treats an all-day event's end as exclusive, so the grid end is
+                // midnight of the day after the stored (inclusive) end date. This convention is
+                // only correct for all-day events.
+                item.StartDate = start.Date;
+                item.EndDate = end.Date.AddDays(1);
             }
             else
             {
@@ -86,9 +93,11 @@ public static class CalendarViewModelMapper
                     return item;
                 }
 
+                // A timed event keeps its real local start and end instants. The
+                // exclusive-end-at-next-midnight rule above is an all-day convention only — applied
+                // here it rendered every timed event as a block running to the following midnight.
                 item.StartDate = localStart;
-                DateTime nextDay = localEnd.AddDays(1);
-                item.EndDate = new DateTime(nextDay.Year, nextDay.Month, nextDay.Day, 0, 0, 0, nextDay.Kind);
+                item.EndDate = localEnd;
             }
 
             return item;

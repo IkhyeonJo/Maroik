@@ -479,4 +479,39 @@ public class ExcelExportServiceTests
         Assert.Equal("2", rows[2][0]);
         Assert.Equal("1", rows[3][0]);
     }
+
+    // ── XML-invalid character stripping ──────────────────────────────────────
+
+    /// <summary>
+    /// A field carrying an unpaired UTF-16 surrogate (truncated emoji / bad clipboard data) must
+    /// not abort the whole export: the surrogate is stripped, a valid surrogate pair on the same
+    /// row is kept, and Workbook.Save succeeds.
+    /// </summary>
+    [Fact]
+    public void CreateAssetExcel_StripsUnpairedSurrogate_AndKeepsValidPair_WithoutFailingTheExport()
+    {
+        string loneHigh = "before\uD83Dafter";     // high surrogate with no low following
+        string loneLow = "x\uDE00y";               // low surrogate with no high preceding
+        AssetResponse[] items =
+        [
+            new() { ProductName = "A", Item = "i", Amount = 1m, Note = loneHigh },
+            new() { ProductName = "B", Item = "i", Amount = 1m, Note = loneLow + " ok 😀" }
+        ];
+
+        var rows = ReadRows(_sut.CreateAssetExcel(items, Identity, "UTC"));
+
+        Assert.Equal("beforeafter", rows[1][6]);
+        Assert.Equal("xy ok 😀", rows[2][6]); // pair survives, lone low stripped
+    }
+
+    /// <summary>A stray C0 control byte is stripped rather than corrupting the workbook.</summary>
+    [Fact]
+    public void CreateAssetExcel_StripsC0ControlChar()
+    {
+        AssetResponse[] items = [new() { ProductName = "A", Item = "i", Amount = 1m, Note = "abcd" }];
+
+        var row = ReadRows(_sut.CreateAssetExcel(items, Identity, "UTC"))[1];
+
+        Assert.Equal("abcd", row[6]);
+    }
 }

@@ -163,6 +163,26 @@ public class AccountRepository(ApplicationDbContext context)
     }
 
     /// <inheritdoc />
+    public Task<int> UpdateRegistrationTokenAsync(string email, string? registrationToken, DateTime updated, CancellationToken ct = default)
+    {
+        string normalizedEmail = email.ToLowerInvariant();
+        return Set.Where(e => e.Email == normalizedEmail)
+            .ExecuteUpdateAsync(s => s
+                .SetProperty(e => e.RegistrationToken, registrationToken)
+                .SetProperty(e => e.Updated, updated), ct);
+    }
+
+    /// <inheritdoc />
+    public Task<int> UpdateAgreedServiceTermsAsync(string email, bool agreedServiceTerms, DateTime updated, CancellationToken ct = default)
+    {
+        string normalizedEmail = email.ToLowerInvariant();
+        return Set.Where(e => e.Email == normalizedEmail)
+            .ExecuteUpdateAsync(s => s
+                .SetProperty(e => e.AgreedServiceTerms, agreedServiceTerms)
+                .SetProperty(e => e.Updated, updated), ct);
+    }
+
+    /// <inheritdoc />
     public Task<int> UpdateMessageAsync(string email, string? message, DateTime updated, CancellationToken ct = default)
     {
         string normalizedEmail = email.ToLowerInvariant();

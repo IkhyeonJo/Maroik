@@ -184,7 +184,12 @@ public class BoardService : IBoardService
         await _unitOfWork.BeginAsync(ct);
         try
         {
-            Board? board = await _boardRepository.FindActiveByIdAsync(request.Id, ct);
+            // Row-lock the post for the rest of the transaction. The subsequent UpdateEntityAsync
+            // rewrites every column from this snapshot, so without the lock a concurrent
+            // IncrementViewAsync (or an admin Noticed/Locked toggle) committing between this read
+            // and the commit would be silently overwritten — the same full-row-overwrite race the
+            // Account column-scoped writes were introduced to fix.
+            Board? board = await _boardRepository.FindActiveByIdForUpdateAsync(request.Id, ct);
 
             // A caller always states the type it expects to edit (see WriteCommentAsync's
             // requiredType for the same pattern); without this check a post owned by the same
@@ -239,27 +244,42 @@ public class BoardService : IBoardService
     /// <inheritdoc />
     public async Task<ServiceResult> DeleteBoardAsync(long boardId, string boardType, string requesterNickname, bool isAdmin, CancellationToken ct = default)
     {
+        await _unitOfWork.BeginAsync(ct);
         try
         {
-            Board? board = await _boardRepository.FindActiveByIdAsync(boardId, ct);
+            // Row-lock the post: SoftDelete goes out through the full-row UpdateEntityAsync, so a
+            // concurrent IncrementViewAsync / admin toggle committing between the read and the
+            // commit would otherwise be lost to this stale snapshot.
+            Board? board = await _boardRepository.FindActiveByIdForUpdateAsync(boardId, ct);
 
             if (board == null || board.Deleted || board.Type != boardType)
+            {
+                await _unitOfWork.RollbackAsync(ct);
                 return ServiceResult.NotFound("Board.NotFound", "Input is invalid");
+            }
 
             // Admins may delete any post; non-admins may only delete their own.
             if (!board.CanBeDeletedBy(requesterNickname, isAdmin))
+            {
+                await _unitOfWork.RollbackAsync(ct);
                 return ServiceResult.Fail("You do not have permission to delete.");
+            }
 
             var deleteResult = board.SoftDelete();
             if (deleteResult.IsError)
+            {
+                await _unitOfWork.RollbackAsync(ct);
                 return ServiceResult.FromError(deleteResult.FirstError);
+            }
 
             await _boardRepository.UpdateEntityAsync(board, ct);
+            await _unitOfWork.CommitAsync(ct);
             return ServiceResult.Ok();
         }
         catch (Exception e)
         {
             _logger.LogError(e, "Failed to delete board post {BoardId}", boardId);
+            await _unitOfWork.RollbackAsync(ct);
             return ServiceResult.Failure("Board.DeleteFailed", "Input is invalid");
         }
     }

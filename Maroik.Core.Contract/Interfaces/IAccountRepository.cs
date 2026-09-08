@@ -54,6 +54,12 @@ public interface IAccountRepository : IGenericRepository<Account>
     /// <summary>Writes only <c>ResetPasswordToken</c> and <c>Updated</c>.</summary>
     Task<int> UpdateResetPasswordTokenAsync(string email, string? resetPasswordToken, DateTime updated, CancellationToken ct = default);
 
+    /// <summary>Writes only <c>RegistrationToken</c> and <c>Updated</c>.</summary>
+    Task<int> UpdateRegistrationTokenAsync(string email, string? registrationToken, DateTime updated, CancellationToken ct = default);
+
+    /// <summary>Writes only <c>AgreedServiceTerms</c> and <c>Updated</c>.</summary>
+    Task<int> UpdateAgreedServiceTermsAsync(string email, bool agreedServiceTerms, DateTime updated, CancellationToken ct = default);
+
     /// <summary>Writes only <c>Message</c> and <c>Updated</c>.</summary>
     Task<int> UpdateMessageAsync(string email, string? message, DateTime updated, CancellationToken ct = default);
 }
