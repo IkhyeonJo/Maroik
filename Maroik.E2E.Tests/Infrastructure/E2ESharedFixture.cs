@@ -15,9 +15,11 @@ public sealed class E2ESharedFixture : IAsyncLifetime
     private readonly E2EPostgresContainer _database = new();
     private PlaywrightWebApplicationFactory? _factory;
     private IPlaywright? _playwright;
+    private IBrowser? _browser;
 
     /// <summary>The shared headless Chromium browser instance used by every test.</summary>
-    public IBrowser Browser { get; private set; } = null!;
+    public IBrowser Browser => _browser
+        ?? throw new InvalidOperationException("The shared browser has not been initialized.");
 
     /// <summary>Base URL of the in-process test server hosting the application.</summary>
     public string ServerBaseUrl => _factory!.ServerBaseUrl;
@@ -31,7 +33,7 @@ public sealed class E2ESharedFixture : IAsyncLifetime
         _factory.CreateClient();
 
         _playwright = await Playwright.CreateAsync();
-        Browser = await _playwright.Chromium.LaunchAsync(new BrowserTypeLaunchOptions
+        _browser = await _playwright.Chromium.LaunchAsync(new BrowserTypeLaunchOptions
         {
             Headless = true,
             Channel = "chrome",
@@ -40,9 +42,14 @@ public sealed class E2ESharedFixture : IAsyncLifetime
     }
 
     /// <summary>Tears down the browser, Playwright driver, in-process server, and database container.</summary>
+    /// <remarks>
+    /// Every step is null-guarded: if <see cref="InitializeAsync"/> throws part-way (e.g. the host
+    /// fails to start), xUnit still calls this, and it must surface that original error rather than
+    /// mask it with a <see cref="NullReferenceException"/> on a member that was never assigned.
+    /// </remarks>
     public async ValueTask DisposeAsync()
     {
-        await Browser.DisposeAsync();
+        if (_browser is not null) await _browser.DisposeAsync();
         _playwright?.Dispose();
         _factory?.Dispose();
         await _database.DisposeAsync();
