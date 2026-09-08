@@ -34,8 +34,13 @@ public class FileValidationServiceTests
         return mock;
     }
 
-    /// <summary>Options wrapping the default 10 MB size cap, matching production's unconfigured default.</summary>
-    private static IOptions<FileStorageSetting> DefaultSettings() => Options.Create(new FileStorageSetting());
+    /// <summary>
+    /// Options wrapping the default 10 MB size cap plus a storage root of the OS temp directory, so
+    /// the temp target dirs these tests write to resolve as "within the root" (production sets the
+    /// root to &lt;contentRoot&gt;/upload in Program.cs).
+    /// </summary>
+    private static IOptions<FileStorageSetting> DefaultSettings() =>
+        Options.Create(new FileStorageSetting { StorageRootPath = Path.GetTempPath() });
 
     private static FormFile MakeFormFile(byte[] bytes, string fileName)
     {

@@ -31,7 +31,6 @@ public class ManagementController : Controller
     private readonly IRsaService _rsa;
     private readonly IHtmlLocalizer<ManagementController> _localizer;
     private readonly ILogger<ManagementController> _logger;
-    private readonly IHostEnvironment _hostEnvironment;
     private readonly IProfileService _profileService;
     private readonly IAccountService _accountService;
     private readonly IManagementAccountService _managementAccountService;
@@ -47,7 +46,6 @@ public class ManagementController : Controller
     public ManagementController(
         IHtmlLocalizer<ManagementController> localizer,
         ILogger<ManagementController> logger,
-        IHostEnvironment hostEnvironment,
         IProfileService profileService,
         IAccountService accountService,
         IManagementAccountService managementAccountService,
@@ -63,7 +61,6 @@ public class ManagementController : Controller
         _sessionService = sessionService;
         _localizer = localizer;
         _logger = logger;
-        _hostEnvironment = hostEnvironment;
         _profileService = profileService;
         _accountService = accountService;
         _managementAccountService = managementAccountService;
@@ -131,10 +128,9 @@ public class ManagementController : Controller
             imageBytes = ms.ToArray();
         }
 
-        string avatarDirectoryPath = Path.Combine(_hostEnvironment.ContentRootPath, "wwwroot", "upload", "Management", "Profile", "Avatar");
         string? email = _sessionService.GetAccount()!.Email;
 
-        ServiceResult avatarResult = await _profileService.UploadAndUpdateAvatarAsync(email!, imageBytes, extension, avatarDirectoryPath, HttpContext.RequestAborted);
+        ServiceResult avatarResult = await _profileService.UploadAndUpdateAvatarAsync(email!, imageBytes, extension, HttpContext.RequestAborted);
 
         if (!avatarResult.Success)
         {

@@ -211,6 +211,10 @@ public class AuthorizationFilter : ActionFilterAttribute
                 context.Result = new RedirectResult("/Account/Login");
                 return;
             }
+
+            // Hand the freshly re-validated account to ViewBagPopulatorFilter (runs next in the
+            // pipeline) so it doesn't re-query the same row on every authenticated request.
+            context.HttpContext.Items[HttpContextItemKeys.LoggedInAccount] = loggedInAccount;
         }
 
         var isAccountSessionExist = loggedInAccount != null;

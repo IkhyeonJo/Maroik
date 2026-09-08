@@ -14,4 +14,11 @@ public static class BoardTypes
 
     /// <summary>Private note. Visible only to its author — no admin bypass.</summary>
     public const string PrivateNote = "PrivateNote";
+
+    /// <summary>Every board-type value a new post may be created with.</summary>
+    public static readonly IReadOnlySet<string> All =
+        new HashSet<string>(StringComparer.Ordinal) { FreeForum, PrivateNote };
+
+    /// <summary>Returns true when <paramref name="type"/> is one of the known board types.</summary>
+    public static bool IsKnown(string? type) => type != null && All.Contains(type);
 }

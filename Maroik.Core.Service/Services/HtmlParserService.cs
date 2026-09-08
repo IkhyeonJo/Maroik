@@ -6,6 +6,14 @@ namespace Maroik.Core.Service.Services;
 /// <summary>HtmlAgilityPack-backed implementation of <see cref="IHtmlParserService"/>.</summary>
 public class HtmlParserService : IHtmlParserService
 {
+    /// <summary>
+    /// Upper bound on how many <paramref name="patchFactory"/> calls run at once in
+    /// <see cref="TransformImageAttributesAsync"/>. Each call is typically a request to the
+    /// file-storage service, so a post with dozens of images must not fan out into dozens of
+    /// simultaneous connections.
+    /// </summary>
+    private const int MaxConcurrentPatchFetches = 4;
+
     /// <inheritdoc />
     public async Task<(string Html, bool HasImages)> TransformImageAttributesAsync(
         string html,
@@ -16,10 +24,17 @@ public class HtmlParserService : IHtmlParserService
         doc.LoadHtml(html);
         List<HtmlNode> imgTags = doc.DocumentNode.Descendants("img").ToList();
 
-        // Fetch every image's patch concurrently instead of awaiting one at a time,
-        // since patchFactory typically makes a network call to the file-storage service.
-        HtmlImgPatch?[] patches = await Task.WhenAll(
-            imgTags.Select(imgTag => patchFactory(imgTag.GetAttributeValue("alt", ""), ct)));
+        // Fetch image patches concurrently (patchFactory typically makes a network call to the
+        // file-storage service) but cap the fan-out so a many-image post can't storm that service.
+        using var gate = new SemaphoreSlim(MaxConcurrentPatchFetches, MaxConcurrentPatchFetches);
+        async Task<HtmlImgPatch?> FetchPatchAsync(HtmlNode imgTag)
+        {
+            await gate.WaitAsync(ct);
+            try { return await patchFactory(imgTag.GetAttributeValue("alt", ""), ct); }
+            finally { _ = gate.Release(); }
+        }
+
+        HtmlImgPatch?[] patches = await Task.WhenAll(imgTags.Select(FetchPatchAsync));
 
         for (int i = 0; i < imgTags.Count; i++)
         {

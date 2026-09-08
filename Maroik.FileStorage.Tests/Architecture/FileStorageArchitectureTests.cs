@@ -70,4 +70,44 @@ public class FileStorageArchitectureTests
             "service instead.\n" +
             "Violations: " + string.Join("; ", violations));
     }
+
+    /// <summary>
+    /// The <c>Services</c> namespace/folder is for DI-registered service classes only — each a
+    /// non-static class that implements an interface from <c>Maroik.FileStorage.Contracts</c>. Pure
+    /// static helpers (e.g. <c>StoragePath</c>) belong under <c>Helpers/</c>, not here: a static
+    /// utility class in <c>Services/</c> blurs the "everything in here is an injected service"
+    /// invariant, and is exactly how <c>StoragePath</c> was first misfiled.
+    /// </summary>
+    [Fact]
+    public void ServicesNamespace_ContainsOnly_DiServiceClasses()
+    {
+        var contractInterfaces = FileStorageAssembly.GetTypes()
+            .Where(t => t is { IsInterface: true, Namespace: "Maroik.FileStorage.Contracts" })
+            .ToHashSet();
+
+        List<string> violations = [];
+
+        foreach (Type type in FileStorageAssembly.GetTypes()
+                     .Where(t => t.Namespace == "Maroik.FileStorage.Services" && !t.IsNested))
+        {
+            if (type.GetCustomAttribute<CompilerGeneratedAttribute>() != null)
+                continue;
+
+            // A C# "static class" compiles to abstract + sealed.
+            if (type is { IsAbstract: true, IsSealed: true })
+            {
+                violations.Add($"{type.Name}: static helper class — move it to Maroik.FileStorage/Helpers");
+                continue;
+            }
+
+            if (!type.GetInterfaces().Any(contractInterfaces.Contains))
+                violations.Add($"{type.Name}: implements no Maroik.FileStorage.Contracts interface");
+        }
+
+        Assert.True(
+            violations.Count == 0,
+            "Types under Maroik.FileStorage.Services must be DI-registered service classes that " +
+            "implement a Maroik.FileStorage.Contracts interface. Static helpers belong in " +
+            "Maroik.FileStorage/Helpers.\nViolations:\n  " + string.Join("\n  ", violations));
+    }
 }

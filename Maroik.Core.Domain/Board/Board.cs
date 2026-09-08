@@ -52,6 +52,7 @@ public sealed class Board : AggregateRoot<long>
     /// </summary>
     public IReadOnlyList<BoardComment> Comments => _comments.AsReadOnly();
 
+    /// <summary>"New post" constructor: stamps <see cref="Created"/>/<see cref="Updated"/>. Used by <see cref="Create"/> only.</summary>
     private Board(
         long id,
         string type,
@@ -65,6 +66,23 @@ public sealed class Board : AggregateRoot<long>
         Writer = writer;
         Created = DateTime.UtcNow;
         Updated = DateTime.UtcNow;
+    }
+
+    /// <summary>Reconstitution constructor: assigns every field verbatim from trusted storage with no <see cref="DateTime.UtcNow"/> side effect.</summary>
+    private Board(
+        long id, string type, string title, string? content, string writer,
+        DateTime created, DateTime updated, long view, bool deleted, bool locked, bool noticed) : base(id)
+    {
+        Type = type;
+        Title = title;
+        Content = content;
+        Writer = writer;
+        Created = created;
+        Updated = updated;
+        View = view;
+        Deleted = deleted;
+        Locked = locked;
+        Noticed = noticed;
     }
 
     // ------------------------------------------------------------------------
@@ -89,14 +107,7 @@ public sealed class Board : AggregateRoot<long>
         bool locked,
         bool noticed)
     {
-        var board = new Board(id, type, title, content, writer)
-        {
-            Created = created, Updated = updated, View = view, Deleted = deleted,
-            Locked = locked,
-            Noticed = noticed
-        };
-
-        return board;
+        return new Board(id, type, title, content, writer, created, updated, view, deleted, locked, noticed);
     }
 
     /// <summary>
@@ -110,6 +121,12 @@ public sealed class Board : AggregateRoot<long>
     {
         if (string.IsNullOrWhiteSpace(type))
             return Error.Validation("Board.TypeEmpty", "Board type cannot be empty.");
+
+        // Constrain to the known taxonomy here rather than trusting the caller: BuildAttachedFilePath
+        // in the service layer interpolates this value into a file-storage path, and the DB
+        // Board_Type_check constraint is currently the only thing rejecting anything else.
+        if (!BoardTypes.IsKnown(type))
+            return Error.Validation("Board.TypeInvalid", "Board type is not a recognised value.");
 
         if (string.IsNullOrWhiteSpace(title))
             return Error.Validation("Board.TitleEmpty", "Post title cannot be empty.");

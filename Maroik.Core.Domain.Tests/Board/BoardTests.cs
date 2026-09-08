@@ -40,6 +40,31 @@ public class BoardTests
         Assert.Equal("Board.TypeEmpty", result.FirstError.Code);
     }
 
+    /// <summary>Create rejects a type outside the known taxonomy (BuildAttachedFilePath puts it in a path).</summary>
+    [Theory]
+    [InlineData("NotARealType")]
+    [InlineData("../../etc")]
+    [InlineData("freeforum")]
+    public void Create_ReturnsError_WhenTypeNotKnown(string type)
+    {
+        var result = Board.Create(type, "Title", null, "Alice");
+
+        Assert.True(result.IsError);
+        Assert.Equal("Board.TypeInvalid", result.FirstError.Code);
+    }
+
+    /// <summary>Create accepts every value in the known board-type taxonomy.</summary>
+    [Theory]
+    [InlineData(BoardTypes.FreeForum)]
+    [InlineData(BoardTypes.PrivateNote)]
+    public void Create_Succeeds_ForKnownType(string type)
+    {
+        var result = Board.Create(type, "Title", "body", "Alice");
+
+        Assert.False(result.IsError);
+        Assert.Equal(type, result.Value.Type);
+    }
+
     /// <summary>Create returns error, when title empty.</summary>
     [Theory]
     [InlineData(null)]

@@ -56,7 +56,8 @@ public class DashboardService : IDashboardService
         // ServerSetting.DemoAccountEmail/DemoDashboardYear/DemoDashboardMonth) so visitors see
         // consistent sample data regardless of when they browse the demo.
         ServerSetting settings = _settings.Value;
-        if (!string.IsNullOrEmpty(settings.DemoAccountEmail) && accountEmail == settings.DemoAccountEmail)
+        bool isDemoAccount = !string.IsNullOrEmpty(settings.DemoAccountEmail) && accountEmail == settings.DemoAccountEmail;
+        if (isDemoAccount)
         {
             year = settings.DemoDashboardYear ?? year;
             month = settings.DemoDashboardMonth ?? month;
@@ -89,7 +90,9 @@ public class DashboardService : IDashboardService
         // Persist the self-corrected value (matches main): other screens that read
         // Account.DefaultMonetaryUnit directly (e.g. account management) must not see a
         // stale/empty value while the dashboard itself already shows the resolved one.
-        if (account != null && account.DefaultMonetaryUnit != defaultMonetaryUnit)
+        // Never do this for the public demo account: its data is pre-seeded and fixed, and it is
+        // browsed anonymously, so a write here would fire on ordinary anonymous page views.
+        if (!isDemoAccount && account != null && account.DefaultMonetaryUnit != defaultMonetaryUnit)
         {
             account.SetDefaultMonetaryUnit(defaultMonetaryUnit);
             await _accountRepository.UpdateEntityAsync(account, ct);

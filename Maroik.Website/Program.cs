@@ -47,44 +47,39 @@ try
 
     #region ServerSettings
 
-    // Capture config values needed before DI container is built (for middleware/Kestrel configuration)
-    var serverConfig = builder.Configuration.GetSection("ServerSetting");
-    var cfgDomainName = serverConfig["DomainName"] ?? "";
-    var cfgSessionExpireMinutes = Convert.ToInt32(serverConfig["SessionExpireMinutes"]);
-    var cfgDockerCertPath = serverConfig["DockerCertPath"];
-    var cfgDockerKeyPath = serverConfig["DockerKeyPath"];
-
-    // Register ServerSetting as IOptions<ServerSetting> for DI
-    builder.Services.Configure<ServerSetting>(cfg =>
+    // Strongly-typed binding of the whole "ServerSetting" section, plus the handful of values that
+    // live in sibling sections (Clamav, FileStorage) or a nested sub-section (SmtpOptions) the flat
+    // model can't reach directly. Replaces a hand-written Convert.ToX(section["..."]) wall in which
+    // a missing numeric silently became 0 (e.g. SessionExpireMinutes = 0 -> sessions expire at once).
+    static void BindServerSetting(IConfiguration configuration, ServerSetting target)
     {
-        var section = builder.Configuration.GetSection("ServerSetting");
-        cfg.DomainName = section["DomainName"];
-        cfg.MaxLoginAttempt = Convert.ToByte(section["MaxLoginAttempt"]);
-        cfg.SessionExpireMinutes = Convert.ToInt32(section["SessionExpireMinutes"]);
-        var smtp = section.GetSection("SmtpOptions");
-        cfg.SmtpUserName = smtp["smtpUserName"];
-        cfg.SmtpPassword = smtp["smtpPassword"];
-        cfg.SmtpHost = smtp["smtpHost"];
-        cfg.SmtpPort = Convert.ToInt32(smtp["smtpPort"]);
-        cfg.SmtpSsl = Convert.ToBoolean(smtp["smtpSsl"]);
-        cfg.FromEmail = smtp["fromEmail"];
-        cfg.FromFullName = smtp["fromFullName"];
-        cfg.IsDefault = Convert.ToBoolean(smtp["IsDefault"]);
-        cfg.MaxAttachedFileSizeBytes = Convert.ToInt64(section["MaxAttachedFileSizeBytes"]);
-        cfg.NoticeMaturityDateDay = Convert.ToInt32(section["NoticeMaturityDateDay"]);
-        cfg.DockerCertPath = section["DockerCertPath"];
-        cfg.DockerKeyPath = section["DockerKeyPath"];
-        cfg.RsaPrivateKey = section["RsaPrivateKey"];
-        cfg.RsaPublicKey = section["RsaPublicKey"];
-        var rsaAlgorithmString = section["RsaAlgorithm"] ?? "Rsa2";
-        cfg.RsaAlgorithm = Enum.TryParse<RsaType>(rsaAlgorithmString, out var rsaType) ? rsaType : RsaType.Rsa2;
-        cfg.ClamavHost = builder.Configuration.GetSection("Clamav")["Host"];
-        cfg.ClamavPort = Convert.ToInt32(builder.Configuration.GetSection("Clamav")["Port"]);
-        cfg.FileStorageBaseUrl = builder.Configuration.GetSection("FileStorage")["BaseUrl"];
-        cfg.DemoAccountEmail = section["DemoAccountEmail"];
-        cfg.DemoDashboardYear = section["DemoDashboardYear"];
-        cfg.DemoDashboardMonth = section["DemoDashboardMonth"];
-    });
+        configuration.GetSection("ServerSetting").Bind(target);
+        configuration.GetSection("ServerSetting:SmtpOptions").Bind(target);
+        target.ClamavHost = configuration["Clamav:Host"];
+        target.ClamavPort = configuration.GetValue<int>("Clamav:Port");
+        target.FileStorageBaseUrl = configuration["FileStorage:BaseUrl"];
+        target.RsaAlgorithm =
+            Enum.TryParse<RsaType>(configuration["ServerSetting:RsaAlgorithm"], ignoreCase: true, out var parsed)
+                ? parsed
+                : RsaType.Rsa2;
+    }
+
+    // A local copy for the values needed before the DI container is built (middleware / Kestrel).
+    var serverSetting = new ServerSetting();
+    BindServerSetting(builder.Configuration, serverSetting);
+
+    if (serverSetting.SessionExpireMinutes <= 0)
+        throw new InvalidOperationException("ServerSetting:SessionExpireMinutes must be a positive number.");
+    if (serverSetting.MaxLoginAttempt == 0)
+        throw new InvalidOperationException("ServerSetting:MaxLoginAttempt must be greater than zero.");
+
+    var cfgDomainName = serverSetting.DomainName ?? "";
+    var cfgSessionExpireMinutes = serverSetting.SessionExpireMinutes;
+    var cfgDockerCertPath = serverSetting.DockerCertPath;
+    var cfgDockerKeyPath = serverSetting.DockerKeyPath;
+
+    // Register ServerSetting as IOptions<ServerSetting> for DI.
+    builder.Services.Configure<ServerSetting>(cfg => BindServerSetting(builder.Configuration, cfg));
 
     #endregion
 
@@ -384,6 +379,10 @@ try
     // Must run immediately before MapStaticAssets so it can 403 role-restricted /admin and /user
     // static file paths before the static file middleware gets a chance to serve them.
     app.UseMiddleware<RoleBasedStaticFileMiddleware>();
+    // Also before MapStaticAssets: lazily pull an uploaded avatar from the shared file-storage
+    // service into this replica's wwwroot on first request, so the static-file middleware below can
+    // then serve it normally.
+    app.UseMiddleware<AvatarCacheMiddleware>();
     app.MapStaticAssets();
 
     app.Run();

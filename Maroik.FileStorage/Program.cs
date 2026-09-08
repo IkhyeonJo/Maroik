@@ -43,6 +43,11 @@ try
         var clamavSection = builder.Configuration.GetSection("Clamav");
         cfg.ClamavHost = clamavSection["Host"];
         cfg.ClamavPort = Convert.ToInt32(clamavSection["Port"]);
+
+        // The one directory every stored/served file must resolve within. In the container the
+        // working dir and content root are both /app, and the upload volume mounts at /app/upload.
+        if (string.IsNullOrWhiteSpace(cfg.StorageRootPath))
+            cfg.StorageRootPath = Path.Combine(builder.Environment.ContentRootPath, "upload");
     });
 
     // Register the ClamAV virus-scan client so FileController can inject it.

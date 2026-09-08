@@ -298,6 +298,35 @@ public class DashboardServiceTests
     }
 
     /// <summary>
+    /// The demo account is browsed anonymously and its data is pre-seeded and fixed, so
+    /// <c>GetSummaryAsync</c> must never issue the DefaultMonetaryUnit self-correction write for it
+    /// (that would fire on ordinary anonymous page views).
+    /// </summary>
+    [Fact]
+    public async Task GetSummaryAsync_DoesNotPersistSelfCorrection_ForDemoAccount()
+    {
+        const string email = "demo@maroik.com";
+        var account = MakeAccount(email, unit: null);
+        _accountRepo.Setup(r => r.FindByEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(account);
+        _assetRepo.Setup(r => r.GetByAccountEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync([MakeAsset("Wallet", "KRW")]);
+        SetupEmptyFinancials(email);
+        var sut = CreateSut(new ServerSetting
+        {
+            DemoAccountEmail = email,
+            DemoDashboardYear = "2025",
+            DemoDashboardMonth = "6"
+        });
+
+        DashboardDto summary = await sut.GetSummaryAsync(email, "2025", "6", "UTC", TestContext.Current.CancellationToken);
+
+        // The value still resolves for display...
+        Assert.Equal("KRW", summary.DefaultMonetaryUnit);
+        // ...but is not written back.
+        _accountRepo.Verify(r => r.UpdateEntityAsync(It.IsAny<Account>(), It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    /// <summary>
     /// Verifies that the year-month totals are correctly derived by filtering the already-fetched
     /// year-range results in memory, and that only one date-range query per repository is issued —
     /// regression test for a fix that dropped two of four sequential DB round trips.

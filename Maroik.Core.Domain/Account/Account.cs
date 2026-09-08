@@ -88,6 +88,8 @@ public sealed class Account : AggregateRoot<string>
     /// <summary>Generates a fresh, unpredictable security stamp value.</summary>
     private static string GenerateSecurityStamp() => Guid.NewGuid().ToString("N");
 
+    /// <summary>"Brand-new account" constructor: stamps <see cref="Created"/>/<see cref="Updated"/>
+    /// and a fresh <see cref="SecurityStamp"/>. Used by <see cref="Create"/> only.</summary>
     private Account(
         Email email,
         string hashedPassword,
@@ -109,6 +111,35 @@ public sealed class Account : AggregateRoot<string>
         SecurityStamp = GenerateSecurityStamp();
         Created = DateTime.UtcNow;
         Updated = DateTime.UtcNow;
+    }
+
+    /// <summary>Reconstitution constructor: assigns every field verbatim from trusted storage with
+    /// no "new entity" side effects (no fresh <see cref="SecurityStamp"/>, no <see cref="DateTime.UtcNow"/>).</summary>
+    private Account(
+        Email email, string hashedPassword, string nickname, string? avatarImagePath, string role,
+        TimeZoneId timeZone, string? defaultMonetaryUnit, bool locked, long loginAttempt, bool emailConfirmed,
+        bool agreedServiceTerms, string? registrationToken, string? resetPasswordToken, DateTime created,
+        DateTime updated, string? message, bool deleted, string securityStamp, bool mustChangePassword) : base(email.Value)
+    {
+        Email = email;
+        HashedPassword = hashedPassword;
+        Nickname = nickname;
+        AvatarImagePath = avatarImagePath;
+        Role = role;
+        TimeZone = timeZone;
+        DefaultMonetaryUnit = defaultMonetaryUnit;
+        Locked = locked;
+        LoginAttempt = loginAttempt;
+        EmailConfirmed = emailConfirmed;
+        AgreedServiceTerms = agreedServiceTerms;
+        RegistrationToken = registrationToken;
+        ResetPasswordToken = resetPasswordToken;
+        Created = created;
+        Updated = updated;
+        Message = message;
+        Deleted = deleted;
+        SecurityStamp = securityStamp;
+        MustChangePassword = mustChangePassword;
     }
 
     // ------------------------------------------------------------------------
@@ -140,27 +171,26 @@ public sealed class Account : AggregateRoot<string>
         string securityStamp,
         bool mustChangePassword)
     {
-        var account = new Account(
+        return new Account(
             Email.FromTrustedSource(email),
             hashedPassword,
             nickname,
+            avatarImagePath,
             role,
             TimeZoneId.FromTrustedSource(timeZoneIanaId),
             defaultMonetaryUnit,
+            locked,
+            loginAttempt,
+            emailConfirmed,
+            agreedServiceTerms,
             registrationToken,
-            agreedServiceTerms)
-        {
-            AvatarImagePath = avatarImagePath, Locked = locked, LoginAttempt = loginAttempt, EmailConfirmed = emailConfirmed,
-            ResetPasswordToken = resetPasswordToken,
-            Created = created,
-            Updated = updated,
-            Message = message,
-            Deleted = deleted,
-            SecurityStamp = securityStamp,
-            MustChangePassword = mustChangePassword
-        };
-
-        return account;
+            resetPasswordToken,
+            created,
+            updated,
+            message,
+            deleted,
+            securityStamp,
+            mustChangePassword);
     }
 
     /// <summary>

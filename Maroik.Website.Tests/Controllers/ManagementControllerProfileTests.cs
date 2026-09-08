@@ -13,11 +13,11 @@ namespace Maroik.Website.Tests.Controllers;
 /// previously entirely uncovered.
 ///
 /// <c>UpdateProfileAvatar</c>'s success path is not covered here: it calls
-/// <c>ProfileService.UploadAndUpdateAvatarAsync</c>, which scans the upload through a real
-/// ClamAV daemon (<c>ServerSetting.ClamavHost</c>/<c>ClamavPort</c>) before anything else — no
-/// such daemon is available in this test environment, so a real upload would always fail at the
-/// virus-scan step regardless of the file's content. Only the validation branches that return
-/// before ClamAV is reached (missing file, oversized file, disallowed extension) are exercised.
+/// <c>ProfileService.UploadAndUpdateAvatarAsync</c>, which stores the image through the
+/// file-storage service (<c>ServerSetting.FileStorageBaseUrl</c>) — not running in this test
+/// environment, so a real upload always fails at that step. Only the controller-level validation
+/// branches that return before the service is reached (missing file, oversized file, disallowed
+/// extension) are exercised.
 /// </summary>
 [Collection("Website Integration")]
 public class ManagementControllerProfileTests

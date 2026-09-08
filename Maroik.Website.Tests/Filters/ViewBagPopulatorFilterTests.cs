@@ -174,6 +174,32 @@ public class ViewBagPopulatorFilterTests
         Assert.Equal(Role.User, account.Role);
     }
 
+    /// <summary>
+    /// When AuthorizationFilter has already stashed the re-validated account on HttpContext.Items,
+    /// ViewBagPopulatorFilter must reuse it and NOT issue a second GetAccountByEmailAsync query.
+    /// </summary>
+    [Fact]
+    public async Task OnActionExecutionAsync_ReusesStashedAccount_WithoutQueryingAgain()
+    {
+        var sessionAccount = new AccountResponse { Email = "user@test.com", Role = Role.User };
+        var stashedAccount = new AccountResponse { Email = "user@test.com", Nickname = "FromAuthFilter", Role = Role.User };
+
+        _sessionService.Setup(s => s.GetAccount()).Returns(sessionAccount);
+        _dashboardService
+            .Setup(d => d.GetNoticeCountsAsync("user@test.com", 7, It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new NotificationDto());
+
+        var (context, controller) = BuildContext();
+        context.HttpContext.Items[Maroik.Website.Constants.HttpContextItemKeys.LoggedInAccount] = stashedAccount;
+
+        await CreateSut().OnActionExecutionAsync(context, EmptyNext());
+
+        AccountResponse account = controller.ViewBag.LoggedInAccount;
+        Assert.Equal("FromAuthFilter", account.Nickname);
+        _accountService.Verify(
+            a => a.GetAccountByEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
+    }
+
     /// <summary>Verifies that notice counts are populated from the dashboard service for a logged-in user.</summary>
     [Fact]
     public async Task OnActionExecutionAsync_SetsNoticeCounts_WhenUserIsLoggedIn()

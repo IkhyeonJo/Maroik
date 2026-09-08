@@ -1,3 +1,5 @@
+using System.Security.Cryptography;
+
 namespace Maroik.Core.Contract.Misc.Tokens;
 
 /// <summary>
@@ -6,30 +8,25 @@ namespace Maroik.Core.Contract.Misc.Tokens;
 /// </summary>
 public static class GuidToken
 {
+    /// <summary>Number of cryptographically-random bytes appended after the 8-byte timestamp prefix.</summary>
+    private const int RandomByteCount = 16;
+
     /// <summary>
-    /// Generates a Base64-encoded token that embeds the current UTC timestamp
-    /// followed by a random GUID. The timestamp allows expiry checking via <see cref="IsTokenAlive"/>.
+    /// Generates a Base64-encoded token that embeds the current UTC timestamp followed by
+    /// <see cref="RandomByteCount"/> cryptographically-secure random bytes. The timestamp allows
+    /// expiry checking via <see cref="IsTokenAlive"/>; the random suffix is the actual secret and
+    /// is drawn from <see cref="RandomNumberGenerator"/> (not <see cref="Guid.NewGuid"/>, which is
+    /// not contractually a CSPRNG) since this value doubles as the bearer secret in the
+    /// email-confirmation and password-reset flows.
     /// </summary>
-    /// <returns>A URL-safe Base64 token string.</returns>
+    /// <returns>A Base64 token string.</returns>
     public static string Generate()
     {
-        #region Unique token
-
-        //string token = Convert.ToBase64String(Guid.NewGuid().ToByteArray());
-
-        #endregion
-
-        #region Basic example of creating a unique token containing a time stamp: https: //stackoverflow.com/questions/14643735/how-to-generate-a-unique-token-which-expires-after-24-hours
-
-        // Embed the current UTC time so we can check expiry later
+        // Embed the current UTC time so we can check expiry later.
         byte[] time = BitConverter.GetBytes(DateTime.UtcNow.ToBinary());
-        // Append a random GUID to make the token unique and unguessable
-        byte[] key = Guid.NewGuid().ToByteArray();
-        string token = Convert.ToBase64String(time.Concat(key).ToArray());
-
-        #endregion
-
-        return token;
+        // Append CSPRNG bytes to make the token unguessable.
+        byte[] key = RandomNumberGenerator.GetBytes(RandomByteCount);
+        return Convert.ToBase64String([.. time, .. key]);
     }
 
     /// <summary>

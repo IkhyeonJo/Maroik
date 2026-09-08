@@ -1,7 +1,10 @@
 using Maroik.FileStorage.Contracts;
+using Maroik.FileStorage.Helpers;
+using Maroik.FileStorage.Settings;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.StaticFiles;
+using Microsoft.Extensions.Options;
 
 namespace Maroik.FileStorage.Controllers;
 
@@ -19,12 +22,14 @@ public class FileController : ControllerBase
     private static readonly FileExtensionContentTypeProvider _contentTypeProvider = new();
 
     private readonly IFileValidationService _fileValidationService;
+    private readonly IOptions<FileStorageSetting> _settings;
     private readonly ILogger<FileController> _logger;
 
     /// <summary>Initializes a new instance of <see cref="FileController"/>.</summary>
-    public FileController(IFileValidationService fileValidationService, ILogger<FileController> logger)
+    public FileController(IFileValidationService fileValidationService, IOptions<FileStorageSetting> settings, ILogger<FileController> logger)
     {
         _fileValidationService = fileValidationService;
+        _settings = settings;
         _logger = logger;
     }
 
@@ -63,15 +68,13 @@ public class FileController : ControllerBase
         {
             var sanitizedFileName = Path.GetFileName(filePath);
 
-            if (!System.IO.File.Exists(filePath)) return NotFound("File not found");
-            // filePath is not attacker-suppliable: this endpoint is only reachable from the
-            // internal "backend" Docker network (see docker-compose.prod.yml — the service is
-            // `expose`d, not `ports`-published), and every current caller (BoardService,
-            // CalendarService, AttachmentContentService) builds filePath from a server-generated
-            // GUID, never from client input. Recombining via GetDirectoryName+GetFileName does
-            // NOT strip ".." segments — do not rely on this line for path-traversal protection.
+            // Confine the read to the storage root. Callers only ever pass server-generated relative
+            // paths under "upload/"; a value that resolves outside the root is rejected here.
+            var resolvedPath = StoragePath.ResolveWithinRoot(_settings.Value.StorageRootPath, filePath);
+            if (resolvedPath == null || !System.IO.File.Exists(resolvedPath)) return NotFound("File not found");
+
 #pragma warning disable SCS0018
-            var fileData = await System.IO.File.ReadAllBytesAsync(filePath);
+            var fileData = await System.IO.File.ReadAllBytesAsync(resolvedPath);
 #pragma warning restore SCS0018
 
             if (!_contentTypeProvider.TryGetContentType(sanitizedFileName, out var contentType))

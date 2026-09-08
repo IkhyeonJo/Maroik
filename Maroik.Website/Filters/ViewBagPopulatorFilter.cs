@@ -3,6 +3,7 @@ using Maroik.Core.Contract.Dtos;
 using Maroik.Core.Contract.Misc.Extensions;
 using Maroik.Core.Contract.Interfaces;
 using Maroik.Core.Contract.Misc.Settings;
+using Maroik.Website.Constants;
 using Maroik.Website.Contracts;
 using Maroik.Website.Extensions;
 using Microsoft.AspNetCore.Localization;
@@ -68,13 +69,23 @@ public class ViewBagPopulatorFilter : IAsyncActionFilter
         var sessionAccount = _sessionService.GetAccount();
         if (sessionAccount != null)
         {
-            try
+            // AuthorizationFilter already re-loaded and re-validated this account from the database
+            // earlier in the same request; reuse that instead of issuing an identical second query.
+            if (context.HttpContext.Items.TryGetValue(HttpContextItemKeys.LoggedInAccount, out var cached)
+                && cached is AccountResponse cachedAccount)
             {
-                string email = sessionAccount.Email ?? "";
-                if (!string.IsNullOrEmpty(email))
-                    loggedInAccount = await _accountService.GetAccountByEmailAsync(email, context.HttpContext.RequestAborted) ?? loggedInAccount;
+                loggedInAccount = cachedAccount;
             }
-            catch (Exception ex) { logger.LogWarning(ex, "Failed to refresh session account for {Email}", sessionAccount.Email); }
+            else
+            {
+                try
+                {
+                    string email = sessionAccount.Email ?? "";
+                    if (!string.IsNullOrEmpty(email))
+                        loggedInAccount = await _accountService.GetAccountByEmailAsync(email, context.HttpContext.RequestAborted) ?? loggedInAccount;
+                }
+                catch (Exception ex) { logger.LogWarning(ex, "Failed to refresh session account for {Email}", sessionAccount.Email); }
+            }
         }
 
         controller.ViewBag.LoggedInAccount = loggedInAccount;

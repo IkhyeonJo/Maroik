@@ -21,16 +21,16 @@ public class ProfileServiceTests
     private readonly Mock<IAccountRepository> _accountRepo = new();
     private readonly Mock<IAssetRepository> _assetRepo = new();
     private readonly Mock<IPasswordService> _passwordService = new();
-    private readonly Mock<IClamavClient> _clamavClient = new();
+    private readonly Mock<IFileClient> _fileClient = new();
     private readonly Mock<IImageValidatorService> _imageValidator = new();
     private readonly IOptions<ServerSetting> _settings =
-        Options.Create(new ServerSetting { ClamavHost = "localhost", ClamavPort = 3310 });
+        Options.Create(new ServerSetting { FileStorageBaseUrl = "http://localhost:5001" });
 
     private ProfileService CreateSut() => new(
         _accountRepo.Object,
         _assetRepo.Object,
         _passwordService.Object,
-        _clamavClient.Object,
+        _fileClient.Object,
         _imageValidator.Object,
         _settings,
         NullLogger<ProfileService>.Instance);
@@ -115,6 +115,120 @@ public class ProfileServiceTests
         Assert.True(result.Success);
         _accountRepo.Verify(r => r.UpdateEntityAsync(
             It.Is<Account>(a => a.AvatarImagePath == "/new/avatar.jpg"), It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    // -- UploadAndUpdateAvatarAsync -----------------------------------------------
+
+    /// <summary>Rejects a payload the image validator does not recognise, without touching storage.</summary>
+    [Fact]
+    public async Task UploadAndUpdateAvatarAsync_ReturnsInvalidImage_WhenNotAnImage()
+    {
+        _imageValidator.Setup(v => v.IsValidImage(It.IsAny<byte[]>())).Returns(false);
+        var sut = CreateSut();
+
+        ServiceResult result = await sut.UploadAndUpdateAvatarAsync("user@example.com", [1, 2, 3], ".png", TestContext.Current.CancellationToken);
+
+        Assert.False(result.Success);
+        Assert.Equal("invalid-image", result.ErrorKey);
+        _fileClient.Verify(c => c.UploadAsync(It.IsAny<byte[]>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    /// <summary>Rejects an SVG even though it is a "valid image", without touching storage.</summary>
+    [Fact]
+    public async Task UploadAndUpdateAvatarAsync_ReturnsSvgNotAllowed_WhenSvg()
+    {
+        _imageValidator.Setup(v => v.IsValidImage(It.IsAny<byte[]>())).Returns(true);
+        _imageValidator.Setup(v => v.IsSvg(It.IsAny<byte[]>())).Returns(true);
+        var sut = CreateSut();
+
+        ServiceResult result = await sut.UploadAndUpdateAvatarAsync("user@example.com", [1, 2, 3], ".png", TestContext.Current.CancellationToken);
+
+        Assert.False(result.Success);
+        Assert.Equal("svg-not-allowed", result.ErrorKey);
+        _fileClient.Verify(c => c.UploadAsync(It.IsAny<byte[]>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    /// <summary>A valid image is stored under the avatar directory with the right MIME type, and the account path is updated.</summary>
+    [Fact]
+    public async Task UploadAndUpdateAvatarAsync_StoresImageAndUpdatesAccountPath_WhenValid()
+    {
+        var account = ActiveAccount();
+        _imageValidator.Setup(v => v.IsValidImage(It.IsAny<byte[]>())).Returns(true);
+        _imageValidator.Setup(v => v.IsSvg(It.IsAny<byte[]>())).Returns(false);
+        _fileClient.Setup(c => c.UploadAsync(It.IsAny<byte[]>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(true);
+        _accountRepo.Setup(r => r.FindByEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(account);
+        _accountRepo.Setup(r => r.UpdateEntityAsync(It.IsAny<Account>(), It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
+        var sut = CreateSut();
+
+        ServiceResult result = await sut.UploadAndUpdateAvatarAsync(account.Email.Value, [0xFF, 0xD8, 0xFF], ".JPG", TestContext.Current.CancellationToken);
+
+        Assert.True(result.Success);
+        _fileClient.Verify(c => c.UploadAsync(
+            It.IsAny<byte[]>(), "image/jpeg",
+            It.Is<string>(p => p.StartsWith("upload/Management/Profile/Avatar/") && p.EndsWith(".jpg")),
+            It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Once);
+        _accountRepo.Verify(r => r.UpdateEntityAsync(
+            It.Is<Account>(a => a.AvatarImagePath!.StartsWith("/upload/Management/Profile/Avatar/")), It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    /// <summary>A storage upload failure returns a failure result and never updates the account.</summary>
+    [Fact]
+    public async Task UploadAndUpdateAvatarAsync_ReturnsFailure_WhenStorageUploadFails()
+    {
+        _imageValidator.Setup(v => v.IsValidImage(It.IsAny<byte[]>())).Returns(true);
+        _imageValidator.Setup(v => v.IsSvg(It.IsAny<byte[]>())).Returns(false);
+        _fileClient.Setup(c => c.UploadAsync(It.IsAny<byte[]>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(false);
+        var sut = CreateSut();
+
+        ServiceResult result = await sut.UploadAndUpdateAvatarAsync("user@example.com", [0xFF, 0xD8, 0xFF], ".png", TestContext.Current.CancellationToken);
+
+        Assert.False(result.Success);
+        Assert.Equal("Profile.UploadAvatarFailed", result.ErrorCode);
+        _accountRepo.Verify(r => r.UpdateEntityAsync(It.IsAny<Account>(), It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    // -- DownloadAvatarAsync ----------------------------------------------------
+
+    /// <summary>Returns the bytes file storage hands back for a known avatar.</summary>
+    [Fact]
+    public async Task DownloadAvatarAsync_ReturnsBytes_WhenStorageHasFile()
+    {
+        byte[] payload = [1, 2, 3, 4];
+        _fileClient.Setup(c => c.DownloadAsync("upload/Management/Profile/Avatar/abc.png", It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(payload);
+        var sut = CreateSut();
+
+        byte[]? result = await sut.DownloadAvatarAsync("abc.png", TestContext.Current.CancellationToken);
+
+        Assert.Equal(payload, result);
+    }
+
+    /// <summary>Returns null (not an exception) when file storage is unreachable / errors.</summary>
+    [Fact]
+    public async Task DownloadAvatarAsync_ReturnsNull_WhenStorageThrows()
+    {
+        _fileClient.Setup(c => c.DownloadAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new HttpRequestException("connection refused"));
+        var sut = CreateSut();
+
+        byte[]? result = await sut.DownloadAvatarAsync("abc.png", TestContext.Current.CancellationToken);
+
+        Assert.Null(result);
+    }
+
+    /// <summary>Treats an empty response as "not found".</summary>
+    [Fact]
+    public async Task DownloadAvatarAsync_ReturnsNull_WhenStorageReturnsEmpty()
+    {
+        _fileClient.Setup(c => c.DownloadAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync([]);
+        var sut = CreateSut();
+
+        byte[]? result = await sut.DownloadAvatarAsync("abc.png", TestContext.Current.CancellationToken);
+
+        Assert.Null(result);
     }
 
     // -- UpdateTimeZoneAsync --------------------------------------------------

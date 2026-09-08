@@ -2,6 +2,7 @@ using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Text.RegularExpressions;
 using Maroik.Core.Contract.Interfaces;
+using Maroik.Website.Attributes;
 using Maroik.Website.Filters;
 using Microsoft.AspNetCore.Mvc;
 using NetArchTest.Rules;
@@ -232,6 +233,61 @@ public class WebsiteArchitectureTests
             "Controllers must not declare non-public helper methods — move shared logic into a " +
             "service or a Website/Extensions method instead.\n" +
             "Violations: " + string.Join("; ", violations));
+    }
+
+    /// <summary>
+    /// Every POST action a controller exposes must be self-describing to <see cref="AuthorizationFilter"/>:
+    ///
+    /// <list type="bullet">
+    ///   <item>It needs <c>[ValidateAntiForgeryToken]</c> — the marker <c>AuthorizationFilter.HasPostGuards</c>
+    ///   keys on. A POST action without it is silently dropped from both the role map and the
+    ///   anonymous allow-list, i.e. unreachable.</item>
+    ///   <item>Unless it lives on <c>AccountController</c> (the anonymous self-service surface, handled
+    ///   by <c>AuthorizationFilter.AnonymousAccountPostActions</c>), it needs at least one
+    ///   <c>[RequiredHttpPostAccess(Role = ...)]</c> with a non-empty role — without it the action
+    ///   appears in no role's <c>PostActionRoles</c> entry and every logged-in caller is denied.</item>
+    /// </list>
+    ///
+    /// This is a build-time backstop: the runtime failure mode is a silent "redirect to Dashboard",
+    /// which is easy to miss when adding a new POST action.
+    /// </summary>
+    [Fact]
+    public void PostActions_MustCarry_AntiforgeryAndRoleAttributes()
+    {
+        List<string> violations = [];
+
+        foreach (Type controllerType in WebsiteAssembly.GetTypes()
+                     .Where(t => t is { IsClass: true, IsAbstract: false } && typeof(Controller).IsAssignableFrom(t)))
+        {
+            bool isAnonymousSelfServiceController = controllerType.Name == "AccountController";
+
+            foreach (MethodInfo method in controllerType.GetMethods(
+                         BindingFlags.Public | BindingFlags.Instance | BindingFlags.DeclaredOnly))
+            {
+                if (method.IsDefined(typeof(NonActionAttribute)) || !method.IsDefined(typeof(HttpPostAttribute)))
+                    continue;
+
+                if (!method.IsDefined(typeof(ValidateAntiForgeryTokenAttribute)))
+                    violations.Add($"{controllerType.Name}.{method.Name}: missing [ValidateAntiForgeryToken]");
+
+                if (isAnonymousSelfServiceController)
+                    continue;
+
+                List<RequiredHttpPostAccessAttribute> roleAttributes =
+                    [.. method.GetCustomAttributes<RequiredHttpPostAccessAttribute>()];
+
+                if (roleAttributes.Count == 0)
+                    violations.Add($"{controllerType.Name}.{method.Name}: missing [RequiredHttpPostAccess]");
+                else if (roleAttributes.All(a => string.IsNullOrEmpty(a.Role)))
+                    violations.Add($"{controllerType.Name}.{method.Name}: [RequiredHttpPostAccess] has no non-empty Role");
+            }
+        }
+
+        Assert.True(
+            violations.Count == 0,
+            "Every controller POST action must declare [ValidateAntiForgeryToken] and — outside " +
+            "AccountController — at least one [RequiredHttpPostAccess(Role = ...)]. AuthorizationFilter " +
+            "silently denies any POST action that doesn't.\nViolations:\n  " + string.Join("\n  ", violations));
     }
 
     /// <summary>

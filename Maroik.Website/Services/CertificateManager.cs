@@ -19,6 +19,12 @@ public sealed class CertificateManager : ICertificateManager
     private readonly Lock _certLock = new();
 
     private X509Certificate2 _currentCert;
+    // The cert displaced by the most recent reload. It is not disposed at swap time because Kestrel's
+    // ServerCertificateSelector may still be mid-handshake with the reference it just took from
+    // SelectCertificate(); it is disposed one reload later, by which point no handshake can still
+    // hold it. Disposing the just-displaced cert immediately would surface as ObjectDisposedException
+    // on any TLS handshake in flight at the exact moment of a cert renewal.
+    private X509Certificate2? _retiredCert;
     private string _previousCertHash;
     private string _previousCertKeyHash;
     private volatile bool _isReloading;
@@ -67,7 +73,9 @@ public sealed class CertificateManager : ICertificateManager
 
                 lock (_certLock)
                 {
-                    _currentCert.Dispose();
+                    // Dispose the cert retired two reloads ago (safe now), then retire the current one.
+                    _retiredCert?.Dispose();
+                    _retiredCert = _currentCert;
                     _currentCert = newCert;
                     _previousCertHash = currentCertHash;
                     _previousCertKeyHash = currentCertKeyHash;
@@ -155,6 +163,7 @@ public sealed class CertificateManager : ICertificateManager
         lock (_certLock)
         {
             _currentCert.Dispose();
+            _retiredCert?.Dispose();
         }
     }
 }

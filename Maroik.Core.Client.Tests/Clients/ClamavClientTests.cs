@@ -71,8 +71,8 @@ public class ClamavClientTests
 
     // -- INSTREAM response parsing ---------------------------------------------
     // The tests above only exercise the connection-failure paths. These use a fake in-process
-    // ClamAV daemon to drive the actual protocol exchange and response parsing
-    // (`response.Contains("OK")` in ClamavClient), which nothing else in this file covers.
+    // ClamAV daemon to drive the actual protocol exchange and response parsing (ClamavClient
+    // treats a reply ending in "OK", with no "FOUND"/"ERROR", as clean), which nothing else here covers.
 
     /// <summary>Verifies that <c>ScanWithClamavAsync</c> returns true when the daemon reports OK.</summary>
     [Fact]

@@ -35,6 +35,7 @@ public sealed class Asset : AggregateRoot<(string ProductName, string AccountEma
     /// <summary>Soft-delete flag.</summary>
     public bool Deleted { get; private set; }
 
+    /// <summary>"Newly registered asset" constructor: stamps <see cref="Created"/>/<see cref="Updated"/>. Used by <see cref="Create"/> only.</summary>
     private Asset(
         string productName,
         Email accountEmail,
@@ -47,6 +48,21 @@ public sealed class Asset : AggregateRoot<(string ProductName, string AccountEma
         Balance = balance;
         Created = DateTime.UtcNow;
         Updated = DateTime.UtcNow;
+    }
+
+    /// <summary>Reconstitution constructor: assigns every field verbatim from trusted storage with no <see cref="DateTime.UtcNow"/> side effect.</summary>
+    private Asset(
+        string productName, Email accountEmail, string item, Money balance,
+        string? note, bool deleted, DateTime created, DateTime updated) : base((productName, accountEmail.Value))
+    {
+        ProductName = productName;
+        AccountEmail = accountEmail;
+        Item = item;
+        Balance = balance;
+        Note = note;
+        Deleted = deleted;
+        Created = created;
+        Updated = updated;
     }
 
     // ------------------------------------------------------------------------
@@ -68,16 +84,15 @@ public sealed class Asset : AggregateRoot<(string ProductName, string AccountEma
         DateTime created,
         DateTime updated)
     {
-        var asset = new Asset(
+        return new Asset(
             productName,
             Email.FromTrustedSource(accountEmail),
             item,
-            Money.FromTrustedSource(amount, monetaryUnit))
-        {
-            Note = note, Deleted = deleted, Created = created, Updated = updated
-        };
-
-        return asset;
+            Money.FromTrustedSource(amount, monetaryUnit),
+            note,
+            deleted,
+            created,
+            updated);
     }
 
     /// <summary>

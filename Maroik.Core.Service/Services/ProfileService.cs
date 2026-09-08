@@ -1,4 +1,3 @@
-using System.Diagnostics;
 using Maroik.Core.Domain.Account;
 using Maroik.Core.Domain.Finance;
 using Maroik.Core.Domain.ValueObjects;
@@ -13,26 +12,30 @@ namespace Maroik.Core.Service.Services;
 
 /// <summary>
 /// Implementation of <see cref="IProfileService"/> for user self-service profile management.
-/// Avatar images are scanned by ClamAV (<see cref="IClamavClient"/>) and image-validated
-/// before being stored. Password changes require the current password to be verified via BCrypt
-/// before the new hash is stored. Time-zone updates validate the IANA ID against the system's zone database.
+/// Avatar images are image-validated locally, then stored through the file-storage service
+/// (<see cref="IFileClient"/> — shared across replicas, virus-scanned there). Password changes
+/// require the current password to be verified via BCrypt before the new hash is stored.
+/// Time-zone updates validate the IANA ID against the system's zone database.
 /// </summary>
 public class ProfileService : IProfileService
 {
     private readonly IAccountRepository _accountRepository;
     private readonly IAssetRepository _assetRepository;
     private readonly IPasswordService _passwordService;
-    private readonly IClamavClient _clamavClient;
+    private readonly IFileClient _fileClient;
     private readonly IImageValidatorService _imageValidator;
     private readonly IOptions<ServerSetting> _settings;
     private readonly ILogger<ProfileService> _logger;
+
+    /// <summary>Relative storage directory (under the file-storage root) that holds uploaded avatars.</summary>
+    private const string AvatarStorageDirectory = "upload/Management/Profile/Avatar";
 
     /// <summary>Initializes a new instance of <see cref="ProfileService"/> with the supplied dependencies.</summary>
     public ProfileService(
         IAccountRepository accountRepository,
         IAssetRepository assetRepository,
         IPasswordService passwordService,
-        IClamavClient clamavClient,
+        IFileClient fileClient,
         IImageValidatorService imageValidator,
         IOptions<ServerSetting> settings,
         ILogger<ProfileService> logger)
@@ -40,7 +43,7 @@ public class ProfileService : IProfileService
         _accountRepository = accountRepository;
         _assetRepository = assetRepository;
         _passwordService = passwordService;
-        _clamavClient = clamavClient;
+        _fileClient = fileClient;
         _imageValidator = imageValidator;
         _settings = settings;
         _logger = logger;
@@ -124,55 +127,26 @@ public class ProfileService : IProfileService
     }
 
     /// <inheritdoc />
-    public async Task<ServiceResult> UploadAndUpdateAvatarAsync(string email, byte[] imageBytes, string extension, string avatarDirectoryPath, CancellationToken ct = default)
+    public async Task<ServiceResult> UploadAndUpdateAvatarAsync(string email, byte[] imageBytes, string extension, CancellationToken ct = default)
     {
         try
         {
-            using var memoryStream = new MemoryStream(imageBytes);
-
-            if (!await _clamavClient.ScanWithClamavAsync(memoryStream, _settings.Value.ClamavHost ?? "", _settings.Value.ClamavPort, ct))
-                return ServiceResult.Validation("Profile.VirusDetected", "virus-detected");
-
-            memoryStream.Position = 0;
-            if (!_imageValidator.IsValidImage(memoryStream.ToArray()))
+            if (!_imageValidator.IsValidImage(imageBytes))
                 return ServiceResult.Validation("Profile.InvalidImage", "invalid-image");
-            if (_imageValidator.IsSvg(memoryStream.ToArray()))
+            if (_imageValidator.IsSvg(imageBytes))
                 return ServiceResult.Validation("Profile.SvgNotAllowed", "svg-not-allowed");
 
-            if (!Directory.Exists(avatarDirectoryPath))
-                Directory.CreateDirectory(avatarDirectoryPath);
+            string avatarFile = $"{Guid.NewGuid():N}{extension.ToLowerInvariant()}";
+            // Store through the file-storage service (shared volume, ClamAV-scanned there) instead of
+            // this replica's local wwwroot, so a multi-replica deployment stays consistent.
+            bool uploaded = await _fileClient.UploadAsync(
+                imageBytes, ContentTypeForExtension(extension),
+                $"{AvatarStorageDirectory}/{avatarFile}", _settings.Value.FileStorageBaseUrl ?? "", ct);
 
-            string guid = Guid.NewGuid().ToString().ToUpper();
-            string avatarFile = $"{guid}{extension}";
-            string filePath = Path.Combine(avatarDirectoryPath, avatarFile);
+            if (!uploaded)
+                return ServiceResult.Failure("Profile.UploadAvatarFailed", "Input is invalid");
 
-#pragma warning disable SCS0018
-            await using (var stream = new FileStream(filePath, FileMode.Create))
-#pragma warning restore SCS0018
-            {
-                memoryStream.Position = 0;
-                await memoryStream.CopyToAsync(stream, ct);
-                await stream.FlushAsync(ct);
-            }
-
-            var chmod = new ProcessStartInfo
-            {
-                FileName = "/bin/chmod",
-#pragma warning disable SCS0001
-                Arguments = $"644 \"{filePath}\"",
-#pragma warning restore SCS0001
-                RedirectStandardOutput = true,
-                RedirectStandardError = true,
-                UseShellExecute = false,
-                CreateNoWindow = true
-            };
-            using (var process = Process.Start(chmod))
-            {
-                if (process != null)
-                    await process.WaitForExitAsync(ct);
-            }
-
-            return await UpdateAvatarAsync(email, $"/upload/Management/Profile/Avatar/{avatarFile}", ct);
+            return await UpdateAvatarAsync(email, $"/{AvatarStorageDirectory}/{avatarFile}", ct);
         }
         catch (Exception e)
         {
@@ -180,6 +154,31 @@ public class ProfileService : IProfileService
             return ServiceResult.Failure("Profile.UploadAvatarFailed", "Input is invalid");
         }
     }
+
+    /// <inheritdoc />
+    public async Task<byte[]?> DownloadAvatarAsync(string fileName, CancellationToken ct = default)
+    {
+        try
+        {
+            byte[] bytes = await _fileClient.DownloadAsync(
+                $"{AvatarStorageDirectory}/{fileName}", _settings.Value.FileStorageBaseUrl ?? "", ct);
+            return bytes.Length > 0 ? bytes : null;
+        }
+        catch (Exception e)
+        {
+            _logger.LogWarning(e, "Failed to download avatar {FileName} from file storage", fileName);
+            return null;
+        }
+    }
+
+    /// <summary>Maps an avatar file extension to its image MIME type.</summary>
+    private static string ContentTypeForExtension(string extension) =>
+        extension.ToLowerInvariant() switch
+        {
+            ".jpg" or ".jpeg" => "image/jpeg",
+            ".png" => "image/png",
+            _ => "application/octet-stream"
+        };
 
     private Task<Account?> FindByEmailAsync(string email, CancellationToken ct = default)
         => _accountRepository.FindByEmailAsync(email, ct);

@@ -58,6 +58,15 @@ public class FileControllerTests : IClassFixture<WebApplicationFactory<Program>>
         if (descriptor != null) services.Remove(descriptor);
     }
 
+    /// <summary>
+    /// A factory whose file-storage root is the OS temp directory, so the download tests below can
+    /// point at a real temp file and have it resolve as "within the root" (Program.cs otherwise
+    /// confines every path to &lt;contentRoot&gt;/upload).
+    /// </summary>
+    private WebApplicationFactory<Program> FactoryWithTempStorageRoot() =>
+        _baseFactory.WithWebHostBuilder(b =>
+            b.UseSetting("ServerSetting:StorageRootPath", Path.GetTempPath()));
+
     // -- Upload: invalid input (no ClamAV call needed) ------------------------
 
     /// <summary>Verifies that <c>Upload</c> returns bad request when no file is provided.</summary>
@@ -329,7 +338,7 @@ public class FileControllerTests : IClassFixture<WebApplicationFactory<Program>>
 
         try
         {
-            var client = _baseFactory.CreateClient();
+            var client = FactoryWithTempStorageRoot().CreateClient();
             using var content = new MultipartFormDataContent();
             content.Add(new StringContent(tempPath), "filePath");
 
@@ -355,7 +364,7 @@ public class FileControllerTests : IClassFixture<WebApplicationFactory<Program>>
 
         try
         {
-            var client = _baseFactory.CreateClient();
+            var client = FactoryWithTempStorageRoot().CreateClient();
             using var content = new MultipartFormDataContent();
             content.Add(new StringContent(tempPath), "filePath");
 

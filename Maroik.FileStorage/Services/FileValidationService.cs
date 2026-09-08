@@ -1,7 +1,7 @@
-using System.Diagnostics;
 using ICSharpCode.SharpZipLib.Zip;
 using Maroik.Core.Contract.Interfaces;
 using Maroik.FileStorage.Contracts;
+using Maroik.FileStorage.Helpers;
 using Maroik.FileStorage.Settings;
 using Microsoft.Extensions.Options;
 
@@ -34,13 +34,13 @@ public class FileValidationService : IFileValidationService
 
         var fileName = Path.GetFileName(file.FileName);
         var ext = Path.GetExtension(fileName).ToLowerInvariant();
-        // filePath is not attacker-suppliable: this endpoint is only reachable from the internal
-        // "backend" Docker network (see docker-compose.prod.yml — the service is `expose`d, not
-        // `ports`-published), and every current caller (BoardService, CalendarService,
-        // AttachmentContentService) builds filePath from a server-generated GUID, never from
-        // client input. Path.GetFullPath does NOT strip ".." segments — do not rely on this line
-        // for path-traversal protection (mirrors the equivalent note in FileController.DownloadAsync).
-        var safeDir = Path.GetFullPath(filePath);
+
+        // Confine the target directory to the storage root. The callers only ever pass
+        // server-generated relative paths under "upload/"; anything that resolves outside the root
+        // (via "..", an absolute path, a symlink, …) is rejected here rather than trusted.
+        var safeDir = StoragePath.ResolveWithinRoot(_settings.Value.StorageRootPath, filePath);
+        if (safeDir == null)
+            return (false, "Invalid file path.");
         var safePath = Path.Combine(safeDir, fileName);
 
         if (!_allowedExtensions.Contains(ext))
@@ -79,9 +79,25 @@ public class FileValidationService : IFileValidationService
         await memStream.CopyToAsync(stream);
         await stream.FlushAsync();
 
-        await SetUnixPermissionsAsync(safePath);
+        SetReadableFileMode(safePath);
 
         return (true, null);
+    }
+
+    /// <summary>
+    /// Sets mode 644 on the newly written file so the process serving downloads can read it
+    /// regardless of the container's umask. Uses the framework API rather than shelling out to
+    /// <c>/bin/chmod</c>; a no-op on Windows (dev only — the deployment target is Linux).
+    /// </summary>
+    private static void SetReadableFileMode(string filePath)
+    {
+        if (OperatingSystem.IsWindows())
+            return;
+
+        File.SetUnixFileMode(
+            filePath,
+            UnixFileMode.UserRead | UnixFileMode.UserWrite |
+            UnixFileMode.GroupRead | UnixFileMode.OtherRead);
     }
 
     /// <summary>
@@ -123,29 +139,5 @@ public class FileValidationService : IFileValidationService
             if (entry.IsCrypted) return true;
         }
         return false;
-    }
-
-    /// <summary>
-    /// Sets file mode 644 on the newly written file so it is world-readable by the web server
-    /// process serving downloads, regardless of the umask the container was created with.
-    /// </summary>
-    private static async Task SetUnixPermissionsAsync(string filePath)
-    {
-        var chmod = new ProcessStartInfo
-        {
-            FileName = "/bin/chmod",
-            // filePath is server-constructed (safeDir + sanitized file name), not raw user input,
-            // so shelling out here is not a command-injection vector; suppress the scanner warning.
-#pragma warning disable SCS0001
-            Arguments = $"644 \"{filePath}\"",
-#pragma warning restore SCS0001
-            RedirectStandardOutput = true,
-            RedirectStandardError = true,
-            UseShellExecute = false,
-            CreateNoWindow = true
-        };
-
-        using var process = Process.Start(chmod);
-        if (process != null) await process.WaitForExitAsync();
     }
 }

@@ -120,7 +120,9 @@ public class AccountController : Controller
     {
         if (!string.IsNullOrEmpty(loginInputViewModel.Password)) // Registration path
         {
-            if (!ModelState.IsValid) return RedirectToAction("Register", "Account");
+            // Re-render the form (keeps ModelState so field errors and typed-in values survive)
+            // instead of redirecting to a fresh GET, which discards both.
+            if (!ModelState.IsValid) return View();
 
             if (!loginInputViewModel.AgreedServiceTerms)
             {
@@ -173,7 +175,7 @@ public class AccountController : Controller
             _ = ModelState.Remove(nameof(loginInputViewModel.Password));
             _ = ModelState.Remove(nameof(loginInputViewModel.Nickname));
 
-            if (!ModelState.IsValid) return RedirectToAction("Register", "Account");
+            if (!ModelState.IsValid) return View();
 
             var emailTemplate = _localizer.ToConfirmationEmailTemplate();
 
@@ -224,7 +226,7 @@ public class AccountController : Controller
         _ = ModelState.Remove(nameof(loginInputViewModel.Nickname));
         _ = ModelState.Remove(nameof(loginInputViewModel.Password));
 
-        if (!ModelState.IsValid) return RedirectToAction("ForgotPassword", "Account");
+        if (!ModelState.IsValid) return View();
 
         var emailTemplate = _localizer.ToResetPasswordEmailTemplate();
 
@@ -252,7 +254,12 @@ public class AccountController : Controller
         _ = ModelState.Remove(nameof(loginInputViewModel.Email));
         _ = ModelState.Remove(nameof(loginInputViewModel.Nickname));
 
-        if (!ModelState.IsValid) return RedirectToAction("ResetPassword", "Account");
+        if (!ModelState.IsValid)
+        {
+            // Re-render with the token so the form stays submittable; ModelState carries the field errors.
+            ViewBag.ResetPasswordToken = loginInputViewModel.ResetPasswordToken;
+            return View();
+        }
 
         var result = await _accountService.ResetPasswordAsync(
             loginInputViewModel.ResetPasswordToken ?? "",

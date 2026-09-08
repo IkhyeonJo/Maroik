@@ -11,9 +11,17 @@ public interface IProfileService
     Task<AccountResponse?> GetProfileAsync(string email, CancellationToken ct = default);
 
     /// <summary>
-    /// Saves uploaded image bytes to <paramref name="avatarDirectoryPath"/> and updates the account's avatar path.
+    /// Validates the uploaded image, stores it through the file-storage service (shared across
+    /// replicas), and updates the account's avatar path.
     /// </summary>
-    Task<ServiceResult> UploadAndUpdateAvatarAsync(string email, byte[] imageBytes, string extension, string avatarDirectoryPath, CancellationToken ct = default);
+    Task<ServiceResult> UploadAndUpdateAvatarAsync(string email, byte[] imageBytes, string extension, CancellationToken ct = default);
+
+    /// <summary>
+    /// Fetches a stored avatar's bytes from the file-storage service by file name, or
+    /// <see langword="null"/> if it is missing or the fetch fails. Used to lazily repopulate a
+    /// replica's local avatar cache.
+    /// </summary>
+    Task<byte[]?> DownloadAvatarAsync(string fileName, CancellationToken ct = default);
 
     /// <summary>Updates the account's preferred IANA time-zone ID.</summary>
     Task<ServiceResult> UpdateTimeZoneAsync(string email, string timeZoneIanaId, CancellationToken ct = default);

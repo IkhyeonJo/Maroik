@@ -32,8 +32,16 @@ public static class ServiceCollectionExtensions
 
             // Register the RabbitMQ email publisher. Singleton: owns one long-lived AMQP connection,
             // opened lazily on first publish so a RabbitMQ outage doesn't block app startup.
+            // Automatic/topology recovery (the client defaults, pinned here) reopen the connection
+            // and channel after a broker restart or network blip without a manual reconnect loop.
             services.AddSingleton<IEmailPublisher>(_ => new RabbitMqEmailPublisher(
-                new ConnectionFactory { Uri = new Uri(rabbitMqConnectionString) }));
+                new ConnectionFactory
+                {
+                    Uri = new Uri(rabbitMqConnectionString),
+                    AutomaticRecoveryEnabled = true,
+                    TopologyRecoveryEnabled = true,
+                    ClientProvidedName = "maroik-website-email-publisher"
+                }));
         }
     }
 }

@@ -56,12 +56,17 @@ public class ClamavClient(ILogger<ClamavClient> logger) : IClamavClient
             byte[] zero = BitConverter.GetBytes(0);
             await stream.WriteAsync(zero, scanCt);
 
-            // Read the single-line scan result (e.g. "stream: OK" or "stream: Virus FOUND")
+            // Read the single-line scan result (e.g. "stream: OK", "stream: <Sig> FOUND",
+            // "stream: <reason> ERROR").
             using var reader = new StreamReader(stream);
-            string response = await reader.ReadLineAsync(scanCt) ?? "";
+            string response = (await reader.ReadLineAsync(scanCt) ?? "").TrimEnd();
 
-            // "OK" in the response means the file passed the virus scan
-            return response.Contains("OK");
+            // A clean file's reply ends in "OK". Check the terminator rather than a bare Contains("OK")
+            // so a malware signature name that happens to contain "OK" can't read as clean; also treat
+            // anything with "FOUND" (a detection) or "ERROR" as not clean.
+            return response.EndsWith("OK", StringComparison.Ordinal)
+                   && !response.Contains("FOUND", StringComparison.Ordinal)
+                   && !response.Contains("ERROR", StringComparison.Ordinal);
         }
         catch (Exception ex)
         {
