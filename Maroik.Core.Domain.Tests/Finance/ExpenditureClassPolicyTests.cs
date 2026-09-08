@@ -54,7 +54,7 @@ public class ExpenditureClassPolicyTests
     [Theory]
     [InlineData("Tax")]
     [InlineData("SocialInsurance")]
-    [InlineData("InterHouseholdTranserExpenses")]
+    [InlineData("InterHouseholdTransferExpenses")]
     [InlineData("NonProfitOrganizationTransfer")]
     public void Validate_ReturnsFalse_ForNonConsumerSpendingWithoutDepositAsset(string subClass)
     {

@@ -237,7 +237,7 @@ public class DashboardViewModelMapperTests
             Expenditure("NonConsumerSpending", "DebtRepayment", 200),
             Expenditure("NonConsumerSpending", "Tax", 200),
             Expenditure("NonConsumerSpending", "SocialInsurance", 200),
-            Expenditure("NonConsumerSpending", "InterHouseholdTranserExpenses", 100),
+            Expenditure("NonConsumerSpending", "InterHouseholdTransferExpenses", 100),
             Expenditure("NonConsumerSpending", "NonProfitOrganizationTransfer", 100)
         ];
 

@@ -24,7 +24,7 @@ public static class ExpenditureClassPolicy
             ["NonConsumerSpending"] = new[]
             {
                 "PublicPension", "DebtRepayment", "Tax", "SocialInsurance",
-                "InterHouseholdTranserExpenses", "NonProfitOrganizationTransfer"
+                "InterHouseholdTransferExpenses", "NonProfitOrganizationTransfer"
             },
             ["ConsumerSpending"] = new[]
             {

@@ -185,7 +185,7 @@ public static class DashboardViewModelMapper
         decimal ncDebt = SumSub(nonConsumer, "DebtRepayment");
         decimal ncTax = SumSub(nonConsumer, "Tax");
         decimal ncSocial = SumSub(nonConsumer, "SocialInsurance");
-        decimal ncInterHousehold = SumSub(nonConsumer, "InterHouseholdTranserExpenses");
+        decimal ncInterHousehold = SumSub(nonConsumer, "InterHouseholdTransferExpenses");
         decimal ncNonProfit = SumSub(nonConsumer, "NonProfitOrganizationTransfer");
         decimal totalNonConsumer = nonConsumer.Sum(v => v.Amount);
 

@@ -174,7 +174,7 @@
   <data name="Input is invalid" xml:space="preserve">
     <value>유효하지 않은 입력값입니다.</value>
   </data>
-  <data name="InterHouseholdTranserExpenses" xml:space="preserve">
+  <data name="InterHouseholdTransferExpenses" xml:space="preserve">
     <value>가구간이전지출</value>
   </data>
   <data name="Investment" xml:space="preserve">

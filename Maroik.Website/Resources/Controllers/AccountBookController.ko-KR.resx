@@ -180,7 +180,7 @@
   <data name="InsuranceAsset" xml:space="preserve">
     <value>보험자산</value>
   </data>
-  <data name="InterHouseholdTranserExpenses" xml:space="preserve">
+  <data name="InterHouseholdTransferExpenses" xml:space="preserve">
     <value>가구간이전지출</value>
   </data>
   <data name="Investment" xml:space="preserve">

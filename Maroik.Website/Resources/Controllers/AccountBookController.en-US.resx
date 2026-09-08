@@ -180,8 +180,8 @@
   <data name="InsuranceAsset" xml:space="preserve">
     <value>InsuranceAsset</value>
   </data>
-  <data name="InterHouseholdTranserExpenses" xml:space="preserve">
-    <value>InterHouseholdTranserExpenses</value>
+  <data name="InterHouseholdTransferExpenses" xml:space="preserve">
+    <value>InterHouseholdTransferExpenses</value>
   </data>
   <data name="Investment" xml:space="preserve">
     <value>Investment</value>
