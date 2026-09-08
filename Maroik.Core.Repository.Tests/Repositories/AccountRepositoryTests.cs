@@ -293,6 +293,79 @@ public sealed class AccountRepositoryTests(DatabaseFixture database) : Repositor
             () => Sut.UpdateEntityAsync(NewDomainAccount(UniqueEmail("ghost"), Unique("Ghost")), TestContext.Current.CancellationToken));
     }
 
+    // -- Column-scoped updates ----------------------------------------------------
+
+    /// <summary>Each column-scoped update writes only its own columns and leaves every other column intact.</summary>
+    [Fact]
+    public async Task ColumnScopedUpdates_TouchOnlyTheirOwnColumns()
+    {
+        string email = UniqueEmail("scoped");
+        var seed = NewAccount(email, Unique("Scoped"));
+        seed.AvatarImagePath = "/original-avatar.jpg";
+        seed.TimeZoneIanaId = "UTC";
+        seed.HashedPassword = "$2a$13$original";
+        seed.SecurityStamp = "original-stamp";
+        seed.MustChangePassword = false;
+        seed.DefaultMonetaryUnit = "USD";
+        seed.Message = "original-message";
+        await SeedAsync(seed);
+
+        var ct = TestContext.Current.CancellationToken;
+        var t1 = new DateTime(2025, 1, 2, 3, 4, 5, DateTimeKind.Utc);
+
+        int n1 = await Sut.UpdateAvatarPathAsync(email, "/new-avatar.jpg", t1, ct);
+        int n2 = await Sut.UpdateTimeZoneAsync(email, "Asia/Seoul", t1, ct);
+        int n3 = await Sut.UpdatePasswordAsync(email, "$2a$13$new", "new-stamp", mustChangePassword: true, t1, ct);
+        int n4 = await Sut.UpdateDefaultMonetaryUnitAsync(email, "KRW", ct);
+        int n5 = await Sut.UpdateMessageAsync(email, "new-message", t1, ct);
+        Context.ChangeTracker.Clear();
+
+        Assert.Equal(1, n1);
+        Assert.Equal(1, n2);
+        Assert.Equal(1, n3);
+        Assert.Equal(1, n4);
+        Assert.Equal(1, n5);
+
+        Account? result = await Sut.FindByEmailAsync(email, ct);
+        Assert.NotNull(result);
+        Assert.Equal("/new-avatar.jpg", result.AvatarImagePath);
+        Assert.Equal("Asia/Seoul", result.TimeZone.Value);
+        Assert.Equal("$2a$13$new", result.HashedPassword);
+        Assert.Equal("new-stamp", result.SecurityStamp);
+        Assert.True(result.MustChangePassword);
+        Assert.Equal("KRW", result.DefaultMonetaryUnit);
+        Assert.Equal("new-message", result.Message);
+        // Untouched by any of the above.
+        Assert.True(result.EmailConfirmed);
+        Assert.Equal(Role.User, result.Role);
+    }
+
+    /// <summary>A null avatar path persists as the shared default-avatar path, matching ToEntity.</summary>
+    [Fact]
+    public async Task UpdateAvatarPathAsync_NullPersistsAsDefaultAvatar()
+    {
+        string email = UniqueEmail("nullavatar");
+        var seed = NewAccount(email, Unique("NullAvatar"));
+        seed.AvatarImagePath = "/some-custom.jpg";
+        await SeedAsync(seed);
+
+        int n = await Sut.UpdateAvatarPathAsync(email, null, DateTime.UtcNow, TestContext.Current.CancellationToken);
+        Context.ChangeTracker.Clear();
+
+        Assert.Equal(1, n);
+        Account? result = await Sut.FindByEmailAsync(email, TestContext.Current.CancellationToken);
+        Assert.NotNull(result);
+        Assert.Equal(Account.DefaultAvatarImagePath, result.AvatarImagePath);
+    }
+
+    /// <summary>A column-scoped update against a non-existent account affects zero rows (no throw).</summary>
+    [Fact]
+    public async Task ColumnScopedUpdate_ReturnsZero_WhenAccountMissing()
+    {
+        int n = await Sut.UpdateMessageAsync(UniqueEmail("ghost"), "x", DateTime.UtcNow, TestContext.Current.CancellationToken);
+        Assert.Equal(0, n);
+    }
+
     // -- FindByEmailForUpdateAsync (raw SELECT ... FOR UPDATE) ----------------
 
     /// <summary>Verifies that the row-locking lookup returns the account when it exists.</summary>

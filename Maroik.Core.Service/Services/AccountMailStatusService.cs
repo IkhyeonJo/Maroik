@@ -23,8 +23,10 @@ public class AccountMailStatusService : IAccountMailStatusService
         if (account == null)
             return;
 
-        account.SetMessage(EnumHelper.GetDescription(AccountMessage.FailToMailSent));
-        await _accountRepository.UpdateEntityAsync(account, ct);
+        // Column-scoped write (Message/Updated only): this runs from the worker and must not
+        // full-row-overwrite an Account the web app is editing at the same moment.
+        await _accountRepository.UpdateMessageAsync(
+            email, EnumHelper.GetDescription(AccountMessage.FailToMailSent), DateTime.UtcNow, ct);
     }
 
     /// <inheritdoc />
@@ -37,7 +39,6 @@ public class AccountMailStatusService : IAccountMailStatusService
         if (account.Message != EnumHelper.GetDescription(AccountMessage.FailToMailSent))
             return;
 
-        account.SetMessage(null);
-        await _accountRepository.UpdateEntityAsync(account, ct);
+        await _accountRepository.UpdateMessageAsync(email, null, DateTime.UtcNow, ct);
     }
 }

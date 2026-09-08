@@ -107,14 +107,14 @@ public class ProfileServiceTests
     {
         var account = ActiveAccount();
         _accountRepo.Setup(r => r.FindByEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(account);
-        _accountRepo.Setup(r => r.UpdateEntityAsync(It.IsAny<Account>(), It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
+        _accountRepo.Setup(r => r.UpdateAvatarPathAsync(It.IsAny<string>(), It.IsAny<string?>(), It.IsAny<DateTime>(), It.IsAny<CancellationToken>())).ReturnsAsync(1);
         var sut = CreateSut();
 
         ServiceResult result = await sut.UpdateAvatarAsync(account.Email.Value, "/new/avatar.jpg", TestContext.Current.CancellationToken);
 
         Assert.True(result.Success);
-        _accountRepo.Verify(r => r.UpdateEntityAsync(
-            It.Is<Account>(a => a.AvatarImagePath == "/new/avatar.jpg"), It.IsAny<CancellationToken>()), Times.Once);
+        _accountRepo.Verify(r => r.UpdateAvatarPathAsync(
+            account.Email.Value, "/new/avatar.jpg", It.IsAny<DateTime>(), It.IsAny<CancellationToken>()), Times.Once);
     }
 
     // -- UploadAndUpdateAvatarAsync -----------------------------------------------
@@ -158,7 +158,7 @@ public class ProfileServiceTests
         _fileClient.Setup(c => c.UploadAsync(It.IsAny<byte[]>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(true);
         _accountRepo.Setup(r => r.FindByEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(account);
-        _accountRepo.Setup(r => r.UpdateEntityAsync(It.IsAny<Account>(), It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
+        _accountRepo.Setup(r => r.UpdateAvatarPathAsync(It.IsAny<string>(), It.IsAny<string?>(), It.IsAny<DateTime>(), It.IsAny<CancellationToken>())).ReturnsAsync(1);
         var sut = CreateSut();
 
         ServiceResult result = await sut.UploadAndUpdateAvatarAsync(account.Email.Value, [0xFF, 0xD8, 0xFF], ".JPG", TestContext.Current.CancellationToken);
@@ -168,8 +168,9 @@ public class ProfileServiceTests
             It.IsAny<byte[]>(), "image/jpeg",
             It.Is<string>(p => p.StartsWith("upload/Management/Profile/Avatar/") && p.EndsWith(".jpg")),
             It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Once);
-        _accountRepo.Verify(r => r.UpdateEntityAsync(
-            It.Is<Account>(a => a.AvatarImagePath!.StartsWith("/upload/Management/Profile/Avatar/")), It.IsAny<CancellationToken>()), Times.Once);
+        _accountRepo.Verify(r => r.UpdateAvatarPathAsync(
+            account.Email.Value, It.Is<string>(p => p!.StartsWith("/upload/Management/Profile/Avatar/")),
+            It.IsAny<DateTime>(), It.IsAny<CancellationToken>()), Times.Once);
     }
 
     /// <summary>A storage upload failure returns a failure result and never updates the account.</summary>
@@ -251,14 +252,14 @@ public class ProfileServiceTests
     {
         var account = ActiveAccount();
         _accountRepo.Setup(r => r.FindByEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(account);
-        _accountRepo.Setup(r => r.UpdateEntityAsync(It.IsAny<Account>(), It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
+        _accountRepo.Setup(r => r.UpdateTimeZoneAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<DateTime>(), It.IsAny<CancellationToken>())).ReturnsAsync(1);
         var sut = CreateSut();
 
         ServiceResult result = await sut.UpdateTimeZoneAsync(account.Email.Value, "Asia/Seoul", TestContext.Current.CancellationToken);
 
         Assert.True(result.Success);
-        _accountRepo.Verify(r => r.UpdateEntityAsync(
-            It.Is<Account>(a => a.TimeZone.Value == "Asia/Seoul"), It.IsAny<CancellationToken>()), Times.Once);
+        _accountRepo.Verify(r => r.UpdateTimeZoneAsync(
+            account.Email.Value, "Asia/Seoul", It.IsAny<DateTime>(), It.IsAny<CancellationToken>()), Times.Once);
     }
 
     // -- UpdatePasswordAsync --------------------------------------------------
@@ -298,29 +299,30 @@ public class ProfileServiceTests
         _accountRepo.Setup(r => r.FindByEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(account);
         _passwordService.Setup(p => p.VerifyPassword("oldpass", account.HashedPassword)).Returns(true);
         _passwordService.Setup(p => p.HashPassword("NewPass1!")).Returns("$2a$13$newhash");
-        _accountRepo.Setup(r => r.UpdateEntityAsync(It.IsAny<Account>(), It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
+        _accountRepo.Setup(r => r.UpdatePasswordAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<bool>(), It.IsAny<DateTime>(), It.IsAny<CancellationToken>())).ReturnsAsync(1);
         var sut = CreateSut();
 
         ServiceResult result = await sut.UpdatePasswordAsync(account.Email.Value, "oldpass", "NewPass1!", TestContext.Current.CancellationToken);
 
         Assert.True(result.Success);
-        _accountRepo.Verify(r => r.UpdateEntityAsync(
-            It.Is<Account>(a => a.HashedPassword == "$2a$13$newhash"), It.IsAny<CancellationToken>()), Times.Once);
+        _accountRepo.Verify(r => r.UpdatePasswordAsync(
+            account.Email.Value, "$2a$13$newhash", It.IsAny<string>(), false, It.IsAny<DateTime>(), It.IsAny<CancellationToken>()), Times.Once);
     }
 
     // -- UpdateDefaultMonetaryUnitAsync --------------------------------------
 
-    /// <summary>Verifies that <c>UpdateDefaultMonetaryUnitAsync</c> does nothing when account not found.</summary>
+    /// <summary>A non-existent account resolves to a no-op column update (0 rows) and does not throw.</summary>
     [Fact]
-    public async Task UpdateDefaultMonetaryUnitAsync_DoesNothing_WhenAccountNotFound()
+    public async Task UpdateDefaultMonetaryUnitAsync_IssuesColumnUpdate_EvenWhenAccountMissing()
     {
         _assetRepo.Setup(r => r.GetByAccountEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync([]);
-        _accountRepo.Setup(r => r.FindByEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync((Account?)null);
+        _accountRepo.Setup(r => r.UpdateDefaultMonetaryUnitAsync(It.IsAny<string>(), It.IsAny<string?>(), It.IsAny<CancellationToken>())).ReturnsAsync(0);
         var sut = CreateSut();
 
         await sut.UpdateDefaultMonetaryUnitAsync("missing@example.com", "KRW", TestContext.Current.CancellationToken);
 
         _accountRepo.Verify(r => r.UpdateEntityAsync(It.IsAny<Account>(), It.IsAny<CancellationToken>()), Times.Never);
+        _accountRepo.Verify(r => r.UpdateDefaultMonetaryUnitAsync("missing@example.com", null, It.IsAny<CancellationToken>()), Times.Once);
     }
 
     /// <summary>Verifies that <c>UpdateDefaultMonetaryUnitAsync</c> persists unit when it exists in assets.</summary>
@@ -329,14 +331,12 @@ public class ProfileServiceTests
     {
         var account = ActiveAccount();
         _assetRepo.Setup(r => r.GetByAccountEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync([MakeAsset("Wallet", "KRW")]);
-        _accountRepo.Setup(r => r.FindByEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(account);
-        _accountRepo.Setup(r => r.UpdateEntityAsync(It.IsAny<Account>(), It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
+        _accountRepo.Setup(r => r.UpdateDefaultMonetaryUnitAsync(It.IsAny<string>(), It.IsAny<string?>(), It.IsAny<CancellationToken>())).ReturnsAsync(1);
         var sut = CreateSut();
 
         await sut.UpdateDefaultMonetaryUnitAsync(account.Email.Value, "KRW", TestContext.Current.CancellationToken);
 
-        _accountRepo.Verify(r => r.UpdateEntityAsync(
-            It.Is<Account>(a => a.DefaultMonetaryUnit == "KRW"), It.IsAny<CancellationToken>()), Times.Once);
+        _accountRepo.Verify(r => r.UpdateDefaultMonetaryUnitAsync(account.Email.Value, "KRW", It.IsAny<CancellationToken>()), Times.Once);
     }
 
     /// <summary>Verifies that <c>UpdateDefaultMonetaryUnitAsync</c> clears unit when it is not in assets.</summary>
@@ -345,14 +345,12 @@ public class ProfileServiceTests
     {
         var account = ActiveAccount();
         _assetRepo.Setup(r => r.GetByAccountEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync([MakeAsset("Wallet", "USD")]);
-        _accountRepo.Setup(r => r.FindByEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(account);
-        _accountRepo.Setup(r => r.UpdateEntityAsync(It.IsAny<Account>(), It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
+        _accountRepo.Setup(r => r.UpdateDefaultMonetaryUnitAsync(It.IsAny<string>(), It.IsAny<string?>(), It.IsAny<CancellationToken>())).ReturnsAsync(1);
         var sut = CreateSut();
 
         await sut.UpdateDefaultMonetaryUnitAsync(account.Email.Value, "KRW", TestContext.Current.CancellationToken);
 
-        _accountRepo.Verify(r => r.UpdateEntityAsync(
-            It.Is<Account>(a => a.DefaultMonetaryUnit == null), It.IsAny<CancellationToken>()), Times.Once);
+        _accountRepo.Verify(r => r.UpdateDefaultMonetaryUnitAsync(account.Email.Value, null, It.IsAny<CancellationToken>()), Times.Once);
     }
 
     /// <summary>Verifies that <c>UpdateDefaultMonetaryUnitAsync</c> ignores a soft-deleted asset's currency.</summary>
@@ -362,13 +360,11 @@ public class ProfileServiceTests
         var account = ActiveAccount();
         _assetRepo.Setup(r => r.GetByAccountEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync([MakeAsset("OldForeignAccount", "USD", deleted: true)]);
-        _accountRepo.Setup(r => r.FindByEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(account);
-        _accountRepo.Setup(r => r.UpdateEntityAsync(It.IsAny<Account>(), It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
+        _accountRepo.Setup(r => r.UpdateDefaultMonetaryUnitAsync(It.IsAny<string>(), It.IsAny<string?>(), It.IsAny<CancellationToken>())).ReturnsAsync(1);
         var sut = CreateSut();
 
         await sut.UpdateDefaultMonetaryUnitAsync(account.Email.Value, "USD", TestContext.Current.CancellationToken);
 
-        _accountRepo.Verify(r => r.UpdateEntityAsync(
-            It.Is<Account>(a => a.DefaultMonetaryUnit == null), It.IsAny<CancellationToken>()), Times.Once);
+        _accountRepo.Verify(r => r.UpdateDefaultMonetaryUnitAsync(account.Email.Value, null, It.IsAny<CancellationToken>()), Times.Once);
     }
 }

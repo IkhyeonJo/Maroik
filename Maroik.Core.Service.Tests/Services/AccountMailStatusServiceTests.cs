@@ -48,8 +48,8 @@ public class AccountMailStatusServiceTests
 
         await sut.MarkMailSendFailedAsync(account.Email.Value, TestContext.Current.CancellationToken);
 
-        _accountRepo.Verify(r => r.UpdateEntityAsync(
-            It.Is<Account>(a => a.Message == EnumHelper.GetDescription(AccountMessage.FailToMailSent)),
+        _accountRepo.Verify(r => r.UpdateMessageAsync(
+            account.Email.Value, EnumHelper.GetDescription(AccountMessage.FailToMailSent), It.IsAny<DateTime>(),
             It.IsAny<CancellationToken>()), Times.Once);
     }
 
@@ -76,7 +76,7 @@ public class AccountMailStatusServiceTests
 
         await sut.MarkMailSendFailedAsync(account.Email.Value, cts.Token);
 
-        _accountRepo.Verify(r => r.UpdateEntityAsync(It.IsAny<Account>(), cts.Token), Times.Once);
+        _accountRepo.Verify(r => r.UpdateMessageAsync(account.Email.Value, It.IsAny<string?>(), It.IsAny<DateTime>(), cts.Token), Times.Once);
     }
 
     /// <summary>Verifies that <c>ClearMailSendFailedAsync</c> clears a FailToMailSent message and persists it.</summary>
@@ -89,8 +89,8 @@ public class AccountMailStatusServiceTests
 
         await sut.ClearMailSendFailedAsync(account.Email.Value, TestContext.Current.CancellationToken);
 
-        _accountRepo.Verify(r => r.UpdateEntityAsync(
-            It.Is<Account>(a => a.Message == null),
+        _accountRepo.Verify(r => r.UpdateMessageAsync(
+            account.Email.Value, null, It.IsAny<DateTime>(),
             It.IsAny<CancellationToken>()), Times.Once);
     }
 

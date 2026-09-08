@@ -104,4 +104,61 @@ public class AccountRepository(ApplicationDbContext context)
         var entity = entities.FirstOrDefault();
         return entity == null ? null : ToDomain(entity);
     }
+
+    // -- Column-scoped updates (see IAccountRepository for the rationale) ---------------------------
+    // ExecuteUpdateAsync emits one UPDATE that sets only the listed columns and runs immediately
+    // (inside the ambient transaction if one is open), so it never overwrites a column a concurrent
+    // writer just changed.
+
+    /// <inheritdoc />
+    public Task<int> UpdateAvatarPathAsync(string email, string? avatarImagePath, DateTime updated, CancellationToken ct = default)
+    {
+        string normalizedEmail = email.ToLowerInvariant();
+        // Keep parity with ToEntity: a null avatar persists as the shared default-avatar path.
+        string stored = avatarImagePath ?? Account.DefaultAvatarImagePath;
+        return Set.Where(e => e.Email == normalizedEmail)
+            .ExecuteUpdateAsync(s => s
+                .SetProperty(e => e.AvatarImagePath, stored)
+                .SetProperty(e => e.Updated, updated), ct);
+    }
+
+    /// <inheritdoc />
+    public Task<int> UpdateTimeZoneAsync(string email, string timeZoneIanaId, DateTime updated, CancellationToken ct = default)
+    {
+        string normalizedEmail = email.ToLowerInvariant();
+        return Set.Where(e => e.Email == normalizedEmail)
+            .ExecuteUpdateAsync(s => s
+                .SetProperty(e => e.TimeZoneIanaId, timeZoneIanaId)
+                .SetProperty(e => e.Updated, updated), ct);
+    }
+
+    /// <inheritdoc />
+    public Task<int> UpdatePasswordAsync(string email, string hashedPassword, string securityStamp, bool mustChangePassword, DateTime updated, CancellationToken ct = default)
+    {
+        string normalizedEmail = email.ToLowerInvariant();
+        return Set.Where(e => e.Email == normalizedEmail)
+            .ExecuteUpdateAsync(s => s
+                .SetProperty(e => e.HashedPassword, hashedPassword)
+                .SetProperty(e => e.SecurityStamp, securityStamp)
+                .SetProperty(e => e.MustChangePassword, mustChangePassword)
+                .SetProperty(e => e.Updated, updated), ct);
+    }
+
+    /// <inheritdoc />
+    public Task<int> UpdateDefaultMonetaryUnitAsync(string email, string? defaultMonetaryUnit, CancellationToken ct = default)
+    {
+        string normalizedEmail = email.ToLowerInvariant();
+        return Set.Where(e => e.Email == normalizedEmail)
+            .ExecuteUpdateAsync(s => s.SetProperty(e => e.DefaultMonetaryUnit, defaultMonetaryUnit), ct);
+    }
+
+    /// <inheritdoc />
+    public Task<int> UpdateMessageAsync(string email, string? message, DateTime updated, CancellationToken ct = default)
+    {
+        string normalizedEmail = email.ToLowerInvariant();
+        return Set.Where(e => e.Email == normalizedEmail)
+            .ExecuteUpdateAsync(s => s
+                .SetProperty(e => e.Message, message)
+                .SetProperty(e => e.Updated, updated), ct);
+    }
 }

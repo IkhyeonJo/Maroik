@@ -94,8 +94,10 @@ public class DashboardService : IDashboardService
         // browsed anonymously, so a write here would fire on ordinary anonymous page views.
         if (!isDemoAccount && account != null && account.DefaultMonetaryUnit != defaultMonetaryUnit)
         {
-            account.SetDefaultMonetaryUnit(defaultMonetaryUnit);
-            await _accountRepository.UpdateEntityAsync(account, ct);
+            // Column-scoped write (DefaultMonetaryUnit only, no Updated bump): this fires on a
+            // dashboard GET, so a full-row UpdateEntityAsync here would race — and silently
+            // overwrite — a concurrent profile edit on the same account.
+            await _accountRepository.UpdateDefaultMonetaryUnitAsync(accountEmail, defaultMonetaryUnit, ct);
         }
 
         var summary = new DashboardDto

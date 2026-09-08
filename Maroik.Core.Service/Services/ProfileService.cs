@@ -65,9 +65,9 @@ public class ProfileService : IProfileService
             if (account == null)
                 return ServiceResult.NotFound("Account.NotFound", "Input is invalid");
 
-            account.UpdateProfile(avatarPath, account.TimeZone, account.DefaultMonetaryUnit);
-
-            await _accountRepository.UpdateEntityAsync(account, ct);
+            // Column-scoped write: touch only AvatarImagePath/Updated so a concurrent timezone or
+            // password change on the same account is not clobbered by a full-row overwrite.
+            await _accountRepository.UpdateAvatarPathAsync(email, avatarPath, DateTime.UtcNow, ct);
             return ServiceResult.Ok();
         }
         catch (Exception e)
@@ -90,9 +90,8 @@ public class ProfileService : IProfileService
             if (tzResult.IsError)
                 return ServiceResult.FromError(tzResult.FirstError);
 
-            account.UpdateProfile(account.AvatarImagePath, tzResult.Value, account.DefaultMonetaryUnit);
-
-            await _accountRepository.UpdateEntityAsync(account, ct);
+            // Column-scoped write: touch only TimeZoneIanaId/Updated (see UpdateAvatarAsync).
+            await _accountRepository.UpdateTimeZoneAsync(email, tzResult.Value.Value, DateTime.UtcNow, ct);
             return ServiceResult.Ok();
         }
         catch (Exception e)
@@ -118,9 +117,12 @@ public class ProfileService : IProfileService
             if (!PasswordPolicy.IsValid(newPassword))
                 return ServiceResult.Validation("Account.PasswordPolicy", PasswordPolicy.ViolationMessage);
 
+            // Let the domain method compute the new SecurityStamp / clear MustChangePassword, then
+            // persist only those columns (see UpdateAvatarAsync for why the full-row write is avoided).
             account.ChangePassword(_passwordService.HashPassword(newPassword));
 
-            await _accountRepository.UpdateEntityAsync(account, ct);
+            await _accountRepository.UpdatePasswordAsync(
+                email, account.HashedPassword, account.SecurityStamp, account.MustChangePassword, account.Updated, ct);
             return ServiceResult.Ok();
         }
         catch (Exception e)
@@ -191,14 +193,14 @@ public class ProfileService : IProfileService
     public async Task UpdateDefaultMonetaryUnitAsync(string accountEmail, string? monetaryUnit, CancellationToken ct = default)
     {
         List<Asset> assets = await _assetRepository.GetByAccountEmailAsync(accountEmail, ct);
-        Account? account = await FindByEmailAsync(accountEmail, ct);
-        if (account == null) return;
 
         // A deleted asset's currency must not remain selectable as the default monetary unit.
         string? newUnit = assets.Where(x => !x.Deleted).Select(x => x.Balance.Currency).Distinct().Contains(monetaryUnit)
             ? monetaryUnit
             : null;
-        account.UpdateProfile(account.AvatarImagePath, account.TimeZone, newUnit);
-        await _accountRepository.UpdateEntityAsync(account, ct);
+
+        // Column-scoped write: only DefaultMonetaryUnit, no Updated bump (background correction).
+        // A no-op (0 rows) when the account does not exist, matching the prior silent return.
+        await _accountRepository.UpdateDefaultMonetaryUnitAsync(accountEmail, newUnit, ct);
     }
 }

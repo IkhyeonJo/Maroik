@@ -28,4 +28,29 @@ public interface IAccountRepository : IGenericRepository<Account>
     /// latest committed state instead of racing on a stale read.
     /// </summary>
     Task<Account?> FindByEmailForUpdateAsync(string email, CancellationToken ct = default);
+
+    // ---------------------------------------------------------------------------------------------
+    // Column-scoped updates. UpdateEntityAsync rewrites EVERY column from the domain snapshot, so
+    // two unrelated writers (a profile edit, a mail-status write from the worker, the dashboard's
+    // default-unit self-correction) racing on the same account silently clobber each other's field.
+    // These issue a single UPDATE touching only the columns the caller actually changed, so writes
+    // to different fields no longer collide. Each returns the affected row count (0 = no such
+    // account). The caller still runs the domain method first so the entity stays authoritative for
+    // the computed values (SecurityStamp, Updated, …).
+    // ---------------------------------------------------------------------------------------------
+
+    /// <summary>Writes only <c>AvatarImagePath</c> and <c>Updated</c>.</summary>
+    Task<int> UpdateAvatarPathAsync(string email, string? avatarImagePath, DateTime updated, CancellationToken ct = default);
+
+    /// <summary>Writes only <c>TimeZoneIanaId</c> and <c>Updated</c>.</summary>
+    Task<int> UpdateTimeZoneAsync(string email, string timeZoneIanaId, DateTime updated, CancellationToken ct = default);
+
+    /// <summary>Writes only <c>HashedPassword</c>, <c>SecurityStamp</c>, <c>MustChangePassword</c> and <c>Updated</c>.</summary>
+    Task<int> UpdatePasswordAsync(string email, string hashedPassword, string securityStamp, bool mustChangePassword, DateTime updated, CancellationToken ct = default);
+
+    /// <summary>Writes only <c>DefaultMonetaryUnit</c>. Does not touch <c>Updated</c> — this is a background self-correction, not a user edit.</summary>
+    Task<int> UpdateDefaultMonetaryUnitAsync(string email, string? defaultMonetaryUnit, CancellationToken ct = default);
+
+    /// <summary>Writes only <c>Message</c> and <c>Updated</c>.</summary>
+    Task<int> UpdateMessageAsync(string email, string? message, DateTime updated, CancellationToken ct = default);
 }
