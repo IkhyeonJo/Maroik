@@ -5,6 +5,7 @@ using DocumentFormat.OpenXml.Spreadsheet;
 using Maroik.Core.Contract.Dtos;
 using Maroik.Core.Contract.Misc.Extensions;
 using Maroik.Website.Contracts;
+using Maroik.Website.Extensions;
 using Maroik.Website.Mappings;
 using Maroik.Website.Models.ViewModels.AccountBook;
 using Maroik.Website.Models.ViewModels.Management;
@@ -246,7 +247,7 @@ public class ExcelExportService : IExcelExportService
 
     /// <inheritdoc />
     public MemoryStream CreateAccountExcel(
-        IEnumerable<AccountResponse> items,
+        IEnumerable<AdminAccountResponse> items,
         Func<string, string> localize,
         string timeZoneIanaId)
     {

@@ -1,7 +1,9 @@
-namespace Maroik.Core.Contract.Misc.Extensions;
+namespace Maroik.Website.Extensions;
 
 /// <summary>
-/// Extension methods for <see cref="string"/> used in the account-book UI.
+/// Presentation-formatting extension methods for <see cref="string"/> used by the account-book and
+/// notice views. Lives in the Website layer because only the Website consumes it — it produces a
+/// display label, not a domain value.
 /// </summary>
 public static class StringExtensions
 {

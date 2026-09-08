@@ -240,9 +240,9 @@ public class AccountServiceTests
         Assert.Contains("Service Terms", result.ErrorKey, StringComparison.OrdinalIgnoreCase);
     }
 
-    /// <summary>Verifies that <c>LoginAsync</c> returns a success result with account data and clears the hashed password when credentials are valid.</summary>
+    /// <summary>Verifies that <c>LoginAsync</c> returns a success result with account data when credentials are valid.</summary>
     [Fact]
-    public async Task LoginAsync_ReturnsSuccessWithAccount_AndClearsHashedPassword_WhenCredentialsValid()
+    public async Task LoginAsync_ReturnsSuccessWithAccount_WhenCredentialsValid()
     {
         var account = ActiveAccount();
         _accountRepo.Setup(r => r.FindByEmailForUpdateAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(account);
@@ -255,7 +255,9 @@ public class AccountServiceTests
         Assert.True(result.Success);
         Assert.NotNull(result.Account);
         Assert.Equal(account.Email.Value, result.Account.Email);
-        Assert.Null(result.Account.HashedPassword); // must be cleared
+        // The session-bound AccountResponse no longer has a HashedPassword member at all — the
+        // secret-bearing fields live only on AdminAccountResponse (see AccountMapper). The absence
+        // of a password hash here is now a compile-time guarantee, not a runtime assertion.
         _unitOfWork.Verify(u => u.CommitAsync(It.IsAny<CancellationToken>()), Times.Once);
     }
 
@@ -275,7 +277,7 @@ public class AccountServiceTests
         var request = new AccountRequest
         {
             Email = "new@example.com",
-            PlainPassword = "plain-password",
+            PlainPassword = "PlainPass1!",
             Nickname = "TestUser",
             RegistrationToken = GuidToken.Generate()
         };
@@ -304,7 +306,7 @@ public class AccountServiceTests
         var request = new AccountRequest
         {
             Email = "new@example.com",
-            PlainPassword = "plain-password",
+            PlainPassword = "PlainPass1!",
             Nickname = "TestUser",
             RegistrationToken = GuidToken.Generate()
         };
@@ -331,7 +333,7 @@ public class AccountServiceTests
         var request = new AccountRequest
         {
             Email = "new@example.com",
-            PlainPassword = "plain-password",
+            PlainPassword = "PlainPass1!",
             RegistrationToken = GuidToken.Generate()
         };
 
@@ -354,7 +356,7 @@ public class AccountServiceTests
         var request = new AccountRequest
         {
             Email = "new@example.com",
-            PlainPassword = "plain-password",
+            PlainPassword = "PlainPass1!",
             Nickname = "TakenNick",
             RegistrationToken = GuidToken.Generate()
         };
@@ -384,7 +386,7 @@ public class AccountServiceTests
         var request = new AccountRequest
         {
             Email = "raced@example.com",
-            PlainPassword = "plain-password",
+            PlainPassword = "PlainPass1!",
             Nickname = "SomeNick",
             RegistrationToken = GuidToken.Generate()
         };
@@ -557,7 +559,7 @@ public class AccountServiceTests
 
         Assert.True(result);
         _accountRepo.Verify(r => r.UpdateEntityAsync(
-            It.Is<Account>(a => a.ResetPasswordToken != null), It.IsAny<CancellationToken>()), Times.Once);
+            It.Is<Account>(a => a.ResetPasswordToken != null), It.IsAny<CancellationToken>()), Times.Exactly(2));
     }
 
     /// <summary>Verifies that <c>ForgotPasswordAsync</c> still sends a reset email when the account is locked,
@@ -576,7 +578,7 @@ public class AccountServiceTests
 
         Assert.True(result);
         _accountRepo.Verify(r => r.UpdateEntityAsync(
-            It.Is<Account>(a => a.ResetPasswordToken != null), It.IsAny<CancellationToken>()), Times.Once);
+            It.Is<Account>(a => a.ResetPasswordToken != null), It.IsAny<CancellationToken>()), Times.Exactly(2));
     }
 
     // -- ValidateResetPasswordTokenAsync -------------------------------------
@@ -661,11 +663,11 @@ public class AccountServiceTests
         var account = ActiveAccount(locked: true, loginAttempt: 3, resetPasswordToken: freshToken);
         _rsa.Setup(r => r.Decrypt("enc")).Returns(freshToken);
         _accountRepo.Setup(r => r.FindByResetPasswordTokenAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(account);
-        _passwordService.Setup(p => p.HashPassword("newpass")).Returns("$2a$13$newhash");
+        _passwordService.Setup(p => p.HashPassword("NewPass1!")).Returns("$2a$13$newhash");
         _accountRepo.Setup(r => r.UpdateEntityAsync(It.IsAny<Account>(), It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
         var sut = CreateSut();
 
-        ServiceResult result = await sut.ResetPasswordAsync("enc", "newpass", TestContext.Current.CancellationToken);
+        ServiceResult result = await sut.ResetPasswordAsync("enc", "NewPass1!", TestContext.Current.CancellationToken);
 
         Assert.True(result.Success);
         _accountRepo.Verify(r => r.UpdateEntityAsync(It.Is<Account>(a =>

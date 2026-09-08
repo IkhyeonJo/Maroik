@@ -114,6 +114,10 @@ public class ProfileService : IProfileService
             if (!_passwordService.VerifyPassword(currentPassword, account.HashedPassword))
                 return ServiceResult.Validation("Profile.WrongPassword", "Invalid password. Please check again.");
 
+            // Enforce the complexity rule server-side, before hashing — Account.ChangePassword only sees the hash.
+            if (!PasswordPolicy.IsValid(newPassword))
+                return ServiceResult.Validation("Account.PasswordPolicy", PasswordPolicy.ViolationMessage);
+
             account.ChangePassword(_passwordService.HashPassword(newPassword));
 
             await _accountRepository.UpdateEntityAsync(account, ct);

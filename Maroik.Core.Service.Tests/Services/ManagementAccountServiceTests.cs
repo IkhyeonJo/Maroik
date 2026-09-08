@@ -59,7 +59,7 @@ public class ManagementAccountServiceTests
         _accountRepo.Setup(r => r.GetAllAsync(It.IsAny<CancellationToken>())).ReturnsAsync([ActiveAccount()]);
         var sut = CreateSut();
 
-        List<AccountResponse> result = await sut.GetAllAccountsAsync(TestContext.Current.CancellationToken);
+        List<AdminAccountResponse> result = await sut.GetAllAccountsAsync(TestContext.Current.CancellationToken);
 
         Assert.Single(result);
     }
@@ -158,12 +158,12 @@ public class ManagementAccountServiceTests
     {
         var account = ActiveAccount();
         _accountRepo.Setup(r => r.FindByEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(account);
-        _passwordService.Setup(p => p.HashPassword("newpass")).Returns("$2a$13$newhash");
+        _passwordService.Setup(p => p.HashPassword("NewPass1!")).Returns("$2a$13$newhash");
         _accountRepo.Setup(r => r.UpdateEntityAsync(It.IsAny<Account>(), It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
         var sut = CreateSut();
 
         ServiceResult result = await sut.UpdateAccountAsync(
-            new AccountRequest { Email = account.Email.Value, Role = "User" }, "newpass", TestContext.Current.CancellationToken);
+            new AccountRequest { Email = account.Email.Value, Role = "User" }, "NewPass1!", TestContext.Current.CancellationToken);
 
         Assert.True(result.Success);
         _accountRepo.Verify(r => r.UpdateEntityAsync(
@@ -177,12 +177,12 @@ public class ManagementAccountServiceTests
         var account = ActiveAccount();
         string originalStamp = account.SecurityStamp;
         _accountRepo.Setup(r => r.FindByEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(account);
-        _passwordService.Setup(p => p.HashPassword("newpass")).Returns("$2a$13$newhash");
+        _passwordService.Setup(p => p.HashPassword("NewPass1!")).Returns("$2a$13$newhash");
         _accountRepo.Setup(r => r.UpdateEntityAsync(It.IsAny<Account>(), It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
         var sut = CreateSut();
 
         await sut.UpdateAccountAsync(
-            new AccountRequest { Email = account.Email.Value, Role = "User" }, "newpass", TestContext.Current.CancellationToken);
+            new AccountRequest { Email = account.Email.Value, Role = "User" }, "NewPass1!", TestContext.Current.CancellationToken);
 
         Assert.True(account.MustChangePassword);
         Assert.NotEqual(originalStamp, account.SecurityStamp);

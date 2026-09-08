@@ -38,6 +38,7 @@ public sealed class Income : AggregateRoot<long>
     /// <summary>Optional free-text note.</summary>
     public string? Note { get; private set; }
 
+    /// <summary>"New record" constructor: stamps <see cref="Created"/>/<see cref="Updated"/>. Used by <see cref="Record"/> only.</summary>
     private Income(
         long id,
         Email accountEmail,
@@ -57,6 +58,22 @@ public sealed class Income : AggregateRoot<long>
         Note = note;
         Created = DateTime.UtcNow;
         Updated = DateTime.UtcNow;
+    }
+
+    /// <summary>Reconstitution constructor: assigns every field verbatim from trusted storage with no <see cref="DateTime.UtcNow"/> side effect.</summary>
+    private Income(
+        long id, Email accountEmail, string mainClass, string subClass, string? content, Money amount,
+        string depositMyAssetProductName, string? note, DateTime created, DateTime updated) : base(id)
+    {
+        AccountEmail = accountEmail;
+        MainClass = mainClass;
+        SubClass = subClass;
+        Content = content;
+        Amount = amount;
+        DepositMyAssetProductName = depositMyAssetProductName;
+        Note = note;
+        Created = created;
+        Updated = updated;
     }
 
     // ------------------------------------------------------------------------
@@ -80,7 +97,7 @@ public sealed class Income : AggregateRoot<long>
         DateTime created,
         DateTime updated)
     {
-        var income = new Income(
+        return new Income(
             id,
             Email.FromTrustedSource(accountEmail),
             mainClass,
@@ -88,9 +105,9 @@ public sealed class Income : AggregateRoot<long>
             content,
             Money.FromTrustedSource(amount, monetaryUnit),
             depositMyAssetProductName,
-            note) { Created = created, Updated = updated };
-
-        return income;
+            note,
+            created,
+            updated);
     }
 
     /// <summary>

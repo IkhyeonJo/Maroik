@@ -1,5 +1,4 @@
 using System.Globalization;
-using Maroik.Core.Contract.Misc.Extensions;
 using Maroik.Website.Models.ViewModels.Notice;
 
 namespace Maroik.Website.Extensions;

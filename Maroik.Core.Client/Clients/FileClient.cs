@@ -11,26 +11,49 @@ namespace Maroik.Core.Client.Clients;
 /// </summary>
 public class FileClient(IHttpClientFactory httpClientFactory, ILogger<FileClient> logger) : IFileClient
 {
+    /// <summary>
+    /// Rejects a storage path that is rooted or contains a <c>..</c> segment, so a value that ever
+    /// reaches here from a less-trusted source can't be used to escape the storage root.
+    /// The app's own paths are always relative (e.g. <c>upload/Forum/.../file.zip</c>).
+    /// </summary>
+    private static bool IsSafeRelativePath(string filePath) =>
+        !string.IsNullOrWhiteSpace(filePath)
+        && !Path.IsPathRooted(filePath)
+        && !filePath.Replace('\\', '/').Split('/').Contains("..");
+
     /// <inheritdoc />
     public async Task<byte[]> DownloadAsync(string filePath, string fileStorageBaseUrl, CancellationToken ct = default)
     {
+        if (!IsSafeRelativePath(filePath))
+            throw new ArgumentException($"Unsafe storage path: '{filePath}'.", nameof(filePath));
+
         var correlationId = Activity.Current?.Id ?? "";
 #pragma warning disable CA1873
         logger.LogInformation("Requesting file download: {FilePath}. CorrelationId={CorrelationId}", filePath, correlationId);
 #pragma warning restore CA1873
 
-        using HttpClient httpClient = httpClientFactory.CreateClient();
-        using MultipartFormDataContent content = [];
+        try
+        {
+            using HttpClient httpClient = httpClientFactory.CreateClient();
+            using MultipartFormDataContent content = [];
 
-        // Pass the server-side file path to the storage service
-        content.Add(new StringContent(filePath), "filePath");
-        // So Maroik.FileStorage's failure logs for this call can be traced back to this request.
-        content.Add(new StringContent(correlationId), "correlationId");
+            // Pass the server-side file path to the storage service
+            content.Add(new StringContent(filePath), "filePath");
+            // So Maroik.FileStorage's failure logs for this call can be traced back to this request.
+            content.Add(new StringContent(correlationId), "correlationId");
 
-        HttpResponseMessage response = await httpClient.PostAsync($"{fileStorageBaseUrl}/api/File/download", content, ct);
+            HttpResponseMessage response = await httpClient.PostAsync($"{fileStorageBaseUrl}/api/File/download", content, ct);
 
-        _ = response.EnsureSuccessStatusCode(); // Throw on non-2xx status
-        return await response.Content.ReadAsByteArrayAsync(ct); // Return raw file bytes
+            _ = response.EnsureSuccessStatusCode(); // Throw on non-2xx status
+            return await response.Content.ReadAsByteArrayAsync(ct); // Return raw file bytes
+        }
+        catch (Exception ex)
+        {
+            // Parity with UploadAsync: log with the correlation id, then rethrow (callers of the
+            // download path already handle the exception and this method has no "false" to return).
+            logger.LogError(ex, "File download request failed for {FilePath}. CorrelationId={CorrelationId}", filePath, correlationId);
+            throw;
+        }
     }
 
     /// <inheritdoc />
@@ -44,6 +67,14 @@ public class FileClient(IHttpClientFactory httpClientFactory, ILogger<FileClient
             // Reject empty uploads immediately
             if (fileData is not { Length: > 0 })
             {
+                return false;
+            }
+
+            // The directory portion is forwarded to the storage service as-is; reject a rooted or
+            // ".."-containing path so it can't place the file outside the storage root.
+            if (!IsSafeRelativePath(filePath))
+            {
+                logger.LogWarning("Rejected file upload with unsafe storage path: {FilePath}", filePath);
                 return false;
             }
 

@@ -404,6 +404,23 @@ public sealed class Account : AggregateRoot<string>
     }
 
     /// <summary>
+    /// Unconditionally replaces the registration token — the resend / re-register flow calls this
+    /// when the stored token is missing <em>or expired</em>, so a stale, un-confirmable registration
+    /// can always be recovered by requesting a fresh email. No-op once the email is confirmed
+    /// (there is nothing left to confirm).
+    /// </summary>
+    public void RegenerateRegistrationToken(string newToken)
+    {
+        if (EmailConfirmed)
+        {
+            return;
+        }
+
+        RegistrationToken = newToken;
+        Updated = DateTime.UtcNow;
+    }
+
+    /// <summary>
     /// Admin bypass: confirms the email without token validation.
     /// Use only when an admin creates an account that should be immediately active.
     /// </summary>

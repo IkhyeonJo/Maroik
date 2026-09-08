@@ -6,40 +6,52 @@ namespace Maroik.Core.Service.Mappers;
 /// <summary>Maps <see cref="Account"/> domain objects to <see cref="AccountResponse"/> DTOs.</summary>
 internal static class AccountMapper
 {
-    /// <summary>Converts an <see cref="Account"/> domain object to its corresponding <see cref="AccountResponse"/> DTO.</summary>
-    internal static AccountResponse ToResponse(Account account) => new()
+    /// <summary>Copies the fields shared by every account DTO from <paramref name="account"/> onto <paramref name="target"/>.</summary>
+    private static void PopulateCommon(AccountResponse target, Account account)
     {
-        Email = account.Email.Value,
-        Nickname = account.Nickname,
-        AvatarImagePath = account.AvatarImagePath,
-        Role = account.Role,
-        TimeZoneIanaId = account.TimeZone.Value,
-        DefaultMonetaryUnit = account.DefaultMonetaryUnit,
-        Locked = account.Locked,
-        LoginAttempt = account.LoginAttempt,
-        EmailConfirmed = account.EmailConfirmed,
-        AgreedServiceTerms = account.AgreedServiceTerms,
-        Created = account.Created,
-        Updated = account.Updated,
-        Message = account.Message,
-        Deleted = account.Deleted,
-        SecurityStamp = account.SecurityStamp,
-        MustChangePassword = account.MustChangePassword
-    };
+        target.Email = account.Email.Value;
+        target.Nickname = account.Nickname;
+        target.AvatarImagePath = account.AvatarImagePath;
+        target.Role = account.Role;
+        target.TimeZoneIanaId = account.TimeZone.Value;
+        target.DefaultMonetaryUnit = account.DefaultMonetaryUnit;
+        target.Locked = account.Locked;
+        target.LoginAttempt = account.LoginAttempt;
+        target.EmailConfirmed = account.EmailConfirmed;
+        target.AgreedServiceTerms = account.AgreedServiceTerms;
+        target.Created = account.Created;
+        target.Updated = account.Updated;
+        target.Message = account.Message;
+        target.Deleted = account.Deleted;
+        target.SecurityStamp = account.SecurityStamp;
+        target.MustChangePassword = account.MustChangePassword;
+    }
+
+    /// <summary>Converts an <see cref="Account"/> domain object to its corresponding <see cref="AccountResponse"/> DTO.</summary>
+    internal static AccountResponse ToResponse(Account account)
+    {
+        var response = new AccountResponse();
+        PopulateCommon(response, account);
+        return response;
+    }
 
     /// <summary>
-    /// Same as <see cref="ToResponse"/> but additionally populates <see cref="AccountResponse.HashedPassword"/>,
-    /// <see cref="AccountResponse.RegistrationToken"/>, and <see cref="AccountResponse.ResetPasswordToken"/>.
-    /// Use ONLY for the admin account-management grid/search/export (matching main's behavior there) —
-    /// never for the logged-in user's own session-stored <see cref="AccountResponse"/>, since that would
-    /// put the password hash into the session payload.
+    /// Same as <see cref="ToResponse"/> but returns an <see cref="AdminAccountResponse"/> that also
+    /// carries <see cref="AdminAccountResponse.HashedPassword"/>,
+    /// <see cref="AdminAccountResponse.RegistrationToken"/>, and
+    /// <see cref="AdminAccountResponse.ResetPasswordToken"/>. Use ONLY for the admin
+    /// account-management grid / search / export — the return type keeps these fields off the
+    /// plain <see cref="AccountResponse"/> that the logged-in user's session is built from.
     /// </summary>
-    internal static AccountResponse ToAdminResponse(Account account)
+    internal static AdminAccountResponse ToAdminResponse(Account account)
     {
-        AccountResponse response = ToResponse(account);
-        response.HashedPassword = account.HashedPassword;
-        response.RegistrationToken = account.RegistrationToken;
-        response.ResetPasswordToken = account.ResetPasswordToken;
+        var response = new AdminAccountResponse
+        {
+            HashedPassword = account.HashedPassword,
+            RegistrationToken = account.RegistrationToken,
+            ResetPasswordToken = account.ResetPasswordToken,
+        };
+        PopulateCommon(response, account);
         return response;
     }
 }

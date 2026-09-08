@@ -41,6 +41,7 @@ public sealed class Expenditure : AggregateRoot<long>
     /// <summary>Optional free-text note.</summary>
     public string? Note { get; private set; }
 
+    /// <summary>"New record" constructor: stamps <see cref="Created"/>/<see cref="Updated"/>. Used by <see cref="Record"/> only.</summary>
     private Expenditure(
         long id,
         Email accountEmail,
@@ -62,6 +63,23 @@ public sealed class Expenditure : AggregateRoot<long>
         Note = note;
         Created = DateTime.UtcNow;
         Updated = DateTime.UtcNow;
+    }
+
+    /// <summary>Reconstitution constructor: assigns every field verbatim from trusted storage with no <see cref="DateTime.UtcNow"/> side effect.</summary>
+    private Expenditure(
+        long id, Email accountEmail, string mainClass, string subClass, string? content, Money amount,
+        string paymentMethod, string? myDepositAsset, string? note, DateTime created, DateTime updated) : base(id)
+    {
+        AccountEmail = accountEmail;
+        MainClass = mainClass;
+        SubClass = subClass;
+        Content = content;
+        Amount = amount;
+        PaymentMethod = paymentMethod;
+        MyDepositAsset = myDepositAsset;
+        Note = note;
+        Created = created;
+        Updated = updated;
     }
 
     // ------------------------------------------------------------------------
@@ -86,7 +104,7 @@ public sealed class Expenditure : AggregateRoot<long>
         DateTime created,
         DateTime updated)
     {
-        var expenditure = new Expenditure(
+        return new Expenditure(
             id,
             Email.FromTrustedSource(accountEmail),
             mainClass,
@@ -95,9 +113,9 @@ public sealed class Expenditure : AggregateRoot<long>
             Money.FromTrustedSource(amount, monetaryUnit),
             paymentMethod,
             myDepositAsset,
-            note) { Created = created, Updated = updated };
-
-        return expenditure;
+            note,
+            created,
+            updated);
     }
 
     /// <summary>

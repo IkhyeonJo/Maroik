@@ -117,7 +117,7 @@ public class IncomeService : IIncomeService
                 return await FailAsync(DeletedAssetResult, ct);
             string newCurrency = newAsset?.Balance.Currency ?? prevAsset?.Balance.Currency ?? "";
 
-            var oldSnapshot = new IncomeSnapshot(previous.DepositMyAssetProductName, previous.Amount.Amount);
+            var oldSnapshot = new IncomeSnapshot(previous.DepositMyAssetProductName, previous.Amount.Amount, previous.Amount.Currency);
 
             var updateResult = previous.Update(request.MainClass, request.SubClass, request.Content,
                 Math.Abs(request.Amount), newCurrency, request.DepositMyAssetProductName, request.Note, request.Created);
@@ -126,7 +126,7 @@ public class IncomeService : IIncomeService
 
             await _incomeRepository.UpdateEntityAsync(previous, ct);
             var adjustResult = await AdjustAssetBalancesAsync(accountEmail, oldSnapshot,
-                new IncomeSnapshot(previous.DepositMyAssetProductName, previous.Amount.Amount), ct);
+                new IncomeSnapshot(previous.DepositMyAssetProductName, previous.Amount.Amount, previous.Amount.Currency), ct);
             if (adjustResult.IsError)
                 return await FailAsync(adjustResult.FirstError, ct);
 
@@ -162,7 +162,7 @@ public class IncomeService : IIncomeService
                 return await FailAsync(DeletedAssetResult, ct);
 
             var adjustResult = await AdjustAssetBalancesAsync(accountEmail,
-                new IncomeSnapshot(income.DepositMyAssetProductName, income.Amount.Amount), null, ct);
+                new IncomeSnapshot(income.DepositMyAssetProductName, income.Amount.Amount, income.Amount.Currency), null, ct);
             if (adjustResult.IsError)
                 return await FailAsync(adjustResult.FirstError, ct);
 
@@ -201,17 +201,19 @@ public class IncomeService : IIncomeService
     /// </summary>
     private async Task<ErrorOr<Success>> AdjustAssetBalancesAsync(string accountEmail, IncomeSnapshot toRevert, IncomeSnapshot? toApply, CancellationToken ct = default)
     {
-        List<AssetBalanceAdjustment> adjustments = [new(toRevert.DepositAssetName, toRevert.Amount, IsDeposit: false)];
+        List<AssetBalanceAdjustment> adjustments =
+            [new(toRevert.DepositAssetName, toRevert.Amount, IsDeposit: false, Currency: toRevert.Currency)];
         if (toApply.HasValue)
-            adjustments.Add(new(toApply.Value.DepositAssetName, toApply.Value.Amount, IsDeposit: true));
+            adjustments.Add(new(toApply.Value.DepositAssetName, toApply.Value.Amount, IsDeposit: true, Currency: toApply.Value.Currency));
 
         return await _assetBalance.ApplyAssetBalanceAdjustmentsAsync(
             accountEmail, adjustments, "Income.AssetNotFound", "The asset referenced by this income could not be found.", ct);
     }
 
     /// <summary>
-    /// Captures the asset-related fields of an <see cref="Income"/> at a point in time so that
-    /// the corresponding asset balance can be correctly reversed during update or delete operations.
+    /// Captures the asset-related fields of an <see cref="Income"/> at a point in time (including the
+    /// currency the amount was recorded in) so that the corresponding asset balance can be correctly
+    /// reversed during update or delete operations.
     /// </summary>
-    private readonly record struct IncomeSnapshot(string? DepositAssetName, decimal Amount);
+    private readonly record struct IncomeSnapshot(string? DepositAssetName, decimal Amount, string Currency);
 }

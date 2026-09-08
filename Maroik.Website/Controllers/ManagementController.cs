@@ -171,11 +171,11 @@ public class ManagementController : Controller
             string? email = _sessionService.GetAccount()!.Email;
             await _profileService.UpdateTimeZoneAsync(email!, profileInputViewModel.TimeZoneIanaId!, HttpContext.RequestAborted);
 
-            // Refresh session with updated timezone
+            // Refresh session with updated timezone. GetProfileAsync returns a plain AccountResponse,
+            // which no longer carries a password hash at all (see AdminAccountResponse).
             AccountResponse? updatedAccount = await _profileService.GetProfileAsync(email!, HttpContext.RequestAborted);
             _sessionService.RemoveAccount();
-            updatedAccount!.HashedPassword = null;
-            _sessionService.SetAccount(updatedAccount);
+            _sessionService.SetAccount(updatedAccount!);
         }
         catch (Exception ex)
         {
@@ -219,8 +219,7 @@ public class ManagementController : Controller
                 // the session copy with the new stamp so only *other* sessions are invalidated.
                 AccountResponse? updatedAccount = await _profileService.GetProfileAsync(email!, HttpContext.RequestAborted);
                 _sessionService.RemoveAccount();
-                updatedAccount!.HashedPassword = null;
-                _sessionService.SetAccount(updatedAccount);
+                _sessionService.SetAccount(updatedAccount!);
             }
 
             return result.Success
@@ -339,7 +338,7 @@ public class ManagementController : Controller
     {
         try
         {
-            AccountResponse? tempAccount = await _managementAccountService.GetAccountByEmailAsync(email, HttpContext.RequestAborted);
+            AdminAccountResponse? tempAccount = await _managementAccountService.GetAccountByEmailAsync(email, HttpContext.RequestAborted);
 
             return tempAccount == null
                 ? Json(new

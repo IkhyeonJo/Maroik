@@ -197,7 +197,11 @@ try
     {
         options.AddDefaultPolicy(corsPolicyBuilder =>
         {
-            _ = corsPolicyBuilder.WithOrigins(cfgDomainName.Replace("/", ""));
+            // Origin = scheme + host (+ port), no trailing slash. The old Replace("/", "") also ate
+            // the "//" in "https://", producing the invalid origin "https:host" that matched nothing.
+            var corsOrigin = cfgDomainName.TrimEnd('/');
+            if (!string.IsNullOrEmpty(corsOrigin))
+                _ = corsPolicyBuilder.WithOrigins(corsOrigin);
         });
     });
 

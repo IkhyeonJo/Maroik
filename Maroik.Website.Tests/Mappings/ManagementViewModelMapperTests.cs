@@ -11,7 +11,7 @@ namespace Maroik.Website.Tests.Mappings;
 /// </summary>
 public class ManagementViewModelMapperTests
 {
-    private static AccountResponse SampleAccount(DateTime created, DateTime updated) => new()
+    private static AdminAccountResponse SampleAccount(DateTime created, DateTime updated) => new()
     {
         Email = "user@example.com",
         HashedPassword = "hashed",
@@ -130,7 +130,7 @@ public class ManagementViewModelMapperTests
     [Fact]
     public void ToDisplayViewModels_EmptySequence_ReturnsEmptyList()
     {
-        var vms = Array.Empty<AccountResponse>().ToDisplayViewModels("UTC");
+        var vms = Array.Empty<AdminAccountResponse>().ToDisplayViewModels("UTC");
 
         Assert.Empty(vms);
     }

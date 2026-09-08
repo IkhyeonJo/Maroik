@@ -151,6 +151,11 @@ public class AccountService : IAccountService
 
         if (existing == null)
         {
+            // Enforce the password-complexity rule at the service boundary (not just the ViewModel),
+            // before hashing — Account.Create only ever sees the already-hashed value.
+            if (!PasswordPolicy.IsValid(newAccount.PlainPassword))
+                return RegisterResult.Fail(PasswordPolicy.ViolationMessage);
+
             // Brand-new account: hash the plain-text password and create the domain entity.
             string hashedPassword = _passwordService.HashPassword(newAccount.PlainPassword ?? "");
 
@@ -201,8 +206,10 @@ public class AccountService : IAccountService
 
         if (!existing.EmailConfirmed)
         {
-            // Account exists but email was never confirmed: regenerate the token if missing and resend.
-            existing.RegenerateRegistrationTokenIfEmpty(GuidToken.Generate());
+            // Account exists but email was never confirmed: regenerate the token when it is missing
+            // OR has passed its 24h TTL, so a stale registration is always recoverable by re-registering.
+            if (string.IsNullOrEmpty(existing.RegistrationToken) || !GuidToken.IsTokenAlive(existing.RegistrationToken))
+                existing.RegenerateRegistrationToken(GuidToken.Generate());
 
             return await SendConfirmationEmailAndUpdateStatusAsync(
                 existing, emailTemplate,
@@ -234,8 +241,10 @@ public class AccountService : IAccountService
 
         if (!account.EmailConfirmed)
         {
-            // Ensure a valid token exists before building the confirmation URL.
-            account.RegenerateRegistrationTokenIfEmpty(GuidToken.Generate());
+            // Ensure a live token exists before building the confirmation URL — regenerate when it is
+            // missing OR has passed its 24h TTL (otherwise a resend just re-sends a dead link).
+            if (string.IsNullOrEmpty(account.RegistrationToken) || !GuidToken.IsTokenAlive(account.RegistrationToken))
+                account.RegenerateRegistrationToken(GuidToken.Generate());
 
             // repeat: true signals the UI that this is a resend, not the first confirmation.
             return await SendConfirmationEmailAndUpdateStatusAsync(
@@ -327,23 +336,19 @@ public class AccountService : IAccountService
 
         try
         {
+            // Persist the reset token FIRST, so any mail that goes out corresponds to a token the
+            // database will actually accept. The reverse order can e-mail a link whose token was
+            // never saved (mail sent, then the save fails) — a dead link the user cannot use.
+            // RequestPasswordReset only errors when EmailConfirmed is false, already ruled out above.
+            if (account.RequestPasswordReset(resetPasswordToken).IsError)
+                return true;
+            await _accountRepository.UpdateEntityAsync(account, ct);
+
             string body = _mailClient.GetMailResetPasswordBody(_rsa.Encrypt(resetPasswordToken), emailTemplate.Title, emailTemplate.Content0, emailTemplate.Content1, _settings.Value.DomainName ?? "");
             bool published = await PublishMailAsync(account.Email.Value, emailTemplate.Subject, body, ct);
 
-            if (!published)
-            {
-                account.SetMessage(EnumHelper.GetDescription(AccountMessage.FailToMailSent));
-                await _accountRepository.UpdateEntityAsync(account, ct);
-                return true;
-            }
-
-            // RequestPasswordReset only errors when EmailConfirmed is false, already ruled out above.
-            var resetResult = account.RequestPasswordReset(resetPasswordToken);
-            if (!resetResult.IsError)
-            {
-                account.SetMessage(EnumHelper.GetDescription(AccountMessage.ResetPasswordMail));
-                await _accountRepository.UpdateEntityAsync(account, ct);
-            }
+            account.SetMessage(EnumHelper.GetDescription(published ? AccountMessage.ResetPasswordMail : AccountMessage.FailToMailSent));
+            await _accountRepository.UpdateEntityAsync(account, ct);
         }
         catch (Exception e) { _logger.LogWarning(e, "ForgotPassword failed for {Email}", email); }
 
@@ -385,6 +390,10 @@ public class AccountService : IAccountService
         Account? account = await FindByResetPasswordTokenAsync(rawToken, ct);
         if (account == null || !GuidToken.IsTokenAlive(rawToken) || !account.EmailConfirmed)
             return ServiceResult.Fail("reset-password-invalid");
+
+        // Enforce the complexity rule server-side, before hashing — Account.ResetPassword only sees the hash.
+        if (!PasswordPolicy.IsValid(newPassword))
+            return ServiceResult.Validation("Account.PasswordPolicy", PasswordPolicy.ViolationMessage);
 
         string newHashedPassword = _passwordService.HashPassword(newPassword);
         var resetResult = account.ResetPassword(rawToken, newHashedPassword);

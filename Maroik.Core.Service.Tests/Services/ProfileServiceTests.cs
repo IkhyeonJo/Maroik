@@ -297,11 +297,11 @@ public class ProfileServiceTests
         var account = ActiveAccount();
         _accountRepo.Setup(r => r.FindByEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(account);
         _passwordService.Setup(p => p.VerifyPassword("oldpass", account.HashedPassword)).Returns(true);
-        _passwordService.Setup(p => p.HashPassword("newpass")).Returns("$2a$13$newhash");
+        _passwordService.Setup(p => p.HashPassword("NewPass1!")).Returns("$2a$13$newhash");
         _accountRepo.Setup(r => r.UpdateEntityAsync(It.IsAny<Account>(), It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
         var sut = CreateSut();
 
-        ServiceResult result = await sut.UpdatePasswordAsync(account.Email.Value, "oldpass", "newpass", TestContext.Current.CancellationToken);
+        ServiceResult result = await sut.UpdatePasswordAsync(account.Email.Value, "oldpass", "NewPass1!", TestContext.Current.CancellationToken);
 
         Assert.True(result.Success);
         _accountRepo.Verify(r => r.UpdateEntityAsync(

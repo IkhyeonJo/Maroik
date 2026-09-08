@@ -33,11 +33,11 @@ public class ManagementAccountService : IManagementAccountService
     }
 
     /// <inheritdoc />
-    public async Task<List<AccountResponse>> GetAllAccountsAsync(CancellationToken ct = default)
+    public async Task<List<AdminAccountResponse>> GetAllAccountsAsync(CancellationToken ct = default)
         => (await _accountRepository.GetAllAsync(ct)).Select(AccountMapper.ToAdminResponse).ToList();
 
     /// <inheritdoc />
-    public async Task<AccountResponse?> GetAccountByEmailAsync(string email, CancellationToken ct = default)
+    public async Task<AdminAccountResponse?> GetAccountByEmailAsync(string email, CancellationToken ct = default)
     {
         Account? account = await FindByEmailAsync(email, ct);
         return account == null ? null : AccountMapper.ToAdminResponse(account);
@@ -54,10 +54,7 @@ public class ManagementAccountService : IManagementAccountService
             // request.PlainPassword carries the raw password. The complexity rule is checked here,
             // before hashing, so the controller no longer has to — Account.Create only ever sees the hash.
             if (!PasswordPolicy.IsValid(request.PlainPassword))
-                return ServiceResult.Validation(
-                    "Account.PasswordPolicy",
-                    "Password must be at least 8 characters and contain at least 3 of 4 of the following: " +
-                    "upper case (A-Z), lower case (a-z), number (0-9) and special character (e.g. !@#$%^&*).");
+                return ServiceResult.Validation("Account.PasswordPolicy", PasswordPolicy.ViolationMessage);
 
             string hashedPassword = _passwordService.HashPassword(request.PlainPassword ?? "");
 
@@ -100,9 +97,15 @@ public class ManagementAccountService : IManagementAccountService
                 return ServiceResult.NotFound("Account.NotFound", "Email address is wrong");
 
             // An admin-set password always forces the account to pick its own new one (meeting
-            // PasswordPolicy) at next login — see Account.AdminResetPassword.
+            // PasswordPolicy) at next login — see Account.AdminResetPassword. It must still meet the
+            // policy itself so there is no weak-password window before that forced change.
             if (!string.IsNullOrEmpty(newPassword))
+            {
+                if (!PasswordPolicy.IsValid(newPassword))
+                    return ServiceResult.Validation("Account.PasswordPolicy", PasswordPolicy.ViolationMessage);
+
                 account.AdminResetPassword(_passwordService.HashPassword(newPassword));
+            }
 
             // The admin UI has no LoginAttempt input, so request.LoginAttempt is always the request
             // DTO's default (0) — pass the account's own current value instead, so AdminUpdate's

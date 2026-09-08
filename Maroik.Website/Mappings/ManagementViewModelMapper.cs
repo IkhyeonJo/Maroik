@@ -10,9 +10,9 @@ namespace Maroik.Website.Mappings;
 /// </summary>
 public static class ManagementViewModelMapper
 {
-    extension(AccountResponse item)
+    extension(AdminAccountResponse item)
     {
-        /// <summary>Maps a single <see cref="AccountResponse"/> to an <see cref="AccountOutputViewModel"/> for display.</summary>
+        /// <summary>Maps a single <see cref="AdminAccountResponse"/> to an <see cref="AccountOutputViewModel"/> for display.</summary>
         private AccountOutputViewModel ToDisplayViewModel(string timeZoneIanaId) => new()
         {
             Email = item.Email,
@@ -34,9 +34,9 @@ public static class ManagementViewModelMapper
         };
     }
 
-    extension(IEnumerable<AccountResponse> items)
+    extension(IEnumerable<AdminAccountResponse> items)
     {
-        /// <summary>Maps all <see cref="AccountResponse"/> items to display view models.</summary>
+        /// <summary>Maps all <see cref="AdminAccountResponse"/> items to display view models.</summary>
         public List<AccountOutputViewModel> ToDisplayViewModels(string timeZoneIanaId)
             => items.Select(i => i.ToDisplayViewModel(timeZoneIanaId)).ToList();
     }

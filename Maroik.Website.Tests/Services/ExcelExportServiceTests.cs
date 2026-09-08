@@ -378,7 +378,7 @@ public class ExcelExportServiceTests
     [Fact]
     public void CreateAccountExcel_OrdersByEmailThenNicknameAscending()
     {
-        AccountResponse[] items =
+        AdminAccountResponse[] items =
         [
             new() { Email = "z@example.com", Nickname = "Z" },
             new() { Email = "a@example.com", Nickname = "A" }
@@ -395,7 +395,7 @@ public class ExcelExportServiceTests
     public void CreateAccountExcel_ConvertsCreatedAndUpdatedToGivenTimeZone()
     {
         var created = new DateTime(2025, 6, 10, 0, 0, 0, DateTimeKind.Utc);
-        AccountResponse[] items = [new() { Email = "a@example.com", Created = created, Updated = created }];
+        AdminAccountResponse[] items = [new() { Email = "a@example.com", Created = created, Updated = created }];
 
         var row = ReadRows(_sut.CreateAccountExcel(items, Identity, "Asia/Seoul"))[1];
 
@@ -407,7 +407,7 @@ public class ExcelExportServiceTests
     [Fact]
     public void CreateAccountExcel_RendersBooleanAndNumericFieldsAsStrings()
     {
-        AccountResponse[] items = [new() { Email = "a@example.com", Locked = true, LoginAttempt = 5, EmailConfirmed = false, AgreedServiceTerms = true, Deleted = true }];
+        AdminAccountResponse[] items = [new() { Email = "a@example.com", Locked = true, LoginAttempt = 5, EmailConfirmed = false, AgreedServiceTerms = true, Deleted = true }];
 
         var row = ReadRows(_sut.CreateAccountExcel(items, Identity, "UTC"))[1];
 

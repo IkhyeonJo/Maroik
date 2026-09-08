@@ -170,7 +170,7 @@ public class ExpenditureService : IExpenditureService
             string newCurrency = newPayAsset?.Balance.Currency ?? prevPayAsset?.Balance.Currency ?? "";
             string? myDepositAsset = classResult.Value ? request.MyDepositAsset : null;
 
-            var oldSnapshot = new ExpenditureSnapshot(previous.PaymentMethod, previous.MyDepositAsset, previous.Amount.Amount);
+            var oldSnapshot = new ExpenditureSnapshot(previous.PaymentMethod, previous.MyDepositAsset, previous.Amount.Amount, previous.Amount.Currency);
 
             var updateResult = previous.Update(request.MainClass, request.SubClass, request.Content,
                 Math.Abs(request.Amount), newCurrency, request.PaymentMethod, myDepositAsset, request.Note, request.Created);
@@ -179,7 +179,7 @@ public class ExpenditureService : IExpenditureService
 
             await _expenditureRepository.UpdateEntityAsync(previous, ct);
             var adjustResult = await AdjustAssetBalancesAsync(accountEmail, oldSnapshot,
-                new ExpenditureSnapshot(previous.PaymentMethod, previous.MyDepositAsset, previous.Amount.Amount), ct);
+                new ExpenditureSnapshot(previous.PaymentMethod, previous.MyDepositAsset, previous.Amount.Amount, previous.Amount.Currency), ct);
             if (adjustResult.IsError)
                 return await FailAsync(adjustResult.FirstError, ct);
 
@@ -217,7 +217,7 @@ public class ExpenditureService : IExpenditureService
                 return await FailAsync(DeletedAssetResult, ct);
 
             var adjustResult = await AdjustAssetBalancesAsync(accountEmail,
-                new ExpenditureSnapshot(expenditure.PaymentMethod, expenditure.MyDepositAsset, expenditure.Amount.Amount),
+                new ExpenditureSnapshot(expenditure.PaymentMethod, expenditure.MyDepositAsset, expenditure.Amount.Amount, expenditure.Amount.Currency),
                 null, ct);
             if (adjustResult.IsError)
                 return await FailAsync(adjustResult.FirstError, ct);
@@ -268,13 +268,13 @@ public class ExpenditureService : IExpenditureService
     {
         List<AssetBalanceAdjustment> adjustments =
         [
-            new(toRevert.PaymentMethod, toRevert.Amount, IsDeposit: true),
-            new(toRevert.MyDepositAsset, toRevert.Amount, IsDeposit: false)
+            new(toRevert.PaymentMethod, toRevert.Amount, IsDeposit: true, Currency: toRevert.Currency),
+            new(toRevert.MyDepositAsset, toRevert.Amount, IsDeposit: false, Currency: toRevert.Currency)
         ];
         if (toApply.HasValue)
         {
-            adjustments.Add(new(toApply.Value.PaymentMethod, toApply.Value.Amount, IsDeposit: false));
-            adjustments.Add(new(toApply.Value.MyDepositAsset, toApply.Value.Amount, IsDeposit: true));
+            adjustments.Add(new(toApply.Value.PaymentMethod, toApply.Value.Amount, IsDeposit: false, Currency: toApply.Value.Currency));
+            adjustments.Add(new(toApply.Value.MyDepositAsset, toApply.Value.Amount, IsDeposit: true, Currency: toApply.Value.Currency));
         }
 
         return await _assetBalance.ApplyAssetBalanceAdjustmentsAsync(
@@ -282,8 +282,9 @@ public class ExpenditureService : IExpenditureService
     }
 
     /// <summary>
-    /// Captures the asset-related fields of an <see cref="Expenditure"/> at a point in time so that
-    /// the corresponding asset balances can be correctly reversed during update or delete operations.
+    /// Captures the asset-related fields of an <see cref="Expenditure"/> at a point in time (including
+    /// the currency the amount was recorded in) so that the corresponding asset balances can be
+    /// correctly reversed during update or delete operations.
     /// </summary>
-    private readonly record struct ExpenditureSnapshot(string? PaymentMethod, string? MyDepositAsset, decimal Amount);
+    private readonly record struct ExpenditureSnapshot(string? PaymentMethod, string? MyDepositAsset, decimal Amount, string Currency);
 }

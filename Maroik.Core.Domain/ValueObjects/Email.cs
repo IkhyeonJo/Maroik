@@ -24,21 +24,36 @@ public sealed class Email : ValueObject
     /// <summary>
     /// Creates an <see cref="Email"/> value object, validating format in the process.
     /// Returns a validation error if the value is null, empty, or not a valid email format.
+    /// The stored value is the parsed, normalized address (lower-case) — not the raw input — so a
+    /// display-name form ("Jane &lt;jane@x.com&gt;") or surrounding whitespace can never be persisted
+    /// verbatim as the address / account key.
     /// </summary>
     public static ErrorOr<Email> Create(string? value)
     {
         if (string.IsNullOrWhiteSpace(value))
             return Error.Validation("Email.Empty", "Email address cannot be empty.");
 
-        if (!IsValid(value))
+        string trimmed = value.Trim();
+        if (!TryParseAddress(trimmed, out string normalized))
             return Error.Validation("Email.Invalid", $"'{value}' is not a valid email address.");
 
-        return new Email(value.ToLowerInvariant());
+        return new Email(normalized);
     }
 
-    private static bool IsValid(string email)
+    /// <summary>
+    /// Validates <paramref name="input"/> as a bare email address and, on success, emits its
+    /// normalized (lower-case) form in <paramref name="normalized"/>. Rejects the display-name form
+    /// (<c>MailAddress</c> parses "Jane &lt;jane@x.com&gt;" happily) by requiring the parsed address
+    /// to equal the input.
+    /// </summary>
+    private static bool TryParseAddress(string input, out string normalized)
     {
-        if (!MailAddress.TryCreate(email, out MailAddress? address))
+        normalized = "";
+
+        if (!MailAddress.TryCreate(input, out MailAddress? address))
+            return false;
+
+        if (!string.Equals(address.Address, input, StringComparison.OrdinalIgnoreCase))
             return false;
 
         string[] hostParts = address.Host.Split('.');
@@ -51,7 +66,11 @@ public sealed class Email : ValueObject
         if (hostParts[^1].Length < 2)
             return false;
 
-        return !address.User.Contains(' ') && address.User.Split('.').All(p => p != "");
+        if (address.User.Contains(' ') || address.User.Split('.').Any(p => p == ""))
+            return false;
+
+        normalized = address.Address.ToLowerInvariant();
+        return true;
     }
 
     /// <inheritdoc/>

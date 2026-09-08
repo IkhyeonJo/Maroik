@@ -162,15 +162,33 @@ public class AssetService : IAssetService
     /// <inheritdoc />
     public async Task<ServiceResult> DeleteAsync(string accountEmail, string productName, CancellationToken ct = default)
     {
-        Asset? asset = await FindAssetAsync(accountEmail, productName, ct);
-        if (asset == null)
-            return ServiceResult.NotFound("Asset.NotFound", "Fail to find the asset by given product name");
+        await _unitOfWork.BeginAsync(ct);
+        try
+        {
+            // Row-lock the asset for the rest of this transaction, exactly as UpdateAsync does: the
+            // soft-delete is a full-row UPDATE (UpdateEntityAsync writes every column), so without the
+            // lock a balance mutation committed by a concurrent Income/Expenditure between the read
+            // and the write would be silently overwritten with this pre-lock snapshot.
+            Asset? asset = await _assetRepository.FindByEmailAndProductNameForUpdateAsync(accountEmail, productName, ct);
+            if (asset == null)
+            {
+                await _unitOfWork.RollbackAsync(ct);
+                return ServiceResult.NotFound("Asset.NotFound", "Fail to find the asset by given product name");
+            }
 
-        // Soft-delete preserves the record for historical reporting while hiding it from active use.
-        asset.SoftDelete();
+            // Soft-delete preserves the record for historical reporting while hiding it from active use.
+            asset.SoftDelete();
 
-        await _assetRepository.UpdateEntityAsync(asset, ct);
-        return ServiceResult.Ok();
+            await _assetRepository.UpdateEntityAsync(asset, ct);
+            await _unitOfWork.CommitAsync(ct);
+            return ServiceResult.Ok();
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to delete asset {ProductName} for account {AccountEmail}", productName, accountEmail);
+            await _unitOfWork.RollbackAsync(ct);
+            return ServiceResult.Failure("Asset.DeleteFailed", "Input is invalid");
+        }
     }
 
     private Task<Asset?> FindAssetAsync(string accountEmail, string productName, CancellationToken ct = default)

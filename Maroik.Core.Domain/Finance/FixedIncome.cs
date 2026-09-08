@@ -49,6 +49,7 @@ public sealed class FixedIncome : AggregateRoot<long>
     /// <summary>True when the income was not received on the scheduled day.</summary>
     public bool Unpunctuality { get; private set; }
 
+    /// <summary>"New record" constructor: stamps <see cref="Created"/>/<see cref="Updated"/>. Used by <see cref="Register"/> only.</summary>
     private FixedIncome(
         long id,
         Email accountEmail,
@@ -76,6 +77,27 @@ public sealed class FixedIncome : AggregateRoot<long>
         Updated = DateTime.UtcNow;
     }
 
+    /// <summary>Reconstitution constructor: assigns every field verbatim from trusted storage with no <see cref="DateTime.UtcNow"/> side effect.</summary>
+    private FixedIncome(
+        long id, Email accountEmail, string mainClass, string subClass, string? content, Money amount,
+        string depositMyAssetProductName, short depositMonth, short depositDay, DateTime maturityDate,
+        string? note, bool unpunctuality, DateTime created, DateTime updated) : base(id)
+    {
+        AccountEmail = accountEmail;
+        MainClass = mainClass;
+        SubClass = subClass;
+        Content = content;
+        Amount = amount;
+        DepositMyAssetProductName = depositMyAssetProductName;
+        DepositMonth = depositMonth;
+        DepositDay = depositDay;
+        MaturityDate = maturityDate;
+        Note = note;
+        Unpunctuality = unpunctuality;
+        Created = created;
+        Updated = updated;
+    }
+
     // ------------------------------------------------------------------------
     // Factory / Reconstitution
     // ------------------------------------------------------------------------
@@ -101,7 +123,7 @@ public sealed class FixedIncome : AggregateRoot<long>
         DateTime created,
         DateTime updated)
     {
-        var fi = new FixedIncome(
+        return new FixedIncome(
             id,
             Email.FromTrustedSource(accountEmail),
             mainClass,
@@ -112,9 +134,10 @@ public sealed class FixedIncome : AggregateRoot<long>
             depositMonth,
             depositDay,
             maturityDate,
-            note) { Unpunctuality = unpunctuality, Created = created, Updated = updated };
-
-        return fi;
+            note,
+            unpunctuality,
+            created,
+            updated);
     }
 
     /// <summary>

@@ -52,6 +52,7 @@ public sealed class FixedExpenditure : AggregateRoot<long>
     /// <summary>True when the charge was not collected on the scheduled day.</summary>
     public bool Unpunctuality { get; private set; }
 
+    /// <summary>"New record" constructor: stamps <see cref="Created"/>/<see cref="Updated"/>. Used by <see cref="Register"/> only.</summary>
     private FixedExpenditure(
         long id,
         Email accountEmail,
@@ -81,6 +82,28 @@ public sealed class FixedExpenditure : AggregateRoot<long>
         Updated = DateTime.UtcNow;
     }
 
+    /// <summary>Reconstitution constructor: assigns every field verbatim from trusted storage with no <see cref="DateTime.UtcNow"/> side effect.</summary>
+    private FixedExpenditure(
+        long id, Email accountEmail, string mainClass, string subClass, string? content, Money amount,
+        string paymentMethod, string? myDepositAsset, short depositMonth, short depositDay, DateTime maturityDate,
+        string? note, bool unpunctuality, DateTime created, DateTime updated) : base(id)
+    {
+        AccountEmail = accountEmail;
+        MainClass = mainClass;
+        SubClass = subClass;
+        Content = content;
+        Amount = amount;
+        PaymentMethod = paymentMethod;
+        MyDepositAsset = myDepositAsset;
+        DepositMonth = depositMonth;
+        DepositDay = depositDay;
+        MaturityDate = maturityDate;
+        Note = note;
+        Unpunctuality = unpunctuality;
+        Created = created;
+        Updated = updated;
+    }
+
     // ------------------------------------------------------------------------
     // Factory / Reconstitution
     // ------------------------------------------------------------------------
@@ -107,7 +130,7 @@ public sealed class FixedExpenditure : AggregateRoot<long>
         DateTime created,
         DateTime updated)
     {
-        var fe = new FixedExpenditure(
+        return new FixedExpenditure(
             id,
             Email.FromTrustedSource(accountEmail),
             mainClass,
@@ -119,9 +142,10 @@ public sealed class FixedExpenditure : AggregateRoot<long>
             depositMonth,
             depositDay,
             maturityDate,
-            note) { Unpunctuality = unpunctuality, Created = created, Updated = updated };
-
-        return fe;
+            note,
+            unpunctuality,
+            created,
+            updated);
     }
 
     /// <summary>

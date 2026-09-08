@@ -9,10 +9,10 @@ namespace Maroik.Core.Contract.Interfaces;
 public interface IManagementAccountService
 {
     /// <summary>Returns all accounts for display on the admin account list.</summary>
-    Task<List<AccountResponse>> GetAllAccountsAsync(CancellationToken ct = default);
+    Task<List<AdminAccountResponse>> GetAllAccountsAsync(CancellationToken ct = default);
 
     /// <summary>Returns a single account by email for the admin edit form, or null.</summary>
-    Task<AccountResponse?> GetAccountByEmailAsync(string email, CancellationToken ct = default);
+    Task<AdminAccountResponse?> GetAccountByEmailAsync(string email, CancellationToken ct = default);
 
     /// <summary>Admin-creates a new account (skips the normal email-confirmation flow).</summary>
     Task<ServiceResult> CreateAccountAsync(AccountRequest request, CancellationToken ct = default);

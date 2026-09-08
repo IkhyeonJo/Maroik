@@ -133,15 +133,37 @@ public class AuthorizationFilter : ActionFilterAttribute
             _cache.GetAsync(AnonymousCategoriesCacheKey),
             _cache.GetAsync(AnonymousSubCategoriesCacheKey));
 
-        List<CategoryResponse> adminCategories;
-        List<SubCategoryResponse> adminSubCategories;
-        List<CategoryResponse> userCategories;
-        List<SubCategoryResponse> userSubCategories;
-        List<CategoryResponse> anonymousCategories;
-        List<SubCategoryResponse> anonymousSubCategories;
+        List<CategoryResponse> adminCategories = [];
+        List<SubCategoryResponse> adminSubCategories = [];
+        List<CategoryResponse> userCategories = [];
+        List<SubCategoryResponse> userSubCategories = [];
+        List<CategoryResponse> anonymousCategories = [];
+        List<SubCategoryResponse> anonymousSubCategories = [];
 
-        if (results[0] == null || results[1] == null || results[2] == null ||
-            results[3] == null || results[4] == null || results[5] == null)
+        bool menusLoaded = false;
+        if (results[0] != null && results[1] != null && results[2] != null &&
+            results[3] != null && results[4] != null && results[5] != null)
+        {
+            try
+            {
+                adminCategories = JsonSerializer.Deserialize<List<CategoryResponse>>(results[0]!)!;
+                adminSubCategories = JsonSerializer.Deserialize<List<SubCategoryResponse>>(results[1]!)!;
+                userCategories = JsonSerializer.Deserialize<List<CategoryResponse>>(results[2]!)!;
+                userSubCategories = JsonSerializer.Deserialize<List<SubCategoryResponse>>(results[3]!)!;
+                anonymousCategories = JsonSerializer.Deserialize<List<CategoryResponse>>(results[4]!)!;
+                anonymousSubCategories = JsonSerializer.Deserialize<List<SubCategoryResponse>>(results[5]!)!;
+                menusLoaded = true;
+            }
+            catch (Exception)
+            {
+                // A poisoned or shape-changed cache entry must not turn into a 500 on every request
+                // for the whole 10-minute TTL — leave menusLoaded false so the block below rebuilds
+                // from the database, which also overwrites the bad entry. (SessionService.GetAccount
+                // guards its own deserialization the same way.)
+            }
+        }
+
+        if (!menusLoaded)
         {
             var categories = (await _menuService.GetAllCategoriesAsync()).ToList();
             var subCategories = (await _menuService.GetAllSubCategoriesAsync()).ToList();
@@ -170,15 +192,6 @@ public class AuthorizationFilter : ActionFilterAttribute
                 _cache.SetAsync(AnonymousSubCategoriesCacheKey,
                     JsonSerializer.SerializeToUtf8Bytes(anonymousSubCategories),
                     entryOptions));
-        }
-        else
-        {
-            adminCategories = JsonSerializer.Deserialize<List<CategoryResponse>>(results[0]!)!;
-            adminSubCategories = JsonSerializer.Deserialize<List<SubCategoryResponse>>(results[1]!)!;
-            userCategories = JsonSerializer.Deserialize<List<CategoryResponse>>(results[2]!)!;
-            userSubCategories = JsonSerializer.Deserialize<List<SubCategoryResponse>>(results[3]!)!;
-            anonymousCategories = JsonSerializer.Deserialize<List<CategoryResponse>>(results[4]!)!;
-            anonymousSubCategories = JsonSerializer.Deserialize<List<SubCategoryResponse>>(results[5]!)!;
         }
 
         if (context.Controller is Controller ctrl)

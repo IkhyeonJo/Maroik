@@ -1,10 +1,11 @@
 using System.Globalization;
 
-namespace Maroik.Core.Contract.Misc.Extensions;
+namespace Maroik.Website.Extensions;
 
 /// <summary>
-/// Extension methods for <see cref="decimal"/> to produce clean display strings
-/// without unnecessary trailing zeros.
+/// Presentation-formatting extension methods for <see cref="decimal"/> that produce clean display
+/// strings without unnecessary trailing zeros. Lives in the Website layer because only the Website
+/// (views, Excel export, grid search) consumes it.
 /// </summary>
 public static class DecimalExtensions
 {
