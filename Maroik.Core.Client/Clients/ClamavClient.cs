@@ -57,9 +57,11 @@ public class ClamavClient(ILogger<ClamavClient> logger) : IClamavClient
             await stream.WriteAsync(zero, scanCt);
 
             // Read the single-line scan result (e.g. "stream: OK", "stream: <Sig> FOUND",
-            // "stream: <reason> ERROR").
+            // "stream: <reason> ERROR"). Some clamd builds / proxies terminate the reply with a
+            // trailing NUL rather than a newline; TrimEnd() alone leaves that '\0' in place and
+            // makes EndsWith("OK") false for a clean file, so strip it explicitly.
             using var reader = new StreamReader(stream);
-            string response = (await reader.ReadLineAsync(scanCt) ?? "").TrimEnd();
+            string response = (await reader.ReadLineAsync(scanCt) ?? "").Trim().TrimEnd('\0').TrimEnd();
 
             // A clean file's reply ends in "OK". Check the terminator rather than a bare Contains("OK")
             // so a malware signature name that happens to contain "OK" can't read as clean; also treat

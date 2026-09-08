@@ -26,7 +26,7 @@ public class HtmlParserService : IHtmlParserService
 
         // Fetch image patches concurrently (patchFactory typically makes a network call to the
         // file-storage service) but cap the fan-out so a many-image post can't storm that service.
-        using var gate = new SemaphoreSlim(MaxConcurrentPatchFetches, MaxConcurrentPatchFetches);
+        var gate = new SemaphoreSlim(MaxConcurrentPatchFetches, MaxConcurrentPatchFetches);
         async Task<HtmlImgPatch?> FetchPatchAsync(HtmlNode imgTag)
         {
             await gate.WaitAsync(ct);
@@ -34,7 +34,22 @@ public class HtmlParserService : IHtmlParserService
             finally { _ = gate.Release(); }
         }
 
-        HtmlImgPatch?[] patches = await Task.WhenAll(imgTags.Select(FetchPatchAsync));
+        Task<HtmlImgPatch?>[] fetchTasks = [.. imgTags.Select(FetchPatchAsync)];
+        HtmlImgPatch?[] patches;
+        try
+        {
+            patches = await Task.WhenAll(fetchTasks);
+        }
+        finally
+        {
+            // Wait for every sibling task to finish before disposing the semaphore — if one fetch
+            // faulted, Task.WhenAll rethrows immediately while the others are still inside
+            // gate.WaitAsync()/gate.Release(), and disposing here would turn those into unobserved
+            // ObjectDisposedExceptions. Swallow faults from the drain (the original is already
+            // propagating).
+            try { await Task.WhenAll(fetchTasks); } catch { /* faults already surfaced above */ }
+            gate.Dispose();
+        }
 
         for (int i = 0; i < imgTags.Count; i++)
         {

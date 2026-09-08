@@ -64,12 +64,18 @@ public class MailClient(ILogger<MailClient> logger) : IMailClient
             // can't outlive it and get killed mid-send (which would cause a duplicate
             // send on redelivery). MailKit's default is ~100s.
             smtp.Timeout = 20_000;
-            // SmtpSsl on => negotiate the best available (implicit TLS or STARTTLS). SmtpSsl off =>
-            // still upgrade opportunistically via STARTTLS when the server advertises it, so
-            // credentials are only ever sent in the clear against a relay that offers no TLS at all.
+            // SmtpSsl on => negotiate the best available (implicit TLS or STARTTLS) AND validate the
+            // server certificate normally. SmtpSsl off => still upgrade opportunistically via
+            // STARTTLS when the server advertises it (so credentials are never sent in the clear
+            // against a relay that offers TLS), but do NOT let an untrusted / self-signed relay
+            // certificate turn that opportunistic upgrade into a hard failure — the operator has
+            // already declared this link non-secure, and the alternative (StartTlsWhenAvailable
+            // aborting on a bad cert) silently drops every confirmation / reset email.
             SecureSocketOptions socketOptions = settings.SmtpSsl
                 ? SecureSocketOptions.Auto
                 : SecureSocketOptions.StartTlsWhenAvailable;
+            if (!settings.SmtpSsl)
+                smtp.ServerCertificateValidationCallback = static (_, _, _, _) => true;
             await smtp.ConnectAsync(settings.SmtpHost ?? "", settings.SmtpPort, socketOptions, ct);
             await smtp.AuthenticateAsync(settings.SmtpUserName ?? "", settings.SmtpPassword ?? "", ct);
             await smtp.SendAsync(message, ct);
