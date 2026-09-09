@@ -66,6 +66,43 @@ public class CalendarTests
         Assert.Equal("HtmlColorCode.Invalid", result.FirstError.Code);
     }
 
+    /// <summary>Create returns error, when name contains markup or control characters.</summary>
+    [Theory]
+    [InlineData("<img src=x>")]
+    [InlineData("Team </label><a href='https://evil'>")]
+    [InlineData("Work\tCalendar")]
+    [InlineData("Line\nBreak")]
+    public void Create_ReturnsError_WhenNameContainsMarkupOrControlChars(string name)
+    {
+        var result = Calendar.Create("user@example.com", name, null, "UTC", "#FF0000");
+
+        Assert.True(result.IsError);
+        Assert.Equal("Calendar.NameInvalid", result.FirstError.Code);
+    }
+
+    /// <summary>Create returns error, when name exceeds the 255-char column width.</summary>
+    [Fact]
+    public void Create_ReturnsError_WhenNameTooLong()
+    {
+        var result = Calendar.Create("user@example.com", new string('a', 256), null, "UTC", "#FF0000");
+
+        Assert.True(result.IsError);
+        Assert.Equal("Calendar.NameTooLong", result.FirstError.Code);
+    }
+
+    /// <summary>Create allows punctuation that is safe in a plain label (ampersand, apostrophe, quotes).</summary>
+    [Theory]
+    [InlineData("Mom & Dad")]
+    [InlineData("Bob's calendar")]
+    [InlineData("Q3 \"planning\"")]
+    public void Create_AllowsSafePunctuation(string name)
+    {
+        var result = Calendar.Create("user@example.com", name, null, "UTC", "#FF0000");
+
+        Assert.False(result.IsError);
+        Assert.Equal(name, result.Value.Name);
+    }
+
     // -- Update ---------------------------------------------------------------
 
     /// <summary>Update succeeds, when valid.</summary>
@@ -92,6 +129,18 @@ public class CalendarTests
 
         Assert.True(result.IsError);
         Assert.Equal("Calendar.NameEmpty", result.FirstError.Code);
+    }
+
+    /// <summary>Update returns error, when name contains markup.</summary>
+    [Fact]
+    public void Update_ReturnsError_WhenNameContainsMarkup()
+    {
+        var calendar = ValidCalendar();
+
+        var result = calendar.Update("<script>alert(1)</script>", null, "UTC", "#FF0000");
+
+        Assert.True(result.IsError);
+        Assert.Equal("Calendar.NameInvalid", result.FirstError.Code);
     }
 
 }

@@ -91,8 +91,8 @@ public sealed class Calendar : AggregateRoot<long>
         string? timeZoneValue,
         string? htmlColorCode)
     {
-        if (string.IsNullOrWhiteSpace(name))
-            return Error.Validation("Calendar.NameEmpty", "Calendar name cannot be empty.");
+        var nameResult = ValidateName(name);
+        if (nameResult.IsError) return nameResult.Errors;
 
         var emailResult = Email.Create(accountEmailValue);
         if (emailResult.IsError) return emailResult.Errors;
@@ -103,7 +103,7 @@ public sealed class Calendar : AggregateRoot<long>
         var colorResult = HtmlColorCode.Create(htmlColorCode);
         if (colorResult.IsError) return colorResult.Errors;
 
-        var calendar = new Calendar(0, emailResult.Value, name, description, tzResult.Value, colorResult.Value);
+        var calendar = new Calendar(0, emailResult.Value, nameResult.Value, description, tzResult.Value, colorResult.Value);
         return calendar;
     }
 
@@ -118,8 +118,8 @@ public sealed class Calendar : AggregateRoot<long>
         string? timeZoneValue,
         string? htmlColorCode)
     {
-        if (string.IsNullOrWhiteSpace(name))
-            return Error.Validation("Calendar.NameEmpty", "Calendar name cannot be empty.");
+        var nameResult = ValidateName(name);
+        if (nameResult.IsError) return nameResult.Errors;
 
         var tzResult = TimeZoneId.Create(timeZoneValue);
         if (tzResult.IsError) return tzResult.Errors;
@@ -127,12 +127,37 @@ public sealed class Calendar : AggregateRoot<long>
         var colorResult = HtmlColorCode.Create(htmlColorCode);
         if (colorResult.IsError) return colorResult.Errors;
 
-        Name = name;
+        Name = nameResult.Value;
         Description = description;
         TimeZone = tzResult.Value;
         ColorCode = colorResult.Value;
         Updated = DateTime.UtcNow;
         return Result.Success;
+    }
+
+    /// <summary>
+    /// Shared validation for <see cref="Name"/>, run by both <see cref="Create"/> and
+    /// <see cref="Update"/>. A calendar name is a plain label, never markup — the
+    /// browse / subscribed-calendar lists render it straight into the DOM — so a value carrying
+    /// angle brackets or control characters is rejected here rather than trusted at every render
+    /// site (matches how <c>Board</c> / comment display text is treated as untrusted). The length
+    /// is capped at the <c>character varying(255)</c> column width so an over-long name surfaces as
+    /// a clean validation error instead of a raw database exception.
+    /// </summary>
+    private static ErrorOr<string> ValidateName(string? name)
+    {
+        if (string.IsNullOrWhiteSpace(name))
+            return Error.Validation("Calendar.NameEmpty", "Calendar name cannot be empty.");
+
+        if (name.Length > 255)
+            return Error.Validation("Calendar.NameTooLong", "Calendar name must be 255 characters or fewer.");
+
+        if (name.Any(c => c is '<' or '>' || char.IsControl(c)))
+            return Error.Validation(
+                "Calendar.NameInvalid",
+                "Calendar name cannot contain angle brackets or control characters.");
+
+        return name;
     }
 
 }

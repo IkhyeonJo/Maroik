@@ -120,6 +120,15 @@
   <data name="The calendar already exists." xml:space="preserve">
     <value>이미 달력이 존재합니다.</value>
   </data>
+  <data name="Calendar name cannot be empty." xml:space="preserve">
+    <value>달력 이름은 비워둘 수 없습니다.</value>
+  </data>
+  <data name="Calendar name must be 255 characters or fewer." xml:space="preserve">
+    <value>달력 이름은 255자 이하여야 합니다.</value>
+  </data>
+  <data name="Calendar name cannot contain angle brackets or control characters." xml:space="preserve">
+    <value>달력 이름에는 부등호(&lt; &gt;)나 제어 문자를 사용할 수 없습니다.</value>
+  </data>
   <data name="The calendar has been successfully created." xml:space="preserve">
     <value>달력이 성공적으로 생성되었습니다.</value>
   </data>

@@ -120,6 +120,15 @@
   <data name="The calendar already exists." xml:space="preserve">
     <value>The calendar already exists.</value>
   </data>
+  <data name="Calendar name cannot be empty." xml:space="preserve">
+    <value>Calendar name cannot be empty.</value>
+  </data>
+  <data name="Calendar name must be 255 characters or fewer." xml:space="preserve">
+    <value>Calendar name must be 255 characters or fewer.</value>
+  </data>
+  <data name="Calendar name cannot contain angle brackets or control characters." xml:space="preserve">
+    <value>Calendar name cannot contain angle brackets or control characters.</value>
+  </data>
   <data name="The calendar has been successfully created." xml:space="preserve">
     <value>The calendar has been successfully created.</value>
   </data>
