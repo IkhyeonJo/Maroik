@@ -230,7 +230,10 @@ try
 
     builder.Services.AddHttpContextAccessor();
     // builder.Services.AddMemoryCache(); // For IMemoryCache DI - unused; IDistributedCache(Valkey) used instead for scale-out
-    builder.Services.AddResponseCaching(); // For HTTP Header Setting
+    // No AddResponseCaching / UseResponseCaching: the middleware below stamps every response
+    // Cache-Control: no-store, so nothing is ever cacheable and the response-caching middleware
+    // would only ever be a no-op. [ResponseCache] on individual actions is header-only and needs
+    // neither.
 
     builder.Services.AddHsts(options => // https://blog.elmah.io/the-asp-net-core-security-headers-guide/
     {
@@ -275,10 +278,8 @@ try
 
     builder.Services.AddControllersWithViews(options =>
     {
-#pragma warning disable CA2263
-        _ = options.Filters.Add(typeof(AuthorizationFilter));
-        _ = options.Filters.Add(typeof(ViewBagPopulatorFilter));
-#pragma warning restore CA2263
+        _ = options.Filters.Add<AuthorizationFilter>();
+        _ = options.Filters.Add<ViewBagPopulatorFilter>();
         options.Filters.Add(
             new AutoValidateAntiforgeryTokenAttribute()); // Globally enables token validation for all requests except for GET, HEAD, OPTIONS, and TRACE
     });
@@ -297,6 +298,14 @@ try
         };
         certTimer.Elapsed += (_, _) => certManager.TryReload();
         certTimer.Start();
+
+        // Stop and dispose the timer on graceful shutdown so it can't fire a reload into a
+        // half-torn-down host.
+        app.Lifetime.ApplicationStopping.Register(() =>
+        {
+            certTimer.Stop();
+            certTimer.Dispose();
+        });
 
         app.Logger.LogInformation("Certificate polling started.");
     }
@@ -339,9 +348,6 @@ try
     #endregion
 
     #region Default HTTP Header Setting
-
-    //https://docs.microsoft.com/en-us/aspnet/core/performance/caching/middleware?view=aspnetcore-5.0
-    app.UseResponseCaching();
 
     #region Apply the following code to all pages. After logout, pressing back button shows logged-in page, so cache is disabled
 

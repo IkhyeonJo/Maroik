@@ -107,7 +107,18 @@ public class RsaService : IRsaService
         if (rsa == null)
             throw new InvalidOperationException("RSA private key is not configured.");
 
-        byte[] cipherBytes = Convert.FromBase64String(cipherText);
+        byte[] cipherBytes;
+        try
+        {
+            cipherBytes = Convert.FromBase64String(cipherText);
+        }
+        catch (FormatException ex)
+        {
+            // Surface a malformed (non-Base64) input as the same exception type an undecryptable
+            // ciphertext produces, so every caller only has to guard CryptographicException.
+            throw new CryptographicException("Ciphertext is not valid Base64.", ex);
+        }
+
         try
         {
             return Encoding.UTF8.GetString(rsa.Decrypt(cipherBytes, RSAEncryptionPadding.CreateOaep(_hashAlgorithmName)));

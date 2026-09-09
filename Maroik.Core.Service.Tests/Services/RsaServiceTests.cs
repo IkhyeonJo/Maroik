@@ -172,6 +172,16 @@ public class RsaServiceTests
         Assert.ThrowsAny<CryptographicException>(() => sut.Decrypt(badCipher));
     }
 
+    /// <summary>Verifies that a non-Base64 input surfaces as CryptographicException, not FormatException,
+    /// so callers only ever have to guard one exception type.</summary>
+    [Fact]
+    public void Decrypt_Throws_CryptographicException_WhenInputIsNotBase64()
+    {
+        var sut = CreateSut();
+
+        Assert.ThrowsAny<CryptographicException>(() => sut.Decrypt("upload/Forum/not-a-token.png"));
+    }
+
     // -- Sign / Verify --------------------------------------------------------
 
     /// <summary>Verifies that <c>Sign</c> then verify when returns true.</summary>

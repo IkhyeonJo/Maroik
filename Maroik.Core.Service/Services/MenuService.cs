@@ -41,14 +41,14 @@ public class MenuService : IMenuService
     /// <inheritdoc />
     public async Task<CategoryResponse?> GetCategoryByIdAsync(int id, CancellationToken ct = default)
     {
-        Category? category = (await _categoryRepository.GetAllAsync(ct)).FirstOrDefault(c => c.Id == id);
+        Category? category = await _categoryRepository.FindByIdAsync(id, ct);
         return category == null ? null : CategoryMapper.ToResponse(category);
     }
 
     /// <inheritdoc />
     public async Task<SubCategoryResponse?> GetSubCategoryByIdAsync(int id, CancellationToken ct = default)
     {
-        SubCategory? sub = (await _subCategoryRepository.GetAllAsync(ct)).FirstOrDefault(s => s.Id == id);
+        SubCategory? sub = await _subCategoryRepository.FindByIdAsync(id, ct);
         return sub == null ? null : SubCategoryMapper.ToResponse(sub);
     }
 
@@ -77,7 +77,7 @@ public class MenuService : IMenuService
     {
         try
         {
-            Category? category = (await _categoryRepository.GetAllAsync(ct)).FirstOrDefault(c => c.Id == request.Id);
+            Category? category = await _categoryRepository.FindByIdAsync(request.Id, ct);
             if (category == null)
                 return ServiceResult.NotFound("Category.NotFound", "Input is invalid");
 
@@ -136,7 +136,7 @@ public class MenuService : IMenuService
     {
         try
         {
-            SubCategory? subCategory = (await _subCategoryRepository.GetAllAsync(ct)).FirstOrDefault(s => s.Id == request.Id);
+            SubCategory? subCategory = await _subCategoryRepository.FindByIdAsync(request.Id, ct);
             if (subCategory == null)
                 return ServiceResult.NotFound("SubCategory.NotFound", "Input is invalid");
 

@@ -38,6 +38,10 @@ public class SubCategoryRepository(ApplicationDbContext context)
         => QueryAllAsync(ct: ct);
 
     /// <inheritdoc />
+    public Task<SubCategory?> FindByIdAsync(long id, CancellationToken ct = default)
+        => QueryFirstAsync(e => e.Id == id, ct);
+
+    /// <inheritdoc />
     public Task DeleteByIdAsync(long id, CancellationToken ct = default)
         => DeleteWhereAsync(e => e.Id == id, ct);
 }

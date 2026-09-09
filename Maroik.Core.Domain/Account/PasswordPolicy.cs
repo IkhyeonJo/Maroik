@@ -44,6 +44,8 @@ public static partial class PasswordPolicy
         !string.IsNullOrEmpty(password)
         && Encoding.UTF8.GetByteCount(password) <= MaxByteLength
         && _compiledRegex.IsMatch(password);
-    [GeneratedRegex(Pattern, RegexOptions.Compiled)]
+    // No RegexOptions.Compiled: the source generator already emits a purpose-built implementation,
+    // so Compiled would only add redundant runtime IL emission on top.
+    [GeneratedRegex(Pattern)]
     private static partial Regex MyRegex();
 }

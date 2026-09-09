@@ -9,6 +9,9 @@ public interface ISubCategoryRepository : IGenericRepository<SubCategory>
     /// <summary>Returns all sub-category (dropdown menu item) rows.</summary>
     Task<List<SubCategory>> GetAllAsync(CancellationToken ct = default);
 
+    /// <summary>Returns the sub-category with the given ID, or <see langword="null"/> if none exists.</summary>
+    Task<SubCategory?> FindByIdAsync(long id, CancellationToken ct = default);
+
     /// <summary>Deletes the sub-category with the given ID.</summary>
     Task DeleteByIdAsync(long id, CancellationToken ct = default);
 }

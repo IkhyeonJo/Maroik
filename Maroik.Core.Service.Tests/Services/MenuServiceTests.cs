@@ -66,7 +66,7 @@ public class MenuServiceTests
     [Fact]
     public async Task GetCategoryByIdAsync_ReturnsCategory_WhenFound()
     {
-        _categoryRepo.Setup(r => r.GetAllAsync(It.IsAny<CancellationToken>())).ReturnsAsync([MakeCategory(id: 5, name: "Board")]);
+        _categoryRepo.Setup(r => r.FindByIdAsync(It.IsAny<long>(), It.IsAny<CancellationToken>())).ReturnsAsync(MakeCategory(id: 5, name: "Board"));
         var sut = CreateSut();
 
         CategoryResponse? result = await sut.GetCategoryByIdAsync(5, TestContext.Current.CancellationToken);
@@ -80,7 +80,7 @@ public class MenuServiceTests
     [Fact]
     public async Task GetCategoryByIdAsync_ReturnsNull_WhenNotFound()
     {
-        _categoryRepo.Setup(r => r.GetAllAsync(It.IsAny<CancellationToken>())).ReturnsAsync([MakeCategory(id: 1)]);
+        _categoryRepo.Setup(r => r.FindByIdAsync(It.IsAny<long>(), It.IsAny<CancellationToken>())).ReturnsAsync((Category?)null);
         var sut = CreateSut();
 
         CategoryResponse? result = await sut.GetCategoryByIdAsync(999, TestContext.Current.CancellationToken);
@@ -94,7 +94,7 @@ public class MenuServiceTests
     [Fact]
     public async Task GetSubCategoryByIdAsync_ReturnsSubCategory_WhenFound()
     {
-        _subCategoryRepo.Setup(r => r.GetAllAsync(It.IsAny<CancellationToken>())).ReturnsAsync([MakeSubCategory(id: 3, name: BoardTypes.PrivateNote)]);
+        _subCategoryRepo.Setup(r => r.FindByIdAsync(It.IsAny<long>(), It.IsAny<CancellationToken>())).ReturnsAsync(MakeSubCategory(id: 3, name: BoardTypes.PrivateNote));
         var sut = CreateSut();
 
         SubCategoryResponse? result = await sut.GetSubCategoryByIdAsync(3, TestContext.Current.CancellationToken);
@@ -107,7 +107,7 @@ public class MenuServiceTests
     [Fact]
     public async Task GetSubCategoryByIdAsync_ReturnsNull_WhenNotFound()
     {
-        _subCategoryRepo.Setup(r => r.GetAllAsync(It.IsAny<CancellationToken>())).ReturnsAsync([MakeSubCategory(id: 1)]);
+        _subCategoryRepo.Setup(r => r.FindByIdAsync(It.IsAny<long>(), It.IsAny<CancellationToken>())).ReturnsAsync((SubCategory?)null);
         var sut = CreateSut();
 
         SubCategoryResponse? result = await sut.GetSubCategoryByIdAsync(999, TestContext.Current.CancellationToken);
@@ -147,7 +147,7 @@ public class MenuServiceTests
     [Fact]
     public async Task UpdateCategoryAsync_ReturnsSuccess_WhenRepositorySucceeds()
     {
-        _categoryRepo.Setup(r => r.GetAllAsync(It.IsAny<CancellationToken>())).ReturnsAsync([MakeCategory(id: 1)]);
+        _categoryRepo.Setup(r => r.FindByIdAsync(It.IsAny<long>(), It.IsAny<CancellationToken>())).ReturnsAsync(MakeCategory(id: 1));
         _categoryRepo.Setup(r => r.UpdateEntityAsync(It.IsAny<Category>(), It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
         var sut = CreateSut();
 
@@ -160,7 +160,7 @@ public class MenuServiceTests
     [Fact]
     public async Task UpdateCategoryAsync_ReturnsFail_WhenIdNotFound()
     {
-        _categoryRepo.Setup(r => r.GetAllAsync(It.IsAny<CancellationToken>())).ReturnsAsync([]);
+        _categoryRepo.Setup(r => r.FindByIdAsync(It.IsAny<long>(), It.IsAny<CancellationToken>())).ReturnsAsync((Category?)null);
         var sut = CreateSut();
 
         ServiceResult result = await sut.UpdateCategoryAsync(new CategoryRequest { Id = 999 }, TestContext.Current.CancellationToken);
@@ -173,7 +173,7 @@ public class MenuServiceTests
     [Fact]
     public async Task UpdateCategoryAsync_ReturnsFail_WhenRepositoryThrows()
     {
-        _categoryRepo.Setup(r => r.GetAllAsync(It.IsAny<CancellationToken>())).ReturnsAsync([MakeCategory(id: 1)]);
+        _categoryRepo.Setup(r => r.FindByIdAsync(It.IsAny<long>(), It.IsAny<CancellationToken>())).ReturnsAsync(MakeCategory(id: 1));
         _categoryRepo.Setup(r => r.UpdateEntityAsync(It.IsAny<Category>(), It.IsAny<CancellationToken>())).ThrowsAsync(new Exception("DB error"));
         var sut = CreateSut();
 
@@ -191,7 +191,7 @@ public class MenuServiceTests
     [Fact]
     public async Task UpdateCategoryAsync_ReturnsFail_WhenNameEmpty()
     {
-        _categoryRepo.Setup(r => r.GetAllAsync(It.IsAny<CancellationToken>())).ReturnsAsync([MakeCategory(id: 1)]);
+        _categoryRepo.Setup(r => r.FindByIdAsync(It.IsAny<long>(), It.IsAny<CancellationToken>())).ReturnsAsync(MakeCategory(id: 1));
         var sut = CreateSut();
 
         ServiceResult result = await sut.UpdateCategoryAsync(new CategoryRequest { Id = 1, Name = "" }, TestContext.Current.CancellationToken);
@@ -258,7 +258,7 @@ public class MenuServiceTests
     [Fact]
     public async Task UpdateSubCategoryAsync_ReturnsSuccess_WhenRepositorySucceeds()
     {
-        _subCategoryRepo.Setup(r => r.GetAllAsync(It.IsAny<CancellationToken>())).ReturnsAsync([MakeSubCategory(id: 1)]);
+        _subCategoryRepo.Setup(r => r.FindByIdAsync(It.IsAny<long>(), It.IsAny<CancellationToken>())).ReturnsAsync(MakeSubCategory(id: 1));
         _subCategoryRepo.Setup(r => r.UpdateEntityAsync(It.IsAny<SubCategory>(), It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
         var sut = CreateSut();
 
@@ -271,7 +271,7 @@ public class MenuServiceTests
     [Fact]
     public async Task UpdateSubCategoryAsync_ReturnsFail_WhenIdNotFound()
     {
-        _subCategoryRepo.Setup(r => r.GetAllAsync(It.IsAny<CancellationToken>())).ReturnsAsync([]);
+        _subCategoryRepo.Setup(r => r.FindByIdAsync(It.IsAny<long>(), It.IsAny<CancellationToken>())).ReturnsAsync((SubCategory?)null);
         var sut = CreateSut();
 
         ServiceResult result = await sut.UpdateSubCategoryAsync(new SubCategoryRequest { Id = 999 }, TestContext.Current.CancellationToken);
@@ -284,7 +284,7 @@ public class MenuServiceTests
     [Fact]
     public async Task UpdateSubCategoryAsync_ReturnsFail_WhenRepositoryThrows()
     {
-        _subCategoryRepo.Setup(r => r.GetAllAsync(It.IsAny<CancellationToken>())).ReturnsAsync([MakeSubCategory(id: 1)]);
+        _subCategoryRepo.Setup(r => r.FindByIdAsync(It.IsAny<long>(), It.IsAny<CancellationToken>())).ReturnsAsync(MakeSubCategory(id: 1));
         _subCategoryRepo.Setup(r => r.UpdateEntityAsync(It.IsAny<SubCategory>(), It.IsAny<CancellationToken>())).ThrowsAsync(new Exception("DB error"));
         var sut = CreateSut();
 
@@ -300,7 +300,7 @@ public class MenuServiceTests
     [Fact]
     public async Task UpdateSubCategoryAsync_ReturnsFail_WhenNameEmpty()
     {
-        _subCategoryRepo.Setup(r => r.GetAllAsync(It.IsAny<CancellationToken>())).ReturnsAsync([MakeSubCategory(id: 1)]);
+        _subCategoryRepo.Setup(r => r.FindByIdAsync(It.IsAny<long>(), It.IsAny<CancellationToken>())).ReturnsAsync(MakeSubCategory(id: 1));
         var sut = CreateSut();
 
         ServiceResult result = await sut.UpdateSubCategoryAsync(new SubCategoryRequest { Id = 1, Name = "" }, TestContext.Current.CancellationToken);

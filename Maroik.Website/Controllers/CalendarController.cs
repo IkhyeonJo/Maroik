@@ -168,10 +168,17 @@ public class CalendarController : Controller
         if (!uploadResult.Success)
             return Ok(new { result = false, errorMessage = _localizer[uploadResult.ErrorKey ?? "Input is invalid"].Value });
 
+        // The Summernote editor only needs the raw bytes (base64) + content type to build an object
+        // URL for the inserted <img>; return those explicitly rather than serialising a whole
+        // FileContentResult and relying on its property names (matches Forum / Management).
         return Ok(new
         {
             result = true,
-            file = File(uploadResult.FileBytes!, uploadResult.ContentType!, uploadResult.FileName!),
+            file = new
+            {
+                fileContents = Convert.ToBase64String(uploadResult.FileBytes!),
+                contentType = uploadResult.ContentType!
+            },
             filePath = _rsa.Encrypt(uploadResult.FilePath!)
         });
     }
@@ -683,7 +690,7 @@ public class CalendarController : Controller
 
                 ServiceResult otherCalendarResult = await _calendarService.UpdateOtherCalendarAsync(
                     loggedInAccount.Email!,
-                    otherCalendars.Select(c => new OtherCalendarRequest { AccountEmail = c.AccountEmail, CalendarId = c.CalendarId }),
+                    otherCalendars.Select(c => new OtherCalendarRequest { CalendarId = c.CalendarId }),
                     HttpContext.RequestAborted);
 
                 return !otherCalendarResult.Success ? Json(new { result = false, error = _localizer[otherCalendarResult.ErrorKey].Value }) : Json(new { result = true, message = _localizer["The other calendar has been successfully updated."].Value });
