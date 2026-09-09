@@ -220,18 +220,30 @@ public class AccountService : IAccountService
                 setVerifyEmailMessageOnSuccess: true, repeat: false, ct);
         }
 
-        // Account is fully confirmed: mark it as already created and return a failure so the user knows.
-        // This runs off an un-locked FindByEmailAsync read against another user's row (the caller is
-        // unauthenticated), so it must NOT go through the full-row UpdateEntityAsync — that would
-        // revert a concurrent self-service change (e.g. a password + SecurityStamp rotation) on the
-        // victim's account from the stale snapshot. Column-scoped writes only, like every other
-        // Account write path.
+        // Account is fully confirmed: tell the caller it already exists and bring the account's own
+        // stored status into line — but write a column only when its value would actually change.
+        // This path runs off an un-locked FindByEmailAsync read against another user's row from an
+        // unauthenticated request, so it must NOT use the full-row UpdateEntityAsync (it would
+        // revert a concurrent self-service change from the stale snapshot), and a no-op must stay a
+        // no-op: an email-enumerating caller must not be able to churn a stranger's Updated
+        // timestamp by replaying this endpoint. Column-scoped writes only, like every other Account
+        // write path.
+        string alreadyCreatedMessage = EnumHelper.GetDescription(AccountMessage.UserAlreadyCreated);
         try
         {
-            existing.AcceptServiceTerms();
-            existing.SetMessage(EnumHelper.GetDescription(AccountMessage.UserAlreadyCreated));
-            await _accountRepository.UpdateAgreedServiceTermsAsync(existing.Email.Value, existing.AgreedServiceTerms, existing.Updated, ct);
-            await _accountRepository.UpdateMessageAsync(existing.Email.Value, existing.Message, existing.Updated, ct);
+            if (!existing.AgreedServiceTerms)
+            {
+                existing.AcceptServiceTerms();
+                await _accountRepository.UpdateAgreedServiceTermsAsync(
+                    existing.Email.Value, existing.AgreedServiceTerms, existing.Updated, ct);
+            }
+
+            if (!string.Equals(existing.Message, alreadyCreatedMessage, StringComparison.Ordinal))
+            {
+                existing.SetMessage(alreadyCreatedMessage);
+                await _accountRepository.UpdateMessageAsync(
+                    existing.Email.Value, existing.Message, existing.Updated, ct);
+            }
         }
         catch (Exception e)
         {
@@ -239,7 +251,7 @@ public class AccountService : IAccountService
             return RegisterResult.Fail("Error occurred while processing about account status");
         }
 
-        return RegisterResult.Fail(EnumHelper.GetDescription(AccountMessage.UserAlreadyCreated));
+        return RegisterResult.Fail(alreadyCreatedMessage);
     }
 
     /// <inheritdoc />
@@ -264,11 +276,17 @@ public class AccountService : IAccountService
 
         // Email is already confirmed: inform the caller the account is fully created. Column-scoped
         // write (not full-row UpdateEntityAsync) — this path runs off an un-locked read and must not
-        // clobber a concurrent self-service change on the same row.
+        // clobber a concurrent self-service change on the same row — and skip the write entirely
+        // when the stored message already says this, so replaying this endpoint against a known
+        // address cannot churn a stranger's Updated timestamp.
+        string alreadyCreatedMessage = EnumHelper.GetDescription(AccountMessage.UserAlreadyCreated);
         try
         {
-            account.SetMessage(EnumHelper.GetDescription(AccountMessage.UserAlreadyCreated));
-            await _accountRepository.UpdateMessageAsync(account.Email.Value, account.Message, account.Updated, ct);
+            if (!string.Equals(account.Message, alreadyCreatedMessage, StringComparison.Ordinal))
+            {
+                account.SetMessage(alreadyCreatedMessage);
+                await _accountRepository.UpdateMessageAsync(account.Email.Value, account.Message, account.Updated, ct);
+            }
         }
         catch (Exception e)
         {
@@ -276,7 +294,7 @@ public class AccountService : IAccountService
             return RegisterResult.Fail("Error occurred while processing about account status");
         }
 
-        return RegisterResult.Fail(EnumHelper.GetDescription(AccountMessage.UserAlreadyCreated));
+        return RegisterResult.Fail(alreadyCreatedMessage);
     }
 
     /// <inheritdoc />
