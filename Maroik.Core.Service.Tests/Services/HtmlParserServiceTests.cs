@@ -72,6 +72,20 @@ public class HtmlParserServiceTests
         Assert.DoesNotContain("data-file", html);
     }
 
+    /// <summary>Verifies that a patch with Remove = true deletes the tag from the output (async overload).</summary>
+    [Fact]
+    public async Task TransformImageAttributesAsync_RemovesTag_WhenPatchRemoveIsTrue()
+    {
+        (string html, _) = await _sut.TransformImageAttributesAsync(
+            "<img alt=\"a\" /><img alt=\"b\" />",
+            (alt, _) => Task.FromResult<HtmlImgPatch?>(
+                alt == "a" ? new HtmlImgPatch(Remove: true) : new HtmlImgPatch(NewAlt: "B")),
+            TestContext.Current.CancellationToken);
+
+        Assert.DoesNotContain("alt=\"a\"", html);
+        Assert.Contains("alt=\"B\"", html);
+    }
+
     /// <summary>Verifies that each image's patch is correctly matched back to its own tag when
     /// multiple images are patched concurrently (no index mix-up from out-of-order completion).</summary>
     [Fact]
@@ -113,5 +127,19 @@ public class HtmlParserServiceTests
         string html = _sut.TransformImageAttributes("<img alt=\"original\" />", _ => null);
 
         Assert.Contains("alt=\"original\"", html);
+    }
+
+    /// <summary>Verifies that the sync overload deletes the tag when the patch has Remove = true,
+    /// and leaves surrounding content and other images intact.</summary>
+    [Fact]
+    public void TransformImageAttributes_RemovesTag_WhenPatchRemoveIsTrue()
+    {
+        string html = _sut.TransformImageAttributes(
+            "<p>keep</p><img alt=\"forged\" /><img alt=\"ok\" />",
+            alt => alt == "forged" ? new HtmlImgPatch(Remove: true) : new HtmlImgPatch(NewAlt: "clean"));
+
+        Assert.DoesNotContain("forged", html);
+        Assert.Contains("<p>keep</p>", html);
+        Assert.Contains("alt=\"clean\"", html);
     }
 }

@@ -287,6 +287,47 @@ public class AttachmentContentServiceTests
         Assert.NotNull(capturedFactory);
         HtmlImgPatch? patch = capturedFactory!("encrypted-alt");
         Assert.Equal("decrypted-alt", patch!.NewAlt);
+        Assert.False(patch.Remove);
+    }
+
+    /// <summary>
+    /// An <c>&lt;img&gt;</c> whose <c>alt</c> is not a decryptable storage token — e.g. a
+    /// hand-crafted plaintext path posted straight to the write endpoint rather than produced by
+    /// the editor — is marked for removal, not persisted. Otherwise the stored tag would drive a
+    /// server-side file fetch every time the post is rendered.
+    /// </summary>
+    [Fact]
+    public void SanitizeAndDecryptContent_MarksImageForRemoval_WhenAltDoesNotDecrypt()
+    {
+        _htmlSanitizer.Setup(s => s.Sanitize("<raw/>")).Returns("<clean/>");
+        Func<string, HtmlImgPatch?>? capturedFactory = null;
+        _htmlParser.Setup(p => p.TransformImageAttributes("<clean/>", It.IsAny<Func<string, HtmlImgPatch?>>()))
+            .Callback<string, Func<string, HtmlImgPatch?>>((_, factory) => capturedFactory = factory)
+            .Returns("<final/>");
+        _rsa.Setup(r => r.Decrypt("upload/Forum/whatever.png")).Throws<FormatException>();
+
+        CreateSut().SanitizeAndDecryptContent("<raw/>");
+
+        Assert.NotNull(capturedFactory);
+        HtmlImgPatch? patch = capturedFactory!("upload/Forum/whatever.png");
+        Assert.True(patch!.Remove);
+        Assert.Null(patch.NewAlt);
+    }
+
+    /// <summary>A bare <c>&lt;img&gt;</c> with no <c>alt</c> yields a null patch (left untouched), not a removal.</summary>
+    [Fact]
+    public void SanitizeAndDecryptContent_LeavesImage_WhenAltIsEmpty()
+    {
+        _htmlSanitizer.Setup(s => s.Sanitize("<raw/>")).Returns("<clean/>");
+        Func<string, HtmlImgPatch?>? capturedFactory = null;
+        _htmlParser.Setup(p => p.TransformImageAttributes("<clean/>", It.IsAny<Func<string, HtmlImgPatch?>>()))
+            .Callback<string, Func<string, HtmlImgPatch?>>((_, factory) => capturedFactory = factory)
+            .Returns("<final/>");
+
+        CreateSut().SanitizeAndDecryptContent("<raw/>");
+
+        Assert.NotNull(capturedFactory);
+        Assert.Null(capturedFactory!(""));
     }
 
     // -- SanitizeContent -----------------------------------------------------------

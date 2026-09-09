@@ -56,6 +56,7 @@ public class HtmlParserService : IHtmlParserService
             HtmlImgPatch? patch = patches[i];
             if (patch == null) continue;
             HtmlNode imgTag = imgTags[i];
+            if (patch.Remove) { imgTag.Remove(); continue; }
             if (patch.NewAlt != null) imgTag.SetAttributeValue("alt", patch.NewAlt);
             if (patch.DataFile != null) imgTag.SetAttributeValue("data-file", patch.DataFile);
             if (patch.DataContentType != null) imgTag.SetAttributeValue("data-contenttype", patch.DataContentType);
@@ -70,11 +71,15 @@ public class HtmlParserService : IHtmlParserService
         var doc = new HtmlDocument();
         doc.LoadHtml(html);
 
-        foreach (HtmlNode imgTag in doc.DocumentNode.Descendants("img"))
+        // Materialise first: a patch may remove its node, which would invalidate the lazy
+        // Descendants() enumerator mid-iteration.
+        foreach (HtmlNode imgTag in doc.DocumentNode.Descendants("img").ToList())
         {
             string alt = imgTag.GetAttributeValue("alt", "");
             HtmlImgPatch? patch = patchFactory(alt);
-            if (patch?.NewAlt != null) imgTag.SetAttributeValue("alt", patch.NewAlt);
+            if (patch == null) continue;
+            if (patch.Remove) { imgTag.Remove(); continue; }
+            if (patch.NewAlt != null) imgTag.SetAttributeValue("alt", patch.NewAlt);
         }
 
         return doc.DocumentNode.OuterHtml;

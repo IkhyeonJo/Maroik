@@ -135,15 +135,33 @@ public class AttachmentContentService : IAttachmentContentService
     public string SanitizeAndDecryptContent(string html)
     {
         string sanitized = _htmlSanitizer.Sanitize(html);
-        return _htmlParser.TransformImageAttributes(sanitized, alt => new HtmlImgPatch(NewAlt: TryDecryptImageAlt(alt)));
+        return _htmlParser.TransformImageAttributes(sanitized, alt =>
+        {
+            // Nothing to resolve — leave a bare <img> as-is (inert on display: PrepareHtmlForDisplayAsync
+            // can't fetch an empty path, and the CSP blocks any cross-origin src).
+            if (string.IsNullOrEmpty(alt))
+                return null;
+
+            string? decrypted = TryDecryptImageAlt(alt);
+
+            // A genuine Summernote image always carries the server-issued RSA-OAEP token in alt (set
+            // by UploadSummernoteImageAsync and re-applied by PrepareHtmlForDisplayAsync on every
+            // edit round-trip). An alt that does not decrypt is a reference the editor never produced
+            // — e.g. a hand-crafted plaintext storage path posted straight to the write endpoint.
+            // Drop the whole <img> rather than persist it, so it cannot drive a server-side file
+            // fetch when the post is later rendered.
+            return decrypted != null
+                ? new HtmlImgPatch(NewAlt: decrypted)
+                : new HtmlImgPatch(Remove: true);
+        });
     }
 
     /// <summary>
-    /// An <c>&lt;img&gt;</c>'s <c>alt</c> is normally the RSA-OAEP token this method round-trips back
-    /// to the real storage path. A hand-edited or forged post can carry an <c>alt</c> that is not a
-    /// valid token; <see cref="IRsaService.Decrypt"/> would then throw (FormatException /
-    /// CryptographicException) and turn the save into an unhandled 500. Leave such an attribute
-    /// untouched instead — the same guarded-decrypt shape the account-token flows already use.
+    /// An <c>&lt;img&gt;</c>'s <c>alt</c> is normally the RSA-OAEP token this service round-trips
+    /// back to the real storage path. Returns the decrypted path, or <see langword="null"/> when
+    /// <paramref name="alt"/> is empty or not a valid token (<see cref="IRsaService.Decrypt"/> throws
+    /// FormatException / CryptographicException) — the guarded-decrypt shape the account-token flows
+    /// already use, so a forged post can't turn the save into an unhandled 500.
     /// </summary>
     private string? TryDecryptImageAlt(string alt)
     {
