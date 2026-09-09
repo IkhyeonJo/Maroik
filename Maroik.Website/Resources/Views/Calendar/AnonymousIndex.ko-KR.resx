@@ -486,4 +486,22 @@
   <data name="View" xml:space="preserve">
     <value>보기</value>
   </data>
+  <data name="Daily" xml:space="preserve">
+    <value>매일</value>
+  </data>
+  <data name="Weekly on Monday" xml:space="preserve">
+    <value>매주 월요일</value>
+  </data>
+  <data name="Monthly on the" xml:space="preserve">
+    <value>매월 첫째 주 월요일</value>
+  </data>
+  <data name="Annually on June 3" xml:space="preserve">
+    <value>매년 6월 3일</value>
+  </data>
+  <data name="Custom..." xml:space="preserve">
+    <value>사용자 지정...</value>
+  </data>
+  <data name="before at" xml:space="preserve">
+    <value>전</value>
+  </data>
 </root>

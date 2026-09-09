@@ -198,4 +198,34 @@
   <data name="Your Account is Locked, Please reset your password by clicking Forgot password Button" xml:space="preserve">
     <value>Your Account is Locked, Please reset your password by clicking Forgot password Button</value>
   </data>
+  <data name="Email address is already confirmed." xml:space="preserve">
+    <value>Email address is already confirmed.</value>
+  </data>
+  <data name="Email must be confirmed before resetting the password." xml:space="preserve">
+    <value>Email must be confirmed before resetting the password.</value>
+  </data>
+  <data name="Hashed password cannot be empty." xml:space="preserve">
+    <value>Hashed password cannot be empty.</value>
+  </data>
+  <data name="Invalid email confirmation token." xml:space="preserve">
+    <value>Invalid email confirmation token.</value>
+  </data>
+  <data name="Invalid or expired password-reset token." xml:space="preserve">
+    <value>Invalid or expired password-reset token.</value>
+  </data>
+  <data name="New hashed password cannot be empty." xml:space="preserve">
+    <value>New hashed password cannot be empty.</value>
+  </data>
+  <data name="Nickname cannot be empty." xml:space="preserve">
+    <value>Nickname cannot be empty.</value>
+  </data>
+  <data name="Nickname must be 255 characters or fewer." xml:space="preserve">
+    <value>Nickname must be 255 characters or fewer.</value>
+  </data>
+  <data name="Role must be either Admin or User." xml:space="preserve">
+    <value>Role must be either Admin or User.</value>
+  </data>
+  <data name="reset-password-invalid" xml:space="preserve">
+    <value>reset-password-invalid</value>
+  </data>
 </root>

@@ -198,4 +198,34 @@
   <data name="Your Account is Locked, Please reset your password by clicking Forgot password Button" xml:space="preserve">
     <value>계정이 잠겼습니다. '비밀번호 찾기' 버튼을 통해 비밀번호를 초기화해주시길 바랍니다.</value>
   </data>
+  <data name="Email address is already confirmed." xml:space="preserve">
+    <value>이메일 주소가 이미 인증되었습니다.</value>
+  </data>
+  <data name="Email must be confirmed before resetting the password." xml:space="preserve">
+    <value>비밀번호를 재설정하기 전에 이메일 인증을 완료해야 합니다.</value>
+  </data>
+  <data name="Hashed password cannot be empty." xml:space="preserve">
+    <value>해시된 비밀번호는 비워둘 수 없습니다.</value>
+  </data>
+  <data name="Invalid email confirmation token." xml:space="preserve">
+    <value>유효하지 않은 이메일 확인 토큰입니다.</value>
+  </data>
+  <data name="Invalid or expired password-reset token." xml:space="preserve">
+    <value>유효하지 않거나 만료된 비밀번호 재설정 토큰입니다.</value>
+  </data>
+  <data name="New hashed password cannot be empty." xml:space="preserve">
+    <value>새 해시된 비밀번호는 비워둘 수 없습니다.</value>
+  </data>
+  <data name="Nickname cannot be empty." xml:space="preserve">
+    <value>닉네임은 비워둘 수 없습니다.</value>
+  </data>
+  <data name="Nickname must be 255 characters or fewer." xml:space="preserve">
+    <value>닉네임은 255자 이하여야 합니다.</value>
+  </data>
+  <data name="Role must be either Admin or User." xml:space="preserve">
+    <value>권한은 Admin 또는 User여야 합니다.</value>
+  </data>
+  <data name="reset-password-invalid" xml:space="preserve">
+    <value>비밀번호 재설정 요청이 유효하지 않습니다.</value>
+  </data>
 </root>

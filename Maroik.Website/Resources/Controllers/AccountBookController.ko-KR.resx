@@ -333,4 +333,67 @@
   <data name="Updated" xml:space="preserve">
     <value>업데이트일</value>
   </data>
+  <data name="Asset category (item) cannot be empty." xml:space="preserve">
+    <value>자산 항목(분류)은 비워둘 수 없습니다.</value>
+  </data>
+  <data name="Asset category cannot be empty." xml:space="preserve">
+    <value>자산 항목은 비워둘 수 없습니다.</value>
+  </data>
+  <data name="Cannot change the currency of an existing asset." xml:space="preserve">
+    <value>기존 자산의 화폐단위는 변경할 수 없습니다.</value>
+  </data>
+  <data name="Cannot deposit a different currency into this asset." xml:space="preserve">
+    <value>이 자산에는 다른 화폐단위로 입금할 수 없습니다.</value>
+  </data>
+  <data name="Cannot withdraw a different currency from this asset." xml:space="preserve">
+    <value>이 자산에서는 다른 화폐단위로 출금할 수 없습니다.</value>
+  </data>
+  <data name="Deposit asset product name cannot be empty." xml:space="preserve">
+    <value>입금 자산 상품명은 비워둘 수 없습니다.</value>
+  </data>
+  <data name="Deposit day is not valid for the selected month." xml:space="preserve">
+    <value>입금일이 선택한 월에 유효하지 않습니다.</value>
+  </data>
+  <data name="Deposit month must be between 1 and 12." xml:space="preserve">
+    <value>입금월은 1에서 12 사이여야 합니다.</value>
+  </data>
+  <data name="Main expense category cannot be empty." xml:space="preserve">
+    <value>지출 대분류는 비워둘 수 없습니다.</value>
+  </data>
+  <data name="Main income category cannot be empty." xml:space="preserve">
+    <value>수입 대분류는 비워둘 수 없습니다.</value>
+  </data>
+  <data name="Payment method (asset name) cannot be empty." xml:space="preserve">
+    <value>결제수단(자산명)은 비워둘 수 없습니다.</value>
+  </data>
+  <data name="Payment method cannot be empty." xml:space="preserve">
+    <value>결제수단은 비워둘 수 없습니다.</value>
+  </data>
+  <data name="Product name cannot be empty." xml:space="preserve">
+    <value>상품명은 비워둘 수 없습니다.</value>
+  </data>
+  <data name="Sub expense category cannot be empty." xml:space="preserve">
+    <value>지출 소분류는 비워둘 수 없습니다.</value>
+  </data>
+  <data name="Sub income category cannot be empty." xml:space="preserve">
+    <value>수입 소분류는 비워둘 수 없습니다.</value>
+  </data>
+  <data name="The expenditure record could not be found." xml:space="preserve">
+    <value>지출 기록을 찾을 수 없습니다.</value>
+  </data>
+  <data name="The income record could not be found." xml:space="preserve">
+    <value>수입 기록을 찾을 수 없습니다.</value>
+  </data>
+  <data name="The operation could not be completed. Please try again." xml:space="preserve">
+    <value>작업을 완료할 수 없습니다. 다시 시도해 주십시오.</value>
+  </data>
+  <data name="The selected asset could not be found." xml:space="preserve">
+    <value>선택한 자산을 찾을 수 없습니다.</value>
+  </data>
+  <data name="Unknown expenditure main class." xml:space="preserve">
+    <value>알 수 없는 지출 대분류입니다.</value>
+  </data>
+  <data name="Unknown income main class." xml:space="preserve">
+    <value>알 수 없는 수입 대분류입니다.</value>
+  </data>
 </root>

@@ -189,4 +189,64 @@
   <data name="The calendar shared has been successfully updated." xml:space="preserve">
     <value>공유 달력이 성공적으로 수정되었습니다.</value>
   </data>
+  <data name="Calendar ID must be a positive integer." xml:space="preserve">
+    <value>달력 ID는 양의 정수여야 합니다.</value>
+  </data>
+  <data name="Currency code cannot be empty." xml:space="preserve">
+    <value>화폐 코드는 비워둘 수 없습니다.</value>
+  </data>
+  <data name="Email address cannot be empty." xml:space="preserve">
+    <value>이메일 주소는 비워둘 수 없습니다.</value>
+  </data>
+  <data name="End date must not be earlier than start date." xml:space="preserve">
+    <value>종료일은 시작일보다 이전일 수 없습니다.</value>
+  </data>
+  <data name="Event description must be 16384 characters or fewer." xml:space="preserve">
+    <value>이벤트 설명은 16384자 이하여야 합니다.</value>
+  </data>
+  <data name="Event title cannot be empty." xml:space="preserve">
+    <value>이벤트 제목은 비워둘 수 없습니다.</value>
+  </data>
+  <data name="Event title must be 100 characters or fewer." xml:space="preserve">
+    <value>이벤트 제목은 100자 이하여야 합니다.</value>
+  </data>
+  <data name="Exactly one lead-time field (minutes/hours/days/weeks) must be set." xml:space="preserve">
+    <value>알림 시간 필드(분/시간/일/주) 중 정확히 하나만 설정해야 합니다.</value>
+  </data>
+  <data name="File name cannot be empty." xml:space="preserve">
+    <value>파일 이름은 비워둘 수 없습니다.</value>
+  </data>
+  <data name="File size cannot be negative." xml:space="preserve">
+    <value>파일 크기는 음수일 수 없습니다.</value>
+  </data>
+  <data name="File storage path cannot be empty." xml:space="preserve">
+    <value>파일 저장 경로는 비워둘 수 없습니다.</value>
+  </data>
+  <data name="HTML color code cannot be empty." xml:space="preserve">
+    <value>HTML 색상 코드는 비워둘 수 없습니다.</value>
+  </data>
+  <data name="Invalid image file." xml:space="preserve">
+    <value>유효하지 않은 이미지 파일입니다.</value>
+  </data>
+  <data name="No calendar exists." xml:space="preserve">
+    <value>달력이 존재하지 않습니다.</value>
+  </data>
+  <data name="Notification method cannot be empty." xml:space="preserve">
+    <value>알림 방법은 비워둘 수 없습니다.</value>
+  </data>
+  <data name="Reminder lead time is outside the allowed range (0 to 28 days before the event)." xml:space="preserve">
+    <value>알림 시간이 허용 범위(이벤트 0~28일 전)를 벗어났습니다.</value>
+  </data>
+  <data name="The calendar could not be found." xml:space="preserve">
+    <value>달력을 찾을 수 없습니다.</value>
+  </data>
+  <data name="The calendar event could not be found." xml:space="preserve">
+    <value>달력 이벤트를 찾을 수 없습니다.</value>
+  </data>
+  <data name="The operation could not be completed. Please try again." xml:space="preserve">
+    <value>작업을 완료할 수 없습니다. 다시 시도해 주십시오.</value>
+  </data>
+  <data name="Time-zone ID cannot be empty." xml:space="preserve">
+    <value>시간대 ID는 비워둘 수 없습니다.</value>
+  </data>
 </root>

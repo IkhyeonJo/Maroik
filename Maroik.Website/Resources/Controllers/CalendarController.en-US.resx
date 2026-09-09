@@ -189,4 +189,64 @@
   <data name="The calendar shared has been successfully updated." xml:space="preserve">
     <value>The calendar shared has been successfully updated.</value>
   </data>
+  <data name="Calendar ID must be a positive integer." xml:space="preserve">
+    <value>Calendar ID must be a positive integer.</value>
+  </data>
+  <data name="Currency code cannot be empty." xml:space="preserve">
+    <value>Currency code cannot be empty.</value>
+  </data>
+  <data name="Email address cannot be empty." xml:space="preserve">
+    <value>Email address cannot be empty.</value>
+  </data>
+  <data name="End date must not be earlier than start date." xml:space="preserve">
+    <value>End date must not be earlier than start date.</value>
+  </data>
+  <data name="Event description must be 16384 characters or fewer." xml:space="preserve">
+    <value>Event description must be 16384 characters or fewer.</value>
+  </data>
+  <data name="Event title cannot be empty." xml:space="preserve">
+    <value>Event title cannot be empty.</value>
+  </data>
+  <data name="Event title must be 100 characters or fewer." xml:space="preserve">
+    <value>Event title must be 100 characters or fewer.</value>
+  </data>
+  <data name="Exactly one lead-time field (minutes/hours/days/weeks) must be set." xml:space="preserve">
+    <value>Exactly one lead-time field (minutes/hours/days/weeks) must be set.</value>
+  </data>
+  <data name="File name cannot be empty." xml:space="preserve">
+    <value>File name cannot be empty.</value>
+  </data>
+  <data name="File size cannot be negative." xml:space="preserve">
+    <value>File size cannot be negative.</value>
+  </data>
+  <data name="File storage path cannot be empty." xml:space="preserve">
+    <value>File storage path cannot be empty.</value>
+  </data>
+  <data name="HTML color code cannot be empty." xml:space="preserve">
+    <value>HTML color code cannot be empty.</value>
+  </data>
+  <data name="Invalid image file." xml:space="preserve">
+    <value>Invalid image file.</value>
+  </data>
+  <data name="No calendar exists." xml:space="preserve">
+    <value>No calendar exists.</value>
+  </data>
+  <data name="Notification method cannot be empty." xml:space="preserve">
+    <value>Notification method cannot be empty.</value>
+  </data>
+  <data name="Reminder lead time is outside the allowed range (0 to 28 days before the event)." xml:space="preserve">
+    <value>Reminder lead time is outside the allowed range (0 to 28 days before the event).</value>
+  </data>
+  <data name="The calendar could not be found." xml:space="preserve">
+    <value>The calendar could not be found.</value>
+  </data>
+  <data name="The calendar event could not be found." xml:space="preserve">
+    <value>The calendar event could not be found.</value>
+  </data>
+  <data name="The operation could not be completed. Please try again." xml:space="preserve">
+    <value>The operation could not be completed. Please try again.</value>
+  </data>
+  <data name="Time-zone ID cannot be empty." xml:space="preserve">
+    <value>Time-zone ID cannot be empty.</value>
+  </data>
 </root>

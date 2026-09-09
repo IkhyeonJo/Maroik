@@ -297,4 +297,70 @@
   <data name="Updated" xml:space="preserve">
     <value>Updated</value>
   </data>
+  <data name="Asset category (item) cannot be empty." xml:space="preserve">
+    <value>Asset category (item) cannot be empty.</value>
+  </data>
+  <data name="Asset category cannot be empty." xml:space="preserve">
+    <value>Asset category cannot be empty.</value>
+  </data>
+  <data name="Cannot change the currency of an existing asset." xml:space="preserve">
+    <value>Cannot change the currency of an existing asset.</value>
+  </data>
+  <data name="Cannot deposit a different currency into this asset." xml:space="preserve">
+    <value>Cannot deposit a different currency into this asset.</value>
+  </data>
+  <data name="Cannot withdraw a different currency from this asset." xml:space="preserve">
+    <value>Cannot withdraw a different currency from this asset.</value>
+  </data>
+  <data name="Deposit asset product name cannot be empty." xml:space="preserve">
+    <value>Deposit asset product name cannot be empty.</value>
+  </data>
+  <data name="Deposit day is not valid for the selected month." xml:space="preserve">
+    <value>Deposit day is not valid for the selected month.</value>
+  </data>
+  <data name="Deposit month must be between 1 and 12." xml:space="preserve">
+    <value>Deposit month must be between 1 and 12.</value>
+  </data>
+  <data name="Fail to find the asset by given product name" xml:space="preserve">
+    <value>Fail to find the asset by given product name</value>
+  </data>
+  <data name="Main expense category cannot be empty." xml:space="preserve">
+    <value>Main expense category cannot be empty.</value>
+  </data>
+  <data name="Main income category cannot be empty." xml:space="preserve">
+    <value>Main income category cannot be empty.</value>
+  </data>
+  <data name="Payment method (asset name) cannot be empty." xml:space="preserve">
+    <value>Payment method (asset name) cannot be empty.</value>
+  </data>
+  <data name="Payment method cannot be empty." xml:space="preserve">
+    <value>Payment method cannot be empty.</value>
+  </data>
+  <data name="Product name cannot be empty." xml:space="preserve">
+    <value>Product name cannot be empty.</value>
+  </data>
+  <data name="Sub expense category cannot be empty." xml:space="preserve">
+    <value>Sub expense category cannot be empty.</value>
+  </data>
+  <data name="Sub income category cannot be empty." xml:space="preserve">
+    <value>Sub income category cannot be empty.</value>
+  </data>
+  <data name="The asset already exists." xml:space="preserve">
+    <value>The asset already exists.</value>
+  </data>
+  <data name="The fixed-expenditure record could not be found." xml:space="preserve">
+    <value>The fixed-expenditure record could not be found.</value>
+  </data>
+  <data name="The fixed-income record could not be found." xml:space="preserve">
+    <value>The fixed-income record could not be found.</value>
+  </data>
+  <data name="The selected asset could not be found." xml:space="preserve">
+    <value>The selected asset could not be found.</value>
+  </data>
+  <data name="Unknown expenditure main class." xml:space="preserve">
+    <value>Unknown expenditure main class.</value>
+  </data>
+  <data name="Unknown income main class." xml:space="preserve">
+    <value>Unknown income main class.</value>
+  </data>
 </root>

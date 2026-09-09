@@ -492,4 +492,22 @@
   <data name="Guest" xml:space="preserve">
     <value>Guest</value>
   </data>
+  <data name="Daily" xml:space="preserve">
+    <value>Daily</value>
+  </data>
+  <data name="Weekly on Monday" xml:space="preserve">
+    <value>Weekly on Monday</value>
+  </data>
+  <data name="Monthly on the" xml:space="preserve">
+    <value>Monthly on the</value>
+  </data>
+  <data name="Annually on June 3" xml:space="preserve">
+    <value>Annually on June 3</value>
+  </data>
+  <data name="Custom..." xml:space="preserve">
+    <value>Custom...</value>
+  </data>
+  <data name="before at" xml:space="preserve">
+    <value>before at</value>
+  </data>
 </root>

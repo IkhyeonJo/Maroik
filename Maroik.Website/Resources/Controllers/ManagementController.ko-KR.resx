@@ -309,4 +309,199 @@
   <data name="Invalid image file" xml:space="preserve">
     <value>유효하지 않은 이미지 파일입니다</value>
   </data>
+  <data name="Agreed Service Terms was not checked. Please try sign up again and login again." xml:space="preserve">
+    <value>약관에 동의하지 않으셨습니다. 회원가입을 다시 진행한 후 로그인해 주십시오.</value>
+  </data>
+  <data name="Asset category (item) cannot be empty." xml:space="preserve">
+    <value>자산 항목(분류)은 비워둘 수 없습니다.</value>
+  </data>
+  <data name="Asset category cannot be empty." xml:space="preserve">
+    <value>자산 항목은 비워둘 수 없습니다.</value>
+  </data>
+  <data name="Board type cannot be empty." xml:space="preserve">
+    <value>게시판 유형은 비워둘 수 없습니다.</value>
+  </data>
+  <data name="Board type is not a recognised value." xml:space="preserve">
+    <value>게시판 유형이 인식할 수 없는 값입니다.</value>
+  </data>
+  <data name="Cannot add a comment to a deleted post." xml:space="preserve">
+    <value>삭제된 게시글에는 댓글을 추가할 수 없습니다.</value>
+  </data>
+  <data name="Cannot add a comment to a locked post." xml:space="preserve">
+    <value>잠긴 게시글에는 댓글을 추가할 수 없습니다.</value>
+  </data>
+  <data name="Cannot change the currency of an existing asset." xml:space="preserve">
+    <value>기존 자산의 화폐단위는 변경할 수 없습니다.</value>
+  </data>
+  <data name="Cannot deposit a different currency into this asset." xml:space="preserve">
+    <value>이 자산에는 다른 화폐단위로 입금할 수 없습니다.</value>
+  </data>
+  <data name="Cannot update a deleted post." xml:space="preserve">
+    <value>삭제된 게시글은 수정할 수 없습니다.</value>
+  </data>
+  <data name="Cannot withdraw a different currency from this asset." xml:space="preserve">
+    <value>이 자산에서는 다른 화폐단위로 출금할 수 없습니다.</value>
+  </data>
+  <data name="Category name cannot be empty." xml:space="preserve">
+    <value>카테고리 이름은 비워둘 수 없습니다.</value>
+  </data>
+  <data name="Comment author (writer) cannot be empty." xml:space="preserve">
+    <value>댓글 작성자는 비워둘 수 없습니다.</value>
+  </data>
+  <data name="Comment content cannot be empty." xml:space="preserve">
+    <value>댓글 내용은 비워둘 수 없습니다.</value>
+  </data>
+  <data name="Comment does not belong to this post." xml:space="preserve">
+    <value>댓글이 이 게시글에 속하지 않습니다.</value>
+  </data>
+  <data name="Comment is already deleted." xml:space="preserve">
+    <value>이미 삭제된 댓글입니다.</value>
+  </data>
+  <data name="Currency code cannot be empty." xml:space="preserve">
+    <value>화폐 코드는 비워둘 수 없습니다.</value>
+  </data>
+  <data name="Deposit asset product name cannot be empty." xml:space="preserve">
+    <value>입금 자산 상품명은 비워둘 수 없습니다.</value>
+  </data>
+  <data name="Deposit day is not valid for the selected month." xml:space="preserve">
+    <value>입금일이 선택한 월에 유효하지 않습니다.</value>
+  </data>
+  <data name="Deposit month must be between 1 and 12." xml:space="preserve">
+    <value>입금월은 1에서 12 사이여야 합니다.</value>
+  </data>
+  <data name="Email address cannot be empty." xml:space="preserve">
+    <value>이메일 주소는 비워둘 수 없습니다.</value>
+  </data>
+  <data name="Email address is already confirmed." xml:space="preserve">
+    <value>이메일 주소가 이미 인증되었습니다.</value>
+  </data>
+  <data name="Email must be confirmed before resetting the password." xml:space="preserve">
+    <value>비밀번호를 재설정하기 전에 이메일 인증을 완료해야 합니다.</value>
+  </data>
+  <data name="Email verification was not completed. Please try sign up again." xml:space="preserve">
+    <value>이메일 인증이 완료되지 않았습니다. 다시 회원가입을 진행해 주시길 바랍니다.</value>
+  </data>
+  <data name="Error occurred while processing about account registration" xml:space="preserve">
+    <value>계정 생성 중 에러가 발생하였습니다.</value>
+  </data>
+  <data name="Error occurred while processing about account status" xml:space="preserve">
+    <value>계정 상태 처리 중 에러가 발생하였습니다.</value>
+  </data>
+  <data name="Error occurred while processing about confirm email account status" xml:space="preserve">
+    <value>이메일 확인 계정 상태 처리 중 에러가 발생하였습니다.</value>
+  </data>
+  <data name="Error occurred while processing about reset password" xml:space="preserve">
+    <value>비밀번호 초기화 중 에러가 발생하였습니다.</value>
+  </data>
+  <data name="Error occurred while processing about sending account authentication mail" xml:space="preserve">
+    <value>계정 인증 메일 전송 중 에러가 발생하였습니다.</value>
+  </data>
+  <data name="Failed to resend email" xml:space="preserve">
+    <value>이메일 재전송에 실패하였습니다.</value>
+  </data>
+  <data name="Failed to upload the attached file." xml:space="preserve">
+    <value>첨부 파일 업로드에 실패하였습니다.</value>
+  </data>
+  <data name="File name cannot be empty." xml:space="preserve">
+    <value>파일 이름은 비워둘 수 없습니다.</value>
+  </data>
+  <data name="File size cannot be negative." xml:space="preserve">
+    <value>파일 크기는 음수일 수 없습니다.</value>
+  </data>
+  <data name="File storage path cannot be empty." xml:space="preserve">
+    <value>파일 저장 경로는 비워둘 수 없습니다.</value>
+  </data>
+  <data name="HTML color code cannot be empty." xml:space="preserve">
+    <value>HTML 색상 코드는 비워둘 수 없습니다.</value>
+  </data>
+  <data name="Hashed password cannot be empty." xml:space="preserve">
+    <value>해시된 비밀번호는 비워둘 수 없습니다.</value>
+  </data>
+  <data name="Invalid email confirmation token." xml:space="preserve">
+    <value>유효하지 않은 이메일 확인 토큰입니다.</value>
+  </data>
+  <data name="Invalid image file." xml:space="preserve">
+    <value>유효하지 않은 이미지 파일입니다.</value>
+  </data>
+  <data name="Invalid or expired password-reset token." xml:space="preserve">
+    <value>유효하지 않거나 만료된 비밀번호 재설정 토큰입니다.</value>
+  </data>
+  <data name="Main expense category cannot be empty." xml:space="preserve">
+    <value>지출 대분류는 비워둘 수 없습니다.</value>
+  </data>
+  <data name="Main income category cannot be empty." xml:space="preserve">
+    <value>수입 대분류는 비워둘 수 없습니다.</value>
+  </data>
+  <data name="New hashed password cannot be empty." xml:space="preserve">
+    <value>새 해시된 비밀번호는 비워둘 수 없습니다.</value>
+  </data>
+  <data name="Nickname cannot be empty." xml:space="preserve">
+    <value>닉네임은 비워둘 수 없습니다.</value>
+  </data>
+  <data name="Nickname must be 255 characters or fewer." xml:space="preserve">
+    <value>닉네임은 255자 이하여야 합니다.</value>
+  </data>
+  <data name="Payment method (asset name) cannot be empty." xml:space="preserve">
+    <value>결제수단(자산명)은 비워둘 수 없습니다.</value>
+  </data>
+  <data name="Payment method cannot be empty." xml:space="preserve">
+    <value>결제수단은 비워둘 수 없습니다.</value>
+  </data>
+  <data name="Post author (writer) cannot be empty." xml:space="preserve">
+    <value>게시글 작성자는 비워둘 수 없습니다.</value>
+  </data>
+  <data name="Post content must be 16384 characters or fewer." xml:space="preserve">
+    <value>게시글 내용은 16384자 이하여야 합니다.</value>
+  </data>
+  <data name="Post is already deleted." xml:space="preserve">
+    <value>이미 삭제된 게시글입니다.</value>
+  </data>
+  <data name="Post title cannot be empty." xml:space="preserve">
+    <value>게시글 제목은 비워둘 수 없습니다.</value>
+  </data>
+  <data name="Post title must be 100 characters or fewer." xml:space="preserve">
+    <value>게시글 제목은 100자 이하여야 합니다.</value>
+  </data>
+  <data name="Product name cannot be empty." xml:space="preserve">
+    <value>상품명은 비워둘 수 없습니다.</value>
+  </data>
+  <data name="Role must be either Admin or User." xml:space="preserve">
+    <value>권한은 Admin 또는 User여야 합니다.</value>
+  </data>
+  <data name="Sub expense category cannot be empty." xml:space="preserve">
+    <value>지출 소분류는 비워둘 수 없습니다.</value>
+  </data>
+  <data name="Sub income category cannot be empty." xml:space="preserve">
+    <value>수입 소분류는 비워둘 수 없습니다.</value>
+  </data>
+  <data name="Sub-category name cannot be empty." xml:space="preserve">
+    <value>하위 카테고리 이름은 비워둘 수 없습니다.</value>
+  </data>
+  <data name="Time-zone ID cannot be empty." xml:space="preserve">
+    <value>시간대 ID는 비워둘 수 없습니다.</value>
+  </data>
+  <data name="Unknown expenditure main class." xml:space="preserve">
+    <value>알 수 없는 지출 대분류입니다.</value>
+  </data>
+  <data name="Unknown income main class." xml:space="preserve">
+    <value>알 수 없는 수입 대분류입니다.</value>
+  </data>
+  <data name="You do not have permission to write a comment." xml:space="preserve">
+    <value>댓글을 작성할 권한이 없습니다.</value>
+  </data>
+  <data name="Your Account is Deleted, Please create your new account by clicking Sign up Button" xml:space="preserve">
+    <value>계정이 삭제되었습니다. '회원가입' 버튼을 통해 새로운 계정을 생성해 주시길 바랍니다.</value>
+  </data>
+  <data name="Your Account is Locked, Please reset your password by clicking Forgot password Button" xml:space="preserve">
+    <value>계정이 잠겼습니다. '비밀번호 찾기' 버튼을 통해 비밀번호를 초기화해 주시길 바랍니다.</value>
+  </data>
+  <data name="invalid-image" xml:space="preserve">
+    <value>유효하지 않은 이미지입니다.</value>
+  </data>
+  <data name="reset-password-invalid" xml:space="preserve">
+    <value>비밀번호 재설정 요청이 유효하지 않습니다.</value>
+  </data>
+  <data name="svg-not-allowed" xml:space="preserve">
+    <value>SVG 파일은 허용되지 않습니다.</value>
+  </data>
 </root>
