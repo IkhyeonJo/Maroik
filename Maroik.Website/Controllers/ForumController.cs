@@ -72,13 +72,12 @@ public class ForumController : Controller
 
             boardInputViewModel.Content ??= "";
 
-            bool isAccountSessionExist = _sessionService.GetAccount() != null;
-            if (!isAccountSessionExist)
-                return Json(new { result = false, error = _localizer["Please Login to write board"].Value });
+            // The DB-fresh, re-validated account ViewBagPopulatorFilter already loaded for this
+            // request (via HttpContext.Items) — reuse it instead of re-reading the login-time
+            // session snapshot, so a mid-session role change takes effect here immediately.
+            AccountResponse loggedInAccount = ViewBag.LoggedInAccount;
 
-            AccountResponse loggedInAccount = _sessionService.GetAccount()!;
-
-            if (loggedInAccount.Role != Role.Admin && loggedInAccount.Role != Role.User)
+            if (loggedInAccount.Role is not (Role.Admin or Role.User))
                 return Json(new { result = false, error = _localizer["Please Login to write board"].Value });
 
             BoardRequest boardRequest = new()
@@ -122,11 +121,10 @@ public class ForumController : Controller
             if (string.IsNullOrEmpty(boardCommentInputViewModel.Content))
                 return Json(new { result = false, error = _localizer["Please enter a comment."].Value });
 
-            bool isAccountSessionExist = _sessionService.GetAccount() != null;
-            if (!isAccountSessionExist)
+            // DB-fresh account already loaded by ViewBagPopulatorFilter for this request (see WriteFreeBoard).
+            AccountResponse loggedInAccount = ViewBag.LoggedInAccount;
+            if (loggedInAccount.Role is not (Role.Admin or Role.User))
                 return Json(new { result = false, error = _localizer["Please Login to write comment."].Value });
-
-            AccountResponse loggedInAccount = _sessionService.GetAccount()!;
 
             BoardCommentRequest commentRequest = new()
             {
@@ -493,11 +491,10 @@ public class ForumController : Controller
 
             boardInputViewModel.Content ??= "";
 
-            bool isAccountSessionExist = _sessionService.GetAccount() != null;
-            if (!isAccountSessionExist)
+            // DB-fresh account already loaded by ViewBagPopulatorFilter for this request (see WriteFreeBoard).
+            AccountResponse loggedInAccount = ViewBag.LoggedInAccount;
+            if (loggedInAccount.Role is not (Role.Admin or Role.User))
                 return Json(new { result = false, error = _localizer["Please Login to edit board."].Value });
-
-            AccountResponse loggedInAccount = _sessionService.GetAccount()!;
 
             BoardRequest boardRequest = new()
             {
