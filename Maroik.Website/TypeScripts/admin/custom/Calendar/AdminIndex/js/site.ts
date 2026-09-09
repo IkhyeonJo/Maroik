@@ -1038,6 +1038,7 @@
             row.find('.error-message').text(errorMessage).toggle(!isValid);
             return isValid;
         }
+        // Create modal, timed (all-day unchecked) reminder row — see the group comment above.
         function ValidateCreateEventInputAllDayUnchecked(row: JQuery) {
             let numberInput = row.find('.createCalendarEventSelNotificationNumberAllDayUnchecked');
             let value: any = (numberInput.val() as string).trim();
@@ -1090,6 +1091,7 @@
             return isValid;
         }
 
+        // Edit modal, timed (all-day unchecked) reminder row — see the group comment above.
         function ValidateEditEventInputAllDayUnchecked(row: JQuery) {
             let numberInput = row.find('.editCalendarEventSelNotificationNumberAllDayUnchecked');
             let value: any = (numberInput.val() as string).trim();
@@ -1142,6 +1144,7 @@
             return isValid;
         }
 
+        // Edit modal, all-day (all-day checked) reminder row — see the group comment above.
         function ValidateEditEventInputAllDayChecked(row: JQuery) {
             let numberInput = row.find('.editCalendarEventSelNotificationNumberAllDayChecked');
             let value: any = (numberInput.val() as string).trim();
