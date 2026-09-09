@@ -59,12 +59,24 @@ public class AuthorizationFilter : ActionFilterAttribute
         BuildPostActionRoleMap();
 
     /// <summary>
-    /// (controller, action) pairs for every <c>AccountController</c> POST action carrying
-    /// <c>[HttpPost]</c> and <c>[ValidateAntiForgeryToken]</c> — the endpoints an unauthenticated
-    /// visitor may POST to (login, register, forgot / reset password, …) without a menu match.
+    /// The fixed set of <c>AccountController</c> POST endpoints an unauthenticated visitor may POST
+    /// to without a navigation-menu match — login, logout, registration / resend, and the
+    /// forgot / reset-password flow. Spelled out explicitly (not reflected off the controller) so
+    /// this anonymous surface mirrors the hardcoded GET allow-list in <see cref="OnActionExecutionAsync"/>:
+    /// adding a new POST action to <c>AccountController</c> does NOT silently widen anonymous access
+    /// — it stays denied (redirect to Dashboard) until it is added here on purpose. Every entry must
+    /// still carry <c>[HttpPost]</c> + <c>[ValidateAntiForgeryToken]</c>, enforced by
+    /// <c>WebsiteArchitectureTests.PostActions_MustCarry_AntiforgeryAndRoleAttributes</c>.
     /// </summary>
     private static readonly IReadOnlySet<(string Controller, string Action)> AnonymousAccountPostActions =
-        BuildAnonymousAccountPostActions();
+        new HashSet<(string Controller, string Action)>
+        {
+            ("Account", nameof(Controllers.AccountController.Login)),
+            ("Account", nameof(Controllers.AccountController.Logout)),
+            ("Account", nameof(Controllers.AccountController.Register)),
+            ("Account", nameof(Controllers.AccountController.ForgotPassword)),
+            ("Account", nameof(Controllers.AccountController.ResetPassword)),
+        };
 
     private static string ControllerName(Type controllerType) =>
         controllerType.Name.EndsWith("Controller", StringComparison.Ordinal)
@@ -97,16 +109,6 @@ public class AuthorizationFilter : ActionFilterAttribute
             }
         }
         return map;
-    }
-
-    private static IReadOnlySet<(string, string)> BuildAnonymousAccountPostActions()
-    {
-        var set = new HashSet<(string, string)>();
-        foreach (Type controller in _cachedControllerTypes.Where(type => type.Name == "AccountController"))
-            foreach (MethodInfo method in controller.GetMethods())
-                if (HasPostGuards(method))
-                    set.Add((ControllerName(controller), method.Name));
-        return set;
     }
 
     /// <summary>Initializes a new instance of <see cref="AuthorizationFilter"/> with the required dependencies.</summary>
