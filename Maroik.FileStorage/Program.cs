@@ -72,8 +72,6 @@ try
 
     var app = builder.Build();
 
-    _ = app.UseDeveloperExceptionPage();
-
     // Mount the Swagger JSON endpoint and the interactive Swagger UI at the app root.
     app.UseSwagger();
     app.UseSwaggerUI(c =>
