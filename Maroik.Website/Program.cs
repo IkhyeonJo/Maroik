@@ -143,9 +143,16 @@ try
     // (there is no separate "StackExchange.Valkey" package) connects to it unmodified.
 
     var valkeyConnectionString = builder.Configuration.GetConnectionString("Valkey");
-    IConnectionMultiplexer? valkey = string.IsNullOrEmpty(valkeyConnectionString)
-        ? null
-        : ConnectionMultiplexer.Connect(valkeyConnectionString);
+    IConnectionMultiplexer? valkey = null;
+    if (!string.IsNullOrEmpty(valkeyConnectionString))
+    {
+        // AbortOnConnectFail = false so a Valkey that is briefly unreachable at boot (its container
+        // still starting, a transient network blip) does not take the whole web app down with it —
+        // the multiplexer connects in the background and retries instead of throwing here.
+        var valkeyOptions = ConfigurationOptions.Parse(valkeyConnectionString);
+        valkeyOptions.AbortOnConnectFail = false;
+        valkey = ConnectionMultiplexer.Connect(valkeyOptions);
+    }
 
     if (valkey != null)
     {
@@ -162,6 +169,20 @@ try
     else
     {
         builder.Services.AddDistributedMemoryCache();
+
+        // No Valkey: persist the Data Protection keyring to a stable folder instead of the default
+        // ephemeral per-process one, so session and antiforgery cookies issued before a restart
+        // stay decryptable afterwards. Still not shared across instances — Valkey is required for a
+        // scaled-out deployment.
+        string keyRingPath = System.IO.Path.Combine(builder.Environment.ContentRootPath, "dataprotection-keys");
+        _ = System.IO.Directory.CreateDirectory(keyRingPath);
+        builder.Services.AddDataProtection()
+            .PersistKeysToFileSystem(new System.IO.DirectoryInfo(keyRingPath))
+            .SetApplicationName("Maroik");
+        Log.Warning(
+            "No Valkey connection string configured — Data Protection keys persist to {KeyRingPath} " +
+            "and the distributed cache is in-process. Multi-instance deployments require Valkey.",
+            keyRingPath);
     }
 
     builder.Services.AddSession(options =>
