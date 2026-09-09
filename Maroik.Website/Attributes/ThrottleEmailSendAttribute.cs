@@ -2,7 +2,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
 using Microsoft.Extensions.Caching.Distributed;
 
-namespace Maroik.Website.Filters;
+namespace Maroik.Website.Attributes;
 
 /// <summary>
 /// Per-target-address cooldown for the account e-mail-sending POST actions (forgot-password and
