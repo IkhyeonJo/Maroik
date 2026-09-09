@@ -27,7 +27,8 @@
         columns.Add(model => model.ResetPasswordToken).Titled(Localizer[nameof(Maroik.Website.Models.ViewModels.Management.AccountOutputViewModel.ResetPasswordToken)]);
         columns.Add(model => model.Created).Titled(Localizer[nameof(Maroik.Website.Models.ViewModels.Management.AccountOutputViewModel.Created)]);
         columns.Add(model => model.Updated).Titled(Localizer[nameof(Maroik.Website.Models.ViewModels.Management.AccountOutputViewModel.Updated)]);
-        columns.Add(model => model.Message).Titled(Localizer[nameof(Maroik.Website.Models.ViewModels.Management.AccountOutputViewModel.Message)]);
+        columns.Add(model => model.Message).Titled(Localizer[nameof(Maroik.Website.Models.ViewModels.Management.AccountOutputViewModel.Message)])
+            .RenderedAs(model => string.IsNullOrEmpty(model.Message) ? "" : Localizer[model.Message].Value);
         columns.Add(model => model.Deleted).Titled(Localizer[nameof(Maroik.Website.Models.ViewModels.Management.AccountOutputViewModel.Deleted)]);
     })
     .Id("accountGrid")
