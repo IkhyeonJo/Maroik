@@ -7,9 +7,10 @@ namespace Maroik.E2E.Tests.Flows;
 /// End-to-end browser tests for the Account self-service flows.
 ///
 /// Each test launches headless Chromium via Playwright against the real Kestrel server
-/// started by <see cref="PlaywrightWebApplicationFactory"/>.  Tests verify that the
-/// correct HTML elements are present on the page — no form submission is made
-/// (POST requires a real DB and SMTP server).
+/// started by <see cref="PlaywrightWebApplicationFactory"/> (backed by a real PostgreSQL
+/// container). Tests mostly verify that the correct HTML elements render; the sign-in /
+/// registration POST flows are not exercised (they need working SMTP), but the antiforgery-
+/// protected Logout POST is.
 /// </summary>
 [Collection("E2E")]
 public class AccountFlowTests : E2ETestBase
@@ -133,19 +134,46 @@ public class AccountFlowTests : E2ETestBase
         Assert.False(string.IsNullOrWhiteSpace(bodyText));
     }
 
-    // -- Logout → redirect ----------------------------------------------------
+    // -- Logout (POST) → redirect ------------------------------------------------
 
-    /// <summary>Verifies that <c>Logout</c> redirects to anonymous dashboard.</summary>
+    /// <summary>
+    /// Verifies that a POST to <c>Logout</c> — the only verb it accepts
+    /// (<c>[HttpPost] [ValidateAntiForgeryToken]</c>) — clears the session and redirects to the
+    /// anonymous dashboard. The real UI logout control is a <c>method="post"</c> form
+    /// (<c>_MainTopBar.cshtml</c>), so reproduce that instead of navigating (which is a GET).
+    /// </summary>
     [Fact]
-    public async Task Logout_RedirectsToAnonymousDashboard()
+    public async Task Logout_Post_RedirectsToAnonymousDashboard()
     {
         var page = await NewPageAsync();
-        // Logout clears session and redirects; Playwright follows it automatically
-        await GotoAsync(page, "/Account/Logout");
 
-        // RedirectToAction("AnonymousIndex","Dashboard") produces "/" because those are
-        // the default-route defaults — the URL generator picks the shortest path.
-        // Verify the page loaded by checking that the body is non-empty.
+        // Any page with a POST form renders the antiforgery token and sets its cookie; the login
+        // page's form is the simplest. Reuse its token for the injected logout form.
+        await GotoAsync(page, "/Account/Login");
+        string token = await page.Locator("input[name='__RequestVerificationToken']").First.InputValueAsync();
+
+        await page.EvaluateAsync(
+            @"(token) => {
+                const form = document.createElement('form');
+                form.method = 'POST';
+                form.action = '/Account/Logout';
+                const input = document.createElement('input');
+                input.type = 'hidden';
+                input.name = '__RequestVerificationToken';
+                input.value = token;
+                form.appendChild(input);
+                document.body.appendChild(form);
+                form.submit();
+            }",
+            token);
+
+        // RedirectToAction("AnonymousIndex","Dashboard") collapses to "/" (default-route defaults);
+        // the URL generator preserves casing and this app does not lowercase URLs, so the path is
+        // exactly "/".
+        await page.WaitForURLAsync(
+            url => new Uri(url).AbsolutePath == "/",
+            new PageWaitForURLOptions { Timeout = 15_000 });
+
         string bodyText = await page.Locator("body").InnerTextAsync();
         Assert.False(string.IsNullOrWhiteSpace(bodyText));
     }
