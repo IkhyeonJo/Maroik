@@ -879,7 +879,7 @@ public class ManagementController : Controller
                 Writer = loggedInAccount.Nickname!
             };
 
-            AttachedFileDto? attachedFile = await boardInputViewModel.UploadedFile.ToAttachedFileInfoAsync(HttpContext.RequestAborted);
+            AttachedFileDto? attachedFile = await boardInputViewModel.UploadedFile.ToAttachedFileInfoAsync(_serverSettings.Value.MaxAttachedFileSizeBytes, HttpContext.RequestAborted);
 
             ServiceResult result = await _boardService.WriteBoardAsync(boardRequest, attachedFile, HttpContext.RequestAborted);
             return result.Success
@@ -1307,7 +1307,7 @@ public class ManagementController : Controller
                 Content = boardInputViewModel.Content
             };
 
-            AttachedFileDto? attachedFile = await boardInputViewModel.UploadedFile.ToAttachedFileInfoAsync(HttpContext.RequestAborted);
+            AttachedFileDto? attachedFile = await boardInputViewModel.UploadedFile.ToAttachedFileInfoAsync(_serverSettings.Value.MaxAttachedFileSizeBytes, HttpContext.RequestAborted);
 
             ServiceResult result = await _boardService.EditBoardAsync(boardRequest, loggedInAccount.Nickname!, attachedFile, HttpContext.RequestAborted);
             return result.Success

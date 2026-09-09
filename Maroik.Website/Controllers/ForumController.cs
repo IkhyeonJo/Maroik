@@ -91,7 +91,7 @@ public class ForumController : Controller
                 Noticed = loggedInAccount.Role == Role.Admin && boardInputViewModel.Noticed
             };
 
-            AttachedFileDto? attachedFile = await boardInputViewModel.UploadedFile.ToAttachedFileInfoAsync(ct);
+            AttachedFileDto? attachedFile = await boardInputViewModel.UploadedFile.ToAttachedFileInfoAsync(_serverSettings.Value.MaxAttachedFileSizeBytes, ct);
 
             ServiceResult result = await _boardService.WriteBoardAsync(boardRequest, attachedFile, ct);
             return result.Success
@@ -508,7 +508,7 @@ public class ForumController : Controller
                 Locked = boardInputViewModel.Locked
             };
 
-            AttachedFileDto? attachedFile = await boardInputViewModel.UploadedFile.ToAttachedFileInfoAsync(ct);
+            AttachedFileDto? attachedFile = await boardInputViewModel.UploadedFile.ToAttachedFileInfoAsync(_serverSettings.Value.MaxAttachedFileSizeBytes, ct);
 
             ServiceResult result = await _boardService.EditBoardAsync(boardRequest, loggedInAccount.Nickname!, attachedFile, ct);
             return result.Success
