@@ -178,15 +178,21 @@ public abstract class GenericRepository<TDomain, TEntity>(ApplicationDbContext c
         // would incur.
         var toRemove = await Set.AsNoTracking().Where(predicate).ToListAsync(ct);
 
+        // Index the entities this context already tracks by primary key once, so matching each row
+        // to delete is a dictionary lookup instead of a linear ChangeTracker scan with a compiled-
+        // getter call per comparison (this was O(rows-to-delete x tracked-entities)).
+        static string KeyOf(object?[] keyValues) =>
+            string.Join("|", keyValues.Select(v => System.Uri.EscapeDataString(v?.ToString() ?? "")));
+
+        Dictionary<string, TEntity> trackedByKey = Context.ChangeTracker.Entries<TEntity>()
+            .GroupBy(e => KeyOf(GetPrimaryKeyValues(e.Entity)))
+            .ToDictionary(g => g.Key, g => g.First().Entity);
+
         foreach (var entity in toRemove)
         {
-            var keyValues = GetPrimaryKeyValues(entity);
-            var trackedEntry = Context.ChangeTracker.Entries<TEntity>()
-                .FirstOrDefault(e => GetPrimaryKeyValues(e.Entity).SequenceEqual(keyValues));
-
-            if (trackedEntry != null)
+            if (trackedByKey.TryGetValue(KeyOf(GetPrimaryKeyValues(entity)), out var tracked))
             {
-                Set.Remove(trackedEntry.Entity);
+                Set.Remove(tracked);
             }
             else
             {
