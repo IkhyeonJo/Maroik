@@ -36,8 +36,10 @@ public class FileClient(IHttpClientFactory httpClientFactory, ILogger<FileClient
             using HttpClient httpClient = httpClientFactory.CreateClient();
             using MultipartFormDataContent content = [];
 
-            // Pass the server-side file path to the storage service
-            content.Add(new StringContent(filePath), "filePath");
+            // Pass the server-side file path to the storage service. Separators are normalised to
+            // "/": the storage service runs on Linux and treats "\" as a literal filename
+            // character, so a path built on Windows must not be forwarded with backslashes.
+            content.Add(new StringContent(filePath.Replace('\\', '/')), "filePath");
             // So Maroik.FileStorage's failure logs for this call can be traced back to this request.
             content.Add(new StringContent(correlationId), "correlationId");
 
@@ -92,8 +94,10 @@ public class FileClient(IHttpClientFactory httpClientFactory, ILogger<FileClient
             // Attach the file bytes under the "file" field name
             content.Add(fileContent, "file", sanitizedFileName);
 
-            // Tell the storage service where to save the file (directory path only)
-            content.Add(new StringContent(Path.GetDirectoryName(filePath) ?? ""), "filePath");
+            // Tell the storage service where to save the file (directory path only), separators
+            // normalised to "/" — on Linux the service would otherwise create a single directory
+            // literally named "upload\Area\...".
+            content.Add(new StringContent((Path.GetDirectoryName(filePath) ?? "").Replace('\\', '/')), "filePath");
             // So Maroik.FileStorage's failure logs for this call can be traced back to this request.
             content.Add(new StringContent(correlationId), "correlationId");
 
