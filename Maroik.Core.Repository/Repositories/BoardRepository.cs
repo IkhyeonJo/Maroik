@@ -73,6 +73,12 @@ public class BoardRepository(ApplicationDbContext context)
         if (query.OwnerNickname != null)
             baseQuery = baseQuery.Where(x => x.Writer == query.OwnerNickname);
 
+        // Match the search term literally. string.Contains translates to a LIKE whose parameter's
+        // %/_ are still wildcards, so "50%" or "a_b" would search as a pattern; escape them the same
+        // way the raw-SQL search paths (SearchAsync / ExpenditureRepository) do via ToLikePattern.
+        // EF.Functions.Like keeps the case-sensitive semantics string.Contains had here.
+        string searchPattern = ToLikePattern(query.SearchText ?? string.Empty);
+
         IQueryable<OrmBoard> filtered;
 
         if (query.OwnerNickname != null)
@@ -81,15 +87,15 @@ public class BoardRepository(ApplicationDbContext context)
             // split needed, matching ManagementController's PrivateNote list action.
             IQueryable<OrmBoard> scoped = query.SearchType switch
             {
-                "Title" when !string.IsNullOrEmpty(query.SearchText) => baseQuery.Where(x => x.Title.Contains(query.SearchText)),
-                "Writer" when !string.IsNullOrEmpty(query.SearchText) => baseQuery.Where(x => x.Writer.Contains(query.SearchText)),
+                "Title" when !string.IsNullOrEmpty(query.SearchText) => baseQuery.Where(x => EF.Functions.Like(x.Title, searchPattern)),
+                "Writer" when !string.IsNullOrEmpty(query.SearchText) => baseQuery.Where(x => EF.Functions.Like(x.Writer, searchPattern)),
                 _ => baseQuery
             };
             filtered = scoped.OrderByDescending(x => x.Id);
         }
         else if (query.SearchType == "Title" && !string.IsNullOrEmpty(query.SearchText))
         {
-            IQueryable<OrmBoard> titleMatches = baseQuery.Where(x => x.Title.Contains(query.SearchText));
+            IQueryable<OrmBoard> titleMatches = baseQuery.Where(x => EF.Functions.Like(x.Title, searchPattern));
 
             if (query.IsLoggedIn)
             {
@@ -128,7 +134,7 @@ public class BoardRepository(ApplicationDbContext context)
         }
         else if (query.SearchType == "Writer" && !string.IsNullOrEmpty(query.SearchText))
         {
-            filtered = baseQuery.Where(x => x.Writer.Contains(query.SearchText)).OrderByDescending(x => x.Id);
+            filtered = baseQuery.Where(x => EF.Functions.Like(x.Writer, searchPattern)).OrderByDescending(x => x.Id);
         }
         else
         {
