@@ -447,3 +447,6 @@ Maroik.Website/wwwroot/**/custom/**/*.js.map
 
 # Merged code-coverage output (CI regenerates it)
 /coverage/
+
+# ASP.NET Core Data Protection key ring — machine-local secret, generated at runtime.
+Maroik.Website/dataprotection-keys/
