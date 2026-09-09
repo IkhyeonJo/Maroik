@@ -165,6 +165,32 @@ public sealed class FixedExpenditure : AggregateRoot<long>
         DateTime maturityDate,
         string? note = null)
     {
+        var coreResult = ValidateCoreFields(mainClass, subClass, paymentMethod, depositMonth, depositDay, content, note);
+        if (coreResult.IsError) return coreResult.Errors;
+
+        var emailResult = Email.Create(accountEmailValue);
+        if (emailResult.IsError) return emailResult.Errors;
+
+        var moneyResult = Money.Create(amount, currency);
+        if (moneyResult.IsError) return moneyResult.Errors;
+
+        var (validMainClass, validSubClass, validPaymentMethod) = coreResult.Value;
+        var fixedExpenditure = new FixedExpenditure(0, emailResult.Value, validMainClass, validSubClass, content,
+            moneyResult.Value, validPaymentMethod, myDepositAsset, depositMonth, depositDay, maturityDate, note);
+
+        return fixedExpenditure;
+    }
+
+    /// <summary>
+    /// Shared validation for the fields <see cref="Register"/> and <see cref="Update"/> both take,
+    /// returning the three required strings once confirmed non-blank so callers keep the compiler's
+    /// non-null flow. Each entry point still applies its own remaining rules — <see cref="Email"/>
+    /// on register, and the <see cref="Money"/> value — in its own order.
+    /// </summary>
+    private static ErrorOr<(string MainClass, string SubClass, string PaymentMethod)> ValidateCoreFields(
+        string? mainClass, string? subClass, string? paymentMethod,
+        short depositMonth, short depositDay, string? content, string? note)
+    {
         if (string.IsNullOrWhiteSpace(mainClass))
             return Error.Validation("FixedExpenditure.MainClassEmpty", "Main expense category cannot be empty.");
 
@@ -186,16 +212,7 @@ public sealed class FixedExpenditure : AggregateRoot<long>
         var classResult = ExpenditureClassPolicy.Validate(mainClass, subClass);
         if (classResult.IsError) return classResult.Errors;
 
-        var emailResult = Email.Create(accountEmailValue);
-        if (emailResult.IsError) return emailResult.Errors;
-
-        var moneyResult = Money.Create(amount, currency);
-        if (moneyResult.IsError) return moneyResult.Errors;
-
-        var fixedExpenditure = new FixedExpenditure(0, emailResult.Value, mainClass, subClass, content,
-            moneyResult.Value, paymentMethod, myDepositAsset, depositMonth, depositDay, maturityDate, note);
-
-        return fixedExpenditure;
+        return (mainClass, subClass, paymentMethod);
     }
 
     // ------------------------------------------------------------------------
@@ -230,35 +247,18 @@ public sealed class FixedExpenditure : AggregateRoot<long>
         DateTime maturityDate,
         string? note)
     {
-        if (string.IsNullOrWhiteSpace(mainClass))
-            return Error.Validation("FixedExpenditure.MainClassEmpty", "Main expense category cannot be empty.");
-
-        if (string.IsNullOrWhiteSpace(subClass))
-            return Error.Validation("FixedExpenditure.SubClassEmpty", "Sub expense category cannot be empty.");
-
-        if (string.IsNullOrWhiteSpace(paymentMethod))
-            return Error.Validation("FixedExpenditure.PaymentMethodEmpty", "Payment method cannot be empty.");
-
-        if (depositMonth is < 1 or > 12)
-            return Error.Validation("FixedExpenditure.InvalidDepositMonth", "Deposit month must be between 1 and 12.");
-
-        if (!FixedSchedulePolicy.IsValidDepositDate(depositMonth, depositDay))
-            return Error.Validation("FixedExpenditure.InvalidDepositDay", "Deposit day is not valid for the selected month.");
-
-        var textResult = FinanceTextPolicy.ValidateContentAndNote(content, note);
-        if (textResult.IsError) return textResult.Errors;
-
-        var classResult = ExpenditureClassPolicy.Validate(mainClass, subClass);
-        if (classResult.IsError) return classResult.Errors;
+        var coreResult = ValidateCoreFields(mainClass, subClass, paymentMethod, depositMonth, depositDay, content, note);
+        if (coreResult.IsError) return coreResult.Errors;
 
         var moneyResult = Money.Create(amount, currency);
         if (moneyResult.IsError) return moneyResult.Errors;
 
-        MainClass = mainClass;
-        SubClass = subClass;
+        var (validMainClass, validSubClass, validPaymentMethod) = coreResult.Value;
+        MainClass = validMainClass;
+        SubClass = validSubClass;
         Content = content;
         Amount = moneyResult.Value;
-        PaymentMethod = paymentMethod;
+        PaymentMethod = validPaymentMethod;
         MyDepositAsset = myDepositAsset;
         DepositMonth = depositMonth;
         DepositDay = depositDay;

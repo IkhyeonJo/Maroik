@@ -124,6 +124,34 @@ public sealed class Income : AggregateRoot<long>
         string? note = null,
         DateTime? created = null)
     {
+        var coreResult = ValidateCoreFields(mainClass, subClass, depositMyAssetProductName, content, note);
+        if (coreResult.IsError) return coreResult.Errors;
+
+        var emailResult = Email.Create(accountEmailValue);
+        if (emailResult.IsError) return emailResult.Errors;
+
+        var moneyResult = Money.Create(amount, currency);
+        if (moneyResult.IsError) return moneyResult.Errors;
+
+        var (validMainClass, validSubClass, validDepositAsset) = coreResult.Value;
+        var income = new Income(0, emailResult.Value, validMainClass, validSubClass, content,
+            moneyResult.Value, validDepositAsset, note);
+
+        if (created.HasValue)
+            income.Created = created.Value;
+
+        return income;
+    }
+
+    /// <summary>
+    /// Shared validation for the fields <see cref="Record"/> and <see cref="Update"/> both take,
+    /// returning the three required strings once confirmed non-blank so callers keep the compiler's
+    /// non-null flow. Each entry point still applies its own remaining rules — <see cref="Email"/>
+    /// on create, and the <see cref="Money"/> value — in its own order.
+    /// </summary>
+    private static ErrorOr<(string MainClass, string SubClass, string DepositAsset)> ValidateCoreFields(
+        string? mainClass, string? subClass, string? depositMyAssetProductName, string? content, string? note)
+    {
         if (string.IsNullOrWhiteSpace(mainClass))
             return Error.Validation("Income.MainClassEmpty", "Main income category cannot be empty.");
 
@@ -139,19 +167,7 @@ public sealed class Income : AggregateRoot<long>
         var classResult = IncomeClassPolicy.Validate(mainClass, subClass);
         if (classResult.IsError) return classResult.Errors;
 
-        var emailResult = Email.Create(accountEmailValue);
-        if (emailResult.IsError) return emailResult.Errors;
-
-        var moneyResult = Money.Create(amount, currency);
-        if (moneyResult.IsError) return moneyResult.Errors;
-
-        var income = new Income(0, emailResult.Value, mainClass, subClass, content,
-            moneyResult.Value, depositMyAssetProductName, note);
-
-        if (created.HasValue)
-            income.Created = created.Value;
-
-        return income;
+        return (mainClass, subClass, depositMyAssetProductName);
     }
 
     // ------------------------------------------------------------------------
@@ -169,29 +185,18 @@ public sealed class Income : AggregateRoot<long>
         string? note,
         DateTime? created = null)
     {
-        if (string.IsNullOrWhiteSpace(mainClass))
-            return Error.Validation("Income.MainClassEmpty", "Main income category cannot be empty.");
-
-        if (string.IsNullOrWhiteSpace(subClass))
-            return Error.Validation("Income.SubClassEmpty", "Sub income category cannot be empty.");
-
-        if (string.IsNullOrWhiteSpace(depositMyAssetProductName))
-            return Error.Validation("Income.DepositAssetEmpty", "Deposit asset product name cannot be empty.");
-
-        var textResult = FinanceTextPolicy.ValidateContentAndNote(content, note);
-        if (textResult.IsError) return textResult.Errors;
-
-        var classResult = IncomeClassPolicy.Validate(mainClass, subClass);
-        if (classResult.IsError) return classResult.Errors;
+        var coreResult = ValidateCoreFields(mainClass, subClass, depositMyAssetProductName, content, note);
+        if (coreResult.IsError) return coreResult.Errors;
 
         var moneyResult = Money.Create(amount, currency);
         if (moneyResult.IsError) return moneyResult.Errors;
 
-        MainClass = mainClass;
-        SubClass = subClass;
+        var (validMainClass, validSubClass, validDepositAsset) = coreResult.Value;
+        MainClass = validMainClass;
+        SubClass = validSubClass;
         Content = content;
         Amount = moneyResult.Value;
-        DepositMyAssetProductName = depositMyAssetProductName;
+        DepositMyAssetProductName = validDepositAsset;
         Note = note;
         if (created.HasValue)
             Created = created.Value;

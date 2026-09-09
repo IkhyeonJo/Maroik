@@ -133,6 +133,34 @@ public sealed class Expenditure : AggregateRoot<long>
         string? note = null,
         DateTime? created = null)
     {
+        var coreResult = ValidateCoreFields(mainClass, subClass, paymentMethod, content, note);
+        if (coreResult.IsError) return coreResult.Errors;
+
+        var emailResult = Email.Create(accountEmailValue);
+        if (emailResult.IsError) return emailResult.Errors;
+
+        var moneyResult = Money.Create(amount, currency);
+        if (moneyResult.IsError) return moneyResult.Errors;
+
+        var (validMainClass, validSubClass, validPaymentMethod) = coreResult.Value;
+        var expenditure = new Expenditure(0, emailResult.Value, validMainClass, validSubClass, content,
+            moneyResult.Value, validPaymentMethod, myDepositAsset, note);
+
+        if (created.HasValue)
+            expenditure.Created = created.Value;
+
+        return expenditure;
+    }
+
+    /// <summary>
+    /// Shared validation for the fields <see cref="Record"/> and <see cref="Update"/> both take,
+    /// returning the three required strings once confirmed non-blank so callers keep the compiler's
+    /// non-null flow. Each entry point still applies its own remaining rules — <see cref="Email"/>
+    /// on create, and the <see cref="Money"/> value — in its own order.
+    /// </summary>
+    private static ErrorOr<(string MainClass, string SubClass, string PaymentMethod)> ValidateCoreFields(
+        string? mainClass, string? subClass, string? paymentMethod, string? content, string? note)
+    {
         if (string.IsNullOrWhiteSpace(mainClass))
             return Error.Validation("Expenditure.MainClassEmpty", "Main expense category cannot be empty.");
 
@@ -148,19 +176,7 @@ public sealed class Expenditure : AggregateRoot<long>
         var classResult = ExpenditureClassPolicy.Validate(mainClass, subClass);
         if (classResult.IsError) return classResult.Errors;
 
-        var emailResult = Email.Create(accountEmailValue);
-        if (emailResult.IsError) return emailResult.Errors;
-
-        var moneyResult = Money.Create(amount, currency);
-        if (moneyResult.IsError) return moneyResult.Errors;
-
-        var expenditure = new Expenditure(0, emailResult.Value, mainClass, subClass, content,
-            moneyResult.Value, paymentMethod, myDepositAsset, note);
-
-        if (created.HasValue)
-            expenditure.Created = created.Value;
-
-        return expenditure;
+        return (mainClass, subClass, paymentMethod);
     }
 
     // ------------------------------------------------------------------------
@@ -179,29 +195,18 @@ public sealed class Expenditure : AggregateRoot<long>
         string? note,
         DateTime? created = null)
     {
-        if (string.IsNullOrWhiteSpace(mainClass))
-            return Error.Validation("Expenditure.MainClassEmpty", "Main expense category cannot be empty.");
-
-        if (string.IsNullOrWhiteSpace(subClass))
-            return Error.Validation("Expenditure.SubClassEmpty", "Sub expense category cannot be empty.");
-
-        if (string.IsNullOrWhiteSpace(paymentMethod))
-            return Error.Validation("Expenditure.PaymentMethodEmpty", "Payment method cannot be empty.");
-
-        var textResult = FinanceTextPolicy.ValidateContentAndNote(content, note);
-        if (textResult.IsError) return textResult.Errors;
-
-        var classResult = ExpenditureClassPolicy.Validate(mainClass, subClass);
-        if (classResult.IsError) return classResult.Errors;
+        var coreResult = ValidateCoreFields(mainClass, subClass, paymentMethod, content, note);
+        if (coreResult.IsError) return coreResult.Errors;
 
         var moneyResult = Money.Create(amount, currency);
         if (moneyResult.IsError) return moneyResult.Errors;
 
-        MainClass = mainClass;
-        SubClass = subClass;
+        var (validMainClass, validSubClass, validPaymentMethod) = coreResult.Value;
+        MainClass = validMainClass;
+        SubClass = validSubClass;
         Content = content;
         Amount = moneyResult.Value;
-        PaymentMethod = paymentMethod;
+        PaymentMethod = validPaymentMethod;
         MyDepositAsset = myDepositAsset;
         Note = note;
         if (created.HasValue)
