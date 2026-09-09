@@ -8,6 +8,16 @@ namespace Maroik.Core.Domain.Finance;
 /// Aggregate root representing a financial asset owned by an account
 /// (e.g. a bank account, stock portfolio, cash wallet).
 /// The composite identity is (<see cref="ProductName"/>, <see cref="AccountEmail"/>).
+/// <para>
+/// <see cref="Entity{TId}.Id"/> is captured once at construction. <see cref="Update"/> can change
+/// <see cref="ProductName"/> (a rename, persisted via <c>AssetRepository.UpdateAssetWithProductNameAsync</c>
+/// keyed on the original name, with <c>ON UPDATE CASCADE</c> propagating it to referencing rows),
+/// which leaves this in-memory instance's <see cref="Entity{TId}.Id"/> holding the pre-rename name
+/// until it is reloaded. The rename flow does exactly one load-mutate-persist per unit of work and
+/// never compares <see cref="Asset"/> instances by identity, so this is currently safe; a caller
+/// that put an <see cref="Asset"/> in a hash-keyed collection and looked it up again after a
+/// rename would not find it.
+/// </para>
 /// </summary>
 public sealed class Asset : AggregateRoot<(string ProductName, string AccountEmail)>
 {
