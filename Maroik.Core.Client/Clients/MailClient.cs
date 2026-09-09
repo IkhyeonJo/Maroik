@@ -15,11 +15,20 @@ namespace Maroik.Core.Client.Clients;
 /// </summary>
 public class MailClient(ILogger<MailClient> logger) : IMailClient
 {
+    /// <summary>
+    /// Joins the configured public base URL to an app-relative path, tolerating a
+    /// <c>DomainName</c> configured either with or without a trailing "/". Previously the callers
+    /// assumed a trailing slash and a value like "https://maroik.com" (no slash) produced the
+    /// broken link "https://maroik.comAccount/ConfirmEmail".
+    /// </summary>
+    private static string BuildUrl(string domainName, string relativePath) =>
+        $"{(domainName ?? "").TrimEnd('/')}/{relativePath.TrimStart('/')}";
+
     /// <inheritdoc />
     public string GetMailConfirmationBody(string registrationToken, string title, string content0, string content1, string domainName)
     {
         // URL-encode the token so special characters survive in the query string
-        string url = $"{domainName}Account/ConfirmEmail?registrationToken={Uri.EscapeDataString(registrationToken)}";
+        string url = BuildUrl(domainName, $"Account/ConfirmEmail?registrationToken={Uri.EscapeDataString(registrationToken)}");
 
         // Return a centred HTML block containing the confirmation link
         return $"""
@@ -36,7 +45,7 @@ public class MailClient(ILogger<MailClient> logger) : IMailClient
     public string GetMailResetPasswordBody(string resetPasswordToken, string title, string content0, string content1, string domainName)
     {
         // URL-encode the token so special characters survive in the query string
-        string url = $"{domainName}Account/ResetPassword?resetPasswordToken={Uri.EscapeDataString(resetPasswordToken)}";
+        string url = BuildUrl(domainName, $"Account/ResetPassword?resetPasswordToken={Uri.EscapeDataString(resetPasswordToken)}");
 
         // Return a centred HTML block containing the password-reset link
         return $"""

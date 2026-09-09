@@ -1,3 +1,5 @@
+using Maroik.Core.Contract.Dtos;
+using Maroik.Core.Domain.Account;
 using Maroik.Core.Domain.Board;
 using Maroik.Core.PostgreSQL.Data;
 using Maroik.Core.Repository.Repositories;
@@ -295,5 +297,59 @@ public sealed class BoardRepositoryTests(DatabaseFixture database) : RepositoryT
 
         Assert.Equal(writerCount, comments.Count);
         Assert.Equal(Enumerable.Range(0, writerCount).Select(n => (long)n), comments.Select(c => c.Order).OrderBy(o => o));
+    }
+
+    // -- QueryPageAsync (locked-post visibility) --------------------------------
+
+    private static EfBoard Locked(EfBoard board, bool locked)
+    {
+        board.Locked = locked;
+        return board;
+    }
+
+    private Task<(List<Board> Items, int TotalCount)> WriterSearch(
+        string writer, bool isLoggedIn, string? viewerRole, string? viewerNickname) =>
+        Sut.QueryPageAsync(
+            new BoardPageQuery(
+                Type: BoardTypes.FreeForum, OwnerNickname: null,
+                SearchType: "Writer", SearchText: writer,
+                IsLoggedIn: isLoggedIn, ViewerRole: viewerRole, ViewerNickname: viewerNickname,
+                Page: 1, PageSize: 50),
+            TestContext.Current.CancellationToken);
+
+    /// <summary>
+    /// Regression: a "Writer" search must apply the same locked-post visibility split the "Title"
+    /// search does — an anonymous or cross-account viewer must never get another account's locked
+    /// (private) posts back, while the owner still sees their own locked posts and an admin sees all.
+    /// </summary>
+    [Fact]
+    public async Task QueryPageAsync_WriterSearch_AppliesLockedPostVisibilitySplit()
+    {
+        string owner = Unique("owner");
+        string other = Unique("other");
+
+        await SeedAsync(
+            Locked(MakeBoard("owner-open", owner), locked: false),
+            Locked(MakeBoard("owner-locked", owner), locked: true),
+            Locked(MakeBoard("other-open", other), locked: false),
+            Locked(MakeBoard("other-locked", other), locked: true));
+
+        // Anonymous searching "other": only their non-locked post.
+        var anon = await WriterSearch(other, isLoggedIn: false, viewerRole: null, viewerNickname: null);
+        Assert.Equal(["other-open"], anon.Items.Select(b => b.Title));
+
+        // User "owner" searching their own writer tag: their own locked post is included.
+        var ownTag = await WriterSearch(owner, isLoggedIn: true, viewerRole: Role.User, viewerNickname: owner);
+        Assert.Equal(2, ownTag.TotalCount);
+        Assert.Contains("owner-locked", ownTag.Items.Select(b => b.Title));
+
+        // User "owner" searching a different writer: still no cross-account locked post.
+        var crossTag = await WriterSearch(other, isLoggedIn: true, viewerRole: Role.User, viewerNickname: owner);
+        Assert.Equal(["other-open"], crossTag.Items.Select(b => b.Title));
+
+        // Admin searching "other": the locked post is visible.
+        var admin = await WriterSearch(other, isLoggedIn: true, viewerRole: Role.Admin, viewerNickname: Unique("admin"));
+        Assert.Equal(2, admin.TotalCount);
+        Assert.Contains("other-locked", admin.Items.Select(b => b.Title));
     }
 }

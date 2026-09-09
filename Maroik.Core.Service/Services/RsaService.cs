@@ -87,8 +87,19 @@ public class RsaService : IRsaService
         if (rsa == null)
             return false;
 
+        byte[] signBytes;
+        try
+        {
+            signBytes = Convert.FromBase64String(sign);
+        }
+        catch (FormatException)
+        {
+            // A malformed (non-Base64) signature is just an invalid signature, not an exception
+            // the caller must guard against — same guarded-parse shape Decrypt / GuidToken use.
+            return false;
+        }
+
         byte[] dataBytes = Encoding.UTF8.GetBytes(data);
-        byte[] signBytes = Convert.FromBase64String(sign);
 
         // SHA-256 first (everything Sign now produces); SHA-1 fallback for signatures made under the
         // old RsaAlgorithm=Rsa config.

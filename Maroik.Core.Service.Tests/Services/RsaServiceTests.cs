@@ -239,6 +239,17 @@ public class RsaServiceTests
         Assert.False(valid);
     }
 
+    /// <summary>Verifies that <c>Verify</c> returns false (does not throw) for a non-Base64 signature.</summary>
+    [Fact]
+    public void Verify_ReturnsFalse_WhenSignatureIsNotBase64()
+    {
+        var sut = CreateSut();
+
+        bool valid = sut.Verify("data", "not-valid-base64-!!!");
+
+        Assert.False(valid);
+    }
+
     /// <summary>Verifies that <c>Sign</c> produces non empty base64 string.</summary>
     [Fact]
     public void Sign_ProducesNonEmptyBase64String()

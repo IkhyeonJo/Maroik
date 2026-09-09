@@ -73,4 +73,9 @@ when the layer model changes.
 
 ## TODO
 
-_(none)_
+- **Retire the RSA SHA-1 fallback.** `RsaService.Decrypt` / `Verify` still accept ciphertext
+  and signatures produced under the legacy `RsaAlgorithm=Rsa` (SHA-1 OAEP) config — needed only
+  while 24 h reset/confirm links minted before the SHA-256 switch may still be in inboxes, and
+  while historical Board/Forum/Calendar HTML holds SHA-1-OAEP storage-path ciphertext. Once the
+  stored content has been re-encrypted (or is known to predate nothing that matters), drop
+  `_legacyHashAlgorithmName` and both fallback paths so only SHA-256 is ever honoured.

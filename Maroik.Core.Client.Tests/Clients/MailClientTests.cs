@@ -70,6 +70,21 @@ public class MailClientTests
         Assert.Contains("https://mysite.io/Account/ConfirmEmail", body);
     }
 
+    /// <summary>
+    /// Verifies that a <c>DomainName</c> configured without a trailing slash still yields a
+    /// well-formed link (regression for "https://mysite.ioAccount/ConfirmEmail").
+    /// </summary>
+    [Theory]
+    [InlineData("https://mysite.io")]
+    [InlineData("https://mysite.io/")]
+    public void GetMailConfirmationBody_JoinsDomainNameRegardlessOfTrailingSlash(string domainName)
+    {
+        string body = _sut.GetMailConfirmationBody("tok", "T", "C0", "C1", domainName);
+
+        Assert.Contains("https://mysite.io/Account/ConfirmEmail", body);
+        Assert.DoesNotContain("ioAccount/ConfirmEmail", body);
+    }
+
     // -- GetMailResetPasswordBody ---------------------------------------------
 
     /// <summary>Verifies that <c>GetMailResetPasswordBody</c> contains title and contents.</summary>
@@ -115,5 +130,20 @@ public class MailClientTests
 
         Assert.Contains("<div", body);
         Assert.Contains("</div>", body);
+    }
+
+    /// <summary>
+    /// Verifies that a <c>DomainName</c> configured without a trailing slash still yields a
+    /// well-formed reset link.
+    /// </summary>
+    [Theory]
+    [InlineData("https://mysite.io")]
+    [InlineData("https://mysite.io/")]
+    public void GetMailResetPasswordBody_JoinsDomainNameRegardlessOfTrailingSlash(string domainName)
+    {
+        string body = _sut.GetMailResetPasswordBody("tok", "T", "C0", "C1", domainName);
+
+        Assert.Contains("https://mysite.io/Account/ResetPassword", body);
+        Assert.DoesNotContain("ioAccount/ResetPassword", body);
     }
 }

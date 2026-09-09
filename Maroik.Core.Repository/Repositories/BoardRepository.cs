@@ -81,6 +81,38 @@ public class BoardRepository(ApplicationDbContext context)
 
         IQueryable<OrmBoard> filtered;
 
+        // Applies the "private (locked) posts are never searchable" rule to a set of search
+        // matches and orders the result: an Admin sees every match; a regular User sees the
+        // non-locked matches plus their own locked matches (their own ordered after, preserving
+        // the group order via SQL UNION ALL rather than a single Id sort); an anonymous / other
+        // viewer sees only non-locked matches. Shared by the Title AND Writer search branches so
+        // both enforce the locked-visibility split identically — a Writer search must not be a
+        // back door to enumerating another account's locked posts.
+        IQueryable<OrmBoard> ApplyLockedVisibility(IQueryable<OrmBoard> matches)
+        {
+            if (!query.IsLoggedIn)
+                return matches.Where(x => !x.Locked).OrderByDescending(x => x.Id);
+
+            if (query.ViewerRole == Role.Admin)
+                return matches.OrderByDescending(x => x.Id);
+
+            if (query.ViewerRole == Role.User)
+            {
+                IQueryable<OrmBoard> noLocked = matches.Where(x => !x.Locked);
+                IQueryable<OrmBoard> ownLocked = matches.Where(x => x.Locked && x.Writer == query.ViewerNickname);
+
+                return noLocked.Select(x => new { Board = x, Group = 0 })
+                    .Concat(ownLocked.Select(x => new { Board = x, Group = 1 }))
+                    .OrderBy(x => x.Group).ThenByDescending(x => x.Board.Id)
+                    .Select(x => x.Board);
+            }
+
+            // Logged in but neither Admin nor User (Role only ever has these two values for an
+            // active session — unreachable in practice). Matches the original code: no case fires,
+            // so the list is left as the unfiltered, unsearched base query.
+            return baseQuery.OrderByDescending(x => x.Id);
+        }
+
         if (query.OwnerNickname != null)
         {
             // Already scoped to the caller's own posts (PrivateNote) — no role/Locked visibility
@@ -95,46 +127,11 @@ public class BoardRepository(ApplicationDbContext context)
         }
         else if (query.SearchType == "Title" && !string.IsNullOrEmpty(query.SearchText))
         {
-            IQueryable<OrmBoard> titleMatches = baseQuery.Where(x => EF.Functions.Like(x.Title, searchPattern));
-
-            if (query.IsLoggedIn)
-            {
-                if (query.ViewerRole == Role.Admin)
-                {
-                    // Administrator can search all posts, including locked ones.
-                    filtered = titleMatches.OrderByDescending(x => x.Id);
-                }
-                else if (query.ViewerRole == Role.User)
-                {
-                    // User can search regular posts plus their own locked posts. Preserves the
-                    // original's group order (non-locked matches first, then the searcher's own
-                    // locked matches after — not a single Id ordering) via SQL UNION ALL (Concat),
-                    // instead of materializing two lists in memory.
-                    IQueryable<OrmBoard> noLocked = titleMatches.Where(x => !x.Locked);
-                    IQueryable<OrmBoard> ownLocked = titleMatches.Where(x => x.Locked && x.Writer == query.ViewerNickname);
-
-                    filtered = noLocked.Select(x => new { Board = x, Group = 0 })
-                        .Concat(ownLocked.Select(x => new { Board = x, Group = 1 }))
-                        .OrderBy(x => x.Group).ThenByDescending(x => x.Board.Id)
-                        .Select(x => x.Board);
-                }
-                else
-                {
-                    // Logged in but neither Admin nor User (Role only ever has these two values for
-                    // an active session — unreachable in practice). Matches the original code: no
-                    // case fires, so the list is left as the unfiltered, unsearched base query.
-                    filtered = baseQuery.OrderByDescending(x => x.Id);
-                }
-            }
-            else
-            {
-                // Not logged in — private (locked) posts are never searchable.
-                filtered = titleMatches.Where(x => !x.Locked).OrderByDescending(x => x.Id);
-            }
+            filtered = ApplyLockedVisibility(baseQuery.Where(x => EF.Functions.Like(x.Title, searchPattern)));
         }
         else if (query.SearchType == "Writer" && !string.IsNullOrEmpty(query.SearchText))
         {
-            filtered = baseQuery.Where(x => EF.Functions.Like(x.Writer, searchPattern)).OrderByDescending(x => x.Id);
+            filtered = ApplyLockedVisibility(baseQuery.Where(x => EF.Functions.Like(x.Writer, searchPattern)));
         }
         else
         {

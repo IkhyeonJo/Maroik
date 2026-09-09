@@ -21,6 +21,14 @@ namespace Maroik.Website.Attributes;
 /// discloses nothing about whether that address is registered — the endpoint's e-mail-enumeration
 /// resistance is unchanged.
 /// </para>
+/// <para>
+/// The cooldown is started only <em>after</em> an action that passed model binding / validation:
+/// a request that bounced on a malformed address or a missing field reached no e-mail-sending code
+/// and must not lose the window (e.g. a nickname typo on the registration form should be
+/// immediately re-submittable). A well-formed address the action actually processed starts the
+/// cooldown whether or not that address turned out to be registered, so the enumeration resistance
+/// above still holds.
+/// </para>
 /// </summary>
 [AttributeUsage(AttributeTargets.Method)]
 public sealed class ThrottleEmailSendAttribute : Attribute, IAsyncActionFilter
@@ -33,16 +41,18 @@ public sealed class ThrottleEmailSendAttribute : Attribute, IAsyncActionFilter
     {
         string? email = ExtractEmail(context.ActionArguments.Values);
         var cache = context.HttpContext.RequestServices.GetService<IDistributedCache>();
+        string action = context.RouteData.Values["action"]?.ToString() ?? "";
+        CancellationToken ct = context.HttpContext.RequestAborted;
 
-        if (cache != null && !string.IsNullOrWhiteSpace(email))
+        string? key = cache != null && !string.IsNullOrWhiteSpace(email)
+            ? $"emailsend:{action}:{email.Trim().ToLowerInvariant()}"
+            : null;
+
+        if (key != null)
         {
-            string action = context.RouteData.Values["action"]?.ToString() ?? "";
-            string key = $"emailsend:{action}:{email.Trim().ToLowerInvariant()}";
-            CancellationToken ct = context.HttpContext.RequestAborted;
-
             try
             {
-                if (await cache.GetAsync(key, ct) is not null)
+                if (await cache!.GetAsync(key, ct) is not null)
                 {
                     if (context.Controller is Controller controller)
                         controller.TempData["Error"] = "Please wait a moment before requesting another email.";
@@ -53,8 +63,28 @@ public sealed class ThrottleEmailSendAttribute : Attribute, IAsyncActionFilter
                         routeValues: null);
                     return;
                 }
+            }
+            catch (Exception)
+            {
+                // Cache unavailable — fail open. Blocking a genuine password reset because Valkey
+                // hiccuped is worse than briefly losing the send-rate cap. Also skip the
+                // post-action write below (nothing to gate against anyway).
+                key = null;
+            }
+        }
 
-                await cache.SetAsync(
+        ActionExecutedContext executed = await next();
+
+        // Start the cooldown only now that the action has run, and only when it actually reached a
+        // send attempt: a request that threw, or that bounced on model binding / validation (the
+        // action returns its view without ever calling the mail service), leaves ModelState invalid
+        // and must not consume the window. A well-formed address the action processed starts the
+        // cooldown regardless of whether it was registered, preserving e-mail-enumeration resistance.
+        if (key != null && executed.Exception == null && context.ModelState.IsValid)
+        {
+            try
+            {
+                await cache!.SetAsync(
                     key,
                     [1],
                     new DistributedCacheEntryOptions
@@ -65,12 +95,9 @@ public sealed class ThrottleEmailSendAttribute : Attribute, IAsyncActionFilter
             }
             catch (Exception)
             {
-                // Cache unavailable — fail open. Blocking a genuine password reset because Valkey
-                // hiccuped is worse than briefly losing the send-rate cap.
+                // Cache unavailable — fail open (see above).
             }
         }
-
-        await next();
     }
 
     /// <summary>

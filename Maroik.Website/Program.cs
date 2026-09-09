@@ -238,7 +238,10 @@ try
     builder.Services.AddHsts(options => // https://blog.elmah.io/the-asp-net-core-security-headers-guide/
     {
         options.IncludeSubDomains = true;
-        options.MaxAge = TimeSpan.FromDays(365);
+        // 2 years — the value the (now-removed) hand-appended Strict-Transport-Security header
+        // carried; UseHsts() below is the single emitter, and it already honours ExcludedHosts
+        // (localhost/dev) and only fires over HTTPS.
+        options.MaxAge = TimeSpan.FromDays(730);
         options.Preload = true;
         options.ExcludedHosts.Add(cfgDomainName.Replace("https://", "").Replace("/", ""));
         options.ExcludedHosts.Add(cfgDomainName.Replace("https://", "").Replace("/", "").Replace("www.", ""));
@@ -372,9 +375,13 @@ try
 
         #region Security Headers [https: //blog.elmah.io/the-asp-net-core-security-headers-guide/]
 
-        context.Response.Headers.Append("Strict-Transport-Security", "max-age=63072000; includeSubDomains; preload");
+        // Strict-Transport-Security is emitted by app.UseHsts() alone (see AddHsts above) — a second
+        // hand-written header here produced two conflicting max-age values on every HTTPS response.
         context.Response.Headers.Append("X-Frame-Options", "DENY");
-        context.Response.Headers.Append("X-Xss-Protection", "1; mode=block");
+        // X-XSS-Protection deliberately set to 0: the legacy auditor it enables is itself a source
+        // of vulnerabilities in the browsers that still honour it, and modern guidance (OWASP) is to
+        // disable it and rely on the Content-Security-Policy below.
+        context.Response.Headers.Append("X-Xss-Protection", "0");
         context.Response.Headers.Append("X-Content-Type-Options", "nosniff");
         context.Response.Headers.Append("Referrer-Policy", "no-referrer");
         context.Response.Headers.Append("X-Permitted-Cross-Domain-Policies", "none");
@@ -382,8 +389,12 @@ try
         context.Response.Headers.Append("Cross-Origin-Opener-Policy", "same-origin");
         context.Response.Headers.Append("Permissions-Policy",
             "accelerometer=(), camera=(), geolocation=(), gyroscope=(), magnetometer=(), microphone=(), payment=(), usb=()");
+        // default-src 'self' closes the fallback for the directives not named explicitly
+        // (font-src, media-src, worker-src, manifest-src, frame-src, …), which were previously
+        // unrestricted. The deprecated report-uri (which pointed at the site root — no collector
+        // exists to receive the POSTed reports) is dropped.
         context.Response.Headers.Append("Content-Security-Policy",
-            $"img-src 'self' blob:; connect-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; object-src 'none'; base-uri 'none'; report-uri {cfgDomainName}; form-action 'self'; frame-ancestors 'none'"); // [https://csper.io/blog/no-more-unsafe-inline] [https://csp-evaluator.withgoogle.com/?csp=https://www.maroik.com]
+            "default-src 'self'; img-src 'self' blob:; connect-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; object-src 'none'; base-uri 'none'; form-action 'self'; frame-ancestors 'none'"); // [https://csper.io/blog/no-more-unsafe-inline] [https://csp-evaluator.withgoogle.com/?csp=https://www.maroik.com]
 
         #endregion
 
