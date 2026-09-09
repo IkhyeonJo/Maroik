@@ -16,11 +16,9 @@ namespace Maroik.Core.Service.Tests.Services;
 public class AssetServiceTests
 {
     private readonly Mock<IAssetRepository> _assetRepo = new();
-    private readonly Mock<IExpenditureRepository> _expenditureRepo = new();
-    private readonly Mock<IFixedExpenditureRepository> _fixedExpenditureRepo = new();
     private readonly Mock<IUnitOfWork> _unitOfWork = new();
 
-    private AssetService CreateSut() => new(_assetRepo.Object, _expenditureRepo.Object, _fixedExpenditureRepo.Object, _unitOfWork.Object, NullLogger<AssetService>.Instance);
+    private AssetService CreateSut() => new(_assetRepo.Object, _unitOfWork.Object, NullLogger<AssetService>.Instance);
 
     /// <summary>Initializes the test fixture, setting up all required test doubles and the system under test.</summary>
     public AssetServiceTests()
@@ -252,12 +250,12 @@ public class AssetServiceTests
     }
 
     /// <summary>
-    /// Verifies that a rename cascades to expenditure/fixed-expenditure records that reference the
-    /// asset via <c>MyDepositAsset</c> — a column with no foreign key (it also holds an empty string
-    /// for transfer-less entries), so the application must propagate the rename itself.
+    /// A rename goes through the composite-key raw-SQL update keyed on the original product name;
+    /// propagation to referencing Income/Expenditure rows is the database's ON UPDATE CASCADE job,
+    /// not the service's.
     /// </summary>
     [Fact]
-    public async Task UpdateAsync_CascadesMyDepositAssetRename_WhenProductNameChanges()
+    public async Task UpdateAsync_Rename_UpdatesAssetKeyedOnOriginalName_AndCommits()
     {
         const string email = "user@example.com";
         SetupFindAsset("OldName", MakeAsset("OldName"));
@@ -267,24 +265,11 @@ public class AssetServiceTests
         ServiceResult result = await sut.UpdateAsync(email, ValidRequest("NewName"), "OldName", TestContext.Current.CancellationToken);
 
         Assert.True(result.Success);
-        _expenditureRepo.Verify(r => r.UpdateMyDepositAssetWithProductNameAsync(email, "OldName", "NewName", It.IsAny<CancellationToken>()), Times.Once);
-        _fixedExpenditureRepo.Verify(r => r.UpdateMyDepositAssetWithProductNameAsync(email, "OldName", "NewName", It.IsAny<CancellationToken>()), Times.Once);
-    }
-
-    /// <summary>Verifies that no MyDepositAsset cascade runs when the product name is unchanged.</summary>
-    [Fact]
-    public async Task UpdateAsync_DoesNotCascadeMyDepositAssetRename_WhenProductNameUnchanged()
-    {
-        const string email = "user@example.com";
-        SetupFindAsset("SameName", MakeAsset("SameName"));
-        _assetRepo.Setup(r => r.UpdateAssetWithProductNameAsync(It.IsAny<Asset>(), "SameName", It.IsAny<CancellationToken>())).ReturnsAsync(1);
-        var sut = CreateSut();
-
-        ServiceResult result = await sut.UpdateAsync(email, ValidRequest("SameName"), "SameName", TestContext.Current.CancellationToken);
-
-        Assert.True(result.Success);
-        _expenditureRepo.Verify(r => r.UpdateMyDepositAssetWithProductNameAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
-        _fixedExpenditureRepo.Verify(r => r.UpdateMyDepositAssetWithProductNameAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
+        _assetRepo.Verify(
+            r => r.UpdateAssetWithProductNameAsync(
+                It.Is<Asset>(a => a.ProductName == "NewName"), "OldName", It.IsAny<CancellationToken>()),
+            Times.Once);
+        _unitOfWork.Verify(u => u.CommitAsync(It.IsAny<CancellationToken>()), Times.Once);
     }
 
     // -- DeleteAsync ----------------------------------------------------------
