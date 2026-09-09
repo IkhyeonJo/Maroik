@@ -36,24 +36,27 @@ public static class GuidToken
     /// <returns>True if the token was created less than 24 hours ago; false if expired or malformed.</returns>
     public static bool IsTokenAlive(string token)
     {
-        byte[] data;
         try
         {
-            // Decode and extract the UTC creation timestamp from the first 8 bytes
-            data = Convert.FromBase64String(token);
+            // Decode and extract the UTC creation timestamp from the first 8 bytes.
+            byte[] data = Convert.FromBase64String(token);
+            if (data.Length < sizeof(long))
+                return false;
+
+            DateTime when = DateTime.FromBinary(BitConverter.ToInt64(data, 0));
+            DateTime now = DateTime.UtcNow;
+
+            // Alive = created within the last 24 h. Reject a future-dated prefix (a hand-crafted
+            // token) as firmly as an expired one, allowing a few minutes of clock skew between
+            // whichever instance minted the token and whichever one is checking it.
+            return when <= now.AddMinutes(5) && when >= now.AddHours(-24);
         }
-        catch (FormatException)
+        catch (Exception e) when (e is FormatException or ArgumentException)
         {
+            // Not valid Base64 (FormatException), a null token, or an 8-byte prefix that is not a
+            // representable DateTime tick count (ArgumentException from DateTime.FromBinary) —
+            // none of which a token this method produced would ever hit.
             return false;
         }
-
-        if (data.Length < sizeof(long))
-            return false;
-
-        DateTime when = DateTime.FromBinary(BitConverter.ToInt64(data, 0));
-
-        return when >= DateTime.UtcNow.AddHours(-24);
-        // token has expired
-        // token is still valid
     }
 }

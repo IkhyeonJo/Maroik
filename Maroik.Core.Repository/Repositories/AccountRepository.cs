@@ -56,7 +56,10 @@ public class AccountRepository(ApplicationDbContext context)
     /// <inheritdoc />
     // See ExpenditureRepository.SearchByAccountEmailAsync for why this is raw SQL rather than LINQ
     // (ILIKE is case-insensitive natively, so it also covers the Locked/EmailConfirmed/
-    // AgreedServiceTerms/Deleted bool matching).
+    // AgreedServiceTerms/Deleted bool matching). The secret columns — HashedPassword (a BCrypt
+    // hash), RegistrationToken and ResetPasswordToken (live bearer secrets) — are deliberately
+    // excluded: a substring match against them is meaningless to an admin searching accounts and
+    // needlessly widens what a search term is compared to.
     public async Task<List<Account>> SearchAsync(string search, CancellationToken ct = default)
     {
         string pattern = ToLikePattern(search);
@@ -64,7 +67,6 @@ public class AccountRepository(ApplicationDbContext context)
             SELECT "Email" AS "Value" FROM "Account"
             WHERE
                   "Email" ILIKE {pattern} OR
-                  "HashedPassword" ILIKE {pattern} OR
                   "Nickname" ILIKE {pattern} OR
                   "AvatarImagePath" ILIKE {pattern} OR
                   "Role" ILIKE {pattern} OR
@@ -73,8 +75,6 @@ public class AccountRepository(ApplicationDbContext context)
                   CAST("LoginAttempt" AS TEXT) ILIKE {pattern} OR
                   CAST("EmailConfirmed" AS TEXT) ILIKE {pattern} OR
                   CAST("AgreedServiceTerms" AS TEXT) ILIKE {pattern} OR
-                  "RegistrationToken" ILIKE {pattern} OR
-                  "ResetPasswordToken" ILIKE {pattern} OR
                   CAST("Created" AS TEXT) ILIKE {pattern} OR
                   CAST("Updated" AS TEXT) ILIKE {pattern} OR
                   "Message" ILIKE {pattern} OR
