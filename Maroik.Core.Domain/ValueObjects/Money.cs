@@ -28,16 +28,24 @@ public sealed class Money : ValueObject
     internal static Money FromTrustedSource(decimal amount, string currency) =>
         new(amount, currency.ToUpperInvariant());
 
+    /// <summary>Longest currency code the persisted <c>MonetaryUnit</c> columns (<c>varchar(45)</c>) accept.</summary>
+    private const int MaxCurrencyLength = 45;
+
     /// <summary>
     /// Creates a <see cref="Money"/> value object.
-    /// Returns a validation error if <paramref name="currency"/> is null or empty.
+    /// Returns a validation error if <paramref name="currency"/> is null, empty, or longer than the
+    /// persisted column allows (so an over-long value is a clean error, not a raw DB write failure).
     /// </summary>
     public static ErrorOr<Money> Create(decimal amount, string? currency)
     {
         if (string.IsNullOrWhiteSpace(currency))
             return Error.Validation("Money.CurrencyEmpty", "Currency code cannot be empty.");
 
-        return new Money(amount, currency.ToUpperInvariant());
+        string trimmedCurrency = currency.Trim();
+        if (trimmedCurrency.Length > MaxCurrencyLength)
+            return Error.Validation("Money.CurrencyTooLong", $"Currency code must be {MaxCurrencyLength} characters or fewer.");
+
+        return new Money(amount, trimmedCurrency.ToUpperInvariant());
     }
 
     /// <summary>Creates a zero-balance <see cref="Money"/> with the given currency.</summary>

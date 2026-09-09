@@ -165,7 +165,7 @@ public sealed class FixedExpenditure : AggregateRoot<long>
         DateTime maturityDate,
         string? note = null)
     {
-        var coreResult = ValidateCoreFields(mainClass, subClass, paymentMethod, depositMonth, depositDay, content, note);
+        var coreResult = ValidateCoreFields(mainClass, subClass, paymentMethod, depositMonth, depositDay, amount, content, note);
         if (coreResult.IsError) return coreResult.Errors;
 
         var emailResult = Email.Create(accountEmailValue);
@@ -189,7 +189,7 @@ public sealed class FixedExpenditure : AggregateRoot<long>
     /// </summary>
     private static ErrorOr<(string MainClass, string SubClass, string PaymentMethod)> ValidateCoreFields(
         string? mainClass, string? subClass, string? paymentMethod,
-        short depositMonth, short depositDay, string? content, string? note)
+        short depositMonth, short depositDay, decimal amount, string? content, string? note)
     {
         if (string.IsNullOrWhiteSpace(mainClass))
             return Error.Validation("FixedExpenditure.MainClassEmpty", "Main expense category cannot be empty.");
@@ -205,6 +205,9 @@ public sealed class FixedExpenditure : AggregateRoot<long>
 
         if (!FixedSchedulePolicy.IsValidDepositDate(depositMonth, depositDay))
             return Error.Validation("FixedExpenditure.InvalidDepositDay", "Deposit day is not valid for the selected month.");
+
+        if (amount < 0m)
+            return Error.Validation("FixedExpenditure.NegativeAmount", "Amount cannot be negative.");
 
         var textResult = FinanceTextPolicy.ValidateContentAndNote(content, note);
         if (textResult.IsError) return textResult.Errors;
@@ -247,7 +250,7 @@ public sealed class FixedExpenditure : AggregateRoot<long>
         DateTime maturityDate,
         string? note)
     {
-        var coreResult = ValidateCoreFields(mainClass, subClass, paymentMethod, depositMonth, depositDay, content, note);
+        var coreResult = ValidateCoreFields(mainClass, subClass, paymentMethod, depositMonth, depositDay, amount, content, note);
         if (coreResult.IsError) return coreResult.Errors;
 
         var moneyResult = Money.Create(amount, currency);

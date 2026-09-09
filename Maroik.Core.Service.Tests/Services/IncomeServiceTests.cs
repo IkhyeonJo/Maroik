@@ -176,6 +176,7 @@ public class IncomeServiceTests
         {
             MainClass = mainClass,
             SubClass = subClass,
+            Content = "Monthly income",
             DepositMyAssetProductName = "SavingsAccount",
             Amount = 100m
         };
@@ -255,6 +256,7 @@ public class IncomeServiceTests
             Id = 1,
             MainClass = "RegularIncome",
             SubClass = "LaborIncome",
+            Content = "Monthly income",
             DepositMyAssetProductName = "SavingsAccount",
             Amount = 500m
         };
@@ -290,6 +292,7 @@ public class IncomeServiceTests
             Id = 1,
             MainClass = "RegularIncome",
             SubClass = "LaborIncome",
+            Content = "Monthly income",
             DepositMyAssetProductName = "NewAsset",
             Amount = 400m
         };

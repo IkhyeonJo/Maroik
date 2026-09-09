@@ -124,7 +124,7 @@ public sealed class Income : AggregateRoot<long>
         string? note = null,
         DateTime? created = null)
     {
-        var coreResult = ValidateCoreFields(mainClass, subClass, depositMyAssetProductName, content, note);
+        var coreResult = ValidateCoreFields(mainClass, subClass, depositMyAssetProductName, content, amount, note);
         if (coreResult.IsError) return coreResult.Errors;
 
         var emailResult = Email.Create(accountEmailValue);
@@ -150,7 +150,7 @@ public sealed class Income : AggregateRoot<long>
     /// on create, and the <see cref="Money"/> value — in its own order.
     /// </summary>
     private static ErrorOr<(string MainClass, string SubClass, string DepositAsset)> ValidateCoreFields(
-        string? mainClass, string? subClass, string? depositMyAssetProductName, string? content, string? note)
+        string? mainClass, string? subClass, string? depositMyAssetProductName, string? content, decimal amount, string? note)
     {
         if (string.IsNullOrWhiteSpace(mainClass))
             return Error.Validation("Income.MainClassEmpty", "Main income category cannot be empty.");
@@ -160,6 +160,15 @@ public sealed class Income : AggregateRoot<long>
 
         if (string.IsNullOrWhiteSpace(depositMyAssetProductName))
             return Error.Validation("Income.DepositAssetEmpty", "Deposit asset product name cannot be empty.");
+
+        // Content is NOT NULL / non-blank at the DB (Income_Content_check: Content ~ '\S') and
+        // [Required] on the ViewModel; mirror that here so a blank value is a clean validation
+        // error rather than a raw 23514 from the database.
+        if (string.IsNullOrWhiteSpace(content))
+            return Error.Validation("Income.ContentEmpty", "Content cannot be empty.");
+
+        if (amount < 0m)
+            return Error.Validation("Income.NegativeAmount", "Amount cannot be negative.");
 
         var textResult = FinanceTextPolicy.ValidateContentAndNote(content, note);
         if (textResult.IsError) return textResult.Errors;
@@ -185,7 +194,7 @@ public sealed class Income : AggregateRoot<long>
         string? note,
         DateTime? created = null)
     {
-        var coreResult = ValidateCoreFields(mainClass, subClass, depositMyAssetProductName, content, note);
+        var coreResult = ValidateCoreFields(mainClass, subClass, depositMyAssetProductName, content, amount, note);
         if (coreResult.IsError) return coreResult.Errors;
 
         var moneyResult = Money.Create(amount, currency);
