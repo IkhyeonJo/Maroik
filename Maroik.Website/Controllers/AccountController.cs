@@ -7,6 +7,7 @@ using Maroik.Core.Contract.Interfaces;
 using Maroik.Core.Contract.Misc.Tokens;
 using Maroik.Website.Contracts;
 using Maroik.Website.Extensions;
+using Maroik.Website.Filters;
 using Maroik.Website.Models.ViewModels.Account;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Localization;
@@ -120,6 +121,7 @@ public class AccountController : Controller
     /// <summary>Displays the registration form (GET) or processes new-account / resend-email requests (POST).</summary>
     [HttpPost]
     [ValidateAntiForgeryToken]
+    [ThrottleEmailSend]
     public async Task<IActionResult> Register(LoginInputViewModel loginInputViewModel, CancellationToken ct)
     {
         if (!string.IsNullOrEmpty(loginInputViewModel.Password)) // Registration path
@@ -225,6 +227,7 @@ public class AccountController : Controller
     /// <summary>Displays the forgot-password form (GET) or sends a reset-password email (POST).</summary>
     [HttpPost]
     [ValidateAntiForgeryToken]
+    [ThrottleEmailSend]
     public async Task<IActionResult> ForgotPassword(LoginInputViewModel loginInputViewModel, CancellationToken ct)
     {
         _ = ModelState.Remove(nameof(loginInputViewModel.Nickname));
