@@ -61,9 +61,10 @@ public class ForumFlowTests : E2ETestBase
         // Navigate to write mode — without a session the controller redirects to Login
         await GotoAsync(page, "/Forum/FreeForum?method=write");
 
-        // After following the redirect, the page URL should contain "Login"
+        // AuthorizationFilter redirects with new RedirectResult("/Account/Login") — a literal,
+        // fixed-case path, so match it exactly.
         string finalUrl = page.Url;
-        Assert.Contains("Login", finalUrl, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("/Account/Login", finalUrl, StringComparison.Ordinal);
     }
 
     /// <summary>Verifies that <c>FreeForumWriteMode</c> without session when shows login form.</summary>

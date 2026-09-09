@@ -34,9 +34,10 @@ public class DashboardFlowTests : E2ETestBase
         var page = await NewPageAsync();
         await GotoAsync(page, "/");
 
-        // The root URL resolves to Dashboard/AnonymousIndex via the default route
+        // The root URL resolves to Dashboard/AnonymousIndex via the default route; the test host
+        // is served from a fixed lower-case "localhost" base URL.
         string finalUrl = page.Url;
-        Assert.Contains("localhost", finalUrl, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("localhost", finalUrl, StringComparison.Ordinal);
 
         string bodyText = await page.Locator("body").InnerTextAsync();
         Assert.False(string.IsNullOrWhiteSpace(bodyText));

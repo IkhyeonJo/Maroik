@@ -20,7 +20,12 @@ public class RoleBasedStaticFileMiddleware(RequestDelegate next)
         {
             var userRole = sessionService.GetAccount()?.Role;
 
-            if ((path.StartsWith("/admin/") && userRole != Role.Admin) || (path.StartsWith("/user/") && userRole != Role.User))
+            // Ordinal (case-sensitive): the deployment target is Linux (case-sensitive filesystem)
+            // and the compiled client assets live under the exact-case /admin/ and /user/ folders,
+            // so those are the only paths that ever resolve to a file — matching any other casing
+            // would gate URLs that 404 anyway.
+            if ((path.StartsWith("/admin/", StringComparison.Ordinal) && userRole != Role.Admin)
+                || (path.StartsWith("/user/", StringComparison.Ordinal) && userRole != Role.User))
             {
                 context.Response.StatusCode = 403;
                 return;

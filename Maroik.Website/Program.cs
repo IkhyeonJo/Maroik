@@ -315,9 +315,11 @@ try
     app.UseHsts();
 
     // /health bypasses HTTPS redirect and www-redirect so it is reachable on HTTP port 80
-    // from the deployment server (used by the CI/CD post-deploy health check).
+    // from the deployment server (used by the CI/CD post-deploy health check). Ordinal: the
+    // CI/CD check hits the exact-case "/health", matching StartsWithSegments' own default is not
+    // relied on (it is OrdinalIgnoreCase).
     app.UseWhen(
-        ctx => !ctx.Request.Path.StartsWithSegments("/health"),
+        ctx => !ctx.Request.Path.StartsWithSegments("/health", StringComparison.Ordinal),
         pipeline =>
         {
             pipeline.UseHttpsRedirection();
