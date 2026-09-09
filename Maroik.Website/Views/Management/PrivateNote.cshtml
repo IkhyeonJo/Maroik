@@ -44,23 +44,6 @@
                             <textarea name="writeBoardContent" id="writeBoardContent" maxlength="16384"></textarea> @*maxlength: 16KB*@
                         </div>
 
-                        @*                     @if (loggedInAccount.Role == Role.Admin)
-                    {
-                        <div class="form-group">
-                            <div class="custom-control custom-checkbox">
-                                <input class="custom-control-input" type="checkbox" id="writeBoardNoticed" />
-                                <label for="writeBoardNoticed" class="custom-control-label">@Localizer["Noticed"].Value</label>
-                            </div>
-                        </div>
-                    } *@
-
-                        @*                     <div class="form-group">
-                        <div class="custom-control custom-checkbox">
-                            <input class="custom-control-input" type="checkbox" id="writeBoardLocked" />
-                            <label for="writeBoardLocked" class="custom-control-label">@Localizer["Locked"].Value</label>
-                        </div>
-                    </div> *@
-
                         <div class="form-group">
                             <input type="file" id="writeUploadedFile" name="writeUploadedFile" accept=".zip" data-errorMessage="@Localizer["File size must be smaller than {0}MB.", maxAttachedFileSizeBytes.ToMegabytesLabel()]">
                             <p class="help-block">@Localizer["Only zip extension allowed."].Value</p>
@@ -130,6 +113,7 @@
                     <div class="card-footer card-comments">
                         @foreach (var comment in Model.DetailBoardComments)
                         {
+                            var isCommentWriterAdmin = comment.Writer.IsAdmin(Model.AdminNicknames);
                             if (Model.BoardOutputViewModel.Writer == comment.Writer) /*Change background color if the commenter is the post author*/
                             {
                                 <div class="card-comment" style="background-color:#003366;">
@@ -137,16 +121,14 @@
 
                                     <div class="comment-text">
                                         <span class="username">
-                                            @{
-                                                if (Model.AdminNicknames.Contains(comment.Writer ?? ""))/*If the comment was written by an admin*/
-                                                {
-                                                    <span style="font-weight:bold;">@comment.Writer</span>
-                                                }
-                                                else
-                                                {
-                                                    <span>@comment.Writer</span>
-                                                }
-                                            } 
+                                            @if (isCommentWriterAdmin)
+                                            {
+                                                <span style="font-weight:bold;">@comment.Writer</span>
+                                            }
+                                            else
+                                            {
+                                                <span>@comment.Writer</span>
+                                            }
                                             <span class="text-muted float-middle">
                                                 @Localizer["Created"].Value: [<span class="private_note_detail_comment_created">@comment.Created.ToViewerFormattedString(loggedInAccount.Role, loggedInAccountTimeZoneIanaId)</span>]
                                             </span>
@@ -168,16 +150,14 @@
 
                                     <div class="comment-text">
                                         <span class="username">
-                                            @{
-                                                if (Model.AdminNicknames.Contains(comment.Writer ?? ""))/*If the comment was written by an admin*/
-                                                {
-                                                    <span style="font-weight:bold;">@comment.Writer</span>
-                                                }
-                                                else
-                                                {
-                                                    <span>@comment.Writer</span>
-                                                }
-                                            } 
+                                            @if (isCommentWriterAdmin)
+                                            {
+                                                <span style="font-weight:bold;">@comment.Writer</span>
+                                            }
+                                            else
+                                            {
+                                                <span>@comment.Writer</span>
+                                            }
                                             <span class="text-muted float-middle">
                                                 @Localizer["Created"].Value: [<span class="private_note_detail_comment_created">@comment.Created.ToViewerFormattedString(loggedInAccount.Role, loggedInAccountTimeZoneIanaId)</span>]
                                             </span>
@@ -230,20 +210,6 @@
                             <label for="editBoardContent" class="control-label"></label>
                             <textarea name="editBoardContent" id="editBoardContent" maxlength="16384">@Html.Raw(Model.BoardOutputViewModel!.Content)</textarea> @*maxlength: 16KB*@
                         </div>
-
-                        @*                     <div class="form-group">
-                        <div class="custom-control custom-checkbox">
-                            @if (Model.BoardOutputViewModel.Locked)
-                            {
-                                <input class="custom-control-input" type="checkbox" id="editBoardLocked" checked />
-                            }
-                            else
-                            {
-                                <input class="custom-control-input" type="checkbox" id="editBoardLocked" />
-                            }
-                            <label for="editBoardLocked" class="custom-control-label">@Localizer["Locked"].Value</label>
-                        </div>
-                    </div> *@
 
                         <div class="card-footer bg-dark">
                             @if (!string.IsNullOrEmpty(Model.BoardOutputViewModel.BoardAttachedFileName))
@@ -334,57 +300,16 @@
                             </tr>
                             </thead>
                             <tbody>
-                            @foreach (var noticeBoard in Model.NoticeBoards)
-                            {
-                                var commentsOfUndeletedSelectedBoardCount = Model.CommentCountByBoardId.GetValueOrDefault(noticeBoard.Id, 0);
-                                var boardAttachedFilesWithName = Model.AttachedFilesByBoardId.GetValueOrDefault(noticeBoard.Id, []);
-                                var noticeBoardTitleVisible = noticeBoard.IsTitleVisibleToOwner(loggedInAccount);
-
-                                <tr style="background-color: lightgray;">
-                                    <td style="font-weight:bold;">@Localizer["Notice"]</td>
-                                    <td>
-                                        @if (noticeBoard.Locked)
-                                        {
-                                            <i class="fa @(noticeBoardTitleVisible ? "fa-lock-open" : "fa-lock")" aria-hidden="true"></i>
-                                        }
-                                        @if (noticeBoardTitleVisible)
-                                        {
-                                            @Html!.ActionLink($"{noticeBoard.Title} [{commentsOfUndeletedSelectedBoardCount}]", "PrivateNote", new {method = "detail", boardId = noticeBoard.Id, page = Model.Pager!.CurrentPage}, new { style = "font-weight: bold;" })
-                                        }
-                                        else
-                                        {
-                                            <span style="font-weight:bold;"> @Localizer["Only a writer and admin can see it."].Value</span>
-                                        }
-                                    </td>
-
-                                    <td><span style="font-weight:bold;">@noticeBoard.Writer</span></td>
-
-                                    <td class="private_note_board_created"><span style="font-weight:bold;">@noticeBoard.Created.ToViewerFormattedString(loggedInAccount.Role, loggedInAccountTimeZoneIanaId)</span></td>
-
-                                    <td><span style="font-weight:bold;">@noticeBoard.View</span></td>
-                                    @if (boardAttachedFilesWithName.Count != 0)
-                                    {
-                                        <td><span style="font-weight:bold;"><i class="fas fa-paperclip"></i></span></td>
-                                    }
-                                    else
-                                    {
-                                        <td></td>
-                                    }
-                                </tr>
-                            }
                             @foreach (var board in Model.Boards)
                             {
                                 var commentsOfUndeletedSelectedBoardCount = Model.CommentCountByBoardId.GetValueOrDefault(board.Id, 0);
                                 var attachedFilesWithName = Model.AttachedFilesByBoardId.GetValueOrDefault(board.Id, []);
                                 var boardTitleVisible = board.IsTitleVisibleToOwner(loggedInAccount);
+                                var isBoardWriterAdmin = board.Writer.IsAdmin(Model.AdminNicknames);
 
                                 <tr>
                                     <td>@Localizer["Private Note"]</td>
                                     <td>
-                                        @if (board.Locked)
-                                        {
-                                            <i class="fa @(boardTitleVisible ? "fa-lock-open" : "fa-lock")" aria-hidden="true"></i>
-                                        }
                                         @if (boardTitleVisible)
                                         {
                                             @Html!.ActionLink($"{board.Title} [{commentsOfUndeletedSelectedBoardCount}]", "PrivateNote", new {method = "detail", boardId = (int)board.Id, page = Model.Pager!.CurrentPage})
@@ -394,15 +319,13 @@
                                             @Localizer["Only a writer can see it."].Value
                                         }
                                     </td>
-                                    @{
-                                        if (Model.AdminNicknames.Contains(board.Writer ?? "")) /*If the post was written by an admin*/
-                                        {
-                                            <td><span style="font-weight:bold;">@board.Writer</span></td>
-                                        }
-                                        else
-                                        {
-                                            <td><span>@board.Writer</span></td>
-                                        }
+                                    @if (isBoardWriterAdmin)
+                                    {
+                                        <td><span style="font-weight:bold;">@board.Writer</span></td>
+                                    }
+                                    else
+                                    {
+                                        <td><span>@board.Writer</span></td>
                                     }
                                     <td class="private_note_board_created">@board.Created.ToViewerFormattedString(loggedInAccount.Role, loggedInAccountTimeZoneIanaId)</td>
 

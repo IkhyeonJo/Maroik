@@ -15,6 +15,13 @@ public interface IAssetRepository : IGenericRepository<Asset>
     /// <summary>Returns all assets belonging to the given account.</summary>
     Task<List<Asset>> GetByAccountEmailAsync(string accountEmail, CancellationToken ct = default);
 
+    /// <summary>
+    /// Returns assets for the given account whose ProductName, Item, currency, Note, Amount,
+    /// Created, Updated, or Deleted flag contains <paramref name="search"/> — filtered in the
+    /// database instead of loading every record.
+    /// </summary>
+    Task<List<Asset>> SearchByAccountEmailAsync(string accountEmail, string search, CancellationToken ct = default);
+
     /// <summary>Returns the asset identified by account email and product name, or null if not found.</summary>
     Task<Asset?> FindByEmailAndProductNameAsync(string accountEmail, string productName, CancellationToken ct = default);
 

@@ -61,6 +61,33 @@ public class AssetRepository(ApplicationDbContext context)
         => QueryAsync(e => e.AccountEmail == accountEmail, ct: ct);
 
     /// <inheritdoc />
+    // See ExpenditureRepository.SearchByAccountEmailAsync for why this is raw SQL rather than LINQ
+    // (ILIKE is case-insensitive natively, so it also covers the Deleted/bool matching).
+    // Asset's key is (AccountEmail, ProductName), not a single Id, so the two-step match collects
+    // ProductName instead.
+    public async Task<List<Asset>> SearchByAccountEmailAsync(string accountEmail, string search, CancellationToken ct = default)
+    {
+        string pattern = ToLikePattern(search);
+        List<string> matchingProductNames = await Context.Database.SqlQuery<string>($"""
+            SELECT "ProductName" AS "Value" FROM "Asset"
+            WHERE "AccountEmail" = {accountEmail}
+              AND (
+                  "ProductName" ILIKE {pattern} OR
+                  "Item" ILIKE {pattern} OR
+                  "MonetaryUnit" ILIKE {pattern} OR
+                  "Note" ILIKE {pattern} OR
+                  CAST("Amount" AS TEXT) ILIKE {pattern} OR
+                  CAST("Created" AS TEXT) ILIKE {pattern} OR
+                  CAST("Updated" AS TEXT) ILIKE {pattern} OR
+                  CAST("Deleted" AS TEXT) ILIKE {pattern}
+              )
+            """).ToListAsync(ct);
+
+        if (matchingProductNames.Count == 0) return [];
+        return await QueryAsync(e => e.AccountEmail == accountEmail && matchingProductNames.Contains(e.ProductName), ct: ct);
+    }
+
+    /// <inheritdoc />
     public Task<Asset?> FindByEmailAndProductNameAsync(string accountEmail, string productName, CancellationToken ct = default)
         => QueryFirstAsync(e => e.AccountEmail == accountEmail && e.ProductName == productName, ct);
 

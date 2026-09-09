@@ -36,6 +36,16 @@ public interface ICalendarService
     Task<List<CalendarSharedResponse>> GetCalendarSharedAsync(CancellationToken ct = default);
 
     /// <summary>
+    /// Returns the calendars the caller can see beyond ones they own: calendars they subscribe
+    /// to when logged in, or calendars shared anonymously when not. Used by every "Other
+    /// calendars" endpoint (the calendar list, event-existence check, and event fetch) so they
+    /// stay in sync instead of each re-implementing the same join.
+    /// </summary>
+    /// <param name="loggedInAccount">The current session's account, or null when logged out.</param>
+    /// <param name="ct">Cancellation token.</param>
+    Task<List<CalendarResponse>> GetVisibleOtherCalendarsAsync(AccountResponse? loggedInAccount, CancellationToken ct = default);
+
+    /// <summary>
     /// Creates the CalendarShared row for each of the given calendars that doesn't already have one.
     /// Fetches the sharing table once and reuses it for every ID, instead of one full scan per calendar.
     /// </summary>

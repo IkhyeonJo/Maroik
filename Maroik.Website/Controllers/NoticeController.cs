@@ -108,10 +108,11 @@ public class NoticeController : Controller
         {
             var account = _sessionService.GetAccount()!;
             var assets = await _assetService.GetAssetsAsync(account.Email!, ct);
-            var incomes = await _fixedIncomeService.GetFixedIncomesAsync(account.Email!, ct);
+            var incomes = string.IsNullOrEmpty(wholeSearch)
+                ? await _fixedIncomeService.GetFixedIncomesAsync(account.Email!, ct)
+                : await _fixedIncomeService.SearchFixedIncomesAsync(account.Email!, wholeSearch, ct);
             var viewModels = incomes
                 .ToDisplayViewModels(assets, _localize, account.TimeZoneIanaId!, _settings.Value.NoticeMaturityDateDay)
-                .ApplySearch(wholeSearch)
                 .OrderByDescending(a => a.Expired).ThenByDescending(m => m.Noticed)
                 .ThenByDescending(m => m.Unpunctuality).ThenByDescending(a => a.Created)
                 .ThenByDescending(a => a.Updated)
@@ -337,10 +338,11 @@ public class NoticeController : Controller
         {
             var account = _sessionService.GetAccount()!;
             var assets = await _assetService.GetAssetsAsync(account.Email!, ct);
-            var expenditures = await _fixedExpenditureService.GetFixedExpendituresAsync(account.Email!, ct);
+            var expenditures = string.IsNullOrEmpty(wholeSearch)
+                ? await _fixedExpenditureService.GetFixedExpendituresAsync(account.Email!, ct)
+                : await _fixedExpenditureService.SearchFixedExpendituresAsync(account.Email!, wholeSearch, ct);
             var viewModels = expenditures
                 .ToDisplayViewModels(assets, _localize, account.TimeZoneIanaId!, _settings.Value.NoticeMaturityDateDay)
-                .ApplySearch(wholeSearch)
                 .OrderByDescending(a => a.Expired).ThenByDescending(m => m.Noticed)
                 .ThenByDescending(m => m.Unpunctuality).ThenByDescending(a => a.Created)
                 .ThenByDescending(a => a.Updated)

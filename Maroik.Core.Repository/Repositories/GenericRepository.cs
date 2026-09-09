@@ -141,14 +141,27 @@ public abstract class GenericRepository<TDomain, TEntity>(ApplicationDbContext c
         return [.. (await query.ToListAsync(ct)).Select(ToDomain)];
     }
 
-    /// <summary>Returns the first row matching <paramref name="predicate"/> mapped to <typeparamref name="TDomain"/>, or <see langword="default"/> if none exists.</summary>
+    /// <summary>Returns the first row matching <paramref name="predicate"/> (with optional <paramref name="orderBy"/>) mapped to <typeparamref name="TDomain"/>, or <see langword="default"/> if none exists.</summary>
     protected async Task<TDomain?> QueryFirstAsync(
         Expression<Func<TEntity, bool>> predicate,
-        CancellationToken ct = default)
+        CancellationToken ct = default,
+        Func<IQueryable<TEntity>, IQueryable<TEntity>>? orderBy = null)
     {
-        var entity = await ApplyIncludes(Set.Where(predicate)).FirstOrDefaultAsync(ct);
+        var query = ApplyIncludes(Set.Where(predicate));
+        if (orderBy != null) query = orderBy(query);
+        var entity = await query.FirstOrDefaultAsync(ct);
         return entity == null ? default : ToDomain(entity);
     }
+
+    /// <summary>
+    /// Wraps <paramref name="search"/> as a <c>%...%</c> ILIKE pattern, escaping the LIKE wildcard
+    /// characters (<c>%</c>, <c>_</c>) and the escape character itself (<c>\</c>, Postgres's default
+    /// LIKE escape) so a search term containing them is matched literally instead of as a wildcard.
+    /// Used to build the raw-SQL search predicates that <c>.ToString()</c> can't reach via LINQ
+    /// (see <c>ExpenditureRepository.SearchByAccountEmailAsync</c>).
+    /// </summary>
+    protected static string ToLikePattern(string search) =>
+        $"%{search.Replace("\\", "\\\\").Replace("%", "\\%").Replace("_", "\\_")}%";
 
     /// <summary>Deletes every row matching <paramref name="predicate"/>.</summary>
     protected async Task DeleteWhereAsync(

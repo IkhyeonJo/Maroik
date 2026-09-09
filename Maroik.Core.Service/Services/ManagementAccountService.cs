@@ -40,6 +40,10 @@ public class ManagementAccountService : IManagementAccountService
         => (await _accountRepository.GetAllAsync(ct)).Select(AccountMapper.ToAdminResponse).ToList();
 
     /// <inheritdoc />
+    public async Task<List<AdminAccountResponse>> SearchAccountsAsync(string search, CancellationToken ct = default)
+        => (await _accountRepository.SearchAsync(search, ct)).Select(AccountMapper.ToAdminResponse).ToList();
+
+    /// <inheritdoc />
     public async Task<AdminAccountResponse?> GetAccountByEmailAsync(string email, CancellationToken ct = default)
     {
         Account? account = await FindByEmailAsync(email, ct);

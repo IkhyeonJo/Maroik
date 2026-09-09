@@ -9,6 +9,13 @@ public interface IIncomeRepository : IGenericRepository<Income>
     /// <summary>Returns all income records for the given account.</summary>
     Task<List<Income>> GetByAccountEmailAsync(string accountEmail, CancellationToken ct = default);
 
+    /// <summary>
+    /// Returns income records for the given account whose MainClass, SubClass, Content,
+    /// DepositMyAssetProductName, Note, Amount, Created, Updated, or currency contains
+    /// <paramref name="search"/> — filtered in the database instead of loading every record.
+    /// </summary>
+    Task<List<Income>> SearchByAccountEmailAsync(string accountEmail, string search, CancellationToken ct = default);
+
     /// <summary>Returns the income record identified by account email and ID, or null if not found.</summary>
     Task<Income?> FindByEmailAndIdAsync(string accountEmail, long id, CancellationToken ct = default);
 

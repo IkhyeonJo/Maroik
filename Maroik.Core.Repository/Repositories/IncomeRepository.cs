@@ -49,6 +49,36 @@ public class IncomeRepository(ApplicationDbContext context)
         => QueryAsync(e => e.AccountEmail == accountEmail, ct: ct);
 
     /// <inheritdoc />
+    // See ExpenditureRepository.SearchByAccountEmailAsync for why this is raw SQL rather than LINQ.
+    public async Task<List<Income>> SearchByAccountEmailAsync(string accountEmail, string search, CancellationToken ct = default)
+    {
+        string pattern = ToLikePattern(search);
+        List<long> matchingIds = await Context.Database.SqlQuery<long>($"""
+            SELECT "Id" AS "Value" FROM "Income"
+            WHERE "AccountEmail" = {accountEmail}
+              AND (
+                  "MainClass" ILIKE {pattern} OR
+                  "SubClass" ILIKE {pattern} OR
+                  "Content" ILIKE {pattern} OR
+                  "DepositMyAssetProductName" ILIKE {pattern} OR
+                  "Note" ILIKE {pattern} OR
+                  CAST("Amount" AS TEXT) ILIKE {pattern} OR
+                  CAST("Created" AS TEXT) ILIKE {pattern} OR
+                  CAST("Updated" AS TEXT) ILIKE {pattern} OR
+                  EXISTS (
+                      SELECT 1 FROM "Asset"
+                      WHERE "Asset"."AccountEmail" = "Income"."AccountEmail"
+                        AND "Asset"."ProductName" = "Income"."DepositMyAssetProductName"
+                        AND "Asset"."MonetaryUnit" ILIKE {pattern}
+                  )
+              )
+            """).ToListAsync(ct);
+
+        if (matchingIds.Count == 0) return [];
+        return await QueryAsync(e => matchingIds.Contains(e.Id), ct: ct);
+    }
+
+    /// <inheritdoc />
     public Task<Income?> FindByEmailAndIdAsync(string accountEmail, long id, CancellationToken ct = default)
         => QueryFirstAsync(e => e.AccountEmail == accountEmail && e.Id == id, ct);
 
@@ -82,11 +112,8 @@ public class IncomeRepository(ApplicationDbContext context)
         => QueryAsync(e => e.AccountEmail == accountEmail && e.Created >= from && e.Created < to, ct: ct);
 
     /// <inheritdoc />
-    public async Task<Income?> GetFirstByAccountEmailOrderedByCreatedAsync(string accountEmail, CancellationToken ct = default)
-    {
-        var entity = await Set.Where(e => e.AccountEmail == accountEmail).OrderBy(e => e.Created).FirstOrDefaultAsync(ct);
-        return entity == null ? null : ToDomain(entity);
-    }
+    public Task<Income?> GetFirstByAccountEmailOrderedByCreatedAsync(string accountEmail, CancellationToken ct = default)
+        => QueryFirstAsync(e => e.AccountEmail == accountEmail, ct, orderBy: q => q.OrderBy(e => e.Created));
 
     /// <inheritdoc />
     public Task DeleteByIdAsync(long id, CancellationToken ct = default)

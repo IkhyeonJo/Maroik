@@ -31,6 +31,10 @@ public class FixedIncomeService : IFixedIncomeService
         => (await _fixedIncomeRepository.GetByAccountEmailAsync(accountEmail, ct)).Select(FixedIncomeMapper.ToResponse).ToList();
 
     /// <inheritdoc />
+    public async Task<List<FixedIncomeResponse>> SearchFixedIncomesAsync(string accountEmail, string search, CancellationToken ct = default)
+        => (await _fixedIncomeRepository.SearchByAccountEmailAsync(accountEmail, search, ct)).Select(FixedIncomeMapper.ToResponse).ToList();
+
+    /// <inheritdoc />
     public async Task<FixedIncomeResponse?> GetByIdAsync(string accountEmail, long id, CancellationToken ct = default)
     {
         var item = await _fixedIncomeRepository.FindByEmailAndIdAsync(accountEmail, id, ct);
@@ -74,9 +78,11 @@ public class FixedIncomeService : IFixedIncomeService
             return ServiceResult.NotFound("FixedIncome.NotFound", "The fixed-income record could not be found.");
 
         Asset? asset = await _assetBalance.GetAssetForReadAsync(accountEmail, request.DepositMyAssetProductName ?? "", ct);
-        if (asset is { Deleted: true })
+        if (asset == null)
+            return ServiceResult.NotFound("FixedIncome.AssetNotFound", "The selected asset could not be found.");
+        if (asset.Deleted)
             return DeletedAssetResult;
-        string currency = asset?.Balance.Currency ?? fi.Amount.Currency;
+        string currency = asset.Balance.Currency;
 
         var updateResult = fi.Update(request.MainClass, request.SubClass, request.Content,
             Math.Abs(request.Amount), currency, request.DepositMyAssetProductName,

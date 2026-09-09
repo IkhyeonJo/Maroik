@@ -31,6 +31,10 @@ public class FixedExpenditureService : IFixedExpenditureService
         => (await _fixedExpenditureRepository.GetByAccountEmailAsync(accountEmail, ct)).Select(FixedExpenditureMapper.ToResponse).ToList();
 
     /// <inheritdoc />
+    public async Task<List<FixedExpenditureResponse>> SearchFixedExpendituresAsync(string accountEmail, string search, CancellationToken ct = default)
+        => (await _fixedExpenditureRepository.SearchByAccountEmailAsync(accountEmail, search, ct)).Select(FixedExpenditureMapper.ToResponse).ToList();
+
+    /// <inheritdoc />
     public async Task<FixedExpenditureResponse?> GetByIdAsync(string accountEmail, long id, CancellationToken ct = default)
     {
         var item = await _fixedExpenditureRepository.FindByEmailAndIdAsync(accountEmail, id, ct);
@@ -83,15 +87,18 @@ public class FixedExpenditureService : IFixedExpenditureService
         if (validation.IsError) return ServiceResult.FromError(validation.FirstError);
         bool requiresDepositAsset = validation.Value;
 
+        Asset? payAsset = await _assetBalance.GetAssetForReadAsync(accountEmail, request.PaymentMethod ?? "", ct);
+        if (payAsset == null) return AssetNotFoundResult;
+        if (payAsset.Deleted) return DeletedAssetResult;
+
         if (requiresDepositAsset)
         {
             if (request.PaymentMethod == request.MyDepositAsset)
                 return SameAssetResult;
 
-            var payAsset = await _assetBalance.GetAssetForReadAsync(accountEmail, request.PaymentMethod ?? "", ct);
             var depAsset = await _assetBalance.GetAssetForReadAsync(accountEmail, request.MyDepositAsset ?? "", ct);
-            if (payAsset == null || depAsset == null) return AssetNotFoundResult;
-            if (payAsset.Deleted || depAsset.Deleted) return DeletedAssetResult;
+            if (depAsset == null) return AssetNotFoundResult;
+            if (depAsset.Deleted) return DeletedAssetResult;
             if (payAsset.Balance.Currency != depAsset.Balance.Currency)
                 return CurrencyMismatchResult;
         }
@@ -100,10 +107,7 @@ public class FixedExpenditureService : IFixedExpenditureService
         if (fe == null)
             return ServiceResult.NotFound("FixedExpenditure.NotFound", "The fixed-expenditure record could not be found.");
 
-        Asset? payAssetForCurrency = await _assetBalance.GetAssetForReadAsync(accountEmail, request.PaymentMethod ?? "", ct);
-        if (payAssetForCurrency is { Deleted: true })
-            return DeletedAssetResult;
-        string currency = payAssetForCurrency?.Balance.Currency ?? fe.Amount.Currency;
+        string currency = payAsset.Balance.Currency;
         string? myDepositAsset = requiresDepositAsset ? request.MyDepositAsset : null;
 
         var updateResult = fe.Update(request.MainClass, request.SubClass, request.Content,

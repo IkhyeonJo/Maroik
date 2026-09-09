@@ -1,4 +1,5 @@
 using Maroik.Core.Domain.Calendar;
+using Maroik.Core.Domain.ValueObjects;
 using Maroik.Core.Contract.Dtos;
 using Maroik.Core.Contract.Interfaces;
 using Maroik.Core.Contract.Misc.Settings;
@@ -110,6 +111,33 @@ public class CalendarService : ICalendarService
     /// <inheritdoc />
     public async Task<List<CalendarSharedResponse>> GetCalendarSharedAsync(CancellationToken ct = default)
         => [.. (await _calendarSharedRepository.GetAllAsync(ct)).Select(CalendarSharedMapper.ToResponse)];
+
+    /// <inheritdoc />
+    public async Task<List<CalendarResponse>> GetVisibleOtherCalendarsAsync(AccountResponse? loggedInAccount, CancellationToken ct = default)
+    {
+        List<CalendarResponse> allCalendars = await GetAllCalendarsAsync(ct);
+
+        if (loggedInAccount != null)
+        {
+            List<OtherCalendarResponse> subscriptions = await GetOtherCalendarsAsync(loggedInAccount.Email!, ct);
+            return
+            [
+                .. (from c in allCalendars
+                    join oc in subscriptions on c.Id equals oc.CalendarId
+                    select new CalendarResponse { Id = c.Id, Name = c.Name, HtmlColorCode = c.HtmlColorCode })
+                .OrderBy(x => x.Name)
+            ];
+        }
+
+        List<CalendarSharedResponse> anonymousShares = [.. (await GetCalendarSharedAsync(ct)).Where(x => x.Anonymous)];
+        return
+        [
+            .. (from c in allCalendars
+                join cs in anonymousShares on c.Id equals cs.CalendarId
+                select new CalendarResponse { Id = c.Id, Name = c.Name, HtmlColorCode = c.HtmlColorCode })
+            .OrderBy(x => x.Name)
+        ];
+    }
 
     /// <inheritdoc />
     public async Task<ServiceResult> EnsureCalendarSharedAsync(IEnumerable<long> calendarIds, CancellationToken ct = default)
@@ -238,14 +266,8 @@ public class CalendarService : ICalendarService
             // or unrecognized, rather than letting Calendar.Create's normal (and deliberately
             // strict) validation silently fail an action the user didn't request.
             string timeZoneIanaId = request.TimeZoneIanaId ?? "";
-            try
-            {
-                _ = TimeZoneInfo.FindSystemTimeZoneById(timeZoneIanaId);
-            }
-            catch (Exception)
-            {
+            if (TimeZoneId.Create(timeZoneIanaId).IsError)
                 timeZoneIanaId = "UTC";
-            }
 
             var calendarResult = Calendar.Create(accountEmail, request.Name, request.Description, timeZoneIanaId, request.HtmlColorCode);
             if (calendarResult.IsError)
@@ -339,27 +361,13 @@ public class CalendarService : ICalendarService
                     await _calendarSharedRepository.CreateAsync(shared, ct);
             }
 
-            List<OtherCalendar> allOtherCalendars = await _otherCalendarRepository.GetAllAsync(ct);
-
             // When a calendar is set to non-user-visible, remove ALL existing subscriptions to it
             // (every account that had subscribed), not just one — otherwise leftover subscription
-            // rows silently reactivate the moment the calendar is shared again.
+            // rows silently reactivate the moment the calendar is shared again. One batched DELETE
+            // per calendar instead of one round trip per subscriber.
             foreach (CalendarSharedRequest req in calendarSharedRequests.Where(r => !r.User))
             {
-                foreach (OtherCalendar other in allOtherCalendars.Where(o => o.CalendarId == req.CalendarId))
-                {
-                    try
-                    {
-                        await _otherCalendarRepository.DeleteByAccountEmailAndCalendarIdAsync(other.AccountEmail.Value, other.CalendarId, ct);
-                    }
-                    catch (Exception ex)
-                    {
-                        // Best effort: a stale subscription is not worth failing the whole request over,
-                        // but a swallowed failure here (transient or otherwise) should still be visible.
-                        _logger.LogWarning(ex, "Failed to remove stale calendar subscription for {AccountEmail} to calendar {CalendarId}",
-                            other.AccountEmail.Value, other.CalendarId);
-                    }
-                }
+                await _otherCalendarRepository.DeleteByCalendarIdAsync(req.CalendarId, ct);
             }
 
             await _unitOfWork.CommitAsync(ct);

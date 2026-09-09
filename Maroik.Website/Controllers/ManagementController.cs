@@ -319,10 +319,11 @@ public class ManagementController : Controller
         }
 
         string tz = _sessionService.GetAccount()!.TimeZoneIanaId!;
-        var accounts = await _managementAccountService.GetAllAccountsAsync(HttpContext.RequestAborted);
+        var accounts = string.IsNullOrEmpty(wholeSearch)
+            ? await _managementAccountService.GetAllAccountsAsync(HttpContext.RequestAborted)
+            : await _managementAccountService.SearchAccountsAsync(wholeSearch, HttpContext.RequestAborted);
         var viewModels = accounts
             .ToDisplayViewModels(tz)
-            .ApplySearch(wholeSearch)
             .OrderBy(m => m.Email).ThenBy(m => m.Nickname)
             .ThenByDescending(m => m.Created).ThenByDescending(m => m.Updated)
             .AsQueryable();
@@ -856,8 +857,6 @@ public class ManagementController : Controller
     {
         try
         {
-            _ = ModelState.Remove(nameof(boardInputViewModel.Locked));
-
             if (!ModelState.IsValid)
                 return Json(new { result = false, error = _localizer["Input is invalid"].Value });
 
@@ -877,8 +876,7 @@ public class ManagementController : Controller
                 Type = BoardTypes.PrivateNote,
                 Title = boardInputViewModel.Title,
                 Content = boardInputViewModel.Content,
-                Writer = loggedInAccount.Nickname!,
-                Noticed = loggedInAccount.Role == Role.Admin && boardInputViewModel.Noticed
+                Writer = loggedInAccount.Nickname!
             };
 
             AttachedFileDto? attachedFile = await boardInputViewModel.UploadedFile.ToAttachedFileInfoAsync(HttpContext.RequestAborted);
@@ -1132,7 +1130,6 @@ public class ManagementController : Controller
                             Writer = privateNoteBoard.Writer,
                             Views = privateNoteBoard.View,
                             Content = privateNoteBoard.Content,
-                            Locked = privateNoteBoard.Locked,
                             Updated = privateNoteBoard.Updated,
                             BoardAttachedFileName = attachedFile?.Name ?? "",
                             BoardAttachedFileExtension = attachedFile?.Extension ?? "",
@@ -1202,12 +1199,6 @@ public class ManagementController : Controller
                 #endregion
 
                 PrivateNoteOutputViewModel privateNoteOutputViewModel = new();
-
-                #region Notice
-
-                privateNoteOutputViewModel.NoticeBoards = [];
-
-                #endregion
 
                 #region Board list
 
@@ -1297,8 +1288,6 @@ public class ManagementController : Controller
     {
         try
         {
-            _ = ModelState.Remove(nameof(boardInputViewModel.Locked));
-
             if (!ModelState.IsValid)
                 return Json(new { result = false, error = _localizer["Input is invalid"].Value });
 
@@ -1315,8 +1304,7 @@ public class ManagementController : Controller
                 Id = boardInputViewModel.Id,
                 Type = BoardTypes.PrivateNote,
                 Title = boardInputViewModel.Title,
-                Content = boardInputViewModel.Content,
-                Locked = boardInputViewModel.Locked
+                Content = boardInputViewModel.Content
             };
 
             AttachedFileDto? attachedFile = await boardInputViewModel.UploadedFile.ToAttachedFileInfoAsync(HttpContext.RequestAborted);
@@ -1387,12 +1375,10 @@ public class ManagementController : Controller
         {
             AccountResponse loggedInAccount = _sessionService.GetAccount()!;
 
-            // Private notes are single-owner: unlike the free forum, an admin may not delete
-            // another account's private note comments.
             ServiceResult result = await _boardService.DeleteCommentAsync(
                 id,
                 loggedInAccount.Nickname!,
-                false,
+                loggedInAccount.Role == Role.Admin,
                 BoardTypes.PrivateNote,
                 HttpContext.RequestAborted);
 

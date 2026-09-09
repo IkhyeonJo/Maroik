@@ -112,22 +112,10 @@ public class DashboardService : IDashboardService
 
         if (summary.DefaultMonetaryUnit != null)
         {
-            DateTime yearStart, yearEnd, ymStart, ymEnd;
-            try
-            {
-                var tz = TimeZoneInfo.FindSystemTimeZoneById(timeZoneId);
-                yearStart = TimeZoneInfo.ConvertTimeToUtc(new DateTime(yearInt, 1, 1), tz);
-                yearEnd = TimeZoneInfo.ConvertTimeToUtc(new DateTime(yearInt + 1, 1, 1), tz);
-                ymStart = TimeZoneInfo.ConvertTimeToUtc(new DateTime(yearInt, monthInt, 1), tz);
-                ymEnd = TimeZoneInfo.ConvertTimeToUtc(new DateTime(yearInt, monthInt, 1).AddMonths(1), tz);
-            }
-            catch
-            {
-                yearStart = new DateTime(yearInt, 1, 1, 0, 0, 0, DateTimeKind.Utc);
-                yearEnd = new DateTime(yearInt + 1, 1, 1, 0, 0, 0, DateTimeKind.Utc);
-                ymStart = new DateTime(yearInt, monthInt, 1, 0, 0, 0, DateTimeKind.Utc);
-                ymEnd = ymStart.AddMonths(1);
-            }
+            DateTime yearStart = new DateTime(yearInt, 1, 1).ConvertToUtcByTimeZoneIanaId(timeZoneId);
+            DateTime yearEnd = new DateTime(yearInt + 1, 1, 1).ConvertToUtcByTimeZoneIanaId(timeZoneId);
+            DateTime ymStart = new DateTime(yearInt, monthInt, 1).ConvertToUtcByTimeZoneIanaId(timeZoneId);
+            DateTime ymEnd = new DateTime(yearInt, monthInt, 1).AddMonths(1).ConvertToUtcByTimeZoneIanaId(timeZoneId);
 
             List<Income> yearIncomes = await _incomeRepository.GetByAccountEmailAndDateRangeAsync(accountEmail, yearStart, yearEnd, ct);
             List<Expenditure> yearExpenditures = await _expenditureRepository.GetByAccountEmailAndDateRangeAsync(accountEmail, yearStart, yearEnd, ct);
@@ -139,21 +127,25 @@ public class DashboardService : IDashboardService
             List<Income> ymIncomes = [.. yearIncomes.Where(x => x.Created >= ymStart && x.Created < ymEnd)];
             List<Expenditure> ymExpenditures = [.. yearExpenditures.Where(x => x.Created >= ymStart && x.Created < ymEnd)];
 
-            // Filter by default monetary unit via asset lookup. Uses allAssets (not the
-            // deleted-filtered `assets`) so a transaction tied to a since-deleted asset still
-            // resolves its currency correctly instead of being dropped from the totals.
+            // Filter by default monetary unit via a currency-by-product lookup built once. Uses
+            // allAssets (not the deleted-filtered `assets`) so a transaction tied to a
+            // since-deleted asset still resolves its currency correctly instead of being dropped
+            // from the totals.
             string defaultUnit = summary.DefaultMonetaryUnit;
+            Dictionary<string, string> currencyByProduct = allAssets
+                .GroupBy(a => a.ProductName ?? "")
+                .ToDictionary(g => g.Key, g => g.Last().Balance.Currency);
             summary.YearIncomes = yearIncomes
-                .Where(x => allAssets.FirstOrDefault(a => a.ProductName == x.DepositMyAssetProductName)?.Balance.Currency == defaultUnit)
+                .Where(x => currencyByProduct.GetValueOrDefault(x.DepositMyAssetProductName ?? "") == defaultUnit)
                 .Select(IncomeMapper.ToResponse).ToList();
             summary.YearExpenditures = yearExpenditures
-                .Where(x => allAssets.FirstOrDefault(a => a.ProductName == x.PaymentMethod)?.Balance.Currency == defaultUnit)
+                .Where(x => currencyByProduct.GetValueOrDefault(x.PaymentMethod ?? "") == defaultUnit)
                 .Select(ExpenditureMapper.ToResponse).ToList();
             summary.YearMonthIncomes = ymIncomes
-                .Where(x => allAssets.FirstOrDefault(a => a.ProductName == x.DepositMyAssetProductName)?.Balance.Currency == defaultUnit)
+                .Where(x => currencyByProduct.GetValueOrDefault(x.DepositMyAssetProductName ?? "") == defaultUnit)
                 .Select(IncomeMapper.ToResponse).ToList();
             summary.YearMonthExpenditures = ymExpenditures
-                .Where(x => allAssets.FirstOrDefault(a => a.ProductName == x.PaymentMethod)?.Balance.Currency == defaultUnit)
+                .Where(x => currencyByProduct.GetValueOrDefault(x.PaymentMethod ?? "") == defaultUnit)
                 .Select(ExpenditureMapper.ToResponse).ToList();
         }
 

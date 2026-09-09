@@ -113,11 +113,21 @@ public class AttachmentContentService : IAttachmentContentService
     {
         return await _htmlParser.TransformImageAttributesAsync(html, async (alt, token) =>
         {
-            byte[] fileData = await _fileClient.DownloadAsync(alt, _settings.Value.FileStorageBaseUrl ?? "", token);
-            return new HtmlImgPatch(
-                NewAlt: _rsa.Encrypt(alt),
-                DataFile: Convert.ToBase64String(fileData),
-                DataContentType: GetImageContentType(alt));
+            try
+            {
+                byte[] fileData = await _fileClient.DownloadAsync(alt, _settings.Value.FileStorageBaseUrl ?? "", token);
+                return new HtmlImgPatch(
+                    NewAlt: _rsa.Encrypt(alt),
+                    DataFile: Convert.ToBase64String(fileData),
+                    DataContentType: GetImageContentType(alt));
+            }
+            catch (Exception ex)
+            {
+                // A missing/unreachable image must not fail the whole post/event render — skip just
+                // this <img> tag's patch, same graceful-degradation contract as DownloadFileAsync.
+                _logger.LogError(ex, "Failed to download image {FilePath} while preparing HTML for display", alt);
+                return null;
+            }
         }, ct);
     }
 

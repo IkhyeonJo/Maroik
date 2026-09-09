@@ -38,6 +38,10 @@ public class ExpenditureService : IExpenditureService
         => (await _expenditureRepository.GetByAccountEmailAsync(accountEmail, ct)).Select(ExpenditureMapper.ToResponse).ToList();
 
     /// <inheritdoc />
+    public async Task<List<ExpenditureResponse>> SearchExpendituresAsync(string accountEmail, string search, CancellationToken ct = default)
+        => (await _expenditureRepository.SearchByAccountEmailAsync(accountEmail, search, ct)).Select(ExpenditureMapper.ToResponse).ToList();
+
+    /// <inheritdoc />
     public async Task<ExpenditureResponse?> GetByIdAsync(string accountEmail, long id, CancellationToken ct = default)
     {
         var expenditure = await _expenditureRepository.FindByEmailAndIdAsync(accountEmail, id, ct);

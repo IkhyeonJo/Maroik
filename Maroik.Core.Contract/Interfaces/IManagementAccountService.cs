@@ -11,6 +11,9 @@ public interface IManagementAccountService
     /// <summary>Returns all accounts for display on the admin account list.</summary>
     Task<List<AdminAccountResponse>> GetAllAccountsAsync(CancellationToken ct = default);
 
+    /// <summary>Returns accounts whose fields contain <paramref name="search"/>, filtered in the database.</summary>
+    Task<List<AdminAccountResponse>> SearchAccountsAsync(string search, CancellationToken ct = default);
+
     /// <summary>Returns a single account by email for the admin edit form, or null.</summary>
     Task<AdminAccountResponse?> GetAccountByEmailAsync(string email, CancellationToken ct = default);
 

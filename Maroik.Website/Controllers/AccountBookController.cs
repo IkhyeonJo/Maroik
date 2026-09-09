@@ -91,10 +91,11 @@ public class AccountBookController : Controller
 #pragma warning restore ASP0015
         {
             var account = _sessionService.GetAccount()!;
-            var assets = await _assetService.GetAssetsAsync(account.Email!, ct);
+            var assets = string.IsNullOrEmpty(wholeSearch)
+                ? await _assetService.GetAssetsAsync(account.Email!, ct)
+                : await _assetService.SearchAssetsAsync(account.Email!, wholeSearch, ct);
             var viewModels = assets
                 .ToDisplayViewModels(_localize, account.TimeZoneIanaId!)
-                .ApplySearch(wholeSearch)
                 .OrderBy(m => m.ProductName)
                 .AsQueryable();
             return PartialView("_AssetGrid", viewModels);
@@ -252,10 +253,11 @@ public class AccountBookController : Controller
         {
             var account = _sessionService.GetAccount()!;
             var assets = await _assetService.GetAssetsAsync(account.Email!, ct);
-            var incomes = await _incomeService.GetIncomesAsync(account.Email!, ct);
+            var incomes = string.IsNullOrEmpty(wholeSearch)
+                ? await _incomeService.GetIncomesAsync(account.Email!, ct)
+                : await _incomeService.SearchIncomesAsync(account.Email!, wholeSearch, ct);
             var viewModels = incomes
                 .ToDisplayViewModels(assets, _localize, account.TimeZoneIanaId!)
-                .ApplySearch(wholeSearch)
                 .OrderByDescending(m => m.Created)
                 .ThenByDescending(m => m.Updated)
                 .AsQueryable();
@@ -446,10 +448,11 @@ public class AccountBookController : Controller
         {
             var account = _sessionService.GetAccount()!;
             var assets = await _assetService.GetAssetsAsync(account.Email!, ct);
-            var expenditures = await _expenditureService.GetExpendituresAsync(account.Email!, ct);
+            var expenditures = string.IsNullOrEmpty(wholeSearch)
+                ? await _expenditureService.GetExpendituresAsync(account.Email!, ct)
+                : await _expenditureService.SearchExpendituresAsync(account.Email!, wholeSearch, ct);
             var viewModels = expenditures
                 .ToDisplayViewModels(assets, _localize, account.TimeZoneIanaId!)
-                .ApplySearch(wholeSearch)
                 .OrderByDescending(m => m.Created)
                 .ThenByDescending(m => m.Updated)
                 .AsQueryable();

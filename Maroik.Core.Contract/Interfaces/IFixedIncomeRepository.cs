@@ -9,6 +9,9 @@ public interface IFixedIncomeRepository : IGenericRepository<FixedIncome>
     /// <summary>Returns all fixed income records for the given account.</summary>
     Task<List<FixedIncome>> GetByAccountEmailAsync(string accountEmail, CancellationToken ct = default);
 
+    /// <summary>Returns fixed income records for the given account whose fields contain <paramref name="search"/>, filtered in the database.</summary>
+    Task<List<FixedIncome>> SearchByAccountEmailAsync(string accountEmail, string search, CancellationToken ct = default);
+
     /// <summary>Returns the fixed income record identified by account email and ID, or null if not found.</summary>
     Task<FixedIncome?> FindByEmailAndIdAsync(string accountEmail, long id, CancellationToken ct = default);
 

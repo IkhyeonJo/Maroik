@@ -33,4 +33,10 @@ public static class AccountResponseExtensions
                 .Select(account => account.Nickname!)
         ];
     }
+
+    extension(string? nickname)
+    {
+        /// <summary>True when <paramref name="nickname"/> belongs to an Admin account, per a set built by <see cref="ToAdminNicknameSet"/>.</summary>
+        public bool IsAdmin(HashSet<string> adminNicknames) => adminNicknames.Contains(nickname ?? "");
+    }
 }

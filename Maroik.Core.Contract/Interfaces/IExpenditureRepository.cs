@@ -9,6 +9,13 @@ public interface IExpenditureRepository : IGenericRepository<Expenditure>
     /// <summary>Returns all expenditure records for the given account.</summary>
     Task<List<Expenditure>> GetByAccountEmailAsync(string accountEmail, CancellationToken ct = default);
 
+    /// <summary>
+    /// Returns expenditure records for the given account whose MainClass, SubClass, Content,
+    /// PaymentMethod, MyDepositAsset, Note, Amount, Created, Updated, or currency contains
+    /// <paramref name="search"/> — filtered in the database instead of loading every record.
+    /// </summary>
+    Task<List<Expenditure>> SearchByAccountEmailAsync(string accountEmail, string search, CancellationToken ct = default);
+
     /// <summary>Returns the expenditure record identified by account email and ID, or null if not found.</summary>
     Task<Expenditure?> FindByEmailAndIdAsync(string accountEmail, long id, CancellationToken ct = default);
 

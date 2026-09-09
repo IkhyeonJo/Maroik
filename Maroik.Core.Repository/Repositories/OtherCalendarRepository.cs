@@ -42,4 +42,8 @@ public class OtherCalendarRepository(ApplicationDbContext context)
     /// <inheritdoc />
     public Task DeleteByAccountEmailAndCalendarIdAsync(string email, long calendarId, CancellationToken ct = default)
         => DeleteWhereAsync(e => e.AccountEmail == email && e.CalendarId == calendarId, ct);
+
+    /// <inheritdoc />
+    public Task DeleteByCalendarIdAsync(long calendarId, CancellationToken ct = default)
+        => DeleteWhereAsync(e => e.CalendarId == calendarId, ct);
 }

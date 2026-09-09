@@ -10,6 +10,9 @@ public interface IAssetService
     /// <summary>Returns all active assets for the given account.</summary>
     Task<List<AssetResponse>> GetAssetsAsync(string accountEmail, CancellationToken ct = default);
 
+    /// <summary>Returns assets for the given account whose fields contain <paramref name="search"/>, filtered in the database.</summary>
+    Task<List<AssetResponse>> SearchAssetsAsync(string accountEmail, string search, CancellationToken ct = default);
+
     /// <summary>Returns a single asset by product name, or null.</summary>
     Task<AssetResponse?> GetAssetAsync(string accountEmail, string productName, CancellationToken ct = default);
 

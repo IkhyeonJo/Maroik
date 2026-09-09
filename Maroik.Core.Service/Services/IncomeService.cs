@@ -34,6 +34,10 @@ public class IncomeService : IIncomeService
         => (await _incomeRepository.GetByAccountEmailAsync(accountEmail, ct)).Select(IncomeMapper.ToResponse).ToList();
 
     /// <inheritdoc />
+    public async Task<List<IncomeResponse>> SearchIncomesAsync(string accountEmail, string search, CancellationToken ct = default)
+        => (await _incomeRepository.SearchByAccountEmailAsync(accountEmail, search, ct)).Select(IncomeMapper.ToResponse).ToList();
+
+    /// <inheritdoc />
     public async Task<IncomeResponse?> GetByIdAsync(string accountEmail, long id, CancellationToken ct = default)
     {
         var income = await _incomeRepository.FindByEmailAndIdAsync(accountEmail, id, ct);

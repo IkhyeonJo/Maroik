@@ -20,42 +20,6 @@ public static class CalendarEventViewModelExtensions
     extension(ICalendarService calendarService)
     {
         /// <summary>
-        /// Returns the calendars the caller can see beyond ones they own: calendars they subscribe
-        /// to when logged in, or calendars shared anonymously when not. Used by every "Other
-        /// calendars" endpoint (the calendar list, event-existence check, and event fetch) so they
-        /// stay in sync instead of each re-implementing the same join.
-        /// </summary>
-        /// <param name="loggedInAccount">The current session's account, or null when logged out.</param>
-        /// <param name="ct">Cancellation token.</param>
-        public async Task<List<CalendarResponse>> GetVisibleOtherCalendarsAsync(AccountResponse? loggedInAccount, CancellationToken ct)
-        {
-            List<CalendarResponse> allCalendars = await calendarService.GetAllCalendarsAsync(ct);
-
-            if (loggedInAccount != null)
-            {
-                List<OtherCalendarResponse> subscriptions =
-                    await calendarService.GetOtherCalendarsAsync(loggedInAccount.Email!, ct);
-                return
-                [
-                    .. (from c in allCalendars
-                        join oc in subscriptions on c.Id equals oc.CalendarId
-                        select new CalendarResponse { Id = c.Id, Name = c.Name, HtmlColorCode = c.HtmlColorCode })
-                    .OrderBy(x => x.Name)
-                ];
-            }
-
-            List<CalendarSharedResponse> anonymousShares =
-                [.. (await calendarService.GetCalendarSharedAsync(ct)).Where(x => x.Anonymous)];
-            return
-            [
-                .. (from c in allCalendars
-                    join cs in anonymousShares on c.Id equals cs.CalendarId
-                    select new CalendarResponse { Id = c.Id, Name = c.Name, HtmlColorCode = c.HtmlColorCode })
-                .OrderBy(x => x.Name)
-            ];
-        }
-
-        /// <summary>
         /// Fetches all events for each calendar in <paramref name="calendars"/> and returns
         /// them as grid-ready view models with timezone conversion applied.
         /// </summary>

@@ -5,9 +5,9 @@ using System.ComponentModel.DataAnnotations;
 namespace Maroik.Website.Models.ViewModels.Management;
 
 /// <summary>
-/// Read-only view model for displaying a single board post in the admin management area.
-/// Identical in structure to <c>Forum.BoardOutputViewModel</c> but scoped to the
-/// Management area so admin-only routing and authorization filters apply.
+/// Read-only view model for displaying a single PrivateNote board post in the management area.
+/// A private note is single-owner content, so it has no lock affordance
+/// (see <see cref="Maroik.Core.Domain.Board.Board.IsPrivateNote"/>).
 /// </summary>
 public class BoardOutputViewModel
 {
@@ -18,9 +18,6 @@ public class BoardOutputViewModel
 
     /// <summary>HTML body of the post as saved from the Summernote editor.</summary>
     public string? Content { get; set; }
-
-    /// <summary>When <see langword="true"/> the post is locked and comments are disabled.</summary>
-    public bool Locked { get; set; }
 
     /// <summary>Nickname of the account that created the post.</summary>
     public string? Writer { get; set; }

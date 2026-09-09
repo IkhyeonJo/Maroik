@@ -9,6 +9,9 @@ public interface IAccountRepository : IGenericRepository<Account>
     /// <summary>Returns all accounts.</summary>
     Task<List<Account>> GetAllAsync(CancellationToken ct = default);
 
+    /// <summary>Returns accounts whose fields contain <paramref name="search"/>, filtered in the database.</summary>
+    Task<List<Account>> SearchAsync(string search, CancellationToken ct = default);
+
     /// <summary>Returns the account with the given email, or null if not found.</summary>
     Task<Account?> FindByEmailAsync(string email, CancellationToken ct = default);
 

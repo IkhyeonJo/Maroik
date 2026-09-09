@@ -367,6 +367,7 @@ public class BoardService : IBoardService
             if (comment == null)
                 return ServiceResult.NotFound("BoardComment.NotFound", "Input is invalid");
 
+            bool isPrivateNoteComment = false;
             if (requiredType != null)
             {
                 // The comment's parent post must belong to the caller's board type — otherwise a
@@ -375,10 +376,13 @@ public class BoardService : IBoardService
                 Board? parent = await _boardRepository.FindActiveByIdAsync(comment.BoardId, ct);
                 if (parent == null || parent.Type != requiredType)
                     return ServiceResult.NotFound("BoardComment.NotFound", "Input is invalid");
+                isPrivateNoteComment = parent.IsPrivateNote;
             }
 
-            // Admins may delete any comment; non-admins may only delete their own.
-            if (!comment.CanBeDeletedBy(requesterNickname, isAdmin))
+            // Admins may delete any comment, except on a private note (owner-only, no admin
+            // bypass — matches Board.CanBeDeletedBy's PrivateNote rule).
+            bool effectiveIsAdmin = isAdmin && !isPrivateNoteComment;
+            if (!comment.CanBeDeletedBy(requesterNickname, effectiveIsAdmin))
                 return ServiceResult.Fail("You do not have permission to delete.");
 
             var deleteResult = comment.SoftDelete();

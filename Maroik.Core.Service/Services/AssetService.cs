@@ -44,6 +44,10 @@ public class AssetService : IAssetService
         => (await _assetRepository.GetByAccountEmailAsync(accountEmail, ct)).Select(AssetMapper.ToResponse).ToList();
 
     /// <inheritdoc />
+    public async Task<List<AssetResponse>> SearchAssetsAsync(string accountEmail, string search, CancellationToken ct = default)
+        => (await _assetRepository.SearchByAccountEmailAsync(accountEmail, search, ct)).Select(AssetMapper.ToResponse).ToList();
+
+    /// <inheritdoc />
     public async Task<AssetResponse?> GetAssetAsync(string accountEmail, string productName, CancellationToken ct = default)
     {
         Asset? asset = await FindAssetAsync(accountEmail, productName, ct);

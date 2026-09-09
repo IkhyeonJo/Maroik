@@ -270,6 +270,11 @@ public sealed class Board : AggregateRoot<long>
     /// <summary>Returns true when <paramref name="nickname"/> may edit this post (owner only, no admin bypass).</summary>
     public bool CanBeEditedBy(string nickname) => IsOwnedBy(nickname);
 
-    /// <summary>Returns true when <paramref name="nickname"/> may delete this post (owner, or any admin).</summary>
-    public bool CanBeDeletedBy(string nickname, bool isAdmin) => IsOwnedBy(nickname) || isAdmin;
+    /// <summary>
+    /// Returns true when <paramref name="nickname"/> may delete this post. A private note is
+    /// deletable only by its author (no admin bypass, matching <see cref="CanBeViewedBy(string?, bool)"/>);
+    /// any other board type is deletable by its owner or any admin.
+    /// </summary>
+    public bool CanBeDeletedBy(string nickname, bool isAdmin) =>
+        IsPrivateNote ? IsOwnedBy(nickname) : IsOwnedBy(nickname) || isAdmin;
 }

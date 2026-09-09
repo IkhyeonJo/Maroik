@@ -130,6 +130,7 @@
                     <div class="card-footer card-comments">
                         @foreach (var comment in Model.DetailBoardComments)
                         {
+                            var isCommentWriterAdmin = comment.Writer.IsAdmin(Model.AdminNicknames);
                             if (Model.BoardOutputViewModel.Writer == comment.Writer) /*Change background color if the commenter is the post author*/
                             {
                                 <div class="card-comment" style="background-color:#003366;">
@@ -137,15 +138,13 @@
 
                                     <div class="comment-text">
                                         <span class="username">
-                                            @{
-                                                if (Model.AdminNicknames.Contains(comment.Writer ?? ""))/*If the comment was written by an admin*/
-                                                {
-                                                    <span style="font-weight:bold; color:green;">@comment.Writer</span>
-                                                }
-                                                else
-                                                {
-                                                    <span>@comment.Writer</span>
-                                                }
+                                            @if (isCommentWriterAdmin)
+                                            {
+                                                <span style="font-weight:bold; color:green;">@comment.Writer</span>
+                                            }
+                                            else
+                                            {
+                                                <span>@comment.Writer</span>
                                             }
                                             <span class="text-muted float-middle">
                                                 @Localizer["Created"].Value: [<span class="free_forum_detail_comment_created">@comment.Created.ToViewerFormattedString(loggedInAccount.Role, loggedInAccountTimeZoneIanaId)</span>]
@@ -168,15 +167,13 @@
 
                                     <div class="comment-text">
                                         <span class="username">
-                                            @{
-                                                if (Model.AdminNicknames.Contains(comment.Writer ?? ""))/*If the comment was written by an admin*/
-                                                {
-                                                    <span style="font-weight:bold; color:green;">@comment.Writer</span>
-                                                }
-                                                else
-                                                {
-                                                    <span>@comment.Writer</span>
-                                                }
+                                            @if (isCommentWriterAdmin)
+                                            {
+                                                <span style="font-weight:bold; color:green;">@comment.Writer</span>
+                                            }
+                                            else
+                                            {
+                                                <span>@comment.Writer</span>
                                             }
                                             <span class="text-muted float-middle">
                                                 @Localizer["Created"].Value: [<span class="free_forum_detail_comment_created">@comment.Created.ToViewerFormattedString(loggedInAccount.Role, loggedInAccountTimeZoneIanaId)</span>]
@@ -369,6 +366,7 @@
                                     var commentsOfUndeletedSelectedBoardCount = Model.CommentCountByBoardId.GetValueOrDefault(board.Id, 0);
                                     var attachedFilesWithName = Model.AttachedFilesByBoardId.GetValueOrDefault(board.Id, []);
                                     var boardTitleVisible = board.IsTitleVisibleToOwnerOrAdmin(loggedInAccount);
+                                    var isBoardWriterAdmin = board.Writer.IsAdmin(Model.AdminNicknames);
 
                                     <tr>
                                         <td>@Localizer["Free Forum"]</td>
@@ -387,7 +385,7 @@
                                             }
                                         </td>
 
-                                        @if (Model.AdminNicknames.Contains(board.Writer ?? "")) @*If the post was written by an admin*@
+                                        @if (isBoardWriterAdmin)
                                         {
                                             <td><span style="font-weight:bold; color:green;">@board.Writer</span></td>
                                         }

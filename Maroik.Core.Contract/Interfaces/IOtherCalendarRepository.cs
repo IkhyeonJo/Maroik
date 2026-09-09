@@ -17,4 +17,7 @@ public interface IOtherCalendarRepository : IGenericRepository<OtherCalendar>
 
     /// <summary>Deletes the subscription row linking the given account to the given calendar.</summary>
     Task DeleteByAccountEmailAndCalendarIdAsync(string email, long calendarId, CancellationToken ct = default);
+
+    /// <summary>Deletes every subscription row for the given calendar, across all subscribing accounts, in one statement.</summary>
+    Task DeleteByCalendarIdAsync(long calendarId, CancellationToken ct = default);
 }

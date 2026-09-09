@@ -10,6 +10,9 @@ public interface IExpenditureService
     /// <summary>Returns all expenditure records for the given account.</summary>
     Task<List<ExpenditureResponse>> GetExpendituresAsync(string accountEmail, CancellationToken ct = default);
 
+    /// <summary>Returns expenditure records for the given account whose fields contain <paramref name="search"/>, filtered in the database.</summary>
+    Task<List<ExpenditureResponse>> SearchExpendituresAsync(string accountEmail, string search, CancellationToken ct = default);
+
     /// <summary>Returns a single expenditure record owned by the account, or null if not found.</summary>
     Task<ExpenditureResponse?> GetByIdAsync(string accountEmail, long id, CancellationToken ct = default);
 
