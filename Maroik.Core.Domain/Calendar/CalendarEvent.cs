@@ -25,10 +25,10 @@ public sealed class CalendarEvent : AggregateRoot<long>
     /// <summary>When true, the event spans the entire day (no specific start/end times).</summary>
     public bool AllDay { get; private set; }
 
-    /// <summary>Event start date/time stored in UTC.</summary>
+    /// <summary>Event start instant. Always UTC — normalized to <see cref="DateTimeKind.Utc"/> on every assignment.</summary>
     public DateTime StartDate { get; private set; }
 
-    /// <summary>Event end date/time stored in UTC.</summary>
+    /// <summary>Event end instant. Always UTC — normalized to <see cref="DateTimeKind.Utc"/> on every assignment.</summary>
     public DateTime EndDate { get; private set; }
 
     /// <summary>IANA time-zone ID of the start date. Null means UTC.</summary>
@@ -70,8 +70,8 @@ public sealed class CalendarEvent : AggregateRoot<long>
         Title = title;
         Description = description;
         AllDay = allDay;
-        StartDate = startDate;
-        EndDate = endDate;
+        StartDate = AsUtc(startDate);
+        EndDate = AsUtc(endDate);
         StartDateTimeZoneIanaId = startTz;
         EndDateTimeZoneIanaId = endTz;
         Location = location;
@@ -80,6 +80,15 @@ public sealed class CalendarEvent : AggregateRoot<long>
         Created = DateTime.UtcNow;
         Updated = DateTime.UtcNow;
     }
+
+    /// <summary>
+    /// Stamps <paramref name="value"/> as <see cref="DateTimeKind.Utc"/> without shifting it. Every
+    /// caller — the create/update factories and <see cref="Reconstitute"/> (Npgsql hands back
+    /// <see cref="DateTimeKind.Unspecified"/> for the <c>timestamp without time zone</c> column) —
+    /// already deals in UTC instants; this makes that contract visible on the value instead of only
+    /// in the doc comment, so nothing downstream has to guess the <see cref="DateTime.Kind"/>.
+    /// </summary>
+    private static DateTime AsUtc(DateTime value) => DateTime.SpecifyKind(value, DateTimeKind.Utc);
 
     // ------------------------------------------------------------------------
     // Factory / Reconstitution
@@ -209,8 +218,8 @@ public sealed class CalendarEvent : AggregateRoot<long>
         Title = title;
         Description = description;
         AllDay = allDay;
-        StartDate = startDate;
-        EndDate = endDate;
+        StartDate = AsUtc(startDate);
+        EndDate = AsUtc(endDate);
         StartDateTimeZoneIanaId = startTz;
         EndDateTimeZoneIanaId = endTz;
         Location = location;
