@@ -433,6 +433,55 @@ public class AccountServiceTests
         Assert.Contains("already", result.ErrorKey, StringComparison.OrdinalIgnoreCase);
     }
 
+    /// <summary>
+    /// Regression test (L-2): the "already confirmed" branch runs off an unauthenticated,
+    /// address-only request. Without the caller proving ownership (current password), it must NOT
+    /// mutate the row — no AgreedServiceTerms / Message write on a stranger's account.
+    /// </summary>
+    [Fact]
+    public async Task RegisterAsync_ConfirmedAccount_DoesNotTouchTheRow_WhenPasswordIsWrong()
+    {
+        var existing = ActiveAccount(emailConfirmed: true, agreedServiceTerms: false);
+        _accountRepo.Setup(r => r.FindByEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(existing);
+        _passwordService.Setup(p => p.VerifyPassword(It.IsAny<string>(), It.IsAny<string>())).Returns(false);
+        var sut = CreateSut();
+
+        var request = new AccountRequest { Email = existing.Email.Value, PlainPassword = "not-the-password" };
+        RegisterResult result = await sut.RegisterAsync(request, _emailTemplate, TestContext.Current.CancellationToken);
+
+        Assert.False(result.Success);
+        Assert.Contains("already", result.ErrorKey, StringComparison.OrdinalIgnoreCase);
+        _accountRepo.Verify(r => r.UpdateAgreedServiceTermsAsync(
+            It.IsAny<string>(), It.IsAny<bool>(), It.IsAny<DateTime>(), It.IsAny<CancellationToken>()), Times.Never);
+        _accountRepo.Verify(r => r.UpdateMessageAsync(
+            It.IsAny<string>(), It.IsAny<string?>(), It.IsAny<DateTime>(), It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    /// <summary>
+    /// Companion to <see cref="RegisterAsync_ConfirmedAccount_DoesNotTouchTheRow_WhenPasswordIsWrong"/>:
+    /// the legit owner re-running registration (correct password) still recovers a legacy
+    /// "confirmed but terms not accepted" account.
+    /// </summary>
+    [Fact]
+    public async Task RegisterAsync_ConfirmedAccount_ReconcilesTerms_WhenPasswordMatches()
+    {
+        var existing = ActiveAccount(emailConfirmed: true, agreedServiceTerms: false);
+        _accountRepo.Setup(r => r.FindByEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(existing);
+        _accountRepo.Setup(r => r.UpdateAgreedServiceTermsAsync(
+            It.IsAny<string>(), It.IsAny<bool>(), It.IsAny<DateTime>(), It.IsAny<CancellationToken>())).ReturnsAsync(1);
+        _accountRepo.Setup(r => r.UpdateMessageAsync(
+            It.IsAny<string>(), It.IsAny<string?>(), It.IsAny<DateTime>(), It.IsAny<CancellationToken>())).ReturnsAsync(1);
+        _passwordService.Setup(p => p.VerifyPassword(It.IsAny<string>(), It.IsAny<string>())).Returns(true);
+        var sut = CreateSut();
+
+        var request = new AccountRequest { Email = existing.Email.Value, PlainPassword = "correct" };
+        RegisterResult result = await sut.RegisterAsync(request, _emailTemplate, TestContext.Current.CancellationToken);
+
+        Assert.False(result.Success);
+        _accountRepo.Verify(r => r.UpdateAgreedServiceTermsAsync(
+            existing.Email.Value, true, It.IsAny<DateTime>(), It.IsAny<CancellationToken>()), Times.Once);
+    }
+
     // -- ConfirmEmailAsync ----------------------------------------------------
 
     /// <summary>Verifies that <c>ConfirmEmailAsync</c> returns invalid token when decryption fails.</summary>

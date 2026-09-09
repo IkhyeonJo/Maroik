@@ -1306,7 +1306,7 @@ public class ManagementController : Controller
 
             AttachedFileDto? attachedFile = await boardInputViewModel.UploadedFile.ToAttachedFileInfoAsync(_serverSettings.Value.MaxAttachedFileSizeBytes, HttpContext.RequestAborted);
 
-            ServiceResult result = await _boardService.EditBoardAsync(boardRequest, loggedInAccount.Nickname!, attachedFile, HttpContext.RequestAborted);
+            ServiceResult result = await _boardService.EditBoardAsync(boardRequest, loggedInAccount.Nickname!, loggedInAccount.Role == Role.Admin, attachedFile, HttpContext.RequestAborted);
             return result.Success
                 ? Json(new { result = true, message = _localizer["The board has been successfully updated."].Value })
                 : Json(new { result = false, error = _localizer["Input is invalid"].Value });

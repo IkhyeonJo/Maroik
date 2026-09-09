@@ -507,7 +507,7 @@ public class ForumController : Controller
 
             AttachedFileDto? attachedFile = await boardInputViewModel.UploadedFile.ToAttachedFileInfoAsync(_serverSettings.Value.MaxAttachedFileSizeBytes, ct);
 
-            ServiceResult result = await _boardService.EditBoardAsync(boardRequest, loggedInAccount.Nickname!, attachedFile, ct);
+            ServiceResult result = await _boardService.EditBoardAsync(boardRequest, loggedInAccount.Nickname!, loggedInAccount.Role == Role.Admin, attachedFile, ct);
             return result.Success
                 ? Json(new { result = true, message = _localizer["The board has been successfully updated."].Value })
                 : Json(new { result = false, error = _localizer["Input is invalid"].Value });

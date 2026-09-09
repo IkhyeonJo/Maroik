@@ -228,27 +228,40 @@ public class AccountService : IAccountService
         // no-op: an email-enumerating caller must not be able to churn a stranger's Updated
         // timestamp by replaying this endpoint. Column-scoped writes only, like every other Account
         // write path.
+        //
+        // Ownership gate: knowing the address is not enough to mutate the row. Only when the caller
+        // also supplies the account's current password (the legit owner re-running registration to
+        // recover a legacy "confirmed but terms not accepted" state) do we reconcile
+        // AgreedServiceTerms / Message — otherwise anyone who knows a registered address could flip
+        // another account's terms flag or status message. The BCrypt verify also keeps this path's
+        // cost in line with the new-account path (which hashes) so the "already exists" outcome is
+        // not distinguishable by timing.
         string alreadyCreatedMessage = EnumHelper.GetDescription(AccountMessage.UserAlreadyCreated);
-        try
+        bool callerOwnsAccount =
+            _passwordService.VerifyPassword(newAccount.PlainPassword ?? "", existing.HashedPassword);
+        if (callerOwnsAccount)
         {
-            if (!existing.AgreedServiceTerms)
+            try
             {
-                existing.AcceptServiceTerms();
-                await _accountRepository.UpdateAgreedServiceTermsAsync(
-                    existing.Email.Value, existing.AgreedServiceTerms, existing.Updated, ct);
-            }
+                if (!existing.AgreedServiceTerms)
+                {
+                    existing.AcceptServiceTerms();
+                    await _accountRepository.UpdateAgreedServiceTermsAsync(
+                        existing.Email.Value, existing.AgreedServiceTerms, existing.Updated, ct);
+                }
 
-            if (!string.Equals(existing.Message, alreadyCreatedMessage, StringComparison.Ordinal))
-            {
-                existing.SetMessage(alreadyCreatedMessage);
-                await _accountRepository.UpdateMessageAsync(
-                    existing.Email.Value, existing.Message, existing.Updated, ct);
+                if (!string.Equals(existing.Message, alreadyCreatedMessage, StringComparison.Ordinal))
+                {
+                    existing.SetMessage(alreadyCreatedMessage);
+                    await _accountRepository.UpdateMessageAsync(
+                        existing.Email.Value, existing.Message, existing.Updated, ct);
+                }
             }
-        }
-        catch (Exception e)
-        {
-            _logger.LogError(e, "Failed to update account status for {Email}", existing.Email.Value);
-            return RegisterResult.Fail("Error occurred while processing about account status");
+            catch (Exception e)
+            {
+                _logger.LogError(e, "Failed to update account status for {Email}", existing.Email.Value);
+                return RegisterResult.Fail("Error occurred while processing about account status");
+            }
         }
 
         return RegisterResult.Fail(alreadyCreatedMessage);

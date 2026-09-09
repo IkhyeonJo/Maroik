@@ -61,8 +61,10 @@ public interface IBoardService
     /// <summary>
     /// Edits an existing post. Only the original author (matched by <paramref name="writerNickname"/>) may edit.
     /// Replaces the attached file if <paramref name="newFile"/> is provided.
+    /// The editor may raise the post's lock via <see cref="BoardRequest.Locked"/>, but only an
+    /// <paramref name="isAdmin"/> editor may clear an existing lock.
     /// </summary>
-    Task<ServiceResult> EditBoardAsync(BoardRequest request, string writerNickname, AttachedFileDto? newFile, CancellationToken ct = default);
+    Task<ServiceResult> EditBoardAsync(BoardRequest request, string writerNickname, bool isAdmin, AttachedFileDto? newFile, CancellationToken ct = default);
 
     /// <summary>
     /// Soft-deletes a board post. Admins can delete any post; regular users can only delete their own.

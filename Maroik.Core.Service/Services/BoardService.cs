@@ -174,7 +174,7 @@ public class BoardService : IBoardService
     }
 
     /// <inheritdoc />
-    public async Task<ServiceResult> EditBoardAsync(BoardRequest request, string writerNickname, AttachedFileDto? newFile, CancellationToken ct = default)
+    public async Task<ServiceResult> EditBoardAsync(BoardRequest request, string writerNickname, bool isAdmin, AttachedFileDto? newFile, CancellationToken ct = default)
     {
         var fileError = _attachmentContent.ValidateAttachedFile(newFile);
         if (fileError != null) return fileError;
@@ -214,11 +214,14 @@ public class BoardService : IBoardService
                 return ServiceResult.FromError(updateResult.FirstError);
             }
 
-            // Apply the lock toggle from the request. Noticed (notice-pin) is set only at write
-            // time (see WriteBoardAsync) — no edit form exposes a control for it, so editing must
-            // never change it; toggling it here based on an always-absent request field would
-            // silently un-pin every notice on its next edit.
-            if (request.Locked) board.Lock(); else board.Unlock();
+            // Apply the lock from the request. The editor (always the post's own author — see the
+            // CanBeEditedBy check above) may raise the lock on their post, but CLEARING it is a
+            // moderation action reserved for an admin: without a stored "who locked this", an
+            // unconditional toggle here would let any author edit silently lift a lock an admin
+            // imposed (the same silent-clobber the Noticed field is deliberately kept out of —
+            // Noticed is set only at write time since no edit form exposes it).
+            if (request.Locked) board.Lock();
+            else if (isAdmin) board.Unlock();
 
             await _boardRepository.UpdateEntityAsync(board, ct);
 

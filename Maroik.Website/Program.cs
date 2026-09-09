@@ -239,12 +239,13 @@ try
     {
         options.IncludeSubDomains = true;
         // 2 years — the value the (now-removed) hand-appended Strict-Transport-Security header
-        // carried; UseHsts() below is the single emitter, and it already honours ExcludedHosts
-        // (localhost/dev) and only fires over HTTPS.
+        // carried; UseHsts() below is the single emitter, and it only fires over HTTPS.
         options.MaxAge = TimeSpan.FromDays(730);
         options.Preload = true;
-        options.ExcludedHosts.Add(cfgDomainName.Replace("https://", "").Replace("/", ""));
-        options.ExcludedHosts.Add(cfgDomainName.Replace("https://", "").Replace("/", "").Replace("www.", ""));
+        // Do NOT add the live domain here: ExcludedHosts is the set of hosts the header is
+        // withheld for. Its defaults (localhost / 127.0.0.1 / [::1]) already keep HSTS off for
+        // local dev over plain HTTP; adding the production host would suppress the header on the
+        // one host that actually needs it.
     });
 
     #region Multi-Language
