@@ -5,8 +5,12 @@ using Maroik.Website.Mappings;
 namespace Maroik.Website.Tests.Mappings;
 
 /// <summary>
-/// Unit tests for <see cref="DashboardViewModelMapper"/> — the per-category income/expenditure
-/// aggregation and percentage-breakdown calculations that feed the Dashboard charts.
+/// Unit tests for <see cref="DashboardViewModelMapper"/>.
+/// The per-category sum/percentage arithmetic itself is computed by <c>DashboardService</c> via
+/// <see cref="Maroik.Core.Domain.Finance.FinanceBreakdownPolicy"/> (covered by
+/// <c>FinanceBreakdownPolicyTests</c> and <c>DashboardServiceTests</c>) -- these tests only verify
+/// that the mapper copies each pre-computed <see cref="FinanceBreakdownDto"/> value onto the right
+/// named <c>UserIndexOutputViewModel</c> property, and never computes a sum or percentage itself.
 /// </summary>
 public class DashboardViewModelMapperTests
 {
@@ -34,6 +38,13 @@ public class DashboardViewModelMapperTests
         Updated = new DateTime(2025, 1, 2, 0, 0, 0, DateTimeKind.Utc)
     };
 
+    private static FinanceBreakdownDto Breakdown(decimal total, params (string SubClass, decimal Amount, double Percentage)[] entries) => new()
+    {
+        Total = total,
+        AmountBySubClass = entries.ToDictionary(e => e.SubClass, e => e.Amount),
+        PercentageBySubClass = entries.ToDictionary(e => e.SubClass, e => e.Percentage)
+    };
+
     private static DashboardDto BaseDto() => new()
     {
         DefaultMonetaryUnit = "KRW",
@@ -53,7 +64,7 @@ public class DashboardViewModelMapperTests
     {
         var dto = BaseDto();
         dto.DefaultMonetaryUnit = null;
-        dto.YearIncomes = [Income("RegularIncome", "LaborIncome", 100)];
+        dto.YearIncomeBreakdown = new() { ["RegularIncome"] = Breakdown(100m, ("LaborIncome", 100m, 100.0)) };
 
         var vm = dto.ToViewModel(Utc);
 
@@ -129,42 +140,40 @@ public class DashboardViewModelMapperTests
         Assert.Equal(income.Updated.ConvertTimeByTimeZoneIanaId("Asia/Seoul"), vm.IncomeYearOutputViewModels[0].Updated);
     }
 
-    // -- Income aggregation: RegularIncome / IrregularIncome ------------------
+    // -- Income breakdown copy: RegularIncome / IrregularIncome ----------------
 
-    /// <summary>To view model aggregates regular income sub classes and percentages year.</summary>
+    /// <summary>To view model copies regular income sub-class amounts and percentages for the year onto their named properties.</summary>
     [Fact]
-    public void ToViewModel_AggregatesRegularIncomeSubClassesAndPercentages_Year()
+    public void ToViewModel_CopiesRegularIncomeBreakdown_Year()
     {
         var dto = BaseDto();
-        dto.YearIncomes =
-        [
-            Income("RegularIncome", "LaborIncome", 600),
-            Income("RegularIncome", "BusinessIncome", 300),
-            Income("RegularIncome", "PensionIncome", 100),
-            Income("IrregularIncome", "LaborIncome", 999) // must not bleed into RegularIncome totals
-        ];
+        dto.YearIncomeBreakdown = new()
+        {
+            ["RegularIncome"] = Breakdown(1000m,
+                ("LaborIncome", 600m, 60.0), ("BusinessIncome", 300m, 30.0), ("PensionIncome", 100m, 10.0))
+        };
 
         var vm = dto.ToViewModel(Utc);
 
         Assert.Equal(600m, vm.RegularIncomeLaborIncomeYear);
         Assert.Equal(300m, vm.RegularIncomeBusinessIncomeYear);
         Assert.Equal(100m, vm.RegularIncomePensionIncomeYear);
-        Assert.Equal(0m, vm.RegularIncomeFinancialIncomeYear);
+        Assert.Equal(0m, vm.RegularIncomeFinancialIncomeYear); // sub-class absent from the breakdown -> default
         Assert.Equal(60.0, vm.PercentageOfRegularIncomeLaborIncomeYear);
         Assert.Equal(30.0, vm.PercentageOfRegularIncomeBusinessIncomeYear);
         Assert.Equal(10.0, vm.PercentageOfRegularIncomePensionIncomeYear);
     }
 
-    /// <summary>To view model aggregates irregular income sub classes and percentages year.</summary>
+    /// <summary>To view model copies irregular income breakdown for the year onto its named properties, independently of RegularIncome.</summary>
     [Fact]
-    public void ToViewModel_AggregatesIrregularIncomeSubClassesAndPercentages_Year()
+    public void ToViewModel_CopiesIrregularIncomeBreakdown_Year()
     {
         var dto = BaseDto();
-        dto.YearIncomes =
-        [
-            Income("IrregularIncome", "LaborIncome", 750),
-            Income("IrregularIncome", "OtherIncome", 250)
-        ];
+        dto.YearIncomeBreakdown = new()
+        {
+            ["RegularIncome"] = Breakdown(999m, ("LaborIncome", 999m, 100.0)), // must not bleed into IrregularIncome
+            ["IrregularIncome"] = Breakdown(1000m, ("LaborIncome", 750m, 75.0), ("OtherIncome", 250m, 25.0))
+        };
 
         var vm = dto.ToViewModel(Utc);
 
@@ -174,26 +183,29 @@ public class DashboardViewModelMapperTests
         Assert.Equal(25.0, vm.PercentageOfIrregularIncomeOtherIncomeYear);
     }
 
-    /// <summary>To view model regular income total zero percentages stay at default.</summary>
+    /// <summary>To view model defaults regular income amounts and percentages to zero when no breakdown entry exists for that main class.</summary>
     [Fact]
-    public void ToViewModel_RegularIncomeTotalZero_PercentagesStayAtDefault()
+    public void ToViewModel_RegularIncomeMainClassAbsent_AmountsAndPercentagesDefaultToZero()
     {
-        var dto = BaseDto();
-        dto.YearIncomes = []; // no regular income at all -> totalRegular == 0
+        var dto = BaseDto(); // YearIncomeBreakdown left empty
 
         var vm = dto.ToViewModel(Utc);
 
+        Assert.Equal(0m, vm.RegularIncomeLaborIncomeYear);
         Assert.Equal(0.0, vm.PercentageOfRegularIncomeLaborIncomeYear);
         Assert.Equal(0.0, vm.PercentageOfRegularIncomeBusinessIncomeYear);
     }
 
-    /// <summary>To view model aggregates regular income for year month list independently.</summary>
+    /// <summary>To view model copies the Year and YearMonth income breakdowns independently.</summary>
     [Fact]
-    public void ToViewModel_AggregatesRegularIncome_ForYearMonthList_Independently()
+    public void ToViewModel_CopiesRegularIncomeBreakdown_ForYearAndYearMonth_Independently()
     {
         var dto = BaseDto();
-        dto.YearIncomes = [Income("RegularIncome", "LaborIncome", 1000)];
-        dto.YearMonthIncomes = [Income("RegularIncome", "LaborIncome", 400), Income("RegularIncome", "BusinessIncome", 100)];
+        dto.YearIncomeBreakdown = new() { ["RegularIncome"] = Breakdown(1000m, ("LaborIncome", 1000m, 100.0)) };
+        dto.YearMonthIncomeBreakdown = new()
+        {
+            ["RegularIncome"] = Breakdown(500m, ("LaborIncome", 400m, 80.0), ("BusinessIncome", 100m, 20.0))
+        };
 
         var vm = dto.ToViewModel(Utc);
 
@@ -203,18 +215,17 @@ public class DashboardViewModelMapperTests
         Assert.Equal(80.0, vm.PercentageOfRegularIncomeLaborIncomeYearMonth);
     }
 
-    // -- Expenditure aggregation: RegularSavings -------------------------------
+    // -- Expenditure breakdown copy: RegularSavings ----------------------------
 
-    /// <summary>To view model aggregates regular savings sub classes and percentages year.</summary>
+    /// <summary>To view model copies regular savings breakdown for the year onto its named properties.</summary>
     [Fact]
-    public void ToViewModel_AggregatesRegularSavingsSubClassesAndPercentages_Year()
+    public void ToViewModel_CopiesRegularSavingsBreakdown_Year()
     {
         var dto = BaseDto();
-        dto.YearExpenditures =
-        [
-            Expenditure("RegularSavings", "Deposit", 700),
-            Expenditure("RegularSavings", "Investment", 300)
-        ];
+        dto.YearExpenditureBreakdown = new()
+        {
+            ["RegularSavings"] = Breakdown(1000m, ("Deposit", 700m, 70.0), ("Investment", 300m, 30.0))
+        };
 
         var vm = dto.ToViewModel(Utc);
 
@@ -224,22 +235,20 @@ public class DashboardViewModelMapperTests
         Assert.Equal(30.0, vm.PercentageOfRegularSavingsInvestmentYear);
     }
 
-    // -- Expenditure aggregation: NonConsumerSpending --------------------------
+    // -- Expenditure breakdown copy: NonConsumerSpending -----------------------
 
-    /// <summary>To view model aggregates non consumer spending sub classes and percentages year.</summary>
+    /// <summary>To view model copies every non-consumer-spending sub-class for the year onto its named property.</summary>
     [Fact]
-    public void ToViewModel_AggregatesNonConsumerSpendingSubClassesAndPercentages_Year()
+    public void ToViewModel_CopiesNonConsumerSpendingBreakdown_Year()
     {
         var dto = BaseDto();
-        dto.YearExpenditures =
-        [
-            Expenditure("NonConsumerSpending", "PublicPension", 200),
-            Expenditure("NonConsumerSpending", "DebtRepayment", 200),
-            Expenditure("NonConsumerSpending", "Tax", 200),
-            Expenditure("NonConsumerSpending", "SocialInsurance", 200),
-            Expenditure("NonConsumerSpending", "InterHouseholdTransferExpenses", 100),
-            Expenditure("NonConsumerSpending", "NonProfitOrganizationTransfer", 100)
-        ];
+        dto.YearExpenditureBreakdown = new()
+        {
+            ["NonConsumerSpending"] = Breakdown(1000m,
+                ("PublicPension", 200m, 20.0), ("DebtRepayment", 200m, 20.0), ("Tax", 200m, 20.0),
+                ("SocialInsurance", 200m, 20.0), ("InterHouseholdTransferExpenses", 100m, 10.0),
+                ("NonProfitOrganizationTransfer", 100m, 10.0))
+        };
 
         var vm = dto.ToViewModel(Utc);
 
@@ -253,77 +262,62 @@ public class DashboardViewModelMapperTests
         Assert.Equal(10.0, vm.PercentageOfNonConsumerSpendingInterHouseholdTransferExpensesYear);
     }
 
-    // -- Expenditure aggregation: ConsumerSpending (all 12 sub-classes) --------
+    // -- Expenditure breakdown copy: ConsumerSpending (all 12 sub-classes) -----
 
-    /// <summary>To view model aggregates consumer spending sub classes and percentages year.</summary>
+    /// <summary>To view model copies every consumer-spending sub-class for the year onto its named property.</summary>
     [Fact]
-    public void ToViewModel_AggregatesConsumerSpendingSubClassesAndPercentages_Year()
+    public void ToViewModel_CopiesConsumerSpendingBreakdown_Year()
     {
         var dto = BaseDto();
-        dto.YearExpenditures =
-        [
-            Expenditure("ConsumerSpending", "MealOrEatOutExpenses", 100),
-            Expenditure("ConsumerSpending", "HousingOrSuppliesCost", 100),
-            Expenditure("ConsumerSpending", "EducationExpenses", 100),
-            Expenditure("ConsumerSpending", "MedicalExpenses", 100),
-            Expenditure("ConsumerSpending", "TransportationCost", 100),
-            Expenditure("ConsumerSpending", "CommunicationCost", 100),
-            Expenditure("ConsumerSpending", "LeisureOrCulture", 100),
-            Expenditure("ConsumerSpending", "ClothingOrShoes", 100),
-            Expenditure("ConsumerSpending", "PinMoney", 100),
-            Expenditure("ConsumerSpending", "ProtectionTypeInsurance", 100),
-            Expenditure("ConsumerSpending", "OtherExpenses", 100),
-            Expenditure("ConsumerSpending", "UnknownExpenditure", 100)
-        ];
+        double eachPct = 100.0 / 12.0;
+        dto.YearExpenditureBreakdown = new()
+        {
+            ["ConsumerSpending"] = Breakdown(1200m,
+                ("MealOrEatOutExpenses", 100m, eachPct), ("HousingOrSuppliesCost", 100m, eachPct),
+                ("EducationExpenses", 100m, eachPct), ("MedicalExpenses", 100m, eachPct),
+                ("TransportationCost", 100m, eachPct), ("CommunicationCost", 100m, eachPct),
+                ("LeisureOrCulture", 100m, eachPct), ("ClothingOrShoes", 100m, eachPct),
+                ("PinMoney", 100m, eachPct), ("ProtectionTypeInsurance", 100m, eachPct),
+                ("OtherExpenses", 100m, eachPct), ("UnknownExpenditure", 100m, eachPct))
+        };
 
         var vm = dto.ToViewModel(Utc);
 
-        // 12 equal sub-classes -> each is exactly 1/12 of the total
         Assert.Equal(100m, vm.ConsumerSpendingMealOrEatOutExpensesYear);
         Assert.Equal(100m, vm.ConsumerSpendingUnknownExpenditureYear);
-        Assert.Equal(100.0 / 12.0, vm.PercentageOfConsumerSpendingMealOrEatOutExpensesYear, precision: 10);
-        Assert.Equal(100.0 / 12.0, vm.PercentageOfConsumerSpendingCommunicationCostYear, precision: 10);
-        Assert.Equal(100.0 / 12.0, vm.PercentageOfConsumerSpendingUnknownExpenditureYear, precision: 10);
+        Assert.Equal(eachPct, vm.PercentageOfConsumerSpendingMealOrEatOutExpensesYear, precision: 10);
+        Assert.Equal(eachPct, vm.PercentageOfConsumerSpendingCommunicationCostYear, precision: 10);
+        Assert.Equal(eachPct, vm.PercentageOfConsumerSpendingUnknownExpenditureYear, precision: 10);
     }
 
-    /// <summary>To view model aggregates consumer spending sub classes and percentages year month.</summary>
+    /// <summary>To view model copies every consumer-spending sub-class for the year-month period onto its named property.</summary>
     [Fact]
-    public void ToViewModel_AggregatesConsumerSpendingSubClassesAndPercentages_YearMonth()
+    public void ToViewModel_CopiesConsumerSpendingBreakdown_YearMonth()
     {
         var dto = BaseDto();
-        dto.YearMonthExpenditures =
-        [
-            Expenditure("ConsumerSpending", "MealOrEatOutExpenses", 100),
-            Expenditure("ConsumerSpending", "HousingOrSuppliesCost", 100),
-            Expenditure("ConsumerSpending", "EducationExpenses", 100),
-            Expenditure("ConsumerSpending", "MedicalExpenses", 100),
-            Expenditure("ConsumerSpending", "TransportationCost", 100),
-            Expenditure("ConsumerSpending", "CommunicationCost", 100),
-            Expenditure("ConsumerSpending", "LeisureOrCulture", 100),
-            Expenditure("ConsumerSpending", "ClothingOrShoes", 100),
-            Expenditure("ConsumerSpending", "PinMoney", 100),
-            Expenditure("ConsumerSpending", "ProtectionTypeInsurance", 100),
-            Expenditure("ConsumerSpending", "OtherExpenses", 100),
-            Expenditure("ConsumerSpending", "UnknownExpenditure", 100)
-        ];
+        double eachPct = 100.0 / 12.0;
+        dto.YearMonthExpenditureBreakdown = new()
+        {
+            ["ConsumerSpending"] = Breakdown(1200m,
+                ("MealOrEatOutExpenses", 100m, eachPct), ("CommunicationCost", 100m, eachPct),
+                ("UnknownExpenditure", 100m, eachPct))
+        };
 
         var vm = dto.ToViewModel(Utc);
 
-        // 12 equal sub-classes -> each is exactly 1/12 of the total
         Assert.Equal(100m, vm.ConsumerSpendingMealOrEatOutExpensesYearMonth);
         Assert.Equal(100m, vm.ConsumerSpendingCommunicationCostYearMonth);
         Assert.Equal(100m, vm.ConsumerSpendingUnknownExpenditureYearMonth);
-        Assert.Equal(100.0 / 12.0, vm.PercentageOfConsumerSpendingMealOrEatOutExpensesYearMonth, precision: 10);
-        Assert.Equal(100.0 / 12.0, vm.PercentageOfConsumerSpendingCommunicationCostYearMonth, precision: 10);
-        Assert.Equal(100.0 / 12.0, vm.PercentageOfConsumerSpendingUnknownExpenditureYearMonth, precision: 10);
+        Assert.Equal(eachPct, vm.PercentageOfConsumerSpendingMealOrEatOutExpensesYearMonth, precision: 10);
+        Assert.Equal(eachPct, vm.PercentageOfConsumerSpendingCommunicationCostYearMonth, precision: 10);
+        Assert.Equal(eachPct, vm.PercentageOfConsumerSpendingUnknownExpenditureYearMonth, precision: 10);
     }
 
-    /// <summary>To view model expenditure totals zero percentages stay at default.</summary>
+    /// <summary>To view model defaults expenditure percentages to zero when no breakdown entry exists for that main class.</summary>
     [Fact]
-    public void ToViewModel_ExpenditureTotalsZero_PercentagesStayAtDefault()
+    public void ToViewModel_ExpenditureMainClassAbsent_PercentagesDefaultToZero()
     {
-        var dto = BaseDto();
-        dto.YearExpenditures = [];
+        var dto = BaseDto(); // YearExpenditureBreakdown left empty
 
         var vm = dto.ToViewModel(Utc);
 

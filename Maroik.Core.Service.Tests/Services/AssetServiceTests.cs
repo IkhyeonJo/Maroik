@@ -67,7 +67,7 @@ public class AssetServiceTests
         ServiceResult result = await sut.CreateAsync("user@example.com", request, TestContext.Current.CancellationToken);
 
         Assert.False(result.Success);
-        Assert.Contains("invalid", result.ErrorKey, StringComparison.OrdinalIgnoreCase);
+        Assert.Equal("Asset.ItemInvalid", result.ErrorCode);
     }
 
     /// <summary>Verifies that <c>CreateAsync</c> returns fail when asset with same name already exists.</summary>
@@ -181,6 +181,7 @@ public class AssetServiceTests
         ServiceResult result = await sut.UpdateAsync("user@example.com", request, "MyBank", TestContext.Current.CancellationToken);
 
         Assert.False(result.Success);
+        Assert.Equal("Asset.ItemInvalid", result.ErrorCode);
         _unitOfWork.Verify(u => u.RollbackAsync(It.IsAny<CancellationToken>()), Times.Once);
     }
 

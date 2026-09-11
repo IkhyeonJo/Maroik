@@ -18,8 +18,7 @@
 (function () {
     // Cached references: tab containers, grid search box, the two maturity-date
     // inputs, every field of both modals, the amount labels, and the
-    // anti-forgery input. (`$btnEditFixedExpenditureGridRow` keeps the id typo
-    // from the original markup — it is this page's "edit" button.)
+    // anti-forgery input. (`$btnEditFixedIncomeGridRow` is this page's "edit" button.)
     const $createFixedIncomeTabs = $('#createFixedIncomeTabs');
     const $editFixedIncomeTabs = $('#editFixedIncomeTabs');
     const $createFixedIncomeMaturityDate = $('#createFixedIncomeMaturityDate');
@@ -51,7 +50,7 @@
     const $confirmDeleteFixedIncomeDialogModal = $('#confirmDeleteFixedIncomeDialogModal');
     const $labelCreateFixedIncomeAmount = $('#labelCreateFixedIncomeAmount');
     const $labelEditFixedIncomeAmount = $('#labelEditFixedIncomeAmount');
-    const $btnEditFixedExpenditureGridRow = $('#btnEditFixedExpenditureGridRow');
+    const $btnEditFixedIncomeGridRow = $('#btnEditFixedIncomeGridRow');
     const $btnConfirmDeleteFixedIncome = $('#btnConfirmDeleteFixedIncome');
     const $btnExportExcelFixedIncome = $('#btnExportExcelFixedIncome');
     const $btnDeleteFixedIncome = $('#btnDeleteFixedIncome');
@@ -685,7 +684,7 @@
     }
 
     // --- Button / form / select wiring --------------------------------
-    $btnEditFixedExpenditureGridRow.off('click').on('click', function () {
+    $btnEditFixedIncomeGridRow.off('click').on('click', function () {
         EditFixedIncomeGridRow($(this).attr('data-errorMessageSelectGridRow'));
     });
 

@@ -194,6 +194,35 @@ public sealed class ExpenditureRepositoryTests(DatabaseFixture database) : Repos
         Assert.Equal(500m, result.Amount); // 300 + 100 + 100: no lost update
     }
 
+    /// <summary>
+    /// Regression: the FOR UPDATE lookup re-reads through <c>FindByEmailAndIdAsync</c>-equivalent
+    /// path, which must run <c>AsNoTracking()</c>. If this row is already tracked in the same
+    /// <see cref="Context"/> from an earlier plain read, a tracking re-read would perform EF's
+    /// identity resolution and hand back that pre-existing (stale) tracked instance instead of the
+    /// row's just-locked, current committed values — silently defeating the FOR UPDATE lock.
+    /// </summary>
+    [Fact]
+    public async Task FindByEmailAndIdForUpdateAsync_ReturnsFreshValues_WhenRowAlreadyTrackedInSameContext()
+    {
+        string alice = UniqueEmail("alice");
+        var ef = MakeExpenditure(alice, "Stale", amount: 100m);
+        await SeedAsync(ef);
+
+        // Pre-track the row in this test's Context via a normal (tracking) read.
+        Expenditure? preRead = await Sut.FindByEmailAndIdAsync(alice, ef.Id, TestContext.Current.CancellationToken);
+        Assert.NotNull(preRead);
+
+        // A concurrent writer commits a change to the same row via a separate connection.
+        await using var writer = NewDbContext();
+        await writer.Expenditures.Where(e => e.Id == ef.Id)
+            .ExecuteUpdateAsync(s => s.SetProperty(e => e.Amount, 999m), TestContext.Current.CancellationToken);
+
+        Expenditure? locked = await Sut.FindByEmailAndIdForUpdateAsync(alice, ef.Id, TestContext.Current.CancellationToken);
+
+        Assert.NotNull(locked);
+        Assert.Equal(999m, locked.Amount.Amount);
+    }
+
     // -- CreateAsync --------------------------------------------------------------
 
     /// <summary>Verifies that <c>CreateAsync</c> inserts an expenditure row.</summary>

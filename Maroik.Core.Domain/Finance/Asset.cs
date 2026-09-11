@@ -122,6 +122,12 @@ public sealed class Asset : AggregateRoot<(string ProductName, string AccountEma
         if (string.IsNullOrWhiteSpace(item))
             return Error.Validation("Asset.ItemEmpty", "Asset category (item) cannot be empty.");
 
+        // Constrain to the known taxonomy here rather than trusting the caller: the DB
+        // Asset_Item_check constraint is currently the only thing rejecting anything else, which
+        // surfaces as a raw DB exception instead of this validation error.
+        if (!AssetItems.IsKnown(item))
+            return Error.Validation("Asset.ItemInvalid", "Asset category (item) is not a recognised value.");
+
         var emailResult = Email.Create(accountEmailValue);
         if (emailResult.IsError) return emailResult.Errors;
 
@@ -184,6 +190,9 @@ public sealed class Asset : AggregateRoot<(string ProductName, string AccountEma
 
         if (string.IsNullOrWhiteSpace(item))
             return Error.Validation("Asset.ItemEmpty", "Asset category cannot be empty.");
+
+        if (!AssetItems.IsKnown(item))
+            return Error.Validation("Asset.ItemInvalid", "Asset category (item) is not a recognised value.");
 
         var moneyResult = Money.Create(amount, currency);
         if (moneyResult.IsError) return moneyResult.Errors;

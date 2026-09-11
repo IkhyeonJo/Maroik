@@ -478,7 +478,7 @@ public class CalendarServiceTests
         var reminders = new List<CalendarReminderDto>
         {
             new() { Method = "Email", MinutesBeforeEvent = 30 },
-            new() { Method = "Popup", MinutesBeforeEvent = 10 }
+            new() { Method = "Notification", MinutesBeforeEvent = 10 }
         };
 
         ServiceResult result = await sut.CreateCalendarEventAsync(

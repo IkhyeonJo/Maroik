@@ -15,7 +15,7 @@ public sealed class CalendarEventReminder : AggregateRoot<long>
     /// <summary>ID of the parent calendar event.</summary>
     public long CalendarEventId { get; private set; }
 
-    /// <summary>Notification delivery method (e.g. "Email", "Push").</summary>
+    /// <summary>Notification delivery method — see <see cref="ReminderMethods"/> for the allowed values.</summary>
     public string Method { get; private set; }
 
     /// <summary>Minutes before the event to send the reminder.</summary>
@@ -77,6 +77,12 @@ public sealed class CalendarEventReminder : AggregateRoot<long>
     {
         if (string.IsNullOrWhiteSpace(method))
             return Error.Validation("Reminder.MethodEmpty", "Notification method cannot be empty.");
+
+        // Constrain to the known taxonomy here rather than trusting the caller: the DB
+        // CalendarEventReminder_Method_check constraint is currently the only thing rejecting
+        // anything else, which surfaces as a raw DB exception instead of this validation error.
+        if (!ReminderMethods.IsKnown(method))
+            return Error.Validation("Reminder.MethodInvalid", "Notification method is not a recognised value.");
 
         // The client models each reminder as a single unit+value pair (a dropdown picks minutes/
         // hours/days/weeks, then one value field) — multiple simultaneous lead-time fields have no

@@ -7,9 +7,10 @@ namespace Maroik.Website.Mappings;
 /// <summary>
 /// Converts a <see cref="DashboardDto"/> returned by <c>IDashboardService</c> into the
 /// <see cref="UserIndexOutputViewModel"/> expected by the Dashboard view.
-/// Handles response-to-ViewModel mapping (with timezone conversion and currency lookup)
-/// and all per-category aggregation and percentage calculations, keeping this logic
-/// out of the controller.
+/// Handles response-to-ViewModel mapping only (timezone conversion, currency lookup, and copying
+/// the per-category sums/percentages <c>DashboardService</c> already computed via
+/// <see cref="Maroik.Core.Domain.Finance.FinanceBreakdownPolicy"/> onto their named view-model
+/// properties) — no summing or percentage math happens here.
 /// </summary>
 public static class DashboardViewModelMapper
 {
@@ -39,8 +40,10 @@ public static class DashboardViewModelMapper
             vm.IncomeYearMonthOutputViewModels = MapIncomes(summary.YearMonthIncomes, currencyByProduct, timeZoneId);
             vm.ExpenditureYearMonthOutputViewModels = MapExpenditures(summary.YearMonthExpenditures, currencyByProduct, timeZoneId);
 
-            AggregateIncomes(vm);
-            AggregateExpenditures(vm);
+            AssignIncomeBreakdown(vm, summary.YearIncomeBreakdown, isYearMonth: false);
+            AssignIncomeBreakdown(vm, summary.YearMonthIncomeBreakdown, isYearMonth: true);
+            AssignExpenditureBreakdown(vm, summary.YearExpenditureBreakdown, isYearMonth: false);
+            AssignExpenditureBreakdown(vm, summary.YearMonthExpenditureBreakdown, isYearMonth: true);
 
             return vm;
         }
@@ -85,198 +88,151 @@ public static class DashboardViewModelMapper
             Updated = item.Updated.ConvertTimeByTimeZoneIanaId(timeZoneId)
         }).ToList();
 
-    // ── Aggregation ──────────────────────────────────────────────────────────
+    // ── Breakdown assignment (lookups only — DashboardService already computed every number) ────
 
-    private static void AggregateIncomes(UserIndexOutputViewModel vm)
+    private static decimal Amount(IReadOnlyDictionary<string, FinanceBreakdownDto> breakdown, string mainClass, string subClass) =>
+        breakdown.TryGetValue(mainClass, out var b) ? b.AmountBySubClass.GetValueOrDefault(subClass) : 0m;
+
+    private static double Pct(IReadOnlyDictionary<string, FinanceBreakdownDto> breakdown, string mainClass, string subClass) =>
+        breakdown.TryGetValue(mainClass, out var b) ? b.PercentageBySubClass.GetValueOrDefault(subClass) : 0.0;
+
+    private static void AssignIncomeBreakdown(
+        UserIndexOutputViewModel vm, IReadOnlyDictionary<string, FinanceBreakdownDto> breakdown, bool isYearMonth)
     {
-        AggregatePeriodIncomes(vm, vm.IncomeYearOutputViewModels, isYearMonth: false);
-        AggregatePeriodIncomes(vm, vm.IncomeYearMonthOutputViewModels, isYearMonth: true);
-    }
-
-    private static void AggregatePeriodIncomes(UserIndexOutputViewModel vm, List<IncomeOutputViewModel> incomes, bool isYearMonth)
-    {
-        var regular = incomes.Where(x => x.MainClass == "RegularIncome").ToList();
-        var irregular = incomes.Where(x => x.MainClass == "IrregularIncome").ToList();
-
-        decimal regularLabor = SumSub(regular, "LaborIncome");
-        decimal regularBusiness = SumSub(regular, "BusinessIncome");
-        decimal regularPension = SumSub(regular, "PensionIncome");
-        decimal regularFinancial = SumSub(regular, "FinancialIncome");
-        decimal regularRental = SumSub(regular, "RentalIncome");
-        decimal regularOther = SumSub(regular, "OtherIncome");
-        decimal totalRegular = regular.Sum(v => v.Amount);
-
-        decimal irregularLabor = SumSub(irregular, "LaborIncome");
-        decimal irregularOther = SumSub(irregular, "OtherIncome");
-        decimal totalIrregular = irregular.Sum(v => v.Amount);
-
         if (!isYearMonth)
         {
-            vm.RegularIncomeLaborIncomeYear = regularLabor;
-            vm.RegularIncomeBusinessIncomeYear = regularBusiness;
-            vm.RegularIncomePensionIncomeYear = regularPension;
-            vm.RegularIncomeFinancialIncomeYear = regularFinancial;
-            vm.RegularIncomeRentalIncomeYear = regularRental;
-            vm.RegularIncomeOtherIncomeYear = regularOther;
-            if (totalRegular != 0)
-            {
-                vm.PercentageOfRegularIncomeLaborIncomeYear = Pct(regularLabor, totalRegular);
-                vm.PercentageOfRegularIncomeBusinessIncomeYear = Pct(regularBusiness, totalRegular);
-                vm.PercentageOfRegularIncomePensionIncomeYear = Pct(regularPension, totalRegular);
-                vm.PercentageOfRegularIncomeFinancialIncomeYear = Pct(regularFinancial, totalRegular);
-                vm.PercentageOfRegularIncomeRentalIncomeYear = Pct(regularRental, totalRegular);
-                vm.PercentageOfRegularIncomeOtherIncomeYear = Pct(regularOther, totalRegular);
-            }
-            vm.IrregularIncomeLaborIncomeYear = irregularLabor;
-            vm.IrregularIncomeOtherIncomeYear = irregularOther;
-            if (totalIrregular == 0)
-            {
-                return;
-            }
+            vm.RegularIncomeLaborIncomeYear = Amount(breakdown, "RegularIncome", "LaborIncome");
+            vm.RegularIncomeBusinessIncomeYear = Amount(breakdown, "RegularIncome", "BusinessIncome");
+            vm.RegularIncomePensionIncomeYear = Amount(breakdown, "RegularIncome", "PensionIncome");
+            vm.RegularIncomeFinancialIncomeYear = Amount(breakdown, "RegularIncome", "FinancialIncome");
+            vm.RegularIncomeRentalIncomeYear = Amount(breakdown, "RegularIncome", "RentalIncome");
+            vm.RegularIncomeOtherIncomeYear = Amount(breakdown, "RegularIncome", "OtherIncome");
+            vm.PercentageOfRegularIncomeLaborIncomeYear = Pct(breakdown, "RegularIncome", "LaborIncome");
+            vm.PercentageOfRegularIncomeBusinessIncomeYear = Pct(breakdown, "RegularIncome", "BusinessIncome");
+            vm.PercentageOfRegularIncomePensionIncomeYear = Pct(breakdown, "RegularIncome", "PensionIncome");
+            vm.PercentageOfRegularIncomeFinancialIncomeYear = Pct(breakdown, "RegularIncome", "FinancialIncome");
+            vm.PercentageOfRegularIncomeRentalIncomeYear = Pct(breakdown, "RegularIncome", "RentalIncome");
+            vm.PercentageOfRegularIncomeOtherIncomeYear = Pct(breakdown, "RegularIncome", "OtherIncome");
 
-            vm.PercentageOfIrregularIncomeLaborIncomeYear = Pct(irregularLabor, totalIrregular);
-            vm.PercentageOfIrregularIncomeOtherIncomeYear = Pct(irregularOther, totalIrregular);
+            vm.IrregularIncomeLaborIncomeYear = Amount(breakdown, "IrregularIncome", "LaborIncome");
+            vm.IrregularIncomeOtherIncomeYear = Amount(breakdown, "IrregularIncome", "OtherIncome");
+            vm.PercentageOfIrregularIncomeLaborIncomeYear = Pct(breakdown, "IrregularIncome", "LaborIncome");
+            vm.PercentageOfIrregularIncomeOtherIncomeYear = Pct(breakdown, "IrregularIncome", "OtherIncome");
         }
         else
         {
-            vm.RegularIncomeLaborIncomeYearMonth = regularLabor;
-            vm.RegularIncomeBusinessIncomeYearMonth = regularBusiness;
-            vm.RegularIncomePensionIncomeYearMonth = regularPension;
-            vm.RegularIncomeFinancialIncomeYearMonth = regularFinancial;
-            vm.RegularIncomeRentalIncomeYearMonth = regularRental;
-            vm.RegularIncomeOtherIncomeYearMonth = regularOther;
-            if (totalRegular != 0)
-            {
-                vm.PercentageOfRegularIncomeLaborIncomeYearMonth = Pct(regularLabor, totalRegular);
-                vm.PercentageOfRegularIncomeBusinessIncomeYearMonth = Pct(regularBusiness, totalRegular);
-                vm.PercentageOfRegularIncomePensionIncomeYearMonth = Pct(regularPension, totalRegular);
-                vm.PercentageOfRegularIncomeFinancialIncomeYearMonth = Pct(regularFinancial, totalRegular);
-                vm.PercentageOfRegularIncomeRentalIncomeYearMonth = Pct(regularRental, totalRegular);
-                vm.PercentageOfRegularIncomeOtherIncomeYearMonth = Pct(regularOther, totalRegular);
-            }
-            vm.IrregularIncomeLaborIncomeYearMonth = irregularLabor;
-            vm.IrregularIncomeOtherIncomeYearMonth = irregularOther;
-            if (totalIrregular == 0)
-            {
-                return;
-            }
+            vm.RegularIncomeLaborIncomeYearMonth = Amount(breakdown, "RegularIncome", "LaborIncome");
+            vm.RegularIncomeBusinessIncomeYearMonth = Amount(breakdown, "RegularIncome", "BusinessIncome");
+            vm.RegularIncomePensionIncomeYearMonth = Amount(breakdown, "RegularIncome", "PensionIncome");
+            vm.RegularIncomeFinancialIncomeYearMonth = Amount(breakdown, "RegularIncome", "FinancialIncome");
+            vm.RegularIncomeRentalIncomeYearMonth = Amount(breakdown, "RegularIncome", "RentalIncome");
+            vm.RegularIncomeOtherIncomeYearMonth = Amount(breakdown, "RegularIncome", "OtherIncome");
+            vm.PercentageOfRegularIncomeLaborIncomeYearMonth = Pct(breakdown, "RegularIncome", "LaborIncome");
+            vm.PercentageOfRegularIncomeBusinessIncomeYearMonth = Pct(breakdown, "RegularIncome", "BusinessIncome");
+            vm.PercentageOfRegularIncomePensionIncomeYearMonth = Pct(breakdown, "RegularIncome", "PensionIncome");
+            vm.PercentageOfRegularIncomeFinancialIncomeYearMonth = Pct(breakdown, "RegularIncome", "FinancialIncome");
+            vm.PercentageOfRegularIncomeRentalIncomeYearMonth = Pct(breakdown, "RegularIncome", "RentalIncome");
+            vm.PercentageOfRegularIncomeOtherIncomeYearMonth = Pct(breakdown, "RegularIncome", "OtherIncome");
 
-            vm.PercentageOfIrregularIncomeLaborIncomeYearMonth = Pct(irregularLabor, totalIrregular);
-            vm.PercentageOfIrregularIncomeOtherIncomeYearMonth = Pct(irregularOther, totalIrregular);
+            vm.IrregularIncomeLaborIncomeYearMonth = Amount(breakdown, "IrregularIncome", "LaborIncome");
+            vm.IrregularIncomeOtherIncomeYearMonth = Amount(breakdown, "IrregularIncome", "OtherIncome");
+            vm.PercentageOfIrregularIncomeLaborIncomeYearMonth = Pct(breakdown, "IrregularIncome", "LaborIncome");
+            vm.PercentageOfIrregularIncomeOtherIncomeYearMonth = Pct(breakdown, "IrregularIncome", "OtherIncome");
         }
     }
 
-    private static void AggregateExpenditures(UserIndexOutputViewModel vm)
+    private static void AssignExpenditureBreakdown(
+        UserIndexOutputViewModel vm, IReadOnlyDictionary<string, FinanceBreakdownDto> breakdown, bool isYearMonth)
     {
-        AggregatePeriodExpenditures(vm, vm.ExpenditureYearOutputViewModels, isYearMonth: false);
-        AggregatePeriodExpenditures(vm, vm.ExpenditureYearMonthOutputViewModels, isYearMonth: true);
-    }
-
-    private static void AggregatePeriodExpenditures(UserIndexOutputViewModel vm, List<ExpenditureOutputViewModel> expenditures, bool isYearMonth)
-    {
-        var savings = expenditures.Where(x => x.MainClass == "RegularSavings").ToList();
-        var nonConsumer = expenditures.Where(x => x.MainClass == "NonConsumerSpending").ToList();
-        var consumer = expenditures.Where(x => x.MainClass == "ConsumerSpending").ToList();
-
-        decimal savingsDeposit = SumSub(savings, "Deposit");
-        decimal savingsInvestment = SumSub(savings, "Investment");
-        decimal totalSavings = savings.Sum(v => v.Amount);
-
-        decimal ncPublicPension = SumSub(nonConsumer, "PublicPension");
-        decimal ncDebt = SumSub(nonConsumer, "DebtRepayment");
-        decimal ncTax = SumSub(nonConsumer, "Tax");
-        decimal ncSocial = SumSub(nonConsumer, "SocialInsurance");
-        decimal ncInterHousehold = SumSub(nonConsumer, "InterHouseholdTransferExpenses");
-        decimal ncNonProfit = SumSub(nonConsumer, "NonProfitOrganizationTransfer");
-        decimal totalNonConsumer = nonConsumer.Sum(v => v.Amount);
-
-        decimal cMeal = SumSub(consumer, "MealOrEatOutExpenses");
-        decimal cHousing = SumSub(consumer, "HousingOrSuppliesCost");
-        decimal cEducation = SumSub(consumer, "EducationExpenses");
-        decimal cMedical = SumSub(consumer, "MedicalExpenses");
-        decimal cTransport = SumSub(consumer, "TransportationCost");
-        decimal cComm = SumSub(consumer, "CommunicationCost");
-        decimal cLeisure = SumSub(consumer, "LeisureOrCulture");
-        decimal cClothing = SumSub(consumer, "ClothingOrShoes");
-        decimal cPin = SumSub(consumer, "PinMoney");
-        decimal cInsurance = SumSub(consumer, "ProtectionTypeInsurance");
-        decimal cOther = SumSub(consumer, "OtherExpenses");
-        decimal cUnknown = SumSub(consumer, "UnknownExpenditure");
-        decimal totalConsumer = consumer.Sum(v => v.Amount);
-
         if (!isYearMonth)
         {
-            vm.RegularSavingsDepositYear = savingsDeposit;
-            vm.RegularSavingsInvestmentYear = savingsInvestment;
-            if (totalSavings != 0) { vm.PercentageOfRegularSavingsDepositYear = Pct(savingsDeposit, totalSavings); vm.PercentageOfRegularSavingsInvestmentYear = Pct(savingsInvestment, totalSavings); }
+            vm.RegularSavingsDepositYear = Amount(breakdown, "RegularSavings", "Deposit");
+            vm.RegularSavingsInvestmentYear = Amount(breakdown, "RegularSavings", "Investment");
+            vm.PercentageOfRegularSavingsDepositYear = Pct(breakdown, "RegularSavings", "Deposit");
+            vm.PercentageOfRegularSavingsInvestmentYear = Pct(breakdown, "RegularSavings", "Investment");
 
-            vm.NonConsumerSpendingPublicPensionYear = ncPublicPension;
-            vm.NonConsumerSpendingDebtRepaymentYear = ncDebt;
-            vm.NonConsumerSpendingTaxYear = ncTax;
-            vm.NonConsumerSpendingSocialInsuranceYear = ncSocial;
-            vm.NonConsumerSpendingInterHouseholdTransferExpensesYear = ncInterHousehold;
-            vm.NonConsumerSpendingNonProfitOrganizationTransferYear = ncNonProfit;
-            if (totalNonConsumer != 0) { vm.PercentageOfNonConsumerSpendingPublicPensionYear = Pct(ncPublicPension, totalNonConsumer); vm.PercentageOfNonConsumerSpendingDebtRepaymentYear = Pct(ncDebt, totalNonConsumer); vm.PercentageOfNonConsumerSpendingTaxYear = Pct(ncTax, totalNonConsumer); vm.PercentageOfNonConsumerSpendingSocialInsuranceYear = Pct(ncSocial, totalNonConsumer); vm.PercentageOfNonConsumerSpendingInterHouseholdTransferExpensesYear = Pct(ncInterHousehold, totalNonConsumer); vm.PercentageOfNonConsumerSpendingNonProfitOrganizationTransferYear = Pct(ncNonProfit, totalNonConsumer); }
+            vm.NonConsumerSpendingPublicPensionYear = Amount(breakdown, "NonConsumerSpending", "PublicPension");
+            vm.NonConsumerSpendingDebtRepaymentYear = Amount(breakdown, "NonConsumerSpending", "DebtRepayment");
+            vm.NonConsumerSpendingTaxYear = Amount(breakdown, "NonConsumerSpending", "Tax");
+            vm.NonConsumerSpendingSocialInsuranceYear = Amount(breakdown, "NonConsumerSpending", "SocialInsurance");
+            vm.NonConsumerSpendingInterHouseholdTransferExpensesYear = Amount(breakdown, "NonConsumerSpending", "InterHouseholdTransferExpenses");
+            vm.NonConsumerSpendingNonProfitOrganizationTransferYear = Amount(breakdown, "NonConsumerSpending", "NonProfitOrganizationTransfer");
+            vm.PercentageOfNonConsumerSpendingPublicPensionYear = Pct(breakdown, "NonConsumerSpending", "PublicPension");
+            vm.PercentageOfNonConsumerSpendingDebtRepaymentYear = Pct(breakdown, "NonConsumerSpending", "DebtRepayment");
+            vm.PercentageOfNonConsumerSpendingTaxYear = Pct(breakdown, "NonConsumerSpending", "Tax");
+            vm.PercentageOfNonConsumerSpendingSocialInsuranceYear = Pct(breakdown, "NonConsumerSpending", "SocialInsurance");
+            vm.PercentageOfNonConsumerSpendingInterHouseholdTransferExpensesYear = Pct(breakdown, "NonConsumerSpending", "InterHouseholdTransferExpenses");
+            vm.PercentageOfNonConsumerSpendingNonProfitOrganizationTransferYear = Pct(breakdown, "NonConsumerSpending", "NonProfitOrganizationTransfer");
 
-            vm.ConsumerSpendingMealOrEatOutExpensesYear = cMeal;
-            vm.ConsumerSpendingHousingOrSuppliesCostYear = cHousing;
-            vm.ConsumerSpendingEducationExpensesYear = cEducation;
-            vm.ConsumerSpendingMedicalExpensesYear = cMedical;
-            vm.ConsumerSpendingTransportationCostYear = cTransport;
-            vm.ConsumerSpendingCommunicationCostYear = cComm;
-            vm.ConsumerSpendingLeisureOrCultureYear = cLeisure;
-            vm.ConsumerSpendingClothingOrShoesYear = cClothing;
-            vm.ConsumerSpendingPinMoneyYear = cPin;
-            vm.ConsumerSpendingProtectionTypeInsuranceYear = cInsurance;
-            vm.ConsumerSpendingOtherExpensesYear = cOther;
-            vm.ConsumerSpendingUnknownExpenditureYear = cUnknown;
-            if (totalConsumer == 0)
-            {
-                return;
-            }
-
-            vm.PercentageOfConsumerSpendingMealOrEatOutExpensesYear = Pct(cMeal, totalConsumer); vm.PercentageOfConsumerSpendingHousingOrSuppliesCostYear = Pct(cHousing, totalConsumer); vm.PercentageOfConsumerSpendingEducationExpensesYear = Pct(cEducation, totalConsumer); vm.PercentageOfConsumerSpendingMedicalExpensesYear = Pct(cMedical, totalConsumer); vm.PercentageOfConsumerSpendingTransportationCostYear = Pct(cTransport, totalConsumer); vm.PercentageOfConsumerSpendingCommunicationCostYear = Pct(cComm, totalConsumer); vm.PercentageOfConsumerSpendingLeisureOrCultureYear = Pct(cLeisure, totalConsumer); vm.PercentageOfConsumerSpendingClothingOrShoesYear = Pct(cClothing, totalConsumer); vm.PercentageOfConsumerSpendingPinMoneyYear = Pct(cPin, totalConsumer); vm.PercentageOfConsumerSpendingProtectionTypeInsuranceYear = Pct(cInsurance, totalConsumer); vm.PercentageOfConsumerSpendingOtherExpensesYear = Pct(cOther, totalConsumer); vm.PercentageOfConsumerSpendingUnknownExpenditureYear = Pct(cUnknown, totalConsumer);
+            vm.ConsumerSpendingMealOrEatOutExpensesYear = Amount(breakdown, "ConsumerSpending", "MealOrEatOutExpenses");
+            vm.ConsumerSpendingHousingOrSuppliesCostYear = Amount(breakdown, "ConsumerSpending", "HousingOrSuppliesCost");
+            vm.ConsumerSpendingEducationExpensesYear = Amount(breakdown, "ConsumerSpending", "EducationExpenses");
+            vm.ConsumerSpendingMedicalExpensesYear = Amount(breakdown, "ConsumerSpending", "MedicalExpenses");
+            vm.ConsumerSpendingTransportationCostYear = Amount(breakdown, "ConsumerSpending", "TransportationCost");
+            vm.ConsumerSpendingCommunicationCostYear = Amount(breakdown, "ConsumerSpending", "CommunicationCost");
+            vm.ConsumerSpendingLeisureOrCultureYear = Amount(breakdown, "ConsumerSpending", "LeisureOrCulture");
+            vm.ConsumerSpendingClothingOrShoesYear = Amount(breakdown, "ConsumerSpending", "ClothingOrShoes");
+            vm.ConsumerSpendingPinMoneyYear = Amount(breakdown, "ConsumerSpending", "PinMoney");
+            vm.ConsumerSpendingProtectionTypeInsuranceYear = Amount(breakdown, "ConsumerSpending", "ProtectionTypeInsurance");
+            vm.ConsumerSpendingOtherExpensesYear = Amount(breakdown, "ConsumerSpending", "OtherExpenses");
+            vm.ConsumerSpendingUnknownExpenditureYear = Amount(breakdown, "ConsumerSpending", "UnknownExpenditure");
+            vm.PercentageOfConsumerSpendingMealOrEatOutExpensesYear = Pct(breakdown, "ConsumerSpending", "MealOrEatOutExpenses");
+            vm.PercentageOfConsumerSpendingHousingOrSuppliesCostYear = Pct(breakdown, "ConsumerSpending", "HousingOrSuppliesCost");
+            vm.PercentageOfConsumerSpendingEducationExpensesYear = Pct(breakdown, "ConsumerSpending", "EducationExpenses");
+            vm.PercentageOfConsumerSpendingMedicalExpensesYear = Pct(breakdown, "ConsumerSpending", "MedicalExpenses");
+            vm.PercentageOfConsumerSpendingTransportationCostYear = Pct(breakdown, "ConsumerSpending", "TransportationCost");
+            vm.PercentageOfConsumerSpendingCommunicationCostYear = Pct(breakdown, "ConsumerSpending", "CommunicationCost");
+            vm.PercentageOfConsumerSpendingLeisureOrCultureYear = Pct(breakdown, "ConsumerSpending", "LeisureOrCulture");
+            vm.PercentageOfConsumerSpendingClothingOrShoesYear = Pct(breakdown, "ConsumerSpending", "ClothingOrShoes");
+            vm.PercentageOfConsumerSpendingPinMoneyYear = Pct(breakdown, "ConsumerSpending", "PinMoney");
+            vm.PercentageOfConsumerSpendingProtectionTypeInsuranceYear = Pct(breakdown, "ConsumerSpending", "ProtectionTypeInsurance");
+            vm.PercentageOfConsumerSpendingOtherExpensesYear = Pct(breakdown, "ConsumerSpending", "OtherExpenses");
+            vm.PercentageOfConsumerSpendingUnknownExpenditureYear = Pct(breakdown, "ConsumerSpending", "UnknownExpenditure");
         }
         else
         {
-            vm.RegularSavingsDepositYearMonth = savingsDeposit;
-            vm.RegularSavingsInvestmentYearMonth = savingsInvestment;
-            if (totalSavings != 0) { vm.PercentageOfRegularSavingsDepositYearMonth = Pct(savingsDeposit, totalSavings); vm.PercentageOfRegularSavingsInvestmentYearMonth = Pct(savingsInvestment, totalSavings); }
+            vm.RegularSavingsDepositYearMonth = Amount(breakdown, "RegularSavings", "Deposit");
+            vm.RegularSavingsInvestmentYearMonth = Amount(breakdown, "RegularSavings", "Investment");
+            vm.PercentageOfRegularSavingsDepositYearMonth = Pct(breakdown, "RegularSavings", "Deposit");
+            vm.PercentageOfRegularSavingsInvestmentYearMonth = Pct(breakdown, "RegularSavings", "Investment");
 
-            vm.NonConsumerSpendingPublicPensionYearMonth = ncPublicPension;
-            vm.NonConsumerSpendingDebtRepaymentYearMonth = ncDebt;
-            vm.NonConsumerSpendingTaxYearMonth = ncTax;
-            vm.NonConsumerSpendingSocialInsuranceYearMonth = ncSocial;
-            vm.NonConsumerSpendingInterHouseholdTransferExpensesYearMonth = ncInterHousehold;
-            vm.NonConsumerSpendingNonProfitOrganizationTransferYearMonth = ncNonProfit;
-            if (totalNonConsumer != 0) { vm.PercentageOfNonConsumerSpendingPublicPensionYearMonth = Pct(ncPublicPension, totalNonConsumer); vm.PercentageOfNonConsumerSpendingDebtRepaymentYearMonth = Pct(ncDebt, totalNonConsumer); vm.PercentageOfNonConsumerSpendingTaxYearMonth = Pct(ncTax, totalNonConsumer); vm.PercentageOfNonConsumerSpendingSocialInsuranceYearMonth = Pct(ncSocial, totalNonConsumer); vm.PercentageOfNonConsumerSpendingInterHouseholdTransferExpensesYearMonth = Pct(ncInterHousehold, totalNonConsumer); vm.PercentageOfNonConsumerSpendingNonProfitOrganizationTransferYearMonth = Pct(ncNonProfit, totalNonConsumer); }
+            vm.NonConsumerSpendingPublicPensionYearMonth = Amount(breakdown, "NonConsumerSpending", "PublicPension");
+            vm.NonConsumerSpendingDebtRepaymentYearMonth = Amount(breakdown, "NonConsumerSpending", "DebtRepayment");
+            vm.NonConsumerSpendingTaxYearMonth = Amount(breakdown, "NonConsumerSpending", "Tax");
+            vm.NonConsumerSpendingSocialInsuranceYearMonth = Amount(breakdown, "NonConsumerSpending", "SocialInsurance");
+            vm.NonConsumerSpendingInterHouseholdTransferExpensesYearMonth = Amount(breakdown, "NonConsumerSpending", "InterHouseholdTransferExpenses");
+            vm.NonConsumerSpendingNonProfitOrganizationTransferYearMonth = Amount(breakdown, "NonConsumerSpending", "NonProfitOrganizationTransfer");
+            vm.PercentageOfNonConsumerSpendingPublicPensionYearMonth = Pct(breakdown, "NonConsumerSpending", "PublicPension");
+            vm.PercentageOfNonConsumerSpendingDebtRepaymentYearMonth = Pct(breakdown, "NonConsumerSpending", "DebtRepayment");
+            vm.PercentageOfNonConsumerSpendingTaxYearMonth = Pct(breakdown, "NonConsumerSpending", "Tax");
+            vm.PercentageOfNonConsumerSpendingSocialInsuranceYearMonth = Pct(breakdown, "NonConsumerSpending", "SocialInsurance");
+            vm.PercentageOfNonConsumerSpendingInterHouseholdTransferExpensesYearMonth = Pct(breakdown, "NonConsumerSpending", "InterHouseholdTransferExpenses");
+            vm.PercentageOfNonConsumerSpendingNonProfitOrganizationTransferYearMonth = Pct(breakdown, "NonConsumerSpending", "NonProfitOrganizationTransfer");
 
-            vm.ConsumerSpendingMealOrEatOutExpensesYearMonth = cMeal;
-            vm.ConsumerSpendingHousingOrSuppliesCostYearMonth = cHousing;
-            vm.ConsumerSpendingEducationExpensesYearMonth = cEducation;
-            vm.ConsumerSpendingMedicalExpensesYearMonth = cMedical;
-            vm.ConsumerSpendingTransportationCostYearMonth = cTransport;
-            vm.ConsumerSpendingCommunicationCostYearMonth = cComm;
-            vm.ConsumerSpendingLeisureOrCultureYearMonth = cLeisure;
-            vm.ConsumerSpendingClothingOrShoesYearMonth = cClothing;
-            vm.ConsumerSpendingPinMoneyYearMonth = cPin;
-            vm.ConsumerSpendingProtectionTypeInsuranceYearMonth = cInsurance;
-            vm.ConsumerSpendingOtherExpensesYearMonth = cOther;
-            vm.ConsumerSpendingUnknownExpenditureYearMonth = cUnknown;
-            if (totalConsumer == 0)
-            {
-                return;
-            }
-
-            vm.PercentageOfConsumerSpendingMealOrEatOutExpensesYearMonth = Pct(cMeal, totalConsumer); vm.PercentageOfConsumerSpendingHousingOrSuppliesCostYearMonth = Pct(cHousing, totalConsumer); vm.PercentageOfConsumerSpendingEducationExpensesYearMonth = Pct(cEducation, totalConsumer); vm.PercentageOfConsumerSpendingMedicalExpensesYearMonth = Pct(cMedical, totalConsumer); vm.PercentageOfConsumerSpendingTransportationCostYearMonth = Pct(cTransport, totalConsumer); vm.PercentageOfConsumerSpendingCommunicationCostYearMonth = Pct(cComm, totalConsumer); vm.PercentageOfConsumerSpendingLeisureOrCultureYearMonth = Pct(cLeisure, totalConsumer); vm.PercentageOfConsumerSpendingClothingOrShoesYearMonth = Pct(cClothing, totalConsumer); vm.PercentageOfConsumerSpendingPinMoneyYearMonth = Pct(cPin, totalConsumer); vm.PercentageOfConsumerSpendingProtectionTypeInsuranceYearMonth = Pct(cInsurance, totalConsumer); vm.PercentageOfConsumerSpendingOtherExpensesYearMonth = Pct(cOther, totalConsumer); vm.PercentageOfConsumerSpendingUnknownExpenditureYearMonth = Pct(cUnknown, totalConsumer);
+            vm.ConsumerSpendingMealOrEatOutExpensesYearMonth = Amount(breakdown, "ConsumerSpending", "MealOrEatOutExpenses");
+            vm.ConsumerSpendingHousingOrSuppliesCostYearMonth = Amount(breakdown, "ConsumerSpending", "HousingOrSuppliesCost");
+            vm.ConsumerSpendingEducationExpensesYearMonth = Amount(breakdown, "ConsumerSpending", "EducationExpenses");
+            vm.ConsumerSpendingMedicalExpensesYearMonth = Amount(breakdown, "ConsumerSpending", "MedicalExpenses");
+            vm.ConsumerSpendingTransportationCostYearMonth = Amount(breakdown, "ConsumerSpending", "TransportationCost");
+            vm.ConsumerSpendingCommunicationCostYearMonth = Amount(breakdown, "ConsumerSpending", "CommunicationCost");
+            vm.ConsumerSpendingLeisureOrCultureYearMonth = Amount(breakdown, "ConsumerSpending", "LeisureOrCulture");
+            vm.ConsumerSpendingClothingOrShoesYearMonth = Amount(breakdown, "ConsumerSpending", "ClothingOrShoes");
+            vm.ConsumerSpendingPinMoneyYearMonth = Amount(breakdown, "ConsumerSpending", "PinMoney");
+            vm.ConsumerSpendingProtectionTypeInsuranceYearMonth = Amount(breakdown, "ConsumerSpending", "ProtectionTypeInsurance");
+            vm.ConsumerSpendingOtherExpensesYearMonth = Amount(breakdown, "ConsumerSpending", "OtherExpenses");
+            vm.ConsumerSpendingUnknownExpenditureYearMonth = Amount(breakdown, "ConsumerSpending", "UnknownExpenditure");
+            vm.PercentageOfConsumerSpendingMealOrEatOutExpensesYearMonth = Pct(breakdown, "ConsumerSpending", "MealOrEatOutExpenses");
+            vm.PercentageOfConsumerSpendingHousingOrSuppliesCostYearMonth = Pct(breakdown, "ConsumerSpending", "HousingOrSuppliesCost");
+            vm.PercentageOfConsumerSpendingEducationExpensesYearMonth = Pct(breakdown, "ConsumerSpending", "EducationExpenses");
+            vm.PercentageOfConsumerSpendingMedicalExpensesYearMonth = Pct(breakdown, "ConsumerSpending", "MedicalExpenses");
+            vm.PercentageOfConsumerSpendingTransportationCostYearMonth = Pct(breakdown, "ConsumerSpending", "TransportationCost");
+            vm.PercentageOfConsumerSpendingCommunicationCostYearMonth = Pct(breakdown, "ConsumerSpending", "CommunicationCost");
+            vm.PercentageOfConsumerSpendingLeisureOrCultureYearMonth = Pct(breakdown, "ConsumerSpending", "LeisureOrCulture");
+            vm.PercentageOfConsumerSpendingClothingOrShoesYearMonth = Pct(breakdown, "ConsumerSpending", "ClothingOrShoes");
+            vm.PercentageOfConsumerSpendingPinMoneyYearMonth = Pct(breakdown, "ConsumerSpending", "PinMoney");
+            vm.PercentageOfConsumerSpendingProtectionTypeInsuranceYearMonth = Pct(breakdown, "ConsumerSpending", "ProtectionTypeInsurance");
+            vm.PercentageOfConsumerSpendingOtherExpensesYearMonth = Pct(breakdown, "ConsumerSpending", "OtherExpenses");
+            vm.PercentageOfConsumerSpendingUnknownExpenditureYearMonth = Pct(breakdown, "ConsumerSpending", "UnknownExpenditure");
         }
     }
-
-    private static decimal SumSub(IEnumerable<IncomeOutputViewModel> items, string subClass)
-        => items.Where(x => x.SubClass == subClass).Sum(v => v.Amount);
-
-    private static decimal SumSub(IEnumerable<ExpenditureOutputViewModel> items, string subClass)
-        => items.Where(x => x.SubClass == subClass).Sum(v => v.Amount);
-
-    private static double Pct(decimal part, decimal total) => 100.0 * (double)part / (double)total;
 }

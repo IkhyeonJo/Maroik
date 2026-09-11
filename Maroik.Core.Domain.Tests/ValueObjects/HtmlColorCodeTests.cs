@@ -4,7 +4,9 @@ namespace Maroik.Core.DomainTests.ValueObjects;
 
 /// <summary>
 /// Unit tests for <see cref="Maroik.Core.Domain.ValueObjects.HtmlColorCode"/>.
-/// Covers creation with valid 3- and 6-digit hex codes, upper-case normalisation, empty/invalid format rejections, and equality.
+/// Covers creation with valid 6-digit hex codes, upper-case normalisation, empty/invalid format
+/// rejections (including the 3-digit CSS shorthand, which is valid CSS but not accepted here — see
+/// <see cref="Create_ReturnsError_WhenInvalidFormat"/>), and equality.
 /// </summary>
 public class HtmlColorCodeTests
 {
@@ -12,8 +14,8 @@ public class HtmlColorCodeTests
     [Theory]
     [InlineData("#FF5733", "#FF5733")]
     [InlineData("#ff5733", "#FF5733")]
-    [InlineData("#ABC", "#ABC")]
-    [InlineData("#abc", "#ABC")]
+    [InlineData("#AABBCC", "#AABBCC")]
+    [InlineData("#aabbcc", "#AABBCC")]
     public void Create_ReturnsCode_AndNormalizesToUpperCase(string input, string expected)
     {
         var result = HtmlColorCode.Create(input);
@@ -35,12 +37,20 @@ public class HtmlColorCodeTests
         Assert.Equal("HtmlColorCode.Empty", result.FirstError.Code);
     }
 
-    /// <summary>Create returns error, when invalid format.</summary>
+    /// <summary>
+    /// Create returns error, when invalid format. Includes the 3-digit CSS shorthand ("#ABC"): it is
+    /// valid CSS but rejected here because <c>Calendar_HtmlColorCode_check</c> (the DB CHECK this
+    /// value is ultimately persisted against) only allows the 6-digit form — accepting it here would
+    /// let the Domain/Service layers pass a value the repository then rejects with a raw DB
+    /// exception instead of this clean validation error.
+    /// </summary>
     [Theory]
     [InlineData("FF5733")]
     [InlineData("#GGGGGG")]
     [InlineData("#12345")]
     [InlineData("#1234567")]
+    [InlineData("#ABC")]
+    [InlineData("#abc")]
     [InlineData("red")]
     public void Create_ReturnsError_WhenInvalidFormat(string input)
     {

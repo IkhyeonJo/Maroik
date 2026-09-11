@@ -16,8 +16,9 @@ namespace Maroik.Website.Tests.Filters;
 /// Unit tests for <see cref="ThrottleEmailSendAttribute"/>: the per-address cooldown gate on the
 /// account e-mail-sending POST actions. Covers the address-extraction fallback (bare string vs. a
 /// bound view model's <c>Email</c> property), the cooldown-hit redirect (which must never reach the
-/// action), the fail-open behaviour when the distributed cache is unavailable or unregistered, and
-/// that the cooldown is only armed after an action that actually ran and passed model validation.
+/// action), the fail-open behaviour when the distributed cache is unavailable or unregistered, that
+/// the cooldown claim is released again when the action never reached a real send attempt, and that
+/// the claim is written before the action runs (closing the concurrent-burst race).
 /// </summary>
 public class ThrottleEmailSendAttributeTests
 {
@@ -221,31 +222,71 @@ public class ThrottleEmailSendAttributeTests
         Assert.Equal(TimeSpan.FromSeconds(30), capturedOptions!.AbsoluteExpirationRelativeToNow);
     }
 
-    /// <summary>An action that bounced on model validation must not consume the cooldown window -- the user can retry immediately.</summary>
+    /// <summary>
+    /// An action that bounced on model validation must not leave the cooldown window armed -- the
+    /// user can retry immediately. The window is still claimed up front (closing the burst race,
+    /// see <see cref="OnActionExecutionAsync_ClaimsCooldown_BeforeActionRuns"/>) and then released
+    /// again once it's clear the action never reached a real send attempt.
+    /// </summary>
     [Fact]
-    public async Task OnActionExecutionAsync_ModelStateInvalidAfterAction_DoesNotArmCooldown()
+    public async Task OnActionExecutionAsync_ModelStateInvalidAfterAction_ReleasesCooldown()
     {
         var cache = new Mock<IDistributedCache>();
         cache.Setup(c => c.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync((byte[]?)null);
+        cache.Setup(c => c.SetAsync(It.IsAny<string>(), It.IsAny<byte[]>(), It.IsAny<DistributedCacheEntryOptions>(), It.IsAny<CancellationToken>()))
+            .Returns(Task.CompletedTask);
+        cache.Setup(c => c.RemoveAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
         var (context, _) = BuildContext(boundArgument: "user@example.com", cache.Object);
         context.ModelState.AddModelError("Nickname", "Nickname is required.");
 
         await new ThrottleEmailSendAttribute().OnActionExecutionAsync(context, NextReturning(() => { }));
 
-        cache.Verify(c => c.SetAsync(It.IsAny<string>(), It.IsAny<byte[]>(), It.IsAny<DistributedCacheEntryOptions>(), It.IsAny<CancellationToken>()), Times.Never);
+        cache.Verify(c => c.SetAsync(It.IsAny<string>(), It.IsAny<byte[]>(), It.IsAny<DistributedCacheEntryOptions>(), It.IsAny<CancellationToken>()), Times.Once);
+        cache.Verify(c => c.RemoveAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Once);
     }
 
-    /// <summary>An action that threw does not consume the cooldown window either.</summary>
+    /// <summary>An action that threw releases the claimed cooldown window too, for the same reason.</summary>
     [Fact]
-    public async Task OnActionExecutionAsync_ActionThrew_DoesNotArmCooldown()
+    public async Task OnActionExecutionAsync_ActionThrew_ReleasesCooldown()
     {
         var cache = new Mock<IDistributedCache>();
         cache.Setup(c => c.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync((byte[]?)null);
+        cache.Setup(c => c.SetAsync(It.IsAny<string>(), It.IsAny<byte[]>(), It.IsAny<DistributedCacheEntryOptions>(), It.IsAny<CancellationToken>()))
+            .Returns(Task.CompletedTask);
+        cache.Setup(c => c.RemoveAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
         var (context, _) = BuildContext(boundArgument: "user@example.com", cache.Object);
 
         await new ThrottleEmailSendAttribute().OnActionExecutionAsync(
             context, NextReturning(() => { }, exception: new InvalidOperationException("boom")));
 
-        cache.Verify(c => c.SetAsync(It.IsAny<string>(), It.IsAny<byte[]>(), It.IsAny<DistributedCacheEntryOptions>(), It.IsAny<CancellationToken>()), Times.Never);
+        cache.Verify(c => c.SetAsync(It.IsAny<string>(), It.IsAny<byte[]>(), It.IsAny<DistributedCacheEntryOptions>(), It.IsAny<CancellationToken>()), Times.Once);
+        cache.Verify(c => c.RemoveAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    // -- Race fix: claim happens before the action runs -----------------------------
+
+    /// <summary>
+    /// Regression: the cooldown must be claimed (<c>SetAsync</c>) before the action runs, not after
+    /// it completes. Claiming only after the action (and its possibly-slow mail send) let every
+    /// request in a concurrent burst for the same address pass the <c>GetAsync</c> check above
+    /// before any of them reached the write, defeating the cooldown for the whole burst.
+    /// </summary>
+    [Fact]
+    public async Task OnActionExecutionAsync_ClaimsCooldown_BeforeActionRuns()
+    {
+        var callOrder = new List<string>();
+        var cache = new Mock<IDistributedCache>();
+        cache.Setup(c => c.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .Callback(() => callOrder.Add("get"))
+            .ReturnsAsync((byte[]?)null);
+        cache.Setup(c => c.SetAsync(It.IsAny<string>(), It.IsAny<byte[]>(), It.IsAny<DistributedCacheEntryOptions>(), It.IsAny<CancellationToken>()))
+            .Callback(() => callOrder.Add("set"))
+            .Returns(Task.CompletedTask);
+        var (context, _) = BuildContext(boundArgument: "user@example.com", cache.Object);
+
+        await new ThrottleEmailSendAttribute().OnActionExecutionAsync(
+            context, NextReturning(() => callOrder.Add("action")));
+
+        Assert.Equal(["get", "set", "action"], callOrder);
     }
 }

@@ -219,6 +219,9 @@
   <data name="Event title must be 100 characters or fewer." xml:space="preserve">
     <value>이벤트 제목은 100자 이하여야 합니다.</value>
   </data>
+  <data name="Event status is not a recognised value." xml:space="preserve">
+    <value>이벤트 상태가 인식할 수 없는 값입니다.</value>
+  </data>
   <data name="Exactly one lead-time field (minutes/hours/days/weeks) must be set." xml:space="preserve">
     <value>알림 시간 필드(분/시간/일/주) 중 정확히 하나만 설정해야 합니다.</value>
   </data>
@@ -242,6 +245,9 @@
   </data>
   <data name="Notification method cannot be empty." xml:space="preserve">
     <value>알림 방법은 비워둘 수 없습니다.</value>
+  </data>
+  <data name="Notification method is not a recognised value." xml:space="preserve">
+    <value>알림 방법이 인식할 수 없는 값입니다.</value>
   </data>
   <data name="Reminder lead time is outside the allowed range (0 to 28 days before the event)." xml:space="preserve">
     <value>알림 시간이 허용 범위(이벤트 0~28일 전)를 벗어났습니다.</value>

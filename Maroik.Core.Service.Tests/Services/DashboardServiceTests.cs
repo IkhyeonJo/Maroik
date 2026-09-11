@@ -362,6 +362,114 @@ public class DashboardServiceTests
         _expenditureRepo.Verify(r => r.GetByAccountEmailAndDateRangeAsync(email, It.IsAny<DateTime>(), It.IsAny<DateTime>(), It.IsAny<CancellationToken>()), Times.Once);
     }
 
+    // -- GetSummaryAsync: income/expenditure breakdown -------------------------
+
+    /// <summary>
+    /// Verifies that <c>GetSummaryAsync</c> computes the per-main-class/sub-class income breakdown
+    /// (via <see cref="FinanceBreakdownPolicy"/>) itself, rather than leaving that arithmetic to the
+    /// presentation layer -- <c>DashboardViewModelMapper</c> now only copies these pre-computed
+    /// numbers onto the view model.
+    /// </summary>
+    [Fact]
+    public async Task GetSummaryAsync_ComputesIncomeBreakdown_PerMainClassAndSubClass()
+    {
+        const string email = "user@example.com";
+        _accountRepo.Setup(r => r.FindByEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(MakeAccount(unit: "KRW"));
+        _assetRepo.Setup(r => r.GetByAccountEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync([MakeAsset("Wallet")]);
+        SetupEmptyFinancials(email);
+
+        List<Income> yearIncomes =
+        [
+            Income.Reconstitute(1, email, "RegularIncome", "LaborIncome", null, 600m, "KRW", "Wallet", null, DateTime.UtcNow, DateTime.UtcNow),
+            Income.Reconstitute(2, email, "RegularIncome", "BusinessIncome", null, 400m, "KRW", "Wallet", null, DateTime.UtcNow, DateTime.UtcNow),
+            Income.Reconstitute(3, email, "IrregularIncome", "LaborIncome", null, 250m, "KRW", "Wallet", null, DateTime.UtcNow, DateTime.UtcNow),
+        ];
+        _incomeRepo.Setup(r => r.GetByAccountEmailAndDateRangeAsync(email, It.IsAny<DateTime>(), It.IsAny<DateTime>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(yearIncomes);
+        var sut = CreateSut();
+
+        DashboardDto summary = await sut.GetSummaryAsync(email, "2025", "1", "UTC", TestContext.Current.CancellationToken);
+
+        FinanceBreakdownDto regular = summary.YearIncomeBreakdown["RegularIncome"];
+        Assert.Equal(1000m, regular.Total);
+        Assert.Equal(600m, regular.AmountBySubClass["LaborIncome"]);
+        Assert.Equal(400m, regular.AmountBySubClass["BusinessIncome"]);
+        Assert.Equal(60.0, regular.PercentageBySubClass["LaborIncome"]);
+        Assert.Equal(40.0, regular.PercentageBySubClass["BusinessIncome"]);
+
+        FinanceBreakdownDto irregular = summary.YearIncomeBreakdown["IrregularIncome"];
+        Assert.Equal(250m, irregular.Total);
+        Assert.Equal(250m, irregular.AmountBySubClass["LaborIncome"]);
+        Assert.Equal(100.0, irregular.PercentageBySubClass["LaborIncome"]);
+    }
+
+    /// <summary>
+    /// Verifies that <c>GetSummaryAsync</c> computes the per-main-class/sub-class expenditure
+    /// breakdown itself, covering all three expenditure main classes.
+    /// </summary>
+    [Fact]
+    public async Task GetSummaryAsync_ComputesExpenditureBreakdown_PerMainClassAndSubClass()
+    {
+        const string email = "user@example.com";
+        _accountRepo.Setup(r => r.FindByEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(MakeAccount(unit: "KRW"));
+        _assetRepo.Setup(r => r.GetByAccountEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync([MakeAsset("Card")]);
+        SetupEmptyFinancials(email);
+
+        List<Expenditure> yearExpenditures =
+        [
+            Expenditure.Reconstitute(1, email, "ConsumerSpending", "MealOrEatOutExpenses", null, 300m, "KRW", "Card", null, null, DateTime.UtcNow, DateTime.UtcNow),
+            Expenditure.Reconstitute(2, email, "ConsumerSpending", "HousingOrSuppliesCost", null, 700m, "KRW", "Card", null, null, DateTime.UtcNow, DateTime.UtcNow),
+            Expenditure.Reconstitute(3, email, "RegularSavings", "Deposit", null, 500m, "KRW", "Card", null, null, DateTime.UtcNow, DateTime.UtcNow),
+        ];
+        _expenditureRepo.Setup(r => r.GetByAccountEmailAndDateRangeAsync(email, It.IsAny<DateTime>(), It.IsAny<DateTime>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(yearExpenditures);
+        var sut = CreateSut();
+
+        DashboardDto summary = await sut.GetSummaryAsync(email, "2025", "1", "UTC", TestContext.Current.CancellationToken);
+
+        FinanceBreakdownDto consumer = summary.YearExpenditureBreakdown["ConsumerSpending"];
+        Assert.Equal(1000m, consumer.Total);
+        Assert.Equal(30.0, consumer.PercentageBySubClass["MealOrEatOutExpenses"]);
+        Assert.Equal(70.0, consumer.PercentageBySubClass["HousingOrSuppliesCost"]);
+
+        FinanceBreakdownDto savings = summary.YearExpenditureBreakdown["RegularSavings"];
+        Assert.Equal(500m, savings.Total);
+        Assert.Equal(100.0, savings.PercentageBySubClass["Deposit"]);
+
+        // NonConsumerSpending had no records this year -- still present, with a zero total and no
+        // percentage entries (matches FinanceBreakdownPolicy's zero-total behaviour).
+        FinanceBreakdownDto nonConsumer = summary.YearExpenditureBreakdown["NonConsumerSpending"];
+        Assert.Equal(0m, nonConsumer.Total);
+        Assert.Empty(nonConsumer.PercentageBySubClass);
+    }
+
+    /// <summary>
+    /// Verifies that the year and year-month breakdowns are computed independently from their
+    /// respective (already year-month-filtered) lists, not from each other.
+    /// </summary>
+    [Fact]
+    public async Task GetSummaryAsync_ComputesYearAndYearMonthBreakdowns_Independently()
+    {
+        const string email = "user@example.com";
+        _accountRepo.Setup(r => r.FindByEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(MakeAccount(unit: "KRW"));
+        _assetRepo.Setup(r => r.GetByAccountEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync([MakeAsset("Wallet")]);
+        SetupEmptyFinancials(email);
+
+        var inMonth = Income.Reconstitute(1, email, "RegularIncome", "LaborIncome", null, 400m, "KRW", "Wallet", null,
+            new DateTime(2025, 3, 15, 0, 0, 0, DateTimeKind.Utc), DateTime.UtcNow);
+        var outOfMonth = Income.Reconstitute(2, email, "RegularIncome", "LaborIncome", null, 600m, "KRW", "Wallet", null,
+            new DateTime(2025, 7, 1, 0, 0, 0, DateTimeKind.Utc), DateTime.UtcNow);
+        _incomeRepo.Setup(r => r.GetByAccountEmailAndDateRangeAsync(email, It.IsAny<DateTime>(), It.IsAny<DateTime>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync([inMonth, outOfMonth]);
+        var sut = CreateSut();
+
+        DashboardDto summary = await sut.GetSummaryAsync(email, "2025", "3", "UTC", TestContext.Current.CancellationToken);
+
+        Assert.Equal(1000m, summary.YearIncomeBreakdown["RegularIncome"].Total);
+        Assert.Equal(400m, summary.YearMonthIncomeBreakdown["RegularIncome"].Total);
+        Assert.Equal(100.0, summary.YearMonthIncomeBreakdown["RegularIncome"].PercentageBySubClass["LaborIncome"]);
+    }
+
     // -- GetNoticeCountsAsync -------------------------------------------------
 
     /// <summary>Verifies that <c>GetNoticeCountsAsync</c> returns zero counts when no fixed items.</summary>

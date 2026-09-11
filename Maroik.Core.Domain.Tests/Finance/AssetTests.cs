@@ -13,7 +13,7 @@ public class AssetTests
     private static Asset ValidAsset(
         string productName = "My Bank",
         string email = "user@example.com",
-        string item = "Deposit",
+        string item = "FreeDepositAndWithdrawal",
         decimal amount = 1000m,
         string currency = "KRW")
         => Asset.Create(productName, email, item, amount, currency).Value;
@@ -24,7 +24,7 @@ public class AssetTests
     [Fact]
     public void Create_ReturnsAsset_WhenValid()
     {
-        var result = Asset.Create("Savings", "user@example.com", "Deposit", 5000m, "KRW");
+        var result = Asset.Create("Savings", "user@example.com", "FreeDepositAndWithdrawal", 5000m, "KRW");
 
         Assert.False(result.IsError);
         Assert.Equal("Savings", result.Value.ProductName);
@@ -38,7 +38,7 @@ public class AssetTests
     [InlineData("   ")]
     public void Create_ReturnsError_WhenProductNameEmpty(string? name)
     {
-        var result = Asset.Create(name, "user@example.com", "Deposit", 0m, "KRW");
+        var result = Asset.Create(name, "user@example.com", "FreeDepositAndWithdrawal", 0m, "KRW");
 
         Assert.True(result.IsError);
         Assert.Equal("Asset.ProductNameEmpty", result.FirstError.Code);
@@ -57,11 +57,29 @@ public class AssetTests
         Assert.Equal("Asset.ItemEmpty", result.FirstError.Code);
     }
 
+    /// <summary>
+    /// Regression: Create rejects an <c>Item</c> value outside <see cref="AssetItemType"/>'s known
+    /// members — previously only <c>AssetService</c> checked this, so the aggregate itself could be
+    /// constructed (and would then fail with a raw DB <c>Asset_Item_check</c> exception on save) with
+    /// an unrecognised category.
+    /// </summary>
+    [Theory]
+    [InlineData("Deposit")]
+    [InlineData("Stock")]
+    [InlineData("freeDepositAndWithdrawal")]
+    public void Create_ReturnsError_WhenItemNotRecognised(string item)
+    {
+        var result = Asset.Create("Savings", "user@example.com", item, 0m, "KRW");
+
+        Assert.True(result.IsError);
+        Assert.Equal("Asset.ItemInvalid", result.FirstError.Code);
+    }
+
     /// <summary>Create returns error, when email invalid.</summary>
     [Fact]
     public void Create_ReturnsError_WhenEmailInvalid()
     {
-        var result = Asset.Create("Savings", "bademail", "Deposit", 0m, "KRW");
+        var result = Asset.Create("Savings", "bademail", "FreeDepositAndWithdrawal", 0m, "KRW");
 
         Assert.True(result.IsError);
     }
@@ -70,7 +88,7 @@ public class AssetTests
     [Fact]
     public void Create_ReturnsError_WhenCurrencyEmpty()
     {
-        var result = Asset.Create("Savings", "user@example.com", "Deposit", 0m, null);
+        var result = Asset.Create("Savings", "user@example.com", "FreeDepositAndWithdrawal", 0m, null);
 
         Assert.True(result.IsError);
         Assert.Equal("Money.CurrencyEmpty", result.FirstError.Code);
@@ -162,11 +180,11 @@ public class AssetTests
     {
         var asset = ValidAsset();
 
-        var result = asset.Update("New Name", "Stock", 2000m, "KRW", "memo", false);
+        var result = asset.Update("New Name", "InvestmentAsset", 2000m, "KRW", "memo", false);
 
         Assert.False(result.IsError);
         Assert.Equal("New Name", asset.ProductName);
-        Assert.Equal("Stock", asset.Item);
+        Assert.Equal("InvestmentAsset", asset.Item);
         Assert.Equal(2000m, asset.Balance.Amount);
     }
 
@@ -176,7 +194,7 @@ public class AssetTests
     {
         var asset = ValidAsset();
 
-        var result = asset.Update("", "Deposit", 0m, "KRW", null, false);
+        var result = asset.Update("", "FreeDepositAndWithdrawal", 0m, "KRW", null, false);
 
         Assert.True(result.IsError);
         Assert.Equal("Asset.ProductNameEmpty", result.FirstError.Code);
@@ -196,6 +214,18 @@ public class AssetTests
         Assert.Equal("Asset.ItemEmpty", result.FirstError.Code);
     }
 
+    /// <summary>Regression: Update rejects an <c>Item</c> value outside <see cref="AssetItemType"/>'s known members (see <see cref="Create_ReturnsError_WhenItemNotRecognised"/>).</summary>
+    [Fact]
+    public void Update_ReturnsError_WhenItemNotRecognised()
+    {
+        var asset = ValidAsset();
+
+        var result = asset.Update("Name", "Stock", 1000m, "KRW", null, false);
+
+        Assert.True(result.IsError);
+        Assert.Equal("Asset.ItemInvalid", result.FirstError.Code);
+    }
+
     /// <summary>Update returns error and leaves the balance unchanged, when currency is empty.</summary>
     [Fact]
     public void Update_ReturnsError_WhenCurrencyEmpty()
@@ -203,7 +233,7 @@ public class AssetTests
         var asset = ValidAsset();
         string originalCurrency = asset.Balance.Currency;
 
-        var result = asset.Update("Name", "Deposit", 1000m, "", null, false);
+        var result = asset.Update("Name", "FreeDepositAndWithdrawal", 1000m, "", null, false);
 
         Assert.True(result.IsError);
         Assert.Equal("Money.CurrencyEmpty", result.FirstError.Code);

@@ -6,8 +6,11 @@ using Maroik.Core.Domain.Primitives;
 namespace Maroik.Core.Domain.ValueObjects;
 
 /// <summary>
-/// Value object that represents a validated HTML hex color code (e.g. "#FF5733" or "#F53").
-/// The stored value is always upper-cased.
+/// Value object that represents a validated HTML hex color code (e.g. "#FF5733").
+/// The stored value is always upper-cased. Only the 6-digit form is accepted — the 3-digit
+/// shorthand (e.g. "#F53") would pass CSS but not <c>Calendar_HtmlColorCode_check</c>, the DB CHECK
+/// constraint this value is ultimately persisted against, which only allows
+/// <c>^#[0-9A-Fa-f]{6}$</c>.
 /// </summary>
 public sealed partial class HtmlColorCode : ValueObject
 {
@@ -44,6 +47,6 @@ public sealed partial class HtmlColorCode : ValueObject
 
     /// <inheritdoc/>
     public override string ToString() => Value;
-    [GeneratedRegex(@"^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$", RegexOptions.Compiled)]
+    [GeneratedRegex(@"^#[A-Fa-f0-9]{6}$", RegexOptions.Compiled)]
     private static partial Regex MyRegex();
 }

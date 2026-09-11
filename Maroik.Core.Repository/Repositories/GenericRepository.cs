@@ -141,13 +141,25 @@ public abstract class GenericRepository<TDomain, TEntity>(ApplicationDbContext c
         return [.. (await query.ToListAsync(ct)).Select(ToDomain)];
     }
 
-    /// <summary>Returns the first row matching <paramref name="predicate"/> (with optional <paramref name="orderBy"/>) mapped to <typeparamref name="TDomain"/>, or <see langword="default"/> if none exists.</summary>
+    /// <summary>
+    /// Returns the first row matching <paramref name="predicate"/> (with optional <paramref name="orderBy"/>)
+    /// mapped to <typeparamref name="TDomain"/>, or <see langword="default"/> if none exists.
+    /// </summary>
+    /// <param name="noTracking">
+    /// Pass <see langword="true"/> to run as <c>AsNoTracking()</c>. Required for a read that must
+    /// reflect the row's true current column values — e.g. re-reading a row right after taking a
+    /// <c>FOR UPDATE</c> lock on it: a normal tracking query performs identity resolution and hands
+    /// back an already-tracked instance from an earlier (pre-lock) read instead of the freshly
+    /// queried values, silently defeating the lock's isolation guarantee.
+    /// </param>
     protected async Task<TDomain?> QueryFirstAsync(
         Expression<Func<TEntity, bool>> predicate,
         CancellationToken ct = default,
-        Func<IQueryable<TEntity>, IQueryable<TEntity>>? orderBy = null)
+        Func<IQueryable<TEntity>, IQueryable<TEntity>>? orderBy = null,
+        bool noTracking = false)
     {
         var query = ApplyIncludes(Set.Where(predicate));
+        if (noTracking) query = query.AsNoTracking();
         if (orderBy != null) query = orderBy(query);
         var entity = await query.FirstOrDefaultAsync(ct);
         return entity == null ? default : ToDomain(entity);
@@ -199,6 +211,18 @@ public abstract class GenericRepository<TDomain, TEntity>(ApplicationDbContext c
                 Set.Attach(entity);
                 Set.Remove(entity);
             }
+        }
+
+        // A row created earlier in the same still-open transaction via CreateAsync has its INSERT
+        // deferred (see FlushUnlessInTransactionAsync) and so does not exist in the database yet —
+        // the query above cannot see it, and it would otherwise still be inserted by the eventual
+        // CommitAsync despite matching this delete. Cancel its pending insert directly against the
+        // change tracker: "delete a row that was never written" is "don't write it", i.e. Detached.
+        var predicateFunc = predicate.Compile();
+        foreach (var entry in Context.ChangeTracker.Entries<TEntity>().Where(e => e.State == EntityState.Added).ToList())
+        {
+            if (predicateFunc(entry.Entity))
+                entry.State = EntityState.Detached;
         }
 
         await FlushUnlessInTransactionAsync(ct);

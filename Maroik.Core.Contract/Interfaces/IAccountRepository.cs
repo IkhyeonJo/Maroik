@@ -65,4 +65,7 @@ public interface IAccountRepository : IGenericRepository<Account>
 
     /// <summary>Writes only <c>Message</c> and <c>Updated</c>.</summary>
     Task<int> UpdateMessageAsync(string email, string? message, DateTime updated, CancellationToken ct = default);
+
+    /// <summary>Writes only <c>EmailConfirmed</c> (to <c>true</c>), <c>RegistrationToken</c>, <c>Message</c> and <c>Updated</c>.</summary>
+    Task<int> UpdateEmailConfirmationAsync(string email, string? registrationToken, string? message, DateTime updated, CancellationToken ct = default);
 }

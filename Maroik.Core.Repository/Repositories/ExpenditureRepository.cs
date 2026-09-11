@@ -115,8 +115,12 @@ public class ExpenditureRepository(ApplicationDbContext context)
 
         // Re-read through the normal included path so the returned domain object carries the
         // monetary unit from the AssetNavigation. The FOR UPDATE lock above is held until the
-        // ambient transaction ends, so this second read sees the same committed row.
-        return await FindByEmailAndIdAsync(accountEmail, id, ct);
+        // ambient transaction ends, so this second read sees the same committed row. Must stay
+        // AsNoTracking (noTracking: true), not delegate to FindByEmailAndIdAsync's tracking query:
+        // if this row is already tracked in the context from an earlier read in the same unit of
+        // work, a tracking query's identity resolution would hand back that pre-lock instance
+        // instead of the just-locked row's values, defeating the lock.
+        return await QueryFirstAsync(e => e.AccountEmail == accountEmail && e.Id == id, ct, noTracking: true);
     }
 
     /// <inheritdoc />

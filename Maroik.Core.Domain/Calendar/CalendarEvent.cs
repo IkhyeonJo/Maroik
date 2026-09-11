@@ -41,7 +41,11 @@ public sealed class CalendarEvent : AggregateRoot<long>
     /// <summary>Physical or virtual location of the event.</summary>
     public string? Location { get; private set; }
 
-    /// <summary>Availability status shown to subscribers (e.g. "Busy", "Free").</summary>
+    /// <summary>
+    /// Availability status shown to subscribers — see <see cref="CalendarEventStatuses"/> for the
+    /// allowed non-null values. <see langword="null"/> means "use the default" (the repository
+    /// persists it as <see cref="CalendarEventStatuses.Busy"/>).
+    /// </summary>
     public string? Status { get; private set; }
 
     /// <summary>Optional reference to a recurrence rule row.</summary>
@@ -148,6 +152,9 @@ public sealed class CalendarEvent : AggregateRoot<long>
         if (description?.Length > 16384)
             return Error.Validation("CalendarEvent.DescriptionTooLong", "Event description must be 16384 characters or fewer.");
 
+        if (!string.IsNullOrWhiteSpace(status) && !CalendarEventStatuses.IsKnown(status))
+            return Error.Validation("CalendarEvent.StatusInvalid", "Event status is not a recognised value.");
+
         var timesResult = ValidateDatesAndZones(allDay, startDate, endDate, startTz, endTz);
         if (timesResult.IsError) return timesResult.Errors;
 
@@ -212,6 +219,9 @@ public sealed class CalendarEvent : AggregateRoot<long>
 
         if (description?.Length > 16384)
             return Error.Validation("CalendarEvent.DescriptionTooLong", "Event description must be 16384 characters or fewer.");
+
+        if (!string.IsNullOrWhiteSpace(status) && !CalendarEventStatuses.IsKnown(status))
+            return Error.Validation("CalendarEvent.StatusInvalid", "Event status is not a recognised value.");
 
         var timesResult = ValidateDatesAndZones(allDay, startDate, endDate, startTz, endTz);
         if (timesResult.IsError) return timesResult.Errors;

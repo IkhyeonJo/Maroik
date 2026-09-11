@@ -50,8 +50,8 @@ public class AssetService : IAssetService
     /// <inheritdoc />
     public async Task<ServiceResult> CreateAsync(string accountEmail, AssetRequest request, CancellationToken ct = default)
     {
-        if (!IsValidAssetItem(request.Item))
-            return ServiceResult.Validation("Asset.InvalidItem", "Input is invalid");
+        if (!AssetItems.IsKnown(request.Item))
+            return ServiceResult.Validation("Asset.ItemInvalid", "Asset category (item) is not a recognised value.");
 
         // Reject duplicate product names within the same account, including a soft-deleted asset
         // under that name: its row still occupies the (ProductName, AccountEmail) primary key, and
@@ -97,10 +97,10 @@ public class AssetService : IAssetService
         await _unitOfWork.BeginAsync(ct);
         try
         {
-            if (!IsValidAssetItem(request.Item))
+            if (!AssetItems.IsKnown(request.Item))
             {
                 await _unitOfWork.RollbackAsync(ct);
-                return ServiceResult.Validation("Asset.InvalidItem", "Input is invalid");
+                return ServiceResult.Validation("Asset.ItemInvalid", "Asset category (item) is not a recognised value.");
             }
 
             // Row-locks the asset for the rest of this transaction (held until commit/rollback),
@@ -187,14 +187,4 @@ public class AssetService : IAssetService
 
     private Task<Asset?> FindAssetAsync(string accountEmail, string productName, CancellationToken ct = default)
         => _assetRepository.FindByEmailAndProductNameAsync(accountEmail, productName, ct);
-
-    /// <summary>
-    /// Returns <see langword="true"/> when <paramref name="item"/> is one of the recognized asset category values.
-    /// Prevents invalid category strings from reaching the domain layer.
-    /// Compares against the exact defined member names (not <see cref="Enum.TryParse{TEnum}(string,out TEnum)"/>,
-    /// which also accepts arbitrary numeric strings like "0" or "999" regardless of whether that
-    /// underlying value has a defined name).
-    /// </summary>
-    private static bool IsValidAssetItem(string? item) =>
-        item != null && Enum.GetNames<AssetItemType>().Contains(item, StringComparer.Ordinal);
 }

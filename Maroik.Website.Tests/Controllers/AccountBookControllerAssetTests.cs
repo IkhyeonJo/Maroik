@@ -92,9 +92,9 @@ public class AccountBookControllerAssetTests
         Assert.Contains("\"result\":false", json);
     }
 
-    /// <summary>Create asset unrecognized item returns input invalid.</summary>
+    /// <summary>Create asset with an unrecognized item category returns the domain's specific validation message.</summary>
     [Fact]
-    public async Task CreateAsset_UnrecognizedItem_ReturnsInputInvalid()
+    public async Task CreateAsset_UnrecognizedItem_ReturnsItemInvalidError()
     {
         var session = await LoginAsUserAsync();
         var payload = new { ProductName = "BadItemAsset", Item = "NotARealItemType", Amount = 100m, MonetaryUnit = "KRW", Note = "", Deleted = false };
@@ -103,7 +103,7 @@ public class AccountBookControllerAssetTests
         var response = await _client.SendAsync(request, TestContext.Current.CancellationToken);
         string json = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
 
-        Assert.Contains("Input is invalid", json);
+        Assert.Contains("Asset category (item) is not a recognised value.", json);
     }
 
     // -- CreateAsset / IsAssetExists: success path --------------------------------

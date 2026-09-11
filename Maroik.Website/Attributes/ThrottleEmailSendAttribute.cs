@@ -22,12 +22,14 @@ namespace Maroik.Website.Attributes;
 /// resistance is unchanged.
 /// </para>
 /// <para>
-/// The cooldown is started only <em>after</em> an action that passed model binding / validation:
-/// a request that bounced on a malformed address or a missing field reached no e-mail-sending code
-/// and must not lose the window (e.g. a nickname typo on the registration form should be
-/// immediately re-submittable). A well-formed address the action actually processed starts the
-/// cooldown whether or not that address turned out to be registered, so the enumeration resistance
-/// above still holds.
+/// The cooldown window is claimed <em>before</em> the action runs (right after the cooldown-hit
+/// check passes), not after — a concurrent burst of requests for the same address must not all
+/// pass the check before any of them records the claim, or the cooldown never actually bounds the
+/// burst. If the action turns out not to have reached a real send attempt (it threw, or bounced on
+/// model binding / validation — e.g. a nickname typo on the registration form), the claim is
+/// released again afterwards so that request doesn't cost the caller their retry window. A
+/// well-formed address the action actually processed keeps the claim whether or not that address
+/// turned out to be registered, so the enumeration resistance above still holds.
 /// </para>
 /// </summary>
 [AttributeUsage(AttributeTargets.Method)]
@@ -63,27 +65,16 @@ public sealed class ThrottleEmailSendAttribute : Attribute, IAsyncActionFilter
                         routeValues: null);
                     return;
                 }
-            }
-            catch (Exception)
-            {
-                // Cache unavailable — fail open. Blocking a genuine password reset because Valkey
-                // hiccuped is worse than briefly losing the send-rate cap. Also skip the
-                // post-action write below (nothing to gate against anyway).
-                key = null;
-            }
-        }
 
-        ActionExecutedContext executed = await next();
-
-        // Start the cooldown only now that the action has run, and only when it actually reached a
-        // send attempt: a request that threw, or that bounced on model binding / validation (the
-        // action returns its view without ever calling the mail service), leaves ModelState invalid
-        // and must not consume the window. A well-formed address the action processed starts the
-        // cooldown regardless of whether it was registered, preserving e-mail-enumeration resistance.
-        if (key != null && executed.Exception == null && context.ModelState.IsValid)
-        {
-            try
-            {
+                // Claim the cooldown window immediately, before the action (and its possibly-slow
+                // mail send) runs — not after, as this used to do. Deferring the write let every
+                // request in a concurrent burst for the same address pass the GetAsync check above
+                // before any of them reached the write, defeating the cooldown entirely for the
+                // whole action+mail-send duration. This still leaves a check-then-act gap between
+                // GetAsync and SetAsync (IDistributedCache has no atomic "set if absent"), but that
+                // gap is now a single cache round trip instead of an entire request's processing
+                // time. If the action turns out not to have actually reached a send attempt, the
+                // claim is released again below.
                 await cache!.SetAsync(
                     key,
                     [1],
@@ -95,7 +86,27 @@ public sealed class ThrottleEmailSendAttribute : Attribute, IAsyncActionFilter
             }
             catch (Exception)
             {
-                // Cache unavailable — fail open (see above).
+                // Cache unavailable — fail open. Blocking a genuine password reset because Valkey
+                // hiccuped is worse than briefly losing the send-rate cap. Also skip the
+                // post-action release below (nothing was claimed anyway).
+                key = null;
+            }
+        }
+
+        ActionExecutedContext executed = await next();
+
+        // Release the claim when the action did not actually reach a send attempt: a request that
+        // threw, or that bounced on model binding / validation (the action returns its view without
+        // ever calling the mail service), must not cost the caller their retry window. A well-formed
+        // address the action processed keeps the claim regardless of whether it was registered,
+        // preserving e-mail-enumeration resistance.
+        if (key != null && (executed.Exception != null || !context.ModelState.IsValid))
+        {
+            try { await cache!.RemoveAsync(key, ct); }
+            catch (Exception)
+            {
+                // Cache unavailable — fail open (see above): worst case the caller loses this
+                // window's retry, same as before the claim-first change.
             }
         }
     }

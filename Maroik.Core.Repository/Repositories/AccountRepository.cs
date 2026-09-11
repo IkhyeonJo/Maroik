@@ -225,4 +225,16 @@ public class AccountRepository(ApplicationDbContext context)
                 .SetProperty(e => e.Message, message)
                 .SetProperty(e => e.Updated, updated), ct);
     }
+
+    /// <inheritdoc />
+    public Task<int> UpdateEmailConfirmationAsync(string email, string? registrationToken, string? message, DateTime updated, CancellationToken ct = default)
+    {
+        string normalizedEmail = email.ToLowerInvariant();
+        return Set.Where(e => e.Email == normalizedEmail)
+            .ExecuteUpdateAsync(s => s
+                .SetProperty(e => e.EmailConfirmed, true)
+                .SetProperty(e => e.RegistrationToken, registrationToken)
+                .SetProperty(e => e.Message, message)
+                .SetProperty(e => e.Updated, updated), ct);
+    }
 }

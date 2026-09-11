@@ -560,15 +560,40 @@ public class AccountServiceTests
         var account = ActiveAccount(emailConfirmed: false, registrationToken: freshToken);
         _rsa.Setup(r => r.Decrypt("enc")).Returns(freshToken);
         _accountRepo.Setup(r => r.FindByRegistrationTokenAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(account);
-        _accountRepo.Setup(r => r.UpdateEntityAsync(It.IsAny<Account>(), It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
+        _accountRepo.Setup(r => r.UpdateEmailConfirmationAsync(
+                It.IsAny<string>(), It.IsAny<string?>(), It.IsAny<string?>(), It.IsAny<DateTime>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(1);
         var sut = CreateSut();
 
         ConfirmEmailResult result = await sut.ConfirmEmailAsync("enc", TestContext.Current.CancellationToken);
 
         Assert.False(result.InvalidToken);
         Assert.True(result.AccountCreated);
-        _accountRepo.Verify(r => r.UpdateEntityAsync(
-            It.Is<Account>(a => a.EmailConfirmed && a.RegistrationToken == null), It.IsAny<CancellationToken>()), Times.Once);
+        _accountRepo.Verify(r => r.UpdateEmailConfirmationAsync(
+            account.Email.Value, null, It.IsAny<string?>(), It.IsAny<DateTime>(), It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    /// <summary>
+    /// Verifies that <c>ConfirmEmailAsync</c> never falls back to a full-row <c>UpdateEntityAsync</c>
+    /// write on the success path — it must use the column-scoped <c>UpdateEmailConfirmationAsync</c>
+    /// so a concurrent write to another column on the same account row is not silently reverted by a
+    /// stale full-row snapshot read from the un-locked token lookup.
+    /// </summary>
+    [Fact]
+    public async Task ConfirmEmailAsync_DoesNotUseFullRowUpdate_WhenTokenIsValid()
+    {
+        string freshToken = GuidToken.Generate();
+        var account = ActiveAccount(emailConfirmed: false, registrationToken: freshToken);
+        _rsa.Setup(r => r.Decrypt("enc")).Returns(freshToken);
+        _accountRepo.Setup(r => r.FindByRegistrationTokenAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(account);
+        _accountRepo.Setup(r => r.UpdateEmailConfirmationAsync(
+                It.IsAny<string>(), It.IsAny<string?>(), It.IsAny<string?>(), It.IsAny<DateTime>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(1);
+        var sut = CreateSut();
+
+        await sut.ConfirmEmailAsync("enc", TestContext.Current.CancellationToken);
+
+        _accountRepo.Verify(r => r.UpdateEntityAsync(It.IsAny<Account>(), It.IsAny<CancellationToken>()), Times.Never);
     }
 
     /// <summary>Verifies that <c>ConfirmEmailAsync</c> returns not created when account already confirmed.</summary>
@@ -579,7 +604,8 @@ public class AccountServiceTests
         var account = ActiveAccount(emailConfirmed: true);
         _rsa.Setup(r => r.Decrypt("enc")).Returns(freshToken);
         _accountRepo.Setup(r => r.FindByRegistrationTokenAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(account);
-        _accountRepo.Setup(r => r.UpdateEntityAsync(It.IsAny<Account>(), It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
+        _accountRepo.Setup(r => r.UpdateMessageAsync(It.IsAny<string>(), It.IsAny<string?>(), It.IsAny<DateTime>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(1);
         var sut = CreateSut();
 
         ConfirmEmailResult result = await sut.ConfirmEmailAsync("enc", TestContext.Current.CancellationToken);

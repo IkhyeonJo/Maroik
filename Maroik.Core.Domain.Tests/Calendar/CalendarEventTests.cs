@@ -115,6 +115,35 @@ public class CalendarEventTests
         Assert.Equal(["Not/AZone"], (object[])result.FirstError.Metadata["ResourceArgs"]);
     }
 
+    /// <summary>
+    /// Regression: Create rejects a <c>Status</c> value outside <see cref="CalendarEventStatuses"/>'s
+    /// known members — previously any non-empty string was accepted here and would only fail later
+    /// with a raw DB <c>CalendarEvent_Status_check</c> exception on save. A null/blank status is
+    /// still allowed (the repository maps it to the "Busy" default before persisting).
+    /// </summary>
+    [Theory]
+    [InlineData("Tentative")]
+    [InlineData("busy")]
+    public void Create_ReturnsError_WhenStatusNotRecognised(string status)
+    {
+        var result = CalendarEvent.Create(10, "Title", null, false, Start, End, null, null, null, status);
+
+        Assert.True(result.IsError);
+        Assert.Equal("CalendarEvent.StatusInvalid", result.FirstError.Code);
+    }
+
+    /// <summary>Create still succeeds with a null or blank status -- the repository defaults it before persisting.</summary>
+    [Theory]
+    [InlineData(null)]
+    [InlineData("")]
+    [InlineData("   ")]
+    public void Create_Succeeds_WhenStatusNullOrBlank(string? status)
+    {
+        var result = CalendarEvent.Create(10, "Title", null, false, Start, End, null, null, null, status);
+
+        Assert.False(result.IsError);
+    }
+
     // -- Update ---------------------------------------------------------------
 
     /// <summary>Update succeeds, when valid.</summary>
@@ -141,6 +170,18 @@ public class CalendarEventTests
 
         Assert.True(result.IsError);
         Assert.Equal("CalendarEvent.InvalidDateRange", result.FirstError.Code);
+    }
+
+    /// <summary>Regression: Update rejects a <c>Status</c> value outside <see cref="CalendarEventStatuses"/>'s known members (see <see cref="Create_ReturnsError_WhenStatusNotRecognised"/>).</summary>
+    [Fact]
+    public void Update_ReturnsError_WhenStatusNotRecognised()
+    {
+        var ev = ValidEvent();
+
+        var result = ev.Update("Title", null, false, Start, End, null, null, null, "Tentative");
+
+        Assert.True(result.IsError);
+        Assert.Equal("CalendarEvent.StatusInvalid", result.FirstError.Code);
     }
 
 }

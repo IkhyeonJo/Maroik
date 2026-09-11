@@ -338,7 +338,11 @@ public class AccountService : IAccountService
         account.SetMessage(EnumHelper.GetDescription(AccountMessage.Success));
         try
         {
-            await _accountRepository.UpdateEntityAsync(account, ct);
+            // Column-scoped write (not full-row UpdateEntityAsync): this runs off an un-locked
+            // token lookup and must not overwrite a concurrent self-service change on the same row
+            // (same reasoning as the already-confirmed branch above).
+            await _accountRepository.UpdateEmailConfirmationAsync(
+                account.Email.Value, account.RegistrationToken, account.Message, account.Updated, ct);
         }
         catch (Exception e)
         {

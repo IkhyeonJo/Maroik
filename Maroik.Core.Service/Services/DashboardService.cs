@@ -147,6 +147,15 @@ public class DashboardService : IDashboardService
             summary.YearMonthExpenditures = ymExpenditures
                 .Where(x => currencyByProduct.GetValueOrDefault(x.PaymentMethod ?? "") == defaultUnit)
                 .Select(ExpenditureMapper.ToResponse).ToList();
+
+            // Per-main-class sub-class amount/percentage breakdowns (labor/business/pension income,
+            // meal/housing/education spending, ...) the dashboard view displays. Computed here, from
+            // IncomeClassPolicy/ExpenditureClassPolicy's own main-class list, so the view model
+            // mapper only reads pre-computed numbers instead of re-deriving these sums itself.
+            summary.YearIncomeBreakdown = BuildBreakdown(summary.YearIncomes, IncomeClassPolicy.SubClassesByMainClass.Keys);
+            summary.YearMonthIncomeBreakdown = BuildBreakdown(summary.YearMonthIncomes, IncomeClassPolicy.SubClassesByMainClass.Keys);
+            summary.YearExpenditureBreakdown = BuildBreakdown(summary.YearExpenditures, ExpenditureClassPolicy.SubClassesByMainClass.Keys);
+            summary.YearMonthExpenditureBreakdown = BuildBreakdown(summary.YearMonthExpenditures, ExpenditureClassPolicy.SubClassesByMainClass.Keys);
         }
 
         // Compute StartYear
@@ -292,6 +301,23 @@ public class DashboardService : IDashboardService
             DockerContainerResult = dockerContainerResult
         };
     }
+
+    /// <summary>Computes a <see cref="FinanceBreakdownDto"/> per main class in <paramref name="mainClasses"/> from <paramref name="items"/> via <see cref="FinanceBreakdownPolicy"/>.</summary>
+    private static Dictionary<string, FinanceBreakdownDto> BuildBreakdown(List<IncomeResponse> items, IEnumerable<string> mainClasses) =>
+        mainClasses.ToDictionary(mainClass => mainClass, mainClass => ToDto(FinanceBreakdownPolicy.Compute(
+            items.Where(i => i.MainClass == mainClass).Select(i => (i.SubClass, i.Amount)))));
+
+    /// <summary>Computes a <see cref="FinanceBreakdownDto"/> per main class in <paramref name="mainClasses"/> from <paramref name="items"/> via <see cref="FinanceBreakdownPolicy"/>.</summary>
+    private static Dictionary<string, FinanceBreakdownDto> BuildBreakdown(List<ExpenditureResponse> items, IEnumerable<string> mainClasses) =>
+        mainClasses.ToDictionary(mainClass => mainClass, mainClass => ToDto(FinanceBreakdownPolicy.Compute(
+            items.Where(e => e.MainClass == mainClass).Select(e => (e.SubClass, e.Amount)))));
+
+    private static FinanceBreakdownDto ToDto(FinanceBreakdownPolicy.SubClassBreakdown breakdown) => new()
+    {
+        Total = breakdown.Total,
+        AmountBySubClass = new Dictionary<string, decimal>(breakdown.AmountBySubClass),
+        PercentageBySubClass = new Dictionary<string, double>(breakdown.PercentageBySubClass)
+    };
 
     /// <summary>
     /// Extracts and trims the text between <paramref name="startMarker"/> and <paramref name="endMarker"/>

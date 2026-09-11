@@ -133,6 +133,35 @@ public sealed class IncomeRepositoryTests(DatabaseFixture database) : Repository
     }
 
     /// <summary>
+    /// Regression: the FOR UPDATE lookup re-reads through <c>FindByEmailAndIdAsync</c>-equivalent
+    /// path, which must run <c>AsNoTracking()</c>. If this row is already tracked in the same
+    /// <see cref="Context"/> from an earlier plain read, a tracking re-read would perform EF's
+    /// identity resolution and hand back that pre-existing (stale) tracked instance instead of the
+    /// row's just-locked, current committed values — silently defeating the FOR UPDATE lock.
+    /// </summary>
+    [Fact]
+    public async Task FindByEmailAndIdForUpdateAsync_ReturnsFreshValues_WhenRowAlreadyTrackedInSameContext()
+    {
+        string alice = UniqueEmail("alice");
+        var ef = MakeIncome(alice, "StaleSavings", amount: 100m);
+        await SeedAsync(ef);
+
+        // Pre-track the row in this test's Context via a normal (tracking) read.
+        Income? preRead = await Sut.FindByEmailAndIdAsync(alice, ef.Id, TestContext.Current.CancellationToken);
+        Assert.NotNull(preRead);
+
+        // A concurrent writer commits a change to the same row via a separate connection.
+        await using var writer = NewDbContext();
+        await writer.Incomes.Where(i => i.Id == ef.Id)
+            .ExecuteUpdateAsync(s => s.SetProperty(i => i.Amount, 999m), TestContext.Current.CancellationToken);
+
+        Income? locked = await Sut.FindByEmailAndIdForUpdateAsync(alice, ef.Id, TestContext.Current.CancellationToken);
+
+        Assert.NotNull(locked);
+        Assert.Equal(999m, locked.Amount.Amount);
+    }
+
+    /// <summary>
     /// Reproduces the concurrent-edit race: two parallel transactions each read the same income,
     /// overlap, then write back an incremented amount. Without FOR UPDATE the second write is based
     /// on a stale read and clobbers the first (final 600); with it the reads serialize and both

@@ -21,7 +21,8 @@ function fixture(): string {
      <select id="createFixedIncomeDepositDay">${Array.from({ length: 31 }, (_, i) => `<option value="${i + 1}">${i + 1}</option>`).join("")}</select>
      <select id="editFixedIncomeDepositDay"></select>
      <form id="formCreateFixedIncome"></form><form id="formEditFixedIncome"></form>
-     <button id="btnExportExcelFixedIncome"></button><button id="btnEditFixedExpenditureGridRow"></button>
+     <button id="btnExportExcelFixedIncome"></button>
+     <button id="btnEditFixedIncomeGridRow" data-errorMessageSelectGridRow="Please select grid row"></button>
      <button id="btnConfirmDeleteFixedIncome"></button><button id="btnDeleteFixedIncome"></button>
      <select id="createFixedIncomeDepositMyAssetProductName"><option value="A" selected>A</option></select>
      <select id="editFixedIncomeDepositMyAssetProductName"></select>`
@@ -42,5 +43,15 @@ describe("Notice/FixedIncome", () => {
     const h = loadSite("user", "Notice", "FixedIncome", fixture());
     h.$("#btnExportExcelFixedIncome").trigger("click");
     expect(h.submittedForms.at(-1)!.action).toContain("/Notice/ExportExcelFixedIncome");
+  });
+
+  // Regression: the EDIT button's cached jQuery selector used to target a nonexistent id
+  // (`#btnEditFixedExpenditureGridRow`) that didn't match the real markup's
+  // `#btnEditFixedIncomeGridRow`, so the click handler was never wired and clicking EDIT did
+  // nothing at all -- not even the "select a row first" error below.
+  it("wires the EDIT button's click handler to the real #btnEditFixedIncomeGridRow markup id", () => {
+    const h = loadSite("user", "Notice", "FixedIncome", fixture());
+    h.$("#btnEditFixedIncomeGridRow").trigger("click");
+    expect(h.toastr.error).toHaveBeenCalledWith("Please select grid row");
   });
 });

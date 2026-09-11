@@ -35,6 +35,23 @@ public class CalendarEventReminderTests
         Assert.Equal("Reminder.MethodEmpty", result.FirstError.Code);
     }
 
+    /// <summary>
+    /// Regression: Create rejects a <c>Method</c> value outside <see cref="ReminderMethods"/>'s known
+    /// members — previously any non-empty string was accepted here and would only fail later with a
+    /// raw DB <c>CalendarEventReminder_Method_check</c> exception on save.
+    /// </summary>
+    [Theory]
+    [InlineData("Push")]
+    [InlineData("SMS")]
+    [InlineData("email")]
+    public void Create_ReturnsError_WhenMethodNotRecognised(string method)
+    {
+        var result = CalendarEventReminder.Create(1, method, 30, null, null, null, null);
+
+        Assert.True(result.IsError);
+        Assert.Equal("Reminder.MethodInvalid", result.FirstError.Code);
+    }
+
     /// <summary>Create returns error, when no lead time set.</summary>
     [Fact]
     public void Create_ReturnsError_WhenNoLeadTimeSet()
@@ -87,7 +104,7 @@ public class CalendarEventReminderTests
     [InlineData(null, null, null, 4L)]
     public void Create_Succeeds_WhenLeadTimeAtMaxBoundary(long? minutes, long? hours, long? days, long? weeks)
     {
-        var result = CalendarEventReminder.Create(1, "Push", minutes, hours, days, weeks, null);
+        var result = CalendarEventReminder.Create(1, "Notification", minutes, hours, days, weeks, null);
 
         Assert.False(result.IsError);
     }
@@ -96,7 +113,7 @@ public class CalendarEventReminderTests
     [Fact]
     public void Create_Succeeds_WhenOnlyHoursBeforeSet()
     {
-        var result = CalendarEventReminder.Create(1, "Push", null, 2, null, null, null);
+        var result = CalendarEventReminder.Create(1, "Notification", null, 2, null, null, null);
 
         Assert.False(result.IsError);
         Assert.Equal(2, result.Value.HoursBeforeEvent);
@@ -106,7 +123,7 @@ public class CalendarEventReminderTests
     [Fact]
     public void Create_Succeeds_WhenOnlyDaysBeforeSet()
     {
-        var result = CalendarEventReminder.Create(1, "Push", null, null, 1, null, null);
+        var result = CalendarEventReminder.Create(1, "Notification", null, null, 1, null, null);
 
         Assert.False(result.IsError);
         Assert.Equal(1, result.Value.DaysBeforeEvent);
@@ -116,7 +133,7 @@ public class CalendarEventReminderTests
     [Fact]
     public void Create_Succeeds_WhenOnlyWeeksBeforeSet()
     {
-        var result = CalendarEventReminder.Create(1, "Push", null, null, null, 1, null);
+        var result = CalendarEventReminder.Create(1, "Notification", null, null, null, 1, null);
 
         Assert.False(result.IsError);
         Assert.Equal(1, result.Value.WeeksBeforeEvent);

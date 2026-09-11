@@ -31,7 +31,7 @@
     const $confirmDeleteFixedIncomeDialogModal = $('#confirmDeleteFixedIncomeDialogModal');
     const $labelCreateFixedIncomeAmount = $('#labelCreateFixedIncomeAmount');
     const $labelEditFixedIncomeAmount = $('#labelEditFixedIncomeAmount');
-    const $btnEditFixedExpenditureGridRow = $('#btnEditFixedExpenditureGridRow');
+    const $btnEditFixedIncomeGridRow = $('#btnEditFixedIncomeGridRow');
     const $btnConfirmDeleteFixedIncome = $('#btnConfirmDeleteFixedIncome');
     const $btnExportExcelFixedIncome = $('#btnExportExcelFixedIncome');
     const $btnDeleteFixedIncome = $('#btnDeleteFixedIncome');
@@ -526,7 +526,7 @@
             }
         });
     }
-    $btnEditFixedExpenditureGridRow.off('click').on('click', function () {
+    $btnEditFixedIncomeGridRow.off('click').on('click', function () {
         EditFixedIncomeGridRow($(this).attr('data-errorMessageSelectGridRow'));
     });
     $btnConfirmDeleteFixedIncome.off('click').on('click', function () {
