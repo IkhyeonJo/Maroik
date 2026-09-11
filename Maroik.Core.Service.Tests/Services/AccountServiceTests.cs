@@ -574,6 +574,32 @@ public class AccountServiceTests
     }
 
     /// <summary>
+    /// Regression: <c>UpdateEmailConfirmationAsync</c> is an <c>ExecuteUpdateAsync</c>-based,
+    /// column-scoped write that matches zero rows -- without throwing -- when the account row was
+    /// deleted concurrently between the <c>FindByRegistrationTokenAsync</c> lookup and this write.
+    /// <c>ConfirmEmailAsync</c> must treat that as a failed confirmation (mirroring the "account not
+    /// found" branch) rather than reporting <c>AccountCreated = true</c> for a write that persisted
+    /// nothing.
+    /// </summary>
+    [Fact]
+    public async Task ConfirmEmailAsync_ReturnsInvalidTokenNotCreated_WhenAccountVanishesBeforeWrite()
+    {
+        string freshToken = GuidToken.Generate();
+        var account = ActiveAccount(emailConfirmed: false, registrationToken: freshToken);
+        _rsa.Setup(r => r.Decrypt("enc")).Returns(freshToken);
+        _accountRepo.Setup(r => r.FindByRegistrationTokenAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(account);
+        _accountRepo.Setup(r => r.UpdateEmailConfirmationAsync(
+                It.IsAny<string>(), It.IsAny<string?>(), It.IsAny<string?>(), It.IsAny<DateTime>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(0);
+        var sut = CreateSut();
+
+        ConfirmEmailResult result = await sut.ConfirmEmailAsync("enc", TestContext.Current.CancellationToken);
+
+        Assert.True(result.InvalidToken);
+        Assert.False(result.AccountCreated);
+    }
+
+    /// <summary>
     /// Verifies that <c>ConfirmEmailAsync</c> never falls back to a full-row <c>UpdateEntityAsync</c>
     /// write on the success path — it must use the column-scoped <c>UpdateEmailConfirmationAsync</c>
     /// so a concurrent write to another column on the same account row is not silently reverted by a

@@ -1,3 +1,5 @@
+using Maroik.Core.Domain.Primitives;
+
 namespace Maroik.Core.Domain.Calendar;
 
 /// <summary>
@@ -16,10 +18,11 @@ public static class CalendarEventStatuses
     /// <summary>The subscriber appears available for the event's duration.</summary>
     public const string Free = "Free";
 
+    private static readonly StringTaxonomy Taxonomy = new([Busy, Free]);
+
     /// <summary>Every recognised status value.</summary>
-    public static readonly IReadOnlySet<string> All =
-        new HashSet<string>(StringComparer.Ordinal) { Busy, Free };
+    public static IReadOnlySet<string> All => Taxonomy.All;
 
     /// <summary>Returns true when <paramref name="status"/> is one of the known status values.</summary>
-    public static bool IsKnown(string? status) => status != null && All.Contains(status);
+    public static bool IsKnown(string? status) => Taxonomy.IsKnown(status);
 }

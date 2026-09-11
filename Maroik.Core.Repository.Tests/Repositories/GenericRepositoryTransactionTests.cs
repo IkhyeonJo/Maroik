@@ -1,6 +1,7 @@
 using Maroik.Core.Domain.Account;
 using Maroik.Core.Domain.Calendar;
 using Maroik.Core.Domain.Menu;
+using Maroik.Core.PostgreSQL.Data;
 using Maroik.Core.Repository.Repositories;
 using Microsoft.EntityFrameworkCore;
 using EfCategory = Maroik.Core.PostgreSQL.Models.Category;
@@ -105,5 +106,93 @@ public sealed class GenericRepositoryTransactionTests(DatabaseFixture database) 
 
         Assert.False(await Context.OtherCalendars.AsNoTracking().AnyAsync(
             o => o.AccountEmail == email && o.CalendarId == calendarId, TestContext.Current.CancellationToken));
+    }
+
+    /// <summary>
+    /// Regression: <c>QueryAsync</c> (used here via <c>OtherCalendarRepository.GetByAccountEmailAsync</c>)
+    /// used to translate its predicate straight into SQL and run it against the database only, so a row
+    /// created earlier in the same still-open transaction -- whose INSERT is deferred -- was invisible
+    /// to it even though it already exists for every practical purpose within this unit of work.
+    /// </summary>
+    [Fact]
+    public async Task QueryAsync_InsideTransaction_SeesRowCreatedEarlierInSameTransaction()
+    {
+        long calendarId = await InsertCalendarAsync();
+        string email = UniqueEmail("subscriber-query");
+        await EnsureAccountsAsync(email);
+        var link = OtherCalendar.Reconstitute(email, calendarId);
+
+        await using var uow = new UnitOfWork(Context);
+        var repo = new OtherCalendarRepository(Context);
+
+        await uow.BeginAsync(TestContext.Current.CancellationToken);
+        await repo.CreateAsync(link, TestContext.Current.CancellationToken);
+        List<OtherCalendar> subscriptions = await repo.GetByAccountEmailAsync(email, TestContext.Current.CancellationToken);
+
+        Assert.Contains(subscriptions, s => s.CalendarId == calendarId);
+    }
+
+    /// <summary>
+    /// Regression: <c>QueryFirstAsync</c> (used here via <c>AccountRepository.FindByEmailAsync</c>) had
+    /// the same DB-only gap as <c>QueryAsync</c> above -- a row created earlier in the same still-open
+    /// transaction was invisible to it because its INSERT is deferred until <c>CommitAsync</c>.
+    /// </summary>
+    [Fact]
+    public async Task QueryFirstAsync_InsideTransaction_SeesRowCreatedEarlierInSameTransaction()
+    {
+        string email = UniqueEmail("first-query");
+        var account = Account.Reconstitute(
+            email: email, hashedPassword: "$2a$13$placeholder", nickname: "nick-" + Token,
+            avatarImagePath: null, role: Role.User, timeZoneIanaId: "UTC", defaultMonetaryUnit: null,
+            locked: false, loginAttempt: 0, emailConfirmed: true, agreedServiceTerms: true,
+            registrationToken: null, resetPasswordToken: null, created: DateTime.UtcNow, updated: DateTime.UtcNow,
+            message: null, deleted: false, securityStamp: "stamp", mustChangePassword: false);
+
+        await using var uow = new UnitOfWork(Context);
+        var repo = new AccountRepository(Context);
+
+        await uow.BeginAsync(TestContext.Current.CancellationToken);
+        await repo.CreateAsync(account, TestContext.Current.CancellationToken);
+        Account? found = await repo.FindByEmailAsync(email, TestContext.Current.CancellationToken);
+
+        Assert.NotNull(found);
+        Assert.Equal(email, found!.Email.Value);
+    }
+
+    /// <summary>Test-only subclass exposing a <c>DeleteWhereAsync</c> filtered on <c>Name</c> (a mutable,
+    /// non-key column) so the Modified-row extension below can be exercised through it.</summary>
+    private sealed class NameFilterableCategoryRepository(ApplicationDbContext context) : CategoryRepository(context)
+    {
+        public Task DeleteByNameAsync(string name, CancellationToken ct) => DeleteWhereAsync(e => e.Name == name, ct);
+    }
+
+    /// <summary>
+    /// Regression: <c>DeleteWhereAsync</c>'s delete-set query is deliberately <c>AsNoTracking</c> (see
+    /// its own comment), so it cannot see a row renamed -- but not yet flushed -- earlier in the same
+    /// transaction; without the Modified-row reconciliation, a predicate matching only the row's new,
+    /// unflushed name would silently delete nothing and the pending rename would still commit.
+    /// </summary>
+    [Fact]
+    public async Task DeleteWhereAsync_InsideTransaction_RemovesRowRenamedEarlierInSameTransactionToMatchPredicate()
+    {
+        string originalName = Unique("OrigCat");
+        string newName = Unique("RenamedCat");
+        var repo = new NameFilterableCategoryRepository(Context);
+        var category = Category.Reconstitute(0, originalName, "Display", "/icons/i.svg", "Ctrl", "Index", Role.User, 1);
+        await repo.CreateAsync(category, TestContext.Current.CancellationToken);
+        long id = await Context.Categories.AsNoTracking()
+            .Where(c => c.Name == originalName)
+            .Select(c => c.Id)
+            .SingleAsync(TestContext.Current.CancellationToken);
+
+        await using var uow = new UnitOfWork(Context);
+        await uow.BeginAsync(TestContext.Current.CancellationToken);
+        var renamed = Category.Reconstitute(id, newName, "Display", "/icons/i.svg", "Ctrl", "Index", Role.User, 1);
+        await repo.UpdateEntityAsync(renamed, TestContext.Current.CancellationToken);
+        await repo.DeleteByNameAsync(newName, TestContext.Current.CancellationToken);
+        await uow.CommitAsync(TestContext.Current.CancellationToken);
+
+        Assert.False(await ExistsInSeparateConnectionAsync(originalName));
+        Assert.False(await ExistsInSeparateConnectionAsync(newName));
     }
 }

@@ -1,3 +1,5 @@
+using Maroik.Core.Domain.Primitives;
+
 namespace Maroik.Core.Domain.Calendar;
 
 /// <summary>
@@ -15,10 +17,11 @@ public static class ReminderMethods
     /// <summary>Deliver the reminder as an in-app/push notification.</summary>
     public const string Notification = "Notification";
 
+    private static readonly StringTaxonomy Taxonomy = new([Email, Notification]);
+
     /// <summary>Every recognised delivery method.</summary>
-    public static readonly IReadOnlySet<string> All =
-        new HashSet<string>(StringComparer.Ordinal) { Email, Notification };
+    public static IReadOnlySet<string> All => Taxonomy.All;
 
     /// <summary>Returns true when <paramref name="method"/> is one of the known delivery methods.</summary>
-    public static bool IsKnown(string? method) => method != null && All.Contains(method);
+    public static bool IsKnown(string? method) => Taxonomy.IsKnown(method);
 }

@@ -1,3 +1,5 @@
+using Maroik.Core.Domain.Primitives;
+
 namespace Maroik.Core.Domain.Board;
 
 /// <summary>
@@ -15,10 +17,11 @@ public static class BoardTypes
     /// <summary>Private note. Visible only to its author — no admin bypass.</summary>
     public const string PrivateNote = "PrivateNote";
 
+    private static readonly StringTaxonomy Taxonomy = new([FreeForum, PrivateNote]);
+
     /// <summary>Every board-type value a new post may be created with.</summary>
-    public static readonly IReadOnlySet<string> All =
-        new HashSet<string>(StringComparer.Ordinal) { FreeForum, PrivateNote };
+    public static IReadOnlySet<string> All => Taxonomy.All;
 
     /// <summary>Returns true when <paramref name="type"/> is one of the known board types.</summary>
-    public static bool IsKnown(string? type) => type != null && All.Contains(type);
+    public static bool IsKnown(string? type) => Taxonomy.IsKnown(type);
 }

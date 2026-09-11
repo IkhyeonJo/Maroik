@@ -152,10 +152,14 @@ public class DashboardService : IDashboardService
             // meal/housing/education spending, ...) the dashboard view displays. Computed here, from
             // IncomeClassPolicy/ExpenditureClassPolicy's own main-class list, so the view model
             // mapper only reads pre-computed numbers instead of re-deriving these sums itself.
-            summary.YearIncomeBreakdown = BuildBreakdown(summary.YearIncomes, IncomeClassPolicy.SubClassesByMainClass.Keys);
-            summary.YearMonthIncomeBreakdown = BuildBreakdown(summary.YearMonthIncomes, IncomeClassPolicy.SubClassesByMainClass.Keys);
-            summary.YearExpenditureBreakdown = BuildBreakdown(summary.YearExpenditures, ExpenditureClassPolicy.SubClassesByMainClass.Keys);
-            summary.YearMonthExpenditureBreakdown = BuildBreakdown(summary.YearMonthExpenditures, ExpenditureClassPolicy.SubClassesByMainClass.Keys);
+            summary.YearIncomeBreakdown = BuildBreakdown(
+                summary.YearIncomes.Select(i => (i.MainClass, i.SubClass, i.Amount)), IncomeClassPolicy.SubClassesByMainClass.Keys);
+            summary.YearMonthIncomeBreakdown = BuildBreakdown(
+                summary.YearMonthIncomes.Select(i => (i.MainClass, i.SubClass, i.Amount)), IncomeClassPolicy.SubClassesByMainClass.Keys);
+            summary.YearExpenditureBreakdown = BuildBreakdown(
+                summary.YearExpenditures.Select(e => (e.MainClass, e.SubClass, e.Amount)), ExpenditureClassPolicy.SubClassesByMainClass.Keys);
+            summary.YearMonthExpenditureBreakdown = BuildBreakdown(
+                summary.YearMonthExpenditures.Select(e => (e.MainClass, e.SubClass, e.Amount)), ExpenditureClassPolicy.SubClassesByMainClass.Keys);
         }
 
         // Compute StartYear
@@ -302,15 +306,22 @@ public class DashboardService : IDashboardService
         };
     }
 
-    /// <summary>Computes a <see cref="FinanceBreakdownDto"/> per main class in <paramref name="mainClasses"/> from <paramref name="items"/> via <see cref="FinanceBreakdownPolicy"/>.</summary>
-    private static Dictionary<string, FinanceBreakdownDto> BuildBreakdown(List<IncomeResponse> items, IEnumerable<string> mainClasses) =>
-        mainClasses.ToDictionary(mainClass => mainClass, mainClass => ToDto(FinanceBreakdownPolicy.Compute(
-            items.Where(i => i.MainClass == mainClass).Select(i => (i.SubClass, i.Amount)))));
-
-    /// <summary>Computes a <see cref="FinanceBreakdownDto"/> per main class in <paramref name="mainClasses"/> from <paramref name="items"/> via <see cref="FinanceBreakdownPolicy"/>.</summary>
-    private static Dictionary<string, FinanceBreakdownDto> BuildBreakdown(List<ExpenditureResponse> items, IEnumerable<string> mainClasses) =>
-        mainClasses.ToDictionary(mainClass => mainClass, mainClass => ToDto(FinanceBreakdownPolicy.Compute(
-            items.Where(e => e.MainClass == mainClass).Select(e => (e.SubClass, e.Amount)))));
+    /// <summary>
+    /// Computes a <see cref="FinanceBreakdownDto"/> per main class in <paramref name="mainClasses"/> from
+    /// <paramref name="items"/> via <see cref="FinanceBreakdownPolicy"/>. Shared by both the income and
+    /// expenditure call sites -- callers project their <c>IncomeResponse</c>/<c>ExpenditureResponse</c>
+    /// list to the common <c>(MainClass, SubClass, Amount)</c> shape first. Groups <paramref name="items"/>
+    /// by main class once via <see cref="Enumerable.ToLookup{TSource,TKey}(IEnumerable{TSource},Func{TSource,TKey})"/>
+    /// so this is a single O(items) pass rather than re-scanning the full list once per main class.
+    /// </summary>
+    private static Dictionary<string, FinanceBreakdownDto> BuildBreakdown(
+        IEnumerable<(string? MainClass, string? SubClass, decimal Amount)> items, IEnumerable<string> mainClasses)
+    {
+        var byMainClass = items.ToLookup(i => i.MainClass);
+        return mainClasses.ToDictionary(
+            mainClass => mainClass,
+            mainClass => ToDto(FinanceBreakdownPolicy.Compute(byMainClass[mainClass].Select(i => (i.SubClass, i.Amount)))));
+    }
 
     private static FinanceBreakdownDto ToDto(FinanceBreakdownPolicy.SubClassBreakdown breakdown) => new()
     {

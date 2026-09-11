@@ -336,12 +336,13 @@ public class AccountService : IAccountService
         }
 
         account.SetMessage(EnumHelper.GetDescription(AccountMessage.Success));
+        int rowsAffected;
         try
         {
             // Column-scoped write (not full-row UpdateEntityAsync): this runs off an un-locked
             // token lookup and must not overwrite a concurrent self-service change on the same row
             // (same reasoning as the already-confirmed branch above).
-            await _accountRepository.UpdateEmailConfirmationAsync(
+            rowsAffected = await _accountRepository.UpdateEmailConfirmationAsync(
                 account.Email.Value, account.RegistrationToken, account.Message, account.Updated, ct);
         }
         catch (Exception e)
@@ -354,6 +355,18 @@ public class AccountService : IAccountService
                 ErrorKey = "Error occurred while processing about confirm email account status"
             };
         }
+
+        // ExecuteUpdateAsync doesn't throw on a missing row -- it just matches zero rows. If the
+        // account was deleted concurrently between FindByRegistrationTokenAsync above and this
+        // write, nothing was actually persisted; report it the same way as "account not found"
+        // rather than a false AccountCreated success.
+        if (rowsAffected == 0)
+        {
+            _logger.LogWarning(
+                "Account {Email} no longer existed when its email confirmation was written", account.Email.Value);
+            return new ConfirmEmailResult { InvalidToken = true, AccountCreated = false };
+        }
+
         return new ConfirmEmailResult { InvalidToken = false, AccountCreated = true };
     }
 

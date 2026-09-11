@@ -128,7 +128,11 @@ public abstract class GenericRepository<TDomain, TEntity>(ApplicationDbContext c
     {
         var query = ApplyIncludes(Set.Where(predicate));
         if (orderBy != null) query = orderBy(query);
-        return [.. (await query.ToListAsync(ct)).Select(ToDomain)];
+        var dbResults = await query.ToListAsync(ct);
+        var merged = MergeWithPendingChanges(dbResults, predicate);
+        if (orderBy != null && !ReferenceEquals(merged, dbResults))
+            merged = [.. orderBy(merged.AsQueryable())];
+        return [.. merged.Select(ToDomain)];
     }
 
     /// <summary>Returns every row in <see cref="Set"/> (with optional <paramref name="orderBy"/>), mapped to <typeparamref name="TDomain"/>.</summary>
@@ -161,7 +165,16 @@ public abstract class GenericRepository<TDomain, TEntity>(ApplicationDbContext c
         var query = ApplyIncludes(Set.Where(predicate));
         if (noTracking) query = query.AsNoTracking();
         if (orderBy != null) query = orderBy(query);
-        var entity = await query.FirstOrDefaultAsync(ct);
+        // Fetched as a list (not FirstOrDefaultAsync's single-row LIMIT 1 SQL) so a pending,
+        // not-yet-flushed row from earlier in the same open transaction -- invisible to the DB
+        // query below -- can still be merged in and considered for "first" below. Predicates used
+        // with this helper are expected to be selective (unique key / small FK-scoped set), so the
+        // extra rows fetched are typically zero or few.
+        var dbResults = await query.ToListAsync(ct);
+        var merged = MergeWithPendingChanges(dbResults, predicate);
+        if (orderBy != null && !ReferenceEquals(merged, dbResults))
+            merged = [.. orderBy(merged.AsQueryable())];
+        var entity = merged.Count > 0 ? merged[0] : default;
         return entity == null ? default : ToDomain(entity);
     }
 
@@ -193,9 +206,6 @@ public abstract class GenericRepository<TDomain, TEntity>(ApplicationDbContext c
         // Index the entities this context already tracks by primary key once, so matching each row
         // to delete is a dictionary lookup instead of a linear ChangeTracker scan with a compiled-
         // getter call per comparison (this was O(rows-to-delete x tracked-entities)).
-        static string KeyOf(object?[] keyValues) =>
-            string.Join("|", keyValues.Select(v => System.Uri.EscapeDataString(v?.ToString() ?? "")));
-
         Dictionary<string, TEntity> trackedByKey = Context.ChangeTracker.Entries<TEntity>()
             .GroupBy(e => KeyOf(GetPrimaryKeyValues(e.Entity)))
             .ToDictionary(g => g.Key, g => g.First().Entity);
@@ -215,16 +225,72 @@ public abstract class GenericRepository<TDomain, TEntity>(ApplicationDbContext c
 
         // A row created earlier in the same still-open transaction via CreateAsync has its INSERT
         // deferred (see FlushUnlessInTransactionAsync) and so does not exist in the database yet —
-        // the query above cannot see it, and it would otherwise still be inserted by the eventual
-        // CommitAsync despite matching this delete. Cancel its pending insert directly against the
-        // change tracker: "delete a row that was never written" is "don't write it", i.e. Detached.
+        // the AsNoTracking query above (deliberately bypassing identity resolution, see its comment)
+        // cannot see it, and it would otherwise still be inserted by the eventual CommitAsync despite
+        // matching this delete. Cancel its pending insert directly against the change tracker:
+        // "delete a row that was never written" is "don't write it", i.e. Detached.
+        //
+        // Symmetrically, a row updated (but not yet flushed) earlier in the same transaction is
+        // fetched above with its stale, still-in-the-database column values, so a predicate matching
+        // only the row's new, unflushed value would miss it entirely; the reverse also holds -- a row
+        // whose new value no longer matches the predicate would still be deleted since the AsNoTracking
+        // query only ever sees the old, matching one. Both are resolved the same way: re-run the
+        // predicate against each Modified entry's current (in-memory) values and let that decide
+        // whether it should end up Deleted, overriding what the AsNoTracking snapshot implied.
         var predicateFunc = predicate.Compile();
         foreach (var entry in Context.ChangeTracker.Entries<TEntity>().Where(e => e.State == EntityState.Added).ToList())
         {
             if (predicateFunc(entry.Entity))
                 entry.State = EntityState.Detached;
         }
+        foreach (var entry in Context.ChangeTracker.Entries<TEntity>().Where(e => e.State == EntityState.Modified).ToList())
+        {
+            if (predicateFunc(entry.Entity))
+                entry.State = EntityState.Deleted;
+        }
 
         await FlushUnlessInTransactionAsync(ct);
     }
+
+    /// <summary>
+    /// Reconciles <paramref name="dbResults"/> (rows already fetched from the database via a tracking
+    /// query) with any pending, not-yet-flushed <see cref="EntityState.Added"/> or
+    /// <see cref="EntityState.Deleted"/> changes this context holds for <typeparamref name="TEntity"/>,
+    /// so a caller inside an open <see cref="IUnitOfWork"/> transaction sees its own uncommitted
+    /// writes. A row Added earlier in the same transaction has its INSERT deferred (see
+    /// <see cref="FlushUnlessInTransactionAsync"/>), so <paramref name="dbResults"/> cannot contain it
+    /// even when it matches <paramref name="predicate"/> -- it is added here. A row Deleted earlier in
+    /// the same transaction has its DELETE likewise deferred, so <paramref name="dbResults"/> can still
+    /// contain it -- it is removed here. (A row Modified earlier in the same transaction needs no such
+    /// reconciliation for a *tracking* query: EF Core's identity resolution returns the already-tracked,
+    /// current-value instance for any row a tracking query's SQL happens to return, which is why this
+    /// gap only bites <see cref="DeleteWhereAsync"/>'s explicitly <c>AsNoTracking</c> lookup.)
+    /// Returns <paramref name="dbResults"/> itself, unchanged, when nothing of <typeparamref name="TEntity"/>
+    /// is pending, so the common case (no open transaction, or no writes yet in this one) pays no
+    /// extra cost and callers can tell nothing changed via reference equality.
+    /// </summary>
+    private List<TEntity> MergeWithPendingChanges(List<TEntity> dbResults, Expression<Func<TEntity, bool>> predicate)
+    {
+        var pending = Context.ChangeTracker.Entries<TEntity>()
+            .Where(e => e.State is EntityState.Added or EntityState.Deleted)
+            .ToList();
+        if (pending.Count == 0)
+            return dbResults;
+
+        var deletedKeys = new HashSet<string>(pending
+            .Where(e => e.State == EntityState.Deleted)
+            .Select(e => KeyOf(GetPrimaryKeyValues(e.Entity))));
+
+        List<TEntity> merged = new(dbResults.Where(e => !deletedKeys.Contains(KeyOf(GetPrimaryKeyValues(e)))));
+
+        var predicateFunc = predicate.Compile();
+        merged.AddRange(pending
+            .Where(e => e.State == EntityState.Added && predicateFunc(e.Entity))
+            .Select(e => e.Entity));
+
+        return merged;
+    }
+
+    private static string KeyOf(object?[] keyValues) =>
+        string.Join("|", keyValues.Select(v => System.Uri.EscapeDataString(v?.ToString() ?? "")));
 }

@@ -444,6 +444,38 @@ public class DashboardServiceTests
     }
 
     /// <summary>
+    /// Regression: <c>BuildBreakdown</c> now groups items by main class via a single
+    /// <see cref="Enumerable.ToLookup{TSource,TKey}(IEnumerable{TSource},Func{TSource,TKey})"/> pass
+    /// instead of re-filtering the full list once per known main class. An item whose main class is
+    /// not one of <c>IncomeClassPolicy.SubClassesByMainClass</c>'s keys must still be silently
+    /// excluded from every bucket -- neither crashing the lookup nor leaking into an unrelated class.
+    /// </summary>
+    [Fact]
+    public async Task GetSummaryAsync_IncomeWithUnrecognisedMainClass_IsExcludedFromEveryBucket()
+    {
+        const string email = "user@example.com";
+        _accountRepo.Setup(r => r.FindByEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(MakeAccount(unit: "KRW"));
+        _assetRepo.Setup(r => r.GetByAccountEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync([MakeAsset("Wallet")]);
+        SetupEmptyFinancials(email);
+
+        List<Income> yearIncomes =
+        [
+            Income.Reconstitute(1, email, "RegularIncome", "LaborIncome", null, 600m, "KRW", "Wallet", null, DateTime.UtcNow, DateTime.UtcNow),
+            Income.Reconstitute(2, email, "NotARealMainClass", "Whatever", null, 999m, "KRW", "Wallet", null, DateTime.UtcNow, DateTime.UtcNow),
+        ];
+        _incomeRepo.Setup(r => r.GetByAccountEmailAndDateRangeAsync(email, It.IsAny<DateTime>(), It.IsAny<DateTime>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(yearIncomes);
+        var sut = CreateSut();
+
+        DashboardDto summary = await sut.GetSummaryAsync(email, "2025", "1", "UTC", TestContext.Current.CancellationToken);
+
+        Assert.DoesNotContain("NotARealMainClass", summary.YearIncomeBreakdown.Keys);
+        FinanceBreakdownDto regular = summary.YearIncomeBreakdown["RegularIncome"];
+        Assert.Equal(600m, regular.Total);
+        Assert.Equal(100.0, regular.PercentageBySubClass["LaborIncome"]);
+    }
+
+    /// <summary>
     /// Verifies that the year and year-month breakdowns are computed independently from their
     /// respective (already year-month-filtered) lists, not from each other.
     /// </summary>
