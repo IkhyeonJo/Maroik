@@ -117,4 +117,28 @@ public class AssetRepository(ApplicationDbContext context)
         var entity = entities.FirstOrDefault();
         return entity == null ? null : ToDomain(entity);
     }
+
+    /// <inheritdoc />
+    public async Task<List<Asset>> FindByEmailAndProductNamesForUpdateAsync(string accountEmail, IReadOnlyCollection<string> productNames, CancellationToken ct = default)
+    {
+        if (productNames.Count == 0) return [];
+
+        // Same rationale as FindByEmailAndProductNameForUpdateAsync (raw SQL for FOR UPDATE,
+        // AsNoTracking to bypass identity-resolution snap-back to a pre-lock tracked instance).
+        // ORDER BY "ProductName" locks every matched row in the same order a caller that already
+        // sorts its requested names (see AssetBalanceOrdinalLockExtensions) would have locked them
+        // one at a time, so batching here doesn't change the deadlock-avoidance guarantee.
+        var entities = await Set.FromSqlInterpolated(
+            $"""
+             SELECT *
+             FROM "Asset"
+             WHERE
+                 "AccountEmail" = {accountEmail}
+                 AND "ProductName" = ANY({productNames.ToArray()})
+             ORDER BY "ProductName"
+             FOR UPDATE
+             """).AsNoTracking().ToListAsync(ct);
+
+        return [.. entities.Select(ToDomain)];
+    }
 }

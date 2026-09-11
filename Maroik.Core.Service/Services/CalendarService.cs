@@ -3,6 +3,7 @@ using Maroik.Core.Domain.ValueObjects;
 using Maroik.Core.Contract.Dtos;
 using Maroik.Core.Contract.Interfaces;
 using Maroik.Core.Contract.Misc.Settings;
+using Maroik.Core.Service.Extensions;
 using Maroik.Core.Service.Mappers;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
@@ -174,8 +175,11 @@ public class CalendarService : ICalendarService
         {
             List<Calendar> calendars = await _calendarRepository.GetByAccountEmailAsync(accountEmail, ct);
 
-            // Prevent duplicate calendar names for the same account. The read + insert run in one
-            // transaction so two concurrent creates of the same name can't both pass this check.
+            // Prevent duplicate calendar names for the same account. This is a read-then-write
+            // check: two concurrent creates of the same name can both pass it under Postgres's
+            // default READ COMMITTED isolation, since a plain SELECT takes no lock. The
+            // "Calendar_AccountEmail_Name_unique" constraint (caught below) is what actually
+            // closes the race; this check only avoids the round trip in the common case.
             if (calendars.Any(c => c.Name == request.Name))
                 return await FailAsync(ServiceResult.Conflict("Calendar.NameExists", "The calendar already exists."), ct);
 
@@ -187,6 +191,11 @@ public class CalendarService : ICalendarService
             await _calendarRepository.CreateAsync(calendar, ct);
             await _unitOfWork.CommitAsync(ct);
             return ServiceResult.Ok();
+        }
+        catch (Exception ex) when (ex.IsPostgresUniqueViolation())
+        {
+            await _unitOfWork.RollbackAsync(ct);
+            return ServiceResult.Conflict("Calendar.NameExists", "The calendar already exists.");
         }
         catch (Exception ex)
         {
@@ -214,6 +223,14 @@ public class CalendarService : ICalendarService
             await _calendarRepository.UpdateEntityAsync(previous, ct);
             await _unitOfWork.CommitAsync(ct);
             return ServiceResult.Ok();
+        }
+        catch (Exception ex) when (ex.IsPostgresUniqueViolation())
+        {
+            // Renaming to a name already used by another of this account's calendars hits the
+            // same "Calendar_AccountEmail_Name_unique" constraint CreateCalendarAsync guards
+            // against -- report the same friendly conflict instead of the generic fallback below.
+            await _unitOfWork.RollbackAsync(ct);
+            return ServiceResult.Conflict("Calendar.NameExists", "The calendar already exists.");
         }
         catch (Exception ex)
         {
@@ -276,6 +293,14 @@ public class CalendarService : ICalendarService
             var calendar = calendarResult.Value;
             await _calendarRepository.CreateAsync(calendar, ct);
             await _unitOfWork.CommitAsync(ct);
+            return ServiceResult.Ok();
+        }
+        catch (Exception ex) when (ex.IsPostgresUniqueViolation())
+        {
+            // A concurrent request (e.g. two tabs opened on first login) already created this
+            // account's default calendar. This method's contract is "some calendar now exists" --
+            // already satisfied -- so treat the race as success rather than surfacing a failure.
+            await _unitOfWork.RollbackAsync(ct);
             return ServiceResult.Ok();
         }
         catch (Exception ex)

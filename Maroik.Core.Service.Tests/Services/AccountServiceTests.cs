@@ -482,6 +482,29 @@ public class AccountServiceTests
             existing.Email.Value, true, It.IsAny<DateTime>(), It.IsAny<CancellationToken>()), Times.Once);
     }
 
+    // -- ResendConfirmationEmailAsync ------------------------------------------
+
+    /// <summary>
+    /// Regression test: this endpoint is address-only (the resend form has no password field), so
+    /// an already-confirmed account must never be written to -- otherwise anyone who knows a
+    /// registered address could churn a stranger's account row for free, the same class of issue
+    /// RegisterAsync's equivalent branch was hardened against.
+    /// </summary>
+    [Fact]
+    public async Task ResendConfirmationEmailAsync_ConfirmedAccount_DoesNotTouchTheRow()
+    {
+        var existing = ActiveAccount(emailConfirmed: true);
+        _accountRepo.Setup(r => r.FindByEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(existing);
+        var sut = CreateSut();
+
+        RegisterResult result = await sut.ResendConfirmationEmailAsync(existing.Email.Value, _emailTemplate, TestContext.Current.CancellationToken);
+
+        Assert.False(result.Success);
+        Assert.Contains("already", result.ErrorKey, StringComparison.OrdinalIgnoreCase);
+        _accountRepo.Verify(r => r.UpdateMessageAsync(
+            It.IsAny<string>(), It.IsAny<string?>(), It.IsAny<DateTime>(), It.IsAny<CancellationToken>()), Times.Never);
+    }
+
     // -- ConfirmEmailAsync ----------------------------------------------------
 
     /// <summary>Verifies that <c>ConfirmEmailAsync</c> returns invalid token when decryption fails.</summary>

@@ -381,11 +381,9 @@ public class ManagementController : Controller
             if (!ModelState.IsValid)
                 return Json(new { result = false, error = _localizer["Input is invalid"].Value });
 
-            if (accountInputViewModel.Role is not (Role.Admin or Role.User))
-            {
-                accountInputViewModel.Role = Role.User;
-            }
-
+            // Role validity is enforced by Account.AdminUpdate in the Domain layer, which rejects
+            // the request with a validation error below instead of the controller silently
+            // coercing an invalid value.
             ServiceResult updateResult = await _managementAccountService.UpdateAccountAsync(
                 new AccountRequest
                 {
@@ -959,20 +957,7 @@ public class ManagementController : Controller
         if (!ImageUploadPolicy.IsAllowedExtension(ext))
             return Ok(new { result = false, errorMessage = _localizer["Only .jpg or jpeg or .png file allowed."].Value });
 
-        byte[] bytes;
-        using (var ms = new MemoryStream())
-        {
-            await summernoteImageFile.CopyToAsync(ms);
-            bytes = ms.ToArray();
-        }
-
-        var file = new AttachedFileDto
-        {
-            Bytes = bytes,
-            ContentType = summernoteImageFile.ContentType,
-            FileName = summernoteImageFile.FileName,
-            Size = summernoteImageFile.Length
-        };
+        AttachedFileDto file = (await summernoteImageFile.ToAttachedFileInfoAsync(_serverSettings.Value.MaxAttachedFileSizeBytes, HttpContext.RequestAborted))!;
 
         SummernoteUploadResult uploadResult = await _boardService.UploadSummernoteImageAsync(file, "Management", BoardTypes.PrivateNote, HttpContext.RequestAborted);
 

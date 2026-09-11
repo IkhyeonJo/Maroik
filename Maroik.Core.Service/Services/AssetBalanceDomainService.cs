@@ -26,6 +26,13 @@ public class AssetBalanceDomainService : IAssetBalanceDomainService
         => _assetRepository.FindByEmailAndProductNameForUpdateAsync(accountEmail, productName, ct);
 
     /// <inheritdoc />
+    public async Task<Dictionary<string, Asset>> GetAssetsAsync(string accountEmail, IReadOnlyCollection<string> productNames, CancellationToken ct = default)
+    {
+        List<Asset> assets = await _assetRepository.FindByEmailAndProductNamesForUpdateAsync(accountEmail, productNames, ct);
+        return assets.ToDictionary(a => a.ProductName, StringComparer.Ordinal);
+    }
+
+    /// <inheritdoc />
     public Task<Asset?> GetAssetForReadAsync(string accountEmail, string productName, CancellationToken ct = default)
         => _assetRepository.FindByEmailAndProductNameAsync(accountEmail, productName, ct);
 

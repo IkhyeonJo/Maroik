@@ -43,6 +43,20 @@ public class IncomeServiceTests
             .Returns(findById);
         _incomeRepo.Setup(r => r.FindByEmailAndIdForUpdateAsync(It.IsAny<string>(), It.IsAny<long>(), It.IsAny<CancellationToken>()))
             .Returns(findById);
+
+        // GetAssetsOrdinalAsync now fetches every asset in one batched call instead of looping
+        // GetAssetAsync per name; bridge it to the per-name setups the tests below already declare.
+        _assetBalance.Setup(r => r.GetAssetsAsync(It.IsAny<string>(), It.IsAny<IReadOnlyCollection<string>>(), It.IsAny<CancellationToken>()))
+            .Returns(async (string email, IReadOnlyCollection<string> names, CancellationToken ct) =>
+            {
+                var result = new Dictionary<string, Asset>(StringComparer.Ordinal);
+                foreach (string name in names)
+                {
+                    Asset? asset = await _assetBalance.Object.GetAssetAsync(email, name, ct);
+                    if (asset != null) result[name] = asset;
+                }
+                return result;
+            });
     }
 
     // -- Helpers --------------------------------------------------------------

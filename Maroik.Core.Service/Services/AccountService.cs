@@ -287,26 +287,11 @@ public class AccountService : IAccountService
                 setVerifyEmailMessageOnSuccess: true, repeat: true, ct);
         }
 
-        // Email is already confirmed: inform the caller the account is fully created. Column-scoped
-        // write (not full-row UpdateEntityAsync) — this path runs off an un-locked read and must not
-        // clobber a concurrent self-service change on the same row — and skip the write entirely
-        // when the stored message already says this, so replaying this endpoint against a known
-        // address cannot churn a stranger's Updated timestamp.
+        // Email is already confirmed: just inform the caller. This request has no proof of
+        // ownership (unlike RegisterAsync's equivalent branch, which requires the account's
+        // password before writing anything) -- an unauthenticated caller who only knows the
+        // address must not be able to mutate the account, so this path is read-only.
         string alreadyCreatedMessage = EnumHelper.GetDescription(AccountMessage.UserAlreadyCreated);
-        try
-        {
-            if (!string.Equals(account.Message, alreadyCreatedMessage, StringComparison.Ordinal))
-            {
-                account.SetMessage(alreadyCreatedMessage);
-                await _accountRepository.UpdateMessageAsync(account.Email.Value, account.Message, account.Updated, ct);
-            }
-        }
-        catch (Exception e)
-        {
-            _logger.LogError(e, "Failed to update account status for {Email}", email);
-            return RegisterResult.Fail("Error occurred while processing about account status");
-        }
-
         return RegisterResult.Fail(alreadyCreatedMessage);
     }
 

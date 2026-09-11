@@ -176,8 +176,8 @@ public sealed class Expenditure : AggregateRoot<long>
         if (string.IsNullOrWhiteSpace(content))
             return Error.Validation("Expenditure.ContentEmpty", "Content cannot be empty.");
 
-        if (amount < 0m)
-            return Error.Validation("Expenditure.NegativeAmount", "Amount cannot be negative.");
+        var amountResult = FinanceAmountPolicy.ValidateNonNegative(amount);
+        if (amountResult.IsError) return amountResult.Errors;
 
         var textResult = FinanceTextPolicy.ValidateContentAndNote(content, note);
         if (textResult.IsError) return textResult.Errors;

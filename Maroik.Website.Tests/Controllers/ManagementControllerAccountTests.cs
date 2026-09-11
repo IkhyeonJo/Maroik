@@ -328,13 +328,13 @@ public class ManagementControllerAccountTests
     }
 
     /// <summary>
-    /// Regression test: an out-of-range Role value must be clamped to <c>Role.User</c> rather
-    /// than persisted as-is, mirroring the same clamp <c>CreateAccount</c> already applies.
-    /// Without this, a malformed request could leave an account with a Role the
-    /// authorization filter doesn't recognize.
+    /// Regression test: an out-of-range Role value must be rejected by Account.AdminUpdate's own
+    /// validation, not silently coerced to Role.User by the controller. Coercing it outside Core
+    /// let an invalid Role bypass the Domain's validation entirely; the account's stored Role must
+    /// stay unchanged when the request is rejected.
     /// </summary>
     [Fact]
-    public async Task UpdateAccount_InvalidRole_ClampsToUser()
+    public async Task UpdateAccount_InvalidRole_IsRejected_AndDoesNotChangeTheStoredRole()
     {
         var session = await LoginAsAdminAsync();
         const string email = "invalid-role-update@test.com";
@@ -355,12 +355,12 @@ public class ManagementControllerAccountTests
         var response = await _client.SendAsync(updateRequest, TestContext.Current.CancellationToken);
         string json = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
 
-        Assert.Contains("\"result\":true", json);
+        Assert.Contains("\"result\":false", json);
 
         using var scope = _factory.Services.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
         var account = db.Accounts.Single(a => a.Email == email);
-        Assert.Equal(Role.User, account.Role);
+        Assert.Equal(Role.User, account.Role); // unchanged from SeedAccount, not clamped
     }
 
     /// <summary>Update account unknown email returns failure result.</summary>

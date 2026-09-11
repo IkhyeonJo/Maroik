@@ -167,20 +167,7 @@ public class ForumController : Controller
         if (!ImageUploadPolicy.IsAllowedExtension(ext))
             return Ok(new { result = false, errorMessage = _localizer["Only .jpg or jpeg or .png file allowed."].Value });
 
-        byte[] bytes;
-        using (var ms = new MemoryStream())
-        {
-            await summernoteImageFile.CopyToAsync(ms, ct);
-            bytes = ms.ToArray();
-        }
-
-        var file = new AttachedFileDto
-        {
-            Bytes = bytes,
-            ContentType = summernoteImageFile.ContentType,
-            FileName = summernoteImageFile.FileName,
-            Size = summernoteImageFile.Length
-        };
+        AttachedFileDto file = (await summernoteImageFile.ToAttachedFileInfoAsync(_serverSettings.Value.MaxAttachedFileSizeBytes, ct))!;
 
         SummernoteUploadResult uploadResult = await _boardService.UploadSummernoteImageAsync(file, "Forum", BoardTypes.FreeForum, ct);
 

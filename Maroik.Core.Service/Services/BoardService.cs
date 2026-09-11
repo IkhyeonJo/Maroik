@@ -200,28 +200,44 @@ public class BoardService : IBoardService
                 return ServiceResult.NotFound("Board.NotFound", "Input is invalid");
             }
 
-            // Only the original writer may edit their own post.
-            if (!board.CanBeEditedBy(writerNickname))
+            // Only the original writer may edit content. An admin who is not the writer may still
+            // reach this point, but only to clear an existing lock (see below) -- everything else
+            // is rejected. This is the only way an admin can ever clear a lock on someone else's
+            // post, since the ownership gate below would otherwise block them from this method
+            // entirely (ForumController.IsBoardExists already lets an admin open the edit page for
+            // any locked post for exactly this reason).
+            bool isOwner = board.CanBeEditedBy(writerNickname);
+            bool adminClearingSomeoneElsesLock = !isOwner && isAdmin && board.Locked && !request.Locked;
+            if (!isOwner && !adminClearingSomeoneElsesLock)
             {
                 await _unitOfWork.RollbackAsync(ct);
                 return ServiceResult.Fail("Input is invalid");
             }
 
-            var updateResult = board.Update(request.Title, content);
-            if (updateResult.IsError)
+            if (isOwner)
             {
-                await _unitOfWork.RollbackAsync(ct);
-                return ServiceResult.FromError(updateResult.FirstError);
-            }
+                var updateResult = board.Update(request.Title, content);
+                if (updateResult.IsError)
+                {
+                    await _unitOfWork.RollbackAsync(ct);
+                    return ServiceResult.FromError(updateResult.FirstError);
+                }
 
-            // Apply the lock from the request. The editor (always the post's own author — see the
-            // CanBeEditedBy check above) may raise the lock on their post, but CLEARING it is a
-            // moderation action reserved for an admin: without a stored "who locked this", an
-            // unconditional toggle here would let any author edit silently lift a lock an admin
-            // imposed (the same silent-clobber the Noticed field is deliberately kept out of —
-            // Noticed is set only at write time since no edit form exposes it).
-            if (request.Locked) board.Lock();
-            else if (isAdmin) board.Unlock();
+                // Apply the lock from the request. The editor (the post's own author) may raise
+                // the lock on their post, but CLEARING it is a moderation action reserved for an
+                // admin: without a stored "who locked this", an unconditional toggle here would
+                // let any author edit silently lift a lock an admin imposed (the same
+                // silent-clobber the Noticed field is deliberately kept out of -- Noticed is set
+                // only at write time since no edit form exposes it).
+                if (request.Locked) board.Lock();
+                else if (isAdmin) board.Unlock();
+            }
+            else
+            {
+                // adminClearingSomeoneElsesLock: an admin acting on a post they don't own may only
+                // clear its lock -- title and content are left untouched.
+                board.Unlock();
+            }
 
             await _boardRepository.UpdateEntityAsync(board, ct);
 

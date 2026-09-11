@@ -151,7 +151,7 @@ try
         // the multiplexer connects in the background and retries instead of throwing here.
         var valkeyOptions = ConfigurationOptions.Parse(valkeyConnectionString);
         valkeyOptions.AbortOnConnectFail = false;
-        valkey = ConnectionMultiplexer.Connect(valkeyOptions);
+        valkey = await ConnectionMultiplexer.ConnectAsync(valkeyOptions);
     }
 
     if (valkey != null)
@@ -185,13 +185,15 @@ try
             keyRingPath);
     }
 
+    string cookieDomain = cfgDomainName.Replace("https://", "").Replace("/", "");
+
     builder.Services.AddSession(options =>
     {
         options.IdleTimeout = TimeSpan.FromMinutes(cfgSessionExpireMinutes);
         options.Cookie.Name = $"{cookiePrefix}{SessionDefaults.CookieName}";
         options.Cookie.HttpOnly = true;
         options.Cookie.IsEssential = true;
-        options.Cookie.Domain = cfgDomainName.Replace("https://", "").Replace("/", "");
+        options.Cookie.Domain = cookieDomain;
         options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
         options.Cookie.SameSite = SameSiteMode.Strict;
     });
@@ -205,7 +207,7 @@ try
         options.Cookie.Name = $"{cookiePrefix}{AntiforgeryOptions.DefaultCookiePrefix}";
         options.Cookie.HttpOnly = true;
         options.Cookie.IsEssential = true;
-        options.Cookie.Domain = cfgDomainName.Replace("https://", "").Replace("/", "");
+        options.Cookie.Domain = cookieDomain;
         options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
         options.Cookie.SameSite = SameSiteMode.Strict;
     });

@@ -121,6 +121,33 @@ public class CalendarServiceTests
         _calendarRepo.Verify(r => r.CreateAsync(It.IsAny<Calendar>(), It.IsAny<CancellationToken>()), Times.Once);
     }
 
+    /// <summary>
+    /// Regression test: the prior name-existence check is a read-then-write race (two concurrent
+    /// creates of the same name can both pass it). The "Calendar_AccountEmail_Name_unique"
+    /// constraint is what actually closes the race -- verify the resulting unique-violation
+    /// exception is turned into the same friendly conflict instead of an unhandled failure.
+    /// </summary>
+    [Fact]
+    public async Task CreateCalendarAsync_ReturnsConflict_WhenConcurrentCreateWinsTheRace()
+    {
+        _calendarRepo.Setup(r => r.GetByAccountEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync([]);
+        var pgException = new Exception("duplicate key value violates unique constraint \"Calendar_AccountEmail_Name_unique\" (23505)");
+        _calendarRepo.Setup(r => r.CreateAsync(It.IsAny<Calendar>(), It.IsAny<CancellationToken>())).ThrowsAsync(pgException);
+        var sut = CreateSut();
+
+        ServiceResult result = await sut.CreateCalendarAsync("user@example.com", new CalendarRequest
+        {
+            AccountEmail = "user@example.com",
+            Name = "NewCalendar",
+            TimeZoneIanaId = "UTC",
+            HtmlColorCode = "#3788d8"
+        }, TestContext.Current.CancellationToken);
+
+        Assert.False(result.Success);
+        Assert.Contains("already exists", result.ErrorKey, StringComparison.OrdinalIgnoreCase);
+        _unitOfWork.Verify(u => u.RollbackAsync(It.IsAny<CancellationToken>()), Times.Once);
+    }
+
     // -- UpdateCalendarAsync --------------------------------------------------
 
     /// <summary>Verifies that <c>UpdateCalendarAsync</c> returns fail when calendar not found.</summary>
@@ -160,6 +187,30 @@ public class CalendarServiceTests
 
         Assert.True(result.Success);
         _calendarRepo.Verify(r => r.UpdateEntityAsync(It.IsAny<Calendar>(), It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    /// <summary>Verifies that renaming to a name already used by another of the account's calendars is reported as a conflict, not a generic failure.</summary>
+    [Fact]
+    public async Task UpdateCalendarAsync_ReturnsConflict_WhenRenamedToAnExistingName()
+    {
+        _calendarRepo.Setup(r => r.GetByAccountEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync([MakeCalendar(id: 1)]);
+        var pgException = new Exception("duplicate key value violates unique constraint \"Calendar_AccountEmail_Name_unique\" (23505)");
+        _calendarRepo.Setup(r => r.UpdateEntityAsync(It.IsAny<Calendar>(), It.IsAny<CancellationToken>())).ThrowsAsync(pgException);
+        var sut = CreateSut();
+
+        ServiceResult result = await sut.UpdateCalendarAsync("user@example.com", new CalendarRequest
+        {
+            AccountEmail = "user@example.com",
+            Id = 1,
+            Name = "AlreadyTaken",
+            TimeZoneIanaId = "UTC",
+            HtmlColorCode = "#3788d8"
+        }, TestContext.Current.CancellationToken);
+
+        Assert.False(result.Success);
+        Assert.Contains("already exists", result.ErrorKey, StringComparison.OrdinalIgnoreCase);
+        _unitOfWork.Verify(u => u.RollbackAsync(It.IsAny<CancellationToken>()), Times.Once);
     }
 
     // -- DeleteCalendarAsync --------------------------------------------------
@@ -236,6 +287,32 @@ public class CalendarServiceTests
 
         Assert.True(result.Success);
         _calendarRepo.Verify(r => r.CreateAsync(It.IsAny<Calendar>(), It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    /// <summary>
+    /// Regression test: the prior "any calendars exist" check is a read-then-write race (two
+    /// concurrent first-logins can both pass it). This method's contract is "some default calendar
+    /// now exists" -- already satisfied once a concurrent request wins the unique-constraint race
+    /// -- so the resulting exception must be treated as success, not surfaced as a failure.
+    /// </summary>
+    [Fact]
+    public async Task EnsureDefaultCalendarAsync_ReturnsSuccess_WhenConcurrentRequestWinsTheRace()
+    {
+        _calendarRepo.Setup(r => r.GetByAccountEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync([]);
+        var pgException = new Exception("duplicate key value violates unique constraint \"Calendar_AccountEmail_Name_unique\" (23505)");
+        _calendarRepo.Setup(r => r.CreateAsync(It.IsAny<Calendar>(), It.IsAny<CancellationToken>())).ThrowsAsync(pgException);
+        var sut = CreateSut();
+
+        ServiceResult result = await sut.EnsureDefaultCalendarAsync("user@example.com", new CalendarRequest
+        {
+            AccountEmail = "user@example.com",
+            Name = "Default",
+            TimeZoneIanaId = "UTC",
+            HtmlColorCode = "#3788d8"
+        }, TestContext.Current.CancellationToken);
+
+        Assert.True(result.Success);
+        _unitOfWork.Verify(u => u.RollbackAsync(It.IsAny<CancellationToken>()), Times.Once);
     }
 
     // -- EnsureCalendarSharedAsync --------------------------------------------

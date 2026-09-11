@@ -49,6 +49,32 @@ public class AssetBalanceDomainServiceTests
         Assert.Null(result);
     }
 
+    /// <summary>
+    /// Verifies that <c>GetAssetsAsync</c> delegates to the batched row-locking repository query
+    /// (a single round trip for every requested name, instead of one query per name) and keys the
+    /// result by product name.
+    /// </summary>
+    [Fact]
+    public async Task GetAssetsAsync_DelegatesToBatchedRowLockingQuery_AndKeysResultByProductName()
+    {
+        var wallet = MakeAsset("Wallet");
+        var savings = MakeAsset("Savings");
+        _assetRepo.Setup(r => r.FindByEmailAndProductNamesForUpdateAsync(
+                "user@example.com", It.Is<IReadOnlyCollection<string>>(n => n.Count == 2 && n.Contains("Wallet") && n.Contains("Savings")),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync([wallet, savings]);
+        var sut = CreateSut();
+
+        Dictionary<string, Asset> result = await sut.GetAssetsAsync(
+            "user@example.com", ["Wallet", "Savings"], TestContext.Current.CancellationToken);
+
+        Assert.Equal(2, result.Count);
+        Assert.Same(wallet, result["Wallet"]);
+        Assert.Same(savings, result["Savings"]);
+        _assetRepo.Verify(r => r.FindByEmailAndProductNamesForUpdateAsync(
+            It.IsAny<string>(), It.IsAny<IReadOnlyCollection<string>>(), It.IsAny<CancellationToken>()), Times.Once);
+    }
+
     /// <summary>Verifies that <c>SaveAsync</c> delegates to the repository update.</summary>
     [Fact]
     public async Task SaveAsync_DelegatesToRepositoryUpdate()

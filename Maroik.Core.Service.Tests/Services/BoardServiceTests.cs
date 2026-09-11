@@ -433,6 +433,53 @@ public class BoardServiceTests
         Assert.False(savedBoard.Locked);
     }
 
+    /// <summary>
+    /// Regression test: before this fix, a non-admin author's locked post could never be
+    /// unlocked by anyone -- the author isn't admin, and an admin who isn't the author was
+    /// rejected by the ownership check before the lock logic ever ran. An admin acting on
+    /// someone else's post must be able to clear the lock, without being able to change the
+    /// post's title/content.
+    /// </summary>
+    [Fact]
+    public async Task EditBoardAsync_AdminNonOwner_CanClearAnExistingLock_ButNotContent()
+    {
+        Board lockedBoard = Board.Reconstitute(1, BoardTypes.FreeForum, "Test Title", "Test Content", "Alice",
+            DateTime.UtcNow, DateTime.UtcNow, 0L, deleted: false, locked: true, noticed: false);
+        _boardRepo.Setup(r => r.FindActiveByIdForUpdateAsync(It.IsAny<long>(), It.IsAny<CancellationToken>())).ReturnsAsync(lockedBoard);
+        _attachedFileRepo.Setup(r => r.FindByBoardIdAsync(It.IsAny<long>(), It.IsAny<CancellationToken>())).ReturnsAsync((BoardAttachedFile?)null);
+        Board? savedBoard = null;
+        _boardRepo.Setup(r => r.UpdateEntityAsync(It.IsAny<Board>(), It.IsAny<CancellationToken>()))
+            .Callback<Board, CancellationToken>((b, _) => savedBoard = b)
+            .Returns(Task.CompletedTask);
+        var sut = CreateSut();
+
+        ServiceResult result = await sut.EditBoardAsync(
+            new BoardRequest { Id = 1, Type = BoardTypes.FreeForum, Title = "Attempted New Title", Content = "Attempted New Content", Locked = false },
+            "Bob", isAdmin: true, null, TestContext.Current.CancellationToken);
+
+        Assert.True(result.Success);
+        Assert.NotNull(savedBoard);
+        Assert.False(savedBoard.Locked);
+        Assert.Equal("Test Title", savedBoard.Title);
+        Assert.Equal("Test Content", savedBoard.Content);
+    }
+
+    /// <summary>An admin who is not the writer and does not clear an existing lock is still rejected.</summary>
+    [Fact]
+    public async Task EditBoardAsync_AdminNonOwner_ReturnsFail_WhenNotClearingALock()
+    {
+        Board unlockedBoard = MakeBoard(writer: "Alice");
+        _boardRepo.Setup(r => r.FindActiveByIdForUpdateAsync(It.IsAny<long>(), It.IsAny<CancellationToken>())).ReturnsAsync(unlockedBoard);
+        var sut = CreateSut();
+
+        ServiceResult result = await sut.EditBoardAsync(
+            new BoardRequest { Id = 1, Type = BoardTypes.FreeForum, Title = "New Title", Content = "New Content", Locked = false },
+            "Bob", isAdmin: true, null, TestContext.Current.CancellationToken);
+
+        Assert.False(result.Success);
+        _unitOfWork.Verify(u => u.RollbackAsync(It.IsAny<CancellationToken>()), Times.Once);
+    }
+
     // -- DeleteBoardAsync -----------------------------------------------------
 
     /// <summary>Verifies that <c>DeleteBoardAsync</c> returns fail when board not found.</summary>

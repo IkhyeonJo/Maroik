@@ -201,8 +201,8 @@ public sealed class FixedIncome : AggregateRoot<long>
         if (!FixedSchedulePolicy.IsValidDepositDate(depositMonth, depositDay))
             return Error.Validation("FixedIncome.InvalidDepositDay", "Deposit day is not valid for the selected month.");
 
-        if (amount < 0m)
-            return Error.Validation("FixedIncome.NegativeAmount", "Amount cannot be negative.");
+        var amountResult = FinanceAmountPolicy.ValidateNonNegative(amount);
+        if (amountResult.IsError) return amountResult.Errors;
 
         var textResult = FinanceTextPolicy.ValidateContentAndNote(content, note);
         if (textResult.IsError) return textResult.Errors;

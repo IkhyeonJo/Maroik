@@ -135,33 +135,20 @@ public class CalendarController : Controller
     [RequiredHttpPostAccess(Role = Role.User)]
     public async Task<IActionResult> UploadImageFile(IFormFile? summernoteImageFile)
     {
-        if (summernoteImageFile is not { Length: > 0 })
+        if (summernoteImageFile == null)
             return Ok(new { result = false, errorMessage = _localizer["Please attach a file."].Value });
 
-        if (summernoteImageFile.Length > _serverSettings.Value.MaxAttachedFileSizeBytes)
+        if (summernoteImageFile.Length <= 0 || summernoteImageFile.Length > _serverSettings.Value.MaxAttachedFileSizeBytes)
             return Ok(new { result = false, errorMessage = _localizer["File Size must be smaller than {0}MB.", _serverSettings.Value.MaxAttachedFileSizeBytes / (1024 * 1024)].Value });
 
         var ext = Path.GetExtension(summernoteImageFile.FileName).ToLowerInvariant();
         if (!ImageUploadPolicy.IsAllowedExtension(ext))
             return Ok(new { result = false, errorMessage = _localizer["Only .jpg or jpeg or .png file allowed."].Value });
 
-        byte[] bytes;
-        using (var ms = new MemoryStream())
-        {
-            await summernoteImageFile.CopyToAsync(ms);
-            bytes = ms.ToArray();
-        }
-
         var loggedInAccount = _sessionService.GetAccount()!;
         string roleIndex = $"{loggedInAccount.Role}Index";
 
-        var file = new AttachedFileDto
-        {
-            Bytes = bytes,
-            ContentType = summernoteImageFile.ContentType,
-            FileName = summernoteImageFile.FileName,
-            Size = summernoteImageFile.Length
-        };
+        AttachedFileDto file = (await summernoteImageFile.ToAttachedFileInfoAsync(_serverSettings.Value.MaxAttachedFileSizeBytes, HttpContext.RequestAborted))!;
 
         SummernoteUploadResult uploadResult = await _calendarService.UploadSummernoteImageAsync(file, roleIndex, HttpContext.RequestAborted);
 

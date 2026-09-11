@@ -34,4 +34,14 @@ public interface IAssetRepository : IGenericRepository<Asset>
     /// from "exists but deleted" and report the latter with a specific message.
     /// </summary>
     Task<Asset?> FindByEmailAndProductNameForUpdateAsync(string accountEmail, string productName, CancellationToken ct = default);
+
+    /// <summary>
+    /// Batched form of <see cref="FindByEmailAndProductNameForUpdateAsync"/>: row-locks (SELECT ...
+    /// FOR UPDATE) every asset in <paramref name="productNames"/> for the given account in a single
+    /// round trip, instead of one query per name. Rows are locked in ascending ProductName order
+    /// (matching <see cref="StringComparer.Ordinal"/>) so callers that always request the same set
+    /// of assets in that order cannot deadlock against each other. Names with no matching row are
+    /// simply absent from the result.
+    /// </summary>
+    Task<List<Asset>> FindByEmailAndProductNamesForUpdateAsync(string accountEmail, IReadOnlyCollection<string> productNames, CancellationToken ct = default);
 }

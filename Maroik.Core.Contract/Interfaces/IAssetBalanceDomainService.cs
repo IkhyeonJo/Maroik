@@ -18,6 +18,13 @@ public interface IAssetBalanceDomainService
     Task<Asset?> GetAssetAsync(string accountEmail, string productName, CancellationToken ct = default);
 
     /// <summary>
+    /// Batched form of <see cref="GetAssetAsync"/>: row-locks and returns every asset in
+    /// <paramref name="productNames"/> for the given account in a single round trip, keyed by
+    /// product name. A name with no matching asset is simply absent from the result.
+    /// </summary>
+    Task<Dictionary<string, Asset>> GetAssetsAsync(string accountEmail, IReadOnlyCollection<string> productNames, CancellationToken ct = default);
+
+    /// <summary>
     /// Returns the asset identified by the composite key (email + productName), or null if not found,
     /// <b>without</b> taking a row lock. Use this from read-only / schedule flows (e.g. fixed
     /// income/expenditure) that never mutate a balance and run outside an <see cref="IUnitOfWork"/>

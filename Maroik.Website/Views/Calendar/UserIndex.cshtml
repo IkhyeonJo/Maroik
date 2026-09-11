@@ -533,7 +533,7 @@
                                         <option value='Notification'>@Localizer["Notification"].Value</option>
                                     </select>
 
-                                    <input type='number' class='form-control-sm createCalendarEventSelNotificationNumberAllDayChecked' style='width:30%;text-overflow:ellipsis; background-color:#343a40; color:#fff; border-color:#6c757d;' min="0" max="28">
+                                    <input type='number' class='form-control-sm createCalendarEventSelNotificationNumberAllDayChecked' style='width:30%;text-overflow:ellipsis; background-color:#343a40; color:#fff; border-color:#6c757d;' min="0" max="@CalendarReminderPolicy.MaxDaysBeforeEvent">
 
                                     <select class='form-control-sm createCalendarEventSelNotificationTimeTypeAllDayChecked' style='width:30%;text-overflow:ellipsis;'>
                                         <option value='Days' selected>@Localizer["Days"].Value</option>
@@ -579,7 +579,7 @@
                                         <option value='Notification'>@Localizer["Notification"].Value</option>
                                     </select>
 
-                                    <input type='number' class='form-control-sm createCalendarEventSelNotificationNumberAllDayUnchecked' style='width:30%;text-overflow:ellipsis; background-color:#343a40; color:#fff; border-color:#6c757d;' min="0" max="40320">
+                                    <input type='number' class='form-control-sm createCalendarEventSelNotificationNumberAllDayUnchecked' style='width:30%;text-overflow:ellipsis; background-color:#343a40; color:#fff; border-color:#6c757d;' min="0" max="@CalendarReminderPolicy.MaxMinutesBeforeEvent">
 
                                     <select class='form-control-sm createCalendarEventSelNotificationTimeTypeAllDayUnchecked' style='width:30%;text-overflow:ellipsis;'>
                                         <option value='Minutes' selected>@Localizer["Minutes"].Value</option>
@@ -790,7 +790,7 @@
                                 <option value='Notification'>@Localizer["Notification"].Value</option>
                                 </select>
 
-                                <input type='number' class='form-control-sm editCalendarEventSelNotificationNumberAllDayChecked' style='width:30%;text-overflow:ellipsis; background-color:#343a40; color:#fff; border-color:#6c757d;' min="0" max="28">
+                                <input type='number' class='form-control-sm editCalendarEventSelNotificationNumberAllDayChecked' style='width:30%;text-overflow:ellipsis; background-color:#343a40; color:#fff; border-color:#6c757d;' min="0" max="@CalendarReminderPolicy.MaxDaysBeforeEvent">
 
                                 <select class='form-control-sm editCalendarEventSelNotificationTimeTypeAllDayChecked' style='width:30%;text-overflow:ellipsis;'>
                                 <option value='Days' selected>@Localizer["Days"].Value</option>
@@ -836,7 +836,7 @@
                                 <option value='Notification'>@Localizer["Notification"].Value</option>
                                 </select>
 
-                                <input type='number' class='form-control-sm editCalendarEventSelNotificationNumberAllDayUnchecked' style='width:30%;text-overflow:ellipsis; background-color:#343a40; color:#fff; border-color:#6c757d;' min="0" max="40320">
+                                <input type='number' class='form-control-sm editCalendarEventSelNotificationNumberAllDayUnchecked' style='width:30%;text-overflow:ellipsis; background-color:#343a40; color:#fff; border-color:#6c757d;' min="0" max="@CalendarReminderPolicy.MaxMinutesBeforeEvent">
 
                                 <select class='form-control-sm editCalendarEventSelNotificationTimeTypeAllDayUnchecked' style='width:30%;text-overflow:ellipsis;'>
                                 <option value='Minutes' selected>@Localizer["Minutes"].Value</option>
@@ -1039,7 +1039,7 @@
                                 <option value='Notification'>@Localizer["Notification"].Value</option>
                                 </select>
 
-                                <input type='number' class='form-control-sm viewCalendarEventSelNotificationNumberAllDayChecked' style='width:30%;text-overflow:ellipsis; background-color:#343a40; color:#fff; border-color:#6c757d;' min="0" max="28" disabled>
+                                <input type='number' class='form-control-sm viewCalendarEventSelNotificationNumberAllDayChecked' style='width:30%;text-overflow:ellipsis; background-color:#343a40; color:#fff; border-color:#6c757d;' min="0" max="@CalendarReminderPolicy.MaxDaysBeforeEvent" disabled>
 
                                 <select class='form-control-sm viewCalendarEventSelNotificationTimeTypeAllDayChecked' style='width:30%;text-overflow:ellipsis;' disabled>
                                 <option value='Days' selected>@Localizer["Days"].Value</option>
@@ -1082,7 +1082,7 @@
                                 <option value='Notification'>@Localizer["Notification"].Value</option>
                                 </select>
 
-                                <input type='number' class='form-control-sm viewCalendarEventSelNotificationNumberAllDayUnchecked' style='width:30%;text-overflow:ellipsis; background-color:#343a40; color:#fff; border-color:#6c757d;' min="0" max="40320" disabled>
+                                <input type='number' class='form-control-sm viewCalendarEventSelNotificationNumberAllDayUnchecked' style='width:30%;text-overflow:ellipsis; background-color:#343a40; color:#fff; border-color:#6c757d;' min="0" max="@CalendarReminderPolicy.MaxMinutesBeforeEvent" disabled>
 
                                 <select class='form-control-sm viewCalendarEventSelNotificationTimeTypeAllDayUnchecked' style='width:30%;text-overflow:ellipsis;' disabled>
                                 <option value='Minutes' selected>@Localizer["Minutes"].Value</option>
