@@ -98,7 +98,7 @@ public class ManagementAccountService : IManagementAccountService
                 // whichever one actually collided, same classification RegisterAsync uses.
                 bool isNicknameConflict = e.InnerException?.Message.Contains("Account_Nickname_unique", StringComparison.Ordinal) ?? false;
                 return isNicknameConflict
-                    ? ServiceResult.Conflict("Account.NicknameAlreadyExists", $"'{request.Nickname}' is a Nickname that already exists. Please enter another Nickname.")
+                    ? ServiceResult.Conflict("Account.NicknameAlreadyExists", "'{0}' is a Nickname that already exists. Please enter another Nickname.", request.Nickname ?? "")
                     : ServiceResult.Conflict("Account.AlreadyExists", "This account has already been created.");
             }
 

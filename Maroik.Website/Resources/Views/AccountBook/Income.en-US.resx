@@ -156,6 +156,9 @@
   <data name="EXCEL" xml:space="preserve">
     <value>EXCEL</value>
   </data>
+  <data name="Failed to load the amount label." xml:space="preserve">
+    <value>Failed to load the amount label.</value>
+  </data>
   <data name="Hour" xml:space="preserve">
     <value>Hour</value>
   </data>

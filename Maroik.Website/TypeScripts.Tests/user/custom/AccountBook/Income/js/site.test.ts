@@ -12,6 +12,7 @@ function fixture(extra = ""): string {
   return (
     antiForgery +
     hidden("incomeSubClassMap", JSON.stringify(subClassMap).replace(/"/g, "&quot;")) +
+    hidden("localizerFailedToLoadAmountLabel", "Failed to load the amount label.") +
     `<div id="createIncomeTabs"></div><div id="editIncomeTabs"></div>
      <input id="createIncomeDate" /><input id="editIncomeDate" /><input id="gridSearch" />
      <select id="createIncomeMainClass">
@@ -25,7 +26,9 @@ function fixture(extra = ""): string {
      <button id="btnExportExcelIncome"></button>
      <button id="btnEditIncomeGridRow"></button><button id="btnConfirmDeleteIncome"></button>
      <button id="btnDeleteIncome"></button>
-     <select id="createIncomeDepositMyAssetProductName"><option value="A" selected>A</option></select>` +
+     <select id="createIncomeDepositMyAssetProductName"><option value="A" selected>A</option></select>
+     <select id="editIncomeDepositMyAssetProductName"><option value="A">A</option><option value="B">B</option></select>
+     <span id="labelCreateIncomeAmount"></span><span id="labelEditIncomeAmount"></span>` +
     extra
   );
 }
@@ -62,5 +65,37 @@ describe("AccountBook/Income", () => {
     h.$("#formCreateIncome").trigger("submit");
 
     expect(h.ajaxCalls.filter((c) => String(c.url).includes("CreateIncome"))).toHaveLength(0);
+  });
+
+  it("shows a toastr error when the create-form amount-label lookup fails", () => {
+    const h = loadSite("user", "AccountBook", "Income", fixture());
+    // loadSite's onload $(function(){...}) already fired one GetIncomeAmountLabel lookup
+    // for the preselected create-form asset.
+    const call = h.ajaxCalls.find((c) => String(c.url).includes("GetIncomeAmountLabel"));
+
+    call?.error?.();
+
+    expect(h.toastr.error).toHaveBeenCalledWith("Failed to load the amount label.");
+  });
+
+  it("shows a toastr error when the edit-form amount-label lookup fails", () => {
+    const h = loadSite("user", "AccountBook", "Income", fixture());
+
+    h.$("#editIncomeDepositMyAssetProductName").val("B").trigger("change");
+    const call = h.lastAjax();
+    expect(call.url).toContain("GetIncomeAmountLabel");
+
+    call.error?.();
+
+    expect(h.toastr.error).toHaveBeenCalledWith("Failed to load the amount label.");
+  });
+
+  it("sets the create-form amount label from a successful lookup", () => {
+    const h = loadSite("user", "AccountBook", "Income", fixture());
+    const call = h.ajaxCalls.find((c) => String(c.url).includes("GetIncomeAmountLabel"));
+
+    call?.success?.({ result: true, label: "KRW" });
+
+    expect(h.win.document.querySelector("#labelCreateIncomeAmount")!.textContent).toBe("KRW");
   });
 });

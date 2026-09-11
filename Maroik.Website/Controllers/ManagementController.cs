@@ -115,7 +115,7 @@ public class ManagementController : Controller
         IFormFile file = profileInputViewModel.ProfileAvatarFiles[0];
 
         if (file.Length <= 0 || file.Length > _serverSettings.Value.MaxAttachedFileSizeBytes)
-            return Ok(new { result = false, errorMessage = _localizer["File Size must be smaller than {0}MB.", _serverSettings.Value.MaxAttachedFileSizeBytes / (1024 * 1024)].Value });
+            return Ok(new { result = false, errorMessage = _localizer["File Size must be smaller than {0}MB.", _serverSettings.Value.MaxAttachedFileSizeBytes / (1024 * 1024)].ToPlainString() });
 
         var extension = Path.GetExtension(file.FileName).ToLowerInvariant();
         if (!ImageUploadPolicy.IsAllowedExtension(extension))
@@ -224,7 +224,7 @@ public class ManagementController : Controller
 
             return result.Success
                 ? Json(new { result = true, message = _localizer["Password change successfully done."].Value })
-                : Json(new { result = false, error = _localizer[result.ErrorKey, result.ErrorArgs].Value });
+                : Json(new { result = false, error = _localizer[result.ErrorKey, result.ErrorArgs].ToPlainString() });
         }
         catch (Exception ex)
         {
@@ -291,7 +291,7 @@ public class ManagementController : Controller
 
             return createResult.Success
                 ? Json(new { result = true, message = _localizer["Account create successfully done."].Value })
-                : Json(new { result = false, error = _localizer[createResult.ErrorKey, createResult.ErrorArgs].Value });
+                : Json(new { result = false, error = _localizer[createResult.ErrorKey, createResult.ErrorArgs].ToPlainString() });
 
             #endregion
 
@@ -401,7 +401,7 @@ public class ManagementController : Controller
 
             return updateResult.Success
                 ? Json(new { result = true, message = _localizer["Successfully updated the account"].Value })
-                : Json(new { result = false, error = _localizer[updateResult.ErrorKey, updateResult.ErrorArgs].Value });
+                : Json(new { result = false, error = _localizer[updateResult.ErrorKey, updateResult.ErrorArgs].ToPlainString() });
         }
         catch (Exception ex)
         {
@@ -425,7 +425,7 @@ public class ManagementController : Controller
             ServiceResult deleteResult = await _managementAccountService.DeleteAccountAsync(accountInputViewModel.Email!, HttpContext.RequestAborted);
             return deleteResult.Success
                 ? Json(new { result = true, message = _localizer["Successfully deleted the account"].Value })
-                : Json(new { result = false, error = _localizer[deleteResult.ErrorKey, deleteResult.ErrorArgs].Value });
+                : Json(new { result = false, error = _localizer[deleteResult.ErrorKey, deleteResult.ErrorArgs].ToPlainString() });
         }
         catch (Exception ex)
         {
@@ -951,7 +951,7 @@ public class ManagementController : Controller
             return Ok(new { result = false, errorMessage = _localizer["Please attach a file."].Value });
 
         if (summernoteImageFile.Length <= 0 || summernoteImageFile.Length > _serverSettings.Value.MaxAttachedFileSizeBytes)
-            return Ok(new { result = false, errorMessage = _localizer["File Size must be smaller than {0}MB.", _serverSettings.Value.MaxAttachedFileSizeBytes / (1024 * 1024)].Value });
+            return Ok(new { result = false, errorMessage = _localizer["File Size must be smaller than {0}MB.", _serverSettings.Value.MaxAttachedFileSizeBytes / (1024 * 1024)].ToPlainString() });
 
         var ext = Path.GetExtension(summernoteImageFile.FileName).ToLowerInvariant();
         if (!ImageUploadPolicy.IsAllowedExtension(ext))
@@ -1333,7 +1333,7 @@ public class ManagementController : Controller
 
             return result.Success
                 ? Json(new { result = true, message = _localizer["The board has been successfully deleted."].Value })
-                : Json(new { result = false, error = _localizer[result.ErrorKey, result.ErrorArgs].Value });
+                : Json(new { result = false, error = _localizer[result.ErrorKey, result.ErrorArgs].ToPlainString() });
         }
         catch (Exception ex)
         {
@@ -1366,7 +1366,7 @@ public class ManagementController : Controller
 
             return result.Success
                 ? Json(new { result = true })
-                : Json(new { result = false, error = _localizer[result.ErrorKey, result.ErrorArgs].Value });
+                : Json(new { result = false, error = _localizer[result.ErrorKey, result.ErrorArgs].ToPlainString() });
         }
         catch (Exception ex)
         {

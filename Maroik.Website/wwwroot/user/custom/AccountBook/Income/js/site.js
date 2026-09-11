@@ -37,6 +37,7 @@
     const $btnExportExcelIncome = $('#btnExportExcelIncome');
     const $btnDeleteIncome = $('#btnDeleteIncome');
     const incomeSubClassMap = JSON.parse($('#incomeSubClassMap').val() || '{}');
+    const failedToLoadAmountLabelMessage = $('#localizerFailedToLoadAmountLabel').val();
     function ApplyAllowedOptions($select, allowedValues, valueToSelect) {
         $select.find('option').each(function () {
             const allowed = allowedValues.indexOf(this.value) !== -1;
@@ -412,7 +413,7 @@
                 $labelCreateIncomeAmount.text(data.label);
             },
             error: function () {
-                toastr.error('Failed to load the amount label.');
+                toastr.error(failedToLoadAmountLabelMessage);
             }
         });
     }
@@ -428,7 +429,7 @@
                 $labelEditIncomeAmount.text(data.label);
             },
             error: function () {
-                toastr.error('Failed to load the amount label.');
+                toastr.error(failedToLoadAmountLabelMessage);
             }
         });
     }

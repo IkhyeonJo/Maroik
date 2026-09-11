@@ -105,9 +105,13 @@ public class ManagementControllerAccountTests
 
         var response = await _client.SendAsync(request, TestContext.Current.CancellationToken);
         var json = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+        using var doc = System.Text.Json.JsonDocument.Parse(json);
 
         Assert.Equal(System.Net.HttpStatusCode.OK, response.StatusCode);
-        Assert.Contains("not a valid email address", json); // Email.Create (Core) message, not a controller-local string
+        // Email.Create (Core) message, not a controller-local string. Asserts the full exact text —
+        // not just a substring — so a regression that stops substituting the "{0}" template argument
+        // (see LocalizedHtmlStringExtensionsTests) would be caught here too.
+        Assert.Equal("'not-an-email' is not a valid email address.", doc.RootElement.GetProperty("error").GetString());
     }
 
     /// <summary>Create account weak password returns password policy error.</summary>
@@ -227,6 +231,63 @@ public class ManagementControllerAccountTests
         string json = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
 
         Assert.Contains("This account has already been created.", json);
+    }
+
+    /// <summary>
+    /// The pre-check in <c>ManagementAccountService.CreateAccountAsync</c> only looks up by email,
+    /// so a duplicate nickname on a *different* email is only ever caught by the real Postgres
+    /// unique constraint (<c>Account_Nickname_unique</c>) raised from <c>CreateAsync</c> — this
+    /// exercises that path end-to-end, including the resx lookup for the new error key/message.
+    /// </summary>
+    [Fact]
+    public async Task CreateAccount_DuplicateNickname_ReturnsNicknameConflictError()
+    {
+        var session = await LoginAsAdminAsync();
+        const string sharedNickname = "TakenAdminNickname";
+
+        using var firstRequest = session.BuildJsonPostRequest("/Management/CreateAccount", new
+        {
+            Email = "nickname-owner@test.com",
+            Password = "NewAccountPw1!",
+            Nickname = sharedNickname,
+            AvatarImagePath = "",
+            Role = Role.User,
+            TimeZoneIanaId = "UTC",
+            Locked = false,
+            LoginAttempt = 0,
+            EmailConfirmed = true,
+            AgreedServiceTerms = true,
+            RegistrationToken = "",
+            ResetPasswordToken = "",
+            Message = "",
+            Deleted = false
+        });
+        await _client.SendAsync(firstRequest, TestContext.Current.CancellationToken);
+
+        using var secondRequest = session.BuildJsonPostRequest("/Management/CreateAccount", new
+        {
+            Email = "nickname-challenger@test.com",
+            Password = "AnotherPassw0rd!",
+            Nickname = sharedNickname,
+            AvatarImagePath = "",
+            Role = Role.User,
+            TimeZoneIanaId = "UTC",
+            Locked = false,
+            LoginAttempt = 0,
+            EmailConfirmed = true,
+            AgreedServiceTerms = true,
+            RegistrationToken = "",
+            ResetPasswordToken = "",
+            Message = "",
+            Deleted = false
+        });
+        var response = await _client.SendAsync(secondRequest, TestContext.Current.CancellationToken);
+        string json = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+        using var doc = System.Text.Json.JsonDocument.Parse(json);
+
+        Assert.Equal(
+            $"'{sharedNickname}' is a Nickname that already exists. Please enter another Nickname.",
+            doc.RootElement.GetProperty("error").GetString());
     }
 
     // -- IsAccountExists ---------------------------------------------------------

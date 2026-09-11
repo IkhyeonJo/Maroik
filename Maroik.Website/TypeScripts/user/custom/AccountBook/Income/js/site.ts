@@ -57,6 +57,7 @@
     // serialized into the page by Income.cshtml. Mirrored here for form UX only; the server
     // re-validates every combination on save.
     const incomeSubClassMap = JSON.parse(($('#incomeSubClassMap').val() as string) || '{}');
+    const failedToLoadAmountLabelMessage = $('#localizerFailedToLoadAmountLabel').val() as string;
 
     // Enables/shows only the options in allowedValues (disabling+hiding the rest) and selects
     // valueToSelect when it is allowed, otherwise the first allowed option.
@@ -559,7 +560,7 @@
                 $labelCreateIncomeAmount.text(data.label);
             },
             error: function () {
-                toastr.error('Failed to load the amount label.');
+                toastr.error(failedToLoadAmountLabelMessage);
             }
         });
     }
@@ -577,7 +578,7 @@
                 $labelEditIncomeAmount.text(data.label);
             },
             error: function () {
-                toastr.error('Failed to load the amount label.');
+                toastr.error(failedToLoadAmountLabelMessage);
             }
         });
     }

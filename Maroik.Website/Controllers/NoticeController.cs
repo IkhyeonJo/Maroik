@@ -86,7 +86,7 @@ public class NoticeController : Controller
             var result = await _fixedIncomeService.CreateAsync(email, request, ct);
             return result.Success
                 ? Json(new { result = true, message = _localizer["The fixedIncome has been successfully created."].Value })
-                : Json(new { result = false, error = _localizer[result.ErrorKey, result.ErrorArgs].Value });
+                : Json(new { result = false, error = _localizer[result.ErrorKey, result.ErrorArgs].ToPlainString() });
         }
         catch (Exception ex)
         {
@@ -226,7 +226,7 @@ public class NoticeController : Controller
             var result = await _fixedIncomeService.UpdateAsync(email, request, ct);
             return result.Success
                 ? Json(new { result = true, message = _localizer["The fixedIncome has been successfully updated."].Value })
-                : Json(new { result = false, error = _localizer[result.ErrorKey, result.ErrorArgs].Value });
+                : Json(new { result = false, error = _localizer[result.ErrorKey, result.ErrorArgs].ToPlainString() });
         }
         catch (Exception ex)
         {
@@ -250,7 +250,7 @@ public class NoticeController : Controller
             var result = await _fixedIncomeService.DeleteAsync(email, fixedIncomeInputViewModel.Id, ct);
             return result.Success
                 ? Json(new { result = true, message = _localizer["The fixedIncome has been successfully deleted."].Value })
-                : Json(new { result = false, error = _localizer[result.ErrorKey, result.ErrorArgs].Value });
+                : Json(new { result = false, error = _localizer[result.ErrorKey, result.ErrorArgs].ToPlainString() });
         }
         catch (Exception ex)
         {
@@ -316,7 +316,7 @@ public class NoticeController : Controller
             var result = await _fixedExpenditureService.CreateAsync(email, request, ct);
             return result.Success
                 ? Json(new { result = true, message = _localizer["The fixedExpenditure has been successfully created."].Value })
-                : Json(new { result = false, error = _localizer[result.ErrorKey, result.ErrorArgs].Value });
+                : Json(new { result = false, error = _localizer[result.ErrorKey, result.ErrorArgs].ToPlainString() });
         }
         catch (Exception ex)
         {
@@ -458,7 +458,7 @@ public class NoticeController : Controller
             var result = await _fixedExpenditureService.UpdateAsync(email, request, ct);
             return result.Success
                 ? Json(new { result = true, message = _localizer["The fixedExpenditure has been successfully updated."].Value })
-                : Json(new { result = false, error = _localizer[result.ErrorKey, result.ErrorArgs].Value });
+                : Json(new { result = false, error = _localizer[result.ErrorKey, result.ErrorArgs].ToPlainString() });
         }
         catch (Exception ex)
         {
@@ -482,7 +482,7 @@ public class NoticeController : Controller
             var result = await _fixedExpenditureService.DeleteAsync(email, fixedExpenditureInputViewModel.Id, ct);
             return result.Success
                 ? Json(new { result = true, message = _localizer["The fixedExpenditure has been successfully deleted."].Value })
-                : Json(new { result = false, error = _localizer[result.ErrorKey, result.ErrorArgs].Value });
+                : Json(new { result = false, error = _localizer[result.ErrorKey, result.ErrorArgs].ToPlainString() });
         }
         catch (Exception ex)
         {

@@ -120,6 +120,63 @@ public class ManagementAccountServiceTests
         _accountRepo.Verify(r => r.CreateAsync(It.Is<Account>(a => a.HashedPassword == "$2a$13$hashedvalue"), It.IsAny<CancellationToken>()), Times.Once);
     }
 
+    /// <summary>
+    /// Regression test: two concurrent admin creates for the same not-yet-registered nickname can
+    /// both pass the prior <c>FindByEmailAsync</c> check (it only checks email) and race on
+    /// <c>CreateAsync</c>. The nickname-unique-constraint violation must be classified as a
+    /// nickname conflict, not fall through to the generic "Input is invalid" failure.
+    /// </summary>
+    [Fact]
+    public async Task CreateAccountAsync_ReturnsNicknameConflict_WhenNicknameUniqueViolationRaces()
+    {
+        _accountRepo.Setup(r => r.FindByEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync((Account?)null);
+        _passwordService.Setup(p => p.HashPassword(It.IsAny<string>())).Returns("$2a$13$hashed");
+        // Simulate a unique constraint violation (Npgsql error code 23505) on the Nickname constraint specifically.
+        _accountRepo.Setup(r => r.CreateAsync(It.IsAny<Account>(), It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new Exception("duplicate key", new Exception("23505 unique constraint \"Account_Nickname_unique\"")));
+        var sut = CreateSut();
+
+        ServiceResult result = await sut.CreateAccountAsync(new AccountRequest
+        {
+            Email = "new@example.com",
+            PlainPassword = "Plain1234!",
+            Nickname = "TakenNick"
+        }, TestContext.Current.CancellationToken);
+
+        Assert.False(result.Success);
+        Assert.Equal(ServiceErrorType.Conflict, result.ErrorType);
+        Assert.Equal("Account.NicknameAlreadyExists", result.ErrorCode);
+        Assert.Contains("Nickname", result.ErrorKey);
+        Assert.Contains("TakenNick", result.ErrorArgs);
+    }
+
+    /// <summary>
+    /// Regression test: the same race on the Email primary key (<c>Account_pk</c>) must be reported
+    /// as an email conflict, not incorrectly blamed on the nickname.
+    /// </summary>
+    [Fact]
+    public async Task CreateAccountAsync_ReturnsEmailAlreadyExists_WhenEmailPrimaryKeyViolationRaces()
+    {
+        _accountRepo.Setup(r => r.FindByEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync((Account?)null);
+        _passwordService.Setup(p => p.HashPassword(It.IsAny<string>())).Returns("$2a$13$hashed");
+        // Simulate a unique constraint violation on the Email primary key, not the Nickname constraint.
+        _accountRepo.Setup(r => r.CreateAsync(It.IsAny<Account>(), It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new Exception("duplicate key", new Exception("23505 unique constraint \"Account_pk\"")));
+        var sut = CreateSut();
+
+        ServiceResult result = await sut.CreateAccountAsync(new AccountRequest
+        {
+            Email = "raced@example.com",
+            PlainPassword = "Plain1234!",
+            Nickname = "SomeNick"
+        }, TestContext.Current.CancellationToken);
+
+        Assert.False(result.Success);
+        Assert.Equal(ServiceErrorType.Conflict, result.ErrorType);
+        Assert.Equal("Account.AlreadyExists", result.ErrorCode);
+        Assert.DoesNotContain("Nickname", result.ErrorKey);
+    }
+
     // -- UpdateAccountAsync ---------------------------------------------------
 
     /// <summary>Verifies that <c>UpdateAccountAsync</c> returns fail when account not found.</summary>

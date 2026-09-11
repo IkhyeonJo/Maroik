@@ -161,7 +161,7 @@ public class ForumController : Controller
             return Ok(new { result = false, errorMessage = _localizer["Please attach a file."].Value });
 
         if (summernoteImageFile.Length <= 0 || summernoteImageFile.Length > _serverSettings.Value.MaxAttachedFileSizeBytes)
-            return Ok(new { result = false, errorMessage = _localizer["File Size must be smaller than {0}MB.", _serverSettings.Value.MaxAttachedFileSizeBytes / (1024 * 1024)].Value });
+            return Ok(new { result = false, errorMessage = _localizer["File Size must be smaller than {0}MB.", _serverSettings.Value.MaxAttachedFileSizeBytes / (1024 * 1024)].ToPlainString() });
 
         var ext = Path.GetExtension(summernoteImageFile.FileName).ToLowerInvariant();
         if (!ImageUploadPolicy.IsAllowedExtension(ext))
@@ -533,7 +533,7 @@ public class ForumController : Controller
 
             return result.Success
                 ? Json(new { result = true, message = _localizer["The board has been successfully deleted."].Value })
-                : Json(new { result = false, error = _localizer[result.ErrorKey, result.ErrorArgs].Value });
+                : Json(new { result = false, error = _localizer[result.ErrorKey, result.ErrorArgs].ToPlainString() });
         }
         catch (Exception ex)
         {
@@ -565,7 +565,7 @@ public class ForumController : Controller
 
             return result.Success
                 ? Json(new { result = true })
-                : Json(new { result = false, error = _localizer[result.ErrorKey, result.ErrorArgs].Value });
+                : Json(new { result = false, error = _localizer[result.ErrorKey, result.ErrorArgs].ToPlainString() });
         }
         catch (Exception ex)
         {

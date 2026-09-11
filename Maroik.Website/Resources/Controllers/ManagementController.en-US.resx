@@ -165,6 +165,9 @@
   <data name="Nickname is must be between 1 and 255 characters" xml:space="preserve">
     <value>Nickname is must be between 1 and 255 characters</value>
   </data>
+  <data name="'{0}' is a Nickname that already exists. Please enter another Nickname." xml:space="preserve">
+    <value>'{0}' is a Nickname that already exists. Please enter another Nickname.</value>
+  </data>
   <data name="HashedPassword" xml:space="preserve">
     <value>HashedPassword</value>
   </data>

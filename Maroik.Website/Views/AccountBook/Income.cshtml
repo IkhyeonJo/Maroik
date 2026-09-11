@@ -72,6 +72,7 @@
 
 @* Income main→sub-class taxonomy — authoritative in IncomeClassPolicy; the form reads this instead of hardcoding the lists. *@
 @Html.Hidden("incomeSubClassMap", JsonSerialization.ToClientJson(IncomeClassPolicy.SubClassesByMainClass))
+@Html.Hidden("localizerFailedToLoadAmountLabel", Localizer["Failed to load the amount label."].Value)
 
 <section class="content">
     <div class="card card-primary">

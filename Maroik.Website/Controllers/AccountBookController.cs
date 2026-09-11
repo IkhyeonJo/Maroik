@@ -75,7 +75,7 @@ public class AccountBookController : Controller
         var result = await _assetService.CreateAsync(email, request, ct);
         return result.Success
             ? Json(new { result = true, message = _localizer["The asset has been successfully created."].Value })
-            : Json(new { result = false, error = _localizer[result.ErrorKey, result.ErrorArgs].Value });
+            : Json(new { result = false, error = _localizer[result.ErrorKey, result.ErrorArgs].ToPlainString() });
     }
 
     #endregion
@@ -166,7 +166,7 @@ public class AccountBookController : Controller
         var result = await _assetService.UpdateAsync(email, request, assetInputViewModel.OriginalProductName!, ct);
         return result.Success
             ? Json(new { result = true, message = _localizer["The asset has been successfully updated."].Value })
-            : Json(new { result = false, error = _localizer[result.ErrorKey, result.ErrorArgs].Value });
+            : Json(new { result = false, error = _localizer[result.ErrorKey, result.ErrorArgs].ToPlainString() });
     }
 
     #endregion
@@ -183,7 +183,7 @@ public class AccountBookController : Controller
         var result = await _assetService.DeleteAsync(email, assetInputViewModel.ProductName!, ct);
         return result.Success
             ? Json(new { result = true, message = _localizer["The asset has been successfully deleted."].Value })
-            : Json(new { result = false, error = _localizer[result.ErrorKey, result.ErrorArgs].Value });
+            : Json(new { result = false, error = _localizer[result.ErrorKey, result.ErrorArgs].ToPlainString() });
     }
 
     #endregion
@@ -236,7 +236,7 @@ public class AccountBookController : Controller
         var result = await _incomeService.CreateAsync(email, request, ct);
         return result.Success
             ? Json(new { result = true, message = _localizer["The income has been successfully created."].Value })
-            : Json(new { result = false, error = _localizer[result.ErrorKey, result.ErrorArgs].Value });
+            : Json(new { result = false, error = _localizer[result.ErrorKey, result.ErrorArgs].ToPlainString() });
     }
 
     #endregion
@@ -358,7 +358,7 @@ public class AccountBookController : Controller
         var result = await _incomeService.UpdateAsync(email, request, ct);
         return result.Success
             ? Json(new { result = true, message = _localizer["The income has been successfully updated."].Value })
-            : Json(new { result = false, error = _localizer[result.ErrorKey, result.ErrorArgs].Value });
+            : Json(new { result = false, error = _localizer[result.ErrorKey, result.ErrorArgs].ToPlainString() });
     }
 
     #endregion
@@ -375,7 +375,7 @@ public class AccountBookController : Controller
         var result = await _incomeService.DeleteAsync(email, incomeInputViewModel.Id, ct);
         return result.Success
             ? Json(new { result = true, message = _localizer["The income has been successfully deleted."].Value })
-            : Json(new { result = false, error = _localizer[result.ErrorKey, result.ErrorArgs].Value });
+            : Json(new { result = false, error = _localizer[result.ErrorKey, result.ErrorArgs].ToPlainString() });
     }
 
     #endregion
@@ -431,7 +431,7 @@ public class AccountBookController : Controller
         var result = await _expenditureService.CreateAsync(email, request, ct);
         return result.Success
             ? Json(new { result = true, message = _localizer["The expenditure has been successfully created."].Value })
-            : Json(new { result = false, error = _localizer[result.ErrorKey, result.ErrorArgs].Value });
+            : Json(new { result = false, error = _localizer[result.ErrorKey, result.ErrorArgs].ToPlainString() });
     }
 
     #endregion
@@ -555,7 +555,7 @@ public class AccountBookController : Controller
         var result = await _expenditureService.UpdateAsync(email, request, ct);
         return result.Success
             ? Json(new { result = true, message = _localizer["The expenditure has been successfully updated."].Value })
-            : Json(new { result = false, error = _localizer[result.ErrorKey, result.ErrorArgs].Value });
+            : Json(new { result = false, error = _localizer[result.ErrorKey, result.ErrorArgs].ToPlainString() });
     }
 
     #endregion
@@ -573,7 +573,7 @@ public class AccountBookController : Controller
         var result = await _expenditureService.DeleteAsync(email, expenditureInputViewModel.Id, ct);
         return result.Success
             ? Json(new { result = true, message = _localizer["The expenditure has been successfully deleted."].Value })
-            : Json(new { result = false, error = _localizer[result.ErrorKey, result.ErrorArgs].Value });
+            : Json(new { result = false, error = _localizer[result.ErrorKey, result.ErrorArgs].ToPlainString() });
     }
 
     #endregion
