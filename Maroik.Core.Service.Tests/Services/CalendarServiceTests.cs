@@ -148,6 +148,33 @@ public class CalendarServiceTests
         _unitOfWork.Verify(u => u.RollbackAsync(It.IsAny<CancellationToken>()), Times.Once);
     }
 
+    /// <summary>
+    /// A unique-violation (23505) on a different constraint than the calendar-name uniqueness one
+    /// (e.g. the "Calendar_pk" surrogate-key PK, which can collide if its sequence ever falls behind
+    /// the table's existing rows) must not be misreported as "name already exists" -- there is no
+    /// name conflict here, and swallowing it that way would hide a real database-integrity problem.
+    /// </summary>
+    [Fact]
+    public async Task CreateCalendarAsync_ReturnsUnexpectedFailure_WhenUniqueViolationIsOnADifferentConstraint()
+    {
+        _calendarRepo.Setup(r => r.GetByAccountEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync([]);
+        var pgException = new Exception("duplicate key value violates unique constraint \"Calendar_pk\" (23505)");
+        _calendarRepo.Setup(r => r.CreateAsync(It.IsAny<Calendar>(), It.IsAny<CancellationToken>())).ThrowsAsync(pgException);
+        var sut = CreateSut();
+
+        ServiceResult result = await sut.CreateCalendarAsync("user@example.com", new CalendarRequest
+        {
+            AccountEmail = "user@example.com",
+            Name = "NewCalendar",
+            TimeZoneIanaId = "UTC",
+            HtmlColorCode = "#3788d8"
+        }, TestContext.Current.CancellationToken);
+
+        Assert.False(result.Success);
+        Assert.Equal("Calendar.Unexpected", result.ErrorKey);
+        _unitOfWork.Verify(u => u.RollbackAsync(It.IsAny<CancellationToken>()), Times.Once);
+    }
+
     // -- UpdateCalendarAsync --------------------------------------------------
 
     /// <summary>Verifies that <c>UpdateCalendarAsync</c> returns fail when calendar not found.</summary>

@@ -19,6 +19,11 @@ namespace Maroik.Core.Service.Services;
 /// </summary>
 public class CalendarService : ICalendarService
 {
+    // Calendar also has a surrogate-key "Calendar_pk" (on Id) that raises the same SQLSTATE 23505
+    // on a PK collision; naming this constraint explicitly (via IsPostgresUniqueViolationOn) keeps
+    // that unrelated failure mode from being misreported as "name already exists" below.
+    private const string NameUniqueConstraint = "Calendar_AccountEmail_Name_unique";
+
     private readonly ICalendarRepository _calendarRepository;
     private readonly ICalendarEventRepository _calendarEventRepository;
     private readonly ICalendarEventAttachedFileRepository _calendarEventAttachedFileRepository;
@@ -192,7 +197,7 @@ public class CalendarService : ICalendarService
             await _unitOfWork.CommitAsync(ct);
             return ServiceResult.Ok();
         }
-        catch (Exception ex) when (ex.IsPostgresUniqueViolation())
+        catch (Exception ex) when (ex.IsPostgresUniqueViolationOn(NameUniqueConstraint))
         {
             await _unitOfWork.RollbackAsync(ct);
             return ServiceResult.Conflict("Calendar.NameExists", "The calendar already exists.");
@@ -224,7 +229,7 @@ public class CalendarService : ICalendarService
             await _unitOfWork.CommitAsync(ct);
             return ServiceResult.Ok();
         }
-        catch (Exception ex) when (ex.IsPostgresUniqueViolation())
+        catch (Exception ex) when (ex.IsPostgresUniqueViolationOn(NameUniqueConstraint))
         {
             // Renaming to a name already used by another of this account's calendars hits the
             // same "Calendar_AccountEmail_Name_unique" constraint CreateCalendarAsync guards
@@ -295,7 +300,7 @@ public class CalendarService : ICalendarService
             await _unitOfWork.CommitAsync(ct);
             return ServiceResult.Ok();
         }
-        catch (Exception ex) when (ex.IsPostgresUniqueViolation())
+        catch (Exception ex) when (ex.IsPostgresUniqueViolationOn(NameUniqueConstraint))
         {
             // A concurrent request (e.g. two tabs opened on first login) already created this
             // account's default calendar. This method's contract is "some calendar now exists" --

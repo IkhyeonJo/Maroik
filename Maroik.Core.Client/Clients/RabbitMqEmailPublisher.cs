@@ -103,10 +103,20 @@ public sealed class RabbitMqEmailPublisher : IEmailPublisher, IAsyncDisposable
     /// <inheritdoc />
     public async ValueTask DisposeAsync()
     {
-        if (_channel != null)
-            await _channel.DisposeAsync();
-        if (_connection != null)
-            await _connection.DisposeAsync();
-        _publishLock.Dispose();
+        // Waits for any in-flight PublishAsync to release the lock first, so the channel/connection
+        // it's using is never disposed out from under it.
+        await _publishLock.WaitAsync();
+        try
+        {
+            if (_channel != null)
+                await _channel.DisposeAsync();
+            if (_connection != null)
+                await _connection.DisposeAsync();
+        }
+        finally
+        {
+            _publishLock.Release();
+            _publishLock.Dispose();
+        }
     }
 }
