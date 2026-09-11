@@ -354,6 +354,9 @@
   <data name="The fixed-income record could not be found." xml:space="preserve">
     <value>The fixed-income record could not be found.</value>
   </data>
+  <data name="The maturity date cannot be earlier than the current date." xml:space="preserve">
+    <value>The maturity date cannot be earlier than the current date.</value>
+  </data>
   <data name="The selected asset could not be found." xml:space="preserve">
     <value>The selected asset could not be found.</value>
   </data>

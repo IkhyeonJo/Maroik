@@ -83,6 +83,27 @@ public class FixedExpenditureTests
         Assert.Equal("FixedExpenditure.PaymentMethodEmpty", result.FirstError.Code);
     }
 
+    /// <summary>Register returns error, when the maturity date is in the past.</summary>
+    [Fact]
+    public void Register_ReturnsError_WhenMaturityDateInPast()
+    {
+        var result = FixedExpenditure.Register("user@example.com", "ConsumerSpending", "LeisureOrCulture", "Netflix",
+            15000m, "KRW", "My Card", null, 1, 1, DateTime.UtcNow.AddYears(-1));
+
+        Assert.True(result.IsError);
+        Assert.Equal("FixedExpenditure.MaturityDateInPast", result.FirstError.Code);
+    }
+
+    /// <summary>Register succeeds with the "no maturity date" sentinel.</summary>
+    [Fact]
+    public void Register_Succeeds_WithNoMaturityDateSentinel()
+    {
+        var result = FixedExpenditure.Register("user@example.com", "ConsumerSpending", "LeisureOrCulture", "Netflix",
+            15000m, "KRW", "My Card", null, 1, 1, FixedSchedulePolicy.NoMaturityDate);
+
+        Assert.False(result.IsError);
+    }
+
     // -- MarkUnpunctual / ClearUnpunctuality -----------------------------------
 
     /// <summary>Mark unpunctual sets flag.</summary>
@@ -147,5 +168,36 @@ public class FixedExpenditureTests
 
         Assert.True(result.IsError);
         Assert.Equal("FixedExpenditure.InvalidDepositDay", result.FirstError.Code);
+    }
+
+    /// <summary>Update returns error, when the maturity date is newly moved into the past.</summary>
+    [Fact]
+    public void Update_ReturnsError_WhenMaturityDateMovedIntoThePast()
+    {
+        var fe = ValidFixedExpenditure();
+
+        var result = fe.Update("ConsumerSpending", "LeisureOrCulture", null, 0m, "KRW", "My Card", null, 1, 15,
+            DateTime.UtcNow.AddYears(-1), null);
+
+        Assert.True(result.IsError);
+        Assert.Equal("FixedExpenditure.MaturityDateInPast", result.FirstError.Code);
+    }
+
+    /// <summary>
+    /// Update succeeds when an already-past maturity date is left unchanged, so an expired
+    /// schedule's other fields stay editable.
+    /// </summary>
+    [Fact]
+    public void Update_Succeeds_WhenPastMaturityDateLeftUnchanged()
+    {
+        var pastMaturity = DateTime.UtcNow.AddYears(-1);
+        var fe = FixedExpenditure.Reconstitute(1, "user@example.com", "ConsumerSpending", "LeisureOrCulture", "Netflix",
+            15000m, "KRW", "My Card", null, 1, 1, pastMaturity, null, false, DateTime.UtcNow.AddYears(-2), DateTime.UtcNow.AddYears(-2));
+
+        var result = fe.Update("ConsumerSpending", "LeisureOrCulture", "Netflix Premium", 20000m, "KRW", "My Card", null, 1, 1,
+            pastMaturity, null);
+
+        Assert.False(result.IsError);
+        Assert.Equal("Netflix Premium", fe.Content);
     }
 }

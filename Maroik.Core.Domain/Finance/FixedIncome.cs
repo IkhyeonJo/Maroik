@@ -165,6 +165,10 @@ public sealed class FixedIncome : AggregateRoot<long>
         var moneyResult = Money.Create(amount, currency);
         if (moneyResult.IsError) return moneyResult.Errors;
 
+        if (!FixedSchedulePolicy.IsAcceptableMaturityDate(maturityDate, DateTime.UtcNow))
+            return Error.Validation("FixedIncome.MaturityDateInPast",
+                "The maturity date cannot be earlier than the current date.");
+
         var (validMainClass, validSubClass, validDepositAsset) = coreResult.Value;
         var fixedIncome = new FixedIncome(0, emailResult.Value, validMainClass, validSubClass, content,
             moneyResult.Value, validDepositAsset, depositMonth, depositDay, maturityDate, note);
@@ -245,6 +249,13 @@ public sealed class FixedIncome : AggregateRoot<long>
 
         var moneyResult = Money.Create(amount, currency);
         if (moneyResult.IsError) return moneyResult.Errors;
+
+        // Reject moving the maturity date into the past, but let an edit that leaves an already
+        // past date untouched through, so an expired schedule's other fields stay editable.
+        if (maturityDate.Date != MaturityDate.Date
+            && !FixedSchedulePolicy.IsAcceptableMaturityDate(maturityDate, DateTime.UtcNow))
+            return Error.Validation("FixedIncome.MaturityDateInPast",
+                "The maturity date cannot be earlier than the current date.");
 
         var (validMainClass, validSubClass, validDepositAsset) = coreResult.Value;
         MainClass = validMainClass;

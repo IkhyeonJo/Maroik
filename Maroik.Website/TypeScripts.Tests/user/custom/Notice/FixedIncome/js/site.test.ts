@@ -10,6 +10,7 @@ function fixture(): string {
     antiForgery +
     hidden("incomeSubClassMap", JSON.stringify(subClassMap).replace(/"/g, "&quot;")) +
     hidden("maxDepositDayByMonth", JSON.stringify(maxDepositDayByMonth).replace(/"/g, "&quot;")) +
+    hidden("noMaturityDate", "9999-12-31") +
     `<div id="createFixedIncomeTabs"></div><div id="editFixedIncomeTabs"></div><input id="gridSearch" />
      <input id="createFixedIncomeMaturityDate" /><input id="editFixedIncomeMaturityDate" />
      <select id="createFixedIncomeMainClass"><option value="Labor">Labor</option></select>

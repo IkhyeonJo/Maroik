@@ -1,3 +1,5 @@
+using System.Globalization;
+
 namespace Maroik.Core.Domain.Finance;
 
 /// <summary>
@@ -8,6 +10,30 @@ namespace Maroik.Core.Domain.Finance;
 /// </summary>
 public static class FixedSchedulePolicy
 {
+    /// <summary>
+    /// Sentinel <c>MaturityDate</c> meaning "this schedule never expires". Far enough in the
+    /// future that <see cref="IsExpired"/> can never treat a live schedule as past it, and that
+    /// <see cref="IsAcceptableMaturityDate"/> always accepts it — "never expires" needs no
+    /// special case. The create / edit forms serialize <see cref="NoMaturityDateIso"/> so the
+    /// client no longer hard-codes the same date.
+    /// </summary>
+    public static readonly DateTime NoMaturityDate = new(9999, 12, 31);
+
+    /// <summary><see cref="NoMaturityDate"/> as the <c>yyyy-MM-dd</c> string the forms submit and render.</summary>
+    public static readonly string NoMaturityDateIso =
+        NoMaturityDate.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture);
+
+    /// <summary>
+    /// Returns <see langword="true"/> when <paramref name="maturityDate"/> is acceptable for a
+    /// newly registered or newly changed schedule: not already in the past, mirroring the
+    /// create / edit form's <c>minDate: 0</c>. A one-day grace against <paramref name="todayUtc"/>
+    /// keeps a client in a timezone behind UTC from being rejected for entering its own "today"
+    /// during the last hours of the day; anything genuinely in the past still fails.
+    /// <see cref="NoMaturityDate"/> passes naturally.
+    /// </summary>
+    public static bool IsAcceptableMaturityDate(DateTime maturityDate, DateTime todayUtc)
+        => maturityDate.Date >= todayUtc.Date.AddDays(-1);
+
     /// <summary>
     /// Returns <see langword="true"/> when this year's scheduled deposit for
     /// (<paramref name="depositMonth"/>, <paramref name="depositDay"/>) has not yet passed and

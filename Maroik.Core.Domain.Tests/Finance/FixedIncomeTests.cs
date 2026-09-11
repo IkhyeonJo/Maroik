@@ -83,6 +83,27 @@ public class FixedIncomeTests
         Assert.Equal("FixedIncome.MainClassEmpty", result.FirstError.Code);
     }
 
+    /// <summary>Register returns error, when the maturity date is in the past.</summary>
+    [Fact]
+    public void Register_ReturnsError_WhenMaturityDateInPast()
+    {
+        var result = FixedIncome.Register("user@example.com", "RegularIncome", "LaborIncome", "Salary",
+            3000000m, "KRW", "My Bank", 1, 25, DateTime.UtcNow.AddYears(-1));
+
+        Assert.True(result.IsError);
+        Assert.Equal("FixedIncome.MaturityDateInPast", result.FirstError.Code);
+    }
+
+    /// <summary>Register succeeds with the "no maturity date" sentinel.</summary>
+    [Fact]
+    public void Register_Succeeds_WithNoMaturityDateSentinel()
+    {
+        var result = FixedIncome.Register("user@example.com", "RegularIncome", "LaborIncome", "Salary",
+            3000000m, "KRW", "My Bank", 1, 25, FixedSchedulePolicy.NoMaturityDate);
+
+        Assert.False(result.IsError);
+    }
+
     // -- MarkUnpunctual / ClearUnpunctuality -----------------------------------
 
     /// <summary>Mark unpunctual sets flag.</summary>
@@ -147,5 +168,36 @@ public class FixedIncomeTests
 
         Assert.True(result.IsError);
         Assert.Equal("FixedIncome.InvalidDepositDay", result.FirstError.Code);
+    }
+
+    /// <summary>Update returns error, when the maturity date is newly moved into the past.</summary>
+    [Fact]
+    public void Update_ReturnsError_WhenMaturityDateMovedIntoThePast()
+    {
+        var fi = ValidFixedIncome();
+
+        var result = fi.Update("RegularIncome", "LaborIncome", null, 0m, "KRW", "My Bank", 1, 10,
+            DateTime.UtcNow.AddYears(-1), null);
+
+        Assert.True(result.IsError);
+        Assert.Equal("FixedIncome.MaturityDateInPast", result.FirstError.Code);
+    }
+
+    /// <summary>
+    /// Update succeeds when an already-past maturity date is left unchanged, so an expired
+    /// schedule's other fields stay editable.
+    /// </summary>
+    [Fact]
+    public void Update_Succeeds_WhenPastMaturityDateLeftUnchanged()
+    {
+        var pastMaturity = DateTime.UtcNow.AddYears(-1);
+        var fi = FixedIncome.Reconstitute(1, "user@example.com", "RegularIncome", "LaborIncome", "Salary",
+            3000000m, "KRW", "My Bank", 1, 25, pastMaturity, null, false, DateTime.UtcNow.AddYears(-2), DateTime.UtcNow.AddYears(-2));
+
+        var result = fi.Update("RegularIncome", "LaborIncome", "Salary raise", 3200000m, "KRW", "My Bank", 1, 25,
+            pastMaturity, null);
+
+        Assert.False(result.IsError);
+        Assert.Equal("Salary raise", fi.Content);
     }
 }

@@ -60,8 +60,11 @@
     // FixedSchedulePolicy; mirrored here for form UX only, the server re-validates on save.
     const incomeSubClassMap = JSON.parse(($('#incomeSubClassMap').val() as string) || '{}');
     const maxDepositDayByMonth = JSON.parse(($('#maxDepositDayByMonth').val() as string) || '{}');
-    // Far-future stand-in for "no maturity date" (must stay in sync with the "No MaturityDate" button).
-    const NO_MATURITY_DATE = new Date(9999, 11, 31);
+    // Far-future stand-in for "no maturity date", published by the server (FixedSchedulePolicy)
+    // as a yyyy-MM-dd string so the client and server never drift on the value.
+    const noMaturityIso = ($('#noMaturityDate').val() as string) || '9999-12-31';
+    const [nmYear, nmMonth, nmDay] = noMaturityIso.split('-').map(Number);
+    const NO_MATURITY_DATE = new Date(nmYear, nmMonth - 1, nmDay);
 
     // Enables/shows only the options in allowedValues (disabling+hiding the rest) and selects
     // valueToSelect when it is allowed, otherwise the first allowed option.

@@ -42,7 +42,9 @@
     const expenditureSubClassMap = JSON.parse($('#expenditureSubClassMap').val() || '{}');
     const expenditureDepositAssetSubClasses = JSON.parse($('#expenditureDepositAssetSubClasses').val() || '[]');
     const maxDepositDayByMonth = JSON.parse($('#maxDepositDayByMonth').val() || '{}');
-    const NO_MATURITY_DATE = new Date(9999, 11, 31);
+    const noMaturityIso = $('#noMaturityDate').val() || '9999-12-31';
+    const [nmYear, nmMonth, nmDay] = noMaturityIso.split('-').map(Number);
+    const NO_MATURITY_DATE = new Date(nmYear, nmMonth - 1, nmDay);
     function ApplyAllowedOptions($select, allowedValues, valueToSelect) {
         $select.find('option').each(function () {
             const allowed = allowedValues.indexOf(this.value) !== -1;

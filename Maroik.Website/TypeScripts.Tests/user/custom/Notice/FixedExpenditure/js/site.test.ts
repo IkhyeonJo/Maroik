@@ -12,6 +12,7 @@ function fixture(): string {
     hidden("expenditureSubClassMap", JSON.stringify(subClassMap).replace(/"/g, "&quot;")) +
     hidden("expenditureDepositAssetSubClasses", JSON.stringify(depositAssetSubClasses).replace(/"/g, "&quot;")) +
     hidden("maxDepositDayByMonth", JSON.stringify(maxDepositDayByMonth).replace(/"/g, "&quot;")) +
+    hidden("noMaturityDate", "9999-12-31") +
     `<div id="createFixedExpenditureTabs"></div><div id="editFixedExpenditureTabs"></div><input id="gridSearch" />
      <input id="createFixedExpenditureMaturityDate" /><input id="editFixedExpenditureMaturityDate" />
      <select id="createFixedExpenditureMainClass"><option value="Living">Living</option><option value="Transfer">Transfer</option></select>

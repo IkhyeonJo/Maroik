@@ -228,6 +228,62 @@ public class FixedSchedulePolicyTests
         Assert.False(FixedSchedulePolicy.IsExpired(maturityDate, today));
     }
 
+    // -- IsAcceptableMaturityDate -------------------------------------------------
+
+    /// <summary>Is acceptable maturity date returns true, when maturity date is in the future.</summary>
+    [Fact]
+    public void IsAcceptableMaturityDate_ReturnsTrue_WhenInFuture()
+    {
+        var todayUtc = new DateTime(2026, 7, 2, 0, 0, 0, DateTimeKind.Utc);
+
+        Assert.True(FixedSchedulePolicy.IsAcceptableMaturityDate(new DateTime(2027, 1, 1), todayUtc));
+    }
+
+    /// <summary>Is acceptable maturity date returns true, when maturity date equals today.</summary>
+    [Fact]
+    public void IsAcceptableMaturityDate_ReturnsTrue_WhenEqualsToday()
+    {
+        var todayUtc = new DateTime(2026, 7, 2, 12, 0, 0, DateTimeKind.Utc);
+
+        Assert.True(FixedSchedulePolicy.IsAcceptableMaturityDate(new DateTime(2026, 7, 2), todayUtc));
+    }
+
+    /// <summary>
+    /// Is acceptable maturity date returns true one day before today: the timezone grace so a
+    /// client behind UTC entering its own "today" is not rejected.
+    /// </summary>
+    [Fact]
+    public void IsAcceptableMaturityDate_ReturnsTrue_WithinOneDayGrace()
+    {
+        var todayUtc = new DateTime(2026, 7, 2, 0, 0, 0, DateTimeKind.Utc);
+
+        Assert.True(FixedSchedulePolicy.IsAcceptableMaturityDate(new DateTime(2026, 7, 1), todayUtc));
+    }
+
+    /// <summary>Is acceptable maturity date returns false, when maturity date is clearly in the past.</summary>
+    [Fact]
+    public void IsAcceptableMaturityDate_ReturnsFalse_WhenClearlyPast()
+    {
+        var todayUtc = new DateTime(2026, 7, 2, 0, 0, 0, DateTimeKind.Utc);
+
+        Assert.False(FixedSchedulePolicy.IsAcceptableMaturityDate(new DateTime(2026, 6, 30), todayUtc));
+    }
+
+    /// <summary>The "no maturity date" sentinel is always acceptable.</summary>
+    [Fact]
+    public void IsAcceptableMaturityDate_ReturnsTrue_ForNoMaturityDateSentinel()
+    {
+        Assert.True(FixedSchedulePolicy.IsAcceptableMaturityDate(FixedSchedulePolicy.NoMaturityDate, DateTime.UtcNow));
+    }
+
+    /// <summary>The published sentinel string is the ISO form of <see cref="FixedSchedulePolicy.NoMaturityDate"/>.</summary>
+    [Fact]
+    public void NoMaturityDateIso_IsTheIsoFormOfNoMaturityDate()
+    {
+        Assert.Equal("9999-12-31", FixedSchedulePolicy.NoMaturityDateIso);
+        Assert.Equal(FixedSchedulePolicy.NoMaturityDate.Date, DateTime.Parse(FixedSchedulePolicy.NoMaturityDateIso).Date);
+    }
+
     // -- GetRowCssClass -------------------------------------------------------------
 
     /// <summary>Get row css class returns danger when expired even if also noticed.</summary>
