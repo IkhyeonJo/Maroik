@@ -24,8 +24,11 @@ public sealed class EmailConsumerWorker : BackgroundService
     internal IChannel? Channel;
     private string? _consumerTag;
 
-    // Tracks delivery tags currently being processed, so StopAsync can wait for them to finish
-    // acking/nacking before the channel is disposed out from under them.
+    // The consumer dispatches one message at a time (RabbitMQ.Client's default
+    // ConsumerDispatchConcurrency is 1); prefetch just lets the broker keep the next few buffered
+    // at the client so there is no round-trip stall between messages. This still tracks the
+    // delivery tag(s) in OnMessageReceivedAsync so StopAsync can wait for the current one to
+    // finish acking/nacking before the channel is disposed out from under it.
     private readonly ConcurrentDictionary<ulong, byte> _inFlight = new();
 
     /// <summary>Initializes a new instance of <see cref="EmailConsumerWorker"/> with the supplied dependencies.</summary>
@@ -40,50 +43,12 @@ public sealed class EmailConsumerWorker : BackgroundService
     }
 
     /// <summary>
-    /// Opens the RabbitMQ connection, declares the durable email queue, and starts consuming.
-    /// Runs for the lifetime of the host; returns only when <paramref name="stoppingToken"/> is canceled.
+    /// Establishes the RabbitMQ topology and starts consuming, then runs for the lifetime of the
+    /// host; returns only when <paramref name="stoppingToken"/> is canceled.
     /// </summary>
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
-        _connection = await _connectionFactory.CreateConnectionAsync(stoppingToken);
-        Channel = await _connection.CreateChannelAsync(cancellationToken: stoppingToken);
-
-        // Dead-letter queue first, so it exists before the main queue can route a rejected
-        // message to it.
-        await Channel.QueueDeclareAsync(
-            queue: QueueNames.EmailDeadLetter,
-            durable: true,
-            exclusive: false,
-            autoDelete: false,
-            cancellationToken: stoppingToken);
-
-        // Arguments must match the Website publisher's declaration of the same queue exactly, or
-        // whichever side declares second fails with PRECONDITION_FAILED. The policy dead-letters
-        // reject-without-requeue messages to QueueNames.EmailDeadLetter.
-        await Channel.QueueDeclareAsync(
-            queue: QueueNames.Email,
-            durable: true,
-            exclusive: false,
-            autoDelete: false,
-            arguments: QueueNames.CreateEmailQueueArguments(),
-            cancellationToken: stoppingToken);
-
-        // Cap in-flight (unacked) messages per consumer so one slow SMTP send doesn't
-        // let unbounded messages pile up in memory.
-        await Channel.BasicQosAsync(prefetchSize: 0, prefetchCount: 10, global: false, cancellationToken: stoppingToken);
-
-        var consumer = new AsyncEventingBasicConsumer(Channel);
-        consumer.ReceivedAsync += OnMessageReceivedAsync;
-
-        _consumerTag = await Channel.BasicConsumeAsync(
-            queue: QueueNames.Email,
-            autoAck: false,
-            consumer: consumer,
-            cancellationToken: stoppingToken);
-
-#pragma warning disable CA1873
-        _logger.LogInformation("Email consumer started, listening on queue '{Queue}'", QueueNames.Email);
-#pragma warning restore CA1873
+        await ConnectAndConsumeAsync(stoppingToken);
 
         try
         {
@@ -92,6 +57,89 @@ public sealed class EmailConsumerWorker : BackgroundService
         catch (OperationCanceledException)
         {
             // Expected during graceful shutdown.
+        }
+    }
+
+    /// <summary>
+    /// Opens the connection and channel, declares the durable email + dead-letter queues, and
+    /// registers the consumer. The broker often is not reachable the instant the worker starts
+    /// (both come up together under docker-compose), so the initial connect is retried with a
+    /// capped back-off rather than letting <see cref="ExecuteAsync"/> fault and stop the host.
+    /// Once this returns, the client's automatic/topology recovery handles any later drop.
+    /// </summary>
+    private async Task ConnectAndConsumeAsync(CancellationToken stoppingToken)
+    {
+        var delay = TimeSpan.FromSeconds(2);
+        var maxDelay = TimeSpan.FromSeconds(30);
+
+        while (true)
+        {
+            stoppingToken.ThrowIfCancellationRequested();
+            try
+            {
+                _connection = await _connectionFactory.CreateConnectionAsync(stoppingToken);
+                Channel = await _connection.CreateChannelAsync(cancellationToken: stoppingToken);
+
+                // Dead-letter queue first, so it exists before the main queue can route a rejected
+                // message to it.
+                await Channel.QueueDeclareAsync(
+                    queue: QueueNames.EmailDeadLetter,
+                    durable: true,
+                    exclusive: false,
+                    autoDelete: false,
+                    cancellationToken: stoppingToken);
+
+                // Arguments must match the Website publisher's declaration of the same queue exactly, or
+                // whichever side declares second fails with PRECONDITION_FAILED. The policy dead-letters
+                // reject-without-requeue messages to QueueNames.EmailDeadLetter.
+                await Channel.QueueDeclareAsync(
+                    queue: QueueNames.Email,
+                    durable: true,
+                    exclusive: false,
+                    autoDelete: false,
+                    arguments: QueueNames.CreateEmailQueueArguments(),
+                    cancellationToken: stoppingToken);
+
+                // Cap unacked messages held at the client so one slow SMTP send doesn't let the
+                // broker push unbounded messages into this process's memory.
+                await Channel.BasicQosAsync(prefetchSize: 0, prefetchCount: 10, global: false, cancellationToken: stoppingToken);
+
+                var consumer = new AsyncEventingBasicConsumer(Channel);
+                consumer.ReceivedAsync += OnMessageReceivedAsync;
+
+                _consumerTag = await Channel.BasicConsumeAsync(
+                    queue: QueueNames.Email,
+                    autoAck: false,
+                    consumer: consumer,
+                    cancellationToken: stoppingToken);
+
+#pragma warning disable CA1873
+                _logger.LogInformation("Email consumer started, listening on queue '{Queue}'", QueueNames.Email);
+#pragma warning restore CA1873
+                return;
+            }
+            catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested)
+            {
+                throw;
+            }
+            catch (Exception ex)
+            {
+                // Tear down whatever half-opened so the next attempt starts from a clean slate.
+                if (Channel != null)
+                {
+                    await Channel.DisposeAsync();
+                    Channel = null;
+                }
+                if (_connection != null)
+                {
+                    await _connection.DisposeAsync();
+                    _connection = null;
+                }
+
+                _logger.LogWarning(ex, "Could not connect to RabbitMQ; retrying in {DelaySeconds}s", delay.TotalSeconds);
+                await Task.Delay(delay, stoppingToken);
+                delay = TimeSpan.FromSeconds(Math.Min(maxDelay.TotalSeconds, delay.TotalSeconds * 2));
+            }
         }
     }
 
@@ -107,8 +155,8 @@ public sealed class EmailConsumerWorker : BackgroundService
     /// </summary>
     internal async Task OnMessageReceivedAsync(object sender, BasicDeliverEventArgs ea)
     {
-        // DeliveryTag alone keeps concurrently-processed messages (prefetch 10) distinguishable
-        // in the logs even if deserialization fails before a CorrelationId is known.
+        // DeliveryTag tags every log line for this message even when deserialization fails before
+        // a CorrelationId is known, and distinguishes a redelivery of the same message in the log.
         using (LogContext.PushProperty("DeliveryTag", ea.DeliveryTag))
         {
             _inFlight[ea.DeliveryTag] = 0;
