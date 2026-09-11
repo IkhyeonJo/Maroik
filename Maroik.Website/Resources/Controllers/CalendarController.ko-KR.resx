@@ -189,6 +189,15 @@
   <data name="The calendar shared has been successfully updated." xml:space="preserve">
     <value>공유 달력이 성공적으로 수정되었습니다.</value>
   </data>
+  <data name="'{0}' is not a recognised time-zone ID." xml:space="preserve">
+    <value>'{0}'은(는) 인식할 수 없는 시간대 ID입니다.</value>
+  </data>
+  <data name="'{0}' is not a valid email address." xml:space="preserve">
+    <value>'{0}'은(는) 올바른 이메일 주소가 아닙니다.</value>
+  </data>
+  <data name="'{0}' is not a valid HTML hex color code (e.g. #FF5733)." xml:space="preserve">
+    <value>'{0}'은(는) 올바른 HTML 16진수 색상 코드가 아닙니다 (예: #FF5733).</value>
+  </data>
   <data name="Calendar ID must be a positive integer." xml:space="preserve">
     <value>달력 ID는 양의 정수여야 합니다.</value>
   </data>

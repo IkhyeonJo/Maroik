@@ -1,5 +1,6 @@
 using System.Net.Mail;
 using ErrorOr;
+using Maroik.Core.Domain.Localization;
 using Maroik.Core.Domain.Primitives;
 
 namespace Maroik.Core.Domain.ValueObjects;
@@ -35,7 +36,7 @@ public sealed class Email : ValueObject
 
         string trimmed = value.Trim();
         if (!TryParseAddress(trimmed, out string normalized))
-            return Error.Validation("Email.Invalid", $"'{value}' is not a valid email address.");
+            return LocalizableError.Validation("Email.Invalid", "'{0}' is not a valid email address.", value);
 
         return new Email(normalized);
     }

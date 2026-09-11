@@ -309,6 +309,12 @@
   <data name="Invalid image file" xml:space="preserve">
     <value>Invalid image file</value>
   </data>
+  <data name="'{0}' is not a recognised time-zone ID." xml:space="preserve">
+    <value>'{0}' is not a recognised time-zone ID.</value>
+  </data>
+  <data name="'{0}' is not a valid email address." xml:space="preserve">
+    <value>'{0}' is not a valid email address.</value>
+  </data>
   <data name="Agreed Service Terms was not checked. Please try sign up again and login again." xml:space="preserve">
     <value>Agreed Service Terms was not checked. Please try sign up again and login again.</value>
   </data>

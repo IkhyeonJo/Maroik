@@ -1,5 +1,6 @@
 using ErrorOr;
 using Maroik.Core.Domain.Finance;
+using Maroik.Core.Domain.Localization;
 using Maroik.Core.Contract.Dtos;
 using Maroik.Core.Contract.Interfaces;
 using Maroik.Core.Service.Mappers;
@@ -160,8 +161,8 @@ public class FixedExpenditureService : IFixedExpenditureService
 
         int maxDay = FixedSchedulePolicy.MaxDepositDay(req.DepositMonth);
         if (req.DepositDay < 1 || req.DepositDay > maxDay)
-            return Error.Validation("FixedExpenditure.DepositDay",
-                $"Deposit day must be between 1 and {maxDay} for month {req.DepositMonth}.");
+            return LocalizableError.Validation("FixedExpenditure.DepositDay",
+                "Deposit day must be between 1 and {0} for month {1}.", maxDay, req.DepositMonth);
 
         return requiresDeposit;
     }

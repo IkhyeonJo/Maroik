@@ -198,6 +198,18 @@
   <data name="Your Account is Locked, Please reset your password by clicking Forgot password Button" xml:space="preserve">
     <value>계정이 잠겼습니다. '비밀번호 찾기' 버튼을 통해 비밀번호를 초기화해주시길 바랍니다.</value>
   </data>
+  <data name="'{0}' is a Nickname that already exists. Please enter another Nickname." xml:space="preserve">
+    <value>'{0}'은(는) 이미 존재하는 닉네임입니다. 다른 닉네임을 입력해 주세요.</value>
+  </data>
+  <data name="'{0}' is an Email that already exists." xml:space="preserve">
+    <value>'{0}'은(는) 이미 존재하는 이메일입니다.</value>
+  </data>
+  <data name="'{0}' is not a recognised time-zone ID." xml:space="preserve">
+    <value>'{0}'은(는) 인식할 수 없는 시간대 ID입니다.</value>
+  </data>
+  <data name="'{0}' is not a valid email address." xml:space="preserve">
+    <value>'{0}'은(는) 올바른 이메일 주소가 아닙니다.</value>
+  </data>
   <data name="Email address is already confirmed." xml:space="preserve">
     <value>이메일 주소가 이미 인증되었습니다.</value>
   </data>

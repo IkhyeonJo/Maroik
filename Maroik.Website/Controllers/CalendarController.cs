@@ -68,7 +68,7 @@ public class CalendarController : Controller
             ServiceResult result = await _calendarService.CreateCalendarAsync(accountEmail, tempCalendar, HttpContext.RequestAborted);
 
             if (!result.Success)
-                return Json(new { result = false, error = _localizer[result.ErrorKey].Value });
+                return Json(new { result = false, error = _localizer[result.ErrorKey, result.ErrorArgs].Value });
 
             // Strip fields the client doesn't need back (and shouldn't see echoed), keeping the
             // JSON payload limited to what the calendar picker UI uses to render the new entry.
@@ -117,7 +117,7 @@ public class CalendarController : Controller
                 await calendarEventInputViewModel.CalendarEventUploadedFile.ToAttachedFileInfoAsync(_serverSettings.Value.MaxAttachedFileSizeBytes, HttpContext.RequestAborted),
                 HttpContext.RequestAborted);
 
-            return !createEventResult.Success ? Json(new { result = false, error = _localizer[createEventResult.ErrorKey, _serverSettings.Value.MaxAttachedFileSizeBytes / (1024 * 1024)].Value }) : Json(new { result = true, message = _localizer["The calendar event has been successfully created."].Value });
+            return !createEventResult.Success ? Json(new { result = false, error = _localizer[createEventResult.ErrorKey, createEventResult.ErrorArgs].Value }) : Json(new { result = true, message = _localizer["The calendar event has been successfully created."].Value });
         }
         catch (Exception ex)
         {
@@ -577,7 +577,7 @@ public class CalendarController : Controller
 
             ServiceResult updateResult = await _calendarService.UpdateCalendarAsync(accountEmail, calendarRequest, HttpContext.RequestAborted);
 
-            return !updateResult.Success ? Json(new { result = false, error = _localizer[updateResult.ErrorKey].Value }) : Json(new { result = true, message = _localizer["The calendar has been successfully updated."].Value, calendar = new CalendarRequest { Id = calendarRequest.Id, Name = calendarRequest.Name, HtmlColorCode = calendarRequest.HtmlColorCode } });
+            return !updateResult.Success ? Json(new { result = false, error = _localizer[updateResult.ErrorKey, updateResult.ErrorArgs].Value }) : Json(new { result = true, message = _localizer["The calendar has been successfully updated."].Value, calendar = new CalendarRequest { Id = calendarRequest.Id, Name = calendarRequest.Name, HtmlColorCode = calendarRequest.HtmlColorCode } });
         }
         catch (Exception ex)
         {
@@ -619,7 +619,7 @@ public class CalendarController : Controller
                 await calendarEventInputViewModel.CalendarEventUploadedFile.ToAttachedFileInfoAsync(_serverSettings.Value.MaxAttachedFileSizeBytes, HttpContext.RequestAborted),
                 HttpContext.RequestAborted);
 
-            return !updateEventResult.Success ? Json(new { result = false, error = _localizer[updateEventResult.ErrorKey, _serverSettings.Value.MaxAttachedFileSizeBytes / (1024 * 1024)].Value }) : Json(new { result = true, message = _localizer["The calendar event has been successfully updated."].Value });
+            return !updateEventResult.Success ? Json(new { result = false, error = _localizer[updateEventResult.ErrorKey, updateEventResult.ErrorArgs].Value }) : Json(new { result = true, message = _localizer["The calendar event has been successfully updated."].Value });
         }
         catch (Exception ex)
         {
@@ -645,7 +645,7 @@ public class CalendarController : Controller
 
             ServiceResult sharedResult = await _calendarService.UpdateCalendarSharedAsync(_sessionService.GetAccount()!.Email!, calendarShareds, HttpContext.RequestAborted);
 
-            return !sharedResult.Success ? Json(new { result = false, error = _localizer[sharedResult.ErrorKey].Value }) : Json(new { result = true, message = _localizer["The calendar shared has been successfully updated."].Value });
+            return !sharedResult.Success ? Json(new { result = false, error = _localizer[sharedResult.ErrorKey, sharedResult.ErrorArgs].Value }) : Json(new { result = true, message = _localizer["The calendar shared has been successfully updated."].Value });
         }
         catch (Exception ex)
         {
@@ -680,7 +680,7 @@ public class CalendarController : Controller
                     otherCalendars.Select(c => new OtherCalendarRequest { CalendarId = c.CalendarId }),
                     HttpContext.RequestAborted);
 
-                return !otherCalendarResult.Success ? Json(new { result = false, error = _localizer[otherCalendarResult.ErrorKey].Value }) : Json(new { result = true, message = _localizer["The other calendar has been successfully updated."].Value });
+                return !otherCalendarResult.Success ? Json(new { result = false, error = _localizer[otherCalendarResult.ErrorKey, otherCalendarResult.ErrorArgs].Value }) : Json(new { result = true, message = _localizer["The other calendar has been successfully updated."].Value });
             }
 
             return Json(new { result = false, error = _localizer["Input is invalid"].Value });
@@ -710,7 +710,7 @@ public class CalendarController : Controller
 
             ServiceResult deleteCalendarResult = await _calendarService.DeleteCalendarAsync(accountEmail, tempCalendar, HttpContext.RequestAborted);
 
-            return !deleteCalendarResult.Success ? Json(new { result = false, error = _localizer[deleteCalendarResult.ErrorKey].Value }) : Json(new { result = true, message = _localizer["The calendar has been successfully deleted."].Value, calendar = new CalendarRequest { Id = tempCalendar.Id } });
+            return !deleteCalendarResult.Success ? Json(new { result = false, error = _localizer[deleteCalendarResult.ErrorKey, deleteCalendarResult.ErrorArgs].Value }) : Json(new { result = true, message = _localizer["The calendar has been successfully deleted."].Value, calendar = new CalendarRequest { Id = tempCalendar.Id } });
         }
         catch (Exception ex)
         {
@@ -732,7 +732,7 @@ public class CalendarController : Controller
 
             ServiceResult deleteEventResult = await _calendarService.DeleteCalendarEventAsync(id, email, HttpContext.RequestAborted);
 
-            return !deleteEventResult.Success ? Json(new { result = false, error = _localizer[deleteEventResult.ErrorKey].Value }) : Json(new { result = true, message = _localizer["The calendar event has been successfully deleted."].Value });
+            return !deleteEventResult.Success ? Json(new { result = false, error = _localizer[deleteEventResult.ErrorKey, deleteEventResult.ErrorArgs].Value }) : Json(new { result = true, message = _localizer["The calendar event has been successfully deleted."].Value });
         }
         catch (Exception ex)
         {

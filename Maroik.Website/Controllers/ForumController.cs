@@ -533,7 +533,7 @@ public class ForumController : Controller
 
             return result.Success
                 ? Json(new { result = true, message = _localizer["The board has been successfully deleted."].Value })
-                : Json(new { result = false, error = _localizer[result.ErrorKey].Value });
+                : Json(new { result = false, error = _localizer[result.ErrorKey, result.ErrorArgs].Value });
         }
         catch (Exception ex)
         {
@@ -565,7 +565,7 @@ public class ForumController : Controller
 
             return result.Success
                 ? Json(new { result = true })
-                : Json(new { result = false, error = _localizer[result.ErrorKey].Value });
+                : Json(new { result = false, error = _localizer[result.ErrorKey, result.ErrorArgs].Value });
         }
         catch (Exception ex)
         {

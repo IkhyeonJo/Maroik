@@ -1,5 +1,6 @@
 using System.Text.RegularExpressions;
 using ErrorOr;
+using Maroik.Core.Domain.Localization;
 using Maroik.Core.Domain.Primitives;
 
 namespace Maroik.Core.Domain.ValueObjects;
@@ -33,7 +34,7 @@ public sealed partial class HtmlColorCode : ValueObject
             return Error.Validation("HtmlColorCode.Empty", "HTML color code cannot be empty.");
 
         if (!_colorRegex.IsMatch(value))
-            return Error.Validation("HtmlColorCode.Invalid", $"'{value}' is not a valid HTML hex color code (e.g. #FF5733).");
+            return LocalizableError.Validation("HtmlColorCode.Invalid", "'{0}' is not a valid HTML hex color code (e.g. #FF5733).", value);
 
         return new HtmlColorCode(value.ToUpperInvariant());
     }

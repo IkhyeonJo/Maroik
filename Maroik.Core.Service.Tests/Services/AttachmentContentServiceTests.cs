@@ -71,6 +71,29 @@ public class AttachmentContentServiceTests
         Assert.False(result!.Success);
     }
 
+    /// <summary>
+    /// The "too large" message is a composite-format template with the configured max size (in MB)
+    /// as a <see cref="ServiceResult.ErrorArgs"/> value -- not baked into
+    /// <see cref="ServiceResult.ErrorKey"/> -- so every caller can localize it via
+    /// <c>_localizer[result.ErrorKey, result.ErrorArgs]</c> instead of separately recomputing
+    /// maxBytes/(1024*1024) at the call site.
+    /// </summary>
+    [Fact]
+    public void ValidateAttachedFile_ReturnsLocalizableErrorArgs_WhenSizeExceedsMax()
+    {
+        var settings = Options.Create(new ServerSetting { MaxAttachedFileSizeBytes = 5 * 1024 * 1024, FileStorageBaseUrl = "http://filestorage.local" });
+        var sut = new AttachmentContentService(
+            _fileClient.Object, _rsa.Object, _imageValidator.Object, _htmlSanitizer.Object, _htmlParser.Object,
+            settings, NullLogger<AttachmentContentService>.Instance);
+        var file = new AttachedFileDto { FileName = "archive.zip", Size = 10 * 1024 * 1024 };
+
+        var result = sut.ValidateAttachedFile(file);
+
+        Assert.NotNull(result);
+        Assert.Equal("File Size must be smaller than {0}MB.", result!.ErrorKey);
+        Assert.Equal([5L], result.ErrorArgs);
+    }
+
     /// <summary>Verifies that a zero-byte file is rejected.</summary>
     [Fact]
     public void ValidateAttachedFile_ReturnsFail_WhenSizeIsZero()

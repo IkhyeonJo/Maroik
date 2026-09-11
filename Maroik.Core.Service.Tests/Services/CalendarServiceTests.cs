@@ -171,7 +171,7 @@ public class CalendarServiceTests
         }, TestContext.Current.CancellationToken);
 
         Assert.False(result.Success);
-        Assert.Equal("Calendar.Unexpected", result.ErrorKey);
+        Assert.Equal("Calendar.Unexpected", result.ErrorCode);
         _unitOfWork.Verify(u => u.RollbackAsync(It.IsAny<CancellationToken>()), Times.Once);
     }
 

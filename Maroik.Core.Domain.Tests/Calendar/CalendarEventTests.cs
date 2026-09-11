@@ -99,6 +99,22 @@ public class CalendarEventTests
         Assert.Equal("CalendarEvent.InvalidTimeZone", result.FirstError.Code);
     }
 
+    /// <summary>
+    /// The rejection is built via <c>LocalizableError</c>: its Metadata carries the composite-format
+    /// resource template and the raw offending zone separately, so <c>ServiceResult.FromError</c> can
+    /// hand the UI something resx-localizable instead of the already-baked, value-embedding sentence
+    /// in <see cref="ErrorOr.Error.Description"/>.
+    /// </summary>
+    [Fact]
+    public void Create_ReturnsError_WithLocalizableMetadata_WhenTimeZoneIdInvalid()
+    {
+        var result = CalendarEvent.Create(10, "Title", null, false, Start, End, "Not/AZone", "UTC", null, null);
+
+        Assert.Equal("'Not/AZone' is not a recognised time-zone ID.", result.FirstError.Description);
+        Assert.Equal("'{0}' is not a recognised time-zone ID.", result.FirstError.Metadata!["ResourceKey"]);
+        Assert.Equal(["Not/AZone"], (object[])result.FirstError.Metadata["ResourceArgs"]);
+    }
+
     // -- Update ---------------------------------------------------------------
 
     /// <summary>Update succeeds, when valid.</summary>

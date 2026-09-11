@@ -333,6 +333,9 @@
   <data name="Updated" xml:space="preserve">
     <value>Updated</value>
   </data>
+  <data name="Amount cannot be negative." xml:space="preserve">
+    <value>Amount cannot be negative.</value>
+  </data>
   <data name="Asset category (item) cannot be empty." xml:space="preserve">
     <value>Asset category (item) cannot be empty.</value>
   </data>
@@ -348,6 +351,18 @@
   <data name="Cannot withdraw a different currency from this asset." xml:space="preserve">
     <value>Cannot withdraw a different currency from this asset.</value>
   </data>
+  <data name="Content cannot be empty." xml:space="preserve">
+    <value>Content cannot be empty.</value>
+  </data>
+  <data name="Content must be 255 characters or fewer." xml:space="preserve">
+    <value>Content must be 255 characters or fewer.</value>
+  </data>
+  <data name="Currency code cannot be empty." xml:space="preserve">
+    <value>Currency code cannot be empty.</value>
+  </data>
+  <data name="Currency code must be 45 characters or fewer." xml:space="preserve">
+    <value>Currency code must be 45 characters or fewer.</value>
+  </data>
   <data name="Deposit asset product name cannot be empty." xml:space="preserve">
     <value>Deposit asset product name cannot be empty.</value>
   </data>
@@ -357,11 +372,17 @@
   <data name="Deposit month must be between 1 and 12." xml:space="preserve">
     <value>Deposit month must be between 1 and 12.</value>
   </data>
+  <data name="Invalid sub-class for {0}." xml:space="preserve">
+    <value>Invalid sub-class for {0}.</value>
+  </data>
   <data name="Main expense category cannot be empty." xml:space="preserve">
     <value>Main expense category cannot be empty.</value>
   </data>
   <data name="Main income category cannot be empty." xml:space="preserve">
     <value>Main income category cannot be empty.</value>
+  </data>
+  <data name="Note must be 255 characters or fewer." xml:space="preserve">
+    <value>Note must be 255 characters or fewer.</value>
   </data>
   <data name="Payment method (asset name) cannot be empty." xml:space="preserve">
     <value>Payment method (asset name) cannot be empty.</value>

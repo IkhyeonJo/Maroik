@@ -1,4 +1,5 @@
 using ErrorOr;
+using Maroik.Core.Domain.Localization;
 using Maroik.Core.Domain.Primitives;
 
 namespace Maroik.Core.Domain.ValueObjects;
@@ -36,7 +37,7 @@ public sealed class TimeZoneId : ValueObject
         }
         catch (Exception ex) when (ex is TimeZoneNotFoundException or InvalidTimeZoneException)
         {
-            return Error.Validation("TimeZoneId.Invalid", $"'{value}' is not a recognised time-zone ID.");
+            return LocalizableError.Validation("TimeZoneId.Invalid", "'{0}' is not a recognised time-zone ID.", value);
         }
 
         return new TimeZoneId(value);

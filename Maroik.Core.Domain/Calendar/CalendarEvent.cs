@@ -1,4 +1,5 @@
 using ErrorOr;
+using Maroik.Core.Domain.Localization;
 using Maroik.Core.Domain.Primitives;
 using Maroik.Core.Domain.ValueObjects;
 
@@ -173,7 +174,7 @@ public sealed class CalendarEvent : AggregateRoot<long>
         foreach (string? tz in new[] { startTz, endTz })
         {
             if (!string.IsNullOrWhiteSpace(tz) && TimeZoneId.Create(tz).IsError)
-                return Error.Validation("CalendarEvent.InvalidTimeZone", $"'{tz}' is not a recognised time-zone ID.");
+                return LocalizableError.Validation("CalendarEvent.InvalidTimeZone", "'{0}' is not a recognised time-zone ID.", tz);
         }
 
         return Result.Success;

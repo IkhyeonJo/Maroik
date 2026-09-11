@@ -52,9 +52,10 @@ public class AttachmentContentService : IAttachmentContentService
             // Stable, value-independent key (same one ManagementController/ForumController/
             // CalendarController already use for the avatar/Summernote-image size errors) so the
             // resx lookup still matches when MaxAttachedFileSizeBytes is configured away from
-            // 10MB. Callers that display this to the user must pass maxBytes/(1024*1024) as the
-            // localizer's format argument instead of reading a pre-baked number out of the key.
-            return ServiceResult.Validation("Attachment.TooLarge", "File Size must be smaller than {0}MB.");
+            // 10MB. The MB figure travels with the result via ErrorArgs, so every caller can just
+            // do `_localizer[result.ErrorKey, result.ErrorArgs]` instead of separately recomputing
+            // maxBytes/(1024*1024) at the call site.
+            return ServiceResult.Validation("Attachment.TooLarge", "File Size must be smaller than {0}MB.", maxBytes / (1024 * 1024));
         return null;
     }
 

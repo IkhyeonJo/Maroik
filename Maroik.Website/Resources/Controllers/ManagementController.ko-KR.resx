@@ -309,6 +309,12 @@
   <data name="Invalid image file" xml:space="preserve">
     <value>유효하지 않은 이미지 파일입니다</value>
   </data>
+  <data name="'{0}' is not a recognised time-zone ID." xml:space="preserve">
+    <value>'{0}'은(는) 인식할 수 없는 시간대 ID입니다.</value>
+  </data>
+  <data name="'{0}' is not a valid email address." xml:space="preserve">
+    <value>'{0}'은(는) 올바른 이메일 주소가 아닙니다.</value>
+  </data>
   <data name="Agreed Service Terms was not checked. Please try sign up again and login again." xml:space="preserve">
     <value>약관에 동의하지 않으셨습니다. 회원가입을 다시 진행한 후 로그인해 주십시오.</value>
   </data>

@@ -36,6 +36,22 @@ public class ExpenditureClassPolicyTests
         Assert.Equal("ExpenditureClass.Invalid", result.FirstError.Code);
     }
 
+    /// <summary>
+    /// A recognized main class with an unrecognized sub-class is built via <c>LocalizableError</c>:
+    /// its Metadata carries the composite-format resource template and the raw main-class name
+    /// separately, so <c>ServiceResult.FromError</c> can hand the UI something resx-localizable
+    /// instead of the already-baked, value-embedding sentence in <see cref="ErrorOr.Error.Description"/>.
+    /// </summary>
+    [Fact]
+    public void Validate_ReturnsError_WithLocalizableMetadata_WhenSubClassInvalid()
+    {
+        var result = ExpenditureClassPolicy.Validate("RegularSavings", "Unknown");
+
+        Assert.Equal("Invalid sub-class for RegularSavings.", result.FirstError.Description);
+        Assert.Equal("Invalid sub-class for {0}.", result.FirstError.Metadata!["ResourceKey"]);
+        Assert.Equal(["RegularSavings"], (object[])result.FirstError.Metadata["ResourceArgs"]);
+    }
+
     // -- NonConsumerSpending ---------------------------------------------------
 
     /// <summary>Validate returns true for non consumer spending with deposit asset.</summary>

@@ -168,7 +168,7 @@ public class AccountController : Controller
 
             if (!result.Success)
             {
-                TempData["Error"] = _localizer[result.ErrorKey].Value;
+                TempData["Error"] = _localizer[result.ErrorKey, result.ErrorArgs].Value;
                 ViewBag.ResendEmail = result.ShowResendEmail;
                 return View();
             }
@@ -189,7 +189,7 @@ public class AccountController : Controller
 
             if (!result.Success)
             {
-                TempData["Error"] = _localizer[result.ErrorKey].Value;
+                TempData["Error"] = _localizer[result.ErrorKey, result.ErrorArgs].Value;
                 ViewBag.ResendEmail = result.ShowResendEmail;
                 return View();
             }
@@ -280,7 +280,7 @@ public class AccountController : Controller
                 ViewBag.FailToResetPassword = true;
                 return View();
             }
-            TempData["Error"] = _localizer[result.ErrorKey].Value;
+            TempData["Error"] = _localizer[result.ErrorKey, result.ErrorArgs].Value;
             ViewBag.FailToResetPassword = true;
             return View();
         }

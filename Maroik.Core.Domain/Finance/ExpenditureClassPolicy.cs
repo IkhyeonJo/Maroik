@@ -1,4 +1,5 @@
 using ErrorOr;
+using Maroik.Core.Domain.Localization;
 
 namespace Maroik.Core.Domain.Finance;
 
@@ -53,7 +54,7 @@ public static class ExpenditureClassPolicy
             return Error.Validation("ExpenditureClass.Invalid", "Unknown expenditure main class.");
 
         if (subClass is null || !subClasses.Contains(subClass))
-            return Error.Validation("ExpenditureClass.Invalid", $"Invalid sub-class for {mainClass}.");
+            return LocalizableError.Validation("ExpenditureClass.Invalid", "Invalid sub-class for {0}.", mainClass);
 
         return DepositAssetSubClasses.Contains(subClass);
     }

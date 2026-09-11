@@ -198,6 +198,18 @@
   <data name="Your Account is Locked, Please reset your password by clicking Forgot password Button" xml:space="preserve">
     <value>Your Account is Locked, Please reset your password by clicking Forgot password Button</value>
   </data>
+  <data name="'{0}' is a Nickname that already exists. Please enter another Nickname." xml:space="preserve">
+    <value>'{0}' is a Nickname that already exists. Please enter another Nickname.</value>
+  </data>
+  <data name="'{0}' is an Email that already exists." xml:space="preserve">
+    <value>'{0}' is an Email that already exists.</value>
+  </data>
+  <data name="'{0}' is not a recognised time-zone ID." xml:space="preserve">
+    <value>'{0}' is not a recognised time-zone ID.</value>
+  </data>
+  <data name="'{0}' is not a valid email address." xml:space="preserve">
+    <value>'{0}' is not a valid email address.</value>
+  </data>
   <data name="Email address is already confirmed." xml:space="preserve">
     <value>Email address is already confirmed.</value>
   </data>

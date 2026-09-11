@@ -224,7 +224,7 @@ public class ManagementController : Controller
 
             return result.Success
                 ? Json(new { result = true, message = _localizer["Password change successfully done."].Value })
-                : Json(new { result = false, error = _localizer[result.ErrorKey].Value });
+                : Json(new { result = false, error = _localizer[result.ErrorKey, result.ErrorArgs].Value });
         }
         catch (Exception ex)
         {
@@ -291,7 +291,7 @@ public class ManagementController : Controller
 
             return createResult.Success
                 ? Json(new { result = true, message = _localizer["Account create successfully done."].Value })
-                : Json(new { result = false, error = _localizer[createResult.ErrorKey].Value });
+                : Json(new { result = false, error = _localizer[createResult.ErrorKey, createResult.ErrorArgs].Value });
 
             #endregion
 
@@ -401,7 +401,7 @@ public class ManagementController : Controller
 
             return updateResult.Success
                 ? Json(new { result = true, message = _localizer["Successfully updated the account"].Value })
-                : Json(new { result = false, error = _localizer[updateResult.ErrorKey].Value });
+                : Json(new { result = false, error = _localizer[updateResult.ErrorKey, updateResult.ErrorArgs].Value });
         }
         catch (Exception ex)
         {
@@ -425,7 +425,7 @@ public class ManagementController : Controller
             ServiceResult deleteResult = await _managementAccountService.DeleteAccountAsync(accountInputViewModel.Email!, HttpContext.RequestAborted);
             return deleteResult.Success
                 ? Json(new { result = true, message = _localizer["Successfully deleted the account"].Value })
-                : Json(new { result = false, error = _localizer[deleteResult.ErrorKey].Value });
+                : Json(new { result = false, error = _localizer[deleteResult.ErrorKey, deleteResult.ErrorArgs].Value });
         }
         catch (Exception ex)
         {
@@ -1333,7 +1333,7 @@ public class ManagementController : Controller
 
             return result.Success
                 ? Json(new { result = true, message = _localizer["The board has been successfully deleted."].Value })
-                : Json(new { result = false, error = _localizer[result.ErrorKey].Value });
+                : Json(new { result = false, error = _localizer[result.ErrorKey, result.ErrorArgs].Value });
         }
         catch (Exception ex)
         {
@@ -1366,7 +1366,7 @@ public class ManagementController : Controller
 
             return result.Success
                 ? Json(new { result = true })
-                : Json(new { result = false, error = _localizer[result.ErrorKey].Value });
+                : Json(new { result = false, error = _localizer[result.ErrorKey, result.ErrorArgs].Value });
         }
         catch (Exception ex)
         {

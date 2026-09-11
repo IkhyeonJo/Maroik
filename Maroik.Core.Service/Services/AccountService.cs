@@ -174,7 +174,7 @@ public class AccountService : IAccountService
                 newAccount.AgreedServiceTerms);
 
             if (createResult.IsError)
-                return RegisterResult.Fail(createResult.FirstError.Description);
+                return RegisterResult.FromError(createResult.FirstError);
 
             var account = createResult.Value;
             account.SetMessage(EnumHelper.GetDescription(AccountMessage.UserCreatedVerifyEmail));
@@ -194,8 +194,8 @@ public class AccountService : IAccountService
                     // instead of always blaming the nickname.
                     bool isNicknameConflict = e.InnerException?.Message.Contains("Account_Nickname_unique", StringComparison.Ordinal) ?? false;
                     return isNicknameConflict
-                        ? RegisterResult.Fail($"'{newAccount.Nickname}' is a Nickname that already exists. Please enter another Nickname.")
-                        : RegisterResult.Fail($"'{newAccount.Email}' is an Email that already exists.");
+                        ? RegisterResult.Fail("'{0}' is a Nickname that already exists. Please enter another Nickname.", errorArgs: [newAccount.Nickname ?? ""])
+                        : RegisterResult.Fail("'{0}' is an Email that already exists.", errorArgs: [newAccount.Email ?? ""]);
                 }
                 _logger.LogError(e, "Failed to create account for {Email}", newAccount.Email);
                 return RegisterResult.Fail("Error occurred while processing about account registration");

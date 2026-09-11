@@ -189,6 +189,15 @@
   <data name="The calendar shared has been successfully updated." xml:space="preserve">
     <value>The calendar shared has been successfully updated.</value>
   </data>
+  <data name="'{0}' is not a recognised time-zone ID." xml:space="preserve">
+    <value>'{0}' is not a recognised time-zone ID.</value>
+  </data>
+  <data name="'{0}' is not a valid email address." xml:space="preserve">
+    <value>'{0}' is not a valid email address.</value>
+  </data>
+  <data name="'{0}' is not a valid HTML hex color code (e.g. #FF5733)." xml:space="preserve">
+    <value>'{0}' is not a valid HTML hex color code (e.g. #FF5733).</value>
+  </data>
   <data name="Calendar ID must be a positive integer." xml:space="preserve">
     <value>Calendar ID must be a positive integer.</value>
   </data>

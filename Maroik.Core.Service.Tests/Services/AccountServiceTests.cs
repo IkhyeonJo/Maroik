@@ -364,7 +364,8 @@ public class AccountServiceTests
         RegisterResult result = await sut.RegisterAsync(request, _emailTemplate, TestContext.Current.CancellationToken);
 
         Assert.False(result.Success);
-        Assert.Contains("TakenNick", result.ErrorKey);
+        Assert.Contains("Nickname", result.ErrorKey);
+        Assert.Contains("TakenNick", result.ErrorArgs);
     }
 
     /// <summary>
@@ -394,7 +395,7 @@ public class AccountServiceTests
         RegisterResult result = await sut.RegisterAsync(request, _emailTemplate, TestContext.Current.CancellationToken);
 
         Assert.False(result.Success);
-        Assert.Contains("raced@example.com", result.ErrorKey);
+        Assert.Contains("raced@example.com", result.ErrorArgs);
         Assert.DoesNotContain("Nickname", result.ErrorKey);
     }
 

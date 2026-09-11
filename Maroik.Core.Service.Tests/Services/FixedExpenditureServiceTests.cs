@@ -115,6 +115,25 @@ public class FixedExpenditureServiceTests
         Assert.False(result.Success);
     }
 
+    /// <summary>
+    /// The out-of-range message is a composite-format template with the computed max day and the
+    /// requested month as separate <see cref="ServiceResult.ErrorArgs"/> -- not baked into
+    /// <see cref="ServiceResult.ErrorKey"/> -- so the UI can localize it via resx.
+    /// </summary>
+    [Fact]
+    public async Task CreateAsync_ReturnsLocalizableErrorArgs_WhenDepositDayIsInvalid()
+    {
+        var sut = CreateSut();
+        var request = ConsumerRequest();
+        request.DepositMonth = 1;
+        request.DepositDay = 32;
+
+        ServiceResult result = await sut.CreateAsync("user@example.com", request, TestContext.Current.CancellationToken);
+
+        Assert.Equal("Deposit day must be between 1 and {0} for month {1}.", result.ErrorKey);
+        Assert.Equal([31, (short)1], result.ErrorArgs);
+    }
+
     /// <summary>Verifies that <c>CreateAsync</c> returns fail when payment method asset not found.</summary>
     [Fact]
     public async Task CreateAsync_ReturnsFail_WhenPaymentMethodAssetNotFound()

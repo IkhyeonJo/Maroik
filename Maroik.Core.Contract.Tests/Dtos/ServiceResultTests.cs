@@ -1,5 +1,6 @@
 using ErrorOr;
 using Maroik.Core.Contract.Dtos;
+using Maroik.Core.Domain.Localization;
 
 namespace Maroik.Core.Contract.Tests.Dtos;
 
@@ -77,5 +78,49 @@ public class ServiceResultTests
         Assert.Equal(expected, result.ErrorType);
         Assert.Equal("E.Code", result.ErrorCode);
         Assert.Equal("desc", result.ErrorKey);
+        Assert.Empty(result.ErrorArgs);
+    }
+
+    /// <summary>The category factories accept optional composite-format args and carry them through unchanged.</summary>
+    [Fact]
+    public void Validation_WithArgs_PopulatesErrorArgs()
+    {
+        var result = ServiceResult.Validation("X.TooLarge", "File Size must be smaller than {0}MB.", 10);
+
+        Assert.False(result.Success);
+        Assert.Equal("File Size must be smaller than {0}MB.", result.ErrorKey);
+        Assert.Equal([10], result.ErrorArgs);
+    }
+
+    /// <summary>
+    /// FromError on a plain domain <see cref="Error"/> (no <see cref="LocalizableError"/> metadata) falls
+    /// back to the already-formatted <see cref="Error.Description"/> with no args -- the pre-existing
+    /// behaviour every other caller of FromError still relies on.
+    /// </summary>
+    [Fact]
+    public void FromError_WithoutLocalizationMetadata_HasEmptyErrorArgs()
+    {
+        var result = ServiceResult.FromError(Error.Validation("Plain.Code", "already-formatted message"));
+
+        Assert.Equal("already-formatted message", result.ErrorKey);
+        Assert.Empty(result.ErrorArgs);
+    }
+
+    /// <summary>
+    /// FromError on an <see cref="Error"/> built via <see cref="LocalizableError.Validation"/> surfaces
+    /// the composite-format resource template in <see cref="ServiceResult.ErrorKey"/> and the original
+    /// (unformatted) values in <see cref="ServiceResult.ErrorArgs"/> -- not the already-baked sentence --
+    /// so the caller can hand both straight to an <c>IHtmlLocalizer</c> indexer.
+    /// </summary>
+    [Fact]
+    public void FromError_WithLocalizationMetadata_SurfacesTemplateAndArgs()
+    {
+        Error error = LocalizableError.Validation("TimeZoneId.Invalid", "'{0}' is not a recognised time-zone ID.", "Mars/OlympusMons");
+
+        var result = ServiceResult.FromError(error);
+
+        Assert.Equal("TimeZoneId.Invalid", result.ErrorCode);
+        Assert.Equal("'{0}' is not a recognised time-zone ID.", result.ErrorKey);
+        Assert.Equal(["Mars/OlympusMons"], result.ErrorArgs);
     }
 }

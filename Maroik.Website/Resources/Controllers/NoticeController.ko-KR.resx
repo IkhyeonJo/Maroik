@@ -297,6 +297,9 @@
   <data name="Updated" xml:space="preserve">
     <value>업데이트일</value>
   </data>
+  <data name="Amount cannot be negative." xml:space="preserve">
+    <value>금액은 음수일 수 없습니다.</value>
+  </data>
   <data name="Asset category (item) cannot be empty." xml:space="preserve">
     <value>자산 항목(분류)은 비워둘 수 없습니다.</value>
   </data>
@@ -312,11 +315,23 @@
   <data name="Cannot withdraw a different currency from this asset." xml:space="preserve">
     <value>이 자산에서는 다른 화폐단위로 출금할 수 없습니다.</value>
   </data>
+  <data name="Content must be 255 characters or fewer." xml:space="preserve">
+    <value>내용은 255자 이하여야 합니다.</value>
+  </data>
+  <data name="Currency code cannot be empty." xml:space="preserve">
+    <value>화폐 코드는 비워둘 수 없습니다.</value>
+  </data>
+  <data name="Currency code must be 45 characters or fewer." xml:space="preserve">
+    <value>화폐 코드는 45자 이하여야 합니다.</value>
+  </data>
   <data name="Deposit asset product name cannot be empty." xml:space="preserve">
     <value>입금 자산 상품명은 비워둘 수 없습니다.</value>
   </data>
   <data name="Deposit day is not valid for the selected month." xml:space="preserve">
     <value>입금일이 선택한 월에 유효하지 않습니다.</value>
+  </data>
+  <data name="Deposit day must be between 1 and {0} for month {1}." xml:space="preserve">
+    <value>입금일은 {1}월 기준 1에서 {0} 사이여야 합니다.</value>
   </data>
   <data name="Deposit month must be between 1 and 12." xml:space="preserve">
     <value>입금월은 1에서 12 사이여야 합니다.</value>
@@ -324,11 +339,17 @@
   <data name="Fail to find the asset by given product name" xml:space="preserve">
     <value>주어진 상품명으로 자산을 찾는데 실패하였습니다.</value>
   </data>
+  <data name="Invalid sub-class for {0}." xml:space="preserve">
+    <value>{0}에 대한 소분류가 올바르지 않습니다.</value>
+  </data>
   <data name="Main expense category cannot be empty." xml:space="preserve">
     <value>지출 대분류는 비워둘 수 없습니다.</value>
   </data>
   <data name="Main income category cannot be empty." xml:space="preserve">
     <value>수입 대분류는 비워둘 수 없습니다.</value>
+  </data>
+  <data name="Note must be 255 characters or fewer." xml:space="preserve">
+    <value>주석은 255자 이하여야 합니다.</value>
   </data>
   <data name="Payment method (asset name) cannot be empty." xml:space="preserve">
     <value>결제수단(자산명)은 비워둘 수 없습니다.</value>

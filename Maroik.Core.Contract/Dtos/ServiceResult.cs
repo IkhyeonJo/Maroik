@@ -37,8 +37,19 @@ public class ServiceResult
     /// <summary>True when the operation completed successfully.</summary>
     public bool Success { get; private init; }
 
-    /// <summary>Localization key / message that describes the error (empty string on success).</summary>
+    /// <summary>
+    /// Localization key / message that describes the error (empty string on success). When
+    /// <see cref="ErrorArgs"/> is non-empty, this is a composite-format template (e.g.
+    /// <c>"'{0}' is not a recognised time-zone ID."</c>) rather than an already-formatted sentence.
+    /// </summary>
     public string ErrorKey { get; private init; } = "";
+
+    /// <summary>
+    /// Composite-format arguments for <see cref="ErrorKey"/> (empty when the key needs no
+    /// formatting). Pass both straight to an <c>IHtmlLocalizer</c> indexer:
+    /// <c>_localizer[result.ErrorKey, result.ErrorArgs]</c>.
+    /// </summary>
+    public object[] ErrorArgs { get; private init; } = [];
 
     /// <summary>Machine-readable error code (e.g. <c>"Income.AssetDeleted"</c>); empty when not set.</summary>
     public string ErrorCode { get; private init; } = "";
@@ -63,34 +74,48 @@ public class ServiceResult
     public static ServiceResult Fail(string errorKey, ServiceErrorType type) =>
         new() { Success = false, ErrorKey = errorKey, ErrorType = type };
 
-    /// <summary>Creates a <see cref="ServiceErrorType.Validation"/> failure with a machine code and message.</summary>
-    public static ServiceResult Validation(string code, string message) =>
-        new() { Success = false, ErrorCode = code, ErrorKey = message, ErrorType = ServiceErrorType.Validation };
+    /// <summary>
+    /// Creates a <see cref="ServiceErrorType.Validation"/> failure with a machine code and message.
+    /// <paramref name="message"/> may be a composite-format template (e.g. <c>"'{0}' is not valid."</c>)
+    /// when <paramref name="args"/> is supplied.
+    /// </summary>
+    public static ServiceResult Validation(string code, string message, params object[] args) =>
+        new() { Success = false, ErrorCode = code, ErrorKey = message, ErrorArgs = args, ErrorType = ServiceErrorType.Validation };
 
     /// <summary>Creates a <see cref="ServiceErrorType.NotFound"/> failure.</summary>
-    public static ServiceResult NotFound(string code, string message) =>
-        new() { Success = false, ErrorCode = code, ErrorKey = message, ErrorType = ServiceErrorType.NotFound };
+    public static ServiceResult NotFound(string code, string message, params object[] args) =>
+        new() { Success = false, ErrorCode = code, ErrorKey = message, ErrorArgs = args, ErrorType = ServiceErrorType.NotFound };
 
     /// <summary>Creates a <see cref="ServiceErrorType.Conflict"/> failure.</summary>
-    public static ServiceResult Conflict(string code, string message) =>
-        new() { Success = false, ErrorCode = code, ErrorKey = message, ErrorType = ServiceErrorType.Conflict };
+    public static ServiceResult Conflict(string code, string message, params object[] args) =>
+        new() { Success = false, ErrorCode = code, ErrorKey = message, ErrorArgs = args, ErrorType = ServiceErrorType.Conflict };
 
     /// <summary>Creates a <see cref="ServiceErrorType.Failure"/> (unexpected/infrastructure) failure.</summary>
-    public static ServiceResult Failure(string code, string message) =>
-        new() { Success = false, ErrorCode = code, ErrorKey = message, ErrorType = ServiceErrorType.Failure };
+    public static ServiceResult Failure(string code, string message, params object[] args) =>
+        new() { Success = false, ErrorCode = code, ErrorKey = message, ErrorArgs = args, ErrorType = ServiceErrorType.Failure };
 
-    /// <summary>Maps a domain <see cref="Error"/> to a <see cref="ServiceResult"/>, preserving its category.</summary>
-    public static ServiceResult FromError(Error error) => new()
+    /// <summary>
+    /// Maps a domain <see cref="Error"/> to a <see cref="ServiceResult"/>, preserving its category.
+    /// When <paramref name="error"/> was built via <c>LocalizableError</c>, <see cref="ErrorKey"/> /
+    /// <see cref="ErrorArgs"/> carry its resource template and arguments instead of the already-
+    /// formatted <see cref="Error.Description"/>.
+    /// </summary>
+    public static ServiceResult FromError(Error error)
     {
-        Success = false,
-        ErrorCode = error.Code,
-        ErrorKey = error.Description,
-        ErrorType = error.Type switch
+        (string key, object[] args) = error.ToLocalizationKeyAndArgs();
+        return new ServiceResult
         {
-            ErrorOr.ErrorType.Validation => ServiceErrorType.Validation,
-            ErrorOr.ErrorType.NotFound => ServiceErrorType.NotFound,
-            ErrorOr.ErrorType.Conflict => ServiceErrorType.Conflict,
-            _ => ServiceErrorType.Failure,
-        },
-    };
+            Success = false,
+            ErrorCode = error.Code,
+            ErrorKey = key,
+            ErrorArgs = args,
+            ErrorType = error.Type switch
+            {
+                ErrorOr.ErrorType.Validation => ServiceErrorType.Validation,
+                ErrorOr.ErrorType.NotFound => ServiceErrorType.NotFound,
+                ErrorOr.ErrorType.Conflict => ServiceErrorType.Conflict,
+                _ => ServiceErrorType.Failure,
+            },
+        };
+    }
 }
