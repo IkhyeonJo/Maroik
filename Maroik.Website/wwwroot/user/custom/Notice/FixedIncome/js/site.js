@@ -37,7 +37,7 @@
     const $btnDeleteFixedIncome = $('#btnDeleteFixedIncome');
     const incomeSubClassMap = JSON.parse($('#incomeSubClassMap').val() || '{}');
     const maxDepositDayByMonth = JSON.parse($('#maxDepositDayByMonth').val() || '{}');
-    const noMaturityIso = $('#noMaturityDate').val() || '9999-12-31';
+    const noMaturityIso = $('#noMaturityDate').val();
     const [nmYear, nmMonth, nmDay] = noMaturityIso.split('-').map(Number);
     const NO_MATURITY_DATE = new Date(nmYear, nmMonth - 1, nmDay);
     function ApplyAllowedOptions($select, allowedValues, valueToSelect) {
@@ -53,7 +53,7 @@
         }
     }
     function DepositDayValues(monthValue) {
-        const maxDay = parseInt(maxDepositDayByMonth[String(monthValue)], 10) || 31;
+        const maxDay = parseInt(maxDepositDayByMonth[String(monthValue)], 10);
         const values = [];
         for (let day = 1; day <= maxDay; day++) {
             values.push(String(day));

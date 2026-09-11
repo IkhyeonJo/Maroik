@@ -556,12 +556,10 @@
             data: null as any,
             contentType: 'application/json; charset=utf-8',
             success: function (data) {
-                if (data.result) {
-                    $labelCreateIncomeAmount.text(data.label);
-                }
-                else {
-                    $labelCreateIncomeAmount.text(data.label);
-                }
+                $labelCreateIncomeAmount.text(data.label);
+            },
+            error: function () {
+                toastr.error('Failed to load the amount label.');
             }
         });
     }
@@ -576,12 +574,10 @@
             data: null as any,
             contentType: 'application/json; charset=utf-8',
             success: function (data) {
-                if (data.result) {
-                    $labelEditIncomeAmount.text(data.label);
-                }
-                else {
-                    $labelEditIncomeAmount.text(data.label);
-                }
+                $labelEditIncomeAmount.text(data.label);
+            },
+            error: function () {
+                toastr.error('Failed to load the amount label.');
             }
         });
     }

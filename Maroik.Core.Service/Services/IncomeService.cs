@@ -52,26 +52,26 @@ public class IncomeService : IIncomeService
         {
             var classResult = IncomeClassPolicy.Validate(request.MainClass, request.SubClass);
             if (classResult.IsError)
-                return await FailAsync(classResult.FirstError, ct);
+                return await _unitOfWork.FailAsync(classResult.FirstError, ct);
 
             Asset? depositAsset = await _assetBalance.GetAssetAsync(accountEmail, request.DepositMyAssetProductName ?? "", ct);
             if (depositAsset == null)
-                return await FailAsync(ServiceResult.NotFound("Income.AssetNotFound", "The selected asset could not be found."), ct);
+                return await _unitOfWork.FailAsync(ServiceResult.NotFound("Income.AssetNotFound", "The selected asset could not be found."), ct);
             if (depositAsset.Deleted)
-                return await FailAsync(DeletedAssetResult, ct);
+                return await _unitOfWork.FailAsync(DeletedAssetResult, ct);
 
             string currency = depositAsset.Balance.Currency;
             var incomeResult = Income.Record(accountEmail, request.MainClass, request.SubClass,
                 request.Content, Math.Abs(request.Amount), currency, request.DepositMyAssetProductName, request.Note, request.Created);
             if (incomeResult.IsError)
-                return await FailAsync(incomeResult.FirstError, ct);
+                return await _unitOfWork.FailAsync(incomeResult.FirstError, ct);
 
             var income = incomeResult.Value;
             await _incomeRepository.CreateAsync(income, ct);
 
             var depositResult = depositAsset.Deposit(income.Amount);
             if (depositResult.IsError)
-                return await FailAsync(depositResult.FirstError, ct);
+                return await _unitOfWork.FailAsync(depositResult.FirstError, ct);
             await _assetBalance.SaveAsync(depositAsset, ct);
 
             await _unitOfWork.CommitAsync(ct);
@@ -93,14 +93,14 @@ public class IncomeService : IIncomeService
         {
             var classResult = IncomeClassPolicy.Validate(request.MainClass, request.SubClass);
             if (classResult.IsError)
-                return await FailAsync(classResult.FirstError, ct);
+                return await _unitOfWork.FailAsync(classResult.FirstError, ct);
 
             // FOR UPDATE: lock the record for the rest of the transaction so a concurrent
             // UpdateAsync/DeleteAsync of the same income cannot read a stale amount here and
             // drift the linked asset balance.
             Income? previous = await _incomeRepository.FindByEmailAndIdForUpdateAsync(accountEmail, request.Id, ct);
             if (previous == null)
-                return await FailAsync(ServiceResult.NotFound("Income.NotFound", "The income record could not be found."), ct);
+                return await _unitOfWork.FailAsync(ServiceResult.NotFound("Income.NotFound", "The income record could not be found."), ct);
 
             // Lock the previous and new deposit assets in a single ordinal-ordered batch so
             // concurrent transactions on the same asset pair (here or in ExpenditureService)
@@ -110,15 +110,15 @@ public class IncomeService : IIncomeService
 
             Asset? prevAsset = !string.IsNullOrEmpty(previous.DepositMyAssetProductName) && touchedAssets.TryGetValue(previous.DepositMyAssetProductName, out var pa) ? pa : null;
             if (prevAsset?.Deleted == true)
-                return await FailAsync(DeletedAssetResult, ct);
+                return await _unitOfWork.FailAsync(DeletedAssetResult, ct);
 
             Asset? newAsset = !string.IsNullOrEmpty(request.DepositMyAssetProductName) && touchedAssets.TryGetValue(request.DepositMyAssetProductName, out var na) ? na : null;
             if (!string.IsNullOrEmpty(request.DepositMyAssetProductName) && newAsset == null)
-                return await FailAsync(ServiceResult.NotFound("Income.AssetNotFound", "The selected asset could not be found."), ct);
+                return await _unitOfWork.FailAsync(ServiceResult.NotFound("Income.AssetNotFound", "The selected asset could not be found."), ct);
             // A record must not be retargeted onto a since-archived asset, matching Create: a
             // deleted asset's balance must never be touched.
             if (newAsset?.Deleted == true)
-                return await FailAsync(DeletedAssetResult, ct);
+                return await _unitOfWork.FailAsync(DeletedAssetResult, ct);
             string newCurrency = newAsset?.Balance.Currency ?? prevAsset?.Balance.Currency ?? "";
 
             var oldSnapshot = new IncomeSnapshot(previous.DepositMyAssetProductName, previous.Amount.Amount, previous.Amount.Currency);
@@ -126,13 +126,13 @@ public class IncomeService : IIncomeService
             var updateResult = previous.Update(request.MainClass, request.SubClass, request.Content,
                 Math.Abs(request.Amount), newCurrency, request.DepositMyAssetProductName, request.Note, request.Created);
             if (updateResult.IsError)
-                return await FailAsync(updateResult.FirstError, ct);
+                return await _unitOfWork.FailAsync(updateResult.FirstError, ct);
 
             await _incomeRepository.UpdateEntityAsync(previous, ct);
             var adjustResult = await AdjustAssetBalancesAsync(accountEmail, oldSnapshot,
                 new IncomeSnapshot(previous.DepositMyAssetProductName, previous.Amount.Amount, previous.Amount.Currency), ct);
             if (adjustResult.IsError)
-                return await FailAsync(adjustResult.FirstError, ct);
+                return await _unitOfWork.FailAsync(adjustResult.FirstError, ct);
 
             await _unitOfWork.CommitAsync(ct);
             return ServiceResult.Ok();
@@ -155,7 +155,7 @@ public class IncomeService : IIncomeService
             // same income cannot reverse its asset impact twice or from a stale amount.
             Income? income = await _incomeRepository.FindByEmailAndIdForUpdateAsync(accountEmail, id, ct);
             if (income == null)
-                return await FailAsync(ServiceResult.NotFound("Income.NotFound", "The income record could not be found."), ct);
+                return await _unitOfWork.FailAsync(ServiceResult.NotFound("Income.NotFound", "The income record could not be found."), ct);
 
             // An income referencing a since-archived (soft-deleted) asset must not be deletable,
             // matching Create/Update: a deleted asset's balance must not be touched.
@@ -163,12 +163,12 @@ public class IncomeService : IIncomeService
                 accountEmail, [income.DepositMyAssetProductName], ct);
             if (!string.IsNullOrEmpty(income.DepositMyAssetProductName) &&
                 assetsToCheck.TryGetValue(income.DepositMyAssetProductName, out var assetToCheck) && assetToCheck.Deleted)
-                return await FailAsync(DeletedAssetResult, ct);
+                return await _unitOfWork.FailAsync(DeletedAssetResult, ct);
 
             var adjustResult = await AdjustAssetBalancesAsync(accountEmail,
                 new IncomeSnapshot(income.DepositMyAssetProductName, income.Amount.Amount, income.Amount.Currency), null, ct);
             if (adjustResult.IsError)
-                return await FailAsync(adjustResult.FirstError, ct);
+                return await _unitOfWork.FailAsync(adjustResult.FirstError, ct);
 
             await _incomeRepository.DeleteByIdAsync(income.Id, ct);
 
@@ -188,16 +188,6 @@ public class IncomeService : IIncomeService
 
     private static ServiceResult UnexpectedFailure => ServiceResult.Failure(
         "Income.Unexpected", "The operation could not be completed. Please try again.");
-
-    /// <summary>Rolls back the current transaction and returns <paramref name="result"/>.</summary>
-    private async Task<ServiceResult> FailAsync(ServiceResult result, CancellationToken ct)
-    {
-        await _unitOfWork.RollbackAsync(ct);
-        return result;
-    }
-
-    /// <summary>Rolls back the current transaction and returns a failure mapped from <paramref name="error"/>.</summary>
-    private Task<ServiceResult> FailAsync(Error error, CancellationToken ct) => FailAsync(ServiceResult.FromError(error), ct);
 
     /// <summary>
     /// Reverts <paramref name="toRevert"/>'s asset impact and applies <paramref name="toApply"/>'s asset impact.

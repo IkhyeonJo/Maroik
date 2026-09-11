@@ -186,11 +186,11 @@ public class CalendarService : ICalendarService
             // "Calendar_AccountEmail_Name_unique" constraint (caught below) is what actually
             // closes the race; this check only avoids the round trip in the common case.
             if (calendars.Any(c => c.Name == request.Name))
-                return await FailAsync(ServiceResult.Conflict("Calendar.NameExists", "The calendar already exists."), ct);
+                return await _unitOfWork.FailAsync(ServiceResult.Conflict("Calendar.NameExists", "The calendar already exists."), ct);
 
             var calendarResult = Calendar.Create(accountEmail, request.Name, request.Description, request.TimeZoneIanaId, request.HtmlColorCode);
             if (calendarResult.IsError)
-                return await FailAsync(calendarResult.FirstError, ct);
+                return await _unitOfWork.FailAsync(calendarResult.FirstError, ct);
 
             var calendar = calendarResult.Value;
             await _calendarRepository.CreateAsync(calendar, ct);
@@ -219,11 +219,11 @@ public class CalendarService : ICalendarService
             List<Calendar> calendars = await _calendarRepository.GetByAccountEmailAsync(accountEmail, ct);
             Calendar? previous = calendars.FirstOrDefault(c => c.Id == request.Id);
             if (previous == null)
-                return await FailAsync(ServiceResult.NotFound("Calendar.NotFound", "The calendar could not be found."), ct);
+                return await _unitOfWork.FailAsync(ServiceResult.NotFound("Calendar.NotFound", "The calendar could not be found."), ct);
 
             var updateResult = previous.Update(request.Name, request.Description, request.TimeZoneIanaId, request.HtmlColorCode);
             if (updateResult.IsError)
-                return await FailAsync(updateResult.FirstError, ct);
+                return await _unitOfWork.FailAsync(updateResult.FirstError, ct);
 
             await _calendarRepository.UpdateEntityAsync(previous, ct);
             await _unitOfWork.CommitAsync(ct);
@@ -254,7 +254,7 @@ public class CalendarService : ICalendarService
             List<Calendar> calendars = await _calendarRepository.GetByAccountEmailAsync(accountEmail, ct);
             Calendar? existing = calendars.FirstOrDefault(c => c.Id == request.Id);
             if (existing == null)
-                return await FailAsync(ServiceResult.NotFound("Calendar.NotFound", "The calendar could not be found."), ct);
+                return await _unitOfWork.FailAsync(ServiceResult.NotFound("Calendar.NotFound", "The calendar could not be found."), ct);
 
             await _calendarRepository.DeleteByIdAsync(existing.Id, ct);
             await _unitOfWork.CommitAsync(ct);
@@ -293,7 +293,7 @@ public class CalendarService : ICalendarService
 
             var calendarResult = Calendar.Create(accountEmail, request.Name, request.Description, timeZoneIanaId, request.HtmlColorCode);
             if (calendarResult.IsError)
-                return await FailAsync(calendarResult.FirstError, ct);
+                return await _unitOfWork.FailAsync(calendarResult.FirstError, ct);
 
             var calendar = calendarResult.Value;
             await _calendarRepository.CreateAsync(calendar, ct);
@@ -558,13 +558,13 @@ public class CalendarService : ICalendarService
         {
             List<Calendar> calendars = await _calendarRepository.GetByAccountEmailAsync(email, ct);
             if (calendars.Count == 0)
-                return await FailAsync(ServiceResult.NotFound("Calendar.None", "No calendar exists."), ct);
+                return await _unitOfWork.FailAsync(ServiceResult.NotFound("Calendar.None", "No calendar exists."), ct);
 
             CalendarEvent? evt = await _calendarEventRepository.FindByIdAsync(calendarEventId, ct);
 
             // Ensure the event exists and belongs to one of the requesting user's calendars.
             if (evt == null || calendars.All(c => c.Id != evt.CalendarId))
-                return await FailAsync(ServiceResult.NotFound("CalendarEvent.NotFound", "The calendar event could not be found."), ct);
+                return await _unitOfWork.FailAsync(ServiceResult.NotFound("CalendarEvent.NotFound", "The calendar event could not be found."), ct);
 
             await _calendarEventRepository.DeleteByIdAsync(evt.Id, ct);
             await _unitOfWork.CommitAsync(ct);
@@ -580,16 +580,6 @@ public class CalendarService : ICalendarService
 
     private static ServiceResult UnexpectedFailure => ServiceResult.Failure(
         "Calendar.Unexpected", "The operation could not be completed. Please try again.");
-
-    /// <summary>Rolls back the current transaction and returns <paramref name="result"/>.</summary>
-    private async Task<ServiceResult> FailAsync(ServiceResult result, CancellationToken ct)
-    {
-        await _unitOfWork.RollbackAsync(ct);
-        return result;
-    }
-
-    /// <summary>Rolls back the current transaction and returns a failure mapped from <paramref name="error"/>.</summary>
-    private Task<ServiceResult> FailAsync(ErrorOr.Error error, CancellationToken ct) => FailAsync(ServiceResult.FromError(error), ct);
 
     /// <summary>
     /// Builds the remote storage path for a calendar event attachment.

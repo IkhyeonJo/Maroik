@@ -62,7 +62,7 @@
     const maxDepositDayByMonth = JSON.parse(($('#maxDepositDayByMonth').val() as string) || '{}');
     // Far-future stand-in for "no maturity date", published by the server (FixedSchedulePolicy)
     // as a yyyy-MM-dd string so the client and server never drift on the value.
-    const noMaturityIso = ($('#noMaturityDate').val() as string) || '9999-12-31';
+    const noMaturityIso = $('#noMaturityDate').val() as string;
     const [nmYear, nmMonth, nmDay] = noMaturityIso.split('-').map(Number);
     const NO_MATURITY_DATE = new Date(nmYear, nmMonth - 1, nmDay);
 
@@ -83,7 +83,7 @@
 
     // The valid deposit-day option values ("1".."maxDay") for the given deposit month.
     function DepositDayValues(monthValue: string) {
-        const maxDay = parseInt(maxDepositDayByMonth[String(monthValue)], 10) || 31;
+        const maxDay = parseInt(maxDepositDayByMonth[String(monthValue)], 10);
         const values = [];
         for (let day = 1; day <= maxDay; day++) {
             values.push(String(day));
