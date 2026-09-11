@@ -7,8 +7,8 @@ namespace Maroik.Core.Client.Tests.Clients;
 
 /// <summary>
 /// Unit tests for <see cref="RabbitMqEmailPublisher"/>.
-/// Verifies lazy connection creation, connection reuse while open, reconnection once the
-/// cached connection drops, and the shape of the published AMQP message.
+/// Verifies lazy connection creation, connection and channel reuse while open, reconnection once
+/// the cached connection drops, and the shape of the published AMQP message.
 /// </summary>
 public class RabbitMqEmailPublisherTests
 {
@@ -18,6 +18,7 @@ public class RabbitMqEmailPublisherTests
     private static Mock<IChannel> MakeChannelMock()
     {
         var channel = new Mock<IChannel>();
+        channel.Setup(c => c.IsOpen).Returns(true);
         channel.Setup(c => c.QueueDeclareAsync(
                 It.IsAny<string>(), It.IsAny<bool>(), It.IsAny<bool>(), It.IsAny<bool>(),
                 It.IsAny<IDictionary<string, object?>>(), It.IsAny<bool>(), It.IsAny<bool>(), It.IsAny<CancellationToken>()))
@@ -115,6 +116,32 @@ public class RabbitMqEmailPublisherTests
         await sut.PublishAsync(Message, TestContext.Current.CancellationToken);
 
         _factory.Verify(f => f.CreateConnectionAsync(It.IsAny<CancellationToken>()), Times.Once);
+        channel.Verify(c => c.BasicPublishAsync(
+                It.IsAny<string>(), It.IsAny<string>(), It.IsAny<bool>(), It.IsAny<BasicProperties>(),
+                It.IsAny<ReadOnlyMemory<byte>>(), It.IsAny<CancellationToken>()),
+            Times.Exactly(2));
+    }
+
+    /// <summary>
+    /// Publish async, channel stays open: the channel (and its one-time queue declare) is reused
+    /// across calls rather than a fresh channel being opened and the queue redeclared per publish.
+    /// </summary>
+    [Fact]
+    public async Task PublishAsync_ChannelStaysOpen_ReusesChannelAndDeclaresQueueOnce()
+    {
+        var channel = MakeChannelMock();
+        var connection = MakeConnectionMock(channel, isOpen: true);
+        _factory.Setup(f => f.CreateConnectionAsync(It.IsAny<CancellationToken>())).ReturnsAsync(connection.Object);
+        var sut = CreateSut();
+
+        await sut.PublishAsync(Message, TestContext.Current.CancellationToken);
+        await sut.PublishAsync(Message, TestContext.Current.CancellationToken);
+
+        connection.Verify(c => c.CreateChannelAsync(It.IsAny<CreateChannelOptions>(), It.IsAny<CancellationToken>()), Times.Once);
+        channel.Verify(c => c.QueueDeclareAsync(
+                QueueNames.Email, true, false, false,
+                It.IsAny<IDictionary<string, object?>>(), It.IsAny<bool>(), It.IsAny<bool>(), It.IsAny<CancellationToken>()),
+            Times.Once);
         channel.Verify(c => c.BasicPublishAsync(
                 It.IsAny<string>(), It.IsAny<string>(), It.IsAny<bool>(), It.IsAny<BasicProperties>(),
                 It.IsAny<ReadOnlyMemory<byte>>(), It.IsAny<CancellationToken>()),
