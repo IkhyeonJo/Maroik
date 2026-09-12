@@ -15,30 +15,22 @@ namespace Maroik.Core.Service.Services;
 /// <c>Expenditure</c> / <c>FixedExpenditure</c> — carries an <c>ON UPDATE CASCADE</c> foreign key,
 /// so the database propagates the new name to all of them as part of that same statement.
 /// </summary>
-public class AssetService : IAssetService
+public class AssetService(
+    IAssetRepository assetRepository,
+    IUnitOfWork unitOfWork,
+    ILogger<AssetService> logger) : IAssetService
 {
-    private readonly IAssetRepository _assetRepository;
-    private readonly IUnitOfWork _unitOfWork;
-    private readonly ILogger<AssetService> _logger;
-
-    /// <summary>Initializes a new instance of <see cref="AssetService"/> with the supplied dependencies.</summary>
-    public AssetService(
-        IAssetRepository assetRepository,
-        IUnitOfWork unitOfWork,
-        ILogger<AssetService> logger)
-    {
-        _assetRepository = assetRepository;
-        _unitOfWork = unitOfWork;
-        _logger = logger;
-    }
-
     /// <inheritdoc />
     public async Task<List<AssetResponse>> GetAssetsAsync(string accountEmail, CancellationToken ct = default)
-        => (await _assetRepository.GetByAccountEmailAsync(accountEmail, ct)).Select(AssetMapper.ToResponse).ToList();
+        => [.. (await assetRepository.GetByAccountEmailAsync(accountEmail, ct)).Select(AssetMapper.ToResponse)];
 
     /// <inheritdoc />
     public async Task<List<AssetResponse>> SearchAssetsAsync(string accountEmail, string search, CancellationToken ct = default)
-        => (await _assetRepository.SearchByAccountEmailAsync(accountEmail, search, ct)).Select(AssetMapper.ToResponse).ToList();
+        =>
+        [
+            .. (await assetRepository.SearchByAccountEmailAsync(accountEmail, search, ct)).Select(
+                AssetMapper.ToResponse)
+        ];
 
     /// <inheritdoc />
     public async Task<AssetResponse?> GetAssetAsync(string accountEmail, string productName, CancellationToken ct = default)
@@ -77,7 +69,7 @@ public class AssetService : IAssetService
 
         try
         {
-            await _assetRepository.CreateAsync(asset, ct);
+            await assetRepository.CreateAsync(asset, ct);
         }
         catch (Exception e) when (e.IsPostgresUniqueViolation())
         {
@@ -94,22 +86,22 @@ public class AssetService : IAssetService
     /// <inheritdoc />
     public async Task<ServiceResult> UpdateAsync(string accountEmail, AssetRequest request, string originalProductName, CancellationToken ct = default)
     {
-        await _unitOfWork.BeginAsync(ct);
+        await unitOfWork.BeginAsync(ct);
         try
         {
             if (!AssetItems.IsKnown(request.Item))
             {
-                await _unitOfWork.RollbackAsync(ct);
+                await unitOfWork.RollbackAsync(ct);
                 return ServiceResult.Validation("Asset.ItemInvalid", "Asset category (item) is not a recognised value.");
             }
 
             // Row-locks the asset for the rest of this transaction (held until commit/rollback),
             // so a concurrent Income/Expenditure balance mutation on the same asset can't be lost
             // under this action's absolute-overwrite of Balance.
-            Asset? asset = await _assetRepository.FindByEmailAndProductNameForUpdateAsync(accountEmail, originalProductName, ct);
+            Asset? asset = await assetRepository.FindByEmailAndProductNameForUpdateAsync(accountEmail, originalProductName, ct);
             if (asset == null)
             {
-                await _unitOfWork.RollbackAsync(ct);
+                await unitOfWork.RollbackAsync(ct);
                 return ServiceResult.NotFound("Asset.NotFound", "Fail to find the asset by given product name");
             }
 
@@ -118,14 +110,14 @@ public class AssetService : IAssetService
             var updateResult = asset.Update(request.ProductName ?? originalProductName, request.Item ?? asset.Item, request.Amount, currency, request.Note, request.Deleted);
             if (updateResult.IsError)
             {
-                await _unitOfWork.RollbackAsync(ct);
+                await unitOfWork.RollbackAsync(ct);
                 return ServiceResult.FromError(updateResult.FirstError);
             }
 
-            int updated = await _assetRepository.UpdateAssetWithProductNameAsync(asset, originalProductName, ct);
+            int updated = await assetRepository.UpdateAssetWithProductNameAsync(asset, originalProductName, ct);
             if (updated <= 0)
             {
-                await _unitOfWork.RollbackAsync(ct);
+                await unitOfWork.RollbackAsync(ct);
                 return ServiceResult.Failure("Asset.UpdateFailed", "Input is invalid");
             }
 
@@ -134,7 +126,7 @@ public class AssetService : IAssetService
             // through those tables' ON UPDATE CASCADE foreign keys, as part of the UPDATE above.
             // Nothing to cascade in application code.
 
-            await _unitOfWork.CommitAsync(ct);
+            await unitOfWork.CommitAsync(ct);
             return ServiceResult.Ok();
         }
         catch (Exception ex) when (ex.IsPostgresUniqueViolation())
@@ -142,13 +134,13 @@ public class AssetService : IAssetService
             // Renaming to a product name that already exists for this account hits the same
             // (ProductName, AccountEmail) primary key CreateAsync guards against — report the
             // same friendly message instead of the generic fallback below.
-            await _unitOfWork.RollbackAsync(ct);
+            await unitOfWork.RollbackAsync(ct);
             return ServiceResult.Conflict("Asset.Duplicate", "The asset already exists.");
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Failed to update asset {OriginalProductName} for account {AccountEmail}", originalProductName, accountEmail);
-            await _unitOfWork.RollbackAsync(ct);
+            logger.LogError(ex, "Failed to update asset {OriginalProductName} for account {AccountEmail}", originalProductName, accountEmail);
+            await unitOfWork.RollbackAsync(ct);
             return ServiceResult.Failure("Asset.UpdateFailed", "Input is invalid");
         }
     }
@@ -156,35 +148,35 @@ public class AssetService : IAssetService
     /// <inheritdoc />
     public async Task<ServiceResult> DeleteAsync(string accountEmail, string productName, CancellationToken ct = default)
     {
-        await _unitOfWork.BeginAsync(ct);
+        await unitOfWork.BeginAsync(ct);
         try
         {
             // Row-lock the asset for the rest of this transaction, exactly as UpdateAsync does: the
             // soft-delete is a full-row UPDATE (UpdateEntityAsync writes every column), so without the
             // lock a balance mutation committed by a concurrent Income/Expenditure between the read
-            // and the write would be silently overwritten with this pre-lock snapshot.
-            Asset? asset = await _assetRepository.FindByEmailAndProductNameForUpdateAsync(accountEmail, productName, ct);
+            // and to write would be silently overwritten with this pre-lock snapshot.
+            Asset? asset = await assetRepository.FindByEmailAndProductNameForUpdateAsync(accountEmail, productName, ct);
             if (asset == null)
             {
-                await _unitOfWork.RollbackAsync(ct);
+                await unitOfWork.RollbackAsync(ct);
                 return ServiceResult.NotFound("Asset.NotFound", "Fail to find the asset by given product name");
             }
 
             // Soft-delete preserves the record for historical reporting while hiding it from active use.
             asset.SoftDelete();
 
-            await _assetRepository.UpdateEntityAsync(asset, ct);
-            await _unitOfWork.CommitAsync(ct);
+            await assetRepository.UpdateEntityAsync(asset, ct);
+            await unitOfWork.CommitAsync(ct);
             return ServiceResult.Ok();
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Failed to delete asset {ProductName} for account {AccountEmail}", productName, accountEmail);
-            await _unitOfWork.RollbackAsync(ct);
+            logger.LogError(ex, "Failed to delete asset {ProductName} for account {AccountEmail}", productName, accountEmail);
+            await unitOfWork.RollbackAsync(ct);
             return ServiceResult.Failure("Asset.DeleteFailed", "Input is invalid");
         }
     }
 
     private Task<Asset?> FindAssetAsync(string accountEmail, string productName, CancellationToken ct = default)
-        => _assetRepository.FindByEmailAndProductNameAsync(accountEmail, productName, ct);
+        => assetRepository.FindByEmailAndProductNameAsync(accountEmail, productName, ct);
 }

@@ -8,35 +8,28 @@ namespace Maroik.Core.Service.Services;
 /// needed by Finance transaction services, keeping them free of a direct
 /// <see cref="IAssetRepository"/> dependency.
 /// </summary>
-public class AssetBalanceDomainService : IAssetBalanceDomainService
+public class AssetBalanceDomainService(IAssetRepository assetRepository) : IAssetBalanceDomainService
 {
-    private readonly IAssetRepository _assetRepository;
-
-    /// <summary>Initializes a new instance of <see cref="AssetBalanceDomainService"/>.</summary>
-    /// <param name="assetRepository">The repository used for asset read and update operations.</param>
-    public AssetBalanceDomainService(IAssetRepository assetRepository)
-        => _assetRepository = assetRepository;
-
     /// <inheritdoc />
     /// <remarks>
     /// Delegates to the row-locking lookup so that concurrent balance mutations of the
     /// same asset serialize inside the ambient unit-of-work transaction (lost-update guard).
     /// </remarks>
     public Task<Asset?> GetAssetAsync(string accountEmail, string productName, CancellationToken ct = default)
-        => _assetRepository.FindByEmailAndProductNameForUpdateAsync(accountEmail, productName, ct);
+        => assetRepository.FindByEmailAndProductNameForUpdateAsync(accountEmail, productName, ct);
 
     /// <inheritdoc />
     public async Task<Dictionary<string, Asset>> GetAssetsAsync(string accountEmail, IReadOnlyCollection<string> productNames, CancellationToken ct = default)
     {
-        List<Asset> assets = await _assetRepository.FindByEmailAndProductNamesForUpdateAsync(accountEmail, productNames, ct);
+        List<Asset> assets = await assetRepository.FindByEmailAndProductNamesForUpdateAsync(accountEmail, productNames, ct);
         return assets.ToDictionary(a => a.ProductName, StringComparer.Ordinal);
     }
 
     /// <inheritdoc />
     public Task<Asset?> GetAssetForReadAsync(string accountEmail, string productName, CancellationToken ct = default)
-        => _assetRepository.FindByEmailAndProductNameAsync(accountEmail, productName, ct);
+        => assetRepository.FindByEmailAndProductNameAsync(accountEmail, productName, ct);
 
     /// <inheritdoc />
     public Task SaveAsync(Asset asset, CancellationToken ct = default)
-        => _assetRepository.UpdateEntityAsync(asset, ct);
+        => assetRepository.UpdateEntityAsync(asset, ct);
 }

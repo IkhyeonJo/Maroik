@@ -18,37 +18,17 @@ namespace Maroik.Core.Service.Services;
 /// require the current password to be verified via BCrypt before the new hash is stored.
 /// Time-zone updates validate the IANA ID against the system's zone database.
 /// </summary>
-public class ProfileService : IProfileService
+public class ProfileService(
+    IAccountRepository accountRepository,
+    IAssetRepository assetRepository,
+    IPasswordService passwordService,
+    IFileClient fileClient,
+    IImageValidatorService imageValidator,
+    IOptions<ServerSetting> settings,
+    ILogger<ProfileService> logger) : IProfileService
 {
-    private readonly IAccountRepository _accountRepository;
-    private readonly IAssetRepository _assetRepository;
-    private readonly IPasswordService _passwordService;
-    private readonly IFileClient _fileClient;
-    private readonly IImageValidatorService _imageValidator;
-    private readonly IOptions<ServerSetting> _settings;
-    private readonly ILogger<ProfileService> _logger;
-
     /// <summary>Relative storage directory (under the file-storage root) that holds uploaded avatars.</summary>
     private const string AvatarStorageDirectory = "upload/Management/Profile/Avatar";
-
-    /// <summary>Initializes a new instance of <see cref="ProfileService"/> with the supplied dependencies.</summary>
-    public ProfileService(
-        IAccountRepository accountRepository,
-        IAssetRepository assetRepository,
-        IPasswordService passwordService,
-        IFileClient fileClient,
-        IImageValidatorService imageValidator,
-        IOptions<ServerSetting> settings,
-        ILogger<ProfileService> logger)
-    {
-        _accountRepository = accountRepository;
-        _assetRepository = assetRepository;
-        _passwordService = passwordService;
-        _fileClient = fileClient;
-        _imageValidator = imageValidator;
-        _settings = settings;
-        _logger = logger;
-    }
 
     /// <inheritdoc />
     public async Task<AccountResponse?> GetProfileAsync(string email, CancellationToken ct = default)
@@ -68,12 +48,12 @@ public class ProfileService : IProfileService
 
             // Column-scoped write: touch only AvatarImagePath/Updated so a concurrent timezone or
             // password change on the same account is not clobbered by a full-row overwrite.
-            await _accountRepository.UpdateAvatarPathAsync(email, avatarPath, DateTime.UtcNow, ct);
+            await accountRepository.UpdateAvatarPathAsync(email, avatarPath, DateTime.UtcNow, ct);
             return ServiceResult.Ok();
         }
         catch (Exception e)
         {
-            _logger.LogError(e, "Failed to update avatar for {Email}", email);
+            logger.LogError(e, "Failed to update avatar for {Email}", email);
             return ServiceResult.Failure("Profile.UpdateAvatarFailed", "Input is invalid");
         }
     }
@@ -92,12 +72,12 @@ public class ProfileService : IProfileService
                 return ServiceResult.FromError(tzResult.FirstError);
 
             // Column-scoped write: touch only TimeZoneIanaId/Updated (see UpdateAvatarAsync).
-            await _accountRepository.UpdateTimeZoneAsync(email, tzResult.Value.Value, DateTime.UtcNow, ct);
+            await accountRepository.UpdateTimeZoneAsync(email, tzResult.Value.Value, DateTime.UtcNow, ct);
             return ServiceResult.Ok();
         }
         catch (Exception e)
         {
-            _logger.LogError(e, "Failed to update timezone for {Email}", email);
+            logger.LogError(e, "Failed to update timezone for {Email}", email);
             return ServiceResult.Failure("Profile.UpdateTimezoneFailed", "Input is invalid");
         }
     }
@@ -111,7 +91,7 @@ public class ProfileService : IProfileService
             if (account == null)
                 return ServiceResult.NotFound("Account.NotFound", "Input is invalid");
 
-            if (!_passwordService.VerifyPassword(currentPassword, account.HashedPassword))
+            if (!passwordService.VerifyPassword(currentPassword, account.HashedPassword))
                 return ServiceResult.Validation("Profile.WrongPassword", "Invalid password. Please check again.");
 
             // Enforce the complexity rule server-side, before hashing — Account.ChangePassword only sees the hash.
@@ -120,15 +100,15 @@ public class ProfileService : IProfileService
 
             // Let the domain method compute the new SecurityStamp / clear MustChangePassword, then
             // persist only those columns (see UpdateAvatarAsync for why the full-row write is avoided).
-            account.ChangePassword(_passwordService.HashPassword(newPassword));
+            account.ChangePassword(passwordService.HashPassword(newPassword));
 
-            await _accountRepository.UpdatePasswordAsync(
+            await accountRepository.UpdatePasswordAsync(
                 email, account.HashedPassword, account.SecurityStamp, account.MustChangePassword, account.Updated, ct);
             return ServiceResult.Ok();
         }
         catch (Exception e)
         {
-            _logger.LogError(e, "Failed to update password for {Email}", email);
+            logger.LogError(e, "Failed to update password for {Email}", email);
             return ServiceResult.Failure("Profile.UpdatePasswordFailed", "Input is invalid");
         }
     }
@@ -144,17 +124,17 @@ public class ProfileService : IProfileService
             if (!ImageUploadPolicy.IsAllowedExtension(extension))
                 return ServiceResult.Validation("Profile.InvalidImage", "invalid-image");
 
-            if (!_imageValidator.IsValidImage(imageBytes))
+            if (!imageValidator.IsValidImage(imageBytes))
                 return ServiceResult.Validation("Profile.InvalidImage", "invalid-image");
-            if (_imageValidator.IsSvg(imageBytes))
+            if (imageValidator.IsSvg(imageBytes))
                 return ServiceResult.Validation("Profile.SvgNotAllowed", "svg-not-allowed");
 
             string avatarFile = $"{Guid.NewGuid():N}{extension.ToLowerInvariant()}";
             // Store through the file-storage service (shared volume, ClamAV-scanned there) instead of
             // this replica's local wwwroot, so a multi-replica deployment stays consistent.
-            bool uploaded = await _fileClient.UploadAsync(
+            bool uploaded = await fileClient.UploadAsync(
                 imageBytes, ContentTypeForExtension(extension),
-                $"{AvatarStorageDirectory}/{avatarFile}", _settings.Value.FileStorageBaseUrl ?? "", ct);
+                $"{AvatarStorageDirectory}/{avatarFile}", settings.Value.FileStorageBaseUrl ?? "", ct);
 
             if (!uploaded)
                 return ServiceResult.Failure("Profile.UploadAvatarFailed", "Input is invalid");
@@ -163,7 +143,7 @@ public class ProfileService : IProfileService
         }
         catch (Exception e)
         {
-            _logger.LogError(e, "Failed to upload and update avatar for {Email}", email);
+            logger.LogError(e, "Failed to upload and update avatar for {Email}", email);
             return ServiceResult.Failure("Profile.UploadAvatarFailed", "Input is invalid");
         }
     }
@@ -173,13 +153,13 @@ public class ProfileService : IProfileService
     {
         try
         {
-            byte[] bytes = await _fileClient.DownloadAsync(
-                $"{AvatarStorageDirectory}/{fileName}", _settings.Value.FileStorageBaseUrl ?? "", ct);
+            byte[] bytes = await fileClient.DownloadAsync(
+                $"{AvatarStorageDirectory}/{fileName}", settings.Value.FileStorageBaseUrl ?? "", ct);
             return bytes.Length > 0 ? bytes : null;
         }
         catch (Exception e)
         {
-            _logger.LogWarning(e, "Failed to download avatar {FileName} from file storage", fileName);
+            logger.LogWarning(e, "Failed to download avatar {FileName} from file storage", fileName);
             return null;
         }
     }
@@ -194,12 +174,12 @@ public class ProfileService : IProfileService
         };
 
     private Task<Account?> FindByEmailAsync(string email, CancellationToken ct = default)
-        => _accountRepository.FindByEmailAsync(email, ct);
+        => accountRepository.FindByEmailAsync(email, ct);
 
     /// <inheritdoc />
     public async Task UpdateDefaultMonetaryUnitAsync(string accountEmail, string? monetaryUnit, CancellationToken ct = default)
     {
-        List<Asset> assets = await _assetRepository.GetByAccountEmailAsync(accountEmail, ct);
+        List<Asset> assets = await assetRepository.GetByAccountEmailAsync(accountEmail, ct);
 
         // A deleted asset's currency must not remain selectable as the default monetary unit.
         string? newUnit = assets.Where(x => !x.Deleted).Select(x => x.Balance.Currency).Distinct().Contains(monetaryUnit)
@@ -208,6 +188,6 @@ public class ProfileService : IProfileService
 
         // Column-scoped write: only DefaultMonetaryUnit, no Updated bump (background correction).
         // A no-op (0 rows) when the account does not exist, matching the prior silent return.
-        await _accountRepository.UpdateDefaultMonetaryUnitAsync(accountEmail, newUnit, ct);
+        await accountRepository.UpdateDefaultMonetaryUnitAsync(accountEmail, newUnit, ct);
     }
 }

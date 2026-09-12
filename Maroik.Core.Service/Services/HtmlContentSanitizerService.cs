@@ -1,3 +1,4 @@
+using AngleSharp;
 using Ganss.Xss;
 using Maroik.Core.Contract.Interfaces;
 
@@ -7,7 +8,7 @@ namespace Maroik.Core.Service.Services;
 /// <remarks>
 /// Registered as a singleton. The <see cref="HtmlSanitizer"/> is configured once at construction
 /// and reused for every call: building it (and its allow-lists) per <see cref="Sanitize"/> call
-/// was pure per-request allocation. <see cref="HtmlSanitizer.Sanitize(string)"/> does not mutate
+/// was pure per-request allocation. <see cref="HtmlSanitizer.Sanitize(string,string,IMarkupFormatter)"/> does not mutate
 /// the configured allow-lists, so concurrent calls on the shared instance are safe.
 /// <para>
 /// The tag / attribute allow-list is Ganss.Xss's own default (broad enough for everything

@@ -15,30 +15,28 @@ namespace Maroik.Core.Service.Services;
 /// A fixed-income entry is a schedule, not a balance movement, so these operations are single
 /// non-transactional repository writes and read the referenced asset without a row lock.
 /// </summary>
-public class FixedIncomeService : IFixedIncomeService
+public class FixedIncomeService(IFixedIncomeRepository fixedIncomeRepository, IAssetBalanceDomainService assetBalance) : IFixedIncomeService
 {
-    private readonly IFixedIncomeRepository _fixedIncomeRepository;
-    private readonly IAssetBalanceDomainService _assetBalance;
-
-    /// <summary>Initializes a new instance of <see cref="FixedIncomeService"/> with the supplied dependencies.</summary>
-    public FixedIncomeService(IFixedIncomeRepository fixedIncomeRepository, IAssetBalanceDomainService assetBalance)
-    {
-        _fixedIncomeRepository = fixedIncomeRepository;
-        _assetBalance = assetBalance;
-    }
-
     /// <inheritdoc />
     public async Task<List<FixedIncomeResponse>> GetFixedIncomesAsync(string accountEmail, CancellationToken ct = default)
-        => (await _fixedIncomeRepository.GetByAccountEmailAsync(accountEmail, ct)).Select(FixedIncomeMapper.ToResponse).ToList();
+        =>
+        [
+            .. (await fixedIncomeRepository.GetByAccountEmailAsync(accountEmail, ct)).Select(FixedIncomeMapper
+                .ToResponse)
+        ];
 
     /// <inheritdoc />
     public async Task<List<FixedIncomeResponse>> SearchFixedIncomesAsync(string accountEmail, string search, CancellationToken ct = default)
-        => (await _fixedIncomeRepository.SearchByAccountEmailAsync(accountEmail, search, ct)).Select(FixedIncomeMapper.ToResponse).ToList();
+        =>
+        [
+            .. (await fixedIncomeRepository.SearchByAccountEmailAsync(accountEmail, search, ct)).Select(
+                FixedIncomeMapper.ToResponse)
+        ];
 
     /// <inheritdoc />
     public async Task<FixedIncomeResponse?> GetByIdAsync(string accountEmail, long id, CancellationToken ct = default)
     {
-        var item = await _fixedIncomeRepository.FindByEmailAndIdAsync(accountEmail, id, ct);
+        var item = await fixedIncomeRepository.FindByEmailAndIdAsync(accountEmail, id, ct);
         return item == null ? null : FixedIncomeMapper.ToResponse(item);
     }
 
@@ -48,7 +46,7 @@ public class FixedIncomeService : IFixedIncomeService
         var validation = ValidateRequest(request);
         if (validation.IsError) return ServiceResult.FromError(validation.FirstError);
 
-        Asset? asset = await _assetBalance.GetAssetForReadAsync(accountEmail, request.DepositMyAssetProductName ?? "", ct);
+        Asset? asset = await assetBalance.GetAssetForReadAsync(accountEmail, request.DepositMyAssetProductName ?? "", ct);
         if (asset == null)
             return ServiceResult.NotFound("FixedIncome.AssetNotFound", "The selected asset could not be found.");
         if (asset.Deleted)
@@ -64,7 +62,7 @@ public class FixedIncomeService : IFixedIncomeService
             return ServiceResult.FromError(registerResult.FirstError);
 
         var fixedIncome = registerResult.Value;
-        await _fixedIncomeRepository.CreateAsync(fixedIncome, ct);
+        await fixedIncomeRepository.CreateAsync(fixedIncome, ct);
         return ServiceResult.Ok();
     }
 
@@ -74,11 +72,11 @@ public class FixedIncomeService : IFixedIncomeService
         var validation = ValidateRequest(request);
         if (validation.IsError) return ServiceResult.FromError(validation.FirstError);
 
-        FixedIncome? fi = await _fixedIncomeRepository.FindByEmailAndIdAsync(accountEmail, request.Id, ct);
+        FixedIncome? fi = await fixedIncomeRepository.FindByEmailAndIdAsync(accountEmail, request.Id, ct);
         if (fi == null)
             return ServiceResult.NotFound("FixedIncome.NotFound", "The fixed-income record could not be found.");
 
-        Asset? asset = await _assetBalance.GetAssetForReadAsync(accountEmail, request.DepositMyAssetProductName ?? "", ct);
+        Asset? asset = await assetBalance.GetAssetForReadAsync(accountEmail, request.DepositMyAssetProductName ?? "", ct);
         if (asset == null)
             return ServiceResult.NotFound("FixedIncome.AssetNotFound", "The selected asset could not be found.");
         if (asset.Deleted)
@@ -91,18 +89,18 @@ public class FixedIncomeService : IFixedIncomeService
 
         if (updateResult.IsError) return ServiceResult.FromError(updateResult.FirstError);
 
-        await _fixedIncomeRepository.UpdateEntityAsync(fi, ct);
+        await fixedIncomeRepository.UpdateEntityAsync(fi, ct);
         return ServiceResult.Ok();
     }
 
     /// <inheritdoc />
     public async Task<ServiceResult> DeleteAsync(string accountEmail, long id, CancellationToken ct = default)
     {
-        FixedIncome? fi = await _fixedIncomeRepository.FindByEmailAndIdAsync(accountEmail, id, ct);
+        FixedIncome? fi = await fixedIncomeRepository.FindByEmailAndIdAsync(accountEmail, id, ct);
         if (fi == null)
             return ServiceResult.NotFound("FixedIncome.NotFound", "The fixed-income record could not be found.");
 
-        await _fixedIncomeRepository.DeleteByIdAsync(fi.Id, ct);
+        await fixedIncomeRepository.DeleteByIdAsync(fi.Id, ct);
         return ServiceResult.Ok();
     }
 

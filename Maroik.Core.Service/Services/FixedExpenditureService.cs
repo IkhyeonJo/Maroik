@@ -15,30 +15,28 @@ namespace Maroik.Core.Service.Services;
 /// A fixed-expenditure entry is a schedule, not a balance movement, so these operations are single
 /// non-transactional repository writes and read the referenced asset without a row lock.
 /// </summary>
-public class FixedExpenditureService : IFixedExpenditureService
+public class FixedExpenditureService(IFixedExpenditureRepository fixedExpenditureRepository, IAssetBalanceDomainService assetBalance) : IFixedExpenditureService
 {
-    private readonly IFixedExpenditureRepository _fixedExpenditureRepository;
-    private readonly IAssetBalanceDomainService _assetBalance;
-
-    /// <summary>Initializes a new instance of <see cref="FixedExpenditureService"/> with the supplied dependencies.</summary>
-    public FixedExpenditureService(IFixedExpenditureRepository fixedExpenditureRepository, IAssetBalanceDomainService assetBalance)
-    {
-        _fixedExpenditureRepository = fixedExpenditureRepository;
-        _assetBalance = assetBalance;
-    }
-
     /// <inheritdoc />
     public async Task<List<FixedExpenditureResponse>> GetFixedExpendituresAsync(string accountEmail, CancellationToken ct = default)
-        => (await _fixedExpenditureRepository.GetByAccountEmailAsync(accountEmail, ct)).Select(FixedExpenditureMapper.ToResponse).ToList();
+        =>
+        [
+            .. (await fixedExpenditureRepository.GetByAccountEmailAsync(accountEmail, ct)).Select(FixedExpenditureMapper
+                .ToResponse)
+        ];
 
     /// <inheritdoc />
     public async Task<List<FixedExpenditureResponse>> SearchFixedExpendituresAsync(string accountEmail, string search, CancellationToken ct = default)
-        => (await _fixedExpenditureRepository.SearchByAccountEmailAsync(accountEmail, search, ct)).Select(FixedExpenditureMapper.ToResponse).ToList();
+        =>
+        [
+            .. (await fixedExpenditureRepository.SearchByAccountEmailAsync(accountEmail, search, ct)).Select(
+                FixedExpenditureMapper.ToResponse)
+        ];
 
     /// <inheritdoc />
     public async Task<FixedExpenditureResponse?> GetByIdAsync(string accountEmail, long id, CancellationToken ct = default)
     {
-        var item = await _fixedExpenditureRepository.FindByEmailAndIdAsync(accountEmail, id, ct);
+        var item = await fixedExpenditureRepository.FindByEmailAndIdAsync(accountEmail, id, ct);
         return item == null ? null : FixedExpenditureMapper.ToResponse(item);
     }
 
@@ -49,7 +47,7 @@ public class FixedExpenditureService : IFixedExpenditureService
         if (validation.IsError) return ServiceResult.FromError(validation.FirstError);
         bool requiresDepositAsset = validation.Value;
 
-        Asset? payAsset = await _assetBalance.GetAssetForReadAsync(accountEmail, request.PaymentMethod ?? "", ct);
+        Asset? payAsset = await assetBalance.GetAssetForReadAsync(accountEmail, request.PaymentMethod ?? "", ct);
         if (payAsset == null) return AssetNotFoundResult;
         if (payAsset.Deleted) return DeletedAssetResult;
 
@@ -59,7 +57,7 @@ public class FixedExpenditureService : IFixedExpenditureService
             if (request.PaymentMethod == request.MyDepositAsset)
                 return SameAssetResult;
 
-            Asset? depAsset = await _assetBalance.GetAssetForReadAsync(accountEmail, request.MyDepositAsset ?? "", ct);
+            Asset? depAsset = await assetBalance.GetAssetForReadAsync(accountEmail, request.MyDepositAsset ?? "", ct);
             if (depAsset == null) return AssetNotFoundResult;
             if (depAsset.Deleted) return DeletedAssetResult;
             if (payAsset.Balance.Currency != depAsset.Balance.Currency)
@@ -77,7 +75,7 @@ public class FixedExpenditureService : IFixedExpenditureService
             return ServiceResult.FromError(registerResult.FirstError);
 
         var fixedExpenditure = registerResult.Value;
-        await _fixedExpenditureRepository.CreateAsync(fixedExpenditure, ct);
+        await fixedExpenditureRepository.CreateAsync(fixedExpenditure, ct);
         return ServiceResult.Ok();
     }
 
@@ -88,7 +86,7 @@ public class FixedExpenditureService : IFixedExpenditureService
         if (validation.IsError) return ServiceResult.FromError(validation.FirstError);
         bool requiresDepositAsset = validation.Value;
 
-        Asset? payAsset = await _assetBalance.GetAssetForReadAsync(accountEmail, request.PaymentMethod ?? "", ct);
+        Asset? payAsset = await assetBalance.GetAssetForReadAsync(accountEmail, request.PaymentMethod ?? "", ct);
         if (payAsset == null) return AssetNotFoundResult;
         if (payAsset.Deleted) return DeletedAssetResult;
 
@@ -97,14 +95,14 @@ public class FixedExpenditureService : IFixedExpenditureService
             if (request.PaymentMethod == request.MyDepositAsset)
                 return SameAssetResult;
 
-            var depAsset = await _assetBalance.GetAssetForReadAsync(accountEmail, request.MyDepositAsset ?? "", ct);
+            var depAsset = await assetBalance.GetAssetForReadAsync(accountEmail, request.MyDepositAsset ?? "", ct);
             if (depAsset == null) return AssetNotFoundResult;
             if (depAsset.Deleted) return DeletedAssetResult;
             if (payAsset.Balance.Currency != depAsset.Balance.Currency)
                 return CurrencyMismatchResult;
         }
 
-        FixedExpenditure? fe = await _fixedExpenditureRepository.FindByEmailAndIdAsync(accountEmail, request.Id, ct);
+        FixedExpenditure? fe = await fixedExpenditureRepository.FindByEmailAndIdAsync(accountEmail, request.Id, ct);
         if (fe == null)
             return ServiceResult.NotFound("FixedExpenditure.NotFound", "The fixed-expenditure record could not be found.");
 
@@ -117,18 +115,18 @@ public class FixedExpenditureService : IFixedExpenditureService
 
         if (updateResult.IsError) return ServiceResult.FromError(updateResult.FirstError);
 
-        await _fixedExpenditureRepository.UpdateEntityAsync(fe, ct);
+        await fixedExpenditureRepository.UpdateEntityAsync(fe, ct);
         return ServiceResult.Ok();
     }
 
     /// <inheritdoc />
     public async Task<ServiceResult> DeleteAsync(string accountEmail, long id, CancellationToken ct = default)
     {
-        FixedExpenditure? fe = await _fixedExpenditureRepository.FindByEmailAndIdAsync(accountEmail, id, ct);
+        FixedExpenditure? fe = await fixedExpenditureRepository.FindByEmailAndIdAsync(accountEmail, id, ct);
         if (fe == null)
             return ServiceResult.NotFound("FixedExpenditure.NotFound", "The fixed-expenditure record could not be found.");
 
-        await _fixedExpenditureRepository.DeleteByIdAsync(fe.Id, ct);
+        await fixedExpenditureRepository.DeleteByIdAsync(fe.Id, ct);
         return ServiceResult.Ok();
     }
 

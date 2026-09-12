@@ -16,7 +16,7 @@ public class PasswordService : IPasswordService
     /// <see cref="VerifyDummy"/> to spend the same CPU as a real verification on the
     /// "account not found" path, so login timing does not reveal whether an email exists.
     /// </summary>
-    private static readonly string DummyHash =
+    private static readonly string _dummyHash =
         BCrypt.Net.BCrypt.HashPassword("maroik-timing-equalizer-" + Guid.NewGuid().ToString("N"), WorkFactor);
 
     /// <summary>
@@ -53,7 +53,7 @@ public class PasswordService : IPasswordService
     /// <inheritdoc />
     public bool VerifyDummy(string password)
     {
-        _ = VerifyPassword(password, DummyHash);
+        _ = VerifyPassword(password, _dummyHash);
         return false;
     }
 }

@@ -6,7 +6,7 @@ namespace Maroik.Core.Service.Services;
 /// <summary>HtmlAgilityPack-backed implementation of <see cref="IHtmlParserService"/>.</summary>
 public class HtmlParserService : IHtmlParserService
 {
-    /// <summary>
+    // ReSharper disable once InvalidXmlDocComment
     /// Upper bound on how many <paramref name="patchFactory"/> calls run at once in
     /// <see cref="TransformImageAttributesAsync"/>. Each call is typically a request to the
     /// file-storage service, so a post with dozens of images must not fan out into dozens of
@@ -22,17 +22,11 @@ public class HtmlParserService : IHtmlParserService
     {
         var doc = new HtmlDocument();
         doc.LoadHtml(html);
-        List<HtmlNode> imgTags = doc.DocumentNode.Descendants("img").ToList();
+        List<HtmlNode> imgTags = [.. doc.DocumentNode.Descendants("img")];
 
         // Fetch image patches concurrently (patchFactory typically makes a network call to the
         // file-storage service) but cap the fan-out so a many-image post can't storm that service.
         var gate = new SemaphoreSlim(MaxConcurrentPatchFetches, MaxConcurrentPatchFetches);
-        async Task<HtmlImgPatch?> FetchPatchAsync(HtmlNode imgTag)
-        {
-            await gate.WaitAsync(ct);
-            try { return await patchFactory(imgTag.GetAttributeValue("alt", ""), ct); }
-            finally { _ = gate.Release(); }
-        }
 
         Task<HtmlImgPatch?>[] fetchTasks = [.. imgTags.Select(FetchPatchAsync)];
         HtmlImgPatch?[] patches;
@@ -63,6 +57,15 @@ public class HtmlParserService : IHtmlParserService
         }
 
         return (doc.DocumentNode.OuterHtml, imgTags.Count > 0);
+
+        async Task<HtmlImgPatch?> FetchPatchAsync(HtmlNode imgTag)
+        {
+            // ReSharper disable once AccessToDisposedClosure
+            await gate.WaitAsync(ct);
+            try { return await patchFactory(imgTag.GetAttributeValue("alt", ""), ct); }
+            // ReSharper disable once AccessToDisposedClosure
+            finally { _ = gate.Release(); }
+        }
     }
 
     /// <inheritdoc />
@@ -71,7 +74,7 @@ public class HtmlParserService : IHtmlParserService
         var doc = new HtmlDocument();
         doc.LoadHtml(html);
 
-        // Materialise first: a patch may remove its node, which would invalidate the lazy
+        // Materialize first: a patch may remove its node, which would invalidate the lazy
         // Descendants() enumerator mid-iteration.
         foreach (HtmlNode imgTag in doc.DocumentNode.Descendants("img").ToList())
         {

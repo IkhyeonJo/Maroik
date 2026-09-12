@@ -13,42 +13,30 @@ namespace Maroik.Core.Service.Services;
 /// missing row into a <see cref="ServiceResult.NotFound"/>, so the controller can surface a
 /// user-friendly error (and react to its kind) without exposing internal details.
 /// </summary>
-public class MenuService : IMenuService
+public class MenuService(
+    ICategoryRepository categoryRepository,
+    ISubCategoryRepository subCategoryRepository,
+    ILogger<MenuService> logger) : IMenuService
 {
-    private readonly ICategoryRepository _categoryRepository;
-    private readonly ISubCategoryRepository _subCategoryRepository;
-    private readonly ILogger<MenuService> _logger;
-
-    /// <summary>Initializes a new instance of <see cref="MenuService"/> with the supplied dependencies.</summary>
-    public MenuService(
-        ICategoryRepository categoryRepository,
-        ISubCategoryRepository subCategoryRepository,
-        ILogger<MenuService> logger)
-    {
-        _categoryRepository = categoryRepository;
-        _subCategoryRepository = subCategoryRepository;
-        _logger = logger;
-    }
-
     /// <inheritdoc />
     public async Task<IEnumerable<CategoryResponse>> GetAllCategoriesAsync(CancellationToken ct = default)
-        => (await _categoryRepository.GetAllAsync(ct)).Select(CategoryMapper.ToResponse);
+        => (await categoryRepository.GetAllAsync(ct)).Select(CategoryMapper.ToResponse);
 
     /// <inheritdoc />
     public async Task<IEnumerable<SubCategoryResponse>> GetAllSubCategoriesAsync(CancellationToken ct = default)
-        => (await _subCategoryRepository.GetAllAsync(ct)).Select(SubCategoryMapper.ToResponse);
+        => (await subCategoryRepository.GetAllAsync(ct)).Select(SubCategoryMapper.ToResponse);
 
     /// <inheritdoc />
     public async Task<CategoryResponse?> GetCategoryByIdAsync(int id, CancellationToken ct = default)
     {
-        Category? category = await _categoryRepository.FindByIdAsync(id, ct);
+        Category? category = await categoryRepository.FindByIdAsync(id, ct);
         return category == null ? null : CategoryMapper.ToResponse(category);
     }
 
     /// <inheritdoc />
     public async Task<SubCategoryResponse?> GetSubCategoryByIdAsync(int id, CancellationToken ct = default)
     {
-        SubCategory? sub = await _subCategoryRepository.FindByIdAsync(id, ct);
+        SubCategory? sub = await subCategoryRepository.FindByIdAsync(id, ct);
         return sub == null ? null : SubCategoryMapper.ToResponse(sub);
     }
 
@@ -62,12 +50,12 @@ public class MenuService : IMenuService
             if (result.IsError)
                 return ServiceResult.FromError(result.FirstError);
 
-            await _categoryRepository.CreateAsync(result.Value, ct);
+            await categoryRepository.CreateAsync(result.Value, ct);
             return ServiceResult.Ok();
         }
         catch (Exception e)
         {
-            _logger.LogError(e, "Failed to create category {Name}", request.Name);
+            logger.LogError(e, "Failed to create category {Name}", request.Name);
             return ServiceResult.Failure("Menu.CreateCategoryFailed", "Input is invalid");
         }
     }
@@ -77,7 +65,7 @@ public class MenuService : IMenuService
     {
         try
         {
-            Category? category = await _categoryRepository.FindByIdAsync(request.Id, ct);
+            Category? category = await categoryRepository.FindByIdAsync(request.Id, ct);
             if (category == null)
                 return ServiceResult.NotFound("Category.NotFound", "Input is invalid");
 
@@ -86,12 +74,12 @@ public class MenuService : IMenuService
             if (updateResult.IsError)
                 return ServiceResult.FromError(updateResult.FirstError);
 
-            await _categoryRepository.UpdateEntityAsync(category, ct);
+            await categoryRepository.UpdateEntityAsync(category, ct);
             return ServiceResult.Ok();
         }
         catch (Exception e)
         {
-            _logger.LogError(e, "Failed to update category {Name}", request.Name);
+            logger.LogError(e, "Failed to update category {Name}", request.Name);
             return ServiceResult.Failure("Menu.UpdateCategoryFailed", "Input is invalid");
         }
     }
@@ -101,12 +89,12 @@ public class MenuService : IMenuService
     {
         try
         {
-            await _categoryRepository.DeleteByIdAsync(request.Id, ct);
+            await categoryRepository.DeleteByIdAsync(request.Id, ct);
             return ServiceResult.Ok();
         }
         catch (Exception e)
         {
-            _logger.LogError(e, "Failed to delete category {Name}", request.Name);
+            logger.LogError(e, "Failed to delete category {Name}", request.Name);
             return ServiceResult.Failure("Menu.DeleteCategoryFailed", "Input is invalid");
         }
     }
@@ -121,12 +109,12 @@ public class MenuService : IMenuService
             if (result.IsError)
                 return ServiceResult.FromError(result.FirstError);
 
-            await _subCategoryRepository.CreateAsync(result.Value, ct);
+            await subCategoryRepository.CreateAsync(result.Value, ct);
             return ServiceResult.Ok();
         }
         catch (Exception e)
         {
-            _logger.LogError(e, "Failed to create sub-category {Name}", request.Name);
+            logger.LogError(e, "Failed to create sub-category {Name}", request.Name);
             return ServiceResult.Failure("Menu.CreateSubCategoryFailed", "Input is invalid");
         }
     }
@@ -136,7 +124,7 @@ public class MenuService : IMenuService
     {
         try
         {
-            SubCategory? subCategory = await _subCategoryRepository.FindByIdAsync(request.Id, ct);
+            SubCategory? subCategory = await subCategoryRepository.FindByIdAsync(request.Id, ct);
             if (subCategory == null)
                 return ServiceResult.NotFound("SubCategory.NotFound", "Input is invalid");
 
@@ -145,12 +133,12 @@ public class MenuService : IMenuService
             if (updateResult.IsError)
                 return ServiceResult.FromError(updateResult.FirstError);
 
-            await _subCategoryRepository.UpdateEntityAsync(subCategory, ct);
+            await subCategoryRepository.UpdateEntityAsync(subCategory, ct);
             return ServiceResult.Ok();
         }
         catch (Exception e)
         {
-            _logger.LogError(e, "Failed to update sub-category {Name}", request.Name);
+            logger.LogError(e, "Failed to update sub-category {Name}", request.Name);
             return ServiceResult.Failure("Menu.UpdateSubCategoryFailed", "Input is invalid");
         }
     }
@@ -160,12 +148,12 @@ public class MenuService : IMenuService
     {
         try
         {
-            await _subCategoryRepository.DeleteByIdAsync(request.Id, ct);
+            await subCategoryRepository.DeleteByIdAsync(request.Id, ct);
             return ServiceResult.Ok();
         }
         catch (Exception e)
         {
-            _logger.LogError(e, "Failed to delete sub-category {Name}", request.Name);
+            logger.LogError(e, "Failed to delete sub-category {Name}", request.Name);
             return ServiceResult.Failure("Menu.DeleteSubCategoryFailed", "Input is invalid");
         }
     }

@@ -16,33 +16,19 @@ namespace Maroik.Core.Service.Services;
 /// (<see cref="ServiceResult.NotFound"/> / <see cref="ServiceResult.Conflict"/> /
 /// <see cref="ServiceResult.Failure"/>).
 /// </summary>
-public class ManagementAccountService : IManagementAccountService
+public class ManagementAccountService(
+    IAccountRepository accountRepository,
+    IPasswordService passwordService,
+    IUnitOfWork unitOfWork,
+    ILogger<ManagementAccountService> logger) : IManagementAccountService
 {
-    private readonly IAccountRepository _accountRepository;
-    private readonly IPasswordService _passwordService;
-    private readonly IUnitOfWork _unitOfWork;
-    private readonly ILogger<ManagementAccountService> _logger;
-
-    /// <summary>Initializes a new instance of <see cref="ManagementAccountService"/> with the supplied dependencies.</summary>
-    public ManagementAccountService(
-        IAccountRepository accountRepository,
-        IPasswordService passwordService,
-        IUnitOfWork unitOfWork,
-        ILogger<ManagementAccountService> logger)
-    {
-        _accountRepository = accountRepository;
-        _passwordService = passwordService;
-        _unitOfWork = unitOfWork;
-        _logger = logger;
-    }
-
     /// <inheritdoc />
     public async Task<List<AdminAccountResponse>> GetAllAccountsAsync(CancellationToken ct = default)
-        => (await _accountRepository.GetAllAsync(ct)).Select(AccountMapper.ToAdminResponse).ToList();
+        => [.. (await accountRepository.GetAllAsync(ct)).Select(AccountMapper.ToAdminResponse)];
 
     /// <inheritdoc />
     public async Task<List<AdminAccountResponse>> SearchAccountsAsync(string search, CancellationToken ct = default)
-        => (await _accountRepository.SearchAsync(search, ct)).Select(AccountMapper.ToAdminResponse).ToList();
+        => [.. (await accountRepository.SearchAsync(search, ct)).Select(AccountMapper.ToAdminResponse)];
 
     /// <inheritdoc />
     public async Task<AdminAccountResponse?> GetAccountByEmailAsync(string email, CancellationToken ct = default)
@@ -64,7 +50,7 @@ public class ManagementAccountService : IManagementAccountService
             if (!PasswordPolicy.IsValid(request.PlainPassword))
                 return ServiceResult.Validation("Account.PasswordPolicy", PasswordPolicy.ViolationMessage);
 
-            string hashedPassword = _passwordService.HashPassword(request.PlainPassword ?? "");
+            string hashedPassword = passwordService.HashPassword(request.PlainPassword ?? "");
 
             var createResult = Account.Create(
                 request.Email ?? "",
@@ -87,7 +73,7 @@ public class ManagementAccountService : IManagementAccountService
 
             try
             {
-                await _accountRepository.CreateAsync(account, ct);
+                await accountRepository.CreateAsync(account, ct);
             }
             catch (Exception e) when (e.IsPostgresUniqueViolation())
             {
@@ -106,7 +92,7 @@ public class ManagementAccountService : IManagementAccountService
         }
         catch (Exception e)
         {
-            _logger.LogError(e, "Failed to create account for {Email}", request.Email);
+            logger.LogError(e, "Failed to create account for {Email}", request.Email);
             return ServiceResult.Failure("ManagementAccount.CreateFailed", "Input is invalid");
         }
     }
@@ -125,20 +111,20 @@ public class ManagementAccountService : IManagementAccountService
             if (!PasswordPolicy.IsValid(newPassword))
                 return ServiceResult.Validation("Account.PasswordPolicy", PasswordPolicy.ViolationMessage);
 
-            newHashedPassword = _passwordService.HashPassword(newPassword);
+            newHashedPassword = passwordService.HashPassword(newPassword);
         }
 
-        await _unitOfWork.BeginAsync(ct);
+        await unitOfWork.BeginAsync(ct);
         try
         {
             // FOR UPDATE: hold the row lock from read to commit so a concurrent self-service
             // column-scoped write (profile avatar/timezone/password change) on the same account
             // serializes behind this admin edit instead of being silently reverted by the full-row
             // write below.
-            Account? account = await _accountRepository.FindByEmailForUpdateAsync(request.Email ?? "", ct);
+            Account? account = await accountRepository.FindByEmailForUpdateAsync(request.Email ?? "", ct);
             if (account == null)
             {
-                await _unitOfWork.RollbackAsync(ct);
+                await unitOfWork.RollbackAsync(ct);
                 return ServiceResult.NotFound("Account.NotFound", "Email address is wrong");
             }
 
@@ -160,51 +146,51 @@ public class ManagementAccountService : IManagementAccountService
 
             if (updateResult.IsError)
             {
-                await _unitOfWork.RollbackAsync(ct);
+                await unitOfWork.RollbackAsync(ct);
                 return ServiceResult.FromError(updateResult.FirstError);
             }
 
-            await _accountRepository.UpdateEntityAsync(account, ct);
-            await _unitOfWork.CommitAsync(ct);
+            await accountRepository.UpdateEntityAsync(account, ct);
+            await unitOfWork.CommitAsync(ct);
             return ServiceResult.Ok();
         }
         catch (Exception e)
         {
-            _logger.LogError(e, "Failed to update account for {Email}", request.Email);
-            await _unitOfWork.RollbackAsync(ct);
+            logger.LogError(e, "Failed to update account for {Email}", request.Email);
+            await unitOfWork.RollbackAsync(ct);
             return ServiceResult.Failure("ManagementAccount.UpdateFailed", "Input is invalid");
         }
     }
 
     private Task<Account?> FindByEmailAsync(string email, CancellationToken ct = default)
-        => _accountRepository.FindByEmailAsync(email, ct);
+        => accountRepository.FindByEmailAsync(email, ct);
 
     /// <inheritdoc />
     public async Task<ServiceResult> DeleteAccountAsync(string email, CancellationToken ct = default)
     {
-        await _unitOfWork.BeginAsync(ct);
+        await unitOfWork.BeginAsync(ct);
         try
         {
             // FOR UPDATE, same reason as UpdateAccountAsync: SoftDelete is persisted as a full-row
             // write, so the row must stay locked from read to commit or a concurrent self-service
             // column-scoped change would be reverted.
-            Account? account = await _accountRepository.FindByEmailForUpdateAsync(email, ct);
+            Account? account = await accountRepository.FindByEmailForUpdateAsync(email, ct);
             if (account == null)
             {
-                await _unitOfWork.RollbackAsync(ct);
+                await unitOfWork.RollbackAsync(ct);
                 return ServiceResult.NotFound("Account.NotFound", "Fail to find the account by given email address");
             }
 
             account.SoftDelete();
 
-            await _accountRepository.UpdateEntityAsync(account, ct);
-            await _unitOfWork.CommitAsync(ct);
+            await accountRepository.UpdateEntityAsync(account, ct);
+            await unitOfWork.CommitAsync(ct);
             return ServiceResult.Ok();
         }
         catch (Exception e)
         {
-            _logger.LogError(e, "Failed to delete account for {Email}", email);
-            await _unitOfWork.RollbackAsync(ct);
+            logger.LogError(e, "Failed to delete account for {Email}", email);
+            await unitOfWork.RollbackAsync(ct);
             return ServiceResult.Failure("ManagementAccount.DeleteFailed", "Input is invalid");
         }
     }

@@ -24,45 +24,24 @@ namespace Maroik.Core.Service.Services;
 /// which enqueues them for asynchronous SMTP delivery by Maroik.Worker instead of sending inline.
 /// Accounts are locked after excessive failed login attempts (threshold from <see cref="ServerSetting"/>).
 /// </summary>
-public class AccountService : IAccountService
+public class AccountService(
+    IAccountRepository accountRepository,
+    IPasswordService passwordService,
+    IMailClient mailClient,
+    IEmailPublisher emailPublisher,
+    IOptions<ServerSetting> settings,
+    IRsaService rsa,
+    ILogger<AccountService> logger,
+    IUnitOfWork unitOfWork
+    ) : IAccountService
 {
-    private readonly IAccountRepository _accountRepository;
-    private readonly IPasswordService _passwordService;
-    private readonly IMailClient _mailClient;
-    private readonly IEmailPublisher _emailPublisher;
-    private readonly IRsaService _rsa;
-    private readonly IOptions<ServerSetting> _settings;
-    private readonly ILogger<AccountService> _logger;
-    private readonly IUnitOfWork _unitOfWork;
-
-    /// <summary>Initializes a new instance of <see cref="AccountService"/> with the supplied dependencies.</summary>
-    public AccountService(
-        IAccountRepository accountRepository,
-        IPasswordService passwordService,
-        IMailClient mailClient,
-        IEmailPublisher emailPublisher,
-        IOptions<ServerSetting> settings,
-        IRsaService rsa,
-        ILogger<AccountService> logger,
-        IUnitOfWork unitOfWork)
-    {
-        _accountRepository = accountRepository;
-        _passwordService = passwordService;
-        _mailClient = mailClient;
-        _emailPublisher = emailPublisher;
-        _settings = settings;
-        _rsa = rsa;
-        _logger = logger;
-        _unitOfWork = unitOfWork;
-    }
-
     /// <inheritdoc />
     public async Task<List<AccountResponse>> GetAllAccountsAsync(CancellationToken ct = default)
-        => (await _accountRepository.GetAllAsync(ct)).Select(AccountMapper.ToResponse).ToList();
+        => (await accountRepository.GetAllAsync(ct)).Select(AccountMapper.ToResponse).ToList();
 
     /// <inheritdoc />
     public async Task<List<AccountResponse>> GetAccountsByNicknamesAsync(IEnumerable<string> nicknames, CancellationToken ct = default)
-        => (await _accountRepository.FindByNicknamesAsync(nicknames, ct)).Select(AccountMapper.ToResponse).ToList();
+        => (await accountRepository.FindByNicknamesAsync(nicknames, ct)).Select(AccountMapper.ToResponse).ToList();
 
     /// <inheritdoc />
     public async Task<AccountResponse?> GetAccountByEmailAsync(string email, CancellationToken ct = default)
@@ -74,13 +53,13 @@ public class AccountService : IAccountService
     /// <inheritdoc />
     public async Task<LoginResult> LoginAsync(string email, string password, CancellationToken ct = default)
     {
-        await _unitOfWork.BeginAsync(ct);
+        await unitOfWork.BeginAsync(ct);
         try
         {
             // Row lock (FOR UPDATE) held until commit/rollback below, so concurrent login attempts
             // against the same account are fully serialized: each one sees the latest committed
             // LoginAttempt/Locked state rather than a stale pre-lock read.
-            Account? account = await _accountRepository.FindByEmailForUpdateAsync(email, ct);
+            Account? account = await accountRepository.FindByEmailForUpdateAsync(email, ct);
 
             const string genericLoginError = "Email or Password is wrong";
 
@@ -88,12 +67,12 @@ public class AccountService : IAccountService
             {
                 // Spend the same CPU as a real verification so "no such account" and "wrong
                 // password" take the same time — otherwise the response time enumerates valid emails.
-                _ = _passwordService.VerifyDummy(password);
+                _ = passwordService.VerifyDummy(password);
                 // ...and issue an equivalent (0-row) column write + commit so this path's DB cost
                 // matches the wrong-password path below (which persists the failed-attempt counter),
                 // instead of returning early after a bare rollback.
-                _ = await _accountRepository.UpdateMessageAsync(email, null, DateTime.UtcNow, ct);
-                await _unitOfWork.CommitAsync(ct);
+                _ = await accountRepository.UpdateMessageAsync(email, null, DateTime.UtcNow, ct);
+                await unitOfWork.CommitAsync(ct);
                 return LoginResult.Fail(genericLoginError);
             }
 
@@ -102,48 +81,48 @@ public class AccountService : IAccountService
             // that has proven it owns the account, so a wrong password can no longer be used to probe
             // whether an email exists or what state it is in — every wrong guess returns the same
             // generic error.
-            if (!_passwordService.VerifyPassword(password, account.HashedPassword))
+            if (!passwordService.VerifyPassword(password, account.HashedPassword))
             {
-                account.RecordLoginFailure(_settings.Value.MaxLoginAttempt);
-                await _accountRepository.UpdateEntityAsync(account, ct);
-                await _unitOfWork.CommitAsync(ct);
+                account.RecordLoginFailure(settings.Value.MaxLoginAttempt);
+                await accountRepository.UpdateEntityAsync(account, ct);
+                await unitOfWork.CommitAsync(ct);
                 return LoginResult.Fail(genericLoginError);
             }
 
             if (account.Deleted)
             {
-                await _unitOfWork.RollbackAsync(ct);
+                await unitOfWork.RollbackAsync(ct);
                 return LoginResult.Fail("Your Account is Deleted, Please create your new account by clicking Sign up Button");
             }
 
             if (account.Locked)
             {
-                await _unitOfWork.RollbackAsync(ct);
+                await unitOfWork.RollbackAsync(ct);
                 return LoginResult.Fail("Your Account is Locked, Please reset your password by clicking Forgot password Button");
             }
 
             if (!account.EmailConfirmed)
             {
-                await _unitOfWork.RollbackAsync(ct);
+                await unitOfWork.RollbackAsync(ct);
                 return LoginResult.Fail("Email verification was not completed. Please try sign up again.");
             }
 
             if (!account.AgreedServiceTerms)
             {
-                await _unitOfWork.RollbackAsync(ct);
+                await unitOfWork.RollbackAsync(ct);
                 return LoginResult.Fail("Agreed Service Terms was not checked. Please try sign up again and login again.");
             }
 
             // Successful login: clear any prior failed attempt counter.
             account.ResetLoginAttempt();
-            await _accountRepository.UpdateEntityAsync(account, ct);
-            await _unitOfWork.CommitAsync(ct);
+            await accountRepository.UpdateEntityAsync(account, ct);
+            await unitOfWork.CommitAsync(ct);
 
             return LoginResult.Ok(AccountMapper.ToResponse(account));
         }
         catch
         {
-            await _unitOfWork.RollbackAsync(ct);
+            await unitOfWork.RollbackAsync(ct);
             throw;
         }
     }
@@ -161,7 +140,7 @@ public class AccountService : IAccountService
                 return RegisterResult.Fail(PasswordPolicy.ViolationMessage);
 
             // Brand-new account: hash the plain-text password and create the domain entity.
-            string hashedPassword = _passwordService.HashPassword(newAccount.PlainPassword ?? "");
+            string hashedPassword = passwordService.HashPassword(newAccount.PlainPassword ?? "");
 
             var createResult = Account.Create(
                 newAccount.Email ?? "",
@@ -181,7 +160,7 @@ public class AccountService : IAccountService
 
             try
             {
-                await _accountRepository.CreateAsync(account, ct);
+                await accountRepository.CreateAsync(account, ct);
             }
             catch (Exception e)
             {
@@ -197,7 +176,7 @@ public class AccountService : IAccountService
                         ? RegisterResult.Fail("'{0}' is a Nickname that already exists. Please enter another Nickname.", errorArgs: [newAccount.Nickname ?? ""])
                         : RegisterResult.Fail("'{0}' is an Email that already exists.", errorArgs: [newAccount.Email ?? ""]);
                 }
-                _logger.LogError(e, "Failed to create account for {Email}", newAccount.Email);
+                logger.LogError(e, "Failed to create account for {Email}", newAccount.Email);
                 return RegisterResult.Fail("Error occurred while processing about account registration");
             }
 
@@ -238,28 +217,32 @@ public class AccountService : IAccountService
         // not distinguishable by timing.
         string alreadyCreatedMessage = EnumHelper.GetDescription(AccountMessage.UserAlreadyCreated);
         bool callerOwnsAccount =
-            _passwordService.VerifyPassword(newAccount.PlainPassword ?? "", existing.HashedPassword);
-        if (callerOwnsAccount)
+            passwordService.VerifyPassword(newAccount.PlainPassword ?? "", existing.HashedPassword);
+        if (!callerOwnsAccount)
+        {
+            return RegisterResult.Fail(alreadyCreatedMessage);
+        }
+
         {
             try
             {
                 if (!existing.AgreedServiceTerms)
                 {
                     existing.AcceptServiceTerms();
-                    await _accountRepository.UpdateAgreedServiceTermsAsync(
+                    await accountRepository.UpdateAgreedServiceTermsAsync(
                         existing.Email.Value, existing.AgreedServiceTerms, existing.Updated, ct);
                 }
 
                 if (!string.Equals(existing.Message, alreadyCreatedMessage, StringComparison.Ordinal))
                 {
                     existing.SetMessage(alreadyCreatedMessage);
-                    await _accountRepository.UpdateMessageAsync(
+                    await accountRepository.UpdateMessageAsync(
                         existing.Email.Value, existing.Message, existing.Updated, ct);
                 }
             }
             catch (Exception e)
             {
-                _logger.LogError(e, "Failed to update account status for {Email}", existing.Email.Value);
+                logger.LogError(e, "Failed to update account status for {Email}", existing.Email.Value);
                 return RegisterResult.Fail("Error occurred while processing about account status");
             }
         }
@@ -299,10 +282,10 @@ public class AccountService : IAccountService
     public async Task<ConfirmEmailResult> ConfirmEmailAsync(string encryptedToken, CancellationToken ct = default)
     {
         string rawToken;
-        try { rawToken = _rsa.Decrypt(encryptedToken); }
+        try { rawToken = rsa.Decrypt(encryptedToken); }
         catch (Exception e)
         {
-            _logger.LogWarning(e, "Failed to decrypt registration token");
+            logger.LogWarning(e, "Failed to decrypt registration token");
             return new ConfirmEmailResult { InvalidToken = true, AccountCreated = false };
         }
 
@@ -330,8 +313,8 @@ public class AccountService : IAccountService
             // UpdateEntityAsync): this runs off an un-locked token lookup and must not overwrite a
             // concurrent self-service change on the same row.
             account.SetMessage(EnumHelper.GetDescription(AccountMessage.UserAlreadyCreated));
-            try { await _accountRepository.UpdateMessageAsync(account.Email.Value, account.Message, account.Updated, ct); }
-            catch (Exception e) { _logger.LogError(e, "Failed to update account status for {Email}", account.Email.Value); }
+            try { await accountRepository.UpdateMessageAsync(account.Email.Value, account.Message, account.Updated, ct); }
+            catch (Exception e) { logger.LogError(e, "Failed to update account status for {Email}", account.Email.Value); }
             return new ConfirmEmailResult { InvalidToken = false, AccountCreated = false };
         }
 
@@ -342,12 +325,12 @@ public class AccountService : IAccountService
             // Column-scoped write (not full-row UpdateEntityAsync): this runs off an un-locked
             // token lookup and must not overwrite a concurrent self-service change on the same row
             // (same reasoning as the already-confirmed branch above).
-            rowsAffected = await _accountRepository.UpdateEmailConfirmationAsync(
+            rowsAffected = await accountRepository.UpdateEmailConfirmationAsync(
                 account.Email.Value, account.RegistrationToken, account.Message, account.Updated, ct);
         }
         catch (Exception e)
         {
-            _logger.LogError(e, "Failed to confirm email for account {Email}", account.Email.Value);
+            logger.LogError(e, "Failed to confirm email for account {Email}", account.Email.Value);
             return new ConfirmEmailResult
             {
                 InvalidToken = true,
@@ -360,14 +343,15 @@ public class AccountService : IAccountService
         // account was deleted concurrently between FindByRegistrationTokenAsync above and this
         // write, nothing was actually persisted; report it the same way as "account not found"
         // rather than a false AccountCreated success.
-        if (rowsAffected == 0)
+        if (rowsAffected != 0)
         {
-            _logger.LogWarning(
-                "Account {Email} no longer existed when its email confirmation was written", account.Email.Value);
-            return new ConfirmEmailResult { InvalidToken = true, AccountCreated = false };
+            return new ConfirmEmailResult { InvalidToken = false, AccountCreated = true };
         }
 
-        return new ConfirmEmailResult { InvalidToken = false, AccountCreated = true };
+        logger.LogWarning(
+            "Account {Email} no longer existed when its email confirmation was written", account.Email.Value);
+        return new ConfirmEmailResult { InvalidToken = true, AccountCreated = false };
+
     }
 
     /// <inheritdoc />
@@ -386,10 +370,10 @@ public class AccountService : IAccountService
         {
             try
             {
-                _ = _rsa.Encrypt(GuidToken.Generate());
-                _ = await _accountRepository.UpdateResetPasswordTokenAsync(email, null, DateTime.UtcNow, ct);
+                _ = rsa.Encrypt(GuidToken.Generate());
+                _ = await accountRepository.UpdateResetPasswordTokenAsync(email, null, DateTime.UtcNow, ct);
             }
-            catch (Exception e) { _logger.LogWarning(e, "ForgotPassword equalization failed for {Email}", email); }
+            catch (Exception e) { logger.LogWarning(e, "ForgotPassword equalization failed for {Email}", email); }
             return true;
         }
 
@@ -408,16 +392,16 @@ public class AccountService : IAccountService
             // UpdateEntityAsync: this runs off an un-locked read, so a concurrent self-service
             // profile change (avatar/timezone/password) on the same account must not be reverted by
             // a stale full-row snapshot — same rationale as every other Account write path.
-            await _accountRepository.UpdateResetPasswordTokenAsync(
+            await accountRepository.UpdateResetPasswordTokenAsync(
                 account.Email.Value, account.ResetPasswordToken, account.Updated, ct);
 
-            string body = _mailClient.GetMailResetPasswordBody(_rsa.Encrypt(resetPasswordToken), emailTemplate.Title, emailTemplate.Content0, emailTemplate.Content1, _settings.Value.DomainName ?? "");
+            string body = mailClient.GetMailResetPasswordBody(rsa.Encrypt(resetPasswordToken), emailTemplate.Title, emailTemplate.Content0, emailTemplate.Content1, settings.Value.DomainName ?? "");
             bool published = await PublishMailAsync(account.Email.Value, emailTemplate.Subject, body, ct);
 
             account.SetMessage(EnumHelper.GetDescription(published ? AccountMessage.ResetPasswordMail : AccountMessage.FailToMailSent));
-            await _accountRepository.UpdateMessageAsync(account.Email.Value, account.Message, account.Updated, ct);
+            await accountRepository.UpdateMessageAsync(account.Email.Value, account.Message, account.Updated, ct);
         }
-        catch (Exception e) { _logger.LogWarning(e, "ForgotPassword failed for {Email}", email); }
+        catch (Exception e) { logger.LogWarning(e, "ForgotPassword failed for {Email}", email); }
 
         return true;
     }
@@ -426,10 +410,10 @@ public class AccountService : IAccountService
     public async Task<ResetPasswordValidationResult> ValidateResetPasswordTokenAsync(string encryptedToken, CancellationToken ct = default)
     {
         string rawToken;
-        try { rawToken = _rsa.Decrypt(encryptedToken); }
+        try { rawToken = rsa.Decrypt(encryptedToken); }
         catch (Exception e)
         {
-            _logger.LogWarning(e, "Failed to decrypt reset password token");
+            logger.LogWarning(e, "Failed to decrypt reset password token");
             return new ResetPasswordValidationResult { FailToReset = true };
         }
 
@@ -447,10 +431,10 @@ public class AccountService : IAccountService
     public async Task<ServiceResult> ResetPasswordAsync(string encryptedToken, string newPassword, CancellationToken ct = default)
     {
         string rawToken;
-        try { rawToken = _rsa.Decrypt(encryptedToken); }
+        try { rawToken = rsa.Decrypt(encryptedToken); }
         catch (Exception e)
         {
-            _logger.LogWarning(e, "Failed to decrypt reset password token");
+            logger.LogWarning(e, "Failed to decrypt reset password token");
             return ServiceResult.Fail("reset-password-invalid");
         }
 
@@ -462,19 +446,19 @@ public class AccountService : IAccountService
         if (!PasswordPolicy.IsValid(newPassword))
             return ServiceResult.Validation("Account.PasswordPolicy", PasswordPolicy.ViolationMessage);
 
-        string newHashedPassword = _passwordService.HashPassword(newPassword);
+        string newHashedPassword = passwordService.HashPassword(newPassword);
 
-        await _unitOfWork.BeginAsync(ct);
+        await unitOfWork.BeginAsync(ct);
         try
         {
             // The lookup above was by token and unlocked. Re-read the row under FOR UPDATE before
             // writing: this touches HashedPassword / SecurityStamp / Locked, so it must not run as a
             // stale full-row overwrite that reverts a concurrent self-service change on the same
             // account (the user may be signed in on another device).
-            Account? account = await _accountRepository.FindByEmailForUpdateAsync(found.Email.Value, ct);
+            Account? account = await accountRepository.FindByEmailForUpdateAsync(found.Email.Value, ct);
             if (account == null)
             {
-                await _unitOfWork.RollbackAsync(ct);
+                await unitOfWork.RollbackAsync(ct);
                 return ServiceResult.Fail("reset-password-invalid");
             }
 
@@ -483,7 +467,7 @@ public class AccountService : IAccountService
             var resetResult = account.ResetPassword(rawToken, newHashedPassword);
             if (resetResult.IsError)
             {
-                await _unitOfWork.RollbackAsync(ct);
+                await unitOfWork.RollbackAsync(ct);
                 return ServiceResult.Fail("reset-password-invalid");
             }
 
@@ -491,26 +475,26 @@ public class AccountService : IAccountService
             account.Unlock();
             account.SetMessage(EnumHelper.GetDescription(AccountMessage.SuccessToResetPassword));
 
-            await _accountRepository.UpdateEntityAsync(account, ct);
-            await _unitOfWork.CommitAsync(ct);
+            await accountRepository.UpdateEntityAsync(account, ct);
+            await unitOfWork.CommitAsync(ct);
             return ServiceResult.Ok();
         }
         catch (Exception e)
         {
-            _logger.LogError(e, "Failed to reset password for {Email}", found.Email.Value);
-            await _unitOfWork.RollbackAsync(ct);
+            logger.LogError(e, "Failed to reset password for {Email}", found.Email.Value);
+            await unitOfWork.RollbackAsync(ct);
             return ServiceResult.Failure("Account.ResetPasswordFailed", "Error occurred while processing about reset password");
         }
     }
 
     private Task<Account?> FindByEmailAsync(string email, CancellationToken ct = default)
-        => _accountRepository.FindByEmailAsync(email, ct);
+        => accountRepository.FindByEmailAsync(email, ct);
 
     private Task<Account?> FindByRegistrationTokenAsync(string token, CancellationToken ct = default)
-        => _accountRepository.FindByRegistrationTokenAsync(token, ct);
+        => accountRepository.FindByRegistrationTokenAsync(token, ct);
 
     private Task<Account?> FindByResetPasswordTokenAsync(string token, CancellationToken ct = default)
-        => _accountRepository.FindByResetPasswordTokenAsync(token, ct);
+        => accountRepository.FindByResetPasswordTokenAsync(token, ct);
 
     /// <summary>
     /// Builds and publishes a registration-confirmation email for <paramref name="account"/>, then
@@ -535,16 +519,16 @@ public class AccountService : IAccountService
         // harmless idempotent re-set of the same value.)
         try
         {
-            await _accountRepository.UpdateRegistrationTokenAsync(
+            await accountRepository.UpdateRegistrationTokenAsync(
                 account.Email.Value, account.RegistrationToken, account.Updated, ct);
         }
         catch (Exception e)
         {
-            _logger.LogError(e, "Failed to persist registration token for {Email}", account.Email.Value);
+            logger.LogError(e, "Failed to persist registration token for {Email}", account.Email.Value);
             return RegisterResult.Fail("Error occurred while processing about account status");
         }
 
-        string body = _mailClient.GetMailConfirmationBody(_rsa.Encrypt(account.RegistrationToken!), emailTemplate.Title, emailTemplate.Content0, emailTemplate.Content1, _settings.Value.DomainName ?? "");
+        string body = mailClient.GetMailConfirmationBody(rsa.Encrypt(account.RegistrationToken!), emailTemplate.Title, emailTemplate.Content0, emailTemplate.Content1, settings.Value.DomainName ?? "");
         bool published = await PublishMailAsync(account.Email.Value, emailTemplate.Subject, body, ct);
 
         if (!published)
@@ -552,22 +536,26 @@ public class AccountService : IAccountService
             try
             {
                 account.SetMessage(EnumHelper.GetDescription(AccountMessage.FailToMailSent));
-                await _accountRepository.UpdateMessageAsync(account.Email.Value, account.Message, account.Updated, ct);
+                await accountRepository.UpdateMessageAsync(account.Email.Value, account.Message, account.Updated, ct);
             }
-            catch (Exception e) { _logger.LogWarning(e, "Failed to update account message after mail send failure for {Email}", account.Email.Value); }
+            catch (Exception e) { logger.LogWarning(e, "Failed to update account message after mail send failure for {Email}", account.Email.Value); }
             return RegisterResult.Fail("Error occurred while processing about sending account authentication mail");
         }
 
-        if (setVerifyEmailMessageOnSuccess)
+        if (!setVerifyEmailMessageOnSuccess)
+        {
+            return RegisterResult.Ok(showResendEmail: true, email: account.Email.Value, repeat: repeat);
+        }
+
         {
             try
             {
                 account.SetMessage(EnumHelper.GetDescription(AccountMessage.VerifyEmail));
-                await _accountRepository.UpdateMessageAsync(account.Email.Value, account.Message, account.Updated, ct);
+                await accountRepository.UpdateMessageAsync(account.Email.Value, account.Message, account.Updated, ct);
             }
             catch (Exception e)
             {
-                _logger.LogError(e, "Failed to update account status for {Email}", account.Email.Value);
+                logger.LogError(e, "Failed to update account status for {Email}", account.Email.Value);
                 return RegisterResult.Fail("Error occurred while processing about account status");
             }
         }
@@ -586,14 +574,14 @@ public class AccountService : IAccountService
         try
         {
 #pragma warning disable CA1873
-            _logger.LogInformation("Publishing email to {Email}. CorrelationId={CorrelationId}", to, correlationId);
+            logger.LogInformation("Publishing email to {Email}. CorrelationId={CorrelationId}", to, correlationId);
 #pragma warning restore CA1873
-            await _emailPublisher.PublishAsync(new SendEmailMessage(to, subject, body, correlationId), ct);
+            await emailPublisher.PublishAsync(new SendEmailMessage(to, subject, body, correlationId), ct);
             return true;
         }
         catch (Exception e)
         {
-            _logger.LogError(e, "Failed to publish email message for {Email}", to);
+            logger.LogError(e, "Failed to publish email message for {Email}", to);
             return false;
         }
     }

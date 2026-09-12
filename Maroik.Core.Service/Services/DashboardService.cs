@@ -17,50 +17,27 @@ namespace Maroik.Core.Service.Services;
 /// and computes notification counts for fixed-income and fixed-expenditure entries
 /// whose deposit dates are approaching or have passed maturity.
 /// </summary>
-public class DashboardService : IDashboardService
+public class DashboardService(
+    IAccountRepository accountRepository,
+    IAssetRepository assetRepository,
+    IIncomeRepository incomeRepository,
+    IExpenditureRepository expenditureRepository,
+    IFixedIncomeRepository fixedIncomeRepository,
+    IFixedExpenditureRepository fixedExpenditureRepository,
+    IOptions<ServerSetting> settings,
+    ILogger<DashboardService> logger) : IDashboardService
 {
-    private readonly IAccountRepository _accountRepository;
-    private readonly IAssetRepository _assetRepository;
-    private readonly IIncomeRepository _incomeRepository;
-    private readonly IExpenditureRepository _expenditureRepository;
-    private readonly IFixedIncomeRepository _fixedIncomeRepository;
-    private readonly IFixedExpenditureRepository _fixedExpenditureRepository;
-    private readonly IOptions<ServerSetting> _settings;
-    private readonly ILogger<DashboardService> _logger;
-
-    /// <summary>Initializes a new instance of <see cref="DashboardService"/> with the supplied dependencies.</summary>
-    public DashboardService(
-        IAccountRepository accountRepository,
-        IAssetRepository assetRepository,
-        IIncomeRepository incomeRepository,
-        IExpenditureRepository expenditureRepository,
-        IFixedIncomeRepository fixedIncomeRepository,
-        IFixedExpenditureRepository fixedExpenditureRepository,
-        IOptions<ServerSetting> settings,
-        ILogger<DashboardService> logger)
-    {
-        _accountRepository = accountRepository;
-        _assetRepository = assetRepository;
-        _incomeRepository = incomeRepository;
-        _expenditureRepository = expenditureRepository;
-        _fixedIncomeRepository = fixedIncomeRepository;
-        _fixedExpenditureRepository = fixedExpenditureRepository;
-        _settings = settings;
-        _logger = logger;
-    }
-
     /// <inheritdoc />
     public async Task<DashboardDto> GetSummaryAsync(string accountEmail, string year, string month, string timeZoneId, CancellationToken ct = default)
     {
         // The public demo account always shows a fixed, pre-seeded period (configured via
         // ServerSetting.DemoAccountEmail/DemoDashboardYear/DemoDashboardMonth) so visitors see
         // consistent sample data regardless of when they browse the demo.
-        ServerSetting settings = _settings.Value;
-        bool isDemoAccount = !string.IsNullOrEmpty(settings.DemoAccountEmail) && accountEmail == settings.DemoAccountEmail;
+        bool isDemoAccount = !string.IsNullOrEmpty(settings.Value.DemoAccountEmail) && accountEmail == settings.Value.DemoAccountEmail;
         if (isDemoAccount)
         {
-            year = settings.DemoDashboardYear ?? year;
-            month = settings.DemoDashboardMonth ?? month;
+            year = settings.Value.DemoDashboardYear ?? year;
+            month = settings.Value.DemoDashboardMonth ?? month;
         }
 
         // Normalize year/month
@@ -81,9 +58,9 @@ public class DashboardService : IDashboardService
         // user whose only assets happen to be deleted still resolves the same effective currency
         // and sees the same MonetaryUnits options main would show. Only the visible asset card
         // list (`assets` below) is deleted-filtered, since main has no such list to match.
-        List<Asset> allAssets = await _assetRepository.GetByAccountEmailAsync(accountEmail, ct);
+        List<Asset> allAssets = await assetRepository.GetByAccountEmailAsync(accountEmail, ct);
         List<Asset> assets = [.. allAssets.Where(a => !a.Deleted)];
-        Account? account = await _accountRepository.FindByEmailAsync(accountEmail, ct);
+        Account? account = await accountRepository.FindByEmailAsync(accountEmail, ct);
 
         string? defaultMonetaryUnit = account == null ? null : DefaultMonetaryUnitPolicy.Resolve(account.DefaultMonetaryUnit, allAssets);
 
@@ -91,13 +68,13 @@ public class DashboardService : IDashboardService
         // Account.DefaultMonetaryUnit directly (e.g. account management) must not see a
         // stale/empty value while the dashboard itself already shows the resolved one.
         // Never do this for the public demo account: its data is pre-seeded and fixed, and it is
-        // browsed anonymously, so a write here would fire on ordinary anonymous page views.
+        // browsed anonymously, so write here would fire on ordinary anonymous page views.
         if (!isDemoAccount && account != null && account.DefaultMonetaryUnit != defaultMonetaryUnit)
         {
             // Column-scoped write (DefaultMonetaryUnit only, no Updated bump): this fires on a
             // dashboard GET, so a full-row UpdateEntityAsync here would race — and silently
             // overwrite — a concurrent profile edit on the same account.
-            await _accountRepository.UpdateDefaultMonetaryUnitAsync(accountEmail, defaultMonetaryUnit, ct);
+            await accountRepository.UpdateDefaultMonetaryUnitAsync(accountEmail, defaultMonetaryUnit, ct);
         }
 
         var summary = new DashboardDto
@@ -117,8 +94,8 @@ public class DashboardService : IDashboardService
             DateTime ymStart = new DateTime(yearInt, monthInt, 1).ConvertToUtcByTimeZoneIanaId(timeZoneId);
             DateTime ymEnd = new DateTime(yearInt, monthInt, 1).AddMonths(1).ConvertToUtcByTimeZoneIanaId(timeZoneId);
 
-            List<Income> yearIncomes = await _incomeRepository.GetByAccountEmailAndDateRangeAsync(accountEmail, yearStart, yearEnd, ct);
-            List<Expenditure> yearExpenditures = await _expenditureRepository.GetByAccountEmailAndDateRangeAsync(accountEmail, yearStart, yearEnd, ct);
+            List<Income> yearIncomes = await incomeRepository.GetByAccountEmailAndDateRangeAsync(accountEmail, yearStart, yearEnd, ct);
+            List<Expenditure> yearExpenditures = await expenditureRepository.GetByAccountEmailAndDateRangeAsync(accountEmail, yearStart, yearEnd, ct);
 
             // ymStart/ymEnd always fall within [yearStart, yearEnd), so the year-month totals can
             // be derived from the year totals already fetched above instead of two more DB round
@@ -133,22 +110,34 @@ public class DashboardService : IDashboardService
             // from the totals.
             string defaultUnit = summary.DefaultMonetaryUnit;
             Dictionary<string, string> currencyByProduct = allAssets
-                .GroupBy(a => a.ProductName ?? "")
+                .GroupBy(a => a.ProductName)
                 .ToDictionary(g => g.Key, g => g.Last().Balance.Currency);
-            summary.YearIncomes = yearIncomes
-                .Where(x => currencyByProduct.GetValueOrDefault(x.DepositMyAssetProductName ?? "") == defaultUnit)
-                .Select(IncomeMapper.ToResponse).ToList();
-            summary.YearExpenditures = yearExpenditures
-                .Where(x => currencyByProduct.GetValueOrDefault(x.PaymentMethod ?? "") == defaultUnit)
-                .Select(ExpenditureMapper.ToResponse).ToList();
-            summary.YearMonthIncomes = ymIncomes
-                .Where(x => currencyByProduct.GetValueOrDefault(x.DepositMyAssetProductName ?? "") == defaultUnit)
-                .Select(IncomeMapper.ToResponse).ToList();
-            summary.YearMonthExpenditures = ymExpenditures
-                .Where(x => currencyByProduct.GetValueOrDefault(x.PaymentMethod ?? "") == defaultUnit)
-                .Select(ExpenditureMapper.ToResponse).ToList();
+            summary.YearIncomes =
+            [
+                .. yearIncomes
+                    .Where(x => currencyByProduct.GetValueOrDefault(x.DepositMyAssetProductName) == defaultUnit)
+                    .Select(IncomeMapper.ToResponse)
+            ];
+            summary.YearExpenditures =
+            [
+                .. yearExpenditures
+                    .Where(x => currencyByProduct.GetValueOrDefault(x.PaymentMethod) == defaultUnit)
+                    .Select(ExpenditureMapper.ToResponse)
+            ];
+            summary.YearMonthIncomes =
+            [
+                .. ymIncomes
+                    .Where(x => currencyByProduct.GetValueOrDefault(x.DepositMyAssetProductName) == defaultUnit)
+                    .Select(IncomeMapper.ToResponse)
+            ];
+            summary.YearMonthExpenditures =
+            [
+                .. ymExpenditures
+                    .Where(x => currencyByProduct.GetValueOrDefault(x.PaymentMethod) == defaultUnit)
+                    .Select(ExpenditureMapper.ToResponse)
+            ];
 
-            // Per-main-class sub-class amount/percentage breakdowns (labor/business/pension income,
+            // Per-main-class subClass amount/percentage breakdowns (labor/business/pension income,
             // meal/housing/education spending, ...) the dashboard view displays. Computed here, from
             // IncomeClassPolicy/ExpenditureClassPolicy's own main-class list, so the view model
             // mapper only reads pre-computed numbers instead of re-deriving these sums itself.
@@ -163,8 +152,8 @@ public class DashboardService : IDashboardService
         }
 
         // Compute StartYear
-        var firstIncome = await _incomeRepository.GetFirstByAccountEmailOrderedByCreatedAsync(accountEmail, ct);
-        var firstExpenditure = await _expenditureRepository.GetFirstByAccountEmailOrderedByCreatedAsync(accountEmail, ct);
+        var firstIncome = await incomeRepository.GetFirstByAccountEmailOrderedByCreatedAsync(accountEmail, ct);
+        var firstExpenditure = await expenditureRepository.GetFirstByAccountEmailOrderedByCreatedAsync(accountEmail, ct);
 
         DateTime firstCreated = DateTime.MaxValue;
         if (firstIncome != null && firstIncome.Created != DateTime.MinValue && firstIncome.Created < firstCreated)
@@ -190,7 +179,7 @@ public class DashboardService : IDashboardService
 
         DateTime currentDate = DateTime.UtcNow.ConvertTimeByTimeZoneIanaId(timeZoneId).Date;
 
-        foreach (var item in await _fixedIncomeRepository.GetByAccountEmailAsync(email, ct))
+        foreach (var item in await fixedIncomeRepository.GetByAccountEmailAsync(email, ct))
         {
             if (FixedSchedulePolicy.IsNoticed(item.DepositMonth, item.DepositDay, currentDate, noticeMaturityDateDay, item.Unpunctuality))
                 incomesNoticed++;
@@ -198,7 +187,7 @@ public class DashboardService : IDashboardService
                 incomesExpired++;
         }
 
-        foreach (var item in await _fixedExpenditureRepository.GetByAccountEmailAsync(email, ct))
+        foreach (var item in await fixedExpenditureRepository.GetByAccountEmailAsync(email, ct))
         {
             if (FixedSchedulePolicy.IsNoticed(item.DepositMonth, item.DepositDay, currentDate, noticeMaturityDateDay, item.Unpunctuality))
                 expendituresNoticed++;
@@ -255,7 +244,7 @@ public class DashboardService : IDashboardService
         }
         catch (Exception ex)
         {
-            _logger.LogWarning(ex, "Failed to parse Docker container resource usage");
+            logger.LogWarning(ex, "Failed to parse Docker container resource usage");
         }
 
         string memUsageLimit = "";
@@ -269,7 +258,7 @@ public class DashboardService : IDashboardService
             }
             catch (Exception ex)
             {
-                _logger.LogWarning(ex, "Failed to parse host memory usage/limit from resource log");
+                logger.LogWarning(ex, "Failed to parse host memory usage/limit from resource log");
             }
         }
 
@@ -284,14 +273,16 @@ public class DashboardService : IDashboardService
             }
             catch (Exception ex)
             {
-                _logger.LogWarning(ex, "Failed to parse host disk usage/limit from resource log");
+                logger.LogWarning(ex, "Failed to parse host disk usage/limit from resource log");
             }
         }
 
 #pragma warning disable CA1806
         double.TryParse(
 #pragma warning restore CA1806
+#pragma warning disable IDE0305
             new string(hostCpuInfo.Where(c => char.IsDigit(c) || c == '.').ToArray()),
+#pragma warning restore IDE0305
             out double hostCpuNumeric);
 
         return new ServerResourceDto
@@ -345,11 +336,13 @@ public class DashboardService : IDashboardService
 
             int startIndex = markerIndex + startMarker.Length;
             int endIndex = endMarker != null ? input.IndexOf(endMarker, startIndex, StringComparison.Ordinal) : input.Length;
+#pragma warning disable IDE0057
             return endIndex < 0 ? "" : input.Substring(startIndex, endIndex - startIndex).Trim();
+#pragma warning restore IDE0057
         }
         catch (Exception ex)
         {
-            _logger.LogWarning(ex, "Failed to extract section {StartMarker} from resource log", startMarker);
+            logger.LogWarning(ex, "Failed to extract section {StartMarker} from resource log", startMarker);
             return "";
         }
     }

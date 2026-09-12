@@ -13,77 +13,71 @@ namespace Maroik.Core.Service.Services;
 /// Asset ownership is verified before create/update operations to prevent cross-account data access.
 /// All write operations are wrapped in a database transaction via <see cref="IUnitOfWork"/>.
 /// </summary>
-public class ExpenditureService : IExpenditureService
+public class ExpenditureService(
+    IExpenditureRepository expenditureRepository,
+    IAssetBalanceDomainService assetBalance,
+    IUnitOfWork unitOfWork,
+    ILogger<ExpenditureService> logger) : IExpenditureService
 {
-    private readonly IExpenditureRepository _expenditureRepository;
-    private readonly IAssetBalanceDomainService _assetBalance;
-    private readonly IUnitOfWork _unitOfWork;
-    private readonly ILogger<ExpenditureService> _logger;
-
-    /// <summary>Initializes a new instance of <see cref="ExpenditureService"/> with the supplied dependencies.</summary>
-    public ExpenditureService(
-        IExpenditureRepository expenditureRepository,
-        IAssetBalanceDomainService assetBalance,
-        IUnitOfWork unitOfWork,
-        ILogger<ExpenditureService> logger)
-    {
-        _expenditureRepository = expenditureRepository;
-        _assetBalance = assetBalance;
-        _unitOfWork = unitOfWork;
-        _logger = logger;
-    }
-
     /// <inheritdoc />
     public async Task<List<ExpenditureResponse>> GetExpendituresAsync(string accountEmail, CancellationToken ct = default)
-        => (await _expenditureRepository.GetByAccountEmailAsync(accountEmail, ct)).Select(ExpenditureMapper.ToResponse).ToList();
+        =>
+        [
+            .. (await expenditureRepository.GetByAccountEmailAsync(accountEmail, ct)).Select(ExpenditureMapper
+                .ToResponse)
+        ];
 
-    /// <inheritdoc />
+    ///s <inheritdoc />
     public async Task<List<ExpenditureResponse>> SearchExpendituresAsync(string accountEmail, string search, CancellationToken ct = default)
-        => (await _expenditureRepository.SearchByAccountEmailAsync(accountEmail, search, ct)).Select(ExpenditureMapper.ToResponse).ToList();
+        =>
+        [
+            .. (await expenditureRepository.SearchByAccountEmailAsync(accountEmail, search, ct)).Select(
+                ExpenditureMapper.ToResponse)
+        ];
 
     /// <inheritdoc />
     public async Task<ExpenditureResponse?> GetByIdAsync(string accountEmail, long id, CancellationToken ct = default)
     {
-        var expenditure = await _expenditureRepository.FindByEmailAndIdAsync(accountEmail, id, ct);
+        var expenditure = await expenditureRepository.FindByEmailAndIdAsync(accountEmail, id, ct);
         return expenditure == null ? null : ExpenditureMapper.ToResponse(expenditure);
     }
 
     /// <inheritdoc />
     public async Task<ServiceResult> CreateAsync(string accountEmail, ExpenditureRequest request, CancellationToken ct = default)
     {
-        await _unitOfWork.BeginAsync(ct);
+        await unitOfWork.BeginAsync(ct);
         try
         {
             var classResult = ExpenditureClassPolicy.Validate(request.MainClass, request.SubClass);
             if (classResult.IsError)
-                return await _unitOfWork.FailAsync(classResult.FirstError, ct);
+                return await unitOfWork.FailAsync(classResult.FirstError, ct);
 
             bool isTransfer = classResult.Value;
             if (isTransfer && request.PaymentMethod == request.MyDepositAsset)
-                return await _unitOfWork.FailAsync(SameAssetResult, ct);
+                return await unitOfWork.FailAsync(SameAssetResult, ct);
 
             // GetAssetsOrdinalAsync takes row locks held until commit/rollback, always in ordinal
             // name order, so that concurrent transactions touching the same asset pair (here,
             // elsewhere in this class, or in IncomeService) cannot deadlock on each other.
-            Dictionary<string, Asset> touchedAssets = await _assetBalance.GetAssetsOrdinalAsync(
+            Dictionary<string, Asset> touchedAssets = await assetBalance.GetAssetsOrdinalAsync(
                 accountEmail, [request.PaymentMethod, isTransfer ? request.MyDepositAsset : null], ct);
 
             Asset? paymentAsset = !string.IsNullOrEmpty(request.PaymentMethod) && touchedAssets.TryGetValue(request.PaymentMethod, out var pay) ? pay : null;
             Asset? depositAsset = isTransfer && !string.IsNullOrEmpty(request.MyDepositAsset) && touchedAssets.TryGetValue(request.MyDepositAsset, out var dep) ? dep : null;
 
             if (paymentAsset == null)
-                return await _unitOfWork.FailAsync(AssetNotFoundResult, ct);
+                return await unitOfWork.FailAsync(AssetNotFoundResult, ct);
             if (paymentAsset.Deleted)
-                return await _unitOfWork.FailAsync(DeletedAssetResult, ct);
+                return await unitOfWork.FailAsync(DeletedAssetResult, ct);
 
             if (isTransfer)
             {
                 if (depositAsset == null)
-                    return await _unitOfWork.FailAsync(AssetNotFoundResult, ct);
+                    return await unitOfWork.FailAsync(AssetNotFoundResult, ct);
                 if (depositAsset.Deleted)
-                    return await _unitOfWork.FailAsync(DeletedAssetResult, ct);
+                    return await unitOfWork.FailAsync(DeletedAssetResult, ct);
                 if (paymentAsset.Balance.Currency != depositAsset.Balance.Currency)
-                    return await _unitOfWork.FailAsync(CurrencyMismatchResult, ct);
+                    return await unitOfWork.FailAsync(CurrencyMismatchResult, ct);
             }
 
             string currency = paymentAsset.Balance.Currency;
@@ -92,57 +86,57 @@ public class ExpenditureService : IExpenditureService
             var expenditureResult = Expenditure.Record(accountEmail, request.MainClass, request.SubClass,
                 request.Content, Math.Abs(request.Amount), currency, request.PaymentMethod, myDepositAsset, request.Note, request.Created);
             if (expenditureResult.IsError)
-                return await _unitOfWork.FailAsync(expenditureResult.FirstError, ct);
+                return await unitOfWork.FailAsync(expenditureResult.FirstError, ct);
 
             var expenditure = expenditureResult.Value;
-            await _expenditureRepository.CreateAsync(expenditure, ct);
+            await expenditureRepository.CreateAsync(expenditure, ct);
 
             var withdrawResult = paymentAsset.Withdraw(expenditure.Amount);
             if (withdrawResult.IsError)
-                return await _unitOfWork.FailAsync(withdrawResult.FirstError, ct);
-            await _assetBalance.SaveAsync(paymentAsset, ct);
+                return await unitOfWork.FailAsync(withdrawResult.FirstError, ct);
+            await assetBalance.SaveAsync(paymentAsset, ct);
 
             if (depositAsset != null)
             {
                 var depositResult = depositAsset.Deposit(expenditure.Amount);
                 if (depositResult.IsError)
-                    return await _unitOfWork.FailAsync(depositResult.FirstError, ct);
-                await _assetBalance.SaveAsync(depositAsset, ct);
+                    return await unitOfWork.FailAsync(depositResult.FirstError, ct);
+                await assetBalance.SaveAsync(depositAsset, ct);
             }
 
-            await _unitOfWork.CommitAsync(ct);
+            await unitOfWork.CommitAsync(ct);
             return ServiceResult.Ok();
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Failed to create expenditure for account {AccountEmail}", accountEmail);
-            return await _unitOfWork.FailAsync(UnexpectedFailure, ct);
+            logger.LogError(ex, "Failed to create expenditure for account {AccountEmail}", accountEmail);
+            return await unitOfWork.FailAsync(UnexpectedFailure, ct);
         }
     }
 
     /// <inheritdoc />
     public async Task<ServiceResult> UpdateAsync(string accountEmail, ExpenditureRequest request, CancellationToken ct = default)
     {
-        await _unitOfWork.BeginAsync(ct);
+        await unitOfWork.BeginAsync(ct);
         try
         {
             var classResult = ExpenditureClassPolicy.Validate(request.MainClass, request.SubClass);
             if (classResult.IsError)
-                return await _unitOfWork.FailAsync(classResult.FirstError, ct);
+                return await unitOfWork.FailAsync(classResult.FirstError, ct);
 
             if (classResult.Value && request.PaymentMethod == request.MyDepositAsset)
-                return await _unitOfWork.FailAsync(SameAssetResult, ct);
+                return await unitOfWork.FailAsync(SameAssetResult, ct);
 
             // FOR UPDATE: lock the record for the rest of the transaction so a concurrent
             // UpdateAsync/DeleteAsync of the same expenditure cannot read a stale amount here and
             // drift the linked asset balances.
-            Expenditure? previous = await _expenditureRepository.FindByEmailAndIdForUpdateAsync(accountEmail, request.Id, ct);
+            Expenditure? previous = await expenditureRepository.FindByEmailAndIdForUpdateAsync(accountEmail, request.Id, ct);
             if (previous == null)
-                return await _unitOfWork.FailAsync(ServiceResult.NotFound("Expenditure.NotFound", "The expenditure record could not be found."), ct);
+                return await unitOfWork.FailAsync(ServiceResult.NotFound("Expenditure.NotFound", "The expenditure record could not be found."), ct);
 
             // Lock every asset this update can touch (old + new payment/deposit) in a single
             // ordinal-ordered batch so concurrent transactions on the same asset pair cannot deadlock.
-            Dictionary<string, Asset> touchedAssets = await _assetBalance.GetAssetsOrdinalAsync(accountEmail,
+            Dictionary<string, Asset> touchedAssets = await assetBalance.GetAssetsOrdinalAsync(accountEmail,
                 [request.PaymentMethod, classResult.Value ? request.MyDepositAsset : null, previous.PaymentMethod, previous.MyDepositAsset], ct);
 
             Asset? newPayAsset = !string.IsNullOrEmpty(request.PaymentMethod) && touchedAssets.TryGetValue(request.PaymentMethod, out var np) ? np : null;
@@ -151,24 +145,24 @@ public class ExpenditureService : IExpenditureService
             // A record must not be retargeted onto a since-archived asset, matching Create: a
             // deleted asset's balance must never be touched.
             if (newPayAsset?.Deleted == true || newDepAsset?.Deleted == true)
-                return await _unitOfWork.FailAsync(DeletedAssetResult, ct);
+                return await unitOfWork.FailAsync(DeletedAssetResult, ct);
 
             if (classResult.Value)
             {
                 if (newPayAsset == null || newDepAsset == null)
-                    return await _unitOfWork.FailAsync(AssetNotFoundResult, ct);
+                    return await unitOfWork.FailAsync(AssetNotFoundResult, ct);
                 if (newPayAsset.Balance.Currency != newDepAsset.Balance.Currency)
-                    return await _unitOfWork.FailAsync(CurrencyMismatchResult, ct);
+                    return await unitOfWork.FailAsync(CurrencyMismatchResult, ct);
             }
 
             Asset? prevPayAsset = !string.IsNullOrEmpty(previous.PaymentMethod) && touchedAssets.TryGetValue(previous.PaymentMethod, out var pp) ? pp : null;
             if (prevPayAsset?.Deleted == true)
-                return await _unitOfWork.FailAsync(DeletedAssetResult, ct);
+                return await unitOfWork.FailAsync(DeletedAssetResult, ct);
             if (!string.IsNullOrEmpty(previous.MyDepositAsset))
             {
                 Asset? prevDepAsset = touchedAssets.GetValueOrDefault(previous.MyDepositAsset);
                 if (prevDepAsset?.Deleted == true)
-                    return await _unitOfWork.FailAsync(DeletedAssetResult, ct);
+                    return await unitOfWork.FailAsync(DeletedAssetResult, ct);
             }
 
             string newCurrency = newPayAsset?.Balance.Currency ?? prevPayAsset?.Balance.Currency ?? "";
@@ -179,62 +173,60 @@ public class ExpenditureService : IExpenditureService
             var updateResult = previous.Update(request.MainClass, request.SubClass, request.Content,
                 Math.Abs(request.Amount), newCurrency, request.PaymentMethod, myDepositAsset, request.Note, request.Created);
             if (updateResult.IsError)
-                return await _unitOfWork.FailAsync(updateResult.FirstError, ct);
+                return await unitOfWork.FailAsync(updateResult.FirstError, ct);
 
-            await _expenditureRepository.UpdateEntityAsync(previous, ct);
+            await expenditureRepository.UpdateEntityAsync(previous, ct);
             var adjustResult = await AdjustAssetBalancesAsync(accountEmail, oldSnapshot,
                 new ExpenditureSnapshot(previous.PaymentMethod, previous.MyDepositAsset, previous.Amount.Amount, previous.Amount.Currency), ct);
             if (adjustResult.IsError)
-                return await _unitOfWork.FailAsync(adjustResult.FirstError, ct);
+                return await unitOfWork.FailAsync(adjustResult.FirstError, ct);
 
-            await _unitOfWork.CommitAsync(ct);
+            await unitOfWork.CommitAsync(ct);
             return ServiceResult.Ok();
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Failed to update expenditure {ExpenditureId} for account {AccountEmail}", request.Id, accountEmail);
-            return await _unitOfWork.FailAsync(UnexpectedFailure, ct);
+            logger.LogError(ex, "Failed to update expenditure {ExpenditureId} for account {AccountEmail}", request.Id, accountEmail);
+            return await unitOfWork.FailAsync(UnexpectedFailure, ct);
         }
     }
 
     /// <inheritdoc />
     public async Task<ServiceResult> DeleteAsync(string accountEmail, long id, CancellationToken ct = default)
     {
-        await _unitOfWork.BeginAsync(ct);
+        await unitOfWork.BeginAsync(ct);
         try
         {
             // FOR UPDATE: see UpdateAsync — lock the record so a concurrent edit/delete of the
             // same expenditure cannot reverse its asset impact twice or from a stale amount.
-            Expenditure? expenditure = await _expenditureRepository.FindByEmailAndIdForUpdateAsync(accountEmail, id, ct);
+            Expenditure? expenditure = await expenditureRepository.FindByEmailAndIdForUpdateAsync(accountEmail, id, ct);
             if (expenditure == null)
-                return await _unitOfWork.FailAsync(ServiceResult.NotFound("Expenditure.NotFound", "The expenditure record could not be found."), ct);
+                return await unitOfWork.FailAsync(ServiceResult.NotFound("Expenditure.NotFound", "The expenditure record could not be found."), ct);
 
             // An expenditure referencing a since-archived (soft-deleted) asset must not be
             // deletable, matching Create/Update: a deleted asset's balance must not be touched.
-            Dictionary<string, Asset> assetsToCheck = await _assetBalance.GetAssetsOrdinalAsync(
+            Dictionary<string, Asset> assetsToCheck = await assetBalance.GetAssetsOrdinalAsync(
                 accountEmail, [expenditure.PaymentMethod, expenditure.MyDepositAsset], ct);
             if (!string.IsNullOrEmpty(expenditure.PaymentMethod) &&
-                assetsToCheck.TryGetValue(expenditure.PaymentMethod, out var payAssetToCheck) && payAssetToCheck.Deleted)
-                return await _unitOfWork.FailAsync(DeletedAssetResult, ct);
-            if (!string.IsNullOrEmpty(expenditure.MyDepositAsset) &&
+                assetsToCheck.TryGetValue(expenditure.PaymentMethod, out var payAssetToCheck) && payAssetToCheck.Deleted || !string.IsNullOrEmpty(expenditure.MyDepositAsset) &&
                 assetsToCheck.TryGetValue(expenditure.MyDepositAsset, out var depAssetToCheck) && depAssetToCheck.Deleted)
-                return await _unitOfWork.FailAsync(DeletedAssetResult, ct);
+                return await unitOfWork.FailAsync(DeletedAssetResult, ct);
 
             var adjustResult = await AdjustAssetBalancesAsync(accountEmail,
                 new ExpenditureSnapshot(expenditure.PaymentMethod, expenditure.MyDepositAsset, expenditure.Amount.Amount, expenditure.Amount.Currency),
                 null, ct);
             if (adjustResult.IsError)
-                return await _unitOfWork.FailAsync(adjustResult.FirstError, ct);
+                return await unitOfWork.FailAsync(adjustResult.FirstError, ct);
 
-            await _expenditureRepository.DeleteByIdAsync(expenditure.Id, ct);
+            await expenditureRepository.DeleteByIdAsync(expenditure.Id, ct);
 
-            await _unitOfWork.CommitAsync(ct);
+            await unitOfWork.CommitAsync(ct);
             return ServiceResult.Ok();
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Failed to delete expenditure {ExpenditureId} for account {AccountEmail}", id, accountEmail);
-            return await _unitOfWork.FailAsync(UnexpectedFailure, ct);
+            logger.LogError(ex, "Failed to delete expenditure {ExpenditureId} for account {AccountEmail}", id, accountEmail);
+            return await unitOfWork.FailAsync(UnexpectedFailure, ct);
         }
     }
 
@@ -265,13 +257,17 @@ public class ExpenditureService : IExpenditureService
             new(toRevert.PaymentMethod, toRevert.Amount, IsDeposit: true, Currency: toRevert.Currency),
             new(toRevert.MyDepositAsset, toRevert.Amount, IsDeposit: false, Currency: toRevert.Currency)
         ];
-        if (toApply.HasValue)
+        if (!toApply.HasValue)
         {
-            adjustments.Add(new(toApply.Value.PaymentMethod, toApply.Value.Amount, IsDeposit: false, Currency: toApply.Value.Currency));
-            adjustments.Add(new(toApply.Value.MyDepositAsset, toApply.Value.Amount, IsDeposit: true, Currency: toApply.Value.Currency));
+            return await assetBalance.ApplyAssetBalanceAdjustmentsAsync(
+                accountEmail, adjustments, "Expenditure.AssetNotFound",
+                "The asset referenced by this expenditure could not be found.", ct);
         }
 
-        return await _assetBalance.ApplyAssetBalanceAdjustmentsAsync(
+        adjustments.Add(new AssetBalanceAdjustment(toApply.Value.PaymentMethod, toApply.Value.Amount, IsDeposit: false, Currency: toApply.Value.Currency));
+        adjustments.Add(new AssetBalanceAdjustment(toApply.Value.MyDepositAsset, toApply.Value.Amount, IsDeposit: true, Currency: toApply.Value.Currency));
+
+        return await assetBalance.ApplyAssetBalanceAdjustmentsAsync(
             accountEmail, adjustments, "Expenditure.AssetNotFound", "The asset referenced by this expenditure could not be found.", ct);
     }
 

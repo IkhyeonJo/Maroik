@@ -15,7 +15,7 @@ namespace Maroik.Core.Service.Services;
 /// <para>
 /// The imported <see cref="RSA"/> objects are <b>not</b> held as shared fields: a single
 /// <see cref="RSA"/> instance is not documented as safe for concurrent use, and every request that
-/// confirms an email, resets a password, or renders board images calls in here in parallel. Instead
+/// confirms an email, resets a password, or renders board images calls in here in parallel. Instead,
 /// the raw key bytes are cached and each operation imports them into a short-lived, per-call
 /// <see cref="RSA"/> that it owns and disposes. Import cost is negligible next to the RSA operation
 /// itself, and the service stays a safe singleton.

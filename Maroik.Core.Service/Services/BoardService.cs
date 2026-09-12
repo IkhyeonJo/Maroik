@@ -1,7 +1,6 @@
 using Maroik.Core.Domain.Account;
 using Maroik.Core.Domain.Board;
 using Maroik.Core.Contract.Dtos;
-using Maroik.Core.Contract.Misc.Extensions;
 using Maroik.Core.Contract.Interfaces;
 using Maroik.Core.Contract.Misc.Settings;
 using Maroik.Core.Service.Mappers;
@@ -18,17 +17,16 @@ namespace Maroik.Core.Service.Services;
 /// is embedded in the HTML content. Post/comment write operations use <see cref="IUnitOfWork"/>
 /// transactions to keep post and attachment records in sync.
 /// </summary>
-public class BoardService : IBoardService
+public class BoardService(
+    IBoardRepository boardRepository,
+    IBoardAttachedFileRepository boardAttachedFileRepository,
+    IBoardCommentRepository boardCommentRepository,
+    IFileClient fileClient,
+    IUnitOfWork unitOfWork,
+    IAttachmentContentService attachmentContent,
+    IOptions<ServerSetting> settings,
+    ILogger<BoardService> logger) : IBoardService
 {
-    private readonly IBoardRepository _boardRepository;
-    private readonly IBoardAttachedFileRepository _boardAttachedFileRepository;
-    private readonly IBoardCommentRepository _boardCommentRepository;
-    private readonly IFileClient _fileClient;
-    private readonly IUnitOfWork _unitOfWork;
-    private readonly IAttachmentContentService _attachmentContent;
-    private readonly IOptions<ServerSetting> _settings;
-    private readonly ILogger<BoardService> _logger;
-
     /// <summary>
     /// Maps each board type name to its corresponding file-storage area folder name.
     /// Used when building attachment storage paths.
@@ -39,42 +37,21 @@ public class BoardService : IBoardService
         [BoardTypes.PrivateNote] = "Management"
     };
 
-    /// <summary>Initializes a new instance of <see cref="BoardService"/> with the supplied dependencies.</summary>
-    public BoardService(
-        IBoardRepository boardRepository,
-        IBoardAttachedFileRepository boardAttachedFileRepository,
-        IBoardCommentRepository boardCommentRepository,
-        IFileClient fileClient,
-        IUnitOfWork unitOfWork,
-        IAttachmentContentService attachmentContent,
-        IOptions<ServerSetting> settings,
-        ILogger<BoardService> logger)
-    {
-        _boardRepository = boardRepository;
-        _boardAttachedFileRepository = boardAttachedFileRepository;
-        _boardCommentRepository = boardCommentRepository;
-        _fileClient = fileClient;
-        _unitOfWork = unitOfWork;
-        _attachmentContent = attachmentContent;
-        _settings = settings;
-        _logger = logger;
-    }
-
     /// <inheritdoc />
     public async Task<(IEnumerable<BoardResponse> Items, int TotalCount)> GetBoardPageAsync(BoardPageQuery query, CancellationToken ct = default)
     {
-        var (items, totalCount) = await _boardRepository.QueryPageAsync(query, ct);
+        var (items, totalCount) = await boardRepository.QueryPageAsync(query, ct);
         return (items.Select(BoardMapper.ToResponse), totalCount);
     }
 
     /// <inheritdoc />
     public async Task<IEnumerable<BoardResponse>> GetNoticedBoardsAsync(string type, CancellationToken ct = default)
-        => (await _boardRepository.GetNoticedAsync(type, ct)).Select(BoardMapper.ToResponse);
+        => (await boardRepository.GetNoticedAsync(type, ct)).Select(BoardMapper.ToResponse);
 
     /// <inheritdoc />
     public async Task<BoardResponse?> GetBoardByIdAsync(long id, string? requiredType = null, CancellationToken ct = default)
     {
-        Board? board = await _boardRepository.FindActiveByIdAsync(id, ct);
+        Board? board = await boardRepository.FindActiveByIdAsync(id, ct);
         if (board == null || (requiredType != null && board.Type != requiredType))
             return null;
 
@@ -90,14 +67,14 @@ public class BoardService : IBoardService
     /// <inheritdoc />
     public async Task<BoardAttachedFileDto?> GetAttachedFileByBoardIdAsync(long boardId, CancellationToken ct = default)
     {
-        BoardAttachedFile? file = await _boardAttachedFileRepository.FindByBoardIdAsync(boardId, ct);
+        BoardAttachedFile? file = await boardAttachedFileRepository.FindByBoardIdAsync(boardId, ct);
         return file == null ? null : BoardAttachedFileMapper.ToResponse(file);
     }
 
     /// <inheritdoc />
     public async Task<Dictionary<long, BoardAttachedFileDto?>> GetAttachedFilesForBoardsAsync(IEnumerable<long> boardIds, CancellationToken ct = default)
     {
-        Dictionary<long, BoardAttachedFile?> domain = await _boardAttachedFileRepository.GetByBoardIdsAsync(boardIds, ct);
+        Dictionary<long, BoardAttachedFile?> domain = await boardAttachedFileRepository.GetByBoardIdsAsync(boardIds, ct);
         return domain.ToDictionary(
             kvp => kvp.Key,
             kvp => kvp.Value == null ? null : (BoardAttachedFileDto?)BoardAttachedFileMapper.ToResponse(kvp.Value));
@@ -105,27 +82,27 @@ public class BoardService : IBoardService
 
     /// <inheritdoc />
     public async Task<IEnumerable<BoardCommentResponse>> GetCommentsByBoardIdAsync(long boardId, CancellationToken ct = default)
-        => (await _boardCommentRepository.GetByBoardIdOrderedAsync(boardId, ct)).Select(BoardCommentMapper.ToResponse);
+        => (await boardCommentRepository.GetByBoardIdOrderedAsync(boardId, ct)).Select(BoardCommentMapper.ToResponse);
 
     /// <inheritdoc />
     public async Task<Dictionary<long, int>> GetCommentCountsForBoardsAsync(IEnumerable<long> boardIds, CancellationToken ct = default)
-        => await _boardCommentRepository.GetCommentCountsByBoardIdsAsync(boardIds, ct);
+        => await boardCommentRepository.GetCommentCountsByBoardIdsAsync(boardIds, ct);
 
     /// <inheritdoc />
     public async Task<ServiceResult> WriteBoardAsync(BoardRequest request, AttachedFileDto? attachedFile, CancellationToken ct = default)
     {
-        var fileError = _attachmentContent.ValidateAttachedFile(attachedFile);
+        var fileError = attachmentContent.ValidateAttachedFile(attachedFile);
         if (fileError != null) return fileError;
 
-        string content = _attachmentContent.SanitizeAndDecryptContent(request.Content ?? "");
+        string content = attachmentContent.SanitizeAndDecryptContent(request.Content ?? "");
 
-        await _unitOfWork.BeginAsync(ct);
+        await unitOfWork.BeginAsync(ct);
         try
         {
             var boardResult = Board.Create(request.Type, request.Title, content, request.Writer);
             if (boardResult.IsError)
             {
-                await _unitOfWork.RollbackAsync(ct);
+                await unitOfWork.RollbackAsync(ct);
                 return ServiceResult.FromError(boardResult.FirstError);
             }
 
@@ -133,16 +110,16 @@ public class BoardService : IBoardService
             if (request.Locked) board.Lock();
             if (request.Noticed) board.Pin();
 
-            long boardId = await _boardRepository.WriteBoardAsync(board, ct);
+            long boardId = await boardRepository.WriteBoardAsync(board, ct);
 
             if (attachedFile != null)
             {
                 // Build a unique storage path and upload the file, then persist the attachment record.
                 string filePath = BuildAttachedFilePath(request.Type!, boardId, attachedFile.FileName);
-                bool uploaded = await _fileClient.UploadAsync(attachedFile.Bytes, attachedFile.ContentType, filePath, _settings.Value.FileStorageBaseUrl ?? "", ct);
+                bool uploaded = await fileClient.UploadAsync(attachedFile.Bytes, attachedFile.ContentType, filePath, settings.Value.FileStorageBaseUrl ?? "", ct);
                 if (!uploaded)
                 {
-                    await _unitOfWork.RollbackAsync(ct);
+                    await unitOfWork.RollbackAsync(ct);
                     return ServiceResult.Failure("Board.AttachmentUploadFailed", "Failed to upload the attached file.");
                 }
 
@@ -152,19 +129,19 @@ public class BoardService : IBoardService
                     filePath.Replace('\\', '/')); // Normalize path separators for URL use.
                 if (fileResult.IsError)
                 {
-                    await _unitOfWork.RollbackAsync(ct);
+                    await unitOfWork.RollbackAsync(ct);
                     return ServiceResult.FromError(fileResult.FirstError);
                 }
-                await _boardAttachedFileRepository.CreateAsync(fileResult.Value, ct);
+                await boardAttachedFileRepository.CreateAsync(fileResult.Value, ct);
             }
 
-            await _unitOfWork.CommitAsync(ct);
+            await unitOfWork.CommitAsync(ct);
             return ServiceResult.Ok();
         }
         catch (Exception e)
         {
-            _logger.LogError(e, "Failed to write board post (Type={Type})", request.Type);
-            await _unitOfWork.RollbackAsync(ct);
+            logger.LogError(e, "Failed to write board post (Type={Type})", request.Type);
+            await unitOfWork.RollbackAsync(ct);
             return ServiceResult.Failure("Board.WriteFailed", "Input is invalid");
         }
     }
@@ -172,12 +149,12 @@ public class BoardService : IBoardService
     /// <inheritdoc />
     public async Task<ServiceResult> EditBoardAsync(BoardRequest request, string writerNickname, bool isAdmin, AttachedFileDto? newFile, CancellationToken ct = default)
     {
-        var fileError = _attachmentContent.ValidateAttachedFile(newFile);
+        var fileError = attachmentContent.ValidateAttachedFile(newFile);
         if (fileError != null) return fileError;
 
-        string content = _attachmentContent.SanitizeAndDecryptContent(request.Content ?? "");
+        string content = attachmentContent.SanitizeAndDecryptContent(request.Content ?? "");
 
-        await _unitOfWork.BeginAsync(ct);
+        await unitOfWork.BeginAsync(ct);
         try
         {
             // Row-lock the post for the rest of the transaction. The subsequent UpdateEntityAsync
@@ -185,14 +162,14 @@ public class BoardService : IBoardService
             // IncrementViewAsync (or an admin Noticed/Locked toggle) committing between this read
             // and the commit would be silently overwritten — the same full-row-overwrite race the
             // Account column-scoped writes were introduced to fix.
-            Board? board = await _boardRepository.FindActiveByIdForUpdateAsync(request.Id, ct);
+            Board? board = await boardRepository.FindActiveByIdForUpdateAsync(request.Id, ct);
 
             // A caller always states the type it expects to edit (see WriteCommentAsync's
             // requiredType for the same pattern); without this check a post owned by the same
             // user under one board type could be edited through another type's endpoint.
             if (board == null || board.Deleted || (request.Type != null && board.Type != request.Type))
             {
-                await _unitOfWork.RollbackAsync(ct);
+                await unitOfWork.RollbackAsync(ct);
                 return ServiceResult.NotFound("Board.NotFound", "Input is invalid");
             }
 
@@ -204,54 +181,54 @@ public class BoardService : IBoardService
             // any locked post for exactly this reason).
             bool isOwner = board.CanBeEditedBy(writerNickname);
             bool adminClearingSomeoneElsesLock = !isOwner && isAdmin && board.Locked && !request.Locked;
-            if (!isOwner && !adminClearingSomeoneElsesLock)
+            switch (isOwner)
             {
-                await _unitOfWork.RollbackAsync(ct);
-                return ServiceResult.Fail("Input is invalid");
-            }
-
-            if (isOwner)
-            {
-                var updateResult = board.Update(request.Title, content);
-                if (updateResult.IsError)
+                case false when !adminClearingSomeoneElsesLock:
+                    await unitOfWork.RollbackAsync(ct);
+                    return ServiceResult.Fail("Input is invalid");
+                case true:
                 {
-                    await _unitOfWork.RollbackAsync(ct);
-                    return ServiceResult.FromError(updateResult.FirstError);
+                    var updateResult = board.Update(request.Title, content);
+                    if (updateResult.IsError)
+                    {
+                        await unitOfWork.RollbackAsync(ct);
+                        return ServiceResult.FromError(updateResult.FirstError);
+                    }
+
+                    // Apply the lock from the request. The editor (the post's own author) may raise
+                    // the lock on their post, but CLEARING it is a moderation action reserved for an
+                    // admin: without a stored "who locked this", an unconditional toggle here would
+                    // let any author edit silently lift a lock an admin imposed (the same
+                    // silent-clobber the Noticed field is deliberately kept out of -- Noticed is set
+                    // only at write time since no edit form exposes it).
+                    if (request.Locked) board.Lock();
+                    else if (isAdmin) board.Unlock();
+                    break;
                 }
-
-                // Apply the lock from the request. The editor (the post's own author) may raise
-                // the lock on their post, but CLEARING it is a moderation action reserved for an
-                // admin: without a stored "who locked this", an unconditional toggle here would
-                // let any author edit silently lift a lock an admin imposed (the same
-                // silent-clobber the Noticed field is deliberately kept out of -- Noticed is set
-                // only at write time since no edit form exposes it).
-                if (request.Locked) board.Lock();
-                else if (isAdmin) board.Unlock();
-            }
-            else
-            {
-                // adminClearingSomeoneElsesLock: an admin acting on a post they don't own may only
-                // clear its lock -- title and content are left untouched.
-                board.Unlock();
+                default:
+                    // adminClearingSomeoneElsesLock: an admin acting on a post they don't own may only
+                    // clear its lock -- title and content are left untouched.
+                    board.Unlock();
+                    break;
             }
 
-            await _boardRepository.UpdateEntityAsync(board, ct);
+            await boardRepository.UpdateEntityAsync(board, ct);
 
-            BoardAttachedFile? previous = await _boardAttachedFileRepository.FindByBoardIdAsync(request.Id, ct);
+            BoardAttachedFile? previous = await boardAttachedFileRepository.FindByBoardIdAsync(request.Id, ct);
             ServiceResult attachmentResult = await HandleAttachmentAsync(board.Type, board.Id, previous, newFile, ct);
             if (!attachmentResult.Success)
             {
-                await _unitOfWork.RollbackAsync(ct);
+                await unitOfWork.RollbackAsync(ct);
                 return attachmentResult;
             }
 
-            await _unitOfWork.CommitAsync(ct);
+            await unitOfWork.CommitAsync(ct);
             return ServiceResult.Ok();
         }
         catch (Exception e)
         {
-            _logger.LogError(e, "Failed to edit board post {BoardId}", request.Id);
-            await _unitOfWork.RollbackAsync(ct);
+            logger.LogError(e, "Failed to edit board post {BoardId}", request.Id);
+            await unitOfWork.RollbackAsync(ct);
             return ServiceResult.Failure("Board.EditFailed", "Input is invalid");
         }
     }
@@ -259,42 +236,42 @@ public class BoardService : IBoardService
     /// <inheritdoc />
     public async Task<ServiceResult> DeleteBoardAsync(long boardId, string boardType, string requesterNickname, bool isAdmin, CancellationToken ct = default)
     {
-        await _unitOfWork.BeginAsync(ct);
+        await unitOfWork.BeginAsync(ct);
         try
         {
             // Row-lock the post: SoftDelete goes out through the full-row UpdateEntityAsync, so a
             // concurrent IncrementViewAsync / admin toggle committing between the read and the
             // commit would otherwise be lost to this stale snapshot.
-            Board? board = await _boardRepository.FindActiveByIdForUpdateAsync(boardId, ct);
+            Board? board = await boardRepository.FindActiveByIdForUpdateAsync(boardId, ct);
 
             if (board == null || board.Deleted || board.Type != boardType)
             {
-                await _unitOfWork.RollbackAsync(ct);
+                await unitOfWork.RollbackAsync(ct);
                 return ServiceResult.NotFound("Board.NotFound", "Input is invalid");
             }
 
             // Admins may delete any post; non-admins may only delete their own.
             if (!board.CanBeDeletedBy(requesterNickname, isAdmin))
             {
-                await _unitOfWork.RollbackAsync(ct);
+                await unitOfWork.RollbackAsync(ct);
                 return ServiceResult.Fail("You do not have permission to delete.");
             }
 
             var deleteResult = board.SoftDelete();
             if (deleteResult.IsError)
             {
-                await _unitOfWork.RollbackAsync(ct);
+                await unitOfWork.RollbackAsync(ct);
                 return ServiceResult.FromError(deleteResult.FirstError);
             }
 
-            await _boardRepository.UpdateEntityAsync(board, ct);
-            await _unitOfWork.CommitAsync(ct);
+            await boardRepository.UpdateEntityAsync(board, ct);
+            await unitOfWork.CommitAsync(ct);
             return ServiceResult.Ok();
         }
         catch (Exception e)
         {
-            _logger.LogError(e, "Failed to delete board post {BoardId}", boardId);
-            await _unitOfWork.RollbackAsync(ct);
+            logger.LogError(e, "Failed to delete board post {BoardId}", boardId);
+            await unitOfWork.RollbackAsync(ct);
             return ServiceResult.Failure("Board.DeleteFailed", "Input is invalid");
         }
     }
@@ -302,29 +279,29 @@ public class BoardService : IBoardService
     /// <inheritdoc />
     public async Task<ServiceResult> WriteCommentAsync(BoardCommentRequest request, string? requiredOwnerNickname = null, bool isAdmin = false, string? requiredType = null, CancellationToken ct = default)
     {
-        string content = _attachmentContent.SanitizeContent(request.Content ?? "");
+        string content = attachmentContent.SanitizeContent(request.Content ?? "");
 
-        await _unitOfWork.BeginAsync(ct);
+        await unitOfWork.BeginAsync(ct);
         try
         {
             // Row-locks the post for the rest of this transaction, so concurrent commenters on
             // the same post serialize instead of both reading the same Count() and racing to
             // insert duplicate Order values.
-            Board? board = await _boardRepository.FindActiveByIdForUpdateAsync(request.BoardId, ct);
+            Board? board = await boardRepository.FindActiveByIdForUpdateAsync(request.BoardId, ct);
             if (board == null || (requiredType != null && board.Type != requiredType))
             {
-                await _unitOfWork.RollbackAsync(ct);
+                await unitOfWork.RollbackAsync(ct);
                 return ServiceResult.NotFound("Board.NotFound", "Input is invalid");
             }
 
             // When requiredOwnerNickname is set, restrict commenting to the post owner only.
             if (requiredOwnerNickname != null && !board.IsOwnedBy(requiredOwnerNickname))
             {
-                await _unitOfWork.RollbackAsync(ct);
+                await unitOfWork.RollbackAsync(ct);
                 return ServiceResult.Fail("You do not have permission to write a comment.");
             }
 
-            IEnumerable<BoardComment> existing = await _boardCommentRepository.GetByBoardIdOrderedAsync(request.BoardId, ct);
+            IEnumerable<BoardComment> existing = await boardCommentRepository.GetByBoardIdOrderedAsync(request.BoardId, ct);
             List<BoardComment> existingList = existing.ToList();
 
             // The comment order continues from the highest existing order, so that a prior
@@ -335,25 +312,25 @@ public class BoardService : IBoardService
             var commentResult = BoardComment.Create(request.BoardId, order, request.AvatarImagePath, request.Writer, content);
             if (commentResult.IsError)
             {
-                await _unitOfWork.RollbackAsync(ct);
+                await unitOfWork.RollbackAsync(ct);
                 return ServiceResult.FromError(commentResult.FirstError);
             }
 
             var addResult = board.AddComment(commentResult.Value, request.Writer, isAdmin);
             if (addResult.IsError)
             {
-                await _unitOfWork.RollbackAsync(ct);
+                await unitOfWork.RollbackAsync(ct);
                 return ServiceResult.FromError(addResult.FirstError);
             }
 
-            await _boardCommentRepository.CreateAsync(commentResult.Value, ct);
-            await _unitOfWork.CommitAsync(ct);
+            await boardCommentRepository.CreateAsync(commentResult.Value, ct);
+            await unitOfWork.CommitAsync(ct);
             return ServiceResult.Ok();
         }
         catch (Exception e)
         {
-            _logger.LogError(e, "Failed to write comment on board {BoardId}", request.BoardId);
-            await _unitOfWork.RollbackAsync(ct);
+            logger.LogError(e, "Failed to write comment on board {BoardId}", request.BoardId);
+            await unitOfWork.RollbackAsync(ct);
             return ServiceResult.Failure("Board.WriteCommentFailed", "Input is invalid");
         }
     }
@@ -363,12 +340,12 @@ public class BoardService : IBoardService
     {
         try
         {
-            await _boardRepository.IncrementViewAsync(boardId, ct);
+            await boardRepository.IncrementViewAsync(boardId, ct);
             return ServiceResult.Ok();
         }
         catch (Exception e)
         {
-            _logger.LogError(e, "Failed to increment view count for board {BoardId}", boardId);
+            logger.LogError(e, "Failed to increment view count for board {BoardId}", boardId);
             return ServiceResult.Failure("Board.IncrementViewFailed", "Input is invalid");
         }
     }
@@ -378,7 +355,7 @@ public class BoardService : IBoardService
     {
         try
         {
-            BoardComment? comment = await _boardCommentRepository.FindByIdAsync(commentId, ct);
+            BoardComment? comment = await boardCommentRepository.FindByIdAsync(commentId, ct);
             if (comment == null)
                 return ServiceResult.NotFound("BoardComment.NotFound", "Input is invalid");
 
@@ -388,7 +365,7 @@ public class BoardService : IBoardService
                 // The comment's parent post must belong to the caller's board type — otherwise a
                 // caller scoped to one board type could delete a comment on a post of a different
                 // type just by supplying its comment ID.
-                Board? parent = await _boardRepository.FindActiveByIdAsync(comment.BoardId, ct);
+                Board? parent = await boardRepository.FindActiveByIdAsync(comment.BoardId, ct);
                 if (parent == null || parent.Type != requiredType)
                     return ServiceResult.NotFound("BoardComment.NotFound", "Input is invalid");
                 isPrivateNoteComment = parent.IsPrivateNote;
@@ -404,12 +381,12 @@ public class BoardService : IBoardService
             if (deleteResult.IsError)
                 return ServiceResult.FromError(deleteResult.FirstError);
 
-            await _boardCommentRepository.UpdateEntityAsync(comment, ct);
+            await boardCommentRepository.UpdateEntityAsync(comment, ct);
             return ServiceResult.Ok();
         }
         catch (Exception e)
         {
-            _logger.LogError(e, "Failed to delete comment {CommentId}", commentId);
+            logger.LogError(e, "Failed to delete comment {CommentId}", commentId);
             return ServiceResult.Failure("Board.DeleteCommentFailed", "Input is invalid");
         }
     }
@@ -427,7 +404,7 @@ public class BoardService : IBoardService
         {
             // Replace: upload the new file and overwrite the existing attachment record.
             string filePath = BuildAttachedFilePath(boardType, boardId, newFile.FileName);
-            bool uploaded = await _fileClient.UploadAsync(newFile.Bytes, newFile.ContentType, filePath, _settings.Value.FileStorageBaseUrl ?? "", ct);
+            bool uploaded = await fileClient.UploadAsync(newFile.Bytes, newFile.ContentType, filePath, settings.Value.FileStorageBaseUrl ?? "", ct);
             if (!uploaded) return ServiceResult.Failure("Board.AttachmentUploadFailed", "Failed to upload the attached file.");
 
             var fileResult = BoardAttachedFile.Create(previous.BoardId, newFile.Size,
@@ -436,7 +413,7 @@ public class BoardService : IBoardService
                 filePath.Replace('\\', '/'));
             if (fileResult.IsError) return ServiceResult.FromError(fileResult.FirstError);
 
-            await _boardAttachedFileRepository.UpdateEntityAsync(
+            await boardAttachedFileRepository.UpdateEntityAsync(
                 BoardAttachedFile.Reconstitute(previous.Id, fileResult.Value.BoardId, fileResult.Value.Size,
                     fileResult.Value.Name, fileResult.Value.Extension, fileResult.Value.Path), ct);
         }
@@ -445,14 +422,14 @@ public class BoardService : IBoardService
             // Clear: zero-out the attachment record without uploading anything. Name/Path are
             // intentionally empty here as an empty-attachment sentinel, not user-submitted data,
             // so Reconstitute (not Create, which would reject an empty name/path) is correct.
-            await _boardAttachedFileRepository.UpdateEntityAsync(
+            await boardAttachedFileRepository.UpdateEntityAsync(
                 BoardAttachedFile.Reconstitute(previous.Id, previous.BoardId, 0, "", "", ""), ct);
         }
         else if (previous == null && newFile != null)
         {
             // Add: upload and create a new attachment record for a post that had none before.
             string filePath = BuildAttachedFilePath(boardType, boardId, newFile.FileName);
-            bool uploaded = await _fileClient.UploadAsync(newFile.Bytes, newFile.ContentType, filePath, _settings.Value.FileStorageBaseUrl ?? "", ct);
+            bool uploaded = await fileClient.UploadAsync(newFile.Bytes, newFile.ContentType, filePath, settings.Value.FileStorageBaseUrl ?? "", ct);
             if (!uploaded) return ServiceResult.Failure("Board.AttachmentUploadFailed", "Failed to upload the attached file.");
 
             var fileResult = BoardAttachedFile.Create(boardId, newFile.Size,
@@ -461,7 +438,7 @@ public class BoardService : IBoardService
                 filePath.Replace('\\', '/'));
             if (fileResult.IsError) return ServiceResult.FromError(fileResult.FirstError);
 
-            await _boardAttachedFileRepository.CreateAsync(fileResult.Value, ct);
+            await boardAttachedFileRepository.CreateAsync(fileResult.Value, ct);
         }
         // previous == null && newFile == null: nothing to do.
 
@@ -470,11 +447,11 @@ public class BoardService : IBoardService
 
     /// <inheritdoc />
     public Task<SummernoteUploadResult> UploadSummernoteImageAsync(AttachedFileDto file, string area, string boardType, CancellationToken ct = default)
-        => _attachmentContent.UploadSummernoteImageAsync(file, area, boardType, ct);
+        => attachmentContent.UploadSummernoteImageAsync(file, area, boardType, ct);
 
     /// <inheritdoc />
     public Task<byte[]?> DownloadFileAsync(string filePath, CancellationToken ct = default)
-        => _attachmentContent.DownloadFileAsync(filePath, ct);
+        => attachmentContent.DownloadFileAsync(filePath, ct);
 
     /// <summary>
     /// Builds the remote storage path for a board attachment.
@@ -491,5 +468,5 @@ public class BoardService : IBoardService
 
     /// <inheritdoc />
     public Task<(string Html, bool HasImages)> PrepareHtmlForDisplayAsync(string html, CancellationToken ct = default)
-        => _attachmentContent.PrepareHtmlForDisplayAsync(html, ct);
+        => attachmentContent.PrepareHtmlForDisplayAsync(html, ct);
 }
