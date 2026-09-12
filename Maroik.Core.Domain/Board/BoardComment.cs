@@ -22,7 +22,7 @@ public sealed class BoardComment : AggregateRoot<long>
     public string? AvatarImagePath { get; private set; }
 
     /// <summary>Nickname of the comment author.</summary>
-    public string Writer { get; private set; }
+    public string Writer { get; }
 
     /// <summary>Comment body text.</summary>
     public string? Content { get; private set; }

@@ -4,6 +4,7 @@ using Maroik.Core.Domain.Account;
 using Maroik.Core.Contract.Interfaces;
 using Maroik.Core.PostgreSQL.Data;
 using Maroik.Core.PostgreSQL.Models;
+using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace Maroik.Website.Tests.Infrastructure;

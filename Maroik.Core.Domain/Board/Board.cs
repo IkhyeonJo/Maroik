@@ -15,7 +15,7 @@ public sealed class Board : AggregateRoot<long>
     private readonly List<BoardComment> _comments = [];
 
     /// <summary>Board type identifier (e.g. "FreeForum", "PrivateNote").</summary>
-    public string Type { get; private set; }
+    public string Type { get; }
 
     /// <summary>Post title.</summary>
     public string Title { get; private set; }
@@ -24,7 +24,7 @@ public sealed class Board : AggregateRoot<long>
     public string? Content { get; private set; }
 
     /// <summary>Nickname of the author.</summary>
-    public string Writer { get; private set; }
+    public string Writer { get; }
 
     /// <summary>UTC timestamp when the post was created.</summary>
     public DateTime Created { get; private set; }

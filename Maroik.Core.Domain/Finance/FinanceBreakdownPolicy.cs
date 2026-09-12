@@ -1,7 +1,7 @@
 namespace Maroik.Core.Domain.Finance;
 
 /// <summary>
-/// Computes per-sub-class totals and percentage-of-total breakdowns for a set of income or
+/// Computes per-subClass totals and percentage-of-total breakdowns for a set of income or
 /// expenditure records already filtered to one main class (e.g. "RegularIncome",
 /// "ConsumerSpending"). The dashboard's multi-property summary (labor/business/pension income,
 /// meal/housing/education spending, ...) is built entirely from this, so the presentation layer
@@ -10,11 +10,11 @@ namespace Maroik.Core.Domain.Finance;
 public static class FinanceBreakdownPolicy
 {
     /// <summary>
-    /// <paramref name="Total"/> is the sum of every item's amount, whatever its sub-class — so a
-    /// sub-class not otherwise recognised is still counted in the total (and therefore in every
-    /// other sub-class's percentage share), it just has no entry of its own in the two dictionaries.
-    /// <paramref name="AmountBySubClass"/> sums amounts per sub-class actually present in the input.
-    /// <paramref name="PercentageBySubClass"/> is each sub-class's share of <paramref name="Total"/>
+    /// <paramref name="Total"/> is the sum of every item's amount, whatever its subClass — so a
+    /// subClass not otherwise recognized is still counted in the total (and therefore in every
+    /// other subClass's percentage share), it just has no entry of its own in the two dictionaries.
+    /// <paramref name="AmountBySubClass"/> sums amounts per subClass actually present in the input.
+    /// <paramref name="PercentageBySubClass"/> is each subClass's share of <paramref name="Total"/>
     /// as 0-100 (empty when <paramref name="Total"/> is zero, avoiding a division by zero).
     /// </summary>
     public sealed record SubClassBreakdown(
@@ -23,7 +23,7 @@ public static class FinanceBreakdownPolicy
         IReadOnlyDictionary<string, double> PercentageBySubClass);
 
     /// <summary>
-    /// Groups <paramref name="items"/> (already filtered to one main class) by sub-class and
+    /// Groups <paramref name="items"/> (already filtered to one main class) by subClass and
     /// computes each one's amount and percentage-of-total share.
     /// </summary>
     public static SubClassBreakdown Compute(IEnumerable<(string? SubClass, decimal Amount)> items)

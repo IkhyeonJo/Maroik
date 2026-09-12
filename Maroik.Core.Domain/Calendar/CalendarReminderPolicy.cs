@@ -40,10 +40,10 @@ public static class CalendarReminderPolicy
     public static bool IsLeadTimeWithinRange(
         long? minutesBefore, long? hoursBefore, long? daysBefore, long? weeksBefore)
     {
-        if (minutesBefore is long minutes) return minutes is >= 0 and <= MaxMinutesBeforeEvent;
-        if (hoursBefore is long hours) return hours is >= 0 and <= MaxHoursBeforeEvent;
-        if (daysBefore is long days) return days is >= 0 and <= MaxDaysBeforeEvent;
-        if (weeksBefore is long weeks) return weeks is >= 0 and <= MaxWeeksBeforeEvent;
+        if (minutesBefore is { } minutes) return minutes is >= 0 and <= MaxMinutesBeforeEvent;
+        if (hoursBefore is { } hours) return hours is >= 0 and <= MaxHoursBeforeEvent;
+        if (daysBefore is { } days) return days is >= 0 and <= MaxDaysBeforeEvent;
+        if (weeksBefore is { } weeks) return weeks is >= 0 and <= MaxWeeksBeforeEvent;
         return true;
     }
 }

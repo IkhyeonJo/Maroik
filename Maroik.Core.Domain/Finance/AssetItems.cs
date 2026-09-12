@@ -13,11 +13,11 @@ namespace Maroik.Core.Domain.Finance;
 /// </summary>
 public static class AssetItems
 {
-    private static readonly StringTaxonomy Taxonomy = new(Enum.GetNames<AssetItemType>());
+    private static readonly StringTaxonomy _taxonomy = new(Enum.GetNames<AssetItemType>());
 
     /// <summary>Every defined <see cref="AssetItemType"/> member name.</summary>
-    public static IReadOnlySet<string> All => Taxonomy.All;
+    public static IReadOnlySet<string> All => _taxonomy.All;
 
     /// <summary>Returns true when <paramref name="item"/> names a defined <see cref="AssetItemType"/> member.</summary>
-    public static bool IsKnown(string? item) => Taxonomy.IsKnown(item);
+    public static bool IsKnown(string? item) => _taxonomy.IsKnown(item);
 }

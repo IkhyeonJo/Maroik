@@ -22,11 +22,11 @@ public static partial class PasswordPolicy
     /// Upper bound on the password length, in UTF-8 bytes. BCrypt silently ignores everything past
     /// the first 72 bytes of its input, so a longer password would hash as if truncated — two
     /// different long passwords sharing a 72-byte prefix would then verify against each other.
-    /// Rejecting them up front keeps "the whole password matters" true. Also usable as a
+    /// Rejecting them up front keeps "the whole password matters" true. Usable as a
     /// <see cref="System.ComponentModel.DataAnnotations.StringLengthAttribute"/> ceiling on ViewModels
     /// (a conservative char count, since one char is 1–4 UTF-8 bytes).
     /// </summary>
-    public const int MaxByteLength = 72;
+    private const int MaxByteLength = 72;
 
     /// <summary>
     /// Human-readable statement of the rule, for a validation error message. Single source of truth

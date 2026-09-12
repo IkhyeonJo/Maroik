@@ -16,32 +16,32 @@ namespace Maroik.Core.Domain.Finance;
 public static class ExpenditureClassPolicy
 {
     /// <summary>
-    /// The recognized sub-classes for each expenditure main class, in display order.
+    /// The recognized subClasses for each expenditure main class, in display order.
     /// </summary>
     public static readonly IReadOnlyDictionary<string, IReadOnlyList<string>> SubClassesByMainClass =
         new Dictionary<string, IReadOnlyList<string>>
         {
-            ["RegularSavings"] = new[] { "Deposit", "Investment" },
-            ["NonConsumerSpending"] = new[]
-            {
+            ["RegularSavings"] = ["Deposit", "Investment"],
+            ["NonConsumerSpending"] =
+            [
                 "PublicPension", "DebtRepayment", "Tax", "SocialInsurance",
                 "InterHouseholdTransferExpenses", "NonProfitOrganizationTransfer"
-            },
-            ["ConsumerSpending"] = new[]
-            {
+            ],
+            ["ConsumerSpending"] =
+            [
                 "MealOrEatOutExpenses", "HousingOrSuppliesCost", "EducationExpenses",
                 "MedicalExpenses", "TransportationCost", "CommunicationCost",
                 "LeisureOrCulture", "ClothingOrShoes", "PinMoney",
                 "ProtectionTypeInsurance", "OtherExpenses", "UnknownExpenditure"
-            }
+            ]
         };
 
     /// <summary>
-    /// Sub-classes that represent a transfer into an asset and therefore require the user to
-    /// pick a deposit asset. Every other recognized sub-class does not.
+    /// SubClasses that represent a transfer into an asset and therefore require the user to
+    /// pick a deposit asset. Every other recognized subClass does not.
     /// </summary>
     public static readonly IReadOnlyList<string> DepositAssetSubClasses =
-        new[] { "Deposit", "Investment", "PublicPension", "DebtRepayment" };
+        ["Deposit", "Investment", "PublicPension", "DebtRepayment"];
 
     /// <summary>
     /// Validates <paramref name="mainClass"/> / <paramref name="subClass"/> and returns whether

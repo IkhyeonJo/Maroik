@@ -17,11 +17,11 @@ public static class ReminderMethods
     /// <summary>Deliver the reminder as an in-app/push notification.</summary>
     public const string Notification = "Notification";
 
-    private static readonly StringTaxonomy Taxonomy = new([Email, Notification]);
+    private static readonly StringTaxonomy _taxonomy = new([Email, Notification]);
 
-    /// <summary>Every recognised delivery method.</summary>
-    public static IReadOnlySet<string> All => Taxonomy.All;
+    /// <summary>Every recognized delivery method.</summary>
+    public static IReadOnlySet<string> All => _taxonomy.All;
 
     /// <summary>Returns true when <paramref name="method"/> is one of the known delivery methods.</summary>
-    public static bool IsKnown(string? method) => Taxonomy.IsKnown(method);
+    public static bool IsKnown(string? method) => _taxonomy.IsKnown(method);
 }

@@ -1,4 +1,6 @@
 using System.Reflection;
+using Maroik.Core.Domain.Board;
+using Maroik.Core.Domain.Calendar;
 using Maroik.Core.Service.Services;
 using NetArchTest.Rules;
 

@@ -18,11 +18,11 @@ public static class CalendarEventStatuses
     /// <summary>The subscriber appears available for the event's duration.</summary>
     public const string Free = "Free";
 
-    private static readonly StringTaxonomy Taxonomy = new([Busy, Free]);
+    private static readonly StringTaxonomy _taxonomy = new(Busy, Free);
 
-    /// <summary>Every recognised status value.</summary>
-    public static IReadOnlySet<string> All => Taxonomy.All;
+    /// <summary>Every recognized status value.</summary>
+    public static IReadOnlySet<string> All => _taxonomy.All;
 
     /// <summary>Returns true when <paramref name="status"/> is one of the known status values.</summary>
-    public static bool IsKnown(string? status) => Taxonomy.IsKnown(status);
+    public static bool IsKnown(string? status) => _taxonomy.IsKnown(status);
 }

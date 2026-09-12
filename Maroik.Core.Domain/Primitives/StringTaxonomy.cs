@@ -7,17 +7,11 @@ namespace Maroik.Core.Domain.Primitives;
 /// delegates the <c>All</c> / <c>IsKnown</c> membership check to one instance of this type, instead
 /// of every taxonomy hand-rolling its own <see cref="HashSet{T}"/> and null-checked lookup.
 /// </summary>
-public sealed class StringTaxonomy
+public sealed class StringTaxonomy(params IEnumerable<string> values)
 {
-    private readonly IReadOnlySet<string> _values;
-
-    /// <summary>Builds the taxonomy from its complete set of recognised values.</summary>
-    public StringTaxonomy(params IEnumerable<string> values) =>
-        _values = new HashSet<string>(values, StringComparer.Ordinal);
-
-    /// <summary>Every recognised value.</summary>
-    public IReadOnlySet<string> All => _values;
+    /// <summary>Every recognized value.</summary>
+    public IReadOnlySet<string> All { get; } = new HashSet<string>(values, StringComparer.Ordinal);
 
     /// <summary>Returns true when <paramref name="value"/> is one of the known values.</summary>
-    public bool IsKnown(string? value) => value != null && _values.Contains(value);
+    public bool IsKnown(string? value) => value != null && All.Contains(value);
 }

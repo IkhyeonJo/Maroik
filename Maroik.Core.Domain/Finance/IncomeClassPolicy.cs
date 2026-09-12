@@ -16,17 +16,17 @@ namespace Maroik.Core.Domain.Finance;
 public static class IncomeClassPolicy
 {
     /// <summary>
-    /// The recognized sub-classes for each income main class, in display order.
+    /// The recognized subClasses for each income main class, in display order.
     /// </summary>
     public static readonly IReadOnlyDictionary<string, IReadOnlyList<string>> SubClassesByMainClass =
         new Dictionary<string, IReadOnlyList<string>>
         {
-            ["RegularIncome"] = new[]
-            {
+            ["RegularIncome"] =
+            [
                 "LaborIncome", "BusinessIncome", "PensionIncome",
                 "FinancialIncome", "RentalIncome", "OtherIncome"
-            },
-            ["IrregularIncome"] = new[] { "LaborIncome", "OtherIncome" }
+            ],
+            ["IrregularIncome"] = ["LaborIncome", "OtherIncome"]
         };
 
     /// <summary>

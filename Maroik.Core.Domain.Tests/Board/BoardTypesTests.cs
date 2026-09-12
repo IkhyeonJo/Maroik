@@ -1,4 +1,5 @@
 using Maroik.Core.Domain.Board;
+using Maroik.Core.Domain.Primitives;
 
 namespace Maroik.Core.DomainTests.BoardDomain;
 
