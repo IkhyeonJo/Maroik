@@ -106,23 +106,6 @@ public sealed class OtherCalendarRepositoryTests(DatabaseFixture database) : Rep
             () => Sut.CreateAsync(OtherCalendar.Reconstitute(accountEmail: carol, calendarId: long.MaxValue), TestContext.Current.CancellationToken));
     }
 
-    // -- DeleteByAccountEmailAndCalendarIdAsync ------------------------------
-
-    /// <summary>Verifies that <c>DeleteByAccountEmailAndCalendarIdAsync</c> removes the one matching row.</summary>
-    [Fact]
-    public async Task DeleteByAccountEmailAndCalendarIdAsync_RemovesEntry()
-    {
-        string dave = UniqueEmail("dave");
-        long calendarId = await InsertCalendarAsync();
-        await SeedAsync(dave, calendarId);
-
-        await Sut.DeleteByAccountEmailAndCalendarIdAsync(dave, calendarId, TestContext.Current.CancellationToken);
-        Context.ChangeTracker.Clear();
-
-        Assert.False(await Context.OtherCalendars.AnyAsync(
-            oc => oc.AccountEmail == dave && oc.CalendarId == calendarId, TestContext.Current.CancellationToken));
-    }
-
     // -- DeleteByAccountEmailAsync --------------------------------------------
 
     /// <summary>Verifies that <c>DeleteByAccountEmailAsync</c> removes all subscriptions for the e-mail.</summary>

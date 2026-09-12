@@ -10,9 +10,6 @@ public class IncomeRequest
     /// <summary>Income ID (auto-incremented primary key; 0 for new records).</summary>
     public long Id { get; set; }
 
-    /// <summary>Email of the account that received the income.</summary>
-    public string? AccountEmail { get; set; }
-
     /// <summary>Top-level income category (e.g. "RegularIncome", "IrregularIncome").</summary>
     public string? MainClass { get; set; }
 

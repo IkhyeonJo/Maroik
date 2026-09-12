@@ -57,21 +57,6 @@ public class BoardServiceTests
     private static BoardComment MakeComment(long id = 1, string writer = "Alice", long order = 0L) =>
         BoardComment.Reconstitute(id, 1L, order, null, writer, "Comment", DateTime.UtcNow, false);
 
-    // -- GetBoardsAsync -------------------------------------------------------
-
-    /// <summary>Verifies that <c>GetBoardsAsync</c> delegates to repository.</summary>
-    [Fact]
-    public async Task GetBoardsAsync_DelegatesToRepository()
-    {
-        var list = new List<Board> { MakeBoard() };
-        _boardRepo.Setup(r => r.GetByTypeAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(list);
-        var sut = CreateSut();
-
-        IEnumerable<BoardResponse> result = await sut.GetBoardsAsync(BoardTypes.FreeForum, TestContext.Current.CancellationToken);
-
-        Assert.Single(result);
-    }
-
     // -- GetBoardByIdAsync ----------------------------------------------------
 
     /// <summary>Verifies that <c>GetBoardByIdAsync</c> delegates to repository.</summary>

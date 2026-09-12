@@ -23,18 +23,6 @@ public class BoardRequest
     /// <summary>Nickname of the author.</summary>
     public string? Writer { get; set; }
 
-    /// <summary>UTC timestamp when the post was created.</summary>
-    public DateTime Created { get; set; }
-
-    /// <summary>UTC timestamp of the most recent edit.</summary>
-    public DateTime Updated { get; set; }
-
-    /// <summary>View count (incremented each time the post is opened).</summary>
-    public long View { get; set; }
-
-    /// <summary>Soft-delete flag.</summary>
-    public bool Deleted { get; set; }
-
     /// <summary>When true, the post is locked and no new comments can be added.</summary>
     public bool Locked { get; set; }
 

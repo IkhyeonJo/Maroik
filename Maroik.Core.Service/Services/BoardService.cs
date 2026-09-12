@@ -61,10 +61,6 @@ public class BoardService : IBoardService
     }
 
     /// <inheritdoc />
-    public async Task<IEnumerable<BoardResponse>> GetBoardsAsync(string type, CancellationToken ct = default)
-        => (await _boardRepository.GetByTypeAsync(type, ct)).Select(BoardMapper.ToResponse);
-
-    /// <inheritdoc />
     public async Task<(IEnumerable<BoardResponse> Items, int TotalCount)> GetBoardPageAsync(BoardPageQuery query, CancellationToken ct = default)
     {
         var (items, totalCount) = await _boardRepository.QueryPageAsync(query, ct);

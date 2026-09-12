@@ -12,13 +12,13 @@ public class AccountRequest
     public string? Email { get; set; }
 
     /// <summary>
-    /// Always a BCrypt hash — never a plain-text password. On the create/register path this stays
+    /// Always a BCrypt hash — never a plain-text password. On the creation/register path this stays
     /// null and <see cref="PlainPassword"/> carries the raw value for the service to hash.
     /// </summary>
     public string? HashedPassword { get; set; }
 
     /// <summary>
-    /// Plain-text password as typed by the user, used only on the create/register path. The service
+    /// Plain-text password as typed by the user, used only on the creation/register path. The service
     /// layer validates it against the password policy and hashes it into <see cref="HashedPassword"/>
     /// before the domain sees it; it is never persisted or returned.
     /// </summary>

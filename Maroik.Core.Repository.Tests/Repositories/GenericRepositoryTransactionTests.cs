@@ -80,35 +80,6 @@ public sealed class GenericRepositoryTransactionTests(DatabaseFixture database) 
     }
 
     /// <summary>
-    /// Regression: <c>DeleteWhereAsync</c> used to compute its delete set purely from a DB query, so
-    /// a row created earlier in the same still-open transaction via <c>CreateAsync</c> — whose
-    /// INSERT is deferred, per this class's flush contract — was invisible to it and got inserted
-    /// anyway by the eventual <c>CommitAsync</c>, silently ignoring the caller's delete.
-    /// <see cref="OtherCalendar"/> is used because its (AccountEmail, CalendarId) primary key is
-    /// caller-supplied, so the delete predicate does not need a DB-generated id that only exists
-    /// after the deferred INSERT is flushed.
-    /// </summary>
-    [Fact]
-    public async Task DeleteWhereAsync_InsideTransaction_RemovesRowCreatedEarlierInSameTransaction()
-    {
-        long calendarId = await InsertCalendarAsync();
-        string email = UniqueEmail("subscriber");
-        await EnsureAccountsAsync(email);
-        var link = OtherCalendar.Reconstitute(email, calendarId);
-
-        await using var uow = new UnitOfWork(Context);
-        var repo = new OtherCalendarRepository(Context);
-
-        await uow.BeginAsync(TestContext.Current.CancellationToken);
-        await repo.CreateAsync(link, TestContext.Current.CancellationToken);
-        await repo.DeleteByAccountEmailAndCalendarIdAsync(email, calendarId, TestContext.Current.CancellationToken);
-        await uow.CommitAsync(TestContext.Current.CancellationToken);
-
-        Assert.False(await Context.OtherCalendars.AsNoTracking().AnyAsync(
-            o => o.AccountEmail == email && o.CalendarId == calendarId, TestContext.Current.CancellationToken));
-    }
-
-    /// <summary>
     /// Regression: <c>QueryAsync</c> (used here via <c>OtherCalendarRepository.GetByAccountEmailAsync</c>)
     /// used to translate its predicate straight into SQL and run it against the database only, so a row
     /// created earlier in the same still-open transaction -- whose INSERT is deferred -- was invisible

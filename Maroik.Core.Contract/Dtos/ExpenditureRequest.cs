@@ -10,9 +10,6 @@ public class ExpenditureRequest
     /// <summary>Expenditure ID (auto-incremented primary key; 0 for new records).</summary>
     public long Id { get; set; }
 
-    /// <summary>Email of the account that owns this expenditure.</summary>
-    public string? AccountEmail { get; set; }
-
     /// <summary>Top-level expense category (e.g. "ConsumerSpending", "NonConsumerSpending").</summary>
     public string? MainClass { get; set; }
 

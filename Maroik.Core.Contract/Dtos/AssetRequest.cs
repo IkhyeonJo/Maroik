@@ -10,9 +10,6 @@ public class AssetRequest
     /// <summary>Product name that identifies the asset (part of the composite primary key).</summary>
     public string? ProductName { get; set; }
 
-    /// <summary>Owner's account email (part of the composite primary key / foreign key).</summary>
-    public string? AccountEmail { get; set; }
-
     /// <summary>Asset category (e.g. "Deposit", "Stock", "Cash").</summary>
     public string? Item { get; set; }
 

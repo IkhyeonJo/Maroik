@@ -71,7 +71,7 @@ public class ServiceResult
     public static ServiceResult Fail(string errorKey) => Fail(errorKey, ServiceErrorType.Validation);
 
     /// <summary>Creates a failed result with the given error key and category.</summary>
-    public static ServiceResult Fail(string errorKey, ServiceErrorType type) =>
+    private static ServiceResult Fail(string errorKey, ServiceErrorType type) =>
         new() { Success = false, ErrorKey = errorKey, ErrorType = type };
 
     /// <summary>

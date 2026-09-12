@@ -35,12 +35,4 @@ public interface IExpenditureRepository : IGenericRepository<Expenditure>
 
     /// <summary>Deletes the expenditure record with the given ID.</summary>
     Task DeleteByIdAsync(long id, CancellationToken ct = default);
-
-    /// <summary>
-    /// Renames every reference to <paramref name="oldMyDepositAsset"/> in this account's expenditure
-    /// records to <paramref name="newMyDepositAsset"/>. There is no foreign key on this column
-    /// (transfer-less expenditures store an empty string here), so a renamed asset must be
-    /// cascaded here explicitly. Returns the number of rows updated.
-    /// </summary>
-    Task<int> UpdateMyDepositAssetWithProductNameAsync(string accountEmail, string oldMyDepositAsset, string newMyDepositAsset, CancellationToken ct = default);
 }

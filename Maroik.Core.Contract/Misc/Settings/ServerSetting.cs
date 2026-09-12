@@ -34,9 +34,6 @@ public class ServerSetting
     /// <summary>Display name shown next to the From address in outgoing emails.</summary>
     public string? FromFullName { get; set; }
 
-    /// <summary>When true, the application runs in default/demo mode (may restrict certain admin actions).</summary>
-    public bool IsDefault { get; set; }
-
     /// <summary>Number of consecutive failed logins allowed before the account is locked.</summary>
     public byte MaxLoginAttempt { get; set; }
 

@@ -8,9 +8,6 @@ namespace Maroik.Core.Contract.Interfaces;
 /// </summary>
 public interface IBoardService
 {
-    /// <summary>Returns all visible posts of the specified board type.</summary>
-    Task<IEnumerable<BoardResponse>> GetBoardsAsync(string type, CancellationToken ct = default);
-
     /// <summary>
     /// Returns one page of posts matching <paramref name="query"/>, plus the total matching count
     /// (for pagination), executed as a single SQL query rather than materializing the whole

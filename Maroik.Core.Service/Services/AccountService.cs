@@ -88,7 +88,7 @@ public class AccountService : IAccountService
             {
                 // Spend the same CPU as a real verification so "no such account" and "wrong
                 // password" take the same time — otherwise the response time enumerates valid emails.
-                _passwordService.VerifyDummy(password);
+                _ = _passwordService.VerifyDummy(password);
                 // ...and issue an equivalent (0-row) column write + commit so this path's DB cost
                 // matches the wrong-password path below (which persists the failed-attempt counter),
                 // instead of returning early after a bare rollback.

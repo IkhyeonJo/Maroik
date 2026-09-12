@@ -11,9 +11,6 @@ public class FixedExpenditureRequest
     /// <summary>Fixed expenditure ID (auto-incremented primary key; 0 for new records).</summary>
     public long Id { get; set; }
 
-    /// <summary>Email of the owning account.</summary>
-    public string? AccountEmail { get; set; }
-
     /// <summary>Top-level expense category.</summary>
     public string? MainClass { get; set; }
 

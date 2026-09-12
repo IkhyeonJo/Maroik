@@ -43,10 +43,4 @@ public class CalendarEventRequest
 
     /// <summary>Optional reference to a CalendarRecurrence row for repeating events.</summary>
     public long? RecurrenceId { get; set; }
-
-    /// <summary>UTC timestamp when the event was created.</summary>
-    public DateTime Created { get; set; }
-
-    /// <summary>UTC timestamp of the most recent update.</summary>
-    public DateTime Updated { get; set; }
 }

@@ -98,10 +98,4 @@ public class FixedExpenditureRepository(ApplicationDbContext context)
     /// <inheritdoc />
     public Task DeleteByIdAsync(long id, CancellationToken ct = default)
         => DeleteWhereAsync(e => e.Id == id, ct);
-
-    /// <inheritdoc />
-    public Task<int> UpdateMyDepositAssetWithProductNameAsync(string accountEmail, string oldMyDepositAsset, string newMyDepositAsset, CancellationToken ct = default)
-        => Set
-            .Where(e => e.AccountEmail == accountEmail && e.MyDepositAsset == oldMyDepositAsset)
-            .ExecuteUpdateAsync(s => s.SetProperty(e => e.MyDepositAsset, newMyDepositAsset), ct);
 }

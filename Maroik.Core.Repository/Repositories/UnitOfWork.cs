@@ -44,9 +44,6 @@ public class UnitOfWork : IUnitOfWork
     }
 
     /// <inheritdoc />
-    public Task SaveChangesAsync(CancellationToken ct = default) => _context.SaveChangesAsync(ct);
-
-    /// <inheritdoc />
     public async Task CommitAsync(CancellationToken ct = default)
     {
         if (_transaction == null)
