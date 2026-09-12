@@ -30,7 +30,7 @@
     const $btnPrivateNoteModify = $('#btnPrivateNoteModify');
     const $btnPrivateNoteShowWriteBoardLoading = $('#btnPrivateNoteShowWriteBoardLoading');
     const $__RequestVerificationToken = $('input[name="__RequestVerificationToken"]');
-    const maxFileSize = parseInt($('#maxAttachedFileSizeBytes').val()) || 10485760;
+    const maxFileSize = parseInt($('#maxAttachedFileSizeBytes').val()) || window.MaroikDefaultMaxAttachedFileSizeBytes;
     const boardHeight = 300;
     function base64ToBlob(base64, mime) {
         const byteCharacters = atob(base64);
@@ -488,3 +488,4 @@
         }
     });
 })();
+//# sourceMappingURL=site.js.map

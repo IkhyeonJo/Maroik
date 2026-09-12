@@ -369,15 +369,22 @@ public class CalendarService(
     /// <inheritdoc />
     public async Task<ServiceResult> UpdateOtherCalendarAsync(string email, IEnumerable<OtherCalendarRequest> requests, CancellationToken ct = default)
     {
+        List<OtherCalendarRequest> requestList = [.. requests];
+
         await unitOfWork.BeginAsync(ct);
         try
         {
             // A subscription must only ever be created for a calendar an admin has explicitly
             // marked shared to Users (CalendarShared.User) — otherwise any account could grant
             // itself read access to any calendar's events by supplying an arbitrary CalendarId.
+            // Locked (FOR UPDATE) on exactly the rows this call depends on: this serializes against
+            // a concurrent UpdateCalendarSharedAsync unsharing (and deleting subscriptions for) one
+            // of these same calendars, in either interleaving — whichever transaction acquires the
+            // row lock first, the other waits until it commits, so a subscription can never be
+            // created against a permission snapshot a concurrent unshare has already invalidated.
             HashSet<long> shareableCalendarIds =
             [
-                .. (await calendarSharedRepository.GetAllAsync(ct))
+                .. (await calendarSharedRepository.GetByIdsForUpdateAsync(requestList.Select(r => r.CalendarId), ct))
                 .Where(shared => shared.User)
                 .Select(shared => shared.Id)
             ];
@@ -385,7 +392,7 @@ public class CalendarService(
             // Replace-all strategy: delete existing subscriptions then re-insert from the new list.
             await otherCalendarRepository.DeleteByAccountEmailAsync(email, ct);
 
-            foreach (OtherCalendarRequest req in requests)
+            foreach (OtherCalendarRequest req in requestList)
             {
                 if (!shareableCalendarIds.Contains(req.CalendarId))
                 {
@@ -561,7 +568,11 @@ public class CalendarService(
                 return ServiceResult.NotFound("Calendar.NotFound", "The calendar does not exists.");
             }
 
-            CalendarEvent? existing = await calendarEventRepository.FindByIdAsync(request.Id, ct);
+            // Row lock (FOR UPDATE) held until commit/rollback below, so a concurrent update to the
+            // same event (e.g. a double-submit/retry) is fully serialized instead of both requests
+            // reading the same pre-update reminder/attachment rows and each inserting its own
+            // replacement set on top of the other's.
+            CalendarEvent? existing = await calendarEventRepository.FindByIdForUpdateAsync(request.Id, ct);
             // Verify the existing event currently belongs to one of the caller's calendars
             // before allowing any mutation or reassignment.
             if (existing == null || existing.Id <= 0 || calendars.All(c => c.Id != existing.CalendarId))

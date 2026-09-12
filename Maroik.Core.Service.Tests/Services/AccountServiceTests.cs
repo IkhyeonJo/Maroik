@@ -405,6 +405,7 @@ public class AccountServiceTests
         string token = GuidToken.Generate();
         var existing = ActiveAccount(emailConfirmed: false, registrationToken: token);
         _accountRepo.Setup(r => r.FindByEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(existing);
+        _accountRepo.Setup(r => r.FindByEmailForUpdateAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(existing);
         _accountRepo.Setup(r => r.UpdateEntityAsync(It.IsAny<Account>(), It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
         _rsa.Setup(r => r.Encrypt(It.IsAny<string>())).Returns("enc-token");
         SetupMailSuccess();
@@ -559,6 +560,7 @@ public class AccountServiceTests
         var account = ActiveAccount(emailConfirmed: false, registrationToken: freshToken);
         _rsa.Setup(r => r.Decrypt("enc")).Returns(freshToken);
         _accountRepo.Setup(r => r.FindByRegistrationTokenAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(account);
+        _accountRepo.Setup(r => r.FindByEmailForUpdateAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(account);
         _accountRepo.Setup(r => r.UpdateEmailConfirmationAsync(
                 It.IsAny<string>(), It.IsAny<string?>(), It.IsAny<string?>(), It.IsAny<DateTime>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(1);
@@ -587,6 +589,7 @@ public class AccountServiceTests
         var account = ActiveAccount(emailConfirmed: false, registrationToken: freshToken);
         _rsa.Setup(r => r.Decrypt("enc")).Returns(freshToken);
         _accountRepo.Setup(r => r.FindByRegistrationTokenAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(account);
+        _accountRepo.Setup(r => r.FindByEmailForUpdateAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(account);
         _accountRepo.Setup(r => r.UpdateEmailConfirmationAsync(
                 It.IsAny<string>(), It.IsAny<string?>(), It.IsAny<string?>(), It.IsAny<DateTime>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(0);
@@ -611,6 +614,7 @@ public class AccountServiceTests
         var account = ActiveAccount(emailConfirmed: false, registrationToken: freshToken);
         _rsa.Setup(r => r.Decrypt("enc")).Returns(freshToken);
         _accountRepo.Setup(r => r.FindByRegistrationTokenAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(account);
+        _accountRepo.Setup(r => r.FindByEmailForUpdateAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(account);
         _accountRepo.Setup(r => r.UpdateEmailConfirmationAsync(
                 It.IsAny<string>(), It.IsAny<string?>(), It.IsAny<string?>(), It.IsAny<DateTime>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(1);
@@ -629,6 +633,7 @@ public class AccountServiceTests
         var account = ActiveAccount(emailConfirmed: true);
         _rsa.Setup(r => r.Decrypt("enc")).Returns(freshToken);
         _accountRepo.Setup(r => r.FindByRegistrationTokenAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(account);
+        _accountRepo.Setup(r => r.FindByEmailForUpdateAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(account);
         _accountRepo.Setup(r => r.UpdateMessageAsync(It.IsAny<string>(), It.IsAny<string?>(), It.IsAny<DateTime>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(1);
         var sut = CreateSut();

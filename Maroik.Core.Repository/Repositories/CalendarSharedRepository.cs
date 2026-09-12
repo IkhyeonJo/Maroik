@@ -31,4 +31,24 @@ public class CalendarSharedRepository(ApplicationDbContext context)
     /// <inheritdoc />
     public Task<List<CalendarShared>> GetAllAsync(CancellationToken ct = default)
         => QueryAllAsync(ct: ct);
+
+    /// <inheritdoc />
+    public async Task<List<CalendarShared>> GetByIdsForUpdateAsync(IEnumerable<long> calendarIds, CancellationToken ct = default)
+    {
+        long[] ids = [.. calendarIds];
+        if (ids.Length == 0) return [];
+
+        // Raw SQL is required because EF Core LINQ cannot emit FOR UPDATE. AsNoTracking so a
+        // pre-lock instance already tracked in this context can't snap back and defeat the lock
+        // (see BoardRepository.FindActiveByIdForUpdateAsync for the same rationale).
+        var entities = await Set.FromSqlInterpolated(
+            $"""
+             SELECT *
+             FROM "CalendarShared"
+             WHERE "CalendarId" = ANY({ids})
+             FOR UPDATE
+             """).AsNoTracking().ToListAsync(ct);
+
+        return [.. entities.Select(ToDomain)];
+    }
 }

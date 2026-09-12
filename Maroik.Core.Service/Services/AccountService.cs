@@ -187,14 +187,43 @@ public class AccountService(
 
         if (!existing.EmailConfirmed)
         {
-            // Account exists but email was never confirmed: regenerate the token when it is missing
-            // OR has passed its 24h TTL, so a stale registration is always recoverable by re-registering.
-            if (string.IsNullOrEmpty(existing.RegistrationToken) || !GuidToken.IsTokenAlive(existing.RegistrationToken))
-                existing.RegenerateRegistrationToken(GuidToken.Generate());
+            await unitOfWork.BeginAsync(ct);
+            try
+            {
+                // Re-read under FOR UPDATE before regenerating/persisting the token: serializes
+                // against a concurrent ConfirmEmailAsync/ResendConfirmationEmailAsync write to the
+                // same row (both now take the same lock before writing) so this cannot resurrect a
+                // token a concurrent confirm just consumed, or vice versa.
+                Account? locked = await accountRepository.FindByEmailForUpdateAsync(existing.Email.Value, ct);
+                if (locked == null)
+                {
+                    await unitOfWork.RollbackAsync(ct);
+                    return RegisterResult.Fail("Error occurred while processing about account registration");
+                }
 
-            return await SendConfirmationEmailAndUpdateStatusAsync(
-                existing, emailTemplate,
-                setVerifyEmailMessageOnSuccess: true, repeat: false, ct);
+                if (locked.EmailConfirmed)
+                {
+                    // Confirmed by a concurrent request while this one waited for the lock.
+                    await unitOfWork.RollbackAsync(ct);
+                    return RegisterResult.Fail(EnumHelper.GetDescription(AccountMessage.UserAlreadyCreated));
+                }
+
+                // Regenerate the token when it is missing OR has passed its 24h TTL, so a stale
+                // registration is always recoverable by re-registering.
+                if (string.IsNullOrEmpty(locked.RegistrationToken) || !GuidToken.IsTokenAlive(locked.RegistrationToken))
+                    locked.RegenerateRegistrationToken(GuidToken.Generate());
+
+                RegisterResult result = await SendConfirmationEmailAndUpdateStatusAsync(
+                    locked, emailTemplate,
+                    setVerifyEmailMessageOnSuccess: true, repeat: false, ct);
+                await unitOfWork.CommitAsync(ct);
+                return result;
+            }
+            catch
+            {
+                await unitOfWork.RollbackAsync(ct);
+                throw;
+            }
         }
 
         // Account is fully confirmed: tell the caller it already exists and bring the account's own
@@ -255,25 +284,53 @@ public class AccountService(
         if (account == null)
             return RegisterResult.Fail("Failed to resend email", showResendEmail: true);
 
-        if (!account.EmailConfirmed)
+        if (account.EmailConfirmed)
         {
-            // Ensure a live token exists before building the confirmation URL — regenerate when it is
-            // missing OR has passed its 24h TTL (otherwise a resend just re-sends a dead link).
-            if (string.IsNullOrEmpty(account.RegistrationToken) || !GuidToken.IsTokenAlive(account.RegistrationToken))
-                account.RegenerateRegistrationToken(GuidToken.Generate());
-
-            // repeat: true signals the UI that this is a resend, not the first confirmation.
-            return await SendConfirmationEmailAndUpdateStatusAsync(
-                account, emailTemplate,
-                setVerifyEmailMessageOnSuccess: true, repeat: true, ct);
+            // Email is already confirmed: just inform the caller. This request has no proof of
+            // ownership (unlike RegisterAsync's equivalent branch, which requires the account's
+            // password before writing anything) -- an unauthenticated caller who only knows the
+            // address must not be able to mutate the account, so this path is read-only.
+            return RegisterResult.Fail(EnumHelper.GetDescription(AccountMessage.UserAlreadyCreated));
         }
 
-        // Email is already confirmed: just inform the caller. This request has no proof of
-        // ownership (unlike RegisterAsync's equivalent branch, which requires the account's
-        // password before writing anything) -- an unauthenticated caller who only knows the
-        // address must not be able to mutate the account, so this path is read-only.
-        string alreadyCreatedMessage = EnumHelper.GetDescription(AccountMessage.UserAlreadyCreated);
-        return RegisterResult.Fail(alreadyCreatedMessage);
+        await unitOfWork.BeginAsync(ct);
+        try
+        {
+            // Re-read under FOR UPDATE before regenerating/persisting the token: serializes against
+            // a concurrent ConfirmEmailAsync/RegisterAsync write to the same row (both now take the
+            // same lock before writing) so this cannot resurrect a token a concurrent confirm just
+            // consumed, or vice versa.
+            Account? locked = await accountRepository.FindByEmailForUpdateAsync(email, ct);
+            if (locked == null)
+            {
+                await unitOfWork.RollbackAsync(ct);
+                return RegisterResult.Fail("Failed to resend email", showResendEmail: true);
+            }
+
+            if (locked.EmailConfirmed)
+            {
+                // Confirmed by a concurrent request while this one waited for the lock.
+                await unitOfWork.RollbackAsync(ct);
+                return RegisterResult.Fail(EnumHelper.GetDescription(AccountMessage.UserAlreadyCreated));
+            }
+
+            // Ensure a live token exists before building the confirmation URL — regenerate when it is
+            // missing OR has passed its 24h TTL (otherwise a resend just re-sends a dead link).
+            if (string.IsNullOrEmpty(locked.RegistrationToken) || !GuidToken.IsTokenAlive(locked.RegistrationToken))
+                locked.RegenerateRegistrationToken(GuidToken.Generate());
+
+            // repeat: true signals the UI that this is a resend, not the first confirmation.
+            RegisterResult result = await SendConfirmationEmailAndUpdateStatusAsync(
+                locked, emailTemplate,
+                setVerifyEmailMessageOnSuccess: true, repeat: true, ct);
+            await unitOfWork.CommitAsync(ct);
+            return result;
+        }
+        catch
+        {
+            await unitOfWork.RollbackAsync(ct);
+            throw;
+        }
     }
 
     /// <inheritdoc />
@@ -295,61 +352,86 @@ public class AccountService(
         if (!GuidToken.IsTokenAlive(rawToken))
             return new ConfirmEmailResult { InvalidToken = true, AccountCreated = false };
 
-        // account was already looked up by RegistrationToken == rawToken above, so the
-        // token check inside ConfirmEmail is redundant here; kept because the domain
-        // method enforces its own invariant regardless of how the caller found the account.
-        var confirmResult = account.ConfirmEmail(rawToken);
-
-        if (confirmResult.IsError)
-        {
-            if (confirmResult.FirstError.Type != ErrorOr.ErrorType.Conflict)
-            {
-                return new ConfirmEmailResult { InvalidToken = true, AccountCreated = true };
-            }
-
-            // Email was already confirmed by a previous request. Column-scoped write (not full-row
-            // UpdateEntityAsync): this runs off an un-locked token lookup and must not overwrite a
-            // concurrent self-service change on the same row.
-            account.SetMessage(EnumHelper.GetDescription(AccountMessage.UserAlreadyCreated));
-            try { await accountRepository.UpdateMessageAsync(account.Email.Value, account.Message, account.Updated, ct); }
-            catch (Exception e) { logger.LogError(e, "Failed to update account status for {Email}", account.Email.Value); }
-            return new ConfirmEmailResult { InvalidToken = false, AccountCreated = false };
-        }
-
-        account.SetMessage(EnumHelper.GetDescription(AccountMessage.Success));
-        int rowsAffected;
+        await unitOfWork.BeginAsync(ct);
         try
         {
-            // Column-scoped write (not full-row UpdateEntityAsync): this runs off an un-locked
-            // token lookup and must not overwrite a concurrent self-service change on the same row
-            // (same reasoning as the already-confirmed branch above).
-            rowsAffected = await accountRepository.UpdateEmailConfirmationAsync(
-                account.Email.Value, account.RegistrationToken, account.Message, account.Updated, ct);
-        }
-        catch (Exception e)
-        {
-            logger.LogError(e, "Failed to confirm email for account {Email}", account.Email.Value);
-            return new ConfirmEmailResult
+            // Re-read under FOR UPDATE, serializing against a concurrent ResendConfirmationEmailAsync
+            // / RegisterAsync write to the same row (both now take the same lock before writing) so
+            // this confirm cannot act on a registration-token snapshot a concurrent resend has
+            // already superseded, or vice versa.
+            Account? locked = await accountRepository.FindByEmailForUpdateAsync(account.Email.Value, ct);
+            if (locked == null)
             {
-                InvalidToken = true,
-                AccountCreated = true,
-                ErrorKey = "Error occurred while processing about confirm email account status"
-            };
-        }
+                await unitOfWork.RollbackAsync(ct);
+                return new ConfirmEmailResult { InvalidToken = true, AccountCreated = false };
+            }
 
-        // ExecuteUpdateAsync doesn't throw on a missing row -- it just matches zero rows. If the
-        // account was deleted concurrently between FindByRegistrationTokenAsync above and this
-        // write, nothing was actually persisted; report it the same way as "account not found"
-        // rather than a false AccountCreated success.
-        if (rowsAffected != 0)
+            // ConfirmEmail enforces its own invariant against the freshly-locked row: it rejects a
+            // token that no longer matches RegistrationToken (superseded by a concurrent resend) the
+            // same way it rejects any other invalid token, and separately reports Conflict when the
+            // locked row is already confirmed.
+            var confirmResult = locked.ConfirmEmail(rawToken);
+
+            if (confirmResult.IsError)
+            {
+                if (confirmResult.FirstError.Type != ErrorOr.ErrorType.Conflict)
+                {
+                    await unitOfWork.RollbackAsync(ct);
+                    return new ConfirmEmailResult { InvalidToken = true, AccountCreated = true };
+                }
+
+                // Email was already confirmed by a previous request.
+                locked.SetMessage(EnumHelper.GetDescription(AccountMessage.UserAlreadyCreated));
+                try
+                {
+                    await accountRepository.UpdateMessageAsync(locked.Email.Value, locked.Message, locked.Updated, ct);
+                    await unitOfWork.CommitAsync(ct);
+                }
+                catch (Exception e)
+                {
+                    logger.LogError(e, "Failed to update account status for {Email}", locked.Email.Value);
+                    await unitOfWork.RollbackAsync(ct);
+                }
+                return new ConfirmEmailResult { InvalidToken = false, AccountCreated = false };
+            }
+
+            locked.SetMessage(EnumHelper.GetDescription(AccountMessage.Success));
+            int rowsAffected;
+            try
+            {
+                rowsAffected = await accountRepository.UpdateEmailConfirmationAsync(
+                    locked.Email.Value, locked.RegistrationToken, locked.Message, locked.Updated, ct);
+                await unitOfWork.CommitAsync(ct);
+            }
+            catch (Exception e)
+            {
+                logger.LogError(e, "Failed to confirm email for account {Email}", locked.Email.Value);
+                await unitOfWork.RollbackAsync(ct);
+                return new ConfirmEmailResult
+                {
+                    InvalidToken = true,
+                    AccountCreated = true,
+                    ErrorKey = "Error occurred while processing about confirm email account status"
+                };
+            }
+
+            // ExecuteUpdateAsync doesn't throw on a missing row -- it just matches zero rows. If the
+            // account was deleted concurrently, nothing was actually persisted; report it the same
+            // way as "account not found" rather than a false AccountCreated success.
+            if (rowsAffected != 0)
+            {
+                return new ConfirmEmailResult { InvalidToken = false, AccountCreated = true };
+            }
+
+            logger.LogWarning(
+                "Account {Email} no longer existed when its email confirmation was written", locked.Email.Value);
+            return new ConfirmEmailResult { InvalidToken = true, AccountCreated = false };
+        }
+        catch
         {
-            return new ConfirmEmailResult { InvalidToken = false, AccountCreated = true };
+            await unitOfWork.RollbackAsync(ct);
+            throw;
         }
-
-        logger.LogWarning(
-            "Account {Email} no longer existed when its email confirmation was written", account.Email.Value);
-        return new ConfirmEmailResult { InvalidToken = true, AccountCreated = false };
-
     }
 
     /// <inheritdoc />
@@ -364,7 +446,7 @@ public class AccountService(
         // equivalent work here first, mirroring LoginAsync's VerifyDummy + dummy-write hardening.
         // (The async mail publish on the success path is the only residual asymmetry, the same
         // trade-off LoginAsync accepts.)
-        if (account == null || !account.EmailConfirmed)
+        if (account == null || account.Deleted || !account.EmailConfirmed)
         {
             try
             {
@@ -437,7 +519,7 @@ public class AccountService(
         }
 
         Account? found = await FindByResetPasswordTokenAsync(rawToken, ct);
-        if (found == null || !GuidToken.IsTokenAlive(rawToken) || !found.EmailConfirmed)
+        if (found == null || found.Deleted || !GuidToken.IsTokenAlive(rawToken) || !found.EmailConfirmed)
             return ServiceResult.Fail("reset-password-invalid");
 
         // Enforce the complexity rule server-side, before hashing — Account.ResetPassword only sees the hash.
@@ -454,7 +536,7 @@ public class AccountService(
             // stale full-row overwrite that reverts a concurrent self-service change on the same
             // account (the user may be signed in on another device).
             Account? account = await accountRepository.FindByEmailForUpdateAsync(found.Email.Value, ct);
-            if (account == null)
+            if (account == null || account.Deleted)
             {
                 await unitOfWork.RollbackAsync(ct);
                 return ServiceResult.Fail("reset-password-invalid");

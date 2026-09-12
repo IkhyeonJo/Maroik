@@ -2,7 +2,7 @@
 (function () {
     const $writeBoardContent = $('#writeBoardContent');
     const $editBoardContent = $('#editBoardContent');
-    const maxFileSize = parseInt($('#maxAttachedFileSizeBytes').val()) || 10485760;
+    const maxFileSize = parseInt($('#maxAttachedFileSizeBytes').val()) || window.MaroikDefaultMaxAttachedFileSizeBytes;
     const $searchType = $('#searchType');
     const $btnPrivateNoteSearchText = $('#btnPrivateNoteSearchText');
     const $formWriteBoard = $('#formWriteBoard');
@@ -484,3 +484,4 @@
         }
     });
 })();
+//# sourceMappingURL=site.js.map

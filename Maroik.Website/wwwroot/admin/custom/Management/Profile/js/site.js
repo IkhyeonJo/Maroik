@@ -7,7 +7,7 @@
     const $password = $('#Password');
     const $__RequestVerificationToken = $('input[name="__RequestVerificationToken"]');
     const mustChangePassword = $('#MustChangePassword').val() === 'true';
-    const maxFileSize = parseInt($('#maxAttachedFileSizeBytes').val()) || 10485760;
+    const maxFileSize = parseInt($('#maxAttachedFileSizeBytes').val()) || window.MaroikDefaultMaxAttachedFileSizeBytes;
     const allowedImageContentTypes = (JSON.parse($('#allowedImageContentTypes').val() || '[]')).map(function (t) { return t.toLowerCase(); });
     function UpdateProfileAvatar(noFileAttachedErrorMessage, fileSizeLimitationErrorMessage, fileTypeErrorMessage) {
         let files = document.getElementById('ProfileAvatarFiles').files[0];
@@ -93,3 +93,4 @@
         return UpdateProfileAvatar($(this).attr('data-noFileAttachedErrorMessage'), $(this).attr('data-fileSizeLimitationErrorMessage'), $(this).attr('data-fileTypeErrorMessage'));
     });
 })();
+//# sourceMappingURL=site.js.map

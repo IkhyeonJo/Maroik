@@ -120,10 +120,10 @@ public class FixedIncomeService(IFixedIncomeRepository fixedIncomeRepository, IA
         if (request.DepositMonth is < 1 or > 12)
             return Error.Validation("FixedIncome.DepositMonth", "Deposit month must be between 1 and 12.");
 
-        int maxDay = FixedSchedulePolicy.MaxDepositDay(request.DepositMonth);
-        if (request.DepositDay < 1 || request.DepositDay > maxDay)
+        if (!FixedSchedulePolicy.IsValidDepositDate(request.DepositMonth, request.DepositDay))
             return LocalizableError.Validation("FixedIncome.DepositDay",
-                "Deposit day must be between 1 and {0} for month {1}.", maxDay, request.DepositMonth);
+                "Deposit day must be between 1 and {0} for month {1}.",
+                FixedSchedulePolicy.MaxDepositDay(request.DepositMonth), request.DepositMonth);
 
         return Result.Success;
     }

@@ -1,6 +1,6 @@
 "use strict";
 (function () {
-    const maxFileSize = parseInt($('#maxAttachedFileSizeBytes').val()) || 10485760;
+    const maxFileSize = parseInt($('#maxAttachedFileSizeBytes').val()) || window.MaroikDefaultMaxAttachedFileSizeBytes;
     const $__RequestVerificationToken = $('input[name="__RequestVerificationToken"]');
     const $writeBoardContent = $('#writeBoardContent');
     const $editBoardContent = $('#editBoardContent');
@@ -484,3 +484,4 @@
         }
     });
 })();
+//# sourceMappingURL=site.js.map

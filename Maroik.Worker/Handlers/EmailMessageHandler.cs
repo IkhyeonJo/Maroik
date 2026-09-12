@@ -29,7 +29,17 @@ public sealed class EmailMessageHandler(
 #pragma warning disable CA1873
             logger.LogInformation("Email sent to {Email}", message.ToEmail);
 #pragma warning restore CA1873
-            await accountMailStatusService.ClearMailSendFailedAsync(message.ToEmail, ct);
+            try
+            {
+                await accountMailStatusService.ClearMailSendFailedAsync(message.ToEmail, ct);
+            }
+            catch (Exception e)
+            {
+                // The mail was already delivered -- a failure clearing the mail-send-failed flag
+                // must not surface as a send failure to the consumer (see HandleAsync's documented
+                // contract), or it nacks/redelivers an email that was already successfully sent.
+                logger.LogError(e, "Failed to clear mail-send-failed status for {Email} after successful send", message.ToEmail);
+            }
             return;
         }
 

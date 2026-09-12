@@ -52,8 +52,9 @@
     // popups ("My" and "Other") and the anti-forgery input.
     const $__RequestVerificationToken = $('input[name="__RequestVerificationToken"]');
     // Authoritative in ServerSetting.MaxAttachedFileSizeBytes (server); mirrored here for form UX
-    // only. 10485760 (10 MB) is a fallback if the hidden field is missing or unparseable.
-    const maxFileSize = parseInt($('#maxAttachedFileSizeBytes').val() as string) || 10485760;
+    // only. Falls back to the shared per-role default (_Layout/site.ts) if the hidden field is
+    // missing or unparseable.
+    const maxFileSize = parseInt($('#maxAttachedFileSizeBytes').val() as string) || (window as any).MaroikDefaultMaxAttachedFileSizeBytes;
     // Authoritative in CalendarReminderPolicy (server); rendered into hidden inputs by the view.
     const maxMinutesBeforeEvent = parseInt($('#maxMinutesBeforeEvent').val() as string, 10);
     const maxHoursBeforeEvent = parseInt($('#maxHoursBeforeEvent').val() as string, 10);

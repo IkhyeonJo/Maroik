@@ -19,8 +19,9 @@
  */
 (function () {
     // Authoritative in ServerSetting.MaxAttachedFileSizeBytes (server); mirrored here for form UX
-    // only. 10485760 (10 MB) is a fallback if the hidden field is missing or unparseable.
-    const maxFileSize = parseInt($('#maxAttachedFileSizeBytes').val() as string) || 10485760;
+    // only. Falls back to the shared per-role default (_Layout/site.ts) if the hidden field is
+    // missing or unparseable.
+    const maxFileSize = parseInt($('#maxAttachedFileSizeBytes').val() as string) || (window as any).MaroikDefaultMaxAttachedFileSizeBytes;
     const $__RequestVerificationToken = $('input[name="__RequestVerificationToken"]');
     // Cached element references. Many exist only on one sub-view, so `.length` is
     // checked before use.

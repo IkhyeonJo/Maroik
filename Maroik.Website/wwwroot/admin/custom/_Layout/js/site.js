@@ -1,5 +1,6 @@
 "use strict";
 (function () {
+    window.MaroikDefaultMaxAttachedFileSizeBytes = 10485760;
     $(document).off('ajaxError._Layout').on('ajaxError._Layout', function () {
         window.location.href = '/Dashboard/AnonymousIndex';
     });
@@ -49,3 +50,4 @@
         $('#loading').hide();
     });
 })();
+//# sourceMappingURL=site.js.map

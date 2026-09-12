@@ -157,10 +157,10 @@ public class FixedExpenditureService(IFixedExpenditureRepository fixedExpenditur
         if (req.DepositMonth is < 1 or > 12)
             return Error.Validation("FixedExpenditure.DepositMonth", "Deposit month must be between 1 and 12.");
 
-        int maxDay = FixedSchedulePolicy.MaxDepositDay(req.DepositMonth);
-        if (req.DepositDay < 1 || req.DepositDay > maxDay)
+        if (!FixedSchedulePolicy.IsValidDepositDate(req.DepositMonth, req.DepositDay))
             return LocalizableError.Validation("FixedExpenditure.DepositDay",
-                "Deposit day must be between 1 and {0} for month {1}.", maxDay, req.DepositMonth);
+                "Deposit day must be between 1 and {0} for month {1}.",
+                FixedSchedulePolicy.MaxDepositDay(req.DepositMonth), req.DepositMonth);
 
         return requiresDeposit;
     }

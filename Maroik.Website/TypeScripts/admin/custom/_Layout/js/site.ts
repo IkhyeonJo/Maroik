@@ -20,6 +20,13 @@
  * `.off(...).on(...)` so re-running the script can never stack duplicates.
  */
 (function () {
+    // Default fallback for the client-side file-size UX check on every admin upload form, used only
+    // when a page's `#maxAttachedFileSizeBytes` hidden field (authoritative: ServerSetting.MaxAttachedFileSizeBytes,
+    // rendered per-page from ViewBag by ViewBagPopulatorFilter) is missing or unparseable. Declared
+    // once here — loaded before every admin page's own script — instead of duplicated as a literal
+    // at each upload form; must match ServerSetting.MaxAttachedFileSizeBytes's own default (10 MB).
+    (window as any).MaroikDefaultMaxAttachedFileSizeBytes = 10485760;
+
     // Global safety net: if any $.ajax call fails and nothing else handles it
     // (typically the session expired and the server answered 401 / a redirect),
     // move the user to the public dashboard instead of leaving them on a page

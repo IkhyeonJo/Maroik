@@ -125,12 +125,24 @@ public abstract class GenericRepository<TDomain, TEntity>(ApplicationDbContext c
     }
 
     /// <summary>Runs <paramref name="predicate"/> (with optional <paramref name="orderBy"/>) and maps every matching row to <typeparamref name="TDomain"/>.</summary>
+    /// <param name="predicate"></param>
+    /// <param name="orderBy"></param>
+    /// <param name="noTracking">
+    /// Pass <see langword="true"/> to run as <c>AsNoTracking()</c> for a pure-display read that is
+    /// never saved back (e.g. a list rendered on a dashboard/grid). Leaves the pending-changes merge
+    /// below unaffected -- that reconciles against the context's change tracker, not against this
+    /// query's own tracking mode. Defaults to <see langword="false"/> so existing callers keep EF
+    /// Core's normal identity-map behavior.
+    /// </param>
+    /// <param name="ct"></param>
     protected async Task<List<TDomain>> QueryAsync(
         Expression<Func<TEntity, bool>> predicate,
         Func<IQueryable<TEntity>, IQueryable<TEntity>>? orderBy = null,
+        bool noTracking = false,
         CancellationToken ct = default)
     {
         var query = ApplyIncludes(Set.Where(predicate));
+        if (noTracking) query = query.AsNoTracking();
         if (orderBy != null) query = orderBy(query);
         var dbResults = await query.ToListAsync(ct);
         var merged = MergeWithPendingChanges(dbResults, predicate);
@@ -140,11 +152,16 @@ public abstract class GenericRepository<TDomain, TEntity>(ApplicationDbContext c
     }
 
     /// <summary>Returns every row in <see cref="Set"/> (with optional <paramref name="orderBy"/>), mapped to <typeparamref name="TDomain"/>.</summary>
+    /// <param name="orderBy"></param>
+    /// <param name="noTracking">See the identically-named parameter on <see cref="QueryAsync"/>.</param>
+    /// <param name="ct"></param>
     protected async Task<List<TDomain>> QueryAllAsync(
         Func<IQueryable<TEntity>, IQueryable<TEntity>>? orderBy = null,
+        bool noTracking = false,
         CancellationToken ct = default)
     {
         var query = ApplyIncludes(Set.AsQueryable());
+        if (noTracking) query = query.AsNoTracking();
         if (orderBy != null) query = orderBy(query);
         return [.. (await query.ToListAsync(ct)).Select(ToDomain)];
     }

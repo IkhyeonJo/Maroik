@@ -1,6 +1,6 @@
 "use strict";
 (function () {
-    const maxFileSize = parseInt($('#maxAttachedFileSizeBytes').val()) || 10485760;
+    const maxFileSize = parseInt($('#maxAttachedFileSizeBytes').val()) || window.MaroikDefaultMaxAttachedFileSizeBytes;
     const allowedImageContentTypes = (JSON.parse($('#allowedImageContentTypes').val() || '[]')).map(function (t) { return t.toLowerCase(); });
     const $formUpdateProfileAvatar = $('#formUpdateProfileAvatar');
     const $formUpdateProfilePassword = $('#formUpdateProfilePassword');
@@ -93,3 +93,4 @@
         return UpdateProfileAvatar($(this).attr('data-noFileAttachedErrorMessage'), $(this).attr('data-fileSizeLimitationErrorMessage'), $(this).attr('data-fileTypeErrorMessage'));
     });
 })();
+//# sourceMappingURL=site.js.map

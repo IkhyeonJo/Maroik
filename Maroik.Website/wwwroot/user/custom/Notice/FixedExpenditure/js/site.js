@@ -613,3 +613,4 @@
         ChangeCreateFixedExpenditureAmountLabel($createFixedExpenditurePaymentMethod.find('option:selected').val());
     });
 })();
+//# sourceMappingURL=site.js.map

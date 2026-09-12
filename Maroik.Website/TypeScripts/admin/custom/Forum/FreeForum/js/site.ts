@@ -53,8 +53,9 @@
     const $aFreeForumDeleteComment = $('.aFreeForumDeleteComment');
     const $__RequestVerificationToken = $('input[name="__RequestVerificationToken"]');
     // Authoritative in ServerSetting.MaxAttachedFileSizeBytes (server); mirrored here for form UX
-    // only. 10485760 (10 MB) is a fallback if the hidden field is missing or unparseable.
-    const maxFileSize = parseInt($('#maxAttachedFileSizeBytes').val() as string) || 10485760;
+    // only. Falls back to the shared per-role default (_Layout/site.ts) if the hidden field is
+    // missing or unparseable.
+    const maxFileSize = parseInt($('#maxAttachedFileSizeBytes').val() as string) || (window as any).MaroikDefaultMaxAttachedFileSizeBytes;
     const boardHeight = 300;
 
     /** base64 -> Blob, for turning server-embedded image/attachment payloads into object URLs. */

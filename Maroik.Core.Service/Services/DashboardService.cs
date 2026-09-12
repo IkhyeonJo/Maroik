@@ -163,8 +163,11 @@ public class DashboardService(
         if (firstCreated == DateTime.MaxValue)
             firstCreated = DateTime.UtcNow;
 
-        // Convert to user timezone
-        try { firstCreated = TimeZoneInfo.ConvertTimeBySystemTimeZoneId(firstCreated, timeZoneId); } catch { /* keep UTC */ }
+        // Convert to user timezone. ConvertTimeByTimeZoneIanaId (not the raw TimeZoneInfo API) is
+        // required here: firstCreated is DateTimeKind.Unspecified as returned by Npgsql but
+        // actually represents a UTC instant, and the raw API infers its source zone from Kind,
+        // silently falling back to the OS-local zone instead of UTC for Unspecified values.
+        firstCreated = firstCreated.ConvertTimeByTimeZoneIanaId(timeZoneId);
 
         summary.StartYear = firstCreated.Year;
 

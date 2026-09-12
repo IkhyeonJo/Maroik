@@ -125,7 +125,9 @@ public class ExpenditureRepository(ApplicationDbContext context)
 
     /// <inheritdoc />
     public Task<List<Expenditure>> GetByAccountEmailAndDateRangeAsync(string accountEmail, DateTime from, DateTime to, CancellationToken ct = default)
-        => QueryAsync(e => e.AccountEmail == accountEmail && e.Created >= from && e.Created < to, ct: ct);
+        // Pure-display read (dashboard yearly/monthly totals and breakdowns, never saved back):
+        // AsNoTracking skips the change-tracking overhead this method has no use for.
+        => QueryAsync(e => e.AccountEmail == accountEmail && e.Created >= from && e.Created < to, noTracking: true, ct: ct);
 
     /// <inheritdoc />
     public Task<Expenditure?> GetFirstByAccountEmailOrderedByCreatedAsync(string accountEmail, CancellationToken ct = default)

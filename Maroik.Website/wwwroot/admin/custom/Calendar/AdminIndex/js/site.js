@@ -106,7 +106,7 @@
     const $dropdownContent = $('#dropdown-content');
     const $dropdownIcon = $('#dropdown-icon');
     const $__RequestVerificationToken = $('input[name="__RequestVerificationToken"]');
-    const maxFileSize = parseInt($('#maxAttachedFileSizeBytes').val()) || 10485760;
+    const maxFileSize = parseInt($('#maxAttachedFileSizeBytes').val()) || window.MaroikDefaultMaxAttachedFileSizeBytes;
     const maxMinutesBeforeEvent = parseInt($('#maxMinutesBeforeEvent').val(), 10);
     const maxHoursBeforeEvent = parseInt($('#maxHoursBeforeEvent').val(), 10);
     const maxDaysBeforeEvent = parseInt($('#maxDaysBeforeEvent').val(), 10);
@@ -2023,3 +2023,4 @@
         }
     });
 })();
+//# sourceMappingURL=site.js.map

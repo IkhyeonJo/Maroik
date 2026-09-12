@@ -63,8 +63,10 @@ public class BoardRepository(ApplicationDbContext context)
 
     /// <inheritdoc />
     public Task<List<Board>> GetNoticedAsync(string type, CancellationToken ct = default)
+        // Pure-display read (rendered as the noticed-post list, never saved back): AsNoTracking
+        // skips the change-tracking snapshot/identity-map overhead this method has no use for.
         => QueryAsync(e => e.Type == type && !e.Deleted && e.Noticed,
-            q => q.OrderByDescending(e => e.Id), ct);
+            q => q.OrderByDescending(e => e.Id), noTracking: true, ct: ct);
 
     /// <inheritdoc />
     public async Task<(List<Board> Items, int TotalCount)> QueryPageAsync(BoardPageQuery query, CancellationToken ct = default)
@@ -137,9 +139,29 @@ public class BoardRepository(ApplicationDbContext context)
                 _ => baseQuery.OrderByDescending(x => x.Id)
             };
 
-        int totalCount = await filtered.CountAsync(ct);
-        List<OrmBoard> page = await filtered.Skip((query.Page - 1) * query.PageSize).Take(query.PageSize).ToListAsync(ct);
-        return (page.Select(ToDomain).ToList(), totalCount);
+        // The count and the page fetch are two separate round trips; under Postgres's default READ
+        // COMMITTED isolation each sees its own latest-committed snapshot, so a concurrent insert or
+        // delete between them can produce a TotalCount inconsistent with the returned page (or a row
+        // skipped/duplicated across adjacent pages). REPEATABLE READ pins both queries to the
+        // snapshot taken at the first one, closing that window. Only opened when this call isn't
+        // already inside an IUnitOfWork transaction -- EF Core (like the custom UnitOfWork) does not
+        // support nested transactions on the same connection, and this method is always called
+        // standalone (a read-only page listing) in practice.
+        bool ownsTransaction = Context.Database.CurrentTransaction is null;
+        var transaction = ownsTransaction
+            ? await Context.Database.BeginTransactionAsync(System.Data.IsolationLevel.RepeatableRead, ct)
+            : null;
+        try
+        {
+            int totalCount = await filtered.CountAsync(ct);
+            List<OrmBoard> page = await filtered.Skip((query.Page - 1) * query.PageSize).Take(query.PageSize).ToListAsync(ct);
+            if (transaction != null) await transaction.CommitAsync(ct);
+            return (page.Select(ToDomain).ToList(), totalCount);
+        }
+        finally
+        {
+            if (transaction != null) await transaction.DisposeAsync();
+        }
     }
 
     /// <inheritdoc />
