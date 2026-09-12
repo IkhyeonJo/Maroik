@@ -40,7 +40,7 @@ public class ServiceResult
     /// <summary>
     /// Localization key / message that describes the error (empty string on success). When
     /// <see cref="ErrorArgs"/> is non-empty, this is a composite-format template (e.g.
-    /// <c>"'{0}' is not a recognised time-zone ID."</c>) rather than an already-formatted sentence.
+    /// <c>"'{0}' is not a recognized time-zone ID."</c>) rather than an already-formatted sentence.
     /// </summary>
     public string ErrorKey { get; private init; } = "";
 
@@ -97,8 +97,8 @@ public class ServiceResult
     /// <summary>
     /// Maps a domain <see cref="Error"/> to a <see cref="ServiceResult"/>, preserving its category.
     /// When <paramref name="error"/> was built via <c>LocalizableError</c>, <see cref="ErrorKey"/> /
-    /// <see cref="ErrorArgs"/> carry its resource template and arguments instead of the already-
-    /// formatted <see cref="Error.Description"/>.
+    /// <see cref="ErrorArgs"/> carry its resource template and arguments instead of the already-formatted
+    /// <see cref="Error.Description"/>.
     /// </summary>
     public static ServiceResult FromError(Error error)
     {

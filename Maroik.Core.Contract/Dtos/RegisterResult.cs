@@ -51,7 +51,7 @@ public class RegisterResult
     /// Maps a domain <see cref="Error"/> to a failed <see cref="RegisterResult"/>. When
     /// <paramref name="error"/> was built via <c>LocalizableError</c>, <see cref="ErrorKey"/> /
     /// <see cref="ErrorArgs"/> carry its resource template and arguments instead of the already-
-    /// formatted <see cref="Error.Description"/>.
+    /// <see cref="Error.Description"/>.
     /// </summary>
     public static RegisterResult FromError(Error error)
     {

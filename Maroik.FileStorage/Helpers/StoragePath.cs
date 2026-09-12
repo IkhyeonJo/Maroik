@@ -26,7 +26,7 @@ internal static class StoragePath
         {
             root = Path.TrimEndingDirectorySeparator(Path.GetFullPath(uploadRoot));
             string resolveBase = Path.GetDirectoryName(root) ?? root;
-            // GetFullPath collapses "." / ".." and normalises separators. An absolute requestedPath
+            // GetFullPath collapses "." / ".." and normalizes separators. An absolute requestedPath
             // ignores resolveBase; a relative one (the real callers' case) resolves under it.
             full = Path.GetFullPath(requestedPath, resolveBase);
         }
