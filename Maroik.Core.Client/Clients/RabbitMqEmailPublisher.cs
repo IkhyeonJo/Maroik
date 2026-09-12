@@ -7,28 +7,20 @@ namespace Maroik.Core.Client.Clients;
 
 /// <summary>
 /// Publishes <see cref="SendEmailMessage"/> to the durable "maroik.email" queue.
-/// The connection and a publish channel are opened lazily on first publish (so a RabbitMQ outage
+/// The connection and a publishing channel are opened lazily on first publish (so a RabbitMQ outage
 /// at application startup does not prevent the web app from starting) and then cached and reused
 /// across publishes; the queue is declared once per channel rather than on every call.
 /// </summary>
-public sealed class RabbitMqEmailPublisher : IEmailPublisher, IAsyncDisposable
+public sealed class RabbitMqEmailPublisher(IConnectionFactory factory) : IEmailPublisher, IAsyncDisposable
 {
-    private readonly IConnectionFactory _factory;
-
     // RabbitMQ.Client's own guidance is a "hard requirement for publishers": a channel must not
     // be shared by threads that publish on it concurrently, or frames from separate publishes can
     // interleave at the protocol level. This channel is cached and shared across every caller of
     // PublishAsync (this class is registered as a singleton), so every publish -- including the
-    // channel (re)creation it may trigger -- is serialised through this lock.
+    // channel (re)creation it may trigger -- is serialized through this lock.
     private readonly SemaphoreSlim _publishLock = new(1, 1);
     private IConnection? _connection;
     private IChannel? _channel;
-
-    /// <summary>Initializes a new instance of <see cref="RabbitMqEmailPublisher"/>. Does not open a connection yet.</summary>
-    public RabbitMqEmailPublisher(IConnectionFactory factory)
-    {
-        _factory = factory;
-    }
 
     /// <inheritdoc />
     public async Task PublishAsync(SendEmailMessage message, CancellationToken ct = default)
@@ -76,7 +68,7 @@ public sealed class RabbitMqEmailPublisher : IEmailPublisher, IAsyncDisposable
         {
             if (_connection != null)
                 await _connection.DisposeAsync();
-            _connection = await _factory.CreateConnectionAsync(ct);
+            _connection = await factory.CreateConnectionAsync(ct);
         }
 
         // Publisher confirms make BasicPublishAsync wait for the broker to actually accept the

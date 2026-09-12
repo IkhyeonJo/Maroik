@@ -22,7 +22,7 @@ public class MailClient(ILogger<MailClient> logger) : IMailClient
     /// broken link "https://maroik.comAccount/ConfirmEmail".
     /// </summary>
     private static string BuildUrl(string domainName, string relativePath) =>
-        $"{(domainName ?? "").TrimEnd('/')}/{relativePath.TrimStart('/')}";
+        $"{(domainName).TrimEnd('/')}/{relativePath.TrimStart('/')}";
 
     /// <inheritdoc />
     public string GetMailConfirmationBody(string registrationToken, string title, string content0, string content1, string domainName)
@@ -90,23 +90,25 @@ public class MailClient(ILogger<MailClient> logger) : IMailClient
             {
                 smtp.ServerCertificateValidationCallback = (_, _, _, errors) =>
                 {
-                    if (errors == SslPolicyErrors.None)
-                        return true;
-
-                    // Accept only a bare chain / self-signed-root problem; reject name mismatch and
-                    // "no certificate" outright.
-                    if (errors == SslPolicyErrors.RemoteCertificateChainErrors)
+                    switch (errors)
                     {
-                        logger.LogWarning(
-                            "Accepting an untrusted SMTP server certificate for {SmtpHost} because SmtpSsl is disabled for this relay",
-                            settings.SmtpHost);
-                        return true;
+                        case SslPolicyErrors.None:
+                            return true;
+                        // Accept only a bare chain / self-signed-root problem; reject name mismatch and
+                        // "no certificate" outright.
+                        case SslPolicyErrors.RemoteCertificateChainErrors:
+                            logger.LogWarning(
+                                "Accepting an untrusted SMTP server certificate for {SmtpHost} because SmtpSsl is disabled for this relay",
+                                settings.SmtpHost);
+                            return true;
+                        case SslPolicyErrors.RemoteCertificateNotAvailable:
+                        case SslPolicyErrors.RemoteCertificateNameMismatch:
+                        default:
+                            logger.LogWarning(
+                                "Rejecting the SMTP server certificate for {SmtpHost}: {SslPolicyErrors}",
+                                settings.SmtpHost, errors);
+                            return false;
                     }
-
-                    logger.LogWarning(
-                        "Rejecting the SMTP server certificate for {SmtpHost}: {SslPolicyErrors}",
-                        settings.SmtpHost, errors);
-                    return false;
                 };
             }
             await smtp.ConnectAsync(settings.SmtpHost ?? "", settings.SmtpPort, socketOptions, ct);

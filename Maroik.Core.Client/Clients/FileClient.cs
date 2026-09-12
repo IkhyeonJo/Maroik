@@ -36,7 +36,7 @@ public class FileClient(IHttpClientFactory httpClientFactory, ILogger<FileClient
             using HttpClient httpClient = httpClientFactory.CreateClient();
             using MultipartFormDataContent content = [];
 
-            // Pass the server-side file path to the storage service. Separators are normalised to
+            // Pass the server-side file path to the storage service. Separators are normalized to
             // "/": the storage service runs on Linux and treats "\" as a literal filename
             // character, so a path built on Windows must not be forwarded with backslashes.
             content.Add(new StringContent(filePath.Replace('\\', '/')), "filePath");
@@ -95,7 +95,7 @@ public class FileClient(IHttpClientFactory httpClientFactory, ILogger<FileClient
             content.Add(fileContent, "file", sanitizedFileName);
 
             // Tell the storage service where to save the file (directory path only), separators
-            // normalised to "/" — on Linux the service would otherwise create a single directory
+            // normalized to "/" — on Linux the service would otherwise create a single directory
             // literally named "upload\Area\...".
             content.Add(new StringContent((Path.GetDirectoryName(filePath) ?? "").Replace('\\', '/')), "filePath");
             // So Maroik.FileStorage's failure logs for this call can be traced back to this request.
@@ -105,13 +105,14 @@ public class FileClient(IHttpClientFactory httpClientFactory, ILogger<FileClient
 
             // Any 2xx means the storage service accepted the file — don't treat a 201/204 as a
             // failure (which would make the caller roll back over a file that was actually stored).
-            if (!response.IsSuccessStatusCode)
+            if (response.IsSuccessStatusCode)
             {
-                logger.LogWarning("File upload returned {StatusCode} for {FilePath}", (int)response.StatusCode, filePath);
-                return false;
+                return true;
             }
 
-            return true;
+            logger.LogWarning("File upload returned {StatusCode} for {FilePath}", (int)response.StatusCode, filePath);
+            return false;
+
         }
         catch (Exception ex)
         {
