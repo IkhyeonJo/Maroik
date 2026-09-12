@@ -8,50 +8,36 @@ using Microsoft.Extensions.Options;
 namespace Maroik.Worker.Handlers;
 
 /// <inheritdoc cref="IEmailMessageHandler"/>
-public sealed class EmailMessageHandler : IEmailMessageHandler
+public sealed class EmailMessageHandler(
+    IMailClient mailClient,
+    IAccountMailStatusService accountMailStatusService,
+    IOptions<ServerSetting> settings,
+    ILogger<EmailMessageHandler> logger) : IEmailMessageHandler
 {
-    private readonly IMailClient _mailClient;
-    private readonly IAccountMailStatusService _accountMailStatusService;
-    private readonly IOptions<ServerSetting> _settings;
-    private readonly ILogger<EmailMessageHandler> _logger;
-
-    /// <summary>Initializes a new instance of <see cref="EmailMessageHandler"/> with the supplied dependencies.</summary>
-    public EmailMessageHandler(
-        IMailClient mailClient,
-        IAccountMailStatusService accountMailStatusService,
-        IOptions<ServerSetting> settings,
-        ILogger<EmailMessageHandler> logger)
-    {
-        _mailClient = mailClient;
-        _accountMailStatusService = accountMailStatusService;
-        _settings = settings;
-        _logger = logger;
-    }
-
     /// <inheritdoc />
     public async Task HandleAsync(SendEmailMessage message, CancellationToken ct = default)
     {
-        ServiceResult result = await _mailClient.SendMailAsync(
+        ServiceResult result = await mailClient.SendMailAsync(
             message.ToEmail,
             message.Subject,
             message.Body,
-            _settings.Value,
+            settings.Value,
             ct);
 
         if (result.Success)
         {
 #pragma warning disable CA1873
-            _logger.LogInformation("Email sent to {Email}", message.ToEmail);
+            logger.LogInformation("Email sent to {Email}", message.ToEmail);
 #pragma warning restore CA1873
-            await _accountMailStatusService.ClearMailSendFailedAsync(message.ToEmail, ct);
+            await accountMailStatusService.ClearMailSendFailedAsync(message.ToEmail, ct);
             return;
         }
 
-        _logger.LogWarning("SMTP send failed for {Email}: {Result}", message.ToEmail, result.ErrorKey);
+        logger.LogWarning("SMTP send failed for {Email}: {Result}", message.ToEmail, result.ErrorKey);
 
-        await _accountMailStatusService.MarkMailSendFailedAsync(message.ToEmail, ct);
+        await accountMailStatusService.MarkMailSendFailedAsync(message.ToEmail, ct);
 
-        // Surface the failure to the consumer so it nacks instead of acking a message that was
+        // Surface the failure to the consumer so it nacks instead of ack a message that was
         // never actually delivered (see IEmailMessageHandler.HandleAsync's documented contract).
         throw new InvalidOperationException($"SMTP send failed for {message.ToEmail}: {result.ErrorKey}");
     }

@@ -64,10 +64,6 @@ try
         new ConnectionFactory
         {
             Uri = new Uri(rabbitMqConnectionString),
-            // Explicit (these are the client's defaults, pinned so a broker restart or a brief
-            // network blip is recovered transparently: the connection and channel reopen and,
-            // with topology recovery, the queues are re-declared and the consumer re-registered —
-            // the worker has no manual reconnect loop and relies on this.
             AutomaticRecoveryEnabled = true,
             TopologyRecoveryEnabled = true,
             ClientProvidedName = "maroik-worker-email-consumer"

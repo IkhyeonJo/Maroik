@@ -14,12 +14,11 @@ namespace Maroik.Worker.Workers;
 /// each one to a scoped <see cref="IEmailMessageHandler"/> (a new DI scope per message,
 /// since the handler depends on scoped services such as the EF Core DbContext).
 /// </summary>
-public sealed class EmailConsumerWorker : BackgroundService
+public sealed class EmailConsumerWorker(
+    IConnectionFactory connectionFactory,
+    IServiceScopeFactory scopeFactory,
+    ILogger<EmailConsumerWorker> logger) : BackgroundService
 {
-    private readonly IConnectionFactory _connectionFactory;
-    private readonly IServiceScopeFactory _scopeFactory;
-    private readonly ILogger<EmailConsumerWorker> _logger;
-
     private IConnection? _connection;
     internal IChannel? Channel;
     private string? _consumerTag;
@@ -28,19 +27,8 @@ public sealed class EmailConsumerWorker : BackgroundService
     // ConsumerDispatchConcurrency is 1); prefetch just lets the broker keep the next few buffered
     // at the client so there is no round-trip stall between messages. This still tracks the
     // delivery tag(s) in OnMessageReceivedAsync so StopAsync can wait for the current one to
-    // finish acking/nacking before the channel is disposed out from under it.
+    // finish ack/nack before the channel is disposed out from under it.
     private readonly ConcurrentDictionary<ulong, byte> _inFlight = new();
-
-    /// <summary>Initializes a new instance of <see cref="EmailConsumerWorker"/> with the supplied dependencies.</summary>
-    public EmailConsumerWorker(
-        IConnectionFactory connectionFactory,
-        IServiceScopeFactory scopeFactory,
-        ILogger<EmailConsumerWorker> logger)
-    {
-        _connectionFactory = connectionFactory;
-        _scopeFactory = scopeFactory;
-        _logger = logger;
-    }
 
     /// <summary>
     /// Establishes the RabbitMQ topology and starts consuming, then runs for the lifetime of the
@@ -77,7 +65,7 @@ public sealed class EmailConsumerWorker : BackgroundService
             stoppingToken.ThrowIfCancellationRequested();
             try
             {
-                _connection = await _connectionFactory.CreateConnectionAsync(stoppingToken);
+                _connection = await connectionFactory.CreateConnectionAsync(stoppingToken);
                 Channel = await _connection.CreateChannelAsync(cancellationToken: stoppingToken);
 
                 // Dead-letter queue first, so it exists before the main queue can route a rejected
@@ -114,7 +102,7 @@ public sealed class EmailConsumerWorker : BackgroundService
                     cancellationToken: stoppingToken);
 
 #pragma warning disable CA1873
-                _logger.LogInformation("Email consumer started, listening on queue '{Queue}'", QueueNames.Email);
+                logger.LogInformation("Email consumer started, listening on queue '{Queue}'", QueueNames.Email);
 #pragma warning restore CA1873
                 return;
             }
@@ -136,7 +124,7 @@ public sealed class EmailConsumerWorker : BackgroundService
                     _connection = null;
                 }
 
-                _logger.LogWarning(ex, "Could not connect to RabbitMQ; retrying in {DelaySeconds}s", delay.TotalSeconds);
+                logger.LogWarning(ex, "Could not connect to RabbitMQ; retrying in {DelaySeconds}s", delay.TotalSeconds);
                 await Task.Delay(delay, stoppingToken);
                 delay = TimeSpan.FromSeconds(Math.Min(maxDelay.TotalSeconds, delay.TotalSeconds * 2));
             }
@@ -145,7 +133,7 @@ public sealed class EmailConsumerWorker : BackgroundService
 
     /// <summary>
     /// Deserializes and processes one delivered message in a fresh DI scope, then acks it.
-    /// A failure on first delivery is requeued once (to survive a transient SMTP/network blip);
+    /// A failure on first delivery is requeue once (to survive a transient SMTP/network blip);
     /// a failure on the retry nacks without requeue, so a poison message cannot block the queue
     /// forever — the queue's dead-letter policy then routes it to <see cref="QueueNames.EmailDeadLetter"/>
     /// for inspection instead of discarding it. A failure to ack a message that was already
@@ -169,7 +157,7 @@ public sealed class EmailConsumerWorker : BackgroundService
                 // can be traced back to the request that published it.
                 using (LogContext.PushProperty("CorrelationId", message.CorrelationId))
                 {
-                    await using AsyncServiceScope scope = _scopeFactory.CreateAsyncScope();
+                    await using AsyncServiceScope scope = scopeFactory.CreateAsyncScope();
                     var handler = scope.ServiceProvider.GetRequiredService<IEmailMessageHandler>();
                     await handler.HandleAsync(message);
                 }
@@ -183,7 +171,7 @@ public sealed class EmailConsumerWorker : BackgroundService
                     // The email was already sent successfully by this point, so this catch must
                     // not fall through to the outer catch's requeue/nack logic below — doing so
                     // would resend an email that already went out.
-                    _logger.LogError(ackEx, "Failed to ack email message (delivery tag {DeliveryTag}) after a successful send; leaving it unacked", ea.DeliveryTag);
+                    logger.LogError(ackEx, "Failed to ack email message (delivery tag {DeliveryTag}) after a successful send; leaving it unacked", ea.DeliveryTag);
                 }
             }
             catch (Exception ex)
@@ -193,14 +181,14 @@ public sealed class EmailConsumerWorker : BackgroundService
                 // again, so a genuinely poison message still can't block the queue forever.
                 if (!ea.Redelivered)
                 {
-                    _logger.LogWarning(ex, "Failed to process email message (delivery tag {DeliveryTag}); requeuing for one retry", ea.DeliveryTag);
+                    logger.LogWarning(ex, "Failed to process email message (delivery tag {DeliveryTag}); requeuing for one retry", ea.DeliveryTag);
                     await Channel!.BasicNackAsync(ea.DeliveryTag, multiple: false, requeue: true);
                 }
                 else
                 {
                     // requeue: false triggers the queue's dead-letter policy, so the message is
                     // routed to QueueNames.EmailDeadLetter rather than discarded.
-                    _logger.LogError(ex, "Failed to process email message (delivery tag {DeliveryTag}) on retry; dead-lettering to '{DeadLetterQueue}'", ea.DeliveryTag, QueueNames.EmailDeadLetter);
+                    logger.LogError(ex, "Failed to process email message (delivery tag {DeliveryTag}) on retry; dead-lettering to '{DeadLetterQueue}'", ea.DeliveryTag, QueueNames.EmailDeadLetter);
                     await Channel!.BasicNackAsync(ea.DeliveryTag, multiple: false, requeue: false);
                 }
             }
@@ -228,7 +216,7 @@ public sealed class EmailConsumerWorker : BackgroundService
             }
             catch (Exception ex)
             {
-                _logger.LogWarning(ex, "Failed to cancel RabbitMQ consumer '{ConsumerTag}' during shutdown", _consumerTag);
+                logger.LogWarning(ex, "Failed to cancel RabbitMQ consumer '{ConsumerTag}' during shutdown", _consumerTag);
             }
         }
 
