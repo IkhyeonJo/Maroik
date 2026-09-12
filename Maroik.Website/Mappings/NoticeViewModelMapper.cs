@@ -70,7 +70,10 @@ public static class NoticeViewModelMapper
                 .GroupBy(a => a.ProductName ?? "")
                 .ToDictionary(g => g.Key, g => g.Last().MonetaryUnit);
             var today = DateTime.UtcNow.ConvertTimeByTimeZoneIanaId(timeZoneIanaId).Date;
-            return items.Select(i => i.ToDisplayViewModel(currencyByProduct, localize, timeZoneIanaId, today, noticeWindowDays)).ToList();
+            return
+            [
+                .. items.Select(i => i.ToDisplayViewModel(currencyByProduct, localize, timeZoneIanaId, today, noticeWindowDays))
+            ];
         }
     }
 
@@ -117,7 +120,10 @@ public static class NoticeViewModelMapper
                 .GroupBy(a => a.ProductName ?? "")
                 .ToDictionary(g => g.Key, g => g.Last().MonetaryUnit);
             var today = DateTime.UtcNow.ConvertTimeByTimeZoneIanaId(timeZoneIanaId).Date;
-            return items.Select(i => i.ToDisplayViewModel(currencyByProduct, localize, timeZoneIanaId, today, noticeWindowDays)).ToList();
+            return
+            [
+                .. items.Select(i => i.ToDisplayViewModel(currencyByProduct, localize, timeZoneIanaId, today, noticeWindowDays))
+            ];
         }
     }
 }

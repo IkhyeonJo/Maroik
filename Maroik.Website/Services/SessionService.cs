@@ -13,20 +13,12 @@ namespace Maroik.Website.Services;
 /// The session key name comes from <see cref="SessionKeys.Account"/>
 /// so it is consistent with all other session accesses in the application.
 /// </summary>
-public class SessionService : ISessionService
+public class SessionService(IHttpContextAccessor httpContextAccessor) : ISessionService
 {
-    private readonly IHttpContextAccessor _httpContextAccessor;
-
-    /// <summary>Initializes a new instance of <see cref="SessionService"/> with the supplied dependencies.</summary>
-    public SessionService(IHttpContextAccessor httpContextAccessor)
-    {
-        _httpContextAccessor = httpContextAccessor;
-    }
-
     /// <inheritdoc />
     public AccountResponse? GetAccount()
     {
-        var session = _httpContextAccessor.HttpContext?.Session;
+        var session = httpContextAccessor.HttpContext?.Session;
         if (session == null) return null;
 
         bool exists = session.TryGetValue(SessionKeys.Account, out byte[]? bytes);
@@ -45,7 +37,7 @@ public class SessionService : ISessionService
     /// <inheritdoc />
     public void SetAccount(AccountResponse account)
     {
-        var session = _httpContextAccessor.HttpContext?.Session;
+        var session = httpContextAccessor.HttpContext?.Session;
         session?.Set(
             SessionKeys.Account,
             Encoding.UTF8.GetBytes(JsonSerializer.Serialize(account)));
@@ -54,7 +46,7 @@ public class SessionService : ISessionService
     /// <inheritdoc />
     public void RemoveAccount()
     {
-        var session = _httpContextAccessor.HttpContext?.Session;
+        var session = httpContextAccessor.HttpContext?.Session;
         session?.Remove(SessionKeys.Account);
     }
 }

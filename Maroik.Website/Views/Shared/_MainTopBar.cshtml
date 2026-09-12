@@ -11,10 +11,10 @@
 *@
 @model Maroik.Core.Contract.Dtos.AccountResponse
 @{
-    var currentCulture = ViewBag.CurrentCulture as string ?? "en-US";
-    var fixedIncomesTotalNoticeCount = ViewBag.FixedIncomesTotalNoticeCount as int? ?? 0;
-    var fixedExpenditureTotalNoticeCount = ViewBag.FixedExpenditureTotalNoticeCount as int? ?? 0;
-    var totalNoticeCount = ViewBag.TotalNoticeCount as int? ?? 0;
+    string currentCulture = ViewBag.CurrentCulture as string ?? "en-US";
+    int fixedIncomesTotalNoticeCount = ViewBag.FixedIncomesTotalNoticeCount as int? ?? 0;
+    int fixedExpenditureTotalNoticeCount = ViewBag.FixedExpenditureTotalNoticeCount as int? ?? 0;
+    int totalNoticeCount = ViewBag.TotalNoticeCount as int? ?? 0;
 }
 
 @*<!-- Navbar -->*@

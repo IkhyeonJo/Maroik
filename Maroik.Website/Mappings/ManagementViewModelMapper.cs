@@ -38,6 +38,9 @@ public static class ManagementViewModelMapper
     {
         /// <summary>Maps all <see cref="AdminAccountResponse"/> items to display view models.</summary>
         public List<AccountOutputViewModel> ToDisplayViewModels(string timeZoneIanaId)
-            => items.Select(i => i.ToDisplayViewModel(timeZoneIanaId)).ToList();
+            =>
+            [
+                .. items.Select(i => i.ToDisplayViewModel(timeZoneIanaId))
+            ];
     }
 }

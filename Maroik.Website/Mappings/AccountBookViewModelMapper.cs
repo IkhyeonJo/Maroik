@@ -32,7 +32,10 @@ public static class AccountBookViewModelMapper
     {
         /// <summary>Maps all <see cref="AssetResponse"/> items to display view models.</summary>
         public List<AssetOutputViewModel> ToDisplayViewModels(Func<string, string> localize, string timeZoneIanaId)
-            => items.Select(i => i.ToDisplayViewModel(localize, timeZoneIanaId)).ToList();
+            =>
+            [
+                .. items.Select(i => i.ToDisplayViewModel(localize, timeZoneIanaId))
+            ];
     }
 
     extension(IncomeResponse item)
@@ -71,7 +74,10 @@ public static class AccountBookViewModelMapper
             var currencyByProduct = assets
                 .GroupBy(a => a.ProductName ?? "")
                 .ToDictionary(g => g.Key, g => g.Last().MonetaryUnit);
-            return items.Select(i => i.ToDisplayViewModel(currencyByProduct, localize, timeZoneIanaId)).ToList();
+            return
+            [
+                .. items.Select(i => i.ToDisplayViewModel(currencyByProduct, localize, timeZoneIanaId))
+            ];
         }
     }
 
@@ -111,7 +117,10 @@ public static class AccountBookViewModelMapper
             var currencyByProduct = assets
                 .GroupBy(a => a.ProductName ?? "")
                 .ToDictionary(g => g.Key, g => g.Last().MonetaryUnit);
-            return items.Select(i => i.ToDisplayViewModel(currencyByProduct, localize, timeZoneIanaId)).ToList();
+            return
+            [
+                .. items.Select(i => i.ToDisplayViewModel(currencyByProduct, localize, timeZoneIanaId))
+            ];
         }
     }
 

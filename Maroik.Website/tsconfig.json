@@ -5,8 +5,8 @@
   // Each site.ts wraps its body in an IIFE and has no import/export, so with
   // moduleDetection:"legacy" every file stays a plain global <script>, exactly like today.
   //
-  // This is the DEBUG config: it emits wwwroot/**/custom/**/site.js.map (with the .ts
-  // source inlined) so Chrome DevTools maps site.js -> site.ts. `npm run build:debug`
+  // This is the DEBUG config: it emits wwwroot/**/custom/**/site.js.map (with the .ts source inlined)
+  // so Chrome DevTools maps site.js -> site.ts. `npm run build:debug`
   // and `npm run watch` use it. Release builds use tsconfig.build.json (no maps) — that
   // is what `npm run build`, the .csproj target, Docker and `dotnet publish` run, and
   // what the committed site.js reflects. See TypeScripts/README.md ("Debugging in Chrome").

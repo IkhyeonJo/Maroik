@@ -45,11 +45,6 @@ public class AccountInputViewModel
     [Display(Name = "Locked")]
     public bool Locked { get; set; }
 
-    /// <summary>Number of consecutive failed login attempts; resets on successful login.</summary>
-    [Required(ErrorMessage = "Please enter LoginAttempt")]
-    [Display(Name = "LoginAttempt")]
-    public int LoginAttempt { get; set; }
-
     /// <summary>When <see langword="true"/> the account's email has been verified via the confirmation link.</summary>
     [Required(ErrorMessage = "Please enter EmailConfirmed")]
     [Display(Name = "EmailConfirmed")]

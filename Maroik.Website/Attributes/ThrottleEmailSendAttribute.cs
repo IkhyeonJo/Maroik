@@ -75,7 +75,7 @@ public sealed class ThrottleEmailSendAttribute : Attribute, IAsyncActionFilter
                 // gap is now a single cache round trip instead of an entire request's processing
                 // time. If the action turns out not to have actually reached a send attempt, the
                 // claim is released again below.
-                await cache!.SetAsync(
+                await cache.SetAsync(
                     key,
                     [1],
                     new DistributedCacheEntryOptions

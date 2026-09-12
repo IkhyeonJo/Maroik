@@ -56,10 +56,10 @@ public class FreeForumOutputViewModel
     public HashSet<string> AdminNicknames { get; set; } = [];
 
     /// <summary>Maps each board post ID to its comment count for the comment badge in the post list.</summary>
-    public Dictionary<long, int> CommentCountByBoardId { get; set; } = new();
+    public Dictionary<long, int> CommentCountByBoardId { get; set; } = [];
 
     /// <summary>Maps each board post ID to its list of attached files for the attachment icon in the post list.</summary>
-    public Dictionary<long, List<BoardAttachedFileDto>> AttachedFilesByBoardId { get; set; } = new();
+    public Dictionary<long, List<BoardAttachedFileDto>> AttachedFilesByBoardId { get; set; } = [];
 
     /// <summary>Comments on the currently open detail post, rendered in the detail panel.</summary>
     public List<BoardCommentResponse> DetailBoardComments { get; set; } = [];

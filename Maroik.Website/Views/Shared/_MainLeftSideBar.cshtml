@@ -11,8 +11,8 @@
 @model Maroik.Core.Contract.Dtos.AccountResponse
 
 @{
-    var currentControllerName = ViewContext.RouteData.Values["Controller"]?.ToString() ?? "";
-    var currentActionName = ViewContext.RouteData.Values["Action"]?.ToString() ?? "";
+    string currentControllerName = ViewContext.RouteData.Values["Controller"]?.ToString() ?? "";
+    string currentActionName = ViewContext.RouteData.Values["Action"]?.ToString() ?? "";
 
     var roleCategories = Model.Role switch
     {

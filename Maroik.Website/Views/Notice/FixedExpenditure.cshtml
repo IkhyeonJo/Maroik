@@ -10,10 +10,9 @@
     localization strings for the calendar widget are injected as hidden form fields.
 *@
 @using Maroik.Core.Domain.Finance
-@using Maroik.Website.Extensions
 @{
     var assets = ViewBag.Assets as List<AssetResponse> ?? [];
-    var defaultAssetProductName = ViewBag.DefaultAssetProductName as string;
+    string? defaultAssetProductName = ViewBag.DefaultAssetProductName as string;
 }
 
 @Html.Hidden("localizerPrevText", Localizer["PrevText"].Value)
@@ -179,9 +178,9 @@
                                 <br />
                                 <select id="createFixedExpenditureDepositMonth" name="createFixedExpenditureDepositMonth" class="form-control form-control-sm" style="max-width:100%;text-overflow:ellipsis;">
                                     <option value="1" selected="selected">1</option>
-                                    @for (var i = 2; i <= 12; i++)
+                                    @for (int i = 2; i <= 12; i++)
                                     {
-                                        var i1 = i;
+                                        int i1 = i;
                                         <option value="@i">@i1</option>
                                     }
                                 </select>
@@ -191,9 +190,9 @@
                                 <br />
                                 <select id="createFixedExpenditureDepositDay" name="createFixedExpenditureDepositDay" class="form-control form-control-sm" style="max-width:100%;text-overflow:ellipsis;">
                                     <option value="1" selected="selected">1</option>
-                                    @for (var i = 2; i <= 31; i++)
+                                    @for (int i = 2; i <= 31; i++)
                                     {
-                                        var i1 = i;
+                                        int i1 = i;
                                         <option value="@i">@i1</option>
                                     }
                                 </select>
@@ -313,9 +312,9 @@
                                 <br />
                                 <select id="editFixedExpenditureDepositMonth" name="editFixedExpenditureDepositMonth" class="form-control form-control-sm" style="max-width:100%;text-overflow:ellipsis;">
                                     <option value="1" selected="selected">1</option>
-                                    @for (var i = 2; i <= 12; i++)
+                                    @for (int i = 2; i <= 12; i++)
                                     {
-                                        var i1 = i;
+                                        int i1 = i;
                                         <option value="@i">@i1</option>
                                     }
                                 </select>
@@ -325,9 +324,9 @@
                                 <br />
                                 <select id="editFixedExpenditureDepositDay" name="editFixedExpenditureDepositDay" class="form-control form-control-sm" style="max-width:100%;text-overflow:ellipsis;">
                                     <option value="1" selected="selected">1</option>
-                                    @for (var i = 2; i <= 31; i++)
+                                    @for (int i = 2; i <= 31; i++)
                                     {
-                                        var i1 = i;
+                                        int i1 = i;
                                         <option value="@i">@i1</option>
                                     }
                                 </select>

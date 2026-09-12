@@ -36,9 +36,6 @@ public class LoginInputViewModel
     /// <summary>Whether the user has agreed to the service terms of use (required for registration).</summary>
     public bool AgreedServiceTerms { get; set; }
 
-    /// <summary>One-time token sent via email to confirm account registration.</summary>
-    public string? RegistrationToken { get; set; }
-
     /// <summary>One-time token sent via email for the password-reset flow.</summary>
     public string? ResetPasswordToken { get; set; }
 

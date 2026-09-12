@@ -12,13 +12,13 @@ namespace Maroik.Website.Extensions;
 /// both matches what the client scripts <c>JSON.parse</c> and keeps non-ASCII text (e.g. Korean
 /// event titles) readable. Every value produced here is rendered through Razor's HTML-attribute
 /// encoding or an MVC <c>Json(...)</c> string field, so the relaxed encoder cannot introduce markup.
-/// MVC's own request/response serialization is configured separately and is unaffected.
+/// MVC own request/response serialization is configured separately and is unaffected.
 /// </para>
 /// </summary>
 public static class JsonSerialization
 {
     /// <summary>Shared options backing <see cref="ToClientJson"/>.</summary>
-    public static readonly JsonSerializerOptions ClientPayload = new()
+    private static readonly JsonSerializerOptions _clientPayload = new()
     {
         Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping,
     };
@@ -27,5 +27,5 @@ public static class JsonSerialization
     /// Serializes <paramref name="value"/> for embedding in a page (hidden field) or an AJAX payload
     /// that a client script will <c>JSON.parse</c>.
     /// </summary>
-    public static string ToClientJson(object? value) => JsonSerializer.Serialize(value, ClientPayload);
+    public static string ToClientJson(object? value) => JsonSerializer.Serialize(value, _clientPayload);
 }

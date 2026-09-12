@@ -21,35 +21,16 @@ namespace Maroik.Website.Controllers;
 /// Manages the free forum: listing, writing, editing, and deleting posts and comments,
 /// plus Summernote inline-image uploads.
 /// </summary>
-public class ForumController : Controller
+public class ForumController(
+    IHtmlLocalizer<ForumController> localizer,
+    ILogger<ForumController> logger,
+    IBoardService boardService,
+    IAccountService accountService,
+    IRsaService rsa,
+    IOptions<ServerSetting> serverSettings,
+    ISessionService sessionService) : Controller
 {
-    private readonly IRsaService _rsa;
-    private readonly IHtmlLocalizer<ForumController> _localizer;
-    private readonly ILogger<ForumController> _logger;
-    private readonly IBoardService _boardService;
-    private readonly IAccountService _accountService;
-    private readonly ISessionService _sessionService;
-    private readonly IOptions<ServerSetting> _serverSettings;
     private static readonly FileExtensionContentTypeProvider _contentTypeProvider = new();
-
-    /// <summary>Initializes a new instance of <see cref="ForumController"/> with the supplied dependencies.</summary>
-    public ForumController(
-        IHtmlLocalizer<ForumController> localizer,
-        ILogger<ForumController> logger,
-        IBoardService boardService,
-        IAccountService accountService,
-        IRsaService rsa,
-        IOptions<ServerSetting> serverSettings,
-        ISessionService sessionService)
-    {
-        _rsa = rsa;
-        _sessionService = sessionService;
-        _localizer = localizer;
-        _logger = logger;
-        _boardService = boardService;
-        _accountService = accountService;
-        _serverSettings = serverSettings;
-    }
 
     #region FreeForum
 
@@ -68,7 +49,7 @@ public class ForumController : Controller
         try
         {
             if (!ModelState.IsValid)
-                return Json(new { result = false, error = _localizer["Input is invalid"].Value });
+                return Json(new { result = false, error = localizer["Input is invalid"].Value });
 
             boardInputViewModel.Content ??= "";
 
@@ -78,7 +59,7 @@ public class ForumController : Controller
             AccountResponse loggedInAccount = ViewBag.LoggedInAccount;
 
             if (loggedInAccount.Role is not (Role.Admin or Role.User))
-                return Json(new { result = false, error = _localizer["Please Login to write board"].Value });
+                return Json(new { result = false, error = localizer["Please Login to write board"].Value });
 
             BoardRequest boardRequest = new()
             {
@@ -90,17 +71,17 @@ public class ForumController : Controller
                 Noticed = loggedInAccount.Role == Role.Admin && boardInputViewModel.Noticed
             };
 
-            AttachedFileDto? attachedFile = await boardInputViewModel.UploadedFile.ToAttachedFileInfoAsync(_serverSettings.Value.MaxAttachedFileSizeBytes, ct);
+            AttachedFileDto? attachedFile = await boardInputViewModel.UploadedFile.ToAttachedFileInfoAsync(serverSettings.Value.MaxAttachedFileSizeBytes, ct);
 
-            ServiceResult result = await _boardService.WriteBoardAsync(boardRequest, attachedFile, ct);
+            ServiceResult result = await boardService.WriteBoardAsync(boardRequest, attachedFile, ct);
             return result.Success
-                ? Json(new { result = true, message = _localizer["The board has been successfully created."].Value })
-                : Json(new { result = false, error = _localizer["Input is invalid"].Value });
+                ? Json(new { result = true, message = localizer["The board has been successfully created."].Value })
+                : Json(new { result = false, error = localizer["Input is invalid"].Value });
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Unhandled exception in forum action");
-            return Json(new { result = false, error = _localizer["Input is invalid"].Value });
+            logger.LogError(ex, "Unhandled exception in forum action");
+            return Json(new { result = false, error = localizer["Input is invalid"].Value });
         }
     }
     #endregion
@@ -116,15 +97,15 @@ public class ForumController : Controller
         try
         {
             if (!ModelState.IsValid)
-                return Json(new { result = false, error = _localizer["Input is invalid"].Value });
+                return Json(new { result = false, error = localizer["Input is invalid"].Value });
 
             if (string.IsNullOrEmpty(boardCommentInputViewModel.Content))
-                return Json(new { result = false, error = _localizer["Please enter a comment."].Value });
+                return Json(new { result = false, error = localizer["Please enter a comment."].Value });
 
             // DB-fresh account already loaded by ViewBagPopulatorFilter for this request (see WriteFreeBoard).
             AccountResponse loggedInAccount = ViewBag.LoggedInAccount;
             if (loggedInAccount.Role is not (Role.Admin or Role.User))
-                return Json(new { result = false, error = _localizer["Please Login to write comment."].Value });
+                return Json(new { result = false, error = localizer["Please Login to write comment."].Value });
 
             BoardCommentRequest commentRequest = new()
             {
@@ -134,15 +115,15 @@ public class ForumController : Controller
                 Content = boardCommentInputViewModel.Content
             };
 
-            ServiceResult result = await _boardService.WriteCommentAsync(commentRequest, isAdmin: loggedInAccount.Role == Role.Admin, requiredType: BoardTypes.FreeForum, ct: ct);
+            ServiceResult result = await boardService.WriteCommentAsync(commentRequest, isAdmin: loggedInAccount.Role == Role.Admin, requiredType: BoardTypes.FreeForum, ct: ct);
             return result.Success
                 ? Json(new { result = true, boardId = boardCommentInputViewModel.BoardId, page = boardCommentInputViewModel.DetailCurrentPage })
-                : Json(new { result = false, error = _localizer["Input is invalid"].Value });
+                : Json(new { result = false, error = localizer["Input is invalid"].Value });
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Unhandled exception in forum action");
-            return Json(new { result = false, error = _localizer["Input is invalid"].Value });
+            logger.LogError(ex, "Unhandled exception in forum action");
+            return Json(new { result = false, error = localizer["Input is invalid"].Value });
         }
     }
     #endregion
@@ -158,24 +139,24 @@ public class ForumController : Controller
     public async Task<IActionResult> UploadImageFile(IFormFile? summernoteImageFile, CancellationToken ct)
     {
         if (summernoteImageFile == null)
-            return Ok(new { result = false, errorMessage = _localizer["Please attach a file."].Value });
+            return Ok(new { result = false, errorMessage = localizer["Please attach a file."].Value });
 
-        if (summernoteImageFile.Length <= 0 || summernoteImageFile.Length > _serverSettings.Value.MaxAttachedFileSizeBytes)
-            return Ok(new { result = false, errorMessage = _localizer["File Size must be smaller than {0}MB.", _serverSettings.Value.MaxAttachedFileSizeBytes / (1024 * 1024)].ToPlainString() });
+        if (summernoteImageFile.Length <= 0 || summernoteImageFile.Length > serverSettings.Value.MaxAttachedFileSizeBytes)
+            return Ok(new { result = false, errorMessage = localizer["File Size must be smaller than {0}MB.", serverSettings.Value.MaxAttachedFileSizeBytes / (1024 * 1024)].ToPlainString() });
 
         var ext = Path.GetExtension(summernoteImageFile.FileName).ToLowerInvariant();
         if (!ImageUploadPolicy.IsAllowedExtension(ext))
-            return Ok(new { result = false, errorMessage = _localizer["Only .jpg or jpeg or .png file allowed."].Value });
+            return Ok(new { result = false, errorMessage = localizer["Only .jpg or jpeg or .png file allowed."].Value });
 
-        AttachedFileDto file = (await summernoteImageFile.ToAttachedFileInfoAsync(_serverSettings.Value.MaxAttachedFileSizeBytes, ct))!;
+        AttachedFileDto file = (await summernoteImageFile.ToAttachedFileInfoAsync(serverSettings.Value.MaxAttachedFileSizeBytes, ct))!;
 
-        SummernoteUploadResult uploadResult = await _boardService.UploadSummernoteImageAsync(file, "Forum", BoardTypes.FreeForum, ct);
+        SummernoteUploadResult uploadResult = await boardService.UploadSummernoteImageAsync(file, "Forum", BoardTypes.FreeForum, ct);
 
         if (!uploadResult.Success)
-            return Ok(new { result = false, errorMessage = _localizer[uploadResult.ErrorKey ?? "Input is invalid"].Value });
+            return Ok(new { result = false, errorMessage = localizer[uploadResult.ErrorKey ?? "Input is invalid"].Value });
 
         // The Summernote editor only needs the raw bytes (base64) + content type to build an object
-        // URL for the inserted <img>; return those explicitly rather than serialising a whole
+        // URL for the inserted <img>; return those explicitly rather than serializing a whole
         // FileContentResult and relying on its property names.
         return Ok(new
         {
@@ -185,7 +166,7 @@ public class ForumController : Controller
                 fileContents = Convert.ToBase64String(uploadResult.FileBytes!),
                 contentType = uploadResult.ContentType!
             },
-            filePath = _rsa.Encrypt(uploadResult.FilePath!)
+            filePath = rsa.Encrypt(uploadResult.FilePath!)
         });
     }
     #endregion
@@ -205,7 +186,7 @@ public class ForumController : Controller
             {
                 FreeForumOutputViewModel freeForumOutputViewModel = new() { Method = method };
 
-                bool isAccountSessionExist = _sessionService.GetAccount() != null;
+                bool isAccountSessionExist = sessionService.GetAccount() != null;
                 return isAccountSessionExist ? View(freeForumOutputViewModel) : RedirectToAction("Login", "Account");
             }
             // Detail view
@@ -222,19 +203,19 @@ public class ForumController : Controller
 
                 try
                 {
-                    BoardResponse? freeBoard = await _boardService.GetBoardByIdAsync((long)boardId, BoardTypes.FreeForum, ct);
-                    BoardAttachedFileDto? boardAttachedFile = await _boardService.GetAttachedFileByBoardIdAsync((long)boardId, ct);
+                    BoardResponse? freeBoard = await boardService.GetBoardByIdAsync((long)boardId, BoardTypes.FreeForum, ct);
+                    BoardAttachedFileDto? boardAttachedFile = await boardService.GetAttachedFileByBoardIdAsync((long)boardId, ct);
 
                     if (freeBoard == null || freeBoard.Deleted)
                         return RedirectToAction(BoardTypes.FreeForum, "Forum");
 
-                    AccountResponse? loggedInAccount = _sessionService.GetAccount();
-                    if (!_boardService.CanView(freeBoard, loggedInAccount))
+                    AccountResponse? loggedInAccount = sessionService.GetAccount();
+                    if (!boardService.CanView(freeBoard, loggedInAccount))
                         return RedirectToAction(BoardTypes.FreeForum, "Forum");
 
-                    await _boardService.IncrementBoardViewAsync((long)boardId, ct);
+                    await boardService.IncrementBoardViewAsync((long)boardId, ct);
 
-                    (freeBoard.Content, bool isImgTagIncluded) = await _boardService.PrepareHtmlForDisplayAsync(freeBoard.Content ?? "", ct);
+                    (freeBoard.Content, bool isImgTagIncluded) = await boardService.PrepareHtmlForDisplayAsync(freeBoard.Content ?? "", ct);
 
                     freeForumOutputViewModel.LoggedInAccount = loggedInAccount ?? new AccountResponse { Role = Role.Anonymous };
                     freeForumOutputViewModel.LoggedInAccountTimeZoneIanaId = freeForumOutputViewModel.LoggedInAccount.TimeZoneIanaId ?? "";
@@ -257,7 +238,7 @@ public class ForumController : Controller
 
                     if (!string.IsNullOrEmpty(freeForumOutputViewModel.BoardOutputViewModel?.BoardAttachedFilePath ?? ""))
                     {
-                        byte[]? fileData = await _boardService.DownloadFileAsync(freeForumOutputViewModel.BoardOutputViewModel?.BoardAttachedFilePath ?? "", ct);
+                        byte[]? fileData = await boardService.DownloadFileAsync(freeForumOutputViewModel.BoardOutputViewModel?.BoardAttachedFilePath ?? "", ct);
                         if (fileData != null)
                         {
                             freeForumOutputViewModel.BoardOutputViewModel?.BoardAttachedFileBase64Data = Convert.ToBase64String(fileData);
@@ -268,20 +249,20 @@ public class ForumController : Controller
                     }
 
                     freeForumOutputViewModel.DetailBoardComments =
-                        [.. await _boardService.GetCommentsByBoardIdAsync((long)boardId, ct)];
+                        [.. await boardService.GetCommentsByBoardIdAsync((long)boardId, ct)];
                     var detailNicknames = freeForumOutputViewModel.DetailBoardComments.Select(c => c.Writer)
                         .Append(freeBoard.Writer ?? "")
                         .Where(w => !string.IsNullOrEmpty(w))
                         .Select(w => w!)
                         .Distinct();
-                    freeForumOutputViewModel.AllAccounts = await _accountService.GetAccountsByNicknamesAsync(detailNicknames, ct);
+                    freeForumOutputViewModel.AllAccounts = await accountService.GetAccountsByNicknamesAsync(detailNicknames, ct);
                     freeForumOutputViewModel.AdminNicknames = freeForumOutputViewModel.AllAccounts.ToAdminNicknameSet();
 
                     return View(freeForumOutputViewModel);
                 }
                 catch (Exception ex)
                 {
-                    _logger.LogError(ex, "Unhandled exception in FreeForum action");
+                    logger.LogError(ex, "Unhandled exception in FreeForum action");
                     return RedirectToAction(BoardTypes.FreeForum, "Forum");
                 }
             }
@@ -299,20 +280,20 @@ public class ForumController : Controller
 
                 try
                 {
-                    BoardResponse? freeBoard = await _boardService.GetBoardByIdAsync((long)boardId, BoardTypes.FreeForum, ct);
-                    BoardAttachedFileDto? boardAttachedFile = await _boardService.GetAttachedFileByBoardIdAsync((long)boardId, ct);
+                    BoardResponse? freeBoard = await boardService.GetBoardByIdAsync((long)boardId, BoardTypes.FreeForum, ct);
+                    BoardAttachedFileDto? boardAttachedFile = await boardService.GetAttachedFileByBoardIdAsync((long)boardId, ct);
 
                     if (freeBoard == null || freeBoard.Deleted)
                         return RedirectToAction(BoardTypes.FreeForum, "Forum");
 
                     // ViewBag.LoggedInAccount is re-fetched from the database by ViewBagPopulatorFilter
-                    // on every request (not the session-cached snapshot), so a mid-session ownership-
+                    // on every request (not the session-cached snapshot), so a mid-session ownership
                     // relevant change (e.g. nickname edit) is reflected immediately here.
                     AccountResponse loggedInAccount = ViewBag.LoggedInAccount;
                     if (!loggedInAccount.IsOwner(freeBoard.Writer))
                         return RedirectToAction(BoardTypes.FreeForum, "Forum");
 
-                    (freeBoard.Content, bool isImgTagIncluded) = await _boardService.PrepareHtmlForDisplayAsync(freeBoard.Content ?? "", ct);
+                    (freeBoard.Content, bool isImgTagIncluded) = await boardService.PrepareHtmlForDisplayAsync(freeBoard.Content ?? "", ct);
 
                     freeForumOutputViewModel.BoardOutputViewModel = new BoardOutputViewModel
                     {
@@ -334,7 +315,7 @@ public class ForumController : Controller
                         return View(freeForumOutputViewModel);
                     }
 
-                    byte[]? fileData = await _boardService.DownloadFileAsync(freeForumOutputViewModel.BoardOutputViewModel?.BoardAttachedFilePath ?? "", ct);
+                    byte[]? fileData = await boardService.DownloadFileAsync(freeForumOutputViewModel.BoardOutputViewModel?.BoardAttachedFilePath ?? "", ct);
                     if (fileData == null)
                     {
                         return View(freeForumOutputViewModel);
@@ -349,7 +330,7 @@ public class ForumController : Controller
                 }
                 catch (Exception ex)
                 {
-                    _logger.LogError(ex, "Unhandled exception in FreeForum action");
+                    logger.LogError(ex, "Unhandled exception in FreeForum action");
                     return RedirectToAction(BoardTypes.FreeForum, "Forum");
                 }
             }
@@ -362,8 +343,8 @@ public class ForumController : Controller
                 // Filtering, search/visibility rules, ordering, and paging are all pushed down into
                 // one SQL query (see BoardRepository.QueryPageAsync) instead of materializing the
                 // whole board-type bucket into memory first.
-                AccountResponse? loggedInAccountForQuery = _sessionService.GetAccount();
-                (IEnumerable<BoardResponse> pageItems, int totalCount) = await _boardService.GetBoardPageAsync(new BoardPageQuery(
+                AccountResponse? loggedInAccountForQuery = sessionService.GetAccount();
+                (IEnumerable<BoardResponse> pageItems, int totalCount) = await boardService.GetBoardPageAsync(new BoardPageQuery(
                     Type: BoardTypes.FreeForum,
                     OwnerNickname: null,
                     SearchType: searchType,
@@ -376,13 +357,14 @@ public class ForumController : Controller
 
                 FreeForumOutputViewModel freeForumOutputViewModel = new()
                 {
-                    NoticeBoards = await _boardService.GetNoticedBoardsAsync(BoardTypes.FreeForum, ct),
+                    NoticeBoards = await boardService.GetNoticedBoardsAsync(BoardTypes.FreeForum, ct),
                     Method = "list",
-                    Pager = new Pager(totalCount, page, pageSize)
+                    Pager = new Pager(totalCount, page, pageSize),
+                    Boards =
+                        [.. pageItems],
+                    LoggedInAccount = sessionService.GetAccount() ?? new AccountResponse { Role = Role.Anonymous }
                 };
-                freeForumOutputViewModel.Boards = [.. pageItems];
 
-                freeForumOutputViewModel.LoggedInAccount = _sessionService.GetAccount() ?? new AccountResponse { Role = Role.Anonymous };
                 freeForumOutputViewModel.LoggedInAccountTimeZoneIanaId = freeForumOutputViewModel.LoggedInAccount.TimeZoneIanaId ?? "";
                 var boardResponses = freeForumOutputViewModel.Boards as BoardResponse[] ?? [.. freeForumOutputViewModel.Boards];
                 var listNicknames = freeForumOutputViewModel.NoticeBoards.Select(b => b.Writer)
@@ -390,7 +372,7 @@ public class ForumController : Controller
                     .Where(w => !string.IsNullOrEmpty(w))
                     .Select(w => w!)
                     .Distinct();
-                freeForumOutputViewModel.AllAccounts = await _accountService.GetAccountsByNicknamesAsync(listNicknames, ct);
+                freeForumOutputViewModel.AllAccounts = await accountService.GetAccountsByNicknamesAsync(listNicknames, ct);
                 freeForumOutputViewModel.AdminNicknames = freeForumOutputViewModel.AllAccounts.ToAdminNicknameSet();
 
                 List<long> allBoardIds =
@@ -400,8 +382,8 @@ public class ForumController : Controller
                         .Distinct()
                 ];
 
-                Dictionary<long, int> commentCounts = await _boardService.GetCommentCountsForBoardsAsync(allBoardIds, ct);
-                Dictionary<long, BoardAttachedFileDto?> attachedFiles = await _boardService.GetAttachedFilesForBoardsAsync(allBoardIds, ct);
+                Dictionary<long, int> commentCounts = await boardService.GetCommentCountsForBoardsAsync(allBoardIds, ct);
+                Dictionary<long, BoardAttachedFileDto?> attachedFiles = await boardService.GetAttachedFilesForBoardsAsync(allBoardIds, ct);
 
                 foreach (var board in freeForumOutputViewModel.NoticeBoards)
                 {
@@ -435,9 +417,9 @@ public class ForumController : Controller
     {
         try
         {
-            BoardResponse? board = await _boardService.GetBoardByIdAsync(id, BoardTypes.FreeForum, ct);
+            BoardResponse? board = await boardService.GetBoardByIdAsync(id, BoardTypes.FreeForum, ct);
             if (board == null || board.Deleted)
-                return Json(new { result = false, error = _localizer["Input is invalid"].Value });
+                return Json(new { result = false, error = localizer["Input is invalid"].Value });
 
             if (!board.Locked)
             {
@@ -447,14 +429,14 @@ public class ForumController : Controller
             // Re-fetched from the database by ViewBagPopulatorFilter on every request.
             AccountResponse loggedInAccount = ViewBag.LoggedInAccount;
             if (!loggedInAccount.IsOwnerOrAdmin(board.Writer))
-                return Json(new { result = false, error = _localizer["Input is invalid"].Value });
+                return Json(new { result = false, error = localizer["Input is invalid"].Value });
 
             return Json(new { result = true, freeBoard = board });
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Unhandled exception in forum action");
-            return Json(new { result = false, error = _localizer["Input is invalid"].Value });
+            logger.LogError(ex, "Unhandled exception in forum action");
+            return Json(new { result = false, error = localizer["Input is invalid"].Value });
         }
     }
     #endregion
@@ -474,14 +456,14 @@ public class ForumController : Controller
         try
         {
             if (!ModelState.IsValid)
-                return Json(new { result = false, error = _localizer["Input is invalid"].Value });
+                return Json(new { result = false, error = localizer["Input is invalid"].Value });
 
             boardInputViewModel.Content ??= "";
 
             // DB-fresh account already loaded by ViewBagPopulatorFilter for this request (see WriteFreeBoard).
             AccountResponse loggedInAccount = ViewBag.LoggedInAccount;
             if (loggedInAccount.Role is not (Role.Admin or Role.User))
-                return Json(new { result = false, error = _localizer["Please Login to edit board."].Value });
+                return Json(new { result = false, error = localizer["Please Login to edit board."].Value });
 
             BoardRequest boardRequest = new()
             {
@@ -492,17 +474,17 @@ public class ForumController : Controller
                 Locked = boardInputViewModel.Locked
             };
 
-            AttachedFileDto? attachedFile = await boardInputViewModel.UploadedFile.ToAttachedFileInfoAsync(_serverSettings.Value.MaxAttachedFileSizeBytes, ct);
+            AttachedFileDto? attachedFile = await boardInputViewModel.UploadedFile.ToAttachedFileInfoAsync(serverSettings.Value.MaxAttachedFileSizeBytes, ct);
 
-            ServiceResult result = await _boardService.EditBoardAsync(boardRequest, loggedInAccount.Nickname!, loggedInAccount.Role == Role.Admin, attachedFile, ct);
+            ServiceResult result = await boardService.EditBoardAsync(boardRequest, loggedInAccount.Nickname!, loggedInAccount.Role == Role.Admin, attachedFile, ct);
             return result.Success
-                ? Json(new { result = true, message = _localizer["The board has been successfully updated."].Value })
-                : Json(new { result = false, error = _localizer["Input is invalid"].Value });
+                ? Json(new { result = true, message = localizer["The board has been successfully updated."].Value })
+                : Json(new { result = false, error = localizer["Input is invalid"].Value });
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Unhandled exception in forum action");
-            return Json(new { result = false, error = _localizer["Input is invalid"].Value });
+            logger.LogError(ex, "Unhandled exception in forum action");
+            return Json(new { result = false, error = localizer["Input is invalid"].Value });
         }
     }
     #endregion
@@ -524,7 +506,7 @@ public class ForumController : Controller
             // Re-fetched from the database by ViewBagPopulatorFilter on every request.
             AccountResponse loggedInAccount = ViewBag.LoggedInAccount;
 
-            ServiceResult result = await _boardService.DeleteBoardAsync(
+            ServiceResult result = await boardService.DeleteBoardAsync(
                 boardInputViewModel.Id,
                 BoardTypes.FreeForum,
                 loggedInAccount.Nickname!,
@@ -532,13 +514,13 @@ public class ForumController : Controller
                 ct);
 
             return result.Success
-                ? Json(new { result = true, message = _localizer["The board has been successfully deleted."].Value })
-                : Json(new { result = false, error = _localizer[result.ErrorKey, result.ErrorArgs].ToPlainString() });
+                ? Json(new { result = true, message = localizer["The board has been successfully deleted."].Value })
+                : Json(new { result = false, error = localizer[result.ErrorKey, result.ErrorArgs].ToPlainString() });
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Unhandled exception in forum action");
-            return Json(new { result = false, error = _localizer["Input is invalid"].Value });
+            logger.LogError(ex, "Unhandled exception in forum action");
+            return Json(new { result = false, error = localizer["Input is invalid"].Value });
         }
     }
     #endregion
@@ -556,7 +538,7 @@ public class ForumController : Controller
             // Re-fetched from the database by ViewBagPopulatorFilter on every request.
             AccountResponse loggedInAccount = ViewBag.LoggedInAccount;
 
-            ServiceResult result = await _boardService.DeleteCommentAsync(
+            ServiceResult result = await boardService.DeleteCommentAsync(
                 id,
                 loggedInAccount.Nickname!,
                 loggedInAccount.Role == Role.Admin,
@@ -565,12 +547,12 @@ public class ForumController : Controller
 
             return result.Success
                 ? Json(new { result = true })
-                : Json(new { result = false, error = _localizer[result.ErrorKey, result.ErrorArgs].ToPlainString() });
+                : Json(new { result = false, error = localizer[result.ErrorKey, result.ErrorArgs].ToPlainString() });
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Unhandled exception in forum action");
-            return Json(new { result = false, error = _localizer["Input is invalid"].Value });
+            logger.LogError(ex, "Unhandled exception in forum action");
+            return Json(new { result = false, error = localizer["Input is invalid"].Value });
         }
     }
     #endregion

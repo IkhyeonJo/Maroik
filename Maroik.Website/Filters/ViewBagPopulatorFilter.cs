@@ -20,29 +20,13 @@ namespace Maroik.Website.Filters;
 /// return URI. Runs after <see cref="AuthorizationFilter"/>, which has already published
 /// ViewBag.{Role}Categories/{Role}SubCategories and decided allow/deny for this request.
 /// </summary>
-public class ViewBagPopulatorFilter : IAsyncActionFilter
+public class ViewBagPopulatorFilter(
+    IAccountService accountService,
+    IDashboardService dashboardService,
+    ITimeZoneCatalogService timeZoneCatalogService,
+    IOptions<ServerSetting> serverSettings,
+    ISessionService sessionService) : IAsyncActionFilter
 {
-    private readonly IAccountService _accountService;
-    private readonly IDashboardService _dashboardService;
-    private readonly ITimeZoneCatalogService _timeZoneCatalogService;
-    private readonly IOptions<ServerSetting> _serverSettings;
-    private readonly ISessionService _sessionService;
-
-    /// <summary>Initializes a new instance of <see cref="ViewBagPopulatorFilter"/> with the supplied dependencies.</summary>
-    public ViewBagPopulatorFilter(
-        IAccountService accountService,
-        IDashboardService dashboardService,
-        ITimeZoneCatalogService timeZoneCatalogService,
-        IOptions<ServerSetting> serverSettings,
-        ISessionService sessionService)
-    {
-        _accountService = accountService;
-        _dashboardService = dashboardService;
-        _timeZoneCatalogService = timeZoneCatalogService;
-        _serverSettings = serverSettings;
-        _sessionService = sessionService;
-    }
-
     /// <summary>Populates shared ViewBag entries before each action executes.</summary>
     public async Task OnActionExecutionAsync(ActionExecutingContext context, ActionExecutionDelegate next)
     {
@@ -55,8 +39,8 @@ public class ViewBagPopulatorFilter : IAsyncActionFilter
             return;
         }
 
-        controller.ViewBag.DomainName = _serverSettings.Value.DomainName;
-        controller.ViewBag.MaxAttachedFileSizeBytes = _serverSettings.Value.MaxAttachedFileSizeBytes;
+        controller.ViewBag.DomainName = serverSettings.Value.DomainName;
+        controller.ViewBag.MaxAttachedFileSizeBytes = serverSettings.Value.MaxAttachedFileSizeBytes;
 
         AccountResponse loggedInAccount = new()
         {
@@ -66,7 +50,7 @@ public class ViewBagPopulatorFilter : IAsyncActionFilter
             AvatarImagePath = "/anonymous/images/bg1.jpg"
         };
 
-        var sessionAccount = _sessionService.GetAccount();
+        var sessionAccount = sessionService.GetAccount();
         if (sessionAccount != null)
         {
             // AuthorizationFilter already re-loaded and re-validated this account from the database
@@ -82,14 +66,14 @@ public class ViewBagPopulatorFilter : IAsyncActionFilter
                 {
                     string email = sessionAccount.Email ?? "";
                     if (!string.IsNullOrEmpty(email))
-                        loggedInAccount = await _accountService.GetAccountByEmailAsync(email, context.HttpContext.RequestAborted) ?? loggedInAccount;
+                        loggedInAccount = await accountService.GetAccountByEmailAsync(email, context.HttpContext.RequestAborted) ?? loggedInAccount;
                 }
                 catch (Exception ex) { logger.LogWarning(ex, "Failed to refresh session account for {Email}", sessionAccount.Email); }
             }
         }
 
         controller.ViewBag.LoggedInAccount = loggedInAccount;
-        controller.ViewBag.TimeZoneOptions = _timeZoneCatalogService.GetTimeZoneOptions();
+        controller.ViewBag.TimeZoneOptions = timeZoneCatalogService.GetTimeZoneOptions();
         controller.ViewBag.CopyrightYear = DateTime.UtcNow.ConvertTimeByTimeZoneIanaId(loggedInAccount.TimeZoneIanaId ?? "UTC").Year;
 
         (IEnumerable<CategoryResponse>? roleCategories, IEnumerable<SubCategoryResponse>? roleSubCategories) = loggedInAccount.Role switch
@@ -118,9 +102,9 @@ public class ViewBagPopulatorFilter : IAsyncActionFilter
         {
             try
             {
-                var counts = await _dashboardService.GetNoticeCountsAsync(
+                var counts = await dashboardService.GetNoticeCountsAsync(
                     loggedInAccount.Email ?? "",
-                    _serverSettings.Value.NoticeMaturityDateDay,
+                    serverSettings.Value.NoticeMaturityDateDay,
                     loggedInAccount.TimeZoneIanaId ?? "UTC",
                     context.HttpContext.RequestAborted);
 

@@ -16,23 +16,11 @@ namespace Maroik.Website.Controllers;
 /// Handles all self-service account flows: consent, login, logout, registration,
 /// email confirmation, forgot-password, and password reset.
 /// </summary>
-public class AccountController : Controller
+public class AccountController(
+    IHtmlLocalizer<AccountController> localizer,
+    IAccountService accountService,
+    ISessionService sessionService) : Controller
 {
-    private readonly IHtmlLocalizer<AccountController> _localizer;
-    private readonly IAccountService _accountService;
-    private readonly ISessionService _sessionService;
-
-    /// <summary>Initializes a new instance of <see cref="AccountController"/> with the supplied dependencies.</summary>
-    public AccountController(
-        IHtmlLocalizer<AccountController> localizer,
-        IAccountService accountService,
-        ISessionService sessionService)
-    {
-        _localizer = localizer;
-        _accountService = accountService;
-        _sessionService = sessionService;
-    }
-
     #region ConsentForm
     /// <summary>Displays the service consent form.</summary>
     [HttpGet]
@@ -52,7 +40,7 @@ public class AccountController : Controller
         string userAgent = Request.Headers.UserAgent.ToString();
         if (userAgent.Contains("MSIE") || userAgent.Contains("Trident"))
         {
-            TempData["Error"] = _localizer["BlockInternetExplorer"].Value;
+            TempData["Error"] = localizer["BlockInternetExplorer"].Value;
             return View();
         }
 
@@ -61,18 +49,18 @@ public class AccountController : Controller
 
         if (!ModelState.IsValid) return View();
 
-        var result = await _accountService.LoginAsync(loginInputViewModel.Email!, loginInputViewModel.Password ?? "", ct);
+        var result = await accountService.LoginAsync(loginInputViewModel.Email!, loginInputViewModel.Password ?? "", ct);
 
         if (!result.Success)
         {
-            TempData["Error"] = _localizer[result.ErrorKey].Value;
+            TempData["Error"] = localizer[result.ErrorKey].Value;
             return View();
         }
 
         // Session fixation mitigation: mint a fresh, unpredictable session id before attaching the
         // account to it, so a session id an attacker fixated before login never becomes authenticated.
         HttpContext.RegenerateSession();
-        _sessionService.SetAccount(result.Account!);
+        sessionService.SetAccount(result.Account!);
         // The new session created by RegenerateSession() above isn't the one SessionMiddleware
         // auto-commits at the end of the request, so it must be saved explicitly here.
         await HttpContext.Session.CommitAsync(ct);
@@ -95,7 +83,7 @@ public class AccountController : Controller
     [ValidateAntiForgeryToken]
     public IActionResult Logout()
     {
-        _sessionService.RemoveAccount();
+        sessionService.RemoveAccount();
         return RedirectToAction("AnonymousIndex", "Dashboard");
     }
     #endregion
@@ -130,17 +118,17 @@ public class AccountController : Controller
 
             if (!loginInputViewModel.AgreedServiceTerms)
             {
-                TempData["Error"] = _localizer["Please check the consent form"].Value;
+                TempData["Error"] = localizer["Please check the consent form"].Value;
                 return View();
             }
 
             if (string.IsNullOrEmpty(loginInputViewModel.TimeZoneIanaId))
             {
-                TempData["Error"] = _localizer["Please select time zone"].Value;
+                TempData["Error"] = localizer["Please select time zone"].Value;
                 return View();
             }
 
-            var emailTemplate = _localizer.ToConfirmationEmailTemplate();
+            var emailTemplate = localizer.ToConfirmationEmailTemplate();
 
             var newAccount = new AccountRequest
             {
@@ -158,11 +146,11 @@ public class AccountController : Controller
                 Deleted = false
             };
 
-            var result = await _accountService.RegisterAsync(newAccount, emailTemplate, ct);
+            var result = await accountService.RegisterAsync(newAccount, emailTemplate, ct);
 
             if (!result.Success)
             {
-                TempData["Error"] = _localizer[result.ErrorKey, result.ErrorArgs].ToPlainString();
+                TempData["Error"] = localizer[result.ErrorKey, result.ErrorArgs].ToPlainString();
                 ViewBag.ResendEmail = result.ShowResendEmail;
                 return View();
             }
@@ -177,13 +165,13 @@ public class AccountController : Controller
 
             if (!ModelState.IsValid) return View();
 
-            var emailTemplate = _localizer.ToConfirmationEmailTemplate();
+            var emailTemplate = localizer.ToConfirmationEmailTemplate();
 
-            var result = await _accountService.ResendConfirmationEmailAsync(loginInputViewModel.Email!, emailTemplate, ct);
+            var result = await accountService.ResendConfirmationEmailAsync(loginInputViewModel.Email!, emailTemplate, ct);
 
             if (!result.Success)
             {
-                TempData["Error"] = _localizer[result.ErrorKey, result.ErrorArgs].ToPlainString();
+                TempData["Error"] = localizer[result.ErrorKey, result.ErrorArgs].ToPlainString();
                 ViewBag.ResendEmail = result.ShowResendEmail;
                 return View();
             }
@@ -202,10 +190,10 @@ public class AccountController : Controller
     [HttpGet]
     public async Task<IActionResult> ConfirmEmail(string registrationToken, CancellationToken ct)
     {
-        var result = await _accountService.ConfirmEmailAsync(registrationToken, ct);
+        var result = await accountService.ConfirmEmailAsync(registrationToken, ct);
 
         if (!string.IsNullOrEmpty(result.ErrorKey))
-            TempData["Error"] = _localizer[result.ErrorKey].Value;
+            TempData["Error"] = localizer[result.ErrorKey].Value;
 
         ViewBag.InvalidToken = result.InvalidToken;
         ViewBag.AccountCreated = result.AccountCreated;
@@ -229,9 +217,9 @@ public class AccountController : Controller
 
         if (!ModelState.IsValid) return View();
 
-        var emailTemplate = _localizer.ToResetPasswordEmailTemplate();
+        var emailTemplate = localizer.ToResetPasswordEmailTemplate();
 
-        await _accountService.ForgotPasswordAsync(loginInputViewModel.Email!, emailTemplate, ct);
+        await accountService.ForgotPasswordAsync(loginInputViewModel.Email!, emailTemplate, ct);
 
         ViewBag.MailSent = true;
         return View();
@@ -241,7 +229,7 @@ public class AccountController : Controller
     [HttpGet]
     public async Task<IActionResult> ResetPassword(string resetPasswordToken, CancellationToken ct)
     {
-        var result = await _accountService.ValidateResetPasswordTokenAsync(resetPasswordToken, ct);
+        var result = await accountService.ValidateResetPasswordTokenAsync(resetPasswordToken, ct);
         ViewBag.FailToResetPassword = result.FailToReset;
         ViewBag.ResetPasswordToken = result.ResetPasswordToken;
         return View();
@@ -262,7 +250,7 @@ public class AccountController : Controller
             return View();
         }
 
-        var result = await _accountService.ResetPasswordAsync(
+        var result = await accountService.ResetPasswordAsync(
             loginInputViewModel.ResetPasswordToken ?? "",
             loginInputViewModel.Password ?? "",
             ct);
@@ -274,7 +262,7 @@ public class AccountController : Controller
                 ViewBag.FailToResetPassword = true;
                 return View();
             }
-            TempData["Error"] = _localizer[result.ErrorKey, result.ErrorArgs].ToPlainString();
+            TempData["Error"] = localizer[result.ErrorKey, result.ErrorArgs].ToPlainString();
             ViewBag.FailToResetPassword = true;
             return View();
         }

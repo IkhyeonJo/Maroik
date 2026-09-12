@@ -15,8 +15,8 @@
 @{
     bool repeatEmailSend = ViewBag.RepeatEmailSend ?? false;
     bool resendEmail = ViewBag.ResendEmail ?? false;
-    var resentEmailAddress = ViewBag.ResentEmailAddress as string ?? "";
-    var error = TempData["Error"] as string ?? "";
+    string resentEmailAddress = ViewBag.ResentEmailAddress as string ?? "";
+    string error = TempData["Error"] as string ?? "";
 }
 
 @if (!resendEmail)

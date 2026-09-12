@@ -10,11 +10,10 @@
 *@
 @model Maroik.Website.Models.ViewModels.Management.ProfileOutputViewModel
 @using Maroik.Core.Domain.Media
-@using Maroik.Website.Extensions
 
 @{
     var loggedInAccount = ViewBag.LoggedInAccount as AccountResponse ?? new AccountResponse { Role = Role.Anonymous };
-    var maxAttachedFileSizeBytes = (long)ViewBag.MaxAttachedFileSizeBytes;
+    long maxAttachedFileSizeBytes = (long)ViewBag.MaxAttachedFileSizeBytes;
 }
 @Html.Hidden(nameof(maxAttachedFileSizeBytes), maxAttachedFileSizeBytes)
 @* Accepted avatar image types — authoritative in ImageUploadPolicy (also enforced server-side). *@

@@ -26,15 +26,11 @@ namespace Maroik.Website.Filters;
 ///   which is why the two concerns share one filter.</item>
 /// </list>
 /// The controller/action → role map used for POST authorization is derived once from the compiled
-/// controllers (see <see cref="PostActionRoles"/>) rather than re-reflected on every request.
+/// controllers (see <see cref="_postActionRoles"/>) rather than re-reflected on every request.
 /// </summary>
-public class AuthorizationFilter : ActionFilterAttribute
+public class AuthorizationFilter(IMenuService menuService, IDistributedCache cache, 
+    ISessionService sessionService, IAccountService accountService) : ActionFilterAttribute
 {
-    private readonly IMenuService _menuService;
-    private readonly IDistributedCache _cache;
-    private readonly ISessionService _sessionService;
-    private readonly IAccountService _accountService;
-
     private const string AdminCategoriesCacheKey = NavigationCacheKeys.AdminCategories;
     private const string AdminSubCategoriesCacheKey = NavigationCacheKeys.AdminSubCategories;
     private const string UserCategoriesCacheKey = NavigationCacheKeys.UserCategories;
@@ -55,7 +51,7 @@ public class AuthorizationFilter : ActionFilterAttribute
     /// actions and their attributes never changes at runtime, so this is built once instead of
     /// re-scanning every controller's methods and custom attributes on every POST request.
     /// </summary>
-    private static readonly IReadOnlyDictionary<(string Controller, string Action), IReadOnlySet<string>> PostActionRoles =
+    private static readonly IReadOnlyDictionary<(string Controller, string Action), IReadOnlySet<string>> _postActionRoles =
         BuildPostActionRoleMap();
 
     /// <summary>
@@ -68,7 +64,9 @@ public class AuthorizationFilter : ActionFilterAttribute
     /// still carry <c>[HttpPost]</c> + <c>[ValidateAntiForgeryToken]</c>, enforced by
     /// <c>WebsiteArchitectureTests.PostActions_MustCarry_AntiforgeryAndRoleAttributes</c>.
     /// </summary>
-    private static readonly IReadOnlySet<(string Controller, string Action)> AnonymousAccountPostActions =
+ #pragma warning disable CA1859
+    private static readonly IReadOnlySet<(string Controller, string Action)> _anonymousAccountPostActions =
+ #pragma warning restore CA1859
         new HashSet<(string Controller, string Action)>
         {
             ("Account", nameof(Controllers.AccountController.Login)),
@@ -89,7 +87,9 @@ public class AuthorizationFilter : ActionFilterAttribute
         && method.IsDefined(typeof(HttpPostAttribute))
         && method.IsDefined(typeof(ValidateAntiForgeryTokenAttribute));
 
+ #pragma warning disable CA1859
     private static IReadOnlyDictionary<(string, string), IReadOnlySet<string>> BuildPostActionRoleMap()
+ #pragma warning restore CA1859
     {
         var map = new Dictionary<(string, string), IReadOnlySet<string>>();
         foreach (Type controller in _cachedControllerTypes)
@@ -99,7 +99,9 @@ public class AuthorizationFilter : ActionFilterAttribute
                 if (!HasPostGuards(method) || !method.IsDefined(typeof(RequiredHttpPostAccessAttribute)))
                     continue;
 
+ #pragma warning disable CA1859
                 IReadOnlySet<string> roles = method.GetCustomAttributes<RequiredHttpPostAccessAttribute>()
+ #pragma warning restore CA1859
                     .Select(attr => attr.Role)
                     .Where(role => !string.IsNullOrEmpty(role))
                     .ToHashSet(StringComparer.Ordinal);
@@ -111,29 +113,16 @@ public class AuthorizationFilter : ActionFilterAttribute
         return map;
     }
 
-    /// <summary>Initializes a new instance of <see cref="AuthorizationFilter"/> with the required dependencies.</summary>
-    /// <param name="menuService">Service used to load category and sub-category navigation data.</param>
-    /// <param name="cache">Distributed cache (Valkey) used to store the navigation menu for 10 minutes.</param>
-    /// <param name="sessionService">Service used to retrieve the currently logged-in account from the session.</param>
-    /// <param name="accountService">Service used to re-verify the logged-in account's current state from the database.</param>
-    public AuthorizationFilter(IMenuService menuService, IDistributedCache cache, ISessionService sessionService, IAccountService accountService)
-    {
-        _menuService = menuService;
-        _cache = cache;
-        _sessionService = sessionService;
-        _accountService = accountService;
-    }
-
     /// <summary>Loads (or restores from cache) the navigation menu data and populates ViewBag before the action executes.</summary>
     public override async Task OnActionExecutionAsync(ActionExecutingContext context, ActionExecutionDelegate next)
     {
         var results = await Task.WhenAll(
-            _cache.GetAsync(AdminCategoriesCacheKey),
-            _cache.GetAsync(AdminSubCategoriesCacheKey),
-            _cache.GetAsync(UserCategoriesCacheKey),
-            _cache.GetAsync(UserSubCategoriesCacheKey),
-            _cache.GetAsync(AnonymousCategoriesCacheKey),
-            _cache.GetAsync(AnonymousSubCategoriesCacheKey));
+            cache.GetAsync(AdminCategoriesCacheKey),
+            cache.GetAsync(AdminSubCategoriesCacheKey),
+            cache.GetAsync(UserCategoriesCacheKey),
+            cache.GetAsync(UserSubCategoriesCacheKey),
+            cache.GetAsync(AnonymousCategoriesCacheKey),
+            cache.GetAsync(AnonymousSubCategoriesCacheKey));
 
         List<CategoryResponse> adminCategories = [];
         List<SubCategoryResponse> adminSubCategories = [];
@@ -167,8 +156,8 @@ public class AuthorizationFilter : ActionFilterAttribute
 
         if (!menusLoaded)
         {
-            var categories = (await _menuService.GetAllCategoriesAsync()).ToList();
-            var subCategories = (await _menuService.GetAllSubCategoriesAsync()).ToList();
+            var categories = (await menuService.GetAllCategoriesAsync()).ToList();
+            var subCategories = (await menuService.GetAllSubCategoriesAsync()).ToList();
 
             var entryOptions = new DistributedCacheEntryOptions()
                 .SetSlidingExpiration(TimeSpan.FromMinutes(10));
@@ -181,17 +170,17 @@ public class AuthorizationFilter : ActionFilterAttribute
             anonymousSubCategories = [.. subCategories.Where(s => s.Role == Role.Anonymous)];
 
             await Task.WhenAll(
-                _cache.SetAsync(AdminCategoriesCacheKey, JsonSerializer.SerializeToUtf8Bytes(adminCategories),
+                cache.SetAsync(AdminCategoriesCacheKey, JsonSerializer.SerializeToUtf8Bytes(adminCategories),
                     entryOptions),
-                _cache.SetAsync(AdminSubCategoriesCacheKey, JsonSerializer.SerializeToUtf8Bytes(adminSubCategories),
+                cache.SetAsync(AdminSubCategoriesCacheKey, JsonSerializer.SerializeToUtf8Bytes(adminSubCategories),
                     entryOptions),
-                _cache.SetAsync(UserCategoriesCacheKey, JsonSerializer.SerializeToUtf8Bytes(userCategories),
+                cache.SetAsync(UserCategoriesCacheKey, JsonSerializer.SerializeToUtf8Bytes(userCategories),
                     entryOptions),
-                _cache.SetAsync(UserSubCategoriesCacheKey, JsonSerializer.SerializeToUtf8Bytes(userSubCategories),
+                cache.SetAsync(UserSubCategoriesCacheKey, JsonSerializer.SerializeToUtf8Bytes(userSubCategories),
                     entryOptions),
-                _cache.SetAsync(AnonymousCategoriesCacheKey, JsonSerializer.SerializeToUtf8Bytes(anonymousCategories),
+                cache.SetAsync(AnonymousCategoriesCacheKey, JsonSerializer.SerializeToUtf8Bytes(anonymousCategories),
                     entryOptions),
-                _cache.SetAsync(AnonymousSubCategoriesCacheKey,
+                cache.SetAsync(AnonymousSubCategoriesCacheKey,
                     JsonSerializer.SerializeToUtf8Bytes(anonymousSubCategories),
                     entryOptions));
         }
@@ -209,12 +198,12 @@ public class AuthorizationFilter : ActionFilterAttribute
         var currentControllerName = context.ActionDescriptor.RouteValues["controller"] ?? ""; // Controller name before execution
         var currentActionName = context.ActionDescriptor.RouteValues["action"] ?? ""; // Action name before execution
         var currentRequestMethod = context.HttpContext.Request.Method; // GET HTTP METHOD
-        var sessionAccount = _sessionService.GetAccount(); // Check if account session exists after login
+        var sessionAccount = sessionService.GetAccount(); // Check if account session exists after login
 
         AccountResponse? loggedInAccount = null;
         if (sessionAccount != null)
         {
-            loggedInAccount = await _accountService.GetAccountByEmailAsync(sessionAccount.Email ?? "", context.HttpContext.RequestAborted); // Re-check account state from DB so that Locked/Deleted/Role changes take effect on the next request, not only at login
+            loggedInAccount = await accountService.GetAccountByEmailAsync(sessionAccount.Email ?? "", context.HttpContext.RequestAborted); // Re-check account state from DB so that Locked/Deleted/Role changes take effect on the next request, not only at login
 
             // SecurityStamp mismatch means the password changed (self-service, forgot-password
             // reset, or admin override) after this session was minted — the session was captured
@@ -222,7 +211,7 @@ public class AuthorizationFilter : ActionFilterAttribute
             if (loggedInAccount == null || loggedInAccount.Deleted || loggedInAccount.Locked ||
                 loggedInAccount.SecurityStamp != sessionAccount.SecurityStamp)
             {
-                _sessionService.RemoveAccount(); // Invalidate this session immediately
+                sessionService.RemoveAccount(); // Invalidate this session immediately
                 context.Result = new RedirectResult("/Account/Login");
                 return;
             }
@@ -245,9 +234,13 @@ public class AuthorizationFilter : ActionFilterAttribute
 
             if (!isAllowedWhileForced)
             {
-                context.Result = currentRequestMethod.ToUpper() == "GET"
+                context.Result = string.Equals(
+                    currentRequestMethod,
+                    "GET",
+                    StringComparison.OrdinalIgnoreCase)
                     ? new RedirectResult("/Management/Profile")
                     : new RedirectResult("/Dashboard/AnonymousIndex");
+
                 return;
             }
 
@@ -341,7 +334,7 @@ public class AuthorizationFilter : ActionFilterAttribute
 
                     // AccountController's own POST actions (login, register, forgot/reset password …)
                     // are always reachable to an anonymous visitor.
-                    if (AnonymousAccountPostActions.Contains(endpoint))
+                    if (_anonymousAccountPostActions.Contains(endpoint))
                     {
                         await next(); // Do Action!!
                         return;
@@ -349,7 +342,7 @@ public class AuthorizationFilter : ActionFilterAttribute
 
                     // Otherwise the action must be explicitly marked for the Anonymous role AND live
                     // on a controller that appears in the anonymous navigation menu.
-                    if (PostActionRoles.TryGetValue(endpoint, out IReadOnlySet<string>? anonRoles)
+                    if (_postActionRoles.TryGetValue(endpoint, out IReadOnlySet<string>? anonRoles)
                         && anonRoles.Contains(Role.Anonymous)
                         && anonymousCategories.Any(category => category.Controller == currentControllerName))
                     {
@@ -384,7 +377,7 @@ public class AuthorizationFilter : ActionFilterAttribute
 
                                 // The action must carry [RequiredHttpPostAccess(Role = <this role>)]
                                 // AND its controller must appear in this role's navigation menu.
-                                if (PostActionRoles.TryGetValue((currentControllerName, currentActionName), out IReadOnlySet<string>? allowedRoles)
+                                if (_postActionRoles.TryGetValue((currentControllerName, currentActionName), out IReadOnlySet<string>? allowedRoles)
                                     && allowedRoles.Contains(loggedInAccount.Role)
                                     && categories.Any(category => category.Controller == currentControllerName))
                                 {

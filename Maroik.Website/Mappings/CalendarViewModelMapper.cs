@@ -135,7 +135,7 @@ public static class CalendarViewModelMapper
             vm.CurrentHour = ct.Hour;
             vm.CurrentMinute = ct.Minute;
             vm.CurrentSecond = ct.Second;
-            int step = CalendarReminderPolicy.ReminderTimeOfDayStepMinutes;
+            const int step = CalendarReminderPolicy.ReminderTimeOfDayStepMinutes;
             List<string> ti = [];
             for (int h = 0; h < 24; h++)
                 for (int m = 0; m < 60; m += step)
@@ -234,14 +234,16 @@ public static class CalendarViewModelMapper
     }
 
     /// <summary>Wire shape of one reminder row in the calendar edit form's hidden JSON field.</summary>
-    private sealed class ReminderFormItem
+    // ReSharper disable once ClassNeverInstantiated.Local
+    private sealed class ReminderFormItem(string? method, int? weeksBeforeEvent, int? daysBeforeEvent, 
+        int? hoursBeforeEvent, int? minutesBeforeEvent, string? timesBeforeEvent)
     {
-        public string? Method { get; set; }
-        public int? MinutesBeforeEvent { get; set; }
-        public int? HoursBeforeEvent { get; set; }
-        public int? DaysBeforeEvent { get; set; }
-        public int? WeeksBeforeEvent { get; set; }
-        public string? TimesBeforeEvent { get; set; }
+        public string? Method { get; } = method;
+        public int? MinutesBeforeEvent { get; } = minutesBeforeEvent;
+        public int? HoursBeforeEvent { get; } = hoursBeforeEvent;
+        public int? DaysBeforeEvent { get; } = daysBeforeEvent;
+        public int? WeeksBeforeEvent { get; } = weeksBeforeEvent;
+        public string? TimesBeforeEvent { get; } = timesBeforeEvent;
     }
 
     /// <summary>Parses a "yyyy-MM-dd HH:mm" string into an unspecified-kind local <see cref="DateTime"/>.</summary>

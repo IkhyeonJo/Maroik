@@ -14,11 +14,11 @@
 @model FreeForumOutputViewModel
 
 @{
-    var selectedSearchType = Model.SelectedSearchType;
-    var maxAttachedFileSizeBytes = (long)ViewBag.MaxAttachedFileSizeBytes;
-    var typedSearchText = Model.TypedSearchText;
+    string selectedSearchType = Model.SelectedSearchType;
+    long maxAttachedFileSizeBytes = (long)ViewBag.MaxAttachedFileSizeBytes;
+    string typedSearchText = Model.TypedSearchText;
     var loggedInAccount = Model.LoggedInAccount;
-    var loggedInAccountTimeZoneIanaId = Model.LoggedInAccountTimeZoneIanaId;
+    string loggedInAccountTimeZoneIanaId = Model.LoggedInAccountTimeZoneIanaId;
 }
 
 @Html.Hidden(nameof(maxAttachedFileSizeBytes), maxAttachedFileSizeBytes)
@@ -130,7 +130,7 @@
                     <div class="card-footer card-comments">
                         @foreach (var comment in Model.DetailBoardComments)
                         {
-                            var isCommentWriterAdmin = comment.Writer.IsAdmin(Model.AdminNicknames);
+                            bool isCommentWriterAdmin = comment.Writer.IsAdmin(Model.AdminNicknames);
                             if (Model.BoardOutputViewModel.Writer == comment.Writer) /*Change background color if the commenter is the post author*/
                             {
                                 <div class="card-comment" style="background-color:#003366;">
@@ -325,9 +325,9 @@
                             <tbody>
                                 @foreach (var noticeBoard in Model.NoticeBoards)
                                 {
-                                    var commentsOfUndeletedSelectedBoardCount = Model.CommentCountByBoardId.GetValueOrDefault(noticeBoard.Id, 0);
+                                    int commentsOfUndeletedSelectedBoardCount = Model.CommentCountByBoardId.GetValueOrDefault(noticeBoard.Id, 0);
                                     var boardAttachedFilesWithName = Model.AttachedFilesByBoardId.GetValueOrDefault(noticeBoard.Id, []);
-                                    var noticeBoardTitleVisible = noticeBoard.IsTitleVisibleToOwnerOrAdmin(loggedInAccount);
+                                    bool noticeBoardTitleVisible = noticeBoard.IsTitleVisibleToOwnerOrAdmin(loggedInAccount);
 
                                     <tr style="background-color: lightgray;">
                                         <td style="color:green;font-weight:bold;">@Localizer["Notice"]</td>
@@ -363,10 +363,10 @@
                                 }
                                 @foreach (var board in Model.Boards)
                                 {
-                                    var commentsOfUndeletedSelectedBoardCount = Model.CommentCountByBoardId.GetValueOrDefault(board.Id, 0);
+                                    int commentsOfUndeletedSelectedBoardCount = Model.CommentCountByBoardId.GetValueOrDefault(board.Id, 0);
                                     var attachedFilesWithName = Model.AttachedFilesByBoardId.GetValueOrDefault(board.Id, []);
-                                    var boardTitleVisible = board.IsTitleVisibleToOwnerOrAdmin(loggedInAccount);
-                                    var isBoardWriterAdmin = board.Writer.IsAdmin(Model.AdminNicknames);
+                                    bool boardTitleVisible = board.IsTitleVisibleToOwnerOrAdmin(loggedInAccount);
+                                    bool isBoardWriterAdmin = board.Writer.IsAdmin(Model.AdminNicknames);
 
                                     <tr>
                                         <td>@Localizer["Free Forum"]</td>
@@ -427,12 +427,12 @@
                                     </li>
                                 }
 
-                                @for (var pageNumber = Model.Pager.StartPage; pageNumber <= Model.Pager.EndPage; pageNumber++)
+                                @for (int pageNumber = Model.Pager.StartPage; pageNumber <= Model.Pager.EndPage; pageNumber++)
                                 {
                                     <li class="page-item @(pageNumber == Model.Pager!.CurrentPage ? "active" : "")">
 
                                         @{
-                                            var number = pageNumber;
+                                            int number = pageNumber;
                                         }
                                         <a class="page-link" asp-controller="Forum" asp-action="FreeForum" asp-route-page="@number" asp-route-searchType="@selectedSearchType" asp-route-searchText="@typedSearchText">@number</a>
                                     </li>

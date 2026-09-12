@@ -1,5 +1,4 @@
 using Maroik.Core.Domain.Media;
-using Maroik.Core.Domain.ValueObjects;
 using Maroik.Core.Domain.Board;
 using Maroik.Core.Contract.Dtos;
 using Maroik.Core.Contract.Misc.Extensions;
@@ -276,7 +275,7 @@ public class ManagementController : Controller
                 Nickname = accountInputViewModel.Nickname,
                 // Fully qualified: this controller also has an "Account" action method, which
                 // shadows the domain type name in this context.
-                AvatarImagePath = Maroik.Core.Domain.Account.Account.DefaultAvatarImagePath,
+                AvatarImagePath = Core.Domain.Account.Account.DefaultAvatarImagePath,
                 Role = accountInputViewModel.Role,
                 TimeZoneIanaId = accountInputViewModel.TimeZoneIanaId,
                 Locked = false,
@@ -962,7 +961,7 @@ public class ManagementController : Controller
             return Ok(new { result = false, errorMessage = _localizer[uploadResult.ErrorKey ?? "Input is invalid"].Value });
 
         // The Summernote editor only needs the raw bytes (base64) + content type to build an object
-        // URL for the inserted <img>; return those explicitly rather than serialising a whole
+        // URL for the inserted <img>; return those explicitly rather than serializing a whole
         // FileContentResult and relying on its property names.
         return Ok(new
         {

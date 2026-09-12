@@ -389,13 +389,13 @@ public class ExcelExportService : IExcelExportService
     /// U+FFFE/U+FFFF, and <em>unpaired</em> UTF-16 surrogate code units (a lone high or low
     /// surrogate \u2014 e.g. from a truncated emoji or bad clipboard data). User-entered fields such as
     /// Note/Content/Nickname can carry any of these from pasted text; left in, the OpenXml
-    /// <see cref="System.Xml.XmlWriter"/> throws during <see cref="Workbook.Save"/>, breaking the
+    /// <see cref="System.Xml.XmlWriter"/> throws during Workbook.Save, breaking the
     /// whole export over one row. Valid surrogate pairs (real astral-plane characters) are kept.
     /// </summary>
     private static string StripXmlInvalidChars(string value)
     {
         if (string.IsNullOrEmpty(value) || !ContainsXmlInvalid(value))
-            return value ?? "";
+            return value;
 
         var sb = new StringBuilder(value.Length);
         for (int i = 0; i < value.Length; i++)
@@ -431,8 +431,11 @@ public class ExcelExportService : IExcelExportService
             char c = value[i];
             if (char.IsHighSurrogate(c))
             {
-                if (i + 1 < value.Length && char.IsLowSurrogate(value[i + 1])) { i++; continue; }
-                return true; // unpaired high surrogate
+                if (i + 1 >= value.Length || !char.IsLowSurrogate(value[i + 1]))
+                {
+                    return true; // unpaired high surrogate
+                }
+                i++; continue;
             }
             if (char.IsLowSurrogate(c) || IsXmlInvalid(c))
                 return true;

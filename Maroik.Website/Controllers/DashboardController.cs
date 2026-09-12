@@ -14,28 +14,14 @@ namespace Maroik.Website.Controllers;
 /// Serves the dashboard index views (Admin / User / Anonymous) and handles
 /// language-culture changes and the user's default monetary-unit preference.
 /// </summary>
-public class DashboardController : Controller
+public class DashboardController(
+    IDashboardService dashboardService,
+    IProfileService profileService,
+    ISessionService sessionService,
+    ILogger<DashboardController> logger) : Controller
 {
-    private readonly IDashboardService _dashboardService;
-    private readonly IProfileService _profileService;
-    private readonly ISessionService _sessionService;
-    private readonly ILogger<DashboardController> _logger;
-
     private const string HostResourceFilePath = "/app/Maroik.Log/HostResourceInfo.txt";
     private const string DockerResourceFilePath = "/app/Maroik.Log/DockerResourceInfo.txt";
-
-    /// <summary>Initializes a new instance of <see cref="DashboardController"/> with the required dependencies.</summary>
-    public DashboardController(
-        IDashboardService dashboardService,
-        IProfileService profileService,
-        ISessionService sessionService,
-        ILogger<DashboardController> logger)
-    {
-        _dashboardService = dashboardService;
-        _profileService = profileService;
-        _sessionService = sessionService;
-        _logger = logger;
-    }
 
     #region Language change
     /// <summary>Sets the UI culture cookie to the requested locale.</summary>
@@ -66,7 +52,7 @@ public class DashboardController : Controller
     [HttpGet]
     public IActionResult AdminIndex()
     {
-        var resource = _dashboardService.GetServerResourceSummary(HostResourceFilePath, DockerResourceFilePath);
+        var resource = dashboardService.GetServerResourceSummary(HostResourceFilePath, DockerResourceFilePath);
 
         ViewBag.HostCpuNumeric = resource.HostCpuNumeric;
         ViewBag.HostCpuInfo = resource.HostCpuInfo;
@@ -87,11 +73,11 @@ public class DashboardController : Controller
     [HttpGet]
     public async Task<IActionResult> UserIndex(string year, string month, CancellationToken ct)
     {
-        var loggedInAccount = _sessionService.GetAccount();
+        var loggedInAccount = sessionService.GetAccount();
         string? email = loggedInAccount?.Email;
         string? timeZoneId = loggedInAccount?.TimeZoneIanaId;
 
-        var summary = await _dashboardService.GetSummaryAsync(email!, year, month, timeZoneId!, ct);
+        var summary = await dashboardService.GetSummaryAsync(email!, year, month, timeZoneId!, ct);
         return View(summary.ToViewModel(timeZoneId!));
     }
     #endregion
@@ -105,13 +91,13 @@ public class DashboardController : Controller
     {
         try
         {
-            string email = _sessionService.GetAccount()?.Email ?? "";
-            await _profileService.UpdateDefaultMonetaryUnitAsync(email, userIndexInputViewModel.DefaultMonetaryUnit, ct);
+            string email = sessionService.GetAccount()?.Email ?? "";
+            await profileService.UpdateDefaultMonetaryUnitAsync(email, userIndexInputViewModel.DefaultMonetaryUnit, ct);
             return Json(new { result = true });
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Failed to update default monetary unit for account {AccountEmail}", _sessionService.GetAccount()?.Email);
+            logger.LogError(ex, "Failed to update default monetary unit for account {AccountEmail}", sessionService.GetAccount()?.Email);
             return Json(new { result = false });
         }
     }
@@ -124,7 +110,7 @@ public class DashboardController : Controller
     [HttpGet]
     public IActionResult AnonymousIndex()
     {
-        var loggedInAccount = _sessionService.GetAccount();
+        var loggedInAccount = sessionService.GetAccount();
 
         if (loggedInAccount == null) return View();
         return loggedInAccount.Role switch

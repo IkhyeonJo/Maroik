@@ -22,9 +22,6 @@ public class BoardOutputViewModel
     /// <summary>Nickname of the account that created the post.</summary>
     public string? Writer { get; set; }
 
-    /// <summary>UTC timestamp when the post was first created.</summary>
-    public DateTime Created { get; set; }
-
     /// <summary>UTC timestamp of the most recent edit to this post.</summary>
     public DateTime Updated { get; set; }
 

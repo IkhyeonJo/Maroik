@@ -53,38 +53,44 @@ public static class DashboardViewModelMapper
         IEnumerable<IncomeResponse> items,
         IReadOnlyDictionary<string, string?> currencyByProduct,
         string timeZoneId)
-        => items.Select(item => new IncomeOutputViewModel
-        {
-            Id = item.Id,
-            MainClass = item.MainClass,
-            SubClass = item.SubClass,
-            Content = item.Content,
-            Amount = item.Amount,
-            MonetaryUnit = currencyByProduct.GetValueOrDefault(item.DepositMyAssetProductName ?? ""),
-            DepositMyAssetProductName = item.DepositMyAssetProductName,
-            Created = item.Created.ConvertTimeByTimeZoneIanaId(timeZoneId),
-            Updated = item.Updated.ConvertTimeByTimeZoneIanaId(timeZoneId),
-            Note = item.Note
-        }).ToList();
+        =>
+        [
+            .. items.Select(item => new IncomeOutputViewModel
+            {
+                Id = item.Id,
+                MainClass = item.MainClass,
+                SubClass = item.SubClass,
+                Content = item.Content,
+                Amount = item.Amount,
+                MonetaryUnit = currencyByProduct.GetValueOrDefault(item.DepositMyAssetProductName ?? ""),
+                DepositMyAssetProductName = item.DepositMyAssetProductName,
+                Created = item.Created.ConvertTimeByTimeZoneIanaId(timeZoneId),
+                Updated = item.Updated.ConvertTimeByTimeZoneIanaId(timeZoneId),
+                Note = item.Note
+            })
+        ];
 
     private static List<ExpenditureOutputViewModel> MapExpenditures(
         IEnumerable<ExpenditureResponse> items,
         IReadOnlyDictionary<string, string?> currencyByProduct,
         string timeZoneId)
-        => items.Select(item => new ExpenditureOutputViewModel
-        {
-            Id = item.Id,
-            MainClass = item.MainClass,
-            SubClass = item.SubClass,
-            Content = item.Content,
-            Amount = item.Amount,
-            MonetaryUnit = currencyByProduct.GetValueOrDefault(item.PaymentMethod ?? ""),
-            PaymentMethod = item.PaymentMethod,
-            Note = item.Note,
-            MyDepositAsset = item.MyDepositAsset,
-            Created = item.Created.ConvertTimeByTimeZoneIanaId(timeZoneId),
-            Updated = item.Updated.ConvertTimeByTimeZoneIanaId(timeZoneId)
-        }).ToList();
+        =>
+        [
+            .. items.Select(item => new ExpenditureOutputViewModel
+            {
+                Id = item.Id,
+                MainClass = item.MainClass,
+                SubClass = item.SubClass,
+                Content = item.Content,
+                Amount = item.Amount,
+                MonetaryUnit = currencyByProduct.GetValueOrDefault(item.PaymentMethod ?? ""),
+                PaymentMethod = item.PaymentMethod,
+                Note = item.Note,
+                MyDepositAsset = item.MyDepositAsset,
+                Created = item.Created.ConvertTimeByTimeZoneIanaId(timeZoneId),
+                Updated = item.Updated.ConvertTimeByTimeZoneIanaId(timeZoneId)
+            })
+        ];
 
     // ── Breakdown assignment (lookups only — DashboardService already computed every number) ────
 
@@ -97,7 +103,7 @@ public static class DashboardViewModelMapper
     /// <summary>
     /// Assigns every "Year" and "YearMonth" income-breakdown view-model property from
     /// <paramref name="yearBreakdown"/> / <paramref name="yearMonthBreakdown"/> respectively.
-    /// One call sets both variants of a given main-class/sub-class pair via tuple deconstruction, so
+    /// One call sets both variants of a given main-class/subClass pair via tuple deconstruction, so
     /// the amount/percentage pairs for the two periods can no longer drift out of sync the way two
     /// near-identical if/else blocks could.
     /// </summary>
@@ -140,9 +146,6 @@ public static class DashboardViewModelMapper
         IReadOnlyDictionary<string, FinanceBreakdownDto> yearBreakdown,
         IReadOnlyDictionary<string, FinanceBreakdownDto> yearMonthBreakdown)
     {
-        (decimal Year, decimal YearMonth, double PctYear, double PctYearMonth) Values(string mainClass, string subClass) =>
-            (Amount(yearBreakdown, mainClass, subClass), Amount(yearMonthBreakdown, mainClass, subClass),
-             Pct(yearBreakdown, mainClass, subClass), Pct(yearMonthBreakdown, mainClass, subClass));
 
         (vm.RegularSavingsDepositYear, vm.RegularSavingsDepositYearMonth,
          vm.PercentageOfRegularSavingsDepositYear, vm.PercentageOfRegularSavingsDepositYearMonth) = Values("RegularSavings", "Deposit");
@@ -186,5 +189,10 @@ public static class DashboardViewModelMapper
          vm.PercentageOfConsumerSpendingOtherExpensesYear, vm.PercentageOfConsumerSpendingOtherExpensesYearMonth) = Values("ConsumerSpending", "OtherExpenses");
         (vm.ConsumerSpendingUnknownExpenditureYear, vm.ConsumerSpendingUnknownExpenditureYearMonth,
          vm.PercentageOfConsumerSpendingUnknownExpenditureYear, vm.PercentageOfConsumerSpendingUnknownExpenditureYearMonth) = Values("ConsumerSpending", "UnknownExpenditure");
+        return;
+
+        (decimal Year, decimal YearMonth, double PctYear, double PctYearMonth) Values(string mainClass, string subClass) =>
+            (Amount(yearBreakdown, mainClass, subClass), Amount(yearMonthBreakdown, mainClass, subClass),
+                Pct(yearBreakdown, mainClass, subClass), Pct(yearMonthBreakdown, mainClass, subClass));
     }
 }

@@ -11,34 +11,20 @@ namespace Maroik.Website.Services;
 /// under a lock so concurrent <see cref="SelectCertificate"/> calls from Kestrel never observe a
 /// half-swapped state. Intended to be polled on a timer by the caller.
 /// </summary>
-public sealed class CertificateManager : ICertificateManager
+public sealed class CertificateManager(string certPath, string keyPath, ILogger logger) : ICertificateManager
 {
-    private readonly string _certPath;
-    private readonly string _keyPath;
-    private readonly ILogger _logger;
     private readonly Lock _certLock = new();
 
-    private X509Certificate2 _currentCert;
+    private X509Certificate2 _currentCert = LoadCertificate(certPath, keyPath, logger);
     // The cert displaced by the most recent reload. It is not disposed at swap time because Kestrel's
     // ServerCertificateSelector may still be mid-handshake with the reference it just took from
     // SelectCertificate(); it is disposed one reload later, by which point no handshake can still
     // hold it. Disposing the just-displaced cert immediately would surface as ObjectDisposedException
     // on any TLS handshake in flight at the exact moment of a cert renewal.
     private X509Certificate2? _retiredCert;
-    private string _previousCertHash;
-    private string _previousCertKeyHash;
+    private string _previousCertHash = ComputeFileHash(certPath);
+    private string _previousCertKeyHash = ComputeFileHash(keyPath);
     private volatile bool _isReloading;
-
-    /// <summary>Loads the initial certificate from <paramref name="certPath"/>/<paramref name="keyPath"/>.</summary>
-    public CertificateManager(string certPath, string keyPath, ILogger logger)
-    {
-        _certPath = certPath;
-        _keyPath = keyPath;
-        _logger = logger;
-        _currentCert = LoadCertificate(certPath, keyPath, logger);
-        _previousCertHash = ComputeFileHash(certPath);
-        _previousCertKeyHash = ComputeFileHash(keyPath);
-    }
 
     /// <inheritdoc />
     public X509Certificate2 SelectCertificate()
@@ -61,32 +47,33 @@ public sealed class CertificateManager : ICertificateManager
 
         try
         {
-            var currentCertHash = ComputeFileHash(_certPath);
-            var currentCertKeyHash = ComputeFileHash(_keyPath);
+            var currentCertHash = ComputeFileHash(certPath);
+            var currentCertKeyHash = ComputeFileHash(keyPath);
 
             // Either file changing is sufficient - certs are sometimes renewed while reusing the same key.
-            if (currentCertHash != _previousCertHash || currentCertKeyHash != _previousCertKeyHash)
+            if (currentCertHash == _previousCertHash && currentCertKeyHash == _previousCertKeyHash)
             {
-                _logger.LogInformation("Certificate file changed, reloading...");
-
-                var newCert = LoadCertificate(_certPath, _keyPath, _logger);
-
-                lock (_certLock)
-                {
-                    // Dispose the cert retired two reloads ago (safe now), then retire the current one.
-                    _retiredCert?.Dispose();
-                    _retiredCert = _currentCert;
-                    _currentCert = newCert;
-                    _previousCertHash = currentCertHash;
-                    _previousCertKeyHash = currentCertKeyHash;
-                }
-
-                _logger.LogInformation("Certificate reloaded successfully.");
+                return;
             }
+            logger.LogInformation("Certificate file changed, reloading...");
+
+            var newCert = LoadCertificate(certPath, keyPath, logger);
+
+            lock (_certLock)
+            {
+                // Dispose the cert retired two reloads ago (safe now), then retire the current one.
+                _retiredCert?.Dispose();
+                _retiredCert = _currentCert;
+                _currentCert = newCert;
+                _previousCertHash = currentCertHash;
+                _previousCertKeyHash = currentCertKeyHash;
+            }
+
+            logger.LogInformation("Certificate reloaded successfully.");
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Failed to reload certificate");
+            logger.LogError(ex, "Failed to reload certificate");
         }
         finally
         {

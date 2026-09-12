@@ -12,132 +12,132 @@
 @model UserIndexOutputViewModel
 
 @{
-    var startYear = Model.StartYear;
-    var endYear = Model.EndYear;
-    var selectedYear = Model.SelectedYear;
-    var selectedMonth = Model.SelectedMonth;
+    int startYear = Model.StartYear;
+    int endYear = Model.EndYear;
+    int selectedYear = Model.SelectedYear;
+    int selectedMonth = Model.SelectedMonth;
 
-    var regularIncomeLaborIncomeYear = Model.RegularIncomeLaborIncomeYear;
-    var regularIncomeBusinessIncomeYear = Model.RegularIncomeBusinessIncomeYear;
-    var regularIncomePensionIncomeYear = Model.RegularIncomePensionIncomeYear;
-    var regularIncomeFinancialIncomeYear = Model.RegularIncomeFinancialIncomeYear;
-    var regularIncomeRentalIncomeYear = Model.RegularIncomeRentalIncomeYear;
-    var regularIncomeOtherIncomeYear = Model.RegularIncomeOtherIncomeYear;
-    var percentageOfRegularIncomeLaborIncomeYear = Model.PercentageOfRegularIncomeLaborIncomeYear;
-    var percentageOfRegularIncomeBusinessIncomeYear = Model.PercentageOfRegularIncomeBusinessIncomeYear;
-    var percentageOfRegularIncomePensionIncomeYear = Model.PercentageOfRegularIncomePensionIncomeYear;
-    var percentageOfRegularIncomeFinancialIncomeYear = Model.PercentageOfRegularIncomeFinancialIncomeYear;
-    var percentageOfRegularIncomeRentalIncomeYear = Model.PercentageOfRegularIncomeRentalIncomeYear;
-    var percentageOfRegularIncomeOtherIncomeYear = Model.PercentageOfRegularIncomeOtherIncomeYear;
+    decimal regularIncomeLaborIncomeYear = Model.RegularIncomeLaborIncomeYear;
+    decimal regularIncomeBusinessIncomeYear = Model.RegularIncomeBusinessIncomeYear;
+    decimal regularIncomePensionIncomeYear = Model.RegularIncomePensionIncomeYear;
+    decimal regularIncomeFinancialIncomeYear = Model.RegularIncomeFinancialIncomeYear;
+    decimal regularIncomeRentalIncomeYear = Model.RegularIncomeRentalIncomeYear;
+    decimal regularIncomeOtherIncomeYear = Model.RegularIncomeOtherIncomeYear;
+    double percentageOfRegularIncomeLaborIncomeYear = Model.PercentageOfRegularIncomeLaborIncomeYear;
+    double percentageOfRegularIncomeBusinessIncomeYear = Model.PercentageOfRegularIncomeBusinessIncomeYear;
+    double percentageOfRegularIncomePensionIncomeYear = Model.PercentageOfRegularIncomePensionIncomeYear;
+    double percentageOfRegularIncomeFinancialIncomeYear = Model.PercentageOfRegularIncomeFinancialIncomeYear;
+    double percentageOfRegularIncomeRentalIncomeYear = Model.PercentageOfRegularIncomeRentalIncomeYear;
+    double percentageOfRegularIncomeOtherIncomeYear = Model.PercentageOfRegularIncomeOtherIncomeYear;
 
-    var irregularIncomeLaborIncomeYear = Model.IrregularIncomeLaborIncomeYear;
-    var irregularIncomeOtherIncomeYear = Model.IrregularIncomeOtherIncomeYear;
-    var percentageOfIrregularIncomeLaborIncomeYear = Model.PercentageOfIrregularIncomeLaborIncomeYear;
-    var percentageOfIrregularIncomeOtherIncomeYear = Model.PercentageOfIrregularIncomeOtherIncomeYear;
+    decimal irregularIncomeLaborIncomeYear = Model.IrregularIncomeLaborIncomeYear;
+    decimal irregularIncomeOtherIncomeYear = Model.IrregularIncomeOtherIncomeYear;
+    double percentageOfIrregularIncomeLaborIncomeYear = Model.PercentageOfIrregularIncomeLaborIncomeYear;
+    double percentageOfIrregularIncomeOtherIncomeYear = Model.PercentageOfIrregularIncomeOtherIncomeYear;
 
-    var regularSavingsDepositYear = Model.RegularSavingsDepositYear;
-    var regularSavingsInvestmentYear = Model.RegularSavingsInvestmentYear;
-    var percentageOfRegularSavingsDepositYear = Model.PercentageOfRegularSavingsDepositYear;
-    var percentageOfRegularSavingsInvestmentYear = Model.PercentageOfRegularSavingsInvestmentYear;
+    decimal regularSavingsDepositYear = Model.RegularSavingsDepositYear;
+    decimal regularSavingsInvestmentYear = Model.RegularSavingsInvestmentYear;
+    double percentageOfRegularSavingsDepositYear = Model.PercentageOfRegularSavingsDepositYear;
+    double percentageOfRegularSavingsInvestmentYear = Model.PercentageOfRegularSavingsInvestmentYear;
 
-    var nonConsumerSpendingPublicPensionYear = Model.NonConsumerSpendingPublicPensionYear;
-    var nonConsumerSpendingDebtRepaymentYear = Model.NonConsumerSpendingDebtRepaymentYear;
-    var nonConsumerSpendingTaxYear = Model.NonConsumerSpendingTaxYear;
-    var nonConsumerSpendingSocialInsuranceYear = Model.NonConsumerSpendingSocialInsuranceYear;
-    var nonConsumerSpendingInterHouseholdTransferExpensesYear = Model.NonConsumerSpendingInterHouseholdTransferExpensesYear;
-    var nonConsumerSpendingNonProfitOrganizationTransferYear = Model.NonConsumerSpendingNonProfitOrganizationTransferYear;
-    var percentageOfNonConsumerSpendingPublicPensionYear = Model.PercentageOfNonConsumerSpendingPublicPensionYear;
-    var percentageOfNonConsumerSpendingDebtRepaymentYear = Model.PercentageOfNonConsumerSpendingDebtRepaymentYear;
-    var percentageOfNonConsumerSpendingTaxYear = Model.PercentageOfNonConsumerSpendingTaxYear;
-    var percentageOfNonConsumerSpendingSocialInsuranceYear = Model.PercentageOfNonConsumerSpendingSocialInsuranceYear;
-    var percentageOfNonConsumerSpendingInterHouseholdTransferExpensesYear = Model.PercentageOfNonConsumerSpendingInterHouseholdTransferExpensesYear;
-    var percentageOfNonConsumerSpendingNonProfitOrganizationTransferYear = Model.PercentageOfNonConsumerSpendingNonProfitOrganizationTransferYear;
+    decimal nonConsumerSpendingPublicPensionYear = Model.NonConsumerSpendingPublicPensionYear;
+    decimal nonConsumerSpendingDebtRepaymentYear = Model.NonConsumerSpendingDebtRepaymentYear;
+    decimal nonConsumerSpendingTaxYear = Model.NonConsumerSpendingTaxYear;
+    decimal nonConsumerSpendingSocialInsuranceYear = Model.NonConsumerSpendingSocialInsuranceYear;
+    decimal nonConsumerSpendingInterHouseholdTransferExpensesYear = Model.NonConsumerSpendingInterHouseholdTransferExpensesYear;
+    decimal nonConsumerSpendingNonProfitOrganizationTransferYear = Model.NonConsumerSpendingNonProfitOrganizationTransferYear;
+    double percentageOfNonConsumerSpendingPublicPensionYear = Model.PercentageOfNonConsumerSpendingPublicPensionYear;
+    double percentageOfNonConsumerSpendingDebtRepaymentYear = Model.PercentageOfNonConsumerSpendingDebtRepaymentYear;
+    double percentageOfNonConsumerSpendingTaxYear = Model.PercentageOfNonConsumerSpendingTaxYear;
+    double percentageOfNonConsumerSpendingSocialInsuranceYear = Model.PercentageOfNonConsumerSpendingSocialInsuranceYear;
+    double percentageOfNonConsumerSpendingInterHouseholdTransferExpensesYear = Model.PercentageOfNonConsumerSpendingInterHouseholdTransferExpensesYear;
+    double percentageOfNonConsumerSpendingNonProfitOrganizationTransferYear = Model.PercentageOfNonConsumerSpendingNonProfitOrganizationTransferYear;
 
-    var consumerSpendingMealOrEatOutExpensesYear = Model.ConsumerSpendingMealOrEatOutExpensesYear;
-    var consumerSpendingHousingOrSuppliesCostYear = Model.ConsumerSpendingHousingOrSuppliesCostYear;
-    var consumerSpendingEducationExpensesYear = Model.ConsumerSpendingEducationExpensesYear;
-    var consumerSpendingMedicalExpensesYear = Model.ConsumerSpendingMedicalExpensesYear;
-    var consumerSpendingTransportationCostYear = Model.ConsumerSpendingTransportationCostYear;
-    var consumerSpendingCommunicationCostYear = Model.ConsumerSpendingCommunicationCostYear;
-    var consumerSpendingLeisureOrCultureYear = Model.ConsumerSpendingLeisureOrCultureYear;
-    var consumerSpendingClothingOrShoesYear = Model.ConsumerSpendingClothingOrShoesYear;
-    var consumerSpendingPinMoneyYear = Model.ConsumerSpendingPinMoneyYear;
-    var consumerSpendingProtectionTypeInsuranceYear = Model.ConsumerSpendingProtectionTypeInsuranceYear;
-    var consumerSpendingOtherExpensesYear = Model.ConsumerSpendingOtherExpensesYear;
-    var consumerSpendingUnknownExpenditureYear = Model.ConsumerSpendingUnknownExpenditureYear;
-    var percentageOfConsumerSpendingMealOrEatOutExpensesYear = Model.PercentageOfConsumerSpendingMealOrEatOutExpensesYear;
-    var percentageOfConsumerSpendingHousingOrSuppliesCostYear = Model.PercentageOfConsumerSpendingHousingOrSuppliesCostYear;
-    var percentageOfConsumerSpendingEducationExpensesYear = Model.PercentageOfConsumerSpendingEducationExpensesYear;
-    var percentageOfConsumerSpendingMedicalExpensesYear = Model.PercentageOfConsumerSpendingMedicalExpensesYear;
-    var percentageOfConsumerSpendingTransportationCostYear = Model.PercentageOfConsumerSpendingTransportationCostYear;
-    var percentageOfConsumerSpendingCommunicationCostYear = Model.PercentageOfConsumerSpendingCommunicationCostYear;
-    var percentageOfConsumerSpendingLeisureOrCultureYear = Model.PercentageOfConsumerSpendingLeisureOrCultureYear;
-    var percentageOfConsumerSpendingClothingOrShoesYear = Model.PercentageOfConsumerSpendingClothingOrShoesYear;
-    var percentageOfConsumerSpendingPinMoneyYear = Model.PercentageOfConsumerSpendingPinMoneyYear;
-    var percentageOfConsumerSpendingProtectionTypeInsuranceYear = Model.PercentageOfConsumerSpendingProtectionTypeInsuranceYear;
-    var percentageOfConsumerSpendingOtherExpensesYear = Model.PercentageOfConsumerSpendingOtherExpensesYear;
-    var percentageOfConsumerSpendingUnknownExpenditureYear = Model.PercentageOfConsumerSpendingUnknownExpenditureYear;
+    decimal consumerSpendingMealOrEatOutExpensesYear = Model.ConsumerSpendingMealOrEatOutExpensesYear;
+    decimal consumerSpendingHousingOrSuppliesCostYear = Model.ConsumerSpendingHousingOrSuppliesCostYear;
+    decimal consumerSpendingEducationExpensesYear = Model.ConsumerSpendingEducationExpensesYear;
+    decimal consumerSpendingMedicalExpensesYear = Model.ConsumerSpendingMedicalExpensesYear;
+    decimal consumerSpendingTransportationCostYear = Model.ConsumerSpendingTransportationCostYear;
+    decimal consumerSpendingCommunicationCostYear = Model.ConsumerSpendingCommunicationCostYear;
+    decimal consumerSpendingLeisureOrCultureYear = Model.ConsumerSpendingLeisureOrCultureYear;
+    decimal consumerSpendingClothingOrShoesYear = Model.ConsumerSpendingClothingOrShoesYear;
+    decimal consumerSpendingPinMoneyYear = Model.ConsumerSpendingPinMoneyYear;
+    decimal consumerSpendingProtectionTypeInsuranceYear = Model.ConsumerSpendingProtectionTypeInsuranceYear;
+    decimal consumerSpendingOtherExpensesYear = Model.ConsumerSpendingOtherExpensesYear;
+    decimal consumerSpendingUnknownExpenditureYear = Model.ConsumerSpendingUnknownExpenditureYear;
+    double percentageOfConsumerSpendingMealOrEatOutExpensesYear = Model.PercentageOfConsumerSpendingMealOrEatOutExpensesYear;
+    double percentageOfConsumerSpendingHousingOrSuppliesCostYear = Model.PercentageOfConsumerSpendingHousingOrSuppliesCostYear;
+    double percentageOfConsumerSpendingEducationExpensesYear = Model.PercentageOfConsumerSpendingEducationExpensesYear;
+    double percentageOfConsumerSpendingMedicalExpensesYear = Model.PercentageOfConsumerSpendingMedicalExpensesYear;
+    double percentageOfConsumerSpendingTransportationCostYear = Model.PercentageOfConsumerSpendingTransportationCostYear;
+    double percentageOfConsumerSpendingCommunicationCostYear = Model.PercentageOfConsumerSpendingCommunicationCostYear;
+    double percentageOfConsumerSpendingLeisureOrCultureYear = Model.PercentageOfConsumerSpendingLeisureOrCultureYear;
+    double percentageOfConsumerSpendingClothingOrShoesYear = Model.PercentageOfConsumerSpendingClothingOrShoesYear;
+    double percentageOfConsumerSpendingPinMoneyYear = Model.PercentageOfConsumerSpendingPinMoneyYear;
+    double percentageOfConsumerSpendingProtectionTypeInsuranceYear = Model.PercentageOfConsumerSpendingProtectionTypeInsuranceYear;
+    double percentageOfConsumerSpendingOtherExpensesYear = Model.PercentageOfConsumerSpendingOtherExpensesYear;
+    double percentageOfConsumerSpendingUnknownExpenditureYear = Model.PercentageOfConsumerSpendingUnknownExpenditureYear;
 
-    var regularIncomeLaborIncomeYearMonth = Model.RegularIncomeLaborIncomeYearMonth;
-    var regularIncomeBusinessIncomeYearMonth = Model.RegularIncomeBusinessIncomeYearMonth;
-    var regularIncomePensionIncomeYearMonth = Model.RegularIncomePensionIncomeYearMonth;
-    var regularIncomeFinancialIncomeYearMonth = Model.RegularIncomeFinancialIncomeYearMonth;
-    var regularIncomeRentalIncomeYearMonth = Model.RegularIncomeRentalIncomeYearMonth;
-    var regularIncomeOtherIncomeYearMonth = Model.RegularIncomeOtherIncomeYearMonth;
-    var percentageOfRegularIncomeLaborIncomeYearMonth = Model.PercentageOfRegularIncomeLaborIncomeYearMonth;
-    var percentageOfRegularIncomeBusinessIncomeYearMonth = Model.PercentageOfRegularIncomeBusinessIncomeYearMonth;
-    var percentageOfRegularIncomePensionIncomeYearMonth = Model.PercentageOfRegularIncomePensionIncomeYearMonth;
-    var percentageOfRegularIncomeFinancialIncomeYearMonth = Model.PercentageOfRegularIncomeFinancialIncomeYearMonth;
-    var percentageOfRegularIncomeRentalIncomeYearMonth = Model.PercentageOfRegularIncomeRentalIncomeYearMonth;
-    var percentageOfRegularIncomeOtherIncomeYearMonth = Model.PercentageOfRegularIncomeOtherIncomeYearMonth;
+    decimal regularIncomeLaborIncomeYearMonth = Model.RegularIncomeLaborIncomeYearMonth;
+    decimal regularIncomeBusinessIncomeYearMonth = Model.RegularIncomeBusinessIncomeYearMonth;
+    decimal regularIncomePensionIncomeYearMonth = Model.RegularIncomePensionIncomeYearMonth;
+    decimal regularIncomeFinancialIncomeYearMonth = Model.RegularIncomeFinancialIncomeYearMonth;
+    decimal regularIncomeRentalIncomeYearMonth = Model.RegularIncomeRentalIncomeYearMonth;
+    decimal regularIncomeOtherIncomeYearMonth = Model.RegularIncomeOtherIncomeYearMonth;
+    double percentageOfRegularIncomeLaborIncomeYearMonth = Model.PercentageOfRegularIncomeLaborIncomeYearMonth;
+    double percentageOfRegularIncomeBusinessIncomeYearMonth = Model.PercentageOfRegularIncomeBusinessIncomeYearMonth;
+    double percentageOfRegularIncomePensionIncomeYearMonth = Model.PercentageOfRegularIncomePensionIncomeYearMonth;
+    double percentageOfRegularIncomeFinancialIncomeYearMonth = Model.PercentageOfRegularIncomeFinancialIncomeYearMonth;
+    double percentageOfRegularIncomeRentalIncomeYearMonth = Model.PercentageOfRegularIncomeRentalIncomeYearMonth;
+    double percentageOfRegularIncomeOtherIncomeYearMonth = Model.PercentageOfRegularIncomeOtherIncomeYearMonth;
 
-    var irregularIncomeLaborIncomeYearMonth = Model.IrregularIncomeLaborIncomeYearMonth;
-    var irregularIncomeOtherIncomeYearMonth = Model.IrregularIncomeOtherIncomeYearMonth;
-    var percentageOfIrregularIncomeLaborIncomeYearMonth = Model.PercentageOfIrregularIncomeLaborIncomeYearMonth;
-    var percentageOfIrregularIncomeOtherIncomeYearMonth = Model.PercentageOfIrregularIncomeOtherIncomeYearMonth;
+    decimal irregularIncomeLaborIncomeYearMonth = Model.IrregularIncomeLaborIncomeYearMonth;
+    decimal irregularIncomeOtherIncomeYearMonth = Model.IrregularIncomeOtherIncomeYearMonth;
+    double percentageOfIrregularIncomeLaborIncomeYearMonth = Model.PercentageOfIrregularIncomeLaborIncomeYearMonth;
+    double percentageOfIrregularIncomeOtherIncomeYearMonth = Model.PercentageOfIrregularIncomeOtherIncomeYearMonth;
 
-    var regularSavingsDepositYearMonth = Model.RegularSavingsDepositYearMonth;
-    var regularSavingsInvestmentYearMonth = Model.RegularSavingsInvestmentYearMonth;
-    var percentageOfRegularSavingsDepositYearMonth = Model.PercentageOfRegularSavingsDepositYearMonth;
-    var percentageOfRegularSavingsInvestmentYearMonth = Model.PercentageOfRegularSavingsInvestmentYearMonth;
+    decimal regularSavingsDepositYearMonth = Model.RegularSavingsDepositYearMonth;
+    decimal regularSavingsInvestmentYearMonth = Model.RegularSavingsInvestmentYearMonth;
+    double percentageOfRegularSavingsDepositYearMonth = Model.PercentageOfRegularSavingsDepositYearMonth;
+    double percentageOfRegularSavingsInvestmentYearMonth = Model.PercentageOfRegularSavingsInvestmentYearMonth;
 
-    var nonConsumerSpendingPublicPensionYearMonth = Model.NonConsumerSpendingPublicPensionYearMonth;
-    var nonConsumerSpendingDebtRepaymentYearMonth = Model.NonConsumerSpendingDebtRepaymentYearMonth;
-    var nonConsumerSpendingTaxYearMonth = Model.NonConsumerSpendingTaxYearMonth;
-    var nonConsumerSpendingSocialInsuranceYearMonth = Model.NonConsumerSpendingSocialInsuranceYearMonth;
-    var nonConsumerSpendingInterHouseholdTransferExpensesYearMonth = Model.NonConsumerSpendingInterHouseholdTransferExpensesYearMonth;
-    var nonConsumerSpendingNonProfitOrganizationTransferYearMonth = Model.NonConsumerSpendingNonProfitOrganizationTransferYearMonth;
-    var percentageOfNonConsumerSpendingPublicPensionYearMonth = Model.PercentageOfNonConsumerSpendingPublicPensionYearMonth;
-    var percentageOfNonConsumerSpendingDebtRepaymentYearMonth = Model.PercentageOfNonConsumerSpendingDebtRepaymentYearMonth;
-    var percentageOfNonConsumerSpendingTaxYearMonth = Model.PercentageOfNonConsumerSpendingTaxYearMonth;
-    var percentageOfNonConsumerSpendingSocialInsuranceYearMonth = Model.PercentageOfNonConsumerSpendingSocialInsuranceYearMonth;
-    var percentageOfNonConsumerSpendingInterHouseholdTransferExpensesYearMonth = Model.PercentageOfNonConsumerSpendingInterHouseholdTransferExpensesYearMonth;
-    var percentageOfNonConsumerSpendingNonProfitOrganizationTransferYearMonth = Model.PercentageOfNonConsumerSpendingNonProfitOrganizationTransferYearMonth;
+    decimal nonConsumerSpendingPublicPensionYearMonth = Model.NonConsumerSpendingPublicPensionYearMonth;
+    decimal nonConsumerSpendingDebtRepaymentYearMonth = Model.NonConsumerSpendingDebtRepaymentYearMonth;
+    decimal nonConsumerSpendingTaxYearMonth = Model.NonConsumerSpendingTaxYearMonth;
+    decimal nonConsumerSpendingSocialInsuranceYearMonth = Model.NonConsumerSpendingSocialInsuranceYearMonth;
+    decimal nonConsumerSpendingInterHouseholdTransferExpensesYearMonth = Model.NonConsumerSpendingInterHouseholdTransferExpensesYearMonth;
+    decimal nonConsumerSpendingNonProfitOrganizationTransferYearMonth = Model.NonConsumerSpendingNonProfitOrganizationTransferYearMonth;
+    double percentageOfNonConsumerSpendingPublicPensionYearMonth = Model.PercentageOfNonConsumerSpendingPublicPensionYearMonth;
+    double percentageOfNonConsumerSpendingDebtRepaymentYearMonth = Model.PercentageOfNonConsumerSpendingDebtRepaymentYearMonth;
+    double percentageOfNonConsumerSpendingTaxYearMonth = Model.PercentageOfNonConsumerSpendingTaxYearMonth;
+    double percentageOfNonConsumerSpendingSocialInsuranceYearMonth = Model.PercentageOfNonConsumerSpendingSocialInsuranceYearMonth;
+    double percentageOfNonConsumerSpendingInterHouseholdTransferExpensesYearMonth = Model.PercentageOfNonConsumerSpendingInterHouseholdTransferExpensesYearMonth;
+    double percentageOfNonConsumerSpendingNonProfitOrganizationTransferYearMonth = Model.PercentageOfNonConsumerSpendingNonProfitOrganizationTransferYearMonth;
 
-    var consumerSpendingMealOrEatOutExpensesYearMonth = Model.ConsumerSpendingMealOrEatOutExpensesYearMonth;
-    var consumerSpendingHousingOrSuppliesCostYearMonth = Model.ConsumerSpendingHousingOrSuppliesCostYearMonth;
-    var consumerSpendingEducationExpensesYearMonth = Model.ConsumerSpendingEducationExpensesYearMonth;
-    var consumerSpendingMedicalExpensesYearMonth = Model.ConsumerSpendingMedicalExpensesYearMonth;
-    var consumerSpendingTransportationCostYearMonth = Model.ConsumerSpendingTransportationCostYearMonth;
-    var consumerSpendingCommunicationCostYearMonth = Model.ConsumerSpendingCommunicationCostYearMonth;
-    var consumerSpendingLeisureOrCultureYearMonth = Model.ConsumerSpendingLeisureOrCultureYearMonth;
-    var consumerSpendingClothingOrShoesYearMonth = Model.ConsumerSpendingClothingOrShoesYearMonth;
-    var consumerSpendingPinMoneyYearMonth = Model.ConsumerSpendingPinMoneyYearMonth;
-    var consumerSpendingProtectionTypeInsuranceYearMonth = Model.ConsumerSpendingProtectionTypeInsuranceYearMonth;
-    var consumerSpendingOtherExpensesYearMonth = Model.ConsumerSpendingOtherExpensesYearMonth;
-    var consumerSpendingUnknownExpenditureYearMonth = Model.ConsumerSpendingUnknownExpenditureYearMonth;
-    var percentageOfConsumerSpendingMealOrEatOutExpensesYearMonth = Model.PercentageOfConsumerSpendingMealOrEatOutExpensesYearMonth;
-    var percentageOfConsumerSpendingHousingOrSuppliesCostYearMonth = Model.PercentageOfConsumerSpendingHousingOrSuppliesCostYearMonth;
-    var percentageOfConsumerSpendingEducationExpensesYearMonth = Model.PercentageOfConsumerSpendingEducationExpensesYearMonth;
-    var percentageOfConsumerSpendingMedicalExpensesYearMonth = Model.PercentageOfConsumerSpendingMedicalExpensesYearMonth;
-    var percentageOfConsumerSpendingTransportationCostYearMonth = Model.PercentageOfConsumerSpendingTransportationCostYearMonth;
-    var percentageOfConsumerSpendingCommunicationCostYearMonth = Model.PercentageOfConsumerSpendingCommunicationCostYearMonth;
-    var percentageOfConsumerSpendingLeisureOrCultureYearMonth = Model.PercentageOfConsumerSpendingLeisureOrCultureYearMonth;
-    var percentageOfConsumerSpendingClothingOrShoesYearMonth = Model.PercentageOfConsumerSpendingClothingOrShoesYearMonth;
-    var percentageOfConsumerSpendingPinMoneyYearMonth = Model.PercentageOfConsumerSpendingPinMoneyYearMonth;
-    var percentageOfConsumerSpendingProtectionTypeInsuranceYearMonth = Model.PercentageOfConsumerSpendingProtectionTypeInsuranceYearMonth;
-    var percentageOfConsumerSpendingOtherExpensesYearMonth = Model.PercentageOfConsumerSpendingOtherExpensesYearMonth;
-    var percentageOfConsumerSpendingUnknownExpenditureYearMonth = Model.PercentageOfConsumerSpendingUnknownExpenditureYearMonth;
+    decimal consumerSpendingMealOrEatOutExpensesYearMonth = Model.ConsumerSpendingMealOrEatOutExpensesYearMonth;
+    decimal consumerSpendingHousingOrSuppliesCostYearMonth = Model.ConsumerSpendingHousingOrSuppliesCostYearMonth;
+    decimal consumerSpendingEducationExpensesYearMonth = Model.ConsumerSpendingEducationExpensesYearMonth;
+    decimal consumerSpendingMedicalExpensesYearMonth = Model.ConsumerSpendingMedicalExpensesYearMonth;
+    decimal consumerSpendingTransportationCostYearMonth = Model.ConsumerSpendingTransportationCostYearMonth;
+    decimal consumerSpendingCommunicationCostYearMonth = Model.ConsumerSpendingCommunicationCostYearMonth;
+    decimal consumerSpendingLeisureOrCultureYearMonth = Model.ConsumerSpendingLeisureOrCultureYearMonth;
+    decimal consumerSpendingClothingOrShoesYearMonth = Model.ConsumerSpendingClothingOrShoesYearMonth;
+    decimal consumerSpendingPinMoneyYearMonth = Model.ConsumerSpendingPinMoneyYearMonth;
+    decimal consumerSpendingProtectionTypeInsuranceYearMonth = Model.ConsumerSpendingProtectionTypeInsuranceYearMonth;
+    decimal consumerSpendingOtherExpensesYearMonth = Model.ConsumerSpendingOtherExpensesYearMonth;
+    decimal consumerSpendingUnknownExpenditureYearMonth = Model.ConsumerSpendingUnknownExpenditureYearMonth;
+    double percentageOfConsumerSpendingMealOrEatOutExpensesYearMonth = Model.PercentageOfConsumerSpendingMealOrEatOutExpensesYearMonth;
+    double percentageOfConsumerSpendingHousingOrSuppliesCostYearMonth = Model.PercentageOfConsumerSpendingHousingOrSuppliesCostYearMonth;
+    double percentageOfConsumerSpendingEducationExpensesYearMonth = Model.PercentageOfConsumerSpendingEducationExpensesYearMonth;
+    double percentageOfConsumerSpendingMedicalExpensesYearMonth = Model.PercentageOfConsumerSpendingMedicalExpensesYearMonth;
+    double percentageOfConsumerSpendingTransportationCostYearMonth = Model.PercentageOfConsumerSpendingTransportationCostYearMonth;
+    double percentageOfConsumerSpendingCommunicationCostYearMonth = Model.PercentageOfConsumerSpendingCommunicationCostYearMonth;
+    double percentageOfConsumerSpendingLeisureOrCultureYearMonth = Model.PercentageOfConsumerSpendingLeisureOrCultureYearMonth;
+    double percentageOfConsumerSpendingClothingOrShoesYearMonth = Model.PercentageOfConsumerSpendingClothingOrShoesYearMonth;
+    double percentageOfConsumerSpendingPinMoneyYearMonth = Model.PercentageOfConsumerSpendingPinMoneyYearMonth;
+    double percentageOfConsumerSpendingProtectionTypeInsuranceYearMonth = Model.PercentageOfConsumerSpendingProtectionTypeInsuranceYearMonth;
+    double percentageOfConsumerSpendingOtherExpensesYearMonth = Model.PercentageOfConsumerSpendingOtherExpensesYearMonth;
+    double percentageOfConsumerSpendingUnknownExpenditureYearMonth = Model.PercentageOfConsumerSpendingUnknownExpenditureYearMonth;
 }
 
 @Html.Hidden("localizerLaborIncome", Localizer["LaborIncome"].Value)
@@ -326,37 +326,37 @@
                             <div class="card-tools">
                                 <div class="input-group input-group-sm">
                                     <select id="year" style="max-width:100%;">
-                                        @for (var i = endYear; i >= startYear; i--)
+                                        @for (int i = endYear; i >= startYear; i--)
                                         {
                                             if (i == selectedYear)
                                             {
-                                                var i1 = i;
+                                                int i1 = i;
                                                 <option value="@i" selected="selected">@i1</option>
                                             }
                                             else
                                             {
-                                                var i1 = i;
+                                                int i1 = i;
                                                 <option value="@i">@i1</option>
                                             }
                                         }
                                     </select>
                                     <select id="month" style="max-width:100%;">
-                                        @for (var i = 1; i <= 12; i++)
+                                        @for (int i = 1; i <= 12; i++)
                                         {
                                             if (i == selectedMonth)
                                             {
-                                                var i1 = i;
+                                                int i1 = i;
                                                 <option value="@i" selected="selected">@i1</option>
                                             }
                                             else
                                             {
-                                                var i1 = i;
+                                                int i1 = i;
                                                 <option value="@i">@i1</option>
                                             }
                                         }
                                     </select>
                                     <select id="monetaryUnit" style="max-width:100%;">
-                                        @foreach (var monetaryUnit in Model.MonetaryUnits)
+                                        @foreach (string monetaryUnit in Model.MonetaryUnits)
                                         {
                                             if (Model.DefaultMonetaryUnit == monetaryUnit)
                                             {

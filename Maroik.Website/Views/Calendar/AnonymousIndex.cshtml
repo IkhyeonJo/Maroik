@@ -8,7 +8,6 @@
 *@
 @using Maroik.Website.Models.ViewModels.Calendar
 @using Maroik.Core.Domain.Calendar
-@using Maroik.Website.Extensions
 @model CalendarOutputViewModel
 
 @{
@@ -227,7 +226,7 @@
                                     <label for="viewCalendarEventAllDayUncheckedStartTime">@Localizer["StartTime"].Value</label>
                                     <br />
                                     <select id="viewCalendarEventAllDayUncheckedStartTime" name="viewCalendarEventAllDayUncheckedStartTime" class="form-control form-control-sm" style="max-width:100%;text-overflow:ellipsis;" disabled>
-                                        @foreach (var time in timeIntervals)
+                                        @foreach (string time in timeIntervals)
                                         {
                                             <option value="@time">@time</option>
                                         }
@@ -244,7 +243,7 @@
                                     <label for="viewCalendarEventAllDayUncheckedEndTime">@Localizer["EndTime"].Value</label>
                                     <br />
                                     <select id="viewCalendarEventAllDayUncheckedEndTime" name="viewCalendarEventAllDayUncheckedEndTime" class="form-control form-control-sm" style="max-width:100%;text-overflow:ellipsis;" disabled>
-                                        @foreach (var time in timeIntervals)
+                                        @foreach (string time in timeIntervals)
                                         {
                                             <option value="@time">@time</option>
                                         }

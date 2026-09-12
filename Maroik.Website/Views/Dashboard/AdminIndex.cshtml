@@ -7,12 +7,12 @@
     usage/limit cards.
 *@
 @{
-    var hostCpuNumeric = ViewBag.HostCpuNumeric as double? ?? 0d;
-    var hostCpuInfo = ViewBag.HostCpuInfo as string ?? "";
-    var memUsageLimit = ViewBag.MemUsageLimit as string ?? "";
-    var hostMemoryInfo = ViewBag.HostMemoryInfo as string ?? "";
-    var diskUsageLimit = ViewBag.DiskUsageLimit as string ?? "";
-    var hostDiskInfo = ViewBag.HostDiskInfo as string ?? "";
+    double hostCpuNumeric = ViewBag.HostCpuNumeric as double? ?? 0d;
+    string hostCpuInfo = ViewBag.HostCpuInfo as string ?? "";
+    string memUsageLimit = ViewBag.MemUsageLimit as string ?? "";
+    string hostMemoryInfo = ViewBag.HostMemoryInfo as string ?? "";
+    string diskUsageLimit = ViewBag.DiskUsageLimit as string ?? "";
+    string hostDiskInfo = ViewBag.HostDiskInfo as string ?? "";
     var containers = ViewBag.DockerContainerResult as List<DockerContainerResourceDto> ?? [];
 }
 

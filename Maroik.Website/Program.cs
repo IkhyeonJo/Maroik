@@ -48,8 +48,8 @@ try
     #region ServerSettings
 
     // Strongly-typed binding of the whole "ServerSetting" section, plus the handful of values that
-    // live in sibling sections (Clamav, FileStorage) or a nested sub-section (SmtpOptions) the flat
-    // model can't reach directly. Replaces a hand-written Convert.ToX(section["..."]) wall in which
+    // live in sibling sections (Clamav, FileStorage) or a nested subSection (SmtpOptions) the flat
+    // model can't reach directly. Replaces a handWritten Convert.ToX(section["..."]) wall in which
     // a missing numeric silently became 0 (e.g. SessionExpireMinutes = 0 -> sessions expire at once).
     static void BindServerSetting(IConfiguration configuration, ServerSetting target)
     {
@@ -172,12 +172,12 @@ try
 
         // No Valkey: persist the Data Protection keyring to a stable folder instead of the default
         // ephemeral per-process one, so session and antiforgery cookies issued before a restart
-        // stay decryptable afterwards. Still not shared across instances — Valkey is required for a
+        // stay decryptable afterward. Still not shared across instances — Valkey is required for a
         // scaled-out deployment.
-        string keyRingPath = System.IO.Path.Combine(builder.Environment.ContentRootPath, "dataprotection-keys");
-        _ = System.IO.Directory.CreateDirectory(keyRingPath);
+        string keyRingPath = Path.Combine(builder.Environment.ContentRootPath, "dataprotection-keys");
+        _ = Directory.CreateDirectory(keyRingPath);
         builder.Services.AddDataProtection()
-            .PersistKeysToFileSystem(new System.IO.DirectoryInfo(keyRingPath))
+            .PersistKeysToFileSystem(new DirectoryInfo(keyRingPath))
             .SetApplicationName("Maroik");
         Log.Warning(
             "No Valkey connection string configured — Data Protection keys persist to {KeyRingPath} " +
@@ -379,10 +379,10 @@ try
         #region Security Headers [https: //blog.elmah.io/the-asp-net-core-security-headers-guide/]
 
         // Strict-Transport-Security is emitted by app.UseHsts() alone (see AddHsts above) — a second
-        // hand-written header here produced two conflicting max-age values on every HTTPS response.
+        // handWritten header here produced two conflicting max-age values on every HTTPS response.
         context.Response.Headers.Append("X-Frame-Options", "DENY");
         // X-XSS-Protection deliberately set to 0: the legacy auditor it enables is itself a source
-        // of vulnerabilities in the browsers that still honour it, and modern guidance (OWASP) is to
+        // of vulnerabilities in the browsers that still honor it, and modern guidance (OWASP) is to
         // disable it and rely on the Content-Security-Policy below.
         context.Response.Headers.Append("X-Xss-Protection", "0");
         context.Response.Headers.Append("X-Content-Type-Options", "nosniff");

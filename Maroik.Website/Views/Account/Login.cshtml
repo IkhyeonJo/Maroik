@@ -11,8 +11,8 @@
 @model LoginOutputViewModel
 
 @{
-    var currentCulture = ViewBag.CurrentCulture as string ?? "en-US";
-    var error = TempData["Error"] as string ?? "";
+    string currentCulture = ViewBag.CurrentCulture as string ?? "en-US";
+    string error = TempData["Error"] as string ?? "";
 }
 
 <div class="login-box">

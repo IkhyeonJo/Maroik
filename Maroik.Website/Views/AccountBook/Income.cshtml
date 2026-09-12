@@ -12,14 +12,13 @@
 
 @using Maroik.Website.Models.ViewModels.AccountBook
 @using Maroik.Core.Domain.Finance
-@using Maroik.Website.Extensions
 @model AccountBookPageViewModel
 @{
     var assets = Model.Assets;
-    var currentDate = Model.CurrentDate;
-    var currentHour = Model.CurrentHour;
-    var currentMinute = Model.CurrentMinute;
-    var currentSecond = Model.CurrentSecond;
+    string currentDate = Model.CurrentDate;
+    int currentHour = Model.CurrentHour;
+    int currentMinute = Model.CurrentMinute;
+    int currentSecond = Model.CurrentSecond;
 }
 
 @Html.Hidden("localizerPrevText", Localizer["PrevText"].Value)
@@ -160,16 +159,16 @@
                                 <label for="createIncomeHour">@Localizer["Hour"].Value</label>
                                 <br />
                                 <select id="createIncomeHour" name="createIncomeHour" class="form-control form-control-sm" style="max-width:100%;text-overflow:ellipsis;">
-                                    @for (var i = 0; i < 24; i++)
+                                    @for (int i = 0; i < 24; i++)
                                     {
                                         if (i == currentHour)
                                         {
-                                            var i1 = i;
+                                            int i1 = i;
                                             <option value="@i" selected="selected">@i1</option>
                                         }
                                         else
                                         {
-                                            var i1 = i;
+                                            int i1 = i;
                                             <option value="@i">@i1</option>
                                         }
                                     }
@@ -181,16 +180,16 @@
                                 <label for="createIncomeMinute">@Localizer["Minute"].Value</label>
                                 <br />
                                 <select id="createIncomeMinute" name="createIncomeMinute" class="form-control form-control-sm" style="max-width:100%;text-overflow:ellipsis;">
-                                    @for (var i = 0; i < 60; i++)
+                                    @for (int i = 0; i < 60; i++)
                                     {
                                         if (i == currentMinute)
                                         {
-                                            var i1 = i;
+                                            int i1 = i;
                                             <option value="@i" selected="selected">@i1</option>
                                         }
                                         else
                                         {
-                                            var i1 = i;
+                                            int i1 = i;
                                             <option value="@i">@i1</option>
                                         }
                                     }
@@ -200,16 +199,16 @@
                                 <label for="createIncomeSecond">@Localizer["Second"].Value</label>
                                 <br />
                                 <select id="createIncomeSecond" name="createIncomeSecond" class="form-control form-control-sm" style="max-width:100%;text-overflow:ellipsis;">
-                                    @for (var i = 0; i < 60; i++)
+                                    @for (int i = 0; i < 60; i++)
                                     {
                                         if (i == currentSecond)
                                         {
-                                            var i1 = i;
+                                            int i1 = i;
                                             <option value="@i" selected="selected">@i1</option>
                                         }
                                         else
                                         {
-                                            var i1 = i;
+                                            int i1 = i;
                                             <option value="@i">@i1</option>
                                         }
                                     }
@@ -300,9 +299,9 @@
                                 <br />
                                 <select id="editIncomeHour" name="editIncomeHour" class="form-control form-control-sm" style="max-width:100%;text-overflow:ellipsis;">
                                     <option value="0" selected="selected">0</option>
-                                    @for (var i = 1; i < 24; i++)
+                                    @for (int i = 1; i < 24; i++)
                                     {
-                                        var i1 = i;
+                                        int i1 = i;
                                         <option value="@i">@i1</option>
                                     }
                                 </select>
@@ -314,9 +313,9 @@
                                 <br />
                                 <select id="editIncomeMinute" name="editIncomeMinute" class="form-control form-control-sm" style="max-width:100%;text-overflow:ellipsis;">
                                     <option value="0" selected="selected">0</option>
-                                    @for (var i = 1; i < 60; i++)
+                                    @for (int i = 1; i < 60; i++)
                                     {
-                                        var i1 = i;
+                                        int i1 = i;
                                         <option value="@i">@i1</option>
                                     }
                                 </select>
@@ -326,9 +325,9 @@
                                 <br />
                                 <select id="editIncomeSecond" name="editIncomeSecond" class="form-control form-control-sm" style="max-width:100%;text-overflow:ellipsis;">
                                     <option value="0" selected="selected">0</option>
-                                    @for (var i = 1; i < 60; i++)
+                                    @for (int i = 1; i < 60; i++)
                                     {
-                                        var i1 = i;
+                                        int i1 = i;
                                         <option value="@i">@i1</option>
                                     }
                                 </select>

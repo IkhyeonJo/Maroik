@@ -9,15 +9,14 @@
 *@
 @using Maroik.Website.Models.ViewModels.Calendar
 @using Maroik.Core.Domain.Calendar
-@using Maroik.Website.Extensions
 @model CalendarOutputViewModel
 
 @{
     var loggedInAccount = Model.LoggedInAccount;
-    var currentDate = Model.CurrentDate;
+    string currentDate = Model.CurrentDate;
     var timeIntervals = Model.TimeIntervals;
-    var currentInterval = Model.CurrentInterval;
-    var maxAttachedFileSizeBytes = (long)ViewBag.MaxAttachedFileSizeBytes;
+    string currentInterval = Model.CurrentInterval;
+    long maxAttachedFileSizeBytes = (long)ViewBag.MaxAttachedFileSizeBytes;
 }
 @Html.Hidden(nameof(maxAttachedFileSizeBytes), maxAttachedFileSizeBytes)
 @Html.Hidden("loggedInAccountTimeZoneIanaId", loggedInAccount.TimeZoneIanaId)
@@ -389,7 +388,7 @@
                                     <label for="createCalendarEventAllDayUncheckedStartTime">@Localizer["StartTime"].Value</label>
                                     <br />
                                     <select id="createCalendarEventAllDayUncheckedStartTime" name="createCalendarEventAllDayUncheckedStartTime" class="form-control form-control-sm" style="max-width:100%;text-overflow:ellipsis;">
-                                        @foreach (var time in timeIntervals)
+                                        @foreach (string time in timeIntervals)
                                         {
                                             if (time == currentInterval)
                                             {
@@ -413,7 +412,7 @@
                                     <label for="createCalendarEventAllDayUncheckedEndTime">@Localizer["EndTime"].Value</label>
                                     <br />
                                     <select id="createCalendarEventAllDayUncheckedEndTime" name="createCalendarEventAllDayUncheckedEndTime" class="form-control form-control-sm" style="max-width:100%;text-overflow:ellipsis;">
-                                        @foreach (var time in timeIntervals)
+                                        @foreach (string time in timeIntervals)
                                         {
                                             if (time == currentInterval)
                                             {
@@ -649,7 +648,7 @@
                                     <label for="editCalendarEventAllDayUncheckedStartTime">@Localizer["StartTime"].Value</label>
                                     <br />
                                     <select id="editCalendarEventAllDayUncheckedStartTime" name="editCalendarEventAllDayUncheckedStartTime" class="form-control form-control-sm" style="max-width:100%;text-overflow:ellipsis;">
-                                        @foreach (var time in timeIntervals)
+                                        @foreach (string time in timeIntervals)
                                         {
                                             <option value="@time">@time</option>
                                         }
@@ -666,7 +665,7 @@
                                     <label for="editCalendarEventAllDayUncheckedEndTime">@Localizer["EndTime"].Value</label>
                                     <br />
                                     <select id="editCalendarEventAllDayUncheckedEndTime" name="editCalendarEventAllDayUncheckedEndTime" class="form-control form-control-sm" style="max-width:100%;text-overflow:ellipsis;">
-                                        @foreach (var time in timeIntervals)
+                                        @foreach (string time in timeIntervals)
                                         {
                                             <option value="@time">@time</option>
                                         }
