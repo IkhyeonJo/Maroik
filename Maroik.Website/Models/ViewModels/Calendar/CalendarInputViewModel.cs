@@ -12,5 +12,6 @@ namespace Maroik.Website.Models.ViewModels.Calendar;
 public class CalendarInputViewModel
 {
     /// <summary>All calendars owned by the logged-in user; pre-populated by the controller.</summary>
-    public IEnumerable<CalendarRequest> Calendars { get; } = [];
+    // ReSharper disable once AutoPropertyCanBeMadeGetOnly.Global
+    public IEnumerable<CalendarRequest> Calendars { get; set; } = [];
 }
