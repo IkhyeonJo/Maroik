@@ -152,7 +152,6 @@ csharp_style_expression_bodied_local_functions = false:silent
 ##############################################
 
 [*.{ts,tsx,mts,cts,js,jsx,mjs,cjs}]
-indent_style = space
 indent_size = 4
 tab_width = 4
 end_of_line = lf
@@ -200,23 +199,6 @@ ij_javascript_space_after_comma = true
 ij_javascript_indent_chained_calls = true
 ij_javascript_keep_blank_lines_in_code = 1
 
-# The Vitest tree is 2-space and its own ESM module style.
-[TypeScripts.Tests/**.ts]
-indent_size = 2
-ij_continuation_indent_size = 2
-
-# The ported client scripts are a byte-faithful 1:1 of the pre-migration site.js
-# (quote style / blank lines vary per file to match each original). Keep ONLY the
-# safe whitespace rules so a reformat-on-save doesn't churn them. tsc +
-# TypeScripts.Tests are what guard these going forward.
-[TypeScripts/**.{ts,mts}]
-indent_size = 4
-ij_typescript_use_double_quotes = unset
-ij_typescript_force_quote_style = false
-ij_typescript_force_semicolon_style = false
-ij_typescript_keep_blank_lines_in_code = 2
-ij_typescript_import_sort_members = false
-
 # The `tsc` output of the client-script migration (TypeScripts/**/*.ts -> here).
 # Generated, never hand-edited — mark it so Rider / ReSharper skips inspections &
 # format-on-save, and don't touch its bytes.
@@ -227,6 +209,5 @@ insert_final_newline = false
 max_line_length = off
 
 [*.{json,json5,jsonc}]
-indent_style = space
 indent_size = 2
 insert_final_newline = true
