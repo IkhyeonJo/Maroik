@@ -15,23 +15,11 @@ namespace Maroik.FileStorage.Controllers;
 /// </summary>
 [ApiController]
 [Route("api/[controller]")]
-public class FileController : ControllerBase
+public class FileController(IFileValidationService fileValidationService, IOptions<FileStorageSetting> settings, ILogger<FileController> logger) : ControllerBase
 {
     // Its constructor builds a ~400-entry default extension-to-MIME-type map; instantiating it
     // per request is wasted work, and the type is documented as safe for concurrent reads.
     private static readonly FileExtensionContentTypeProvider _contentTypeProvider = new();
-
-    private readonly IFileValidationService _fileValidationService;
-    private readonly IOptions<FileStorageSetting> _settings;
-    private readonly ILogger<FileController> _logger;
-
-    /// <summary>Initializes a new instance of <see cref="FileController"/>.</summary>
-    public FileController(IFileValidationService fileValidationService, IOptions<FileStorageSetting> settings, ILogger<FileController> logger)
-    {
-        _fileValidationService = fileValidationService;
-        _settings = settings;
-        _logger = logger;
-    }
 
     /// <summary>
     /// Accepts a multipart file upload and delegates validation, virus scan, and persistence
@@ -43,18 +31,18 @@ public class FileController : ControllerBase
     {
         try
         {
-            var (success, error) = await _fileValidationService.ValidateAndSaveAsync(file, filePath);
+            var (success, error) = await fileValidationService.ValidateAndSaveAsync(file, filePath);
             if (!success)
                 return BadRequest(error);
 
 #pragma warning disable CA1873
-            _logger.LogInformation("File uploaded: {FilePath}. CorrelationId={CorrelationId}", filePath, correlationId);
+            logger.LogInformation("File uploaded: {FilePath}. CorrelationId={CorrelationId}", filePath, correlationId);
 #pragma warning restore CA1873
             return Ok("File uploaded successfully.");
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "File upload failed for {FilePath}. CorrelationId={CorrelationId}", filePath, correlationId);
+            logger.LogError(ex, "File upload failed for {FilePath}. CorrelationId={CorrelationId}", filePath, correlationId);
             return BadRequest("File upload failed.");
         }
     }
@@ -70,7 +58,7 @@ public class FileController : ControllerBase
 
             // Confine the read to the storage root. Callers only ever pass server-generated relative
             // paths under "upload/"; a value that resolves outside the root is rejected here.
-            var resolvedPath = StoragePath.ResolveWithinRoot(_settings.Value.StorageRootPath, filePath);
+            var resolvedPath = StoragePath.ResolveWithinRoot(settings.Value.StorageRootPath, filePath);
             if (resolvedPath == null || !System.IO.File.Exists(resolvedPath)) return NotFound("File not found");
 
 #pragma warning disable SCS0018
@@ -81,13 +69,13 @@ public class FileController : ControllerBase
                 contentType = "application/octet-stream";
 
 #pragma warning disable CA1873
-            _logger.LogInformation("File downloaded: {FilePath}. CorrelationId={CorrelationId}", filePath, correlationId);
+            logger.LogInformation("File downloaded: {FilePath}. CorrelationId={CorrelationId}", filePath, correlationId);
 #pragma warning restore CA1873
             return File(fileData, contentType, sanitizedFileName);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "File download failed for {FilePath}. CorrelationId={CorrelationId}", filePath, correlationId);
+            logger.LogError(ex, "File download failed for {FilePath}. CorrelationId={CorrelationId}", filePath, correlationId);
             return BadRequest("Invalid file");
         }
     }

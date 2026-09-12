@@ -11,7 +11,7 @@ namespace Maroik.FileStorage.Settings;
 public class FileStorageSetting
 {
     /// <summary>Maximum allowed upload file size in bytes. Defaults to 10 MB when not configured.</summary>
-    public long MaxAttachedFileSizeBytes { get; set; } = 10L * 1024 * 1024;
+    public static long MaxAttachedFileSizeBytes => 10L * 1024 * 1024;
 
     /// <summary>
     /// Absolute path of the one directory every stored/served file must resolve within. Set from the

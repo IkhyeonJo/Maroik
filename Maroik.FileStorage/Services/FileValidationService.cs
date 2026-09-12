@@ -12,19 +12,9 @@ namespace Maroik.FileStorage.Services;
 /// and ClamAV virus-scan rules before writing them to disk.
 /// Extracted from <c>FileController</c> to keep the controller free of infrastructure concerns.
 /// </summary>
-public class FileValidationService : IFileValidationService
+public class FileValidationService(IClamavClient clamavClient, IOptions<FileStorageSetting> settings) : IFileValidationService
 {
     private static readonly string[] _allowedExtensions = [".zip", ".jpg", ".jpeg", ".png"];
-
-    private readonly IClamavClient _clamavClient;
-    private readonly IOptions<FileStorageSetting> _settings;
-
-    /// <summary>Initializes a new instance of <see cref="FileValidationService"/>.</summary>
-    public FileValidationService(IClamavClient clamavClient, IOptions<FileStorageSetting> settings)
-    {
-        _clamavClient = clamavClient;
-        _settings = settings;
-    }
 
     /// <inheritdoc />
     public async Task<(bool Success, string? Error)> ValidateAndSaveAsync(IFormFile file, string filePath)
@@ -38,7 +28,7 @@ public class FileValidationService : IFileValidationService
         // Confine the target directory to the storage root. The callers only ever pass
         // server-generated relative paths under "upload/"; anything that resolves outside the root
         // (via "..", an absolute path, a symlink, …) is rejected here rather than trusted.
-        var safeDir = StoragePath.ResolveWithinRoot(_settings.Value.StorageRootPath, filePath);
+        var safeDir = StoragePath.ResolveWithinRoot(settings.Value.StorageRootPath, filePath);
         if (safeDir == null)
             return (false, "Invalid file path.");
         var safePath = Path.Combine(safeDir, fileName);
@@ -46,7 +36,7 @@ public class FileValidationService : IFileValidationService
         if (!_allowedExtensions.Contains(ext))
             return (false, "Unsupported file extension.");
 
-        if (file.Length > _settings.Value.MaxAttachedFileSizeBytes)
+        if (file.Length > FileStorageSetting.MaxAttachedFileSizeBytes)
             return (false, "File too large.");
 
         using var memStream = new MemoryStream();
@@ -55,7 +45,7 @@ public class FileValidationService : IFileValidationService
         if (!HasValidMagicBytes(memStream, ext))
             return (false, "Invalid or unsupported file format.");
 
-        if (!await _clamavClient.ScanWithClamavAsync(memStream, _settings.Value.ClamavHost ?? "", _settings.Value.ClamavPort))
+        if (!await clamavClient.ScanWithClamavAsync(memStream, settings.Value.ClamavHost ?? "", settings.Value.ClamavPort))
             return (false, "File may be infected with a virus.");
 
         if (ext == ".zip" && IsZipEncrypted(memStream))
@@ -134,10 +124,6 @@ public class FileValidationService : IFileValidationService
         copy.Position = 0;
 
         using var zip = new ZipFile(copy);
-        foreach (ZipEntry entry in zip)
-        {
-            if (entry.IsCrypted) return true;
-        }
-        return false;
+        return zip.Cast<ZipEntry>().Any(entry => entry.IsCrypted);
     }
 }
