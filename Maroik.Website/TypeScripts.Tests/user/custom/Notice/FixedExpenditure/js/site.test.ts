@@ -13,6 +13,7 @@ function fixture(): string {
     hidden("expenditureDepositAssetSubClasses", JSON.stringify(depositAssetSubClasses).replace(/"/g, "&quot;")) +
     hidden("maxDepositDayByMonth", JSON.stringify(maxDepositDayByMonth).replace(/"/g, "&quot;")) +
     hidden("noMaturityDate", "9999-12-31") +
+    hidden("localizerFailedToLoadAmountLabel", "Failed to load the amount label.") +
     `<div id="createFixedExpenditureTabs"></div><div id="editFixedExpenditureTabs"></div><input id="gridSearch" />
      <input id="createFixedExpenditureMaturityDate" /><input id="editFixedExpenditureMaturityDate" />
      <select id="createFixedExpenditureMainClass"><option value="Living">Living</option><option value="Transfer">Transfer</option></select>
@@ -28,7 +29,8 @@ function fixture(): string {
      <button id="btnExportExcelFixedExpenditure"></button><button id="btnEditFixedExpenditureGridRow"></button>
      <button id="btnConfirmDeleteFixedExpenditure"></button><button id="btnDeleteFixedExpenditure"></button>
      <select id="createFixedExpenditurePaymentMethod"><option value="Card" selected>Card</option></select>
-     <select id="editFixedExpenditurePaymentMethod"></select>`
+     <select id="editFixedExpenditurePaymentMethod"><option value="Card">Card</option><option value="Cash">Cash</option></select>
+     <span id="labelCreateFixedExpenditureAmount"></span><span id="labelEditFixedExpenditureAmount"></span>`
   );
 }
 
@@ -45,5 +47,28 @@ describe("Notice/FixedExpenditure", () => {
     const h = loadSite("user", "Notice", "FixedExpenditure", fixture());
     h.$("#btnExportExcelFixedExpenditure").trigger("click");
     expect(h.submittedForms.at(-1)!.action).toContain("/Notice/ExportExcelFixedExpenditure");
+  });
+
+  it("shows a toastr error when the create-form amount-label lookup fails", () => {
+    const h = loadSite("user", "Notice", "FixedExpenditure", fixture());
+    // loadSite's onload $(function(){...}) already fired one GetFixedExpenditureAmountLabel
+    // lookup for the preselected create-form payment method.
+    const call = h.ajaxCalls.find((c) => String(c.url).includes("GetFixedExpenditureAmountLabel"));
+
+    call?.error?.();
+
+    expect(h.toastr.error).toHaveBeenCalledWith("Failed to load the amount label.");
+  });
+
+  it("shows a toastr error when the edit-form amount-label lookup fails", () => {
+    const h = loadSite("user", "Notice", "FixedExpenditure", fixture());
+
+    h.$("#editFixedExpenditurePaymentMethod").val("Cash").trigger("change");
+    const call = h.lastAjax();
+    expect(call.url).toContain("GetFixedExpenditureAmountLabel");
+
+    call.error?.();
+
+    expect(h.toastr.error).toHaveBeenCalledWith("Failed to load the amount label.");
   });
 });

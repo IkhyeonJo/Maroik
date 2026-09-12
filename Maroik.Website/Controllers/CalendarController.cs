@@ -209,15 +209,7 @@ public class CalendarController(
             calendars = await calendarService.GetCalendarsAsync(loggedInAccount.Email!, HttpContext.RequestAborted);
         }
 
-        List<CalendarResponse> allCalendars = await calendarService.GetAllCalendarsAsync(HttpContext.RequestAborted);
-        List<OtherCalendarResponse> otherCalendarSubscriptions = await calendarService.GetOtherCalendarsAsync(loggedInAccount.Email!, HttpContext.RequestAborted);
-        List<CalendarResponse> otherCalendars =
-        [
-            .. (from c in allCalendars
-                join oc in otherCalendarSubscriptions on c.Id equals oc.CalendarId
-                select new CalendarResponse { Id = c.Id, Name = c.Name, HtmlColorCode = c.HtmlColorCode })
-            .OrderBy(x => x.Name)
-        ];
+        List<CalendarResponse> otherCalendars = await calendarService.GetVisibleOtherCalendarsAsync(loggedInAccount, HttpContext.RequestAborted);
 
         CalendarOutputViewModel vm = new()
         {
@@ -239,15 +231,7 @@ public class CalendarController(
         const string userTimezone = "UTC";
         AccountResponse loggedInAccount = new() { Role = Role.Anonymous, TimeZoneIanaId = userTimezone };
 
-        List<CalendarResponse> allCalendars = await calendarService.GetAllCalendarsAsync(HttpContext.RequestAborted);
-        List<CalendarSharedResponse> sharedCalendars = await calendarService.GetCalendarSharedAsync(HttpContext.RequestAborted);
-        List<CalendarResponse> otherCalendars =
-        [
-            .. (from c in allCalendars
-                join cs in sharedCalendars.Where(x => x.Anonymous) on c.Id equals cs.CalendarId
-                select new CalendarResponse { Id = c.Id, Name = c.Name, HtmlColorCode = c.HtmlColorCode })
-            .OrderBy(x => x.Name)
-        ];
+        List<CalendarResponse> otherCalendars = await calendarService.GetVisibleOtherCalendarsAsync(null, HttpContext.RequestAborted);
 
         CalendarOutputViewModel vm = new()
         {
@@ -458,36 +442,8 @@ public class CalendarController(
     {
         try
         {
-            List<CalendarResponse> calendars =
-            [
-                .. await calendarService.GetCalendarsAsync(sessionService.GetAccount()!.Email!,
-                    HttpContext.RequestAborted)
-            ];
-
-            // A CalendarShared row may not exist yet for calendars created before sharing was
-            // configured, so backfill any missing ones (single query) before reading the list below.
-            await calendarService.EnsureCalendarSharedAsync(calendars.Select(c => c.Id), HttpContext.RequestAborted);
-
-            List<CalendarSharedResponse> tempCalendarShareds =
-            [
-                .. from calendarShared in
-                    (await calendarService.GetCalendarSharedAsync(HttpContext.RequestAborted)).ToList()
-                let item = calendars.FirstOrDefault(x => x.Id == calendarShared.CalendarId) ??
-                           new CalendarResponse()
-                where item.Id > 0
-                select calendarShared
-            ];
-
-            var setCalendarShareds = (from calendar in calendars
-                                      join sharedCalendar in tempCalendarShareds
-                                      on calendar.Id equals sharedCalendar.CalendarId
-                                      select new
-                                      {
-                                          Id = sharedCalendar.CalendarId,
-                                          calendar.Name,
-                                          sharedCalendar.User,
-                                          Guest = sharedCalendar.Anonymous
-                                      }).OrderBy(x => x.Name).ToList();
+            List<CalendarSharedSummaryResponse> setCalendarShareds =
+                await calendarService.GetCalendarSharedSummariesAsync(sessionService.GetAccount()!.Email!, HttpContext.RequestAborted);
 
             return Json(new { result = true, setCalendarShareds });
         }
@@ -506,26 +462,8 @@ public class CalendarController(
     {
         try
         {
-            AccountResponse loggedInAccount = sessionService.GetAccount()!;
-            List<CalendarResponse> allCalendars = await calendarService.GetAllCalendarsAsync(HttpContext.RequestAborted);
-            List<CalendarSharedResponse> calendarShareds =
-            [
-                .. (await calendarService.GetCalendarSharedAsync(HttpContext.RequestAborted)).Where(x => x.User)
-            ];
-            List<OtherCalendarResponse> otherCalendars = await calendarService.GetOtherCalendarsAsync(loggedInAccount.Email!, HttpContext.RequestAborted);
-
-            var browseCalendarsOfInterests = (from calendar in allCalendars
-                                              join calendarShared in calendarShareds
-                                              on calendar.Id equals calendarShared.CalendarId
-                                              join otherCalendar in otherCalendars
-                                              on calendar.Id equals otherCalendar.CalendarId into otherCalendarGroup
-                                              from otherCalendar in otherCalendarGroup.DefaultIfEmpty()
-                                              select new
-                                              {
-                                                  calendar.Id,
-                                                  calendar.Name,
-                                                  Checked = otherCalendar != null
-                                              }).OrderBy(x => x.Name).ToList();
+            List<CalendarBrowseSummaryResponse> browseCalendarsOfInterests =
+                await calendarService.GetBrowseCalendarsOfInterestAsync(sessionService.GetAccount()!.Email!, HttpContext.RequestAborted);
 
             return Json(new { result = true, browseCalendarsOfInterests });
         }

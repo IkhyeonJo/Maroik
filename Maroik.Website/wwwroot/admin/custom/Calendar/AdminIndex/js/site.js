@@ -1,5 +1,16 @@
 "use strict";
 (function () {
+    function escapeHtml(value) {
+        return value.replace(/[&<>"']/g, function (ch) {
+            switch (ch) {
+                case '&': return '&amp;';
+                case '<': return '&lt;';
+                case '>': return '&gt;';
+                case '"': return '&quot;';
+                default: return '&#39;';
+            }
+        });
+    }
     const $createCalendarEventAllDayUncheckedEndDate = $('#createCalendarEventAllDayUncheckedEndDate');
     const $createCalendarEventAllDayCheckedEndDate = $('#createCalendarEventAllDayCheckedEndDate');
     const $editCalendarEventAllDayUncheckedEndDate = $('#editCalendarEventAllDayUncheckedEndDate');
@@ -1646,7 +1657,7 @@
             success: function (data) {
                 if (data.result) {
                     $createCalendarDialogModal.modal('hide');
-                    $myCalendars.append(`<label id='lblCalendar${data.calendar.id}' style='position: relative; border:1px solid #ccc; padding:10px; margin:0 0 10px; display:block'><input type='checkbox' style='accent-color:${data.calendar.htmlColorCode}' checked /><label style='padding-left:0.5em;'> ${data.calendar.name}</label><i id='${data.calendar.id}' class='edit-calendar fas fa-edit' style='position: absolute; right: 40px; top: 50%; transform: translateY(-50%); cursor: pointer;'></i><i id='${data.calendar.id}' class='delete-calendar fas fa-trash' style='position: absolute; right: 15px; top: 50%; transform: translateY(-50%); cursor: pointer;'></i></label>`);
+                    $myCalendars.append(`<label id='lblCalendar${data.calendar.id}' style='position: relative; border:1px solid #ccc; padding:10px; margin:0 0 10px; display:block'><input type='checkbox' style='accent-color:${data.calendar.htmlColorCode}' checked /><label style='padding-left:0.5em;'> ${escapeHtml(data.calendar.name)}</label><i id='${data.calendar.id}' class='edit-calendar fas fa-edit' style='position: absolute; right: 40px; top: 50%; transform: translateY(-50%); cursor: pointer;'></i><i id='${data.calendar.id}' class='delete-calendar fas fa-trash' style='position: absolute; right: 15px; top: 50%; transform: translateY(-50%); cursor: pointer;'></i></label>`);
                     let calendars = $myCalendars.find('label[id^="lblCalendar"]').get();
                     calendars.sort(function (a, b) {
                         let nameA = $(a).text().trim().toUpperCase();
@@ -1889,7 +1900,7 @@
                         htmlString += String.raw `
                             <div class='form-row setCalendarShared' style='margin-top: 20px;'>
                                 <div id='divSetCalendarShared${setCalendarShared.id}' class='form-group col-md-4 mb-4 text-center'>
-                                    <label class='shareToCalendar' style='word-break: break-all;'>${setCalendarShared.name}</label>
+                                    <label class='shareToCalendar' style='word-break: break-all;'>${escapeHtml(setCalendarShared.name)}</label>
                                 </div>
                                 <div class='form-group col-md-4 mb-4 text-center'>
                                     <input class='form-control form-control-sm shareToUser' type='checkbox' ${setCalendarShared.user === true ? 'checked' : ''}/>
@@ -2012,4 +2023,3 @@
         }
     });
 })();
-//# sourceMappingURL=site.js.map

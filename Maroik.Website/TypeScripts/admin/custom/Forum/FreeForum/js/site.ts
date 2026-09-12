@@ -52,7 +52,8 @@
     const $aEditBoardAttachedFile = $('#aEditBoardAttachedFile');
     const $aFreeForumDeleteComment = $('.aFreeForumDeleteComment');
     const $__RequestVerificationToken = $('input[name="__RequestVerificationToken"]');
-    // Attachment size limit in bytes, published by the view; 10 MB fallback.
+    // Authoritative in ServerSetting.MaxAttachedFileSizeBytes (server); mirrored here for form UX
+    // only. 10485760 (10 MB) is a fallback if the hidden field is missing or unparseable.
     const maxFileSize = parseInt($('#maxAttachedFileSizeBytes').val() as string) || 10485760;
     const boardHeight = 300;
 

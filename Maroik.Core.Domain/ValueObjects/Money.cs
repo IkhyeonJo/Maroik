@@ -58,22 +58,26 @@ public sealed class Money : ValueObject
     /// </summary>
     public Money WithAmount(decimal amount) => new(amount, Currency);
 
-    /// <summary>Returns a new <see cref="Money"/> whose amount is the sum of both operands.</summary>
-    /// <exception cref="InvalidOperationException">Thrown when currencies differ.</exception>
-    public Money Add(Money other)
+    /// <summary>
+    /// Returns a new <see cref="Money"/> whose amount is the sum of both operands, or a validation
+    /// error when the currencies differ.
+    /// </summary>
+    public ErrorOr<Money> Add(Money other)
     {
         if (!Currency.Equals(other.Currency, StringComparison.OrdinalIgnoreCase))
-            throw new InvalidOperationException($"Cannot add {Currency} and {other.Currency}.");
+            return Error.Validation("Money.CurrencyMismatch", $"Cannot add {Currency} and {other.Currency}.");
 
         return new Money(Amount + other.Amount, Currency);
     }
 
-    /// <summary>Returns a new <see cref="Money"/> whose amount equals this minus <paramref name="other"/>.</summary>
-    /// <exception cref="InvalidOperationException">Thrown when currencies differ.</exception>
-    public Money Subtract(Money other)
+    /// <summary>
+    /// Returns a new <see cref="Money"/> whose amount equals this minus <paramref name="other"/>,
+    /// or a validation error when the currencies differ.
+    /// </summary>
+    public ErrorOr<Money> Subtract(Money other)
     {
         if (!Currency.Equals(other.Currency, StringComparison.OrdinalIgnoreCase))
-            throw new InvalidOperationException($"Cannot subtract {other.Currency} from {Currency}.");
+            return Error.Validation("Money.CurrencyMismatch", $"Cannot subtract {other.Currency} from {Currency}.");
 
         return new Money(Amount - other.Amount, Currency);
     }

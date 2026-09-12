@@ -147,9 +147,15 @@ public class ExpenditureService(
             if (newPayAsset?.Deleted == true || newDepAsset?.Deleted == true)
                 return await unitOfWork.FailAsync(DeletedAssetResult, ct);
 
+            // Matches CreateAsync: the payment asset is required regardless of transfer/non-transfer,
+            // so a retarget onto a nonexistent asset name fails clean here instead of silently
+            // persisting the update and only surfacing as an AdjustAssetBalancesAsync rollback later.
+            if (newPayAsset == null)
+                return await unitOfWork.FailAsync(AssetNotFoundResult, ct);
+
             if (classResult.Value)
             {
-                if (newPayAsset == null || newDepAsset == null)
+                if (newDepAsset == null)
                     return await unitOfWork.FailAsync(AssetNotFoundResult, ct);
                 if (newPayAsset.Balance.Currency != newDepAsset.Balance.Currency)
                     return await unitOfWork.FailAsync(CurrencyMismatchResult, ct);
@@ -165,7 +171,8 @@ public class ExpenditureService(
                     return await unitOfWork.FailAsync(DeletedAssetResult, ct);
             }
 
-            string newCurrency = newPayAsset?.Balance.Currency ?? prevPayAsset?.Balance.Currency ?? "";
+            // newPayAsset is guaranteed non-null past the AssetNotFoundResult guard above.
+            string newCurrency = newPayAsset.Balance.Currency;
             string? myDepositAsset = classResult.Value ? request.MyDepositAsset : null;
 
             var oldSnapshot = new ExpenditureSnapshot(previous.PaymentMethod, previous.MyDepositAsset, previous.Amount.Amount, previous.Amount.Currency);

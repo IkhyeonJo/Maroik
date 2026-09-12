@@ -173,6 +173,43 @@ public class RabbitMqEmailPublisherTests
             Times.Once);
     }
 
+    /// <summary>
+    /// Verifies that when the cached connection is seen as closed but flips back to open by the
+    /// time the short recovery grace window elapses (AutomaticRecoveryEnabled's own reconnection
+    /// loop finishing first), GetChannelAsync reuses the same connection instead of disposing it
+    /// and racing that recovery with a brand-new one.
+    /// </summary>
+    [Fact]
+    public async Task PublishAsync_ConnectionRecoversDuringGraceWindow_ReusesConnection_WithoutReconnecting()
+    {
+        var channel1 = MakeChannelMock();
+        var channel2 = MakeChannelMock();
+        var connection = new Mock<IConnection>();
+        // IsOpen is never read while _connection is still null (pattern-matching a null reference
+        // short-circuits without touching the member), so the first real invocation happens on the
+        // second publish's cached-fast-path check below.
+        connection.SetupSequence(c => c.IsOpen)
+            .Returns(false) // second publish: cached-fast-path check — looks dropped
+            .Returns(false) // entering the "not open" branch
+            .Returns(true) // re-checked after the grace-window delay: recovered
+            .Returns(true); // final re-check before falling through to a fresh connection
+        connection.SetupSequence(c => c.CreateChannelAsync(It.IsAny<CreateChannelOptions>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(channel1.Object)
+            .ReturnsAsync(channel2.Object);
+        _factory.Setup(f => f.CreateConnectionAsync(It.IsAny<CancellationToken>())).ReturnsAsync(connection.Object);
+        var sut = CreateSut();
+
+        await sut.PublishAsync(Message, TestContext.Current.CancellationToken); // caches the connection
+        await sut.PublishAsync(Message, TestContext.Current.CancellationToken); // sees it "closed", waits, sees it recovered
+
+        _factory.Verify(f => f.CreateConnectionAsync(It.IsAny<CancellationToken>()), Times.Once);
+        connection.Verify(c => c.DisposeAsync(), Times.Never);
+        channel2.Verify(c => c.BasicPublishAsync(
+                It.IsAny<string>(), It.IsAny<string>(), It.IsAny<bool>(), It.IsAny<BasicProperties>(),
+                It.IsAny<ReadOnlyMemory<byte>>(), It.IsAny<CancellationToken>()),
+            Times.Once);
+    }
+
     /// <summary>Dispose async with open connection disposes connection.</summary>
     [Fact]
     public async Task DisposeAsync_WithOpenConnection_DisposesConnection()

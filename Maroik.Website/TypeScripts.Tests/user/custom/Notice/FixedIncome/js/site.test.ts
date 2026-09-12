@@ -11,6 +11,7 @@ function fixture(): string {
     hidden("incomeSubClassMap", JSON.stringify(subClassMap).replace(/"/g, "&quot;")) +
     hidden("maxDepositDayByMonth", JSON.stringify(maxDepositDayByMonth).replace(/"/g, "&quot;")) +
     hidden("noMaturityDate", "9999-12-31") +
+    hidden("localizerFailedToLoadAmountLabel", "Failed to load the amount label.") +
     `<div id="createFixedIncomeTabs"></div><div id="editFixedIncomeTabs"></div><input id="gridSearch" />
      <input id="createFixedIncomeMaturityDate" /><input id="editFixedIncomeMaturityDate" />
      <select id="createFixedIncomeMainClass"><option value="Labor">Labor</option></select>
@@ -25,7 +26,8 @@ function fixture(): string {
      <button id="btnEditFixedIncomeGridRow" data-errorMessageSelectGridRow="Please select grid row"></button>
      <button id="btnConfirmDeleteFixedIncome"></button><button id="btnDeleteFixedIncome"></button>
      <select id="createFixedIncomeDepositMyAssetProductName"><option value="A" selected>A</option></select>
-     <select id="editFixedIncomeDepositMyAssetProductName"></select>`
+     <select id="editFixedIncomeDepositMyAssetProductName"><option value="A">A</option><option value="B">B</option></select>
+     <span id="labelCreateFixedIncomeAmount"></span><span id="labelEditFixedIncomeAmount"></span>`
   );
 }
 
@@ -53,5 +55,28 @@ describe("Notice/FixedIncome", () => {
     const h = loadSite("user", "Notice", "FixedIncome", fixture());
     h.$("#btnEditFixedIncomeGridRow").trigger("click");
     expect(h.toastr.error).toHaveBeenCalledWith("Please select grid row");
+  });
+
+  it("shows a toastr error when the create-form amount-label lookup fails", () => {
+    const h = loadSite("user", "Notice", "FixedIncome", fixture());
+    // loadSite's onload $(function(){...}) already fired one GetFixedIncomeAmountLabel lookup
+    // for the preselected create-form deposit asset.
+    const call = h.ajaxCalls.find((c) => String(c.url).includes("GetFixedIncomeAmountLabel"));
+
+    call?.error?.();
+
+    expect(h.toastr.error).toHaveBeenCalledWith("Failed to load the amount label.");
+  });
+
+  it("shows a toastr error when the edit-form amount-label lookup fails", () => {
+    const h = loadSite("user", "Notice", "FixedIncome", fixture());
+
+    h.$("#editFixedIncomeDepositMyAssetProductName").val("B").trigger("change");
+    const call = h.lastAjax();
+    expect(call.url).toContain("GetFixedIncomeAmountLabel");
+
+    call.error?.();
+
+    expect(h.toastr.error).toHaveBeenCalledWith("Failed to load the amount label.");
   });
 });

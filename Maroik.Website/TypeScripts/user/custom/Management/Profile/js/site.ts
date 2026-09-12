@@ -15,8 +15,8 @@
  * Wrapped in an IIFE, no `import` / `export`; handlers use `.off(...).on(...)`.
  */
 (function () {
-    // Max upload size in bytes, published by the view; `|| 10485760` (10 MB) is a
-    // fallback if the hidden field is missing or unparseable.
+    // Authoritative in ServerSetting.MaxAttachedFileSizeBytes (server); mirrored here for form UX
+    // only. `|| 10485760` (10 MB) is a fallback if the hidden field is missing or unparseable.
     const maxFileSize = parseInt($('#maxAttachedFileSizeBytes').val() as string) || 10485760;
     // Accepted avatar image MIME types, published by Profile.cshtml (ImageUploadPolicy). The
     // server re-validates by extension; this is the client mirror.

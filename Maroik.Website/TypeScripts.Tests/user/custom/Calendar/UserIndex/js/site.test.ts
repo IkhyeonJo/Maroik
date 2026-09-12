@@ -45,7 +45,11 @@ function fixture(): string {
      <select id="createCalendarEventMyCalendar"></select><select id="editCalendarEventMyCalendar"></select>
      <div id="dropdown-content"></div><i id="dropdown-icon"></i>
      <a id="aCreateCalendar"></a><a id="aCreateCalendarEvent"></a>
-     <form id="formCreateCalendar"></form><form id="formEditCalendar"></form>
+     <form id="formCreateCalendar">
+       <input id="createCalendarName" /><input id="createCalendarDescription" />
+       <input id="createCalendarHtmlColorCode" value="#3788d8" /><input id="createCalendarTimeZone" value="UTC" />
+     </form>
+     <form id="formEditCalendar"></form>
      <form id="formCreateCalendarEvent"></form><form id="formEditCalendarEvent"></form>
      <div id="myCalendars"></div>
      <a id="aEditCalendarEventAttachedFile"></a><a id="aViewCalendarEventAttachedFile"></a>
@@ -79,5 +83,39 @@ describe("user/Calendar/UserIndex", () => {
     const h = loadSite("user", "Calendar", "UserIndex", fixture());
     h.$("#aCreateCalendarEvent").trigger("click");
     expect(h.ajaxCalls.some((c) => c.url === "/Calendar/GetCalendars")).toBe(true);
+  });
+
+  // Regression: a calendar name is free text the owner controls. It used to be interpolated
+  // straight into a raw HTML template literal with no escaping, so a name containing markup would
+  // be parsed as HTML by every viewer who saw it (the sidebar list here, and the "browse calendars
+  // of interest" dialog below) instead of being displayed as plain text.
+  it("escapes a malicious calendar name before appending it to the sidebar list", () => {
+    const h = loadSite("user", "Calendar", "UserIndex", fixture());
+    h.$("#createCalendarName").val("<img src=x onerror=alert(1)>");
+
+    h.$("#formCreateCalendar").trigger("submit");
+    const call = h.lastAjax();
+    expect(call.url).toBe("/Calendar/CreateCalendar");
+    call.success?.({ result: true, calendar: { id: 1, name: "<img src=x onerror=alert(1)>", htmlColorCode: "#3788d8" } });
+
+    const myCalendarsHtml = h.win.document.getElementById("myCalendars")!.innerHTML;
+    expect(myCalendarsHtml).not.toContain("<img");
+    expect(myCalendarsHtml).toContain("&lt;img src=x onerror=alert(1)&gt;");
+  });
+
+  it("escapes a malicious calendar name in the 'browse calendars of interest' dialog", () => {
+    const h = loadSite("user", "Calendar", "UserIndex", fixture());
+
+    h.$("#aBrowseCalendarsOfInterest").trigger("click");
+    const call = h.lastAjax();
+    expect(call.url).toBe("/Calendar/GetBrowseCalendarsOfInterest");
+    call.success?.({
+      result: true,
+      browseCalendarsOfInterests: [{ id: 1, name: "<img src=x onerror=alert(1)>", checked: false }],
+    });
+
+    const html = h.win.document.getElementById("divBrowseCalendarsOfInterest")!.innerHTML;
+    expect(html).not.toContain("<img");
+    expect(html).toContain("&lt;img src=x onerror=alert(1)&gt;");
   });
 });

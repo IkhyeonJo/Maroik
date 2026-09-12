@@ -7,6 +7,7 @@ using System.Globalization;
 using Maroik.Core.Client.Extensions;
 using Maroik.Core.Contract.Misc.Enums;
 using Maroik.Core.Contract.Misc.Settings;
+using Maroik.Core.Domain.Localization;
 using Maroik.Core.Repository.Extensions;
 using Maroik.Core.Service.Extensions;
 using Maroik.Website.Extensions;
@@ -258,12 +259,8 @@ try
 
     builder.Services.Configure<RequestLocalizationOptions>(opt =>
     {
-        List<CultureInfo> supportedCultures =
-        [
-            new("en-US"),
-            new("ko-KR")
-        ];
-        opt.DefaultRequestCulture = new RequestCulture("en-US");
+        List<CultureInfo> supportedCultures = CulturePolicy.SupportedCultures.Select(c => new CultureInfo(c)).ToList();
+        opt.DefaultRequestCulture = new RequestCulture(CulturePolicy.DefaultCulture);
         opt.SupportedCultures = supportedCultures;
         opt.SupportedUICultures = supportedCultures;
     });
@@ -410,8 +407,8 @@ try
 
     #region Multi-Language
 
-    string[] supportedCultures = ["en-US", "ko-KR"];
-    var localizationOptions = new RequestLocalizationOptions().SetDefaultCulture(supportedCultures[0])
+    string[] supportedCultures = [.. CulturePolicy.SupportedCultures];
+    var localizationOptions = new RequestLocalizationOptions().SetDefaultCulture(CulturePolicy.DefaultCulture)
         .AddSupportedCultures(supportedCultures)
         .AddSupportedUICultures(supportedCultures);
 

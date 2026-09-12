@@ -37,6 +37,7 @@
     const $createExpenditureNote = $('#createExpenditureNote');
     const $createExpenditureMyDepositAsset = $('#createExpenditureMyDepositAsset');
     const $__RequestVerificationToken = $('input[name="__RequestVerificationToken"]');
+    const failedToLoadAmountLabelMessage = $('#localizerFailedToLoadAmountLabel').val() as string;
     const $createExpenditureDialogModal = $('#createExpenditureDialogModal');
     const $editExpenditureId = $('#editExpenditureId');
     const $editExpenditureMainClass = $('#editExpenditureMainClass');
@@ -607,6 +608,9 @@
                 else {
                     $labelCreateExpenditureAmount.text(data.label);
                 }
+            },
+            error: function () {
+                toastr.error(failedToLoadAmountLabelMessage);
             }
         });
     }
@@ -627,6 +631,9 @@
                 else {
                     $labelEditExpenditureAmount.text(data.label);
                 }
+            },
+            error: function () {
+                toastr.error(failedToLoadAmountLabelMessage);
             }
         });
     }

@@ -77,8 +77,22 @@ public sealed class RabbitMqEmailPublisher(IConnectionFactory factory, ILogger<R
         if (_connection is not { IsOpen: true })
         {
             if (_connection != null)
-                await _connection.DisposeAsync();
-            _connection = await factory.CreateConnectionAsync(ct);
+            {
+                // AutomaticRecoveryEnabled means a connection that just dropped is very likely
+                // already being reconnected by the client's own recovery loop (same IConnection
+                // instance, reopened transparently) rather than genuinely dead. Give it one short,
+                // bounded chance to come back on its own before tearing it down and opening a
+                // brand-new connection, so a brief broker blip doesn't race its own recovery.
+                await Task.Delay(TimeSpan.FromMilliseconds(200), ct);
+                if (!_connection.IsOpen)
+                {
+                    await _connection.DisposeAsync();
+                    _connection = null;
+                }
+            }
+
+            if (_connection is not { IsOpen: true })
+                _connection = await factory.CreateConnectionAsync(ct);
         }
 
         // Publisher confirms make BasicPublishAsync wait for the broker to actually accept the

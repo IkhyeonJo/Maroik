@@ -53,6 +53,20 @@ public interface ICalendarService
     Task<ServiceResult> EnsureCalendarSharedAsync(IEnumerable<long> calendarIds, CancellationToken ct = default);
 
     /// <summary>
+    /// Returns the sharing status (Id/Name/User/Guest) of every calendar owned by
+    /// <paramref name="accountEmail"/>, backfilling any missing CalendarShared row first. Backs the
+    /// Management &gt; Calendar "shared calendars" grid.
+    /// </summary>
+    Task<List<CalendarSharedSummaryResponse>> GetCalendarSharedSummariesAsync(string accountEmail, CancellationToken ct = default);
+
+    /// <summary>
+    /// Returns every calendar shared with registered users, alongside whether
+    /// <paramref name="accountEmail"/> is already subscribed to it. Backs the "browse calendars of
+    /// interest" list a user picks new subscriptions from.
+    /// </summary>
+    Task<List<CalendarBrowseSummaryResponse>> GetBrowseCalendarsOfInterestAsync(string accountEmail, CancellationToken ct = default);
+
+    /// <summary>
     /// Creates a new calendar owned by <paramref name="accountEmail"/>. The owner is taken as an
     /// explicit argument (from the authenticated session), never from the request body, so a
     /// form-bound value cannot make one account create a calendar under another's identity.

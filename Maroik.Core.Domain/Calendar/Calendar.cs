@@ -149,8 +149,8 @@ public sealed class Calendar : AggregateRoot<long>
         if (string.IsNullOrWhiteSpace(name))
             return Error.Validation("Calendar.NameEmpty", "Calendar name cannot be empty.");
 
-        if (name.Length > 255)
-            return Error.Validation("Calendar.NameTooLong", "Calendar name must be 255 characters or fewer.");
+        if (name.Length > ShortTextPolicy.MaxLength)
+            return Error.Validation("Calendar.NameTooLong", $"Calendar name must be {ShortTextPolicy.MaxLength} characters or fewer.");
 
         if (name.Any(c => c is '<' or '>' || char.IsControl(c)))
             return Error.Validation(

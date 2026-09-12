@@ -27,6 +27,42 @@ public class MenuService(
         => (await subCategoryRepository.GetAllAsync(ct)).Select(SubCategoryMapper.ToResponse);
 
     /// <inheritdoc />
+    public async Task<IEnumerable<CategoryResponse>> SearchCategoriesAsync(string? search, CancellationToken ct = default)
+    {
+        IEnumerable<CategoryResponse> categories = await GetAllCategoriesAsync(ct);
+        return string.IsNullOrEmpty(search) ? categories : categories.Where(item => Matches(item, search));
+    }
+
+    /// <inheritdoc />
+    public async Task<IEnumerable<SubCategoryResponse>> SearchSubCategoriesAsync(string? search, CancellationToken ct = default)
+    {
+        IEnumerable<SubCategoryResponse> subCategories = await GetAllSubCategoriesAsync(ct);
+        return string.IsNullOrEmpty(search) ? subCategories : subCategories.Where(item => Matches(item, search));
+    }
+
+    /// <summary>Whole-search predicate for a category row — mirrors the sub-category overload below.</summary>
+    private static bool Matches(CategoryResponse item, string search) =>
+        item.Id.ToString().Contains(search) ||
+        (item.Name ?? "").Contains(search) ||
+        (item.DisplayName ?? "").Contains(search) ||
+        (item.IconPath ?? "").Contains(search) ||
+        (item.Controller ?? "").Contains(search) ||
+        (item.Action ?? "").Contains(search) ||
+        (item.Role ?? "").Contains(search) ||
+        item.Order.ToString().Contains(search);
+
+    /// <summary>Whole-search predicate for a sub-category row — mirrors the category overload above.</summary>
+    private static bool Matches(SubCategoryResponse item, string search) =>
+        item.Id.ToString().Contains(search) ||
+        item.CategoryId.ToString().Contains(search) ||
+        (item.Name ?? "").Contains(search) ||
+        (item.DisplayName ?? "").Contains(search) ||
+        (item.IconPath ?? "").Contains(search) ||
+        (item.Action ?? "").Contains(search) ||
+        (item.Role ?? "").Contains(search) ||
+        item.Order.ToString().Contains(search);
+
+    /// <inheritdoc />
     public async Task<CategoryResponse?> GetCategoryByIdAsync(int id, CancellationToken ct = default)
     {
         Category? category = await categoryRepository.FindByIdAsync(id, ct);

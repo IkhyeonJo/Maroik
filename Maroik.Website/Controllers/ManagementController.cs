@@ -542,15 +542,13 @@ public class ManagementController : Controller
             return View();
         }
 
+        // Whole-search filtering is a Service-layer concern (IMenuService.SearchCategoriesAsync /
+        // SearchSubCategoriesAsync); the controller only reshapes the returned DTOs into the grid's
+        // view model.
         List<MenuOutputViewModel> menuOutputViewModels =
         [
-            .. from item in await _menuService.GetAllCategoriesAsync(HttpContext.RequestAborted)
-            where string.IsNullOrEmpty(wholeSearch) || item.Id.ToString().Contains(wholeSearch) ||
-                  (item.Name ?? "").Contains(wholeSearch) || (item.DisplayName ?? "").Contains(wholeSearch) ||
-                  (item.IconPath ?? "").Contains(wholeSearch) || (item.Controller ?? "").Contains(wholeSearch) ||
-                  (item.Action ?? "").Contains(wholeSearch) || (item.Role ?? "").Contains(wholeSearch) ||
-                  item.Order.ToString().Contains(wholeSearch)
-            select new MenuOutputViewModel
+            .. (await _menuService.SearchCategoriesAsync(wholeSearch, HttpContext.RequestAborted))
+            .Select(item => new MenuOutputViewModel
             {
                 Id = item.Id,
                 CategoryId = null,
@@ -561,15 +559,10 @@ public class ManagementController : Controller
                 Action = item.Action,
                 Role = item.Role,
                 Order = item.Order
-            },
+            }),
 
-            .. from item in await _menuService.GetAllSubCategoriesAsync(HttpContext.RequestAborted)
-            where string.IsNullOrEmpty(wholeSearch) || item.Id.ToString().Contains(wholeSearch) ||
-                  item.CategoryId.ToString().Contains(wholeSearch) || (item.Name ?? "").Contains(wholeSearch) ||
-                  (item.DisplayName ?? "").Contains(wholeSearch) || (item.IconPath ?? "").Contains(wholeSearch) ||
-                  (item.Action ?? "").Contains(wholeSearch) || (item.Role ?? "").Contains(wholeSearch) ||
-                  item.Order.ToString().Contains(wholeSearch)
-            select new MenuOutputViewModel
+            .. (await _menuService.SearchSubCategoriesAsync(wholeSearch, HttpContext.RequestAborted))
+            .Select(item => new MenuOutputViewModel
             {
                 Id = item.Id,
                 CategoryId = item.CategoryId,
@@ -580,7 +573,7 @@ public class ManagementController : Controller
                 Action = item.Action,
                 Role = item.Role,
                 Order = item.Order
-            }
+            })
         ];
 
         IQueryable<MenuOutputViewModel> result = menuOutputViewModels.OrderByDescending(m => m.Id)

@@ -1,4 +1,5 @@
 using Maroik.Core.Domain.Account;
+using Maroik.Core.Domain.Localization;
 using Maroik.Core.Contract.Interfaces;
 using Maroik.Website.Attributes;
 using Maroik.Website.Contracts;
@@ -32,12 +33,12 @@ public class DashboardController(
     [RequiredHttpPostAccess(Role = Role.Anonymous)]
     public IActionResult CultureManagement([FromBody] LoginInputViewModel loginInputViewModel)
     {
-        // Only the cultures the app actually supports. Anything else (a bogus value would make
-        // new RequestCulture(...) / new CultureInfo(...) throw an unhandled CultureNotFoundException)
-        // is rejected here rather than written to the cookie.
-        string[] supportedCultures = ["en-US", "ko-KR"];
+        // Only the cultures the app actually supports (CulturePolicy.SupportedCultures — the same
+        // list Program.cs configures RequestLocalizationOptions with). Anything else (a bogus value
+        // would make new RequestCulture(...) / new CultureInfo(...) throw an unhandled
+        // CultureNotFoundException) is rejected here rather than written to the cookie.
         string? culture = loginInputViewModel.Culture;
-        if (string.IsNullOrEmpty(culture) || !supportedCultures.Contains(culture, StringComparer.OrdinalIgnoreCase))
+        if (string.IsNullOrEmpty(culture) || !CulturePolicy.SupportedCultures.Contains(culture, StringComparer.OrdinalIgnoreCase))
             return Json(new { result = false });
 
         Response.Cookies.Append(CookieRequestCultureProvider.DefaultCookieName, CookieRequestCultureProvider.MakeCookieValue(new RequestCulture(culture)),

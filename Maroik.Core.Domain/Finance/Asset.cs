@@ -152,7 +152,10 @@ public sealed class Asset : AggregateRoot<(string ProductName, string AccountEma
         if (amount.Currency != Balance.Currency)
             return Error.Validation("Asset.CurrencyMismatch", "Cannot deposit a different currency into this asset.");
 
-        Balance = Balance.Add(amount);
+        var addResult = Balance.Add(amount);
+        if (addResult.IsError) return addResult.Errors;
+
+        Balance = addResult.Value;
         Updated = DateTime.UtcNow;
         return Result.Success;
     }
@@ -163,7 +166,10 @@ public sealed class Asset : AggregateRoot<(string ProductName, string AccountEma
         if (amount.Currency != Balance.Currency)
             return Error.Validation("Asset.CurrencyMismatch", "Cannot withdraw a different currency from this asset.");
 
-        Balance = Balance.Subtract(amount);
+        var subtractResult = Balance.Subtract(amount);
+        if (subtractResult.IsError) return subtractResult.Errors;
+
+        Balance = subtractResult.Value;
         Updated = DateTime.UtcNow;
         return Result.Success;
     }

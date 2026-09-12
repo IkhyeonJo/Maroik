@@ -17,6 +17,7 @@
     const $createFixedIncomeNote = $('#createFixedIncomeNote');
     const $createFixedIncomeDepositMyAssetProductName = $('#createFixedIncomeDepositMyAssetProductName');
     const $__RequestVerificationToken = $('input[name="__RequestVerificationToken"]');
+    const failedToLoadAmountLabelMessage = $('#localizerFailedToLoadAmountLabel').val();
     const $createFixedIncomeDialogModal = $('#createFixedIncomeDialogModal');
     const $editFixedIncomeId = $('#editFixedIncomeId');
     const $editFixedIncomeMainClass = $('#editFixedIncomeMainClass');
@@ -505,6 +506,9 @@
                 else {
                     $labelCreateFixedIncomeAmount.text(data.label);
                 }
+            },
+            error: function () {
+                toastr.error(failedToLoadAmountLabelMessage);
             }
         });
     }
@@ -523,6 +527,9 @@
                 else {
                     $labelEditFixedIncomeAmount.text(data.label);
                 }
+            },
+            error: function () {
+                toastr.error(failedToLoadAmountLabelMessage);
             }
         });
     }
@@ -566,4 +573,3 @@
         ChangeCreateFixedIncomeAmountLabel($createFixedIncomeDepositMyAssetProductName.find('option:selected').val());
     });
 })();
-//# sourceMappingURL=site.js.map

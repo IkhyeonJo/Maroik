@@ -5,7 +5,7 @@ namespace Maroik.Core.DomainTests.ValueObjects;
 /// <summary>
 /// Unit tests for <see cref="Maroik.Core.Domain.ValueObjects.Money"/>.
 /// Covers creation, currency normalisation, zero factory, arithmetic (add/subtract),
-/// cross-currency exception throwing, and equality.
+/// cross-currency validation errors, and equality.
 /// </summary>
 public class MoneyTests
 {
@@ -62,18 +62,22 @@ public class MoneyTests
 
         var result = a.Add(b);
 
-        Assert.Equal(1500m, result.Amount);
-        Assert.Equal("KRW", result.Currency);
+        Assert.False(result.IsError);
+        Assert.Equal(1500m, result.Value.Amount);
+        Assert.Equal("KRW", result.Value.Currency);
     }
 
-    /// <summary>Add throws, when different currency.</summary>
+    /// <summary>Add returns error, when different currency.</summary>
     [Fact]
-    public void Add_Throws_WhenDifferentCurrency()
+    public void Add_ReturnsError_WhenDifferentCurrency()
     {
         var krw = Money.Create(1000m, "KRW").Value;
         var usd = Money.Create(10m, "USD").Value;
 
-        Assert.Throws<InvalidOperationException>(() => krw.Add(usd));
+        var result = krw.Add(usd);
+
+        Assert.True(result.IsError);
+        Assert.Equal("Money.CurrencyMismatch", result.FirstError.Code);
     }
 
     /// <summary>Subtract returns remainder, when same currency.</summary>
@@ -85,18 +89,22 @@ public class MoneyTests
 
         var result = a.Subtract(b);
 
-        Assert.Equal(700m, result.Amount);
-        Assert.Equal("KRW", result.Currency);
+        Assert.False(result.IsError);
+        Assert.Equal(700m, result.Value.Amount);
+        Assert.Equal("KRW", result.Value.Currency);
     }
 
-    /// <summary>Subtract throws, when different currency.</summary>
+    /// <summary>Subtract returns error, when different currency.</summary>
     [Fact]
-    public void Subtract_Throws_WhenDifferentCurrency()
+    public void Subtract_ReturnsError_WhenDifferentCurrency()
     {
         var krw = Money.Create(1000m, "KRW").Value;
         var usd = Money.Create(10m, "USD").Value;
 
-        Assert.Throws<InvalidOperationException>(() => krw.Subtract(usd));
+        var result = krw.Subtract(usd);
+
+        Assert.True(result.IsError);
+        Assert.Equal("Money.CurrencyMismatch", result.FirstError.Code);
     }
 
     /// <summary>Equality same amount and currency are equal.</summary>

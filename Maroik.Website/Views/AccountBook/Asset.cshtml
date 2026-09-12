@@ -7,6 +7,7 @@
     Asset amounts are displayed with their currency units; soft-deleted assets can be restored.
 *@
 @using Maroik.Website.Models.ViewModels.AccountBook
+@using Maroik.Core.Domain.Finance
 @model AccountBookPageViewModel
 <section class="content">
     <div class="card card-primary">
@@ -61,15 +62,13 @@
                                 <label for="createAssetItem">@Localizer["Item"].Value</label>
                                 <br />
                                 <select id="createAssetItem" name="createAssetItem" class="form-control form-control-sm" style="max-width:100%;text-overflow:ellipsis;">
-                                    <option value="FreeDepositAndWithdrawal">@Localizer["FreeDepositAndWithdrawal"].Value</option>
-                                    <option value="TrustAsset">@Localizer["TrustAsset"].Value</option>
-                                    <option value="CashAsset">@Localizer["CashAsset"].Value</option>
-                                    <option value="SavingsAsset">@Localizer["SavingsAsset"].Value</option>
-                                    <option value="InvestmentAsset">@Localizer["InvestmentAsset"].Value</option>
-                                    <option value="RealEstate">@Localizer["RealEstate"].Value</option>
-                                    <option value="Movables">@Localizer["Movables"].Value</option>
-                                    <option value="OtherPhysicalAsset">@Localizer["OtherPhysicalAsset"].Value</option>
-                                    <option value="InsuranceAsset">@Localizer["InsuranceAsset"].Value</option>
+                                    @* Options are rendered from AssetItemType (the domain enum backing Asset.Item /
+                                       the DB's Asset_Item_check constraint) rather than hardcoded, so this list can't
+                                       drift out of sync with the taxonomy the server actually accepts. *@
+                                    @foreach (string item in Enum.GetNames<AssetItemType>())
+                                    {
+                                        <option value="@item">@Localizer[item].Value</option>
+                                    }
                                 </select>
                             </div>
                         </div>
@@ -123,15 +122,10 @@
                                 <label for="editAssetItem">@Localizer["Item"].Value</label>
                                 <br />
                                 <select id="editAssetItem" name="editAssetItem" class="form-control form-control-sm" style="max-width:100%;text-overflow:ellipsis;">
-                                    <option value="FreeDepositAndWithdrawal">@Localizer["FreeDepositAndWithdrawal"].Value</option>
-                                    <option value="TrustAsset">@Localizer["TrustAsset"].Value</option>
-                                    <option value="CashAsset">@Localizer["CashAsset"].Value</option>
-                                    <option value="SavingsAsset">@Localizer["SavingsAsset"].Value</option>
-                                    <option value="InvestmentAsset">@Localizer["InvestmentAsset"].Value</option>
-                                    <option value="RealEstate">@Localizer["RealEstate"].Value</option>
-                                    <option value="Movables">@Localizer["Movables"].Value</option>
-                                    <option value="OtherPhysicalAsset">@Localizer["OtherPhysicalAsset"].Value</option>
-                                    <option value="InsuranceAsset">@Localizer["InsuranceAsset"].Value</option>
+                                    @foreach (string item in Enum.GetNames<AssetItemType>())
+                                    {
+                                        <option value="@item">@Localizer[item].Value</option>
+                                    }
                                 </select>
                             </div>
                         </div>

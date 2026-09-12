@@ -14,6 +14,22 @@ public interface IMenuService
     /// <summary>Returns all sub-category (dropdown menu item) rows.</summary>
     Task<IEnumerable<SubCategoryResponse>> GetAllSubCategoriesAsync(CancellationToken ct = default);
 
+    /// <summary>
+    /// Returns the top-level navigation categories whose Id/Name/DisplayName/IconPath/Controller/
+    /// Action/Role/Order contains <paramref name="search"/> (ordinal substring match), or every
+    /// category when <paramref name="search"/> is null or empty. Backs the Management &gt; Menu
+    /// grid's "whole search" box.
+    /// </summary>
+    Task<IEnumerable<CategoryResponse>> SearchCategoriesAsync(string? search, CancellationToken ct = default);
+
+    /// <summary>
+    /// Returns the sub-category rows whose Id/CategoryId/Name/DisplayName/IconPath/Action/Role/Order
+    /// contains <paramref name="search"/> (ordinal substring match), or every sub-category when
+    /// <paramref name="search"/> is null or empty. Backs the Management &gt; Menu grid's "whole
+    /// search" box.
+    /// </summary>
+    Task<IEnumerable<SubCategoryResponse>> SearchSubCategoriesAsync(string? search, CancellationToken ct = default);
+
     /// <summary>Returns a single category by its ID, or null.</summary>
     Task<CategoryResponse?> GetCategoryByIdAsync(int id, CancellationToken ct = default);
 

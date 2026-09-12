@@ -1,5 +1,4 @@
 using System.Globalization;
-using Maroik.Core.Domain.Account;
 using Maroik.Core.Domain.Localization;
 
 namespace Maroik.Core.DomainTests.Localization;
@@ -75,46 +74,24 @@ public class DateTimeExtensionsTests
 
     // -- ToViewerFormattedString ------------------------------------------------
 
-    /// <summary>Verifies that Admin viewers see the value converted to their local time zone.</summary>
+    /// <summary>Verifies that a viewer who sees local time gets the value converted to their time zone.</summary>
     [Fact]
-    public void ToViewerFormattedString_AdminViewer_ReturnsLocalTimeConvertedValue()
+    public void ToViewerFormattedString_ViewerSeesLocalTime_ReturnsLocalTimeConvertedValue()
     {
         var utcNoon = new DateTime(2025, 6, 15, 12, 0, 0, DateTimeKind.Utc);
 
-        string result = utcNoon.ToViewerFormattedString(Role.Admin, "Asia/Seoul");
+        string result = utcNoon.ToViewerFormattedString(viewerSeesLocalTime: true, "Asia/Seoul");
 
         Assert.Equal(utcNoon.ConvertTimeByTimeZoneIanaId("Asia/Seoul").ToString(CultureInfo.InvariantCulture), result);
     }
 
-    /// <summary>Verifies that User viewers see the value converted to their local time zone, same as Admin.</summary>
+    /// <summary>Verifies that a viewer who does not see local time gets the raw, unconverted UTC value in ISO-8601 form.</summary>
     [Fact]
-    public void ToViewerFormattedString_UserViewer_ReturnsLocalTimeConvertedValue()
+    public void ToViewerFormattedString_ViewerDoesNotSeeLocalTime_ReturnsRawUtcIso8601()
     {
         var utcNoon = new DateTime(2025, 6, 15, 12, 0, 0, DateTimeKind.Utc);
 
-        string result = utcNoon.ToViewerFormattedString(Role.User, "Asia/Seoul");
-
-        Assert.Equal(utcNoon.ConvertTimeByTimeZoneIanaId("Asia/Seoul").ToString(CultureInfo.InvariantCulture), result);
-    }
-
-    /// <summary>Verifies that Anonymous viewers see the raw, unconverted UTC value in ISO-8601 form.</summary>
-    [Fact]
-    public void ToViewerFormattedString_AnonymousViewer_ReturnsRawUtcIso8601()
-    {
-        var utcNoon = new DateTime(2025, 6, 15, 12, 0, 0, DateTimeKind.Utc);
-
-        string result = utcNoon.ToViewerFormattedString(Role.Anonymous, "Asia/Seoul");
-
-        Assert.Equal("2025-06-15T12:00:00Z", result);
-    }
-
-    /// <summary>Verifies that a null role is treated the same as Anonymous (raw UTC, not converted).</summary>
-    [Fact]
-    public void ToViewerFormattedString_NullRole_ReturnsRawUtcIso8601()
-    {
-        var utcNoon = new DateTime(2025, 6, 15, 12, 0, 0, DateTimeKind.Utc);
-
-        string result = utcNoon.ToViewerFormattedString(null, "Asia/Seoul");
+        string result = utcNoon.ToViewerFormattedString(viewerSeesLocalTime: false, "Asia/Seoul");
 
         Assert.Equal("2025-06-15T12:00:00Z", result);
     }

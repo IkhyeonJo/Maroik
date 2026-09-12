@@ -73,6 +73,7 @@
    ExpenditureClassPolicy; the form reads these instead of hardcoding the lists. *@
 @Html.Hidden("expenditureSubClassMap", JsonSerialization.ToClientJson(ExpenditureClassPolicy.SubClassesByMainClass))
 @Html.Hidden("expenditureDepositAssetSubClasses", JsonSerialization.ToClientJson(ExpenditureClassPolicy.DepositAssetSubClasses))
+@Html.Hidden("localizerFailedToLoadAmountLabel", Localizer["Failed to load the amount label."].Value)
 
 <section class="content">
     <div class="card card-primary">
@@ -131,29 +132,22 @@
                                 <label for="createExpenditureSubClass">@Localizer["SubClass"].Value</label>
                                 <br />
                                 <select id="createExpenditureSubClass" name="createExpenditureSubClass" class="form-control form-control-sm" style="max-width:100%;text-overflow:ellipsis;">
-                                    @*Regular Savings*@
-                                    <option value="Deposit" selected="selected">@Localizer["Deposit"].Value</option>
-                                    <option value="Investment">@Localizer["Investment"].Value</option>
-                                    @*Non-Consumer Spending*@
-                                    <option value="PublicPension" hidden="hidden">@Localizer["PublicPension"].Value</option>
-                                    <option value="DebtRepayment" hidden="hidden">@Localizer["DebtRepayment"].Value</option>
-                                    <option value="Tax" hidden="hidden">@Localizer["Tax"].Value</option>
-                                    <option value="SocialInsurance" hidden="hidden">@Localizer["SocialInsurance"].Value</option>
-                                    <option value="InterHouseholdTransferExpenses" hidden="hidden">@Localizer["InterHouseholdTransferExpenses"].Value</option>
-                                    <option value="NonProfitOrganizationTransfer" hidden="hidden">@Localizer["NonProfitOrganizationTransfer"].Value</option>
-                                    @*Consumer Spending*@
-                                    <option value="MealOrEatOutExpenses" hidden="hidden">@Localizer["식비/외식비"].Value</option>
-                                    <option value="HousingOrSuppliesCost" hidden="hidden">@Localizer["주거/용품비"].Value</option>
-                                    <option value="EducationExpenses" hidden="hidden">@Localizer["EducationExpenses"].Value</option>
-                                    <option value="MedicalExpenses" hidden="hidden">@Localizer["MedicalExpenses"].Value</option>
-                                    <option value="TransportationCost" hidden="hidden">@Localizer["TransportationCost"].Value</option>
-                                    <option value="CommunicationCost" hidden="hidden">@Localizer["CommunicationCost"].Value</option>
-                                    <option value="LeisureOrCulture" hidden="hidden">@Localizer["여가/문화"].Value</option>
-                                    <option value="ClothingOrShoes" hidden="hidden">@Localizer["의류/신발"].Value</option>
-                                    <option value="PinMoney" hidden="hidden">@Localizer["PinMoney"].Value</option>
-                                    <option value="ProtectionTypeInsurance" hidden="hidden">@Localizer["ProtectionTypeInsurance"].Value</option>
-                                    <option value="OtherExpenses" hidden="hidden">@Localizer["OtherExpenses"].Value</option>
-                                    <option value="UnknownExpenditure" hidden="hidden">@Localizer["UnknownExpenditure"].Value</option>
+                                    @* Options are rendered from ExpenditureClassPolicy.SubClassesByMainClass (the domain
+                                       policy backing ExpenditureClassPolicy.Validate) rather than hardcoded, so this list
+                                       can't drift out of sync with what the server actually accepts. Only the default
+                                       main class's (first key's) sub-classes start visible/selected; ChangeCreate*MainClass
+                                       (site.ts) reveals the rest when the user picks a different main class. *@
+                                    @{
+                                        string createExpenditureDefaultMainClass = ExpenditureClassPolicy.SubClassesByMainClass.Keys.First();
+                                        string createExpenditureDefaultSubClass = ExpenditureClassPolicy.SubClassesByMainClass[createExpenditureDefaultMainClass][0];
+                                    }
+                                    @foreach ((string mainClass, IReadOnlyList<string> subClasses) in ExpenditureClassPolicy.SubClassesByMainClass)
+                                    {
+                                        foreach (string subClass in subClasses)
+                                        {
+                                            <option value="@subClass" hidden="@(mainClass == createExpenditureDefaultMainClass ? null : "hidden")" selected="@(subClass == createExpenditureDefaultSubClass ? "selected" : null)">@Localizer[subClass].Value</option>
+                                        }
+                                    }
                                 </select>
                             </div>
                         </div>
@@ -300,29 +294,18 @@
                                 <label for="editExpenditureSubClass">@Localizer["SubClass"].Value</label>
                                 <br />
                                 <select id="editExpenditureSubClass" name="editExpenditureSubClass" class="form-control form-control-sm" style="max-width:100%;text-overflow:ellipsis;">
-                                    @*Regular Savings*@
-                                    <option value="Deposit" selected="selected">@Localizer["Deposit"].Value</option>
-                                    <option value="Investment">@Localizer["Investment"].Value</option>
-                                    @*Non-Consumer Spending*@
-                                    <option value="PublicPension" hidden="hidden">@Localizer["PublicPension"].Value</option>
-                                    <option value="DebtRepayment" hidden="hidden">@Localizer["DebtRepayment"].Value</option>
-                                    <option value="Tax" hidden="hidden">@Localizer["Tax"].Value</option>
-                                    <option value="SocialInsurance" hidden="hidden">@Localizer["SocialInsurance"].Value</option>
-                                    <option value="InterHouseholdTransferExpenses" hidden="hidden">@Localizer["InterHouseholdTransferExpenses"].Value</option>
-                                    <option value="NonProfitOrganizationTransfer" hidden="hidden">@Localizer["NonProfitOrganizationTransfer"].Value</option>
-                                    @*Consumer Spending*@
-                                    <option value="MealOrEatOutExpenses" hidden="hidden">@Localizer["식비/외식비"].Value</option>
-                                    <option value="HousingOrSuppliesCost" hidden="hidden">@Localizer["주거/용품비"].Value</option>
-                                    <option value="EducationExpenses" hidden="hidden">@Localizer["EducationExpenses"].Value</option>
-                                    <option value="MedicalExpenses" hidden="hidden">@Localizer["MedicalExpenses"].Value</option>
-                                    <option value="TransportationCost" hidden="hidden">@Localizer["TransportationCost"].Value</option>
-                                    <option value="CommunicationCost" hidden="hidden">@Localizer["CommunicationCost"].Value</option>
-                                    <option value="LeisureOrCulture" hidden="hidden">@Localizer["여가/문화"].Value</option>
-                                    <option value="ClothingOrShoes" hidden="hidden">@Localizer["의류/신발"].Value</option>
-                                    <option value="PinMoney" hidden="hidden">@Localizer["PinMoney"].Value</option>
-                                    <option value="ProtectionTypeInsurance" hidden="hidden">@Localizer["ProtectionTypeInsurance"].Value</option>
-                                    <option value="OtherExpenses" hidden="hidden">@Localizer["OtherExpenses"].Value</option>
-                                    <option value="UnknownExpenditure" hidden="hidden">@Localizer["UnknownExpenditure"].Value</option>
+                                    @* See createExpenditureSubClass above for why these options are policy-generated. *@
+                                    @{
+                                        string editExpenditureDefaultMainClass = ExpenditureClassPolicy.SubClassesByMainClass.Keys.First();
+                                        string editExpenditureDefaultSubClass = ExpenditureClassPolicy.SubClassesByMainClass[editExpenditureDefaultMainClass][0];
+                                    }
+                                    @foreach ((string mainClass, IReadOnlyList<string> subClasses) in ExpenditureClassPolicy.SubClassesByMainClass)
+                                    {
+                                        foreach (string subClass in subClasses)
+                                        {
+                                            <option value="@subClass" hidden="@(mainClass == editExpenditureDefaultMainClass ? null : "hidden")" selected="@(subClass == editExpenditureDefaultSubClass ? "selected" : null)">@Localizer[subClass].Value</option>
+                                        }
+                                    }
                                 </select>
                             </div>
                         </div>

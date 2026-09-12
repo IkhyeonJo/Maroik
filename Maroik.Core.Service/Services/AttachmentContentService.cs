@@ -103,10 +103,13 @@ public class AttachmentContentService(
             }
             catch (Exception ex)
             {
-                // A missing/unreachable image must not fail the whole post/event render — skip just
-                // this <img> tag's patch, same graceful-degradation contract as DownloadFileAsync.
+                // A missing/unreachable image must not fail the whole post/event render — drop just
+                // this <img> tag rather than leave its patch untouched: a null patch here would leave
+                // the plaintext storage path sitting in `alt` (it's only ever re-encrypted by the
+                // NewAlt patch above), exposing internal storage layout to the client. Remove: true
+                // is the same graceful-degradation contract as DownloadFileAsync, minus the leak.
                 logger.LogError(ex, "Failed to download image {FilePath} while preparing HTML for display", alt);
-                return null;
+                return new HtmlImgPatch(Remove: true);
             }
         }, ct);
     }

@@ -391,6 +391,100 @@ public class CalendarServiceTests
         _sharedRepo.Verify(r => r.CreateAsync(It.Is<CalendarShared>(s => s.Id == 3), It.IsAny<CancellationToken>()), Times.Once);
     }
 
+    // -- GetCalendarSharedSummariesAsync ---------------------------------------
+
+    /// <summary>
+    /// Verifies that <c>GetCalendarSharedSummariesAsync</c> joins the account's own calendars with
+    /// their sharing status and backfills any missing CalendarShared row first.
+    /// </summary>
+    [Fact]
+    public async Task GetCalendarSharedSummariesAsync_ReturnsOwnedCalendars_JoinedWithSharingStatus()
+    {
+        const string email = "user@example.com";
+        _calendarRepo.Setup(r => r.GetByAccountEmailAsync(email, It.IsAny<CancellationToken>()))
+            .ReturnsAsync([MakeCalendar(id: 1, name: "Personal", email: email)]);
+        _sharedRepo.Setup(r => r.GetAllAsync(It.IsAny<CancellationToken>()))
+            .ReturnsAsync([CalendarShared.Reconstitute(1, true, false)]);
+        var sut = CreateSut();
+
+        List<CalendarSharedSummaryResponse> result =
+            await sut.GetCalendarSharedSummariesAsync(email, TestContext.Current.CancellationToken);
+
+        CalendarSharedSummaryResponse only = Assert.Single(result);
+        Assert.Equal(1, only.Id);
+        Assert.Equal("Personal", only.Name);
+        Assert.True(only.User);
+        Assert.False(only.Guest);
+    }
+
+    /// <summary>
+    /// Verifies that <c>GetCalendarSharedSummariesAsync</c> excludes another account's calendars
+    /// even when that calendar has a sharing row — the join is keyed off the caller's own
+    /// calendars, not off every CalendarShared row.
+    /// </summary>
+    [Fact]
+    public async Task GetCalendarSharedSummariesAsync_ExcludesCalendarsNotOwnedByAccount()
+    {
+        const string email = "user@example.com";
+        _calendarRepo.Setup(r => r.GetByAccountEmailAsync(email, It.IsAny<CancellationToken>())).ReturnsAsync([]);
+        _sharedRepo.Setup(r => r.GetAllAsync(It.IsAny<CancellationToken>()))
+            .ReturnsAsync([CalendarShared.Reconstitute(99, true, true)]);
+        var sut = CreateSut();
+
+        List<CalendarSharedSummaryResponse> result =
+            await sut.GetCalendarSharedSummariesAsync(email, TestContext.Current.CancellationToken);
+
+        Assert.Empty(result);
+    }
+
+    // -- GetBrowseCalendarsOfInterestAsync -------------------------------------
+
+    /// <summary>
+    /// Verifies that <c>GetBrowseCalendarsOfInterestAsync</c> only returns calendars shared with
+    /// registered users, and correctly flags one the account is already subscribed to.
+    /// </summary>
+    [Fact]
+    public async Task GetBrowseCalendarsOfInterestAsync_FlagsAlreadySubscribedCalendar()
+    {
+        const string email = "user@example.com";
+        _calendarRepo.Setup(r => r.GetAllOrderedByNameAsync(It.IsAny<CancellationToken>()))
+            .ReturnsAsync([MakeCalendar(id: 1, name: "Shared A"), MakeCalendar(id: 2, name: "Shared B")]);
+        _sharedRepo.Setup(r => r.GetAllAsync(It.IsAny<CancellationToken>()))
+            .ReturnsAsync([CalendarShared.Reconstitute(1, true, false), CalendarShared.Reconstitute(2, true, false)]);
+        _otherCalendarRepo.Setup(r => r.GetByAccountEmailAsync(email, It.IsAny<CancellationToken>()))
+            .ReturnsAsync([OtherCalendar.Reconstitute(email, 1)]);
+        var sut = CreateSut();
+
+        List<CalendarBrowseSummaryResponse> result =
+            await sut.GetBrowseCalendarsOfInterestAsync(email, TestContext.Current.CancellationToken);
+
+        Assert.Equal(2, result.Count);
+        Assert.True(result.Single(x => x.Id == 1).Checked);
+        Assert.False(result.Single(x => x.Id == 2).Checked);
+    }
+
+    /// <summary>
+    /// Verifies that <c>GetBrowseCalendarsOfInterestAsync</c> excludes a calendar shared only with
+    /// anonymous visitors (User = false), matching the controller's prior <c>.Where(x =&gt; x.User)</c>
+    /// pre-filter.
+    /// </summary>
+    [Fact]
+    public async Task GetBrowseCalendarsOfInterestAsync_ExcludesCalendarSharedOnlyWithAnonymousVisitors()
+    {
+        const string email = "user@example.com";
+        _calendarRepo.Setup(r => r.GetAllOrderedByNameAsync(It.IsAny<CancellationToken>()))
+            .ReturnsAsync([MakeCalendar(id: 1, name: "GuestOnly")]);
+        _sharedRepo.Setup(r => r.GetAllAsync(It.IsAny<CancellationToken>()))
+            .ReturnsAsync([CalendarShared.Reconstitute(1, false, true)]);
+        _otherCalendarRepo.Setup(r => r.GetByAccountEmailAsync(email, It.IsAny<CancellationToken>())).ReturnsAsync([]);
+        var sut = CreateSut();
+
+        List<CalendarBrowseSummaryResponse> result =
+            await sut.GetBrowseCalendarsOfInterestAsync(email, TestContext.Current.CancellationToken);
+
+        Assert.Empty(result);
+    }
+
     // -- CreateCalendarEventAsync ---------------------------------------------
 
     /// <summary>Verifies that <c>CreateCalendarEventAsync</c> returns fail when calendar not found.</summary>

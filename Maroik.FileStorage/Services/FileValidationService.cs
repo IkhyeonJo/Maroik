@@ -36,7 +36,7 @@ public class FileValidationService(IClamavClient clamavClient, IOptions<FileStor
         if (!_allowedExtensions.Contains(ext))
             return (false, "Unsupported file extension.");
 
-        if (file.Length > FileStorageSetting.MaxAttachedFileSizeBytes)
+        if (file.Length > settings.Value.MaxAttachedFileSizeBytes)
             return (false, "File too large.");
 
         using var memStream = new MemoryStream();

@@ -29,10 +29,30 @@
  * re-bound with `.off().on()`.
  */
 (function () {
+    // Escapes text before it's interpolated into a raw HTML template literal (as opposed to
+    // jQuery .text()/.attr(), which already escape on their own). Calendar names are free text a
+    // calendar owner controls; the CSP (script-src with no 'unsafe-inline') already blocks any
+    // injected markup from executing script, but nothing there stops HTML injection (broken
+    // layout, a same-origin phishing overlay) into another viewer's page — escape at the point of
+    // insertion instead of relying solely on the response header.
+    function escapeHtml(value: string): string {
+        return value.replace(/[&<>"']/g, function (ch) {
+            switch (ch) {
+                case '&': return '&amp;';
+                case '<': return '&lt;';
+                case '>': return '&gt;';
+                case '"': return '&quot;';
+                default: return '&#39;';
+            }
+        });
+    }
+
     // --- Element cache: every field of the create/edit-calendar,
     // create/edit/view-event and browse-calendars modals, plus the two event
     // popups ("My" and "Other") and the anti-forgery input.
     const $__RequestVerificationToken = $('input[name="__RequestVerificationToken"]');
+    // Authoritative in ServerSetting.MaxAttachedFileSizeBytes (server); mirrored here for form UX
+    // only. 10485760 (10 MB) is a fallback if the hidden field is missing or unparseable.
     const maxFileSize = parseInt($('#maxAttachedFileSizeBytes').val() as string) || 10485760;
     // Authoritative in CalendarReminderPolicy (server); rendered into hidden inputs by the view.
     const maxMinutesBeforeEvent = parseInt($('#maxMinutesBeforeEvent').val() as string, 10);
@@ -2377,7 +2397,7 @@
                 if (data.result) {
                     $createCalendarDialogModal.modal('hide');
 
-                    $myCalendars.append(`<label id="lblCalendar${data.calendar.id}" style="position: relative; border:1px solid #ccc; padding:10px; margin:0 0 10px; display:block"><input type="checkbox" style="accent-color:${data.calendar.htmlColorCode}" checked /><label style="padding-left:0.5em;"> ${data.calendar.name}</label><i id="${data.calendar.id}" class="edit-calendar fas fa-edit" style="position: absolute; right: 40px; top: 50%; transform: translateY(-50%); cursor: pointer;"></i><i id="${data.calendar.id}" class="delete-calendar fas fa-trash" style="position: absolute; right: 15px; top: 50%; transform: translateY(-50%); cursor: pointer;"></i></label>`);
+                    $myCalendars.append(`<label id="lblCalendar${data.calendar.id}" style="position: relative; border:1px solid #ccc; padding:10px; margin:0 0 10px; display:block"><input type="checkbox" style="accent-color:${data.calendar.htmlColorCode}" checked /><label style="padding-left:0.5em;"> ${escapeHtml(data.calendar.name)}</label><i id="${data.calendar.id}" class="edit-calendar fas fa-edit" style="position: absolute; right: 40px; top: 50%; transform: translateY(-50%); cursor: pointer;"></i><i id="${data.calendar.id}" class="delete-calendar fas fa-trash" style="position: absolute; right: 15px; top: 50%; transform: translateY(-50%); cursor: pointer;"></i></label>`);
 
                     let calendars = $myCalendars.find('label[id^="lblCalendar"]').get();
 
@@ -2677,7 +2697,7 @@
                                     <input class="form-control form-control-sm checkBoxBrowseCalendarsOfInterest" type="checkbox" ${browseCalendarsOfInterest.checked === true ? "checked" : ""}/>
                                 </div>
                                 <div class="form-group col-md-9 mb-9 text-center">
-                                    <label style="word-break: break-all;">${browseCalendarsOfInterest.name}</label>
+                                    <label style="word-break: break-all;">${escapeHtml(browseCalendarsOfInterest.name)}</label>
                                 </div>
                             </div>
                         `;
@@ -2743,7 +2763,7 @@
                                     htmlString += String.raw`
                                         <label id="lblOtherCalendar${otherCalendar.id}" style="position: relative; border:1px solid #ccc; padding:10px; margin:0 0 10px; display:block">
                                             <input type="checkbox" class="chkOtherCalendar" style="accent-color:${otherCalendar.htmlColorCode}" checked />
-                                            <label style="padding-left:0.3em;">${otherCalendar.name}</label>
+                                            <label style="padding-left:0.3em;">${escapeHtml(otherCalendar.name)}</label>
                                         </label>
                                     `;
                                 });

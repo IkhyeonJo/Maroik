@@ -39,6 +39,7 @@
     const $formEditFixedExpenditure = $('#formEditFixedExpenditure');
     const $confirmDeleteFixedExpenditureDialogModal = $('#confirmDeleteFixedExpenditureDialogModal');
     const $__RequestVerificationToken = $('input[name="__RequestVerificationToken"]');
+    const failedToLoadAmountLabelMessage = $('#localizerFailedToLoadAmountLabel').val() as string;
     const $createFixedExpenditureDialogModal = $('#createFixedExpenditureDialogModal');
     const $createFixedExpenditurePaymentMethod = $('#createFixedExpenditurePaymentMethod');
     const $editFixedExpenditurePaymentMethod = $('#editFixedExpenditurePaymentMethod');
@@ -711,6 +712,9 @@
                 else {
                     $labelCreateFixedExpenditureAmount.text(data.label);
                 }
+            },
+            error: function () {
+                toastr.error(failedToLoadAmountLabelMessage);
             }
         });
     }
@@ -731,6 +735,9 @@
                 else {
                     $labelEditFixedExpenditureAmount.text(data.label);
                 }
+            },
+            error: function () {
+                toastr.error(failedToLoadAmountLabelMessage);
             }
         });
     }

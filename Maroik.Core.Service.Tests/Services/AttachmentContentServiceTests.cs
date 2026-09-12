@@ -288,6 +288,33 @@ public class AttachmentContentServiceTests
         Assert.Equal("<html/>", html);
     }
 
+    /// <summary>
+    /// When the file-storage download fails (transient outage, missing blob, …) the patch must
+    /// mark the tag for removal rather than returning null: a null patch leaves the tag's `alt`
+    /// untouched, which is still the plaintext storage path at that point, so it would leak the
+    /// internal storage layout to the client instead of degrading gracefully.
+    /// </summary>
+    [Fact]
+    public async Task PrepareHtmlForDisplayAsync_PatchFactory_MarksImageForRemoval_WhenDownloadFails()
+    {
+        Func<string, CancellationToken, Task<HtmlImgPatch?>>? capturedFactory = null;
+        _htmlParser.Setup(p => p.TransformImageAttributesAsync(
+                It.IsAny<string>(), It.IsAny<Func<string, CancellationToken, Task<HtmlImgPatch?>>>(), It.IsAny<CancellationToken>()))
+            .Callback<string, Func<string, CancellationToken, Task<HtmlImgPatch?>>, CancellationToken>(
+                (_, factory, _) => capturedFactory = factory)
+            .ReturnsAsync(("<html/>", true));
+        _fileClient.Setup(f => f.DownloadAsync("upload/img.png", It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new InvalidOperationException("storage unreachable"));
+
+        await CreateSut().PrepareHtmlForDisplayAsync("<html/>", TestContext.Current.CancellationToken);
+
+        Assert.NotNull(capturedFactory);
+        HtmlImgPatch? patch = await capturedFactory!("upload/img.png", TestContext.Current.CancellationToken);
+        Assert.NotNull(patch);
+        Assert.True(patch!.Remove);
+        Assert.Null(patch.NewAlt);
+    }
+
     // -- SanitizeAndDecryptContent ---------------------------------------------------
 
     /// <summary>

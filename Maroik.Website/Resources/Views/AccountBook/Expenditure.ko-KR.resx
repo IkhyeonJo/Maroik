@@ -153,6 +153,9 @@
   <data name="EXCEL" xml:space="preserve">
     <value>엑셀</value>
   </data>
+  <data name="Failed to load the amount label." xml:space="preserve">
+    <value>금액 라벨을 불러오지 못했습니다.</value>
+  </data>
   <data name="Hour" xml:space="preserve">
     <value>시</value>
   </data>
@@ -207,7 +210,7 @@
   <data name="OtherExpenses" xml:space="preserve">
     <value>기타지출</value>
   </data>
-  <data name="내자산이체" xml:space="preserve">
+  <data name="MyAssetTransfer" xml:space="preserve">
     <value>내자산이체</value>
   </data>
   <data name="UnknownExpenditure" xml:space="preserve">
@@ -234,10 +237,10 @@
   <data name="ConsumerSpending" xml:space="preserve">
     <value>소비지출</value>
   </data>
-  <data name="식비/외식비" xml:space="preserve">
+  <data name="MealOrEatOutExpenses" xml:space="preserve">
     <value>식비/외식비</value>
   </data>
-  <data name="여가/문화" xml:space="preserve">
+  <data name="LeisureOrCulture" xml:space="preserve">
     <value>여가/문화</value>
   </data>
   <data name="Deposit" xml:space="preserve">
@@ -249,13 +252,13 @@
   <data name="MedicalExpenses" xml:space="preserve">
     <value>의료비</value>
   </data>
-  <data name="의류/신발" xml:space="preserve">
+  <data name="ClothingOrShoes" xml:space="preserve">
     <value>의류/신발</value>
   </data>
   <data name="RegularSavings" xml:space="preserve">
     <value>정기저축</value>
   </data>
-  <data name="주거/용품비" xml:space="preserve">
+  <data name="HousingOrSuppliesCost" xml:space="preserve">
     <value>주거/용품비</value>
   </data>
   <data name="CommunicationCost" xml:space="preserve">

@@ -10,6 +10,7 @@ function fixture(): string {
     antiForgery +
     hidden("expenditureSubClassMap", JSON.stringify(subClassMap).replace(/"/g, "&quot;")) +
     hidden("expenditureDepositAssetSubClasses", JSON.stringify(depositAssetSubClasses).replace(/"/g, "&quot;")) +
+    hidden("localizerFailedToLoadAmountLabel", "Failed to load the amount label.") +
     `<div id="createExpenditureTabs"></div><div id="editExpenditureTabs"></div>
      <input id="createExpenditureDate" value="2024-05-04" /><input id="editExpenditureDate" /><input id="gridSearch" />
      <select id="createExpenditureMainClass"><option value="Living">Living</option><option value="Transfer">Transfer</option></select>
@@ -22,7 +23,8 @@ function fixture(): string {
      <button id="btnEditExpenditureGridRow"></button><button id="btnConfirmDeleteExpenditure"></button>
      <button id="btnDeleteExpenditure"></button>
      <select id="createExpenditurePaymentMethod"><option value="Card" selected>Card</option></select>
-     <select id="editExpenditurePaymentMethod"></select>`
+     <select id="editExpenditurePaymentMethod"><option value="Card">Card</option><option value="Cash">Cash</option></select>
+     <span id="labelCreateExpenditureAmount"></span><span id="labelEditExpenditureAmount"></span>`
   );
 }
 
@@ -48,5 +50,28 @@ describe("AccountBook/Expenditure", () => {
     const h = loadSite("user", "AccountBook", "Expenditure", fixture());
     h.$("#btnExportExcelExpenditure").trigger("click");
     expect(h.submittedForms.at(-1)!.action).toContain("/AccountBook/ExportExcelExpenditure");
+  });
+
+  it("shows a toastr error when the create-form amount-label lookup fails", () => {
+    const h = loadSite("user", "AccountBook", "Expenditure", fixture());
+    // loadSite's onload $(function(){...}) already fired one GetExpenditureAmountLabel lookup
+    // for the preselected create-form payment method.
+    const call = h.ajaxCalls.find((c) => String(c.url).includes("GetExpenditureAmountLabel"));
+
+    call?.error?.();
+
+    expect(h.toastr.error).toHaveBeenCalledWith("Failed to load the amount label.");
+  });
+
+  it("shows a toastr error when the edit-form amount-label lookup fails", () => {
+    const h = loadSite("user", "AccountBook", "Expenditure", fixture());
+
+    h.$("#editExpenditurePaymentMethod").val("Cash").trigger("change");
+    const call = h.lastAjax();
+    expect(call.url).toContain("GetExpenditureAmountLabel");
+
+    call.error?.();
+
+    expect(h.toastr.error).toHaveBeenCalledWith("Failed to load the amount label.");
   });
 });

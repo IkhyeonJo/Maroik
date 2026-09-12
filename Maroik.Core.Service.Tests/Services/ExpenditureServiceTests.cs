@@ -293,6 +293,30 @@ public class ExpenditureServiceTests
         Assert.Contains("deleted", result.ErrorKey, StringComparison.OrdinalIgnoreCase);
     }
 
+    /// <summary>
+    /// Verifies that <c>UpdateAsync</c> fails fast with AssetNotFound when the request retargets a
+    /// non-transfer expenditure's payment method to an asset name that doesn't exist, instead of
+    /// silently persisting the update and only failing later inside AdjustAssetBalancesAsync.
+    /// </summary>
+    [Fact]
+    public async Task UpdateAsync_ReturnsFail_WhenNewPaymentAssetNotFound()
+    {
+        const string email = "user@example.com";
+        var previous = Expenditure.Reconstitute(1, email, "ConsumerSpending", "MealOrEatOutExpenses", null, 50m, "KRW", "Wallet", "", null, DateTime.UtcNow, DateTime.UtcNow);
+        _expenditureRepo.Setup(r => r.GetByAccountEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(new List<Expenditure> { previous });
+        _assetBalance.Setup(r => r.GetAssetAsync(email, "Wallet", It.IsAny<CancellationToken>())).ReturnsAsync(MakeAsset("Wallet"));
+        _assetBalance.Setup(r => r.GetAssetAsync(email, "GhostWallet", It.IsAny<CancellationToken>())).ReturnsAsync((Asset?)null);
+        var sut = CreateSut();
+
+        var request = ConsumerRequest("GhostWallet", 100m);
+        request.Id = 1;
+        ServiceResult result = await sut.UpdateAsync(email, request, TestContext.Current.CancellationToken);
+
+        Assert.False(result.Success);
+        _expenditureRepo.Verify(r => r.UpdateEntityAsync(It.IsAny<Expenditure>(), It.IsAny<CancellationToken>()), Times.Never);
+        _unitOfWork.Verify(u => u.RollbackAsync(It.IsAny<CancellationToken>()), Times.Once);
+    }
+
     /// <summary>Verifies that <c>UpdateAsync</c> adjusts asset balance for consumer spending amount change.</summary>
     [Fact]
     public async Task UpdateAsync_AdjustsAssetBalance_ForConsumerSpendingAmountChange()

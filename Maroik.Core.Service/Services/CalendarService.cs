@@ -174,6 +174,55 @@ public class CalendarService(
     }
 
     /// <inheritdoc />
+    public async Task<List<CalendarSharedSummaryResponse>> GetCalendarSharedSummariesAsync(string accountEmail, CancellationToken ct = default)
+    {
+        List<CalendarResponse> calendars = await GetCalendarsAsync(accountEmail, ct);
+
+        // A CalendarShared row may not exist yet for calendars created before sharing was
+        // configured, so backfill any missing ones (single query) before reading the list below.
+        await EnsureCalendarSharedAsync(calendars.Select(c => c.Id), ct);
+
+        List<CalendarSharedResponse> allShared = await GetCalendarSharedAsync(ct);
+
+        return
+        [
+            .. (from calendar in calendars
+                join sharedCalendar in allShared on calendar.Id equals sharedCalendar.CalendarId
+                select new CalendarSharedSummaryResponse
+                {
+                    Id = sharedCalendar.CalendarId,
+                    Name = calendar.Name,
+                    User = sharedCalendar.User,
+                    Guest = sharedCalendar.Anonymous
+                })
+            .OrderBy(x => x.Name)
+        ];
+    }
+
+    /// <inheritdoc />
+    public async Task<List<CalendarBrowseSummaryResponse>> GetBrowseCalendarsOfInterestAsync(string accountEmail, CancellationToken ct = default)
+    {
+        List<CalendarResponse> allCalendars = await GetAllCalendarsAsync(ct);
+        List<CalendarSharedResponse> userSharedCalendars = [.. (await GetCalendarSharedAsync(ct)).Where(x => x.User)];
+        List<OtherCalendarResponse> subscriptions = await GetOtherCalendarsAsync(accountEmail, ct);
+
+        return
+        [
+            .. (from calendar in allCalendars
+                join calendarShared in userSharedCalendars on calendar.Id equals calendarShared.CalendarId
+                join subscription in subscriptions on calendar.Id equals subscription.CalendarId into subscriptionGroup
+                from subscription in subscriptionGroup.DefaultIfEmpty()
+                select new CalendarBrowseSummaryResponse
+                {
+                    Id = calendar.Id,
+                    Name = calendar.Name,
+                    Checked = subscription != null
+                })
+            .OrderBy(x => x.Name)
+        ];
+    }
+
+    /// <inheritdoc />
     public async Task<ServiceResult> CreateCalendarAsync(string accountEmail, CalendarRequest request, CancellationToken ct = default)
     {
         await unitOfWork.BeginAsync(ct);

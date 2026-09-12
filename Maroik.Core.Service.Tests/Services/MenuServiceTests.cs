@@ -60,6 +60,78 @@ public class MenuServiceTests
         Assert.Single(result);
     }
 
+    // -- SearchCategoriesAsync -------------------------------------------------
+
+    /// <summary>Verifies that <c>SearchCategoriesAsync</c> returns every category when the search text is empty.</summary>
+    [Fact]
+    public async Task SearchCategoriesAsync_ReturnsAll_WhenSearchIsEmpty()
+    {
+        _categoryRepo.Setup(r => r.GetAllAsync(It.IsAny<CancellationToken>()))
+            .ReturnsAsync([MakeCategory(1, "Forum"), MakeCategory(2, "Calendar")]);
+        var sut = CreateSut();
+
+        IEnumerable<CategoryResponse> result = await sut.SearchCategoriesAsync(null, TestContext.Current.CancellationToken);
+
+        Assert.Equal(2, result.Count());
+    }
+
+    /// <summary>Verifies that <c>SearchCategoriesAsync</c> filters by a substring match on Name.</summary>
+    [Fact]
+    public async Task SearchCategoriesAsync_FiltersByNameSubstring()
+    {
+        _categoryRepo.Setup(r => r.GetAllAsync(It.IsAny<CancellationToken>()))
+            .ReturnsAsync([MakeCategory(1, "Forum"), MakeCategory(2, "Calendar")]);
+        var sut = CreateSut();
+
+        IEnumerable<CategoryResponse> result = await sut.SearchCategoriesAsync("Cal", TestContext.Current.CancellationToken);
+
+        CategoryResponse only = Assert.Single(result);
+        Assert.Equal("Calendar", only.Name);
+    }
+
+    /// <summary>Verifies that <c>SearchCategoriesAsync</c> also matches a substring of the numeric Id.</summary>
+    [Fact]
+    public async Task SearchCategoriesAsync_FiltersByIdSubstring()
+    {
+        _categoryRepo.Setup(r => r.GetAllAsync(It.IsAny<CancellationToken>()))
+            .ReturnsAsync([MakeCategory(1, "Forum"), MakeCategory(42, "Calendar")]);
+        var sut = CreateSut();
+
+        IEnumerable<CategoryResponse> result = await sut.SearchCategoriesAsync("42", TestContext.Current.CancellationToken);
+
+        CategoryResponse only = Assert.Single(result);
+        Assert.Equal(42, only.Id);
+    }
+
+    // -- SearchSubCategoriesAsync -----------------------------------------------
+
+    /// <summary>Verifies that <c>SearchSubCategoriesAsync</c> returns every sub-category when the search text is empty.</summary>
+    [Fact]
+    public async Task SearchSubCategoriesAsync_ReturnsAll_WhenSearchIsEmpty()
+    {
+        _subCategoryRepo.Setup(r => r.GetAllAsync(It.IsAny<CancellationToken>()))
+            .ReturnsAsync([MakeSubCategory(1, BoardTypes.FreeForum), MakeSubCategory(2, BoardTypes.PrivateNote)]);
+        var sut = CreateSut();
+
+        IEnumerable<SubCategoryResponse> result = await sut.SearchSubCategoriesAsync("", TestContext.Current.CancellationToken);
+
+        Assert.Equal(2, result.Count());
+    }
+
+    /// <summary>Verifies that <c>SearchSubCategoriesAsync</c> filters by a substring match on Name.</summary>
+    [Fact]
+    public async Task SearchSubCategoriesAsync_FiltersByNameSubstring()
+    {
+        _subCategoryRepo.Setup(r => r.GetAllAsync(It.IsAny<CancellationToken>()))
+            .ReturnsAsync([MakeSubCategory(1, BoardTypes.FreeForum), MakeSubCategory(2, BoardTypes.PrivateNote)]);
+        var sut = CreateSut();
+
+        IEnumerable<SubCategoryResponse> result = await sut.SearchSubCategoriesAsync(BoardTypes.PrivateNote, TestContext.Current.CancellationToken);
+
+        SubCategoryResponse only = Assert.Single(result);
+        Assert.Equal(BoardTypes.PrivateNote, only.Name);
+    }
+
     // -- GetCategoryByIdAsync -------------------------------------------------
 
     /// <summary>Verifies that <c>GetCategoryByIdAsync</c> returns category when found.</summary>

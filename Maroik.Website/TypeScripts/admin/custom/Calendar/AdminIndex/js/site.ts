@@ -27,6 +27,24 @@
  * handler is namespaced `.AdminIndex` and re-bound with `.off().on()`.
  */
 (function () {
+    // Escapes text before it's interpolated into a raw HTML template literal (as opposed to
+    // jQuery .text()/.attr(), which already escape on their own). Calendar names are free text a
+    // calendar owner controls; the CSP (script-src with no 'unsafe-inline') already blocks any
+    // injected markup from executing script, but nothing there stops HTML injection (broken
+    // layout, a same-origin phishing overlay) into another viewer's page — escape at the point of
+    // insertion instead of relying solely on the response header.
+    function escapeHtml(value: string): string {
+        return value.replace(/[&<>"']/g, function (ch) {
+            switch (ch) {
+                case '&': return '&amp;';
+                case '<': return '&lt;';
+                case '>': return '&gt;';
+                case '"': return '&quot;';
+                default: return '&#39;';
+            }
+        });
+    }
+
     // --- Element cache: every field of the create/edit-calendar,
     // create/edit-event and share modals, plus the event popup and the
     // anti-forgery input. (Names mirror the ids one-to-one.)
@@ -125,6 +143,8 @@
     const $dropdownContent = $('#dropdown-content');
     const $dropdownIcon = $('#dropdown-icon');
     const $__RequestVerificationToken = $('input[name="__RequestVerificationToken"]');
+    // Authoritative in ServerSetting.MaxAttachedFileSizeBytes (server); mirrored here for form UX
+    // only. 10485760 (10 MB) is a fallback if the hidden field is missing or unparseable.
     const maxFileSize = parseInt($('#maxAttachedFileSizeBytes').val() as string) || 10485760;
     // Authoritative in CalendarReminderPolicy (server); rendered into hidden inputs by the view.
     const maxMinutesBeforeEvent = parseInt($('#maxMinutesBeforeEvent').val() as string, 10);
@@ -1997,7 +2017,7 @@
                 if (data.result) {
                     $createCalendarDialogModal.modal('hide');
 
-                    $myCalendars.append(`<label id='lblCalendar${data.calendar.id}' style='position: relative; border:1px solid #ccc; padding:10px; margin:0 0 10px; display:block'><input type='checkbox' style='accent-color:${data.calendar.htmlColorCode}' checked /><label style='padding-left:0.5em;'> ${data.calendar.name}</label><i id='${data.calendar.id}' class='edit-calendar fas fa-edit' style='position: absolute; right: 40px; top: 50%; transform: translateY(-50%); cursor: pointer;'></i><i id='${data.calendar.id}' class='delete-calendar fas fa-trash' style='position: absolute; right: 15px; top: 50%; transform: translateY(-50%); cursor: pointer;'></i></label>`);
+                    $myCalendars.append(`<label id='lblCalendar${data.calendar.id}' style='position: relative; border:1px solid #ccc; padding:10px; margin:0 0 10px; display:block'><input type='checkbox' style='accent-color:${data.calendar.htmlColorCode}' checked /><label style='padding-left:0.5em;'> ${escapeHtml(data.calendar.name)}</label><i id='${data.calendar.id}' class='edit-calendar fas fa-edit' style='position: absolute; right: 40px; top: 50%; transform: translateY(-50%); cursor: pointer;'></i><i id='${data.calendar.id}' class='delete-calendar fas fa-trash' style='position: absolute; right: 15px; top: 50%; transform: translateY(-50%); cursor: pointer;'></i></label>`);
 
                     let calendars = $myCalendars.find('label[id^="lblCalendar"]').get();
 
@@ -2296,7 +2316,7 @@
                         htmlString += String.raw`
                             <div class='form-row setCalendarShared' style='margin-top: 20px;'>
                                 <div id='divSetCalendarShared${setCalendarShared.id}' class='form-group col-md-4 mb-4 text-center'>
-                                    <label class='shareToCalendar' style='word-break: break-all;'>${setCalendarShared.name}</label>
+                                    <label class='shareToCalendar' style='word-break: break-all;'>${escapeHtml(setCalendarShared.name)}</label>
                                 </div>
                                 <div class='form-group col-md-4 mb-4 text-center'>
                                     <input class='form-control form-control-sm shareToUser' type='checkbox' ${setCalendarShared.user === true ? 'checked' : ''}/>
