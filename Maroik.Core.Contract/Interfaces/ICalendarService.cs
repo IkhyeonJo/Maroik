@@ -16,9 +16,10 @@ public interface ICalendarService
 
     /// <summary>
     /// Returns all events belonging to any of the given calendars, fetched in a single query
-    /// and grouped by calendar ID for per-calendar lookup.
+    /// and grouped by calendar ID for per-calendar lookup. A calendar ID with no events is not
+    /// present as a key — look it up with <c>GetValueOrDefault(id, [])</c>.
     /// </summary>
-    Task<ILookup<long, CalendarEventResponse>> GetCalendarEventsAsync(IEnumerable<long> calendarIds, CancellationToken ct = default);
+    Task<IReadOnlyDictionary<long, List<CalendarEventResponse>>> GetCalendarEventsAsync(IEnumerable<long> calendarIds, CancellationToken ct = default);
 
     /// <summary>Returns a single calendar event by ID, or null.</summary>
     Task<CalendarEventResponse?> GetCalendarEventAsync(long id, CancellationToken ct = default);

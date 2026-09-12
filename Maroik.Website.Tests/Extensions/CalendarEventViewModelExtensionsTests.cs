@@ -35,7 +35,9 @@ public class CalendarEventViewModelExtensionsTests
     private void SetUpEvents(params CalendarEventResponse[] events) =>
         _calendarService
             .Setup(s => s.GetCalendarEventsAsync(It.IsAny<IEnumerable<long>>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(events.ToLookup(e => e.CalendarId));
+            .ReturnsAsync((IReadOnlyDictionary<long, List<CalendarEventResponse>>)events
+                .GroupBy(e => e.CalendarId)
+                .ToDictionary(g => g.Key, g => g.ToList()));
 
     // -- GetCalendarEventViewModelsAsync ---------------------------------------
 
@@ -134,7 +136,7 @@ public class CalendarEventViewModelExtensionsTests
         using var cts = new CancellationTokenSource();
         _calendarService
             .Setup(s => s.GetCalendarEventsAsync(It.IsAny<IEnumerable<long>>(), cts.Token))
-            .ReturnsAsync(Array.Empty<CalendarEventResponse>().ToLookup(e => e.CalendarId));
+            .ReturnsAsync(new Dictionary<long, List<CalendarEventResponse>>());
 
         await _calendarService.Object.GetCalendarEventViewModelsAsync([calendar], "UTC", null, cts.Token);
 

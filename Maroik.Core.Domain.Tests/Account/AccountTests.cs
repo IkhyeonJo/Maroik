@@ -154,6 +154,24 @@ public class AccountTests
         Assert.False(account.EmailConfirmed);
     }
 
+    /// <summary>
+    /// Regression test: a null/empty stored RegistrationToken must never match, even a null/empty
+    /// candidate token, unlike a plain <c>==</c> comparison (where null == null is true).
+    /// </summary>
+    [Theory]
+    [InlineData(null)]
+    [InlineData("")]
+    public void ConfirmEmail_ReturnsError_WhenStoredTokenIsNullOrEmpty_EvenForSameCandidate(string? storedToken)
+    {
+        var account = ValidAccount(registrationToken: storedToken);
+
+        var result = account.ConfirmEmail(storedToken ?? "");
+
+        Assert.True(result.IsError);
+        Assert.Equal("Account.InvalidToken", result.FirstError.Code);
+        Assert.False(account.EmailConfirmed);
+    }
+
     // -- RequestPasswordReset -------------------------------------------------
 
     /// <summary>Request password reset succeeds, when email confirmed.</summary>

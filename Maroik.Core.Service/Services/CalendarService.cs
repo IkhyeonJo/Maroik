@@ -35,6 +35,17 @@ public class CalendarService(
     // that unrelated failure mode from being misreported as "name already exists" below.
     private const string NameUniqueConstraint = "Calendar_AccountEmail_Name_unique";
 
+    /// <summary>CalendarShared's primary-key constraint (on CalendarId), for classifying a concurrent-insert race.</summary>
+    private const string SharedPkConstraint = "CalendarShared_pk";
+
+    /// <summary>
+    /// Bound on retries for a CalendarShared "ensure/upsert" transaction that hits a concurrent
+    /// insert on <see cref="SharedPkConstraint"/>. Postgres aborts the whole transaction on any
+    /// statement error, so a caught unique-violation cannot be handled in place -- the fix is to
+    /// roll back and retry, re-reading which ids are still missing.
+    /// </summary>
+    private const int SharedRaceRetryLimit = 3;
+
     /// <inheritdoc />
     public async Task<List<CalendarResponse>> GetCalendarsAsync(string email, CancellationToken ct = default)
         =>
@@ -48,10 +59,11 @@ public class CalendarService(
         => [.. (await calendarRepository.GetAllOrderedByNameAsync(ct)).Select(CalendarMapper.ToResponse)];
 
     /// <inheritdoc />
-    public async Task<ILookup<long, CalendarEventResponse>> GetCalendarEventsAsync(IEnumerable<long> calendarIds, CancellationToken ct = default)
+    public async Task<IReadOnlyDictionary<long, List<CalendarEventResponse>>> GetCalendarEventsAsync(IEnumerable<long> calendarIds, CancellationToken ct = default)
         => (await calendarEventRepository.GetByCalendarIdsAsync(calendarIds, ct))
             .Select(CalendarEventMapper.ToResponse)
-            .ToLookup(e => e.CalendarId);
+            .GroupBy(e => e.CalendarId)
+            .ToDictionary(g => g.Key, g => g.ToList());
 
     /// <inheritdoc />
     public async Task<CalendarEventResponse?> GetCalendarEventAsync(long id, CancellationToken ct = default)
@@ -121,27 +133,44 @@ public class CalendarService(
     public async Task<ServiceResult> EnsureCalendarSharedAsync(IEnumerable<long> calendarIds, CancellationToken ct = default)
     {
         List<long> ids = [.. calendarIds];
-        await unitOfWork.BeginAsync(ct);
-        try
-        {
-            // Single fetch of the whole table, reused for every ID instead of one full scan per calendar.
-            // The read + the inserts run in one transaction so two concurrent callers can't both pass
-            // the "not present" check for the same id and then race on the CalendarShared primary key.
-            List<CalendarShared> shares = await calendarSharedRepository.GetAllAsync(ct);
-            HashSet<long> existingIds = [.. shares.Select(s => s.Id)];
 
-            foreach (long id in ids.Where(id => !existingIds.Contains(id)))
-                await calendarSharedRepository.CreateAsync(CalendarShared.CreatePrivate(id), ct);
-
-            await unitOfWork.CommitAsync(ct);
-            return ServiceResult.Ok();
-        }
-        catch (Exception ex)
+        // The read + the inserts run in one transaction, but that alone does not stop two
+        // concurrent callers from both passing the "not present" check for the same id under
+        // Postgres's default READ COMMITTED isolation (a plain SELECT takes no lock) and then
+        // racing on the CalendarShared primary key. Retry on that specific race: Postgres aborts
+        // the whole transaction on any statement error, so the conflicting insert cannot simply be
+        // skipped in place -- roll back and re-read, which will see the other caller's now-committed
+        // row and only attempt whatever ids are still actually missing.
+        for (int attempt = 0; attempt < SharedRaceRetryLimit; attempt++)
         {
-            logger.LogError(ex, "Failed to ensure calendar shared records for calendars {CalendarIds}", string.Join(",", ids));
-            await unitOfWork.RollbackAsync(ct);
-            return UnexpectedFailure;
+            await unitOfWork.BeginAsync(ct);
+            try
+            {
+                // Single fetch of the whole table, reused for every ID instead of one full scan per calendar.
+                List<CalendarShared> shares = await calendarSharedRepository.GetAllAsync(ct);
+                HashSet<long> existingIds = [.. shares.Select(s => s.Id)];
+
+                foreach (long id in ids.Where(id => !existingIds.Contains(id)))
+                    await calendarSharedRepository.CreateAsync(CalendarShared.CreatePrivate(id), ct);
+
+                await unitOfWork.CommitAsync(ct);
+                return ServiceResult.Ok();
+            }
+            catch (Exception ex) when (ex.IsPostgresUniqueViolationOn(SharedPkConstraint))
+            {
+                await unitOfWork.RollbackAsync(ct);
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "Failed to ensure calendar shared records for calendars {CalendarIds}", string.Join(",", ids));
+                await unitOfWork.RollbackAsync(ct);
+                return UnexpectedFailure;
+            }
         }
+
+        logger.LogError("Failed to ensure calendar shared records for calendars {CalendarIds} after {Retries} retries",
+            string.Join(",", ids), SharedRaceRetryLimit);
+        return UnexpectedFailure;
     }
 
     /// <inheritdoc />
@@ -346,41 +375,56 @@ public class CalendarService(
             return ServiceResult.Validation("CalendarShared.InvalidTarget", "Input is invalid");
         }
 
-        await unitOfWork.BeginAsync(ct);
-        try
+        // As in EnsureCalendarSharedAsync, the unlocked read below cannot stop a concurrent caller
+        // (another UpdateCalendarSharedAsync/EnsureCalendarSharedAsync) from creating the same row
+        // between our read and our insert. Postgres aborts the whole transaction on that error, so
+        // retry: roll back and re-read, which will see the other caller's row and take the Update
+        // branch for it instead of re-inserting, still applying this call's requested values.
+        for (int attempt = 0; attempt < SharedRaceRetryLimit; attempt++)
         {
-            // Upsert: a CalendarShared row may not exist yet for a calendar being shared for the
-            // first time (EnsureCalendarSharedAsync is not guaranteed to have run). UpdateEntityAsync
-            // throws when the row is missing, which previously failed the whole request.
-            HashSet<long> existingShareIds = [.. (await calendarSharedRepository.GetAllAsync(ct)).Select(s => s.Id)];
-
-            foreach (CalendarSharedRequest req in calendarSharedRequests)
+            await unitOfWork.BeginAsync(ct);
+            try
             {
-                CalendarShared shared = CalendarShared.CreatePrivate(req.CalendarId).Update(req.User, req.Anonymous);
-                if (existingShareIds.Contains(req.CalendarId))
-                    await calendarSharedRepository.UpdateEntityAsync(shared, ct);
-                else
-                    await calendarSharedRepository.CreateAsync(shared, ct);
-            }
+                // Upsert: a CalendarShared row may not exist yet for a calendar being shared for the
+                // first time (EnsureCalendarSharedAsync is not guaranteed to have run). UpdateEntityAsync
+                // throws when the row is missing, which previously failed the whole request.
+                HashSet<long> existingShareIds = [.. (await calendarSharedRepository.GetAllAsync(ct)).Select(s => s.Id)];
 
-            // When a calendar is set to non-user-visible, remove ALL existing subscriptions to it
-            // (every account that had subscribed), not just one — otherwise leftover subscription
-            // rows silently reactivate the moment the calendar is shared again. One batched DELETE
-            // per calendar instead of one round trip per subscriber.
-            foreach (CalendarSharedRequest req in calendarSharedRequests.Where(r => !r.User))
+                foreach (CalendarSharedRequest req in calendarSharedRequests)
+                {
+                    CalendarShared shared = CalendarShared.CreatePrivate(req.CalendarId).Update(req.User, req.Anonymous);
+                    if (existingShareIds.Contains(req.CalendarId))
+                        await calendarSharedRepository.UpdateEntityAsync(shared, ct);
+                    else
+                        await calendarSharedRepository.CreateAsync(shared, ct);
+                }
+
+                // When a calendar is set to non-user-visible, remove ALL existing subscriptions to it
+                // (every account that had subscribed), not just one — otherwise leftover subscription
+                // rows silently reactivate the moment the calendar is shared again. One batched DELETE
+                // per calendar instead of one round trip per subscriber.
+                foreach (CalendarSharedRequest req in calendarSharedRequests.Where(r => !r.User))
+                {
+                    await otherCalendarRepository.DeleteByCalendarIdAsync(req.CalendarId, ct);
+                }
+
+                await unitOfWork.CommitAsync(ct);
+                return ServiceResult.Ok();
+            }
+            catch (Exception ex) when (ex.IsPostgresUniqueViolationOn(SharedPkConstraint))
             {
-                await otherCalendarRepository.DeleteByCalendarIdAsync(req.CalendarId, ct);
+                await unitOfWork.RollbackAsync(ct);
             }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "Failed to update calendar shared settings");
+                await unitOfWork.RollbackAsync(ct);
+                return ServiceResult.Failure("Calendar.UpdateSharedFailed", "Input is invalid");
+            }
+        }
 
-            await unitOfWork.CommitAsync(ct);
-            return ServiceResult.Ok();
-        }
-        catch (Exception ex)
-        {
-            logger.LogError(ex, "Failed to update calendar shared settings");
-            await unitOfWork.RollbackAsync(ct);
-            return ServiceResult.Failure("Calendar.UpdateSharedFailed", "Input is invalid");
-        }
+        logger.LogError("Failed to update calendar shared settings after {Retries} retries", SharedRaceRetryLimit);
+        return ServiceResult.Failure("Calendar.UpdateSharedFailed", "Input is invalid");
     }
 
     /// <inheritdoc />
@@ -598,7 +642,7 @@ public class CalendarService(
     {
         foreach (var reminderResult in reminders.Select(reminderDto => CalendarEventReminder.Create(calendarEventId, reminderDto.Method,
                      reminderDto.MinutesBeforeEvent, reminderDto.HoursBeforeEvent, reminderDto.DaysBeforeEvent, reminderDto.WeeksBeforeEvent,
-                     reminderDto.TimesBeforeEvent.HasValue ? TimeOnly.FromTimeSpan(reminderDto.TimesBeforeEvent.Value) : null)))
+                     reminderDto.TimesBeforeEvent)))
         {
             if (reminderResult.IsError)
                 return ServiceResult.FromError(reminderResult.FirstError);

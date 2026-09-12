@@ -58,4 +58,23 @@ public class BoardCommentRepository(ApplicationDbContext context)
     /// <inheritdoc />
     public Task<BoardComment?> FindByIdAsync(long id, CancellationToken ct = default)
         => QueryFirstAsync(e => e.Id == id && !e.Deleted, ct: ct);
+
+    /// <inheritdoc />
+    public async Task<BoardComment?> FindByIdForUpdateAsync(long id, CancellationToken ct = default)
+    {
+        // Raw SQL is required because EF Core LINQ cannot emit FOR UPDATE. AsNoTracking so a
+        // pre-lock instance already tracked in this context can't snap back and defeat the lock
+        // (see BoardRepository.FindActiveByIdForUpdateAsync for the same rationale).
+        var entities = await Set.FromSqlInterpolated(
+            $"""
+             SELECT *
+             FROM "BoardComment"
+             WHERE "Id" = {id} AND "Deleted" = false
+             LIMIT 1
+             FOR UPDATE
+             """).AsNoTracking().ToListAsync(ct);
+
+        var entity = entities.FirstOrDefault();
+        return entity == null ? null : ToDomain(entity);
+    }
 }

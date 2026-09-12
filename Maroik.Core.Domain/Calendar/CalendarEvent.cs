@@ -146,11 +146,11 @@ public sealed class CalendarEvent : AggregateRoot<long>
         if (string.IsNullOrWhiteSpace(title))
             return Error.Validation("CalendarEvent.TitleEmpty", "Event title cannot be empty.");
 
-        if (title.Length > 100)
-            return Error.Validation("CalendarEvent.TitleTooLong", "Event title must be 100 characters or fewer.");
+        if (title.Length > TitledContentPolicy.MaxTitleLength)
+            return Error.Validation("CalendarEvent.TitleTooLong", $"Event title must be {TitledContentPolicy.MaxTitleLength} characters or fewer.");
 
-        if (description?.Length > 16384)
-            return Error.Validation("CalendarEvent.DescriptionTooLong", "Event description must be 16384 characters or fewer.");
+        if (description?.Length > TitledContentPolicy.MaxBodyLength)
+            return Error.Validation("CalendarEvent.DescriptionTooLong", $"Event description must be {TitledContentPolicy.MaxBodyLength} characters or fewer.");
 
         if (!string.IsNullOrWhiteSpace(status) && !CalendarEventStatuses.IsKnown(status))
             return Error.Validation("CalendarEvent.StatusInvalid", "Event status is not a recognised value.");
@@ -214,11 +214,11 @@ public sealed class CalendarEvent : AggregateRoot<long>
         if (string.IsNullOrWhiteSpace(title))
             return Error.Validation("CalendarEvent.TitleEmpty", "Event title cannot be empty.");
 
-        if (title.Length > 100)
-            return Error.Validation("CalendarEvent.TitleTooLong", "Event title must be 100 characters or fewer.");
+        if (title.Length > TitledContentPolicy.MaxTitleLength)
+            return Error.Validation("CalendarEvent.TitleTooLong", $"Event title must be {TitledContentPolicy.MaxTitleLength} characters or fewer.");
 
-        if (description?.Length > 16384)
-            return Error.Validation("CalendarEvent.DescriptionTooLong", "Event description must be 16384 characters or fewer.");
+        if (description?.Length > TitledContentPolicy.MaxBodyLength)
+            return Error.Validation("CalendarEvent.DescriptionTooLong", $"Event description must be {TitledContentPolicy.MaxBodyLength} characters or fewer.");
 
         if (!string.IsNullOrWhiteSpace(status) && !CalendarEventStatuses.IsKnown(status))
             return Error.Validation("CalendarEvent.StatusInvalid", "Event status is not a recognised value.");

@@ -217,7 +217,7 @@ public class CalendarViewModelMapperTests
         Assert.Equal(1, roundTripped[0].HoursBeforeEvent);
         Assert.Equal(2, roundTripped[0].DaysBeforeEvent);
         Assert.Equal(1, roundTripped[0].WeeksBeforeEvent);
-        Assert.Equal(new TimeSpan(9, 0, 0), roundTripped[0].TimesBeforeEvent);
+        Assert.Equal(new TimeOnly(9, 0), roundTripped[0].TimesBeforeEvent);
     }
 
     /// <summary>To serialized reminders null method defaults to empty string.</summary>
@@ -386,7 +386,7 @@ public class CalendarViewModelMapperTests
         Assert.Equal("Push", reminders[0].Method);
         Assert.Equal(15, reminders[0].MinutesBeforeEvent);
         Assert.Equal(1, reminders[0].DaysBeforeEvent);
-        Assert.Equal(new TimeSpan(9, 30, 0), reminders[0].TimesBeforeEvent);
+        Assert.Equal(new TimeOnly(9, 30), reminders[0].TimesBeforeEvent);
     }
 
     /// <summary>To reminder info list empty times before event leaves times before event null.</summary>
@@ -403,6 +403,37 @@ public class CalendarViewModelMapperTests
                 DaysBeforeEvent = 0,
                 WeeksBeforeEvent = 0,
                 TimesBeforeEvent = ""
+            }
+        });
+
+        var reminders = json.ToReminderInfoList();
+
+        Assert.Null(reminders[0].TimesBeforeEvent);
+    }
+
+    /// <summary>
+    /// Regression test: an out-of-range or malformed "HH:mm" string (never expected from the real
+    /// client, but this reads directly from client-supplied JSON) must parse to null instead of
+    /// throwing. Before <see cref="CalendarReminderDto.TimesBeforeEvent"/> was <see cref="TimeOnly"/>,
+    /// this kind of value could reach the service layer as an out-of-range <see cref="TimeSpan"/> and
+    /// crash on the unchecked <c>TimeOnly.FromTimeSpan</c> conversion instead of failing gracefully.
+    /// </summary>
+    [Theory]
+    [InlineData("25:99")]
+    [InlineData("-1:30")]
+    [InlineData("not-a-time")]
+    public void ToReminderInfoList_OutOfRangeOrMalformedTimeString_YieldsNullTimesBeforeEvent(string timesBeforeEvent)
+    {
+        string json = JsonSerializer.Serialize(new[]
+        {
+            new
+            {
+                Method = "Push",
+                MinutesBeforeEvent = (int?)null,
+                HoursBeforeEvent = (int?)null,
+                DaysBeforeEvent = (int?)null,
+                WeeksBeforeEvent = (int?)null,
+                TimesBeforeEvent = timesBeforeEvent
             }
         });
 

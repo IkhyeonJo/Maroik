@@ -1,6 +1,7 @@
 using System.Text.Json;
 using Maroik.Core.Contract.Interfaces;
 using Maroik.Core.Contract.Misc.Messaging;
+using Microsoft.Extensions.Logging;
 using RabbitMQ.Client;
 
 namespace Maroik.Core.Client.Clients;
@@ -11,8 +12,17 @@ namespace Maroik.Core.Client.Clients;
 /// at application startup does not prevent the web app from starting) and then cached and reused
 /// across publishes; the queue is declared once per channel rather than on every call.
 /// </summary>
-public sealed class RabbitMqEmailPublisher(IConnectionFactory factory) : IEmailPublisher, IAsyncDisposable
+public sealed class RabbitMqEmailPublisher(IConnectionFactory factory, ILogger<RabbitMqEmailPublisher> logger)
+    : IEmailPublisher, IAsyncDisposable
 {
+    /// <summary>
+    /// Bound on how long <see cref="DisposeAsync"/> waits for an in-flight <see cref="PublishAsync"/>
+    /// to release <see cref="_publishLock"/>. Without a bound, one publish wedged on a broker that
+    /// never confirms (e.g. a caller that passed <see cref="CancellationToken.None"/>) would make
+    /// graceful application shutdown hang forever.
+    /// </summary>
+    private static readonly TimeSpan _disposeLockTimeout = TimeSpan.FromSeconds(5);
+
     // RabbitMQ.Client's own guidance is a "hard requirement for publishers": a channel must not
     // be shared by threads that publish on it concurrently, or frames from separate publishes can
     // interleave at the protocol level. This channel is cached and shared across every caller of
@@ -95,9 +105,14 @@ public sealed class RabbitMqEmailPublisher(IConnectionFactory factory) : IEmailP
     /// <inheritdoc />
     public async ValueTask DisposeAsync()
     {
-        // Waits for any in-flight PublishAsync to release the lock first, so the channel/connection
-        // it's using is never disposed out from under it.
-        await _publishLock.WaitAsync();
+        // Waits (bounded -- see DisposeLockTimeout) for any in-flight PublishAsync to release the
+        // lock first, so the channel/connection it's using is never disposed out from under it.
+        bool acquired = await _publishLock.WaitAsync(_disposeLockTimeout);
+        if (!acquired)
+            logger.LogWarning(
+                "Timed out after {Timeout} waiting for an in-flight publish to finish; disposing anyway",
+                _disposeLockTimeout);
+
         try
         {
             if (_channel != null)
@@ -107,8 +122,15 @@ public sealed class RabbitMqEmailPublisher(IConnectionFactory factory) : IEmailP
         }
         finally
         {
-            _publishLock.Release();
-            _publishLock.Dispose();
+            if (acquired)
+            {
+                // Only ours to release/dispose when we actually acquired it. On a timeout the
+                // stuck PublishAsync still holds it and will call Release() itself once it
+                // eventually unblocks -- disposing the semaphore out from under that pending
+                // Release() would throw ObjectDisposedException on that unrelated call stack.
+                _publishLock.Release();
+                _publishLock.Dispose();
+            }
         }
     }
 }

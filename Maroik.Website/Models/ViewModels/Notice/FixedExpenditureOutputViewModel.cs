@@ -1,6 +1,7 @@
 // ReSharper disable PropertyCanBeMadeInitOnly.Global
 using System.ComponentModel.DataAnnotations;
 using Maroik.Core.Domain.Finance;
+using Maroik.Website.Mappings;
 
 namespace Maroik.Website.Models.ViewModels.Notice;
 
@@ -99,5 +100,5 @@ public class FixedExpenditureOutputViewModel
     /// <summary>
     /// CSS row class for the grid, prioritizing Expired over Noticed the default state.
     /// </summary>
-    public string RowCssClass => FixedSchedulePolicy.GetRowCssClass(Expired, Noticed);
+    public string RowCssClass => FixedSchedulePolicy.GetRowStatus(Expired, Noticed).ToRowCssClass();
 }

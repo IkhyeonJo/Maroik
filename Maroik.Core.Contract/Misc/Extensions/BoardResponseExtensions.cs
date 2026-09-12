@@ -1,26 +1,27 @@
+using Maroik.Core.Domain.Account;
+using Maroik.Core.Domain.Board;
 using Maroik.Core.Contract.Dtos;
 
 namespace Maroik.Core.Contract.Misc.Extensions;
 
 /// <summary>
 /// Extension methods encoding the "can this viewer see a locked post's title" rule for list views.
-/// An unlocked post's title is always visible; a locked post's title is redacted
-/// unless the viewer passes the board's ownership check. FreeForum posts grant
-/// visibility to the writer or any Admin; PrivateNote posts are stricter and
-/// grant visibility to the writer only (see <c>Management.PrivateNote.cshtml</c>).
-/// UI mirror only — the authoritative gate on opening a post is <c>Board.CanBeViewedBy</c>
-/// (Maroik.Core.Domain), invoked server-side via <c>IBoardService.CanView</c>.
+/// FreeForum posts grant visibility to the writer or any Admin when unlocked-or-owned;
+/// PrivateNote posts are stricter and grant visibility to the writer only (see
+/// <c>Management.PrivateNote.cshtml</c>). Both delegate to <see cref="Board.CanBeViewedBy(string?, bool, bool, string?, string?, bool)"/>
+/// (Maroik.Core.Domain) — the same field-level rule <c>IBoardService.CanView</c> enforces
+/// server-side — rather than re-deriving the rule here, so the two can't drift apart.
 /// </summary>
 public static class BoardResponseExtensions
 {
     extension(BoardResponse board)
     {
-        /// <summary>True when the post is unlocked, or the viewer is the writer or an Admin.</summary>
+        /// <summary>True when this viewer (or any Admin) may see the post per <see cref="Board.CanBeViewedBy(string?, bool, bool, string?, string?, bool)"/>.</summary>
         public bool IsTitleVisibleToOwnerOrAdmin(AccountResponse viewer) =>
-            !board.Locked || viewer.IsOwnerOrAdmin(board.Writer);
+            Board.CanBeViewedBy(board.Type, board.Deleted, board.Locked, board.Writer, viewer.Nickname, viewer.Role == Role.Admin);
 
-        /// <summary>True when the post is unlocked, or the viewer is the writer.</summary>
+        /// <summary>True when this viewer (writer only, no admin bypass) may see the post per <see cref="Board.CanBeViewedBy(string?, bool, bool, string?, string?, bool)"/>.</summary>
         public bool IsTitleVisibleToOwner(AccountResponse viewer) =>
-            !board.Locked || viewer.IsOwner(board.Writer);
+            Board.CanBeViewedBy(board.Type, board.Deleted, board.Locked, board.Writer, viewer.Nickname, viewerIsAdmin: false);
     }
 }

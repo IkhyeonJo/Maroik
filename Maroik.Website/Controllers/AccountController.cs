@@ -151,13 +151,9 @@ public class AccountController : Controller
                 Role = Role.User,
                 TimeZoneIanaId = loginInputViewModel.TimeZoneIanaId,
                 Locked = false,
-                LoginAttempt = 0,
                 EmailConfirmed = false,
                 AgreedServiceTerms = true,
                 RegistrationToken = GuidToken.Generate(),
-                ResetPasswordToken = null,
-                Created = DateTime.UtcNow,
-                Updated = DateTime.UtcNow,
                 Message = EnumHelper.GetDescription(AccountMessage.UserCreatedVerifyEmail),
                 Deleted = false
             };

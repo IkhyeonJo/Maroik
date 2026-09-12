@@ -439,7 +439,7 @@ public class CalendarController : Controller
             ];
 
             // Fetch every authorized calendar's events in a single query instead of one round trip per calendar.
-            ILookup<long, CalendarEventResponse> eventsByCalendarId =
+            IReadOnlyDictionary<long, List<CalendarEventResponse>> eventsByCalendarId =
                 await _calendarService.GetCalendarEventsAsync(authorizedCalendarIds, HttpContext.RequestAborted);
 
             calendarEvents.AddRange(from inputCalendar in calendarInputViewModel.Calendars
@@ -452,7 +452,7 @@ public class CalendarController : Controller
                 let htmlColorCode = isOwned
                     ? ownedCalendars.FirstOrDefault(x => x.Id == inputCalendar.Id)?.HtmlColorCode
                     : otherCalendars.FirstOrDefault(x => x.Id == inputCalendar.Id)?.HtmlColorCode
-                from evt in eventsByCalendarId[inputCalendar.Id]
+                from evt in eventsByCalendarId.GetValueOrDefault(inputCalendar.Id, [])
                 select evt.ToDisplayViewModel(userTimezone, htmlColorCode, calendarType));
 
             // Matches main: an empty result set for the requested range/calendars is reported the

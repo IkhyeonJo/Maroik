@@ -42,9 +42,6 @@ public class AccountRequest
     /// <summary>Whether the account is locked and cannot log in.</summary>
     public bool Locked { get; set; }
 
-    /// <summary>Number of consecutive failed login attempts.</summary>
-    public long LoginAttempt { get; set; }
-
     /// <summary>Whether the user has confirmed their email address.</summary>
     public bool EmailConfirmed { get; set; }
 
@@ -53,15 +50,6 @@ public class AccountRequest
 
     /// <summary>Token embedded in the registration confirmation email link (valid 24 h).</summary>
     public string? RegistrationToken { get; set; }
-
-    /// <summary>Token embedded in the password-reset email link (valid 24 h).</summary>
-    public string? ResetPasswordToken { get; set; }
-
-    /// <summary>UTC timestamp when the account was created.</summary>
-    public DateTime Created { get; set; }
-
-    /// <summary>UTC timestamp of the most recent account update.</summary>
-    public DateTime Updated { get; set; }
 
     /// <summary>Optional admin-facing note attached to the account.</summary>
     public string? Message { get; set; }

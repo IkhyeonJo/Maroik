@@ -36,13 +36,13 @@ public static class CalendarEventViewModelExtensions
             List<CalendarResponse> calendarList = [.. calendars];
 
             // Fetch every calendar's events in a single query instead of one round trip per calendar.
-            ILookup<long, CalendarEventResponse> eventsByCalendarId =
+            IReadOnlyDictionary<long, List<CalendarEventResponse>> eventsByCalendarId =
                 await calendarService.GetCalendarEventsAsync(calendarList.Select(c => c.Id), ct);
 
             return
             [
                 .. from calendar in calendarList
-                   from evt in eventsByCalendarId[calendar.Id]
+                   from evt in eventsByCalendarId.GetValueOrDefault(calendar.Id, [])
                    select evt.ToDisplayViewModel(userTimeZoneIanaId, calendar.HtmlColorCode, calendarType)
             ];
         }

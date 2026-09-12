@@ -117,4 +117,38 @@ public class FileClientTests
 
         Assert.Contains("name=correlationId", capturing.LastRequestBody);
     }
+
+    // -- Path safety ------------------------------------------------------------
+
+    /// <summary>
+    /// Regression test: a leading backslash is not "rooted" per <see cref="Path.IsPathRooted(string)"/>
+    /// on this (Linux) runtime, but becomes a rooted Unix path ("/etc/passwd") once normalized for
+    /// the storage service — the safety check must normalize separators first, or this form of
+    /// input slips past it into an absolute path outside the storage root.
+    /// </summary>
+    [Theory]
+    [InlineData(@"\etc\passwd")]
+    [InlineData("/etc/passwd")]
+    [InlineData(@"..\..\etc\passwd")]
+    [InlineData("../../etc/passwd")]
+    public async Task DownloadAsync_ThrowsArgumentException_ForUnsafePath(string unsafePath)
+    {
+        await Assert.ThrowsAsync<ArgumentException>(
+            () => CreateSut().DownloadAsync(unsafePath, "http://filestorage.local", TestContext.Current.CancellationToken));
+    }
+
+    /// <summary>Same unsafe-path cases as <c>DownloadAsync</c>, but <c>UploadAsync</c> reports failure via its bool return instead of throwing.</summary>
+    [Theory]
+    [InlineData(@"\etc\passwd")]
+    [InlineData("/etc/passwd")]
+    [InlineData(@"..\..\etc\passwd")]
+    [InlineData("../../etc/passwd")]
+    public async Task UploadAsync_ReturnsFalse_ForUnsafePath(string unsafePath)
+    {
+        byte[] data = [0x89, 0x50, 0x4E, 0x47];
+
+        bool result = await CreateSut().UploadAsync(data, "image/png", unsafePath, "http://filestorage.local", TestContext.Current.CancellationToken);
+
+        Assert.False(result);
+    }
 }

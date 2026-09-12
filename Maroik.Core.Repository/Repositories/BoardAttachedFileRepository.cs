@@ -20,13 +20,18 @@ public class BoardAttachedFileRepository(ApplicationDbContext context)
     public async Task<Dictionary<long, BoardAttachedFile?>> GetByBoardIdsAsync(IEnumerable<long> boardIds, CancellationToken ct = default)
     {
         List<long> ids = [.. boardIds];
+        // AsNoTracking: this is a pure read-only display projection, not an entity that will be
+        // updated through this context. ToLookup once instead of a FirstOrDefault scan per id,
+        // so this is O(files + ids) rather than O(files * ids) for a large board list.
         List<OrmFile> files = await Context.BoardAttachedFiles
+            .AsNoTracking()
             .Where(x => ids.Contains(x.BoardId))
             .ToListAsync(ct);
 
+        ILookup<long, OrmFile> filesByBoardId = files.ToLookup(f => f.BoardId);
         return ids.ToDictionary(
             id => id,
-            id => files.FirstOrDefault(file => file.BoardId == id) is { } f ? ToDomain(f) : null);
+            id => filesByBoardId[id].FirstOrDefault() is { } f ? ToDomain(f) : null);
     }
 
     /// <summary>Maps a persisted <see cref="OrmFile"/> row to the <see cref="BoardAttachedFile"/> domain object.</summary>

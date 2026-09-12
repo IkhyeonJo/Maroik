@@ -1,6 +1,7 @@
 using Maroik.Core.Client.Clients;
 using Maroik.Core.Contract.Interfaces;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using RabbitMQ.Client;
 
 namespace Maroik.Core.Client.Extensions;
@@ -34,14 +35,15 @@ public static class ServiceCollectionExtensions
             // opened lazily on first publish so a RabbitMQ outage doesn't block app startup.
             // Automatic/topology recovery (the client defaults, pinned here) reopen the connection
             // and channel after a broker restart or network blip without a manual reconnect loop.
-            services.AddSingleton<IEmailPublisher>(_ => new RabbitMqEmailPublisher(
+            services.AddSingleton<IEmailPublisher>(sp => new RabbitMqEmailPublisher(
                 new ConnectionFactory
                 {
                     Uri = new Uri(rabbitMqConnectionString),
                     AutomaticRecoveryEnabled = true,
                     TopologyRecoveryEnabled = true,
                     ClientProvidedName = "maroik-website-email-publisher"
-                }));
+                },
+                sp.GetRequiredService<ILogger<RabbitMqEmailPublisher>>()));
         }
     }
 }

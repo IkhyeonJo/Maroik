@@ -353,11 +353,19 @@ public class BoardService(
     /// <inheritdoc />
     public async Task<ServiceResult> DeleteCommentAsync(long commentId, string requesterNickname, bool isAdmin, string? requiredType = null, CancellationToken ct = default)
     {
+        await unitOfWork.BeginAsync(ct);
         try
         {
-            BoardComment? comment = await boardCommentRepository.FindByIdAsync(commentId, ct);
+            // Lock the row for the rest of this transaction, consistent with every other write in
+            // this file (WriteCommentAsync/EditBoardAsync/DeleteBoardAsync): without it, two
+            // concurrent deletes of the same comment could both read Deleted=false, both succeed
+            // in memory, and both issue a redundant write.
+            BoardComment? comment = await boardCommentRepository.FindByIdForUpdateAsync(commentId, ct);
             if (comment == null)
+            {
+                await unitOfWork.RollbackAsync(ct);
                 return ServiceResult.NotFound("BoardComment.NotFound", "Input is invalid");
+            }
 
             bool isPrivateNoteComment = false;
             if (requiredType != null)
@@ -367,7 +375,10 @@ public class BoardService(
                 // type just by supplying its comment ID.
                 Board? parent = await boardRepository.FindActiveByIdAsync(comment.BoardId, ct);
                 if (parent == null || parent.Type != requiredType)
+                {
+                    await unitOfWork.RollbackAsync(ct);
                     return ServiceResult.NotFound("BoardComment.NotFound", "Input is invalid");
+                }
                 isPrivateNoteComment = parent.IsPrivateNote;
             }
 
@@ -375,18 +386,26 @@ public class BoardService(
             // bypass — matches Board.CanBeDeletedBy's PrivateNote rule).
             bool effectiveIsAdmin = isAdmin && !isPrivateNoteComment;
             if (!comment.CanBeDeletedBy(requesterNickname, effectiveIsAdmin))
+            {
+                await unitOfWork.RollbackAsync(ct);
                 return ServiceResult.Fail("You do not have permission to delete.");
+            }
 
             var deleteResult = comment.SoftDelete();
             if (deleteResult.IsError)
+            {
+                await unitOfWork.RollbackAsync(ct);
                 return ServiceResult.FromError(deleteResult.FirstError);
+            }
 
             await boardCommentRepository.UpdateEntityAsync(comment, ct);
+            await unitOfWork.CommitAsync(ct);
             return ServiceResult.Ok();
         }
         catch (Exception e)
         {
             logger.LogError(e, "Failed to delete comment {CommentId}", commentId);
+            await unitOfWork.RollbackAsync(ct);
             return ServiceResult.Failure("Board.DeleteCommentFailed", "Input is invalid");
         }
     }

@@ -113,11 +113,11 @@ public static class CalendarViewModelMapper
             => JsonSerialization.ToClientJson(reminders.Select(x => new CalendarReminderDto
             {
                 Method = x.Method ?? "",
-                MinutesBeforeEvent = (int?)x.MinutesBeforeEvent,
-                HoursBeforeEvent = (int?)x.HoursBeforeEvent,
-                DaysBeforeEvent = (int?)x.DaysBeforeEvent,
-                WeeksBeforeEvent = (int?)x.WeeksBeforeEvent,
-                TimesBeforeEvent = x.TimesBeforeEvent?.ToTimeSpan()
+                MinutesBeforeEvent = x.MinutesBeforeEvent,
+                HoursBeforeEvent = x.HoursBeforeEvent,
+                DaysBeforeEvent = x.DaysBeforeEvent,
+                WeeksBeforeEvent = x.WeeksBeforeEvent,
+                TimesBeforeEvent = x.TimesBeforeEvent
             }));
     }
 
@@ -220,14 +220,17 @@ public static class CalendarViewModelMapper
         NumberHandling = JsonNumberHandling.AllowReadingFromString
     };
 
-    /// <summary>Parses an <c>"HH:mm"</c> time-of-day string; null/empty yields <see langword="null"/>.</summary>
-    private static TimeSpan? ParseTimeOfDay(string? value)
+    /// <summary>
+    /// Parses an <c>"HH:mm"</c> time-of-day string; null/empty or anything not a valid time of day
+    /// (including an hour or minute out of range) yields <see langword="null"/> rather than
+    /// throwing, since this reads directly from client-supplied JSON.
+    /// </summary>
+    private static TimeOnly? ParseTimeOfDay(string? value)
     {
         if (string.IsNullOrEmpty(value))
             return null;
 
-        string[] parts = value.Split(':');
-        return new TimeSpan(Convert.ToInt32(parts[0]), Convert.ToInt32(parts[1]), 0);
+        return TimeOnly.TryParse(value, out TimeOnly result) ? result : null;
     }
 
     /// <summary>Wire shape of one reminder row in the calendar edit form's hidden JSON field.</summary>

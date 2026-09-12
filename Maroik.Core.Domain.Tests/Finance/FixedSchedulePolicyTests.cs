@@ -284,26 +284,26 @@ public class FixedSchedulePolicyTests
         Assert.Equal(FixedSchedulePolicy.NoMaturityDate.Date, DateTime.Parse(FixedSchedulePolicy.NoMaturityDateIso).Date);
     }
 
-    // -- GetRowCssClass -------------------------------------------------------------
+    // -- GetRowStatus -------------------------------------------------------------
 
-    /// <summary>Get row css class returns danger when expired even if also noticed.</summary>
+    /// <summary>Get row status returns Expired when expired even if also noticed.</summary>
     [Fact]
-    public void GetRowCssClass_ReturnsDanger_WhenExpired_EvenIfAlsoNoticed()
+    public void GetRowStatus_ReturnsExpired_WhenExpired_EvenIfAlsoNoticed()
     {
-        Assert.Equal("table-danger clsGridRow", FixedSchedulePolicy.GetRowCssClass(expired: true, noticed: true));
+        Assert.Equal(FixedScheduleRowStatus.Expired, FixedSchedulePolicy.GetRowStatus(expired: true, noticed: true));
     }
 
-    /// <summary>Get row css class returns info, when noticed and not expired.</summary>
+    /// <summary>Get row status returns Noticed, when noticed and not expired.</summary>
     [Fact]
-    public void GetRowCssClass_ReturnsInfo_WhenNoticedAndNotExpired()
+    public void GetRowStatus_ReturnsNoticed_WhenNoticedAndNotExpired()
     {
-        Assert.Equal("table-info clsGridRow", FixedSchedulePolicy.GetRowCssClass(expired: false, noticed: true));
+        Assert.Equal(FixedScheduleRowStatus.Noticed, FixedSchedulePolicy.GetRowStatus(expired: false, noticed: true));
     }
 
-    /// <summary>Get row css class returns inactive, when neither expired nor noticed.</summary>
+    /// <summary>Get row status returns Normal, when neither expired nor noticed.</summary>
     [Fact]
-    public void GetRowCssClass_ReturnsInactive_WhenNeitherExpiredNorNoticed()
+    public void GetRowStatus_ReturnsNormal_WhenNeitherExpiredNorNoticed()
     {
-        Assert.Equal("table-inactive clsGridRow", FixedSchedulePolicy.GetRowCssClass(expired: false, noticed: false));
+        Assert.Equal(FixedScheduleRowStatus.Normal, FixedSchedulePolicy.GetRowStatus(expired: false, noticed: false));
     }
 }

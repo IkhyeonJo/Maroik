@@ -106,9 +106,23 @@ public static class FixedSchedulePolicy
         => depositDay >= 1 && depositDay <= MaxDepositDay(depositMonth);
 
     /// <summary>
-    /// Returns the notice-grid row CSS class for a schedule, prioritizing
+    /// Returns the notice-grid row status for a schedule, prioritizing
     /// <paramref name="expired"/> over <paramref name="noticed"/> over the default state.
+    /// The presentation layer maps this to a CSS class; Domain only decides the status.
     /// </summary>
-    public static string GetRowCssClass(bool expired, bool noticed) =>
-        expired ? "table-danger clsGridRow" : noticed ? "table-info clsGridRow" : "table-inactive clsGridRow";
+    public static FixedScheduleRowStatus GetRowStatus(bool expired, bool noticed) =>
+        expired ? FixedScheduleRowStatus.Expired : noticed ? FixedScheduleRowStatus.Noticed : FixedScheduleRowStatus.Normal;
+}
+
+/// <summary>Notice-grid row status for a fixed schedule, as decided by <see cref="FixedSchedulePolicy.GetRowStatus"/>.</summary>
+public enum FixedScheduleRowStatus
+{
+    /// <summary>No further recurrences are expected; the maturity date has passed.</summary>
+    Expired,
+
+    /// <summary>The next recurrence is approaching within the notification window.</summary>
+    Noticed,
+
+    /// <summary>Neither expired nor noticed.</summary>
+    Normal
 }

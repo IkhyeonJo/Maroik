@@ -131,9 +131,9 @@ public class ManagementAccountService(
             if (newHashedPassword != null)
                 account.AdminResetPassword(newHashedPassword);
 
-            // The admin UI has no LoginAttempt input, so request.LoginAttempt is always the request
-            // DTO's default (0) — pass the account's own current value instead, so AdminUpdate's
-            // "preserve while locked, reset on unlock" logic has a real count to preserve.
+            // The admin UI has no LoginAttempt input, and AccountRequest carries no such field —
+            // pass the account's own current value instead, so AdminUpdate's "preserve while
+            // locked, reset on unlock" logic has a real count to preserve.
             var updateResult = account.AdminUpdate(
                 request.Role,
                 request.TimeZoneIanaId,

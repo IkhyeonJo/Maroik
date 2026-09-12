@@ -14,4 +14,10 @@ public interface IBoardCommentRepository : IGenericRepository<BoardComment>
 
     /// <summary>Returns the non-deleted comment with the given ID, or null if not found or already deleted.</summary>
     Task<BoardComment?> FindByIdAsync(long id, CancellationToken ct = default);
+
+    /// <summary>
+    /// Returns the non-deleted comment with the given ID, row-locked (<c>FOR UPDATE</c>) for the
+    /// rest of the ambient transaction, or null if not found or already deleted.
+    /// </summary>
+    Task<BoardComment?> FindByIdForUpdateAsync(long id, CancellationToken ct = default);
 }

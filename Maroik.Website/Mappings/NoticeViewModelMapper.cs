@@ -12,6 +12,22 @@ namespace Maroik.Website.Mappings;
 /// </summary>
 public static class NoticeViewModelMapper
 {
+    extension(FixedScheduleRowStatus status)
+    {
+        /// <summary>
+        /// Maps a <see cref="FixedScheduleRowStatus"/> to the notice-grid's Bootstrap row class.
+        /// The status decision is Domain's (<see cref="FixedSchedulePolicy.GetRowStatus"/>); this
+        /// presentation-only mapping (and the "clsGridRow" selector hook the client script binds
+        /// to) belongs here, not in Domain.
+        /// </summary>
+        public string ToRowCssClass() => status switch
+        {
+            FixedScheduleRowStatus.Expired => "table-danger clsGridRow",
+            FixedScheduleRowStatus.Noticed => "table-info clsGridRow",
+            _ => "table-inactive clsGridRow"
+        };
+    }
+
     extension(FixedIncomeResponse item)
     {
         /// <summary>Maps a single <see cref="FixedIncomeResponse"/> to a <see cref="FixedIncomeOutputViewModel"/> for display.</summary>

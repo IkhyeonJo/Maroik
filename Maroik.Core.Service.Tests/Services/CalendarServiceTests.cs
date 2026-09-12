@@ -529,14 +529,14 @@ public class CalendarServiceTests
             ]);
         var sut = CreateSut();
 
-        ILookup<long, CalendarEventResponse> result = await sut.GetCalendarEventsAsync([1L, 2L], TestContext.Current.CancellationToken);
+        IReadOnlyDictionary<long, List<CalendarEventResponse>> result = await sut.GetCalendarEventsAsync([1L, 2L], TestContext.Current.CancellationToken);
 
-        Assert.Equal(2, result[1L].Count());
+        Assert.Equal(2, result[1L].Count);
         Assert.Single(result[2L]);
         _eventRepo.Verify(r => r.GetByCalendarIdsAsync(It.IsAny<IEnumerable<long>>(), It.IsAny<CancellationToken>()), Times.Once);
     }
 
-    /// <summary>Verifies that the batch overload returns an empty lookup when the repository finds no events.</summary>
+    /// <summary>Verifies that the batch overload returns no entry for a calendar ID the repository finds no events for.</summary>
     [Fact]
     public async Task GetCalendarEventsAsync_Batch_ReturnsEmptyLookup_WhenNoEventsFound()
     {
@@ -544,9 +544,9 @@ public class CalendarServiceTests
             .ReturnsAsync([]);
         var sut = CreateSut();
 
-        ILookup<long, CalendarEventResponse> result = await sut.GetCalendarEventsAsync([1L], TestContext.Current.CancellationToken);
+        IReadOnlyDictionary<long, List<CalendarEventResponse>> result = await sut.GetCalendarEventsAsync([1L], TestContext.Current.CancellationToken);
 
-        Assert.Empty(result[1L]);
+        Assert.Empty(result.GetValueOrDefault(1L, []));
     }
 
     // -- UpdateCalendarEventAsync ---------------------------------------------

@@ -1,3 +1,5 @@
+using System.Security.Cryptography;
+using System.Text;
 using ErrorOr;
 using Maroik.Core.Domain.Primitives;
 using Maroik.Core.Domain.ValueObjects;
@@ -87,6 +89,21 @@ public sealed class Account : AggregateRoot<string>
 
     /// <summary>Generates a fresh, unpredictable security stamp value.</summary>
     private static string GenerateSecurityStamp() => Guid.NewGuid().ToString("N");
+
+    /// <summary>
+    /// Constant-time comparison of a bearer token (registration/password-reset) against the value
+    /// stored on this account. Guards against a timing side-channel that a plain <c>==</c>/<c>!=</c>
+    /// comparison (which short-circuits on the first differing byte) would leak on these
+    /// account-takeover-adjacent tokens. Null/empty on either side never matches.
+    /// </summary>
+    private static bool TokensMatch(string? stored, string? candidate)
+    {
+        if (string.IsNullOrWhiteSpace(stored) || string.IsNullOrWhiteSpace(candidate))
+            return false;
+
+        return CryptographicOperations.FixedTimeEquals(
+            Encoding.UTF8.GetBytes(stored), Encoding.UTF8.GetBytes(candidate));
+    }
 
     /// <summary>"Brand-new account" constructor: stamps <see cref="Created"/>/<see cref="Updated"/>
     /// and a fresh <see cref="SecurityStamp"/>. Used by <see cref="Create"/> only.</summary>
@@ -243,7 +260,7 @@ public sealed class Account : AggregateRoot<string>
         if (EmailConfirmed)
             return Error.Conflict("Account.AlreadyConfirmed", "Email address is already confirmed.");
 
-        if (RegistrationToken != token)
+        if (!TokensMatch(RegistrationToken, token))
             return Error.Validation("Account.InvalidToken", "Invalid email confirmation token.");
 
         EmailConfirmed = true;
@@ -273,7 +290,7 @@ public sealed class Account : AggregateRoot<string>
     /// </summary>
     public ErrorOr<Success> ResetPassword(string token, string newHashedPassword)
     {
-        if (string.IsNullOrWhiteSpace(ResetPasswordToken) || ResetPasswordToken != token)
+        if (!TokensMatch(ResetPasswordToken, token))
             return Error.Validation("Account.InvalidToken", "Invalid or expired password-reset token.");
 
         if (string.IsNullOrWhiteSpace(newHashedPassword))

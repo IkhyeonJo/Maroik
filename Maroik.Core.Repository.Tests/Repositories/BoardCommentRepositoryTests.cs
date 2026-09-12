@@ -1,4 +1,5 @@
 using Maroik.Core.Domain.Board;
+using Maroik.Core.PostgreSQL.Data;
 using Maroik.Core.Repository.Repositories;
 using Microsoft.EntityFrameworkCore;
 using EfBoard = Maroik.Core.PostgreSQL.Models.Board;
@@ -150,6 +151,94 @@ public sealed class BoardCommentRepositoryTests(DatabaseFixture database) : Repo
         BoardComment? result = await Sut.FindByIdAsync(ef.Id, TestContext.Current.CancellationToken);
 
         Assert.Null(result);
+    }
+
+    // -- FindByIdForUpdateAsync (SELECT ... FOR UPDATE) ---------------------------
+
+    /// <summary>Verifies that <c>FindByIdForUpdateAsync</c> returns the comment when found.</summary>
+    [Fact]
+    public async Task FindByIdForUpdateAsync_ReturnsComment_WhenFound()
+    {
+        long boardId = await SeedBoardAsync();
+        var ef = MakeComment(boardId, 1, writer: "Bob" + Token);
+        await SeedAsync(ef);
+
+        BoardComment? result = await Sut.FindByIdForUpdateAsync(ef.Id, TestContext.Current.CancellationToken);
+
+        Assert.NotNull(result);
+        Assert.Equal("Bob" + Token, result.Writer);
+    }
+
+    /// <summary>Verifies that <c>FindByIdForUpdateAsync</c> returns null when not found.</summary>
+    [Fact]
+    public async Task FindByIdForUpdateAsync_ReturnsNull_WhenNotFound()
+    {
+        BoardComment? result = await Sut.FindByIdForUpdateAsync(long.MaxValue, TestContext.Current.CancellationToken);
+
+        Assert.Null(result);
+    }
+
+    /// <summary>Verifies that <c>FindByIdForUpdateAsync</c> returns null for a soft-deleted comment.</summary>
+    [Fact]
+    public async Task FindByIdForUpdateAsync_ReturnsNull_WhenCommentIsDeleted()
+    {
+        long boardId = await SeedBoardAsync();
+        var ef = MakeComment(boardId, 1, deleted: true);
+        await SeedAsync(ef);
+
+        BoardComment? result = await Sut.FindByIdForUpdateAsync(ef.Id, TestContext.Current.CancellationToken);
+
+        Assert.Null(result);
+    }
+
+    /// <summary>
+    /// Reproduces the race <c>BoardService.DeleteCommentAsync</c> must avoid: several concurrent
+    /// "lock comment, soft-delete" sequences against the same comment. PostgreSQL serializes them
+    /// via <c>FindByIdForUpdateAsync</c>'s row lock, so exactly one sequence observes the
+    /// not-yet-deleted row and succeeds; every other sequence's own locked re-read (after the
+    /// winner commits) sees it already gone, matching this repository's <c>!Deleted</c> filter.
+    /// </summary>
+    [Fact]
+    public async Task FindByIdForUpdateAsync_SerializesConcurrentSoftDelete()
+    {
+        const int attempterCount = 5;
+        long boardId = await SeedBoardAsync();
+        var ef = MakeComment(boardId, 1);
+        await SeedAsync(ef);
+
+        ApplicationDbContext[] contexts = [.. Enumerable.Range(0, attempterCount).Select(_ => NewDbContext())];
+
+        bool[] succeeded = await Task.WhenAll(contexts.Select(async context =>
+        {
+            var commentRepo = new BoardCommentRepository(context);
+            await using var unitOfWork = new UnitOfWork(context);
+
+            await unitOfWork.BeginAsync(TestContext.Current.CancellationToken);
+            BoardComment? locked = await commentRepo.FindByIdForUpdateAsync(ef.Id, TestContext.Current.CancellationToken);
+            if (locked == null)
+            {
+                await unitOfWork.RollbackAsync(TestContext.Current.CancellationToken);
+                return false;
+            }
+
+            var deleteResult = locked.SoftDelete();
+            if (deleteResult.IsError)
+            {
+                await unitOfWork.RollbackAsync(TestContext.Current.CancellationToken);
+                return false;
+            }
+
+            await commentRepo.UpdateEntityAsync(locked, TestContext.Current.CancellationToken);
+            await unitOfWork.CommitAsync(TestContext.Current.CancellationToken);
+            return true;
+        }));
+
+        Assert.Equal(1, succeeded.Count(s => s));
+
+        Context.ChangeTracker.Clear();
+        BoardComment? afterAll = await new BoardCommentRepository(Context)
+            .FindByIdAsync(ef.Id, TestContext.Current.CancellationToken);
+        Assert.Null(afterAll); // soft-deleted
     }
 
     // -- GetCommentCountsByBoardIdsAsync ------------------------------------------

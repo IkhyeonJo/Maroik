@@ -85,30 +85,39 @@ public class NoticeViewModelMapperTests
         Assert.False(result);
     }
 
-    // ── FixedSchedulePolicy.GetRowCssClass ────────────────────────────────────
+    // ── NoticeViewModelMapper.ToRowCssClass (presentation mapping of FixedSchedulePolicy.GetRowStatus) ──
 
-    /// <summary>Get row css class expired takes priority over noticed.</summary>
+    /// <summary>Expired status takes priority and maps to the danger row class.</summary>
     [Fact]
-    public void GetRowCssClass_Expired_TakesPriorityOverNoticed()
+    public void ToRowCssClass_Expired_ReturnsDangerClass()
     {
-        var result = FixedSchedulePolicy.GetRowCssClass(expired: true, noticed: true);
+        var result = FixedScheduleRowStatus.Expired.ToRowCssClass();
         Assert.Equal("table-danger clsGridRow", result);
     }
 
-    /// <summary>Get row css class noticed not expired returns info class.</summary>
+    /// <summary>Noticed (not expired) maps to the info row class.</summary>
     [Fact]
-    public void GetRowCssClass_NoticedNotExpired_ReturnsInfoClass()
+    public void ToRowCssClass_Noticed_ReturnsInfoClass()
     {
-        var result = FixedSchedulePolicy.GetRowCssClass(expired: false, noticed: true);
+        var result = FixedScheduleRowStatus.Noticed.ToRowCssClass();
         Assert.Equal("table-info clsGridRow", result);
     }
 
-    /// <summary>Get row css class neither expired nor noticed returns inactive class.</summary>
+    /// <summary>Normal (neither expired nor noticed) maps to the inactive row class.</summary>
     [Fact]
-    public void GetRowCssClass_NeitherExpiredNorNoticed_ReturnsInactiveClass()
+    public void ToRowCssClass_Normal_ReturnsInactiveClass()
     {
-        var result = FixedSchedulePolicy.GetRowCssClass(expired: false, noticed: false);
+        var result = FixedScheduleRowStatus.Normal.ToRowCssClass();
         Assert.Equal("table-inactive clsGridRow", result);
+    }
+
+    /// <summary>End-to-end: a mapped FixedIncomeOutputViewModel's RowCssClass reflects Expired/Noticed.</summary>
+    [Fact]
+    public void FixedIncomesToDisplayViewModels_SetsRowCssClass_ForExpiredItem()
+    {
+        var items = new[] { new FixedIncomeResponse { MaturityDate = DateTime.Today.AddDays(-1) } };
+        var vms = items.ToDisplayViewModels([], k => k, "UTC", 7);
+        Assert.Equal("table-danger clsGridRow", vms[0].RowCssClass);
     }
 
     // ── NoticeViewModelMapper.ToDisplayViewModels ────────────────────────────

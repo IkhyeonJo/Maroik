@@ -1,5 +1,6 @@
 using Maroik.Core.Client.Clients;
 using Maroik.Core.Contract.Misc.Messaging;
+using Microsoft.Extensions.Logging.Abstractions;
 using Moq;
 using RabbitMQ.Client;
 
@@ -38,7 +39,7 @@ public class RabbitMqEmailPublisherTests
         return connection;
     }
 
-    private RabbitMqEmailPublisher CreateSut() => new(_factory.Object);
+    private RabbitMqEmailPublisher CreateSut() => new(_factory.Object, NullLogger<RabbitMqEmailPublisher>.Instance);
 
     /// <summary>Publish async no cached connection opens connection and publishes.</summary>
     [Fact]
@@ -196,5 +197,35 @@ public class RabbitMqEmailPublisherTests
         await sut.DisposeAsync();
 
         _factory.Verify(f => f.CreateConnectionAsync(It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    /// <summary>
+    /// Regression test: DisposeAsync must not hang forever if a PublishAsync call is stuck holding
+    /// the publish lock (e.g. a broker that never confirms, with the caller having passed
+    /// CancellationToken.None). Verifies dispose completes within a bounded time instead of
+    /// deadlocking application shutdown.
+    /// </summary>
+    [Fact]
+    public async Task DisposeAsync_DoesNotHangForever_WhenPublishIsStuckHoldingTheLock()
+    {
+        var channel = MakeChannelMock();
+        var neverCompletes = new TaskCompletionSource();
+        channel.Setup(c => c.BasicPublishAsync(
+                It.IsAny<string>(), It.IsAny<string>(), It.IsAny<bool>(), It.IsAny<BasicProperties>(),
+                It.IsAny<ReadOnlyMemory<byte>>(), It.IsAny<CancellationToken>()))
+            .Returns(new ValueTask(neverCompletes.Task));
+        var connection = MakeConnectionMock(channel, isOpen: true);
+        _factory.Setup(f => f.CreateConnectionAsync(It.IsAny<CancellationToken>())).ReturnsAsync(connection.Object);
+        var sut = CreateSut();
+
+        Task stuckPublish = sut.PublishAsync(Message, CancellationToken.None);
+
+        Task disposeTask = sut.DisposeAsync().AsTask();
+        Task completedFirst = await Task.WhenAny(disposeTask, Task.Delay(TimeSpan.FromSeconds(10), TestContext.Current.CancellationToken));
+
+        Assert.Same(disposeTask, completedFirst);
+
+        neverCompletes.SetResult(); // unblock the stuck publish so it doesn't leak past this test
+        await stuckPublish;
     }
 }

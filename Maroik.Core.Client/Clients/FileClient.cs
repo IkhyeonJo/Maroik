@@ -15,10 +15,21 @@ public class FileClient(IHttpClientFactory httpClientFactory, ILogger<FileClient
     /// reaches here from a less-trusted source can't be used to escape the storage root.
     /// The app's own paths are always relative (e.g. <c>upload/Forum/.../file.zip</c>).
     /// </summary>
-    private static bool IsSafeRelativePath(string filePath) =>
-        !string.IsNullOrWhiteSpace(filePath)
-        && !Path.IsPathRooted(filePath)
-        && !filePath.Replace('\\', '/').Split('/').Contains("..");
+    private static bool IsSafeRelativePath(string filePath)
+    {
+        if (string.IsNullOrWhiteSpace(filePath))
+            return false;
+
+        // Normalize separators before checking rootedness/traversal, not after: a value starting
+        // with '\' is not rooted by Path.IsPathRooted's rules on this (Linux) runtime, but becomes
+        // a rooted Unix path ("/etc/passwd") the moment it is normalized for the storage service
+        // (see DownloadAsync/UploadAsync below) — checking the un-normalized string would let that
+        // form slip past this guard.
+        string normalized = filePath.Replace('\\', '/');
+        return !normalized.StartsWith('/')
+            && !Path.IsPathRooted(normalized)
+            && !normalized.Split('/').Contains("..");
+    }
 
     /// <inheritdoc />
     public async Task<byte[]> DownloadAsync(string filePath, string fileStorageBaseUrl, CancellationToken ct = default)

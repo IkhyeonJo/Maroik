@@ -131,11 +131,11 @@ public sealed class Board : AggregateRoot<long>
         if (string.IsNullOrWhiteSpace(title))
             return Error.Validation("Board.TitleEmpty", "Post title cannot be empty.");
 
-        if (title.Length > 100)
-            return Error.Validation("Board.TitleTooLong", "Post title must be 100 characters or fewer.");
+        if (title.Length > TitledContentPolicy.MaxTitleLength)
+            return Error.Validation("Board.TitleTooLong", $"Post title must be {TitledContentPolicy.MaxTitleLength} characters or fewer.");
 
-        if (content?.Length > 16384)
-            return Error.Validation("Board.ContentTooLong", "Post content must be 16384 characters or fewer.");
+        if (content?.Length > TitledContentPolicy.MaxBodyLength)
+            return Error.Validation("Board.ContentTooLong", $"Post content must be {TitledContentPolicy.MaxBodyLength} characters or fewer.");
 
         if (string.IsNullOrWhiteSpace(writer))
             return Error.Validation("Board.WriterEmpty", "Post author (writer) cannot be empty.");
@@ -154,11 +154,11 @@ public sealed class Board : AggregateRoot<long>
         if (string.IsNullOrWhiteSpace(title))
             return Error.Validation("Board.TitleEmpty", "Post title cannot be empty.");
 
-        if (title.Length > 100)
-            return Error.Validation("Board.TitleTooLong", "Post title must be 100 characters or fewer.");
+        if (title.Length > TitledContentPolicy.MaxTitleLength)
+            return Error.Validation("Board.TitleTooLong", $"Post title must be {TitledContentPolicy.MaxTitleLength} characters or fewer.");
 
-        if (content?.Length > 16384)
-            return Error.Validation("Board.ContentTooLong", "Post content must be 16384 characters or fewer.");
+        if (content?.Length > TitledContentPolicy.MaxBodyLength)
+            return Error.Validation("Board.ContentTooLong", $"Post content must be {TitledContentPolicy.MaxBodyLength} characters or fewer.");
 
         if (Deleted)
             return Error.Conflict("Board.Deleted", "Cannot update a deleted post.");

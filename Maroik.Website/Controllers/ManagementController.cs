@@ -280,11 +280,8 @@ public class ManagementController : Controller
                 Role = accountInputViewModel.Role,
                 TimeZoneIanaId = accountInputViewModel.TimeZoneIanaId,
                 Locked = false,
-                LoginAttempt = 0,
                 EmailConfirmed = true,
                 AgreedServiceTerms = true,
-                Created = DateTime.UtcNow,
-                Updated = DateTime.UtcNow,
                 Message = EnumHelper.GetDescription(AccountMessage.Success),
                 Deleted = false
             }, HttpContext.RequestAborted);

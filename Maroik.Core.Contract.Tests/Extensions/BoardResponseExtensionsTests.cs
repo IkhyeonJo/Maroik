@@ -1,4 +1,5 @@
 using Maroik.Core.Domain.Account;
+using Maroik.Core.Domain.Board;
 using Maroik.Core.Contract.Dtos;
 using Maroik.Core.Contract.Misc.Extensions;
 
@@ -113,5 +114,43 @@ public class BoardResponseExtensionsTests
         var anonymous = new AccountResponse { Nickname = null, Role = Role.Anonymous };
 
         Assert.False(board.IsTitleVisibleToOwner(anonymous));
+    }
+
+    // -- Delegation to Board.CanBeViewedBy (PrivateNote is owner-only regardless of lock) ---------
+
+    /// <summary>
+    /// Regression test: an UNLOCKED PrivateNote's title must still be hidden from a non-owner.
+    /// The old hand-rolled "!Locked || IsOwner" formula would have returned true here (a non-owner
+    /// could see another account's unlocked private-note title); delegating to
+    /// <see cref="Board.CanBeViewedBy(string?, bool, bool, string?, string?, bool)"/> makes
+    /// PrivateNote owner-only unconditionally, matching the domain rule.
+    /// </summary>
+    [Fact]
+    public void IsTitleVisibleToOwner_PrivateNoteNotLockedNotWriter_False()
+    {
+        var board = new BoardResponse { Type = BoardTypes.PrivateNote, Locked = false, Writer = "Alice" };
+        var viewer = new AccountResponse { Nickname = "Bob", Role = Role.User };
+
+        Assert.False(board.IsTitleVisibleToOwner(viewer));
+    }
+
+    /// <summary>An unlocked PrivateNote's title is still visible to its own writer.</summary>
+    [Fact]
+    public void IsTitleVisibleToOwner_PrivateNoteNotLockedIsWriter_True()
+    {
+        var board = new BoardResponse { Type = BoardTypes.PrivateNote, Locked = false, Writer = "Alice" };
+        var viewer = new AccountResponse { Nickname = "Alice", Role = Role.User };
+
+        Assert.True(board.IsTitleVisibleToOwner(viewer));
+    }
+
+    /// <summary>A soft-deleted post's title is never visible, even to its own writer.</summary>
+    [Fact]
+    public void IsTitleVisibleToOwnerOrAdmin_Deleted_False()
+    {
+        var board = new BoardResponse { Locked = false, Deleted = true, Writer = "Alice" };
+        var viewer = new AccountResponse { Nickname = "Alice", Role = Role.Admin };
+
+        Assert.False(board.IsTitleVisibleToOwnerOrAdmin(viewer));
     }
 }

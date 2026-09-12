@@ -672,38 +672,60 @@ public class BoardServiceTests
     [Fact]
     public async Task DeleteCommentAsync_ReturnsFail_WhenCommentNotFound()
     {
-        _commentRepo.Setup(r => r.FindByIdAsync(It.IsAny<long>(), It.IsAny<CancellationToken>())).ReturnsAsync((BoardComment?)null);
+        _commentRepo.Setup(r => r.FindByIdForUpdateAsync(It.IsAny<long>(), It.IsAny<CancellationToken>())).ReturnsAsync((BoardComment?)null);
         var sut = CreateSut();
 
         ServiceResult result = await sut.DeleteCommentAsync(99, "Alice", false, ct: TestContext.Current.CancellationToken);
 
         Assert.False(result.Success);
+        _unitOfWork.Verify(u => u.RollbackAsync(It.IsAny<CancellationToken>()), Times.Once);
     }
 
     /// <summary>Verifies that <c>DeleteCommentAsync</c> returns fail when not owner and not admin.</summary>
     [Fact]
     public async Task DeleteCommentAsync_ReturnsFail_WhenNotOwnerAndNotAdmin()
     {
-        _commentRepo.Setup(r => r.FindByIdAsync(It.IsAny<long>(), It.IsAny<CancellationToken>())).ReturnsAsync(MakeComment(writer: "Alice"));
+        _commentRepo.Setup(r => r.FindByIdForUpdateAsync(It.IsAny<long>(), It.IsAny<CancellationToken>())).ReturnsAsync(MakeComment(writer: "Alice"));
         var sut = CreateSut();
 
         ServiceResult result = await sut.DeleteCommentAsync(1, "Bob", false, ct: TestContext.Current.CancellationToken);
 
         Assert.False(result.Success);
         Assert.Contains("permission", result.ErrorKey, StringComparison.OrdinalIgnoreCase);
+        _unitOfWork.Verify(u => u.RollbackAsync(It.IsAny<CancellationToken>()), Times.Once);
     }
 
     /// <summary>Verifies that <c>DeleteCommentAsync</c> returns success when owner.</summary>
     [Fact]
     public async Task DeleteCommentAsync_ReturnsSuccess_WhenOwner()
     {
-        _commentRepo.Setup(r => r.FindByIdAsync(It.IsAny<long>(), It.IsAny<CancellationToken>())).ReturnsAsync(MakeComment(writer: "Alice"));
+        _commentRepo.Setup(r => r.FindByIdForUpdateAsync(It.IsAny<long>(), It.IsAny<CancellationToken>())).ReturnsAsync(MakeComment(writer: "Alice"));
         _commentRepo.Setup(r => r.UpdateEntityAsync(It.IsAny<BoardComment>(), It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
         var sut = CreateSut();
 
         ServiceResult result = await sut.DeleteCommentAsync(1, "Alice", false, ct: TestContext.Current.CancellationToken);
 
         Assert.True(result.Success);
+        _unitOfWork.Verify(u => u.BeginAsync(It.IsAny<CancellationToken>()), Times.Once);
+        _unitOfWork.Verify(u => u.CommitAsync(It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    /// <summary>
+    /// Regression test: the comment lookup must be the locked (FOR UPDATE) variant, matching this
+    /// file's other writes (WriteCommentAsync/EditBoardAsync/DeleteBoardAsync), not the unlocked
+    /// FindByIdAsync — otherwise two concurrent deletes of the same comment could both succeed.
+    /// </summary>
+    [Fact]
+    public async Task DeleteCommentAsync_UsesLockedLookup_NotUnlockedFindById()
+    {
+        _commentRepo.Setup(r => r.FindByIdForUpdateAsync(It.IsAny<long>(), It.IsAny<CancellationToken>())).ReturnsAsync(MakeComment(writer: "Alice"));
+        _commentRepo.Setup(r => r.UpdateEntityAsync(It.IsAny<BoardComment>(), It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
+        var sut = CreateSut();
+
+        await sut.DeleteCommentAsync(1, "Alice", false, ct: TestContext.Current.CancellationToken);
+
+        _commentRepo.Verify(r => r.FindByIdForUpdateAsync(1, It.IsAny<CancellationToken>()), Times.Once);
+        _commentRepo.Verify(r => r.FindByIdAsync(It.IsAny<long>(), It.IsAny<CancellationToken>()), Times.Never);
     }
 
     // -- IncrementBoardViewAsync ----------------------------------------------
