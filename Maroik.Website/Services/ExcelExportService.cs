@@ -4,7 +4,7 @@ using DocumentFormat.OpenXml;
 using DocumentFormat.OpenXml.Packaging;
 using DocumentFormat.OpenXml.Spreadsheet;
 using Maroik.Core.Contract.Dtos;
-using Maroik.Core.Contract.Misc.Extensions;
+using Maroik.Core.Domain.Localization;
 using Maroik.Website.Contracts;
 using Maroik.Website.Extensions;
 using Maroik.Website.Mappings;

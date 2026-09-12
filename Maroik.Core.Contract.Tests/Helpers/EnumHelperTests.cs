@@ -1,4 +1,4 @@
-using Maroik.Core.Contract.Misc.Enums;
+using Maroik.Core.Domain.Account;
 using Maroik.Core.Contract.Misc.Helpers;
 
 namespace Maroik.Core.Contract.Tests.Helpers;

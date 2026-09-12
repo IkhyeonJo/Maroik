@@ -1,4 +1,4 @@
-using Maroik.Core.Contract.Misc.Extensions;
+using Maroik.Core.Domain.Localization;
 
 namespace Maroik.Website.Extensions;
 

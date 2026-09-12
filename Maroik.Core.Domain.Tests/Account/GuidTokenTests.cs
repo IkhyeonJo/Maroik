@@ -1,9 +1,9 @@
-using Maroik.Core.Contract.Misc.Tokens;
+using Maroik.Core.Domain.Account;
 
-namespace Maroik.Core.Contract.Tests.Tokens;
+namespace Maroik.Core.DomainTests.AccountDomain;
 
 /// <summary>
-/// Unit tests for <see cref="Maroik.Core.Contract.Misc.Tokens.GuidToken"/>.
+/// Unit tests for <see cref="GuidToken"/>.
 /// Verifies token generation uniqueness, Base64 validity, 24-hour expiry window,
 /// and rejection of expired or tampered tokens.
 /// </summary>

@@ -1,6 +1,6 @@
 using System.Security.Cryptography;
 
-namespace Maroik.Core.Contract.Misc.Tokens;
+namespace Maroik.Core.Domain.Account;
 
 /// <summary>
 /// Utility class for generating and validating time-stamped tokens used in

@@ -6,7 +6,6 @@ using Maroik.Core.Contract.Misc.Helpers;
 using Maroik.Core.Contract.Interfaces;
 using Maroik.Core.Contract.Misc.Messaging;
 using Maroik.Core.Contract.Misc.Settings;
-using Maroik.Core.Contract.Misc.Tokens;
 using Maroik.Core.Service.Services;
 using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Options;

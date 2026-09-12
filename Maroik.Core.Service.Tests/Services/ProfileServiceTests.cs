@@ -23,6 +23,7 @@ public class ProfileServiceTests
     private readonly Mock<IPasswordService> _passwordService = new();
     private readonly Mock<IFileClient> _fileClient = new();
     private readonly Mock<IImageValidatorService> _imageValidator = new();
+    private readonly Mock<IUnitOfWork> _unitOfWork = new();
     private readonly IOptions<ServerSetting> _settings =
         Options.Create(new ServerSetting { FileStorageBaseUrl = "http://localhost:5001" });
 
@@ -33,6 +34,7 @@ public class ProfileServiceTests
         _fileClient.Object,
         _imageValidator.Object,
         _settings,
+        _unitOfWork.Object,
         NullLogger<ProfileService>.Instance);
 
     // -- Helpers --------------------------------------------------------------
@@ -268,12 +270,13 @@ public class ProfileServiceTests
     [Fact]
     public async Task UpdatePasswordAsync_ReturnsFail_WhenAccountNotFound()
     {
-        _accountRepo.Setup(r => r.FindByEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync((Account?)null);
+        _accountRepo.Setup(r => r.FindByEmailForUpdateAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync((Account?)null);
         var sut = CreateSut();
 
         ServiceResult result = await sut.UpdatePasswordAsync("ghost@example.com", "old", "new", TestContext.Current.CancellationToken);
 
         Assert.False(result.Success);
+        _unitOfWork.Verify(u => u.RollbackAsync(It.IsAny<CancellationToken>()), Times.Once);
     }
 
     /// <summary>Verifies that <c>UpdatePasswordAsync</c> returns fail when current password is wrong.</summary>
@@ -281,7 +284,7 @@ public class ProfileServiceTests
     public async Task UpdatePasswordAsync_ReturnsFail_WhenCurrentPasswordIsWrong()
     {
         var account = ActiveAccount();
-        _accountRepo.Setup(r => r.FindByEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(account);
+        _accountRepo.Setup(r => r.FindByEmailForUpdateAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(account);
         _passwordService.Setup(p => p.VerifyPassword("wrongpass", account.HashedPassword)).Returns(false);
         var sut = CreateSut();
 
@@ -289,6 +292,7 @@ public class ProfileServiceTests
 
         Assert.False(result.Success);
         Assert.Contains("Invalid password", result.ErrorKey, StringComparison.OrdinalIgnoreCase);
+        _unitOfWork.Verify(u => u.RollbackAsync(It.IsAny<CancellationToken>()), Times.Once);
     }
 
     /// <summary>Verifies that <c>UpdatePasswordAsync</c> hashes and updates when current password is correct.</summary>
@@ -296,7 +300,7 @@ public class ProfileServiceTests
     public async Task UpdatePasswordAsync_HashesAndUpdates_WhenCurrentPasswordIsCorrect()
     {
         var account = ActiveAccount();
-        _accountRepo.Setup(r => r.FindByEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(account);
+        _accountRepo.Setup(r => r.FindByEmailForUpdateAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(account);
         _passwordService.Setup(p => p.VerifyPassword("oldpass", account.HashedPassword)).Returns(true);
         _passwordService.Setup(p => p.HashPassword("NewPass1!")).Returns("$2a$13$newhash");
         _accountRepo.Setup(r => r.UpdatePasswordAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<bool>(), It.IsAny<DateTime>(), It.IsAny<CancellationToken>())).ReturnsAsync(1);
@@ -307,6 +311,29 @@ public class ProfileServiceTests
         Assert.True(result.Success);
         _accountRepo.Verify(r => r.UpdatePasswordAsync(
             account.Email.Value, "$2a$13$newhash", It.IsAny<string>(), false, It.IsAny<DateTime>(), It.IsAny<CancellationToken>()), Times.Once);
+        _unitOfWork.Verify(u => u.BeginAsync(It.IsAny<CancellationToken>()), Times.Once);
+        _unitOfWork.Verify(u => u.CommitAsync(It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    /// <summary>
+    /// Regression test for the read-verify-write race this method used to have: the account lookup
+    /// must be the locked (FOR UPDATE) variant, not the plain unlocked lookup, so a concurrent
+    /// password reset on the same row cannot be silently overwritten by a stale verification.
+    /// </summary>
+    [Fact]
+    public async Task UpdatePasswordAsync_UsesLockedLookup_NotUnlockedFindByEmail()
+    {
+        var account = ActiveAccount();
+        _accountRepo.Setup(r => r.FindByEmailForUpdateAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(account);
+        _passwordService.Setup(p => p.VerifyPassword("oldpass", account.HashedPassword)).Returns(true);
+        _passwordService.Setup(p => p.HashPassword("NewPass1!")).Returns("$2a$13$newhash");
+        _accountRepo.Setup(r => r.UpdatePasswordAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<bool>(), It.IsAny<DateTime>(), It.IsAny<CancellationToken>())).ReturnsAsync(1);
+        var sut = CreateSut();
+
+        await sut.UpdatePasswordAsync(account.Email.Value, "oldpass", "NewPass1!", TestContext.Current.CancellationToken);
+
+        _accountRepo.Verify(r => r.FindByEmailForUpdateAsync(account.Email.Value, It.IsAny<CancellationToken>()), Times.Once);
+        _accountRepo.Verify(r => r.FindByEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
     }
 
     // -- UpdateDefaultMonetaryUnitAsync --------------------------------------

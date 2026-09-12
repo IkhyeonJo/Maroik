@@ -5,6 +5,7 @@ using Maroik.Core.Domain.ValueObjects;
 using Maroik.Core.Contract.Dtos;
 using Maroik.Core.Contract.Interfaces;
 using Maroik.Core.Contract.Misc.Settings;
+using Maroik.Core.Service.Extensions;
 using Maroik.Core.Service.Mappers;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
@@ -25,6 +26,7 @@ public class ProfileService(
     IFileClient fileClient,
     IImageValidatorService imageValidator,
     IOptions<ServerSetting> settings,
+    IUnitOfWork unitOfWork,
     ILogger<ProfileService> logger) : IProfileService
 {
     /// <summary>Relative storage directory (under the file-storage root) that holds uploaded avatars.</summary>
@@ -85,18 +87,24 @@ public class ProfileService(
     /// <inheritdoc />
     public async Task<ServiceResult> UpdatePasswordAsync(string email, string currentPassword, string newPassword, CancellationToken ct = default)
     {
+        await unitOfWork.BeginAsync(ct);
         try
         {
-            Account? account = await FindByEmailAsync(email, ct);
+            // The read must be locked (FOR UPDATE), not the plain FindByEmailAsync used elsewhere in
+            // this class: a concurrent AccountService.ResetPasswordAsync also writes HashedPassword /
+            // SecurityStamp. An unlocked read here could verify currentPassword against a
+            // since-superseded hash and then blindly overwrite a password the user just reset via
+            // "forgot password" on another device.
+            Account? account = await accountRepository.FindByEmailForUpdateAsync(email, ct);
             if (account == null)
-                return ServiceResult.NotFound("Account.NotFound", "Input is invalid");
+                return await unitOfWork.FailAsync(ServiceResult.NotFound("Account.NotFound", "Input is invalid"), ct);
 
             if (!passwordService.VerifyPassword(currentPassword, account.HashedPassword))
-                return ServiceResult.Validation("Profile.WrongPassword", "Invalid password. Please check again.");
+                return await unitOfWork.FailAsync(ServiceResult.Validation("Profile.WrongPassword", "Invalid password. Please check again."), ct);
 
             // Enforce the complexity rule server-side, before hashing — Account.ChangePassword only sees the hash.
             if (!PasswordPolicy.IsValid(newPassword))
-                return ServiceResult.Validation("Account.PasswordPolicy", PasswordPolicy.ViolationMessage);
+                return await unitOfWork.FailAsync(ServiceResult.Validation("Account.PasswordPolicy", PasswordPolicy.ViolationMessage), ct);
 
             // Let the domain method compute the new SecurityStamp / clear MustChangePassword, then
             // persist only those columns (see UpdateAvatarAsync for why the full-row write is avoided).
@@ -104,11 +112,13 @@ public class ProfileService(
 
             await accountRepository.UpdatePasswordAsync(
                 email, account.HashedPassword, account.SecurityStamp, account.MustChangePassword, account.Updated, ct);
+            await unitOfWork.CommitAsync(ct);
             return ServiceResult.Ok();
         }
         catch (Exception e)
         {
             logger.LogError(e, "Failed to update password for {Email}", email);
+            await unitOfWork.RollbackAsync(ct);
             return ServiceResult.Failure("Profile.UpdatePasswordFailed", "Input is invalid");
         }
     }

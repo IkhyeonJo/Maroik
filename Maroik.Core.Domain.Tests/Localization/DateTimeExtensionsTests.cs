@@ -1,11 +1,11 @@
 using System.Globalization;
 using Maroik.Core.Domain.Account;
-using Maroik.Core.Contract.Misc.Extensions;
+using Maroik.Core.Domain.Localization;
 
-namespace Maroik.Core.Contract.Tests.Extensions;
+namespace Maroik.Core.DomainTests.Localization;
 
 /// <summary>
-/// Unit tests for <see cref="Maroik.Core.Contract.Misc.Extensions.DateTimeExtensions"/>.
+/// Unit tests for <see cref="DateTimeExtensions"/>.
 /// Verifies UTC-to-local conversion using IANA time-zone IDs and graceful handling
 /// of unknown or null zone identifiers.
 /// </summary>

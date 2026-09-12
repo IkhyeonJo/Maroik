@@ -1,7 +1,7 @@
 using System.Globalization;
 using Maroik.Core.Domain.Account;
 
-namespace Maroik.Core.Contract.Misc.Extensions;
+namespace Maroik.Core.Domain.Localization;
 
 /// <summary>
 /// Extension methods for <see cref="DateTime"/> to simplify time-zone conversions.
