@@ -19,7 +19,7 @@ public class BoardAttachedFileRepository(ApplicationDbContext context)
     /// <inheritdoc />
     public async Task<Dictionary<long, BoardAttachedFile?>> GetByBoardIdsAsync(IEnumerable<long> boardIds, CancellationToken ct = default)
     {
-        List<long> ids = boardIds.ToList();
+        List<long> ids = [.. boardIds];
         List<OrmFile> files = await Context.BoardAttachedFiles
             .Where(x => ids.Contains(x.BoardId))
             .ToListAsync(ct);
@@ -46,5 +46,5 @@ public class BoardAttachedFileRepository(ApplicationDbContext context)
 
     /// <inheritdoc />
     public Task<BoardAttachedFile?> FindByBoardIdAsync(long boardId, CancellationToken ct = default)
-        => QueryFirstAsync(e => e.BoardId == boardId, ct);
+        => QueryFirstAsync(e => e.BoardId == boardId, ct: ct);
 }

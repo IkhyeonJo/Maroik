@@ -27,9 +27,9 @@ public class ExpenditureRepository(ApplicationDbContext context)
 
     /// <summary>Maps a persisted <see cref="OrmExpenditure"/> row to the <see cref="Expenditure"/> domain object.</summary>
     protected override Expenditure ToDomain(OrmExpenditure e) => Expenditure.Reconstitute(
-        e.Id, e.AccountEmail ?? "", e.MainClass ?? "",
-        e.SubClass ?? "", e.Content, e.Amount, e.AssetNavigation?.MonetaryUnit ?? "",
-        e.PaymentMethod ?? "", e.MyDepositAsset, e.Note,
+        e.Id, e.AccountEmail, e.MainClass,
+        e.SubClass, e.Content, e.Amount, e.AssetNavigation.MonetaryUnit,
+        e.PaymentMethod, e.MyDepositAsset, e.Note,
         e.Created, e.Updated);
 
     /// <summary>Maps an <see cref="Expenditure"/> domain object to its <see cref="OrmExpenditure"/> persistence representation.</summary>
@@ -92,7 +92,7 @@ public class ExpenditureRepository(ApplicationDbContext context)
 
     /// <inheritdoc />
     public Task<Expenditure?> FindByEmailAndIdAsync(string accountEmail, long id, CancellationToken ct = default)
-        => QueryFirstAsync(e => e.AccountEmail == accountEmail && e.Id == id, ct);
+        => QueryFirstAsync(e => e.AccountEmail == accountEmail && e.Id == id, ct: ct);
 
     /// <inheritdoc />
     public async Task<Expenditure?> FindByEmailAndIdForUpdateAsync(string accountEmail, long id, CancellationToken ct = default)
@@ -120,7 +120,7 @@ public class ExpenditureRepository(ApplicationDbContext context)
         // if this row is already tracked in the context from an earlier read in the same unit of
         // work, a tracking query's identity resolution would hand back that pre-lock instance
         // instead of the just-locked row's values, defeating the lock.
-        return await QueryFirstAsync(e => e.AccountEmail == accountEmail && e.Id == id, ct, noTracking: true);
+        return await QueryFirstAsync(e => e.AccountEmail == accountEmail && e.Id == id, ct: ct, noTracking: true);
     }
 
     /// <inheritdoc />
@@ -129,7 +129,7 @@ public class ExpenditureRepository(ApplicationDbContext context)
 
     /// <inheritdoc />
     public Task<Expenditure?> GetFirstByAccountEmailOrderedByCreatedAsync(string accountEmail, CancellationToken ct = default)
-        => QueryFirstAsync(e => e.AccountEmail == accountEmail, ct, orderBy: q => q.OrderBy(e => e.Created));
+        => QueryFirstAsync(e => e.AccountEmail == accountEmail, orderBy: q => q.OrderBy(e => e.Created), ct:ct);
 
     /// <inheritdoc />
     public Task DeleteByIdAsync(long id, CancellationToken ct = default)

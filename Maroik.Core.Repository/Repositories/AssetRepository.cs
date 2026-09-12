@@ -39,8 +39,8 @@ public class AssetRepository(ApplicationDbContext context)
 
     /// <summary>Maps a persisted <see cref="OrmAsset"/> row to the <see cref="Asset"/> domain object.</summary>
     protected override Asset ToDomain(OrmAsset e) => Asset.Reconstitute(
-        e.ProductName ?? "", e.AccountEmail ?? "", e.Item ?? "",
-        e.Amount, e.MonetaryUnit ?? "", e.Note, e.Deleted, e.Created, e.Updated);
+        e.ProductName, e.AccountEmail, e.Item,
+        e.Amount, e.MonetaryUnit, e.Note, e.Deleted, e.Created, e.Updated);
 
     /// <summary>Maps an <see cref="Asset"/> domain object to its <see cref="OrmAsset"/> persistence representation.</summary>
     protected override OrmAsset ToEntity(Asset a) => new()
@@ -63,7 +63,7 @@ public class AssetRepository(ApplicationDbContext context)
     /// <inheritdoc />
     // See ExpenditureRepository.SearchByAccountEmailAsync for why this is raw SQL rather than LINQ
     // (ILIKE is case-insensitive natively, so it also covers the Deleted/bool matching).
-    // Asset's key is (AccountEmail, ProductName), not a single Id, so the two-step match collects
+    // Asset's key is (AccountEmail, ProductName), not a single ID, so the two-step match collects
     // ProductName instead.
     public async Task<List<Asset>> SearchByAccountEmailAsync(string accountEmail, string search, CancellationToken ct = default)
     {
@@ -89,7 +89,7 @@ public class AssetRepository(ApplicationDbContext context)
 
     /// <inheritdoc />
     public Task<Asset?> FindByEmailAndProductNameAsync(string accountEmail, string productName, CancellationToken ct = default)
-        => QueryFirstAsync(e => e.AccountEmail == accountEmail && e.ProductName == productName, ct);
+        => QueryFirstAsync(e => e.AccountEmail == accountEmail && e.ProductName == productName, ct: ct);
 
     /// <inheritdoc />
     public async Task<Asset?> FindByEmailAndProductNameForUpdateAsync(string accountEmail, string productName, CancellationToken ct = default)
@@ -123,7 +123,7 @@ public class AssetRepository(ApplicationDbContext context)
     {
         if (productNames.Count == 0) return [];
 
-        // Same rationale as FindByEmailAndProductNameForUpdateAsync (raw SQL for FOR UPDATE,
+        // Same rationale as FindByEmailAndProductNameForUpdateAsync (raw SQL for "FOR UPDATE",
         // AsNoTracking to bypass identity-resolution snap-back to a pre-lock tracked instance).
         // ORDER BY "ProductName" locks every matched row in the same order a caller that already
         // sorts its requested names (see AssetBalanceOrdinalLockExtensions) would have locked them

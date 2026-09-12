@@ -19,7 +19,7 @@ public class BoardCommentRepository(ApplicationDbContext context)
     /// <inheritdoc />
     public async Task<Dictionary<long, int>> GetCommentCountsByBoardIdsAsync(IEnumerable<long> boardIds, CancellationToken ct = default)
     {
-        List<long> ids = boardIds.ToList();
+        List<long> ids = [.. boardIds];
 
         Dictionary<long, int> counts = await Context.BoardComments
             .Where(x => ids.Contains(x.BoardId) && !x.Deleted)
@@ -35,7 +35,7 @@ public class BoardCommentRepository(ApplicationDbContext context)
 
     /// <summary>Maps a persisted <see cref="OrmBoardComment"/> row to the <see cref="BoardComment"/> domain object.</summary>
     protected override BoardComment ToDomain(OrmBoardComment e) => BoardComment.Reconstitute(
-        e.Id, e.BoardId, e.Order, e.AvatarImagePath, e.Writer ?? "",
+        e.Id, e.BoardId, e.Order, e.AvatarImagePath, e.Writer,
         e.Content, e.Created, e.Deleted);
 
     /// <summary>Maps a <see cref="BoardComment"/> domain object to its <see cref="OrmBoardComment"/> persistence representation.</summary>
@@ -57,5 +57,5 @@ public class BoardCommentRepository(ApplicationDbContext context)
 
     /// <inheritdoc />
     public Task<BoardComment?> FindByIdAsync(long id, CancellationToken ct = default)
-        => QueryFirstAsync(e => e.Id == id && !e.Deleted, ct);
+        => QueryFirstAsync(e => e.Id == id && !e.Deleted, ct: ct);
 }

@@ -1,5 +1,4 @@
 using System.Linq.Expressions;
-using System.Reflection;
 using Maroik.Core.Contract.Interfaces;
 using Maroik.Core.PostgreSQL.Data;
 using Microsoft.EntityFrameworkCore;
@@ -24,9 +23,9 @@ namespace Maroik.Core.Repository.Repositories;
 /// entity built from the domain object is always a new, Detached instance, not because tracking itself
 /// is off.
 /// <para>
-/// Flush behaviour: when no <see cref="IUnitOfWork"/> transaction is open on the context, each
+/// Flush behavior: when no <see cref="IUnitOfWork"/> transaction is open on the context, each
 /// write is persisted immediately (a single-write service method, or a repository integration
-/// test, behaves exactly as before). When a transaction <em>is</em> open, the write is left
+/// test, behaves exactly as before). When a transaction <em>is</em> open, to write is left
 /// pending so that <see cref="IUnitOfWork.CommitAsync"/> flushes the whole unit of work as one
 /// round trip instead of one per repository call.
 /// </para>
@@ -54,7 +53,7 @@ public abstract class GenericRepository<TDomain, TEntity>(ApplicationDbContext c
     /// <summary>
     /// Compiled getters for <typeparamref name="TEntity"/>'s primary-key properties, built once per
     /// closed generic type and reused for every <see cref="UpdateEntityAsync"/> /
-    /// <see cref="DeleteWhereAsync"/> call. This replaces a per-call <see cref="PropertyInfo.GetValue"/>
+    /// <see cref="DeleteWhereAsync"/> call. This replaces a per-call
     /// reflection walk; the key-property list still comes from the EF model (itself cached by EF Core),
     /// only the value extraction is compiled. Assigned via <c>??=</c> — a benign race just rebuilds an
     /// identical delegate array.
@@ -106,18 +105,23 @@ public abstract class GenericRepository<TDomain, TEntity>(ApplicationDbContext c
         // via Set.FindAsync, which returns a tracked instance we can then overwrite.
         var keyValues = GetPrimaryKeyValues(newEntity);
         var existing = await Set.FindAsync(keyValues, ct);
-        if (existing is null)
+        if (existing is not null)
+        {
+            var entry = Context.Entry(existing);
+            if (entry.State == EntityState.Detached) entry.State = EntityState.Unchanged;
+            // Copy all scalar values from the mapped domain object onto the tracked entity, then mark
+            // the whole entry Modified so SaveChanges issues an UPDATE for every column regardless of
+            // which individual values actually changed.
+            entry.CurrentValues.SetValues(newEntity);
+            entry.State = EntityState.Modified;
+            await FlushUnlessInTransactionAsync(ct);
+        }
+        else
+        {
             throw new InvalidOperationException(
                 $"Cannot update {typeof(TEntity).Name}: no row found for key ({string.Join(", ", keyValues)}). " +
                 "It may have been deleted concurrently.");
-        var entry = Context.Entry(existing);
-        if (entry.State == EntityState.Detached) entry.State = EntityState.Unchanged;
-        // Copy all scalar values from the mapped domain object onto the tracked entity, then mark
-        // the whole entry Modified so SaveChanges issues an UPDATE for every column regardless of
-        // which individual values actually changed.
-        entry.CurrentValues.SetValues(newEntity);
-        entry.State = EntityState.Modified;
-        await FlushUnlessInTransactionAsync(ct);
+        }
     }
 
     /// <summary>Runs <paramref name="predicate"/> (with optional <paramref name="orderBy"/>) and maps every matching row to <typeparamref name="TDomain"/>.</summary>
@@ -149,6 +153,7 @@ public abstract class GenericRepository<TDomain, TEntity>(ApplicationDbContext c
     /// Returns the first row matching <paramref name="predicate"/> (with optional <paramref name="orderBy"/>)
     /// mapped to <typeparamref name="TDomain"/>, or <see langword="default"/> if none exists.
     /// </summary>
+    /// <param name="orderBy"></param>
     /// <param name="noTracking">
     /// Pass <see langword="true"/> to run as <c>AsNoTracking()</c>. Required for a read that must
     /// reflect the row's true current column values — e.g. re-reading a row right after taking a
@@ -156,11 +161,13 @@ public abstract class GenericRepository<TDomain, TEntity>(ApplicationDbContext c
     /// back an already-tracked instance from an earlier (pre-lock) read instead of the freshly
     /// queried values, silently defeating the lock's isolation guarantee.
     /// </param>
+    /// <param name="predicate"></param>
+    /// <param name="ct"></param>
     protected async Task<TDomain?> QueryFirstAsync(
         Expression<Func<TEntity, bool>> predicate,
-        CancellationToken ct = default,
         Func<IQueryable<TEntity>, IQueryable<TEntity>>? orderBy = null,
-        bool noTracking = false)
+        bool noTracking = false,
+        CancellationToken ct = default)
     {
         var query = ApplyIncludes(Set.Where(predicate));
         if (noTracking) query = query.AsNoTracking();
@@ -174,7 +181,7 @@ public abstract class GenericRepository<TDomain, TEntity>(ApplicationDbContext c
         var merged = MergeWithPendingChanges(dbResults, predicate);
         if (orderBy != null && !ReferenceEquals(merged, dbResults))
             merged = [.. orderBy(merged.AsQueryable())];
-        var entity = merged.Count > 0 ? merged[0] : default;
+        var entity = merged.Count > 0 ? merged[0] : null;
         return entity == null ? default : ToDomain(entity);
     }
 
@@ -186,7 +193,7 @@ public abstract class GenericRepository<TDomain, TEntity>(ApplicationDbContext c
     /// (see <c>ExpenditureRepository.SearchByAccountEmailAsync</c>).
     /// </summary>
     protected static string ToLikePattern(string search) =>
-        $"%{search.Replace("\\", "\\\\").Replace("%", "\\%").Replace("_", "\\_")}%";
+        $"%{search.Replace("\\", @"\\").Replace("%", "\\%").Replace("_", "\\_")}%";
 
     /// <summary>Deletes every row matching <paramref name="predicate"/>.</summary>
     protected async Task DeleteWhereAsync(
@@ -198,14 +205,11 @@ public abstract class GenericRepository<TDomain, TEntity>(ApplicationDbContext c
         // entity. If this context already has a tracked instance for a given row (e.g. it was
         // just added/queried earlier in the same unit of work), that instance is removed directly
         // — attaching the freshly-fetched no-tracking copy instead would conflict with it (same
-        // key, two instances). Otherwise the fetched row is attached in memory (no DB round trip)
+        // key, two instances). Otherwise, the fetched row is attached in memory (no DB round trip)
         // before being removed. Both paths avoid the DB round trip that a per-row Set.FindAsync
         // would incur.
         var toRemove = await Set.AsNoTracking().Where(predicate).ToListAsync(ct);
-
-        // Index the entities this context already tracks by primary key once, so matching each row
-        // to delete is a dictionary lookup instead of a linear ChangeTracker scan with a compiled-
-        // getter call per comparison (this was O(rows-to-delete x tracked-entities)).
+        
         Dictionary<string, TEntity> trackedByKey = Context.ChangeTracker.Entries<TEntity>()
             .GroupBy(e => KeyOf(GetPrimaryKeyValues(e.Entity)))
             .ToDictionary(g => g.Key, g => g.First().Entity);
@@ -222,31 +226,15 @@ public abstract class GenericRepository<TDomain, TEntity>(ApplicationDbContext c
                 Set.Remove(entity);
             }
         }
-
-        // A row created earlier in the same still-open transaction via CreateAsync has its INSERT
-        // deferred (see FlushUnlessInTransactionAsync) and so does not exist in the database yet —
-        // the AsNoTracking query above (deliberately bypassing identity resolution, see its comment)
-        // cannot see it, and it would otherwise still be inserted by the eventual CommitAsync despite
-        // matching this delete. Cancel its pending insert directly against the change tracker:
-        // "delete a row that was never written" is "don't write it", i.e. Detached.
-        //
-        // Symmetrically, a row updated (but not yet flushed) earlier in the same transaction is
-        // fetched above with its stale, still-in-the-database column values, so a predicate matching
-        // only the row's new, unflushed value would miss it entirely; the reverse also holds -- a row
-        // whose new value no longer matches the predicate would still be deleted since the AsNoTracking
-        // query only ever sees the old, matching one. Both are resolved the same way: re-run the
-        // predicate against each Modified entry's current (in-memory) values and let that decide
-        // whether it should end up Deleted, overriding what the AsNoTracking snapshot implied.
+        
         var predicateFunc = predicate.Compile();
-        foreach (var entry in Context.ChangeTracker.Entries<TEntity>().Where(e => e.State == EntityState.Added).ToList())
+        foreach (var entry in Context.ChangeTracker.Entries<TEntity>().Where(e => e.State == EntityState.Added).ToList().Where(entry => predicateFunc(entry.Entity)))
         {
-            if (predicateFunc(entry.Entity))
-                entry.State = EntityState.Detached;
+            entry.State = EntityState.Detached;
         }
-        foreach (var entry in Context.ChangeTracker.Entries<TEntity>().Where(e => e.State == EntityState.Modified).ToList())
+        foreach (var entry in Context.ChangeTracker.Entries<TEntity>().Where(e => e.State == EntityState.Modified).ToList().Where(entry => predicateFunc(entry.Entity)))
         {
-            if (predicateFunc(entry.Entity))
-                entry.State = EntityState.Deleted;
+            entry.State = EntityState.Deleted;
         }
 
         await FlushUnlessInTransactionAsync(ct);
@@ -281,7 +269,7 @@ public abstract class GenericRepository<TDomain, TEntity>(ApplicationDbContext c
             .Where(e => e.State == EntityState.Deleted)
             .Select(e => KeyOf(GetPrimaryKeyValues(e.Entity))));
 
-        List<TEntity> merged = new(dbResults.Where(e => !deletedKeys.Contains(KeyOf(GetPrimaryKeyValues(e)))));
+        List<TEntity> merged = [.. dbResults.Where(e => !deletedKeys.Contains(KeyOf(GetPrimaryKeyValues(e))))];
 
         var predicateFunc = predicate.Compile();
         merged.AddRange(pending
@@ -292,5 +280,5 @@ public abstract class GenericRepository<TDomain, TEntity>(ApplicationDbContext c
     }
 
     private static string KeyOf(object?[] keyValues) =>
-        string.Join("|", keyValues.Select(v => System.Uri.EscapeDataString(v?.ToString() ?? "")));
+        string.Join("|", keyValues.Select(v => Uri.EscapeDataString(v?.ToString() ?? "")));
 }

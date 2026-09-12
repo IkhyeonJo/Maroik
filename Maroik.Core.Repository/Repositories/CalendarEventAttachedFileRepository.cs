@@ -32,7 +32,7 @@ public class CalendarEventAttachedFileRepository(ApplicationDbContext context)
 
     /// <inheritdoc />
     public Task<CalendarEventAttachedFile?> FindByCalendarEventIdAsync(long calendarEventId, CancellationToken ct = default)
-        => QueryFirstAsync(e => e.CalendarEventId == calendarEventId, ct);
+        => QueryFirstAsync(e => e.CalendarEventId == calendarEventId, ct: ct);
 
     /// <inheritdoc />
     public Task DeleteByCalendarEventIdAsync(long calendarEventId, CancellationToken ct = default)

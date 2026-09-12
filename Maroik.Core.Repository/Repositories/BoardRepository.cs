@@ -30,7 +30,7 @@ public class BoardRepository(ApplicationDbContext context)
         OrmBoard entity = ToEntity(board);
         _ = await Context.Boards.AddAsync(entity, ct);
         // Unlike the deferred CreateAsync, this flush is unconditional: the caller needs the
-        // database-generated Id immediately (to build the attachment's storage path within the
+        // database-generated ID immediately (to build the attachment's storage path within the
         // same unit of work). Inside a transaction the INSERT is still uncommitted until commit.
         _ = await Context.SaveChangesAsync(ct);
         return entity.Id;
@@ -38,8 +38,8 @@ public class BoardRepository(ApplicationDbContext context)
 
     /// <summary>Maps a persisted <see cref="OrmBoard"/> row to the <see cref="Board"/> domain object.</summary>
     protected override Board ToDomain(OrmBoard e) => Board.Reconstitute(
-        e.Id, e.Type ?? "", e.Title ?? "", e.Content,
-        e.Writer ?? "", e.Created, e.Updated, e.View, e.Deleted, e.Locked, e.Noticed);
+        e.Id, e.Type, e.Title, e.Content,
+        e.Writer, e.Created, e.Updated, e.View, e.Deleted, e.Locked, e.Noticed);
 
     /// <summary>Maps a <see cref="Board"/> domain object to its <see cref="OrmBoard"/> persistence representation.</summary>
     protected override OrmBoard ToEntity(Board b) => new()
@@ -73,7 +73,7 @@ public class BoardRepository(ApplicationDbContext context)
         if (query.OwnerNickname != null)
             baseQuery = baseQuery.Where(x => x.Writer == query.OwnerNickname);
 
-        // Match the search term literally. string.Contains translates to a LIKE whose parameter's
+        // Match the search term literally. string.Contains translate to a LIKE whose parameter's
         // %/_ are still wildcards, so "50%" or "a_b" would search as a pattern; escape them the same
         // way the raw-SQL search paths (SearchAsync / ExpenditureRepository) do via ToLikePattern.
         // EF.Functions.Like keeps the case-sensitive semantics string.Contains had here.
@@ -84,7 +84,7 @@ public class BoardRepository(ApplicationDbContext context)
         // Applies the "private (locked) posts are never searchable" rule to a set of search
         // matches and orders the result: an Admin sees every match; a regular User sees the
         // non-locked matches plus their own locked matches (their own ordered after, preserving
-        // the group order via SQL UNION ALL rather than a single Id sort); an anonymous / other
+        // the group order via SQL UNION ALL rather than a single ID sort); an anonymous / other
         // viewer sees only non-locked matches. Shared by the Title AND Writer search branches so
         // both enforce the locked-visibility split identically — a Writer search must not be a
         // back door to enumerating another account's locked posts.
@@ -93,24 +93,26 @@ public class BoardRepository(ApplicationDbContext context)
             if (!query.IsLoggedIn)
                 return matches.Where(x => !x.Locked).OrderByDescending(x => x.Id);
 
-            if (query.ViewerRole == Role.Admin)
-                return matches.OrderByDescending(x => x.Id);
-
-            if (query.ViewerRole == Role.User)
+            switch (query.ViewerRole)
             {
-                IQueryable<OrmBoard> noLocked = matches.Where(x => !x.Locked);
-                IQueryable<OrmBoard> ownLocked = matches.Where(x => x.Locked && x.Writer == query.ViewerNickname);
+                case Role.Admin:
+                    return matches.OrderByDescending(x => x.Id);
+                case Role.User:
+                {
+                    IQueryable<OrmBoard> noLocked = matches.Where(x => !x.Locked);
+                    IQueryable<OrmBoard> ownLocked = matches.Where(x => x.Locked && x.Writer == query.ViewerNickname);
 
-                return noLocked.Select(x => new { Board = x, Group = 0 })
-                    .Concat(ownLocked.Select(x => new { Board = x, Group = 1 }))
-                    .OrderBy(x => x.Group).ThenByDescending(x => x.Board.Id)
-                    .Select(x => x.Board);
+                    return noLocked.Select(x => new { Board = x, Group = 0 })
+                        .Concat(ownLocked.Select(x => new { Board = x, Group = 1 }))
+                        .OrderBy(x => x.Group).ThenByDescending(x => x.Board.Id)
+                        .Select(x => x.Board);
+                }
+                default:
+                    // Logged in but neither Admin nor User (Role only ever has these two values for an
+                    // active session — unreachable in practice). Matches the original code: no case fires,
+                    // so the list is left as the unfiltered, unsearched base query.
+                    return baseQuery.OrderByDescending(x => x.Id);
             }
-
-            // Logged in but neither Admin nor User (Role only ever has these two values for an
-            // active session — unreachable in practice). Matches the original code: no case fires,
-            // so the list is left as the unfiltered, unsearched base query.
-            return baseQuery.OrderByDescending(x => x.Id);
         }
 
         if (query.OwnerNickname != null)
@@ -125,18 +127,15 @@ public class BoardRepository(ApplicationDbContext context)
             };
             filtered = scoped.OrderByDescending(x => x.Id);
         }
-        else if (query.SearchType == "Title" && !string.IsNullOrEmpty(query.SearchText))
-        {
-            filtered = ApplyLockedVisibility(baseQuery.Where(x => EF.Functions.Like(x.Title, searchPattern)));
-        }
-        else if (query.SearchType == "Writer" && !string.IsNullOrEmpty(query.SearchText))
-        {
-            filtered = ApplyLockedVisibility(baseQuery.Where(x => EF.Functions.Like(x.Writer, searchPattern)));
-        }
         else
-        {
-            filtered = baseQuery.OrderByDescending(x => x.Id);
-        }
+            filtered = query.SearchType switch
+            {
+                "Title" when !string.IsNullOrEmpty(query.SearchText) => ApplyLockedVisibility(
+                    baseQuery.Where(x => EF.Functions.Like(x.Title, searchPattern))),
+                "Writer" when !string.IsNullOrEmpty(query.SearchText) => ApplyLockedVisibility(
+                    baseQuery.Where(x => EF.Functions.Like(x.Writer, searchPattern))),
+                _ => baseQuery.OrderByDescending(x => x.Id)
+            };
 
         int totalCount = await filtered.CountAsync(ct);
         List<OrmBoard> page = await filtered.Skip((query.Page - 1) * query.PageSize).Take(query.PageSize).ToListAsync(ct);
@@ -145,7 +144,7 @@ public class BoardRepository(ApplicationDbContext context)
 
     /// <inheritdoc />
     public Task<Board?> FindActiveByIdAsync(long id, CancellationToken ct = default)
-        => QueryFirstAsync(e => e.Id == id && e.Deleted == false, ct);
+        => QueryFirstAsync(e => e.Id == id && e.Deleted == false, ct: ct);
 
     /// <inheritdoc />
     public async Task<Board?> FindActiveByIdForUpdateAsync(long id, CancellationToken ct = default)

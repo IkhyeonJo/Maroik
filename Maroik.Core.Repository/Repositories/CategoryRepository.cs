@@ -39,7 +39,7 @@ public class CategoryRepository(ApplicationDbContext context)
 
     /// <inheritdoc />
     public Task<Category?> FindByIdAsync(long id, CancellationToken ct = default)
-        => QueryFirstAsync(e => e.Id == id, ct);
+        => QueryFirstAsync(e => e.Id == id, ct: ct);
 
     /// <inheritdoc />
     public Task DeleteByIdAsync(long id, CancellationToken ct = default)

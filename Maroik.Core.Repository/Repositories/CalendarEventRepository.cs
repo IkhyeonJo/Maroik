@@ -22,7 +22,7 @@ public class CalendarEventRepository(ApplicationDbContext context)
         OrmCalendarEvent entity = ToEntity(calendarEvent);
         _ = await Context.CalendarEvents.AddAsync(entity, ct);
         // Flushed unconditionally (unlike the deferred CreateAsync): the caller needs the
-        // database-generated Id for the reminder / attached-file rows it writes next in the same
+        // database-generated ID for the reminder / attached-file rows it writes next in the same
         // unit of work. The INSERT stays uncommitted until the transaction commits.
         _ = await Context.SaveChangesAsync(ct);
         return entity.Id;
@@ -30,7 +30,7 @@ public class CalendarEventRepository(ApplicationDbContext context)
 
     /// <summary>Maps a persisted <see cref="OrmCalendarEvent"/> row to the <see cref="CalendarEvent"/> domain object.</summary>
     protected override CalendarEvent ToDomain(OrmCalendarEvent e) => CalendarEvent.Reconstitute(
-        e.Id, e.CalendarId, e.Title ?? "", e.Description,
+        e.Id, e.CalendarId, e.Title, e.Description,
         e.AllDay, e.StartDate, e.EndDate,
         e.StartDateTimeZoneIanaId, e.EndDateTimeZoneIanaId,
         e.Location, e.Status, e.RecurrenceId, e.Created, e.Updated);
@@ -63,7 +63,7 @@ public class CalendarEventRepository(ApplicationDbContext context)
 
     /// <inheritdoc />
     public Task<CalendarEvent?> FindByIdAsync(long id, CancellationToken ct = default)
-        => QueryFirstAsync(e => e.Id == id, ct);
+        => QueryFirstAsync(e => e.Id == id, ct: ct);
 
     /// <inheritdoc />
     public Task DeleteByIdAsync(long id, CancellationToken ct = default)

@@ -26,9 +26,9 @@ public class FixedIncomeRepository(ApplicationDbContext context)
 
     /// <summary>Maps a persisted <see cref="OrmFixedIncome"/> row to the <see cref="FixedIncome"/> domain object.</summary>
     protected override FixedIncome ToDomain(OrmFixedIncome e) => FixedIncome.Reconstitute(
-        e.Id, e.AccountEmail ?? "", e.MainClass ?? "",
-        e.SubClass ?? "", e.Content, e.Amount, e.Asset?.MonetaryUnit ?? "",
-        e.DepositMyAssetProductName ?? "", e.DepositMonth, e.DepositDay,
+        e.Id, e.AccountEmail, e.MainClass,
+        e.SubClass, e.Content, e.Amount, e.Asset.MonetaryUnit,
+        e.DepositMyAssetProductName, e.DepositMonth, e.DepositDay,
         e.MaturityDate, e.Note, e.Unpunctuality, e.Created, e.Updated);
 
     /// <summary>Maps a <see cref="FixedIncome"/> domain object to its <see cref="OrmFixedIncome"/> persistence representation.</summary>
@@ -89,7 +89,7 @@ public class FixedIncomeRepository(ApplicationDbContext context)
 
     /// <inheritdoc />
     public Task<FixedIncome?> FindByEmailAndIdAsync(string accountEmail, long id, CancellationToken ct = default)
-        => QueryFirstAsync(e => e.AccountEmail == accountEmail && e.Id == id, ct);
+        => QueryFirstAsync(e => e.AccountEmail == accountEmail && e.Id == id, ct: ct);
 
     /// <inheritdoc />
     public Task DeleteByIdAsync(long id, CancellationToken ct = default)

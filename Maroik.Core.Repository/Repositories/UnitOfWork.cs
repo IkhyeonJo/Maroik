@@ -21,13 +21,9 @@ namespace Maroik.Core.Repository.Repositories;
 /// has ended, so a <c>catch</c> block can safely call <see cref="RollbackAsync"/> even on a path
 /// that already committed.
 /// </remarks>
-public class UnitOfWork : IUnitOfWork
+public class UnitOfWork(ApplicationDbContext context) : IUnitOfWork
 {
-    private readonly ApplicationDbContext _context;
     private IDbContextTransaction? _transaction;
-
-    /// <summary>Initializes a new instance of <see cref="UnitOfWork"/> with <paramref name="context"/>.</summary>
-    public UnitOfWork(ApplicationDbContext context) => _context = context;
 
     /// <inheritdoc />
     public async Task BeginAsync(CancellationToken ct = default)
@@ -40,7 +36,7 @@ public class UnitOfWork : IUnitOfWork
                 "or resolve a separate scope for the inner work.");
         }
 
-        _transaction = await _context.Database.BeginTransactionAsync(ct);
+        _transaction = await context.Database.BeginTransactionAsync(ct);
     }
 
     /// <inheritdoc />
@@ -54,7 +50,7 @@ public class UnitOfWork : IUnitOfWork
             // Flush the writes the repositories left pending for the duration of the transaction
             // (see GenericRepository) so the whole unit of work reaches the database as one batch,
             // then commit.
-            await _context.SaveChangesAsync(ct);
+            await context.SaveChangesAsync(ct);
             await _transaction.CommitAsync(ct);
         }
         finally
@@ -87,7 +83,7 @@ public class UnitOfWork : IUnitOfWork
             // CreateAsync otherwise leaves a Modified/Added entry on the request-scoped DbContext
             // that the next SaveChanges (e.g. a second Begin→Commit cycle in the same request —
             // IncomeService/ExpenditureService adjust-then-fail paths) would silently persist.
-            _context.ChangeTracker.Clear();
+            context.ChangeTracker.Clear();
         }
     }
 
@@ -105,7 +101,7 @@ public class UnitOfWork : IUnitOfWork
             _transaction = null;
             // Same reason as RollbackAsync: drop any deferred writes so they cannot be flushed by
             // a later SaveChanges on the same scoped context.
-            _context.ChangeTracker.Clear();
+            context.ChangeTracker.Clear();
         }
         GC.SuppressFinalize(this);
     }

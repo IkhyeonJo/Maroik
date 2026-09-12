@@ -18,8 +18,8 @@ public class AccountRepository(ApplicationDbContext context)
 
     /// <summary>Maps a persisted <see cref="OrmAccount"/> row to the <see cref="Account"/> domain aggregate.</summary>
     protected override Account ToDomain(OrmAccount e) => Account.Reconstitute(
-        e.Email ?? "", e.HashedPassword ?? "", e.Nickname ?? "",
-        e.AvatarImagePath, e.Role ?? "", e.TimeZoneIanaId ?? "UTC",
+        e.Email, e.HashedPassword, e.Nickname,
+        e.AvatarImagePath, e.Role, e.TimeZoneIanaId,
         e.DefaultMonetaryUnit, e.Locked, e.LoginAttempt, e.EmailConfirmed,
         e.AgreedServiceTerms, e.RegistrationToken, e.ResetPasswordToken,
         e.Created, e.Updated, e.Message, e.Deleted,
@@ -94,22 +94,22 @@ public class AccountRepository(ApplicationDbContext context)
         // un-normalized user input (login form, forgot-password form, etc.) — normalize the
         // lookup key too, or a differently-cased-but-identical email never matches.
         string normalizedEmail = email.ToLowerInvariant();
-        return QueryFirstAsync(e => e.Email == normalizedEmail, ct);
+        return QueryFirstAsync(e => e.Email == normalizedEmail, ct: ct);
     }
 
     /// <inheritdoc />
     public Task<Account?> FindByRegistrationTokenAsync(string token, CancellationToken ct = default)
-        => QueryFirstAsync(e => e.RegistrationToken == token, ct);
+        => QueryFirstAsync(e => e.RegistrationToken == token, ct: ct);
 
     /// <inheritdoc />
     public Task<Account?> FindByResetPasswordTokenAsync(string token, CancellationToken ct = default)
-        => QueryFirstAsync(e => e.ResetPasswordToken == token, ct);
+        => QueryFirstAsync(e => e.ResetPasswordToken == token, ct: ct);
 
     /// <inheritdoc />
     public Task<List<Account>> FindByNicknamesAsync(IEnumerable<string> nicknames, CancellationToken ct = default)
     {
         var list = nicknames.ToList();
-        return QueryAsync(e => list.Contains(e.Nickname!), ct: ct);
+        return QueryAsync(e => list.Contains(e.Nickname), ct: ct);
     }
 
     /// <inheritdoc />

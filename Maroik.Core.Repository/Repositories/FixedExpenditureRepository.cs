@@ -28,9 +28,9 @@ public class FixedExpenditureRepository(ApplicationDbContext context)
 
     /// <summary>Maps a persisted <see cref="OrmFixedExpenditure"/> row to the <see cref="FixedExpenditure"/> domain object.</summary>
     protected override FixedExpenditure ToDomain(OrmFixedExpenditure e) => FixedExpenditure.Reconstitute(
-        e.Id, e.AccountEmail ?? "", e.MainClass ?? "",
-        e.SubClass ?? "", e.Content, e.Amount, e.AssetNavigation?.MonetaryUnit ?? "",
-        e.PaymentMethod ?? "", e.MyDepositAsset, e.DepositMonth, e.DepositDay,
+        e.Id, e.AccountEmail, e.MainClass,
+        e.SubClass, e.Content, e.Amount, e.AssetNavigation.MonetaryUnit,
+        e.PaymentMethod, e.MyDepositAsset, e.DepositMonth, e.DepositDay,
         e.MaturityDate, e.Note, e.Unpunctuality, e.Created, e.Updated);
 
     /// <summary>Maps a <see cref="FixedExpenditure"/> domain object to its <see cref="OrmFixedExpenditure"/> persistence representation.</summary>
@@ -93,7 +93,7 @@ public class FixedExpenditureRepository(ApplicationDbContext context)
 
     /// <inheritdoc />
     public Task<FixedExpenditure?> FindByEmailAndIdAsync(string accountEmail, long id, CancellationToken ct = default)
-        => QueryFirstAsync(e => e.AccountEmail == accountEmail && e.Id == id, ct);
+        => QueryFirstAsync(e => e.AccountEmail == accountEmail && e.Id == id, ct: ct);
 
     /// <inheritdoc />
     public Task DeleteByIdAsync(long id, CancellationToken ct = default)
