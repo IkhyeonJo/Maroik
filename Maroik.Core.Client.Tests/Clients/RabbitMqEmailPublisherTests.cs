@@ -39,7 +39,13 @@ public class RabbitMqEmailPublisherTests
         return connection;
     }
 
-    private RabbitMqEmailPublisher CreateSut() => new(_factory.Object, NullLogger<RabbitMqEmailPublisher>.Instance);
+    // A short grace window so tests exercising the "connection dropped" path don't pay a real
+    // multi-second sleep (the production default, sourced from ConnectionFactory.NetworkRecoveryInterval,
+    // is 5s — see RabbitMqEmailPublisher's constructor).
+    private static readonly TimeSpan _testRecoveryGraceWindow = TimeSpan.FromMilliseconds(20);
+
+    private RabbitMqEmailPublisher CreateSut() =>
+        new(_factory.Object, NullLogger<RabbitMqEmailPublisher>.Instance, _testRecoveryGraceWindow);
 
     /// <summary>Publish async no cached connection opens connection and publishes.</summary>
     [Fact]
@@ -208,6 +214,26 @@ public class RabbitMqEmailPublisherTests
                 It.IsAny<string>(), It.IsAny<string>(), It.IsAny<bool>(), It.IsAny<BasicProperties>(),
                 It.IsAny<ReadOnlyMemory<byte>>(), It.IsAny<CancellationToken>()),
             Times.Once);
+    }
+
+    /// <summary>
+    /// Regression: the recovery-grace-window fix must actually track whatever
+    /// <c>NetworkRecoveryInterval</c> a real <see cref="ConnectionFactory"/> is configured with
+    /// (defaulting to a fixed constant here previously either stalled every reconnect on a mismatch
+    /// or, before that, was too short to ever observe a real recovery). Reflection reaches the
+    /// private field directly since the grace window is otherwise only observable by actually
+    /// waiting it out in real time.
+    /// </summary>
+    [Fact]
+    public void Constructor_SourcesRecoveryGraceWindow_FromConnectionFactoryNetworkRecoveryInterval()
+    {
+        var realFactory = new ConnectionFactory { NetworkRecoveryInterval = TimeSpan.FromSeconds(42) };
+
+        var sut = new RabbitMqEmailPublisher(realFactory, NullLogger<RabbitMqEmailPublisher>.Instance);
+
+        var field = typeof(RabbitMqEmailPublisher).GetField(
+            "_connectionRecoveryGraceWindow", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+        Assert.Equal(TimeSpan.FromSeconds(42), (TimeSpan)field!.GetValue(sut)!);
     }
 
     /// <summary>Dispose async with open connection disposes connection.</summary>

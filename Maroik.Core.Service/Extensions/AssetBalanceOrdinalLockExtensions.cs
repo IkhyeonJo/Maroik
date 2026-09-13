@@ -56,6 +56,10 @@ public static class AssetBalanceOrdinalLockExtensions
         /// <paramref name="adjustments"/>, applies each deposit/withdrawal in order, then saves every
         /// touched asset. Used to revert a transaction record's old asset impact and/or apply its new
         /// one from a single fetched snapshot, avoiding duplicate reads of the same asset.
+        /// A caller that already holds a dictionary covering these asset names — typically because it
+        /// fetched one of its own for validation just before calling this — should use the
+        /// <see cref="ApplyAssetBalanceAdjustmentsAsync(IAssetBalanceDomainService, Dictionary{string, Asset}, IEnumerable{AssetBalanceAdjustment}, string, string, CancellationToken)"/>
+        /// overload instead, to reuse that fetch rather than repeating it here.
         /// </summary>
         /// <param name="accountEmail"></param>
         /// <param name="adjustments">Adjustments to apply; entries with an empty <see cref="AssetBalanceAdjustment.AssetName"/> are skipped.</param>
@@ -72,6 +76,31 @@ public static class AssetBalanceOrdinalLockExtensions
             List<AssetBalanceAdjustment> toApply = [.. adjustments.Where(a => !string.IsNullOrEmpty(a.AssetName))];
             Dictionary<string, Asset> assets = await assetBalance.GetAssetsOrdinalAsync(
                 accountEmail, toApply.Select(a => a.AssetName), ct);
+
+            return await assetBalance.ApplyAssetBalanceAdjustmentsAsync(
+                assets, toApply, notFoundErrorCode, notFoundErrorMessage, ct);
+        }
+
+        /// <summary>
+        /// Applies each deposit/withdrawal in <paramref name="adjustments"/> against the already-fetched
+        /// <paramref name="assets"/> (from a prior <see cref="GetAssetsOrdinalAsync"/> call — typically
+        /// one the caller made for its own pre-write validation), then saves every touched asset,
+        /// without fetching the assets a second time.
+        /// </summary>
+        /// <param name="assets">Already row-locked assets, keyed by name, covering every name in <paramref name="adjustments"/>.</param>
+        /// <param name="adjustments">Adjustments to apply; entries with an empty <see cref="AssetBalanceAdjustment.AssetName"/> are skipped.</param>
+        /// <param name="notFoundErrorCode">Error code used when a non-empty asset name does not resolve to an asset.</param>
+        /// <param name="notFoundErrorMessage">Error message used when a non-empty asset name does not resolve to an asset.</param>
+        /// <param name="ct"></param>
+        public async Task<ErrorOr<Success>> ApplyAssetBalanceAdjustmentsAsync(
+            Dictionary<string, Asset> assets,
+            IEnumerable<AssetBalanceAdjustment> adjustments,
+            string notFoundErrorCode,
+            string notFoundErrorMessage,
+            CancellationToken ct = default)
+        {
+            List<AssetBalanceAdjustment> toApply = [.. adjustments.Where(a => !string.IsNullOrEmpty(a.AssetName))];
+            HashSet<string> touchedNames = [];
 
             foreach (var adjustment in toApply)
             {
@@ -92,10 +121,15 @@ public static class AssetBalanceOrdinalLockExtensions
 
                 var result = adjustment.IsDeposit ? asset.Deposit(amount) : asset.Withdraw(amount);
                 if (result.IsError) return result.Errors;
+
+                touchedNames.Add(adjustment.AssetName!);
             }
 
-            foreach (var asset in assets.Values)
-                await assetBalance.SaveAsync(asset, ct);
+            // Only save assets this call actually adjusted — `assets` may hold extra entries the
+            // caller fetched for its own validation (e.g. a since-archived asset) that this call
+            // never touched.
+            foreach (var name in touchedNames)
+                await assetBalance.SaveAsync(assets[name], ct);
 
             return Result.Success;
         }

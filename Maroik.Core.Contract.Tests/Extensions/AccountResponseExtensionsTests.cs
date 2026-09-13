@@ -80,6 +80,40 @@ public class AccountResponseExtensionsTests
         Assert.False(anonymous.IsOwnerOrAdmin("Bob"));
     }
 
+    // -- SeesLocalTime ------------------------------------------------------------
+
+    /// <summary>An Admin viewer sees local time.</summary>
+    [Fact]
+    public void SeesLocalTime_Admin_True()
+    {
+        var viewer = new AccountResponse { Nickname = "AdminUser", Role = Role.Admin };
+        Assert.True(viewer.SeesLocalTime());
+    }
+
+    /// <summary>A regular User viewer sees local time, same as Admin.</summary>
+    [Fact]
+    public void SeesLocalTime_User_True()
+    {
+        var viewer = new AccountResponse { Nickname = "Alice", Role = Role.User };
+        Assert.True(viewer.SeesLocalTime());
+    }
+
+    /// <summary>An Anonymous viewer does not see local time (raw UTC instead).</summary>
+    [Fact]
+    public void SeesLocalTime_Anonymous_False()
+    {
+        var anonymous = new AccountResponse { Nickname = null, Role = Role.Anonymous };
+        Assert.False(anonymous.SeesLocalTime());
+    }
+
+    /// <summary>A null role (unauthenticated default) does not see local time.</summary>
+    [Fact]
+    public void SeesLocalTime_NullRole_False()
+    {
+        var viewer = new AccountResponse { Nickname = null, Role = null };
+        Assert.False(viewer.SeesLocalTime());
+    }
+
     // -- ToAdminNicknameSet -------------------------------------------------------
 
     /// <summary>To admin nickname set returns only admin nicknames.</summary>

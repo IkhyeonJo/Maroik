@@ -120,7 +120,7 @@ public class IncomeService(IIncomeRepository incomeRepository, IAssetBalanceDoma
                 return await unitOfWork.FailAsync(updateResult.FirstError, ct);
 
             await incomeRepository.UpdateEntityAsync(previous, ct);
-            var adjustResult = await AdjustAssetBalancesAsync(accountEmail, oldSnapshot,
+            var adjustResult = await AdjustAssetBalancesAsync(touchedAssets, oldSnapshot,
                 new IncomeSnapshot(previous.DepositMyAssetProductName, previous.Amount.Amount, previous.Amount.Currency), ct);
             if (adjustResult.IsError)
                 return await unitOfWork.FailAsync(adjustResult.FirstError, ct);
@@ -156,7 +156,7 @@ public class IncomeService(IIncomeRepository incomeRepository, IAssetBalanceDoma
                 assetsToCheck.TryGetValue(income.DepositMyAssetProductName, out var assetToCheck) && assetToCheck.Deleted)
                 return await unitOfWork.FailAsync(DeletedAssetResult, ct);
 
-            var adjustResult = await AdjustAssetBalancesAsync(accountEmail,
+            var adjustResult = await AdjustAssetBalancesAsync(assetsToCheck,
                 new IncomeSnapshot(income.DepositMyAssetProductName, income.Amount.Amount, income.Amount.Currency), null, ct);
             if (adjustResult.IsError)
                 return await unitOfWork.FailAsync(adjustResult.FirstError, ct);
@@ -182,9 +182,12 @@ public class IncomeService(IIncomeRepository incomeRepository, IAssetBalanceDoma
 
     /// <summary>
     /// Reverts <paramref name="toRevert"/>'s asset impact and applies <paramref name="toApply"/>'s asset impact.
-    /// Pass null for toApply when deleting.
+    /// Pass null for toApply when deleting. Applies against <paramref name="touchedAssets"/> — the
+    /// dictionary the caller already fetched (via <see cref="AssetBalanceOrdinalLockExtensions.GetAssetsOrdinalAsync"/>)
+    /// for its own pre-write validation — instead of fetching the same assets again.
     /// </summary>
-    private async Task<ErrorOr<Success>> AdjustAssetBalancesAsync(string accountEmail, IncomeSnapshot toRevert, IncomeSnapshot? toApply, CancellationToken ct = default)
+    private async Task<ErrorOr<Success>> AdjustAssetBalancesAsync(
+        Dictionary<string, Asset> touchedAssets, IncomeSnapshot toRevert, IncomeSnapshot? toApply, CancellationToken ct = default)
     {
         List<AssetBalanceAdjustment> adjustments =
             [new(toRevert.DepositAssetName, toRevert.Amount, IsDeposit: false, Currency: toRevert.Currency)];
@@ -192,7 +195,7 @@ public class IncomeService(IIncomeRepository incomeRepository, IAssetBalanceDoma
             adjustments.Add(new(toApply.Value.DepositAssetName, toApply.Value.Amount, IsDeposit: true, Currency: toApply.Value.Currency));
 
         return await assetBalance.ApplyAssetBalanceAdjustmentsAsync(
-            accountEmail, adjustments, "Income.AssetNotFound", "The asset referenced by this income could not be found.", ct);
+            touchedAssets, adjustments, "Income.AssetNotFound", "The asset referenced by this income could not be found.", ct);
     }
 
     /// <summary>

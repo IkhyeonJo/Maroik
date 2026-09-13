@@ -136,22 +136,7 @@
                                 <label for="createFixedExpenditureSubClass">@Localizer["SubClass"].Value</label>
                                 <br />
                                 <select id="createFixedExpenditureSubClass" name="createFixedExpenditureSubClass" class="form-control form-control-sm" style="max-width:100%;text-overflow:ellipsis;">
-                                    @* Options are rendered from ExpenditureClassPolicy.SubClassesByMainClass (the domain
-                                       policy backing ExpenditureClassPolicy.Validate) rather than hardcoded, so this list
-                                       can't drift out of sync with what the server actually accepts. Only the default
-                                       main class's (first key's) sub-classes start visible/selected; ChangeCreate*MainClass
-                                       (site.ts) reveals the rest when the user picks a different main class. *@
-                                    @{
-                                        string createFixedExpenditureDefaultMainClass = ExpenditureClassPolicy.SubClassesByMainClass.Keys.First();
-                                        string createFixedExpenditureDefaultSubClass = ExpenditureClassPolicy.SubClassesByMainClass[createFixedExpenditureDefaultMainClass][0];
-                                    }
-                                    @foreach ((string mainClass, IReadOnlyList<string> subClasses) in ExpenditureClassPolicy.SubClassesByMainClass)
-                                    {
-                                        foreach (string subClass in subClasses)
-                                        {
-                                            <option value="@subClass" hidden="@(mainClass == createFixedExpenditureDefaultMainClass ? null : "hidden")" selected="@(subClass == createFixedExpenditureDefaultSubClass ? "selected" : null)">@Localizer[subClass].Value</option>
-                                        }
-                                    }
+                                    @Html.ExpenditureSubClassOptions(Localizer)
                                 </select>
                             </div>
                         </div>
@@ -263,18 +248,7 @@
                                 <label for="editFixedExpenditureSubClass">@Localizer["SubClass"].Value</label>
                                 <br />
                                 <select id="editFixedExpenditureSubClass" name="editFixedExpenditureSubClass" class="form-control form-control-sm" style="max-width:100%;text-overflow:ellipsis;">
-                                    @* See createFixedExpenditureSubClass above for why these options are policy-generated. *@
-                                    @{
-                                        string editFixedExpenditureDefaultMainClass = ExpenditureClassPolicy.SubClassesByMainClass.Keys.First();
-                                        string editFixedExpenditureDefaultSubClass = ExpenditureClassPolicy.SubClassesByMainClass[editFixedExpenditureDefaultMainClass][0];
-                                    }
-                                    @foreach ((string mainClass, IReadOnlyList<string> subClasses) in ExpenditureClassPolicy.SubClassesByMainClass)
-                                    {
-                                        foreach (string subClass in subClasses)
-                                        {
-                                            <option value="@subClass" hidden="@(mainClass == editFixedExpenditureDefaultMainClass ? null : "hidden")" selected="@(subClass == editFixedExpenditureDefaultSubClass ? "selected" : null)">@Localizer[subClass].Value</option>
-                                        }
-                                    }
+                                    @Html.ExpenditureSubClassOptions(Localizer)
                                 </select>
                             </div>
                         </div>

@@ -1,4 +1,5 @@
 using Maroik.Core.Domain.Calendar;
+using Maroik.Core.PostgreSQL.Data;
 using Maroik.Core.Repository.Repositories;
 using Microsoft.EntityFrameworkCore;
 using EfCalendarShared = Maroik.Core.PostgreSQL.Models.CalendarShared;
@@ -97,5 +98,75 @@ public sealed class CalendarSharedRepositoryTests(DatabaseFixture database) : Re
         Assert.NotNull(updated);
         Assert.True(updated.User);
         Assert.True(updated.Anonymous);
+    }
+
+    // -- GetByIdsForUpdateAsync (SELECT ... FOR UPDATE) --------------------
+
+    /// <summary>Verifies the batched row-locking lookup returns only the requested, existing entries.</summary>
+    [Fact]
+    public async Task GetByIdsForUpdateAsync_ReturnsOnlyMatchingEntries()
+    {
+        long c1 = await InsertCalendarAsync();
+        long c2 = await InsertCalendarAsync();
+        long c3 = await InsertCalendarAsync();
+        await SeedAsync(MakeShared(c1, user: true), MakeShared(c2, anonymous: true), MakeShared(c3));
+
+        List<CalendarShared> result = await Sut.GetByIdsForUpdateAsync([c1, c3, long.MaxValue], TestContext.Current.CancellationToken);
+
+        Assert.Equal(2, result.Count);
+        Assert.Contains(result, s => s.Id == c1 && s.User);
+        Assert.Contains(result, s => s.Id == c3);
+        Assert.DoesNotContain(result, s => s.Id == c2);
+    }
+
+    /// <summary>An empty id set returns an empty list without hitting the database.</summary>
+    [Fact]
+    public async Task GetByIdsForUpdateAsync_ReturnsEmptyList_ForEmptyIdSet()
+    {
+        List<CalendarShared> result = await Sut.GetByIdsForUpdateAsync([], TestContext.Current.CancellationToken);
+
+        Assert.Empty(result);
+    }
+
+    /// <summary>
+    /// Reproduces the deadlock hazard the query's <c>ORDER BY "CalendarId"</c> guards against: two
+    /// concurrent transactions locking the same two rows in opposite request order must still both
+    /// complete (serialized, not deadlocked) because the query itself normalizes the lock-acquisition
+    /// order regardless of the order ids were passed in.
+    /// </summary>
+    [Fact]
+    public async Task GetByIdsForUpdateAsync_DoesNotDeadlock_WhenConcurrentCallersRequestOverlappingIdsInOppositeOrder()
+    {
+        long low = await InsertCalendarAsync();
+        long high = await InsertCalendarAsync();
+        // Ensure "low" really does sort before "high" regardless of insertion order.
+        if (low > high) (low, high) = (high, low);
+        await SeedAsync(MakeShared(low), MakeShared(high));
+
+        ApplicationDbContext[] contexts = [NewDbContext(), NewDbContext()];
+
+        async Task LockAndUpdateAsync(ApplicationDbContext context, long[] ids, bool user, bool anonymous)
+        {
+            var repo = new CalendarSharedRepository(context);
+            await using var tx = await context.Database.BeginTransactionAsync(TestContext.Current.CancellationToken);
+
+            List<CalendarShared> locked = await repo.GetByIdsForUpdateAsync(ids, TestContext.Current.CancellationToken);
+            Assert.Equal(2, locked.Count);
+
+            await Task.Delay(200, TestContext.Current.CancellationToken);
+
+            foreach (CalendarShared shared in locked)
+                await repo.UpdateEntityAsync(shared.Update(user, anonymous), TestContext.Current.CancellationToken);
+
+            await context.SaveChangesAsync(TestContext.Current.CancellationToken);
+            await tx.CommitAsync(TestContext.Current.CancellationToken);
+        }
+
+        // One caller requests [low, high]; the other requests the same pair reversed, [high, low].
+        // Without the ORDER BY, this is exactly the pattern that can lock rows in different physical
+        // orders across the two transactions and deadlock in PostgreSQL.
+        await Task.WhenAll(
+            LockAndUpdateAsync(contexts[0], [low, high], user: true, anonymous: false),
+            LockAndUpdateAsync(contexts[1], [high, low], user: false, anonymous: true));
     }
 }

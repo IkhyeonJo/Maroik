@@ -98,7 +98,7 @@ public sealed class BoardComment : AggregateRoot<long>
     }
 
     /// <summary>Returns true when <paramref name="nickname"/> is this comment's author.</summary>
-    public bool IsOwnedBy(string nickname) => Writer == nickname;
+    public bool IsOwnedBy(string nickname) => Board.IsOwnedBy(Writer, nickname);
 
     /// <summary>Returns true when <paramref name="nickname"/> may delete this comment (owner, or any admin).</summary>
     public bool CanBeDeletedBy(string nickname, bool isAdmin) => IsOwnedBy(nickname) || isAdmin;

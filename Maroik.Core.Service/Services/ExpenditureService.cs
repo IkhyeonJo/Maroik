@@ -183,7 +183,7 @@ public class ExpenditureService(
                 return await unitOfWork.FailAsync(updateResult.FirstError, ct);
 
             await expenditureRepository.UpdateEntityAsync(previous, ct);
-            var adjustResult = await AdjustAssetBalancesAsync(accountEmail, oldSnapshot,
+            var adjustResult = await AdjustAssetBalancesAsync(touchedAssets, oldSnapshot,
                 new ExpenditureSnapshot(previous.PaymentMethod, previous.MyDepositAsset, previous.Amount.Amount, previous.Amount.Currency), ct);
             if (adjustResult.IsError)
                 return await unitOfWork.FailAsync(adjustResult.FirstError, ct);
@@ -219,7 +219,7 @@ public class ExpenditureService(
                 assetsToCheck.TryGetValue(expenditure.MyDepositAsset, out var depAssetToCheck) && depAssetToCheck.Deleted)
                 return await unitOfWork.FailAsync(DeletedAssetResult, ct);
 
-            var adjustResult = await AdjustAssetBalancesAsync(accountEmail,
+            var adjustResult = await AdjustAssetBalancesAsync(assetsToCheck,
                 new ExpenditureSnapshot(expenditure.PaymentMethod, expenditure.MyDepositAsset, expenditure.Amount.Amount, expenditure.Amount.Currency),
                 null, ct);
             if (adjustResult.IsError)
@@ -254,28 +254,26 @@ public class ExpenditureService(
 
     /// <summary>
     /// Reverts <paramref name="toRevert"/>'s asset impact and applies <paramref name="toApply"/>'s asset impact.
-    /// Pass null for toApply when deleting.
-    /// Uses a dictionary to batch all asset fetches and avoid double-fetch issues.
+    /// Pass null for toApply when deleting. Applies against <paramref name="touchedAssets"/> — the
+    /// dictionary the caller already fetched (via <see cref="AssetBalanceOrdinalLockExtensions.GetAssetsOrdinalAsync"/>)
+    /// for its own pre-write validation — instead of fetching the same assets again.
     /// </summary>
-    private async Task<ErrorOr<Success>> AdjustAssetBalancesAsync(string accountEmail, ExpenditureSnapshot toRevert, ExpenditureSnapshot? toApply, CancellationToken ct = default)
+    private async Task<ErrorOr<Success>> AdjustAssetBalancesAsync(
+        Dictionary<string, Asset> touchedAssets, ExpenditureSnapshot toRevert, ExpenditureSnapshot? toApply, CancellationToken ct = default)
     {
         List<AssetBalanceAdjustment> adjustments =
         [
             new(toRevert.PaymentMethod, toRevert.Amount, IsDeposit: true, Currency: toRevert.Currency),
             new(toRevert.MyDepositAsset, toRevert.Amount, IsDeposit: false, Currency: toRevert.Currency)
         ];
-        if (!toApply.HasValue)
+        if (toApply.HasValue)
         {
-            return await assetBalance.ApplyAssetBalanceAdjustmentsAsync(
-                accountEmail, adjustments, "Expenditure.AssetNotFound",
-                "The asset referenced by this expenditure could not be found.", ct);
+            adjustments.Add(new AssetBalanceAdjustment(toApply.Value.PaymentMethod, toApply.Value.Amount, IsDeposit: false, Currency: toApply.Value.Currency));
+            adjustments.Add(new AssetBalanceAdjustment(toApply.Value.MyDepositAsset, toApply.Value.Amount, IsDeposit: true, Currency: toApply.Value.Currency));
         }
 
-        adjustments.Add(new AssetBalanceAdjustment(toApply.Value.PaymentMethod, toApply.Value.Amount, IsDeposit: false, Currency: toApply.Value.Currency));
-        adjustments.Add(new AssetBalanceAdjustment(toApply.Value.MyDepositAsset, toApply.Value.Amount, IsDeposit: true, Currency: toApply.Value.Currency));
-
         return await assetBalance.ApplyAssetBalanceAdjustmentsAsync(
-            accountEmail, adjustments, "Expenditure.AssetNotFound", "The asset referenced by this expenditure could not be found.", ct);
+            touchedAssets, adjustments, "Expenditure.AssetNotFound", "The asset referenced by this expenditure could not be found.", ct);
     }
 
     /// <summary>

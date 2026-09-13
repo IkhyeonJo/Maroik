@@ -1,3 +1,4 @@
+using System.Data;
 using Maroik.Core.Domain.Account;
 using Maroik.Core.Domain.Board;
 using Maroik.Core.Contract.Dtos;
@@ -40,8 +41,21 @@ public class BoardService(
     /// <inheritdoc />
     public async Task<(IEnumerable<BoardResponse> Items, int TotalCount)> GetBoardPageAsync(BoardPageQuery query, CancellationToken ct = default)
     {
-        var (items, totalCount) = await boardRepository.QueryPageAsync(query, ct);
-        return (items.Select(BoardMapper.ToResponse), totalCount);
+        // REPEATABLE READ pins the count and page reads QueryPageAsync makes to one snapshot, so a
+        // concurrent insert/delete between them can't produce a TotalCount inconsistent with the
+        // returned page. Owned here (Service via IUnitOfWork), not inside the repository.
+        await unitOfWork.BeginAsync(ct, IsolationLevel.RepeatableRead);
+        try
+        {
+            var (items, totalCount) = await boardRepository.QueryPageAsync(query, ct);
+            await unitOfWork.CommitAsync(ct);
+            return (items.Select(BoardMapper.ToResponse), totalCount);
+        }
+        catch
+        {
+            await unitOfWork.RollbackAsync(ct);
+            throw;
+        }
     }
 
     /// <inheritdoc />

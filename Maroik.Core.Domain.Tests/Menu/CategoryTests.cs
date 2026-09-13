@@ -14,7 +14,7 @@ public class CategoryTests
     [Fact]
     public void Create_ReturnsCategory_WhenValid()
     {
-        var result = Category.Create(1, "Dashboard", "Dashboard", "/icons/dash.svg", "Home", "Index", "User", 1);
+        var result = Category.Create("Dashboard", "Dashboard", "/icons/dash.svg", "Home", "Index", "User", 1);
 
         Assert.False(result.IsError);
         Assert.Equal("Dashboard", result.Value.Name);
@@ -24,6 +24,16 @@ public class CategoryTests
         Assert.Equal(1, result.Value.Order);
     }
 
+    /// <summary>Create always assigns id 0 — the repository/database assigns the real identity on insert.</summary>
+    [Fact]
+    public void Create_AlwaysAssignsIdZero()
+    {
+        var result = Category.Create("Dashboard", "Dashboard", "/icons/dash.svg", "Home", "Index", "User", 1);
+
+        Assert.False(result.IsError);
+        Assert.Equal(0, result.Value.Id);
+    }
+
     /// <summary>Create returns error, when name empty.</summary>
     [Theory]
     [InlineData(null)]
@@ -31,7 +41,7 @@ public class CategoryTests
     [InlineData("   ")]
     public void Create_ReturnsError_WhenNameEmpty(string? name)
     {
-        var result = Category.Create(1, name, "Dashboard", null, "Home", "Index", "User", 1);
+        var result = Category.Create(name, "Dashboard", null, "Home", "Index", "User", 1);
 
         Assert.True(result.IsError);
         Assert.Equal("Category.NameEmpty", result.FirstError.Code);

@@ -81,7 +81,7 @@ public class MenuService(
     {
         try
         {
-            var result = Category.Create(0, request.Name, request.DisplayName, request.IconPath,
+            var result = Category.Create(request.Name, request.DisplayName, request.IconPath,
                 request.Controller, request.Action, request.Role, request.Order);
             if (result.IsError)
                 return ServiceResult.FromError(result.FirstError);
@@ -140,7 +140,7 @@ public class MenuService(
     {
         try
         {
-            var result = SubCategory.Create(0, request.CategoryId, request.Name, request.DisplayName,
+            var result = SubCategory.Create(request.CategoryId, request.Name, request.DisplayName,
                 request.IconPath, request.Action, request.Role, request.Order);
             if (result.IsError)
                 return ServiceResult.FromError(result.FirstError);

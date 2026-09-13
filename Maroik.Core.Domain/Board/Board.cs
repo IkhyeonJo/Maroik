@@ -238,7 +238,16 @@ public sealed class Board : AggregateRoot<long>
     public bool IsPrivateNote => string.Equals(Type, BoardTypes.PrivateNote, StringComparison.Ordinal);
 
     /// <summary>Returns true when <paramref name="nickname"/> is this post's author.</summary>
-    public bool IsOwnedBy(string nickname) => Writer == nickname;
+    public bool IsOwnedBy(string nickname) => IsOwnedBy(Writer, nickname);
+
+    /// <summary>
+    /// Field-level ownership comparison shared by <see cref="Board"/> and <see cref="BoardComment"/>
+    /// (both use the identical "author nickname equals viewer nickname" rule), and by
+    /// <c>Maroik.Core.Contract.Misc.Extensions.AccountResponseExtensions.IsOwner</c> for the DTO-side
+    /// UI-affordance mirror of the same rule — kept in one place so all three can't drift apart.
+    /// </summary>
+    public static bool IsOwnedBy(string? writer, string? viewerNickname) =>
+        string.Equals(writer, viewerNickname, StringComparison.Ordinal);
 
     /// <summary>
     /// Returns true when a viewer identified by <paramref name="viewerNickname"/> (<see langword="null"/>

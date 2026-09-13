@@ -35,17 +35,9 @@
     // injected markup from executing script, but nothing there stops HTML injection (broken
     // layout, a same-origin phishing overlay) into another viewer's page — escape at the point of
     // insertion instead of relying solely on the response header.
-    function escapeHtml(value: string): string {
-        return value.replace(/[&<>"']/g, function (ch) {
-            switch (ch) {
-                case '&': return '&amp;';
-                case '<': return '&lt;';
-                case '>': return '&gt;';
-                case '"': return '&quot;';
-                default: return '&#39;';
-            }
-        });
-    }
+    // Shared with every other user-area page via user/_Layout/js/site.ts (loaded first on every
+    // user page) instead of being redefined here.
+    const escapeHtml: (value: string) => string = (window as any).escapeHtml;
 
     // --- Element cache: every field of the create/edit-calendar,
     // create/edit/view-event and browse-calendars modals, plus the two event
@@ -295,7 +287,8 @@
         ErrorRangeMinute: $('#localizerErrorRangeMinute').val(),
         ErrorRangeHour: $('#localizerErrorRangeHour').val(),
         ErrorRangeDay: $('#localizerErrorRangeDay').val(),
-        ErrorRangeWeek: $('#localizerErrorRangeWeek').val()
+        ErrorRangeWeek: $('#localizerErrorRangeWeek').val(),
+        FailedToLoadCalendars: $('#localizerFailedToLoadCalendars').val()
     };
 
     // Module-scope FullCalendar instance, assigned inside `$(function)` below and
@@ -642,7 +635,6 @@
                     dataType: 'json',
                     data: null as any,
                     contentType: 'application/json; charset=utf-8',
-                    async: false,
                     success: function (response) {
                         if (response.result) {
                             $createCalendarEventMyCalendar.empty();
@@ -654,15 +646,21 @@
                                 }));
                             });
                         }
+                    },
+                    error: function () {
+                        toastr.error(localizer.FailedToLoadCalendars);
+                    },
+                    complete: function () {
+                        // Kept out of `success` so the modal still opens (with a stale/empty
+                        // calendar list rather than not opening at all) even if this fetch fails.
+                        $createCalendarEventAllDayUncheckedStartTimeZone.val($loggedInAccountTimeZoneIanaId.val() as string);
+                        $createCalendarEventAllDayUncheckedEndTimeZone.val($loggedInAccountTimeZoneIanaId.val() as string);
+
+                        $createCalendarEventTaskDialogModal.modal('show');
+
+                        calendar.unselect();
                     }
                 });
-
-                $createCalendarEventAllDayUncheckedStartTimeZone.val($loggedInAccountTimeZoneIanaId.val() as string);
-                $createCalendarEventAllDayUncheckedEndTimeZone.val($loggedInAccountTimeZoneIanaId.val() as string);
-
-                $createCalendarEventTaskDialogModal.modal('show');
-
-                calendar.unselect();
             },
             // Click an event. Two branches on `calendarType`:
             //   'My'    -> summary popup with edit / delete. Edit fetches the
@@ -808,30 +806,7 @@
                                         $spanEditCalendarEventAttachedFile.text(`${Math.round(data.calendarEvent.calendarEventAttachedFile.size / 1024).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",")}KB`);
                                     }
 
-                                    $.ajax({
-                                        url: '/Calendar/GetCalendars',
-                                        method: 'POST',
-                                        headers: { "RequestVerificationToken": $__RequestVerificationToken.val() as string },
-                                        dataType: 'json',
-                                        data: null as any,
-                                        contentType: 'application/json; charset=utf-8',
-                                        async: false,
-                                        success: function (response) {
-                                            if (response.result) {
-                                                $editCalendarEventMyCalendar.empty();
-
-                                                $.each(response.calendars, function (index: number, calendar: any) {
-                                                    $editCalendarEventMyCalendar.append($('<option>', {
-                                                        value: calendar.id,
-                                                        text: calendar.name
-                                                    }));
-                                                });
-
-                                                $editCalendarEventMyCalendar.val(data.calendarEvent.calendarId);
-                                            }
-                                        }
-                                    });
-
+                                    function showEditCalendarEventModal() {
                                     $editCalendarEventStatus.val(data.calendarEvent.status);
 
                                     $divEditEventNotificationAllDayChecked.hide();
@@ -947,6 +922,36 @@
 
                                     $editCalendarEventTaskDialogModal.modal('toggle');
                                     $editCalendarEventTaskDialogModal.modal('show');
+                                    }
+
+                                    $.ajax({
+                                        url: '/Calendar/GetCalendars',
+                                        method: 'POST',
+                                        headers: { "RequestVerificationToken": $__RequestVerificationToken.val() as string },
+                                        dataType: 'json',
+                                        data: null as any,
+                                        contentType: 'application/json; charset=utf-8',
+                                        success: function (response) {
+                                            if (response.result) {
+                                                $editCalendarEventMyCalendar.empty();
+
+                                                $.each(response.calendars, function (index: number, calendar: any) {
+                                                    $editCalendarEventMyCalendar.append($('<option>', {
+                                                        value: calendar.id,
+                                                        text: calendar.name
+                                                    }));
+                                                });
+
+                                                $editCalendarEventMyCalendar.val(data.calendarEvent.calendarId);
+                                            }
+                                        },
+                                        error: function () {
+                                            toastr.error(localizer.FailedToLoadCalendars);
+                                        },
+                                        complete: function () {
+                                            showEditCalendarEventModal();
+                                        }
+                                    });
                                 }
                                 else {
                                     toastr.error(data.error);
@@ -1114,30 +1119,7 @@
                                     }
 
 
-                                    $.ajax({
-                                        url: '/Calendar/GetOtherCalendars',
-                                        method: 'POST',
-                                        headers: { "RequestVerificationToken": $__RequestVerificationToken.val() as string },
-                                        dataType: 'json',
-                                        data: null as any,
-                                        contentType: 'application/json; charset=utf-8',
-                                        async: false,
-                                        success: function (response) {
-                                            if (response.result) {
-                                                $viewCalendarEventMyCalendar.empty();
-
-                                                $.each(response.tempOtherCalendars, function (index, tempOtherCalendar) {
-                                                    $viewCalendarEventMyCalendar.append($('<option>', {
-                                                        value: tempOtherCalendar.id,
-                                                        text: tempOtherCalendar.name
-                                                    }));
-                                                });
-
-                                                $viewCalendarEventMyCalendar.val(data.calendarEvent.calendarId);
-                                            }
-                                        }
-                                    });
-
+                                    function showViewCalendarEventModal() {
                                     $viewCalendarEventStatus.val(data.calendarEvent.status);
 
                                     $divViewEventNotificationAllDayChecked.hide();
@@ -1246,6 +1228,36 @@
 
                                     $viewCalendarEventTaskDialogModal.modal('toggle');
                                     $viewCalendarEventTaskDialogModal.modal('show');
+                                    }
+
+                                    $.ajax({
+                                        url: '/Calendar/GetOtherCalendars',
+                                        method: 'POST',
+                                        headers: { "RequestVerificationToken": $__RequestVerificationToken.val() as string },
+                                        dataType: 'json',
+                                        data: null as any,
+                                        contentType: 'application/json; charset=utf-8',
+                                        success: function (response) {
+                                            if (response.result) {
+                                                $viewCalendarEventMyCalendar.empty();
+
+                                                $.each(response.tempOtherCalendars, function (index, tempOtherCalendar) {
+                                                    $viewCalendarEventMyCalendar.append($('<option>', {
+                                                        value: tempOtherCalendar.id,
+                                                        text: tempOtherCalendar.name
+                                                    }));
+                                                });
+
+                                                $viewCalendarEventMyCalendar.val(data.calendarEvent.calendarId);
+                                            }
+                                        },
+                                        error: function () {
+                                            toastr.error(localizer.FailedToLoadCalendars);
+                                        },
+                                        complete: function () {
+                                            showViewCalendarEventModal();
+                                        }
+                                    });
                                 }
                                 else {
                                     toastr.error(data.error);
@@ -2431,7 +2443,8 @@
 
     // "New event" button (not via drag-select): load the user's calendars into
     // the select, default the timezone, open the modal, set the date fields to
-    // today. `async: false` so the select is filled before the modal shows.
+    // today. Kept asynchronous — the modal-opening steps run from `complete`
+    // once the fetch settles, rather than blocking the page while in flight.
     $aCreateCalendarEvent.off('click').on('click', function () {
 
         $.ajax({
@@ -2441,7 +2454,6 @@
             dataType: 'json',
             data: null as any,
             contentType: 'application/json; charset=utf-8',
-            async: false,
             success: function (response) {
                 if (response.result) {
                     $createCalendarEventMyCalendar.empty();
@@ -2453,19 +2465,23 @@
                         }));
                     });
                 }
+            },
+            error: function () {
+                toastr.error(localizer.FailedToLoadCalendars);
+            },
+            complete: function () {
+                $createCalendarEventAllDayUncheckedStartTimeZone.val($loggedInAccountTimeZoneIanaId.val() as string);
+                $createCalendarEventAllDayUncheckedEndTimeZone.val($loggedInAccountTimeZoneIanaId.val() as string);
+
+                $createCalendarEventTaskDialogModal.modal('show');
+
+                $createCalendarEventAllDayUncheckedStartDate.val(moment().format("YYYY-MM-DD"));
+                $createCalendarEventAllDayCheckedStartDate.val(moment().format("YYYY-MM-DD"));
+
+                $createCalendarEventAllDayUncheckedEndDate.val(moment().format("YYYY-MM-DD"));
+                $createCalendarEventAllDayCheckedEndDate.val(moment().format("YYYY-MM-DD"));
             }
         });
-
-        $createCalendarEventAllDayUncheckedStartTimeZone.val($loggedInAccountTimeZoneIanaId.val() as string);
-        $createCalendarEventAllDayUncheckedEndTimeZone.val($loggedInAccountTimeZoneIanaId.val() as string);
-
-        $createCalendarEventTaskDialogModal.modal('show');
-
-        $createCalendarEventAllDayUncheckedStartDate.val(moment().format("YYYY-MM-DD"));
-        $createCalendarEventAllDayCheckedStartDate.val(moment().format("YYYY-MM-DD"));
-
-        $createCalendarEventAllDayUncheckedEndDate.val(moment().format("YYYY-MM-DD"));
-        $createCalendarEventAllDayCheckedEndDate.val(moment().format("YYYY-MM-DD"));
     });
 
     // "All day" checkboxes: swap between the timed and all-day date/reminder
@@ -2687,7 +2703,6 @@
             dataType: 'json',
             data: null as any,
             contentType: 'application/json; charset=utf-8',
-            async: false,
             success: function (response) {
                 if (response.result) {
                     let htmlString = '';
@@ -2714,10 +2729,16 @@
                         $allCheckBrowseCalendarsOfInterest.prop('checked', $('.checkBoxBrowseCalendarsOfInterest').length === $('.checkBoxBrowseCalendarsOfInterest:checked').length);
                     });
                 }
+            },
+            error: function () {
+                toastr.error(localizer.FailedToLoadCalendars);
+            },
+            complete: function () {
+                // Kept out of `success` so the modal still opens (with a stale/empty list
+                // rather than not opening at all) even if this fetch fails.
+                $browseCalendarsOfInterestDialogModal.modal('show');
             }
         });
-
-        $browseCalendarsOfInterestDialogModal.modal('show');
     });
 
     $allCheckBrowseCalendarsOfInterest.off('change').on('change', function () {
@@ -2748,6 +2769,16 @@
             success: function (data) {
                 if (data.result) {
 
+                    // Runs on every exit path below (both ajax calls' success-but-failed-result,
+                    // both ajax calls' transport error, and the innermost call's actual success) so
+                    // the dialog reliably closes and the toast reliably shows exactly once, instead
+                    // of only on the single synchronous fall-through `async: false` used to
+                    // guarantee before these calls were made asynchronous.
+                    function finishBrowseCalendarsUpdate() {
+                        $browseCalendarsOfInterestDialogModal.modal('hide');
+                        toastr.success(data.message);
+                    }
+
                     $.ajax({
                         url: '/Calendar/GetOtherCalendars',
                         method: 'POST',
@@ -2755,7 +2786,6 @@
                         dataType: 'json',
                         data: null as any,
                         contentType: 'application/json; charset=utf-8',
-                        async: false,
                         success: function (response) {
                             if (response.result) {
                                 let htmlString = '';
@@ -2826,21 +2856,35 @@
                                                 });
                                             });
                                         }
+                                    },
+                                    error: function () {
+                                        toastr.error(localizer.FailedToLoadCalendars);
+                                    },
+                                    complete: function () {
+                                        // Moved here (from right after the outer ajax below) so the
+                                        // dialog only closes and the success toast only shows once
+                                        // the calendar grid has actually finished refreshing, instead
+                                        // of racing ahead of it now that these calls are async.
+                                        finishBrowseCalendarsUpdate();
                                     }
                                 });
                             }
+                            else {
+                                finishBrowseCalendarsUpdate();
+                            }
+                        },
+                        error: function () {
+                            toastr.error(localizer.FailedToLoadCalendars);
+                            finishBrowseCalendarsUpdate();
                         }
                     });
-
-                    $browseCalendarsOfInterestDialogModal.modal('hide');
-                    toastr.success(data.message);
                 }
                 else {
                     toastr.error(data.error);
                 }
             }
         });
-    
+
         return false;
     });
 

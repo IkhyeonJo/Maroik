@@ -27,6 +27,21 @@
     // at each upload form; must match ServerSetting.MaxAttachedFileSizeBytes's own default (10 MB).
     (window as any).MaroikDefaultMaxAttachedFileSizeBytes = 10485760;
 
+    // Shared HTML-escaping helper for pages that interpolate user-controlled text (e.g. a
+    // calendar name) into a raw HTML template literal. Declared once here — loaded before every
+    // admin page's own script — instead of duplicated per page (see admin/Calendar/AdminIndex).
+    (window as any).escapeHtml = function (value: string): string {
+        return value.replace(/[&<>"']/g, function (ch: string) {
+            switch (ch) {
+                case '&': return '&amp;';
+                case '<': return '&lt;';
+                case '>': return '&gt;';
+                case '"': return '&quot;';
+                default: return '&#39;';
+            }
+        });
+    };
+
     // Global safety net: if any $.ajax call fails and nothing else handles it
     // (typically the session expired and the server answered 401 / a redirect),
     // move the user to the public dashboard instead of leaving them on a page

@@ -57,13 +57,13 @@ public sealed class SubCategory : AggregateRoot<long>
 
     /// <summary>Creates a new sub-category after validating required fields.</summary>
     public static ErrorOr<SubCategory> Create(
-        long id, long categoryId, string? name, string? displayName,
+        long categoryId, string? name, string? displayName,
         string? iconPath, string? action, string? role, long order)
     {
         if (string.IsNullOrWhiteSpace(name))
             return Error.Validation("SubCategory.NameEmpty", "Sub-category name cannot be empty.");
 
-        return new SubCategory(id, categoryId, name, displayName, iconPath, action, role, order);
+        return new SubCategory(0, categoryId, name, displayName, iconPath, action, role, order);
     }
 
     /// <summary>Updates this sub-category's fields after validating the new name.</summary>

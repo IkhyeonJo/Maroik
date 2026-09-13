@@ -12,7 +12,10 @@ namespace Maroik.Core.Client.Clients;
 /// at application startup does not prevent the web app from starting) and then cached and reused
 /// across publishes; the queue is declared once per channel rather than on every call.
 /// </summary>
-public sealed class RabbitMqEmailPublisher(IConnectionFactory factory, ILogger<RabbitMqEmailPublisher> logger)
+public sealed class RabbitMqEmailPublisher(
+    IConnectionFactory factory,
+    ILogger<RabbitMqEmailPublisher> logger,
+    TimeSpan? connectionRecoveryGraceWindow = null)
     : IEmailPublisher, IAsyncDisposable
 {
     /// <summary>
@@ -22,6 +25,21 @@ public sealed class RabbitMqEmailPublisher(IConnectionFactory factory, ILogger<R
     /// graceful application shutdown hang forever.
     /// </summary>
     private static readonly TimeSpan _disposeLockTimeout = TimeSpan.FromSeconds(5);
+
+    /// <summary>
+    /// How long <see cref="GetChannelAsync"/> waits for a dropped connection to recover on its own
+    /// (see the comment there) before giving up and opening a new one. Defaults to the factory's own
+    /// configured <see cref="ConnectionFactory.NetworkRecoveryInterval"/> when <paramref
+    /// name="factory"/> is a concrete <see cref="ConnectionFactory"/> (so this always matches
+    /// whatever automatic-recovery timing is actually configured, 5s unless overridden), falling
+    /// back to 5s — <see cref="ConnectionFactory"/>'s own default — for any other
+    /// <see cref="IConnectionFactory"/> implementation. Overridable via
+    /// <paramref name="connectionRecoveryGraceWindow"/> (tests use a short window so they don't pay
+    /// a real multi-second sleep).
+    /// </summary>
+    private readonly TimeSpan _connectionRecoveryGraceWindow = connectionRecoveryGraceWindow
+        ?? (factory as ConnectionFactory)?.NetworkRecoveryInterval
+        ?? TimeSpan.FromSeconds(5);
 
     // RabbitMQ.Client's own guidance is a "hard requirement for publishers": a channel must not
     // be shared by threads that publish on it concurrently, or frames from separate publishes can
@@ -80,10 +98,17 @@ public sealed class RabbitMqEmailPublisher(IConnectionFactory factory, ILogger<R
             {
                 // AutomaticRecoveryEnabled means a connection that just dropped is very likely
                 // already being reconnected by the client's own recovery loop (same IConnection
-                // instance, reopened transparently) rather than genuinely dead. Give it one short,
-                // bounded chance to come back on its own before tearing it down and opening a
-                // brand-new connection, so a brief broker blip doesn't race its own recovery.
-                await Task.Delay(TimeSpan.FromMilliseconds(200), ct);
+                // instance, reopened transparently) rather than genuinely dead. Give it one bounded
+                // chance to come back on its own before tearing it down and opening a brand-new
+                // connection, so a brief broker blip doesn't race its own recovery. The wait is
+                // _connectionRecoveryGraceWindow — the factory's own configured
+                // NetworkRecoveryInterval (5s by default) rather than an arbitrary short constant,
+                // so this actually has a chance to observe a real recovery completing instead of
+                // almost always falling through to a needless reconnect. This still runs under
+                // _publishLock: with one shared channel, every queued publish needs the same
+                // outcome (recovered connection or a fresh one) before any of them can proceed, so
+                // serializing the wait here is correct, not just incidental.
+                await Task.Delay(_connectionRecoveryGraceWindow, ct);
                 if (!_connection.IsOpen)
                 {
                     await _connection.DisposeAsync();

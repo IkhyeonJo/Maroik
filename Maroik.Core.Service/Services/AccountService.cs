@@ -187,21 +187,26 @@ public class AccountService(
 
         if (!existing.EmailConfirmed)
         {
+            Account locked;
             await unitOfWork.BeginAsync(ct);
             try
             {
                 // Re-read under FOR UPDATE before regenerating/persisting the token: serializes
                 // against a concurrent ConfirmEmailAsync/ResendConfirmationEmailAsync write to the
                 // same row (both now take the same lock before writing) so this cannot resurrect a
-                // token a concurrent confirm just consumed, or vice versa.
-                Account? locked = await accountRepository.FindByEmailForUpdateAsync(existing.Email.Value, ct);
-                if (locked == null)
+                // token a concurrent confirm just consumed, or vice versa. The lock is held only
+                // long enough to persist the (possibly-regenerated) token — released at Commit
+                // below, before the network mail send that follows, so a slow/degraded broker can
+                // no longer hold this row's lock (and this request's DB connection) open for the
+                // duration of the publish.
+                Account? found = await accountRepository.FindByEmailForUpdateAsync(existing.Email.Value, ct);
+                if (found == null)
                 {
                     await unitOfWork.RollbackAsync(ct);
                     return RegisterResult.Fail("Error occurred while processing about account registration");
                 }
 
-                if (locked.EmailConfirmed)
+                if (found.EmailConfirmed)
                 {
                     // Confirmed by a concurrent request while this one waited for the lock.
                     await unitOfWork.RollbackAsync(ct);
@@ -210,20 +215,27 @@ public class AccountService(
 
                 // Regenerate the token when it is missing OR has passed its 24h TTL, so a stale
                 // registration is always recoverable by re-registering.
-                if (string.IsNullOrEmpty(locked.RegistrationToken) || !GuidToken.IsTokenAlive(locked.RegistrationToken))
-                    locked.RegenerateRegistrationToken(GuidToken.Generate());
+                if (string.IsNullOrEmpty(found.RegistrationToken) || !GuidToken.IsTokenAlive(found.RegistrationToken))
+                    found.RegenerateRegistrationToken(GuidToken.Generate());
 
-                RegisterResult result = await SendConfirmationEmailAndUpdateStatusAsync(
-                    locked, emailTemplate,
-                    setVerifyEmailMessageOnSuccess: true, repeat: false, ct);
+                await accountRepository.UpdateRegistrationTokenAsync(found.Email.Value, found.RegistrationToken, found.Updated, ct);
                 await unitOfWork.CommitAsync(ct);
-                return result;
+                locked = found;
             }
             catch
             {
                 await unitOfWork.RollbackAsync(ct);
                 throw;
             }
+
+            // Mail send + final status write run unlocked, after the row lock above was released.
+            // SendConfirmationEmailAndUpdateStatusAsync re-persists the same token it finds on
+            // `locked` as its first step — a harmless idempotent re-write of the value just
+            // committed above — then sends the mail and writes the final status column, none of
+            // which need this row's lock held.
+            return await SendConfirmationEmailAndUpdateStatusAsync(
+                locked, emailTemplate,
+                setVerifyEmailMessageOnSuccess: true, repeat: false, ct);
         }
 
         // Account is fully confirmed: tell the caller it already exists and bring the account's own
@@ -293,21 +305,25 @@ public class AccountService(
             return RegisterResult.Fail(EnumHelper.GetDescription(AccountMessage.UserAlreadyCreated));
         }
 
+        Account locked;
         await unitOfWork.BeginAsync(ct);
         try
         {
             // Re-read under FOR UPDATE before regenerating/persisting the token: serializes against
             // a concurrent ConfirmEmailAsync/RegisterAsync write to the same row (both now take the
             // same lock before writing) so this cannot resurrect a token a concurrent confirm just
-            // consumed, or vice versa.
-            Account? locked = await accountRepository.FindByEmailForUpdateAsync(email, ct);
-            if (locked == null)
+            // consumed, or vice versa. The lock is held only long enough to persist the
+            // (possibly-regenerated) token — released at Commit below, before the network mail send
+            // that follows, so a slow/degraded broker can no longer hold this row's lock (and this
+            // request's DB connection) open for the duration of the publish.
+            Account? found = await accountRepository.FindByEmailForUpdateAsync(email, ct);
+            if (found == null)
             {
                 await unitOfWork.RollbackAsync(ct);
                 return RegisterResult.Fail("Failed to resend email", showResendEmail: true);
             }
 
-            if (locked.EmailConfirmed)
+            if (found.EmailConfirmed)
             {
                 // Confirmed by a concurrent request while this one waited for the lock.
                 await unitOfWork.RollbackAsync(ct);
@@ -316,21 +332,24 @@ public class AccountService(
 
             // Ensure a live token exists before building the confirmation URL — regenerate when it is
             // missing OR has passed its 24h TTL (otherwise a resend just re-sends a dead link).
-            if (string.IsNullOrEmpty(locked.RegistrationToken) || !GuidToken.IsTokenAlive(locked.RegistrationToken))
-                locked.RegenerateRegistrationToken(GuidToken.Generate());
+            if (string.IsNullOrEmpty(found.RegistrationToken) || !GuidToken.IsTokenAlive(found.RegistrationToken))
+                found.RegenerateRegistrationToken(GuidToken.Generate());
 
-            // repeat: true signals the UI that this is a resend, not the first confirmation.
-            RegisterResult result = await SendConfirmationEmailAndUpdateStatusAsync(
-                locked, emailTemplate,
-                setVerifyEmailMessageOnSuccess: true, repeat: true, ct);
+            await accountRepository.UpdateRegistrationTokenAsync(found.Email.Value, found.RegistrationToken, found.Updated, ct);
             await unitOfWork.CommitAsync(ct);
-            return result;
+            locked = found;
         }
         catch
         {
             await unitOfWork.RollbackAsync(ct);
             throw;
         }
+
+        // Mail send + final status write run unlocked, after the row lock above was released.
+        // repeat: true signals the UI that this is a resend, not the first confirmation.
+        return await SendConfirmationEmailAndUpdateStatusAsync(
+            locked, emailTemplate,
+            setVerifyEmailMessageOnSuccess: true, repeat: true, ct);
     }
 
     /// <inheritdoc />
@@ -499,8 +518,10 @@ public class AccountService(
 
         Account? account = await FindByResetPasswordTokenAsync(rawToken, ct);
 
-        // Reject if account not found, token has expired, or email is unconfirmed.
-        if (account == null || !GuidToken.IsTokenAlive(rawToken) || !account.EmailConfirmed)
+        // Reject if account not found, deleted, token has expired, or email is unconfirmed. Mirrors
+        // the same guard on ForgotPasswordAsync / ResetPasswordAsync so a soft-deleted account's
+        // lingering token can never be reported "valid" here only to be rejected at the actual reset.
+        if (account == null || account.Deleted || !GuidToken.IsTokenAlive(rawToken) || !account.EmailConfirmed)
             return new ResetPasswordValidationResult { FailToReset = true };
 
         // Return the still-encrypted token so the client can pass it back during the actual reset.

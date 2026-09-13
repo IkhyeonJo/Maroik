@@ -57,13 +57,13 @@ public sealed class Category : AggregateRoot<long>
 
     /// <summary>Creates a new navigation category after validating required fields.</summary>
     public static ErrorOr<Category> Create(
-        long id, string? name, string? displayName, string? iconPath,
+        string? name, string? displayName, string? iconPath,
         string? controller, string? action, string? role, long order)
     {
         if (string.IsNullOrWhiteSpace(name))
             return Error.Validation("Category.NameEmpty", "Category name cannot be empty.");
 
-        return new Category(id, name, displayName, iconPath, controller, action, role, order);
+        return new Category(0, name, displayName, iconPath, controller, action, role, order);
     }
 
     /// <summary>Updates this category's fields after validating the new name.</summary>

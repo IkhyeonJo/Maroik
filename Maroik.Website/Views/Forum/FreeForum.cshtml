@@ -84,7 +84,7 @@
                         <span class="mailbox-read-time float-left">@Localizer["Views"].Value: @Model.BoardOutputViewModel!.Views</span>
 
                         <span class="mailbox-read-time float-right">
-                            @Localizer["Updated"].Value: [<span id="free_forum_detail_updated">@Model.BoardOutputViewModel.Updated.ToViewerFormattedString(loggedInAccount.Role is Role.Admin or Role.User, loggedInAccountTimeZoneIanaId)</span>]
+                            @Localizer["Updated"].Value: [<span id="free_forum_detail_updated">@Model.BoardOutputViewModel.Updated.ToViewerFormattedString(loggedInAccount.SeesLocalTime(), loggedInAccountTimeZoneIanaId)</span>]
                         </span>
                         <br />
                     </div>
@@ -147,7 +147,7 @@
                                                 <span>@comment.Writer</span>
                                             }
                                             <span class="text-muted float-middle">
-                                                @Localizer["Created"].Value: [<span class="free_forum_detail_comment_created">@comment.Created.ToViewerFormattedString(loggedInAccount.Role is Role.Admin or Role.User, loggedInAccountTimeZoneIanaId)</span>]
+                                                @Localizer["Created"].Value: [<span class="free_forum_detail_comment_created">@comment.Created.ToViewerFormattedString(loggedInAccount.SeesLocalTime(), loggedInAccountTimeZoneIanaId)</span>]
                                             </span>
                                             @{
                                                 if (loggedInAccount.IsOwnerOrAdmin(comment.Writer))/*If the visitor is the author or admin*/
@@ -176,7 +176,7 @@
                                                 <span>@comment.Writer</span>
                                             }
                                             <span class="text-muted float-middle">
-                                                @Localizer["Created"].Value: [<span class="free_forum_detail_comment_created">@comment.Created.ToViewerFormattedString(loggedInAccount.Role is Role.Admin or Role.User, loggedInAccountTimeZoneIanaId)</span>]
+                                                @Localizer["Created"].Value: [<span class="free_forum_detail_comment_created">@comment.Created.ToViewerFormattedString(loggedInAccount.SeesLocalTime(), loggedInAccountTimeZoneIanaId)</span>]
                                             </span>
                                             @{
                                                 if (loggedInAccount.IsOwnerOrAdmin(comment.Writer))/*If the visitor is the author or admin*/
@@ -348,7 +348,7 @@
 
                                         <td><span style="font-weight:bold; color:green;">@noticeBoard.Writer</span></td>
 
-                                        <td class="free_forum_board_created"><span style="font-weight:bold; color:green;">@noticeBoard.Created.ToViewerFormattedString(loggedInAccount.Role is Role.Admin or Role.User, loggedInAccountTimeZoneIanaId)</span></td>
+                                        <td class="free_forum_board_created"><span style="font-weight:bold; color:green;">@noticeBoard.Created.ToViewerFormattedString(loggedInAccount.SeesLocalTime(), loggedInAccountTimeZoneIanaId)</span></td>
 
                                         <td><span style="font-weight:bold; color:green;">@noticeBoard.View</span></td>
                                         @if (boardAttachedFilesWithName.Count != 0)
@@ -394,7 +394,7 @@
                                             <td><span>@board.Writer</span></td>
                                         }
 
-                                        <td class="free_forum_board_created">@board.Created.ToViewerFormattedString(loggedInAccount.Role is Role.Admin or Role.User, loggedInAccountTimeZoneIanaId)</td>
+                                        <td class="free_forum_board_created">@board.Created.ToViewerFormattedString(loggedInAccount.SeesLocalTime(), loggedInAccountTimeZoneIanaId)</td>
 
                                         <td>@board.View</td>
                                         @if (attachedFilesWithName.Count != 0)

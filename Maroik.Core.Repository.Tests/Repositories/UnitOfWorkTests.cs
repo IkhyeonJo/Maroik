@@ -1,4 +1,6 @@
+using System.Data;
 using Maroik.Core.Repository.Repositories;
+using Microsoft.EntityFrameworkCore.Storage;
 
 namespace Maroik.Core.Repository.Tests.Repositories;
 
@@ -90,5 +92,23 @@ public sealed class UnitOfWorkTests(DatabaseFixture database) : RepositoryTestBa
         Exception? ex = await Record.ExceptionAsync(() => uow.RollbackAsync(TestContext.Current.CancellationToken));
 
         Assert.Null(ex);
+    }
+
+    /// <summary>
+    /// Passing an explicit isolation level actually opens the transaction at that level — this is
+    /// what lets a Service (e.g. BoardService.GetBoardPageAsync) request a stronger guarantee than
+    /// the provider default without any repository opening a transaction of its own.
+    /// </summary>
+    [Fact]
+    public async Task BeginAsync_WithIsolationLevel_OpensTransactionAtThatLevel()
+    {
+        await using var context = NewDbContext();
+        var uow = new UnitOfWork(context);
+
+        await uow.BeginAsync(TestContext.Current.CancellationToken, IsolationLevel.RepeatableRead);
+
+        Assert.Equal(IsolationLevel.RepeatableRead, context.Database.CurrentTransaction?.GetDbTransaction().IsolationLevel);
+
+        await uow.RollbackAsync(TestContext.Current.CancellationToken);
     }
 }

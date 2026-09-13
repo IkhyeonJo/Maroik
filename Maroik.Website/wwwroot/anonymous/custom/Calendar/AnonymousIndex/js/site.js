@@ -136,7 +136,8 @@
         ErrorRangeMinute: $('#localizerErrorRangeMinute').val(),
         ErrorRangeHour: $('#localizerErrorRangeHour').val(),
         ErrorRangeDay: $('#localizerErrorRangeDay').val(),
-        ErrorRangeWeek: $('#localizerErrorRangeWeek').val()
+        ErrorRangeWeek: $('#localizerErrorRangeWeek').val(),
+        FailedToLoadCalendars: $('#localizerFailedToLoadCalendars').val()
     };
     let calendar;
     $(function () {
@@ -261,52 +262,32 @@
                                         $aViewCalendarEventAttachedFile.text(`${data.calendarEvent.calendarEventAttachedFile.name}${data.calendarEvent.calendarEventAttachedFile.extension}`);
                                         $spanViewCalendarEventAttachedFile.text(`${Math.round(data.calendarEvent.calendarEventAttachedFile.size / 1024).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",")}KB`);
                                     }
-                                    $.ajax({
-                                        url: '/Calendar/GetOtherCalendars',
-                                        method: 'POST',
-                                        headers: { 'RequestVerificationToken': $__RequestVerificationToken.val() },
-                                        dataType: 'json',
-                                        data: null,
-                                        contentType: 'application/json; charset=utf-8',
-                                        async: false,
-                                        success: function (response) {
-                                            if (response.result) {
-                                                $viewCalendarEventMyCalendar.empty();
-                                                $.each(response.tempOtherCalendars, function (index, tempOtherCalendar) {
-                                                    $viewCalendarEventMyCalendar.append($('<option>', {
-                                                        value: tempOtherCalendar.id,
-                                                        text: tempOtherCalendar.name
-                                                    }));
-                                                });
-                                                $viewCalendarEventMyCalendar.val(data.calendarEvent.calendarId);
-                                            }
-                                        }
-                                    });
-                                    $viewCalendarEventStatus.val(data.calendarEvent.status);
-                                    $divViewEventNotificationAllDayChecked.hide();
-                                    $divViewEventNotificationAllDayUnchecked.hide();
-                                    if (data.calendarEvent.allDay === true) {
-                                        $divViewEventNotificationAllDayChecked.find('.divViewEventNotificationAllDayCheckedRow').remove();
-                                        $divViewEventNotificationAllDayChecked.show();
-                                        if (data.calendarEvent.serializedCalendarReminders !== '[]') {
-                                            const timeIntervals = reminderTimeIntervals;
-                                            JSON.parse(data.calendarEvent.serializedCalendarReminders).forEach((reminder) => {
-                                                if (reminder.Method !== 'Email') {
-                                                    const selectedMethodOption = `
+                                    function showViewCalendarEventModal() {
+                                        $viewCalendarEventStatus.val(data.calendarEvent.status);
+                                        $divViewEventNotificationAllDayChecked.hide();
+                                        $divViewEventNotificationAllDayUnchecked.hide();
+                                        if (data.calendarEvent.allDay === true) {
+                                            $divViewEventNotificationAllDayChecked.find('.divViewEventNotificationAllDayCheckedRow').remove();
+                                            $divViewEventNotificationAllDayChecked.show();
+                                            if (data.calendarEvent.serializedCalendarReminders !== '[]') {
+                                                const timeIntervals = reminderTimeIntervals;
+                                                JSON.parse(data.calendarEvent.serializedCalendarReminders).forEach((reminder) => {
+                                                    if (reminder.Method !== 'Email') {
+                                                        const selectedMethodOption = `
                                                         <option value='Email' ${reminder.Method === 'Email' ? 'selected' : ''}>${localizer.Email}</option>
                                                         <option value='Notification' ${reminder.Method === 'Notification' ? 'selected' : ''}>${localizer.Notification}</option>
                                                     `;
-                                                    let value = reminder.DaysBeforeEvent !== null ? reminder.DaysBeforeEvent : reminder.WeeksBeforeEvent;
-                                                    let max = reminder.DaysBeforeEvent !== null ? maxDaysBeforeEvent : maxWeeksBeforeEvent;
-                                                    let selectedDays = reminder.DaysBeforeEvent !== null ? 'selected' : '';
-                                                    let selectedWeeks = reminder.WeeksBeforeEvent !== null ? 'selected' : '';
-                                                    const selNotificationTimeTypeAllDayChecked = `
+                                                        let value = reminder.DaysBeforeEvent !== null ? reminder.DaysBeforeEvent : reminder.WeeksBeforeEvent;
+                                                        let max = reminder.DaysBeforeEvent !== null ? maxDaysBeforeEvent : maxWeeksBeforeEvent;
+                                                        let selectedDays = reminder.DaysBeforeEvent !== null ? 'selected' : '';
+                                                        let selectedWeeks = reminder.WeeksBeforeEvent !== null ? 'selected' : '';
+                                                        const selNotificationTimeTypeAllDayChecked = `
                                                     <input type='number' class='form-control-sm viewCalendarEventSelNotificationNumberAllDayChecked' style='width:20%;text-overflow:ellipsis; background-color:#343a40; color:#fff; border-color:#6c757d;' min="0" max="${max}" value="${value}" disabled>
                                                     <select class='form-control-sm viewCalendarEventSelNotificationTimeTypeAllDayChecked' style='width:15%;text-overflow:ellipsis;' disabled>
                                                         <option value='Days' ${selectedDays}>${localizer.Days}</option>
                                                         <option value='Weeks' ${selectedWeeks}>${localizer.Weeks}</option>
                                                     </select>`;
-                                                    const htmlString = String.raw `
+                                                        const htmlString = String.raw `
                                                         <div class="divViewEventNotificationAllDayCheckedRow">
                                                             <select class='form-control-sm viewCalendarEventSelNotificationMethodAllDayChecked' style='width:20%;text-overflow:ellipsis;' disabled>
                                                                 ${selectedMethodOption}
@@ -323,28 +304,28 @@
                                                             <div class="error-message" style="color: red; font-size: 0.9em; display: none;"></div>
                                                         </div>
                                                     `;
-                                                    $(htmlString).insertBefore($viewCalendarEventNotificationAllDayChecked);
-                                                }
-                                            });
+                                                        $(htmlString).insertBefore($viewCalendarEventNotificationAllDayChecked);
+                                                    }
+                                                });
+                                            }
                                         }
-                                    }
-                                    else {
-                                        $divViewEventNotificationAllDayUnchecked.find('.divViewEventNotificationAllDayUncheckedRow').remove();
-                                        $divViewEventNotificationAllDayUnchecked.show();
-                                        if (data.calendarEvent.serializedCalendarReminders !== '[]') {
-                                            JSON.parse(data.calendarEvent.serializedCalendarReminders).forEach((reminder) => {
-                                                if (reminder.Method !== 'Email') {
-                                                    const selectedMethodOption = `
+                                        else {
+                                            $divViewEventNotificationAllDayUnchecked.find('.divViewEventNotificationAllDayUncheckedRow').remove();
+                                            $divViewEventNotificationAllDayUnchecked.show();
+                                            if (data.calendarEvent.serializedCalendarReminders !== '[]') {
+                                                JSON.parse(data.calendarEvent.serializedCalendarReminders).forEach((reminder) => {
+                                                    if (reminder.Method !== 'Email') {
+                                                        const selectedMethodOption = `
                                                         <option value='Email' ${reminder.Method === 'Email' ? 'selected' : ''}>${localizer.Email}</option>
                                                         <option value='Notification' ${reminder.Method === 'Notification' ? 'selected' : ''}>${localizer.Notification}</option>
                                                     `;
-                                                    let value = reminder.MinutesBeforeEvent !== null ? reminder.MinutesBeforeEvent : reminder.HoursBeforeEvent !== null ? reminder.HoursBeforeEvent : reminder.DaysBeforeEvent !== null ? reminder.DaysBeforeEvent : reminder.WeeksBeforeEvent;
-                                                    let max = reminder.MinutesBeforeEvent !== null ? maxMinutesBeforeEvent : reminder.HoursBeforeEvent !== null ? maxHoursBeforeEvent : reminder.DaysBeforeEvent !== null ? maxDaysBeforeEvent : maxWeeksBeforeEvent;
-                                                    let selectedMinutes = reminder.MinutesBeforeEvent !== null ? 'selected' : '';
-                                                    let selectedHours = reminder.HoursBeforeEvent !== null ? 'selected' : '';
-                                                    let selectedDays = reminder.DaysBeforeEvent !== null ? 'selected' : '';
-                                                    let selectedWeeks = reminder.WeeksBeforeEvent !== null ? 'selected' : '';
-                                                    const selNotificationTimeTypeAllDayUnchecked = `
+                                                        let value = reminder.MinutesBeforeEvent !== null ? reminder.MinutesBeforeEvent : reminder.HoursBeforeEvent !== null ? reminder.HoursBeforeEvent : reminder.DaysBeforeEvent !== null ? reminder.DaysBeforeEvent : reminder.WeeksBeforeEvent;
+                                                        let max = reminder.MinutesBeforeEvent !== null ? maxMinutesBeforeEvent : reminder.HoursBeforeEvent !== null ? maxHoursBeforeEvent : reminder.DaysBeforeEvent !== null ? maxDaysBeforeEvent : maxWeeksBeforeEvent;
+                                                        let selectedMinutes = reminder.MinutesBeforeEvent !== null ? 'selected' : '';
+                                                        let selectedHours = reminder.HoursBeforeEvent !== null ? 'selected' : '';
+                                                        let selectedDays = reminder.DaysBeforeEvent !== null ? 'selected' : '';
+                                                        let selectedWeeks = reminder.WeeksBeforeEvent !== null ? 'selected' : '';
+                                                        const selNotificationTimeTypeAllDayUnchecked = `
                                                     <input type='number' class='form-control-sm viewCalendarEventSelNotificationNumberAllDayUnchecked' style='width:20%;text-overflow:ellipsis; background-color:#343a40; color:#fff; border-color:#6c757d;' min="0" max="${max}" value="${value}" disabled>
                                                     <select class='form-control-sm viewCalendarEventSelNotificationTimeTypeAllDayUnchecked' style='width:15%;text-overflow:ellipsis;' disabled>
                                                         <option value='Minutes' ${selectedMinutes}>${localizer.Minutes}</option>
@@ -352,7 +333,7 @@
                                                         <option value='Days' ${selectedDays}>${localizer.Days}</option>
                                                         <option value='Weeks' ${selectedWeeks}>${localizer.Weeks}</option>
                                                     </select>`;
-                                                    const htmlString = String.raw `
+                                                        const htmlString = String.raw `
                                                         <div class="divViewEventNotificationAllDayUncheckedRow" style="padding-bottom:5px;">
                                                             <select class='form-control-sm viewCalendarEventSelNotificationMethodAllDayUnchecked' style='width:20%;text-overflow:ellipsis;' disabled>
                                                                 ${selectedMethodOption}
@@ -364,17 +345,44 @@
                                                             <div class="error-message" style="color: red; font-size: 0.9em; display: none;"></div>
                                                         </div>
                                                     `;
-                                                    $(htmlString).insertBefore($viewCalendarEventNotificationAllDayUnchecked);
-                                                }
-                                            });
+                                                        $(htmlString).insertBefore($viewCalendarEventNotificationAllDayUnchecked);
+                                                    }
+                                                });
+                                            }
                                         }
+                                        $viewCalendarEventTaskDialogModal.modal({
+                                            keyboard: false,
+                                            backdrop: "static"
+                                        });
+                                        $viewCalendarEventTaskDialogModal.modal('toggle');
+                                        $viewCalendarEventTaskDialogModal.modal('show');
                                     }
-                                    $viewCalendarEventTaskDialogModal.modal({
-                                        keyboard: false,
-                                        backdrop: "static"
+                                    $.ajax({
+                                        url: '/Calendar/GetOtherCalendars',
+                                        method: 'POST',
+                                        headers: { 'RequestVerificationToken': $__RequestVerificationToken.val() },
+                                        dataType: 'json',
+                                        data: null,
+                                        contentType: 'application/json; charset=utf-8',
+                                        success: function (response) {
+                                            if (response.result) {
+                                                $viewCalendarEventMyCalendar.empty();
+                                                $.each(response.tempOtherCalendars, function (index, tempOtherCalendar) {
+                                                    $viewCalendarEventMyCalendar.append($('<option>', {
+                                                        value: tempOtherCalendar.id,
+                                                        text: tempOtherCalendar.name
+                                                    }));
+                                                });
+                                                $viewCalendarEventMyCalendar.val(data.calendarEvent.calendarId);
+                                            }
+                                        },
+                                        error: function () {
+                                            toastr.error(localizer.FailedToLoadCalendars);
+                                        },
+                                        complete: function () {
+                                            showViewCalendarEventModal();
+                                        }
                                     });
-                                    $viewCalendarEventTaskDialogModal.modal('toggle');
-                                    $viewCalendarEventTaskDialogModal.modal('show');
                                 }
                                 else {
                                     toastr.error(data.error);

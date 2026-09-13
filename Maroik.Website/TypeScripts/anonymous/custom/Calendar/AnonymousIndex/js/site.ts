@@ -176,7 +176,8 @@
         ErrorRangeMinute: $('#localizerErrorRangeMinute').val(),
         ErrorRangeHour: $('#localizerErrorRangeHour').val(),
         ErrorRangeDay: $('#localizerErrorRangeDay').val(),
-        ErrorRangeWeek: $('#localizerErrorRangeWeek').val()
+        ErrorRangeWeek: $('#localizerErrorRangeWeek').val(),
+        FailedToLoadCalendars: $('#localizerFailedToLoadCalendars').val()
     };
 
     // Module-scope FullCalendar instance, assigned inside `$(function)` below and
@@ -354,69 +355,50 @@
 
 
                                     // Populate the (disabled) "calendar" select with the
-                                    // visitor-visible "other" calendars. `async: false` so the
-                                    // select is filled before `.val(...)` sets the selection.
-                                    // `data` here is the outer `success(data)` param — valid.
-                                    $.ajax({
-                                        url: '/Calendar/GetOtherCalendars',
-                                        method: 'POST',
-                                        headers: { 'RequestVerificationToken': $__RequestVerificationToken.val() as string },
-                                        dataType: 'json',
-                                        data: null as any,
-                                        contentType: 'application/json; charset=utf-8',
-                                        async: false,
-                                        success: function (response) {
-                                            if (response.result) {
-                                                $viewCalendarEventMyCalendar.empty();
+                                    // visitor-visible "other" calendars, then continue building the
+                                    // rest of the read-only modal in `showViewCalendarEventModal`
+                                    // once this call settles (success or error) — kept asynchronous
+                                    // so a slow request doesn't freeze the page; the modal still
+                                    // opens either way, just without this one select populated on
+                                    // a failed fetch. `data` here is the outer `success(data)`
+                                    // param — valid, captured by the closure below.
+                                    function showViewCalendarEventModal() {
+                                        $viewCalendarEventStatus.val(data.calendarEvent.status);
 
-                                                $.each(response.tempOtherCalendars, function (index: number, tempOtherCalendar: any) {
-                                                    $viewCalendarEventMyCalendar.append($('<option>', {
-                                                        value: tempOtherCalendar.id,
-                                                        text: tempOtherCalendar.name
-                                                    }));
-                                                });
+                                        // --- Rebuild the reminder rows (read-only) ---
+                                        // Every generated control is `disabled`, and `Email`-method
+                                        // reminders are skipped (not shown to anonymous visitors).
+                                        $divViewEventNotificationAllDayChecked.hide();
+                                        $divViewEventNotificationAllDayUnchecked.hide();
 
-                                                $viewCalendarEventMyCalendar.val(data.calendarEvent.calendarId);
-                                            }
-                                        }
-                                    });
+                                        if (data.calendarEvent.allDay === true) {
+                                            $divViewEventNotificationAllDayChecked.find('.divViewEventNotificationAllDayCheckedRow').remove();
+                                            $divViewEventNotificationAllDayChecked.show();
 
-                                    $viewCalendarEventStatus.val(data.calendarEvent.status);
+                                            if (data.calendarEvent.serializedCalendarReminders !== '[]') {
+                                                const timeIntervals = reminderTimeIntervals;
 
-                                    // --- Rebuild the reminder rows (read-only) ---
-                                    // Every generated control is `disabled`, and `Email`-method
-                                    // reminders are skipped (not shown to anonymous visitors).
-                                    $divViewEventNotificationAllDayChecked.hide();
-                                    $divViewEventNotificationAllDayUnchecked.hide();
-
-                                    if (data.calendarEvent.allDay === true) {
-                                        $divViewEventNotificationAllDayChecked.find('.divViewEventNotificationAllDayCheckedRow').remove();
-                                        $divViewEventNotificationAllDayChecked.show();
-
-                                        if (data.calendarEvent.serializedCalendarReminders !== '[]') {
-                                            const timeIntervals = reminderTimeIntervals;
-
-                                            JSON.parse(data.calendarEvent.serializedCalendarReminders).forEach((reminder: any) => {
-                                                if (reminder.Method !== 'Email') {
-                                                    const selectedMethodOption = `
+                                                JSON.parse(data.calendarEvent.serializedCalendarReminders).forEach((reminder: any) => {
+                                                    if (reminder.Method !== 'Email') {
+                                                        const selectedMethodOption = `
                                                         <option value='Email' ${reminder.Method === 'Email' ? 'selected' : ''}>${localizer.Email}</option>
                                                         <option value='Notification' ${reminder.Method === 'Notification' ? 'selected' : ''}>${localizer.Notification}</option>
                                                     `;
 
-                                                    // All-day reminders use days / weeks lead time.
-                                                    let value = reminder.DaysBeforeEvent !== null ? reminder.DaysBeforeEvent : reminder.WeeksBeforeEvent;
-                                                    let max = reminder.DaysBeforeEvent !== null ? maxDaysBeforeEvent : maxWeeksBeforeEvent;
-                                                    let selectedDays = reminder.DaysBeforeEvent !== null ? 'selected' : '';
-                                                    let selectedWeeks = reminder.WeeksBeforeEvent !== null ? 'selected' : '';
+                                                        // All-day reminders use days / weeks lead time.
+                                                        let value = reminder.DaysBeforeEvent !== null ? reminder.DaysBeforeEvent : reminder.WeeksBeforeEvent;
+                                                        let max = reminder.DaysBeforeEvent !== null ? maxDaysBeforeEvent : maxWeeksBeforeEvent;
+                                                        let selectedDays = reminder.DaysBeforeEvent !== null ? 'selected' : '';
+                                                        let selectedWeeks = reminder.WeeksBeforeEvent !== null ? 'selected' : '';
 
-                                                    const selNotificationTimeTypeAllDayChecked = `
+                                                        const selNotificationTimeTypeAllDayChecked = `
                                                     <input type='number' class='form-control-sm viewCalendarEventSelNotificationNumberAllDayChecked' style='width:20%;text-overflow:ellipsis; background-color:#343a40; color:#fff; border-color:#6c757d;' min="0" max="${max}" value="${value}" disabled>
                                                     <select class='form-control-sm viewCalendarEventSelNotificationTimeTypeAllDayChecked' style='width:15%;text-overflow:ellipsis;' disabled>
                                                         <option value='Days' ${selectedDays}>${localizer.Days}</option>
                                                         <option value='Weeks' ${selectedWeeks}>${localizer.Weeks}</option>
                                                     </select>`;
 
-                                                    const htmlString = String.raw`
+                                                        const htmlString = String.raw`
                                                         <div class="divViewEventNotificationAllDayCheckedRow">
                                                             <select class='form-control-sm viewCalendarEventSelNotificationMethodAllDayChecked' style='width:20%;text-overflow:ellipsis;' disabled>
                                                                 ${selectedMethodOption}
@@ -434,35 +416,35 @@
                                                         </div>
                                                     `;
 
-                                                    $(htmlString).insertBefore($viewCalendarEventNotificationAllDayChecked);
-                                                }
-                                            });
+                                                        $(htmlString).insertBefore($viewCalendarEventNotificationAllDayChecked);
+                                                    }
+                                                });
+                                            }
                                         }
-                                    }
-                                    else {
-                                        $divViewEventNotificationAllDayUnchecked.find('.divViewEventNotificationAllDayUncheckedRow').remove();
-                                        $divViewEventNotificationAllDayUnchecked.show();
+                                        else {
+                                            $divViewEventNotificationAllDayUnchecked.find('.divViewEventNotificationAllDayUncheckedRow').remove();
+                                            $divViewEventNotificationAllDayUnchecked.show();
 
-                                        if (data.calendarEvent.serializedCalendarReminders !== '[]') {
+                                            if (data.calendarEvent.serializedCalendarReminders !== '[]') {
 
-                                            JSON.parse(data.calendarEvent.serializedCalendarReminders).forEach((reminder: any) => {
-                                                if (reminder.Method !== 'Email') {
-                                                    const selectedMethodOption = `
+                                                JSON.parse(data.calendarEvent.serializedCalendarReminders).forEach((reminder: any) => {
+                                                    if (reminder.Method !== 'Email') {
+                                                        const selectedMethodOption = `
                                                         <option value='Email' ${reminder.Method === 'Email' ? 'selected' : ''}>${localizer.Email}</option>
                                                         <option value='Notification' ${reminder.Method === 'Notification' ? 'selected' : ''}>${localizer.Notification}</option>
                                                     `;
 
-                                                    // Timed reminders can be minutes / hours / days / weeks;
-                                                    // pick the first non-null and its matching max.
-                                                    let value = reminder.MinutesBeforeEvent !== null ? reminder.MinutesBeforeEvent : reminder.HoursBeforeEvent !== null ? reminder.HoursBeforeEvent : reminder.DaysBeforeEvent !== null ? reminder.DaysBeforeEvent : reminder.WeeksBeforeEvent;
-                                                    let max = reminder.MinutesBeforeEvent !== null ? maxMinutesBeforeEvent : reminder.HoursBeforeEvent !== null ? maxHoursBeforeEvent : reminder.DaysBeforeEvent !== null ? maxDaysBeforeEvent : maxWeeksBeforeEvent;
+                                                        // Timed reminders can be minutes / hours / days / weeks;
+                                                        // pick the first non-null and its matching max.
+                                                        let value = reminder.MinutesBeforeEvent !== null ? reminder.MinutesBeforeEvent : reminder.HoursBeforeEvent !== null ? reminder.HoursBeforeEvent : reminder.DaysBeforeEvent !== null ? reminder.DaysBeforeEvent : reminder.WeeksBeforeEvent;
+                                                        let max = reminder.MinutesBeforeEvent !== null ? maxMinutesBeforeEvent : reminder.HoursBeforeEvent !== null ? maxHoursBeforeEvent : reminder.DaysBeforeEvent !== null ? maxDaysBeforeEvent : maxWeeksBeforeEvent;
 
-                                                    let selectedMinutes = reminder.MinutesBeforeEvent !== null ? 'selected' : '';
-                                                    let selectedHours = reminder.HoursBeforeEvent !== null ? 'selected' : '';
-                                                    let selectedDays = reminder.DaysBeforeEvent !== null ? 'selected' : '';
-                                                    let selectedWeeks = reminder.WeeksBeforeEvent !== null ? 'selected' : '';
+                                                        let selectedMinutes = reminder.MinutesBeforeEvent !== null ? 'selected' : '';
+                                                        let selectedHours = reminder.HoursBeforeEvent !== null ? 'selected' : '';
+                                                        let selectedDays = reminder.DaysBeforeEvent !== null ? 'selected' : '';
+                                                        let selectedWeeks = reminder.WeeksBeforeEvent !== null ? 'selected' : '';
 
-                                                    const selNotificationTimeTypeAllDayUnchecked = `
+                                                        const selNotificationTimeTypeAllDayUnchecked = `
                                                     <input type='number' class='form-control-sm viewCalendarEventSelNotificationNumberAllDayUnchecked' style='width:20%;text-overflow:ellipsis; background-color:#343a40; color:#fff; border-color:#6c757d;' min="0" max="${max}" value="${value}" disabled>
                                                     <select class='form-control-sm viewCalendarEventSelNotificationTimeTypeAllDayUnchecked' style='width:15%;text-overflow:ellipsis;' disabled>
                                                         <option value='Minutes' ${selectedMinutes}>${localizer.Minutes}</option>
@@ -471,7 +453,7 @@
                                                         <option value='Weeks' ${selectedWeeks}>${localizer.Weeks}</option>
                                                     </select>`;
 
-                                                    const htmlString = String.raw`
+                                                        const htmlString = String.raw`
                                                         <div class="divViewEventNotificationAllDayUncheckedRow" style="padding-bottom:5px;">
                                                             <select class='form-control-sm viewCalendarEventSelNotificationMethodAllDayUnchecked' style='width:20%;text-overflow:ellipsis;' disabled>
                                                                 ${selectedMethodOption}
@@ -484,20 +466,50 @@
                                                         </div>
                                                     `;
 
-                                                    $(htmlString).insertBefore($viewCalendarEventNotificationAllDayUnchecked);
-                                                }
-                                            });
+                                                        $(htmlString).insertBefore($viewCalendarEventNotificationAllDayUnchecked);
+                                                    }
+                                                });
+                                            }
                                         }
+
+                                        // Force the modal open (static backdrop, no Esc).
+                                        $viewCalendarEventTaskDialogModal.modal({
+                                            keyboard: false,
+                                            backdrop: "static"
+                                        });
+
+                                        $viewCalendarEventTaskDialogModal.modal('toggle');
+                                        $viewCalendarEventTaskDialogModal.modal('show');
                                     }
 
-                                    // Force the modal open (static backdrop, no Esc).
-                                    $viewCalendarEventTaskDialogModal.modal({
-                                        keyboard: false,
-                                        backdrop: "static"
-                                    });
+                                    $.ajax({
+                                        url: '/Calendar/GetOtherCalendars',
+                                        method: 'POST',
+                                        headers: { 'RequestVerificationToken': $__RequestVerificationToken.val() as string },
+                                        dataType: 'json',
+                                        data: null as any,
+                                        contentType: 'application/json; charset=utf-8',
+                                        success: function (response) {
+                                            if (response.result) {
+                                                $viewCalendarEventMyCalendar.empty();
 
-                                    $viewCalendarEventTaskDialogModal.modal('toggle');
-                                    $viewCalendarEventTaskDialogModal.modal('show');
+                                                $.each(response.tempOtherCalendars, function (index: number, tempOtherCalendar: any) {
+                                                    $viewCalendarEventMyCalendar.append($('<option>', {
+                                                        value: tempOtherCalendar.id,
+                                                        text: tempOtherCalendar.name
+                                                    }));
+                                                });
+
+                                                $viewCalendarEventMyCalendar.val(data.calendarEvent.calendarId);
+                                            }
+                                        },
+                                        error: function () {
+                                            toastr.error(localizer.FailedToLoadCalendars);
+                                        },
+                                        complete: function () {
+                                            showViewCalendarEventModal();
+                                        }
+                                    });
                                 }
                                 else {
                                     toastr.error(data.error);

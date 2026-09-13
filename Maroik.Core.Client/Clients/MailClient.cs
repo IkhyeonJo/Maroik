@@ -24,6 +24,21 @@ public class MailClient(ILogger<MailClient> logger) : IMailClient
     private static string BuildUrl(string domainName, string relativePath) =>
         $"{(domainName).TrimEnd('/')}/{relativePath.TrimStart('/')}";
 
+    /// <summary>
+    /// Decides whether to tolerate an SMTP server certificate when <c>SmtpSsl</c> is disabled for a
+    /// relay. Accept only a bare chain / self-signed-root problem (the realistic "operator's own
+    /// relay" case); reject a hostname mismatch or a missing certificate outright, since both are the
+    /// signature of an active man-in-the-middle rather than a benign self-signed relay. Extracted as a
+    /// pure function (no logging, no capture) so this security-sensitive decision has direct unit-test
+    /// coverage independent of an actual SMTP connection.
+    /// </summary>
+    public static bool ShouldAcceptCertificate(SslPolicyErrors errors) => errors switch
+    {
+        SslPolicyErrors.None => true,
+        SslPolicyErrors.RemoteCertificateChainErrors => true,
+        _ => false
+    };
+
     /// <inheritdoc />
     public string GetMailConfirmationBody(string registrationToken, string title, string content0, string content1, string domainName)
     {
@@ -90,25 +105,19 @@ public class MailClient(ILogger<MailClient> logger) : IMailClient
             {
                 smtp.ServerCertificateValidationCallback = (_, _, _, errors) =>
                 {
-                    switch (errors)
+                    bool accept = ShouldAcceptCertificate(errors);
+                    if (errors != SslPolicyErrors.None)
                     {
-                        case SslPolicyErrors.None:
-                            return true;
-                        // Accept only a bare chain / self-signed-root problem; reject name mismatch and
-                        // "no certificate" outright.
-                        case SslPolicyErrors.RemoteCertificateChainErrors:
+                        if (accept)
                             logger.LogWarning(
                                 "Accepting an untrusted SMTP server certificate for {SmtpHost} because SmtpSsl is disabled for this relay",
                                 settings.SmtpHost);
-                            return true;
-                        case SslPolicyErrors.RemoteCertificateNotAvailable:
-                        case SslPolicyErrors.RemoteCertificateNameMismatch:
-                        default:
+                        else
                             logger.LogWarning(
                                 "Rejecting the SMTP server certificate for {SmtpHost}: {SslPolicyErrors}",
                                 settings.SmtpHost, errors);
-                            return false;
                     }
+                    return accept;
                 };
             }
             await smtp.ConnectAsync(settings.SmtpHost ?? "", settings.SmtpPort, socketOptions, ct);

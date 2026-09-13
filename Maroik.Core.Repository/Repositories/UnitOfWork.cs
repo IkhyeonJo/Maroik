@@ -1,5 +1,7 @@
+using System.Data;
 using Maroik.Core.Contract.Interfaces;
 using Maroik.Core.PostgreSQL.Data;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Storage;
 
 namespace Maroik.Core.Repository.Repositories;
@@ -26,7 +28,7 @@ public class UnitOfWork(ApplicationDbContext context) : IUnitOfWork
     private IDbContextTransaction? _transaction;
 
     /// <inheritdoc />
-    public async Task BeginAsync(CancellationToken ct = default)
+    public async Task BeginAsync(CancellationToken ct = default, IsolationLevel? isolationLevel = null)
     {
         if (_transaction != null)
         {
@@ -36,7 +38,9 @@ public class UnitOfWork(ApplicationDbContext context) : IUnitOfWork
                 "or resolve a separate scope for the inner work.");
         }
 
-        _transaction = await context.Database.BeginTransactionAsync(ct);
+        _transaction = isolationLevel.HasValue
+            ? await context.Database.BeginTransactionAsync(isolationLevel.Value, ct)
+            : await context.Database.BeginTransactionAsync(ct);
     }
 
     /// <inheritdoc />

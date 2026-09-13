@@ -1,16 +1,6 @@
 "use strict";
 (function () {
-    function escapeHtml(value) {
-        return value.replace(/[&<>"']/g, function (ch) {
-            switch (ch) {
-                case '&': return '&amp;';
-                case '<': return '&lt;';
-                case '>': return '&gt;';
-                case '"': return '&quot;';
-                default: return '&#39;';
-            }
-        });
-    }
+    const escapeHtml = window.escapeHtml;
     const $__RequestVerificationToken = $('input[name="__RequestVerificationToken"]');
     const maxFileSize = parseInt($('#maxAttachedFileSizeBytes').val()) || window.MaroikDefaultMaxAttachedFileSizeBytes;
     const maxMinutesBeforeEvent = parseInt($('#maxMinutesBeforeEvent').val(), 10);
@@ -243,7 +233,8 @@
         ErrorRangeMinute: $('#localizerErrorRangeMinute').val(),
         ErrorRangeHour: $('#localizerErrorRangeHour').val(),
         ErrorRangeDay: $('#localizerErrorRangeDay').val(),
-        ErrorRangeWeek: $('#localizerErrorRangeWeek').val()
+        ErrorRangeWeek: $('#localizerErrorRangeWeek').val(),
+        FailedToLoadCalendars: $('#localizerFailedToLoadCalendars').val()
     };
     let calendar;
     $.datepicker.setDefaults({
@@ -525,7 +516,6 @@
                     dataType: 'json',
                     data: null,
                     contentType: 'application/json; charset=utf-8',
-                    async: false,
                     success: function (response) {
                         if (response.result) {
                             $createCalendarEventMyCalendar.empty();
@@ -536,12 +526,17 @@
                                 }));
                             });
                         }
+                    },
+                    error: function () {
+                        toastr.error(localizer.FailedToLoadCalendars);
+                    },
+                    complete: function () {
+                        $createCalendarEventAllDayUncheckedStartTimeZone.val($loggedInAccountTimeZoneIanaId.val());
+                        $createCalendarEventAllDayUncheckedEndTimeZone.val($loggedInAccountTimeZoneIanaId.val());
+                        $createCalendarEventTaskDialogModal.modal('show');
+                        calendar.unselect();
                     }
                 });
-                $createCalendarEventAllDayUncheckedStartTimeZone.val($loggedInAccountTimeZoneIanaId.val());
-                $createCalendarEventAllDayUncheckedEndTimeZone.val($loggedInAccountTimeZoneIanaId.val());
-                $createCalendarEventTaskDialogModal.modal('show');
-                calendar.unselect();
             },
             eventClick: function (arg) {
                 if (arg.event.extendedProps.calendarType === 'My') {
@@ -646,51 +641,31 @@
                                         $aEditCalendarEventAttachedFile.text(`${data.calendarEvent.calendarEventAttachedFile.name}${data.calendarEvent.calendarEventAttachedFile.extension}`);
                                         $spanEditCalendarEventAttachedFile.text(`${Math.round(data.calendarEvent.calendarEventAttachedFile.size / 1024).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",")}KB`);
                                     }
-                                    $.ajax({
-                                        url: '/Calendar/GetCalendars',
-                                        method: 'POST',
-                                        headers: { "RequestVerificationToken": $__RequestVerificationToken.val() },
-                                        dataType: 'json',
-                                        data: null,
-                                        contentType: 'application/json; charset=utf-8',
-                                        async: false,
-                                        success: function (response) {
-                                            if (response.result) {
-                                                $editCalendarEventMyCalendar.empty();
-                                                $.each(response.calendars, function (index, calendar) {
-                                                    $editCalendarEventMyCalendar.append($('<option>', {
-                                                        value: calendar.id,
-                                                        text: calendar.name
-                                                    }));
-                                                });
-                                                $editCalendarEventMyCalendar.val(data.calendarEvent.calendarId);
-                                            }
-                                        }
-                                    });
-                                    $editCalendarEventStatus.val(data.calendarEvent.status);
-                                    $divEditEventNotificationAllDayChecked.hide();
-                                    $divEditEventNotificationAllDayUnchecked.hide();
-                                    if (data.calendarEvent.allDay === true) {
-                                        $divEditEventNotificationAllDayChecked.find('.divEditEventNotificationAllDayCheckedRow').remove();
-                                        $divEditEventNotificationAllDayChecked.show();
-                                        if (data.calendarEvent.serializedCalendarReminders !== '[]') {
-                                            const timeIntervals = reminderTimeIntervals;
-                                            JSON.parse(data.calendarEvent.serializedCalendarReminders).forEach((reminder) => {
-                                                const selectedMethodOption = `
+                                    function showEditCalendarEventModal() {
+                                        $editCalendarEventStatus.val(data.calendarEvent.status);
+                                        $divEditEventNotificationAllDayChecked.hide();
+                                        $divEditEventNotificationAllDayUnchecked.hide();
+                                        if (data.calendarEvent.allDay === true) {
+                                            $divEditEventNotificationAllDayChecked.find('.divEditEventNotificationAllDayCheckedRow').remove();
+                                            $divEditEventNotificationAllDayChecked.show();
+                                            if (data.calendarEvent.serializedCalendarReminders !== '[]') {
+                                                const timeIntervals = reminderTimeIntervals;
+                                                JSON.parse(data.calendarEvent.serializedCalendarReminders).forEach((reminder) => {
+                                                    const selectedMethodOption = `
                                                 <option value='Email' ${reminder.Method === 'Email' ? 'selected' : ''}>${localizer.Email}</option>
                                                 <option value='Notification' ${reminder.Method === 'Notification' ? 'selected' : ''}>${localizer.Notification}</option>
                                             `;
-                                                let value = reminder.DaysBeforeEvent !== null ? reminder.DaysBeforeEvent : reminder.WeeksBeforeEvent;
-                                                let max = reminder.DaysBeforeEvent !== null ? maxDaysBeforeEvent : maxWeeksBeforeEvent;
-                                                let selectedDays = reminder.DaysBeforeEvent !== null ? 'selected' : '';
-                                                let selectedWeeks = reminder.WeeksBeforeEvent !== null ? 'selected' : '';
-                                                const selNotificationTimeTypeAllDayChecked = `
+                                                    let value = reminder.DaysBeforeEvent !== null ? reminder.DaysBeforeEvent : reminder.WeeksBeforeEvent;
+                                                    let max = reminder.DaysBeforeEvent !== null ? maxDaysBeforeEvent : maxWeeksBeforeEvent;
+                                                    let selectedDays = reminder.DaysBeforeEvent !== null ? 'selected' : '';
+                                                    let selectedWeeks = reminder.WeeksBeforeEvent !== null ? 'selected' : '';
+                                                    const selNotificationTimeTypeAllDayChecked = `
                                             <input type='number' class='form-control-sm editCalendarEventSelNotificationNumberAllDayChecked' style='width:20%;text-overflow:ellipsis; background-color:#343a40; color:#fff; border-color:#6c757d;' min="0" max="${max}" value="${value}">
                                             <select class='form-control-sm editCalendarEventSelNotificationTimeTypeAllDayChecked' style='width:15%;text-overflow:ellipsis;'>
                                                 <option value='Days' ${selectedDays}>${localizer.Days}</option>
                                                 <option value='Weeks' ${selectedWeeks}>${localizer.Weeks}</option>
                                             </select>`;
-                                                const htmlString = String.raw `
+                                                    const htmlString = String.raw `
                                             <div class="divEditEventNotificationAllDayCheckedRow">
                                                 <select class='form-control-sm editCalendarEventSelNotificationMethodAllDayChecked' style='width:20%;text-overflow:ellipsis;'>
                                                     ${selectedMethodOption}
@@ -710,26 +685,26 @@
                                                 <div class="error-message" style="color: red; font-size: 0.9em; display: none;"></div>
                                             </div>
                                         `;
-                                                $(htmlString).insertBefore($editCalendarEventNotificationAllDayChecked);
-                                            });
+                                                    $(htmlString).insertBefore($editCalendarEventNotificationAllDayChecked);
+                                                });
+                                            }
                                         }
-                                    }
-                                    else {
-                                        $divEditEventNotificationAllDayUnchecked.find('.divEditEventNotificationAllDayUncheckedRow').remove();
-                                        $divEditEventNotificationAllDayUnchecked.show();
-                                        if (data.calendarEvent.serializedCalendarReminders !== '[]') {
-                                            JSON.parse(data.calendarEvent.serializedCalendarReminders).forEach((reminder) => {
-                                                const selectedMethodOption = `
+                                        else {
+                                            $divEditEventNotificationAllDayUnchecked.find('.divEditEventNotificationAllDayUncheckedRow').remove();
+                                            $divEditEventNotificationAllDayUnchecked.show();
+                                            if (data.calendarEvent.serializedCalendarReminders !== '[]') {
+                                                JSON.parse(data.calendarEvent.serializedCalendarReminders).forEach((reminder) => {
+                                                    const selectedMethodOption = `
                                                 <option value='Email' ${reminder.Method === 'Email' ? 'selected' : ''}>${localizer.Email}</option>
                                                 <option value='Notification' ${reminder.Method === 'Notification' ? 'selected' : ''}>${localizer.Notification}</option>
                                             `;
-                                                let value = reminder.MinutesBeforeEvent !== null ? reminder.MinutesBeforeEvent : reminder.HoursBeforeEvent !== null ? reminder.HoursBeforeEvent : reminder.DaysBeforeEvent !== null ? reminder.DaysBeforeEvent : reminder.WeeksBeforeEvent;
-                                                let max = reminder.MinutesBeforeEvent !== null ? maxMinutesBeforeEvent : reminder.HoursBeforeEvent !== null ? maxHoursBeforeEvent : reminder.DaysBeforeEvent !== null ? maxDaysBeforeEvent : maxWeeksBeforeEvent;
-                                                let selectedMinutes = reminder.MinutesBeforeEvent !== null ? 'selected' : '';
-                                                let selectedHours = reminder.HoursBeforeEvent !== null ? 'selected' : '';
-                                                let selectedDays = reminder.DaysBeforeEvent !== null ? 'selected' : '';
-                                                let selectedWeeks = reminder.WeeksBeforeEvent !== null ? 'selected' : '';
-                                                const selNotificationTimeTypeAllDayUnchecked = `
+                                                    let value = reminder.MinutesBeforeEvent !== null ? reminder.MinutesBeforeEvent : reminder.HoursBeforeEvent !== null ? reminder.HoursBeforeEvent : reminder.DaysBeforeEvent !== null ? reminder.DaysBeforeEvent : reminder.WeeksBeforeEvent;
+                                                    let max = reminder.MinutesBeforeEvent !== null ? maxMinutesBeforeEvent : reminder.HoursBeforeEvent !== null ? maxHoursBeforeEvent : reminder.DaysBeforeEvent !== null ? maxDaysBeforeEvent : maxWeeksBeforeEvent;
+                                                    let selectedMinutes = reminder.MinutesBeforeEvent !== null ? 'selected' : '';
+                                                    let selectedHours = reminder.HoursBeforeEvent !== null ? 'selected' : '';
+                                                    let selectedDays = reminder.DaysBeforeEvent !== null ? 'selected' : '';
+                                                    let selectedWeeks = reminder.WeeksBeforeEvent !== null ? 'selected' : '';
+                                                    const selNotificationTimeTypeAllDayUnchecked = `
                                             <input type='number' class='form-control-sm editCalendarEventSelNotificationNumberAllDayUnchecked' style='width:20%;text-overflow:ellipsis; background-color:#343a40; color:#fff; border-color:#6c757d;' min="0" max="${max}" value="${value}">
                                             <select class='form-control-sm editCalendarEventSelNotificationTimeTypeAllDayUnchecked' style='width:15%;text-overflow:ellipsis;'>
                                                 <option value='Minutes' ${selectedMinutes}>${localizer.Minutes}</option>
@@ -737,7 +712,7 @@
                                                 <option value='Days' ${selectedDays}>${localizer.Days}</option>
                                                 <option value='Weeks' ${selectedWeeks}>${localizer.Weeks}</option>
                                             </select>`;
-                                                const htmlString = String.raw `
+                                                    const htmlString = String.raw `
                                             <div class="divEditEventNotificationAllDayUncheckedRow" style="padding-bottom:5px;">
                                                 <select class='form-control-sm editCalendarEventSelNotificationMethodAllDayUnchecked' style='width:20%;text-overflow:ellipsis;'>
                                                     ${selectedMethodOption}
@@ -753,16 +728,43 @@
                                                 <div class="error-message" style="color: red; font-size: 0.9em; display: none;"></div>
                                             </div>
                                         `;
-                                                $(htmlString).insertBefore($editCalendarEventNotificationAllDayUnchecked);
-                                            });
+                                                    $(htmlString).insertBefore($editCalendarEventNotificationAllDayUnchecked);
+                                                });
+                                            }
                                         }
+                                        $editCalendarEventTaskDialogModal.modal({
+                                            keyboard: false,
+                                            backdrop: "static"
+                                        });
+                                        $editCalendarEventTaskDialogModal.modal('toggle');
+                                        $editCalendarEventTaskDialogModal.modal('show');
                                     }
-                                    $editCalendarEventTaskDialogModal.modal({
-                                        keyboard: false,
-                                        backdrop: "static"
+                                    $.ajax({
+                                        url: '/Calendar/GetCalendars',
+                                        method: 'POST',
+                                        headers: { "RequestVerificationToken": $__RequestVerificationToken.val() },
+                                        dataType: 'json',
+                                        data: null,
+                                        contentType: 'application/json; charset=utf-8',
+                                        success: function (response) {
+                                            if (response.result) {
+                                                $editCalendarEventMyCalendar.empty();
+                                                $.each(response.calendars, function (index, calendar) {
+                                                    $editCalendarEventMyCalendar.append($('<option>', {
+                                                        value: calendar.id,
+                                                        text: calendar.name
+                                                    }));
+                                                });
+                                                $editCalendarEventMyCalendar.val(data.calendarEvent.calendarId);
+                                            }
+                                        },
+                                        error: function () {
+                                            toastr.error(localizer.FailedToLoadCalendars);
+                                        },
+                                        complete: function () {
+                                            showEditCalendarEventModal();
+                                        }
                                     });
-                                    $editCalendarEventTaskDialogModal.modal('toggle');
-                                    $editCalendarEventTaskDialogModal.modal('show');
                                 }
                                 else {
                                     toastr.error(data.error);
@@ -898,51 +900,31 @@
                                         $aViewCalendarEventAttachedFile.text(`${data.calendarEvent.calendarEventAttachedFile.name}${data.calendarEvent.calendarEventAttachedFile.extension}`);
                                         $spanViewCalendarEventAttachedFile.text(`${Math.round(data.calendarEvent.calendarEventAttachedFile.size / 1024).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",")}KB`);
                                     }
-                                    $.ajax({
-                                        url: '/Calendar/GetOtherCalendars',
-                                        method: 'POST',
-                                        headers: { "RequestVerificationToken": $__RequestVerificationToken.val() },
-                                        dataType: 'json',
-                                        data: null,
-                                        contentType: 'application/json; charset=utf-8',
-                                        async: false,
-                                        success: function (response) {
-                                            if (response.result) {
-                                                $viewCalendarEventMyCalendar.empty();
-                                                $.each(response.tempOtherCalendars, function (index, tempOtherCalendar) {
-                                                    $viewCalendarEventMyCalendar.append($('<option>', {
-                                                        value: tempOtherCalendar.id,
-                                                        text: tempOtherCalendar.name
-                                                    }));
-                                                });
-                                                $viewCalendarEventMyCalendar.val(data.calendarEvent.calendarId);
-                                            }
-                                        }
-                                    });
-                                    $viewCalendarEventStatus.val(data.calendarEvent.status);
-                                    $divViewEventNotificationAllDayChecked.hide();
-                                    $divViewEventNotificationAllDayUnchecked.hide();
-                                    if (data.calendarEvent.allDay === true) {
-                                        $divViewEventNotificationAllDayChecked.find('.divViewEventNotificationAllDayCheckedRow').remove();
-                                        $divViewEventNotificationAllDayChecked.show();
-                                        if (data.calendarEvent.serializedCalendarReminders !== '[]') {
-                                            const timeIntervals = reminderTimeIntervals;
-                                            JSON.parse(data.calendarEvent.serializedCalendarReminders).forEach((reminder) => {
-                                                const selectedMethodOption = `
+                                    function showViewCalendarEventModal() {
+                                        $viewCalendarEventStatus.val(data.calendarEvent.status);
+                                        $divViewEventNotificationAllDayChecked.hide();
+                                        $divViewEventNotificationAllDayUnchecked.hide();
+                                        if (data.calendarEvent.allDay === true) {
+                                            $divViewEventNotificationAllDayChecked.find('.divViewEventNotificationAllDayCheckedRow').remove();
+                                            $divViewEventNotificationAllDayChecked.show();
+                                            if (data.calendarEvent.serializedCalendarReminders !== '[]') {
+                                                const timeIntervals = reminderTimeIntervals;
+                                                JSON.parse(data.calendarEvent.serializedCalendarReminders).forEach((reminder) => {
+                                                    const selectedMethodOption = `
                                                     <option value='Email' ${reminder.Method === 'Email' ? 'selected' : ''}>${localizer.Email}</option>
                                                     <option value='Notification' ${reminder.Method === 'Notification' ? 'selected' : ''}>${localizer.Notification}</option>
                                                 `;
-                                                let value = reminder.DaysBeforeEvent !== null ? reminder.DaysBeforeEvent : reminder.WeeksBeforeEvent;
-                                                let max = reminder.DaysBeforeEvent !== null ? maxDaysBeforeEvent : maxWeeksBeforeEvent;
-                                                let selectedDays = reminder.DaysBeforeEvent !== null ? 'selected' : '';
-                                                let selectedWeeks = reminder.WeeksBeforeEvent !== null ? 'selected' : '';
-                                                const selNotificationTimeTypeAllDayChecked = `
+                                                    let value = reminder.DaysBeforeEvent !== null ? reminder.DaysBeforeEvent : reminder.WeeksBeforeEvent;
+                                                    let max = reminder.DaysBeforeEvent !== null ? maxDaysBeforeEvent : maxWeeksBeforeEvent;
+                                                    let selectedDays = reminder.DaysBeforeEvent !== null ? 'selected' : '';
+                                                    let selectedWeeks = reminder.WeeksBeforeEvent !== null ? 'selected' : '';
+                                                    const selNotificationTimeTypeAllDayChecked = `
                                                 <input type='number' class='form-control-sm viewCalendarEventSelNotificationNumberAllDayChecked' style='width:20%;text-overflow:ellipsis; background-color:#343a40; color:#fff; border-color:#6c757d;' min="0" max="${max}" value="${value}" disabled>
                                                 <select class='form-control-sm viewCalendarEventSelNotificationTimeTypeAllDayChecked' style='width:15%;text-overflow:ellipsis;' disabled>
                                                     <option value='Days' ${selectedDays}>${localizer.Days}</option>
                                                     <option value='Weeks' ${selectedWeeks}>${localizer.Weeks}</option>
                                                 </select>`;
-                                                const htmlString = String.raw `
+                                                    const htmlString = String.raw `
                                                     <div class="divViewEventNotificationAllDayCheckedRow">
                                                         <select class='form-control-sm viewCalendarEventSelNotificationMethodAllDayChecked' style='width:20%;text-overflow:ellipsis;' disabled>
                                                             ${selectedMethodOption}
@@ -959,26 +941,26 @@
                                                         <div class="error-message" style="color: red; font-size: 0.9em; display: none;"></div>
                                                     </div>
                                                 `;
-                                                $(htmlString).insertBefore($viewCalendarEventNotificationAllDayChecked);
-                                            });
+                                                    $(htmlString).insertBefore($viewCalendarEventNotificationAllDayChecked);
+                                                });
+                                            }
                                         }
-                                    }
-                                    else {
-                                        $divViewEventNotificationAllDayUnchecked.find('.divViewEventNotificationAllDayUncheckedRow').remove();
-                                        $divViewEventNotificationAllDayUnchecked.show();
-                                        if (data.calendarEvent.serializedCalendarReminders !== '[]') {
-                                            JSON.parse(data.calendarEvent.serializedCalendarReminders).forEach((reminder) => {
-                                                const selectedMethodOption = `
+                                        else {
+                                            $divViewEventNotificationAllDayUnchecked.find('.divViewEventNotificationAllDayUncheckedRow').remove();
+                                            $divViewEventNotificationAllDayUnchecked.show();
+                                            if (data.calendarEvent.serializedCalendarReminders !== '[]') {
+                                                JSON.parse(data.calendarEvent.serializedCalendarReminders).forEach((reminder) => {
+                                                    const selectedMethodOption = `
                                                     <option value='Email' ${reminder.Method === 'Email' ? 'selected' : ''}>${localizer.Email}</option>
                                                     <option value='Notification' ${reminder.Method === 'Notification' ? 'selected' : ''}>${localizer.Notification}</option>
                                                 `;
-                                                let value = reminder.MinutesBeforeEvent !== null ? reminder.MinutesBeforeEvent : reminder.HoursBeforeEvent !== null ? reminder.HoursBeforeEvent : reminder.DaysBeforeEvent !== null ? reminder.DaysBeforeEvent : reminder.WeeksBeforeEvent;
-                                                let max = reminder.MinutesBeforeEvent !== null ? maxMinutesBeforeEvent : reminder.HoursBeforeEvent !== null ? maxHoursBeforeEvent : reminder.DaysBeforeEvent !== null ? maxDaysBeforeEvent : maxWeeksBeforeEvent;
-                                                let selectedMinutes = reminder.MinutesBeforeEvent !== null ? 'selected' : '';
-                                                let selectedHours = reminder.HoursBeforeEvent !== null ? 'selected' : '';
-                                                let selectedDays = reminder.DaysBeforeEvent !== null ? 'selected' : '';
-                                                let selectedWeeks = reminder.WeeksBeforeEvent !== null ? 'selected' : '';
-                                                const selNotificationTimeTypeAllDayUnchecked = `
+                                                    let value = reminder.MinutesBeforeEvent !== null ? reminder.MinutesBeforeEvent : reminder.HoursBeforeEvent !== null ? reminder.HoursBeforeEvent : reminder.DaysBeforeEvent !== null ? reminder.DaysBeforeEvent : reminder.WeeksBeforeEvent;
+                                                    let max = reminder.MinutesBeforeEvent !== null ? maxMinutesBeforeEvent : reminder.HoursBeforeEvent !== null ? maxHoursBeforeEvent : reminder.DaysBeforeEvent !== null ? maxDaysBeforeEvent : maxWeeksBeforeEvent;
+                                                    let selectedMinutes = reminder.MinutesBeforeEvent !== null ? 'selected' : '';
+                                                    let selectedHours = reminder.HoursBeforeEvent !== null ? 'selected' : '';
+                                                    let selectedDays = reminder.DaysBeforeEvent !== null ? 'selected' : '';
+                                                    let selectedWeeks = reminder.WeeksBeforeEvent !== null ? 'selected' : '';
+                                                    const selNotificationTimeTypeAllDayUnchecked = `
                                                 <input type='number' class='form-control-sm viewCalendarEventSelNotificationNumberAllDayUnchecked' style='width:20%;text-overflow:ellipsis; background-color:#343a40; color:#fff; border-color:#6c757d;' min="0" max="${max}" value="${value}" disabled>
                                                 <select class='form-control-sm viewCalendarEventSelNotificationTimeTypeAllDayUnchecked' style='width:15%;text-overflow:ellipsis;' disabled>
                                                     <option value='Minutes' ${selectedMinutes}>${localizer.Minutes}</option>
@@ -986,7 +968,7 @@
                                                     <option value='Days' ${selectedDays}>${localizer.Days}</option>
                                                     <option value='Weeks' ${selectedWeeks}>${localizer.Weeks}</option>
                                                 </select>`;
-                                                const htmlString = String.raw `
+                                                    const htmlString = String.raw `
                                                     <div class="divViewEventNotificationAllDayUncheckedRow" style="padding-bottom:5px;">
                                                         <select class='form-control-sm viewCalendarEventSelNotificationMethodAllDayUnchecked' style='width:20%;text-overflow:ellipsis;' disabled>
                                                             ${selectedMethodOption}
@@ -998,16 +980,43 @@
                                                         <div class="error-message" style="color: red; font-size: 0.9em; display: none;"></div>
                                                     </div>
                                                 `;
-                                                $(htmlString).insertBefore($viewCalendarEventNotificationAllDayUnchecked);
-                                            });
+                                                    $(htmlString).insertBefore($viewCalendarEventNotificationAllDayUnchecked);
+                                                });
+                                            }
                                         }
+                                        $viewCalendarEventTaskDialogModal.modal({
+                                            keyboard: false,
+                                            backdrop: "static"
+                                        });
+                                        $viewCalendarEventTaskDialogModal.modal('toggle');
+                                        $viewCalendarEventTaskDialogModal.modal('show');
                                     }
-                                    $viewCalendarEventTaskDialogModal.modal({
-                                        keyboard: false,
-                                        backdrop: "static"
+                                    $.ajax({
+                                        url: '/Calendar/GetOtherCalendars',
+                                        method: 'POST',
+                                        headers: { "RequestVerificationToken": $__RequestVerificationToken.val() },
+                                        dataType: 'json',
+                                        data: null,
+                                        contentType: 'application/json; charset=utf-8',
+                                        success: function (response) {
+                                            if (response.result) {
+                                                $viewCalendarEventMyCalendar.empty();
+                                                $.each(response.tempOtherCalendars, function (index, tempOtherCalendar) {
+                                                    $viewCalendarEventMyCalendar.append($('<option>', {
+                                                        value: tempOtherCalendar.id,
+                                                        text: tempOtherCalendar.name
+                                                    }));
+                                                });
+                                                $viewCalendarEventMyCalendar.val(data.calendarEvent.calendarId);
+                                            }
+                                        },
+                                        error: function () {
+                                            toastr.error(localizer.FailedToLoadCalendars);
+                                        },
+                                        complete: function () {
+                                            showViewCalendarEventModal();
+                                        }
                                     });
-                                    $viewCalendarEventTaskDialogModal.modal('toggle');
-                                    $viewCalendarEventTaskDialogModal.modal('show');
                                 }
                                 else {
                                     toastr.error(data.error);
@@ -2009,7 +2018,6 @@
             dataType: 'json',
             data: null,
             contentType: 'application/json; charset=utf-8',
-            async: false,
             success: function (response) {
                 if (response.result) {
                     $createCalendarEventMyCalendar.empty();
@@ -2020,15 +2028,20 @@
                         }));
                     });
                 }
+            },
+            error: function () {
+                toastr.error(localizer.FailedToLoadCalendars);
+            },
+            complete: function () {
+                $createCalendarEventAllDayUncheckedStartTimeZone.val($loggedInAccountTimeZoneIanaId.val());
+                $createCalendarEventAllDayUncheckedEndTimeZone.val($loggedInAccountTimeZoneIanaId.val());
+                $createCalendarEventTaskDialogModal.modal('show');
+                $createCalendarEventAllDayUncheckedStartDate.val(moment().format("YYYY-MM-DD"));
+                $createCalendarEventAllDayCheckedStartDate.val(moment().format("YYYY-MM-DD"));
+                $createCalendarEventAllDayUncheckedEndDate.val(moment().format("YYYY-MM-DD"));
+                $createCalendarEventAllDayCheckedEndDate.val(moment().format("YYYY-MM-DD"));
             }
         });
-        $createCalendarEventAllDayUncheckedStartTimeZone.val($loggedInAccountTimeZoneIanaId.val());
-        $createCalendarEventAllDayUncheckedEndTimeZone.val($loggedInAccountTimeZoneIanaId.val());
-        $createCalendarEventTaskDialogModal.modal('show');
-        $createCalendarEventAllDayUncheckedStartDate.val(moment().format("YYYY-MM-DD"));
-        $createCalendarEventAllDayCheckedStartDate.val(moment().format("YYYY-MM-DD"));
-        $createCalendarEventAllDayUncheckedEndDate.val(moment().format("YYYY-MM-DD"));
-        $createCalendarEventAllDayCheckedEndDate.val(moment().format("YYYY-MM-DD"));
     });
     $createCalendarEventAllDay.off('click').on('click', function () {
         if ($(this).is(':checked')) {
@@ -2211,7 +2224,6 @@
             dataType: 'json',
             data: null,
             contentType: 'application/json; charset=utf-8',
-            async: false,
             success: function (response) {
                 if (response.result) {
                     let htmlString = '';
@@ -2235,9 +2247,14 @@
                         $allCheckBrowseCalendarsOfInterest.prop('checked', $('.checkBoxBrowseCalendarsOfInterest').length === $('.checkBoxBrowseCalendarsOfInterest:checked').length);
                     });
                 }
+            },
+            error: function () {
+                toastr.error(localizer.FailedToLoadCalendars);
+            },
+            complete: function () {
+                $browseCalendarsOfInterestDialogModal.modal('show');
             }
         });
-        $browseCalendarsOfInterestDialogModal.modal('show');
     });
     $allCheckBrowseCalendarsOfInterest.off('change').on('change', function () {
         $('.checkBoxBrowseCalendarsOfInterest').prop('checked', $(this).prop('checked'));
@@ -2262,6 +2279,10 @@
             contentType: 'application/json; charset=utf-8',
             success: function (data) {
                 if (data.result) {
+                    function finishBrowseCalendarsUpdate() {
+                        $browseCalendarsOfInterestDialogModal.modal('hide');
+                        toastr.success(data.message);
+                    }
                     $.ajax({
                         url: '/Calendar/GetOtherCalendars',
                         method: 'POST',
@@ -2269,7 +2290,6 @@
                         dataType: 'json',
                         data: null,
                         contentType: 'application/json; charset=utf-8',
-                        async: false,
                         success: function (response) {
                             if (response.result) {
                                 let htmlString = '';
@@ -2331,13 +2351,24 @@
                                                 });
                                             });
                                         }
+                                    },
+                                    error: function () {
+                                        toastr.error(localizer.FailedToLoadCalendars);
+                                    },
+                                    complete: function () {
+                                        finishBrowseCalendarsUpdate();
                                     }
                                 });
                             }
+                            else {
+                                finishBrowseCalendarsUpdate();
+                            }
+                        },
+                        error: function () {
+                            toastr.error(localizer.FailedToLoadCalendars);
+                            finishBrowseCalendarsUpdate();
                         }
                     });
-                    $browseCalendarsOfInterestDialogModal.modal('hide');
-                    toastr.success(data.message);
                 }
                 else {
                     toastr.error(data.error);

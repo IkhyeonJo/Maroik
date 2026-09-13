@@ -118,12 +118,15 @@ public class FileValidationService(IClamavClient clamavClient, IOptions<FileStor
     /// </summary>
     private static bool IsZipEncrypted(Stream stream)
     {
+        // `stream` (the caller's already-fully-buffered upload) is itself seekable, so ZipFile can
+        // read directly from it — no need to duplicate it into a second in-memory copy first, which
+        // would double peak memory held per concurrent .zip upload for no functional reason.
+        // IsStreamOwner = false is required: ZipFile disposes its underlying stream by default, and
+        // the caller reuses `stream` (via ValidateAndSaveAsync's `memStream`) after this returns.
         stream.Position = 0;
-        using var copy = new MemoryStream();
-        stream.CopyTo(copy);
-        copy.Position = 0;
-
-        using var zip = new ZipFile(copy);
-        return zip.Cast<ZipEntry>().Any(entry => entry.IsCrypted);
+        using var zip = new ZipFile(stream) { IsStreamOwner = false };
+        bool encrypted = zip.Cast<ZipEntry>().Any(entry => entry.IsCrypted);
+        stream.Position = 0;
+        return encrypted;
     }
 }

@@ -1,3 +1,5 @@
+using System.Data;
+
 namespace Maroik.Core.Contract.Interfaces;
 
 /// <summary>
@@ -8,8 +10,13 @@ namespace Maroik.Core.Contract.Interfaces;
 /// </summary>
 public interface IUnitOfWork : IAsyncDisposable
 {
-    /// <summary>Opens a new database transaction.</summary>
-    Task BeginAsync(CancellationToken ct = default);
+    /// <summary>
+    /// Opens a new database transaction, at <paramref name="isolationLevel"/> when given (otherwise
+    /// the provider default). A Service method needing a stronger guarantee than the default — e.g.
+    /// pinning a multi-query read to one snapshot — asks for it here; a repository must never open a
+    /// transaction of its own to get one.
+    /// </summary>
+    Task BeginAsync(CancellationToken ct = default, IsolationLevel? isolationLevel = null);
 
     /// <summary>Flushes any pending changes and commits the current transaction.</summary>
     Task CommitAsync(CancellationToken ct = default);

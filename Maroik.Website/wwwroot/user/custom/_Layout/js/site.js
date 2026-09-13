@@ -1,6 +1,17 @@
 "use strict";
 (function () {
     window.MaroikDefaultMaxAttachedFileSizeBytes = 10485760;
+    window.escapeHtml = function (value) {
+        return value.replace(/[&<>"']/g, function (ch) {
+            switch (ch) {
+                case '&': return '&amp;';
+                case '<': return '&lt;';
+                case '>': return '&gt;';
+                case '"': return '&quot;';
+                default: return '&#39;';
+            }
+        });
+    };
     $(document).off('ajaxError._Layout').on('ajaxError._Layout', function () {
         window.location.href = "/Dashboard/AnonymousIndex";
     });

@@ -1,3 +1,4 @@
+using System.Net.Security;
 using Maroik.Core.Client.Clients;
 using Microsoft.Extensions.Logging.Abstractions;
 
@@ -145,5 +146,47 @@ public class MailClientTests
 
         Assert.Contains("https://mysite.io/Account/ResetPassword", body);
         Assert.DoesNotContain("ioAccount/ResetPassword", body);
+    }
+
+    // -- ShouldAcceptCertificate ------------------------------------------
+    // This is the sole gate distinguishing "tolerate a self-signed relay" from "accept a MITM"
+    // when SmtpSsl is disabled. Each SslPolicyErrors branch is asserted explicitly so a future edit
+    // that merges cases or flips a default can never silently reopen the MITM hole undetected.
+
+    /// <summary>No certificate error at all is always accepted.</summary>
+    [Fact]
+    public void ShouldAcceptCertificate_Accepts_WhenNoError()
+    {
+        Assert.True(MailClient.ShouldAcceptCertificate(SslPolicyErrors.None));
+    }
+
+    /// <summary>A bare chain / self-signed-root problem is accepted (the "operator's own relay" case).</summary>
+    [Fact]
+    public void ShouldAcceptCertificate_Accepts_WhenOnlyChainErrors()
+    {
+        Assert.True(MailClient.ShouldAcceptCertificate(SslPolicyErrors.RemoteCertificateChainErrors));
+    }
+
+    /// <summary>A hostname mismatch is rejected outright — the signature of an active MITM.</summary>
+    [Fact]
+    public void ShouldAcceptCertificate_Rejects_WhenNameMismatch()
+    {
+        Assert.False(MailClient.ShouldAcceptCertificate(SslPolicyErrors.RemoteCertificateNameMismatch));
+    }
+
+    /// <summary>A missing certificate is rejected outright.</summary>
+    [Fact]
+    public void ShouldAcceptCertificate_Rejects_WhenCertificateNotAvailable()
+    {
+        Assert.False(MailClient.ShouldAcceptCertificate(SslPolicyErrors.RemoteCertificateNotAvailable));
+    }
+
+    /// <summary>Combined error flags (e.g. chain errors plus a name mismatch) must reject, not accept.</summary>
+    [Fact]
+    public void ShouldAcceptCertificate_Rejects_WhenChainErrorsCombinedWithNameMismatch()
+    {
+        SslPolicyErrors combined = SslPolicyErrors.RemoteCertificateChainErrors | SslPolicyErrors.RemoteCertificateNameMismatch;
+
+        Assert.False(MailClient.ShouldAcceptCertificate(combined));
     }
 }

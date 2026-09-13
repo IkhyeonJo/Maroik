@@ -41,11 +41,17 @@ public class CalendarSharedRepository(ApplicationDbContext context)
         // Raw SQL is required because EF Core LINQ cannot emit FOR UPDATE. AsNoTracking so a
         // pre-lock instance already tracked in this context can't snap back and defeat the lock
         // (see BoardRepository.FindActiveByIdForUpdateAsync for the same rationale).
+        // ORDER BY "CalendarId" locks every matched row in a fixed, deterministic order regardless
+        // of the order ids were passed in — the same ORDER BY + FOR UPDATE technique
+        // AssetRepository.FindByEmailAndProductNamesForUpdateAsync uses to guarantee two concurrent
+        // batched-lock callers with overlapping id sets can never acquire their locks in different
+        // orders and deadlock.
         var entities = await Set.FromSqlInterpolated(
             $"""
              SELECT *
              FROM "CalendarShared"
              WHERE "CalendarId" = ANY({ids})
+             ORDER BY "CalendarId"
              FOR UPDATE
              """).AsNoTracking().ToListAsync(ct);
 

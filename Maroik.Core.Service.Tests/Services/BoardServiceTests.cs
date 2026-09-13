@@ -1,3 +1,4 @@
+using System.Data;
 using Maroik.Core.Domain.Account;
 using Maroik.Core.Domain.Board;
 using Maroik.Core.Contract.Dtos;
@@ -30,7 +31,7 @@ public class BoardServiceTests
     /// <summary>Initializes the test fixture, setting up all required test doubles and the system under test.</summary>
     public BoardServiceTests()
     {
-        _unitOfWork.Setup(u => u.BeginAsync(It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
+        _unitOfWork.Setup(u => u.BeginAsync(It.IsAny<CancellationToken>(), It.IsAny<IsolationLevel?>())).Returns(Task.CompletedTask);
         _unitOfWork.Setup(u => u.CommitAsync(It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
         _unitOfWork.Setup(u => u.RollbackAsync(It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
         _unitOfWork.Setup(u => u.DisposeAsync()).Returns(ValueTask.CompletedTask);
@@ -87,6 +88,48 @@ public class BoardServiceTests
         BoardResponse? result = await sut.GetBoardByIdAsync(1, BoardTypes.PrivateNote, TestContext.Current.CancellationToken);
 
         Assert.Null(result);
+    }
+
+    // -- GetBoardPageAsync ------------------------------------------------------
+
+    private static BoardPageQuery MakeQuery() => new(
+        BoardTypes.FreeForum, OwnerNickname: null, SearchType: null, SearchText: null,
+        IsLoggedIn: false, ViewerRole: null, ViewerNickname: null, Page: 1, PageSize: 10);
+
+    /// <summary>
+    /// The count/page read this delegates to is only snapshot-consistent inside a REPEATABLE READ
+    /// transaction — asserts the Service (not the repository) opens exactly that isolation level,
+    /// and commits it once the repository call returns.
+    /// </summary>
+    [Fact]
+    public async Task GetBoardPageAsync_WrapsRepositoryCallInRepeatableReadTransaction()
+    {
+        _boardRepo.Setup(r => r.QueryPageAsync(It.IsAny<BoardPageQuery>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(([MakeBoard()], 1));
+        var sut = CreateSut();
+
+        var (items, totalCount) = await sut.GetBoardPageAsync(MakeQuery(), TestContext.Current.CancellationToken);
+
+        Assert.Single(items);
+        Assert.Equal(1, totalCount);
+        _unitOfWork.Verify(u => u.BeginAsync(It.IsAny<CancellationToken>(), IsolationLevel.RepeatableRead), Times.Once);
+        _unitOfWork.Verify(u => u.CommitAsync(It.IsAny<CancellationToken>()), Times.Once);
+        _unitOfWork.Verify(u => u.RollbackAsync(It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    /// <summary>A failure inside the transaction rolls back and propagates rather than swallowing the error.</summary>
+    [Fact]
+    public async Task GetBoardPageAsync_RollsBackAndRethrows_WhenRepositoryThrows()
+    {
+        _boardRepo.Setup(r => r.QueryPageAsync(It.IsAny<BoardPageQuery>(), It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new InvalidOperationException("boom"));
+        var sut = CreateSut();
+
+        await Assert.ThrowsAsync<InvalidOperationException>(
+            () => sut.GetBoardPageAsync(MakeQuery(), TestContext.Current.CancellationToken));
+
+        _unitOfWork.Verify(u => u.RollbackAsync(It.IsAny<CancellationToken>()), Times.Once);
+        _unitOfWork.Verify(u => u.CommitAsync(It.IsAny<CancellationToken>()), Times.Never);
     }
 
     // -- CanView ----------------------------------------------------------------

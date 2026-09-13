@@ -29,6 +29,8 @@ export interface AjaxCall {
   headers?: Record<string, unknown>;
   success?: (data: unknown) => void;
   error?: (...a: unknown[]) => void;
+  complete?: (...a: unknown[]) => void;
+  async?: boolean;
 }
 
 export interface SiteHandle {
@@ -36,6 +38,8 @@ export interface SiteHandle {
   win: Window & typeof globalThis & Record<string, any>;
   /** every `{ ctx, cfg }` passed to `new Chart(...)` (Dashboard) */
   charts: unknown[];
+  /** every options object passed to `new FullCalendar.Calendar(el, opts)` — see the field's own doc comment above. */
+  calendarOptions: any[];
   ajaxCalls: AjaxCall[];
   /** invoke the Nth captured ajax call's `success` with `data` */
   respond(indexFromEnd: number, data: unknown): void;
@@ -104,6 +108,21 @@ export function loadSite(
   const toastr = { success: vi.fn(), error: vi.fn(), info: vi.fn(), warning: vi.fn() };
   win.toastr = toastr;
 
+  // Normally set by each area's _Layout/js/site.ts, loaded before a page's own script in a real
+  // page load; loadSite only loads the one page script under test, so provide the same
+  // implementation here (kept byte-identical to _Layout's) for pages that call it unconditionally.
+  win.escapeHtml = function (value: string): string {
+    return value.replace(/[&<>"']/g, function (ch: string) {
+      switch (ch) {
+        case "&": return "&amp;";
+        case "<": return "&lt;";
+        case ">": return "&gt;";
+        case '"': return "&quot;";
+        default: return "&#39;";
+      }
+    });
+  };
+
   const MvcGridInstances: any[] = [];
   win.MvcGrid = class {
     url = new URL("http://localhost/grid");
@@ -113,9 +132,16 @@ export function loadSite(
     }
   };
 
+  // Every options object passed to `new FullCalendar.Calendar(el, opts)`, so a test can invoke a
+  // page's `select` / `eventClick` callback directly (`h.calendarOptions[0].select(arg)`) to drive
+  // flows that only run from inside those callbacks — the render/interaction loop itself is not
+  // simulated, only the options object FullCalendar would have called back into.
+  const calendarOptions: any[] = [];
   win.FullCalendar = {
     Calendar: class {
-      constructor(_el: unknown, _opts: unknown) {}
+      constructor(_el: unknown, opts: unknown) {
+        calendarOptions.push(opts);
+      }
       render = vi.fn();
       addEvent = vi.fn();
       removeAllEvents = vi.fn();
@@ -195,6 +221,7 @@ export function loadSite(
     $,
     win,
     charts,
+    calendarOptions,
     ajaxCalls,
     respond(indexFromEnd, data) {
       const call = ajaxCalls[ajaxCalls.length - 1 - indexFromEnd];

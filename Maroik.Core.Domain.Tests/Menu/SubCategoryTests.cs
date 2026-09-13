@@ -14,7 +14,7 @@ public class SubCategoryTests
     [Fact]
     public void Create_ReturnsSubCategory_WhenValid()
     {
-        var result = SubCategory.Create(1, 10, "FreeForum", "Free Forum", "/icons/forum.svg", "List", "User", 1);
+        var result = SubCategory.Create(10, "FreeForum", "Free Forum", "/icons/forum.svg", "List", "User", 1);
 
         Assert.False(result.IsError);
         Assert.Equal(10, result.Value.CategoryId);
@@ -24,6 +24,16 @@ public class SubCategoryTests
         Assert.Equal(1, result.Value.Order);
     }
 
+    /// <summary>Create always assigns id 0 — the repository/database assigns the real identity on insert.</summary>
+    [Fact]
+    public void Create_AlwaysAssignsIdZero()
+    {
+        var result = SubCategory.Create(10, "FreeForum", "Free Forum", "/icons/forum.svg", "List", "User", 1);
+
+        Assert.False(result.IsError);
+        Assert.Equal(0, result.Value.Id);
+    }
+
     /// <summary>Create returns error, when name empty.</summary>
     [Theory]
     [InlineData(null)]
@@ -31,7 +41,7 @@ public class SubCategoryTests
     [InlineData("   ")]
     public void Create_ReturnsError_WhenNameEmpty(string? name)
     {
-        var result = SubCategory.Create(1, 10, name, "Free Forum", null, "List", "User", 1);
+        var result = SubCategory.Create(10, name, "Free Forum", null, "List", "User", 1);
 
         Assert.True(result.IsError);
         Assert.Equal("SubCategory.NameEmpty", result.FirstError.Code);
