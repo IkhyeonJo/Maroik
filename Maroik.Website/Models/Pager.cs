@@ -68,11 +68,10 @@ public class Pager
         {
             endPage = totalPages;
 
-            // Keep the window at 5 links wide when there are enough pages
-            if (endPage > 5)
-            {
-                startPage = endPage - 4;
-            }
+            // Re-widen toward page 1 so the window stays up to 5 links wide even when
+            // totalPages itself is small (e.g. totalPages=4, currentPage=4 would otherwise
+            // leave startPage at 2, making page 1 unreachable).
+            startPage = Math.Max(1, endPage - 4);
         }
 
         TotalItems = totalItems;

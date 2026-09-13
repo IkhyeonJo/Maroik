@@ -139,6 +139,24 @@ public class PagerTests
         Assert.Equal(1, pager.EndPage);
     }
 
+    /// <summary>
+    /// When totalPages is small (&lt;= 5) but currentPage sits near the top, the window must still
+    /// re-widen to start at page 1 -- regression test for a bug where the right-boundary clamp only
+    /// re-widened when the clamped endPage exceeded 5, leaving page 1 unreachable (e.g. 4 total
+    /// pages at page 4 produced a (2,4) window instead of (1,4)).
+    /// </summary>
+    [Theory]
+    [InlineData(40, 4, 4)] // 4 total pages, currentPage = 4
+    [InlineData(50, 5, 5)] // 5 total pages, currentPage = 5
+    public void Constructor_WindowStartsAtPageOne_WhenTotalPagesIsSmall_AndCurrentPageIsNearTheEnd(int totalItems, int page, int expectedTotalPages)
+    {
+        var pager = new Pager(totalItems, page, pageSize: 10);
+
+        Assert.Equal(expectedTotalPages, pager.TotalPages);
+        Assert.Equal(1, pager.StartPage);
+        Assert.Equal(expectedTotalPages, pager.EndPage);
+    }
+
     /// <summary>Default page size is 10 when not specified.</summary>
     [Fact]
     public void Constructor_DefaultsPageSize_ToTen()

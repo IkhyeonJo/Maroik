@@ -629,7 +629,17 @@ public class AccountService(
             return RegisterResult.Fail("Error occurred while processing about account status");
         }
 
-        string body = mailClient.GetMailConfirmationBody(rsa.Encrypt(account.RegistrationToken!), emailTemplate.Title, emailTemplate.Content0, emailTemplate.Content1, settings.Value.DomainName ?? "");
+        string body;
+        try
+        {
+            body = mailClient.GetMailConfirmationBody(rsa.Encrypt(account.RegistrationToken!), emailTemplate.Title, emailTemplate.Content0, emailTemplate.Content1, settings.Value.DomainName ?? "");
+        }
+        catch (Exception e)
+        {
+            logger.LogError(e, "Failed to build confirmation mail body for {Email}", account.Email.Value);
+            return RegisterResult.Fail("Error occurred while processing about sending account authentication mail");
+        }
+
         bool published = await PublishMailAsync(account.Email.Value, emailTemplate.Subject, body, ct);
 
         if (!published)

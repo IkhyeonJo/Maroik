@@ -179,17 +179,27 @@ public sealed class EmailConsumerWorker(
                 // Give a message one redelivery so a transient SMTP/network blip doesn't permanently
                 // drop the email; only give up once it has already come back around once and failed
                 // again, so a genuinely poison message still can't block the queue forever.
-                if (!ea.Redelivered)
+                try
                 {
-                    logger.LogWarning(ex, "Failed to process email message (delivery tag {DeliveryTag}); requeuing for one retry", ea.DeliveryTag);
-                    await Channel!.BasicNackAsync(ea.DeliveryTag, multiple: false, requeue: true);
+                    if (!ea.Redelivered)
+                    {
+                        logger.LogWarning(ex, "Failed to process email message (delivery tag {DeliveryTag}); requeuing for one retry", ea.DeliveryTag);
+                        await Channel!.BasicNackAsync(ea.DeliveryTag, multiple: false, requeue: true);
+                    }
+                    else
+                    {
+                        // requeue: false triggers the queue's dead-letter policy, so the message is
+                        // routed to QueueNames.EmailDeadLetter rather than discarded.
+                        logger.LogError(ex, "Failed to process email message (delivery tag {DeliveryTag}) on retry; dead-lettering to '{DeadLetterQueue}'", ea.DeliveryTag, QueueNames.EmailDeadLetter);
+                        await Channel!.BasicNackAsync(ea.DeliveryTag, multiple: false, requeue: false);
+                    }
                 }
-                else
+                catch (Exception nackEx)
                 {
-                    // requeue: false triggers the queue's dead-letter policy, so the message is
-                    // routed to QueueNames.EmailDeadLetter rather than discarded.
-                    logger.LogError(ex, "Failed to process email message (delivery tag {DeliveryTag}) on retry; dead-lettering to '{DeadLetterQueue}'", ea.DeliveryTag, QueueNames.EmailDeadLetter);
-                    await Channel!.BasicNackAsync(ea.DeliveryTag, multiple: false, requeue: false);
+                    // Nacking failed (e.g. channel mid-recovery). The message will only come back via
+                    // connection-level recovery rather than this class's documented retry/dead-letter
+                    // policy, so at least surface that loudly instead of losing the exception silently.
+                    logger.LogError(nackEx, "Failed to nack email message (delivery tag {DeliveryTag}) after a processing failure", ea.DeliveryTag);
                 }
             }
             finally

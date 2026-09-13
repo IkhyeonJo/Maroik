@@ -341,6 +341,36 @@ public class AccountServiceTests
         Assert.False(result.Success);
     }
 
+    /// <summary>
+    /// Regression test: a brand-new account is already durably committed via <c>CreateAsync</c>
+    /// before this call, with no surrounding try/catch in <c>RegisterAsync</c>. If building the
+    /// confirmation mail body (including the RSA encryption of the registration token) throws, it
+    /// must be caught and turned into a graceful <see cref="RegisterResult.Fail"/> rather than
+    /// propagating as a raw unhandled exception out of <c>RegisterAsync</c>.
+    /// </summary>
+    [Fact]
+    public async Task RegisterAsync_ReturnsFail_WhenRsaEncryptThrows()
+    {
+        _accountRepo.Setup(r => r.FindByEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync((Account?)null);
+        _passwordService.Setup(p => p.HashPassword(It.IsAny<string>())).Returns("$2a$13$hashed");
+        _accountRepo.Setup(r => r.CreateAsync(It.IsAny<Account>(), It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
+        _rsa.Setup(r => r.Encrypt(It.IsAny<string>())).Throws(new InvalidOperationException("key misconfigured"));
+        var sut = CreateSut();
+
+        var request = new AccountRequest
+        {
+            Email = "new@example.com",
+            PlainPassword = "PlainPass1!",
+            Nickname = "TestUser",
+            RegistrationToken = GuidToken.Generate()
+        };
+
+        RegisterResult result = await sut.RegisterAsync(request, _emailTemplate, TestContext.Current.CancellationToken);
+
+        Assert.False(result.Success);
+        _emailPublisher.Verify(p => p.PublishAsync(It.IsAny<SendEmailMessage>(), It.IsAny<CancellationToken>()), Times.Never);
+    }
+
     /// <summary>Verifies that <c>RegisterAsync</c> returns fail when nickname already exists.</summary>
     [Fact]
     public async Task RegisterAsync_ReturnsFail_WhenNicknameAlreadyExists()

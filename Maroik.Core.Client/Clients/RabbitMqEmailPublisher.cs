@@ -148,9 +148,15 @@ public sealed class RabbitMqEmailPublisher(
         // lock first, so the channel/connection it's using is never disposed out from under it.
         bool acquired = await _publishLock.WaitAsync(_disposeLockTimeout);
         if (!acquired)
+        {
+            // The in-flight publish still owns _channel/_connection and will Release() the lock
+            // itself once it unblocks -- disposing them here anyway would pull them out from under
+            // that still-running call, so leave cleanup to the process exit instead.
             logger.LogWarning(
-                "Timed out after {Timeout} waiting for an in-flight publish to finish; disposing anyway",
+                "Timed out after {Timeout} waiting for an in-flight publish to finish; skipping disposal of the channel/connection",
                 _disposeLockTimeout);
+            return;
+        }
 
         try
         {
@@ -161,15 +167,8 @@ public sealed class RabbitMqEmailPublisher(
         }
         finally
         {
-            if (acquired)
-            {
-                // Only ours to release/dispose when we actually acquired it. On a timeout the
-                // stuck PublishAsync still holds it and will call Release() itself once it
-                // eventually unblocks -- disposing the semaphore out from under that pending
-                // Release() would throw ObjectDisposedException on that unrelated call stack.
-                _publishLock.Release();
-                _publishLock.Dispose();
-            }
+            _publishLock.Release();
+            _publishLock.Dispose();
         }
     }
 }

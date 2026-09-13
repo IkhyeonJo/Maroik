@@ -129,12 +129,7 @@
                                 <label for="createIncomeSubClass">@Localizer["SubClass"].Value</label>
                                 <br />
                                 <select id="createIncomeSubClass" name="createIncomeSubClass" class="form-control form-control-sm" style="max-width:100%;text-overflow:ellipsis;">
-                                    <option value="LaborIncome" selected="selected">@Localizer["LaborIncome"].Value</option>
-                                    <option value="BusinessIncome">@Localizer["BusinessIncome"].Value</option>
-                                    <option value="PensionIncome">@Localizer["PensionIncome"].Value</option>
-                                    <option value="FinancialIncome">@Localizer["FinancialIncome"].Value</option>
-                                    <option value="RentalIncome">@Localizer["RentalIncome"].Value</option>
-                                    <option value="OtherIncome">@Localizer["OtherIncome"].Value</option>
+                                    @Html.IncomeSubClassOptions(Localizer)
                                 </select>
                             </div>
                         </div>
@@ -268,12 +263,7 @@
                                 <label for="editIncomeSubClass">@Localizer["SubClass"].Value</label>
                                 <br />
                                 <select id="editIncomeSubClass" name="editIncomeSubClass" class="form-control form-control-sm" style="max-width:100%;text-overflow:ellipsis;">
-                                    <option value="LaborIncome">@Localizer["LaborIncome"].Value</option>
-                                    <option value="BusinessIncome">@Localizer["BusinessIncome"].Value</option>
-                                    <option value="PensionIncome">@Localizer["PensionIncome"].Value</option>
-                                    <option value="FinancialIncome">@Localizer["FinancialIncome"].Value</option>
-                                    <option value="RentalIncome">@Localizer["RentalIncome"].Value</option>
-                                    <option value="OtherIncome">@Localizer["OtherIncome"].Value</option>
+                                    @Html.IncomeSubClassOptions(Localizer)
                                 </select>
                             </div>
                         </div>

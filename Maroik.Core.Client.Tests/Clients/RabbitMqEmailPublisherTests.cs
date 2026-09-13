@@ -266,7 +266,8 @@ public class RabbitMqEmailPublisherTests
     /// Regression test: DisposeAsync must not hang forever if a PublishAsync call is stuck holding
     /// the publish lock (e.g. a broker that never confirms, with the caller having passed
     /// CancellationToken.None). Verifies dispose completes within a bounded time instead of
-    /// deadlocking application shutdown.
+    /// deadlocking application shutdown, and -- since the stuck publish still owns them -- that it
+    /// does NOT dispose the channel/connection out from under that still-running call.
     /// </summary>
     [Fact]
     public async Task DisposeAsync_DoesNotHangForever_WhenPublishIsStuckHoldingTheLock()
@@ -287,6 +288,8 @@ public class RabbitMqEmailPublisherTests
         Task completedFirst = await Task.WhenAny(disposeTask, Task.Delay(TimeSpan.FromSeconds(10), TestContext.Current.CancellationToken));
 
         Assert.Same(disposeTask, completedFirst);
+        channel.Verify(c => c.DisposeAsync(), Times.Never);
+        connection.Verify(c => c.DisposeAsync(), Times.Never);
 
         neverCompletes.SetResult(); // unblock the stuck publish so it doesn't leak past this test
         await stuckPublish;

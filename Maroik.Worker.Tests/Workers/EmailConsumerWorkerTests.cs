@@ -147,6 +147,30 @@ public class EmailConsumerWorkerTests
         channel.Verify(c => c.BasicNackAsync(It.IsAny<ulong>(), It.IsAny<bool>(), It.IsAny<bool>(), It.IsAny<CancellationToken>()), Times.Never);
     }
 
+    /// <summary>
+    /// Regression test: if the failure-path <c>BasicNackAsync</c> call itself throws (e.g. the
+    /// channel is mid-recovery), that exception must be caught rather than escaping
+    /// <c>OnMessageReceivedAsync</c> unhandled -- the success-path ack already has this protection,
+    /// and the nack path needs the same so a broker blip during error handling doesn't surface as
+    /// an unobserved/unhandled exception from the message loop.
+    /// </summary>
+    [Fact]
+    public async Task OnMessageReceivedAsync_NackThrowsAfterHandlerFailure_DoesNotThrow()
+    {
+        var handler = new Mock<IEmailMessageHandler>();
+        handler.Setup(h => h.HandleAsync(It.IsAny<SendEmailMessage>(), It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new InvalidOperationException("SMTP down"));
+        var worker = CreateSut(handler.Object, out var channel);
+        channel.Setup(c => c.BasicNackAsync(It.IsAny<ulong>(), It.IsAny<bool>(), It.IsAny<bool>(), It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new InvalidOperationException("channel closed"));
+        byte[] body = JsonSerializer.SerializeToUtf8Bytes(Message);
+
+        var exception = await Record.ExceptionAsync(() =>
+            worker.OnMessageReceivedAsync(this, MakeDeliverArgs(body, deliveryTag: 13, redelivered: false)));
+
+        Assert.Null(exception);
+    }
+
     /// <summary>On message received async handler throws on redelivery nacks without requeue, so a genuinely poison message can't block the queue forever.</summary>
     [Fact]
     public async Task OnMessageReceivedAsync_HandlerThrows_Redelivered_NacksWithoutRequeue()
