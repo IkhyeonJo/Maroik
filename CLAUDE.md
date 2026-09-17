@@ -26,6 +26,23 @@ logic into the Core layers:
 
 @.claude/rules/frontend-no-business-logic.md
 
+## Always write resx + unit tests alongside code
+
+Whenever you add or change code, also write the matching pieces in the same change —
+don't leave them for later or treat them as optional:
+
+- **Resource (.resx) files.** Any user-facing string (controller messages, ViewModel
+  labels/validation messages, etc.) goes through the resx pair for its class, mirroring
+  the source path 1:1 under `Maroik.Website/Resources/...` — e.g.
+  `Controllers/FooController.cs` → `Resources/Controllers/FooController.en-US.resx` +
+  `FooController.ko-KR.resx`. New class needing localized strings ⇒ new resx pair, both
+  cultures filled in (no missing `ko-KR` or `en-US` entries).
+- **Unit tests.** Every `*` project has a matching `*.Tests` project
+  (`Maroik.Core.Domain` → `Maroik.Core.Domain.Tests`, `Maroik.Core.Service` →
+  `Maroik.Core.Service.Tests`, etc. — see the list under `ls -d */ | grep Tests`). New
+  or changed behavior in a source project gets corresponding tests added in its `.Tests`
+  project in the same change, not deferred.
+
 ## Branches
 
 - `main` — production. No test suite / CI, but carries real security fixes.
