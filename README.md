@@ -5,6 +5,14 @@
 ## Introduction
 Maroik is a modern web application built with ASP.NET Core MVC, featuring a comprehensive set of tools for personal and business management. It includes features such as expense tracking, calendar management, bulletin boards, and role-based user management.
 
+Mail server: Zoho mail
+
+SMTP Server: Brevo
+
+DDOS Protect: Cloudflare
+
+Domain registration: AWS Route 53
+
 ## Key Features
 
 ### 1. Personal Finance Management
