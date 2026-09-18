@@ -36,7 +36,7 @@ public static class IncomeClassPolicy
     public static ErrorOr<Success> Validate(string? mainClass, string? subClass)
     {
         if (mainClass is null || !SubClassesByMainClass.TryGetValue(mainClass, out var subClasses))
-            return Error.Validation("IncomeClass.Invalid", "Unknown income main class.");
+            return LocalizableError.Validation("IncomeClass.Invalid", "Unknown income main class.");
 
         return subClass is not null && subClasses.Contains(subClass)
             ? Result.Success

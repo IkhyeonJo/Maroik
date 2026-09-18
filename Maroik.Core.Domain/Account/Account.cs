@@ -1,6 +1,7 @@
 using System.Security.Cryptography;
 using System.Text;
 using ErrorOr;
+using Maroik.Core.Domain.Localization;
 using Maroik.Core.Domain.Primitives;
 using Maroik.Core.Domain.ValueObjects;
 
@@ -230,16 +231,16 @@ public sealed class Account : AggregateRoot<string>
         if (tzResult.IsError) return tzResult.Errors;
 
         if (string.IsNullOrWhiteSpace(nickname))
-            return Error.Validation("Account.NicknameEmpty", "Nickname cannot be empty.");
+            return LocalizableError.Validation("Account.NicknameEmpty", "Nickname cannot be empty.");
 
         if (nickname.Length > ShortTextPolicy.MaxLength)
-            return Error.Validation("Account.NicknameTooLong", $"Nickname must be {ShortTextPolicy.MaxLength} characters or fewer.");
+            return LocalizableError.Validation("Account.NicknameTooLong", "Nickname must be {0} characters or fewer.", ShortTextPolicy.MaxLength);
 
         if (string.IsNullOrWhiteSpace(hashedPassword))
-            return Error.Validation("Account.PasswordEmpty", "Hashed password cannot be empty.");
+            return LocalizableError.Validation("Account.PasswordEmpty", "Hashed password cannot be empty.");
 
         if (role is not (Maroik.Core.Domain.Account.Role.Admin or Maroik.Core.Domain.Account.Role.User))
-            return Error.Validation("Account.RoleInvalid", "Role must be either Admin or User.");
+            return LocalizableError.Validation("Account.RoleInvalid", "Role must be either Admin or User.");
 
         var account = new Account(
             emailResult.Value, hashedPassword, nickname, role,
@@ -258,10 +259,10 @@ public sealed class Account : AggregateRoot<string>
     public ErrorOr<Success> ConfirmEmail(string token)
     {
         if (EmailConfirmed)
-            return Error.Conflict("Account.AlreadyConfirmed", "Email address is already confirmed.");
+            return LocalizableError.Conflict("Account.AlreadyConfirmed", "Email address is already confirmed.");
 
         if (!TokensMatch(RegistrationToken, token))
-            return Error.Validation("Account.InvalidToken", "Invalid email confirmation token.");
+            return LocalizableError.Validation("Account.InvalidToken", "Invalid email confirmation token.");
 
         EmailConfirmed = true;
         RegistrationToken = null;
@@ -278,7 +279,7 @@ public sealed class Account : AggregateRoot<string>
     public ErrorOr<Success> RequestPasswordReset(string resetToken)
     {
         if (!EmailConfirmed)
-            return Error.Failure("Account.NotConfirmed", "Email must be confirmed before resetting the password.");
+            return LocalizableError.Failure("Account.NotConfirmed", "Email must be confirmed before resetting the password.");
 
         ResetPasswordToken = resetToken;
         Updated = DateTime.UtcNow;
@@ -291,10 +292,10 @@ public sealed class Account : AggregateRoot<string>
     public ErrorOr<Success> ResetPassword(string token, string newHashedPassword)
     {
         if (!TokensMatch(ResetPasswordToken, token))
-            return Error.Validation("Account.InvalidToken", "Invalid or expired password-reset token.");
+            return LocalizableError.Validation("Account.InvalidToken", "Invalid or expired password-reset token.");
 
         if (string.IsNullOrWhiteSpace(newHashedPassword))
-            return Error.Validation("Account.PasswordEmpty", "New hashed password cannot be empty.");
+            return LocalizableError.Validation("Account.PasswordEmpty", "New hashed password cannot be empty.");
 
         HashedPassword = newHashedPassword;
         ResetPasswordToken = null;
@@ -466,7 +467,7 @@ public sealed class Account : AggregateRoot<string>
         if (tzResult.IsError) return tzResult.Errors;
 
         if (role is not (null or Maroik.Core.Domain.Account.Role.Admin or Maroik.Core.Domain.Account.Role.User))
-            return Error.Validation("Account.RoleInvalid", "Role must be either Admin or User.");
+            return LocalizableError.Validation("Account.RoleInvalid", "Role must be either Admin or User.");
 
         Role = role ?? Role;
         TimeZone = tzResult.Value;

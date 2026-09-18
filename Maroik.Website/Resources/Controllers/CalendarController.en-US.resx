@@ -123,8 +123,8 @@
   <data name="Calendar name cannot be empty." xml:space="preserve">
     <value>Calendar name cannot be empty.</value>
   </data>
-  <data name="Calendar name must be 255 characters or fewer." xml:space="preserve">
-    <value>Calendar name must be 255 characters or fewer.</value>
+  <data name="Calendar name must be {0} characters or fewer." xml:space="preserve">
+    <value>Calendar name must be {0} characters or fewer.</value>
   </data>
   <data name="Calendar name cannot contain angle brackets or control characters." xml:space="preserve">
     <value>Calendar name cannot contain angle brackets or control characters.</value>
@@ -210,14 +210,14 @@
   <data name="End date must not be earlier than start date." xml:space="preserve">
     <value>End date must not be earlier than start date.</value>
   </data>
-  <data name="Event description must be 16384 characters or fewer." xml:space="preserve">
-    <value>Event description must be 16384 characters or fewer.</value>
+  <data name="Event description must be {0} characters or fewer." xml:space="preserve">
+    <value>Event description must be {0} characters or fewer.</value>
   </data>
   <data name="Event title cannot be empty." xml:space="preserve">
     <value>Event title cannot be empty.</value>
   </data>
-  <data name="Event title must be 100 characters or fewer." xml:space="preserve">
-    <value>Event title must be 100 characters or fewer.</value>
+  <data name="Event title must be {0} characters or fewer." xml:space="preserve">
+    <value>Event title must be {0} characters or fewer.</value>
   </data>
   <data name="Event status is not a recognised value." xml:space="preserve">
     <value>Event status is not a recognised value.</value>

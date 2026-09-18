@@ -1,4 +1,5 @@
 using ErrorOr;
+using Maroik.Core.Domain.Localization;
 using Maroik.Core.Domain.Primitives;
 using Maroik.Core.Domain.ValueObjects;
 
@@ -147,13 +148,13 @@ public sealed class Calendar : AggregateRoot<long>
     private static ErrorOr<string> ValidateName(string? name)
     {
         if (string.IsNullOrWhiteSpace(name))
-            return Error.Validation("Calendar.NameEmpty", "Calendar name cannot be empty.");
+            return LocalizableError.Validation("Calendar.NameEmpty", "Calendar name cannot be empty.");
 
         if (name.Length > ShortTextPolicy.MaxLength)
-            return Error.Validation("Calendar.NameTooLong", $"Calendar name must be {ShortTextPolicy.MaxLength} characters or fewer.");
+            return LocalizableError.Validation("Calendar.NameTooLong", "Calendar name must be {0} characters or fewer.", ShortTextPolicy.MaxLength);
 
         if (name.Any(c => c is '<' or '>' || char.IsControl(c)))
-            return Error.Validation(
+            return LocalizableError.Validation(
                 "Calendar.NameInvalid",
                 "Calendar name cannot contain angle brackets or control characters.");
 

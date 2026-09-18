@@ -1,4 +1,5 @@
 using ErrorOr;
+using Maroik.Core.Domain.Localization;
 
 namespace Maroik.Core.Domain.Finance;
 
@@ -22,10 +23,10 @@ public static class FinanceTextPolicy
     public static ErrorOr<Success> ValidateContentAndNote(string? content, string? note)
     {
         if (content is { Length: > MaxTextLength })
-            return Error.Validation("Finance.ContentTooLong", $"Content must be {MaxTextLength} characters or fewer.");
+            return LocalizableError.Validation("Finance.ContentTooLong", "Content must be {0} characters or fewer.", MaxTextLength);
 
         if (note is { Length: > MaxTextLength })
-            return Error.Validation("Finance.NoteTooLong", $"Note must be {MaxTextLength} characters or fewer.");
+            return LocalizableError.Validation("Finance.NoteTooLong", "Note must be {0} characters or fewer.", MaxTextLength);
 
         return Result.Success;
     }

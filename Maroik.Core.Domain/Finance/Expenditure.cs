@@ -1,4 +1,5 @@
 using ErrorOr;
+using Maroik.Core.Domain.Localization;
 using Maroik.Core.Domain.Primitives;
 using Maroik.Core.Domain.ValueObjects;
 
@@ -162,19 +163,19 @@ public sealed class Expenditure : AggregateRoot<long>
         string? mainClass, string? subClass, string? paymentMethod, string? content, decimal amount, string? note)
     {
         if (string.IsNullOrWhiteSpace(mainClass))
-            return Error.Validation("Expenditure.MainClassEmpty", "Main expense category cannot be empty.");
+            return LocalizableError.Validation("Expenditure.MainClassEmpty", "Main expense category cannot be empty.");
 
         if (string.IsNullOrWhiteSpace(subClass))
-            return Error.Validation("Expenditure.SubClassEmpty", "Sub expense category cannot be empty.");
+            return LocalizableError.Validation("Expenditure.SubClassEmpty", "Sub expense category cannot be empty.");
 
         if (string.IsNullOrWhiteSpace(paymentMethod))
-            return Error.Validation("Expenditure.PaymentMethodEmpty", "Payment method (asset name) cannot be empty.");
+            return LocalizableError.Validation("Expenditure.PaymentMethodEmpty", "Payment method (asset name) cannot be empty.");
 
         // Content is NOT NULL / non-blank at the DB (Expenditure_Content_check: Content ~ '\S') and
         // [Required] on the ViewModel; mirror that here so a blank value is a clean validation
         // error rather than a raw 23514 from the database.
         if (string.IsNullOrWhiteSpace(content))
-            return Error.Validation("Expenditure.ContentEmpty", "Content cannot be empty.");
+            return LocalizableError.Validation("Expenditure.ContentEmpty", "Content cannot be empty.");
 
         var amountResult = FinanceAmountPolicy.ValidateNonNegative(amount);
         if (amountResult.IsError) return amountResult.Errors;

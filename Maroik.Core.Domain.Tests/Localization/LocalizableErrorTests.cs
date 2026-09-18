@@ -42,4 +42,36 @@ public class LocalizableErrorTests
         Assert.Equal("A static message.", error.Metadata![LocalizableError.ResourceKeyMetadataKey]);
         Assert.Empty((object[])error.Metadata[LocalizableError.ResourceArgsMetadataKey]);
     }
+
+    /// <summary>
+    /// <see cref="LocalizableError.Conflict"/> follows the same code/description/metadata/type
+    /// pattern as <see cref="Validation"/>, just with <see cref="ErrorType.Conflict"/>.
+    /// </summary>
+    [Fact]
+    public void Conflict_BuildsAConflictError_WithTemplateAndArgsInMetadata()
+    {
+        Error error = LocalizableError.Conflict("Board.Deleted", "Cannot add a comment to a deleted post.");
+
+        Assert.Equal("Board.Deleted", error.Code);
+        Assert.Equal("Cannot add a comment to a deleted post.", error.Description);
+        Assert.Equal(ErrorType.Conflict, error.Type);
+        Assert.Equal("Cannot add a comment to a deleted post.", error.Metadata![LocalizableError.ResourceKeyMetadataKey]);
+        Assert.Empty((object[])error.Metadata[LocalizableError.ResourceArgsMetadataKey]);
+    }
+
+    /// <summary>
+    /// <see cref="LocalizableError.Failure"/> follows the same code/description/metadata/type
+    /// pattern as <see cref="Validation"/>, just with <see cref="ErrorType.Failure"/>.
+    /// </summary>
+    [Fact]
+    public void Failure_BuildsAFailureError_WithTemplateAndArgsInMetadata()
+    {
+        Error error = LocalizableError.Failure("Account.NotConfirmed", "Email must be confirmed before resetting the password.");
+
+        Assert.Equal("Account.NotConfirmed", error.Code);
+        Assert.Equal("Email must be confirmed before resetting the password.", error.Description);
+        Assert.Equal(ErrorType.Failure, error.Type);
+        Assert.Equal("Email must be confirmed before resetting the password.", error.Metadata![LocalizableError.ResourceKeyMetadataKey]);
+        Assert.Empty((object[])error.Metadata[LocalizableError.ResourceArgsMetadataKey]);
+    }
 }

@@ -1,4 +1,5 @@
 using ErrorOr;
+using Maroik.Core.Domain.Localization;
 using Maroik.Core.Domain.Primitives;
 using Maroik.Core.Domain.ValueObjects;
 
@@ -175,7 +176,7 @@ public sealed class FixedExpenditure : AggregateRoot<long>
         if (moneyResult.IsError) return moneyResult.Errors;
 
         if (!FixedSchedulePolicy.IsAcceptableMaturityDate(maturityDate, DateTime.UtcNow))
-            return Error.Validation("FixedExpenditure.MaturityDateInPast",
+            return LocalizableError.Validation("FixedExpenditure.MaturityDateInPast",
                 "The maturity date cannot be earlier than the current date.");
 
         var (validMainClass, validSubClass, validPaymentMethod) = coreResult.Value;
@@ -196,19 +197,19 @@ public sealed class FixedExpenditure : AggregateRoot<long>
         short depositMonth, short depositDay, decimal amount, string? content, string? note)
     {
         if (string.IsNullOrWhiteSpace(mainClass))
-            return Error.Validation("FixedExpenditure.MainClassEmpty", "Main expense category cannot be empty.");
+            return LocalizableError.Validation("FixedExpenditure.MainClassEmpty", "Main expense category cannot be empty.");
 
         if (string.IsNullOrWhiteSpace(subClass))
-            return Error.Validation("FixedExpenditure.SubClassEmpty", "Sub expense category cannot be empty.");
+            return LocalizableError.Validation("FixedExpenditure.SubClassEmpty", "Sub expense category cannot be empty.");
 
         if (string.IsNullOrWhiteSpace(paymentMethod))
-            return Error.Validation("FixedExpenditure.PaymentMethodEmpty", "Payment method cannot be empty.");
+            return LocalizableError.Validation("FixedExpenditure.PaymentMethodEmpty", "Payment method cannot be empty.");
 
         if (depositMonth is < 1 or > 12)
-            return Error.Validation("FixedExpenditure.InvalidDepositMonth", "Deposit month must be between 1 and 12.");
+            return LocalizableError.Validation("FixedExpenditure.InvalidDepositMonth", "Deposit month must be between 1 and 12.");
 
         if (!FixedSchedulePolicy.IsValidDepositDate(depositMonth, depositDay))
-            return Error.Validation("FixedExpenditure.InvalidDepositDay", "Deposit day is not valid for the selected month.");
+            return LocalizableError.Validation("FixedExpenditure.InvalidDepositDay", "Deposit day is not valid for the selected month.");
 
         var amountResult = FinanceAmountPolicy.ValidateNonNegative(amount);
         if (amountResult.IsError) return amountResult.Errors;
@@ -264,7 +265,7 @@ public sealed class FixedExpenditure : AggregateRoot<long>
         // past date untouched through, so an expired schedule's other fields stay editable.
         if (maturityDate.Date != MaturityDate.Date
             && !FixedSchedulePolicy.IsAcceptableMaturityDate(maturityDate, DateTime.UtcNow))
-            return Error.Validation("FixedExpenditure.MaturityDateInPast",
+            return LocalizableError.Validation("FixedExpenditure.MaturityDateInPast",
                 "The maturity date cannot be earlier than the current date.");
 
         var (validMainClass, validSubClass, validPaymentMethod) = coreResult.Value;

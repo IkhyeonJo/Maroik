@@ -1,4 +1,5 @@
 using ErrorOr;
+using Maroik.Core.Domain.Localization;
 using Maroik.Core.Domain.Primitives;
 
 namespace Maroik.Core.Domain.Calendar;
@@ -58,13 +59,13 @@ public sealed class CalendarEventAttachedFile : AggregateRoot<long>
         string? path)
     {
         if (string.IsNullOrWhiteSpace(name))
-            return Error.Validation("CalendarEventAttachedFile.NameEmpty", "File name cannot be empty.");
+            return LocalizableError.Validation("CalendarEventAttachedFile.NameEmpty", "File name cannot be empty.");
 
         if (string.IsNullOrWhiteSpace(path))
-            return Error.Validation("CalendarEventAttachedFile.PathEmpty", "File storage path cannot be empty.");
+            return LocalizableError.Validation("CalendarEventAttachedFile.PathEmpty", "File storage path cannot be empty.");
 
         if (size < 0)
-            return Error.Validation("CalendarEventAttachedFile.InvalidSize", "File size cannot be negative.");
+            return LocalizableError.Validation("CalendarEventAttachedFile.InvalidSize", "File size cannot be negative.");
 
         return new CalendarEventAttachedFile(0, calendarEventId, size, name, extension, path);
     }

@@ -29,7 +29,7 @@ public sealed class TimeZoneId : ValueObject
     public static ErrorOr<TimeZoneId> Create(string? value)
     {
         if (string.IsNullOrWhiteSpace(value))
-            return Error.Validation("TimeZoneId.Empty", "Time-zone ID cannot be empty.");
+            return LocalizableError.Validation("TimeZoneId.Empty", "Time-zone ID cannot be empty.");
 
         try
         {

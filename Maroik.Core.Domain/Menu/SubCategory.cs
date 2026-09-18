@@ -1,4 +1,5 @@
 using ErrorOr;
+using Maroik.Core.Domain.Localization;
 using Maroik.Core.Domain.Primitives;
 
 namespace Maroik.Core.Domain.Menu;
@@ -61,7 +62,7 @@ public sealed class SubCategory : AggregateRoot<long>
         string? iconPath, string? action, string? role, long order)
     {
         if (string.IsNullOrWhiteSpace(name))
-            return Error.Validation("SubCategory.NameEmpty", "Sub-category name cannot be empty.");
+            return LocalizableError.Validation("SubCategory.NameEmpty", "Sub-category name cannot be empty.");
 
         return new SubCategory(0, categoryId, name, displayName, iconPath, action, role, order);
     }
@@ -72,7 +73,7 @@ public sealed class SubCategory : AggregateRoot<long>
         string? iconPath, string? action, string? role, long order)
     {
         if (string.IsNullOrWhiteSpace(name))
-            return Error.Validation("SubCategory.NameEmpty", "Sub-category name cannot be empty.");
+            return LocalizableError.Validation("SubCategory.NameEmpty", "Sub-category name cannot be empty.");
 
         CategoryId = categoryId;
         Name = name;

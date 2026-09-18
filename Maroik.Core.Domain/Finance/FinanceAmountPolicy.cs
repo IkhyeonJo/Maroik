@@ -1,4 +1,5 @@
 using ErrorOr;
+using Maroik.Core.Domain.Localization;
 
 namespace Maroik.Core.Domain.Finance;
 
@@ -16,7 +17,7 @@ public static class FinanceAmountPolicy
     public static ErrorOr<Success> ValidateNonNegative(decimal amount)
     {
         if (amount < 0m)
-            return Error.Validation("Finance.NegativeAmount", "Amount cannot be negative.");
+            return LocalizableError.Validation("Finance.NegativeAmount", "Amount cannot be negative.");
 
         return Result.Success;
     }

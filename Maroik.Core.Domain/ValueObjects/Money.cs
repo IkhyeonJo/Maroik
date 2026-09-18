@@ -1,4 +1,5 @@
 using ErrorOr;
+using Maroik.Core.Domain.Localization;
 using Maroik.Core.Domain.Primitives;
 
 namespace Maroik.Core.Domain.ValueObjects;
@@ -39,11 +40,11 @@ public sealed class Money : ValueObject
     public static ErrorOr<Money> Create(decimal amount, string? currency)
     {
         if (string.IsNullOrWhiteSpace(currency))
-            return Error.Validation("Money.CurrencyEmpty", "Currency code cannot be empty.");
+            return LocalizableError.Validation("Money.CurrencyEmpty", "Currency code cannot be empty.");
 
         string trimmedCurrency = currency.Trim();
         if (trimmedCurrency.Length > MaxCurrencyLength)
-            return Error.Validation("Money.CurrencyTooLong", $"Currency code must be {MaxCurrencyLength} characters or fewer.");
+            return LocalizableError.Validation("Money.CurrencyTooLong", "Currency code must be {0} characters or fewer.", MaxCurrencyLength);
 
         return new Money(amount, trimmedCurrency.ToUpperInvariant());
     }
@@ -65,7 +66,7 @@ public sealed class Money : ValueObject
     public ErrorOr<Money> Add(Money other)
     {
         if (!Currency.Equals(other.Currency, StringComparison.OrdinalIgnoreCase))
-            return Error.Validation("Money.CurrencyMismatch", $"Cannot add {Currency} and {other.Currency}.");
+            return LocalizableError.Validation("Money.CurrencyMismatch", "Cannot add {0} and {1}.", Currency, other.Currency);
 
         return new Money(Amount + other.Amount, Currency);
     }
@@ -77,7 +78,7 @@ public sealed class Money : ValueObject
     public ErrorOr<Money> Subtract(Money other)
     {
         if (!Currency.Equals(other.Currency, StringComparison.OrdinalIgnoreCase))
-            return Error.Validation("Money.CurrencyMismatch", $"Cannot subtract {other.Currency} from {Currency}.");
+            return LocalizableError.Validation("Money.CurrencyMismatch", "Cannot subtract {0} from {1}.", other.Currency, Currency);
 
         return new Money(Amount - other.Amount, Currency);
     }

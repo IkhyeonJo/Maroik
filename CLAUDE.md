@@ -36,12 +36,19 @@ don't leave them for later or treat them as optional:
   the source path 1:1 under `Maroik.Website/Resources/...` — e.g.
   `Controllers/FooController.cs` → `Resources/Controllers/FooController.en-US.resx` +
   `FooController.ko-KR.resx`. New class needing localized strings ⇒ new resx pair, both
-  cultures filled in (no missing `ko-KR` or `en-US` entries).
-- **Unit tests.** Every `*` project has a matching `*.Tests` project
+  cultures filled in (no missing `ko-KR` or `en-US` entries). This is a server-side
+  (`.cs`/`.cshtml`) concern only — `TypeScripts/**/site.ts` never calls a localizer or
+  owns a resx; it only reads text the server already localized into the DOM (hidden
+  inputs / data attributes a Razor view rendered via `IStringLocalizer`), so there is
+  nothing for a `.ts` change to add here.
+- **Unit tests.** Every `.csproj` source project has a matching `*.Tests` project
   (`Maroik.Core.Domain` → `Maroik.Core.Domain.Tests`, `Maroik.Core.Service` →
-  `Maroik.Core.Service.Tests`, etc. — see the list under `ls -d */ | grep Tests`). New
-  or changed behavior in a source project gets corresponding tests added in its `.Tests`
-  project in the same change, not deferred.
+  `Maroik.Core.Service.Tests`, etc. — see the list under `ls -d */ | grep Tests`), **and**
+  `Maroik.Website/TypeScripts/**/site.ts` has its own counterpart,
+  `Maroik.Website/TypeScripts.Tests/` (Vitest + jsdom; no `.csproj`, not in `Maroik.sln`,
+  run via `npm test` from `Maroik.Website/` — see `TypeScripts.Tests/README.md`). New or
+  changed behavior in a source project **or in a `.ts` file** gets corresponding tests
+  added in its `.Tests` project in the same change, not deferred.
 
 ## Branches
 
@@ -87,6 +94,30 @@ classes in each `*.Tests` project's `Architecture/` folder, plus the solution-wi
 the `.csproj` project- and package-reference graph itself. They run under
 `dotnet test` in CI, so a violation fails the build. Keep them green; extend them
 when the layer model changes.
+
+## Domain error messages must go through LocalizableError
+
+Every `Maroik.Core.Domain` error is built via `Maroik.Core.Domain.Localization.LocalizableError`
+(`.Validation`/`.Conflict`/`.Failure`) — **never** call the raw `ErrorOr.Error.Validation` /
+`.Conflict` / `.Failure` / `.NotFound` / `.Forbidden` / `.Unexpected` factories directly outside
+`LocalizableError.cs` itself. This applies even to a message with no runtime value to interpolate
+(pass zero `args`) — a message that starts static and later gains an interpolated value must not be
+able to silently regress to bypassing localization.
+
+Why: a raw `Error.X(code, "some message")` bakes the description straight into `Error.Description`
+with no composite-format template in `Error.Metadata`, so the Website's `IHtmlLocalizer` resx lookup
+falls back to the baked (often English, sometimes value-specific) string instead of resolving a
+`ko-KR` translation. This was the actual state of ~98 of 104 Domain error call sites, and for
+`Money.Add`/`Subtract`'s currency-mismatch errors it was a live bug: a genuinely runtime currency
+code was interpolated straight into the message, so no resx key could ever match it.
+
+Enforced by `DomainArchitectureTests.Domain_ErrorMessages_MustGoThrough_LocalizableError`
+(`Maroik.Core.Domain.Tests/Architecture/DomainArchitectureTests.cs`) — a NetArchTest custom rule that
+inspects each type's IL for a direct call to a raw `ErrorOr.Error` factory method (a type-dependency
+check doesn't work here since every Domain type legitimately depends on the unrelated `ErrorOr<T>`
+return type). Keep it green; when a new error is added, add it via `LocalizableError`, and add the
+matching resx entry — with a `{0}`/`{1}` composite-format key, not a baked value — to every controller
+resx pair (`en-US` + `ko-KR`) that can surface it.
 
 ## TODO
 

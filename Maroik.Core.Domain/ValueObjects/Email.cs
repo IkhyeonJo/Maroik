@@ -32,7 +32,7 @@ public sealed class Email : ValueObject
     public static ErrorOr<Email> Create(string? value)
     {
         if (string.IsNullOrWhiteSpace(value))
-            return Error.Validation("Email.Empty", "Email address cannot be empty.");
+            return LocalizableError.Validation("Email.Empty", "Email address cannot be empty.");
 
         string trimmed = value.Trim();
         if (!TryParseAddress(trimmed, out string normalized))

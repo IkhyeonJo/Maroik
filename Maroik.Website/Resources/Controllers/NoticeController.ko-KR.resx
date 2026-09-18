@@ -315,14 +315,14 @@
   <data name="Cannot withdraw a different currency from this asset." xml:space="preserve">
     <value>이 자산에서는 다른 화폐단위로 출금할 수 없습니다.</value>
   </data>
-  <data name="Content must be 255 characters or fewer." xml:space="preserve">
-    <value>내용은 255자 이하여야 합니다.</value>
+  <data name="Content must be {0} characters or fewer." xml:space="preserve">
+    <value>내용은 {0}자 이하여야 합니다.</value>
   </data>
   <data name="Currency code cannot be empty." xml:space="preserve">
     <value>화폐 코드는 비워둘 수 없습니다.</value>
   </data>
-  <data name="Currency code must be 45 characters or fewer." xml:space="preserve">
-    <value>화폐 코드는 45자 이하여야 합니다.</value>
+  <data name="Currency code must be {0} characters or fewer." xml:space="preserve">
+    <value>화폐 코드는 {0}자 이하여야 합니다.</value>
   </data>
   <data name="Deposit asset product name cannot be empty." xml:space="preserve">
     <value>입금 자산 상품명은 비워둘 수 없습니다.</value>
@@ -348,8 +348,8 @@
   <data name="Main income category cannot be empty." xml:space="preserve">
     <value>수입 대분류는 비워둘 수 없습니다.</value>
   </data>
-  <data name="Note must be 255 characters or fewer." xml:space="preserve">
-    <value>주석은 255자 이하여야 합니다.</value>
+  <data name="Note must be {0} characters or fewer." xml:space="preserve">
+    <value>주석은 {0}자 이하여야 합니다.</value>
   </data>
   <data name="Payment method (asset name) cannot be empty." xml:space="preserve">
     <value>결제수단(자산명)은 비워둘 수 없습니다.</value>

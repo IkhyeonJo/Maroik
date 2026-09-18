@@ -1,4 +1,5 @@
 using ErrorOr;
+using Maroik.Core.Domain.Localization;
 using Maroik.Core.Domain.Primitives;
 
 namespace Maroik.Core.Domain.Menu;
@@ -61,7 +62,7 @@ public sealed class Category : AggregateRoot<long>
         string? controller, string? action, string? role, long order)
     {
         if (string.IsNullOrWhiteSpace(name))
-            return Error.Validation("Category.NameEmpty", "Category name cannot be empty.");
+            return LocalizableError.Validation("Category.NameEmpty", "Category name cannot be empty.");
 
         return new Category(0, name, displayName, iconPath, controller, action, role, order);
     }
@@ -72,7 +73,7 @@ public sealed class Category : AggregateRoot<long>
         string? controller, string? action, string? role, long order)
     {
         if (string.IsNullOrWhiteSpace(name))
-            return Error.Validation("Category.NameEmpty", "Category name cannot be empty.");
+            return LocalizableError.Validation("Category.NameEmpty", "Category name cannot be empty.");
 
         Name = name;
         DisplayName = displayName;

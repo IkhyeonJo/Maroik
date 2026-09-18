@@ -144,16 +144,16 @@ public sealed class CalendarEvent : AggregateRoot<long>
         long? recurrenceId = null)
     {
         if (string.IsNullOrWhiteSpace(title))
-            return Error.Validation("CalendarEvent.TitleEmpty", "Event title cannot be empty.");
+            return LocalizableError.Validation("CalendarEvent.TitleEmpty", "Event title cannot be empty.");
 
         if (title.Length > TitledContentPolicy.MaxTitleLength)
-            return Error.Validation("CalendarEvent.TitleTooLong", $"Event title must be {TitledContentPolicy.MaxTitleLength} characters or fewer.");
+            return LocalizableError.Validation("CalendarEvent.TitleTooLong", "Event title must be {0} characters or fewer.", TitledContentPolicy.MaxTitleLength);
 
         if (description?.Length > TitledContentPolicy.MaxBodyLength)
-            return Error.Validation("CalendarEvent.DescriptionTooLong", $"Event description must be {TitledContentPolicy.MaxBodyLength} characters or fewer.");
+            return LocalizableError.Validation("CalendarEvent.DescriptionTooLong", "Event description must be {0} characters or fewer.", TitledContentPolicy.MaxBodyLength);
 
         if (!string.IsNullOrWhiteSpace(status) && !CalendarEventStatuses.IsKnown(status))
-            return Error.Validation("CalendarEvent.StatusInvalid", "Event status is not a recognised value.");
+            return LocalizableError.Validation("CalendarEvent.StatusInvalid", "Event status is not a recognised value.");
 
         var timesResult = ValidateDatesAndZones(allDay, startDate, endDate, startTz, endTz);
         if (timesResult.IsError) return timesResult.Errors;
@@ -176,7 +176,7 @@ public sealed class CalendarEvent : AggregateRoot<long>
     {
         bool rangeInvalid = allDay ? endDate.Date < startDate.Date : endDate < startDate;
         if (rangeInvalid)
-            return Error.Validation("CalendarEvent.InvalidDateRange", "End date must not be earlier than start date.");
+            return LocalizableError.Validation("CalendarEvent.InvalidDateRange", "End date must not be earlier than start date.");
 
         foreach (string? tz in new[] { startTz, endTz })
         {
@@ -212,16 +212,16 @@ public sealed class CalendarEvent : AggregateRoot<long>
         string? status)
     {
         if (string.IsNullOrWhiteSpace(title))
-            return Error.Validation("CalendarEvent.TitleEmpty", "Event title cannot be empty.");
+            return LocalizableError.Validation("CalendarEvent.TitleEmpty", "Event title cannot be empty.");
 
         if (title.Length > TitledContentPolicy.MaxTitleLength)
-            return Error.Validation("CalendarEvent.TitleTooLong", $"Event title must be {TitledContentPolicy.MaxTitleLength} characters or fewer.");
+            return LocalizableError.Validation("CalendarEvent.TitleTooLong", "Event title must be {0} characters or fewer.", TitledContentPolicy.MaxTitleLength);
 
         if (description?.Length > TitledContentPolicy.MaxBodyLength)
-            return Error.Validation("CalendarEvent.DescriptionTooLong", $"Event description must be {TitledContentPolicy.MaxBodyLength} characters or fewer.");
+            return LocalizableError.Validation("CalendarEvent.DescriptionTooLong", "Event description must be {0} characters or fewer.", TitledContentPolicy.MaxBodyLength);
 
         if (!string.IsNullOrWhiteSpace(status) && !CalendarEventStatuses.IsKnown(status))
-            return Error.Validation("CalendarEvent.StatusInvalid", "Event status is not a recognised value.");
+            return LocalizableError.Validation("CalendarEvent.StatusInvalid", "Event status is not a recognised value.");
 
         var timesResult = ValidateDatesAndZones(allDay, startDate, endDate, startTz, endTz);
         if (timesResult.IsError) return timesResult.Errors;

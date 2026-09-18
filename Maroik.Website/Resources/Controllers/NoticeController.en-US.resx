@@ -315,14 +315,14 @@
   <data name="Cannot withdraw a different currency from this asset." xml:space="preserve">
     <value>Cannot withdraw a different currency from this asset.</value>
   </data>
-  <data name="Content must be 255 characters or fewer." xml:space="preserve">
-    <value>Content must be 255 characters or fewer.</value>
+  <data name="Content must be {0} characters or fewer." xml:space="preserve">
+    <value>Content must be {0} characters or fewer.</value>
   </data>
   <data name="Currency code cannot be empty." xml:space="preserve">
     <value>Currency code cannot be empty.</value>
   </data>
-  <data name="Currency code must be 45 characters or fewer." xml:space="preserve">
-    <value>Currency code must be 45 characters or fewer.</value>
+  <data name="Currency code must be {0} characters or fewer." xml:space="preserve">
+    <value>Currency code must be {0} characters or fewer.</value>
   </data>
   <data name="Deposit asset product name cannot be empty." xml:space="preserve">
     <value>Deposit asset product name cannot be empty.</value>
@@ -348,8 +348,8 @@
   <data name="Main income category cannot be empty." xml:space="preserve">
     <value>Main income category cannot be empty.</value>
   </data>
-  <data name="Note must be 255 characters or fewer." xml:space="preserve">
-    <value>Note must be 255 characters or fewer.</value>
+  <data name="Note must be {0} characters or fewer." xml:space="preserve">
+    <value>Note must be {0} characters or fewer.</value>
   </data>
   <data name="Payment method (asset name) cannot be empty." xml:space="preserve">
     <value>Payment method (asset name) cannot be empty.</value>

@@ -1,4 +1,5 @@
 using ErrorOr;
+using Maroik.Core.Domain.Localization;
 using Maroik.Core.Domain.Primitives;
 
 namespace Maroik.Core.Domain.Board;
@@ -79,10 +80,10 @@ public sealed class BoardComment : AggregateRoot<long>
         string? content)
     {
         if (string.IsNullOrWhiteSpace(writer))
-            return Error.Validation("BoardComment.WriterEmpty", "Comment author (writer) cannot be empty.");
+            return LocalizableError.Validation("BoardComment.WriterEmpty", "Comment author (writer) cannot be empty.");
 
         if (string.IsNullOrWhiteSpace(content))
-            return Error.Validation("BoardComment.ContentEmpty", "Comment content cannot be empty.");
+            return LocalizableError.Validation("BoardComment.ContentEmpty", "Comment content cannot be empty.");
 
         return new BoardComment(0, boardId, order, avatarImagePath, writer, content);
     }
@@ -91,7 +92,7 @@ public sealed class BoardComment : AggregateRoot<long>
     public ErrorOr<Success> SoftDelete()
     {
         if (Deleted)
-            return Error.Conflict("BoardComment.AlreadyDeleted", "Comment is already deleted.");
+            return LocalizableError.Conflict("BoardComment.AlreadyDeleted", "Comment is already deleted.");
 
         Deleted = true;
         return Result.Success;

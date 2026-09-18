@@ -1,4 +1,5 @@
 using ErrorOr;
+using Maroik.Core.Domain.Localization;
 using Maroik.Core.Domain.Primitives;
 
 namespace Maroik.Core.Domain.Calendar;
@@ -76,13 +77,13 @@ public sealed class CalendarEventReminder : AggregateRoot<long>
         TimeOnly? timesBefore)
     {
         if (string.IsNullOrWhiteSpace(method))
-            return Error.Validation("Reminder.MethodEmpty", "Notification method cannot be empty.");
+            return LocalizableError.Validation("Reminder.MethodEmpty", "Notification method cannot be empty.");
 
         // Constrain to the known taxonomy here rather than trusting the caller: the DB
         // CalendarEventReminder_Method_check constraint is currently the only thing rejecting
         // anything else, which surfaces as a raw DB exception instead of this validation error.
         if (!ReminderMethods.IsKnown(method))
-            return Error.Validation("Reminder.MethodInvalid", "Notification method is not a recognised value.");
+            return LocalizableError.Validation("Reminder.MethodInvalid", "Notification method is not a recognised value.");
 
         // The client models each reminder as a single unit+value pair (a dropdown picks minutes/
         // hours/days/weeks, then one value field) — multiple simultaneous lead-time fields have no
@@ -91,10 +92,10 @@ public sealed class CalendarEventReminder : AggregateRoot<long>
                                   + (daysBefore.HasValue ? 1 : 0) + (weeksBefore.HasValue ? 1 : 0);
 
         if (leadTimeFieldCount != 1)
-            return Error.Validation("Reminder.InvalidLeadTime", "Exactly one lead-time field (minutes/hours/days/weeks) must be set.");
+            return LocalizableError.Validation("Reminder.InvalidLeadTime", "Exactly one lead-time field (minutes/hours/days/weeks) must be set.");
 
         if (!CalendarReminderPolicy.IsLeadTimeWithinRange(minutesBefore, hoursBefore, daysBefore, weeksBefore))
-            return Error.Validation("Reminder.LeadTimeOutOfRange",
+            return LocalizableError.Validation("Reminder.LeadTimeOutOfRange",
                 "Reminder lead time is outside the allowed range (0 to 28 days before the event).");
 
         return new CalendarEventReminder(0, calendarEventId, method,

@@ -1,4 +1,5 @@
 using ErrorOr;
+using Maroik.Core.Domain.Localization;
 using Maroik.Core.Domain.Primitives;
 
 namespace Maroik.Core.Domain.Board;
@@ -58,13 +59,13 @@ public sealed class BoardAttachedFile : AggregateRoot<long>
         string? path)
     {
         if (string.IsNullOrWhiteSpace(name))
-            return Error.Validation("BoardAttachedFile.NameEmpty", "File name cannot be empty.");
+            return LocalizableError.Validation("BoardAttachedFile.NameEmpty", "File name cannot be empty.");
 
         if (string.IsNullOrWhiteSpace(path))
-            return Error.Validation("BoardAttachedFile.PathEmpty", "File storage path cannot be empty.");
+            return LocalizableError.Validation("BoardAttachedFile.PathEmpty", "File storage path cannot be empty.");
 
         if (size < 0)
-            return Error.Validation("BoardAttachedFile.InvalidSize", "File size cannot be negative.");
+            return LocalizableError.Validation("BoardAttachedFile.InvalidSize", "File size cannot be negative.");
 
         return new BoardAttachedFile(0, boardId, size, name, extension, path);
     }

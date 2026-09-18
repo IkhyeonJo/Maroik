@@ -51,7 +51,7 @@ public static class ExpenditureClassPolicy
     public static ErrorOr<bool> Validate(string? mainClass, string? subClass)
     {
         if (mainClass is null || !SubClassesByMainClass.TryGetValue(mainClass, out var subClasses))
-            return Error.Validation("ExpenditureClass.Invalid", "Unknown expenditure main class.");
+            return LocalizableError.Validation("ExpenditureClass.Invalid", "Unknown expenditure main class.");
 
         if (subClass is null || !subClasses.Contains(subClass))
             return LocalizableError.Validation("ExpenditureClass.Invalid", "Invalid sub-class for {0}.", mainClass);
