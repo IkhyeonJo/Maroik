@@ -148,7 +148,15 @@ public class BoardRepository(ApplicationDbContext context)
         // which wraps this call accordingly). A caller that doesn't need that guarantee may call this
         // outside any transaction; it still returns a correct, merely not snapshot-pinned, result.
         int totalCount = await filtered.CountAsync(ct);
-        List<OrmBoard> page = await filtered.Skip((query.Page - 1) * query.PageSize).Take(query.PageSize).ToListAsync(ct);
+
+        // Page comes straight from the ?page= query string. (Page - 1) * PageSize in int arithmetic
+        // wraps for a huge value (e.g. 600000000 * 5) into a negative OFFSET, which Postgres rejects
+        // ("OFFSET must not be negative") — a 500 for any visitor. Compute in long, floor at 0, and
+        // cap at int.MaxValue: an offset past the last row simply returns an empty page.
+        long offset = Math.Max(0L, (long)query.Page - 1) * query.PageSize;
+        int skip = (int)Math.Min(offset, int.MaxValue);
+
+        List<OrmBoard> page = await filtered.Skip(skip).Take(query.PageSize).ToListAsync(ct);
         return (page.Select(ToDomain).ToList(), totalCount);
     }
 

@@ -299,6 +299,66 @@ public sealed class BoardRepositoryTests(DatabaseFixture database) : RepositoryT
         Assert.Equal(Enumerable.Range(0, writerCount).Select(n => (long)n), comments.Select(c => c.Order).OrderBy(o => o));
     }
 
+    // -- QueryPageAsync (page bounds) -------------------------------------------
+
+    private Task<(List<Board> Items, int TotalCount)> PageOf(string writer, int page, int pageSize) =>
+        Sut.QueryPageAsync(
+            new BoardPageQuery(
+                Type: BoardTypes.FreeForum, OwnerNickname: null,
+                SearchType: "Writer", SearchText: writer,
+                IsLoggedIn: false, ViewerRole: null, ViewerNickname: null,
+                Page: page, PageSize: pageSize),
+            TestContext.Current.CancellationToken);
+
+    /// <summary>
+    /// Regression: <c>(Page - 1) * PageSize</c> used to be int arithmetic, so a large <c>?page=</c>
+    /// (600000000 * 5) wrapped to a negative OFFSET and Postgres threw "OFFSET must not be negative".
+    /// Any page past the last row must return an empty page instead, with the real total intact.
+    /// </summary>
+    [Theory]
+    [InlineData(600_000_000)]
+    [InlineData(1_000_000_000)]
+    [InlineData(int.MaxValue)]
+    public async Task QueryPageAsync_HugePageNumber_ReturnsEmptyPage_WithoutThrowing(int page)
+    {
+        string writer = Unique("hugepage");
+        await SeedAsync(MakeBoard("t1", writer), MakeBoard("t2", writer));
+
+        (List<Board> items, int totalCount) = await PageOf(writer, page, pageSize: 5);
+
+        Assert.Empty(items);
+        Assert.Equal(2, totalCount);
+    }
+
+    /// <summary>A page number below 1 is floored to the first page rather than producing a negative OFFSET.</summary>
+    [Theory]
+    [InlineData(0)]
+    [InlineData(-3)]
+    public async Task QueryPageAsync_PageBelowOne_ReturnsFirstPage(int page)
+    {
+        string writer = Unique("lowpage");
+        await SeedAsync(MakeBoard("only", writer));
+
+        (List<Board> items, int totalCount) = await PageOf(writer, page, pageSize: 5);
+
+        Assert.Single(items);
+        Assert.Equal(1, totalCount);
+    }
+
+    /// <summary>Ordinary paging is unchanged: page 2 of size 1 returns the second-newest post.</summary>
+    [Fact]
+    public async Task QueryPageAsync_OrdinaryPaging_IsUnchanged()
+    {
+        string writer = Unique("normalpage");
+        await SeedAsync(MakeBoard("first", writer), MakeBoard("second", writer));
+
+        (List<Board> items, int totalCount) = await PageOf(writer, page: 2, pageSize: 1);
+
+        Assert.Single(items);
+        Assert.Equal("first", items[0].Title);
+        Assert.Equal(2, totalCount);
+    }
+
     // -- QueryPageAsync (locked-post visibility) --------------------------------
 
     private static EfBoard Locked(EfBoard board, bool locked)
