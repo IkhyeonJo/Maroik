@@ -131,7 +131,7 @@ public class CalendarServiceTests
     public async Task CreateCalendarAsync_ReturnsConflict_WhenConcurrentCreateWinsTheRace()
     {
         _calendarRepo.Setup(r => r.GetByAccountEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync([]);
-        var pgException = new Exception("duplicate key value violates unique constraint \"Calendar_AccountEmail_Name_unique\" (23505)");
+        var pgException = new Exception("23505: duplicate key value violates unique constraint \"Calendar_AccountEmail_Name_unique\"");
         _calendarRepo.Setup(r => r.CreateAsync(It.IsAny<Calendar>(), It.IsAny<CancellationToken>())).ThrowsAsync(pgException);
         var sut = CreateSut();
 
@@ -158,7 +158,7 @@ public class CalendarServiceTests
     public async Task CreateCalendarAsync_ReturnsUnexpectedFailure_WhenUniqueViolationIsOnADifferentConstraint()
     {
         _calendarRepo.Setup(r => r.GetByAccountEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync([]);
-        var pgException = new Exception("duplicate key value violates unique constraint \"Calendar_pk\" (23505)");
+        var pgException = new Exception("23505: duplicate key value violates unique constraint \"Calendar_pk\"");
         _calendarRepo.Setup(r => r.CreateAsync(It.IsAny<Calendar>(), It.IsAny<CancellationToken>())).ThrowsAsync(pgException);
         var sut = CreateSut();
 
@@ -245,7 +245,7 @@ public class CalendarServiceTests
     {
         _calendarRepo.Setup(r => r.FindByIdForUpdateAsync(1, It.IsAny<CancellationToken>()))
             .ReturnsAsync(MakeCalendar(id: 1));
-        var pgException = new Exception("duplicate key value violates unique constraint \"Calendar_AccountEmail_Name_unique\" (23505)");
+        var pgException = new Exception("23505: duplicate key value violates unique constraint \"Calendar_AccountEmail_Name_unique\"");
         _calendarRepo.Setup(r => r.UpdateEntityAsync(It.IsAny<Calendar>(), It.IsAny<CancellationToken>())).ThrowsAsync(pgException);
         var sut = CreateSut();
 
@@ -349,7 +349,7 @@ public class CalendarServiceTests
     public async Task EnsureDefaultCalendarAsync_ReturnsSuccess_WhenConcurrentRequestWinsTheRace()
     {
         _calendarRepo.Setup(r => r.GetByAccountEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync([]);
-        var pgException = new Exception("duplicate key value violates unique constraint \"Calendar_AccountEmail_Name_unique\" (23505)");
+        var pgException = new Exception("23505: duplicate key value violates unique constraint \"Calendar_AccountEmail_Name_unique\"");
         _calendarRepo.Setup(r => r.CreateAsync(It.IsAny<Calendar>(), It.IsAny<CancellationToken>())).ThrowsAsync(pgException);
         var sut = CreateSut();
 

@@ -51,14 +51,30 @@ public class DbExceptionExtensionsTests
 
     /// <summary>
     /// A wrapped/rethrown exception that lost its typed SqlState property still matches via the
-    /// SQLSTATE-substring fallback in its message.
+    /// message fallback, when the message carries the SQLSTATE in Npgsql's leading "23505: …" form.
     /// </summary>
     [Fact]
-    public void IsPostgresUniqueViolation_ReturnsTrue_WhenSqlStateSubstringInMessage()
+    public void IsPostgresUniqueViolation_ReturnsTrue_WhenMessageStartsWithSqlState()
     {
-        var ex = new Exception("duplicate key value violates unique constraint \"Calendar_pk\" (23505)");
+        var ex = new Exception("23505: duplicate key value violates unique constraint \"Calendar_pk\"");
 
         Assert.True(ex.IsPostgresUniqueViolation());
+    }
+
+    /// <summary>
+    /// Regression: the fallback used to match "23505" anywhere in the message, so a foreign-key
+    /// violation whose DETAIL echoes a key value of 23505 was misreported as a unique violation.
+    /// </summary>
+    [Theory]
+    [InlineData("23503: insert or update on table \"CalendarEvent\" violates foreign key constraint \"fk\"\nDETAIL: Key (CalendarId)=(23505) is not present in table \"Calendar\".")]
+    [InlineData("duplicate key value violates unique constraint \"Calendar_pk\" (23505)")]
+    [InlineData("an error mentioning 23505 in the middle of the text")]
+    [InlineData("123505: not the SQLSTATE")]
+    public void IsPostgresUniqueViolation_ReturnsFalse_WhenSqlStateOnlyAppearsInsideTheMessage(string message)
+    {
+        var ex = new Exception(message);
+
+        Assert.False(ex.IsPostgresUniqueViolation());
     }
 
     /// <summary>The unique-violation SQLSTATE on an inner exception is found by walking the chain.</summary>
@@ -121,7 +137,7 @@ public class DbExceptionExtensionsTests
     [Fact]
     public void IsPostgresUniqueViolationOn_ReturnsTrue_WhenConstraintNameSubstringInMessage()
     {
-        var ex = new Exception("duplicate key value violates unique constraint \"Calendar_AccountEmail_Name_unique\" (23505)");
+        var ex = new Exception("23505: duplicate key value violates unique constraint \"Calendar_AccountEmail_Name_unique\"");
 
         Assert.True(ex.IsPostgresUniqueViolationOn("Calendar_AccountEmail_Name_unique"));
     }
@@ -130,7 +146,19 @@ public class DbExceptionExtensionsTests
     [Fact]
     public void IsPostgresUniqueViolationOn_ReturnsFalse_WhenDifferentConstraintNameSubstringInMessage()
     {
-        var ex = new Exception("duplicate key value violates unique constraint \"Calendar_pk\" (23505)");
+        var ex = new Exception("23505: duplicate key value violates unique constraint \"Calendar_pk\"");
+
+        Assert.False(ex.IsPostgresUniqueViolationOn("Calendar_AccountEmail_Name_unique"));
+    }
+
+    /// <summary>
+    /// A message that merely mentions the constraint name and the digits 23505 (not as a leading
+    /// SQLSTATE) is not a unique violation, so it must not match either.
+    /// </summary>
+    [Fact]
+    public void IsPostgresUniqueViolationOn_ReturnsFalse_WhenSqlStateOnlyAppearsInsideTheMessage()
+    {
+        var ex = new Exception("violates foreign key constraint \"Calendar_AccountEmail_Name_unique\": Key (Id)=(23505) is not present");
 
         Assert.False(ex.IsPostgresUniqueViolationOn("Calendar_AccountEmail_Name_unique"));
     }

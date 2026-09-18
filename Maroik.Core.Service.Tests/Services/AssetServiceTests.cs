@@ -137,7 +137,7 @@ public class AssetServiceTests
     public async Task CreateAsync_ReturnsFail_WhenConcurrentInsertViolatesUniqueConstraint()
     {
         SetupFindAsset("MyBank", null);
-        var pgException = new Exception("duplicate key value violates unique constraint \"Asset_pk\" (23505)");
+        var pgException = new Exception("23505: duplicate key value violates unique constraint \"Asset_pk\"");
         _assetRepo.Setup(r => r.CreateAsync(It.IsAny<Asset>(), It.IsAny<CancellationToken>()))
             .ThrowsAsync(new InvalidOperationException("insert failed", pgException));
         var sut = CreateSut();
@@ -238,7 +238,7 @@ public class AssetServiceTests
     public async Task UpdateAsync_ReturnsFail_WhenRenameViolatesUniqueConstraint()
     {
         SetupFindAsset("OldName", MakeAsset("OldName"));
-        var pgException = new Exception("duplicate key value violates unique constraint \"Asset_pk\" (23505)");
+        var pgException = new Exception("23505: duplicate key value violates unique constraint \"Asset_pk\"");
         _assetRepo.Setup(r => r.UpdateAssetWithProductNameAsync(It.IsAny<Asset>(), "OldName", It.IsAny<CancellationToken>()))
             .ThrowsAsync(new InvalidOperationException("rename failed", pgException));
         var sut = CreateSut();

@@ -6,6 +6,16 @@ public static class DbExceptionExtensions
     /// <summary>PostgreSQL SQLSTATE for a unique / primary-key constraint violation.</summary>
     private const string UniqueViolationSqlState = "23505";
 
+    /// <summary>
+    /// Fallback for an exception that lost its typed <c>SqlState</c>: Npgsql renders a
+    /// <c>PostgresException</c>'s message as <c>"{SqlState}: {MessageText}"</c>, so the SQLSTATE is
+    /// recognised only in that leading position. A bare substring test would also match any message
+    /// that merely contains the digits — e.g. a foreign-key violation whose DETAIL echoes a key value
+    /// (<c>Key (CalendarId)=(23505) is not present…</c>) — and misreport it as a unique violation.
+    /// </summary>
+    private static bool MessageStartsWithUniqueViolationSqlState(Exception e) =>
+        e.Message.AsSpan().TrimStart().StartsWith(UniqueViolationSqlState + ":", StringComparison.Ordinal);
+
     extension(Exception e)
     {
         /// <summary>
@@ -17,8 +27,9 @@ public static class DbExceptionExtensions
         /// (and <c>Code</c>) string property, read here reflectively so <c>Maroik.Core.Service</c> needs
         /// no Npgsql package reference. This is the structured code, not the culture- and
         /// version-dependent message text. As a fallback (wrapped / rethrown / logged exceptions that no
-        /// longer carry the typed property) the SQLSTATE is also matched as a substring of any message
-        /// in the chain.
+        /// longer carry the typed property) the SQLSTATE is also matched when a message in the chain
+        /// starts with it, in Npgsql's <c>"23505: …"</c> format — not as an arbitrary substring, which
+        /// would misclassify e.g. a foreign-key violation that merely echoes a key value of 23505.
         /// </para>
         /// </summary>
         public bool IsPostgresUniqueViolation()
@@ -33,7 +44,7 @@ public static class DbExceptionExtensions
                 if (sqlState == UniqueViolationSqlState)
                     return true;
 
-                if (current.Message.Contains(UniqueViolationSqlState, StringComparison.Ordinal))
+                if (MessageStartsWithUniqueViolationSqlState(current))
                     return true;
             }
 
@@ -63,7 +74,7 @@ public static class DbExceptionExtensions
                     ?? type.GetProperty("Code")?.GetValue(current) as string;
 
                 bool isUniqueViolation = sqlState == UniqueViolationSqlState
-                                         || current.Message.Contains(UniqueViolationSqlState, StringComparison.Ordinal);
+                                         || MessageStartsWithUniqueViolationSqlState(current);
                 if (!isUniqueViolation)
                     continue;
 

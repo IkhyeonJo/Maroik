@@ -386,7 +386,7 @@ public class AccountServiceTests
         _passwordService.Setup(p => p.HashPassword(It.IsAny<string>())).Returns("$2a$13$hashed");
         // Simulate a unique constraint violation (Npgsql error code 23505) on the Nickname constraint specifically.
         _accountRepo.Setup(r => r.CreateAsync(It.IsAny<Account>(), It.IsAny<CancellationToken>()))
-            .ThrowsAsync(new Exception("duplicate key", new Exception("23505 unique constraint \"Account_Nickname_unique\"")));
+            .ThrowsAsync(new Exception("duplicate key", new Exception("23505: duplicate key value violates unique constraint \"Account_Nickname_unique\"")));
         var sut = CreateSut();
 
         var request = new AccountRequest
@@ -417,7 +417,7 @@ public class AccountServiceTests
         _passwordService.Setup(p => p.HashPassword(It.IsAny<string>())).Returns("$2a$13$hashed");
         // Simulate a unique constraint violation on the Email primary key, not the Nickname constraint.
         _accountRepo.Setup(r => r.CreateAsync(It.IsAny<Account>(), It.IsAny<CancellationToken>()))
-            .ThrowsAsync(new Exception("duplicate key", new Exception("23505 unique constraint \"Account_pk\"")));
+            .ThrowsAsync(new Exception("duplicate key", new Exception("23505: duplicate key value violates unique constraint \"Account_pk\"")));
         var sut = CreateSut();
 
         var request = new AccountRequest
