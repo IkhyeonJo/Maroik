@@ -116,6 +116,56 @@ public class RoleBasedStaticFileMiddlewareTests
         Assert.Equal(403, context.Response.StatusCode);
     }
 
+    /// <summary>
+    /// The static-file provider trims leading slashes, so "//admin/x" resolves to the same file as
+    /// "/admin/x" — the gate must treat any number of leading slashes the same way.
+    /// </summary>
+    [Theory]
+    [InlineData("//admin/dist/img/logo.png")]
+    [InlineData("///admin/dist/img/logo.png")]
+    [InlineData("//user/dist/img/avatar.png")]
+    [InlineData("////user/dist/img/avatar.png")]
+    public async Task InvokeAsync_RestrictedPathWithExtraLeadingSlashes_NoSession_Blocks(string path)
+    {
+        SetupAccount(null);
+        var context = BuildContext(path);
+        bool nextCalled = false;
+        var sut = new RoleBasedStaticFileMiddleware(_ => { nextCalled = true; return Task.CompletedTask; });
+
+        await sut.InvokeAsync(context, _sessionService.Object);
+
+        Assert.False(nextCalled);
+        Assert.Equal(403, context.Response.StatusCode);
+    }
+
+    /// <summary>Extra leading slashes must not turn an admin-owned path into a block for the matching role.</summary>
+    [Fact]
+    public async Task InvokeAsync_AdminPathWithExtraLeadingSlashes_AdminSession_Forwards()
+    {
+        SetupAccount(Role.Admin);
+        var context = BuildContext("//admin/dist/img/logo.png");
+        bool nextCalled = false;
+        var sut = new RoleBasedStaticFileMiddleware(_ => { nextCalled = true; return Task.CompletedTask; });
+
+        await sut.InvokeAsync(context, _sessionService.Object);
+
+        Assert.True(nextCalled);
+    }
+
+    /// <summary>A path that merely starts with the letters "admin" (no folder boundary) is not gated.</summary>
+    [Fact]
+    public async Task InvokeAsync_PathSharingOnlyThePrefixLetters_Forwards()
+    {
+        SetupAccount(null);
+        var context = BuildContext("/administrators.css");
+        bool nextCalled = false;
+        var sut = new RoleBasedStaticFileMiddleware(_ => { nextCalled = true; return Task.CompletedTask; });
+
+        await sut.InvokeAsync(context, _sessionService.Object);
+
+        Assert.True(nextCalled);
+    }
+
     /// <summary>Invoke async unrestricted path no session forwards.</summary>
     [Fact]
     public async Task InvokeAsync_UnrestrictedPath_NoSession_Forwards()
