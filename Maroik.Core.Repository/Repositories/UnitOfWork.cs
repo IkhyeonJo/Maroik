@@ -21,7 +21,8 @@ namespace Maroik.Core.Repository.Repositories;
 /// calling <see cref="BeginAsync"/> while one is already live throws instead of silently
 /// discarding the outer transaction. Commit/Rollback are idempotent no-ops once the transaction
 /// has ended, so a <c>catch</c> block can safely call <see cref="RollbackAsync"/> even on a path
-/// that already committed.
+/// that already committed. A failed <see cref="CommitAsync"/> discards the change tracker itself
+/// (the slot is already cleared by then, so the follow-up <see cref="RollbackAsync"/> cannot).
 /// </remarks>
 public class UnitOfWork(ApplicationDbContext context) : IUnitOfWork
 {
@@ -56,6 +57,16 @@ public class UnitOfWork(ApplicationDbContext context) : IUnitOfWork
             // then commit.
             await context.SaveChangesAsync(ct);
             await _transaction.CommitAsync(ct);
+        }
+        catch
+        {
+            // The flush (or the commit itself) failed. The finally below clears the transaction
+            // slot, so a catch block's follow-up RollbackAsync is a no-op and would never reach
+            // its ChangeTracker.Clear() — discard the aborted unit of work's entities here, or
+            // the failed Added/Modified entries stay on the request-scoped context and a retry's
+            // next SaveChanges re-flushes them (the CalendarShared_pk retry loops).
+            context.ChangeTracker.Clear();
+            throw;
         }
         finally
         {

@@ -1,6 +1,8 @@
 using System.Data;
 using Maroik.Core.Repository.Repositories;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Storage;
+using OrmAccount = Maroik.Core.PostgreSQL.Models.Account;
 
 namespace Maroik.Core.Repository.Tests.Repositories;
 
@@ -110,5 +112,84 @@ public sealed class UnitOfWorkTests(DatabaseFixture database) : RepositoryTestBa
         Assert.Equal(IsolationLevel.RepeatableRead, context.Database.CurrentTransaction?.GetDbTransaction().IsolationLevel);
 
         await uow.RollbackAsync(TestContext.Current.CancellationToken);
+    }
+
+    // -- Failed commit ------------------------------------------------------------
+
+    /// <summary>
+    /// When the flush inside <c>CommitAsync</c> fails (here a primary-key violation), the entities the
+    /// aborted unit of work left tracked must be discarded. <c>CommitAsync</c> clears its transaction
+    /// slot in <c>finally</c>, so the <c>RollbackAsync</c> a catch block calls afterwards is a no-op
+    /// and would never reach <c>ChangeTracker.Clear()</c> — leaving the failed <c>Added</c> entity on
+    /// the request-scoped context, where a retry's next <c>SaveChanges</c> re-flushes it and fails
+    /// the same way (the CalendarShared_pk retry loops in CalendarService).
+    /// </summary>
+    [Fact]
+    public async Task CommitAsync_WhenSaveChangesFails_ClearsTheChangeTracker()
+    {
+        var ct = TestContext.Current.CancellationToken;
+        string email = UniqueEmail("dup");
+        await EnsureAccountsAsync(email);
+
+        await using var context = NewDbContext();
+        var uow = new UnitOfWork(context);
+        await uow.BeginAsync(ct);
+        context.Accounts.Add(new OrmAccount
+        {
+            Email = email, // same primary key as the row just seeded
+            Nickname = Unique("Dup-" + Guid.NewGuid().ToString("N")[..8]),
+            HashedPassword = "$2a$13$placeholder",
+            AvatarImagePath = "/upload/Management/Profile/default-avatar.jpg",
+            Role = "User",
+            TimeZoneIanaId = "UTC",
+            EmailConfirmed = true,
+            AgreedServiceTerms = true,
+            SecurityStamp = "stamp",
+            Created = DateTime.UtcNow,
+            Updated = DateTime.UtcNow,
+        });
+
+        await Assert.ThrowsAsync<DbUpdateException>(() => uow.CommitAsync(ct));
+        // The catch-block pattern services use: must stay a harmless no-op.
+        await uow.RollbackAsync(ct);
+
+        Assert.Empty(context.ChangeTracker.Entries());
+    }
+
+    /// <summary>After a failed commit the same instance can run a fresh Begin→Commit cycle without re-flushing the failed entity.</summary>
+    [Fact]
+    public async Task CommitAsync_AfterFailedCommit_NextCycleDoesNotReflushTheFailedEntity()
+    {
+        var ct = TestContext.Current.CancellationToken;
+        string email = UniqueEmail("dup-retry");
+        await EnsureAccountsAsync(email);
+
+        await using var context = NewDbContext();
+        var uow = new UnitOfWork(context);
+        await uow.BeginAsync(ct);
+        context.Accounts.Add(new OrmAccount
+        {
+            Email = email,
+            Nickname = Unique("DupRetry-" + Guid.NewGuid().ToString("N")[..8]),
+            HashedPassword = "$2a$13$placeholder",
+            AvatarImagePath = "/upload/Management/Profile/default-avatar.jpg",
+            Role = "User",
+            TimeZoneIanaId = "UTC",
+            EmailConfirmed = true,
+            AgreedServiceTerms = true,
+            SecurityStamp = "stamp",
+            Created = DateTime.UtcNow,
+            Updated = DateTime.UtcNow,
+        });
+        await Assert.ThrowsAsync<DbUpdateException>(() => uow.CommitAsync(ct));
+        await uow.RollbackAsync(ct);
+
+        Exception? ex = await Record.ExceptionAsync(async () =>
+        {
+            await uow.BeginAsync(ct);
+            await uow.CommitAsync(ct);
+        });
+
+        Assert.Null(ex);
     }
 }
