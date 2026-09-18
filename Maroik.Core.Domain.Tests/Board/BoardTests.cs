@@ -400,6 +400,53 @@ public class BoardTests
         Assert.False(board.CanBeDeletedBy("Bob", isAdmin: false));
     }
 
+    // -- CanLockBeClearedBy -------------------------------------------------------
+
+    /// <summary>An admin who is not the writer may clear the lock on a locked free-forum post.</summary>
+    [Fact]
+    public void CanLockBeClearedBy_ReturnsTrue_ForNonWriterAdmin_OnLockedFreeForumPost()
+    {
+        var board = ViewBoard(BoardTypes.FreeForum, writer: "Alice", locked: true);
+
+        Assert.True(board.CanLockBeClearedBy("Bob", isAdmin: true));
+    }
+
+    /// <summary>A private note is single-owner: even an admin who is not the writer may not clear its lock.</summary>
+    [Fact]
+    public void CanLockBeClearedBy_ReturnsFalse_ForNonWriterAdmin_OnLockedPrivateNote()
+    {
+        var board = ViewBoard(BoardTypes.PrivateNote, writer: "Alice", locked: true);
+
+        Assert.False(board.CanLockBeClearedBy("Bob", isAdmin: true));
+    }
+
+    /// <summary>A non-admin never clears someone else's lock.</summary>
+    [Fact]
+    public void CanLockBeClearedBy_ReturnsFalse_ForNonAdmin()
+    {
+        var board = ViewBoard(BoardTypes.FreeForum, writer: "Alice", locked: true);
+
+        Assert.False(board.CanLockBeClearedBy("Bob", isAdmin: false));
+    }
+
+    /// <summary>The writer is not "someone else" — clearing their own lock goes through the normal edit path.</summary>
+    [Fact]
+    public void CanLockBeClearedBy_ReturnsFalse_ForWriter_EvenIfAdmin()
+    {
+        var board = ViewBoard(BoardTypes.FreeForum, writer: "Alice", locked: true);
+
+        Assert.False(board.CanLockBeClearedBy("Alice", isAdmin: true));
+    }
+
+    /// <summary>There is nothing to clear on an unlocked post.</summary>
+    [Fact]
+    public void CanLockBeClearedBy_ReturnsFalse_WhenPostIsNotLocked()
+    {
+        var board = ViewBoard(BoardTypes.FreeForum, writer: "Alice", locked: false);
+
+        Assert.False(board.CanLockBeClearedBy("Bob", isAdmin: true));
+    }
+
     // -- CanBeViewedBy ------------------------------------------------------------
 
     private static Board ViewBoard(string type, string writer = "Alice", bool locked = false, bool deleted = false) =>

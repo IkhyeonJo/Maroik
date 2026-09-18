@@ -196,7 +196,7 @@ public class BoardService(
             // entirely (ForumController.IsBoardExists already lets an admin open the edit page for
             // any locked post for exactly this reason).
             bool isOwner = board.CanBeEditedBy(writerNickname);
-            bool adminClearingSomeoneElsesLock = !isOwner && isAdmin && board.Locked && !request.Locked;
+            bool adminClearingSomeoneElsesLock = !request.Locked && board.CanLockBeClearedBy(writerNickname, isAdmin);
             switch (isOwner)
             {
                 case false when !adminClearingSomeoneElsesLock:

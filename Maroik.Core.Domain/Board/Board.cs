@@ -287,4 +287,14 @@ public sealed class Board : AggregateRoot<long>
     /// </summary>
     public bool CanBeDeletedBy(string nickname, bool isAdmin) =>
         IsPrivateNote ? IsOwnedBy(nickname) : IsOwnedBy(nickname) || isAdmin;
+
+    /// <summary>
+    /// Returns true when <paramref name="nickname"/> is an admin who is <em>not</em> this post's author
+    /// and may nonetheless clear its lock — the one moderation action an admin may take on someone
+    /// else's post (title and content stay author-only, see <see cref="CanBeEditedBy"/>). A private
+    /// note is single-owner (no admin bypass, matching <see cref="CanBeViewedBy(string?, bool)"/> and
+    /// <see cref="CanBeDeletedBy"/>), and there is nothing to clear on an unlocked post.
+    /// </summary>
+    public bool CanLockBeClearedBy(string nickname, bool isAdmin) =>
+        isAdmin && Locked && !IsPrivateNote && !IsOwnedBy(nickname);
 }

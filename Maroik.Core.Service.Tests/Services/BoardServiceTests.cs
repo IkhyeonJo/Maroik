@@ -547,6 +547,29 @@ public class BoardServiceTests
         _unitOfWork.Verify(u => u.RollbackAsync(It.IsAny<CancellationToken>()), Times.Once);
     }
 
+    /// <summary>
+    /// A private note is single-owner (no admin bypass, like view and delete): an admin who is not
+    /// the writer must not be able to clear its lock, unlike on a free-forum post. The row must be
+    /// left untouched and the transaction rolled back.
+    /// </summary>
+    [Fact]
+    public async Task EditBoardAsync_AdminNonOwner_CannotClearLock_OnPrivateNote()
+    {
+        Board lockedNote = Board.Reconstitute(1, BoardTypes.PrivateNote, "Test Title", "Test Content", "Alice",
+            DateTime.UtcNow, DateTime.UtcNow, 0L, deleted: false, locked: true, noticed: false);
+        _boardRepo.Setup(r => r.FindActiveByIdForUpdateAsync(It.IsAny<long>(), It.IsAny<CancellationToken>())).ReturnsAsync(lockedNote);
+        var sut = CreateSut();
+
+        ServiceResult result = await sut.EditBoardAsync(
+            new BoardRequest { Id = 1, Type = BoardTypes.PrivateNote, Title = "New Title", Content = "New Content", Locked = false },
+            "Bob", isAdmin: true, null, TestContext.Current.CancellationToken);
+
+        Assert.False(result.Success);
+        Assert.True(lockedNote.Locked);
+        _boardRepo.Verify(r => r.UpdateEntityAsync(It.IsAny<Board>(), It.IsAny<CancellationToken>()), Times.Never);
+        _unitOfWork.Verify(u => u.RollbackAsync(It.IsAny<CancellationToken>()), Times.Once);
+    }
+
     // -- DeleteBoardAsync -----------------------------------------------------
 
     /// <summary>Verifies that <c>DeleteBoardAsync</c> returns fail when board not found.</summary>
