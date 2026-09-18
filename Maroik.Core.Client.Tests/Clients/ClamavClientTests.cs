@@ -99,6 +99,21 @@ public class ClamavClientTests
     }
 
     /// <summary>
+    /// Verifies that the INSTREAM command is sent as exactly <c>nINSTREAM\n</c> — the "n" prefix
+    /// tells clamd the command is newline-terminated, so a Windows "\r\n" would corrupt it.
+    /// </summary>
+    [Fact]
+    public async Task ScanWithClamavAsync_SendsCommandTerminatedByBareNewline()
+    {
+        await using var server = FakeClamavServer.Start("stream: OK\n");
+        using var stream = new MemoryStream([0x01, 0x02, 0x03]);
+
+        _ = await _sut.ScanWithClamavAsync(stream, "127.0.0.1", server.Port, TestContext.Current.CancellationToken);
+
+        Assert.Equal("nINSTREAM\n", await server.CommandLine);
+    }
+
+    /// <summary>
     /// Minimal fake ClamAV daemon: accepts one INSTREAM session, consumes the length-prefixed
     /// chunks up to the zero-length terminator, then writes back <c>response</c> and closes.
     /// </summary>
@@ -107,7 +122,12 @@ public class ClamavClientTests
         private readonly TcpListener _listener;
         private readonly Task _acceptTask;
 
+        private readonly TaskCompletionSource<string> _commandLine = new();
+
         public int Port { get; }
+
+        /// <summary>The raw command line (including its terminator) the client sent before the chunks.</summary>
+        public Task<string> CommandLine => _commandLine.Task;
 
         private FakeClamavServer(TcpListener listener, string response)
         {
@@ -128,8 +148,8 @@ public class ClamavClientTests
             using TcpClient client = await _listener.AcceptTcpClientAsync();
             await using NetworkStream stream = client.GetStream();
 
-            // Consume the "nINSTREAM" command line; its exact content doesn't matter here.
-            await ReadLineAsync(stream);
+            // Read the "nINSTREAM" command line up to and including its '\n' and expose it to tests.
+            _commandLine.TrySetResult(await ReadLineAsync(stream));
 
             // Consume length-prefixed chunks until the zero-length terminator, mirroring
             // ClamavClient's write side of the INSTREAM protocol.
@@ -157,10 +177,16 @@ public class ClamavClientTests
             return buffer;
         }
 
-        private static async Task ReadLineAsync(Stream stream)
+        private static async Task<string> ReadLineAsync(Stream stream)
         {
+            var line = new StringBuilder();
             var b = new byte[1];
-            while (await stream.ReadAsync(b) == 1 && b[0] != (byte)'\n') { }
+            while (await stream.ReadAsync(b) == 1)
+            {
+                line.Append((char)b[0]);
+                if (b[0] == (byte)'\n') break;
+            }
+            return line.ToString();
         }
 
         public async ValueTask DisposeAsync()

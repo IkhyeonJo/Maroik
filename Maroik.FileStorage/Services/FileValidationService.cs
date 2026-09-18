@@ -27,7 +27,9 @@ public class FileValidationService(IClamavClient clamavClient, IOptions<FileStor
 
         // Confine the target directory to the storage root. The callers only ever pass
         // server-generated relative paths under "upload/"; anything that resolves outside the root
-        // (via "..", an absolute path, a symlink, …) is rejected here rather than trusted.
+        // (via "..", or an absolute path) is rejected here rather than trusted. The check is lexical
+        // (Path.GetFullPath): it does not resolve symlinks, so it relies on nothing but this service
+        // creating entries under the storage root.
         var safeDir = StoragePath.ResolveWithinRoot(settings.Value.StorageRootPath, filePath);
         if (safeDir == null)
             return (false, "Invalid file path.");

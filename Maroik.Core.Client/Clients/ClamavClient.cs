@@ -38,8 +38,10 @@ public class ClamavClient(ILogger<ClamavClient> logger) : IClamavClient
             await using var writer = new StreamWriter(stream, leaveOpen: true);
             writer.AutoFlush = true;
 
-            // Initiate a streaming scan session with the INSTREAM command
-            await writer.WriteLineAsync("nINSTREAM");
+            // Initiate a streaming scan session with the INSTREAM command. The "n" prefix makes clamd
+            // read a newline-terminated command, so send an explicit "\n" — WriteLineAsync would use
+            // Environment.NewLine, which is "\r\n" on Windows and leaves a stray '\r' in the command.
+            await writer.WriteAsync("nINSTREAM\n");
 
             // Send file data in 2 KB chunks, each prefixed with its 4-byte big-endian length
             byte[] buffer = new byte[2048];
