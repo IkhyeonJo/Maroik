@@ -111,13 +111,13 @@ public class RsaServiceTests
     }
 
     /// <summary>
-    /// Regression: ciphertext produced under the old RsaAlgorithm=Rsa (SHA-1 OAEP) config must
-    /// still decrypt after the service moved its own output to SHA-256 — reset/confirm links in
-    /// inboxes and, more importantly, file-path ciphertext embedded in historical stored HTML
-    /// (which never expires) would otherwise be permanently unreadable.
+    /// Regression: the SHA-1 OAEP fallback has been retired (CLAUDE.md TODO — "Retire the RSA SHA-1
+    /// fallback"), so ciphertext produced the way the old <see cref="RsaType.Rsa"/> config did no
+    /// longer decrypts — <c>Decrypt</c> must now surface it as the same <see cref="CryptographicException"/>
+    /// any other undecryptable ciphertext produces, not silently retry under SHA-1.
     /// </summary>
     [Fact]
-    public void Decrypt_RecoversCiphertext_ProducedWithLegacySha1Oaep()
+    public void Decrypt_Throws_ForCiphertextProducedWithLegacySha1Oaep()
     {
         const string plaintext = "legacy-sha1-oaep-blob";
 
@@ -136,12 +136,15 @@ public class RsaServiceTests
             RsaPublicKey = publicKey
         }));
 
-        Assert.Equal(plaintext, sut.Decrypt(legacyCipher));
+        Assert.ThrowsAny<CryptographicException>(() => sut.Decrypt(legacyCipher));
     }
 
-    /// <summary>Verifies that <c>Verify</c> accepts a signature made with the legacy SHA-1 hash.</summary>
+    /// <summary>
+    /// Regression: the SHA-1 fallback has been retired, so a signature made with the legacy SHA-1
+    /// hash must no longer verify.
+    /// </summary>
     [Fact]
-    public void Verify_AcceptsSignature_MadeWithLegacySha1()
+    public void Verify_RejectsSignature_MadeWithLegacySha1()
     {
         const string data = "legacy-sha1-signed";
 
@@ -159,7 +162,7 @@ public class RsaServiceTests
             RsaPublicKey = publicKey
         }));
 
-        Assert.True(sut.Verify(data, legacySignature));
+        Assert.False(sut.Verify(data, legacySignature));
     }
 
     /// <summary>Verifies that <c>Decrypt</c> throws when ciphertext is invalid.</summary>

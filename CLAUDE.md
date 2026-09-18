@@ -118,12 +118,3 @@ check doesn't work here since every Domain type legitimately depends on the unre
 return type). Keep it green; when a new error is added, add it via `LocalizableError`, and add the
 matching resx entry — with a `{0}`/`{1}` composite-format key, not a baked value — to every controller
 resx pair (`en-US` + `ko-KR`) that can surface it.
-
-## TODO
-
-- **Retire the RSA SHA-1 fallback.** `RsaService.Decrypt` / `Verify` still accept ciphertext
-  and signatures produced under the legacy `RsaAlgorithm=Rsa` (SHA-1 OAEP) config — needed only
-  while 24 h reset/confirm links minted before the SHA-256 switch may still be in inboxes, and
-  while historical Board/Forum/Calendar HTML holds SHA-1-OAEP storage-path ciphertext. Once the
-  stored content has been re-encrypted (or is known to predate nothing that matters), drop
-  `_legacyHashAlgorithmName` and both fallback paths so only SHA-256 is ever honoured.
