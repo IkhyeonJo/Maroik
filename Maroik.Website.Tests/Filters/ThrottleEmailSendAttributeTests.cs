@@ -8,6 +8,8 @@ using Microsoft.AspNetCore.Mvc.ViewFeatures;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Localization;
+using System.Globalization;
 using Moq;
 
 namespace Maroik.Website.Tests.Filters;
@@ -23,12 +25,14 @@ namespace Maroik.Website.Tests.Filters;
 public class ThrottleEmailSendAttributeTests
 {
     private static (ActionExecutingContext context, FakeController controller) BuildContext(
-        object? boundArgument, IDistributedCache? cache, string action = "ForgotPassword", string controllerName = "Account")
+        object? boundArgument, IDistributedCache? cache, string action = "ForgotPassword", string controllerName = "Account",
+        Action<IServiceCollection>? configureServices = null)
     {
         var services = new ServiceCollection();
         services.AddLogging();
         if (cache != null)
             services.AddSingleton(cache);
+        configureServices?.Invoke(services);
         var sp = services.BuildServiceProvider();
 
         var httpContext = new DefaultHttpContext { RequestServices = sp };
@@ -126,6 +130,53 @@ public class ThrottleEmailSendAttributeTests
         Assert.Equal("ForgotPassword", redirect.ActionName);
         Assert.Equal("Please wait a moment before requesting another email.", controller.TempData["Error"]);
         cache.Verify(c => c.SetAsync(It.IsAny<string>(), It.IsAny<byte[]>(), It.IsAny<DistributedCacheEntryOptions>(), It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    /// <summary>The cooldown notice goes through the request's <c>IStringLocalizer</c> when one is registered.</summary>
+    [Fact]
+    public async Task OnActionExecutionAsync_AddressOnCooldown_UsesTheRegisteredLocalizer()
+    {
+        var cache = new Mock<IDistributedCache>();
+        cache.Setup(c => c.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync([1]);
+        var localizer = new Mock<IStringLocalizer<ThrottleEmailSendAttribute>>();
+        localizer.Setup(l => l[ThrottleEmailSendAttribute.CooldownMessageKey])
+            .Returns(new LocalizedString(ThrottleEmailSendAttribute.CooldownMessageKey, "localized notice"));
+        var (context, controller) = BuildContext(
+            boundArgument: "user@example.com", cache.Object,
+            configureServices: services => services.AddSingleton(localizer.Object));
+
+        await new ThrottleEmailSendAttribute().OnActionExecutionAsync(context, NextReturning(() => { }));
+
+        Assert.Equal("localized notice", controller.TempData["Error"]);
+    }
+
+    /// <summary>
+    /// End to end against the real embedded resx pair (<c>Resources/Attributes/ThrottleEmailSendAttribute.*.resx</c>):
+    /// the notice must resolve to the culture's own text, not fall back to the English key.
+    /// </summary>
+    [Theory]
+    [InlineData("en-US", "Please wait a moment before requesting another email.")]
+    [InlineData("ko-KR", "잠시 후에 다시 이메일을 요청해 주세요.")]
+    public async Task OnActionExecutionAsync_AddressOnCooldown_ResolvesNoticeFromTheRealResx(string culture, string expected)
+    {
+        var cache = new Mock<IDistributedCache>();
+        cache.Setup(c => c.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync([1]);
+        var (context, controller) = BuildContext(
+            boundArgument: "user@example.com", cache.Object,
+            configureServices: services => services.AddLocalization(o => o.ResourcesPath = "Resources"));
+
+        CultureInfo original = CultureInfo.CurrentUICulture;
+        try
+        {
+            CultureInfo.CurrentUICulture = new CultureInfo(culture);
+            await new ThrottleEmailSendAttribute().OnActionExecutionAsync(context, NextReturning(() => { }));
+        }
+        finally
+        {
+            CultureInfo.CurrentUICulture = original;
+        }
+
+        Assert.Equal(expected, controller.TempData["Error"]);
     }
 
     /// <summary>The cooldown key is namespaced by action, lower-cased, and trimmed -- so casing/whitespace on the submitted address can't dodge or split the cooldown.</summary>

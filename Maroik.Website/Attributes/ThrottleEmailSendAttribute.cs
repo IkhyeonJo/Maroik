@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
 using Microsoft.Extensions.Caching.Distributed;
+using Microsoft.Extensions.Localization;
 
 namespace Maroik.Website.Attributes;
 
@@ -35,6 +36,12 @@ namespace Maroik.Website.Attributes;
 [AttributeUsage(AttributeTargets.Method)]
 public sealed class ThrottleEmailSendAttribute : Attribute, IAsyncActionFilter
 {
+    /// <summary>
+    /// Resource key (and English fallback text) of the "wait a moment" notice — localized through
+    /// <c>Resources/Attributes/ThrottleEmailSendAttribute.{culture}.resx</c>.
+    /// </summary>
+    internal const string CooldownMessageKey = "Please wait a moment before requesting another email.";
+
     /// <summary>Length of the cooldown window, in seconds. Defaults to 60.</summary>
     public int WindowSeconds { get; init; } = 60;
 
@@ -57,7 +64,13 @@ public sealed class ThrottleEmailSendAttribute : Attribute, IAsyncActionFilter
                 if (await cache!.GetAsync(key, ct) is not null)
                 {
                     if (context.Controller is Controller controller)
-                        controller.TempData["Error"] = "Please wait a moment before requesting another email.";
+                    {
+                        // An attribute has no constructor injection, so resolve the localizer from the
+                        // request's services; without one registered, fall back to the English key.
+                        var localizer = context.HttpContext.RequestServices
+                            .GetService<IStringLocalizer<ThrottleEmailSendAttribute>>();
+                        controller.TempData["Error"] = localizer?[CooldownMessageKey].Value ?? CooldownMessageKey;
+                    }
 
                     context.Result = new RedirectToActionResult(
                         action,
