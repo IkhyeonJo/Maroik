@@ -74,11 +74,24 @@ public class AccountService(
                 return LoginResult.Fail(genericLoginError);
             }
 
-            // Verify the password FIRST, for every account regardless of its state. The account-state
-            // messages below (deleted / locked / unconfirmed / terms) are only disclosed to a caller
-            // that has proven it owns the account, so a wrong password can no longer be used to probe
-            // whether an email exists or what state it is in — every wrong guess returns the same
-            // generic error.
+            // A locked account is refused BEFORE the password is looked at, whatever was typed. If the
+            // password were verified first, the lock would stop nothing: guessing could go on
+            // indefinitely, and the one correct guess would be confirmed by the "Locked" reply — a
+            // password oracle. Refusing up front ends the guessing (no verification, no counter
+            // write, no BCrypt cost) and leaves the lock lifted only by a password reset or an admin.
+            // What this reveals is that the address exists and is locked; existence is already public
+            // (RegisterAsync answers "already exists"), and anyone can lock an account with a few wrong
+            // guesses anyway, so nothing new is exposed.
+            if (account.Locked)
+            {
+                await unitOfWork.RollbackAsync(ct);
+                return LoginResult.Fail("Your Account is Locked, Please reset your password by clicking Forgot password Button");
+            }
+
+            // For every other state the password is verified FIRST. The remaining account-state
+            // messages below (deleted / unconfirmed / terms) are only disclosed to a caller that has
+            // proven it owns the account, so a wrong password cannot be used to probe what state the
+            // account is in — every wrong guess returns the same generic error.
             if (!passwordService.VerifyPassword(password, account.HashedPassword))
             {
                 account.RecordLoginFailure(settings.Value.MaxLoginAttempt);
@@ -91,12 +104,6 @@ public class AccountService(
             {
                 await unitOfWork.RollbackAsync(ct);
                 return LoginResult.Fail("Your Account is Deleted, Please create your new account by clicking Sign up Button");
-            }
-
-            if (account.Locked)
-            {
-                await unitOfWork.RollbackAsync(ct);
-                return LoginResult.Fail("Your Account is Locked, Please reset your password by clicking Forgot password Button");
             }
 
             if (!account.EmailConfirmed)

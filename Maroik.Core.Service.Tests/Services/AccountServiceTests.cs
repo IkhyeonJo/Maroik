@@ -146,23 +146,30 @@ public class AccountServiceTests
         Assert.DoesNotContain("Deleted", result.ErrorKey, StringComparison.OrdinalIgnoreCase);
     }
 
-    /// <summary>Verifies that <c>LoginAsync</c> returns fail when account is locked.</summary>
-    [Fact]
-    public async Task LoginAsync_ReturnsFail_WhenAccountIsLocked()
+    /// <summary>
+    /// A locked account is refused as "locked" whatever password is supplied — right or wrong — and
+    /// the password is never even verified, so the lock really ends the guessing and a correct
+    /// guess is indistinguishable from a wrong one.
+    /// </summary>
+    [Theory]
+    [InlineData(true)]
+    [InlineData(false)]
+    public async Task LoginAsync_ReturnsLocked_WithoutVerifyingThePassword_WhenAccountIsLocked(bool passwordIsCorrect)
     {
-        var account = ActiveAccount(locked: true);
+        var account = ActiveAccount(locked: true, loginAttempt: 3);
         _accountRepo.Setup(r => r.FindByEmailForUpdateAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(account);
-        // The account-state message is only disclosed once the password proves account ownership.
-        _passwordService.Setup(p => p.VerifyPassword(It.IsAny<string>(), It.IsAny<string>())).Returns(true);
+        _passwordService.Setup(p => p.VerifyPassword(It.IsAny<string>(), It.IsAny<string>())).Returns(passwordIsCorrect);
         var sut = CreateSut();
 
-        LoginResult result = await sut.LoginAsync(account.Email.Value, "correct", TestContext.Current.CancellationToken);
+        LoginResult result = await sut.LoginAsync(account.Email.Value, "whatever", TestContext.Current.CancellationToken);
 
         Assert.False(result.Success);
         Assert.Contains("Locked", result.ErrorKey, StringComparison.OrdinalIgnoreCase);
-        // The password is now verified for every account regardless of state, so a wrong guess
-        // cannot be used to probe whether the account exists or is locked (see B3).
-        _passwordService.Verify(p => p.VerifyPassword(It.IsAny<string>(), It.IsAny<string>()), Times.Once);
+        _passwordService.Verify(p => p.VerifyPassword(It.IsAny<string>(), It.IsAny<string>()), Times.Never);
+        // Refused up front: no failed-attempt write and no commit of a mutated row.
+        _accountRepo.Verify(r => r.UpdateEntityAsync(It.IsAny<Account>(), It.IsAny<CancellationToken>()), Times.Never);
+        _unitOfWork.Verify(u => u.CommitAsync(It.IsAny<CancellationToken>()), Times.Never);
+        _unitOfWork.Verify(u => u.RollbackAsync(It.IsAny<CancellationToken>()), Times.Once);
     }
 
     /// <summary>Verifies that <c>LoginAsync</c> returns a failure result and persists the incremented counter when the password is wrong.</summary>
