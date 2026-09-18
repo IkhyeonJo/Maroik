@@ -347,25 +347,31 @@
      * `createCalendarEventUploadedFile` for the submit to send.
      */
     function CreateCalendarEventUploadedFile(obj: HTMLInputElement, errorMessage?: string) {
-        if (obj.files![0].size > maxFileSize) {
+        if (!obj.files || obj.files.length === 0) {
+            return;
+        }
+        if (obj.files[0].size > maxFileSize) {
             alert(errorMessage);
             (document.getElementById("createCalendarEventAttachment") as HTMLInputElement).value = "";
             return false;
         }
         else {
-            createCalendarEventUploadedFile = obj.files![0];
+            createCalendarEventUploadedFile = obj.files[0];
         }
     }
 
     /** Same as `CreateCalendarEventUploadedFile` for the edit-event form. */
     function EditCalendarEventUploadedFile(obj: HTMLInputElement, errorMessage?: string) {
-        if (obj.files![0].size > maxFileSize) {
+        if (!obj.files || obj.files.length === 0) {
+            return;
+        }
+        if (obj.files[0].size > maxFileSize) {
             alert(errorMessage);
             (document.getElementById("editCalendarEventAttachment") as HTMLInputElement).value = "";
             return false;
         }
         else {
-            editCalendarEventUploadedFile = obj.files![0];
+            editCalendarEventUploadedFile = obj.files[0];
         }
     }
 
@@ -1325,8 +1331,14 @@
          * encodes the id): clears the grid, gathers the ids, POSTs
          * `GetCalendarEvents`, and re-adds whatever comes back.
          */
+        // Guards against a stale GetCalendarEvents response (from a checkbox toggle just before
+        // this one) landing after a newer one and re-adding events the user already unchecked.
+        let calendarEventsRequestSeq = 0;
+
         function RefreshCalendarEvents() {
             calendar.removeAllEvents();
+
+            const requestSeq = ++calendarEventsRequestSeq;
 
             let paramValue: any = {
                 Calendars: []
@@ -1360,6 +1372,12 @@
                 data: JSON.stringify(paramValue),
                 contentType: 'application/json; charset=utf-8',
                 success: function (response) {
+                    // A newer RefreshCalendarEvents call already ran (and removed/re-added events)
+                    // since this request went out — applying this stale response now would put
+                    // back events the newer call's own removeAllEvents() just cleared.
+                    if (requestSeq !== calendarEventsRequestSeq) {
+                        return;
+                    }
                     if (response.result) {
                         JSON.parse(response.calendarEvents).forEach((item: any) => {
                             calendar.addEvent({

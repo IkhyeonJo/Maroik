@@ -44,6 +44,25 @@ public class CalendarRepository(ApplicationDbContext context)
         => QueryAllAsync(q => q.OrderBy(e => e.Name), ct: ct);
 
     /// <inheritdoc />
+    public async Task<Calendar?> FindByIdForUpdateAsync(long id, CancellationToken ct = default)
+    {
+        // Raw SQL is required because EF Core LINQ cannot emit FOR UPDATE. AsNoTracking so a
+        // pre-lock instance already tracked in this context can't snap back and defeat the lock
+        // (see BoardRepository.FindActiveByIdForUpdateAsync for the same rationale).
+        var entities = await Set.FromSqlInterpolated(
+            $"""
+             SELECT *
+             FROM "Calendar"
+             WHERE "Id" = {id}
+             LIMIT 1
+             FOR UPDATE
+             """).AsNoTracking().ToListAsync(ct);
+
+        var entity = entities.FirstOrDefault();
+        return entity == null ? null : ToDomain(entity);
+    }
+
+    /// <inheritdoc />
     public Task DeleteByIdAsync(long id, CancellationToken ct = default)
         => DeleteWhereAsync(e => e.Id == id, ct);
 }

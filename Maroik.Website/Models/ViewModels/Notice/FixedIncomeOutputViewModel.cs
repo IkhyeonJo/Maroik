@@ -13,7 +13,6 @@ namespace Maroik.Website.Models.ViewModels.Notice;
 public class FixedIncomeOutputViewModel
 {
     /// <summary>Unique database ID of this fixed income record.</summary>
-    [Required(ErrorMessage = "Please enter Id")]
     [Display(Name = "Id")]
     public long Id { get; set; }
 

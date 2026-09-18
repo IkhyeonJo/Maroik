@@ -10,7 +10,6 @@ namespace Maroik.Website.Models.ViewModels.Management;
 public class MenuOutputViewModel
 {
     /// <summary>Unique database ID of the sub-menu item.</summary>
-    [Required(ErrorMessage = "Please enter Id")]
     [Display(Name = "Id")]
     public long Id { get; set; }
 
@@ -50,7 +49,6 @@ public class MenuOutputViewModel
     public string? Role { get; set; }
 
     /// <summary>Display order of this item within its parent category.</summary>
-    [Required(ErrorMessage = "Please enter Order")]
     [Display(Name = "Order")]
     public long Order { get; set; }
 }

@@ -79,8 +79,9 @@ public class ManagementController : Controller
     [HttpGet]
     public async Task<IActionResult> Profile()
     {
-        string? loggedInAccountTimeZoneIanaId = _sessionService.GetAccount()!.TimeZoneIanaId;
-        AccountResponse? tempAccount = await _profileService.GetProfileAsync(_sessionService.GetAccount()!.Email!, HttpContext.RequestAborted);
+        AccountResponse loggedInAccount = ViewBag.LoggedInAccount;
+        string? loggedInAccountTimeZoneIanaId = loggedInAccount.TimeZoneIanaId;
+        AccountResponse? tempAccount = await _profileService.GetProfileAsync(loggedInAccount.Email!, HttpContext.RequestAborted);
 
         return View(new ProfileOutputViewModel()
         {
@@ -127,7 +128,7 @@ public class ManagementController : Controller
             imageBytes = ms.ToArray();
         }
 
-        string? email = _sessionService.GetAccount()!.Email;
+        string? email = ((AccountResponse)ViewBag.LoggedInAccount).Email;
 
         ServiceResult avatarResult = await _profileService.UploadAndUpdateAvatarAsync(email!, imageBytes, extension, HttpContext.RequestAborted);
 
@@ -165,9 +166,9 @@ public class ManagementController : Controller
             return RedirectToAction("Profile", "Management");
         }
 
+        string? email = ((AccountResponse)ViewBag.LoggedInAccount).Email;
         try
         {
-            string? email = _sessionService.GetAccount()!.Email;
             await _profileService.UpdateTimeZoneAsync(email!, profileInputViewModel.TimeZoneIanaId!, HttpContext.RequestAborted);
 
             // Refresh session with updated timezone. GetProfileAsync returns a plain AccountResponse,
@@ -178,7 +179,7 @@ public class ManagementController : Controller
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Failed to update time zone for account {AccountEmail}", _sessionService.GetAccount()?.Email);
+            _logger.LogError(ex, "Failed to update time zone for account {AccountEmail}", email);
         }
 
         return RedirectToAction("Profile", "Management");
@@ -201,10 +202,9 @@ public class ManagementController : Controller
         if (!ModelState.IsValid)
             return Json(new { result = false, error = _localizer["Input is invalid"].Value });
 
+        string? email = ((AccountResponse)ViewBag.LoggedInAccount).Email;
         try
         {
-            string? email = _sessionService.GetAccount()!.Email;
-
             ServiceResult result = await _profileService.UpdatePasswordAsync(
                 email!,
                 profileInputViewModel.Password ?? "",
@@ -227,7 +227,7 @@ public class ManagementController : Controller
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Failed to update password for account {AccountEmail}", _sessionService.GetAccount()?.Email);
+            _logger.LogError(ex, "Failed to update password for account {AccountEmail}", email);
             return Json(new { result = false, error = _localizer["Input is invalid"].Value });
         }
     }
@@ -314,7 +314,7 @@ public class ManagementController : Controller
             return View();
         }
 
-        string tz = _sessionService.GetAccount()!.TimeZoneIanaId!;
+        string tz = ((AccountResponse)ViewBag.LoggedInAccount).TimeZoneIanaId!;
         var accounts = string.IsNullOrEmpty(wholeSearch)
             ? await _managementAccountService.GetAllAccountsAsync(HttpContext.RequestAborted)
             : await _managementAccountService.SearchAccountsAsync(wholeSearch, HttpContext.RequestAborted);
@@ -440,7 +440,7 @@ public class ManagementController : Controller
     [RequiredHttpPostAccess(Role = Role.Admin)]
     public async Task<IActionResult> ExportExcelAccount(string fileName = "")
     {
-        var account = _sessionService.GetAccount()!;
+        AccountResponse account = ViewBag.LoggedInAccount;
         var accounts = await _managementAccountService.GetAllAccountsAsync(HttpContext.RequestAborted);
         var stream = _excelExportService.CreateAccountExcel(accounts, _localize, account.TimeZoneIanaId!);
         string name = fileName.ToExcelFileName(account.TimeZoneIanaId!);
@@ -815,7 +815,7 @@ public class ManagementController : Controller
     [RequiredHttpPostAccess(Role = Role.Admin)]
     public async Task<IActionResult> ExportExcelMenu(string fileName = "")
     {
-        var account = _sessionService.GetAccount()!;
+        AccountResponse account = ViewBag.LoggedInAccount;
         var categories = await _menuService.GetAllCategoriesAsync(HttpContext.RequestAborted);
         var subCats = await _menuService.GetAllSubCategoriesAsync(HttpContext.RequestAborted);
         var stream = _excelExportService.CreateMenuExcel(categories, subCats, _localize);
@@ -867,7 +867,7 @@ public class ManagementController : Controller
 
             AttachedFileDto? attachedFile = await boardInputViewModel.UploadedFile.ToAttachedFileInfoAsync(_serverSettings.Value.MaxAttachedFileSizeBytes, HttpContext.RequestAborted);
 
-            ServiceResult result = await _boardService.WriteBoardAsync(boardRequest, attachedFile, HttpContext.RequestAborted);
+            ServiceResult result = await _boardService.WriteBoardAsync(boardRequest, loggedInAccount.Role == Role.Admin, attachedFile, HttpContext.RequestAborted);
             return result.Success
                 ? Json(new { result = true, message = _localizer["The board has been successfully created."].Value })
                 : Json(new { result = false, error = _localizer["Input is invalid"].Value });
@@ -985,13 +985,16 @@ public class ManagementController : Controller
             case "write":
             {
                 PrivateNoteOutputViewModel privateNoteOutputViewModel = new() { Method = method };
-                bool isAccountSessionExist = _sessionService.GetAccount() != null; // Check if account session exists after login
+                bool isAccountSessionExist = ((AccountResponse)ViewBag.LoggedInAccount).Role != Role.Anonymous;
                 return isAccountSessionExist ? View(privateNoteOutputViewModel) : RedirectToAction("Login", "Account");
             }
             // Detail view
             case "detail":
             {
-                AccountResponse loggedInAccount = _sessionService.GetAccount()!; // Get Session
+                // ViewBag.LoggedInAccount is re-fetched from the database by ViewBagPopulatorFilter
+                // on every request (not the session-cached snapshot), so a mid-session Role change
+                // (e.g. an admin demotion) is reflected immediately in the CanView check below.
+                AccountResponse loggedInAccount = ViewBag.LoggedInAccount;
 
                 if (boardId == null)
                 {
@@ -1081,7 +1084,9 @@ public class ManagementController : Controller
                     EditBoardId = (int)boardId
                 };
 
-                AccountResponse loggedInAccount = _sessionService.GetAccount()!;
+                // ViewBag.LoggedInAccount is re-fetched from the database by ViewBagPopulatorFilter
+                // on every request (not the session-cached snapshot) — see the "detail" case above.
+                AccountResponse loggedInAccount = ViewBag.LoggedInAccount;
 
                 try
                 {
@@ -1137,7 +1142,9 @@ public class ManagementController : Controller
             // List
             default:
             {
-                AccountResponse loggedInAccount = _sessionService.GetAccount()!;
+                // ViewBag.LoggedInAccount is re-fetched from the database by ViewBagPopulatorFilter
+                // on every request (not the session-cached snapshot) — see the "detail" case above.
+                AccountResponse loggedInAccount = ViewBag.LoggedInAccount;
 
                 #region Board default paging logic
 
@@ -1229,7 +1236,7 @@ public class ManagementController : Controller
     {
         try
         {
-            string? nickname = _sessionService.GetAccount()!.Nickname;
+            string? nickname = ((AccountResponse)ViewBag.LoggedInAccount).Nickname;
             BoardResponse? board = await _boardService.GetBoardByIdAsync(id, BoardTypes.PrivateNote, HttpContext.RequestAborted);
 
             return board == null || board.Deleted || board.Writer != nickname
@@ -1309,7 +1316,9 @@ public class ManagementController : Controller
     {
         try
         {
-            AccountResponse loggedInAccount = _sessionService.GetAccount()!;
+            // ViewBag.LoggedInAccount is re-fetched from the database by ViewBagPopulatorFilter
+            // on every request (not the session-cached snapshot) — see the "detail" case above.
+            AccountResponse loggedInAccount = ViewBag.LoggedInAccount;
 
             // Private notes are single-owner: unlike the free forum, an admin may not delete
             // another account's private note board.
@@ -1344,7 +1353,9 @@ public class ManagementController : Controller
     {
         try
         {
-            AccountResponse loggedInAccount = _sessionService.GetAccount()!;
+            // ViewBag.LoggedInAccount is re-fetched from the database by ViewBagPopulatorFilter
+            // on every request (not the session-cached snapshot) — see the "detail" case above.
+            AccountResponse loggedInAccount = ViewBag.LoggedInAccount;
 
             ServiceResult result = await _boardService.DeleteCommentAsync(
                 id,

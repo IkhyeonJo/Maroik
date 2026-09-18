@@ -1,4 +1,4 @@
-using Maroik.Core.Domain.Account;
+﻿using Maroik.Core.Domain.Account;
 using Maroik.Core.Contract.Dtos;
 using Maroik.Core.Contract.Interfaces;
 using Maroik.Core.Contract.Misc.Settings;
@@ -23,7 +23,6 @@ public class NoticeController : Controller
     private readonly IFixedIncomeService _fixedIncomeService;
     private readonly IFixedExpenditureService _fixedExpenditureService;
     private readonly IOptions<ServerSetting> _settings;
-    private readonly ISessionService _sessionService;
     private readonly IExcelExportService _excelExportService;
     private readonly Func<string, string> _localize;
 
@@ -35,7 +34,6 @@ public class NoticeController : Controller
         IFixedIncomeService fixedIncomeService,
         IFixedExpenditureService fixedExpenditureService,
         IOptions<ServerSetting> settings,
-        ISessionService sessionService,
         IExcelExportService excelExportService)
     {
         _localizer = localizer;
@@ -44,7 +42,6 @@ public class NoticeController : Controller
         _fixedIncomeService = fixedIncomeService;
         _fixedExpenditureService = fixedExpenditureService;
         _settings = settings;
-        _sessionService = sessionService;
         _excelExportService = excelExportService;
         _localize = key => _localizer[key].Value;
     }
@@ -64,7 +61,7 @@ public class NoticeController : Controller
 
         try
         {
-            string email = _sessionService.GetAccount()!.Email!;
+            string email = ((AccountResponse)ViewBag.LoggedInAccount).Email!;
 
             var request = new FixedIncomeRequest
             {
@@ -106,7 +103,7 @@ public class NoticeController : Controller
         if (HttpContext.Request.Headers["X-Requested-With"] == "XMLHttpRequest")
 #pragma warning restore ASP0015
         {
-            var account = _sessionService.GetAccount()!;
+            AccountResponse account = ViewBag.LoggedInAccount;
             var assets = await _assetService.GetAssetsAsync(account.Email!, ct);
             var incomes = string.IsNullOrEmpty(wholeSearch)
                 ? await _fixedIncomeService.GetFixedIncomesAsync(account.Email!, ct)
@@ -120,7 +117,7 @@ public class NoticeController : Controller
             return PartialView("_FixedIncomeGrid", viewModels);
         }
 
-        var loggedInAccount = _sessionService.GetAccount() ?? new AccountResponse();
+        AccountResponse loggedInAccount = ViewBag.LoggedInAccount;
         var fixedIncomeAssets = (await _assetService.GetAssetsAsync(loggedInAccount.Email!, ct))
             .Where(x => !x.Deleted).OrderBy(x => x.ProductName).ToList();
         ViewBag.Assets = fixedIncomeAssets;
@@ -136,7 +133,7 @@ public class NoticeController : Controller
     {
         try
         {
-            string email = _sessionService.GetAccount()!.Email!;
+            string email = ((AccountResponse)ViewBag.LoggedInAccount).Email!;
             FixedIncomeResponse? item = await _fixedIncomeService.GetByIdAsync(email, id, ct);
             if (item == null)
                 return Json(new { result = false, error = _localizer["Input is invalid"].Value });
@@ -174,7 +171,7 @@ public class NoticeController : Controller
         {
             string baseLabel = _localizer["Amount"].Value;
             AssetResponse? asset = await _assetService.GetAssetAsync(
-                _sessionService.GetAccount()!.Email!, productName, ct);
+                ((AccountResponse)ViewBag.LoggedInAccount).Email!, productName, ct);
 
             string label = !string.IsNullOrEmpty(asset?.MonetaryUnit)
                 ? baseLabel.GetAmountLabel(asset.MonetaryUnit)
@@ -204,7 +201,7 @@ public class NoticeController : Controller
 
         try
         {
-            string email = _sessionService.GetAccount()!.Email!;
+            string email = ((AccountResponse)ViewBag.LoggedInAccount).Email!;
 
             var request = new FixedIncomeRequest
             {
@@ -246,7 +243,7 @@ public class NoticeController : Controller
     {
         try
         {
-            string email = _sessionService.GetAccount()!.Email!;
+            string email = ((AccountResponse)ViewBag.LoggedInAccount).Email!;
             var result = await _fixedIncomeService.DeleteAsync(email, fixedIncomeInputViewModel.Id, ct);
             return result.Success
                 ? Json(new { result = true, message = _localizer["The fixedIncome has been successfully deleted."].Value })
@@ -267,7 +264,7 @@ public class NoticeController : Controller
     [RequiredHttpPostAccess(Role = Role.User)]
     public async Task<IActionResult> ExportExcelFixedIncome(string fileName = "", CancellationToken ct = default)
     {
-        var account = _sessionService.GetAccount()!;
+        AccountResponse account = ViewBag.LoggedInAccount;
         var assets = await _assetService.GetAssetsAsync(account.Email!, ct);
         var incomes = await _fixedIncomeService.GetFixedIncomesAsync(account.Email!, ct);
         var stream = _excelExportService.CreateFixedIncomeExcel(incomes, assets, _localize, account.TimeZoneIanaId!, _settings.Value.NoticeMaturityDateDay);
@@ -293,7 +290,7 @@ public class NoticeController : Controller
 
         try
         {
-            string email = _sessionService.GetAccount()!.Email!;
+            string email = ((AccountResponse)ViewBag.LoggedInAccount).Email!;
 
             var request = new FixedExpenditureRequest
             {
@@ -336,7 +333,7 @@ public class NoticeController : Controller
         if (HttpContext.Request.Headers["X-Requested-With"] == "XMLHttpRequest")
 #pragma warning restore ASP0015
         {
-            var account = _sessionService.GetAccount()!;
+            AccountResponse account = ViewBag.LoggedInAccount;
             var assets = await _assetService.GetAssetsAsync(account.Email!, ct);
             var expenditures = string.IsNullOrEmpty(wholeSearch)
                 ? await _fixedExpenditureService.GetFixedExpendituresAsync(account.Email!, ct)
@@ -350,7 +347,7 @@ public class NoticeController : Controller
             return PartialView("_FixedExpenditureGrid", viewModels);
         }
 
-        var loggedInAccount = _sessionService.GetAccount() ?? new AccountResponse();
+        AccountResponse loggedInAccount = ViewBag.LoggedInAccount;
         var fixedExpenditureAssets = (await _assetService.GetAssetsAsync(loggedInAccount.Email!, ct))
             .Where(x => !x.Deleted).OrderBy(x => x.ProductName).ToList();
         ViewBag.Assets = fixedExpenditureAssets;
@@ -366,7 +363,7 @@ public class NoticeController : Controller
     {
         try
         {
-            string email = _sessionService.GetAccount()!.Email!;
+            string email = ((AccountResponse)ViewBag.LoggedInAccount).Email!;
             FixedExpenditureResponse? item = await _fixedExpenditureService.GetByIdAsync(email, id, ct);
             if (item == null)
                 return Json(new { result = false, error = _localizer["Input is invalid"].Value });
@@ -405,7 +402,7 @@ public class NoticeController : Controller
         {
             string baseLabel = _localizer["Amount"].Value;
             AssetResponse? asset = await _assetService.GetAssetAsync(
-                _sessionService.GetAccount()!.Email!, productName, ct);
+                ((AccountResponse)ViewBag.LoggedInAccount).Email!, productName, ct);
 
             string label = !string.IsNullOrEmpty(asset?.MonetaryUnit)
                 ? baseLabel.GetAmountLabel(asset.MonetaryUnit)
@@ -435,7 +432,7 @@ public class NoticeController : Controller
 
         try
         {
-            string email = _sessionService.GetAccount()!.Email!;
+            string email = ((AccountResponse)ViewBag.LoggedInAccount).Email!;
 
             var request = new FixedExpenditureRequest
             {
@@ -478,7 +475,7 @@ public class NoticeController : Controller
     {
         try
         {
-            string email = _sessionService.GetAccount()!.Email!;
+            string email = ((AccountResponse)ViewBag.LoggedInAccount).Email!;
             var result = await _fixedExpenditureService.DeleteAsync(email, fixedExpenditureInputViewModel.Id, ct);
             return result.Success
                 ? Json(new { result = true, message = _localizer["The fixedExpenditure has been successfully deleted."].Value })
@@ -499,7 +496,7 @@ public class NoticeController : Controller
     [RequiredHttpPostAccess(Role = Role.User)]
     public async Task<IActionResult> ExportExcelFixedExpenditure(string fileName = "", CancellationToken ct = default)
     {
-        var account = _sessionService.GetAccount()!;
+        AccountResponse account = ViewBag.LoggedInAccount;
         var assets = await _assetService.GetAssetsAsync(account.Email!, ct);
         var expenditures = await _fixedExpenditureService.GetFixedExpendituresAsync(account.Email!, ct);
         var stream = _excelExportService.CreateFixedExpenditureExcel(expenditures, assets, _localize, account.TimeZoneIanaId!, _settings.Value.NoticeMaturityDateDay);

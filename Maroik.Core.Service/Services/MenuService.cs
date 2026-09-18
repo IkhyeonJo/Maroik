@@ -1,6 +1,7 @@
 using Maroik.Core.Domain.Menu;
 using Maroik.Core.Contract.Dtos;
 using Maroik.Core.Contract.Interfaces;
+using Maroik.Core.Service.Extensions;
 using Maroik.Core.Service.Mappers;
 using Microsoft.Extensions.Logging;
 
@@ -16,6 +17,7 @@ namespace Maroik.Core.Service.Services;
 public class MenuService(
     ICategoryRepository categoryRepository,
     ISubCategoryRepository subCategoryRepository,
+    IUnitOfWork unitOfWork,
     ILogger<MenuService> logger) : IMenuService
 {
     /// <inheritdoc />
@@ -99,23 +101,30 @@ public class MenuService(
     /// <inheritdoc />
     public async Task<ServiceResult> UpdateCategoryAsync(CategoryRequest request, CancellationToken ct = default)
     {
+        await unitOfWork.BeginAsync(ct);
         try
         {
-            Category? category = await categoryRepository.FindByIdAsync(request.Id, ct);
+            // FOR UPDATE, inside this explicit transaction: without BeginAsync/CommitAsync around
+            // it, the lock would be released the instant this SELECT completes (its own implicit,
+            // auto-committed transaction) and buy nothing against a concurrent update racing in
+            // between this read and the write below.
+            Category? category = await categoryRepository.FindByIdForUpdateAsync(request.Id, ct);
             if (category == null)
-                return ServiceResult.NotFound("Category.NotFound", "Input is invalid");
+                return await unitOfWork.FailAsync(ServiceResult.NotFound("Category.NotFound", "Input is invalid"), ct);
 
             var updateResult = category.Update(request.Name, request.DisplayName, request.IconPath,
                 request.Controller, request.Action, request.Role, request.Order);
             if (updateResult.IsError)
-                return ServiceResult.FromError(updateResult.FirstError);
+                return await unitOfWork.FailAsync(updateResult.FirstError, ct);
 
             await categoryRepository.UpdateEntityAsync(category, ct);
+            await unitOfWork.CommitAsync(ct);
             return ServiceResult.Ok();
         }
         catch (Exception e)
         {
             logger.LogError(e, "Failed to update category {Name}", request.Name);
+            await unitOfWork.RollbackAsync(ct);
             return ServiceResult.Failure("Menu.UpdateCategoryFailed", "Input is invalid");
         }
     }
@@ -158,23 +167,28 @@ public class MenuService(
     /// <inheritdoc />
     public async Task<ServiceResult> UpdateSubCategoryAsync(SubCategoryRequest request, CancellationToken ct = default)
     {
+        await unitOfWork.BeginAsync(ct);
         try
         {
-            SubCategory? subCategory = await subCategoryRepository.FindByIdAsync(request.Id, ct);
+            // FOR UPDATE, inside this explicit transaction — see UpdateCategoryAsync for why the
+            // transaction wrapper is required for the lock to mean anything.
+            SubCategory? subCategory = await subCategoryRepository.FindByIdForUpdateAsync(request.Id, ct);
             if (subCategory == null)
-                return ServiceResult.NotFound("SubCategory.NotFound", "Input is invalid");
+                return await unitOfWork.FailAsync(ServiceResult.NotFound("SubCategory.NotFound", "Input is invalid"), ct);
 
             var updateResult = subCategory.Update(request.CategoryId, request.Name,
                 request.DisplayName, request.IconPath, request.Action, request.Role, request.Order);
             if (updateResult.IsError)
-                return ServiceResult.FromError(updateResult.FirstError);
+                return await unitOfWork.FailAsync(updateResult.FirstError, ct);
 
             await subCategoryRepository.UpdateEntityAsync(subCategory, ct);
+            await unitOfWork.CommitAsync(ct);
             return ServiceResult.Ok();
         }
         catch (Exception e)
         {
             logger.LogError(e, "Failed to update sub-category {Name}", request.Name);
+            await unitOfWork.RollbackAsync(ct);
             return ServiceResult.Failure("Menu.UpdateSubCategoryFailed", "Input is invalid");
         }
     }

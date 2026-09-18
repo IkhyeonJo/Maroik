@@ -48,4 +48,10 @@ describe("user/Management/PrivateNote", () => {
     h.$("#btnPrivateNoteList").trigger("click");
     expect(h.navigations.at(-1)).toBe("/l");
   });
+
+  it("WriteUploadFile/EditUploadFile do not throw when change fires with no file selected", () => {
+    const h = loadSite("user", "Management", "PrivateNote", fixture);
+    expect(() => h.$("#writeUploadedFile").trigger("change")).not.toThrow();
+    expect(() => h.$("#editUploadedFile").trigger("change")).not.toThrow();
+  });
 });

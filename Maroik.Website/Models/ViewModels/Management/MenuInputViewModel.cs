@@ -10,12 +10,10 @@ namespace Maroik.Website.Models.ViewModels.Management;
 public class MenuInputViewModel
 {
     /// <summary>Database row ID of the sub-menu item; 0 for a new item, positive for an edit.</summary>
-    [Required(ErrorMessage = "Please enter Id")]
     [Display(Name = "Id")]
     public int Id { get; set; }
 
     /// <summary>ID of the parent Category this sub-menu item belongs to.</summary>
-    [Required(ErrorMessage = "Please enter CategoryId")]
     [Display(Name = "CategoryId")]
     public int CategoryId { get; set; }
 
@@ -50,7 +48,6 @@ public class MenuInputViewModel
     public string? Role { get; set; }
 
     /// <summary>Display order of this item within its parent category (lower numbers appear first).</summary>
-    [Required(ErrorMessage = "Please enter Order")]
     [Display(Name = "Order")]
     public int Order { get; set; }
 }

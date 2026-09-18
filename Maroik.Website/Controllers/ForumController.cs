@@ -6,7 +6,6 @@ using Maroik.Core.Contract.Misc.Extensions;
 using Maroik.Core.Contract.Interfaces;
 using Maroik.Core.Contract.Misc.Settings;
 using Maroik.Website.Attributes;
-using Maroik.Website.Contracts;
 using Maroik.Website.Extensions;
 using Maroik.Website.Models;
 using Maroik.Website.Models.ViewModels.Forum;
@@ -27,8 +26,7 @@ public class ForumController(
     IBoardService boardService,
     IAccountService accountService,
     IRsaService rsa,
-    IOptions<ServerSetting> serverSettings,
-    ISessionService sessionService) : Controller
+    IOptions<ServerSetting> serverSettings) : Controller
 {
     private static readonly FileExtensionContentTypeProvider _contentTypeProvider = new();
 
@@ -68,12 +66,14 @@ public class ForumController(
                 Content = boardInputViewModel.Content,
                 Writer = loggedInAccount.Nickname!,
                 Locked = boardInputViewModel.Locked,
-                Noticed = loggedInAccount.Role == Role.Admin && boardInputViewModel.Noticed
+                Noticed = boardInputViewModel.Noticed
             };
 
             AttachedFileDto? attachedFile = await boardInputViewModel.UploadedFile.ToAttachedFileInfoAsync(serverSettings.Value.MaxAttachedFileSizeBytes, ct);
 
-            ServiceResult result = await boardService.WriteBoardAsync(boardRequest, attachedFile, ct);
+            // WriteBoardAsync itself gates Noticed on isAdmin, so a non-admin's Noticed=true can
+            // never pin a post regardless of what this controller (or any other caller) sends.
+            ServiceResult result = await boardService.WriteBoardAsync(boardRequest, loggedInAccount.Role == Role.Admin, attachedFile, ct);
             return result.Success
                 ? Json(new { result = true, message = localizer["The board has been successfully created."].Value })
                 : Json(new { result = false, error = localizer["Input is invalid"].Value });
@@ -186,7 +186,7 @@ public class ForumController(
             {
                 FreeForumOutputViewModel freeForumOutputViewModel = new() { Method = method };
 
-                bool isAccountSessionExist = sessionService.GetAccount() != null;
+                bool isAccountSessionExist = ((AccountResponse)ViewBag.LoggedInAccount).Role != Role.Anonymous;
                 return isAccountSessionExist ? View(freeForumOutputViewModel) : RedirectToAction("Login", "Account");
             }
             // Detail view
@@ -209,7 +209,11 @@ public class ForumController(
                     if (freeBoard == null || freeBoard.Deleted)
                         return RedirectToAction(BoardTypes.FreeForum, "Forum");
 
-                    AccountResponse? loggedInAccount = sessionService.GetAccount();
+                    // ViewBag.LoggedInAccount is re-fetched from the database by ViewBagPopulatorFilter
+                    // on every request (not the session-cached snapshot), so a mid-session Role
+                    // change (e.g. an admin demotion) is reflected immediately in the CanView check
+                    // below — matching the "edit" case's use of ViewBag.LoggedInAccount.
+                    AccountResponse? loggedInAccount = ViewBag.LoggedInAccount;
                     if (!boardService.CanView(freeBoard, loggedInAccount))
                         return RedirectToAction(BoardTypes.FreeForum, "Forum");
 
@@ -340,18 +344,23 @@ public class ForumController(
                 const int pageSize = 5;
                 if (page < 1) page = 1;
 
+                // ViewBag.LoggedInAccount is re-fetched from the database by ViewBagPopulatorFilter
+                // on every request (not the session-cached snapshot), so a mid-session Role change
+                // is reflected immediately in the locked-post visibility rule below — same
+                // rationale as the "detail" case above.
+                AccountResponse loggedInAccountForQuery = ViewBag.LoggedInAccount;
+                bool isLoggedIn = loggedInAccountForQuery.Role != Role.Anonymous;
                 // Filtering, search/visibility rules, ordering, and paging are all pushed down into
                 // one SQL query (see BoardRepository.QueryPageAsync) instead of materializing the
                 // whole board-type bucket into memory first.
-                AccountResponse? loggedInAccountForQuery = sessionService.GetAccount();
                 (IEnumerable<BoardResponse> pageItems, int totalCount) = await boardService.GetBoardPageAsync(new BoardPageQuery(
                     Type: BoardTypes.FreeForum,
                     OwnerNickname: null,
                     SearchType: searchType,
                     SearchText: searchText,
-                    IsLoggedIn: loggedInAccountForQuery != null,
-                    ViewerRole: loggedInAccountForQuery?.Role,
-                    ViewerNickname: loggedInAccountForQuery?.Nickname,
+                    IsLoggedIn: isLoggedIn,
+                    ViewerRole: isLoggedIn ? loggedInAccountForQuery.Role : null,
+                    ViewerNickname: isLoggedIn ? loggedInAccountForQuery.Nickname : null,
                     Page: page,
                     PageSize: pageSize), ct);
 
@@ -362,7 +371,7 @@ public class ForumController(
                     Pager = new Pager(totalCount, page, pageSize),
                     Boards =
                         [.. pageItems],
-                    LoggedInAccount = sessionService.GetAccount() ?? new AccountResponse { Role = Role.Anonymous }
+                    LoggedInAccount = loggedInAccountForQuery
                 };
 
                 freeForumOutputViewModel.LoggedInAccountTimeZoneIanaId = freeForumOutputViewModel.LoggedInAccount.TimeZoneIanaId ?? "";

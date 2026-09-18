@@ -45,7 +45,6 @@ public class AssetOutputViewModel
     public string? Note { get; set; }
 
     /// <summary>Soft-delete flag; when <see langword="true"/> the asset is excluded from normal views.</summary>
-    [Required(ErrorMessage = "Please enter Deleted")]
     [Display(Name = "Deleted")]
     public bool Deleted { get; set; }
 }

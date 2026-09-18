@@ -254,14 +254,17 @@ public sealed class Account : AggregateRoot<string>
     // ------------------------------------------------------------------------
 
     /// <summary>
-    /// Validates the registration token and activates the account.
+    /// Validates the registration token — must match <see cref="RegistrationToken"/> and still be
+    /// within <see cref="GuidToken"/>'s 24 h window — and activates the account. Expiry is enforced
+    /// here, not just by callers, so this invariant can't be silently skipped by a future caller
+    /// that forgets to pre-check <see cref="GuidToken.IsTokenAlive"/> itself.
     /// </summary>
     public ErrorOr<Success> ConfirmEmail(string token)
     {
         if (EmailConfirmed)
             return LocalizableError.Conflict("Account.AlreadyConfirmed", "Email address is already confirmed.");
 
-        if (!TokensMatch(RegistrationToken, token))
+        if (!TokensMatch(RegistrationToken, token) || !GuidToken.IsTokenAlive(RegistrationToken!))
             return LocalizableError.Validation("Account.InvalidToken", "Invalid email confirmation token.");
 
         EmailConfirmed = true;
@@ -287,11 +290,14 @@ public sealed class Account : AggregateRoot<string>
     }
 
     /// <summary>
-    /// Validates the reset token and replaces the hashed password.
+    /// Validates the reset token — must match <see cref="ResetPasswordToken"/> and still be within
+    /// <see cref="GuidToken"/>'s 24 h window — and replaces the hashed password. Expiry is enforced
+    /// here, not just by callers, so this invariant can't be silently skipped by a future caller
+    /// that forgets to pre-check <see cref="GuidToken.IsTokenAlive"/> itself.
     /// </summary>
     public ErrorOr<Success> ResetPassword(string token, string newHashedPassword)
     {
-        if (!TokensMatch(ResetPasswordToken, token))
+        if (!TokensMatch(ResetPasswordToken, token) || !GuidToken.IsTokenAlive(ResetPasswordToken!))
             return LocalizableError.Validation("Account.InvalidToken", "Invalid or expired password-reset token.");
 
         if (string.IsNullOrWhiteSpace(newHashedPassword))

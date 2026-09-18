@@ -1,4 +1,4 @@
-using Maroik.Core.Domain.Account;
+﻿using Maroik.Core.Domain.Account;
 using Maroik.Core.Contract.Dtos;
 using Maroik.Core.Contract.Interfaces;
 using Maroik.Core.Domain.Localization;
@@ -23,7 +23,6 @@ public class AccountBookController : Controller
     private readonly IAssetService _assetService;
     private readonly IIncomeService _incomeService;
     private readonly IExpenditureService _expenditureService;
-    private readonly ISessionService _sessionService;
     private readonly IExcelExportService _excelExportService;
     private readonly Func<string, string> _localize;
 
@@ -34,7 +33,6 @@ public class AccountBookController : Controller
         IAssetService assetService,
         IIncomeService incomeService,
         IExpenditureService expenditureService,
-        ISessionService sessionService,
         IExcelExportService excelExportService)
     {
         _localizer = localizer;
@@ -42,7 +40,6 @@ public class AccountBookController : Controller
         _assetService = assetService;
         _incomeService = incomeService;
         _expenditureService = expenditureService;
-        _sessionService = sessionService;
         _excelExportService = excelExportService;
         _localize = key => _localizer[key].Value;
     }
@@ -60,7 +57,7 @@ public class AccountBookController : Controller
         if (!ModelState.IsValid)
             return Json(new { result = false, error = _localizer["Input is invalid"].Value });
 
-        string email = _sessionService.GetAccount()!.Email!;
+        string email = ((AccountResponse)ViewBag.LoggedInAccount).Email!;
 
         var request = new AssetRequest
         {
@@ -90,7 +87,7 @@ public class AccountBookController : Controller
         if (HttpContext.Request.Headers["X-Requested-With"] == "XMLHttpRequest")
 #pragma warning restore ASP0015
         {
-            var account = _sessionService.GetAccount()!;
+            AccountResponse account = ViewBag.LoggedInAccount;
             var assets = string.IsNullOrEmpty(wholeSearch)
                 ? await _assetService.GetAssetsAsync(account.Email!, ct)
                 : await _assetService.SearchAssetsAsync(account.Email!, wholeSearch, ct);
@@ -101,7 +98,7 @@ public class AccountBookController : Controller
             return PartialView("_AssetGrid", viewModels);
         }
 
-        var pageAccount = _sessionService.GetAccount() ?? new AccountResponse();
+        AccountResponse pageAccount = ViewBag.LoggedInAccount;
         string tz = pageAccount.TimeZoneIanaId ?? "UTC";
         var vm = new AccountBookPageViewModel
         {
@@ -124,7 +121,7 @@ public class AccountBookController : Controller
         try
         {
             AssetResponse? asset = await _assetService.GetAssetAsync(
-                _sessionService.GetAccount()!.Email!, productName, ct);
+                ((AccountResponse)ViewBag.LoggedInAccount).Email!, productName, ct);
 
             return asset == null
                 ? Json(new { result = false, error = _localizer["Fail to find the asset by given product name"].Value })
@@ -151,7 +148,7 @@ public class AccountBookController : Controller
         if (!ModelState.IsValid)
             return Json(new { result = false, error = _localizer["Input is invalid"].Value });
 
-        string email = _sessionService.GetAccount()!.Email!;
+        string email = ((AccountResponse)ViewBag.LoggedInAccount).Email!;
 
         var request = new AssetRequest
         {
@@ -179,7 +176,7 @@ public class AccountBookController : Controller
     [RequiredHttpPostAccess(Role = Role.User)]
     public async Task<IActionResult> DeleteAsset([FromBody] AssetInputViewModel assetInputViewModel, CancellationToken ct)
     {
-        string email = _sessionService.GetAccount()!.Email!;
+        string email = ((AccountResponse)ViewBag.LoggedInAccount).Email!;
         var result = await _assetService.DeleteAsync(email, assetInputViewModel.ProductName!, ct);
         return result.Success
             ? Json(new { result = true, message = _localizer["The asset has been successfully deleted."].Value })
@@ -196,7 +193,7 @@ public class AccountBookController : Controller
     [RequiredHttpPostAccess(Role = Role.User)]
     public async Task<IActionResult> ExportExcelAsset(string fileName = "", CancellationToken ct = default)
     {
-        var account = _sessionService.GetAccount()!;
+        AccountResponse account = ViewBag.LoggedInAccount;
         var assets = await _assetService.GetAssetsAsync(account.Email!, ct);
         var stream = _excelExportService.CreateAssetExcel(assets, _localize, account.TimeZoneIanaId!);
         string name = fileName.ToExcelFileName(account.TimeZoneIanaId!);
@@ -220,7 +217,7 @@ public class AccountBookController : Controller
         if (!ModelState.IsValid)
             return Json(new { result = false, error = _localizer["Input is invalid"].Value });
 
-        string email = _sessionService.GetAccount()!.Email!;
+        AccountResponse account = ViewBag.LoggedInAccount;
 
         var request = new IncomeRequest
         {
@@ -229,11 +226,11 @@ public class AccountBookController : Controller
             Content = incomeInputViewModel.Content ?? "",
             Amount = incomeInputViewModel.Amount,
             DepositMyAssetProductName = incomeInputViewModel.DepositMyAssetProductName,
-            Created = incomeInputViewModel.Created,
+            Created = incomeInputViewModel.ToCreatedUtc(account.TimeZoneIanaId ?? "UTC"),
             Note = incomeInputViewModel.Note ?? ""
         };
 
-        var result = await _incomeService.CreateAsync(email, request, ct);
+        var result = await _incomeService.CreateAsync(account.Email!, request, ct);
         return result.Success
             ? Json(new { result = true, message = _localizer["The income has been successfully created."].Value })
             : Json(new { result = false, error = _localizer[result.ErrorKey, result.ErrorArgs].ToPlainString() });
@@ -251,7 +248,7 @@ public class AccountBookController : Controller
         if (HttpContext.Request.Headers["X-Requested-With"] == "XMLHttpRequest")
 #pragma warning restore ASP0015
         {
-            var account = _sessionService.GetAccount()!;
+            AccountResponse account = ViewBag.LoggedInAccount;
             var assets = await _assetService.GetAssetsAsync(account.Email!, ct);
             var incomes = string.IsNullOrEmpty(wholeSearch)
                 ? await _incomeService.GetIncomesAsync(account.Email!, ct)
@@ -264,7 +261,7 @@ public class AccountBookController : Controller
             return PartialView("_IncomeGrid", viewModels);
         }
 
-        var pageAccount = _sessionService.GetAccount() ?? new AccountResponse();
+        AccountResponse pageAccount = ViewBag.LoggedInAccount;
         string tz = pageAccount.TimeZoneIanaId ?? "UTC";
         var vm = new AccountBookPageViewModel
         {
@@ -286,8 +283,8 @@ public class AccountBookController : Controller
     {
         try
         {
-            string email = _sessionService.GetAccount()!.Email!;
-            string tz = _sessionService.GetAccount()!.TimeZoneIanaId!;
+            string email = ((AccountResponse)ViewBag.LoggedInAccount).Email!;
+            string tz = ((AccountResponse)ViewBag.LoggedInAccount).TimeZoneIanaId!;
 
             IncomeResponse? income = await _incomeService.GetByIdAsync(email, id, ct);
             if (income == null)
@@ -313,7 +310,7 @@ public class AccountBookController : Controller
         {
             string baseLabel = _localizer["Amount"].Value;
             AssetResponse? asset = await _assetService.GetAssetAsync(
-                _sessionService.GetAccount()!.Email!, productName, ct);
+                ((AccountResponse)ViewBag.LoggedInAccount).Email!, productName, ct);
 
             string label = !string.IsNullOrEmpty(asset?.MonetaryUnit)
                 ? baseLabel.GetAmountLabel(asset.MonetaryUnit)
@@ -341,7 +338,7 @@ public class AccountBookController : Controller
         if (!ModelState.IsValid)
             return Json(new { result = false, error = _localizer["Input is invalid"].Value });
 
-        string email = _sessionService.GetAccount()!.Email!;
+        AccountResponse account = ViewBag.LoggedInAccount;
 
         var request = new IncomeRequest
         {
@@ -351,11 +348,11 @@ public class AccountBookController : Controller
             Content = incomeInputViewModel.Content,
             Amount = incomeInputViewModel.Amount,
             DepositMyAssetProductName = incomeInputViewModel.DepositMyAssetProductName,
-            Created = incomeInputViewModel.Created,
+            Created = incomeInputViewModel.ToCreatedUtc(account.TimeZoneIanaId ?? "UTC"),
             Note = incomeInputViewModel.Note
         };
 
-        var result = await _incomeService.UpdateAsync(email, request, ct);
+        var result = await _incomeService.UpdateAsync(account.Email!, request, ct);
         return result.Success
             ? Json(new { result = true, message = _localizer["The income has been successfully updated."].Value })
             : Json(new { result = false, error = _localizer[result.ErrorKey, result.ErrorArgs].ToPlainString() });
@@ -371,7 +368,7 @@ public class AccountBookController : Controller
     [RequiredHttpPostAccess(Role = Role.User)]
     public async Task<IActionResult> DeleteIncome([FromBody] IncomeInputViewModel incomeInputViewModel, CancellationToken ct)
     {
-        string email = _sessionService.GetAccount()!.Email!;
+        string email = ((AccountResponse)ViewBag.LoggedInAccount).Email!;
         var result = await _incomeService.DeleteAsync(email, incomeInputViewModel.Id, ct);
         return result.Success
             ? Json(new { result = true, message = _localizer["The income has been successfully deleted."].Value })
@@ -388,7 +385,7 @@ public class AccountBookController : Controller
     [RequiredHttpPostAccess(Role = Role.User)]
     public async Task<IActionResult> ExportExcelIncome(string fileName = "", CancellationToken ct = default)
     {
-        var account = _sessionService.GetAccount()!;
+        AccountResponse account = ViewBag.LoggedInAccount;
         var assets = await _assetService.GetAssetsAsync(account.Email!, ct);
         var incomes = await _incomeService.GetIncomesAsync(account.Email!, ct);
         var stream = _excelExportService.CreateIncomeExcel(incomes, assets, _localize, account.TimeZoneIanaId!);
@@ -414,7 +411,7 @@ public class AccountBookController : Controller
         if (!ModelState.IsValid)
             return Json(new { result = false, error = _localizer["Input is invalid"].Value });
 
-        string email = _sessionService.GetAccount()!.Email!;
+        AccountResponse account = ViewBag.LoggedInAccount;
 
         var request = new ExpenditureRequest
         {
@@ -424,11 +421,11 @@ public class AccountBookController : Controller
             Amount = expenditureInputViewModel.Amount,
             PaymentMethod = expenditureInputViewModel.PaymentMethod,
             MyDepositAsset = expenditureInputViewModel.MyDepositAsset,
-            Created = expenditureInputViewModel.Created,
+            Created = expenditureInputViewModel.ToCreatedUtc(account.TimeZoneIanaId ?? "UTC"),
             Note = expenditureInputViewModel.Note ?? ""
         };
 
-        var result = await _expenditureService.CreateAsync(email, request, ct);
+        var result = await _expenditureService.CreateAsync(account.Email!, request, ct);
         return result.Success
             ? Json(new { result = true, message = _localizer["The expenditure has been successfully created."].Value })
             : Json(new { result = false, error = _localizer[result.ErrorKey, result.ErrorArgs].ToPlainString() });
@@ -446,7 +443,7 @@ public class AccountBookController : Controller
         if (HttpContext.Request.Headers["X-Requested-With"] == "XMLHttpRequest")
 #pragma warning restore ASP0015
         {
-            var account = _sessionService.GetAccount()!;
+            AccountResponse account = ViewBag.LoggedInAccount;
             var assets = await _assetService.GetAssetsAsync(account.Email!, ct);
             var expenditures = string.IsNullOrEmpty(wholeSearch)
                 ? await _expenditureService.GetExpendituresAsync(account.Email!, ct)
@@ -459,7 +456,7 @@ public class AccountBookController : Controller
             return PartialView("_ExpenditureGrid", viewModels);
         }
 
-        var pageAccount = _sessionService.GetAccount() ?? new AccountResponse();
+        AccountResponse pageAccount = ViewBag.LoggedInAccount;
         string tz = pageAccount.TimeZoneIanaId ?? "UTC";
         var vm = new AccountBookPageViewModel
         {
@@ -481,8 +478,8 @@ public class AccountBookController : Controller
     {
         try
         {
-            string email = _sessionService.GetAccount()!.Email!;
-            string tz = _sessionService.GetAccount()!.TimeZoneIanaId!;
+            string email = ((AccountResponse)ViewBag.LoggedInAccount).Email!;
+            string tz = ((AccountResponse)ViewBag.LoggedInAccount).TimeZoneIanaId!;
 
             ExpenditureResponse? expenditure = await _expenditureService.GetByIdAsync(email, id, ct);
             if (expenditure == null)
@@ -508,7 +505,7 @@ public class AccountBookController : Controller
         {
             string baseLabel = _localizer["Amount"].Value;
             AssetResponse? asset = await _assetService.GetAssetAsync(
-                _sessionService.GetAccount()!.Email!, productName, ct);
+                ((AccountResponse)ViewBag.LoggedInAccount).Email!, productName, ct);
 
             string label = !string.IsNullOrEmpty(asset?.MonetaryUnit)
                 ? baseLabel.GetAmountLabel(asset.MonetaryUnit)
@@ -537,7 +534,7 @@ public class AccountBookController : Controller
         if (!ModelState.IsValid)
             return Json(new { result = false, error = _localizer["Input is invalid"].Value });
 
-        string email = _sessionService.GetAccount()!.Email!;
+        AccountResponse account = ViewBag.LoggedInAccount;
 
         var request = new ExpenditureRequest
         {
@@ -548,11 +545,11 @@ public class AccountBookController : Controller
             Amount = expenditureInputViewModel.Amount,
             PaymentMethod = expenditureInputViewModel.PaymentMethod,
             MyDepositAsset = expenditureInputViewModel.MyDepositAsset,
-            Created = expenditureInputViewModel.Created,
+            Created = expenditureInputViewModel.ToCreatedUtc(account.TimeZoneIanaId ?? "UTC"),
             Note = expenditureInputViewModel.Note ?? ""
         };
 
-        var result = await _expenditureService.UpdateAsync(email, request, ct);
+        var result = await _expenditureService.UpdateAsync(account.Email!, request, ct);
         return result.Success
             ? Json(new { result = true, message = _localizer["The expenditure has been successfully updated."].Value })
             : Json(new { result = false, error = _localizer[result.ErrorKey, result.ErrorArgs].ToPlainString() });
@@ -569,7 +566,7 @@ public class AccountBookController : Controller
     public async Task<IActionResult> DeleteExpenditure(
         [FromBody] ExpenditureInputViewModel expenditureInputViewModel, CancellationToken ct)
     {
-        string email = _sessionService.GetAccount()!.Email!;
+        string email = ((AccountResponse)ViewBag.LoggedInAccount).Email!;
         var result = await _expenditureService.DeleteAsync(email, expenditureInputViewModel.Id, ct);
         return result.Success
             ? Json(new { result = true, message = _localizer["The expenditure has been successfully deleted."].Value })
@@ -586,7 +583,7 @@ public class AccountBookController : Controller
     [RequiredHttpPostAccess(Role = Role.User)]
     public async Task<IActionResult> ExportExcelExpenditure(string fileName = "", CancellationToken ct = default)
     {
-        var account = _sessionService.GetAccount()!;
+        AccountResponse account = ViewBag.LoggedInAccount;
         var assets = await _assetService.GetAssetsAsync(account.Email!, ct);
         var expenditures = await _expenditureService.GetExpendituresAsync(account.Email!, ct);
         var stream = _excelExportService.CreateExpenditureExcel(expenditures, assets, _localize, account.TimeZoneIanaId!);

@@ -42,6 +42,24 @@ public class CategoryRepository(ApplicationDbContext context)
         => QueryFirstAsync(e => e.Id == id, ct: ct);
 
     /// <inheritdoc />
+    public async Task<Category?> FindByIdForUpdateAsync(long id, CancellationToken ct = default)
+    {
+        // Raw SQL is required because EF Core LINQ cannot emit FOR UPDATE. AsNoTracking so a
+        // pre-lock instance already tracked in this context can't snap back and defeat the lock.
+        var entities = await Set.FromSqlInterpolated(
+            $"""
+             SELECT *
+             FROM "Category"
+             WHERE "Id" = {id}
+             LIMIT 1
+             FOR UPDATE
+             """).AsNoTracking().ToListAsync(ct);
+
+        var entity = entities.FirstOrDefault();
+        return entity == null ? null : ToDomain(entity);
+    }
+
+    /// <inheritdoc />
     public Task DeleteByIdAsync(long id, CancellationToken ct = default)
         => DeleteWhereAsync(e => e.Id == id, ct);
 }

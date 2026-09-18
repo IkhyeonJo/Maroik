@@ -103,7 +103,7 @@ public class BoardService(
         => await boardCommentRepository.GetCommentCountsByBoardIdsAsync(boardIds, ct);
 
     /// <inheritdoc />
-    public async Task<ServiceResult> WriteBoardAsync(BoardRequest request, AttachedFileDto? attachedFile, CancellationToken ct = default)
+    public async Task<ServiceResult> WriteBoardAsync(BoardRequest request, bool isAdmin, AttachedFileDto? attachedFile, CancellationToken ct = default)
     {
         var fileError = attachmentContent.ValidateAttachedFile(attachedFile);
         if (fileError != null) return fileError;
@@ -122,7 +122,9 @@ public class BoardService(
 
             var board = boardResult.Value;
             if (request.Locked) board.Lock();
-            if (request.Noticed) board.Pin();
+            // Pinning a post site-wide is an admin-only action — enforced here, not just by the
+            // caller, so a future write path can't accidentally honour a non-admin's Noticed=true.
+            if (request.Noticed && isAdmin) board.Pin();
 
             long boardId = await boardRepository.WriteBoardAsync(board, ct);
 

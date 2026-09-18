@@ -99,25 +99,31 @@
 
     /** Write-form attachment `change`: reject + clear if over `maxFileSize`, else stash the `File`. */
     function WriteUploadFile(obj: HTMLInputElement, errorMessage?: string) {
-        if (obj.files![0].size > maxFileSize) {
+        if (!obj.files || obj.files.length === 0) {
+            return;
+        }
+        if (obj.files[0].size > maxFileSize) {
             alert(errorMessage);
             (document.getElementById('writeUploadedFile') as HTMLInputElement).value = "";
             return false;
         }
         else {
-            writeUploadedFile = obj.files![0];
+            writeUploadedFile = obj.files[0];
         }
     }
 
     /** Same as `WriteUploadFile` for the edit form. */
     function EditUploadFile(obj: HTMLInputElement, errorMessage?: string) {
-        if (obj.files![0].size > maxFileSize) {
+        if (!obj.files || obj.files.length === 0) {
+            return;
+        }
+        if (obj.files[0].size > maxFileSize) {
             alert(errorMessage);
             (document.getElementById('editUploadedFile') as HTMLInputElement).value = "";
             return false;
         }
         else {
-            editUploadedFile = obj.files![0];
+            editUploadedFile = obj.files[0];
         }
     }
 

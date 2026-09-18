@@ -1,5 +1,6 @@
 // ReSharper disable UnusedAutoPropertyAccessor.Global
 using System.ComponentModel.DataAnnotations;
+using Maroik.Core.Domain.Finance;
 
 namespace Maroik.Website.Models.ViewModels.Notice;
 
@@ -9,10 +10,9 @@ namespace Maroik.Website.Models.ViewModels.Notice;
 /// after which they are treated as expired. An <see cref="Unpunctuality"/> flag tracks
 /// whether the payment was made on time.
 /// </summary>
-public class FixedExpenditureInputViewModel
+public class FixedExpenditureInputViewModel : IValidatableObject
 {
     /// <summary>Database row ID; 0 for a new record, positive for an edit.</summary>
-    [Required(ErrorMessage = "Please enter Id")]
     [Display(Name = "Id")]
     public int Id { get; set; }
 
@@ -55,13 +55,18 @@ public class FixedExpenditureInputViewModel
     [Display(Name = "Note")]
     public string? Note { get; set; }
 
-    /// <summary>Payment instrument used (e.g. "CreditCard", "Cash").</summary>
+    /// <summary>Name of the asset (product) debited to pay for this expenditure — an FK to
+    /// <c>Asset.ProductName</c>, despite the field name (e.g. "CreditCard", "Cash").</summary>
     [Required(ErrorMessage = "Please enter PaymentMethod")]
     [Display(Name = "PaymentMethod")]
     public string? PaymentMethod { get; set; }
 
-    /// <summary>Name of the asset (product) that is debited for this recurring expenditure.</summary>
-    [Required(ErrorMessage = "Please enter MyDepositAsset")]
+    /// <summary>
+    /// Name of the asset (product) that is debited for this recurring expenditure. Required only
+    /// when <see cref="SubClass"/> is one of
+    /// <see cref="ExpenditureClassPolicy.DepositAssetSubClasses"/> (a transfer-type sub-class) —
+    /// the domain only needs a deposit asset then; see <see cref="Validate"/>.
+    /// </summary>
     [Display(Name = "MyDepositAsset")]
     public string? MyDepositAsset { get; set; }
 
@@ -71,4 +76,18 @@ public class FixedExpenditureInputViewModel
     /// </summary>
     [Display(Name = "Unpunctuality")]
     public bool Unpunctuality { get; set; }
+
+    /// <summary>
+    /// Enforces that <see cref="MyDepositAsset"/> is supplied when (and only when) the domain
+    /// actually requires one, instead of a blanket <c>[Required]</c> that would reject a valid
+    /// non-transfer fixed expenditure from any caller that correctly omits it.
+    /// </summary>
+    public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
+    {
+        if (SubClass != null && ExpenditureClassPolicy.DepositAssetSubClasses.Contains(SubClass)
+            && string.IsNullOrWhiteSpace(MyDepositAsset))
+        {
+            yield return new ValidationResult("Please enter MyDepositAsset", [nameof(MyDepositAsset)]);
+        }
+    }
 }

@@ -223,7 +223,7 @@ public class BoardServiceTests
         var sut = CreateSut();
 
         ServiceResult result = await sut.WriteBoardAsync(
-            new BoardRequest { Type = BoardTypes.FreeForum, Title = "Test Title", Writer = "Alice" }, null, TestContext.Current.CancellationToken);
+            new BoardRequest { Type = BoardTypes.FreeForum, Title = "Test Title", Writer = "Alice" }, false, null, TestContext.Current.CancellationToken);
 
         Assert.True(result.Success);
         _unitOfWork.Verify(u => u.CommitAsync(It.IsAny<CancellationToken>()), Times.Once);
@@ -241,7 +241,7 @@ public class BoardServiceTests
 
         var file = new AttachedFileDto { FileName = "doc.zip", ContentType = "application/zip", Bytes = [1, 2], Size = 2 };
         ServiceResult result = await sut.WriteBoardAsync(
-            new BoardRequest { Type = BoardTypes.FreeForum, Title = "Test Title", Writer = "Alice" }, file, TestContext.Current.CancellationToken);
+            new BoardRequest { Type = BoardTypes.FreeForum, Title = "Test Title", Writer = "Alice" }, false, file, TestContext.Current.CancellationToken);
 
         Assert.True(result.Success);
         _attachedFileRepo.Verify(r => r.CreateAsync(It.IsAny<BoardAttachedFile>(), It.IsAny<CancellationToken>()), Times.Once);
@@ -259,7 +259,7 @@ public class BoardServiceTests
 
         var file = new AttachedFileDto { FileName = "doc.zip", ContentType = "application/zip", Bytes = [1, 2], Size = 2 };
         ServiceResult result = await sut.WriteBoardAsync(
-            new BoardRequest { Type = BoardTypes.FreeForum, Title = "Test Title", Writer = "Alice" }, file, TestContext.Current.CancellationToken);
+            new BoardRequest { Type = BoardTypes.FreeForum, Title = "Test Title", Writer = "Alice" }, false, file, TestContext.Current.CancellationToken);
 
         Assert.False(result.Success);
         _attachedFileRepo.Verify(r => r.CreateAsync(It.IsAny<BoardAttachedFile>(), It.IsAny<CancellationToken>()), Times.Never);
@@ -284,7 +284,7 @@ public class BoardServiceTests
 
         var file = new AttachedFileDto { FileName = ".zip", ContentType = "application/zip", Bytes = [1, 2], Size = 2 };
         ServiceResult result = await sut.WriteBoardAsync(
-            new BoardRequest { Type = BoardTypes.FreeForum, Title = "Test Title", Writer = "Alice" }, file, TestContext.Current.CancellationToken);
+            new BoardRequest { Type = BoardTypes.FreeForum, Title = "Test Title", Writer = "Alice" }, false, file, TestContext.Current.CancellationToken);
 
         Assert.False(result.Success);
         _attachedFileRepo.Verify(r => r.CreateAsync(It.IsAny<BoardAttachedFile>(), It.IsAny<CancellationToken>()), Times.Never);
@@ -299,10 +299,49 @@ public class BoardServiceTests
         var sut = CreateSut();
 
         ServiceResult result = await sut.WriteBoardAsync(
-            new BoardRequest { Type = BoardTypes.FreeForum, Title = "Test Title", Writer = "Alice" }, null, TestContext.Current.CancellationToken);
+            new BoardRequest { Type = BoardTypes.FreeForum, Title = "Test Title", Writer = "Alice" }, false, null, TestContext.Current.CancellationToken);
 
         Assert.False(result.Success);
         _unitOfWork.Verify(u => u.RollbackAsync(It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    /// <summary>Verifies that <c>Noticed=true</c> from a non-admin caller does not pin the post —
+    /// enforced by the service itself, not just by the controller that builds the request.</summary>
+    [Fact]
+    public async Task WriteBoardAsync_DoesNotPin_WhenNoticedTrueButNotAdmin()
+    {
+        Board? written = null;
+        _boardRepo.Setup(r => r.WriteBoardAsync(It.IsAny<Board>(), It.IsAny<CancellationToken>()))
+            .Callback<Board, CancellationToken>((b, _) => written = b)
+            .ReturnsAsync(1L);
+        var sut = CreateSut();
+
+        ServiceResult result = await sut.WriteBoardAsync(
+            new BoardRequest { Type = BoardTypes.FreeForum, Title = "Test Title", Writer = "Alice", Noticed = true },
+            false, null, TestContext.Current.CancellationToken);
+
+        Assert.True(result.Success);
+        Assert.NotNull(written);
+        Assert.False(written!.Noticed);
+    }
+
+    /// <summary>Verifies that <c>Noticed=true</c> from an admin caller does pin the post.</summary>
+    [Fact]
+    public async Task WriteBoardAsync_Pins_WhenNoticedTrueAndAdmin()
+    {
+        Board? written = null;
+        _boardRepo.Setup(r => r.WriteBoardAsync(It.IsAny<Board>(), It.IsAny<CancellationToken>()))
+            .Callback<Board, CancellationToken>((b, _) => written = b)
+            .ReturnsAsync(1L);
+        var sut = CreateSut();
+
+        ServiceResult result = await sut.WriteBoardAsync(
+            new BoardRequest { Type = BoardTypes.FreeForum, Title = "Test Title", Writer = "Alice", Noticed = true },
+            true, null, TestContext.Current.CancellationToken);
+
+        Assert.True(result.Success);
+        Assert.NotNull(written);
+        Assert.True(written!.Noticed);
     }
 
     // -- EditBoardAsync -------------------------------------------------------

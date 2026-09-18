@@ -262,4 +262,10 @@ describe("admin/Calendar/AdminIndex", () => {
     expect(html).not.toContain("<img");
     expect(html).toContain("&lt;img src=x onerror=alert(1)&gt;");
   });
+
+  it("CreateCalendarEventUploadedFile/EditCalendarEventUploadedFile do not throw when change fires with no file selected", () => {
+    const h = loadSite("admin", "Calendar", "AdminIndex", fixture());
+    expect(() => h.$("#createCalendarEventAttachment").trigger("change")).not.toThrow();
+    expect(() => h.$("#editCalendarEventAttachment").trigger("change")).not.toThrow();
+  });
 });

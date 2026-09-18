@@ -23,12 +23,39 @@ public sealed class EmailConsumerWorker(
     internal IChannel? Channel;
     private string? _consumerTag;
 
+    // Passed to every IEmailMessageHandler.HandleAsync call. Never cancelled during normal
+    // operation; StopAsync cancels it only once its drain deadline is reached with a send still
+    // running, so that in-progress SendMailAsync call aborts cleanly (triggering the normal
+    // nack/dead-letter path in OnMessageReceivedAsync's catch) instead of the channel being
+    // disposed out from under it, which would throw from ack/nack and force a redelivery/resend
+    // of a send that may already have completed.
+    private readonly CancellationTokenSource _sendCts = new();
+
+    /// <summary>Overridable in tests so the drain/unwind waits below don't need to run for real seconds.</summary>
+    internal TimeSpan DrainTimeout { get; set; } = TimeSpan.FromSeconds(25);
+
+    /// <summary>Overridable in tests — see <see cref="DrainTimeout"/>.</summary>
+    internal TimeSpan CancelUnwindTimeout { get; set; } = TimeSpan.FromSeconds(5);
+
     // The consumer dispatches one message at a time (RabbitMQ.Client's default
     // ConsumerDispatchConcurrency is 1); prefetch just lets the broker keep the next few buffered
     // at the client so there is no round-trip stall between messages. This still tracks the
     // delivery tag(s) in OnMessageReceivedAsync so StopAsync can wait for the current one to
     // finish ack/nack before the channel is disposed out from under it.
     private readonly ConcurrentDictionary<ulong, byte> _inFlight = new();
+
+    /// <summary>
+    /// Header this worker sets on its own retry republish, holding how many times it has already
+    /// retried this logical message. Tracked ourselves rather than via <c>BasicDeliverEventArgs
+    /// .Redelivered</c>: the broker also sets that flag on a redelivery caused by a connection/consumer
+    /// drop unrelated to this class's own retry decision (e.g. this process crashing and restarting),
+    /// which would otherwise immediately dead-letter a message that this consumer instance never
+    /// actually attempted.
+    /// </summary>
+    internal const string RetryCountHeader = "x-maroik-retry-count";
+
+    /// <summary>How many of our own retries (via <see cref="RetryCountHeader"/>) a message gets before dead-lettering.</summary>
+    internal const int MaxRetries = 1;
 
     /// <summary>
     /// Establishes the RabbitMQ topology and starts consuming, then runs for the lifetime of the
@@ -108,6 +135,20 @@ public sealed class EmailConsumerWorker(
             }
             catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested)
             {
+                // Shutdown was requested mid-connect (e.g. right after CreateConnectionAsync
+                // succeeded but before the queue topology finished declaring). Tear down whatever
+                // was opened, same as the generic catch below, so this doesn't leak an open
+                // connection when ExecuteAsync's caller doesn't get a chance to clean up.
+                if (Channel != null)
+                {
+                    await Channel.DisposeAsync();
+                    Channel = null;
+                }
+                if (_connection != null)
+                {
+                    await _connection.DisposeAsync();
+                    _connection = null;
+                }
                 throw;
             }
             catch (Exception ex)
@@ -133,13 +174,14 @@ public sealed class EmailConsumerWorker(
 
     /// <summary>
     /// Deserializes and processes one delivered message in a fresh DI scope, then acks it.
-    /// A failure on first delivery is requeue once (to survive a transient SMTP/network blip);
-    /// a failure on the retry nacks without requeue, so a poison message cannot block the queue
-    /// forever — the queue's dead-letter policy then routes it to <see cref="QueueNames.EmailDeadLetter"/>
-    /// for inspection instead of discarding it. A failure to ack a message that was already
-    /// handled successfully is logged and left unacked rather than nacked, since nacking it would
-    /// requeue and resend an email that was already delivered (there is no idempotency key to
-    /// suppress the duplicate).
+    /// A failure gets <see cref="MaxRetries"/> retries (via <see cref="RetryCountHeader"/>, our own
+    /// counter — see its doc comment for why this isn't just <c>BasicDeliverEventArgs.Redelivered</c>)
+    /// to survive a transient SMTP/network blip; once exhausted, the message is nacked without
+    /// requeue so a poison message cannot block the queue forever — the queue's dead-letter policy
+    /// then routes it to <see cref="QueueNames.EmailDeadLetter"/> for inspection instead of
+    /// discarding it. A failure to ack a message that was already handled successfully is logged
+    /// and left unacked rather than nacked, since nacking it would requeue and resend an email that
+    /// was already delivered (there is no idempotency key to suppress the duplicate).
     /// </summary>
     internal async Task OnMessageReceivedAsync(object sender, BasicDeliverEventArgs ea)
     {
@@ -159,7 +201,7 @@ public sealed class EmailConsumerWorker(
                 {
                     await using AsyncServiceScope scope = scopeFactory.CreateAsyncScope();
                     var handler = scope.ServiceProvider.GetRequiredService<IEmailMessageHandler>();
-                    await handler.HandleAsync(message);
+                    await handler.HandleAsync(message, _sendCts.Token);
                 }
 
                 try
@@ -176,30 +218,38 @@ public sealed class EmailConsumerWorker(
             }
             catch (Exception ex)
             {
-                // Give a message one redelivery so a transient SMTP/network blip doesn't permanently
-                // drop the email; only give up once it has already come back around once and failed
-                // again, so a genuinely poison message still can't block the queue forever.
+                // Give a message MaxRetries retries (our own counter, not the broker's Redelivered
+                // flag -- see RetryCountHeader's doc comment) so a transient SMTP/network blip
+                // doesn't permanently drop the email; only give up once that's exhausted, so a
+                // genuinely poison message still can't block the queue forever.
                 try
                 {
-                    if (!ea.Redelivered)
+                    int retryCount = GetRetryCount(ea.BasicProperties);
+                    if (retryCount < MaxRetries)
                     {
-                        logger.LogWarning(ex, "Failed to process email message (delivery tag {DeliveryTag}); requeuing for one retry", ea.DeliveryTag);
-                        await Channel!.BasicNackAsync(ea.DeliveryTag, multiple: false, requeue: true);
+                        logger.LogWarning(ex, "Failed to process email message (delivery tag {DeliveryTag}, retry {RetryCount}); republishing for retry", ea.DeliveryTag, retryCount);
+                        // A plain nack(requeue:true) can't carry our incremented counter -- RabbitMQ
+                        // requeues the original message unchanged, headers included. Publish a copy
+                        // with RetryCountHeader bumped, then ack the original so it's this republished
+                        // copy (not the original) that the broker redelivers next.
+                        await RepublishWithIncrementedRetryAsync(ea, retryCount + 1);
+                        await Channel!.BasicAckAsync(ea.DeliveryTag, multiple: false);
                     }
                     else
                     {
                         // requeue: false triggers the queue's dead-letter policy, so the message is
                         // routed to QueueNames.EmailDeadLetter rather than discarded.
-                        logger.LogError(ex, "Failed to process email message (delivery tag {DeliveryTag}) on retry; dead-lettering to '{DeadLetterQueue}'", ea.DeliveryTag, QueueNames.EmailDeadLetter);
+                        logger.LogError(ex, "Failed to process email message (delivery tag {DeliveryTag}) after {RetryCount} retries; dead-lettering to '{DeadLetterQueue}'", ea.DeliveryTag, retryCount, QueueNames.EmailDeadLetter);
                         await Channel!.BasicNackAsync(ea.DeliveryTag, multiple: false, requeue: false);
                     }
                 }
                 catch (Exception nackEx)
                 {
-                    // Nacking failed (e.g. channel mid-recovery). The message will only come back via
-                    // connection-level recovery rather than this class's documented retry/dead-letter
-                    // policy, so at least surface that loudly instead of losing the exception silently.
-                    logger.LogError(nackEx, "Failed to nack email message (delivery tag {DeliveryTag}) after a processing failure", ea.DeliveryTag);
+                    // Republish/ack or nack failed (e.g. channel mid-recovery). The message will only
+                    // come back via connection-level recovery rather than this class's documented
+                    // retry/dead-letter policy, so at least surface that loudly instead of losing the
+                    // exception silently.
+                    logger.LogError(nackEx, "Failed to republish/ack or nack email message (delivery tag {DeliveryTag}) after a processing failure", ea.DeliveryTag);
                 }
             }
             finally
@@ -207,6 +257,48 @@ public sealed class EmailConsumerWorker(
                 _inFlight.TryRemove(ea.DeliveryTag, out _);
             }
         }
+    }
+
+    /// <summary>Reads <see cref="RetryCountHeader"/> off a delivery, defaulting to 0 (first attempt) when absent or unparsable.</summary>
+    private static int GetRetryCount(IReadOnlyBasicProperties properties)
+    {
+        if (properties.Headers == null || !properties.Headers.TryGetValue(RetryCountHeader, out object? value) || value == null)
+            return 0;
+
+        return value switch
+        {
+            int i => i,
+            long l => (int)l,
+            byte[] bytes when int.TryParse(System.Text.Encoding.UTF8.GetString(bytes), out int parsed) => parsed,
+            _ => 0
+        };
+    }
+
+    /// <summary>
+    /// Publishes a copy of <paramref name="ea"/>'s body back onto the "maroik.email" queue with
+    /// <see cref="RetryCountHeader"/> set to <paramref name="nextRetryCount"/>. The caller acks the
+    /// original delivery once this returns, so exactly one copy (this republished one) remains live
+    /// -- the original is never itself requeued. Note: if this publish succeeds but the following
+    /// ack then fails (e.g. the channel drops in between), both the original (redelivered via
+    /// connection recovery) and this republished copy can end up live, risking a duplicate send on
+    /// retry -- the same class of narrow, accepted race as a post-send ack failure elsewhere in this
+    /// worker (see OnMessageReceivedAsync's own doc comment).
+    /// </summary>
+    private async Task RepublishWithIncrementedRetryAsync(BasicDeliverEventArgs ea, int nextRetryCount)
+    {
+        var headers = ea.BasicProperties.Headers != null
+            ? new Dictionary<string, object?>(ea.BasicProperties.Headers)
+            : [];
+        headers[RetryCountHeader] = nextRetryCount;
+
+        var properties = new BasicProperties(ea.BasicProperties) { Headers = headers };
+
+        await Channel!.BasicPublishAsync(
+            exchange: "",
+            routingKey: QueueNames.Email,
+            mandatory: false,
+            basicProperties: properties,
+            body: ea.Body);
     }
 
     /// <summary>
@@ -233,7 +325,7 @@ public sealed class EmailConsumerWorker(
         await base.StopAsync(cancellationToken);
 
         using var drainCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
-        drainCts.CancelAfter(TimeSpan.FromSeconds(25));
+        drainCts.CancelAfter(DrainTimeout);
         try
         {
             while (!_inFlight.IsEmpty)
@@ -241,13 +333,37 @@ public sealed class EmailConsumerWorker(
         }
         catch (OperationCanceledException)
         {
-            // Either the host's own shutdown deadline or the 25s drain deadline was reached;
-            // proceed to dispose regardless.
+            // Either the host's own shutdown deadline or the 25s drain deadline was reached. If a
+            // send is still running at this point, cancel it via _sendCts (every HandleAsync call
+            // is given its token) instead of disposing the channel straight out from under it below
+            // -- that would throw from the handler's own ack/nack and force a redelivery/resend of
+            // a send that may already have completed. Cancellation instead lets
+            // OnMessageReceivedAsync's own catch nack the message cleanly. Give it a short, separate
+            // window to actually unwind before disposing regardless.
+            if (!_inFlight.IsEmpty)
+            {
+                logger.LogWarning(
+                    "Shutdown drain deadline reached with {Count} message(s) still in flight; cancelling in-progress send(s)",
+                    _inFlight.Count);
+                await _sendCts.CancelAsync();
+
+                using var unwindCts = new CancellationTokenSource(CancelUnwindTimeout);
+                try
+                {
+                    while (!_inFlight.IsEmpty)
+                        await Task.Delay(100, unwindCts.Token);
+                }
+                catch (OperationCanceledException)
+                {
+                    // Still not drained after the extra grace window; proceed to dispose regardless.
+                }
+            }
         }
 
         if (Channel != null)
             await Channel.DisposeAsync();
         if (_connection != null)
             await _connection.DisposeAsync();
+        _sendCts.Dispose();
     }
 }

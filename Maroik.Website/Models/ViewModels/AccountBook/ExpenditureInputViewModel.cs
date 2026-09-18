@@ -1,5 +1,7 @@
 // ReSharper disable UnusedAutoPropertyAccessor.Global
 using System.ComponentModel.DataAnnotations;
+using Maroik.Core.Domain.Finance;
+using Maroik.Website.Mappings;
 
 namespace Maroik.Website.Models.ViewModels.AccountBook;
 
@@ -9,10 +11,9 @@ namespace Maroik.Website.Models.ViewModels.AccountBook;
 /// (e.g. "ConsumerSpending" / "MealOrEatOutExpenses") and linked to the payment method
 /// and the asset account that was debited.
 /// </summary>
-public class ExpenditureInputViewModel
+public class ExpenditureInputViewModel : IValidatableObject
 {
     /// <summary>Database row ID; 0 for a new record, positive for an edit.</summary>
-    [Required(ErrorMessage = "Please enter Id")]
     [Display(Name = "Id")]
     public int Id { get; set; }
 
@@ -36,10 +37,17 @@ public class ExpenditureInputViewModel
     [Display(Name = "Amount")]
     public decimal Amount { get; set; }
 
-    /// <summary>The date the expenditure occurred; set by the controller from the user's time zone.</summary>
-    public DateTime Created { get; set; }
+    /// <summary>
+    /// The local date/time the expenditure occurred, as "yyyy-MM-dd HH:mm:ss" in the account's own
+    /// time zone (never the browser's) — the controller converts it to UTC using the logged-in
+    /// account's <c>TimeZoneIanaId</c>, already known server-side from the session, so the client
+    /// never needs to compute or transmit a UTC instant or a time zone itself.
+    /// </summary>
+    [Display(Name = "Created")]
+    public string? Created { get; set; }
 
-    /// <summary>Payment instrument used (e.g. "CreditCard", "Cash").</summary>
+    /// <summary>Name of the asset (product) debited to pay for this expenditure — an FK to
+    /// <c>Asset.ProductName</c>, despite the field name (e.g. "CreditCard", "Cash").</summary>
     [Required(ErrorMessage = "Please enter PaymentMethod")]
     [Display(Name = "PaymentMethod")]
     public string? PaymentMethod { get; set; }
@@ -48,8 +56,31 @@ public class ExpenditureInputViewModel
     [Display(Name = "Note")]
     public string? Note { get; set; }
 
-    /// <summary>Name of the asset (product) that was debited for this expenditure.</summary>
-    [Required(ErrorMessage = "Please enter MyDepositAsset")]
+    /// <summary>
+    /// Name of the asset (product) that was debited for this expenditure. Required only when
+    /// <see cref="SubClass"/> is one of <see cref="ExpenditureClassPolicy.DepositAssetSubClasses"/>
+    /// (a transfer-type sub-class) — the domain only needs a deposit asset then; see
+    /// <see cref="Validate"/>.
+    /// </summary>
     [Display(Name = "MyDepositAsset")]
     public string? MyDepositAsset { get; set; }
+
+    /// <summary>
+    /// Enforces that <see cref="MyDepositAsset"/> is supplied when (and only when) the domain
+    /// actually requires one, instead of a blanket <c>[Required]</c> that would reject a valid
+    /// non-transfer expenditure from any caller that correctly omits it.
+    /// </summary>
+    public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
+    {
+        if (SubClass != null && ExpenditureClassPolicy.DepositAssetSubClasses.Contains(SubClass)
+            && string.IsNullOrWhiteSpace(MyDepositAsset))
+        {
+            yield return new ValidationResult("Please enter MyDepositAsset", [nameof(MyDepositAsset)]);
+        }
+
+        if (!AccountBookViewModelMapper.IsValidLocalDateTime(Created))
+        {
+            yield return new ValidationResult("Please enter a valid Created", [nameof(Created)]);
+        }
+    }
 }

@@ -10,7 +10,6 @@ namespace Maroik.Website.Models.ViewModels.AccountBook;
 public class IncomeOutputViewModel
 {
     /// <summary>Unique database ID of this income record.</summary>
-    [Required(ErrorMessage = "Please enter Id")]
     [Display(Name = "Id")]
     public long Id { get; set; }
 

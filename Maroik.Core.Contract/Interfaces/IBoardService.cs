@@ -52,8 +52,12 @@ public interface IBoardService
     /// </summary>
     Task<Dictionary<long, int>> GetCommentCountsForBoardsAsync(IEnumerable<long> boardIds, CancellationToken ct = default);
 
-    /// <summary>Creates a new board post and optionally saves an attached file.</summary>
-    Task<ServiceResult> WriteBoardAsync(BoardRequest request, AttachedFileDto? attachedFile, CancellationToken ct = default);
+    /// <summary>
+    /// Creates a new board post and optionally saves an attached file. <paramref name="isAdmin"/>
+    /// gates <see cref="BoardRequest.Noticed"/> — a non-admin's request can never pin a post, no
+    /// matter what the caller populated the DTO with.
+    /// </summary>
+    Task<ServiceResult> WriteBoardAsync(BoardRequest request, bool isAdmin, AttachedFileDto? attachedFile, CancellationToken ct = default);
 
     /// <summary>
     /// Edits an existing post. Only the original author (matched by <paramref name="writerNickname"/>) may edit.

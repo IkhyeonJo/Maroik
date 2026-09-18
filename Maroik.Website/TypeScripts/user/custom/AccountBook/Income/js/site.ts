@@ -14,6 +14,11 @@
  * IIFE-wrapped, no `import` / `export`.
  */
 (function () {
+    /** Zero-pads a 1-2 digit date/time component to 2 digits (e.g. `5` -> `"05"`). */
+    function pad2(n: number): string {
+        return n.toString().padStart(2, '0');
+    }
+
     // Cached references: jQuery-UI tab containers, the grid search box, both
     // modals' fields, the amount labels, and the anti-forgery input.
     const $createIncomeTabs = $('#createIncomeTabs');
@@ -248,9 +253,11 @@
      * from the separate date / hour / minute / second fields, POST as JSON, then
      * close / reload / toast.
      *
-     * `new Date(y, m-1, d, ...)` uses `month - 1` because JS months are
-     * 0-indexed; `.toISOString()` converts that *local* time to UTC for the
-     * server. TypeScript does not catch a mistake in this arithmetic.
+     * `Created` is sent as the account's own local wall-clock time
+     * ("yyyy-MM-dd HH:mm:ss"), not converted to UTC here — the server already
+     * knows the account's IANA time zone from the session and does that
+     * conversion itself, so the browser's own (possibly different) time zone
+     * never enters into it.
      */
     function CreateIncome() {
 
@@ -270,7 +277,7 @@
         let minute = parseInt($createIncomeMinute.val() as string);
         let second = parseInt($createIncomeSecond.val() as string);
 
-        let created = new Date(year, month - 1, day, hour, minute, second).toISOString();
+        let created = `${year}-${pad2(month)}-${pad2(day)} ${pad2(hour)}:${pad2(minute)}:${pad2(second)}`;
         let depositMyAssetProductName = $createIncomeDepositMyAssetProductName.val();
         let note = $createIncomeNote.val();
 
@@ -394,7 +401,8 @@
         let minute = parseInt($editIncomeMinute.val() as string);
         let second = parseInt($editIncomeSecond.val() as string);
 
-        let created = new Date(year, month - 1, day, hour, minute, second).toISOString();
+        // See CreateIncome — local wall-clock string, no client-side UTC conversion.
+        let created = `${year}-${pad2(month)}-${pad2(day)} ${pad2(hour)}:${pad2(minute)}:${pad2(second)}`;
         let depositMyAssetProductName = $editIncomeDepositMyAssetProductName.val();
         let note = $editIncomeNote.val();
 

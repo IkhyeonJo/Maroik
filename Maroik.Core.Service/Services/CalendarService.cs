@@ -266,9 +266,12 @@ public class CalendarService(
         await unitOfWork.BeginAsync(ct);
         try
         {
-            List<Calendar> calendars = await calendarRepository.GetByAccountEmailAsync(accountEmail, ct);
-            Calendar? previous = calendars.FirstOrDefault(c => c.Id == request.Id);
-            if (previous == null)
+            // FOR UPDATE: lock the row for the rest of the transaction so a concurrent update from
+            // another session on the same calendar (e.g. two open tabs) cannot commit between this
+            // read and this transaction's write and have its change silently overwritten by
+            // UpdateEntityAsync's full-row snapshot below.
+            Calendar? previous = await calendarRepository.FindByIdForUpdateAsync(request.Id, ct);
+            if (previous == null || previous.AccountEmail.Value != accountEmail)
                 return await unitOfWork.FailAsync(ServiceResult.NotFound("Calendar.NotFound", "The calendar could not be found."), ct);
 
             var updateResult = previous.Update(request.Name, request.Description, request.TimeZoneIanaId, request.HtmlColorCode);

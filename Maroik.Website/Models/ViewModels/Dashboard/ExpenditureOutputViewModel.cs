@@ -12,7 +12,6 @@ namespace Maroik.Website.Models.ViewModels.Dashboard;
 public class ExpenditureOutputViewModel
 {
     /// <summary>Unique database ID of this expenditure record.</summary>
-    [Required(ErrorMessage = "Please enter Id")]
     [Display(Name = "Id")]
     public long Id { get; set; }
 
@@ -40,7 +39,8 @@ public class ExpenditureOutputViewModel
     [Display(Name = "MonetaryUnit")]
     public string? MonetaryUnit { get; set; }
 
-    /// <summary>Payment instrument used (e.g. "CreditCard", "Cash").</summary>
+    /// <summary>Name of the asset (product) debited to pay for this expenditure — an FK to
+    /// <c>Asset.ProductName</c>, despite the field name (e.g. "CreditCard", "Cash").</summary>
     [Required(ErrorMessage = "Please enter PaymentMethod")]
     [Display(Name = "PaymentMethod")]
     public string? PaymentMethod { get; set; }

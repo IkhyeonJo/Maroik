@@ -181,7 +181,7 @@ public class CalendarServiceTests
     [Fact]
     public async Task UpdateCalendarAsync_ReturnsFail_WhenCalendarNotFound()
     {
-        _calendarRepo.Setup(r => r.GetByAccountEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync([]);
+        _calendarRepo.Setup(r => r.FindByIdForUpdateAsync(It.IsAny<long>(), It.IsAny<CancellationToken>())).ReturnsAsync((Calendar?)null);
         var sut = CreateSut();
 
         ServiceResult result = await sut.UpdateCalendarAsync("user@example.com", new CalendarRequest
@@ -198,8 +198,8 @@ public class CalendarServiceTests
     [Fact]
     public async Task UpdateCalendarAsync_ReturnsSuccess_WhenCalendarFound()
     {
-        _calendarRepo.Setup(r => r.GetByAccountEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync([MakeCalendar(id: 1)]);
+        _calendarRepo.Setup(r => r.FindByIdForUpdateAsync(1, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(MakeCalendar(id: 1));
         _calendarRepo.Setup(r => r.UpdateEntityAsync(It.IsAny<Calendar>(), It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
         var sut = CreateSut();
 
@@ -216,12 +216,35 @@ public class CalendarServiceTests
         _calendarRepo.Verify(r => r.UpdateEntityAsync(It.IsAny<Calendar>(), It.IsAny<CancellationToken>()), Times.Once);
     }
 
+    /// <summary>Verifies that a calendar owned by a different account is treated as not found, not
+    /// updated — <c>FindByIdForUpdateAsync</c> looks up by ID alone, so the service itself must
+    /// still enforce ownership before applying the update.</summary>
+    [Fact]
+    public async Task UpdateCalendarAsync_ReturnsFail_WhenCalendarOwnedByDifferentAccount()
+    {
+        _calendarRepo.Setup(r => r.FindByIdForUpdateAsync(1, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(MakeCalendar(id: 1, email: "someone-else@example.com"));
+        var sut = CreateSut();
+
+        ServiceResult result = await sut.UpdateCalendarAsync("user@example.com", new CalendarRequest
+        {
+            AccountEmail = "user@example.com",
+            Id = 1,
+            Name = "Updated",
+            TimeZoneIanaId = "UTC",
+            HtmlColorCode = "#3788d8"
+        }, TestContext.Current.CancellationToken);
+
+        Assert.False(result.Success);
+        _calendarRepo.Verify(r => r.UpdateEntityAsync(It.IsAny<Calendar>(), It.IsAny<CancellationToken>()), Times.Never);
+    }
+
     /// <summary>Verifies that renaming to a name already used by another of the account's calendars is reported as a conflict, not a generic failure.</summary>
     [Fact]
     public async Task UpdateCalendarAsync_ReturnsConflict_WhenRenamedToAnExistingName()
     {
-        _calendarRepo.Setup(r => r.GetByAccountEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync([MakeCalendar(id: 1)]);
+        _calendarRepo.Setup(r => r.FindByIdForUpdateAsync(1, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(MakeCalendar(id: 1));
         var pgException = new Exception("duplicate key value violates unique constraint \"Calendar_AccountEmail_Name_unique\" (23505)");
         _calendarRepo.Setup(r => r.UpdateEntityAsync(It.IsAny<Calendar>(), It.IsAny<CancellationToken>())).ThrowsAsync(pgException);
         var sut = CreateSut();

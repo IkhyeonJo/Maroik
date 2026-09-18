@@ -43,4 +43,10 @@ describe("admin/Forum/FreeForum", () => {
     expect(call.data).toBeInstanceOf(h.win.FormData);
     expect((call.data as FormData).get("Title")).toBe("hi");
   });
+
+  it("WriteUploadFile/EditUploadFile do not throw when change fires with no file selected", () => {
+    const h = loadSite("admin", "Forum", "FreeForum", fixture);
+    expect(() => h.$("#writeUploadedFile").trigger("change")).not.toThrow();
+    expect(() => h.$("#editUploadedFile").trigger("change")).not.toThrow();
+  });
 });

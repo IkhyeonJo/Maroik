@@ -20,6 +20,17 @@ public class AccountTests
         bool agreedServiceTerms = true)
         => Account.Create(email, hashedPassword, nickname, role, timeZone, "KRW", registrationToken, agreedServiceTerms).Value;
 
+    /// <summary>
+    /// Builds a token using the same encoding as <see cref="GuidToken.Generate"/> but timestamped
+    /// 25 hours in the past, i.e. past <see cref="GuidToken"/>'s 24h validity window.
+    /// </summary>
+    private static string ExpiredToken()
+    {
+        byte[] time = BitConverter.GetBytes(DateTime.UtcNow.AddHours(-25).ToBinary());
+        byte[] key = Guid.NewGuid().ToByteArray();
+        return Convert.ToBase64String([.. time, .. key]);
+    }
+
     // -- Create ---------------------------------------------------------------
 
     /// <summary>Create returns account, when all inputs valid.</summary>
@@ -119,9 +130,10 @@ public class AccountTests
     [Fact]
     public void ConfirmEmail_Succeeds_WhenTokenMatches()
     {
-        var account = ValidAccount(registrationToken: "abc");
+        string token = GuidToken.Generate();
+        var account = ValidAccount(registrationToken: token);
 
-        var result = account.ConfirmEmail("abc");
+        var result = account.ConfirmEmail(token);
 
         Assert.False(result.IsError);
         Assert.True(account.EmailConfirmed);
@@ -132,13 +144,30 @@ public class AccountTests
     [Fact]
     public void ConfirmEmail_ReturnsError_WhenAlreadyConfirmed()
     {
-        var account = ValidAccount(registrationToken: "abc");
-        account.ConfirmEmail("abc");
+        string token = GuidToken.Generate();
+        var account = ValidAccount(registrationToken: token);
+        account.ConfirmEmail(token);
 
-        var result = account.ConfirmEmail("abc");
+        var result = account.ConfirmEmail(token);
 
         Assert.True(result.IsError);
         Assert.Equal("Account.AlreadyConfirmed", result.FirstError.Code);
+    }
+
+    /// <summary>Confirm email returns error, when the stored token has passed its 24h TTL, even
+    /// though it still matches the candidate — expiry is enforced by the aggregate itself, not just
+    /// by a caller pre-check.</summary>
+    [Fact]
+    public void ConfirmEmail_ReturnsError_WhenTokenExpired()
+    {
+        string token = ExpiredToken();
+        var account = ValidAccount(registrationToken: token);
+
+        var result = account.ConfirmEmail(token);
+
+        Assert.True(result.IsError);
+        Assert.Equal("Account.InvalidToken", result.FirstError.Code);
+        Assert.False(account.EmailConfirmed);
     }
 
     /// <summary>Confirm email returns error, when token mismatch.</summary>
@@ -178,8 +207,9 @@ public class AccountTests
     [Fact]
     public void RequestPasswordReset_Succeeds_WhenEmailConfirmed()
     {
-        var account = ValidAccount(registrationToken: "tok");
-        account.ConfirmEmail("tok");
+        string token = GuidToken.Generate();
+        var account = ValidAccount(registrationToken: token);
+        account.ConfirmEmail(token);
 
         var result = account.RequestPasswordReset("reset-token");
 
@@ -203,8 +233,9 @@ public class AccountTests
     [Fact]
     public void RequestPasswordReset_Succeeds_WhenLocked()
     {
-        var account = ValidAccount(registrationToken: "tok");
-        account.ConfirmEmail("tok");
+        string token = GuidToken.Generate();
+        var account = ValidAccount(registrationToken: token);
+        account.ConfirmEmail(token);
         account.Lock("reason");
 
         var result = account.RequestPasswordReset("reset-token");
@@ -219,11 +250,13 @@ public class AccountTests
     [Fact]
     public void ResetPassword_Succeeds_WhenTokenValid()
     {
-        var account = ValidAccount(registrationToken: "tok");
-        account.ConfirmEmail("tok");
-        account.RequestPasswordReset("reset-tok");
+        string registrationToken = GuidToken.Generate();
+        var account = ValidAccount(registrationToken: registrationToken);
+        account.ConfirmEmail(registrationToken);
+        string resetToken = GuidToken.Generate();
+        account.RequestPasswordReset(resetToken);
 
-        var result = account.ResetPassword("reset-tok", "newHash");
+        var result = account.ResetPassword(resetToken, "newHash");
 
         Assert.False(result.IsError);
         Assert.Equal("newHash", account.HashedPassword);
@@ -234,11 +267,29 @@ public class AccountTests
     [Fact]
     public void ResetPassword_ReturnsError_WhenTokenInvalid()
     {
-        var account = ValidAccount(registrationToken: "tok");
-        account.ConfirmEmail("tok");
-        account.RequestPasswordReset("reset-tok");
+        string registrationToken = GuidToken.Generate();
+        var account = ValidAccount(registrationToken: registrationToken);
+        account.ConfirmEmail(registrationToken);
+        account.RequestPasswordReset(GuidToken.Generate());
 
         var result = account.ResetPassword("wrong-tok", "newHash");
+
+        Assert.True(result.IsError);
+        Assert.Equal("Account.InvalidToken", result.FirstError.Code);
+    }
+
+    /// <summary>Reset password returns error, when the stored token has passed its 24h TTL, even
+    /// though it still matches the candidate.</summary>
+    [Fact]
+    public void ResetPassword_ReturnsError_WhenTokenExpired()
+    {
+        string registrationToken = GuidToken.Generate();
+        var account = ValidAccount(registrationToken: registrationToken);
+        account.ConfirmEmail(registrationToken);
+        string expiredResetToken = ExpiredToken();
+        account.RequestPasswordReset(expiredResetToken);
+
+        var result = account.ResetPassword(expiredResetToken, "newHash");
 
         Assert.True(result.IsError);
         Assert.Equal("Account.InvalidToken", result.FirstError.Code);
@@ -248,11 +299,13 @@ public class AccountTests
     [Fact]
     public void ResetPassword_ReturnsError_WhenNewPasswordEmpty()
     {
-        var account = ValidAccount(registrationToken: "tok");
-        account.ConfirmEmail("tok");
-        account.RequestPasswordReset("reset-tok");
+        string registrationToken = GuidToken.Generate();
+        var account = ValidAccount(registrationToken: registrationToken);
+        account.ConfirmEmail(registrationToken);
+        string resetToken = GuidToken.Generate();
+        account.RequestPasswordReset(resetToken);
 
-        var result = account.ResetPassword("reset-tok", "");
+        var result = account.ResetPassword(resetToken, "");
 
         Assert.True(result.IsError);
         Assert.Equal("Account.PasswordEmpty", result.FirstError.Code);
@@ -400,8 +453,9 @@ public class AccountTests
     [Fact]
     public void RegenerateRegistrationTokenIfEmpty_SetsToken_WhenCurrentIsNull()
     {
-        var account = ValidAccount(registrationToken: "tok");
-        account.ConfirmEmail("tok");
+        string token = GuidToken.Generate();
+        var account = ValidAccount(registrationToken: token);
+        account.ConfirmEmail(token);
         Assert.Null(account.RegistrationToken);
 
         account.RegenerateRegistrationTokenIfEmpty("new-tok");
@@ -581,13 +635,15 @@ public class AccountTests
     [Fact]
     public void ResetPassword_RegeneratesSecurityStamp_AndClearsMustChangePassword()
     {
-        var account = ValidAccount(registrationToken: "tok");
-        account.ConfirmEmail("tok");
-        account.RequestPasswordReset("reset-tok");
+        string registrationToken = GuidToken.Generate();
+        var account = ValidAccount(registrationToken: registrationToken);
+        account.ConfirmEmail(registrationToken);
+        string resetToken = GuidToken.Generate();
+        account.RequestPasswordReset(resetToken);
         account.AdminResetPassword("tempHash");
         string stampBeforeReset = account.SecurityStamp;
 
-        account.ResetPassword("reset-tok", "newHash");
+        account.ResetPassword(resetToken, "newHash");
 
         Assert.NotEqual(stampBeforeReset, account.SecurityStamp);
         Assert.False(account.MustChangePassword);

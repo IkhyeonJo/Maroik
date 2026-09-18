@@ -134,6 +134,37 @@ public sealed class CalendarRepositoryTests(DatabaseFixture database) : Reposito
             () => Sut.CreateAsync(calendar, TestContext.Current.CancellationToken));
     }
 
+    // -- FindByIdForUpdateAsync (SELECT ... FOR UPDATE) --------------------------
+
+    /// <summary>Verifies that the row-locking lookup returns the calendar when it exists.</summary>
+    [Fact]
+    public async Task FindByIdForUpdateAsync_ReturnsCalendar_WhenExists()
+    {
+        string alice = UniqueEmail("alice");
+        var seed = MakeCalendar(alice, Unique("Work"));
+        await SeedAsync(seed);
+
+        await using var unitOfWork = new UnitOfWork(Context);
+        await unitOfWork.BeginAsync(TestContext.Current.CancellationToken);
+        Calendar? result = await Sut.FindByIdForUpdateAsync(seed.Id, TestContext.Current.CancellationToken);
+        await unitOfWork.CommitAsync(TestContext.Current.CancellationToken);
+
+        Assert.NotNull(result);
+        Assert.Equal(seed.Name, result.Name);
+    }
+
+    /// <summary>Verifies that the row-locking lookup returns null when the calendar does not exist.</summary>
+    [Fact]
+    public async Task FindByIdForUpdateAsync_ReturnsNull_WhenNotFound()
+    {
+        await using var unitOfWork = new UnitOfWork(Context);
+        await unitOfWork.BeginAsync(TestContext.Current.CancellationToken);
+        Calendar? result = await Sut.FindByIdForUpdateAsync(long.MaxValue, TestContext.Current.CancellationToken);
+        await unitOfWork.CommitAsync(TestContext.Current.CancellationToken);
+
+        Assert.Null(result);
+    }
+
     // -- UpdateEntityAsync --------------------------------------------------
 
     /// <summary>Verifies that <c>UpdateEntityAsync</c> persists changes to an existing calendar.</summary>

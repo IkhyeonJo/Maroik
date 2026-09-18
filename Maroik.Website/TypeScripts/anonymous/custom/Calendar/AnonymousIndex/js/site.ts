@@ -553,9 +553,15 @@
          * calendars": clears everything, gathers the checked calendar ids, POSTs
          * `GetCalendarEvents`, and re-adds whatever comes back.
          */
+        // Guards against a stale GetCalendarEvents response (from a checkbox toggle just before
+        // this one) landing after a newer one and re-adding events the user already unchecked.
+        let calendarEventsRequestSeq = 0;
+
         function RefreshCalendarEvents() {
 
             calendar.removeAllEvents();
+
+            const requestSeq = ++calendarEventsRequestSeq;
 
             let paramValue: any = {
                 Calendars: []
@@ -580,6 +586,12 @@
                 data: JSON.stringify(paramValue),
                 contentType: 'application/json; charset=utf-8',
                 success: function (response) {
+                    // A newer RefreshCalendarEvents call already ran (and removed/re-added events)
+                    // since this request went out — applying this stale response now would put
+                    // back events the newer call's own removeAllEvents() just cleared.
+                    if (requestSeq !== calendarEventsRequestSeq) {
+                        return;
+                    }
                     if (response.result) {
                         JSON.parse(response.calendarEvents).forEach((item: any) => {
                             calendar.addEvent({

@@ -1,8 +1,8 @@
 using Maroik.Core.Domain.Account;
 using Maroik.Core.Domain.Localization;
+using Maroik.Core.Contract.Dtos;
 using Maroik.Core.Contract.Interfaces;
 using Maroik.Website.Attributes;
-using Maroik.Website.Contracts;
 using Maroik.Website.Mappings;
 using Maroik.Website.Models.ViewModels.Account;
 using Maroik.Website.Models.ViewModels.Dashboard;
@@ -18,7 +18,6 @@ namespace Maroik.Website.Controllers;
 public class DashboardController(
     IDashboardService dashboardService,
     IProfileService profileService,
-    ISessionService sessionService,
     ILogger<DashboardController> logger) : Controller
 {
     private const string HostResourceFilePath = "/app/Maroik.Log/HostResourceInfo.txt";
@@ -74,9 +73,9 @@ public class DashboardController(
     [HttpGet]
     public async Task<IActionResult> UserIndex(string year, string month, CancellationToken ct)
     {
-        var loggedInAccount = sessionService.GetAccount();
-        string? email = loggedInAccount?.Email;
-        string? timeZoneId = loggedInAccount?.TimeZoneIanaId;
+        AccountResponse loggedInAccount = ViewBag.LoggedInAccount;
+        string? email = loggedInAccount.Email;
+        string? timeZoneId = loggedInAccount.TimeZoneIanaId;
 
         var summary = await dashboardService.GetSummaryAsync(email!, year, month, timeZoneId!, ct);
         return View(summary.ToViewModel(timeZoneId!));
@@ -90,15 +89,15 @@ public class DashboardController(
     [RequiredHttpPostAccess(Role = Role.User)]
     public async Task<IActionResult> UserUpdateDefaultMonetary([FromBody] UserIndexInputViewModel userIndexInputViewModel, CancellationToken ct)
     {
+        string email = ((AccountResponse)ViewBag.LoggedInAccount).Email ?? "";
         try
         {
-            string email = sessionService.GetAccount()?.Email ?? "";
             await profileService.UpdateDefaultMonetaryUnitAsync(email, userIndexInputViewModel.DefaultMonetaryUnit, ct);
             return Json(new { result = true });
         }
         catch (Exception ex)
         {
-            logger.LogError(ex, "Failed to update default monetary unit for account {AccountEmail}", sessionService.GetAccount()?.Email);
+            logger.LogError(ex, "Failed to update default monetary unit for account {AccountEmail}", email);
             return Json(new { result = false });
         }
     }
@@ -111,9 +110,8 @@ public class DashboardController(
     [HttpGet]
     public IActionResult AnonymousIndex()
     {
-        var loggedInAccount = sessionService.GetAccount();
+        AccountResponse loggedInAccount = ViewBag.LoggedInAccount;
 
-        if (loggedInAccount == null) return View();
         return loggedInAccount.Role switch
         {
             Role.Admin => RedirectToAction("AdminIndex", "Dashboard"),

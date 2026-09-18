@@ -5,6 +5,8 @@ using Maroik.Core.Contract.Interfaces;
 using Maroik.Website.Attributes;
 using Maroik.Website.Filters;
 using Microsoft.AspNetCore.Mvc;
+using Mono.Cecil;
+using Mono.Cecil.Cil;
 using NetArchTest.Rules;
 
 namespace Maroik.Website.Tests.Architecture;
@@ -316,6 +318,67 @@ public class WebsiteArchitectureTests
             "a Website/Extensions method instead, or split into separate controllers if the actions " +
             "are genuinely independent.\n" +
             "Offending files: " + string.Join(", ", offendingFiles));
+    }
+
+    /// <summary>
+    /// Controllers must read the currently logged-in account via <c>ViewBag.LoggedInAccount</c> —
+    /// re-fetched from the database by <see cref="ViewBagPopulatorFilter"/> on every request — never
+    /// <c>ISessionService.GetAccount()</c>, which returns the snapshot cached in the session at
+    /// login time. A mid-session change to Role, Locked, Nickname, TimeZoneIanaId, etc. must take
+    /// effect on the very next request; reading the stale session copy instead let a demoted admin
+    /// keep an admin's view of a locked post until they logged out and back in (the bug this rule
+    /// exists to prevent a recurrence of). <c>SetAccount</c>/<c>RemoveAccount</c> (the write side —
+    /// login/logout/profile-refresh) are unaffected; only the <c>GetAccount</c> read is forbidden.
+    /// </summary>
+    [Fact]
+    public void Controllers_ShouldNot_CallSessionServiceGetAccount()
+    {
+        NetArchTest.Rules.TestResult result = Types.InAssembly(WebsiteAssembly)
+            .That()
+            .ResideInNamespace("Maroik.Website.Controllers")
+            .Should()
+            .MeetCustomRule(new DoesNotCallSessionServiceGetAccount())
+            .GetResult();
+
+        Assert.True(
+            result.IsSuccessful,
+            "Controllers must read the logged-in account via ViewBag.LoggedInAccount (populated " +
+            "fresh from the database by ViewBagPopulatorFilter on every request), not " +
+            "ISessionService.GetAccount() (the stale, login-time session snapshot). " +
+            "SetAccount/RemoveAccount are still allowed — only the GetAccount read is forbidden.\n" +
+            "Failing types: " + string.Join(", ", result.FailingTypeNames ?? []));
+    }
+
+    /// <summary>
+    /// Flags a type whose IL directly calls <c>ISessionService.GetAccount</c>. Checked at the
+    /// method-call level via Mono.Cecil (not a type-dependency rule) because controllers
+    /// legitimately depend on <c>ISessionService</c> itself for <c>SetAccount</c>/<c>RemoveAccount</c>
+    /// — only the <c>GetAccount</c> read is forbidden. Mirrors
+    /// <c>DomainArchitectureTests.DoesNotCallRawErrorFactory</c>'s approach.
+    /// </summary>
+    private sealed class DoesNotCallSessionServiceGetAccount : ICustomRule
+    {
+        public bool MeetsRule(TypeDefinition type)
+        {
+            foreach (MethodDefinition method in type.Methods)
+            {
+                if (!method.HasBody) continue;
+
+                foreach (Instruction instruction in method.Body.Instructions)
+                {
+                    if (instruction.OpCode != OpCodes.Call && instruction.OpCode != OpCodes.Callvirt) continue;
+                    if (instruction.Operand is not MethodReference calledMethod) continue;
+
+                    if (calledMethod.DeclaringType.FullName == "Maroik.Website.Contracts.ISessionService"
+                        && calledMethod.Name == "GetAccount")
+                    {
+                        return false;
+                    }
+                }
+            }
+
+            return true;
+        }
     }
 
     /// <summary>Walks up from the test assembly's output directory to find the repository root (identified by Maroik.sln).</summary>

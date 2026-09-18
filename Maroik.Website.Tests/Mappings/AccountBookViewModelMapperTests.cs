@@ -1,5 +1,6 @@
 using Maroik.Core.Contract.Dtos;
 using Maroik.Website.Mappings;
+using Maroik.Website.Models.ViewModels.AccountBook;
 
 namespace Maroik.Website.Tests.Mappings;
 
@@ -122,5 +123,52 @@ public class AccountBookViewModelMapperTests
         var currency = new Dictionary<string, string?> { ["CreditCard"] = "KRW" };
         var vm = response.ToDisplayViewModel(currency, Identity, "UTC");
         Assert.Equal("KRW", vm.MonetaryUnit);
+    }
+
+    // ── IsValidLocalDateTime / ToCreatedUtc ──────────────────────────────────────
+    // Created is the account's own local wall-clock time ("yyyy-MM-dd HH:mm:ss"), converted to
+    // UTC using the account's IANA time zone (known server-side from the session) — never the
+    // browser's time zone, and never computed/converted on the client.
+
+    /// <summary>Is valid local date time accepts the well-formed shape.</summary>
+    [Theory]
+    [InlineData("2026-01-15 09:30:00")]
+    [InlineData("2026-12-31 23:59:59")]
+    public void IsValidLocalDateTime_Accepts_WellFormedShape(string value)
+    {
+        Assert.True(AccountBookViewModelMapper.IsValidLocalDateTime(value));
+    }
+
+    /// <summary>Is valid local date time rejects malformed or missing input.</summary>
+    [Theory]
+    [InlineData(null)]
+    [InlineData("")]
+    [InlineData("not-a-date")]
+    [InlineData("2026-01-15")]
+    [InlineData("2026-01-15T09:30:00")]
+    [InlineData("2026-13-01 09:30:00")]
+    public void IsValidLocalDateTime_Rejects_MalformedOrMissingInput(string? value)
+    {
+        Assert.False(AccountBookViewModelMapper.IsValidLocalDateTime(value));
+    }
+
+    /// <summary>Income input view model to created utc converts using the given account time zone,
+    /// not the machine's local time zone.</summary>
+    [Fact]
+    public void IncomeInputViewModel_ToCreatedUtc_ConvertsUsingGivenTimeZone()
+    {
+        var vm = new IncomeInputViewModel { Created = "2026-01-15 09:30:00" };
+        DateTime utc = vm.ToCreatedUtc("Asia/Seoul");
+        // 09:30 KST (UTC+9) -> 00:30 UTC the same day.
+        Assert.Equal(new DateTime(2026, 1, 15, 0, 30, 0, DateTimeKind.Utc), utc);
+    }
+
+    /// <summary>Expenditure input view model to created utc converts using the given account time zone.</summary>
+    [Fact]
+    public void ExpenditureInputViewModel_ToCreatedUtc_ConvertsUsingGivenTimeZone()
+    {
+        var vm = new ExpenditureInputViewModel { Created = "2026-01-15 09:30:00" };
+        DateTime utc = vm.ToCreatedUtc("Asia/Seoul");
+        Assert.Equal(new DateTime(2026, 1, 15, 0, 30, 0, DateTimeKind.Utc), utc);
     }
 }

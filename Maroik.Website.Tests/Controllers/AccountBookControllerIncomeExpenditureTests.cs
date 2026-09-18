@@ -154,7 +154,8 @@ public class AccountBookControllerIncomeExpenditureTests
         var payload = new
         {
             Id = 0, MainClass = "RegularIncome", SubClass = "LaborIncome", Content = "Bonus",
-            Amount = 300, DepositMyAssetProductName = asset, Note = ""
+            Amount = 300, DepositMyAssetProductName = asset, Note = "",
+            Created = "2026-01-15 10:30:00"
         };
         using var request = session.BuildJsonPostRequest("/AccountBook/CreateIncome", payload);
         var response = await _client.SendAsync(request, TestContext.Current.CancellationToken);
@@ -176,7 +177,8 @@ public class AccountBookControllerIncomeExpenditureTests
         using var request = session.BuildJsonPostRequest("/AccountBook/UpdateIncome", new
         {
             Id = id, MainClass = "RegularIncome", SubClass = "BusinessIncome", Content = "Updated",
-            Amount = 1200, DepositMyAssetProductName = AssetProductName, Note = "updated"
+            Amount = 1200, DepositMyAssetProductName = AssetProductName, Note = "updated",
+            Created = "2026-01-15 10:30:00"
         });
         var response = await _client.SendAsync(request, TestContext.Current.CancellationToken);
         string json = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
@@ -285,7 +287,8 @@ public class AccountBookControllerIncomeExpenditureTests
         var payload = new
         {
             Id = 0, MainClass = "ConsumerSpending", SubClass = "MealOrEatOutExpenses", Content = "Dinner",
-            Amount = 40, PaymentMethod = asset, MyDepositAsset = "N/A", Note = ""
+            Amount = 40, PaymentMethod = asset, MyDepositAsset = "N/A", Note = "",
+            Created = "2026-01-15 10:30:00"
         };
         using var request = session.BuildJsonPostRequest("/AccountBook/CreateExpenditure", payload);
         var response = await _client.SendAsync(request, TestContext.Current.CancellationToken);
@@ -307,7 +310,8 @@ public class AccountBookControllerIncomeExpenditureTests
         using var request = session.BuildJsonPostRequest("/AccountBook/UpdateExpenditure", new
         {
             Id = id, MainClass = "ConsumerSpending", SubClass = "TransportationCost", Content = "Updated",
-            Amount = 60, PaymentMethod = AssetProductName, MyDepositAsset = "N/A", Note = "updated"
+            Amount = 60, PaymentMethod = AssetProductName, MyDepositAsset = "N/A", Note = "updated",
+            Created = "2026-01-15 10:30:00"
         });
         var response = await _client.SendAsync(request, TestContext.Current.CancellationToken);
         string json = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);

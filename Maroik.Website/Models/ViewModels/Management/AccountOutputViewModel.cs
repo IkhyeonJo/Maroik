@@ -40,7 +40,6 @@ public class AccountOutputViewModel
     public string? TimeZoneIanaId { get; set; }
 
     /// <summary>When <see langword="true"/> the account cannot log in until manually unlocked by an admin.</summary>
-    [Required(ErrorMessage = "Please enter Locked")]
     [Display(Name = "Locked")]
     public bool Locked { get; set; }
 
@@ -50,12 +49,10 @@ public class AccountOutputViewModel
     public long LoginAttempt { get; set; }
 
     /// <summary>When <see langword="true"/> the email has been verified via the confirmation link.</summary>
-    [Required(ErrorMessage = "Please enter EmailConfirmed")]
     [Display(Name = "EmailConfirmed")]
     public bool EmailConfirmed { get; set; }
 
     /// <summary>Whether the user agreed to the service terms of use at registration.</summary>
-    [Required(ErrorMessage = "Please enter AgreedServiceTerms")]
     [Display(Name = "AgreedServiceTerms")]
     public bool AgreedServiceTerms { get; set; }
 
@@ -85,7 +82,6 @@ public class AccountOutputViewModel
     public string? Message { get; set; }
 
     /// <summary>Soft-delete flag; when <see langword="true"/> the account is hidden from normal views.</summary>
-    [Required(ErrorMessage = "Please enter Deleted")]
     [Display(Name = "Deleted")]
     public bool Deleted { get; set; }
 }

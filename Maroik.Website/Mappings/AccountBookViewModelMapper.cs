@@ -1,3 +1,4 @@
+using System.Globalization;
 using Maroik.Core.Contract.Dtos;
 using Maroik.Core.Domain.Localization;
 using Maroik.Website.Models.ViewModels.AccountBook;
@@ -12,6 +13,44 @@ namespace Maroik.Website.Mappings;
 /// </summary>
 public static class AccountBookViewModelMapper
 {
+    /// <summary>The "yyyy-MM-dd HH:mm:ss" shape <see cref="ParseLocalDateTime"/> expects.</summary>
+    private const string LocalDateTimeFormat = "yyyy-MM-dd HH:mm:ss";
+
+    /// <summary>
+    /// True when <paramref name="value"/> parses as <see cref="LocalDateTimeFormat"/> — used by
+    /// <see cref="ExpenditureInputViewModel.Validate"/> / <see cref="IncomeInputViewModel.Validate"/>
+    /// so a malformed <c>Created</c> value fails cleanly as a validation error instead of throwing
+    /// out of <see cref="ExpenditureInputViewModel.ToCreatedUtc"/> / <see cref="IncomeInputViewModel.ToCreatedUtc"/>.
+    /// </summary>
+    public static bool IsValidLocalDateTime(string? value) =>
+        DateTime.TryParseExact(value, LocalDateTimeFormat, CultureInfo.InvariantCulture, DateTimeStyles.None, out _);
+
+    /// <summary>
+    /// Parses a "yyyy-MM-dd HH:mm:ss" local wall-clock string (no time zone of its own — the
+    /// caller applies one via <see cref="DateTimeExtensions.ConvertToUtcByTimeZoneIanaId"/>).
+    /// </summary>
+    private static DateTime ParseLocalDateTime(string value) =>
+        DateTime.ParseExact(value, LocalDateTimeFormat, CultureInfo.InvariantCulture, DateTimeStyles.None);
+
+    extension(IncomeInputViewModel vm)
+    {
+        /// <summary>
+        /// Converts <see cref="IncomeInputViewModel.Created"/> — the account's own local wall-clock
+        /// time, never the browser's — to UTC using <paramref name="accountTimeZoneIanaId"/> (the
+        /// logged-in account's own <c>TimeZoneIanaId</c>, already known server-side). The client
+        /// never computes or transmits a UTC instant or a time zone itself.
+        /// </summary>
+        public DateTime ToCreatedUtc(string accountTimeZoneIanaId) =>
+            ParseLocalDateTime(vm.Created!).ConvertToUtcByTimeZoneIanaId(accountTimeZoneIanaId);
+    }
+
+    extension(ExpenditureInputViewModel vm)
+    {
+        /// <summary>Same conversion as the <c>IncomeInputViewModel</c> overload above, for an expenditure.</summary>
+        public DateTime ToCreatedUtc(string accountTimeZoneIanaId) =>
+            ParseLocalDateTime(vm.Created!).ConvertToUtcByTimeZoneIanaId(accountTimeZoneIanaId);
+    }
+
     extension(AssetResponse item)
     {
         /// <summary>Maps a single <see cref="AssetResponse"/> to an <see cref="AssetOutputViewModel"/> for display.</summary>

@@ -24,4 +24,24 @@ public class ExportExcelExtensionsTests
 
         Assert.Matches(new Regex(@"^Menu-\d{4}-\d{2}-\d{2}-\d{2}-\d{2}-\d{2}-\d{3}\.xlsx$"), fileName);
     }
+
+    /// <summary>
+    /// Regression test: a caller-supplied prefix containing characters invalid in a file name (it
+    /// comes straight from a query string) must not throw when the framework later builds the
+    /// response's Content-Disposition header from the result — those characters are stripped instead.
+    /// Built from <see cref="Path.GetInvalidFileNameChars"/> itself (platform-dependent — Windows
+    /// and Linux disallow different characters) rather than a hardcoded set, so this passes on both.
+    /// </summary>
+    [Fact]
+    public void ToExcelFileName_StripsInvalidFileNameCharacters()
+    {
+        char[] invalidChars = Path.GetInvalidFileNameChars();
+        string prefix = "Bad" + new string(invalidChars) + "Name";
+
+        string fileName = prefix.ToExcelFileName("UTC");
+
+        Assert.StartsWith("BadName-", fileName);
+        foreach (char c in invalidChars)
+            Assert.DoesNotContain(c, fileName);
+    }
 }

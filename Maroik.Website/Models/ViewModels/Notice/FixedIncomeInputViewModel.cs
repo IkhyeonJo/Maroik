@@ -11,7 +11,6 @@ namespace Maroik.Website.Models.ViewModels.Notice;
 public class FixedIncomeInputViewModel
 {
     /// <summary>Database row ID; 0 for a new record, positive for an edit.</summary>
-    [Required(ErrorMessage = "Please enter Id")]
     [Display(Name = "Id")]
     public int Id { get; set; }
 

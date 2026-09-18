@@ -15,6 +15,11 @@
  * class combination on save. IIFE-wrapped, no `import` / `export`.
  */
 (function () {
+    /** Zero-pads a 1-2 digit date/time component to 2 digits (e.g. `5` -> `"05"`). */
+    function pad2(n: number): string {
+        return n.toString().padStart(2, '0');
+    }
+
     // Cached references: tab containers, grid search box, the deposit-asset
     // wrapper divs, every field of both modals, the amount labels, and the
     // anti-forgery input.
@@ -292,7 +297,11 @@
         let minute = parseInt($createExpenditureMinute.val() as string);
         let second = parseInt($createExpenditureSecond.val() as string);
 
-        let created = new Date(year, month - 1, day, hour, minute, second).toISOString();
+        // Sent as the account's own local wall-clock time ("yyyy-MM-dd HH:mm:ss"), not converted
+        // to UTC here: the server already knows the account's IANA time zone from the session and
+        // does that conversion itself, so the browser's own (possibly different) time zone is
+        // never involved.
+        let created = `${year}-${pad2(month)}-${pad2(day)} ${pad2(hour)}:${pad2(minute)}:${pad2(second)}`;
 
         let paymentMethod = $createExpenditurePaymentMethod.val();
         let note = $createExpenditureNote.val();
@@ -438,7 +447,8 @@
         let minute = parseInt($editExpenditureMinute.val() as string);
         let second = parseInt($editExpenditureSecond.val() as string);
 
-        let created = new Date(year, month - 1, day, hour, minute, second).toISOString();
+        // See CreateExpenditure — local wall-clock string, no client-side UTC conversion.
+        let created = `${year}-${pad2(month)}-${pad2(day)} ${pad2(hour)}:${pad2(minute)}:${pad2(second)}`;
         let paymentMethod = $editExpenditurePaymentMethod.val();
         let note = $editExpenditureNote.val();
         let myDepositAsset = $editExpenditureMyDepositAsset.val();
