@@ -114,6 +114,27 @@ public class ClamavClientTests
     }
 
     /// <summary>
+    /// Verifies that a payload larger than one chunk is streamed in 64 KB chunks (not 2 KB), that each
+    /// chunk's length prefix matches its payload, and that the reassembled bytes equal the input.
+    /// </summary>
+    [Fact]
+    public async Task ScanWithClamavAsync_StreamsLargePayloadIn64KbChunks_AndPreservesContent()
+    {
+        const int chunkSize = 64 * 1024;
+        byte[] data = new byte[(2 * chunkSize) + 1234];
+        new Random(42).NextBytes(data);
+
+        await using var server = FakeClamavServer.Start("stream: OK\n");
+        using var stream = new MemoryStream(data);
+
+        bool result = await _sut.ScanWithClamavAsync(stream, "127.0.0.1", server.Port, TestContext.Current.CancellationToken);
+
+        Assert.True(result);
+        Assert.Equal([chunkSize, chunkSize, 1234], await server.ChunkLengths);
+        Assert.Equal(data, await server.Payload);
+    }
+
+    /// <summary>
     /// Minimal fake ClamAV daemon: accepts one INSTREAM session, consumes the length-prefixed
     /// chunks up to the zero-length terminator, then writes back <c>response</c> and closes.
     /// </summary>
@@ -128,6 +149,15 @@ public class ClamavClientTests
 
         /// <summary>The raw command line (including its terminator) the client sent before the chunks.</summary>
         public Task<string> CommandLine => _commandLine.Task;
+
+        private readonly TaskCompletionSource<List<int>> _chunkLengths = new();
+        private readonly TaskCompletionSource<byte[]> _payload = new();
+
+        /// <summary>The length prefix of every chunk received, in order (excluding the zero terminator).</summary>
+        public Task<List<int>> ChunkLengths => _chunkLengths.Task;
+
+        /// <summary>All chunk payloads concatenated in arrival order.</summary>
+        public Task<byte[]> Payload => _payload.Task;
 
         private FakeClamavServer(TcpListener listener, string response)
         {
@@ -153,13 +183,19 @@ public class ClamavClientTests
 
             // Consume length-prefixed chunks until the zero-length terminator, mirroring
             // ClamavClient's write side of the INSTREAM protocol.
+            var lengths = new List<int>();
+            using var payload = new MemoryStream();
             while (true)
             {
                 byte[] lengthBytes = await ReadExactlyAsync(stream, 4);
                 int length = IPAddress.NetworkToHostOrder(BitConverter.ToInt32(lengthBytes));
                 if (length == 0) break;
-                _ = await ReadExactlyAsync(stream, length);
+                lengths.Add(length);
+                await payload.WriteAsync(await ReadExactlyAsync(stream, length));
             }
+
+            _chunkLengths.TrySetResult(lengths);
+            _payload.TrySetResult(payload.ToArray());
 
             await stream.WriteAsync(Encoding.ASCII.GetBytes(response));
         }

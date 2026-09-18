@@ -254,7 +254,11 @@ try
     #region Multi-Language
 
     builder.Services.AddLocalization(opt => { opt.ResourcesPath = "Resources"; });
-    builder.Services.AddMvc().AddViewLocalization(LanguageViewLocationExpanderFormat.Suffix)
+    // AddControllersWithViews (not AddMvc): this app has no Razor Pages, so AddMvc's extra Razor
+    // Pages services were dead weight. The filters/options for the same builder are added by the
+    // AddControllersWithViews call further below; the two calls merge into one MVC builder.
+    builder.Services.AddControllersWithViews()
+        .AddViewLocalization(LanguageViewLocationExpanderFormat.Suffix)
         .AddDataAnnotationsLocalization();
 
     builder.Services.Configure<RequestLocalizationOptions>(opt =>

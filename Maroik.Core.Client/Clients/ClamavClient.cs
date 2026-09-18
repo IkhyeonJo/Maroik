@@ -1,4 +1,4 @@
-using System.Net;
+using System.Buffers.Binary;
 using System.Net.Sockets;
 using Maroik.Core.Contract.Interfaces;
 using Microsoft.Extensions.Logging;
@@ -15,6 +15,16 @@ public class ClamavClient(ILogger<ClamavClient> logger) : IClamavClient
     // can't pin the calling request thread forever — callers such as FileValidationService don't
     // thread their own CancellationToken into this call, so this is the only backstop.
     private static readonly TimeSpan _scanTimeout = TimeSpan.FromSeconds(30);
+
+    /// <summary>Size in bytes of the big-endian length prefix that precedes every INSTREAM chunk.</summary>
+    private const int LengthPrefixSize = sizeof(int);
+
+    /// <summary>
+    /// Payload bytes per INSTREAM chunk. Large enough that a multi-MB upload is a few dozen socket
+    /// writes rather than thousands, and far below clamd's default StreamMaxLength (25 MB), which
+    /// bounds the whole stream, not a single chunk.
+    /// </summary>
+    private const int ChunkSize = 64 * 1024;
 
     /// <inheritdoc />
     public async Task<bool> ScanWithClamavAsync(Stream fileStream, string clamavHost, int clamavPort, CancellationToken ct = default)
@@ -43,15 +53,17 @@ public class ClamavClient(ILogger<ClamavClient> logger) : IClamavClient
             // Environment.NewLine, which is "\r\n" on Windows and leaves a stray '\r' in the command.
             await writer.WriteAsync("nINSTREAM\n");
 
-            // Send file data in 2 KB chunks, each prefixed with its 4-byte big-endian length
-            byte[] buffer = new byte[2048];
+            // Send file data in ChunkSize chunks, each prefixed with its 4-byte big-endian length.
+            // The prefix is written into the first LengthPrefixSize bytes of the same buffer the
+            // payload is read into, so each chunk goes out in one socket write instead of two
+            // (NetworkStream is unbuffered — a separate prefix write is its own TCP segment).
+            byte[] buffer = new byte[LengthPrefixSize + ChunkSize];
             int bytesRead;
-            while ((bytesRead = await fileStream.ReadAsync(buffer, scanCt)) > 0)
+            while ((bytesRead = await fileStream.ReadAsync(buffer.AsMemory(LengthPrefixSize, ChunkSize), scanCt)) > 0)
             {
                 // INSTREAM protocol requires network byte order (big-endian) for the length prefix
-                byte[] lengthPrefix = BitConverter.GetBytes(IPAddress.HostToNetworkOrder(bytesRead));
-                await stream.WriteAsync(lengthPrefix, scanCt);
-                await stream.WriteAsync(buffer.AsMemory(0, bytesRead), scanCt);
+                BinaryPrimitives.WriteInt32BigEndian(buffer, bytesRead);
+                await stream.WriteAsync(buffer.AsMemory(0, LengthPrefixSize + bytesRead), scanCt);
             }
 
             // A zero-length chunk signals end-of-stream to ClamAV
