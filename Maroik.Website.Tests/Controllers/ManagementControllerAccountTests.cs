@@ -307,6 +307,27 @@ public class ManagementControllerAccountTests
         Assert.Contains("\"result\":true", json);
     }
 
+    /// <summary>
+    /// The edit form never reads the password hash or the registration / reset tokens, so the
+    /// single-account lookup must not put them in the JSON response.
+    /// </summary>
+    [Fact]
+    public async Task IsAccountExists_SeededAccount_DoesNotReturnSecretColumns()
+    {
+        var session = await LoginAsAdminAsync();
+        const string email = "existing-secret-check@test.com";
+        SeedAccount(email);
+
+        using var request = session.BuildJsonPostRequest($"/Management/IsAccountExists?email={email}");
+        var response = await _client.SendAsync(request, TestContext.Current.CancellationToken);
+        string json = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+
+        Assert.Contains("\"result\":true", json);
+        Assert.DoesNotContain("hashedPassword", json, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain("registrationToken", json, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain("resetPasswordToken", json, StringComparison.OrdinalIgnoreCase);
+    }
+
     /// <summary>Is account exists unknown email returns failure result.</summary>
     [Fact]
     public async Task IsAccountExists_UnknownEmail_ReturnsFailureResult()

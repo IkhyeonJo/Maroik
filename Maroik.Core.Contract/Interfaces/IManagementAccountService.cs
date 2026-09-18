@@ -14,8 +14,13 @@ public interface IManagementAccountService
     /// <summary>Returns accounts whose fields contain <paramref name="search"/>, filtered in the database.</summary>
     Task<List<AdminAccountResponse>> SearchAccountsAsync(string search, CancellationToken ct = default);
 
-    /// <summary>Returns a single account by email for the admin edit form, or null.</summary>
-    Task<AdminAccountResponse?> GetAccountByEmailAsync(string email, CancellationToken ct = default);
+    /// <summary>
+    /// Returns a single account by email for the admin edit form, or null. Returns the plain
+    /// <see cref="AccountResponse"/>: the edit form never reads the password hash or the
+    /// registration / reset tokens, so they are not sent to the browser for this lookup (the grid,
+    /// search and export keep <see cref="AdminAccountResponse"/>, which shows them deliberately).
+    /// </summary>
+    Task<AccountResponse?> GetAccountByEmailAsync(string email, CancellationToken ct = default);
 
     /// <summary>Admin-creates a new account (skips the normal email-confirmation flow).</summary>
     Task<ServiceResult> CreateAccountAsync(AccountRequest request, CancellationToken ct = default);

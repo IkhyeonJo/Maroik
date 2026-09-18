@@ -80,6 +80,25 @@ public class ManagementAccountServiceTests
         Assert.Null(result);
     }
 
+    /// <summary>
+    /// The single-account lookup behind the admin edit form must return the plain
+    /// <see cref="AccountResponse"/> — never the <see cref="AdminAccountResponse"/> that carries the
+    /// password hash and the registration / reset tokens, which the form does not read.
+    /// </summary>
+    [Fact]
+    public async Task GetAccountByEmailAsync_ReturnsPlainAccountResponse_WithoutSecretColumns()
+    {
+        var account = ActiveAccount();
+        _accountRepo.Setup(r => r.FindByEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(account);
+        var sut = CreateSut();
+
+        AccountResponse? result = await sut.GetAccountByEmailAsync(account.Email.Value, TestContext.Current.CancellationToken);
+
+        Assert.NotNull(result);
+        Assert.Equal(account.Email.Value, result.Email);
+        Assert.IsNotType<AdminAccountResponse>(result);
+    }
+
     // -- CreateAccountAsync ---------------------------------------------------
 
     /// <summary>Verifies that <c>CreateAccountAsync</c> returns fail when email already exists.</summary>

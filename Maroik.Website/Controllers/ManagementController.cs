@@ -335,7 +335,7 @@ public class ManagementController : Controller
     {
         try
         {
-            AdminAccountResponse? tempAccount = await _managementAccountService.GetAccountByEmailAsync(email, HttpContext.RequestAborted);
+            AccountResponse? tempAccount = await _managementAccountService.GetAccountByEmailAsync(email, HttpContext.RequestAborted);
 
             return tempAccount == null
                 ? Json(new
