@@ -1,5 +1,8 @@
 "use strict";
 (function () {
+    function pad2(n) {
+        return n.toString().padStart(2, '0');
+    }
     const $createIncomeTabs = $('#createIncomeTabs');
     const $editIncomeTabs = $('#editIncomeTabs');
     const $createIncomeDate = $('#createIncomeDate');
@@ -193,7 +196,7 @@
         let hour = parseInt($createIncomeHour.val());
         let minute = parseInt($createIncomeMinute.val());
         let second = parseInt($createIncomeSecond.val());
-        let created = new Date(year, month - 1, day, hour, minute, second).toISOString();
+        let created = `${year}-${pad2(month)}-${pad2(day)} ${pad2(hour)}:${pad2(minute)}:${pad2(second)}`;
         let depositMyAssetProductName = $createIncomeDepositMyAssetProductName.val();
         let note = $createIncomeNote.val();
         let paramValue = JSON.stringify({
@@ -285,7 +288,7 @@
         let hour = parseInt($editIncomeHour.val());
         let minute = parseInt($editIncomeMinute.val());
         let second = parseInt($editIncomeSecond.val());
-        let created = new Date(year, month - 1, day, hour, minute, second).toISOString();
+        let created = `${year}-${pad2(month)}-${pad2(day)} ${pad2(hour)}:${pad2(minute)}:${pad2(second)}`;
         let depositMyAssetProductName = $editIncomeDepositMyAssetProductName.val();
         let note = $editIncomeNote.val();
         let paramValue = JSON.stringify({

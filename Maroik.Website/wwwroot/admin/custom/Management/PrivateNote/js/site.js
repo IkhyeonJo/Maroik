@@ -69,6 +69,9 @@
     let writeUploadedFile;
     let editUploadedFile;
     function WriteUploadFile(obj, errorMessage) {
+        if (!obj.files || obj.files.length === 0) {
+            return;
+        }
         if (obj.files[0].size > maxFileSize) {
             alert(errorMessage);
             document.getElementById('writeUploadedFile').value = "";
@@ -79,6 +82,9 @@
         }
     }
     function EditUploadFile(obj, errorMessage) {
+        if (!obj.files || obj.files.length === 0) {
+            return;
+        }
         if (obj.files[0].size > maxFileSize) {
             alert(errorMessage);
             document.getElementById('editUploadedFile').value = "";

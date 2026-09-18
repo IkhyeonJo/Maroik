@@ -1,5 +1,8 @@
 "use strict";
 (function () {
+    function pad2(n) {
+        return n.toString().padStart(2, '0');
+    }
     const $createExpenditureDate = $('#createExpenditureDate');
     const $createExpenditureTabs = $('#createExpenditureTabs');
     const $editExpenditureTabs = $('#editExpenditureTabs');
@@ -212,7 +215,7 @@
         let hour = parseInt($createExpenditureHour.val());
         let minute = parseInt($createExpenditureMinute.val());
         let second = parseInt($createExpenditureSecond.val());
-        let created = new Date(year, month - 1, day, hour, minute, second).toISOString();
+        let created = `${year}-${pad2(month)}-${pad2(day)} ${pad2(hour)}:${pad2(minute)}:${pad2(second)}`;
         let paymentMethod = $createExpenditurePaymentMethod.val();
         let note = $createExpenditureNote.val();
         let myDepositAsset = $createExpenditureMyDepositAsset.val();
@@ -320,7 +323,7 @@
         let hour = parseInt($editExpenditureHour.val());
         let minute = parseInt($editExpenditureMinute.val());
         let second = parseInt($editExpenditureSecond.val());
-        let created = new Date(year, month - 1, day, hour, minute, second).toISOString();
+        let created = `${year}-${pad2(month)}-${pad2(day)} ${pad2(hour)}:${pad2(minute)}:${pad2(second)}`;
         let paymentMethod = $editExpenditurePaymentMethod.val();
         let note = $editExpenditureNote.val();
         let myDepositAsset = $editExpenditureMyDepositAsset.val();

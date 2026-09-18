@@ -415,8 +415,10 @@
             });
         });
         calendar.render();
+        let calendarEventsRequestSeq = 0;
         function RefreshCalendarEvents() {
             calendar.removeAllEvents();
+            const requestSeq = ++calendarEventsRequestSeq;
             let paramValue = {
                 Calendars: []
             };
@@ -436,6 +438,9 @@
                 data: JSON.stringify(paramValue),
                 contentType: 'application/json; charset=utf-8',
                 success: function (response) {
+                    if (requestSeq !== calendarEventsRequestSeq) {
+                        return;
+                    }
                     if (response.result) {
                         JSON.parse(response.calendarEvents).forEach((item) => {
                             calendar.addEvent({
