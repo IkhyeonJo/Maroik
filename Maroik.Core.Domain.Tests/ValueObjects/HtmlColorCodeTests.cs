@@ -52,6 +52,10 @@ public class HtmlColorCodeTests
     [InlineData("#ABC")]
     [InlineData("#abc")]
     [InlineData("red")]
+    [InlineData("#FF5733\n")]
+    [InlineData("#FF5733\r\n")]
+    [InlineData("#FF5733 ")]
+    [InlineData("\n#FF5733")]
     public void Create_ReturnsError_WhenInvalidFormat(string input)
     {
         var result = HtmlColorCode.Create(input);

@@ -47,6 +47,9 @@ public sealed partial class HtmlColorCode : ValueObject
 
     /// <inheritdoc/>
     public override string ToString() => Value;
-    [GeneratedRegex(@"^#[A-Fa-f0-9]{6}$", RegexOptions.Compiled)]
+    // \z, not $: in .NET "$" also matches before a trailing "\n", so "#FF5733\n" would pass here and then
+    // be rejected by Calendar_HtmlColorCode_check (Postgres "$" only matches the true end of the
+    // string) as a raw DB error instead of this clean validation error.
+    [GeneratedRegex(@"^#[A-Fa-f0-9]{6}\z", RegexOptions.Compiled)]
     private static partial Regex MyRegex();
 }
