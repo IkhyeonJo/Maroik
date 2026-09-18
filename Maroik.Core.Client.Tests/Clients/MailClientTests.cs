@@ -1,4 +1,5 @@
 using System.Net.Security;
+using MailKit.Security;
 using Maroik.Core.Client.Clients;
 using Microsoft.Extensions.Logging.Abstractions;
 
@@ -188,5 +189,55 @@ public class MailClientTests
         SslPolicyErrors combined = SslPolicyErrors.RemoteCertificateChainErrors | SslPolicyErrors.RemoteCertificateNameMismatch;
 
         Assert.False(MailClient.ShouldAcceptCertificate(combined));
+    }
+
+    // -- GetSecureSocketOptions -------------------------------------------
+    // SmtpSsl on must REQUIRE TLS. The old mapping (SecureSocketOptions.Auto) continued in cleartext
+    // when the server did not advertise STARTTLS, so an attacker stripping that capability got the
+    // SMTP credentials and the token-bearing mail body unencrypted.
+
+    /// <summary>SmtpSsl on with a submission port requires STARTTLS — never the cleartext-tolerant Auto / StartTlsWhenAvailable.</summary>
+    [Theory]
+    [InlineData(587)]
+    [InlineData(25)]
+    [InlineData(2525)]
+    public void GetSecureSocketOptions_SslOn_RequiresStartTls(int port)
+    {
+        Assert.Equal(SecureSocketOptions.StartTls, MailClient.GetSecureSocketOptions(true, port));
+    }
+
+    /// <summary>SmtpSsl on with a conventional implicit-TLS port uses TLS from the first byte.</summary>
+    [Theory]
+    [InlineData(465)]
+    [InlineData(2465)]
+    public void GetSecureSocketOptions_SslOn_ImplicitTlsPorts_UseSslOnConnect(int port)
+    {
+        Assert.Equal(SecureSocketOptions.SslOnConnect, MailClient.GetSecureSocketOptions(true, port));
+    }
+
+    /// <summary>SmtpSsl on never maps to an option that tolerates a server without TLS.</summary>
+    [Theory]
+    [InlineData(25)]
+    [InlineData(465)]
+    [InlineData(587)]
+    [InlineData(2465)]
+    [InlineData(0)]
+    public void GetSecureSocketOptions_SslOn_NeverAllowsCleartext(int port)
+    {
+        SecureSocketOptions options = MailClient.GetSecureSocketOptions(true, port);
+
+        Assert.NotEqual(SecureSocketOptions.Auto, options);
+        Assert.NotEqual(SecureSocketOptions.StartTlsWhenAvailable, options);
+        Assert.NotEqual(SecureSocketOptions.None, options);
+    }
+
+    /// <summary>SmtpSsl off keeps the deliberate opportunistic STARTTLS for an operator's own relay, on any port.</summary>
+    [Theory]
+    [InlineData(25)]
+    [InlineData(465)]
+    [InlineData(587)]
+    public void GetSecureSocketOptions_SslOff_IsOpportunisticStartTls(int port)
+    {
+        Assert.Equal(SecureSocketOptions.StartTlsWhenAvailable, MailClient.GetSecureSocketOptions(false, port));
     }
 }

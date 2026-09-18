@@ -39,6 +39,26 @@ public class MailClient(ILogger<MailClient> logger) : IMailClient
         _ => false
     };
 
+    /// <summary>
+    /// Picks the TLS mode for the SMTP connection. <c>SmtpSsl</c> on means TLS is <b>required</b>:
+    /// implicit TLS on the conventional implicit-TLS ports (465 / 2465), otherwise a mandatory
+    /// STARTTLS upgrade — the connect fails rather than continuing in cleartext if the server does
+    /// not offer it, so an attacker who strips the STARTTLS capability cannot make the client send
+    /// its SMTP credentials or the token-bearing mail body unencrypted (the previous
+    /// <c>SecureSocketOptions.Auto</c> silently fell back to no encryption). <c>SmtpSsl</c> off keeps
+    /// the deliberate opportunistic behaviour for an operator's own relay. Extracted as a pure
+    /// function so this security-sensitive decision is unit-testable without an SMTP connection.
+    /// </summary>
+    public static SecureSocketOptions GetSecureSocketOptions(bool smtpSsl, int port)
+    {
+        if (!smtpSsl)
+            return SecureSocketOptions.StartTlsWhenAvailable;
+
+        return port is 465 or 2465
+            ? SecureSocketOptions.SslOnConnect
+            : SecureSocketOptions.StartTls;
+    }
+
     /// <inheritdoc />
     public string GetMailConfirmationBody(string registrationToken, string title, string content0, string content1, string domainName)
     {
@@ -89,8 +109,8 @@ public class MailClient(ILogger<MailClient> logger) : IMailClient
             // can't outlive it and get killed mid-send (which would cause a duplicate
             // send on redelivery). MailKit's default is ~100s.
             smtp.Timeout = 20_000;
-            // SmtpSsl on  => negotiate the best available (implicit TLS or STARTTLS) AND validate the
-            //               server certificate normally.
+            // SmtpSsl on  => TLS is required (implicit TLS or mandatory STARTTLS, see
+            //               GetSecureSocketOptions) AND the server certificate is validated normally.
             // SmtpSsl off => still upgrade opportunistically via STARTTLS when the server advertises
             //               it (so credentials are never sent in the clear against a relay that
             //               offers TLS). The certificate check is relaxed only for an untrusted /
@@ -98,9 +118,7 @@ public class MailClient(ILogger<MailClient> logger) : IMailClient
             //               hostname mismatch or a missing certificate is still rejected, since both
             //               are the signature of an active man-in-the-middle rather than a benign
             //               self-signed relay.
-            SecureSocketOptions socketOptions = settings.SmtpSsl
-                ? SecureSocketOptions.Auto
-                : SecureSocketOptions.StartTlsWhenAvailable;
+            SecureSocketOptions socketOptions = GetSecureSocketOptions(settings.SmtpSsl, settings.SmtpPort);
             if (!settings.SmtpSsl)
             {
                 smtp.ServerCertificateValidationCallback = (_, _, _, errors) =>
@@ -123,7 +141,20 @@ public class MailClient(ILogger<MailClient> logger) : IMailClient
             await smtp.ConnectAsync(settings.SmtpHost ?? "", settings.SmtpPort, socketOptions, ct);
             await smtp.AuthenticateAsync(settings.SmtpUserName ?? "", settings.SmtpPassword ?? "", ct);
             await smtp.SendAsync(message, ct);
-            await smtp.DisconnectAsync(true, ct);
+
+            // The server has accepted the message at this point, so a failure while closing the
+            // connection (20 s timeout, socket reset, a cancelled token at worker shutdown) must not
+            // be reported as a failed send: the caller would mark the mail failed and republish it,
+            // and the recipient would get a duplicate confirmation / reset mail. Log and move on;
+            // disposing `smtp` tears the connection down anyway.
+            try
+            {
+                await smtp.DisconnectAsync(true, ct);
+            }
+            catch (Exception disconnectEx)
+            {
+                logger.LogWarning(disconnectEx, "Mail to {ToEmail} was sent, but closing the SMTP connection failed", toEmail);
+            }
 
             return ServiceResult.Ok();
         }
