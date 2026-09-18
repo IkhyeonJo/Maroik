@@ -167,7 +167,7 @@ public class AccountRepository(ApplicationDbContext context)
     }
 
     /// <inheritdoc />
-    public Task<int> UpdatePasswordAsync(string email, string hashedPassword, string securityStamp, bool mustChangePassword, DateTime updated, CancellationToken ct = default)
+    public Task<int> UpdatePasswordAsync(string email, string hashedPassword, string securityStamp, bool mustChangePassword, string? resetPasswordToken, DateTime updated, CancellationToken ct = default)
     {
         string normalizedEmail = email.ToLowerInvariant();
         return Set.Where(e => e.Email == normalizedEmail)
@@ -175,6 +175,7 @@ public class AccountRepository(ApplicationDbContext context)
                 .SetProperty(e => e.HashedPassword, hashedPassword)
                 .SetProperty(e => e.SecurityStamp, securityStamp)
                 .SetProperty(e => e.MustChangePassword, mustChangePassword)
+                .SetProperty(e => e.ResetPasswordToken, resetPasswordToken)
                 .SetProperty(e => e.Updated, updated), ct);
     }
 

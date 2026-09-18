@@ -106,12 +106,13 @@ public class ProfileService(
             if (!PasswordPolicy.IsValid(newPassword))
                 return await unitOfWork.FailAsync(ServiceResult.Validation("Account.PasswordPolicy", PasswordPolicy.ViolationMessage), ct);
 
-            // Let the domain method compute the new SecurityStamp / clear MustChangePassword, then
-            // persist only those columns (see UpdateAvatarAsync for why the full-row write is avoided).
+            // Let the domain method compute the new SecurityStamp / clear MustChangePassword and any
+            // pending ResetPasswordToken, then persist only those columns (see UpdateAvatarAsync for
+            // why the full-row write is avoided).
             account.ChangePassword(passwordService.HashPassword(newPassword));
 
             await accountRepository.UpdatePasswordAsync(
-                email, account.HashedPassword, account.SecurityStamp, account.MustChangePassword, account.Updated, ct);
+                email, account.HashedPassword, account.SecurityStamp, account.MustChangePassword, account.ResetPasswordToken, account.Updated, ct);
             await unitOfWork.CommitAsync(ct);
             return ServiceResult.Ok();
         }

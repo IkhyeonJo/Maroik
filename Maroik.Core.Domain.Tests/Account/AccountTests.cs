@@ -631,6 +631,41 @@ public class AccountTests
         Assert.NotEqual(originalStamp, account.SecurityStamp);
     }
 
+    /// <summary>Self-service change password discards a pending reset token, so an earlier reset link cannot overwrite the new password.</summary>
+    [Fact]
+    public void ChangePassword_ClearsPendingResetPasswordToken()
+    {
+        string registrationToken = GuidToken.Generate();
+        var account = ValidAccount(registrationToken: registrationToken);
+        account.ConfirmEmail(registrationToken);
+        string resetToken = GuidToken.Generate();
+        account.RequestPasswordReset(resetToken);
+
+        account.ChangePassword("newHash");
+
+        Assert.Null(account.ResetPasswordToken);
+        Assert.True(account.ResetPassword(resetToken, "attackerHash").IsError);
+        Assert.Equal("newHash", account.HashedPassword);
+    }
+
+    /// <summary>Admin reset discards a pending reset token, so an earlier reset link cannot bypass the forced password change.</summary>
+    [Fact]
+    public void AdminResetPassword_ClearsPendingResetPasswordToken()
+    {
+        string registrationToken = GuidToken.Generate();
+        var account = ValidAccount(registrationToken: registrationToken);
+        account.ConfirmEmail(registrationToken);
+        string resetToken = GuidToken.Generate();
+        account.RequestPasswordReset(resetToken);
+
+        account.AdminResetPassword("tempHash");
+
+        Assert.Null(account.ResetPasswordToken);
+        Assert.True(account.ResetPassword(resetToken, "attackerHash").IsError);
+        Assert.Equal("tempHash", account.HashedPassword);
+        Assert.True(account.MustChangePassword);
+    }
+
     /// <summary>Token-based password reset regenerates the security stamp and clears a pending forced password change.</summary>
     [Fact]
     public void ResetPassword_RegeneratesSecurityStamp_AndClearsMustChangePassword()
@@ -638,13 +673,16 @@ public class AccountTests
         string registrationToken = GuidToken.Generate();
         var account = ValidAccount(registrationToken: registrationToken);
         account.ConfirmEmail(registrationToken);
+        // The admin reset comes first: it discards any reset link requested before it, so the
+        // link used below must be requested afterwards.
+        account.AdminResetPassword("tempHash");
         string resetToken = GuidToken.Generate();
         account.RequestPasswordReset(resetToken);
-        account.AdminResetPassword("tempHash");
         string stampBeforeReset = account.SecurityStamp;
 
-        account.ResetPassword(resetToken, "newHash");
+        var result = account.ResetPassword(resetToken, "newHash");
 
+        Assert.False(result.IsError);
         Assert.NotEqual(stampBeforeReset, account.SecurityStamp);
         Assert.False(account.MustChangePassword);
     }

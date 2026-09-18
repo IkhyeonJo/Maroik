@@ -48,8 +48,8 @@ public interface IAccountRepository : IGenericRepository<Account>
     /// <summary>Writes only <c>TimeZoneIanaId</c> and <c>Updated</c>.</summary>
     Task<int> UpdateTimeZoneAsync(string email, string timeZoneIanaId, DateTime updated, CancellationToken ct = default);
 
-    /// <summary>Writes only <c>HashedPassword</c>, <c>SecurityStamp</c>, <c>MustChangePassword</c> and <c>Updated</c>.</summary>
-    Task<int> UpdatePasswordAsync(string email, string hashedPassword, string securityStamp, bool mustChangePassword, DateTime updated, CancellationToken ct = default);
+    /// <summary>Writes only <c>HashedPassword</c>, <c>SecurityStamp</c>, <c>MustChangePassword</c>, <c>ResetPasswordToken</c> and <c>Updated</c>.</summary>
+    Task<int> UpdatePasswordAsync(string email, string hashedPassword, string securityStamp, bool mustChangePassword, string? resetPasswordToken, DateTime updated, CancellationToken ct = default);
 
     /// <summary>Writes only <c>DefaultMonetaryUnit</c>. Does not touch <c>Updated</c> — this is a background self-correction, not a user edit.</summary>
     Task<int> UpdateDefaultMonetaryUnitAsync(string email, string? defaultMonetaryUnit, CancellationToken ct = default);

@@ -306,6 +306,7 @@ public sealed class AccountRepositoryTests(DatabaseFixture database) : Repositor
         seed.HashedPassword = "$2a$13$original";
         seed.SecurityStamp = "original-stamp";
         seed.MustChangePassword = false;
+        seed.ResetPasswordToken = "pending-reset-token";
         seed.DefaultMonetaryUnit = "USD";
         seed.Message = "original-message";
         await SeedAsync(seed);
@@ -315,7 +316,7 @@ public sealed class AccountRepositoryTests(DatabaseFixture database) : Repositor
 
         int n1 = await Sut.UpdateAvatarPathAsync(email, "/new-avatar.jpg", t1, ct);
         int n2 = await Sut.UpdateTimeZoneAsync(email, "Asia/Seoul", t1, ct);
-        int n3 = await Sut.UpdatePasswordAsync(email, "$2a$13$new", "new-stamp", mustChangePassword: true, t1, ct);
+        int n3 = await Sut.UpdatePasswordAsync(email, "$2a$13$new", "new-stamp", mustChangePassword: true, resetPasswordToken: null, t1, ct);
         int n4 = await Sut.UpdateDefaultMonetaryUnitAsync(email, "KRW", ct);
         int n5 = await Sut.UpdateMessageAsync(email, "new-message", t1, ct);
         Context.ChangeTracker.Clear();
@@ -333,6 +334,8 @@ public sealed class AccountRepositoryTests(DatabaseFixture database) : Repositor
         Assert.Equal("$2a$13$new", result.HashedPassword);
         Assert.Equal("new-stamp", result.SecurityStamp);
         Assert.True(result.MustChangePassword);
+        // A password write discards the pending reset token, so a link mailed earlier is dead.
+        Assert.Null(result.ResetPasswordToken);
         Assert.Equal("KRW", result.DefaultMonetaryUnit);
         Assert.Equal("new-message", result.Message);
         // Untouched by any of the above.

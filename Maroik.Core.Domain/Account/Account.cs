@@ -364,11 +364,14 @@ public sealed class Account : AggregateRoot<string>
     /// Replaces the stored BCrypt hash for a self-service password change. Regenerates
     /// <see cref="SecurityStamp"/> (invalidating any other open session on its next request) and
     /// clears <see cref="MustChangePassword"/>, since supplying a new hash here always goes through
-    /// the password-policy-validated self-service flow.
+    /// the password-policy-validated self-service flow. Also discards any pending
+    /// <see cref="ResetPasswordToken"/>: a reset link mailed before this change must not stay
+    /// usable to overwrite the password the account owner just chose.
     /// </summary>
     public void ChangePassword(string newHashedPassword)
     {
         HashedPassword = newHashedPassword;
+        ResetPasswordToken = null;
         SecurityStamp = GenerateSecurityStamp();
         MustChangePassword = false;
         Updated = DateTime.UtcNow;
@@ -378,11 +381,13 @@ public sealed class Account : AggregateRoot<string>
     /// Admin override: replaces the stored BCrypt hash and forces the account to choose its own
     /// new password (meeting <see cref="PasswordPolicy"/>) the next time it logs in. Regenerates
     /// <see cref="SecurityStamp"/> so any session already open under the old password is
-    /// invalidated on its next request.
+    /// invalidated on its next request, and discards any pending <see cref="ResetPasswordToken"/>
+    /// so a reset link mailed earlier cannot be used to bypass the forced change.
     /// </summary>
     public void AdminResetPassword(string newHashedPassword)
     {
         HashedPassword = newHashedPassword;
+        ResetPasswordToken = null;
         SecurityStamp = GenerateSecurityStamp();
         MustChangePassword = true;
         Updated = DateTime.UtcNow;
