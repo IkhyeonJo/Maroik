@@ -13,4 +13,11 @@ internal static class HttpContextItemKeys
     /// identical second query.
     /// </summary>
     internal const string LoggedInAccount = "__Maroik.LoggedInAccount";
+
+    /// <summary>
+    /// The per-role navigation menu (<see cref="Maroik.Website.Filters.NavigationMenus"/>) that
+    /// <see cref="Maroik.Website.Filters.AuthorizationFilter"/> loaded for this request, so
+    /// <see cref="Maroik.Website.Filters.ViewBagPopulatorFilter"/> can publish it to the ViewBag.
+    /// </summary>
+    internal const string NavigationMenus = "__Maroik.NavigationMenus";
 }

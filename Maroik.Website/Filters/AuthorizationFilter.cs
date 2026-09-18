@@ -14,22 +14,29 @@ using Microsoft.Extensions.Caching.Distributed;
 namespace Maroik.Website.Filters;
 
 /// <summary>
-/// Global action filter with two jobs, run before every action:
-/// <list type="bullet">
-///   <item><b>Authorization.</b> Decides whether the current request may run, given the visitor's
-///   session role and the seeded navigation menu (a GET must resolve to a menu item for the role;
-///   a POST must carry a matching <see cref="RequiredHttpPostAccessAttribute"/> and target a
-///   controller present in the role's menu). Denied requests are redirected instead of executing.</item>
-///   <item><b>Navigation.</b> Loads the category / sub-category menu for all three roles (Admin,
-///   User, Anonymous) — cached in the distributed cache with a 10-minute sliding expiration — and
-///   puts it on <c>ViewBag</c>. This data is also the input to the authorization decision above,
-///   which is why the two concerns share one filter.</item>
-/// </list>
+/// Global <b>authorization</b> filter: decides, before model binding and before the action runs,
+/// whether the current request may proceed, given the visitor's session role and the seeded
+/// navigation menu (a GET must resolve to a menu item for the role; a POST must carry a matching
+/// <see cref="RequiredHttpPostAccessAttribute"/> and target a controller present in the role's menu).
+/// Denied requests are redirected instead of executing. Being an authorization filter (not an action
+/// filter) means a denied request never reaches form / file model binding.
+/// <para>
+/// It also loads the category / sub-category menu for all three roles (Admin, User, Anonymous) —
+/// cached in the distributed cache with a 10-minute sliding expiration — because that data is the
+/// input to the decision. The loaded menu is stashed on <c>HttpContext.Items</c> as
+/// <see cref="NavigationMenus"/>; <see cref="ViewBagPopulatorFilter"/> publishes it to the ViewBag
+/// (there is no controller instance yet at this stage, so it cannot be done here).
+/// </para>
+/// <para>
+/// Ordering: runs at the default filter order (0), i.e. before the global
+/// <c>AutoValidateAntiforgeryTokenAttribute</c> (order 1000), so an unauthorized request is rejected
+/// before its form body is parsed for an antiforgery token.
+/// </para>
 /// The controller/action → role map used for POST authorization is derived once from the compiled
 /// controllers (see <see cref="_postActionRoles"/>) rather than re-reflected on every request.
 /// </summary>
-public class AuthorizationFilter(IMenuService menuService, IDistributedCache cache, 
-    ISessionService sessionService, IAccountService accountService) : ActionFilterAttribute
+public class AuthorizationFilter(IMenuService menuService, IDistributedCache cache,
+    ISessionService sessionService, IAccountService accountService) : IAsyncAuthorizationFilter
 {
     private const string AdminCategoriesCacheKey = NavigationCacheKeys.AdminCategories;
     private const string AdminSubCategoriesCacheKey = NavigationCacheKeys.AdminSubCategories;
@@ -113,8 +120,8 @@ public class AuthorizationFilter(IMenuService menuService, IDistributedCache cac
         return map;
     }
 
-    /// <summary>Loads (or restores from cache) the navigation menu data and populates ViewBag before the action executes.</summary>
-    public override async Task OnActionExecutionAsync(ActionExecutingContext context, ActionExecutionDelegate next)
+    /// <summary>Loads (or restores from cache) the navigation menu data, then allows or denies the request before model binding.</summary>
+    public async Task OnAuthorizationAsync(AuthorizationFilterContext context)
     {
         var results = await Task.WhenAll(
             cache.GetAsync(AdminCategoriesCacheKey),
@@ -185,15 +192,12 @@ public class AuthorizationFilter(IMenuService menuService, IDistributedCache cac
                     entryOptions));
         }
 
-        if (context.Controller is Controller ctrl)
-        {
-            ctrl.ViewBag.AdminCategories = adminCategories;
-            ctrl.ViewBag.AdminSubCategories = adminSubCategories;
-            ctrl.ViewBag.UserCategories = userCategories;
-            ctrl.ViewBag.UserSubCategories = userSubCategories;
-            ctrl.ViewBag.AnonymousCategories = anonymousCategories;
-            ctrl.ViewBag.AnonymousSubCategories = anonymousSubCategories;
-        }
+        // Hand the menu to ViewBagPopulatorFilter: an authorization filter runs before the controller
+        // instance exists, so there is no ViewBag to write to here.
+        context.HttpContext.Items[HttpContextItemKeys.NavigationMenus] = new NavigationMenus(
+            adminCategories, adminSubCategories,
+            userCategories, userSubCategories,
+            anonymousCategories, anonymousSubCategories);
 
         var currentControllerName = context.ActionDescriptor.RouteValues["controller"] ?? ""; // Controller name before execution
         var currentActionName = context.ActionDescriptor.RouteValues["action"] ?? ""; // Action name before execution
@@ -244,8 +248,7 @@ public class AuthorizationFilter(IMenuService menuService, IDistributedCache cac
                 return;
             }
 
-            await next();
-            return;
+            return; // allowed: no Result set
         }
 
         switch (currentRequestMethod.ToUpper())
@@ -270,8 +273,7 @@ public class AuthorizationFilter(IMenuService menuService, IDistributedCache cac
                         case "Account" when currentActionName == "ForgotPassword":
                         // If password reset page
                         case "Account" when currentActionName == "ResetPassword":
-                            await next(); // Do Action!!
-                            return;
+                            return; // allowed: no Result set
                     }
 
                     var anonymousMatch = anonymousCategories.ResolveActiveMenuItem(
@@ -279,8 +281,7 @@ public class AuthorizationFilter(IMenuService menuService, IDistributedCache cac
 
                     if (anonymousMatch.IsMatch)
                     {
-                        await next(); // Do Action!!
-                        return;
+                        return; // allowed: no Result set
                     }
 
                     context.Result = new RedirectResult("/Dashboard/AnonymousIndex");
@@ -294,8 +295,7 @@ public class AuthorizationFilter(IMenuService menuService, IDistributedCache cac
                         case "Exception" when currentActionName == "Error":
                         // Initial screen
                         case "Dashboard" when currentActionName == "AnonymousIndex":
-                            await next(); // Do Action!!
-                            return;
+                            return; // allowed: no Result set
                     }
 
                     switch (loggedInAccount!.Role)
@@ -311,8 +311,7 @@ public class AuthorizationFilter(IMenuService menuService, IDistributedCache cac
 
                                 if (match.IsMatch)
                                 {
-                                    await next(); // Do Action!!
-                                    return;
+                                    return; // allowed: no Result set
                                 }
 
                                 context.Result = new RedirectResult("/Dashboard/AnonymousIndex");
@@ -336,8 +335,7 @@ public class AuthorizationFilter(IMenuService menuService, IDistributedCache cac
                     // are always reachable to an anonymous visitor.
                     if (_anonymousAccountPostActions.Contains(endpoint))
                     {
-                        await next(); // Do Action!!
-                        return;
+                        return; // allowed: no Result set
                     }
 
                     // Otherwise the action must be explicitly marked for the Anonymous role AND live
@@ -346,8 +344,7 @@ public class AuthorizationFilter(IMenuService menuService, IDistributedCache cac
                         && anonRoles.Contains(Role.Anonymous)
                         && anonymousCategories.Any(category => category.Controller == currentControllerName))
                     {
-                        await next(); // Do Action!!
-                        return;
+                        return; // allowed: no Result set
                     }
 
                     context.Result = new RedirectResult("/Dashboard/AnonymousIndex");
@@ -361,8 +358,7 @@ public class AuthorizationFilter(IMenuService menuService, IDistributedCache cac
                     // account regardless of role.
                     if (currentControllerName == "Account" && currentActionName == "Logout")
                     {
-                        await next();
-                        return;
+                        return; // allowed: no Result set
                     }
 
                     switch (loggedInAccount!.Role)
@@ -381,8 +377,7 @@ public class AuthorizationFilter(IMenuService menuService, IDistributedCache cac
                                     && allowedRoles.Contains(loggedInAccount.Role)
                                     && categories.Any(category => category.Controller == currentControllerName))
                                 {
-                                    await next(); // Do Action!!
-                                    return;
+                                    return; // allowed: no Result set
                                 }
 
                                 context.Result = new RedirectResult("/Dashboard/AnonymousIndex");

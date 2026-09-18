@@ -1,6 +1,7 @@
 using Maroik.Core.Domain.Account;
 using Maroik.Core.Contract.Dtos;
 using Maroik.Core.Contract.Interfaces;
+using Maroik.Website.Constants;
 using Maroik.Website.Contracts;
 using Maroik.Website.Filters;
 using Microsoft.AspNetCore.Http;
@@ -17,10 +18,10 @@ namespace Maroik.Website.Tests.Filters;
 
 /// <summary>
 /// Unit tests for <see cref="AuthorizationFilter"/>, focused purely on the GET/POST allow/deny
-/// gating driven by <c>MenuNavigationMatcher.ResolveActiveMenuItem</c>. This filter no longer sets
-/// any view-rendering ViewBag values itself (that responsibility moved to
-/// <c>ViewBagPopulatorFilter</c>, which runs after it) — it only decides whether the request is
-/// allowed to proceed. All service dependencies are replaced with Moq mocks; the distributed
+/// gating driven by <c>MenuNavigationMatcher.ResolveActiveMenuItem</c>. The filter is an authorization
+/// filter (it runs before model binding and before a controller instance exists): it only decides
+/// whether the request may proceed — a denial is a <c>Result</c> on the context, an allow leaves it
+/// null — and leaves the loaded menu on <c>HttpContext.Items</c> for <c>ViewBagPopulatorFilter</c>. All service dependencies are replaced with Moq mocks; the distributed
 /// cache always misses so every test exercises the <see cref="IMenuService"/> fallback path.
 /// </summary>
 public class AuthorizationFilterTests
@@ -66,7 +67,7 @@ public class AuthorizationFilterTests
         _menuService.Setup(m => m.GetAllSubCategoriesAsync(It.IsAny<CancellationToken>())).ReturnsAsync(subCategories);
     }
 
-    private static (ActionExecutingContext context, Controller controller) BuildContext(
+    private static AuthorizationFilterContext BuildContext(
         string controllerName, string actionName, string httpMethod = "GET")
     {
         var services = new ServiceCollection();
@@ -76,7 +77,6 @@ public class AuthorizationFilterTests
         var httpContext = new DefaultHttpContext { RequestServices = sp };
         httpContext.Request.Method = httpMethod;
 
-        var controller = new FakeController();
         var actionDescriptor = new ControllerActionDescriptor
         {
             RouteValues = new Dictionary<string, string?>
@@ -85,95 +85,72 @@ public class AuthorizationFilterTests
                 ["action"] = actionName
             }
         };
-        controller.ControllerContext = new ControllerContext
-        {
-            HttpContext = httpContext,
-            RouteData = new RouteData(),
-            ActionDescriptor = actionDescriptor
-        };
 
-        var actionContext = new ActionContext(httpContext, new RouteData(), actionDescriptor);
-        var executingContext = new ActionExecutingContext(
-            actionContext,
-            new List<IFilterMetadata>(),
-            new Dictionary<string, object?>(),
-            controller);
-
-        return (executingContext, controller);
+        // An authorization filter runs before the controller instance exists, so the context carries
+        // only the request and the matched action — no controller, no ViewBag.
+        return new AuthorizationFilterContext(
+            new ActionContext(httpContext, new RouteData(), actionDescriptor),
+            new List<IFilterMetadata>());
     }
-
-    private static ActionExecutionDelegate NextCalled(Action onNext) =>
-        () =>
-        {
-            onNext();
-            return Task.FromResult(new ActionExecutedContext(
-                new ActionContext(new DefaultHttpContext(), new RouteData(), new ControllerActionDescriptor()),
-                new List<IFilterMetadata>(),
-                null!));
-        };
 
     // -- GET, not logged in -------------------------------------------------------
 
     /// <summary>On action execution async get not logged in bypass route always allowed.</summary>
     [Fact]
-    public async Task OnActionExecutionAsync_Get_NotLoggedIn_BypassRoute_AlwaysAllowed()
+    public async Task OnAuthorizationAsync_Get_NotLoggedIn_BypassRoute_AlwaysAllowed()
     {
         _sessionService.Setup(s => s.GetAccount()).Returns((AccountResponse?)null);
         SetupMenu([], []);
-        var (context, _) = BuildContext("Account", "Login");
-        bool nextCalled = false;
+        var context = BuildContext("Account", "Login");
 
-        await CreateSut().OnActionExecutionAsync(context, NextCalled(() => nextCalled = true));
+        await CreateSut().OnAuthorizationAsync(context);
 
-        Assert.True(nextCalled);
+        Assert.Null(context.Result);
         Assert.Null(context.Result);
     }
 
     /// <summary>On action execution async get not logged in single category match allows.</summary>
     [Fact]
-    public async Task OnActionExecutionAsync_Get_NotLoggedIn_SingleCategoryMatch_Allows()
+    public async Task OnAuthorizationAsync_Get_NotLoggedIn_SingleCategoryMatch_Allows()
     {
         _sessionService.Setup(s => s.GetAccount()).Returns((AccountResponse?)null);
         var category = MakeCategory(1, Role.Anonymous, "Dashboard", "AnonymousIndex");
         SetupMenu([category], []);
-        var (context, _) = BuildContext("Dashboard", "AnonymousIndex");
-        bool nextCalled = false;
+        var context = BuildContext("Dashboard", "AnonymousIndex");
 
-        await CreateSut().OnActionExecutionAsync(context, NextCalled(() => nextCalled = true));
+        await CreateSut().OnAuthorizationAsync(context);
 
-        Assert.True(nextCalled);
+        Assert.Null(context.Result);
         Assert.Null(context.Result);
     }
 
     /// <summary>On action execution async get not logged in sub category match allows.</summary>
     [Fact]
-    public async Task OnActionExecutionAsync_Get_NotLoggedIn_SubCategoryMatch_Allows()
+    public async Task OnAuthorizationAsync_Get_NotLoggedIn_SubCategoryMatch_Allows()
     {
         _sessionService.Setup(s => s.GetAccount()).Returns((AccountResponse?)null);
         var category = MakeCategory(1, Role.Anonymous, "Notice", null); // parent category (no direct Action = has children)
         var subCategory = MakeSubCategory(10, categoryId: 1, role: Role.Anonymous, action: "FixedIncome");
         SetupMenu([category], [subCategory]);
-        var (context, _) = BuildContext("Notice", "FixedIncome");
-        bool nextCalled = false;
+        var context = BuildContext("Notice", "FixedIncome");
 
-        await CreateSut().OnActionExecutionAsync(context, NextCalled(() => nextCalled = true));
+        await CreateSut().OnAuthorizationAsync(context);
 
-        Assert.True(nextCalled);
+        Assert.Null(context.Result);
     }
 
     /// <summary>On action execution async get not logged in no match redirects.</summary>
     [Fact]
-    public async Task OnActionExecutionAsync_Get_NotLoggedIn_NoMatch_Redirects()
+    public async Task OnAuthorizationAsync_Get_NotLoggedIn_NoMatch_Redirects()
     {
         _sessionService.Setup(s => s.GetAccount()).Returns((AccountResponse?)null);
         var category = MakeCategory(1, Role.Anonymous, "Dashboard", "AnonymousIndex");
         SetupMenu([category], []);
-        var (context, _) = BuildContext("Forum", "FreeForum");
-        bool nextCalled = false;
+        var context = BuildContext("Forum", "FreeForum");
 
-        await CreateSut().OnActionExecutionAsync(context, NextCalled(() => nextCalled = true));
+        await CreateSut().OnAuthorizationAsync(context);
 
-        Assert.False(nextCalled);
+        Assert.NotNull(context.Result);
         var redirect = Assert.IsType<RedirectResult>(context.Result);
         Assert.Equal("/Dashboard/AnonymousIndex", redirect.Url);
     }
@@ -182,24 +159,23 @@ public class AuthorizationFilterTests
 
     /// <summary>On action execution async get admin logged in single category match allows.</summary>
     [Fact]
-    public async Task OnActionExecutionAsync_Get_AdminLoggedIn_SingleCategoryMatch_Allows()
+    public async Task OnAuthorizationAsync_Get_AdminLoggedIn_SingleCategoryMatch_Allows()
     {
         var admin = new AccountResponse { Email = "admin@test.com", Nickname = "Admin", Role = Role.Admin };
         _sessionService.Setup(s => s.GetAccount()).Returns(admin);
         _accountService.Setup(a => a.GetAccountByEmailAsync("admin@test.com", It.IsAny<CancellationToken>())).ReturnsAsync(admin);
         var category = MakeCategory(1, Role.Admin, "Management", "Account");
         SetupMenu([category], []);
-        var (context, _) = BuildContext("Management", "Account");
-        bool nextCalled = false;
+        var context = BuildContext("Management", "Account");
 
-        await CreateSut().OnActionExecutionAsync(context, NextCalled(() => nextCalled = true));
+        await CreateSut().OnAuthorizationAsync(context);
 
-        Assert.True(nextCalled);
+        Assert.Null(context.Result);
     }
 
     /// <summary>On action execution async get admin logged in sub category match allows.</summary>
     [Fact]
-    public async Task OnActionExecutionAsync_Get_AdminLoggedIn_SubCategoryMatch_Allows()
+    public async Task OnAuthorizationAsync_Get_AdminLoggedIn_SubCategoryMatch_Allows()
     {
         var admin = new AccountResponse { Email = "admin@test.com", Nickname = "Admin", Role = Role.Admin };
         _sessionService.Setup(s => s.GetAccount()).Returns(admin);
@@ -207,29 +183,27 @@ public class AuthorizationFilterTests
         var category = MakeCategory(1, Role.Admin, "Notice", null); // parent category (no direct Action = has children)
         var subCategory = MakeSubCategory(10, categoryId: 1, role: Role.Admin, action: "FixedIncome");
         SetupMenu([category], [subCategory]);
-        var (context, _) = BuildContext("Notice", "FixedIncome");
-        bool nextCalled = false;
+        var context = BuildContext("Notice", "FixedIncome");
 
-        await CreateSut().OnActionExecutionAsync(context, NextCalled(() => nextCalled = true));
+        await CreateSut().OnAuthorizationAsync(context);
 
-        Assert.True(nextCalled);
+        Assert.Null(context.Result);
     }
 
     /// <summary>On action execution async get admin logged in no match redirects.</summary>
     [Fact]
-    public async Task OnActionExecutionAsync_Get_AdminLoggedIn_NoMatch_Redirects()
+    public async Task OnAuthorizationAsync_Get_AdminLoggedIn_NoMatch_Redirects()
     {
         var admin = new AccountResponse { Email = "admin@test.com", Nickname = "Admin", Role = Role.Admin };
         _sessionService.Setup(s => s.GetAccount()).Returns(admin);
         _accountService.Setup(a => a.GetAccountByEmailAsync("admin@test.com", It.IsAny<CancellationToken>())).ReturnsAsync(admin);
         var category = MakeCategory(1, Role.Admin, "Management", "Account");
         SetupMenu([category], []);
-        var (context, _) = BuildContext("Unregistered", "Action");
-        bool nextCalled = false;
+        var context = BuildContext("Unregistered", "Action");
 
-        await CreateSut().OnActionExecutionAsync(context, NextCalled(() => nextCalled = true));
+        await CreateSut().OnAuthorizationAsync(context);
 
-        Assert.False(nextCalled);
+        Assert.NotNull(context.Result);
         var redirect = Assert.IsType<RedirectResult>(context.Result);
         Assert.Equal("/Dashboard/AnonymousIndex", redirect.Url);
     }
@@ -238,33 +212,32 @@ public class AuthorizationFilterTests
 
     /// <summary>On action execution async get user logged in single category match allows.</summary>
     [Fact]
-    public async Task OnActionExecutionAsync_Get_UserLoggedIn_SingleCategoryMatch_Allows()
+    public async Task OnAuthorizationAsync_Get_UserLoggedIn_SingleCategoryMatch_Allows()
     {
         var user = new AccountResponse { Email = "user@test.com", Nickname = "User", Role = Role.User };
         _sessionService.Setup(s => s.GetAccount()).Returns(user);
         _accountService.Setup(a => a.GetAccountByEmailAsync("user@test.com", It.IsAny<CancellationToken>())).ReturnsAsync(user);
         var category = MakeCategory(1, Role.User, "AccountBook", "Income");
         SetupMenu([category], []);
-        var (context, _) = BuildContext("AccountBook", "Income");
-        bool nextCalled = false;
+        var context = BuildContext("AccountBook", "Income");
 
-        await CreateSut().OnActionExecutionAsync(context, NextCalled(() => nextCalled = true));
+        await CreateSut().OnAuthorizationAsync(context);
 
-        Assert.True(nextCalled);
+        Assert.Null(context.Result);
     }
 
     /// <summary>On action execution async get user logged in no match redirects.</summary>
     [Fact]
-    public async Task OnActionExecutionAsync_Get_UserLoggedIn_NoMatch_Redirects()
+    public async Task OnAuthorizationAsync_Get_UserLoggedIn_NoMatch_Redirects()
     {
         var user = new AccountResponse { Email = "user@test.com", Nickname = "User", Role = Role.User };
         _sessionService.Setup(s => s.GetAccount()).Returns(user);
         _accountService.Setup(a => a.GetAccountByEmailAsync("user@test.com", It.IsAny<CancellationToken>())).ReturnsAsync(user);
         var category = MakeCategory(1, Role.User, "AccountBook", "Income");
         SetupMenu([category], []);
-        var (context, _) = BuildContext("Management", "Account"); // Admin-only route
+        var context = BuildContext("Management", "Account"); // Admin-only route
 
-        await CreateSut().OnActionExecutionAsync(context, NextCalled(() => { }));
+        await CreateSut().OnAuthorizationAsync(context);
 
         var redirect = Assert.IsType<RedirectResult>(context.Result);
         Assert.Equal("/Dashboard/AnonymousIndex", redirect.Url);
@@ -277,15 +250,15 @@ public class AuthorizationFilterTests
     /// short-circuiting the pipeline with an empty response instead of redirecting.
     /// </summary>
     [Fact]
-    public async Task OnActionExecutionAsync_Get_UnrecognizedRole_Redirects()
+    public async Task OnAuthorizationAsync_Get_UnrecognizedRole_Redirects()
     {
         var account = new AccountResponse { Email = "weird@test.com", Nickname = "Weird", Role = "SuperAdmin" };
         _sessionService.Setup(s => s.GetAccount()).Returns(account);
         _accountService.Setup(a => a.GetAccountByEmailAsync("weird@test.com", It.IsAny<CancellationToken>())).ReturnsAsync(account);
         SetupMenu([], []);
-        var (context, _) = BuildContext("AccountBook", "Income");
+        var context = BuildContext("AccountBook", "Income");
 
-        await CreateSut().OnActionExecutionAsync(context, NextCalled(() => { }));
+        await CreateSut().OnAuthorizationAsync(context);
 
         var redirect = Assert.IsType<RedirectResult>(context.Result);
         Assert.Equal("/Dashboard/AnonymousIndex", redirect.Url);
@@ -295,19 +268,18 @@ public class AuthorizationFilterTests
 
     /// <summary>On action execution async logged in account deleted in db redirects to login and clears session.</summary>
     [Fact]
-    public async Task OnActionExecutionAsync_LoggedInAccountDeletedInDb_RedirectsToLoginAndClearsSession()
+    public async Task OnAuthorizationAsync_LoggedInAccountDeletedInDb_RedirectsToLoginAndClearsSession()
     {
         var sessionAccount = new AccountResponse { Email = "gone@test.com", Nickname = "Gone", Role = Role.User };
         var dbAccount = new AccountResponse { Email = "gone@test.com", Nickname = "Gone", Role = Role.User, Deleted = true };
         _sessionService.Setup(s => s.GetAccount()).Returns(sessionAccount);
         _accountService.Setup(a => a.GetAccountByEmailAsync("gone@test.com", It.IsAny<CancellationToken>())).ReturnsAsync(dbAccount);
         SetupMenu([], []);
-        var (context, _) = BuildContext("Dashboard", "UserIndex");
-        bool nextCalled = false;
+        var context = BuildContext("Dashboard", "UserIndex");
 
-        await CreateSut().OnActionExecutionAsync(context, NextCalled(() => nextCalled = true));
+        await CreateSut().OnAuthorizationAsync(context);
 
-        Assert.False(nextCalled);
+        Assert.NotNull(context.Result);
         var redirect = Assert.IsType<RedirectResult>(context.Result);
         Assert.Equal("/Account/Login", redirect.Url);
         _sessionService.Verify(s => s.RemoveAccount(), Times.Once);
@@ -315,19 +287,18 @@ public class AuthorizationFilterTests
 
     /// <summary>A stale security stamp (password changed since this session was minted) redirects to login and clears the session.</summary>
     [Fact]
-    public async Task OnActionExecutionAsync_SecurityStampMismatch_RedirectsToLoginAndClearsSession()
+    public async Task OnAuthorizationAsync_SecurityStampMismatch_RedirectsToLoginAndClearsSession()
     {
         var sessionAccount = new AccountResponse { Email = "user@test.com", Nickname = "User", Role = Role.User, SecurityStamp = "old-stamp" };
         var dbAccount = new AccountResponse { Email = "user@test.com", Nickname = "User", Role = Role.User, SecurityStamp = "new-stamp" };
         _sessionService.Setup(s => s.GetAccount()).Returns(sessionAccount);
         _accountService.Setup(a => a.GetAccountByEmailAsync("user@test.com", It.IsAny<CancellationToken>())).ReturnsAsync(dbAccount);
         SetupMenu([], []);
-        var (context, _) = BuildContext("Dashboard", "UserIndex");
-        bool nextCalled = false;
+        var context = BuildContext("Dashboard", "UserIndex");
 
-        await CreateSut().OnActionExecutionAsync(context, NextCalled(() => nextCalled = true));
+        await CreateSut().OnAuthorizationAsync(context);
 
-        Assert.False(nextCalled);
+        Assert.NotNull(context.Result);
         var redirect = Assert.IsType<RedirectResult>(context.Result);
         Assert.Equal("/Account/Login", redirect.Url);
         _sessionService.Verify(s => s.RemoveAccount(), Times.Once);
@@ -337,89 +308,134 @@ public class AuthorizationFilterTests
 
     /// <summary>A pending forced password change redirects any other GET page to the profile page.</summary>
     [Fact]
-    public async Task OnActionExecutionAsync_MustChangePassword_OtherGet_RedirectsToProfile()
+    public async Task OnAuthorizationAsync_MustChangePassword_OtherGet_RedirectsToProfile()
     {
         var account = new AccountResponse { Email = "user@test.com", Nickname = "User", Role = Role.User, MustChangePassword = true };
         _sessionService.Setup(s => s.GetAccount()).Returns(account);
         _accountService.Setup(a => a.GetAccountByEmailAsync("user@test.com", It.IsAny<CancellationToken>())).ReturnsAsync(account);
         var category = MakeCategory(1, Role.User, "AccountBook", "Income");
         SetupMenu([category], []);
-        var (context, _) = BuildContext("AccountBook", "Income");
-        bool nextCalled = false;
+        var context = BuildContext("AccountBook", "Income");
 
-        await CreateSut().OnActionExecutionAsync(context, NextCalled(() => nextCalled = true));
+        await CreateSut().OnAuthorizationAsync(context);
 
-        Assert.False(nextCalled);
+        Assert.NotNull(context.Result);
         var redirect = Assert.IsType<RedirectResult>(context.Result);
         Assert.Equal("/Management/Profile", redirect.Url);
     }
 
     /// <summary>A pending forced password change blocks any other POST (redirected, not logged out).</summary>
     [Fact]
-    public async Task OnActionExecutionAsync_MustChangePassword_OtherPost_Blocks()
+    public async Task OnAuthorizationAsync_MustChangePassword_OtherPost_Blocks()
     {
         var account = new AccountResponse { Email = "user@test.com", Nickname = "User", Role = Role.User, MustChangePassword = true };
         _sessionService.Setup(s => s.GetAccount()).Returns(account);
         _accountService.Setup(a => a.GetAccountByEmailAsync("user@test.com", It.IsAny<CancellationToken>())).ReturnsAsync(account);
         SetupMenu([], []);
-        var (context, _) = BuildContext("AccountBook", "CreateIncome", "POST");
-        bool nextCalled = false;
+        var context = BuildContext("AccountBook", "CreateIncome", "POST");
 
-        await CreateSut().OnActionExecutionAsync(context, NextCalled(() => nextCalled = true));
+        await CreateSut().OnAuthorizationAsync(context);
 
-        Assert.False(nextCalled);
+        Assert.NotNull(context.Result);
         var redirect = Assert.IsType<RedirectResult>(context.Result);
         Assert.Equal("/Dashboard/AnonymousIndex", redirect.Url);
     }
 
     /// <summary>A pending forced password change still allows the profile page itself.</summary>
     [Fact]
-    public async Task OnActionExecutionAsync_MustChangePassword_ProfileGet_Allows()
+    public async Task OnAuthorizationAsync_MustChangePassword_ProfileGet_Allows()
     {
         var account = new AccountResponse { Email = "user@test.com", Nickname = "User", Role = Role.User, MustChangePassword = true };
         _sessionService.Setup(s => s.GetAccount()).Returns(account);
         _accountService.Setup(a => a.GetAccountByEmailAsync("user@test.com", It.IsAny<CancellationToken>())).ReturnsAsync(account);
         SetupMenu([], []);
-        var (context, _) = BuildContext("Management", "Profile");
-        bool nextCalled = false;
+        var context = BuildContext("Management", "Profile");
 
-        await CreateSut().OnActionExecutionAsync(context, NextCalled(() => nextCalled = true));
+        await CreateSut().OnAuthorizationAsync(context);
 
-        Assert.True(nextCalled);
+        Assert.Null(context.Result);
         Assert.Null(context.Result);
     }
 
     /// <summary>A pending forced password change still allows submitting the change-password form.</summary>
     [Fact]
-    public async Task OnActionExecutionAsync_MustChangePassword_UpdateProfilePasswordPost_Allows()
+    public async Task OnAuthorizationAsync_MustChangePassword_UpdateProfilePasswordPost_Allows()
     {
         var account = new AccountResponse { Email = "user@test.com", Nickname = "User", Role = Role.User, MustChangePassword = true };
         _sessionService.Setup(s => s.GetAccount()).Returns(account);
         _accountService.Setup(a => a.GetAccountByEmailAsync("user@test.com", It.IsAny<CancellationToken>())).ReturnsAsync(account);
         SetupMenu([], []);
-        var (context, _) = BuildContext("Management", "UpdateProfilePassword", "POST");
-        bool nextCalled = false;
+        var context = BuildContext("Management", "UpdateProfilePassword", "POST");
 
-        await CreateSut().OnActionExecutionAsync(context, NextCalled(() => nextCalled = true));
+        await CreateSut().OnAuthorizationAsync(context);
 
-        Assert.True(nextCalled);
+        Assert.Null(context.Result);
         Assert.Null(context.Result);
     }
 
     /// <summary>A pending forced password change still allows logging out.</summary>
     [Fact]
-    public async Task OnActionExecutionAsync_MustChangePassword_LogoutGet_Allows()
+    public async Task OnAuthorizationAsync_MustChangePassword_LogoutGet_Allows()
     {
         var account = new AccountResponse { Email = "user@test.com", Nickname = "User", Role = Role.User, MustChangePassword = true };
         _sessionService.Setup(s => s.GetAccount()).Returns(account);
         _accountService.Setup(a => a.GetAccountByEmailAsync("user@test.com", It.IsAny<CancellationToken>())).ReturnsAsync(account);
         SetupMenu([], []);
-        var (context, _) = BuildContext("Account", "Logout");
-        bool nextCalled = false;
+        var context = BuildContext("Account", "Logout");
 
-        await CreateSut().OnActionExecutionAsync(context, NextCalled(() => nextCalled = true));
+        await CreateSut().OnAuthorizationAsync(context);
 
-        Assert.True(nextCalled);
         Assert.Null(context.Result);
+        Assert.Null(context.Result);
+    }
+    // -- Filter kind / hand-off to ViewBagPopulatorFilter -------------------------
+
+    /// <summary>
+    /// Regression test: the gate must be an authorization filter, not an action filter — action
+    /// filters run after model binding, so a denied request would still have had its form / file
+    /// upload bound first.
+    /// </summary>
+    [Fact]
+    public void AuthorizationFilter_IsAnAuthorizationFilter_NotAnActionFilter()
+    {
+        Assert.True(typeof(IAsyncAuthorizationFilter).IsAssignableFrom(typeof(AuthorizationFilter)));
+        Assert.False(typeof(IActionFilter).IsAssignableFrom(typeof(AuthorizationFilter)));
+        Assert.False(typeof(IAsyncActionFilter).IsAssignableFrom(typeof(AuthorizationFilter)));
+    }
+
+    /// <summary>The loaded menu, split by role, is left on HttpContext.Items for ViewBagPopulatorFilter to publish.</summary>
+    [Fact]
+    public async Task OnAuthorizationAsync_StashesLoadedMenuOnHttpContextItems_SplitByRole()
+    {
+        _sessionService.Setup(s => s.GetAccount()).Returns((AccountResponse?)null);
+        var anonymous = MakeCategory(1, Role.Anonymous, "Dashboard", "AnonymousIndex");
+        var user = MakeCategory(2, Role.User, "AccountBook", "Income");
+        var admin = MakeCategory(3, Role.Admin, "Management", "Account");
+        var userSub = MakeSubCategory(20, categoryId: 2, role: Role.User, action: "Expenditure");
+        SetupMenu([anonymous, user, admin], [userSub]);
+        var context = BuildContext("Dashboard", "AnonymousIndex");
+
+        await CreateSut().OnAuthorizationAsync(context);
+
+        var menus = Assert.IsType<NavigationMenus>(context.HttpContext.Items[HttpContextItemKeys.NavigationMenus]);
+        Assert.Equal([1L], menus.AnonymousCategories.Select(c => c.Id));
+        Assert.Equal([2L], menus.UserCategories.Select(c => c.Id));
+        Assert.Equal([3L], menus.AdminCategories.Select(c => c.Id));
+        Assert.Equal([20L], menus.UserSubCategories.Select(c => c.Id));
+        Assert.Empty(menus.AdminSubCategories);
+    }
+
+    /// <summary>A denied request still leaves the menu on Items (the decision needed it), and carries a Result.</summary>
+    [Fact]
+    public async Task OnAuthorizationAsync_DeniedRequest_SetsResult_AndStillStashesMenu()
+    {
+        _sessionService.Setup(s => s.GetAccount()).Returns((AccountResponse?)null);
+        SetupMenu([MakeCategory(1, Role.Anonymous, "Dashboard", "AnonymousIndex")], []);
+        var context = BuildContext("Management", "Account");
+
+        await CreateSut().OnAuthorizationAsync(context);
+
+        Assert.IsType<RedirectResult>(context.Result);
+        Assert.IsType<NavigationMenus>(context.HttpContext.Items[HttpContextItemKeys.NavigationMenus]);
     }
 }

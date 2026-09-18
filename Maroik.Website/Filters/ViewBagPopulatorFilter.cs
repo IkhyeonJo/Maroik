@@ -17,8 +17,9 @@ namespace Maroik.Website.Filters;
 /// Global action filter that populates shared ViewBag entries before every action executes:
 /// domain name, file-size limit, logged-in account, the active navigation menu item (for
 /// sidebar highlighting/breadcrumbs), notification badge counts, current culture, and the
-/// return URI. Runs after <see cref="AuthorizationFilter"/>, which has already published
-/// ViewBag.{Role}Categories/{Role}SubCategories and decided allow/deny for this request.
+/// return URI. Runs after <see cref="AuthorizationFilter"/>, which has already decided allow/deny for
+/// this request and left the navigation menu on <c>HttpContext.Items</c>; this filter publishes it as
+/// ViewBag.{Role}Categories/{Role}SubCategories.
 /// </summary>
 public class ViewBagPopulatorFilter(
     IAccountService accountService,
@@ -37,6 +38,19 @@ public class ViewBagPopulatorFilter(
         {
             await next();
             return;
+        }
+
+        // AuthorizationFilter runs before the controller exists, so it can't write to the ViewBag; it
+        // leaves the menu it loaded on HttpContext.Items and this is the first point that can publish it.
+        if (context.HttpContext.Items.TryGetValue(HttpContextItemKeys.NavigationMenus, out var menusItem)
+            && menusItem is NavigationMenus menus)
+        {
+            controller.ViewBag.AdminCategories = menus.AdminCategories;
+            controller.ViewBag.AdminSubCategories = menus.AdminSubCategories;
+            controller.ViewBag.UserCategories = menus.UserCategories;
+            controller.ViewBag.UserSubCategories = menus.UserSubCategories;
+            controller.ViewBag.AnonymousCategories = menus.AnonymousCategories;
+            controller.ViewBag.AnonymousSubCategories = menus.AnonymousSubCategories;
         }
 
         controller.ViewBag.DomainName = serverSettings.Value.DomainName;

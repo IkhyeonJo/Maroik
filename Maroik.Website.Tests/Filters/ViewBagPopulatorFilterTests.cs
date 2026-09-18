@@ -328,6 +328,37 @@ public class ViewBagPopulatorFilterTests
 
     // -- Active menu resolution -------------------------------------------------
 
+    /// <summary>
+    /// Verifies the hand-off from AuthorizationFilter: the menu it left on HttpContext.Items is published
+    /// as ViewBag.{Role}Categories/{Role}SubCategories (an authorization filter has no controller to
+    /// write to), and the active menu item is then resolved from it.
+    /// </summary>
+    [Fact]
+    public async Task OnActionExecutionAsync_PublishesNavigationMenusFromHttpContextItems_ToViewBag()
+    {
+        var sessionAccount = new AccountResponse { Email = "user@test.com", Role = Role.User };
+        var dbAccount = new AccountResponse { Email = "user@test.com", Role = Role.User };
+        _sessionService.Setup(s => s.GetAccount()).Returns(sessionAccount);
+        _accountService.Setup(a => a.GetAccountByEmailAsync("user@test.com", It.IsAny<CancellationToken>())).ReturnsAsync(dbAccount);
+
+        var (context, controller) = BuildContext(controllerName: "AccountBook", actionName: "Income");
+        var userCategories = new List<CategoryResponse>
+        {
+            new() { Id = 1, DisplayName = "AccountBook", Controller = "AccountBook", Action = "Income" }
+        };
+        var adminCategories = new List<CategoryResponse> { new() { Id = 2, DisplayName = "Management", Controller = "Management", Action = "Account" } };
+        context.HttpContext.Items[Maroik.Website.Constants.HttpContextItemKeys.NavigationMenus] = new NavigationMenus(
+            adminCategories, [], userCategories, [], [], []);
+
+        await CreateSut().OnActionExecutionAsync(context, EmptyNext());
+
+        Assert.Same(userCategories, controller.ViewBag.UserCategories);
+        Assert.Same(adminCategories, controller.ViewBag.AdminCategories);
+        Assert.NotNull(controller.ViewBag.AnonymousCategories);
+        CategoryResponse activeCategory = controller.ViewBag.ActiveCategory;
+        Assert.Equal(1, activeCategory.Id);
+    }
+
     /// <summary>Verifies that ViewBag.ActiveCategory/ActiveSubCategory are resolved from the role-appropriate
     /// categories that AuthorizationFilter (running earlier in the pipeline) already published to ViewBag.</summary>
     [Fact]
