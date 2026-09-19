@@ -57,7 +57,11 @@ public abstract class E2ETestBase
         var context = await _fixture.Browser.NewContextAsync(new BrowserNewContextOptions
         {
             BaseURL = BaseUrl,
-            IgnoreHTTPSErrors = true
+            IgnoreHTTPSErrors = true,
+            // Pinned instead of inherited from the machine: the app picks the UI culture (and the
+            // default time zone of the register form) from Accept-Language, and Chrome vs Firefox
+            // vs a CI runner would otherwise each get a different one.
+            Locale = "ko-KR"
         });
         return await context.NewPageAsync();
     }

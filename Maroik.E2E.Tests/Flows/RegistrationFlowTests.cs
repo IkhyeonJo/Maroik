@@ -24,9 +24,15 @@ public class RegistrationFlowTests : E2ETestBase
         await page.Locator("#Email").FillAsync(email);
         await page.Locator("#Password").FillAsync("Reg1ster-Pass!");
         await page.Locator("#ConfirmPassword").FillAsync("Reg1ster-Pass!");
+        // Not left to the culture's default: without a time zone the form never submits.
+        await page.Locator("#TimeZoneIanaId").SelectOptionAsync("Asia/Seoul");
         // The checkbox is the hidden input of an iCheck-styled control; force past the visibility check.
         await page.Locator("#AgreedServiceTerms").CheckAsync(new LocatorCheckOptions { Force = true });
-        await page.Locator("#btnRegister").ClickAsync();
+        // The refusals below assert "form still shown, no account", which is also what an unsubmitted
+        // form looks like — so require that the POST really reached the server.
+        await page.RunAndWaitForResponseAsync(
+            () => page.Locator("#btnRegister").ClickAsync(),
+            response => response.Request.Method == "POST" && response.Url.Contains("/Account/Register", StringComparison.Ordinal));
 
         await page.WaitForLoadStateAsync(LoadState.NetworkIdle);
         return email;
