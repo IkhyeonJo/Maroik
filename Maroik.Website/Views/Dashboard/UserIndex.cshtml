@@ -11,135 +11,6 @@
 
 @model UserIndexOutputViewModel
 
-@{
-    int startYear = Model.StartYear;
-    int endYear = Model.EndYear;
-    int selectedYear = Model.SelectedYear;
-    int selectedMonth = Model.SelectedMonth;
-
-    decimal regularIncomeLaborIncomeYear = Model.RegularIncomeLaborIncomeYear;
-    decimal regularIncomeBusinessIncomeYear = Model.RegularIncomeBusinessIncomeYear;
-    decimal regularIncomePensionIncomeYear = Model.RegularIncomePensionIncomeYear;
-    decimal regularIncomeFinancialIncomeYear = Model.RegularIncomeFinancialIncomeYear;
-    decimal regularIncomeRentalIncomeYear = Model.RegularIncomeRentalIncomeYear;
-    decimal regularIncomeOtherIncomeYear = Model.RegularIncomeOtherIncomeYear;
-    double percentageOfRegularIncomeLaborIncomeYear = Model.PercentageOfRegularIncomeLaborIncomeYear;
-    double percentageOfRegularIncomeBusinessIncomeYear = Model.PercentageOfRegularIncomeBusinessIncomeYear;
-    double percentageOfRegularIncomePensionIncomeYear = Model.PercentageOfRegularIncomePensionIncomeYear;
-    double percentageOfRegularIncomeFinancialIncomeYear = Model.PercentageOfRegularIncomeFinancialIncomeYear;
-    double percentageOfRegularIncomeRentalIncomeYear = Model.PercentageOfRegularIncomeRentalIncomeYear;
-    double percentageOfRegularIncomeOtherIncomeYear = Model.PercentageOfRegularIncomeOtherIncomeYear;
-
-    decimal irregularIncomeLaborIncomeYear = Model.IrregularIncomeLaborIncomeYear;
-    decimal irregularIncomeOtherIncomeYear = Model.IrregularIncomeOtherIncomeYear;
-    double percentageOfIrregularIncomeLaborIncomeYear = Model.PercentageOfIrregularIncomeLaborIncomeYear;
-    double percentageOfIrregularIncomeOtherIncomeYear = Model.PercentageOfIrregularIncomeOtherIncomeYear;
-
-    decimal regularSavingsDepositYear = Model.RegularSavingsDepositYear;
-    decimal regularSavingsInvestmentYear = Model.RegularSavingsInvestmentYear;
-    double percentageOfRegularSavingsDepositYear = Model.PercentageOfRegularSavingsDepositYear;
-    double percentageOfRegularSavingsInvestmentYear = Model.PercentageOfRegularSavingsInvestmentYear;
-
-    decimal nonConsumerSpendingPublicPensionYear = Model.NonConsumerSpendingPublicPensionYear;
-    decimal nonConsumerSpendingDebtRepaymentYear = Model.NonConsumerSpendingDebtRepaymentYear;
-    decimal nonConsumerSpendingTaxYear = Model.NonConsumerSpendingTaxYear;
-    decimal nonConsumerSpendingSocialInsuranceYear = Model.NonConsumerSpendingSocialInsuranceYear;
-    decimal nonConsumerSpendingInterHouseholdTransferExpensesYear = Model.NonConsumerSpendingInterHouseholdTransferExpensesYear;
-    decimal nonConsumerSpendingNonProfitOrganizationTransferYear = Model.NonConsumerSpendingNonProfitOrganizationTransferYear;
-    double percentageOfNonConsumerSpendingPublicPensionYear = Model.PercentageOfNonConsumerSpendingPublicPensionYear;
-    double percentageOfNonConsumerSpendingDebtRepaymentYear = Model.PercentageOfNonConsumerSpendingDebtRepaymentYear;
-    double percentageOfNonConsumerSpendingTaxYear = Model.PercentageOfNonConsumerSpendingTaxYear;
-    double percentageOfNonConsumerSpendingSocialInsuranceYear = Model.PercentageOfNonConsumerSpendingSocialInsuranceYear;
-    double percentageOfNonConsumerSpendingInterHouseholdTransferExpensesYear = Model.PercentageOfNonConsumerSpendingInterHouseholdTransferExpensesYear;
-    double percentageOfNonConsumerSpendingNonProfitOrganizationTransferYear = Model.PercentageOfNonConsumerSpendingNonProfitOrganizationTransferYear;
-
-    decimal consumerSpendingMealOrEatOutExpensesYear = Model.ConsumerSpendingMealOrEatOutExpensesYear;
-    decimal consumerSpendingHousingOrSuppliesCostYear = Model.ConsumerSpendingHousingOrSuppliesCostYear;
-    decimal consumerSpendingEducationExpensesYear = Model.ConsumerSpendingEducationExpensesYear;
-    decimal consumerSpendingMedicalExpensesYear = Model.ConsumerSpendingMedicalExpensesYear;
-    decimal consumerSpendingTransportationCostYear = Model.ConsumerSpendingTransportationCostYear;
-    decimal consumerSpendingCommunicationCostYear = Model.ConsumerSpendingCommunicationCostYear;
-    decimal consumerSpendingLeisureOrCultureYear = Model.ConsumerSpendingLeisureOrCultureYear;
-    decimal consumerSpendingClothingOrShoesYear = Model.ConsumerSpendingClothingOrShoesYear;
-    decimal consumerSpendingPinMoneyYear = Model.ConsumerSpendingPinMoneyYear;
-    decimal consumerSpendingProtectionTypeInsuranceYear = Model.ConsumerSpendingProtectionTypeInsuranceYear;
-    decimal consumerSpendingOtherExpensesYear = Model.ConsumerSpendingOtherExpensesYear;
-    decimal consumerSpendingUnknownExpenditureYear = Model.ConsumerSpendingUnknownExpenditureYear;
-    double percentageOfConsumerSpendingMealOrEatOutExpensesYear = Model.PercentageOfConsumerSpendingMealOrEatOutExpensesYear;
-    double percentageOfConsumerSpendingHousingOrSuppliesCostYear = Model.PercentageOfConsumerSpendingHousingOrSuppliesCostYear;
-    double percentageOfConsumerSpendingEducationExpensesYear = Model.PercentageOfConsumerSpendingEducationExpensesYear;
-    double percentageOfConsumerSpendingMedicalExpensesYear = Model.PercentageOfConsumerSpendingMedicalExpensesYear;
-    double percentageOfConsumerSpendingTransportationCostYear = Model.PercentageOfConsumerSpendingTransportationCostYear;
-    double percentageOfConsumerSpendingCommunicationCostYear = Model.PercentageOfConsumerSpendingCommunicationCostYear;
-    double percentageOfConsumerSpendingLeisureOrCultureYear = Model.PercentageOfConsumerSpendingLeisureOrCultureYear;
-    double percentageOfConsumerSpendingClothingOrShoesYear = Model.PercentageOfConsumerSpendingClothingOrShoesYear;
-    double percentageOfConsumerSpendingPinMoneyYear = Model.PercentageOfConsumerSpendingPinMoneyYear;
-    double percentageOfConsumerSpendingProtectionTypeInsuranceYear = Model.PercentageOfConsumerSpendingProtectionTypeInsuranceYear;
-    double percentageOfConsumerSpendingOtherExpensesYear = Model.PercentageOfConsumerSpendingOtherExpensesYear;
-    double percentageOfConsumerSpendingUnknownExpenditureYear = Model.PercentageOfConsumerSpendingUnknownExpenditureYear;
-
-    decimal regularIncomeLaborIncomeYearMonth = Model.RegularIncomeLaborIncomeYearMonth;
-    decimal regularIncomeBusinessIncomeYearMonth = Model.RegularIncomeBusinessIncomeYearMonth;
-    decimal regularIncomePensionIncomeYearMonth = Model.RegularIncomePensionIncomeYearMonth;
-    decimal regularIncomeFinancialIncomeYearMonth = Model.RegularIncomeFinancialIncomeYearMonth;
-    decimal regularIncomeRentalIncomeYearMonth = Model.RegularIncomeRentalIncomeYearMonth;
-    decimal regularIncomeOtherIncomeYearMonth = Model.RegularIncomeOtherIncomeYearMonth;
-    double percentageOfRegularIncomeLaborIncomeYearMonth = Model.PercentageOfRegularIncomeLaborIncomeYearMonth;
-    double percentageOfRegularIncomeBusinessIncomeYearMonth = Model.PercentageOfRegularIncomeBusinessIncomeYearMonth;
-    double percentageOfRegularIncomePensionIncomeYearMonth = Model.PercentageOfRegularIncomePensionIncomeYearMonth;
-    double percentageOfRegularIncomeFinancialIncomeYearMonth = Model.PercentageOfRegularIncomeFinancialIncomeYearMonth;
-    double percentageOfRegularIncomeRentalIncomeYearMonth = Model.PercentageOfRegularIncomeRentalIncomeYearMonth;
-    double percentageOfRegularIncomeOtherIncomeYearMonth = Model.PercentageOfRegularIncomeOtherIncomeYearMonth;
-
-    decimal irregularIncomeLaborIncomeYearMonth = Model.IrregularIncomeLaborIncomeYearMonth;
-    decimal irregularIncomeOtherIncomeYearMonth = Model.IrregularIncomeOtherIncomeYearMonth;
-    double percentageOfIrregularIncomeLaborIncomeYearMonth = Model.PercentageOfIrregularIncomeLaborIncomeYearMonth;
-    double percentageOfIrregularIncomeOtherIncomeYearMonth = Model.PercentageOfIrregularIncomeOtherIncomeYearMonth;
-
-    decimal regularSavingsDepositYearMonth = Model.RegularSavingsDepositYearMonth;
-    decimal regularSavingsInvestmentYearMonth = Model.RegularSavingsInvestmentYearMonth;
-    double percentageOfRegularSavingsDepositYearMonth = Model.PercentageOfRegularSavingsDepositYearMonth;
-    double percentageOfRegularSavingsInvestmentYearMonth = Model.PercentageOfRegularSavingsInvestmentYearMonth;
-
-    decimal nonConsumerSpendingPublicPensionYearMonth = Model.NonConsumerSpendingPublicPensionYearMonth;
-    decimal nonConsumerSpendingDebtRepaymentYearMonth = Model.NonConsumerSpendingDebtRepaymentYearMonth;
-    decimal nonConsumerSpendingTaxYearMonth = Model.NonConsumerSpendingTaxYearMonth;
-    decimal nonConsumerSpendingSocialInsuranceYearMonth = Model.NonConsumerSpendingSocialInsuranceYearMonth;
-    decimal nonConsumerSpendingInterHouseholdTransferExpensesYearMonth = Model.NonConsumerSpendingInterHouseholdTransferExpensesYearMonth;
-    decimal nonConsumerSpendingNonProfitOrganizationTransferYearMonth = Model.NonConsumerSpendingNonProfitOrganizationTransferYearMonth;
-    double percentageOfNonConsumerSpendingPublicPensionYearMonth = Model.PercentageOfNonConsumerSpendingPublicPensionYearMonth;
-    double percentageOfNonConsumerSpendingDebtRepaymentYearMonth = Model.PercentageOfNonConsumerSpendingDebtRepaymentYearMonth;
-    double percentageOfNonConsumerSpendingTaxYearMonth = Model.PercentageOfNonConsumerSpendingTaxYearMonth;
-    double percentageOfNonConsumerSpendingSocialInsuranceYearMonth = Model.PercentageOfNonConsumerSpendingSocialInsuranceYearMonth;
-    double percentageOfNonConsumerSpendingInterHouseholdTransferExpensesYearMonth = Model.PercentageOfNonConsumerSpendingInterHouseholdTransferExpensesYearMonth;
-    double percentageOfNonConsumerSpendingNonProfitOrganizationTransferYearMonth = Model.PercentageOfNonConsumerSpendingNonProfitOrganizationTransferYearMonth;
-
-    decimal consumerSpendingMealOrEatOutExpensesYearMonth = Model.ConsumerSpendingMealOrEatOutExpensesYearMonth;
-    decimal consumerSpendingHousingOrSuppliesCostYearMonth = Model.ConsumerSpendingHousingOrSuppliesCostYearMonth;
-    decimal consumerSpendingEducationExpensesYearMonth = Model.ConsumerSpendingEducationExpensesYearMonth;
-    decimal consumerSpendingMedicalExpensesYearMonth = Model.ConsumerSpendingMedicalExpensesYearMonth;
-    decimal consumerSpendingTransportationCostYearMonth = Model.ConsumerSpendingTransportationCostYearMonth;
-    decimal consumerSpendingCommunicationCostYearMonth = Model.ConsumerSpendingCommunicationCostYearMonth;
-    decimal consumerSpendingLeisureOrCultureYearMonth = Model.ConsumerSpendingLeisureOrCultureYearMonth;
-    decimal consumerSpendingClothingOrShoesYearMonth = Model.ConsumerSpendingClothingOrShoesYearMonth;
-    decimal consumerSpendingPinMoneyYearMonth = Model.ConsumerSpendingPinMoneyYearMonth;
-    decimal consumerSpendingProtectionTypeInsuranceYearMonth = Model.ConsumerSpendingProtectionTypeInsuranceYearMonth;
-    decimal consumerSpendingOtherExpensesYearMonth = Model.ConsumerSpendingOtherExpensesYearMonth;
-    decimal consumerSpendingUnknownExpenditureYearMonth = Model.ConsumerSpendingUnknownExpenditureYearMonth;
-    double percentageOfConsumerSpendingMealOrEatOutExpensesYearMonth = Model.PercentageOfConsumerSpendingMealOrEatOutExpensesYearMonth;
-    double percentageOfConsumerSpendingHousingOrSuppliesCostYearMonth = Model.PercentageOfConsumerSpendingHousingOrSuppliesCostYearMonth;
-    double percentageOfConsumerSpendingEducationExpensesYearMonth = Model.PercentageOfConsumerSpendingEducationExpensesYearMonth;
-    double percentageOfConsumerSpendingMedicalExpensesYearMonth = Model.PercentageOfConsumerSpendingMedicalExpensesYearMonth;
-    double percentageOfConsumerSpendingTransportationCostYearMonth = Model.PercentageOfConsumerSpendingTransportationCostYearMonth;
-    double percentageOfConsumerSpendingCommunicationCostYearMonth = Model.PercentageOfConsumerSpendingCommunicationCostYearMonth;
-    double percentageOfConsumerSpendingLeisureOrCultureYearMonth = Model.PercentageOfConsumerSpendingLeisureOrCultureYearMonth;
-    double percentageOfConsumerSpendingClothingOrShoesYearMonth = Model.PercentageOfConsumerSpendingClothingOrShoesYearMonth;
-    double percentageOfConsumerSpendingPinMoneyYearMonth = Model.PercentageOfConsumerSpendingPinMoneyYearMonth;
-    double percentageOfConsumerSpendingProtectionTypeInsuranceYearMonth = Model.PercentageOfConsumerSpendingProtectionTypeInsuranceYearMonth;
-    double percentageOfConsumerSpendingOtherExpensesYearMonth = Model.PercentageOfConsumerSpendingOtherExpensesYearMonth;
-    double percentageOfConsumerSpendingUnknownExpenditureYearMonth = Model.PercentageOfConsumerSpendingUnknownExpenditureYearMonth;
-}
-
 @Html.Hidden("localizerLaborIncome", Localizer["LaborIncome"].Value)
 @Html.Hidden("localizerBusinessIncome", Localizer["BusinessIncome"].Value)
 @Html.Hidden("localizerPensionIncome", Localizer["PensionIncome"].Value)
@@ -169,147 +40,147 @@
 
 @*Income*@
 @*Regular Income*@
-@Html.Hidden($"{nameof(regularIncomeLaborIncomeYear)}", regularIncomeLaborIncomeYear.TrimTrailingZeros())
-@Html.Hidden($"{nameof(regularIncomeBusinessIncomeYear)}", regularIncomeBusinessIncomeYear.TrimTrailingZeros())
-@Html.Hidden($"{nameof(regularIncomePensionIncomeYear)}", regularIncomePensionIncomeYear.TrimTrailingZeros())
-@Html.Hidden($"{nameof(regularIncomeFinancialIncomeYear)}", regularIncomeFinancialIncomeYear.TrimTrailingZeros())
-@Html.Hidden($"{nameof(regularIncomeRentalIncomeYear)}", regularIncomeRentalIncomeYear.TrimTrailingZeros())
-@Html.Hidden($"{nameof(regularIncomeOtherIncomeYear)}", regularIncomeOtherIncomeYear.TrimTrailingZeros())
+@Html.Hidden("regularIncomeLaborIncomeYear", Model.RegularIncomeLaborIncomeYear.TrimTrailingZeros())
+@Html.Hidden("regularIncomeBusinessIncomeYear", Model.RegularIncomeBusinessIncomeYear.TrimTrailingZeros())
+@Html.Hidden("regularIncomePensionIncomeYear", Model.RegularIncomePensionIncomeYear.TrimTrailingZeros())
+@Html.Hidden("regularIncomeFinancialIncomeYear", Model.RegularIncomeFinancialIncomeYear.TrimTrailingZeros())
+@Html.Hidden("regularIncomeRentalIncomeYear", Model.RegularIncomeRentalIncomeYear.TrimTrailingZeros())
+@Html.Hidden("regularIncomeOtherIncomeYear", Model.RegularIncomeOtherIncomeYear.TrimTrailingZeros())
 
-@Html.Hidden($"{nameof(percentageOfRegularIncomeLaborIncomeYear)}", $"{percentageOfRegularIncomeLaborIncomeYear:0.00}")
-@Html.Hidden($"{nameof(percentageOfRegularIncomeBusinessIncomeYear)}", $"{percentageOfRegularIncomeBusinessIncomeYear:0.00}")
-@Html.Hidden($"{nameof(percentageOfRegularIncomePensionIncomeYear)}", $"{percentageOfRegularIncomePensionIncomeYear:0.00}")
-@Html.Hidden($"{nameof(percentageOfRegularIncomeFinancialIncomeYear)}", $"{percentageOfRegularIncomeFinancialIncomeYear:0.00}")
-@Html.Hidden($"{nameof(percentageOfRegularIncomeRentalIncomeYear)}", $"{percentageOfRegularIncomeRentalIncomeYear:0.00}")
-@Html.Hidden($"{nameof(percentageOfRegularIncomeOtherIncomeYear)}", $"{percentageOfRegularIncomeOtherIncomeYear:0.00}")
+@Html.Hidden("percentageOfRegularIncomeLaborIncomeYear", $"{Model.PercentageOfRegularIncomeLaborIncomeYear:0.00}")
+@Html.Hidden("percentageOfRegularIncomeBusinessIncomeYear", $"{Model.PercentageOfRegularIncomeBusinessIncomeYear:0.00}")
+@Html.Hidden("percentageOfRegularIncomePensionIncomeYear", $"{Model.PercentageOfRegularIncomePensionIncomeYear:0.00}")
+@Html.Hidden("percentageOfRegularIncomeFinancialIncomeYear", $"{Model.PercentageOfRegularIncomeFinancialIncomeYear:0.00}")
+@Html.Hidden("percentageOfRegularIncomeRentalIncomeYear", $"{Model.PercentageOfRegularIncomeRentalIncomeYear:0.00}")
+@Html.Hidden("percentageOfRegularIncomeOtherIncomeYear", $"{Model.PercentageOfRegularIncomeOtherIncomeYear:0.00}")
 
 
-@Html.Hidden($"{nameof(regularIncomeLaborIncomeYearMonth)}", regularIncomeLaborIncomeYearMonth.TrimTrailingZeros())
-@Html.Hidden($"{nameof(regularIncomeBusinessIncomeYearMonth)}", regularIncomeBusinessIncomeYearMonth.TrimTrailingZeros())
-@Html.Hidden($"{nameof(regularIncomePensionIncomeYearMonth)}", regularIncomePensionIncomeYearMonth.TrimTrailingZeros())
-@Html.Hidden($"{nameof(regularIncomeFinancialIncomeYearMonth)}", regularIncomeFinancialIncomeYearMonth.TrimTrailingZeros())
-@Html.Hidden($"{nameof(regularIncomeRentalIncomeYearMonth)}", regularIncomeRentalIncomeYearMonth.TrimTrailingZeros())
-@Html.Hidden($"{nameof(regularIncomeOtherIncomeYearMonth)}", regularIncomeOtherIncomeYearMonth.TrimTrailingZeros())
+@Html.Hidden("regularIncomeLaborIncomeYearMonth", Model.RegularIncomeLaborIncomeYearMonth.TrimTrailingZeros())
+@Html.Hidden("regularIncomeBusinessIncomeYearMonth", Model.RegularIncomeBusinessIncomeYearMonth.TrimTrailingZeros())
+@Html.Hidden("regularIncomePensionIncomeYearMonth", Model.RegularIncomePensionIncomeYearMonth.TrimTrailingZeros())
+@Html.Hidden("regularIncomeFinancialIncomeYearMonth", Model.RegularIncomeFinancialIncomeYearMonth.TrimTrailingZeros())
+@Html.Hidden("regularIncomeRentalIncomeYearMonth", Model.RegularIncomeRentalIncomeYearMonth.TrimTrailingZeros())
+@Html.Hidden("regularIncomeOtherIncomeYearMonth", Model.RegularIncomeOtherIncomeYearMonth.TrimTrailingZeros())
 
-@Html.Hidden($"{nameof(percentageOfRegularIncomeLaborIncomeYearMonth)}", $"{percentageOfRegularIncomeLaborIncomeYearMonth:0.00}")
-@Html.Hidden($"{nameof(percentageOfRegularIncomeBusinessIncomeYearMonth)}", $"{percentageOfRegularIncomeBusinessIncomeYearMonth:0.00}")
-@Html.Hidden($"{nameof(percentageOfRegularIncomePensionIncomeYearMonth)}", $"{percentageOfRegularIncomePensionIncomeYearMonth:0.00}")
-@Html.Hidden($"{nameof(percentageOfRegularIncomeFinancialIncomeYearMonth)}", $"{percentageOfRegularIncomeFinancialIncomeYearMonth:0.00}")
-@Html.Hidden($"{nameof(percentageOfRegularIncomeRentalIncomeYearMonth)}", $"{percentageOfRegularIncomeRentalIncomeYearMonth:0.00}")
-@Html.Hidden($"{nameof(percentageOfRegularIncomeOtherIncomeYearMonth)}", $"{percentageOfRegularIncomeOtherIncomeYearMonth:0.00}")
+@Html.Hidden("percentageOfRegularIncomeLaborIncomeYearMonth", $"{Model.PercentageOfRegularIncomeLaborIncomeYearMonth:0.00}")
+@Html.Hidden("percentageOfRegularIncomeBusinessIncomeYearMonth", $"{Model.PercentageOfRegularIncomeBusinessIncomeYearMonth:0.00}")
+@Html.Hidden("percentageOfRegularIncomePensionIncomeYearMonth", $"{Model.PercentageOfRegularIncomePensionIncomeYearMonth:0.00}")
+@Html.Hidden("percentageOfRegularIncomeFinancialIncomeYearMonth", $"{Model.PercentageOfRegularIncomeFinancialIncomeYearMonth:0.00}")
+@Html.Hidden("percentageOfRegularIncomeRentalIncomeYearMonth", $"{Model.PercentageOfRegularIncomeRentalIncomeYearMonth:0.00}")
+@Html.Hidden("percentageOfRegularIncomeOtherIncomeYearMonth", $"{Model.PercentageOfRegularIncomeOtherIncomeYearMonth:0.00}")
 
 @*Irregular Income*@
-@Html.Hidden($"{nameof(irregularIncomeLaborIncomeYear)}", irregularIncomeLaborIncomeYear.TrimTrailingZeros())
-@Html.Hidden($"{nameof(irregularIncomeOtherIncomeYear)}", irregularIncomeOtherIncomeYear.TrimTrailingZeros())
+@Html.Hidden("irregularIncomeLaborIncomeYear", Model.IrregularIncomeLaborIncomeYear.TrimTrailingZeros())
+@Html.Hidden("irregularIncomeOtherIncomeYear", Model.IrregularIncomeOtherIncomeYear.TrimTrailingZeros())
 
-@Html.Hidden($"{nameof(percentageOfIrregularIncomeLaborIncomeYear)}", $"{percentageOfIrregularIncomeLaborIncomeYear:0.00}")
-@Html.Hidden($"{nameof(percentageOfIrregularIncomeOtherIncomeYear)}", $"{percentageOfIrregularIncomeOtherIncomeYear:0.00}")
+@Html.Hidden("percentageOfIrregularIncomeLaborIncomeYear", $"{Model.PercentageOfIrregularIncomeLaborIncomeYear:0.00}")
+@Html.Hidden("percentageOfIrregularIncomeOtherIncomeYear", $"{Model.PercentageOfIrregularIncomeOtherIncomeYear:0.00}")
 
 
-@Html.Hidden($"{nameof(irregularIncomeLaborIncomeYearMonth)}", irregularIncomeLaborIncomeYearMonth.TrimTrailingZeros())
-@Html.Hidden($"{nameof(irregularIncomeOtherIncomeYearMonth)}", irregularIncomeOtherIncomeYearMonth.TrimTrailingZeros())
+@Html.Hidden("irregularIncomeLaborIncomeYearMonth", Model.IrregularIncomeLaborIncomeYearMonth.TrimTrailingZeros())
+@Html.Hidden("irregularIncomeOtherIncomeYearMonth", Model.IrregularIncomeOtherIncomeYearMonth.TrimTrailingZeros())
 
-@Html.Hidden($"{nameof(percentageOfIrregularIncomeLaborIncomeYearMonth)}", $"{percentageOfIrregularIncomeLaborIncomeYearMonth:0.00}")
-@Html.Hidden($"{nameof(percentageOfIrregularIncomeOtherIncomeYearMonth)}", $"{percentageOfIrregularIncomeOtherIncomeYearMonth:0.00}")
+@Html.Hidden("percentageOfIrregularIncomeLaborIncomeYearMonth", $"{Model.PercentageOfIrregularIncomeLaborIncomeYearMonth:0.00}")
+@Html.Hidden("percentageOfIrregularIncomeOtherIncomeYearMonth", $"{Model.PercentageOfIrregularIncomeOtherIncomeYearMonth:0.00}")
 
 @*Expenditure*@
 @*Regular Savings*@
-@Html.Hidden($"{nameof(regularSavingsDepositYear)}", regularSavingsDepositYear.TrimTrailingZeros())
-@Html.Hidden($"{nameof(regularSavingsInvestmentYear)}", regularSavingsInvestmentYear.TrimTrailingZeros())
+@Html.Hidden("regularSavingsDepositYear", Model.RegularSavingsDepositYear.TrimTrailingZeros())
+@Html.Hidden("regularSavingsInvestmentYear", Model.RegularSavingsInvestmentYear.TrimTrailingZeros())
 
-@Html.Hidden($"{nameof(percentageOfRegularSavingsDepositYear)}", $"{percentageOfRegularSavingsDepositYear:0.00}")
-@Html.Hidden($"{nameof(percentageOfRegularSavingsInvestmentYear)}", $"{percentageOfRegularSavingsInvestmentYear:0.00}")
+@Html.Hidden("percentageOfRegularSavingsDepositYear", $"{Model.PercentageOfRegularSavingsDepositYear:0.00}")
+@Html.Hidden("percentageOfRegularSavingsInvestmentYear", $"{Model.PercentageOfRegularSavingsInvestmentYear:0.00}")
 
 
-@Html.Hidden($"{nameof(regularSavingsDepositYearMonth)}", regularSavingsDepositYearMonth.TrimTrailingZeros())
-@Html.Hidden($"{nameof(regularSavingsInvestmentYearMonth)}", regularSavingsInvestmentYearMonth.TrimTrailingZeros())
+@Html.Hidden("regularSavingsDepositYearMonth", Model.RegularSavingsDepositYearMonth.TrimTrailingZeros())
+@Html.Hidden("regularSavingsInvestmentYearMonth", Model.RegularSavingsInvestmentYearMonth.TrimTrailingZeros())
 
-@Html.Hidden($"{nameof(percentageOfRegularSavingsDepositYearMonth)}", $"{percentageOfRegularSavingsDepositYearMonth:0.00}")
-@Html.Hidden($"{nameof(percentageOfRegularSavingsInvestmentYearMonth)}", $"{percentageOfRegularSavingsInvestmentYearMonth:0.00}")
+@Html.Hidden("percentageOfRegularSavingsDepositYearMonth", $"{Model.PercentageOfRegularSavingsDepositYearMonth:0.00}")
+@Html.Hidden("percentageOfRegularSavingsInvestmentYearMonth", $"{Model.PercentageOfRegularSavingsInvestmentYearMonth:0.00}")
 
 @*Non-Consumer Spending*@
-@Html.Hidden($"{nameof(nonConsumerSpendingPublicPensionYear)}", nonConsumerSpendingPublicPensionYear.TrimTrailingZeros())
-@Html.Hidden($"{nameof(nonConsumerSpendingDebtRepaymentYear)}", nonConsumerSpendingDebtRepaymentYear.TrimTrailingZeros())
-@Html.Hidden($"{nameof(nonConsumerSpendingTaxYear)}", nonConsumerSpendingTaxYear.TrimTrailingZeros())
-@Html.Hidden($"{nameof(nonConsumerSpendingSocialInsuranceYear)}", nonConsumerSpendingSocialInsuranceYear.TrimTrailingZeros())
-@Html.Hidden($"{nameof(nonConsumerSpendingInterHouseholdTransferExpensesYear)}", nonConsumerSpendingInterHouseholdTransferExpensesYear.TrimTrailingZeros())
-@Html.Hidden($"{nameof(nonConsumerSpendingNonProfitOrganizationTransferYear)}", nonConsumerSpendingNonProfitOrganizationTransferYear.TrimTrailingZeros())
+@Html.Hidden("nonConsumerSpendingPublicPensionYear", Model.NonConsumerSpendingPublicPensionYear.TrimTrailingZeros())
+@Html.Hidden("nonConsumerSpendingDebtRepaymentYear", Model.NonConsumerSpendingDebtRepaymentYear.TrimTrailingZeros())
+@Html.Hidden("nonConsumerSpendingTaxYear", Model.NonConsumerSpendingTaxYear.TrimTrailingZeros())
+@Html.Hidden("nonConsumerSpendingSocialInsuranceYear", Model.NonConsumerSpendingSocialInsuranceYear.TrimTrailingZeros())
+@Html.Hidden("nonConsumerSpendingInterHouseholdTransferExpensesYear", Model.NonConsumerSpendingInterHouseholdTransferExpensesYear.TrimTrailingZeros())
+@Html.Hidden("nonConsumerSpendingNonProfitOrganizationTransferYear", Model.NonConsumerSpendingNonProfitOrganizationTransferYear.TrimTrailingZeros())
 
-@Html.Hidden($"{nameof(percentageOfNonConsumerSpendingPublicPensionYear)}", $"{percentageOfNonConsumerSpendingPublicPensionYear:0.00}")
-@Html.Hidden($"{nameof(percentageOfNonConsumerSpendingDebtRepaymentYear)}", $"{percentageOfNonConsumerSpendingDebtRepaymentYear:0.00}")
-@Html.Hidden($"{nameof(percentageOfNonConsumerSpendingTaxYear)}", $"{percentageOfNonConsumerSpendingTaxYear:0.00}")
-@Html.Hidden($"{nameof(percentageOfNonConsumerSpendingSocialInsuranceYear)}", $"{percentageOfNonConsumerSpendingSocialInsuranceYear:0.00}")
-@Html.Hidden($"{nameof(percentageOfNonConsumerSpendingInterHouseholdTransferExpensesYear)}", $"{percentageOfNonConsumerSpendingInterHouseholdTransferExpensesYear:0.00}")
-@Html.Hidden($"{nameof(percentageOfNonConsumerSpendingNonProfitOrganizationTransferYear)}", $"{percentageOfNonConsumerSpendingNonProfitOrganizationTransferYear:0.00}")
+@Html.Hidden("percentageOfNonConsumerSpendingPublicPensionYear", $"{Model.PercentageOfNonConsumerSpendingPublicPensionYear:0.00}")
+@Html.Hidden("percentageOfNonConsumerSpendingDebtRepaymentYear", $"{Model.PercentageOfNonConsumerSpendingDebtRepaymentYear:0.00}")
+@Html.Hidden("percentageOfNonConsumerSpendingTaxYear", $"{Model.PercentageOfNonConsumerSpendingTaxYear:0.00}")
+@Html.Hidden("percentageOfNonConsumerSpendingSocialInsuranceYear", $"{Model.PercentageOfNonConsumerSpendingSocialInsuranceYear:0.00}")
+@Html.Hidden("percentageOfNonConsumerSpendingInterHouseholdTransferExpensesYear", $"{Model.PercentageOfNonConsumerSpendingInterHouseholdTransferExpensesYear:0.00}")
+@Html.Hidden("percentageOfNonConsumerSpendingNonProfitOrganizationTransferYear", $"{Model.PercentageOfNonConsumerSpendingNonProfitOrganizationTransferYear:0.00}")
 
 
-@Html.Hidden($"{nameof(nonConsumerSpendingPublicPensionYearMonth)}", nonConsumerSpendingPublicPensionYearMonth.TrimTrailingZeros())
-@Html.Hidden($"{nameof(nonConsumerSpendingDebtRepaymentYearMonth)}", nonConsumerSpendingDebtRepaymentYearMonth.TrimTrailingZeros())
-@Html.Hidden($"{nameof(nonConsumerSpendingTaxYearMonth)}", nonConsumerSpendingTaxYearMonth.TrimTrailingZeros())
-@Html.Hidden($"{nameof(nonConsumerSpendingSocialInsuranceYearMonth)}", nonConsumerSpendingSocialInsuranceYearMonth.TrimTrailingZeros())
-@Html.Hidden($"{nameof(nonConsumerSpendingInterHouseholdTransferExpensesYearMonth)}", nonConsumerSpendingInterHouseholdTransferExpensesYearMonth.TrimTrailingZeros())
-@Html.Hidden($"{nameof(nonConsumerSpendingNonProfitOrganizationTransferYearMonth)}", nonConsumerSpendingNonProfitOrganizationTransferYearMonth.TrimTrailingZeros())
+@Html.Hidden("nonConsumerSpendingPublicPensionYearMonth", Model.NonConsumerSpendingPublicPensionYearMonth.TrimTrailingZeros())
+@Html.Hidden("nonConsumerSpendingDebtRepaymentYearMonth", Model.NonConsumerSpendingDebtRepaymentYearMonth.TrimTrailingZeros())
+@Html.Hidden("nonConsumerSpendingTaxYearMonth", Model.NonConsumerSpendingTaxYearMonth.TrimTrailingZeros())
+@Html.Hidden("nonConsumerSpendingSocialInsuranceYearMonth", Model.NonConsumerSpendingSocialInsuranceYearMonth.TrimTrailingZeros())
+@Html.Hidden("nonConsumerSpendingInterHouseholdTransferExpensesYearMonth", Model.NonConsumerSpendingInterHouseholdTransferExpensesYearMonth.TrimTrailingZeros())
+@Html.Hidden("nonConsumerSpendingNonProfitOrganizationTransferYearMonth", Model.NonConsumerSpendingNonProfitOrganizationTransferYearMonth.TrimTrailingZeros())
 
-@Html.Hidden($"{nameof(percentageOfNonConsumerSpendingPublicPensionYearMonth)}", $"{percentageOfNonConsumerSpendingPublicPensionYearMonth:0.00}")
-@Html.Hidden($"{nameof(percentageOfNonConsumerSpendingDebtRepaymentYearMonth)}", $"{percentageOfNonConsumerSpendingDebtRepaymentYearMonth:0.00}")
-@Html.Hidden($"{nameof(percentageOfNonConsumerSpendingTaxYearMonth)}", $"{percentageOfNonConsumerSpendingTaxYearMonth:0.00}")
-@Html.Hidden($"{nameof(percentageOfNonConsumerSpendingSocialInsuranceYearMonth)}", $"{percentageOfNonConsumerSpendingSocialInsuranceYearMonth:0.00}")
-@Html.Hidden($"{nameof(percentageOfNonConsumerSpendingInterHouseholdTransferExpensesYearMonth)}", $"{percentageOfNonConsumerSpendingInterHouseholdTransferExpensesYearMonth:0.00}")
-@Html.Hidden($"{nameof(percentageOfNonConsumerSpendingNonProfitOrganizationTransferYearMonth)}", $"{percentageOfNonConsumerSpendingNonProfitOrganizationTransferYearMonth:0.00}")
+@Html.Hidden("percentageOfNonConsumerSpendingPublicPensionYearMonth", $"{Model.PercentageOfNonConsumerSpendingPublicPensionYearMonth:0.00}")
+@Html.Hidden("percentageOfNonConsumerSpendingDebtRepaymentYearMonth", $"{Model.PercentageOfNonConsumerSpendingDebtRepaymentYearMonth:0.00}")
+@Html.Hidden("percentageOfNonConsumerSpendingTaxYearMonth", $"{Model.PercentageOfNonConsumerSpendingTaxYearMonth:0.00}")
+@Html.Hidden("percentageOfNonConsumerSpendingSocialInsuranceYearMonth", $"{Model.PercentageOfNonConsumerSpendingSocialInsuranceYearMonth:0.00}")
+@Html.Hidden("percentageOfNonConsumerSpendingInterHouseholdTransferExpensesYearMonth", $"{Model.PercentageOfNonConsumerSpendingInterHouseholdTransferExpensesYearMonth:0.00}")
+@Html.Hidden("percentageOfNonConsumerSpendingNonProfitOrganizationTransferYearMonth", $"{Model.PercentageOfNonConsumerSpendingNonProfitOrganizationTransferYearMonth:0.00}")
 
 @*Consumer Spending*@
-@Html.Hidden($"{nameof(consumerSpendingMealOrEatOutExpensesYear)}", consumerSpendingMealOrEatOutExpensesYear.TrimTrailingZeros())
-@Html.Hidden($"{nameof(consumerSpendingHousingOrSuppliesCostYear)}", consumerSpendingHousingOrSuppliesCostYear.TrimTrailingZeros())
-@Html.Hidden($"{nameof(consumerSpendingEducationExpensesYear)}", consumerSpendingEducationExpensesYear.TrimTrailingZeros())
-@Html.Hidden($"{nameof(consumerSpendingMedicalExpensesYear)}", consumerSpendingMedicalExpensesYear.TrimTrailingZeros())
-@Html.Hidden($"{nameof(consumerSpendingTransportationCostYear)}", consumerSpendingTransportationCostYear.TrimTrailingZeros())
-@Html.Hidden($"{nameof(consumerSpendingCommunicationCostYear)}", consumerSpendingCommunicationCostYear.TrimTrailingZeros())
-@Html.Hidden($"{nameof(consumerSpendingLeisureOrCultureYear)}", consumerSpendingLeisureOrCultureYear.TrimTrailingZeros())
-@Html.Hidden($"{nameof(consumerSpendingClothingOrShoesYear)}", consumerSpendingClothingOrShoesYear.TrimTrailingZeros())
-@Html.Hidden($"{nameof(consumerSpendingPinMoneyYear)}", consumerSpendingPinMoneyYear.TrimTrailingZeros())
-@Html.Hidden($"{nameof(consumerSpendingProtectionTypeInsuranceYear)}", consumerSpendingProtectionTypeInsuranceYear.TrimTrailingZeros())
-@Html.Hidden($"{nameof(consumerSpendingOtherExpensesYear)}", consumerSpendingOtherExpensesYear.TrimTrailingZeros())
-@Html.Hidden($"{nameof(consumerSpendingUnknownExpenditureYear)}", consumerSpendingUnknownExpenditureYear.TrimTrailingZeros())
+@Html.Hidden("consumerSpendingMealOrEatOutExpensesYear", Model.ConsumerSpendingMealOrEatOutExpensesYear.TrimTrailingZeros())
+@Html.Hidden("consumerSpendingHousingOrSuppliesCostYear", Model.ConsumerSpendingHousingOrSuppliesCostYear.TrimTrailingZeros())
+@Html.Hidden("consumerSpendingEducationExpensesYear", Model.ConsumerSpendingEducationExpensesYear.TrimTrailingZeros())
+@Html.Hidden("consumerSpendingMedicalExpensesYear", Model.ConsumerSpendingMedicalExpensesYear.TrimTrailingZeros())
+@Html.Hidden("consumerSpendingTransportationCostYear", Model.ConsumerSpendingTransportationCostYear.TrimTrailingZeros())
+@Html.Hidden("consumerSpendingCommunicationCostYear", Model.ConsumerSpendingCommunicationCostYear.TrimTrailingZeros())
+@Html.Hidden("consumerSpendingLeisureOrCultureYear", Model.ConsumerSpendingLeisureOrCultureYear.TrimTrailingZeros())
+@Html.Hidden("consumerSpendingClothingOrShoesYear", Model.ConsumerSpendingClothingOrShoesYear.TrimTrailingZeros())
+@Html.Hidden("consumerSpendingPinMoneyYear", Model.ConsumerSpendingPinMoneyYear.TrimTrailingZeros())
+@Html.Hidden("consumerSpendingProtectionTypeInsuranceYear", Model.ConsumerSpendingProtectionTypeInsuranceYear.TrimTrailingZeros())
+@Html.Hidden("consumerSpendingOtherExpensesYear", Model.ConsumerSpendingOtherExpensesYear.TrimTrailingZeros())
+@Html.Hidden("consumerSpendingUnknownExpenditureYear", Model.ConsumerSpendingUnknownExpenditureYear.TrimTrailingZeros())
 
-@Html.Hidden($"{nameof(percentageOfConsumerSpendingMealOrEatOutExpensesYear)}", $"{percentageOfConsumerSpendingMealOrEatOutExpensesYear:0.00}")
-@Html.Hidden($"{nameof(percentageOfConsumerSpendingHousingOrSuppliesCostYear)}", $"{percentageOfConsumerSpendingHousingOrSuppliesCostYear:0.00}")
-@Html.Hidden($"{nameof(percentageOfConsumerSpendingEducationExpensesYear)}", $"{percentageOfConsumerSpendingEducationExpensesYear:0.00}")
-@Html.Hidden($"{nameof(percentageOfConsumerSpendingMedicalExpensesYear)}", $"{percentageOfConsumerSpendingMedicalExpensesYear:0.00}")
-@Html.Hidden($"{nameof(percentageOfConsumerSpendingTransportationCostYear)}", $"{percentageOfConsumerSpendingTransportationCostYear:0.00}")
-@Html.Hidden($"{nameof(percentageOfConsumerSpendingCommunicationCostYear)}", $"{percentageOfConsumerSpendingCommunicationCostYear:0.00}")
-@Html.Hidden($"{nameof(percentageOfConsumerSpendingLeisureOrCultureYear)}", $"{percentageOfConsumerSpendingLeisureOrCultureYear:0.00}")
-@Html.Hidden($"{nameof(percentageOfConsumerSpendingClothingOrShoesYear)}", $"{percentageOfConsumerSpendingClothingOrShoesYear:0.00}")
-@Html.Hidden($"{nameof(percentageOfConsumerSpendingPinMoneyYear)}", $"{percentageOfConsumerSpendingPinMoneyYear:0.00}")
-@Html.Hidden($"{nameof(percentageOfConsumerSpendingProtectionTypeInsuranceYear)}", $"{percentageOfConsumerSpendingProtectionTypeInsuranceYear:0.00}")
-@Html.Hidden($"{nameof(percentageOfConsumerSpendingOtherExpensesYear)}", $"{percentageOfConsumerSpendingOtherExpensesYear:0.00}")
-@Html.Hidden($"{nameof(percentageOfConsumerSpendingUnknownExpenditureYear)}", $"{percentageOfConsumerSpendingUnknownExpenditureYear:0.00}")
+@Html.Hidden("percentageOfConsumerSpendingMealOrEatOutExpensesYear", $"{Model.PercentageOfConsumerSpendingMealOrEatOutExpensesYear:0.00}")
+@Html.Hidden("percentageOfConsumerSpendingHousingOrSuppliesCostYear", $"{Model.PercentageOfConsumerSpendingHousingOrSuppliesCostYear:0.00}")
+@Html.Hidden("percentageOfConsumerSpendingEducationExpensesYear", $"{Model.PercentageOfConsumerSpendingEducationExpensesYear:0.00}")
+@Html.Hidden("percentageOfConsumerSpendingMedicalExpensesYear", $"{Model.PercentageOfConsumerSpendingMedicalExpensesYear:0.00}")
+@Html.Hidden("percentageOfConsumerSpendingTransportationCostYear", $"{Model.PercentageOfConsumerSpendingTransportationCostYear:0.00}")
+@Html.Hidden("percentageOfConsumerSpendingCommunicationCostYear", $"{Model.PercentageOfConsumerSpendingCommunicationCostYear:0.00}")
+@Html.Hidden("percentageOfConsumerSpendingLeisureOrCultureYear", $"{Model.PercentageOfConsumerSpendingLeisureOrCultureYear:0.00}")
+@Html.Hidden("percentageOfConsumerSpendingClothingOrShoesYear", $"{Model.PercentageOfConsumerSpendingClothingOrShoesYear:0.00}")
+@Html.Hidden("percentageOfConsumerSpendingPinMoneyYear", $"{Model.PercentageOfConsumerSpendingPinMoneyYear:0.00}")
+@Html.Hidden("percentageOfConsumerSpendingProtectionTypeInsuranceYear", $"{Model.PercentageOfConsumerSpendingProtectionTypeInsuranceYear:0.00}")
+@Html.Hidden("percentageOfConsumerSpendingOtherExpensesYear", $"{Model.PercentageOfConsumerSpendingOtherExpensesYear:0.00}")
+@Html.Hidden("percentageOfConsumerSpendingUnknownExpenditureYear", $"{Model.PercentageOfConsumerSpendingUnknownExpenditureYear:0.00}")
 
 
-@Html.Hidden($"{nameof(consumerSpendingMealOrEatOutExpensesYearMonth)}", consumerSpendingMealOrEatOutExpensesYearMonth.TrimTrailingZeros())
-@Html.Hidden($"{nameof(consumerSpendingHousingOrSuppliesCostYearMonth)}", consumerSpendingHousingOrSuppliesCostYearMonth.TrimTrailingZeros())
-@Html.Hidden($"{nameof(consumerSpendingEducationExpensesYearMonth)}", consumerSpendingEducationExpensesYearMonth.TrimTrailingZeros())
-@Html.Hidden($"{nameof(consumerSpendingMedicalExpensesYearMonth)}", consumerSpendingMedicalExpensesYearMonth.TrimTrailingZeros())
-@Html.Hidden($"{nameof(consumerSpendingTransportationCostYearMonth)}", consumerSpendingTransportationCostYearMonth.TrimTrailingZeros())
-@Html.Hidden($"{nameof(consumerSpendingCommunicationCostYearMonth)}", consumerSpendingCommunicationCostYearMonth.TrimTrailingZeros())
-@Html.Hidden($"{nameof(consumerSpendingLeisureOrCultureYearMonth)}", consumerSpendingLeisureOrCultureYearMonth.TrimTrailingZeros())
-@Html.Hidden($"{nameof(consumerSpendingClothingOrShoesYearMonth)}", consumerSpendingClothingOrShoesYearMonth.TrimTrailingZeros())
-@Html.Hidden($"{nameof(consumerSpendingPinMoneyYearMonth)}", consumerSpendingPinMoneyYearMonth.TrimTrailingZeros())
-@Html.Hidden($"{nameof(consumerSpendingProtectionTypeInsuranceYearMonth)}", consumerSpendingProtectionTypeInsuranceYearMonth.TrimTrailingZeros())
-@Html.Hidden($"{nameof(consumerSpendingOtherExpensesYearMonth)}", consumerSpendingOtherExpensesYearMonth.TrimTrailingZeros())
-@Html.Hidden($"{nameof(consumerSpendingUnknownExpenditureYearMonth)}", consumerSpendingUnknownExpenditureYearMonth.TrimTrailingZeros())
+@Html.Hidden("consumerSpendingMealOrEatOutExpensesYearMonth", Model.ConsumerSpendingMealOrEatOutExpensesYearMonth.TrimTrailingZeros())
+@Html.Hidden("consumerSpendingHousingOrSuppliesCostYearMonth", Model.ConsumerSpendingHousingOrSuppliesCostYearMonth.TrimTrailingZeros())
+@Html.Hidden("consumerSpendingEducationExpensesYearMonth", Model.ConsumerSpendingEducationExpensesYearMonth.TrimTrailingZeros())
+@Html.Hidden("consumerSpendingMedicalExpensesYearMonth", Model.ConsumerSpendingMedicalExpensesYearMonth.TrimTrailingZeros())
+@Html.Hidden("consumerSpendingTransportationCostYearMonth", Model.ConsumerSpendingTransportationCostYearMonth.TrimTrailingZeros())
+@Html.Hidden("consumerSpendingCommunicationCostYearMonth", Model.ConsumerSpendingCommunicationCostYearMonth.TrimTrailingZeros())
+@Html.Hidden("consumerSpendingLeisureOrCultureYearMonth", Model.ConsumerSpendingLeisureOrCultureYearMonth.TrimTrailingZeros())
+@Html.Hidden("consumerSpendingClothingOrShoesYearMonth", Model.ConsumerSpendingClothingOrShoesYearMonth.TrimTrailingZeros())
+@Html.Hidden("consumerSpendingPinMoneyYearMonth", Model.ConsumerSpendingPinMoneyYearMonth.TrimTrailingZeros())
+@Html.Hidden("consumerSpendingProtectionTypeInsuranceYearMonth", Model.ConsumerSpendingProtectionTypeInsuranceYearMonth.TrimTrailingZeros())
+@Html.Hidden("consumerSpendingOtherExpensesYearMonth", Model.ConsumerSpendingOtherExpensesYearMonth.TrimTrailingZeros())
+@Html.Hidden("consumerSpendingUnknownExpenditureYearMonth", Model.ConsumerSpendingUnknownExpenditureYearMonth.TrimTrailingZeros())
 
-@Html.Hidden($"{nameof(percentageOfConsumerSpendingMealOrEatOutExpensesYearMonth)}", $"{percentageOfConsumerSpendingMealOrEatOutExpensesYearMonth:0.00}")
-@Html.Hidden($"{nameof(percentageOfConsumerSpendingHousingOrSuppliesCostYearMonth)}", $"{percentageOfConsumerSpendingHousingOrSuppliesCostYearMonth:0.00}")
-@Html.Hidden($"{nameof(percentageOfConsumerSpendingEducationExpensesYearMonth)}", $"{percentageOfConsumerSpendingEducationExpensesYearMonth:0.00}")
-@Html.Hidden($"{nameof(percentageOfConsumerSpendingMedicalExpensesYearMonth)}", $"{percentageOfConsumerSpendingMedicalExpensesYearMonth:0.00}")
-@Html.Hidden($"{nameof(percentageOfConsumerSpendingTransportationCostYearMonth)}", $"{percentageOfConsumerSpendingTransportationCostYearMonth:0.00}")
-@Html.Hidden($"{nameof(percentageOfConsumerSpendingCommunicationCostYearMonth)}", $"{percentageOfConsumerSpendingCommunicationCostYearMonth:0.00}")
-@Html.Hidden($"{nameof(percentageOfConsumerSpendingLeisureOrCultureYearMonth)}", $"{percentageOfConsumerSpendingLeisureOrCultureYearMonth:0.00}")
-@Html.Hidden($"{nameof(percentageOfConsumerSpendingClothingOrShoesYearMonth)}", $"{percentageOfConsumerSpendingClothingOrShoesYearMonth:0.00}")
-@Html.Hidden($"{nameof(percentageOfConsumerSpendingPinMoneyYearMonth)}", $"{percentageOfConsumerSpendingPinMoneyYearMonth:0.00}")
-@Html.Hidden($"{nameof(percentageOfConsumerSpendingProtectionTypeInsuranceYearMonth)}", $"{percentageOfConsumerSpendingProtectionTypeInsuranceYearMonth:0.00}")
-@Html.Hidden($"{nameof(percentageOfConsumerSpendingOtherExpensesYearMonth)}", $"{percentageOfConsumerSpendingOtherExpensesYearMonth:0.00}")
-@Html.Hidden($"{nameof(percentageOfConsumerSpendingUnknownExpenditureYearMonth)}", $"{percentageOfConsumerSpendingUnknownExpenditureYearMonth:0.00}")
+@Html.Hidden("percentageOfConsumerSpendingMealOrEatOutExpensesYearMonth", $"{Model.PercentageOfConsumerSpendingMealOrEatOutExpensesYearMonth:0.00}")
+@Html.Hidden("percentageOfConsumerSpendingHousingOrSuppliesCostYearMonth", $"{Model.PercentageOfConsumerSpendingHousingOrSuppliesCostYearMonth:0.00}")
+@Html.Hidden("percentageOfConsumerSpendingEducationExpensesYearMonth", $"{Model.PercentageOfConsumerSpendingEducationExpensesYearMonth:0.00}")
+@Html.Hidden("percentageOfConsumerSpendingMedicalExpensesYearMonth", $"{Model.PercentageOfConsumerSpendingMedicalExpensesYearMonth:0.00}")
+@Html.Hidden("percentageOfConsumerSpendingTransportationCostYearMonth", $"{Model.PercentageOfConsumerSpendingTransportationCostYearMonth:0.00}")
+@Html.Hidden("percentageOfConsumerSpendingCommunicationCostYearMonth", $"{Model.PercentageOfConsumerSpendingCommunicationCostYearMonth:0.00}")
+@Html.Hidden("percentageOfConsumerSpendingLeisureOrCultureYearMonth", $"{Model.PercentageOfConsumerSpendingLeisureOrCultureYearMonth:0.00}")
+@Html.Hidden("percentageOfConsumerSpendingClothingOrShoesYearMonth", $"{Model.PercentageOfConsumerSpendingClothingOrShoesYearMonth:0.00}")
+@Html.Hidden("percentageOfConsumerSpendingPinMoneyYearMonth", $"{Model.PercentageOfConsumerSpendingPinMoneyYearMonth:0.00}")
+@Html.Hidden("percentageOfConsumerSpendingProtectionTypeInsuranceYearMonth", $"{Model.PercentageOfConsumerSpendingProtectionTypeInsuranceYearMonth:0.00}")
+@Html.Hidden("percentageOfConsumerSpendingOtherExpensesYearMonth", $"{Model.PercentageOfConsumerSpendingOtherExpensesYearMonth:0.00}")
+@Html.Hidden("percentageOfConsumerSpendingUnknownExpenditureYearMonth", $"{Model.PercentageOfConsumerSpendingUnknownExpenditureYearMonth:0.00}")
 
 <section class="content">
     <div class="container-fluid">
@@ -326,9 +197,9 @@
                             <div class="card-tools">
                                 <div class="input-group input-group-sm">
                                     <select id="year" style="max-width:100%;">
-                                        @for (int i = endYear; i >= startYear; i--)
+                                        @for (int i = Model.EndYear; i >= Model.StartYear; i--)
                                         {
-                                            if (i == selectedYear)
+                                            if (i == Model.SelectedYear)
                                             {
                                                 int i1 = i;
                                                 <option value="@i" selected="selected">@i1</option>
@@ -343,7 +214,7 @@
                                     <select id="month" style="max-width:100%;">
                                         @for (int i = 1; i <= 12; i++)
                                         {
-                                            if (i == selectedMonth)
+                                            if (i == Model.SelectedMonth)
                                             {
                                                 int i1 = i;
                                                 <option value="@i" selected="selected">@i1</option>
