@@ -34,6 +34,21 @@ public class BoardCommentTests
         Assert.Equal("BoardComment.WriterEmpty", result.FirstError.Code);
     }
 
+    /// <summary>Create accepts content of exactly the maximum length and rejects one character more.</summary>
+    [Fact]
+    public void Create_EnforcesTheContentLengthLimit()
+    {
+        int max = Maroik.Core.Domain.Primitives.TitledContentPolicy.MaxBodyLength;
+
+        Assert.False(BoardComment.Create(10, 1, null, "Alice", new string('a', max)).IsError);
+
+        var tooLong = BoardComment.Create(10, 1, null, "Alice", new string('a', max + 1));
+        Assert.True(tooLong.IsError);
+        Assert.Equal("BoardComment.ContentTooLong", tooLong.FirstError.Code);
+        Assert.Equal("Comment must be {0} characters or fewer.", tooLong.FirstError.Metadata!["ResourceKey"]);
+        Assert.Equal([max], (object[])tooLong.FirstError.Metadata["ResourceArgs"]);
+    }
+
     /// <summary>Create returns error, when content empty.</summary>
     [Theory]
     [InlineData(null)]

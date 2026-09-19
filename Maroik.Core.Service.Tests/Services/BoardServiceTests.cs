@@ -268,6 +268,26 @@ public class BoardServiceTests
     }
 
     /// <summary>
+    /// Regression: an attachment record the domain rejects (here a file name over the 255-character
+    /// column) is caught BEFORE the file is uploaded, so nothing is left orphaned in storage.
+    /// </summary>
+    [Fact]
+    public async Task WriteBoardAsync_RejectsAnOverlongFileName_BeforeUploadingAnything()
+    {
+        _boardRepo.Setup(r => r.WriteBoardAsync(It.IsAny<Board>(), It.IsAny<CancellationToken>())).ReturnsAsync(1L);
+        var sut = CreateSut();
+
+        var file = new AttachedFileDto { FileName = new string('n', 256) + ".zip", ContentType = "application/zip", Bytes = [1, 2], Size = 2 };
+        ServiceResult result = await sut.WriteBoardAsync(
+            new BoardRequest { Type = BoardTypes.FreeForum, Title = "Test Title", Writer = "Alice" }, false, file, TestContext.Current.CancellationToken);
+
+        Assert.False(result.Success);
+        Assert.Equal("BoardAttachedFile.NameTooLong", result.ErrorCode);
+        _fileClient.Verify(f => f.UploadAsync(It.IsAny<byte[]>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
+        _unitOfWork.Verify(u => u.RollbackAsync(It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    /// <summary>
     /// Regression test: a file whose name is only an extension (e.g. ".zip") produces an empty
     /// Path.GetFileNameWithoutExtension result. The attachment used to be persisted via
     /// BoardAttachedFile.Reconstitute (a validation-bypass method meant only for trusted

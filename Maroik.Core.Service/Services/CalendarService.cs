@@ -680,16 +680,17 @@ public class CalendarService(
     private async Task<ServiceResult> SaveEventAttachmentAsync(string roleIndex, long calendarEventId, AttachedFileDto attachedFile, CancellationToken ct)
     {
         string filePath = BuildEventFilePath(roleIndex, calendarEventId, attachedFile.FileName);
-        bool uploaded = await fileClient.UploadAsync(attachedFile.Bytes, attachedFile.ContentType, filePath, settings.Value.FileStorageBaseUrl ?? "", ct);
-        if (!uploaded)
-            return ServiceResult.Failure("CalendarEvent.AttachmentUploadFailed", "Input is invalid");
-
         var fileResult = CalendarEventAttachedFile.Create(calendarEventId, attachedFile.Size,
             Path.GetFileNameWithoutExtension(attachedFile.FileName),
             Path.GetExtension(attachedFile.FileName),
             filePath.Replace('\\', '/')); // Normalize path separators for URL use.
         if (fileResult.IsError)
             return ServiceResult.FromError(fileResult.FirstError);
+
+        // Validated first, uploaded second: a record the domain rejects must not leave an orphaned file.
+        bool uploaded = await fileClient.UploadAsync(attachedFile.Bytes, attachedFile.ContentType, filePath, settings.Value.FileStorageBaseUrl ?? "", ct);
+        if (!uploaded)
+            return ServiceResult.Failure("CalendarEvent.AttachmentUploadFailed", "Input is invalid");
 
         await calendarEventAttachedFileRepository.CreateAsync(fileResult.Value, ct);
         return ServiceResult.Ok();

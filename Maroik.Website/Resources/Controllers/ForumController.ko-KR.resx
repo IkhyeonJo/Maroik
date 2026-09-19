@@ -285,4 +285,16 @@
   <data name="reset-password-invalid" xml:space="preserve">
     <value>비밀번호 재설정 요청이 유효하지 않습니다.</value>
   </data>
+  <data name="Comment must be {0} characters or fewer." xml:space="preserve">
+    <value>댓글은 {0}자 이하여야 합니다.</value>
+  </data>
+  <data name="File name must be {0} characters or fewer." xml:space="preserve">
+    <value>파일 이름은 {0}자 이하여야 합니다.</value>
+  </data>
+  <data name="File extension must be {0} characters or fewer." xml:space="preserve">
+    <value>파일 확장자는 {0}자 이하여야 합니다.</value>
+  </data>
+  <data name="File storage path must be {0} characters or fewer." xml:space="preserve">
+    <value>파일 저장 경로는 {0}자 이하여야 합니다.</value>
+  </data>
 </root>

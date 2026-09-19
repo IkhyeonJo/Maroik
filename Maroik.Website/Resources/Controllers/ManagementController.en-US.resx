@@ -525,4 +525,16 @@
   <data name="svg-not-allowed" xml:space="preserve">
     <value>svg-not-allowed</value>
   </data>
+  <data name="Comment must be {0} characters or fewer." xml:space="preserve">
+    <value>Comment must be {0} characters or fewer.</value>
+  </data>
+  <data name="File name must be {0} characters or fewer." xml:space="preserve">
+    <value>File name must be {0} characters or fewer.</value>
+  </data>
+  <data name="File extension must be {0} characters or fewer." xml:space="preserve">
+    <value>File extension must be {0} characters or fewer.</value>
+  </data>
+  <data name="File storage path must be {0} characters or fewer." xml:space="preserve">
+    <value>File storage path must be {0} characters or fewer.</value>
+  </data>
 </root>

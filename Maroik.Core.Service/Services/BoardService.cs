@@ -130,15 +130,10 @@ public class BoardService(
 
             if (attachedFile != null)
             {
-                // Build a unique storage path and upload the file, then persist the attachment record.
+                // Build a unique storage path and validate the attachment record BEFORE uploading, so a
+                // record the domain would reject (e.g. an over-long file name) never leaves an orphaned
+                // file in storage; then upload, then persist the record.
                 string filePath = BuildAttachedFilePath(request.Type!, boardId, attachedFile.FileName);
-                bool uploaded = await fileClient.UploadAsync(attachedFile.Bytes, attachedFile.ContentType, filePath, settings.Value.FileStorageBaseUrl ?? "", ct);
-                if (!uploaded)
-                {
-                    await unitOfWork.RollbackAsync(ct);
-                    return ServiceResult.Failure("Board.AttachmentUploadFailed", "Failed to upload the attached file.");
-                }
-
                 var fileResult = BoardAttachedFile.Create(boardId, attachedFile.Size,
                     Path.GetFileNameWithoutExtension(attachedFile.FileName),
                     Path.GetExtension(attachedFile.FileName),
@@ -148,6 +143,14 @@ public class BoardService(
                     await unitOfWork.RollbackAsync(ct);
                     return ServiceResult.FromError(fileResult.FirstError);
                 }
+
+                bool uploaded = await fileClient.UploadAsync(attachedFile.Bytes, attachedFile.ContentType, filePath, settings.Value.FileStorageBaseUrl ?? "", ct);
+                if (!uploaded)
+                {
+                    await unitOfWork.RollbackAsync(ct);
+                    return ServiceResult.Failure("Board.AttachmentUploadFailed", "Failed to upload the attached file.");
+                }
+
                 await boardAttachedFileRepository.CreateAsync(fileResult.Value, ct);
             }
 
@@ -438,14 +441,15 @@ public class BoardService(
         {
             // Replace: upload the new file and overwrite the existing attachment record.
             string filePath = BuildAttachedFilePath(boardType, boardId, newFile.FileName);
-            bool uploaded = await fileClient.UploadAsync(newFile.Bytes, newFile.ContentType, filePath, settings.Value.FileStorageBaseUrl ?? "", ct);
-            if (!uploaded) return ServiceResult.Failure("Board.AttachmentUploadFailed", "Failed to upload the attached file.");
-
             var fileResult = BoardAttachedFile.Create(previous.BoardId, newFile.Size,
                 Path.GetFileNameWithoutExtension(newFile.FileName),
                 Path.GetExtension(newFile.FileName),
                 filePath.Replace('\\', '/'));
             if (fileResult.IsError) return ServiceResult.FromError(fileResult.FirstError);
+
+            // Validated first, uploaded second: a rejected record must not leave an orphaned file.
+            bool uploaded = await fileClient.UploadAsync(newFile.Bytes, newFile.ContentType, filePath, settings.Value.FileStorageBaseUrl ?? "", ct);
+            if (!uploaded) return ServiceResult.Failure("Board.AttachmentUploadFailed", "Failed to upload the attached file.");
 
             await boardAttachedFileRepository.UpdateEntityAsync(
                 BoardAttachedFile.Reconstitute(previous.Id, fileResult.Value.BoardId, fileResult.Value.Size,
@@ -463,14 +467,15 @@ public class BoardService(
         {
             // Add: upload and create a new attachment record for a post that had none before.
             string filePath = BuildAttachedFilePath(boardType, boardId, newFile.FileName);
-            bool uploaded = await fileClient.UploadAsync(newFile.Bytes, newFile.ContentType, filePath, settings.Value.FileStorageBaseUrl ?? "", ct);
-            if (!uploaded) return ServiceResult.Failure("Board.AttachmentUploadFailed", "Failed to upload the attached file.");
-
             var fileResult = BoardAttachedFile.Create(boardId, newFile.Size,
                 Path.GetFileNameWithoutExtension(newFile.FileName),
                 Path.GetExtension(newFile.FileName),
                 filePath.Replace('\\', '/'));
             if (fileResult.IsError) return ServiceResult.FromError(fileResult.FirstError);
+
+            // Validated first, uploaded second: a rejected record must not leave an orphaned file.
+            bool uploaded = await fileClient.UploadAsync(newFile.Bytes, newFile.ContentType, filePath, settings.Value.FileStorageBaseUrl ?? "", ct);
+            if (!uploaded) return ServiceResult.Failure("Board.AttachmentUploadFailed", "Failed to upload the attached file.");
 
             await boardAttachedFileRepository.CreateAsync(fileResult.Value, ct);
         }

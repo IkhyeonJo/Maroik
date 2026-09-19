@@ -525,4 +525,16 @@
   <data name="svg-not-allowed" xml:space="preserve">
     <value>SVG 파일은 허용되지 않습니다.</value>
   </data>
+  <data name="Comment must be {0} characters or fewer." xml:space="preserve">
+    <value>댓글은 {0}자 이하여야 합니다.</value>
+  </data>
+  <data name="File name must be {0} characters or fewer." xml:space="preserve">
+    <value>파일 이름은 {0}자 이하여야 합니다.</value>
+  </data>
+  <data name="File extension must be {0} characters or fewer." xml:space="preserve">
+    <value>파일 확장자는 {0}자 이하여야 합니다.</value>
+  </data>
+  <data name="File storage path must be {0} characters or fewer." xml:space="preserve">
+    <value>파일 저장 경로는 {0}자 이하여야 합니다.</value>
+  </data>
 </root>

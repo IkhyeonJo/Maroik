@@ -60,6 +60,25 @@ public class CalendarEventAttachedFileTests
         Assert.Equal("CalendarEventAttachedFile.InvalidSize", result.FirstError.Code);
     }
 
+    /// <summary>Name, extension and path are bounded by their character varying(255) columns: the limit passes, one more is rejected cleanly.</summary>
+    [Fact]
+    public void Create_EnforcesTheColumnLengthLimits()
+    {
+        Assert.False(CalendarEventAttachedFile.Create(1, 10, new string("n"[0], 255), ".zip", "/f/a.zip").IsError);
+        Assert.False(CalendarEventAttachedFile.Create(1, 10, "doc", new string(".zip"[0], 255), "/f/a.zip").IsError);
+        Assert.False(CalendarEventAttachedFile.Create(1, 10, "doc", ".zip", new string("/"[0], 255)).IsError);
+
+        var name = CalendarEventAttachedFile.Create(1, 10, new string("n"[0], 256), ".zip", "/f/a.zip");
+        Assert.Equal("CalendarEventAttachedFile.NameTooLong", name.FirstError.Code);
+        Assert.Equal("File name must be {0} characters or fewer.", name.FirstError.Metadata!["ResourceKey"]);
+
+        var extension = CalendarEventAttachedFile.Create(1, 10, "doc", new string(".zip"[0], 256), "/f/a.zip");
+        Assert.Equal("CalendarEventAttachedFile.ExtensionTooLong", extension.FirstError.Code);
+
+        var path = CalendarEventAttachedFile.Create(1, 10, "doc", ".zip", new string("/"[0], 256));
+        Assert.Equal("CalendarEventAttachedFile.PathTooLong", path.FirstError.Code);
+    }
+
     // -- Reconstitute -----------------------------------------------------------
 
     /// <summary>Reconstitute rebuilds file without validation.</summary>

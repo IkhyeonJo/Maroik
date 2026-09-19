@@ -582,6 +582,28 @@ public class CalendarServiceTests
         _unitOfWork.Verify(u => u.CommitAsync(It.IsAny<CancellationToken>()), Times.Never);
     }
 
+    /// <summary>
+    /// Regression: an attachment record the domain rejects (a file name over 255 characters) is caught
+    /// BEFORE the file is uploaded, so no orphaned file is left in storage.
+    /// </summary>
+    [Fact]
+    public async Task CreateCalendarEventAsync_RejectsAnOverlongFileName_BeforeUploadingAnything()
+    {
+        _calendarRepo.Setup(r => r.GetByAccountEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync([MakeCalendar(id: 1)]);
+        _eventRepo.Setup(r => r.CreateCalendarEventAsync(It.IsAny<CalendarEvent>(), It.IsAny<CancellationToken>())).ReturnsAsync(1L);
+        var sut = CreateSut();
+        var attachedFile = new AttachedFileDto { Bytes = [1, 2, 3], ContentType = "application/zip", FileName = new string('n', 256) + ".zip", Size = 3 };
+
+        ServiceResult result = await sut.CreateCalendarEventAsync(
+            new CalendarEventRequest { CalendarId = 1, Title = "Meeting" }, "user@example.com", "1", [], attachedFile, TestContext.Current.CancellationToken);
+
+        Assert.False(result.Success);
+        Assert.Equal("CalendarEventAttachedFile.NameTooLong", result.ErrorCode);
+        _fileClient.Verify(f => f.UploadAsync(It.IsAny<byte[]>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
+        _unitOfWork.Verify(u => u.RollbackAsync(It.IsAny<CancellationToken>()), Times.Once);
+    }
+
     /// <summary>Verifies that <c>CreateCalendarEventAsync</c> creates reminders when provided.</summary>
     [Fact]
     public async Task CreateCalendarEventAsync_CreatesReminders_WhenProvided()

@@ -85,6 +85,11 @@ public sealed class BoardComment : AggregateRoot<long>
         if (string.IsNullOrWhiteSpace(content))
             return LocalizableError.Validation("BoardComment.ContentEmpty", "Comment content cannot be empty.");
 
+        // Persisted in a text column, so the database would accept any size; bound it here to the same
+        // limit a post's body has, so one comment cannot be used to store or render an unbounded blob.
+        if (content.Length > TitledContentPolicy.MaxBodyLength)
+            return LocalizableError.Validation("BoardComment.ContentTooLong", "Comment must be {0} characters or fewer.", TitledContentPolicy.MaxBodyLength);
+
         return new BoardComment(0, boardId, order, avatarImagePath, writer, content);
     }
 
