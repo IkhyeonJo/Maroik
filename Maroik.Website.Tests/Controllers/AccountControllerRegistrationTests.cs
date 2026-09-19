@@ -239,6 +239,36 @@ public class AccountControllerRegistrationTests
         Assert.StartsWith($"'{nickname}' ", System.Net.WebUtility.HtmlDecode(error.Groups[1].Value));
     }
 
+    /// <summary>
+    /// The "not a valid email address" message carries the typed address as a format argument. It must
+    /// read like the typed text (once-encoded), not with entities: <c>+</c>, <c>'</c> and <c>@</c> are all
+    /// characters the default HTML encoder escapes. "user@localhost" passes the view model's
+    /// <c>[EmailAddress]</c> attribute but is rejected by the domain's <c>Email</c> value object, which is
+    /// what surfaces the message.
+    /// </summary>
+    [Fact]
+    public async Task Register_InvalidEmailForDomain_ShowsTheAddressEncodedOnlyOnce()
+    {
+        const string typed = "o'brien+x@localhost";
+
+        var response = await PostFormAsync("/Account/Register", new Dictionary<string, string>
+        {
+            ["Email"] = typed,
+            ["Password"] = "AnotherPassword1!",
+            ["ConfirmPassword"] = "AnotherPassword1!",
+            ["Nickname"] = "EmailMsg_" + Guid.NewGuid().ToString("N")[..8],
+            ["AgreedServiceTerms"] = "true",
+            ["TimeZoneIanaId"] = "UTC"
+        });
+
+        Assert.Equal(System.Net.HttpStatusCode.OK, response.StatusCode);
+        string html = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+        Match error = Regex.Match(html, "<span style=\"font-weight:bold; color: red; \">(.*?)</span>", RegexOptions.Singleline);
+        Assert.True(error.Success, "The registration error message was not rendered.");
+
+        Assert.StartsWith($"'{typed}' ", System.Net.WebUtility.HtmlDecode(error.Groups[1].Value));
+    }
+
     /// <summary>Register unconfirmed email resends confirmation on resubmission.</summary>
     [Fact]
     public async Task Register_UnconfirmedEmail_ResendsConfirmationOnResubmission()
