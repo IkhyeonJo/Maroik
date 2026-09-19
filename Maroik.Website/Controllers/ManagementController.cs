@@ -214,16 +214,14 @@ public class ManagementController : Controller
 
             if (result.Success)
             {
-                // ChangePassword regenerates the account's SecurityStamp, which would otherwise
-                // make AuthorizationFilter log this very session out on its next request — refresh
-                // the session copy with the new stamp so only *other* sessions are invalidated.
-                AccountResponse? updatedAccount = await _profileService.GetProfileAsync(email!, HttpContext.RequestAborted);
+                // ChangePassword regenerated the account's SecurityStamp, so every session of this
+                // account is now invalid — this one included. Drop it here explicitly and let the
+                // client send the user to the sign-in page (they sign in again with the new password).
                 _sessionService.RemoveAccount();
-                _sessionService.SetAccount(updatedAccount!);
             }
 
             return result.Success
-                ? Json(new { result = true, message = _localizer["Password change successfully done."].Value })
+                ? Json(new { result = true, message = _localizer["Password changed. Please sign in again."].Value })
                 : Json(new { result = false, error = _localizer[result.ErrorKey, result.ErrorArgs].ToPlainString() });
         }
         catch (Exception ex)

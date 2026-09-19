@@ -6,7 +6,6 @@
     const $newPassword = $('#NewPassword');
     const $password = $('#Password');
     const $__RequestVerificationToken = $('input[name="__RequestVerificationToken"]');
-    const mustChangePassword = $('#MustChangePassword').val() === 'true';
     const maxFileSize = parseInt($('#maxAttachedFileSizeBytes').val()) || window.MaroikDefaultMaxAttachedFileSizeBytes;
     const allowedImageContentTypes = (JSON.parse($('#allowedImageContentTypes').val() || '[]')).map(function (t) { return t.toLowerCase(); });
     function UpdateProfileAvatar(noFileAttachedErrorMessage, fileSizeLimitationErrorMessage, fileTypeErrorMessage) {
@@ -74,10 +73,8 @@
             contentType: 'application/json; charset=utf-8',
             success: function (data) {
                 if (data.result) {
-                    toastr.success(data.message);
-                    if (mustChangePassword) {
-                        window.location.href = "/Dashboard/AnonymousIndex";
-                    }
+                    alert(data.message);
+                    window.location.href = "/Account/Login";
                 }
                 else {
                     toastr.error(data.error);
@@ -93,4 +90,3 @@
         return UpdateProfileAvatar($(this).attr('data-noFileAttachedErrorMessage'), $(this).attr('data-fileSizeLimitationErrorMessage'), $(this).attr('data-fileTypeErrorMessage'));
     });
 })();
-//# sourceMappingURL=site.js.map

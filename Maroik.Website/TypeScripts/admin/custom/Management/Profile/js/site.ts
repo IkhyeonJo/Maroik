@@ -4,8 +4,9 @@
  * Two independent forms on one page:
  *
  *   1. Change password — `#formUpdateProfilePassword`. Validated client-side,
- *      then POSTed as JSON; the result is reported with a toastr message and the
- *      user stays on the page.
+ *      then POSTed as JSON; on success an `alert` is shown and, once it is confirmed, the user
+ *      is sent to the sign-in page (every session of the account is signed out).
+ *      Failures are reported with a toastr message and the user stays on the page.
  *   2. Change avatar — `#formUpdateProfileAvatar`. Fires automatically when a
  *      file is picked (no submit button). The chosen file is checked against the
  *      size limit and the allowed image types *before* upload, purely for fast
@@ -22,10 +23,6 @@
     const $newPassword = $('#NewPassword');
     const $password = $('#Password');
     const $__RequestVerificationToken = $('input[name="__RequestVerificationToken"]');
-    // Set by the view when an admin password reset is forcing this account to change its
-    // password before doing anything else — server-authoritative (AuthorizationFilter enforces
-    // this on every request); only used here to decide whether to leave the page on success.
-    const mustChangePassword = $('#MustChangePassword').val() === 'true';
     // Authoritative in ServerSetting.MaxAttachedFileSizeBytes (server); mirrored here for form UX
     // only. Falls back to the shared per-role default (_Layout/site.ts) if the hidden field is
     // missing or unparseable.
@@ -132,13 +129,11 @@
             contentType: 'application/json; charset=utf-8',
             success: function (data) {
                 if (data.result) {
-                    toastr.success(data.message);
-                    // An admin-forced password change is now satisfied — leave the page the
-                    // server was otherwise pinning this account to (AuthorizationFilter re-checks
-                    // MustChangePassword from the DB, so this is just a navigation convenience).
-                    if (mustChangePassword) {
-                        window.location.href = "/Dashboard/AnonymousIndex";
-                    }
+                    // Changing the password signs every session of the account out — this one
+                    // included (the server already dropped it). `alert` blocks until the user
+                    // confirms, so the message is always read before going to the sign-in page.
+                    alert(data.message);
+                    window.location.href = "/Account/Login";
                 }
                 else {
                     // Server-side rule failure (e.g. wrong current password,

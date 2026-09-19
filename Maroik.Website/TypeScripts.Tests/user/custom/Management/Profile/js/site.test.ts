@@ -16,8 +16,6 @@ const fixture =
           data-fileTypeErrorMessage="wrong type" />
    <input id="Password" /><input id="NewPassword" />`;
 
-const forcedFixture = fixture + hidden("MustChangePassword", "true");
-
 describe("user/Management/Profile", () => {
   it("alerts 'attach a file' when the avatar input fires change with no file", () => {
     const h = loadSite("user", "Management", "Profile", fixture);
@@ -43,18 +41,20 @@ describe("user/Management/Profile", () => {
     expect(JSON.parse(String(call.data))).toEqual({ Password: "old", NewPassword: "new" });
   });
 
-  it("stays on the page after a successful change when no password change was forced", () => {
+  it("alerts the message and goes to the sign-in page after a successful change", () => {
     const h = loadSite("user", "Management", "Profile", fixture);
     h.$("#formUpdateProfilePassword").trigger("submit");
     h.respond(0, { result: true, message: "ok" });
-    expect(h.toastr.success).toHaveBeenCalledWith("ok");
-    expect(h.navigations).toHaveLength(0);
+    expect(h.win.alert).toHaveBeenCalledWith("ok");
+    expect(h.navigations).toEqual(["/Account/Login"]);
   });
 
-  it("navigates to the dashboard after a successful change when a password change was forced", () => {
-    const h = loadSite("user", "Management", "Profile", forcedFixture);
+  it("stays on the page and shows the error when the change is refused", () => {
+    const h = loadSite("user", "Management", "Profile", fixture);
     h.$("#formUpdateProfilePassword").trigger("submit");
-    h.respond(0, { result: true, message: "ok" });
-    expect(h.navigations).toEqual(["/Dashboard/AnonymousIndex"]);
+    h.respond(0, { result: false, error: "wrong password" });
+    expect(h.toastr.error).toHaveBeenCalledWith("wrong password");
+    expect(h.win.alert).not.toHaveBeenCalled();
+    expect(h.navigations).toHaveLength(0);
   });
 });

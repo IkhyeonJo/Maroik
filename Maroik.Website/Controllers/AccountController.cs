@@ -270,8 +270,10 @@ public class AccountController(
                 ViewBag.FailToResetPassword = true;
                 return View();
             }
+            // Any other refusal (the password rule, ...) says nothing against the token itself — keep
+            // showing the form, with the token, so the user can pick another password.
             TempData["Error"] = localizer[result.ErrorKey, result.ErrorArgs].ToPlainString();
-            ViewBag.FailToResetPassword = true;
+            ViewBag.ResetPasswordToken = loginInputViewModel.ResetPasswordToken;
             return View();
         }
 

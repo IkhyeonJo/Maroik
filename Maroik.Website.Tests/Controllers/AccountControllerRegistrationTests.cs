@@ -390,6 +390,41 @@ public class AccountControllerRegistrationTests
     }
 
     /// <summary>
+    /// Regression: a new password over 72 UTF-8 bytes (here 3 + 25 Hangul = 78 bytes, but well under 100
+    /// characters) used to be reported as "The authentication token is invalid." — although nothing was wrong
+    /// with the token. The form must come back (with the token) and say what is wrong with the password, and
+    /// the reset token must stay usable.
+    /// </summary>
+    [Fact]
+    public async Task ResetPassword_Post_PasswordOver72Bytes_ReShowsTheFormAndKeepsTheToken()
+    {
+        string email = UniqueEmail();
+        string rawToken = GuidToken.Generate();
+        await SeedAccountAsync(email, emailConfirmed: true, resetPasswordToken: rawToken);
+
+        using var scope = _factory.Services.CreateScope();
+        var rsa = scope.ServiceProvider.GetRequiredService<IRsaService>();
+        string encryptedToken = rsa.Encrypt(rawToken);
+
+        var response = await PostFormAsync("/Account/ResetPassword", new Dictionary<string, string>
+        {
+            ["ResetPasswordToken"] = encryptedToken,
+            ["Password"] = "Aa1" + new string('가', 25)
+        });
+        string html = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+
+        Assert.Equal(System.Net.HttpStatusCode.OK, response.StatusCode);
+        Assert.Contains("resetPasswordForm", html);
+        Assert.DoesNotContain("The authentication token is invalid.", html);
+        Assert.Contains("at most 72 bytes", html);
+
+        using var verifyScope = _factory.Services.CreateScope();
+        var db = verifyScope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+        var account = db.Accounts.Single(a => a.Email == email);
+        Assert.Equal(rawToken, account.ResetPasswordToken); // still usable
+    }
+
+    /// <summary>
     /// Regression: a registration the service rejects (here a reserved nickname) sent no mail, so it
     /// must not burn the per-address e-mail cooldown — the corrected form, submitted straight away,
     /// has to go through instead of being told to "wait a moment before requesting another email".

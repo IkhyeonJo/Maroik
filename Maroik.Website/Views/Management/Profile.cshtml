@@ -18,7 +18,6 @@
 @Html.Hidden(nameof(maxAttachedFileSizeBytes), maxAttachedFileSizeBytes)
 @* Accepted avatar image types — authoritative in ImageUploadPolicy (also enforced server-side). *@
 @Html.Hidden("allowedImageContentTypes", JsonSerialization.ToClientJson(ImageUploadPolicy.AllowedContentTypes))
-@Html.Hidden(nameof(Model.MustChangePassword), Model.MustChangePassword ? "true" : "false")
 <section class="content">
     <div class="container-fluid">
         @if (Model.MustChangePassword)

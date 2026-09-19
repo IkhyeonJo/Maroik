@@ -138,4 +138,10 @@
   <data name="Please select time zone" xml:space="preserve">
     <value>시간대를 선택해 주세요</value>
   </data>
+  <data name="Password must be at most 72 bytes (one Korean character counts as 3 bytes)." xml:space="preserve">
+    <value>비밀번호는 최대 72바이트까지 가능합니다 (한글 1자는 3바이트).</value>
+  </data>
+  <data name="Time zone" xml:space="preserve">
+    <value>시간대</value>
+  </data>
 </root>

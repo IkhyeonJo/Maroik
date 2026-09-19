@@ -1,6 +1,7 @@
 // ReSharper disable UnusedAutoPropertyAccessor.Global
 using System.ComponentModel.DataAnnotations;
 using Maroik.Core.Domain.Account;
+using Maroik.Website.Attributes;
 
 namespace Maroik.Website.Models.ViewModels.Account;
 
@@ -26,6 +27,7 @@ public class LoginInputViewModel
     [StringLength(100, ErrorMessage = "The {0} must be at least {2} characters long.", MinimumLength = 8)]
     [DataType(DataType.Password)]
     [RegularExpression(PasswordPolicy.Pattern, ErrorMessage = "Password must be at least 8 characters and contain at 3 of 4 of the following: upper case (A-Z), lower case (a-z), number (0-9) and special character (e.g. !@#$%^&*)")]
+    [PasswordMaxBytes(ErrorMessage = "Password must be at most 72 bytes (one Korean character counts as 3 bytes).")]
     public string? Password { get; set; }
 
     /// <summary>The display name chosen by the user during registration.</summary>

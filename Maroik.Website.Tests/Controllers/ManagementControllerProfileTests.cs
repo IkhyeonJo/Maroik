@@ -116,6 +116,36 @@ public class ManagementControllerProfileTests
     }
 
     /// <summary>
+    /// Changing the password signs every session of the account out — the one that made the change
+    /// included — and the response tells the user to sign in again (the client then goes to the
+    /// sign-in page). The next request with the same session cookie is no longer authenticated.
+    /// </summary>
+    [Fact]
+    public async Task UpdateProfilePassword_Success_EndsTheCurrentSessionToo()
+    {
+        var session = await LoginAsUserAsync("management-profile-pw-signout@test.com");
+        using var change = session.BuildJsonPostRequest("/Management/UpdateProfilePassword", new
+        {
+            Nickname = "unused",
+            Password = "UserPassword1!",
+            NewPassword = "BrandNewPassword1!",
+            TimeZoneIanaId = "unused"
+        });
+
+        var changeResponse = await _client.SendAsync(change, TestContext.Current.CancellationToken);
+        string json = await changeResponse.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+
+        Assert.Contains("\"result\":true", json);
+        Assert.Contains("sign in again", json);
+
+        using var profile = new HttpRequestMessage(HttpMethod.Get, "/Management/Profile");
+        profile.Headers.Add("Cookie", session.CookieHeader);
+        var profileResponse = await _client.SendAsync(profile, TestContext.Current.CancellationToken);
+
+        Assert.Equal(System.Net.HttpStatusCode.Redirect, profileResponse.StatusCode);
+    }
+
+    /// <summary>
     /// Regression: the CURRENT password only has to match what is stored — it is not held to the
     /// complexity rule. An account whose password predates the rule (here a short, single-class one)
     /// must still be able to change it.
@@ -144,6 +174,31 @@ public class ManagementControllerProfileTests
         var passwordService = scope.ServiceProvider.GetRequiredService<IPasswordService>();
         var account = db.Accounts.Single(a => a.Email == email);
         Assert.True(passwordService.VerifyPassword("BrandNewPassword1!", account.HashedPassword!));
+    }
+
+    /// <summary>A new password over 72 UTF-8 bytes is refused (BCrypt would silently truncate it) and nothing changes.</summary>
+    [Fact]
+    public async Task UpdateProfilePassword_NewPasswordOver72Bytes_ReturnsFailureResult()
+    {
+        var session = await LoginAsUserAsync("management-profile-pw-toolong@test.com");
+        using var request = session.BuildJsonPostRequest("/Management/UpdateProfilePassword", new
+        {
+            Nickname = "unused",
+            Password = "UserPassword1!",
+            NewPassword = "Aa1" + new string('가', 25),
+            TimeZoneIanaId = "unused"
+        });
+
+        var response = await _client.SendAsync(request, TestContext.Current.CancellationToken);
+        string json = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+
+        Assert.Contains("\"result\":false", json);
+
+        using var scope = _factory.Services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+        var passwordService = scope.ServiceProvider.GetRequiredService<IPasswordService>();
+        var account = db.Accounts.Single(a => a.Email == "management-profile-pw-toolong@test.com");
+        Assert.True(passwordService.VerifyPassword("UserPassword1!", account.HashedPassword!)); // unchanged
     }
 
     /// <summary>Update profile password wrong current password returns failure result.</summary>

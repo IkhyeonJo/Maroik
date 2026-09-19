@@ -138,4 +138,7 @@
   <data name="The {0} must be at least {2} characters long." xml:space="preserve">
     <value>적어도 {2} 길이 이상이여야 합니다.</value>
   </data>
+  <data name="Password must be at most 72 bytes (one Korean character counts as 3 bytes)." xml:space="preserve">
+    <value>비밀번호는 최대 72바이트까지 가능합니다 (한글 1자는 3바이트).</value>
+  </data>
 </root>

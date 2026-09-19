@@ -40,4 +40,31 @@ public class PasswordPolicyTests
     {
         Assert.False(PasswordPolicy.IsValid(password));
     }
+
+    /// <summary>Is within max byte length counts UTF-8 bytes, not characters: 24 Hangul fit (72 bytes), 25 do not (75).</summary>
+    [Theory]
+    [InlineData(0, true)]
+    [InlineData(24, true)] // 24 chars x 3 bytes = 72
+    [InlineData(25, false)] // 25 chars x 3 bytes = 75
+    public void IsWithinMaxByteLength_CountsUtf8Bytes(int hangulCount, bool expected)
+    {
+        Assert.Equal(expected, PasswordPolicy.IsWithinMaxByteLength(new string('가', hangulCount)));
+    }
+
+    /// <summary>Is within max byte length treats null and empty as within the limit.</summary>
+    [Theory]
+    [InlineData(null)]
+    [InlineData("")]
+    public void IsWithinMaxByteLength_ReturnsTrue_ForNullOrEmpty(string? password)
+    {
+        Assert.True(PasswordPolicy.IsWithinMaxByteLength(password));
+    }
+
+    /// <summary>Is valid rejects a password over the byte cap even though it is well under any character cap.</summary>
+    [Fact]
+    public void IsValid_ReturnsFalse_WhenPasswordExceedsMaxBytesButNotMaxChars()
+    {
+        Assert.False(PasswordPolicy.IsValid("Aa1" + new string('가', 25))); // 78 bytes, 28 chars
+        Assert.True(PasswordPolicy.IsValid("Aa1" + new string('가', 23))); // 72 bytes exactly
+    }
 }

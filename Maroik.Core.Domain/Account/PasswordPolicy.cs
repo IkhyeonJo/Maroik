@@ -26,7 +26,7 @@ public static partial class PasswordPolicy
     /// <see cref="System.ComponentModel.DataAnnotations.StringLengthAttribute"/> ceiling on ViewModels
     /// (a conservative char count, since one char is 1–4 UTF-8 bytes).
     /// </summary>
-    private const int MaxByteLength = 72;
+    public const int MaxByteLength = 72;
 
     /// <summary>
     /// Human-readable statement of the rule, for a validation error message. Single source of truth
@@ -39,10 +39,18 @@ public static partial class PasswordPolicy
 
     private static readonly Regex _compiledRegex = MyRegex();
 
+    /// <summary>
+    /// Returns <c>true</c> when <paramref name="password"/> fits within <see cref="MaxByteLength"/>
+    /// UTF-8 bytes (<c>null</c>/empty trivially do). Split out from <see cref="IsValid"/> so a caller can tell
+    /// "too long" apart from "not complex enough" when it reports the problem.
+    /// </summary>
+    public static bool IsWithinMaxByteLength(string? password) =>
+        string.IsNullOrEmpty(password) || Encoding.UTF8.GetByteCount(password) <= MaxByteLength;
+
     /// <summary>Returns <c>true</c> when <paramref name="password"/> satisfies the complexity and length rule.</summary>
     public static bool IsValid(string? password) =>
         !string.IsNullOrEmpty(password)
-        && Encoding.UTF8.GetByteCount(password) <= MaxByteLength
+        && IsWithinMaxByteLength(password)
         && _compiledRegex.IsMatch(password);
     // No RegexOptions.Compiled: the source generator already emits a purpose-built implementation,
     // so Compiled would only add redundant runtime IL emission on top.
