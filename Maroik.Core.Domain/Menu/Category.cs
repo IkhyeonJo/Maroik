@@ -64,6 +64,9 @@ public sealed class Category : AggregateRoot<long>
         if (string.IsNullOrWhiteSpace(name))
             return LocalizableError.Validation("Category.NameEmpty", "Category name cannot be empty.");
 
+        var fieldsResult = MenuFieldPolicy.Validate(name, displayName, iconPath, controller, action, role, order);
+        if (fieldsResult.IsError) return fieldsResult.Errors;
+
         return new Category(0, name, displayName, iconPath, controller, action, role, order);
     }
 
@@ -74,6 +77,9 @@ public sealed class Category : AggregateRoot<long>
     {
         if (string.IsNullOrWhiteSpace(name))
             return LocalizableError.Validation("Category.NameEmpty", "Category name cannot be empty.");
+
+        var fieldsResult = MenuFieldPolicy.Validate(name, displayName, iconPath, controller, action, role, order);
+        if (fieldsResult.IsError) return fieldsResult.Errors;
 
         Name = name;
         DisplayName = displayName;

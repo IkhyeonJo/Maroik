@@ -64,6 +64,9 @@ public sealed class SubCategory : AggregateRoot<long>
         if (string.IsNullOrWhiteSpace(name))
             return LocalizableError.Validation("SubCategory.NameEmpty", "Sub-category name cannot be empty.");
 
+        var fieldsResult = MenuFieldPolicy.Validate(name, displayName, iconPath, controller: null, action, role, order);
+        if (fieldsResult.IsError) return fieldsResult.Errors;
+
         return new SubCategory(0, categoryId, name, displayName, iconPath, action, role, order);
     }
 
@@ -74,6 +77,9 @@ public sealed class SubCategory : AggregateRoot<long>
     {
         if (string.IsNullOrWhiteSpace(name))
             return LocalizableError.Validation("SubCategory.NameEmpty", "Sub-category name cannot be empty.");
+
+        var fieldsResult = MenuFieldPolicy.Validate(name, displayName, iconPath, controller: null, action, role, order);
+        if (fieldsResult.IsError) return fieldsResult.Errors;
 
         CategoryId = categoryId;
         Name = name;
