@@ -149,18 +149,17 @@ public class AccountFlowTests : E2ETestBase
     {
         var page = await NewPageAsync();
 
-        // Track JavaScript console errors
+        // Track uncaught JavaScript exceptions (not console noise such as a missing favicon)
         var jsErrors = new List<string>();
-        page.Console += (_, e) =>
-        {
-            if (e.Type == "error") jsErrors.Add(e.Text);
-        };
+        page.PageError += (_, message) => jsErrors.Add(message);
 
         await GotoAsync(page, "/Account/ConfirmEmail?registrationToken=bad-token");
+        await page.WaitForLoadStateAsync(LoadState.NetworkIdle);
 
-        // Page must render (no 500 crash)
+        // Page must render (no 500 crash) and its scripts must not have thrown
         string bodyText = await page.Locator("body").InnerTextAsync();
         Assert.False(string.IsNullOrWhiteSpace(bodyText));
+        Assert.Empty(jsErrors);
     }
 
     // -- ResetPassword (invalid token) ----------------------------------------

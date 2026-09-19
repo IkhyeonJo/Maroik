@@ -403,6 +403,13 @@ public class WebsiteArchitectureTests
     {
         const string generatedViewNamespace = "AspNetCoreGeneratedDocument";
 
+        // NetArchTest passes vacuously when the selection is empty, so prove the compiled Razor
+        // views really are in the assembly (otherwise this rule would silently check nothing).
+        Assert.NotEmpty(Types.InAssembly(_websiteAssembly)
+            .That()
+            .ResideInNamespace(generatedViewNamespace)
+            .GetTypes());
+
         NetArchTest.Rules.TestResult repoResult = Types.InAssembly(_websiteAssembly)
             .That()
             .ResideInNamespace(generatedViewNamespace)
