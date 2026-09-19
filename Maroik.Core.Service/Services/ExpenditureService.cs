@@ -27,7 +27,7 @@ public class ExpenditureService(
                 .ToResponse)
         ];
 
-    ///s <inheritdoc />
+    /// <inheritdoc />
     public async Task<List<ExpenditureResponse>> SearchExpendituresAsync(string accountEmail, string search, CancellationToken ct = default)
         =>
         [
