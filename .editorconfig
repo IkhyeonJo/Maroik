@@ -208,6 +208,11 @@ trim_trailing_whitespace = false
 insert_final_newline = false
 max_line_length = off
 
+# EF Core scaffolded/generated persistence models and DbContext. Mark them so Rider / ReSharper and
+# the Roslyn analyzers skip style inspections & cleanup for them, and don't touch their bytes.
+[Maroik.Core.PostgreSQL/**.cs]
+generated_code = true
+
 [*.{json,json5,jsonc}]
 indent_size = 2
 insert_final_newline = true

@@ -4,6 +4,10 @@
     <TargetFramework>net10.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
+    <!-- .editorconfig marks this project's *.cs as generated_code (EF Core output), and the compiler
+         switches the nullable context off for generated code, so the scaffolded `string?` members
+         would otherwise raise CS8669 (an error under TreatWarningsAsErrors). -->
+    <NoWarn>$(NoWarn);CS8669</NoWarn>
   </PropertyGroup>
 
   <ItemGroup>
