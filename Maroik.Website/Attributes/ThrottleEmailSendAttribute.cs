@@ -42,6 +42,19 @@ public sealed class ThrottleEmailSendAttribute : Attribute, IAsyncActionFilter
     /// </summary>
     internal const string CooldownMessageKey = "Please wait a moment before requesting another email.";
 
+    /// <summary><c>HttpContext.Items</c> key set by <see cref="ReleaseCooldownClaim"/>.</summary>
+    internal const string ReleaseClaimItemKey = "ThrottleEmailSend.ReleaseClaim";
+
+    /// <summary>
+    /// Called by an action that finished <em>without</em> reaching a mail send — a service-level
+    /// rejection such as "nickname already taken", or a form check that bounced the request after
+    /// model binding succeeded. The attribute then releases the cooldown claim it took up front, so
+    /// the caller can correct the form and retry at once instead of being told to "wait a moment
+    /// before requesting another email" for a mail that was never sent.
+    /// </summary>
+    public static void ReleaseCooldownClaim(HttpContext httpContext) =>
+        httpContext.Items[ReleaseClaimItemKey] = true;
+
     /// <summary>Length of the cooldown window, in seconds. Defaults to 60.</summary>
     public int WindowSeconds { get; init; } = 60;
 
@@ -113,7 +126,8 @@ public sealed class ThrottleEmailSendAttribute : Attribute, IAsyncActionFilter
         // ever calling the mail service), must not cost the caller their retry window. A well-formed
         // address the action processed keeps the claim regardless of whether it was registered,
         // preserving e-mail-enumeration resistance.
-        if (key != null && (executed.Exception != null || !context.ModelState.IsValid))
+        bool actionAskedForRelease = context.HttpContext.Items.ContainsKey(ReleaseClaimItemKey);
+        if (key != null && (executed.Exception != null || !context.ModelState.IsValid || actionAskedForRelease))
         {
             try { await cache!.RemoveAsync(key, ct); }
             catch (Exception)

@@ -314,6 +314,44 @@ public class ThrottleEmailSendAttributeTests
         cache.Verify(c => c.RemoveAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Once);
     }
 
+    /// <summary>
+    /// Regression: an action that finished without reaching a mail send — e.g. a registration that the
+    /// service rejected ("nickname already taken") after model binding had succeeded — asks for the claim
+    /// to be released via <see cref="ThrottleEmailSendAttribute.ReleaseCooldownClaim"/>, so the caller is
+    /// not locked out for a mail that was never sent.
+    /// </summary>
+    [Fact]
+    public async Task OnActionExecutionAsync_ActionAsksForRelease_ReleasesCooldown()
+    {
+        var cache = new Mock<IDistributedCache>();
+        cache.Setup(c => c.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync((byte[]?)null);
+        cache.Setup(c => c.SetAsync(It.IsAny<string>(), It.IsAny<byte[]>(), It.IsAny<DistributedCacheEntryOptions>(), It.IsAny<CancellationToken>()))
+            .Returns(Task.CompletedTask);
+        cache.Setup(c => c.RemoveAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
+        var (context, _) = BuildContext(boundArgument: "user@example.com", cache.Object);
+
+        await new ThrottleEmailSendAttribute().OnActionExecutionAsync(
+            context, NextReturning(() => ThrottleEmailSendAttribute.ReleaseCooldownClaim(context.HttpContext)));
+
+        cache.Verify(c => c.SetAsync(It.IsAny<string>(), It.IsAny<byte[]>(), It.IsAny<DistributedCacheEntryOptions>(), It.IsAny<CancellationToken>()), Times.Once);
+        cache.Verify(c => c.RemoveAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    /// <summary>An action that does not ask for a release keeps its claim (the mail was really sent / attempted).</summary>
+    [Fact]
+    public async Task OnActionExecutionAsync_ActionDoesNotAskForRelease_KeepsCooldown()
+    {
+        var cache = new Mock<IDistributedCache>();
+        cache.Setup(c => c.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync((byte[]?)null);
+        cache.Setup(c => c.SetAsync(It.IsAny<string>(), It.IsAny<byte[]>(), It.IsAny<DistributedCacheEntryOptions>(), It.IsAny<CancellationToken>()))
+            .Returns(Task.CompletedTask);
+        var (context, _) = BuildContext(boundArgument: "user@example.com", cache.Object);
+
+        await new ThrottleEmailSendAttribute().OnActionExecutionAsync(context, NextReturning(() => { }));
+
+        cache.Verify(c => c.RemoveAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
+    }
+
     // -- Race fix: claim happens before the action runs -----------------------------
 
     /// <summary>

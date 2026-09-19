@@ -118,12 +118,14 @@ public class AccountController(
 
             if (!loginInputViewModel.AgreedServiceTerms)
             {
+                ThrottleEmailSendAttribute.ReleaseCooldownClaim(HttpContext); // no mail was sent
                 TempData["Error"] = localizer["Please check the consent form"].Value;
                 return View();
             }
 
             if (string.IsNullOrEmpty(loginInputViewModel.TimeZoneIanaId))
             {
+                ThrottleEmailSendAttribute.ReleaseCooldownClaim(HttpContext); // no mail was sent
                 TempData["Error"] = localizer["Please select time zone"].Value;
                 return View();
             }
@@ -150,6 +152,9 @@ public class AccountController(
 
             if (!result.Success)
             {
+                // Rejected before / instead of a mail send (nickname taken, weak password, account
+                // already confirmed, ...): the caller may fix the form and retry immediately.
+                ThrottleEmailSendAttribute.ReleaseCooldownClaim(HttpContext);
                 TempData["Error"] = localizer[result.ErrorKey, result.ErrorArgs].ToPlainString();
                 ViewBag.ResendEmail = result.ShowResendEmail;
                 return View();
@@ -171,6 +176,9 @@ public class AccountController(
 
             if (!result.Success)
             {
+                // Rejected before / instead of a mail send (nickname taken, weak password, account
+                // already confirmed, ...): the caller may fix the form and retry immediately.
+                ThrottleEmailSendAttribute.ReleaseCooldownClaim(HttpContext);
                 TempData["Error"] = localizer[result.ErrorKey, result.ErrorArgs].ToPlainString();
                 ViewBag.ResendEmail = result.ShowResendEmail;
                 return View();

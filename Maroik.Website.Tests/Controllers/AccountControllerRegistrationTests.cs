@@ -388,4 +388,41 @@ public class AccountControllerRegistrationTests
         Assert.Equal(System.Net.HttpStatusCode.OK, response.StatusCode);
         Assert.Contains("The authentication token is invalid.", html);
     }
+
+    /// <summary>
+    /// Regression: a registration the service rejects (here a reserved nickname) sent no mail, so it
+    /// must not burn the per-address e-mail cooldown — the corrected form, submitted straight away,
+    /// has to go through instead of being told to "wait a moment before requesting another email".
+    /// </summary>
+    [Fact]
+    public async Task Register_RejectedByService_DoesNotConsumeTheEmailCooldown()
+    {
+        string email = UniqueEmail();
+
+        var rejected = await PostFormAsync("/Account/Register", new Dictionary<string, string>
+        {
+            ["Email"] = email,
+            ["Password"] = "NewPassword1!",
+            ["Nickname"] = "Admin",
+            ["AgreedServiceTerms"] = "true",
+            ["TimeZoneIanaId"] = "UTC"
+        });
+        Assert.Equal(System.Net.HttpStatusCode.OK, rejected.StatusCode);
+
+        var accepted = await PostFormAsync("/Account/Register", new Dictionary<string, string>
+        {
+            ["Email"] = email,
+            ["Password"] = "NewPassword1!",
+            ["Nickname"] = "RegRetry_" + Guid.NewGuid().ToString("N")[..8],
+            ["AgreedServiceTerms"] = "true",
+            ["TimeZoneIanaId"] = "UTC"
+        });
+        Assert.Equal(System.Net.HttpStatusCode.OK, accepted.StatusCode);
+
+        using var scope = _factory.Services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+        Assert.True(db.Accounts.Any(a => a.Email == email), "the corrected registration was throttled");
+        var publisher = scope.ServiceProvider.GetRequiredService<FakeEmailPublisher>();
+        Assert.Contains(publisher.PublishedMessages, m => m.ToEmail == email);
+    }
 }
