@@ -105,7 +105,7 @@ public class DashboardViewModelMapperTests
     public void ToViewModel_MapsIncomeMonetaryUnit_FromAssetLookupByDepositProductName()
     {
         var dto = BaseDto();
-        dto.Assets = [new AssetResponse { ProductName = "Bank", MonetaryUnit = "USD" }];
+        dto.CurrencyByProduct = new() { ["Bank"] = "USD" };
         dto.YearIncomes = [Income("RegularIncome", "LaborIncome", 100, "Bank")];
 
         var vm = dto.ToViewModel(Utc);
@@ -113,12 +113,29 @@ public class DashboardViewModelMapperTests
         Assert.Equal("USD", vm.IncomeYearOutputViewModels[0].MonetaryUnit);
     }
 
+    /// <summary>
+    /// Regression: a row tied to a since-deleted asset (absent from <c>Assets</c>, present in
+    /// <c>CurrencyByProduct</c>) still shows its currency — the totals count it, so the row must not go blank.
+    /// </summary>
+    [Fact]
+    public void ToViewModel_KeepsTheCurrencyOfARowTiedToADeletedAsset()
+    {
+        var dto = BaseDto();
+        dto.Assets = [];
+        dto.CurrencyByProduct = new() { ["OldBank"] = "KRW" };
+        dto.YearIncomes = [Income("RegularIncome", "LaborIncome", 100, "OldBank")];
+
+        var vm = dto.ToViewModel(Utc);
+
+        Assert.Equal("KRW", vm.IncomeYearOutputViewModels[0].MonetaryUnit);
+    }
+
     /// <summary>To view model maps expenditure monetary unit from asset lookup by payment method.</summary>
     [Fact]
     public void ToViewModel_MapsExpenditureMonetaryUnit_FromAssetLookupByPaymentMethod()
     {
         var dto = BaseDto();
-        dto.Assets = [new AssetResponse { ProductName = "Card", MonetaryUnit = "USD" }];
+        dto.CurrencyByProduct = new() { ["Card"] = "USD" };
         dto.YearExpenditures = [Expenditure("ConsumerSpending", "MealOrEatOutExpenses", 50, "Card")];
 
         var vm = dto.ToViewModel(Utc);

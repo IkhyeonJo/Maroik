@@ -112,6 +112,8 @@ public class DashboardService(
             Dictionary<string, string> currencyByProduct = allAssets
                 .GroupBy(a => a.ProductName)
                 .ToDictionary(g => g.Key, g => g.Last().Balance.Currency);
+            summary.CurrencyByProduct = currencyByProduct;
+
             summary.YearIncomes =
             [
                 .. yearIncomes

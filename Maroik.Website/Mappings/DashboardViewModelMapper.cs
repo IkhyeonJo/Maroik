@@ -31,9 +31,10 @@ public static class DashboardViewModelMapper
 
             if (summary.DefaultMonetaryUnit == null) return vm;
 
-            var currencyByProduct = summary.Assets
-                .GroupBy(a => a.ProductName ?? "")
-                .ToDictionary(g => g.Key, g => g.Last().MonetaryUnit);
+            // All assets, deleted ones included (summary.Assets omits them): a transaction tied to a
+            // since-deleted asset is counted in the totals, so its row must still show its currency.
+            IReadOnlyDictionary<string, string?> currencyByProduct = summary.CurrencyByProduct
+                .ToDictionary(kv => kv.Key, kv => (string?)kv.Value);
 
             vm.IncomeYearOutputViewModels = MapIncomes(summary.YearIncomes, currencyByProduct, timeZoneId);
             vm.ExpenditureYearOutputViewModels = MapExpenditures(summary.YearExpenditures, currencyByProduct, timeZoneId);

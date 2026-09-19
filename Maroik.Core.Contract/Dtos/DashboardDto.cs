@@ -38,6 +38,13 @@ public class DashboardDto
     /// <summary>All active assets owned by the user.</summary>
     public List<AssetResponse> Assets { get; set; } = [];
 
+    /// <summary>
+    /// Currency of every asset the account has, deleted ones included, keyed by product name. The
+    /// dashboard's totals are built over all assets (a transaction tied to a since-deleted asset still
+    /// counts), so a row's currency must be looked up here — <see cref="Assets"/> omits deleted assets.
+    /// </summary>
+    public Dictionary<string, string> CurrencyByProduct { get; set; } = new();
+
     /// <summary>Distinct currency units from the user's assets (used to populate the filter dropdown).</summary>
     public IEnumerable<string?> MonetaryUnits { get; set; } = [];
 

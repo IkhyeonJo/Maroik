@@ -274,6 +274,10 @@ public class DashboardServiceTests
         // whole income/expenditure section would silently disappear from the dashboard.
         Assert.Contains("USD", summary.MonetaryUnits);
         Assert.Equal("KRW", summary.DefaultMonetaryUnit);
+
+        // Rows tied to the deleted asset still need its currency, so the lookup covers every asset.
+        Assert.Equal("USD", summary.CurrencyByProduct["OldForeignAccount"]);
+        Assert.Equal("KRW", summary.CurrencyByProduct["Wallet"]);
     }
 
     /// <summary>
