@@ -177,4 +177,10 @@
   <data name="Updated" xml:space="preserve">
     <value>업데이트일</value>
   </data>
+  <data name="Content" xml:space="preserve">
+    <value>내용</value>
+  </data>
+  <data name="Please enter Content" xml:space="preserve">
+    <value>내용을 입력해주세요.</value>
+  </data>
 </root>

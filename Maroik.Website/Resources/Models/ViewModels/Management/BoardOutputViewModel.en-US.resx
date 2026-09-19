@@ -123,4 +123,7 @@
   <data name="Title is required." xml:space="preserve">
     <value>Title is required.</value>
   </data>
+  <data name="Must be between 1 and 100 characters." xml:space="preserve">
+    <value>Must be between 1 and 100 characters.</value>
+  </data>
 </root>

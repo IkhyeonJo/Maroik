@@ -180,4 +180,13 @@
   <data name="SubClass" xml:space="preserve">
     <value>소분류</value>
   </data>
+  <data name="Content" xml:space="preserve">
+    <value>내용</value>
+  </data>
+  <data name="Please enter Content" xml:space="preserve">
+    <value>내용을 입력해주세요.</value>
+  </data>
+  <data name="Unpunctuality" xml:space="preserve">
+    <value>시간 미엄수</value>
+  </data>
 </root>

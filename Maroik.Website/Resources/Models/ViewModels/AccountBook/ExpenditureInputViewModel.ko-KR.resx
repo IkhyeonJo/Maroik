@@ -162,4 +162,16 @@
   <data name="SubClass" xml:space="preserve">
     <value>소분류</value>
   </data>
+  <data name="Content" xml:space="preserve">
+    <value>내용</value>
+  </data>
+  <data name="Created" xml:space="preserve">
+    <value>생성일</value>
+  </data>
+  <data name="Please enter Content" xml:space="preserve">
+    <value>내용을 입력해주세요.</value>
+  </data>
+  <data name="Please enter a valid Created" xml:space="preserve">
+    <value>올바른 생성일을 입력해주세요.</value>
+  </data>
 </root>

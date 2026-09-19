@@ -177,4 +177,10 @@
   <data name="Updated" xml:space="preserve">
     <value>Updated</value>
   </data>
+  <data name="Content" xml:space="preserve">
+    <value>Content</value>
+  </data>
+  <data name="Please enter Content" xml:space="preserve">
+    <value>Please enter Content</value>
+  </data>
 </root>

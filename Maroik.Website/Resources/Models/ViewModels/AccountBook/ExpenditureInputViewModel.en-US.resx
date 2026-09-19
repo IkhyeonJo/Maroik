@@ -162,4 +162,16 @@
   <data name="SubClass" xml:space="preserve">
     <value>SubClass</value>
   </data>
+  <data name="Content" xml:space="preserve">
+    <value>Content</value>
+  </data>
+  <data name="Created" xml:space="preserve">
+    <value>Created</value>
+  </data>
+  <data name="Please enter Content" xml:space="preserve">
+    <value>Please enter Content</value>
+  </data>
+  <data name="Please enter a valid Created" xml:space="preserve">
+    <value>Please enter a valid Created</value>
+  </data>
 </root>
