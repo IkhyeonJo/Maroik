@@ -211,6 +211,74 @@ public class FixedIncomeServiceTests
         _fixedIncomeRepo.Verify(r => r.UpdateEntityAsync(It.Is<FixedIncome>(fi => fi.Amount.Amount == 600m), It.IsAny<CancellationToken>()), Times.Once);
     }
 
+    /// <summary>
+    /// Regression test: the edit form's Unpunctuality checkbox reaches the request, and the service
+    /// must persist it. Previously it was silently dropped — <c>FixedIncome.Update</c> does not carry
+    /// the flag and nothing called <c>MarkUnpunctual</c> — so it could never be turned on.
+    /// </summary>
+    [Fact]
+    public async Task UpdateAsync_PersistsUnpunctuality_WhenRequested()
+    {
+        const string email = "user@example.com";
+        var existing = FixedIncome.Reconstitute(1, email, "RegularIncome", "LaborIncome", null, 0m, "KRW",
+            "SavingsAccount", (short)1, (short)15, new DateTime(2030, 12, 31), null, false, DateTime.UtcNow, DateTime.UtcNow);
+        _fixedIncomeRepo.Setup(r => r.GetByAccountEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(new List<FixedIncome> { existing });
+        _assetBalance.Setup(r => r.GetAssetAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(MakeSavingsAsset());
+        _fixedIncomeRepo.Setup(r => r.UpdateEntityAsync(It.IsAny<FixedIncome>(), It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
+        var sut = CreateSut();
+
+        var request = ValidRequest();
+        request.Id = 1;
+        request.Unpunctuality = true;
+        ServiceResult result = await sut.UpdateAsync(email, request, TestContext.Current.CancellationToken);
+
+        Assert.True(result.Success);
+        _fixedIncomeRepo.Verify(r => r.UpdateEntityAsync(It.Is<FixedIncome>(fi => fi.Unpunctuality), It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    /// <summary>Unticking the checkbox clears a previously set flag.</summary>
+    [Fact]
+    public async Task UpdateAsync_ClearsUnpunctuality_WhenNotRequested()
+    {
+        const string email = "user@example.com";
+        var existing = FixedIncome.Reconstitute(1, email, "RegularIncome", "LaborIncome", null, 0m, "KRW",
+            "SavingsAccount", (short)1, (short)15, new DateTime(2030, 12, 31), null, true, DateTime.UtcNow, DateTime.UtcNow);
+        _fixedIncomeRepo.Setup(r => r.GetByAccountEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(new List<FixedIncome> { existing });
+        _assetBalance.Setup(r => r.GetAssetAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(MakeSavingsAsset());
+        _fixedIncomeRepo.Setup(r => r.UpdateEntityAsync(It.IsAny<FixedIncome>(), It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
+        var sut = CreateSut();
+
+        var request = ValidRequest();
+        request.Id = 1;
+        request.Unpunctuality = false;
+        ServiceResult result = await sut.UpdateAsync(email, request, TestContext.Current.CancellationToken);
+
+        Assert.True(result.Success);
+        _fixedIncomeRepo.Verify(r => r.UpdateEntityAsync(It.Is<FixedIncome>(fi => !fi.Unpunctuality), It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    /// <summary>A create request carrying Unpunctuality is honoured too.</summary>
+    [Fact]
+    public async Task CreateAsync_PersistsUnpunctuality_WhenRequested()
+    {
+        _assetBalance.Setup(r => r.GetAssetAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(MakeSavingsAsset());
+        FixedIncome? captured = null;
+        _fixedIncomeRepo.Setup(r => r.CreateAsync(It.IsAny<FixedIncome>(), It.IsAny<CancellationToken>()))
+            .Callback<FixedIncome, CancellationToken>((fi, _) => captured = fi)
+            .Returns(Task.CompletedTask);
+        var sut = CreateSut();
+
+        var request = ValidRequest();
+        request.Unpunctuality = true;
+        await sut.CreateAsync("user@example.com", request, TestContext.Current.CancellationToken);
+
+        Assert.NotNull(captured);
+        Assert.True(captured.Unpunctuality);
+    }
+
     // -- DeleteAsync ----------------------------------------------------------
 
     /// <summary>Verifies that <c>DeleteAsync</c> returns fail when record not found.</summary>

@@ -75,6 +75,7 @@ public class FixedExpenditureService(IFixedExpenditureRepository fixedExpenditur
             return ServiceResult.FromError(registerResult.FirstError);
 
         var fixedExpenditure = registerResult.Value;
+        ApplyUnpunctuality(fixedExpenditure, request.Unpunctuality);
         await fixedExpenditureRepository.CreateAsync(fixedExpenditure, ct);
         return ServiceResult.Ok();
     }
@@ -115,6 +116,7 @@ public class FixedExpenditureService(IFixedExpenditureRepository fixedExpenditur
 
         if (updateResult.IsError) return ServiceResult.FromError(updateResult.FirstError);
 
+        ApplyUnpunctuality(fe, request.Unpunctuality);
         await fixedExpenditureRepository.UpdateEntityAsync(fe, ct);
         return ServiceResult.Ok();
     }
@@ -128,6 +130,18 @@ public class FixedExpenditureService(IFixedExpenditureRepository fixedExpenditur
 
         await fixedExpenditureRepository.DeleteByIdAsync(fe.Id, ct);
         return ServiceResult.Ok();
+    }
+
+    /// <summary>
+    /// Applies the user's "always notify" choice (see <c>FixedIncomeService.ApplyUnpunctuality</c>):
+    /// <c>FixedExpenditure.Update</c>/<c>Register</c> do not carry it, so it must be applied here.
+    /// </summary>
+    private static void ApplyUnpunctuality(FixedExpenditure fixedExpenditure, bool unpunctuality)
+    {
+        if (unpunctuality)
+            fixedExpenditure.MarkUnpunctual();
+        else
+            fixedExpenditure.ClearUnpunctuality();
     }
 
     private static ServiceResult SameAssetResult => ServiceResult.Validation(

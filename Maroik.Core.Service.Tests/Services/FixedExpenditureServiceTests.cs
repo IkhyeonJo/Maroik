@@ -295,6 +295,51 @@ public class FixedExpenditureServiceTests
         _fixedExpenditureRepo.Verify(r => r.UpdateEntityAsync(It.IsAny<FixedExpenditure>(), It.IsAny<CancellationToken>()), Times.Once);
     }
 
+    /// <summary>
+    /// Regression test: the edit form's Unpunctuality checkbox reaches the request and must be
+    /// persisted (it used to be silently dropped — see FixedIncomeServiceTests).
+    /// </summary>
+    [Theory]
+    [InlineData(true, false)]
+    [InlineData(false, true)]
+    public async Task UpdateAsync_AppliesUnpunctuality_FromTheRequest(bool requested, bool existingFlag)
+    {
+        const string email = "user@example.com";
+        var existing = FixedExpenditure.Reconstitute(1, email, "ConsumerSpending", "MealOrEatOutExpenses", null, 100m, "KRW",
+            "Wallet", null, (short)1, (short)15, new DateTime(2030, 12, 31), null, existingFlag, DateTime.UtcNow, DateTime.UtcNow);
+        _assetBalance.Setup(r => r.GetAssetAsync(email, "Wallet", It.IsAny<CancellationToken>())).ReturnsAsync(MakeAsset("Wallet"));
+        _fixedExpenditureRepo.Setup(r => r.GetByAccountEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(new List<FixedExpenditure> { existing });
+        _fixedExpenditureRepo.Setup(r => r.UpdateEntityAsync(It.IsAny<FixedExpenditure>(), It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
+        var sut = CreateSut();
+
+        var request = ConsumerRequest();
+        request.Id = 1;
+        request.Unpunctuality = requested;
+        ServiceResult result = await sut.UpdateAsync(email, request, TestContext.Current.CancellationToken);
+
+        Assert.True(result.Success);
+        _fixedExpenditureRepo.Verify(r => r.UpdateEntityAsync(It.Is<FixedExpenditure>(fe => fe.Unpunctuality == requested), It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    /// <summary>A create request carrying Unpunctuality is honoured too.</summary>
+    [Fact]
+    public async Task CreateAsync_PersistsUnpunctuality_WhenRequested()
+    {
+        _assetBalance.Setup(r => r.GetAssetAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(MakeAsset("Wallet"));
+        FixedExpenditure? captured = null;
+        _fixedExpenditureRepo.Setup(r => r.CreateAsync(It.IsAny<FixedExpenditure>(), It.IsAny<CancellationToken>()))
+            .Callback<FixedExpenditure, CancellationToken>((fe, _) => captured = fe)
+            .Returns(Task.CompletedTask);
+        var sut = CreateSut();
+
+        var request = ConsumerRequest();
+        request.Unpunctuality = true;
+        await sut.CreateAsync("user@example.com", request, TestContext.Current.CancellationToken);
+
+        Assert.NotNull(captured);
+        Assert.True(captured.Unpunctuality);
+    }
+
     // -- DeleteAsync ----------------------------------------------------------
 
     /// <summary>Verifies that <c>DeleteAsync</c> returns fail when record not found.</summary>

@@ -62,6 +62,7 @@ public class FixedIncomeService(IFixedIncomeRepository fixedIncomeRepository, IA
             return ServiceResult.FromError(registerResult.FirstError);
 
         var fixedIncome = registerResult.Value;
+        ApplyUnpunctuality(fixedIncome, request.Unpunctuality);
         await fixedIncomeRepository.CreateAsync(fixedIncome, ct);
         return ServiceResult.Ok();
     }
@@ -89,6 +90,7 @@ public class FixedIncomeService(IFixedIncomeRepository fixedIncomeRepository, IA
 
         if (updateResult.IsError) return ServiceResult.FromError(updateResult.FirstError);
 
+        ApplyUnpunctuality(fi, request.Unpunctuality);
         await fixedIncomeRepository.UpdateEntityAsync(fi, ct);
         return ServiceResult.Ok();
     }
@@ -102,6 +104,19 @@ public class FixedIncomeService(IFixedIncomeRepository fixedIncomeRepository, IA
 
         await fixedIncomeRepository.DeleteByIdAsync(fi.Id, ct);
         return ServiceResult.Ok();
+    }
+
+    /// <summary>
+    /// Applies the user's "always notify" choice. <c>FixedIncome.Update</c>/<c>Register</c> do not
+    /// carry it, so without this the edit form's Unpunctuality checkbox would reach the request and
+    /// then be silently dropped — the flag could never be set or cleared.
+    /// </summary>
+    private static void ApplyUnpunctuality(FixedIncome fixedIncome, bool unpunctuality)
+    {
+        if (unpunctuality)
+            fixedIncome.MarkUnpunctual();
+        else
+            fixedIncome.ClearUnpunctuality();
     }
 
     private static ServiceResult DeletedAssetResult => ServiceResult.Conflict(
