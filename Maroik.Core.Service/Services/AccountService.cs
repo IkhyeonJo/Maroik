@@ -473,6 +473,9 @@ public class AccountService(
         }
     }
 
+    /// <summary>An address no account can have (the primary key is never empty): the target of the timing-equalization write.</summary>
+    private const string NoAccountEmail = "";
+
     /// <inheritdoc />
     public async Task<bool> ForgotPasswordAsync(string email, EmailTemplate emailTemplate, CancellationToken ct = default)
     {
@@ -490,7 +493,12 @@ public class AccountService(
             try
             {
                 _ = rsa.Encrypt(GuidToken.Generate());
-                _ = await accountRepository.UpdateResetPasswordTokenAsync(email, null, DateTime.UtcNow, ct);
+                // The write targets NoAccountEmail, never `email`: for an address that IS registered
+                // (but unconfirmed or deleted) this branch must not touch that stranger's row — an
+                // anonymous caller who merely knows the address could otherwise rewrite its Updated
+                // stamp and clear its token. An empty address matches no row (Account.Email is the
+                // non-empty primary key), so the statement costs the same and changes nothing.
+                _ = await accountRepository.UpdateResetPasswordTokenAsync(NoAccountEmail, null, DateTime.UtcNow, ct);
             }
             catch (Exception e) { logger.LogWarning(e, "ForgotPassword equalization failed for {Email}", email); }
             return true;

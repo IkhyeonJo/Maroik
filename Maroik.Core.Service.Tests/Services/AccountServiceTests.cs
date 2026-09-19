@@ -815,6 +815,39 @@ public class AccountServiceTests
 
         Assert.True(result);
         _emailPublisher.Verify(p => p.PublishAsync(It.IsAny<SendEmailMessage>(), It.IsAny<CancellationToken>()), Times.Never);
+        VerifyNoWriteToRegisteredRow(account.Email.Value);
+    }
+
+    /// <summary>Verifies that <c>ForgotPasswordAsync</c> returns true silently for a deleted account and leaves its row alone.</summary>
+    [Fact]
+    public async Task ForgotPasswordAsync_ReturnsTrueSilently_AndLeavesRowAlone_WhenAccountDeleted()
+    {
+        var account = ActiveAccount(deleted: true);
+        _accountRepo.Setup(r => r.FindByEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(account);
+        var sut = CreateSut();
+
+        bool result = await sut.ForgotPasswordAsync(account.Email.Value, _emailTemplate, TestContext.Current.CancellationToken);
+
+        Assert.True(result);
+        _emailPublisher.Verify(p => p.PublishAsync(It.IsAny<SendEmailMessage>(), It.IsAny<CancellationToken>()), Times.Never);
+        VerifyNoWriteToRegisteredRow(account.Email.Value);
+    }
+
+    /// <summary>
+    /// The timing-equalization write of the "silently succeed" branch must never target the address the
+    /// (anonymous) caller typed: for a registered-but-unconfirmed/deleted account that would rewrite a
+    /// stranger's <c>Updated</c> stamp and clear its token. It still runs — against an address no
+    /// account has — so the branch costs what the real path costs.
+    /// </summary>
+    private void VerifyNoWriteToRegisteredRow(string registeredEmail)
+    {
+        _accountRepo.Verify(r => r.UpdateResetPasswordTokenAsync(
+            registeredEmail, It.IsAny<string?>(), It.IsAny<DateTime>(), It.IsAny<CancellationToken>()), Times.Never);
+        _accountRepo.Verify(r => r.UpdateResetPasswordTokenAsync(
+            "", null, It.IsAny<DateTime>(), It.IsAny<CancellationToken>()), Times.Once);
+        _accountRepo.Verify(r => r.UpdateMessageAsync(
+            registeredEmail, It.IsAny<string?>(), It.IsAny<DateTime>(), It.IsAny<CancellationToken>()), Times.Never);
+        _accountRepo.Verify(r => r.UpdateEntityAsync(It.IsAny<Account>(), It.IsAny<CancellationToken>()), Times.Never);
     }
 
     /// <summary>Verifies that <c>ForgotPasswordAsync</c> sends reset email when account is valid.</summary>
