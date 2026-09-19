@@ -130,14 +130,26 @@ public static class NicknamePolicy
     }
 
     /// <summary>
-    /// Control, format (zero-width / bidirectional-override), private-use, unassigned and separator
-    /// characters: none is visible as a letter, so they can only be used to fake a lookalike.
+    /// Characters that carry meaning in HTML markup or as an escape (<c>&lt; &gt; " ` \</c>). A nickname
+    /// is a display name that is echoed into pages, mails and other names (an account's default
+    /// calendar is named after it), so it never legitimately contains them. <c>&amp;</c> and
+    /// <c>'</c> stay allowed ("R&amp;D팀", "O'Brien"); every render site still encodes.
+    /// </summary>
+    private static readonly HashSet<char> _markupAndEscapeCharacters = ['<', '>', '"', '`', '\\'];
+
+    /// <summary>
+    /// Markup / escape characters (see <see cref="_markupAndEscapeCharacters"/>), plus control, format
+    /// (zero-width / bidirectional-override), private-use, unassigned and separator characters: the
+    /// latter are not visible as a letter, so they can only be used to fake a lookalike.
     /// </summary>
     private static bool ContainsDisallowedCharacter(string value)
     {
         foreach (Rune rune in value.EnumerateRunes())
         {
             if (rune == Rune.ReplacementChar)
+                return true;
+
+            if (rune.IsBmp && _markupAndEscapeCharacters.Contains((char)rune.Value))
                 return true;
 
             switch (Rune.GetUnicodeCategory(rune))

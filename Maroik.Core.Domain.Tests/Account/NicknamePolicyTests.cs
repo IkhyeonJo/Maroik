@@ -52,6 +52,9 @@ public class NicknamePolicyTests
     [InlineData("Bob 🙂")]
     [InlineData("Admin1")]
     [InlineData("Administrators of fun")]
+    [InlineData("O'Brien")]        // apostrophe stays allowed
+    [InlineData("R&D팀")]          // ampersand stays allowed
+    [InlineData("Kim & Lee")]
     public void Validate_AcceptsOrdinaryNicknames(string nickname)
         => Assert.False(NicknamePolicy.Validate(nickname).IsError);
 
@@ -101,6 +104,31 @@ public class NicknamePolicyTests
 
         Assert.True(result.IsError);
         Assert.Equal("Account.NicknameInvalidCharacters", result.FirstError.Code);
+    }
+
+    /// <summary>
+    /// HTML markup and escape characters (<c>&lt; &gt; " ` \</c>) are rejected — including the full-width
+    /// forms, which NFKC folds to the ASCII ones before the check — for self-registration and for an
+    /// administrator creating an account alike.
+    /// </summary>
+    [Theory]
+    [InlineData("a<b")]
+    [InlineData("<b>x</b>")]
+    [InlineData("a>b")]
+    [InlineData("say \"hi\"")]
+    [InlineData("a`b")]
+    [InlineData("a\\b")]
+    [InlineData("a＜b")]       // full-width less-than sign
+    [InlineData("a＞b")]       // full-width greater-than sign
+    public void Validate_RejectsMarkupAndEscapeCharacters(string nickname)
+    {
+        foreach (bool allowReserved in new[] { false, true })
+        {
+            var result = NicknamePolicy.Validate(nickname, allowReserved);
+
+            Assert.True(result.IsError);
+            Assert.Equal("Account.NicknameInvalidCharacters", result.FirstError.Code);
+        }
     }
 
     /// <summary>Latin letters mixed with Cyrillic or Greek lookalikes are rejected.</summary>
