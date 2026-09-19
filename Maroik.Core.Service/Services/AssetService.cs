@@ -79,6 +79,13 @@ public class AssetService(
             // same friendly result instead of letting the raw DB exception escape.
             return ServiceResult.Conflict("Asset.Duplicate", "The asset already exists.");
         }
+        catch (Exception e)
+        {
+            // Every other write in this class turns an unexpected failure into a result; without this
+            // one, a database error other than a duplicate key escaped as an unhandled 500.
+            logger.LogError(e, "Failed to create asset {ProductName} for account {AccountEmail}", request.ProductName, accountEmail);
+            return ServiceResult.Failure("Asset.CreateFailed", "Input is invalid");
+        }
 
         return ServiceResult.Ok();
     }

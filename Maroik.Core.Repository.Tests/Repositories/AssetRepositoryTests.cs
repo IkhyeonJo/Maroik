@@ -46,6 +46,35 @@ public sealed class AssetRepositoryTests(DatabaseFixture database) : RepositoryT
         Context.ChangeTracker.Clear();
     }
 
+    // -- Domain limits vs. column limits ---------------------------------------------
+
+    /// <summary>
+    /// The limits the Asset domain enforces (255-char name / note, |amount| ≤ 9,999,999,999,999,999.99)
+    /// are exactly what the real <c>Asset</c> columns hold: a value sitting on each limit persists and
+    /// round-trips. (Beyond them the write would fail with SQLSTATE 22001 / 22003 — which the domain now
+    /// rejects up front instead.)
+    /// </summary>
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public async Task CreateAsync_PersistsAnAssetOnTheColumnLimits(bool negative)
+    {
+        string email = UniqueEmail("limits");
+        await EnsureAccountsAsync([email]);
+        decimal amount = negative ? -FinanceAmountPolicy.MaxAbsoluteAmount : FinanceAmountPolicy.MaxAbsoluteAmount;
+        string name = new string('a', 250) + (negative ? "-neg" : "-pos") + "z";
+        Assert.Equal(255, name.Length);
+        var asset = Asset.Create(name, email, "FreeDepositAndWithdrawal", amount, "KRW", new string('n', 255)).Value;
+
+        await Sut.CreateAsync(asset, TestContext.Current.CancellationToken);
+        Context.ChangeTracker.Clear();
+
+        Asset? loaded = await Sut.FindByEmailAndProductNameAsync(email, name, TestContext.Current.CancellationToken);
+        Assert.NotNull(loaded);
+        Assert.Equal(amount, loaded.Balance.Amount);
+        Assert.Equal(255, loaded.Note!.Length);
+    }
+
     // -- GetByAccountEmailAsync ---------------------------------------------------
 
     /// <summary>Verifies that <c>GetByAccountEmailAsync</c> returns only assets for the given e-mail.</summary>

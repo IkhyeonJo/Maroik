@@ -120,6 +120,12 @@ public sealed class Asset : AggregateRoot<(string ProductName, string AccountEma
         if (string.IsNullOrWhiteSpace(productName))
             return LocalizableError.Validation("Asset.ProductNameEmpty", "Product name cannot be empty.");
 
+        var textResult = ValidateNameAndNote(productName, note);
+        if (textResult.IsError) return textResult.Errors;
+
+        var rangeResult = FinanceAmountPolicy.ValidateWithinRange(amount);
+        if (rangeResult.IsError) return rangeResult.Errors;
+
         if (string.IsNullOrWhiteSpace(item))
             return LocalizableError.Validation("Asset.ItemEmpty", "Asset category (item) cannot be empty.");
 
@@ -146,6 +152,22 @@ public sealed class Asset : AggregateRoot<(string ProductName, string AccountEma
     // ------------------------------------------------------------------------
     // Domain behaviours
     // ------------------------------------------------------------------------
+
+    /// <summary>
+    /// Product name and note are persisted in <c>character varying(255)</c> columns: reject an over-long
+    /// value here (a clean validation error) instead of letting the write fail with a raw
+    /// "value too long" (SQLSTATE 22001).
+    /// </summary>
+    private static ErrorOr<Success> ValidateNameAndNote(string productName, string? note)
+    {
+        if (productName.Length > FinanceTextPolicy.MaxTextLength)
+            return LocalizableError.Validation("Asset.ProductNameTooLong", "Product name must be {0} characters or fewer.", FinanceTextPolicy.MaxTextLength);
+
+        if (note is { Length: > FinanceTextPolicy.MaxTextLength })
+            return LocalizableError.Validation("Finance.NoteTooLong", "Note must be {0} characters or fewer.", FinanceTextPolicy.MaxTextLength);
+
+        return Result.Success;
+    }
 
     /// <summary>Adds the given amount to the balance (e.g. on income deposit).</summary>
     public ErrorOr<Success> Deposit(Money amount)
@@ -194,6 +216,12 @@ public sealed class Asset : AggregateRoot<(string ProductName, string AccountEma
     {
         if (string.IsNullOrWhiteSpace(productName))
             return LocalizableError.Validation("Asset.ProductNameEmpty", "Product name cannot be empty.");
+
+        var textResult = ValidateNameAndNote(productName, note);
+        if (textResult.IsError) return textResult.Errors;
+
+        var rangeResult = FinanceAmountPolicy.ValidateWithinRange(amount);
+        if (rangeResult.IsError) return rangeResult.Errors;
 
         if (string.IsNullOrWhiteSpace(item))
             return LocalizableError.Validation("Asset.ItemEmpty", "Asset category cannot be empty.");

@@ -300,6 +300,9 @@
   <data name="Amount cannot be negative." xml:space="preserve">
     <value>Amount cannot be negative.</value>
   </data>
+  <data name="Amount must not exceed {0}." xml:space="preserve">
+    <value>Amount must not exceed {0}.</value>
+  </data>
   <data name="Asset category (item) cannot be empty." xml:space="preserve">
     <value>Asset category (item) cannot be empty.</value>
   </data>

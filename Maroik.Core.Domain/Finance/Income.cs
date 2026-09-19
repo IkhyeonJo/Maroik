@@ -168,7 +168,7 @@ public sealed class Income : AggregateRoot<long>
         if (string.IsNullOrWhiteSpace(content))
             return LocalizableError.Validation("Income.ContentEmpty", "Content cannot be empty.");
 
-        var amountResult = FinanceAmountPolicy.ValidateNonNegative(amount);
+        var amountResult = FinanceAmountPolicy.ValidateAmount(amount);
         if (amountResult.IsError) return amountResult.Errors;
 
         var textResult = FinanceTextPolicy.ValidateContentAndNote(content, note);

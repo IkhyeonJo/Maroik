@@ -70,6 +70,37 @@ public class AssetServiceTests
         Assert.Equal("Asset.ItemInvalid", result.ErrorCode);
     }
 
+    /// <summary>
+    /// Regression test: a database failure other than a duplicate key used to escape
+    /// <c>CreateAsync</c> as an unhandled exception (an HTTP 500); like every other write in
+    /// this service it must come back as a failed result.
+    /// </summary>
+    [Fact]
+    public async Task CreateAsync_ReturnsFailure_WhenTheRepositoryThrowsANonDuplicateError()
+    {
+        _assetRepo.Setup(r => r.CreateAsync(It.IsAny<Asset>(), It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new InvalidOperationException("22001: value too long for type character varying(255)"));
+        var sut = CreateSut();
+
+        ServiceResult result = await sut.CreateAsync("user@example.com", ValidRequest("MyBank"), TestContext.Current.CancellationToken);
+
+        Assert.False(result.Success);
+        Assert.Equal("Asset.CreateFailed", result.ErrorCode);
+    }
+
+    /// <summary>An over-long product name is now a validation error before it reaches the database.</summary>
+    [Fact]
+    public async Task CreateAsync_ReturnsValidationError_WhenProductNameIsTooLong()
+    {
+        var sut = CreateSut();
+
+        ServiceResult result = await sut.CreateAsync("user@example.com", ValidRequest(new string('a', 256)), TestContext.Current.CancellationToken);
+
+        Assert.False(result.Success);
+        Assert.Equal("Asset.ProductNameTooLong", result.ErrorCode);
+        _assetRepo.Verify(r => r.CreateAsync(It.IsAny<Asset>(), It.IsAny<CancellationToken>()), Times.Never);
+    }
+
     /// <summary>Verifies that <c>CreateAsync</c> returns fail when asset with same name already exists.</summary>
     [Fact]
     public async Task CreateAsync_ReturnsFail_WhenAssetWithSameNameAlreadyExists()

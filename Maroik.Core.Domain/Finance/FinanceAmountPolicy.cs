@@ -21,4 +21,32 @@ public static class FinanceAmountPolicy
 
         return Result.Success;
     }
+
+    /// <summary>
+    /// Largest absolute amount the persisted <c>numeric(18,2)</c> columns (Asset / Income / Expenditure /
+    /// FixedIncome / FixedExpenditure <c>Amount</c>) can hold: 16 integer digits and 2 decimals.
+    /// </summary>
+    public const decimal MaxAbsoluteAmount = 9_999_999_999_999_999.99m;
+
+    /// <summary>
+    /// Rejects an amount whose magnitude the database column cannot hold, so an over-large value is a
+    /// clean validation error instead of a raw "numeric field overflow" (SQLSTATE 22003) from the write.
+    /// </summary>
+    public static ErrorOr<Success> ValidateWithinRange(decimal amount)
+    {
+        if (decimal.Abs(amount) > MaxAbsoluteAmount)
+            return LocalizableError.Validation("Finance.AmountOutOfRange", "Amount must not exceed {0}.", MaxAbsoluteAmount.ToString("N2", System.Globalization.CultureInfo.InvariantCulture));
+
+        return Result.Success;
+    }
+
+    /// <summary>
+    /// Non-negative <em>and</em> within the persisted column's range — the check every income /
+    /// expenditure (one-time or fixed) applies to its amount.
+    /// </summary>
+    public static ErrorOr<Success> ValidateAmount(decimal amount)
+    {
+        var nonNegative = ValidateNonNegative(amount);
+        return nonNegative.IsError ? nonNegative : ValidateWithinRange(amount);
+    }
 }
