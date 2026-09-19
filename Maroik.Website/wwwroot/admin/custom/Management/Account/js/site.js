@@ -115,7 +115,7 @@
             return false;
         }
         $.ajax({
-            url: "/Management/IsAccountExists" + "?email=" + selectedRowEmail,
+            url: "/Management/IsAccountExists" + "?email=" + encodeURIComponent(selectedRowEmail),
             type: "POST",
             headers: { "RequestVerificationToken": $__RequestVerificationToken.val() },
             dataType: "json",
@@ -220,7 +220,7 @@
             return false;
         }
         $.ajax({
-            url: "/Management/IsAccountExists" + "?email=" + selectedRowEmail,
+            url: "/Management/IsAccountExists" + "?email=" + encodeURIComponent(selectedRowEmail),
             type: "POST",
             headers: { "RequestVerificationToken": $__RequestVerificationToken.val() },
             dataType: "json",

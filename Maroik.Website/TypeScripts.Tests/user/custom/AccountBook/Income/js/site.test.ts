@@ -27,7 +27,7 @@ function fixture(extra = ""): string {
      <button id="btnEditIncomeGridRow"></button><button id="btnConfirmDeleteIncome"></button>
      <button id="btnDeleteIncome"></button>
      <select id="createIncomeDepositMyAssetProductName"><option value="A" selected>A</option></select>
-     <select id="editIncomeDepositMyAssetProductName"><option value="A">A</option><option value="B">B</option></select>
+     <select id="editIncomeDepositMyAssetProductName"><option value="A">A</option><option value="B">B</option><option value="A&amp;B Bank">A&amp;B Bank</option></select>
      <span id="labelCreateIncomeAmount"></span><span id="labelEditIncomeAmount"></span>` +
     extra
   );
@@ -97,5 +97,13 @@ describe("AccountBook/Income", () => {
     call?.success?.({ result: true, label: "KRW" });
 
     expect(h.win.document.querySelector("#labelCreateIncomeAmount")!.textContent).toBe("KRW");
+  });
+
+  it("percent-encodes the chosen deposit asset in the amount-label lookup query", () => {
+    const h = loadSite("user", "AccountBook", "Income", fixture());
+
+    h.$("#editIncomeDepositMyAssetProductName").val("A&B Bank").trigger("change");
+
+    expect(h.lastAjax().url).toBe("/AccountBook/GetIncomeAmountLabel?productName=A%26B%20Bank");
   });
 });

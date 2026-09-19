@@ -10,6 +10,7 @@ function fixture(): string {
      <table><tbody>
        <tr class="clsGridRow" data-productName="Gold"></tr>
        <tr class="clsGridRow" data-productName="Cash"></tr>
+       <tr class="clsGridRow" data-productName="A&amp;B Bank #1"></tr>
      </tbody></table>
      <form id="formCreateAsset"></form><form id="formEditAsset"></form>
      <button id="btnExportExcelAsset"></button>
@@ -26,7 +27,7 @@ describe("AccountBook/Asset", () => {
     fireNative(h.win.document, "rowclick", { data: { ProductName: "Cash" } });
 
     const rows = [...h.win.document.querySelectorAll(".clsGridRow")];
-    expect(rows.map((r) => r.classList.contains("table-primary"))).toEqual([false, true]);
+    expect(rows.map((r) => r.classList.contains("table-primary"))).toEqual([false, true, false]);
   });
 
   it("shows an error toast when Edit is clicked with no row selected", () => {
@@ -42,5 +43,14 @@ describe("AccountBook/Asset", () => {
     const form = h.submittedForms.at(-1)!;
     expect(form.action).toContain("/AccountBook/ExportExcelAsset");
     expect(form.querySelector<HTMLInputElement>('input[name="fileName"]')!.value).toBe("Asset");
+  });
+
+  it("percent-encodes the selected product name in the IsAssetExists query", () => {
+    const h = loadSite("user", "AccountBook", "Asset", fixture());
+    fireNative(h.win.document, "rowclick", { data: { ProductName: "A&B Bank #1" } });
+
+    h.$("#btnEditAssetGridRow").trigger("click");
+
+    expect(h.lastAjax().url).toBe("/AccountBook/IsAssetExists?productName=A%26B%20Bank%20%231");
   });
 });

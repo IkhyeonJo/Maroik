@@ -10,6 +10,7 @@ function fixture(): string {
      <table><tbody>
        <tr class="clsGridRow" data-email="a@x.com"></tr>
        <tr class="clsGridRow" data-email="b@x.com"></tr>
+       <tr class="clsGridRow" data-email="a+b&amp;c@x.com"></tr>
      </tbody></table>
      <form id="formCreateAccount"></form><form id="formEditAccount"></form>
      <button id="btnExportExcelAccount"></button>
@@ -24,7 +25,7 @@ describe("Management/Account (admin)", () => {
     const h = loadSite("admin", "Management", "Account", fixture());
     fireNative(h.win.document, "rowclick", { data: { Email: "b@x.com" } });
     const rows = [...h.win.document.querySelectorAll(".clsGridRow")];
-    expect(rows.map((r) => r.classList.contains("table-primary"))).toEqual([false, true]);
+    expect(rows.map((r) => r.classList.contains("table-primary"))).toEqual([false, true, false]);
   });
 
   it("errors and makes no request when Edit is clicked with nothing selected", () => {
@@ -40,5 +41,14 @@ describe("Management/Account (admin)", () => {
     const form = h.submittedForms.at(-1)!;
     expect(form.action).toContain("/Management/ExportExcelAccount");
     expect(form.querySelector<HTMLInputElement>('input[name="fileName"]')!.value).toBe("Account");
+  });
+
+  it("percent-encodes the selected e-mail in the IsAccountExists query (a '+' or '&' must survive)", () => {
+    const h = loadSite("admin", "Management", "Account", fixture());
+    fireNative(h.win.document, "rowclick", { data: { Email: "a+b&c@x.com" } });
+
+    h.$("#btnEditAccountGridRow").trigger("click");
+
+    expect(h.lastAjax().url).toBe("/Management/IsAccountExists?email=a%2Bb%26c%40x.com");
   });
 });

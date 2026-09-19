@@ -112,7 +112,7 @@
             return false;
         }
         $.ajax({
-            url: "/AccountBook/IsAssetExists" + "?productName=" + selectedRowProductName,
+            url: "/AccountBook/IsAssetExists" + "?productName=" + encodeURIComponent(selectedRowProductName),
             type: "POST",
             headers: { "RequestVerificationToken": $__RequestVerificationToken.val() },
             dataType: "json",
@@ -211,7 +211,7 @@
             return false;
         }
         $.ajax({
-            url: "/AccountBook/IsAssetExists" + "?productName=" + selectedRowProductName,
+            url: "/AccountBook/IsAssetExists" + "?productName=" + encodeURIComponent(selectedRowProductName),
             type: "POST",
             headers: { "RequestVerificationToken": $__RequestVerificationToken.val() },
             dataType: "json",

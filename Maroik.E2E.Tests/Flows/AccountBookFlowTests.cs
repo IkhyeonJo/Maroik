@@ -105,6 +105,27 @@ public class AccountBookFlowTests : E2ETestBase
     // -- Income ---------------------------------------------------------------------
 
     /// <summary>Recording an income stores it and adds the amount to the deposit asset's balance.</summary>
+    /// <summary>
+    /// The edit lookup sends the product name in the query string; a name with '&amp;' and '#' must arrive intact
+    /// (it used to be concatenated unencoded, so such an asset could not be opened for editing).
+    /// </summary>
+    [Fact]
+    public async Task Asset_Edit_OpensAnAssetWhoseNameNeedsUrlEncoding()
+    {
+        var (page, account) = await NewSignedInPageAsync();
+        const string name = "A&B Bank #1";
+        await Db.SeedAssetAsync(account.Email, name, 10);
+
+        await GotoAsync(page, "/AccountBook/Asset");
+        var row = page.Locator(".mvc-grid tbody tr", new PageLocatorOptions { HasTextString = name });
+        await Assertions.Expect(row).ToBeVisibleAsync();
+        await row.Locator("td:not(.mvc-grid-hidden)").First.ClickAsync();
+        await page.Locator("#btnEditAssetGridRow").ClickAsync();
+
+        await Assertions.Expect(page.Locator("#editAssetDialogModal")).ToBeVisibleAsync();
+        await Assertions.Expect(page.Locator("#editAssetProductName")).ToHaveValueAsync(name);
+    }
+
     [Fact]
     public async Task Income_Create_AddsTheAmountToTheDepositAsset()
     {

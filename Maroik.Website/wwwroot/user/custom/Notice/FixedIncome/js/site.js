@@ -493,7 +493,7 @@
     }
     function ChangeCreateFixedIncomeAmountLabel(productName) {
         $.ajax({
-            url: "/Notice/GetFixedIncomeAmountLabel" + "?productName=" + productName,
+            url: "/Notice/GetFixedIncomeAmountLabel" + "?productName=" + encodeURIComponent(productName),
             type: "POST",
             headers: { "RequestVerificationToken": $__RequestVerificationToken.val() },
             dataType: "json",
@@ -514,7 +514,7 @@
     }
     function ChangeEditFixedIncomeAmountLabel(productName) {
         $.ajax({
-            url: "/Notice/GetFixedIncomeAmountLabel" + "?productName=" + productName,
+            url: "/Notice/GetFixedIncomeAmountLabel" + "?productName=" + encodeURIComponent(productName),
             type: "POST",
             headers: { "RequestVerificationToken": $__RequestVerificationToken.val() },
             dataType: "json",

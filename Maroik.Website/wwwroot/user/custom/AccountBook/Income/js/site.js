@@ -406,7 +406,7 @@
     }
     function ChangeCreateIncomeAmountLabel(productName) {
         $.ajax({
-            url: "/AccountBook/GetIncomeAmountLabel" + "?productName=" + productName,
+            url: "/AccountBook/GetIncomeAmountLabel" + "?productName=" + encodeURIComponent(productName),
             type: "POST",
             headers: { "RequestVerificationToken": $__RequestVerificationToken.val() },
             dataType: "json",
@@ -422,7 +422,7 @@
     }
     function ChangeEditIncomeAmountLabel(productName) {
         $.ajax({
-            url: "/AccountBook/GetIncomeAmountLabel" + "?productName=" + productName,
+            url: "/AccountBook/GetIncomeAmountLabel" + "?productName=" + encodeURIComponent(productName),
             type: "POST",
             headers: { "RequestVerificationToken": $__RequestVerificationToken.val() },
             dataType: "json",

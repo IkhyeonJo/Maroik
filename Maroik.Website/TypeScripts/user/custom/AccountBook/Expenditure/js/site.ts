@@ -605,7 +605,7 @@
      */
     function ChangeCreateExpenditureAmountLabel(productName: string) {
         $.ajax({
-            url: "/AccountBook/GetExpenditureAmountLabel" + "?productName=" + productName,
+            url: "/AccountBook/GetExpenditureAmountLabel" + "?productName=" + encodeURIComponent(productName),
             type: "POST",
             headers: { "RequestVerificationToken": $__RequestVerificationToken.val() as string },
             dataType: "json",
@@ -628,7 +628,7 @@
     /** Same as `ChangeCreateExpenditureAmountLabel` for the edit form. */
     function ChangeEditExpenditureAmountLabel(productName: string) {
         $.ajax({
-            url: "/AccountBook/GetExpenditureAmountLabel" + "?productName=" + productName,
+            url: "/AccountBook/GetExpenditureAmountLabel" + "?productName=" + encodeURIComponent(productName),
             type: "POST",
             headers: { "RequestVerificationToken": $__RequestVerificationToken.val() as string },
             dataType: "json",

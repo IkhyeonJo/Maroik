@@ -443,7 +443,7 @@
     }
     function ChangeCreateExpenditureAmountLabel(productName) {
         $.ajax({
-            url: "/AccountBook/GetExpenditureAmountLabel" + "?productName=" + productName,
+            url: "/AccountBook/GetExpenditureAmountLabel" + "?productName=" + encodeURIComponent(productName),
             type: "POST",
             headers: { "RequestVerificationToken": $__RequestVerificationToken.val() },
             dataType: "json",
@@ -464,7 +464,7 @@
     }
     function ChangeEditExpenditureAmountLabel(productName) {
         $.ajax({
-            url: "/AccountBook/GetExpenditureAmountLabel" + "?productName=" + productName,
+            url: "/AccountBook/GetExpenditureAmountLabel" + "?productName=" + encodeURIComponent(productName),
             type: "POST",
             headers: { "RequestVerificationToken": $__RequestVerificationToken.val() },
             dataType: "json",

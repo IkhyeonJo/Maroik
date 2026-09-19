@@ -647,7 +647,7 @@
      */
     function ChangeCreateFixedIncomeAmountLabel(productName: string) {
         $.ajax({
-            url: "/Notice/GetFixedIncomeAmountLabel" + "?productName=" + productName,
+            url: "/Notice/GetFixedIncomeAmountLabel" + "?productName=" + encodeURIComponent(productName),
             type: "POST",
             headers: { "RequestVerificationToken": $__RequestVerificationToken.val() as string },
             dataType: "json",
@@ -670,7 +670,7 @@
     /** Same as `ChangeCreateFixedIncomeAmountLabel` for the edit form. */
     function ChangeEditFixedIncomeAmountLabel(productName: string) {
         $.ajax({
-            url: "/Notice/GetFixedIncomeAmountLabel" + "?productName=" + productName,
+            url: "/Notice/GetFixedIncomeAmountLabel" + "?productName=" + encodeURIComponent(productName),
             type: "POST",
             headers: { "RequestVerificationToken": $__RequestVerificationToken.val() as string },
             dataType: "json",

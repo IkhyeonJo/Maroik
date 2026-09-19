@@ -527,7 +527,7 @@
     }
     function ChangeCreateFixedExpenditureAmountLabel(productName) {
         $.ajax({
-            url: "/Notice/GetFixedExpenditureAmountLabel" + "?productName=" + productName,
+            url: "/Notice/GetFixedExpenditureAmountLabel" + "?productName=" + encodeURIComponent(productName),
             type: "POST",
             headers: { "RequestVerificationToken": $__RequestVerificationToken.val() },
             dataType: "json",
@@ -548,7 +548,7 @@
     }
     function ChangeEditFixedExpenditureAmountLabel(productName) {
         $.ajax({
-            url: "/Notice/GetFixedExpenditureAmountLabel" + "?productName=" + productName,
+            url: "/Notice/GetFixedExpenditureAmountLabel" + "?productName=" + encodeURIComponent(productName),
             type: "POST",
             headers: { "RequestVerificationToken": $__RequestVerificationToken.val() },
             dataType: "json",

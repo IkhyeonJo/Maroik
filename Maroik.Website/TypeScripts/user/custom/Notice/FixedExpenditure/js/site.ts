@@ -699,7 +699,7 @@
      */
     function ChangeCreateFixedExpenditureAmountLabel(productName: string) {
         $.ajax({
-            url: "/Notice/GetFixedExpenditureAmountLabel" + "?productName=" + productName,
+            url: "/Notice/GetFixedExpenditureAmountLabel" + "?productName=" + encodeURIComponent(productName),
             type: "POST",
             headers: { "RequestVerificationToken": $__RequestVerificationToken.val() as string },
             dataType: "json",
@@ -722,7 +722,7 @@
     /** Same as `ChangeCreateFixedExpenditureAmountLabel` for the edit form. */
     function ChangeEditFixedExpenditureAmountLabel(productName: string) {
         $.ajax({
-            url: "/Notice/GetFixedExpenditureAmountLabel" + "?productName=" + productName,
+            url: "/Notice/GetFixedExpenditureAmountLabel" + "?productName=" + encodeURIComponent(productName),
             type: "POST",
             headers: { "RequestVerificationToken": $__RequestVerificationToken.val() as string },
             dataType: "json",
