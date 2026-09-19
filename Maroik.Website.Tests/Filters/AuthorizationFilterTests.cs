@@ -264,6 +264,77 @@ public class AuthorizationFilterTests
         Assert.Equal("/Dashboard/AnonymousIndex", redirect.Url);
     }
 
+    // -- Exception/Error, reached through UseExceptionHandler with the original method ------
+
+    /// <summary>
+    /// Regression test: UseExceptionHandler re-executes /Exception/Error with the original request's
+    /// method, so a failed POST arrives as a POST. An anonymous visitor must still get the error page
+    /// rather than being redirected away by the POST branch.
+    /// </summary>
+    [Theory]
+    [InlineData("POST")]
+    [InlineData("PUT")]
+    [InlineData("PATCH")]
+    [InlineData("DELETE")]
+    public async Task OnAuthorizationAsync_ExceptionError_NonGetMethod_NotLoggedIn_Allows(string method)
+    {
+        _sessionService.Setup(s => s.GetAccount()).Returns((AccountResponse?)null);
+        SetupMenu([], []);
+        var context = BuildContext("Exception", "Error", method);
+
+        await CreateSut().OnAuthorizationAsync(context);
+
+        Assert.Null(context.Result);
+    }
+
+    /// <summary>A logged-in user (any role) whose POST threw also reaches the error page.</summary>
+    [Theory]
+    [InlineData(Role.User)]
+    [InlineData(Role.Admin)]
+    public async Task OnAuthorizationAsync_ExceptionError_Post_LoggedIn_Allows(string role)
+    {
+        var account = new AccountResponse { Email = "who@test.com", Nickname = "Who", Role = role };
+        _sessionService.Setup(s => s.GetAccount()).Returns(account);
+        _accountService.Setup(a => a.GetAccountByEmailAsync("who@test.com", It.IsAny<CancellationToken>())).ReturnsAsync(account);
+        SetupMenu([], []);
+        var context = BuildContext("Exception", "Error", "POST");
+
+        await CreateSut().OnAuthorizationAsync(context);
+
+        Assert.Null(context.Result);
+    }
+
+    /// <summary>The allowance is for Exception/Error only: another Exception action (AccessDenied) is still gated on POST.</summary>
+    [Fact]
+    public async Task OnAuthorizationAsync_ExceptionAccessDenied_Post_NotLoggedIn_StillRedirects()
+    {
+        _sessionService.Setup(s => s.GetAccount()).Returns((AccountResponse?)null);
+        SetupMenu([], []);
+        var context = BuildContext("Exception", "AccessDenied", "POST");
+
+        await CreateSut().OnAuthorizationAsync(context);
+
+        var redirect = Assert.IsType<RedirectResult>(context.Result);
+        Assert.Equal("/Dashboard/AnonymousIndex", redirect.Url);
+    }
+
+    /// <summary>A revoked / deleted session is still sent to login even on the error page (session validity comes first).</summary>
+    [Fact]
+    public async Task OnAuthorizationAsync_ExceptionError_Post_DeletedAccount_StillRedirectsToLogin()
+    {
+        var sessionAccount = new AccountResponse { Email = "gone@test.com", Nickname = "Gone", Role = Role.User };
+        var dbAccount = new AccountResponse { Email = "gone@test.com", Nickname = "Gone", Role = Role.User, Deleted = true };
+        _sessionService.Setup(s => s.GetAccount()).Returns(sessionAccount);
+        _accountService.Setup(a => a.GetAccountByEmailAsync("gone@test.com", It.IsAny<CancellationToken>())).ReturnsAsync(dbAccount);
+        SetupMenu([], []);
+        var context = BuildContext("Exception", "Error", "POST");
+
+        await CreateSut().OnAuthorizationAsync(context);
+
+        var redirect = Assert.IsType<RedirectResult>(context.Result);
+        Assert.Equal("/Account/Login", redirect.Url);
+    }
+
     // -- Session validity (unrelated to menu resolution, still gated by this filter) --
 
     /// <summary>On action execution async logged in account deleted in db redirects to login and clears session.</summary>

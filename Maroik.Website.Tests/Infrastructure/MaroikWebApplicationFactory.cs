@@ -189,6 +189,12 @@ public class MaroikWebApplicationFactory : WebApplicationFactory<Program>, IAsyn
         using (var scope = host.Services.CreateScope())
         {
             var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+
+            // Idempotent: a derived factory (WithWebHostBuilder) runs this CreateHost again against
+            // the same, already-seeded database.
+            if (db.Categories.Any(c => c.Id == 9001))
+                return host;
+
             db.Categories.AddRange(
                 new Category { Id = 9001, Name = "DriveAnon", DisplayName = "Drive", IconPath = "", Controller = "Drive", Action = "AnonymousIndex", Role = Role.Anonymous, Order = 100 },
                 new Category { Id = 9002, Name = "DriveAdmin", DisplayName = "Drive (Admin)", IconPath = "", Controller = "Drive", Action = "AdminIndex", Role = Role.Admin, Order = 101 },

@@ -251,6 +251,13 @@ public class AuthorizationFilter(IMenuService menuService, IDistributedCache cac
             return; // allowed: no Result set
         }
 
+        // UseExceptionHandler re-executes /Exception/Error with the ORIGINAL request's method, so a
+        // failed POST/PUT/DELETE arrives here as that method. The error page is inert (it changes no
+        // state and shows only a request id), so it is reachable for every method and every role;
+        // without this, the POST branches below would redirect the user away from the error page.
+        if (currentControllerName == "Exception" && currentActionName == "Error")
+            return; // allowed: no Result set
+
         switch (currentRequestMethod.ToUpper())
         {
             // GET method (block page access only!!)
