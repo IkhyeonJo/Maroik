@@ -432,6 +432,14 @@ Maroik.SSL/**
 *.log
 Maroik.Log/**
 
+# Backup artifacts written into the repo folder by Maroik.Crontab/DBBackup.sh and UploadFileBackup.sh
+maroik-db-*.sql
+maroik-db-*.sql.gz
+website-upload-*/
+file-storage-upload-*/
+website-upload-*.tar.xz
+file-storage-upload-*.tar.xz
+
 # Upload directories (user uploaded files)
 Maroik.Website/wwwroot/upload/**
 Maroik.FileStorage/upload/**
