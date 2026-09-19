@@ -50,6 +50,25 @@ public class ManagementControllerProfileTests
         Assert.Equal(System.Net.HttpStatusCode.OK, response.StatusCode);
     }
 
+    /// <summary>
+    /// The avatar picker's <c>accept</c> filter is rendered from <c>ImageUploadPolicy</c> (the single source of
+    /// truth the server validates against), not a hand-typed list that can drift from it.
+    /// </summary>
+    [Fact]
+    public async Task Profile_Get_AvatarFileInput_AcceptsExactlyTheImagePolicyContentTypes()
+    {
+        var session = await LoginAsUserAsync();
+        using var request = new HttpRequestMessage(HttpMethod.Get, "/Management/Profile");
+        request.Headers.Add("Cookie", session.CookieHeader);
+
+        var response = await _client.SendAsync(request, TestContext.Current.CancellationToken);
+        string html = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+
+        string expected = string.Join(", ", Maroik.Core.Domain.Media.ImageUploadPolicy.AllowedContentTypes);
+        Assert.Contains($"id=\"ProfileAvatarFiles\"", html);
+        Assert.Matches($"id=\"ProfileAvatarFiles\"[^>]*accept=\"{System.Text.RegularExpressions.Regex.Escape(expected)}\"", html);
+    }
+
     // -- UpdateProfileTimeZone ----------------------------------------------------------
 
     /// <summary>Update profile time zone valid id persists change.</summary>

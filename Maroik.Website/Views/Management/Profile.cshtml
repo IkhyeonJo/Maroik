@@ -399,7 +399,7 @@
                                                                                 <div class="form-group">
                                                                                     <div class="btn btn-default btn-file">
                                                                                         <i class="fas fa-paperclip" style="padding-right: 3px;"></i>&nbsp;&nbsp;&nbsp;@Localizer["Browse"]
-                                                                                        <input type="file" name="ProfileAvatarFiles" id="ProfileAvatarFiles" data-noFileAttachedErrorMessage="@Localizer["Please attach a file."]" data-fileSizeLimitationErrorMessage="@Localizer["File Size must be smaller than {0}MB.", maxAttachedFileSizeBytes.ToMegabytesLabel()]" data-fileTypeErrorMessage="@Localizer["Only .jpg or jpeg or .png file allowed."]" accept="image/png, image/jpg, image/jpeg">
+                                                                                        <input type="file" name="ProfileAvatarFiles" id="ProfileAvatarFiles" data-noFileAttachedErrorMessage="@Localizer["Please attach a file."]" data-fileSizeLimitationErrorMessage="@Localizer["File Size must be smaller than {0}MB.", maxAttachedFileSizeBytes.ToMegabytesLabel()]" data-fileTypeErrorMessage="@Localizer["Only .jpg or jpeg or .png file allowed."]" accept="@(string.Join(", ", ImageUploadPolicy.AllowedContentTypes))">
                                                                                     </div>
                                                                                 </div>
                                                                             </form>

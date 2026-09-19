@@ -298,6 +298,30 @@ public class AccountControllerRegistrationTests
         Assert.Contains(publisher.PublishedMessages, m => m.ToEmail == email);
     }
 
+    /// <summary>
+    /// The "you keep failing to receive the mail" state links the administrator with a well-formed
+    /// <c>mailto:</c> URL (it once had a stray space after the colon).
+    /// </summary>
+    [Fact]
+    public async Task Register_UnconfirmedEmail_Resubmission_ShowsAWellFormedAdministratorMailtoLink()
+    {
+        string email = UniqueEmail();
+        await SeedAccountAsync(email, emailConfirmed: false, registrationToken: null);
+
+        var response = await PostFormAsync("/Account/Register", new Dictionary<string, string>
+        {
+            ["Email"] = email,
+            ["Password"] = "",
+            ["Nickname"] = "",
+            ["AgreedServiceTerms"] = "false",
+            ["TimeZoneIanaId"] = ""
+        });
+        string html = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+
+        Assert.Contains("mailto:admin@maroik.com", html);
+        Assert.DoesNotContain("mailto: ", html);
+    }
+
     // -- ConfirmEmail -----------------------------------------------------------------
 
     /// <summary>Confirm email valid token activates account.</summary>
