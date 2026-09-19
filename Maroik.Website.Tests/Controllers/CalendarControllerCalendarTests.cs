@@ -1,3 +1,4 @@
+using Maroik.Core.Contract.Interfaces;
 using Maroik.Core.Domain.Account;
 using Maroik.Core.PostgreSQL.Data;
 using Maroik.Website.Tests.Infrastructure;
@@ -36,6 +37,51 @@ public class CalendarControllerCalendarTests
             new { Id = 0, Name = name, Description = "", TimeZoneIanaId = "UTC", HtmlColorCode = "#3788d8" }
         }
     };
+
+    // -- Default calendar for an account with a legacy nickname -----------------------
+
+    /// <summary>
+    /// An account created before nicknames were restricted can carry a character a calendar name cannot
+    /// (here <c>&lt;</c>). Opening the calendar page auto-creates a default calendar named after the
+    /// nickname; that must still succeed — with the character dropped — instead of leaving the account
+    /// with no calendar.
+    /// </summary>
+    [Fact]
+    public async Task UserIndex_LegacyNicknameWithAngleBracket_StillGetsADefaultCalendar()
+    {
+        const string email = "legacy-nick-user@test.com";
+        using (var scope = _factory.Services.CreateScope())
+        {
+            var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+            var passwordService = scope.ServiceProvider.GetRequiredService<IPasswordService>();
+            db.Accounts.Add(new Maroik.Core.PostgreSQL.Models.Account
+            {
+                Email = email,
+                HashedPassword = passwordService.HashPassword("UserPassword1!"),
+                Nickname = "Legacy<Nick",   // stored directly: today's NicknamePolicy would refuse it
+                AvatarImagePath = "/upload/Management/Profile/default-avatar.jpg",
+                Role = Role.User,
+                TimeZoneIanaId = "UTC",
+                EmailConfirmed = true,
+                AgreedServiceTerms = true,
+                Created = DateTime.UtcNow,
+                Updated = DateTime.UtcNow
+            });
+            await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+        }
+        var session = await LoginAsUserAsync(email);
+
+        using var page = new HttpRequestMessage(HttpMethod.Get, "/Calendar/UserIndex");
+        page.Headers.Add("Cookie", session.CookieHeader);
+        var response = await _client.SendAsync(page, TestContext.Current.CancellationToken);
+
+        Assert.Equal(System.Net.HttpStatusCode.OK, response.StatusCode);
+        using var verify = _factory.Services.CreateScope();
+        var calendars = verify.ServiceProvider.GetRequiredService<ApplicationDbContext>()
+            .Calendars.Where(c => c.AccountEmail == email).ToList();
+        Assert.Single(calendars);
+        Assert.Equal("LegacyNick", calendars[0].Name);
+    }
 
     // -- CreateCalendar: role gating ----------------------------------------------
 

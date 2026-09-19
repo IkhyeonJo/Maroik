@@ -342,6 +342,46 @@ public class CalendarServiceTests
         _calendarRepo.Verify(r => r.CreateAsync(It.IsAny<Calendar>(), It.IsAny<CancellationToken>()), Times.Once);
     }
 
+    /// <summary>
+    /// An account created before nicknames were restricted can carry a character a calendar name cannot
+    /// (&lt; &gt;, control characters). The default calendar is named after the nickname, so it must still
+    /// be created — with that character dropped — instead of the account being left with no calendar.
+    /// </summary>
+    [Theory]
+    [InlineData("a<b", "ab")]
+    [InlineData("<b>x</b>", "bx/b")]
+    [InlineData("Bo\u0007b", "Bob")]
+    [InlineData("  Kim & Lee  ", "Kim & Lee")]
+    [InlineData("홍길동", "홍길동")]
+    public async Task EnsureDefaultCalendarAsync_DropsCharactersACalendarNameCannotHave(string requested, string expectedName)
+    {
+        _calendarRepo.Setup(r => r.GetByAccountEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync([]);
+        Calendar? created = null;
+        _calendarRepo.Setup(r => r.CreateAsync(It.IsAny<Calendar>(), It.IsAny<CancellationToken>()))
+            .Callback<Calendar, CancellationToken>((c, _) => created = c).Returns(Task.CompletedTask);
+        var sut = CreateSut();
+
+        ServiceResult result = await sut.EnsureDefaultCalendarAsync("user@example.com", new CalendarRequest
+        {
+            Name = requested,
+            TimeZoneIanaId = "UTC",
+            HtmlColorCode = "#fc330e"
+        }, TestContext.Current.CancellationToken);
+
+        Assert.True(result.Success);
+        Assert.NotNull(created);
+        Assert.Equal(expectedName, created!.Name);
+    }
+
+    /// <summary>A name made only of rejected characters falls back to a fixed name rather than failing.</summary>
+    [Theory]
+    [InlineData("<>")]
+    [InlineData("<\u0007>")]
+    [InlineData("   ")]
+    [InlineData(null)]
+    public void DefaultCalendarName_FallsBack_WhenNothingUsableIsLeft(string? requested)
+        => Assert.Equal("Calendar", CalendarService.DefaultCalendarName(requested));
+
     /// <summary>Verifies that <c>EnsureDefaultCalendarAsync</c> does not create when calendar exists.</summary>
     [Fact]
     public async Task EnsureDefaultCalendarAsync_DoesNotCreate_WhenCalendarExists()
