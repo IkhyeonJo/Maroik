@@ -136,7 +136,6 @@ public class ManagementController : Controller
         {
             return avatarResult.ErrorKey switch
             {
-                "virus-detected" => BadRequest("File may be infected with a virus."),
                 "svg-not-allowed" => Ok(new { result = false, errorMessage = _localizer["SVG format is not allowed"].Value }),
                 "invalid-image" => Ok(new { result = false, errorMessage = _localizer["Invalid image file"].Value }),
                 _ => Ok(new { result = false, errorMessage = _localizer["Input is invalid"].Value })
@@ -1039,19 +1038,19 @@ public class ManagementController : Controller
                             CanDelete = loggedInAccount.IsOwner(privateNoteBoard.Writer)
                         };
 
-                    if (string.IsNullOrEmpty(privateNoteOutputViewModel.BoardOutputViewModel?.BoardAttachedFilePath ?? ""))
+                    // The attachment is optional: a note without one must still get its comments and
+                    // viewer data below, so this is a guard around the download only (not an early return).
+                    if (!string.IsNullOrEmpty(privateNoteOutputViewModel.BoardOutputViewModel?.BoardAttachedFilePath ?? ""))
                     {
-                        return View(privateNoteOutputViewModel);
-                    }
+                        byte[]? fileData = await _boardService.DownloadFileAsync(
+                            privateNoteOutputViewModel.BoardOutputViewModel?.BoardAttachedFilePath ?? "", HttpContext.RequestAborted);
 
-                    byte[]? fileData = await _boardService.DownloadFileAsync(
-                        privateNoteOutputViewModel.BoardOutputViewModel?.BoardAttachedFilePath ?? "", HttpContext.RequestAborted);
-
-                    if (fileData != null)
-                    {
-                        privateNoteOutputViewModel.BoardOutputViewModel?.BoardAttachedFileBase64Data =
-                            Convert.ToBase64String(fileData);
-                        privateNoteOutputViewModel.BoardOutputViewModel?.BoardAttachedFileContentType = "application/octet-stream";
+                        if (fileData != null)
+                        {
+                            privateNoteOutputViewModel.BoardOutputViewModel?.BoardAttachedFileBase64Data =
+                                Convert.ToBase64String(fileData);
+                            privateNoteOutputViewModel.BoardOutputViewModel?.BoardAttachedFileContentType = "application/octet-stream";
+                        }
                     }
 
                     // Preload comments and accounts for detail view
@@ -1059,7 +1058,14 @@ public class ManagementController : Controller
                     [
                         .. await _boardService.GetCommentsByBoardIdAsync((long)boardId, HttpContext.RequestAborted)
                     ];
-                    privateNoteOutputViewModel.AllAccounts = await _accountService.GetAllAccountsAsync(HttpContext.RequestAborted);
+                    // Only the accounts shown on this page (the note's author and its commenters) are
+                    // needed, to highlight admin-authored entries — not every account in the system.
+                    var detailNicknames = privateNoteOutputViewModel.DetailBoardComments.Select(c => c.Writer)
+                        .Append(privateNoteBoard.Writer)
+                        .Where(w => !string.IsNullOrEmpty(w))
+                        .Select(w => w!)
+                        .Distinct();
+                    privateNoteOutputViewModel.AllAccounts = await _accountService.GetAccountsByNicknamesAsync(detailNicknames, HttpContext.RequestAborted);
                     privateNoteOutputViewModel.AdminNicknames = privateNoteOutputViewModel.AllAccounts.ToAdminNicknameSet();
                     privateNoteOutputViewModel.LoggedInAccount = loggedInAccount;
                     privateNoteOutputViewModel.LoggedInAccountTimeZoneIanaId = loggedInAccount.TimeZoneIanaId ?? "";
@@ -1200,10 +1206,14 @@ public class ManagementController : Controller
                 #region Preload comment counts and attached files for view
                 privateNoteOutputViewModel.LoggedInAccount = loggedInAccount;
                 privateNoteOutputViewModel.LoggedInAccountTimeZoneIanaId = loggedInAccount.TimeZoneIanaId ?? "";
-                privateNoteOutputViewModel.AllAccounts = await _accountService.GetAllAccountsAsync(HttpContext.RequestAborted);
-                privateNoteOutputViewModel.AdminNicknames = privateNoteOutputViewModel.AllAccounts.ToAdminNicknameSet();
-
                 var boardResponses = privateNoteOutputViewModel.Boards.ToList();
+                // Only the writers on this page are needed (to highlight admin-authored notes).
+                var listNicknames = boardResponses.Select(b => b.Writer)
+                    .Where(w => !string.IsNullOrEmpty(w))
+                    .Select(w => w!)
+                    .Distinct();
+                privateNoteOutputViewModel.AllAccounts = await _accountService.GetAccountsByNicknamesAsync(listNicknames, HttpContext.RequestAborted);
+                privateNoteOutputViewModel.AdminNicknames = privateNoteOutputViewModel.AllAccounts.ToAdminNicknameSet();
                 List<long> boardIds = [.. boardResponses.Select(b => b.Id)];
                 Dictionary<long, int> commentCounts = await _boardService.GetCommentCountsForBoardsAsync(boardIds, HttpContext.RequestAborted);
                 Dictionary<long, BoardAttachedFileDto?> attachedFiles = await _boardService.GetAttachedFilesForBoardsAsync(boardIds, HttpContext.RequestAborted);

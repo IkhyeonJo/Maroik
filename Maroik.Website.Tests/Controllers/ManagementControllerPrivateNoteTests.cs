@@ -255,4 +255,57 @@ public class ManagementControllerPrivateNoteTests
 
         Assert.Contains("\"result\":false", json);
     }
+    // -- PrivateNote detail page ------------------------------------------------------
+
+    private void SeedComment(long boardId, string writer, string content)
+    {
+        using var scope = _factory.Services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+        db.BoardComments.Add(new BoardComment
+        {
+            BoardId = boardId,
+            Order = 0,
+            AvatarImagePath = "/upload/Management/Profile/default-avatar.jpg",
+            Writer = writer,
+            Content = content,
+            Created = DateTime.UtcNow,
+            Deleted = false
+        });
+        db.SaveChanges();
+    }
+
+    /// <summary>
+    /// Regression: a note WITHOUT an attached file used to return its detail view before the comments
+    /// (and the viewer data) were loaded, so its existing comments silently never rendered.
+    /// </summary>
+    [Fact]
+    public async Task PrivateNoteDetail_NoteWithoutAttachment_RendersItsComments()
+    {
+        var session = await LoginAsUserAsync("management-privatenote-detail-user@test.com");
+        long boardId = SeedBoard(writer: session.Nickname);
+        string commentText = $"Comment-{Guid.NewGuid():N}";
+        SeedComment(boardId, session.Nickname, commentText);
+
+        using var request = new HttpRequestMessage(HttpMethod.Get, $"/Management/PrivateNote?method=detail&boardId={boardId}");
+        request.Headers.Add("Cookie", session.CookieHeader);
+        var response = await _client.SendAsync(request, TestContext.Current.CancellationToken);
+        string html = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+
+        Assert.Equal(System.Net.HttpStatusCode.OK, response.StatusCode);
+        Assert.Contains(commentText, html);
+    }
+
+    /// <summary>A private note is invisible to anyone but its author, so another user's detail request redirects away.</summary>
+    [Fact]
+    public async Task PrivateNoteDetail_OtherUsersNote_RedirectsToList()
+    {
+        var session = await LoginAsUserAsync("management-privatenote-detail-other@test.com");
+        long boardId = SeedBoard(writer: "SomeoneElse_" + Guid.NewGuid().ToString("N"));
+
+        using var request = new HttpRequestMessage(HttpMethod.Get, $"/Management/PrivateNote?method=detail&boardId={boardId}");
+        request.Headers.Add("Cookie", session.CookieHeader);
+        var response = await _client.SendAsync(request, TestContext.Current.CancellationToken);
+
+        Assert.Equal(System.Net.HttpStatusCode.Redirect, response.StatusCode);
+    }
 }
