@@ -2,6 +2,7 @@ using System.Net;
 using System.Net.Sockets;
 using System.Text;
 using Maroik.Core.Client.Clients;
+using Maroik.Core.Contract.Misc.Enums;
 using Microsoft.Extensions.Logging.Abstractions;
 
 namespace Maroik.Core.Client.Tests.Clients;
@@ -10,7 +11,8 @@ namespace Maroik.Core.Client.Tests.Clients;
 /// Unit tests for <see cref="ClamavClient"/>.
 /// Because no real ClamAV daemon is available during the test run, every test targets
 /// an unreachable host or invalid address and verifies that the client handles the
-/// connection failure gracefully by returning <see langword="false"/>.
+/// connection failure gracefully by returning <see cref="ClamavScanResult.Unavailable"/> (a refusal
+/// that is deliberately not reported as an infection).
 /// </summary>
 public class ClamavClientTests
 {
@@ -18,27 +20,27 @@ public class ClamavClientTests
 
     // -- ScanWithClamavAsync --------------------------------------------------
 
-    /// <summary>Verifies that <c>ScanWithClamavAsync</c> returns false when host is unreachable.</summary>
+    /// <summary>Verifies that <c>ScanWithClamavAsync</c> returns Unavailable when host is unreachable.</summary>
     [Fact]
-    public async Task ScanWithClamavAsync_ReturnsFalse_WhenHostIsUnreachable()
+    public async Task ScanWithClamavAsync_ReturnsUnavailable_WhenHostIsUnreachable()
     {
         using var stream = new MemoryStream([0x01, 0x02, 0x03]);
 
         // Any host that won't have ClamAV running → connection refused → returns false
-        bool result = await _sut.ScanWithClamavAsync(stream, "127.0.0.1", 19999, TestContext.Current.CancellationToken);
+        ClamavScanResult result = await _sut.ScanWithClamavAsync(stream, "127.0.0.1", 19999, TestContext.Current.CancellationToken);
 
-        Assert.False(result);
+        Assert.Equal(ClamavScanResult.Unavailable, result);
     }
 
-    /// <summary>Verifies that <c>ScanWithClamavAsync</c> returns false when host name is invalid.</summary>
+    /// <summary>Verifies that <c>ScanWithClamavAsync</c> returns Unavailable when host name is invalid.</summary>
     [Fact]
-    public async Task ScanWithClamavAsync_ReturnsFalse_WhenHostNameIsInvalid()
+    public async Task ScanWithClamavAsync_ReturnsUnavailable_WhenHostNameIsInvalid()
     {
         using var stream = new MemoryStream([0x01, 0x02, 0x03]);
 
-        bool result = await _sut.ScanWithClamavAsync(stream, "invalid.host.that.does.not.exist.local", 3310, TestContext.Current.CancellationToken);
+        ClamavScanResult result = await _sut.ScanWithClamavAsync(stream, "invalid.host.that.does.not.exist.local", 3310, TestContext.Current.CancellationToken);
 
-        Assert.False(result);
+        Assert.Equal(ClamavScanResult.Unavailable, result);
     }
 
     /// <summary>Verifies that <c>ScanWithClamavAsync</c> resets stream position before reading.</summary>
@@ -52,21 +54,21 @@ public class ClamavClientTests
 
         // Should not throw even though stream is at end initially;
         // implementation rewinds to position 0 before reading
-        bool result = await _sut.ScanWithClamavAsync(stream, "127.0.0.1", 19999, TestContext.Current.CancellationToken);
+        ClamavScanResult result = await _sut.ScanWithClamavAsync(stream, "127.0.0.1", 19999, TestContext.Current.CancellationToken);
 
-        // Unreachable host returns false; the key assertion is no exception thrown
-        Assert.False(result);
+        // Unreachable host is Unavailable; the key assertion is no exception thrown
+        Assert.Equal(ClamavScanResult.Unavailable, result);
     }
 
-    /// <summary>Verifies that <c>ScanWithClamavAsync</c> returns false when stream is empty.</summary>
+    /// <summary>Verifies that <c>ScanWithClamavAsync</c> returns Unavailable when stream is empty and the host is unreachable.</summary>
     [Fact]
-    public async Task ScanWithClamavAsync_ReturnsFalse_WhenStreamIsEmpty()
+    public async Task ScanWithClamavAsync_ReturnsUnavailable_WhenStreamIsEmpty_AndHostIsUnreachable()
     {
         using var stream = new MemoryStream();
 
-        bool result = await _sut.ScanWithClamavAsync(stream, "127.0.0.1", 19999, TestContext.Current.CancellationToken);
+        ClamavScanResult result = await _sut.ScanWithClamavAsync(stream, "127.0.0.1", 19999, TestContext.Current.CancellationToken);
 
-        Assert.False(result);
+        Assert.Equal(ClamavScanResult.Unavailable, result);
     }
 
     // -- INSTREAM response parsing ---------------------------------------------
@@ -74,28 +76,69 @@ public class ClamavClientTests
     // ClamAV daemon to drive the actual protocol exchange and response parsing (ClamavClient
     // treats a reply ending in "OK", with no "FOUND"/"ERROR", as clean), which nothing else here covers.
 
-    /// <summary>Verifies that <c>ScanWithClamavAsync</c> returns true when the daemon reports OK.</summary>
+    /// <summary>Verifies that <c>ScanWithClamavAsync</c> returns Clean when the daemon reports OK.</summary>
     [Fact]
-    public async Task ScanWithClamavAsync_ReturnsTrue_WhenDaemonRespondsOk()
+    public async Task ScanWithClamavAsync_ReturnsClean_WhenDaemonRespondsOk()
     {
         await using var server = FakeClamavServer.Start("stream: OK\n");
         using var stream = new MemoryStream([0x01, 0x02, 0x03]);
 
-        bool result = await _sut.ScanWithClamavAsync(stream, "127.0.0.1", server.Port, TestContext.Current.CancellationToken);
+        ClamavScanResult result = await _sut.ScanWithClamavAsync(stream, "127.0.0.1", server.Port, TestContext.Current.CancellationToken);
 
-        Assert.True(result);
+        Assert.Equal(ClamavScanResult.Clean, result);
     }
 
-    /// <summary>Verifies that <c>ScanWithClamavAsync</c> returns false when the daemon reports a virus found.</summary>
+    /// <summary>Verifies that <c>ScanWithClamavAsync</c> returns Infected when the daemon reports a virus found.</summary>
     [Fact]
-    public async Task ScanWithClamavAsync_ReturnsFalse_WhenDaemonRespondsFound()
+    public async Task ScanWithClamavAsync_ReturnsInfected_WhenDaemonRespondsFound()
     {
         await using var server = FakeClamavServer.Start("stream: Eicar-Test-Signature FOUND\n");
         using var stream = new MemoryStream([0x01, 0x02, 0x03]);
 
-        bool result = await _sut.ScanWithClamavAsync(stream, "127.0.0.1", server.Port, TestContext.Current.CancellationToken);
+        ClamavScanResult result = await _sut.ScanWithClamavAsync(stream, "127.0.0.1", server.Port, TestContext.Current.CancellationToken);
 
-        Assert.False(result);
+        Assert.Equal(ClamavScanResult.Infected, result);
+    }
+
+    /// <summary>
+    /// A daemon "ERROR" reply (e.g. the stream exceeded clamd's size limit) is a scan that did not
+    /// complete — refused, but not reported as an infection.
+    /// </summary>
+    [Fact]
+    public async Task ScanWithClamavAsync_ReturnsUnavailable_WhenDaemonRespondsError()
+    {
+        await using var server = FakeClamavServer.Start("INSTREAM size limit exceeded. ERROR\n");
+        using var stream = new MemoryStream([0x01, 0x02, 0x03]);
+
+        ClamavScanResult result = await _sut.ScanWithClamavAsync(stream, "127.0.0.1", server.Port, TestContext.Current.CancellationToken);
+
+        Assert.Equal(ClamavScanResult.Unavailable, result);
+    }
+
+    /// <summary>A reply that is neither an OK, a FOUND nor an ERROR verdict is not trusted as clean and not called an infection.</summary>
+    [Theory]
+    [InlineData("\n")]
+    [InlineData("stream: gibberish\n")]
+    public async Task ScanWithClamavAsync_ReturnsUnavailable_WhenReplyIsNotAVerdict(string reply)
+    {
+        await using var server = FakeClamavServer.Start(reply);
+        using var stream = new MemoryStream([0x01, 0x02, 0x03]);
+
+        ClamavScanResult result = await _sut.ScanWithClamavAsync(stream, "127.0.0.1", server.Port, TestContext.Current.CancellationToken);
+
+        Assert.Equal(ClamavScanResult.Unavailable, result);
+    }
+
+    /// <summary>A signature name that merely contains "OK" must not read as clean: FOUND wins.</summary>
+    [Fact]
+    public async Task ScanWithClamavAsync_ReturnsInfected_WhenSignatureNameContainsOk()
+    {
+        await using var server = FakeClamavServer.Start("stream: Win.Trojan.OK-Dropper FOUND\n");
+        using var stream = new MemoryStream([0x01, 0x02, 0x03]);
+
+        ClamavScanResult result = await _sut.ScanWithClamavAsync(stream, "127.0.0.1", server.Port, TestContext.Current.CancellationToken);
+
+        Assert.Equal(ClamavScanResult.Infected, result);
     }
 
     /// <summary>
@@ -127,9 +170,9 @@ public class ClamavClientTests
         await using var server = FakeClamavServer.Start("stream: OK\n");
         using var stream = new MemoryStream(data);
 
-        bool result = await _sut.ScanWithClamavAsync(stream, "127.0.0.1", server.Port, TestContext.Current.CancellationToken);
+        ClamavScanResult result = await _sut.ScanWithClamavAsync(stream, "127.0.0.1", server.Port, TestContext.Current.CancellationToken);
 
-        Assert.True(result);
+        Assert.Equal(ClamavScanResult.Clean, result);
         Assert.Equal([chunkSize, chunkSize, 1234], await server.ChunkLengths);
         Assert.Equal(data, await server.Payload);
     }

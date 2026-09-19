@@ -1,3 +1,5 @@
+using Maroik.Core.Contract.Misc.Enums;
+
 namespace Maroik.Core.Contract.Interfaces;
 
 /// <summary>
@@ -8,7 +10,10 @@ public interface IClamavClient
 {
     /// <summary>
     /// Streams <paramref name="fileStream"/> to the ClamAV daemon via the INSTREAM protocol.
-    /// Returns true when the file is clean; false on a virus detection or connection error.
+    /// Returns <see cref="ClamavScanResult.Clean"/> when the daemon reports the file clean,
+    /// <see cref="ClamavScanResult.Infected"/> on a detection, and <see cref="ClamavScanResult.Unavailable"/>
+    /// when the scan could not be completed (connection error, timeout, daemon error, unreadable reply).
+    /// Anything other than <see cref="ClamavScanResult.Clean"/> must be treated as a refusal.
     /// </summary>
-    public Task<bool> ScanWithClamavAsync(Stream fileStream, string clamavHost, int clamavPort, CancellationToken ct = default);
+    public Task<ClamavScanResult> ScanWithClamavAsync(Stream fileStream, string clamavHost, int clamavPort, CancellationToken ct = default);
 }

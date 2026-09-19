@@ -1,6 +1,7 @@
 using System.Diagnostics;
 using System.Net;
 using Maroik.Core.Client.Clients;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 
 namespace Maroik.Core.Client.Tests.Clients;
@@ -40,6 +41,26 @@ public class FileClientTests
         }
     }
 
+    /// <summary>Returns a fixed status + plain-text body, like Maroik.FileStorage's <c>BadRequest(error)</c>.</summary>
+    private sealed class RefusingHandler(HttpStatusCode status, string body) : HttpMessageHandler
+    {
+        protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
+            => Task.FromResult(new HttpResponseMessage(status) { Content = new StringContent(body) });
+    }
+
+    /// <summary>Records every formatted log message.</summary>
+    private sealed class RecordingLogger : ILogger<FileClient>
+    {
+        public List<(LogLevel Level, string Message)> Entries { get; } = [];
+
+        public IDisposable? BeginScope<TState>(TState state) where TState : notnull => null;
+
+        public bool IsEnabled(LogLevel logLevel) => true;
+
+        public void Log<TState>(LogLevel logLevel, EventId eventId, TState state, Exception? exception, Func<TState, Exception?, string> formatter)
+            => Entries.Add((logLevel, formatter(state, exception)));
+    }
+
     private readonly FakeHttpClientFactory _httpClientFactory = new();
     private FileClient CreateSut() => new(_httpClientFactory, NullLogger<FileClient>.Instance);
 
@@ -72,6 +93,42 @@ public class FileClientTests
         bool result = await CreateSut().UploadAsync(data, "image/png", "test.png", "http://invalid.host.that.does.not.exist.local", TestContext.Current.CancellationToken);
 
         Assert.False(result);
+    }
+
+    // -- Refusal reason logging -------------------------------------------------
+
+    /// <summary>
+    /// Verifies that when the storage service refuses an upload, the reason it gave in the response
+    /// body ("could not be scanned", "infected", ...) is logged — a bare "400" would not tell an
+    /// operator a ClamAV outage from a virus detection.
+    /// </summary>
+    [Fact]
+    public async Task UploadAsync_LogsTheStorageServicesRefusalReason_WhenUploadIsRefused()
+    {
+        _httpClientFactory.InnerHandler = new RefusingHandler(HttpStatusCode.BadRequest, "The file could not be scanned for viruses. Please try again later.");
+        var logger = new RecordingLogger();
+        var sut = new FileClient(_httpClientFactory, logger);
+
+        bool result = await sut.UploadAsync([0x89, 0x50, 0x4E, 0x47], "image/png", "test.png", "http://filestorage.local", TestContext.Current.CancellationToken);
+
+        Assert.False(result);
+        var warning = Assert.Single(logger.Entries, e => e.Level == LogLevel.Warning);
+        Assert.Contains("400", warning.Message);
+        Assert.Contains("could not be scanned", warning.Message);
+    }
+
+    /// <summary>An over-long refusal body is truncated in the log.</summary>
+    [Fact]
+    public async Task UploadAsync_TruncatesAnOverlongRefusalReason()
+    {
+        _httpClientFactory.InnerHandler = new RefusingHandler(HttpStatusCode.BadRequest, new string('x', 5000));
+        var logger = new RecordingLogger();
+        var sut = new FileClient(_httpClientFactory, logger);
+
+        await sut.UploadAsync([0x89, 0x50, 0x4E, 0x47], "image/png", "test.png", "http://filestorage.local", TestContext.Current.CancellationToken);
+
+        var warning = Assert.Single(logger.Entries, e => e.Level == LogLevel.Warning);
+        Assert.True(warning.Message.Length < 500);
     }
 
     // -- Correlation id form field ----------------------------------------------

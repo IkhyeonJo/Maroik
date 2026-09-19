@@ -1,6 +1,7 @@
 using System.Buffers.Binary;
 using System.Net.Sockets;
 using Maroik.Core.Contract.Interfaces;
+using Maroik.Core.Contract.Misc.Enums;
 using Microsoft.Extensions.Logging;
 
 namespace Maroik.Core.Client.Clients;
@@ -27,7 +28,7 @@ public class ClamavClient(ILogger<ClamavClient> logger) : IClamavClient
     private const int ChunkSize = 64 * 1024;
 
     /// <inheritdoc />
-    public async Task<bool> ScanWithClamavAsync(Stream fileStream, string clamavHost, int clamavPort, CancellationToken ct = default)
+    public async Task<ClamavScanResult> ScanWithClamavAsync(Stream fileStream, string clamavHost, int clamavPort, CancellationToken ct = default)
     {
         using var timeoutCts = CancellationTokenSource.CreateLinkedTokenSource(ct);
         timeoutCts.CancelAfter(_scanTimeout);
@@ -78,19 +79,29 @@ public class ClamavClient(ILogger<ClamavClient> logger) : IClamavClient
             string response = (await reader.ReadLineAsync(scanCt) ?? "").Trim().TrimEnd('\0').TrimEnd();
 
             // A clean file's reply ends in "OK". Check the terminator rather than a bare Contains("OK")
-            // so a malware signature name that happens to contain "OK" can't read as clean; also treat
-            // anything with "FOUND" (a detection) or "ERROR" as not clean.
-            return response.EndsWith("OK", StringComparison.Ordinal)
-                   && !response.Contains("FOUND", StringComparison.Ordinal)
-                   && !response.Contains("ERROR", StringComparison.Ordinal);
+            // so a malware signature name that happens to contain "OK" can't read as clean. A reply
+            // containing "FOUND" is a detection. Anything else — an "ERROR" reply (e.g. the stream
+            // exceeded clamd's size limit), an empty reply, gibberish — means the scan did not
+            // complete: the file is still refused, but it is NOT reported as infected.
+            if (response.EndsWith("OK", StringComparison.Ordinal)
+                && !response.Contains("FOUND", StringComparison.Ordinal)
+                && !response.Contains("ERROR", StringComparison.Ordinal))
+                return ClamavScanResult.Clean;
+
+            if (response.Contains("FOUND", StringComparison.Ordinal))
+                return ClamavScanResult.Infected;
+
+            logger.LogWarning("ClamAV at {ClamavHost}:{ClamavPort} returned a reply that is not a clean or infected verdict: {Response}",
+                clamavHost, clamavPort, response);
+            return ClamavScanResult.Unavailable;
         }
         catch (Exception ex)
         {
-            // Treat any connection, protocol, or timeout error as a scan failure (fail-safe), but
-            // log it so an outage of the ClamAV daemon itself is distinguishable from an actual
-            // virus detection instead of silently rejecting every upload with no trace.
+            // Any connection, protocol or timeout error means the scan did not complete: refuse the
+            // file (fail-safe) but report Unavailable rather than Infected, and log it, so an outage
+            // of the ClamAV daemon itself is distinguishable from an actual virus detection.
             logger.LogWarning(ex, "ClamAV scan failed against {ClamavHost}:{ClamavPort}", clamavHost, clamavPort);
-            return false;
+            return ClamavScanResult.Unavailable;
         }
     }
 }

@@ -1,5 +1,6 @@
 using ICSharpCode.SharpZipLib.Zip;
 using Maroik.Core.Contract.Interfaces;
+using Maroik.Core.Contract.Misc.Enums;
 using Maroik.FileStorage.Services;
 using Maroik.FileStorage.Settings;
 using Microsoft.AspNetCore.Http;
@@ -22,15 +23,19 @@ public class FileValidationServiceTests
     {
         var mock = new Mock<IClamavClient>();
         mock.Setup(c => c.ScanWithClamavAsync(It.IsAny<Stream>(), It.IsAny<string>(), It.IsAny<int>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(true);
+            .ReturnsAsync(ClamavScanResult.Clean);
         return mock;
     }
 
-    private static Mock<IClamavClient> InfectedScanMock()
+    private static Mock<IClamavClient> InfectedScanMock() => ScanMock(ClamavScanResult.Infected);
+
+    private static Mock<IClamavClient> UnavailableScanMock() => ScanMock(ClamavScanResult.Unavailable);
+
+    private static Mock<IClamavClient> ScanMock(ClamavScanResult result)
     {
         var mock = new Mock<IClamavClient>();
         mock.Setup(c => c.ScanWithClamavAsync(It.IsAny<Stream>(), It.IsAny<string>(), It.IsAny<int>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(false);
+            .ReturnsAsync(result);
         return mock;
     }
 
@@ -248,6 +253,39 @@ public class FileValidationServiceTests
 
         Assert.False(success);
         Assert.Equal("File may be infected with a virus.", error);
+    }
+
+    /// <summary>
+    /// A ClamAV outage / incomplete scan is refused (fail-closed) but must NOT be reported as a
+    /// virus detection: the file was never found infected.
+    /// </summary>
+    [Fact]
+    public async Task ValidateAndSaveAsync_ReturnsScanUnavailableMessage_WhenClamavCannotScan()
+    {
+        byte[] jpegBytes = [0xFF, 0xD8, 0xFF, 0xE0, 0x00, 0x10, 0x4A, 0x46, 0x49, 0x46, 0x00];
+        var file = MakeFormFile(jpegBytes, "unscanned.jpg");
+        var service = new FileValidationService(UnavailableScanMock().Object, DefaultSettings());
+
+        var (success, error) = await service.ValidateAndSaveAsync(file, Path.GetTempPath());
+
+        Assert.False(success);
+        Assert.Equal("The file could not be scanned for viruses. Please try again later.", error);
+        Assert.DoesNotContain("infected", error!, StringComparison.OrdinalIgnoreCase);
+    }
+
+    /// <summary>A refused scan leaves nothing on disk.</summary>
+    [Fact]
+    public async Task ValidateAndSaveAsync_WritesNothing_WhenClamavCannotScan()
+    {
+        byte[] jpegBytes = [0xFF, 0xD8, 0xFF, 0xE0, 0x00, 0x10, 0x4A, 0x46, 0x49, 0x46, 0x00];
+        string dir = CreateTempDir();
+        var file = MakeFormFile(jpegBytes, "unscanned.jpg");
+        var service = new FileValidationService(UnavailableScanMock().Object, DefaultSettings());
+
+        var (success, _) = await service.ValidateAndSaveAsync(file, dir);
+
+        Assert.False(success);
+        Assert.False(Directory.Exists(dir));
     }
 
     // -- ZIP handling -------------------------------------------------------------------

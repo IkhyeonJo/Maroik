@@ -1,6 +1,7 @@
 using System.Net;
 using System.Net.Http.Headers;
 using Maroik.Core.Contract.Interfaces;
+using Maroik.Core.Contract.Misc.Enums;
 using Maroik.FileStorage.Contracts;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc.Testing;
@@ -37,20 +38,43 @@ public class FileControllerTests : IClassFixture<WebApplicationFactory<Program>>
             RemoveService<IClamavClient>(services);
             var mock = new Mock<IClamavClient>();
             mock.Setup(c => c.ScanWithClamavAsync(It.IsAny<Stream>(), It.IsAny<string>(), It.IsAny<int>()))
-                .ReturnsAsync(true);
+                .ReturnsAsync(ClamavScanResult.Clean);
             services.AddScoped<IClamavClient>(_ => mock.Object);
         }));
 
+    /// <summary>Returns a factory whose ClamAV mock can never complete a scan (daemon down).</summary>
+    private WebApplicationFactory<Program> FactoryWithClamavUnavailable() =>
+        _baseFactory.WithWebHostBuilder(b =>
+        {
+            // Storage root = OS temp dir, so the request's target path passes the path check and actually
+            // reaches the ClamAV scan (under the default <contentRoot>/upload root it is rejected first).
+            b.UseSetting("ServerSetting:StorageRootPath", Path.GetTempPath());
+            b.ConfigureServices(services =>
+            {
+                RemoveService<IClamavClient>(services);
+                var mock = new Mock<IClamavClient>();
+                mock.Setup(c => c.ScanWithClamavAsync(It.IsAny<Stream>(), It.IsAny<string>(), It.IsAny<int>()))
+                    .ReturnsAsync(ClamavScanResult.Unavailable);
+                services.AddScoped<IClamavClient>(_ => mock.Object);
+            });
+        });
+
     /// <summary>Returns a factory whose ClamAV mock always reports a virus.</summary>
     private WebApplicationFactory<Program> FactoryWithVirusDetected() =>
-        _baseFactory.WithWebHostBuilder(b => b.ConfigureServices(services =>
+        _baseFactory.WithWebHostBuilder(b =>
         {
-            RemoveService<IClamavClient>(services);
-            var mock = new Mock<IClamavClient>();
-            mock.Setup(c => c.ScanWithClamavAsync(It.IsAny<Stream>(), It.IsAny<string>(), It.IsAny<int>()))
-                .ReturnsAsync(false);
-            services.AddScoped<IClamavClient>(_ => mock.Object);
-        }));
+            // Storage root = OS temp dir, so the request's target path passes the path check and actually
+            // reaches the ClamAV scan (under the default <contentRoot>/upload root it is rejected first).
+            b.UseSetting("ServerSetting:StorageRootPath", Path.GetTempPath());
+            b.ConfigureServices(services =>
+            {
+                RemoveService<IClamavClient>(services);
+                var mock = new Mock<IClamavClient>();
+                mock.Setup(c => c.ScanWithClamavAsync(It.IsAny<Stream>(), It.IsAny<string>(), It.IsAny<int>()))
+                    .ReturnsAsync(ClamavScanResult.Infected);
+                services.AddScoped<IClamavClient>(_ => mock.Object);
+            });
+        });
 
     private static void RemoveService<T>(IServiceCollection services)
     {
@@ -66,6 +90,9 @@ public class FileControllerTests : IClassFixture<WebApplicationFactory<Program>>
     private WebApplicationFactory<Program> FactoryWithTempStorageRoot() =>
         _baseFactory.WithWebHostBuilder(b =>
             b.UseSetting("ServerSetting:StorageRootPath", Path.GetTempPath()));
+
+    /// <summary>A not-yet-existing target directory inside the OS temp dir (the storage root of the scan-failure factories).</summary>
+    private static string UniqueTempTarget() => Path.Combine(Path.GetTempPath(), $"maroik_scan_{Guid.NewGuid():N}");
 
     // -- Upload: invalid input (no ClamAV call needed) ------------------------
 
@@ -217,11 +244,37 @@ public class FileControllerTests : IClassFixture<WebApplicationFactory<Program>>
         var fileContent = new ByteArrayContent([0xFF, 0xD8, 0xFF, 0xE0, 0x00, 0x10, 0x4A, 0x46, 0x49, 0x46, 0x00]);
         fileContent.Headers.ContentType = MediaTypeHeaderValue.Parse("image/jpeg");
         content.Add(fileContent, "file", "infected.jpg");
-        content.Add(new StringContent("/tmp/uploads"), "filePath");
+        content.Add(new StringContent(UniqueTempTarget()), "filePath");
 
         var response = await client.PostAsync("/api/File/upload", content, TestContext.Current.CancellationToken);
 
+        string body = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+
         Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+        // The refusal must come from the scan itself (not from an earlier path / extension check).
+        Assert.Contains("infected", body);
+    }
+
+    /// <summary>
+    /// Verifies that <c>Upload</c> refuses the file with a distinct "could not be scanned" reason —
+    /// not the virus message — when the ClamAV daemon cannot complete a scan.
+    /// </summary>
+    [Fact]
+    public async Task Upload_ReturnsBadRequest_WithScanUnavailableReason_WhenClamAvIsDown()
+    {
+        var client = FactoryWithClamavUnavailable().CreateClient();
+        using var content = new MultipartFormDataContent();
+        var fileContent = new ByteArrayContent([0xFF, 0xD8, 0xFF, 0xE0, 0x00, 0x10, 0x4A, 0x46, 0x49, 0x46, 0x00]);
+        fileContent.Headers.ContentType = MediaTypeHeaderValue.Parse("image/jpeg");
+        content.Add(fileContent, "file", "unscanned.jpg");
+        content.Add(new StringContent(UniqueTempTarget()), "filePath");
+
+        var response = await client.PostAsync("/api/File/upload", content, TestContext.Current.CancellationToken);
+        string body = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+        Assert.Contains("could not be scanned", body);
+        Assert.DoesNotContain("infected", body);
     }
 
     // -- Upload: encrypted ZIP ------------------------------------------------

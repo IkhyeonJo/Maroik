@@ -68,6 +68,20 @@ public class FileClient(IHttpClientFactory httpClientFactory, ILogger<FileClient
         }
     }
 
+    /// <summary>The storage service's plain-text refusal reason, truncated; empty if it cannot be read.</summary>
+    private static async Task<string> ReadReasonAsync(HttpResponseMessage response, CancellationToken ct)
+    {
+        try
+        {
+            string body = await response.Content.ReadAsStringAsync(ct);
+            return body.Length <= 200 ? body : body[..200];
+        }
+        catch (Exception)
+        {
+            return "";
+        }
+    }
+
     /// <inheritdoc />
     public async Task<bool> UploadAsync(byte[]? fileData, string contentType, string filePath, string fileStorageBaseUrl, CancellationToken ct = default)
     {
@@ -121,7 +135,10 @@ public class FileClient(IHttpClientFactory httpClientFactory, ILogger<FileClient
                 return true;
             }
 
-            logger.LogWarning("File upload returned {StatusCode} for {FilePath}", (int)response.StatusCode, filePath);
+            // The storage service says why it refused (virus found, could not be scanned, bad
+            // extension, ...) in the response body; without it the log only shows a bare 400.
+            string reason = await ReadReasonAsync(response, ct);
+            logger.LogWarning("File upload returned {StatusCode} for {FilePath}: {Reason}", (int)response.StatusCode, filePath, reason);
             return false;
 
         }

@@ -1,5 +1,6 @@
 using ICSharpCode.SharpZipLib.Zip;
 using Maroik.Core.Contract.Interfaces;
+using Maroik.Core.Contract.Misc.Enums;
 using Maroik.FileStorage.Contracts;
 using Maroik.FileStorage.Helpers;
 using Maroik.FileStorage.Settings;
@@ -47,8 +48,13 @@ public class FileValidationService(IClamavClient clamavClient, IOptions<FileStor
         if (!HasValidMagicBytes(memStream, ext))
             return (false, "Invalid or unsupported file format.");
 
-        if (!await clamavClient.ScanWithClamavAsync(memStream, settings.Value.ClamavHost ?? "", settings.Value.ClamavPort))
+        // Only Clean lets the file through. Infected and Unavailable are both refusals (fail-closed),
+        // but they are reported differently: a ClamAV outage must not read as a virus detection.
+        ClamavScanResult scan = await clamavClient.ScanWithClamavAsync(memStream, settings.Value.ClamavHost ?? "", settings.Value.ClamavPort);
+        if (scan == ClamavScanResult.Infected)
             return (false, "File may be infected with a virus.");
+        if (scan != ClamavScanResult.Clean)
+            return (false, "The file could not be scanned for viruses. Please try again later.");
 
         if (ext == ".zip" && IsZipEncrypted(memStream))
             return (false, "Encrypted ZIP files are not allowed.");
