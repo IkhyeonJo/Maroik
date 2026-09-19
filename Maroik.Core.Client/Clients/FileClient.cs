@@ -1,5 +1,7 @@
 using System.Diagnostics;
 using Maroik.Core.Contract.Interfaces;
+using Maroik.Core.Contract.Misc.Enums;
+using Maroik.Core.Contract.Misc.Messaging;
 using Microsoft.Extensions.Logging;
 
 namespace Maroik.Core.Client.Clients;
@@ -84,6 +86,20 @@ public class FileClient(IHttpClientFactory httpClientFactory, ILogger<FileClient
 
     /// <inheritdoc />
     public async Task<bool> UploadAsync(byte[]? fileData, string contentType, string filePath, string fileStorageBaseUrl, CancellationToken ct = default)
+        => await UploadWithResultAsync(fileData, contentType, filePath, fileStorageBaseUrl, ct) == FileUploadResult.Stored;
+
+    /// <summary>Maps the storage service's refusal reason back to a <see cref="FileUploadResult"/>.</summary>
+    private static FileUploadResult ClassifyRefusal(string reason)
+    {
+        if (reason.Contains(FileStorageRefusals.Infected, StringComparison.Ordinal))
+            return FileUploadResult.Infected;
+        if (reason.Contains(FileStorageRefusals.ScanUnavailable, StringComparison.Ordinal))
+            return FileUploadResult.ScanUnavailable;
+        return FileUploadResult.Failed;
+    }
+
+    /// <inheritdoc />
+    public async Task<FileUploadResult> UploadWithResultAsync(byte[]? fileData, string contentType, string filePath, string fileStorageBaseUrl, CancellationToken ct = default)
     {
         try
         {
@@ -93,7 +109,7 @@ public class FileClient(IHttpClientFactory httpClientFactory, ILogger<FileClient
             // Reject empty uploads immediately
             if (fileData is not { Length: > 0 })
             {
-                return false;
+                return FileUploadResult.Failed;
             }
 
             // The directory portion is forwarded to the storage service as-is; reject a rooted or
@@ -101,7 +117,7 @@ public class FileClient(IHttpClientFactory httpClientFactory, ILogger<FileClient
             if (!IsSafeRelativePath(filePath))
             {
                 logger.LogWarning("Rejected file upload with unsafe storage path: {FilePath}", filePath);
-                return false;
+                return FileUploadResult.Failed;
             }
 
             var correlationId = Activity.Current?.Id ?? "";
@@ -132,20 +148,20 @@ public class FileClient(IHttpClientFactory httpClientFactory, ILogger<FileClient
             // failure (which would make the caller roll back over a file that was actually stored).
             if (response.IsSuccessStatusCode)
             {
-                return true;
+                return FileUploadResult.Stored;
             }
 
             // The storage service says why it refused (virus found, could not be scanned, bad
             // extension, ...) in the response body; without it the log only shows a bare 400.
             string reason = await ReadReasonAsync(response, ct);
             logger.LogWarning("File upload returned {StatusCode} for {FilePath}: {Reason}", (int)response.StatusCode, filePath, reason);
-            return false;
+            return ClassifyRefusal(reason);
 
         }
         catch (Exception ex)
         {
             logger.LogError(ex, "File upload request failed for {FilePath}", filePath);
-            return false;
+            return FileUploadResult.Failed;
         }
     }
 }

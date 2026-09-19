@@ -306,6 +306,12 @@
   <data name="You do not have permission to delete." xml:space="preserve">
     <value>You do not have permission to delete.</value>
   </data>
+  <data name="File may be infected with a virus." xml:space="preserve">
+    <value>File may be infected with a virus.</value>
+  </data>
+  <data name="The file could not be scanned for viruses. Please try again later." xml:space="preserve">
+    <value>The file could not be scanned for viruses. Please try again later.</value>
+  </data>
   <data name="SVG format is not allowed" xml:space="preserve">
     <value>SVG format is not allowed</value>
   </data>

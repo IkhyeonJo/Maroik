@@ -1,3 +1,5 @@
+using Maroik.Core.Contract.Misc.Enums;
+
 namespace Maroik.Core.Contract.Interfaces;
 
 /// <summary>
@@ -24,4 +26,16 @@ public interface IFileClient
     /// <param name="fileStorageBaseUrl">Base URL of the Maroik.FileStorage service.</param>
     /// <param name="ct">Cancellation token.</param>
     public Task<bool> UploadAsync(byte[] fileData, string contentType, string filePath, string fileStorageBaseUrl, CancellationToken ct = default);
+
+    /// <summary>
+    /// Same upload as <see cref="UploadAsync"/>, but reports <em>why</em> a refused file was refused —
+    /// a virus detection, a scanner outage, or any other failure — for callers that show the user a
+    /// specific message.
+    /// </summary>
+    /// <param name="fileData">Raw bytes of the file to upload.</param>
+    /// <param name="contentType">MIME type (e.g. "image/png").</param>
+    /// <param name="filePath">Destination path including file name within the storage service.</param>
+    /// <param name="fileStorageBaseUrl">Base URL of the Maroik.FileStorage service.</param>
+    /// <param name="ct">Cancellation token.</param>
+    public Task<FileUploadResult> UploadWithResultAsync(byte[] fileData, string contentType, string filePath, string fileStorageBaseUrl, CancellationToken ct = default);
 }

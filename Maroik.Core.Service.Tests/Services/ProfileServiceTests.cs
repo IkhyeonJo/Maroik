@@ -2,6 +2,7 @@ using Maroik.Core.Domain.Account;
 using Maroik.Core.Domain.Finance;
 using Maroik.Core.Contract.Dtos;
 using Maroik.Core.Contract.Interfaces;
+using Maroik.Core.Contract.Misc.Enums;
 using Maroik.Core.Contract.Misc.Settings;
 using Maroik.Core.Service.Services;
 using Microsoft.Extensions.Logging.Abstractions;
@@ -132,7 +133,7 @@ public class ProfileServiceTests
 
         Assert.False(result.Success);
         Assert.Equal("invalid-image", result.ErrorKey);
-        _fileClient.Verify(c => c.UploadAsync(It.IsAny<byte[]>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
+        _fileClient.Verify(c => c.UploadWithResultAsync(It.IsAny<byte[]>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
     }
 
     /// <summary>Rejects an SVG even though it is a "valid image", without touching storage.</summary>
@@ -147,7 +148,7 @@ public class ProfileServiceTests
 
         Assert.False(result.Success);
         Assert.Equal("svg-not-allowed", result.ErrorKey);
-        _fileClient.Verify(c => c.UploadAsync(It.IsAny<byte[]>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
+        _fileClient.Verify(c => c.UploadWithResultAsync(It.IsAny<byte[]>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
     }
 
     /// <summary>A valid image is stored under the avatar directory with the right MIME type, and the account path is updated.</summary>
@@ -157,8 +158,8 @@ public class ProfileServiceTests
         var account = ActiveAccount();
         _imageValidator.Setup(v => v.IsValidImage(It.IsAny<byte[]>())).Returns(true);
         _imageValidator.Setup(v => v.IsSvg(It.IsAny<byte[]>())).Returns(false);
-        _fileClient.Setup(c => c.UploadAsync(It.IsAny<byte[]>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(true);
+        _fileClient.Setup(c => c.UploadWithResultAsync(It.IsAny<byte[]>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(FileUploadResult.Stored);
         _accountRepo.Setup(r => r.FindByEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(account);
         _accountRepo.Setup(r => r.UpdateAvatarPathAsync(It.IsAny<string>(), It.IsAny<string?>(), It.IsAny<DateTime>(), It.IsAny<CancellationToken>())).ReturnsAsync(1);
         var sut = CreateSut();
@@ -166,7 +167,7 @@ public class ProfileServiceTests
         ServiceResult result = await sut.UploadAndUpdateAvatarAsync(account.Email.Value, [0xFF, 0xD8, 0xFF], ".JPG", TestContext.Current.CancellationToken);
 
         Assert.True(result.Success);
-        _fileClient.Verify(c => c.UploadAsync(
+        _fileClient.Verify(c => c.UploadWithResultAsync(
             It.IsAny<byte[]>(), "image/jpeg",
             It.Is<string>(p => p.StartsWith("upload/Management/Profile/Avatar/") && p.EndsWith(".jpg")),
             It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Once);
@@ -181,8 +182,8 @@ public class ProfileServiceTests
     {
         _imageValidator.Setup(v => v.IsValidImage(It.IsAny<byte[]>())).Returns(true);
         _imageValidator.Setup(v => v.IsSvg(It.IsAny<byte[]>())).Returns(false);
-        _fileClient.Setup(c => c.UploadAsync(It.IsAny<byte[]>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(false);
+        _fileClient.Setup(c => c.UploadWithResultAsync(It.IsAny<byte[]>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(FileUploadResult.Failed);
         var sut = CreateSut();
 
         ServiceResult result = await sut.UploadAndUpdateAvatarAsync("user@example.com", [0xFF, 0xD8, 0xFF], ".png", TestContext.Current.CancellationToken);
@@ -190,6 +191,40 @@ public class ProfileServiceTests
         Assert.False(result.Success);
         Assert.Equal("Profile.UploadAvatarFailed", result.ErrorCode);
         _accountRepo.Verify(r => r.UpdateEntityAsync(It.IsAny<Account>(), It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    /// <summary>Regression: a virus detection is reported as such (not as a generic "invalid input") and never updates the account.</summary>
+    [Fact]
+    public async Task UploadAndUpdateAvatarAsync_ReturnsVirusDetected_WhenStorageFlagsTheFile()
+    {
+        _imageValidator.Setup(v => v.IsValidImage(It.IsAny<byte[]>())).Returns(true);
+        _imageValidator.Setup(v => v.IsSvg(It.IsAny<byte[]>())).Returns(false);
+        _fileClient.Setup(c => c.UploadWithResultAsync(It.IsAny<byte[]>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(FileUploadResult.Infected);
+        var sut = CreateSut();
+
+        ServiceResult result = await sut.UploadAndUpdateAvatarAsync("user@example.com", [0xFF, 0xD8, 0xFF], ".png", TestContext.Current.CancellationToken);
+
+        Assert.False(result.Success);
+        Assert.Equal("virus-detected", result.ErrorKey);
+        _accountRepo.Verify(r => r.UpdateAvatarPathAsync(It.IsAny<string>(), It.IsAny<string?>(), It.IsAny<DateTime>(), It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    /// <summary>A scanner outage is reported separately from a detection and never updates the account.</summary>
+    [Fact]
+    public async Task UploadAndUpdateAvatarAsync_ReturnsScanUnavailable_WhenTheScannerCouldNotRun()
+    {
+        _imageValidator.Setup(v => v.IsValidImage(It.IsAny<byte[]>())).Returns(true);
+        _imageValidator.Setup(v => v.IsSvg(It.IsAny<byte[]>())).Returns(false);
+        _fileClient.Setup(c => c.UploadWithResultAsync(It.IsAny<byte[]>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(FileUploadResult.ScanUnavailable);
+        var sut = CreateSut();
+
+        ServiceResult result = await sut.UploadAndUpdateAvatarAsync("user@example.com", [0xFF, 0xD8, 0xFF], ".png", TestContext.Current.CancellationToken);
+
+        Assert.False(result.Success);
+        Assert.Equal("scan-unavailable", result.ErrorKey);
+        _accountRepo.Verify(r => r.UpdateAvatarPathAsync(It.IsAny<string>(), It.IsAny<string?>(), It.IsAny<DateTime>(), It.IsAny<CancellationToken>()), Times.Never);
     }
 
     // -- DownloadAvatarAsync ----------------------------------------------------

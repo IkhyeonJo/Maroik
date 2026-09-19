@@ -1,6 +1,7 @@
 using System.Diagnostics;
 using System.Net;
 using Maroik.Core.Client.Clients;
+using Maroik.Core.Contract.Misc.Enums;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 
@@ -129,6 +130,48 @@ public class FileClientTests
 
         var warning = Assert.Single(logger.Entries, e => e.Level == LogLevel.Warning);
         Assert.True(warning.Message.Length < 500);
+    }
+
+    // -- UploadWithResultAsync: why a refused file was refused ------------------
+
+    /// <summary>The storage service's refusal reasons map to distinct outcomes: detection, scanner outage, anything else.</summary>
+    [Theory]
+    [InlineData("File may be infected with a virus.", FileUploadResult.Infected)]
+    [InlineData("The file could not be scanned for viruses. Please try again later.", FileUploadResult.ScanUnavailable)]
+    [InlineData("Unsupported file extension.", FileUploadResult.Failed)]
+    [InlineData("", FileUploadResult.Failed)]
+    public async Task UploadWithResultAsync_MapsTheRefusalReason_ToAnOutcome(string reason, FileUploadResult expected)
+    {
+        _httpClientFactory.InnerHandler = new RefusingHandler(HttpStatusCode.BadRequest, reason);
+        var sut = CreateSut();
+
+        FileUploadResult result = await sut.UploadWithResultAsync([0x89, 0x50, 0x4E, 0x47], "image/png", "test.png", "http://filestorage.local", TestContext.Current.CancellationToken);
+
+        Assert.Equal(expected, result);
+    }
+
+    /// <summary>A 2xx reply is <see cref="FileUploadResult.Stored"/> (and <c>UploadAsync</c> stays true for it).</summary>
+    [Fact]
+    public async Task UploadWithResultAsync_ReturnsStored_ForASuccessfulUpload()
+    {
+        _httpClientFactory.InnerHandler = new RefusingHandler(HttpStatusCode.OK, "File uploaded successfully.");
+        var sut = CreateSut();
+
+        FileUploadResult result = await sut.UploadWithResultAsync([0x89, 0x50, 0x4E, 0x47], "image/png", "test.png", "http://filestorage.local", TestContext.Current.CancellationToken);
+        bool legacy = await sut.UploadAsync([0x89, 0x50, 0x4E, 0x47], "image/png", "test.png", "http://filestorage.local", TestContext.Current.CancellationToken);
+
+        Assert.Equal(FileUploadResult.Stored, result);
+        Assert.True(legacy);
+    }
+
+    /// <summary>Empty input, an unsafe path and a transport error are all <see cref="FileUploadResult.Failed"/>.</summary>
+    [Fact]
+    public async Task UploadWithResultAsync_ReturnsFailed_ForEmptyInputAndUnsafePath()
+    {
+        var sut = CreateSut();
+
+        Assert.Equal(FileUploadResult.Failed, await sut.UploadWithResultAsync([], "image/png", "test.png", "http://localhost", TestContext.Current.CancellationToken));
+        Assert.Equal(FileUploadResult.Failed, await sut.UploadWithResultAsync([1], "image/png", "../escape.png", "http://localhost", TestContext.Current.CancellationToken));
     }
 
     // -- Correlation id form field ----------------------------------------------

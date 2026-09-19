@@ -136,6 +136,8 @@ public class ManagementController : Controller
         {
             return avatarResult.ErrorKey switch
             {
+                "virus-detected" => Ok(new { result = false, errorMessage = _localizer["File may be infected with a virus."].Value }),
+                "scan-unavailable" => Ok(new { result = false, errorMessage = _localizer["The file could not be scanned for viruses. Please try again later."].Value }),
                 "svg-not-allowed" => Ok(new { result = false, errorMessage = _localizer["SVG format is not allowed"].Value }),
                 "invalid-image" => Ok(new { result = false, errorMessage = _localizer["Invalid image file"].Value }),
                 _ => Ok(new { result = false, errorMessage = _localizer["Input is invalid"].Value })

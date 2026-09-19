@@ -4,6 +4,7 @@ using Maroik.Core.Domain.Media;
 using Maroik.Core.Domain.ValueObjects;
 using Maroik.Core.Contract.Dtos;
 using Maroik.Core.Contract.Interfaces;
+using Maroik.Core.Contract.Misc.Enums;
 using Maroik.Core.Contract.Misc.Settings;
 using Maroik.Core.Service.Extensions;
 using Maroik.Core.Service.Mappers;
@@ -143,12 +144,21 @@ public class ProfileService(
             string avatarFile = $"{Guid.NewGuid():N}{extension.ToLowerInvariant()}";
             // Store through the file-storage service (shared volume, ClamAV-scanned there) instead of
             // this replica's local wwwroot, so a multi-replica deployment stays consistent.
-            bool uploaded = await fileClient.UploadAsync(
+            FileUploadResult uploaded = await fileClient.UploadWithResultAsync(
                 imageBytes, ContentTypeForExtension(extension),
                 $"{AvatarStorageDirectory}/{avatarFile}", settings.Value.FileStorageBaseUrl ?? "", ct);
 
-            if (!uploaded)
-                return ServiceResult.Failure("Profile.UploadAvatarFailed", "Input is invalid");
+            // Tell the caller WHY the file was refused, so the user is not told "invalid input" for a
+            // virus detection or for a scanner outage.
+            switch (uploaded)
+            {
+                case FileUploadResult.Infected:
+                    return ServiceResult.Validation("Profile.VirusDetected", "virus-detected");
+                case FileUploadResult.ScanUnavailable:
+                    return ServiceResult.Failure("Profile.ScanUnavailable", "scan-unavailable");
+                case FileUploadResult.Failed:
+                    return ServiceResult.Failure("Profile.UploadAvatarFailed", "Input is invalid");
+            }
 
             return await UpdateAvatarAsync(email, $"/{AvatarStorageDirectory}/{avatarFile}", ct);
         }
