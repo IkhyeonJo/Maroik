@@ -106,6 +106,13 @@ public class AccountRepository(ApplicationDbContext context)
         => QueryFirstAsync(e => e.ResetPasswordToken == token, ct: ct);
 
     /// <inheritdoc />
+    public Task<bool> NicknameExistsIgnoreCaseAsync(string nickname, CancellationToken ct = default)
+    {
+        string lowered = nickname.ToLowerInvariant();
+        return Set.AnyAsync(e => e.Nickname.ToLower() == lowered, ct);
+    }
+
+    /// <inheritdoc />
     public Task<List<Account>> FindByNicknamesAsync(IEnumerable<string> nicknames, CancellationToken ct = default)
     {
         var list = nicknames.ToList();

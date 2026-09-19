@@ -88,6 +88,49 @@ public class AccountTests
         Assert.False(result.IsError);
     }
 
+    /// <summary>Create stores the normalized nickname, not the raw input.</summary>
+    [Fact]
+    public void Create_StoresNormalizedNickname()
+    {
+        var result = Account.Create("user@example.com", "hashed", "  Ｂｏｂ   Smith ", "User", "UTC", null, null, true);
+
+        Assert.False(result.IsError);
+        Assert.Equal("Bob Smith", result.Value.Nickname);
+    }
+
+    /// <summary>Create rejects a reserved nickname.</summary>
+    [Theory]
+    [InlineData("Admin")]
+    [InlineData("login")]
+    [InlineData("A d m i n")]
+    public void Create_ReturnsError_WhenNicknameIsReserved(string nickname)
+    {
+        var result = Account.Create("user@example.com", "hashed", nickname, "User", "UTC", null, null, true);
+
+        Assert.True(result.IsError);
+        Assert.Equal("Account.NicknameReserved", result.FirstError.Code);
+    }
+
+    /// <summary>Create accepts a reserved nickname when the caller (an administrator) allows it.</summary>
+    [Fact]
+    public void Create_AcceptsReservedNickname_WhenAllowReservedNickname()
+    {
+        var result = Account.Create("user@example.com", "hashed", "Admin", "Admin", "UTC", null, null, true, allowReservedNickname: true);
+
+        Assert.False(result.IsError);
+        Assert.Equal("Admin", result.Value.Nickname);
+    }
+
+    /// <summary>Create rejects a nickname containing invisible characters.</summary>
+    [Fact]
+    public void Create_ReturnsError_WhenNicknameHasInvisibleCharacters()
+    {
+        var result = Account.Create("user@example.com", "hashed", "Bo\u200Bb", "User", "UTC", null, null, true);
+
+        Assert.True(result.IsError);
+        Assert.Equal("Account.NicknameInvalidCharacters", result.FirstError.Code);
+    }
+
     /// <summary>Create returns error, when password empty.</summary>
     [Theory]
     [InlineData("")]

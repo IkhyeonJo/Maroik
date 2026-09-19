@@ -21,6 +21,12 @@ public interface IAccountRepository : IGenericRepository<Account>
     /// <summary>Returns the account with the given password-reset token, or null if not found.</summary>
     Task<Account?> FindByResetPasswordTokenAsync(string token, CancellationToken ct = default);
 
+    /// <summary>
+    /// Whether any account already uses <paramref name="nickname"/>, ignoring case. The database's
+    /// unique constraint on Nickname is case-sensitive, so it alone would accept "bob" next to "Bob".
+    /// </summary>
+    Task<bool> NicknameExistsIgnoreCaseAsync(string nickname, CancellationToken ct = default);
+
     /// <summary>Returns accounts whose nickname matches any of the given values.</summary>
     Task<List<Account>> FindByNicknamesAsync(IEnumerable<string> nicknames, CancellationToken ct = default);
 

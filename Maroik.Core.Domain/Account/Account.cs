@@ -212,7 +212,9 @@ public sealed class Account : AggregateRoot<string>
     }
 
     /// <summary>
-    /// Creates a new <see cref="Account"/>.
+    /// Creates a new <see cref="Account"/>. The nickname is validated and normalized by
+    /// <see cref="NicknamePolicy"/>; <paramref name="allowReservedNickname"/> lets an administrator
+    /// creating an account use a reserved name (self-registration leaves it <see langword="false"/>).
     /// </summary>
     public static ErrorOr<Account> Create(
         string emailValue,
@@ -222,7 +224,8 @@ public sealed class Account : AggregateRoot<string>
         string timeZoneValue,
         string? defaultMonetaryUnit,
         string? registrationToken,
-        bool agreedServiceTerms)
+        bool agreedServiceTerms,
+        bool allowReservedNickname = false)
     {
         var emailResult = Email.Create(emailValue);
         if (emailResult.IsError) return emailResult.Errors;
@@ -230,11 +233,10 @@ public sealed class Account : AggregateRoot<string>
         var tzResult = TimeZoneId.Create(timeZoneValue);
         if (tzResult.IsError) return tzResult.Errors;
 
-        if (string.IsNullOrWhiteSpace(nickname))
-            return LocalizableError.Validation("Account.NicknameEmpty", "Nickname cannot be empty.");
-
-        if (nickname.Length > ShortTextPolicy.MaxLength)
-            return LocalizableError.Validation("Account.NicknameTooLong", "Nickname must be {0} characters or fewer.", ShortTextPolicy.MaxLength);
+        // The nickname is stored in its normalized form (see NicknamePolicy), never as typed.
+        var nicknameResult = NicknamePolicy.Validate(nickname, allowReservedNickname);
+        if (nicknameResult.IsError) return nicknameResult.Errors;
+        nickname = nicknameResult.Value;
 
         if (string.IsNullOrWhiteSpace(hashedPassword))
             return LocalizableError.Validation("Account.PasswordEmpty", "Hashed password cannot be empty.");

@@ -295,6 +295,113 @@ public class AccountServiceTests
         _accountRepo.Verify(r => r.CreateAsync(It.IsAny<Account>(), It.IsAny<CancellationToken>()), Times.Once);
     }
 
+    /// <summary>
+    /// Verifies that <c>RegisterAsync</c> rejects a reserved nickname (a staff / system name, or the
+    /// anonymous placeholder) before doing any of the expensive or persisting work.
+    /// </summary>
+    [Theory]
+    [InlineData("Admin")]
+    [InlineData("login")]
+    [InlineData("A d m i n")]
+    public async Task RegisterAsync_ReturnsFail_WhenNicknameIsReserved(string nickname)
+    {
+        _accountRepo.Setup(r => r.FindByEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync((Account?)null);
+        var sut = CreateSut();
+
+        RegisterResult result = await sut.RegisterAsync(
+            new AccountRequest { Email = "new@example.com", PlainPassword = "PlainPass1!", Nickname = nickname, RegistrationToken = GuidToken.Generate() },
+            _emailTemplate, TestContext.Current.CancellationToken);
+
+        Assert.False(result.Success);
+        Assert.Equal("'{0}' cannot be used as a Nickname.", result.ErrorKey);
+        _passwordService.Verify(p => p.HashPassword(It.IsAny<string>()), Times.Never);
+        _accountRepo.Verify(r => r.CreateAsync(It.IsAny<Account>(), It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    /// <summary>Verifies that <c>RegisterAsync</c> rejects a nickname containing invisible characters.</summary>
+    [Fact]
+    public async Task RegisterAsync_ReturnsFail_WhenNicknameHasInvisibleCharacters()
+    {
+        _accountRepo.Setup(r => r.FindByEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync((Account?)null);
+        var sut = CreateSut();
+
+        RegisterResult result = await sut.RegisterAsync(
+            new AccountRequest { Email = "new@example.com", PlainPassword = "PlainPass1!", Nickname = "Bo\u200Bb", RegistrationToken = GuidToken.Generate() },
+            _emailTemplate, TestContext.Current.CancellationToken);
+
+        Assert.False(result.Success);
+        Assert.Equal("Nickname contains characters that are not allowed.", result.ErrorKey);
+        _accountRepo.Verify(r => r.CreateAsync(It.IsAny<Account>(), It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    /// <summary>
+    /// Verifies that <c>RegisterAsync</c> reports a nickname already taken ignoring case (the DB
+    /// constraint is case-sensitive, so this check is what stops "bob" registering next to "Bob"),
+    /// and does so before hashing the password.
+    /// </summary>
+    [Fact]
+    public async Task RegisterAsync_ReturnsFail_WhenNicknameExistsIgnoringCase()
+    {
+        _accountRepo.Setup(r => r.FindByEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync((Account?)null);
+        _accountRepo.Setup(r => r.NicknameExistsIgnoreCaseAsync("bob", It.IsAny<CancellationToken>())).ReturnsAsync(true);
+        var sut = CreateSut();
+
+        RegisterResult result = await sut.RegisterAsync(
+            new AccountRequest { Email = "new@example.com", PlainPassword = "PlainPass1!", Nickname = "  bob ", RegistrationToken = GuidToken.Generate() },
+            _emailTemplate, TestContext.Current.CancellationToken);
+
+        Assert.False(result.Success);
+        Assert.Equal("'{0}' is a Nickname that already exists. Please enter another Nickname.", result.ErrorKey);
+        Assert.Equal(["bob"], result.ErrorArgs);
+        _passwordService.Verify(p => p.HashPassword(It.IsAny<string>()), Times.Never);
+        _accountRepo.Verify(r => r.CreateAsync(It.IsAny<Account>(), It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    /// <summary>
+    /// Verifies that a concurrent "bob" / "Bob" registration — passing the app-level check but caught
+    /// by the case-insensitive unique index — is reported as a nickname conflict, not an email one.
+    /// </summary>
+    [Fact]
+    public async Task RegisterAsync_ReturnsNicknameConflict_WhenCaseInsensitiveIndexRaces()
+    {
+        _accountRepo.Setup(r => r.FindByEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync((Account?)null);
+        _passwordService.Setup(p => p.HashPassword(It.IsAny<string>())).Returns("$2a$13$hashed");
+        _accountRepo.Setup(r => r.CreateAsync(It.IsAny<Account>(), It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new Exception("duplicate key", new Exception("23505: duplicate key value violates unique constraint \"Account_unique_index_0\"")));
+        var sut = CreateSut();
+
+        RegisterResult result = await sut.RegisterAsync(
+            new AccountRequest { Email = "new@example.com", PlainPassword = "PlainPass1!", Nickname = "bob", RegistrationToken = GuidToken.Generate() },
+            _emailTemplate, TestContext.Current.CancellationToken);
+
+        Assert.False(result.Success);
+        Assert.Equal("'{0}' is a Nickname that already exists. Please enter another Nickname.", result.ErrorKey);
+        Assert.Equal(["bob"], result.ErrorArgs);
+    }
+
+    /// <summary>Verifies that <c>RegisterAsync</c> persists the normalized nickname, not the raw input.</summary>
+    [Fact]
+    public async Task RegisterAsync_StoresNormalizedNickname()
+    {
+        _accountRepo.Setup(r => r.FindByEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync((Account?)null);
+        _passwordService.Setup(p => p.HashPassword(It.IsAny<string>())).Returns("$2a$13$hashed");
+        Account? created = null;
+        _accountRepo.Setup(r => r.CreateAsync(It.IsAny<Account>(), It.IsAny<CancellationToken>()))
+            .Callback<Account, CancellationToken>((a, _) => created = a)
+            .Returns(Task.CompletedTask);
+        _rsa.Setup(r => r.Encrypt(It.IsAny<string>())).Returns("enc-token");
+        SetupMailSuccess();
+        var sut = CreateSut();
+
+        RegisterResult result = await sut.RegisterAsync(
+            new AccountRequest { Email = "new@example.com", PlainPassword = "PlainPass1!", Nickname = "  Ｂｏｂ   Smith ", RegistrationToken = GuidToken.Generate() },
+            _emailTemplate, TestContext.Current.CancellationToken);
+
+        Assert.True(result.Success);
+        Assert.NotNull(created);
+        Assert.Equal("Bob Smith", created.Nickname);
+    }
+
     /// <summary>Verifies that <c>RegisterAsync</c> stamps the published email with the ambient
     /// <see cref="Activity.Current"/> id, so Worker-side logs for that message can be traced
     /// back to this request.</summary>

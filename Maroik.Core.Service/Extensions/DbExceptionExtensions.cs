@@ -6,6 +6,12 @@ public static class DbExceptionExtensions
     /// <summary>PostgreSQL SQLSTATE for a unique / primary-key constraint violation.</summary>
     private const string UniqueViolationSqlState = "23505";
 
+    /// <summary>Exact-match unique constraint on <c>Account.Nickname</c>.</summary>
+    private const string AccountNicknameUniqueConstraint = "Account_Nickname_unique";
+
+    /// <summary>Case-insensitive unique index on <c>lower(Account.Nickname)</c>.</summary>
+    private const string AccountNicknameLowerUniqueIndex = "Account_unique_index_0";
+
     /// <summary>
     /// Fallback for an exception that lost its typed <c>SqlState</c>: Npgsql renders a
     /// <c>PostgresException</c>'s message as <c>"{SqlState}: {MessageText}"</c>, so the SQLSTATE is
@@ -87,5 +93,15 @@ public static class DbExceptionExtensions
 
             return false;
         }
+
+        /// <summary>
+        /// Returns <see langword="true"/> when <paramref name="e"/> is a unique violation on
+        /// <c>Account.Nickname</c>: either the exact-match constraint <c>Account_Nickname_unique</c> or
+        /// the case-insensitive <c>Account_unique_index_0</c> index (so "bob" racing "Bob" is
+        /// reported as a nickname conflict, not blamed on the email).
+        /// </summary>
+        public bool IsAccountNicknameUniqueViolation() =>
+            e.IsPostgresUniqueViolationOn(AccountNicknameUniqueConstraint)
+            || e.IsPostgresUniqueViolationOn(AccountNicknameLowerUniqueIndex);
     }
 }

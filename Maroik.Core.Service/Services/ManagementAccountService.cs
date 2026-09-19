@@ -44,6 +44,17 @@ public class ManagementAccountService(
             if (await FindByEmailAsync(request.Email ?? "", ct) != null)
                 return ServiceResult.Conflict("Account.AlreadyExists", "This account has already been created.");
 
+            // Nickname: validated + normalized like self-registration, except that an administrator
+            // may deliberately use a reserved name. Uniqueness is checked ignoring case (the DB
+            // constraint alone is case-sensitive).
+            var nicknameResult = NicknamePolicy.Validate(request.Nickname, allowReserved: true);
+            if (nicknameResult.IsError)
+                return ServiceResult.FromError(nicknameResult.FirstError);
+            string nickname = nicknameResult.Value;
+
+            if (await accountRepository.NicknameExistsIgnoreCaseAsync(nickname, ct))
+                return ServiceResult.Conflict("Account.NicknameAlreadyExists", "'{0}' is a Nickname that already exists. Please enter another Nickname.", nickname);
+
             // request.PlainPassword carries the raw password. The complexity rule is checked here,
             // before hashing, so the controller no longer has to — Account.Create only ever sees the hash.
             if (!PasswordPolicy.IsValid(request.PlainPassword))
@@ -54,12 +65,13 @@ public class ManagementAccountService(
             var createResult = Account.Create(
                 request.Email ?? "",
                 hashedPassword,
-                request.Nickname ?? "",
+                nickname,
                 request.Role ?? Role.User,
                 request.TimeZoneIanaId ?? "UTC",
                 request.DefaultMonetaryUnit,
                 request.RegistrationToken,
-                request.AgreedServiceTerms);
+                request.AgreedServiceTerms,
+                allowReservedNickname: true);
 
             if (createResult.IsError)
                 return ServiceResult.FromError(createResult.FirstError);
@@ -81,9 +93,9 @@ public class ManagementAccountService(
                 // checked Nickname at all. Email is the actual primary key (Account_pk), while
                 // Nickname has its own separate unique constraint (Account_Nickname_unique) — report
                 // whichever one actually collided, same classification RegisterAsync uses.
-                bool isNicknameConflict = e.InnerException?.Message.Contains("Account_Nickname_unique", StringComparison.Ordinal) ?? false;
+                bool isNicknameConflict = e.IsAccountNicknameUniqueViolation();
                 return isNicknameConflict
-                    ? ServiceResult.Conflict("Account.NicknameAlreadyExists", "'{0}' is a Nickname that already exists. Please enter another Nickname.", request.Nickname ?? "")
+                    ? ServiceResult.Conflict("Account.NicknameAlreadyExists", "'{0}' is a Nickname that already exists. Please enter another Nickname.", nickname)
                     : ServiceResult.Conflict("Account.AlreadyExists", "This account has already been created.");
             }
 

@@ -57,6 +57,11 @@ public partial class ApplicationDbContext : DbContext
             entity.ToTable("Account", tb => tb.HasComment("Account"));
 
             entity.HasIndex(e => e.Nickname, "Account_Nickname_unique").IsUnique();
+            // Not mapped here on purpose: the case-insensitive UNIQUE index "Account_unique_index_0" on
+            // lower("Nickname") lives only in Init.sql. EF Core / Npgsql have no expression-index mapping (a
+            // HasIndex on Nickname would misstate it as a plain index on the column). The schema is created
+            // from Init.sql, not from this model, so nothing is lost; DbExceptionExtensions matches the index
+            // by name when it classifies a duplicate-nickname violation.
 
             entity.Property(e => e.Email)
                 .HasMaxLength(255)

@@ -139,6 +139,18 @@ public class AccountService(
 
         if (existing == null)
         {
+            // Validate + normalize the nickname first (cheap, and before the deliberately slow
+            // BCrypt hash below). The reserved-name rule applies here: self-registration may not
+            // claim a staff / system name. Uniqueness is checked ignoring case, since the database
+            // constraint alone is case-sensitive and would let "bob" register next to "Bob".
+            var nicknameResult = NicknamePolicy.Validate(newAccount.Nickname);
+            if (nicknameResult.IsError)
+                return RegisterResult.FromError(nicknameResult.FirstError);
+            string nickname = nicknameResult.Value;
+
+            if (await accountRepository.NicknameExistsIgnoreCaseAsync(nickname, ct))
+                return RegisterResult.Fail("'{0}' is a Nickname that already exists. Please enter another Nickname.", errorArgs: [nickname]);
+
             // Enforce the password-complexity rule at the service boundary (not just the ViewModel),
             // before hashing — Account.Create only ever sees the already-hashed value.
             if (!PasswordPolicy.IsValid(newAccount.PlainPassword))
@@ -150,7 +162,7 @@ public class AccountService(
             var createResult = Account.Create(
                 newAccount.Email ?? "",
                 hashedPassword,
-                newAccount.Nickname ?? "",
+                nickname,
                 newAccount.Role ?? Role.User,
                 newAccount.TimeZoneIanaId ?? "UTC",
                 newAccount.DefaultMonetaryUnit,
@@ -174,11 +186,12 @@ public class AccountService(
                     // The prior FindByEmailAsync check above is a read-then-write race: two concurrent
                     // registrations for the same not-yet-registered email can both pass it. Email is the
                     // actual primary key (Account_pk), while Nickname has its own separate unique
-                    // constraint (Account_Nickname_unique) — report whichever one actually collided
+                    // constraint (Account_Nickname_unique) plus a case-insensitive index
+                    // (Account_unique_index_0) — report whichever one actually collided
                     // instead of always blaming the nickname.
-                    bool isNicknameConflict = e.InnerException?.Message.Contains("Account_Nickname_unique", StringComparison.Ordinal) ?? false;
+                    bool isNicknameConflict = e.IsAccountNicknameUniqueViolation();
                     return isNicknameConflict
-                        ? RegisterResult.Fail("'{0}' is a Nickname that already exists. Please enter another Nickname.", errorArgs: [newAccount.Nickname ?? ""])
+                        ? RegisterResult.Fail("'{0}' is a Nickname that already exists. Please enter another Nickname.", errorArgs: [nickname])
                         : RegisterResult.Fail("'{0}' is an Email that already exists.", errorArgs: [newAccount.Email ?? ""]);
                 }
                 logger.LogError(e, "Failed to create account for {Email}", newAccount.Email);

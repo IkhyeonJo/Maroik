@@ -172,4 +172,35 @@ public class DbExceptionExtensionsTests
 
         Assert.True(outer.IsPostgresUniqueViolationOn("Account_Nickname_unique"));
     }
+
+    // -- IsAccountNicknameUniqueViolation --------------------------------------
+
+    /// <summary>Both the exact-match constraint and the case-insensitive index count as a nickname conflict.</summary>
+    [Theory]
+    [InlineData("Account_Nickname_unique")]
+    [InlineData("Account_unique_index_0")]
+    public void IsAccountNicknameUniqueViolation_ReturnsTrue_ForEitherNicknameConstraint(string constraint)
+    {
+        var ex = new FakePostgresException("duplicate key", sqlState: "23505", constraintName: constraint);
+
+        Assert.True(ex.IsAccountNicknameUniqueViolation());
+    }
+
+    /// <summary>A unique violation on another Account constraint (the email primary key) is not a nickname conflict.</summary>
+    [Fact]
+    public void IsAccountNicknameUniqueViolation_ReturnsFalse_ForTheEmailPrimaryKey()
+    {
+        var ex = new FakePostgresException("duplicate key", sqlState: "23505", constraintName: "Account_pk");
+
+        Assert.False(ex.IsAccountNicknameUniqueViolation());
+    }
+
+    /// <summary>The name is also recognized in the message when the typed property was lost (wrapped exception).</summary>
+    [Fact]
+    public void IsAccountNicknameUniqueViolation_ReturnsTrue_WhenOnlyTheMessageCarriesTheIndexName()
+    {
+        var ex = new Exception("outer", new Exception("23505: duplicate key value violates unique constraint \"Account_unique_index_0\""));
+
+        Assert.True(ex.IsAccountNicknameUniqueViolation());
+    }
 }

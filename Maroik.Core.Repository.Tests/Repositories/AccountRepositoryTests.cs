@@ -228,6 +228,63 @@ public sealed class AccountRepositoryTests(DatabaseFixture database) : Repositor
         Assert.Empty(result);
     }
 
+    // -- Email limit vs. column limit --------------------------------------------------
+
+    /// <summary>
+    /// The 255-character e-mail limit the domain enforces is exactly what the real <c>Account.Email</c>
+    /// column (the primary key) holds: an address on the limit persists and round-trips.
+    /// </summary>
+    [Fact]
+    public async Task CreateAsync_PersistsAnEmailOnTheColumnLimit()
+    {
+        string local = ("l" + Guid.NewGuid().ToString("N")).PadRight(255 - "@example.com".Length, 'x');
+        string email = local + "@example.com";
+        Assert.Equal(255, email.Length);
+        var domainAccount = NewDomainAccount(email, Unique("LongMail"));
+
+        await Sut.CreateAsync(domainAccount, TestContext.Current.CancellationToken);
+        Context.ChangeTracker.Clear();
+
+        Account? loaded = await Sut.FindByEmailAsync(email, TestContext.Current.CancellationToken);
+        Assert.NotNull(loaded);
+        Assert.Equal(255, loaded.Email.Value.Length);
+    }
+
+    // -- NicknameExistsIgnoreCaseAsync ----------------------------------------
+
+    /// <summary>
+    /// Verifies that <c>NicknameExistsIgnoreCaseAsync</c> matches an existing nickname regardless of
+    /// case — the <c>Account_Nickname_unique</c> constraint itself is case-sensitive, so it alone
+    /// would accept "bob" next to "Bob".
+    /// </summary>
+    [Fact]
+    public async Task NicknameExistsIgnoreCaseAsync_ReturnsTrue_ForDifferentCase()
+    {
+        string nickname = Unique("CaseNick");
+        await SeedAsync(NewAccount(nickname: nickname));
+
+        Assert.True(await Sut.NicknameExistsIgnoreCaseAsync(nickname, TestContext.Current.CancellationToken));
+        Assert.True(await Sut.NicknameExistsIgnoreCaseAsync(nickname.ToLowerInvariant(), TestContext.Current.CancellationToken));
+        Assert.True(await Sut.NicknameExistsIgnoreCaseAsync(nickname.ToUpperInvariant(), TestContext.Current.CancellationToken));
+    }
+
+    /// <summary>Verifies that <c>NicknameExistsIgnoreCaseAsync</c> returns false for a nickname nobody uses.</summary>
+    [Fact]
+    public async Task NicknameExistsIgnoreCaseAsync_ReturnsFalse_WhenNoAccountUsesTheNickname()
+    {
+        Assert.False(await Sut.NicknameExistsIgnoreCaseAsync(Unique("Ghost"), TestContext.Current.CancellationToken));
+    }
+
+    /// <summary>Verifies that <c>NicknameExistsIgnoreCaseAsync</c> is not a prefix / substring match.</summary>
+    [Fact]
+    public async Task NicknameExistsIgnoreCaseAsync_DoesNotMatchAPrefix()
+    {
+        string nickname = Unique("Prefix");
+        await SeedAsync(NewAccount(nickname: nickname + "Longer"));
+
+        Assert.False(await Sut.NicknameExistsIgnoreCaseAsync(nickname, TestContext.Current.CancellationToken));
+    }
+
     // -- CreateAsync --------------------------------------------------------------
 
     /// <summary>Verifies that <c>CreateAsync</c> persists a new account row that is then retrievable.</summary>
@@ -264,6 +321,40 @@ public sealed class AccountRepositoryTests(DatabaseFixture database) : Repositor
 
         await Assert.ThrowsAsync<DbUpdateException>(
             () => Sut.CreateAsync(NewDomainAccount(UniqueEmail("other"), nickname), TestContext.Current.CancellationToken));
+    }
+
+    /// <summary>
+    /// PostgreSQL enforces <c>Account_unique_index_0</c>: a nickname that differs only by case
+    /// from an existing one is rejected by the database itself (the app-level check alone cannot stop
+    /// two concurrent registrations), and the violation names that index so the service can report it
+    /// as a nickname conflict.
+    /// </summary>
+    [Fact]
+    public async Task CreateAsync_Throws_WhenNicknameDiffersOnlyByCase()
+    {
+        string nickname = Unique("CaseTwin");
+        await SeedAsync(NewAccount(nickname: nickname));
+
+        var ex = await Assert.ThrowsAsync<DbUpdateException>(
+            () => Sut.CreateAsync(NewDomainAccount(UniqueEmail("case"), nickname.ToUpperInvariant()), TestContext.Current.CancellationToken));
+
+        var pg = Assert.IsType<Npgsql.PostgresException>(ex.InnerException);
+        Assert.Equal("23505", pg.SqlState);
+        Assert.Equal("Account_unique_index_0", pg.ConstraintName);
+    }
+
+    /// <summary>The exact-duplicate case is still reported against the original exact-match constraint.</summary>
+    [Fact]
+    public async Task CreateAsync_ExactDuplicateNickname_ViolatesTheExactMatchConstraint()
+    {
+        string nickname = Unique("ExactTwin");
+        await SeedAsync(NewAccount(nickname: nickname));
+
+        var ex = await Assert.ThrowsAsync<DbUpdateException>(
+            () => Sut.CreateAsync(NewDomainAccount(UniqueEmail("exact"), nickname), TestContext.Current.CancellationToken));
+
+        var pg = Assert.IsType<Npgsql.PostgresException>(ex.InnerException);
+        Assert.Contains(pg.ConstraintName, new[] { "Account_Nickname_unique", "Account_unique_index_0" });
     }
 
     // -- UpdateEntityAsync ---------------------------------------------------

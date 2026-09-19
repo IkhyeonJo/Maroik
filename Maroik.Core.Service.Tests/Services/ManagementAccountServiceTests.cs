@@ -139,6 +139,69 @@ public class ManagementAccountServiceTests
         _accountRepo.Verify(r => r.CreateAsync(It.Is<Account>(a => a.HashedPassword == "$2a$13$hashedvalue"), It.IsAny<CancellationToken>()), Times.Once);
     }
 
+    /// <summary>An administrator may create an account under a reserved nickname (e.g. a second staff account).</summary>
+    [Fact]
+    public async Task CreateAccountAsync_AllowsReservedNickname_ForAdministrator()
+    {
+        _accountRepo.Setup(r => r.FindByEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync((Account?)null);
+        _passwordService.Setup(p => p.HashPassword(It.IsAny<string>())).Returns("$2a$13$hashed");
+        _accountRepo.Setup(r => r.CreateAsync(It.IsAny<Account>(), It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
+        var sut = CreateSut();
+
+        ServiceResult result = await sut.CreateAccountAsync(new AccountRequest
+        {
+            Email = "staff@example.com",
+            PlainPassword = "Plain1234!",
+            Nickname = "Admin",
+            Role = Role.Admin,
+            EmailConfirmed = true
+        }, TestContext.Current.CancellationToken);
+
+        Assert.True(result.Success);
+        _accountRepo.Verify(r => r.CreateAsync(It.Is<Account>(a => a.Nickname == "Admin"), It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    /// <summary>An administrator-created nickname is still normalized and still rejected when it hides invisible characters.</summary>
+    [Fact]
+    public async Task CreateAccountAsync_ReturnsFail_WhenNicknameHasInvisibleCharacters()
+    {
+        _accountRepo.Setup(r => r.FindByEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync((Account?)null);
+        var sut = CreateSut();
+
+        ServiceResult result = await sut.CreateAccountAsync(new AccountRequest
+        {
+            Email = "new@example.com",
+            PlainPassword = "Plain1234!",
+            Nickname = "Bo\u200Bb"
+        }, TestContext.Current.CancellationToken);
+
+        Assert.False(result.Success);
+        Assert.Equal("Account.NicknameInvalidCharacters", result.ErrorCode);
+        _passwordService.Verify(p => p.HashPassword(It.IsAny<string>()), Times.Never);
+    }
+
+    /// <summary>A nickname that differs from an existing one only by case is reported as a conflict, before hashing.</summary>
+    [Fact]
+    public async Task CreateAccountAsync_ReturnsNicknameConflict_WhenNicknameExistsIgnoringCase()
+    {
+        _accountRepo.Setup(r => r.FindByEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync((Account?)null);
+        _accountRepo.Setup(r => r.NicknameExistsIgnoreCaseAsync("bob", It.IsAny<CancellationToken>())).ReturnsAsync(true);
+        var sut = CreateSut();
+
+        ServiceResult result = await sut.CreateAccountAsync(new AccountRequest
+        {
+            Email = "new@example.com",
+            PlainPassword = "Plain1234!",
+            Nickname = " bob "
+        }, TestContext.Current.CancellationToken);
+
+        Assert.False(result.Success);
+        Assert.Equal(ServiceErrorType.Conflict, result.ErrorType);
+        Assert.Equal("Account.NicknameAlreadyExists", result.ErrorCode);
+        Assert.Contains("bob", result.ErrorArgs);
+        _passwordService.Verify(p => p.HashPassword(It.IsAny<string>()), Times.Never);
+    }
+
     /// <summary>
     /// Regression test: two concurrent admin creates for the same not-yet-registered nickname can
     /// both pass the prior <c>FindByEmailAsync</c> check (it only checks email) and race on
@@ -167,6 +230,32 @@ public class ManagementAccountServiceTests
         Assert.Equal("Account.NicknameAlreadyExists", result.ErrorCode);
         Assert.Contains("Nickname", result.ErrorKey);
         Assert.Contains("TakenNick", result.ErrorArgs);
+    }
+
+    /// <summary>
+    /// The race between "bob" and "Bob" is caught by the case-insensitive unique index
+    /// (<c>Account_unique_index_0</c>) and must be reported as a nickname conflict too.
+    /// </summary>
+    [Fact]
+    public async Task CreateAccountAsync_ReturnsNicknameConflict_WhenCaseInsensitiveIndexRaces()
+    {
+        _accountRepo.Setup(r => r.FindByEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync((Account?)null);
+        _passwordService.Setup(p => p.HashPassword(It.IsAny<string>())).Returns("$2a$13$hashed");
+        _accountRepo.Setup(r => r.CreateAsync(It.IsAny<Account>(), It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new Exception("duplicate key", new Exception("23505: duplicate key value violates unique constraint \"Account_unique_index_0\"")));
+        var sut = CreateSut();
+
+        ServiceResult result = await sut.CreateAccountAsync(new AccountRequest
+        {
+            Email = "new@example.com",
+            PlainPassword = "Plain1234!",
+            Nickname = "bob"
+        }, TestContext.Current.CancellationToken);
+
+        Assert.False(result.Success);
+        Assert.Equal(ServiceErrorType.Conflict, result.ErrorType);
+        Assert.Equal("Account.NicknameAlreadyExists", result.ErrorCode);
+        Assert.Contains("bob", result.ErrorArgs);
     }
 
     /// <summary>
