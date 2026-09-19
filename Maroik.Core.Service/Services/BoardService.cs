@@ -211,14 +211,13 @@ public class BoardService(
                         return ServiceResult.FromError(updateResult.FirstError);
                     }
 
-                    // Apply the lock from the request. The editor (the post's own author) may raise
-                    // the lock on their post, but CLEARING it is a moderation action reserved for an
-                    // admin: without a stored "who locked this", an unconditional toggle here would
-                    // let any author edit silently lift a lock an admin imposed (the same
-                    // silent-clobber the Noticed field is deliberately kept out of -- Noticed is set
-                    // only at write time since no edit form exposes it).
+                    // Apply the lock from the request. A lock is only ever raised by the post's own
+                    // author (at write or edit time) -- an admin who is not the author can only CLEAR
+                    // one (see the default branch below), never impose it -- so the author may lower
+                    // it as well as raise it. (Noticed, by contrast, is set only at write time and
+                    // deliberately kept out of this edit path.)
                     if (request.Locked) board.Lock();
-                    else if (isAdmin) board.Unlock();
+                    else board.Unlock();
                     break;
                 }
                 default:

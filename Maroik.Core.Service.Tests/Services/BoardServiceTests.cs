@@ -450,13 +450,12 @@ public class BoardServiceTests
     }
 
     /// <summary>
-    /// Regression test (L-1): a non-admin author's edit may raise the lock on their own post but
-    /// must NOT clear one — clearing a lock is a moderation action reserved for an admin. Without
-    /// this, any author edit (BoardRequest.Locked defaults to false) would silently unlock a post
-    /// an admin had locked.
+    /// A non-admin author may lower the lock on their own post as well as raise it. A lock is only
+    /// ever raised by the post's own author (an admin who is not the author can only clear one), so
+    /// there is no "admin-imposed" lock for an author edit to clobber.
     /// </summary>
     [Fact]
-    public async Task EditBoardAsync_NonAdminAuthor_CannotClearAnExistingLock()
+    public async Task EditBoardAsync_NonAdminAuthor_CanClearTheirOwnLock()
     {
         Board lockedBoard = Board.Reconstitute(1, BoardTypes.FreeForum, "Test Title", "Test Content", "Alice",
             DateTime.UtcNow, DateTime.UtcNow, 0L, deleted: false, locked: true, noticed: false);
@@ -474,10 +473,33 @@ public class BoardServiceTests
 
         Assert.True(result.Success);
         Assert.NotNull(savedBoard);
-        Assert.True(savedBoard.Locked); // still locked — a non-admin edit cannot lift it
+        Assert.False(savedBoard.Locked);
+        Assert.Equal("New Title", savedBoard.Title);
     }
 
-    /// <summary>Companion to <see cref="EditBoardAsync_NonAdminAuthor_CannotClearAnExistingLock"/>: an admin edit CAN clear the lock.</summary>
+    /// <summary>A non-admin author's edit with <c>Locked = true</c> still raises the lock.</summary>
+    [Fact]
+    public async Task EditBoardAsync_NonAdminAuthor_CanRaiseTheirOwnLock()
+    {
+        Board unlockedBoard = MakeBoard(writer: "Alice");
+        _boardRepo.Setup(r => r.FindActiveByIdForUpdateAsync(It.IsAny<long>(), It.IsAny<CancellationToken>())).ReturnsAsync(unlockedBoard);
+        _attachedFileRepo.Setup(r => r.FindByBoardIdAsync(It.IsAny<long>(), It.IsAny<CancellationToken>())).ReturnsAsync((BoardAttachedFile?)null);
+        Board? savedBoard = null;
+        _boardRepo.Setup(r => r.UpdateEntityAsync(It.IsAny<Board>(), It.IsAny<CancellationToken>()))
+            .Callback<Board, CancellationToken>((b, _) => savedBoard = b)
+            .Returns(Task.CompletedTask);
+        var sut = CreateSut();
+
+        ServiceResult result = await sut.EditBoardAsync(
+            new BoardRequest { Id = 1, Type = BoardTypes.FreeForum, Title = "New Title", Content = "New Content", Locked = true },
+            "Alice", isAdmin: false, null, TestContext.Current.CancellationToken);
+
+        Assert.True(result.Success);
+        Assert.NotNull(savedBoard);
+        Assert.True(savedBoard.Locked);
+    }
+
+    /// <summary>An admin author's edit can clear their own lock too.</summary>
     [Fact]
     public async Task EditBoardAsync_AdminAuthor_CanClearAnExistingLock()
     {
