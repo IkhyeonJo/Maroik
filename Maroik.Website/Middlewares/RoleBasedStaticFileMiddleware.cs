@@ -24,10 +24,13 @@ public class RoleBasedStaticFileMiddleware(RequestDelegate next)
             // when it resolves the file, so "//admin/x" serves the same file as "/admin/x" and would
             // otherwise slip past a plain "/admin/" StartsWith check.
             //
-            // OrdinalIgnoreCase, not Ordinal: the assets are served through endpoint routing
-            // (MapStaticAssets), which matches route templates case-insensitively even though the
-            // Linux filesystem is case-sensitive. "/Admin/x" therefore resolves to the same asset as
-            // "/admin/x", and a case-sensitive test here would let it straight past the gate.
+            // OrdinalIgnoreCase, not Ordinal: the assets are served by the static-file middleware
+            // (this project's MapStaticAssets extension is UseStaticFiles — not the ASP.NET
+            // endpoint-routing API of the same name), which resolves the request path against the
+            // physical wwwroot. On Linux (production) that filesystem is case-sensitive, so "/Admin/x"
+            // just 404s; on a case-insensitive filesystem (Windows / macOS dev) it would resolve to the
+            // same file as "/admin/x", and a case-sensitive test here would let it straight past the
+            // gate. The case-insensitive test is therefore what keeps the gate host-independent.
             var relativePath = path.TrimStart('/');
             if ((relativePath.StartsWith("admin/", StringComparison.OrdinalIgnoreCase) && userRole != Role.Admin)
                 || (relativePath.StartsWith("user/", StringComparison.OrdinalIgnoreCase) && userRole != Role.User))

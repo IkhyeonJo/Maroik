@@ -13,7 +13,7 @@
 # (Hourly backups of the DB + upload files go to an external HDD via Maroik.Crontab.)
 volumes:
       datasource:            # PostgreSQL data directory (/var/lib/postgresql/data)
-      dataprotection-keys:   # ASP.NET Core Data Protection key ring, shared by website + filestorage so encrypted payloads/cookies validate across both
+      dataprotection-keys:   # ASP.NET Core default Data Protection key-ring location (/root/.aspnet/DataProtection-Keys). The website does NOT use it: Program.cs persists the ring to Valkey (ConnectionStrings__Valkey, set in the env file) and, only without Valkey, to <ContentRoot>/dataprotection-keys (not this volume). FileStorage uses no Data Protection at all.
       valkey-data:           # Valkey (Redis-compatible) append-only file persistence
       rabbitmq-data:         # RabbitMQ node data (durable queues, definitions)
 
@@ -127,7 +127,7 @@ services:
         volumes:
           - ./Maroik.SSL/conf:/etc/letsencrypt:ro                  # real Let's Encrypt cert tree, written by certbot, read-only here
           - ./Maroik.Log/:/app/Maroik.Log:rw                       # app writes logs to the host tree
-          - dataprotection-keys:/root/.aspnet/DataProtection-Keys  # same key ring as filestorage
+          - dataprotection-keys:/root/.aspnet/DataProtection-Keys  # default key-ring path; unused while Valkey is configured (see the volume note above)
         depends_on:                    # wait for each dependency's healthcheck to pass before starting
           postgresql:
             condition: service_healthy
@@ -155,7 +155,7 @@ services:
           - ASPNETCORE_URLS=http://+:80   # bind HTTP only; TLS is not used on the private network
         volumes:
           - ./Maroik.FileStorage/upload/:/app/upload:rw            # uploaded files persisted to the host tree (backed up hourly)
-          - dataprotection-keys:/root/.aspnet/DataProtection-Keys  # shared ring so website-encrypted tokens validate here
+          - dataprotection-keys:/root/.aspnet/DataProtection-Keys  # unused: FileStorage does not use Data Protection
 
     # ── Maroik.Worker ────────────────────────────────────────────────────────
     # Headless background service: consumes RabbitMQ messages (e.g. sends email).
