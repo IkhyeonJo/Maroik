@@ -152,6 +152,61 @@ public class RoleBasedStaticFileMiddlewareTests
         Assert.True(nextCalled);
     }
 
+    /// <summary>
+    /// Regression test: endpoint routing (MapStaticAssets) matches asset routes case-insensitively, so
+    /// "/Admin/x" is served the same file as "/admin/x". The gate must not be bypassable by casing.
+    /// </summary>
+    [Theory]
+    [InlineData("/Admin/dist/img/logo.png")]
+    [InlineData("/ADMIN/dist/img/logo.png")]
+    [InlineData("/aDmIn/custom/Forum/FreeForum/js/site.js")]
+    [InlineData("/User/dist/img/avatar.png")]
+    [InlineData("/USER/dist/img/avatar.png")]
+    [InlineData("//Admin/dist/img/logo.png")]
+    public async Task InvokeAsync_RestrictedPathWithDifferentCasing_NoSession_Blocks(string path)
+    {
+        SetupAccount(null);
+        var context = BuildContext(path);
+        bool nextCalled = false;
+        var sut = new RoleBasedStaticFileMiddleware(_ => { nextCalled = true; return Task.CompletedTask; });
+
+        await sut.InvokeAsync(context, _sessionService.Object);
+
+        Assert.False(nextCalled);
+        Assert.Equal(403, context.Response.StatusCode);
+    }
+
+    /// <summary>The casing variants are gated by role, not blocked outright: the matching role still gets through.</summary>
+    [Theory]
+    [InlineData("/Admin/dist/img/logo.png", Role.Admin)]
+    [InlineData("/USER/dist/img/avatar.png", Role.User)]
+    public async Task InvokeAsync_RestrictedPathWithDifferentCasing_MatchingRole_Forwards(string path, string role)
+    {
+        SetupAccount(role);
+        var context = BuildContext(path);
+        bool nextCalled = false;
+        var sut = new RoleBasedStaticFileMiddleware(_ => { nextCalled = true; return Task.CompletedTask; });
+
+        await sut.InvokeAsync(context, _sessionService.Object);
+
+        Assert.True(nextCalled);
+    }
+
+    /// <summary>A wrong-role session is blocked on a casing variant too.</summary>
+    [Fact]
+    public async Task InvokeAsync_AdminPathWithDifferentCasing_UserSession_Blocks()
+    {
+        SetupAccount(Role.User);
+        var context = BuildContext("/Admin/dist/img/logo.png");
+        bool nextCalled = false;
+        var sut = new RoleBasedStaticFileMiddleware(_ => { nextCalled = true; return Task.CompletedTask; });
+
+        await sut.InvokeAsync(context, _sessionService.Object);
+
+        Assert.False(nextCalled);
+        Assert.Equal(403, context.Response.StatusCode);
+    }
+
     /// <summary>A path that merely starts with the letters "admin" (no folder boundary) is not gated.</summary>
     [Fact]
     public async Task InvokeAsync_PathSharingOnlyThePrefixLetters_Forwards()

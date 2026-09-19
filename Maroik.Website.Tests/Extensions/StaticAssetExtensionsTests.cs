@@ -48,6 +48,26 @@ public class StaticAssetExtensionsTests
         Assert.Contains("nosniff", values!);
     }
 
+    /// <summary>
+    /// Regression test: role-restricted asset folders are gated by <c>RoleBasedStaticFileMiddleware</c>.
+    /// Endpoint routing matches asset routes case-insensitively, so "/Admin/..." resolved to the same
+    /// file as "/admin/..." and used to be served to anonymous visitors (200) while the lower-case
+    /// path was blocked (403). Every casing must be blocked.
+    /// </summary>
+    [Theory]
+    [InlineData("/admin/dist/js/adminlte.js")]
+    [InlineData("/Admin/dist/js/adminlte.js")]
+    [InlineData("/ADMIN/dist/js/adminlte.js")]
+    [InlineData("/user/dist/js/adminlte.js")]
+    [InlineData("/User/dist/js/adminlte.js")]
+    [InlineData("/USER/dist/js/adminlte.js")]
+    public async Task StaticFile_RoleRestrictedFolder_AnonymousSession_IsForbidden_RegardlessOfCasing(string path)
+    {
+        var response = await _client.GetAsync(path, TestContext.Current.CancellationToken);
+
+        Assert.Equal(System.Net.HttpStatusCode.Forbidden, response.StatusCode);
+    }
+
     /// <summary>Static file unknown path returns404.</summary>
     [Fact]
     public async Task StaticFile_UnknownPath_Returns404()

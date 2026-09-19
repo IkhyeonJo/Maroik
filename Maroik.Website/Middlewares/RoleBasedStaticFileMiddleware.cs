@@ -24,13 +24,13 @@ public class RoleBasedStaticFileMiddleware(RequestDelegate next)
             // when it resolves the file, so "//admin/x" serves the same file as "/admin/x" and would
             // otherwise slip past a plain "/admin/" StartsWith check.
             //
-            // Ordinal (case-sensitive): the deployment target is Linux (case-sensitive filesystem)
-            // and the compiled client assets live under the exact-case /admin/ and /user/ folders,
-            // so those are the only paths that ever resolve to a file — matching any other casing
-            // would gate URLs that 404 anyway.
+            // OrdinalIgnoreCase, not Ordinal: the assets are served through endpoint routing
+            // (MapStaticAssets), which matches route templates case-insensitively even though the
+            // Linux filesystem is case-sensitive. "/Admin/x" therefore resolves to the same asset as
+            // "/admin/x", and a case-sensitive test here would let it straight past the gate.
             var relativePath = path.TrimStart('/');
-            if ((relativePath.StartsWith("admin/", StringComparison.Ordinal) && userRole != Role.Admin)
-                || (relativePath.StartsWith("user/", StringComparison.Ordinal) && userRole != Role.User))
+            if ((relativePath.StartsWith("admin/", StringComparison.OrdinalIgnoreCase) && userRole != Role.Admin)
+                || (relativePath.StartsWith("user/", StringComparison.OrdinalIgnoreCase) && userRole != Role.User))
             {
                 context.Response.StatusCode = 403;
                 return;
