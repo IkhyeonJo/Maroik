@@ -34,11 +34,11 @@
     (window as any).escapeHtml = function (value: string): string {
         return value.replace(/[&<>"']/g, function (ch: string) {
             switch (ch) {
-                case '&': return '&amp;';
-                case '<': return '&lt;';
-                case '>': return '&gt;';
-                case '"': return '&quot;';
-                default: return '&#39;';
+                case "&": return "&amp;";
+                case "<": return "&lt;";
+                case ">": return "&gt;";
+                case '"': return "&quot;";
+                default: return "&#39;";
             }
         });
     };
@@ -47,7 +47,7 @@
     // (typically the session expired and the server answered 401 / a redirect),
     // move the user to the public dashboard instead of leaving them on a page
     // whose data never loaded.
-    $(document).off('ajaxError._Layout').on('ajaxError._Layout', function () {
+    $(document).off("ajaxError._Layout").on("ajaxError._Layout", function () {
         window.location.href = "/Dashboard/AnonymousIndex";
     });
 
@@ -70,15 +70,15 @@
         });
 
         $.ajax({
-            url: '/Dashboard/CultureManagement',
-            type: 'POST',
+            url: "/Dashboard/CultureManagement",
+            type: "POST",
             // ASP.NET anti-forgery token, read from the hidden input MVC renders
             // into every form. `.val()` is typed `string | number | string[] |
             // undefined`, so it is narrowed to `string` for the header value.
-            headers: { 'RequestVerificationToken': $('input[name="__RequestVerificationToken"]').val() as string },
-            dataType: 'json',
+            headers: { "RequestVerificationToken": $('input[name="__RequestVerificationToken"]').val() as string },
+            dataType: "json",
             data: paramValue,
-            contentType: 'application/json; charset=utf-8',
+            contentType: "application/json; charset=utf-8",
             success: function () {
                 // Full navigation (not an in-place update) so the server
                 // re-renders every localized string on the page.
@@ -89,12 +89,12 @@
 
     // Top-bar language links. `.off('click')` first so a second execution of the
     // script never binds a duplicate handler to the same anchor.
-    $('#aChangeCultureEnUS').off('click').on('click', function () {
-        ChangeCulture('en-US');
+    $("#aChangeCultureEnUS").off("click").on("click", function () {
+        ChangeCulture("en-US");
     });
 
-    $('#aChangeCultureKoKR').off('click').on('click', function () {
-        ChangeCulture('ko-KR');
+    $("#aChangeCultureKoKR").off("click").on("click", function () {
+        ChangeCulture("ko-KR");
     });
 
     // --- Double-submit / in-flight guard ------------------------------------
@@ -107,37 +107,37 @@
     // jQuery raises `ajaxSend` just before every request leaves the browser.
     // GETs are safe to repeat, so only POSTs are guarded: bump the counter and
     // disable the submit controls.
-    $(document).off('ajaxSend._Layout').on('ajaxSend._Layout', function (_event, _xhr, settings: JQuery.AjaxSettings) {
-        if ((settings.type || 'GET').toUpperCase() !== 'POST') return;
+    $(document).off("ajaxSend._Layout").on("ajaxSend._Layout", function (_event, _xhr, settings: JQuery.AjaxSettings) {
+        if ((settings.type || "GET").toUpperCase() !== "POST") return;
         inFlightPostCount++;
-        $('button[type="submit"], input[type="submit"]').prop('disabled', true);
+        $('button[type="submit"], input[type="submit"]').prop("disabled", true);
     });
 
     // `ajaxComplete` fires after each request, whether it succeeded or failed.
     // Decrement the counter (clamped at 0 for safety); once nothing is in flight,
     // re-enable the submit controls.
-    $(document).off('ajaxComplete._Layout').on('ajaxComplete._Layout', function (_event, _xhr, settings: JQuery.AjaxSettings) {
-        if ((settings.type || 'GET').toUpperCase() !== 'POST') return;
+    $(document).off("ajaxComplete._Layout").on("ajaxComplete._Layout", function (_event, _xhr, settings: JQuery.AjaxSettings) {
+        if ((settings.type || "GET").toUpperCase() !== "POST") return;
         inFlightPostCount = Math.max(0, inFlightPostCount - 1);
         if (inFlightPostCount === 0) {
-            $('button[type="submit"], input[type="submit"]').prop('disabled', false);
+            $('button[type="submit"], input[type="submit"]').prop("disabled", false);
         }
     });
 
     // Classic (non-AJAX) form posts never go through the ajax events above, so
     // guard them directly: the instant a form submits, disable that form's own
     // submit buttons. Delegated from `document` so forms added later are covered.
-    $(document).off('submit._Layout', 'form').on('submit._Layout', 'form', function () {
-        $(this).find('button[type="submit"], input[type="submit"]').prop('disabled', true);
+    $(document).off("submit._Layout", "form").on("submit._Layout", "form", function () {
+        $(this).find('button[type="submit"], input[type="submit"]').prop("disabled", true);
     });
 
     // Returning through the browser Back/Forward cache (bfcache) restores the
     // page exactly as it was left — possibly with buttons still disabled from the
     // navigation that took the user away, and the loading overlay still showing.
     // Reset all of that on `pageshow`.
-    $(window).off('pageshow._Layout').on('pageshow._Layout', function () {
+    $(window).off("pageshow._Layout").on("pageshow._Layout", function () {
         inFlightPostCount = 0;
-        $('button[type="submit"], input[type="submit"]').prop('disabled', false);
-        $('#loading').hide();
+        $('button[type="submit"], input[type="submit"]').prop("disabled", false);
+        $("#loading").hide();
     });
 })();

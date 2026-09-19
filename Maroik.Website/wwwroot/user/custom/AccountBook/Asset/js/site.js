@@ -2,64 +2,64 @@
 (function () {
     const $createAssetTabs = $("#createAssetTabs");
     const $editAssetTabs = $("#editAssetTabs");
-    const $gridSearch = $('#gridSearch');
-    const $formCreateAsset = $('#formCreateAsset');
-    const $createAssetProductName = $('#createAssetProductName');
-    const $createAssetItem = $('#createAssetItem');
-    const $createAssetAmount = $('#createAssetAmount');
-    const $createAssetMonetaryUnit = $('#createAssetMonetaryUnit');
-    const $createAssetNote = $('#createAssetNote');
+    const $gridSearch = $("#gridSearch");
+    const $formCreateAsset = $("#formCreateAsset");
+    const $createAssetProductName = $("#createAssetProductName");
+    const $createAssetItem = $("#createAssetItem");
+    const $createAssetAmount = $("#createAssetAmount");
+    const $createAssetMonetaryUnit = $("#createAssetMonetaryUnit");
+    const $createAssetNote = $("#createAssetNote");
     const $__RequestVerificationToken = $('input[name="__RequestVerificationToken"]');
-    const $createAssetDialogModal = $('#createAssetDialogModal');
-    const $editAssetOriginalProductName = $('#editAssetOriginalProductName');
-    const $editAssetProductName = $('#editAssetProductName');
-    const $editAssetItem = $('#editAssetItem');
-    const $editAssetAmount = $('#editAssetAmount');
-    const $editAssetMonetaryUnit = $('#editAssetMonetaryUnit');
-    const $editAssetNote = $('#editAssetNote');
-    const $editAssetDeleted = $('#editAssetDeleted');
-    const $editAssetDialogModal = $('#editAssetDialogModal');
-    const $formEditAsset = $('#formEditAsset');
-    const $confirmDeleteAssetDialogModal = $('#confirmDeleteAssetDialogModal');
-    const $btnEditAssetGridRow = $('#btnEditAssetGridRow');
-    const $btnConfirmDeleteAsset = $('#btnConfirmDeleteAsset');
-    const $btnExportExcelAsset = $('#btnExportExcelAsset');
-    const $btnDeleteAsset = $('#btnDeleteAsset');
+    const $createAssetDialogModal = $("#createAssetDialogModal");
+    const $editAssetOriginalProductName = $("#editAssetOriginalProductName");
+    const $editAssetProductName = $("#editAssetProductName");
+    const $editAssetItem = $("#editAssetItem");
+    const $editAssetAmount = $("#editAssetAmount");
+    const $editAssetMonetaryUnit = $("#editAssetMonetaryUnit");
+    const $editAssetNote = $("#editAssetNote");
+    const $editAssetDeleted = $("#editAssetDeleted");
+    const $editAssetDialogModal = $("#editAssetDialogModal");
+    const $formEditAsset = $("#formEditAsset");
+    const $confirmDeleteAssetDialogModal = $("#confirmDeleteAssetDialogModal");
+    const $btnEditAssetGridRow = $("#btnEditAssetGridRow");
+    const $btnConfirmDeleteAsset = $("#btnConfirmDeleteAsset");
+    const $btnExportExcelAsset = $("#btnExportExcelAsset");
+    const $btnDeleteAsset = $("#btnDeleteAsset");
     $(function () {
         $createAssetTabs.tabs();
         $editAssetTabs.tabs();
     });
     let selectedRowColor = "table-primary";
-    $(document).off('rowclick.Asset').on('rowclick.Asset', (e) => {
+    $(document).off("rowclick.Asset").on("rowclick.Asset", (e) => {
         let selectedRow = e.detail;
         let selectedRowProductName = selectedRow.data.ProductName;
-        let $clsGridRow = $('.clsGridRow');
+        let $clsGridRow = $(".clsGridRow");
         $clsGridRow.each(function () {
             $(this).removeClass(selectedRowColor);
         });
         $clsGridRow.each(function () {
-            if ((String(selectedRowProductName).valueOf() === String($(this).attr('data-productName')).valueOf())) {
+            if ((String(selectedRowProductName).valueOf() === String($(this).attr("data-productName")).valueOf())) {
                 $(this).addClass(selectedRowColor);
             }
         });
     });
-    $(document).off('reloadstart.Asset').on('reloadstart.Asset', _ => {
+    $(document).off("reloadstart.Asset").on("reloadstart.Asset", _ => {
     });
-    $(document).off('reloadend.Asset').on('reloadend.Asset', _ => {
+    $(document).off("reloadend.Asset").on("reloadend.Asset", _ => {
     });
-    $(document).off('reloadfail.Asset').on('reloadfail.Asset', _ => {
+    $(document).off("reloadfail.Asset").on("reloadfail.Asset", _ => {
     });
-    $(document).off('gridconfigure.Asset').on('gridconfigure.Asset', _ => {
+    $(document).off("gridconfigure.Asset").on("gridconfigure.Asset", _ => {
     });
-    $(document).off('dblclick.Asset', '.clsGridRow').on('dblclick.Asset', '.clsGridRow', function () {
-        $('.clsGridRow').each(function () {
+    $(document).off("dblclick.Asset", ".clsGridRow").on("dblclick.Asset", ".clsGridRow", function () {
+        $(".clsGridRow").each(function () {
             if ($(this).attr("class").includes(selectedRowColor)) {
                 EditAssetGridRow();
             }
         });
     });
-    $gridSearch.off('input').on('input', function () {
-        const grid = new MvcGrid(document.querySelector('.mvc-grid'));
+    $gridSearch.off("input").on("input", function () {
+        const grid = new MvcGrid(document.querySelector(".mvc-grid"));
         grid.url.searchParams.set("wholeSearch", this.value);
         grid.reload();
     });
@@ -80,16 +80,16 @@
             Note: note
         });
         $.ajax({
-            url: '/AccountBook/CreateAsset',
-            type: 'POST',
+            url: "/AccountBook/CreateAsset",
+            type: "POST",
             headers: { "RequestVerificationToken": $__RequestVerificationToken.val() },
-            dataType: 'json',
+            dataType: "json",
             data: paramValue,
-            contentType: 'application/json; charset=utf-8',
+            contentType: "application/json; charset=utf-8",
             success: function (data) {
                 if (data.result) {
-                    $createAssetDialogModal.modal('hide');
-                    const grid = new MvcGrid(document.querySelector('.mvc-grid'));
+                    $createAssetDialogModal.modal("hide");
+                    const grid = new MvcGrid(document.querySelector(".mvc-grid"));
                     grid.reload();
                     toastr.success(data.message);
                 }
@@ -102,7 +102,7 @@
     }
     function EditAssetGridRow(errorMessageSelectGridRow) {
         let selectedRowProductName = "";
-        $('.clsGridRow').each(function () {
+        $(".clsGridRow").each(function () {
             if ($(this).attr("class").includes(selectedRowColor)) {
                 selectedRowProductName = $(this).attr("data-productName");
             }
@@ -112,12 +112,12 @@
             return false;
         }
         $.ajax({
-            url: '/AccountBook/IsAssetExists' + '?productName=' + selectedRowProductName,
-            type: 'POST',
+            url: "/AccountBook/IsAssetExists" + "?productName=" + selectedRowProductName,
+            type: "POST",
             headers: { "RequestVerificationToken": $__RequestVerificationToken.val() },
-            dataType: 'json',
+            dataType: "json",
             data: null,
-            contentType: 'application/json; charset=utf-8',
+            contentType: "application/json; charset=utf-8",
             success: function (data) {
                 if (data.result) {
                     $editAssetOriginalProductName.val(data.asset.productName);
@@ -131,8 +131,8 @@
                         keyboard: false,
                         backdrop: "static"
                     });
-                    $editAssetDialogModal.modal('toggle');
-                    $editAssetDialogModal.modal('show');
+                    $editAssetDialogModal.modal("toggle");
+                    $editAssetDialogModal.modal("show");
                 }
                 else {
                     toastr.error(data.error);
@@ -161,16 +161,16 @@
             OriginalProductName: originalProductName
         });
         $.ajax({
-            url: '/AccountBook/UpdateAsset',
-            type: 'POST',
+            url: "/AccountBook/UpdateAsset",
+            type: "POST",
             headers: { "RequestVerificationToken": $__RequestVerificationToken.val() },
-            dataType: 'json',
+            dataType: "json",
             data: paramValue,
-            contentType: 'application/json; charset=utf-8',
+            contentType: "application/json; charset=utf-8",
             success: function (data) {
                 if (data.result) {
-                    $editAssetDialogModal.modal('hide');
-                    const grid = new MvcGrid(document.querySelector('.mvc-grid'));
+                    $editAssetDialogModal.modal("hide");
+                    const grid = new MvcGrid(document.querySelector(".mvc-grid"));
                     grid.reload();
                     toastr.success(data.message);
                 }
@@ -183,7 +183,7 @@
     }
     function ConfirmDeleteAsset(errorMessageSelectGridRow) {
         let selectedRowProductName = "";
-        $('.clsGridRow').each(function () {
+        $(".clsGridRow").each(function () {
             if ($(this).attr("class").includes(selectedRowColor)) {
                 selectedRowProductName = $(this).attr("data-productName");
             }
@@ -196,12 +196,12 @@
             keyboard: false,
             backdrop: "static"
         });
-        $confirmDeleteAssetDialogModal.modal('toggle');
-        $confirmDeleteAssetDialogModal.modal('show');
+        $confirmDeleteAssetDialogModal.modal("toggle");
+        $confirmDeleteAssetDialogModal.modal("show");
     }
     function DeleteAsset(errorMessageSelectGridRow) {
         let selectedRowProductName = "";
-        $('.clsGridRow').each(function () {
+        $(".clsGridRow").each(function () {
             if ($(this).attr("class").includes(selectedRowColor)) {
                 selectedRowProductName = $(this).attr("data-productName");
             }
@@ -211,28 +211,28 @@
             return false;
         }
         $.ajax({
-            url: '/AccountBook/IsAssetExists' + '?productName=' + selectedRowProductName,
-            type: 'POST',
+            url: "/AccountBook/IsAssetExists" + "?productName=" + selectedRowProductName,
+            type: "POST",
             headers: { "RequestVerificationToken": $__RequestVerificationToken.val() },
-            dataType: 'json',
+            dataType: "json",
             data: null,
-            contentType: 'application/json; charset=utf-8',
+            contentType: "application/json; charset=utf-8",
             success: function (data) {
                 if (data.result) {
                     let paramValue = JSON.stringify({
                         ProductName: data.asset.productName
                     });
                     $.ajax({
-                        url: '/AccountBook/DeleteAsset',
-                        type: 'POST',
+                        url: "/AccountBook/DeleteAsset",
+                        type: "POST",
                         headers: { "RequestVerificationToken": $__RequestVerificationToken.val() },
-                        dataType: 'json',
+                        dataType: "json",
                         data: paramValue,
-                        contentType: 'application/json; charset=utf-8',
+                        contentType: "application/json; charset=utf-8",
                         success: function (data) {
                             if (data.result) {
-                                $confirmDeleteAssetDialogModal.modal('hide');
-                                const grid = new MvcGrid(document.querySelector('.mvc-grid'));
+                                $confirmDeleteAssetDialogModal.modal("hide");
+                                const grid = new MvcGrid(document.querySelector(".mvc-grid"));
                                 grid.reload();
                                 toastr.success(data.message);
                             }
@@ -263,22 +263,22 @@
         document.body.appendChild(form);
         form.submit();
     }
-    $btnEditAssetGridRow.off('click').on('click', function () {
+    $btnEditAssetGridRow.off("click").on("click", function () {
         EditAssetGridRow($(this).attr("data-errorMessageSelectGridRow"));
     });
-    $btnConfirmDeleteAsset.off('click').on('click', function () {
+    $btnConfirmDeleteAsset.off("click").on("click", function () {
         ConfirmDeleteAsset($(this).attr("data-errorMessageSelectGridRow"));
     });
-    $btnExportExcelAsset.off('click').on('click', function () {
+    $btnExportExcelAsset.off("click").on("click", function () {
         ExportExcelAsset();
     });
-    $btnDeleteAsset.off('click').on('click', function () {
+    $btnDeleteAsset.off("click").on("click", function () {
         DeleteAsset($(this).attr("data-errorMessageSelectGridRow"));
     });
-    $formCreateAsset.off('submit').on('submit', function () {
+    $formCreateAsset.off("submit").on("submit", function () {
         return CreateAsset();
     });
-    $formEditAsset.off('submit').on('submit', function () {
+    $formEditAsset.off("submit").on("submit", function () {
         return UpdateAsset();
     });
 })();

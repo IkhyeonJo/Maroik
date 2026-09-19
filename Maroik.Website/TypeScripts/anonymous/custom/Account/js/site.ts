@@ -23,48 +23,48 @@
 
     /** Register form: show the loading overlay only when the form validates. */
     function ShowRegisterLoading() {
-        if (!$('#registerForm').valid()) {
-            $('#loading').hide();
+        if (!$("#registerForm").valid()) {
+            $("#loading").hide();
             return false;
         }
         else {
-            $('#loading').show();
+            $("#loading").show();
             return true;
         }
     }
 
     /** Forgot-password form: show the loading overlay only when it validates. */
     function ShowForgotPasswordLoading() {
-        if (!$('#forgotPasswordForm').valid()) {
-            $('#loading').hide();
+        if (!$("#forgotPasswordForm").valid()) {
+            $("#loading").hide();
             return false;
         }
         else {
-            $('#loading').show();
+            $("#loading").show();
             return true;
         }
     }
 
     /** Reset-password form: show the loading overlay only when it validates. */
     function ShowResetPasswordLoading() {
-        if (!$('#resetPasswordForm').valid()) {
-            $('#loading').hide();
+        if (!$("#resetPasswordForm").valid()) {
+            $("#loading").hide();
             return false;
         }
         else {
-            $('#loading').show();
+            $("#loading").show();
             return true;
         }
     }
 
     /** Login form: show the loading overlay only when it validates. */
     function ShowLoginLoading() {
-        if (!$('#loginForm').valid()) {
-            $('#loading').hide();
+        if (!$("#loginForm").valid()) {
+            $("#loading").hide();
             return false;
         }
         else {
-            $('#loading').show();
+            $("#loading").show();
             return true;
         }
     }
@@ -83,14 +83,14 @@
         });
 
         $.ajax({
-            url: '/Dashboard/CultureManagement',
-            type: 'POST',
+            url: "/Dashboard/CultureManagement",
+            type: "POST",
             // Anti-forgery token from MVC's hidden input; `.val()` is a union, so
             // narrow it to `string` for the request header.
             headers: { "RequestVerificationToken": $('input[name="__RequestVerificationToken"]').val() as string },
-            dataType: 'json',
+            dataType: "json",
             data: paramValue,
-            contentType: 'application/json; charset=utf-8',
+            contentType: "application/json; charset=utf-8",
             success: function () {
                 window.location.href = $("#returnUri").val() as string;
             }
@@ -101,32 +101,32 @@
     // Each submit/action button flips the overlay through its helper just before
     // the form posts. `.off('click')` guards against a duplicate binding.
 
-    $('#btnRequestNewPassword').off('click').on('click', function () {
+    $("#btnRequestNewPassword").off("click").on("click", function () {
         ShowForgotPasswordLoading();
     });
 
-    $('#aChangeCultureEnUS').off('click').on('click', function () {
-        ChangeCulture('en-US');
+    $("#aChangeCultureEnUS").off("click").on("click", function () {
+        ChangeCulture("en-US");
     });
 
-    $('#aChangeCultureKoKR').off('click').on('click', function () {
-        ChangeCulture('ko-KR');
+    $("#aChangeCultureKoKR").off("click").on("click", function () {
+        ChangeCulture("ko-KR");
     });
 
-    $('#btnSignIn').off('click').on('click', function () {
+    $("#btnSignIn").off("click").on("click", function () {
         ShowLoginLoading();
     });
 
-    $('#btnRegister').off('click').on('click', function () {
+    $("#btnRegister").off("click").on("click", function () {
         ShowRegisterLoading();
     });
 
     // "Resend confirmation e-mail" reuses the register form, hence the same helper.
-    $('#btnResend').off('click').on('click', function () {
+    $("#btnResend").off("click").on("click", function () {
         ShowRegisterLoading();
     });
 
-    $('#btnChangePassword').off('click').on('click', function () {
+    $("#btnChangePassword").off("click").on("click", function () {
         ShowResetPasswordLoading();
     });
 })();

@@ -1,36 +1,36 @@
 "use strict";
 (function () {
-    const $writeBoardContent = $('#writeBoardContent');
-    const $editBoardContent = $('#editBoardContent');
-    const $searchType = $('#searchType');
-    const $btnPrivateNoteSearchText = $('#btnPrivateNoteSearchText');
-    const $formWriteBoard = $('#formWriteBoard');
-    const $loading = $('#loading');
-    const $formEditBoard = $('#formEditBoard');
-    const $writeBoardTitle = $('#writeBoardTitle');
-    const $writeBoardNoticed = $('#writeBoardNoticed');
-    const $writeBoardLocked = $('#writeBoardLocked');
-    const $editBoardTitle = $('#editBoardTitle');
-    const $editBoardLocked = $('#editBoardLocked');
-    const $confirmDeleteBoardDialogModal = $('#confirmDeleteBoardDialogModal');
-    const $writePrivateNoteCommentContent = $('#writePrivateNoteCommentContent');
-    const $detailBoardContent = $('#detailBoardContent');
-    const $aDetailBoardAttachedFile = $('#aDetailBoardAttachedFile');
-    const $aEditBoardAttachedFile = $('#aEditBoardAttachedFile');
-    const $divEditBoardContent = $('#divEditBoardContent');
-    const $editUploadedFile = $('#editUploadedFile');
-    const $writeUploadedFile = $('#writeUploadedFile');
-    const $formWritePrivateNoteComment = $('#formWritePrivateNoteComment');
-    const $btnPrivateNoteDeleteBoard = $('#btnPrivateNoteDeleteBoard');
-    const $btnPrivateNoteSearchBoard = $('#btnPrivateNoteSearchBoard');
-    const $btnPrivateNoteWrite = $('#btnPrivateNoteWrite');
-    const $btnPrivateNoteSubmitModify = $('#btnPrivateNoteSubmitModify');
-    const $btnPrivateNoteList = $('#btnPrivateNoteList');
-    const $btnPrivateNoteConfirmDeleteBoard = $('#btnPrivateNoteConfirmDeleteBoard');
-    const $btnPrivateNoteModify = $('#btnPrivateNoteModify');
-    const $btnPrivateNoteShowWriteBoardLoading = $('#btnPrivateNoteShowWriteBoardLoading');
+    const $writeBoardContent = $("#writeBoardContent");
+    const $editBoardContent = $("#editBoardContent");
+    const $searchType = $("#searchType");
+    const $btnPrivateNoteSearchText = $("#btnPrivateNoteSearchText");
+    const $formWriteBoard = $("#formWriteBoard");
+    const $loading = $("#loading");
+    const $formEditBoard = $("#formEditBoard");
+    const $writeBoardTitle = $("#writeBoardTitle");
+    const $writeBoardNoticed = $("#writeBoardNoticed");
+    const $writeBoardLocked = $("#writeBoardLocked");
+    const $editBoardTitle = $("#editBoardTitle");
+    const $editBoardLocked = $("#editBoardLocked");
+    const $confirmDeleteBoardDialogModal = $("#confirmDeleteBoardDialogModal");
+    const $writePrivateNoteCommentContent = $("#writePrivateNoteCommentContent");
+    const $detailBoardContent = $("#detailBoardContent");
+    const $aDetailBoardAttachedFile = $("#aDetailBoardAttachedFile");
+    const $aEditBoardAttachedFile = $("#aEditBoardAttachedFile");
+    const $divEditBoardContent = $("#divEditBoardContent");
+    const $editUploadedFile = $("#editUploadedFile");
+    const $writeUploadedFile = $("#writeUploadedFile");
+    const $formWritePrivateNoteComment = $("#formWritePrivateNoteComment");
+    const $btnPrivateNoteDeleteBoard = $("#btnPrivateNoteDeleteBoard");
+    const $btnPrivateNoteSearchBoard = $("#btnPrivateNoteSearchBoard");
+    const $btnPrivateNoteWrite = $("#btnPrivateNoteWrite");
+    const $btnPrivateNoteSubmitModify = $("#btnPrivateNoteSubmitModify");
+    const $btnPrivateNoteList = $("#btnPrivateNoteList");
+    const $btnPrivateNoteConfirmDeleteBoard = $("#btnPrivateNoteConfirmDeleteBoard");
+    const $btnPrivateNoteModify = $("#btnPrivateNoteModify");
+    const $btnPrivateNoteShowWriteBoardLoading = $("#btnPrivateNoteShowWriteBoardLoading");
     const $__RequestVerificationToken = $('input[name="__RequestVerificationToken"]');
-    const maxFileSize = parseInt($('#maxAttachedFileSizeBytes').val()) || window.MaroikDefaultMaxAttachedFileSizeBytes;
+    const maxFileSize = parseInt($("#maxAttachedFileSizeBytes").val()) || window.MaroikDefaultMaxAttachedFileSizeBytes;
     const boardHeight = 300;
     function base64ToBlob(base64, mime) {
         const byteCharacters = atob(base64);
@@ -42,7 +42,7 @@
         return new Blob([byteArray], { type: mime });
     }
     const localizer = {
-        IETFLanguageTag: $('#localizerIETFLanguageTag').val()
+        IETFLanguageTag: $("#localizerIETFLanguageTag").val()
     };
     $writeBoardContent.summernote({
         height: boardHeight,
@@ -74,7 +74,7 @@
         }
         if (obj.files[0].size > maxFileSize) {
             alert(errorMessage);
-            document.getElementById('writeUploadedFile').value = "";
+            document.getElementById("writeUploadedFile").value = "";
             return false;
         }
         else {
@@ -87,7 +87,7 @@
         }
         if (obj.files[0].size > maxFileSize) {
             alert(errorMessage);
-            document.getElementById('editUploadedFile').value = "";
+            document.getElementById("editUploadedFile").value = "";
             return false;
         }
         else {
@@ -119,26 +119,26 @@
     }
     function WriteUploadImageFile(file) {
         let formData = new FormData();
-        formData.append('summernoteImageFile', file);
+        formData.append("summernoteImageFile", file);
         $.ajax({
-            url: '/Management/UploadImageFile',
+            url: "/Management/UploadImageFile",
             data: formData,
-            headers: { 'RequestVerificationToken': $__RequestVerificationToken.val() },
-            type: 'POST',
-            enctype: 'multipart/form-data',
+            headers: { "RequestVerificationToken": $__RequestVerificationToken.val() },
+            type: "POST",
+            enctype: "multipart/form-data",
             processData: false,
             contentType: false,
-            dataType: 'json',
+            dataType: "json",
             cache: false,
             success: function (data) {
                 if (data.result) {
                     const imgURL = URL.createObjectURL(base64ToBlob(data.file.fileContents, data.file.contentType));
-                    const imgNode = document.createElement('img');
+                    const imgNode = document.createElement("img");
                     imgNode.src = imgURL;
                     imgNode.style.maxWidth = "170px";
                     imgNode.style.maxHeight = "209px";
-                    imgNode.setAttribute('alt', data.filePath);
-                    $writeBoardContent.summernote('insertNode', imgNode);
+                    imgNode.setAttribute("alt", data.filePath);
+                    $writeBoardContent.summernote("insertNode", imgNode);
                     imgNode.onload = function () {
                         URL.revokeObjectURL(imgURL);
                     };
@@ -154,26 +154,26 @@
     }
     function EditUploadImageFile(file) {
         let formData = new FormData();
-        formData.append('summernoteImageFile', file);
+        formData.append("summernoteImageFile", file);
         $.ajax({
-            url: '/Management/UploadImageFile',
+            url: "/Management/UploadImageFile",
             data: formData,
-            headers: { 'RequestVerificationToken': $__RequestVerificationToken.val() },
-            type: 'POST',
-            enctype: 'multipart/form-data',
+            headers: { "RequestVerificationToken": $__RequestVerificationToken.val() },
+            type: "POST",
+            enctype: "multipart/form-data",
             processData: false,
             contentType: false,
-            dataType: 'json',
+            dataType: "json",
             cache: false,
             success: function (data) {
                 if (data.result) {
                     const imgURL = URL.createObjectURL(base64ToBlob(data.file.fileContents, data.file.contentType));
-                    const imgNode = document.createElement('img');
+                    const imgNode = document.createElement("img");
                     imgNode.src = imgURL;
                     imgNode.style.maxWidth = "170px";
                     imgNode.style.maxHeight = "209px";
-                    imgNode.setAttribute('alt', data.filePath);
-                    $editBoardContent.summernote('insertNode', imgNode);
+                    imgNode.setAttribute("alt", data.filePath);
+                    $editBoardContent.summernote("insertNode", imgNode);
                     imgNode.onload = function () {
                         URL.revokeObjectURL(imgURL);
                     };
@@ -193,19 +193,19 @@
         }
         let title = $writeBoardTitle.val();
         let content = $writeBoardContent.val();
-        let noticed = $writeBoardNoticed.is(':checked');
-        let locked = $writeBoardLocked.is(':checked');
+        let noticed = $writeBoardNoticed.is(":checked");
+        let locked = $writeBoardLocked.is(":checked");
         let formData = new FormData();
-        formData.append('Title', title);
-        formData.append('Content', content);
-        formData.append('Noticed', noticed);
-        formData.append('Locked', locked);
-        formData.append('UploadedFile', writeUploadedFile);
+        formData.append("Title", title);
+        formData.append("Content", content);
+        formData.append("Noticed", noticed);
+        formData.append("Locked", locked);
+        formData.append("UploadedFile", writeUploadedFile);
         $.ajax({
-            url: '/Management/WritePrivateNoteBoard',
-            type: 'POST',
-            headers: { 'RequestVerificationToken': $__RequestVerificationToken.val() },
-            dataType: 'json',
+            url: "/Management/WritePrivateNoteBoard",
+            type: "POST",
+            headers: { "RequestVerificationToken": $__RequestVerificationToken.val() },
+            dataType: "json",
             data: formData,
             contentType: false,
             processData: false,
@@ -228,18 +228,18 @@
         }
         let title = $editBoardTitle.val();
         let content = $editBoardContent.val();
-        let locked = $editBoardLocked.is(':checked');
+        let locked = $editBoardLocked.is(":checked");
         let formData = new FormData();
-        formData.append('Id', editBoardId);
-        formData.append('Title', title);
-        formData.append('Locked', locked);
-        formData.append('Content', content);
-        formData.append('UploadedFile', editUploadedFile);
+        formData.append("Id", editBoardId);
+        formData.append("Title", title);
+        formData.append("Locked", locked);
+        formData.append("Content", content);
+        formData.append("UploadedFile", editUploadedFile);
         $.ajax({
-            url: '/Management/EditPrivateNoteBoard',
-            type: 'POST',
-            headers: { 'RequestVerificationToken': $__RequestVerificationToken.val() },
-            dataType: 'json',
+            url: "/Management/EditPrivateNoteBoard",
+            type: "POST",
+            headers: { "RequestVerificationToken": $__RequestVerificationToken.val() },
+            dataType: "json",
             data: formData,
             contentType: false,
             processData: false,
@@ -261,32 +261,32 @@
             keyboard: false,
             backdrop: "static"
         });
-        $confirmDeleteBoardDialogModal.modal('toggle');
-        $confirmDeleteBoardDialogModal.modal('show');
+        $confirmDeleteBoardDialogModal.modal("toggle");
+        $confirmDeleteBoardDialogModal.modal("show");
     }
     function DeleteBoard(detailBoardId) {
         $.ajax({
-            url: '/Management/IsBoardExists' + '?id=' + detailBoardId,
-            type: 'POST',
-            headers: { 'RequestVerificationToken': $__RequestVerificationToken.val() },
-            dataType: 'json',
+            url: "/Management/IsBoardExists" + "?id=" + detailBoardId,
+            type: "POST",
+            headers: { "RequestVerificationToken": $__RequestVerificationToken.val() },
+            dataType: "json",
             data: null,
-            contentType: 'application/json; charset=utf-8',
+            contentType: "application/json; charset=utf-8",
             success: function (data) {
                 if (data.result) {
                     let paramValue = JSON.stringify({
                         Id: data.privateNoteBoard.id
                     });
                     $.ajax({
-                        url: '/Management/DeleteBoard',
-                        type: 'POST',
-                        headers: { 'RequestVerificationToken': $__RequestVerificationToken.val() },
-                        dataType: 'json',
+                        url: "/Management/DeleteBoard",
+                        type: "POST",
+                        headers: { "RequestVerificationToken": $__RequestVerificationToken.val() },
+                        dataType: "json",
                         data: paramValue,
-                        contentType: 'application/json; charset=utf-8',
+                        contentType: "application/json; charset=utf-8",
                         success: function (data) {
                             if (data.result) {
-                                $confirmDeleteBoardDialogModal.modal('hide');
+                                $confirmDeleteBoardDialogModal.modal("hide");
                                 alert(data.message);
                                 window.location.href = "/Management/PrivateNote";
                             }
@@ -314,12 +314,12 @@
             DetailCurrentPage: detailCurrentPage
         });
         $.ajax({
-            url: '/Management/WritePrivateNoteComment',
-            type: 'POST',
-            headers: { 'RequestVerificationToken': $__RequestVerificationToken.val() },
-            dataType: 'json',
+            url: "/Management/WritePrivateNoteComment",
+            type: "POST",
+            headers: { "RequestVerificationToken": $__RequestVerificationToken.val() },
+            dataType: "json",
             data: paramValue,
-            contentType: 'application/json; charset=utf-8',
+            contentType: "application/json; charset=utf-8",
             success: function (data) {
                 if (data.result) {
                     window.location.href = "/Management/PrivateNote?method=detail" + "&boardId=" + data.boardId + "&page=" + data.page;
@@ -333,12 +333,12 @@
     }
     function DeleteComment(commentId, boardId, page) {
         $.ajax({
-            url: '/Management/DeleteComment' + '?id=' + commentId,
-            type: 'POST',
-            headers: { 'RequestVerificationToken': $__RequestVerificationToken.val() },
-            dataType: 'json',
+            url: "/Management/DeleteComment" + "?id=" + commentId,
+            type: "POST",
+            headers: { "RequestVerificationToken": $__RequestVerificationToken.val() },
+            dataType: "json",
             data: null,
-            contentType: 'application/json; charset=utf-8',
+            contentType: "application/json; charset=utf-8",
             success: function (data) {
                 if (data.result) {
                     window.location.href = "/Management/PrivateNote?method=detail" + "&boardId=" + boardId + "&page=" + page;
@@ -349,62 +349,62 @@
             }
         });
     }
-    $btnPrivateNoteShowWriteBoardLoading.off('click').on('click', function () {
+    $btnPrivateNoteShowWriteBoardLoading.off("click").on("click", function () {
         return ShowWriteBoardLoading();
     });
-    $btnPrivateNoteModify.off('click').on('click', function () {
-        location.href = $(this).attr('data-link');
+    $btnPrivateNoteModify.off("click").on("click", function () {
+        location.href = $(this).attr("data-link");
     });
-    $btnPrivateNoteConfirmDeleteBoard.off('click').on('click', function () {
+    $btnPrivateNoteConfirmDeleteBoard.off("click").on("click", function () {
         ConfirmDeleteBoard();
     });
-    $btnPrivateNoteList.off('click').on('click', function () {
-        location.href = $(this).attr('data-link');
+    $btnPrivateNoteList.off("click").on("click", function () {
+        location.href = $(this).attr("data-link");
     });
-    $btnPrivateNoteSubmitModify.off('click').on('click', function () {
+    $btnPrivateNoteSubmitModify.off("click").on("click", function () {
         return ShowEditBoardLoading();
     });
-    $btnPrivateNoteWrite.off('click').on('click', function () {
+    $btnPrivateNoteWrite.off("click").on("click", function () {
         location.href = "/Management/PrivateNote?method=write";
     });
-    $btnPrivateNoteSearchBoard.off('click').on('click', function () {
+    $btnPrivateNoteSearchBoard.off("click").on("click", function () {
         SearchBoard();
     });
-    $btnPrivateNoteDeleteBoard.off('click').on('click', function () {
-        DeleteBoard($(this).attr('data-boardId'));
+    $btnPrivateNoteDeleteBoard.off("click").on("click", function () {
+        DeleteBoard($(this).attr("data-boardId"));
     });
-    $btnPrivateNoteSearchText.off('keypress').on('keypress', function (event) {
-        if (event.key === 'Enter') {
+    $btnPrivateNoteSearchText.off("keypress").on("keypress", function (event) {
+        if (event.key === "Enter") {
             SearchBoard();
         }
     });
-    $('.aPrivateNoteDeleteComment').off('click').on('click', function (event) {
+    $(".aPrivateNoteDeleteComment").off("click").on("click", function (event) {
         event.preventDefault();
-        DeleteComment($(this).attr('data-commentId'), $(this).attr('data-detailBoardId'), $(this).attr('data-detailCurrentPage'));
+        DeleteComment($(this).attr("data-commentId"), $(this).attr("data-detailBoardId"), $(this).attr("data-detailCurrentPage"));
     });
-    $formWritePrivateNoteComment.off('submit').on('submit', function () {
-        return WritePrivateNoteComment($(this).attr('data-detailBoardId'), $(this).attr('data-detailCurrentPage'), $(this).attr('data-errorMessage'));
+    $formWritePrivateNoteComment.off("submit").on("submit", function () {
+        return WritePrivateNoteComment($(this).attr("data-detailBoardId"), $(this).attr("data-detailCurrentPage"), $(this).attr("data-errorMessage"));
     });
-    $formWriteBoard.off('submit').on('submit', function () {
+    $formWriteBoard.off("submit").on("submit", function () {
         return WriteBoard();
     });
-    $formEditBoard.off('submit').on('submit', function () {
-        return EditBoard($(this).attr('data-editBoardId'), $(this).attr('data-editCurrentPage'));
+    $formEditBoard.off("submit").on("submit", function () {
+        return EditBoard($(this).attr("data-editBoardId"), $(this).attr("data-editCurrentPage"));
     });
-    $writeUploadedFile.off('change').on('change', function () {
-        return WriteUploadFile(this, $(this).attr('data-errorMessage'));
+    $writeUploadedFile.off("change").on("change", function () {
+        return WriteUploadFile(this, $(this).attr("data-errorMessage"));
     });
-    $editUploadedFile.off('change').on('change', function () {
-        return EditUploadFile(this, $(this).attr('data-errorMessage'));
+    $editUploadedFile.off("change").on("change", function () {
+        return EditUploadFile(this, $(this).attr("data-errorMessage"));
     });
     $(function () {
-        if ($detailBoardContent.length > 0 && $detailBoardContent.is(':hidden')) {
+        if ($detailBoardContent.length > 0 && $detailBoardContent.is(":hidden")) {
             const parser = new DOMParser();
-            const htmlDoc = parser.parseFromString($detailBoardContent.html(), 'text/html');
-            const imgTags = htmlDoc.querySelectorAll('img[data-file]');
+            const htmlDoc = parser.parseFromString($detailBoardContent.html(), "text/html");
+            const imgTags = htmlDoc.querySelectorAll("img[data-file]");
             imgTags.forEach(function (imgTag) {
-                const base64Data = imgTag.getAttribute('data-file');
-                const contentType = imgTag.getAttribute('data-contenttype');
+                const base64Data = imgTag.getAttribute("data-file");
+                const contentType = imgTag.getAttribute("data-contenttype");
                 if (base64Data && contentType) {
                     const blob = base64ToBlob(base64Data, contentType);
                     const imgURL = URL.createObjectURL(blob);
@@ -415,21 +415,21 @@
                     imgTag.onerror = function () {
                         URL.revokeObjectURL(imgURL);
                     };
-                    imgTag.removeAttribute('data-file');
-                    imgTag.removeAttribute('data-contenttype');
+                    imgTag.removeAttribute("data-file");
+                    imgTag.removeAttribute("data-contenttype");
                 }
             });
             const updatedHtml = htmlDoc.body.innerHTML;
             $detailBoardContent.html(updatedHtml);
             $detailBoardContent.show();
         }
-        else if ($editBoardContent.length > 0 && $divEditBoardContent.is(':hidden')) {
+        else if ($editBoardContent.length > 0 && $divEditBoardContent.is(":hidden")) {
             const parser = new DOMParser();
-            const htmlDoc = parser.parseFromString($editBoardContent.summernote('code'), 'text/html');
-            const imgTags = htmlDoc.querySelectorAll('img[data-file]');
+            const htmlDoc = parser.parseFromString($editBoardContent.summernote("code"), "text/html");
+            const imgTags = htmlDoc.querySelectorAll("img[data-file]");
             imgTags.forEach(function (imgTag) {
-                const base64Data = imgTag.getAttribute('data-file');
-                const contentType = imgTag.getAttribute('data-contenttype');
+                const base64Data = imgTag.getAttribute("data-file");
+                const contentType = imgTag.getAttribute("data-contenttype");
                 if (base64Data && contentType) {
                     const blob = base64ToBlob(base64Data, contentType);
                     const imgURL = URL.createObjectURL(blob);
@@ -440,24 +440,24 @@
                     imgTag.onerror = function () {
                         URL.revokeObjectURL(imgURL);
                     };
-                    imgTag.removeAttribute('data-file');
-                    imgTag.removeAttribute('data-contenttype');
+                    imgTag.removeAttribute("data-file");
+                    imgTag.removeAttribute("data-contenttype");
                 }
             });
             const updatedHtml = htmlDoc.body.innerHTML;
-            $editBoardContent.summernote('code', updatedHtml);
+            $editBoardContent.summernote("code", updatedHtml);
             $divEditBoardContent.show();
         }
         if ($aDetailBoardAttachedFile.length > 0) {
-            $aDetailBoardAttachedFile.off('click').on('click', function (event) {
+            $aDetailBoardAttachedFile.off("click").on("click", function (event) {
                 event.preventDefault();
-                let base64Data = $(this).attr('data-file');
-                let contentType = $(this).attr('data-contenttype');
-                let name = $(this).attr('data-name');
+                let base64Data = $(this).attr("data-file");
+                let contentType = $(this).attr("data-contenttype");
+                let name = $(this).attr("data-name");
                 if (base64Data && contentType) {
                     let blob = base64ToBlob(base64Data, contentType);
                     let url = URL.createObjectURL(blob);
-                    let a = document.createElement('a');
+                    let a = document.createElement("a");
                     try {
                         a.href = url;
                         a.download = name;
@@ -471,15 +471,15 @@
             });
         }
         else if ($aEditBoardAttachedFile.length > 0) {
-            $aEditBoardAttachedFile.off('click').on('click', function (event) {
+            $aEditBoardAttachedFile.off("click").on("click", function (event) {
                 event.preventDefault();
-                let base64Data = $(this).attr('data-file');
-                let contentType = $(this).attr('data-contenttype');
-                let name = $(this).attr('data-name');
+                let base64Data = $(this).attr("data-file");
+                let contentType = $(this).attr("data-contenttype");
+                let name = $(this).attr("data-name");
                 if (base64Data && contentType) {
                     let blob = base64ToBlob(base64Data, contentType);
                     let url = URL.createObjectURL(blob);
-                    let a = document.createElement('a');
+                    let a = document.createElement("a");
                     try {
                         a.href = url;
                         a.download = name;

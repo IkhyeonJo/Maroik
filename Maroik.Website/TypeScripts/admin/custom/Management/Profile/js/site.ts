@@ -17,19 +17,19 @@
  */
 (function () {
     // Cached form / field references (jQuery objects) and the anti-forgery input.
-    const $formUpdateProfilePassword = $('#formUpdateProfilePassword');
-    const $formUpdateProfileAvatar = $('#formUpdateProfileAvatar');
-    const $profileAvatarFiles = $('#ProfileAvatarFiles');
-    const $newPassword = $('#NewPassword');
-    const $password = $('#Password');
+    const $formUpdateProfilePassword = $("#formUpdateProfilePassword");
+    const $formUpdateProfileAvatar = $("#formUpdateProfileAvatar");
+    const $profileAvatarFiles = $("#ProfileAvatarFiles");
+    const $newPassword = $("#NewPassword");
+    const $password = $("#Password");
     const $__RequestVerificationToken = $('input[name="__RequestVerificationToken"]');
     // Authoritative in ServerSetting.MaxAttachedFileSizeBytes (server); mirrored here for form UX
     // only. Falls back to the shared per-role default (_Layout/site.ts) if the hidden field is
     // missing or unparseable.
-    const maxFileSize = parseInt($('#maxAttachedFileSizeBytes').val() as string) || (window as any).MaroikDefaultMaxAttachedFileSizeBytes;
+    const maxFileSize = parseInt($("#maxAttachedFileSizeBytes").val() as string) || (window as any).MaroikDefaultMaxAttachedFileSizeBytes;
     // Accepted avatar image MIME types, published by Profile.cshtml (ImageUploadPolicy). The
     // server re-validates by extension; this is the client mirror.
-    const allowedImageContentTypes = (JSON.parse(($('#allowedImageContentTypes').val() as string) || '[]')).map(function (t: string) { return t.toLowerCase(); });
+    const allowedImageContentTypes = (JSON.parse(($("#allowedImageContentTypes").val() as string) || "[]")).map(function (t: string) { return t.toLowerCase(); });
 
     /**
      * Validates the freshly chosen avatar file and, if it passes, uploads the
@@ -48,7 +48,7 @@
     function UpdateProfileAvatar(noFileAttachedErrorMessage?: string, fileSizeLimitationErrorMessage?: string, fileTypeErrorMessage?: string) {
         // `.files` is possibly null and `[0]` possibly undefined; typed `any` here
         // because it is compared against `undefined` right below.
-        let files: any = (document.getElementById('ProfileAvatarFiles') as HTMLInputElement).files![0];
+        let files: any = (document.getElementById("ProfileAvatarFiles") as HTMLInputElement).files![0];
         if (files === undefined || files === null) {
             alert(noFileAttachedErrorMessage);
             window.location.href = "/Management/Profile";
@@ -60,20 +60,20 @@
             }
             else if (files.size > 0 && files.size <= maxFileSize) {
                 // Size is fine — now check the MIME type against the allow-list.
-                if (allowedImageContentTypes.indexOf((files.type || '').toLowerCase()) !== -1) {
+                if (allowedImageContentTypes.indexOf((files.type || "").toLowerCase()) !== -1) {
                     // Send the entire form (file + anti-forgery token) as multipart.
                     // processData/contentType `false` let jQuery pass the FormData
                     // through untouched with the correct multipart boundary.
                     let form = $formUpdateProfileAvatar[0] as HTMLFormElement;
                     let formData = new FormData(form);
                     $.ajax({
-                        url: '/Management/UpdateProfileAvatar',
+                        url: "/Management/UpdateProfileAvatar",
                         data: formData,
-                        type: 'POST',
-                        enctype: 'multipart/form-data',
+                        type: "POST",
+                        enctype: "multipart/form-data",
                         processData: false,
                         contentType: false,
-                        dataType: 'json',
+                        dataType: "json",
                         cache: false,
                         success: function (data) {
                             if (data.result) {
@@ -121,12 +121,12 @@
         });
 
         $.ajax({
-            url: '/Management/UpdateProfilePassword',
-            type: 'POST',
-            headers: { 'RequestVerificationToken': $__RequestVerificationToken.val() as string },
-            dataType: 'json',
+            url: "/Management/UpdateProfilePassword",
+            type: "POST",
+            headers: { "RequestVerificationToken": $__RequestVerificationToken.val() as string },
+            dataType: "json",
             data: paramValue,
-            contentType: 'application/json; charset=utf-8',
+            contentType: "application/json; charset=utf-8",
             success: function (data) {
                 if (data.result) {
                     // Changing the password signs every session of the account out — this one
@@ -147,13 +147,13 @@
 
     // Change-password form: run the handler on submit; its `false` return blocks
     // the native navigation.
-    $formUpdateProfilePassword.off('submit').on('submit', function () {
+    $formUpdateProfilePassword.off("submit").on("submit", function () {
         return UpdateProfilePassword();
     });
 
     // Avatar upload is triggered by picking a file, not by a submit button. The
     // localized error strings are read from the input's `data-*` attributes.
-    $profileAvatarFiles.off('change').on('change', function () {
-        return UpdateProfileAvatar($(this).attr('data-noFileAttachedErrorMessage'), $(this).attr('data-fileSizeLimitationErrorMessage'), $(this).attr('data-fileTypeErrorMessage'));
+    $profileAvatarFiles.off("change").on("change", function () {
+        return UpdateProfileAvatar($(this).attr("data-noFileAttachedErrorMessage"), $(this).attr("data-fileSizeLimitationErrorMessage"), $(this).attr("data-fileTypeErrorMessage"));
     });
 })();

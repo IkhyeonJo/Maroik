@@ -21,41 +21,41 @@
 (function () {
     // Cached element references. Many of these exist only on one sub-view, so
     // their `.length` is checked before use.
-    const $writeBoardContent = $('#writeBoardContent');
-    const $editBoardContent = $('#editBoardContent');
-    const $confirmDeleteBoardDialogModal = $('#confirmDeleteBoardDialogModal');
-    const $btnFreeForumSearchText = $('#btnFreeForumSearchText');
-    const $writeUploadedFile = $('#writeUploadedFile');
-    const $editUploadedFile = $('#editUploadedFile');
-    const $formWriteBoard = $('#formWriteBoard');
-    const $searchType = $('#searchType');
-    const $loading = $('#loading');
-    const $formEditBoard = $('#formEditBoard');
-    const $writeBoardTitle = $('#writeBoardTitle');
-    const $writeBoardNoticed = $('#writeBoardNoticed');
-    const $writeBoardLocked = $('#writeBoardLocked');
-    const $editBoardTitle = $('#editBoardTitle');
-    const $editBoardLocked = $('#editBoardLocked');
-    const $writeFreeCommentContent = $('#writeFreeCommentContent');
-    const $btnFreeForumShowWriteBoardLoading = $('#btnFreeForumShowWriteBoardLoading');
-    const $btnFreeForumModify = $('#btnFreeForumModify');
-    const $btnFreeForumConfirmDeleteBoard = $('#btnFreeForumConfirmDeleteBoard');
-    const $btnFreeForumList = $('#btnFreeForumList');
-    const $btnFreeForumSubmitModify = $('#btnFreeForumSubmitModify');
-    const $btnFreeForumWrite = $('#btnFreeForumWrite');
-    const $btnFreeForumSearchBoard = $('#btnFreeForumSearchBoard');
-    const $btnFreeForumDeleteBoard = $('#btnFreeForumDeleteBoard');
-    const $formWriteFreeComment = $('#formWriteFreeComment');
-    const $detailBoardContent = $('#detailBoardContent');
-    const $divEditBoardContent = $('#divEditBoardContent');
-    const $aDetailBoardAttachedFile = $('#aDetailBoardAttachedFile');
-    const $aEditBoardAttachedFile = $('#aEditBoardAttachedFile');
-    const $aFreeForumDeleteComment = $('.aFreeForumDeleteComment');
+    const $writeBoardContent = $("#writeBoardContent");
+    const $editBoardContent = $("#editBoardContent");
+    const $confirmDeleteBoardDialogModal = $("#confirmDeleteBoardDialogModal");
+    const $btnFreeForumSearchText = $("#btnFreeForumSearchText");
+    const $writeUploadedFile = $("#writeUploadedFile");
+    const $editUploadedFile = $("#editUploadedFile");
+    const $formWriteBoard = $("#formWriteBoard");
+    const $searchType = $("#searchType");
+    const $loading = $("#loading");
+    const $formEditBoard = $("#formEditBoard");
+    const $writeBoardTitle = $("#writeBoardTitle");
+    const $writeBoardNoticed = $("#writeBoardNoticed");
+    const $writeBoardLocked = $("#writeBoardLocked");
+    const $editBoardTitle = $("#editBoardTitle");
+    const $editBoardLocked = $("#editBoardLocked");
+    const $writeFreeCommentContent = $("#writeFreeCommentContent");
+    const $btnFreeForumShowWriteBoardLoading = $("#btnFreeForumShowWriteBoardLoading");
+    const $btnFreeForumModify = $("#btnFreeForumModify");
+    const $btnFreeForumConfirmDeleteBoard = $("#btnFreeForumConfirmDeleteBoard");
+    const $btnFreeForumList = $("#btnFreeForumList");
+    const $btnFreeForumSubmitModify = $("#btnFreeForumSubmitModify");
+    const $btnFreeForumWrite = $("#btnFreeForumWrite");
+    const $btnFreeForumSearchBoard = $("#btnFreeForumSearchBoard");
+    const $btnFreeForumDeleteBoard = $("#btnFreeForumDeleteBoard");
+    const $formWriteFreeComment = $("#formWriteFreeComment");
+    const $detailBoardContent = $("#detailBoardContent");
+    const $divEditBoardContent = $("#divEditBoardContent");
+    const $aDetailBoardAttachedFile = $("#aDetailBoardAttachedFile");
+    const $aEditBoardAttachedFile = $("#aEditBoardAttachedFile");
+    const $aFreeForumDeleteComment = $(".aFreeForumDeleteComment");
     const $__RequestVerificationToken = $('input[name="__RequestVerificationToken"]');
     // Authoritative in ServerSetting.MaxAttachedFileSizeBytes (server); mirrored here for form UX
     // only. Falls back to the shared per-role default (_Layout/site.ts) if the hidden field is
     // missing or unparseable.
-    const maxFileSize = parseInt($('#maxAttachedFileSizeBytes').val() as string) || (window as any).MaroikDefaultMaxAttachedFileSizeBytes;
+    const maxFileSize = parseInt($("#maxAttachedFileSizeBytes").val() as string) || (window as any).MaroikDefaultMaxAttachedFileSizeBytes;
     const boardHeight = 300;
 
     /** base64 -> Blob, for turning server-embedded image/attachment payloads into object URLs. */
@@ -72,7 +72,7 @@
     // Only one localized value is needed here — the summernote UI language.
     // `any` avoids typing a one-off bag of `.val()` strings.
     const localizer: any = {
-        IETFLanguageTag: $('#localizerIETFLanguageTag').val()
+        IETFLanguageTag: $("#localizerIETFLanguageTag").val()
     };
 
     // Rich-text editor for the "write" body. `onImageUpload` fires for every
@@ -117,7 +117,7 @@
         }
         if (obj.files[0].size > maxFileSize) {
             alert(errorMessage);
-            $writeUploadedFile.val('');
+            $writeUploadedFile.val("");
             return false;
         }
         else {
@@ -132,7 +132,7 @@
         }
         if (obj.files[0].size > maxFileSize) {
             alert(errorMessage);
-            $editUploadedFile.val('');
+            $editUploadedFile.val("");
             return false;
         }
         else {
@@ -180,28 +180,28 @@
     function WriteUploadImageFile(file: File) {
 
         let formData = new FormData();
-        formData.append('summernoteImageFile', file);
+        formData.append("summernoteImageFile", file);
 
         $.ajax({
-            url: '/Forum/UploadImageFile',
+            url: "/Forum/UploadImageFile",
             data: formData,
-            headers: { 'RequestVerificationToken': $__RequestVerificationToken.val() as string },
-            type: 'POST',
-            enctype: 'multipart/form-data',
+            headers: { "RequestVerificationToken": $__RequestVerificationToken.val() as string },
+            type: "POST",
+            enctype: "multipart/form-data",
             processData: false,
             contentType: false,
-            dataType: 'json',
+            dataType: "json",
             cache: false,
             success: function (data) {
                 if (data.result) {
                     const imgURL = URL.createObjectURL(base64ToBlob(data.file.fileContents, data.file.contentType));
-                    const imgNode = document.createElement('img');
+                    const imgNode = document.createElement("img");
                     imgNode.src = imgURL;
                     imgNode.style.maxWidth = "170px";
                     imgNode.style.maxHeight = "209px";
-                    imgNode.setAttribute('alt', data.filePath);
+                    imgNode.setAttribute("alt", data.filePath);
 
-                    $writeBoardContent.summernote('insertNode', imgNode);
+                    $writeBoardContent.summernote("insertNode", imgNode);
 
                     imgNode.onload = function () {
                         URL.revokeObjectURL(imgURL);
@@ -221,28 +221,28 @@
     function EditUploadImageFile(file: File) {
 
         let formData = new FormData();
-        formData.append('summernoteImageFile', file);
+        formData.append("summernoteImageFile", file);
 
         $.ajax({
-            url: '/Forum/UploadImageFile',
+            url: "/Forum/UploadImageFile",
             data: formData,
-            headers: { 'RequestVerificationToken': $__RequestVerificationToken.val() as string },
-            type: 'POST',
-            enctype: 'multipart/form-data',
+            headers: { "RequestVerificationToken": $__RequestVerificationToken.val() as string },
+            type: "POST",
+            enctype: "multipart/form-data",
             processData: false,
             contentType: false,
-            dataType: 'json',
+            dataType: "json",
             cache: false,
             success: function (data) {
                 if (data.result) {
                     const imgURL = URL.createObjectURL(base64ToBlob(data.file.fileContents, data.file.contentType));
-                    const imgNode = document.createElement('img');
+                    const imgNode = document.createElement("img");
                     imgNode.src = imgURL;
                     imgNode.style.maxWidth = "170px";
                     imgNode.style.maxHeight = "209px";
-                    imgNode.setAttribute('alt', data.filePath);
+                    imgNode.setAttribute("alt", data.filePath);
 
-                    $editBoardContent.summernote('insertNode', imgNode);
+                    $editBoardContent.summernote("insertNode", imgNode);
 
                     imgNode.onload = function () {
                         URL.revokeObjectURL(imgURL);
@@ -274,21 +274,21 @@
 
         let title = $writeBoardTitle.val();
         let content = $writeBoardContent.val();
-        let noticed = $writeBoardNoticed.is(':checked');
-        let locked = $writeBoardLocked.is(':checked');
+        let noticed = $writeBoardNoticed.is(":checked");
+        let locked = $writeBoardLocked.is(":checked");
 
         let formData = new FormData();
-        formData.append('Title', title as any);
-        formData.append('Content', content as any);
-        formData.append('Noticed', noticed as any);
-        formData.append('Locked', locked as any);
-        formData.append('UploadedFile', writeUploadedFile);
+        formData.append("Title", title as any);
+        formData.append("Content", content as any);
+        formData.append("Noticed", noticed as any);
+        formData.append("Locked", locked as any);
+        formData.append("UploadedFile", writeUploadedFile);
 
         $.ajax({
-            url: '/Forum/WriteFreeBoard',
-            type: 'POST',
-            headers: { 'RequestVerificationToken': $__RequestVerificationToken.val() as string },
-            dataType: 'json',
+            url: "/Forum/WriteFreeBoard",
+            type: "POST",
+            headers: { "RequestVerificationToken": $__RequestVerificationToken.val() as string },
+            dataType: "json",
             data: formData,
             contentType: false,
             processData: false,
@@ -323,21 +323,21 @@
 
         let title = $editBoardTitle.val();
         let content = $editBoardContent.val();
-        let locked = $editBoardLocked.is(':checked');
+        let locked = $editBoardLocked.is(":checked");
 
         let formData = new FormData();
-        formData.append('Id', editBoardId as any);
-        formData.append('Title', title as any);
-        formData.append('Locked', locked as any);
-        formData.append('Content', content as any);
-        formData.append('UploadedFile', editUploadedFile);
+        formData.append("Id", editBoardId as any);
+        formData.append("Title", title as any);
+        formData.append("Locked", locked as any);
+        formData.append("Content", content as any);
+        formData.append("UploadedFile", editUploadedFile);
 
 
         $.ajax({
-            url: '/Forum/EditFreeBoard',
-            type: 'POST',
-            headers: { 'RequestVerificationToken': $__RequestVerificationToken.val() as string },
-            dataType: 'json',
+            url: "/Forum/EditFreeBoard",
+            type: "POST",
+            headers: { "RequestVerificationToken": $__RequestVerificationToken.val() as string },
+            dataType: "json",
             data: formData,
             contentType: false,
             processData: false,
@@ -360,11 +360,11 @@
     function ConfirmDeleteBoard() {
         $confirmDeleteBoardDialogModal.modal({
             keyboard: false,
-            backdrop: 'static'
+            backdrop: "static"
         });
 
-        $confirmDeleteBoardDialogModal.modal('toggle');
-        $confirmDeleteBoardDialogModal.modal('show');
+        $confirmDeleteBoardDialogModal.modal("toggle");
+        $confirmDeleteBoardDialogModal.modal("show");
     }
 
     /**
@@ -375,12 +375,12 @@
     function DeleteBoard(detailBoardId?: string) {
 
         $.ajax({
-            url: '/Forum/IsBoardExists' + '?id=' + detailBoardId,
-            type: 'POST',
-            headers: { 'RequestVerificationToken': $__RequestVerificationToken.val() as string },
-            dataType: 'json',
+            url: "/Forum/IsBoardExists" + "?id=" + detailBoardId,
+            type: "POST",
+            headers: { "RequestVerificationToken": $__RequestVerificationToken.val() as string },
+            dataType: "json",
             data: null as any,
-            contentType: 'application/json; charset=utf-8',
+            contentType: "application/json; charset=utf-8",
             success: function (data) {
                 if (data.result) {
 
@@ -389,15 +389,15 @@
                     });
 
                     $.ajax({
-                        url: '/Forum/DeleteBoard',
-                        type: 'POST',
-                        headers: { 'RequestVerificationToken': $__RequestVerificationToken.val() as string },
-                        dataType: 'json',
+                        url: "/Forum/DeleteBoard",
+                        type: "POST",
+                        headers: { "RequestVerificationToken": $__RequestVerificationToken.val() as string },
+                        dataType: "json",
                         data: paramValue,
-                        contentType: 'application/json; charset=utf-8',
+                        contentType: "application/json; charset=utf-8",
                         success: function (data) {
                             if (data.result) {
-                                $confirmDeleteBoardDialogModal.modal('hide');
+                                $confirmDeleteBoardDialogModal.modal("hide");
                                 alert(data.message);
                                 window.location.href = "/Forum/FreeForum";
                             }
@@ -435,12 +435,12 @@
         });
 
         $.ajax({
-            url: '/Forum/WriteFreeComment',
-            type: 'POST',
-            headers: { 'RequestVerificationToken': $__RequestVerificationToken.val() as string },
-            dataType: 'json',
+            url: "/Forum/WriteFreeComment",
+            type: "POST",
+            headers: { "RequestVerificationToken": $__RequestVerificationToken.val() as string },
+            dataType: "json",
             data: paramValue,
-            contentType: 'application/json; charset=utf-8',
+            contentType: "application/json; charset=utf-8",
             success: function (data) {
                 if (data.result) {
                     window.location.href = "/Forum/FreeForum?method=detail" + "&boardId=" + data.boardId + "&page=" + data.page;
@@ -456,12 +456,12 @@
     /** Deletes one comment by id, then reloads the detail view. */
     function DeleteComment(commentId?: string, boardId?: string, page?: string) {
         $.ajax({
-            url: '/Forum/DeleteComment' + '?id=' + commentId,
-            type: 'POST',
-            headers: { 'RequestVerificationToken': $__RequestVerificationToken.val() as string },
-            dataType: 'json',
+            url: "/Forum/DeleteComment" + "?id=" + commentId,
+            type: "POST",
+            headers: { "RequestVerificationToken": $__RequestVerificationToken.val() as string },
+            dataType: "json",
             data: null as any,
-            contentType: 'application/json; charset=utf-8',
+            contentType: "application/json; charset=utf-8",
             success: function (data) {
                 if (data.result) {
                     window.location.href = "/Forum/FreeForum?method=detail" + "&boardId=" + boardId + "&page=" + page;
@@ -477,85 +477,85 @@
     // Every handler is cleared with `.off` first so a re-run cannot double-bind.
     // Buttons that just navigate carry their target in a `data-*` attribute.
 
-    $btnFreeForumShowWriteBoardLoading.off('click').on('click', function () {
+    $btnFreeForumShowWriteBoardLoading.off("click").on("click", function () {
         return ShowWriteBoardLoading();
     });
 
-    $btnFreeForumModify.off('click').on('click', function () {
-        location.href = $(this).attr('data-link')!;
+    $btnFreeForumModify.off("click").on("click", function () {
+        location.href = $(this).attr("data-link")!;
     });
 
-    $btnFreeForumConfirmDeleteBoard.off('click').on('click', function () {
+    $btnFreeForumConfirmDeleteBoard.off("click").on("click", function () {
         ConfirmDeleteBoard();
     });
 
-    $btnFreeForumList.off('click').on('click', function () {
-        location.href = $(this).attr('data-link')!;
+    $btnFreeForumList.off("click").on("click", function () {
+        location.href = $(this).attr("data-link")!;
     });
 
-    $btnFreeForumSubmitModify.off('click').on('click', function () {
+    $btnFreeForumSubmitModify.off("click").on("click", function () {
         return ShowEditBoardLoading();
     });
 
-    $btnFreeForumWrite.off('click').on('click', function () {
+    $btnFreeForumWrite.off("click").on("click", function () {
         location.href = "/Forum/FreeForum?method=write";
     });
 
-    $btnFreeForumSearchBoard.off('click').on('click', function () {
+    $btnFreeForumSearchBoard.off("click").on("click", function () {
         SearchBoard();
     });
 
-    $btnFreeForumDeleteBoard.off('click').on('click', function () {
-        DeleteBoard($(this).attr('data-boardId'));
+    $btnFreeForumDeleteBoard.off("click").on("click", function () {
+        DeleteBoard($(this).attr("data-boardId"));
     });
 
     // Enter in the search box runs the search.
-    $btnFreeForumSearchText.off('keypress').on('keypress', function (event) {
-        if (event.key === 'Enter') {
+    $btnFreeForumSearchText.off("keypress").on("keypress", function (event) {
+        if (event.key === "Enter") {
             SearchBoard();
         }
     });
 
-    $formWriteFreeComment.off('submit').on('submit', function () {
-        return WriteFreeComment($(this).attr('data-detailBoardId'), $(this).attr('data-detailCurrentPage'), $(this).attr('data-errorMessage'));
+    $formWriteFreeComment.off("submit").on("submit", function () {
+        return WriteFreeComment($(this).attr("data-detailBoardId"), $(this).attr("data-detailCurrentPage"), $(this).attr("data-errorMessage"));
     });
 
-    $formWriteBoard.off('submit').on('submit', function () {
+    $formWriteBoard.off("submit").on("submit", function () {
         return WriteBoard();
     });
 
-    $formEditBoard.off('submit').on('submit', function () {
-        return EditBoard($(this).attr('data-editBoardId'), $(this).attr('data-editCurrentPage'));
+    $formEditBoard.off("submit").on("submit", function () {
+        return EditBoard($(this).attr("data-editBoardId"), $(this).attr("data-editCurrentPage"));
     });
 
     // Attachment inputs: validate + stash on selection.
-    $writeUploadedFile.off('change').on('change', function (this: HTMLInputElement) {
-        return WriteUploadFile(this, $(this).attr('data-errorMessage'));
+    $writeUploadedFile.off("change").on("change", function (this: HTMLInputElement) {
+        return WriteUploadFile(this, $(this).attr("data-errorMessage"));
     });
 
-    $editUploadedFile.off('change').on('change', function (this: HTMLInputElement) {
-        return EditUploadFile(this, $(this).attr('data-errorMessage'));
+    $editUploadedFile.off("change").on("change", function (this: HTMLInputElement) {
+        return EditUploadFile(this, $(this).attr("data-errorMessage"));
     });
 
     // Per-comment delete links (a NodeList, hence the class selector).
-    $aFreeForumDeleteComment.off('click').on('click', function (event) {
+    $aFreeForumDeleteComment.off("click").on("click", function (event) {
         event.preventDefault();
-        DeleteComment($(this).attr('data-commentId'), $(this).attr('data-detailBoardId'), $(this).attr('data-detailCurrentPage'));
+        DeleteComment($(this).attr("data-commentId"), $(this).attr("data-detailBoardId"), $(this).attr("data-detailCurrentPage"));
     });
 
     // --- On ready: rehydrate embedded images + wire attachment download ---
     $(function () {
         // Detail view: the body is rendered hidden with base64 `data-file`
         // images; swap each to an object URL in a detached document, then reveal.
-        if ($detailBoardContent.length > 0 && $detailBoardContent.is(':hidden')) {
+        if ($detailBoardContent.length > 0 && $detailBoardContent.is(":hidden")) {
             const parser = new DOMParser();
-            const htmlDoc = parser.parseFromString($detailBoardContent.html(), 'text/html');
+            const htmlDoc = parser.parseFromString($detailBoardContent.html(), "text/html");
 
-            const imgTags = htmlDoc.querySelectorAll<HTMLImageElement>('img[data-file]');
+            const imgTags = htmlDoc.querySelectorAll<HTMLImageElement>("img[data-file]");
 
             imgTags.forEach(function (imgTag) {
-                const base64Data = imgTag.getAttribute('data-file');
-                const contentType = imgTag.getAttribute('data-contenttype');
+                const base64Data = imgTag.getAttribute("data-file");
+                const contentType = imgTag.getAttribute("data-contenttype");
 
                 if (base64Data && contentType) {
                     const blob = base64ToBlob(base64Data, contentType);
@@ -570,25 +570,25 @@
                         URL.revokeObjectURL(imgURL);
                     };
 
-                    imgTag.removeAttribute('data-file');
-                    imgTag.removeAttribute('data-contenttype');
+                    imgTag.removeAttribute("data-file");
+                    imgTag.removeAttribute("data-contenttype");
                 }
             });
 
             const updatedHtml = htmlDoc.body.innerHTML;
             $detailBoardContent.html(updatedHtml);
             $detailBoardContent.show();
-        } else if ($editBoardContent.length > 0 && $divEditBoardContent.is(':hidden')) {
+        } else if ($editBoardContent.length > 0 && $divEditBoardContent.is(":hidden")) {
             // Edit view: same rehydration, but the HTML lives inside summernote
             // (`summernote('code')` gets/sets it) rather than a plain element.
             const parser = new DOMParser();
-            const htmlDoc = parser.parseFromString($editBoardContent.summernote('code'), 'text/html');
+            const htmlDoc = parser.parseFromString($editBoardContent.summernote("code"), "text/html");
 
-            const imgTags = htmlDoc.querySelectorAll<HTMLImageElement>('img[data-file]');
+            const imgTags = htmlDoc.querySelectorAll<HTMLImageElement>("img[data-file]");
 
             imgTags.forEach(function (imgTag) {
-                const base64Data = imgTag.getAttribute('data-file');
-                const contentType = imgTag.getAttribute('data-contenttype');
+                const base64Data = imgTag.getAttribute("data-file");
+                const contentType = imgTag.getAttribute("data-contenttype");
 
                 if (base64Data && contentType) {
                     const blob = base64ToBlob(base64Data, contentType);
@@ -603,29 +603,29 @@
                         URL.revokeObjectURL(imgURL);
                     };
 
-                    imgTag.removeAttribute('data-file');
-                    imgTag.removeAttribute('data-contenttype');
+                    imgTag.removeAttribute("data-file");
+                    imgTag.removeAttribute("data-contenttype");
                 }
             });
 
             const updatedHtml = htmlDoc.body.innerHTML;
-            $editBoardContent.summernote('code', updatedHtml);
+            $editBoardContent.summernote("code", updatedHtml);
             $divEditBoardContent.show();
         }
 
         // Attachment download link (detail or edit view): base64 -> Blob -> a
         // throwaway `<a download>` that is clicked and cleaned up.
         if ($aDetailBoardAttachedFile.length > 0) {
-            $aDetailBoardAttachedFile.off('click').on('click', function (event) {
+            $aDetailBoardAttachedFile.off("click").on("click", function (event) {
                 event.preventDefault();
-                let base64Data = $(this).attr('data-file');
-                let contentType = $(this).attr('data-contenttype');
-                let name = $(this).attr('data-name')
+                let base64Data = $(this).attr("data-file");
+                let contentType = $(this).attr("data-contenttype");
+                let name = $(this).attr("data-name")
 
                 if (base64Data && contentType) {
                     let blob = base64ToBlob(base64Data, contentType);
                     let url = URL.createObjectURL(blob);
-                    let a = document.createElement('a');
+                    let a = document.createElement("a");
                     try {
                         a.href = url;
                         a.download = name!;
@@ -637,16 +637,16 @@
                 }
             });
         } else if ($aEditBoardAttachedFile.length > 0) {
-            $aEditBoardAttachedFile.off('click').on('click', function (event) {
+            $aEditBoardAttachedFile.off("click").on("click", function (event) {
                 event.preventDefault();
-                let base64Data = $(this).attr('data-file');
-                let contentType = $(this).attr('data-contenttype');
-                let name = $(this).attr('data-name')
+                let base64Data = $(this).attr("data-file");
+                let contentType = $(this).attr("data-contenttype");
+                let name = $(this).attr("data-name")
 
                 if (base64Data && contentType) {
                     let blob = base64ToBlob(base64Data, contentType);
                     let url = URL.createObjectURL(blob);
-                    let a = document.createElement('a');
+                    let a = document.createElement("a");
                     try {
                         a.href = url;
                         a.download = name!;

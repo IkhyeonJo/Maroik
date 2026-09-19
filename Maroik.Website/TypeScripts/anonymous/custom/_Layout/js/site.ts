@@ -19,7 +19,7 @@
 (function () {
     // Global safety net: any unhandled AJAX failure sends the visitor to the
     // public dashboard rather than leaving them on a page whose data never loaded.
-    $(document).off('ajaxError._Layout').on('ajaxError._Layout', function () {
+    $(document).off("ajaxError._Layout").on("ajaxError._Layout", function () {
         window.location.href = "/Dashboard/AnonymousIndex";
     });
 
@@ -37,14 +37,14 @@
         });
 
         $.ajax({
-            url: '/Dashboard/CultureManagement',
-            type: 'POST',
+            url: "/Dashboard/CultureManagement",
+            type: "POST",
             // Anti-forgery token from MVC's hidden input; `.val()` is a union, so
             // narrow it to `string` for the request header.
-            headers: { 'RequestVerificationToken': $('input[name="__RequestVerificationToken"]').val() as string },
-            dataType: 'json',
+            headers: { "RequestVerificationToken": $('input[name="__RequestVerificationToken"]').val() as string },
+            dataType: "json",
             data: paramValue,
-            contentType: 'application/json; charset=utf-8',
+            contentType: "application/json; charset=utf-8",
             success: function () {
                 window.location.href = $("#returnUri").val() as string;
             }
@@ -52,16 +52,16 @@
     }
 
     // Top-bar language links.
-    $('#aChangeCultureEnUS').off('click').on('click', function () {
-        ChangeCulture('en-US');
+    $("#aChangeCultureEnUS").off("click").on("click", function () {
+        ChangeCulture("en-US");
     });
 
-    $('#aChangeCultureKoKR').off('click').on('click', function () {
-        ChangeCulture('ko-KR');
+    $("#aChangeCultureKoKR").off("click").on("click", function () {
+        ChangeCulture("ko-KR");
     });
 
     // Top-bar "Login" link (public layout only).
-    $('#btnMainTopBarLogin').off('click').on('click', function () {
+    $("#btnMainTopBarLogin").off("click").on("click", function () {
         location.href = "/Account/Login";
     });
 
@@ -73,32 +73,32 @@
 
     // `ajaxSend` fires just before every request; guard POSTs only (GETs are
     // safe to repeat).
-    $(document).off('ajaxSend._Layout').on('ajaxSend._Layout', function (_event, _xhr, settings: JQuery.AjaxSettings) {
-        if ((settings.type || 'GET').toUpperCase() !== 'POST') return;
+    $(document).off("ajaxSend._Layout").on("ajaxSend._Layout", function (_event, _xhr, settings: JQuery.AjaxSettings) {
+        if ((settings.type || "GET").toUpperCase() !== "POST") return;
         inFlightPostCount++;
-        $('button[type="submit"], input[type="submit"]').prop('disabled', true);
+        $('button[type="submit"], input[type="submit"]').prop("disabled", true);
     });
 
     // `ajaxComplete` fires after each request (success or error); re-enable the
     // submit controls once nothing is in flight.
-    $(document).off('ajaxComplete._Layout').on('ajaxComplete._Layout', function (_event, _xhr, settings: JQuery.AjaxSettings) {
-        if ((settings.type || 'GET').toUpperCase() !== 'POST') return;
+    $(document).off("ajaxComplete._Layout").on("ajaxComplete._Layout", function (_event, _xhr, settings: JQuery.AjaxSettings) {
+        if ((settings.type || "GET").toUpperCase() !== "POST") return;
         inFlightPostCount = Math.max(0, inFlightPostCount - 1);
         if (inFlightPostCount === 0) {
-            $('button[type="submit"], input[type="submit"]').prop('disabled', false);
+            $('button[type="submit"], input[type="submit"]').prop("disabled", false);
         }
     });
 
     // Classic (non-AJAX) form posts: disable that form's submit buttons on submit.
-    $(document).off('submit._Layout', 'form').on('submit._Layout', 'form', function () {
-        $(this).find('button[type="submit"], input[type="submit"]').prop('disabled', true);
+    $(document).off("submit._Layout", "form").on("submit._Layout", "form", function () {
+        $(this).find('button[type="submit"], input[type="submit"]').prop("disabled", true);
     });
 
     // Returning via the browser Back/Forward cache (bfcache) can restore the page
     // with buttons still disabled and the overlay showing — reset on `pageshow`.
-    $(window).off('pageshow._Layout').on('pageshow._Layout', function () {
+    $(window).off("pageshow._Layout").on("pageshow._Layout", function () {
         inFlightPostCount = 0;
-        $('button[type="submit"], input[type="submit"]').prop('disabled', false);
-        $('#loading').hide();
+        $('button[type="submit"], input[type="submit"]').prop("disabled", false);
+        $("#loading").hide();
     });
 })();

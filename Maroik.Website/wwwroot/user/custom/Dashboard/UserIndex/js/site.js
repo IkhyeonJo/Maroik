@@ -1,55 +1,55 @@
 "use strict";
 (function () {
     const localizer = {
-        LaborIncome: $('#localizerLaborIncome').val(),
-        BusinessIncome: $('#localizerBusinessIncome').val(),
-        PensionIncome: $('#localizerPensionIncome').val(),
-        FinancialIncome: $('#localizerFinancialIncome').val(),
-        RentalIncome: $('#localizerRentalIncome').val(),
-        OtherIncome: $('#localizerOtherIncome').val(),
-        Deposit: $('#localizerDeposit').val(),
-        Investment: $('#localizerInvestment').val(),
-        PublicPension: $('#localizerPublicPension').val(),
-        DebtRepayment: $('#localizerDebtRepayment').val(),
-        Tax: $('#localizerTax').val(),
-        SocialInsurance: $('#localizerSocialInsurance').val(),
-        InterHouseholdTransferExpenses: $('#localizerInterHouseholdTransferExpenses').val(),
-        NonProfitOrganizationTransfer: $('#localizerNonProfitOrganizationTransfer').val(),
-        MealOrEatOutExpenses: $('#localizerMealOrEatOutExpenses').val(),
-        HousingOrSuppliesCost: $('#localizerHousingOrSuppliesCost').val(),
-        EducationExpenses: $('#localizerEducationExpenses').val(),
-        MedicalExpenses: $('#localizerMedicalExpenses').val(),
-        TransportationCost: $('#localizerTransportationCost').val(),
-        CommunicationCost: $('#localizerCommunicationCost').val(),
-        LeisureOrCulture: $('#localizerLeisureOrCulture').val(),
-        ClothingOrShoes: $('#localizerClothingOrShoes').val(),
-        PinMoney: $('#localizerPinMoney').val(),
-        ProtectionTypeInsurance: $('#localizerProtectionTypeInsurance').val(),
-        OtherExpenses: $('#localizerOtherExpenses').val(),
-        UnknownExpenditure: $('#localizerUnknownExpenditure').val()
+        LaborIncome: $("#localizerLaborIncome").val(),
+        BusinessIncome: $("#localizerBusinessIncome").val(),
+        PensionIncome: $("#localizerPensionIncome").val(),
+        FinancialIncome: $("#localizerFinancialIncome").val(),
+        RentalIncome: $("#localizerRentalIncome").val(),
+        OtherIncome: $("#localizerOtherIncome").val(),
+        Deposit: $("#localizerDeposit").val(),
+        Investment: $("#localizerInvestment").val(),
+        PublicPension: $("#localizerPublicPension").val(),
+        DebtRepayment: $("#localizerDebtRepayment").val(),
+        Tax: $("#localizerTax").val(),
+        SocialInsurance: $("#localizerSocialInsurance").val(),
+        InterHouseholdTransferExpenses: $("#localizerInterHouseholdTransferExpenses").val(),
+        NonProfitOrganizationTransfer: $("#localizerNonProfitOrganizationTransfer").val(),
+        MealOrEatOutExpenses: $("#localizerMealOrEatOutExpenses").val(),
+        HousingOrSuppliesCost: $("#localizerHousingOrSuppliesCost").val(),
+        EducationExpenses: $("#localizerEducationExpenses").val(),
+        MedicalExpenses: $("#localizerMedicalExpenses").val(),
+        TransportationCost: $("#localizerTransportationCost").val(),
+        CommunicationCost: $("#localizerCommunicationCost").val(),
+        LeisureOrCulture: $("#localizerLeisureOrCulture").val(),
+        ClothingOrShoes: $("#localizerClothingOrShoes").val(),
+        PinMoney: $("#localizerPinMoney").val(),
+        ProtectionTypeInsurance: $("#localizerProtectionTypeInsurance").val(),
+        OtherExpenses: $("#localizerOtherExpenses").val(),
+        UnknownExpenditure: $("#localizerUnknownExpenditure").val()
     };
-    $('#year').off('change').on('change', function () {
-        window.location.href = "/Dashboard/UserIndex?year=" + $('#year').find(":selected").val() + "&month=" + $('#month').find(":selected").val();
+    $("#year").off("change").on("change", function () {
+        window.location.href = "/Dashboard/UserIndex?year=" + $("#year").find(":selected").val() + "&month=" + $("#month").find(":selected").val();
     });
-    $('#month').off('change').on('change', function () {
-        window.location.href = "/Dashboard/UserIndex?year=" + $('#year').find(":selected").val() + "&month=" + $('#month').find(":selected").val();
+    $("#month").off("change").on("change", function () {
+        window.location.href = "/Dashboard/UserIndex?year=" + $("#year").find(":selected").val() + "&month=" + $("#month").find(":selected").val();
     });
-    $('#monetaryUnit').off('change').on('change', function () {
+    $("#monetaryUnit").off("change").on("change", function () {
         $.ajax({
-            url: '/Dashboard/UserUpdateDefaultMonetary',
-            type: 'POST',
+            url: "/Dashboard/UserUpdateDefaultMonetary",
+            type: "POST",
             headers: { "RequestVerificationToken": $('input[name="__RequestVerificationToken"]').val() },
-            dataType: 'json',
+            dataType: "json",
             data: JSON.stringify({
                 DefaultMonetaryUnit: $("#monetaryUnit").find(":selected").val()
             }),
-            contentType: 'application/json; charset=utf-8',
+            contentType: "application/json; charset=utf-8",
             success: function (data) {
                 if (data.result) {
-                    window.location.href = "/Dashboard/UserIndex?year=" + $('#year').find(":selected").val() + "&month=" + $('#month').find(":selected").val();
+                    window.location.href = "/Dashboard/UserIndex?year=" + $("#year").find(":selected").val() + "&month=" + $("#month").find(":selected").val();
                 }
                 else {
-                    window.location.href = "/Dashboard/UserIndex?year=" + $('#year').find(":selected").val() + "&month=" + $('#month').find(":selected").val();
+                    window.location.href = "/Dashboard/UserIndex?year=" + $("#year").find(":selected").val() + "&month=" + $("#month").find(":selected").val();
                 }
             }
         });
@@ -61,7 +61,7 @@
         let regularIncomeFinancialIncomeYear = Number($("#regularIncomeFinancialIncomeYear").val());
         let regularIncomeRentalIncomeYear = Number($("#regularIncomeRentalIncomeYear").val());
         let regularIncomeOtherIncomeYear = Number($("#regularIncomeOtherIncomeYear").val());
-        let donutChartCanvasRegularIncomeYear = $('#regularIncomeYear').get(0).getContext('2d');
+        let donutChartCanvasRegularIncomeYear = $("#regularIncomeYear").get(0).getContext("2d");
         let donutDataRegularIncomeYear = {
             labels: [
                 localizer.LaborIncome,
@@ -74,7 +74,7 @@
             datasets: [
                 {
                     data: [regularIncomeLaborIncomeYear, regularIncomeBusinessIncomeYear, regularIncomePensionIncomeYear, regularIncomeFinancialIncomeYear, regularIncomeRentalIncomeYear, regularIncomeOtherIncomeYear],
-                    backgroundColor: ['#f56954', '#00a65a', '#f39c12', '#00c0ef', '#3c8dbc', '#d2d6de'],
+                    backgroundColor: ["#f56954", "#00a65a", "#f39c12", "#00c0ef", "#3c8dbc", "#d2d6de"],
                 }
             ]
         };
@@ -83,7 +83,7 @@
             responsive: true,
             legend: {
                 labels: {
-                    fontColor: '#fff',
+                    fontColor: "#fff",
                     fontSize: 15
                 }
             },
@@ -107,13 +107,13 @@
             }
         };
         new Chart(donutChartCanvasRegularIncomeYear, {
-            type: 'doughnut',
+            type: "doughnut",
             data: donutDataRegularIncomeYear,
             options: donutOptionsRegularIncomeYear
         });
         let irregularIncomeLaborIncomeYear = Number($("#irregularIncomeLaborIncomeYear").val());
         let irregularIncomeOtherIncomeYear = Number($("#irregularIncomeOtherIncomeYear").val());
-        let donutChartCanvasIrregularIncomeYear = $('#irregularIncomeYear').get(0).getContext('2d');
+        let donutChartCanvasIrregularIncomeYear = $("#irregularIncomeYear").get(0).getContext("2d");
         let donutDataIrregularIncomeYear = {
             labels: [
                 localizer.LaborIncome,
@@ -122,7 +122,7 @@
             datasets: [
                 {
                     data: [irregularIncomeLaborIncomeYear, irregularIncomeOtherIncomeYear],
-                    backgroundColor: ['#f56954', '#00a65a'],
+                    backgroundColor: ["#f56954", "#00a65a"],
                 }
             ]
         };
@@ -131,7 +131,7 @@
             responsive: true,
             legend: {
                 labels: {
-                    fontColor: '#fff',
+                    fontColor: "#fff",
                     fontSize: 15
                 }
             },
@@ -151,13 +151,13 @@
             }
         };
         new Chart(donutChartCanvasIrregularIncomeYear, {
-            type: 'doughnut',
+            type: "doughnut",
             data: donutDataIrregularIncomeYear,
             options: donutOptionsIrregularIncomeYear
         });
         let regularSavingsDepositYear = Number($("#regularSavingsDepositYear").val());
         let regularSavingsInvestmentYear = Number($("#regularSavingsInvestmentYear").val());
-        let donutChartCanvasRegularSavingsYear = $('#regularSavingsYear').get(0).getContext('2d');
+        let donutChartCanvasRegularSavingsYear = $("#regularSavingsYear").get(0).getContext("2d");
         let donutDataRegularSavingsYear = {
             labels: [
                 localizer.Deposit,
@@ -166,7 +166,7 @@
             datasets: [
                 {
                     data: [regularSavingsDepositYear, regularSavingsInvestmentYear],
-                    backgroundColor: ['#f56954', '#00a65a'],
+                    backgroundColor: ["#f56954", "#00a65a"],
                 }
             ]
         };
@@ -175,7 +175,7 @@
             responsive: true,
             legend: {
                 labels: {
-                    fontColor: '#fff',
+                    fontColor: "#fff",
                     fontSize: 15
                 }
             },
@@ -195,7 +195,7 @@
             }
         };
         new Chart(donutChartCanvasRegularSavingsYear, {
-            type: 'doughnut',
+            type: "doughnut",
             data: donutDataRegularSavingsYear,
             options: donutOptionsRegularSavingsYear
         });
@@ -205,7 +205,7 @@
         let nonConsumerSpendingSocialInsuranceYear = Number($("#nonConsumerSpendingSocialInsuranceYear").val());
         let nonConsumerSpendingInterHouseholdTransferExpensesYear = Number($("#nonConsumerSpendingInterHouseholdTransferExpensesYear").val());
         let nonConsumerSpendingNonProfitOrganizationTransferYear = Number($("#nonConsumerSpendingNonProfitOrganizationTransferYear").val());
-        let donutChartCanvasNonConsumerSpendingYear = $('#nonConsumerSpendingYear').get(0).getContext('2d');
+        let donutChartCanvasNonConsumerSpendingYear = $("#nonConsumerSpendingYear").get(0).getContext("2d");
         let donutDataNonConsumerSpendingYear = {
             labels: [
                 localizer.PublicPension,
@@ -218,7 +218,7 @@
             datasets: [
                 {
                     data: [nonConsumerSpendingPublicPensionYear, nonConsumerSpendingDebtRepaymentYear, nonConsumerSpendingTaxYear, nonConsumerSpendingSocialInsuranceYear, nonConsumerSpendingInterHouseholdTransferExpensesYear, nonConsumerSpendingNonProfitOrganizationTransferYear],
-                    backgroundColor: ['#f56954', '#00a65a', '#f39c12', '#00c0ef', '#3c8dbc', '#d2d6de'],
+                    backgroundColor: ["#f56954", "#00a65a", "#f39c12", "#00c0ef", "#3c8dbc", "#d2d6de"],
                 }
             ]
         };
@@ -227,7 +227,7 @@
             responsive: true,
             legend: {
                 labels: {
-                    fontColor: '#fff',
+                    fontColor: "#fff",
                     fontSize: 15
                 }
             },
@@ -251,7 +251,7 @@
             }
         };
         new Chart(donutChartCanvasNonConsumerSpendingYear, {
-            type: 'doughnut',
+            type: "doughnut",
             data: donutDataNonConsumerSpendingYear,
             options: donutOptionsNonConsumerSpendingYear
         });
@@ -267,7 +267,7 @@
         let consumerSpendingProtectionTypeInsuranceYear = Number($("#consumerSpendingProtectionTypeInsuranceYear").val());
         let consumerSpendingOtherExpensesYear = Number($("#consumerSpendingOtherExpensesYear").val());
         let consumerSpendingUnknownExpenditureYear = Number($("#consumerSpendingUnknownExpenditureYear").val());
-        let donutChartCanvasConsumerSpendingYear = $('#consumerSpendingYear').get(0).getContext('2d');
+        let donutChartCanvasConsumerSpendingYear = $("#consumerSpendingYear").get(0).getContext("2d");
         let donutDataConsumerSpendingYear = {
             labels: [
                 localizer.MealOrEatOutExpenses,
@@ -286,7 +286,7 @@
             datasets: [
                 {
                     data: [consumerSpendingMealOrEatOutExpensesYear, consumerSpendingHousingOrSuppliesCostYear, consumerSpendingEducationExpensesYear, consumerSpendingMedicalExpensesYear, consumerSpendingTransportationCostYear, consumerSpendingCommunicationCostYear, consumerSpendingLeisureOrCultureYear, consumerSpendingClothingOrShoesYear, consumerSpendingPinMoneyYear, consumerSpendingProtectionTypeInsuranceYear, consumerSpendingOtherExpensesYear, consumerSpendingUnknownExpenditureYear],
-                    backgroundColor: ['#FF0000', '#FFA200', '#FBFF00', '#70FF00', '#00FFE0', '#003EFF', '#D500FF', '#813F3F', '#7D813F', '#3F815A', '#3F8180', '#3F4B81'],
+                    backgroundColor: ["#FF0000", "#FFA200", "#FBFF00", "#70FF00", "#00FFE0", "#003EFF", "#D500FF", "#813F3F", "#7D813F", "#3F815A", "#3F8180", "#3F4B81"],
                 }
             ]
         };
@@ -295,7 +295,7 @@
             responsive: true,
             legend: {
                 labels: {
-                    fontColor: '#fff',
+                    fontColor: "#fff",
                     fontSize: 15
                 }
             },
@@ -325,7 +325,7 @@
             }
         };
         new Chart(donutChartCanvasConsumerSpendingYear, {
-            type: 'doughnut',
+            type: "doughnut",
             data: donutDataConsumerSpendingYear,
             options: donutOptionsConsumerSpendingYear
         });
@@ -335,7 +335,7 @@
         let regularIncomeFinancialIncomeYearMonth = Number($("#regularIncomeFinancialIncomeYearMonth").val());
         let regularIncomeRentalIncomeYearMonth = Number($("#regularIncomeRentalIncomeYearMonth").val());
         let regularIncomeOtherIncomeYearMonth = Number($("#regularIncomeOtherIncomeYearMonth").val());
-        let donutChartCanvasRegularIncomeYearMonth = $('#regularIncomeYearMonth').get(0).getContext('2d');
+        let donutChartCanvasRegularIncomeYearMonth = $("#regularIncomeYearMonth").get(0).getContext("2d");
         let donutDataRegularIncomeYearMonth = {
             labels: [
                 localizer.LaborIncome,
@@ -348,7 +348,7 @@
             datasets: [
                 {
                     data: [regularIncomeLaborIncomeYearMonth, regularIncomeBusinessIncomeYearMonth, regularIncomePensionIncomeYearMonth, regularIncomeFinancialIncomeYearMonth, regularIncomeRentalIncomeYearMonth, regularIncomeOtherIncomeYearMonth],
-                    backgroundColor: ['#f56954', '#00a65a', '#f39c12', '#00c0ef', '#3c8dbc', '#d2d6de'],
+                    backgroundColor: ["#f56954", "#00a65a", "#f39c12", "#00c0ef", "#3c8dbc", "#d2d6de"],
                 }
             ]
         };
@@ -357,7 +357,7 @@
             responsive: true,
             legend: {
                 labels: {
-                    fontColor: '#fff',
+                    fontColor: "#fff",
                     fontSize: 15
                 }
             },
@@ -381,13 +381,13 @@
             }
         };
         new Chart(donutChartCanvasRegularIncomeYearMonth, {
-            type: 'doughnut',
+            type: "doughnut",
             data: donutDataRegularIncomeYearMonth,
             options: donutOptionsRegularIncomeYearMonth
         });
         let irregularIncomeLaborIncomeYearMonth = Number($("#irregularIncomeLaborIncomeYearMonth").val());
         let irregularIncomeOtherIncomeYearMonth = Number($("#irregularIncomeOtherIncomeYearMonth").val());
-        let donutChartCanvasIrregularIncomeYearMonth = $('#irregularIncomeYearMonth').get(0).getContext('2d');
+        let donutChartCanvasIrregularIncomeYearMonth = $("#irregularIncomeYearMonth").get(0).getContext("2d");
         let donutDataIrregularIncomeYearMonth = {
             labels: [
                 localizer.LaborIncome,
@@ -396,7 +396,7 @@
             datasets: [
                 {
                     data: [irregularIncomeLaborIncomeYearMonth, irregularIncomeOtherIncomeYearMonth],
-                    backgroundColor: ['#f56954', '#00a65a'],
+                    backgroundColor: ["#f56954", "#00a65a"],
                 }
             ]
         };
@@ -405,7 +405,7 @@
             responsive: true,
             legend: {
                 labels: {
-                    fontColor: '#fff',
+                    fontColor: "#fff",
                     fontSize: 15
                 }
             },
@@ -425,13 +425,13 @@
             }
         };
         new Chart(donutChartCanvasIrregularIncomeYearMonth, {
-            type: 'doughnut',
+            type: "doughnut",
             data: donutDataIrregularIncomeYearMonth,
             options: donutOptionsIrregularIncomeYearMonth
         });
         let regularSavingsDepositYearMonth = Number($("#regularSavingsDepositYearMonth").val());
         let regularSavingsInvestmentYearMonth = Number($("#regularSavingsInvestmentYearMonth").val());
-        let donutChartCanvasRegularSavingsYearMonth = $('#regularSavingsYearMonth').get(0).getContext('2d');
+        let donutChartCanvasRegularSavingsYearMonth = $("#regularSavingsYearMonth").get(0).getContext("2d");
         let donutDataRegularSavingsYearMonth = {
             labels: [
                 localizer.Deposit,
@@ -440,7 +440,7 @@
             datasets: [
                 {
                     data: [regularSavingsDepositYearMonth, regularSavingsInvestmentYearMonth],
-                    backgroundColor: ['#f56954', '#00a65a'],
+                    backgroundColor: ["#f56954", "#00a65a"],
                 }
             ]
         };
@@ -449,7 +449,7 @@
             responsive: true,
             legend: {
                 labels: {
-                    fontColor: '#fff',
+                    fontColor: "#fff",
                     fontSize: 15
                 }
             },
@@ -469,7 +469,7 @@
             }
         };
         new Chart(donutChartCanvasRegularSavingsYearMonth, {
-            type: 'doughnut',
+            type: "doughnut",
             data: donutDataRegularSavingsYearMonth,
             options: donutOptionsRegularSavingsYearMonth
         });
@@ -479,7 +479,7 @@
         let nonConsumerSpendingSocialInsuranceYearMonth = Number($("#nonConsumerSpendingSocialInsuranceYearMonth").val());
         let nonConsumerSpendingInterHouseholdTransferExpensesYearMonth = Number($("#nonConsumerSpendingInterHouseholdTransferExpensesYearMonth").val());
         let nonConsumerSpendingNonProfitOrganizationTransferYearMonth = Number($("#nonConsumerSpendingNonProfitOrganizationTransferYearMonth").val());
-        let donutChartCanvasNonConsumerSpendingYearMonth = $('#nonConsumerSpendingYearMonth').get(0).getContext('2d');
+        let donutChartCanvasNonConsumerSpendingYearMonth = $("#nonConsumerSpendingYearMonth").get(0).getContext("2d");
         let donutDataNonConsumerSpendingYearMonth = {
             labels: [
                 localizer.PublicPension,
@@ -492,7 +492,7 @@
             datasets: [
                 {
                     data: [nonConsumerSpendingPublicPensionYearMonth, nonConsumerSpendingDebtRepaymentYearMonth, nonConsumerSpendingTaxYearMonth, nonConsumerSpendingSocialInsuranceYearMonth, nonConsumerSpendingInterHouseholdTransferExpensesYearMonth, nonConsumerSpendingNonProfitOrganizationTransferYearMonth],
-                    backgroundColor: ['#f56954', '#00a65a', '#f39c12', '#00c0ef', '#3c8dbc', '#d2d6de'],
+                    backgroundColor: ["#f56954", "#00a65a", "#f39c12", "#00c0ef", "#3c8dbc", "#d2d6de"],
                 }
             ]
         };
@@ -501,7 +501,7 @@
             responsive: true,
             legend: {
                 labels: {
-                    fontColor: '#fff',
+                    fontColor: "#fff",
                     fontSize: 15
                 }
             },
@@ -525,7 +525,7 @@
             }
         };
         new Chart(donutChartCanvasNonConsumerSpendingYearMonth, {
-            type: 'doughnut',
+            type: "doughnut",
             data: donutDataNonConsumerSpendingYearMonth,
             options: donutOptionsNonConsumerSpendingYearMonth
         });
@@ -541,7 +541,7 @@
         let consumerSpendingProtectionTypeInsuranceYearMonth = Number($("#consumerSpendingProtectionTypeInsuranceYearMonth").val());
         let consumerSpendingOtherExpensesYearMonth = Number($("#consumerSpendingOtherExpensesYearMonth").val());
         let consumerSpendingUnknownExpenditureYearMonth = Number($("#consumerSpendingUnknownExpenditureYearMonth").val());
-        let donutChartCanvasConsumerSpendingYearMonth = $('#consumerSpendingYearMonth').get(0).getContext('2d');
+        let donutChartCanvasConsumerSpendingYearMonth = $("#consumerSpendingYearMonth").get(0).getContext("2d");
         let donutDataConsumerSpendingYearMonth = {
             labels: [
                 localizer.MealOrEatOutExpenses,
@@ -560,7 +560,7 @@
             datasets: [
                 {
                     data: [consumerSpendingMealOrEatOutExpensesYearMonth, consumerSpendingHousingOrSuppliesCostYearMonth, consumerSpendingEducationExpensesYearMonth, consumerSpendingMedicalExpensesYearMonth, consumerSpendingTransportationCostYearMonth, consumerSpendingCommunicationCostYearMonth, consumerSpendingLeisureOrCultureYearMonth, consumerSpendingClothingOrShoesYearMonth, consumerSpendingPinMoneyYearMonth, consumerSpendingProtectionTypeInsuranceYearMonth, consumerSpendingOtherExpensesYearMonth, consumerSpendingUnknownExpenditureYearMonth],
-                    backgroundColor: ['#FF0000', '#FFA200', '#FBFF00', '#70FF00', '#00FFE0', '#003EFF', '#D500FF', '#813F3F', '#7D813F', '#3F815A', '#3F8180', '#3F4B81'],
+                    backgroundColor: ["#FF0000", "#FFA200", "#FBFF00", "#70FF00", "#00FFE0", "#003EFF", "#D500FF", "#813F3F", "#7D813F", "#3F815A", "#3F8180", "#3F4B81"],
                 }
             ]
         };
@@ -569,7 +569,7 @@
             responsive: true,
             legend: {
                 labels: {
-                    fontColor: '#fff',
+                    fontColor: "#fff",
                     fontSize: 15
                 }
             },
@@ -599,7 +599,7 @@
             }
         };
         new Chart(donutChartCanvasConsumerSpendingYearMonth, {
-            type: 'doughnut',
+            type: "doughnut",
             data: donutDataConsumerSpendingYearMonth,
             options: donutOptionsConsumerSpendingYearMonth
         });

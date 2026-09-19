@@ -4,52 +4,52 @@
     const $editFixedExpenditureTabs = $("#editFixedExpenditureTabs");
     const $createFixedExpenditureMaturityDate = $("#createFixedExpenditureMaturityDate");
     const $editFixedExpenditureMaturityDate = $("#editFixedExpenditureMaturityDate");
-    const $gridSearch = $('#gridSearch');
-    const $createFixedExpenditureSubClass = $('#createFixedExpenditureSubClass');
+    const $gridSearch = $("#gridSearch");
+    const $createFixedExpenditureSubClass = $("#createFixedExpenditureSubClass");
     const $divCreateFixedExpenditureMyDepositAsset = $("#divCreateFixedExpenditureMyDepositAsset");
-    const $createFixedExpenditureDepositDay = $('#createFixedExpenditureDepositDay');
-    const $editFixedExpenditureSubClass = $('#editFixedExpenditureSubClass');
+    const $createFixedExpenditureDepositDay = $("#createFixedExpenditureDepositDay");
+    const $editFixedExpenditureSubClass = $("#editFixedExpenditureSubClass");
     const $divEditFixedExpenditureMyDepositAsset = $("#divEditFixedExpenditureMyDepositAsset");
-    const $editFixedExpenditureDepositDay = $('#editFixedExpenditureDepositDay');
-    const $formCreateFixedExpenditure = $('#formCreateFixedExpenditure');
-    const $editFixedExpenditureDialogModal = $('#editFixedExpenditureDialogModal');
-    const $formEditFixedExpenditure = $('#formEditFixedExpenditure');
-    const $confirmDeleteFixedExpenditureDialogModal = $('#confirmDeleteFixedExpenditureDialogModal');
+    const $editFixedExpenditureDepositDay = $("#editFixedExpenditureDepositDay");
+    const $formCreateFixedExpenditure = $("#formCreateFixedExpenditure");
+    const $editFixedExpenditureDialogModal = $("#editFixedExpenditureDialogModal");
+    const $formEditFixedExpenditure = $("#formEditFixedExpenditure");
+    const $confirmDeleteFixedExpenditureDialogModal = $("#confirmDeleteFixedExpenditureDialogModal");
     const $__RequestVerificationToken = $('input[name="__RequestVerificationToken"]');
-    const failedToLoadAmountLabelMessage = $('#localizerFailedToLoadAmountLabel').val();
-    const $createFixedExpenditureDialogModal = $('#createFixedExpenditureDialogModal');
-    const $createFixedExpenditurePaymentMethod = $('#createFixedExpenditurePaymentMethod');
-    const $editFixedExpenditurePaymentMethod = $('#editFixedExpenditurePaymentMethod');
-    const $editFixedExpenditureDepositMonth = $('#editFixedExpenditureDepositMonth');
-    const $editFixedExpenditureMainClass = $('#editFixedExpenditureMainClass');
-    const $createFixedExpenditureDepositMonth = $('#createFixedExpenditureDepositMonth');
-    const $createFixedExpenditureMainClass = $('#createFixedExpenditureMainClass');
-    const $btnDeleteFixedExpenditure = $('#btnDeleteFixedExpenditure');
-    const $btnExportExcelFixedExpenditure = $('#btnExportExcelFixedExpenditure');
-    const $btnConfirmDeleteFixedExpenditure = $('#btnConfirmDeleteFixedExpenditure');
-    const $btnEditFixedExpenditureGridRow = $('#btnEditFixedExpenditureGridRow');
-    const $labelEditFixedExpenditureAmount = $('#labelEditFixedExpenditureAmount');
-    const $labelCreateFixedExpenditureAmount = $('#labelCreateFixedExpenditureAmount');
-    const $editFixedExpenditureId = $('#editFixedExpenditureId');
-    const $editFixedExpenditureContent = $('#editFixedExpenditureContent');
-    const $editFixedExpenditureAmount = $('#editFixedExpenditureAmount');
-    const $editFixedExpenditureNote = $('#editFixedExpenditureNote');
-    const $editFixedExpenditureMyDepositAsset = $('#editFixedExpenditureMyDepositAsset');
-    const $editFixedExpenditureUnpunctuality = $('#editFixedExpenditureUnpunctuality');
-    const $createFixedExpenditureContent = $('#createFixedExpenditureContent');
-    const $createFixedExpenditureAmount = $('#createFixedExpenditureAmount');
-    const $createFixedExpenditureNote = $('#createFixedExpenditureNote');
-    const $createFixedExpenditureMyDepositAsset = $('#createFixedExpenditureMyDepositAsset');
-    const expenditureSubClassMap = JSON.parse($('#expenditureSubClassMap').val() || '{}');
-    const expenditureDepositAssetSubClasses = JSON.parse($('#expenditureDepositAssetSubClasses').val() || '[]');
-    const maxDepositDayByMonth = JSON.parse($('#maxDepositDayByMonth').val() || '{}');
-    const noMaturityIso = $('#noMaturityDate').val();
-    const [nmYear, nmMonth, nmDay] = noMaturityIso.split('-').map(Number);
+    const failedToLoadAmountLabelMessage = $("#localizerFailedToLoadAmountLabel").val();
+    const $createFixedExpenditureDialogModal = $("#createFixedExpenditureDialogModal");
+    const $createFixedExpenditurePaymentMethod = $("#createFixedExpenditurePaymentMethod");
+    const $editFixedExpenditurePaymentMethod = $("#editFixedExpenditurePaymentMethod");
+    const $editFixedExpenditureDepositMonth = $("#editFixedExpenditureDepositMonth");
+    const $editFixedExpenditureMainClass = $("#editFixedExpenditureMainClass");
+    const $createFixedExpenditureDepositMonth = $("#createFixedExpenditureDepositMonth");
+    const $createFixedExpenditureMainClass = $("#createFixedExpenditureMainClass");
+    const $btnDeleteFixedExpenditure = $("#btnDeleteFixedExpenditure");
+    const $btnExportExcelFixedExpenditure = $("#btnExportExcelFixedExpenditure");
+    const $btnConfirmDeleteFixedExpenditure = $("#btnConfirmDeleteFixedExpenditure");
+    const $btnEditFixedExpenditureGridRow = $("#btnEditFixedExpenditureGridRow");
+    const $labelEditFixedExpenditureAmount = $("#labelEditFixedExpenditureAmount");
+    const $labelCreateFixedExpenditureAmount = $("#labelCreateFixedExpenditureAmount");
+    const $editFixedExpenditureId = $("#editFixedExpenditureId");
+    const $editFixedExpenditureContent = $("#editFixedExpenditureContent");
+    const $editFixedExpenditureAmount = $("#editFixedExpenditureAmount");
+    const $editFixedExpenditureNote = $("#editFixedExpenditureNote");
+    const $editFixedExpenditureMyDepositAsset = $("#editFixedExpenditureMyDepositAsset");
+    const $editFixedExpenditureUnpunctuality = $("#editFixedExpenditureUnpunctuality");
+    const $createFixedExpenditureContent = $("#createFixedExpenditureContent");
+    const $createFixedExpenditureAmount = $("#createFixedExpenditureAmount");
+    const $createFixedExpenditureNote = $("#createFixedExpenditureNote");
+    const $createFixedExpenditureMyDepositAsset = $("#createFixedExpenditureMyDepositAsset");
+    const expenditureSubClassMap = JSON.parse($("#expenditureSubClassMap").val() || "{}");
+    const expenditureDepositAssetSubClasses = JSON.parse($("#expenditureDepositAssetSubClasses").val() || "[]");
+    const maxDepositDayByMonth = JSON.parse($("#maxDepositDayByMonth").val() || "{}");
+    const noMaturityIso = $("#noMaturityDate").val();
+    const [nmYear, nmMonth, nmDay] = noMaturityIso.split("-").map(Number);
     const NO_MATURITY_DATE = new Date(nmYear, nmMonth - 1, nmDay);
     function ApplyAllowedOptions($select, allowedValues, valueToSelect) {
-        $select.find('option').each(function () {
+        $select.find("option").each(function () {
             const allowed = allowedValues.indexOf(this.value) !== -1;
-            $(this).prop('disabled', !allowed).prop('hidden', !allowed);
+            $(this).prop("disabled", !allowed).prop("hidden", !allowed);
         });
         const target = (valueToSelect != null && allowedValues.indexOf(valueToSelect) !== -1)
             ? valueToSelect
@@ -77,59 +77,59 @@
             : $divEditFixedExpenditureMyDepositAsset.hide();
     }
     const localizer = {
-        PrevText: $('#localizerPrevText').val(),
-        NextText: $('#localizerNextText').val(),
-        January: $('#localizerJanuary').val(),
-        February: $('#localizerFebruary').val(),
-        March: $('#localizerMarch').val(),
-        April: $('#localizerApril').val(),
-        May: $('#localizerMay').val(),
-        June: $('#localizerJune').val(),
-        July: $('#localizerJuly').val(),
-        August: $('#localizerAugust').val(),
-        September: $('#localizerSeptember').val(),
-        October: $('#localizerOctober').val(),
-        November: $('#localizerNovember').val(),
-        December: $('#localizerDecember').val(),
-        Jan: $('#localizerJan').val(),
-        Feb: $('#localizerFeb').val(),
-        Mar: $('#localizerMar').val(),
-        Apr: $('#localizerApr').val(),
-        Jun: $('#localizerJun').val(),
-        Jul: $('#localizerJul').val(),
-        Aug: $('#localizerAug').val(),
-        Sep: $('#localizerSep').val(),
-        Oct: $('#localizerOct').val(),
-        Nov: $('#localizerNov').val(),
-        Dec: $('#localizerDec').val(),
-        Sunday: $('#localizerSunday').val(),
-        Monday: $('#localizerMonday').val(),
-        Tuesday: $('#localizerTuesday').val(),
-        Wednesday: $('#localizerWednesday').val(),
-        Thursday: $('#localizerThursday').val(),
-        Friday: $('#localizerFriday').val(),
-        Saturday: $('#localizerSaturday').val(),
-        Sun: $('#localizerSun').val(),
-        Mon: $('#localizerMon').val(),
-        Tue: $('#localizerTue').val(),
-        Wed: $('#localizerWed').val(),
-        Thu: $('#localizerThu').val(),
-        Fri: $('#localizerFri').val(),
-        Sat: $('#localizerSat').val(),
-        Su: $('#localizerSu').val(),
-        Mo: $('#localizerMo').val(),
-        Tu: $('#localizerTu').val(),
-        We: $('#localizerWe').val(),
-        Th: $('#localizerTh').val(),
-        Fr: $('#localizerFr').val(),
-        Sa: $('#localizerSa').val(),
-        YearSuffix: $('#localizerYearSuffix').val(),
-        NoMaturityDate: $('#localizerNoMaturityDate').val(),
-        Today: $('#localizerToday').val(),
-        MaturityDateError: $('#localizerMaturityDateError').val(),
+        PrevText: $("#localizerPrevText").val(),
+        NextText: $("#localizerNextText").val(),
+        January: $("#localizerJanuary").val(),
+        February: $("#localizerFebruary").val(),
+        March: $("#localizerMarch").val(),
+        April: $("#localizerApril").val(),
+        May: $("#localizerMay").val(),
+        June: $("#localizerJune").val(),
+        July: $("#localizerJuly").val(),
+        August: $("#localizerAugust").val(),
+        September: $("#localizerSeptember").val(),
+        October: $("#localizerOctober").val(),
+        November: $("#localizerNovember").val(),
+        December: $("#localizerDecember").val(),
+        Jan: $("#localizerJan").val(),
+        Feb: $("#localizerFeb").val(),
+        Mar: $("#localizerMar").val(),
+        Apr: $("#localizerApr").val(),
+        Jun: $("#localizerJun").val(),
+        Jul: $("#localizerJul").val(),
+        Aug: $("#localizerAug").val(),
+        Sep: $("#localizerSep").val(),
+        Oct: $("#localizerOct").val(),
+        Nov: $("#localizerNov").val(),
+        Dec: $("#localizerDec").val(),
+        Sunday: $("#localizerSunday").val(),
+        Monday: $("#localizerMonday").val(),
+        Tuesday: $("#localizerTuesday").val(),
+        Wednesday: $("#localizerWednesday").val(),
+        Thursday: $("#localizerThursday").val(),
+        Friday: $("#localizerFriday").val(),
+        Saturday: $("#localizerSaturday").val(),
+        Sun: $("#localizerSun").val(),
+        Mon: $("#localizerMon").val(),
+        Tue: $("#localizerTue").val(),
+        Wed: $("#localizerWed").val(),
+        Thu: $("#localizerThu").val(),
+        Fri: $("#localizerFri").val(),
+        Sat: $("#localizerSat").val(),
+        Su: $("#localizerSu").val(),
+        Mo: $("#localizerMo").val(),
+        Tu: $("#localizerTu").val(),
+        We: $("#localizerWe").val(),
+        Th: $("#localizerTh").val(),
+        Fr: $("#localizerFr").val(),
+        Sa: $("#localizerSa").val(),
+        YearSuffix: $("#localizerYearSuffix").val(),
+        NoMaturityDate: $("#localizerNoMaturityDate").val(),
+        Today: $("#localizerToday").val(),
+        MaturityDateError: $("#localizerMaturityDateError").val(),
     };
     $.datepicker.setDefaults({
-        dateFormat: 'yy-mm-dd',
+        dateFormat: "yy-mm-dd",
         prevText: localizer.PrevText,
         nextText: localizer.NextText,
         monthNames: [localizer.January, localizer.February, localizer.March, localizer.April, localizer.May, localizer.June, localizer.July, localizer.August, localizer.September, localizer.October, localizer.November, localizer.December],
@@ -237,41 +237,41 @@
         });
         $createFixedExpenditureMaturityDate.datepicker("setDate", new Date());
         $editFixedExpenditureMaturityDate.datepicker("setDate", new Date());
-        $('<style> .ui-datepicker-close { display: none; } </style>').appendTo("head");
-        $('<style> .ui-datepicker-current { display: none; } </style>').appendTo("head");
+        $("<style> .ui-datepicker-close { display: none; } </style>").appendTo("head");
+        $("<style> .ui-datepicker-current { display: none; } </style>").appendTo("head");
     });
     let selectedRowColor = "table-primary";
-    $(document).off('rowclick.FixedExpenditure').on('rowclick.FixedExpenditure', (e) => {
+    $(document).off("rowclick.FixedExpenditure").on("rowclick.FixedExpenditure", (e) => {
         let selectedRow = e.detail;
         let selectedRowId = selectedRow.data.Id;
-        let $clsGridRow = $('.clsGridRow');
+        let $clsGridRow = $(".clsGridRow");
         $clsGridRow.each(function () {
             $(this).removeClass(selectedRowColor);
         });
         $clsGridRow.each(function () {
-            if ((String(selectedRowId).valueOf() === String($(this).attr('data-id')).valueOf())) {
+            if ((String(selectedRowId).valueOf() === String($(this).attr("data-id")).valueOf())) {
                 $(this).addClass(selectedRowColor);
             }
         });
     });
-    $(document).off('reloadstart.FixedExpenditure').on('reloadstart.FixedExpenditure', _ => {
+    $(document).off("reloadstart.FixedExpenditure").on("reloadstart.FixedExpenditure", _ => {
     });
-    $(document).off('reloadend.FixedExpenditure').on('reloadend.FixedExpenditure', _ => {
+    $(document).off("reloadend.FixedExpenditure").on("reloadend.FixedExpenditure", _ => {
     });
-    $(document).off('reloadfail.FixedExpenditure').on('reloadfail.FixedExpenditure', _ => {
+    $(document).off("reloadfail.FixedExpenditure").on("reloadfail.FixedExpenditure", _ => {
     });
-    $(document).off('gridconfigure.FixedExpenditure').on('gridconfigure.FixedExpenditure', _ => {
+    $(document).off("gridconfigure.FixedExpenditure").on("gridconfigure.FixedExpenditure", _ => {
     });
-    $(document).off('dblclick.FixedExpenditure', '.clsGridRow').on('dblclick.FixedExpenditure', '.clsGridRow', function () {
-        $('.clsGridRow').each(function () {
-            if ($(this).attr('class').includes(selectedRowColor)) {
+    $(document).off("dblclick.FixedExpenditure", ".clsGridRow").on("dblclick.FixedExpenditure", ".clsGridRow", function () {
+        $(".clsGridRow").each(function () {
+            if ($(this).attr("class").includes(selectedRowColor)) {
                 EditFixedExpenditureGridRow();
             }
         });
     });
-    $gridSearch.off('input').on('input', function () {
-        const grid = new MvcGrid(document.querySelector('.mvc-grid'));
-        grid.url.searchParams.set('wholeSearch', this.value);
+    $gridSearch.off("input").on("input", function () {
+        const grid = new MvcGrid(document.querySelector(".mvc-grid"));
+        grid.url.searchParams.set("wholeSearch", this.value);
         grid.reload();
     });
     function CreateFormShowFixedExpenditureSubClassBySelectedFixedExpenditureMainClass(createFixedExpenditureMainClass) {
@@ -321,16 +321,16 @@
             MyDepositAsset: myDepositAsset
         });
         $.ajax({
-            url: '/Notice/CreateFixedExpenditure',
-            type: 'POST',
+            url: "/Notice/CreateFixedExpenditure",
+            type: "POST",
             headers: { "RequestVerificationToken": $__RequestVerificationToken.val() },
-            dataType: 'json',
+            dataType: "json",
             data: paramValue,
-            contentType: 'application/json; charset=utf-8',
+            contentType: "application/json; charset=utf-8",
             success: function (data) {
                 if (data.result) {
-                    $createFixedExpenditureDialogModal.modal('hide');
-                    const grid = new MvcGrid(document.querySelector('.mvc-grid'));
+                    $createFixedExpenditureDialogModal.modal("hide");
+                    const grid = new MvcGrid(document.querySelector(".mvc-grid"));
                     grid.reload();
                     toastr.success(data.message);
                 }
@@ -343,7 +343,7 @@
     }
     function EditFixedExpenditureGridRow(errorMessageSelectGridRow) {
         let selectedRowId = "";
-        $('.clsGridRow').each(function () {
+        $(".clsGridRow").each(function () {
             if ($(this).attr("class").includes(selectedRowColor)) {
                 selectedRowId = $(this).attr("data-id");
             }
@@ -353,12 +353,12 @@
             return false;
         }
         $.ajax({
-            url: '/Notice/IsFixedExpenditureExists' + '?id=' + selectedRowId,
-            type: 'POST',
+            url: "/Notice/IsFixedExpenditureExists" + "?id=" + selectedRowId,
+            type: "POST",
             headers: { "RequestVerificationToken": $__RequestVerificationToken.val() },
-            dataType: 'json',
+            dataType: "json",
             data: null,
-            contentType: 'application/json; charset=utf-8',
+            contentType: "application/json; charset=utf-8",
             success: function (data) {
                 if (data.result) {
                     $editFixedExpenditureId.val(data.fixedExpenditure.id);
@@ -383,8 +383,8 @@
                         keyboard: false,
                         backdrop: "static"
                     });
-                    $editFixedExpenditureDialogModal.modal('toggle');
-                    $editFixedExpenditureDialogModal.modal('show');
+                    $editFixedExpenditureDialogModal.modal("toggle");
+                    $editFixedExpenditureDialogModal.modal("show");
                 }
                 else {
                     toastr.error(data.error);
@@ -423,16 +423,16 @@
             Unpunctuality: unpunctuality
         });
         $.ajax({
-            url: '/Notice/UpdateFixedExpenditure',
-            type: 'POST',
+            url: "/Notice/UpdateFixedExpenditure",
+            type: "POST",
             headers: { "RequestVerificationToken": $__RequestVerificationToken.val() },
-            dataType: 'json',
+            dataType: "json",
             data: paramValue,
-            contentType: 'application/json; charset=utf-8',
+            contentType: "application/json; charset=utf-8",
             success: function (data) {
                 if (data.result) {
-                    $editFixedExpenditureDialogModal.modal('hide');
-                    const grid = new MvcGrid(document.querySelector('.mvc-grid'));
+                    $editFixedExpenditureDialogModal.modal("hide");
+                    const grid = new MvcGrid(document.querySelector(".mvc-grid"));
                     grid.reload();
                     toastr.success(data.message);
                 }
@@ -445,7 +445,7 @@
     }
     function ConfirmDeleteFixedExpenditure(errorMessageSelectGridRow) {
         let selectedRowId = "";
-        $('.clsGridRow').each(function () {
+        $(".clsGridRow").each(function () {
             if ($(this).attr("class").includes(selectedRowColor)) {
                 selectedRowId = $(this).attr("data-id");
             }
@@ -458,12 +458,12 @@
             keyboard: false,
             backdrop: "static"
         });
-        $confirmDeleteFixedExpenditureDialogModal.modal('toggle');
-        $confirmDeleteFixedExpenditureDialogModal.modal('show');
+        $confirmDeleteFixedExpenditureDialogModal.modal("toggle");
+        $confirmDeleteFixedExpenditureDialogModal.modal("show");
     }
     function DeleteFixedExpenditure(errorMessageSelectGridRow) {
         let selectedRowId = "";
-        $('.clsGridRow').each(function () {
+        $(".clsGridRow").each(function () {
             if ($(this).attr("class").includes(selectedRowColor)) {
                 selectedRowId = $(this).attr("data-id");
             }
@@ -473,28 +473,28 @@
             return false;
         }
         $.ajax({
-            url: '/Notice/IsFixedExpenditureExists' + '?id=' + selectedRowId,
-            type: 'POST',
+            url: "/Notice/IsFixedExpenditureExists" + "?id=" + selectedRowId,
+            type: "POST",
             headers: { "RequestVerificationToken": $__RequestVerificationToken.val() },
-            dataType: 'json',
+            dataType: "json",
             data: null,
-            contentType: 'application/json; charset=utf-8',
+            contentType: "application/json; charset=utf-8",
             success: function (data) {
                 if (data.result) {
                     let paramValue = JSON.stringify({
                         Id: data.fixedExpenditure.id
                     });
                     $.ajax({
-                        url: '/Notice/DeleteFixedExpenditure',
-                        type: 'POST',
+                        url: "/Notice/DeleteFixedExpenditure",
+                        type: "POST",
                         headers: { "RequestVerificationToken": $__RequestVerificationToken.val() },
-                        dataType: 'json',
+                        dataType: "json",
                         data: paramValue,
-                        contentType: 'application/json; charset=utf-8',
+                        contentType: "application/json; charset=utf-8",
                         success: function (data) {
                             if (data.result) {
-                                $confirmDeleteFixedExpenditureDialogModal.modal('hide');
-                                const grid = new MvcGrid(document.querySelector('.mvc-grid'));
+                                $confirmDeleteFixedExpenditureDialogModal.modal("hide");
+                                const grid = new MvcGrid(document.querySelector(".mvc-grid"));
                                 grid.reload();
                                 toastr.success(data.message);
                             }
@@ -527,12 +527,12 @@
     }
     function ChangeCreateFixedExpenditureAmountLabel(productName) {
         $.ajax({
-            url: '/Notice/GetFixedExpenditureAmountLabel' + '?productName=' + productName,
-            type: 'POST',
+            url: "/Notice/GetFixedExpenditureAmountLabel" + "?productName=" + productName,
+            type: "POST",
             headers: { "RequestVerificationToken": $__RequestVerificationToken.val() },
-            dataType: 'json',
+            dataType: "json",
             data: null,
-            contentType: 'application/json; charset=utf-8',
+            contentType: "application/json; charset=utf-8",
             success: function (data) {
                 if (data.result) {
                     $labelCreateFixedExpenditureAmount.text(data.label);
@@ -548,12 +548,12 @@
     }
     function ChangeEditFixedExpenditureAmountLabel(productName) {
         $.ajax({
-            url: '/Notice/GetFixedExpenditureAmountLabel' + '?productName=' + productName,
-            type: 'POST',
+            url: "/Notice/GetFixedExpenditureAmountLabel" + "?productName=" + productName,
+            type: "POST",
             headers: { "RequestVerificationToken": $__RequestVerificationToken.val() },
-            dataType: 'json',
+            dataType: "json",
             data: null,
-            contentType: 'application/json; charset=utf-8',
+            contentType: "application/json; charset=utf-8",
             success: function (data) {
                 if (data.result) {
                     $labelEditFixedExpenditureAmount.text(data.label);
@@ -567,50 +567,50 @@
             }
         });
     }
-    $btnEditFixedExpenditureGridRow.off('click').on('click', function () {
-        EditFixedExpenditureGridRow($(this).attr('data-errorMessageSelectGridRow'));
+    $btnEditFixedExpenditureGridRow.off("click").on("click", function () {
+        EditFixedExpenditureGridRow($(this).attr("data-errorMessageSelectGridRow"));
     });
-    $btnConfirmDeleteFixedExpenditure.off('click').on('click', function () {
-        ConfirmDeleteFixedExpenditure($(this).attr('data-errorMessageSelectGridRow'));
+    $btnConfirmDeleteFixedExpenditure.off("click").on("click", function () {
+        ConfirmDeleteFixedExpenditure($(this).attr("data-errorMessageSelectGridRow"));
     });
-    $btnExportExcelFixedExpenditure.off('click').on('click', function () {
+    $btnExportExcelFixedExpenditure.off("click").on("click", function () {
         ExportExcelFixedExpenditure();
     });
-    $btnDeleteFixedExpenditure.off('click').on('click', function () {
-        DeleteFixedExpenditure($(this).attr('data-errorMessageSelectGridRow'));
+    $btnDeleteFixedExpenditure.off("click").on("click", function () {
+        DeleteFixedExpenditure($(this).attr("data-errorMessageSelectGridRow"));
     });
-    $formCreateFixedExpenditure.off('submit').on('submit', function () {
+    $formCreateFixedExpenditure.off("submit").on("submit", function () {
         return CreateFixedExpenditure();
     });
-    $formEditFixedExpenditure.off('submit').on('submit', function () {
+    $formEditFixedExpenditure.off("submit").on("submit", function () {
         return UpdateFixedExpenditure();
     });
-    $createFixedExpenditureMainClass.off('change').on('change', function () {
+    $createFixedExpenditureMainClass.off("change").on("change", function () {
         return CreateFormShowFixedExpenditureSubClassBySelectedFixedExpenditureMainClass(this);
     });
-    $createFixedExpenditureSubClass.off('change').on('change', function () {
+    $createFixedExpenditureSubClass.off("change").on("change", function () {
         return CreateFormShowFixedExpenditureDivCreateFixedExpenditureMyDepositAssetBySelectedFixedExpenditureSubClass(this);
     });
-    $createFixedExpenditureDepositMonth.off('change').on('change', function () {
+    $createFixedExpenditureDepositMonth.off("change").on("change", function () {
         return CreateFormShowFixedExpenditureDepositDayBySelectedFixedExpenditureDepositMonth(this);
     });
-    $editFixedExpenditureMainClass.off('change').on('change', function () {
+    $editFixedExpenditureMainClass.off("change").on("change", function () {
         return EditFormShowFixedExpenditureSubClassBySelectedFixedExpenditureMainClass(this);
     });
-    $editFixedExpenditureSubClass.off('change').on('change', function () {
+    $editFixedExpenditureSubClass.off("change").on("change", function () {
         return EditFormShowFixedExpenditureDivCreateFixedExpenditureMyDepositAssetBySelectedFixedExpenditureSubClass(this);
     });
-    $editFixedExpenditureDepositMonth.off('change').on('change', function () {
+    $editFixedExpenditureDepositMonth.off("change").on("change", function () {
         return EditFormShowFixedExpenditureDepositDayBySelectedFixedExpenditureDepositMonth(this);
     });
-    $createFixedExpenditurePaymentMethod.off('change').on('change', function () {
+    $createFixedExpenditurePaymentMethod.off("change").on("change", function () {
         ChangeCreateFixedExpenditureAmountLabel(this.value);
     });
-    $editFixedExpenditurePaymentMethod.off('change').on('change', function () {
+    $editFixedExpenditurePaymentMethod.off("change").on("change", function () {
         ChangeEditFixedExpenditureAmountLabel(this.value);
     });
     $(function () {
-        ChangeCreateFixedExpenditureAmountLabel($createFixedExpenditurePaymentMethod.find('option:selected').val());
+        ChangeCreateFixedExpenditureAmountLabel($createFixedExpenditurePaymentMethod.find("option:selected").val());
     });
 })();
 //# sourceMappingURL=site.js.map

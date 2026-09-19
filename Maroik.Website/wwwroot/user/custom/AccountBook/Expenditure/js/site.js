@@ -1,55 +1,55 @@
 "use strict";
 (function () {
     function pad2(n) {
-        return n.toString().padStart(2, '0');
+        return n.toString().padStart(2, "0");
     }
-    const $createExpenditureDate = $('#createExpenditureDate');
-    const $createExpenditureTabs = $('#createExpenditureTabs');
-    const $editExpenditureTabs = $('#editExpenditureTabs');
-    const $editExpenditureDate = $('#editExpenditureDate');
-    const $gridSearch = $('#gridSearch');
-    const $createExpenditureSubClass = $('#createExpenditureSubClass');
-    const $editExpenditureSubClass = $('#editExpenditureSubClass');
+    const $createExpenditureDate = $("#createExpenditureDate");
+    const $createExpenditureTabs = $("#createExpenditureTabs");
+    const $editExpenditureTabs = $("#editExpenditureTabs");
+    const $editExpenditureDate = $("#editExpenditureDate");
+    const $gridSearch = $("#gridSearch");
+    const $createExpenditureSubClass = $("#createExpenditureSubClass");
+    const $editExpenditureSubClass = $("#editExpenditureSubClass");
     const $divCreateExpenditureMyDepositAsset = $("#divCreateExpenditureMyDepositAsset");
-    const $createExpenditureMainClass = $('#createExpenditureMainClass');
-    const $formCreateExpenditure = $('#formCreateExpenditure');
-    const $createExpenditureContent = $('#createExpenditureContent');
-    const $createExpenditureAmount = $('#createExpenditureAmount');
-    const $createExpenditureHour = $('#createExpenditureHour');
-    const $createExpenditureMinute = $('#createExpenditureMinute');
-    const $createExpenditureSecond = $('#createExpenditureSecond');
-    const $createExpenditurePaymentMethod = $('#createExpenditurePaymentMethod');
-    const $createExpenditureNote = $('#createExpenditureNote');
-    const $createExpenditureMyDepositAsset = $('#createExpenditureMyDepositAsset');
+    const $createExpenditureMainClass = $("#createExpenditureMainClass");
+    const $formCreateExpenditure = $("#formCreateExpenditure");
+    const $createExpenditureContent = $("#createExpenditureContent");
+    const $createExpenditureAmount = $("#createExpenditureAmount");
+    const $createExpenditureHour = $("#createExpenditureHour");
+    const $createExpenditureMinute = $("#createExpenditureMinute");
+    const $createExpenditureSecond = $("#createExpenditureSecond");
+    const $createExpenditurePaymentMethod = $("#createExpenditurePaymentMethod");
+    const $createExpenditureNote = $("#createExpenditureNote");
+    const $createExpenditureMyDepositAsset = $("#createExpenditureMyDepositAsset");
     const $__RequestVerificationToken = $('input[name="__RequestVerificationToken"]');
-    const failedToLoadAmountLabelMessage = $('#localizerFailedToLoadAmountLabel').val();
-    const $createExpenditureDialogModal = $('#createExpenditureDialogModal');
-    const $editExpenditureId = $('#editExpenditureId');
-    const $editExpenditureMainClass = $('#editExpenditureMainClass');
+    const failedToLoadAmountLabelMessage = $("#localizerFailedToLoadAmountLabel").val();
+    const $createExpenditureDialogModal = $("#createExpenditureDialogModal");
+    const $editExpenditureId = $("#editExpenditureId");
+    const $editExpenditureMainClass = $("#editExpenditureMainClass");
     const $divEditExpenditureMyDepositAsset = $("#divEditExpenditureMyDepositAsset");
-    const $editExpenditureContent = $('#editExpenditureContent');
-    const $editExpenditureAmount = $('#editExpenditureAmount');
-    const $editExpenditureHour = $('#editExpenditureHour');
-    const $editExpenditureMinute = $('#editExpenditureMinute');
-    const $editExpenditureSecond = $('#editExpenditureSecond');
-    const $editExpenditurePaymentMethod = $('#editExpenditurePaymentMethod');
-    const $editExpenditureNote = $('#editExpenditureNote');
-    const $editExpenditureMyDepositAsset = $('#editExpenditureMyDepositAsset');
-    const $editExpenditureDialogModal = $('#editExpenditureDialogModal');
-    const $formEditExpenditure = $('#formEditExpenditure');
-    const $confirmDeleteExpenditureDialogModal = $('#confirmDeleteExpenditureDialogModal');
-    const $btnDeleteExpenditure = $('#btnDeleteExpenditure');
-    const $btnExportExcelExpenditure = $('#btnExportExcelExpenditure');
-    const $btnConfirmDeleteExpenditure = $('#btnConfirmDeleteExpenditure');
-    const $btnEditExpenditureGridRow = $('#btnEditExpenditureGridRow');
-    const $labelCreateExpenditureAmount = $('#labelCreateExpenditureAmount');
-    const $labelEditExpenditureAmount = $('#labelEditExpenditureAmount');
-    const expenditureSubClassMap = JSON.parse($('#expenditureSubClassMap').val() || '{}');
-    const expenditureDepositAssetSubClasses = JSON.parse($('#expenditureDepositAssetSubClasses').val() || '[]');
+    const $editExpenditureContent = $("#editExpenditureContent");
+    const $editExpenditureAmount = $("#editExpenditureAmount");
+    const $editExpenditureHour = $("#editExpenditureHour");
+    const $editExpenditureMinute = $("#editExpenditureMinute");
+    const $editExpenditureSecond = $("#editExpenditureSecond");
+    const $editExpenditurePaymentMethod = $("#editExpenditurePaymentMethod");
+    const $editExpenditureNote = $("#editExpenditureNote");
+    const $editExpenditureMyDepositAsset = $("#editExpenditureMyDepositAsset");
+    const $editExpenditureDialogModal = $("#editExpenditureDialogModal");
+    const $formEditExpenditure = $("#formEditExpenditure");
+    const $confirmDeleteExpenditureDialogModal = $("#confirmDeleteExpenditureDialogModal");
+    const $btnDeleteExpenditure = $("#btnDeleteExpenditure");
+    const $btnExportExcelExpenditure = $("#btnExportExcelExpenditure");
+    const $btnConfirmDeleteExpenditure = $("#btnConfirmDeleteExpenditure");
+    const $btnEditExpenditureGridRow = $("#btnEditExpenditureGridRow");
+    const $labelCreateExpenditureAmount = $("#labelCreateExpenditureAmount");
+    const $labelEditExpenditureAmount = $("#labelEditExpenditureAmount");
+    const expenditureSubClassMap = JSON.parse($("#expenditureSubClassMap").val() || "{}");
+    const expenditureDepositAssetSubClasses = JSON.parse($("#expenditureDepositAssetSubClasses").val() || "[]");
     function ApplyAllowedOptions($select, allowedValues, valueToSelect) {
-        $select.find('option').each(function () {
+        $select.find("option").each(function () {
             const allowed = allowedValues.indexOf(this.value) !== -1;
-            $(this).prop('disabled', !allowed).prop('hidden', !allowed);
+            $(this).prop("disabled", !allowed).prop("hidden", !allowed);
         });
         const target = (valueToSelect != null && allowedValues.indexOf(valueToSelect) !== -1)
             ? valueToSelect
@@ -69,56 +69,56 @@
             : $divEditExpenditureMyDepositAsset.hide();
     }
     const localizer = {
-        PrevText: $('#localizerPrevText').val(),
-        NextText: $('#localizerNextText').val(),
-        January: $('#localizerJanuary').val(),
-        February: $('#localizerFebruary').val(),
-        March: $('#localizerMarch').val(),
-        April: $('#localizerApril').val(),
-        May: $('#localizerMay').val(),
-        June: $('#localizerJune').val(),
-        July: $('#localizerJuly').val(),
-        August: $('#localizerAugust').val(),
-        September: $('#localizerSeptember').val(),
-        October: $('#localizerOctober').val(),
-        November: $('#localizerNovember').val(),
-        December: $('#localizerDecember').val(),
-        Jan: $('#localizerJan').val(),
-        Feb: $('#localizerFeb').val(),
-        Mar: $('#localizerMar').val(),
-        Apr: $('#localizerApr').val(),
-        Jun: $('#localizerJun').val(),
-        Jul: $('#localizerJul').val(),
-        Aug: $('#localizerAug').val(),
-        Sep: $('#localizerSep').val(),
-        Oct: $('#localizerOct').val(),
-        Nov: $('#localizerNov').val(),
-        Dec: $('#localizerDec').val(),
-        Sunday: $('#localizerSunday').val(),
-        Monday: $('#localizerMonday').val(),
-        Tuesday: $('#localizerTuesday').val(),
-        Wednesday: $('#localizerWednesday').val(),
-        Thursday: $('#localizerThursday').val(),
-        Friday: $('#localizerFriday').val(),
-        Saturday: $('#localizerSaturday').val(),
-        Sun: $('#localizerSun').val(),
-        Mon: $('#localizerMon').val(),
-        Tue: $('#localizerTue').val(),
-        Wed: $('#localizerWed').val(),
-        Thu: $('#localizerThu').val(),
-        Fri: $('#localizerFri').val(),
-        Sat: $('#localizerSat').val(),
-        Su: $('#localizerSu').val(),
-        Mo: $('#localizerMo').val(),
-        Tu: $('#localizerTu').val(),
-        We: $('#localizerWe').val(),
-        Th: $('#localizerTh').val(),
-        Fr: $('#localizerFr').val(),
-        Sa: $('#localizerSa').val(),
-        YearSuffix: $('#localizerYearSuffix').val()
+        PrevText: $("#localizerPrevText").val(),
+        NextText: $("#localizerNextText").val(),
+        January: $("#localizerJanuary").val(),
+        February: $("#localizerFebruary").val(),
+        March: $("#localizerMarch").val(),
+        April: $("#localizerApril").val(),
+        May: $("#localizerMay").val(),
+        June: $("#localizerJune").val(),
+        July: $("#localizerJuly").val(),
+        August: $("#localizerAugust").val(),
+        September: $("#localizerSeptember").val(),
+        October: $("#localizerOctober").val(),
+        November: $("#localizerNovember").val(),
+        December: $("#localizerDecember").val(),
+        Jan: $("#localizerJan").val(),
+        Feb: $("#localizerFeb").val(),
+        Mar: $("#localizerMar").val(),
+        Apr: $("#localizerApr").val(),
+        Jun: $("#localizerJun").val(),
+        Jul: $("#localizerJul").val(),
+        Aug: $("#localizerAug").val(),
+        Sep: $("#localizerSep").val(),
+        Oct: $("#localizerOct").val(),
+        Nov: $("#localizerNov").val(),
+        Dec: $("#localizerDec").val(),
+        Sunday: $("#localizerSunday").val(),
+        Monday: $("#localizerMonday").val(),
+        Tuesday: $("#localizerTuesday").val(),
+        Wednesday: $("#localizerWednesday").val(),
+        Thursday: $("#localizerThursday").val(),
+        Friday: $("#localizerFriday").val(),
+        Saturday: $("#localizerSaturday").val(),
+        Sun: $("#localizerSun").val(),
+        Mon: $("#localizerMon").val(),
+        Tue: $("#localizerTue").val(),
+        Wed: $("#localizerWed").val(),
+        Thu: $("#localizerThu").val(),
+        Fri: $("#localizerFri").val(),
+        Sat: $("#localizerSat").val(),
+        Su: $("#localizerSu").val(),
+        Mo: $("#localizerMo").val(),
+        Tu: $("#localizerTu").val(),
+        We: $("#localizerWe").val(),
+        Th: $("#localizerTh").val(),
+        Fr: $("#localizerFr").val(),
+        Sa: $("#localizerSa").val(),
+        YearSuffix: $("#localizerYearSuffix").val()
     };
     $.datepicker.setDefaults({
-        dateFormat: 'yy-mm-dd',
+        dateFormat: "yy-mm-dd",
         prevText: localizer.PrevText,
         nextText: localizer.NextText,
         monthNames: [localizer.January, localizer.February, localizer.March, localizer.April, localizer.May, localizer.June, localizer.July, localizer.August, localizer.September, localizer.October, localizer.November, localizer.December],
@@ -129,9 +129,9 @@
         showMonthAfterYear: true,
         yearSuffix: localizer.YearSuffix
     });
-    const currentYear = $createExpenditureDate.val().split('-')[0];
-    const currentMonth = $createExpenditureDate.val().split('-')[1];
-    const currentDay = $createExpenditureDate.val().split('-')[2];
+    const currentYear = $createExpenditureDate.val().split("-")[0];
+    const currentMonth = $createExpenditureDate.val().split("-")[1];
+    const currentDay = $createExpenditureDate.val().split("-")[2];
     $(function () {
         $createExpenditureTabs.tabs();
         $editExpenditureTabs.tabs();
@@ -157,40 +157,40 @@
                 }, 1);
             }
         });
-        $('<style> .ui-datepicker-close { display: none; } </style>').appendTo("head");
-        $('<style> .ui-datepicker-current { display: none; } </style>').appendTo("head");
+        $("<style> .ui-datepicker-close { display: none; } </style>").appendTo("head");
+        $("<style> .ui-datepicker-current { display: none; } </style>").appendTo("head");
     });
     let selectedRowColor = "table-primary";
-    $(document).off('rowclick.Expenditure').on('rowclick.Expenditure', (e) => {
+    $(document).off("rowclick.Expenditure").on("rowclick.Expenditure", (e) => {
         let selectedRow = e.detail;
         let selectedRowId = selectedRow.data.Id;
-        let $clsGridRow = $('.clsGridRow');
+        let $clsGridRow = $(".clsGridRow");
         $clsGridRow.each(function () {
             $(this).removeClass(selectedRowColor);
         });
         $clsGridRow.each(function () {
-            if ((String(selectedRowId).valueOf() === String($(this).attr('data-id')).valueOf())) {
+            if ((String(selectedRowId).valueOf() === String($(this).attr("data-id")).valueOf())) {
                 $(this).addClass(selectedRowColor);
             }
         });
     });
-    $(document).off('reloadstart.Expenditure').on('reloadstart.Expenditure', _ => {
+    $(document).off("reloadstart.Expenditure").on("reloadstart.Expenditure", _ => {
     });
-    $(document).off('reloadend.Expenditure').on('reloadend.Expenditure', _ => {
+    $(document).off("reloadend.Expenditure").on("reloadend.Expenditure", _ => {
     });
-    $(document).off('reloadfail.Expenditure').on('reloadfail.Expenditure', _ => {
+    $(document).off("reloadfail.Expenditure").on("reloadfail.Expenditure", _ => {
     });
-    $(document).off('gridconfigure.Expenditure').on('gridconfigure.Expenditure', _ => {
+    $(document).off("gridconfigure.Expenditure").on("gridconfigure.Expenditure", _ => {
     });
-    $(document).off('dblclick.Expenditure', '.clsGridRow').on('dblclick.Expenditure', '.clsGridRow', function () {
-        $('.clsGridRow').each(function () {
+    $(document).off("dblclick.Expenditure", ".clsGridRow").on("dblclick.Expenditure", ".clsGridRow", function () {
+        $(".clsGridRow").each(function () {
             if ($(this).attr("class").includes(selectedRowColor)) {
                 EditExpenditureGridRow();
             }
         });
     });
-    $gridSearch.off('input').on('input', function () {
-        const grid = new MvcGrid(document.querySelector('.mvc-grid'));
+    $gridSearch.off("input").on("input", function () {
+        const grid = new MvcGrid(document.querySelector(".mvc-grid"));
         grid.url.searchParams.set("wholeSearch", this.value);
         grid.reload();
     });
@@ -230,16 +230,16 @@
             MyDepositAsset: myDepositAsset
         });
         $.ajax({
-            url: '/AccountBook/CreateExpenditure',
-            type: 'POST',
+            url: "/AccountBook/CreateExpenditure",
+            type: "POST",
             headers: { "RequestVerificationToken": $__RequestVerificationToken.val() },
-            dataType: 'json',
+            dataType: "json",
             data: paramValue,
-            contentType: 'application/json; charset=utf-8',
+            contentType: "application/json; charset=utf-8",
             success: function (data) {
                 if (data.result) {
-                    $createExpenditureDialogModal.modal('hide');
-                    const grid = new MvcGrid(document.querySelector('.mvc-grid'));
+                    $createExpenditureDialogModal.modal("hide");
+                    const grid = new MvcGrid(document.querySelector(".mvc-grid"));
                     grid.reload();
                     toastr.success(data.message);
                 }
@@ -252,7 +252,7 @@
     }
     function EditExpenditureGridRow(errorMessageSelectGridRow) {
         let selectedRowId = "";
-        $('.clsGridRow').each(function () {
+        $(".clsGridRow").each(function () {
             if ($(this).attr("class").includes(selectedRowColor)) {
                 selectedRowId = $(this).attr("data-id");
             }
@@ -262,12 +262,12 @@
             return false;
         }
         $.ajax({
-            url: '/AccountBook/IsExpenditureExists' + '?id=' + selectedRowId,
-            type: 'POST',
+            url: "/AccountBook/IsExpenditureExists" + "?id=" + selectedRowId,
+            type: "POST",
             headers: { "RequestVerificationToken": $__RequestVerificationToken.val() },
-            dataType: 'json',
+            dataType: "json",
             data: null,
-            contentType: 'application/json; charset=utf-8',
+            contentType: "application/json; charset=utf-8",
             success: function (data) {
                 if (data.result) {
                     $editExpenditureId.val(data.expenditure.id);
@@ -276,10 +276,10 @@
                     ToggleEditExpenditureMyDepositAsset(data.expenditure.subClass);
                     $editExpenditureContent.val(data.expenditure.content);
                     $editExpenditureAmount.val(data.expenditure.amount);
-                    $editExpenditureDate.val(data.expenditure.created.split('T')[0]);
-                    $editExpenditureHour.val(parseInt(data.expenditure.created.split('T')[1].substring(0, 2))).change();
-                    $editExpenditureMinute.val(parseInt(data.expenditure.created.split('T')[1].substring(3, 5))).change();
-                    $editExpenditureSecond.val(parseInt(data.expenditure.created.split('T')[1].substring(6, 8))).change();
+                    $editExpenditureDate.val(data.expenditure.created.split("T")[0]);
+                    $editExpenditureHour.val(parseInt(data.expenditure.created.split("T")[1].substring(0, 2))).change();
+                    $editExpenditureMinute.val(parseInt(data.expenditure.created.split("T")[1].substring(3, 5))).change();
+                    $editExpenditureSecond.val(parseInt(data.expenditure.created.split("T")[1].substring(6, 8))).change();
                     $editExpenditurePaymentMethod.val(data.expenditure.paymentMethod).change();
                     $editExpenditureNote.val(data.expenditure.note);
                     if (data.expenditure.myDepositAsset) {
@@ -292,8 +292,8 @@
                         keyboard: false,
                         backdrop: "static"
                     });
-                    $editExpenditureDialogModal.modal('toggle');
-                    $editExpenditureDialogModal.modal('show');
+                    $editExpenditureDialogModal.modal("toggle");
+                    $editExpenditureDialogModal.modal("show");
                 }
                 else {
                     toastr.error(data.error);
@@ -339,16 +339,16 @@
             MyDepositAsset: myDepositAsset
         });
         $.ajax({
-            url: '/AccountBook/UpdateExpenditure',
-            type: 'POST',
+            url: "/AccountBook/UpdateExpenditure",
+            type: "POST",
             headers: { "RequestVerificationToken": $__RequestVerificationToken.val() },
-            dataType: 'json',
+            dataType: "json",
             data: paramValue,
-            contentType: 'application/json; charset=utf-8',
+            contentType: "application/json; charset=utf-8",
             success: function (data) {
                 if (data.result) {
-                    $editExpenditureDialogModal.modal('hide');
-                    const grid = new MvcGrid(document.querySelector('.mvc-grid'));
+                    $editExpenditureDialogModal.modal("hide");
+                    const grid = new MvcGrid(document.querySelector(".mvc-grid"));
                     grid.reload();
                     toastr.success(data.message);
                 }
@@ -361,7 +361,7 @@
     }
     function ConfirmDeleteExpenditure(errorMessageSelectGridRow) {
         let selectedRowId = "";
-        $('.clsGridRow').each(function () {
+        $(".clsGridRow").each(function () {
             if ($(this).attr("class").includes(selectedRowColor)) {
                 selectedRowId = $(this).attr("data-id");
             }
@@ -374,12 +374,12 @@
             keyboard: false,
             backdrop: "static"
         });
-        $confirmDeleteExpenditureDialogModal.modal('toggle');
-        $confirmDeleteExpenditureDialogModal.modal('show');
+        $confirmDeleteExpenditureDialogModal.modal("toggle");
+        $confirmDeleteExpenditureDialogModal.modal("show");
     }
     function DeleteExpenditure(errorMessageSelectGridRow) {
         let selectedRowId = "";
-        $('.clsGridRow').each(function () {
+        $(".clsGridRow").each(function () {
             if ($(this).attr("class").includes(selectedRowColor)) {
                 selectedRowId = $(this).attr("data-id");
             }
@@ -389,28 +389,28 @@
             return false;
         }
         $.ajax({
-            url: '/AccountBook/IsExpenditureExists' + '?id=' + selectedRowId,
-            type: 'POST',
+            url: "/AccountBook/IsExpenditureExists" + "?id=" + selectedRowId,
+            type: "POST",
             headers: { "RequestVerificationToken": $__RequestVerificationToken.val() },
-            dataType: 'json',
+            dataType: "json",
             data: null,
-            contentType: 'application/json; charset=utf-8',
+            contentType: "application/json; charset=utf-8",
             success: function (data) {
                 if (data.result) {
                     let paramValue = JSON.stringify({
                         Id: data.expenditure.id
                     });
                     $.ajax({
-                        url: '/AccountBook/DeleteExpenditure',
-                        type: 'POST',
+                        url: "/AccountBook/DeleteExpenditure",
+                        type: "POST",
                         headers: { "RequestVerificationToken": $__RequestVerificationToken.val() },
-                        dataType: 'json',
+                        dataType: "json",
                         data: paramValue,
-                        contentType: 'application/json; charset=utf-8',
+                        contentType: "application/json; charset=utf-8",
                         success: function (data) {
                             if (data.result) {
-                                $confirmDeleteExpenditureDialogModal.modal('hide');
-                                const grid = new MvcGrid(document.querySelector('.mvc-grid'));
+                                $confirmDeleteExpenditureDialogModal.modal("hide");
+                                const grid = new MvcGrid(document.querySelector(".mvc-grid"));
                                 grid.reload();
                                 toastr.success(data.message);
                             }
@@ -443,12 +443,12 @@
     }
     function ChangeCreateExpenditureAmountLabel(productName) {
         $.ajax({
-            url: '/AccountBook/GetExpenditureAmountLabel' + '?productName=' + productName,
-            type: 'POST',
+            url: "/AccountBook/GetExpenditureAmountLabel" + "?productName=" + productName,
+            type: "POST",
             headers: { "RequestVerificationToken": $__RequestVerificationToken.val() },
-            dataType: 'json',
+            dataType: "json",
             data: null,
-            contentType: 'application/json; charset=utf-8',
+            contentType: "application/json; charset=utf-8",
             success: function (data) {
                 if (data.result) {
                     $labelCreateExpenditureAmount.text(data.label);
@@ -464,12 +464,12 @@
     }
     function ChangeEditExpenditureAmountLabel(productName) {
         $.ajax({
-            url: '/AccountBook/GetExpenditureAmountLabel' + '?productName=' + productName,
-            type: 'POST',
+            url: "/AccountBook/GetExpenditureAmountLabel" + "?productName=" + productName,
+            type: "POST",
             headers: { "RequestVerificationToken": $__RequestVerificationToken.val() },
-            dataType: 'json',
+            dataType: "json",
             data: null,
-            contentType: 'application/json; charset=utf-8',
+            contentType: "application/json; charset=utf-8",
             success: function (data) {
                 if (data.result) {
                     $labelEditExpenditureAmount.text(data.label);
@@ -483,44 +483,44 @@
             }
         });
     }
-    $btnEditExpenditureGridRow.off('click').on('click', function () {
+    $btnEditExpenditureGridRow.off("click").on("click", function () {
         EditExpenditureGridRow($(this).attr("data-errorMessageSelectGridRow"));
     });
-    $btnConfirmDeleteExpenditure.off('click').on('click', function () {
+    $btnConfirmDeleteExpenditure.off("click").on("click", function () {
         ConfirmDeleteExpenditure($(this).attr("data-errorMessageSelectGridRow"));
     });
-    $btnExportExcelExpenditure.off('click').on('click', function () {
+    $btnExportExcelExpenditure.off("click").on("click", function () {
         ExportExcelExpenditure();
     });
-    $btnDeleteExpenditure.off('click').on('click', function () {
+    $btnDeleteExpenditure.off("click").on("click", function () {
         DeleteExpenditure($(this).attr("data-errorMessageSelectGridRow"));
     });
-    $formCreateExpenditure.off('submit').on('submit', function () {
+    $formCreateExpenditure.off("submit").on("submit", function () {
         return CreateExpenditure();
     });
-    $formEditExpenditure.off('submit').on('submit', function () {
+    $formEditExpenditure.off("submit").on("submit", function () {
         return UpdateExpenditure();
     });
-    $createExpenditureMainClass.off('change').on('change', function () {
+    $createExpenditureMainClass.off("change").on("change", function () {
         CreateFormShowExpenditureSubClassBySelectedExpenditureMainClass(this);
     });
-    $createExpenditureSubClass.off('change').on('change', function () {
+    $createExpenditureSubClass.off("change").on("change", function () {
         CreateFormShowExpenditureDivCreateExpenditureMyDepositAssetBySelectedExpenditureSubClass(this);
     });
-    $editExpenditureMainClass.off('change').on('change', function () {
+    $editExpenditureMainClass.off("change").on("change", function () {
         EditFormShowExpenditureSubClassBySelectedExpenditureMainClass(this);
     });
-    $editExpenditureSubClass.off('change').on('change', function () {
+    $editExpenditureSubClass.off("change").on("change", function () {
         EditFormShowExpenditureDivCreateExpenditureMyDepositAssetBySelectedExpenditureSubClass(this);
     });
-    $createExpenditurePaymentMethod.off('change').on('change', function () {
+    $createExpenditurePaymentMethod.off("change").on("change", function () {
         ChangeCreateExpenditureAmountLabel(this.value);
     });
-    $editExpenditurePaymentMethod.off('change').on('change', function () {
+    $editExpenditurePaymentMethod.off("change").on("change", function () {
         ChangeEditExpenditureAmountLabel(this.value);
     });
     $(function () {
-        ChangeCreateExpenditureAmountLabel($createExpenditurePaymentMethod.find('option:selected').val());
+        ChangeCreateExpenditureAmountLabel($createExpenditurePaymentMethod.find("option:selected").val());
     });
 })();
 //# sourceMappingURL=site.js.map

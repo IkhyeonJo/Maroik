@@ -1,15 +1,15 @@
 "use strict";
 (function () {
-    const maxFileSize = parseInt($('#maxAttachedFileSizeBytes').val()) || window.MaroikDefaultMaxAttachedFileSizeBytes;
-    const allowedImageContentTypes = (JSON.parse($('#allowedImageContentTypes').val() || '[]')).map(function (t) { return t.toLowerCase(); });
-    const $formUpdateProfileAvatar = $('#formUpdateProfileAvatar');
-    const $formUpdateProfilePassword = $('#formUpdateProfilePassword');
-    const $password = $('#Password');
-    const $newPassword = $('#NewPassword');
+    const maxFileSize = parseInt($("#maxAttachedFileSizeBytes").val()) || window.MaroikDefaultMaxAttachedFileSizeBytes;
+    const allowedImageContentTypes = (JSON.parse($("#allowedImageContentTypes").val() || "[]")).map(function (t) { return t.toLowerCase(); });
+    const $formUpdateProfileAvatar = $("#formUpdateProfileAvatar");
+    const $formUpdateProfilePassword = $("#formUpdateProfilePassword");
+    const $password = $("#Password");
+    const $newPassword = $("#NewPassword");
     const $__RequestVerificationToken = $('input[name="__RequestVerificationToken"]');
-    const $profileAvatarFiles = $('#ProfileAvatarFiles');
+    const $profileAvatarFiles = $("#ProfileAvatarFiles");
     function UpdateProfileAvatar(noFileAttachedErrorMessage, fileSizeLimitationErrorMessage, fileTypeErrorMessage) {
-        let files = document.getElementById('ProfileAvatarFiles').files[0];
+        let files = document.getElementById("ProfileAvatarFiles").files[0];
         if (files === undefined || files === null) {
             alert(noFileAttachedErrorMessage);
             window.location.href = "/Management/Profile";
@@ -20,17 +20,17 @@
                 window.location.href = "/Management/Profile";
             }
             else if (files.size > 0 && files.size <= maxFileSize) {
-                if (allowedImageContentTypes.indexOf((files.type || '').toLowerCase()) !== -1) {
+                if (allowedImageContentTypes.indexOf((files.type || "").toLowerCase()) !== -1) {
                     let form = $formUpdateProfileAvatar[0];
                     let formData = new FormData(form);
                     $.ajax({
                         url: "/Management/UpdateProfileAvatar",
                         data: formData,
-                        type: 'POST',
-                        enctype: 'multipart/form-data',
+                        type: "POST",
+                        enctype: "multipart/form-data",
                         processData: false,
                         contentType: false,
-                        dataType: 'json',
+                        dataType: "json",
                         cache: false,
                         success: function (data) {
                             if (data.result) {
@@ -65,12 +65,12 @@
             NewPassword: newPassword
         });
         $.ajax({
-            url: '/Management/UpdateProfilePassword',
-            type: 'POST',
+            url: "/Management/UpdateProfilePassword",
+            type: "POST",
             headers: { "RequestVerificationToken": $__RequestVerificationToken.val() },
-            dataType: 'json',
+            dataType: "json",
             data: paramValue,
-            contentType: 'application/json; charset=utf-8',
+            contentType: "application/json; charset=utf-8",
             success: function (data) {
                 if (data.result) {
                     alert(data.message);
@@ -83,10 +83,11 @@
         });
         return false;
     }
-    $formUpdateProfilePassword.off('submit').on('submit', function () {
+    $formUpdateProfilePassword.off("submit").on("submit", function () {
         return UpdateProfilePassword();
     });
-    $profileAvatarFiles.off('change').on('change', function () {
-        return UpdateProfileAvatar($(this).attr('data-noFileAttachedErrorMessage'), $(this).attr('data-fileSizeLimitationErrorMessage'), $(this).attr('data-fileTypeErrorMessage'));
+    $profileAvatarFiles.off("change").on("change", function () {
+        return UpdateProfileAvatar($(this).attr("data-noFileAttachedErrorMessage"), $(this).attr("data-fileSizeLimitationErrorMessage"), $(this).attr("data-fileTypeErrorMessage"));
     });
 })();
+//# sourceMappingURL=site.js.map

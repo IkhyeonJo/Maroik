@@ -27,60 +27,60 @@
     const $editFixedExpenditureTabs = $("#editFixedExpenditureTabs");
     const $createFixedExpenditureMaturityDate = $("#createFixedExpenditureMaturityDate");
     const $editFixedExpenditureMaturityDate = $("#editFixedExpenditureMaturityDate");
-    const $gridSearch = $('#gridSearch');
-    const $createFixedExpenditureSubClass = $('#createFixedExpenditureSubClass');
+    const $gridSearch = $("#gridSearch");
+    const $createFixedExpenditureSubClass = $("#createFixedExpenditureSubClass");
     const $divCreateFixedExpenditureMyDepositAsset = $("#divCreateFixedExpenditureMyDepositAsset");
-    const $createFixedExpenditureDepositDay = $('#createFixedExpenditureDepositDay');
-    const $editFixedExpenditureSubClass = $('#editFixedExpenditureSubClass');
+    const $createFixedExpenditureDepositDay = $("#createFixedExpenditureDepositDay");
+    const $editFixedExpenditureSubClass = $("#editFixedExpenditureSubClass");
     const $divEditFixedExpenditureMyDepositAsset = $("#divEditFixedExpenditureMyDepositAsset");
-    const $editFixedExpenditureDepositDay = $('#editFixedExpenditureDepositDay');
-    const $formCreateFixedExpenditure = $('#formCreateFixedExpenditure');
-    const $editFixedExpenditureDialogModal = $('#editFixedExpenditureDialogModal');
-    const $formEditFixedExpenditure = $('#formEditFixedExpenditure');
-    const $confirmDeleteFixedExpenditureDialogModal = $('#confirmDeleteFixedExpenditureDialogModal');
+    const $editFixedExpenditureDepositDay = $("#editFixedExpenditureDepositDay");
+    const $formCreateFixedExpenditure = $("#formCreateFixedExpenditure");
+    const $editFixedExpenditureDialogModal = $("#editFixedExpenditureDialogModal");
+    const $formEditFixedExpenditure = $("#formEditFixedExpenditure");
+    const $confirmDeleteFixedExpenditureDialogModal = $("#confirmDeleteFixedExpenditureDialogModal");
     const $__RequestVerificationToken = $('input[name="__RequestVerificationToken"]');
-    const failedToLoadAmountLabelMessage = $('#localizerFailedToLoadAmountLabel').val() as string;
-    const $createFixedExpenditureDialogModal = $('#createFixedExpenditureDialogModal');
-    const $createFixedExpenditurePaymentMethod = $('#createFixedExpenditurePaymentMethod');
-    const $editFixedExpenditurePaymentMethod = $('#editFixedExpenditurePaymentMethod');
-    const $editFixedExpenditureDepositMonth = $('#editFixedExpenditureDepositMonth');
-    const $editFixedExpenditureMainClass = $('#editFixedExpenditureMainClass');
-    const $createFixedExpenditureDepositMonth = $('#createFixedExpenditureDepositMonth');
-    const $createFixedExpenditureMainClass = $('#createFixedExpenditureMainClass');
-    const $btnDeleteFixedExpenditure = $('#btnDeleteFixedExpenditure');
-    const $btnExportExcelFixedExpenditure = $('#btnExportExcelFixedExpenditure');
-    const $btnConfirmDeleteFixedExpenditure = $('#btnConfirmDeleteFixedExpenditure');
-    const $btnEditFixedExpenditureGridRow = $('#btnEditFixedExpenditureGridRow');
-    const $labelEditFixedExpenditureAmount = $('#labelEditFixedExpenditureAmount');
-    const $labelCreateFixedExpenditureAmount = $('#labelCreateFixedExpenditureAmount');
-    const $editFixedExpenditureId = $('#editFixedExpenditureId');
-    const $editFixedExpenditureContent = $('#editFixedExpenditureContent');
-    const $editFixedExpenditureAmount = $('#editFixedExpenditureAmount');
-    const $editFixedExpenditureNote = $('#editFixedExpenditureNote');
-    const $editFixedExpenditureMyDepositAsset = $('#editFixedExpenditureMyDepositAsset');
-    const $editFixedExpenditureUnpunctuality = $('#editFixedExpenditureUnpunctuality');
-    const $createFixedExpenditureContent = $('#createFixedExpenditureContent');
-    const $createFixedExpenditureAmount = $('#createFixedExpenditureAmount');
-    const $createFixedExpenditureNote = $('#createFixedExpenditureNote');
-    const $createFixedExpenditureMyDepositAsset = $('#createFixedExpenditureMyDepositAsset');
+    const failedToLoadAmountLabelMessage = $("#localizerFailedToLoadAmountLabel").val() as string;
+    const $createFixedExpenditureDialogModal = $("#createFixedExpenditureDialogModal");
+    const $createFixedExpenditurePaymentMethod = $("#createFixedExpenditurePaymentMethod");
+    const $editFixedExpenditurePaymentMethod = $("#editFixedExpenditurePaymentMethod");
+    const $editFixedExpenditureDepositMonth = $("#editFixedExpenditureDepositMonth");
+    const $editFixedExpenditureMainClass = $("#editFixedExpenditureMainClass");
+    const $createFixedExpenditureDepositMonth = $("#createFixedExpenditureDepositMonth");
+    const $createFixedExpenditureMainClass = $("#createFixedExpenditureMainClass");
+    const $btnDeleteFixedExpenditure = $("#btnDeleteFixedExpenditure");
+    const $btnExportExcelFixedExpenditure = $("#btnExportExcelFixedExpenditure");
+    const $btnConfirmDeleteFixedExpenditure = $("#btnConfirmDeleteFixedExpenditure");
+    const $btnEditFixedExpenditureGridRow = $("#btnEditFixedExpenditureGridRow");
+    const $labelEditFixedExpenditureAmount = $("#labelEditFixedExpenditureAmount");
+    const $labelCreateFixedExpenditureAmount = $("#labelCreateFixedExpenditureAmount");
+    const $editFixedExpenditureId = $("#editFixedExpenditureId");
+    const $editFixedExpenditureContent = $("#editFixedExpenditureContent");
+    const $editFixedExpenditureAmount = $("#editFixedExpenditureAmount");
+    const $editFixedExpenditureNote = $("#editFixedExpenditureNote");
+    const $editFixedExpenditureMyDepositAsset = $("#editFixedExpenditureMyDepositAsset");
+    const $editFixedExpenditureUnpunctuality = $("#editFixedExpenditureUnpunctuality");
+    const $createFixedExpenditureContent = $("#createFixedExpenditureContent");
+    const $createFixedExpenditureAmount = $("#createFixedExpenditureAmount");
+    const $createFixedExpenditureNote = $("#createFixedExpenditureNote");
+    const $createFixedExpenditureMyDepositAsset = $("#createFixedExpenditureMyDepositAsset");
 
     // Server-published rules (FixedExpenditure.cshtml). Authoritative in ExpenditureClassPolicy /
     // FixedSchedulePolicy; mirrored here for form UX only, the server re-validates on save.
-    const expenditureSubClassMap = JSON.parse(($('#expenditureSubClassMap').val() as string) || '{}');
-    const expenditureDepositAssetSubClasses = JSON.parse(($('#expenditureDepositAssetSubClasses').val() as string) || '[]');
-    const maxDepositDayByMonth = JSON.parse(($('#maxDepositDayByMonth').val() as string) || '{}');
+    const expenditureSubClassMap = JSON.parse(($("#expenditureSubClassMap").val() as string) || "{}");
+    const expenditureDepositAssetSubClasses = JSON.parse(($("#expenditureDepositAssetSubClasses").val() as string) || "[]");
+    const maxDepositDayByMonth = JSON.parse(($("#maxDepositDayByMonth").val() as string) || "{}");
     // Far-future stand-in for "no maturity date", published by the server (FixedSchedulePolicy)
     // as a yyyy-MM-dd string so the client and server never drift on the value.
-    const noMaturityIso = $('#noMaturityDate').val() as string;
-    const [nmYear, nmMonth, nmDay] = noMaturityIso.split('-').map(Number);
+    const noMaturityIso = $("#noMaturityDate").val() as string;
+    const [nmYear, nmMonth, nmDay] = noMaturityIso.split("-").map(Number);
     const NO_MATURITY_DATE = new Date(nmYear, nmMonth - 1, nmDay);
 
     // Enables/shows only the options in allowedValues (disabling+hiding the rest) and selects
     // valueToSelect when it is allowed, otherwise the first allowed option.
     function ApplyAllowedOptions($select: JQuery, allowedValues: string[], valueToSelect: string | null) {
-        $select.find('option').each(function (this: HTMLOptionElement) {
+        $select.find("option").each(function (this: HTMLOptionElement) {
             const allowed = allowedValues.indexOf(this.value) !== -1;
-            $(this).prop('disabled', !allowed).prop('hidden', !allowed);
+            $(this).prop("disabled", !allowed).prop("hidden", !allowed);
         });
         const target = (valueToSelect != null && allowedValues.indexOf(valueToSelect) !== -1)
             ? valueToSelect
@@ -118,61 +118,61 @@
     // captions and the maturity-date error message. `any` avoids ~45 `.val()`
     // casts; `PrevText` / `NextText` are read PascalCase to match the keys.
     const localizer: any = {
-        PrevText: $('#localizerPrevText').val(),
-        NextText: $('#localizerNextText').val(),
-        January: $('#localizerJanuary').val(),
-        February: $('#localizerFebruary').val(),
-        March: $('#localizerMarch').val(),
-        April: $('#localizerApril').val(),
-        May: $('#localizerMay').val(),
-        June: $('#localizerJune').val(),
-        July: $('#localizerJuly').val(),
-        August: $('#localizerAugust').val(),
-        September: $('#localizerSeptember').val(),
-        October: $('#localizerOctober').val(),
-        November: $('#localizerNovember').val(),
-        December: $('#localizerDecember').val(),
-        Jan: $('#localizerJan').val(),
-        Feb: $('#localizerFeb').val(),
-        Mar: $('#localizerMar').val(),
-        Apr: $('#localizerApr').val(),
-        Jun: $('#localizerJun').val(),
-        Jul: $('#localizerJul').val(),
-        Aug: $('#localizerAug').val(),
-        Sep: $('#localizerSep').val(),
-        Oct: $('#localizerOct').val(),
-        Nov: $('#localizerNov').val(),
-        Dec: $('#localizerDec').val(),
-        Sunday: $('#localizerSunday').val(),
-        Monday: $('#localizerMonday').val(),
-        Tuesday: $('#localizerTuesday').val(),
-        Wednesday: $('#localizerWednesday').val(),
-        Thursday: $('#localizerThursday').val(),
-        Friday: $('#localizerFriday').val(),
-        Saturday: $('#localizerSaturday').val(),
-        Sun: $('#localizerSun').val(),
-        Mon: $('#localizerMon').val(),
-        Tue: $('#localizerTue').val(),
-        Wed: $('#localizerWed').val(),
-        Thu: $('#localizerThu').val(),
-        Fri: $('#localizerFri').val(),
-        Sat: $('#localizerSat').val(),
-        Su: $('#localizerSu').val(),
-        Mo: $('#localizerMo').val(),
-        Tu: $('#localizerTu').val(),
-        We: $('#localizerWe').val(),
-        Th: $('#localizerTh').val(),
-        Fr: $('#localizerFr').val(),
-        Sa: $('#localizerSa').val(),
-        YearSuffix: $('#localizerYearSuffix').val(),
-        NoMaturityDate: $('#localizerNoMaturityDate').val(),
-        Today: $('#localizerToday').val(),
-        MaturityDateError: $('#localizerMaturityDateError').val(),
+        PrevText: $("#localizerPrevText").val(),
+        NextText: $("#localizerNextText").val(),
+        January: $("#localizerJanuary").val(),
+        February: $("#localizerFebruary").val(),
+        March: $("#localizerMarch").val(),
+        April: $("#localizerApril").val(),
+        May: $("#localizerMay").val(),
+        June: $("#localizerJune").val(),
+        July: $("#localizerJuly").val(),
+        August: $("#localizerAugust").val(),
+        September: $("#localizerSeptember").val(),
+        October: $("#localizerOctober").val(),
+        November: $("#localizerNovember").val(),
+        December: $("#localizerDecember").val(),
+        Jan: $("#localizerJan").val(),
+        Feb: $("#localizerFeb").val(),
+        Mar: $("#localizerMar").val(),
+        Apr: $("#localizerApr").val(),
+        Jun: $("#localizerJun").val(),
+        Jul: $("#localizerJul").val(),
+        Aug: $("#localizerAug").val(),
+        Sep: $("#localizerSep").val(),
+        Oct: $("#localizerOct").val(),
+        Nov: $("#localizerNov").val(),
+        Dec: $("#localizerDec").val(),
+        Sunday: $("#localizerSunday").val(),
+        Monday: $("#localizerMonday").val(),
+        Tuesday: $("#localizerTuesday").val(),
+        Wednesday: $("#localizerWednesday").val(),
+        Thursday: $("#localizerThursday").val(),
+        Friday: $("#localizerFriday").val(),
+        Saturday: $("#localizerSaturday").val(),
+        Sun: $("#localizerSun").val(),
+        Mon: $("#localizerMon").val(),
+        Tue: $("#localizerTue").val(),
+        Wed: $("#localizerWed").val(),
+        Thu: $("#localizerThu").val(),
+        Fri: $("#localizerFri").val(),
+        Sat: $("#localizerSat").val(),
+        Su: $("#localizerSu").val(),
+        Mo: $("#localizerMo").val(),
+        Tu: $("#localizerTu").val(),
+        We: $("#localizerWe").val(),
+        Th: $("#localizerTh").val(),
+        Fr: $("#localizerFr").val(),
+        Sa: $("#localizerSa").val(),
+        YearSuffix: $("#localizerYearSuffix").val(),
+        NoMaturityDate: $("#localizerNoMaturityDate").val(),
+        Today: $("#localizerToday").val(),
+        MaturityDateError: $("#localizerMaturityDateError").val(),
     };
 
     // Apply the localized names to every datepicker on the page.
     $.datepicker.setDefaults({
-        dateFormat: 'yy-mm-dd',
+        dateFormat: "yy-mm-dd",
         prevText: localizer.PrevText,
         nextText: localizer.NextText,
         monthNames: [localizer.January, localizer.February, localizer.March, localizer.April, localizer.May, localizer.June, localizer.July, localizer.August, localizer.September, localizer.October, localizer.November, localizer.December],
@@ -304,57 +304,57 @@
         $editFixedExpenditureMaturityDate.datepicker("setDate", new Date());
 
         // Hide the datepicker's built-in "Close" / "Today" buttons via injected CSS.
-        $('<style> .ui-datepicker-close { display: none; } </style>').appendTo("head");
-        $('<style> .ui-datepicker-current { display: none; } </style>').appendTo("head");
+        $("<style> .ui-datepicker-close { display: none; } </style>").appendTo("head");
+        $("<style> .ui-datepicker-current { display: none; } </style>").appendTo("head");
     });
 
     // Bootstrap table class that marks the currently selected grid row.
     let selectedRowColor = "table-primary";
 
     // MvcGrid `rowclick`: move the highlight to the row whose `data-id` matches.
-    $(document).off('rowclick.FixedExpenditure').on('rowclick.FixedExpenditure', (e: any) => {
+    $(document).off("rowclick.FixedExpenditure").on("rowclick.FixedExpenditure", (e: any) => {
         let selectedRow = e.detail;
         let selectedRowId = selectedRow.data.Id;
 
-        let $clsGridRow = $('.clsGridRow');
+        let $clsGridRow = $(".clsGridRow");
 
         $clsGridRow.each(function () {
             $(this).removeClass(selectedRowColor);
         });
 
         $clsGridRow.each(function () {
-            if ((String(selectedRowId).valueOf() === String($(this).attr('data-id')).valueOf())) {
+            if ((String(selectedRowId).valueOf() === String($(this).attr("data-id")).valueOf())) {
                 $(this).addClass(selectedRowColor);
             }
         });
     });
 
     // MvcGrid lifecycle events — intentional no-ops, bound only as hook points.
-    $(document).off('reloadstart.FixedExpenditure').on('reloadstart.FixedExpenditure', _ => {
+    $(document).off("reloadstart.FixedExpenditure").on("reloadstart.FixedExpenditure", _ => {
     });
 
-    $(document).off('reloadend.FixedExpenditure').on('reloadend.FixedExpenditure', _ => {
+    $(document).off("reloadend.FixedExpenditure").on("reloadend.FixedExpenditure", _ => {
     });
 
-    $(document).off('reloadfail.FixedExpenditure').on('reloadfail.FixedExpenditure', _ => {
+    $(document).off("reloadfail.FixedExpenditure").on("reloadfail.FixedExpenditure", _ => {
     });
 
-    $(document).off('gridconfigure.FixedExpenditure').on('gridconfigure.FixedExpenditure', _ => {
+    $(document).off("gridconfigure.FixedExpenditure").on("gridconfigure.FixedExpenditure", _ => {
     });
 
     // Double-click the highlighted row to open its edit modal.
-    $(document).off('dblclick.FixedExpenditure', '.clsGridRow').on('dblclick.FixedExpenditure', '.clsGridRow', function () {
-        $('.clsGridRow').each(function () {
-            if ($(this).attr('class')!.includes(selectedRowColor)) {
+    $(document).off("dblclick.FixedExpenditure", ".clsGridRow").on("dblclick.FixedExpenditure", ".clsGridRow", function () {
+        $(".clsGridRow").each(function () {
+            if ($(this).attr("class")!.includes(selectedRowColor)) {
                 EditFixedExpenditureGridRow();
             }
         });
     });
 
     // Free-text search: push the term into the grid query string and reload.
-    $gridSearch.off('input').on('input', function (this: HTMLInputElement) {
-        const grid = new MvcGrid(document.querySelector('.mvc-grid'));
-        grid.url.searchParams.set('wholeSearch', this.value);
+    $gridSearch.off("input").on("input", function (this: HTMLInputElement) {
+        const grid = new MvcGrid(document.querySelector(".mvc-grid"));
+        grid.url.searchParams.set("wholeSearch", this.value);
         grid.reload();
     });
 
@@ -423,17 +423,17 @@
         });
 
         $.ajax({
-            url: '/Notice/CreateFixedExpenditure',
-            type: 'POST',
+            url: "/Notice/CreateFixedExpenditure",
+            type: "POST",
             headers: { "RequestVerificationToken": $__RequestVerificationToken.val() as string },
-            dataType: 'json',
+            dataType: "json",
             data: paramValue,
-            contentType: 'application/json; charset=utf-8',
+            contentType: "application/json; charset=utf-8",
             success: function (data) {
                 if (data.result) {
-                    $createFixedExpenditureDialogModal.modal('hide');
+                    $createFixedExpenditureDialogModal.modal("hide");
 
-                    const grid = new MvcGrid(document.querySelector('.mvc-grid'));
+                    const grid = new MvcGrid(document.querySelector(".mvc-grid"));
                     grid.reload();
 
                     toastr.success(data.message);
@@ -460,7 +460,7 @@
 
         let selectedRowId = "";
 
-        $('.clsGridRow').each(function () {
+        $(".clsGridRow").each(function () {
             if ($(this).attr("class")!.includes(selectedRowColor)) {
                 selectedRowId = $(this).attr("data-id")!;
             }
@@ -472,12 +472,12 @@
         }
 
         $.ajax({
-            url: '/Notice/IsFixedExpenditureExists' + '?id=' + selectedRowId,
-            type: 'POST',
+            url: "/Notice/IsFixedExpenditureExists" + "?id=" + selectedRowId,
+            type: "POST",
             headers: { "RequestVerificationToken": $__RequestVerificationToken.val() as string },
-            dataType: 'json',
+            dataType: "json",
             data: null as any,
-            contentType: 'application/json; charset=utf-8',
+            contentType: "application/json; charset=utf-8",
             success: function (data) {
                 if (data.result) {
 
@@ -515,8 +515,8 @@
                         backdrop: "static"
                     });
 
-                    $editFixedExpenditureDialogModal.modal('toggle');
-                    $editFixedExpenditureDialogModal.modal('show');
+                    $editFixedExpenditureDialogModal.modal("toggle");
+                    $editFixedExpenditureDialogModal.modal("show");
                 }
                 else {
                     toastr.error(data.error);
@@ -561,17 +561,17 @@
         });
 
         $.ajax({
-            url: '/Notice/UpdateFixedExpenditure',
-            type: 'POST',
+            url: "/Notice/UpdateFixedExpenditure",
+            type: "POST",
             headers: { "RequestVerificationToken": $__RequestVerificationToken.val() as string },
-            dataType: 'json',
+            dataType: "json",
             data: paramValue,
-            contentType: 'application/json; charset=utf-8',
+            contentType: "application/json; charset=utf-8",
             success: function (data) {
                 if (data.result) {
-                    $editFixedExpenditureDialogModal.modal('hide');
+                    $editFixedExpenditureDialogModal.modal("hide");
 
-                    const grid = new MvcGrid(document.querySelector('.mvc-grid'));
+                    const grid = new MvcGrid(document.querySelector(".mvc-grid"));
                     grid.reload();
 
                     toastr.success(data.message);
@@ -589,7 +589,7 @@
 
         let selectedRowId = "";
 
-        $('.clsGridRow').each(function () {
+        $(".clsGridRow").each(function () {
             if ($(this).attr("class")!.includes(selectedRowColor)) {
                 selectedRowId = $(this).attr("data-id")!;
             }
@@ -605,8 +605,8 @@
             backdrop: "static"
         });
 
-        $confirmDeleteFixedExpenditureDialogModal.modal('toggle');
-        $confirmDeleteFixedExpenditureDialogModal.modal('show');
+        $confirmDeleteFixedExpenditureDialogModal.modal("toggle");
+        $confirmDeleteFixedExpenditureDialogModal.modal("show");
     }
 
     /** Confirmed delete: re-check selection, confirm the record exists, then POST `DeleteFixedExpenditure`. */
@@ -614,7 +614,7 @@
 
         let selectedRowId = "";
 
-        $('.clsGridRow').each(function () {
+        $(".clsGridRow").each(function () {
             if ($(this).attr("class")!.includes(selectedRowColor)) {
                 selectedRowId = $(this).attr("data-id")!;
             }
@@ -626,12 +626,12 @@
         }
 
         $.ajax({
-            url: '/Notice/IsFixedExpenditureExists' + '?id=' + selectedRowId,
-            type: 'POST',
+            url: "/Notice/IsFixedExpenditureExists" + "?id=" + selectedRowId,
+            type: "POST",
             headers: { "RequestVerificationToken": $__RequestVerificationToken.val() as string },
-            dataType: 'json',
+            dataType: "json",
             data: null as any,
-            contentType: 'application/json; charset=utf-8',
+            contentType: "application/json; charset=utf-8",
             success: function (data) {
                 if (data.result) {
 
@@ -640,17 +640,17 @@
                     });
 
                     $.ajax({
-                        url: '/Notice/DeleteFixedExpenditure',
-                        type: 'POST',
+                        url: "/Notice/DeleteFixedExpenditure",
+                        type: "POST",
                         headers: { "RequestVerificationToken": $__RequestVerificationToken.val() as string },
-                        dataType: 'json',
+                        dataType: "json",
                         data: paramValue,
-                        contentType: 'application/json; charset=utf-8',
+                        contentType: "application/json; charset=utf-8",
                         success: function (data) {
                             if (data.result) {
-                                $confirmDeleteFixedExpenditureDialogModal.modal('hide');
+                                $confirmDeleteFixedExpenditureDialogModal.modal("hide");
 
-                                const grid = new MvcGrid(document.querySelector('.mvc-grid'));
+                                const grid = new MvcGrid(document.querySelector(".mvc-grid"));
                                 grid.reload();
 
                                 toastr.success(data.message);
@@ -699,12 +699,12 @@
      */
     function ChangeCreateFixedExpenditureAmountLabel(productName: string) {
         $.ajax({
-            url: '/Notice/GetFixedExpenditureAmountLabel' + '?productName=' + productName,
-            type: 'POST',
+            url: "/Notice/GetFixedExpenditureAmountLabel" + "?productName=" + productName,
+            type: "POST",
             headers: { "RequestVerificationToken": $__RequestVerificationToken.val() as string },
-            dataType: 'json',
+            dataType: "json",
             data: null as any,
-            contentType: 'application/json; charset=utf-8',
+            contentType: "application/json; charset=utf-8",
             success: function (data) {
                 if (data.result) {
                     $labelCreateFixedExpenditureAmount.text(data.label);
@@ -722,12 +722,12 @@
     /** Same as `ChangeCreateFixedExpenditureAmountLabel` for the edit form. */
     function ChangeEditFixedExpenditureAmountLabel(productName: string) {
         $.ajax({
-            url: '/Notice/GetFixedExpenditureAmountLabel' + '?productName=' + productName,
-            type: 'POST',
+            url: "/Notice/GetFixedExpenditureAmountLabel" + "?productName=" + productName,
+            type: "POST",
             headers: { "RequestVerificationToken": $__RequestVerificationToken.val() as string },
-            dataType: 'json',
+            dataType: "json",
             data: null as any,
-            contentType: 'application/json; charset=utf-8',
+            contentType: "application/json; charset=utf-8",
             success: function (data) {
                 if (data.result) {
                     $labelEditFixedExpenditureAmount.text(data.label);
@@ -743,68 +743,68 @@
     }
 
     // --- Button / form / select wiring --------------------------------
-    $btnEditFixedExpenditureGridRow.off('click').on('click', function () {
-        EditFixedExpenditureGridRow($(this).attr('data-errorMessageSelectGridRow'));
+    $btnEditFixedExpenditureGridRow.off("click").on("click", function () {
+        EditFixedExpenditureGridRow($(this).attr("data-errorMessageSelectGridRow"));
     });
 
-    $btnConfirmDeleteFixedExpenditure.off('click').on('click', function () {
-        ConfirmDeleteFixedExpenditure($(this).attr('data-errorMessageSelectGridRow'));
+    $btnConfirmDeleteFixedExpenditure.off("click").on("click", function () {
+        ConfirmDeleteFixedExpenditure($(this).attr("data-errorMessageSelectGridRow"));
     });
 
-    $btnExportExcelFixedExpenditure.off('click').on('click', function () {
+    $btnExportExcelFixedExpenditure.off("click").on("click", function () {
         ExportExcelFixedExpenditure();
     });
 
-    $btnDeleteFixedExpenditure.off('click').on('click', function () {
-        DeleteFixedExpenditure($(this).attr('data-errorMessageSelectGridRow'));
+    $btnDeleteFixedExpenditure.off("click").on("click", function () {
+        DeleteFixedExpenditure($(this).attr("data-errorMessageSelectGridRow"));
     });
 
-    $formCreateFixedExpenditure.off('submit').on('submit', function () {
+    $formCreateFixedExpenditure.off("submit").on("submit", function () {
         return CreateFixedExpenditure();
     });
 
-    $formEditFixedExpenditure.off('submit').on('submit', function () {
+    $formEditFixedExpenditure.off("submit").on("submit", function () {
         return UpdateFixedExpenditure();
     });
 
     // Main-class change -> re-filter sub-class + deposit-asset visibility.
-    $createFixedExpenditureMainClass.off('change').on('change', function (this: HTMLSelectElement) {
+    $createFixedExpenditureMainClass.off("change").on("change", function (this: HTMLSelectElement) {
         return CreateFormShowFixedExpenditureSubClassBySelectedFixedExpenditureMainClass(this);
     });
 
     // Sub-class change -> deposit-asset visibility only.
-    $createFixedExpenditureSubClass.off('change').on('change', function (this: HTMLSelectElement) {
+    $createFixedExpenditureSubClass.off("change").on("change", function (this: HTMLSelectElement) {
         return CreateFormShowFixedExpenditureDivCreateFixedExpenditureMyDepositAssetBySelectedFixedExpenditureSubClass(this);
     });
 
     // Deposit-month change -> re-fill deposit-day options.
-    $createFixedExpenditureDepositMonth.off('change').on('change', function (this: HTMLSelectElement) {
+    $createFixedExpenditureDepositMonth.off("change").on("change", function (this: HTMLSelectElement) {
         return CreateFormShowFixedExpenditureDepositDayBySelectedFixedExpenditureDepositMonth(this);
     });
 
-    $editFixedExpenditureMainClass.off('change').on('change', function (this: HTMLSelectElement) {
+    $editFixedExpenditureMainClass.off("change").on("change", function (this: HTMLSelectElement) {
         return EditFormShowFixedExpenditureSubClassBySelectedFixedExpenditureMainClass(this);
     });
 
-    $editFixedExpenditureSubClass.off('change').on('change', function (this: HTMLSelectElement) {
+    $editFixedExpenditureSubClass.off("change").on("change", function (this: HTMLSelectElement) {
         return EditFormShowFixedExpenditureDivCreateFixedExpenditureMyDepositAssetBySelectedFixedExpenditureSubClass(this);
     });
 
-    $editFixedExpenditureDepositMonth.off('change').on('change', function (this: HTMLSelectElement) {
+    $editFixedExpenditureDepositMonth.off("change").on("change", function (this: HTMLSelectElement) {
         return EditFormShowFixedExpenditureDepositDayBySelectedFixedExpenditureDepositMonth(this);
     });
 
     // Payment-method change -> refresh the amount label.
-    $createFixedExpenditurePaymentMethod.off('change').on('change', function (this: HTMLSelectElement) {
+    $createFixedExpenditurePaymentMethod.off("change").on("change", function (this: HTMLSelectElement) {
         ChangeCreateFixedExpenditureAmountLabel(this.value);
     });
 
-    $editFixedExpenditurePaymentMethod.off('change').on('change', function (this: HTMLSelectElement) {
+    $editFixedExpenditurePaymentMethod.off("change").on("change", function (this: HTMLSelectElement) {
         ChangeEditFixedExpenditureAmountLabel(this.value);
     });
 
     // On load, set the create-form amount label for whichever method is preselected.
     $(function () {
-        ChangeCreateFixedExpenditureAmountLabel($createFixedExpenditurePaymentMethod.find('option:selected').val() as string);
+        ChangeCreateFixedExpenditureAmountLabel($createFixedExpenditurePaymentMethod.find("option:selected").val() as string);
     })
 })();

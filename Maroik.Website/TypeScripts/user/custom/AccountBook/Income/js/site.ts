@@ -16,60 +16,60 @@
 (function () {
     /** Zero-pads a 1-2 digit date/time component to 2 digits (e.g. `5` -> `"05"`). */
     function pad2(n: number): string {
-        return n.toString().padStart(2, '0');
+        return n.toString().padStart(2, "0");
     }
 
     // Cached references: jQuery-UI tab containers, the grid search box, both
     // modals' fields, the amount labels, and the anti-forgery input.
-    const $createIncomeTabs = $('#createIncomeTabs');
-    const $editIncomeTabs = $('#editIncomeTabs');
-    const $createIncomeDate = $('#createIncomeDate');
-    const $editIncomeDate = $('#editIncomeDate');
-    const $gridSearch = $('#gridSearch');
-    const $createIncomeSubClass = $('#createIncomeSubClass');
-    const $editIncomeSubClass = $('#editIncomeSubClass');
-    const $editIncomeDialogModal = $('#editIncomeDialogModal');
-    const $formCreateIncome = $('#formCreateIncome');
+    const $createIncomeTabs = $("#createIncomeTabs");
+    const $editIncomeTabs = $("#editIncomeTabs");
+    const $createIncomeDate = $("#createIncomeDate");
+    const $editIncomeDate = $("#editIncomeDate");
+    const $gridSearch = $("#gridSearch");
+    const $createIncomeSubClass = $("#createIncomeSubClass");
+    const $editIncomeSubClass = $("#editIncomeSubClass");
+    const $editIncomeDialogModal = $("#editIncomeDialogModal");
+    const $formCreateIncome = $("#formCreateIncome");
     const $__RequestVerificationToken = $('input[name="__RequestVerificationToken"]');
-    const $createIncomeMainClass = $('#createIncomeMainClass');
-    const $createIncomeContent = $('#createIncomeContent');
-    const $createIncomeAmount = $('#createIncomeAmount');
-    const $createIncomeHour = $('#createIncomeHour');
-    const $createIncomeMinute = $('#createIncomeMinute');
-    const $createIncomeSecond = $('#createIncomeSecond');
-    const $createIncomeDepositMyAssetProductName = $('#createIncomeDepositMyAssetProductName');
-    const $createIncomeNote = $('#createIncomeNote');
-    const $createIncomeDialogModal = $('#createIncomeDialogModal');
-    const $editIncomeId = $('#editIncomeId');
-    const $editIncomeMainClass = $('#editIncomeMainClass');
-    const $editIncomeContent = $('#editIncomeContent');
-    const $editIncomeAmount = $('#editIncomeAmount');
-    const $editIncomeHour = $('#editIncomeHour');
-    const $editIncomeMinute = $('#editIncomeMinute');
-    const $editIncomeSecond = $('#editIncomeSecond');
-    const $editIncomeDepositMyAssetProductName = $('#editIncomeDepositMyAssetProductName');
-    const $editIncomeNote = $('#editIncomeNote');
-    const $formEditIncome = $('#formEditIncome');
-    const $confirmDeleteIncomeDialogModal = $('#confirmDeleteIncomeDialogModal');
-    const $labelCreateIncomeAmount = $('#labelCreateIncomeAmount');
-    const $labelEditIncomeAmount = $('#labelEditIncomeAmount');
-    const $btnEditIncomeGridRow = $('#btnEditIncomeGridRow');
-    const $btnConfirmDeleteIncome = $('#btnConfirmDeleteIncome');
-    const $btnExportExcelIncome = $('#btnExportExcelIncome');
-    const $btnDeleteIncome = $('#btnDeleteIncome');
+    const $createIncomeMainClass = $("#createIncomeMainClass");
+    const $createIncomeContent = $("#createIncomeContent");
+    const $createIncomeAmount = $("#createIncomeAmount");
+    const $createIncomeHour = $("#createIncomeHour");
+    const $createIncomeMinute = $("#createIncomeMinute");
+    const $createIncomeSecond = $("#createIncomeSecond");
+    const $createIncomeDepositMyAssetProductName = $("#createIncomeDepositMyAssetProductName");
+    const $createIncomeNote = $("#createIncomeNote");
+    const $createIncomeDialogModal = $("#createIncomeDialogModal");
+    const $editIncomeId = $("#editIncomeId");
+    const $editIncomeMainClass = $("#editIncomeMainClass");
+    const $editIncomeContent = $("#editIncomeContent");
+    const $editIncomeAmount = $("#editIncomeAmount");
+    const $editIncomeHour = $("#editIncomeHour");
+    const $editIncomeMinute = $("#editIncomeMinute");
+    const $editIncomeSecond = $("#editIncomeSecond");
+    const $editIncomeDepositMyAssetProductName = $("#editIncomeDepositMyAssetProductName");
+    const $editIncomeNote = $("#editIncomeNote");
+    const $formEditIncome = $("#formEditIncome");
+    const $confirmDeleteIncomeDialogModal = $("#confirmDeleteIncomeDialogModal");
+    const $labelCreateIncomeAmount = $("#labelCreateIncomeAmount");
+    const $labelEditIncomeAmount = $("#labelEditIncomeAmount");
+    const $btnEditIncomeGridRow = $("#btnEditIncomeGridRow");
+    const $btnConfirmDeleteIncome = $("#btnConfirmDeleteIncome");
+    const $btnExportExcelIncome = $("#btnExportExcelIncome");
+    const $btnDeleteIncome = $("#btnDeleteIncome");
 
     // Income main-class -> allowed sub-classes. Authoritative in IncomeClassPolicy (server),
     // serialized into the page by Income.cshtml. Mirrored here for form UX only; the server
     // re-validates every combination on save.
-    const incomeSubClassMap = JSON.parse(($('#incomeSubClassMap').val() as string) || '{}');
-    const failedToLoadAmountLabelMessage = $('#localizerFailedToLoadAmountLabel').val() as string;
+    const incomeSubClassMap = JSON.parse(($("#incomeSubClassMap").val() as string) || "{}");
+    const failedToLoadAmountLabelMessage = $("#localizerFailedToLoadAmountLabel").val() as string;
 
     // Enables/shows only the options in allowedValues (disabling+hiding the rest) and selects
     // valueToSelect when it is allowed, otherwise the first allowed option.
     function ApplyAllowedOptions($select: JQuery, allowedValues: string[], valueToSelect: string | null) {
-        $select.find('option').each(function (this: HTMLOptionElement) {
+        $select.find("option").each(function (this: HTMLOptionElement) {
             const allowed = allowedValues.indexOf(this.value) !== -1;
-            $(this).prop('disabled', !allowed).prop('hidden', !allowed);
+            $(this).prop("disabled", !allowed).prop("hidden", !allowed);
         });
         const target = (valueToSelect != null && allowedValues.indexOf(valueToSelect) !== -1)
             ? valueToSelect
@@ -84,58 +84,58 @@
     // `.val()` unions don't each need a cast. `PrevText` / `NextText` are read
     // PascalCase to match the object keys (a casing fix committed separately).
     const localizer: any = {
-        PrevText: $('#localizerPrevText').val(),
-        NextText: $('#localizerNextText').val(),
-        January: $('#localizerJanuary').val(),
-        February: $('#localizerFebruary').val(),
-        March: $('#localizerMarch').val(),
-        April: $('#localizerApril').val(),
-        May: $('#localizerMay').val(),
-        June: $('#localizerJune').val(),
-        July: $('#localizerJuly').val(),
-        August: $('#localizerAugust').val(),
-        September: $('#localizerSeptember').val(),
-        October: $('#localizerOctober').val(),
-        November: $('#localizerNovember').val(),
-        December: $('#localizerDecember').val(),
-        Jan: $('#localizerJan').val(),
-        Feb: $('#localizerFeb').val(),
-        Mar: $('#localizerMar').val(),
-        Apr: $('#localizerApr').val(),
-        Jun: $('#localizerJun').val(),
-        Jul: $('#localizerJul').val(),
-        Aug: $('#localizerAug').val(),
-        Sep: $('#localizerSep').val(),
-        Oct: $('#localizerOct').val(),
-        Nov: $('#localizerNov').val(),
-        Dec: $('#localizerDec').val(),
-        Sunday: $('#localizerSunday').val(),
-        Monday: $('#localizerMonday').val(),
-        Tuesday: $('#localizerTuesday').val(),
-        Wednesday: $('#localizerWednesday').val(),
-        Thursday: $('#localizerThursday').val(),
-        Friday: $('#localizerFriday').val(),
-        Saturday: $('#localizerSaturday').val(),
-        Sun: $('#localizerSun').val(),
-        Mon: $('#localizerMon').val(),
-        Tue: $('#localizerTue').val(),
-        Wed: $('#localizerWed').val(),
-        Thu: $('#localizerThu').val(),
-        Fri: $('#localizerFri').val(),
-        Sat: $('#localizerSat').val(),
-        Su: $('#localizerSu').val(),
-        Mo: $('#localizerMo').val(),
-        Tu: $('#localizerTu').val(),
-        We: $('#localizerWe').val(),
-        Th: $('#localizerTh').val(),
-        Fr: $('#localizerFr').val(),
-        Sa: $('#localizerSa').val(),
-        YearSuffix: $('#localizerYearSuffix').val()
+        PrevText: $("#localizerPrevText").val(),
+        NextText: $("#localizerNextText").val(),
+        January: $("#localizerJanuary").val(),
+        February: $("#localizerFebruary").val(),
+        March: $("#localizerMarch").val(),
+        April: $("#localizerApril").val(),
+        May: $("#localizerMay").val(),
+        June: $("#localizerJune").val(),
+        July: $("#localizerJuly").val(),
+        August: $("#localizerAugust").val(),
+        September: $("#localizerSeptember").val(),
+        October: $("#localizerOctober").val(),
+        November: $("#localizerNovember").val(),
+        December: $("#localizerDecember").val(),
+        Jan: $("#localizerJan").val(),
+        Feb: $("#localizerFeb").val(),
+        Mar: $("#localizerMar").val(),
+        Apr: $("#localizerApr").val(),
+        Jun: $("#localizerJun").val(),
+        Jul: $("#localizerJul").val(),
+        Aug: $("#localizerAug").val(),
+        Sep: $("#localizerSep").val(),
+        Oct: $("#localizerOct").val(),
+        Nov: $("#localizerNov").val(),
+        Dec: $("#localizerDec").val(),
+        Sunday: $("#localizerSunday").val(),
+        Monday: $("#localizerMonday").val(),
+        Tuesday: $("#localizerTuesday").val(),
+        Wednesday: $("#localizerWednesday").val(),
+        Thursday: $("#localizerThursday").val(),
+        Friday: $("#localizerFriday").val(),
+        Saturday: $("#localizerSaturday").val(),
+        Sun: $("#localizerSun").val(),
+        Mon: $("#localizerMon").val(),
+        Tue: $("#localizerTue").val(),
+        Wed: $("#localizerWed").val(),
+        Thu: $("#localizerThu").val(),
+        Fri: $("#localizerFri").val(),
+        Sat: $("#localizerSat").val(),
+        Su: $("#localizerSu").val(),
+        Mo: $("#localizerMo").val(),
+        Tu: $("#localizerTu").val(),
+        We: $("#localizerWe").val(),
+        Th: $("#localizerTh").val(),
+        Fr: $("#localizerFr").val(),
+        Sa: $("#localizerSa").val(),
+        YearSuffix: $("#localizerYearSuffix").val()
     };
 
     // Apply the localized names to every datepicker on the page.
     $.datepicker.setDefaults({
-        dateFormat: 'yy-mm-dd',
+        dateFormat: "yy-mm-dd",
         prevText: localizer.PrevText,
         nextText: localizer.NextText,
         monthNames: [localizer.January, localizer.February, localizer.March, localizer.April, localizer.May, localizer.June, localizer.July, localizer.August, localizer.September, localizer.October, localizer.November, localizer.December],
@@ -183,8 +183,8 @@
         } as any);
 
         // Hide the datepicker's built-in "Close" / "Today" buttons via injected CSS.
-        $('<style> .ui-datepicker-close { display: none; } </style>').appendTo("head");
-        $('<style> .ui-datepicker-current { display: none; } </style>').appendTo("head");
+        $("<style> .ui-datepicker-close { display: none; } </style>").appendTo("head");
+        $("<style> .ui-datepicker-current { display: none; } </style>").appendTo("head");
     });
 
     // Bootstrap table class that marks the currently selected grid row.
@@ -192,39 +192,39 @@
 
     // MvcGrid `rowclick` (native CustomEvent): move the highlight to the row
     // whose `data-id` matches the clicked record.
-    $(document).off('rowclick.Income').on('rowclick.Income', (e: any) => {
+    $(document).off("rowclick.Income").on("rowclick.Income", (e: any) => {
         let selectedRow = e.detail;
         let selectedRowId = selectedRow.data.Id;
 
-        let $clsGridRow = $('.clsGridRow');
+        let $clsGridRow = $(".clsGridRow");
 
         $clsGridRow.each(function () {
             $(this).removeClass(selectedRowColor);
         });
 
         $clsGridRow.each(function () {
-            if ((String(selectedRowId).valueOf() === String($(this).attr('data-id')).valueOf())) {
+            if ((String(selectedRowId).valueOf() === String($(this).attr("data-id")).valueOf())) {
                 $(this).addClass(selectedRowColor);
             }
         });
     });
 
     // MvcGrid lifecycle events — intentional no-ops, bound only as hook points.
-    $(document).off('reloadstart.Income').on('reloadstart.Income', _ => {
+    $(document).off("reloadstart.Income").on("reloadstart.Income", _ => {
     });
 
-    $(document).off('reloadend.Income').on('reloadend.Income', _ => {
+    $(document).off("reloadend.Income").on("reloadend.Income", _ => {
     });
 
-    $(document).off('reloadfail.Income').on('reloadfail.Income', _ => {
+    $(document).off("reloadfail.Income").on("reloadfail.Income", _ => {
     });
 
-    $(document).off('gridconfigure.Income').on('gridconfigure.Income', _ => {
+    $(document).off("gridconfigure.Income").on("gridconfigure.Income", _ => {
     });
 
     // Double-click the highlighted row to open its edit modal.
-    $(document).off('dblclick.Income', '.clsGridRow').on('dblclick.Income', '.clsGridRow', function () {
-        $('.clsGridRow').each(function () {
+    $(document).off("dblclick.Income", ".clsGridRow").on("dblclick.Income", ".clsGridRow", function () {
+        $(".clsGridRow").each(function () {
             if ($(this).attr("class")!.includes(selectedRowColor)) {
                 EditIncomeGridRow();
             }
@@ -232,9 +232,9 @@
     });
 
     // Free-text search: push the term into the grid query string and reload.
-    $gridSearch.off('input').on('input', function (this: HTMLInputElement) {
-        const grid = new MvcGrid(document.querySelector('.mvc-grid'));
-        grid.url.searchParams.set('wholeSearch', this.value);
+    $gridSearch.off("input").on("input", function (this: HTMLInputElement) {
+        const grid = new MvcGrid(document.querySelector(".mvc-grid"));
+        grid.url.searchParams.set("wholeSearch", this.value);
         grid.reload();
     });
 
@@ -292,17 +292,17 @@
         });
 
         $.ajax({
-            url: '/AccountBook/CreateIncome',
-            type: 'POST',
+            url: "/AccountBook/CreateIncome",
+            type: "POST",
             headers: { "RequestVerificationToken": $__RequestVerificationToken.val() as string },
-            dataType: 'json',
+            dataType: "json",
             data: paramValue,
-            contentType: 'application/json; charset=utf-8',
+            contentType: "application/json; charset=utf-8",
             success: function (data) {
                 if (data.result) {
-                    $createIncomeDialogModal.modal('hide');
+                    $createIncomeDialogModal.modal("hide");
 
-                    const grid = new MvcGrid(document.querySelector('.mvc-grid'));
+                    const grid = new MvcGrid(document.querySelector(".mvc-grid"));
                     grid.reload();
 
                     toastr.success(data.message);
@@ -328,7 +328,7 @@
 
         let selectedRowId = "";
 
-        $('.clsGridRow').each(function () {
+        $(".clsGridRow").each(function () {
             if ($(this).attr("class")!.includes(selectedRowColor)) {
                 selectedRowId = $(this).attr("data-id")!;
             }
@@ -340,12 +340,12 @@
         }
 
         $.ajax({
-            url: '/AccountBook/IsIncomeExists' + '?id=' + selectedRowId,
-            type: 'POST',
+            url: "/AccountBook/IsIncomeExists" + "?id=" + selectedRowId,
+            type: "POST",
             headers: { "RequestVerificationToken": $__RequestVerificationToken.val() as string },
-            dataType: 'json',
+            dataType: "json",
             data: null as any,
-            contentType: 'application/json; charset=utf-8',
+            contentType: "application/json; charset=utf-8",
             success: function (data) {
                 if (data.result) {
 
@@ -359,10 +359,10 @@
                     // `created` is `YYYY-MM-DDTHH:mm:ss`; split into the date field
                     // and the hour / minute / second selects (`.change()` so any
                     // listener fires).
-                    $editIncomeDate.val(data.income.created.split('T')[0]);
-                    $editIncomeHour.val(parseInt(data.income.created.split('T')[1].substring(0, 2))).change();
-                    $editIncomeMinute.val(parseInt(data.income.created.split('T')[1].substring(3, 5))).change();
-                    $editIncomeSecond.val(parseInt(data.income.created.split('T')[1].substring(6, 8))).change();
+                    $editIncomeDate.val(data.income.created.split("T")[0]);
+                    $editIncomeHour.val(parseInt(data.income.created.split("T")[1].substring(0, 2))).change();
+                    $editIncomeMinute.val(parseInt(data.income.created.split("T")[1].substring(3, 5))).change();
+                    $editIncomeSecond.val(parseInt(data.income.created.split("T")[1].substring(6, 8))).change();
                     $editIncomeDepositMyAssetProductName.val(data.income.depositMyAssetProductName).change();
                     $editIncomeNote.val(data.income.note);
 
@@ -371,8 +371,8 @@
                         backdrop: "static"
                     });
 
-                    $editIncomeDialogModal.modal('toggle');
-                    $editIncomeDialogModal.modal('show');
+                    $editIncomeDialogModal.modal("toggle");
+                    $editIncomeDialogModal.modal("show");
                 }
                 else {
                     toastr.error(data.error);
@@ -418,17 +418,17 @@
         });
 
         $.ajax({
-            url: '/AccountBook/UpdateIncome',
-            type: 'POST',
+            url: "/AccountBook/UpdateIncome",
+            type: "POST",
             headers: { "RequestVerificationToken": $__RequestVerificationToken.val() as string },
-            dataType: 'json',
+            dataType: "json",
             data: paramValue,
-            contentType: 'application/json; charset=utf-8',
+            contentType: "application/json; charset=utf-8",
             success: function (data) {
                 if (data.result) {
-                    $editIncomeDialogModal.modal('hide');
+                    $editIncomeDialogModal.modal("hide");
 
-                    const grid = new MvcGrid(document.querySelector('.mvc-grid'));
+                    const grid = new MvcGrid(document.querySelector(".mvc-grid"));
                     grid.reload();
 
                     toastr.success(data.message);
@@ -446,7 +446,7 @@
 
         let selectedRowId = "";
 
-        $('.clsGridRow').each(function () {
+        $(".clsGridRow").each(function () {
             if ($(this).attr("class")!.includes(selectedRowColor)) {
                 selectedRowId = $(this).attr("data-id")!;
             }
@@ -462,8 +462,8 @@
             backdrop: "static"
         });
 
-        $confirmDeleteIncomeDialogModal.modal('toggle');
-        $confirmDeleteIncomeDialogModal.modal('show');
+        $confirmDeleteIncomeDialogModal.modal("toggle");
+        $confirmDeleteIncomeDialogModal.modal("show");
     }
 
     /** Confirmed delete: re-check selection, confirm the record exists, then POST `DeleteIncome`. */
@@ -471,7 +471,7 @@
 
         let selectedRowId = "";
 
-        $('.clsGridRow').each(function () {
+        $(".clsGridRow").each(function () {
             if ($(this).attr("class")!.includes(selectedRowColor)) {
                 selectedRowId = $(this).attr("data-id")!;
             }
@@ -483,12 +483,12 @@
         }
 
         $.ajax({
-            url: '/AccountBook/IsIncomeExists' + '?id=' + selectedRowId,
-            type: 'POST',
+            url: "/AccountBook/IsIncomeExists" + "?id=" + selectedRowId,
+            type: "POST",
             headers: { "RequestVerificationToken": $__RequestVerificationToken.val() as string },
-            dataType: 'json',
+            dataType: "json",
             data: null as any,
-            contentType: 'application/json; charset=utf-8',
+            contentType: "application/json; charset=utf-8",
             success: function (data) {
                 if (data.result) {
 
@@ -497,17 +497,17 @@
                     });
 
                     $.ajax({
-                        url: '/AccountBook/DeleteIncome',
-                        type: 'POST',
+                        url: "/AccountBook/DeleteIncome",
+                        type: "POST",
                         headers: { "RequestVerificationToken": $__RequestVerificationToken.val() as string },
-                        dataType: 'json',
+                        dataType: "json",
                         data: paramValue,
-                        contentType: 'application/json; charset=utf-8',
+                        contentType: "application/json; charset=utf-8",
                         success: function (data) {
                             if (data.result) {
-                                $confirmDeleteIncomeDialogModal.modal('hide');
+                                $confirmDeleteIncomeDialogModal.modal("hide");
 
-                                const grid = new MvcGrid(document.querySelector('.mvc-grid'));
+                                const grid = new MvcGrid(document.querySelector(".mvc-grid"));
                                 grid.reload();
 
                                 toastr.success(data.message);
@@ -558,12 +558,12 @@
      */
     function ChangeCreateIncomeAmountLabel(productName: string) {
         $.ajax({
-            url: '/AccountBook/GetIncomeAmountLabel' + '?productName=' + productName,
-            type: 'POST',
+            url: "/AccountBook/GetIncomeAmountLabel" + "?productName=" + productName,
+            type: "POST",
             headers: { "RequestVerificationToken": $__RequestVerificationToken.val() as string },
-            dataType: 'json',
+            dataType: "json",
             data: null as any,
-            contentType: 'application/json; charset=utf-8',
+            contentType: "application/json; charset=utf-8",
             success: function (data) {
                 $labelCreateIncomeAmount.text(data.label);
             },
@@ -576,12 +576,12 @@
     /** Same as `ChangeCreateIncomeAmountLabel` for the edit form. */
     function ChangeEditIncomeAmountLabel(productName: string) {
         $.ajax({
-            url: '/AccountBook/GetIncomeAmountLabel' + '?productName=' + productName,
-            type: 'POST',
+            url: "/AccountBook/GetIncomeAmountLabel" + "?productName=" + productName,
+            type: "POST",
             headers: { "RequestVerificationToken": $__RequestVerificationToken.val() as string },
-            dataType: 'json',
+            dataType: "json",
             data: null as any,
-            contentType: 'application/json; charset=utf-8',
+            contentType: "application/json; charset=utf-8",
             success: function (data) {
                 $labelEditIncomeAmount.text(data.label);
             },
@@ -592,50 +592,50 @@
     }
 
     // --- Button / form / select wiring --------------------------------
-    $btnEditIncomeGridRow.off('click').on('click', function () {
+    $btnEditIncomeGridRow.off("click").on("click", function () {
         EditIncomeGridRow($(this).attr("data-errorMessageSelectGridRow"));
     });
 
-    $btnConfirmDeleteIncome.off('click').on('click', function () {
+    $btnConfirmDeleteIncome.off("click").on("click", function () {
         ConfirmDeleteIncome($(this).attr("data-errorMessageSelectGridRow"));
     });
 
-    $btnExportExcelIncome.off('click').on('click', function () {
+    $btnExportExcelIncome.off("click").on("click", function () {
         ExportExcelIncome();
     });
 
-    $btnDeleteIncome.off('click').on('click', function () {
+    $btnDeleteIncome.off("click").on("click", function () {
         DeleteIncome($(this).attr("data-errorMessageSelectGridRow"));
     });
 
-    $formCreateIncome.off('submit').on('submit', function () {
+    $formCreateIncome.off("submit").on("submit", function () {
         return CreateIncome();
     });
 
-    $formEditIncome.off('submit').on('submit', function () {
+    $formEditIncome.off("submit").on("submit", function () {
         return UpdateIncome();
     });
 
     // Main-class change -> re-filter the sub-class options.
-    $createIncomeMainClass.off('change').on('change', function (this: HTMLSelectElement) {
+    $createIncomeMainClass.off("change").on("change", function (this: HTMLSelectElement) {
         CreateFormShowIncomeSubClassBySelectedIncomeMainClass(this);
     });
 
-    $editIncomeMainClass.off('change').on('change', function (this: HTMLSelectElement) {
+    $editIncomeMainClass.off("change").on("change", function (this: HTMLSelectElement) {
         EditFormShowIncomeSubClassBySelectedIncomeMainClass(this);
     });
 
     // Deposit-asset change -> refresh the amount label.
-    $createIncomeDepositMyAssetProductName.off('change').on('change', function (this: HTMLSelectElement) {
+    $createIncomeDepositMyAssetProductName.off("change").on("change", function (this: HTMLSelectElement) {
         ChangeCreateIncomeAmountLabel(this.value);
     });
 
-    $editIncomeDepositMyAssetProductName.off('change').on('change', function (this: HTMLSelectElement) {
+    $editIncomeDepositMyAssetProductName.off("change").on("change", function (this: HTMLSelectElement) {
         ChangeEditIncomeAmountLabel(this.value);
     });
 
     // On load, set the create-form amount label for whichever asset is preselected.
     $(function () {
-        ChangeCreateIncomeAmountLabel($createIncomeDepositMyAssetProductName.find('option:selected').val() as string);
+        ChangeCreateIncomeAmountLabel($createIncomeDepositMyAssetProductName.find("option:selected").val() as string);
     })
 })();
