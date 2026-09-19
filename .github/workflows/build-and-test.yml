@@ -137,9 +137,18 @@ jobs:
       # ── E2E Tests (Playwright) ───────────────────────────────────────────────
       # Needs Docker for the Testcontainers PostgreSQL instance (ubuntu-latest has it).
       - name: Install Playwright browsers
-        run: pwsh Maroik.E2E.Tests/bin/Release/net10.0/playwright.ps1 install --with-deps chromium
+        run: pwsh Maroik.E2E.Tests/bin/Release/net10.0/playwright.ps1 install --with-deps chromium firefox
 
-      - name: E2E Tests
+      # The suite runs once per browser; E2E_BROWSER picks it (default: the runner's Google Chrome).
+      - name: E2E Tests (Chrome)
+        run: |
+          dotnet test --project Maroik.E2E.Tests/Maroik.E2E.Tests.csproj \
+            --no-build \
+            --configuration Release
+
+      - name: E2E Tests (Firefox)
+        env:
+          E2E_BROWSER: firefox
         run: |
           dotnet test --project Maroik.E2E.Tests/Maroik.E2E.Tests.csproj \
             --no-build \

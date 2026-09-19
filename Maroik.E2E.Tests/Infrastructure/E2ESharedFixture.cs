@@ -6,7 +6,7 @@ namespace Maroik.E2E.Tests.Infrastructure;
 /// Shared fixture for all E2E test classes in the "E2E" collection.
 /// Creates ONE seeded PostgreSQL container (<see cref="E2EPostgresContainer"/>), ONE
 /// <see cref="PlaywrightWebApplicationFactory"/> (so Program.cs runs exactly once per test
-/// session) and ONE headless Chromium browser instance.
+/// session) and ONE headless browser instance (Chrome by default; see <see cref="BrowserName"/>).
 /// Each test creates its own <see cref="IBrowserContext"/> via
 /// <see cref="PlaywrightWebApplicationFactory.ServerBaseUrl"/>, ensuring page isolation.
 /// </summary>
@@ -17,7 +17,7 @@ public sealed class E2ESharedFixture : IAsyncLifetime
     private IPlaywright? _playwright;
     private IBrowser? _browser;
 
-    /// <summary>The shared headless Chromium browser instance used by every test.</summary>
+    /// <summary>The shared headless browser instance used by every test.</summary>
     public IBrowser Browser => _browser
         ?? throw new InvalidOperationException("The shared browser has not been initialized.");
 
@@ -36,13 +36,40 @@ public sealed class E2ESharedFixture : IAsyncLifetime
         _factory.CreateClient();
 
         _playwright = await Playwright.CreateAsync();
-        _browser = await _playwright.Chromium.LaunchAsync(new BrowserTypeLaunchOptions
+        _browser = await LaunchBrowserAsync(_playwright, BrowserName);
+    }
+
+    /// <summary>
+    /// Environment variable that picks the browser the whole run uses: <c>chrome</c> (default, the
+    /// installed Google Chrome), <c>chromium</c> (Playwright's bundled build) or <c>firefox</c>.
+    /// CI runs the suite once per browser.
+    /// </summary>
+    public const string BrowserEnvironmentVariable = "E2E_BROWSER";
+
+    /// <summary>The browser this run drives, from <see cref="BrowserEnvironmentVariable"/>.</summary>
+    public static string BrowserName =>
+        Environment.GetEnvironmentVariable(BrowserEnvironmentVariable) is { Length: > 0 } name
+            ? name.Trim().ToLowerInvariant()
+            : "chrome";
+
+    private static Task<IBrowser> LaunchBrowserAsync(IPlaywright playwright, string browserName) => browserName switch
+    {
+        "chrome" => playwright.Chromium.LaunchAsync(new BrowserTypeLaunchOptions
         {
             Headless = true,
             Channel = "chrome",
             Args = ["--no-sandbox"]
-        });
-    }
+        }),
+        "chromium" => playwright.Chromium.LaunchAsync(new BrowserTypeLaunchOptions
+        {
+            Headless = true,
+            Args = ["--no-sandbox"]
+        }),
+        // Chromium's --no-sandbox is not a Firefox flag; Playwright's bundled Firefox needs none.
+        "firefox" => playwright.Firefox.LaunchAsync(new BrowserTypeLaunchOptions { Headless = true }),
+        _ => throw new InvalidOperationException(
+            $"Unknown {BrowserEnvironmentVariable} '{browserName}'. Use chrome, chromium or firefox.")
+    };
 
     /// <summary>Tears down the browser, Playwright driver, in-process server, and database container.</summary>
     /// <remarks>
