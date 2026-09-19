@@ -217,6 +217,47 @@ public class RabbitMqEmailPublisherTests
     }
 
     /// <summary>
+    /// Regression: while the broker is down, a failed connect attempt makes the publishes that follow
+    /// within the grace window fail fast — they do not each queue behind the lock and pay another
+    /// (multi-second) connect attempt, which stacked up request latency during an outage.
+    /// </summary>
+    [Fact]
+    public async Task PublishAsync_AfterAFailedConnect_FailsFast_WithoutAnotherConnectAttempt()
+    {
+        _factory.Setup(f => f.CreateConnectionAsync(It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new InvalidOperationException("broker down"));
+        var sut = new RabbitMqEmailPublisher(_factory.Object, NullLogger<RabbitMqEmailPublisher>.Instance, TimeSpan.FromSeconds(30));
+
+        await Assert.ThrowsAsync<InvalidOperationException>(() => sut.PublishAsync(Message, TestContext.Current.CancellationToken));
+        var fastFail = await Assert.ThrowsAsync<InvalidOperationException>(() => sut.PublishAsync(Message, TestContext.Current.CancellationToken));
+
+        Assert.Contains("unavailable", fastFail.Message);
+        _factory.Verify(f => f.CreateConnectionAsync(It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    /// <summary>Once the grace window has passed the publisher tries to connect again, and a success clears the failure.</summary>
+    [Fact]
+    public async Task PublishAsync_ReconnectsAfterTheGraceWindow_AndPublishes()
+    {
+        var channel = MakeChannelMock();
+        var connection = MakeConnectionMock(channel, isOpen: true);
+        _factory.SetupSequence(f => f.CreateConnectionAsync(It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new InvalidOperationException("broker down"))
+            .ReturnsAsync(connection.Object);
+        var sut = new RabbitMqEmailPublisher(_factory.Object, NullLogger<RabbitMqEmailPublisher>.Instance, TimeSpan.FromMilliseconds(50));
+
+        await Assert.ThrowsAsync<InvalidOperationException>(() => sut.PublishAsync(Message, TestContext.Current.CancellationToken));
+        await Task.Delay(150, TestContext.Current.CancellationToken);
+        await sut.PublishAsync(Message, TestContext.Current.CancellationToken);
+
+        _factory.Verify(f => f.CreateConnectionAsync(It.IsAny<CancellationToken>()), Times.Exactly(2));
+        channel.Verify(c => c.BasicPublishAsync(
+                It.IsAny<string>(), It.IsAny<string>(), It.IsAny<bool>(), It.IsAny<BasicProperties>(),
+                It.IsAny<ReadOnlyMemory<byte>>(), It.IsAny<CancellationToken>()),
+            Times.Once);
+    }
+
+    /// <summary>
     /// Regression: the recovery-grace-window fix must actually track whatever
     /// <c>NetworkRecoveryInterval</c> a real <see cref="ConnectionFactory"/> is configured with
     /// (defaulting to a fixed constant here previously either stalled every reconnect on a mismatch

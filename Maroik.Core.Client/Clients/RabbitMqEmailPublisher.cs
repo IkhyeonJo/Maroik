@@ -50,6 +50,13 @@ public sealed class RabbitMqEmailPublisher(
     private IConnection? _connection;
     private IChannel? _channel;
 
+    // Stopwatch timestamp of the last time (re)connecting failed, or null. While the broker is down every
+    // publish would otherwise queue behind _publishLock and each pay the recovery grace wait plus a full
+    // connect attempt in turn, so a burst of registrations / password resets stacks up multi-second
+    // latencies. After a failure, callers within one grace window fail fast instead (PublishAsync throws,
+    // which the callers already treat as "mail could not be queued").
+    private long? _lastConnectFailureTimestamp;
+
     /// <inheritdoc />
     public async Task PublishAsync(SendEmailMessage message, CancellationToken ct = default)
     {
@@ -94,6 +101,13 @@ public sealed class RabbitMqEmailPublisher(
 
         if (_connection is not { IsOpen: true })
         {
+            if (_lastConnectFailureTimestamp is { } failedAt
+                && System.Diagnostics.Stopwatch.GetElapsedTime(failedAt) < _connectionRecoveryGraceWindow)
+            {
+                throw new InvalidOperationException(
+                    "RabbitMQ is unavailable: a reconnect attempt failed moments ago, so this publish is not retried yet.");
+            }
+
             if (_connection != null)
             {
                 // AutomaticRecoveryEnabled means a connection that just dropped is very likely
@@ -117,7 +131,19 @@ public sealed class RabbitMqEmailPublisher(
             }
 
             if (_connection is not { IsOpen: true })
-                _connection = await factory.CreateConnectionAsync(ct);
+            {
+                try
+                {
+                    _connection = await factory.CreateConnectionAsync(ct);
+                    _lastConnectFailureTimestamp = null;
+                }
+                catch (Exception) when (!ct.IsCancellationRequested)
+                {
+                    // Remember the failure so the publishes queued behind this one fail fast (see the field).
+                    _lastConnectFailureTimestamp = System.Diagnostics.Stopwatch.GetTimestamp();
+                    throw;
+                }
+            }
         }
 
         // Publisher confirms make BasicPublishAsync wait for the broker to actually accept the
