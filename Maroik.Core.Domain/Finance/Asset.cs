@@ -178,6 +178,11 @@ public sealed class Asset : AggregateRoot<(string ProductName, string AccountEma
         var addResult = Balance.Add(amount);
         if (addResult.IsError) return addResult.Errors;
 
+        // The balance is persisted in a numeric(18,2) column: a deposit that would take it past the
+        // range is a clean validation error here, not a raw numeric-overflow (SQLSTATE 22003) at save.
+        var rangeResult = FinanceAmountPolicy.ValidateWithinRange(addResult.Value.Amount);
+        if (rangeResult.IsError) return rangeResult.Errors;
+
         Balance = addResult.Value;
         Updated = DateTime.UtcNow;
         return Result.Success;
@@ -192,6 +197,10 @@ public sealed class Asset : AggregateRoot<(string ProductName, string AccountEma
         var subtractResult = Balance.Subtract(amount);
         if (subtractResult.IsError) return subtractResult.Errors;
 
+        // Same numeric(18,2) bound as Deposit, in the negative direction.
+        var rangeResult = FinanceAmountPolicy.ValidateWithinRange(subtractResult.Value.Amount);
+        if (rangeResult.IsError) return rangeResult.Errors;
+
         Balance = subtractResult.Value;
         Updated = DateTime.UtcNow;
         return Result.Success;
@@ -202,6 +211,9 @@ public sealed class Asset : AggregateRoot<(string ProductName, string AccountEma
     {
         if (newBalance.Currency != Balance.Currency)
             return LocalizableError.Validation("Asset.CurrencyMismatch", "Cannot change the currency of an existing asset.");
+
+        var rangeResult = FinanceAmountPolicy.ValidateWithinRange(newBalance.Amount);
+        if (rangeResult.IsError) return rangeResult.Errors;
 
         Balance = newBalance;
         Updated = DateTime.UtcNow;

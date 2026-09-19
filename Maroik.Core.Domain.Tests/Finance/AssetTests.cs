@@ -118,6 +118,48 @@ public class AssetTests
         Assert.Equal(700m, asset.Balance.Amount);
     }
 
+    /// <summary>
+    /// Regression: the balance lives in a numeric(18,2) column, so a deposit that would take it past
+    /// <see cref="FinanceAmountPolicy.MaxAbsoluteAmount"/> is a clean validation error (and leaves the
+    /// balance untouched) instead of a raw numeric-overflow at save.
+    /// </summary>
+    [Fact]
+    public void Deposit_ReturnsError_AndLeavesBalanceUntouched_WhenItWouldExceedTheRange()
+    {
+        var asset = ValidAsset(amount: FinanceAmountPolicy.MaxAbsoluteAmount);
+
+        var result = asset.Deposit(Money.Create(0.01m, "KRW").Value);
+
+        Assert.True(result.IsError);
+        Assert.Equal("Finance.AmountOutOfRange", result.FirstError.Code);
+        Assert.Equal(FinanceAmountPolicy.MaxAbsoluteAmount, asset.Balance.Amount);
+    }
+
+    /// <summary>The same bound applies in the negative direction on a withdrawal.</summary>
+    [Fact]
+    public void Withdraw_ReturnsError_AndLeavesBalanceUntouched_WhenItWouldExceedTheNegativeRange()
+    {
+        var asset = ValidAsset(amount: -FinanceAmountPolicy.MaxAbsoluteAmount);
+
+        var result = asset.Withdraw(Money.Create(0.01m, "KRW").Value);
+
+        Assert.True(result.IsError);
+        Assert.Equal("Finance.AmountOutOfRange", result.FirstError.Code);
+        Assert.Equal(-FinanceAmountPolicy.MaxAbsoluteAmount, asset.Balance.Amount);
+    }
+
+    /// <summary>A change that lands exactly on the limit is still allowed.</summary>
+    [Fact]
+    public void Deposit_Succeeds_WhenItLandsExactlyOnTheLimit()
+    {
+        var asset = ValidAsset(amount: FinanceAmountPolicy.MaxAbsoluteAmount - 1m);
+
+        var result = asset.Deposit(Money.Create(1m, "KRW").Value);
+
+        Assert.False(result.IsError);
+        Assert.Equal(FinanceAmountPolicy.MaxAbsoluteAmount, asset.Balance.Amount);
+    }
+
     /// <summary>Deposit returns error, when currency mismatch.</summary>
     [Fact]
     public void Deposit_ReturnsError_WhenCurrencyMismatch()

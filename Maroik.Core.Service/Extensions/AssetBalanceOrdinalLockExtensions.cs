@@ -13,10 +13,12 @@ namespace Maroik.Core.Service.Extensions;
 /// <param name="Amount">Amount to deposit or withdraw (sign is ignored — <see cref="IsDeposit"/> controls direction).</param>
 /// <param name="IsDeposit">true to deposit into the asset, false to withdraw from it.</param>
 /// <param name="Currency">
-/// Currency the amount was <em>recorded</em> in (from the transaction row, not the asset's current
-/// balance). Null falls back to the asset's current currency. When the asset's currency was changed
-/// after the transaction was recorded, the two differ and the deposit/withdraw is rejected with a
-/// currency-mismatch error instead of silently drifting the balance by a re-labeled amount.
+/// Currency label of the transaction row being reverted or re-applied. Rows carry no currency of their
+/// own — the repository reads it from the asset they reference — so it normally equals the asset's
+/// label. It is still passed through as a defensive check: if the two ever differ (e.g. the two assets
+/// of an older transfer were relabelled differently), the deposit/withdraw is rejected with a
+/// currency-mismatch error instead of silently drifting the balance. Null falls back to the asset's
+/// current currency.
 /// </param>
 public readonly record struct AssetBalanceAdjustment(string? AssetName, decimal Amount, bool IsDeposit, string? Currency = null);
 
