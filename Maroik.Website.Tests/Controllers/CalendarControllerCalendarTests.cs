@@ -1,4 +1,6 @@
 using Maroik.Core.Domain.Account;
+using Maroik.Core.PostgreSQL.Data;
+using Microsoft.Extensions.DependencyInjection;
 using Maroik.Website.Tests.Infrastructure;
 
 namespace Maroik.Website.Tests.Controllers;
@@ -66,6 +68,27 @@ public class CalendarControllerCalendarTests
         string getJson = await getResponse.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
 
         Assert.Contains("Work", getJson);
+    }
+
+    /// <summary>
+    /// Regression: the response echoes the new calendar with its REAL id. It used to be 0, so the client
+    /// built the new calendar's checkbox / edit / delete controls for "calendar 0" until the page was reloaded.
+    /// </summary>
+    [Fact]
+    public async Task CreateCalendar_ResponseCarriesTheRealIdOfTheNewCalendar()
+    {
+        var session = await LoginAsUserAsync();
+        using var createRequest = session.BuildJsonPostRequest("/Calendar/CreateCalendar", ValidCalendarPayload("WithId"));
+        var createResponse = await _client.SendAsync(createRequest, TestContext.Current.CancellationToken);
+        using var doc = System.Text.Json.JsonDocument.Parse(await createResponse.Content.ReadAsStringAsync(TestContext.Current.CancellationToken));
+        long returnedId = doc.RootElement.GetProperty("calendar").GetProperty("id").GetInt64();
+
+        using var scope = _factory.Services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+        long storedId = db.Calendars.Single(c => c.AccountEmail == "calendar-user@test.com" && c.Name == "WithId").Id;
+
+        Assert.True(returnedId > 0);
+        Assert.Equal(storedId, returnedId);
     }
 
     /// <summary>Create calendar duplicate name returns already exists error.</summary>

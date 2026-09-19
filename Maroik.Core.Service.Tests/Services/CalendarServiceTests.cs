@@ -122,6 +122,27 @@ public class CalendarServiceTests
     }
 
     /// <summary>
+    /// Regression: the new calendar's database-generated id is handed back on the request (the aggregate
+    /// itself is created with Id 0), because the client builds the new calendar's checkbox / edit / delete
+    /// controls from the id the controller echoes — with id 0 they addressed no calendar until a reload.
+    /// </summary>
+    [Fact]
+    public async Task CreateCalendarAsync_HandsTheGeneratedIdBackOnTheRequest()
+    {
+        _calendarRepo.SetupSequence(r => r.GetByAccountEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync([MakeCalendar(id: 7, name: "Other")])                                      // duplicate check (before)
+            .ReturnsAsync([MakeCalendar(id: 7, name: "Other"), MakeCalendar(id: 42, name: "NewCalendar")]); // after the insert
+        _calendarRepo.Setup(r => r.CreateAsync(It.IsAny<Calendar>(), It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
+        var sut = CreateSut();
+        var request = new CalendarRequest { Name = "NewCalendar", TimeZoneIanaId = "UTC", HtmlColorCode = "#3788d8" };
+
+        ServiceResult result = await sut.CreateCalendarAsync("user@example.com", request, TestContext.Current.CancellationToken);
+
+        Assert.True(result.Success);
+        Assert.Equal(42, request.Id);
+    }
+
+    /// <summary>
     /// Regression test: the prior name-existence check is a read-then-write race (two concurrent
     /// creates of the same name can both pass it). The "Calendar_AccountEmail_Name_unique"
     /// constraint is what actually closes the race -- verify the resulting unique-violation
