@@ -20,13 +20,13 @@ public class ProfileInputViewModel
     public List<IFormFile>? ProfileAvatarFiles { get; set; }
 
     /// <summary>
-    /// Current (existing) password ?? required to authorize profile updates.
-    /// Must satisfy the password complexity rule.
+    /// Current (existing) password, required to authorize a password change. Deliberately NOT checked
+    /// against the complexity rule: it only has to match what is stored (verified by the server), and
+    /// an account whose password predates the rule must still be able to type it in order to change it.
     /// </summary>
     [Required(ErrorMessage = "Password is required")]
-    [StringLength(100, ErrorMessage = "The {0} must be at least {2} characters long.", MinimumLength = 8)]
+    [StringLength(100)]
     [DataType(DataType.Password)]
-    [RegularExpression(PasswordPolicy.Pattern, ErrorMessage = "Password must be at least 8 characters and contain at 3 of 4 of the following: upper case (A-Z), lower case (a-z), number (0-9) and special character (e.g. !@#$%^&*)")]
     public string? Password { get; set; }
 
     /// <summary>

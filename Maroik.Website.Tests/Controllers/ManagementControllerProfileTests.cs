@@ -115,6 +115,37 @@ public class ManagementControllerProfileTests
         Assert.True(passwordService.VerifyPassword("BrandNewPassword1!", account.HashedPassword!));
     }
 
+    /// <summary>
+    /// Regression: the CURRENT password only has to match what is stored — it is not held to the
+    /// complexity rule. An account whose password predates the rule (here a short, single-class one)
+    /// must still be able to change it.
+    /// </summary>
+    [Fact]
+    public async Task UpdateProfilePassword_LegacyWeakCurrentPassword_ChangesPassword()
+    {
+        const string email = "management-profile-pw-legacy@test.com";
+        var session = await AuthenticatedSessionHelper.LoginAsync(
+            _factory, _client, email, "weak", Role.User, TestContext.Current.CancellationToken);
+        using var request = session.BuildJsonPostRequest("/Management/UpdateProfilePassword", new
+        {
+            Nickname = "unused",
+            Password = "weak",
+            NewPassword = "BrandNewPassword1!",
+            TimeZoneIanaId = "unused"
+        });
+
+        var response = await _client.SendAsync(request, TestContext.Current.CancellationToken);
+        string json = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+
+        Assert.Contains("\"result\":true", json);
+
+        using var scope = _factory.Services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+        var passwordService = scope.ServiceProvider.GetRequiredService<IPasswordService>();
+        var account = db.Accounts.Single(a => a.Email == email);
+        Assert.True(passwordService.VerifyPassword("BrandNewPassword1!", account.HashedPassword!));
+    }
+
     /// <summary>Update profile password wrong current password returns failure result.</summary>
     [Fact]
     public async Task UpdateProfilePassword_WrongCurrentPassword_ReturnsFailureResult()
