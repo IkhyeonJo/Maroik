@@ -21,6 +21,36 @@ public abstract class E2ETestBase
         _fixture = fixture;
     }
 
+    /// <summary>The seeded database, for creating fixtures and checking what the server persisted.</summary>
+    protected E2EDatabase Db => _fixture.Database;
+
+    /// <summary>
+    /// Signs <paramref name="account"/> in through the real login form and waits until the browser
+    /// has left the login page (i.e. the server accepted the credentials and issued a session).
+    /// </summary>
+    protected async Task LoginAsync(IPage page, SeededAccount account)
+    {
+        await GotoAsync(page, "/Account/Login");
+        await page.WaitForSelectorAsync("#loginForm");
+
+        // The login page pre-fills the public demo account; replace both fields.
+        await page.Locator("input[name='Email']").FillAsync(account.Email);
+        await page.Locator("#Password").FillAsync(account.Password);
+        await page.Locator("#btnSignIn").ClickAsync();
+
+        await page.WaitForURLAsync(url => !url.Contains("/Account/Login", StringComparison.Ordinal),
+            new PageWaitForURLOptions { Timeout = 30_000 });
+    }
+
+    /// <summary>Seeds an account of <paramref name="role"/>, opens a fresh page and signs it in.</summary>
+    protected async Task<(IPage Page, SeededAccount Account)> NewSignedInPageAsync(string role = "User")
+    {
+        SeededAccount account = await Db.SeedAccountAsync(role);
+        IPage page = await NewPageAsync();
+        await LoginAsync(page, account);
+        return (page, account);
+    }
+
     /// <summary>Creates a fresh <see cref="IPage"/> in a new isolated browser context.</summary>
     protected async Task<IPage> NewPageAsync()
     {

@@ -21,6 +21,9 @@ public sealed class E2ESharedFixture : IAsyncLifetime
     public IBrowser Browser => _browser
         ?? throw new InvalidOperationException("The shared browser has not been initialized.");
 
+    /// <summary>Direct access to the seeded database, for seeding fixtures and asserting persisted rows.</summary>
+    public E2EDatabase Database => new(_database.ConnectionString);
+
     /// <summary>Base URL of the in-process test server hosting the application.</summary>
     public string ServerBaseUrl => _factory!.ServerBaseUrl;
 
