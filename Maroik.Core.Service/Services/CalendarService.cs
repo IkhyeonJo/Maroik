@@ -351,11 +351,7 @@ public class CalendarService(
             if (TimeZoneId.Create(timeZoneIanaId).IsError)
                 timeZoneIanaId = "UTC";
 
-            // The name is the account's nickname (see the controller). An account created before
-            // nicknames were restricted may still carry a character a calendar name cannot (< > or a
-            // control character); that must not leave the account with no calendar at all, so it is
-            // dropped here rather than rejected.
-            var calendarResult = Calendar.Create(accountEmail, DefaultCalendarName(request.Name), request.Description, timeZoneIanaId, request.HtmlColorCode);
+            var calendarResult = Calendar.Create(accountEmail, request.Name, request.Description, timeZoneIanaId, request.HtmlColorCode);
             if (calendarResult.IsError)
                 return await unitOfWork.FailAsync(calendarResult.FirstError, ct);
 
@@ -666,23 +662,6 @@ public class CalendarService(
             await unitOfWork.RollbackAsync(ct);
             return UnexpectedFailure;
         }
-    }
-
-    /// <summary>Name used for a default calendar whose requested name is nothing but characters a calendar name cannot contain.</summary>
-    private const string FallbackDefaultCalendarName = "Calendar";
-
-    /// <summary>
-    /// The requested default-calendar name with the characters <see cref="Calendar"/> rejects in a name
-    /// (angle brackets, control characters) removed. A name that is fine is returned unchanged; one with
-    /// nothing left falls back to <see cref="FallbackDefaultCalendarName"/>.
-    /// </summary>
-    internal static string DefaultCalendarName(string? requested)
-    {
-        if (string.IsNullOrWhiteSpace(requested))
-            return FallbackDefaultCalendarName;
-
-        string cleaned = string.Concat(requested.Where(c => c is not ('<' or '>') && !char.IsControl(c))).Trim();
-        return cleaned.Length == 0 ? FallbackDefaultCalendarName : cleaned;
     }
 
     private static ServiceResult UnexpectedFailure => ServiceResult.Failure(
