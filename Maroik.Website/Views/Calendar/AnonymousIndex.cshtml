@@ -342,7 +342,7 @@
                                 <select class='form-control-sm viewCalendarEventSelNotificationTimeAllDayChecked' style='width:11%;text-overflow:ellipsis;' disabled>
                                 @foreach (var time in timeIntervals)
                                 {
-                                if (time == "09:00") // Default time
+                                if (time == CalendarReminderPolicy.DefaultReminderTimeOfDay) // Default time
                                 {
                                 <option value="@time" selected>@time</option>
                                 }

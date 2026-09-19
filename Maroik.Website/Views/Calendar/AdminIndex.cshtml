@@ -515,7 +515,7 @@
                                     <select class='form-control-sm createCalendarEventSelNotificationTimeAllDayChecked' style='width:11%;text-overflow:ellipsis;'>
                                         @foreach (var time in timeIntervals)
                                         {
-                                            if (time == "09:00") // Default time
+                                            if (time == CalendarReminderPolicy.DefaultReminderTimeOfDay) // Default time
                                             {
                                                 <option value="@time" selected>@time</option>
                                             }
@@ -772,7 +772,7 @@
                                 <select class='form-control-sm editCalendarEventSelNotificationTimeAllDayChecked' style='width:11%;text-overflow:ellipsis;'>
                                 @foreach (var time in timeIntervals)
                                 {
-                                if (time == "09:00") // Default time
+                                if (time == CalendarReminderPolicy.DefaultReminderTimeOfDay) // Default time
                                 {
                                 <option value="@time" selected>@time</option>
                                 }
