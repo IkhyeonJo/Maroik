@@ -162,6 +162,9 @@
   <data name="Irregular income" xml:space="preserve">
     <value>Irregular income</value>
   </data>
+  <data name="Kurtosis" xml:space="preserve">
+    <value>Kurtosis</value>
+  </data>
   <data name="LaborIncome" xml:space="preserve">
     <value>LaborIncome</value>
   </data>
@@ -174,6 +177,9 @@
   <data name="MealOrEatOutExpenses" xml:space="preserve">
     <value>MealOrEatOutExpenses</value>
   </data>
+  <data name="Mean" xml:space="preserve">
+    <value>Mean</value>
+  </data>
   <data name="MedicalExpenses" xml:space="preserve">
     <value>MedicalExpenses</value>
   </data>
@@ -182,6 +188,9 @@
   </data>
   <data name="Mode" xml:space="preserve">
     <value>Mode</value>
+  </data>
+  <data name="Mode Count" xml:space="preserve">
+    <value>Mode Count</value>
   </data>
   <data name="MonetaryUnit" xml:space="preserve">
     <value>MonetaryUnit</value>
@@ -200,6 +209,9 @@
   </data>
   <data name="OtherIncome" xml:space="preserve">
     <value>OtherIncome</value>
+  </data>
+  <data name="Over Consumption Index" xml:space="preserve">
+    <value>Over Consumption Index</value>
   </data>
   <data name="PensionIncome" xml:space="preserve">
     <value>PensionIncome</value>
@@ -228,8 +240,14 @@
   <data name="Setting" xml:space="preserve">
     <value>Setting</value>
   </data>
+  <data name="Skewness" xml:space="preserve">
+    <value>Skewness</value>
+  </data>
   <data name="SocialInsurance" xml:space="preserve">
     <value>SocialInsurance</value>
+  </data>
+  <data name="Standard Deviation" xml:space="preserve">
+    <value>Standard Deviation</value>
   </data>
   <data name="Sum" xml:space="preserve">
     <value>Sum</value>
@@ -242,6 +260,9 @@
   </data>
   <data name="UnknownExpenditure" xml:space="preserve">
     <value>UnknownExpenditure</value>
+  </data>
+  <data name="Variance" xml:space="preserve">
+    <value>Variance</value>
   </data>
   <data name="YearIncome" xml:space="preserve">
     <value>Year Income</value>

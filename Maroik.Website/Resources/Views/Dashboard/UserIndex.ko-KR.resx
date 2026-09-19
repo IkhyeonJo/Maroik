@@ -162,6 +162,9 @@
   <data name="Irregular income" xml:space="preserve">
     <value>비정기수입</value>
   </data>
+  <data name="Kurtosis" xml:space="preserve">
+    <value>첨도</value>
+  </data>
   <data name="LaborIncome" xml:space="preserve">
     <value>근로수입</value>
   </data>
@@ -174,6 +177,9 @@
   <data name="MealOrEatOutExpenses" xml:space="preserve">
     <value>식비/외식비</value>
   </data>
+  <data name="Mean" xml:space="preserve">
+    <value>평균</value>
+  </data>
   <data name="MedicalExpenses" xml:space="preserve">
     <value>의료비</value>
   </data>
@@ -182,6 +188,9 @@
   </data>
   <data name="Mode" xml:space="preserve">
     <value>최빈값</value>
+  </data>
+  <data name="Mode Count" xml:space="preserve">
+    <value>최빈값 개수</value>
   </data>
   <data name="MonetaryUnit" xml:space="preserve">
     <value>화폐단위</value>
@@ -200,6 +209,9 @@
   </data>
   <data name="OtherIncome" xml:space="preserve">
     <value>기타수입</value>
+  </data>
+  <data name="Over Consumption Index" xml:space="preserve">
+    <value>과소비지수</value>
   </data>
   <data name="PensionIncome" xml:space="preserve">
     <value>연금수입</value>
@@ -228,8 +240,14 @@
   <data name="Setting" xml:space="preserve">
     <value>설정</value>
   </data>
+  <data name="Skewness" xml:space="preserve">
+    <value>왜도</value>
+  </data>
   <data name="SocialInsurance" xml:space="preserve">
     <value>사회보험</value>
+  </data>
+  <data name="Standard Deviation" xml:space="preserve">
+    <value>표준편차</value>
   </data>
   <data name="Sum" xml:space="preserve">
     <value>합계</value>
@@ -242,6 +260,9 @@
   </data>
   <data name="UnknownExpenditure" xml:space="preserve">
     <value>미파악지출</value>
+  </data>
+  <data name="Variance" xml:space="preserve">
+    <value>분산</value>
   </data>
   <data name="YearIncome" xml:space="preserve">
     <value>연 수입</value>
