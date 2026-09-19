@@ -14,6 +14,9 @@ public sealed class Email : ValueObject
     /// <summary>The normalized (lower-case) email address string.</summary>
     public string Value { get; }
 
+    /// <summary>Longest address the persisted <c>character varying(255)</c> e-mail columns accept.</summary>
+    public const int MaxLength = ShortTextPolicy.MaxLength;
+
     private Email(string value) => Value = value;
 
     /// <summary>
@@ -35,6 +38,13 @@ public sealed class Email : ValueObject
             return LocalizableError.Validation("Email.Empty", "Email address cannot be empty.");
 
         string trimmed = value.Trim();
+
+        // Persisted in character varying(255) columns (Account.Email and every table that references it):
+        // an over-long address is a clean validation error here, not a raw "value too long" (SQLSTATE
+        // 22001) from the write.
+        if (trimmed.Length > MaxLength)
+            return LocalizableError.Validation("Email.TooLong", "Email address must be {0} characters or fewer.", MaxLength);
+
         if (!TryParseAddress(trimmed, out string normalized))
             return LocalizableError.Validation("Email.Invalid", "'{0}' is not a valid email address.", value);
 

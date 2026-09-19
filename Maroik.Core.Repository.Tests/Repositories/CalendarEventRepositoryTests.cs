@@ -121,6 +121,26 @@ public sealed class CalendarEventRepositoryTests(DatabaseFixture database) : Rep
         Assert.True(saved.AllDay);
     }
 
+    /// <summary>
+    /// The 255-character location limit the domain enforces is exactly what the real column holds: a
+    /// location on the limit persists and round-trips.
+    /// </summary>
+    [Fact]
+    public async Task CreateCalendarEventAsync_PersistsALocationOnTheColumnLimit()
+    {
+        long cal = await InsertCalendarAsync();
+        string location = new('l', 255);
+        var calendarEvent = CalendarEvent.Create(
+            cal, Unique("Located"), null, false, DateTime.UtcNow, DateTime.UtcNow.AddHours(1), null, null, location, "Busy").Value;
+
+        long id = await Sut.CreateCalendarEventAsync(calendarEvent, TestContext.Current.CancellationToken);
+        Context.ChangeTracker.Clear();
+
+        EfCalendarEvent? saved = await Context.CalendarEvents.FirstOrDefaultAsync(e => e.Id == id, TestContext.Current.CancellationToken);
+        Assert.NotNull(saved);
+        Assert.Equal(255, saved.Location!.Length);
+    }
+
     /// <summary>PostgreSQL enforces <c>CalendarEvent_EndDate_check</c> — an end before the start throws (InMemory did not).</summary>
     [Fact]
     public async Task CreateCalendarEventAsync_Throws_WhenEndBeforeStart()

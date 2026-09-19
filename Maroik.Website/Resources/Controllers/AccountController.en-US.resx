@@ -210,6 +210,9 @@
   <data name="'{0}' is not a valid email address." xml:space="preserve">
     <value>'{0}' is not a valid email address.</value>
   </data>
+  <data name="Email address must be {0} characters or fewer." xml:space="preserve">
+    <value>Email address must be {0} characters or fewer.</value>
+  </data>
   <data name="Email address is already confirmed." xml:space="preserve">
     <value>Email address is already confirmed.</value>
   </data>

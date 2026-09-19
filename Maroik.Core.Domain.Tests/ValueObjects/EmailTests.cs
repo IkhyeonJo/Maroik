@@ -21,6 +21,29 @@ public class EmailTests
         Assert.Equal(input.ToLowerInvariant(), result.Value.Value);
     }
 
+    /// <summary>An address exactly at the persisted 255-character limit is accepted.</summary>
+    [Fact]
+    public void Create_ReturnsEmail_WhenAtTheMaximumLength()
+    {
+        string address = new string('a', Email.MaxLength - "@example.com".Length) + "@example.com";
+        Assert.Equal(255, address.Length);
+
+        Assert.False(Email.Create(address).IsError);
+    }
+
+    /// <summary>An address over 255 characters is a clean validation error (the column would reject it with SQLSTATE 22001).</summary>
+    [Fact]
+    public void Create_ReturnsError_WhenLongerThanTheColumn()
+    {
+        string address = new string('a', Email.MaxLength - "@example.com".Length + 1) + "@example.com";
+        Assert.Equal(256, address.Length);
+
+        var result = Email.Create(address);
+
+        Assert.True(result.IsError);
+        Assert.Equal("Email.TooLong", result.FirstError.Code);
+    }
+
     /// <summary>Create returns error, when empty.</summary>
     [Theory]
     [InlineData(null)]

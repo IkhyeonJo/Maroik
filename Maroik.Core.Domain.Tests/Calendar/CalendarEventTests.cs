@@ -27,6 +27,29 @@ public class CalendarEventTests
         Assert.Equal(10, result.Value.CalendarId);
     }
 
+    /// <summary>A location exactly at the persisted 255-character limit is accepted on create and update.</summary>
+    [Fact]
+    public void Location_AtTheMaximumLength_IsAccepted()
+    {
+        string location = new('l', 255);
+
+        Assert.False(CalendarEvent.Create(10, "Stand-up", null, false, Start, End, null, null, location, null).IsError);
+        Assert.False(ValidEvent().Update("Team Meeting", null, false, Start, End, null, null, location, null).IsError);
+    }
+
+    /// <summary>A location over 255 characters is a clean validation error on create and update.</summary>
+    [Fact]
+    public void Location_LongerThanTheColumn_IsRejected()
+    {
+        string location = new('l', 256);
+
+        var created = CalendarEvent.Create(10, "Stand-up", null, false, Start, End, null, null, location, null);
+        var updated = ValidEvent().Update("Team Meeting", null, false, Start, End, null, null, location, null);
+
+        Assert.Equal("CalendarEvent.LocationTooLong", created.FirstError.Code);
+        Assert.Equal("CalendarEvent.LocationTooLong", updated.FirstError.Code);
+    }
+
     /// <summary>Create returns error, when title empty.</summary>
     [Theory]
     [InlineData(null)]
