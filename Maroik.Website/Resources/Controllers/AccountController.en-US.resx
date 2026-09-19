@@ -192,8 +192,8 @@
   <data name="Welcome to Maroik" xml:space="preserve">
     <value>Welcome to Maroik</value>
   </data>
-  <data name="Your Account is Deleted, Please create your new account by clicking Sign up Button" xml:space="preserve">
-    <value>Your Account is Deleted, Please create your new account by clicking Sign up Button</value>
+  <data name="Your Account is Deleted. Please contact the administrator." xml:space="preserve">
+    <value>Your Account is Deleted. Please contact the administrator.</value>
   </data>
   <data name="Your Account is Locked, Please reset your password by clicking Forgot password Button" xml:space="preserve">
     <value>Your Account is Locked, Please reset your password by clicking Forgot password Button</value>

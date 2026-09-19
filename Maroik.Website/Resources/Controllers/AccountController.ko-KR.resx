@@ -192,8 +192,8 @@
   <data name="Welcome to Maroik" xml:space="preserve">
     <value>Maroik에 오신 것을 환영합니다.</value>
   </data>
-  <data name="Your Account is Deleted, Please create your new account by clicking Sign up Button" xml:space="preserve">
-    <value>계정이 삭제되었습니다. '회원가입' 버튼을 통해 새로운 계정을 생성해주시길 바랍니다.</value>
+  <data name="Your Account is Deleted. Please contact the administrator." xml:space="preserve">
+    <value>삭제된 계정입니다. 관리자에게 문의해 주세요.</value>
   </data>
   <data name="Your Account is Locked, Please reset your password by clicking Forgot password Button" xml:space="preserve">
     <value>계정이 잠겼습니다. '비밀번호 찾기' 버튼을 통해 비밀번호를 초기화해주시길 바랍니다.</value>

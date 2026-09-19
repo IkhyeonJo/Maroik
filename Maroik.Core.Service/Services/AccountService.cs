@@ -103,7 +103,7 @@ public class AccountService(
             if (account.Deleted)
             {
                 await unitOfWork.RollbackAsync(ct);
-                return LoginResult.Fail("Your Account is Deleted, Please create your new account by clicking Sign up Button");
+                return LoginResult.Fail("Your Account is Deleted. Please contact the administrator.");
             }
 
             if (!account.EmailConfirmed)
