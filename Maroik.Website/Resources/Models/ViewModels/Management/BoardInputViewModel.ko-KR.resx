@@ -118,7 +118,7 @@
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
   <data name="Must be between 1 and 30 characters." xml:space="preserve">
-    <value>제목 길이는 1~30 글자이여야 합니다.</value>
+    <value>제목 길이는 1~30 글자여야 합니다.</value>
   </data>
   <data name="Title is required." xml:space="preserve">
     <value>제목을 입력하여 주십시오.</value>

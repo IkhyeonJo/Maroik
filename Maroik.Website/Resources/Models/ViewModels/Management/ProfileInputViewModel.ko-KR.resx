@@ -133,7 +133,7 @@
     <value>닉네임을 입력해주세요.</value>
   </data>
   <data name="The {0} must be at least {2} characters long." xml:space="preserve">
-    <value>적어도 {2} 길이 이상이여야 합니다.</value>
+    <value>적어도 {2} 길이 이상이어야 합니다.</value>
   </data>
   <data name="Please select time zone" xml:space="preserve">
     <value>시간대를 선택해 주세요</value>

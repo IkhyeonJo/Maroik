@@ -157,7 +157,7 @@
     <value>주어진 이메일 주소로 계정을 찾는데 실패하였습니다.</value>
   </data>
   <data name="File Size must be smaller than {0}MB." xml:space="preserve">
-    <value>파일 사이즈는 {0}MB 미만이여야 합니다.</value>
+    <value>파일 사이즈는 {0}MB 미만이어야 합니다.</value>
   </data>
   <data name="Nickname" xml:space="preserve">
     <value>닉네임</value>
@@ -208,7 +208,7 @@
     <value>비밀번호가 변경되었습니다. 다시 로그인해 주세요.</value>
   </data>
   <data name="Password must be at least 8 characters and contain at 3 of 4 of the following: upper case (A-Z), lower case (a-z), number (0-9) and special character (e.g. !@#$%^&amp;*)" xml:space="preserve">
-    <value>비밀번호는 8자리 이상이여야 하며 대소문자 및 숫자와 특수문자를 포함해야합니다.</value>
+    <value>비밀번호는 8자리 이상이어야 하며 대소문자 및 숫자와 특수문자를 포함해야합니다.</value>
   </data>
   <data name="Please attach a file" xml:space="preserve">
     <value>파일 첨부하여 주십시오</value>
@@ -265,7 +265,7 @@
     <value>시간대</value>
   </data>
   <data name="content length is must be between 0 and 16384 characters." xml:space="preserve">
-    <value>내용 길이는 1~16384 글자이여야 합니다.</value>
+    <value>내용 길이는 1~16384 글자여야 합니다.</value>
   </data>
   <data name="No PrivateNoteBoard exists" xml:space="preserve">
     <value>해당 사적 메모가 존재하지 않습니다.</value>
@@ -301,7 +301,7 @@
     <value>게시물이 성공적으로 수정되었습니다.</value>
   </data>
   <data name="Title length is must be between 1 and 100 characters." xml:space="preserve">
-    <value>제목 길이는 1~100 글자이여야 합니다.</value>
+    <value>제목 길이는 1~100 글자여야 합니다.</value>
   </data>
   <data name="You do not have permission to delete." xml:space="preserve">
     <value>삭제할 권한이 없습니다.</value>
