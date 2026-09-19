@@ -282,6 +282,25 @@ public class ExcelExportServiceTests
         Assert.Equal("False", rows[2][13]);
     }
 
+    /// <summary>Create fixed income excel trims amount trailing zeros, like every other export and the grids.</summary>
+    [Theory]
+    [InlineData("1000.00", "1000")]
+    [InlineData("1000.50", "1000.5")]
+    [InlineData("0.05", "0.05")]
+    public void CreateFixedIncomeExcel_TrimsAmountTrailingZeros(string amount, string expected)
+    {
+        // Parsed from text so the decimal keeps its scale, as a numeric(18,2) column read from the
+        // database does (a double literal cast to decimal would already have dropped the zeros).
+        FixedIncomeResponse[] items =
+        [
+            new() { Content = "salary", Amount = decimal.Parse(amount, CultureInfo.InvariantCulture), MaturityDate = DateTime.UtcNow.AddYears(1), DepositMonth = 1, DepositDay = 1 }
+        ];
+
+        var row = ReadRows(_sut.CreateFixedIncomeExcel(items, [], _identity, "UTC", 7))[1];
+
+        Assert.Equal(expected, row[3]);
+    }
+
     /// <summary>Create fixed income excel renders maturity date and deposit month day.</summary>
     [Fact]
     public void CreateFixedIncomeExcel_RendersMaturityDateAndDepositMonthDay()

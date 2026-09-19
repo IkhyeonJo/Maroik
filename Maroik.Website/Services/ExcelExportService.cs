@@ -178,7 +178,7 @@ public class ExcelExportService : IExcelExportService
             item.MainClass ?? "",
             item.SubClass ?? "",
             item.Content ?? "",
-            item.Amount.ToString(CultureInfo.InvariantCulture),
+            item.Amount.TrimTrailingZeros(),
             item.MonetaryUnit ?? "",
             item.DepositMonth.ToString(),
             item.DepositDay.ToString(),
