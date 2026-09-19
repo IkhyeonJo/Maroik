@@ -3,6 +3,10 @@ name: Build & Test (reusable)
 on:
   workflow_call:
 
+# Least privilege by default; a job that needs more (bump-version, CodeQL) declares it itself.
+permissions:
+  contents: read
+
 jobs:
   build-and-test:
     name: Build & Test
@@ -10,18 +14,62 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
 
       - name: Setup .NET
-        uses: actions/setup-dotnet@v4
+        uses: actions/setup-dotnet@67a3573c9a986a3f9c594539f4ab511d57bb3ce9 # v4
         with:
           dotnet-version: '10.0.x'
+
+      # A Debug build of the client scripts (tsconfig.json) appends a sourceMappingURL trailer that
+      # the shipped Release build (tsconfig.build.json) never has. Fail early with a clear message
+      # if one was committed, before the generic "out of date" diff check further below.
+      - name: Verify no Debug-build client scripts are committed
+        run: |
+          if git grep -l "sourceMappingURL" -- 'Maroik.Website/wwwroot/*/custom/*' | grep .; then
+            echo "::error::A committed wwwroot/**/custom/**/site.js is a Debug build (sourceMappingURL). Run 'npm run build' (not build:debug) in Maroik.Website and commit the result."
+            exit 1
+          fi
+
+      # ── Client scripts (TypeScript) toolchain ────────────────────────────────
+      # Maroik.Website's client scripts are authored as TypeScripts/**/site.ts and compiled 1:1 by
+      # tsc to the *committed* wwwroot/**/site.js. Without node_modules, `dotnet build` silently
+      # skips both the tsc compile and the Vitest suite (see Maroik.Website.csproj), so neither
+      # the client tests nor "generated .js matches the .ts" would ever gate a merge.
+      - name: Setup Node.js
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: Maroik.Website/package-lock.json
+
+      - name: Install client script dependencies
+        run: npm ci
+        working-directory: Maroik.Website
 
       - name: Restore dependencies
         run: dotnet restore Maroik.sln
 
+      # RunClientScriptTests=false: the Vitest suite runs as its own visible step below instead of
+      # implicitly inside the build.
       - name: Build
-        run: dotnet build Maroik.sln --no-restore --configuration Release
+        run: dotnet build Maroik.sln --no-restore --configuration Release -p:RunClientScriptTests=false
+
+      - name: Client script tests (Vitest)
+        run: npm test
+        working-directory: Maroik.Website
+
+      # The build/test above regenerated wwwroot/**/site.js from the .ts sources. Any difference from
+      # what is committed means somebody edited a .ts (or the generated .js) without committing the
+      # regenerated output — never hand-edit wwwroot/**/site.js, run `npm run build` and commit it.
+      - name: Verify generated client scripts are committed
+        run: |
+          if [ -n "$(git status --porcelain -- Maroik.Website/wwwroot)" ]; then
+            echo "::error::wwwroot/**/site.js is out of date with TypeScripts/**/site.ts. Run 'npm run build' in Maroik.Website and commit the result."
+            git --no-pager status --short -- Maroik.Website/wwwroot
+            git --no-pager diff --stat -- Maroik.Website/wwwroot
+            exit 1
+          fi
 
       # ── Unit & Integration Tests ─────────────────────────────────────────────
       # The test projects run on Microsoft.Testing.Platform (xunit.v3); `dotnet test`
@@ -79,7 +127,7 @@ jobs:
           "
 
       - name: Upload Coverage Report
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         if: always()
         with:
           name: coverage-report
