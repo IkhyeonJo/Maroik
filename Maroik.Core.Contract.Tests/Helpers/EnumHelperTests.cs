@@ -1,5 +1,5 @@
-using Maroik.Core.Domain.Account;
 using Maroik.Core.Contract.Misc.Helpers;
+using Maroik.Core.Domain.Account;
 
 namespace Maroik.Core.Contract.Tests.Helpers;
 

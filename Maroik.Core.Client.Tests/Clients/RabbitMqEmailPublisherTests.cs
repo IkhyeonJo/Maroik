@@ -14,7 +14,7 @@ namespace Maroik.Core.Client.Tests.Clients;
 public class RabbitMqEmailPublisherTests
 {
     private readonly Mock<IConnectionFactory> _factory = new();
-    private static readonly SendEmailMessage Message = new("to@test.com", "Subject", "Body", "corr-1");
+    private static readonly SendEmailMessage _message = new("to@test.com", "Subject", "Body", "corr-1");
 
     private static Mock<IChannel> MakeChannelMock()
     {
@@ -55,7 +55,7 @@ public class RabbitMqEmailPublisherTests
         var connection = MakeConnectionMock(channel, isOpen: true);
         _factory.Setup(f => f.CreateConnectionAsync(It.IsAny<CancellationToken>())).ReturnsAsync(connection.Object);
 
-        await CreateSut().PublishAsync(Message, TestContext.Current.CancellationToken);
+        await CreateSut().PublishAsync(_message, TestContext.Current.CancellationToken);
 
         _factory.Verify(f => f.CreateConnectionAsync(It.IsAny<CancellationToken>()), Times.Once);
         channel.Verify(c => c.BasicPublishAsync(
@@ -82,7 +82,7 @@ public class RabbitMqEmailPublisherTests
         var connection = MakeConnectionMock(channel, isOpen: true);
         _factory.Setup(f => f.CreateConnectionAsync(It.IsAny<CancellationToken>())).ReturnsAsync(connection.Object);
 
-        await CreateSut().PublishAsync(Message, TestContext.Current.CancellationToken);
+        await CreateSut().PublishAsync(_message, TestContext.Current.CancellationToken);
 
         connection.Verify(c => c.CreateChannelAsync(
                 It.Is<CreateChannelOptions>(o => o.PublisherConfirmationsEnabled && o.PublisherConfirmationTrackingEnabled),
@@ -104,10 +104,10 @@ public class RabbitMqEmailPublisherTests
             .Callback<string, string, bool, BasicProperties, ReadOnlyMemory<byte>, CancellationToken>(
                 (_, _, _, _, body, _) => capturedBody = body.ToArray());
 
-        await CreateSut().PublishAsync(Message, TestContext.Current.CancellationToken);
+        await CreateSut().PublishAsync(_message, TestContext.Current.CancellationToken);
 
         var deserialized = System.Text.Json.JsonSerializer.Deserialize<SendEmailMessage>(capturedBody!);
-        Assert.Equal(Message, deserialized);
+        Assert.Equal(_message, deserialized);
     }
 
     /// <summary>Publish async connection stays open reuses connection across calls.</summary>
@@ -119,8 +119,8 @@ public class RabbitMqEmailPublisherTests
         _factory.Setup(f => f.CreateConnectionAsync(It.IsAny<CancellationToken>())).ReturnsAsync(connection.Object);
         var sut = CreateSut();
 
-        await sut.PublishAsync(Message, TestContext.Current.CancellationToken);
-        await sut.PublishAsync(Message, TestContext.Current.CancellationToken);
+        await sut.PublishAsync(_message, TestContext.Current.CancellationToken);
+        await sut.PublishAsync(_message, TestContext.Current.CancellationToken);
 
         _factory.Verify(f => f.CreateConnectionAsync(It.IsAny<CancellationToken>()), Times.Once);
         channel.Verify(c => c.BasicPublishAsync(
@@ -141,8 +141,8 @@ public class RabbitMqEmailPublisherTests
         _factory.Setup(f => f.CreateConnectionAsync(It.IsAny<CancellationToken>())).ReturnsAsync(connection.Object);
         var sut = CreateSut();
 
-        await sut.PublishAsync(Message, TestContext.Current.CancellationToken);
-        await sut.PublishAsync(Message, TestContext.Current.CancellationToken);
+        await sut.PublishAsync(_message, TestContext.Current.CancellationToken);
+        await sut.PublishAsync(_message, TestContext.Current.CancellationToken);
 
         connection.Verify(c => c.CreateChannelAsync(It.IsAny<CreateChannelOptions>(), It.IsAny<CancellationToken>()), Times.Once);
         channel.Verify(c => c.QueueDeclareAsync(
@@ -168,8 +168,8 @@ public class RabbitMqEmailPublisherTests
             .ReturnsAsync(freshConnection.Object);
         var sut = CreateSut();
 
-        await sut.PublishAsync(Message, TestContext.Current.CancellationToken); // caches deadConnection (its own open state is irrelevant on creation)
-        await sut.PublishAsync(Message, TestContext.Current.CancellationToken); // now sees deadConnection.IsOpen == false, must reconnect
+        await sut.PublishAsync(_message, TestContext.Current.CancellationToken); // caches deadConnection (its own open state is irrelevant on creation)
+        await sut.PublishAsync(_message, TestContext.Current.CancellationToken); // now sees deadConnection.IsOpen == false, must reconnect
 
         _factory.Verify(f => f.CreateConnectionAsync(It.IsAny<CancellationToken>()), Times.Exactly(2));
         deadConnection.Verify(c => c.DisposeAsync(), Times.Once);
@@ -205,8 +205,8 @@ public class RabbitMqEmailPublisherTests
         _factory.Setup(f => f.CreateConnectionAsync(It.IsAny<CancellationToken>())).ReturnsAsync(connection.Object);
         var sut = CreateSut();
 
-        await sut.PublishAsync(Message, TestContext.Current.CancellationToken); // caches the connection
-        await sut.PublishAsync(Message, TestContext.Current.CancellationToken); // sees it "closed", waits, sees it recovered
+        await sut.PublishAsync(_message, TestContext.Current.CancellationToken); // caches the connection
+        await sut.PublishAsync(_message, TestContext.Current.CancellationToken); // sees it "closed", waits, sees it recovered
 
         _factory.Verify(f => f.CreateConnectionAsync(It.IsAny<CancellationToken>()), Times.Once);
         connection.Verify(c => c.DisposeAsync(), Times.Never);
@@ -228,8 +228,8 @@ public class RabbitMqEmailPublisherTests
             .ThrowsAsync(new InvalidOperationException("broker down"));
         var sut = new RabbitMqEmailPublisher(_factory.Object, NullLogger<RabbitMqEmailPublisher>.Instance, TimeSpan.FromSeconds(30));
 
-        await Assert.ThrowsAsync<InvalidOperationException>(() => sut.PublishAsync(Message, TestContext.Current.CancellationToken));
-        var fastFail = await Assert.ThrowsAsync<InvalidOperationException>(() => sut.PublishAsync(Message, TestContext.Current.CancellationToken));
+        await Assert.ThrowsAsync<InvalidOperationException>(() => sut.PublishAsync(_message, TestContext.Current.CancellationToken));
+        var fastFail = await Assert.ThrowsAsync<InvalidOperationException>(() => sut.PublishAsync(_message, TestContext.Current.CancellationToken));
 
         Assert.Contains("unavailable", fastFail.Message);
         _factory.Verify(f => f.CreateConnectionAsync(It.IsAny<CancellationToken>()), Times.Once);
@@ -246,9 +246,9 @@ public class RabbitMqEmailPublisherTests
             .ReturnsAsync(connection.Object);
         var sut = new RabbitMqEmailPublisher(_factory.Object, NullLogger<RabbitMqEmailPublisher>.Instance, TimeSpan.FromMilliseconds(50));
 
-        await Assert.ThrowsAsync<InvalidOperationException>(() => sut.PublishAsync(Message, TestContext.Current.CancellationToken));
+        await Assert.ThrowsAsync<InvalidOperationException>(() => sut.PublishAsync(_message, TestContext.Current.CancellationToken));
         await Task.Delay(150, TestContext.Current.CancellationToken);
-        await sut.PublishAsync(Message, TestContext.Current.CancellationToken);
+        await sut.PublishAsync(_message, TestContext.Current.CancellationToken);
 
         _factory.Verify(f => f.CreateConnectionAsync(It.IsAny<CancellationToken>()), Times.Exactly(2));
         channel.Verify(c => c.BasicPublishAsync(
@@ -285,7 +285,7 @@ public class RabbitMqEmailPublisherTests
         var connection = MakeConnectionMock(channel, isOpen: true);
         _factory.Setup(f => f.CreateConnectionAsync(It.IsAny<CancellationToken>())).ReturnsAsync(connection.Object);
         var sut = CreateSut();
-        await sut.PublishAsync(Message, TestContext.Current.CancellationToken);
+        await sut.PublishAsync(_message, TestContext.Current.CancellationToken);
 
         await sut.DisposeAsync();
 
@@ -323,7 +323,7 @@ public class RabbitMqEmailPublisherTests
         _factory.Setup(f => f.CreateConnectionAsync(It.IsAny<CancellationToken>())).ReturnsAsync(connection.Object);
         var sut = CreateSut();
 
-        Task stuckPublish = sut.PublishAsync(Message, CancellationToken.None);
+        Task stuckPublish = sut.PublishAsync(_message, CancellationToken.None);
 
         Task disposeTask = sut.DisposeAsync().AsTask();
         Task completedFirst = await Task.WhenAny(disposeTask, Task.Delay(TimeSpan.FromSeconds(10), TestContext.Current.CancellationToken));

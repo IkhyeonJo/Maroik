@@ -1,7 +1,7 @@
 using Maroik.Core.Contract.Dtos;
+using Maroik.Core.Contract.Interfaces;
 using Maroik.Core.Domain.Account;
 using Maroik.Core.Domain.Board;
-using Maroik.Core.Contract.Interfaces;
 using Maroik.Core.PostgreSQL.Data;
 using Microsoft.EntityFrameworkCore;
 using OrmBoard = Maroik.Core.PostgreSQL.Models.Board;

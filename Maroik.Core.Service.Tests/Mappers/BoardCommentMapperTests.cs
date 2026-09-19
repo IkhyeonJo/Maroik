@@ -1,5 +1,5 @@
-using Maroik.Core.Domain.Board;
 using Maroik.Core.Contract.Dtos;
+using Maroik.Core.Domain.Board;
 using Maroik.Core.Service.Mappers;
 
 namespace Maroik.Core.Service.Tests.Mappers;

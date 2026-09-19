@@ -40,17 +40,17 @@ public class SolutionLayeringArchitectureTests
     private const string FileStorage = "Maroik.FileStorage";
 
     /// <summary>The six inner layers. None of them may depend on an application host project.</summary>
-    private static readonly string[] CoreLayers =
+    private static readonly string[] _coreLayers =
         [Domain, Contract, PostgreSql, Client, Repository, Service];
 
     /// <summary>The three composition-root / host projects that wire everything together.</summary>
-    private static readonly string[] ApplicationHosts = [Website, Worker, FileStorage];
+    private static readonly string[] _applicationHosts = [Website, Worker, FileStorage];
 
     /// <summary>
     /// The only <c>&lt;ProjectReference&gt;</c> edges allowed out of each production project.
     /// Anything a project references that is not in its set here is an architecture violation.
     /// </summary>
-    private static readonly IReadOnlyDictionary<string, string[]> AllowedProjectReferences =
+    private static readonly IReadOnlyDictionary<string, string[]> _allowedProjectReferences =
         new Dictionary<string, string[]>
         {
             [Domain] = [],
@@ -70,7 +70,7 @@ public class SolutionLayeringArchitectureTests
     /// (publisher) + Worker (consumer host) is what stops another layer from talking to an external
     /// system without going through a Contract interface.
     /// </summary>
-    private static readonly (string PackagePrefix, string[] AllowedProjects, string Purpose)[] ConfinedPackages =
+    private static readonly (string PackagePrefix, string[] AllowedProjects, string Purpose)[] _confinedPackages =
     [
         ("Microsoft.EntityFrameworkCore", [Repository, PostgreSql], "EF Core persistence"),
         ("Npgsql", [Repository, PostgreSql], "PostgreSQL driver"),
@@ -78,7 +78,7 @@ public class SolutionLayeringArchitectureTests
         ("RabbitMQ.Client", [Client, Worker], "RabbitMQ message broker"),
     ];
 
-    private static readonly Lazy<IReadOnlyList<ProjectFile>> ProductionProjects =
+    private static readonly Lazy<IReadOnlyList<ProjectFile>> _productionProjects =
         new(LoadProductionProjects);
 
     // ─────────────────────────────────────────────────────────────────────────────────────────
@@ -137,9 +137,9 @@ public class SolutionLayeringArchitectureTests
     {
         List<string> violations = [];
 
-        foreach ((string packagePrefix, string[] allowedProjects, string purpose) in ConfinedPackages)
+        foreach ((string packagePrefix, string[] allowedProjects, string purpose) in _confinedPackages)
         {
-            foreach (ProjectFile project in ProductionProjects.Value)
+            foreach (ProjectFile project in _productionProjects.Value)
             {
                 bool referencesPackage = project.PackageReferences
                     .Any(p => p.StartsWith(packagePrefix, StringComparison.OrdinalIgnoreCase));
@@ -179,10 +179,10 @@ public class SolutionLayeringArchitectureTests
     {
         List<string> violations = [];
 
-        foreach (string layer in CoreLayers)
+        foreach (string layer in _coreLayers)
         {
             string[] offending = GetProject(layer).ProjectReferences
-                .Where(ApplicationHosts.Contains)
+                .Where(_applicationHosts.Contains)
                 .ToArray();
 
             if (offending.Length > 0)
@@ -203,12 +203,12 @@ public class SolutionLayeringArchitectureTests
     {
         List<string> violations = [];
 
-        foreach (ProjectFile project in ProductionProjects.Value)
+        foreach (ProjectFile project in _productionProjects.Value)
         {
-            if (!AllowedProjectReferences.TryGetValue(project.Name, out string[]? allowed))
+            if (!_allowedProjectReferences.TryGetValue(project.Name, out string[]? allowed))
             {
                 violations.Add(
-                    $"{project.Name} is a production project with no entry in AllowedProjectReferences — " +
+                    $"{project.Name} is a production project with no entry in _allowedProjectReferences — " +
                     "add it to the map (and to Maroik.sln's layer model) deliberately.");
                 continue;
             }
@@ -299,10 +299,10 @@ public class SolutionLayeringArchitectureTests
     }
 
     private static ProjectFile GetProject(string name) =>
-        ProductionProjects.Value.SingleOrDefault(p => p.Name == name)
+        _productionProjects.Value.SingleOrDefault(p => p.Name == name)
         ?? throw new InvalidOperationException(
             $"Production project '{name}' not found under the repository root. " +
-            "Known: " + string.Join(", ", ProductionProjects.Value.Select(p => p.Name)));
+            "Known: " + string.Join(", ", _productionProjects.Value.Select(p => p.Name)));
 
     private static IReadOnlyList<ProjectFile> LoadProductionProjects() =>
         LoadAllProjects()

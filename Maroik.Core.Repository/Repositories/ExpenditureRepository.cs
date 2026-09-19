@@ -1,5 +1,5 @@
-using Maroik.Core.Domain.Finance;
 using Maroik.Core.Contract.Interfaces;
+using Maroik.Core.Domain.Finance;
 using Maroik.Core.PostgreSQL.Data;
 using Microsoft.EntityFrameworkCore;
 using OrmExpenditure = Maroik.Core.PostgreSQL.Models.Expenditure;

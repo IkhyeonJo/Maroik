@@ -282,7 +282,7 @@ public class ManagementControllerMenuTests
 
     // -- Cache invalidation --------------------------------------------------------
 
-    private static readonly string[] NavigationCacheKeyList =
+    private static readonly string[] _navigationCacheKeyList =
     [
         NavigationCacheKeys.AdminCategories,
         NavigationCacheKeys.AdminSubCategories,
@@ -311,7 +311,7 @@ public class ManagementControllerMenuTests
         var warmupResponse = await _client.SendAsync(warmupRequest, TestContext.Current.CancellationToken);
         Assert.Equal(System.Net.HttpStatusCode.OK, warmupResponse.StatusCode);
 
-        foreach (var key in NavigationCacheKeyList)
+        foreach (var key in _navigationCacheKeyList)
         {
             Assert.NotNull(await cache.GetAsync(key, TestContext.Current.CancellationToken));
         }
@@ -320,7 +320,7 @@ public class ManagementControllerMenuTests
         string json = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
         Assert.Contains("\"result\":true", json);
 
-        foreach (var key in NavigationCacheKeyList)
+        foreach (var key in _navigationCacheKeyList)
         {
             Assert.Null(await cache.GetAsync(key, TestContext.Current.CancellationToken));
         }

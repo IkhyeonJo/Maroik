@@ -17,8 +17,8 @@ public class ExcelExportServiceTests
 {
     private readonly ExcelExportService _sut = new();
 
-    private static readonly Func<string, string> Localize = key => $"L:{key}";
-    private static readonly Func<string, string> Identity = key => key;
+    private static readonly Func<string, string> _localize = key => $"L:{key}";
+    private static readonly Func<string, string> _identity = key => key;
 
     /// <summary>Reads every row (header + data) of the first worksheet as raw cell text.</summary>
     private static List<List<string>> ReadRows(MemoryStream stream)
@@ -40,7 +40,7 @@ public class ExcelExportServiceTests
     [Fact]
     public void CreateAssetExcel_LocalizesHeaders()
     {
-        var stream = _sut.CreateAssetExcel([], Localize, "UTC");
+        var stream = _sut.CreateAssetExcel([], _localize, "UTC");
 
         var rows = ReadRows(stream);
 
@@ -59,7 +59,7 @@ public class ExcelExportServiceTests
             new() { ProductName = "Alpha", Item = "a", Amount = 2m, MonetaryUnit = "KRW", Note = "" }
         ];
 
-        var rows = ReadRows(_sut.CreateAssetExcel(items, Identity, "UTC"));
+        var rows = ReadRows(_sut.CreateAssetExcel(items, _identity, "UTC"));
 
         Assert.Equal("Alpha", rows[1][0]);
         Assert.Equal("Zeta", rows[2][0]);
@@ -71,7 +71,7 @@ public class ExcelExportServiceTests
     {
         AssetResponse[] items = [new() { ProductName = "Cash", Item = "Deposit", Amount = 1000.00m, MonetaryUnit = "KRW", Note = "" }];
 
-        var row = ReadRows(_sut.CreateAssetExcel(items, Localize, "UTC"))[1];
+        var row = ReadRows(_sut.CreateAssetExcel(items, _localize, "UTC"))[1];
 
         Assert.Equal("Cash", row[0]);
         Assert.Equal("L:Deposit", row[1]);
@@ -87,7 +87,7 @@ public class ExcelExportServiceTests
         var updated = new DateTime(2025, 6, 10, 15, 0, 0, DateTimeKind.Utc);
         AssetResponse[] items = [new() { ProductName = "Cash", Item = "Deposit", Amount = 1m, Note = "" , Created = created, Updated = updated}];
 
-        var row = ReadRows(_sut.CreateAssetExcel(items, Identity, "Asia/Seoul"))[1];
+        var row = ReadRows(_sut.CreateAssetExcel(items, _identity, "Asia/Seoul"))[1];
 
         Assert.Equal(created.ConvertTimeByTimeZoneIanaId("Asia/Seoul").ToString(CultureInfo.InvariantCulture), row[4]);
         Assert.Equal(updated.ConvertTimeByTimeZoneIanaId("Asia/Seoul").ToString(CultureInfo.InvariantCulture), row[5]);
@@ -102,7 +102,7 @@ public class ExcelExportServiceTests
     {
         AssetResponse[] items = [new() { ProductName = "Cash", Item = "x", Amount = 1m, Note = "closed account", Deleted = true }];
 
-        var row = ReadRows(_sut.CreateAssetExcel(items, Identity, "UTC"))[1];
+        var row = ReadRows(_sut.CreateAssetExcel(items, _identity, "UTC"))[1];
 
         Assert.Equal("closed account", row[6]);
         Assert.Equal("True", row[7]);
@@ -116,7 +116,7 @@ public class ExcelExportServiceTests
     {
         IncomeResponse[] items = [new() { MainClass = "RegularIncome", SubClass = "LaborIncome", Content = "salary", Amount = 100m }];
 
-        var rows = ReadRows(_sut.CreateIncomeExcel(items, [], Localize, "UTC"));
+        var rows = ReadRows(_sut.CreateIncomeExcel(items, [], _localize, "UTC"));
 
         Assert.Equal("L:MainClass", rows[0][0]);
         Assert.Equal("L:RegularIncome", rows[1][0]);
@@ -131,7 +131,7 @@ public class ExcelExportServiceTests
         AssetResponse[] assets = [new() { ProductName = "Bank", MonetaryUnit = "KRW" }];
         IncomeResponse[] items = [new() { Content = "salary", Amount = 100m, DepositMyAssetProductName = "Bank" }];
 
-        var row = ReadRows(_sut.CreateIncomeExcel(items, assets, Identity, "UTC"))[1];
+        var row = ReadRows(_sut.CreateIncomeExcel(items, assets, _identity, "UTC"))[1];
 
         Assert.Equal("KRW", row[4]);
         Assert.Equal("Bank", row[5]);
@@ -143,7 +143,7 @@ public class ExcelExportServiceTests
     {
         IncomeResponse[] items = [new() { Content = "salary", Amount = 100m, DepositMyAssetProductName = "Unknown" }];
 
-        var row = ReadRows(_sut.CreateIncomeExcel(items, [], Identity, "UTC"))[1];
+        var row = ReadRows(_sut.CreateIncomeExcel(items, [], _identity, "UTC"))[1];
 
         Assert.Equal("", row[4]);
     }
@@ -158,7 +158,7 @@ public class ExcelExportServiceTests
             new() { Content = "newer", Amount = 2m, Created = new DateTime(2025, 6, 1) }
         ];
 
-        var rows = ReadRows(_sut.CreateIncomeExcel(items, [], Identity, "UTC"));
+        var rows = ReadRows(_sut.CreateIncomeExcel(items, [], _identity, "UTC"));
 
         Assert.Equal("newer", rows[1][2]);
         Assert.Equal("older", rows[2][2]);
@@ -170,7 +170,7 @@ public class ExcelExportServiceTests
     {
         IncomeResponse[] items = [new() { Content = "bonus", Amount = 500.50m }];
 
-        var row = ReadRows(_sut.CreateIncomeExcel(items, [], Identity, "UTC"))[1];
+        var row = ReadRows(_sut.CreateIncomeExcel(items, [], _identity, "UTC"))[1];
 
         Assert.Equal("500.5", row[3]);
     }
@@ -183,7 +183,7 @@ public class ExcelExportServiceTests
     {
         ExpenditureResponse[] items = [new() { MainClass = "ConsumerSpending", SubClass = "Tax", Content = "income tax", Amount = 50m }];
 
-        var rows = ReadRows(_sut.CreateExpenditureExcel(items, [], Localize, "UTC"));
+        var rows = ReadRows(_sut.CreateExpenditureExcel(items, [], _localize, "UTC"));
 
         Assert.Equal("L:MainClass", rows[0][0]);
         Assert.Equal("L:ConsumerSpending", rows[1][0]);
@@ -198,7 +198,7 @@ public class ExcelExportServiceTests
         AssetResponse[] assets = [new() { ProductName = "CreditCard", MonetaryUnit = "USD" }];
         ExpenditureResponse[] items = [new() { Content = "lunch", Amount = 10m, PaymentMethod = "CreditCard", MyDepositAsset = "Bank" }];
 
-        var row = ReadRows(_sut.CreateExpenditureExcel(items, assets, Identity, "UTC"))[1];
+        var row = ReadRows(_sut.CreateExpenditureExcel(items, assets, _identity, "UTC"))[1];
 
         Assert.Equal("USD", row[4]);
         Assert.Equal("CreditCard", row[5]);
@@ -215,7 +215,7 @@ public class ExcelExportServiceTests
             new() { Content = "newer", Amount = 2m, Created = new DateTime(2025, 6, 1) }
         ];
 
-        var rows = ReadRows(_sut.CreateExpenditureExcel(items, [], Identity, "UTC"));
+        var rows = ReadRows(_sut.CreateExpenditureExcel(items, [], _identity, "UTC"));
 
         Assert.Equal("newer", rows[1][2]);
         Assert.Equal("older", rows[2][2]);
@@ -227,7 +227,7 @@ public class ExcelExportServiceTests
     [Fact]
     public void CreateFixedIncomeExcel_LocalizesHeaders()
     {
-        var rows = ReadRows(_sut.CreateFixedIncomeExcel([], [], Localize, "UTC", 7));
+        var rows = ReadRows(_sut.CreateFixedIncomeExcel([], [], _localize, "UTC", 7));
 
         Assert.Equal("L:MainClass", rows[0][0]);
         Assert.Equal("L:Noticed", rows[0][12]);
@@ -243,7 +243,7 @@ public class ExcelExportServiceTests
             new() { MainClass = "RegularIncome", SubClass = "LaborIncome", Content = "salary", Amount = 100m, MaturityDate = DateTime.UtcNow.AddYears(1) }
         ];
 
-        var row = ReadRows(_sut.CreateFixedIncomeExcel(items, [], Localize, "UTC", 7))[1];
+        var row = ReadRows(_sut.CreateFixedIncomeExcel(items, [], _localize, "UTC", 7))[1];
 
         Assert.Equal("L:RegularIncome", row[0]);
         Assert.Equal("L:LaborIncome", row[1]);
@@ -259,7 +259,7 @@ public class ExcelExportServiceTests
             new() { Content = "salary", Amount = 100m, DepositMyAssetProductName = "Bank", MaturityDate = DateTime.UtcNow.AddYears(1) }
         ];
 
-        var row = ReadRows(_sut.CreateFixedIncomeExcel(items, assets, Identity, "UTC", 7))[1];
+        var row = ReadRows(_sut.CreateFixedIncomeExcel(items, assets, _identity, "UTC", 7))[1];
 
         Assert.Equal("KRW", row[4]);
     }
@@ -274,7 +274,7 @@ public class ExcelExportServiceTests
             new() { Content = "expired", Amount = 2m, MaturityDate = new DateTime(2000, 1, 1) }
         ];
 
-        var rows = ReadRows(_sut.CreateFixedIncomeExcel(items, [], Identity, "UTC", 7));
+        var rows = ReadRows(_sut.CreateFixedIncomeExcel(items, [], _identity, "UTC", 7));
 
         Assert.Equal("expired", rows[1][2]);
         Assert.Equal("active", rows[2][2]);
@@ -291,7 +291,7 @@ public class ExcelExportServiceTests
             new() { Content = "salary", Amount = 1m, DepositMonth = 6, DepositDay = 15, MaturityDate = new DateTime(2030, 12, 31) }
         ];
 
-        var row = ReadRows(_sut.CreateFixedIncomeExcel(items, [], Identity, "UTC", 7))[1];
+        var row = ReadRows(_sut.CreateFixedIncomeExcel(items, [], _identity, "UTC", 7))[1];
 
         Assert.Equal("6", row[5]);
         Assert.Equal("15", row[6]);
@@ -307,7 +307,7 @@ public class ExcelExportServiceTests
             new() { Content = "salary", Amount = 1m, MaturityDate = DateTime.UtcNow.AddYears(1), Unpunctuality = true, DepositMonth = 1, DepositDay = 1 }
         ];
 
-        var row = ReadRows(_sut.CreateFixedIncomeExcel(items, [], Identity, "UTC", 7))[1];
+        var row = ReadRows(_sut.CreateFixedIncomeExcel(items, [], _identity, "UTC", 7))[1];
 
         Assert.Equal("True", row[12]); // Noticed column
     }
@@ -323,7 +323,7 @@ public class ExcelExportServiceTests
             new() { MainClass = "ConsumerSpending", SubClass = "Tax", Content = "insurance", Amount = 50m, MaturityDate = DateTime.UtcNow.AddYears(1) }
         ];
 
-        var rows = ReadRows(_sut.CreateFixedExpenditureExcel(items, [], Localize, "UTC", 7));
+        var rows = ReadRows(_sut.CreateFixedExpenditureExcel(items, [], _localize, "UTC", 7));
 
         Assert.Equal("L:MainClass", rows[0][0]);
         Assert.Equal("L:ConsumerSpending", rows[1][0]);
@@ -340,7 +340,7 @@ public class ExcelExportServiceTests
             new() { Content = "insurance", Amount = 250.00m, PaymentMethod = "Card", MaturityDate = DateTime.UtcNow.AddYears(1) }
         ];
 
-        var row = ReadRows(_sut.CreateFixedExpenditureExcel(items, assets, Identity, "UTC", 7))[1];
+        var row = ReadRows(_sut.CreateFixedExpenditureExcel(items, assets, _identity, "UTC", 7))[1];
 
         Assert.Equal("250", row[3]);
         Assert.Equal("USD", row[4]);
@@ -356,7 +356,7 @@ public class ExcelExportServiceTests
             new() { Content = "expired", Amount = 2m, MaturityDate = new DateTime(2000, 1, 1) }
         ];
 
-        var rows = ReadRows(_sut.CreateFixedExpenditureExcel(items, [], Identity, "UTC", 7));
+        var rows = ReadRows(_sut.CreateFixedExpenditureExcel(items, [], _identity, "UTC", 7));
 
         Assert.Equal("expired", rows[1][2]);
         Assert.Equal("active", rows[2][2]);
@@ -368,7 +368,7 @@ public class ExcelExportServiceTests
     [Fact]
     public void CreateAccountExcel_LocalizesHeaders()
     {
-        var rows = ReadRows(_sut.CreateAccountExcel([], Localize, "UTC"));
+        var rows = ReadRows(_sut.CreateAccountExcel([], _localize, "UTC"));
 
         Assert.Equal("L:Email", rows[0][0]);
         Assert.Equal("L:Nickname", rows[0][1]);
@@ -388,7 +388,7 @@ public class ExcelExportServiceTests
             new() { Email = "a@example.com", Nickname = "A" }
         ];
 
-        var rows = ReadRows(_sut.CreateAccountExcel(items, Identity, "UTC"));
+        var rows = ReadRows(_sut.CreateAccountExcel(items, _identity, "UTC"));
 
         Assert.Equal("a@example.com", rows[1][0]);
         Assert.Equal("z@example.com", rows[2][0]);
@@ -401,7 +401,7 @@ public class ExcelExportServiceTests
         var created = new DateTime(2025, 6, 10, 0, 0, 0, DateTimeKind.Utc);
         AdminAccountResponse[] items = [new() { Email = "a@example.com", Created = created, Updated = created }];
 
-        var row = ReadRows(_sut.CreateAccountExcel(items, Identity, "Asia/Seoul"))[1];
+        var row = ReadRows(_sut.CreateAccountExcel(items, _identity, "Asia/Seoul"))[1];
 
         Assert.Equal(created.ConvertTimeByTimeZoneIanaId("Asia/Seoul").ToString(CultureInfo.InvariantCulture), row[9]);
         Assert.Contains("09:00:00", row[9]);
@@ -413,7 +413,7 @@ public class ExcelExportServiceTests
     {
         AdminAccountResponse[] items = [new() { Email = "a@example.com", Locked = true, LoginAttempt = 5, EmailConfirmed = false, AgreedServiceTerms = true, Deleted = true }];
 
-        var row = ReadRows(_sut.CreateAccountExcel(items, Identity, "UTC"))[1];
+        var row = ReadRows(_sut.CreateAccountExcel(items, _identity, "UTC"))[1];
 
         Assert.Equal("True", row[5]);  // Locked
         Assert.Equal("5", row[6]);     // LoginAttempt
@@ -428,7 +428,7 @@ public class ExcelExportServiceTests
     [Fact]
     public void CreateMenuExcel_LocalizesHeaders()
     {
-        var rows = ReadRows(_sut.CreateMenuExcel([], [], Localize));
+        var rows = ReadRows(_sut.CreateMenuExcel([], [], _localize));
 
         Assert.Equal(
             ["L:Id", "L:CategoryId", "L:Name", "L:DisplayName", "L:IconPath", "L:Controller", "L:Action", "L:Role", "L:Order"],
@@ -441,7 +441,7 @@ public class ExcelExportServiceTests
     {
         CategoryResponse[] categories = [new() { Id = 1, Name = "Dashboard", DisplayName = "Dashboard", Controller = "Dashboard", Action = "Index", Role = "User", Order = 1 }];
 
-        var row = ReadRows(_sut.CreateMenuExcel(categories, [], Identity))[1];
+        var row = ReadRows(_sut.CreateMenuExcel(categories, [], _identity))[1];
 
         Assert.Equal("1", row[0]);
         Assert.Equal("", row[1]);
@@ -454,7 +454,7 @@ public class ExcelExportServiceTests
     {
         SubCategoryResponse[] subCategories = [new() { Id = 10, CategoryId = 1, Name = "Sub", DisplayName = "Sub", Action = "Index", Role = "User", Order = 1 }];
 
-        var row = ReadRows(_sut.CreateMenuExcel([], subCategories, Identity))[1];
+        var row = ReadRows(_sut.CreateMenuExcel([], subCategories, _identity))[1];
 
         Assert.Equal("10", row[0]);
         Assert.Equal("1", row[1]);
@@ -472,7 +472,7 @@ public class ExcelExportServiceTests
         ];
         SubCategoryResponse[] subCategories = [new() { Id = 10, CategoryId = 1, Name = "Sub10" }];
 
-        var rows = ReadRows(_sut.CreateMenuExcel(categories, subCategories, Identity));
+        var rows = ReadRows(_sut.CreateMenuExcel(categories, subCategories, _identity));
 
         // Header + 3 data rows, ordered descending by parsed Id: 10, 2, 1
         Assert.Equal("10", rows[1][0]);
@@ -498,7 +498,7 @@ public class ExcelExportServiceTests
             new() { ProductName = "B", Item = "i", Amount = 1m, Note = loneLow + " ok 😀" }
         ];
 
-        var rows = ReadRows(_sut.CreateAssetExcel(items, Identity, "UTC"));
+        var rows = ReadRows(_sut.CreateAssetExcel(items, _identity, "UTC"));
 
         Assert.Equal("beforeafter", rows[1][6]);
         Assert.Equal("xy ok 😀", rows[2][6]); // pair survives, lone low stripped
@@ -510,7 +510,7 @@ public class ExcelExportServiceTests
     {
         AssetResponse[] items = [new() { ProductName = "A", Item = "i", Amount = 1m, Note = "abcd" }];
 
-        var row = ReadRows(_sut.CreateAssetExcel(items, Identity, "UTC"))[1];
+        var row = ReadRows(_sut.CreateAssetExcel(items, _identity, "UTC"))[1];
 
         Assert.Equal("abcd", row[6]);
     }

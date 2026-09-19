@@ -1,7 +1,7 @@
 using ErrorOr;
+using Maroik.Core.Contract.Interfaces;
 using Maroik.Core.Domain.Finance;
 using Maroik.Core.Domain.ValueObjects;
-using Maroik.Core.Contract.Interfaces;
 
 namespace Maroik.Core.Service.Extensions;
 

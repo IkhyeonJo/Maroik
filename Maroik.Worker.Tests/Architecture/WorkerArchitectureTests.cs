@@ -14,8 +14,8 @@ namespace Maroik.Worker.Tests.Architecture;
 /// </summary>
 public class WorkerArchitectureTests
 {
-    private static readonly Assembly WorkerAssembly = typeof(EmailConsumerWorker).Assembly;
-    private static readonly Assembly ContractAssembly = typeof(IAccountRepository).Assembly;
+    private static readonly Assembly _workerAssembly = typeof(EmailConsumerWorker).Assembly;
+    private static readonly Assembly _contractAssembly = typeof(IAccountRepository).Assembly;
 
     private const string RepositoryNamespace = "Maroik.Core.Repository";
     private const string ClientNamespace = "Maroik.Core.Client";
@@ -28,9 +28,9 @@ public class WorkerArchitectureTests
     /// client interfaces, so bypassing the service layer this way doesn't touch
     /// Maroik.Core.Repository at all and slips past the namespace-based rules above.
     /// </summary>
-    private static readonly string[] RepositoryInterfaceFullNames =
+    private static readonly string[] _repositoryInterfaceFullNames =
     [
-        .. ContractAssembly.GetTypes()
+        .. _contractAssembly.GetTypes()
             .Where(t => t is { IsInterface: true, Namespace: "Maroik.Core.Contract.Interfaces" })
             .Where(t => t.Name.EndsWith("Repository", StringComparison.Ordinal))
             .Select(t => t.FullName!)
@@ -40,7 +40,7 @@ public class WorkerArchitectureTests
     [Fact]
     public void WorkerTypes_ExceptCompositionRoot_ShouldNot_DependOnRepositoryNamespace()
     {
-        NetArchTest.Rules.TestResult result = Types.InAssembly(WorkerAssembly)
+        NetArchTest.Rules.TestResult result = Types.InAssembly(_workerAssembly)
             .That()
             .DoNotHaveName("Program")
             .ShouldNot()
@@ -63,11 +63,11 @@ public class WorkerArchitectureTests
     [Fact]
     public void WorkerTypes_ExceptCompositionRoot_ShouldNot_DependOnRepositoryInterfaces()
     {
-        NetArchTest.Rules.TestResult result = Types.InAssembly(WorkerAssembly)
+        NetArchTest.Rules.TestResult result = Types.InAssembly(_workerAssembly)
             .That()
             .DoNotHaveName("Program")
             .ShouldNot()
-            .HaveDependencyOnAny(RepositoryInterfaceFullNames)
+            .HaveDependencyOnAny(_repositoryInterfaceFullNames)
             .GetResult();
 
         Assert.True(
@@ -83,7 +83,7 @@ public class WorkerArchitectureTests
     [Fact]
     public void WorkerTypes_ExceptCompositionRoot_ShouldNot_DependOnClientNamespace()
     {
-        NetArchTest.Rules.TestResult result = Types.InAssembly(WorkerAssembly)
+        NetArchTest.Rules.TestResult result = Types.InAssembly(_workerAssembly)
             .That()
             .DoNotHaveName("Program")
             .ShouldNot()
@@ -107,7 +107,7 @@ public class WorkerArchitectureTests
     [Fact]
     public void WorkerTypes_ShouldNot_DependOnPostgreSqlNamespace()
     {
-        NetArchTest.Rules.TestResult result = Types.InAssembly(WorkerAssembly)
+        NetArchTest.Rules.TestResult result = Types.InAssembly(_workerAssembly)
             .That()
             .ResideInNamespaceStartingWith("Maroik.Worker")
             .ShouldNot()

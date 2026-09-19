@@ -28,8 +28,8 @@ namespace Maroik.Website.Tests.Architecture;
 /// </summary>
 public class WebsiteArchitectureTests
 {
-    private static readonly Assembly WebsiteAssembly = typeof(ViewBagPopulatorFilter).Assembly;
-    private static readonly Assembly ContractAssembly = typeof(IAccountRepository).Assembly;
+    private static readonly Assembly _websiteAssembly = typeof(ViewBagPopulatorFilter).Assembly;
+    private static readonly Assembly _contractAssembly = typeof(IAccountRepository).Assembly;
 
     private const string RepositoryNamespace = "Maroik.Core.Repository";
     private const string ClientNamespace = "Maroik.Core.Client";
@@ -43,9 +43,9 @@ public class WebsiteArchitectureTests
     /// client interfaces, so bypassing the service layer this way doesn't touch
     /// Maroik.Core.Repository at all and slips past the namespace-based rules above.
     /// </summary>
-    private static readonly string[] RepositoryInterfaceFullNames =
+    private static readonly string[] _repositoryInterfaceFullNames =
     [
-        .. ContractAssembly.GetTypes()
+        .. _contractAssembly.GetTypes()
             .Where(t => t is { IsInterface: true, Namespace: "Maroik.Core.Contract.Interfaces" })
             .Where(t => t.Name.EndsWith("Repository", StringComparison.Ordinal))
             .Select(t => t.FullName!)
@@ -55,7 +55,7 @@ public class WebsiteArchitectureTests
     [Fact]
     public void WebsiteTypes_ExceptCompositionRoot_ShouldNot_DependOnRepositoryNamespace()
     {
-        NetArchTest.Rules.TestResult result = Types.InAssembly(WebsiteAssembly)
+        NetArchTest.Rules.TestResult result = Types.InAssembly(_websiteAssembly)
             .That()
             .DoNotHaveName("Program")
             .ShouldNot()
@@ -78,11 +78,11 @@ public class WebsiteArchitectureTests
     [Fact]
     public void WebsiteTypes_ExceptCompositionRoot_ShouldNot_DependOnRepositoryInterfaces()
     {
-        NetArchTest.Rules.TestResult result = Types.InAssembly(WebsiteAssembly)
+        NetArchTest.Rules.TestResult result = Types.InAssembly(_websiteAssembly)
             .That()
             .DoNotHaveName("Program")
             .ShouldNot()
-            .HaveDependencyOnAny(RepositoryInterfaceFullNames)
+            .HaveDependencyOnAny(_repositoryInterfaceFullNames)
             .GetResult();
 
         Assert.True(
@@ -98,7 +98,7 @@ public class WebsiteArchitectureTests
     [Fact]
     public void WebsiteTypes_ExceptCompositionRoot_ShouldNot_DependOnClientNamespace()
     {
-        NetArchTest.Rules.TestResult result = Types.InAssembly(WebsiteAssembly)
+        NetArchTest.Rules.TestResult result = Types.InAssembly(_websiteAssembly)
             .That()
             .DoNotHaveName("Program")
             .ShouldNot()
@@ -117,7 +117,7 @@ public class WebsiteArchitectureTests
     [Fact]
     public void WebsiteTypes_ExceptCompositionRoot_ShouldNot_DependOnServiceNamespace()
     {
-        NetArchTest.Rules.TestResult result = Types.InAssembly(WebsiteAssembly)
+        NetArchTest.Rules.TestResult result = Types.InAssembly(_websiteAssembly)
             .That()
             .DoNotHaveName("Program")
             .ShouldNot()
@@ -141,7 +141,7 @@ public class WebsiteArchitectureTests
     [Fact]
     public void WebsiteTypes_ShouldNot_DependOnPostgreSqlNamespace()
     {
-        NetArchTest.Rules.TestResult result = Types.InAssembly(WebsiteAssembly)
+        NetArchTest.Rules.TestResult result = Types.InAssembly(_websiteAssembly)
             .That()
             .ResideInNamespaceStartingWith("Maroik.Website")
             .ShouldNot()
@@ -159,21 +159,21 @@ public class WebsiteArchitectureTests
     [Fact]
     public void Controllers_ShouldNot_DependOnRepositoryOrClientOrServiceNamespace()
     {
-        NetArchTest.Rules.TestResult repoResult = Types.InAssembly(WebsiteAssembly)
+        NetArchTest.Rules.TestResult repoResult = Types.InAssembly(_websiteAssembly)
             .That()
             .ResideInNamespace("Maroik.Website.Controllers")
             .ShouldNot()
             .HaveDependencyOn(RepositoryNamespace)
             .GetResult();
 
-        NetArchTest.Rules.TestResult clientResult = Types.InAssembly(WebsiteAssembly)
+        NetArchTest.Rules.TestResult clientResult = Types.InAssembly(_websiteAssembly)
             .That()
             .ResideInNamespace("Maroik.Website.Controllers")
             .ShouldNot()
             .HaveDependencyOn(ClientNamespace)
             .GetResult();
 
-        NetArchTest.Rules.TestResult serviceResult = Types.InAssembly(WebsiteAssembly)
+        NetArchTest.Rules.TestResult serviceResult = Types.InAssembly(_websiteAssembly)
             .That()
             .ResideInNamespace("Maroik.Website.Controllers")
             .ShouldNot()
@@ -214,7 +214,7 @@ public class WebsiteArchitectureTests
     {
         List<string> violations = [];
 
-        foreach (Type controllerType in WebsiteAssembly.GetTypes()
+        foreach (Type controllerType in _websiteAssembly.GetTypes()
                      .Where(t => t is { IsClass: true, IsAbstract: false } && typeof(Controller).IsAssignableFrom(t)))
         {
             List<string> nonPublicMethods =
@@ -258,7 +258,7 @@ public class WebsiteArchitectureTests
     {
         List<string> violations = [];
 
-        foreach (Type controllerType in WebsiteAssembly.GetTypes()
+        foreach (Type controllerType in _websiteAssembly.GetTypes()
                      .Where(t => t is { IsClass: true, IsAbstract: false } && typeof(Controller).IsAssignableFrom(t)))
         {
             bool isAnonymousSelfServiceController = controllerType.Name == "AccountController";
@@ -333,7 +333,7 @@ public class WebsiteArchitectureTests
     [Fact]
     public void Controllers_ShouldNot_CallSessionServiceGetAccount()
     {
-        NetArchTest.Rules.TestResult result = Types.InAssembly(WebsiteAssembly)
+        NetArchTest.Rules.TestResult result = Types.InAssembly(_websiteAssembly)
             .That()
             .ResideInNamespace("Maroik.Website.Controllers")
             .Should()
@@ -403,21 +403,21 @@ public class WebsiteArchitectureTests
     {
         const string generatedViewNamespace = "AspNetCoreGeneratedDocument";
 
-        NetArchTest.Rules.TestResult repoResult = Types.InAssembly(WebsiteAssembly)
+        NetArchTest.Rules.TestResult repoResult = Types.InAssembly(_websiteAssembly)
             .That()
             .ResideInNamespace(generatedViewNamespace)
             .ShouldNot()
             .HaveDependencyOn(RepositoryNamespace)
             .GetResult();
 
-        NetArchTest.Rules.TestResult clientResult = Types.InAssembly(WebsiteAssembly)
+        NetArchTest.Rules.TestResult clientResult = Types.InAssembly(_websiteAssembly)
             .That()
             .ResideInNamespace(generatedViewNamespace)
             .ShouldNot()
             .HaveDependencyOn(ClientNamespace)
             .GetResult();
 
-        NetArchTest.Rules.TestResult serviceResult = Types.InAssembly(WebsiteAssembly)
+        NetArchTest.Rules.TestResult serviceResult = Types.InAssembly(_websiteAssembly)
             .That()
             .ResideInNamespace(generatedViewNamespace)
             .ShouldNot()

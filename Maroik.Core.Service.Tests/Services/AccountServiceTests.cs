@@ -1,11 +1,11 @@
 using System.Diagnostics;
-using Maroik.Core.Domain.Account;
 using Maroik.Core.Contract.Dtos;
+using Maroik.Core.Contract.Interfaces;
 using Maroik.Core.Contract.Misc.Enums;
 using Maroik.Core.Contract.Misc.Helpers;
-using Maroik.Core.Contract.Interfaces;
 using Maroik.Core.Contract.Misc.Messaging;
 using Maroik.Core.Contract.Misc.Settings;
+using Maroik.Core.Domain.Account;
 using Maroik.Core.Service.Services;
 using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Options;

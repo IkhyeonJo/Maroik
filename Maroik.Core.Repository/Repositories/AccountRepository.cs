@@ -1,5 +1,5 @@
-using Maroik.Core.Domain.Account;
 using Maroik.Core.Contract.Interfaces;
+using Maroik.Core.Domain.Account;
 using Maroik.Core.PostgreSQL.Data;
 using Microsoft.EntityFrameworkCore;
 using OrmAccount = Maroik.Core.PostgreSQL.Models.Account;

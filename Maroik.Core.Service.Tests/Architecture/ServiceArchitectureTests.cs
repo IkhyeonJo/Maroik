@@ -13,7 +13,7 @@ namespace Maroik.Core.Service.Tests.Architecture;
 /// </summary>
 public class ServiceArchitectureTests
 {
-    private static readonly Assembly ServiceAssembly = typeof(AccountService).Assembly;
+    private static readonly Assembly _serviceAssembly = typeof(AccountService).Assembly;
 
     /// <summary>Service should not depend on any infrastructure layer or outer application.</summary>
     [Theory]
@@ -25,7 +25,7 @@ public class ServiceArchitectureTests
     [InlineData("Maroik.FileStorage")]
     public void Service_ShouldNot_DependOnInfrastructureOrOuterLayer(string forbiddenNamespace)
     {
-        NetArchTest.Rules.TestResult result = Types.InAssembly(ServiceAssembly)
+        NetArchTest.Rules.TestResult result = Types.InAssembly(_serviceAssembly)
             .ShouldNot()
             .HaveDependencyOn(forbiddenNamespace)
             .GetResult();
@@ -53,7 +53,7 @@ public class ServiceArchitectureTests
     [InlineData("RabbitMQ.Client")]
     public void Service_ShouldNot_DependOn_ExternalSystemClientLibrary(string forbiddenNamespace)
     {
-        NetArchTest.Rules.TestResult result = Types.InAssembly(ServiceAssembly)
+        NetArchTest.Rules.TestResult result = Types.InAssembly(_serviceAssembly)
             .ShouldNot()
             .HaveDependencyOn(forbiddenNamespace)
             .GetResult();
@@ -88,7 +88,7 @@ public class ServiceArchitectureTests
     [InlineData("CalendarService", "IOtherCalendarRepository")]
     public void OnlyOwningAggregateService_ShouldDependOn_ChildEntityRepository(string owningServiceName, string childRepositoryInterfaceName)
     {
-        NetArchTest.Rules.TestResult result = Types.InAssembly(ServiceAssembly)
+        NetArchTest.Rules.TestResult result = Types.InAssembly(_serviceAssembly)
             .That()
             .DoNotHaveName(owningServiceName)
             .ShouldNot()

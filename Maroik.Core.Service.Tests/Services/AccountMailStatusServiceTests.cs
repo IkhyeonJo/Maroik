@@ -1,6 +1,6 @@
-using Maroik.Core.Domain.Account;
-using Maroik.Core.Contract.Misc.Helpers;
 using Maroik.Core.Contract.Interfaces;
+using Maroik.Core.Contract.Misc.Helpers;
+using Maroik.Core.Domain.Account;
 using Maroik.Core.Service.Services;
 using Moq;
 

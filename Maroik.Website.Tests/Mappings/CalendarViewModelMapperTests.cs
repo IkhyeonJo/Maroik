@@ -1,7 +1,7 @@
+using System.Text.Json;
 using Maroik.Core.Contract.Dtos;
 using Maroik.Website.Mappings;
 using Maroik.Website.Models.ViewModels.Calendar;
-using System.Text.Json;
 
 namespace Maroik.Website.Tests.Mappings;
 

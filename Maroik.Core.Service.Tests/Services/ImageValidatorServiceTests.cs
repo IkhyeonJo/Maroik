@@ -9,7 +9,7 @@ public class ImageValidatorServiceTests
     private readonly ImageValidatorService _sut = new();
 
     // Minimal valid 1x1 transparent PNG — a well-known fixture byte sequence, not a mock.
-    private static readonly byte[] ValidPngBytes =
+    private static readonly byte[] _validPngBytes =
     [
         0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A,
         0x00, 0x00, 0x00, 0x0D, 0x49, 0x48, 0x44, 0x52,
@@ -25,7 +25,7 @@ public class ImageValidatorServiceTests
     [Fact]
     public void IsValidImage_ReturnsTrue_ForValidPng()
     {
-        Assert.True(_sut.IsValidImage(ValidPngBytes));
+        Assert.True(_sut.IsValidImage(_validPngBytes));
     }
 
     /// <summary>Verifies that non-image bytes are rejected rather than throwing.</summary>
@@ -46,7 +46,7 @@ public class ImageValidatorServiceTests
     [Fact]
     public void IsSvg_ReturnsFalse_ForPngImage()
     {
-        Assert.False(_sut.IsSvg(ValidPngBytes));
+        Assert.False(_sut.IsSvg(_validPngBytes));
     }
 
     /// <summary>Verifies that garbage bytes are rejected rather than throwing.</summary>
@@ -97,7 +97,7 @@ public class ImageValidatorServiceTests
     [Fact]
     public void IsValidImage_ReturnsFalse_ForPngSignatureWithGarbageBody()
     {
-        byte[] bytes = [.. ValidPngBytes[..8], 0xDE, 0xAD, 0xBE, 0xEF];
+        byte[] bytes = [.. _validPngBytes[..8], 0xDE, 0xAD, 0xBE, 0xEF];
         Assert.False(_sut.IsValidImage(bytes));
     }
 

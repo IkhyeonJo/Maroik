@@ -1,6 +1,6 @@
-using Maroik.Core.Domain.Account;
 using Maroik.Core.Contract.Dtos;
 using Maroik.Core.Contract.Misc.Extensions;
+using Maroik.Core.Domain.Account;
 
 namespace Maroik.Core.Contract.Tests.Extensions;
 

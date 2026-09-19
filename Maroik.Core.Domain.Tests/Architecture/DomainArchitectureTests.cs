@@ -14,7 +14,7 @@ namespace Maroik.Core.DomainTests.Architecture;
 /// </summary>
 public class DomainArchitectureTests
 {
-    private static readonly Assembly DomainAssembly = typeof(Account).Assembly;
+    private static readonly Assembly _domainAssembly = typeof(Account).Assembly;
 
     /// <summary>Domain should not depend on any other layer.</summary>
     [Theory]
@@ -28,7 +28,7 @@ public class DomainArchitectureTests
     [InlineData("Maroik.FileStorage")]
     public void Domain_ShouldNot_DependOnAnyOtherLayer(string forbiddenNamespace)
     {
-        NetArchTest.Rules.TestResult result = Types.InAssembly(DomainAssembly)
+        NetArchTest.Rules.TestResult result = Types.InAssembly(_domainAssembly)
             .ShouldNot()
             .HaveDependencyOn(forbiddenNamespace)
             .GetResult();
@@ -45,7 +45,7 @@ public class DomainArchitectureTests
     [Fact]
     public void Domain_ShouldOnly_DependOn_SystemOrErrorOr()
     {
-        AssemblyName[] referenced = DomainAssembly.GetReferencedAssemblies();
+        AssemblyName[] referenced = _domainAssembly.GetReferencedAssemblies();
 
         var unexpected = referenced
             .Where(a => a.Name is not null)
@@ -99,7 +99,7 @@ public class DomainArchitectureTests
     [InlineData("MediatR")]
     public void Domain_ShouldNot_DependOn_ExternalInfrastructureLibrary(string forbiddenNamespace)
     {
-        NetArchTest.Rules.TestResult result = Types.InAssembly(DomainAssembly)
+        NetArchTest.Rules.TestResult result = Types.InAssembly(_domainAssembly)
             .ShouldNot()
             .HaveDependencyOn(forbiddenNamespace)
             .GetResult();
@@ -120,7 +120,7 @@ public class DomainArchitectureTests
     /// Board.Writer being a plain string instead of an Account reference) rather than a
     /// direct type dependency.
     /// </summary>
-    private static readonly string[] BoundedContextNamespaces =
+    private static readonly string[] _boundedContextNamespaces =
     [
         "Maroik.Core.Domain.Account",
         "Maroik.Core.Domain.Board",
@@ -138,11 +138,11 @@ public class DomainArchitectureTests
     [InlineData("Maroik.Core.Domain.Menu")]
     public void BoundedContext_ShouldNot_DependOnAnotherBoundedContext(string boundedContextNamespace)
     {
-        string[] otherContexts = BoundedContextNamespaces
+        string[] otherContexts = _boundedContextNamespaces
             .Where(ns => ns != boundedContextNamespace)
             .ToArray();
 
-        NetArchTest.Rules.TestResult result = Types.InAssembly(DomainAssembly)
+        NetArchTest.Rules.TestResult result = Types.InAssembly(_domainAssembly)
             .That()
             .ResideInNamespace(boundedContextNamespace)
             .ShouldNot()
@@ -172,7 +172,7 @@ public class DomainArchitectureTests
     [Fact]
     public void Domain_ErrorMessages_MustGoThrough_LocalizableError()
     {
-        NetArchTest.Rules.TestResult result = Types.InAssembly(DomainAssembly)
+        NetArchTest.Rules.TestResult result = Types.InAssembly(_domainAssembly)
             .That()
             .DoNotResideInNamespace("Maroik.Core.Domain.Localization")
             .Should()
@@ -197,7 +197,7 @@ public class DomainArchitectureTests
     /// </summary>
     private sealed class DoesNotCallRawErrorFactory : ICustomRule
     {
-        private static readonly string[] RawFactoryMethodNames =
+        private static readonly string[] _rawFactoryMethodNames =
             ["Validation", "Conflict", "Failure", "NotFound", "Forbidden", "Unexpected"];
 
         public bool MeetsRule(TypeDefinition type)
@@ -212,7 +212,7 @@ public class DomainArchitectureTests
                     if (instruction.Operand is not MethodReference calledMethod) continue;
 
                     if (calledMethod.DeclaringType.FullName == "ErrorOr.Error"
-                        && RawFactoryMethodNames.Contains(calledMethod.Name))
+                        && _rawFactoryMethodNames.Contains(calledMethod.Name))
                     {
                         return false;
                     }

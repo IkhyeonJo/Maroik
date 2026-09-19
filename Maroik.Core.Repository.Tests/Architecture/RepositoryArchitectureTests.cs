@@ -15,17 +15,17 @@ namespace Maroik.Core.Repository.Tests.Architecture;
 /// </summary>
 public class RepositoryArchitectureTests
 {
-    private static readonly Assembly RepositoryAssembly = typeof(AccountRepository).Assembly;
-    private static readonly Assembly DomainAssembly = typeof(Entity<>).Assembly;
-    private static readonly Assembly ContractAssembly = typeof(IAccountRepository).Assembly;
+    private static readonly Assembly _repositoryAssembly = typeof(AccountRepository).Assembly;
+    private static readonly Assembly _domainAssembly = typeof(Entity<>).Assembly;
+    private static readonly Assembly _contractAssembly = typeof(IAccountRepository).Assembly;
 
     /// <summary>
     /// Full names of every domain <c>*Policy</c> type (business rules / allowed-value taxonomies).
     /// The persistence layer must not apply one — that is service / domain-entity work.
     /// </summary>
-    private static readonly string[] DomainPolicyFullNames =
+    private static readonly string[] _domainPolicyFullNames =
     [
-        .. DomainAssembly.GetTypes()
+        .. _domainAssembly.GetTypes()
             .Where(t => t.IsClass && t.Name.EndsWith("Policy", StringComparison.Ordinal))
             .Select(t => t.FullName!)
     ];
@@ -34,9 +34,9 @@ public class RepositoryArchitectureTests
     /// Full names of every <c>I*Service</c> interface declared in Maroik.Core.Contract.Interfaces.
     /// A repository must never call a service — dependencies flow Service → Repository, never back.
     /// </summary>
-    private static readonly string[] ServiceInterfaceFullNames =
+    private static readonly string[] _serviceInterfaceFullNames =
     [
-        .. ContractAssembly.GetTypes()
+        .. _contractAssembly.GetTypes()
             .Where(t => t is { IsInterface: true, Namespace: "Maroik.Core.Contract.Interfaces" })
             .Where(t => t.Name.EndsWith("Service", StringComparison.Ordinal))
             .Select(t => t.FullName!)
@@ -46,7 +46,7 @@ public class RepositoryArchitectureTests
     [Fact]
     public void Repository_ShouldNot_DependOnClientNamespace()
     {
-        NetArchTest.Rules.TestResult result = Types.InAssembly(RepositoryAssembly)
+        NetArchTest.Rules.TestResult result = Types.InAssembly(_repositoryAssembly)
             .ShouldNot()
             .HaveDependencyOn("Maroik.Core.Client")
             .GetResult();
@@ -62,7 +62,7 @@ public class RepositoryArchitectureTests
     [Fact]
     public void Repository_ShouldNot_DependOnServiceNamespace()
     {
-        NetArchTest.Rules.TestResult result = Types.InAssembly(RepositoryAssembly)
+        NetArchTest.Rules.TestResult result = Types.InAssembly(_repositoryAssembly)
             .ShouldNot()
             .HaveDependencyOn("Maroik.Core.Service")
             .GetResult();
@@ -81,7 +81,7 @@ public class RepositoryArchitectureTests
     [InlineData("Maroik.FileStorage")]
     public void Repository_ShouldNot_DependOnApplicationHostLayer(string forbiddenNamespace)
     {
-        NetArchTest.Rules.TestResult result = Types.InAssembly(RepositoryAssembly)
+        NetArchTest.Rules.TestResult result = Types.InAssembly(_repositoryAssembly)
             .ShouldNot()
             .HaveDependencyOn(forbiddenNamespace)
             .GetResult();
@@ -104,7 +104,7 @@ public class RepositoryArchitectureTests
     [InlineData("RabbitMQ.Client")]
     public void Repository_ShouldNot_DependOnAnotherLayersExternalSystemLibrary(string forbiddenNamespace)
     {
-        NetArchTest.Rules.TestResult result = Types.InAssembly(RepositoryAssembly)
+        NetArchTest.Rules.TestResult result = Types.InAssembly(_repositoryAssembly)
             .ShouldNot()
             .HaveDependencyOn(forbiddenNamespace)
             .GetResult();
@@ -124,18 +124,18 @@ public class RepositoryArchitectureTests
     [Fact]
     public void Repository_ShouldNot_DependOn_DomainPolicies()
     {
-        Assert.NotEmpty(DomainPolicyFullNames);
+        Assert.NotEmpty(_domainPolicyFullNames);
 
-        NetArchTest.Rules.TestResult result = Types.InAssembly(RepositoryAssembly)
+        NetArchTest.Rules.TestResult result = Types.InAssembly(_repositoryAssembly)
             .ShouldNot()
-            .HaveDependencyOnAny(DomainPolicyFullNames)
+            .HaveDependencyOnAny(_domainPolicyFullNames)
             .GetResult();
 
         Assert.True(
             result.IsSuccessful,
             "Maroik.Core.Repository must not depend on a domain policy — the persistence layer holds " +
             "no business rules. Apply the policy in the aggregate/domain method or the service that " +
-            "calls the repository.\nPolicies: " + string.Join(", ", DomainPolicyFullNames) +
+            "calls the repository.\nPolicies: " + string.Join(", ", _domainPolicyFullNames) +
             "\nFailing types: " + string.Join(", ", result.FailingTypeNames ?? []));
     }
 
@@ -146,11 +146,11 @@ public class RepositoryArchitectureTests
     [Fact]
     public void Repository_ShouldNot_DependOn_ServiceInterfaces()
     {
-        Assert.NotEmpty(ServiceInterfaceFullNames);
+        Assert.NotEmpty(_serviceInterfaceFullNames);
 
-        NetArchTest.Rules.TestResult result = Types.InAssembly(RepositoryAssembly)
+        NetArchTest.Rules.TestResult result = Types.InAssembly(_repositoryAssembly)
             .ShouldNot()
-            .HaveDependencyOnAny(ServiceInterfaceFullNames)
+            .HaveDependencyOnAny(_serviceInterfaceFullNames)
             .GetResult();
 
         Assert.True(

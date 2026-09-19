@@ -15,17 +15,17 @@ namespace Maroik.Core.Client.Tests.Architecture;
 /// </summary>
 public class ClientArchitectureTests
 {
-    private static readonly Assembly ClientAssembly = typeof(FileClient).Assembly;
-    private static readonly Assembly DomainAssembly = typeof(Entity<>).Assembly;
-    private static readonly Assembly ContractAssembly = typeof(IAccountRepository).Assembly;
+    private static readonly Assembly _clientAssembly = typeof(FileClient).Assembly;
+    private static readonly Assembly _domainAssembly = typeof(Entity<>).Assembly;
+    private static readonly Assembly _contractAssembly = typeof(IAccountRepository).Assembly;
 
     /// <summary>
     /// Full names of every domain <c>*Policy</c> type (business rules / allowed-value taxonomies).
     /// An external-system adapter must not apply one.
     /// </summary>
-    private static readonly string[] DomainPolicyFullNames =
+    private static readonly string[] _domainPolicyFullNames =
     [
-        .. DomainAssembly.GetTypes()
+        .. _domainAssembly.GetTypes()
             .Where(t => t.IsClass && t.Name.EndsWith("Policy", StringComparison.Ordinal))
             .Select(t => t.FullName!)
     ];
@@ -34,9 +34,9 @@ public class ClientArchitectureTests
     /// Full names of every <c>I*Service</c> interface declared in Maroik.Core.Contract.Interfaces.
     /// A client must never call a service — dependencies flow Service → Client, never back.
     /// </summary>
-    private static readonly string[] ServiceInterfaceFullNames =
+    private static readonly string[] _serviceInterfaceFullNames =
     [
-        .. ContractAssembly.GetTypes()
+        .. _contractAssembly.GetTypes()
             .Where(t => t is { IsInterface: true, Namespace: "Maroik.Core.Contract.Interfaces" })
             .Where(t => t.Name.EndsWith("Service", StringComparison.Ordinal))
             .Select(t => t.FullName!)
@@ -46,7 +46,7 @@ public class ClientArchitectureTests
     [Fact]
     public void Client_ShouldNot_DependOnRepositoryNamespace()
     {
-        NetArchTest.Rules.TestResult result = Types.InAssembly(ClientAssembly)
+        NetArchTest.Rules.TestResult result = Types.InAssembly(_clientAssembly)
             .ShouldNot()
             .HaveDependencyOn("Maroik.Core.Repository")
             .GetResult();
@@ -62,7 +62,7 @@ public class ClientArchitectureTests
     [Fact]
     public void Client_ShouldNot_DependOnServiceNamespace()
     {
-        NetArchTest.Rules.TestResult result = Types.InAssembly(ClientAssembly)
+        NetArchTest.Rules.TestResult result = Types.InAssembly(_clientAssembly)
             .ShouldNot()
             .HaveDependencyOn("Maroik.Core.Service")
             .GetResult();
@@ -82,7 +82,7 @@ public class ClientArchitectureTests
     [InlineData("Maroik.FileStorage")]
     public void Client_ShouldNot_DependOnPersistenceOrApplicationHostLayer(string forbiddenNamespace)
     {
-        NetArchTest.Rules.TestResult result = Types.InAssembly(ClientAssembly)
+        NetArchTest.Rules.TestResult result = Types.InAssembly(_clientAssembly)
             .ShouldNot()
             .HaveDependencyOn(forbiddenNamespace)
             .GetResult();
@@ -104,7 +104,7 @@ public class ClientArchitectureTests
     [InlineData("Npgsql")]
     public void Client_ShouldNot_DependOn_PersistenceLibrary(string forbiddenNamespace)
     {
-        NetArchTest.Rules.TestResult result = Types.InAssembly(ClientAssembly)
+        NetArchTest.Rules.TestResult result = Types.InAssembly(_clientAssembly)
             .ShouldNot()
             .HaveDependencyOn(forbiddenNamespace)
             .GetResult();
@@ -124,17 +124,17 @@ public class ClientArchitectureTests
     [Fact]
     public void Client_ShouldNot_DependOn_DomainPolicies()
     {
-        Assert.NotEmpty(DomainPolicyFullNames);
+        Assert.NotEmpty(_domainPolicyFullNames);
 
-        NetArchTest.Rules.TestResult result = Types.InAssembly(ClientAssembly)
+        NetArchTest.Rules.TestResult result = Types.InAssembly(_clientAssembly)
             .ShouldNot()
-            .HaveDependencyOnAny(DomainPolicyFullNames)
+            .HaveDependencyOnAny(_domainPolicyFullNames)
             .GetResult();
 
         Assert.True(
             result.IsSuccessful,
             "Maroik.Core.Client must not depend on a domain policy — an external-system adapter " +
-            "holds no business rules.\nPolicies: " + string.Join(", ", DomainPolicyFullNames) +
+            "holds no business rules.\nPolicies: " + string.Join(", ", _domainPolicyFullNames) +
             "\nFailing types: " + string.Join(", ", result.FailingTypeNames ?? []));
     }
 
@@ -145,11 +145,11 @@ public class ClientArchitectureTests
     [Fact]
     public void Client_ShouldNot_DependOn_ServiceInterfaces()
     {
-        Assert.NotEmpty(ServiceInterfaceFullNames);
+        Assert.NotEmpty(_serviceInterfaceFullNames);
 
-        NetArchTest.Rules.TestResult result = Types.InAssembly(ClientAssembly)
+        NetArchTest.Rules.TestResult result = Types.InAssembly(_clientAssembly)
             .ShouldNot()
-            .HaveDependencyOnAny(ServiceInterfaceFullNames)
+            .HaveDependencyOnAny(_serviceInterfaceFullNames)
             .GetResult();
 
         Assert.True(

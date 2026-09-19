@@ -13,7 +13,7 @@ namespace Maroik.Core.Contract.Tests.Architecture;
 /// </summary>
 public class ContractArchitectureTests
 {
-    private static readonly Assembly ContractAssembly = typeof(IAccountRepository).Assembly;
+    private static readonly Assembly _contractAssembly = typeof(IAccountRepository).Assembly;
 
     /// <summary>Contract should not depend on any implementation layer.</summary>
     [Theory]
@@ -26,7 +26,7 @@ public class ContractArchitectureTests
     [InlineData("Maroik.FileStorage")]
     public void Contract_ShouldNot_DependOnAnyImplementationLayer(string forbiddenNamespace)
     {
-        NetArchTest.Rules.TestResult result = Types.InAssembly(ContractAssembly)
+        NetArchTest.Rules.TestResult result = Types.InAssembly(_contractAssembly)
             .ShouldNot()
             .HaveDependencyOn(forbiddenNamespace)
             .GetResult();
@@ -50,7 +50,7 @@ public class ContractArchitectureTests
     [Fact]
     public void Contract_ShouldOnly_DependOn_Bcl_ErrorOr_AndDomain()
     {
-        AssemblyName[] referenced = ContractAssembly.GetReferencedAssemblies();
+        AssemblyName[] referenced = _contractAssembly.GetReferencedAssemblies();
 
         var unexpected = referenced
             .Where(a => a.Name is not null)
@@ -105,7 +105,7 @@ public class ContractArchitectureTests
     [InlineData("MediatR")]
     public void Contract_ShouldNot_DependOn_ExternalInfrastructureLibrary(string forbiddenNamespace)
     {
-        NetArchTest.Rules.TestResult result = Types.InAssembly(ContractAssembly)
+        NetArchTest.Rules.TestResult result = Types.InAssembly(_contractAssembly)
             .ShouldNot()
             .HaveDependencyOn(forbiddenNamespace)
             .GetResult();
@@ -132,7 +132,7 @@ public class ContractArchitectureTests
     {
         (Type Repo, Type Domain)[] persisted =
         [
-            .. ContractAssembly.GetTypes()
+            .. _contractAssembly.GetTypes()
                 .Where(t => t is { IsInterface: true, Namespace: "Maroik.Core.Contract.Interfaces" })
                 .SelectMany(
                     repo => repo.GetInterfaces()

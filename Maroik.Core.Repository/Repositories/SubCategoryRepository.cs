@@ -1,5 +1,5 @@
-using Maroik.Core.Domain.Menu;
 using Maroik.Core.Contract.Interfaces;
+using Maroik.Core.Domain.Menu;
 using Maroik.Core.PostgreSQL.Data;
 using Microsoft.EntityFrameworkCore;
 using OrmSubCategory = Maroik.Core.PostgreSQL.Models.SubCategory;

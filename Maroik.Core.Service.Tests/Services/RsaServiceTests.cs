@@ -20,14 +20,14 @@ public class RsaServiceTests
 {
     // -- Shared 2048-bit key pair generated once per test class ---------------
 
-    private static readonly string PrivateKeyBase64;
-    private static readonly string PublicKeyBase64;
+    private static readonly string _privateKeyBase64;
+    private static readonly string _publicKeyBase64;
 
     static RsaServiceTests()
     {
         using var rsa = RSA.Create(2048);
-        PrivateKeyBase64 = Convert.ToBase64String(rsa.ExportRSAPrivateKey());
-        PublicKeyBase64 = Convert.ToBase64String(rsa.ExportSubjectPublicKeyInfo());
+        _privateKeyBase64 = Convert.ToBase64String(rsa.ExportRSAPrivateKey());
+        _publicKeyBase64 = Convert.ToBase64String(rsa.ExportSubjectPublicKeyInfo());
     }
 
     // -- Helpers --------------------------------------------------------------
@@ -36,8 +36,8 @@ public class RsaServiceTests
         new(Options.Create(new ServerSetting
         {
             RsaAlgorithm = algorithm,
-            RsaPrivateKey = PrivateKeyBase64,
-            RsaPublicKey = PublicKeyBase64
+            RsaPrivateKey = _privateKeyBase64,
+            RsaPublicKey = _publicKeyBase64
         }));
 
     // -- Encrypt / Decrypt ----------------------------------------------------
@@ -277,7 +277,7 @@ public class RsaServiceTests
         {
             RsaAlgorithm = RsaType.Rsa2,
             RsaPrivateKey = "",
-            RsaPublicKey = PublicKeyBase64
+            RsaPublicKey = _publicKeyBase64
         }));
 
         string result = sut.Sign("data");
@@ -292,7 +292,7 @@ public class RsaServiceTests
         var sut = new RsaService(Options.Create(new ServerSetting
         {
             RsaAlgorithm = RsaType.Rsa2,
-            RsaPrivateKey = PrivateKeyBase64,
+            RsaPrivateKey = _privateKeyBase64,
             RsaPublicKey = null
         }));
 

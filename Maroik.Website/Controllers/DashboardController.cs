@@ -1,7 +1,7 @@
-using Maroik.Core.Domain.Account;
-using Maroik.Core.Domain.Localization;
 using Maroik.Core.Contract.Dtos;
 using Maroik.Core.Contract.Interfaces;
+using Maroik.Core.Domain.Account;
+using Maroik.Core.Domain.Localization;
 using Maroik.Website.Attributes;
 using Maroik.Website.Mappings;
 using Maroik.Website.Models.ViewModels.Account;

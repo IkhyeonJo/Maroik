@@ -13,7 +13,7 @@ namespace Maroik.FileStorage.Tests.Architecture;
 /// </summary>
 public class FileStorageArchitectureTests
 {
-    private static readonly Assembly FileStorageAssembly = typeof(FileController).Assembly;
+    private static readonly Assembly _fileStorageAssembly = typeof(FileController).Assembly;
 
     /// <summary>FileStorage should not depend on the monolith's internal layers.</summary>
     [Theory]
@@ -23,7 +23,7 @@ public class FileStorageArchitectureTests
     [InlineData("Maroik.Website")]
     public void FileStorage_ShouldNot_DependOnMonolithInternalLayers(string forbiddenNamespace)
     {
-        NetArchTest.Rules.TestResult result = Types.InAssembly(FileStorageAssembly)
+        NetArchTest.Rules.TestResult result = Types.InAssembly(_fileStorageAssembly)
             .ShouldNot()
             .HaveDependencyOn(forbiddenNamespace)
             .GetResult();
@@ -48,7 +48,7 @@ public class FileStorageArchitectureTests
     {
         List<string> violations = [];
 
-        foreach (Type controllerType in FileStorageAssembly.GetTypes()
+        foreach (Type controllerType in _fileStorageAssembly.GetTypes()
                      .Where(t => t is { IsClass: true, IsAbstract: false } && typeof(ControllerBase).IsAssignableFrom(t)))
         {
             List<string> nonPublicMethods =
@@ -81,13 +81,13 @@ public class FileStorageArchitectureTests
     [Fact]
     public void ServicesNamespace_ContainsOnly_DiServiceClasses()
     {
-        var contractInterfaces = FileStorageAssembly.GetTypes()
+        var contractInterfaces = _fileStorageAssembly.GetTypes()
             .Where(t => t is { IsInterface: true, Namespace: "Maroik.FileStorage.Contracts" })
             .ToHashSet();
 
         List<string> violations = [];
 
-        foreach (Type type in FileStorageAssembly.GetTypes()
+        foreach (Type type in _fileStorageAssembly.GetTypes()
                      .Where(t => t.Namespace == "Maroik.FileStorage.Services" && !t.IsNested))
         {
             if (type.GetCustomAttribute<CompilerGeneratedAttribute>() != null)

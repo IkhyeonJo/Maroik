@@ -1,7 +1,8 @@
-﻿using Maroik.Core.Domain.Account;
+using System.Globalization;
 using Maroik.Core.Contract.Dtos;
 using Maroik.Core.Contract.Interfaces;
 using Maroik.Core.Contract.Misc.Settings;
+using Maroik.Core.Domain.Account;
 using Maroik.Website.Attributes;
 using Maroik.Website.Contracts;
 using Maroik.Website.Extensions;
@@ -10,7 +11,6 @@ using Maroik.Website.Models.ViewModels.Notice;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Localization;
 using Microsoft.Extensions.Options;
-using System.Globalization;
 
 namespace Maroik.Website.Controllers;
 

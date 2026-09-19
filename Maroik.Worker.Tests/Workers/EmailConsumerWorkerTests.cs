@@ -20,7 +20,7 @@ namespace Maroik.Worker.Tests.Workers;
 /// </summary>
 public class EmailConsumerWorkerTests
 {
-    private static readonly SendEmailMessage Message = new("to@test.com", "Subject", "Body", "corr-1");
+    private static readonly SendEmailMessage _message = new("to@test.com", "Subject", "Body", "corr-1");
 
     private static IServiceScopeFactory BuildScopeFactory(IEmailMessageHandler handler)
     {
@@ -59,12 +59,12 @@ public class EmailConsumerWorkerTests
     {
         var handler = new Mock<IEmailMessageHandler>();
         var worker = CreateSut(handler.Object, out var channel);
-        byte[] body = JsonSerializer.SerializeToUtf8Bytes(Message);
+        byte[] body = JsonSerializer.SerializeToUtf8Bytes(_message);
 
         await worker.OnMessageReceivedAsync(this, MakeDeliverArgs(body, deliveryTag: 7));
 
         handler.Verify(h => h.HandleAsync(
-            It.Is<SendEmailMessage>(m => m == Message), It.IsAny<CancellationToken>()), Times.Once);
+            It.Is<SendEmailMessage>(m => m == _message), It.IsAny<CancellationToken>()), Times.Once);
         channel.Verify(c => c.BasicAckAsync(7, false, It.IsAny<CancellationToken>()), Times.Once);
         channel.Verify(c => c.BasicNackAsync(It.IsAny<ulong>(), It.IsAny<bool>(), It.IsAny<bool>(), It.IsAny<CancellationToken>()), Times.Never);
     }
@@ -144,7 +144,7 @@ public class EmailConsumerWorkerTests
         handler.Setup(h => h.HandleAsync(It.IsAny<SendEmailMessage>(), It.IsAny<CancellationToken>()))
             .ThrowsAsync(new InvalidOperationException("SMTP down"));
         var worker = CreateSut(handler.Object, out var channel);
-        byte[] body = JsonSerializer.SerializeToUtf8Bytes(Message);
+        byte[] body = JsonSerializer.SerializeToUtf8Bytes(_message);
         channel.Setup(c => c.BasicPublishAsync(
                 It.IsAny<string>(), It.IsAny<string>(), It.IsAny<bool>(), It.IsAny<BasicProperties>(), It.IsAny<ReadOnlyMemory<byte>>(), It.IsAny<CancellationToken>()))
             .Returns(ValueTask.CompletedTask);
@@ -163,12 +163,12 @@ public class EmailConsumerWorkerTests
         var worker = CreateSut(handler.Object, out var channel);
         channel.Setup(c => c.BasicAckAsync(It.IsAny<ulong>(), It.IsAny<bool>(), It.IsAny<CancellationToken>()))
             .ThrowsAsync(new InvalidOperationException("channel closed"));
-        byte[] body = JsonSerializer.SerializeToUtf8Bytes(Message);
+        byte[] body = JsonSerializer.SerializeToUtf8Bytes(_message);
 
         await worker.OnMessageReceivedAsync(this, MakeDeliverArgs(body, deliveryTag: 11));
 
         handler.Verify(h => h.HandleAsync(
-            It.Is<SendEmailMessage>(m => m == Message), It.IsAny<CancellationToken>()), Times.Once);
+            It.Is<SendEmailMessage>(m => m == _message), It.IsAny<CancellationToken>()), Times.Once);
         channel.Verify(c => c.BasicNackAsync(It.IsAny<ulong>(), It.IsAny<bool>(), It.IsAny<bool>(), It.IsAny<CancellationToken>()), Times.Never);
     }
 
@@ -188,7 +188,7 @@ public class EmailConsumerWorkerTests
         var worker = CreateSut(handler.Object, out var channel);
         channel.Setup(c => c.BasicNackAsync(It.IsAny<ulong>(), It.IsAny<bool>(), It.IsAny<bool>(), It.IsAny<CancellationToken>()))
             .ThrowsAsync(new InvalidOperationException("channel closed"));
-        byte[] body = JsonSerializer.SerializeToUtf8Bytes(Message);
+        byte[] body = JsonSerializer.SerializeToUtf8Bytes(_message);
 
         var exception = await Record.ExceptionAsync(() =>
             worker.OnMessageReceivedAsync(this, MakeDeliverArgs(body, deliveryTag: 13, redelivered: true, retryCount: EmailConsumerWorker.MaxRetries)));
@@ -211,7 +211,7 @@ public class EmailConsumerWorkerTests
         channel.Setup(c => c.BasicPublishAsync(
                 It.IsAny<string>(), It.IsAny<string>(), It.IsAny<bool>(), It.IsAny<BasicProperties>(), It.IsAny<ReadOnlyMemory<byte>>(), It.IsAny<CancellationToken>()))
             .ThrowsAsync(new InvalidOperationException("channel closed"));
-        byte[] body = JsonSerializer.SerializeToUtf8Bytes(Message);
+        byte[] body = JsonSerializer.SerializeToUtf8Bytes(_message);
 
         var exception = await Record.ExceptionAsync(() =>
             worker.OnMessageReceivedAsync(this, MakeDeliverArgs(body, deliveryTag: 14, redelivered: false)));
@@ -240,7 +240,7 @@ public class EmailConsumerWorkerTests
         var worker = CreateSut(handler.Object, out var channel);
         worker.DrainTimeout = TimeSpan.FromMilliseconds(50);
         worker.CancelUnwindTimeout = TimeSpan.FromMilliseconds(500);
-        byte[] body = JsonSerializer.SerializeToUtf8Bytes(Message);
+        byte[] body = JsonSerializer.SerializeToUtf8Bytes(_message);
         channel.Setup(c => c.BasicPublishAsync(
                 It.IsAny<string>(), It.IsAny<string>(), It.IsAny<bool>(), It.IsAny<BasicProperties>(), It.IsAny<ReadOnlyMemory<byte>>(), It.IsAny<CancellationToken>()))
             .Returns(ValueTask.CompletedTask);
@@ -267,7 +267,7 @@ public class EmailConsumerWorkerTests
         handler.Setup(h => h.HandleAsync(It.IsAny<SendEmailMessage>(), It.IsAny<CancellationToken>()))
             .ThrowsAsync(new InvalidOperationException("SMTP down"));
         var worker = CreateSut(handler.Object, out var channel);
-        byte[] body = JsonSerializer.SerializeToUtf8Bytes(Message);
+        byte[] body = JsonSerializer.SerializeToUtf8Bytes(_message);
 
         await worker.OnMessageReceivedAsync(this, MakeDeliverArgs(body, deliveryTag: 9, redelivered: true, retryCount: EmailConsumerWorker.MaxRetries));
 
@@ -288,7 +288,7 @@ public class EmailConsumerWorkerTests
         handler.Setup(h => h.HandleAsync(It.IsAny<SendEmailMessage>(), It.IsAny<CancellationToken>()))
             .ThrowsAsync(new InvalidOperationException("SMTP down"));
         var worker = CreateSut(handler.Object, out var channel);
-        byte[] body = JsonSerializer.SerializeToUtf8Bytes(Message);
+        byte[] body = JsonSerializer.SerializeToUtf8Bytes(_message);
         channel.Setup(c => c.BasicPublishAsync(
                 It.IsAny<string>(), It.IsAny<string>(), It.IsAny<bool>(), It.IsAny<BasicProperties>(), It.IsAny<ReadOnlyMemory<byte>>(), It.IsAny<CancellationToken>()))
             .Returns(ValueTask.CompletedTask);

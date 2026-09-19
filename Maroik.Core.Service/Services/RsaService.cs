@@ -1,7 +1,7 @@
 using System.Security.Cryptography;
 using System.Text;
-using Maroik.Core.Contract.Misc.Enums;
 using Maroik.Core.Contract.Interfaces;
+using Maroik.Core.Contract.Misc.Enums;
 using Maroik.Core.Contract.Misc.Settings;
 using Microsoft.Extensions.Options;
 

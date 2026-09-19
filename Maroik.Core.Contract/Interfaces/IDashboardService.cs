@@ -1,5 +1,5 @@
-using Maroik.Core.Domain.Primitives;
 using Maroik.Core.Contract.Dtos;
+using Maroik.Core.Domain.Primitives;
 
 namespace Maroik.Core.Contract.Interfaces;
 

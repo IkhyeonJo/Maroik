@@ -1,7 +1,7 @@
 using System.Security.Cryptography;
-using Maroik.Core.Domain.Account;
 using Maroik.Core.Contract.Interfaces;
 using Maroik.Core.Contract.Misc.Settings;
+using Maroik.Core.Domain.Account;
 using Maroik.Core.PostgreSQL.Data;
 using Maroik.Core.PostgreSQL.Models;
 using Microsoft.AspNetCore.Antiforgery;
@@ -49,7 +49,7 @@ public class MaroikWebApplicationFactory : WebApplicationFactory<Program>, IAsyn
     /// ForgotPassword, ResetPassword) would throw "RSA private/public key is not configured"
     /// the moment it tried to encrypt or decrypt a token.
     /// </summary>
-    private static readonly RSA RsaKeyPair = RSA.Create(2048);
+    private static readonly RSA _rsaKeyPair = RSA.Create(2048);
 
     private readonly PostgreSqlContainer _postgres = new PostgreSqlBuilder("postgres:17")
         // Schema comes from the real production init script (not EF's EnsureCreated, which
@@ -108,8 +108,8 @@ public class MaroikWebApplicationFactory : WebApplicationFactory<Program>, IAsyn
                 ["ServerSetting:SessionExpireMinutes"] = "60",
                 ["ServerSetting:MaxLoginAttempt"] = "5",
                 ["ServerSetting:NoticeMaturityDateDay"] = "7",
-                ["ServerSetting:RsaPrivateKey"] = Convert.ToBase64String(RsaKeyPair.ExportRSAPrivateKey()),
-                ["ServerSetting:RsaPublicKey"] = Convert.ToBase64String(RsaKeyPair.ExportSubjectPublicKeyInfo()),
+                ["ServerSetting:RsaPrivateKey"] = Convert.ToBase64String(_rsaKeyPair.ExportRSAPrivateKey()),
+                ["ServerSetting:RsaPublicKey"] = Convert.ToBase64String(_rsaKeyPair.ExportSubjectPublicKeyInfo()),
                 ["ServerSetting:RsaAlgorithm"] = "Rsa2",
                 ["ServerSetting:FileStorageBaseUrl"] = "http://localhost:5001",
 
