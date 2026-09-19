@@ -141,6 +141,28 @@ public sealed class CalendarEventRepositoryTests(DatabaseFixture database) : Rep
         Assert.Equal(255, saved.Location!.Length);
     }
 
+    /// <summary>
+    /// Regression: the domain accepts a null OR whitespace status as "not specified". Both must persist
+    /// as the "Busy" default — a whitespace value used to reach <c>CalendarEvent_Status_check</c> and fail.
+    /// </summary>
+    [Theory]
+    [InlineData(null)]
+    [InlineData("")]
+    [InlineData("   ")]
+    public async Task CreateCalendarEventAsync_PersistsABlankStatus_AsBusy(string? blankStatus)
+    {
+        long cal = await InsertCalendarAsync();
+        var calendarEvent = CalendarEvent.Create(
+            cal, Unique("BlankStatus"), null, false, DateTime.UtcNow, DateTime.UtcNow.AddHours(1), null, null, null, blankStatus).Value;
+
+        long id = await Sut.CreateCalendarEventAsync(calendarEvent, TestContext.Current.CancellationToken);
+        Context.ChangeTracker.Clear();
+
+        EfCalendarEvent? saved = await Context.CalendarEvents.FirstOrDefaultAsync(e => e.Id == id, TestContext.Current.CancellationToken);
+        Assert.NotNull(saved);
+        Assert.Equal("Busy", saved.Status);
+    }
+
     /// <summary>PostgreSQL enforces <c>CalendarEvent_EndDate_check</c> — an end before the start throws (InMemory did not).</summary>
     [Fact]
     public async Task CreateCalendarEventAsync_Throws_WhenEndBeforeStart()

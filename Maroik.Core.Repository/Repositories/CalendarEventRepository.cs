@@ -48,7 +48,10 @@ public class CalendarEventRepository(ApplicationDbContext context)
         StartDateTimeZoneIanaId = ce.StartDateTimeZoneIanaId,
         EndDateTimeZoneIanaId = ce.EndDateTimeZoneIanaId,
         Location = ce.Location,
-        Status = ce.Status ?? "Busy",
+        // A blank status (the domain accepts null/whitespace as "not specified") persists as the
+        // "Busy" default: CalendarEvent_Status_check only allows the known values, so whitespace
+        // would otherwise be rejected by the database instead of defaulted.
+        Status = string.IsNullOrWhiteSpace(ce.Status) ? "Busy" : ce.Status,
         RecurrenceId = ce.RecurrenceId,
         Created = ce.Created,
         Updated = ce.Updated
