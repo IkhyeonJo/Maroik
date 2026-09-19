@@ -86,7 +86,7 @@ public class AccountControllerRegistrationTests
         return match.Groups[1].Value;
     }
 
-    private async Task SeedAccountAsync(string email, bool emailConfirmed, string? registrationToken = null, string? resetPasswordToken = null)
+    private async Task SeedAccountAsync(string email, bool emailConfirmed, string? registrationToken = null, string? resetPasswordToken = null, string? nickname = null)
     {
         using var scope = _factory.Services.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
@@ -95,7 +95,7 @@ public class AccountControllerRegistrationTests
         {
             Email = email,
             HashedPassword = passwordService.HashPassword("OldPassword1!"),
-            Nickname = "RegTest_" + email.Replace("@", "_").Replace(".", "_"),
+            Nickname = nickname ?? "RegTest_" + email.Replace("@", "_").Replace(".", "_"),
             AvatarImagePath = "/upload/Management/Profile/default-avatar.jpg",
             Role = Role.User,
             TimeZoneIanaId = "UTC",
@@ -204,6 +204,39 @@ public class AccountControllerRegistrationTests
         var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
         var account = db.Accounts.Single(a => a.Email == email);
         Assert.True(account.EmailConfirmed); // unchanged
+    }
+
+    /// <summary>
+    /// The "nickname already exists" message is stored raw in <c>TempData</c> and HTML-encoded once by the
+    /// view. Regression: it used to be encoded twice (once when built, once by the view), so a Korean
+    /// nickname was shown as <c>&amp;#xD64D;…</c> and <c>R&amp;D</c> as <c>R&amp;amp;D</c>.
+    /// </summary>
+    [Theory]
+    [InlineData("홍길동")]
+    [InlineData("R&D팀")]
+    [InlineData("O'Brien")]
+    [InlineData("PlainAscii")]
+    public async Task Register_TakenNickname_ShowsTheNicknameEncodedOnlyOnce(string nickname)
+    {
+        await SeedAccountAsync(UniqueEmail(), emailConfirmed: true, nickname: nickname);
+
+        var response = await PostFormAsync("/Account/Register", new Dictionary<string, string>
+        {
+            ["Email"] = UniqueEmail(),
+            ["Password"] = "AnotherPassword1!",
+            ["ConfirmPassword"] = "AnotherPassword1!",
+            ["Nickname"] = nickname,
+            ["AgreedServiceTerms"] = "true",
+            ["TimeZoneIanaId"] = "UTC"
+        });
+
+        Assert.Equal(System.Net.HttpStatusCode.OK, response.StatusCode);
+        string html = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+        Match error = Regex.Match(html, "<span style=\"font-weight:bold; color: red; \">(.*?)</span>", RegexOptions.Singleline);
+        Assert.True(error.Success, "The registration error message was not rendered.");
+
+        // What the browser shows is the HTML-decoded text; it must read exactly like the typed nickname.
+        Assert.StartsWith($"'{nickname}' ", System.Net.WebUtility.HtmlDecode(error.Groups[1].Value));
     }
 
     /// <summary>Register unconfirmed email resends confirmation on resubmission.</summary>

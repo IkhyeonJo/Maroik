@@ -155,7 +155,7 @@ public class AccountController(
                 // Rejected before / instead of a mail send (nickname taken, weak password, account
                 // already confirmed, ...): the caller may fix the form and retry immediately.
                 ThrottleEmailSendAttribute.ReleaseCooldownClaim(HttpContext);
-                TempData["Error"] = localizer[result.ErrorKey, result.ErrorArgs].ToPlainString();
+                TempData["Error"] = localizer.ToRawText(result.ErrorKey, result.ErrorArgs);
                 ViewBag.ResendEmail = result.ShowResendEmail;
                 return View();
             }
@@ -179,7 +179,7 @@ public class AccountController(
                 // Rejected before / instead of a mail send (nickname taken, weak password, account
                 // already confirmed, ...): the caller may fix the form and retry immediately.
                 ThrottleEmailSendAttribute.ReleaseCooldownClaim(HttpContext);
-                TempData["Error"] = localizer[result.ErrorKey, result.ErrorArgs].ToPlainString();
+                TempData["Error"] = localizer.ToRawText(result.ErrorKey, result.ErrorArgs);
                 ViewBag.ResendEmail = result.ShowResendEmail;
                 return View();
             }
@@ -272,7 +272,7 @@ public class AccountController(
             }
             // Any other refusal (the password rule, ...) says nothing against the token itself — keep
             // showing the form, with the token, so the user can pick another password.
-            TempData["Error"] = localizer[result.ErrorKey, result.ErrorArgs].ToPlainString();
+            TempData["Error"] = localizer.ToRawText(result.ErrorKey, result.ErrorArgs);
             ViewBag.ResetPasswordToken = loginInputViewModel.ResetPasswordToken;
             return View();
         }
