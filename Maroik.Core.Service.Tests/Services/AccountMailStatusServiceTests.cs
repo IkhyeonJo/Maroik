@@ -61,7 +61,8 @@ public class AccountMailStatusServiceTests
 
         await sut.MarkMailSendFailedAsync("ghost@example.com", TestContext.Current.CancellationToken);
 
-        _accountRepo.Verify(r => r.UpdateEntityAsync(It.IsAny<Account>(), It.IsAny<CancellationToken>()), Times.Never);
+        _accountRepo.Verify(r => r.UpdateMessageAsync(
+            It.IsAny<string>(), It.IsAny<string?>(), It.IsAny<DateTime>(), It.IsAny<CancellationToken>()), Times.Never);
     }
 
     /// <summary>Passes cancellation token through to the repository.</summary>
@@ -102,7 +103,8 @@ public class AccountMailStatusServiceTests
 
         await sut.ClearMailSendFailedAsync("ghost@example.com", TestContext.Current.CancellationToken);
 
-        _accountRepo.Verify(r => r.UpdateEntityAsync(It.IsAny<Account>(), It.IsAny<CancellationToken>()), Times.Never);
+        _accountRepo.Verify(r => r.UpdateMessageAsync(
+            It.IsAny<string>(), It.IsAny<string?>(), It.IsAny<DateTime>(), It.IsAny<CancellationToken>()), Times.Never);
     }
 
     /// <summary>Verifies that <c>ClearMailSendFailedAsync</c> leaves an unrelated message untouched.</summary>
@@ -115,6 +117,7 @@ public class AccountMailStatusServiceTests
 
         await sut.ClearMailSendFailedAsync(account.Email.Value, TestContext.Current.CancellationToken);
 
-        _accountRepo.Verify(r => r.UpdateEntityAsync(It.IsAny<Account>(), It.IsAny<CancellationToken>()), Times.Never);
+        _accountRepo.Verify(r => r.UpdateMessageAsync(
+            It.IsAny<string>(), It.IsAny<string?>(), It.IsAny<DateTime>(), It.IsAny<CancellationToken>()), Times.Never);
     }
 }

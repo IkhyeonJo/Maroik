@@ -190,6 +190,8 @@ public class ProfileServiceTests
 
         Assert.False(result.Success);
         Assert.Equal("Profile.UploadAvatarFailed", result.ErrorCode);
+        _accountRepo.Verify(r => r.UpdateAvatarPathAsync(
+            It.IsAny<string>(), It.IsAny<string?>(), It.IsAny<DateTime>(), It.IsAny<CancellationToken>()), Times.Never);
         _accountRepo.Verify(r => r.UpdateEntityAsync(It.IsAny<Account>(), It.IsAny<CancellationToken>()), Times.Never);
     }
 

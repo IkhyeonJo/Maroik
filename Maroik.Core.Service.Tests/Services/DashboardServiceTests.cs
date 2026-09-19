@@ -328,7 +328,9 @@ public class DashboardServiceTests
 
         // The value still resolves for display...
         Assert.Equal("KRW", summary.DefaultMonetaryUnit);
-        // ...but is not written back.
+        // ...but is not written back (the service self-corrects through the column-scoped update).
+        _accountRepo.Verify(r => r.UpdateDefaultMonetaryUnitAsync(
+            It.IsAny<string>(), It.IsAny<string?>(), It.IsAny<CancellationToken>()), Times.Never);
         _accountRepo.Verify(r => r.UpdateEntityAsync(It.IsAny<Account>(), It.IsAny<CancellationToken>()), Times.Never);
     }
 
