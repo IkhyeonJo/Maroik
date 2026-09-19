@@ -1,3 +1,4 @@
+using ImageMagick;
 using Maroik.Core.Service.Services;
 
 namespace Maroik.Core.Service.Tests.Services;
@@ -53,5 +54,67 @@ public class ImageValidatorServiceTests
     public void IsSvg_ReturnsFalse_ForGarbageBytes()
     {
         Assert.False(_sut.IsSvg([0x00, 0x01, 0x02, 0x03]));
+    }
+
+    private static byte[] Encode(MagickFormat format)
+    {
+        using var image = new MagickImage(MagickColors.Red, 2, 2);
+        image.Format = format;
+        return image.ToByteArray();
+    }
+
+    /// <summary>A real, decodable JPEG is accepted.</summary>
+    [Fact]
+    public void IsValidImage_ReturnsTrue_ForValidJpeg()
+    {
+        Assert.True(_sut.IsValidImage(Encode(MagickFormat.Jpeg)));
+    }
+
+    /// <summary>
+    /// Only JPEG and PNG are accepted. A perfectly decodable GIF is refused too — and, by the same
+    /// mechanism, so is anything else Magick.NET could decode from content alone.
+    /// </summary>
+    [Fact]
+    public void IsValidImage_ReturnsFalse_ForGif()
+    {
+        Assert.False(_sut.IsValidImage(Encode(MagickFormat.Gif)));
+    }
+
+    /// <summary>
+    /// SVG and PostScript documents (which Magick.NET would happily render when given only their bytes)
+    /// are rejected on their content without being decoded.
+    /// </summary>
+    [Theory]
+    [InlineData("<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"10\" height=\"10\"><rect width=\"10\" height=\"10\"/></svg>")]
+    [InlineData("%!PS-Adobe-3.0 EPSF-3.0\n%%BoundingBox: 0 0 10 10\nshowpage")]
+    [InlineData("push graphic-context\nviewbox 0 0 10 10\nfill 'red'\ncircle 5,5 3,3\npop graphic-context")]
+    public void IsValidImage_ReturnsFalse_ForNonRasterDocuments(string document)
+    {
+        Assert.False(_sut.IsValidImage(System.Text.Encoding.UTF8.GetBytes(document)));
+    }
+
+    /// <summary>A file that starts with the PNG signature but is not a decodable image is refused.</summary>
+    [Fact]
+    public void IsValidImage_ReturnsFalse_ForPngSignatureWithGarbageBody()
+    {
+        byte[] bytes = [.. ValidPngBytes[..8], 0xDE, 0xAD, 0xBE, 0xEF];
+        Assert.False(_sut.IsValidImage(bytes));
+    }
+
+    /// <summary>An SVG document is recognised as one, whether or not it carries an XML declaration, a BOM or odd casing.</summary>
+    [Theory]
+    [InlineData("<svg xmlns=\"http://www.w3.org/2000/svg\"></svg>")]
+    [InlineData("<?xml version=\"1.0\"?>\n<!-- c -->\n<SVG xmlns=\"http://www.w3.org/2000/svg\"></SVG>")]
+    [InlineData("\uFEFF<svg></svg>")]
+    public void IsSvg_ReturnsTrue_ForSvgDocuments(string document)
+    {
+        Assert.True(_sut.IsSvg(System.Text.Encoding.UTF8.GetBytes(document)));
+    }
+
+    /// <summary>An empty payload is not an SVG.</summary>
+    [Fact]
+    public void IsSvg_ReturnsFalse_ForEmptyBytes()
+    {
+        Assert.False(_sut.IsSvg([]));
     }
 }

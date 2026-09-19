@@ -136,10 +136,12 @@ public class ProfileService(
             if (!ImageUploadPolicy.IsAllowedExtension(extension))
                 return ServiceResult.Validation("Profile.InvalidImage", "invalid-image");
 
-            if (!imageValidator.IsValidImage(imageBytes))
-                return ServiceResult.Validation("Profile.InvalidImage", "invalid-image");
+            // SVG first: IsValidImage only accepts JPEG/PNG, so an SVG would otherwise be reported as a
+            // generic "invalid image" instead of the specific "SVG is not allowed".
             if (imageValidator.IsSvg(imageBytes))
                 return ServiceResult.Validation("Profile.SvgNotAllowed", "svg-not-allowed");
+            if (!imageValidator.IsValidImage(imageBytes))
+                return ServiceResult.Validation("Profile.InvalidImage", "invalid-image");
 
             string avatarFile = $"{Guid.NewGuid():N}{extension.ToLowerInvariant()}";
             // Store through the file-storage service (shared volume, ClamAV-scanned there) instead of

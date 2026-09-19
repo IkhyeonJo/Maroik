@@ -45,13 +45,13 @@ public class AttachmentContentService(
 
         // Same allow-list gate the avatar upload path enforces (ImageUploadPolicy is the single
         // source of truth): reject anything outside jpg/png by extension or declared content type,
-        // and reject SVG outright, BEFORE the Magick decode check — .gif/.bmp/.tiff/.svg all decode
-        // fine, so IsValidImage alone let them through they were stored under their original
-        // extension.
+        // and reject SVG outright. IsValidImage itself only accepts real JPEG/PNG content (by magic
+        // bytes, and Magick is told to read exactly that format), so the label on the file never
+        // decides which decoder the bytes are fed to.
         if (!ImageUploadPolicy.IsAllowedExtension(ext) || !ImageUploadPolicy.IsAllowedContentType(file.ContentType))
             return SummernoteUploadResult.Fail("Invalid image file.");
 
-        if (!imageValidator.IsValidImage(file.Bytes) || imageValidator.IsSvg(file.Bytes))
+        if (imageValidator.IsSvg(file.Bytes) || !imageValidator.IsValidImage(file.Bytes))
             return SummernoteUploadResult.Fail("Invalid image file.");
 
         // Use a GUID-based file name to avoid collisions and prevent path traversal via the original name.
