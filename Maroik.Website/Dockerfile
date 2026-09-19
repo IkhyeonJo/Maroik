@@ -17,9 +17,9 @@ EXPOSE 443
 # Rider/VS maps site.js back to site.ts. docker-compose.prod.yml leaves it "false".
 #
 # The jsdom test suite is OFF by default so Rider/VS "regular mode" docker-compose
-# debug builds aren't gated on a ~40s test run. CI opts in:
-#     docker build --build-arg RUN_CLIENT_TESTS=true ...
-#     docker compose -f docker-compose.yml -f docker-compose.ci.yml build
+# debug builds aren't gated on a ~40s test run. Opt in with:
+#     docker build --build-arg RUN_CLIENT_TESTS=true -f Maroik.Website/Dockerfile .
+# (CI runs the suite itself via `npm test` in build-and-test.yml, not through this image build.)
 FROM node:22-alpine AS tsbuild
 ARG RUN_CLIENT_TESTS=false
 ARG TS_SOURCEMAPS=false
