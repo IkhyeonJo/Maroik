@@ -99,6 +99,48 @@ public class AccountFlowTests : E2ETestBase
         await Assertions.Expect(submitButton).ToBeVisibleAsync();
     }
 
+    /// <summary>
+    /// A second reset request for the same address inside the cooldown window is bounced back to the
+    /// form, and the "wait a moment" notice the throttle leaves in TempData is actually shown — it used
+    /// to be set but never rendered, so the visitor just saw the same empty form.
+    /// </summary>
+    [Fact]
+    public async Task ForgotPassword_SecondRequestForTheSameAddress_ShowsTheCooldownNotice()
+    {
+        var page = await NewPageAsync();
+        string email = $"cooldown-{Guid.NewGuid():N}"[..20] + "@test.com";
+
+        async Task SubmitAsync()
+        {
+            await GotoAsync(page, "/Account/ForgotPassword");
+            await page.Locator("input[name='Email']").FillAsync(email);
+            await page.RunAndWaitForResponseAsync(
+                () => page.Locator("#btnRequestNewPassword").ClickAsync(),
+                response => response.Request.Method == "POST" && response.Url.Contains("/Account/ForgotPassword", StringComparison.Ordinal));
+            await page.WaitForLoadStateAsync(LoadState.NetworkIdle);
+        }
+
+        // First request: accepted (the address is unknown, so nothing is mailed) -> confirmation page, no notice.
+        await SubmitAsync();
+        await Assertions.Expect(page.Locator("#forgotPasswordForm")).ToHaveCountAsync(0);
+
+        // Second request inside the window: back on the form, with the notice (ko-KR, see E2ETestBase).
+        await SubmitAsync();
+        await Assertions.Expect(page.Locator("#forgotPasswordForm")).ToBeVisibleAsync();
+        await Assertions.Expect(page.Locator("#forgotPasswordError"))
+            .ToContainTextAsync("잠시 후에 다시 이메일을 요청해 주세요.");
+    }
+
+    /// <summary>Opening the form without a pending notice shows no error text.</summary>
+    [Fact]
+    public async Task ForgotPasswordPage_WithoutAPendingNotice_ShowsNoError()
+    {
+        var page = await NewPageAsync();
+        await GotoAsync(page, "/Account/ForgotPassword");
+
+        await Assertions.Expect(page.Locator("#forgotPasswordError")).ToHaveTextAsync("");
+    }
+
     // -- ConfirmEmail (invalid token) -----------------------------------------
 
     /// <summary>Verifies that <c>ConfirmEmailPage</c> with invalid token when loads without unhandled error.</summary>
