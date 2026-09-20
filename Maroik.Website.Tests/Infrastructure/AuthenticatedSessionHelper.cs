@@ -5,6 +5,7 @@ using Maroik.Core.Domain.Account;
 using Maroik.Core.PostgreSQL.Data;
 using Maroik.Core.PostgreSQL.Models;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace Maroik.Website.Tests.Infrastructure;
@@ -66,7 +67,7 @@ public static class AuthenticatedSessionHelper
     /// and logs in as it via a real HTTP round-trip, returning the resulting session.
     /// </summary>
     public static async Task<AuthenticatedSession> LoginAsync(
-        MaroikWebApplicationFactory factory, HttpClient client, string email, string password, string role, CancellationToken ct)
+        WebApplicationFactory<Program> factory, HttpClient client, string email, string password, string role, CancellationToken ct)
     {
         // Account_Nickname_unique is a real, enforced constraint (Postgres), so every seeded
         // account needs a distinct nickname — derive it from the (already-unique) email rather

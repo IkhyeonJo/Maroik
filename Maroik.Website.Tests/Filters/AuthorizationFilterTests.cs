@@ -509,4 +509,70 @@ public class AuthorizationFilterTests
         Assert.IsType<RedirectResult>(context.Result);
         Assert.IsType<NavigationMenus>(context.HttpContext.Items[HttpContextItemKeys.NavigationMenus]);
     }
+
+    private void SignIn(string role, string email = "gate@test.com")
+    {
+        var account = new AccountResponse { Email = email, Nickname = "Gate", Role = role };
+        _sessionService.Setup(s => s.GetAccount()).Returns(account);
+        _accountService.Setup(a => a.GetAccountByEmailAsync(email, It.IsAny<CancellationToken>())).ReturnsAsync(account);
+    }
+
+    /// <summary>Logout is a POST on the (menu-less) Account controller; any signed-in account may use it whatever its role.</summary>
+    [Theory]
+    [InlineData(Role.User)]
+    [InlineData(Role.Admin)]
+    public async Task OnAuthorizationAsync_AccountLogoutPost_LoggedIn_Allows(string role)
+    {
+        SignIn(role);
+        SetupMenu([], []);
+        var context = BuildContext("Account", "Logout", "POST");
+
+        await CreateSut().OnAuthorizationAsync(context);
+
+        Assert.Null(context.Result);
+    }
+
+    /// <summary>An account persisted with neither role (a stale or hand-edited row) gets an explicit redirect on POST, not an empty response.</summary>
+    [Fact]
+    public async Task OnAuthorizationAsync_Post_LoggedInWithAnUnknownRole_RedirectsToTheAnonymousDashboard()
+    {
+        SignIn("Ghost");
+        SetupMenu([], []);
+        var context = BuildContext("AccountBook", "CreateIncome", "POST");
+
+        await CreateSut().OnAuthorizationAsync(context);
+
+        Assert.Equal("/Dashboard/AnonymousIndex", Assert.IsType<RedirectResult>(context.Result).Url);
+    }
+
+    /// <summary>Any method other than GET / POST (PATCH, DELETE, ...) is rejected outright.</summary>
+    [Theory]
+    [InlineData("PATCH")]
+    [InlineData("DELETE")]
+    [InlineData("PUT")]
+    public async Task OnAuthorizationAsync_OtherHttpMethods_AreRedirected(string method)
+    {
+        SignIn(Role.Admin);
+        SetupMenu([], []);
+        var context = BuildContext("Dashboard", "AdminIndex", method);
+
+        await CreateSut().OnAuthorizationAsync(context);
+
+        Assert.Equal("/Dashboard/AnonymousIndex", Assert.IsType<RedirectResult>(context.Result).Url);
+    }
+
+    /// <summary>A poisoned cache entry does not become a 500: the menu is rebuilt from the database and the request is decided as usual.</summary>
+    [Fact]
+    public async Task OnAuthorizationAsync_APoisonedMenuCacheEntry_FallsBackToTheDatabase()
+    {
+        _cache.Setup(c => c.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync("this is not json"u8.ToArray());
+        _sessionService.Setup(s => s.GetAccount()).Returns((AccountResponse?)null);
+        SetupMenu([], []);
+        var context = BuildContext("Account", "Login");
+
+        await CreateSut().OnAuthorizationAsync(context);
+
+        Assert.Null(context.Result);
+        _menuService.Verify(m => m.GetAllCategoriesAsync(It.IsAny<CancellationToken>()), Times.Once);
+    }
 }

@@ -523,6 +523,28 @@ public class ExcelExportServiceTests
         Assert.Equal("xy ok 😀", rows[2][6]); // pair survives, lone low stripped
     }
 
+    /// <summary>A high surrogate that ends the value (truncated emoji) is stripped too, and the export still succeeds.</summary>
+    [Fact]
+    public void CreateAssetExcel_StripsATrailingHighSurrogate()
+    {
+        AssetResponse[] items = [new() { ProductName = "A", Item = "i", Amount = 1m, Note = "truncated\uD83D" }];
+
+        var row = ReadRows(_sut.CreateAssetExcel(items, _identity, "UTC"))[1];
+
+        Assert.Equal("truncated", row[6]);
+    }
+
+    /// <summary>A value made only of valid characters — including a proper surrogate pair — is written exactly as it is.</summary>
+    [Fact]
+    public void CreateAssetExcel_KeepsAValueWithAValidSurrogatePair_Untouched()
+    {
+        AssetResponse[] items = [new() { ProductName = "A", Item = "i", Amount = 1m, Note = "party 🎉 time 😀" }];
+
+        var row = ReadRows(_sut.CreateAssetExcel(items, _identity, "UTC"))[1];
+
+        Assert.Equal("party 🎉 time 😀", row[6]);
+    }
+
     /// <summary>A stray C0 control byte is stripped rather than corrupting the workbook.</summary>
     [Fact]
     public void CreateAssetExcel_StripsC0ControlChar()

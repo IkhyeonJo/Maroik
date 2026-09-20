@@ -128,6 +128,25 @@ public class CalendarEventViewModelExtensionsTests
         Assert.Equal("Asia/Seoul", result[0].StartDateTimeZoneIanaId);
     }
 
+    /// <summary>An attachment whose extension has no known media type is served as a generic binary download.</summary>
+    [Theory]
+    [InlineData("attachments/file.unknownext")]
+    [InlineData("attachments/noextension")]
+    public async Task GetCalendarEventDetailViewModelAsync_FallsBackToOctetStream_ForAnUnknownFileType(string path)
+    {
+        SetUpDetailEvent(MakeEvent(100, calendarId: 1, "Trip"));
+        _calendarService
+            .Setup(s => s.GetCalendarEventAttachedFileAsync(100, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new CalendarEventAttachedFileDto { Id = 1, CalendarEventId = 100, Path = path });
+        _calendarService.Setup(s => s.DownloadFileAsync(path, It.IsAny<CancellationToken>())).ReturnsAsync([9]);
+
+        var result = await _calendarService.Object.GetCalendarEventDetailViewModelAsync(
+            [MakeCalendar(1)], "UTC", 100, TestContext.Current.CancellationToken);
+
+        Assert.Equal("application/octet-stream", result!.CalendarEventAttachedFileContentType);
+        Assert.Equal(Convert.ToBase64String([9]), result.CalendarEventAttachedFileBase64Data);
+    }
+
     /// <summary>Passes cancellation token through to the service.</summary>
     [Fact]
     public async Task PassesCancellationTokenThroughToTheService()

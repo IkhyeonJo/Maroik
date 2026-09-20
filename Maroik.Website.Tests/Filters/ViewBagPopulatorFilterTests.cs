@@ -94,6 +94,24 @@ public class ViewBagPopulatorFilterTests
 
     // -- ServerSettings -------------------------------------------------------
 
+    /// <summary>An action on something that is not an MVC <c>Controller</c> (so it has no ViewBag) is passed straight through untouched.</summary>
+    [Fact]
+    public async Task OnActionExecutionAsync_NonControllerTarget_RunsTheActionAndPopulatesNothing()
+    {
+        var (template, _) = BuildContext();
+        var context = new ActionExecutingContext(template, new List<IFilterMetadata>(), new Dictionary<string, object?>(), new object());
+        bool ran = false;
+
+        await CreateSut().OnActionExecutionAsync(context, () =>
+        {
+            ran = true;
+            return EmptyNext()();
+        });
+
+        Assert.True(ran);
+        _sessionService.Verify(s => s.GetAccount(), Times.Never);
+    }
+
     /// <summary>Verifies that <c>ViewBag.DomainName</c> is populated from server settings.</summary>
     [Fact]
     public async Task OnActionExecutionAsync_SetsDomainName_FromServerSettings()

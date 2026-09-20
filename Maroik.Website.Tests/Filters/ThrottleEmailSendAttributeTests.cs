@@ -314,6 +314,24 @@ public class ThrottleEmailSendAttributeTests
         cache.Verify(c => c.RemoveAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Once);
     }
 
+    /// <summary>A cache that cannot release the claim (unavailable) must not turn the response into an error — the caller only loses this window's retry.</summary>
+    [Fact]
+    public async Task OnActionExecutionAsync_ReleaseFails_IsSwallowed()
+    {
+        var cache = new Mock<IDistributedCache>();
+        cache.Setup(c => c.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync((byte[]?)null);
+        cache.Setup(c => c.SetAsync(It.IsAny<string>(), It.IsAny<byte[]>(), It.IsAny<DistributedCacheEntryOptions>(), It.IsAny<CancellationToken>()))
+            .Returns(Task.CompletedTask);
+        cache.Setup(c => c.RemoveAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ThrowsAsync(new InvalidOperationException("cache down"));
+        var (context, _) = BuildContext(boundArgument: "user@example.com", cache.Object);
+
+        var ex = await Record.ExceptionAsync(() => new ThrottleEmailSendAttribute().OnActionExecutionAsync(
+            context, NextReturning(() => { }, exception: new InvalidOperationException("boom"))));
+
+        Assert.Null(ex);
+        cache.Verify(c => c.RemoveAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Once);
+    }
+
     /// <summary>
     /// Regression: an action that finished without reaching a mail send — e.g. a registration that the
     /// service rejected ("nickname already taken") after model binding had succeeded — asks for the claim

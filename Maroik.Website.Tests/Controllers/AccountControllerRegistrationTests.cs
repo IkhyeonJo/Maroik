@@ -547,4 +547,97 @@ public class AccountControllerRegistrationTests
         var publisher = scope.ServiceProvider.GetRequiredService<FakeEmailPublisher>();
         Assert.Contains(publisher.PublishedMessages, m => m.ToEmail == email);
     }
+
+    // -- Refusals that re-render the form ---------------------------------------------------------
+
+    private async Task<HttpResponseMessage> PostLoginAsync(Dictionary<string, string> fields, string? userAgent = null)
+    {
+        var (cookie, token) = await GetAntiForgeryAsync("/Account/Login");
+        using var request = new HttpRequestMessage(HttpMethod.Post, "/Account/Login");
+        request.Headers.Add("Cookie", $"{AntiForgeryCookieName}={cookie}");
+        if (userAgent != null) request.Headers.TryAddWithoutValidation("User-Agent", userAgent);
+        fields["__RequestVerificationToken"] = token;
+        request.Content = new FormUrlEncodedContent(fields);
+        return await _client.SendAsync(request, TestContext.Current.CancellationToken);
+    }
+
+    /// <summary>Internet Explorer is refused before credentials are even looked at — even correct ones.</summary>
+    [Theory]
+    [InlineData("Mozilla/5.0 (compatible; MSIE 10.0; Windows NT 6.2; Trident/6.0)")]
+    [InlineData("Mozilla/5.0 (Windows NT 10.0; Trident/7.0; rv:11.0) like Gecko")]
+    public async Task Login_Post_FromInternetExplorer_IsBlocked_EvenWithCorrectCredentials(string userAgent)
+    {
+        string email = UniqueEmail();
+        await SeedAccountAsync(email, emailConfirmed: true);
+
+        var response = await PostLoginAsync(new() { ["Email"] = email, ["Password"] = "OldPassword1!" }, userAgent);
+        string html = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+
+        Assert.Equal(System.Net.HttpStatusCode.OK, response.StatusCode); // a successful login redirects
+        Assert.Contains("does not support Internet Explorer", html);
+    }
+
+    /// <summary>A login the service refuses (wrong password) re-renders the form with a message instead of redirecting.</summary>
+    [Fact]
+    public async Task Login_Post_WithAWrongPassword_ReShowsTheFormWithAnError()
+    {
+        string email = UniqueEmail();
+        await SeedAccountAsync(email, emailConfirmed: true);
+
+        var response = await PostLoginAsync(new() { ["Email"] = email, ["Password"] = "NotThePassword9!" });
+        string html = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+
+        Assert.Equal(System.Net.HttpStatusCode.OK, response.StatusCode);
+        Assert.Contains("loginForm", html);
+    }
+
+    /// <summary>
+    /// Asking for the confirmation mail again (empty password) for an address that has no account, or whose account is
+    /// already confirmed, sends nothing, says why, and releases the resend cool-down so the visitor can retry at once.
+    /// </summary>
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public async Task Register_ResendRequest_TheServiceRefuses_SendsNothing_AndReleasesTheCooldown(bool accountExists)
+    {
+        string email = UniqueEmail();
+        if (accountExists) await SeedAccountAsync(email, emailConfirmed: true);
+        var fields = () => new Dictionary<string, string>
+        {
+            ["Email"] = email, ["Password"] = "", ["Nickname"] = "", ["AgreedServiceTerms"] = "false", ["TimeZoneIanaId"] = ""
+        };
+
+        var first = await PostFormAsync("/Account/Register", fields());
+        var second = await PostFormAsync("/Account/Register", fields());
+        string secondHtml = await second.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+
+        Assert.Equal(System.Net.HttpStatusCode.OK, first.StatusCode);
+        Assert.Equal(System.Net.HttpStatusCode.OK, second.StatusCode); // not answered by the cool-down (which is 429)
+        Assert.Contains("registerForm", secondHtml);
+        using var scope = _factory.Services.CreateScope();
+        Assert.DoesNotContain(scope.ServiceProvider.GetRequiredService<FakeEmailPublisher>().PublishedMessages, m => m.ToEmail == email);
+    }
+
+    /// <summary>A reset with a live token but a password the policy refuses keeps the form (and the token) instead of consuming it.</summary>
+    [Fact]
+    public async Task ResetPassword_Post_PasswordTheServiceRefuses_ReShowsTheFormAndKeepsTheToken()
+    {
+        string email = UniqueEmail();
+        string rawToken = GuidToken.Generate();
+        await SeedAccountAsync(email, emailConfirmed: true, resetPasswordToken: rawToken);
+        using var scope = _factory.Services.CreateScope();
+        string encryptedToken = scope.ServiceProvider.GetRequiredService<IRsaService>().Encrypt(rawToken);
+
+        var response = await PostFormAsync("/Account/ResetPassword", new Dictionary<string, string>
+        {
+            ["ResetPasswordToken"] = encryptedToken, ["Password"] = "weak"
+        });
+        string html = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+
+        Assert.Equal(System.Net.HttpStatusCode.OK, response.StatusCode);
+        Assert.Contains("resetPasswordForm", html);
+        Assert.DoesNotContain("The authentication token is invalid.", html);
+        var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+        Assert.Equal(rawToken, db.Accounts.Single(a => a.Email == email).ResetPasswordToken);
+    }
 }
