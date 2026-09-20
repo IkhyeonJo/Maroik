@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
 using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.Extensions.Localization;
+using Microsoft.Extensions.Logging;
 
 namespace Maroik.Website.Attributes;
 
@@ -63,6 +64,7 @@ public sealed class ThrottleEmailSendAttribute : Attribute, IAsyncActionFilter
     {
         string? email = ExtractEmail(context.ActionArguments.Values);
         var cache = context.HttpContext.RequestServices.GetService<IDistributedCache>();
+        var logger = context.HttpContext.RequestServices.GetService<ILogger<ThrottleEmailSendAttribute>>();
         string action = context.RouteData.Values["action"]?.ToString() ?? "";
         CancellationToken ct = context.HttpContext.RequestAborted;
 
@@ -110,12 +112,13 @@ public sealed class ThrottleEmailSendAttribute : Attribute, IAsyncActionFilter
                     },
                     ct);
             }
-            catch (Exception)
+            catch (Exception e)
             {
                 // Cache unavailable — fail open. Blocking a genuine password reset because Valkey
                 // hiccuped is worse than briefly losing the send-rate cap. Also skip the
                 // post-action release below (nothing was claimed anyway).
                 key = null;
+                logger?.LogWarning(e, "Distributed cache unavailable: the send-rate throttle is inactive for this request");
             }
         }
 
@@ -130,10 +133,11 @@ public sealed class ThrottleEmailSendAttribute : Attribute, IAsyncActionFilter
         if (key != null && (executed.Exception != null || !context.ModelState.IsValid || actionAskedForRelease))
         {
             try { await cache!.RemoveAsync(key, ct); }
-            catch (Exception)
+            catch (Exception e)
             {
                 // Cache unavailable — fail open (see above): worst case the caller loses this
                 // window's retry, same as before the claim-first change.
+                logger?.LogWarning(e, "The send-rate throttle claim could not be released; the caller loses this retry window");
             }
         }
     }

@@ -12,6 +12,8 @@ using Microsoft.AspNetCore.Mvc.Filters;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Testing;
 using Moq;
 
 namespace Maroik.Website.Tests.Filters;
@@ -30,6 +32,7 @@ public class AuthorizationFilterTests
     private readonly Mock<IDistributedCache> _cache = new();
     private readonly Mock<ISessionService> _sessionService = new();
     private readonly Mock<IAccountService> _accountService = new();
+    private readonly FakeLogger<AuthorizationFilter> _logger = new();
 
     /// <summary>Initializes a new instance of AuthorizationFilterTests.</summary>
     public AuthorizationFilterTests()
@@ -39,7 +42,7 @@ public class AuthorizationFilterTests
     }
 
     private AuthorizationFilter CreateSut() =>
-        new(_menuService.Object, _cache.Object, _sessionService.Object, _accountService.Object);
+        new(_menuService.Object, _cache.Object, _sessionService.Object, _accountService.Object, _logger);
 
     private static CategoryResponse MakeCategory(long id, string role, string controller, string? action, long order = 0) => new()
     {
@@ -574,5 +577,109 @@ public class AuthorizationFilterTests
 
         Assert.Null(context.Result);
         _menuService.Verify(m => m.GetAllCategoriesAsync(It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    // -- Logging ------------------------------------------------------------------
+
+    private FakeLogRecord OnlyWarning(string containing) =>
+        Assert.Single(_logger.Collector.GetSnapshot(),
+            r => r.Level == LogLevel.Warning && r.Message.Contains(containing, StringComparison.Ordinal));
+
+    [Fact]
+    public async Task OnAuthorizationAsync_LogsAWarningWithTheException_WhenTheMenuCacheEntryIsPoisoned()
+    {
+        _cache.Setup(c => c.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync("this is not json"u8.ToArray());
+        _sessionService.Setup(s => s.GetAccount()).Returns((AccountResponse?)null);
+        SetupMenu([], []);
+
+        await CreateSut().OnAuthorizationAsync(BuildContext("Account", "Login"));
+
+        FakeLogRecord record = OnlyWarning("Navigation menu cache entry could not be read");
+        Assert.NotNull(record.Exception);
+    }
+
+    [Fact]
+    public async Task OnAuthorizationAsync_LogsTheSessionInvalidation_WhenTheAccountWasDeleted()
+    {
+        var sessionAccount = new AccountResponse { Email = "gone@test.com", Nickname = "Gone", Role = Role.User };
+        _sessionService.Setup(s => s.GetAccount()).Returns(sessionAccount);
+        _accountService.Setup(a => a.GetAccountByEmailAsync("gone@test.com", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new AccountResponse { Email = "gone@test.com", Nickname = "Gone", Role = Role.User, Deleted = true });
+        SetupMenu([], []);
+
+        await CreateSut().OnAuthorizationAsync(BuildContext("Dashboard", "UserIndex"));
+
+        Assert.Contains("gone@test.com", OnlyWarning("Session invalidated").Message);
+        Assert.Contains("account is deleted", OnlyWarning("Session invalidated").Message);
+    }
+
+    [Fact]
+    public async Task OnAuthorizationAsync_LogsTheSessionInvalidation_WhenTheSecurityStampChanged()
+    {
+        _sessionService.Setup(s => s.GetAccount()).Returns(new AccountResponse { Email = "user@test.com", Nickname = "User", Role = Role.User, SecurityStamp = "old" });
+        _accountService.Setup(a => a.GetAccountByEmailAsync("user@test.com", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new AccountResponse { Email = "user@test.com", Nickname = "User", Role = Role.User, SecurityStamp = "new" });
+        SetupMenu([], []);
+
+        await CreateSut().OnAuthorizationAsync(BuildContext("Dashboard", "UserIndex"));
+
+        FakeLogRecord record = OnlyWarning("Session invalidated");
+        Assert.Contains("user@test.com", record.Message);
+        Assert.Contains("security stamp changed", record.Message);
+        Assert.DoesNotContain("old", record.Message.Replace("Session invalidated", ""));
+    }
+
+    [Fact]
+    public async Task OnAuthorizationAsync_LogsAnAccessDeniedWarning_WhenALoggedInAccountRequestsAPageOutsideItsMenu()
+    {
+        var admin = new AccountResponse { Email = "admin@test.com", Nickname = "Admin", Role = Role.Admin };
+        _sessionService.Setup(s => s.GetAccount()).Returns(admin);
+        _accountService.Setup(a => a.GetAccountByEmailAsync("admin@test.com", It.IsAny<CancellationToken>())).ReturnsAsync(admin);
+        SetupMenu([MakeCategory(1, Role.Admin, "Management", "Account")], []);
+
+        await CreateSut().OnAuthorizationAsync(BuildContext("Unregistered", "Action"));
+
+        FakeLogRecord record = OnlyWarning("Access denied");
+        Assert.Contains("GET Unregistered/Action", record.Message);
+        Assert.Contains("admin@test.com", record.Message);
+    }
+
+    [Fact]
+    public async Task OnAuthorizationAsync_LogsAnAccessDeniedWarning_WhenALoggedInPostIsNotPermitted()
+    {
+        var user = new AccountResponse { Email = "user@test.com", Nickname = "User", Role = Role.User };
+        _sessionService.Setup(s => s.GetAccount()).Returns(user);
+        _accountService.Setup(a => a.GetAccountByEmailAsync("user@test.com", It.IsAny<CancellationToken>())).ReturnsAsync(user);
+        SetupMenu([], []);
+
+        await CreateSut().OnAuthorizationAsync(BuildContext("Management", "DeleteAccount", "POST"));
+
+        FakeLogRecord record = OnlyWarning("Access denied");
+        Assert.Contains("POST Management/DeleteAccount", record.Message);
+        Assert.Contains("user@test.com", record.Message);
+    }
+
+    [Fact]
+    public async Task OnAuthorizationAsync_LogsAnAccessDeniedWarning_WhenAnAnonymousPostIsNotPermitted()
+    {
+        _sessionService.Setup(s => s.GetAccount()).Returns((AccountResponse?)null);
+        SetupMenu([], []);
+
+        await CreateSut().OnAuthorizationAsync(BuildContext("Management", "DeleteAccount", "POST"));
+
+        FakeLogRecord record = OnlyWarning("Access denied");
+        Assert.Contains("POST Management/DeleteAccount", record.Message);
+        Assert.Contains("anonymous", record.Message);
+    }
+
+    [Fact]
+    public async Task OnAuthorizationAsync_LogsNothing_WhenAnAnonymousVisitorIsSentFromAnUnlistedPage()
+    {
+        _sessionService.Setup(s => s.GetAccount()).Returns((AccountResponse?)null);
+        SetupMenu([], []);
+
+        await CreateSut().OnAuthorizationAsync(BuildContext("Unregistered", "Action"));
+
+        Assert.DoesNotContain(_logger.Collector.GetSnapshot(), r => r.Level >= LogLevel.Warning);
     }
 }

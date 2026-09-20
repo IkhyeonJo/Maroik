@@ -1,4 +1,6 @@
 using Maroik.Core.Service.Services;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Testing;
 
 namespace Maroik.Core.Service.Tests.Services;
 
@@ -9,7 +11,10 @@ namespace Maroik.Core.Service.Tests.Services;
 /// </summary>
 public class PasswordServiceTests
 {
-    private readonly PasswordService _sut = new();
+    private readonly FakeLogger<PasswordService> _logger = new();
+    private readonly PasswordService _sut;
+
+    public PasswordServiceTests() => _sut = new PasswordService(_logger);
 
     // -- HashPassword --------------------------------------------------------
 
@@ -111,6 +116,37 @@ public class PasswordServiceTests
     [InlineData("maroik-timing-equalizer-")]
     public void VerifyDummy_AlwaysReturnsFalse(string password)
     {
-        Assert.False(new PasswordService().VerifyDummy(password));
+        Assert.False(new PasswordService(new FakeLogger<PasswordService>()).VerifyDummy(password));
+    }
+
+    /// <summary>
+    /// A stored hash that is not a BCrypt hash is a data problem an operator must hear about: the
+    /// verification just answers "no", so without a log the affected user is silently locked out.
+    /// The hash itself (a credential) must not be logged.
+    /// </summary>
+    [Fact]
+    public void VerifyPassword_LogsAWarningWithoutTheHash_WhenTheStoredHashIsMalformed()
+    {
+        const string malformedHash = "not-a-bcrypt-hash-9f3a";
+
+        bool result = _sut.VerifyPassword("Whatever1!", malformedHash);
+
+        Assert.False(result);
+        FakeLogRecord record = Assert.Single(_logger.Collector.GetSnapshot());
+        Assert.Equal(LogLevel.Warning, record.Level);
+        Assert.Contains("malformed", record.Message);
+        Assert.NotNull(record.Exception);
+        Assert.DoesNotContain(malformedHash, record.Message);
+        Assert.DoesNotContain("Whatever1!", record.Message);
+    }
+
+    /// <summary>An ordinary wrong password is not an event by itself here (the caller logs the login failure).</summary>
+    [Fact]
+    public void VerifyPassword_LogsNothing_WhenThePasswordIsSimplyWrong()
+    {
+        string hash = _sut.HashPassword("Right-Pass1!");
+
+        Assert.False(_sut.VerifyPassword("Wrong-Pass1!", hash));
+        Assert.Empty(_logger.Collector.GetSnapshot());
     }
 }

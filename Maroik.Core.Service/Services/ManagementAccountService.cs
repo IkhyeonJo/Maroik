@@ -99,6 +99,7 @@ public class ManagementAccountService(
                     : ServiceResult.Conflict("Account.AlreadyExists", "This account has already been created.");
             }
 
+            logger.LogInformation("Admin created account {Email} with role {Role}", account.Email.Value, account.Role);
             return ServiceResult.Ok();
         }
         catch (Exception e)
@@ -136,8 +137,13 @@ public class ManagementAccountService(
             if (account == null)
             {
                 await unitOfWork.RollbackAsync(ct);
+                logger.LogWarning("Admin update failed: account not found for {Email}", request.Email);
                 return ServiceResult.NotFound("Account.NotFound", "Email address is wrong");
             }
+
+            string oldRole = account.Role;
+            bool oldLocked = account.Locked;
+            bool oldDeleted = account.Deleted;
 
             if (newHashedPassword != null)
                 account.AdminResetPassword(newHashedPassword);
@@ -163,6 +169,9 @@ public class ManagementAccountService(
 
             await accountRepository.UpdateEntityAsync(account, ct);
             await unitOfWork.CommitAsync(ct);
+            logger.LogInformation(
+                "Admin updated account {Email}: role {OldRole} -> {NewRole}, locked {OldLocked} -> {NewLocked}, deleted {OldDeleted} -> {NewDeleted}, password reset {PasswordReset}",
+                account.Email.Value, oldRole, account.Role, oldLocked, account.Locked, oldDeleted, account.Deleted, newHashedPassword != null);
             return ServiceResult.Ok();
         }
         catch (Exception e)
@@ -189,6 +198,7 @@ public class ManagementAccountService(
             if (account == null)
             {
                 await unitOfWork.RollbackAsync(ct);
+                logger.LogWarning("Admin delete failed: account not found for {Email}", email);
                 return ServiceResult.NotFound("Account.NotFound", "Fail to find the account by given email address");
             }
 
@@ -196,6 +206,7 @@ public class ManagementAccountService(
 
             await accountRepository.UpdateEntityAsync(account, ct);
             await unitOfWork.CommitAsync(ct);
+            logger.LogInformation("Admin deleted account {Email}", account.Email.Value);
             return ServiceResult.Ok();
         }
         catch (Exception e)

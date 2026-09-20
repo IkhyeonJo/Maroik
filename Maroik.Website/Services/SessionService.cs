@@ -3,6 +3,7 @@ using System.Text.Json;
 using Maroik.Core.Contract.Dtos;
 using Maroik.Website.Constants;
 using Maroik.Website.Contracts;
+using Microsoft.Extensions.Logging;
 
 namespace Maroik.Website.Services;
 
@@ -13,7 +14,7 @@ namespace Maroik.Website.Services;
 /// The session key name comes from <see cref="SessionKeys.Account"/>
 /// so it is consistent with all other session accesses in the application.
 /// </summary>
-public class SessionService(IHttpContextAccessor httpContextAccessor) : ISessionService
+public class SessionService(IHttpContextAccessor httpContextAccessor, ILogger<SessionService> logger) : ISessionService
 {
     /// <inheritdoc />
     public AccountResponse? GetAccount()
@@ -28,8 +29,11 @@ public class SessionService(IHttpContextAccessor httpContextAccessor) : ISession
         {
             return JsonSerializer.Deserialize<AccountResponse>(Encoding.UTF8.GetString(bytes));
         }
-        catch
+        catch (Exception e)
         {
+            // A corrupt / tampered session entry is treated as "no session" (the visitor logs in again),
+            // but an operator should see it. The payload is not logged.
+            logger.LogWarning(e, "Stored session account could not be read; treating the session as empty");
             return null;
         }
     }

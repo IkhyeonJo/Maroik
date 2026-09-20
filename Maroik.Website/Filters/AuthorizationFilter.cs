@@ -10,6 +10,7 @@ using Maroik.Website.Extensions;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
 using Microsoft.Extensions.Caching.Distributed;
+using Microsoft.Extensions.Logging;
 
 namespace Maroik.Website.Filters;
 
@@ -36,7 +37,8 @@ namespace Maroik.Website.Filters;
 /// controllers (see <see cref="_postActionRoles"/>) rather than re-reflected on every request.
 /// </summary>
 public class AuthorizationFilter(IMenuService menuService, IDistributedCache cache,
-    ISessionService sessionService, IAccountService accountService) : IAsyncAuthorizationFilter
+    ISessionService sessionService, IAccountService accountService,
+    ILogger<AuthorizationFilter> logger) : IAsyncAuthorizationFilter
 {
     private const string AdminCategoriesCacheKey = NavigationCacheKeys.AdminCategories;
     private const string AdminSubCategoriesCacheKey = NavigationCacheKeys.AdminSubCategories;
@@ -152,12 +154,13 @@ public class AuthorizationFilter(IMenuService menuService, IDistributedCache cac
                 anonymousSubCategories = JsonSerializer.Deserialize<List<SubCategoryResponse>>(results[5]!)!;
                 menusLoaded = true;
             }
-            catch (Exception)
+            catch (Exception e)
             {
                 // A poisoned or shape-changed cache entry must not turn into a 500 on every request
                 // for the whole 10-minute TTL — leave menusLoaded false so the block below rebuilds
                 // from the database, which also overwrites the bad entry. (SessionService.GetAccount
                 // guards its own deserialization the same way.)
+                logger.LogWarning(e, "Navigation menu cache entry could not be read; rebuilding it from the database");
             }
         }
 
@@ -215,6 +218,11 @@ public class AuthorizationFilter(IMenuService menuService, IDistributedCache cac
             if (loggedInAccount == null || loggedInAccount.Deleted || loggedInAccount.Locked ||
                 loggedInAccount.SecurityStamp != sessionAccount.SecurityStamp)
             {
+                string reason = loggedInAccount == null ? "account no longer exists"
+                    : loggedInAccount.Deleted ? "account is deleted"
+                    : loggedInAccount.Locked ? "account is locked"
+                    : "security stamp changed";
+                logger.LogWarning("Session invalidated for {Email}: {Reason}", sessionAccount.Email, reason);
                 sessionService.RemoveAccount(); // Invalidate this session immediately
                 context.Result = new RedirectResult("/Account/Login");
                 return;
@@ -258,7 +266,15 @@ public class AuthorizationFilter(IMenuService menuService, IDistributedCache cac
         if (currentControllerName == "Exception" && currentActionName == "Error")
             return; // allowed: no Result set
 
-        switch (currentRequestMethod.ToUpper())
+        // A refused request is a security event: record who asked for what, then send them to the start page.
+        void Deny()
+        {
+            logger.LogWarning("Access denied: {Method} {Controller}/{Action} for {Account}",
+                currentRequestMethod, currentControllerName, currentActionName, loggedInAccount?.Email ?? "anonymous");
+            context.Result = new RedirectResult("/Dashboard/AnonymousIndex");
+        }
+
+        switch (currentRequestMethod.ToUpperInvariant())
         {
             // GET method (block page access only!!)
             // If not logged in
@@ -321,7 +337,7 @@ public class AuthorizationFilter(IMenuService menuService, IDistributedCache cac
                                     return; // allowed: no Result set
                                 }
 
-                                context.Result = new RedirectResult("/Dashboard/AnonymousIndex");
+                                Deny();
                                 return;
                             }
                         // Role is a plain string, not an enum — an account somehow persisted with
@@ -329,7 +345,7 @@ public class AuthorizationFilter(IMenuService menuService, IDistributedCache cac
                         // falling through with next() never called and context.Result never set,
                         // which would silently short-circuit the pipeline with an empty response.
                         default:
-                            context.Result = new RedirectResult("/Dashboard/AnonymousIndex");
+                            Deny();
                             return;
                     }
                 }
@@ -354,7 +370,7 @@ public class AuthorizationFilter(IMenuService menuService, IDistributedCache cac
                         return; // allowed: no Result set
                     }
 
-                    context.Result = new RedirectResult("/Dashboard/AnonymousIndex");
+                    Deny();
                     return;
                 }
             // POST method — logged in
@@ -387,7 +403,7 @@ public class AuthorizationFilter(IMenuService menuService, IDistributedCache cac
                                     return; // allowed: no Result set
                                 }
 
-                                context.Result = new RedirectResult("/Dashboard/AnonymousIndex");
+                                Deny();
                                 return;
                             }
                         // Role is a plain string, not an enum — an account somehow persisted with
@@ -395,13 +411,13 @@ public class AuthorizationFilter(IMenuService menuService, IDistributedCache cac
                         // falling through with next() never called and context.Result never set,
                         // which would silently short-circuit the pipeline with an empty response.
                         default:
-                            context.Result = new RedirectResult("/Dashboard/AnonymousIndex");
+                            Deny();
                             return;
                     }
                 }
             // (Reject all methods like PATCH / DELETE etc.)
             default:
-                context.Result = new RedirectResult("/Dashboard/AnonymousIndex");
+                Deny();
                 return;
         }
     }

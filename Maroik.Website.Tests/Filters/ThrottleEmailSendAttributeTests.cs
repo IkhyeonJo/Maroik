@@ -10,6 +10,8 @@ using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Localization;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Testing;
 using Moq;
 
 namespace Maroik.Website.Tests.Filters;
@@ -395,5 +397,48 @@ public class ThrottleEmailSendAttributeTests
             context, NextReturning(() => callOrder.Add("action")));
 
         Assert.Equal(["get", "set", "action"], callOrder);
+    }
+
+    /// <summary>
+    /// The throttle fails open when the cache is down (a genuine reset must not be blocked) — but that
+    /// means the send-rate cap is off, so it is logged as a warning, with the exception.
+    /// </summary>
+    [Fact]
+    public async Task OnActionExecutionAsync_LogsAWarning_WhenTheCacheReadFails()
+    {
+        var cache = new Mock<IDistributedCache>();
+        cache.Setup(c => c.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ThrowsAsync(new TimeoutException("cache down"));
+        FakeLogCollector? collector = null;
+        var (context, _) = BuildContext(boundArgument: "user@example.com", cache.Object,
+            configureServices: services => services.AddFakeLogging());
+        collector = context.HttpContext.RequestServices.GetFakeLogCollector();
+
+        await new ThrottleEmailSendAttribute().OnActionExecutionAsync(context, NextReturning(() => { }));
+
+        FakeLogRecord record = Assert.Single(collector.GetSnapshot(), r => r.Level == LogLevel.Warning);
+        Assert.Contains("send-rate throttle is inactive", record.Message);
+        Assert.IsType<TimeoutException>(record.Exception);
+        Assert.DoesNotContain("user@example.com", record.Message); // the address is not needed to diagnose the cache
+    }
+
+    /// <summary>Failing to release the claim after a bounced request is also logged (the caller silently loses one retry window).</summary>
+    [Fact]
+    public async Task OnActionExecutionAsync_LogsAWarning_WhenReleasingTheClaimFails()
+    {
+        var cache = new Mock<IDistributedCache>();
+        cache.Setup(c => c.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync((byte[]?)null);
+        cache.Setup(c => c.SetAsync(It.IsAny<string>(), It.IsAny<byte[]>(), It.IsAny<DistributedCacheEntryOptions>(), It.IsAny<CancellationToken>()))
+            .Returns(Task.CompletedTask);
+        cache.Setup(c => c.RemoveAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ThrowsAsync(new TimeoutException("cache down"));
+        var (context, _) = BuildContext(boundArgument: "user@example.com", cache.Object,
+            configureServices: services => services.AddFakeLogging());
+        FakeLogCollector collector = context.HttpContext.RequestServices.GetFakeLogCollector();
+        context.ModelState.AddModelError("Email", "invalid"); // bounced on validation -> claim is released
+
+        await new ThrottleEmailSendAttribute().OnActionExecutionAsync(context, NextReturning(() => { }));
+
+        FakeLogRecord record = Assert.Single(collector.GetSnapshot(), r => r.Level == LogLevel.Warning);
+        Assert.Contains("could not be released", record.Message);
+        Assert.IsType<TimeoutException>(record.Exception);
     }
 }

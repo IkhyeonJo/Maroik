@@ -1,0 +1,124 @@
+using Maroik.Core.Contract.Dtos;
+using Maroik.Core.Contract.Interfaces;
+using Maroik.Core.Domain.Account;
+using Maroik.Core.Service.Services;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Testing;
+using Moq;
+
+namespace Maroik.Core.Service.Tests.Services;
+
+/// <summary>
+/// The admin audit trail of <see cref="ManagementAccountService"/>: what an administrator created,
+/// changed (role, lock, deletion, password reset) or deleted is logged with the values before and
+/// after, so "who did what to which account" is answerable from the logs. Passwords are never logged.
+/// </summary>
+public class ManagementAccountServiceAuditLoggingTests
+{
+    private const string Email = "target@example.com";
+
+    private readonly Mock<IAccountRepository> _accountRepo = new();
+    private readonly Mock<IPasswordService> _passwordService = new();
+    private readonly Mock<IUnitOfWork> _unitOfWork = new();
+    private readonly FakeLogger<ManagementAccountService> _logger = new();
+
+    private ManagementAccountService CreateSut() => new(_accountRepo.Object, _passwordService.Object, _unitOfWork.Object, _logger);
+
+    private static Account Existing(bool locked = false, long loginAttempt = 0) =>
+        Account.Reconstitute(Email, "$2a$13$placeholder", "Target", null, Role.User, "UTC", null, locked, loginAttempt,
+            true, true, null, null, DateTime.UtcNow, DateTime.UtcNow, null, false, "stamp", false);
+
+    private FakeLogRecord Only(LogLevel level, string containing)
+    {
+        FakeLogRecord record = Assert.Single(_logger.Collector.GetSnapshot(),
+            r => r.Level == level && r.Message.Contains(containing, StringComparison.Ordinal));
+        Assert.Contains(Email, record.Message);
+        return record;
+    }
+
+    private void AssertNoSecretLogged(params string[] secrets)
+    {
+        foreach (FakeLogRecord record in _logger.Collector.GetSnapshot())
+        foreach (string secret in secrets)
+            Assert.DoesNotContain(secret, record.Message + record.Exception);
+    }
+
+    [Fact]
+    public async Task Create_LogsInformationWithTheRole_WhenTheAccountIsCreated()
+    {
+        _accountRepo.Setup(r => r.FindByEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync((Account?)null);
+        _passwordService.Setup(p => p.HashPassword("Plain1234!")).Returns("$2a$13$hashedvalue");
+        _accountRepo.Setup(r => r.CreateAsync(It.IsAny<Account>(), It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
+
+        await CreateSut().CreateAccountAsync(new AccountRequest
+        {
+            Email = Email, PlainPassword = "Plain1234!", Nickname = "NewUser", Role = Role.Admin, EmailConfirmed = true,
+        }, TestContext.Current.CancellationToken);
+
+        FakeLogRecord record = Only(LogLevel.Information, "Admin created account");
+        Assert.Contains(Role.Admin, record.Message);
+        AssertNoSecretLogged("Plain1234!", "$2a$13$hashedvalue");
+    }
+
+    [Fact]
+    public async Task Update_LogsTheChangesBeforeAndAfter_WhenTheRoleLockAndPasswordChange()
+    {
+        Account account = Existing(locked: false);
+        _accountRepo.Setup(r => r.FindByEmailForUpdateAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(account);
+        _passwordService.Setup(p => p.HashPassword("NewPass1!")).Returns("$2a$13$newhash");
+        _accountRepo.Setup(r => r.UpdateEntityAsync(It.IsAny<Account>(), It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
+
+        await CreateSut().UpdateAccountAsync(
+            new AccountRequest { Email = Email, Role = Role.Admin, Locked = true, EmailConfirmed = true, AgreedServiceTerms = true },
+            "NewPass1!", TestContext.Current.CancellationToken);
+
+        FakeLogRecord record = Only(LogLevel.Information, "Admin updated account");
+        Assert.Contains("role User -> Admin", record.Message);
+        Assert.Contains("locked False -> True", record.Message);
+        Assert.Contains("password reset True", record.Message);
+        AssertNoSecretLogged("NewPass1!", "$2a$13$newhash");
+    }
+
+    [Fact]
+    public async Task Update_LogsThatThePasswordWasNotReset_WhenNoNewPasswordIsGiven()
+    {
+        _accountRepo.Setup(r => r.FindByEmailForUpdateAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(Existing());
+        _accountRepo.Setup(r => r.UpdateEntityAsync(It.IsAny<Account>(), It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
+
+        await CreateSut().UpdateAccountAsync(
+            new AccountRequest { Email = Email, Role = Role.User, EmailConfirmed = true, AgreedServiceTerms = true }, null, TestContext.Current.CancellationToken);
+
+        Assert.Contains("password reset False", Only(LogLevel.Information, "Admin updated account").Message);
+    }
+
+    [Fact]
+    public async Task Update_LogsWarning_WhenTheAccountDoesNotExist()
+    {
+        _accountRepo.Setup(r => r.FindByEmailForUpdateAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync((Account?)null);
+
+        await CreateSut().UpdateAccountAsync(new AccountRequest { Email = Email }, null, TestContext.Current.CancellationToken);
+
+        Only(LogLevel.Warning, "Admin update failed: account not found");
+    }
+
+    [Fact]
+    public async Task Delete_LogsInformation_WhenTheAccountIsDeleted()
+    {
+        _accountRepo.Setup(r => r.FindByEmailForUpdateAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(Existing());
+        _accountRepo.Setup(r => r.UpdateEntityAsync(It.IsAny<Account>(), It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
+
+        await CreateSut().DeleteAccountAsync(Email, TestContext.Current.CancellationToken);
+
+        Only(LogLevel.Information, "Admin deleted account");
+    }
+
+    [Fact]
+    public async Task Delete_LogsWarning_WhenTheAccountDoesNotExist()
+    {
+        _accountRepo.Setup(r => r.FindByEmailForUpdateAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync((Account?)null);
+
+        await CreateSut().DeleteAccountAsync(Email, TestContext.Current.CancellationToken);
+
+        Only(LogLevel.Warning, "Admin delete failed: account not found");
+    }
+}

@@ -1,3 +1,4 @@
+using Maroik.Core.Contract.Misc.Messaging;
 using Maroik.FileStorage.Contracts;
 using Maroik.FileStorage.Helpers;
 using Maroik.FileStorage.Settings;
@@ -33,7 +34,15 @@ public class FileController(IFileValidationService fileValidationService, IOptio
         {
             var (success, error) = await fileValidationService.ValidateAndSaveAsync(file, filePath);
             if (!success)
+            {
+                // A scanner outage is an operational fault; every other refusal is the caller's input
+                // (a virus, a traversal path, a bad extension …) — both are recorded with the exact reason.
+                if (error == FileStorageRefusals.ScanUnavailable)
+                    logger.LogError("File upload refused: {Reason}. FilePath={FilePath} CorrelationId={CorrelationId}", error, filePath, correlationId);
+                else
+                    logger.LogWarning("File upload refused: {Reason}. FilePath={FilePath} CorrelationId={CorrelationId}", error, filePath, correlationId);
                 return BadRequest(error);
+            }
 
 #pragma warning disable CA1873
             logger.LogInformation("File uploaded: {FilePath}. CorrelationId={CorrelationId}", filePath, correlationId);
@@ -59,7 +68,17 @@ public class FileController(IFileValidationService fileValidationService, IOptio
             // Confine the read to the storage root. Callers only ever pass server-generated relative
             // paths under "upload/"; a value that resolves outside the root is rejected here.
             var resolvedPath = StoragePath.ResolveWithinRoot(settings.Value.StorageRootPath, filePath);
-            if (resolvedPath == null || !System.IO.File.Exists(resolvedPath)) return NotFound("File not found");
+            if (resolvedPath == null)
+            {
+                logger.LogWarning("File download refused: path outside the storage root. FilePath={FilePath} CorrelationId={CorrelationId}", filePath, correlationId);
+                return NotFound("File not found");
+            }
+
+            if (!System.IO.File.Exists(resolvedPath))
+            {
+                logger.LogWarning("File download failed: file not found. FilePath={FilePath} CorrelationId={CorrelationId}", filePath, correlationId);
+                return NotFound("File not found");
+            }
 
 #pragma warning disable SCS0018
             var fileData = await System.IO.File.ReadAllBytesAsync(resolvedPath);

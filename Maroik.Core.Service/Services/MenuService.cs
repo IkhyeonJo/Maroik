@@ -89,6 +89,7 @@ public class MenuService(
                 return ServiceResult.FromError(result.FirstError);
 
             await categoryRepository.CreateAsync(result.Value, ct);
+            logger.LogInformation("Menu category {Name} created (role {Role})", request.Name, request.Role);
             return ServiceResult.Ok();
         }
         catch (Exception e)
@@ -119,6 +120,7 @@ public class MenuService(
 
             await categoryRepository.UpdateEntityAsync(category, ct);
             await unitOfWork.CommitAsync(ct);
+            logger.LogInformation("Menu category {CategoryId} ({Name}) updated (role {Role})", request.Id, request.Name, request.Role);
             return ServiceResult.Ok();
         }
         catch (Exception e)
@@ -135,6 +137,7 @@ public class MenuService(
         try
         {
             await categoryRepository.DeleteByIdAsync(request.Id, ct);
+            logger.LogInformation("Menu category {CategoryId} ({Name}) deleted", request.Id, request.Name);
             return ServiceResult.Ok();
         }
         catch (Exception e)
@@ -155,6 +158,7 @@ public class MenuService(
                 return ServiceResult.FromError(result.FirstError);
 
             await subCategoryRepository.CreateAsync(result.Value, ct);
+            logger.LogInformation("Menu sub-category {Name} created (role {Role})", request.Name, request.Role);
             return ServiceResult.Ok();
         }
         catch (Exception e)
@@ -183,6 +187,7 @@ public class MenuService(
 
             await subCategoryRepository.UpdateEntityAsync(subCategory, ct);
             await unitOfWork.CommitAsync(ct);
+            logger.LogInformation("Menu sub-category {SubCategoryId} ({Name}) updated (role {Role})", request.Id, request.Name, request.Role);
             return ServiceResult.Ok();
         }
         catch (Exception e)
@@ -199,6 +204,7 @@ public class MenuService(
         try
         {
             await subCategoryRepository.DeleteByIdAsync(request.Id, ct);
+            logger.LogInformation("Menu sub-category {SubCategoryId} ({Name}) deleted", request.Id, request.Name);
             return ServiceResult.Ok();
         }
         catch (Exception e)

@@ -1,12 +1,17 @@
 using ImageMagick;
 using Maroik.Core.Service.Services;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Testing;
 
 namespace Maroik.Core.Service.Tests.Services;
 
 /// <summary>Unit tests for <see cref="ImageValidatorService"/>.</summary>
 public class ImageValidatorServiceTests
 {
-    private readonly ImageValidatorService _sut = new();
+    private readonly FakeLogger<ImageValidatorService> _logger = new();
+    private readonly ImageValidatorService _sut;
+
+    public ImageValidatorServiceTests() => _sut = new ImageValidatorService(_logger);
 
     // Minimal valid 1x1 transparent PNG — a well-known fixture byte sequence, not a mock.
     private static readonly byte[] _validPngBytes =
@@ -116,5 +121,32 @@ public class ImageValidatorServiceTests
     public void IsSvg_ReturnsFalse_ForEmptyBytes()
     {
         Assert.False(_sut.IsSvg([]));
+    }
+
+    /// <summary>
+    /// A file that passes the magic-byte check but cannot be decoded (truncated / crafted) is a rejected
+    /// upload: it is refused AND logged, so a probe of the decoder shows up in the logs.
+    /// </summary>
+    [Fact]
+    public void IsValidImage_LogsAWarning_WhenAPngSignatureIsFollowedByUndecodableBytes()
+    {
+        byte[] truncated = [.. _validPngBytes.Take(20)];
+
+        Assert.False(_sut.IsValidImage(truncated));
+
+        FakeLogRecord record = Assert.Single(_logger.Collector.GetSnapshot());
+        Assert.Equal(LogLevel.Warning, record.Level);
+        Assert.Contains("could not be decoded", record.Message);
+        Assert.NotNull(record.Exception);
+    }
+
+    /// <summary>A valid image and a plain non-image (no signature) are not decode failures and log nothing.</summary>
+    [Fact]
+    public void IsValidImage_LogsNothing_ForAValidImageAndForNonImageBytes()
+    {
+        Assert.True(_sut.IsValidImage(_validPngBytes));
+        Assert.False(_sut.IsValidImage([0x00, 0x01, 0x02, 0x03]));
+
+        Assert.Empty(_logger.Collector.GetSnapshot());
     }
 }

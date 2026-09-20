@@ -101,7 +101,10 @@ public class ProfileService(
                 return await unitOfWork.FailAsync(ServiceResult.NotFound("Account.NotFound", "Input is invalid"), ct);
 
             if (!passwordService.VerifyPassword(currentPassword, account.HashedPassword))
+            {
+                logger.LogWarning("Password change refused: wrong current password for {Email}", email);
                 return await unitOfWork.FailAsync(ServiceResult.Validation("Profile.WrongPassword", "Invalid password. Please check again."), ct);
+            }
 
             // Enforce the complexity rule server-side, before hashing — Account.ChangePassword only sees the hash.
             if (!PasswordPolicy.IsValid(newPassword))
@@ -115,6 +118,7 @@ public class ProfileService(
             await accountRepository.UpdatePasswordAsync(
                 email, account.HashedPassword, account.SecurityStamp, account.MustChangePassword, account.ResetPasswordToken, account.Updated, ct);
             await unitOfWork.CommitAsync(ct);
+            logger.LogInformation("Password changed for {Email}", email);
             return ServiceResult.Ok();
         }
         catch (Exception e)
@@ -134,14 +138,24 @@ public class ProfileService(
             // single source of truth, and a stored avatar must never end up under an arbitrary
             // caller-chosen extension even if a future caller skips the controller-side check.
             if (!ImageUploadPolicy.IsAllowedExtension(extension))
+            {
+                logger.LogWarning("Avatar upload refused: extension not allowed ({Extension}) for {Email}", extension, email);
                 return ServiceResult.Validation("Profile.InvalidImage", "invalid-image");
+            }
 
             // SVG first: IsValidImage only accepts JPEG/PNG, so an SVG would otherwise be reported as a
             // generic "invalid image" instead of the specific "SVG is not allowed".
             if (imageValidator.IsSvg(imageBytes))
+            {
+                logger.LogWarning("Avatar upload refused: SVG is not allowed for {Email}", email);
                 return ServiceResult.Validation("Profile.SvgNotAllowed", "svg-not-allowed");
+            }
+
             if (!imageValidator.IsValidImage(imageBytes))
+            {
+                logger.LogWarning("Avatar upload refused: not a valid image for {Email}", email);
                 return ServiceResult.Validation("Profile.InvalidImage", "invalid-image");
+            }
 
             string avatarFile = $"{Guid.NewGuid():N}{extension.ToLowerInvariant()}";
             // Store through the file-storage service (shared volume, ClamAV-scanned there) instead of
@@ -155,14 +169,20 @@ public class ProfileService(
             switch (uploaded)
             {
                 case FileUploadResult.Infected:
+                    logger.LogWarning("Avatar upload refused: virus detected for {Email}", email);
                     return ServiceResult.Validation("Profile.VirusDetected", "virus-detected");
                 case FileUploadResult.ScanUnavailable:
+                    logger.LogError("Avatar upload failed: virus scanner unavailable for {Email}", email);
                     return ServiceResult.Failure("Profile.ScanUnavailable", "scan-unavailable");
                 case FileUploadResult.Failed:
+                    logger.LogError("Avatar upload failed: file storage refused the upload for {Email}", email);
                     return ServiceResult.Failure("Profile.UploadAvatarFailed", "Input is invalid");
             }
 
-            return await UpdateAvatarAsync(email, $"/{AvatarStorageDirectory}/{avatarFile}", ct);
+            ServiceResult updated = await UpdateAvatarAsync(email, $"/{AvatarStorageDirectory}/{avatarFile}", ct);
+            if (updated.Success)
+                logger.LogInformation("Avatar updated for {Email}", email);
+            return updated;
         }
         catch (Exception e)
         {

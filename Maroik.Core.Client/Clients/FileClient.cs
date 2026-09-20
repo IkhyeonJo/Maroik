@@ -71,15 +71,16 @@ public class FileClient(IHttpClientFactory httpClientFactory, ILogger<FileClient
     }
 
     /// <summary>The storage service's plain-text refusal reason, truncated; empty if it cannot be read.</summary>
-    private static async Task<string> ReadReasonAsync(HttpResponseMessage response, CancellationToken ct)
+    private async Task<string> ReadReasonAsync(HttpResponseMessage response, CancellationToken ct)
     {
         try
         {
             string body = await response.Content.ReadAsStringAsync(ct);
             return body.Length <= 200 ? body : body[..200];
         }
-        catch (Exception)
+        catch (Exception e)
         {
+            logger.LogDebug(e, "The file-storage refusal response body could not be read");
             return "";
         }
     }

@@ -142,6 +142,8 @@ public class FileClientTests
 
         Assert.False(result);
         Assert.Single(logger.Entries, e => e.Level == LogLevel.Warning && e.Message.Contains("400"));
+        // The unreadable body itself leaves a trace too (diagnostic level: the refusal is already warned about).
+        Assert.Single(logger.Entries, e => e.Level == LogLevel.Debug && e.Message.Contains("could not be read"));
     }
 
     /// <summary>An over-long refusal body is truncated in the log.</summary>

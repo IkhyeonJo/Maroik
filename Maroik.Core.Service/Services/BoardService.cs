@@ -204,6 +204,7 @@ public class BoardService(
             {
                 case false when !adminClearingSomeoneElsesLock:
                     await unitOfWork.RollbackAsync(ct);
+                    logger.LogWarning("Board edit refused: {Requester} may not edit post {BoardId}", writerNickname, board.Id);
                     return ServiceResult.Fail("Input is invalid");
                 case true:
                 {
@@ -227,6 +228,7 @@ public class BoardService(
                     // adminClearingSomeoneElsesLock: an admin acting on a post they don't own may only
                     // clear its lock -- title and content are left untouched.
                     board.Unlock();
+                    logger.LogInformation("Lock on post {BoardId} of {Writer} cleared by admin {Requester}", board.Id, board.Writer, writerNickname);
                     break;
             }
 
@@ -272,6 +274,7 @@ public class BoardService(
             if (!board.CanBeDeletedBy(requesterNickname, isAdmin))
             {
                 await unitOfWork.RollbackAsync(ct);
+                logger.LogWarning("Board delete refused: {Requester} may not delete post {BoardId}", requesterNickname, boardId);
                 return ServiceResult.Fail("You do not have permission to delete.");
             }
 
@@ -280,6 +283,7 @@ public class BoardService(
 
             await boardRepository.UpdateEntityAsync(board, ct);
             await unitOfWork.CommitAsync(ct);
+            logger.LogInformation("Board post {BoardId} of {Writer} deleted by {Requester} (admin: {IsAdmin})", boardId, board.Writer, requesterNickname, isAdmin);
             return ServiceResult.Ok();
         }
         catch (Exception e)
@@ -402,6 +406,7 @@ public class BoardService(
             if (!comment.CanBeDeletedBy(requesterNickname, effectiveIsAdmin))
             {
                 await unitOfWork.RollbackAsync(ct);
+                logger.LogWarning("Comment delete refused: {Requester} may not delete comment {CommentId}", requesterNickname, commentId);
                 return ServiceResult.Fail("You do not have permission to delete.");
             }
 
@@ -414,6 +419,7 @@ public class BoardService(
 
             await boardCommentRepository.UpdateEntityAsync(comment, ct);
             await unitOfWork.CommitAsync(ct);
+            logger.LogInformation("Comment {CommentId} of {Writer} deleted by {Requester} (admin: {IsAdmin})", commentId, comment.Writer, requesterNickname, isAdmin);
             return ServiceResult.Ok();
         }
         catch (Exception e)

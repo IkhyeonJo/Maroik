@@ -1,10 +1,11 @@
 using ImageMagick;
 using Maroik.Core.Contract.Interfaces;
+using Microsoft.Extensions.Logging;
 
 namespace Maroik.Core.Service.Services;
 
 /// <summary>ImageMagick-backed implementation of <see cref="IImageValidatorService"/>.</summary>
-public class ImageValidatorService : IImageValidatorService
+public class ImageValidatorService(ILogger<ImageValidatorService> logger) : IImageValidatorService
 {
     static ImageValidatorService()
     {
@@ -53,8 +54,10 @@ public class ImageValidatorService : IImageValidatorService
             using var image = new MagickImage(new MemoryStream(bytes), new MagickReadSettings { Format = format });
             return true;
         }
-        catch (MagickException)
+        catch (MagickException e)
         {
+            // The magic bytes matched but the decoder refused the content: a corrupt or crafted upload.
+            logger.LogWarning(e, "Image with a {Format} signature could not be decoded and was rejected", format);
             return false;
         }
     }

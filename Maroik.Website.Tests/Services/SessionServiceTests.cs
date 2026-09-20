@@ -3,6 +3,8 @@ using Maroik.Core.Domain.Account;
 using Maroik.Website.Services;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Session;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Testing;
 using Moq;
 
 namespace Maroik.Website.Tests.Services;
@@ -18,7 +20,9 @@ public class SessionServiceTests
     private readonly Mock<IHttpContextAccessor> _httpContextAccessor = new();
     private readonly Mock<ISession> _session = new();
 
-    private SessionService CreateSut() => new(_httpContextAccessor.Object);
+    private readonly FakeLogger<SessionService> _logger = new();
+
+    private SessionService CreateSut() => new(_httpContextAccessor.Object, _logger);
 
     private void SetupContext()
     {
@@ -160,5 +164,26 @@ public class SessionServiceTests
 
         var ex = Record.Exception(() => sut.RemoveAccount());
         Assert.Null(ex);
+    }
+
+    /// <summary>
+    /// A session entry that is not valid JSON is treated as "no session" (the visitor is sent to
+    /// log in again) — and logged, so a corrupt or tampered session store is visible to an operator.
+    /// The payload itself is not logged.
+    /// </summary>
+    [Fact]
+    public void GetAccount_LogsAWarning_WhenTheStoredSessionIsNotValidJson()
+    {
+        SetupContext();
+        byte[]? bytes = System.Text.Encoding.UTF8.GetBytes("{not json secret-9f3a");
+        _session.Setup(s => s.TryGetValue(It.IsAny<string>(), out bytes)).Returns(true);
+
+        Assert.Null(CreateSut().GetAccount());
+
+        FakeLogRecord record = Assert.Single(_logger.Collector.GetSnapshot());
+        Assert.Equal(LogLevel.Warning, record.Level);
+        Assert.Contains("could not be read", record.Message);
+        Assert.NotNull(record.Exception);
+        Assert.DoesNotContain("secret-9f3a", record.Message);
     }
 }

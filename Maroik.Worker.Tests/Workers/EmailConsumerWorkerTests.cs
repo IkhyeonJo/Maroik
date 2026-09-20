@@ -5,6 +5,7 @@ using Maroik.Worker.Contracts;
 using Maroik.Worker.Workers;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Testing;
 using Moq;
 using RabbitMQ.Client;
 using RabbitMQ.Client.Events;
@@ -29,10 +30,10 @@ public class EmailConsumerWorkerTests
         return services.BuildServiceProvider().GetRequiredService<IServiceScopeFactory>();
     }
 
-    private static EmailConsumerWorker CreateSut(IEmailMessageHandler handler, out Mock<IChannel> channel)
+    private static EmailConsumerWorker CreateSut(IEmailMessageHandler handler, out Mock<IChannel> channel, ILogger<EmailConsumerWorker>? logger = null)
     {
         var factory = new Mock<IConnectionFactory>();
-        var worker = new EmailConsumerWorker(factory.Object, BuildScopeFactory(handler), Mock.Of<ILogger<EmailConsumerWorker>>());
+        var worker = new EmailConsumerWorker(factory.Object, BuildScopeFactory(handler), logger ?? Mock.Of<ILogger<EmailConsumerWorker>>());
         channel = new Mock<IChannel>();
         worker.Channel = channel.Object;
         return worker;
@@ -560,4 +561,41 @@ public class EmailConsumerWorkerTests
         Encoding.UTF8.GetBytes("abc"),
         3.5,
     };
+
+    /// <summary>
+    /// A send that ignores cancellation is still running when the unwind window ends: the worker moves on
+    /// to closing the channel regardless. That message will be redelivered, so it is logged as a warning
+    /// (the drain-deadline warning before it only says cancellation was requested).
+    /// </summary>
+    [Fact]
+    public async Task StopAsync_LogsAWarning_WhenASendIgnoresCancellationPastTheUnwindWindow()
+    {
+        var handlerStarted = new TaskCompletionSource();
+        var release = new TaskCompletionSource();
+        var handler = new Mock<IEmailMessageHandler>();
+        handler.Setup(h => h.HandleAsync(It.IsAny<SendEmailMessage>(), It.IsAny<CancellationToken>()))
+            .Returns((SendEmailMessage _, CancellationToken _) =>
+            {
+                handlerStarted.SetResult();
+                return release.Task; // ignores the token on purpose
+            });
+        var logger = new FakeLogger<EmailConsumerWorker>();
+        var worker = CreateSut(handler.Object, out var channel, logger);
+        worker.DrainTimeout = TimeSpan.FromMilliseconds(50);
+        worker.CancelUnwindTimeout = TimeSpan.FromMilliseconds(100);
+        channel.Setup(c => c.BasicPublishAsync(
+                It.IsAny<string>(), It.IsAny<string>(), It.IsAny<bool>(), It.IsAny<BasicProperties>(), It.IsAny<ReadOnlyMemory<byte>>(), It.IsAny<CancellationToken>()))
+            .Returns(ValueTask.CompletedTask);
+        byte[] body = JsonSerializer.SerializeToUtf8Bytes(_message);
+        Task received = worker.OnMessageReceivedAsync(this, MakeDeliverArgs(body, deliveryTag: 31, redelivered: false));
+        await handlerStarted.Task;
+
+        await worker.StopAsync(CancellationToken.None);
+
+        FakeLogRecord warning = Assert.Single(logger.Collector.GetSnapshot(),
+            r => r.Level == LogLevel.Warning && r.Message.Contains("did not stop within the unwind window", StringComparison.Ordinal));
+        Assert.Contains("1", warning.Message); // one send still in flight
+        release.SetResult();
+        await received;
+    }
 }

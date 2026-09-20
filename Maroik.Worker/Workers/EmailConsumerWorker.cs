@@ -359,6 +359,9 @@ public sealed class EmailConsumerWorker(
                 catch (OperationCanceledException)
                 {
                     // Still not drained after the extra grace window; proceed to dispose regardless.
+                    logger.LogWarning(
+                        "{Count} send(s) did not stop within the unwind window; closing the channel anyway (unacknowledged messages will be redelivered)",
+                        _inFlight.Count);
                 }
             }
         }

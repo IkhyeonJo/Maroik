@@ -71,6 +71,7 @@ public class AccountService(
                 // instead of returning early after a bare rollback.
                 _ = await accountRepository.UpdateMessageAsync(email, null, DateTime.UtcNow, ct);
                 await unitOfWork.CommitAsync(ct);
+                logger.LogWarning("Login failed: no account for {Email}", email);
                 return LoginResult.Fail(genericLoginError);
             }
 
@@ -85,6 +86,7 @@ public class AccountService(
             if (account.Locked)
             {
                 await unitOfWork.RollbackAsync(ct);
+                logger.LogWarning("Login refused: account is locked for {Email}", email);
                 return LoginResult.Fail("Your Account is Locked, Please reset your password by clicking Forgot password Button");
             }
 
@@ -97,24 +99,30 @@ public class AccountService(
                 account.RecordLoginFailure(settings.Value.MaxLoginAttempt);
                 await accountRepository.UpdateEntityAsync(account, ct);
                 await unitOfWork.CommitAsync(ct);
+                logger.LogWarning("Login failed: wrong password for {Email} (failed attempts: {LoginAttempts})", email, account.LoginAttempt);
+                if (account.Locked)
+                    logger.LogWarning("Account {Email} locked after {LoginAttempts} failed login attempts", email, account.LoginAttempt);
                 return LoginResult.Fail(genericLoginError);
             }
 
             if (account.Deleted)
             {
                 await unitOfWork.RollbackAsync(ct);
+                logger.LogWarning("Login refused: deleted account {Email}", email);
                 return LoginResult.Fail("Your Account is Deleted. Please contact the administrator.");
             }
 
             if (!account.EmailConfirmed)
             {
                 await unitOfWork.RollbackAsync(ct);
+                logger.LogWarning("Login refused: email not confirmed for {Email}", email);
                 return LoginResult.Fail("Email verification was not completed. Please try sign up again.");
             }
 
             if (!account.AgreedServiceTerms)
             {
                 await unitOfWork.RollbackAsync(ct);
+                logger.LogWarning("Login refused: service terms not accepted for {Email}", email);
                 return LoginResult.Fail("Agreed Service Terms was not checked. Please try sign up again and login again.");
             }
 
@@ -123,6 +131,7 @@ public class AccountService(
             await accountRepository.UpdateEntityAsync(account, ct);
             await unitOfWork.CommitAsync(ct);
 
+            logger.LogInformation("Login succeeded for {Email}", email);
             return LoginResult.Ok(AccountMapper.ToResponse(account));
         }
         catch
@@ -197,6 +206,8 @@ public class AccountService(
                 logger.LogError(e, "Failed to create account for {Email}", newAccount.Email);
                 return RegisterResult.Fail("Error occurred while processing about account registration");
             }
+
+            logger.LogInformation("Account registered: {Email}", account.Email.Value);
 
             // The account was just created with UserCreatedVerifyEmail already set above, so a
             // successful send should not overwrite it with VerifyEmail.
@@ -385,11 +396,17 @@ public class AccountService(
 
         Account? account = await FindByRegistrationTokenAsync(rawToken, ct);
         if (account == null)
+        {
+            logger.LogWarning("Email confirmation rejected: invalid or expired token");
             return new ConfirmEmailResult { InvalidToken = true, AccountCreated = false };
+        }
 
         // Reject tokens that have passed their time-to-live window.
         if (!GuidToken.IsTokenAlive(rawToken))
+        {
+            logger.LogWarning("Email confirmation rejected: invalid or expired token for {Email}", account.Email.Value);
             return new ConfirmEmailResult { InvalidToken = true, AccountCreated = false };
+        }
 
         await unitOfWork.BeginAsync(ct);
         try
@@ -402,6 +419,7 @@ public class AccountService(
             if (locked == null)
             {
                 await unitOfWork.RollbackAsync(ct);
+                logger.LogWarning("Email confirmation rejected: invalid or expired token for {Email}", account.Email.Value);
                 return new ConfirmEmailResult { InvalidToken = true, AccountCreated = false };
             }
 
@@ -416,6 +434,7 @@ public class AccountService(
                 if (confirmResult.FirstError.Type != ErrorOr.ErrorType.Conflict)
                 {
                     await unitOfWork.RollbackAsync(ct);
+                    logger.LogWarning("Email confirmation rejected: invalid or expired token for {Email}", locked.Email.Value);
                     return new ConfirmEmailResult { InvalidToken = true, AccountCreated = true };
                 }
 
@@ -459,6 +478,7 @@ public class AccountService(
             // way as "account not found" rather than a false AccountCreated success.
             if (rowsAffected != 0)
             {
+                logger.LogInformation("Email confirmed for {Email}", locked.Email.Value);
                 return new ConfirmEmailResult { InvalidToken = false, AccountCreated = true };
             }
 
@@ -501,6 +521,7 @@ public class AccountService(
                 _ = await accountRepository.UpdateResetPasswordTokenAsync(NoAccountEmail, null, DateTime.UtcNow, ct);
             }
             catch (Exception e) { logger.LogWarning(e, "ForgotPassword equalization failed for {Email}", email); }
+            logger.LogWarning("Password reset ignored for {Email}: unknown, unconfirmed or deleted account", email);
             return true;
         }
 
@@ -523,6 +544,8 @@ public class AccountService(
 
             string body = mailClient.GetMailResetPasswordBody(rsa.Encrypt(resetPasswordToken), emailTemplate.Title, emailTemplate.Content0, emailTemplate.Content1, settings.Value.DomainName ?? "");
             bool published = await PublishMailAsync(account.Email.Value, emailTemplate.Subject, body, ct);
+            if (published)
+                logger.LogInformation("Password reset requested for {Email}", account.Email.Value);
 
             account.SetMessage(EnumHelper.GetDescription(published ? AccountMessage.ResetPasswordMail : AccountMessage.FailToMailSent));
             await accountRepository.UpdateMessageAsync(account.Email.Value, account.Message, account.Updated, ct);
@@ -549,7 +572,10 @@ public class AccountService(
         // the same guard on ForgotPasswordAsync / ResetPasswordAsync so a soft-deleted account's
         // lingering token can never be reported "valid" here only to be rejected at the actual reset.
         if (account == null || account.Deleted || !GuidToken.IsTokenAlive(rawToken) || !account.EmailConfirmed)
+        {
+            logger.LogWarning("Password reset link rejected: invalid or expired token");
             return new ResetPasswordValidationResult { FailToReset = true };
+        }
 
         // Return the still-encrypted token so the client can pass it back during the actual reset.
         return new ResetPasswordValidationResult { FailToReset = false, ResetPasswordToken = encryptedToken };
@@ -568,7 +594,10 @@ public class AccountService(
 
         Account? found = await FindByResetPasswordTokenAsync(rawToken, ct);
         if (found == null || found.Deleted || !GuidToken.IsTokenAlive(rawToken) || !found.EmailConfirmed)
+        {
+            logger.LogWarning("Password reset rejected: invalid or expired token");
             return ServiceResult.Fail("reset-password-invalid");
+        }
 
         // Enforce the complexity rule server-side, before hashing — Account.ResetPassword only sees the hash.
         if (!PasswordPolicy.IsValid(newPassword))
@@ -587,6 +616,7 @@ public class AccountService(
             if (account == null || account.Deleted)
             {
                 await unitOfWork.RollbackAsync(ct);
+                logger.LogWarning("Password reset rejected: account {Email} no longer exists or is deleted", found.Email.Value);
                 return ServiceResult.Fail("reset-password-invalid");
             }
 
@@ -596,6 +626,7 @@ public class AccountService(
             if (resetResult.IsError)
             {
                 await unitOfWork.RollbackAsync(ct);
+                logger.LogWarning("Password reset rejected: invalid or expired token for {Email}", account.Email.Value);
                 return ServiceResult.Fail("reset-password-invalid");
             }
 
@@ -605,6 +636,7 @@ public class AccountService(
 
             await accountRepository.UpdateEntityAsync(account, ct);
             await unitOfWork.CommitAsync(ct);
+            logger.LogInformation("Password reset completed for {Email}", account.Email.Value);
             return ServiceResult.Ok();
         }
         catch (Exception e)

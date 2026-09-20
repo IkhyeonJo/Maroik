@@ -1,4 +1,5 @@
 using Maroik.Core.Contract.Interfaces;
+using Microsoft.Extensions.Logging;
 
 namespace Maroik.Core.Service.Services;
 
@@ -7,7 +8,7 @@ namespace Maroik.Core.Service.Services;
 /// Uses a work factor of 13 (2^13 iterations) which balances security and hash speed
 /// — high enough to be brute-force resistant, low enough for interactive login latency.
 /// </summary>
-public class PasswordService : IPasswordService
+public class PasswordService(ILogger<PasswordService> logger) : IPasswordService
 {
     private const int WorkFactor = 13; // BCrypt work factor
 
@@ -44,8 +45,12 @@ public class PasswordService : IPasswordService
         {
             return BCrypt.Net.BCrypt.Verify(password, hashedPassword);
         }
-        catch
+        catch (Exception e)
         {
+            // A stored value that is not a BCrypt hash: the answer is "no match", but the account is
+            // now unable to log in and an operator must hear about it. Neither the hash nor the typed
+            // password is logged.
+            logger.LogWarning(e, "Stored password hash is malformed; verification failed");
             return false;
         }
     }
