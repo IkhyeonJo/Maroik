@@ -616,16 +616,17 @@ describe("user/Calendar/UserIndex — edit form and shared-event view in detail"
       expect(String(code!.args[1])).toContain('src="blob:fake"');
     });
 
-    it.each(["onload", "onerror"] as const)("the view's rehydrated image %s releases the object URL it was given", (event) => {
-      const h = setup();
+    it.each(["onload", "onerror"] as const)("the view's rebuilt image %s releases the object URL it was given", (event) => {
+      const h = build({ body: (html) => html.replace('<div id="viewCalendarEventDescription"></div>', '<div id="viewCalendarEventDescription"></div><div class="note-editor"><img src="blob:live"></div>') + detailDom });
+      (h.win as any).URL.createObjectURL = vi.fn(() => "blob:fake");
+      spyModal(h);
       openView(h, { description: `<img data-file="${png}" data-contenttype="image/png">` });
       const revoke = ((h.win as any).URL.revokeObjectURL = vi.fn());
-      const img = h.parsedDocuments.flatMap((d) => [...d.querySelectorAll("img")]).find((i) => typeof (i as any)[event] === "function") as any;
+      const img = h.$(".note-editor img")[0] as HTMLImageElement;
 
-      expect(img).toBeDefined();
-      img[event]();
+      (img[event] as () => void)();
 
-      expect(revoke).toHaveBeenCalledWith("blob:fake");
+      expect(revoke).toHaveBeenCalledWith("blob:live");
     });
 
     it("clicking the attached-file link downloads it through a temporary object URL, released shortly after; a link without data does nothing", () => {

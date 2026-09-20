@@ -42,6 +42,16 @@
         const byteArray = new Uint8Array(byteNumbers);
         return new Blob([byteArray], { type: mime });
     }
+    function ReleaseObjectUrlsOnLoad(root) {
+        if (!root)
+            return;
+        root.querySelectorAll('img[src^="blob:"]').forEach(function (img) {
+            const url = img.src;
+            img.onload = img.onerror = function () {
+                URL.revokeObjectURL(url);
+            };
+        });
+    }
     const localizer = {
         IETFLanguageTag: $("#localizerIETFLanguageTag").val()
     };
@@ -410,18 +420,13 @@
                     const blob = base64ToBlob(base64Data, contentType);
                     const imgURL = URL.createObjectURL(blob);
                     imgTag.src = imgURL;
-                    imgTag.onload = function () {
-                        URL.revokeObjectURL(imgURL);
-                    };
-                    imgTag.onerror = function () {
-                        URL.revokeObjectURL(imgURL);
-                    };
                     imgTag.removeAttribute("data-file");
                     imgTag.removeAttribute("data-contenttype");
                 }
             });
             const updatedHtml = htmlDoc.body.innerHTML;
             $detailBoardContent.html(updatedHtml);
+            ReleaseObjectUrlsOnLoad($detailBoardContent[0]);
             $detailBoardContent.show();
         }
         else if ($editBoardContent.length > 0 && $divEditBoardContent.is(":hidden")) {
@@ -435,18 +440,13 @@
                     const blob = base64ToBlob(base64Data, contentType);
                     const imgURL = URL.createObjectURL(blob);
                     imgTag.src = imgURL;
-                    imgTag.onload = function () {
-                        URL.revokeObjectURL(imgURL);
-                    };
-                    imgTag.onerror = function () {
-                        URL.revokeObjectURL(imgURL);
-                    };
                     imgTag.removeAttribute("data-file");
                     imgTag.removeAttribute("data-contenttype");
                 }
             });
             const updatedHtml = htmlDoc.body.innerHTML;
             $editBoardContent.summernote("code", updatedHtml);
+            ReleaseObjectUrlsOnLoad($editBoardContent.next(".note-editor")[0]);
             $divEditBoardContent.show();
         }
         if ($aDetailBoardAttachedFile.length > 0) {

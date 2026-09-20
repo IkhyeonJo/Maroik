@@ -153,6 +153,16 @@
         const byteArray = new Uint8Array(byteNumbers);
         return new Blob([byteArray], { type: mime });
     }
+    function ReleaseObjectUrlsOnLoad(root) {
+        if (!root)
+            return;
+        root.querySelectorAll('img[src^="blob:"]').forEach(function (img) {
+            const url = img.src;
+            img.onload = img.onerror = function () {
+                URL.revokeObjectURL(url);
+            };
+        });
+    }
     const localizer = {
         Email: $("#localizerEmail").val(),
         Notification: $("#localizerNotification").val(),
@@ -625,18 +635,13 @@
                                             const blob = base64ToBlob(base64Data, contentType);
                                             const imgURL = URL.createObjectURL(blob);
                                             imgTag.src = imgURL;
-                                            imgTag.onload = function () {
-                                                URL.revokeObjectURL(imgURL);
-                                            };
-                                            imgTag.onerror = function () {
-                                                URL.revokeObjectURL(imgURL);
-                                            };
                                             imgTag.removeAttribute("data-file");
                                             imgTag.removeAttribute("data-contenttype");
                                         }
                                     });
                                     const updatedHtml = htmlDoc.body.innerHTML;
                                     $editCalendarEventDescription.summernote("code", updatedHtml);
+                                    ReleaseObjectUrlsOnLoad($editCalendarEventDescription.next(".note-editor")[0]);
                                     $divEditCalendarEventAttachedFile.hide();
                                     if (data.calendarEvent.calendarEventAttachedFile !== null) {
                                         $divEditCalendarEventAttachedFile.show();
@@ -883,18 +888,13 @@
                                             const blob = base64ToBlob(base64Data, contentType);
                                             const imgURL = URL.createObjectURL(blob);
                                             imgTag.src = imgURL;
-                                            imgTag.onload = function () {
-                                                URL.revokeObjectURL(imgURL);
-                                            };
-                                            imgTag.onerror = function () {
-                                                URL.revokeObjectURL(imgURL);
-                                            };
                                             imgTag.removeAttribute("data-file");
                                             imgTag.removeAttribute("data-contenttype");
                                         }
                                     });
                                     const updatedHtml = htmlDoc.body.innerHTML;
                                     $viewCalendarEventDescription.summernote("code", updatedHtml);
+                                    ReleaseObjectUrlsOnLoad($viewCalendarEventDescription.next(".note-editor")[0]);
                                     $viewCalendarEventDescription.summernote("disable");
                                     $divViewCalendarEventAttachedFile.hide();
                                     if (data.calendarEvent.calendarEventAttachedFile !== null) {
@@ -1551,7 +1551,7 @@
                                     });
                                 }
                                 else {
-                                    toastr.error(data.error);
+                                    toastr.error(response.error);
                                 }
                             }
                         });
@@ -1760,7 +1760,7 @@
                                     });
                                 }
                                 else {
-                                    toastr.error(data.error);
+                                    toastr.error(response.error);
                                 }
                             }
                         });

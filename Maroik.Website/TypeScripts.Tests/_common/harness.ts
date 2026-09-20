@@ -59,8 +59,6 @@ export interface SiteHandle {
   summernoteInits: { el: Element | undefined; options: any }[];
   /** every other `$(el).summernote("cmd", ...args)` call (insertNode, code setter, …) */
   summernoteCalls: { el: Element | undefined; args: unknown[] }[];
-  /** every document the script parsed with `new DOMParser().parseFromString(...)` — the images it rehydrates live in these, so a test can fire their `onload` / `onerror` */
-  parsedDocuments: Document[];
 }
 
 function bindJquery(win: any): JQueryStatic {
@@ -190,13 +188,6 @@ export function loadSite(
   // --- browser bits jsdom lacks / complains about --------------------------
   win.alert = vi.fn();
   win.confirm = vi.fn(() => true);
-  const parsedDocuments: Document[] = [];
-  const realParse = win.DOMParser.prototype.parseFromString;
-  win.DOMParser.prototype.parseFromString = function (this: DOMParser, ...args: [string, DOMParserSupportedType]) {
-    const doc = realParse.apply(this, args);
-    parsedDocuments.push(doc);
-    return doc;
-  };
   if (!win.URL.createObjectURL) win.URL.createObjectURL = () => "blob:stub";
   if (!win.URL.revokeObjectURL) win.URL.revokeObjectURL = () => undefined;
 
@@ -265,7 +256,6 @@ export function loadSite(
     summernoteCalls,
     calendarInstances,
     datepickerInits,
-    parsedDocuments,
   };
 }
 

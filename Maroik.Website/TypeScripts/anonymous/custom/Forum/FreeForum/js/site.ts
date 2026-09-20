@@ -47,6 +47,21 @@
         return new Blob([byteArray], { type: mime });
     }
 
+    /**
+     * Frees each rebuilt image's object URL once the image has loaded (or failed to): the browser keeps the Blob alive until then.
+     * Applied to the images as they are in the live page — the ones rebuilt in the parsed, detached copy are re-serialised into
+     * HTML, which drops any handler set on them.
+     */
+    function ReleaseObjectUrlsOnLoad(root: Element | undefined | null) {
+        if (!root) return;
+        root.querySelectorAll<HTMLImageElement>('img[src^="blob:"]').forEach(function (img) {
+            const url = img.src;
+            img.onload = img.onerror = function () {
+                URL.revokeObjectURL(url);
+            };
+        });
+    }
+
     $(function () {
 
         // --- UTC -> local time -------------------------------------------------
@@ -132,12 +147,6 @@
 
                     // Release the object URL once the browser has the bytes
                     // (whether the load succeeded or failed).
-                    imgTag.onload = function () {
-                        URL.revokeObjectURL(imgURL);
-                    };
-                    imgTag.onerror = function () {
-                        URL.revokeObjectURL(imgURL);
-                    };
 
                     // Drop the now-redundant payload attributes.
                     imgTag.removeAttribute("data-file");
@@ -147,6 +156,7 @@
 
             const updatedHtml = htmlDoc.body.innerHTML;
             $detailBoardContent.html(updatedHtml);
+            ReleaseObjectUrlsOnLoad($detailBoardContent[0]);
             $detailBoardContent.show();
         }
 

@@ -14,7 +14,7 @@ Node.js on the machine.
 short version:
 
 1. **Install Node.js 22** (LTS). The build uses Node 22 everywhere
-   (`Maroik.Website/Dockerfile` → `FROM node:22-alpine`; CI doesn't use Node).
+   (`Maroik.Website/Dockerfile` → `FROM node:22-alpine`; CI runs it on Node 22 too — `.github/workflows/build-and-test.yml`).
    `package.json` `"engines"` requires `node >=22.22.2 <23` and
    `Maroik.Website/.npmrc` has `engine-strict=true`, so any other version makes
    the next step stop with `npm error code EBADENGINE` (nothing installed — just
@@ -52,20 +52,34 @@ TypeScripts.Tests/
   _common/
     harness.ts            loadSite() + fixture helpers + jsdom stubs   (test infra, no source counterpart)
     vitest.setup.ts       runs once before each test file
+    *Suite.ts             behaviour shared by several scripts (see "Shared suites")
   {role}/custom/{Feature}/{Page}/js/site.test.ts   ⟷  wwwroot/{role}/custom/{Feature}/{Page}/js/site.js
   tsconfig.json           standalone (the main tsconfig excludes this tree)
 ```
 
-**Every `site.js` has exactly one `site.test.ts` at the matching path**, and the only
-files that don't mirror a source path are under `_common/`. Each test file inlines its
-own DOM fixture — there are deliberately **no** cross-role shared fixture/spec files
-(so the tree stays a pure mirror; the small amount of fixture duplication is the price).
+**Every `site.js` has exactly one `site.test.ts` at the matching path** (22 of each), and the only
+files that don't mirror a source path are under `_common/`. Each test file builds its own DOM fixture;
+scripts that share behaviour (the two board scripts × 3 roles, the grid-CRUD finance pages, the two
+calendar scripts, the three layouts, the two profile pages) call a shared suite from `_common/` so the
+behaviour is asserted once, identically, for each script instead of being copied.
 
 Imports use the **`@tests/*` alias** (`== TypeScripts.Tests/*`), so a helper import
 reads the same from any depth. It's declared twice, keep them in sync:
 
 * `../vitest.config.mts` → `resolve.alias` (runtime)
 * `./tsconfig.json` → `baseUrl` + `paths: { "@tests/*": ["*"] }` (editor / type-check)
+
+### Shared suites (`_common/*Suite.ts`)
+
+| Suite | Used by | Asserts |
+|---|---|---|
+| `boardSuite` | Forum/FreeForum and Management/PrivateNote (user + admin) | search, write/edit/delete/comment requests, attachments, image upload, inline-image rehydration, attachment download |
+| `gridCrudSuite` | AccountBook/{Asset,Income,Expenditure}, Notice/{FixedIncome,FixedExpenditure} | row highlight, create/edit/delete round trips, refusals, maturity-date pickers |
+| `amountLabelSuite` | the four finance pages with an amount label | label lookup on the create and edit forms, success / refusal / failure |
+| `calendarSuite` | Calendar/{UserIndex,AdminIndex} | reminder validation, create/edit event, my calendars, popup, editors, downloads |
+| `layoutSuite` | the three `_Layout` scripts | culture switch, double-submit guard, session-expiry recovery |
+| `profileSuite` | Management/Profile (user + admin) | avatar upload rules, time zone, password |
+| `missingConfigSuite` | every script that reads server-published constants | still initialises when a constant is absent (and no swallowed ready-callback exception) |
 
 ---
 
@@ -89,7 +103,10 @@ reads the same from any depth. It's declared twice, keep them in sync:
 6. `window.eval`s the compiled `site.js` (it self-executes — it's the IIFE-wrapped port).
 
 Returned `SiteHandle`: `$`, `win`, `ajaxCalls` / `respond` / `lastAjax`, `toastr`,
-`charts`, `submittedForms`, `navigations`, `MvcGridInstances`.
+`charts`, `submittedForms`, `navigations`, `MvcGridInstances`, plus what the vendored widgets were
+asked to do: `calendarOptions` / `calendarInstances` (FullCalendar), `datepickerInits`,
+`summernoteInits` / `summernoteCalls` (editor callbacks and `code` / `insertNode` calls;
+`opts.summernoteCode` supplies the editor's initial HTML).
 Also exported: `hidden(id, value)`, `antiForgery`, `hiddenByStyle(el)`,
 `fireNative(target, type, detail)`.
 
@@ -106,20 +123,23 @@ Also exported: `hidden(id, value)`, `antiForgery`, `hiddenByStyle(el)`,
 
 ## What is tested
 
-"The parts worth locking down per script", not every handler:
+All 22 scripts, to **100 % of statements and functions** (and ~99.5 % of branches — the few left are arms
+the UI cannot reach, e.g. an unknown reminder unit that form validation rejects first). Per script:
 
-* **server-policy UX mirrors** — income/expenditure sub-class filtering
-  (`ApplyAllowedOptions`), fixed-schedule deposit-day limits (`DepositDayValues`),
-  the calendar reminder lead-time bounds (`Validate*` vs `CalendarReminderPolicy`),
-* **form / request wiring** — `ExportExcel*` builds the right POST form; create/edit
-  forms hit the right URL with the right JSON / `FormData`; an invalid form makes no
-  request,
-* **small behaviours** — culture switch, grid row highlight, date localisation, the
-  `_Layout` double-submit guard,
-* a **smoke `loadSite()`** for the 2,300- / 2,700-line Calendar scripts (proves the
-  FullCalendar / moment / datepicker / summernote stubs are enough to run them).
+* **server-policy UX mirrors** — income/expenditure sub-class filtering (`ApplyAllowedOptions`),
+  fixed-schedule deposit-day limits (`DepositDayValues`), the calendar reminder lead-time bounds
+  (`Validate*` vs `CalendarReminderPolicy`), the size / type limits,
+* **form / request wiring** — every create / edit / delete / export request has the right URL, headers and
+  JSON / `FormData`; an invalid form makes no request; a refused or failed reply is toasted, never crashes,
+* **DOM behaviour** — modals, popups, calendar list order, reminder rows rebuilt from stored data, attachments
+  and inline images (object URLs are released once an image loads), downloads, date pickers,
+* **defaults** — a script still initialises when a server-published constant is missing.
 
-22 test files, 58 tests.
+## Measuring coverage
+
+The suite `eval`s the compiled `site.js`, so Vitest's own v8 coverage cannot see it. To measure, instrument the
+script inside `loadSite` (e.g. with `istanbul-lib-instrument`) behind an environment variable and merge each
+window's `__coverage__`; keep that out of the repository — it is a measuring aid, not part of the suite.
 
 ## Adding a test
 
@@ -145,7 +165,7 @@ the **compiled** `site.js`, then runs Vitest. A successful run ends with:
 
 ```
  Test Files  22 passed (22)
-      Tests  58 passed (58)
+      Tests  783 passed (783)
 ```
 
 Expect ~30 lines of `Not implemented: HTMLCanvasElement's getContext() ...` to

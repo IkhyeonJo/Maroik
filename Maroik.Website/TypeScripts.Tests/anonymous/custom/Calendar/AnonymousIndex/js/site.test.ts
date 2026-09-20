@@ -27,7 +27,7 @@ function fixture(): string {
      <input id="viewCalendarEventAllDayUncheckedStartDate" /><input id="viewCalendarEventAllDayUncheckedStartTime" /><input id="viewCalendarEventAllDayUncheckedStartTimeZone" />
      <input id="viewCalendarEventAllDayUncheckedEndDate" /><input id="viewCalendarEventAllDayUncheckedEndTime" /><input id="viewCalendarEventAllDayUncheckedEndTimeZone" />
      <input id="viewCalendarEventLocation" />
-     <div id="viewCalendarEventDescription"></div>
+     <div id="viewCalendarEventDescription"></div><div class="note-editor"><img src="blob:live"></div>
      <div id="divViewCalendarEventAttachedFile"></div>
      <span id="spanViewCalendarEventAttachedFile"></span>
      <select id="viewCalendarEventMyCalendar"></select>
@@ -366,17 +366,16 @@ describe("Calendar/AnonymousIndex — the read-only view modal", () => {
     expect(h.summernoteCalls.some((c) => c.args[0] === "disable")).toBe(true);
   });
 
-  it.each(["onload", "onerror"] as const)("a rehydrated description image's %s releases the object URL it was given", (event) => {
-    const h = load();
+  it.each(["onload", "onerror"] as const)("a rebuilt description image's %s releases the object URL it was given", (event) => {
+    const h = load(); // (the fixture's editor container already holds an image, as summernote's own DOM would after `code` is set)
     open(h);
     h.lastAjax().success!(reply({ description: `<img data-file="${btoa("abc")}" data-contenttype="image/png">` }));
     const revoke = ((h.win as any).URL.revokeObjectURL = vi.fn());
-    const img = h.parsedDocuments.flatMap((d) => [...d.querySelectorAll("img")]).find((i) => typeof (i as any)[event] === "function") as any;
+    const img = h.$(".note-editor img")[0] as HTMLImageElement;
 
-    expect(img).toBeDefined();
-    img[event]();
+    (img[event] as () => void)();
 
-    expect(revoke).toHaveBeenCalledWith(img.src);
+    expect(revoke).toHaveBeenCalledWith("blob:live");
   });
 
   it("the attachment download's temporary object URL is released shortly after the click", () => {

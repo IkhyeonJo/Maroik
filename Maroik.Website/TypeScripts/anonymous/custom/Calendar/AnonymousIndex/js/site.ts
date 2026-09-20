@@ -93,6 +93,21 @@
         return new Blob([byteArray], { type: mime });
     }
 
+    /**
+     * Frees each rebuilt image's object URL once the image has loaded (or failed to): the browser keeps the Blob alive until then.
+     * Applied to the images as they are in the live page — the ones rebuilt in the parsed, detached copy are re-serialised into
+     * HTML, which drops any handler set on them.
+     */
+    function ReleaseObjectUrlsOnLoad(root: Element | undefined | null) {
+        if (!root) return;
+        root.querySelectorAll<HTMLImageElement>('img[src^="blob:"]').forEach(function (img) {
+            const url = img.src;
+            img.onload = img.onerror = function () {
+                URL.revokeObjectURL(url);
+            };
+        });
+    }
+
     // Localized FullCalendar UI strings + reminder labels + validation messages,
     // each from a hidden input the view rendered from the resource files. Typed
     // `any` so the ~70 `.val()` unions don't each need a cast.
@@ -319,12 +334,6 @@
 
                                             imgTag.src = imgURL;
 
-                                            imgTag.onload = function () {
-                                                URL.revokeObjectURL(imgURL);
-                                            };
-                                            imgTag.onerror = function () {
-                                                URL.revokeObjectURL(imgURL);
-                                            };
 
                                             imgTag.removeAttribute("data-file");
                                             imgTag.removeAttribute("data-contenttype");
@@ -334,6 +343,7 @@
                                     const updatedHtml = htmlDoc.body.innerHTML;
 
                                     $viewCalendarEventDescription.summernote("code", updatedHtml);
+                                    ReleaseObjectUrlsOnLoad($viewCalendarEventDescription.next(".note-editor")[0]);
                                     $viewCalendarEventDescription.summernote("disable");
 
                                     // Attachment: show the link (base64 kept in `data-*` for the
@@ -380,9 +390,10 @@
 
                                                 JSON.parse(data.calendarEvent.serializedCalendarReminders).forEach((reminder: any) => {
                                                     if (reminder.Method !== "Email") {
+                                                        // (a visitor only ever sees Notification reminders, so that is the method shown)
                                                         const selectedMethodOption = `
-                                                        <option value='Email' ${reminder.Method === "Email" ? "selected" : ""}>${localizer.Email}</option>
-                                                        <option value='Notification' ${reminder.Method === "Notification" ? "selected" : ""}>${localizer.Notification}</option>
+                                                        <option value='Email'>${localizer.Email}</option>
+                                                        <option value='Notification' selected>${localizer.Notification}</option>
                                                     `;
 
                                                         // All-day reminders use days / weeks lead time.
@@ -429,9 +440,10 @@
 
                                                 JSON.parse(data.calendarEvent.serializedCalendarReminders).forEach((reminder: any) => {
                                                     if (reminder.Method !== "Email") {
+                                                        // (a visitor only ever sees Notification reminders, so that is the method shown)
                                                         const selectedMethodOption = `
-                                                        <option value='Email' ${reminder.Method === "Email" ? "selected" : ""}>${localizer.Email}</option>
-                                                        <option value='Notification' ${reminder.Method === "Notification" ? "selected" : ""}>${localizer.Notification}</option>
+                                                        <option value='Email'>${localizer.Email}</option>
+                                                        <option value='Notification' selected>${localizer.Notification}</option>
                                                     `;
 
                                                         // Timed reminders can be minutes / hours / days / weeks;

@@ -252,8 +252,8 @@ describe(`${label} — create-event form`, () => {
     expect(h.calendarInstances[0].addEvent.mock.calls.at(-1)[0].id).toBe(50);
     expect(h.toastr.success).toHaveBeenCalledWith("created");
     expect(modal).toHaveBeenCalledWith("hide");
-    eventCalls(h)[0].success!({ result: false }); // the follow-up reload being refused is toasted (the outer reply's `error`, as on main)
-    expect(h.toastr.error).toHaveBeenCalledTimes(1);
+    eventCalls(h)[0].success!({ result: false, error: "no events for you" }); // the follow-up reload being refused is toasted with its own message
+    expect(h.toastr.error).toHaveBeenCalledWith("no events for you");
 
     const h2 = build({ body: withRows(timedRows) });
     setDates(h2);
@@ -1022,16 +1022,19 @@ export function describeEditFormDetail(c: { label: string; build: Build }): void
       expect(html).toContain('src="keep.png"');
     });
 
-    it.each(["onload", "onerror"] as const)("the edit form's rehydrated image %s releases the object URL it was given", (event) => {
-      const h = setup();
+    it.each(["onload", "onerror"] as const)("the edit form's rebuilt image %s releases the object URL it was given", (event) => {
+      const h = build({ body: (html) => html
+        .replace('<div id="divEditEventNotificationAllDayUnchecked"></div>', "").replace('<div id="divEditEventNotificationAllDayChecked"></div>', "")
+        .replace('<div id="editCalendarEventDescription"></div>', '<div id="editCalendarEventDescription"></div><div class="note-editor"><img src="blob:live"></div>') + editDom });
+      (h.win as any).URL.createObjectURL = vi.fn(() => "blob:fake");
+      spyModal(h);
       openEdit(h, { description: `<img data-file="${png}" data-contenttype="image/png">` });
       const revoke = ((h.win as any).URL.revokeObjectURL = vi.fn());
-      const img = h.parsedDocuments.flatMap((d) => [...d.querySelectorAll("img")]).find((i) => typeof (i as any)[event] === "function") as any;
+      const img = h.$(".note-editor img")[0] as HTMLImageElement;
 
-      expect(img).toBeDefined();
-      img[event]();
+      (img[event] as () => void)();
 
-      expect(revoke).toHaveBeenCalledWith("blob:fake");
+      expect(revoke).toHaveBeenCalledWith("blob:live");
     });
 
     it("an inline image with no content type is left exactly as stored", () => {
@@ -1123,8 +1126,8 @@ export function describeEditFormDetail(c: { label: string; build: Build }): void
       expect(added).toMatchObject({ id: 50, title: "Event 50", backgroundColor: "#123456" });
       expect(added.extendedProps).toMatchObject({ calendarId: 1, displayStartDate: "2024-05-01 10:00:00", displayEndDateTimeZone: "UTC" });
 
-      reload.success!({ result: false });
-      expect(h.toastr.error).toHaveBeenCalledTimes(1); // the script toasts the (outer) reply's `error`, as it does on main
+      reload.success!({ result: false, error: "no events for you" });
+      expect(h.toastr.error).toHaveBeenCalledWith("no events for you"); // the reload's own message, not the (successful) edit reply's
     });
 
     it("clicking the attached-file link downloads it through a temporary object URL and revokes that URL shortly after", () => {

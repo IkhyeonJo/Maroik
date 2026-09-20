@@ -398,16 +398,16 @@ export function describeBoardScript(c: BoardScriptConfig): void {
       expect((h.$("#detailBoardContent")[0] as HTMLElement).style.display).not.toBe("none");
     });
 
-    it.each(["onload", "onerror"] as const)("detail view: a rehydrated image's %s releases the object URL it was given", (event) => {
+    it.each(["onload", "onerror"] as const)("detail view: a rebuilt image's %s releases the object URL it was given", (event) => {
       const h = loadSite(c.area, c.feature, c.page,
         boardFixture(c).replace(
           '<div id="detailBoardContent" style="display:none"></div>',
           `<div id="detailBoardContent" style="display:none"><img data-file="${btoa("abc")}" data-contenttype="image/png"></div>`));
       const revoke = ((h.win as any).URL.revokeObjectURL = vi.fn());
-      const img = h.parsedDocuments.flatMap((d) => [...d.querySelectorAll("img")]).find((i) => typeof (i as any)[event] === "function") as any;
+      const img = h.$("#detailBoardContent img")[0] as HTMLImageElement; // the image as it is in the live page
 
-      expect(img, "the script attached a handler to the image it rebuilt").toBeDefined();
-      img[event]();
+      expect(revoke).not.toHaveBeenCalled();
+      (img[event] as () => void)();
 
       expect(revoke).toHaveBeenCalledTimes(1);
       expect(revoke).toHaveBeenCalledWith(img.src);
@@ -425,18 +425,18 @@ export function describeBoardScript(c: BoardScriptConfig): void {
       expect((h.$("#divEditBoardContent")[0] as HTMLElement).style.display).not.toBe("none");
     });
 
-    it.each(["onload", "onerror"] as const)("edit view: a rehydrated image's %s releases the object URL it was given", (event) => {
+    it.each(["onload", "onerror"] as const)("edit view: a rebuilt image's %s releases the object URL it was given", (event) => {
       const h = loadSite(c.area, c.feature, c.page,
         boardFixture(c).replace('<div id="detailBoardContent" style="display:none"></div>', "")
+          .replace('<div id="editBoardContent"></div>', '<div id="editBoardContent"></div><div class="note-editor"><img src="blob:live"></div>')
           .replace('<div id="divEditBoardContent"></div>', '<div id="divEditBoardContent" style="display:none"></div>'),
         { summernoteCode: `<img data-file="${btoa("abc")}" data-contenttype="image/png">` });
       const revoke = ((h.win as any).URL.revokeObjectURL = vi.fn());
-      const img = h.parsedDocuments.flatMap((d) => [...d.querySelectorAll("img")]).find((i) => typeof (i as any)[event] === "function") as any;
+      const img = h.$(".note-editor img")[0] as HTMLImageElement; // the editor's own copy of the rebuilt image
 
-      expect(img).toBeDefined();
-      img[event]();
+      (img[event] as () => void)();
 
-      expect(revoke).toHaveBeenCalledWith(img.src);
+      expect(revoke).toHaveBeenCalledWith("blob:live");
     });
 
     it("edit view: an inline image with no content type is left as stored", () => {

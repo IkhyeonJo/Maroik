@@ -105,15 +105,14 @@ describe("Forum/FreeForum (anonymous) — navigation, images and attachments", (
     expect(el.style.display).not.toBe("none");
   });
 
-  it.each(["onload", "onerror"] as const)("a rehydrated detail image's %s releases the object URL it was given", (event) => {
+  it.each(["onload", "onerror"] as const)("a rebuilt detail image's %s releases the object URL it was given", (event) => {
     const h = load(fixture().replace(
       '<div id="detailBoardContent"></div>',
       `<div id="detailBoardContent" style="display:none"><img data-file="${btoa("abc")}" data-contenttype="image/png"></div>`));
     const revoke = ((h.win as any).URL.revokeObjectURL = vi.fn());
-    const img = h.parsedDocuments.flatMap((d) => [...d.querySelectorAll("img")]).find((i) => typeof (i as any)[event] === "function") as any;
+    const img = h.$("#detailBoardContent img")[0] as HTMLImageElement;
 
-    expect(img).toBeDefined();
-    img[event]();
+    (img[event] as () => void)();
 
     expect(revoke).toHaveBeenCalledWith(img.src);
   });
