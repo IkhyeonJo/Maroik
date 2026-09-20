@@ -207,4 +207,25 @@ public class CalendarEventTests
         Assert.Equal("CalendarEvent.StatusInvalid", result.FirstError.Code);
     }
 
+    // -- Update: length limits (the shared rules of Create and Update) -----------------
+
+    /// <summary>Update refuses an over-long title.</summary>
+    [Fact]
+    public void Update_ReturnsError_WhenTitleTooLong()
+    {
+        var result = ValidEvent().Update(new string('x', 101), null, false, _start, _end, null, null, null, null);
+
+        Assert.True(result.IsError);
+        Assert.Equal("CalendarEvent.TitleTooLong", result.FirstError.Code);
+    }
+
+    /// <summary>Update refuses an over-long description.</summary>
+    [Fact]
+    public void Update_ReturnsError_WhenDescriptionTooLong()
+    {
+        var result = ValidEvent().Update("Title", new string('x', 16385), false, _start, _end, null, null, null, null);
+
+        Assert.True(result.IsError);
+        Assert.Equal("CalendarEvent.DescriptionTooLong", result.FirstError.Code);
+    }
 }

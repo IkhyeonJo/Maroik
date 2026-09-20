@@ -15,9 +15,9 @@ namespace Maroik.FileStorage.Tests.Controllers;
 /// Uses <see cref="WebApplicationFactory{TEntryPoint}"/> to spin up the real ASP.NET pipeline
 /// in memory, replacing <see cref="IClamavClient"/> with a controllable mock.
 ///
-/// Note: the "happy-path" upload (file actually written to disk) is not tested here because
-/// the action calls /bin/chmod which is Linux-only. All validation paths ?? extension,
-/// size, magic bytes, ClamAV, and encrypted-ZIP checks ?? are fully covered.
+/// Covers every validation path (extension, size, magic bytes, ClamAV, encrypted ZIP), the happy path
+/// (a clean image is written under the storage root and can be downloaded back) and the download edge
+/// cases (unknown type, unreadable file).
 /// </summary>
 public class FileControllerTests : IClassFixture<WebApplicationFactory<Program>>
 {
@@ -429,6 +429,108 @@ public class FileControllerTests : IClassFixture<WebApplicationFactory<Program>>
         finally
         {
             if (File.Exists(tempPath)) File.Delete(tempPath);
+        }
+    }
+
+    // -- Upload: success; Download: unknown type and unreadable file ----------------------
+
+    /// <summary>A valid, clean image is stored under the target directory and the caller is told so; it can then be downloaded back byte for byte.</summary>
+    [Fact]
+    public async Task Upload_StoresAValidCleanImage_AndItCanBeDownloadedBack()
+    {
+        string targetDir = UniqueTempTarget();
+        byte[] png = [0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A, 0x00];
+        try
+        {
+            var factory = _baseFactory.WithWebHostBuilder(b =>
+            {
+                b.UseSetting("ServerSetting:StorageRootPath", Path.GetTempPath());
+                b.ConfigureServices(services =>
+                {
+                    RemoveService<IClamavClient>(services);
+                    var mock = new Mock<IClamavClient>();
+                    mock.Setup(c => c.ScanWithClamavAsync(It.IsAny<Stream>(), It.IsAny<string>(), It.IsAny<int>()))
+                        .ReturnsAsync(ClamavScanResult.Clean);
+                    services.AddScoped<IClamavClient>(_ => mock.Object);
+                });
+            });
+            var client = factory.CreateClient();
+            using var upload = new MultipartFormDataContent();
+            var fileContent = new ByteArrayContent(png);
+            fileContent.Headers.ContentType = MediaTypeHeaderValue.Parse("image/png");
+            upload.Add(fileContent, "file", "stored.png");
+            upload.Add(new StringContent(targetDir), "filePath");
+            upload.Add(new StringContent("corr-1"), "correlationId");
+
+            var uploaded = await client.PostAsync("/api/File/upload", upload, TestContext.Current.CancellationToken);
+
+            Assert.Equal(HttpStatusCode.OK, uploaded.StatusCode);
+            Assert.Equal("File uploaded successfully.", await uploaded.Content.ReadAsStringAsync(TestContext.Current.CancellationToken));
+            string stored = Path.Combine(targetDir, "stored.png");
+            Assert.Equal(png, await File.ReadAllBytesAsync(stored, TestContext.Current.CancellationToken));
+
+            using var download = new MultipartFormDataContent { { new StringContent(stored), "filePath" } };
+            var downloaded = await client.PostAsync("/api/File/download", download, TestContext.Current.CancellationToken);
+            Assert.Equal(HttpStatusCode.OK, downloaded.StatusCode);
+            Assert.Equal(png, await downloaded.Content.ReadAsByteArrayAsync(TestContext.Current.CancellationToken));
+        }
+        finally
+        {
+            if (Directory.Exists(targetDir)) Directory.Delete(targetDir, recursive: true);
+        }
+    }
+
+    /// <summary>A stored file whose extension has no known media type is served as a generic binary download.</summary>
+    [Fact]
+    public async Task Download_FallsBackToOctetStream_ForAnUnknownFileType()
+    {
+        var tempPath = Path.Combine(Path.GetTempPath(), $"maroik_test_{Guid.NewGuid()}.unknownext");
+        await File.WriteAllBytesAsync(tempPath, [1, 2, 3], TestContext.Current.CancellationToken);
+        try
+        {
+            var client = FactoryWithTempStorageRoot().CreateClient();
+            using var content = new MultipartFormDataContent { { new StringContent(tempPath), "filePath" } };
+
+            var response = await client.PostAsync("/api/File/download", content, TestContext.Current.CancellationToken);
+
+            Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+            Assert.Equal("application/octet-stream", response.Content.Headers.ContentType?.MediaType);
+        }
+        finally
+        {
+            File.Delete(tempPath);
+        }
+    }
+
+    /// <summary>A file that exists but cannot be read is answered with a plain "Invalid file", not a server error.</summary>
+    [Fact]
+    public async Task Download_ReturnsBadRequest_WhenTheFileCannotBeRead()
+    {
+        if (OperatingSystem.IsWindows()) return; // permissions are set through Unix file modes
+        var tempPath = Path.Combine(Path.GetTempPath(), $"maroik_test_{Guid.NewGuid()}.png");
+        await File.WriteAllBytesAsync(tempPath, [1, 2, 3], TestContext.Current.CancellationToken);
+        File.SetUnixFileMode(tempPath, UnixFileMode.None);
+        try
+        {
+            if (CanRead(tempPath)) return; // running as root: file permissions do not apply, so the read cannot be made to fail
+            var client = FactoryWithTempStorageRoot().CreateClient();
+            using var content = new MultipartFormDataContent { { new StringContent(tempPath), "filePath" } };
+
+            var response = await client.PostAsync("/api/File/download", content, TestContext.Current.CancellationToken);
+
+            Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+            Assert.Equal("Invalid file", await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken));
+        }
+        finally
+        {
+            File.SetUnixFileMode(tempPath, UnixFileMode.UserRead | UnixFileMode.UserWrite);
+            File.Delete(tempPath);
+        }
+
+        static bool CanRead(string path)
+        {
+            try { _ = File.ReadAllBytes(path); return true; }
+            catch (UnauthorizedAccessException) { return false; }
         }
     }
 }

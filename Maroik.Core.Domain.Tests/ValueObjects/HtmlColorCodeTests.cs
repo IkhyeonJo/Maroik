@@ -89,4 +89,11 @@ public class HtmlColorCodeTests
 
         Assert.Equal(a, b);
     }
+
+    /// <summary>ToString is the colour code.</summary>
+    [Fact]
+    public void ToString_IsTheColorCode()
+    {
+        Assert.Equal("#3788D8", HtmlColorCode.Create("#3788d8").Value.ToString()); // normalised to upper case
+    }
 }

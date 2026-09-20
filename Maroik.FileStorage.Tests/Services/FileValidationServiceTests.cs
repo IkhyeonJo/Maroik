@@ -329,4 +329,28 @@ public class FileValidationServiceTests
         Assert.False(success);
         Assert.Equal("Encrypted ZIP files are not allowed.", error);
     }
+
+    /// <summary>An upload whose target file already exists is refused (names are unique GUIDs, so a collision means a bug upstream) and the original is left untouched.</summary>
+    [Fact]
+    public async Task ValidateAndSaveAsync_RefusesToOverwrite_AnExistingFile()
+    {
+        var tempDir = CreateTempDir();
+        try
+        {
+            byte[] original = [0xFF, 0xD8, 0xFF, 0xE0, 0x00, 0x10, 0x4A, 0x46, 0x49, 0x46, 0x00];
+            var service = new FileValidationService(CleanScanMock().Object, DefaultSettings());
+            Assert.True((await service.ValidateAndSaveAsync(MakeFormFile(original, "photo.jpg"), tempDir)).Item1);
+
+            byte[] other = [0xFF, 0xD8, 0xFF, 0xE1, 0x00, 0x10, 0x00, 0x00, 0x00, 0x00, 0x00];
+            var (success, error) = await service.ValidateAndSaveAsync(MakeFormFile(other, "photo.jpg"), tempDir);
+
+            Assert.False(success);
+            Assert.Equal("A file already exists at the target path.", error);
+            Assert.Equal(original, await File.ReadAllBytesAsync(Path.Combine(tempDir, "photo.jpg"), TestContext.Current.CancellationToken));
+        }
+        finally
+        {
+            if (Directory.Exists(tempDir)) Directory.Delete(tempDir, recursive: true);
+        }
+    }
 }

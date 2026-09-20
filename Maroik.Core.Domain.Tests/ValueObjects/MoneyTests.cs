@@ -151,4 +151,23 @@ public class MoneyTests
 
         Assert.Equal(100m, money.Amount);
     }
+
+    // -- Create: currency length; ToString ------------------------------------------------
+
+    /// <summary>Create refuses a currency code longer than the column holds.</summary>
+    [Fact]
+    public void Create_ReturnsError_WhenCurrencyTooLong()
+    {
+        var result = Money.Create(1m, new string('K', 46) /* the column holds 45 */);
+
+        Assert.True(result.IsError);
+        Assert.Equal("Money.CurrencyTooLong", result.FirstError.Code);
+    }
+
+    /// <summary>ToString shows the amount and the (upper-cased) currency.</summary>
+    [Fact]
+    public void ToString_ShowsAmountAndCurrency()
+    {
+        Assert.Equal("12.5 KRW", Money.Create(12.5m, "krw").Value.ToString());
+    }
 }

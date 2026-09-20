@@ -392,4 +392,28 @@ public class AttachmentContentServiceTests
 
         Assert.Equal("<clean/>", result);
     }
+
+    /// <summary>The embedded image's content type follows its stored file's extension (unknown extensions are served as generic binary).</summary>
+    [Theory]
+    [InlineData("upload/a.jpg", "image/jpeg")]
+    [InlineData("upload/a.JPEG", "image/jpeg")]
+    [InlineData("upload/a.gif", "image/gif")]
+    [InlineData("upload/a.webp", "image/webp")]
+    [InlineData("upload/a.bmp", "application/octet-stream")]
+    [InlineData("upload/noextension", "application/octet-stream")]
+    public async Task PrepareHtmlForDisplayAsync_PatchFactory_PicksTheContentTypeFromTheExtension(string path, string expected)
+    {
+        Func<string, CancellationToken, Task<HtmlImgPatch?>>? capturedFactory = null;
+        _htmlParser.Setup(p => p.TransformImageAttributesAsync(
+                It.IsAny<string>(), It.IsAny<Func<string, CancellationToken, Task<HtmlImgPatch?>>>(), It.IsAny<CancellationToken>()))
+            .Callback<string, Func<string, CancellationToken, Task<HtmlImgPatch?>>, CancellationToken>((_, factory, _) => capturedFactory = factory)
+            .ReturnsAsync(("<html/>", true));
+        _fileClient.Setup(f => f.DownloadAsync(path, It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync([1, 2, 3]);
+        _rsa.Setup(r => r.Encrypt(path)).Returns("enc");
+
+        await CreateSut().PrepareHtmlForDisplayAsync("<html/>", TestContext.Current.CancellationToken);
+        HtmlImgPatch? patch = await capturedFactory!(path, TestContext.Current.CancellationToken);
+
+        Assert.Equal(expected, patch!.DataContentType);
+    }
 }

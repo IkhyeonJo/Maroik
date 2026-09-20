@@ -24,8 +24,7 @@ public class DashboardService(
     IExpenditureRepository expenditureRepository,
     IFixedIncomeRepository fixedIncomeRepository,
     IFixedExpenditureRepository fixedExpenditureRepository,
-    IOptions<ServerSetting> settings,
-    ILogger<DashboardService> logger) : IDashboardService
+    IOptions<ServerSetting> settings) : IDashboardService
 {
     /// <inheritdoc />
     public async Task<DashboardDto> GetSummaryAsync(string accountEmail, string year, string month, string timeZoneId, CancellationToken ct = default)
@@ -221,65 +220,46 @@ public class DashboardService(
         string dockerResourceUsage = ExtractSection(dockerText, "Docker Resource Usage:");
 
         var dockerContainerResult = new List<DockerContainerResourceDto>();
-        try
+        // Plain string splitting of text that is already a non-null string: nothing here can throw, and a malformed
+        // line is simply skipped (fewer than five columns).
+        var lines = dockerResourceUsage.Split('\n', StringSplitOptions.RemoveEmptyEntries);
+        var resourceMap = new Dictionary<string, string[]>();
+        for (int i = 1; i < lines.Length; i++)
         {
-            var lines = dockerResourceUsage.Split('\n', StringSplitOptions.RemoveEmptyEntries);
-            var resourceMap = new Dictionary<string, string[]>();
-            for (int i = 1; i < lines.Length; i++)
-            {
-                var cols = lines[i].Split(' ', StringSplitOptions.RemoveEmptyEntries);
-                if (cols.Length < 5) continue;
-                resourceMap[cols[0]] = cols;
-            }
-            for (int i = 1; i < lines.Length; i++)
-            {
-                var cols = lines[i].Split(' ', StringSplitOptions.RemoveEmptyEntries);
-                if (cols.Length < 5) continue;
-                string name = cols[0];
-                if (resourceMap.TryGetValue(name, out var r))
-                {
-                    dockerContainerResult.Add(new DockerContainerResourceDto
-                    {
-                        Name = name,
-                        CpuPercent = r[1],
-                        MemUsageDisplay = $"{r[2]} {r[3]} {r[4]}"
-                    });
-                }
-            }
+            var cols = lines[i].Split(' ', StringSplitOptions.RemoveEmptyEntries);
+            if (cols.Length < 5) continue;
+            resourceMap[cols[0]] = cols;
         }
-        catch (Exception ex)
+        for (int i = 1; i < lines.Length; i++)
         {
-            logger.LogWarning(ex, "Failed to parse Docker container resource usage");
+            var cols = lines[i].Split(' ', StringSplitOptions.RemoveEmptyEntries);
+            if (cols.Length < 5) continue;
+            string name = cols[0];
+            if (resourceMap.TryGetValue(name, out var r))
+            {
+                dockerContainerResult.Add(new DockerContainerResourceDto
+                {
+                    Name = name,
+                    CpuPercent = r[1],
+                    MemUsageDisplay = $"{r[2]} {r[3]} {r[4]}"
+                });
+            }
         }
 
         string memUsageLimit = "";
         if (!string.IsNullOrEmpty(hostMemoryInfo))
         {
-            try
-            {
-                string[] temp = hostMemoryInfo.Replace("Memory: ", "").Split('/');
-                if (temp.Length >= 2)
-                    memUsageLimit = temp[1].Trim() + " / " + temp[0].Trim();
-            }
-            catch (Exception ex)
-            {
-                logger.LogWarning(ex, "Failed to parse host memory usage/limit from resource log");
-            }
+            string[] temp = hostMemoryInfo.Replace("Memory: ", "").Split('/');
+            if (temp.Length >= 2)
+                memUsageLimit = temp[1].Trim() + " / " + temp[0].Trim();
         }
 
         string diskUsageLimit = "";
         if (!string.IsNullOrEmpty(hostDiskInfo))
         {
-            try
-            {
-                string[] temp = hostDiskInfo.Replace("Disk: ", "").Split('/');
-                if (temp.Length >= 2)
-                    diskUsageLimit = temp[1].Trim() + " / " + temp[0].Trim();
-            }
-            catch (Exception ex)
-            {
-                logger.LogWarning(ex, "Failed to parse host disk usage/limit from resource log");
-            }
+            string[] temp = hostDiskInfo.Replace("Disk: ", "").Split('/');
+            if (temp.Length >= 2)
+                diskUsageLimit = temp[1].Trim() + " / " + temp[0].Trim();
         }
 
 #pragma warning disable CA1806
@@ -329,26 +309,18 @@ public class DashboardService(
     /// <summary>
     /// Extracts and trims the text between <paramref name="startMarker"/> and <paramref name="endMarker"/>
     /// (or to the end of <paramref name="input"/> when <paramref name="endMarker"/> is omitted).
-    /// Returns an empty string when a marker is missing or any parsing error occurs, instead of throwing,
+    /// Returns an empty string when a marker is missing (the search itself cannot fail on a non-null string),
     /// so a malformed resource log never breaks the whole summary.
     /// </summary>
-    private string ExtractSection(string input, string startMarker, string? endMarker = null)
+    private static string ExtractSection(string input, string startMarker, string? endMarker = null)
     {
-        try
-        {
-            int markerIndex = input.IndexOf(startMarker, StringComparison.Ordinal);
-            if (markerIndex < 0) return "";
+        int markerIndex = input.IndexOf(startMarker, StringComparison.Ordinal);
+        if (markerIndex < 0) return "";
 
-            int startIndex = markerIndex + startMarker.Length;
-            int endIndex = endMarker != null ? input.IndexOf(endMarker, startIndex, StringComparison.Ordinal) : input.Length;
+        int startIndex = markerIndex + startMarker.Length;
+        int endIndex = endMarker != null ? input.IndexOf(endMarker, startIndex, StringComparison.Ordinal) : input.Length;
 #pragma warning disable IDE0057
-            return endIndex < 0 ? "" : input.Substring(startIndex, endIndex - startIndex).Trim();
+        return endIndex < 0 ? "" : input.Substring(startIndex, endIndex - startIndex).Trim();
 #pragma warning restore IDE0057
-        }
-        catch (Exception ex)
-        {
-            logger.LogWarning(ex, "Failed to extract section {StartMarker} from resource log", startMarker);
-            return "";
-        }
     }
 }

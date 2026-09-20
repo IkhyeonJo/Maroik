@@ -32,4 +32,11 @@ public class EnumHelperTests
 
         Assert.Equal(expected, result);
     }
+
+    /// <summary>A value that is not a defined member of its enum has no member info, so its number is returned.</summary>
+    [Fact]
+    public void GetDescription_FallsBackToTheValueText_ForAnUndefinedEnumValue()
+    {
+        Assert.Equal("99", EnumHelper.GetDescription((DayOfWeek)99));
+    }
 }

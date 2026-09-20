@@ -452,4 +452,42 @@ public sealed class BoardRepositoryTests(DatabaseFixture database) : RepositoryT
 
         Assert.Equal([$"50%_off-{Token}"], result.Items.Select(b => b.Title));
     }
+
+    // -- QueryPageAsync (owner-scoped Writer search; unknown viewer role) ------------------
+
+    /// <summary>The owner-scoped list (private notes) can be searched by writer as well as by title.</summary>
+    [Fact]
+    public async Task QueryPageAsync_OwnerScopedWriterSearch_FindsOnlyThatWriter()
+    {
+        string owner = Unique("note_owner");
+        await SeedAsync(MakeBoard($"Mine-{Token}", owner), MakeBoard($"Theirs-{Token}", Unique("someone_else")));
+
+        var result = await Sut.QueryPageAsync(
+            new BoardPageQuery(BoardTypes.FreeForum, OwnerNickname: owner, SearchType: "Writer", SearchText: owner,
+                IsLoggedIn: true, ViewerRole: Role.User, ViewerNickname: owner, Page: 1, PageSize: 50),
+            TestContext.Current.CancellationToken);
+
+        Assert.Equal([$"Mine-{Token}"], result.Items.Select(b => b.Title));
+    }
+
+    /// <summary>
+    /// A logged-in viewer whose role is neither Admin nor User (impossible for a real session) is not restricted at all: the search
+    /// is left as the plain, unfiltered, unsearched list — the behaviour the original code had — rather than an error.
+    /// </summary>
+    [Fact]
+    public async Task QueryPageAsync_ASearchByALoggedInViewerWithAnUnknownRole_GetsTheUnfilteredList()
+    {
+        EfBoard open = MakeBoard($"Open-{Token}");
+        EfBoard locked = MakeBoard($"Locked-{Token}");
+        locked.Locked = true;
+        await SeedAsync(open, locked);
+
+        var result = await Sut.QueryPageAsync(
+            new BoardPageQuery(BoardTypes.FreeForum, OwnerNickname: null, SearchType: "Title", SearchText: $"Open-{Token}",
+                IsLoggedIn: true, ViewerRole: "Ghost", ViewerNickname: Unique("ghost"), Page: 1, PageSize: 500),
+            TestContext.Current.CancellationToken);
+
+        Assert.Contains(result.Items, b => b.Title == $"Open-{Token}");
+        Assert.Contains(result.Items, b => b.Title == $"Locked-{Token}"); // neither searched nor lock-filtered
+    }
 }

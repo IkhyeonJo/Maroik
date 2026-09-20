@@ -729,4 +729,30 @@ public class AccountTests
         Assert.NotEqual(stampBeforeReset, account.SecurityStamp);
         Assert.False(account.MustChangePassword);
     }
+
+    // -- RegenerateRegistrationToken -------------------------------------------
+
+    /// <summary>Regenerate registration token replaces the stored token for an unconfirmed account (even one that is still valid).</summary>
+    [Fact]
+    public void RegenerateRegistrationToken_ReplacesTheToken_WhenNotYetConfirmed()
+    {
+        var account = ValidAccount(registrationToken: "old-token");
+
+        account.RegenerateRegistrationToken("fresh-token");
+
+        Assert.Equal("fresh-token", account.RegistrationToken);
+    }
+
+    /// <summary>Once the e-mail is confirmed there is nothing left to confirm, so regenerating changes nothing.</summary>
+    [Fact]
+    public void RegenerateRegistrationToken_IsANoOp_OnceConfirmed()
+    {
+        string token = GuidToken.Generate();
+        var account = ValidAccount(registrationToken: token);
+        account.ConfirmEmail(token);
+
+        account.RegenerateRegistrationToken("fresh-token");
+
+        Assert.Null(account.RegistrationToken);
+    }
 }

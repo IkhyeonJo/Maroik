@@ -116,4 +116,38 @@ public class EmailTests
 
         Assert.NotEqual(a, b);
     }
+
+    // -- Create: the address shapes MailAddress accepts but the value object refuses ----------------
+
+    /// <summary>The display-name form ("Jane &lt;jane@example.com&gt;") is not a bare address.</summary>
+    [Fact]
+    public void Create_RejectsTheDisplayNameForm()
+    {
+        var result = Email.Create("Jane <jane@example.com>");
+
+        Assert.True(result.IsError);
+        Assert.Equal("Email.Invalid", result.FirstError.Code);
+    }
+
+    /// <summary>A host with an empty label, a one-letter top-level domain, or a quoted local part with a space is refused.</summary>
+    [Theory]
+    [InlineData("user@example.com.")]
+    [InlineData("user@example.c")]
+    [InlineData("\"a b\"@example.com")]
+    [InlineData("user..name@example.com")]
+    [InlineData(".user@example.com")]
+    public void Create_RejectsMalformedHostsAndLocalParts(string input)
+    {
+        var result = Email.Create(input);
+
+        Assert.True(result.IsError);
+        Assert.Equal("Email.Invalid", result.FirstError.Code);
+    }
+
+    /// <summary>ToString is the normalized (lower-case) address.</summary>
+    [Fact]
+    public void ToString_IsTheNormalizedAddress()
+    {
+        Assert.Equal("user@example.com", Email.Create("USER@Example.com").Value.ToString());
+    }
 }

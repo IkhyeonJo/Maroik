@@ -192,4 +192,44 @@ public sealed class UnitOfWorkTests(DatabaseFixture database) : RepositoryTestBa
 
         Assert.Null(ex);
     }
+
+    // -- A transaction the database has already ended ----------------------------------
+
+    /// <summary>Begins a unit of work and then kills its database session, so the transaction can no longer be rolled back normally.</summary>
+    private async Task<(UnitOfWork Uow, Maroik.Core.PostgreSQL.Data.ApplicationDbContext Context)> BeginAndKillTheSessionAsync()
+    {
+        CancellationToken ct = TestContext.Current.CancellationToken;
+        var context = NewDbContext();
+        var uow = new UnitOfWork(context);
+        await uow.BeginAsync(ct);
+        int pid = await context.Database.SqlQueryRaw<int>("SELECT pg_backend_pid() AS \"Value\"").SingleAsync(ct);
+        await Context.Database.ExecuteSqlAsync($"SELECT pg_terminate_backend({pid})", ct);
+        return (uow, context);
+    }
+
+    /// <summary>Rolling back after the database dropped the session does not throw (there is nothing left to roll back) and still clears the tracker.</summary>
+    [Fact]
+    public async Task RollbackAsync_DoesNotThrow_WhenTheDatabaseAlreadyEndedTheTransaction()
+    {
+        var (uow, context) = await BeginAndKillTheSessionAsync();
+        context.Accounts.Add(new OrmAccount { Email = UniqueEmail("tracked"), Nickname = Unique("Tracked"), HashedPassword = "x", AvatarImagePath = "/a", Role = "User", TimeZoneIanaId = "UTC", SecurityStamp = "s" });
+
+        Exception? ex = await Record.ExceptionAsync(() => uow.RollbackAsync(TestContext.Current.CancellationToken));
+
+        Assert.Null(ex);
+        Assert.Empty(context.ChangeTracker.Entries()); // the aborted unit of work leaves nothing tracked
+        await uow.DisposeAsync();
+    }
+
+    /// <summary>Disposing a unit of work whose transaction the database already ended does not throw either.</summary>
+    [Fact]
+    public async Task DisposeAsync_DoesNotThrow_WhenTheDatabaseAlreadyEndedTheTransaction()
+    {
+        var (uow, context) = await BeginAndKillTheSessionAsync();
+
+        Exception? ex = await Record.ExceptionAsync(async () => await uow.DisposeAsync());
+
+        Assert.Null(ex);
+        Assert.Empty(context.ChangeTracker.Entries());
+    }
 }

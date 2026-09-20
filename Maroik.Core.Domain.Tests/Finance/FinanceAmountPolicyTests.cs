@@ -34,4 +34,14 @@ public class FinanceAmountPolicyTests
         Assert.Equal("Finance.NegativeAmount", result.FirstError.Code);
         Assert.Equal("Amount cannot be negative.", result.FirstError.Description);
     }
+
+    /// <summary>The largest absolute amount is what a <c>numeric(18,2)</c> column holds: 16 integer digits and 2 decimals.</summary>
+    [Fact]
+    public void MaxAbsoluteAmount_IsTheLargestNumeric18_2Value()
+    {
+        // (a decimal constant is stored as an attribute on a static field, so also force the type's static initialisation)
+        System.Runtime.CompilerServices.RuntimeHelpers.RunClassConstructor(typeof(FinanceAmountPolicy).TypeHandle);
+
+        Assert.Equal(9_999_999_999_999_999.99m, FinanceAmountPolicy.MaxAbsoluteAmount);
+    }
 }

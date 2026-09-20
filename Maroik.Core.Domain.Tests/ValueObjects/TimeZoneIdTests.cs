@@ -69,4 +69,11 @@ public class TimeZoneIdTests
 
         Assert.Equal(a, b);
     }
+
+    /// <summary>ToString is the IANA id.</summary>
+    [Fact]
+    public void ToString_IsTheIanaId()
+    {
+        Assert.Equal("Asia/Seoul", TimeZoneId.Create("Asia/Seoul").Value.ToString());
+    }
 }

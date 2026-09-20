@@ -187,14 +187,12 @@ public class ProfileService(
         }
     }
 
-    /// <summary>Maps an avatar file extension to its image MIME type.</summary>
+    /// <summary>
+    /// Maps an avatar file extension to its image MIME type. Only reached after <see cref="ImageUploadPolicy.IsAllowedExtension"/>
+    /// has accepted the extension (.jpg / .jpeg / .png), so anything that is not PNG is JPEG.
+    /// </summary>
     private static string ContentTypeForExtension(string extension) =>
-        extension.ToLowerInvariant() switch
-        {
-            ".jpg" or ".jpeg" => "image/jpeg",
-            ".png" => "image/png",
-            _ => "application/octet-stream"
-        };
+        extension.Equals(".png", StringComparison.OrdinalIgnoreCase) ? "image/png" : "image/jpeg";
 
     private Task<Account?> FindByEmailAsync(string email, CancellationToken ct = default)
         => accountRepository.FindByEmailAsync(email, ct);

@@ -733,4 +733,18 @@ public class ExpenditureServiceTests
         Assert.DoesNotContain("secret detail", result.ErrorKey);
         _unitOfWork.Verify(u => u.RollbackAsync(It.IsAny<CancellationToken>()), Times.Once);
     }
+
+    /// <summary>A record whose ORIGINAL payment asset has since been archived cannot be moved to another asset (its old balance impact cannot be reverted).</summary>
+    [Fact]
+    public async Task UpdateAsync_ReturnsAssetDeleted_WhenThePreviousPaymentAssetIsArchived_AndTheNewOneIsNot()
+    {
+        var previous = Expenditure.Reconstitute(1, Email, "ConsumerSpending", "MealOrEatOutExpenses", null, 50m, "KRW", "OldWallet", "", null, DateTime.UtcNow, DateTime.UtcNow);
+        _expenditureRepo.Setup(r => r.GetByAccountEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(new List<Expenditure> { previous });
+        GivenAssets(MakeAsset("Wallet"), MakeAsset("OldWallet", deleted: true));
+
+        ServiceResult result = await CreateSut().UpdateAsync(Email, WithId(ConsumerRequest("Wallet")), TestContext.Current.CancellationToken);
+
+        Assert.Equal("Expenditure.AssetDeleted", result.ErrorCode);
+        _expenditureRepo.Verify(r => r.UpdateEntityAsync(It.IsAny<Expenditure>(), It.IsAny<CancellationToken>()), Times.Never);
+    }
 }

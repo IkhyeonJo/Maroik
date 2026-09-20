@@ -301,4 +301,15 @@ public class RsaServiceTests
 
         Assert.False(result);
     }
+
+    /// <summary>Decrypting without a configured private key fails loudly instead of returning garbage.</summary>
+    [Fact]
+    public void Decrypt_Throws_WhenNoPrivateKeyIsConfigured()
+    {
+        var sut = new RsaService(Options.Create(new ServerSetting { RsaAlgorithm = RsaType.Rsa2, RsaPrivateKey = "", RsaPublicKey = _publicKeyBase64 }));
+
+        var ex = Assert.Throws<InvalidOperationException>(() => sut.Decrypt("anything"));
+
+        Assert.Contains("private key", ex.Message);
+    }
 }

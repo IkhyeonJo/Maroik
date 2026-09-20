@@ -251,9 +251,12 @@ public class MenuServiceTests
         _categoryRepo.Setup(r => r.UpdateEntityAsync(It.IsAny<Category>(), It.IsAny<CancellationToken>())).ThrowsAsync(new Exception("DB error"));
         var sut = CreateSut();
 
-        ServiceResult result = await sut.UpdateCategoryAsync(new CategoryRequest { Id = 1 }, TestContext.Current.CancellationToken);
+        // (a valid name: an empty one is refused by the domain before the repository is ever asked to write)
+        ServiceResult result = await sut.UpdateCategoryAsync(new CategoryRequest { Id = 1, Name = "Updated" }, TestContext.Current.CancellationToken);
 
         Assert.False(result.Success);
+        Assert.Equal("Menu.UpdateCategoryFailed", result.ErrorCode);
+        _unitOfWork.Verify(u => u.RollbackAsync(It.IsAny<CancellationToken>()), Times.Once);
     }
 
     /// <summary>
@@ -362,9 +365,12 @@ public class MenuServiceTests
         _subCategoryRepo.Setup(r => r.UpdateEntityAsync(It.IsAny<SubCategory>(), It.IsAny<CancellationToken>())).ThrowsAsync(new Exception("DB error"));
         var sut = CreateSut();
 
-        ServiceResult result = await sut.UpdateSubCategoryAsync(new SubCategoryRequest { Id = 1 }, TestContext.Current.CancellationToken);
+        // (a valid name: an empty one is refused by the domain before the repository is ever asked to write)
+        ServiceResult result = await sut.UpdateSubCategoryAsync(new SubCategoryRequest { Id = 1, Name = "Updated" }, TestContext.Current.CancellationToken);
 
         Assert.False(result.Success);
+        Assert.Equal("Menu.UpdateSubCategoryFailed", result.ErrorCode);
+        _unitOfWork.Verify(u => u.RollbackAsync(It.IsAny<CancellationToken>()), Times.Once);
     }
 
     /// <summary>

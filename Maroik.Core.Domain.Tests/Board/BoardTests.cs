@@ -511,4 +511,18 @@ public class BoardTests
             board.CanBeViewedBy("Alice", viewerIsAdmin: false),
             Board.CanBeViewedBy(board.Type, board.Deleted, board.Locked, board.Writer, "Alice", viewerIsAdmin: false));
     }
+
+    // -- Update: content length ----------------------------------------------------
+
+    /// <summary>Update refuses over-long content.</summary>
+    [Fact]
+    public void Update_ReturnsError_WhenContentTooLong()
+    {
+        var board = Board.Create("FreeForum", "Title", "body", "Alice").Value;
+
+        var result = board.Update("Title", new string('x', 16385));
+
+        Assert.True(result.IsError);
+        Assert.Equal("Board.ContentTooLong", result.FirstError.Code);
+    }
 }

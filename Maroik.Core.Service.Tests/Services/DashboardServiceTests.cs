@@ -32,8 +32,7 @@ public class DashboardServiceTests
         _expenditureRepo.Object,
         _fixedIncomeRepo.Object,
         _fixedExpenditureRepo.Object,
-        Options.Create(settings ?? new ServerSetting()),
-        NullLogger<DashboardService>.Instance);
+        Options.Create(settings ?? new ServerSetting()));
 
     // -- Helpers --------------------------------------------------------------
 

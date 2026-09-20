@@ -126,4 +126,24 @@ public sealed class OtherCalendarRepositoryTests(DatabaseFixture database) : Rep
         Assert.False(await Context.OtherCalendars.AnyAsync(oc => oc.AccountEmail == alice, TestContext.Current.CancellationToken));
         Assert.True(await Context.OtherCalendars.AnyAsync(oc => oc.AccountEmail == bob, TestContext.Current.CancellationToken));
     }
+
+    // -- DeleteByCalendarIdAsync ----------------------------------------------
+
+    /// <summary>Verifies that <c>DeleteByCalendarIdAsync</c> removes every subscription to that calendar and only those.</summary>
+    [Fact]
+    public async Task DeleteByCalendarIdAsync_RemovesEverySubscriptionToThatCalendar()
+    {
+        string alice = UniqueEmail("alice");
+        string bob = UniqueEmail("bob");
+        long shared = await InsertCalendarAsync();
+        long other = await InsertCalendarAsync();
+        await SeedAsync(alice, shared, other);
+        await SeedAsync(bob, shared);
+
+        await Sut.DeleteByCalendarIdAsync(shared, TestContext.Current.CancellationToken);
+        Context.ChangeTracker.Clear();
+
+        Assert.False(await Context.OtherCalendars.AnyAsync(oc => oc.CalendarId == shared, TestContext.Current.CancellationToken));
+        Assert.True(await Context.OtherCalendars.AnyAsync(oc => oc.AccountEmail == alice && oc.CalendarId == other, TestContext.Current.CancellationToken));
+    }
 }

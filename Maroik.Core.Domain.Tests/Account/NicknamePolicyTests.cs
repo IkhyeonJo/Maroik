@@ -211,4 +211,21 @@ public class NicknamePolicyTests
     [Fact]
     public void ReservedNicknames_IncludeTheAnonymousPlaceholder()
         => Assert.True(NicknamePolicy.IsReserved("Login"));
+
+    // -- Text that cannot be normalized (a lone surrogate) -----------------------------
+
+    /// <summary>A lone surrogate cannot be normalized: the canonical key is empty (it never collides with anything).</summary>
+    [Fact]
+    public void CanonicalKey_IsEmpty_ForALoneSurrogate()
+        => Assert.Equal("", NicknamePolicy.CanonicalKey("bad\uD800name"));
+
+    /// <summary>A nickname with a lone surrogate is refused as containing characters that are not allowed.</summary>
+    [Fact]
+    public void Validate_RejectsALoneSurrogate()
+    {
+        var result = NicknamePolicy.Validate("bad\uD800name");
+
+        Assert.True(result.IsError);
+        Assert.Equal("Account.NicknameInvalidCharacters", result.FirstError.Code);
+    }
 }

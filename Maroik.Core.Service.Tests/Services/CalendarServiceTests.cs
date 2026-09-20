@@ -1451,4 +1451,21 @@ public class CalendarServiceTests
 
         Assert.Equal([9, 9], bytes);
     }
+
+    /// <summary>A shared-calendar row that cannot become a subscription (a non-positive calendar id) is refused, and the transaction rolls back.</summary>
+    [Fact]
+    public async Task UpdateOtherCalendarAsync_ReturnsTheDomainRefusal_ForAnInvalidCalendarId()
+    {
+        _sharedRepo.Setup(r => r.GetByIdsForUpdateAsync(It.IsAny<IEnumerable<long>>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync([CalendarShared.Reconstitute(0, user: true, anonymous: false)]);
+        _otherCalendarRepo.Setup(r => r.DeleteByAccountEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
+        var sut = CreateSut();
+
+        ServiceResult result = await sut.UpdateOtherCalendarAsync("user@example.com", [new OtherCalendarRequest { CalendarId = 0 }], TestContext.Current.CancellationToken);
+
+        Assert.False(result.Success);
+        Assert.Equal("OtherCalendar.InvalidCalendarId", result.ErrorCode);
+        _unitOfWork.Verify(u => u.RollbackAsync(It.IsAny<CancellationToken>()), Times.Once);
+        _otherCalendarRepo.Verify(r => r.CreateAsync(It.IsAny<OtherCalendar>(), It.IsAny<CancellationToken>()), Times.Never);
+    }
 }

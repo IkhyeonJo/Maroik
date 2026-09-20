@@ -1209,4 +1209,37 @@ public class BoardServiceTests
 
         Assert.Equal([9, 9], await CreateSut().DownloadFileAsync("/upload/x.png", TestContext.Current.CancellationToken));
     }
+
+    // -- Domain refusals after the service's own checks ----------------------------------------------
+
+    /// <summary>A comment on a locked post by someone who is neither its author nor an admin is refused by the post itself, and the transaction rolls back.</summary>
+    [Fact]
+    public async Task WriteCommentAsync_ReturnsTheDomainRefusal_ForALockedPostAndAStranger()
+    {
+        _boardRepo.Setup(r => r.FindActiveByIdForUpdateAsync(It.IsAny<long>(), It.IsAny<CancellationToken>())).ReturnsAsync(MakeBoard(writer: "Alice", locked: true));
+        _commentRepo.Setup(r => r.GetByBoardIdOrderedAsync(It.IsAny<long>(), It.IsAny<CancellationToken>())).ReturnsAsync([]);
+        var sut = CreateSut();
+
+        ServiceResult result = await sut.WriteCommentAsync(new BoardCommentRequest { BoardId = 1, Writer = "Bob", Content = "Hello" }, ct: TestContext.Current.CancellationToken);
+
+        Assert.False(result.Success);
+        Assert.Equal("Board.Locked", result.ErrorCode);
+        _unitOfWork.Verify(u => u.RollbackAsync(It.IsAny<CancellationToken>()), Times.Once);
+        _commentRepo.Verify(r => r.CreateAsync(It.IsAny<BoardComment>(), It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    /// <summary>Deleting a comment that is already deleted is refused by the comment itself (the lookup does not filter deleted rows), and the transaction rolls back.</summary>
+    [Fact]
+    public async Task DeleteCommentAsync_ReturnsTheDomainRefusal_ForAnAlreadyDeletedComment()
+    {
+        _commentRepo.Setup(r => r.FindByIdForUpdateAsync(It.IsAny<long>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(BoardComment.Reconstitute(1, 1L, 0L, null, "Alice", "Comment", DateTime.UtcNow, true));
+        var sut = CreateSut();
+
+        ServiceResult result = await sut.DeleteCommentAsync(1, "Alice", false, ct: TestContext.Current.CancellationToken);
+
+        Assert.False(result.Success);
+        Assert.Equal("BoardComment.AlreadyDeleted", result.ErrorCode);
+        _unitOfWork.Verify(u => u.RollbackAsync(It.IsAny<CancellationToken>()), Times.Once);
+    }
 }

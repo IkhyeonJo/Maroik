@@ -200,4 +200,32 @@ public class FixedIncomeTests
         Assert.False(result.IsError);
         Assert.Equal("Salary raise", fi.Content);
     }
+
+    // -- Register: the other required text fields --------------------------------------
+
+    /// <summary>Register refuses a blank sub class.</summary>
+    [Theory]
+    [InlineData(null)]
+    [InlineData("")]
+    [InlineData("  ")]
+    public void Register_ReturnsError_WhenSubClassEmpty(string? subClass)
+    {
+        var result = FixedIncome.Register("user@example.com", "RegularIncome", subClass, "Salary", 1m, "KRW", "My Bank", 1, 25, _maturity);
+
+        Assert.True(result.IsError);
+        Assert.Equal("FixedIncome.SubClassEmpty", result.FirstError.Code);
+    }
+
+    /// <summary>Register refuses a blank deposit asset.</summary>
+    [Theory]
+    [InlineData(null)]
+    [InlineData("")]
+    [InlineData("  ")]
+    public void Register_ReturnsError_WhenDepositAssetEmpty(string? asset)
+    {
+        var result = FixedIncome.Register("user@example.com", "RegularIncome", "LaborIncome", "Salary", 1m, "KRW", asset, 1, 25, _maturity);
+
+        Assert.True(result.IsError);
+        Assert.Equal("FixedIncome.DepositAssetEmpty", result.FirstError.Code);
+    }
 }

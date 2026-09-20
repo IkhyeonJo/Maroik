@@ -200,4 +200,32 @@ public class FixedExpenditureTests
         Assert.False(result.IsError);
         Assert.Equal("Netflix Premium", fe.Content);
     }
+
+    // -- Register: the required text fields ----------------------------------------------
+
+    /// <summary>Register refuses a blank main class.</summary>
+    [Theory]
+    [InlineData(null)]
+    [InlineData("")]
+    [InlineData("  ")]
+    public void Register_ReturnsError_WhenMainClassEmpty(string? mainClass)
+    {
+        var result = FixedExpenditure.Register("user@example.com", mainClass, "LeisureOrCulture", "Netflix", 1m, "KRW", "My Card", null, 1, 1, _maturity);
+
+        Assert.True(result.IsError);
+        Assert.Equal("FixedExpenditure.MainClassEmpty", result.FirstError.Code);
+    }
+
+    /// <summary>Register refuses a blank sub class.</summary>
+    [Theory]
+    [InlineData(null)]
+    [InlineData("")]
+    [InlineData("  ")]
+    public void Register_ReturnsError_WhenSubClassEmpty(string? subClass)
+    {
+        var result = FixedExpenditure.Register("user@example.com", "ConsumerSpending", subClass, "Netflix", 1m, "KRW", "My Card", null, 1, 1, _maturity);
+
+        Assert.True(result.IsError);
+        Assert.Equal("FixedExpenditure.SubClassEmpty", result.FirstError.Code);
+    }
 }
