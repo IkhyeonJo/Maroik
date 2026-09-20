@@ -371,4 +371,84 @@ public sealed class AssetRepositoryTests(DatabaseFixture database) : RepositoryT
         Assert.NotNull(found);
         Assert.Equal(900m, found.Balance.Amount);
     }
+
+    // -- SearchByAccountEmailAsync -----------------------------------------------------
+
+    /// <summary>The whole-row search matches ProductName case-insensitively and never crosses accounts.</summary>
+    [Fact]
+    public async Task SearchByAccountEmailAsync_MatchesProductNameCaseInsensitively_AndIsScopedToTheAccount()
+    {
+        string alice = UniqueEmail("alice");
+        string bob = UniqueEmail("bob");
+        string marker = Unique("Brokerage");
+        await SeedAsync(MakeAsset(marker, alice), MakeAsset("Wallet", alice), MakeAsset(marker, bob));
+
+        List<Asset> result = await Sut.SearchByAccountEmailAsync(alice, marker.ToUpperInvariant(), TestContext.Current.CancellationToken);
+
+        Asset hit = Assert.Single(result);
+        Assert.Equal(marker, hit.ProductName);
+        Assert.Equal(alice, hit.AccountEmail.Value);
+    }
+
+    /// <summary>Item, currency label, note and amount are all searchable columns.</summary>
+    [Fact]
+    public async Task SearchByAccountEmailAsync_MatchesItemMonetaryUnitNoteAndAmount()
+    {
+        string alice = UniqueEmail("alice");
+        string unit = "U" + Token;
+        OrmAsset withUnit = MakeAsset("with-unit", alice, unit: unit);
+        OrmAsset withNote = MakeAsset("with-note", alice);
+        withNote.Note = "remember-" + Token;
+        await SeedAsync(
+            MakeAsset("trust", alice, item: "TrustAsset"),
+            withUnit,
+            withNote,
+            MakeAsset("with-amount", alice, amount: 4321.09m),
+            MakeAsset("plain", alice));
+
+        Assert.Equal("trust", Assert.Single(await Sut.SearchByAccountEmailAsync(alice, "TrustAsset", TestContext.Current.CancellationToken)).ProductName);
+        Assert.Equal("with-unit", Assert.Single(await Sut.SearchByAccountEmailAsync(alice, unit, TestContext.Current.CancellationToken)).ProductName);
+        Assert.Equal("with-note", Assert.Single(await Sut.SearchByAccountEmailAsync(alice, "remember-" + Token, TestContext.Current.CancellationToken)).ProductName);
+        Assert.Equal("with-amount", Assert.Single(await Sut.SearchByAccountEmailAsync(alice, "4321.09", TestContext.Current.CancellationToken)).ProductName);
+    }
+
+    /// <summary>The soft-delete flag is searchable as <c>true</c> (deleted assets stay visible to the search).</summary>
+    [Fact]
+    public async Task SearchByAccountEmailAsync_MatchesTheDeletedFlagAsText()
+    {
+        string alice = UniqueEmail("alice");
+        await SeedAsync(MakeAsset("gone", alice, deleted: true), MakeAsset("alive", alice));
+
+        List<Asset> result = await Sut.SearchByAccountEmailAsync(alice, "true", TestContext.Current.CancellationToken);
+
+        Assert.Equal("gone", Assert.Single(result).ProductName);
+    }
+
+    /// <summary><c>%</c> and <c>_</c> in the search text are literals, not LIKE wildcards.</summary>
+    [Fact]
+    public async Task SearchByAccountEmailAsync_TreatsLikeWildcardsLiterally()
+    {
+        string alice = UniqueEmail("alice");
+        await SeedAsync(
+            MakeAsset($"100%-{Token}", alice),
+            MakeAsset($"1000-{Token}", alice),
+            MakeAsset($"a_b-{Token}", alice),
+            MakeAsset($"axb-{Token}", alice));
+
+        List<Asset> percent = await Sut.SearchByAccountEmailAsync(alice, $"0%-{Token}", TestContext.Current.CancellationToken);
+        List<Asset> underscore = await Sut.SearchByAccountEmailAsync(alice, $"a_b-{Token}", TestContext.Current.CancellationToken);
+
+        Assert.Equal($"100%-{Token}", Assert.Single(percent).ProductName);
+        Assert.Equal($"a_b-{Token}", Assert.Single(underscore).ProductName);
+    }
+
+    /// <summary>No matching row → an empty list (the two-step lookup skips its second query).</summary>
+    [Fact]
+    public async Task SearchByAccountEmailAsync_ReturnsEmpty_WhenNothingMatches()
+    {
+        string alice = UniqueEmail("alice");
+        await SeedAsync(MakeAsset("Wallet", alice));
+
+        Assert.Empty(await Sut.SearchByAccountEmailAsync(alice, "no-such-" + Token, TestContext.Current.CancellationToken));
+    }
 }

@@ -901,4 +901,312 @@ public class BoardServiceTests
 
         Assert.False(result.Success);
     }
+
+    // -- EditBoardAsync: the four attachment states ------------------------------
+
+    private static AttachedFileDto Zip(string name = "new.zip") =>
+        new() { FileName = name, ContentType = "application/zip", Bytes = [1, 2], Size = 2 };
+
+    private void SetupEditableBoardWithAttachment(BoardAttachedFile? previous)
+    {
+        _boardRepo.Setup(r => r.FindActiveByIdForUpdateAsync(It.IsAny<long>(), It.IsAny<CancellationToken>())).ReturnsAsync(MakeBoard(writer: "Alice"));
+        _boardRepo.Setup(r => r.UpdateEntityAsync(It.IsAny<Board>(), It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
+        _attachedFileRepo.Setup(r => r.FindByBoardIdAsync(It.IsAny<long>(), It.IsAny<CancellationToken>())).ReturnsAsync(previous);
+        _fileClient.Setup(f => f.UploadAsync(It.IsAny<byte[]>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(true);
+    }
+
+    private static BoardRequest EditRequest() =>
+        new() { Id = 1, Type = BoardTypes.FreeForum, Title = "New Title", Content = "New Content" };
+
+    /// <summary>Replace: uploading a new file overwrites the SAME attachment row (same id) with the new file's metadata.</summary>
+    [Fact]
+    public async Task EditBoardAsync_ReplacesTheExistingAttachmentRecord_WhenANewFileIsUploaded()
+    {
+        SetupEditableBoardWithAttachment(BoardAttachedFile.Reconstitute(77, 1, 10, "old", ".txt", "/upload/old.txt"));
+
+        ServiceResult result = await CreateSut().EditBoardAsync(EditRequest(), "Alice", false, Zip("new.zip"), TestContext.Current.CancellationToken);
+
+        Assert.True(result.Success);
+        _fileClient.Verify(f => f.UploadAsync(It.IsAny<byte[]>(), "application/zip", It.Is<string>(p => p.StartsWith("upload/Forum/FreeForum/boardAttachedFiles/1/") && p.EndsWith(".zip")), "http://files.example.com", It.IsAny<CancellationToken>()), Times.Once);
+        _attachedFileRepo.Verify(r => r.UpdateEntityAsync(
+            It.Is<BoardAttachedFile>(f => f.Id == 77 && f.BoardId == 1 && f.Name == "new" && f.Extension == ".zip" && f.Size == 2
+                && f.Path.StartsWith("upload/Forum/FreeForum/boardAttachedFiles/1/") && f.Path.EndsWith(".zip")),
+            It.IsAny<CancellationToken>()), Times.Once);
+        _attachedFileRepo.Verify(r => r.CreateAsync(It.IsAny<BoardAttachedFile>(), It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    /// <summary>Clear: submitting the edit without a file empties the existing attachment record; nothing is uploaded (this is how an attachment is removed).</summary>
+    [Fact]
+    public async Task EditBoardAsync_ClearsTheExistingAttachmentRecord_WhenNoFileIsSubmitted()
+    {
+        SetupEditableBoardWithAttachment(BoardAttachedFile.Reconstitute(77, 1, 10, "old", ".txt", "/upload/old.txt"));
+
+        ServiceResult result = await CreateSut().EditBoardAsync(EditRequest(), "Alice", false, null, TestContext.Current.CancellationToken);
+
+        Assert.True(result.Success);
+        _attachedFileRepo.Verify(r => r.UpdateEntityAsync(
+            It.Is<BoardAttachedFile>(f => f.Id == 77 && f.BoardId == 1 && f.Size == 0 && f.Name == "" && f.Path == ""),
+            It.IsAny<CancellationToken>()), Times.Once);
+        _fileClient.Verify(f => f.UploadAsync(It.IsAny<byte[]>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    /// <summary>Add: a post that had no attachment gets a new record for the uploaded file.</summary>
+    [Fact]
+    public async Task EditBoardAsync_CreatesAnAttachmentRecord_WhenThePostHadNone()
+    {
+        SetupEditableBoardWithAttachment(previous: null);
+
+        ServiceResult result = await CreateSut().EditBoardAsync(EditRequest(), "Alice", false, Zip(), TestContext.Current.CancellationToken);
+
+        Assert.True(result.Success);
+        _attachedFileRepo.Verify(r => r.CreateAsync(It.Is<BoardAttachedFile>(f => f.BoardId == 1 && f.Name == "new"), It.IsAny<CancellationToken>()), Times.Once);
+        _attachedFileRepo.Verify(r => r.UpdateEntityAsync(It.IsAny<BoardAttachedFile>(), It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    /// <summary>No previous attachment and no new file: the attachment table is not touched at all.</summary>
+    [Fact]
+    public async Task EditBoardAsync_LeavesAttachmentsAlone_WhenThereWasNoneAndNoneIsSubmitted()
+    {
+        SetupEditableBoardWithAttachment(previous: null);
+
+        ServiceResult result = await CreateSut().EditBoardAsync(EditRequest(), "Alice", false, null, TestContext.Current.CancellationToken);
+
+        Assert.True(result.Success);
+        _attachedFileRepo.Verify(r => r.CreateAsync(It.IsAny<BoardAttachedFile>(), It.IsAny<CancellationToken>()), Times.Never);
+        _attachedFileRepo.Verify(r => r.UpdateEntityAsync(It.IsAny<BoardAttachedFile>(), It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    /// <summary>A failed upload while REPLACING rolls everything back: the old record must not be overwritten to point at a missing file.</summary>
+    [Fact]
+    public async Task EditBoardAsync_RollsBackWithoutTouchingTheRecord_WhenReplacingAndTheUploadFails()
+    {
+        SetupEditableBoardWithAttachment(BoardAttachedFile.Reconstitute(77, 1, 10, "old", ".txt", "/upload/old.txt"));
+        _fileClient.Setup(f => f.UploadAsync(It.IsAny<byte[]>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(false);
+
+        ServiceResult result = await CreateSut().EditBoardAsync(EditRequest(), "Alice", false, Zip(), TestContext.Current.CancellationToken);
+
+        Assert.False(result.Success);
+        Assert.Equal("Board.AttachmentUploadFailed", result.ErrorCode);
+        _attachedFileRepo.Verify(r => r.UpdateEntityAsync(It.IsAny<BoardAttachedFile>(), It.IsAny<CancellationToken>()), Times.Never);
+        _unitOfWork.Verify(u => u.RollbackAsync(It.IsAny<CancellationToken>()), Times.Once);
+        _unitOfWork.Verify(u => u.CommitAsync(It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    /// <summary>A record the domain rejects (over-long name) is refused BEFORE uploading, for replace and add alike, so no orphan file is left.</summary>
+    [Theory]
+    [InlineData(true)]
+    [InlineData(false)]
+    public async Task EditBoardAsync_RejectsAnOverlongFileName_BeforeUploading(bool hadPreviousAttachment)
+    {
+        SetupEditableBoardWithAttachment(hadPreviousAttachment ? BoardAttachedFile.Reconstitute(77, 1, 10, "old", ".txt", "/upload/old.txt") : null);
+
+        ServiceResult result = await CreateSut().EditBoardAsync(
+            EditRequest(), "Alice", false, Zip(new string('n', 256) + ".zip"), TestContext.Current.CancellationToken);
+
+        Assert.False(result.Success);
+        Assert.Equal("BoardAttachedFile.NameTooLong", result.ErrorCode);
+        _fileClient.Verify(f => f.UploadAsync(It.IsAny<byte[]>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
+        _unitOfWork.Verify(u => u.RollbackAsync(It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    /// <summary>A post edited through another board type's endpoint is "not found" (no cross-type edit).</summary>
+    [Fact]
+    public async Task EditBoardAsync_ReturnsNotFound_WhenTheCallerExpectsADifferentBoardType()
+    {
+        _boardRepo.Setup(r => r.FindActiveByIdForUpdateAsync(It.IsAny<long>(), It.IsAny<CancellationToken>())).ReturnsAsync(MakeBoard(writer: "Alice"));
+
+        ServiceResult result = await CreateSut().EditBoardAsync(
+            new BoardRequest { Id = 1, Type = BoardTypes.PrivateNote, Title = "t", Content = "c" }, "Alice", false, null, TestContext.Current.CancellationToken);
+
+        Assert.False(result.Success);
+        Assert.Equal("Board.NotFound", result.ErrorCode);
+        _boardRepo.Verify(r => r.UpdateEntityAsync(It.IsAny<Board>(), It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    /// <summary>A blank title on edit is returned as the domain validation error and nothing is written.</summary>
+    [Fact]
+    public async Task EditBoardAsync_ReturnsTheDomainValidationError_WhenTheTitleIsBlank()
+    {
+        SetupEditableBoardWithAttachment(previous: null);
+
+        ServiceResult result = await CreateSut().EditBoardAsync(
+            new BoardRequest { Id = 1, Type = BoardTypes.FreeForum, Title = "  ", Content = "c" }, "Alice", false, null, TestContext.Current.CancellationToken);
+
+        Assert.Equal("Board.TitleEmpty", result.ErrorCode);
+        _boardRepo.Verify(r => r.UpdateEntityAsync(It.IsAny<Board>(), It.IsAny<CancellationToken>()), Times.Never);
+        _unitOfWork.Verify(u => u.RollbackAsync(It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    /// <summary>An unexpected failure on edit is rolled back and reported without leaking internals.</summary>
+    [Fact]
+    public async Task EditBoardAsync_RollsBackAndReportsEditFailed_WhenTheRepositoryThrows()
+    {
+        _boardRepo.Setup(r => r.FindActiveByIdForUpdateAsync(It.IsAny<long>(), It.IsAny<CancellationToken>())).ThrowsAsync(new InvalidOperationException("secret detail"));
+
+        ServiceResult result = await CreateSut().EditBoardAsync(EditRequest(), "Alice", false, null, TestContext.Current.CancellationToken);
+
+        Assert.Equal("Board.EditFailed", result.ErrorCode);
+        Assert.DoesNotContain("secret detail", result.ErrorKey);
+        _unitOfWork.Verify(u => u.RollbackAsync(It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    // -- WriteBoardAsync / DeleteBoardAsync: validation and failures ---------------
+
+    /// <summary>A blank title is returned as the domain validation error; nothing is stored.</summary>
+    [Fact]
+    public async Task WriteBoardAsync_ReturnsTheDomainValidationError_WhenTheTitleIsBlank()
+    {
+        ServiceResult result = await CreateSut().WriteBoardAsync(
+            new BoardRequest { Type = BoardTypes.FreeForum, Title = "", Writer = "Alice" }, false, null, TestContext.Current.CancellationToken);
+
+        Assert.Equal("Board.TitleEmpty", result.ErrorCode);
+        _boardRepo.Verify(r => r.WriteBoardAsync(It.IsAny<Board>(), It.IsAny<CancellationToken>()), Times.Never);
+        _unitOfWork.Verify(u => u.RollbackAsync(It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    /// <summary>A post can only be deleted through its own board type's endpoint.</summary>
+    [Fact]
+    public async Task DeleteBoardAsync_ReturnsNotFound_WhenTheBoardTypeDoesNotMatch()
+    {
+        _boardRepo.Setup(r => r.FindActiveByIdForUpdateAsync(It.IsAny<long>(), It.IsAny<CancellationToken>())).ReturnsAsync(MakeBoard(writer: "Alice"));
+
+        ServiceResult result = await CreateSut().DeleteBoardAsync(1, BoardTypes.PrivateNote, "Alice", isAdmin: true, TestContext.Current.CancellationToken);
+
+        Assert.Equal("Board.NotFound", result.ErrorCode);
+        _boardRepo.Verify(r => r.UpdateEntityAsync(It.IsAny<Board>(), It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    /// <summary>An unexpected failure on delete is rolled back and reported without leaking internals.</summary>
+    [Fact]
+    public async Task DeleteBoardAsync_RollsBackAndReportsDeleteFailed_WhenTheRepositoryThrows()
+    {
+        _boardRepo.Setup(r => r.FindActiveByIdForUpdateAsync(It.IsAny<long>(), It.IsAny<CancellationToken>())).ReturnsAsync(MakeBoard(writer: "Alice"));
+        _boardRepo.Setup(r => r.UpdateEntityAsync(It.IsAny<Board>(), It.IsAny<CancellationToken>())).ThrowsAsync(new InvalidOperationException("secret detail"));
+
+        ServiceResult result = await CreateSut().DeleteBoardAsync(1, BoardTypes.FreeForum, "Alice", false, TestContext.Current.CancellationToken);
+
+        Assert.Equal("Board.DeleteFailed", result.ErrorCode);
+        Assert.DoesNotContain("secret detail", result.ErrorKey);
+        _unitOfWork.Verify(u => u.RollbackAsync(It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    // -- Comments: validation, scoping and failures -------------------------------
+
+    /// <summary>An empty comment is returned as the domain validation error; nothing is stored.</summary>
+    [Fact]
+    public async Task WriteCommentAsync_ReturnsTheDomainValidationError_WhenTheCommentIsEmpty()
+    {
+        _boardRepo.Setup(r => r.FindActiveByIdForUpdateAsync(It.IsAny<long>(), It.IsAny<CancellationToken>())).ReturnsAsync(MakeBoard(writer: "Alice"));
+        _commentRepo.Setup(r => r.GetByBoardIdOrderedAsync(It.IsAny<long>(), It.IsAny<CancellationToken>())).ReturnsAsync([]);
+
+        ServiceResult result = await CreateSut().WriteCommentAsync(
+            new BoardCommentRequest { BoardId = 1, Writer = "Bob", Content = "" }, ct: TestContext.Current.CancellationToken);
+
+        Assert.Equal("BoardComment.ContentEmpty", result.ErrorCode);
+        _commentRepo.Verify(r => r.CreateAsync(It.IsAny<BoardComment>(), It.IsAny<CancellationToken>()), Times.Never);
+        _unitOfWork.Verify(u => u.RollbackAsync(It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    /// <summary>A comment can only be written through the endpoint of the post's own board type.</summary>
+    [Fact]
+    public async Task WriteCommentAsync_ReturnsNotFound_WhenTheBoardTypeDoesNotMatchTheRequiredType()
+    {
+        _boardRepo.Setup(r => r.FindActiveByIdForUpdateAsync(It.IsAny<long>(), It.IsAny<CancellationToken>())).ReturnsAsync(MakeBoard(writer: "Alice"));
+
+        ServiceResult result = await CreateSut().WriteCommentAsync(
+            new BoardCommentRequest { BoardId = 1, Writer = "Bob", Content = "Hi" }, requiredType: BoardTypes.PrivateNote, ct: TestContext.Current.CancellationToken);
+
+        Assert.Equal("Board.NotFound", result.ErrorCode);
+        _commentRepo.Verify(r => r.CreateAsync(It.IsAny<BoardComment>(), It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    /// <summary>An unexpected failure while writing a comment is rolled back and reported without leaking internals.</summary>
+    [Fact]
+    public async Task WriteCommentAsync_RollsBackAndReportsWriteCommentFailed_WhenTheRepositoryThrows()
+    {
+        _boardRepo.Setup(r => r.FindActiveByIdForUpdateAsync(It.IsAny<long>(), It.IsAny<CancellationToken>())).ThrowsAsync(new InvalidOperationException("secret detail"));
+
+        ServiceResult result = await CreateSut().WriteCommentAsync(
+            new BoardCommentRequest { BoardId = 1, Writer = "Bob", Content = "Hi" }, ct: TestContext.Current.CancellationToken);
+
+        Assert.Equal("Board.WriteCommentFailed", result.ErrorCode);
+        Assert.DoesNotContain("secret detail", result.ErrorKey);
+        _unitOfWork.Verify(u => u.RollbackAsync(It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    /// <summary>When the caller is scoped to a board type, a comment whose parent post is gone (or of another type) is "not found".</summary>
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public async Task DeleteCommentAsync_ReturnsNotFound_WhenTheParentPostIsMissingOrOfAnotherType(bool parentExists)
+    {
+        _commentRepo.Setup(r => r.FindByIdForUpdateAsync(It.IsAny<long>(), It.IsAny<CancellationToken>())).ReturnsAsync(MakeComment(writer: "Alice"));
+        _boardRepo.Setup(r => r.FindActiveByIdAsync(It.IsAny<long>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(parentExists ? MakeBoard(writer: "Alice") : null);
+
+        ServiceResult result = await CreateSut().DeleteCommentAsync(1, "Alice", false, BoardTypes.PrivateNote, TestContext.Current.CancellationToken);
+
+        Assert.Equal("BoardComment.NotFound", result.ErrorCode);
+        _commentRepo.Verify(r => r.UpdateEntityAsync(It.IsAny<BoardComment>(), It.IsAny<CancellationToken>()), Times.Never);
+        _unitOfWork.Verify(u => u.RollbackAsync(It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    /// <summary>A private note is owner-only: an admin who did not write the comment cannot delete it, unlike on the free forum.</summary>
+    [Fact]
+    public async Task DeleteCommentAsync_DeniesAnAdmin_OnAPrivateNoteComment_ButAllowsThemOnAForumComment()
+    {
+        var privateNote = Board.Reconstitute(1, BoardTypes.PrivateNote, "t", "c", "Owner", DateTime.UtcNow, DateTime.UtcNow, 0L, false, false, false);
+        _commentRepo.Setup(r => r.FindByIdForUpdateAsync(It.IsAny<long>(), It.IsAny<CancellationToken>())).ReturnsAsync(MakeComment(writer: "Owner"));
+        _commentRepo.Setup(r => r.UpdateEntityAsync(It.IsAny<BoardComment>(), It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
+        _boardRepo.Setup(r => r.FindActiveByIdAsync(It.IsAny<long>(), It.IsAny<CancellationToken>())).ReturnsAsync(privateNote);
+
+        ServiceResult onPrivateNote = await CreateSut().DeleteCommentAsync(1, "AdminNick", isAdmin: true, BoardTypes.PrivateNote, TestContext.Current.CancellationToken);
+
+        Assert.False(onPrivateNote.Success);
+        Assert.Contains("permission", onPrivateNote.ErrorKey, StringComparison.OrdinalIgnoreCase);
+
+        _boardRepo.Setup(r => r.FindActiveByIdAsync(It.IsAny<long>(), It.IsAny<CancellationToken>())).ReturnsAsync(MakeBoard(writer: "Owner"));
+        ServiceResult onForum = await CreateSut().DeleteCommentAsync(1, "AdminNick", isAdmin: true, BoardTypes.FreeForum, TestContext.Current.CancellationToken);
+
+        Assert.True(onForum.Success);
+    }
+
+    /// <summary>An unexpected failure while deleting a comment is rolled back and reported without leaking internals.</summary>
+    [Fact]
+    public async Task DeleteCommentAsync_RollsBackAndReportsDeleteCommentFailed_WhenTheRepositoryThrows()
+    {
+        _commentRepo.Setup(r => r.FindByIdForUpdateAsync(It.IsAny<long>(), It.IsAny<CancellationToken>())).ThrowsAsync(new InvalidOperationException("secret detail"));
+
+        ServiceResult result = await CreateSut().DeleteCommentAsync(1, "Alice", false, ct: TestContext.Current.CancellationToken);
+
+        Assert.Equal("Board.DeleteCommentFailed", result.ErrorCode);
+        Assert.DoesNotContain("secret detail", result.ErrorKey);
+        _unitOfWork.Verify(u => u.RollbackAsync(It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    // -- Attachment-content delegation ---------------------------------------------
+
+    /// <summary>The Summernote image upload is delegated to the shared attachment service with the caller's area and board type.</summary>
+    [Fact]
+    public async Task UploadSummernoteImageAsync_DelegatesToTheAttachmentService()
+    {
+        var file = new AttachedFileDto { Bytes = [1], ContentType = "image/png", FileName = "a.png", Size = 1 };
+        var expected = SummernoteUploadResult.Fail("nope");
+        _attachmentContent.Setup(a => a.UploadSummernoteImageAsync(file, "user", BoardTypes.FreeForum, It.IsAny<CancellationToken>())).ReturnsAsync(expected);
+
+        SummernoteUploadResult actual = await CreateSut().UploadSummernoteImageAsync(file, "user", BoardTypes.FreeForum, TestContext.Current.CancellationToken);
+
+        Assert.Same(expected, actual);
+    }
+
+    /// <summary>The file download is delegated to the shared attachment service.</summary>
+    [Fact]
+    public async Task DownloadFileAsync_DelegatesToTheAttachmentService()
+    {
+        _attachmentContent.Setup(a => a.DownloadFileAsync("/upload/x.png", It.IsAny<CancellationToken>())).ReturnsAsync([9, 9]);
+
+        Assert.Equal([9, 9], await CreateSut().DownloadFileAsync("/upload/x.png", TestContext.Current.CancellationToken));
+    }
 }

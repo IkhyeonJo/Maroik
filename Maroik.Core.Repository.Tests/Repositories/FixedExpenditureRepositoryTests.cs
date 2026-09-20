@@ -189,4 +189,103 @@ public sealed class FixedExpenditureRepositoryTests(DatabaseFixture database) : 
             .Where(fe => fe.AccountEmail == alice).ToListAsync(TestContext.Current.CancellationToken);
         Assert.Equal(keep.Id, Assert.Single(remaining).Id);
     }
+
+    // -- SearchByAccountEmailAsync -----------------------------------------------------
+
+    /// <summary>The whole-row search matches a text column case-insensitively and never crosses accounts.</summary>
+    [Fact]
+    public async Task SearchByAccountEmailAsync_MatchesTextColumnCaseInsensitively_AndIsScopedToTheAccount()
+    {
+        string alice = UniqueEmail("alice");
+        string bob = UniqueEmail("bob");
+        string marker = Unique("Rent");
+        await SeedAsync(
+            MakeFixedExpenditure(alice, marker),
+            MakeFixedExpenditure(alice, "Insurance"),
+            MakeFixedExpenditure(bob, marker));
+
+        List<FixedExpenditure> result = await Sut.SearchByAccountEmailAsync(alice, marker.ToUpperInvariant(), TestContext.Current.CancellationToken);
+
+        FixedExpenditure hit = Assert.Single(result);
+        Assert.Equal(marker, hit.Content);
+        Assert.Equal(alice, hit.AccountEmail.Value);
+    }
+
+    /// <summary>PaymentMethod and MyDepositAsset are both searchable columns.</summary>
+    [Fact]
+    public async Task SearchByAccountEmailAsync_MatchesPaymentMethodAndMyDepositAsset()
+    {
+        string alice = UniqueEmail("alice");
+        string card = Unique("Card");
+        string savings = Unique("Savings");
+        await SeedAsync(
+            MakeFixedExpenditure(alice, "paid by card", paymentMethod: card, myDepositAsset: null),
+            MakeFixedExpenditure(alice, "moved to savings", paymentMethod: "Wallet", myDepositAsset: savings),
+            MakeFixedExpenditure(alice, "plain", paymentMethod: "Wallet", myDepositAsset: null));
+
+        List<FixedExpenditure> byCard = await Sut.SearchByAccountEmailAsync(alice, card, TestContext.Current.CancellationToken);
+        List<FixedExpenditure> bySavings = await Sut.SearchByAccountEmailAsync(alice, savings, TestContext.Current.CancellationToken);
+
+        Assert.Equal("paid by card", Assert.Single(byCard).Content);
+        Assert.Equal("moved to savings", Assert.Single(bySavings).Content);
+    }
+
+    /// <summary>MaturityDate is searched through <c>CAST(... AS TEXT)</c> (ISO form).</summary>
+    [Fact]
+    public async Task SearchByAccountEmailAsync_MatchesTheMaturityDateAsText()
+    {
+        string alice = UniqueEmail("alice");
+        EfFixedExpenditure matures = MakeFixedExpenditure(alice, "Matures in 2099");
+        matures.MaturityDate = new DateTime(2099, 12, 31, 12, 0, 0, DateTimeKind.Utc);
+        await SeedAsync(matures, MakeFixedExpenditure(alice, "Matures next year"));
+
+        List<FixedExpenditure> result = await Sut.SearchByAccountEmailAsync(alice, "2099-12-31", TestContext.Current.CancellationToken);
+
+        Assert.Equal("Matures in 2099", Assert.Single(result).Content);
+    }
+
+    /// <summary>The currency label lives on the payment-method asset — the <c>EXISTS</c> join must find it.</summary>
+    [Fact]
+    public async Task SearchByAccountEmailAsync_MatchesThePaymentMethodAssetsMonetaryUnit()
+    {
+        string alice = UniqueEmail("alice");
+        string unit = "U" + Token;
+        await SeedAsync(
+            MakeFixedExpenditure(alice, "In foreign currency", paymentMethod: "Foreign", myDepositAsset: null),
+            MakeFixedExpenditure(alice, "In KRW", paymentMethod: "Wallet", myDepositAsset: null));
+        await Context.Assets.Where(a => a.AccountEmail == alice && a.ProductName == "Foreign")
+            .ExecuteUpdateAsync(s => s.SetProperty(a => a.MonetaryUnit, unit), TestContext.Current.CancellationToken);
+
+        List<FixedExpenditure> result = await Sut.SearchByAccountEmailAsync(alice, unit, TestContext.Current.CancellationToken);
+
+        Assert.Equal("In foreign currency", Assert.Single(result).Content);
+    }
+
+    /// <summary><c>%</c> and <c>_</c> in the search text are literals, not LIKE wildcards.</summary>
+    [Fact]
+    public async Task SearchByAccountEmailAsync_TreatsLikeWildcardsLiterally()
+    {
+        string alice = UniqueEmail("alice");
+        await SeedAsync(
+            MakeFixedExpenditure(alice, $"100%-{Token}"),
+            MakeFixedExpenditure(alice, $"1000-{Token}"),
+            MakeFixedExpenditure(alice, $"a_b-{Token}"),
+            MakeFixedExpenditure(alice, $"axb-{Token}"));
+
+        List<FixedExpenditure> percent = await Sut.SearchByAccountEmailAsync(alice, $"0%-{Token}", TestContext.Current.CancellationToken);
+        List<FixedExpenditure> underscore = await Sut.SearchByAccountEmailAsync(alice, $"a_b-{Token}", TestContext.Current.CancellationToken);
+
+        Assert.Equal($"100%-{Token}", Assert.Single(percent).Content);
+        Assert.Equal($"a_b-{Token}", Assert.Single(underscore).Content);
+    }
+
+    /// <summary>No matching row → an empty list (the two-step lookup skips its second query).</summary>
+    [Fact]
+    public async Task SearchByAccountEmailAsync_ReturnsEmpty_WhenNothingMatches()
+    {
+        string alice = UniqueEmail("alice");
+        await SeedAsync(MakeFixedExpenditure(alice, "Rent"));
+
+        Assert.Empty(await Sut.SearchByAccountEmailAsync(alice, "no-such-" + Token, TestContext.Current.CancellationToken));
+    }
 }

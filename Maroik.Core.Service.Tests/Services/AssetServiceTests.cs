@@ -367,4 +367,67 @@ public class AssetServiceTests
         Assert.NotNull(result);
         Assert.Equal("MyBank", result.ProductName);
     }
+
+    // -- SearchAssetsAsync ------------------------------------------------------
+
+    /// <summary>The search is delegated to the repository and its rows are mapped to responses.</summary>
+    [Fact]
+    public async Task SearchAssetsAsync_DelegatesToRepository_AndMapsTheRows()
+    {
+        _assetRepo.Setup(r => r.SearchByAccountEmailAsync("user@example.com", "bank", It.IsAny<CancellationToken>()))
+            .ReturnsAsync([MakeAsset("MyBank")]);
+
+        List<AssetResponse> result = await CreateSut().SearchAssetsAsync("user@example.com", "bank", TestContext.Current.CancellationToken);
+
+        Assert.Equal("MyBank", Assert.Single(result).ProductName);
+    }
+
+    // -- UpdateAsync / DeleteAsync: domain errors and unexpected failures --------------
+
+    /// <summary>A rename the domain rejects (blank name) is returned as its validation error and never written.</summary>
+    [Fact]
+    public async Task UpdateAsync_ReturnsTheDomainValidationError_AndDoesNotWrite()
+    {
+        SetupFindAsset("MyBank", MakeAsset("MyBank"));
+
+        ServiceResult result = await CreateSut().UpdateAsync("user@example.com",
+            new AssetRequest { ProductName = "   ", Item = "FreeDepositAndWithdrawal", Amount = 10m, MonetaryUnit = "KRW" }, "MyBank", TestContext.Current.CancellationToken);
+
+        Assert.False(result.Success);
+        Assert.NotEqual("Asset.UpdateFailed", result.ErrorCode);
+        _assetRepo.Verify(r => r.UpdateAssetWithProductNameAsync(It.IsAny<Asset>(), It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
+        _unitOfWork.Verify(u => u.RollbackAsync(It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    /// <summary>An unexpected repository failure on update is rolled back and reported without leaking internals.</summary>
+    [Fact]
+    public async Task UpdateAsync_RollsBackAndReportsUpdateFailed_WhenTheRepositoryThrows()
+    {
+        SetupFindAsset("MyBank", MakeAsset("MyBank"));
+        _assetRepo.Setup(r => r.UpdateAssetWithProductNameAsync(It.IsAny<Asset>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new InvalidOperationException("secret detail"));
+
+        ServiceResult result = await CreateSut().UpdateAsync("user@example.com", ValidRequest("MyBank"), "MyBank", TestContext.Current.CancellationToken);
+
+        Assert.Equal("Asset.UpdateFailed", result.ErrorCode);
+        Assert.DoesNotContain("secret detail", result.ErrorKey);
+        _unitOfWork.Verify(u => u.RollbackAsync(It.IsAny<CancellationToken>()), Times.Once);
+        _unitOfWork.Verify(u => u.CommitAsync(It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    /// <summary>An unexpected repository failure on delete is rolled back and reported without leaking internals.</summary>
+    [Fact]
+    public async Task DeleteAsync_RollsBackAndReportsDeleteFailed_WhenTheRepositoryThrows()
+    {
+        SetupFindAsset("MyBank", MakeAsset("MyBank"));
+        _assetRepo.Setup(r => r.UpdateEntityAsync(It.IsAny<Asset>(), It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new InvalidOperationException("secret detail"));
+
+        ServiceResult result = await CreateSut().DeleteAsync("user@example.com", "MyBank", TestContext.Current.CancellationToken);
+
+        Assert.Equal("Asset.DeleteFailed", result.ErrorCode);
+        Assert.DoesNotContain("secret detail", result.ErrorKey);
+        _unitOfWork.Verify(u => u.RollbackAsync(It.IsAny<CancellationToken>()), Times.Once);
+        _unitOfWork.Verify(u => u.CommitAsync(It.IsAny<CancellationToken>()), Times.Never);
+    }
 }

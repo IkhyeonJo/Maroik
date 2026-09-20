@@ -443,4 +443,185 @@ public class IncomeServiceTests
 
         Assert.Single(result);
     }
+
+    // -- SearchIncomesAsync -----------------------------------------------------
+
+    /// <summary>The search is delegated to the repository for the caller's account and its rows are mapped to responses.</summary>
+    [Fact]
+    public async Task SearchIncomesAsync_DelegatesToRepository_AndMapsTheRows()
+    {
+        _incomeRepo.Setup(r => r.SearchByAccountEmailAsync("user@example.com", "salary", It.IsAny<CancellationToken>()))
+            .ReturnsAsync([MakeIncome(7)]);
+
+        List<IncomeResponse> result = await CreateSut().SearchIncomesAsync("user@example.com", "salary", TestContext.Current.CancellationToken);
+
+        Assert.Equal(7, Assert.Single(result).Id);
+    }
+
+    // -- Money-affecting failure branches ------------------------------------------
+
+    private const string Email = "user@example.com";
+
+    private void GivenAssets(params Asset[] assets)
+    {
+        foreach (Asset a in assets)
+            _assetBalance.Setup(r => r.GetAssetAsync(Email, a.ProductName, It.IsAny<CancellationToken>())).ReturnsAsync(a);
+    }
+
+    private void GivenExistingIncome(Income previous) =>
+        _incomeRepo.Setup(r => r.GetByAccountEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync([previous]);
+
+    private static IncomeRequest WithId(IncomeRequest r) { r.Id = 1; return r; }
+
+    /// <summary>A negative amount typed by the user is stored (and deposited) as its absolute value.</summary>
+    [Fact]
+    public async Task CreateAsync_StoresAndDepositsTheAbsoluteAmount_WhenTheRequestAmountIsNegative()
+    {
+        GivenAssets(MakeAsset("SavingsAccount", amount: 1000m));
+        Income? stored = null;
+        _incomeRepo.Setup(r => r.CreateAsync(It.IsAny<Income>(), It.IsAny<CancellationToken>()))
+            .Callback<Income, CancellationToken>((i, _) => stored = i).Returns(Task.CompletedTask);
+        Asset? saved = null;
+        _assetBalance.Setup(r => r.SaveAsync(It.IsAny<Asset>(), It.IsAny<CancellationToken>()))
+            .Callback<Asset, CancellationToken>((a, _) => saved = a).Returns(Task.CompletedTask);
+        IncomeRequest request = ValidRequest();
+        request.Amount = -250m;
+
+        ServiceResult result = await CreateSut().CreateAsync(Email, request, TestContext.Current.CancellationToken);
+
+        Assert.True(result.Success);
+        Assert.Equal(250m, stored?.Amount.Amount);
+        Assert.Equal(1250m, saved?.Balance.Amount);
+    }
+
+    /// <summary>A deposit that would push the balance past the column range is refused and nothing is committed.</summary>
+    [Fact]
+    public async Task CreateAsync_ReturnsTheRangeError_AndRollsBack_WhenTheDepositWouldOverflowTheBalance()
+    {
+        GivenAssets(MakeAsset("SavingsAccount", amount: FinanceAmountPolicy.MaxAbsoluteAmount));
+
+        ServiceResult result = await CreateSut().CreateAsync(Email, ValidRequest(), TestContext.Current.CancellationToken);
+
+        Assert.False(result.Success);
+        Assert.Equal("Finance.AmountOutOfRange", result.ErrorCode);
+        _assetBalance.Verify(r => r.SaveAsync(It.IsAny<Asset>(), It.IsAny<CancellationToken>()), Times.Never);
+        _unitOfWork.Verify(u => u.CommitAsync(It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    /// <summary>A record the domain rejects (over-long content) is returned as its validation error before any balance moves.</summary>
+    [Fact]
+    public async Task CreateAsync_ReturnsTheDomainValidationError_BeforeMovingAnyBalance()
+    {
+        GivenAssets(MakeAsset("SavingsAccount"));
+        IncomeRequest request = ValidRequest();
+        request.Content = new string('x', 100_000);
+
+        ServiceResult result = await CreateSut().CreateAsync(Email, request, TestContext.Current.CancellationToken);
+
+        Assert.Equal("Finance.ContentTooLong", result.ErrorCode);
+        _incomeRepo.Verify(r => r.CreateAsync(It.IsAny<Income>(), It.IsAny<CancellationToken>()), Times.Never);
+        _assetBalance.Verify(r => r.SaveAsync(It.IsAny<Asset>(), It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    /// <summary>An unexpected failure on create is rolled back and reported without leaking internals.</summary>
+    [Fact]
+    public async Task CreateAsync_RollsBackAndReportsUnexpectedFailure_WhenThePersistenceThrows()
+    {
+        GivenAssets(MakeAsset("SavingsAccount"));
+        _incomeRepo.Setup(r => r.CreateAsync(It.IsAny<Income>(), It.IsAny<CancellationToken>())).ThrowsAsync(new InvalidOperationException("secret detail"));
+
+        ServiceResult result = await CreateSut().CreateAsync(Email, ValidRequest(), TestContext.Current.CancellationToken);
+
+        Assert.Equal("Income.Unexpected", result.ErrorCode);
+        Assert.DoesNotContain("secret detail", result.ErrorKey);
+        _unitOfWork.Verify(u => u.RollbackAsync(It.IsAny<CancellationToken>()), Times.Once);
+        _unitOfWork.Verify(u => u.CommitAsync(It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    /// <summary>An income retargeted onto a since-archived asset is refused (its balance must never be touched).</summary>
+    [Fact]
+    public async Task UpdateAsync_ReturnsAssetDeleted_WhenTheNewAssetIsArchived()
+    {
+        GivenExistingIncome(MakeIncome(1, "SavingsAccount"));
+        GivenAssets(MakeAsset("SavingsAccount"), MakeAsset("Archived", deleted: true));
+
+        ServiceResult result = await CreateSut().UpdateAsync(Email, WithId(ValidRequest("Archived")), TestContext.Current.CancellationToken);
+
+        Assert.Equal("Income.AssetDeleted", result.ErrorCode);
+        _incomeRepo.Verify(r => r.UpdateEntityAsync(It.IsAny<Income>(), It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    /// <summary>A record edited to content the domain rejects is returned as its validation error and not persisted.</summary>
+    [Fact]
+    public async Task UpdateAsync_ReturnsTheDomainValidationError_AndDoesNotPersist()
+    {
+        GivenExistingIncome(MakeIncome(1, "SavingsAccount"));
+        GivenAssets(MakeAsset("SavingsAccount"));
+        IncomeRequest request = WithId(ValidRequest());
+        request.Content = new string('x', 100_000);
+
+        ServiceResult result = await CreateSut().UpdateAsync(Email, request, TestContext.Current.CancellationToken);
+
+        Assert.Equal("Finance.ContentTooLong", result.ErrorCode);
+        _incomeRepo.Verify(r => r.UpdateEntityAsync(It.IsAny<Income>(), It.IsAny<CancellationToken>()), Times.Never);
+        _unitOfWork.Verify(u => u.RollbackAsync(It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    /// <summary>A balance adjustment the asset refuses (range overflow) rolls the whole update back.</summary>
+    [Fact]
+    public async Task UpdateAsync_ReturnsTheAdjustmentError_AndRollsBack_WhenTheBalanceWouldOverflow()
+    {
+        GivenExistingIncome(MakeIncome(1, "SavingsAccount", amount: 100m));
+        GivenAssets(MakeAsset("SavingsAccount", amount: FinanceAmountPolicy.MaxAbsoluteAmount));
+
+        ServiceResult result = await CreateSut().UpdateAsync(Email, WithId(ValidRequest()), TestContext.Current.CancellationToken);
+
+        Assert.False(result.Success);
+        _unitOfWork.Verify(u => u.RollbackAsync(It.IsAny<CancellationToken>()), Times.Once);
+        _unitOfWork.Verify(u => u.CommitAsync(It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    /// <summary>An unexpected failure on update is rolled back and reported without leaking internals.</summary>
+    [Fact]
+    public async Task UpdateAsync_RollsBackAndReportsUnexpectedFailure_WhenThePersistenceThrows()
+    {
+        GivenExistingIncome(MakeIncome(1, "SavingsAccount"));
+        GivenAssets(MakeAsset("SavingsAccount"));
+        _incomeRepo.Setup(r => r.UpdateEntityAsync(It.IsAny<Income>(), It.IsAny<CancellationToken>())).ThrowsAsync(new InvalidOperationException("secret detail"));
+
+        ServiceResult result = await CreateSut().UpdateAsync(Email, WithId(ValidRequest()), TestContext.Current.CancellationToken);
+
+        Assert.Equal("Income.Unexpected", result.ErrorCode);
+        Assert.DoesNotContain("secret detail", result.ErrorKey);
+        _unitOfWork.Verify(u => u.RollbackAsync(It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    /// <summary>Reverting the record's impact must keep the balance in range; otherwise the delete is refused and rolled back.</summary>
+    [Fact]
+    public async Task DeleteAsync_ReturnsTheAdjustmentError_AndKeepsTheRow_WhenRevertingWouldOverflowTheBalance()
+    {
+        GivenExistingIncome(MakeIncome(1, "SavingsAccount", amount: 100m));
+        GivenAssets(MakeAsset("SavingsAccount", amount: -FinanceAmountPolicy.MaxAbsoluteAmount));
+
+        ServiceResult result = await CreateSut().DeleteAsync(Email, 1, TestContext.Current.CancellationToken);
+
+        Assert.False(result.Success);
+        _incomeRepo.Verify(r => r.DeleteByIdAsync(It.IsAny<long>(), It.IsAny<CancellationToken>()), Times.Never);
+        _unitOfWork.Verify(u => u.RollbackAsync(It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    /// <summary>An unexpected failure on delete is rolled back and reported without leaking internals.</summary>
+    [Fact]
+    public async Task DeleteAsync_RollsBackAndReportsUnexpectedFailure_WhenThePersistenceThrows()
+    {
+        GivenExistingIncome(MakeIncome(1, "SavingsAccount"));
+        GivenAssets(MakeAsset("SavingsAccount"));
+        _incomeRepo.Setup(r => r.DeleteByIdAsync(It.IsAny<long>(), It.IsAny<CancellationToken>())).ThrowsAsync(new InvalidOperationException("secret detail"));
+
+        ServiceResult result = await CreateSut().DeleteAsync(Email, 1, TestContext.Current.CancellationToken);
+
+        Assert.Equal("Income.Unexpected", result.ErrorCode);
+        Assert.DoesNotContain("secret detail", result.ErrorKey);
+        _unitOfWork.Verify(u => u.RollbackAsync(It.IsAny<CancellationToken>()), Times.Once);
+    }
 }

@@ -391,4 +391,178 @@ public class FixedExpenditureServiceTests
         Assert.Single(result);
         Assert.Equal(1, result[0].Id);
     }
+
+    // -- Search / GetById -------------------------------------------------------
+
+    private const string Email = "user@example.com";
+
+    private static FixedExpenditure ExistingConsumer(long id = 1, string payment = "Wallet") =>
+        FixedExpenditure.Reconstitute(id, Email, "ConsumerSpending", "MealOrEatOutExpenses", null, 100m, "KRW",
+            payment, null, (short)1, (short)15, new DateTime(2030, 12, 31), null, false, DateTime.UtcNow, DateTime.UtcNow);
+
+    private void GivenAssets(params Asset[] assets)
+    {
+        foreach (Asset a in assets)
+            _assetBalance.Setup(r => r.GetAssetAsync(Email, a.ProductName, It.IsAny<CancellationToken>())).ReturnsAsync(a);
+    }
+
+    private static Asset ArchivedAsset(string name) =>
+        Asset.Reconstitute(name, Email, "FreeDepositAndWithdrawal", 1000m, "KRW", null, true, DateTime.UtcNow, DateTime.UtcNow);
+
+    /// <summary>The search is delegated to the repository and its rows are mapped to responses.</summary>
+    [Fact]
+    public async Task SearchFixedExpendituresAsync_DelegatesToRepository_AndMapsTheRows()
+    {
+        _fixedExpenditureRepo.Setup(r => r.SearchByAccountEmailAsync(Email, "rent", It.IsAny<CancellationToken>())).ReturnsAsync([ExistingConsumer(7)]);
+
+        List<FixedExpenditureResponse> result = await CreateSut().SearchFixedExpendituresAsync(Email, "rent", TestContext.Current.CancellationToken);
+
+        Assert.Equal(7, Assert.Single(result).Id);
+    }
+
+    /// <summary>GetById returns null for an unknown id and the mapped response for a known one.</summary>
+    [Fact]
+    public async Task GetByIdAsync_ReturnsNullWhenMissing_AndMappedResponseWhenFound()
+    {
+        _fixedExpenditureRepo.Setup(r => r.GetByAccountEmailAsync(Email, It.IsAny<CancellationToken>())).ReturnsAsync([ExistingConsumer(3)]);
+        var sut = CreateSut();
+
+        Assert.Null(await sut.GetByIdAsync(Email, 99, TestContext.Current.CancellationToken));
+        Assert.Equal(3, (await sut.GetByIdAsync(Email, 3, TestContext.Current.CancellationToken))?.Id);
+    }
+
+    // -- CreateAsync: archived asset / domain error ---------------------------------
+
+    /// <summary>A schedule cannot be created against an archived payment asset.</summary>
+    [Fact]
+    public async Task CreateAsync_ReturnsAssetDeleted_WhenThePaymentAssetIsArchived()
+    {
+        GivenAssets(ArchivedAsset("Wallet"));
+
+        ServiceResult result = await CreateSut().CreateAsync(Email, ConsumerRequest(), TestContext.Current.CancellationToken);
+
+        Assert.Equal("FixedExpenditure.AssetDeleted", result.ErrorCode);
+        _fixedExpenditureRepo.Verify(r => r.CreateAsync(It.IsAny<FixedExpenditure>(), It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    /// <summary>A transfer schedule cannot be created against an archived deposit asset.</summary>
+    [Fact]
+    public async Task CreateAsync_ReturnsAssetDeleted_WhenTheDepositAssetIsArchived()
+    {
+        GivenAssets(MakeAsset("Checking"), ArchivedAsset("Savings"));
+
+        ServiceResult result = await CreateSut().CreateAsync(Email, SavingsRequest(), TestContext.Current.CancellationToken);
+
+        Assert.Equal("FixedExpenditure.AssetDeleted", result.ErrorCode);
+        _fixedExpenditureRepo.Verify(r => r.CreateAsync(It.IsAny<FixedExpenditure>(), It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    /// <summary>A record the domain rejects (over-long content) is returned as its validation error and not persisted.</summary>
+    [Fact]
+    public async Task CreateAsync_ReturnsTheDomainValidationError_AndDoesNotPersist()
+    {
+        GivenAssets(MakeAsset("Wallet"));
+        FixedExpenditureRequest request = ConsumerRequest();
+        request.Content = new string('x', 100_000);
+
+        ServiceResult result = await CreateSut().CreateAsync(Email, request, TestContext.Current.CancellationToken);
+
+        Assert.Equal("Finance.ContentTooLong", result.ErrorCode);
+        _fixedExpenditureRepo.Verify(r => r.CreateAsync(It.IsAny<FixedExpenditure>(), It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    // -- UpdateAsync: asset rules ---------------------------------------------------
+
+    private static FixedExpenditureRequest WithId(FixedExpenditureRequest r) { r.Id = 1; return r; }
+
+    /// <summary>An update naming an archived payment asset is refused before the record is looked up.</summary>
+    [Fact]
+    public async Task UpdateAsync_ReturnsAssetDeleted_WhenThePaymentAssetIsArchived()
+    {
+        GivenAssets(ArchivedAsset("Wallet"));
+
+        ServiceResult result = await CreateSut().UpdateAsync(Email, WithId(ConsumerRequest()), TestContext.Current.CancellationToken);
+
+        Assert.Equal("FixedExpenditure.AssetDeleted", result.ErrorCode);
+        _fixedExpenditureRepo.Verify(r => r.UpdateEntityAsync(It.IsAny<FixedExpenditure>(), It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    /// <summary>An update to an unknown payment asset is refused.</summary>
+    [Fact]
+    public async Task UpdateAsync_ReturnsAssetNotFound_WhenThePaymentAssetDoesNotExist()
+    {
+        GivenAssets();
+
+        ServiceResult result = await CreateSut().UpdateAsync(Email, WithId(ConsumerRequest()), TestContext.Current.CancellationToken);
+
+        Assert.Equal("FixedExpenditure.AssetNotFound", result.ErrorCode);
+    }
+
+    /// <summary>A transfer schedule cannot name the same asset on both sides.</summary>
+    [Fact]
+    public async Task UpdateAsync_ReturnsSameAsset_WhenPaymentAndDepositAssetAreTheSame()
+    {
+        GivenAssets(MakeAsset("Checking"));
+
+        ServiceResult result = await CreateSut().UpdateAsync(Email, WithId(new FixedExpenditureRequest
+        {
+            MainClass = "RegularSavings", SubClass = "Deposit", PaymentMethod = "Checking", MyDepositAsset = "Checking",
+            Amount = 200m, DepositMonth = 1, DepositDay = 15, MaturityDate = new DateTime(2030, 12, 31)
+        }), TestContext.Current.CancellationToken);
+
+        Assert.Equal("FixedExpenditure.SameAsset", result.ErrorCode);
+    }
+
+    /// <summary>A transfer update whose deposit asset does not exist / is archived / uses another currency is refused; the row is not touched.</summary>
+    [Theory]
+    [InlineData("missing", "FixedExpenditure.AssetNotFound")]
+    [InlineData("archived", "FixedExpenditure.AssetDeleted")]
+    [InlineData("usd", "FixedExpenditure.CurrencyMismatch")]
+    public async Task UpdateAsync_RefusesATransferWhoseDepositAssetIsUnusable(string scenario, string expectedCode)
+    {
+        GivenAssets(MakeAsset("Checking"));
+        switch (scenario)
+        {
+            case "archived": GivenAssets(ArchivedAsset("Savings")); break;
+            case "usd": GivenAssets(MakeAsset("Savings", "USD")); break;
+        }
+        _fixedExpenditureRepo.Setup(r => r.GetByAccountEmailAsync(Email, It.IsAny<CancellationToken>())).ReturnsAsync([ExistingConsumer()]);
+
+        ServiceResult result = await CreateSut().UpdateAsync(Email, WithId(SavingsRequest()), TestContext.Current.CancellationToken);
+
+        Assert.Equal(expectedCode, result.ErrorCode);
+        _fixedExpenditureRepo.Verify(r => r.UpdateEntityAsync(It.IsAny<FixedExpenditure>(), It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    /// <summary>An update to content the domain rejects is returned as its validation error and not persisted.</summary>
+    [Fact]
+    public async Task UpdateAsync_ReturnsTheDomainValidationError_AndDoesNotPersist()
+    {
+        GivenAssets(MakeAsset("Wallet"));
+        _fixedExpenditureRepo.Setup(r => r.GetByAccountEmailAsync(Email, It.IsAny<CancellationToken>())).ReturnsAsync([ExistingConsumer()]);
+        FixedExpenditureRequest request = WithId(ConsumerRequest());
+        request.Content = new string('x', 100_000);
+
+        ServiceResult result = await CreateSut().UpdateAsync(Email, request, TestContext.Current.CancellationToken);
+
+        Assert.Equal("Finance.ContentTooLong", result.ErrorCode);
+        _fixedExpenditureRepo.Verify(r => r.UpdateEntityAsync(It.IsAny<FixedExpenditure>(), It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    /// <summary>Changing a transfer schedule into a non-transfer one drops the deposit asset from the stored record.</summary>
+    [Fact]
+    public async Task UpdateAsync_ClearsTheDepositAsset_WhenTheClassIsNoLongerATransfer()
+    {
+        var existingTransfer = FixedExpenditure.Reconstitute(1, Email, "RegularSavings", "Deposit", null, 100m, "KRW",
+            "Checking", "Savings", (short)1, (short)15, new DateTime(2030, 12, 31), null, false, DateTime.UtcNow, DateTime.UtcNow);
+        GivenAssets(MakeAsset("Wallet"));
+        _fixedExpenditureRepo.Setup(r => r.GetByAccountEmailAsync(Email, It.IsAny<CancellationToken>())).ReturnsAsync([existingTransfer]);
+        FixedExpenditureRequest request = WithId(ConsumerRequest());
+        request.MyDepositAsset = "Savings";
+
+        ServiceResult result = await CreateSut().UpdateAsync(Email, request, TestContext.Current.CancellationToken);
+
+        Assert.True(result.Success);
+        _fixedExpenditureRepo.Verify(r => r.UpdateEntityAsync(It.Is<FixedExpenditure>(f => f.MyDepositAsset == null && f.PaymentMethod == "Wallet"), It.IsAny<CancellationToken>()), Times.Once);
+    }
 }

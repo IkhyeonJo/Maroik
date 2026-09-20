@@ -454,4 +454,122 @@ public class ProfileServiceTests
 
         _accountRepo.Verify(r => r.UpdateDefaultMonetaryUnitAsync(account.Email.Value, null, It.IsAny<CancellationToken>()), Times.Once);
     }
+
+    // -- Failure branches ---------------------------------------------------------
+
+    /// <summary>A repository failure while saving the avatar path is caught and reported generically.</summary>
+    [Fact]
+    public async Task UpdateAvatarAsync_ReportsUpdateAvatarFailed_WhenTheRepositoryThrows()
+    {
+        _accountRepo.Setup(r => r.FindByEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ThrowsAsync(new InvalidOperationException("secret detail"));
+
+        ServiceResult result = await CreateSut().UpdateAvatarAsync("user@example.com", "/a.png", TestContext.Current.CancellationToken);
+
+        Assert.Equal("Profile.UpdateAvatarFailed", result.ErrorCode);
+        Assert.DoesNotContain("secret detail", result.ErrorKey);
+    }
+
+    /// <summary>An unknown IANA time zone is refused with the domain's validation error and nothing is written.</summary>
+    [Fact]
+    public async Task UpdateTimeZoneAsync_ReturnsTheDomainValidationError_ForAnUnknownTimeZone()
+    {
+        _accountRepo.Setup(r => r.FindByEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(ActiveAccount());
+
+        ServiceResult result = await CreateSut().UpdateTimeZoneAsync("user@example.com", "Mars/Olympus_Mons", TestContext.Current.CancellationToken);
+
+        Assert.False(result.Success);
+        Assert.NotEqual("Profile.UpdateTimezoneFailed", result.ErrorCode);
+        _accountRepo.Verify(r => r.UpdateTimeZoneAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<DateTime>(), It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    /// <summary>A repository failure while saving the time zone is caught and reported generically.</summary>
+    [Fact]
+    public async Task UpdateTimeZoneAsync_ReportsUpdateTimezoneFailed_WhenTheRepositoryThrows()
+    {
+        _accountRepo.Setup(r => r.FindByEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ThrowsAsync(new InvalidOperationException("secret detail"));
+
+        ServiceResult result = await CreateSut().UpdateTimeZoneAsync("user@example.com", "UTC", TestContext.Current.CancellationToken);
+
+        Assert.Equal("Profile.UpdateTimezoneFailed", result.ErrorCode);
+        Assert.DoesNotContain("secret detail", result.ErrorKey);
+    }
+
+    /// <summary>A new password that breaks the complexity rule is refused before hashing and before any write; the lock is released.</summary>
+    [Fact]
+    public async Task UpdatePasswordAsync_ReturnsPolicyViolation_AndDoesNotHashOrWrite_WhenTheNewPasswordIsTooWeak()
+    {
+        _accountRepo.Setup(r => r.FindByEmailForUpdateAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(ActiveAccount());
+        _passwordService.Setup(p => p.VerifyPassword(It.IsAny<string>(), It.IsAny<string>())).Returns(true);
+
+        ServiceResult result = await CreateSut().UpdatePasswordAsync("user@example.com", "current", "weak", TestContext.Current.CancellationToken);
+
+        Assert.False(result.Success);
+        Assert.Equal("Account.PasswordPolicy", result.ErrorCode);
+        _passwordService.Verify(p => p.HashPassword(It.IsAny<string>()), Times.Never);
+        _accountRepo.Verify(r => r.UpdatePasswordAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<bool>(), It.IsAny<string?>(), It.IsAny<DateTime>(), It.IsAny<CancellationToken>()), Times.Never);
+        _unitOfWork.Verify(u => u.RollbackAsync(It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    /// <summary>A failure while persisting the new password is rolled back and reported generically.</summary>
+    [Fact]
+    public async Task UpdatePasswordAsync_RollsBackAndReportsUpdatePasswordFailed_WhenTheRepositoryThrows()
+    {
+        _accountRepo.Setup(r => r.FindByEmailForUpdateAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(ActiveAccount());
+        _passwordService.Setup(p => p.VerifyPassword(It.IsAny<string>(), It.IsAny<string>())).Returns(true);
+        _passwordService.Setup(p => p.HashPassword(It.IsAny<string>())).Returns("$2a$13$new");
+        _accountRepo.Setup(r => r.UpdatePasswordAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<bool>(), It.IsAny<string?>(), It.IsAny<DateTime>(), It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new InvalidOperationException("secret detail"));
+
+        ServiceResult result = await CreateSut().UpdatePasswordAsync("user@example.com", "current", "NewPass1!", TestContext.Current.CancellationToken);
+
+        Assert.Equal("Profile.UpdatePasswordFailed", result.ErrorCode);
+        Assert.DoesNotContain("secret detail", result.ErrorKey);
+        _unitOfWork.Verify(u => u.RollbackAsync(It.IsAny<CancellationToken>()), Times.Once);
+        _unitOfWork.Verify(u => u.CommitAsync(It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    /// <summary>The extension allow-list is re-asserted in the service: a disallowed extension never reaches the validator or storage.</summary>
+    [Theory]
+    [InlineData(".gif")]
+    [InlineData(".svg")]
+    [InlineData("")]
+    [InlineData(".png.exe")]
+    public async Task UploadAndUpdateAvatarAsync_RefusesADisallowedExtension_BeforeDecodingOrStoring(string extension)
+    {
+        ServiceResult result = await CreateSut().UploadAndUpdateAvatarAsync("user@example.com", [1, 2, 3], extension, TestContext.Current.CancellationToken);
+
+        Assert.Equal("invalid-image", result.ErrorKey);
+        _imageValidator.Verify(v => v.IsValidImage(It.IsAny<byte[]>()), Times.Never);
+        _fileClient.Verify(c => c.UploadWithResultAsync(It.IsAny<byte[]>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    /// <summary>The stored MIME type follows the (case-insensitive) extension.</summary>
+    [Theory]
+    [InlineData(".jpg", "image/jpeg")]
+    [InlineData(".JPEG", "image/jpeg")]
+    [InlineData(".png", "image/png")]
+    [InlineData(".PNG", "image/png")]
+    public async Task UploadAndUpdateAvatarAsync_UploadsWithTheMimeTypeOfTheExtension(string extension, string expectedContentType)
+    {
+        _imageValidator.Setup(v => v.IsValidImage(It.IsAny<byte[]>())).Returns(true);
+        _fileClient.Setup(c => c.UploadWithResultAsync(It.IsAny<byte[]>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(FileUploadResult.Stored);
+        _accountRepo.Setup(r => r.FindByEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(ActiveAccount());
+
+        await CreateSut().UploadAndUpdateAvatarAsync("user@example.com", [1, 2, 3], extension, TestContext.Current.CancellationToken);
+
+        _fileClient.Verify(c => c.UploadWithResultAsync(It.IsAny<byte[]>(), expectedContentType, It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    /// <summary>An unexpected failure while validating/storing the avatar is caught and reported generically.</summary>
+    [Fact]
+    public async Task UploadAndUpdateAvatarAsync_ReportsUploadAvatarFailed_WhenTheValidatorThrows()
+    {
+        _imageValidator.Setup(v => v.IsSvg(It.IsAny<byte[]>())).Throws(new InvalidOperationException("secret detail"));
+
+        ServiceResult result = await CreateSut().UploadAndUpdateAvatarAsync("user@example.com", [1, 2, 3], ".png", TestContext.Current.CancellationToken);
+
+        Assert.Equal("Profile.UploadAvatarFailed", result.ErrorCode);
+        Assert.DoesNotContain("secret detail", result.ErrorKey);
+    }
 }

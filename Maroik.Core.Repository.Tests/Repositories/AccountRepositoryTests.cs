@@ -539,4 +539,89 @@ public sealed class AccountRepositoryTests(DatabaseFixture database) : Repositor
         Assert.NotNull(updated);
         Assert.Equal(5, updated.LoginAttempt);
     }
+
+    // -- SearchAsync ----------------------------------------------------------------
+
+    /// <summary>The admin grid search matches nickname/e-mail case-insensitively.</summary>
+    [Fact]
+    public async Task SearchAsync_MatchesNicknameAndEmailCaseInsensitively()
+    {
+        string nickname = Unique("Searchable");
+        OrmAccount target = NewAccount(nickname: nickname);
+        await SeedAsync(target, NewAccount());
+
+        List<Account> byNickname = await Sut.SearchAsync(nickname.ToUpperInvariant(), TestContext.Current.CancellationToken);
+        List<Account> byEmail = await Sut.SearchAsync(target.Email!.ToUpperInvariant(), TestContext.Current.CancellationToken);
+
+        Assert.Equal(target.Email, Assert.Single(byNickname).Email.Value);
+        Assert.Equal(target.Email, Assert.Single(byEmail).Email.Value);
+    }
+
+    /// <summary>
+    /// The registration / reset tokens and the admin message are shown in the admin grid (and used to
+    /// verify a token issue took effect), so the whole-row search must match them too.
+    /// </summary>
+    [Fact]
+    public async Task SearchAsync_MatchesRegistrationTokenResetTokenAndMessage()
+    {
+        string regToken = "reg-" + Token;
+        string resetToken = "reset-" + Token;
+        string message = "note-" + Token;
+        OrmAccount withReg = NewAccount(registrationToken: regToken);
+        OrmAccount withReset = NewAccount(resetPasswordToken: resetToken);
+        OrmAccount withMessage = NewAccount();
+        withMessage.Message = message;
+        await SeedAsync(withReg, withReset, withMessage, NewAccount());
+
+        Assert.Equal(withReg.Email, Assert.Single(await Sut.SearchAsync(regToken, TestContext.Current.CancellationToken)).Email.Value);
+        Assert.Equal(withReset.Email, Assert.Single(await Sut.SearchAsync(resetToken, TestContext.Current.CancellationToken)).Email.Value);
+        Assert.Equal(withMessage.Email, Assert.Single(await Sut.SearchAsync(message, TestContext.Current.CancellationToken)).Email.Value);
+    }
+
+    /// <summary><c>%</c> and <c>_</c> in the search text are literals, not LIKE wildcards.</summary>
+    [Fact]
+    public async Task SearchAsync_TreatsLikeWildcardsLiterally()
+    {
+        OrmAccount percent = NewAccount(nickname: $"100%-{Token}");
+        OrmAccount plain = NewAccount(nickname: $"1000-{Token}");
+        OrmAccount underscore = NewAccount(nickname: $"a_b-{Token}");
+        OrmAccount other = NewAccount(nickname: $"axb-{Token}");
+        await SeedAsync(percent, plain, underscore, other);
+
+        List<Account> byPercent = await Sut.SearchAsync($"0%-{Token}", TestContext.Current.CancellationToken);
+        List<Account> byUnderscore = await Sut.SearchAsync($"a_b-{Token}", TestContext.Current.CancellationToken);
+
+        Assert.Equal(percent.Email, Assert.Single(byPercent).Email.Value);
+        Assert.Equal(underscore.Email, Assert.Single(byUnderscore).Email.Value);
+    }
+
+    /// <summary>No matching row → an empty list (the two-step lookup skips its second query).</summary>
+    [Fact]
+    public async Task SearchAsync_ReturnsEmpty_WhenNothingMatches()
+    {
+        Assert.Empty(await Sut.SearchAsync("no-such-" + Token, TestContext.Current.CancellationToken));
+    }
+
+    // -- UpdateAgreedServiceTermsAsync ------------------------------------------------
+
+    /// <summary>Writes the flag and the timestamp for exactly the addressed account (e-mail is normalised to lower case).</summary>
+    [Fact]
+    public async Task UpdateAgreedServiceTermsAsync_UpdatesOnlyTheAddressedAccount()
+    {
+        OrmAccount target = NewAccount();
+        target.AgreedServiceTerms = false;
+        OrmAccount bystander = NewAccount();
+        bystander.AgreedServiceTerms = false;
+        await SeedAsync(target, bystander);
+        DateTime updated = new(2031, 5, 6, 7, 8, 9, DateTimeKind.Utc);
+
+        int rows = await Sut.UpdateAgreedServiceTermsAsync(target.Email!.ToUpperInvariant(), true, updated, TestContext.Current.CancellationToken);
+
+        Assert.Equal(1, rows);
+        OrmAccount reloadedTarget = await Context.Accounts.AsNoTracking().SingleAsync(a => a.Email == target.Email, TestContext.Current.CancellationToken);
+        OrmAccount reloadedBystander = await Context.Accounts.AsNoTracking().SingleAsync(a => a.Email == bystander.Email, TestContext.Current.CancellationToken);
+        Assert.True(reloadedTarget.AgreedServiceTerms);
+        Assert.Equal(updated, reloadedTarget.Updated);
+        Assert.False(reloadedBystander.AgreedServiceTerms);
+    }
 }

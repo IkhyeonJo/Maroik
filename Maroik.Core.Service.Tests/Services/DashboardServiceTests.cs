@@ -737,4 +737,167 @@ public class DashboardServiceTests
             File.Delete(dockerFile);
         }
     }
+
+    // -- GetSummaryAsync: currency filter and start year ------------------------------
+
+    private void GivenSummaryInputs(IEnumerable<Asset> assets, List<Income> incomes, List<Expenditure> expenditures,
+        Income? firstIncome = null, Expenditure? firstExpenditure = null, string? defaultUnit = "KRW")
+    {
+        _accountRepo.Setup(r => r.FindByEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(MakeAccount(unit: defaultUnit));
+        _assetRepo.Setup(r => r.GetByAccountEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync([.. assets]);
+        _incomeRepo.Setup(r => r.GetByAccountEmailAndDateRangeAsync(It.IsAny<string>(), It.IsAny<DateTime>(), It.IsAny<DateTime>(), It.IsAny<CancellationToken>())).ReturnsAsync(incomes);
+        _expenditureRepo.Setup(r => r.GetByAccountEmailAndDateRangeAsync(It.IsAny<string>(), It.IsAny<DateTime>(), It.IsAny<DateTime>(), It.IsAny<CancellationToken>())).ReturnsAsync(expenditures);
+        _incomeRepo.Setup(r => r.GetFirstByAccountEmailOrderedByCreatedAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(firstIncome);
+        _expenditureRepo.Setup(r => r.GetFirstByAccountEmailOrderedByCreatedAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(firstExpenditure);
+    }
+
+    private static Income IncomeAt(long id, string asset, decimal amount, DateTime created) =>
+        Income.Reconstitute(id, "user@example.com", "RegularIncome", "LaborIncome", null, amount, "KRW", asset, null, created, created);
+
+    private static Expenditure ExpenditureAt(long id, string paymentMethod, decimal amount, DateTime created) =>
+        Expenditure.Reconstitute(id, "user@example.com", "ConsumerSpending", "MealOrEatOutExpenses", null, amount, "KRW", paymentMethod, "", null, created, created);
+
+    /// <summary>
+    /// Only rows whose asset uses the account's default currency are totalled (mixing currencies would
+    /// add unlike amounts), but the product→currency lookup still lists every asset for the view.
+    /// </summary>
+    [Fact]
+    public async Task GetSummaryAsync_TotalsOnlyRowsInTheDefaultCurrency()
+    {
+        var march = new DateTime(2025, 3, 15, 0, 0, 0, DateTimeKind.Utc);
+        GivenSummaryInputs(
+            [MakeAsset("Wallet", "KRW"), MakeAsset("UsdWallet", "USD")],
+            [IncomeAt(1, "Wallet", 100m, march), IncomeAt(2, "UsdWallet", 999m, march)],
+            [ExpenditureAt(3, "Wallet", 10m, march), ExpenditureAt(4, "UsdWallet", 888m, march)]);
+
+        DashboardDto summary = await CreateSut().GetSummaryAsync("user@example.com", "2025", "3", "UTC", TestContext.Current.CancellationToken);
+
+        Assert.Equal([1L], summary.YearIncomes.Select(i => i.Id));
+        Assert.Equal([1L], summary.YearMonthIncomes.Select(i => i.Id));
+        Assert.Equal([3L], summary.YearExpenditures.Select(e => e.Id));
+        Assert.Equal([3L], summary.YearMonthExpenditures.Select(e => e.Id));
+        Assert.Equal("USD", summary.CurrencyByProduct["UsdWallet"]);
+    }
+
+    /// <summary>A transaction on a since-deleted asset still resolves its currency and stays in the totals.</summary>
+    [Fact]
+    public async Task GetSummaryAsync_KeepsTransactionsOnDeletedAssets_InTheTotals()
+    {
+        var march = new DateTime(2025, 3, 15, 0, 0, 0, DateTimeKind.Utc);
+        GivenSummaryInputs([MakeAsset("OldWallet", "KRW", deleted: true)], [IncomeAt(1, "OldWallet", 100m, march)], []);
+
+        DashboardDto summary = await CreateSut().GetSummaryAsync("user@example.com", "2025", "3", "UTC", TestContext.Current.CancellationToken);
+
+        Assert.Equal([1L], summary.YearIncomes.Select(i => i.Id));
+    }
+
+    /// <summary>The start year is the earlier of the first income and the first expenditure.</summary>
+    [Fact]
+    public async Task GetSummaryAsync_StartYear_IsTheEarlierOfTheFirstIncomeAndTheFirstExpenditure()
+    {
+        GivenSummaryInputs([MakeAsset("Wallet")], [], [],
+            firstIncome: IncomeAt(1, "Wallet", 1m, new DateTime(2023, 6, 1, 0, 0, 0, DateTimeKind.Utc)),
+            firstExpenditure: ExpenditureAt(2, "Wallet", 1m, new DateTime(2021, 2, 1, 0, 0, 0, DateTimeKind.Utc)));
+
+        DashboardDto summary = await CreateSut().GetSummaryAsync("user@example.com", "2025", "3", "UTC", TestContext.Current.CancellationToken);
+
+        Assert.Equal(2021, summary.StartYear);
+    }
+
+    /// <summary>The start year is read in the user's own time zone: a UTC instant just before New Year is already next year in Seoul.</summary>
+    [Fact]
+    public async Task GetSummaryAsync_StartYear_IsConvertedToTheUsersTimeZone()
+    {
+        GivenSummaryInputs([MakeAsset("Wallet")], [], [],
+            firstIncome: IncomeAt(1, "Wallet", 1m, new DateTime(2024, 12, 31, 20, 0, 0, DateTimeKind.Utc)));
+
+        DashboardDto utc = await CreateSut().GetSummaryAsync("user@example.com", "2025", "3", "UTC", TestContext.Current.CancellationToken);
+        DashboardDto seoul = await CreateSut().GetSummaryAsync("user@example.com", "2025", "3", "Asia/Seoul", TestContext.Current.CancellationToken);
+
+        Assert.Equal(2024, utc.StartYear);
+        Assert.Equal(2025, seoul.StartYear);
+    }
+
+    /// <summary>An account with no transactions yet starts "this year".</summary>
+    [Fact]
+    public async Task GetSummaryAsync_StartYear_IsTheCurrentYear_WhenThereAreNoTransactions()
+    {
+        GivenSummaryInputs([MakeAsset("Wallet")], [], []);
+
+        DashboardDto summary = await CreateSut().GetSummaryAsync("user@example.com", "2025", "3", "UTC", TestContext.Current.CancellationToken);
+
+        Assert.Equal(DateTime.UtcNow.Year, summary.StartYear);
+    }
+
+    // -- GetNoticeCountsAsync: fixed expenditures ------------------------------------
+
+    private static FixedExpenditure FixedExpenditureDue(DateTime maturity, bool unpunctual = false) =>
+        FixedExpenditure.Reconstitute(1, "user@example.com", "ConsumerSpending", "MealOrEatOutExpenses", null, 100m, "KRW",
+            "Wallet", null, (short)1, (short)1, maturity, null, unpunctual, DateTime.UtcNow, DateTime.UtcNow);
+
+    /// <summary>Fixed expenditures are counted like fixed incomes: "always notify" items are noticed, past-maturity ones are expired.</summary>
+    [Fact]
+    public async Task GetNoticeCountsAsync_CountsNoticedAndExpiredFixedExpenditures()
+    {
+        _fixedIncomeRepo.Setup(r => r.GetByAccountEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync([]);
+        _fixedExpenditureRepo.Setup(r => r.GetByAccountEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(
+        [
+            FixedExpenditureDue(DateTime.UtcNow.Date.AddYears(1), unpunctual: true),
+            FixedExpenditureDue(DateTime.UtcNow.Date.AddYears(-1)),
+        ]);
+
+        NotificationDto counts = await CreateSut().GetNoticeCountsAsync("user@example.com", 7, "UTC", TestContext.Current.CancellationToken);
+
+        Assert.Equal(1, counts.FixedExpendituresNoticed);
+        Assert.Equal(1, counts.FixedExpendituresExpired);
+        Assert.Equal(0, counts.FixedIncomesNoticed);
+        Assert.Equal(0, counts.FixedIncomesExpired);
+    }
+
+    // -- GetServerResourceSummary: memory / disk rendering ----------------------------
+
+    /// <summary>
+    /// The collector writes <c>Memory: total / usage</c> and <c>Disk: total / usage</c>; the summary
+    /// shows them as <c>usage / total</c>, and reads the CPU percentage out of the "CPU Usage: n%" line.
+    /// </summary>
+    [Fact]
+    public void GetServerResourceSummary_RendersMemoryAndDiskAsUsageOverTotal()
+    {
+        string hostFile = Path.GetTempFileName();
+        try
+        {
+            File.WriteAllText(hostFile,
+                "Host CPU Information:\nCPU Usage: 37.5%\nHost Memory Information:\nMemory: 8.0Gi / 3.2Gi\nHost Disk Information:\nDisk: 500GB / 120GB\n");
+
+            ServerResourceDto summary = CreateSut().GetServerResourceSummary(hostFile, "nonexistent_docker.txt");
+
+            Assert.Equal("3.2Gi / 8.0Gi", summary.MemUsageLimit);
+            Assert.Equal("120GB / 500GB", summary.DiskUsageLimit);
+            Assert.Equal(37.5, summary.HostCpuNumeric, precision: 1);
+        }
+        finally
+        {
+            File.Delete(hostFile);
+        }
+    }
+
+    /// <summary>A memory/disk line without the "total / usage" separator renders nothing instead of throwing.</summary>
+    [Fact]
+    public void GetServerResourceSummary_RendersNothing_WhenTheMemoryAndDiskLinesHaveNoSeparator()
+    {
+        string hostFile = Path.GetTempFileName();
+        try
+        {
+            File.WriteAllText(hostFile, "Host CPU Information: 1%\nHost Memory Information:\nMemory: unavailable\nHost Disk Information:\nDisk: unknown\n");
+
+            ServerResourceDto summary = CreateSut().GetServerResourceSummary(hostFile, "nonexistent_docker.txt");
+
+            Assert.Equal("", summary.MemUsageLimit);
+            Assert.Equal("", summary.DiskUsageLimit);
+        }
+        finally
+        {
+            File.Delete(hostFile);
+        }
+    }
 }

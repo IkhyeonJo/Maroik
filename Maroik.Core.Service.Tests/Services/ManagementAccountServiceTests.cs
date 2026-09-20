@@ -402,4 +402,132 @@ public class ManagementAccountServiceTests
         _accountRepo.Verify(r => r.UpdateEntityAsync(
             It.Is<Account>(a => a.Deleted == true), It.IsAny<CancellationToken>()), Times.Once);
     }
+
+    // -- SearchAccountsAsync ------------------------------------------------------
+
+    /// <summary>The admin grid search is delegated to the repository and its rows are mapped to the admin response.</summary>
+    [Fact]
+    public async Task SearchAccountsAsync_DelegatesToRepository_AndMapsTheRows()
+    {
+        _accountRepo.Setup(r => r.SearchAsync("needle", It.IsAny<CancellationToken>())).ReturnsAsync([ActiveAccount("found@example.com")]);
+
+        List<AdminAccountResponse> result = await CreateSut().SearchAccountsAsync("needle", TestContext.Current.CancellationToken);
+
+        Assert.Equal("found@example.com", Assert.Single(result).Email);
+    }
+
+    // -- CreateAccountAsync: validation and failures ---------------------------------
+
+    private static AccountRequest NewAccountRequest(string email = "new@example.com", string password = "Plain1234!", string nickname = "NewUser") => new()
+    {
+        Email = email, PlainPassword = password, Nickname = nickname, EmailConfirmed = true
+    };
+
+    /// <summary>An admin-created account still has to meet the password rule; nothing is hashed or stored otherwise.</summary>
+    [Fact]
+    public async Task CreateAccountAsync_ReturnsPolicyViolation_AndDoesNotHashOrCreate_WhenThePasswordIsTooWeak()
+    {
+        _accountRepo.Setup(r => r.FindByEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync((Account?)null);
+
+        ServiceResult result = await CreateSut().CreateAccountAsync(NewAccountRequest(password: "weak"), TestContext.Current.CancellationToken);
+
+        Assert.False(result.Success);
+        Assert.Equal("Account.PasswordPolicy", result.ErrorCode);
+        _passwordService.Verify(p => p.HashPassword(It.IsAny<string>()), Times.Never);
+        _accountRepo.Verify(r => r.CreateAsync(It.IsAny<Account>(), It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    /// <summary>A malformed address is returned as the domain's validation error and nothing is stored.</summary>
+    [Fact]
+    public async Task CreateAccountAsync_ReturnsTheDomainValidationError_ForAMalformedEmail()
+    {
+        _accountRepo.Setup(r => r.FindByEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync((Account?)null);
+        _passwordService.Setup(p => p.HashPassword(It.IsAny<string>())).Returns("$2a$13$hashed");
+
+        ServiceResult result = await CreateSut().CreateAccountAsync(NewAccountRequest(email: "not-an-email"), TestContext.Current.CancellationToken);
+
+        Assert.Equal("Email.Invalid", result.ErrorCode);
+        _accountRepo.Verify(r => r.CreateAsync(It.IsAny<Account>(), It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    /// <summary>The admin's "email confirmed" checkbox and status message are applied to the created account.</summary>
+    [Fact]
+    public async Task CreateAccountAsync_AppliesTheConfirmedFlagAndMessage_FromTheRequest()
+    {
+        _accountRepo.Setup(r => r.FindByEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync((Account?)null);
+        _passwordService.Setup(p => p.HashPassword(It.IsAny<string>())).Returns("$2a$13$hashed");
+        AccountRequest request = NewAccountRequest();
+        request.Message = "created by admin";
+        request.EmailConfirmed = true;
+
+        ServiceResult result = await CreateSut().CreateAccountAsync(request, TestContext.Current.CancellationToken);
+
+        Assert.True(result.Success);
+        _accountRepo.Verify(r => r.CreateAsync(It.Is<Account>(a => a.EmailConfirmed && a.Message == "created by admin" && a.RegistrationToken == null), It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    /// <summary>An unexpected repository failure is caught and reported without leaking internals.</summary>
+    [Fact]
+    public async Task CreateAccountAsync_ReportsCreateFailed_WhenTheRepositoryThrows()
+    {
+        _accountRepo.Setup(r => r.FindByEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ThrowsAsync(new InvalidOperationException("secret detail"));
+
+        ServiceResult result = await CreateSut().CreateAccountAsync(NewAccountRequest(), TestContext.Current.CancellationToken);
+
+        Assert.Equal("ManagementAccount.CreateFailed", result.ErrorCode);
+        Assert.DoesNotContain("secret detail", result.ErrorKey);
+    }
+
+    // -- UpdateAccountAsync: validation and failures ----------------------------------
+
+    /// <summary>An admin-set password must meet the policy: refused before hashing and before the row lock is taken.</summary>
+    [Fact]
+    public async Task UpdateAccountAsync_ReturnsPolicyViolation_BeforeLockingTheRow_WhenTheNewPasswordIsTooWeak()
+    {
+        ServiceResult result = await CreateSut().UpdateAccountAsync(new AccountRequest { Email = "user@example.com" }, "weak", TestContext.Current.CancellationToken);
+
+        Assert.Equal("Account.PasswordPolicy", result.ErrorCode);
+        _passwordService.Verify(p => p.HashPassword(It.IsAny<string>()), Times.Never);
+        _unitOfWork.Verify(u => u.BeginAsync(It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    /// <summary>An unknown role is returned as the domain's validation error; the row is not written and the lock is released.</summary>
+    [Fact]
+    public async Task UpdateAccountAsync_ReturnsTheDomainValidationError_ForAnUnknownRole()
+    {
+        _accountRepo.Setup(r => r.FindByEmailForUpdateAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(ActiveAccount());
+
+        ServiceResult result = await CreateSut().UpdateAccountAsync(new AccountRequest { Email = "user@example.com", Role = "SuperUser", TimeZoneIanaId = "UTC" }, null, TestContext.Current.CancellationToken);
+
+        Assert.Equal("Account.RoleInvalid", result.ErrorCode);
+        _accountRepo.Verify(r => r.UpdateEntityAsync(It.IsAny<Account>(), It.IsAny<CancellationToken>()), Times.Never);
+        _unitOfWork.Verify(u => u.RollbackAsync(It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    /// <summary>An unexpected repository failure on update is rolled back and reported without leaking internals.</summary>
+    [Fact]
+    public async Task UpdateAccountAsync_RollsBackAndReportsUpdateFailed_WhenTheRepositoryThrows()
+    {
+        _accountRepo.Setup(r => r.FindByEmailForUpdateAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ThrowsAsync(new InvalidOperationException("secret detail"));
+
+        ServiceResult result = await CreateSut().UpdateAccountAsync(new AccountRequest { Email = "user@example.com" }, null, TestContext.Current.CancellationToken);
+
+        Assert.Equal("ManagementAccount.UpdateFailed", result.ErrorCode);
+        Assert.DoesNotContain("secret detail", result.ErrorKey);
+        _unitOfWork.Verify(u => u.RollbackAsync(It.IsAny<CancellationToken>()), Times.Once);
+        _unitOfWork.Verify(u => u.CommitAsync(It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    /// <summary>An unexpected repository failure on delete is rolled back and reported without leaking internals.</summary>
+    [Fact]
+    public async Task DeleteAccountAsync_RollsBackAndReportsDeleteFailed_WhenTheRepositoryThrows()
+    {
+        _accountRepo.Setup(r => r.FindByEmailForUpdateAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ThrowsAsync(new InvalidOperationException("secret detail"));
+
+        ServiceResult result = await CreateSut().DeleteAccountAsync("user@example.com", TestContext.Current.CancellationToken);
+
+        Assert.Equal("ManagementAccount.DeleteFailed", result.ErrorCode);
+        Assert.DoesNotContain("secret detail", result.ErrorKey);
+        _unitOfWork.Verify(u => u.RollbackAsync(It.IsAny<CancellationToken>()), Times.Once);
+    }
 }

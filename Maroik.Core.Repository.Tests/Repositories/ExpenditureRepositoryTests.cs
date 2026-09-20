@@ -321,4 +321,131 @@ public sealed class ExpenditureRepositoryTests(DatabaseFixture database) : Repos
             .Where(e => e.AccountEmail == alice).ToListAsync(TestContext.Current.CancellationToken);
         Assert.Equal(keep.Id, Assert.Single(remaining).Id);
     }
+
+    // -- SearchByAccountEmailAsync -----------------------------------------------------
+
+    /// <summary>The whole-row search matches a text column case-insensitively and never crosses accounts.</summary>
+    [Fact]
+    public async Task SearchByAccountEmailAsync_MatchesTextColumnCaseInsensitively_AndIsScopedToTheAccount()
+    {
+        string alice = UniqueEmail("alice");
+        string bob = UniqueEmail("bob");
+        string marker = Unique("Groceries");
+        await SeedAsync(
+            MakeExpenditure(alice, marker),
+            MakeExpenditure(alice, "Lunch"),
+            MakeExpenditure(bob, marker));
+
+        List<Expenditure> result = await Sut.SearchByAccountEmailAsync(alice, marker.ToUpperInvariant(), TestContext.Current.CancellationToken);
+
+        Expenditure hit = Assert.Single(result);
+        Assert.Equal(marker, hit.Content);
+        Assert.Equal(alice, hit.AccountEmail.Value);
+    }
+
+    /// <summary>PaymentMethod and MyDepositAsset are both searchable columns.</summary>
+    [Fact]
+    public async Task SearchByAccountEmailAsync_MatchesPaymentMethodAndMyDepositAsset()
+    {
+        string alice = UniqueEmail("alice");
+        string card = Unique("Card");
+        string savings = Unique("Savings");
+        await SeedAsync(
+            MakeExpenditure(alice, "paid by card", paymentMethod: card, myDepositAsset: null),
+            MakeExpenditure(alice, "moved to savings", paymentMethod: "Wallet", myDepositAsset: savings),
+            MakeExpenditure(alice, "plain", paymentMethod: "Wallet", myDepositAsset: null));
+
+        List<Expenditure> byCard = await Sut.SearchByAccountEmailAsync(alice, card, TestContext.Current.CancellationToken);
+        List<Expenditure> bySavings = await Sut.SearchByAccountEmailAsync(alice, savings, TestContext.Current.CancellationToken);
+
+        Assert.Equal("paid by card", Assert.Single(byCard).Content);
+        Assert.Equal("moved to savings", Assert.Single(bySavings).Content);
+    }
+
+    /// <summary>Amount is searched through <c>CAST(... AS TEXT)</c>, so its stored text form (<c>7654.32</c>) matches.</summary>
+    [Fact]
+    public async Task SearchByAccountEmailAsync_MatchesTheAmountAsText()
+    {
+        string alice = UniqueEmail("alice");
+        await SeedAsync(
+            MakeExpenditure(alice, "Target", amount: 7654.32m),
+            MakeExpenditure(alice, "Other", amount: 12m));
+
+        List<Expenditure> result = await Sut.SearchByAccountEmailAsync(alice, "7654.32", TestContext.Current.CancellationToken);
+
+        Assert.Equal("Target", Assert.Single(result).Content);
+    }
+
+    /// <summary>The currency label lives on the payment-method asset — the <c>EXISTS</c> join must find it.</summary>
+    [Fact]
+    public async Task SearchByAccountEmailAsync_MatchesThePaymentMethodAssetsMonetaryUnit()
+    {
+        string alice = UniqueEmail("alice");
+        string unit = "U" + Token;
+        await SeedAsync(
+            MakeExpenditure(alice, "In foreign currency", paymentMethod: "Foreign", myDepositAsset: null),
+            MakeExpenditure(alice, "In KRW", paymentMethod: "Wallet", myDepositAsset: null));
+        await Context.Assets.Where(a => a.AccountEmail == alice && a.ProductName == "Foreign")
+            .ExecuteUpdateAsync(s => s.SetProperty(a => a.MonetaryUnit, unit), TestContext.Current.CancellationToken);
+
+        List<Expenditure> result = await Sut.SearchByAccountEmailAsync(alice, unit, TestContext.Current.CancellationToken);
+
+        Assert.Equal("In foreign currency", Assert.Single(result).Content);
+    }
+
+    /// <summary><c>%</c> and <c>_</c> in the search text are literals, not LIKE wildcards.</summary>
+    [Fact]
+    public async Task SearchByAccountEmailAsync_TreatsLikeWildcardsLiterally()
+    {
+        string alice = UniqueEmail("alice");
+        await SeedAsync(
+            MakeExpenditure(alice, $"100%-{Token}"),
+            MakeExpenditure(alice, $"1000-{Token}"),
+            MakeExpenditure(alice, $"a_b-{Token}"),
+            MakeExpenditure(alice, $"axb-{Token}"));
+
+        List<Expenditure> percent = await Sut.SearchByAccountEmailAsync(alice, $"0%-{Token}", TestContext.Current.CancellationToken);
+        List<Expenditure> underscore = await Sut.SearchByAccountEmailAsync(alice, $"a_b-{Token}", TestContext.Current.CancellationToken);
+
+        Assert.Equal($"100%-{Token}", Assert.Single(percent).Content);
+        Assert.Equal($"a_b-{Token}", Assert.Single(underscore).Content);
+    }
+
+    /// <summary>No matching row → an empty list (the two-step lookup skips its second query).</summary>
+    [Fact]
+    public async Task SearchByAccountEmailAsync_ReturnsEmpty_WhenNothingMatches()
+    {
+        string alice = UniqueEmail("alice");
+        await SeedAsync(MakeExpenditure(alice, "Lunch"));
+
+        Assert.Empty(await Sut.SearchByAccountEmailAsync(alice, "no-such-" + Token, TestContext.Current.CancellationToken));
+    }
+
+    // -- GetByAccountEmailAndDateRangeAsync ---------------------------------------------
+
+    /// <summary>The range is half-open (<c>from</c> inclusive, <c>to</c> exclusive) and scoped to the account.</summary>
+    [Fact]
+    public async Task GetByAccountEmailAndDateRangeAsync_IsHalfOpen_AndScopedToTheAccount()
+    {
+        string alice = UniqueEmail("alice");
+        string bob = UniqueEmail("bob");
+        var from = new DateTime(2031, 3, 1, 0, 0, 0, DateTimeKind.Utc);
+        var to = new DateTime(2031, 4, 1, 0, 0, 0, DateTimeKind.Utc);
+        EfExpenditure At(string email, string content, DateTime created)
+        {
+            EfExpenditure expenditure = MakeExpenditure(email, content);
+            expenditure.Created = created;
+            return expenditure;
+        }
+        await SeedAsync(
+            At(alice, "before", from.AddTicks(-1)),
+            At(alice, "at-from", from),
+            At(alice, "inside", from.AddDays(10)),
+            At(alice, "at-to", to),
+            At(bob, "other-account", from.AddDays(10)));
+
+        List<Expenditure> result = await Sut.GetByAccountEmailAndDateRangeAsync(alice, from, to, TestContext.Current.CancellationToken);
+
+        Assert.Equal(["at-from", "inside"], result.Select(e => e.Content).Order());
+    }
 }

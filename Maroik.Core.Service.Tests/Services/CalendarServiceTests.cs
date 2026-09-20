@@ -1025,4 +1025,430 @@ public class CalendarServiceTests
         _sharedRepo.Verify(r => r.UpdateEntityAsync(It.IsAny<CalendarShared>(), It.IsAny<CancellationToken>()), Times.Never);
         _unitOfWork.Verify(u => u.CommitAsync(It.IsAny<CancellationToken>()), Times.Once);
     }
+
+    // -- Read-time sharing filters ---------------------------------------------
+
+    /// <summary>
+    /// A subscription to a calendar that has since been turned private must stop showing up at read time,
+    /// even if the cleanup that should have deleted the stale row never ran.
+    /// </summary>
+    [Fact]
+    public async Task GetOtherCalendarsAsync_DropsSubscriptionsToCalendarsThatAreNoLongerSharedToUsers()
+    {
+        _otherCalendarRepo.Setup(r => r.GetByAccountEmailAsync("user@example.com", It.IsAny<CancellationToken>()))
+            .ReturnsAsync([OtherCalendar.Reconstitute("user@example.com", 1), OtherCalendar.Reconstitute("user@example.com", 2)]);
+        _sharedRepo.Setup(r => r.GetAllAsync(It.IsAny<CancellationToken>()))
+            .ReturnsAsync([CalendarShared.Reconstitute(1, user: true, anonymous: false), CalendarShared.Reconstitute(2, user: false, anonymous: true)]);
+
+        List<OtherCalendarResponse> result = await CreateSut().GetOtherCalendarsAsync("user@example.com", TestContext.Current.CancellationToken);
+
+        Assert.Equal([1L], result.Select(r => r.CalendarId));
+    }
+
+    /// <summary>A signed-in visitor sees exactly the calendars they subscribed to (and are still shared), sorted by name.</summary>
+    [Fact]
+    public async Task GetVisibleOtherCalendarsAsync_ForASignedInAccount_ReturnsSubscribedCalendarsSortedByName()
+    {
+        _calendarRepo.Setup(r => r.GetAllOrderedByNameAsync(It.IsAny<CancellationToken>()))
+            .ReturnsAsync([MakeCalendar(1, "Zeta"), MakeCalendar(2, "Alpha"), MakeCalendar(3, "Unsubscribed")]);
+        _otherCalendarRepo.Setup(r => r.GetByAccountEmailAsync("user@example.com", It.IsAny<CancellationToken>()))
+            .ReturnsAsync([OtherCalendar.Reconstitute("user@example.com", 1), OtherCalendar.Reconstitute("user@example.com", 2)]);
+        _sharedRepo.Setup(r => r.GetAllAsync(It.IsAny<CancellationToken>()))
+            .ReturnsAsync([CalendarShared.Reconstitute(1, true, false), CalendarShared.Reconstitute(2, true, false), CalendarShared.Reconstitute(3, true, false)]);
+
+        List<CalendarResponse> result = await CreateSut().GetVisibleOtherCalendarsAsync(
+            new AccountResponse { Email = "user@example.com" }, TestContext.Current.CancellationToken);
+
+        Assert.Equal(["Alpha", "Zeta"], result.Select(c => c.Name));
+    }
+
+    /// <summary>An anonymous visitor sees only calendars an admin shared with guests, sorted by name.</summary>
+    [Fact]
+    public async Task GetVisibleOtherCalendarsAsync_ForAnAnonymousVisitor_ReturnsOnlyGuestSharedCalendars()
+    {
+        _calendarRepo.Setup(r => r.GetAllOrderedByNameAsync(It.IsAny<CancellationToken>()))
+            .ReturnsAsync([MakeCalendar(1, "Zeta"), MakeCalendar(2, "Alpha"), MakeCalendar(3, "UsersOnly")]);
+        _sharedRepo.Setup(r => r.GetAllAsync(It.IsAny<CancellationToken>()))
+            .ReturnsAsync([CalendarShared.Reconstitute(1, false, true), CalendarShared.Reconstitute(2, false, true), CalendarShared.Reconstitute(3, true, false)]);
+
+        List<CalendarResponse> result = await CreateSut().GetVisibleOtherCalendarsAsync(null, TestContext.Current.CancellationToken);
+
+        Assert.Equal(["Alpha", "Zeta"], result.Select(c => c.Name));
+        _otherCalendarRepo.Verify(r => r.GetByAccountEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    // -- EnsureCalendarSharedAsync: races and failures ---------------------------
+
+    private static Exception SharedPkViolation() =>
+        new("23505: duplicate key value violates unique constraint \"CalendarShared_pk\"");
+
+    /// <summary>The first attempt loses the CalendarShared PK race; the retry (in a fresh transaction) succeeds.</summary>
+    [Fact]
+    public async Task EnsureCalendarSharedAsync_RetriesInAFreshTransaction_AfterLosingThePrimaryKeyRace()
+    {
+        _sharedRepo.SetupSequence(r => r.GetAllAsync(It.IsAny<CancellationToken>()))
+            .ReturnsAsync([])
+            .ReturnsAsync([CalendarShared.Reconstitute(5, false, false)]);
+        _sharedRepo.SetupSequence(r => r.CreateAsync(It.IsAny<CalendarShared>(), It.IsAny<CancellationToken>()))
+            .ThrowsAsync(SharedPkViolation());
+
+        ServiceResult result = await CreateSut().EnsureCalendarSharedAsync([5], TestContext.Current.CancellationToken);
+
+        Assert.True(result.Success);
+        _unitOfWork.Verify(u => u.BeginAsync(It.IsAny<CancellationToken>()), Times.Exactly(2));
+        _unitOfWork.Verify(u => u.RollbackAsync(It.IsAny<CancellationToken>()), Times.Once);
+        _unitOfWork.Verify(u => u.CommitAsync(It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    /// <summary>A persistent PK collision gives up after the retry limit instead of looping forever.</summary>
+    [Fact]
+    public async Task EnsureCalendarSharedAsync_GivesUp_WhenThePrimaryKeyRaceNeverResolves()
+    {
+        _sharedRepo.Setup(r => r.GetAllAsync(It.IsAny<CancellationToken>())).ReturnsAsync([]);
+        _sharedRepo.Setup(r => r.CreateAsync(It.IsAny<CalendarShared>(), It.IsAny<CancellationToken>())).ThrowsAsync(SharedPkViolation());
+
+        ServiceResult result = await CreateSut().EnsureCalendarSharedAsync([5], TestContext.Current.CancellationToken);
+
+        Assert.False(result.Success);
+        Assert.Equal("Calendar.Unexpected", result.ErrorCode);
+        _unitOfWork.Verify(u => u.BeginAsync(It.IsAny<CancellationToken>()), Times.Exactly(3));
+        _unitOfWork.Verify(u => u.RollbackAsync(It.IsAny<CancellationToken>()), Times.Exactly(3));
+        _unitOfWork.Verify(u => u.CommitAsync(It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    /// <summary>Any other failure is not retried: it rolls back once and reports the generic failure.</summary>
+    [Fact]
+    public async Task EnsureCalendarSharedAsync_DoesNotRetry_WhenTheFailureIsNotThePrimaryKeyRace()
+    {
+        _sharedRepo.Setup(r => r.GetAllAsync(It.IsAny<CancellationToken>())).ThrowsAsync(new InvalidOperationException("db down"));
+
+        ServiceResult result = await CreateSut().EnsureCalendarSharedAsync([5], TestContext.Current.CancellationToken);
+
+        Assert.False(result.Success);
+        Assert.Equal("Calendar.Unexpected", result.ErrorCode);
+        _unitOfWork.Verify(u => u.BeginAsync(It.IsAny<CancellationToken>()), Times.Once);
+        _unitOfWork.Verify(u => u.RollbackAsync(It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    // -- Calendar CRUD: validation and unexpected failures -----------------------
+
+    /// <summary>A domain validation error (bad colour) is returned as-is and nothing is persisted.</summary>
+    [Fact]
+    public async Task CreateCalendarAsync_ReturnsTheDomainValidationError_AndPersistsNothing()
+    {
+        _calendarRepo.Setup(r => r.GetByAccountEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync([]);
+
+        ServiceResult result = await CreateSut().CreateCalendarAsync("user@example.com",
+            new CalendarRequest { Name = "Work", TimeZoneIanaId = "UTC", HtmlColorCode = "not-a-colour" }, TestContext.Current.CancellationToken);
+
+        Assert.Equal("HtmlColorCode.Invalid", result.ErrorCode);
+        _calendarRepo.Verify(r => r.CreateAsync(It.IsAny<Calendar>(), It.IsAny<CancellationToken>()), Times.Never);
+        _unitOfWork.Verify(u => u.RollbackAsync(It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    /// <summary>A domain validation error on update (blank name) is returned and the row is not written.</summary>
+    [Fact]
+    public async Task UpdateCalendarAsync_ReturnsTheDomainValidationError_AndDoesNotWrite()
+    {
+        _calendarRepo.Setup(r => r.FindByIdForUpdateAsync(1, It.IsAny<CancellationToken>())).ReturnsAsync(MakeCalendar(1));
+
+        ServiceResult result = await CreateSut().UpdateCalendarAsync("user@example.com",
+            new CalendarRequest { Id = 1, Name = "   ", TimeZoneIanaId = "UTC", HtmlColorCode = "#3788d8" }, TestContext.Current.CancellationToken);
+
+        Assert.Equal("Calendar.NameEmpty", result.ErrorCode);
+        _calendarRepo.Verify(r => r.UpdateEntityAsync(It.IsAny<Calendar>(), It.IsAny<CancellationToken>()), Times.Never);
+        _unitOfWork.Verify(u => u.RollbackAsync(It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    /// <summary>An unexpected repository failure on update is rolled back and reported generically (no internals leaked).</summary>
+    [Fact]
+    public async Task UpdateCalendarAsync_RollsBackAndReportsUnexpectedFailure_WhenTheRepositoryThrows()
+    {
+        _calendarRepo.Setup(r => r.FindByIdForUpdateAsync(1, It.IsAny<CancellationToken>())).ThrowsAsync(new InvalidOperationException("secret detail"));
+
+        ServiceResult result = await CreateSut().UpdateCalendarAsync("user@example.com",
+            new CalendarRequest { Id = 1, Name = "Work", TimeZoneIanaId = "UTC", HtmlColorCode = "#3788d8" }, TestContext.Current.CancellationToken);
+
+        Assert.Equal("Calendar.Unexpected", result.ErrorCode);
+        Assert.DoesNotContain("secret detail", result.ErrorKey);
+        _unitOfWork.Verify(u => u.RollbackAsync(It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    /// <summary>An unexpected repository failure on delete is rolled back and reported generically.</summary>
+    [Fact]
+    public async Task DeleteCalendarAsync_RollsBackAndReportsUnexpectedFailure_WhenTheRepositoryThrows()
+    {
+        _calendarRepo.Setup(r => r.GetByAccountEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync([MakeCalendar(1)]);
+        _calendarRepo.Setup(r => r.DeleteByIdAsync(1, It.IsAny<CancellationToken>())).ThrowsAsync(new InvalidOperationException("db down"));
+
+        ServiceResult result = await CreateSut().DeleteCalendarAsync("user@example.com", new CalendarRequest { Id = 1 }, TestContext.Current.CancellationToken);
+
+        Assert.Equal("Calendar.Unexpected", result.ErrorCode);
+        _unitOfWork.Verify(u => u.RollbackAsync(It.IsAny<CancellationToken>()), Times.Once);
+        _unitOfWork.Verify(u => u.CommitAsync(It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    /// <summary>
+    /// First-visit provisioning must never leave the grid empty: an unknown / missing time zone on the
+    /// account falls back to UTC instead of failing the auto-created default calendar.
+    /// </summary>
+    [Theory]
+    [InlineData("Not/AZone")]
+    [InlineData(null)]
+    public async Task EnsureDefaultCalendarAsync_FallsBackToUtc_WhenTheAccountTimeZoneIsUnusable(string? timeZone)
+    {
+        _calendarRepo.Setup(r => r.GetByAccountEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync([]);
+        Calendar? created = null;
+        _calendarRepo.Setup(r => r.CreateAsync(It.IsAny<Calendar>(), It.IsAny<CancellationToken>()))
+            .Callback<Calendar, CancellationToken>((c, _) => created = c).Returns(Task.CompletedTask);
+
+        ServiceResult result = await CreateSut().EnsureDefaultCalendarAsync("user@example.com",
+            new CalendarRequest { Name = "Nick", TimeZoneIanaId = timeZone, HtmlColorCode = "#3788d8" }, TestContext.Current.CancellationToken);
+
+        Assert.True(result.Success);
+        Assert.Equal("UTC", created?.TimeZone.Value);
+    }
+
+    /// <summary>A failure other than the name race while provisioning the default calendar is rolled back and reported.</summary>
+    [Fact]
+    public async Task EnsureDefaultCalendarAsync_ReportsUnexpectedFailure_WhenTheRepositoryThrows()
+    {
+        _calendarRepo.Setup(r => r.GetByAccountEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new InvalidOperationException("db down"));
+
+        ServiceResult result = await CreateSut().EnsureDefaultCalendarAsync("user@example.com",
+            new CalendarRequest { Name = "Nick", TimeZoneIanaId = "UTC", HtmlColorCode = "#3788d8" }, TestContext.Current.CancellationToken);
+
+        Assert.Equal("Calendar.Unexpected", result.ErrorCode);
+        _unitOfWork.Verify(u => u.RollbackAsync(It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    /// <summary>A default-calendar name the domain rejects (e.g. a nickname with angle brackets) returns the validation error, not an exception.</summary>
+    [Fact]
+    public async Task EnsureDefaultCalendarAsync_ReturnsTheDomainValidationError_WhenTheNameIsRejected()
+    {
+        _calendarRepo.Setup(r => r.GetByAccountEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync([]);
+
+        ServiceResult result = await CreateSut().EnsureDefaultCalendarAsync("user@example.com",
+            new CalendarRequest { Name = "a<b", TimeZoneIanaId = "UTC", HtmlColorCode = "#3788d8" }, TestContext.Current.CancellationToken);
+
+        Assert.Equal("Calendar.NameInvalid", result.ErrorCode);
+        _calendarRepo.Verify(r => r.CreateAsync(It.IsAny<Calendar>(), It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    // -- UpdateOtherCalendarAsync / UpdateCalendarSharedAsync: failures ----------
+
+    /// <summary>A failure while re-creating subscriptions is rolled back (the delete-all must not survive) and reported.</summary>
+    [Fact]
+    public async Task UpdateOtherCalendarAsync_RollsBackAndFails_WhenTheRepositoryThrows()
+    {
+        _sharedRepo.Setup(r => r.GetByIdsForUpdateAsync(It.IsAny<IEnumerable<long>>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync([CalendarShared.Reconstitute(20, true, false)]);
+        _otherCalendarRepo.Setup(r => r.CreateAsync(It.IsAny<OtherCalendar>(), It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new InvalidOperationException("db down"));
+
+        ServiceResult result = await CreateSut().UpdateOtherCalendarAsync("user@example.com",
+            [new OtherCalendarRequest { CalendarId = 20 }], TestContext.Current.CancellationToken);
+
+        Assert.False(result.Success);
+        Assert.Equal("Calendar.UpdateOtherCalendarsFailed", result.ErrorCode);
+        _unitOfWork.Verify(u => u.RollbackAsync(It.IsAny<CancellationToken>()), Times.Once);
+        _unitOfWork.Verify(u => u.CommitAsync(It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    /// <summary>
+    /// Turning a calendar private must remove EVERY account's subscription to it (one batched delete per
+    /// unshared calendar), otherwise the leftovers silently reactivate when it is shared again.
+    /// </summary>
+    [Fact]
+    public async Task UpdateCalendarSharedAsync_RemovesAllSubscriptions_OnlyForCalendarsNoLongerSharedToUsers()
+    {
+        const string email = "admin@example.com";
+        _calendarRepo.Setup(r => r.GetByAccountEmailAsync(email, It.IsAny<CancellationToken>()))
+            .ReturnsAsync([MakeCalendar(1, "A", email), MakeCalendar(2, "B", email)]);
+        _sharedRepo.Setup(r => r.GetAllAsync(It.IsAny<CancellationToken>()))
+            .ReturnsAsync([CalendarShared.Reconstitute(1, true, false), CalendarShared.Reconstitute(2, true, false)]);
+
+        ServiceResult result = await CreateSut().UpdateCalendarSharedAsync(email,
+        [
+            new CalendarSharedRequest { CalendarId = 1, User = true, Anonymous = false },
+            new CalendarSharedRequest { CalendarId = 2, User = false, Anonymous = true },
+        ], TestContext.Current.CancellationToken);
+
+        Assert.True(result.Success);
+        _otherCalendarRepo.Verify(r => r.DeleteByCalendarIdAsync(2, It.IsAny<CancellationToken>()), Times.Once);
+        _otherCalendarRepo.Verify(r => r.DeleteByCalendarIdAsync(1, It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    /// <summary>A lost CalendarShared PK race on the upsert is retried and the second attempt applies the same values.</summary>
+    [Fact]
+    public async Task UpdateCalendarSharedAsync_RetriesAfterLosingThePrimaryKeyRace()
+    {
+        const string email = "admin@example.com";
+        _calendarRepo.Setup(r => r.GetByAccountEmailAsync(email, It.IsAny<CancellationToken>())).ReturnsAsync([MakeCalendar(1, "A", email)]);
+        _sharedRepo.SetupSequence(r => r.GetAllAsync(It.IsAny<CancellationToken>()))
+            .ReturnsAsync([])
+            .ReturnsAsync([CalendarShared.Reconstitute(1, false, false)]);
+        _sharedRepo.Setup(r => r.CreateAsync(It.IsAny<CalendarShared>(), It.IsAny<CancellationToken>())).ThrowsAsync(SharedPkViolation());
+
+        ServiceResult result = await CreateSut().UpdateCalendarSharedAsync(email,
+            [new CalendarSharedRequest { CalendarId = 1, User = true, Anonymous = false }], TestContext.Current.CancellationToken);
+
+        Assert.True(result.Success);
+        _sharedRepo.Verify(r => r.UpdateEntityAsync(It.Is<CalendarShared>(s => s.Id == 1 && s.User), It.IsAny<CancellationToken>()), Times.Once);
+        _unitOfWork.Verify(u => u.BeginAsync(It.IsAny<CancellationToken>()), Times.Exactly(2));
+    }
+
+    /// <summary>A persistent PK race gives up after the retry limit with the shared-settings failure code.</summary>
+    [Fact]
+    public async Task UpdateCalendarSharedAsync_GivesUp_WhenThePrimaryKeyRaceNeverResolves()
+    {
+        const string email = "admin@example.com";
+        _calendarRepo.Setup(r => r.GetByAccountEmailAsync(email, It.IsAny<CancellationToken>())).ReturnsAsync([MakeCalendar(1, "A", email)]);
+        _sharedRepo.Setup(r => r.GetAllAsync(It.IsAny<CancellationToken>())).ReturnsAsync([]);
+        _sharedRepo.Setup(r => r.CreateAsync(It.IsAny<CalendarShared>(), It.IsAny<CancellationToken>())).ThrowsAsync(SharedPkViolation());
+
+        ServiceResult result = await CreateSut().UpdateCalendarSharedAsync(email,
+            [new CalendarSharedRequest { CalendarId = 1, User = true, Anonymous = false }], TestContext.Current.CancellationToken);
+
+        Assert.False(result.Success);
+        Assert.Equal("Calendar.UpdateSharedFailed", result.ErrorCode);
+        _unitOfWork.Verify(u => u.BeginAsync(It.IsAny<CancellationToken>()), Times.Exactly(3));
+        _unitOfWork.Verify(u => u.CommitAsync(It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    /// <summary>Any other failure is not retried: one rollback, then the shared-settings failure code.</summary>
+    [Fact]
+    public async Task UpdateCalendarSharedAsync_DoesNotRetry_WhenTheFailureIsNotThePrimaryKeyRace()
+    {
+        const string email = "admin@example.com";
+        _calendarRepo.Setup(r => r.GetByAccountEmailAsync(email, It.IsAny<CancellationToken>())).ReturnsAsync([MakeCalendar(1, "A", email)]);
+        _sharedRepo.Setup(r => r.GetAllAsync(It.IsAny<CancellationToken>())).ThrowsAsync(new InvalidOperationException("db down"));
+
+        ServiceResult result = await CreateSut().UpdateCalendarSharedAsync(email,
+            [new CalendarSharedRequest { CalendarId = 1, User = true, Anonymous = false }], TestContext.Current.CancellationToken);
+
+        Assert.Equal("Calendar.UpdateSharedFailed", result.ErrorCode);
+        _unitOfWork.Verify(u => u.BeginAsync(It.IsAny<CancellationToken>()), Times.Once);
+        _unitOfWork.Verify(u => u.RollbackAsync(It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    // -- Calendar events: validation and unexpected failures ----------------------
+
+    /// <summary>A blank event title is returned as the domain validation error; nothing is stored.</summary>
+    [Fact]
+    public async Task CreateCalendarEventAsync_ReturnsTheDomainValidationError_WhenTheTitleIsBlank()
+    {
+        _calendarRepo.Setup(r => r.GetByAccountEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync([MakeCalendar(1)]);
+
+        ServiceResult result = await CreateSut().CreateCalendarEventAsync(
+            new CalendarEventRequest { CalendarId = 1, Title = "" }, "user@example.com", "1", [], null, TestContext.Current.CancellationToken);
+
+        Assert.Equal("CalendarEvent.TitleEmpty", result.ErrorCode);
+        _eventRepo.Verify(r => r.CreateCalendarEventAsync(It.IsAny<CalendarEvent>(), It.IsAny<CancellationToken>()), Times.Never);
+        _unitOfWork.Verify(u => u.RollbackAsync(It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    /// <summary>An unexpected repository failure while creating an event is rolled back and reported without leaking internals.</summary>
+    [Fact]
+    public async Task CreateCalendarEventAsync_RollsBackAndReportsCreateFailed_WhenTheRepositoryThrows()
+    {
+        _calendarRepo.Setup(r => r.GetByAccountEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync([MakeCalendar(1)]);
+        _eventRepo.Setup(r => r.CreateCalendarEventAsync(It.IsAny<CalendarEvent>(), It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new InvalidOperationException("secret detail"));
+
+        ServiceResult result = await CreateSut().CreateCalendarEventAsync(
+            new CalendarEventRequest { CalendarId = 1, Title = "Meeting" }, "user@example.com", "1", [], null, TestContext.Current.CancellationToken);
+
+        Assert.Equal("CalendarEvent.CreateFailed", result.ErrorCode);
+        Assert.DoesNotContain("secret detail", result.ErrorKey);
+        _unitOfWork.Verify(u => u.RollbackAsync(It.IsAny<CancellationToken>()), Times.Once);
+        _unitOfWork.Verify(u => u.CommitAsync(It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    /// <summary>A blank title on update is returned as the domain validation error and the event row is not written.</summary>
+    [Fact]
+    public async Task UpdateCalendarEventAsync_ReturnsTheDomainValidationError_WhenTheTitleIsBlank()
+    {
+        _calendarRepo.Setup(r => r.GetByAccountEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync([MakeCalendar(1)]);
+        _eventRepo.Setup(r => r.FindByIdForUpdateAsync(1, It.IsAny<CancellationToken>())).ReturnsAsync(MakeCalendarEvent(1, 1, "Old"));
+
+        ServiceResult result = await CreateSut().UpdateCalendarEventAsync(
+            new CalendarEventRequest { Id = 1, CalendarId = 1, Title = "" }, "user@example.com", "1", [], null, TestContext.Current.CancellationToken);
+
+        Assert.Equal("CalendarEvent.TitleEmpty", result.ErrorCode);
+        _eventRepo.Verify(r => r.UpdateEntityAsync(It.IsAny<CalendarEvent>(), It.IsAny<CancellationToken>()), Times.Never);
+        _unitOfWork.Verify(u => u.RollbackAsync(It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    /// <summary>An unexpected repository failure while updating an event is rolled back and reported without leaking internals.</summary>
+    [Fact]
+    public async Task UpdateCalendarEventAsync_RollsBackAndReportsUpdateFailed_WhenTheRepositoryThrows()
+    {
+        _calendarRepo.Setup(r => r.GetByAccountEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync([MakeCalendar(1)]);
+        _eventRepo.Setup(r => r.FindByIdForUpdateAsync(1, It.IsAny<CancellationToken>())).ReturnsAsync(MakeCalendarEvent(1, 1, "Old"));
+        _eventRepo.Setup(r => r.UpdateEntityAsync(It.IsAny<CalendarEvent>(), It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new InvalidOperationException("secret detail"));
+
+        ServiceResult result = await CreateSut().UpdateCalendarEventAsync(
+            new CalendarEventRequest { Id = 1, CalendarId = 1, Title = "New" }, "user@example.com", "1", [], null, TestContext.Current.CancellationToken);
+
+        Assert.Equal("CalendarEvent.UpdateFailed", result.ErrorCode);
+        Assert.DoesNotContain("secret detail", result.ErrorKey);
+        _unitOfWork.Verify(u => u.RollbackAsync(It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    /// <summary>An account with no calendar at all cannot delete an event (and the lookup never runs).</summary>
+    [Fact]
+    public async Task DeleteCalendarEventAsync_ReturnsNotFound_WhenTheAccountHasNoCalendar()
+    {
+        _calendarRepo.Setup(r => r.GetByAccountEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync([]);
+
+        ServiceResult result = await CreateSut().DeleteCalendarEventAsync(1, "user@example.com", TestContext.Current.CancellationToken);
+
+        Assert.False(result.Success);
+        _eventRepo.Verify(r => r.FindByIdAsync(It.IsAny<long>(), It.IsAny<CancellationToken>()), Times.Never);
+        _unitOfWork.Verify(u => u.RollbackAsync(It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    /// <summary>An unexpected repository failure while deleting an event is rolled back and reported generically.</summary>
+    [Fact]
+    public async Task DeleteCalendarEventAsync_RollsBackAndReportsUnexpectedFailure_WhenTheRepositoryThrows()
+    {
+        _calendarRepo.Setup(r => r.GetByAccountEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync([MakeCalendar(1)]);
+        _eventRepo.Setup(r => r.FindByIdAsync(1, It.IsAny<CancellationToken>())).ReturnsAsync(MakeCalendarEvent(1, 1));
+        _eventRepo.Setup(r => r.DeleteByIdAsync(1, It.IsAny<CancellationToken>())).ThrowsAsync(new InvalidOperationException("db down"));
+
+        ServiceResult result = await CreateSut().DeleteCalendarEventAsync(1, "user@example.com", TestContext.Current.CancellationToken);
+
+        Assert.Equal("Calendar.Unexpected", result.ErrorCode);
+        _unitOfWork.Verify(u => u.RollbackAsync(It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    // -- Attachment-content delegation --------------------------------------------
+
+    /// <summary>The Summernote image upload is delegated to the shared attachment service under the "Calendar" area.</summary>
+    [Fact]
+    public async Task UploadSummernoteImageAsync_DelegatesToTheAttachmentServiceUnderTheCalendarArea()
+    {
+        var file = new AttachedFileDto { Bytes = [1], ContentType = "image/png", FileName = "a.png", Size = 1 };
+        var expected = SummernoteUploadResult.Fail("nope");
+        _attachmentContent.Setup(a => a.UploadSummernoteImageAsync(file, "Calendar", "7", It.IsAny<CancellationToken>())).ReturnsAsync(expected);
+
+        SummernoteUploadResult actual = await CreateSut().UploadSummernoteImageAsync(file, "7", TestContext.Current.CancellationToken);
+
+        Assert.Same(expected, actual);
+    }
+
+    /// <summary>The file download is delegated to the shared attachment service.</summary>
+    [Fact]
+    public async Task DownloadFileAsync_DelegatesToTheAttachmentService()
+    {
+        _attachmentContent.Setup(a => a.DownloadFileAsync("/upload/x.png", It.IsAny<CancellationToken>())).ReturnsAsync([9, 9]);
+
+        byte[]? bytes = await CreateSut().DownloadFileAsync("/upload/x.png", TestContext.Current.CancellationToken);
+
+        Assert.Equal([9, 9], bytes);
+    }
 }

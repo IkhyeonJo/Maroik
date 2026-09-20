@@ -97,4 +97,20 @@ public class PasswordServiceTests
 
         Assert.False(result);
     }
+
+    // -- VerifyDummy ------------------------------------------------------------
+
+    /// <summary>
+    /// The timing-equalizer used on the "no such account" login path never says "match", whatever it is
+    /// given (including empty input) — otherwise an unknown address could be logged into.
+    /// </summary>
+    [Theory]
+    [InlineData("")]
+    [InlineData("   ")]
+    [InlineData("password")]
+    [InlineData("maroik-timing-equalizer-")]
+    public void VerifyDummy_AlwaysReturnsFalse(string password)
+    {
+        Assert.False(new PasswordService().VerifyDummy(password));
+    }
 }

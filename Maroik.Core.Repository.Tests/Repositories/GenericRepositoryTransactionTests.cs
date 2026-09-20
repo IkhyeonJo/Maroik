@@ -166,4 +166,105 @@ public sealed class GenericRepositoryTransactionTests(DatabaseFixture database) 
         Assert.False(await ExistsInSeparateConnectionAsync(originalName));
         Assert.False(await ExistsInSeparateConnectionAsync(newName));
     }
+
+    /// <summary>Test-only subclass exposing <c>QueryAsync</c> / <c>QueryFirstAsync</c> with an <c>orderBy</c>
+    /// and a <c>DeleteWhereAsync</c>, all filtered on a name prefix, so the pending-change merge can be
+    /// exercised through the protected helpers.</summary>
+    private sealed class PrefixCategoryRepository(ApplicationDbContext context) : CategoryRepository(context)
+    {
+        public Task<List<Category>> ListOrderedAsync(string prefix, CancellationToken ct) =>
+            QueryAsync(e => e.Name.StartsWith(prefix), q => q.OrderBy(e => e.Name), ct: ct);
+
+        public Task<Category?> FirstOrderedAsync(string prefix, CancellationToken ct) =>
+            QueryFirstAsync(e => e.Name.StartsWith(prefix), q => q.OrderBy(e => e.Name), ct: ct);
+
+        public Task DeleteByPrefixAsync(string prefix, CancellationToken ct) =>
+            DeleteWhereAsync(e => e.Name.StartsWith(prefix), ct);
+    }
+
+    private static Category CategoryNamed(string name) =>
+        Category.Reconstitute(0, name, "Display", "/icons/i.svg", "Ctrl", "Index", Role.User, 1);
+
+    /// <summary>
+    /// A row created earlier in the open transaction is merged into <c>QueryAsync</c>'s result, and the
+    /// merged list must then be re-sorted with the caller's <c>orderBy</c> — the pending row is appended
+    /// after the DB rows, so without the re-sort an ordered read would return it last.
+    /// </summary>
+    [Fact]
+    public async Task QueryAsync_InsideTransaction_ReSortsPendingRowsIntoTheCallersOrder()
+    {
+        string prefix = Unique("Ord");
+        var repo = new PrefixCategoryRepository(Context);
+        await repo.CreateAsync(CategoryNamed(prefix + "-b"), TestContext.Current.CancellationToken);
+        await repo.CreateAsync(CategoryNamed(prefix + "-d"), TestContext.Current.CancellationToken);
+
+        await using var uow = new UnitOfWork(Context);
+        await uow.BeginAsync(TestContext.Current.CancellationToken);
+        await repo.CreateAsync(CategoryNamed(prefix + "-a"), TestContext.Current.CancellationToken);
+        await repo.CreateAsync(CategoryNamed(prefix + "-c"), TestContext.Current.CancellationToken);
+
+        List<Category> ordered = await repo.ListOrderedAsync(prefix, TestContext.Current.CancellationToken);
+
+        Assert.Equal([prefix + "-a", prefix + "-b", prefix + "-c", prefix + "-d"], ordered.Select(c => c.Name));
+    }
+
+    /// <summary>
+    /// <c>QueryFirstAsync</c> must pick "first" from the merged, re-sorted set: a pending row that sorts
+    /// before every persisted row is the answer, not the first row the database happened to return.
+    /// </summary>
+    [Fact]
+    public async Task QueryFirstAsync_InsideTransaction_ConsidersPendingRowsWhenPickingFirst()
+    {
+        string prefix = Unique("First");
+        var repo = new PrefixCategoryRepository(Context);
+        await repo.CreateAsync(CategoryNamed(prefix + "-b"), TestContext.Current.CancellationToken);
+
+        await using var uow = new UnitOfWork(Context);
+        await uow.BeginAsync(TestContext.Current.CancellationToken);
+        await repo.CreateAsync(CategoryNamed(prefix + "-a"), TestContext.Current.CancellationToken);
+
+        Category? first = await repo.FirstOrderedAsync(prefix, TestContext.Current.CancellationToken);
+
+        Assert.Equal(prefix + "-a", first?.Name);
+    }
+
+    /// <summary>
+    /// A row deleted earlier in the same transaction still exists in the database until commit, so the
+    /// DB query returns it; the merge must drop it, otherwise a caller would read a row it just deleted.
+    /// </summary>
+    [Fact]
+    public async Task QueryAsync_InsideTransaction_DoesNotReturnRowDeletedEarlierInSameTransaction()
+    {
+        string prefix = Unique("Del");
+        var repo = new PrefixCategoryRepository(Context);
+        await repo.CreateAsync(CategoryNamed(prefix + "-keep"), TestContext.Current.CancellationToken);
+        await repo.CreateAsync(CategoryNamed(prefix + "-gone"), TestContext.Current.CancellationToken);
+
+        await using var uow = new UnitOfWork(Context);
+        await uow.BeginAsync(TestContext.Current.CancellationToken);
+        await repo.DeleteByPrefixAsync(prefix + "-gone", TestContext.Current.CancellationToken);
+
+        List<Category> visible = await repo.ListOrderedAsync(prefix, TestContext.Current.CancellationToken);
+
+        Assert.Equal([prefix + "-keep"], visible.Select(c => c.Name));
+    }
+
+    /// <summary>
+    /// Deleting a row that was only created earlier in the same transaction (INSERT still deferred) must
+    /// cancel the pending insert instead of issuing a DELETE for a row that never reached the database.
+    /// </summary>
+    [Fact]
+    public async Task DeleteWhereAsync_InsideTransaction_CancelsRowCreatedEarlierInSameTransaction()
+    {
+        string name = Unique("Ephemeral");
+        var repo = new PrefixCategoryRepository(Context);
+
+        await using var uow = new UnitOfWork(Context);
+        await uow.BeginAsync(TestContext.Current.CancellationToken);
+        await repo.CreateAsync(CategoryNamed(name), TestContext.Current.CancellationToken);
+        await repo.DeleteByPrefixAsync(name, TestContext.Current.CancellationToken);
+        await uow.CommitAsync(TestContext.Current.CancellationToken);
+
+        Assert.False(await ExistsInSeparateConnectionAsync(name));
+    }
 }

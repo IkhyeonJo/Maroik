@@ -460,4 +460,277 @@ public class ExpenditureServiceTests
         Assert.Single(result);
         Assert.Equal(1, result[0].Id);
     }
+
+    // -- SearchExpendituresAsync ------------------------------------------------
+
+    /// <summary>The search is delegated to the repository for the caller's account and its rows are mapped to responses.</summary>
+    [Fact]
+    public async Task SearchExpendituresAsync_DelegatesToRepository_AndMapsTheRows()
+    {
+        const string email = "user@example.com";
+        _expenditureRepo.Setup(r => r.SearchByAccountEmailAsync(email, "lunch", It.IsAny<CancellationToken>()))
+            .ReturnsAsync([Expenditure.Reconstitute(7, email, "ConsumerSpending", "MealOrEatOutExpenses", "Lunch", 100m, "KRW", "Wallet", "", null, DateTime.UtcNow, DateTime.UtcNow)]);
+
+        List<ExpenditureResponse> result = await CreateSut().SearchExpendituresAsync(email, "lunch", TestContext.Current.CancellationToken);
+
+        Assert.Equal(7, Assert.Single(result).Id);
+    }
+
+    // -- CreateAsync: money-affecting failure branches -------------------------------
+
+    private const string Email = "user@example.com";
+
+    private void GivenAssets(params Asset[] assets)
+    {
+        foreach (Asset a in assets)
+            _assetBalance.Setup(r => r.GetAssetAsync(Email, a.ProductName, It.IsAny<CancellationToken>())).ReturnsAsync(a);
+    }
+
+    private void GivenExistingExpenditure(Expenditure previous) =>
+        _expenditureRepo.Setup(r => r.GetByAccountEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync([previous]);
+
+    private static Expenditure ExistingConsumer(decimal amount = 50m, string payment = "Wallet") =>
+        Expenditure.Reconstitute(1, Email, "ConsumerSpending", "MealOrEatOutExpenses", null, amount, "KRW", payment, "", null, DateTime.UtcNow, DateTime.UtcNow);
+
+    private static Expenditure ExistingTransfer(decimal amount = 50m, string payment = "Checking", string deposit = "Savings") =>
+        Expenditure.Reconstitute(1, Email, "RegularSavings", "Deposit", null, amount, "KRW", payment, deposit, null, DateTime.UtcNow, DateTime.UtcNow);
+
+    /// <summary>A negative amount typed by the user is stored (and withdrawn) as its absolute value.</summary>
+    [Fact]
+    public async Task CreateAsync_StoresAndWithdrawsTheAbsoluteAmount_WhenTheRequestAmountIsNegative()
+    {
+        GivenAssets(MakeAsset("Wallet", amount: 1000m));
+        Expenditure? stored = null;
+        _expenditureRepo.Setup(r => r.CreateAsync(It.IsAny<Expenditure>(), It.IsAny<CancellationToken>()))
+            .Callback<Expenditure, CancellationToken>((e, _) => stored = e).Returns(Task.CompletedTask);
+        Asset? saved = null;
+        _assetBalance.Setup(r => r.SaveAsync(It.IsAny<Asset>(), It.IsAny<CancellationToken>()))
+            .Callback<Asset, CancellationToken>((a, _) => saved = a).Returns(Task.CompletedTask);
+
+        ServiceResult result = await CreateSut().CreateAsync(Email, ConsumerRequest("Wallet", -250m), TestContext.Current.CancellationToken);
+
+        Assert.True(result.Success);
+        Assert.Equal(250m, stored?.Amount.Amount);
+        Assert.Equal(750m, saved?.Balance.Amount);
+    }
+
+    /// <summary>A withdrawal that would push the balance past the column range is refused and nothing is committed.</summary>
+    [Fact]
+    public async Task CreateAsync_ReturnsTheRangeError_AndRollsBack_WhenTheWithdrawalWouldOverflowTheBalance()
+    {
+        GivenAssets(MakeAsset("Wallet", amount: -FinanceAmountPolicy.MaxAbsoluteAmount));
+
+        ServiceResult result = await CreateSut().CreateAsync(Email, ConsumerRequest("Wallet", 100m), TestContext.Current.CancellationToken);
+
+        Assert.False(result.Success);
+        Assert.Equal("Finance.AmountOutOfRange", result.ErrorCode);
+        _assetBalance.Verify(r => r.SaveAsync(It.IsAny<Asset>(), It.IsAny<CancellationToken>()), Times.Never);
+        _unitOfWork.Verify(u => u.RollbackAsync(It.IsAny<CancellationToken>()), Times.Once);
+        _unitOfWork.Verify(u => u.CommitAsync(It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    /// <summary>A transfer whose deposit would overflow the destination balance is refused after the source was debited in memory — nothing is saved.</summary>
+    [Fact]
+    public async Task CreateAsync_ReturnsTheRangeError_AndSavesNoDepositAsset_WhenTheDepositWouldOverflow()
+    {
+        GivenAssets(MakeAsset("Checking", amount: 1000m), MakeAsset("Savings", amount: FinanceAmountPolicy.MaxAbsoluteAmount));
+
+        ServiceResult result = await CreateSut().CreateAsync(Email, SavingsTransferRequest(amount: 200m), TestContext.Current.CancellationToken);
+
+        Assert.False(result.Success);
+        Assert.Equal("Finance.AmountOutOfRange", result.ErrorCode);
+        _assetBalance.Verify(r => r.SaveAsync(It.Is<Asset>(a => a.ProductName == "Savings"), It.IsAny<CancellationToken>()), Times.Never);
+        _unitOfWork.Verify(u => u.CommitAsync(It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    /// <summary>A record the domain rejects (over-long content) is returned as its validation error before any balance moves.</summary>
+    [Fact]
+    public async Task CreateAsync_ReturnsTheDomainValidationError_BeforeMovingAnyBalance()
+    {
+        GivenAssets(MakeAsset("Wallet"));
+        ExpenditureRequest request = ConsumerRequest("Wallet");
+        request.Content = new string('x', 100_000);
+
+        ServiceResult result = await CreateSut().CreateAsync(Email, request, TestContext.Current.CancellationToken);
+
+        Assert.Equal("Finance.ContentTooLong", result.ErrorCode);
+        _expenditureRepo.Verify(r => r.CreateAsync(It.IsAny<Expenditure>(), It.IsAny<CancellationToken>()), Times.Never);
+        _assetBalance.Verify(r => r.SaveAsync(It.IsAny<Asset>(), It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    /// <summary>An unexpected failure on create is rolled back and reported without leaking internals.</summary>
+    [Fact]
+    public async Task CreateAsync_RollsBackAndReportsUnexpectedFailure_WhenThePersistenceThrows()
+    {
+        GivenAssets(MakeAsset("Wallet"));
+        _expenditureRepo.Setup(r => r.CreateAsync(It.IsAny<Expenditure>(), It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new InvalidOperationException("secret detail"));
+
+        ServiceResult result = await CreateSut().CreateAsync(Email, ConsumerRequest("Wallet"), TestContext.Current.CancellationToken);
+
+        Assert.Equal("Expenditure.Unexpected", result.ErrorCode);
+        Assert.DoesNotContain("secret detail", result.ErrorKey);
+        _unitOfWork.Verify(u => u.RollbackAsync(It.IsAny<CancellationToken>()), Times.Once);
+        _unitOfWork.Verify(u => u.CommitAsync(It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    // -- UpdateAsync: money-affecting failure branches --------------------------------
+
+    private static ExpenditureRequest WithId(ExpenditureRequest r) { r.Id = 1; return r; }
+
+    /// <summary>A transfer edited so that both sides name the same asset is refused before any lookup or lock.</summary>
+    [Fact]
+    public async Task UpdateAsync_ReturnsFail_WhenPaymentAndDepositAssetAreTheSame_ForTransferType()
+    {
+        GivenExistingExpenditure(ExistingTransfer());
+
+        ServiceResult result = await CreateSut().UpdateAsync(Email, WithId(SavingsTransferRequest("Checking", "Checking")), TestContext.Current.CancellationToken);
+
+        Assert.Equal("Expenditure.SameAsset", result.ErrorCode);
+        _assetBalance.Verify(r => r.GetAssetAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
+        _expenditureRepo.Verify(r => r.UpdateEntityAsync(It.IsAny<Expenditure>(), It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    /// <summary>A transfer retargeted to a deposit asset that does not exist is refused, and the row is not updated.</summary>
+    [Fact]
+    public async Task UpdateAsync_ReturnsAssetNotFound_WhenTheNewDepositAssetDoesNotExist()
+    {
+        GivenExistingExpenditure(ExistingTransfer());
+        GivenAssets(MakeAsset("Checking"), MakeAsset("Savings"));
+
+        ServiceResult result = await CreateSut().UpdateAsync(Email, WithId(SavingsTransferRequest("Checking", "Ghost")), TestContext.Current.CancellationToken);
+
+        Assert.Equal("Expenditure.AssetNotFound", result.ErrorCode);
+        _expenditureRepo.Verify(r => r.UpdateEntityAsync(It.IsAny<Expenditure>(), It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    /// <summary>A transfer retargeted onto a since-archived deposit asset is refused (its balance must never be touched).</summary>
+    [Fact]
+    public async Task UpdateAsync_ReturnsAssetDeleted_WhenTheNewDepositAssetIsArchived()
+    {
+        GivenExistingExpenditure(ExistingTransfer());
+        GivenAssets(MakeAsset("Checking"), MakeAsset("Savings"), MakeAsset("Archived", deleted: true));
+
+        ServiceResult result = await CreateSut().UpdateAsync(Email, WithId(SavingsTransferRequest("Checking", "Archived")), TestContext.Current.CancellationToken);
+
+        Assert.Equal("Expenditure.AssetDeleted", result.ErrorCode);
+        _expenditureRepo.Verify(r => r.UpdateEntityAsync(It.IsAny<Expenditure>(), It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    /// <summary>A transfer retargeted to a deposit asset in another currency is refused.</summary>
+    [Fact]
+    public async Task UpdateAsync_ReturnsCurrencyMismatch_WhenTheNewAssetsUseDifferentCurrencies()
+    {
+        GivenExistingExpenditure(ExistingTransfer());
+        GivenAssets(MakeAsset("Checking"), MakeAsset("Savings"), MakeAsset("UsdSavings", currency: "USD"));
+
+        ServiceResult result = await CreateSut().UpdateAsync(Email, WithId(SavingsTransferRequest("Checking", "UsdSavings")), TestContext.Current.CancellationToken);
+
+        Assert.Equal("Expenditure.CurrencyMismatch", result.ErrorCode);
+        _expenditureRepo.Verify(r => r.UpdateEntityAsync(It.IsAny<Expenditure>(), It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    /// <summary>A record whose ORIGINAL deposit asset has since been archived cannot be edited (its old balance impact cannot be reverted).</summary>
+    [Fact]
+    public async Task UpdateAsync_ReturnsAssetDeleted_WhenThePreviousDepositAssetIsArchived()
+    {
+        GivenExistingExpenditure(ExistingTransfer(deposit: "OldSavings"));
+        GivenAssets(MakeAsset("Checking"), MakeAsset("Savings"), MakeAsset("OldSavings", deleted: true));
+
+        ServiceResult result = await CreateSut().UpdateAsync(Email, WithId(SavingsTransferRequest("Checking", "Savings")), TestContext.Current.CancellationToken);
+
+        Assert.Equal("Expenditure.AssetDeleted", result.ErrorCode);
+        _expenditureRepo.Verify(r => r.UpdateEntityAsync(It.IsAny<Expenditure>(), It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    /// <summary>A record edited to content the domain rejects is returned as its validation error and not persisted.</summary>
+    [Fact]
+    public async Task UpdateAsync_ReturnsTheDomainValidationError_AndDoesNotPersist()
+    {
+        GivenExistingExpenditure(ExistingConsumer());
+        GivenAssets(MakeAsset("Wallet"));
+        ExpenditureRequest request = WithId(ConsumerRequest("Wallet"));
+        request.Content = new string('x', 100_000);
+
+        ServiceResult result = await CreateSut().UpdateAsync(Email, request, TestContext.Current.CancellationToken);
+
+        Assert.Equal("Finance.ContentTooLong", result.ErrorCode);
+        _expenditureRepo.Verify(r => r.UpdateEntityAsync(It.IsAny<Expenditure>(), It.IsAny<CancellationToken>()), Times.Never);
+        _unitOfWork.Verify(u => u.RollbackAsync(It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    /// <summary>A balance adjustment the asset refuses (range overflow) rolls the whole update back instead of committing a half-applied edit.</summary>
+    [Fact]
+    public async Task UpdateAsync_ReturnsTheAdjustmentError_AndRollsBack_WhenTheBalanceWouldOverflow()
+    {
+        GivenExistingExpenditure(ExistingConsumer(amount: 50m));
+        GivenAssets(MakeAsset("Wallet", amount: -FinanceAmountPolicy.MaxAbsoluteAmount));
+
+        ServiceResult result = await CreateSut().UpdateAsync(Email, WithId(ConsumerRequest("Wallet", 100m)), TestContext.Current.CancellationToken);
+
+        Assert.False(result.Success);
+        _unitOfWork.Verify(u => u.RollbackAsync(It.IsAny<CancellationToken>()), Times.Once);
+        _unitOfWork.Verify(u => u.CommitAsync(It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    /// <summary>An unexpected failure on update is rolled back and reported without leaking internals.</summary>
+    [Fact]
+    public async Task UpdateAsync_RollsBackAndReportsUnexpectedFailure_WhenThePersistenceThrows()
+    {
+        GivenExistingExpenditure(ExistingConsumer());
+        GivenAssets(MakeAsset("Wallet"));
+        _expenditureRepo.Setup(r => r.UpdateEntityAsync(It.IsAny<Expenditure>(), It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new InvalidOperationException("secret detail"));
+
+        ServiceResult result = await CreateSut().UpdateAsync(Email, WithId(ConsumerRequest("Wallet", 60m)), TestContext.Current.CancellationToken);
+
+        Assert.Equal("Expenditure.Unexpected", result.ErrorCode);
+        Assert.DoesNotContain("secret detail", result.ErrorKey);
+        _unitOfWork.Verify(u => u.RollbackAsync(It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    // -- DeleteAsync: failure branches ------------------------------------------------
+
+    /// <summary>A transfer whose deposit asset has since been archived cannot be deleted (its balance must not be touched).</summary>
+    [Fact]
+    public async Task DeleteAsync_ReturnsAssetDeleted_WhenTheDepositAssetIsArchived()
+    {
+        GivenExistingExpenditure(ExistingTransfer());
+        GivenAssets(MakeAsset("Checking"), MakeAsset("Savings", deleted: true));
+
+        ServiceResult result = await CreateSut().DeleteAsync(Email, 1, TestContext.Current.CancellationToken);
+
+        Assert.Equal("Expenditure.AssetDeleted", result.ErrorCode);
+        _expenditureRepo.Verify(r => r.DeleteByIdAsync(It.IsAny<long>(), It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    /// <summary>Reverting the record's impact must keep every balance in range; otherwise the delete is refused and rolled back.</summary>
+    [Fact]
+    public async Task DeleteAsync_ReturnsTheAdjustmentError_AndKeepsTheRow_WhenRevertingWouldOverflowTheBalance()
+    {
+        GivenExistingExpenditure(ExistingConsumer(amount: 100m));
+        GivenAssets(MakeAsset("Wallet", amount: FinanceAmountPolicy.MaxAbsoluteAmount));
+
+        ServiceResult result = await CreateSut().DeleteAsync(Email, 1, TestContext.Current.CancellationToken);
+
+        Assert.False(result.Success);
+        _expenditureRepo.Verify(r => r.DeleteByIdAsync(It.IsAny<long>(), It.IsAny<CancellationToken>()), Times.Never);
+        _unitOfWork.Verify(u => u.RollbackAsync(It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    /// <summary>An unexpected failure on delete is rolled back and reported without leaking internals.</summary>
+    [Fact]
+    public async Task DeleteAsync_RollsBackAndReportsUnexpectedFailure_WhenThePersistenceThrows()
+    {
+        GivenExistingExpenditure(ExistingConsumer());
+        GivenAssets(MakeAsset("Wallet"));
+        _expenditureRepo.Setup(r => r.DeleteByIdAsync(It.IsAny<long>(), It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new InvalidOperationException("secret detail"));
+
+        ServiceResult result = await CreateSut().DeleteAsync(Email, 1, TestContext.Current.CancellationToken);
+
+        Assert.Equal("Expenditure.Unexpected", result.ErrorCode);
+        Assert.DoesNotContain("secret detail", result.ErrorKey);
+        _unitOfWork.Verify(u => u.RollbackAsync(It.IsAny<CancellationToken>()), Times.Once);
+    }
 }

@@ -408,4 +408,45 @@ public class MenuServiceTests
 
         Assert.False(result.Success);
     }
+
+    // -- Field policy is enforced at the service boundary ---------------------------------
+
+    /// <summary>A role outside Admin/User/Anonymous is refused with the domain's error rather than reaching the DB CHECK constraint.</summary>
+    [Fact]
+    public async Task CreateCategoryAsync_ReturnsTheDomainValidationError_ForAnUnknownRole()
+    {
+        ServiceResult result = await CreateSut().CreateCategoryAsync(
+            new CategoryRequest { Name = "Forum", DisplayName = "Forum", IconPath = "/i.png", Controller = "Board", Action = "Index", Role = "Root", Order = 0 },
+            TestContext.Current.CancellationToken);
+
+        Assert.Equal("Menu.RoleInvalid", result.ErrorCode);
+        _categoryRepo.Verify(r => r.CreateAsync(It.IsAny<Category>(), It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    /// <summary>A negative order is refused for a sub-category as well.</summary>
+    [Fact]
+    public async Task CreateSubCategoryAsync_ReturnsTheDomainValidationError_ForANegativeOrder()
+    {
+        ServiceResult result = await CreateSut().CreateSubCategoryAsync(
+            new SubCategoryRequest { CategoryId = 1, Name = "Free", DisplayName = "Free", IconPath = "/i.png", Action = "Index", Role = Role.User, Order = -1 },
+            TestContext.Current.CancellationToken);
+
+        Assert.Equal("Menu.OrderNegative", result.ErrorCode);
+        _subCategoryRepo.Verify(r => r.CreateAsync(It.IsAny<SubCategory>(), It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    /// <summary>An over-long text field is refused on update, the row is not written and the lock is released.</summary>
+    [Fact]
+    public async Task UpdateCategoryAsync_ReturnsTheDomainValidationError_ForAnOverlongField()
+    {
+        _categoryRepo.Setup(r => r.FindByIdForUpdateAsync(1, It.IsAny<CancellationToken>())).ReturnsAsync(MakeCategory());
+
+        ServiceResult result = await CreateSut().UpdateCategoryAsync(
+            new CategoryRequest { Id = 1, Name = new string('n', 300), DisplayName = "d", IconPath = "/i.png", Controller = "Board", Action = "Index", Role = Role.User, Order = 0 },
+            TestContext.Current.CancellationToken);
+
+        Assert.Equal("Menu.FieldTooLong", result.ErrorCode);
+        _categoryRepo.Verify(r => r.UpdateEntityAsync(It.IsAny<Category>(), It.IsAny<CancellationToken>()), Times.Never);
+        _unitOfWork.Verify(u => u.RollbackAsync(It.IsAny<CancellationToken>()), Times.Once);
+    }
 }

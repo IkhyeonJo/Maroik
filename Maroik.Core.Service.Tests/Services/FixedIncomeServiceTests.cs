@@ -329,4 +329,99 @@ public class FixedIncomeServiceTests
 
         Assert.Single(result);
     }
+
+    // -- Search / GetById -------------------------------------------------------
+
+    private const string Email = "user@example.com";
+
+    private static FixedIncome ExistingIncome(long id = 1) =>
+        FixedIncome.Reconstitute(id, Email, "RegularIncome", "LaborIncome", null, 500m, "KRW", "SavingsAccount",
+            (short)1, (short)15, new DateTime(2030, 12, 31), null, false, DateTime.UtcNow, DateTime.UtcNow);
+
+    private static Asset ArchivedAsset(string name = "SavingsAccount") =>
+        Asset.Reconstitute(name, Email, "SavingsAsset", 0m, "KRW", null, true, DateTime.UtcNow, DateTime.UtcNow);
+
+    private static FixedIncomeRequest WithId(FixedIncomeRequest r) { r.Id = 1; return r; }
+
+    /// <summary>The search is delegated to the repository and its rows are mapped to responses.</summary>
+    [Fact]
+    public async Task SearchFixedIncomesAsync_DelegatesToRepository_AndMapsTheRows()
+    {
+        _fixedIncomeRepo.Setup(r => r.SearchByAccountEmailAsync(Email, "salary", It.IsAny<CancellationToken>())).ReturnsAsync([ExistingIncome(7)]);
+
+        List<FixedIncomeResponse> result = await CreateSut().SearchFixedIncomesAsync(Email, "salary", TestContext.Current.CancellationToken);
+
+        Assert.Equal(7, Assert.Single(result).Id);
+    }
+
+    /// <summary>GetById returns null for an unknown id and the mapped response for a known one.</summary>
+    [Fact]
+    public async Task GetByIdAsync_ReturnsNullWhenMissing_AndMappedResponseWhenFound()
+    {
+        _fixedIncomeRepo.Setup(r => r.GetByAccountEmailAsync(Email, It.IsAny<CancellationToken>())).ReturnsAsync([ExistingIncome(3)]);
+        var sut = CreateSut();
+
+        Assert.Null(await sut.GetByIdAsync(Email, 99, TestContext.Current.CancellationToken));
+        Assert.Equal(3, (await sut.GetByIdAsync(Email, 3, TestContext.Current.CancellationToken))?.Id);
+    }
+
+    // -- Asset rules and domain errors -----------------------------------------------
+
+    /// <summary>A schedule cannot be created for an unknown / archived deposit asset.</summary>
+    [Theory]
+    [InlineData(false, "FixedIncome.AssetNotFound")]
+    [InlineData(true, "FixedIncome.AssetDeleted")]
+    public async Task CreateAsync_RefusesAnUnusableDepositAsset(bool archived, string expectedCode)
+    {
+        _assetBalance.Setup(r => r.GetAssetAsync(Email, "SavingsAccount", It.IsAny<CancellationToken>())).ReturnsAsync(archived ? ArchivedAsset() : null);
+
+        ServiceResult result = await CreateSut().CreateAsync(Email, ValidRequest(), TestContext.Current.CancellationToken);
+
+        Assert.Equal(expectedCode, result.ErrorCode);
+        _fixedIncomeRepo.Verify(r => r.CreateAsync(It.IsAny<FixedIncome>(), It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    /// <summary>A schedule the domain rejects (over-long content) is returned as its validation error and not persisted.</summary>
+    [Fact]
+    public async Task CreateAsync_ReturnsTheDomainValidationError_AndDoesNotPersist()
+    {
+        _assetBalance.Setup(r => r.GetAssetAsync(Email, "SavingsAccount", It.IsAny<CancellationToken>())).ReturnsAsync(MakeSavingsAsset());
+        FixedIncomeRequest request = ValidRequest();
+        request.Content = new string('x', 100_000);
+
+        ServiceResult result = await CreateSut().CreateAsync(Email, request, TestContext.Current.CancellationToken);
+
+        Assert.Equal("Finance.ContentTooLong", result.ErrorCode);
+        _fixedIncomeRepo.Verify(r => r.CreateAsync(It.IsAny<FixedIncome>(), It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    /// <summary>An update naming an unknown / archived deposit asset is refused; the row is not touched.</summary>
+    [Theory]
+    [InlineData(false, "FixedIncome.AssetNotFound")]
+    [InlineData(true, "FixedIncome.AssetDeleted")]
+    public async Task UpdateAsync_RefusesAnUnusableDepositAsset(bool archived, string expectedCode)
+    {
+        _fixedIncomeRepo.Setup(r => r.GetByAccountEmailAsync(Email, It.IsAny<CancellationToken>())).ReturnsAsync([ExistingIncome()]);
+        _assetBalance.Setup(r => r.GetAssetAsync(Email, "SavingsAccount", It.IsAny<CancellationToken>())).ReturnsAsync(archived ? ArchivedAsset() : null);
+
+        ServiceResult result = await CreateSut().UpdateAsync(Email, WithId(ValidRequest()), TestContext.Current.CancellationToken);
+
+        Assert.Equal(expectedCode, result.ErrorCode);
+        _fixedIncomeRepo.Verify(r => r.UpdateEntityAsync(It.IsAny<FixedIncome>(), It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    /// <summary>An update to content the domain rejects is returned as its validation error and not persisted.</summary>
+    [Fact]
+    public async Task UpdateAsync_ReturnsTheDomainValidationError_AndDoesNotPersist()
+    {
+        _fixedIncomeRepo.Setup(r => r.GetByAccountEmailAsync(Email, It.IsAny<CancellationToken>())).ReturnsAsync([ExistingIncome()]);
+        _assetBalance.Setup(r => r.GetAssetAsync(Email, "SavingsAccount", It.IsAny<CancellationToken>())).ReturnsAsync(MakeSavingsAsset());
+        FixedIncomeRequest request = WithId(ValidRequest());
+        request.Content = new string('x', 100_000);
+
+        ServiceResult result = await CreateSut().UpdateAsync(Email, request, TestContext.Current.CancellationToken);
+
+        Assert.Equal("Finance.ContentTooLong", result.ErrorCode);
+        _fixedIncomeRepo.Verify(r => r.UpdateEntityAsync(It.IsAny<FixedIncome>(), It.IsAny<CancellationToken>()), Times.Never);
+    }
 }
