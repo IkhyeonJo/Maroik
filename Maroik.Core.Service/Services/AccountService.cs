@@ -511,9 +511,8 @@ public class AccountService(
             // Persist the reset token FIRST, so any mail that goes out corresponds to a token the
             // database will actually accept. The reverse order can e-mail a link whose token was
             // never saved (mail sent, then the save fails) — a dead link the user cannot use.
-            // RequestPasswordReset only errors when EmailConfirmed is false, already ruled out above.
-            if (account.RequestPasswordReset(resetPasswordToken).IsError)
-                return true;
+            // Cannot fail: RequestPasswordReset only errors when EmailConfirmed is false, already ruled out above.
+            _ = account.RequestPasswordReset(resetPasswordToken);
 
             // Column-scoped writes (ResetPasswordToken/Message + Updated), not a full-row
             // UpdateEntityAsync: this runs off an un-locked read, so a concurrent self-service

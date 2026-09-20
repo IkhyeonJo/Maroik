@@ -275,12 +275,8 @@ public class BoardService(
                 return ServiceResult.Fail("You do not have permission to delete.");
             }
 
-            var deleteResult = board.SoftDelete();
-            if (deleteResult.IsError)
-            {
-                await unitOfWork.RollbackAsync(ct);
-                return ServiceResult.FromError(deleteResult.FirstError);
-            }
+            // Cannot fail: the post was loaded as active and not deleted just above (SoftDelete only refuses an already-deleted post).
+            _ = board.SoftDelete();
 
             await boardRepository.UpdateEntityAsync(board, ct);
             await unitOfWork.CommitAsync(ct);
