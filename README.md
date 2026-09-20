@@ -95,6 +95,28 @@ Domain registration: AWS Route 53
 - Code projects (assemblies, namespaces, types) follow the .NET Framework Design Guidelines for acronym casing: acronyms of three or more letters use PascalCase (e.g. `Ssl`, `Http`), while two-letter acronyms stay uppercase (e.g. `DB`, `IO`).
 - Operational folders that are not code projects — `Maroik.SSL`, `Maroik.DB`, `Maroik.Log`, `Maroik.Crontab`, `Maroik.DeployOps` — intentionally keep their existing casing. These names are referenced by docker-compose volume mounts, deployment scripts, and live directories on the production server, so they are kept stable by design rather than renamed for stylistic consistency.
 
+## Testing
+Every source project has a matching `*.Tests` project (xUnit v3 on Microsoft.Testing.Platform), plus the client-script suite and an end-to-end suite. `Maroik.sln` builds them all; CI runs each with coverage (`.github/workflows/build-and-test.yml`, gate: line >= 80 %, branch >= 65 %).
+
+| Tests | What they cover | Needs Docker |
+|---|---|---|
+| `Maroik.Core.Domain.Tests`, `Maroik.Core.Contract.Tests` | entities, policies, value objects, DTOs, the layering / package-reference architecture rules | no |
+| `Maroik.Core.Service.Tests` | use-case orchestration (mocked repositories) | no |
+| `Maroik.Core.Repository.Tests` | EF Core repositories against a real PostgreSQL 17 loaded from `Maroik.DB/.../Debugging/Init.sql` | yes |
+| `Maroik.Core.PostgreSQL.Tests` | the EF model against the real schema of both init scripts (tables, columns, keys, foreign keys, indexes) | yes |
+| `Maroik.Core.Client.Tests` | mail (in-process SMTP server), file storage, ClamAV, RabbitMQ publisher and health check (real RabbitMQ) | yes |
+| `Maroik.Worker.Tests` | the e-mail consumer and the worker host, against a real RabbitMQ and an SMTP relay | yes |
+| `Maroik.FileStorage.Tests` | the file-storage service | no |
+| `Maroik.Website.Tests` | controllers, filters, views and start-up through `WebApplicationFactory` against a real PostgreSQL | yes |
+| `Maroik.Website/TypeScripts.Tests` | every client script (Vitest + jsdom), run with `npm test` in `Maroik.Website/` | no |
+| `Maroik.E2E.Tests` | the running site in a real browser (Playwright) | yes |
+
+```bash
+dotnet build Maroik.sln -p:RunClientScriptTests=false
+dotnet test --project Maroik.Core.Service.Tests            # any single project
+(cd Maroik.Website && npm ci && npm test)                  # client scripts
+```
+
 ## Getting Started
 
 ### Prerequisites

@@ -26,6 +26,34 @@ logic into the Core layers:
 
 @.claude/rules/frontend-no-business-logic.md
 
+## Strict TDD — no test, no code
+
+All new and changed code is written test-first. This is a hard rule, not a preference:
+
+1. **Red.** Write the test that describes the behaviour *before* the production code. Run it and watch it fail, for the
+   right reason (the behaviour is missing — not a compile error or a typo in the test).
+2. **Green.** Write the least production code that makes it pass. Nothing the tests do not demand.
+3. **Refactor.** Clean up with the tests green. Behaviour changes need a new failing test first.
+4. **A bug fix starts with a regression test** that fails on the current code. Revert the fix and confirm the test fails again
+   (a test that passes without the fix proves nothing).
+
+Consequences that apply to every change — C# under `Maroik.Core.*` / `Maroik.Website` / `Maroik.Worker` /
+`Maroik.FileStorage`, and `TypeScripts/**/site.ts`:
+
+- **Production code that no test exercises does not stay.** If a line, branch, method, class or script has no test that would
+  fail without it, either write that test now or delete the code. "Defensive" branches that cannot be reached are not
+  a reason to keep untested code: prove them reachable with a test, or remove them.
+- **Tests must be able to fail.** No tests that only assert "does not throw", that pass regardless of the code, or that mock away
+  the thing under test. Assert the concrete result (value, status code, message, persisted row, request body, DOM).
+- **Prefer real collaborators over mocks** where the behaviour is about PostgreSQL, RabbitMQ, SMTP or HTTP: use the
+  Testcontainers / in-process fakes already in the test projects (see "Tests that need Docker").
+- **Do not lower a gate to make a change pass.** CI enforces line >= 80 % / branch >= 65 %, the architecture tests, and that the
+  generated `wwwroot/**/site.js` matches the `.ts`. A change that needs an exemption gets a discussion, not a quiet skip.
+- **Done means the suite is green** (`dotnet test` for the touched projects, `npm test` for scripts), the build has zero warnings,
+  and the tests for the change are in the same commit as the change.
+
+When asked for a change and it is unclear what test would drive it, ask that question first — the answer is the specification.
+
 ## Always write resx + unit tests alongside code
 
 Whenever you add or change code, also write the matching pieces in the same change —
@@ -85,6 +113,14 @@ empty table: insert under keys unique to the test (`RepositoryTestBase.UniqueEma
 rows or account the test itself created. Real CHECK / FK / composite-PK behaviour is
 now exercised (e.g. `FixedIncome_DepositDayMonth_check`,
 `CalendarEventReminder_Method_check`, `Board_Type_check`).
+
+## Tests that need Docker
+
+Besides `Maroik.Core.Repository.Tests` (PostgreSQL) the following start throwaway containers with Testcontainers, so Docker must
+be available (CI's `ubuntu-latest` has it): `Maroik.Core.PostgreSQL.Tests` (PostgreSQL 17, both init scripts — the EF model must match
+the real schema), `Maroik.Website.Tests` and `Maroik.E2E.Tests` (PostgreSQL 17), `Maroik.Core.Client.Tests` and
+`Maroik.Worker.Tests` (RabbitMQ 4; the mail path uses an in-process SMTP server, `FakeSmtpServer`). Prefer these real services over
+mocks when a test is about how the code behaves against PostgreSQL / RabbitMQ.
 
 ## Architecture validation tests
 
