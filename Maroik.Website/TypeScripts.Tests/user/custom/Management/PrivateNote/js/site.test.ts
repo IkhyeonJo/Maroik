@@ -1,4 +1,6 @@
 import { describe, it, expect } from "vitest";
+import { describeMissingServerConstants } from "@tests/_common/missingConfigSuite";
+import { describeBoardScript } from "@tests/_common/boardSuite";
 import { loadSite, hidden, antiForgery } from "@tests/_common/harness";
 
 // wwwroot/user/custom/Management/PrivateNote/js/site.js
@@ -55,3 +57,10 @@ describe("user/Management/PrivateNote", () => {
     expect(() => h.$("#editUploadedFile").trigger("change")).not.toThrow();
   });
 });
+
+describeBoardScript({
+  area: "user", feature: "Management", page: "PrivateNote", idInfix: "PrivateNote", listUrl: "/Management/PrivateNote", actionPrefix: "/Management",
+  commentInfix: "PrivateNote", writeAction: "WritePrivateNoteBoard", editAction: "EditPrivateNoteBoard", commentAction: "WritePrivateNoteComment", existsKey: "privateNoteBoard", hasNoticed: false,
+});
+
+describeMissingServerConstants("user", "Management", "PrivateNote", () => fixture);

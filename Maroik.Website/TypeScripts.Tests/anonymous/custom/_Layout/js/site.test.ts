@@ -1,4 +1,5 @@
 import { describe, it, expect } from "vitest";
+import { describeLayoutScript } from "@tests/_common/layoutSuite";
 import { loadSite, antiForgery, hidden } from "@tests/_common/harness";
 
 // wwwroot/anonymous/custom/_Layout/js/site.js
@@ -26,3 +27,5 @@ describe("anonymous/_Layout", () => {
     expect(h.navigations).toContain("/Account/Login");
   });
 });
+
+describeLayoutScript("anonymous");

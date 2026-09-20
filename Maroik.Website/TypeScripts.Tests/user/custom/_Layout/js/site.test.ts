@@ -1,4 +1,5 @@
 import { describe, it, expect } from "vitest";
+import { describeLayoutScript } from "@tests/_common/layoutSuite";
 import { loadSite, antiForgery, hidden } from "@tests/_common/harness";
 
 // wwwroot/user/custom/_Layout/js/site.js
@@ -30,3 +31,5 @@ describe("user/_Layout", () => {
     expect(btn.disabled).toBe(false);
   });
 });
+
+describeLayoutScript("user");

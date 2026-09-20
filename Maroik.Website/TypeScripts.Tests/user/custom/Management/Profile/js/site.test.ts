@@ -1,4 +1,6 @@
 import { describe, it, expect } from "vitest";
+import { describeMissingServerConstants } from "@tests/_common/missingConfigSuite";
+import { describeProfileScript } from "@tests/_common/profileSuite";
 import { loadSite, hidden, antiForgery } from "@tests/_common/harness";
 
 // wwwroot/user/custom/Management/Profile/js/site.js
@@ -58,3 +60,7 @@ describe("user/Management/Profile", () => {
     expect(h.navigations).toHaveLength(0);
   });
 });
+
+describeProfileScript("user");
+
+describeMissingServerConstants("user", "Management", "Profile", () => fixture);

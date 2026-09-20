@@ -33,4 +33,39 @@ describe("anonymous/Account", () => {
 
     expect(hiddenByStyle(h.win.document.getElementById("loading"))).toBe(true);
   });
+
+  it("posts the ko-KR culture with the anti-forgery header, then returns to the page it came from", () => {
+    const h = loadSite("anonymous", "Account", "", fixture());
+    h.$("#aChangeCultureKoKR").trigger("click");
+    const call = h.lastAjax();
+    expect(call.headers).toEqual({ RequestVerificationToken: "tok" });
+    expect(JSON.parse(String(call.data))).toEqual({ Culture: "ko-KR" });
+    call.success!({});
+    expect(h.navigations.at(-1)).toBe("/back");
+  });
+
+  // Each button drives the loading overlay for ITS OWN form: valid → shown, invalid → hidden.
+  it.each([
+    ["#btnSignIn", "loginForm"],
+    ["#btnRegister", "registerForm"],
+    ["#btnResend", "registerForm"],
+    ["#btnRequestNewPassword", "forgotPasswordForm"],
+    ["#btnChangePassword", "resetPasswordForm"],
+  ])("%s shows the loading overlay only when %s validates", (button, formId) => {
+    const h = loadSite("anonymous", "Account", "", fixture());
+    const validated: string[] = [];
+    (h.$.fn as any).valid = function (this: JQuery) {
+      validated.push(this.attr("id")!);
+      return validated.length > 1; // first call: invalid, second call: valid
+    };
+
+    h.$("#loading").show();
+    h.$(button).trigger("click");
+    expect(validated).toEqual([formId]);
+    expect(hiddenByStyle(h.win.document.getElementById("loading"))).toBe(true);
+
+    h.$(button).trigger("click");
+    expect(validated).toEqual([formId, formId]);
+    expect(hiddenByStyle(h.win.document.getElementById("loading"))).toBe(false);
+  });
 });

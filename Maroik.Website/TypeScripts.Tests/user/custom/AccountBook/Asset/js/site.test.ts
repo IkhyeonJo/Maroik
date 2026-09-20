@@ -1,4 +1,5 @@
 import { describe, it, expect } from "vitest";
+import { describeGridCrudScript } from "@tests/_common/gridCrudSuite";
 import { loadSite, antiForgery, fireNative } from "@tests/_common/harness";
 
 // wwwroot/user/custom/AccountBook/Asset/js/site.js — grid CRUD, no policy map.
@@ -53,4 +54,10 @@ describe("AccountBook/Asset", () => {
 
     expect(h.lastAjax().url).toBe("/AccountBook/IsAssetExists?productName=A%26B%20Bank%20%231");
   });
+});
+
+describeGridCrudScript({
+  area: "user", feature: "AccountBook", page: "Asset", entity: "Asset", controller: "AccountBook", existsKey: "asset", rowKey: "ProductName",
+  fixture: () => fixture(),
+  record: { productName: "suite", item: "FreeDepositAndWithdrawal", amount: 1, monetaryUnit: "KRW", note: "", deleted: false },
 });

@@ -1,4 +1,7 @@
 import { describe, it, expect } from "vitest";
+import { describeMissingServerConstants } from "@tests/_common/missingConfigSuite";
+import { describeAmountLabel } from "@tests/_common/amountLabelSuite";
+import { describeGridCrudScript } from "@tests/_common/gridCrudSuite";
 import { loadSite, hidden, antiForgery } from "@tests/_common/harness";
 
 // wwwroot/user/custom/Notice/FixedIncome/js/site.js
@@ -80,3 +83,27 @@ describe("Notice/FixedIncome", () => {
     expect(h.toastr.error).toHaveBeenCalledWith("Failed to load the amount label.");
   });
 });
+
+describeGridCrudScript({
+  area: "user", feature: "Notice", page: "FixedIncome", entity: "FixedIncome", controller: "Notice", existsKey: "fixedIncome", rowKey: "Id",
+  fixture: () => fixture(),
+  maturityPickers: ["createFixedIncomeMaturityDate", "editFixedIncomeMaturityDate"], noMaturityDate: "9999-12-31",
+  record: { id: 1, mainClass: "Labor", subClass: "Salary", content: "c", amount: 1, depositMonth: 1, depositDay: 2, maturityDate: "2030-01-01", note: "", depositMyAssetProductName: "A", unpunctuality: true },
+});
+
+describeAmountLabel({
+  label: "user/Notice/FixedIncome", load: () => loadSite("user", "Notice", "FixedIncome", fixture()), url: "GetFixedIncomeAmountLabel",
+  create: { trigger: "#createFixedIncomeDepositMyAssetProductName", span: "#labelCreateFixedIncomeAmount" }, edit: { trigger: "#editFixedIncomeDepositMyAssetProductName", span: "#labelEditFixedIncomeAmount" },
+});
+
+describe("Notice/FixedIncome — main class change", () => {
+  it("choosing a create main class limits the sub-classes to it and selects the first", () => {
+    const h = loadSite("user", "Notice", "FixedIncome", fixture());
+    h.$("#createFixedIncomeMainClass").val("Labor").trigger("change");
+    const enabled = [...h.win.document.querySelectorAll<HTMLOptionElement>("#createFixedIncomeSubClass option")].filter((o) => !o.disabled).map((o) => o.value);
+    expect(enabled.length).toBeGreaterThan(0);
+    expect(h.$("#createFixedIncomeSubClass").val()).toBe(enabled[0]);
+  });
+});
+
+describeMissingServerConstants("user", "Notice", "FixedIncome", () => fixture());

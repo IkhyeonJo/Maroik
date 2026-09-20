@@ -1,4 +1,6 @@
 import { describe, it, expect } from "vitest";
+import { describeMissingServerConstants } from "@tests/_common/missingConfigSuite";
+import { describeBoardScript } from "@tests/_common/boardSuite";
 import { loadSite, hidden, antiForgery } from "@tests/_common/harness";
 
 // wwwroot/admin/custom/Forum/FreeForum/js/site.js
@@ -50,3 +52,10 @@ describe("admin/Forum/FreeForum", () => {
     expect(() => h.$("#editUploadedFile").trigger("change")).not.toThrow();
   });
 });
+
+describeBoardScript({
+  area: "admin", feature: "Forum", page: "FreeForum", idInfix: "FreeForum", listUrl: "/Forum/FreeForum", actionPrefix: "/Forum",
+  commentInfix: "Free", writeAction: "WriteFreeBoard", editAction: "EditFreeBoard", commentAction: "WriteFreeComment", existsKey: "freeBoard", hasNoticed: true,
+});
+
+describeMissingServerConstants("admin", "Forum", "FreeForum", () => fixture);

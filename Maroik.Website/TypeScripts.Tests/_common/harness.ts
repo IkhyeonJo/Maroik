@@ -51,6 +51,16 @@ export interface SiteHandle {
   /** values passed to `window.location.href = …` */
   navigations: string[];
   MvcGridInstances: any[];
+  /** every `{ el, options }` passed to `$(el).datepicker({...})` — lets a test call `options.onSelect` / `beforeShow` */
+  datepickerInits: { el: Element | undefined; options: any }[];
+  /** every `FullCalendar.Calendar` the script constructed (`addEvent` / `removeAllEvents` / `render` are spies) */
+  calendarInstances: any[];
+  /** every `{ el, options }` passed to `$(el).summernote({...})` — lets a test call `options.callbacks.onImageUpload(...)` */
+  summernoteInits: { el: Element | undefined; options: any }[];
+  /** every other `$(el).summernote("cmd", ...args)` call (insertNode, code setter, …) */
+  summernoteCalls: { el: Element | undefined; args: unknown[] }[];
+  /** every document the script parsed with `new DOMParser().parseFromString(...)` — the images it rehydrates live in these, so a test can fire their `onload` / `onerror` */
+  parsedDocuments: Document[];
 }
 
 function bindJquery(win: any): JQueryStatic {
@@ -64,7 +74,7 @@ export function loadSite(
   feature: string,
   page: string,
   fixtureHtml: string,
-  opts: { autoAjaxResult?: boolean } = {},
+  opts: { autoAjaxResult?: boolean; /** what `$(el).summernote("code")` returns */ summernoteCode?: string } = {},
 ): SiteHandle {
   const win = window as any;
 
@@ -82,12 +92,22 @@ export function loadSite(
   for (const name of ["tabs", "modal", "tooltip"]) {
     ($.fn as any)[name] = chainable;
   }
+  const datepickerInits: SiteHandle["datepickerInits"] = [];
   ($.fn as any).datepicker = function (this: any, arg?: unknown) {
+    if (arg && typeof arg === "object") datepickerInits.push({ el: this[0], options: arg });
     return arg === "getDate" ? null : this;
   };
   ($.fn as any).valid = () => true;
-  ($.fn as any).summernote = function (this: any, arg?: unknown) {
-    return arg === "code" ? "" : this;
+  const summernoteInits: SiteHandle["summernoteInits"] = [];
+  const summernoteCalls: SiteHandle["summernoteCalls"] = [];
+  ($.fn as any).summernote = function (this: any, ...args: unknown[]) {
+    if (args.length === 0 || typeof args[0] === "object") {
+      summernoteInits.push({ el: this[0], options: args[0] });
+      return this;
+    }
+    if (args[0] === "code" && args.length === 1) return opts.summernoteCode ?? "";
+    summernoteCalls.push({ el: this[0], args });
+    return this;
   };
 
   // --- static jQuery helpers -------------------------------------------------
@@ -137,10 +157,12 @@ export function loadSite(
   // flows that only run from inside those callbacks — the render/interaction loop itself is not
   // simulated, only the options object FullCalendar would have called back into.
   const calendarOptions: any[] = [];
+  const calendarInstances: any[] = [];
   win.FullCalendar = {
     Calendar: class {
       constructor(_el: unknown, opts: unknown) {
         calendarOptions.push(opts);
+        calendarInstances.push(this);
       }
       render = vi.fn();
       addEvent = vi.fn();
@@ -168,6 +190,13 @@ export function loadSite(
   // --- browser bits jsdom lacks / complains about --------------------------
   win.alert = vi.fn();
   win.confirm = vi.fn(() => true);
+  const parsedDocuments: Document[] = [];
+  const realParse = win.DOMParser.prototype.parseFromString;
+  win.DOMParser.prototype.parseFromString = function (this: DOMParser, ...args: [string, DOMParserSupportedType]) {
+    const doc = realParse.apply(this, args);
+    parsedDocuments.push(doc);
+    return doc;
+  };
   if (!win.URL.createObjectURL) win.URL.createObjectURL = () => "blob:stub";
   if (!win.URL.revokeObjectURL) win.URL.revokeObjectURL = () => undefined;
 
@@ -232,6 +261,11 @@ export function loadSite(
     submittedForms,
     navigations,
     MvcGridInstances,
+    summernoteInits,
+    summernoteCalls,
+    calendarInstances,
+    datepickerInits,
+    parsedDocuments,
   };
 }
 

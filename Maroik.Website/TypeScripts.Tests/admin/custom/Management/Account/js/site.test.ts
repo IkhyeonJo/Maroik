@@ -1,4 +1,5 @@
 import { describe, it, expect } from "vitest";
+import { describeGridCrudScript } from "@tests/_common/gridCrudSuite";
 import { loadSite, antiForgery, fireNative } from "@tests/_common/harness";
 
 // wwwroot/admin/custom/Management/Account/js/site.js
@@ -51,4 +52,10 @@ describe("Management/Account (admin)", () => {
 
     expect(h.lastAjax().url).toBe("/Management/IsAccountExists?email=a%2Bb%26c%40x.com");
   });
+});
+
+describeGridCrudScript({
+  area: "admin", feature: "Management", page: "Account", entity: "Account", controller: "Management", existsKey: "account", rowKey: "Email",
+  fixture: () => fixture(),
+  record: { email: "a@x.com", nickname: "n", role: "User", timeZoneIanaId: "UTC", locked: false, emailConfirmed: true, agreedServiceTerms: true, message: "m", deleted: false },
 });

@@ -1,5 +1,8 @@
-import { describe, it, expect } from "vitest";
-import { loadSite, hidden, antiForgery, hiddenByStyle } from "@tests/_common/harness";
+import { describe, it, expect, vi } from "vitest";
+import { describeMissingServerConstants } from "@tests/_common/missingConfigSuite";
+import { describeAmountLabel } from "@tests/_common/amountLabelSuite";
+import { describeGridCrudScript } from "@tests/_common/gridCrudSuite";
+import { loadSite, hidden, antiForgery, hiddenByStyle, fireNative } from "@tests/_common/harness";
 
 // wwwroot/user/custom/AccountBook/Expenditure/js/site.js
 const subClassMap = { Living: ["Food", "Rent"], Transfer: ["ToSavings"] };
@@ -75,3 +78,56 @@ describe("AccountBook/Expenditure", () => {
     expect(h.toastr.error).toHaveBeenCalledWith("Failed to load the amount label.");
   });
 });
+
+describeGridCrudScript({
+  area: "user", feature: "AccountBook", page: "Expenditure", entity: "Expenditure", controller: "AccountBook", existsKey: "expenditure", rowKey: "Id",
+  fixture: () => fixture(),
+  record: { id: 1, mainClass: "Living", subClass: "Food", content: "c", amount: 1, created: "2025-01-02T03:04:05", paymentMethod: "A", myDepositAsset: null, note: "" },
+});
+
+describeAmountLabel({
+  label: "user/AccountBook/Expenditure", load: () => loadSite("user", "AccountBook", "Expenditure", fixture()), url: "GetExpenditureAmountLabel",
+  create: { trigger: "#createExpenditurePaymentMethod", span: "#labelCreateExpenditureAmount" }, edit: { trigger: "#editExpenditurePaymentMethod", span: "#labelEditExpenditureAmount" },
+});
+
+describe("AccountBook/Expenditure — date pickers and filling the edit form", () => {
+  it("both date pickers' repaint hooks run (they only schedule a no-op nudge)", () => {
+    const h = loadSite("user", "AccountBook", "Expenditure", fixture());
+    vi.useFakeTimers(); // after load: loadSite manages its own fake timers while it evaluates the script
+    try {
+      for (const id of ["createExpenditureDate", "editExpenditureDate"]) {
+        const init = h.datepickerInits.find((i) => i.el?.id === id)!;
+        expect(() => { init.options.beforeShow(); init.options.onChangeMonthYear(); vi.runAllTimers(); }).not.toThrow();
+      }
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  const edit = (record: Record<string, unknown>) => {
+    const h = loadSite("user", "AccountBook", "Expenditure", fixture()
+      + `<div class="mvc-grid"></div><table><tbody><tr class="clsGridRow" data-id="1"></tr></tbody></table>
+         <div id="editExpenditureDialogModal"></div><div id="confirmDeleteExpenditureDialogModal"></div>
+         <input id="editExpenditureId" /><input id="editExpenditureHour" /><select id="editExpenditureMyDepositAsset"><option value="acct">acct</option><option value="Card">Card</option></select>`);
+    (h.$.fn as any).modal = function (this: any) { return this; };
+    fireNative(h.win.document, "rowclick", { data: { Id: "1" } });
+    h.$("#btnEditExpenditureGridRow").trigger("click");
+    h.ajaxCalls.find((a) => String(a.url).includes("IsExpenditureExists"))!.success!({ result: true, expenditure: {
+      id: 1, mainClass: "Transfer", subClass: "ToSavings", content: "c", amount: 5, created: "2024-05-04T09:08:07", note: "n",
+      paymentMethod: "Card", myDepositAsset: null, ...record } });
+    return h;
+  };
+
+  it("a stored deposit asset is selected in the edit form", () => {
+    const h = edit({ myDepositAsset: "acct" });
+    expect(h.$("#editExpenditureMyDepositAsset").val()).toBe("acct");
+    expect(h.$("#editExpenditureDate").val()).toBe("2024-05-04");
+  });
+
+  it("without a stored deposit asset the edit form falls back to the payment method", () => {
+    const h = edit({});
+    expect(h.$("#editExpenditureMyDepositAsset").val()).toBe("Card");
+  });
+});
+
+describeMissingServerConstants("user", "AccountBook", "Expenditure", () => fixture());

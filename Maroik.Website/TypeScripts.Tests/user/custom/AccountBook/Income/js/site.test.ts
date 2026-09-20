@@ -1,4 +1,7 @@
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, vi } from "vitest";
+import { describeMissingServerConstants } from "@tests/_common/missingConfigSuite";
+import { describeAmountLabel } from "@tests/_common/amountLabelSuite";
+import { describeGridCrudScript } from "@tests/_common/gridCrudSuite";
 import { loadSite, hidden, antiForgery } from "@tests/_common/harness";
 
 // wwwroot/user/custom/AccountBook/Income/js/site.js
@@ -107,3 +110,32 @@ describe("AccountBook/Income", () => {
     expect(h.lastAjax().url).toBe("/AccountBook/GetIncomeAmountLabel?productName=A%26B%20Bank");
   });
 });
+
+describeGridCrudScript({
+  area: "user", feature: "AccountBook", page: "Income", entity: "Income", controller: "AccountBook", existsKey: "income", rowKey: "Id",
+  fixture: () => fixture(),
+  record: { id: 1, mainClass: "Labor", subClass: "Salary", content: "c", amount: 1, created: "2025-01-02T03:04:05", depositMyAssetProductName: "A", note: "" },
+});
+
+describeAmountLabel({
+  label: "user/AccountBook/Income", load: () => loadSite("user", "AccountBook", "Income", fixture()), url: "GetIncomeAmountLabel",
+  create: { trigger: "#createIncomeDepositMyAssetProductName", span: "#labelCreateIncomeAmount" }, edit: { trigger: "#editIncomeDepositMyAssetProductName", span: "#labelEditIncomeAmount" },
+});
+
+describe("AccountBook/Income — date pickers", () => {
+  it("both date pickers' repaint hooks run (they only schedule a no-op nudge)", () => {
+    const h = loadSite("user", "AccountBook", "Income", fixture());
+    vi.useFakeTimers(); // after load: loadSite manages its own fake timers while it evaluates the script
+    try {
+      for (const id of ["createIncomeDate", "editIncomeDate"]) {
+        const init = h.datepickerInits.find((i) => i.el?.id === id)!;
+        expect(init, `a datepicker is attached to #${id}`).toBeDefined();
+        expect(() => { init.options.beforeShow(); init.options.onChangeMonthYear(); vi.runAllTimers(); }).not.toThrow();
+      }
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+});
+
+describeMissingServerConstants("user", "AccountBook", "Income", () => fixture());
