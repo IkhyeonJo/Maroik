@@ -39,6 +39,9 @@ public class SolutionLayeringArchitectureTests
     private const string Worker = "Maroik.Worker";
     private const string FileStorage = "Maroik.FileStorage";
 
+    /// <summary>Test-only support project (the logging architecture rules): neither a production project nor a test project itself.</summary>
+    private const string TestSupport = "Maroik.Tests.Shared";
+
     /// <summary>The six inner layers. None of them may depend on an application host project.</summary>
     private static readonly string[] _coreLayers =
         [Domain, Contract, PostgreSql, Client, Repository, Service];
@@ -298,6 +301,107 @@ public class SolutionLayeringArchitectureTests
             "Reach every other concern through a Maroik.Core.Contract interface instead.");
     }
 
+    // ─────────────────────────────────────────────────────────────────────────────────────────
+    // Solution registration — every project is in Maroik.sln, under the right solution folder
+    // ─────────────────────────────────────────────────────────────────────────────────────────
+
+    /// <summary>A project that exists on disk but is missing from <c>Maroik.sln</c> is invisible to the IDE and to
+    /// <c>dotnet build Maroik.sln</c> / CI's solution build.</summary>
+    [Fact]
+    public void EveryProject_MustBeRegisteredInTheSolution()
+    {
+        SolutionFile solution = SolutionFile.Load(Path.Combine(FindRepositoryRoot(), "Maroik.sln"));
+
+        string[] missing = [.. LoadAllProjects().Select(p => p.Name).Where(name => !solution.ProjectNames.Contains(name)).Order()];
+
+        Assert.True(missing.Length == 0,
+            "Add these projects to Maroik.sln (dotnet sln add <csproj> --solution-folder <src|tests>): " + string.Join(", ", missing));
+    }
+
+    /// <summary>Test projects (and the test-support project) live in the <c>tests</c> solution folder, the rest in <c>src</c>.</summary>
+    [Fact]
+    public void EveryProject_MustBeNestedUnderTheMatchingSolutionFolder()
+    {
+        SolutionFile solution = SolutionFile.Load(Path.Combine(FindRepositoryRoot(), "Maroik.sln"));
+        List<string> wrong = [];
+
+        foreach (ProjectFile project in LoadAllProjects())
+        {
+            bool isTestSide = project.Name.EndsWith(".Tests", StringComparison.Ordinal) || project.Name == TestSupport;
+            string expected = isTestSide ? "tests" : "src";
+            string? actual = solution.FolderOf(project.Name);
+            if (actual != expected)
+                wrong.Add($"{project.Name}: in '{actual ?? "(solution root)"}', expected '{expected}'");
+        }
+
+        Assert.True(wrong.Count == 0, "Solution folder mismatch:\n" + string.Join("\n", wrong));
+    }
+
+    /// <summary>The test-support project may be referenced by test projects only — never by shipped code.</summary>
+    [Fact]
+    public void TestSupportProject_MustBeReferencedOnlyByTestProjects()
+    {
+        string[] offenders =
+        [
+            .. LoadAllProjects()
+                .Where(p => p.ProjectReferences.Contains(TestSupport))
+                .Where(p => !p.Name.EndsWith(".Tests", StringComparison.Ordinal))
+                .Select(p => p.Name),
+        ];
+
+        Assert.True(offenders.Length == 0,
+            $"{TestSupport} is test-only support; production projects must not reference it: " + string.Join(", ", offenders));
+    }
+
+    /// <summary>The test-support project itself must not depend on any Maroik project (it analyses assemblies by path, not by reference).</summary>
+    [Fact]
+    public void TestSupportProject_MustNotReferenceAnyMaroikProject()
+    {
+        ProjectFile support = LoadAllProjects().Single(p => p.Name == TestSupport);
+
+        Assert.True(support.ProjectReferences.Count == 0,
+            $"{TestSupport} must not reference Maroik projects: " + string.Join(", ", support.ProjectReferences));
+    }
+
+    /// <summary>The parts of <c>Maroik.sln</c> the rules above need: project names, and each project's solution folder.</summary>
+    private sealed class SolutionFile
+    {
+        private readonly Dictionary<string, (string Name, string Path)> _byGuid;
+        private readonly Dictionary<string, string> _parentByGuid;
+
+        private SolutionFile(Dictionary<string, (string Name, string Path)> byGuid, Dictionary<string, string> parentByGuid)
+        {
+            _byGuid = byGuid;
+            _parentByGuid = parentByGuid;
+        }
+
+        public IReadOnlySet<string> ProjectNames => _byGuid.Values.Select(v => v.Name).ToHashSet(StringComparer.Ordinal);
+
+        public static SolutionFile Load(string path)
+        {
+            string text = File.ReadAllText(path);
+
+            Dictionary<string, (string Name, string Path)> byGuid = System.Text.RegularExpressions.Regex
+                .Matches(text, @"Project\(""\{[^}]+\}""\) = ""(?<name>[^""]+)"", ""(?<path>[^""]+)"", ""\{(?<guid>[^}]+)\}""")
+                .ToDictionary(m => m.Groups["guid"].Value.ToUpperInvariant(), m => (m.Groups["name"].Value, m.Groups["path"].Value));
+
+            Dictionary<string, string> parentByGuid = System.Text.RegularExpressions.Regex
+                .Matches(text, @"\{(?<child>[0-9A-Fa-f-]+)\}\s*=\s*\{(?<parent>[0-9A-Fa-f-]+)\}")
+                .ToDictionary(m => m.Groups["child"].Value.ToUpperInvariant(), m => m.Groups["parent"].Value.ToUpperInvariant());
+
+            return new SolutionFile(byGuid, parentByGuid);
+        }
+
+        /// <summary>The name of the solution folder the project is directly nested in, or <see langword="null"/> at the solution root.</summary>
+        public string? FolderOf(string projectName)
+        {
+            string? guid = _byGuid.FirstOrDefault(kv => kv.Value.Name == projectName).Key;
+            return guid != null && _parentByGuid.TryGetValue(guid, out string? parent) && _byGuid.TryGetValue(parent, out var folder)
+                ? folder.Name
+                : null;
+        }
+    }
+
     private static ProjectFile GetProject(string name) =>
         _productionProjects.Value.SingleOrDefault(p => p.Name == name)
         ?? throw new InvalidOperationException(
@@ -308,6 +412,7 @@ public class SolutionLayeringArchitectureTests
         LoadAllProjects()
             .Where(p => !p.Name.EndsWith(".Tests", StringComparison.Ordinal))
             .Where(p => p.Name != "Maroik.E2E.Tests")
+            .Where(p => p.Name != TestSupport)
             .ToArray();
 
     private static IReadOnlyList<ProjectFile> LoadAllProjects()

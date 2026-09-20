@@ -1,0 +1,22 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    Test support shared by the *.Tests projects (NOT a production project, and not itself a test project):
+    the solution-wide logging architecture rules (see CLAUDE.md -> "Logging"). Only *.Tests projects may
+    reference it — enforced by SolutionLayeringArchitectureTests.
+  -->
+  <PropertyGroup>
+    <IsPackable>false</IsPackable>
+    <IsTestProject>false</IsTestProject>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- NetArchTest.Rules brings Mono.Cecil (IL inspection), as the per-layer architecture tests use it. -->
+    <PackageReference Include="NetArchTest.Rules" />
+    <PackageReference Include="Microsoft.CodeAnalysis.CSharp" />
+    <!-- [Fact] / Assert for the reusable rule base class. The xunit.v3 metapackage would turn this library into a test host. -->
+    <PackageReference Include="xunit.v3.extensibility.core" />
+    <PackageReference Include="xunit.v3.assert" />
+  </ItemGroup>
+
+</Project>

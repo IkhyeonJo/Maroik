@@ -13,6 +13,7 @@
       <PrivateAssets>all</PrivateAssets>
     </PackageReference>
     <PackageReference Include="Microsoft.NET.Test.Sdk" />
+    <PackageReference Include="Microsoft.Extensions.Diagnostics.Testing" />
     <PackageReference Include="Moq" />
     <PackageReference Include="Testcontainers.RabbitMq" />
     <PackageReference Include="NetArchTest.Rules" />
@@ -25,6 +26,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\Maroik.Tests.Shared\Maroik.Tests.Shared.csproj" />
     <ProjectReference Include="..\Maroik.Core.Client\Maroik.Core.Client.csproj" />
   </ItemGroup>
 

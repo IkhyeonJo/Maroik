@@ -159,6 +159,23 @@ public class DomainArchitectureTests
     }
 
     /// <summary>
+    /// The domain is pure (CLAUDE.md → "Logging"): it returns errors, it does not log. Logging belongs to
+    /// the service / client / host layers that decide what an error means.
+    /// </summary>
+    [Fact]
+    public void Domain_ShouldNot_Log()
+    {
+        NetArchTest.Rules.TestResult result = Types.InAssembly(_domainAssembly)
+            .ShouldNot()
+            .HaveDependencyOn("Microsoft.Extensions.Logging")
+            .GetResult();
+
+        Assert.True(result.IsSuccessful,
+            "Maroik.Core.Domain must not depend on Microsoft.Extensions.Logging.\n" +
+            "Failing types: " + string.Join(", ", result.FailingTypeNames ?? []));
+    }
+
+    /// <summary>
     /// Every Domain error message must be built via <c>LocalizableError.Validation</c>/<c>Conflict</c>/
     /// <c>Failure</c>, never the raw <c>ErrorOr.Error</c> factories directly. <c>LocalizableError</c> is
     /// what attaches the composite-format template + args to <c>Error.Metadata</c> so the UI can

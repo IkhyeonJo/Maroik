@@ -96,6 +96,22 @@ How:
   filters log. Do not log-and-rethrow the same exception at several layers — log it once, where it is handled.
 - **Done also means** every `catch` you added or touched satisfies the rules above and its test is green.
 
+Enforced (a violation fails `dotnet test`, so keep them green — do not weaken a rule to pass):
+
+- `*LoggingArchitectureTests` in `Maroik.Core.Service.Tests`, `Maroik.Website.Tests`, `Maroik.Worker.Tests`,
+  `Maroik.FileStorage.Tests` and `Maroik.Core.Client.Tests`, each a one-class subclass of
+  `Maroik.Tests.Shared.LoggingArchitectureTestsBase`: (1) every `logger.LogXxx` / Serilog `Log.Xxx` message is a
+  **string literal** (IL check with Mono.Cecil — no interpolation, concatenation, `string.Format` or variable);
+  (2) every `catch` logs or throws (Roslyn source check — an `async` catch body is rewritten by the compiler, so
+  the IL cannot be trusted for this); (3) a catch that legitimately stays silent goes in `AllowedSilentCatches`
+  **with its reason**, and a stale entry fails too. A unique-violation filter (`when (ex.IsPostgresUniqueViolation…)`)
+  that turns a race into a result is the one built-in exemption.
+- `LoggingRulesSelfTests` (in `Maroik.Website.Tests`) run the rules against known-bad and known-good code, so a rule
+  that silently stops detecting is caught. A rule that cannot fail is not a rule.
+- `DomainArchitectureTests.Domain_ShouldNot_Log` and `RepositoryLoggingArchitectureTests` (Repository does not log and
+  its catches rethrow or are allow-listed).
+
+
 ## Always write resx + unit tests alongside code
 
 Whenever you add or change code, also write the matching pieces in the same change —
@@ -172,6 +188,13 @@ classes in each `*.Tests` project's `Architecture/` folder, plus the solution-wi
 the `.csproj` project- and package-reference graph itself. They run under
 `dotnet test` in CI, so a violation fails the build. Keep them green; extend them
 when the layer model changes.
+
+`Maroik.Tests.Shared` is a real project (test support: the reusable logging rules), in `Maroik.sln`. Only `*.Tests`
+projects may reference it and it references no Maroik project. **Every project — including a new one — must be
+registered in `Maroik.sln` under the matching solution folder** (`src` for shipped code, `tests` for `*.Tests` and
+`Maroik.Tests.Shared`): `dotnet sln Maroik.sln add <csproj> --solution-folder tests`. Enforced by
+`SolutionLayeringArchitectureTests` (`EveryProject_MustBeRegisteredInTheSolution`,
+`EveryProject_MustBeNestedUnderTheMatchingSolutionFolder`, `TestSupportProject_*`).
 
 ## Domain error messages must go through LocalizableError
 
