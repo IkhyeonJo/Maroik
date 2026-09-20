@@ -300,4 +300,264 @@ public class EmailConsumerWorkerTests
         channel.Verify(c => c.BasicAckAsync(10, false, It.IsAny<CancellationToken>()), Times.Once);
         channel.Verify(c => c.BasicNackAsync(It.IsAny<ulong>(), It.IsAny<bool>(), It.IsAny<bool>(), It.IsAny<CancellationToken>()), Times.Never);
     }
+
+    // -- Connect / topology / consume loop -----------------------------------------------------
+
+    /// <summary>BackgroundService starts <c>ExecuteAsync</c> without awaiting it, so wait (bounded) for the observable effect instead of sleeping.</summary>
+    private static async Task WaitUntilAsync(Func<bool> condition)
+    {
+        using var timeout = new CancellationTokenSource(TimeSpan.FromSeconds(10));
+        while (!condition())
+            await Task.Delay(5, timeout.Token);
+    }
+
+    private sealed class BrokerFixture
+    {
+        public Mock<IConnectionFactory> Factory { get; } = new();
+        public Mock<IConnection> Connection { get; } = new();
+        public Mock<IChannel> Channel { get; } = new();
+        public List<string> Calls { get; } = [];
+        public IDictionary<string, object?>? EmailQueueArguments { get; private set; }
+        public (uint PrefetchSize, ushort PrefetchCount, bool Global)? Qos { get; private set; }
+        public (string Queue, bool AutoAck)? Consume { get; private set; }
+
+        public BrokerFixture()
+        {
+            Factory.Setup(f => f.CreateConnectionAsync(It.IsAny<CancellationToken>())).ReturnsAsync(Connection.Object);
+            WireChannel(Connection, Channel);
+        }
+
+        public void WireChannel(Mock<IConnection> connection, Mock<IChannel> channel)
+        {
+            connection.Setup(c => c.CreateChannelAsync(It.IsAny<CreateChannelOptions?>(), It.IsAny<CancellationToken>())).ReturnsAsync(channel.Object);
+            channel.Setup(c => c.QueueDeclareAsync(It.IsAny<string>(), It.IsAny<bool>(), It.IsAny<bool>(), It.IsAny<bool>(),
+                    It.IsAny<IDictionary<string, object?>?>(), It.IsAny<bool>(), It.IsAny<bool>(), It.IsAny<CancellationToken>()))
+                .Callback((string queue, bool durable, bool exclusive, bool autoDelete, IDictionary<string, object?>? args, bool passive, bool noWait, CancellationToken _) =>
+                {
+                    Calls.Add($"declare:{queue}:durable={durable}:exclusive={exclusive}:autoDelete={autoDelete}");
+                    if (queue == QueueNames.Email) EmailQueueArguments = args;
+                })
+                .ReturnsAsync((string queue, bool _, bool _, bool _, IDictionary<string, object?>? _, bool _, bool _, CancellationToken _) => new QueueDeclareOk(queue, 0, 0));
+            channel.Setup(c => c.BasicQosAsync(It.IsAny<uint>(), It.IsAny<ushort>(), It.IsAny<bool>(), It.IsAny<CancellationToken>()))
+                .Callback((uint size, ushort count, bool global, CancellationToken _) => { Calls.Add("qos"); Qos = (size, count, global); })
+                .Returns(Task.CompletedTask);
+            channel.Setup(c => c.BasicConsumeAsync(It.IsAny<string>(), It.IsAny<bool>(), It.IsAny<string>(), It.IsAny<bool>(), It.IsAny<bool>(),
+                    It.IsAny<IDictionary<string, object?>?>(), It.IsAny<IAsyncBasicConsumer>(), It.IsAny<CancellationToken>()))
+                .Callback((string queue, bool autoAck, string _, bool _, bool _, IDictionary<string, object?>? _, IAsyncBasicConsumer _, CancellationToken _) =>
+                {
+                    Calls.Add("consume");
+                    Consume = (queue, autoAck);
+                })
+                .ReturnsAsync("consumer-tag-1");
+        }
+
+        public EmailConsumerWorker CreateWorker() => new(Factory.Object, BuildScopeFactory(Mock.Of<IEmailMessageHandler>()), Mock.Of<ILogger<EmailConsumerWorker>>())
+        {
+            ConnectRetryInitialDelay = TimeSpan.FromMilliseconds(10),
+            DrainTimeout = TimeSpan.FromMilliseconds(50),
+        };
+    }
+
+    /// <summary>
+    /// Startup declares the dead-letter queue BEFORE the main queue (so the main queue's dead-letter
+    /// policy has somewhere to route), with the exact arguments the Website publisher uses (a mismatch
+    /// makes whichever side declares second fail with PRECONDITION_FAILED), caps unacked deliveries, and
+    /// consumes with manual acknowledgements.
+    /// </summary>
+    [Fact]
+    public async Task StartAsync_DeclaresDeadLetterQueueFirst_SetsPrefetch_AndConsumesWithManualAck()
+    {
+        var broker = new BrokerFixture();
+        var worker = broker.CreateWorker();
+
+        await worker.StartAsync(TestContext.Current.CancellationToken);
+        try
+        {
+            await WaitUntilAsync(() => broker.Consume != null);
+            Assert.Equal(
+            [
+                $"declare:{QueueNames.EmailDeadLetter}:durable=True:exclusive=False:autoDelete=False",
+                $"declare:{QueueNames.Email}:durable=True:exclusive=False:autoDelete=False",
+                "qos",
+                "consume",
+            ], broker.Calls);
+            Assert.Equal(QueueNames.CreateEmailQueueArguments().Keys.Order(), broker.EmailQueueArguments?.Keys.Order());
+            foreach (var pair in QueueNames.CreateEmailQueueArguments())
+                Assert.Equal(pair.Value, broker.EmailQueueArguments![pair.Key]);
+            Assert.Equal((0u, (ushort)10, false), broker.Qos);
+            Assert.Equal((QueueNames.Email, false), broker.Consume);
+        }
+        finally
+        {
+            await worker.StopAsync(CancellationToken.None);
+        }
+    }
+
+    /// <summary>The broker often is not reachable the instant the worker starts: the initial connect is retried instead of faulting the host.</summary>
+    [Fact]
+    public async Task StartAsync_RetriesTheInitialConnection_UntilTheBrokerIsReachable()
+    {
+        var broker = new BrokerFixture();
+        int attempts = 0;
+        broker.Factory.Setup(f => f.CreateConnectionAsync(It.IsAny<CancellationToken>()))
+            .ReturnsAsync(() => ++attempts < 3 ? throw new InvalidOperationException("broker not ready") : broker.Connection.Object);
+        var worker = broker.CreateWorker();
+
+        await worker.StartAsync(TestContext.Current.CancellationToken);
+        try
+        {
+            await WaitUntilAsync(() => broker.Consume != null);
+            Assert.Equal(3, attempts);
+            Assert.Equal((QueueNames.Email, false), broker.Consume);
+        }
+        finally
+        {
+            await worker.StopAsync(CancellationToken.None);
+        }
+    }
+
+    /// <summary>A failure part-way through the topology setup tears down the half-opened channel and connection before the next attempt (no leak).</summary>
+    [Fact]
+    public async Task StartAsync_DisposesTheHalfOpenedChannelAndConnection_WhenTopologySetupFailsThenRetries()
+    {
+        var broker = new BrokerFixture();
+        var failingConnection = new Mock<IConnection>();
+        var failingChannel = new Mock<IChannel>();
+        failingConnection.Setup(c => c.CreateChannelAsync(It.IsAny<CreateChannelOptions?>(), It.IsAny<CancellationToken>())).ReturnsAsync(failingChannel.Object);
+        failingChannel.Setup(c => c.QueueDeclareAsync(It.IsAny<string>(), It.IsAny<bool>(), It.IsAny<bool>(), It.IsAny<bool>(),
+                It.IsAny<IDictionary<string, object?>?>(), It.IsAny<bool>(), It.IsAny<bool>(), It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new InvalidOperationException("declare failed"));
+        broker.Factory.SetupSequence(f => f.CreateConnectionAsync(It.IsAny<CancellationToken>()))
+            .ReturnsAsync(failingConnection.Object)
+            .ReturnsAsync(broker.Connection.Object);
+        var worker = broker.CreateWorker();
+
+        await worker.StartAsync(TestContext.Current.CancellationToken);
+        try
+        {
+            await WaitUntilAsync(() => broker.Consume != null);
+            failingChannel.Verify(c => c.DisposeAsync(), Times.Once);
+            failingConnection.Verify(c => c.DisposeAsync(), Times.Once);
+            Assert.Equal((QueueNames.Email, false), broker.Consume);
+        }
+        finally
+        {
+            await worker.StopAsync(CancellationToken.None);
+        }
+    }
+
+    /// <summary>Shutdown requested mid-connect closes what was already opened and stops (it neither retries nor leaks the connection).</summary>
+    [Fact]
+    public async Task StartAsync_DisposesWhatWasOpenedAndStops_WhenShutdownIsRequestedMidConnect()
+    {
+        var broker = new BrokerFixture();
+        using var cts = new CancellationTokenSource();
+        broker.Channel.Setup(c => c.QueueDeclareAsync(It.IsAny<string>(), It.IsAny<bool>(), It.IsAny<bool>(), It.IsAny<bool>(),
+                It.IsAny<IDictionary<string, object?>?>(), It.IsAny<bool>(), It.IsAny<bool>(), It.IsAny<CancellationToken>()))
+            .Returns(() =>
+            {
+                cts.Cancel();
+                throw new OperationCanceledException(cts.Token);
+            });
+        var worker = broker.CreateWorker();
+
+        await worker.StartAsync(cts.Token);
+        await Assert.ThrowsAnyAsync<OperationCanceledException>(() => worker.ExecuteTask!);
+
+        broker.Channel.Verify(c => c.DisposeAsync(), Times.Once);
+        broker.Connection.Verify(c => c.DisposeAsync(), Times.Once);
+        broker.Factory.Verify(f => f.CreateConnectionAsync(It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    /// <summary>Stopping cancels the consumer first (no new deliveries), then releases the channel and connection.</summary>
+    [Fact]
+    public async Task StopAsync_CancelsTheConsumer_ThenDisposesTheChannelAndConnection()
+    {
+        var broker = new BrokerFixture();
+        broker.Channel.Setup(c => c.BasicCancelAsync("consumer-tag-1", It.IsAny<bool>(), It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
+        var worker = broker.CreateWorker();
+        await worker.StartAsync(TestContext.Current.CancellationToken);
+        await WaitUntilAsync(() => broker.Consume != null);
+
+        await worker.StopAsync(CancellationToken.None);
+
+        broker.Channel.Verify(c => c.BasicCancelAsync("consumer-tag-1", false, It.IsAny<CancellationToken>()), Times.Once);
+        broker.Channel.Verify(c => c.DisposeAsync(), Times.Once);
+        broker.Connection.Verify(c => c.DisposeAsync(), Times.Once);
+    }
+
+    /// <summary>A failure cancelling the consumer during shutdown is logged, not thrown: the channel and connection are still released.</summary>
+    [Fact]
+    public async Task StopAsync_StillDisposesEverything_WhenCancellingTheConsumerFails()
+    {
+        var broker = new BrokerFixture();
+        broker.Channel.Setup(c => c.BasicCancelAsync(It.IsAny<string>(), It.IsAny<bool>(), It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new InvalidOperationException("channel already closed"));
+        var worker = broker.CreateWorker();
+        await worker.StartAsync(TestContext.Current.CancellationToken);
+        await WaitUntilAsync(() => broker.Consume != null);
+
+        await worker.StopAsync(CancellationToken.None);
+
+        broker.Channel.Verify(c => c.DisposeAsync(), Times.Once);
+        broker.Connection.Verify(c => c.DisposeAsync(), Times.Once);
+    }
+
+    // -- Retry-count header parsing ---------------------------------------------------------------
+
+    private static BasicDeliverEventArgs MakeDeliverArgsWithRawRetryHeader(byte[] body, object? headerValue, ulong deliveryTag) =>
+        new("consumer-tag", deliveryTag, false, exchange: "", routingKey: QueueNames.Email,
+            new BasicProperties { Headers = new Dictionary<string, object?> { [EmailConsumerWorker.RetryCountHeader] = headerValue } },
+            body, CancellationToken.None);
+
+    /// <summary>
+    /// The retry counter survives however the broker hands the header back (an int we set, a long, or a
+    /// UTF-8 byte string): a value already at the limit dead-letters instead of retrying forever.
+    /// </summary>
+    [Theory]
+    [MemberData(nameof(ExhaustedRetryHeaders))]
+    public async Task OnMessageReceivedAsync_DeadLettersInsteadOfRetrying_WhenTheRetryHeaderIsAtTheLimit(object headerValue)
+    {
+        var handler = new Mock<IEmailMessageHandler>();
+        handler.Setup(h => h.HandleAsync(It.IsAny<SendEmailMessage>(), It.IsAny<CancellationToken>())).ThrowsAsync(new InvalidOperationException("SMTP down"));
+        var worker = CreateSut(handler.Object, out var channel);
+
+        await worker.OnMessageReceivedAsync(this, MakeDeliverArgsWithRawRetryHeader(JsonSerializer.SerializeToUtf8Bytes(_message), headerValue, deliveryTag: 31));
+
+        channel.Verify(c => c.BasicNackAsync(31, false, false, It.IsAny<CancellationToken>()), Times.Once);
+        channel.Verify(c => c.BasicPublishAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<bool>(), It.IsAny<BasicProperties>(), It.IsAny<ReadOnlyMemory<byte>>(), It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    /// <summary>Header values that were exhausted, in each representation the client may deliver.</summary>
+    public static TheoryData<object> ExhaustedRetryHeaders => new()
+    {
+        EmailConsumerWorker.MaxRetries,
+        (long)EmailConsumerWorker.MaxRetries,
+        Encoding.UTF8.GetBytes(EmailConsumerWorker.MaxRetries.ToString()),
+    };
+
+    /// <summary>A garbage or non-numeric header counts as "first attempt": the message still gets its retry.</summary>
+    [Theory]
+    [MemberData(nameof(UnusableRetryHeaders))]
+    public async Task OnMessageReceivedAsync_TreatsAnUnusableRetryHeaderAsAFirstAttempt(object headerValue)
+    {
+        var handler = new Mock<IEmailMessageHandler>();
+        handler.Setup(h => h.HandleAsync(It.IsAny<SendEmailMessage>(), It.IsAny<CancellationToken>())).ThrowsAsync(new InvalidOperationException("SMTP down"));
+        var worker = CreateSut(handler.Object, out var channel);
+        channel.Setup(c => c.BasicPublishAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<bool>(), It.IsAny<BasicProperties>(), It.IsAny<ReadOnlyMemory<byte>>(), It.IsAny<CancellationToken>()))
+            .Returns(ValueTask.CompletedTask);
+
+        await worker.OnMessageReceivedAsync(this, MakeDeliverArgsWithRawRetryHeader(JsonSerializer.SerializeToUtf8Bytes(_message), headerValue, deliveryTag: 32));
+
+        channel.Verify(c => c.BasicAckAsync(32, false, It.IsAny<CancellationToken>()), Times.Once);
+        channel.Verify(c => c.BasicNackAsync(It.IsAny<ulong>(), It.IsAny<bool>(), It.IsAny<bool>(), It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    /// <summary>Header values that must not count as an exhausted retry budget.</summary>
+    public static TheoryData<object> UnusableRetryHeaders => new()
+    {
+        "not-a-number",
+        Encoding.UTF8.GetBytes("abc"),
+        3.5,
+    };
 }

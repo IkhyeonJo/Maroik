@@ -1,5 +1,6 @@
 using Maroik.Core.Client.HealthChecks;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
+using Testcontainers.RabbitMq;
 
 namespace Maroik.Core.Client.Tests.HealthChecks;
 
@@ -8,10 +9,45 @@ namespace Maroik.Core.Client.Tests.HealthChecks;
 /// (there is no injectable connection abstraction to mock), so only the failure path is exercised
 /// here without a real broker: an unreachable/malformed connection string must be reported as
 /// <see cref="HealthStatus.Unhealthy"/>, with the underlying exception attached, rather than
-/// propagating and taking the health-check middleware down with it.
+/// propagating and taking the health-check middleware down with it. The healthy path and a real
+/// authentication refusal run against a throwaway RabbitMQ container (Testcontainers; Docker required,
+/// like the Repository and Website tests).
 /// </summary>
-public class RabbitMqHealthCheckTests
+public class RabbitMqHealthCheckTests : IAsyncLifetime
 {
+    private readonly RabbitMqContainer _broker = new RabbitMqBuilder("rabbitmq:4-alpine").Build();
+
+    /// <summary>Starts the broker container.</summary>
+    public async ValueTask InitializeAsync() => await _broker.StartAsync();
+
+    /// <summary>Stops and removes the broker container.</summary>
+    public async ValueTask DisposeAsync() => await _broker.DisposeAsync();
+
+    /// <summary>A reachable broker with valid credentials is healthy.</summary>
+    [Fact]
+    public async Task CheckHealthAsync_ReachableBroker_ReturnsHealthy()
+    {
+        var sut = new RabbitMqHealthCheck(_broker.GetConnectionString());
+
+        HealthCheckResult result = await sut.CheckHealthAsync(new HealthCheckContext(), TestContext.Current.CancellationToken);
+
+        Assert.Equal(HealthStatus.Healthy, result.Status);
+        Assert.Null(result.Exception);
+    }
+
+    /// <summary>A broker that is up but refuses the credentials is unhealthy, with the refusal attached.</summary>
+    [Fact]
+    public async Task CheckHealthAsync_ReachableBroker_WrongCredentials_ReturnsUnhealthy()
+    {
+        var sut = new RabbitMqHealthCheck($"amqp://nobody:wrong@{_broker.Hostname}:{_broker.GetMappedPublicPort(5672)}/");
+
+        HealthCheckResult result = await sut.CheckHealthAsync(new HealthCheckContext(), TestContext.Current.CancellationToken);
+
+        Assert.Equal(HealthStatus.Unhealthy, result.Status);
+        Assert.Equal("Failed to connect to RabbitMQ.", result.Description);
+        Assert.NotNull(result.Exception);
+    }
+
     /// <summary>A connection attempt to a port nothing is listening on is reported unhealthy, not thrown.</summary>
     [Fact]
     public async Task CheckHealthAsync_UnreachableBroker_ReturnsUnhealthy()

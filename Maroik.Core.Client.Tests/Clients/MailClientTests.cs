@@ -1,6 +1,11 @@
 using System.Net.Security;
+using System.Net;
+using System.Security.Cryptography;
+using System.Security.Cryptography.X509Certificates;
 using MailKit.Security;
 using Maroik.Core.Client.Clients;
+using Maroik.Core.Contract.Dtos;
+using Maroik.Core.Contract.Misc.Settings;
 using Microsoft.Extensions.Logging.Abstractions;
 
 namespace Maroik.Core.Client.Tests.Clients;
@@ -239,5 +244,190 @@ public class MailClientTests
     public void GetSecureSocketOptions_SslOff_IsOpportunisticStartTls(int port)
     {
         Assert.Equal(SecureSocketOptions.StartTlsWhenAvailable, MailClient.GetSecureSocketOptions(false, port));
+    }
+
+    // -- SendMailAsync (through the real MailKit client against an in-process SMTP server) --------
+
+    private static ServerSetting SettingsFor(int port, string password = "s3cret") => new()
+    {
+        SmtpHost = "127.0.0.1",
+        SmtpPort = port,
+        SmtpSsl = false,
+        SmtpUserName = "mailer",
+        SmtpPassword = password,
+        FromEmail = "noreply@maroik.test",
+        FromFullName = "Maroik"
+    };
+
+    /// <summary>A message is delivered with the configured sender, the recipient, the subject and the HTML body, after authenticating.</summary>
+    [Fact]
+    public async Task SendMailAsync_DeliversTheMessage_AfterAuthenticating()
+    {
+        await using var smtp = new FakeSmtpServer();
+
+        ServiceResult result = await _sut.SendMailAsync(
+            "bob@example.com", "Hello there", "<p>confirm me</p>", SettingsFor(smtp.Port), TestContext.Current.CancellationToken);
+
+        Assert.True(result.Success);
+        Assert.Equal(("mailer", "s3cret"), smtp.Credentials);
+        Assert.Contains(smtp.Commands, c => c.StartsWith("MAIL FROM:<noreply@maroik.test>", StringComparison.OrdinalIgnoreCase));
+        Assert.Contains(smtp.Commands, c => c.StartsWith("RCPT TO:<bob@example.com>", StringComparison.OrdinalIgnoreCase));
+        Assert.NotNull(smtp.ReceivedMessage);
+        Assert.Contains("Subject: Hello there", smtp.ReceivedMessage);
+        Assert.Contains("bob@example.com", smtp.ReceivedMessage);
+        Assert.Contains("Content-Type: text/html", smtp.ReceivedMessage);
+        Assert.Contains("<p>confirm me</p>", smtp.ReceivedMessage);
+    }
+
+    /// <summary>
+    /// The server has accepted the message, so a failure while closing the connection must NOT be
+    /// reported as a failed send (the caller would republish it and the recipient get a duplicate).
+    /// This pins that observable contract; note that MailKit itself already swallows a failed QUIT, so
+    /// this does not exercise <c>MailClient</c>'s own defensive catch around <c>DisconnectAsync</c> — that one is driven by
+    /// <c>SendMailAsync_AFailureWhileClosingTheConnection_StillReportsSuccess_AndOnlyLogsAWarning</c> through a substituted SMTP client.
+    /// </summary>
+    [Fact]
+    public async Task SendMailAsync_StillReportsSuccess_WhenClosingTheConnectionFailsAfterTheServerAcceptedTheMessage()
+    {
+        await using var smtp = new FakeSmtpServer { DropConnectionOnQuit = true };
+
+        ServiceResult result = await _sut.SendMailAsync(
+            "bob@example.com", "Hello", "<p>hi</p>", SettingsFor(smtp.Port), TestContext.Current.CancellationToken);
+
+        Assert.True(result.Success);
+        Assert.NotNull(smtp.ReceivedMessage);
+    }
+
+    /// <summary>Rejected credentials fail the send with a generic message that leaks neither the host nor the server's reply, and nothing is delivered.</summary>
+    [Fact]
+    public async Task SendMailAsync_ReturnsAGenericFailure_WhenTheServerRejectsTheCredentials()
+    {
+        await using var smtp = new FakeSmtpServer { RejectAuthentication = true };
+
+        ServiceResult result = await _sut.SendMailAsync(
+            "bob@example.com", "Hello", "<p>hi</p>", SettingsFor(smtp.Port, "wrong"), TestContext.Current.CancellationToken);
+
+        Assert.False(result.Success);
+        Assert.Equal("Mail.SendFailed", result.ErrorCode);
+        Assert.DoesNotContain("127.0.0.1", result.ErrorKey);
+        Assert.DoesNotContain("535", result.ErrorKey);
+        Assert.Null(smtp.ReceivedMessage);
+    }
+
+    /// <summary>An unreachable server is a failed send, not an exception.</summary>
+    [Fact]
+    public async Task SendMailAsync_ReturnsAGenericFailure_WhenTheServerIsUnreachable()
+    {
+        int closedPort;
+        await using (var probe = new FakeSmtpServer()) closedPort = probe.Port;
+
+        ServiceResult result = await _sut.SendMailAsync(
+            "bob@example.com", "Hello", "<p>hi</p>", SettingsFor(closedPort), TestContext.Current.CancellationToken);
+
+        Assert.False(result.Success);
+        Assert.Equal("Mail.SendFailed", result.ErrorCode);
+    }
+
+    /// <summary>A malformed recipient address is a failed send, not an exception.</summary>
+    [Fact]
+    public async Task SendMailAsync_ReturnsAGenericFailure_WhenTheRecipientIsNotAValidAddress()
+    {
+        await using var smtp = new FakeSmtpServer();
+
+        ServiceResult result = await _sut.SendMailAsync(
+            "not an address\r\nBcc: victim@example.com", "Hello", "<p>hi</p>", SettingsFor(smtp.Port), TestContext.Current.CancellationToken);
+
+        Assert.False(result.Success);
+        Assert.DoesNotContain(smtp.Commands, c => c.Contains("victim@example.com"));
+    }
+
+    // -- SmtpSsl off: opportunistic STARTTLS with a relaxed (chain-only) certificate check ---------------
+
+    private static X509Certificate2 SelfSigned(Action<SubjectAlternativeNameBuilder> san)
+    {
+        using RSA rsa = RSA.Create(2048);
+        var request = new CertificateRequest("CN=fake.smtp", rsa, HashAlgorithmName.SHA256, RSASignaturePadding.Pkcs1);
+        var names = new SubjectAlternativeNameBuilder();
+        san(names);
+        request.CertificateExtensions.Add(names.Build());
+        using X509Certificate2 cert = request.CreateSelfSigned(DateTimeOffset.UtcNow.AddDays(-1), DateTimeOffset.UtcNow.AddDays(1));
+        return X509CertificateLoader.LoadPkcs12(cert.Export(X509ContentType.Pfx), null);
+    }
+
+    /// <summary>
+    /// The operator's own relay with a self-signed certificate (only an untrusted chain, the name matches) is accepted
+    /// when SmtpSsl is off: the connection is upgraded with STARTTLS and the mail is delivered over it.
+    /// </summary>
+    [Fact]
+    public async Task SendMailAsync_AcceptsASelfSignedRelayCertificate_WhenSmtpSslIsOff_AndUpgradesToTls()
+    {
+        using X509Certificate2 cert = SelfSigned(n => n.AddIpAddress(IPAddress.Loopback));
+        await using var smtp = new FakeSmtpServer { Certificate = cert };
+
+        ServiceResult result = await _sut.SendMailAsync(
+            "bob@example.com", "Hello", "<p>hi</p>", SettingsFor(smtp.Port), TestContext.Current.CancellationToken);
+
+        Assert.True(result.Success);
+        Assert.True(smtp.TlsEstablished);
+        Assert.NotNull(smtp.ReceivedMessage);
+    }
+
+    /// <summary>
+    /// A certificate whose name does not match the host is the signature of a man-in-the-middle, not of a benign
+    /// self-signed relay: it is rejected even though SmtpSsl is off, and nothing (credentials included) is sent.
+    /// </summary>
+    [Fact]
+    public async Task SendMailAsync_RejectsACertificateForAnotherHost_EvenWhenSmtpSslIsOff()
+    {
+        using X509Certificate2 cert = SelfSigned(n => n.AddDnsName("mail.other-host.example"));
+        await using var smtp = new FakeSmtpServer { Certificate = cert };
+
+        ServiceResult result = await _sut.SendMailAsync(
+            "bob@example.com", "Hello", "<p>hi</p>", SettingsFor(smtp.Port), TestContext.Current.CancellationToken);
+
+        Assert.False(result.Success);
+        Assert.Equal("Mail.SendFailed", result.ErrorCode);
+        Assert.Null(smtp.Credentials);
+        Assert.Null(smtp.ReceivedMessage);
+    }
+
+    // -- closing the connection after the server accepted the mail ------------------------------------------------
+
+    private sealed class FailingCloseSmtpClient : MailKit.Net.Smtp.SmtpClient
+    {
+        public override Task DisconnectAsync(bool quit, CancellationToken cancellationToken = default) =>
+            throw new IOException("connection reset while closing");
+    }
+
+    private sealed class RecordingLogger : Microsoft.Extensions.Logging.ILogger<MailClient>
+    {
+        public List<(Microsoft.Extensions.Logging.LogLevel Level, string Message, Exception? Exception)> Entries { get; } = [];
+        public IDisposable? BeginScope<TState>(TState state) where TState : notnull => null;
+        public bool IsEnabled(Microsoft.Extensions.Logging.LogLevel logLevel) => true;
+        public void Log<TState>(Microsoft.Extensions.Logging.LogLevel logLevel, Microsoft.Extensions.Logging.EventId eventId, TState state, Exception? exception, Func<TState, Exception?, string> formatter) =>
+            Entries.Add((logLevel, formatter(state, exception), exception));
+    }
+
+    /// <summary>
+    /// Once the server has accepted the message, a failure while closing the connection must not be reported as a failed
+    /// send — the caller would republish and the recipient would get a duplicate. The send is a success; the close failure is
+    /// only logged (as a warning, with the exception).
+    /// </summary>
+    [Fact]
+    public async Task SendMailAsync_AFailureWhileClosingTheConnection_StillReportsSuccess_AndOnlyLogsAWarning()
+    {
+        await using var smtp = new FakeSmtpServer();
+        var logger = new RecordingLogger();
+        var sut = new MailClient(logger) { SmtpClientFactory = () => new FailingCloseSmtpClient() };
+
+        ServiceResult result = await sut.SendMailAsync(
+            "bob@example.com", "Hello", "<p>hi</p>", SettingsFor(smtp.Port), TestContext.Current.CancellationToken);
+
+        Assert.True(result.Success);
+        Assert.NotNull(smtp.ReceivedMessage); // the mail really was accepted
+        var warning = Assert.Single(logger.Entries, e => e.Level == Microsoft.Extensions.Logging.LogLevel.Warning);
+        Assert.Contains("bob@example.com", warning.Message);
+        Assert.IsType<IOException>(warning.Exception);
+        Assert.DoesNotContain(logger.Entries, e => e.Level >= Microsoft.Extensions.Logging.LogLevel.Error);
     }
 }

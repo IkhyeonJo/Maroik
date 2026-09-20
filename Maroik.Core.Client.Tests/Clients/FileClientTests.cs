@@ -49,6 +49,18 @@ public class FileClientTests
             => Task.FromResult(new HttpResponseMessage(status) { Content = new StringContent(body) });
     }
 
+    /// <summary>A refusal whose body cannot be decoded (a charset .NET does not know) — reading the reason throws.</summary>
+    private sealed class UnreadableBodyHandler : HttpMessageHandler
+    {
+        protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
+        {
+            var content = new StringContent("refused");
+            content.Headers.Remove("Content-Type");
+            content.Headers.TryAddWithoutValidation("Content-Type", "text/plain; charset=not-a-real-charset");
+            return Task.FromResult(new HttpResponseMessage(HttpStatusCode.BadRequest) { Content = content });
+        }
+    }
+
     /// <summary>Records every formatted log message.</summary>
     private sealed class RecordingLogger : ILogger<FileClient>
     {
@@ -116,6 +128,20 @@ public class FileClientTests
         var warning = Assert.Single(logger.Entries, e => e.Level == LogLevel.Warning);
         Assert.Contains("400", warning.Message);
         Assert.Contains("could not be scanned", warning.Message);
+    }
+
+    /// <summary>A refusal whose body cannot be decoded does not turn into an exception: the upload just fails, with an empty reason logged.</summary>
+    [Fact]
+    public async Task UploadAsync_ReturnsFalse_WhenTheRefusalBodyCannotBeRead()
+    {
+        _httpClientFactory.InnerHandler = new UnreadableBodyHandler();
+        var logger = new RecordingLogger();
+        var sut = new FileClient(_httpClientFactory, logger);
+
+        bool result = await sut.UploadAsync([0x89, 0x50, 0x4E, 0x47], "image/png", "test.png", "http://filestorage.local", TestContext.Current.CancellationToken);
+
+        Assert.False(result);
+        Assert.Single(logger.Entries, e => e.Level == LogLevel.Warning && e.Message.Contains("400"));
     }
 
     /// <summary>An over-long refusal body is truncated in the log.</summary>
@@ -231,6 +257,8 @@ public class FileClientTests
     [InlineData("/etc/passwd")]
     [InlineData(@"..\..\etc\passwd")]
     [InlineData("../../etc/passwd")]
+    [InlineData("")]
+    [InlineData("   ")]
     public async Task DownloadAsync_ThrowsArgumentException_ForUnsafePath(string unsafePath)
     {
         await Assert.ThrowsAsync<ArgumentException>(
@@ -243,6 +271,8 @@ public class FileClientTests
     [InlineData("/etc/passwd")]
     [InlineData(@"..\..\etc\passwd")]
     [InlineData("../../etc/passwd")]
+    [InlineData("")]
+    [InlineData("   ")]
     public async Task UploadAsync_ReturnsFalse_ForUnsafePath(string unsafePath)
     {
         byte[] data = [0x89, 0x50, 0x4E, 0x47];

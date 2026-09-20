@@ -9,8 +9,8 @@ namespace Maroik.Worker.Tests.Architecture;
 /// Architecture test enforcing that Maroik.Worker only consumes the infrastructure
 /// implementations (Maroik.Core.Client, Maroik.Core.Repository) via interfaces declared
 /// in Maroik.Core.Contract. Direct dependencies on those implementation namespaces are
-/// forbidden for all types except Program (the composition root), which wires up
-/// implementations into the DI container — mirroring WebsiteArchitectureTests.
+/// forbidden for all types except Program and WorkerHost (the composition root: Program runs what
+/// WorkerHost composes), which wire up implementations into the DI container — mirroring WebsiteArchitectureTests.
 /// </summary>
 public class WorkerArchitectureTests
 {
@@ -42,7 +42,7 @@ public class WorkerArchitectureTests
     {
         NetArchTest.Rules.TestResult result = Types.InAssembly(_workerAssembly)
             .That()
-            .DoNotHaveName("Program")
+            .DoNotHaveName("Program").And().DoNotHaveName("WorkerHost")
             .ShouldNot()
             .HaveDependencyOn(RepositoryNamespace)
             .GetResult();
@@ -65,7 +65,7 @@ public class WorkerArchitectureTests
     {
         NetArchTest.Rules.TestResult result = Types.InAssembly(_workerAssembly)
             .That()
-            .DoNotHaveName("Program")
+            .DoNotHaveName("Program").And().DoNotHaveName("WorkerHost")
             .ShouldNot()
             .HaveDependencyOnAny(_repositoryInterfaceFullNames)
             .GetResult();
@@ -85,7 +85,7 @@ public class WorkerArchitectureTests
     {
         NetArchTest.Rules.TestResult result = Types.InAssembly(_workerAssembly)
             .That()
-            .DoNotHaveName("Program")
+            .DoNotHaveName("Program").And().DoNotHaveName("WorkerHost")
             .ShouldNot()
             .HaveDependencyOn(ClientNamespace)
             .GetResult();

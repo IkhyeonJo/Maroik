@@ -11,11 +11,15 @@ namespace Maroik.Website.Services;
 /// under a lock so concurrent <see cref="SelectCertificate"/> calls from Kestrel never observe a
 /// half-swapped state. Intended to be polled on a timer by the caller.
 /// </summary>
-public sealed class CertificateManager(string certPath, string keyPath, ILogger logger) : ICertificateManager
+public sealed class CertificateManager(string certPath, string keyPath, ILogger logger, bool? isWindows = null) : ICertificateManager
 {
     private readonly Lock _certLock = new();
 
-    private X509Certificate2 _currentCert = LoadCertificate(certPath, keyPath, logger);
+    // Where the certificate files are read from differs per OS (see LoadCertificate). Production leaves this to be
+    // detected; the optional constructor argument lets tests exercise the Windows layout on any OS.
+    private readonly bool _windows = DetectWindows(isWindows);
+
+    private X509Certificate2 _currentCert = LoadCertificate(certPath, keyPath, logger, DetectWindows(isWindows));
     // The cert displaced by the most recent reload. It is not disposed at swap time because Kestrel's
     // ServerCertificateSelector may still be mid-handshake with the reference it just took from
     // SelectCertificate(); it is disposed one reload later, by which point no handshake can still
@@ -57,7 +61,7 @@ public sealed class CertificateManager(string certPath, string keyPath, ILogger 
             }
             logger.LogInformation("Certificate file changed, reloading...");
 
-            var newCert = LoadCertificate(certPath, keyPath, logger);
+            var newCert = LoadCertificate(certPath, keyPath, logger, _windows);
 
             lock (_certLock)
             {
@@ -96,7 +100,9 @@ public sealed class CertificateManager(string certPath, string keyPath, ILogger 
         return Convert.ToHexString(hashBytes);
     }
 
-    private static X509Certificate2 LoadCertificate(string certPath, string keyPath, ILogger logger)
+    private static bool DetectWindows(bool? forced) => forced ?? RuntimeInformation.IsOSPlatform(OSPlatform.Windows);
+
+    private static X509Certificate2 LoadCertificate(string certPath, string keyPath, ILogger logger, bool windows)
     {
         try
         {
@@ -104,7 +110,7 @@ public sealed class CertificateManager(string certPath, string keyPath, ILogger 
             var realKeyPem = "";
 
             // Read certificate and key as string (pem format)
-            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+            if (windows)
             {
                 var linkCertPem = File.ReadAllText(certPath);
                 var linkKeyPem = File.ReadAllText(keyPath);

@@ -37,6 +37,9 @@ public sealed class EmailConsumerWorker(
     /// <summary>Overridable in tests — see <see cref="DrainTimeout"/>.</summary>
     internal TimeSpan CancelUnwindTimeout { get; set; } = TimeSpan.FromSeconds(5);
 
+    /// <summary>First wait between failed initial connection attempts (doubled up to a 30s cap). Overridable in tests — see <see cref="DrainTimeout"/>.</summary>
+    internal TimeSpan ConnectRetryInitialDelay { get; set; } = TimeSpan.FromSeconds(2);
+
     // The consumer dispatches one message at a time (RabbitMQ.Client's default
     // ConsumerDispatchConcurrency is 1); prefetch just lets the broker keep the next few buffered
     // at the client so there is no round-trip stall between messages. This still tracks the
@@ -84,7 +87,7 @@ public sealed class EmailConsumerWorker(
     /// </summary>
     private async Task ConnectAndConsumeAsync(CancellationToken stoppingToken)
     {
-        var delay = TimeSpan.FromSeconds(2);
+        var delay = ConnectRetryInitialDelay;
         var maxDelay = TimeSpan.FromSeconds(30);
 
         while (true)

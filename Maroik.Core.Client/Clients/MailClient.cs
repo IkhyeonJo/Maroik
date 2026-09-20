@@ -15,6 +15,9 @@ namespace Maroik.Core.Client.Clients;
 /// </summary>
 public class MailClient(ILogger<MailClient> logger) : IMailClient
 {
+    /// <summary>Creates the SMTP client for one send. Overridable in tests (MailKit never fails its own QUIT/close, so the "closing failed" path needs a client that does).</summary>
+    internal Func<SmtpClient> SmtpClientFactory { get; set; } = () => new SmtpClient();
+
     /// <summary>
     /// Joins the configured public base URL to an app-relative path, tolerating a
     /// <c>DomainName</c> configured either with or without a trailing "/". Previously the callers
@@ -104,7 +107,7 @@ public class MailClient(ILogger<MailClient> logger) : IMailClient
             message.Subject = subject;
             message.Body = new BodyBuilder { HtmlBody = body }.ToMessageBody();
 
-            using SmtpClient smtp = new();
+            using SmtpClient smtp = SmtpClientFactory();
             // Bounded well under the worker's shutdown drain budget so a hung connection
             // can't outlive it and get killed mid-send (which would cause a duplicate
             // send on redelivery). MailKit's default is ~100s.
