@@ -412,4 +412,44 @@ public sealed class BoardRepositoryTests(DatabaseFixture database) : RepositoryT
         Assert.Equal(2, admin.TotalCount);
         Assert.Contains("other-locked", admin.Items.Select(b => b.Title));
     }
+
+    // -- QueryPageAsync (search text is literal) ------------------------------------
+
+    /// <summary>
+    /// <c>%</c> and <c>_</c> in a search term are literals, not LIKE wildcards — for the Title search and
+    /// for the Writer search (nicknames legitimately contain underscores, e.g. <c>john_doe</c>).
+    /// </summary>
+    [Fact]
+    public async Task QueryPageAsync_TreatsLikeWildcardsInTheSearchTextLiterally()
+    {
+        string writerWithUnderscore = $"a_b-{Token}";
+        string writerLookalike = $"axb-{Token}";
+        await SeedAsync(
+            MakeBoard($"100%-{Token}", writerWithUnderscore),
+            MakeBoard($"1000-{Token}", writerLookalike));
+
+        var byWriter = await WriterSearch(writerWithUnderscore, isLoggedIn: false, viewerRole: null, viewerNickname: null);
+        var byTitle = await Sut.QueryPageAsync(
+            new BoardPageQuery(BoardTypes.FreeForum, OwnerNickname: null, SearchType: "Title", SearchText: $"0%-{Token}",
+                IsLoggedIn: false, ViewerRole: null, ViewerNickname: null, Page: 1, PageSize: 50),
+            TestContext.Current.CancellationToken);
+
+        Assert.Equal([writerWithUnderscore], byWriter.Items.Select(b => b.Writer));
+        Assert.Equal([$"100%-{Token}"], byTitle.Items.Select(b => b.Title));
+    }
+
+    /// <summary>The owner-scoped list (private notes) matches literally as well.</summary>
+    [Fact]
+    public async Task QueryPageAsync_OwnerScopedSearch_TreatsLikeWildcardsInTheSearchTextLiterally()
+    {
+        string owner = Unique("note_owner");
+        await SeedAsync(MakeBoard($"50%_off-{Token}", owner), MakeBoard($"50xxoff-{Token}", owner));
+
+        var result = await Sut.QueryPageAsync(
+            new BoardPageQuery(BoardTypes.FreeForum, OwnerNickname: owner, SearchType: "Title", SearchText: $"50%_off-{Token}",
+                IsLoggedIn: true, ViewerRole: Role.User, ViewerNickname: owner, Page: 1, PageSize: 50),
+            TestContext.Current.CancellationToken);
+
+        Assert.Equal([$"50%_off-{Token}"], result.Items.Select(b => b.Title));
+    }
 }

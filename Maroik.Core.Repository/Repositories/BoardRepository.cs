@@ -68,6 +68,9 @@ public class BoardRepository(ApplicationDbContext context)
         => QueryAsync(e => e.Type == type && !e.Deleted && e.Noticed,
             q => q.OrderByDescending(e => e.Id), noTracking: true, ct: ct);
 
+    /// <summary>The LIKE escape character <see cref="GenericRepository{TDomain,TEntity}.ToLikePattern"/> uses (Postgres's default).</summary>
+    private const string LikeEscape = "\\";
+
     /// <inheritdoc />
     public async Task<(List<Board> Items, int TotalCount)> QueryPageAsync(BoardPageQuery query, CancellationToken ct = default)
     {
@@ -78,7 +81,10 @@ public class BoardRepository(ApplicationDbContext context)
         // Match the search term literally. string.Contains translate to a LIKE whose parameter's
         // %/_ are still wildcards, so "50%" or "a_b" would search as a pattern; escape them the same
         // way the raw-SQL search paths (SearchAsync / ExpenditureRepository) do via ToLikePattern.
-        // EF.Functions.Like keeps the case-sensitive semantics string.Contains had here.
+        // EF.Functions.Like keeps the case-sensitive semantics string.Contains had here. The escape
+        // character must be passed explicitly: the two-argument overload is translated to
+        // `LIKE @p ESCAPE ''` (no escape character at all), so the backslashes ToLikePattern adds would be
+        // matched literally and a term containing `_`, `%` or `\` (e.g. the nickname "john_doe") found nothing.
         string searchPattern = ToLikePattern(query.SearchText ?? string.Empty);
 
         IQueryable<OrmBoard> filtered;
@@ -123,8 +129,8 @@ public class BoardRepository(ApplicationDbContext context)
             // split needed, matching ManagementController's PrivateNote list action.
             IQueryable<OrmBoard> scoped = query.SearchType switch
             {
-                "Title" when !string.IsNullOrEmpty(query.SearchText) => baseQuery.Where(x => EF.Functions.Like(x.Title, searchPattern)),
-                "Writer" when !string.IsNullOrEmpty(query.SearchText) => baseQuery.Where(x => EF.Functions.Like(x.Writer, searchPattern)),
+                "Title" when !string.IsNullOrEmpty(query.SearchText) => baseQuery.Where(x => EF.Functions.Like(x.Title, searchPattern, LikeEscape)),
+                "Writer" when !string.IsNullOrEmpty(query.SearchText) => baseQuery.Where(x => EF.Functions.Like(x.Writer, searchPattern, LikeEscape)),
                 _ => baseQuery
             };
             filtered = scoped.OrderByDescending(x => x.Id);
@@ -133,9 +139,9 @@ public class BoardRepository(ApplicationDbContext context)
             filtered = query.SearchType switch
             {
                 "Title" when !string.IsNullOrEmpty(query.SearchText) => ApplyLockedVisibility(
-                    baseQuery.Where(x => EF.Functions.Like(x.Title, searchPattern))),
+                    baseQuery.Where(x => EF.Functions.Like(x.Title, searchPattern, LikeEscape))),
                 "Writer" when !string.IsNullOrEmpty(query.SearchText) => ApplyLockedVisibility(
-                    baseQuery.Where(x => EF.Functions.Like(x.Writer, searchPattern))),
+                    baseQuery.Where(x => EF.Functions.Like(x.Writer, searchPattern, LikeEscape))),
                 _ => baseQuery.OrderByDescending(x => x.Id)
             };
 
