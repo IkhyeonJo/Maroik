@@ -180,6 +180,22 @@ the real schema), `Maroik.Website.Tests` and `Maroik.E2E.Tests` (PostgreSQL 17),
 `Maroik.Worker.Tests` (RabbitMQ 4; the mail path uses an in-process SMTP server, `FakeSmtpServer`). Prefer these real services over
 mocks when a test is about how the code behaves against PostgreSQL / RabbitMQ.
 
+## Mutation testing (on demand)
+
+Coverage says code ran, not that a test would notice it breaking. Stryker.NET (pinned in `.config/dotnet-tools.json`) changes the
+production code and reports which changes NO test catches ("survivors"). Run it from the test project's folder, with the
+Microsoft.Testing.Platform runner (this repo uses xUnit v3 / MTP; the default vstest runner reports a false 0 %):
+
+    dotnet tool restore
+    cd Maroik.Core.Domain.Tests
+    dotnet stryker --test-runner mtp --project Maroik.Core.Domain.csproj --reporter json --reporter cleartext
+
+Read the survivors, not just the score. Known limits of the MTP runner: mutants inside **static field initializers**
+(`static readonly` tables such as the reserved nicknames or the class taxonomies) are reported as survived even when a test does fail
+for them (apply the mutation by hand to check), and a few mutants are equivalent (an `>=` vs `>` that only differs at an
+exact-`now` instant). Baseline: `Maroik.Core.Domain` 92 % (the rest is those two categories), `Maroik.Core.Service` 66 % — Service tests
+mock the unit of work and rarely assert Begin/Commit/Rollback or the result codes, which is the next place to strengthen.
+
 ## Architecture validation tests
 
 The layering / ArchNet rules are enforced by NetArchTest-based `*ArchitectureTests`
