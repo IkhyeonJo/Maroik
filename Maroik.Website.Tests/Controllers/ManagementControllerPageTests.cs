@@ -236,6 +236,23 @@ public class ManagementControllerPageTests
         Assert.DoesNotContain("mgmt-page-findme8@test.com", other);
     }
 
+    /// <summary>Several matching accounts are listed ordered by e-mail address.</summary>
+    [Fact]
+    public async Task AccountGrid_ListsSeveralMatches_OrderedByEmail()
+    {
+        var admin = await LoginAsync("mgmt-page-acctorder@test.com", Role.Admin);
+        await LoginAsync("zz-mgmt-order9@test.com");
+        await LoginAsync("mm-mgmt-order9@test.com");
+        await LoginAsync("aa-mgmt-order9@test.com");
+
+        string body = await BodyAsync(await GetAsync("/Management/Account?wholeSearch=mgmt-order9", admin, ajax: true));
+
+        int aa = body.IndexOf("aa-mgmt-order9@test.com", StringComparison.Ordinal);
+        int mm = body.IndexOf("mm-mgmt-order9@test.com", StringComparison.Ordinal);
+        int zz = body.IndexOf("zz-mgmt-order9@test.com", StringComparison.Ordinal);
+        Assert.True(aa >= 0 && aa < mm && mm < zz, $"expected aa < mm < zz, got {aa}, {mm}, {zz}");
+    }
+
     // -- Menu grid (admin) ---------------------------------------------------------------------------------
 
     /// <summary>The admin menu page opens and its grid's whole-row search finds exactly the matching categories.</summary>

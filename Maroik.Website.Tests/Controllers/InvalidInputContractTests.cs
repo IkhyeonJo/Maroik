@@ -180,4 +180,34 @@ public class InvalidInputContractTests
         Assert.Equal(HttpStatusCode.Redirect, response.StatusCode);
         Assert.EndsWith("/Management/Profile", response.Headers.Location?.ToString());
     }
+
+    /// <summary>
+    /// A request with no form fields at all (an empty multipart body) leaves the model unbound. Every form-posting endpoint must answer
+    /// it as an invalid / empty request — never with a server error.
+    /// </summary>
+    [Fact]
+    public async Task AnEmptyMultipartBody_NeverCausesAServerError()
+    {
+        var client = _factory.CreateTestClient();
+        var user = await AuthenticatedSessionHelper.LoginAsync(_factory, client, "invalid-input-emptymulti-user@test.com", "UserPassword1!", Role.User, TestContext.Current.CancellationToken);
+        var admin = await AuthenticatedSessionHelper.LoginAsync(_factory, client, "invalid-input-emptymulti-admin@test.com", "UserPassword1!", Role.Admin, TestContext.Current.CancellationToken);
+        (AuthenticatedSession Session, string Url)[] endpoints =
+        [
+            (user, "/Management/UpdateProfileAvatar"), (user, "/Management/UpdateProfileTimeZone"),
+            (user, "/Forum/WriteFreeBoard"), (user, "/Forum/EditFreeBoard"),
+            (user, "/Management/WritePrivateNoteBoard"), (user, "/Management/EditPrivateNoteBoard"),
+            (user, "/Calendar/CreateCalendarEvent"), (user, "/Calendar/UpdateCalendarEvent"),
+            (admin, "/Forum/WriteFreeBoard"), (admin, "/Management/UpdateProfileAvatar"),
+        ];
+
+        List<string> problems = [];
+        foreach (var (session, url) in endpoints)
+        {
+            using var request = session.BuildFormPostRequest(url, new MultipartFormDataContent());
+            var response = await client.SendAsync(request, TestContext.Current.CancellationToken);
+            if ((int)response.StatusCode >= 500) problems.Add($"{url}: HTTP {(int)response.StatusCode}");
+        }
+
+        Assert.True(problems.Count == 0, string.Join(Environment.NewLine, problems));
+    }
 }

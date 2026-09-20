@@ -105,9 +105,10 @@ public class ManagementController : Controller
     [ValidateAntiForgeryToken]
     [RequiredHttpPostAccess(Role = Role.Admin)]
     [RequiredHttpPostAccess(Role = Role.User)]
-    public async Task<IActionResult> UpdateProfileAvatar(ProfileInputViewModel profileInputViewModel)
+    public async Task<IActionResult> UpdateProfileAvatar(ProfileInputViewModel? profileInputViewModel)
     {
-        if (profileInputViewModel.ProfileAvatarFiles == null || profileInputViewModel.ProfileAvatarFiles.Count == 0)
+        // A request with no form fields at all (an empty multipart body) is not bound to a model — treat it as "no file".
+        if (profileInputViewModel?.ProfileAvatarFiles == null || profileInputViewModel.ProfileAvatarFiles.Count == 0)
         {
             return Ok(new { result = false, errorMessage = _localizer["Please attach a file"].Value });
         }
@@ -319,8 +320,7 @@ public class ManagementController : Controller
             : await _managementAccountService.SearchAccountsAsync(wholeSearch, HttpContext.RequestAborted);
         var viewModels = accounts
             .ToDisplayViewModels(tz)
-            .OrderBy(m => m.Email).ThenBy(m => m.Nickname)
-            .ThenByDescending(m => m.Created).ThenByDescending(m => m.Updated)
+            .OrderBy(m => m.Email) // the e-mail address is the account's unique key, so no tie-breaker is needed
             .AsQueryable();
         return PartialView("_AccountGrid", viewModels);
 

@@ -110,8 +110,8 @@ public class FileStorageBackedEndpointsTests
             return Error(doc);
         }
 
-        // (a form with no fields at all would leave the model unbound — the UI never sends that; main behaves the same)
         Assert.Equal("Please attach a file", await Send(new MultipartFormDataContent { { new StringContent("x"), "Nickname" } }));
+        Assert.Equal("Please attach a file", await Send(new MultipartFormDataContent())); // no fields at all: the model is not even bound
         Assert.Equal("Only .jpg or jpeg or .png file allowed", await Send(FileForm("ProfileAvatarFiles", "me.gif", _png, "image/gif")));
         Assert.Equal("Invalid image file", await Send(FileForm("ProfileAvatarFiles", "me.png", "definitely not an image"u8.ToArray(), "image/png")));
         Assert.Equal("SVG format is not allowed", await Send(FileForm("ProfileAvatarFiles", "me.png", "<svg xmlns=\"http://www.w3.org/2000/svg\"/>"u8.ToArray(), "image/png")));
