@@ -341,6 +341,40 @@ public class MailClientTests
         Assert.DoesNotContain(smtp.Commands, c => c.Contains("victim@example.com"));
     }
 
+    // -- HTML-encoding of everything interpolated into the mail body -----------------------
+
+    /// <summary>The title and the two content lines are HTML-encoded: text in them can never become markup.</summary>
+    [Theory]
+    [InlineData(true)]
+    [InlineData(false)]
+    public void MailBodies_HtmlEncodeTheTitleAndContentLines(bool confirmation)
+    {
+        string body = confirmation
+            ? _sut.GetMailConfirmationBody("tok", "<script>alert(1)</script>", "a <b>bold</b> line", "x & y", "https://example.com/")
+            : _sut.GetMailResetPasswordBody("tok", "<script>alert(1)</script>", "a <b>bold</b> line", "x & y", "https://example.com/");
+
+        Assert.DoesNotContain("<script>", body);
+        Assert.DoesNotContain("<b>", body);
+        Assert.Contains("&lt;script&gt;alert(1)&lt;/script&gt;", body);
+        Assert.Contains("a &lt;b&gt;bold&lt;/b&gt; line", body);
+        Assert.Contains("x &amp; y", body);
+    }
+
+    /// <summary>A domain name that contains a quote cannot break out of the link's href attribute.</summary>
+    [Theory]
+    [InlineData(true)]
+    [InlineData(false)]
+    public void MailBodies_HtmlEncodeTheLink(bool confirmation)
+    {
+        const string hostile = "https://example.com/' onmouseover='alert(1)";
+        string body = confirmation
+            ? _sut.GetMailConfirmationBody("tok", "T", "C0", "C1", hostile)
+            : _sut.GetMailResetPasswordBody("tok", "T", "C0", "C1", hostile);
+
+        Assert.DoesNotContain("' onmouseover='", body);
+        Assert.Contains("&#39; onmouseover=&#39;", body);
+    }
+
     // -- SmtpSsl off: opportunistic STARTTLS with a relaxed (chain-only) certificate check ---------------
 
     private static X509Certificate2 SelfSigned(Action<SubjectAlternativeNameBuilder> san)

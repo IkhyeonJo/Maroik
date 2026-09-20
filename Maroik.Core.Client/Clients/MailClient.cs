@@ -1,3 +1,4 @@
+using System.Net;
 using System.Net.Security;
 using MailKit.Net.Smtp;
 using MailKit.Security;
@@ -26,6 +27,24 @@ public class MailClient(ILogger<MailClient> logger) : IMailClient
     /// </summary>
     private static string BuildUrl(string domainName, string relativePath) =>
         $"{(domainName).TrimEnd('/')}/{relativePath.TrimStart('/')}";
+
+    /// <summary>
+    /// The centred HTML block shared by the confirmation and reset-password mails. Everything interpolated into the markup is
+    /// HTML-encoded (the texts come from resx files and the link from configuration today, but nothing here should be able to
+    /// turn into markup — or break out of the <c>href</c> attribute — if that ever stops being true).
+    /// </summary>
+    private static string BuildLinkBody(string title, string content0, string content1, string url)
+    {
+        string link = WebUtility.HtmlEncode(url);
+        return $"""
+                <div style='text-align:center;'>
+                                        <h1>{WebUtility.HtmlEncode(title)}</h1>
+                                        <h3>{WebUtility.HtmlEncode(content0)}</h3>
+                                        <h3>{WebUtility.HtmlEncode(content1)}</h3>
+                                        <a href='{link}' target='_blank' rel='noopener noreferrer'>{link}</a>
+                                      </div>
+                """;
+    }
 
     /// <summary>
     /// Decides whether to tolerate an SMTP server certificate when <c>SmtpSsl</c> is disabled for a
@@ -69,14 +88,7 @@ public class MailClient(ILogger<MailClient> logger) : IMailClient
         string url = BuildUrl(domainName, $"Account/ConfirmEmail?registrationToken={Uri.EscapeDataString(registrationToken)}");
 
         // Return a centred HTML block containing the confirmation link
-        return $"""
-                <div style='text-align:center;'>
-                                        <h1>{title}</h1>
-                                        <h3>{content0}</h3>
-                                        <h3>{content1}</h3>
-                                        <a href='{url}' target='_blank' rel='noopener noreferrer'>{url}</a>
-                                      </div>
-                """;
+        return BuildLinkBody(title, content0, content1, url);
     }
 
     /// <inheritdoc />
@@ -86,14 +98,7 @@ public class MailClient(ILogger<MailClient> logger) : IMailClient
         string url = BuildUrl(domainName, $"Account/ResetPassword?resetPasswordToken={Uri.EscapeDataString(resetPasswordToken)}");
 
         // Return a centred HTML block containing the password-reset link
-        return $"""
-                <div style='text-align:center;'>
-                                        <h1>{title}</h1>
-                                        <h3>{content0}</h3>
-                                        <h3>{content1}</h3>
-                                        <a href='{url}' target='_blank' rel='noopener noreferrer'>{url}</a>
-                                      </div>
-                """;
+        return BuildLinkBody(title, content0, content1, url);
     }
 
     /// <inheritdoc />

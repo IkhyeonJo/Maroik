@@ -248,7 +248,7 @@ public sealed class Board : AggregateRoot<long>
     /// UI-affordance mirror of the same rule — kept in one place so all three can't drift apart.
     /// </summary>
     public static bool IsOwnedBy(string? writer, string? viewerNickname) =>
-        string.Equals(writer, viewerNickname, StringComparison.Ordinal);
+        !string.IsNullOrEmpty(writer) && string.Equals(writer, viewerNickname, StringComparison.Ordinal);
 
     /// <summary>
     /// Returns true when a viewer identified by <paramref name="viewerNickname"/> (<see langword="null"/>

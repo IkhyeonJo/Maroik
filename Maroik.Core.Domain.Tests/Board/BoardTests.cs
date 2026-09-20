@@ -525,4 +525,26 @@ public class BoardTests
         Assert.True(result.IsError);
         Assert.Equal("Board.ContentTooLong", result.FirstError.Code);
     }
+
+    // -- IsOwnedBy (static): a missing name never owns anything ----------------------------
+
+    /// <summary>Two missing names are not "the same owner": ownership needs an actual nickname on both sides.</summary>
+    [Theory]
+    [InlineData(null, null)]
+    [InlineData("Alice", null)]
+    [InlineData(null, "Alice")]
+    [InlineData("", "")]
+    public void IsOwnedBy_Static_IsFalse_WhenEitherNameIsMissing(string? writer, string? viewer)
+    {
+        Assert.False(Board.IsOwnedBy(writer, viewer));
+    }
+
+    /// <summary>The static ownership check is case-sensitive and exact.</summary>
+    [Theory]
+    [InlineData("Alice", "Alice", true)]
+    [InlineData("Alice", "alice", false)]
+    public void IsOwnedBy_Static_ComparesNicknamesExactly(string writer, string viewer, bool expected)
+    {
+        Assert.Equal(expected, Board.IsOwnedBy(writer, viewer));
+    }
 }
