@@ -20,7 +20,7 @@ public class EntityTests
             Assert.NotNull(Activator.CreateInstance(type));
     }
 
-    /// <summary>Every collection navigation is initialised, so code can add to it on a new entity without a null check.</summary>
+    /// <summary>Every collection navigation is initialized, so code can add to it on a new entity without a null check.</summary>
     [Fact]
     public void EveryCollectionNavigation_StartsEmpty()
     {
@@ -32,7 +32,7 @@ public class EntityTests
             {
                 var collection = property.GetValue(entity) as System.Collections.IEnumerable;
                 Assert.True(collection != null, $"{type.Name}.{property.Name} is null on a new entity");
-                Assert.Empty(collection!.Cast<object>());
+                Assert.Empty(collection.Cast<object>());
             }
         }
     }

@@ -33,18 +33,18 @@ public class PostgreSqlArchitectureTests
     public void Types_LiveInModelsOrData()
     {
         var stray = _assembly.GetTypes()
-            .Where(t => t.IsPublic && t.Namespace is not ("Maroik.Core.PostgreSQL.Models" or "Maroik.Core.PostgreSQL.Data"))
+            .Where(t => t is { IsPublic: true, Namespace: not ("Maroik.Core.PostgreSQL.Models" or "Maroik.Core.PostgreSQL.Data") })
             .Select(t => t.FullName).ToList();
 
         Assert.True(stray.Count == 0, "public types outside Models / Data: " + string.Join(", ", stray));
     }
 
-    /// <summary>The entities are plain data classes: they hold no behaviour of their own (business rules belong to the Domain).</summary>
+    /// <summary>The entities are plain data classes: they hold no behavior of their own (business rules belong to the Domain).</summary>
     [Fact]
     public void Entities_HaveNoMethodsOfTheirOwn()
     {
         var withMethods = _assembly.GetTypes()
-            .Where(t => t.Namespace == "Maroik.Core.PostgreSQL.Models" && t.IsPublic)
+            .Where(t => t is { Namespace: "Maroik.Core.PostgreSQL.Models", IsPublic: true })
             .Where(t => t.GetMethods(BindingFlags.Public | BindingFlags.Instance | BindingFlags.DeclaredOnly).Any(m => !m.IsSpecialName))
             .Select(t => t.Name).ToList();
 

@@ -63,7 +63,7 @@ public abstract class ModelMatchesSchemaTests(SchemaDatabaseFixture database)
     [Fact]
     public async Task EveryTable_IsMapped_AndEveryMappedTable_Exists()
     {
-        using ApplicationDbContext db = CreateContext();
+        await using ApplicationDbContext db = CreateContext();
         var columns = await ReadColumnsAsync();
 
         string[] tables = [.. columns.Select(c => c.Table).Distinct().Order()];
@@ -76,7 +76,7 @@ public abstract class ModelMatchesSchemaTests(SchemaDatabaseFixture database)
     [Fact]
     public async Task EveryMappedProperty_HasAMatchingColumn()
     {
-        using ApplicationDbContext db = CreateContext();
+        await using ApplicationDbContext db = CreateContext();
         var columns = (await ReadColumnsAsync()).ToDictionary(c => (c.Table, c.Name));
 
         List<string> problems = [];
@@ -107,7 +107,7 @@ public abstract class ModelMatchesSchemaTests(SchemaDatabaseFixture database)
     [Fact]
     public async Task EveryUnmappedColumn_IsNullableOrHasADefault()
     {
-        using ApplicationDbContext db = CreateContext();
+        await using ApplicationDbContext db = CreateContext();
         var columns = await ReadColumnsAsync();
         HashSet<(string, string)> mapped = [.. db.Model.GetEntityTypes().SelectMany(e =>
         {
@@ -115,7 +115,7 @@ public abstract class ModelMatchesSchemaTests(SchemaDatabaseFixture database)
             return e.GetProperties().Select(p => (e.GetTableName()!, p.GetColumnName(store)!));
         })];
 
-        var risky = columns.Where(c => !mapped.Contains((c.Table, c.Name)) && !c.Nullable && !c.HasDefault)
+        var risky = columns.Where(c => !mapped.Contains((c.Table, c.Name)) && c is { Nullable: false, HasDefault: false })
             .Select(c => $"{c.Table}.{c.Name}").ToList();
 
         Assert.True(risky.Count == 0, "unmapped NOT NULL columns without a default: " + string.Join(", ", risky));
@@ -125,7 +125,7 @@ public abstract class ModelMatchesSchemaTests(SchemaDatabaseFixture database)
     [Fact]
     public async Task EveryPrimaryKey_MatchesTheDatabase()
     {
-        using ApplicationDbContext db = CreateContext();
+        await using ApplicationDbContext db = CreateContext();
         await using NpgsqlConnection connection = await database.OpenAsync(Ct);
         await using var command = new NpgsqlCommand(
             """
@@ -150,7 +150,7 @@ public abstract class ModelMatchesSchemaTests(SchemaDatabaseFixture database)
             var store = StoreObjectIdentifier.Table(table, entity.GetSchema());
             string[] modelKey = [.. entity.FindPrimaryKey()!.Properties.Select(p => p.GetColumnName(store)!)];
             Assert.True(real.TryGetValue(table, out var actual), $"{table} has no primary key in the database");
-            Assert.Equal(actual!.Order(), modelKey.Order());
+            Assert.Equal(actual.Order(), modelKey.Order());
         }
     }
 
@@ -158,7 +158,7 @@ public abstract class ModelMatchesSchemaTests(SchemaDatabaseFixture database)
     [Fact]
     public async Task EveryModelRelationship_HasAForeignKeyInTheDatabase()
     {
-        using ApplicationDbContext db = CreateContext();
+        await using ApplicationDbContext db = CreateContext();
         await using NpgsqlConnection connection = await database.OpenAsync(Ct);
         await using var command = new NpgsqlCommand(
             """
@@ -172,14 +172,11 @@ public abstract class ModelMatchesSchemaTests(SchemaDatabaseFixture database)
         while (await reader.ReadAsync(Ct))
             real.Add($"{reader.GetString(0).Trim('"')}({reader.GetString(2)})->{reader.GetString(1).Trim('"')}");
 
-        List<string> missing = [];
-        foreach (IForeignKey fk in db.Model.GetEntityTypes().SelectMany(e => e.GetForeignKeys()))
-        {
-            var store = StoreObjectIdentifier.Table(fk.DeclaringEntityType.GetTableName()!, fk.DeclaringEntityType.GetSchema());
-            string columns = string.Join(',', fk.Properties.Select(p => p.GetColumnName(store)!));
-            string key = $"{fk.DeclaringEntityType.GetTableName()}({columns})->{fk.PrincipalEntityType.GetTableName()}";
-            if (!real.Contains(key)) missing.Add(key);
-        }
+        List<string> missing =
+        [
+            .. from fk in db.Model.GetEntityTypes().SelectMany(e => e.GetForeignKeys()) let store = StoreObjectIdentifier.Table(fk.DeclaringEntityType.GetTableName()!, fk.DeclaringEntityType.GetSchema()) let columns = string.Join(',', fk.Properties.Select(p => p.GetColumnName(store)!)) select $"{fk.DeclaringEntityType.GetTableName()}({columns})->{fk.PrincipalEntityType.GetTableName()}" into key where !real.Contains(key) select key
+
+        ];
 
         Assert.True(missing.Count == 0, "foreign keys in the model but not in the database: " + string.Join("; ", missing));
     }
@@ -188,7 +185,7 @@ public abstract class ModelMatchesSchemaTests(SchemaDatabaseFixture database)
     [Fact]
     public async Task EveryUniqueIndexInTheModel_ExistsInTheDatabase()
     {
-        using ApplicationDbContext db = CreateContext();
+        await using ApplicationDbContext db = CreateContext();
         await using NpgsqlConnection connection = await database.OpenAsync(Ct);
         await using var command = new NpgsqlCommand("SELECT tablename, indexname FROM pg_indexes WHERE schemaname = 'public'", connection);
         await using var reader = await command.ExecuteReaderAsync(Ct);
@@ -206,7 +203,7 @@ public abstract class ModelMatchesSchemaTests(SchemaDatabaseFixture database)
     [Fact]
     public async Task EveryEntity_CanBeQueried()
     {
-        using ApplicationDbContext db = CreateContext();
+        await using ApplicationDbContext db = CreateContext();
 
         await db.Accounts.AsNoTracking().Take(1).ToListAsync(Ct);
         await db.Assets.AsNoTracking().Take(1).ToListAsync(Ct);

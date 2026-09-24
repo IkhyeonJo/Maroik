@@ -1,5 +1,6 @@
 using Npgsql;
 using Testcontainers.PostgreSql;
+// ReSharper disable ClassNeverInstantiated.Global
 
 namespace Maroik.Core.PostgreSQL.Tests.Infrastructure;
 
@@ -33,8 +34,12 @@ public abstract class SchemaDatabaseFixture(string initScriptRelativePath) : IAs
     }
 
     /// <inheritdoc />
-    public async ValueTask DisposeAsync() => await _container.DisposeAsync();
-
+    public async ValueTask DisposeAsync()
+    {
+        await _container.DisposeAsync();
+        GC.SuppressFinalize(this);
+    }
+    
     /// <summary>Opens a new connection to the loaded database.</summary>
     public async Task<NpgsqlConnection> OpenAsync(CancellationToken ct)
     {
