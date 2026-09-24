@@ -92,4 +92,3 @@
         return UpdateProfileAvatar($(this).attr("data-noFileAttachedErrorMessage"), $(this).attr("data-fileSizeLimitationErrorMessage"), $(this).attr("data-fileTypeErrorMessage"));
     });
 })();
-//# sourceMappingURL=site.js.map
