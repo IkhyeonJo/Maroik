@@ -1,6 +1,6 @@
 using Maroik.Core.Contract.Dtos;
 using Maroik.Core.Service.Mappers;
-using CalendarEntity = Maroik.Core.Domain.Calendar.Calendar;
+using DomainCalendar = Maroik.Core.Domain.Calendar.Calendar;
 
 namespace Maroik.Core.Service.Tests.Mappers;
 
@@ -14,7 +14,7 @@ public class CalendarMapperTests
         var created = new DateTime(2026, 1, 1, 1, 0, 0, DateTimeKind.Utc);
         var updated = new DateTime(2026, 1, 2, 2, 0, 0, DateTimeKind.Utc);
 
-        CalendarEntity calendar = CalendarEntity.Reconstitute(
+        DomainCalendar calendar = DomainCalendar.Reconstitute(
             id: 10,
             accountEmail: "carol@example.com",
             name: "Work",

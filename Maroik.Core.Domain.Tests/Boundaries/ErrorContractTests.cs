@@ -5,7 +5,7 @@ using Maroik.Core.Domain.Calendar;
 using Maroik.Core.Domain.Finance;
 using Maroik.Core.Domain.Menu;
 using Maroik.Core.Domain.ValueObjects;
-using AccountEntity = Maroik.Core.Domain.Account.Account;
+using DomainAccount = Maroik.Core.Domain.Account.Account;
 using DomainTitledContentPolicy = Maroik.Core.Domain.Primitives.TitledContentPolicy;
 
 namespace Maroik.Core.Domain.Tests.Boundaries;
@@ -57,12 +57,12 @@ public class ErrorContractTests
 
     // ---- Account --------------------------------------------------------------------------
 
-    private static ErrorOr<AccountEntity> NewAccount(string hash = "$2a$hash", string role = Role.User) =>
-        AccountEntity.Create(Email, hash, "Nick", role, "UTC", null, GuidToken.Generate(), true);
+    private static ErrorOr<DomainAccount> NewAccount(string hash = "$2a$hash", string role = Role.User) =>
+        DomainAccount.Create(Email, hash, "Nick", role, "UTC", null, GuidToken.Generate(), true);
 
-    private static AccountEntity Reconstituted(bool emailConfirmed = true, string? resetToken = null, string? registrationToken = null,
+    private static DomainAccount Reconstituted(bool emailConfirmed = true, string? resetToken = null, string? registrationToken = null,
         bool locked = false, long loginAttempt = 0) =>
-        AccountEntity.Reconstitute(Email, "$2a$hash", "Nick", null, Role.User, "UTC", null, locked, loginAttempt, emailConfirmed, true,
+        DomainAccount.Reconstitute(Email, "$2a$hash", "Nick", null, Role.User, "UTC", null, locked, loginAttempt, emailConfirmed, true,
             registrationToken, resetToken, DateTime.UtcNow, DateTime.UtcNow, null, false, "stamp", false);
 
     [Fact]
@@ -87,7 +87,7 @@ public class ErrorContractTests
             "Email must be confirmed before resetting the password.");
 
         string token = GuidToken.Generate();
-        AccountEntity account = Reconstituted(resetToken: token);
+        DomainAccount account = Reconstituted(resetToken: token);
         ErrorAssert.Validation(account.ResetPassword("wrong", "$2a$new"), "Account.InvalidToken", "Invalid or expired password-reset token.");
         ErrorAssert.Validation(account.ResetPassword(token, " "), "Account.PasswordEmpty", "New hashed password cannot be empty.");
     }

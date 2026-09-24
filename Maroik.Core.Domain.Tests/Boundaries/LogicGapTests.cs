@@ -5,9 +5,9 @@ using Maroik.Core.Domain.Board;
 using Maroik.Core.Domain.Calendar;
 using Maroik.Core.Domain.Finance;
 using Maroik.Core.Domain.ValueObjects;
-using AccountEntity = Maroik.Core.Domain.Account.Account;
-using CalendarEntity = Maroik.Core.Domain.Calendar.Calendar;
-using IncomeEntity = Maroik.Core.Domain.Finance.Income;
+using DomainAccount = Maroik.Core.Domain.Account.Account;
+using DomainCalendar = Maroik.Core.Domain.Calendar.Calendar;
+using DomainIncome = Maroik.Core.Domain.Finance.Income;
 
 namespace Maroik.Core.Domain.Tests.Boundaries;
 
@@ -130,18 +130,18 @@ public class LogicGapTests
 
     // ---- Account --------------------------------------------------------------------------------
 
-    private static AccountEntity Account(bool locked = false, long loginAttempt = 0) =>
-        AccountEntity.Reconstitute(Email, "$2a$hash", "Nick", null, Role.User, "UTC", null, locked, loginAttempt, true, true,
+    private static DomainAccount Account(bool locked = false, long loginAttempt = 0) =>
+        DomainAccount.Reconstitute(Email, "$2a$hash", "Nick", null, Role.User, "UTC", null, locked, loginAttempt, true, true,
             null, null, DateTime.UtcNow, DateTime.UtcNow, null, false, "stamp", false);
 
     [Fact]
     public void AdminUpdate_KeepsTheAttemptCountWhileLocked_AndClearsItOnUnlock()
     {
-        AccountEntity locked = Account(locked: true, loginAttempt: 3);
+        DomainAccount locked = Account(locked: true, loginAttempt: 3);
         Assert.False(locked.AdminUpdate(null, null, locked: true, loginAttempt: 3, true, true, null, false).IsError);
         Assert.Equal(3, locked.LoginAttempt);
 
-        AccountEntity unlocked = Account(locked: true, loginAttempt: 3);
+        DomainAccount unlocked = Account(locked: true, loginAttempt: 3);
         Assert.False(unlocked.AdminUpdate(null, null, locked: false, loginAttempt: 3, true, true, null, false).IsError);
         Assert.Equal(0, unlocked.LoginAttempt);
     }
@@ -149,8 +149,8 @@ public class LogicGapTests
     [Fact]
     public void NewAccounts_GetADistinctHyphenlessSecurityStamp()
     {
-        string stamp1 = AccountEntity.Create(Email, "$2a$h", "Nick", Role.User, "UTC", null, GuidToken.Generate(), true).Value.SecurityStamp;
-        string stamp2 = AccountEntity.Create(Email, "$2a$h", "Nick", Role.User, "UTC", null, GuidToken.Generate(), true).Value.SecurityStamp;
+        string stamp1 = DomainAccount.Create(Email, "$2a$h", "Nick", Role.User, "UTC", null, GuidToken.Generate(), true).Value.SecurityStamp;
+        string stamp2 = DomainAccount.Create(Email, "$2a$h", "Nick", Role.User, "UTC", null, GuidToken.Generate(), true).Value.SecurityStamp;
 
  #pragma warning disable SYSLIB1045
         Assert.Matches(new Regex("^[0-9a-f]{32}$"), stamp1);
@@ -163,7 +163,7 @@ public class LogicGapTests
     {
         DateTime created = new(2025, 1, 2, 3, 4, 5), updated = new(2025, 6, 7, 8, 9, 10);
 
-        AccountEntity account = AccountEntity.Reconstitute("Mixed@Case.com", "$2a$hash", "Nick", "/a.png", Role.Admin, "Asia/Seoul", "KRW",
+        DomainAccount account = DomainAccount.Reconstitute("Mixed@Case.com", "$2a$hash", "Nick", "/a.png", Role.Admin, "Asia/Seoul", "KRW",
             locked: true, loginAttempt: 4, emailConfirmed: true, agreedServiceTerms: true, registrationToken: "reg", resetPasswordToken: "reset",
             created, updated, "msg", deleted: true, securityStamp: "stamp", mustChangePassword: true);
 
@@ -195,7 +195,7 @@ public class LogicGapTests
     {
         DateTime created = new(2025, 1, 2), updated = new(2025, 3, 4);
 
-        IncomeEntity income = IncomeEntity.Reconstitute(7, Email, "RegularIncome", "LaborIncome", "c", 123.45m, "KRW", "asset", "n", created, updated);
+        DomainIncome income = DomainIncome.Reconstitute(7, Email, "RegularIncome", "LaborIncome", "c", 123.45m, "KRW", "asset", "n", created, updated);
         Assert.Equal((7, Email, "RegularIncome", "LaborIncome", "c", "asset", "n", created, updated),
             (income.Id, income.AccountEmail.Value, income.MainClass, income.SubClass, income.Content, income.DepositMyAssetProductName, income.Note, income.Created, income.Updated));
         Assert.Equal(Money.Create(123.45m, "KRW").Value, income.Amount);
@@ -283,7 +283,7 @@ public class LogicGapTests
     {
         DateTime created = new(2025, 1, 2, 3, 4, 5), updated = new(2025, 6, 7, 8, 9, 10);
 
-        CalendarEntity calendar = CalendarEntity.Reconstitute(4, Email, "Work", "desc", "Asia/Seoul", "#112233", created, updated);
+        DomainCalendar calendar = DomainCalendar.Reconstitute(4, Email, "Work", "desc", "Asia/Seoul", "#112233", created, updated);
 
         Assert.Equal((4L, Email, "Work", "desc", "Asia/Seoul", "#112233", created, updated),
             (calendar.Id, calendar.AccountEmail.Value, calendar.Name, calendar.Description, calendar.TimeZone.Value, calendar.ColorCode.Value, calendar.Created, calendar.Updated));

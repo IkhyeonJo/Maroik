@@ -1,7 +1,6 @@
 using System.Diagnostics;
 using Maroik.Core.Contract.Dtos;
 using Maroik.Core.Contract.Interfaces;
-using Maroik.Core.Contract.Misc.Enums;
 using Maroik.Core.Contract.Misc.Helpers;
 using Maroik.Core.Contract.Misc.Messaging;
 using Maroik.Core.Contract.Misc.Settings;
@@ -724,7 +723,7 @@ public class AccountServiceTests
     /// column-scoped write that matches zero rows -- without throwing -- when the account row was
     /// deleted concurrently between the <c>FindByRegistrationTokenAsync</c> lookup and this write.
     /// <c>ConfirmEmailAsync</c> must treat that as a failed confirmation (mirroring the "account not
-    /// found" branch) rather than reporting <c>AccountCreated = true</c> for a write that persisted
+    /// found" branch) rather than reporting <c>AccountCreated = true</c> for write that persisted
     /// nothing.
     /// </summary>
     [Fact]

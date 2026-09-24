@@ -2,7 +2,7 @@ using Maroik.Core.Domain.Board;
 using Maroik.Core.Domain.Calendar;
 using Maroik.Core.Domain.Primitives;
 using Maroik.Core.Domain.ValueObjects;
-using CalendarEntity = Maroik.Core.Domain.Calendar.Calendar;
+using DomainCalendar = Maroik.Core.Domain.Calendar.Calendar;
 namespace Maroik.Core.Domain.Tests.Boundaries;
 
 /// <summary>
@@ -58,13 +58,13 @@ public class LengthBoundaryTests
     [Fact]
     public void Calendar_Create_AcceptsANameAtTheLimit_AndRefusesOneMore()
     {
-        Assert.False(CalendarEntity.Create("a@b.com", Text(ShortTextPolicy.MaxLength), null, "UTC", "#112233").IsError);
+        Assert.False(DomainCalendar.Create("a@b.com", Text(ShortTextPolicy.MaxLength), null, "UTC", "#112233").IsError);
 
-        ErrorAssert.Validation(CalendarEntity.Create("a@b.com", Text(ShortTextPolicy.MaxLength + 1), null, "UTC", "#112233"),
+        ErrorAssert.Validation(DomainCalendar.Create("a@b.com", Text(ShortTextPolicy.MaxLength + 1), null, "UTC", "#112233"),
             "Calendar.NameTooLong", "Calendar name must be {0} characters or fewer.", ShortTextPolicy.MaxLength);
-        ErrorAssert.Validation(CalendarEntity.Create("a@b.com", " ", null, "UTC", "#112233"),
+        ErrorAssert.Validation(DomainCalendar.Create("a@b.com", " ", null, "UTC", "#112233"),
             "Calendar.NameEmpty", "Calendar name cannot be empty.");
-        ErrorAssert.Validation(CalendarEntity.Create("a@b.com", "a<b", null, "UTC", "#112233"),
+        ErrorAssert.Validation(DomainCalendar.Create("a@b.com", "a<b", null, "UTC", "#112233"),
             "Calendar.NameInvalid", "Calendar name cannot contain angle brackets or control characters.");
     }
 

@@ -6,6 +6,4 @@ namespace Maroik.E2E.Tests.Infrastructure;
 /// and run sequentially rather than in parallel, since they all hit the same server/database.
 /// </summary>
 [CollectionDefinition("E2E")]
-public class E2ECollection : ICollectionFixture<E2ESharedFixture>
-{
-}
+public class E2ECollection : ICollectionFixture<E2ESharedFixture>;
