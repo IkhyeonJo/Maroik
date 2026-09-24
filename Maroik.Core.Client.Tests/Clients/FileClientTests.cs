@@ -125,9 +125,9 @@ public class FileClientTests
         bool result = await sut.UploadAsync([0x89, 0x50, 0x4E, 0x47], "image/png", "test.png", "http://filestorage.local", TestContext.Current.CancellationToken);
 
         Assert.False(result);
-        var warning = Assert.Single(logger.Entries, e => e.Level == LogLevel.Warning);
-        Assert.Contains("400", warning.Message);
-        Assert.Contains("could not be scanned", warning.Message);
+        var (_, message) = Assert.Single(logger.Entries, e => e.Level == LogLevel.Warning);
+        Assert.Contains("400", message);
+        Assert.Contains("could not be scanned", message);
     }
 
     /// <summary>A refusal whose body cannot be decoded does not turn into an exception: the upload just fails, with an empty reason logged.</summary>
@@ -156,8 +156,8 @@ public class FileClientTests
 
         await sut.UploadAsync([0x89, 0x50, 0x4E, 0x47], "image/png", "test.png", "http://filestorage.local", TestContext.Current.CancellationToken);
 
-        var warning = Assert.Single(logger.Entries, e => e.Level == LogLevel.Warning);
-        Assert.True(warning.Message.Length < 500);
+        var (_, message) = Assert.Single(logger.Entries, e => e.Level == LogLevel.Warning);
+        Assert.True(message.Length < 500);
     }
 
     // -- UploadWithResultAsync: why a refused file was refused ------------------

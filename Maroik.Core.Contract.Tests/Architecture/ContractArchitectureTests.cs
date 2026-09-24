@@ -125,7 +125,7 @@ public class ContractArchitectureTests
     /// an <see cref="AggregateRoot{TId}"/> rather than a child <see cref="Entity{TId}"/> (see the
     /// root CLAUDE.md and commit 284dc52f). So every <c>TDomain</c> behind a repository interface
     /// must derive from <see cref="AggregateRoot{TId}"/>; a bare <c>Entity&lt;TId&gt;</c> with its
-    /// own repository is a modelling bug.
+    /// own repository is a modeling bug.
     /// </summary>
     [Fact]
     public void EveryRepositoryInterface_MustPersist_AnAggregateRoot()
@@ -142,10 +142,12 @@ public class ContractArchitectureTests
 
         Assert.NotEmpty(persisted);
 
-        string[] violations = persisted
-            .Where(p => !DerivesFromAggregateRoot(p.Domain))
-            .Select(p => $"{p.Repo.Name} persists {p.Domain.Name}, which is {DescribeBase(p.Domain)}")
-            .ToArray();
+        string[] violations =
+        [
+            .. persisted
+                .Where(p => !DerivesFromAggregateRoot(p.Domain))
+                .Select(p => $"{p.Repo.Name} persists {p.Domain.Name}, which is {DescribeBase(p.Domain)}")
+        ];
 
         Assert.True(
             violations.Length == 0,

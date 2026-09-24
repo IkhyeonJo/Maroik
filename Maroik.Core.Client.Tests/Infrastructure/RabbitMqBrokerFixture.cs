@@ -7,12 +7,13 @@ namespace Maroik.Core.Client.Tests.Infrastructure;
 /// One throwaway RabbitMQ 4 container for a test class (xUnit class fixture). Tests share it, so each starts by
 /// calling <see cref="ResetQueuesAsync"/> to delete the two well-known queues and get a clean slate.
 /// </summary>
+// ReSharper disable once ClassNeverInstantiated.Global
 public sealed class RabbitMqBrokerFixture : IAsyncLifetime
 {
     private readonly RabbitMqContainer _broker = new RabbitMqBuilder("rabbitmq:4-alpine").Build();
 
     /// <summary>The broker's AMQP connection string (guest login).</summary>
-    public string ConnectionString => _broker.GetConnectionString();
+    private string ConnectionString => _broker.GetConnectionString();
 
     /// <summary>A connection factory for the broker; automatic recovery is on, as in production.</summary>
     public ConnectionFactory CreateFactory() => new() { Uri = new Uri(ConnectionString), AutomaticRecoveryEnabled = true };

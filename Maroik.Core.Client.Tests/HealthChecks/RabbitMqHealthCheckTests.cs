@@ -9,7 +9,7 @@ namespace Maroik.Core.Client.Tests.HealthChecks;
 /// (there is no injectable connection abstraction to mock), so only the failure path is exercised
 /// here without a real broker: an unreachable/malformed connection string must be reported as
 /// <see cref="HealthStatus.Unhealthy"/>, with the underlying exception attached, rather than
-/// propagating and taking the health-check middleware down with it. The healthy path and a real
+/// propagating and taking the health check middleware down with it. The healthy path and a real
 /// authentication refusal run against a throwaway RabbitMQ container (Testcontainers; Docker required,
 /// like the Repository and Website tests).
 /// </summary>
@@ -21,8 +21,12 @@ public class RabbitMqHealthCheckTests : IAsyncLifetime
     public async ValueTask InitializeAsync() => await _broker.StartAsync();
 
     /// <summary>Stops and removes the broker container.</summary>
-    public async ValueTask DisposeAsync() => await _broker.DisposeAsync();
-
+    public async ValueTask DisposeAsync()
+    {
+        await _broker.DisposeAsync();
+        GC.SuppressFinalize(this);
+    }
+    
     /// <summary>A reachable broker with valid credentials is healthy.</summary>
     [Fact]
     public async Task CheckHealthAsync_ReachableBroker_ReturnsHealthy()
@@ -63,7 +67,7 @@ public class RabbitMqHealthCheckTests : IAsyncLifetime
         Assert.NotNull(result.Exception);
     }
 
-    /// <summary>A malformed connection string (not even a valid AMQP URI) is reported unhealthy rather than throwing out of the health-check middleware.</summary>
+    /// <summary>A malformed connection string (not even a valid AMQP URI) is reported unhealthy rather than throwing out of the health check middleware.</summary>
     [Fact]
     public async Task CheckHealthAsync_MalformedConnectionString_ReturnsUnhealthy()
     {

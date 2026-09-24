@@ -56,7 +56,7 @@ public class MailClientTests
         Assert.DoesNotContain("registrationToken=a+b", body);
     }
 
-    /// <summary>Verifies that <c>GetMailConfirmationBody</c> returns html div.</summary>
+    /// <summary>Verifies that <c>GetMailConfirmationBody</c> returns HTML div.</summary>
     [Fact]
     public void GetMailConfirmationBody_ReturnsHtmlDiv()
     {
@@ -128,7 +128,7 @@ public class MailClientTests
         Assert.Contains("%3D", body);
     }
 
-    /// <summary>Verifies that <c>GetMailResetPasswordBody</c> returns html div.</summary>
+    /// <summary>Verifies that <c>GetMailResetPasswordBody</c> returns HTML div.</summary>
     [Fact]
     public void GetMailResetPasswordBody_ReturnsHtmlDiv()
     {
@@ -191,7 +191,7 @@ public class MailClientTests
     [Fact]
     public void ShouldAcceptCertificate_Rejects_WhenChainErrorsCombinedWithNameMismatch()
     {
-        SslPolicyErrors combined = SslPolicyErrors.RemoteCertificateChainErrors | SslPolicyErrors.RemoteCertificateNameMismatch;
+        const SslPolicyErrors combined = SslPolicyErrors.RemoteCertificateChainErrors | SslPolicyErrors.RemoteCertificateNameMismatch;
 
         Assert.False(MailClient.ShouldAcceptCertificate(combined));
     }
@@ -298,7 +298,7 @@ public class MailClientTests
         Assert.NotNull(smtp.ReceivedMessage);
     }
 
-    /// <summary>Rejected credentials fail the send with a generic message that leaks neither the host nor the server's reply, and nothing is delivered.</summary>
+    /// <summary>Rejected credentials fail to send with a generic message that leaks neither the host nor the server's reply, and nothing is delivered.</summary>
     [Fact]
     public async Task SendMailAsync_ReturnsAGenericFailure_WhenTheServerRejectsTheCredentials()
     {
@@ -444,7 +444,7 @@ public class MailClientTests
 
     /// <summary>
     /// Once the server has accepted the message, a failure while closing the connection must not be reported as a failed
-    /// send — the caller would republish and the recipient would get a duplicate. The send is a success; the close failure is
+    /// send — the caller would republish and the recipient would get a duplicate. To send is a success; the close failure is
     /// only logged (as a warning, with the exception).
     /// </summary>
     [Fact]

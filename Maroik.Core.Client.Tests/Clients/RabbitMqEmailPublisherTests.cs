@@ -70,7 +70,7 @@ public class RabbitMqEmailPublisherTests
 
     /// <summary>
     /// Regression test: without publisher confirmations enabled, BasicPublishAsync returns as
-    /// soon as the message is locally buffered, so a dropped connection right after the write
+    /// soon as the message is locally buffered, so a dropped connection right after to write
     /// silently loses the message even though PublishAsync reported success. Verifies the channel
     /// is created with confirmations (and tracking) enabled so BasicPublishAsync actually waits
     /// for and validates the broker's ack.
@@ -90,7 +90,7 @@ public class RabbitMqEmailPublisherTests
             Times.Once);
     }
 
-    /// <summary>Publish async publishes message body as json.</summary>
+    /// <summary>Publish async publishes message body as JSON.</summary>
     [Fact]
     public async Task PublishAsync_PublishesMessageBodyAsJson()
     {
@@ -193,7 +193,7 @@ public class RabbitMqEmailPublisherTests
         var connection = new Mock<IConnection>();
         // IsOpen is never read while _connection is still null (pattern-matching a null reference
         // short-circuits without touching the member), so the first real invocation happens on the
-        // second publish's cached-fast-path check below.
+        // second publishes cached-fast-path check below.
         connection.SetupSequence(c => c.IsOpen)
             .Returns(false) // second publish: cached-fast-path check — looks dropped
             .Returns(false) // entering the "not open" branch
@@ -305,9 +305,9 @@ public class RabbitMqEmailPublisherTests
 
     /// <summary>
     /// Regression test: DisposeAsync must not hang forever if a PublishAsync call is stuck holding
-    /// the publish lock (e.g. a broker that never confirms, with the caller having passed
+    /// the publishing lock (e.g. a broker that never confirms, with the caller having passed
     /// CancellationToken.None). Verifies dispose completes within a bounded time instead of
-    /// deadlocking application shutdown, and -- since the stuck publish still owns them -- that it
+    /// deadlocking application shutdown, and -- since the stuck publishing still owns them -- that it
     /// does NOT dispose the channel/connection out from under that still-running call.
     /// </summary>
     [Fact]
@@ -332,7 +332,7 @@ public class RabbitMqEmailPublisherTests
         channel.Verify(c => c.DisposeAsync(), Times.Never);
         connection.Verify(c => c.DisposeAsync(), Times.Never);
 
-        neverCompletes.SetResult(); // unblock the stuck publish so it doesn't leak past this test
+        neverCompletes.SetResult(); // unblock the stuck publishing so it doesn't leak past this test
         await stuckPublish;
     }
 }

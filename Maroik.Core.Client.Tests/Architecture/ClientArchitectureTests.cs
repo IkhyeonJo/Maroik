@@ -118,7 +118,7 @@ public class ClientArchitectureTests
 
     /// <summary>
     /// The client layer contains no business logic: it must not depend on any domain <c>*Policy</c>.
-    /// An adapter serialises a request, calls the external system, and maps the response — deciding
+    /// An adapter serializes a request, calls the external system, and maps the response — deciding
     /// what is allowed is domain / service work.
     /// </summary>
     [Fact]

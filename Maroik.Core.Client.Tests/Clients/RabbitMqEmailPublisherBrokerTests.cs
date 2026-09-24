@@ -150,7 +150,7 @@ public class RabbitMqEmailPublisherBrokerTests(RabbitMqBrokerFixture broker) : I
                 last = null;
                 break;
             }
-            catch (Exception ex) // a publish inside the fail-fast window right after a failed reconnect is allowed to throw; a later one must succeed
+            catch (Exception ex) // a publishing inside the fail-fast window right after a failed reconnect is allowed to throw; a later one must succeed
             {
                 last = ex;
                 await Task.Delay(300, TestContext.Current.CancellationToken);
