@@ -114,7 +114,11 @@ public class FileControllerLoggingTests(WebApplicationFactory<Program> baseFacto
     public async Task Download_LogsAWarning_WhenThePathEscapesTheStorageRoot()
     {
         var (client, logger) = CreateClient(ClamavScanResult.Clean);
-        using var content = new MultipartFormDataContent { { new StringContent("../../etc/passwd"), "filePath" }, { new StringContent("corr-dl-1"), "correlationId" } };
+ #pragma warning disable IDE0028
+        using var content = new MultipartFormDataContent();
+ #pragma warning restore IDE0028
+        content.Add(new StringContent("../../etc/passwd"), "filePath");
+        content.Add(new StringContent("corr-dl-1"), "correlationId");
 
         var response = await client.PostAsync("/api/File/download", content, TestContext.Current.CancellationToken);
 
@@ -130,7 +134,10 @@ public class FileControllerLoggingTests(WebApplicationFactory<Program> baseFacto
     {
         var (client, logger) = CreateClient(ClamavScanResult.Clean);
         string missing = Path.Combine(Path.GetTempPath(), $"maroik_missing_{Guid.NewGuid():N}.jpg");
-        using var content = new MultipartFormDataContent { { new StringContent(missing), "filePath" } };
+ #pragma warning disable IDE0028
+        using var content = new MultipartFormDataContent();
+ #pragma warning restore IDE0028
+        content.Add(new StringContent(missing), "filePath");
 
         var response = await client.PostAsync("/api/File/download", content, TestContext.Current.CancellationToken);
 

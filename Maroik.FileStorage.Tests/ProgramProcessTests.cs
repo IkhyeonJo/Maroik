@@ -8,18 +8,23 @@ namespace Maroik.FileStorage.Tests;
 /// The executable itself (<c>Program.cs</c>), run as a real process: it starts, serves and stops cleanly on SIGINT, and when it cannot
 /// start (its port is taken) it logs a fatal message and exits with a failure code instead of hanging or swallowing the error.
 /// </summary>
-public class Program_ProcessTests
+public class ProgramProcessTests
 {
+    private static readonly HttpClient _http = new()
+        { Timeout = TimeSpan.FromSeconds(5) };
     private static Process Start(int port)
     {
         string dll = Path.Combine(AppContext.BaseDirectory, "Maroik.FileStorage.dll");
         var info = new ProcessStartInfo("dotnet", $"\"{dll}\" --urls http://127.0.0.1:{port}")
         {
             WorkingDirectory = AppContext.BaseDirectory, RedirectStandardOutput = true, RedirectStandardError = true, UseShellExecute = false,
+            Environment =
+            {
+                ["Clamav__Host"] = "127.0.0.1",
+                ["Clamav__Port"] = "3310",
+                ["DOTNET_ENVIRONMENT"] = "Production"
+            }
         };
-        info.Environment["Clamav__Host"] = "127.0.0.1";
-        info.Environment["Clamav__Port"] = "3310";
-        info.Environment["DOTNET_ENVIRONMENT"] = "Production";
         var process = new Process { StartInfo = info };
         Assert.True(process.Start());
         return process;
@@ -43,15 +48,17 @@ public class Program_ProcessTests
         using Process process = Start(port);
         try
         {
-            using var http = new HttpClient { Timeout = TimeSpan.FromSeconds(5) };
             HttpResponseMessage? response = null;
             for (var deadline = DateTime.UtcNow.AddSeconds(30); DateTime.UtcNow < deadline && response == null; await Task.Delay(200, TestContext.Current.CancellationToken))
             {
                 if (process.HasExited) break;
                 try
                 {
-                    using var form = new MultipartFormDataContent { { new StringContent("upload/none.png"), "filePath" } };
-                    response = await http.PostAsync($"http://127.0.0.1:{port}/api/File/download", form, TestContext.Current.CancellationToken);
+ #pragma warning disable IDE0028
+                    using var form = new MultipartFormDataContent();
+ #pragma warning restore IDE0028
+                    form.Add(new StringContent("upload/none.png"), "filePath");
+                    response = await _http.PostAsync($"http://127.0.0.1:{port}/api/File/download", form, TestContext.Current.CancellationToken);
                 }
                 catch (HttpRequestException) { /* not listening yet */ }
             }
@@ -59,7 +66,7 @@ public class Program_ProcessTests
             Assert.False(process.HasExited, "the process exited before serving a request");
             Assert.Equal(HttpStatusCode.NotFound, response!.StatusCode);
 
-            using (var kill = Process.Start("kill", $"-INT {process.Id}")!) await kill.WaitForExitAsync(TestContext.Current.CancellationToken);
+            using (var kill = Process.Start("kill", $"-INT {process.Id}")) await kill.WaitForExitAsync(TestContext.Current.CancellationToken);
             await process.WaitForExitAsync(TestContext.Current.CancellationToken).WaitAsync(TimeSpan.FromSeconds(30), TestContext.Current.CancellationToken);
             Assert.Equal(0, process.ExitCode);
         }

@@ -46,23 +46,21 @@ public class FileStorageArchitectureTests
     [Fact]
     public void Controllers_ShouldNot_DeclareNonPublicMethods()
     {
-        List<string> violations = [];
-
-        foreach (Type controllerType in _fileStorageAssembly.GetTypes()
-                     .Where(t => t is { IsClass: true, IsAbstract: false } && typeof(ControllerBase).IsAssignableFrom(t)))
-        {
-            List<string> nonPublicMethods =
+        List<string> violations =
+        [
+            .. from controllerType in _fileStorageAssembly.GetTypes()
+                .Where(t => t is { IsClass: true, IsAbstract: false } && typeof(ControllerBase).IsAssignableFrom(t))
+            let nonPublicMethods = (List<string>)
             [
-                .. controllerType
-                    .GetMethods(BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.Static | BindingFlags.DeclaredOnly)
+                .. controllerType.GetMethods(BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.Static | BindingFlags.DeclaredOnly)
                     .Where(m => !m.IsSpecialName) // exclude property/event accessors
                     .Where(m => m.GetCustomAttribute<CompilerGeneratedAttribute>() == null) // exclude lambda bodies etc.
                     .Select(m => m.Name)
-            ];
+            ]
+            where nonPublicMethods.Count > 0
+            select $"{controllerType.Name}: {string.Join(", ", nonPublicMethods)}"
 
-            if (nonPublicMethods.Count > 0)
-                violations.Add($"{controllerType.Name}: {string.Join(", ", nonPublicMethods)}");
-        }
+        ];
 
         Assert.True(
             violations.Count == 0,
@@ -88,7 +86,7 @@ public class FileStorageArchitectureTests
         List<string> violations = [];
 
         foreach (Type type in _fileStorageAssembly.GetTypes()
-                     .Where(t => t.Namespace == "Maroik.FileStorage.Services" && !t.IsNested))
+                     .Where(t => t is { Namespace: "Maroik.FileStorage.Services", IsNested: false }))
         {
             if (type.GetCustomAttribute<CompilerGeneratedAttribute>() != null)
                 continue;

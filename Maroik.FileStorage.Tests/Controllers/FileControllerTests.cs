@@ -25,7 +25,9 @@ public class FileControllerTests : IClassFixture<WebApplicationFactory<Program>>
     private readonly WebApplicationFactory<Program> _baseFactory;
 
     /// <summary>Initializes a new instance of FileControllerTests, sharing the WebApplicationFactory&lt;Program&gt; fixture across the tests in this class.</summary>
+ #pragma warning disable IDE0290
     public FileControllerTests(WebApplicationFactory<Program> factory)
+ #pragma warning restore IDE0290
     {
         _baseFactory = factory;
     }
@@ -102,7 +104,9 @@ public class FileControllerTests : IClassFixture<WebApplicationFactory<Program>>
     public async Task Upload_ReturnsBadRequest_WhenNoFileIsProvided()
     {
         var client = FactoryWithCleanScan().CreateClient();
+ #pragma warning disable IDE0028
         using var content = new MultipartFormDataContent();
+ #pragma warning restore IDE0028
         content.Add(new StringContent("/tmp/uploads"), "filePath");
         // Intentionally omit the "file" part
 
@@ -373,7 +377,9 @@ public class FileControllerTests : IClassFixture<WebApplicationFactory<Program>>
     public async Task Download_ReturnsNotFound_WhenFileDoesNotExist()
     {
         var client = _baseFactory.CreateClient();
+ #pragma warning disable IDE0028
         using var content = new MultipartFormDataContent();
+ #pragma warning restore IDE0028
         content.Add(new StringContent("/nonexistent/path/does_not_exist_xyz.jpg"), "filePath");
 
         var response = await client.PostAsync("/api/File/download", content, TestContext.Current.CancellationToken);
@@ -393,7 +399,9 @@ public class FileControllerTests : IClassFixture<WebApplicationFactory<Program>>
         try
         {
             var client = FactoryWithTempStorageRoot().CreateClient();
+ #pragma warning disable IDE0028
             using var content = new MultipartFormDataContent();
+ #pragma warning restore IDE0028
             content.Add(new StringContent(tempPath), "filePath");
 
             var response = await client.PostAsync("/api/File/download", content, TestContext.Current.CancellationToken);
@@ -419,7 +427,9 @@ public class FileControllerTests : IClassFixture<WebApplicationFactory<Program>>
         try
         {
             var client = FactoryWithTempStorageRoot().CreateClient();
+ #pragma warning disable IDE0028
             using var content = new MultipartFormDataContent();
+ #pragma warning restore IDE0028
             content.Add(new StringContent(tempPath), "filePath");
 
             var response = await client.PostAsync("/api/File/download", content, TestContext.Current.CancellationToken);
@@ -470,7 +480,10 @@ public class FileControllerTests : IClassFixture<WebApplicationFactory<Program>>
             string stored = Path.Combine(targetDir, "stored.png");
             Assert.Equal(png, await File.ReadAllBytesAsync(stored, TestContext.Current.CancellationToken));
 
-            using var download = new MultipartFormDataContent { { new StringContent(stored), "filePath" } };
+ #pragma warning disable IDE0028
+            using var download = new MultipartFormDataContent();
+ #pragma warning restore IDE0028
+            download.Add(new StringContent(stored), "filePath");
             var downloaded = await client.PostAsync("/api/File/download", download, TestContext.Current.CancellationToken);
             Assert.Equal(HttpStatusCode.OK, downloaded.StatusCode);
             Assert.Equal(png, await downloaded.Content.ReadAsByteArrayAsync(TestContext.Current.CancellationToken));
@@ -490,7 +503,10 @@ public class FileControllerTests : IClassFixture<WebApplicationFactory<Program>>
         try
         {
             var client = FactoryWithTempStorageRoot().CreateClient();
-            using var content = new MultipartFormDataContent { { new StringContent(tempPath), "filePath" } };
+ #pragma warning disable IDE0028
+            using var content = new MultipartFormDataContent();
+ #pragma warning restore IDE0028
+            content.Add(new StringContent(tempPath), "filePath");
 
             var response = await client.PostAsync("/api/File/download", content, TestContext.Current.CancellationToken);
 
@@ -515,7 +531,10 @@ public class FileControllerTests : IClassFixture<WebApplicationFactory<Program>>
         {
             if (CanRead(tempPath)) return; // running as root: file permissions do not apply, so the read cannot be made to fail
             var client = FactoryWithTempStorageRoot().CreateClient();
-            using var content = new MultipartFormDataContent { { new StringContent(tempPath), "filePath" } };
+ #pragma warning disable IDE0028
+            using var content = new MultipartFormDataContent();
+ #pragma warning restore IDE0028
+            content.Add(new StringContent(tempPath), "filePath");
 
             var response = await client.PostAsync("/api/File/download", content, TestContext.Current.CancellationToken);
 
@@ -527,6 +546,7 @@ public class FileControllerTests : IClassFixture<WebApplicationFactory<Program>>
             File.SetUnixFileMode(tempPath, UnixFileMode.UserRead | UnixFileMode.UserWrite);
             File.Delete(tempPath);
         }
+        return;
 
         static bool CanRead(string path)
         {
