@@ -5,12 +5,11 @@
     Also renders a page-size selector (dropdown or text input) when Model.ShowPageSizes is true.
     Disabled state is applied to boundary buttons when already on the first or last page.
 *@
-@using NonFactors.Mvc.Grid;
 @model IGridPager
 @{
-    Int32 totalPages = Model.TotalPages;
-    Int32 currentPage = Model.CurrentPage;
-    Int32 firstDisplayPage = Model.FirstDisplayPage;
+    int totalPages = Model.TotalPages;
+    int currentPage = Model.CurrentPage;
+    int firstDisplayPage = Model.FirstDisplayPage;
 }
 
     <div class="@($"mvc-grid-pager {Model.CssClasses}".Trim())" data-show-page-sizes="@Model.ShowPageSizes" data-total-rows="@Model.TotalRows">
@@ -26,7 +25,7 @@
         <button type="button" disabled>&#171;</button>
         <button type="button" disabled>&#8249;</button>
         }
-        for (Int32 page = firstDisplayPage; page <= totalPages && page < firstDisplayPage + Model.PagesToDisplay; page++)
+        for (int page = firstDisplayPage; page <= totalPages && page < firstDisplayPage + Model.PagesToDisplay; page++)
         {
             if (page == currentPage)
             {
@@ -53,7 +52,7 @@
         @if (Model.PageSizes.Count > 0)
         {
             <select class="mvc-grid-pager-rows">
-            @foreach (KeyValuePair<Int32, String> size in Model.PageSizes)
+            @foreach (var size in Model.PageSizes)
             {
                 if (Model.RowsPerPage == size.Key)
                 {

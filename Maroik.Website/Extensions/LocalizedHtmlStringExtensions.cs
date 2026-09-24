@@ -28,7 +28,7 @@ public static class LocalizedHtmlStringExtensions
     /// HTML-encoding them. For a message that is stored raw (e.g. in <c>TempData</c>) and encoded
     /// exactly once later, by the view's <c>@</c> output. Feeding it <see cref="ToPlainString"/> instead
     /// encodes twice, so a Korean nickname shows up as <c>&amp;#xD64D;…</c> and <c>R&amp;D</c> as
-    /// <c>R&amp;amp;D</c>. <see cref="ToPlainString"/> stays the right call for JSON bodies, which the
+    /// <c>R&amp;amp'd</c>. <see cref="ToPlainString"/> stays the right call for JSON bodies, which the
     /// client renders as HTML (toastr) and therefore decodes once.
     /// </summary>
     public static string ToRawText(this IHtmlLocalizer localizer, string key, params object[] args)

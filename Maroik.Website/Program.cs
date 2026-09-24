@@ -182,7 +182,7 @@ try
             .SetApplicationName("Maroik");
         Log.Warning(
             "No Valkey connection string configured — Data Protection keys persist to {KeyRingPath} " +
-            "and the distributed cache is in-process. Multi-instance deployments require Valkey.",
+            "and the distributed cache is in-process. Multi-instance deployments require Valkey",
             keyRingPath);
     }
 
@@ -314,7 +314,7 @@ try
             certTimer.Dispose();
         });
 
-        app.Logger.LogInformation("Certificate polling started.");
+        app.Logger.LogInformation("Certificate polling started");
     }
 
     #endregion

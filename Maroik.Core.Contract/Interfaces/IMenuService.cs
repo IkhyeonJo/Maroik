@@ -15,7 +15,7 @@ public interface IMenuService
     Task<IEnumerable<SubCategoryResponse>> GetAllSubCategoriesAsync(CancellationToken ct = default);
 
     /// <summary>
-    /// Returns the top-level navigation categories whose Id/Name/DisplayName/IconPath/Controller/
+    /// Returns the top-level navigation categories whose ID/Name/DisplayName/IconPath/Controller/
     /// Action/Role/Order contains <paramref name="search"/> (ordinal substring match), or every
     /// category when <paramref name="search"/> is null or empty. Backs the Management &gt; Menu
     /// grid's "whole search" box.
@@ -23,7 +23,7 @@ public interface IMenuService
     Task<IEnumerable<CategoryResponse>> SearchCategoriesAsync(string? search, CancellationToken ct = default);
 
     /// <summary>
-    /// Returns the sub-category rows whose Id/CategoryId/Name/DisplayName/IconPath/Action/Role/Order
+    /// Returns the sub-category rows whose ID/CategoryId/Name/DisplayName/IconPath/Action/Role/Order
     /// contains <paramref name="search"/> (ordinal substring match), or every sub-category when
     /// <paramref name="search"/> is null or empty. Backs the Management &gt; Menu grid's "whole
     /// search" box.

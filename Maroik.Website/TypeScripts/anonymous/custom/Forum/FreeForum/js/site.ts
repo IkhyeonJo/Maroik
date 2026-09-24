@@ -15,7 +15,7 @@
  * IIFE-wrapped, no `import` / `export`. Most of the work runs inside a jQuery
  * `$(function)` ready callback.
  */
-(function () {
+(function() {
     // Cached element references. `#free_forum_detail_updated` and the table only
     // exist on the relevant sub-view, so their `.length` is checked before use.
     const $freeForumDetailUpdated = $("#free_forum_detail_updated");
@@ -49,20 +49,20 @@
 
     /**
      * Frees each rebuilt image's object URL once the image has loaded (or failed to): the browser keeps the Blob alive until then.
-     * Applied to the images as they are in the live page — the ones rebuilt in the parsed, detached copy are re-serialised into
+     * Applied to the images as they are in the live page — the ones rebuilt in the parsed, detached copy are re-serialized into
      * HTML, which drops any handler set on them.
      */
     function ReleaseObjectUrlsOnLoad(root: Element | undefined | null) {
         if (!root) return;
-        root.querySelectorAll<HTMLImageElement>('img[src^="blob:"]').forEach(function (img) {
+        root.querySelectorAll<HTMLImageElement>("img[src^=\"blob:\"]").forEach(function(img) {
             const url = img.src;
-            img.onload = img.onerror = function () {
+            img.onload = img.onerror = function() {
                 URL.revokeObjectURL(url);
             };
         });
     }
 
-    $(function () {
+    $(function() {
 
         // --- UTC -> local time -------------------------------------------------
         // Post-detail "updated" stamp (present only on the detail sub-view).
@@ -75,7 +75,7 @@
 
         // "Created" column of every row in the list table. The cell sometimes
         // wraps the value in a <span>, so read/write whichever is present.
-        $tblFreeForum.find("tbody").children("tr").find(".free_forum_board_created").each(function () {
+        $tblFreeForum.find("tbody").children("tr").find(".free_forum_board_created").each(function() {
             let $element = $(this);
             let $span = $element.find("span");
             let utcDateStr = $span.length > 0 ? $span.html() : $element.text();
@@ -85,7 +85,7 @@
         });
 
         // Each comment's "created" stamp on the detail view.
-        $(".free_forum_detail_comment_created").each(function () {
+        $(".free_forum_detail_comment_created").each(function() {
             let utcDateStr = $(this).text();
             let utcDate = new Date(utcDateStr);
             let localDateStr = utcDate.toLocaleString();
@@ -98,30 +98,30 @@
             window.location.href = "/Forum/FreeForum?searchType=" + encodeURIComponent($searchType.val() as string) + "&searchText=" + encodeURIComponent($btnFreeForumSearchText.val() as string);
         }
 
-        $btnFreeForumSearchBoard.off("click").on("click", function () {
+        $btnFreeForumSearchBoard.off("click").on("click", function() {
             SearchBoard();
         });
 
-        $btnFreeForumWrite.off("click").on("click", function () {
+        $btnFreeForumWrite.off("click").on("click", function() {
             location.href = "/Forum/FreeForum?method=write";
         });
 
         // "Back to list" keeps the caller's paging/search state, carried in the
         // button's `data-link` attribute (always present here, hence the `!`).
-        $btnFreeForumList.off("click").on("click", function () {
+        $btnFreeForumList.off("click").on("click", function() {
             location.href = $(this).attr("data-link")!;
         });
 
         // Enter in the search box triggers the search instead of submitting.
-        $btnFreeForumSearchText.off("keypress").on("keypress", function (event) {
-            if (event.keyCode === 13 || event.which === 13) {
+        $btnFreeForumSearchText.off("keydown").on("keydown", function(event) {
+            if (event.key === "Enter") {
                 SearchBoard();
             }
         });
 
         // In the comment form, swallow Enter so a stray newline can't submit it
         // (returning false from a keydown handler cancels the key).
-        $formWriteFreeComment.off("keydown").on("keydown", function (event) {
+        $formWriteFreeComment.off("keydown").on("keydown", function(event) {
             return event.key !== "Enter";
         });
 
@@ -135,20 +135,13 @@
 
             const imgTags = htmlDoc.querySelectorAll<HTMLImageElement>("img[data-file]");
 
-            imgTags.forEach(function (imgTag) {
+            imgTags.forEach(function(imgTag) {
                 const base64Data = imgTag.getAttribute("data-file");
                 const contentType = imgTag.getAttribute("data-contenttype");
 
                 if (base64Data && contentType) {
                     const blob = base64ToBlob(base64Data, contentType);
-                    const imgURL = URL.createObjectURL(blob);
-
-                    imgTag.src = imgURL;
-
-                    // Release the object URL once the browser has the bytes
-                    // (whether the load succeeded or failed).
-
-                    // Drop the now-redundant payload attributes.
+                    imgTag.src = URL.createObjectURL(blob);
                     imgTag.removeAttribute("data-file");
                     imgTag.removeAttribute("data-contenttype");
                 }
@@ -164,11 +157,11 @@
         // The attachment is also embedded as base64; build a Blob, hand it to a
         // throwaway <a download>, click it, then clean up.
         if ($aDetailBoardAttachedFile.length > 0) {
-            $aDetailBoardAttachedFile.off("click").on("click", function (event) {
+            $aDetailBoardAttachedFile.off("click").on("click", function(event) {
                 event.preventDefault();
                 let base64Data = $(this).attr("data-file");
                 let contentType = $(this).attr("data-contenttype");
-                let name = $(this).attr("data-name")
+                let name = $(this).attr("data-name");
 
                 if (base64Data && contentType) {
                     let blob = base64ToBlob(base64Data, contentType);

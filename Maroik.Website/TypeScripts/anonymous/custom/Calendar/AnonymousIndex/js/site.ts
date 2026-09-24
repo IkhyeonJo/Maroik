@@ -22,7 +22,7 @@
  * attribute here — the authoritative rules live in `CalendarReminderPolicy`.
  * IIFE-wrapped, no `import` / `export`.
  */
-(function () {
+(function() {
     // Cached element references — the "other event" popup and every field of the
     // read-only "view event" modal, plus the anti-forgery input and the two
     // hidden inputs the view uses to hand data to this script.
@@ -39,7 +39,7 @@
     const $otherCalendarEventPopupEndTimeZoneAllDayUnchecked = $("#otherCalendarEventPopupEndTimeZoneAllDayUnchecked");
     const $viewOtherCalendarEventPopup = $("#viewOtherCalendarEventPopup");
     const $closeOtherCalendarEventPopup = $("#closeOtherCalendarEventPopup");
-    const $__RequestVerificationToken = $('input[name="__RequestVerificationToken"]');
+    const $__RequestVerificationToken = $("input[name=\"__RequestVerificationToken\"]");
     const $viewCalendarEventId = $("#viewCalendarEventId");
     const $viewCalendarEventName = $("#viewCalendarEventName");
     const $viewCalendarEventAllDay = $("#viewCalendarEventAllDay");
@@ -80,7 +80,6 @@
     // by the server (CalendarViewModelMapper / CalendarReminderPolicy). Was regenerated inline
     // as Array.from({length:96}) in several places.
     const reminderTimeIntervals = JSON.parse(($("#reminderTimeIntervals").val() as string) || "[]");
-    const defaultBeforeAt = ($("#defaultReminderTimeOfDay").val() as string) || "09:00";
 
     /** base64 -> Blob, for turning the server-embedded image / attachment payloads into object URLs. */
     function base64ToBlob(base64: string, mime: string) {
@@ -95,14 +94,14 @@
 
     /**
      * Frees each rebuilt image's object URL once the image has loaded (or failed to): the browser keeps the Blob alive until then.
-     * Applied to the images as they are in the live page — the ones rebuilt in the parsed, detached copy are re-serialised into
+     * Applied to the images as they are in the live page — the ones rebuilt in the parsed, detached copy are re-serialized into
      * HTML, which drops any handler set on them.
      */
     function ReleaseObjectUrlsOnLoad(root: Element | undefined | null) {
         if (!root) return;
-        root.querySelectorAll<HTMLImageElement>('img[src^="blob:"]').forEach(function (img) {
+        root.querySelectorAll<HTMLImageElement>("img[src^=\"blob:\"]").forEach(function(img) {
             const url = img.src;
-            img.onload = img.onerror = function () {
+            img.onload = img.onerror = function() {
                 URL.revokeObjectURL(url);
             };
         });
@@ -200,7 +199,7 @@
     // `FullCalendar.Calendar` is loosely typed here).
     let calendar: any;
 
-    $(function () {
+    $(function() {
         $viewCalendarEventTaskTabs.tabs();
 
         // --- Build the read-only FullCalendar --------------------------------
@@ -222,7 +221,7 @@
             selectMirror: true,
             // Clicking an "Other" event: show a small summary popup anchored to
             // the event element. Clicking again on the same event closes it.
-            eventClick: function (arg: any) {
+            eventClick: function(arg: any) {
                 if (arg.event.extendedProps.calendarType === "Other") {
                     let eventEl = $(arg.el);
                     let offset = eventEl.offset()!;
@@ -259,21 +258,21 @@
                         display: "block"
                     }).data("event-id", arg.event.id);
 
-                    $viewOtherCalendarEventPopup.focus();
+                    $viewOtherCalendarEventPopup.trigger("focus");
 
                     // Click anywhere outside the popup / an event closes it.
-                    $(document).off("click.AnonymousIndex").on("click.AnonymousIndex", function (e) {
+                    $(document).off("click.AnonymousIndex").on("click.AnonymousIndex", function(e) {
                         if (!$(e.target).closest($otherCalendarEventPopup).length && !$(e.target).closest(".fc-event").length) {
                             popup.hide();
                         }
                     });
 
-                    $closeOtherCalendarEventPopup.off("click").on("click", function () {
+                    $closeOtherCalendarEventPopup.off("click").on("click", function() {
                         popup.hide();
                     });
 
                     // "View" button: fetch the full event and open the read-only modal.
-                    $viewOtherCalendarEventPopup.off("click").on("click", function () {
+                    $viewOtherCalendarEventPopup.off("click").on("click", function() {
                         $.ajax({
                             url: "/Calendar/IsOtherCalendarEventExists" + "?id=" + popup.data("event-id"),
                             type: "POST",
@@ -281,7 +280,7 @@
                             dataType: "json",
                             data: null as any,
                             contentType: "application/json; charset=utf-8",
-                            success: function (data) {
+                            success: function(data) {
                                 if (data.result) {
                                     // --- Fill the read-only modal from `data.calendarEvent` ---
                                     $viewCalendarEventId.val(data.calendarEvent.id);
@@ -297,8 +296,7 @@
                                         $viewCalendarEventAllDayCheckedStartDate.val(data.calendarEvent.displayStartDate);
                                         $viewCalendarEventAllDayCheckedEndDate.val(data.calendarEvent.displayEndDate);
 
-                                    }
-                                    else {
+                                    } else {
                                         $divViewEventAllDayUnchecked.show();
 
                                         $viewCalendarEventAllDay.prop("checked", false);
@@ -324,17 +322,13 @@
 
                                     const imgTags = htmlDoc.querySelectorAll<HTMLImageElement>("img[data-file]");
 
-                                    imgTags.forEach(function (imgTag) {
+                                    imgTags.forEach(function(imgTag) {
                                         const base64Data = imgTag.getAttribute("data-file");
                                         const contentType = imgTag.getAttribute("data-contenttype");
 
                                         if (base64Data && contentType) {
                                             const blob = base64ToBlob(base64Data, contentType);
-                                            const imgURL = URL.createObjectURL(blob);
-
-                                            imgTag.src = imgURL;
-
-
+                                            imgTag.src = URL.createObjectURL(blob);
                                             imgTag.removeAttribute("data-file");
                                             imgTag.removeAttribute("data-contenttype");
                                         }
@@ -362,7 +356,6 @@
 
                                         $spanViewCalendarEventAttachedFile.text(`${Math.round(data.calendarEvent.calendarEventAttachedFile.size / 1024).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",")}KB`);
                                     }
-
 
                                     // Populate the (disabled) "calendar" select with the
                                     // visitor-visible "other" calendars, then continue building the
@@ -431,8 +424,7 @@
                                                     }
                                                 });
                                             }
-                                        }
-                                        else {
+                                        } else {
                                             $divViewEventNotificationAllDayUnchecked.find(".divViewEventNotificationAllDayUncheckedRow").remove();
                                             $divViewEventNotificationAllDayUnchecked.show();
 
@@ -501,11 +493,11 @@
                                         dataType: "json",
                                         data: null as any,
                                         contentType: "application/json; charset=utf-8",
-                                        success: function (response) {
+                                        success: function(response) {
                                             if (response.result) {
                                                 $viewCalendarEventMyCalendar.empty();
 
-                                                $.each(response.tempOtherCalendars, function (index: number, tempOtherCalendar: any) {
+                                                $.each(response.tempOtherCalendars, function(_, tempOtherCalendar: any) {
                                                     $viewCalendarEventMyCalendar.append($("<option>", {
                                                         value: tempOtherCalendar.id,
                                                         text: tempOtherCalendar.name
@@ -515,15 +507,14 @@
                                                 $viewCalendarEventMyCalendar.val(data.calendarEvent.calendarId);
                                             }
                                         },
-                                        error: function () {
+                                        error: function() {
                                             toastr.error(localizer.FailedToLoadCalendars);
                                         },
-                                        complete: function () {
+                                        complete: function() {
                                             showViewCalendarEventModal();
                                         }
                                     });
-                                }
-                                else {
+                                } else {
                                     toastr.error(data.error);
                                 }
                             }
@@ -565,8 +556,8 @@
          * calendars": clears everything, gathers the checked calendar ids, POSTs
          * `GetCalendarEvents`, and re-adds whatever comes back.
          */
-        // Guards against a stale GetCalendarEvents response (from a checkbox toggle just before
-        // this one) landing after a newer one and re-adding events the user already unchecked.
+            // Guards against a stale GetCalendarEvents response (from a checkbox toggle just before
+            // this one) landing after a newer one and re-adding events the user already unchecked.
         let calendarEventsRequestSeq = 0;
 
         function RefreshCalendarEvents() {
@@ -579,7 +570,7 @@
                 Calendars: []
             };
 
-            $otherCalendars.find('input[type="checkbox"]').filter(":checked").each(function () {
+            $otherCalendars.find("input[type=\"checkbox\"]").filter(":checked").each(function() {
                 // Each checkbox's `<label id="lblOtherCalendar123">` encodes the id.
                 let calendarsArray = [
                     { Id: Number($(this).closest("label").attr("id")!.replace("lblOtherCalendar", "")) }
@@ -597,7 +588,7 @@
                 dataType: "json",
                 data: JSON.stringify(paramValue),
                 contentType: "application/json; charset=utf-8",
-                success: function (response) {
+                success: function(response) {
                     // A newer RefreshCalendarEvents call already ran (and removed/re-added events)
                     // since this request went out — applying this stale response now would put
                     // back events the newer call's own removeAllEvents() just cleared.
@@ -630,7 +621,7 @@
         }
 
         // Toggling any "other calendar" checkbox reloads the events (delegated).
-        $(document).off("change.AnonymousIndex", ".chkOtherCalendar").on("change.AnonymousIndex", ".chkOtherCalendar", function () {
+        $(document).off("change.AnonymousIndex", ".chkOtherCalendar").on("change.AnonymousIndex", ".chkOtherCalendar", function() {
             RefreshCalendarEvents();
         });
     });
@@ -638,11 +629,11 @@
     // Attachment download: base64 -> Blob -> a throwaway `<a download>` that is
     // clicked and cleaned up. (Bound once at load; the link's `data-*` payload is
     // filled when the view modal opens.)
-    $aViewCalendarEventAttachedFile.off("click").on("click", function (event) {
+    $aViewCalendarEventAttachedFile.off("click").on("click", function(event) {
         event.preventDefault();
         let base64Data = $(this).attr("data-file");
         let contentType = $(this).attr("data-contenttype");
-        let name = $(this).attr("data-name")
+        let name = $(this).attr("data-name");
 
         if (base64Data && contentType) {
             let blob = base64ToBlob(base64Data, contentType);

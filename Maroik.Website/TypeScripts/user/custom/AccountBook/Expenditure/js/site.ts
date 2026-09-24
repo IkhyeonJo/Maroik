@@ -5,16 +5,16 @@
  * pattern (see `AccountBook/Asset`) plus:
  *
  *   • A localized jQuery-UI datepicker on the "date" fields.
- *   • A dependent `<select>`: choosing a main class narrows the sub-class
+ *   • A dependent `<select>`: choosing a main class narrows the subclass
  *     options to those `ExpenditureClassPolicy` allows.
- *   • A "deposit asset" block that is only shown for transfer-type sub-classes
+ *   • A "deposit asset" block that is only shown for transfer-type subclasses
  *     (`expenditureDepositAssetSubClasses`).
  *   • The amount field's label follows the chosen payment method.
  *
  * Client checks are UX mirrors; the controller re-validates every field and
  * class combination on save. IIFE-wrapped, no `import` / `export`.
  */
-(function () {
+(function() {
     /** Zero-pads a 1-2 digit date/time component to 2 digits (e.g. `5` -> `"05"`). */
     function pad2(n: number): string {
         return n.toString().padStart(2, "0");
@@ -41,7 +41,7 @@
     const $createExpenditurePaymentMethod = $("#createExpenditurePaymentMethod");
     const $createExpenditureNote = $("#createExpenditureNote");
     const $createExpenditureMyDepositAsset = $("#createExpenditureMyDepositAsset");
-    const $__RequestVerificationToken = $('input[name="__RequestVerificationToken"]');
+    const $__RequestVerificationToken = $("input[name=\"__RequestVerificationToken\"]");
     const failedToLoadAmountLabelMessage = $("#localizerFailedToLoadAmountLabel").val() as string;
     const $createExpenditureDialogModal = $("#createExpenditureDialogModal");
     const $editExpenditureId = $("#editExpenditureId");
@@ -73,7 +73,7 @@
     // Enables/shows only the options in allowedValues (disabling+hiding the rest) and selects
     // valueToSelect when it is allowed, otherwise the first allowed option.
     function ApplyAllowedOptions($select: JQuery, allowedValues: string[], valueToSelect: string | null) {
-        $select.find("option").each(function (this: HTMLOptionElement) {
+        $select.find("option").each(function(this: HTMLOptionElement) {
             const allowed = allowedValues.indexOf(this.value) !== -1;
             $(this).prop("disabled", !allowed).prop("hidden", !allowed);
         });
@@ -81,11 +81,11 @@
             ? valueToSelect
             : allowedValues[0];
         if (target != null) {
-            $select.val(target).change();
+            $select.val(target).trigger("change");
         }
     }
 
-    // The "deposit asset" field is only relevant for transfer-type sub-classes.
+    // The "deposit asset" field is only relevant for transfer-type subclasses.
     function ToggleCreateExpenditureMyDepositAsset(subClassValue: string) {
         expenditureDepositAssetSubClasses.indexOf(subClassValue) !== -1
             ? $divCreateExpenditureMyDepositAsset.show()
@@ -170,11 +170,7 @@
     // Today's date parts, split from the create-form date field's default value.
     // (Declared here; `currentMonth` / `currentDay` are unused elsewhere but kept
     // as-is from the original.)
-    const currentYear = ($createExpenditureDate.val() as string).split("-")[0];
-    const currentMonth = ($createExpenditureDate.val() as string).split("-")[1];
-    const currentDay = ($createExpenditureDate.val() as string).split("-")[2];
-
-    $(function () {
+    $(function() {
         $createExpenditureTabs.tabs();
         $editExpenditureTabs.tabs();
         // The empty `setTimeout(fn, 1)` callbacks are a jQuery-UI datepicker
@@ -182,13 +178,13 @@
         // because `@types/jqueryui` insists these return `DatepickerOptions`.
         $createExpenditureDate.datepicker({
             showButtonPanel: true,
-            beforeShow: function () {
-                setTimeout(function () {
+            beforeShow: function() {
+                setTimeout(function() {
 
                 }, 1);
             },
-            onChangeMonthYear: function () {
-                setTimeout(function () {
+            onChangeMonthYear: function() {
+                setTimeout(function() {
 
                 }, 1);
             }
@@ -196,13 +192,13 @@
 
         $editExpenditureDate.datepicker({
             showButtonPanel: true,
-            beforeShow: function () {
-                setTimeout(function () {
+            beforeShow: function() {
+                setTimeout(function() {
 
                 }, 1);
             },
-            onChangeMonthYear: function () {
-                setTimeout(function () {
+            onChangeMonthYear: function() {
+                setTimeout(function() {
 
                 }, 1);
             }
@@ -223,11 +219,11 @@
 
         let $clsGridRow = $(".clsGridRow");
 
-        $clsGridRow.each(function () {
+        $clsGridRow.each(function() {
             $(this).removeClass(selectedRowColor);
         });
 
-        $clsGridRow.each(function () {
+        $clsGridRow.each(function() {
             if ((String(selectedRowId).valueOf() === String($(this).attr("data-id")).valueOf())) {
                 $(this).addClass(selectedRowColor);
             }
@@ -248,27 +244,27 @@
     });
 
     // Double-click the highlighted row to open its edit modal.
-    $(document).off("dblclick.Expenditure", ".clsGridRow").on("dblclick.Expenditure", ".clsGridRow", function () {
-        $(".clsGridRow").each(function () {
+    $(document).off("dblclick.Expenditure", ".clsGridRow").on("dblclick.Expenditure", ".clsGridRow", function() {
+        $(".clsGridRow").each(function() {
             if ($(this).attr("class")!.includes(selectedRowColor)) {
                 EditExpenditureGridRow();
             }
         });
     });
     // Free-text search: push the term into the grid query string and reload.
-    $gridSearch.off("input").on("input", function (this: HTMLInputElement) {
+    $gridSearch.off("input").on("input", function(event) {
         const grid = new MvcGrid(document.querySelector(".mvc-grid"));
-        grid.url.searchParams.set("wholeSearch", this.value);
+        grid.url.searchParams.set("wholeSearch", (event.currentTarget as HTMLInputElement).value);
         grid.reload();
     });
 
-    /** Create form main-class change: re-filter the sub-class options and re-evaluate the deposit-asset block. */
+    /** Create form main-class change: re-filter the subclass options and re-evaluate the deposit-asset block. */
     function CreateFormShowExpenditureSubClassBySelectedExpenditureMainClass(createExpenditureMainClass: HTMLSelectElement) {
         ApplyAllowedOptions($createExpenditureSubClass, expenditureSubClassMap[createExpenditureMainClass.value] || [], null);
         ToggleCreateExpenditureMyDepositAsset($createExpenditureSubClass.val() as string);
     }
 
-    /** Create form sub-class change: show/hide the deposit-asset block for it. */
+    /** Create form subclass change: show/hide the deposit-asset block for it. */
     function CreateFormShowExpenditureDivCreateExpenditureMyDepositAssetBySelectedExpenditureSubClass(createExpenditureSubClass: HTMLSelectElement) {
         ToggleCreateExpenditureMyDepositAsset(createExpenditureSubClass.value);
     }
@@ -325,7 +321,7 @@
             dataType: "json",
             data: paramValue,
             contentType: "application/json; charset=utf-8",
-            success: function (data) {
+            success: function(data) {
                 if (data.result) {
                     $createExpenditureDialogModal.modal("hide");
 
@@ -333,8 +329,7 @@
                     grid.reload();
 
                     toastr.success(data.message);
-                }
-                else {
+                } else {
                     toastr.error(data.error);
                 }
             }
@@ -345,7 +340,7 @@
 
     /**
      * Opens the edit modal for the selected grid row. Fetches the record
-     * (`IsExpenditureExists`), fills the form, re-filters the sub-class select
+     * (`IsExpenditureExists`), fills the form, re-filters the subclass select
      * and toggles the deposit-asset block. When the record has no explicit
      * `myDepositAsset` the payment method is used as the fallback selection.
      *
@@ -355,7 +350,7 @@
 
         let selectedRowId = "";
 
-        $(".clsGridRow").each(function () {
+        $(".clsGridRow").each(function() {
             if ($(this).attr("class")!.includes(selectedRowColor)) {
                 selectedRowId = $(this).attr("data-id")!;
             }
@@ -373,11 +368,11 @@
             dataType: "json",
             data: null as any,
             contentType: "application/json; charset=utf-8",
-            success: function (data) {
+            success: function(data) {
                 if (data.result) {
 
                     $editExpenditureId.val(data.expenditure.id);
-                    $editExpenditureMainClass.val(data.expenditure.mainClass).change();
+                    $editExpenditureMainClass.val(data.expenditure.mainClass).trigger("change");
 
                     ApplyAllowedOptions($editExpenditureSubClass, expenditureSubClassMap[data.expenditure.mainClass] || [], data.expenditure.subClass);
                     ToggleEditExpenditureMyDepositAsset(data.expenditure.subClass);
@@ -387,19 +382,17 @@
                     // Split the `created` ISO string into the date field and the
                     // hour / minute / second selects.
                     $editExpenditureDate.val(data.expenditure.created.split("T")[0]);
-                    $editExpenditureHour.val(parseInt(data.expenditure.created.split("T")[1].substring(0, 2))).change();
-                    $editExpenditureMinute.val(parseInt(data.expenditure.created.split("T")[1].substring(3, 5))).change();
-                    $editExpenditureSecond.val(parseInt(data.expenditure.created.split("T")[1].substring(6, 8))).change();
-                    $editExpenditurePaymentMethod.val(data.expenditure.paymentMethod).change();
+                    $editExpenditureHour.val(parseInt(data.expenditure.created.split("T")[1].substring(0, 2))).trigger("change");
+                    $editExpenditureMinute.val(parseInt(data.expenditure.created.split("T")[1].substring(3, 5))).trigger("change");
+                    $editExpenditureSecond.val(parseInt(data.expenditure.created.split("T")[1].substring(6, 8))).trigger("change");
+                    $editExpenditurePaymentMethod.val(data.expenditure.paymentMethod).trigger("change");
                     $editExpenditureNote.val(data.expenditure.note);
 
                     if (data.expenditure.myDepositAsset) {
-                        $editExpenditureMyDepositAsset.val(data.expenditure.myDepositAsset).change();
+                        $editExpenditureMyDepositAsset.val(data.expenditure.myDepositAsset).trigger("change");
+                    } else {
+                        $editExpenditureMyDepositAsset.val(data.expenditure.paymentMethod).trigger("change");
                     }
-                    else {
-                        $editExpenditureMyDepositAsset.val(data.expenditure.paymentMethod).change();
-                    }
-
 
                     $editExpenditureDialogModal.modal({
                         keyboard: false,
@@ -408,26 +401,25 @@
 
                     $editExpenditureDialogModal.modal("toggle");
                     $editExpenditureDialogModal.modal("show");
-                }
-                else {
+                } else {
                     toastr.error(data.error);
                 }
             }
         });
     }
 
-    /** Edit form main-class change: re-filter the sub-class options and re-evaluate the deposit-asset block. */
+    /** Edit form main-class change: re-filter the subclass options and re-evaluate the deposit-asset block. */
     function EditFormShowExpenditureSubClassBySelectedExpenditureMainClass(editExpenditureMainClass: HTMLSelectElement) {
         ApplyAllowedOptions($editExpenditureSubClass, expenditureSubClassMap[editExpenditureMainClass.value] || [], null);
         ToggleEditExpenditureMyDepositAsset($editExpenditureSubClass.val() as string);
     }
 
-    /** Edit form sub-class change: show/hide the deposit-asset block for it. */
+    /** Edit form subclass change: show/hide the deposit-asset block for it. */
     function EditFormShowExpenditureDivCreateExpenditureMyDepositAssetBySelectedExpenditureSubClass(editExpenditureSubClass: HTMLSelectElement) {
         ToggleEditExpenditureMyDepositAsset(editExpenditureSubClass.value);
     }
 
-    /** Edit-expenditure modal submit: same shape as `CreateExpenditure` plus `Id`. */
+    /** Edit-expenditure modal submit: same shape as `CreateExpenditure` plus `ID`. */
     function UpdateExpenditure() {
 
         if (!$formEditExpenditure.valid()) {
@@ -472,7 +464,7 @@
             dataType: "json",
             data: paramValue,
             contentType: "application/json; charset=utf-8",
-            success: function (data) {
+            success: function(data) {
                 if (data.result) {
                     $editExpenditureDialogModal.modal("hide");
 
@@ -480,8 +472,7 @@
                     grid.reload();
 
                     toastr.success(data.message);
-                }
-                else {
+                } else {
                     toastr.error(data.error);
                 }
             }
@@ -489,12 +480,12 @@
         return false;
     }
 
-    /** "Delete" button: require a selected row, then just open the confirm modal. */
+    /** "Delete" button: require a selected row, then just open the confirmation modal. */
     function ConfirmDeleteExpenditure(errorMessageSelectGridRow?: string) {
 
         let selectedRowId = "";
 
-        $(".clsGridRow").each(function () {
+        $(".clsGridRow").each(function() {
             if ($(this).attr("class")!.includes(selectedRowColor)) {
                 selectedRowId = $(this).attr("data-id")!;
             }
@@ -519,7 +510,7 @@
 
         let selectedRowId = "";
 
-        $(".clsGridRow").each(function () {
+        $(".clsGridRow").each(function() {
             if ($(this).attr("class")!.includes(selectedRowColor)) {
                 selectedRowId = $(this).attr("data-id")!;
             }
@@ -537,7 +528,7 @@
             dataType: "json",
             data: null as any,
             contentType: "application/json; charset=utf-8",
-            success: function (data) {
+            success: function(data) {
                 if (data.result) {
 
                     let paramValue = JSON.stringify({
@@ -551,7 +542,7 @@
                         dataType: "json",
                         data: paramValue,
                         contentType: "application/json; charset=utf-8",
-                        success: function (data) {
+                        success: function(data) {
                             if (data.result) {
                                 $confirmDeleteExpenditureDialogModal.modal("hide");
 
@@ -559,14 +550,12 @@
                                 grid.reload();
 
                                 toastr.success(data.message);
-                            }
-                            else {
+                            } else {
                                 toastr.error(data.error);
                             }
                         }
                     });
-                }
-                else {
+                } else {
                     toastr.error(data.error);
                 }
             }
@@ -611,15 +600,14 @@
             dataType: "json",
             data: null as any,
             contentType: "application/json; charset=utf-8",
-            success: function (data) {
+            success: function(data) {
                 if (data.result) {
                     $labelCreateExpenditureAmount.text(data.label);
-                }
-                else {
+                } else {
                     $labelCreateExpenditureAmount.text(data.label);
                 }
             },
-            error: function () {
+            error: function() {
                 toastr.error(failedToLoadAmountLabelMessage);
             }
         });
@@ -634,74 +622,82 @@
             dataType: "json",
             data: null as any,
             contentType: "application/json; charset=utf-8",
-            success: function (data) {
+            success: function(data) {
                 if (data.result) {
                     $labelEditExpenditureAmount.text(data.label);
-                }
-                else {
+                } else {
                     $labelEditExpenditureAmount.text(data.label);
                 }
             },
-            error: function () {
+            error: function() {
                 toastr.error(failedToLoadAmountLabelMessage);
             }
         });
     }
 
     // --- Button / form / select wiring --------------------------------
-    $btnEditExpenditureGridRow.off("click").on("click", function () {
+    $btnEditExpenditureGridRow.off("click").on("click", function() {
         EditExpenditureGridRow($(this).attr("data-errorMessageSelectGridRow"));
     });
 
-    $btnConfirmDeleteExpenditure.off("click").on("click", function () {
+    $btnConfirmDeleteExpenditure.off("click").on("click", function() {
         ConfirmDeleteExpenditure($(this).attr("data-errorMessageSelectGridRow"));
     });
 
-    $btnExportExcelExpenditure.off("click").on("click", function () {
+    $btnExportExcelExpenditure.off("click").on("click", function() {
         ExportExcelExpenditure();
     });
 
-    $btnDeleteExpenditure.off("click").on("click", function () {
+    $btnDeleteExpenditure.off("click").on("click", function() {
         DeleteExpenditure($(this).attr("data-errorMessageSelectGridRow"));
     });
 
-    $formCreateExpenditure.off("submit").on("submit", function () {
+    $formCreateExpenditure.off("submit").on("submit", function() {
         return CreateExpenditure();
     });
 
-    $formEditExpenditure.off("submit").on("submit", function () {
+    $formEditExpenditure.off("submit").on("submit", function() {
         return UpdateExpenditure();
     });
 
-    // Main-class change -> re-filter sub-class + deposit-asset visibility.
-    $createExpenditureMainClass.off("change").on("change", function (this: HTMLSelectElement) {
-        CreateFormShowExpenditureSubClassBySelectedExpenditureMainClass(this);
+    $createExpenditureMainClass.off("change").on("change", function(event) {
+        CreateFormShowExpenditureSubClassBySelectedExpenditureMainClass(
+            event.currentTarget as HTMLSelectElement
+        );
     });
 
-    // Sub-class change -> deposit-asset visibility only.
-    $createExpenditureSubClass.off("change").on("change", function (this: HTMLSelectElement) {
-        CreateFormShowExpenditureDivCreateExpenditureMyDepositAssetBySelectedExpenditureSubClass(this);
+    $createExpenditureSubClass.off("change").on("change", function(event) {
+        CreateFormShowExpenditureDivCreateExpenditureMyDepositAssetBySelectedExpenditureSubClass(
+            event.currentTarget as HTMLSelectElement
+        );
     });
 
-    $editExpenditureMainClass.off("change").on("change", function (this: HTMLSelectElement) {
-        EditFormShowExpenditureSubClassBySelectedExpenditureMainClass(this);
+    $editExpenditureMainClass.off("change").on("change", function(event) {
+        EditFormShowExpenditureSubClassBySelectedExpenditureMainClass(
+            event.currentTarget as HTMLSelectElement
+        );
     });
 
-    $editExpenditureSubClass.off("change").on("change", function (this: HTMLSelectElement) {
-        EditFormShowExpenditureDivCreateExpenditureMyDepositAssetBySelectedExpenditureSubClass(this);
+    $editExpenditureSubClass.off("change").on("change", function(event) {
+        EditFormShowExpenditureDivCreateExpenditureMyDepositAssetBySelectedExpenditureSubClass(
+            event.currentTarget as HTMLSelectElement
+        );
     });
 
-    // Payment-method change -> refresh the amount label.
-    $createExpenditurePaymentMethod.off("change").on("change", function (this: HTMLSelectElement) {
-        ChangeCreateExpenditureAmountLabel(this.value);
+    $createExpenditurePaymentMethod.off("change").on("change", function(event) {
+        ChangeCreateExpenditureAmountLabel(
+            (event.currentTarget as HTMLSelectElement).value
+        );
     });
 
-    $editExpenditurePaymentMethod.off("change").on("change", function (this: HTMLSelectElement) {
-        ChangeEditExpenditureAmountLabel(this.value);
+    $editExpenditurePaymentMethod.off("change").on("change", function(event) {
+        ChangeEditExpenditureAmountLabel(
+            (event.currentTarget as HTMLSelectElement).value
+        );
     });
 
     // On load, set the create-form amount label for whichever method is preselected.
-    $(function () {
+    $(function() {
         ChangeCreateExpenditureAmountLabel($createExpenditurePaymentMethod.find("option:selected").val() as string);
-    })
+    });
 })();

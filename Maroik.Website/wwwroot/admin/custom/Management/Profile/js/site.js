@@ -5,9 +5,11 @@
     const $profileAvatarFiles = $("#ProfileAvatarFiles");
     const $newPassword = $("#NewPassword");
     const $password = $("#Password");
-    const $__RequestVerificationToken = $('input[name="__RequestVerificationToken"]');
+    const $__RequestVerificationToken = $("input[name=\"__RequestVerificationToken\"]");
     const maxFileSize = parseInt($("#maxAttachedFileSizeBytes").val()) || window.MaroikDefaultMaxAttachedFileSizeBytes;
-    const allowedImageContentTypes = (JSON.parse($("#allowedImageContentTypes").val() || "[]")).map(function (t) { return t.toLowerCase(); });
+    const allowedImageContentTypes = (JSON.parse($("#allowedImageContentTypes").val() || "[]")).map(function (t) {
+        return t.toLowerCase();
+    });
     function UpdateProfileAvatar(noFileAttachedErrorMessage, fileSizeLimitationErrorMessage, fileTypeErrorMessage) {
         let files = document.getElementById("ProfileAvatarFiles").files[0];
         if (files === undefined || files === null) {
@@ -90,3 +92,4 @@
         return UpdateProfileAvatar($(this).attr("data-noFileAttachedErrorMessage"), $(this).attr("data-fileSizeLimitationErrorMessage"), $(this).attr("data-fileTypeErrorMessage"));
     });
 })();
+//# sourceMappingURL=site.js.map

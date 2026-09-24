@@ -12,8 +12,11 @@
 // custom scripts actually touch: new MvcGrid(el), .url.searchParams, .reload().
 declare class MvcGrid {
     constructor(container: Element | null);
+
     url: URL;
+
     reload(): void;
+
     [key: string]: unknown;
 }
 
@@ -38,5 +41,6 @@ interface BootstrapModalOptions {
 
 interface JQuery<TElement = HTMLElement> {
     modal(action?: "show" | "hide" | "toggle" | "handleUpdate" | "dispose"): this;
+
     modal(options: BootstrapModalOptions): this;
 }

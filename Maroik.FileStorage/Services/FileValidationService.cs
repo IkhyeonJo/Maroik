@@ -133,7 +133,8 @@ public class FileValidationService(IClamavClient clamavClient, IOptions<FileStor
         // IsStreamOwner = false is required: ZipFile disposes its underlying stream by default, and
         // the caller reuses `stream` (via ValidateAndSaveAsync's `memStream`) after this returns.
         stream.Position = 0;
-        using var zip = new ZipFile(stream) { IsStreamOwner = false };
+        using var zip = new ZipFile(stream);
+        zip.IsStreamOwner = false;
         bool encrypted = zip.Cast<ZipEntry>().Any(entry => entry.IsCrypted);
         stream.Position = 0;
         return encrypted;

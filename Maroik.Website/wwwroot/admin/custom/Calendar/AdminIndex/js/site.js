@@ -95,7 +95,7 @@
     const $aCreateCalendar = $("#aCreateCalendar");
     const $dropdownContent = $("#dropdown-content");
     const $dropdownIcon = $("#dropdown-icon");
-    const $__RequestVerificationToken = $('input[name="__RequestVerificationToken"]');
+    const $__RequestVerificationToken = $("input[name=\"__RequestVerificationToken\"]");
     const maxFileSize = parseInt($("#maxAttachedFileSizeBytes").val()) || window.MaroikDefaultMaxAttachedFileSizeBytes;
     const maxMinutesBeforeEvent = parseInt($("#maxMinutesBeforeEvent").val(), 10);
     const maxHoursBeforeEvent = parseInt($("#maxHoursBeforeEvent").val(), 10);
@@ -115,7 +115,7 @@
     function ReleaseObjectUrlsOnLoad(root) {
         if (!root)
             return;
-        root.querySelectorAll('img[src^="blob:"]').forEach(function (img) {
+        root.querySelectorAll("img[src^=\"blob:\"]").forEach(function (img) {
             const url = img.src;
             img.onload = img.onerror = function () {
                 URL.revokeObjectURL(url);
@@ -267,11 +267,11 @@
             editCalendarEventUploadedFile = obj.files[0];
         }
     }
-    $createCalendarEventAttachment.off("change").on("change", function () {
-        return CreateCalendarEventUploadedFile(this, $(this).attr("data-errorMessage"));
+    $createCalendarEventAttachment.off("change").on("change", function (event) {
+        return CreateCalendarEventUploadedFile(event.currentTarget, $(event.currentTarget).attr("data-errorMessage"));
     });
-    $editCalendarEventAttachment.off("change").on("change", function () {
-        return EditCalendarEventUploadedFile(this, $(this).attr("data-errorMessage"));
+    $editCalendarEventAttachment.off("change").on("change", function (event) {
+        return EditCalendarEventUploadedFile(event.currentTarget, $(event.currentTarget).attr("data-errorMessage"));
     });
     $(function () {
         $createCalendarTabs.tabs();
@@ -492,7 +492,7 @@
                     success: function (response) {
                         if (response.result) {
                             $createCalendarEventMyCalendar.empty();
-                            $.each(response.calendars, function (index, calendar) {
+                            $.each(response.calendars, function (_, calendar) {
                                 $createCalendarEventMyCalendar.append($("<option>", {
                                     value: calendar.id,
                                     text: calendar.name
@@ -540,7 +540,7 @@
                     left: offset.left + eventEl.outerWidth(),
                     display: "block"
                 }).data("event-id", arg.event.id);
-                $editCalendarEventPopup.focus();
+                $editCalendarEventPopup.trigger("focus");
                 $(document).off("click.AdminIndex").on("click.AdminIndex", function (e) {
                     if (!$(e.target).closest($calendarEventPopup.add(".fc-event")).length) {
                         popup.hide();
@@ -589,8 +589,7 @@
                                     const contentType = imgTag.getAttribute("data-contenttype");
                                     if (base64Data && contentType) {
                                         const blob = base64ToBlob(base64Data, contentType);
-                                        const imgURL = URL.createObjectURL(blob);
-                                        imgTag.src = imgURL;
+                                        imgTag.src = URL.createObjectURL(blob);
                                         imgTag.removeAttribute("data-file");
                                         imgTag.removeAttribute("data-contenttype");
                                     }
@@ -716,7 +715,7 @@
                                     success: function (response) {
                                         if (response.result) {
                                             $editCalendarEventMyCalendar.empty();
-                                            $.each(response.calendars, function (index, calendar) {
+                                            $.each(response.calendars, function (_, calendar) {
                                                 $editCalendarEventMyCalendar.append($("<option>", {
                                                     value: calendar.id,
                                                     text: calendar.name
@@ -791,7 +790,7 @@
             let paramValue = {
                 Calendars: []
             };
-            $myCalendars.find('input[type="checkbox"]:checked').each(function () {
+            $myCalendars.find("input[type=\"checkbox\"]:checked").each(function () {
                 let calendarsArray = [
                     { Id: Number($(this).closest("label").attr("id").replace("lblCalendar", "")) }
                 ];
@@ -1203,7 +1202,7 @@
                         let paramValue = {
                             Calendars: []
                         };
-                        $myCalendars.find('input[type="checkbox"]:checked').each(function () {
+                        $myCalendars.find("input[type=\"checkbox\"]:checked").each(function () {
                             let calendarsArray = [
                                 { Id: Number($(this).closest("label").attr("id").replace("lblCalendar", "")) }
                             ];
@@ -1403,7 +1402,7 @@
                         let paramValue = {
                             Calendars: []
                         };
-                        $myCalendars.find('input[type="checkbox"]:checked').each(function () {
+                        $myCalendars.find("input[type=\"checkbox\"]:checked").each(function () {
                             let calendarsArray = [
                                 { Id: Number($(this).closest("label").attr("id").replace("lblCalendar", "")) }
                             ];
@@ -1487,7 +1486,7 @@
                         if (label.length > 0) {
                             label.text(data.calendar.name);
                         }
-                        let checkbox = $lblCalendarId.find('input[type="checkbox"]');
+                        let checkbox = $lblCalendarId.find("input[type=\"checkbox\"]");
                         if (checkbox.length > 0) {
                             checkbox.css("accent-color", data.calendar.htmlColorCode);
                         }
@@ -1498,7 +1497,7 @@
                             }
                         });
                         setTimeout(function () {
-                            let calendars = $myCalendars.find('label[id^="lblCalendar"]').get();
+                            let calendars = $myCalendars.find("label[id^=\"lblCalendar\"]").get();
                             calendars.sort(function (a, b) {
                                 let nameA = $(a).text().trim().toUpperCase();
                                 let nameB = $(b).text().trim().toUpperCase();
@@ -1508,7 +1507,7 @@
                                     return 1;
                                 return 0;
                             });
-                            $.each(calendars, function (index, label) {
+                            $.each(calendars, function (_, label) {
                                 $myCalendars.append(label);
                             });
                         }, 0);
@@ -1676,7 +1675,7 @@
                 if (data.result) {
                     $createCalendarDialogModal.modal("hide");
                     $myCalendars.append(`<label id='lblCalendar${data.calendar.id}' style='position: relative; border:1px solid #ccc; padding:10px; margin:0 0 10px; display:block'><input type='checkbox' style='accent-color:${data.calendar.htmlColorCode}' checked /><label style='padding-left:0.5em;'> ${escapeHtml(data.calendar.name)}</label><i id='${data.calendar.id}' class='edit-calendar fas fa-edit' style='position: absolute; right: 40px; top: 50%; transform: translateY(-50%); cursor: pointer;'></i><i id='${data.calendar.id}' class='delete-calendar fas fa-trash' style='position: absolute; right: 15px; top: 50%; transform: translateY(-50%); cursor: pointer;'></i></label>`);
-                    let calendars = $myCalendars.find('label[id^="lblCalendar"]').get();
+                    let calendars = $myCalendars.find("label[id^=\"lblCalendar\"]").get();
                     calendars.sort(function (a, b) {
                         let nameA = $(a).text().trim().toUpperCase();
                         let nameB = $(b).text().trim().toUpperCase();
@@ -1686,7 +1685,7 @@
                             return 1;
                         return 0;
                     });
-                    $.each(calendars, function (index, label) {
+                    $.each(calendars, function (_, label) {
                         $myCalendars.append(label);
                     });
                     toastr.success(data.message);
@@ -1712,7 +1711,7 @@
             success: function (response) {
                 if (response.result) {
                     $createCalendarEventMyCalendar.empty();
-                    $.each(response.calendars, function (index, calendar) {
+                    $.each(response.calendars, function (_, calendar) {
                         $createCalendarEventMyCalendar.append($("<option>", {
                             value: calendar.id,
                             text: calendar.name
@@ -1771,7 +1770,6 @@
         }
     });
     $createCalendarEventNotificationAllDayChecked.off("click").on("click", function () {
-        const timeIntervals = reminderTimeIntervals;
         const htmlString = String.raw `
         <div class='divCreateEventNotificationAllDayCheckedRow'>
             <select class='form-control-sm createCalendarEventSelNotificationMethodAllDayChecked' style='width:20%;text-overflow:ellipsis;'>
@@ -1787,7 +1785,7 @@
             </select>
             <label style='padding-left:5px;padding-right:5px;'>${localizer.BeforeAt}</label>
             <select class='form-control-sm createCalendarEventSelNotificationTimeAllDayChecked' style='width:11%;text-overflow:ellipsis;'>
-                ${timeIntervals.map((time) => time === `${defaultBeforeAt}` ? `<option value='${time}' selected>${time}</option>` : `<option value='${time}'>${time}</option>`).join("")}
+                ${reminderTimeIntervals.map((time) => time === `${defaultBeforeAt}` ? `<option value='${time}' selected>${time}</option>` : `<option value='${time}'>${time}</option>`).join("")}
             </select>
             <a class='hover aCreateCalendarDeleteNotificationAllDayChecked' href='#' style='width:10%;'>
                 <i class='fa fa-trash' aria-hidden='true' style='margin-left: 7px;'></i>
@@ -1826,7 +1824,6 @@
         $(htmlString).insertBefore(this);
     });
     $editCalendarEventNotificationAllDayChecked.off("click").on("click", function () {
-        const timeIntervals = reminderTimeIntervals;
         const htmlString = String.raw `
         <div class='divEditEventNotificationAllDayCheckedRow'>
             <select class='form-control-sm editCalendarEventSelNotificationMethodAllDayChecked' style='width:20%;text-overflow:ellipsis;'>
@@ -1842,7 +1839,7 @@
             </select>
             <label style='padding-left:5px;padding-right:5px;'>${localizer.BeforeAt}</label>
             <select class='form-control-sm editCalendarEventSelNotificationTimeAllDayChecked' style='width:11%;text-overflow:ellipsis;'>
-                ${timeIntervals.map((time) => time === `${defaultBeforeAt}` ? `<option value='${time}' selected>${time}</option>` : `<option value='${time}'>${time}</option>`).join("")}
+                ${reminderTimeIntervals.map((time) => time === `${defaultBeforeAt}` ? `<option value='${time}' selected>${time}</option>` : `<option value='${time}'>${time}</option>`).join("")}
             </select>
             <a class='hover aEditCalendarDeleteNotificationAllDayChecked' href='#' style='width:10%;'>
                 <i class='fa fa-trash' aria-hidden='true' style='margin-left: 7px;'></i>
@@ -1917,7 +1914,7 @@
             success: function (response) {
                 if (response.result) {
                     let htmlString = "";
-                    $.each(response.setCalendarShareds, function (index, setCalendarShared) {
+                    $.each(response.setCalendarShareds, function (_, setCalendarShared) {
                         htmlString += String.raw `
                             <div class='form-row setCalendarShared' style='margin-top: 20px;'>
                                 <div id='divSetCalendarShared${setCalendarShared.id}' class='form-group col-md-4 mb-4 text-center'>
@@ -1990,7 +1987,7 @@
                     $editCalendarName.val(data.calendar.name);
                     $editCalendarDescription.val(data.calendar.description);
                     $editCalendarHtmlColorCode.val(data.calendar.htmlColorCode);
-                    $editCalendarTimeZone.val(data.calendar.timeZoneIanaId).change();
+                    $editCalendarTimeZone.val(data.calendar.timeZoneIanaId).trigger("change");
                     $editCalendarDialogModal.modal({
                         keyboard: false,
                         backdrop: "static"
@@ -2049,3 +2046,4 @@
         }
     });
 })();
+//# sourceMappingURL=site.js.map

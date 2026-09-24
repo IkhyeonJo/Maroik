@@ -3,7 +3,6 @@ using System.Text.Json;
 using Maroik.Core.Contract.Dtos;
 using Maroik.Website.Constants;
 using Maroik.Website.Contracts;
-using Microsoft.Extensions.Logging;
 
 namespace Maroik.Website.Services;
 

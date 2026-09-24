@@ -65,7 +65,7 @@ services:
 
     # ── ClamAV ───────────────────────────────────────────────────────────────
     # Virus scanner; Maroik.FileStorage streams every upload to it over TCP 3310.
-    # No healthcheck / restart policy here — the DB signature load makes first
+    # No health check / restart policy here — the DB signature load makes first
     # readiness slow, and nothing uses `depends_on` on it.
     clamav:
       image: clamav/clamav:latest
@@ -77,7 +77,7 @@ services:
 
     # ── PostgreSQL ───────────────────────────────────────────────────────────
     # Primary database. Schema is DB-first: the mounted SQL scripts run once, on an
-    # empty data volume, via the postgres image's /docker-entrypoint-initdb.d hook.
+    # empty data volume, via the Postgres image's /docker-entrypoint-initdb.d hook.
     postgresql:
       image: postgres:17
       container_name: Maroik.PostgreSQL
@@ -131,7 +131,7 @@ services:
           - ./Maroik.SSL/localhostprivkey1.pem:/etc/ssl/localhostprivkey1.pem:ro   # its private key (read-only)
           - ./Maroik.Log/:/app/Maroik.Log:rw                                       # app writes logs to the host tree
           - dataprotection-keys:/root/.aspnet/DataProtection-Keys                  # default key-ring path; unused while Valkey is configured (see the volume note above)
-        depends_on:                    # wait for each dependency's healthcheck to pass before starting
+        depends_on:                    # wait for each dependency's health check to pass before starting
           postgresql:
             condition: service_healthy
           valkey:
@@ -161,7 +161,7 @@ services:
 
     # ── Maroik.Worker ────────────────────────────────────────────────────────
     # Headless background service: consumes RabbitMQ messages (e.g. sends email).
-    # No network ports at all. Needs only postgresql + rabbitmq.
+    # No network ports at all. Needs only PostgreSQL + rabbitmq.
     maroik.worker:
         build :
          context : .

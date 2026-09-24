@@ -16,7 +16,7 @@ namespace Maroik.Core.Service.Extensions;
 /// Currency label of the transaction row being reverted or re-applied. Rows carry no currency of their
 /// own — the repository reads it from the asset they reference — so it normally equals the asset's
 /// label. It is still passed through as a defensive check: if the two ever differ (e.g. the two assets
-/// of an older transfer were relabelled differently), the deposit/withdraw is rejected with a
+/// of an older transfer were relabeled differently), the deposit/withdraw is rejected with a
 /// currency-mismatch error instead of silently drifting the balance. Null falls back to the asset's
 /// current currency.
 /// </param>

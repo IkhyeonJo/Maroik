@@ -22,13 +22,13 @@ public static class MenuFieldPolicy
     public static class Roles
     {
         /// <summary>Visible to administrators.</summary>
-        public const string Admin = "Admin";
+        private const string Admin = "Admin";
 
         /// <summary>Visible to signed-in users.</summary>
-        public const string User = "User";
+        private const string User = "User";
 
         /// <summary>Visible to signed-out visitors.</summary>
-        public const string Anonymous = "Anonymous";
+        private const string Anonymous = "Anonymous";
 
         private static readonly StringTaxonomy _taxonomy = new(Admin, User, Anonymous);
 

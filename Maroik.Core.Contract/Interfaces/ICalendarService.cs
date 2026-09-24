@@ -53,7 +53,7 @@ public interface ICalendarService
     Task<ServiceResult> EnsureCalendarSharedAsync(IEnumerable<long> calendarIds, CancellationToken ct = default);
 
     /// <summary>
-    /// Returns the sharing status (Id/Name/User/Guest) of every calendar owned by
+    /// Returns the sharing status (ID/Name/User/Guest) of every calendar owned by
     /// <paramref name="accountEmail"/>, backfilling any missing CalendarShared row first. Backs the
     /// Management &gt; Calendar "shared calendars" grid.
     /// </summary>

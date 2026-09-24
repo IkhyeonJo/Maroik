@@ -2,7 +2,6 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
 using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.Extensions.Localization;
-using Microsoft.Extensions.Logging;
 
 namespace Maroik.Website.Attributes;
 
@@ -29,7 +28,7 @@ namespace Maroik.Website.Attributes;
 /// pass the check before any of them records the claim, or the cooldown never actually bounds the
 /// burst. If the action turns out not to have reached a real send attempt (it threw, or bounced on
 /// model binding / validation — e.g. a nickname typo on the registration form), the claim is
-/// released again afterwards so that request doesn't cost the caller their retry window. A
+/// released again afterward so that request doesn't cost the caller their retry window. A
 /// well-formed address the action actually processed keeps the claim whether or not that address
 /// turned out to be registered, so the enumeration resistance above still holds.
 /// </para>
@@ -44,7 +43,7 @@ public sealed class ThrottleEmailSendAttribute : Attribute, IAsyncActionFilter
     internal const string CooldownMessageKey = "Please wait a moment before requesting another email.";
 
     /// <summary><c>HttpContext.Items</c> key set by <see cref="ReleaseCooldownClaim"/>.</summary>
-    internal const string ReleaseClaimItemKey = "ThrottleEmailSend.ReleaseClaim";
+    private const string ReleaseClaimItemKey = "ThrottleEmailSend.ReleaseClaim";
 
     /// <summary>
     /// Called by an action that finished <em>without</em> reaching a mail send — a service-level
@@ -97,7 +96,7 @@ public sealed class ThrottleEmailSendAttribute : Attribute, IAsyncActionFilter
                 // Claim the cooldown window immediately, before the action (and its possibly-slow
                 // mail send) runs — not after, as this used to do. Deferring the write let every
                 // request in a concurrent burst for the same address pass the GetAsync check above
-                // before any of them reached the write, defeating the cooldown entirely for the
+                // before any of them reached to write, defeating the cooldown entirely for the
                 // whole action+mail-send duration. This still leaves a check-then-act gap between
                 // GetAsync and SetAsync (IDistributedCache has no atomic "set if absent"), but that
                 // gap is now a single cache round trip instead of an entire request's processing

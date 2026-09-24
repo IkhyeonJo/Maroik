@@ -12,7 +12,7 @@
     const $editIncomeSubClass = $("#editIncomeSubClass");
     const $editIncomeDialogModal = $("#editIncomeDialogModal");
     const $formCreateIncome = $("#formCreateIncome");
-    const $__RequestVerificationToken = $('input[name="__RequestVerificationToken"]');
+    const $__RequestVerificationToken = $("input[name=\"__RequestVerificationToken\"]");
     const $createIncomeMainClass = $("#createIncomeMainClass");
     const $createIncomeContent = $("#createIncomeContent");
     const $createIncomeAmount = $("#createIncomeAmount");
@@ -50,7 +50,7 @@
             ? valueToSelect
             : allowedValues[0];
         if (target != null) {
-            $select.val(target).change();
+            $select.val(target).trigger("change");
         }
     }
     const localizer = {
@@ -171,9 +171,9 @@
             }
         });
     });
-    $gridSearch.off("input").on("input", function () {
+    $gridSearch.off("input").on("input", function (event) {
         const grid = new MvcGrid(document.querySelector(".mvc-grid"));
-        grid.url.searchParams.set("wholeSearch", this.value);
+        grid.url.searchParams.set("wholeSearch", event.currentTarget.value);
         grid.reload();
     });
     function CreateFormShowIncomeSubClassBySelectedIncomeMainClass(createIncomeMainClass) {
@@ -250,15 +250,15 @@
             success: function (data) {
                 if (data.result) {
                     $editIncomeId.val(data.income.id);
-                    $editIncomeMainClass.val(data.income.mainClass).change();
+                    $editIncomeMainClass.val(data.income.mainClass).trigger("change");
                     ApplyAllowedOptions($editIncomeSubClass, incomeSubClassMap[data.income.mainClass] || [], data.income.subClass);
                     $editIncomeContent.val(data.income.content);
                     $editIncomeAmount.val(data.income.amount);
                     $editIncomeDate.val(data.income.created.split("T")[0]);
-                    $editIncomeHour.val(parseInt(data.income.created.split("T")[1].substring(0, 2))).change();
-                    $editIncomeMinute.val(parseInt(data.income.created.split("T")[1].substring(3, 5))).change();
-                    $editIncomeSecond.val(parseInt(data.income.created.split("T")[1].substring(6, 8))).change();
-                    $editIncomeDepositMyAssetProductName.val(data.income.depositMyAssetProductName).change();
+                    $editIncomeHour.val(parseInt(data.income.created.split("T")[1].substring(0, 2))).trigger("change");
+                    $editIncomeMinute.val(parseInt(data.income.created.split("T")[1].substring(3, 5))).trigger("change");
+                    $editIncomeSecond.val(parseInt(data.income.created.split("T")[1].substring(6, 8))).trigger("change");
+                    $editIncomeDepositMyAssetProductName.val(data.income.depositMyAssetProductName).trigger("change");
                     $editIncomeNote.val(data.income.note);
                     $editIncomeDialogModal.modal({
                         keyboard: false,
@@ -454,19 +454,20 @@
     $formEditIncome.off("submit").on("submit", function () {
         return UpdateIncome();
     });
-    $createIncomeMainClass.off("change").on("change", function () {
-        CreateFormShowIncomeSubClassBySelectedIncomeMainClass(this);
+    $createIncomeMainClass.off("change").on("change", function (event) {
+        CreateFormShowIncomeSubClassBySelectedIncomeMainClass(event.currentTarget);
     });
-    $editIncomeMainClass.off("change").on("change", function () {
-        EditFormShowIncomeSubClassBySelectedIncomeMainClass(this);
+    $editIncomeMainClass.off("change").on("change", function (event) {
+        EditFormShowIncomeSubClassBySelectedIncomeMainClass(event.currentTarget);
     });
-    $createIncomeDepositMyAssetProductName.off("change").on("change", function () {
-        ChangeCreateIncomeAmountLabel(this.value);
+    $createIncomeDepositMyAssetProductName.off("change").on("change", function (event) {
+        ChangeCreateIncomeAmountLabel(event.currentTarget.value);
     });
-    $editIncomeDepositMyAssetProductName.off("change").on("change", function () {
-        ChangeEditIncomeAmountLabel(this.value);
+    $editIncomeDepositMyAssetProductName.off("change").on("change", function (event) {
+        ChangeEditIncomeAmountLabel(event.currentTarget.value);
     });
     $(function () {
         ChangeCreateIncomeAmountLabel($createIncomeDepositMyAssetProductName.find("option:selected").val());
     });
 })();
+//# sourceMappingURL=site.js.map

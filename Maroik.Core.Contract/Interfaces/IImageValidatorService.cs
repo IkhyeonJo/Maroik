@@ -6,7 +6,7 @@ namespace Maroik.Core.Contract.Interfaces;
 public interface IImageValidatorService
 {
     /// <summary>
-    /// Returns true when <paramref name="bytes"/> are a JPEG or PNG image (recognised by content, not by any
+    /// Returns true when <paramref name="bytes"/> are a JPEG or PNG image (recognized by content, not by any
     /// file name) that can actually be decoded. Every other format — GIF, SVG, PostScript, ... — is false.
     /// </summary>
     bool IsValidImage(byte[] bytes);

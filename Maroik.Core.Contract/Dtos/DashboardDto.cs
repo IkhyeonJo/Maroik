@@ -23,7 +23,7 @@ public class DashboardDto
     /// <summary>Expenditure records for the selected year + month.</summary>
     public List<ExpenditureResponse> YearMonthExpenditures { get; set; } = [];
 
-    /// <summary>Per-main-class income breakdown (sub-class amounts + percentages), keyed by main class, for the selected year.</summary>
+    /// <summary>Per-main-class income breakdown (subclass amounts + percentages), keyed by main class, for the selected year.</summary>
     public Dictionary<string, FinanceBreakdownDto> YearIncomeBreakdown { get; set; } = new();
 
     /// <summary>Per-main-class income breakdown for the selected year + month.</summary>

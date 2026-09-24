@@ -23,7 +23,7 @@
  * objects and the `getContext('2d')` result are awkward to type precisely and
  * gain nothing here. IIFE-wrapped, no `import` / `export`.
  */
-(function () {
+(function() {
     // Localized category names, read from hidden inputs the view rendered from
     // the resource files. Used as the chart slice labels below.
     const localizer: any = {
@@ -57,31 +57,30 @@
 
     // --- Period / currency pickers -------------------------------------
     // Year / month changes just reload the dashboard for the new period.
-    $("#year").off("change").on("change", function () {
+    $("#year").off("change").on("change", function() {
         window.location.href = "/Dashboard/UserIndex?year=" + $("#year").find(":selected").val() + "&month=" + $("#month").find(":selected").val();
     });
 
-    $("#month").off("change").on("change", function () {
+    $("#month").off("change").on("change", function() {
         window.location.href = "/Dashboard/UserIndex?year=" + $("#year").find(":selected").val() + "&month=" + $("#month").find(":selected").val();
     });
 
     // Monetary-unit change first persists the choice, then reloads. Both `if`
     // branches reload, so a failed save just re-renders in the old currency.
-    $("#monetaryUnit").off("change").on("change", function () {
+    $("#monetaryUnit").off("change").on("change", function() {
         $.ajax({
             url: "/Dashboard/UserUpdateDefaultMonetary",
             type: "POST",
-            headers: { "RequestVerificationToken": $('input[name="__RequestVerificationToken"]').val() as string },
+            headers: { "RequestVerificationToken": $("input[name=\"__RequestVerificationToken\"]").val() as string },
             dataType: "json",
             data: JSON.stringify({
                 DefaultMonetaryUnit: $("#monetaryUnit").find(":selected").val()
             }),
             contentType: "application/json; charset=utf-8",
-            success: function (data) {
+            success: function(data) {
                 if (data.result) {
                     window.location.href = "/Dashboard/UserIndex?year=" + $("#year").find(":selected").val() + "&month=" + $("#month").find(":selected").val();
-                }
-                else {
+                } else {
                     window.location.href = "/Dashboard/UserIndex?year=" + $("#year").find(":selected").val() + "&month=" + $("#month").find(":selected").val();
                 }
             }
@@ -89,7 +88,7 @@
     });
 
     // --- Charts (drawn once the DOM is ready) -------------------------
-    $(function () {
+    $(function() {
         // ===== Chart 1/10: regular income, whole year =====
         // 1. Read each slice's value from its hidden input.
         let regularIncomeLaborIncomeYear = Number($("#regularIncomeLaborIncomeYear").val());
@@ -100,8 +99,8 @@
         let regularIncomeOtherIncomeYear = Number($("#regularIncomeOtherIncomeYear").val());
 
         // 2. Grab the <canvas> 2D context and build the Chart.js data object
-        //    (localized labels + one dataset of the values, with fixed colours).
-        let donutChartCanvasRegularIncomeYear: any = ($("#regularIncomeYear").get(0) as HTMLCanvasElement).getContext("2d")
+        //    (localized labels + one dataset of the values, with fixed colors).
+        let donutChartCanvasRegularIncomeYear: any = ($("#regularIncomeYear").get(0) as HTMLCanvasElement).getContext("2d");
         let donutDataRegularIncomeYear: any = {
             labels: [
                 localizer.LaborIncome,
@@ -117,7 +116,7 @@
                     backgroundColor: ["#f56954", "#00a65a", "#f39c12", "#00c0ef", "#3c8dbc", "#d2d6de"],
                 }
             ]
-        }
+        };
 
         // 3. Options: white legend text; the tooltip `label` callback formats
         //    each slice as "Label: 1,234 (12.34%)" using the server-supplied
@@ -133,7 +132,7 @@
             },
             tooltips: {
                 callbacks: {
-                    label: function (tooltipItem: any, data: any) {
+                    label: function(tooltipItem: any, data: any) {
                         const index = tooltipItem.index;
                         const label = data.labels[index];
                         const value = Number(data.datasets[0].data[index]);
@@ -151,20 +150,20 @@
                     }
                 }
             }
-        }
+        };
 
         // 4. Draw it.
         new Chart(donutChartCanvasRegularIncomeYear, {
             type: "doughnut",
             data: donutDataRegularIncomeYear,
             options: donutOptionsRegularIncomeYear
-        })
+        });
 
         // ===== Chart 2/10: irregular income, whole year (same shape as chart 1) =====
         let irregularIncomeLaborIncomeYear = Number($("#irregularIncomeLaborIncomeYear").val());
         let irregularIncomeOtherIncomeYear = Number($("#irregularIncomeOtherIncomeYear").val());
 
-        let donutChartCanvasIrregularIncomeYear: any = ($("#irregularIncomeYear").get(0) as HTMLCanvasElement).getContext("2d")
+        let donutChartCanvasIrregularIncomeYear: any = ($("#irregularIncomeYear").get(0) as HTMLCanvasElement).getContext("2d");
         let donutDataIrregularIncomeYear: any = {
             labels: [
                 localizer.LaborIncome,
@@ -176,7 +175,7 @@
                     backgroundColor: ["#f56954", "#00a65a"],
                 }
             ]
-        }
+        };
 
         let donutOptionsIrregularIncomeYear: any = {
             maintainAspectRatio: false,
@@ -189,7 +188,7 @@
             },
             tooltips: {
                 callbacks: {
-                    label: function (tooltipItem: any, data: any) {
+                    label: function(tooltipItem: any, data: any) {
                         const index = tooltipItem.index;
                         const label = data.labels[index];
                         const value = Number(data.datasets[0].data[index]);
@@ -203,21 +202,19 @@
                     }
                 }
             }
-        }
+        };
 
         new Chart(donutChartCanvasIrregularIncomeYear, {
             type: "doughnut",
             data: donutDataIrregularIncomeYear,
             options: donutOptionsIrregularIncomeYear
-        })
-
-
+        });
 
         // ===== Chart 3/10: regular savings, whole year (same shape as chart 1) =====
         let regularSavingsDepositYear = Number($("#regularSavingsDepositYear").val());
         let regularSavingsInvestmentYear = Number($("#regularSavingsInvestmentYear").val());
 
-        let donutChartCanvasRegularSavingsYear: any = ($("#regularSavingsYear").get(0) as HTMLCanvasElement).getContext("2d")
+        let donutChartCanvasRegularSavingsYear: any = ($("#regularSavingsYear").get(0) as HTMLCanvasElement).getContext("2d");
         let donutDataRegularSavingsYear: any = {
             labels: [
                 localizer.Deposit,
@@ -229,7 +226,7 @@
                     backgroundColor: ["#f56954", "#00a65a"],
                 }
             ]
-        }
+        };
         let donutOptionsRegularSavingsYear: any = {
             maintainAspectRatio: false,
             responsive: true,
@@ -241,7 +238,7 @@
             },
             tooltips: {
                 callbacks: {
-                    label: function (tooltipItem: any, data: any) {
+                    label: function(tooltipItem: any, data: any) {
                         const index = tooltipItem.index;
                         const label = data.labels[index];
                         const value = Number(data.datasets[0].data[index]);
@@ -255,15 +252,13 @@
                     }
                 }
             }
-        }
+        };
 
         new Chart(donutChartCanvasRegularSavingsYear, {
             type: "doughnut",
             data: donutDataRegularSavingsYear,
             options: donutOptionsRegularSavingsYear
-        })
-
-
+        });
 
         // ===== Chart 4/10: non-consumer spending, whole year (same shape as chart 1) =====
         let nonConsumerSpendingPublicPensionYear = Number($("#nonConsumerSpendingPublicPensionYear").val());
@@ -273,7 +268,7 @@
         let nonConsumerSpendingInterHouseholdTransferExpensesYear = Number($("#nonConsumerSpendingInterHouseholdTransferExpensesYear").val());
         let nonConsumerSpendingNonProfitOrganizationTransferYear = Number($("#nonConsumerSpendingNonProfitOrganizationTransferYear").val());
 
-        let donutChartCanvasNonConsumerSpendingYear: any = ($("#nonConsumerSpendingYear").get(0) as HTMLCanvasElement).getContext("2d")
+        let donutChartCanvasNonConsumerSpendingYear: any = ($("#nonConsumerSpendingYear").get(0) as HTMLCanvasElement).getContext("2d");
         let donutDataNonConsumerSpendingYear: any = {
             labels: [
                 localizer.PublicPension,
@@ -289,7 +284,7 @@
                     backgroundColor: ["#f56954", "#00a65a", "#f39c12", "#00c0ef", "#3c8dbc", "#d2d6de"],
                 }
             ]
-        }
+        };
         let donutOptionsNonConsumerSpendingYear: any = {
             maintainAspectRatio: false,
             responsive: true,
@@ -301,7 +296,7 @@
             },
             tooltips: {
                 callbacks: {
-                    label: function (tooltipItem: any, data: any) {
+                    label: function(tooltipItem: any, data: any) {
                         const index = tooltipItem.index;
                         const label = data.labels[index];
                         const value = Number(data.datasets[0].data[index]);
@@ -319,15 +314,13 @@
                     }
                 }
             }
-        }
+        };
 
         new Chart(donutChartCanvasNonConsumerSpendingYear, {
             type: "doughnut",
             data: donutDataNonConsumerSpendingYear,
             options: donutOptionsNonConsumerSpendingYear
-        })
-
-
+        });
 
         // ===== Chart 5/10: consumer spending, whole year (same shape as chart 1) =====
         let consumerSpendingMealOrEatOutExpensesYear = Number($("#consumerSpendingMealOrEatOutExpensesYear").val());
@@ -343,7 +336,7 @@
         let consumerSpendingOtherExpensesYear = Number($("#consumerSpendingOtherExpensesYear").val());
         let consumerSpendingUnknownExpenditureYear = Number($("#consumerSpendingUnknownExpenditureYear").val());
 
-        let donutChartCanvasConsumerSpendingYear: any = ($("#consumerSpendingYear").get(0) as HTMLCanvasElement).getContext("2d")
+        let donutChartCanvasConsumerSpendingYear: any = ($("#consumerSpendingYear").get(0) as HTMLCanvasElement).getContext("2d");
         let donutDataConsumerSpendingYear: any = {
             labels: [
                 localizer.MealOrEatOutExpenses,
@@ -365,7 +358,7 @@
                     backgroundColor: ["#FF0000", "#FFA200", "#FBFF00", "#70FF00", "#00FFE0", "#003EFF", "#D500FF", "#813F3F", "#7D813F", "#3F815A", "#3F8180", "#3F4B81"],
                 }
             ]
-        }
+        };
         let donutOptionsConsumerSpendingYear: any = {
             maintainAspectRatio: false,
             responsive: true,
@@ -377,7 +370,7 @@
             },
             tooltips: {
                 callbacks: {
-                    label: function (tooltipItem: any, data: any) {
+                    label: function(tooltipItem: any, data: any) {
                         const index = tooltipItem.index;
                         const label = data.labels[index];
                         const value = Number(data.datasets[0].data[index]);
@@ -401,14 +394,13 @@
                     }
                 }
             }
-        }
+        };
 
         new Chart(donutChartCanvasConsumerSpendingYear, {
             type: "doughnut",
             data: donutDataConsumerSpendingYear,
             options: donutOptionsConsumerSpendingYear
-        })
-
+        });
 
         // ===== Chart 6/10: regular income, selected month (same shape as chart 1) =====
         let regularIncomeLaborIncomeYearMonth = Number($("#regularIncomeLaborIncomeYearMonth").val());
@@ -418,7 +410,7 @@
         let regularIncomeRentalIncomeYearMonth = Number($("#regularIncomeRentalIncomeYearMonth").val());
         let regularIncomeOtherIncomeYearMonth = Number($("#regularIncomeOtherIncomeYearMonth").val());
 
-        let donutChartCanvasRegularIncomeYearMonth: any = ($("#regularIncomeYearMonth").get(0) as HTMLCanvasElement).getContext("2d")
+        let donutChartCanvasRegularIncomeYearMonth: any = ($("#regularIncomeYearMonth").get(0) as HTMLCanvasElement).getContext("2d");
         let donutDataRegularIncomeYearMonth: any = {
             labels: [
                 localizer.LaborIncome,
@@ -434,7 +426,7 @@
                     backgroundColor: ["#f56954", "#00a65a", "#f39c12", "#00c0ef", "#3c8dbc", "#d2d6de"],
                 }
             ]
-        }
+        };
 
         let donutOptionsRegularIncomeYearMonth: any = {
             maintainAspectRatio: false,
@@ -447,7 +439,7 @@
             },
             tooltips: {
                 callbacks: {
-                    label: function (tooltipItem: any, data: any) {
+                    label: function(tooltipItem: any, data: any) {
                         const index = tooltipItem.index;
                         const label = data.labels[index];
                         const value = Number(data.datasets[0].data[index]);
@@ -465,19 +457,19 @@
                     }
                 }
             }
-        }
+        };
 
         new Chart(donutChartCanvasRegularIncomeYearMonth, {
             type: "doughnut",
             data: donutDataRegularIncomeYearMonth,
             options: donutOptionsRegularIncomeYearMonth
-        })
+        });
 
         // ===== Chart 7/10: irregular income, selected month (same shape as chart 1) =====
         let irregularIncomeLaborIncomeYearMonth = Number($("#irregularIncomeLaborIncomeYearMonth").val());
         let irregularIncomeOtherIncomeYearMonth = Number($("#irregularIncomeOtherIncomeYearMonth").val());
 
-        let donutChartCanvasIrregularIncomeYearMonth: any = ($("#irregularIncomeYearMonth").get(0) as HTMLCanvasElement).getContext("2d")
+        let donutChartCanvasIrregularIncomeYearMonth: any = ($("#irregularIncomeYearMonth").get(0) as HTMLCanvasElement).getContext("2d");
         let donutDataIrregularIncomeYearMonth: any = {
             labels: [
                 localizer.LaborIncome,
@@ -489,7 +481,7 @@
                     backgroundColor: ["#f56954", "#00a65a"],
                 }
             ]
-        }
+        };
 
         let donutOptionsIrregularIncomeYearMonth: any = {
             maintainAspectRatio: false,
@@ -502,7 +494,7 @@
             },
             tooltips: {
                 callbacks: {
-                    label: function (tooltipItem: any, data: any) {
+                    label: function(tooltipItem: any, data: any) {
                         const index = tooltipItem.index;
                         const label = data.labels[index];
                         const value = Number(data.datasets[0].data[index]);
@@ -516,21 +508,19 @@
                     }
                 }
             }
-        }
+        };
 
         new Chart(donutChartCanvasIrregularIncomeYearMonth, {
             type: "doughnut",
             data: donutDataIrregularIncomeYearMonth,
             options: donutOptionsIrregularIncomeYearMonth
-        })
-
-
+        });
 
         // ===== Chart 8/10: regular savings, selected month (same shape as chart 1) =====
         let regularSavingsDepositYearMonth = Number($("#regularSavingsDepositYearMonth").val());
         let regularSavingsInvestmentYearMonth = Number($("#regularSavingsInvestmentYearMonth").val());
 
-        let donutChartCanvasRegularSavingsYearMonth: any = ($("#regularSavingsYearMonth").get(0) as HTMLCanvasElement).getContext("2d")
+        let donutChartCanvasRegularSavingsYearMonth: any = ($("#regularSavingsYearMonth").get(0) as HTMLCanvasElement).getContext("2d");
         let donutDataRegularSavingsYearMonth: any = {
             labels: [
                 localizer.Deposit,
@@ -542,7 +532,7 @@
                     backgroundColor: ["#f56954", "#00a65a"],
                 }
             ]
-        }
+        };
         let donutOptionsRegularSavingsYearMonth: any = {
             maintainAspectRatio: false,
             responsive: true,
@@ -554,7 +544,7 @@
             },
             tooltips: {
                 callbacks: {
-                    label: function (tooltipItem: any, data: any) {
+                    label: function(tooltipItem: any, data: any) {
                         const index = tooltipItem.index;
                         const label = data.labels[index];
                         const value = Number(data.datasets[0].data[index]);
@@ -568,15 +558,13 @@
                     }
                 }
             }
-        }
+        };
 
         new Chart(donutChartCanvasRegularSavingsYearMonth, {
             type: "doughnut",
             data: donutDataRegularSavingsYearMonth,
             options: donutOptionsRegularSavingsYearMonth
-        })
-
-
+        });
 
         // ===== Chart 9/10: non-consumer spending, selected month (same shape as chart 1) =====
         let nonConsumerSpendingPublicPensionYearMonth = Number($("#nonConsumerSpendingPublicPensionYearMonth").val());
@@ -586,7 +574,7 @@
         let nonConsumerSpendingInterHouseholdTransferExpensesYearMonth = Number($("#nonConsumerSpendingInterHouseholdTransferExpensesYearMonth").val());
         let nonConsumerSpendingNonProfitOrganizationTransferYearMonth = Number($("#nonConsumerSpendingNonProfitOrganizationTransferYearMonth").val());
 
-        let donutChartCanvasNonConsumerSpendingYearMonth: any = ($("#nonConsumerSpendingYearMonth").get(0) as HTMLCanvasElement).getContext("2d")
+        let donutChartCanvasNonConsumerSpendingYearMonth: any = ($("#nonConsumerSpendingYearMonth").get(0) as HTMLCanvasElement).getContext("2d");
         let donutDataNonConsumerSpendingYearMonth: any = {
             labels: [
                 localizer.PublicPension,
@@ -602,7 +590,7 @@
                     backgroundColor: ["#f56954", "#00a65a", "#f39c12", "#00c0ef", "#3c8dbc", "#d2d6de"],
                 }
             ]
-        }
+        };
         let donutOptionsNonConsumerSpendingYearMonth: any = {
             maintainAspectRatio: false,
             responsive: true,
@@ -614,7 +602,7 @@
             },
             tooltips: {
                 callbacks: {
-                    label: function (tooltipItem: any, data: any) {
+                    label: function(tooltipItem: any, data: any) {
                         const index = tooltipItem.index;
                         const label = data.labels[index];
                         const value = Number(data.datasets[0].data[index]);
@@ -632,15 +620,13 @@
                     }
                 }
             }
-        }
+        };
 
         new Chart(donutChartCanvasNonConsumerSpendingYearMonth, {
             type: "doughnut",
             data: donutDataNonConsumerSpendingYearMonth,
             options: donutOptionsNonConsumerSpendingYearMonth
-        })
-
-
+        });
 
         // ===== Chart 10/10: consumer spending, selected month (same shape as chart 1) =====
         let consumerSpendingMealOrEatOutExpensesYearMonth = Number($("#consumerSpendingMealOrEatOutExpensesYearMonth").val());
@@ -656,7 +642,7 @@
         let consumerSpendingOtherExpensesYearMonth = Number($("#consumerSpendingOtherExpensesYearMonth").val());
         let consumerSpendingUnknownExpenditureYearMonth = Number($("#consumerSpendingUnknownExpenditureYearMonth").val());
 
-        let donutChartCanvasConsumerSpendingYearMonth: any = ($("#consumerSpendingYearMonth").get(0) as HTMLCanvasElement).getContext("2d")
+        let donutChartCanvasConsumerSpendingYearMonth: any = ($("#consumerSpendingYearMonth").get(0) as HTMLCanvasElement).getContext("2d");
         let donutDataConsumerSpendingYearMonth: any = {
             labels: [
                 localizer.MealOrEatOutExpenses,
@@ -678,7 +664,7 @@
                     backgroundColor: ["#FF0000", "#FFA200", "#FBFF00", "#70FF00", "#00FFE0", "#003EFF", "#D500FF", "#813F3F", "#7D813F", "#3F815A", "#3F8180", "#3F4B81"],
                 }
             ]
-        }
+        };
         let donutOptionsConsumerSpendingYearMonth: any = {
             maintainAspectRatio: false,
             responsive: true,
@@ -690,7 +676,7 @@
             },
             tooltips: {
                 callbacks: {
-                    label: function (tooltipItem: any, data: any) {
+                    label: function(tooltipItem: any, data: any) {
                         const index = tooltipItem.index;
                         const label = data.labels[index];
                         const value = Number(data.datasets[0].data[index]);
@@ -714,12 +700,12 @@
                     }
                 }
             }
-        }
+        };
 
         new Chart(donutChartCanvasConsumerSpendingYearMonth, {
             type: "doughnut",
             data: donutDataConsumerSpendingYearMonth,
             options: donutOptionsConsumerSpendingYearMonth
-        })
-    })
+        });
+    });
 })();

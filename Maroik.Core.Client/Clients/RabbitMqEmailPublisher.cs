@@ -175,7 +175,7 @@ public sealed class RabbitMqEmailPublisher(
         bool acquired = await _publishLock.WaitAsync(_disposeLockTimeout);
         if (!acquired)
         {
-            // The in-flight publish still owns _channel/_connection and will Release() the lock
+            // The in-flight publishing still owns _channel/_connection and will Release() the lock
             // itself once it unblocks -- disposing them here anyway would pull them out from under
             // that still-running call, so leave cleanup to the process exit instead.
             logger.LogWarning(

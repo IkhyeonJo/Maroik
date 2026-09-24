@@ -10,7 +10,7 @@ public enum ClamavScanResult
     /// <summary>The daemon scanned the stream and reported it clean.</summary>
     Clean = 0,
 
-    /// <summary>The daemon scanned the stream and reported a detection ("... FOUND").</summary>
+    /// <summary>The daemon scanned the stream and reported a detection.</summary>
     Infected,
 
     /// <summary>

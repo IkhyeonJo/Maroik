@@ -15,7 +15,7 @@ public static class DbExceptionExtensions
     /// <summary>
     /// Fallback for an exception that lost its typed <c>SqlState</c>: Npgsql renders a
     /// <c>PostgresException</c>'s message as <c>"{SqlState}: {MessageText}"</c>, so the SQLSTATE is
-    /// recognised only in that leading position. A bare substring test would also match any message
+    /// recognized only in that leading position. A bare substring test would also match any message
     /// that merely contains the digits — e.g. a foreign-key violation whose DETAIL echoes a key value
     /// (<c>Key (CalendarId)=(23505) is not present…</c>) — and misreport it as a unique violation.
     /// </summary>

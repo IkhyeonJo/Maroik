@@ -10,7 +10,7 @@ using Maroik.Website.Extensions;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
 using Microsoft.Extensions.Caching.Distributed;
-using Microsoft.Extensions.Logging;
+// ReSharper disable InvalidXmlDocComment
 
 namespace Maroik.Website.Filters;
 
@@ -253,7 +253,6 @@ public class AuthorizationFilter(IMenuService menuService, IDistributedCache cac
                     ? new RedirectResult("/Management/Profile")
                     : new RedirectResult("/Dashboard/AnonymousIndex");
 
-                return;
             }
 
             return; // allowed: no Result set
@@ -265,14 +264,6 @@ public class AuthorizationFilter(IMenuService menuService, IDistributedCache cac
         // without this, the POST branches below would redirect the user away from the error page.
         if (currentControllerName == "Exception" && currentActionName == "Error")
             return; // allowed: no Result set
-
-        // A refused request is a security event: record who asked for what, then send them to the start page.
-        void Deny()
-        {
-            logger.LogWarning("Access denied: {Method} {Controller}/{Action} for {Account}",
-                currentRequestMethod, currentControllerName, currentActionName, loggedInAccount?.Email ?? "anonymous");
-            context.Result = new RedirectResult("/Dashboard/AnonymousIndex");
-        }
 
         switch (currentRequestMethod.ToUpperInvariant())
         {
@@ -419,6 +410,14 @@ public class AuthorizationFilter(IMenuService menuService, IDistributedCache cac
             default:
                 Deny();
                 return;
+        }
+
+        // A refused request is a security event: record who asked for what, then send them to the start page.
+        void Deny()
+        {
+            logger.LogWarning("Access denied: {Method} {Controller}/{Action} for {Account}",
+                currentRequestMethod, currentControllerName, currentActionName, loggedInAccount?.Email ?? "anonymous");
+            context.Result = new RedirectResult("/Dashboard/AnonymousIndex");
         }
     }
 }

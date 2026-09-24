@@ -22,7 +22,7 @@
     function ReleaseObjectUrlsOnLoad(root) {
         if (!root)
             return;
-        root.querySelectorAll('img[src^="blob:"]').forEach(function (img) {
+        root.querySelectorAll("img[src^=\"blob:\"]").forEach(function (img) {
             const url = img.src;
             img.onload = img.onerror = function () {
                 URL.revokeObjectURL(url);
@@ -62,8 +62,8 @@
         $btnFreeForumList.off("click").on("click", function () {
             location.href = $(this).attr("data-link");
         });
-        $btnFreeForumSearchText.off("keypress").on("keypress", function (event) {
-            if (event.keyCode === 13 || event.which === 13) {
+        $btnFreeForumSearchText.off("keydown").on("keydown", function (event) {
+            if (event.key === "Enter") {
                 SearchBoard();
             }
         });
@@ -79,8 +79,7 @@
                 const contentType = imgTag.getAttribute("data-contenttype");
                 if (base64Data && contentType) {
                     const blob = base64ToBlob(base64Data, contentType);
-                    const imgURL = URL.createObjectURL(blob);
-                    imgTag.src = imgURL;
+                    imgTag.src = URL.createObjectURL(blob);
                     imgTag.removeAttribute("data-file");
                     imgTag.removeAttribute("data-contenttype");
                 }
@@ -114,3 +113,4 @@
         }
     });
 })();
+//# sourceMappingURL=site.js.map

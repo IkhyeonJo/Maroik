@@ -9,7 +9,7 @@
     const $createAccountNickname = $("#createAccountNickname");
     const $createAccountRole = $("#createAccountRole");
     const $createAccountTimeZone = $("#createAccountTimeZone");
-    const $__RequestVerificationToken = $('input[name="__RequestVerificationToken"]');
+    const $__RequestVerificationToken = $("input[name=\"__RequestVerificationToken\"]");
     const $createAccountDialogModal = $("#createAccountDialogModal");
     const $editAccountEmail = $("#editAccountEmail");
     const $editAccountNickname = $("#editAccountNickname");
@@ -61,9 +61,9 @@
             }
         });
     });
-    $gridSearch.off("input").on("input", function () {
+    $gridSearch.off("input").on("input", function (event) {
         const grid = new MvcGrid(document.querySelector(".mvc-grid"));
-        grid.url.searchParams.set("wholeSearch", this.value);
+        grid.url.searchParams.set("wholeSearch", event.currentTarget.value);
         grid.reload();
     });
     function CreateAccount() {
@@ -125,8 +125,8 @@
                 if (data.result) {
                     $editAccountEmail.val(data.account.email);
                     $editAccountNickname.val(data.account.nickname);
-                    $editAccountRole.val(data.account.role).change();
-                    $editAccountTimeZone.val(data.account.timeZoneIanaId).change();
+                    $editAccountRole.val(data.account.role).trigger("change");
+                    $editAccountTimeZone.val(data.account.timeZoneIanaId).trigger("change");
                     $editAccountLocked.prop("checked", data.account.locked);
                     $editAccountEmailConfirmed.prop("checked", data.account.emailConfirmed);
                     $editAccountAgreedServiceTerms.prop("checked", data.account.agreedServiceTerms);
@@ -291,3 +291,4 @@
         return UpdateAccount();
     });
 })();
+//# sourceMappingURL=site.js.map

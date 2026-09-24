@@ -5,6 +5,7 @@ using Maroik.Worker.Contracts;
 using RabbitMQ.Client;
 using RabbitMQ.Client.Events;
 using Serilog.Context;
+// ReSharper disable PropertyCanBeMadeInitOnly.Global
 
 namespace Maroik.Worker.Workers;
 
@@ -23,7 +24,7 @@ public sealed class EmailConsumerWorker(
     internal IChannel? Channel;
     private string? _consumerTag;
 
-    // Passed to every IEmailMessageHandler.HandleAsync call. Never cancelled during normal
+    // Passed to every IEmailMessageHandler.HandleAsync call. Never canceled during normal
     // operation; StopAsync cancels it only once its drain deadline is reached with a send still
     // running, so that in-progress SendMailAsync call aborts cleanly (triggering the normal
     // nack/dead-letter path in OnMessageReceivedAsync's catch) instead of the channel being
@@ -337,7 +338,7 @@ public sealed class EmailConsumerWorker(
         catch (OperationCanceledException)
         {
             // Either the host's own shutdown deadline or the 25s drain deadline was reached. If a
-            // send is still running at this point, cancel it via _sendCts (every HandleAsync call
+            // sent is still running at this point, cancel it via _sendCts (every HandleAsync call
             // is given its token) instead of disposing the channel straight out from under it below
             // -- that would throw from the handler's own ack/nack and force a redelivery/resend of
             // a send that may already have completed. Cancellation instead lets

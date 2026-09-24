@@ -2,6 +2,7 @@ using System.Globalization;
 using Maroik.Core.Contract.Dtos;
 using Maroik.Core.Domain.Localization;
 using Maroik.Website.Models.ViewModels.AccountBook;
+// ReSharper disable InvalidXmlDocComment
 
 namespace Maroik.Website.Mappings;
 

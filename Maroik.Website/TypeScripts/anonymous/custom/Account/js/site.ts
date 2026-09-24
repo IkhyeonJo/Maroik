@@ -15,7 +15,7 @@
  * `export` so it stays a plain global `<script>`; handlers use
  * `.off(...).on(...)` so re-running the file cannot double-bind.
  */
-(function () {
+(function() {
     // One helper per form. Each returns a boolean purely as documentation of
     // "did we let it through" — the click handlers below ignore the value and
     // the browser performs the real submit. If the form is invalid, hide the
@@ -26,8 +26,7 @@
         if (!$("#registerForm").valid()) {
             $("#loading").hide();
             return false;
-        }
-        else {
+        } else {
             $("#loading").show();
             return true;
         }
@@ -38,8 +37,7 @@
         if (!$("#forgotPasswordForm").valid()) {
             $("#loading").hide();
             return false;
-        }
-        else {
+        } else {
             $("#loading").show();
             return true;
         }
@@ -50,8 +48,7 @@
         if (!$("#resetPasswordForm").valid()) {
             $("#loading").hide();
             return false;
-        }
-        else {
+        } else {
             $("#loading").show();
             return true;
         }
@@ -62,8 +59,7 @@
         if (!$("#loginForm").valid()) {
             $("#loading").hide();
             return false;
-        }
-        else {
+        } else {
             $("#loading").show();
             return true;
         }
@@ -87,11 +83,11 @@
             type: "POST",
             // Anti-forgery token from MVC's hidden input; `.val()` is a union, so
             // narrow it to `string` for the request header.
-            headers: { "RequestVerificationToken": $('input[name="__RequestVerificationToken"]').val() as string },
+            headers: { "RequestVerificationToken": $("input[name=\"__RequestVerificationToken\"]").val() as string },
             dataType: "json",
             data: paramValue,
             contentType: "application/json; charset=utf-8",
-            success: function () {
+            success: function() {
                 window.location.href = $("#returnUri").val() as string;
             }
         });
@@ -101,32 +97,32 @@
     // Each submit/action button flips the overlay through its helper just before
     // the form posts. `.off('click')` guards against a duplicate binding.
 
-    $("#btnRequestNewPassword").off("click").on("click", function () {
+    $("#btnRequestNewPassword").off("click").on("click", function() {
         ShowForgotPasswordLoading();
     });
 
-    $("#aChangeCultureEnUS").off("click").on("click", function () {
+    $("#aChangeCultureEnUS").off("click").on("click", function() {
         ChangeCulture("en-US");
     });
 
-    $("#aChangeCultureKoKR").off("click").on("click", function () {
+    $("#aChangeCultureKoKR").off("click").on("click", function() {
         ChangeCulture("ko-KR");
     });
 
-    $("#btnSignIn").off("click").on("click", function () {
+    $("#btnSignIn").off("click").on("click", function() {
         ShowLoginLoading();
     });
 
-    $("#btnRegister").off("click").on("click", function () {
+    $("#btnRegister").off("click").on("click", function() {
         ShowRegisterLoading();
     });
 
     // "Resend confirmation e-mail" reuses the register form, hence the same helper.
-    $("#btnResend").off("click").on("click", function () {
+    $("#btnResend").off("click").on("click", function() {
         ShowRegisterLoading();
     });
 
-    $("#btnChangePassword").off("click").on("click", function () {
+    $("#btnChangePassword").off("click").on("click", function() {
         ShowResetPasswordLoading();
     });
 })();

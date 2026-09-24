@@ -5,7 +5,6 @@ using Maroik.Core.Domain.Account;
 using Maroik.Core.Domain.Finance;
 using Maroik.Core.Domain.Localization;
 using Maroik.Core.Service.Mappers;
-using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
 namespace Maroik.Core.Service.Services;

@@ -2,6 +2,7 @@
 // ReSharper disable PropertyCanBeMadeInitOnly.Global
 using System.ComponentModel.DataAnnotations;
 using System.Globalization;
+// ReSharper disable InvalidXmlDocComment
 
 namespace Maroik.Website.Models.ViewModels.Calendar;
 

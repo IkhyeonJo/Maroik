@@ -6,14 +6,14 @@
  *
  *   • A localized jQuery-UI datepicker on the "date" fields.
  *   • A dependent `<select>`: choosing a main income class narrows the
- *     sub-class options to those `IncomeClassPolicy` allows for it.
+ *     subclass options to those `IncomeClassPolicy` allows for it.
  *   • The amount field's label follows the chosen deposit asset (its currency).
  *
- * Client checks (allowed sub-classes, required fields) are UX mirrors — the
+ * Client checks (allowed subclasses, required fields) are UX mirrors — the
  * controller re-validates every field and every class combination on save.
  * IIFE-wrapped, no `import` / `export`.
  */
-(function () {
+(function() {
     /** Zero-pads a 1-2 digit date/time component to 2 digits (e.g. `5` -> `"05"`). */
     function pad2(n: number): string {
         return n.toString().padStart(2, "0");
@@ -30,7 +30,7 @@
     const $editIncomeSubClass = $("#editIncomeSubClass");
     const $editIncomeDialogModal = $("#editIncomeDialogModal");
     const $formCreateIncome = $("#formCreateIncome");
-    const $__RequestVerificationToken = $('input[name="__RequestVerificationToken"]');
+    const $__RequestVerificationToken = $("input[name=\"__RequestVerificationToken\"]");
     const $createIncomeMainClass = $("#createIncomeMainClass");
     const $createIncomeContent = $("#createIncomeContent");
     const $createIncomeAmount = $("#createIncomeAmount");
@@ -58,7 +58,7 @@
     const $btnExportExcelIncome = $("#btnExportExcelIncome");
     const $btnDeleteIncome = $("#btnDeleteIncome");
 
-    // Income main-class -> allowed sub-classes. Authoritative in IncomeClassPolicy (server),
+    // Income main-class -> allowed subclasses. Authoritative in IncomeClassPolicy (server),
     // serialized into the page by Income.cshtml. Mirrored here for form UX only; the server
     // re-validates every combination on save.
     const incomeSubClassMap = JSON.parse(($("#incomeSubClassMap").val() as string) || "{}");
@@ -67,7 +67,7 @@
     // Enables/shows only the options in allowedValues (disabling+hiding the rest) and selects
     // valueToSelect when it is allowed, otherwise the first allowed option.
     function ApplyAllowedOptions($select: JQuery, allowedValues: string[], valueToSelect: string | null) {
-        $select.find("option").each(function (this: HTMLOptionElement) {
+        $select.find("option").each(function(this: HTMLOptionElement) {
             const allowed = allowedValues.indexOf(this.value) !== -1;
             $(this).prop("disabled", !allowed).prop("hidden", !allowed);
         });
@@ -75,7 +75,7 @@
             ? valueToSelect
             : allowedValues[0];
         if (target != null) {
-            $select.val(target).change();
+            $select.val(target).trigger("change");
         }
     }
 
@@ -147,7 +147,7 @@
         yearSuffix: localizer.YearSuffix
     });
 
-    $(function () {
+    $(function() {
         $createIncomeTabs.tabs();
         $editIncomeTabs.tabs();
         // The empty `setTimeout(fn, 1)` in `beforeShow` / `onChangeMonthYear` is
@@ -156,13 +156,13 @@
         // those callbacks return `DatepickerOptions`.
         $createIncomeDate.datepicker({
             showButtonPanel: true,
-            beforeShow: function () {
-                setTimeout(function () {
+            beforeShow: function() {
+                setTimeout(function() {
 
                 }, 1);
             },
-            onChangeMonthYear: function () {
-                setTimeout(function () {
+            onChangeMonthYear: function() {
+                setTimeout(function() {
 
                 }, 1);
             }
@@ -170,13 +170,13 @@
 
         $editIncomeDate.datepicker({
             showButtonPanel: true,
-            beforeShow: function () {
-                setTimeout(function () {
+            beforeShow: function() {
+                setTimeout(function() {
 
                 }, 1);
             },
-            onChangeMonthYear: function () {
-                setTimeout(function () {
+            onChangeMonthYear: function() {
+                setTimeout(function() {
 
                 }, 1);
             }
@@ -198,11 +198,11 @@
 
         let $clsGridRow = $(".clsGridRow");
 
-        $clsGridRow.each(function () {
+        $clsGridRow.each(function() {
             $(this).removeClass(selectedRowColor);
         });
 
-        $clsGridRow.each(function () {
+        $clsGridRow.each(function() {
             if ((String(selectedRowId).valueOf() === String($(this).attr("data-id")).valueOf())) {
                 $(this).addClass(selectedRowColor);
             }
@@ -223,8 +223,8 @@
     });
 
     // Double-click the highlighted row to open its edit modal.
-    $(document).off("dblclick.Income", ".clsGridRow").on("dblclick.Income", ".clsGridRow", function () {
-        $(".clsGridRow").each(function () {
+    $(document).off("dblclick.Income", ".clsGridRow").on("dblclick.Income", ".clsGridRow", function() {
+        $(".clsGridRow").each(function() {
             if ($(this).attr("class")!.includes(selectedRowColor)) {
                 EditIncomeGridRow();
             }
@@ -232,13 +232,13 @@
     });
 
     // Free-text search: push the term into the grid query string and reload.
-    $gridSearch.off("input").on("input", function (this: HTMLInputElement) {
+    $gridSearch.off("input").on("input", function(event) {
         const grid = new MvcGrid(document.querySelector(".mvc-grid"));
-        grid.url.searchParams.set("wholeSearch", this.value);
+        grid.url.searchParams.set("wholeSearch", (event.currentTarget as HTMLInputElement).value);
         grid.reload();
     });
 
-    /** Create form: on main-class change, narrow the sub-class options to those allowed for it. */
+    /** Create form: on main-class change, narrow the subclass options to those allowed for it. */
     function CreateFormShowIncomeSubClassBySelectedIncomeMainClass(createIncomeMainClass: HTMLSelectElement) {
         ApplyAllowedOptions($createIncomeSubClass, incomeSubClassMap[createIncomeMainClass.value] || [], null);
     }
@@ -298,7 +298,7 @@
             dataType: "json",
             data: paramValue,
             contentType: "application/json; charset=utf-8",
-            success: function (data) {
+            success: function(data) {
                 if (data.result) {
                     $createIncomeDialogModal.modal("hide");
 
@@ -306,8 +306,7 @@
                     grid.reload();
 
                     toastr.success(data.message);
-                }
-                else {
+                } else {
                     toastr.error(data.error);
                 }
             }
@@ -320,7 +319,7 @@
      * Opens the edit modal for the selected grid row. Fetches the record
      * (`IsIncomeExists`) and fills the form; the `Created` ISO string is split
      * back into the separate date / time-part inputs, and `ApplyAllowedOptions`
-     * re-populates the sub-class select for the record's main class.
+     * re-populates the subclass select for the record's main class.
      *
      * @param errorMessageSelectGridRow localized "pick a row first" text from a `data-*` attribute.
      */
@@ -328,7 +327,7 @@
 
         let selectedRowId = "";
 
-        $(".clsGridRow").each(function () {
+        $(".clsGridRow").each(function() {
             if ($(this).attr("class")!.includes(selectedRowColor)) {
                 selectedRowId = $(this).attr("data-id")!;
             }
@@ -346,11 +345,11 @@
             dataType: "json",
             data: null as any,
             contentType: "application/json; charset=utf-8",
-            success: function (data) {
+            success: function(data) {
                 if (data.result) {
 
                     $editIncomeId.val(data.income.id);
-                    $editIncomeMainClass.val(data.income.mainClass).change();
+                    $editIncomeMainClass.val(data.income.mainClass).trigger("change");
 
                     ApplyAllowedOptions($editIncomeSubClass, incomeSubClassMap[data.income.mainClass] || [], data.income.subClass);
 
@@ -360,10 +359,10 @@
                     // and the hour / minute / second selects (`.change()` so any
                     // listener fires).
                     $editIncomeDate.val(data.income.created.split("T")[0]);
-                    $editIncomeHour.val(parseInt(data.income.created.split("T")[1].substring(0, 2))).change();
-                    $editIncomeMinute.val(parseInt(data.income.created.split("T")[1].substring(3, 5))).change();
-                    $editIncomeSecond.val(parseInt(data.income.created.split("T")[1].substring(6, 8))).change();
-                    $editIncomeDepositMyAssetProductName.val(data.income.depositMyAssetProductName).change();
+                    $editIncomeHour.val(parseInt(data.income.created.split("T")[1].substring(0, 2))).trigger("change");
+                    $editIncomeMinute.val(parseInt(data.income.created.split("T")[1].substring(3, 5))).trigger("change");
+                    $editIncomeSecond.val(parseInt(data.income.created.split("T")[1].substring(6, 8))).trigger("change");
+                    $editIncomeDepositMyAssetProductName.val(data.income.depositMyAssetProductName).trigger("change");
                     $editIncomeNote.val(data.income.note);
 
                     $editIncomeDialogModal.modal({
@@ -373,15 +372,14 @@
 
                     $editIncomeDialogModal.modal("toggle");
                     $editIncomeDialogModal.modal("show");
-                }
-                else {
+                } else {
                     toastr.error(data.error);
                 }
             }
         });
     }
 
-    /** Edit-income modal submit: same shape as `CreateIncome` plus `Id`. */
+    /** Edit-income modal submit: same shape as `CreateIncome` plus `ID`. */
     function UpdateIncome() {
 
         if (!$formEditIncome.valid()) {
@@ -424,7 +422,7 @@
             dataType: "json",
             data: paramValue,
             contentType: "application/json; charset=utf-8",
-            success: function (data) {
+            success: function(data) {
                 if (data.result) {
                     $editIncomeDialogModal.modal("hide");
 
@@ -432,8 +430,7 @@
                     grid.reload();
 
                     toastr.success(data.message);
-                }
-                else {
+                } else {
                     toastr.error(data.error);
                 }
             }
@@ -441,12 +438,12 @@
         return false;
     }
 
-    /** "Delete" button: require a selected row, then just open the confirm modal. */
+    /** "Delete" button: require a selected row, then just open the confirmation modal. */
     function ConfirmDeleteIncome(errorMessageSelectGridRow?: string) {
 
         let selectedRowId = "";
 
-        $(".clsGridRow").each(function () {
+        $(".clsGridRow").each(function() {
             if ($(this).attr("class")!.includes(selectedRowColor)) {
                 selectedRowId = $(this).attr("data-id")!;
             }
@@ -471,7 +468,7 @@
 
         let selectedRowId = "";
 
-        $(".clsGridRow").each(function () {
+        $(".clsGridRow").each(function() {
             if ($(this).attr("class")!.includes(selectedRowColor)) {
                 selectedRowId = $(this).attr("data-id")!;
             }
@@ -489,7 +486,7 @@
             dataType: "json",
             data: null as any,
             contentType: "application/json; charset=utf-8",
-            success: function (data) {
+            success: function(data) {
                 if (data.result) {
 
                     let paramValue = JSON.stringify({
@@ -503,7 +500,7 @@
                         dataType: "json",
                         data: paramValue,
                         contentType: "application/json; charset=utf-8",
-                        success: function (data) {
+                        success: function(data) {
                             if (data.result) {
                                 $confirmDeleteIncomeDialogModal.modal("hide");
 
@@ -511,14 +508,12 @@
                                 grid.reload();
 
                                 toastr.success(data.message);
-                            }
-                            else {
+                            } else {
                                 toastr.error(data.error);
                             }
                         }
                     });
-                }
-                else {
+                } else {
                     toastr.error(data.error);
                 }
             }
@@ -564,10 +559,10 @@
             dataType: "json",
             data: null as any,
             contentType: "application/json; charset=utf-8",
-            success: function (data) {
+            success: function(data) {
                 $labelCreateIncomeAmount.text(data.label);
             },
-            error: function () {
+            error: function() {
                 toastr.error(failedToLoadAmountLabelMessage);
             }
         });
@@ -582,60 +577,66 @@
             dataType: "json",
             data: null as any,
             contentType: "application/json; charset=utf-8",
-            success: function (data) {
+            success: function(data) {
                 $labelEditIncomeAmount.text(data.label);
             },
-            error: function () {
+            error: function() {
                 toastr.error(failedToLoadAmountLabelMessage);
             }
         });
     }
 
     // --- Button / form / select wiring --------------------------------
-    $btnEditIncomeGridRow.off("click").on("click", function () {
+    $btnEditIncomeGridRow.off("click").on("click", function() {
         EditIncomeGridRow($(this).attr("data-errorMessageSelectGridRow"));
     });
 
-    $btnConfirmDeleteIncome.off("click").on("click", function () {
+    $btnConfirmDeleteIncome.off("click").on("click", function() {
         ConfirmDeleteIncome($(this).attr("data-errorMessageSelectGridRow"));
     });
 
-    $btnExportExcelIncome.off("click").on("click", function () {
+    $btnExportExcelIncome.off("click").on("click", function() {
         ExportExcelIncome();
     });
 
-    $btnDeleteIncome.off("click").on("click", function () {
+    $btnDeleteIncome.off("click").on("click", function() {
         DeleteIncome($(this).attr("data-errorMessageSelectGridRow"));
     });
 
-    $formCreateIncome.off("submit").on("submit", function () {
+    $formCreateIncome.off("submit").on("submit", function() {
         return CreateIncome();
     });
 
-    $formEditIncome.off("submit").on("submit", function () {
+    $formEditIncome.off("submit").on("submit", function() {
         return UpdateIncome();
     });
 
-    // Main-class change -> re-filter the sub-class options.
-    $createIncomeMainClass.off("change").on("change", function (this: HTMLSelectElement) {
-        CreateFormShowIncomeSubClassBySelectedIncomeMainClass(this);
+    $createIncomeMainClass.off("change").on("change", function(event) {
+        CreateFormShowIncomeSubClassBySelectedIncomeMainClass(
+            event.currentTarget as HTMLSelectElement
+        );
     });
 
-    $editIncomeMainClass.off("change").on("change", function (this: HTMLSelectElement) {
-        EditFormShowIncomeSubClassBySelectedIncomeMainClass(this);
+    $editIncomeMainClass.off("change").on("change", function(event) {
+        EditFormShowIncomeSubClassBySelectedIncomeMainClass(
+            event.currentTarget as HTMLSelectElement
+        );
     });
 
-    // Deposit-asset change -> refresh the amount label.
-    $createIncomeDepositMyAssetProductName.off("change").on("change", function (this: HTMLSelectElement) {
-        ChangeCreateIncomeAmountLabel(this.value);
+    $createIncomeDepositMyAssetProductName.off("change").on("change", function(event) {
+        ChangeCreateIncomeAmountLabel(
+            (event.currentTarget as HTMLSelectElement).value
+        );
     });
 
-    $editIncomeDepositMyAssetProductName.off("change").on("change", function (this: HTMLSelectElement) {
-        ChangeEditIncomeAmountLabel(this.value);
+    $editIncomeDepositMyAssetProductName.off("change").on("change", function(event) {
+        ChangeEditIncomeAmountLabel(
+            (event.currentTarget as HTMLSelectElement).value
+        );
     });
 
     // On load, set the create-form amount label for whichever asset is preselected.
-    $(function () {
+    $(function() {
         ChangeCreateIncomeAmountLabel($createIncomeDepositMyAssetProductName.find("option:selected").val() as string);
-    })
+    });
 })();

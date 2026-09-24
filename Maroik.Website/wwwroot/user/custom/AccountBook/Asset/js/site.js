@@ -9,7 +9,7 @@
     const $createAssetAmount = $("#createAssetAmount");
     const $createAssetMonetaryUnit = $("#createAssetMonetaryUnit");
     const $createAssetNote = $("#createAssetNote");
-    const $__RequestVerificationToken = $('input[name="__RequestVerificationToken"]');
+    const $__RequestVerificationToken = $("input[name=\"__RequestVerificationToken\"]");
     const $createAssetDialogModal = $("#createAssetDialogModal");
     const $editAssetOriginalProductName = $("#editAssetOriginalProductName");
     const $editAssetProductName = $("#editAssetProductName");
@@ -122,7 +122,7 @@
                 if (data.result) {
                     $editAssetOriginalProductName.val(data.asset.productName);
                     $editAssetProductName.val(data.asset.productName);
-                    $editAssetItem.val(data.asset.item).change();
+                    $editAssetItem.val(data.asset.item).trigger("change");
                     $editAssetAmount.val(data.asset.amount);
                     $editAssetMonetaryUnit.val(data.asset.monetaryUnit);
                     $editAssetNote.val(data.asset.note);
@@ -282,3 +282,4 @@
         return UpdateAsset();
     });
 })();
+//# sourceMappingURL=site.js.map

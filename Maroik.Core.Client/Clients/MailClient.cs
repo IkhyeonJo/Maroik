@@ -17,7 +17,7 @@ namespace Maroik.Core.Client.Clients;
 public class MailClient(ILogger<MailClient> logger) : IMailClient
 {
     /// <summary>Creates the SMTP client for one send. Overridable in tests (MailKit never fails its own QUIT/close, so the "closing failed" path needs a client that does).</summary>
-    internal Func<SmtpClient> SmtpClientFactory { get; set; } = () => new SmtpClient();
+    internal Func<SmtpClient> SmtpClientFactory { get; init; } = () => new SmtpClient();
 
     /// <summary>
     /// Joins the configured public base URL to an app-relative path, tolerating a
@@ -68,7 +68,7 @@ public class MailClient(ILogger<MailClient> logger) : IMailClient
     /// not offer it, so an attacker who strips the STARTTLS capability cannot make the client send
     /// its SMTP credentials or the token-bearing mail body unencrypted (the previous
     /// <c>SecureSocketOptions.Auto</c> silently fell back to no encryption). <c>SmtpSsl</c> off keeps
-    /// the deliberate opportunistic behaviour for an operator's own relay. Extracted as a pure
+    /// the deliberate opportunistic behavior for an operator's own relay. Extracted as a pure
     /// function so this security-sensitive decision is unit-testable without an SMTP connection.
     /// </summary>
     public static SecureSocketOptions GetSecureSocketOptions(bool smtpSsl, int port)
@@ -151,7 +151,7 @@ public class MailClient(ILogger<MailClient> logger) : IMailClient
             await smtp.SendAsync(message, ct);
 
             // The server has accepted the message at this point, so a failure while closing the
-            // connection (20 s timeout, socket reset, a cancelled token at worker shutdown) must not
+            // connection (20 s timeout, socket reset, a canceled token at worker shutdown) must not
             // be reported as a failed send: the caller would mark the mail failed and republish it,
             // and the recipient would get a duplicate confirmation / reset mail. Log and move on;
             // disposing `smtp` tears the connection down anyway.

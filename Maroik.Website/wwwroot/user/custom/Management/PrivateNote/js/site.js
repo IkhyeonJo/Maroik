@@ -8,7 +8,7 @@
     const $formWriteBoard = $("#formWriteBoard");
     const $loading = $("#loading");
     const $formEditBoard = $("#formEditBoard");
-    const $__RequestVerificationToken = $('input[name="__RequestVerificationToken"]');
+    const $__RequestVerificationToken = $("input[name=\"__RequestVerificationToken\"]");
     const $writeBoardTitle = $("#writeBoardTitle");
     const $writeBoardLocked = $("#writeBoardLocked");
     const $editBoardTitle = $("#editBoardTitle");
@@ -42,7 +42,7 @@
     function ReleaseObjectUrlsOnLoad(root) {
         if (!root)
             return;
-        root.querySelectorAll('img[src^="blob:"]').forEach(function (img) {
+        root.querySelectorAll("img[src^=\"blob:\"]").forEach(function (img) {
             const url = img.src;
             img.onload = img.onerror = function () {
                 URL.revokeObjectURL(url);
@@ -379,8 +379,8 @@
     $btnPrivateNoteDeleteBoard.off("click").on("click", function () {
         DeleteBoard($(this).attr("data-boardId"));
     });
-    $btnPrivateNoteSearchText.off("keypress").on("keypress", function (event) {
-        if (event.keyCode === 13 || event.which === 13) {
+    $btnPrivateNoteSearchText.off("keydown").on("keydown", function (event) {
+        if (event.key === "Enter") {
             SearchBoard();
         }
     });
@@ -397,11 +397,11 @@
     $formEditBoard.off("submit").on("submit", function () {
         return EditBoard($(this).attr("data-editBoardId"), $(this).attr("data-editCurrentPage"));
     });
-    $writeUploadedFile.off("change").on("change", function () {
-        return WriteUploadFile(this, $(this).attr("data-errorMessage"));
+    $writeUploadedFile.off("change").on("change", function (event) {
+        return WriteUploadFile(event.currentTarget, $(event.currentTarget).attr("data-errorMessage"));
     });
-    $editUploadedFile.off("change").on("change", function () {
-        return EditUploadFile(this, $(this).attr("data-errorMessage"));
+    $editUploadedFile.off("change").on("change", function (event) {
+        return EditUploadFile(event.currentTarget, $(event.currentTarget).attr("data-errorMessage"));
     });
     $(function () {
         if ($detailBoardContent.length > 0 && $detailBoardContent.is(":hidden")) {
@@ -413,8 +413,7 @@
                 const contentType = imgTag.getAttribute("data-contenttype");
                 if (base64Data && contentType) {
                     const blob = base64ToBlob(base64Data, contentType);
-                    const imgURL = URL.createObjectURL(blob);
-                    imgTag.src = imgURL;
+                    imgTag.src = URL.createObjectURL(blob);
                     imgTag.removeAttribute("data-file");
                     imgTag.removeAttribute("data-contenttype");
                 }
@@ -433,8 +432,7 @@
                 const contentType = imgTag.getAttribute("data-contenttype");
                 if (base64Data && contentType) {
                     const blob = base64ToBlob(base64Data, contentType);
-                    const imgURL = URL.createObjectURL(blob);
-                    imgTag.src = imgURL;
+                    imgTag.src = URL.createObjectURL(blob);
                     imgTag.removeAttribute("data-file");
                     imgTag.removeAttribute("data-contenttype");
                 }
@@ -490,3 +488,4 @@
         }
     });
 })();
+//# sourceMappingURL=site.js.map

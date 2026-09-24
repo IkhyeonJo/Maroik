@@ -123,7 +123,7 @@ public class BoardService(
             var board = boardResult.Value;
             if (request.Locked) board.Lock();
             // Pinning a post site-wide is an admin-only action — enforced here, not just by the
-            // caller, so a future write path can't accidentally honour a non-admin's Noticed=true.
+            // caller, so a future write path can't accidentally honor a non-admin's Noticed=true.
             if (request.Noticed && isAdmin) board.Pin();
 
             long boardId = await boardRepository.WriteBoardAsync(board, ct);

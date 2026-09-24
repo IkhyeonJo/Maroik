@@ -73,7 +73,7 @@ public sealed class CertificateManager(string certPath, string keyPath, ILogger 
                 _previousCertKeyHash = currentCertKeyHash;
             }
 
-            logger.LogInformation("Certificate reloaded successfully.");
+            logger.LogInformation("Certificate reloaded successfully");
         }
         catch (Exception ex)
         {

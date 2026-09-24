@@ -3,18 +3,18 @@
 ## Prerequisites — Node.js (written for a non-JS dev)
 
 This suite has **no `.csproj`**, is **not** its own npm package, and is not in
-`Maroik.sln`. Vitest, jsdom, jQuery and the `typescript` compiler are npm
-**devDependencies of `Maroik.Website/package.json`**, and every command below is
+`Maroik.sln`. Vitest, jsdom, jQuery and the `typescript` compiler are npm **devDependencies of
+`Maroik.Website/package.json`**, and every command below is
 run from **`Maroik.Website/`** (the folder with `package.json` — *not* the
-capital-**S** `Maroik.WebSite/` at the repo root). Nothing here runs without
+capital- **S** `Maroik.WebSite/` at the repo root). Nothing here runs without
 Node.js on the machine.
 
 **Full install walkthrough — with expected output for each step — is in
 [`../TypeScripts/README.md`](../TypeScripts/README.md) ("Prerequisites").** The
 short version:
 
-1. **Install Node.js 22** (LTS). The build uses Node 22 everywhere
-   (`Maroik.Website/Dockerfile` → `FROM node:22-alpine`; CI runs it on Node 22 too — `.github/workflows/build-and-test.yml`).
+1. **Install Node.js 22** (LTS). The build uses Node 22 everywhere (`Maroik.Website/Dockerfile` → `FROM node:22-alpine`;
+   CI runs it on Node 22 too — `.github/workflows/build-and-test.yml`).
    `package.json` `"engines"` requires `node >=22.22.2 <23` and
    `Maroik.Website/.npmrc` has `engine-strict=true`, so any other version makes
    the next step stop with `npm error code EBADENGINE` (nothing installed — just
@@ -23,17 +23,17 @@ short version:
    `v22.22.2` or newer 22.x.
 
 2. **`npm ci`** from `Maroik.Website/` — installs ~105 packages into
-   `node_modules/` (git-ignored). This **one** install covers both `TypeScripts/`
+   `node_modules/` (git-ignored). This **one** installation covers both `TypeScripts/`
    and this test tree. Success ends with `found 0 vulnerabilities`.
 
 3. **`npm test`** from `Maroik.Website/` — see **Running** below.
 
 `TypeScripts.Tests/tsconfig.json` is standalone for **editor / `tsc --noEmit`
-type-checking only** — it emits nothing and needs no separate install.
+type-checking only** — it emits nothing and needs no separate installation.
 
 If you never run `npm ci`, `dotnet build` still succeeds — with `node_modules/`
-absent the MSBuild target that would run the suite is a silent no-op (see
-**Running → In a build**), so a missing Node install is quiet, not a build error.
+absent the MSBuild target that would run the suite is a silent no-op (see **Running → In a build**), so a missing Node
+install is quiet, not a build error.
 
 ---
 
@@ -59,9 +59,9 @@ TypeScripts.Tests/
 
 **Every `site.js` has exactly one `site.test.ts` at the matching path** (22 of each), and the only
 files that don't mirror a source path are under `_common/`. Each test file builds its own DOM fixture;
-scripts that share behaviour (the two board scripts × 3 roles, the grid-CRUD finance pages, the two
+scripts that share behavior (the two board scripts × 3 roles, the grid-CRUD finance pages, the two
 calendar scripts, the three layouts, the two profile pages) call a shared suite from `_common/` so the
-behaviour is asserted once, identically, for each script instead of being copied.
+behavior is asserted once, identically, for each script instead of being copied.
 
 Imports use the **`@tests/*` alias** (`== TypeScripts.Tests/*`), so a helper import
 reads the same from any depth. It's declared twice, keep them in sync:
@@ -71,15 +71,15 @@ reads the same from any depth. It's declared twice, keep them in sync:
 
 ### Shared suites (`_common/*Suite.ts`)
 
-| Suite | Used by | Asserts |
-|---|---|---|
-| `boardSuite` | Forum/FreeForum and Management/PrivateNote (user + admin) | search, write/edit/delete/comment requests, attachments, image upload, inline-image rehydration, attachment download |
-| `gridCrudSuite` | AccountBook/{Asset,Income,Expenditure}, Notice/{FixedIncome,FixedExpenditure} | row highlight, create/edit/delete round trips, refusals, maturity-date pickers |
-| `amountLabelSuite` | the four finance pages with an amount label | label lookup on the create and edit forms, success / refusal / failure |
-| `calendarSuite` | Calendar/{UserIndex,AdminIndex} | reminder validation, create/edit event, my calendars, popup, editors, downloads |
-| `layoutSuite` | the three `_Layout` scripts | culture switch, double-submit guard, session-expiry recovery |
-| `profileSuite` | Management/Profile (user + admin) | avatar upload rules, time zone, password |
-| `missingConfigSuite` | every script that reads server-published constants | still initialises when a constant is absent (and no swallowed ready-callback exception) |
+| Suite                | Used by                                                                       | Asserts                                                                                                              |
+|----------------------|-------------------------------------------------------------------------------|----------------------------------------------------------------------------------------------------------------------|
+| `boardSuite`         | Forum/FreeForum and Management/PrivateNote (user + admin)                     | search, write/edit/delete/comment requests, attachments, image upload, inline-image rehydration, attachment download |
+| `gridCrudSuite`      | AccountBook/{Asset,Income,Expenditure}, Notice/{FixedIncome,FixedExpenditure} | row highlight, create/edit/delete round trips, refusals, maturity-date pickers                                       |
+| `amountLabelSuite`   | the four finance pages with an amount label                                   | label lookup on the create and edit forms, success / refusal / failure                                               |
+| `calendarSuite`      | Calendar/{UserIndex,AdminIndex}                                               | reminder validation, create/edit event, my calendars, popup, editors, downloads                                      |
+| `layoutSuite`        | the three `_Layout` scripts                                                   | culture switch, double-submit guard, session-expiry recovery                                                         |
+| `profileSuite`       | Management/Profile (user + admin)                                             | avatar upload rules, time zone, password                                                                             |
+| `missingConfigSuite` | every script that reads server-published constants                            | still initialises when a constant is absent (and no swallowed ready-callback exception)                              |
 
 ---
 
@@ -98,8 +98,8 @@ reads the same from any depth. It's declared twice, keep them in sync:
    `confirm`, `URL.createObjectURL`,
 5. **fake-timer-flushes** the eval — jQuery defers `$(fn)` via `setTimeout` when the
    document is already `complete` (it is, in jsdom), so the harness wraps the eval in
-   `vi.useFakeTimers()` + `vi.runOnlyPendingTimers()` to run those ready-callbacks
-   (where most Calendar/Forum wiring lives) synchronously before the test asserts,
+   `vi.useFakeTimers()` + `vi.runOnlyPendingTimers()` to run those ready-callbacks (where most Calendar/Forum wiring
+   lives) synchronously before the test asserts,
 6. `window.eval`s the compiled `site.js` (it self-executes — it's the IIFE-wrapped port).
 
 Returned `SiteHandle`: `$`, `win`, `ajaxCalls` / `respond` / `lastAjax`, `toastr`,
@@ -126,14 +126,14 @@ Also exported: `hidden(id, value)`, `antiForgery`, `hiddenByStyle(el)`,
 All 22 scripts, to **100 % of statements and functions** (and ~99.5 % of branches — the few left are arms
 the UI cannot reach, e.g. an unknown reminder unit that form validation rejects first). Per script:
 
-* **server-policy UX mirrors** — income/expenditure sub-class filtering (`ApplyAllowedOptions`),
-  fixed-schedule deposit-day limits (`DepositDayValues`), the calendar reminder lead-time bounds
-  (`Validate*` vs `CalendarReminderPolicy`), the size / type limits,
+* **server-policy UX mirrors** — income/expenditure subclass filtering (`ApplyAllowedOptions`),
+  fixed-schedule deposit-day limits (`DepositDayValues`), the calendar reminder lead-time bounds (`Validate*` vs
+  `CalendarReminderPolicy`), the size / type limits,
 * **form / request wiring** — every create / edit / delete / export request has the right URL, headers and
   JSON / `FormData`; an invalid form makes no request; a refused or failed reply is toasted, never crashes,
-* **DOM behaviour** — modals, popups, calendar list order, reminder rows rebuilt from stored data, attachments
+* **DOM behavior** — modals, popups, calendar list order, reminder rows rebuilt from stored data, attachments
   and inline images (object URLs are released once an image loads), downloads, date pickers,
-* **defaults** — a script still initialises when a server-published constant is missing.
+* **defaults** — a script still initializes when a server-published constant is missing.
 
 ## Measuring coverage
 
@@ -176,8 +176,8 @@ no `<canvas>` engine for the Chart.js code to use. Only the
 
 **In a build:**
 
-* **`dotnet build` / `dotnet test` / Rider / VS** — the `RunClientScriptTests` target
-  (`Maroik.Website.csproj`, `AfterTargets="Build"`) runs `npx vitest run` **on by
+* **`dotnet build` / `dotnet test` / Rider / VS** — the `RunClientScriptTests` target (`Maroik.Website.csproj`,
+  `AfterTargets="Build"`) runs `npx vitest run` **on by
   default** wherever `npm ci` has been done. It is **incremental** — skipped unless a
   `TypeScripts/**/*.ts`, `TypeScripts.Tests/**/*.ts`, `tsconfig.json`,
   `vitest.config.mts` or `package.json` changed since the last pass (stamp:

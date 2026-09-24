@@ -246,7 +246,7 @@ public class CalendarService(
             await calendarRepository.CreateAsync(calendar, ct);
             await unitOfWork.CommitAsync(ct);
 
-            // The aggregate is built with Id 0 and the database generates the real one, so hand it back on
+            // The aggregate is built with ID 0 and the database generates the real one, so hand it back on
             // the request: the client builds the new calendar's checkbox / edit / delete controls from the
             // id the controller echoes (main returned the persisted entity, id included). Names are unique
             // per account (Calendar_AccountEmail_Name_unique), so the row is found by name.

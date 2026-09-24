@@ -9,17 +9,17 @@
  *   • A localized jQuery-UI datepicker on the "maturity date" fields, with two
  *     injected button-panel buttons: "No maturity date" (`NO_MATURITY_DATE`
  *     sentinel) and "Today".
- *   • Dependent `<select>`s: main class -> allowed sub-classes
+ *   • Dependent `<select>`s: main class -> allowed subclasses
  *     (`ExpenditureClassPolicy`); deposit month -> valid deposit days 1..maxDay
  *     (`FixedSchedulePolicy`, via `maxDepositDayByMonth`).
- *   • A "deposit asset" block shown only for transfer-type sub-classes
+ *   • A "deposit asset" block shown only for transfer-type subclasses
  *     (`expenditureDepositAssetSubClasses`).
  *   • The amount field's label follows the chosen payment method.
  *
  * Client checks are UX mirrors; the controller re-validates on save.
  * IIFE-wrapped, no `import` / `export`.
  */
-(function () {
+(function() {
     // Cached references: tab containers, grid search box, the two maturity-date
     // inputs, the deposit-asset wrapper divs, every field of both modals, the
     // amount labels, and the anti-forgery input.
@@ -38,7 +38,7 @@
     const $editFixedExpenditureDialogModal = $("#editFixedExpenditureDialogModal");
     const $formEditFixedExpenditure = $("#formEditFixedExpenditure");
     const $confirmDeleteFixedExpenditureDialogModal = $("#confirmDeleteFixedExpenditureDialogModal");
-    const $__RequestVerificationToken = $('input[name="__RequestVerificationToken"]');
+    const $__RequestVerificationToken = $("input[name=\"__RequestVerificationToken\"]");
     const failedToLoadAmountLabelMessage = $("#localizerFailedToLoadAmountLabel").val() as string;
     const $createFixedExpenditureDialogModal = $("#createFixedExpenditureDialogModal");
     const $createFixedExpenditurePaymentMethod = $("#createFixedExpenditurePaymentMethod");
@@ -78,7 +78,7 @@
     // Enables/shows only the options in allowedValues (disabling+hiding the rest) and selects
     // valueToSelect when it is allowed, otherwise the first allowed option.
     function ApplyAllowedOptions($select: JQuery, allowedValues: string[], valueToSelect: string | null) {
-        $select.find("option").each(function (this: HTMLOptionElement) {
+        $select.find("option").each(function(this: HTMLOptionElement) {
             const allowed = allowedValues.indexOf(this.value) !== -1;
             $(this).prop("disabled", !allowed).prop("hidden", !allowed);
         });
@@ -86,7 +86,7 @@
             ? valueToSelect
             : allowedValues[0];
         if (target != null) {
-            $select.val(target).change();
+            $select.val(target).trigger("change");
         }
     }
 
@@ -100,7 +100,7 @@
         return values;
     }
 
-    // The "deposit asset" field is only relevant for transfer-type sub-classes.
+    // The "deposit asset" field is only relevant for transfer-type subclasses.
     function ToggleCreateFixedExpenditureMyDepositAsset(subClassValue: string) {
         expenditureDepositAssetSubClasses.indexOf(subClassValue) !== -1
             ? $divCreateFixedExpenditureMyDepositAsset.show()
@@ -184,7 +184,7 @@
         yearSuffix: localizer.YearSuffix
     });
 
-    $(function () {
+    $(function() {
         $createFixedExpenditureTabs.tabs();
         $editFixedExpenditureTabs.tabs();
         // Maturity-date pickers. `minDate: 0` forbids past dates. `beforeShow` /
@@ -196,15 +196,15 @@
         $createFixedExpenditureMaturityDate.datepicker({
             showButtonPanel: true,
             minDate: 0,
-            beforeShow: function (input: Element) {
-                setTimeout(function () {
+            beforeShow: function(input: Element) {
+                setTimeout(function() {
                     let buttonPane = $(input)
                         .datepicker("widget")
                         .find(".ui-datepicker-buttonpane");
 
                     $("<button>", {
                         text: localizer.NoMaturityDate,
-                        click: function () {
+                        click: function() {
                             ($.datepicker as any)._clearDate(input);
                             $createFixedExpenditureMaturityDate.datepicker("setDate", NO_MATURITY_DATE);
                         }
@@ -212,7 +212,7 @@
 
                     $("<button>", {
                         text: localizer.Today,
-                        click: function () {
+                        click: function() {
                             ($.datepicker as any)._clearDate(input);
                             $createFixedExpenditureMaturityDate.datepicker("setDate", new Date());
                         }
@@ -220,15 +220,15 @@
 
                 }, 1);
             },
-            onChangeMonthYear: function (year: number, month: number, instance: any) {
-                setTimeout(function () {
+            onChangeMonthYear: function(_year: number, _month: number, instance: any) {
+                setTimeout(function() {
                     let buttonPane = $(instance)
                         .datepicker("widget")
                         .find(".ui-datepicker-buttonpane");
 
                     $("<button>", {
                         text: localizer.NoMaturityDate,
-                        click: function () {
+                        click: function() {
                             ($.datepicker as any)._clearDate(instance.input);
                             $createFixedExpenditureMaturityDate.datepicker("setDate", NO_MATURITY_DATE);
                         }
@@ -236,7 +236,7 @@
 
                     $("<button>", {
                         text: localizer.Today,
-                        click: function () {
+                        click: function() {
                             ($.datepicker as any)._clearDate(instance.input);
                             $createFixedExpenditureMaturityDate.datepicker("setDate", new Date());
                         }
@@ -249,15 +249,15 @@
         $editFixedExpenditureMaturityDate.datepicker({
             showButtonPanel: true,
             minDate: 0,
-            beforeShow: function (input: Element) {
-                setTimeout(function () {
+            beforeShow: function(input: Element) {
+                setTimeout(function() {
                     let buttonPane = $(input)
                         .datepicker("widget")
                         .find(".ui-datepicker-buttonpane");
 
                     $("<button>", {
                         text: localizer.NoMaturityDate,
-                        click: function () {
+                        click: function() {
                             ($.datepicker as any)._clearDate(input);
                             $editFixedExpenditureMaturityDate.datepicker("setDate", NO_MATURITY_DATE);
                         }
@@ -265,7 +265,7 @@
 
                     $("<button>", {
                         text: localizer.Today,
-                        click: function () {
+                        click: function() {
                             ($.datepicker as any)._clearDate(input);
                             $editFixedExpenditureMaturityDate.datepicker("setDate", new Date());
                         }
@@ -273,15 +273,15 @@
 
                 }, 1);
             },
-            onChangeMonthYear: function (year: number, month: number, instance: any) {
-                setTimeout(function () {
+            onChangeMonthYear: function(_year: number, _month: number, instance: any) {
+                setTimeout(function() {
                     let buttonPane = $(instance)
                         .datepicker("widget")
                         .find(".ui-datepicker-buttonpane");
 
                     $("<button>", {
                         text: localizer.NoMaturityDate,
-                        click: function () {
+                        click: function() {
                             ($.datepicker as any)._clearDate(instance.input);
                             $editFixedExpenditureMaturityDate.datepicker("setDate", NO_MATURITY_DATE);
                         }
@@ -289,7 +289,7 @@
 
                     $("<button>", {
                         text: localizer.Today,
-                        click: function () {
+                        click: function() {
                             ($.datepicker as any)._clearDate(instance.input);
                             $editFixedExpenditureMaturityDate.datepicker("setDate", new Date());
                         }
@@ -303,7 +303,7 @@
         $createFixedExpenditureMaturityDate.datepicker("setDate", new Date());
         $editFixedExpenditureMaturityDate.datepicker("setDate", new Date());
 
-        // Hide the datepicker's built-in "Close" / "Today" buttons via injected CSS.
+        // Hide the date picker's built-in "Close" / "Today" buttons via injected CSS.
         $("<style> .ui-datepicker-close { display: none; } </style>").appendTo("head");
         $("<style> .ui-datepicker-current { display: none; } </style>").appendTo("head");
     });
@@ -318,11 +318,11 @@
 
         let $clsGridRow = $(".clsGridRow");
 
-        $clsGridRow.each(function () {
+        $clsGridRow.each(function() {
             $(this).removeClass(selectedRowColor);
         });
 
-        $clsGridRow.each(function () {
+        $clsGridRow.each(function() {
             if ((String(selectedRowId).valueOf() === String($(this).attr("data-id")).valueOf())) {
                 $(this).addClass(selectedRowColor);
             }
@@ -343,8 +343,8 @@
     });
 
     // Double-click the highlighted row to open its edit modal.
-    $(document).off("dblclick.FixedExpenditure", ".clsGridRow").on("dblclick.FixedExpenditure", ".clsGridRow", function () {
-        $(".clsGridRow").each(function () {
+    $(document).off("dblclick.FixedExpenditure", ".clsGridRow").on("dblclick.FixedExpenditure", ".clsGridRow", function() {
+        $(".clsGridRow").each(function() {
             if ($(this).attr("class")!.includes(selectedRowColor)) {
                 EditFixedExpenditureGridRow();
             }
@@ -352,19 +352,19 @@
     });
 
     // Free-text search: push the term into the grid query string and reload.
-    $gridSearch.off("input").on("input", function (this: HTMLInputElement) {
+    $gridSearch.off("input").on("input", function(event) {
         const grid = new MvcGrid(document.querySelector(".mvc-grid"));
-        grid.url.searchParams.set("wholeSearch", this.value);
+        grid.url.searchParams.set("wholeSearch", (event.currentTarget as HTMLInputElement).value);
         grid.reload();
     });
 
-    /** Create form main-class change: re-filter the sub-class options and re-evaluate the deposit-asset block. */
+    /** Create form main-class change: re-filter the subclass options and re-evaluate the deposit-asset block. */
     function CreateFormShowFixedExpenditureSubClassBySelectedFixedExpenditureMainClass(createFixedExpenditureMainClass: HTMLSelectElement) {
         ApplyAllowedOptions($createFixedExpenditureSubClass, expenditureSubClassMap[createFixedExpenditureMainClass.value] || [], null);
         ToggleCreateFixedExpenditureMyDepositAsset($createFixedExpenditureSubClass.val() as string);
     }
 
-    /** Create form sub-class change: show/hide the deposit-asset block for it. */
+    /** Create form subclass change: show/hide the deposit-asset block for it. */
     function CreateFormShowFixedExpenditureDivCreateFixedExpenditureMyDepositAssetBySelectedFixedExpenditureSubClass(createFixedExpenditureSubClass: HTMLSelectElement) {
         ToggleCreateFixedExpenditureMyDepositAsset(createFixedExpenditureSubClass.value);
     }
@@ -380,7 +380,7 @@
         ToggleEditFixedExpenditureMyDepositAsset($editFixedExpenditureSubClass.val() as string);
     }
 
-    /** Edit form sub-class change: show/hide the deposit-asset block for it. */
+    /** Edit form subclass change: show/hide the deposit-asset block for it. */
     function EditFormShowFixedExpenditureDivCreateFixedExpenditureMyDepositAssetBySelectedFixedExpenditureSubClass(editFixedExpenditureSubClass: HTMLSelectElement) {
         ToggleEditFixedExpenditureMyDepositAsset(editFixedExpenditureSubClass.value);
     }
@@ -389,7 +389,6 @@
     function EditFormShowFixedExpenditureDepositDayBySelectedFixedExpenditureDepositMonth(editFixedExpenditureDepositMonth: HTMLSelectElement) {
         ApplyAllowedOptions($editFixedExpenditureDepositDay, DepositDayValues(editFixedExpenditureDepositMonth.value), null);
     }
-
 
     /** Create-fixed-expenditure modal submit: validate, POST the fields as JSON, then close / reload / toast. */
     function CreateFixedExpenditure() {
@@ -429,7 +428,7 @@
             dataType: "json",
             data: paramValue,
             contentType: "application/json; charset=utf-8",
-            success: function (data) {
+            success: function(data) {
                 if (data.result) {
                     $createFixedExpenditureDialogModal.modal("hide");
 
@@ -437,8 +436,7 @@
                     grid.reload();
 
                     toastr.success(data.message);
-                }
-                else {
+                } else {
                     toastr.error(data.error);
                 }
             }
@@ -449,7 +447,7 @@
 
     /**
      * Opens the edit modal for the selected grid row. Fetches the record
-     * (`IsFixedExpenditureExists`), fills the form, re-filters the sub-class and
+     * (`IsFixedExpenditureExists`), fills the form, re-filters the subclass and
      * deposit-day selects, toggles the deposit-asset block, and (when the record
      * has no explicit `myDepositAsset`) falls back to the payment method for
      * that select.
@@ -460,7 +458,7 @@
 
         let selectedRowId = "";
 
-        $(".clsGridRow").each(function () {
+        $(".clsGridRow").each(function() {
             if ($(this).attr("class")!.includes(selectedRowColor)) {
                 selectedRowId = $(this).attr("data-id")!;
             }
@@ -478,32 +476,29 @@
             dataType: "json",
             data: null as any,
             contentType: "application/json; charset=utf-8",
-            success: function (data) {
+            success: function(data) {
                 if (data.result) {
 
                     $editFixedExpenditureId.val(data.fixedExpenditure.id);
-                    $editFixedExpenditureMainClass.val(data.fixedExpenditure.mainClass).change();
+                    $editFixedExpenditureMainClass.val(data.fixedExpenditure.mainClass).trigger("change");
 
                     ApplyAllowedOptions($editFixedExpenditureSubClass, expenditureSubClassMap[data.fixedExpenditure.mainClass] || [], data.fixedExpenditure.subClass);
-
 
                     $editFixedExpenditureContent.val(data.fixedExpenditure.content);
                     $editFixedExpenditureAmount.val(data.fixedExpenditure.amount);
 
-                    $editFixedExpenditureDepositMonth.val(data.fixedExpenditure.depositMonth.toString()).change();
+                    $editFixedExpenditureDepositMonth.val(data.fixedExpenditure.depositMonth.toString()).trigger("change");
 
                     ApplyAllowedOptions($editFixedExpenditureDepositDay, DepositDayValues(data.fixedExpenditure.depositMonth.toString()), data.fixedExpenditure.depositDay.toString());
 
-
                     $editFixedExpenditureMaturityDate.val(data.fixedExpenditure.maturityDate);
                     $editFixedExpenditureNote.val(data.fixedExpenditure.note);
-                    $editFixedExpenditurePaymentMethod.val(data.fixedExpenditure.paymentMethod).change();
+                    $editFixedExpenditurePaymentMethod.val(data.fixedExpenditure.paymentMethod).trigger("change");
 
                     if (data.fixedExpenditure.myDepositAsset) {
-                        $editFixedExpenditureMyDepositAsset.val(data.fixedExpenditure.myDepositAsset).change();
-                    }
-                    else {
-                        $editFixedExpenditureMyDepositAsset.val(data.fixedExpenditure.paymentMethod).change();
+                        $editFixedExpenditureMyDepositAsset.val(data.fixedExpenditure.myDepositAsset).trigger("change");
+                    } else {
+                        $editFixedExpenditureMyDepositAsset.val(data.fixedExpenditure.paymentMethod).trigger("change");
                     }
 
                     ToggleEditFixedExpenditureMyDepositAsset(data.fixedExpenditure.subClass);
@@ -517,15 +512,14 @@
 
                     $editFixedExpenditureDialogModal.modal("toggle");
                     $editFixedExpenditureDialogModal.modal("show");
-                }
-                else {
+                } else {
                     toastr.error(data.error);
                 }
             }
         });
     }
 
-    /** Edit-fixed-expenditure modal submit: same shape as `CreateFixedExpenditure` plus `Id` and `Unpunctuality`. */
+    /** Edit-fixed-expenditure modal submit: same shape as `CreateFixedExpenditure` plus `ID` and `Unpunctuality`. */
     function UpdateFixedExpenditure() {
 
         if (!$formEditFixedExpenditure.valid()) {
@@ -567,7 +561,7 @@
             dataType: "json",
             data: paramValue,
             contentType: "application/json; charset=utf-8",
-            success: function (data) {
+            success: function(data) {
                 if (data.result) {
                     $editFixedExpenditureDialogModal.modal("hide");
 
@@ -575,8 +569,7 @@
                     grid.reload();
 
                     toastr.success(data.message);
-                }
-                else {
+                } else {
                     toastr.error(data.error);
                 }
             }
@@ -584,12 +577,12 @@
         return false;
     }
 
-    /** "Delete" button: require a selected row, then just open the confirm modal. */
+    /** "Delete" button: require a selected row, then just open the confirmation modal. */
     function ConfirmDeleteFixedExpenditure(errorMessageSelectGridRow?: string) {
 
         let selectedRowId = "";
 
-        $(".clsGridRow").each(function () {
+        $(".clsGridRow").each(function() {
             if ($(this).attr("class")!.includes(selectedRowColor)) {
                 selectedRowId = $(this).attr("data-id")!;
             }
@@ -614,7 +607,7 @@
 
         let selectedRowId = "";
 
-        $(".clsGridRow").each(function () {
+        $(".clsGridRow").each(function() {
             if ($(this).attr("class")!.includes(selectedRowColor)) {
                 selectedRowId = $(this).attr("data-id")!;
             }
@@ -632,7 +625,7 @@
             dataType: "json",
             data: null as any,
             contentType: "application/json; charset=utf-8",
-            success: function (data) {
+            success: function(data) {
                 if (data.result) {
 
                     let paramValue = JSON.stringify({
@@ -646,7 +639,7 @@
                         dataType: "json",
                         data: paramValue,
                         contentType: "application/json; charset=utf-8",
-                        success: function (data) {
+                        success: function(data) {
                             if (data.result) {
                                 $confirmDeleteFixedExpenditureDialogModal.modal("hide");
 
@@ -654,14 +647,12 @@
                                 grid.reload();
 
                                 toastr.success(data.message);
-                            }
-                            else {
+                            } else {
                                 toastr.error(data.error);
                             }
                         }
                     });
-                }
-                else {
+                } else {
                     toastr.error(data.error);
                 }
             }
@@ -705,15 +696,14 @@
             dataType: "json",
             data: null as any,
             contentType: "application/json; charset=utf-8",
-            success: function (data) {
+            success: function(data) {
                 if (data.result) {
                     $labelCreateFixedExpenditureAmount.text(data.label);
-                }
-                else {
+                } else {
                     $labelCreateFixedExpenditureAmount.text(data.label);
                 }
             },
-            error: function () {
+            error: function() {
                 toastr.error(failedToLoadAmountLabelMessage);
             }
         });
@@ -728,83 +718,78 @@
             dataType: "json",
             data: null as any,
             contentType: "application/json; charset=utf-8",
-            success: function (data) {
+            success: function(data) {
                 if (data.result) {
                     $labelEditFixedExpenditureAmount.text(data.label);
-                }
-                else {
+                } else {
                     $labelEditFixedExpenditureAmount.text(data.label);
                 }
             },
-            error: function () {
+            error: function() {
                 toastr.error(failedToLoadAmountLabelMessage);
             }
         });
     }
 
     // --- Button / form / select wiring --------------------------------
-    $btnEditFixedExpenditureGridRow.off("click").on("click", function () {
+    $btnEditFixedExpenditureGridRow.off("click").on("click", function() {
         EditFixedExpenditureGridRow($(this).attr("data-errorMessageSelectGridRow"));
     });
 
-    $btnConfirmDeleteFixedExpenditure.off("click").on("click", function () {
+    $btnConfirmDeleteFixedExpenditure.off("click").on("click", function() {
         ConfirmDeleteFixedExpenditure($(this).attr("data-errorMessageSelectGridRow"));
     });
 
-    $btnExportExcelFixedExpenditure.off("click").on("click", function () {
+    $btnExportExcelFixedExpenditure.off("click").on("click", function() {
         ExportExcelFixedExpenditure();
     });
 
-    $btnDeleteFixedExpenditure.off("click").on("click", function () {
+    $btnDeleteFixedExpenditure.off("click").on("click", function() {
         DeleteFixedExpenditure($(this).attr("data-errorMessageSelectGridRow"));
     });
 
-    $formCreateFixedExpenditure.off("submit").on("submit", function () {
+    $formCreateFixedExpenditure.off("submit").on("submit", function() {
         return CreateFixedExpenditure();
     });
 
-    $formEditFixedExpenditure.off("submit").on("submit", function () {
+    $formEditFixedExpenditure.off("submit").on("submit", function() {
         return UpdateFixedExpenditure();
     });
 
-    // Main-class change -> re-filter sub-class + deposit-asset visibility.
-    $createFixedExpenditureMainClass.off("change").on("change", function (this: HTMLSelectElement) {
-        return CreateFormShowFixedExpenditureSubClassBySelectedFixedExpenditureMainClass(this);
+    $createFixedExpenditureMainClass.off("change").on("change", function(event) {
+        return CreateFormShowFixedExpenditureSubClassBySelectedFixedExpenditureMainClass(event.currentTarget as HTMLSelectElement);
     });
 
-    // Sub-class change -> deposit-asset visibility only.
-    $createFixedExpenditureSubClass.off("change").on("change", function (this: HTMLSelectElement) {
-        return CreateFormShowFixedExpenditureDivCreateFixedExpenditureMyDepositAssetBySelectedFixedExpenditureSubClass(this);
+    $createFixedExpenditureSubClass.off("change").on("change", function(event) {
+        return CreateFormShowFixedExpenditureDivCreateFixedExpenditureMyDepositAssetBySelectedFixedExpenditureSubClass(event.currentTarget as HTMLSelectElement);
     });
 
-    // Deposit-month change -> re-fill deposit-day options.
-    $createFixedExpenditureDepositMonth.off("change").on("change", function (this: HTMLSelectElement) {
-        return CreateFormShowFixedExpenditureDepositDayBySelectedFixedExpenditureDepositMonth(this);
+    $createFixedExpenditureDepositMonth.off("change").on("change", function(event) {
+        return CreateFormShowFixedExpenditureDepositDayBySelectedFixedExpenditureDepositMonth(event.currentTarget as HTMLSelectElement);
     });
 
-    $editFixedExpenditureMainClass.off("change").on("change", function (this: HTMLSelectElement) {
-        return EditFormShowFixedExpenditureSubClassBySelectedFixedExpenditureMainClass(this);
+    $editFixedExpenditureMainClass.off("change").on("change", function(event) {
+        return EditFormShowFixedExpenditureSubClassBySelectedFixedExpenditureMainClass(event.currentTarget as HTMLSelectElement);
     });
 
-    $editFixedExpenditureSubClass.off("change").on("change", function (this: HTMLSelectElement) {
-        return EditFormShowFixedExpenditureDivCreateFixedExpenditureMyDepositAssetBySelectedFixedExpenditureSubClass(this);
+    $editFixedExpenditureSubClass.off("change").on("change", function(event) {
+        return EditFormShowFixedExpenditureDivCreateFixedExpenditureMyDepositAssetBySelectedFixedExpenditureSubClass(event.currentTarget as HTMLSelectElement);
     });
 
-    $editFixedExpenditureDepositMonth.off("change").on("change", function (this: HTMLSelectElement) {
-        return EditFormShowFixedExpenditureDepositDayBySelectedFixedExpenditureDepositMonth(this);
+    $editFixedExpenditureDepositMonth.off("change").on("change", function(event) {
+        return EditFormShowFixedExpenditureDepositDayBySelectedFixedExpenditureDepositMonth(event.currentTarget as HTMLSelectElement);
     });
 
-    // Payment-method change -> refresh the amount label.
-    $createFixedExpenditurePaymentMethod.off("change").on("change", function (this: HTMLSelectElement) {
-        ChangeCreateFixedExpenditureAmountLabel(this.value);
+    $createFixedExpenditurePaymentMethod.off("change").on("change", function(event) {
+        ChangeCreateFixedExpenditureAmountLabel((event.currentTarget as HTMLSelectElement).value);
     });
 
-    $editFixedExpenditurePaymentMethod.off("change").on("change", function (this: HTMLSelectElement) {
-        ChangeEditFixedExpenditureAmountLabel(this.value);
+    $editFixedExpenditurePaymentMethod.off("change").on("change", function(event) {
+        ChangeEditFixedExpenditureAmountLabel((event.currentTarget as HTMLSelectElement).value);
     });
 
     // On load, set the create-form amount label for whichever method is preselected.
-    $(function () {
+    $(function() {
         ChangeCreateFixedExpenditureAmountLabel($createFixedExpenditurePaymentMethod.find("option:selected").val() as string);
-    })
+    });
 })();

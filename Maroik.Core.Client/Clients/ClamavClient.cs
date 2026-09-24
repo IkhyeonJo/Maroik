@@ -56,8 +56,8 @@ public class ClamavClient(ILogger<ClamavClient> logger) : IClamavClient
 
             // Send file data in ChunkSize chunks, each prefixed with its 4-byte big-endian length.
             // The prefix is written into the first LengthPrefixSize bytes of the same buffer the
-            // payload is read into, so each chunk goes out in one socket write instead of two
-            // (NetworkStream is unbuffered — a separate prefix write is its own TCP segment).
+            // payload is read into, so each chunk goes out in one socket write instead of two.
+            // (NetworkStream is unbuffered — a separate prefix write is its own TCP segment.)
             byte[] buffer = new byte[LengthPrefixSize + ChunkSize];
             int bytesRead;
             while ((bytesRead = await fileStream.ReadAsync(buffer.AsMemory(LengthPrefixSize, ChunkSize), scanCt)) > 0)

@@ -15,21 +15,23 @@
  *
  * Wrapped in an IIFE, no `import` / `export`; handlers use `.off(...).on(...)`.
  */
-(function () {
+(function() {
     // Cached form / field references (jQuery objects) and the anti-forgery input.
     const $formUpdateProfilePassword = $("#formUpdateProfilePassword");
     const $formUpdateProfileAvatar = $("#formUpdateProfileAvatar");
     const $profileAvatarFiles = $("#ProfileAvatarFiles");
     const $newPassword = $("#NewPassword");
     const $password = $("#Password");
-    const $__RequestVerificationToken = $('input[name="__RequestVerificationToken"]');
+    const $__RequestVerificationToken = $("input[name=\"__RequestVerificationToken\"]");
     // Authoritative in ServerSetting.MaxAttachedFileSizeBytes (server); mirrored here for form UX
     // only. Falls back to the shared per-role default (_Layout/site.ts) if the hidden field is
     // missing or unparseable.
     const maxFileSize = parseInt($("#maxAttachedFileSizeBytes").val() as string) || (window as any).MaroikDefaultMaxAttachedFileSizeBytes;
     // Accepted avatar image MIME types, published by Profile.cshtml (ImageUploadPolicy). The
     // server re-validates by extension; this is the client mirror.
-    const allowedImageContentTypes = (JSON.parse(($("#allowedImageContentTypes").val() as string) || "[]")).map(function (t: string) { return t.toLowerCase(); });
+    const allowedImageContentTypes = (JSON.parse(($("#allowedImageContentTypes").val() as string) || "[]")).map(function(t: string) {
+        return t.toLowerCase();
+    });
 
     /**
      * Validates the freshly chosen avatar file and, if it passes, uploads the
@@ -52,13 +54,11 @@
         if (files === undefined || files === null) {
             alert(noFileAttachedErrorMessage);
             window.location.href = "/Management/Profile";
-        }
-        else {
+        } else {
             if (files.size > maxFileSize) {
                 alert(fileSizeLimitationErrorMessage);
                 window.location.href = "/Management/Profile";
-            }
-            else if (files.size > 0 && files.size <= maxFileSize) {
+            } else if (files.size > 0 && files.size <= maxFileSize) {
                 // Size is fine — now check the MIME type against the allow-list.
                 if (allowedImageContentTypes.indexOf((files.type || "").toLowerCase()) !== -1) {
                     // Send the entire form (file + anti-forgery token) as multipart.
@@ -75,24 +75,21 @@
                         contentType: false,
                         dataType: "json",
                         cache: false,
-                        success: function (data) {
+                        success: function(data) {
                             if (data.result) {
                                 window.location.href = "/Management/Profile";
-                            }
-                            else {
+                            } else {
                                 alert(data.errorMessage);
                                 window.location.href = "/Management/Profile";
                             }
                         }
                     });
 
-                }
-                else {
-                    alert(fileTypeErrorMessage)
+                } else {
+                    alert(fileTypeErrorMessage);
                     window.location.href = "/Management/Profile";
                 }
-            }
-            else {
+            } else {
                 // files.size === 0 (or negative) — treat an empty file as a size error.
                 alert(fileSizeLimitationErrorMessage);
                 window.location.href = "/Management/Profile";
@@ -127,15 +124,14 @@
             dataType: "json",
             data: paramValue,
             contentType: "application/json; charset=utf-8",
-            success: function (data) {
+            success: function(data) {
                 if (data.result) {
                     // Changing the password signs every session of the account out — this one
                     // included (the server already dropped it). `alert` blocks until the user
                     // confirms, so the message is always read before going to the sign-in page.
                     alert(data.message);
                     window.location.href = "/Account/Login";
-                }
-                else {
+                } else {
                     // Server-side rule failure (e.g. wrong current password,
                     // new password rejected by PasswordPolicy).
                     toastr.error(data.error);
@@ -147,13 +143,13 @@
 
     // Change-password form: run the handler on submit; its `false` return blocks
     // the native navigation.
-    $formUpdateProfilePassword.off("submit").on("submit", function () {
+    $formUpdateProfilePassword.off("submit").on("submit", function() {
         return UpdateProfilePassword();
     });
 
     // Avatar upload is triggered by picking a file, not by a submit button. The
     // localized error strings are read from the input's `data-*` attributes.
-    $profileAvatarFiles.off("change").on("change", function () {
+    $profileAvatarFiles.off("change").on("change", function() {
         return UpdateProfileAvatar($(this).attr("data-noFileAttachedErrorMessage"), $(this).attr("data-fileSizeLimitationErrorMessage"), $(this).attr("data-fileTypeErrorMessage"));
     });
 })();

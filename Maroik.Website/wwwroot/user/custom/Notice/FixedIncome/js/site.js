@@ -16,7 +16,7 @@
     const $createFixedIncomeDepositMonth = $("#createFixedIncomeDepositMonth");
     const $createFixedIncomeNote = $("#createFixedIncomeNote");
     const $createFixedIncomeDepositMyAssetProductName = $("#createFixedIncomeDepositMyAssetProductName");
-    const $__RequestVerificationToken = $('input[name="__RequestVerificationToken"]');
+    const $__RequestVerificationToken = $("input[name=\"__RequestVerificationToken\"]");
     const failedToLoadAmountLabelMessage = $("#localizerFailedToLoadAmountLabel").val();
     const $createFixedIncomeDialogModal = $("#createFixedIncomeDialogModal");
     const $editFixedIncomeId = $("#editFixedIncomeId");
@@ -50,7 +50,7 @@
             ? valueToSelect
             : allowedValues[0];
         if (target != null) {
-            $select.val(target).change();
+            $select.val(target).trigger("change");
         }
     }
     function DepositDayValues(monthValue) {
@@ -152,7 +152,7 @@
                     }).appendTo(buttonPane).addClass("ui-datepicker-clear ui-state-default ui-priority-primary ui-corner-all");
                 }, 1);
             },
-            onChangeMonthYear: function (year, month, instance) {
+            onChangeMonthYear: function (_year, _month, instance) {
                 setTimeout(function () {
                     let buttonPane = $(instance)
                         .datepicker("widget")
@@ -198,7 +198,7 @@
                     }).appendTo(buttonPane).addClass("ui-datepicker-clear ui-state-default ui-priority-primary ui-corner-all");
                 }, 1);
             },
-            onChangeMonthYear: function (year, month, instance) {
+            onChangeMonthYear: function (_year, _month, instance) {
                 setTimeout(function () {
                     let buttonPane = $(instance)
                         .datepicker("widget")
@@ -254,9 +254,9 @@
             }
         });
     });
-    $gridSearch.off("input").on("input", function () {
+    $gridSearch.off("input").on("input", function (event) {
         const grid = new MvcGrid(document.querySelector(".mvc-grid"));
-        grid.url.searchParams.set("wholeSearch", this.value);
+        grid.url.searchParams.set("wholeSearch", event.currentTarget.value);
         grid.reload();
     });
     function CreateFormShowFixedIncomeSubClassBySelectedFixedIncomeMainClass(createFixedIncomeMainClass) {
@@ -337,15 +337,15 @@
             success: function (data) {
                 if (data.result) {
                     $editFixedIncomeId.val(data.fixedIncome.id);
-                    $editFixedIncomeMainClass.val(data.fixedIncome.mainClass).change();
+                    $editFixedIncomeMainClass.val(data.fixedIncome.mainClass).trigger("change");
                     ApplyAllowedOptions($editFixedIncomeSubClass, incomeSubClassMap[data.fixedIncome.mainClass] || [], data.fixedIncome.subClass);
                     $editFixedIncomeContent.val(data.fixedIncome.content);
                     $editFixedIncomeAmount.val(data.fixedIncome.amount);
-                    $editFixedIncomeDepositMonth.val(data.fixedIncome.depositMonth.toString()).change();
+                    $editFixedIncomeDepositMonth.val(data.fixedIncome.depositMonth.toString()).trigger("change");
                     ApplyAllowedOptions($editFixedIncomeDepositDay, DepositDayValues(data.fixedIncome.depositMonth.toString()), data.fixedIncome.depositDay.toString());
                     $editFixedIncomeMaturityDate.val(data.fixedIncome.maturityDate);
                     $editFixedIncomeNote.val(data.fixedIncome.note);
-                    $editFixedIncomeDepositMyAssetProductName.val(data.fixedIncome.depositMyAssetProductName).change();
+                    $editFixedIncomeDepositMyAssetProductName.val(data.fixedIncome.depositMyAssetProductName).trigger("change");
                     $editFixedIncomeUnpunctuality.prop("checked", data.fixedIncome.unpunctuality);
                     $editFixedIncomeDialogModal.modal({
                         keyboard: false,
@@ -551,25 +551,26 @@
     $formEditFixedIncome.off("submit").on("submit", function () {
         return UpdateFixedIncome();
     });
-    $createFixedIncomeMainClass.off("change").on("change", function () {
-        return CreateFormShowFixedIncomeSubClassBySelectedFixedIncomeMainClass(this);
+    $createFixedIncomeMainClass.off("change").on("change", function (event) {
+        return CreateFormShowFixedIncomeSubClassBySelectedFixedIncomeMainClass(event.currentTarget);
     });
-    $createFixedIncomeDepositMonth.off("change").on("change", function () {
-        return CreateFormShowFixedIncomeDepositDayBySelectedFixedIncomeDepositMonth(this);
+    $createFixedIncomeDepositMonth.off("change").on("change", function (event) {
+        return CreateFormShowFixedIncomeDepositDayBySelectedFixedIncomeDepositMonth(event.currentTarget);
     });
-    $editFixedIncomeMainClass.off("change").on("change", function () {
-        return EditFormShowFixedIncomeSubClassBySelectedFixedIncomeMainClass(this);
+    $editFixedIncomeMainClass.off("change").on("change", function (event) {
+        return EditFormShowFixedIncomeSubClassBySelectedFixedIncomeMainClass(event.currentTarget);
     });
-    $editFixedIncomeDepositMonth.off("change").on("change", function () {
-        return EditFormShowFixedIncomeDepositDayBySelectedFixedIncomeDepositMonth(this);
+    $editFixedIncomeDepositMonth.off("change").on("change", function (event) {
+        return EditFormShowFixedIncomeDepositDayBySelectedFixedIncomeDepositMonth(event.currentTarget);
     });
-    $createFixedIncomeDepositMyAssetProductName.off("change").on("change", function () {
-        ChangeCreateFixedIncomeAmountLabel(this.value);
+    $createFixedIncomeDepositMyAssetProductName.off("change").on("change", function (event) {
+        ChangeCreateFixedIncomeAmountLabel(event.currentTarget.value);
     });
-    $editFixedIncomeDepositMyAssetProductName.off("change").on("change", function () {
-        ChangeEditFixedIncomeAmountLabel(this.value);
+    $editFixedIncomeDepositMyAssetProductName.off("change").on("change", function (event) {
+        ChangeEditFixedIncomeAmountLabel(event.currentTarget.value);
     });
     $(function () {
         ChangeCreateFixedIncomeAmountLabel($createFixedIncomeDepositMyAssetProductName.find("option:selected").val());
     });
 })();
+//# sourceMappingURL=site.js.map

@@ -9,7 +9,7 @@
  * `data-categoryid`) and the edit / delete functions branch on it to hit the
  * Category or SubCategory endpoint.
  *
- * Otherwise this follows the standard grid-CRUD pattern (see
+ * Otherwise, this follows the standard grid-CRUD pattern (see
  * `AccountBook/Asset` for the fullest commentary): native MvcGrid
  * `CustomEvent`s, selection tracked by the `selectedRowColor` CSS class, each
  * mutation = validate -> POST JSON -> hide modal / reload grid / toast, every
@@ -17,7 +17,7 @@
  *
  * IIFE-wrapped, no `import` / `export`.
  */
-(function () {
+(function() {
     // Cached references: jQuery-UI tab containers, the grid search box, and every
     // field of the four modals (create category / sub, edit category / sub) plus
     // the anti-forgery input.
@@ -33,7 +33,7 @@
     const $createCategoryAction = $("#createCategoryAction");
     const $createCategoryRole = $("#createCategoryRole");
     const $createCategoryOrder = $("#createCategoryOrder");
-    const $__RequestVerificationToken = $('input[name="__RequestVerificationToken"]');
+    const $__RequestVerificationToken = $("input[name=\"__RequestVerificationToken\"]");
     const $createMenuDialogModal = $("#createMenuDialogModal");
     const $formCreateSubCategory = $("#formCreateSubCategory");
     const $createSubcategoryCategoryId = $("#createSubcategoryCategoryId");
@@ -71,15 +71,15 @@
     // Bootstrap table class that marks the currently selected grid row.
     const selectedRowColor = "table-primary";
 
-    // Initialise the jQuery-UI tab widgets inside the modals.
-    $(function () {
+    // Initialize the jQuery-UI tab widgets inside the modals.
+    $(function() {
         $createMenuTabs.tabs();
         $editCategoryTabs.tabs();
         $editSubCategoryTabs.tabs();
     });
 
     // MvcGrid `rowclick`: highlight the row matching the compound key
-    // (Id + CategoryId). An empty CategoryId is normalised to "-1" so the
+    // (ID + CategoryId). An empty CategoryId is normalized to "-1" so the
     // comparison is stable for Category rows.
     $(document).off("rowclick.Menu").on("rowclick.Menu", (e: any) => {
         let selectedRow = e.detail;
@@ -92,11 +92,11 @@
 
         let $clsGridRow = $(".clsGridRow");
 
-        $clsGridRow.each(function () {
+        $clsGridRow.each(function() {
             $(this).removeClass(selectedRowColor);
         });
 
-        $clsGridRow.each(function () {
+        $clsGridRow.each(function() {
             if ((String(selectedRowId).valueOf() === String($(this).attr("data-id")).valueOf()) && (String(selectedRowCategoryId).valueOf() === String($(this).attr("data-categoryid")).valueOf())) {
                 $(this).addClass(selectedRowColor);
             }
@@ -117,8 +117,8 @@
     });
 
     // Double-click the highlighted row to open its edit modal.
-    $(document).off("dblclick.Menu", ".clsGridRow").on("dblclick.Menu", ".clsGridRow", function () {
-        $(".clsGridRow").each(function () {
+    $(document).off("dblclick.Menu", ".clsGridRow").on("dblclick.Menu", ".clsGridRow", function() {
+        $(".clsGridRow").each(function() {
             if ($(this).attr("class")!.includes(selectedRowColor)) {
                 EditMenuGridRow();
             }
@@ -126,9 +126,9 @@
     });
 
     // Free-text search: push the term into the grid query string and reload.
-    $gridSearch.off("input").on("input", function (this: HTMLInputElement) {
+    $gridSearch.off("input").on("input", function(event) {
         const grid = new MvcGrid(document.querySelector(".mvc-grid"));
-        grid.url.searchParams.set("wholeSearch", this.value);
+        grid.url.searchParams.set("wholeSearch", (event.currentTarget as HTMLInputElement).value);
         grid.reload();
     });
 
@@ -164,7 +164,7 @@
             dataType: "json",
             data: paramValue,
             contentType: "application/json; charset=utf-8",
-            success: function (data) {
+            success: function(data) {
                 if (data.result) {
                     $createMenuDialogModal.modal("hide");
 
@@ -172,8 +172,7 @@
                     grid.reload();
 
                     toastr.success(data.message);
-                }
-                else {
+                } else {
                     toastr.error(data.error);
                 }
             }
@@ -216,7 +215,7 @@
             dataType: "json",
             data: paramValue,
             contentType: "application/json; charset=utf-8",
-            success: function (data) {
+            success: function(data) {
                 if (data.result) {
                     $createMenuDialogModal.modal("hide");
 
@@ -224,8 +223,7 @@
                     grid.reload();
 
                     toastr.success(data.message);
-                }
-                else {
+                } else {
                     toastr.error(data.error);
                 }
             }
@@ -246,7 +244,7 @@
         let selectedRowId = "-1";
         let selectedRowCategoryId = "-1";
 
-        $(".clsGridRow").each(function () {
+        $(".clsGridRow").each(function() {
             if ($(this).attr("class")!.includes(selectedRowColor)) {
                 selectedRowId = $(this).attr("data-id")!;
                 selectedRowCategoryId = $(this).attr("data-categoryid")!;
@@ -267,7 +265,7 @@
                 dataType: "json",
                 data: null as any,
                 contentType: "application/json; charset=utf-8",
-                success: function (data) {
+                success: function(data) {
                     if (data.result) {
 
                         $editCategoryId.val(data.category.id);
@@ -276,7 +274,7 @@
                         $editCategoryIconPath.val(data.category.iconPath);
                         $editCategoryController.val(data.category.controller);
                         $editCategoryAction.val(data.category.action);
-                        $editCategoryRole.val(data.category.role).change();
+                        $editCategoryRole.val(data.category.role).trigger("change");
                         $editCategoryOrder.val(data.category.order);
 
                         $editCategoryDialogModal.modal({
@@ -286,14 +284,12 @@
 
                         $editCategoryDialogModal.modal("toggle");
                         $editCategoryDialogModal.modal("show");
-                    }
-                    else {
+                    } else {
                         toastr.error(data.error);
                     }
                 }
             });
-        }
-        else {
+        } else {
             // Subcategory.
             $.ajax({
                 url: "/Management/IsSubCategoryExists" + "?id=" + selectedRowId,
@@ -302,7 +298,7 @@
                 dataType: "json",
                 data: null as any,
                 contentType: "application/json; charset=utf-8",
-                success: function (data) {
+                success: function(data) {
                     if (data.result) {
 
                         $editSubCategoryId.val(data.subCategory.id);
@@ -311,7 +307,7 @@
                         $editSubCategoryDisplayName.val(data.subCategory.displayName);
                         $editSubCategoryIconPath.val(data.subCategory.iconPath);
                         $editSubCategoryAction.val(data.subCategory.action);
-                        $editSubCategoryRole.val(data.subCategory.role).change();
+                        $editSubCategoryRole.val(data.subCategory.role).trigger("change");
                         $editSubCategoryOrder.val(data.subCategory.order);
 
                         $editSubCategoryDialogModal.modal({
@@ -321,8 +317,7 @@
 
                         $editSubCategoryDialogModal.modal("toggle");
                         $editSubCategoryDialogModal.modal("show");
-                    }
-                    else {
+                    } else {
                         toastr.error(data.error);
                     }
                 }
@@ -363,7 +358,7 @@
             dataType: "json",
             data: paramValue,
             contentType: "application/json; charset=utf-8",
-            success: function (data) {
+            success: function(data) {
                 if (data.result) {
                     $editCategoryDialogModal.modal("hide");
 
@@ -371,8 +366,7 @@
                     grid.reload();
 
                     toastr.success(data.message);
-                }
-                else {
+                } else {
                     toastr.error(data.error);
                 }
             }
@@ -413,7 +407,7 @@
             dataType: "json",
             data: paramValue,
             contentType: "application/json; charset=utf-8",
-            success: function (data) {
+            success: function(data) {
                 if (data.result) {
                     $editSubCategoryDialogModal.modal("hide");
 
@@ -421,8 +415,7 @@
                     grid.reload();
 
                     toastr.success(data.message);
-                }
-                else {
+                } else {
                     toastr.error(data.error);
                 }
             }
@@ -430,12 +423,12 @@
         return false;
     }
 
-    /** "Delete" button: require a selected row, then just open the confirm modal. */
+    /** "Delete" button: require a selected row, then just open the confirmation modal. */
     function ConfirmDeleteMenu(errorMessageSelectGridRow?: string) {
 
         let selectedRowId = "-1";
 
-        $(".clsGridRow").each(function () {
+        $(".clsGridRow").each(function() {
             if ($(this).attr("class")!.includes(selectedRowColor)) {
                 selectedRowId = $(this).attr("data-id")!;
             }
@@ -460,13 +453,13 @@
      * a Category is verified with `IsCategoryExists` then removed with
      * `DeleteCategory` (the full record is echoed back into the delete payload);
      * a SubCategory goes through `IsSubCategoryExists` / `DeleteSubCategory`.
-     * Nested so the delete always uses the server's current record.
+     * Nested so to delete always uses the server's current record.
      */
     function DeleteMenu(errorMessageSelectGridRow?: string) {
         let selectedRowId = "-1";
         let selectedRowCategoryId = "-1";
 
-        $(".clsGridRow").each(function () {
+        $(".clsGridRow").each(function() {
             if ($(this).attr("class")!.includes(selectedRowColor)) {
                 selectedRowId = $(this).attr("data-id")!;
                 selectedRowCategoryId = $(this).attr("data-categoryid")!;
@@ -487,7 +480,7 @@
                 dataType: "json",
                 data: null as any,
                 contentType: "application/json; charset=utf-8",
-                success: function (data) {
+                success: function(data) {
                     if (data.result) {
 
                         let paramValue = JSON.stringify({
@@ -508,7 +501,7 @@
                             dataType: "json",
                             data: paramValue,
                             contentType: "application/json; charset=utf-8",
-                            success: function (data) {
+                            success: function(data) {
                                 if (data.result) {
                                     $confirmDeleteMenuDialogModal.modal("hide");
 
@@ -516,20 +509,17 @@
                                     grid.reload();
 
                                     toastr.success(data.message);
-                                }
-                                else {
+                                } else {
                                     toastr.error(data.error);
                                 }
                             }
                         });
-                    }
-                    else {
+                    } else {
                         toastr.error(data.error);
                     }
                 }
             });
-        }
-        else {
+        } else {
             $.ajax({
                 url: "/Management/IsSubCategoryExists" + "?id=" + selectedRowId,
                 type: "POST",
@@ -537,7 +527,7 @@
                 dataType: "json",
                 data: null as any,
                 contentType: "application/json; charset=utf-8",
-                success: function (data) {
+                success: function(data) {
                     if (data.result) {
 
                         let paramValue = JSON.stringify({
@@ -558,7 +548,7 @@
                             dataType: "json",
                             data: paramValue,
                             contentType: "application/json; charset=utf-8",
-                            success: function (data) {
+                            success: function(data) {
                                 if (data.result) {
                                     $confirmDeleteMenuDialogModal.modal("hide");
 
@@ -566,14 +556,12 @@
                                     grid.reload();
 
                                     toastr.success(data.message);
-                                }
-                                else {
+                                } else {
                                     toastr.error(data.error);
                                 }
                             }
                         });
-                    }
-                    else {
+                    } else {
                         toastr.error(data.error);
                     }
                 }
@@ -608,35 +596,35 @@
     }
 
     // --- Button / form wiring ------------------------------------------
-    $btnEditMenuGridRow.off("click").on("click", function () {
+    $btnEditMenuGridRow.off("click").on("click", function() {
         EditMenuGridRow($(this).attr("data-errorMessageSelectGridRow"));
     });
 
-    $btnConfirmDeleteMenu.off("click").on("click", function () {
+    $btnConfirmDeleteMenu.off("click").on("click", function() {
         ConfirmDeleteMenu($(this).attr("data-errorMessageSelectGridRow"));
     });
 
-    $btnExportExcelMenu.off("click").on("click", function () {
+    $btnExportExcelMenu.off("click").on("click", function() {
         ExportExcelMenu();
     });
 
-    $btnDeleteMenu.off("click").on("click", function () {
+    $btnDeleteMenu.off("click").on("click", function() {
         DeleteMenu($(this).attr("data-errorMessageSelectGridRow"));
     });
 
-    $formCreateCategory.off("submit").on("submit", function () {
+    $formCreateCategory.off("submit").on("submit", function() {
         return CreateCategory();
     });
 
-    $formCreateSubCategory.off("submit").on("submit", function () {
+    $formCreateSubCategory.off("submit").on("submit", function() {
         return CreateSubCategory();
     });
 
-    $formEditCategory.off("submit").on("submit", function () {
+    $formEditCategory.off("submit").on("submit", function() {
         return UpdateCategory();
     });
 
-    $formEditSubCategory.off("submit").on("submit", function () {
+    $formEditSubCategory.off("submit").on("submit", function() {
         return UpdateSubCategory();
     });
 })();

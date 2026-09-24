@@ -15,7 +15,7 @@
     const $editFixedExpenditureDialogModal = $("#editFixedExpenditureDialogModal");
     const $formEditFixedExpenditure = $("#formEditFixedExpenditure");
     const $confirmDeleteFixedExpenditureDialogModal = $("#confirmDeleteFixedExpenditureDialogModal");
-    const $__RequestVerificationToken = $('input[name="__RequestVerificationToken"]');
+    const $__RequestVerificationToken = $("input[name=\"__RequestVerificationToken\"]");
     const failedToLoadAmountLabelMessage = $("#localizerFailedToLoadAmountLabel").val();
     const $createFixedExpenditureDialogModal = $("#createFixedExpenditureDialogModal");
     const $createFixedExpenditurePaymentMethod = $("#createFixedExpenditurePaymentMethod");
@@ -55,7 +55,7 @@
             ? valueToSelect
             : allowedValues[0];
         if (target != null) {
-            $select.val(target).change();
+            $select.val(target).trigger("change");
         }
     }
     function DepositDayValues(monthValue) {
@@ -167,7 +167,7 @@
                     }).appendTo(buttonPane).addClass("ui-datepicker-clear ui-state-default ui-priority-primary ui-corner-all");
                 }, 1);
             },
-            onChangeMonthYear: function (year, month, instance) {
+            onChangeMonthYear: function (_year, _month, instance) {
                 setTimeout(function () {
                     let buttonPane = $(instance)
                         .datepicker("widget")
@@ -213,7 +213,7 @@
                     }).appendTo(buttonPane).addClass("ui-datepicker-clear ui-state-default ui-priority-primary ui-corner-all");
                 }, 1);
             },
-            onChangeMonthYear: function (year, month, instance) {
+            onChangeMonthYear: function (_year, _month, instance) {
                 setTimeout(function () {
                     let buttonPane = $(instance)
                         .datepicker("widget")
@@ -269,9 +269,9 @@
             }
         });
     });
-    $gridSearch.off("input").on("input", function () {
+    $gridSearch.off("input").on("input", function (event) {
         const grid = new MvcGrid(document.querySelector(".mvc-grid"));
-        grid.url.searchParams.set("wholeSearch", this.value);
+        grid.url.searchParams.set("wholeSearch", event.currentTarget.value);
         grid.reload();
     });
     function CreateFormShowFixedExpenditureSubClassBySelectedFixedExpenditureMainClass(createFixedExpenditureMainClass) {
@@ -362,20 +362,20 @@
             success: function (data) {
                 if (data.result) {
                     $editFixedExpenditureId.val(data.fixedExpenditure.id);
-                    $editFixedExpenditureMainClass.val(data.fixedExpenditure.mainClass).change();
+                    $editFixedExpenditureMainClass.val(data.fixedExpenditure.mainClass).trigger("change");
                     ApplyAllowedOptions($editFixedExpenditureSubClass, expenditureSubClassMap[data.fixedExpenditure.mainClass] || [], data.fixedExpenditure.subClass);
                     $editFixedExpenditureContent.val(data.fixedExpenditure.content);
                     $editFixedExpenditureAmount.val(data.fixedExpenditure.amount);
-                    $editFixedExpenditureDepositMonth.val(data.fixedExpenditure.depositMonth.toString()).change();
+                    $editFixedExpenditureDepositMonth.val(data.fixedExpenditure.depositMonth.toString()).trigger("change");
                     ApplyAllowedOptions($editFixedExpenditureDepositDay, DepositDayValues(data.fixedExpenditure.depositMonth.toString()), data.fixedExpenditure.depositDay.toString());
                     $editFixedExpenditureMaturityDate.val(data.fixedExpenditure.maturityDate);
                     $editFixedExpenditureNote.val(data.fixedExpenditure.note);
-                    $editFixedExpenditurePaymentMethod.val(data.fixedExpenditure.paymentMethod).change();
+                    $editFixedExpenditurePaymentMethod.val(data.fixedExpenditure.paymentMethod).trigger("change");
                     if (data.fixedExpenditure.myDepositAsset) {
-                        $editFixedExpenditureMyDepositAsset.val(data.fixedExpenditure.myDepositAsset).change();
+                        $editFixedExpenditureMyDepositAsset.val(data.fixedExpenditure.myDepositAsset).trigger("change");
                     }
                     else {
-                        $editFixedExpenditureMyDepositAsset.val(data.fixedExpenditure.paymentMethod).change();
+                        $editFixedExpenditureMyDepositAsset.val(data.fixedExpenditure.paymentMethod).trigger("change");
                     }
                     ToggleEditFixedExpenditureMyDepositAsset(data.fixedExpenditure.subClass);
                     $editFixedExpenditureUnpunctuality.prop("checked", data.fixedExpenditure.unpunctuality);
@@ -585,31 +585,32 @@
     $formEditFixedExpenditure.off("submit").on("submit", function () {
         return UpdateFixedExpenditure();
     });
-    $createFixedExpenditureMainClass.off("change").on("change", function () {
-        return CreateFormShowFixedExpenditureSubClassBySelectedFixedExpenditureMainClass(this);
+    $createFixedExpenditureMainClass.off("change").on("change", function (event) {
+        return CreateFormShowFixedExpenditureSubClassBySelectedFixedExpenditureMainClass(event.currentTarget);
     });
-    $createFixedExpenditureSubClass.off("change").on("change", function () {
-        return CreateFormShowFixedExpenditureDivCreateFixedExpenditureMyDepositAssetBySelectedFixedExpenditureSubClass(this);
+    $createFixedExpenditureSubClass.off("change").on("change", function (event) {
+        return CreateFormShowFixedExpenditureDivCreateFixedExpenditureMyDepositAssetBySelectedFixedExpenditureSubClass(event.currentTarget);
     });
-    $createFixedExpenditureDepositMonth.off("change").on("change", function () {
-        return CreateFormShowFixedExpenditureDepositDayBySelectedFixedExpenditureDepositMonth(this);
+    $createFixedExpenditureDepositMonth.off("change").on("change", function (event) {
+        return CreateFormShowFixedExpenditureDepositDayBySelectedFixedExpenditureDepositMonth(event.currentTarget);
     });
-    $editFixedExpenditureMainClass.off("change").on("change", function () {
-        return EditFormShowFixedExpenditureSubClassBySelectedFixedExpenditureMainClass(this);
+    $editFixedExpenditureMainClass.off("change").on("change", function (event) {
+        return EditFormShowFixedExpenditureSubClassBySelectedFixedExpenditureMainClass(event.currentTarget);
     });
-    $editFixedExpenditureSubClass.off("change").on("change", function () {
-        return EditFormShowFixedExpenditureDivCreateFixedExpenditureMyDepositAssetBySelectedFixedExpenditureSubClass(this);
+    $editFixedExpenditureSubClass.off("change").on("change", function (event) {
+        return EditFormShowFixedExpenditureDivCreateFixedExpenditureMyDepositAssetBySelectedFixedExpenditureSubClass(event.currentTarget);
     });
-    $editFixedExpenditureDepositMonth.off("change").on("change", function () {
-        return EditFormShowFixedExpenditureDepositDayBySelectedFixedExpenditureDepositMonth(this);
+    $editFixedExpenditureDepositMonth.off("change").on("change", function (event) {
+        return EditFormShowFixedExpenditureDepositDayBySelectedFixedExpenditureDepositMonth(event.currentTarget);
     });
-    $createFixedExpenditurePaymentMethod.off("change").on("change", function () {
-        ChangeCreateFixedExpenditureAmountLabel(this.value);
+    $createFixedExpenditurePaymentMethod.off("change").on("change", function (event) {
+        ChangeCreateFixedExpenditureAmountLabel(event.currentTarget.value);
     });
-    $editFixedExpenditurePaymentMethod.off("change").on("change", function () {
-        ChangeEditFixedExpenditureAmountLabel(this.value);
+    $editFixedExpenditurePaymentMethod.off("change").on("change", function (event) {
+        ChangeEditFixedExpenditureAmountLabel(event.currentTarget.value);
     });
     $(function () {
         ChangeCreateFixedExpenditureAmountLabel($createFixedExpenditurePaymentMethod.find("option:selected").val());
     });
 })();
+//# sourceMappingURL=site.js.map

@@ -5,8 +5,7 @@
 **You can skip all of this if you only touch C#.** `dotnet build` still succeeds
 with no Node installed — it just reuses the `wwwroot/**/site.js` that is already
 committed to git instead of recompiling it (see **Build integration**). You need
-the steps below only to **edit a `.ts` file and regenerate its `.js`**, or to
-**run the client-script tests**.
+the steps below only to **edit a `.ts` file and regenerate its `.js`**, or to **run the client-script tests**.
 
 **Why it isn't automatic:** `tsc` (the TypeScript compiler) is not a system-wide
 tool here. `tsc`, Vitest, jsdom and every `@types/*` package are listed in
@@ -52,8 +51,8 @@ $ npm ci
 ```
 
 `npm ci` reads `package-lock.json` and installs those exact package versions into
-`Maroik.Website/node_modules/` (~105 packages; the folder is git-ignored). Run it
-**once after a fresh checkout**, and again whenever `package.json` or
+`Maroik.Website/node_modules/` (~105 packages; the folder is git-ignored). Run it **once after a fresh checkout**, and
+again whenever `package.json` or
 `package-lock.json` changes. A successful run looks like:
 
 ```
@@ -75,8 +74,8 @@ $ npm run build
 ```
 
 Runs `tsc`, which (re)writes
-`wwwroot/{area}/custom/{Feature}/{Page}/js/site.js` for every matching `.ts`.
-**A clean build prints nothing and just returns to the prompt.** A type error
+`wwwroot/{area}/custom/{Feature}/{Page}/js/site.js` for every matching `.ts`. **A clean build prints nothing and just
+returns to the prompt.** A type error
 prints `path/file.ts(line,col): error TS####: <message>` and exits non-zero — fix
 the `.ts` and re-run.
 
@@ -119,7 +118,7 @@ mode is "my `.ts` edit didn't show up in the browser", not a build error.
 
 ---
 
-The 22 hand-written client scripts under `wwwroot/{admin,anonymous,user}/custom/**/js/site.js`
+The 22 handwritten client scripts under `wwwroot/{admin,anonymous,user}/custom/**/js/site.js`
 are authored here as TypeScript and compiled back to the exact same paths.
 
 ```
@@ -131,7 +130,7 @@ Maroik.Website/
 ```
 
 No other `wwwroot` asset is touched. Vendored libraries (jQuery, AdminLTE, FullCalendar,
-summernote, MvcGrid, …) stay exactly as they are and are **not** compiled or bundled.
+Summernote, MvcGrid, …) stay exactly as they are and are **not** compiled or bundled.
 
 ---
 
@@ -142,41 +141,41 @@ Whitespace / EOL / quotes / semicolons for `*.ts` are pinned in the **repo-root
 `ij_typescript_*` / `ij_javascript_*` keys that are Rider's / WebStorm's code-style
 mechanism (Rider reads JS/TS style straight from `.editorconfig`). `TypeScripts/**`
 is narrowed there to **whitespace-only** rules so a reformat-on-save can't churn the
-byte-faithful port; `TypeScripts.Tests/**` is 2-space; the `tsc` output
-(`wwwroot/**/custom/**/site.js`) is `generated_code = true`. `Maroik.sln.DotSettings`
-carries the few ReSharper-side JS/TS toggles that aren't editorconfig-backed
-(e.g. TS interfaces take **no** `I` prefix, unlike C#).
+byte-faithful port; `TypeScripts.Tests/**` is 2-space; the `tsc` output (`wwwroot/**/custom/**/site.js`) is
+`generated_code = true`. `Maroik.sln.DotSettings`
+carries the few ReSharper-side JS/TS toggles that aren't editorconfig-backed (e.g. TS interfaces take **no** `I` prefix,
+unlike C#).
 
 ## Tech stack
 
-| Purpose | Tool | Version | Notes |
-|---|---|---|---|
-| Type-check **and** emit | **TypeScript** (`tsc`) | **7.0.2** | The native (Go) compiler — the whole `TypeScripts/` tree type-checks + emits in well under a second. No Babel, no bundler. |
-| Type-check-only gate | `tsc --noEmit` | — | `npm run check`; use in CI. |
-| Tests | **Vitest** + **jsdom** + real **jQuery 3.6.0** | 4.1.11 / 30.0.1 / 3.6.0 | See `../TypeScripts.Tests/`. |
+| Purpose                 | Tool                                           | Version                 | Notes                                                                                                                      |
+|-------------------------|------------------------------------------------|-------------------------|----------------------------------------------------------------------------------------------------------------------------|
+| Type-check **and** emit | **TypeScript** (`tsc`)                         | **7.0.2**               | The native (Go) compiler — the whole `TypeScripts/` tree type-checks + emits in well under a second. No Babel, no bundler. |
+| Type-check-only gate    | `tsc --noEmit`                                 | —                       | `npm run check`; use in CI.                                                                                                |
+| Tests                   | **Vitest** + **jsdom** + real **jQuery 3.6.0** | 4.1.11 / 30.0.1 / 3.6.0 | See `../TypeScripts.Tests/`.                                                                                               |
 
 ### `@types/*` — pinned to the runtime versions actually loaded by `Views/Shared/_Layout.cshtml`
 
-| Loaded script (`wwwroot/{area}/…`) | Runtime version | Dev dependency |
-|---|---|---|
-| `plugins/jquery/jquery.min.js` | jQuery 3.6.0 | `@types/jquery@3.5.34` — the 3.5.x line targets jQuery 3.x; `@types/jquery@4` is for jQuery 4 and would be wrong. |
-| `plugins/jquery-ui/jquery-ui.min.js` | jQuery UI 1.12.1 | `@types/jqueryui@1.12.24` |
-| `lib/jquery-validation/dist/jquery.validate.min.js` | jquery-validation 1.17.0 | `@types/jquery.validation@1.17.1` |
-| `plugins/bootstrap/js/bootstrap.bundle.min.js` | Bootstrap 4.6.0 | none — the scripts only call `$el.modal(...)`, hand-typed in `global.d.ts`. `@types/bootstrap` was dropped: it pulled in the deprecated `popper.js@1` package to type the rest of the Bootstrap 4 surface, which these scripts never touch. |
-| `plugins/toastr/toastr.min.js` | toastr 2.1.4 | `@types/toastr@2.1.44` |
-| `plugins/summernote/summernote-bs4.js` | summernote 0.8.18 | `@types/summernote@0.8.10` (latest published) |
-| `plugins/chart.js/Chart.min.js` | Chart.js 2.9.4 | `@types/chart.js@2.9.41` — the 2.9.x line targets Chart.js v2; `@types/chart.js@4` is for v3+. |
-| `plugins/fullcalendar/main.js` | FullCalendar 5.5.1 | `@fullcalendar/core@5.5.1` (installed type-only; global `<script>` build is used at runtime) |
-| `plugins/moment/moment.min.js` | moment 2.30.1 | `moment@2.30.1` (ships its own `.d.ts`; installed type-only). Bumped from 2.29.1 for CVE-2022-24785 / CVE-2022-31129; 2.30.1 is the last 2.x and a drop-in for global `<script>` use. |
-| `js/mvc-grid/nonfactors-mvc-grid.js` | NonFactors.Grid.Mvc6 companion JS | not on npm → hand-written ambient in `global.d.ts` |
-| `dist/js/adminlte.js` | AdminLTE 3.1.0 | no types — the custom scripts never call the AdminLTE JS API directly |
+| Loaded script (`wwwroot/{area}/…`)                  | Runtime version                   | Dev dependency                                                                                                                                                                                                                              |
+|-----------------------------------------------------|-----------------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `plugins/jquery/jquery.min.js`                      | jQuery 3.6.0                      | `@types/jquery@3.5.34` — the 3.5.x line targets jQuery 3.x; `@types/jquery@4` is for jQuery 4 and would be wrong.                                                                                                                           |
+| `plugins/jquery-ui/jquery-ui.min.js`                | jQuery UI 1.12.1                  | `@types/jqueryui@1.12.24`                                                                                                                                                                                                                   |
+| `lib/jquery-validation/dist/jquery.validate.min.js` | jquery-validation 1.17.0          | `@types/jquery.validation@1.17.1`                                                                                                                                                                                                           |
+| `plugins/bootstrap/js/bootstrap.bundle.min.js`      | Bootstrap 4.6.0                   | none — the scripts only call `$el.modal(...)`, hand-typed in `global.d.ts`. `@types/bootstrap` was dropped: it pulled in the deprecated `popper.js@1` package to type the rest of the Bootstrap 4 surface, which these scripts never touch. |
+| `plugins/toastr/toastr.min.js`                      | toastr 2.1.4                      | `@types/toastr@2.1.44`                                                                                                                                                                                                                      |
+| `plugins/summernote/summernote-bs4.js`              | summernote 0.8.18                 | `@types/summernote@0.8.10` (latest published)                                                                                                                                                                                               |
+| `plugins/chart.js/Chart.min.js`                     | Chart.js 2.9.4                    | `@types/chart.js@2.9.41` — the 2.9.x line targets Chart.js v2; `@types/chart.js@4` is for v3+.                                                                                                                                              |
+| `plugins/fullcalendar/main.js`                      | FullCalendar 5.5.1                | `@fullcalendar/core@5.5.1` (installed type-only; global `<script>` build is used at runtime)                                                                                                                                                |
+| `plugins/moment/moment.min.js`                      | moment 2.30.1                     | `moment@2.30.1` (ships its own `.d.ts`; installed type-only). Bumped from 2.29.1 for CVE-2022-24785 / CVE-2022-31129; 2.30.1 is the last 2.x and a drop-in for global `<script>` use.                                                       |
+| `js/mvc-grid/nonfactors-mvc-grid.js`                | NonFactors.Grid.Mvc6 companion JS | not on npm → hand-written ambient in `global.d.ts`                                                                                                                                                                                          |
+| `dist/js/adminlte.js`                               | AdminLTE 3.1.0                    | no types — the custom scripts never call the AdminLTE JS API directly                                                                                                                                                                       |
 
 `global.d.ts` declares the globals with no matching `@types`: `MvcGrid`, `FullCalendar`,
 and `moment`, plus a `JQuery.modal(...)` augmentation standing in for `@types/bootstrap`.
 
 ---
 
-## How the migration was done (goal: zero behaviour change)
+## How the migration was done (goal: zero behavior change)
 
 Every `site.ts` is the original `site.js` **wrapped in one IIFE**, with the smallest set
 of type annotations needed to pass `tsc --strict`. Type syntax erases at compile time, so
@@ -187,16 +186,16 @@ the emitted `site.js` is byte-for-byte the original **modulo**:
 * **comments dropped** (`removeComments: true`) — write freely in the `.ts`; the shipped
   `.js` carries none,
 * `tsc`'s own reformatting — it drops blank lines, splits `if (x) return;` onto two lines,
-  parenthesises single arrow params `(e) =>`, strips the UTF-8 BOM, and adds ASI semicolons.
+  parentheses single arrow params `(e) =>`, strips the UTF-8 BOM, and adds ASI semicolons.
 
 None of that changes semantics. At migration time every one of the 22 files was proved
-equivalent by normalising the pre-migration original and the compiled output to a
+equivalent by normalizing the pre-migration original and the compiled output to a
 whitespace-/semicolon-/comment-free token stream (minus the wrapper) and diffing — all matched.
 Two deliberate follow-up changes have since landed (see "Deliberate post-port changes" below):
 the `localizer.prevText` / `.nextText` casing fix, and removal of the dead `data.calendarEvent.calendarId`
 line from the two Calendar `select` handlers — so those files' compiled `site.js` no longer
 token-matches the pre-migration original, which is intentional. Going forward, `tsc` (types)
-and `../TypeScripts.Tests` (behaviour) are the guards; a plain `git diff wwwroot/**/site.js`
+and `../TypeScripts.Tests` (behavior) are the guards; a plain `git diff wwwroot/**/site.js`
 shows exactly what a `.ts` edit changed in the output.
 
 ### Why an IIFE and no `Common/` module
@@ -211,19 +210,19 @@ per file (just typed); there is deliberately no shared module.
 
 ### The recurring annotations
 
-| Original pattern | Becomes | Reason |
-|---|---|---|
-| `function f(x) {` (DOM-interop param) | `function f(x: string \| HTMLSelectElement \| …)` / `x?: string` / `x: any` | `noImplicitAny` |
-| `$(sel).val()` used as a string (`location.href =`, `input.value`, ajax `headers`, `parseInt`, `.split`) | `$(sel).val() as string` | `.val()` is `string \| number \| string[] \| undefined` |
-| `$(this).attr('x')` assigned to a `string` / before `.includes()` | `$(this).attr('x')!` | `.attr()` is `string \| undefined`; the attribute is always present |
-| `$.ajax({ data: null })` | `data: null as any` | jQuery's `AjaxSettings.data` excludes `null` |
-| `toastr.error(msg)` where `msg?: string` | `toastr.error(msg!)` (inside the guard where it's set) | `toastr.error`'s message param is non-optional |
-| `const localizer = { … 44 × $(sel).val() }` | `const localizer: any = { … }` | one cast instead of 44 errors (see the casing fix under "Deliberate post-port changes"). |
-| `.datepicker({ … beforeShow/onSelect … })` instance call | `.datepicker({ … } as any)` + `onSelect: function (this: any)` | `@types/jqueryui` demands the callbacks return `DatepickerOptions` |
-| `new FullCalendar.Calendar(document.getElementById('calendar'), {…})` | `… getElementById('calendar')!, {…} as any` + `select/eventClick: function (arg: any)` | null-guard + `CalendarOptions` friction on `themeSystem` etc. |
-| `$.datepicker._clearDate(x)` | `($.datepicker as any)._clearDate(x)` | undocumented method |
-| `let x;` (no initialiser) / `let arr = [];` reused | `let x: any;` / `let arr: any[] = [];` | `noImplicitAny` on evolving types |
-| `htmlDoc.querySelectorAll('img[data-file]')` then `imgTag.src` | `.querySelectorAll<HTMLImageElement>('img[data-file]')` | `Element` has no `.src` |
+| Original pattern                                                                                         | Becomes                                                                                | Reason                                                                                   |
+|----------------------------------------------------------------------------------------------------------|----------------------------------------------------------------------------------------|------------------------------------------------------------------------------------------|
+| `function f(x) {` (DOM-interop param)                                                                    | `function f(x: string \| HTMLSelectElement \| …)` / `x?: string` / `x: any`            | `noImplicitAny`                                                                          |
+| `$(sel).val()` used as a string (`location.href =`, `input.value`, ajax `headers`, `parseInt`, `.split`) | `$(sel).val() as string`                                                               | `.val()` is `string \| number \| string[] \| undefined`                                  |
+| `$(this).attr('x')` assigned to a `string` / before `.includes()`                                        | `$(this).attr('x')!`                                                                   | `.attr()` is `string \| undefined`; the attribute is always present                      |
+| `$.ajax({ data: null })`                                                                                 | `data: null as any`                                                                    | jQuery's `AjaxSettings.data` excludes `null`                                             |
+| `toastr.error(msg)` where `msg?: string`                                                                 | `toastr.error(msg!)` (inside the guard where it's set)                                 | `toastr.error`'s message param is non-optional                                           |
+| `const localizer = { … 44 × $(sel).val() }`                                                              | `const localizer: any = { … }`                                                         | one cast instead of 44 errors (see the casing fix under "Deliberate post-port changes"). |
+| `.datepicker({ … beforeShow/onSelect … })` instance call                                                 | `.datepicker({ … } as any)` + `onSelect: function (this: any)`                         | `@types/jqueryui` demands the callbacks return `DatepickerOptions`                       |
+| `new FullCalendar.Calendar(document.getElementById('calendar'), {…})`                                    | `… getElementById('calendar')!, {…} as any` + `select/eventClick: function (arg: any)` | null-guard + `CalendarOptions` friction on `themeSystem` etc.                            |
+| `$.datepicker._clearDate(x)`                                                                             | `($.datepicker as any)._clearDate(x)`                                                  | undocumented method                                                                      |
+| `let x;` (no initialiser) / `let arr = [];` reused                                                       | `let x: any;` / `let arr: any[] = [];`                                                 | `noImplicitAny` on evolving types                                                        |
+| `htmlDoc.querySelectorAll('img[data-file]')` then `imgTag.src`                                           | `.querySelectorAll<HTMLImageElement>('img[data-file]')`                                | `Element` has no `.src`                                                                  |
 
 ### Deliberate post-port changes
 
@@ -301,8 +300,8 @@ commit a `site.js` that has picked up the `sourceMappingURL` comment (re-run
   `Exists('$(MSBuildProjectDirectory)/node_modules/typescript')`. So it compiles on dev
   machines that ran `npm ci`, and is a silent no-op everywhere else (a TS error there fails
   the .NET build — that's intended). Force it with `-p:BuildClientTypeScript=true`.
-* **Docker** — `Dockerfile` has a dedicated `node:22-alpine` `tsbuild` stage
-  (`npm ci && npm run build`) whose `wwwroot/` output is `COPY --from=tsbuild` over the
+* **Docker** — `Dockerfile` has a dedicated `node:22-alpine` `tsbuild` stage (`npm ci && npm run build`) whose
+  `wwwroot/` output is `COPY --from=tsbuild` over the
   SDK build stage's copy. The .NET SDK image has no Node, so the csproj target stays a no-op.
 * **`dotnet publish` with no Node at all** — falls back to the committed `wwwroot/**/site.js`.
 

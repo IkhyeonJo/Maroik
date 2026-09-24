@@ -22,7 +22,7 @@ public class ImageValidatorService(ILogger<ImageValidatorService> logger) : IIma
     private static readonly byte[] _pngSignature = [0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A];
     private static readonly byte[] _jpegSignature = [0xFF, 0xD8, 0xFF];
 
-    // How much of the file is looked at to recognise an SVG document: its <svg> element sits at the top
+    // How much of the file is looked at to recognize an SVG document: its <svg> element sits at the top
     // (after an optional BOM, XML declaration, DOCTYPE and comments).
     private const int SvgSniffLength = 2048;
 
@@ -32,7 +32,7 @@ public class ImageValidatorService(ILogger<ImageValidatorService> logger) : IIma
     /// the file's magic bytes BEFORE Magick.NET sees it, and Magick is then told to read exactly that
     /// format: left to itself it picks the decoder from the content, so a file named "x.png" holding an SVG
     /// or a PostScript document would be run through those (much larger) parsers just to be rejected
-    /// afterwards.
+    /// afterward.
     /// </remarks>
     public bool IsValidImage(byte[] bytes)
     {

@@ -30,7 +30,7 @@
     const $aDetailBoardAttachedFile = $("#aDetailBoardAttachedFile");
     const $aEditBoardAttachedFile = $("#aEditBoardAttachedFile");
     const $aFreeForumDeleteComment = $(".aFreeForumDeleteComment");
-    const $__RequestVerificationToken = $('input[name="__RequestVerificationToken"]');
+    const $__RequestVerificationToken = $("input[name=\"__RequestVerificationToken\"]");
     const maxFileSize = parseInt($("#maxAttachedFileSizeBytes").val()) || window.MaroikDefaultMaxAttachedFileSizeBytes;
     const boardHeight = 300;
     function base64ToBlob(base64, mime) {
@@ -45,7 +45,7 @@
     function ReleaseObjectUrlsOnLoad(root) {
         if (!root)
             return;
-        root.querySelectorAll('img[src^="blob:"]').forEach(function (img) {
+        root.querySelectorAll("img[src^=\"blob:\"]").forEach(function (img) {
             const url = img.src;
             img.onload = img.onerror = function () {
                 URL.revokeObjectURL(url);
@@ -384,7 +384,7 @@
     $btnFreeForumDeleteBoard.off("click").on("click", function () {
         DeleteBoard($(this).attr("data-boardId"));
     });
-    $btnFreeForumSearchText.off("keypress").on("keypress", function (event) {
+    $btnFreeForumSearchText.off("keydown").on("keydown", function (event) {
         if (event.key === "Enter") {
             SearchBoard();
         }
@@ -398,11 +398,11 @@
     $formEditBoard.off("submit").on("submit", function () {
         return EditBoard($(this).attr("data-editBoardId"), $(this).attr("data-editCurrentPage"));
     });
-    $writeUploadedFile.off("change").on("change", function () {
-        return WriteUploadFile(this, $(this).attr("data-errorMessage"));
+    $writeUploadedFile.off("change").on("change", function (event) {
+        return WriteUploadFile(event.currentTarget, $(event.currentTarget).attr("data-errorMessage"));
     });
-    $editUploadedFile.off("change").on("change", function () {
-        return EditUploadFile(this, $(this).attr("data-errorMessage"));
+    $editUploadedFile.off("change").on("change", function (event) {
+        return EditUploadFile(event.currentTarget, $(event.currentTarget).attr("data-errorMessage"));
     });
     $aFreeForumDeleteComment.off("click").on("click", function (event) {
         event.preventDefault();
@@ -418,8 +418,7 @@
                 const contentType = imgTag.getAttribute("data-contenttype");
                 if (base64Data && contentType) {
                     const blob = base64ToBlob(base64Data, contentType);
-                    const imgURL = URL.createObjectURL(blob);
-                    imgTag.src = imgURL;
+                    imgTag.src = URL.createObjectURL(blob);
                     imgTag.removeAttribute("data-file");
                     imgTag.removeAttribute("data-contenttype");
                 }
@@ -438,8 +437,7 @@
                 const contentType = imgTag.getAttribute("data-contenttype");
                 if (base64Data && contentType) {
                     const blob = base64ToBlob(base64Data, contentType);
-                    const imgURL = URL.createObjectURL(blob);
-                    imgTag.src = imgURL;
+                    imgTag.src = URL.createObjectURL(blob);
                     imgTag.removeAttribute("data-file");
                     imgTag.removeAttribute("data-contenttype");
                 }
@@ -495,3 +493,4 @@
         }
     });
 })();
+//# sourceMappingURL=site.js.map

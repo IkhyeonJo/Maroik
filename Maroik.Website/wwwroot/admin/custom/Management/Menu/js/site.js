@@ -12,7 +12,7 @@
     const $createCategoryAction = $("#createCategoryAction");
     const $createCategoryRole = $("#createCategoryRole");
     const $createCategoryOrder = $("#createCategoryOrder");
-    const $__RequestVerificationToken = $('input[name="__RequestVerificationToken"]');
+    const $__RequestVerificationToken = $("input[name=\"__RequestVerificationToken\"]");
     const $createMenuDialogModal = $("#createMenuDialogModal");
     const $formCreateSubCategory = $("#formCreateSubCategory");
     const $createSubcategoryCategoryId = $("#createSubcategoryCategoryId");
@@ -85,9 +85,9 @@
             }
         });
     });
-    $gridSearch.off("input").on("input", function () {
+    $gridSearch.off("input").on("input", function (event) {
         const grid = new MvcGrid(document.querySelector(".mvc-grid"));
-        grid.url.searchParams.set("wholeSearch", this.value);
+        grid.url.searchParams.set("wholeSearch", event.currentTarget.value);
         grid.reload();
     });
     function CreateCategory() {
@@ -201,7 +201,7 @@
                         $editCategoryIconPath.val(data.category.iconPath);
                         $editCategoryController.val(data.category.controller);
                         $editCategoryAction.val(data.category.action);
-                        $editCategoryRole.val(data.category.role).change();
+                        $editCategoryRole.val(data.category.role).trigger("change");
                         $editCategoryOrder.val(data.category.order);
                         $editCategoryDialogModal.modal({
                             keyboard: false,
@@ -232,7 +232,7 @@
                         $editSubCategoryDisplayName.val(data.subCategory.displayName);
                         $editSubCategoryIconPath.val(data.subCategory.iconPath);
                         $editSubCategoryAction.val(data.subCategory.action);
-                        $editSubCategoryRole.val(data.subCategory.role).change();
+                        $editSubCategoryRole.val(data.subCategory.role).trigger("change");
                         $editSubCategoryOrder.val(data.subCategory.order);
                         $editSubCategoryDialogModal.modal({
                             keyboard: false,
@@ -498,3 +498,4 @@
         return UpdateSubCategory();
     });
 })();
+//# sourceMappingURL=site.js.map

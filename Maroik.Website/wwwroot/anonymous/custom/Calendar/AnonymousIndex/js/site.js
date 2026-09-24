@@ -13,7 +13,7 @@
     const $otherCalendarEventPopupEndTimeZoneAllDayUnchecked = $("#otherCalendarEventPopupEndTimeZoneAllDayUnchecked");
     const $viewOtherCalendarEventPopup = $("#viewOtherCalendarEventPopup");
     const $closeOtherCalendarEventPopup = $("#closeOtherCalendarEventPopup");
-    const $__RequestVerificationToken = $('input[name="__RequestVerificationToken"]');
+    const $__RequestVerificationToken = $("input[name=\"__RequestVerificationToken\"]");
     const $viewCalendarEventId = $("#viewCalendarEventId");
     const $viewCalendarEventName = $("#viewCalendarEventName");
     const $viewCalendarEventAllDay = $("#viewCalendarEventAllDay");
@@ -46,7 +46,6 @@
     const maxDaysBeforeEvent = parseInt($("#maxDaysBeforeEvent").val(), 10);
     const maxWeeksBeforeEvent = parseInt($("#maxWeeksBeforeEvent").val(), 10);
     const reminderTimeIntervals = JSON.parse($("#reminderTimeIntervals").val() || "[]");
-    const defaultBeforeAt = $("#defaultReminderTimeOfDay").val() || "09:00";
     function base64ToBlob(base64, mime) {
         const byteCharacters = atob(base64);
         const byteNumbers = new Array(byteCharacters.length);
@@ -59,7 +58,7 @@
     function ReleaseObjectUrlsOnLoad(root) {
         if (!root)
             return;
-        root.querySelectorAll('img[src^="blob:"]').forEach(function (img) {
+        root.querySelectorAll("img[src^=\"blob:\"]").forEach(function (img) {
             const url = img.src;
             img.onload = img.onerror = function () {
                 URL.revokeObjectURL(url);
@@ -198,7 +197,7 @@
                         left: offset.left + eventEl.outerWidth(),
                         display: "block"
                     }).data("event-id", arg.event.id);
-                    $viewOtherCalendarEventPopup.focus();
+                    $viewOtherCalendarEventPopup.trigger("focus");
                     $(document).off("click.AnonymousIndex").on("click.AnonymousIndex", function (e) {
                         if (!$(e.target).closest($otherCalendarEventPopup).length && !$(e.target).closest(".fc-event").length) {
                             popup.hide();
@@ -247,8 +246,7 @@
                                         const contentType = imgTag.getAttribute("data-contenttype");
                                         if (base64Data && contentType) {
                                             const blob = base64ToBlob(base64Data, contentType);
-                                            const imgURL = URL.createObjectURL(blob);
-                                            imgTag.src = imgURL;
+                                            imgTag.src = URL.createObjectURL(blob);
                                             imgTag.removeAttribute("data-file");
                                             imgTag.removeAttribute("data-contenttype");
                                         }
@@ -372,7 +370,7 @@
                                         success: function (response) {
                                             if (response.result) {
                                                 $viewCalendarEventMyCalendar.empty();
-                                                $.each(response.tempOtherCalendars, function (index, tempOtherCalendar) {
+                                                $.each(response.tempOtherCalendars, function (_, tempOtherCalendar) {
                                                     $viewCalendarEventMyCalendar.append($("<option>", {
                                                         value: tempOtherCalendar.id,
                                                         text: tempOtherCalendar.name
@@ -427,7 +425,7 @@
             let paramValue = {
                 Calendars: []
             };
-            $otherCalendars.find('input[type="checkbox"]').filter(":checked").each(function () {
+            $otherCalendars.find("input[type=\"checkbox\"]").filter(":checked").each(function () {
                 let calendarsArray = [
                     { Id: Number($(this).closest("label").attr("id").replace("lblOtherCalendar", "")) }
                 ];
@@ -495,3 +493,4 @@
         }
     });
 })();
+//# sourceMappingURL=site.js.map

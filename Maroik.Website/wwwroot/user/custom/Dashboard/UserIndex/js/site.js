@@ -38,7 +38,7 @@
         $.ajax({
             url: "/Dashboard/UserUpdateDefaultMonetary",
             type: "POST",
-            headers: { "RequestVerificationToken": $('input[name="__RequestVerificationToken"]').val() },
+            headers: { "RequestVerificationToken": $("input[name=\"__RequestVerificationToken\"]").val() },
             dataType: "json",
             data: JSON.stringify({
                 DefaultMonetaryUnit: $("#monetaryUnit").find(":selected").val()
@@ -605,3 +605,4 @@
         });
     });
 })();
+//# sourceMappingURL=site.js.map

@@ -17,12 +17,12 @@
  * IIFE-wrapped, no `import` / `export`. Client checks are UX mirrors; the
  * controller re-validates everything.
  */
-(function () {
+(function() {
     // Authoritative in ServerSetting.MaxAttachedFileSizeBytes (server); mirrored here for form UX
     // only. Falls back to the shared per-role default (_Layout/site.ts) if the hidden field is
     // missing or unparseable.
     const maxFileSize = parseInt($("#maxAttachedFileSizeBytes").val() as string) || (window as any).MaroikDefaultMaxAttachedFileSizeBytes;
-    const $__RequestVerificationToken = $('input[name="__RequestVerificationToken"]');
+    const $__RequestVerificationToken = $("input[name=\"__RequestVerificationToken\"]");
     // Cached element references. Many exist only on one sub-view, so `.length` is
     // checked before use.
     const $writeBoardContent = $("#writeBoardContent");
@@ -67,20 +67,20 @@
 
     /**
      * Frees each rebuilt image's object URL once the image has loaded (or failed to): the browser keeps the Blob alive until then.
-     * Applied to the images as they are in the live page — the ones rebuilt in the parsed, detached copy are re-serialised into
+     * Applied to the images as they are in the live page — the ones rebuilt in the parsed, detached copy are re-serialized into
      * HTML, which drops any handler set on them.
      */
     function ReleaseObjectUrlsOnLoad(root: Element | undefined | null) {
         if (!root) return;
-        root.querySelectorAll<HTMLImageElement>('img[src^="blob:"]').forEach(function (img) {
+        root.querySelectorAll<HTMLImageElement>("img[src^=\"blob:\"]").forEach(function(img) {
             const url = img.src;
-            img.onload = img.onerror = function () {
+            img.onload = img.onerror = function() {
                 URL.revokeObjectURL(url);
             };
         });
     }
 
-    // Only the summernote UI language is needed here; `any` avoids typing a
+    // Only the Summernote UI language is needed here; `any` avoids typing a
     // one-off bag of `.val()` strings.
     const localizer: any = {
         IETFLanguageTag: $("#localizerIETFLanguageTag").val()
@@ -92,7 +92,7 @@
         height: 300,
         lang: localizer.IETFLanguageTag,
         callbacks: {
-            onImageUpload: function (files: any) {
+            onImageUpload: function(files: any) {
                 for (let i = 0; i < files.length; i++) {
                     WriteUploadImageFile(files[i]);
                 }
@@ -105,7 +105,7 @@
         height: 300,
         lang: localizer.IETFLanguageTag,
         callbacks: {
-            onImageUpload: function (files: any) {
+            onImageUpload: function(files: any) {
                 for (let i = 0; i < files.length; i++) {
                     EditUploadImageFile(files[i]);
                 }
@@ -130,8 +130,7 @@
             alert(errorMessage);
             (document.getElementById("writeUploadedFile") as HTMLInputElement).value = "";
             return false;
-        }
-        else {
+        } else {
             writeUploadedFile = obj.files[0];
         }
     }
@@ -145,8 +144,7 @@
             alert(errorMessage);
             (document.getElementById("editUploadedFile") as HTMLInputElement).value = "";
             return false;
-        }
-        else {
+        } else {
             editUploadedFile = obj.files[0];
         }
     }
@@ -161,8 +159,7 @@
         if (!$formWriteBoard.valid()) {
             $loading.hide();
             return false;
-        }
-        else {
+        } else {
             $loading.show();
             return true;
         }
@@ -173,8 +170,7 @@
         if (!$formEditBoard.valid()) {
             $loading.hide();
             return false;
-        }
-        else {
+        } else {
             $loading.show();
             return true;
         }
@@ -202,7 +198,7 @@
             contentType: false,
             dataType: "json",
             cache: false,
-            success: function (data) {
+            success: function(data) {
                 if (data.result) {
                     const imgURL = URL.createObjectURL(base64ToBlob(data.file.fileContents, data.file.contentType));
                     const imgNode = document.createElement("img");
@@ -213,14 +209,13 @@
 
                     $writeBoardContent.summernote("insertNode", imgNode);
 
-                    imgNode.onload = function () {
+                    imgNode.onload = function() {
                         URL.revokeObjectURL(imgURL);
                     };
-                    imgNode.onerror = function () {
+                    imgNode.onerror = function() {
                         URL.revokeObjectURL(imgURL);
                     };
-                }
-                else {
+                } else {
                     alert(data.errorMessage);
                 }
             }
@@ -243,7 +238,7 @@
             contentType: false,
             dataType: "json",
             cache: false,
-            success: function (data) {
+            success: function(data) {
                 if (data.result) {
                     const imgURL = URL.createObjectURL(base64ToBlob(data.file.fileContents, data.file.contentType));
                     const imgNode = document.createElement("img");
@@ -254,14 +249,13 @@
 
                     $editBoardContent.summernote("insertNode", imgNode);
 
-                    imgNode.onload = function () {
+                    imgNode.onload = function() {
                         URL.revokeObjectURL(imgURL);
                     };
-                    imgNode.onerror = function () {
+                    imgNode.onerror = function() {
                         URL.revokeObjectURL(imgURL);
                     };
-                }
-                else {
+                } else {
                     alert(data.errorMessage);
                 }
             }
@@ -299,12 +293,11 @@
             data: formData,
             contentType: false,
             processData: false,
-            success: function (data) {
+            success: function(data) {
                 if (data.result) {
                     alert(data.message);
                     window.location.href = "/Forum/FreeForum";
-                }
-                else {
+                } else {
                     toastr.error(data.error);
                     $loading.hide();
                 }
@@ -316,7 +309,7 @@
 
     /**
      * Submits an edit to an existing post. Same multipart shape as `WriteBoard`
-     * plus the board `Id`; on success returns to that post's detail view.
+     * plus the board `ID`; on success returns to that post's detail view.
      *
      * @param editBoardId    id of the post being edited (from a `data-*` attribute).
      * @param editCurrentPage list page to return to.
@@ -346,12 +339,11 @@
             data: formData,
             contentType: false,
             processData: false,
-            success: function (data) {
+            success: function(data) {
                 if (data.result) {
                     alert(data.message);
                     window.location.href = "/Forum/FreeForum?method=detail" + "&boardId=" + editBoardId + "&page=" + editCurrentPage;
-                }
-                else {
+                } else {
                     toastr.error(data.error);
                     $loading.hide();
                 }
@@ -386,7 +378,7 @@
             dataType: "json",
             data: null as any,
             contentType: "application/json; charset=utf-8",
-            success: function (data) {
+            success: function(data) {
                 if (data.result) {
 
                     let paramValue = JSON.stringify({
@@ -400,19 +392,17 @@
                         dataType: "json",
                         data: paramValue,
                         contentType: "application/json; charset=utf-8",
-                        success: function (data) {
+                        success: function(data) {
                             if (data.result) {
                                 $confirmDeleteBoardDialogModal.modal("hide");
                                 alert(data.message);
                                 window.location.href = "/Forum/FreeForum";
-                            }
-                            else {
+                            } else {
                                 toastr.error(data.error);
                             }
                         }
                     });
-                }
-                else {
+                } else {
                     toastr.error(data.error);
                 }
             }
@@ -446,11 +436,10 @@
             dataType: "json",
             data: paramValue,
             contentType: "application/json; charset=utf-8",
-            success: function (data) {
+            success: function(data) {
                 if (data.result) {
                     window.location.href = "/Forum/FreeForum?method=detail" + "&boardId=" + data.boardId + "&page=" + data.page;
-                }
-                else {
+                } else {
                     toastr.error(data.error);
                 }
             }
@@ -458,6 +447,7 @@
 
         return false;
     }
+
     /** Deletes one comment by id, then reloads the detail view. */
     function DeleteComment(commentId?: string, boardId?: string, page?: string) {
         $.ajax({
@@ -467,11 +457,10 @@
             dataType: "json",
             data: null as any,
             contentType: "application/json; charset=utf-8",
-            success: function (data) {
+            success: function(data) {
                 if (data.result) {
                     window.location.href = "/Forum/FreeForum?method=detail" + "&boardId=" + boardId + "&page=" + page;
-                }
-                else {
+                } else {
                     toastr.error(data.error);
                 }
             }
@@ -482,74 +471,74 @@
     // Every handler is cleared with `.off` first so a re-run cannot double-bind.
     // Buttons that just navigate carry their target in a `data-*` attribute.
 
-    $btnFreeForumShowWriteBoardLoading.off("click").on("click", function () {
+    $btnFreeForumShowWriteBoardLoading.off("click").on("click", function() {
         return ShowWriteBoardLoading();
     });
 
-    $btnFreeForumModify.off("click").on("click", function () {
+    $btnFreeForumModify.off("click").on("click", function() {
         location.href = $(this).attr("data-link")!;
     });
 
-    $btnFreeForumConfirmDeleteBoard.off("click").on("click", function () {
+    $btnFreeForumConfirmDeleteBoard.off("click").on("click", function() {
         ConfirmDeleteBoard();
     });
 
-    $btnFreeForumList.off("click").on("click", function () {
+    $btnFreeForumList.off("click").on("click", function() {
         location.href = $(this).attr("data-link")!;
     });
 
-    $btnFreeForumSubmitModify.off("click").on("click", function () {
+    $btnFreeForumSubmitModify.off("click").on("click", function() {
         return ShowEditBoardLoading();
     });
 
-    $btnFreeForumWrite.off("click").on("click", function () {
+    $btnFreeForumWrite.off("click").on("click", function() {
         location.href = "/Forum/FreeForum?method=write";
     });
 
-    $btnFreeForumSearchBoard.off("click").on("click", function () {
+    $btnFreeForumSearchBoard.off("click").on("click", function() {
         SearchBoard();
     });
 
-    $btnFreeForumDeleteBoard.off("click").on("click", function () {
+    $btnFreeForumDeleteBoard.off("click").on("click", function() {
         DeleteBoard($(this).attr("data-boardId"));
     });
 
     // Enter in the search box runs the search.
-    $btnFreeForumSearchText.off("keypress").on("keypress", function (event) {
+    $btnFreeForumSearchText.off("keydown").on("keydown", function(event) {
         if (event.key === "Enter") {
             SearchBoard();
         }
     });
 
     // Per-comment delete links (a NodeList, hence the class selector).
-    $(".aFreeForumDeleteComment").off("click").on("click", function (event) {
+    $(".aFreeForumDeleteComment").off("click").on("click", function(event) {
         event.preventDefault();
         DeleteComment($(this).attr("data-commentId"), $(this).attr("data-detailBoardId"), $(this).attr("data-detailCurrentPage"));
     });
 
-    $formWriteFreeComment.off("submit").on("submit", function () {
+    $formWriteFreeComment.off("submit").on("submit", function() {
         return WriteFreeComment($(this).attr("data-detailBoardId"), $(this).attr("data-detailCurrentPage"), $(this).attr("data-errorMessage"));
     });
 
-    $formWriteBoard.off("submit").on("submit", function () {
+    $formWriteBoard.off("submit").on("submit", function() {
         return WriteBoard();
     });
 
-    $formEditBoard.off("submit").on("submit", function () {
+    $formEditBoard.off("submit").on("submit", function() {
         return EditBoard($(this).attr("data-editBoardId"), $(this).attr("data-editCurrentPage"));
     });
 
     // Attachment inputs: validate + stash on selection.
-    $writeUploadedFile.off("change").on("change", function (this: HTMLInputElement) {
-        return WriteUploadFile(this, $(this).attr("data-errorMessage"));
+    $writeUploadedFile.off("change").on("change", function(event) {
+        return WriteUploadFile(event.currentTarget as HTMLInputElement, $(event.currentTarget).attr("data-errorMessage"));
     });
 
-    $editUploadedFile.off("change").on("change", function (this: HTMLInputElement) {
-        return EditUploadFile(this, $(this).attr("data-errorMessage"));
+    $editUploadedFile.off("change").on("change", function(event) {
+        return EditUploadFile(event.currentTarget as HTMLInputElement, $(event.currentTarget).attr("data-errorMessage"));
     });
 
     // --- On ready: rehydrate embedded images + wire attachment download ---
-    $(function () {
+    $(function() {
         // Detail view: the body is rendered hidden with base64 `data-file`
         // images; swap each to an object URL in a detached document, then reveal.
         if ($detailBoardContent.length > 0 && $detailBoardContent.is(":hidden")) {
@@ -558,17 +547,13 @@
 
             const imgTags = htmlDoc.querySelectorAll<HTMLImageElement>("img[data-file]");
 
-            imgTags.forEach(function (imgTag) {
+            imgTags.forEach(function(imgTag) {
                 const base64Data = imgTag.getAttribute("data-file");
                 const contentType = imgTag.getAttribute("data-contenttype");
 
                 if (base64Data && contentType) {
                     const blob = base64ToBlob(base64Data, contentType);
-                    const imgURL = URL.createObjectURL(blob);
-
-                    imgTag.src = imgURL;
-
-
+                    imgTag.src = URL.createObjectURL(blob);
                     imgTag.removeAttribute("data-file");
                     imgTag.removeAttribute("data-contenttype");
                 }
@@ -579,24 +564,20 @@
             ReleaseObjectUrlsOnLoad($detailBoardContent[0]);
             $detailBoardContent.show();
         } else if ($editBoardContent.length > 0 && $divEditBoardContent.is(":hidden")) {
-            // Edit view: same rehydration, but the HTML lives inside summernote
-            // (`summernote('code')` gets/sets it) rather than a plain element.
+            // Edit view: same rehydration, but the HTML lives inside Summernote
+            // (`Summernote('code')` gets/sets it) rather than a plain element.
             const parser = new DOMParser();
             const htmlDoc = parser.parseFromString($editBoardContent.summernote("code"), "text/html");
 
             const imgTags = htmlDoc.querySelectorAll<HTMLImageElement>("img[data-file]");
 
-            imgTags.forEach(function (imgTag) {
+            imgTags.forEach(function(imgTag) {
                 const base64Data = imgTag.getAttribute("data-file");
                 const contentType = imgTag.getAttribute("data-contenttype");
 
                 if (base64Data && contentType) {
                     const blob = base64ToBlob(base64Data, contentType);
-                    const imgURL = URL.createObjectURL(blob);
-
-                    imgTag.src = imgURL;
-
-
+                    imgTag.src = URL.createObjectURL(blob);
                     imgTag.removeAttribute("data-file");
                     imgTag.removeAttribute("data-contenttype");
                 }
@@ -611,11 +592,11 @@
         // Attachment download link (detail or edit view): base64 -> Blob -> a
         // throwaway `<a download>` that is clicked and cleaned up.
         if ($aDetailBoardAttachedFile.length > 0) {
-            $aDetailBoardAttachedFile.off("click").on("click", function (event) {
+            $aDetailBoardAttachedFile.off("click").on("click", function(event) {
                 event.preventDefault();
                 let base64Data = $(this).attr("data-file");
                 let contentType = $(this).attr("data-contenttype");
-                let name = $(this).attr("data-name")
+                let name = $(this).attr("data-name");
 
                 if (base64Data && contentType) {
                     let blob = base64ToBlob(base64Data, contentType);
@@ -632,11 +613,11 @@
                 }
             });
         } else if ($aEditBoardAttachedFile.length > 0) {
-            $aEditBoardAttachedFile.off("click").on("click", function (event) {
+            $aEditBoardAttachedFile.off("click").on("click", function(event) {
                 event.preventDefault();
                 let base64Data = $(this).attr("data-file");
                 let contentType = $(this).attr("data-contenttype");
-                let name = $(this).attr("data-name")
+                let name = $(this).attr("data-name");
 
                 if (base64Data && contentType) {
                     let blob = base64ToBlob(base64Data, contentType);

@@ -19,7 +19,7 @@ namespace Maroik.Worker;
 internal static class WorkerHost
 {
     /// <summary>Broker address used when <c>ConnectionStrings:RabbitMQ</c> is not configured (a local development broker).</summary>
-    internal const string DefaultRabbitMqConnectionString = "amqp://guest:guest@localhost:5672/";
+    private const string DefaultRabbitMqConnectionString = "amqp://guest:guest@localhost:5672/";
 
     /// <summary>Builds (does not start) the worker host from the command line / environment / appsettings in <paramref name="args"/>.</summary>
     internal static IHost Build(string[] args)

@@ -2,6 +2,7 @@
 using System.ComponentModel.DataAnnotations;
 using Maroik.Core.Domain.Finance;
 using Maroik.Website.Mappings;
+// ReSharper disable PropertyCanBeMadeInitOnly.Global
 
 namespace Maroik.Website.Models.ViewModels.AccountBook;
 
@@ -59,7 +60,7 @@ public class ExpenditureInputViewModel : IValidatableObject
     /// <summary>
     /// Name of the asset (product) that was debited for this expenditure. Required only when
     /// <see cref="SubClass"/> is one of <see cref="ExpenditureClassPolicy.DepositAssetSubClasses"/>
-    /// (a transfer-type sub-class) — the domain only needs a deposit asset then; see
+    /// (a transfer-type subclass) — the domain only needs a deposit asset then; see
     /// <see cref="Validate"/>.
     /// </summary>
     [Display(Name = "MyDepositAsset")]

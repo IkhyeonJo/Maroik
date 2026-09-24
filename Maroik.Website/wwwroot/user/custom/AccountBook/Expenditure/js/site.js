@@ -21,7 +21,7 @@
     const $createExpenditurePaymentMethod = $("#createExpenditurePaymentMethod");
     const $createExpenditureNote = $("#createExpenditureNote");
     const $createExpenditureMyDepositAsset = $("#createExpenditureMyDepositAsset");
-    const $__RequestVerificationToken = $('input[name="__RequestVerificationToken"]');
+    const $__RequestVerificationToken = $("input[name=\"__RequestVerificationToken\"]");
     const failedToLoadAmountLabelMessage = $("#localizerFailedToLoadAmountLabel").val();
     const $createExpenditureDialogModal = $("#createExpenditureDialogModal");
     const $editExpenditureId = $("#editExpenditureId");
@@ -55,7 +55,7 @@
             ? valueToSelect
             : allowedValues[0];
         if (target != null) {
-            $select.val(target).change();
+            $select.val(target).trigger("change");
         }
     }
     function ToggleCreateExpenditureMyDepositAsset(subClassValue) {
@@ -129,9 +129,6 @@
         showMonthAfterYear: true,
         yearSuffix: localizer.YearSuffix
     });
-    const currentYear = $createExpenditureDate.val().split("-")[0];
-    const currentMonth = $createExpenditureDate.val().split("-")[1];
-    const currentDay = $createExpenditureDate.val().split("-")[2];
     $(function () {
         $createExpenditureTabs.tabs();
         $editExpenditureTabs.tabs();
@@ -189,9 +186,9 @@
             }
         });
     });
-    $gridSearch.off("input").on("input", function () {
+    $gridSearch.off("input").on("input", function (event) {
         const grid = new MvcGrid(document.querySelector(".mvc-grid"));
-        grid.url.searchParams.set("wholeSearch", this.value);
+        grid.url.searchParams.set("wholeSearch", event.currentTarget.value);
         grid.reload();
     });
     function CreateFormShowExpenditureSubClassBySelectedExpenditureMainClass(createExpenditureMainClass) {
@@ -271,22 +268,22 @@
             success: function (data) {
                 if (data.result) {
                     $editExpenditureId.val(data.expenditure.id);
-                    $editExpenditureMainClass.val(data.expenditure.mainClass).change();
+                    $editExpenditureMainClass.val(data.expenditure.mainClass).trigger("change");
                     ApplyAllowedOptions($editExpenditureSubClass, expenditureSubClassMap[data.expenditure.mainClass] || [], data.expenditure.subClass);
                     ToggleEditExpenditureMyDepositAsset(data.expenditure.subClass);
                     $editExpenditureContent.val(data.expenditure.content);
                     $editExpenditureAmount.val(data.expenditure.amount);
                     $editExpenditureDate.val(data.expenditure.created.split("T")[0]);
-                    $editExpenditureHour.val(parseInt(data.expenditure.created.split("T")[1].substring(0, 2))).change();
-                    $editExpenditureMinute.val(parseInt(data.expenditure.created.split("T")[1].substring(3, 5))).change();
-                    $editExpenditureSecond.val(parseInt(data.expenditure.created.split("T")[1].substring(6, 8))).change();
-                    $editExpenditurePaymentMethod.val(data.expenditure.paymentMethod).change();
+                    $editExpenditureHour.val(parseInt(data.expenditure.created.split("T")[1].substring(0, 2))).trigger("change");
+                    $editExpenditureMinute.val(parseInt(data.expenditure.created.split("T")[1].substring(3, 5))).trigger("change");
+                    $editExpenditureSecond.val(parseInt(data.expenditure.created.split("T")[1].substring(6, 8))).trigger("change");
+                    $editExpenditurePaymentMethod.val(data.expenditure.paymentMethod).trigger("change");
                     $editExpenditureNote.val(data.expenditure.note);
                     if (data.expenditure.myDepositAsset) {
-                        $editExpenditureMyDepositAsset.val(data.expenditure.myDepositAsset).change();
+                        $editExpenditureMyDepositAsset.val(data.expenditure.myDepositAsset).trigger("change");
                     }
                     else {
-                        $editExpenditureMyDepositAsset.val(data.expenditure.paymentMethod).change();
+                        $editExpenditureMyDepositAsset.val(data.expenditure.paymentMethod).trigger("change");
                     }
                     $editExpenditureDialogModal.modal({
                         keyboard: false,
@@ -501,25 +498,26 @@
     $formEditExpenditure.off("submit").on("submit", function () {
         return UpdateExpenditure();
     });
-    $createExpenditureMainClass.off("change").on("change", function () {
-        CreateFormShowExpenditureSubClassBySelectedExpenditureMainClass(this);
+    $createExpenditureMainClass.off("change").on("change", function (event) {
+        CreateFormShowExpenditureSubClassBySelectedExpenditureMainClass(event.currentTarget);
     });
-    $createExpenditureSubClass.off("change").on("change", function () {
-        CreateFormShowExpenditureDivCreateExpenditureMyDepositAssetBySelectedExpenditureSubClass(this);
+    $createExpenditureSubClass.off("change").on("change", function (event) {
+        CreateFormShowExpenditureDivCreateExpenditureMyDepositAssetBySelectedExpenditureSubClass(event.currentTarget);
     });
-    $editExpenditureMainClass.off("change").on("change", function () {
-        EditFormShowExpenditureSubClassBySelectedExpenditureMainClass(this);
+    $editExpenditureMainClass.off("change").on("change", function (event) {
+        EditFormShowExpenditureSubClassBySelectedExpenditureMainClass(event.currentTarget);
     });
-    $editExpenditureSubClass.off("change").on("change", function () {
-        EditFormShowExpenditureDivCreateExpenditureMyDepositAssetBySelectedExpenditureSubClass(this);
+    $editExpenditureSubClass.off("change").on("change", function (event) {
+        EditFormShowExpenditureDivCreateExpenditureMyDepositAssetBySelectedExpenditureSubClass(event.currentTarget);
     });
-    $createExpenditurePaymentMethod.off("change").on("change", function () {
-        ChangeCreateExpenditureAmountLabel(this.value);
+    $createExpenditurePaymentMethod.off("change").on("change", function (event) {
+        ChangeCreateExpenditureAmountLabel(event.currentTarget.value);
     });
-    $editExpenditurePaymentMethod.off("change").on("change", function () {
-        ChangeEditExpenditureAmountLabel(this.value);
+    $editExpenditurePaymentMethod.off("change").on("change", function (event) {
+        ChangeEditExpenditureAmountLabel(event.currentTarget.value);
     });
     $(function () {
         ChangeCreateExpenditureAmountLabel($createExpenditurePaymentMethod.find("option:selected").val());
     });
 })();
+//# sourceMappingURL=site.js.map

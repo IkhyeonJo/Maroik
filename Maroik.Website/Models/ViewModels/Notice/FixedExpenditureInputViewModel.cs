@@ -1,6 +1,7 @@
 // ReSharper disable UnusedAutoPropertyAccessor.Global
 using System.ComponentModel.DataAnnotations;
 using Maroik.Core.Domain.Finance;
+// ReSharper disable PropertyCanBeMadeInitOnly.Global
 
 namespace Maroik.Website.Models.ViewModels.Notice;
 
@@ -64,7 +65,7 @@ public class FixedExpenditureInputViewModel : IValidatableObject
     /// <summary>
     /// Name of the asset (product) that is debited for this recurring expenditure. Required only
     /// when <see cref="SubClass"/> is one of
-    /// <see cref="ExpenditureClassPolicy.DepositAssetSubClasses"/> (a transfer-type sub-class) —
+    /// <see cref="ExpenditureClassPolicy.DepositAssetSubClasses"/> (a transfer-type subclass) —
     /// the domain only needs a deposit asset then; see <see cref="Validate"/>.
     /// </summary>
     [Display(Name = "MyDepositAsset")]

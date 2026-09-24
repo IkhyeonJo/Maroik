@@ -47,7 +47,7 @@
         $.ajax({
             url: "/Dashboard/CultureManagement",
             type: "POST",
-            headers: { "RequestVerificationToken": $('input[name="__RequestVerificationToken"]').val() },
+            headers: { "RequestVerificationToken": $("input[name=\"__RequestVerificationToken\"]").val() },
             dataType: "json",
             data: paramValue,
             contentType: "application/json; charset=utf-8",
@@ -78,3 +78,4 @@
         ShowResetPasswordLoading();
     });
 })();
+//# sourceMappingURL=site.js.map

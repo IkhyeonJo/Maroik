@@ -10,7 +10,7 @@
         $.ajax({
             url: "/Dashboard/CultureManagement",
             type: "POST",
-            headers: { "RequestVerificationToken": $('input[name="__RequestVerificationToken"]').val() },
+            headers: { "RequestVerificationToken": $("input[name=\"__RequestVerificationToken\"]").val() },
             dataType: "json",
             data: paramValue,
             contentType: "application/json; charset=utf-8",
@@ -33,22 +33,23 @@
         if ((settings.type || "GET").toUpperCase() !== "POST")
             return;
         inFlightPostCount++;
-        $('button[type="submit"], input[type="submit"]').prop("disabled", true);
+        $("button[type=\"submit\"], input[type=\"submit\"]").prop("disabled", true);
     });
     $(document).off("ajaxComplete._Layout").on("ajaxComplete._Layout", function (_event, _xhr, settings) {
         if ((settings.type || "GET").toUpperCase() !== "POST")
             return;
         inFlightPostCount = Math.max(0, inFlightPostCount - 1);
         if (inFlightPostCount === 0) {
-            $('button[type="submit"], input[type="submit"]').prop("disabled", false);
+            $("button[type=\"submit\"], input[type=\"submit\"]").prop("disabled", false);
         }
     });
     $(document).off("submit._Layout", "form").on("submit._Layout", "form", function () {
-        $(this).find('button[type="submit"], input[type="submit"]').prop("disabled", true);
+        $(this).find("button[type=\"submit\"], input[type=\"submit\"]").prop("disabled", true);
     });
     $(window).off("pageshow._Layout").on("pageshow._Layout", function () {
         inFlightPostCount = 0;
-        $('button[type="submit"], input[type="submit"]').prop("disabled", false);
+        $("button[type=\"submit\"], input[type=\"submit\"]").prop("disabled", false);
         $("#loading").hide();
     });
 })();
+//# sourceMappingURL=site.js.map
