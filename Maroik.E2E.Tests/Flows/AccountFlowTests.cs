@@ -16,7 +16,9 @@ namespace Maroik.E2E.Tests.Flows;
 public class AccountFlowTests : E2ETestBase
 {
     /// <summary>Initializes a new instance of AccountFlowTests, sharing the E2ESharedFixture fixture across the tests in this class.</summary>
+ #pragma warning disable IDE0290
     public AccountFlowTests(E2ESharedFixture fixture) : base(fixture) { }
+ #pragma warning restore IDE0290
 
     // -- Login ----------------------------------------------------------------
 
@@ -71,7 +73,7 @@ public class AccountFlowTests : E2ETestBase
 
     // -- ConsentForm ----------------------------------------------------------
 
-    /// <summary>Verifies that <c>ConsentFormPage</c> loads with non empty body.</summary>
+    /// <summary>Verifies that <c>ConsentFormPage</c> loads with non-empty body.</summary>
     [Fact]
     public async Task ConsentFormPage_Loads_WithNonEmptyBody()
     {
@@ -110,16 +112,6 @@ public class AccountFlowTests : E2ETestBase
         var page = await NewPageAsync();
         string email = $"cooldown-{Guid.NewGuid():N}"[..20] + "@test.com";
 
-        async Task SubmitAsync()
-        {
-            await GotoAsync(page, "/Account/ForgotPassword");
-            await page.Locator("input[name='Email']").FillAsync(email);
-            await page.RunAndWaitForResponseAsync(
-                () => page.Locator("#btnRequestNewPassword").ClickAsync(),
-                response => response.Request.Method == "POST" && response.Url.Contains("/Account/ForgotPassword", StringComparison.Ordinal));
-            await page.WaitForLoadStateAsync(LoadState.NetworkIdle);
-        }
-
         // First request: accepted (the address is unknown, so nothing is mailed) -> confirmation page, no notice.
         await SubmitAsync();
         await Assertions.Expect(page.Locator("#forgotPasswordForm")).ToHaveCountAsync(0);
@@ -129,6 +121,17 @@ public class AccountFlowTests : E2ETestBase
         await Assertions.Expect(page.Locator("#forgotPasswordForm")).ToBeVisibleAsync();
         await Assertions.Expect(page.Locator("#forgotPasswordError"))
             .ToContainTextAsync("잠시 후에 다시 이메일을 요청해 주세요.");
+        return;
+
+        async Task SubmitAsync()
+        {
+            await GotoAsync(page, "/Account/ForgotPassword");
+            await page.Locator("input[name='Email']").FillAsync(email);
+            await page.RunAndWaitForResponseAsync(
+                () => page.Locator("#btnRequestNewPassword").ClickAsync(),
+                response => response.Request.Method == "POST" && response.Url.Contains("/Account/ForgotPassword", StringComparison.Ordinal));
+            await page.WaitForLoadStateAsync(LoadState.NetworkIdle);
+        }
     }
 
     /// <summary>Opening the form without a pending notice shows no error text.</summary>
@@ -194,18 +197,20 @@ public class AccountFlowTests : E2ETestBase
         string token = await page.Locator("input[name='__RequestVerificationToken']").First.InputValueAsync();
 
         await page.EvaluateAsync(
-            @"(token) => {
-                const form = document.createElement('form');
-                form.method = 'POST';
-                form.action = '/Account/Logout';
-                const input = document.createElement('input');
-                input.type = 'hidden';
-                input.name = '__RequestVerificationToken';
-                input.value = token;
-                form.appendChild(input);
-                document.body.appendChild(form);
-                form.submit();
-            }",
+            """
+            (token) => {
+                            const form = document.createElement('form');
+                            form.method = 'POST';
+                            form.action = '/Account/Logout';
+                            const input = document.createElement('input');
+                            input.type = 'hidden';
+                            input.name = '__RequestVerificationToken';
+                            input.value = token;
+                            form.appendChild(input);
+                            document.body.appendChild(form);
+                            form.submit();
+                        }
+            """,
             token);
 
         // RedirectToAction("AnonymousIndex","Dashboard") collapses to "/" (default-route defaults);

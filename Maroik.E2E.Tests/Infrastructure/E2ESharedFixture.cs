@@ -1,4 +1,6 @@
 using Microsoft.Playwright;
+// ReSharper disable ClassNeverInstantiated.Global
+// ReSharper disable MethodHasAsyncOverload
 
 namespace Maroik.E2E.Tests.Infrastructure;
 
@@ -44,10 +46,10 @@ public sealed class E2ESharedFixture : IAsyncLifetime
     /// installed Google Chrome), <c>chromium</c> (Playwright's bundled build) or <c>firefox</c>.
     /// CI runs the suite once per browser.
     /// </summary>
-    public const string BrowserEnvironmentVariable = "E2E_BROWSER";
+    private const string BrowserEnvironmentVariable = "E2E_BROWSER";
 
     /// <summary>The browser this run drives, from <see cref="BrowserEnvironmentVariable"/>.</summary>
-    public static string BrowserName =>
+    private static string BrowserName =>
         Environment.GetEnvironmentVariable(BrowserEnvironmentVariable) is { Length: > 0 } name
             ? name.Trim().ToLowerInvariant()
             : "chrome";

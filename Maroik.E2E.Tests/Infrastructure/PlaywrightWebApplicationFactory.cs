@@ -1,4 +1,3 @@
-using Maroik.Core.PostgreSQL.Data;
 using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Hosting.Server;
@@ -27,7 +26,6 @@ namespace Maroik.E2E.Tests.Infrastructure;
 /// </summary>
 public sealed class PlaywrightWebApplicationFactory : WebApplicationFactory<Program>
 {
-    private readonly string _connectionString;
     private readonly Dictionary<string, string?> _configOverrides;
     private IHost? _realHost;
 
@@ -39,7 +37,7 @@ public sealed class PlaywrightWebApplicationFactory : WebApplicationFactory<Prog
     /// </param>
     public PlaywrightWebApplicationFactory(string connectionString)
     {
-        _connectionString = connectionString;
+        var s = connectionString;
 
         // The schema uses `timestamp without time zone`; Npgsql needs the legacy switch to accept
         // Utc/Local DateTime values. Program.cs sets it too, but the container may be queried
@@ -71,7 +69,7 @@ public sealed class PlaywrightWebApplicationFactory : WebApplicationFactory<Prog
             ["FileStorage:BaseUrl"] = "http://localhost:5001",
             // Real seeded PostgreSQL container — AddRepositoryContext() in Program.cs picks
             // this up and wires the DbContext to Npgsql, so no service-level DB swap is needed.
-            ["ConnectionStrings:DefaultConnection"] = _connectionString,
+            ["ConnectionStrings:DefaultConnection"] = s,
             ["ConnectionStrings:Valkey"] = ""
         };
 

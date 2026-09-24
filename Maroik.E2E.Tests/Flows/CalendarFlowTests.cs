@@ -12,9 +12,11 @@ namespace Maroik.E2E.Tests.Flows;
 public class CalendarFlowTests : E2ETestBase
 {
     /// <summary>Initializes a new instance of CalendarFlowTests, sharing the E2ESharedFixture fixture across the tests in this class.</summary>
+ #pragma warning disable IDE0290
     public CalendarFlowTests(E2ESharedFixture fixture) : base(fixture) { }
+ #pragma warning restore IDE0290
 
-    /// <summary>Verifies that <c>AnonymousCalendar</c> loads with non empty body.</summary>
+    /// <summary>Verifies that <c>AnonymousCalendar</c> loads with non-empty body.</summary>
     [Fact]
     public async Task AnonymousCalendar_Loads_WithNonEmptyBody()
     {
@@ -25,7 +27,7 @@ public class CalendarFlowTests : E2ETestBase
         Assert.False(string.IsNullOrWhiteSpace(bodyText));
     }
 
-    /// <summary>Verifies that <c>AnonymousCalendar</c> has html body element.</summary>
+    /// <summary>Verifies that <c>AnonymousCalendar</c> has HTML body element.</summary>
     [Fact]
     public async Task AnonymousCalendar_HasHtmlBodyElement()
     {
@@ -35,7 +37,7 @@ public class CalendarFlowTests : E2ETestBase
         await Assertions.Expect(page.Locator("body")).ToBeVisibleAsync();
     }
 
-    /// <summary>Verifies that <c>AnonymousCalendar</c> has non empty title.</summary>
+    /// <summary>Verifies that <c>AnonymousCalendar</c> has non-empty title.</summary>
     [Fact]
     public async Task AnonymousCalendar_HasNonEmptyTitle()
     {

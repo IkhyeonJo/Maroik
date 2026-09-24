@@ -17,7 +17,7 @@ public sealed record SeededAccount(string Email, string Password, string Nicknam
 public sealed class E2EDatabase(string connectionString)
 {
     /// <summary>The password every seeded account signs in with.</summary>
-    public const string DefaultPassword = "E2ePassw0rd!";
+    private const string DefaultPassword = "E2ePassw0rd!";
 
     private static string NewKey() => Guid.NewGuid().ToString("N")[..10];
 

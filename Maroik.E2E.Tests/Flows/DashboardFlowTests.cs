@@ -12,11 +12,13 @@ namespace Maroik.E2E.Tests.Flows;
 public class DashboardFlowTests : E2ETestBase
 {
     /// <summary>Initializes a new instance of DashboardFlowTests, sharing the E2ESharedFixture fixture across the tests in this class.</summary>
+ #pragma warning disable IDE0290
     public DashboardFlowTests(E2ESharedFixture fixture) : base(fixture) { }
+ #pragma warning restore IDE0290
 
     // -- Anonymous dashboard --------------------------------------------------
 
-    /// <summary>Verifies that <c>AnonymousDashboard</c> loads with non empty body.</summary>
+    /// <summary>Verifies that <c>AnonymousDashboard</c> loads with non-empty body.</summary>
     [Fact]
     public async Task AnonymousDashboard_Loads_WithNonEmptyBody()
     {
@@ -43,7 +45,7 @@ public class DashboardFlowTests : E2ETestBase
         Assert.False(string.IsNullOrWhiteSpace(bodyText));
     }
 
-    /// <summary>Verifies that <c>AnonymousDashboard</c> has html body element.</summary>
+    /// <summary>Verifies that <c>AnonymousDashboard</c> has HTML body element.</summary>
     [Fact]
     public async Task AnonymousDashboard_HasHtmlBodyElement()
     {
@@ -54,7 +56,7 @@ public class DashboardFlowTests : E2ETestBase
         await Assertions.Expect(page.Locator("body")).ToBeVisibleAsync();
     }
 
-    /// <summary>Verifies that <c>AnonymousDashboard</c> has non empty page title.</summary>
+    /// <summary>Verifies that <c>AnonymousDashboard</c> has non-empty page title.</summary>
     [Fact]
     public async Task AnonymousDashboard_HasNonEmptyPageTitle()
     {

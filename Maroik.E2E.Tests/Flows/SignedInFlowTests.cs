@@ -12,7 +12,9 @@ namespace Maroik.E2E.Tests.Flows;
 public class SignedInFlowTests : E2ETestBase
 {
     /// <summary>Initializes a new instance of SignedInFlowTests, sharing the E2ESharedFixture fixture across the tests in this class.</summary>
+ #pragma warning disable IDE0290
     public SignedInFlowTests(E2ESharedFixture fixture) : base(fixture) { }
+ #pragma warning restore IDE0290
 
     // -- Sign in ----------------------------------------------------------------
 
@@ -20,7 +22,7 @@ public class SignedInFlowTests : E2ETestBase
     [Fact]
     public async Task Login_AsUser_LandsOnTheUserDashboard()
     {
-        var (page, _) = await NewSignedInPageAsync("User");
+        var (page, _) = await NewSignedInPageAsync();
 
         await page.WaitForURLAsync(url => url.Contains("/Dashboard/UserIndex", StringComparison.Ordinal),
             new PageWaitForURLOptions { Timeout = 30_000 });
@@ -80,7 +82,7 @@ public class SignedInFlowTests : E2ETestBase
     [Fact]
     public async Task Logout_EndsTheSession()
     {
-        var (page, _) = await NewSignedInPageAsync("User");
+        var (page, _) = await NewSignedInPageAsync();
         await GotoAsync(page, "/AccountBook/Asset");
         await Assertions.Expect(page.Locator("h3.card-title")).ToBeVisibleAsync();
 
@@ -121,7 +123,7 @@ public class SignedInFlowTests : E2ETestBase
     [InlineData("/Management/Menu")]
     public async Task AdminPage_AsUser_RedirectsAway(string path)
     {
-        var (page, _) = await NewSignedInPageAsync("User");
+        var (page, _) = await NewSignedInPageAsync();
 
         await GotoAsync(page, path);
 

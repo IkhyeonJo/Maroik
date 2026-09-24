@@ -12,7 +12,9 @@ namespace Maroik.E2E.Tests.Flows;
 public class ManagementFlowTests : E2ETestBase
 {
     /// <summary>Initializes a new instance of ManagementFlowTests, sharing the E2ESharedFixture fixture across the tests in this class.</summary>
+ #pragma warning disable IDE0290
     public ManagementFlowTests(E2ESharedFixture fixture) : base(fixture) { }
+ #pragma warning restore IDE0290
 
     // -- Profile (User) ------------------------------------------------------------
 
@@ -20,7 +22,7 @@ public class ManagementFlowTests : E2ETestBase
     [Fact]
     public async Task Profile_ShowsTheSignedInUsersDetails()
     {
-        var (page, account) = await NewSignedInPageAsync("User");
+        var (page, account) = await NewSignedInPageAsync();
 
         await GotoAsync(page, "/Management/Profile");
 
@@ -36,7 +38,7 @@ public class ManagementFlowTests : E2ETestBase
     public async Task AdminAccount_Grid_ListsAccounts()
     {
         var (page, _) = await NewSignedInPageAsync("Admin");
-        SeededAccount user = await Db.SeedAccountAsync("User");
+        SeededAccount user = await Db.SeedAccountAsync();
 
         await GotoAsync(page, "/Management/Account");
 
@@ -47,7 +49,7 @@ public class ManagementFlowTests : E2ETestBase
         await Assertions.Expect(page.Locator(".mvc-grid")).ToContainTextAsync(user.Email);
     }
 
-    private async Task CreateAccountThroughTheUiAsync(IPage page, string email, string nickname)
+    private static async Task CreateAccountThroughTheUiAsync(IPage page, string email, string nickname)
     {
         await GotoAsync(page, "/Management/Account");
         await page.Locator("button[data-target='#createAccountDialogModal']").ClickAsync();
@@ -98,7 +100,7 @@ public class ManagementFlowTests : E2ETestBase
     {
         var (page, _) = await NewSignedInPageAsync("Admin");
         string key = Guid.NewGuid().ToString("N")[..8];
-        await Db.SeedAccountAsync("User", nickname: $"CaseTwin{key}");
+        await Db.SeedAccountAsync(nickname: $"CaseTwin{key}");
         string email = $"twin-{key}@test.com";
 
         await CreateAccountThroughTheUiAsync(page, email, $"casetwin{key}");

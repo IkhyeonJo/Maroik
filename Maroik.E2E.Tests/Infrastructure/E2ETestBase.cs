@@ -16,7 +16,9 @@ public abstract class E2ETestBase
     protected string BaseUrl => _fixture.ServerBaseUrl;
 
     /// <summary>Initializes the base class with the shared fixture supplied by the test collection.</summary>
+ #pragma warning disable IDE0290
     protected E2ETestBase(E2ESharedFixture fixture)
+ #pragma warning restore IDE0290
     {
         _fixture = fixture;
     }
@@ -28,7 +30,7 @@ public abstract class E2ETestBase
     /// Signs <paramref name="account"/> in through the real login form and waits until the browser
     /// has left the login page (i.e. the server accepted the credentials and issued a session).
     /// </summary>
-    protected async Task LoginAsync(IPage page, SeededAccount account)
+    private static async Task LoginAsync(IPage page, SeededAccount account)
     {
         await GotoAsync(page, "/Account/Login");
         await page.WaitForSelectorAsync("#loginForm");

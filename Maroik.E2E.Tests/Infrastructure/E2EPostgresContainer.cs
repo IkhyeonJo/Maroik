@@ -11,7 +11,7 @@ namespace Maroik.E2E.Tests.Infrastructure;
 /// repository integration tests use — so the browser tests hit the real CHECK/FK constraints,
 /// column defaults and the seeded navigation menu (anonymous <c>Category</c> / <c>SubCategory</c>
 /// rows the <c>AuthorizationFilter</c> needs) instead of the EF Core InMemory provider, which
-/// modelled none of that.
+/// modeled none of that.
 /// </para>
 /// <para>
 /// The E2E collection already runs sequentially against a single shared server, so one database
@@ -35,7 +35,7 @@ public sealed class E2EPostgresContainer : IAsyncDisposable
     public async Task StartAsync()
     {
         // The schema is full of `timestamp without time zone` columns. Npgsql 6+ maps those to
-        // DateTimeKind.Unspecified and throws when handed a Utc/Local DateTime unless the legacy
+        // DateTimeKind.Unspecified and throws when handed an Utc/Local DateTime unless the legacy
         // switch is on. Set before the first connection is opened. (Program.cs also sets it, but
         // this guarantees it is on even if the container is queried before the host is built.)
         AppContext.SetSwitch("Npgsql.EnableLegacyTimestampBehavior", true);
@@ -45,9 +45,9 @@ public sealed class E2EPostgresContainer : IAsyncDisposable
         // Init.sql is a `pg_dump` plain-format script full of psql meta-commands
         // (`COPY ... FROM stdin` blocks, `\restrict` / `\unrestrict` client guards) that only the
         // psql client understands, so it is piped through psql via ExecScriptAsync rather than run
-        // over an Npgsql connection. `\restrict` / `\unrestrict` are psql 17.5+ only and are not
+        // over a Npgsql connection. `\restrict` / `\unrestrict` are psql 17.5+ only and are not
         // needed to replay the dump, so they are stripped to stay independent of the client
-        // version bundled in the postgres image.
+        // version bundled in the Postgres image.
         string[] lines = await File.ReadAllLinesAsync(ResolveInitScriptPath());
         string initSql = string.Join(
             '\n',
@@ -81,9 +81,6 @@ public sealed class E2EPostgresContainer : IAsyncDisposable
         string path = Path.Combine(
             dir.FullName, InitScriptRelativePath.Replace('/', Path.DirectorySeparatorChar));
 
-        if (!File.Exists(path))
-            throw new FileNotFoundException("Seed script not found at expected location.", path);
-
-        return path;
+        return !File.Exists(path) ? throw new FileNotFoundException("Seed script not found at expected location.", path) : path;
     }
 }

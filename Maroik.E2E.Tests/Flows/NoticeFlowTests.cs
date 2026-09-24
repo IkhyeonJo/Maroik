@@ -12,16 +12,20 @@ namespace Maroik.E2E.Tests.Flows;
 public class NoticeFlowTests : E2ETestBase
 {
     /// <summary>Initializes a new instance of NoticeFlowTests, sharing the E2ESharedFixture fixture across the tests in this class.</summary>
+ #pragma warning disable IDE0290
     public NoticeFlowTests(E2ESharedFixture fixture) : base(fixture) { }
+ #pragma warning restore IDE0290
 
     private static async Task SelectGridRowAsync(IPage page, string rowText)
     {
         // The grid loads over AJAX; a click on a row's cell selects it (the row gets "table-primary").
         var row = page.Locator(".mvc-grid tbody tr", new PageLocatorOptions { HasTextString = rowText });
         await Assertions.Expect(row).ToBeVisibleAsync();
-        // The first column is the hidden Id; click the first visible cell.
+        // The first column is the hidden ID; click the first visible cell.
         await row.Locator("td:not(.mvc-grid-hidden)").First.ClickAsync();
+ #pragma warning disable SYSLIB1045
         await Assertions.Expect(row).ToHaveClassAsync(new System.Text.RegularExpressions.Regex("table-primary"));
+ #pragma warning restore SYSLIB1045
     }
 
     // -- Fixed income ---------------------------------------------------------------

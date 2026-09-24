@@ -11,11 +11,13 @@ namespace Maroik.E2E.Tests.Flows;
 public class ForumFlowTests : E2ETestBase
 {
     /// <summary>Initializes a new instance of ForumFlowTests, sharing the E2ESharedFixture fixture across the tests in this class.</summary>
+ #pragma warning disable IDE0290
     public ForumFlowTests(E2ESharedFixture fixture) : base(fixture) { }
+ #pragma warning restore IDE0290
 
     // -- Forum list -----------------------------------------------------------
 
-    /// <summary>Verifies that <c>FreeForumList</c> loads with non empty body.</summary>
+    /// <summary>Verifies that <c>FreeForumList</c> loads with non-empty body.</summary>
     [Fact]
     public async Task FreeForumList_Loads_WithNonEmptyBody()
     {
@@ -52,13 +54,13 @@ public class ForumFlowTests : E2ETestBase
 
     // -- Write mode: unauthenticated ------------------------------------------
 
-    /// <summary>Verifies that <c>FreeForumWriteMode</c> without session when redirects to login.</summary>
+    /// <summary>Verifies that <c>FreeForumWriteMode</c> without session when redirects to log in.</summary>
     [Fact]
     public async Task FreeForumWriteMode_WithoutSession_RedirectsToLogin()
     {
         var page = await NewPageAsync();
 
-        // Navigate to write mode — without a session the controller redirects to Login
+        // Navigate to write mode — without a session the controller redirects to Log in
         await GotoAsync(page, "/Forum/FreeForum?method=write");
 
         // AuthorizationFilter redirects with new RedirectResult("/Account/Login") — a literal,
@@ -74,7 +76,7 @@ public class ForumFlowTests : E2ETestBase
         var page = await NewPageAsync();
         await GotoAsync(page, "/Forum/FreeForum?method=write");
 
-        // After redirect to Login, the login form must be present
+        // After redirect to Log in, the login form must be present
         await page.WaitForSelectorAsync("#loginForm", new PageWaitForSelectorOptions { Timeout = 10_000 });
         await Assertions.Expect(page.Locator("#loginForm")).ToBeVisibleAsync();
     }

@@ -12,9 +12,11 @@ namespace Maroik.E2E.Tests.Flows;
 public class RegistrationFlowTests : E2ETestBase
 {
     /// <summary>Initializes a new instance of RegistrationFlowTests, sharing the E2ESharedFixture fixture across the tests in this class.</summary>
+ #pragma warning disable IDE0290
     public RegistrationFlowTests(E2ESharedFixture fixture) : base(fixture) { }
+ #pragma warning restore IDE0290
 
-    private async Task<string> SubmitRegistrationAsync(IPage page, string nickname, string? email = null)
+    private static async Task<string> SubmitRegistrationAsync(IPage page, string nickname, string? email = null)
     {
         email ??= $"reg-{Guid.NewGuid():N}"[..16] + "@test.com";
         await GotoAsync(page, "/Account/Register");
@@ -22,8 +24,8 @@ public class RegistrationFlowTests : E2ETestBase
 
         await page.Locator("#Nickname").FillAsync(nickname);
         await page.Locator("#Email").FillAsync(email);
-        await page.Locator("#Password").FillAsync("Reg1ster-Pass!");
-        await page.Locator("#ConfirmPassword").FillAsync("Reg1ster-Pass!");
+        await page.Locator("#Password").FillAsync("Reg1-Pass!");
+        await page.Locator("#ConfirmPassword").FillAsync("Reg1-Pass!");
         // Not left to the culture's default: without a time zone the form never submits.
         await page.Locator("#TimeZoneIanaId").SelectOptionAsync("Asia/Seoul");
         // The checkbox is the hidden input of an iCheck-styled control; force past the visibility check.
@@ -68,7 +70,7 @@ public class RegistrationFlowTests : E2ETestBase
     public async Task Register_WithANicknameDifferingOnlyByCase_IsRefused()
     {
         string key = Guid.NewGuid().ToString("N")[..8];
-        await Db.SeedAccountAsync("User", nickname: $"Existing{key}");
+        await Db.SeedAccountAsync(nickname: $"Existing{key}");
         var page = await NewPageAsync();
 
         string email = await SubmitRegistrationAsync(page, $"EXISTING{key}");
@@ -89,7 +91,7 @@ public class RegistrationFlowTests : E2ETestBase
 
     /// <summary>
     /// An e-mail address longer than the database column (255) is refused with a validation message
-    /// instead of failing the write, and no account is created.
+    /// instead of failing to write, and no account is created.
     /// </summary>
     [Fact]
     public async Task Register_WithAnOverlongEmail_IsRefused()
