@@ -35,7 +35,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Maroik.Tests.Shared\Maroik.Tests.Shared.csproj" />
     <ProjectReference Include="..\Maroik.Website\Maroik.Website.csproj" />
   </ItemGroup>
 

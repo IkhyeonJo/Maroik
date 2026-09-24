@@ -470,3 +470,4 @@
         ChangeCreateIncomeAmountLabel($createIncomeDepositMyAssetProductName.find("option:selected").val());
     });
 })();
+//# sourceMappingURL=site.js.map

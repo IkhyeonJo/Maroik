@@ -26,7 +26,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Maroik.Tests.Shared\Maroik.Tests.Shared.csproj" />
     <ProjectReference Include="..\Maroik.Core.Client\Maroik.Core.Client.csproj" />
   </ItemGroup>
 

@@ -39,9 +39,6 @@ public class SolutionLayeringArchitectureTests
     private const string Worker = "Maroik.Worker";
     private const string FileStorage = "Maroik.FileStorage";
 
-    /// <summary>Test-only support project (the logging architecture rules): neither a production project nor a test project itself.</summary>
-    private const string TestSupport = "Maroik.Tests.Shared";
-
     /// <summary>The six inner layers. None of them may depend on an application host project.</summary>
     private static readonly string[] _coreLayers =
         [Domain, Contract, PostgreSql, Client, Repository, Service];
@@ -327,7 +324,7 @@ public class SolutionLayeringArchitectureTests
 
         foreach (ProjectFile project in LoadAllProjects())
         {
-            bool isTestSide = project.Name.EndsWith(".Tests", StringComparison.Ordinal) || project.Name == TestSupport;
+            bool isTestSide = project.Name.EndsWith(".Tests", StringComparison.Ordinal);
             string expected = isTestSide ? "tests" : "src";
             string? actual = solution.FolderOf(project.Name);
             if (actual != expected)
@@ -335,32 +332,6 @@ public class SolutionLayeringArchitectureTests
         }
 
         Assert.True(wrong.Count == 0, "Solution folder mismatch:\n" + string.Join("\n", wrong));
-    }
-
-    /// <summary>The test-support project may be referenced by test projects only — never by shipped code.</summary>
-    [Fact]
-    public void TestSupportProject_MustBeReferencedOnlyByTestProjects()
-    {
-        string[] offenders =
-        [
-            .. LoadAllProjects()
-                .Where(p => p.ProjectReferences.Contains(TestSupport))
-                .Where(p => !p.Name.EndsWith(".Tests", StringComparison.Ordinal))
-                .Select(p => p.Name),
-        ];
-
-        Assert.True(offenders.Length == 0,
-            $"{TestSupport} is test-only support; production projects must not reference it: " + string.Join(", ", offenders));
-    }
-
-    /// <summary>The test-support project itself must not depend on any Maroik project (it analyses assemblies by path, not by reference).</summary>
-    [Fact]
-    public void TestSupportProject_MustNotReferenceAnyMaroikProject()
-    {
-        ProjectFile support = LoadAllProjects().Single(p => p.Name == TestSupport);
-
-        Assert.True(support.ProjectReferences.Count == 0,
-            $"{TestSupport} must not reference Maroik projects: " + string.Join(", ", support.ProjectReferences));
     }
 
     /// <summary>The parts of <c>Maroik.sln</c> the rules above need: project names, and each project's solution folder.</summary>
@@ -412,7 +383,6 @@ public class SolutionLayeringArchitectureTests
         LoadAllProjects()
             .Where(p => !p.Name.EndsWith(".Tests", StringComparison.Ordinal))
             .Where(p => p.Name != "Maroik.E2E.Tests")
-            .Where(p => p.Name != TestSupport)
             .ToArray();
 
     private static IReadOnlyList<ProjectFile> LoadAllProjects()

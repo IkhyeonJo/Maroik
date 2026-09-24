@@ -27,7 +27,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Maroik.Tests.Shared\Maroik.Tests.Shared.csproj" />
     <ProjectReference Include="..\Maroik.FileStorage\Maroik.FileStorage.csproj" />
   </ItemGroup>
 
