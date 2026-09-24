@@ -2,15 +2,15 @@ using Maroik.Core.Domain.Calendar;
 using Maroik.Core.PostgreSQL.Data;
 using Maroik.Core.Repository.Repositories;
 using Microsoft.EntityFrameworkCore;
-using EfCalendarShared = Maroik.Core.PostgreSQL.Models.CalendarShared;
+using OrmCalendarShared = Maroik.Core.PostgreSQL.Models.CalendarShared;
 
 namespace Maroik.Core.Repository.Tests.Repositories;
 
 /// <summary>
 /// Tests for <see cref="CalendarSharedRepository"/> against a real PostgreSQL database
-/// (Testcontainers) pre-loaded with the production <c>Init.sql</c> schema and seed data (one shared
+/// (Testcontainers) preloaded with the production <c>Init.sql</c> schema and seed data (one shared
 /// calendar). <c>CalendarShared.CalendarId</c> is both the primary key and the FK
-/// <c>CalendarShared_fk_0</c> to <c>Calendar.Id</c> (unenforced by InMemory), so every test creates
+/// <c>CalendarShared_fk_0</c> to <c>Calendar.ID</c> (unenforced by InMemory), so every test creates
 /// a real parent calendar; the global <c>GetAllAsync</c> assertions are scoped to the ids this test
 /// created.
 /// </summary>
@@ -18,14 +18,14 @@ public sealed class CalendarSharedRepositoryTests(DatabaseFixture database) : Re
 {
     private CalendarSharedRepository Sut => new(Context);
 
-    private static EfCalendarShared MakeShared(long calendarId, bool user = false, bool anonymous = false) => new()
+    private static OrmCalendarShared MakeShared(long calendarId, bool user = false, bool anonymous = false) => new()
     {
         CalendarId = calendarId,
         User = user,
         Anonymous = anonymous
     };
 
-    private async Task SeedAsync(params EfCalendarShared[] entries)
+    private async Task SeedAsync(params OrmCalendarShared[] entries)
     {
         await Context.CalendarShareds.AddRangeAsync(entries);
         await Context.SaveChangesAsync();
@@ -62,7 +62,7 @@ public sealed class CalendarSharedRepositoryTests(DatabaseFixture database) : Re
         await Sut.CreateAsync(shared, TestContext.Current.CancellationToken);
         Context.ChangeTracker.Clear();
 
-        EfCalendarShared? saved = await Context.CalendarShareds
+        OrmCalendarShared? saved = await Context.CalendarShareds
             .FirstOrDefaultAsync(s => s.CalendarId == calendarId, TestContext.Current.CancellationToken);
         Assert.NotNull(saved);
         Assert.True(saved.User);
@@ -93,7 +93,7 @@ public sealed class CalendarSharedRepositoryTests(DatabaseFixture database) : Re
         await Sut.UpdateEntityAsync(shared, TestContext.Current.CancellationToken);
         Context.ChangeTracker.Clear();
 
-        EfCalendarShared? updated = await Context.CalendarShareds
+        OrmCalendarShared? updated = await Context.CalendarShareds
             .FirstOrDefaultAsync(s => s.CalendarId == calendarId, TestContext.Current.CancellationToken);
         Assert.NotNull(updated);
         Assert.True(updated.User);
@@ -145,7 +145,17 @@ public sealed class CalendarSharedRepositoryTests(DatabaseFixture database) : Re
 
         ApplicationDbContext[] contexts = [NewDbContext(), NewDbContext()];
 
+        // One caller requests [low, high]; the other requests the same pair reversed, [high, low].
+        // Without the ORDER BY, this is exactly the pattern that can lock rows in different physical
+        // orders across the two transactions and deadlock in PostgreSQL.
+        await Task.WhenAll(
+            LockAndUpdateAsync(contexts[0], [low, high], user: true, anonymous: false),
+            LockAndUpdateAsync(contexts[1], [high, low], user: false, anonymous: true));
+        return;
+
+ #pragma warning disable IDE0062
         async Task LockAndUpdateAsync(ApplicationDbContext context, long[] ids, bool user, bool anonymous)
+ #pragma warning restore IDE0062
         {
             var repo = new CalendarSharedRepository(context);
             await using var tx = await context.Database.BeginTransactionAsync(TestContext.Current.CancellationToken);
@@ -161,12 +171,5 @@ public sealed class CalendarSharedRepositoryTests(DatabaseFixture database) : Re
             await context.SaveChangesAsync(TestContext.Current.CancellationToken);
             await tx.CommitAsync(TestContext.Current.CancellationToken);
         }
-
-        // One caller requests [low, high]; the other requests the same pair reversed, [high, low].
-        // Without the ORDER BY, this is exactly the pattern that can lock rows in different physical
-        // orders across the two transactions and deadlock in PostgreSQL.
-        await Task.WhenAll(
-            LockAndUpdateAsync(contexts[0], [low, high], user: true, anonymous: false),
-            LockAndUpdateAsync(contexts[1], [high, low], user: false, anonymous: true));
     }
 }

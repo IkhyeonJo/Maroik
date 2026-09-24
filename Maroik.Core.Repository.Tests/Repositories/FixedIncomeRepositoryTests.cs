@@ -1,13 +1,13 @@
 using Maroik.Core.Domain.Finance;
 using Maroik.Core.Repository.Repositories;
 using Microsoft.EntityFrameworkCore;
-using EfFixedIncome = Maroik.Core.PostgreSQL.Models.FixedIncome;
+using OrmFixedIncome = Maroik.Core.PostgreSQL.Models.FixedIncome;
 
 namespace Maroik.Core.Repository.Tests.Repositories;
 
 /// <summary>
 /// Tests for <see cref="FixedIncomeRepository"/> against a real PostgreSQL database (Testcontainers)
-/// pre-loaded with the production <c>Init.sql</c> schema and seed data. <c>FixedIncome</c> carries
+/// preloaded with the production <c>Init.sql</c> schema and seed data. <c>FixedIncome</c> carries
 /// the composite FK <c>FixedIncome_fk_0</c> to <c>Asset(ProductName, AccountEmail)</c> which the
 /// repository eager-loads; each test seeds the owning account and asset and scopes to its own
 /// unique account e-mail.
@@ -16,7 +16,7 @@ public sealed class FixedIncomeRepositoryTests(DatabaseFixture database) : Repos
 {
     private FixedIncomeRepository Sut => new(Context);
 
-    private static EfFixedIncome MakeFixedIncome(string email, string content, string asset = "BankAccount", decimal amount = 3000m) => new()
+    private static OrmFixedIncome MakeFixedIncome(string email, string content, string asset = "BankAccount", decimal amount = 3000m) => new()
     {
         AccountEmail = email,
         MainClass = "RegularIncome",
@@ -33,7 +33,7 @@ public sealed class FixedIncomeRepositoryTests(DatabaseFixture database) : Repos
         Unpunctuality = false
     };
 
-    private async Task SeedAsync(params EfFixedIncome[] items)
+    private async Task SeedAsync(params OrmFixedIncome[] items)
     {
         foreach (var group in items.GroupBy(i => i.AccountEmail!))
             await EnsureAssetsAsync(group.Key, [.. group.Select(i => i.DepositMyAssetProductName)]);
@@ -118,7 +118,7 @@ public sealed class FixedIncomeRepositoryTests(DatabaseFixture database) : Repos
         await Sut.CreateAsync(fixedIncome, TestContext.Current.CancellationToken);
         Context.ChangeTracker.Clear();
 
-        EfFixedIncome? saved = await Context.FixedIncomes.FirstOrDefaultAsync(
+        OrmFixedIncome? saved = await Context.FixedIncomes.FirstOrDefaultAsync(
             fi => fi.AccountEmail == alice && fi.Content == "Monthly salary", TestContext.Current.CancellationToken);
         Assert.NotNull(saved);
         Assert.Equal(5000m, saved.Amount);
@@ -145,7 +145,7 @@ public sealed class FixedIncomeRepositoryTests(DatabaseFixture database) : Repos
         await Sut.UpdateEntityAsync(fixedIncome, TestContext.Current.CancellationToken);
         Context.ChangeTracker.Clear();
 
-        EfFixedIncome? updated = await Context.FixedIncomes.FirstOrDefaultAsync(fi => fi.Id == ef.Id, TestContext.Current.CancellationToken);
+        OrmFixedIncome? updated = await Context.FixedIncomes.FirstOrDefaultAsync(fi => fi.Id == ef.Id, TestContext.Current.CancellationToken);
         Assert.NotNull(updated);
         Assert.Equal(3500m, updated.Amount);
         Assert.Equal("Salary (Raise)", updated.Content);
@@ -180,7 +180,7 @@ public sealed class FixedIncomeRepositoryTests(DatabaseFixture database) : Repos
         await Sut.DeleteByIdAsync(remove.Id, TestContext.Current.CancellationToken);
         Context.ChangeTracker.Clear();
 
-        List<EfFixedIncome> remaining = await Context.FixedIncomes
+        List<OrmFixedIncome> remaining = await Context.FixedIncomes
             .Where(fi => fi.AccountEmail == alice).ToListAsync(TestContext.Current.CancellationToken);
         Assert.Equal(keep.Id, Assert.Single(remaining).Id);
     }
@@ -225,7 +225,7 @@ public sealed class FixedIncomeRepositoryTests(DatabaseFixture database) : Repos
     public async Task SearchByAccountEmailAsync_MatchesTheMaturityDateAsText()
     {
         string alice = UniqueEmail("alice");
-        EfFixedIncome matures = MakeFixedIncome(alice, "Matures in 2099");
+        OrmFixedIncome matures = MakeFixedIncome(alice, "Matures in 2099");
         matures.MaturityDate = new DateTime(2099, 12, 31, 12, 0, 0, DateTimeKind.Utc);
         await SeedAsync(matures, MakeFixedIncome(alice, "Matures next year"));
 

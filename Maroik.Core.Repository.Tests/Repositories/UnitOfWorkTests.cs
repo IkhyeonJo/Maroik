@@ -18,7 +18,7 @@ public sealed class UnitOfWorkTests(DatabaseFixture database) : RepositoryTestBa
 
     // -- Null-guard paths (no BeginAsync) -------------------------------------
 
-    /// <summary>Verifies that <c>CommitAsync</c> does not throw when begin was not called.</summary>
+    /// <summary>Verifies that <c>CommitAsync</c> does not throw when being was not called.</summary>
     [Fact]
     public async Task CommitAsync_DoesNotThrow_WhenBeginWasNotCalled()
     {
@@ -29,7 +29,7 @@ public sealed class UnitOfWorkTests(DatabaseFixture database) : RepositoryTestBa
         Assert.Null(ex);
     }
 
-    /// <summary>Verifies that <c>RollbackAsync</c> does not throw when begin was not called.</summary>
+    /// <summary>Verifies that <c>RollbackAsync</c> does not throw when being was not called.</summary>
     [Fact]
     public async Task RollbackAsync_DoesNotThrow_WhenBeginWasNotCalled()
     {
@@ -119,7 +119,7 @@ public sealed class UnitOfWorkTests(DatabaseFixture database) : RepositoryTestBa
     /// <summary>
     /// When the flush inside <c>CommitAsync</c> fails (here a primary-key violation), the entities the
     /// aborted unit of work left tracked must be discarded. <c>CommitAsync</c> clears its transaction
-    /// slot in <c>finally</c>, so the <c>RollbackAsync</c> a catch block calls afterwards is a no-op
+    /// slot in <c>finally</c>, so the <c>RollbackAsync</c> a catch block calls afterward is a no-op
     /// and would never reach <c>ChangeTracker.Clear()</c> — leaving the failed <c>Added</c> entity on
     /// the request-scoped context, where a retry's next <c>SaveChanges</c> re-flushes it and fails
     /// the same way (the CalendarShared_pk retry loops in CalendarService).
@@ -156,7 +156,7 @@ public sealed class UnitOfWorkTests(DatabaseFixture database) : RepositoryTestBa
         Assert.Empty(context.ChangeTracker.Entries());
     }
 
-    /// <summary>After a failed commit the same instance can run a fresh Begin→Commit cycle without re-flushing the failed entity.</summary>
+    /// <summary>After a failed commit the same instance can run a fresh Beginning→Commit cycle without re-flushing the failed entity.</summary>
     [Fact]
     public async Task CommitAsync_AfterFailedCommit_NextCycleDoesNotReflushTheFailedEntity()
     {
@@ -196,7 +196,7 @@ public sealed class UnitOfWorkTests(DatabaseFixture database) : RepositoryTestBa
     // -- A transaction the database has already ended ----------------------------------
 
     /// <summary>Begins a unit of work and then kills its database session, so the transaction can no longer be rolled back normally.</summary>
-    private async Task<(UnitOfWork Uow, Maroik.Core.PostgreSQL.Data.ApplicationDbContext Context)> BeginAndKillTheSessionAsync()
+    private async Task<(UnitOfWork Uow, PostgreSQL.Data.ApplicationDbContext Context)> BeginAndKillTheSessionAsync()
     {
         CancellationToken ct = TestContext.Current.CancellationToken;
         var context = NewDbContext();

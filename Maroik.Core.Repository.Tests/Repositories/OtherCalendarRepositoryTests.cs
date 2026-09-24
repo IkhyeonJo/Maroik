@@ -1,16 +1,16 @@
 using Maroik.Core.Domain.Calendar;
 using Maroik.Core.Repository.Repositories;
 using Microsoft.EntityFrameworkCore;
-using EfOtherCalendar = Maroik.Core.PostgreSQL.Models.OtherCalendar;
+using OrmOtherCalendar = Maroik.Core.PostgreSQL.Models.OtherCalendar;
 
 namespace Maroik.Core.Repository.Tests.Repositories;
 
 /// <summary>
 /// Tests for <see cref="OtherCalendarRepository"/> against a real PostgreSQL database (Testcontainers)
-/// pre-loaded with the production <c>Init.sql</c> schema and seed data (two subscriptions).
+/// preloaded with the production <c>Init.sql</c> schema and seed data (two subscriptions).
 /// <c>OtherCalendar</c> has the composite PK <c>(AccountEmail, CalendarId)</c> and the FKs
 /// <c>OtherCalendar_fk_0</c> to <c>Account.Email</c> and <c>OtherCalendar_fk_1</c> to
-/// <c>Calendar.Id</c> (both unenforced by InMemory). The global <c>GetAllAsync</c> assertion is
+/// <c>Calendar.ID</c> (both unenforced by InMemory). The global <c>GetAllAsync</c> assertion is
 /// scoped to the rows this test created.
 /// </summary>
 public sealed class OtherCalendarRepositoryTests(DatabaseFixture database) : RepositoryTestBase(database)
@@ -20,7 +20,7 @@ public sealed class OtherCalendarRepositoryTests(DatabaseFixture database) : Rep
     private async Task SeedAsync(string email, params long[] calendarIds)
     {
         await EnsureAccountsAsync(email);
-        await Context.OtherCalendars.AddRangeAsync(calendarIds.Select(id => new EfOtherCalendar
+        await Context.OtherCalendars.AddRangeAsync(calendarIds.Select(id => new OrmOtherCalendar
         {
             AccountEmail = email,
             CalendarId = id

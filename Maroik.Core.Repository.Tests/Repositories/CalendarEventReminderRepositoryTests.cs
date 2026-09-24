@@ -1,14 +1,14 @@
 using Maroik.Core.Domain.Calendar;
 using Maroik.Core.Repository.Repositories;
 using Microsoft.EntityFrameworkCore;
-using EfCalendarEventReminder = Maroik.Core.PostgreSQL.Models.CalendarEventReminder;
+using OrmCalendarEventReminder = Maroik.Core.PostgreSQL.Models.CalendarEventReminder;
 
 namespace Maroik.Core.Repository.Tests.Repositories;
 
 /// <summary>
 /// Tests for <see cref="CalendarEventReminderRepository"/> against a real PostgreSQL database
-/// (Testcontainers) pre-loaded with the production <c>Init.sql</c> schema. <c>CalendarEventReminder</c>
-/// carries the FK <c>CalendarEventReminder_fk_0</c> to <c>CalendarEvent.Id</c> and several checks the
+/// (Testcontainers) preloaded with the production <c>Init.sql</c> schema. <c>CalendarEventReminder</c>
+/// carries the FK <c>CalendarEventReminder_fk_0</c> to <c>CalendarEvent.ID</c> and several checks the
 /// EF Core InMemory provider ignored: <c>Method</c> must be <c>Email</c>/<c>Notification</c>, and
 /// <c>CalendarEventReminder_BeforeEvent_check</c> requires exactly one of
 /// Minutes/Hours/Days/Weeks-before to be set. Every test creates a real parent event.
@@ -17,14 +17,14 @@ public sealed class CalendarEventReminderRepositoryTests(DatabaseFixture databas
 {
     private CalendarEventReminderRepository Sut => new(Context);
 
-    private static EfCalendarEventReminder MakeReminder(long calendarEventId, string method = "Email", long minutesBefore = 30) => new()
+    private static OrmCalendarEventReminder MakeReminder(long calendarEventId, string method = "Email", long minutesBefore = 30) => new()
     {
         CalendarEventId = calendarEventId,
         Method = method,
         MinutesBeforeEvent = minutesBefore
     };
 
-    private async Task SeedAsync(params EfCalendarEventReminder[] reminders)
+    private async Task SeedAsync(params OrmCalendarEventReminder[] reminders)
     {
         await Context.CalendarEventReminders.AddRangeAsync(reminders);
         await Context.SaveChangesAsync();
@@ -42,7 +42,7 @@ public sealed class CalendarEventReminderRepositoryTests(DatabaseFixture databas
         await SeedAsync(
             MakeReminder(event1, "Email", 15),
             MakeReminder(event1, "Notification", 60),
-            MakeReminder(event2, "Email", 30));
+            MakeReminder(event2));
 
         List<CalendarEventReminder> result = await Sut.GetByCalendarEventIdAsync(event1, TestContext.Current.CancellationToken);
 
@@ -74,7 +74,7 @@ public sealed class CalendarEventReminderRepositoryTests(DatabaseFixture databas
         await Sut.CreateAsync(reminder, TestContext.Current.CancellationToken);
         Context.ChangeTracker.Clear();
 
-        EfCalendarEventReminder? saved = await Context.CalendarEventReminders
+        OrmCalendarEventReminder? saved = await Context.CalendarEventReminders
             .FirstOrDefaultAsync(r => r.CalendarEventId == eventId, TestContext.Current.CancellationToken);
         Assert.NotNull(saved);
         Assert.Equal("Notification", saved.Method);
@@ -120,7 +120,7 @@ public sealed class CalendarEventReminderRepositoryTests(DatabaseFixture databas
         await SeedAsync(
             MakeReminder(removeEvent, "Email", 10),
             MakeReminder(removeEvent, "Notification", 20),
-            MakeReminder(keepEvent, "Email", 30));
+            MakeReminder(keepEvent));
 
         await Sut.DeleteByCalendarEventIdAsync(removeEvent, TestContext.Current.CancellationToken);
         Context.ChangeTracker.Clear();

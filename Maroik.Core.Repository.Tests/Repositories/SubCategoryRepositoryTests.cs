@@ -2,15 +2,15 @@ using Maroik.Core.Domain.Account;
 using Maroik.Core.Domain.Menu;
 using Maroik.Core.Repository.Repositories;
 using Microsoft.EntityFrameworkCore;
-using EfCategory = Maroik.Core.PostgreSQL.Models.Category;
-using EfSubCategory = Maroik.Core.PostgreSQL.Models.SubCategory;
+using OrmCategory = Maroik.Core.PostgreSQL.Models.Category;
+using OrmSubCategory = Maroik.Core.PostgreSQL.Models.SubCategory;
 
 namespace Maroik.Core.Repository.Tests.Repositories;
 
 /// <summary>
 /// Tests for <see cref="SubCategoryRepository"/> against a real PostgreSQL database (Testcontainers)
-/// pre-loaded with the production <c>Init.sql</c> schema and seed data (14 sub-categories).
-/// <c>SubCategory</c> carries the FK <c>SubCategory_fk_0</c> to <c>Category.Id</c> (unenforced by
+/// preloaded with the production <c>Init.sql</c> schema and seed data (14 sub-categories).
+/// <c>SubCategory</c> carries the FK <c>SubCategory_fk_0</c> to <c>Category.ID</c> (unenforced by
 /// InMemory) plus <c>SubCategory_Role_check</c> / <c>SubCategory_Order_check</c>. Every test creates
 /// a real parent category and scopes the global <c>GetAllAsync</c> assertions to its own rows.
 /// </summary>
@@ -18,7 +18,7 @@ public sealed class SubCategoryRepositoryTests(DatabaseFixture database) : Repos
 {
     private SubCategoryRepository Sut => new(Context);
 
-    private EfSubCategory MakeSubCategory(long categoryId, string name, string role = Role.User, long order = 1) => new()
+    private static OrmSubCategory MakeSubCategory(long categoryId, string name, string role = Role.User, long order = 1) => new()
     {
         CategoryId = categoryId,
         Name = name,
@@ -32,7 +32,7 @@ public sealed class SubCategoryRepositoryTests(DatabaseFixture database) : Repos
     /// <summary>Inserts a real parent <c>Category</c> and returns its id.</summary>
     private async Task<long> SeedCategoryAsync()
     {
-        var category = new EfCategory
+        var category = new OrmCategory
         {
             Name = Unique("ParentCategory"),
             DisplayName = "Parent",
@@ -48,7 +48,7 @@ public sealed class SubCategoryRepositoryTests(DatabaseFixture database) : Repos
         return category.Id;
     }
 
-    private async Task SeedAsync(params EfSubCategory[] items)
+    private async Task SeedAsync(params OrmSubCategory[] items)
     {
         await Context.SubCategories.AddRangeAsync(items);
         await Context.SaveChangesAsync();
@@ -87,7 +87,7 @@ public sealed class SubCategoryRepositoryTests(DatabaseFixture database) : Repos
         await Sut.CreateAsync(subCategory, TestContext.Current.CancellationToken);
         Context.ChangeTracker.Clear();
 
-        EfSubCategory? saved = await Context.SubCategories.FirstOrDefaultAsync(sc => sc.Name == name, TestContext.Current.CancellationToken);
+        OrmSubCategory? saved = await Context.SubCategories.FirstOrDefaultAsync(sc => sc.Name == name, TestContext.Current.CancellationToken);
         Assert.NotNull(saved);
         Assert.Equal(catId, saved.CategoryId);
         Assert.Equal(Role.User, saved.Role);
@@ -123,7 +123,7 @@ public sealed class SubCategoryRepositoryTests(DatabaseFixture database) : Repos
         await Sut.UpdateEntityAsync(subCategory, TestContext.Current.CancellationToken);
         Context.ChangeTracker.Clear();
 
-        EfSubCategory? updated = await Context.SubCategories.FirstOrDefaultAsync(sc => sc.Id == seed.Id, TestContext.Current.CancellationToken);
+        OrmSubCategory? updated = await Context.SubCategories.FirstOrDefaultAsync(sc => sc.Id == seed.Id, TestContext.Current.CancellationToken);
         Assert.NotNull(updated);
         Assert.Equal(newName, updated.Name);
         Assert.Equal(Role.Admin, updated.Role);

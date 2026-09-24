@@ -4,13 +4,13 @@ using Maroik.Core.Domain.Board;
 using Maroik.Core.PostgreSQL.Data;
 using Maroik.Core.Repository.Repositories;
 using Microsoft.EntityFrameworkCore;
-using EfBoard = Maroik.Core.PostgreSQL.Models.Board;
+using OrmBoard = Maroik.Core.PostgreSQL.Models.Board;
 
 namespace Maroik.Core.Repository.Tests.Repositories;
 
 /// <summary>
 /// Tests for <see cref="BoardRepository"/> against a real PostgreSQL database (Testcontainers)
-/// pre-loaded with the production <c>Init.sql</c> schema and seed data (272 boards). <c>Board.Type</c>
+/// preloaded with the production <c>Init.sql</c> schema and seed data (272 boards). <c>Board.Type</c>
 /// is constrained by <c>Board_Type_check</c> to <c>FreeForum</c> / <c>PrivateNote</c>, so tests
 /// cannot isolate by a private type — instead each test tags its boards with a unique
 /// <see cref="RepositoryTestBase.Unique"/> <c>Writer</c> and scopes list assertions to it. Includes
@@ -21,7 +21,7 @@ public sealed class BoardRepositoryTests(DatabaseFixture database) : RepositoryT
 {
     private BoardRepository Sut => new(Context);
 
-    private EfBoard MakeBoard(string title, string? writer = null, string type = BoardTypes.FreeForum, bool deleted = false) => new()
+    private OrmBoard MakeBoard(string title, string? writer = null, string type = BoardTypes.FreeForum, bool deleted = false) => new()
     {
         Type = type,
         Title = title,
@@ -35,7 +35,7 @@ public sealed class BoardRepositoryTests(DatabaseFixture database) : RepositoryT
         Noticed = false
     };
 
-    private async Task<EfBoard[]> SeedAsync(params EfBoard[] boards)
+    private async Task<OrmBoard[]> SeedAsync(params OrmBoard[] boards)
     {
         await Context.Boards.AddRangeAsync(boards);
         await Context.SaveChangesAsync();
@@ -91,7 +91,7 @@ public sealed class BoardRepositoryTests(DatabaseFixture database) : RepositoryT
     [Fact]
     public async Task FindActiveByIdAsync_ReturnsBoard_WhenFoundAndNotDeleted()
     {
-        EfBoard[] seeded = await SeedAsync(MakeBoard("My Post"));
+        OrmBoard[] seeded = await SeedAsync(MakeBoard("My Post"));
 
         Board? result = await Sut.FindActiveByIdAsync(seeded[0].Id, TestContext.Current.CancellationToken);
 
@@ -103,7 +103,7 @@ public sealed class BoardRepositoryTests(DatabaseFixture database) : RepositoryT
     [Fact]
     public async Task FindActiveByIdAsync_ReturnsNull_WhenBoardIsDeleted()
     {
-        EfBoard[] seeded = await SeedAsync(MakeBoard("Deleted Post", deleted: true));
+        OrmBoard[] seeded = await SeedAsync(MakeBoard("Deleted Post", deleted: true));
 
         Board? result = await Sut.FindActiveByIdAsync(seeded[0].Id, TestContext.Current.CancellationToken);
 
@@ -135,7 +135,7 @@ public sealed class BoardRepositoryTests(DatabaseFixture database) : RepositoryT
         Context.ChangeTracker.Clear();
 
         Assert.True(id > 0);
-        EfBoard? saved = await Context.Boards.FirstOrDefaultAsync(b => b.Id == id, TestContext.Current.CancellationToken);
+        OrmBoard? saved = await Context.Boards.FirstOrDefaultAsync(b => b.Id == id, TestContext.Current.CancellationToken);
         Assert.NotNull(saved);
         Assert.Equal(writer, saved.Writer);
     }
@@ -159,7 +159,7 @@ public sealed class BoardRepositoryTests(DatabaseFixture database) : RepositoryT
     [Fact]
     public async Task UpdateEntityAsync_UpdatesExistingBoard()
     {
-        EfBoard[] seeded = await SeedAsync(MakeBoard("Original Title"));
+        OrmBoard[] seeded = await SeedAsync(MakeBoard("Original Title"));
 
         var board = Board.Reconstitute(
             id: seeded[0].Id, type: BoardTypes.FreeForum, title: "Updated Title", content: "Updated content",
@@ -169,7 +169,7 @@ public sealed class BoardRepositoryTests(DatabaseFixture database) : RepositoryT
         await Sut.UpdateEntityAsync(board, TestContext.Current.CancellationToken);
         Context.ChangeTracker.Clear();
 
-        EfBoard? updated = await Context.Boards.FirstOrDefaultAsync(b => b.Id == seeded[0].Id, TestContext.Current.CancellationToken);
+        OrmBoard? updated = await Context.Boards.FirstOrDefaultAsync(b => b.Id == seeded[0].Id, TestContext.Current.CancellationToken);
         Assert.NotNull(updated);
         Assert.Equal("Updated Title", updated.Title);
     }
@@ -178,7 +178,7 @@ public sealed class BoardRepositoryTests(DatabaseFixture database) : RepositoryT
     [Fact]
     public async Task UpdateEntityAsync_SetsDeletedFlag_OnBoard()
     {
-        EfBoard[] seeded = await SeedAsync(MakeBoard("Post to Delete"));
+        OrmBoard[] seeded = await SeedAsync(MakeBoard("Post to Delete"));
 
         var board = Board.Reconstitute(
             id: seeded[0].Id, type: seeded[0].Type!, title: seeded[0].Title!, content: seeded[0].Content,
@@ -188,7 +188,7 @@ public sealed class BoardRepositoryTests(DatabaseFixture database) : RepositoryT
         await Sut.UpdateEntityAsync(board, TestContext.Current.CancellationToken);
         Context.ChangeTracker.Clear();
 
-        EfBoard? result = await Context.Boards.FirstOrDefaultAsync(b => b.Id == seeded[0].Id, TestContext.Current.CancellationToken);
+        OrmBoard? result = await Context.Boards.FirstOrDefaultAsync(b => b.Id == seeded[0].Id, TestContext.Current.CancellationToken);
         Assert.NotNull(result);
         Assert.True(result.Deleted);
     }
@@ -201,12 +201,12 @@ public sealed class BoardRepositoryTests(DatabaseFixture database) : RepositoryT
     {
         var seed = MakeBoard("Viewed");
         seed.View = 5;
-        EfBoard[] seeded = await SeedAsync(seed);
+        OrmBoard[] seeded = await SeedAsync(seed);
 
         await Sut.IncrementViewAsync(seeded[0].Id, TestContext.Current.CancellationToken);
         Context.ChangeTracker.Clear();
 
-        EfBoard? result = await Context.Boards.FirstOrDefaultAsync(b => b.Id == seeded[0].Id, TestContext.Current.CancellationToken);
+        OrmBoard? result = await Context.Boards.FirstOrDefaultAsync(b => b.Id == seeded[0].Id, TestContext.Current.CancellationToken);
         Assert.NotNull(result);
         Assert.Equal(6, result.View);
     }
@@ -224,7 +224,7 @@ public sealed class BoardRepositoryTests(DatabaseFixture database) : RepositoryT
     [Fact]
     public async Task FindActiveByIdForUpdateAsync_ReturnsBoard_WhenExists()
     {
-        EfBoard[] seeded = await SeedAsync(MakeBoard("Locked"));
+        OrmBoard[] seeded = await SeedAsync(MakeBoard("Locked"));
 
         await using var unitOfWork = new UnitOfWork(Context);
         await unitOfWork.BeginAsync(TestContext.Current.CancellationToken);
@@ -251,7 +251,7 @@ public sealed class BoardRepositoryTests(DatabaseFixture database) : RepositoryT
     [Fact]
     public async Task FindActiveByIdForUpdateAsync_ReturnsNull_WhenDeleted()
     {
-        EfBoard[] seeded = await SeedAsync(MakeBoard("Gone", deleted: true));
+        OrmBoard[] seeded = await SeedAsync(MakeBoard("Gone", deleted: true));
 
         await using var unitOfWork = new UnitOfWork(Context);
         await unitOfWork.BeginAsync(TestContext.Current.CancellationToken);
@@ -272,7 +272,7 @@ public sealed class BoardRepositoryTests(DatabaseFixture database) : RepositoryT
     public async Task FindActiveByIdForUpdateAsync_SerializesConcurrentCommentOrderAssignment()
     {
         const int writerCount = 5;
-        EfBoard[] seeded = await SeedAsync(MakeBoard("Hot post"));
+        OrmBoard[] seeded = await SeedAsync(MakeBoard("Hot post"));
         long boardId = seeded[0].Id;
 
         ApplicationDbContext[] contexts = [.. Enumerable.Range(0, writerCount).Select(_ => NewDbContext())];
@@ -354,14 +354,14 @@ public sealed class BoardRepositoryTests(DatabaseFixture database) : RepositoryT
 
         (List<Board> items, int totalCount) = await PageOf(writer, page: 2, pageSize: 1);
 
-        Assert.Single(items);
-        Assert.Equal("first", items[0].Title);
+        var item = Assert.Single(items);
+        Assert.Equal("first", item.Title);
         Assert.Equal(2, totalCount);
     }
 
     // -- QueryPageAsync (locked-post visibility) --------------------------------
 
-    private static EfBoard Locked(EfBoard board, bool locked)
+    private static OrmBoard Locked(OrmBoard board, bool locked)
     {
         board.Locked = locked;
         return board;
@@ -395,22 +395,22 @@ public sealed class BoardRepositoryTests(DatabaseFixture database) : RepositoryT
             Locked(MakeBoard("other-locked", other), locked: true));
 
         // Anonymous searching "other": only their non-locked post.
-        var anon = await WriterSearch(other, isLoggedIn: false, viewerRole: null, viewerNickname: null);
-        Assert.Equal(["other-open"], anon.Items.Select(b => b.Title));
+        var (items, _) = await WriterSearch(other, isLoggedIn: false, viewerRole: null, viewerNickname: null);
+        Assert.Equal(["other-open"], items.Select(b => b.Title));
 
         // User "owner" searching their own writer tag: their own locked post is included.
-        var ownTag = await WriterSearch(owner, isLoggedIn: true, viewerRole: Role.User, viewerNickname: owner);
-        Assert.Equal(2, ownTag.TotalCount);
-        Assert.Contains("owner-locked", ownTag.Items.Select(b => b.Title));
+        var (boards, totalCount) = await WriterSearch(owner, isLoggedIn: true, viewerRole: Role.User, viewerNickname: owner);
+        Assert.Equal(2, totalCount);
+        Assert.Contains("owner-locked", boards.Select(b => b.Title));
 
         // User "owner" searching a different writer: still no cross-account locked post.
-        var crossTag = await WriterSearch(other, isLoggedIn: true, viewerRole: Role.User, viewerNickname: owner);
-        Assert.Equal(["other-open"], crossTag.Items.Select(b => b.Title));
+        var (list, _) = await WriterSearch(other, isLoggedIn: true, viewerRole: Role.User, viewerNickname: owner);
+        Assert.Equal(["other-open"], list.Select(b => b.Title));
 
         // Admin searching "other": the locked post is visible.
-        var admin = await WriterSearch(other, isLoggedIn: true, viewerRole: Role.Admin, viewerNickname: Unique("admin"));
-        Assert.Equal(2, admin.TotalCount);
-        Assert.Contains("other-locked", admin.Items.Select(b => b.Title));
+        var (boards1, i) = await WriterSearch(other, isLoggedIn: true, viewerRole: Role.Admin, viewerNickname: Unique("admin"));
+        Assert.Equal(2, i);
+        Assert.Contains("other-locked", boards1.Select(b => b.Title));
     }
 
     // -- QueryPageAsync (search text is literal) ------------------------------------
@@ -428,14 +428,14 @@ public sealed class BoardRepositoryTests(DatabaseFixture database) : RepositoryT
             MakeBoard($"100%-{Token}", writerWithUnderscore),
             MakeBoard($"1000-{Token}", writerLookalike));
 
-        var byWriter = await WriterSearch(writerWithUnderscore, isLoggedIn: false, viewerRole: null, viewerNickname: null);
-        var byTitle = await Sut.QueryPageAsync(
+        var (items, _) = await WriterSearch(writerWithUnderscore, isLoggedIn: false, viewerRole: null, viewerNickname: null);
+        var (boards, _) = await Sut.QueryPageAsync(
             new BoardPageQuery(BoardTypes.FreeForum, OwnerNickname: null, SearchType: "Title", SearchText: $"0%-{Token}",
                 IsLoggedIn: false, ViewerRole: null, ViewerNickname: null, Page: 1, PageSize: 50),
             TestContext.Current.CancellationToken);
 
-        Assert.Equal([writerWithUnderscore], byWriter.Items.Select(b => b.Writer));
-        Assert.Equal([$"100%-{Token}"], byTitle.Items.Select(b => b.Title));
+        Assert.Equal([writerWithUnderscore], items.Select(b => b.Writer));
+        Assert.Equal([$"100%-{Token}"], boards.Select(b => b.Title));
     }
 
     /// <summary>The owner-scoped list (private notes) matches literally as well.</summary>
@@ -445,12 +445,12 @@ public sealed class BoardRepositoryTests(DatabaseFixture database) : RepositoryT
         string owner = Unique("note_owner");
         await SeedAsync(MakeBoard($"50%_off-{Token}", owner), MakeBoard($"50xxoff-{Token}", owner));
 
-        var result = await Sut.QueryPageAsync(
+        var (items, _) = await Sut.QueryPageAsync(
             new BoardPageQuery(BoardTypes.FreeForum, OwnerNickname: owner, SearchType: "Title", SearchText: $"50%_off-{Token}",
                 IsLoggedIn: true, ViewerRole: Role.User, ViewerNickname: owner, Page: 1, PageSize: 50),
             TestContext.Current.CancellationToken);
 
-        Assert.Equal([$"50%_off-{Token}"], result.Items.Select(b => b.Title));
+        Assert.Equal([$"50%_off-{Token}"], items.Select(b => b.Title));
     }
 
     // -- QueryPageAsync (owner-scoped Writer search; unknown viewer role) ------------------
@@ -462,32 +462,32 @@ public sealed class BoardRepositoryTests(DatabaseFixture database) : RepositoryT
         string owner = Unique("note_owner");
         await SeedAsync(MakeBoard($"Mine-{Token}", owner), MakeBoard($"Theirs-{Token}", Unique("someone_else")));
 
-        var result = await Sut.QueryPageAsync(
+        var (items, _) = await Sut.QueryPageAsync(
             new BoardPageQuery(BoardTypes.FreeForum, OwnerNickname: owner, SearchType: "Writer", SearchText: owner,
                 IsLoggedIn: true, ViewerRole: Role.User, ViewerNickname: owner, Page: 1, PageSize: 50),
             TestContext.Current.CancellationToken);
 
-        Assert.Equal([$"Mine-{Token}"], result.Items.Select(b => b.Title));
+        Assert.Equal([$"Mine-{Token}"], items.Select(b => b.Title));
     }
 
     /// <summary>
     /// A logged-in viewer whose role is neither Admin nor User (impossible for a real session) is not restricted at all: the search
-    /// is left as the plain, unfiltered, unsearched list — the behaviour the original code had — rather than an error.
+    /// is left as the plain, unfiltered, unsearched list — the behavior the original code had — rather than an error.
     /// </summary>
     [Fact]
     public async Task QueryPageAsync_ASearchByALoggedInViewerWithAnUnknownRole_GetsTheUnfilteredList()
     {
-        EfBoard open = MakeBoard($"Open-{Token}");
-        EfBoard locked = MakeBoard($"Locked-{Token}");
+        OrmBoard open = MakeBoard($"Open-{Token}");
+        OrmBoard locked = MakeBoard($"Locked-{Token}");
         locked.Locked = true;
         await SeedAsync(open, locked);
 
-        var result = await Sut.QueryPageAsync(
+        var (items, _) = await Sut.QueryPageAsync(
             new BoardPageQuery(BoardTypes.FreeForum, OwnerNickname: null, SearchType: "Title", SearchText: $"Open-{Token}",
                 IsLoggedIn: true, ViewerRole: "Ghost", ViewerNickname: Unique("ghost"), Page: 1, PageSize: 500),
             TestContext.Current.CancellationToken);
 
-        Assert.Contains(result.Items, b => b.Title == $"Open-{Token}");
-        Assert.Contains(result.Items, b => b.Title == $"Locked-{Token}"); // neither searched nor lock-filtered
+        Assert.Contains(items, b => b.Title == $"Open-{Token}");
+        Assert.Contains(items, b => b.Title == $"Locked-{Token}"); // neither searched nor lock-filtered
     }
 }

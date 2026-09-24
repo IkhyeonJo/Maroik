@@ -6,13 +6,13 @@ namespace Maroik.Core.Repository.Tests.Infrastructure;
 /// <summary>
 /// One PostgreSQL 17 container shared by the whole test assembly.
 /// <para>
-/// On startup it loads the real production schema <b>and its seed data</b> from
+/// On startup, it loads the real production schema <b>and its seed data</b> from
 /// <c>Maroik.DB/PostgreSQL/SQL_Init_Script/Debugging/Init.sql</c> into a template database.
 /// Every repository test class then gets its own throwaway database cloned from that template
 /// (<see cref="CloneTemplateAsync"/> / <see cref="DropDatabaseAsync"/>), so tests run against the
 /// real CHECK/FK constraints, column defaults (<c>now()</c>, <c>gen_random_uuid()</c>),
-/// <c>ON UPDATE/DELETE CASCADE</c> behaviour and the ~19k seed rows — while staying isolated from
-/// one another. This replaces the EF Core InMemory provider, which modelled none of that.
+/// <c>ON UPDATE/DELETE CASCADE</c> behavior and the ~19k seed rows — while staying isolated from
+/// one another. This replaces the EF Core InMemory provider, which modeled none of that.
 /// </para>
 /// </summary>
 public sealed class PostgresContainerFixture : IAsyncLifetime
@@ -32,7 +32,7 @@ public sealed class PostgresContainerFixture : IAsyncLifetime
     public async ValueTask InitializeAsync()
     {
         // The schema is full of `timestamp without time zone` columns. Npgsql 6+ maps those to
-        // DateTimeKind.Unspecified and throws when handed a Utc/Local DateTime unless the legacy
+        // DateTimeKind.Unspecified and throws when handed an Utc/Local DateTime unless the legacy
         // switch is on. Set before the first connection is opened.
         AppContext.SetSwitch("Npgsql.EnableLegacyTimestampBehavior", true);
 
@@ -40,13 +40,13 @@ public sealed class PostgresContainerFixture : IAsyncLifetime
 
         // Init.sql is a `pg_dump` plain-format script: it contains psql meta-commands
         // (`\restrict`, `COPY ... FROM stdin` blocks terminated by `\.`) that only the psql
-        // client understands, so it has to be piped through psql rather than executed over an
+        // client understands, so it has to be piped through psql rather than executed over a
         // Npgsql connection. ExecScriptAsync copies the script into the container and runs it
         // with psql against the container's default database (TemplateDatabase).
         //
         // `\restrict` / `\unrestrict` are psql 17.5+ client guards around the dump; they are not
         // needed to replay it and are stripped so the load does not depend on the client version
-        // bundled in the postgres image.
+        // bundled in the Postgres image.
         string[] lines = await File.ReadAllLinesAsync(ResolveInitScriptPath());
         string initSql = string.Join(
             '\n',
@@ -68,7 +68,7 @@ public sealed class PostgresContainerFixture : IAsyncLifetime
     /// <summary>
     /// Creates a fresh database cloned from the seeded template and returns its name plus a
     /// connection string pointing at it. Pooling is disabled on the returned string so the caller
-    /// can <see cref="DropDatabaseAsync"/> it cleanly afterwards.
+    /// can <see cref="DropDatabaseAsync"/> it cleanly afterward.
     /// </summary>
     public async Task<(string Database, string ConnectionString)> CloneTemplateAsync()
     {
@@ -117,9 +117,7 @@ public sealed class PostgresContainerFixture : IAsyncLifetime
         string path = Path.Combine(
             dir.FullName, InitScriptRelativePath.Replace('/', Path.DirectorySeparatorChar));
 
-        if (!File.Exists(path))
-            throw new FileNotFoundException($"Seed script not found at expected location.", path);
+        return !File.Exists(path) ? throw new FileNotFoundException($"Seed script not found at expected location.", path) : path;
 
-        return path;
     }
 }

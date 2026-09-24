@@ -1,5 +1,3 @@
-using Maroik.Core.Repository.Tests.Infrastructure;
-
 // One PostgreSQL container for the entire assembly (xUnit v3 assembly fixture). It is
 // constructor-injected into DatabaseFixture, which hands each test class its own cloned database.
 //

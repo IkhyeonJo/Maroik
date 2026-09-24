@@ -1,3 +1,4 @@
+// ReSharper disable ClassNeverInstantiated.Global
 namespace Maroik.Core.Repository.Tests.Infrastructure;
 
 /// <summary>

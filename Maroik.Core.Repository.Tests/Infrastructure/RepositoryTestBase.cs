@@ -52,7 +52,7 @@ public abstract class RepositoryTestBase : IClassFixture<DatabaseFixture>, IAsyn
     protected async Task EnsureAccountsAsync(params string[] emails)
     {
         List<string> existing = await Context.Accounts.AsNoTracking()
-            .Where(a => emails.Contains(a.Email))
+            .Where(a => ((IEnumerable<string>)emails).Contains(a.Email))
             .Select(a => a.Email!)
             .ToListAsync();
 
@@ -98,7 +98,7 @@ public abstract class RepositoryTestBase : IClassFixture<DatabaseFixture>, IAsyn
         if (names.Length == 0) return;
 
         List<string> existing = await Context.Assets.AsNoTracking()
-            .Where(a => a.AccountEmail == accountEmail && names.Contains(a.ProductName))
+            .Where(a => a.AccountEmail == accountEmail && ((IEnumerable<string>)names).Contains(a.ProductName))
             .Select(a => a.ProductName!)
             .ToListAsync();
 
@@ -125,7 +125,7 @@ public abstract class RepositoryTestBase : IClassFixture<DatabaseFixture>, IAsyn
     /// <summary>
     /// Inserts a <c>Calendar</c> (creating its owning <c>Account</c> if needed) and returns its
     /// DB-generated id, so tests can satisfy the FKs on <c>CalendarEvent</c>, <c>CalendarShared</c>
-    /// and <c>OtherCalendar</c>. The colour matches <c>Calendar_HtmlColorCode_check</c>.
+    /// and <c>OtherCalendar</c>. The color matches <c>Calendar_HtmlColorCode_check</c>.
     /// </summary>
     protected async Task<long> InsertCalendarAsync(string? accountEmail = null, string? name = null)
     {

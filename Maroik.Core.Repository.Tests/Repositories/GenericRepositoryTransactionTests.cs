@@ -4,13 +4,13 @@ using Maroik.Core.Domain.Menu;
 using Maroik.Core.PostgreSQL.Data;
 using Maroik.Core.Repository.Repositories;
 using Microsoft.EntityFrameworkCore;
-using EfCategory = Maroik.Core.PostgreSQL.Models.Category;
+using OrmCategory = Maroik.Core.PostgreSQL.Models.Category;
 
 namespace Maroik.Core.Repository.Tests.Repositories;
 
 /// <summary>
 /// Tests the flush contract shared by every <see cref="GenericRepository{TDomain,TEntity}"/>:
-/// a write is persisted immediately when no <see cref="UnitOfWork"/> transaction is open, but is
+/// write is persisted immediately when no <see cref="UnitOfWork"/> transaction is open, but is
 /// left pending — and flushed by <see cref="UnitOfWork.CommitAsync"/> as a single batch — while a
 /// transaction is open. <see cref="CategoryRepository"/> is used as a representative concrete
 /// repository (root table, no FKs).
@@ -26,7 +26,7 @@ public sealed class GenericRepositoryTransactionTests(DatabaseFixture database) 
         return await probe.Categories.AsNoTracking().AnyAsync(c => c.Name == name, TestContext.Current.CancellationToken);
     }
 
-    /// <summary>Without a transaction, <c>CreateAsync</c> flushes right away (unchanged legacy behaviour).</summary>
+    /// <summary>Without a transaction, <c>CreateAsync</c> flushes right away (unchanged legacy behavior).</summary>
     [Fact]
     public async Task CreateAsync_WithoutTransaction_FlushesImmediately()
     {
@@ -35,7 +35,7 @@ public sealed class GenericRepositoryTransactionTests(DatabaseFixture database) 
         await new CategoryRepository(Context).CreateAsync(category, TestContext.Current.CancellationToken);
 
         Assert.DoesNotContain(
-            Context.ChangeTracker.Entries<EfCategory>(),
+            Context.ChangeTracker.Entries<OrmCategory>(),
             e => e.State == EntityState.Added);
         Assert.True(await ExistsInSeparateConnectionAsync(category.Name!));
     }
@@ -53,13 +53,13 @@ public sealed class GenericRepositoryTransactionTests(DatabaseFixture database) 
 
         // Still pending — no SaveChanges was issued by the repository call.
         Assert.Contains(
-            Context.ChangeTracker.Entries<EfCategory>(),
-            e => e.State == EntityState.Added && ((EfCategory)e.Entity).Name == category.Name);
+            Context.ChangeTracker.Entries<OrmCategory>(),
+            e => e.State == EntityState.Added && e.Entity.Name == category.Name);
 
         await uow.CommitAsync(TestContext.Current.CancellationToken);
 
         Assert.DoesNotContain(
-            Context.ChangeTracker.Entries<EfCategory>(),
+            Context.ChangeTracker.Entries<OrmCategory>(),
             e => e.State == EntityState.Added);
         Assert.True(await ExistsInSeparateConnectionAsync(category.Name!));
     }
@@ -127,7 +127,7 @@ public sealed class GenericRepositoryTransactionTests(DatabaseFixture database) 
         Account? found = await repo.FindByEmailAsync(email, TestContext.Current.CancellationToken);
 
         Assert.NotNull(found);
-        Assert.Equal(email, found!.Email.Value);
+        Assert.Equal(email, found.Email.Value);
     }
 
     /// <summary>Test-only subclass exposing a <c>DeleteWhereAsync</c> filtered on <c>Name</c> (a mutable,

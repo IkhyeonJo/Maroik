@@ -1,13 +1,13 @@
 using Maroik.Core.Domain.Finance;
 using Maroik.Core.Repository.Repositories;
 using Microsoft.EntityFrameworkCore;
-using EfFixedExpenditure = Maroik.Core.PostgreSQL.Models.FixedExpenditure;
+using OrmFixedExpenditure = Maroik.Core.PostgreSQL.Models.FixedExpenditure;
 
 namespace Maroik.Core.Repository.Tests.Repositories;
 
 /// <summary>
 /// Tests for <see cref="FixedExpenditureRepository"/> against a real PostgreSQL database
-/// (Testcontainers) pre-loaded with the production <c>Init.sql</c> schema and seed data.
+/// (Testcontainers) preloaded with the production <c>Init.sql</c> schema and seed data.
 /// <c>FixedExpenditure</c> carries the composite FKs <c>FixedExpenditure_fk_0</c> on
 /// <c>(PaymentMethod, AccountEmail)</c> and <c>FixedExpenditure_fk_1</c> on
 /// <c>(MyDepositAsset, AccountEmail)</c>. Includes <c>UpdateMyDepositAssetWithProductNameAsync</c>
@@ -17,7 +17,7 @@ public sealed class FixedExpenditureRepositoryTests(DatabaseFixture database) : 
 {
     private FixedExpenditureRepository Sut => new(Context);
 
-    private static EfFixedExpenditure MakeFixedExpenditure(
+    private static OrmFixedExpenditure MakeFixedExpenditure(
         string email, string content, string paymentMethod = "Wallet", string? myDepositAsset = "Wallet",
         decimal amount = 50m) => new()
     {
@@ -37,7 +37,7 @@ public sealed class FixedExpenditureRepositoryTests(DatabaseFixture database) : 
         Unpunctuality = false
     };
 
-    private async Task SeedAsync(params EfFixedExpenditure[] items)
+    private async Task SeedAsync(params OrmFixedExpenditure[] items)
     {
         foreach (var group in items.GroupBy(e => e.AccountEmail!))
             await EnsureAssetsAsync(group.Key, [.. group.SelectMany(e => new[] { e.PaymentMethod, e.MyDepositAsset })]);
@@ -122,7 +122,7 @@ public sealed class FixedExpenditureRepositoryTests(DatabaseFixture database) : 
         await Sut.CreateAsync(fixedExpenditure, TestContext.Current.CancellationToken);
         Context.ChangeTracker.Clear();
 
-        EfFixedExpenditure? saved = await Context.FixedExpenditures.FirstOrDefaultAsync(
+        OrmFixedExpenditure? saved = await Context.FixedExpenditures.FirstOrDefaultAsync(
             fe => fe.AccountEmail == alice && fe.Content == "Property tax", TestContext.Current.CancellationToken);
         Assert.NotNull(saved);
         Assert.Equal(200m, saved.Amount);
@@ -150,7 +150,7 @@ public sealed class FixedExpenditureRepositoryTests(DatabaseFixture database) : 
         await Sut.UpdateEntityAsync(fixedExpenditure, TestContext.Current.CancellationToken);
         Context.ChangeTracker.Clear();
 
-        EfFixedExpenditure? updated = await Context.FixedExpenditures.FirstOrDefaultAsync(fe => fe.Id == ef.Id, TestContext.Current.CancellationToken);
+        OrmFixedExpenditure? updated = await Context.FixedExpenditures.FirstOrDefaultAsync(fe => fe.Id == ef.Id, TestContext.Current.CancellationToken);
         Assert.NotNull(updated);
         Assert.Equal(75m, updated.Amount);
         Assert.Equal("Netflix Premium", updated.Content);
@@ -185,7 +185,7 @@ public sealed class FixedExpenditureRepositoryTests(DatabaseFixture database) : 
         await Sut.DeleteByIdAsync(remove.Id, TestContext.Current.CancellationToken);
         Context.ChangeTracker.Clear();
 
-        List<EfFixedExpenditure> remaining = await Context.FixedExpenditures
+        List<OrmFixedExpenditure> remaining = await Context.FixedExpenditures
             .Where(fe => fe.AccountEmail == alice).ToListAsync(TestContext.Current.CancellationToken);
         Assert.Equal(keep.Id, Assert.Single(remaining).Id);
     }
@@ -235,7 +235,7 @@ public sealed class FixedExpenditureRepositoryTests(DatabaseFixture database) : 
     public async Task SearchByAccountEmailAsync_MatchesTheMaturityDateAsText()
     {
         string alice = UniqueEmail("alice");
-        EfFixedExpenditure matures = MakeFixedExpenditure(alice, "Matures in 2099");
+        OrmFixedExpenditure matures = MakeFixedExpenditure(alice, "Matures in 2099");
         matures.MaturityDate = new DateTime(2099, 12, 31, 12, 0, 0, DateTimeKind.Utc);
         await SeedAsync(matures, MakeFixedExpenditure(alice, "Matures next year"));
 

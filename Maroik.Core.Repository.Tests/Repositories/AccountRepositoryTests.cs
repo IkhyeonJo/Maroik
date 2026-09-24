@@ -8,8 +8,8 @@ namespace Maroik.Core.Repository.Tests.Repositories;
 
 /// <summary>
 /// Tests for <see cref="AccountRepository"/> against a real PostgreSQL database (Testcontainers)
-/// pre-loaded with the production <c>Init.sql</c> schema and seed data. Exercises real SQL
-/// behaviour the EF Core InMemory provider could not: the <c>Account_Nickname_unique</c> index,
+/// preloaded with the production <c>Init.sql</c> schema and seed data. Exercises real SQL
+/// behavior the EF Core InMemory provider could not: the <c>Account_Nickname_unique</c> index,
 /// the case-sensitive <c>=</c> lookup, the <c>Account_Role_check</c> constraint, column defaults
 /// and <c>SELECT ... FOR UPDATE</c> row-lock semantics.
 /// Each test inserts under keys unique to itself (<see cref="RepositoryTestBase.UniqueEmail"/> /
@@ -50,7 +50,7 @@ public sealed class AccountRepositoryTests(DatabaseFixture database) : Repositor
         SecurityStamp = "stamp"
     };
 
-    private Account NewDomainAccount(string email, string nickname, string role = Role.User, string timeZone = "UTC") =>
+    private static Account NewDomainAccount(string email, string nickname, string role = Role.User, string timeZone = "UTC") =>
         Account.Reconstitute(
             email: email, hashedPassword: "$2a$13$hash", nickname: nickname, avatarImagePath: null,
             role: role, timeZoneIanaId: timeZone, defaultMonetaryUnit: null, locked: false, loginAttempt: 0,
@@ -203,7 +203,7 @@ public sealed class AccountRepositoryTests(DatabaseFixture database) : Repositor
             NewAccount(nickname: Unique("Bob")),
             NewAccount(nickname: n2));
 
-        List<Account> result = await Sut.FindByNicknamesAsync(new[] { n1, n2 }, TestContext.Current.CancellationToken);
+        List<Account> result = await Sut.FindByNicknamesAsync([n1, n2], TestContext.Current.CancellationToken);
 
         Assert.Equal(2, result.Count);
         Assert.Contains(result, a => a.Nickname == n1);
@@ -214,7 +214,7 @@ public sealed class AccountRepositoryTests(DatabaseFixture database) : Repositor
     [Fact]
     public async Task FindByNicknamesAsync_ReturnsEmpty_WhenNoneMatch()
     {
-        List<Account> result = await Sut.FindByNicknamesAsync(new[] { Unique("Ghost") }, TestContext.Current.CancellationToken);
+        List<Account> result = await Sut.FindByNicknamesAsync([Unique("Ghost")], TestContext.Current.CancellationToken);
 
         Assert.Empty(result);
     }
@@ -223,7 +223,7 @@ public sealed class AccountRepositoryTests(DatabaseFixture database) : Repositor
     [Fact]
     public async Task FindByNicknamesAsync_ReturnsEmpty_WhenListIsEmpty()
     {
-        List<Account> result = await Sut.FindByNicknamesAsync(Array.Empty<string>(), TestContext.Current.CancellationToken);
+        List<Account> result = await Sut.FindByNicknamesAsync([], TestContext.Current.CancellationToken);
 
         Assert.Empty(result);
     }
@@ -604,7 +604,7 @@ public sealed class AccountRepositoryTests(DatabaseFixture database) : Repositor
 
     // -- UpdateAgreedServiceTermsAsync ------------------------------------------------
 
-    /// <summary>Writes the flag and the timestamp for exactly the addressed account (e-mail is normalised to lower case).</summary>
+    /// <summary>Writes the flag and the timestamp for exactly the addressed account (e-mail is normalized to lower case).</summary>
     [Fact]
     public async Task UpdateAgreedServiceTermsAsync_UpdatesOnlyTheAddressedAccount()
     {

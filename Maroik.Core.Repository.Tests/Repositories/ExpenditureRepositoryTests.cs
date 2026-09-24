@@ -1,13 +1,14 @@
+using DocumentFormat.OpenXml.InkML;
 using Maroik.Core.Domain.Finance;
 using Maroik.Core.Repository.Repositories;
 using Microsoft.EntityFrameworkCore;
-using EfExpenditure = Maroik.Core.PostgreSQL.Models.Expenditure;
+using OrmExpenditure = Maroik.Core.PostgreSQL.Models.Expenditure;
 
 namespace Maroik.Core.Repository.Tests.Repositories;
 
 /// <summary>
 /// Tests for <see cref="ExpenditureRepository"/> against a real PostgreSQL database (Testcontainers)
-/// pre-loaded with the production <c>Init.sql</c> schema and seed data. <c>Expenditure</c> carries
+/// preloaded with the production <c>Init.sql</c> schema and seed data. <c>Expenditure</c> carries
 /// two composite FKs to <c>Asset</c>: <c>Expenditure_fk_0</c> on <c>(PaymentMethod, AccountEmail)</c>
 /// and <c>Expenditure_fk_1</c> on <c>(MyDepositAsset, AccountEmail)</c> (NULL when the entry is not
 /// a transfer). Includes <c>UpdateMyDepositAssetWithProductNameAsync</c>, which uses
@@ -17,7 +18,7 @@ public sealed class ExpenditureRepositoryTests(DatabaseFixture database) : Repos
 {
     private ExpenditureRepository Sut => new(Context);
 
-    private static EfExpenditure MakeExpenditure(
+    private static OrmExpenditure MakeExpenditure(
         string email, string content, string paymentMethod = "Wallet", string? myDepositAsset = "Wallet",
         decimal amount = 100m) => new()
     {
@@ -33,7 +34,7 @@ public sealed class ExpenditureRepositoryTests(DatabaseFixture database) : Repos
         Updated = DateTime.UtcNow
     };
 
-    private async Task SeedAsync(params EfExpenditure[] expenditures)
+    private async Task SeedAsync(params OrmExpenditure[] expenditures)
     {
         foreach (var group in expenditures.GroupBy(e => e.AccountEmail!))
             await EnsureAssetsAsync(group.Key, [.. group.SelectMany(e => new[] { e.PaymentMethod, e.MyDepositAsset })]);
@@ -164,6 +165,15 @@ public sealed class ExpenditureRepositoryTests(DatabaseFixture database) : Repos
         var ef = MakeExpenditure(alice, "RaceSpend", amount: 300m);
         await SeedAsync(ef);
 
+        await Task.WhenAll(BumpAsync(), BumpAsync());
+
+        Context.ChangeTracker.Clear();
+        OrmExpenditure? result = await Context.Expenditures.AsNoTracking()
+            .FirstOrDefaultAsync(e => e.Id == ef.Id, TestContext.Current.CancellationToken);
+        Assert.NotNull(result);
+        Assert.Equal(500m, result.Amount); // 300 + 100 + 100: no lost update
+        return;
+
         async Task BumpAsync()
         {
             await using var context = NewDbContext();
@@ -184,14 +194,6 @@ public sealed class ExpenditureRepositoryTests(DatabaseFixture database) : Repos
             await context.SaveChangesAsync(TestContext.Current.CancellationToken);
             await tx.CommitAsync(TestContext.Current.CancellationToken);
         }
-
-        await Task.WhenAll(BumpAsync(), BumpAsync());
-
-        Context.ChangeTracker.Clear();
-        EfExpenditure? result = await Context.Expenditures.AsNoTracking()
-            .FirstOrDefaultAsync(e => e.Id == ef.Id, TestContext.Current.CancellationToken);
-        Assert.NotNull(result);
-        Assert.Equal(500m, result.Amount); // 300 + 100 + 100: no lost update
     }
 
     /// <summary>
@@ -241,7 +243,7 @@ public sealed class ExpenditureRepositoryTests(DatabaseFixture database) : Repos
         await Sut.CreateAsync(expenditure, TestContext.Current.CancellationToken);
         Context.ChangeTracker.Clear();
 
-        EfExpenditure? saved = await Context.Expenditures.FirstOrDefaultAsync(
+        OrmExpenditure? saved = await Context.Expenditures.FirstOrDefaultAsync(
             e => e.AccountEmail == alice && e.Content == "Team lunch", TestContext.Current.CancellationToken);
         Assert.NotNull(saved);
         Assert.Equal(250m, saved.Amount);
@@ -283,7 +285,7 @@ public sealed class ExpenditureRepositoryTests(DatabaseFixture database) : Repos
         await Sut.UpdateEntityAsync(expenditure, TestContext.Current.CancellationToken);
         Context.ChangeTracker.Clear();
 
-        EfExpenditure? updated = await Context.Expenditures.FirstOrDefaultAsync(e => e.Id == ef.Id, TestContext.Current.CancellationToken);
+        OrmExpenditure? updated = await Context.Expenditures.FirstOrDefaultAsync(e => e.Id == ef.Id, TestContext.Current.CancellationToken);
         Assert.NotNull(updated);
         Assert.Equal(150m, updated.Amount);
         Assert.Equal("Updated Lunch", updated.Content);
@@ -317,7 +319,7 @@ public sealed class ExpenditureRepositoryTests(DatabaseFixture database) : Repos
         await Sut.DeleteByIdAsync(remove.Id, TestContext.Current.CancellationToken);
         Context.ChangeTracker.Clear();
 
-        List<EfExpenditure> remaining = await Context.Expenditures
+        List<OrmExpenditure> remaining = await Context.Expenditures
             .Where(e => e.AccountEmail == alice).ToListAsync(TestContext.Current.CancellationToken);
         Assert.Equal(keep.Id, Assert.Single(remaining).Id);
     }
@@ -431,12 +433,6 @@ public sealed class ExpenditureRepositoryTests(DatabaseFixture database) : Repos
         string bob = UniqueEmail("bob");
         var from = new DateTime(2031, 3, 1, 0, 0, 0, DateTimeKind.Utc);
         var to = new DateTime(2031, 4, 1, 0, 0, 0, DateTimeKind.Utc);
-        EfExpenditure At(string email, string content, DateTime created)
-        {
-            EfExpenditure expenditure = MakeExpenditure(email, content);
-            expenditure.Created = created;
-            return expenditure;
-        }
         await SeedAsync(
             At(alice, "before", from.AddTicks(-1)),
             At(alice, "at-from", from),
@@ -447,5 +443,13 @@ public sealed class ExpenditureRepositoryTests(DatabaseFixture database) : Repos
         List<Expenditure> result = await Sut.GetByAccountEmailAndDateRangeAsync(alice, from, to, TestContext.Current.CancellationToken);
 
         Assert.Equal(["at-from", "inside"], result.Select(e => e.Content).Order());
+        return;
+
+        OrmExpenditure At(string email, string content, DateTime created)
+        {
+            OrmExpenditure expenditure = MakeExpenditure(email, content);
+            expenditure.Created = created;
+            return expenditure;
+        }
     }
 }

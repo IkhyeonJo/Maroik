@@ -1,14 +1,14 @@
 using Maroik.Core.Domain.Calendar;
 using Maroik.Core.Repository.Repositories;
 using Microsoft.EntityFrameworkCore;
-using EfCalendarEvent = Maroik.Core.PostgreSQL.Models.CalendarEvent;
+using OrmCalendarEvent = Maroik.Core.PostgreSQL.Models.CalendarEvent;
 
 namespace Maroik.Core.Repository.Tests.Repositories;
 
 /// <summary>
 /// Tests for <see cref="CalendarEventRepository"/> against a real PostgreSQL database
-/// (Testcontainers) pre-loaded with the production <c>Init.sql</c> schema and seed data
-/// (~1,880 events). <c>CalendarEvent</c> has the FK <c>CalendarEvent_fk_0</c> to <c>Calendar.Id</c>
+/// (Testcontainers) preloaded with the production <c>Init.sql</c> schema and seed data
+/// (~1,880 events). <c>CalendarEvent</c> has the FK <c>CalendarEvent_fk_0</c> to <c>Calendar.ID</c>
 /// (unenforced by InMemory) plus the checks <c>CalendarEvent_Status_check</c> (Busy/Free),
 /// <c>CalendarEvent_EndDate_check</c> (<c>EndDate &gt;= StartDate</c>) and
 /// <c>CalendarEvent_Title_check</c>. Every test creates a real parent calendar and scopes to its id.
@@ -17,7 +17,7 @@ public sealed class CalendarEventRepositoryTests(DatabaseFixture database) : Rep
 {
     private CalendarEventRepository Sut => new(Context);
 
-    private EfCalendarEvent MakeEvent(long calendarId, string? title = null) => new()
+    private OrmCalendarEvent MakeEvent(long calendarId, string? title = null) => new()
     {
         CalendarId = calendarId,
         Title = title ?? Unique("Meeting"),
@@ -29,7 +29,7 @@ public sealed class CalendarEventRepositoryTests(DatabaseFixture database) : Rep
         Updated = DateTime.UtcNow
     };
 
-    private async Task SeedAsync(params EfCalendarEvent[] events)
+    private async Task SeedAsync(params OrmCalendarEvent[] events)
     {
         await Context.CalendarEvents.AddRangeAsync(events);
         await Context.SaveChangesAsync();
@@ -116,7 +116,7 @@ public sealed class CalendarEventRepositoryTests(DatabaseFixture database) : Rep
         Context.ChangeTracker.Clear();
 
         Assert.True(id > 0);
-        EfCalendarEvent? saved = await Context.CalendarEvents.FirstOrDefaultAsync(e => e.Id == id, TestContext.Current.CancellationToken);
+        OrmCalendarEvent? saved = await Context.CalendarEvents.FirstOrDefaultAsync(e => e.Id == id, TestContext.Current.CancellationToken);
         Assert.NotNull(saved);
         Assert.True(saved.AllDay);
     }
@@ -136,7 +136,7 @@ public sealed class CalendarEventRepositoryTests(DatabaseFixture database) : Rep
         long id = await Sut.CreateCalendarEventAsync(calendarEvent, TestContext.Current.CancellationToken);
         Context.ChangeTracker.Clear();
 
-        EfCalendarEvent? saved = await Context.CalendarEvents.FirstOrDefaultAsync(e => e.Id == id, TestContext.Current.CancellationToken);
+        OrmCalendarEvent? saved = await Context.CalendarEvents.FirstOrDefaultAsync(e => e.Id == id, TestContext.Current.CancellationToken);
         Assert.NotNull(saved);
         Assert.Equal(255, saved.Location!.Length);
     }
@@ -158,7 +158,7 @@ public sealed class CalendarEventRepositoryTests(DatabaseFixture database) : Rep
         long id = await Sut.CreateCalendarEventAsync(calendarEvent, TestContext.Current.CancellationToken);
         Context.ChangeTracker.Clear();
 
-        EfCalendarEvent? saved = await Context.CalendarEvents.FirstOrDefaultAsync(e => e.Id == id, TestContext.Current.CancellationToken);
+        OrmCalendarEvent? saved = await Context.CalendarEvents.FirstOrDefaultAsync(e => e.Id == id, TestContext.Current.CancellationToken);
         Assert.NotNull(saved);
         Assert.Equal("Busy", saved.Status);
     }
@@ -198,7 +198,7 @@ public sealed class CalendarEventRepositoryTests(DatabaseFixture database) : Rep
         await Sut.UpdateEntityAsync(calendarEvent, TestContext.Current.CancellationToken);
         Context.ChangeTracker.Clear();
 
-        EfCalendarEvent? updated = await Context.CalendarEvents.FirstOrDefaultAsync(e => e.Id == ef.Id, TestContext.Current.CancellationToken);
+        OrmCalendarEvent? updated = await Context.CalendarEvents.FirstOrDefaultAsync(e => e.Id == ef.Id, TestContext.Current.CancellationToken);
         Assert.NotNull(updated);
         Assert.Equal("Updated Title", updated.Title);
         Assert.Equal("Free", updated.Status);

@@ -1,21 +1,21 @@
 using Maroik.Core.Domain.Calendar;
 using Maroik.Core.Repository.Repositories;
 using Microsoft.EntityFrameworkCore;
-using EfCalendarEventAttachedFile = Maroik.Core.PostgreSQL.Models.CalendarEventAttachedFile;
+using OrmCalendarEventAttachedFile = Maroik.Core.PostgreSQL.Models.CalendarEventAttachedFile;
 
 namespace Maroik.Core.Repository.Tests.Repositories;
 
 /// <summary>
 /// Tests for <see cref="CalendarEventAttachedFileRepository"/> against a real PostgreSQL database
-/// (Testcontainers) pre-loaded with the production <c>Init.sql</c> schema and seed data.
+/// (Testcontainers) preloaded with the production <c>Init.sql</c> schema and seed data.
 /// <c>CalendarEventAttachedFile</c> carries the FK <c>CalendarEventAttachedFile_fk_0</c> to
-/// <c>CalendarEvent.Id</c> (unenforced by InMemory), so every test creates a real parent event.
+/// <c>CalendarEvent.ID</c> (unenforced by InMemory), so every test creates a real parent event.
 /// </summary>
 public sealed class CalendarEventAttachedFileRepositoryTests(DatabaseFixture database) : RepositoryTestBase(database)
 {
     private CalendarEventAttachedFileRepository Sut => new(Context);
 
-    private static EfCalendarEventAttachedFile MakeFile(long calendarEventId, string name = "doc.pdf") => new()
+    private static OrmCalendarEventAttachedFile MakeFile(long calendarEventId, string name = "doc.pdf") => new()
     {
         CalendarEventId = calendarEventId,
         Name = name,
@@ -24,7 +24,7 @@ public sealed class CalendarEventAttachedFileRepositoryTests(DatabaseFixture dat
         Size = 1024
     };
 
-    private async Task SeedAsync(params EfCalendarEventAttachedFile[] files)
+    private async Task SeedAsync(params OrmCalendarEventAttachedFile[] files)
     {
         await Context.CalendarEventAttachedFiles.AddRangeAsync(files);
         await Context.SaveChangesAsync();
@@ -71,7 +71,7 @@ public sealed class CalendarEventAttachedFileRepositoryTests(DatabaseFixture dat
         await Sut.CreateAsync(file, TestContext.Current.CancellationToken);
         Context.ChangeTracker.Clear();
 
-        EfCalendarEventAttachedFile? saved = await Context.CalendarEventAttachedFiles
+        OrmCalendarEventAttachedFile? saved = await Context.CalendarEventAttachedFiles
             .FirstOrDefaultAsync(f => f.CalendarEventId == eventId, TestContext.Current.CancellationToken);
         Assert.NotNull(saved);
         Assert.Equal("new.pdf", saved.Name);
@@ -106,7 +106,7 @@ public sealed class CalendarEventAttachedFileRepositoryTests(DatabaseFixture dat
         await Sut.UpdateEntityAsync(file, TestContext.Current.CancellationToken);
         Context.ChangeTracker.Clear();
 
-        EfCalendarEventAttachedFile? updated = await Context.CalendarEventAttachedFiles
+        OrmCalendarEventAttachedFile? updated = await Context.CalendarEventAttachedFiles
             .FirstOrDefaultAsync(f => f.Id == seed.Id, TestContext.Current.CancellationToken);
         Assert.NotNull(updated);
         Assert.Equal("updated.pdf", updated.Name);

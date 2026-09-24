@@ -1,13 +1,13 @@
 using Maroik.Core.Domain.Calendar;
 using Maroik.Core.Repository.Repositories;
 using Microsoft.EntityFrameworkCore;
-using EfCalendar = Maroik.Core.PostgreSQL.Models.Calendar;
+using OrmCalendar = Maroik.Core.PostgreSQL.Models.Calendar;
 
 namespace Maroik.Core.Repository.Tests.Repositories;
 
 /// <summary>
 /// Tests for <see cref="CalendarRepository"/> against a real PostgreSQL database (Testcontainers)
-/// pre-loaded with the production <c>Init.sql</c> schema and seed data (4 calendars). <c>Calendar</c>
+/// preloaded with the production <c>Init.sql</c> schema and seed data (4 calendars). <c>Calendar</c>
 /// has the FK <c>Calendar_fk_0</c> to <c>Account.Email</c> and the checks
 /// <c>Calendar_HtmlColorCode_check</c> (<c>^#[0-9A-Fa-f]{6}$</c>) and <c>Calendar_Name_check</c>.
 /// The global <c>GetAllOrderedByNameAsync</c> also returns the seed rows, so its assertions are
@@ -17,7 +17,7 @@ public sealed class CalendarRepositoryTests(DatabaseFixture database) : Reposito
 {
     private CalendarRepository Sut => new(Context);
 
-    private EfCalendar MakeCalendar(string email, string name, string color = "#FF5733") => new()
+    private static OrmCalendar MakeCalendar(string email, string name, string color = "#FF5733") => new()
     {
         AccountEmail = email,
         Name = name,
@@ -28,7 +28,7 @@ public sealed class CalendarRepositoryTests(DatabaseFixture database) : Reposito
         Updated = DateTime.UtcNow
     };
 
-    private async Task SeedAsync(params EfCalendar[] calendars)
+    private async Task SeedAsync(params OrmCalendar[] calendars)
     {
         await EnsureAccountsAsync([.. calendars.Select(c => c.AccountEmail!)]);
         await Context.Calendars.AddRangeAsync(calendars);
@@ -58,10 +58,12 @@ public sealed class CalendarRepositoryTests(DatabaseFixture database) : Reposito
         // Prefix with the token so the pair sorts adjacently regardless of seed names.
         await SeedAsync(MakeCalendar(alice, Token + "-Work"), MakeCalendar(alice, Token + "-Personal"));
 
-        List<string> mine = (await Sut.GetAllOrderedByNameAsync(TestContext.Current.CancellationToken))
+        List<string> mine =
+        [
+            .. (await Sut.GetAllOrderedByNameAsync(TestContext.Current.CancellationToken))
             .Where(c => c.AccountEmail.Value == alice)
             .Select(c => c.Name)
-            .ToList();
+        ];
 
         Assert.Equal([Token + "-Personal", Token + "-Work"], mine);
     }
@@ -111,14 +113,14 @@ public sealed class CalendarRepositoryTests(DatabaseFixture database) : Reposito
         await Sut.CreateAsync(calendar, TestContext.Current.CancellationToken);
         Context.ChangeTracker.Clear();
 
-        EfCalendar? saved = await Context.Calendars.FirstOrDefaultAsync(
+        OrmCalendar? saved = await Context.Calendars.FirstOrDefaultAsync(
             c => c.AccountEmail == alice, TestContext.Current.CancellationToken);
         Assert.NotNull(saved);
         Assert.Equal("#3498DB", saved.HtmlColorCode);
         Assert.Equal("Asia/Seoul", saved.TimeZoneIanaId);
     }
 
-    /// <summary>PostgreSQL enforces <c>Calendar_HtmlColorCode_check</c> — a malformed colour throws (InMemory did not).</summary>
+    /// <summary>PostgreSQL enforces <c>Calendar_HtmlColorCode_check</c> — a malformed color throws (InMemory did not).</summary>
     [Fact]
     public async Task CreateAsync_Throws_WhenColourCodeIsMalformed()
     {
@@ -183,7 +185,7 @@ public sealed class CalendarRepositoryTests(DatabaseFixture database) : Reposito
         await Sut.UpdateEntityAsync(calendar, TestContext.Current.CancellationToken);
         Context.ChangeTracker.Clear();
 
-        EfCalendar? updated = await Context.Calendars.FirstOrDefaultAsync(c => c.Id == seed.Id, TestContext.Current.CancellationToken);
+        OrmCalendar? updated = await Context.Calendars.FirstOrDefaultAsync(c => c.Id == seed.Id, TestContext.Current.CancellationToken);
         Assert.NotNull(updated);
         Assert.Equal("#2ECC71", updated.HtmlColorCode);
     }
@@ -216,7 +218,7 @@ public sealed class CalendarRepositoryTests(DatabaseFixture database) : Reposito
         await Sut.DeleteByIdAsync(remove.Id, TestContext.Current.CancellationToken);
         Context.ChangeTracker.Clear();
 
-        List<EfCalendar> remaining = await Context.Calendars
+        List<OrmCalendar> remaining = await Context.Calendars
             .Where(c => c.AccountEmail == alice).ToListAsync(TestContext.Current.CancellationToken);
         Assert.Equal(keep.Id, Assert.Single(remaining).Id);
     }

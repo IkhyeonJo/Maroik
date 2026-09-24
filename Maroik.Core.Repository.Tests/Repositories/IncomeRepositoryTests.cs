@@ -1,13 +1,14 @@
+using DocumentFormat.OpenXml.InkML;
 using Maroik.Core.Domain.Finance;
 using Maroik.Core.Repository.Repositories;
 using Microsoft.EntityFrameworkCore;
-using EfIncome = Maroik.Core.PostgreSQL.Models.Income;
+using OrmIncome = Maroik.Core.PostgreSQL.Models.Income;
 
 namespace Maroik.Core.Repository.Tests.Repositories;
 
 /// <summary>
 /// Tests for <see cref="IncomeRepository"/> against a real PostgreSQL database (Testcontainers)
-/// pre-loaded with the production <c>Init.sql</c> schema and seed data. <c>Income</c> carries the
+/// preloaded with the production <c>Init.sql</c> schema and seed data. <c>Income</c> carries the
 /// composite FK <c>Income_fk_0</c> to <c>Asset(ProductName, AccountEmail)</c>, which the repository
 /// eager-loads via <c>Include(x =&gt; x.Asset)</c> — so every test seeds the owning account and
 /// asset first (<see cref="RepositoryTestBase.EnsureAssetsAsync"/>) and scopes queries to its own
@@ -17,7 +18,7 @@ public sealed class IncomeRepositoryTests(DatabaseFixture database) : Repository
 {
     private IncomeRepository Sut => new(Context);
 
-    private static EfIncome MakeIncome(string email, string assetName, string content = "Salary", decimal amount = 500m) => new()
+    private static OrmIncome MakeIncome(string email, string assetName, string content = "Salary", decimal amount = 500m) => new()
     {
         AccountEmail = email,
         DepositMyAssetProductName = assetName,
@@ -30,7 +31,7 @@ public sealed class IncomeRepositoryTests(DatabaseFixture database) : Repository
         Updated = DateTime.UtcNow
     };
 
-    private async Task SeedAsync(params EfIncome[] incomes)
+    private async Task SeedAsync(params OrmIncome[] incomes)
     {
         foreach (var group in incomes.GroupBy(i => i.AccountEmail!))
             await EnsureAssetsAsync(group.Key, [.. group.Select(i => i.DepositMyAssetProductName)]);
@@ -174,6 +175,15 @@ public sealed class IncomeRepositoryTests(DatabaseFixture database) : Repository
         var ef = MakeIncome(alice, "RaceSavings", amount: 500m);
         await SeedAsync(ef);
 
+        await Task.WhenAll(BumpAsync(), BumpAsync());
+
+        Context.ChangeTracker.Clear();
+        OrmIncome? result = await Context.Incomes.AsNoTracking()
+            .FirstOrDefaultAsync(i => i.Id == ef.Id, TestContext.Current.CancellationToken);
+        Assert.NotNull(result);
+        Assert.Equal(700m, result.Amount); // 500 + 100 + 100: no lost update
+        return;
+
         async Task BumpAsync()
         {
             await using var context = NewDbContext();
@@ -193,14 +203,6 @@ public sealed class IncomeRepositoryTests(DatabaseFixture database) : Repository
             await context.SaveChangesAsync(TestContext.Current.CancellationToken);
             await tx.CommitAsync(TestContext.Current.CancellationToken);
         }
-
-        await Task.WhenAll(BumpAsync(), BumpAsync());
-
-        Context.ChangeTracker.Clear();
-        EfIncome? result = await Context.Incomes.AsNoTracking()
-            .FirstOrDefaultAsync(i => i.Id == ef.Id, TestContext.Current.CancellationToken);
-        Assert.NotNull(result);
-        Assert.Equal(700m, result.Amount); // 500 + 100 + 100: no lost update
     }
 
     // -- CreateAsync --------------------------------------------------------------
@@ -221,7 +223,7 @@ public sealed class IncomeRepositoryTests(DatabaseFixture database) : Repository
         await Sut.CreateAsync(income, TestContext.Current.CancellationToken);
         Context.ChangeTracker.Clear();
 
-        EfIncome? saved = await Context.Incomes.FirstOrDefaultAsync(
+        OrmIncome? saved = await Context.Incomes.FirstOrDefaultAsync(
             i => i.AccountEmail == alice && i.Content == "Monthly salary", TestContext.Current.CancellationToken);
         Assert.NotNull(saved);
         Assert.Equal(3000m, saved.Amount);
@@ -264,7 +266,7 @@ public sealed class IncomeRepositoryTests(DatabaseFixture database) : Repository
         await Sut.UpdateEntityAsync(income, TestContext.Current.CancellationToken);
         Context.ChangeTracker.Clear();
 
-        EfIncome? updated = await Context.Incomes.FirstOrDefaultAsync(i => i.Id == ef.Id, TestContext.Current.CancellationToken);
+        OrmIncome? updated = await Context.Incomes.FirstOrDefaultAsync(i => i.Id == ef.Id, TestContext.Current.CancellationToken);
         Assert.NotNull(updated);
         Assert.Equal(750m, updated.Amount);
         Assert.Equal("BusinessIncome", updated.SubClass);
@@ -298,7 +300,7 @@ public sealed class IncomeRepositoryTests(DatabaseFixture database) : Repository
         await Sut.DeleteByIdAsync(remove.Id, TestContext.Current.CancellationToken);
         Context.ChangeTracker.Clear();
 
-        List<EfIncome> remaining = await Context.Incomes
+        List<OrmIncome> remaining = await Context.Incomes
             .Where(i => i.AccountEmail == alice).ToListAsync(TestContext.Current.CancellationToken);
         Assert.Equal(keep.Id, Assert.Single(remaining).Id);
     }
@@ -393,12 +395,6 @@ public sealed class IncomeRepositoryTests(DatabaseFixture database) : Repository
         string bob = UniqueEmail("bob");
         var from = new DateTime(2031, 3, 1, 0, 0, 0, DateTimeKind.Utc);
         var to = new DateTime(2031, 4, 1, 0, 0, 0, DateTimeKind.Utc);
-        EfIncome At(string email, string content, DateTime created)
-        {
-            EfIncome income = MakeIncome(email, "Bank", content);
-            income.Created = created;
-            return income;
-        }
         await SeedAsync(
             At(alice, "before", from.AddTicks(-1)),
             At(alice, "at-from", from),
@@ -409,5 +405,15 @@ public sealed class IncomeRepositoryTests(DatabaseFixture database) : Repository
         List<Income> result = await Sut.GetByAccountEmailAndDateRangeAsync(alice, from, to, TestContext.Current.CancellationToken);
 
         Assert.Equal(["at-from", "inside"], result.Select(i => i.Content).Order());
+        return;
+
+ #pragma warning disable IDE0062
+        OrmIncome At(string email, string content, DateTime created)
+ #pragma warning restore IDE0062
+        {
+            OrmIncome income = MakeIncome(email, "Bank", content);
+            income.Created = created;
+            return income;
+        }
     }
 }

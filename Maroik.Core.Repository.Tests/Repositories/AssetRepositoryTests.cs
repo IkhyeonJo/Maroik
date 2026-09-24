@@ -8,7 +8,7 @@ namespace Maroik.Core.Repository.Tests.Repositories;
 
 /// <summary>
 /// Tests for <see cref="AssetRepository"/> against a real PostgreSQL database (Testcontainers)
-/// pre-loaded with the production <c>Init.sql</c> schema and seed data. <c>Asset</c> has a
+/// preloaded with the production <c>Init.sql</c> schema and seed data. <c>Asset</c> has a
 /// composite primary key (<c>ProductName</c> + <c>AccountEmail</c>) and a foreign key to
 /// <c>Account</c>; these tests exercise CRUD plus the two raw-SQL paths the EF Core InMemory
 /// provider could not run — <c>UpdateAssetWithProductNameAsync</c> (renames a composite PK) and
@@ -51,7 +51,7 @@ public sealed class AssetRepositoryTests(DatabaseFixture database) : RepositoryT
     /// <summary>
     /// The limits the Asset domain enforces (255-char name / note, |amount| ≤ 9,999,999,999,999,999.99)
     /// are exactly what the real <c>Asset</c> columns hold: a value sitting on each limit persists and
-    /// round-trips. (Beyond them the write would fail with SQLSTATE 22001 / 22003 — which the domain now
+    /// round-trips. (Beyond them to write would fail with SQLSTATE 22001 / 22003 — which the domain now
     /// rejects up front instead.)
     /// </summary>
     [Theory]
@@ -314,6 +314,15 @@ public sealed class AssetRepositoryTests(DatabaseFixture database) : RepositoryT
 
         ApplicationDbContext[] contexts = [NewDbContext(), NewDbContext()];
 
+        await Task.WhenAll(WithdrawAsync(contexts[0], 100m), WithdrawAsync(contexts[1], 100m));
+
+        Context.ChangeTracker.Clear();
+        OrmAsset? result = await Context.Assets.AsNoTracking().FirstOrDefaultAsync(
+            a => a.ProductName == "RaceWallet" && a.AccountEmail == alice, TestContext.Current.CancellationToken);
+        Assert.NotNull(result);
+        Assert.Equal(800m, result.Amount); // 1000 - 100 - 100: no lost update
+        return;
+
         async Task WithdrawAsync(ApplicationDbContext context, decimal amount)
         {
             var repo = new AssetRepository(context);
@@ -332,14 +341,6 @@ public sealed class AssetRepositoryTests(DatabaseFixture database) : RepositoryT
             await context.SaveChangesAsync(TestContext.Current.CancellationToken);
             await tx.CommitAsync(TestContext.Current.CancellationToken);
         }
-
-        await Task.WhenAll(WithdrawAsync(contexts[0], 100m), WithdrawAsync(contexts[1], 100m));
-
-        Context.ChangeTracker.Clear();
-        OrmAsset? result = await Context.Assets.AsNoTracking().FirstOrDefaultAsync(
-            a => a.ProductName == "RaceWallet" && a.AccountEmail == alice, TestContext.Current.CancellationToken);
-        Assert.NotNull(result);
-        Assert.Equal(800m, result.Amount); // 1000 - 100 - 100: no lost update
     }
 
     /// <summary>

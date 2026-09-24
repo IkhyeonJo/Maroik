@@ -2,22 +2,22 @@ using Maroik.Core.Domain.Board;
 using Maroik.Core.PostgreSQL.Data;
 using Maroik.Core.Repository.Repositories;
 using Microsoft.EntityFrameworkCore;
-using EfBoard = Maroik.Core.PostgreSQL.Models.Board;
-using EfBoardComment = Maroik.Core.PostgreSQL.Models.BoardComment;
+using OrmBoard = Maroik.Core.PostgreSQL.Models.Board;
+using OrmBoardComment = Maroik.Core.PostgreSQL.Models.BoardComment;
 
 namespace Maroik.Core.Repository.Tests.Repositories;
 
 /// <summary>
 /// Tests for <see cref="BoardCommentRepository"/> against a real PostgreSQL database (Testcontainers)
-/// pre-loaded with the production <c>Init.sql</c> schema and seed data. <c>BoardComment</c> carries
-/// the FK <c>BoardComment_fk_0</c> to <c>Board.Id</c> and the check <c>BoardComment_Order_check</c>
+/// preloaded with the production <c>Init.sql</c> schema and seed data. <c>BoardComment</c> carries
+/// the FK <c>BoardComment_fk_0</c> to <c>Board.ID</c> and the check <c>BoardComment_Order_check</c>
 /// (<c>Order &gt;= 0</c>), so every test creates a real parent board and scopes to its id.
 /// </summary>
 public sealed class BoardCommentRepositoryTests(DatabaseFixture database) : RepositoryTestBase(database)
 {
     private BoardCommentRepository Sut => new(Context);
 
-    private EfBoardComment MakeComment(long boardId, long order, string? writer = null, bool deleted = false) => new()
+    private OrmBoardComment MakeComment(long boardId, long order, string? writer = null, bool deleted = false) => new()
     {
         BoardId = boardId,
         Order = order,
@@ -30,7 +30,7 @@ public sealed class BoardCommentRepositoryTests(DatabaseFixture database) : Repo
 
     private async Task<long> SeedBoardAsync()
     {
-        var board = new EfBoard
+        var board = new OrmBoard
         {
             Type = BoardTypes.FreeForum,
             Title = Unique("Parent Board"),
@@ -49,7 +49,7 @@ public sealed class BoardCommentRepositoryTests(DatabaseFixture database) : Repo
         return board.Id;
     }
 
-    private async Task SeedAsync(params EfBoardComment[] comments)
+    private async Task SeedAsync(params OrmBoardComment[] comments)
     {
         await Context.BoardComments.AddRangeAsync(comments);
         await Context.SaveChangesAsync();
@@ -287,7 +287,7 @@ public sealed class BoardCommentRepositoryTests(DatabaseFixture database) : Repo
         await Sut.CreateAsync(comment, TestContext.Current.CancellationToken);
         Context.ChangeTracker.Clear();
 
-        EfBoardComment? saved = await Context.BoardComments.FirstOrDefaultAsync(
+        OrmBoardComment? saved = await Context.BoardComments.FirstOrDefaultAsync(
             c => c.BoardId == boardId && c.Content == "Great post!", TestContext.Current.CancellationToken);
         Assert.NotNull(saved);
         Assert.Equal("Alice" + Token, saved.Writer);
@@ -322,7 +322,7 @@ public sealed class BoardCommentRepositoryTests(DatabaseFixture database) : Repo
         await Sut.UpdateEntityAsync(comment, TestContext.Current.CancellationToken);
         Context.ChangeTracker.Clear();
 
-        EfBoardComment? result = await Context.BoardComments.FirstOrDefaultAsync(c => c.Id == ef.Id, TestContext.Current.CancellationToken);
+        OrmBoardComment? result = await Context.BoardComments.FirstOrDefaultAsync(c => c.Id == ef.Id, TestContext.Current.CancellationToken);
         Assert.NotNull(result);
         Assert.True(result.Deleted);
     }

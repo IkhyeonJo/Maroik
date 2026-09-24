@@ -1,15 +1,15 @@
 using Maroik.Core.Domain.Board;
 using Maroik.Core.Repository.Repositories;
 using Microsoft.EntityFrameworkCore;
-using EfBoard = Maroik.Core.PostgreSQL.Models.Board;
+using OrmBoard = Maroik.Core.PostgreSQL.Models.Board;
 using OrmBoardAttachedFile = Maroik.Core.PostgreSQL.Models.BoardAttachedFile;
 
 namespace Maroik.Core.Repository.Tests.Repositories;
 
 /// <summary>
 /// Tests for <see cref="BoardAttachedFileRepository"/> against a real PostgreSQL database
-/// (Testcontainers) pre-loaded with the production <c>Init.sql</c> schema and seed data.
-/// <c>BoardAttachedFile</c> carries the FK <c>BoardAttachedFile_fk_0</c> to <c>Board.Id</c>
+/// (Testcontainers) preloaded with the production <c>Init.sql</c> schema and seed data.
+/// <c>BoardAttachedFile</c> carries the FK <c>BoardAttachedFile_fk_0</c> to <c>Board.ID</c>
 /// (which the EF Core InMemory provider did not enforce), so every test creates real parent
 /// boards and scopes to their ids.
 /// </summary>
@@ -29,7 +29,7 @@ public sealed class BoardAttachedFileRepositoryTests(DatabaseFixture database) :
     /// <summary>Creates <paramref name="count"/> real parent boards and returns their ids.</summary>
     private async Task<long[]> SeedBoardsAsync(int count)
     {
-        EfBoard[] boards = [.. Enumerable.Range(0, count).Select(i => new EfBoard
+        OrmBoard[] boards = [.. Enumerable.Range(0, count).Select(i => new OrmBoard
         {
             Type = BoardTypes.FreeForum,
             Title = Unique($"Parent {i}"),
@@ -105,7 +105,7 @@ public sealed class BoardAttachedFileRepositoryTests(DatabaseFixture database) :
 
         Dictionary<long, BoardAttachedFile?> result = await Sut.GetByBoardIdsAsync(boards, TestContext.Current.CancellationToken);
 
-        Assert.All(result.Values, v => Assert.Null(v));
+        Assert.All(result.Values, Assert.Null);
     }
 
     // -- CreateAsync -------------------------------------------

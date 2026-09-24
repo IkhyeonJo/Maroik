@@ -2,13 +2,13 @@ using Maroik.Core.Domain.Account;
 using Maroik.Core.Domain.Menu;
 using Maroik.Core.Repository.Repositories;
 using Microsoft.EntityFrameworkCore;
-using EfCategory = Maroik.Core.PostgreSQL.Models.Category;
+using OrmCategory = Maroik.Core.PostgreSQL.Models.Category;
 
 namespace Maroik.Core.Repository.Tests.Repositories;
 
 /// <summary>
 /// Tests for <see cref="CategoryRepository"/> against a real PostgreSQL database (Testcontainers)
-/// pre-loaded with the production <c>Init.sql</c> schema and seed data (13 navigation categories).
+/// preloaded with the production <c>Init.sql</c> schema and seed data (13 navigation categories).
 /// <c>Category</c> is a root table (no FK) with the checks <c>Category_Role_check</c> and
 /// <c>Category_Order_check</c>. The global <c>GetAllAsync</c> also returns the seed rows, so its
 /// assertions are scoped to the names this test inserts.
@@ -17,7 +17,7 @@ public sealed class CategoryRepositoryTests(DatabaseFixture database) : Reposito
 {
     private CategoryRepository Sut => new(Context);
 
-    private EfCategory MakeCategory(string name, string role = Role.User, long order = 1) => new()
+    private static OrmCategory MakeCategory(string name, string role = Role.User, long order = 1) => new()
     {
         Name = name,
         DisplayName = name,
@@ -28,7 +28,7 @@ public sealed class CategoryRepositoryTests(DatabaseFixture database) : Reposito
         Order = order
     };
 
-    private async Task SeedAsync(params EfCategory[] categories)
+    private async Task SeedAsync(params OrmCategory[] categories)
     {
         await Context.Categories.AddRangeAsync(categories);
         await Context.SaveChangesAsync();
@@ -56,7 +56,7 @@ public sealed class CategoryRepositoryTests(DatabaseFixture database) : Reposito
     {
         List<Category> result = [.. await Sut.GetAllAsync(TestContext.Current.CancellationToken)];
 
-        Assert.Contains(result, c => c.Controller == "Dashboard" && c.Role == Role.Admin);
+        Assert.Contains(result, c => c is { Controller: "Dashboard", Role: Role.Admin });
     }
 
     // -- CreateAsync --------------------------------------------------
@@ -73,7 +73,7 @@ public sealed class CategoryRepositoryTests(DatabaseFixture database) : Reposito
         await Sut.CreateAsync(category, TestContext.Current.CancellationToken);
         Context.ChangeTracker.Clear();
 
-        EfCategory? saved = await Context.Categories.FirstOrDefaultAsync(c => c.Name == name, TestContext.Current.CancellationToken);
+        OrmCategory? saved = await Context.Categories.FirstOrDefaultAsync(c => c.Name == name, TestContext.Current.CancellationToken);
         Assert.NotNull(saved);
         Assert.Equal(Role.User, saved.Role);
         Assert.Equal(5, saved.Order);
@@ -108,7 +108,7 @@ public sealed class CategoryRepositoryTests(DatabaseFixture database) : Reposito
         await Sut.UpdateEntityAsync(category, TestContext.Current.CancellationToken);
         Context.ChangeTracker.Clear();
 
-        EfCategory? updated = await Context.Categories.FirstOrDefaultAsync(c => c.Id == seed.Id, TestContext.Current.CancellationToken);
+        OrmCategory? updated = await Context.Categories.FirstOrDefaultAsync(c => c.Id == seed.Id, TestContext.Current.CancellationToken);
         Assert.NotNull(updated);
         Assert.Equal(newName, updated.Name);
         Assert.Equal(Role.Admin, updated.Role);
