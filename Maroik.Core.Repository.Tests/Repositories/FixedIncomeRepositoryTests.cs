@@ -78,10 +78,10 @@ public sealed class FixedIncomeRepositoryTests(DatabaseFixture database) : Repos
     public async Task FindByEmailAndIdAsync_ReturnsItem_WhenOwnedByEmail()
     {
         string alice = UniqueEmail("alice");
-        var ef = MakeFixedIncome(alice, "Salary", amount: 4200m);
-        await SeedAsync(ef);
+        var orm = MakeFixedIncome(alice, "Salary", amount: 4200m);
+        await SeedAsync(orm);
 
-        FixedIncome? result = await Sut.FindByEmailAndIdAsync(alice, ef.Id, TestContext.Current.CancellationToken);
+        FixedIncome? result = await Sut.FindByEmailAndIdAsync(alice, orm.Id, TestContext.Current.CancellationToken);
 
         Assert.NotNull(result);
         Assert.Equal(4200m, result.Amount.Amount);
@@ -91,10 +91,10 @@ public sealed class FixedIncomeRepositoryTests(DatabaseFixture database) : Repos
     [Fact]
     public async Task FindByEmailAndIdAsync_ReturnsNull_WhenNotOwnedByEmail()
     {
-        var ef = MakeFixedIncome(UniqueEmail("bob"), "Salary");
-        await SeedAsync(ef);
+        var orm = MakeFixedIncome(UniqueEmail("bob"), "Salary");
+        await SeedAsync(orm);
 
-        FixedIncome? result = await Sut.FindByEmailAndIdAsync(UniqueEmail("alice"), ef.Id, TestContext.Current.CancellationToken);
+        FixedIncome? result = await Sut.FindByEmailAndIdAsync(UniqueEmail("alice"), orm.Id, TestContext.Current.CancellationToken);
 
         Assert.Null(result);
     }
@@ -132,20 +132,20 @@ public sealed class FixedIncomeRepositoryTests(DatabaseFixture database) : Repos
     public async Task UpdateEntityAsync_UpdatesExistingItem()
     {
         string alice = UniqueEmail("alice");
-        var ef = MakeFixedIncome(alice, "Salary", amount: 3000m);
-        await SeedAsync(ef);
+        var orm = MakeFixedIncome(alice, "Salary", amount: 3000m);
+        await SeedAsync(orm);
 
         var fixedIncome = FixedIncome.Reconstitute(
-            id: ef.Id, accountEmail: alice, mainClass: "RegularIncome", subClass: "LaborIncome",
+            id: orm.Id, accountEmail: alice, mainClass: "RegularIncome", subClass: "LaborIncome",
             content: "Salary (Raise)", amount: 3500m, monetaryUnit: "",
             depositMyAssetProductName: "BankAccount", depositMonth: 1, depositDay: 25,
-            maturityDate: ef.MaturityDate, note: null, unpunctuality: true,
-            created: ef.Created, updated: DateTime.UtcNow);
+            maturityDate: orm.MaturityDate, note: null, unpunctuality: true,
+            created: orm.Created, updated: DateTime.UtcNow);
 
         await Sut.UpdateEntityAsync(fixedIncome, TestContext.Current.CancellationToken);
         Context.ChangeTracker.Clear();
 
-        OrmFixedIncome? updated = await Context.FixedIncomes.FirstOrDefaultAsync(fi => fi.Id == ef.Id, TestContext.Current.CancellationToken);
+        OrmFixedIncome? updated = await Context.FixedIncomes.FirstOrDefaultAsync(fi => fi.Id == orm.Id, TestContext.Current.CancellationToken);
         Assert.NotNull(updated);
         Assert.Equal(3500m, updated.Amount);
         Assert.Equal("Salary (Raise)", updated.Content);
@@ -159,13 +159,13 @@ public sealed class FixedIncomeRepositoryTests(DatabaseFixture database) : Repos
     public async Task DeleteByIdAsync_RemovesItemFromDatabase()
     {
         string alice = UniqueEmail("alice");
-        var ef = MakeFixedIncome(alice, "Pension");
-        await SeedAsync(ef);
+        var orm = MakeFixedIncome(alice, "Pension");
+        await SeedAsync(orm);
 
-        await Sut.DeleteByIdAsync(ef.Id, TestContext.Current.CancellationToken);
+        await Sut.DeleteByIdAsync(orm.Id, TestContext.Current.CancellationToken);
         Context.ChangeTracker.Clear();
 
-        Assert.Null(await Context.FixedIncomes.FirstOrDefaultAsync(fi => fi.Id == ef.Id, TestContext.Current.CancellationToken));
+        Assert.Null(await Context.FixedIncomes.FirstOrDefaultAsync(fi => fi.Id == orm.Id, TestContext.Current.CancellationToken));
     }
 
     /// <summary>Verifies that <c>DeleteByIdAsync</c> does not affect other items.</summary>

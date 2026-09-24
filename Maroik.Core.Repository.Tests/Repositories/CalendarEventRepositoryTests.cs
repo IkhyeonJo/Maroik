@@ -80,10 +80,10 @@ public sealed class CalendarEventRepositoryTests(DatabaseFixture database) : Rep
     public async Task FindByIdAsync_ReturnsEvent_WhenFound()
     {
         long cal = await InsertCalendarAsync();
-        var ef = MakeEvent(cal, "Team Standup");
-        await SeedAsync(ef);
+        var orm = MakeEvent(cal, "Team Standup");
+        await SeedAsync(orm);
 
-        CalendarEvent? result = await Sut.FindByIdAsync(ef.Id, TestContext.Current.CancellationToken);
+        CalendarEvent? result = await Sut.FindByIdAsync(orm.Id, TestContext.Current.CancellationToken);
 
         Assert.NotNull(result);
         Assert.Equal("Team Standup", result.Title);
@@ -186,19 +186,19 @@ public sealed class CalendarEventRepositoryTests(DatabaseFixture database) : Rep
     public async Task UpdateEntityAsync_UpdatesExistingEvent()
     {
         long cal = await InsertCalendarAsync();
-        var ef = MakeEvent(cal, "Old Title");
-        await SeedAsync(ef);
+        var orm = MakeEvent(cal, "Old Title");
+        await SeedAsync(orm);
 
         var calendarEvent = CalendarEvent.Reconstitute(
-            id: ef.Id, calendarId: cal, title: "Updated Title", description: null, allDay: false,
+            id: orm.Id, calendarId: cal, title: "Updated Title", description: null, allDay: false,
             startDate: DateTime.UtcNow, endDate: DateTime.UtcNow.AddHours(2),
             startTz: null, endTz: null, location: null, status: "Free", recurrenceId: null,
-            created: ef.Created, updated: DateTime.UtcNow);
+            created: orm.Created, updated: DateTime.UtcNow);
 
         await Sut.UpdateEntityAsync(calendarEvent, TestContext.Current.CancellationToken);
         Context.ChangeTracker.Clear();
 
-        OrmCalendarEvent? updated = await Context.CalendarEvents.FirstOrDefaultAsync(e => e.Id == ef.Id, TestContext.Current.CancellationToken);
+        OrmCalendarEvent? updated = await Context.CalendarEvents.FirstOrDefaultAsync(e => e.Id == orm.Id, TestContext.Current.CancellationToken);
         Assert.NotNull(updated);
         Assert.Equal("Updated Title", updated.Title);
         Assert.Equal("Free", updated.Status);
@@ -211,12 +211,12 @@ public sealed class CalendarEventRepositoryTests(DatabaseFixture database) : Rep
     public async Task DeleteByIdAsync_RemovesEvent()
     {
         long cal = await InsertCalendarAsync();
-        var ef = MakeEvent(cal, "To Be Deleted");
-        await SeedAsync(ef);
+        var orm = MakeEvent(cal, "To Be Deleted");
+        await SeedAsync(orm);
 
-        await Sut.DeleteByIdAsync(ef.Id, TestContext.Current.CancellationToken);
+        await Sut.DeleteByIdAsync(orm.Id, TestContext.Current.CancellationToken);
         Context.ChangeTracker.Clear();
 
-        Assert.False(await Context.CalendarEvents.AnyAsync(e => e.Id == ef.Id, TestContext.Current.CancellationToken));
+        Assert.False(await Context.CalendarEvents.AnyAsync(e => e.Id == orm.Id, TestContext.Current.CancellationToken));
     }
 }

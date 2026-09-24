@@ -122,10 +122,10 @@ public sealed class BoardCommentRepositoryTests(DatabaseFixture database) : Repo
     public async Task FindByIdAsync_ReturnsComment_WhenFound()
     {
         long boardId = await SeedBoardAsync();
-        var ef = MakeComment(boardId, 1, writer: "Bob" + Token);
-        await SeedAsync(ef);
+        var orm = MakeComment(boardId, 1, writer: "Bob" + Token);
+        await SeedAsync(orm);
 
-        BoardComment? result = await Sut.FindByIdAsync(ef.Id, TestContext.Current.CancellationToken);
+        BoardComment? result = await Sut.FindByIdAsync(orm.Id, TestContext.Current.CancellationToken);
 
         Assert.NotNull(result);
         Assert.Equal("Bob" + Token, result.Writer);
@@ -145,10 +145,10 @@ public sealed class BoardCommentRepositoryTests(DatabaseFixture database) : Repo
     public async Task FindByIdAsync_ReturnsNull_WhenCommentIsDeleted()
     {
         long boardId = await SeedBoardAsync();
-        var ef = MakeComment(boardId, 1, deleted: true);
-        await SeedAsync(ef);
+        var orm = MakeComment(boardId, 1, deleted: true);
+        await SeedAsync(orm);
 
-        BoardComment? result = await Sut.FindByIdAsync(ef.Id, TestContext.Current.CancellationToken);
+        BoardComment? result = await Sut.FindByIdAsync(orm.Id, TestContext.Current.CancellationToken);
 
         Assert.Null(result);
     }
@@ -160,10 +160,10 @@ public sealed class BoardCommentRepositoryTests(DatabaseFixture database) : Repo
     public async Task FindByIdForUpdateAsync_ReturnsComment_WhenFound()
     {
         long boardId = await SeedBoardAsync();
-        var ef = MakeComment(boardId, 1, writer: "Bob" + Token);
-        await SeedAsync(ef);
+        var orm = MakeComment(boardId, 1, writer: "Bob" + Token);
+        await SeedAsync(orm);
 
-        BoardComment? result = await Sut.FindByIdForUpdateAsync(ef.Id, TestContext.Current.CancellationToken);
+        BoardComment? result = await Sut.FindByIdForUpdateAsync(orm.Id, TestContext.Current.CancellationToken);
 
         Assert.NotNull(result);
         Assert.Equal("Bob" + Token, result.Writer);
@@ -183,10 +183,10 @@ public sealed class BoardCommentRepositoryTests(DatabaseFixture database) : Repo
     public async Task FindByIdForUpdateAsync_ReturnsNull_WhenCommentIsDeleted()
     {
         long boardId = await SeedBoardAsync();
-        var ef = MakeComment(boardId, 1, deleted: true);
-        await SeedAsync(ef);
+        var orm = MakeComment(boardId, 1, deleted: true);
+        await SeedAsync(orm);
 
-        BoardComment? result = await Sut.FindByIdForUpdateAsync(ef.Id, TestContext.Current.CancellationToken);
+        BoardComment? result = await Sut.FindByIdForUpdateAsync(orm.Id, TestContext.Current.CancellationToken);
 
         Assert.Null(result);
     }
@@ -203,8 +203,8 @@ public sealed class BoardCommentRepositoryTests(DatabaseFixture database) : Repo
     {
         const int attempterCount = 5;
         long boardId = await SeedBoardAsync();
-        var ef = MakeComment(boardId, 1);
-        await SeedAsync(ef);
+        var orm = MakeComment(boardId, 1);
+        await SeedAsync(orm);
 
         ApplicationDbContext[] contexts = [.. Enumerable.Range(0, attempterCount).Select(_ => NewDbContext())];
 
@@ -214,7 +214,7 @@ public sealed class BoardCommentRepositoryTests(DatabaseFixture database) : Repo
             await using var unitOfWork = new UnitOfWork(context);
 
             await unitOfWork.BeginAsync(TestContext.Current.CancellationToken);
-            BoardComment? locked = await commentRepo.FindByIdForUpdateAsync(ef.Id, TestContext.Current.CancellationToken);
+            BoardComment? locked = await commentRepo.FindByIdForUpdateAsync(orm.Id, TestContext.Current.CancellationToken);
             if (locked == null)
             {
                 await unitOfWork.RollbackAsync(TestContext.Current.CancellationToken);
@@ -237,7 +237,7 @@ public sealed class BoardCommentRepositoryTests(DatabaseFixture database) : Repo
 
         Context.ChangeTracker.Clear();
         BoardComment? afterAll = await new BoardCommentRepository(Context)
-            .FindByIdAsync(ef.Id, TestContext.Current.CancellationToken);
+            .FindByIdAsync(orm.Id, TestContext.Current.CancellationToken);
         Assert.Null(afterAll); // soft-deleted
     }
 
@@ -312,17 +312,17 @@ public sealed class BoardCommentRepositoryTests(DatabaseFixture database) : Repo
     public async Task UpdateEntityAsync_SoftDeletesComment()
     {
         long boardId = await SeedBoardAsync();
-        var ef = MakeComment(boardId, 1);
-        await SeedAsync(ef);
+        var orm = MakeComment(boardId, 1);
+        await SeedAsync(orm);
 
         var comment = BoardComment.Reconstitute(
-            id: ef.Id, boardId: ef.BoardId, order: ef.Order, avatarImagePath: ef.AvatarImagePath,
-            writer: ef.Writer ?? "", content: ef.Content, created: ef.Created, deleted: true);
+            id: orm.Id, boardId: orm.BoardId, order: orm.Order, avatarImagePath: orm.AvatarImagePath,
+            writer: orm.Writer ?? "", content: orm.Content, created: orm.Created, deleted: true);
 
         await Sut.UpdateEntityAsync(comment, TestContext.Current.CancellationToken);
         Context.ChangeTracker.Clear();
 
-        OrmBoardComment? result = await Context.BoardComments.FirstOrDefaultAsync(c => c.Id == ef.Id, TestContext.Current.CancellationToken);
+        OrmBoardComment? result = await Context.BoardComments.FirstOrDefaultAsync(c => c.Id == orm.Id, TestContext.Current.CancellationToken);
         Assert.NotNull(result);
         Assert.True(result.Deleted);
     }

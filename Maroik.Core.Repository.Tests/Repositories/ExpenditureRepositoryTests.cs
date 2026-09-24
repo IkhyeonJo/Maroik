@@ -95,10 +95,10 @@ public sealed class ExpenditureRepositoryTests(DatabaseFixture database) : Repos
     public async Task FindByEmailAndIdAsync_ReturnsExpenditure_WhenOwnedByEmail()
     {
         string alice = UniqueEmail("alice");
-        var ef = MakeExpenditure(alice, "Lunch", amount: 42m);
-        await SeedAsync(ef);
+        var orm = MakeExpenditure(alice, "Lunch", amount: 42m);
+        await SeedAsync(orm);
 
-        Expenditure? result = await Sut.FindByEmailAndIdAsync(alice, ef.Id, TestContext.Current.CancellationToken);
+        Expenditure? result = await Sut.FindByEmailAndIdAsync(alice, orm.Id, TestContext.Current.CancellationToken);
 
         Assert.NotNull(result);
         Assert.Equal(42m, result.Amount.Amount);
@@ -108,10 +108,10 @@ public sealed class ExpenditureRepositoryTests(DatabaseFixture database) : Repos
     [Fact]
     public async Task FindByEmailAndIdAsync_ReturnsNull_WhenNotOwnedByEmail()
     {
-        var ef = MakeExpenditure(UniqueEmail("bob"), "Coffee");
-        await SeedAsync(ef);
+        var orm = MakeExpenditure(UniqueEmail("bob"), "Coffee");
+        await SeedAsync(orm);
 
-        Expenditure? result = await Sut.FindByEmailAndIdAsync(UniqueEmail("alice"), ef.Id, TestContext.Current.CancellationToken);
+        Expenditure? result = await Sut.FindByEmailAndIdAsync(UniqueEmail("alice"), orm.Id, TestContext.Current.CancellationToken);
 
         Assert.Null(result);
     }
@@ -123,10 +123,10 @@ public sealed class ExpenditureRepositoryTests(DatabaseFixture database) : Repos
     public async Task FindByEmailAndIdForUpdateAsync_FindsExpenditure_OrReturnsNull()
     {
         string alice = UniqueEmail("alice");
-        var ef = MakeExpenditure(alice, "Lunch", amount: 42m);
-        await SeedAsync(ef);
+        var orm = MakeExpenditure(alice, "Lunch", amount: 42m);
+        await SeedAsync(orm);
 
-        Expenditure? found = await Sut.FindByEmailAndIdForUpdateAsync(alice, ef.Id, TestContext.Current.CancellationToken);
+        Expenditure? found = await Sut.FindByEmailAndIdForUpdateAsync(alice, orm.Id, TestContext.Current.CancellationToken);
         Expenditure? missing = await Sut.FindByEmailAndIdForUpdateAsync(alice, long.MaxValue, TestContext.Current.CancellationToken);
 
         Assert.NotNull(found);
@@ -143,10 +143,10 @@ public sealed class ExpenditureRepositoryTests(DatabaseFixture database) : Repos
     public async Task FindByEmailAndIdForUpdateAsync_CarriesMonetaryUnit_FromAssetInclude()
     {
         string alice = UniqueEmail("alice");
-        var ef = MakeExpenditure(alice, "Lunch", amount: 20m);
-        await SeedAsync(ef); // EnsureAssetsAsync seeds the asset with MonetaryUnit "KRW"
+        var orm = MakeExpenditure(alice, "Lunch", amount: 20m);
+        await SeedAsync(orm); // EnsureAssetsAsync seeds the asset with MonetaryUnit "KRW"
 
-        Expenditure? found = await Sut.FindByEmailAndIdForUpdateAsync(alice, ef.Id, TestContext.Current.CancellationToken);
+        Expenditure? found = await Sut.FindByEmailAndIdForUpdateAsync(alice, orm.Id, TestContext.Current.CancellationToken);
 
         Assert.NotNull(found);
         Assert.Equal("KRW", found.Amount.Currency);
@@ -162,14 +162,14 @@ public sealed class ExpenditureRepositoryTests(DatabaseFixture database) : Repos
     public async Task FindByEmailAndIdForUpdateAsync_SerializesConcurrentRecordEdits()
     {
         string alice = UniqueEmail("alice");
-        var ef = MakeExpenditure(alice, "RaceSpend", amount: 300m);
-        await SeedAsync(ef);
+        var orm = MakeExpenditure(alice, "RaceSpend", amount: 300m);
+        await SeedAsync(orm);
 
         await Task.WhenAll(BumpAsync(), BumpAsync());
 
         Context.ChangeTracker.Clear();
         OrmExpenditure? result = await Context.Expenditures.AsNoTracking()
-            .FirstOrDefaultAsync(e => e.Id == ef.Id, TestContext.Current.CancellationToken);
+            .FirstOrDefaultAsync(e => e.Id == orm.Id, TestContext.Current.CancellationToken);
         Assert.NotNull(result);
         Assert.Equal(500m, result.Amount); // 300 + 100 + 100: no lost update
         return;
@@ -180,7 +180,7 @@ public sealed class ExpenditureRepositoryTests(DatabaseFixture database) : Repos
             var repo = new ExpenditureRepository(context);
             await using var tx = await context.Database.BeginTransactionAsync(TestContext.Current.CancellationToken);
 
-            Expenditure? expenditure = await repo.FindByEmailAndIdForUpdateAsync(alice, ef.Id, TestContext.Current.CancellationToken);
+            Expenditure? expenditure = await repo.FindByEmailAndIdForUpdateAsync(alice, orm.Id, TestContext.Current.CancellationToken);
             Assert.NotNull(expenditure);
 
             await Task.Delay(300, TestContext.Current.CancellationToken);
@@ -207,19 +207,19 @@ public sealed class ExpenditureRepositoryTests(DatabaseFixture database) : Repos
     public async Task FindByEmailAndIdForUpdateAsync_ReturnsFreshValues_WhenRowAlreadyTrackedInSameContext()
     {
         string alice = UniqueEmail("alice");
-        var ef = MakeExpenditure(alice, "Stale", amount: 100m);
-        await SeedAsync(ef);
+        var orm = MakeExpenditure(alice, "Stale", amount: 100m);
+        await SeedAsync(orm);
 
         // Pre-track the row in this test's Context via a normal (tracking) read.
-        Expenditure? preRead = await Sut.FindByEmailAndIdAsync(alice, ef.Id, TestContext.Current.CancellationToken);
+        Expenditure? preRead = await Sut.FindByEmailAndIdAsync(alice, orm.Id, TestContext.Current.CancellationToken);
         Assert.NotNull(preRead);
 
         // A concurrent writer commits a change to the same row via a separate connection.
         await using var writer = NewDbContext();
-        await writer.Expenditures.Where(e => e.Id == ef.Id)
+        await writer.Expenditures.Where(e => e.Id == orm.Id)
             .ExecuteUpdateAsync(s => s.SetProperty(e => e.Amount, 999m), TestContext.Current.CancellationToken);
 
-        Expenditure? locked = await Sut.FindByEmailAndIdForUpdateAsync(alice, ef.Id, TestContext.Current.CancellationToken);
+        Expenditure? locked = await Sut.FindByEmailAndIdForUpdateAsync(alice, orm.Id, TestContext.Current.CancellationToken);
 
         Assert.NotNull(locked);
         Assert.Equal(999m, locked.Amount.Amount);
@@ -273,19 +273,19 @@ public sealed class ExpenditureRepositoryTests(DatabaseFixture database) : Repos
     public async Task UpdateEntityAsync_UpdatesExistingExpenditure()
     {
         string alice = UniqueEmail("alice");
-        var ef = MakeExpenditure(alice, "Lunch", amount: 100m);
-        await SeedAsync(ef);
+        var orm = MakeExpenditure(alice, "Lunch", amount: 100m);
+        await SeedAsync(orm);
 
         var expenditure = Expenditure.Reconstitute(
-            id: ef.Id, accountEmail: alice, mainClass: "ConsumerSpending", subClass: "MealOrEatOutExpenses",
+            id: orm.Id, accountEmail: alice, mainClass: "ConsumerSpending", subClass: "MealOrEatOutExpenses",
             content: "Updated Lunch", amount: 150m, monetaryUnit: "",
             paymentMethod: "Wallet", myDepositAsset: "Wallet", note: null,
-            created: ef.Created, updated: DateTime.UtcNow);
+            created: orm.Created, updated: DateTime.UtcNow);
 
         await Sut.UpdateEntityAsync(expenditure, TestContext.Current.CancellationToken);
         Context.ChangeTracker.Clear();
 
-        OrmExpenditure? updated = await Context.Expenditures.FirstOrDefaultAsync(e => e.Id == ef.Id, TestContext.Current.CancellationToken);
+        OrmExpenditure? updated = await Context.Expenditures.FirstOrDefaultAsync(e => e.Id == orm.Id, TestContext.Current.CancellationToken);
         Assert.NotNull(updated);
         Assert.Equal(150m, updated.Amount);
         Assert.Equal("Updated Lunch", updated.Content);
@@ -298,13 +298,13 @@ public sealed class ExpenditureRepositoryTests(DatabaseFixture database) : Repos
     public async Task DeleteByIdAsync_RemovesExpenditureFromDatabase()
     {
         string alice = UniqueEmail("alice");
-        var ef = MakeExpenditure(alice, "Taxi");
-        await SeedAsync(ef);
+        var orm = MakeExpenditure(alice, "Taxi");
+        await SeedAsync(orm);
 
-        await Sut.DeleteByIdAsync(ef.Id, TestContext.Current.CancellationToken);
+        await Sut.DeleteByIdAsync(orm.Id, TestContext.Current.CancellationToken);
         Context.ChangeTracker.Clear();
 
-        Assert.Null(await Context.Expenditures.FirstOrDefaultAsync(e => e.Id == ef.Id, TestContext.Current.CancellationToken));
+        Assert.Null(await Context.Expenditures.FirstOrDefaultAsync(e => e.Id == orm.Id, TestContext.Current.CancellationToken));
     }
 
     /// <summary>Verifies that <c>DeleteByIdAsync</c> does not affect other expenditures.</summary>
@@ -445,7 +445,9 @@ public sealed class ExpenditureRepositoryTests(DatabaseFixture database) : Repos
         Assert.Equal(["at-from", "inside"], result.Select(e => e.Content).Order());
         return;
 
+ #pragma warning disable IDE0062
         OrmExpenditure At(string email, string content, DateTime created)
+ #pragma warning restore IDE0062
         {
             OrmExpenditure expenditure = MakeExpenditure(email, content);
             expenditure.Created = created;

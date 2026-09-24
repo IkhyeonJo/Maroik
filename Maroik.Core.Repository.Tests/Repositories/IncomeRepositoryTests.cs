@@ -76,10 +76,10 @@ public sealed class IncomeRepositoryTests(DatabaseFixture database) : Repository
     public async Task FindByEmailAndIdAsync_ReturnsIncome_WhenOwnedByEmail()
     {
         string alice = UniqueEmail("alice");
-        var ef = MakeIncome(alice, "Savings", amount: 900m);
-        await SeedAsync(ef);
+        var orm = MakeIncome(alice, "Savings", amount: 900m);
+        await SeedAsync(orm);
 
-        Income? result = await Sut.FindByEmailAndIdAsync(alice, ef.Id, TestContext.Current.CancellationToken);
+        Income? result = await Sut.FindByEmailAndIdAsync(alice, orm.Id, TestContext.Current.CancellationToken);
 
         Assert.NotNull(result);
         Assert.Equal(900m, result.Amount.Amount);
@@ -89,10 +89,10 @@ public sealed class IncomeRepositoryTests(DatabaseFixture database) : Repository
     [Fact]
     public async Task FindByEmailAndIdAsync_ReturnsNull_WhenNotOwnedByEmail()
     {
-        var ef = MakeIncome(UniqueEmail("bob"), "Savings");
-        await SeedAsync(ef);
+        var orm = MakeIncome(UniqueEmail("bob"), "Savings");
+        await SeedAsync(orm);
 
-        Income? result = await Sut.FindByEmailAndIdAsync(UniqueEmail("alice"), ef.Id, TestContext.Current.CancellationToken);
+        Income? result = await Sut.FindByEmailAndIdAsync(UniqueEmail("alice"), orm.Id, TestContext.Current.CancellationToken);
 
         Assert.Null(result);
     }
@@ -104,10 +104,10 @@ public sealed class IncomeRepositoryTests(DatabaseFixture database) : Repository
     public async Task FindByEmailAndIdForUpdateAsync_FindsIncome_OrReturnsNull()
     {
         string alice = UniqueEmail("alice");
-        var ef = MakeIncome(alice, "LockedSavings", amount: 640m);
-        await SeedAsync(ef);
+        var orm = MakeIncome(alice, "LockedSavings", amount: 640m);
+        await SeedAsync(orm);
 
-        Income? found = await Sut.FindByEmailAndIdForUpdateAsync(alice, ef.Id, TestContext.Current.CancellationToken);
+        Income? found = await Sut.FindByEmailAndIdForUpdateAsync(alice, orm.Id, TestContext.Current.CancellationToken);
         Income? missing = await Sut.FindByEmailAndIdForUpdateAsync(alice, long.MaxValue, TestContext.Current.CancellationToken);
 
         Assert.NotNull(found);
@@ -124,10 +124,10 @@ public sealed class IncomeRepositoryTests(DatabaseFixture database) : Repository
     public async Task FindByEmailAndIdForUpdateAsync_CarriesMonetaryUnit_FromAssetInclude()
     {
         string alice = UniqueEmail("alice");
-        var ef = MakeIncome(alice, "SavingsAccount", amount: 300m);
-        await SeedAsync(ef); // EnsureAssetsAsync seeds the asset with MonetaryUnit "KRW"
+        var orm = MakeIncome(alice, "SavingsAccount", amount: 300m);
+        await SeedAsync(orm); // EnsureAssetsAsync seeds the asset with MonetaryUnit "KRW"
 
-        Income? found = await Sut.FindByEmailAndIdForUpdateAsync(alice, ef.Id, TestContext.Current.CancellationToken);
+        Income? found = await Sut.FindByEmailAndIdForUpdateAsync(alice, orm.Id, TestContext.Current.CancellationToken);
 
         Assert.NotNull(found);
         Assert.Equal("KRW", found.Amount.Currency);
@@ -144,19 +144,19 @@ public sealed class IncomeRepositoryTests(DatabaseFixture database) : Repository
     public async Task FindByEmailAndIdForUpdateAsync_ReturnsFreshValues_WhenRowAlreadyTrackedInSameContext()
     {
         string alice = UniqueEmail("alice");
-        var ef = MakeIncome(alice, "StaleSavings", amount: 100m);
-        await SeedAsync(ef);
+        var orm = MakeIncome(alice, "StaleSavings", amount: 100m);
+        await SeedAsync(orm);
 
         // Pre-track the row in this test's Context via a normal (tracking) read.
-        Income? preRead = await Sut.FindByEmailAndIdAsync(alice, ef.Id, TestContext.Current.CancellationToken);
+        Income? preRead = await Sut.FindByEmailAndIdAsync(alice, orm.Id, TestContext.Current.CancellationToken);
         Assert.NotNull(preRead);
 
         // A concurrent writer commits a change to the same row via a separate connection.
         await using var writer = NewDbContext();
-        await writer.Incomes.Where(i => i.Id == ef.Id)
+        await writer.Incomes.Where(i => i.Id == orm.Id)
             .ExecuteUpdateAsync(s => s.SetProperty(i => i.Amount, 999m), TestContext.Current.CancellationToken);
 
-        Income? locked = await Sut.FindByEmailAndIdForUpdateAsync(alice, ef.Id, TestContext.Current.CancellationToken);
+        Income? locked = await Sut.FindByEmailAndIdForUpdateAsync(alice, orm.Id, TestContext.Current.CancellationToken);
 
         Assert.NotNull(locked);
         Assert.Equal(999m, locked.Amount.Amount);
@@ -172,14 +172,14 @@ public sealed class IncomeRepositoryTests(DatabaseFixture database) : Repository
     public async Task FindByEmailAndIdForUpdateAsync_SerializesConcurrentRecordEdits()
     {
         string alice = UniqueEmail("alice");
-        var ef = MakeIncome(alice, "RaceSavings", amount: 500m);
-        await SeedAsync(ef);
+        var orm = MakeIncome(alice, "RaceSavings", amount: 500m);
+        await SeedAsync(orm);
 
         await Task.WhenAll(BumpAsync(), BumpAsync());
 
         Context.ChangeTracker.Clear();
         OrmIncome? result = await Context.Incomes.AsNoTracking()
-            .FirstOrDefaultAsync(i => i.Id == ef.Id, TestContext.Current.CancellationToken);
+            .FirstOrDefaultAsync(i => i.Id == orm.Id, TestContext.Current.CancellationToken);
         Assert.NotNull(result);
         Assert.Equal(700m, result.Amount); // 500 + 100 + 100: no lost update
         return;
@@ -190,7 +190,7 @@ public sealed class IncomeRepositoryTests(DatabaseFixture database) : Repository
             var repo = new IncomeRepository(context);
             await using var tx = await context.Database.BeginTransactionAsync(TestContext.Current.CancellationToken);
 
-            Income? income = await repo.FindByEmailAndIdForUpdateAsync(alice, ef.Id, TestContext.Current.CancellationToken);
+            Income? income = await repo.FindByEmailAndIdForUpdateAsync(alice, orm.Id, TestContext.Current.CancellationToken);
             Assert.NotNull(income);
 
             await Task.Delay(300, TestContext.Current.CancellationToken);
@@ -254,19 +254,19 @@ public sealed class IncomeRepositoryTests(DatabaseFixture database) : Repository
     public async Task UpdateEntityAsync_UpdatesExistingIncome()
     {
         string alice = UniqueEmail("alice");
-        var ef = MakeIncome(alice, "SavingsAccount", amount: 500m);
-        await SeedAsync(ef);
+        var orm = MakeIncome(alice, "SavingsAccount", amount: 500m);
+        await SeedAsync(orm);
 
         var income = Income.Reconstitute(
-            id: ef.Id, accountEmail: alice, mainClass: "RegularIncome", subClass: "BusinessIncome",
+            id: orm.Id, accountEmail: alice, mainClass: "RegularIncome", subClass: "BusinessIncome",
             content: "Updated Content", amount: 750m, monetaryUnit: "",
             depositMyAssetProductName: "SavingsAccount", note: null,
-            created: ef.Created, updated: DateTime.UtcNow);
+            created: orm.Created, updated: DateTime.UtcNow);
 
         await Sut.UpdateEntityAsync(income, TestContext.Current.CancellationToken);
         Context.ChangeTracker.Clear();
 
-        OrmIncome? updated = await Context.Incomes.FirstOrDefaultAsync(i => i.Id == ef.Id, TestContext.Current.CancellationToken);
+        OrmIncome? updated = await Context.Incomes.FirstOrDefaultAsync(i => i.Id == orm.Id, TestContext.Current.CancellationToken);
         Assert.NotNull(updated);
         Assert.Equal(750m, updated.Amount);
         Assert.Equal("BusinessIncome", updated.SubClass);
@@ -279,13 +279,13 @@ public sealed class IncomeRepositoryTests(DatabaseFixture database) : Repository
     public async Task DeleteByIdAsync_RemovesIncomeFromDatabase()
     {
         string alice = UniqueEmail("alice");
-        var ef = MakeIncome(alice, "SavingsAccount");
-        await SeedAsync(ef);
+        var orm = MakeIncome(alice, "SavingsAccount");
+        await SeedAsync(orm);
 
-        await Sut.DeleteByIdAsync(ef.Id, TestContext.Current.CancellationToken);
+        await Sut.DeleteByIdAsync(orm.Id, TestContext.Current.CancellationToken);
         Context.ChangeTracker.Clear();
 
-        Assert.Null(await Context.Incomes.FirstOrDefaultAsync(i => i.Id == ef.Id, TestContext.Current.CancellationToken));
+        Assert.Null(await Context.Incomes.FirstOrDefaultAsync(i => i.Id == orm.Id, TestContext.Current.CancellationToken));
     }
 
     /// <summary>Verifies that <c>DeleteByIdAsync</c> does not affect other incomes.</summary>

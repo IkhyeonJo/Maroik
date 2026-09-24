@@ -82,10 +82,10 @@ public sealed class FixedExpenditureRepositoryTests(DatabaseFixture database) : 
     public async Task FindByEmailAndIdAsync_ReturnsItem_WhenOwnedByEmail()
     {
         string alice = UniqueEmail("alice");
-        var ef = MakeFixedExpenditure(alice, "Netflix", amount: 17m);
-        await SeedAsync(ef);
+        var orm = MakeFixedExpenditure(alice, "Netflix", amount: 17m);
+        await SeedAsync(orm);
 
-        FixedExpenditure? result = await Sut.FindByEmailAndIdAsync(alice, ef.Id, TestContext.Current.CancellationToken);
+        FixedExpenditure? result = await Sut.FindByEmailAndIdAsync(alice, orm.Id, TestContext.Current.CancellationToken);
 
         Assert.NotNull(result);
         Assert.Equal(17m, result.Amount.Amount);
@@ -95,10 +95,10 @@ public sealed class FixedExpenditureRepositoryTests(DatabaseFixture database) : 
     [Fact]
     public async Task FindByEmailAndIdAsync_ReturnsNull_WhenNotOwnedByEmail()
     {
-        var ef = MakeFixedExpenditure(UniqueEmail("bob"), "Gym");
-        await SeedAsync(ef);
+        var orm = MakeFixedExpenditure(UniqueEmail("bob"), "Gym");
+        await SeedAsync(orm);
 
-        FixedExpenditure? result = await Sut.FindByEmailAndIdAsync(UniqueEmail("alice"), ef.Id, TestContext.Current.CancellationToken);
+        FixedExpenditure? result = await Sut.FindByEmailAndIdAsync(UniqueEmail("alice"), orm.Id, TestContext.Current.CancellationToken);
 
         Assert.Null(result);
     }
@@ -137,20 +137,20 @@ public sealed class FixedExpenditureRepositoryTests(DatabaseFixture database) : 
     public async Task UpdateEntityAsync_UpdatesExistingItem()
     {
         string alice = UniqueEmail("alice");
-        var ef = MakeFixedExpenditure(alice, "Netflix", amount: 50m);
-        await SeedAsync(ef);
+        var orm = MakeFixedExpenditure(alice, "Netflix", amount: 50m);
+        await SeedAsync(orm);
 
         var fixedExpenditure = FixedExpenditure.Reconstitute(
-            id: ef.Id, accountEmail: alice, mainClass: "ConsumerSpending", subClass: "Tax",
+            id: orm.Id, accountEmail: alice, mainClass: "ConsumerSpending", subClass: "Tax",
             content: "Netflix Premium", amount: 75m, monetaryUnit: "",
             paymentMethod: "Wallet", myDepositAsset: "Wallet", depositMonth: 1, depositDay: 25,
-            maturityDate: ef.MaturityDate, note: null, unpunctuality: true,
-            created: ef.Created, updated: DateTime.UtcNow);
+            maturityDate: orm.MaturityDate, note: null, unpunctuality: true,
+            created: orm.Created, updated: DateTime.UtcNow);
 
         await Sut.UpdateEntityAsync(fixedExpenditure, TestContext.Current.CancellationToken);
         Context.ChangeTracker.Clear();
 
-        OrmFixedExpenditure? updated = await Context.FixedExpenditures.FirstOrDefaultAsync(fe => fe.Id == ef.Id, TestContext.Current.CancellationToken);
+        OrmFixedExpenditure? updated = await Context.FixedExpenditures.FirstOrDefaultAsync(fe => fe.Id == orm.Id, TestContext.Current.CancellationToken);
         Assert.NotNull(updated);
         Assert.Equal(75m, updated.Amount);
         Assert.Equal("Netflix Premium", updated.Content);
@@ -164,13 +164,13 @@ public sealed class FixedExpenditureRepositoryTests(DatabaseFixture database) : 
     public async Task DeleteByIdAsync_RemovesItemFromDatabase()
     {
         string alice = UniqueEmail("alice");
-        var ef = MakeFixedExpenditure(alice, "Spotify");
-        await SeedAsync(ef);
+        var orm = MakeFixedExpenditure(alice, "Spotify");
+        await SeedAsync(orm);
 
-        await Sut.DeleteByIdAsync(ef.Id, TestContext.Current.CancellationToken);
+        await Sut.DeleteByIdAsync(orm.Id, TestContext.Current.CancellationToken);
         Context.ChangeTracker.Clear();
 
-        Assert.Null(await Context.FixedExpenditures.FirstOrDefaultAsync(fe => fe.Id == ef.Id, TestContext.Current.CancellationToken));
+        Assert.Null(await Context.FixedExpenditures.FirstOrDefaultAsync(fe => fe.Id == orm.Id, TestContext.Current.CancellationToken));
     }
 
     /// <summary>Verifies that <c>DeleteByIdAsync</c> does not affect other items.</summary>
