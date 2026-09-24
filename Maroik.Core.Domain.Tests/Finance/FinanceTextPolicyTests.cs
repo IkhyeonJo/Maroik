@@ -1,6 +1,5 @@
 using Maroik.Core.Domain.Finance;
-
-namespace Maroik.Core.DomainTests.Finance;
+namespace Maroik.Core.Domain.Tests.Finance;
 
 /// <summary>
 /// Unit tests for <see cref="FinanceTextPolicy"/> -- the <c>Content</c>/<c>Note</c> length limit

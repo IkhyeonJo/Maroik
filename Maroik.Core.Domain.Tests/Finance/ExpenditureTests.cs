@@ -1,10 +1,9 @@
 using Maroik.Core.Domain.Finance;
-
-namespace Maroik.Core.DomainTests.Finance;
+namespace Maroik.Core.Domain.Tests.Finance;
 
 /// <summary>
 /// Unit tests for <see cref="Maroik.Core.Domain.Finance.Expenditure"/>.
-/// Covers expenditure recording validation (empty main/sub class and payment method) and update logic.
+/// Covers expenditure recording validation (empty main/subclass and payment method) and update logic.
 /// </summary>
 public class ExpenditureTests
 {

@@ -6,12 +6,13 @@ using Maroik.Core.Domain.Finance;
 using Maroik.Core.Domain.Menu;
 using Maroik.Core.Domain.ValueObjects;
 using AccountEntity = Maroik.Core.Domain.Account.Account;
+using DomainTitledContentPolicy = Maroik.Core.Domain.Primitives.TitledContentPolicy;
 
-namespace Maroik.Core.DomainTests.Boundaries;
+namespace Maroik.Core.Domain.Tests.Boundaries;
 
 /// <summary>
 /// The message template of each domain error is the key the Website uses to find its ko-KR translation
-/// (see <c>LocalizableError</c>), so it is part of the behaviour: these assert the code, type and exact
+/// (see <c>LocalizableError</c>), so it is part of the behavior: these assert the code, type and exact
 /// template of every error that had no such assertion. Changing a template means changing the resx keys too.
 /// </summary>
 public class ErrorContractTests
@@ -100,36 +101,34 @@ public class ErrorContractTests
 
     // ---- Board ----------------------------------------------------------------------------
 
-    private static Board NewBoard() => Board.Create(BoardTypes.FreeForum, "t", "c", "Alice").Value;
-
     [Fact]
     public void Board_Conflicts()
     {
-        Board board = Board.Reconstitute(1, BoardTypes.FreeForum, "t", "c", "Alice", DateTime.UtcNow, DateTime.UtcNow, 0L, deleted: true, locked: false, noticed: false);
+        Domain.Board.Board board = Domain.Board.Board.Reconstitute(1, BoardTypes.FreeForum, "t", "c", "Alice", DateTime.UtcNow, DateTime.UtcNow, 0L, deleted: true, locked: false, noticed: false);
         BoardComment comment = BoardComment.Create(1, 0, null, "Bob", "hi").Value;
 
         ErrorAssert.Is(board.Update("t", "c"), "Board.Deleted", ErrorType.Conflict, "Cannot update a deleted post.");
         ErrorAssert.Is(board.AddComment(comment), "Board.Deleted", ErrorType.Conflict, "Cannot add a comment to a deleted post.");
         ErrorAssert.Is(board.SoftDelete(), "Board.AlreadyDeleted", ErrorType.Conflict, "Post is already deleted.");
 
-        Board locked = Board.Reconstitute(1, BoardTypes.FreeForum, "t", "c", "Alice", DateTime.UtcNow, DateTime.UtcNow, 0L, deleted: false, locked: true, noticed: false);
+        Domain.Board.Board locked = Domain.Board.Board.Reconstitute(1, BoardTypes.FreeForum, "t", "c", "Alice", DateTime.UtcNow, DateTime.UtcNow, 0L, deleted: false, locked: true, noticed: false);
         ErrorAssert.Is(locked.AddComment(comment, "Bob"), "Board.Locked", ErrorType.Conflict, "Cannot add a comment to a locked post.");
 
         BoardComment foreign = BoardComment.Create(999, 0, null, "Bob", "hi").Value;
         ErrorAssert.Validation(NewBoardWithId(1).AddComment(foreign), "Board.CommentMismatch", "Comment does not belong to this post.");
     }
 
-    private static Board NewBoardWithId(long id) =>
-        Board.Reconstitute(id, BoardTypes.FreeForum, "t", "c", "Alice", DateTime.UtcNow, DateTime.UtcNow, 0L, false, false, false);
+    private static Domain.Board.Board NewBoardWithId(long id) =>
+        Domain.Board.Board.Reconstitute(id, BoardTypes.FreeForum, "t", "c", "Alice", DateTime.UtcNow, DateTime.UtcNow, 0L, false, false, false);
 
     [Fact]
     public void BoardComment_Errors()
     {
         ErrorAssert.Validation(BoardComment.Create(1, 0, null, " ", "hi"), "BoardComment.WriterEmpty", "Comment author (writer) cannot be empty.");
         ErrorAssert.Validation(BoardComment.Create(1, 0, null, "Bob", " "), "BoardComment.ContentEmpty", "Comment content cannot be empty.");
-        ErrorAssert.Validation(BoardComment.Create(1, 0, null, "Bob", new string('x', Domain.Primitives.TitledContentPolicy.MaxBodyLength + 1)),
-            "BoardComment.ContentTooLong", "Comment must be {0} characters or fewer.", Domain.Primitives.TitledContentPolicy.MaxBodyLength);
-        Assert.False(BoardComment.Create(1, 0, null, "Bob", new string('x', Domain.Primitives.TitledContentPolicy.MaxBodyLength)).IsError);
+        ErrorAssert.Validation(BoardComment.Create(1, 0, null, "Bob", new string('x', DomainTitledContentPolicy.MaxBodyLength + 1)),
+            "BoardComment.ContentTooLong", "Comment must be {0} characters or fewer.", DomainTitledContentPolicy.MaxBodyLength);
+        Assert.False(BoardComment.Create(1, 0, null, "Bob", new string('x', DomainTitledContentPolicy.MaxBodyLength)).IsError);
 
         BoardComment deleted = BoardComment.Reconstitute(1, 1, 0, null, "Bob", "hi", DateTime.UtcNow, deleted: true);
         ErrorAssert.Is(deleted.SoftDelete(), "BoardComment.AlreadyDeleted", ErrorType.Conflict, "Comment is already deleted.");

@@ -1,6 +1,5 @@
 using Maroik.Core.Domain.Finance;
-
-namespace Maroik.Core.DomainTests.Finance;
+namespace Maroik.Core.Domain.Tests.Finance;
 
 /// <summary>
 /// Unit tests for <see cref="AssetItems"/>, pinning its <see cref="Maroik.Core.Domain.Primitives.StringTaxonomy"/>-backed
@@ -23,7 +22,7 @@ public class AssetItemsTests
     [InlineData(nameof(AssetItemType.InsuranceAsset))]
     public void IsKnown_KnownItem_ReturnsTrue(string item) => Assert.True(AssetItems.IsKnown(item));
 
-    /// <summary>IsKnown returns false for an unrecognised item and for null.</summary>
+    /// <summary>IsKnown returns false for an unrecognized item and for null.</summary>
     [Theory]
     [InlineData("NotAnAssetItem")]
     [InlineData(null)]

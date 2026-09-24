@@ -1,6 +1,5 @@
 using Maroik.Core.Domain.Media;
-
-namespace Maroik.Core.DomainTests.Media;
+namespace Maroik.Core.Domain.Tests.Media;
 
 /// <summary>
 /// Unit tests for <see cref="AttachmentUploadPolicy"/> — accepted extensions
@@ -12,7 +11,7 @@ public class AttachmentUploadPolicyTests
     [Fact]
     public void AllowedExtensions_IsZipOnly()
     {
-        Assert.Equal(new[] { ".zip" }, AttachmentUploadPolicy.AllowedExtensions);
+        Assert.Equal([".zip"], AttachmentUploadPolicy.AllowedExtensions);
     }
 
     /// <summary>Is allowed extension is case-insensitive and rejects everything else.</summary>

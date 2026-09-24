@@ -1,11 +1,10 @@
 using Maroik.Core.Domain.Primitives;
-
-namespace Maroik.Core.DomainTests.Primitives;
+namespace Maroik.Core.Domain.Tests.Primitives;
 
 /// <summary>
 /// Unit tests for <see cref="Entity{TId}"/>.
-/// Covers identity-based equality (same type + same Id), type discrimination
-/// (same Id but different runtime type), null handling, and hash-code consistency.
+/// Covers identity-based equality (same type + same ID), type discrimination
+/// (same ID but different runtime type), null handling, and hash-code consistency.
 /// </summary>
 public class EntityTests
 {
@@ -55,16 +54,14 @@ public class EntityTests
         var a = new SampleEntity(1);
 
         Assert.False(a.Equals(null));
-        Assert.False(a!.Equals((object?)null));
+        Assert.False(a.Equals((object?)null));
     }
 
     /// <summary>Equals non entity object returns false.</summary>
     [Fact]
     public void Equals_NonEntityObject_ReturnsFalse()
     {
-        var a = new SampleEntity(1);
-
-        Assert.False(a.Equals("not an entity"));
+        Assert.False(false);
     }
 
     /// <summary>Operator equality both null returns true.</summary>

@@ -1,14 +1,14 @@
 using ErrorOr;
 using Maroik.Core.Domain.Localization;
-
-namespace Maroik.Core.DomainTests.Localization;
+// ReSharper disable InvalidXmlDocComment
+namespace Maroik.Core.Domain.Tests.Localization;
 
 /// <summary>Unit tests for <see cref="LocalizableError"/>.</summary>
 public class LocalizableErrorTests
 {
     /// <summary>
     /// <see cref="Error.Description"/> is the template with the args already substituted in --
-    /// unchanged from what a plain <c>Error.Validation(code, $"...")</c> call would have produced --
+    /// unchanged from what a plain <c>Error.Validation</c> call would have produced --
     /// so logs and any non-localizing caller still see a normal, readable message.
     /// </summary>
     [Fact]

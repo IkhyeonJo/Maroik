@@ -1,10 +1,9 @@
 using Maroik.Core.Domain.ValueObjects;
-
-namespace Maroik.Core.DomainTests.ValueObjects;
+namespace Maroik.Core.Domain.Tests.ValueObjects;
 
 /// <summary>
 /// Unit tests for <see cref="Maroik.Core.Domain.ValueObjects.HtmlColorCode"/>.
-/// Covers creation with valid 6-digit hex codes, upper-case normalisation, empty/invalid format
+/// Covers creation with valid 6-digit hex codes, upper-case normalization, empty/invalid format
 /// rejections (including the 3-digit CSS shorthand, which is valid CSS but not accepted here — see
 /// <see cref="Create_ReturnsError_WhenInvalidFormat"/>), and equality.
 /// </summary>
@@ -90,10 +89,10 @@ public class HtmlColorCodeTests
         Assert.Equal(a, b);
     }
 
-    /// <summary>ToString is the colour code.</summary>
+    /// <summary>ToString is the color code.</summary>
     [Fact]
     public void ToString_IsTheColorCode()
     {
-        Assert.Equal("#3788D8", HtmlColorCode.Create("#3788d8").Value.ToString()); // normalised to upper case
+        Assert.Equal("#3788D8", HtmlColorCode.Create("#3788d8").Value.ToString()); // normalized to upper case
     }
 }

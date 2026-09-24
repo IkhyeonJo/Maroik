@@ -1,6 +1,4 @@
-using Maroik.Core.Domain.Calendar;
-
-namespace Maroik.Core.DomainTests.CalendarDomain;
+namespace Maroik.Core.Domain.Tests.Calendar;
 
 /// <summary>
 /// Unit tests for <see cref="Maroik.Core.Domain.Calendar.Calendar"/>.
@@ -8,8 +6,8 @@ namespace Maroik.Core.DomainTests.CalendarDomain;
 /// </summary>
 public class CalendarTests
 {
-    private static Calendar ValidCalendar(long id = 1) =>
-        Calendar.Reconstitute(id, "user@example.com", "Work", "My work calendar", "UTC", "#3498DB", DateTime.UtcNow, DateTime.UtcNow);
+    private static Domain.Calendar.Calendar ValidCalendar(long id = 1) =>
+        Domain.Calendar.Calendar.Reconstitute(id, "user@example.com", "Work", "My work calendar", "UTC", "#3498DB", DateTime.UtcNow, DateTime.UtcNow);
 
     // -- Create ---------------------------------------------------------------
 
@@ -17,7 +15,7 @@ public class CalendarTests
     [Fact]
     public void Create_ReturnsCalendar_WhenValid()
     {
-        var result = Calendar.Create("user@example.com", "Personal", null, "UTC", "#FF0000");
+        var result = Domain.Calendar.Calendar.Create("user@example.com", "Personal", null, "UTC", "#FF0000");
 
         Assert.False(result.IsError);
         Assert.Equal("Personal", result.Value.Name);
@@ -31,7 +29,7 @@ public class CalendarTests
     [InlineData("   ")]
     public void Create_ReturnsError_WhenNameEmpty(string? name)
     {
-        var result = Calendar.Create("user@example.com", name, null, "UTC", "#FF0000");
+        var result = Domain.Calendar.Calendar.Create("user@example.com", name, null, "UTC", "#FF0000");
 
         Assert.True(result.IsError);
         Assert.Equal("Calendar.NameEmpty", result.FirstError.Code);
@@ -41,7 +39,7 @@ public class CalendarTests
     [Fact]
     public void Create_ReturnsError_WhenEmailInvalid()
     {
-        var result = Calendar.Create("bademail", "Work", null, "UTC", "#FF0000");
+        var result = Domain.Calendar.Calendar.Create("bademail", "Work", null, "UTC", "#FF0000");
 
         Assert.True(result.IsError);
     }
@@ -50,7 +48,7 @@ public class CalendarTests
     [Fact]
     public void Create_ReturnsError_WhenTimeZoneInvalid()
     {
-        var result = Calendar.Create("user@example.com", "Work", null, "Not/Valid", "#FF0000");
+        var result = Domain.Calendar.Calendar.Create("user@example.com", "Work", null, "Not/Valid", "#FF0000");
 
         Assert.True(result.IsError);
         Assert.Equal("TimeZoneId.Invalid", result.FirstError.Code);
@@ -60,7 +58,7 @@ public class CalendarTests
     [Fact]
     public void Create_ReturnsError_WhenColorCodeInvalid()
     {
-        var result = Calendar.Create("user@example.com", "Work", null, "UTC", "red");
+        var result = Domain.Calendar.Calendar.Create("user@example.com", "Work", null, "UTC", "red");
 
         Assert.True(result.IsError);
         Assert.Equal("HtmlColorCode.Invalid", result.FirstError.Code);
@@ -74,7 +72,7 @@ public class CalendarTests
     [InlineData("Line\nBreak")]
     public void Create_ReturnsError_WhenNameContainsMarkupOrControlChars(string name)
     {
-        var result = Calendar.Create("user@example.com", name, null, "UTC", "#FF0000");
+        var result = Domain.Calendar.Calendar.Create("user@example.com", name, null, "UTC", "#FF0000");
 
         Assert.True(result.IsError);
         Assert.Equal("Calendar.NameInvalid", result.FirstError.Code);
@@ -84,7 +82,7 @@ public class CalendarTests
     [Fact]
     public void Create_ReturnsError_WhenNameTooLong()
     {
-        var result = Calendar.Create("user@example.com", new string('a', 256), null, "UTC", "#FF0000");
+        var result = Domain.Calendar.Calendar.Create("user@example.com", new string('a', 256), null, "UTC", "#FF0000");
 
         Assert.True(result.IsError);
         Assert.Equal("Calendar.NameTooLong", result.FirstError.Code);
@@ -97,7 +95,7 @@ public class CalendarTests
     [InlineData("Q3 \"planning\"")]
     public void Create_AllowsSafePunctuation(string name)
     {
-        var result = Calendar.Create("user@example.com", name, null, "UTC", "#FF0000");
+        var result = Domain.Calendar.Calendar.Create("user@example.com", name, null, "UTC", "#FF0000");
 
         Assert.False(result.IsError);
         Assert.Equal(name, result.Value.Name);

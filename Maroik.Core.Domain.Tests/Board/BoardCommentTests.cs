@@ -1,10 +1,10 @@
 using Maroik.Core.Domain.Board;
-
-namespace Maroik.Core.DomainTests.BoardDomain;
+using DomainTitledContentPolicy = Maroik.Core.Domain.Primitives.TitledContentPolicy;
+namespace Maroik.Core.Domain.Tests.Board;
 
 /// <summary>
 /// Unit tests for <see cref="Maroik.Core.Domain.Board.BoardComment"/>.
-/// Covers creation validation (writer and content empty guards) and soft-delete behaviour.
+/// Covers creation validation (writer and content empty guards) and soft-delete behavior.
 /// </summary>
 public class BoardCommentTests
 {
@@ -38,7 +38,7 @@ public class BoardCommentTests
     [Fact]
     public void Create_EnforcesTheContentLengthLimit()
     {
-        int max = Maroik.Core.Domain.Primitives.TitledContentPolicy.MaxBodyLength;
+        const int max = DomainTitledContentPolicy.MaxBodyLength;
 
         Assert.False(BoardComment.Create(10, 1, null, "Alice", new string('a', max)).IsError);
 

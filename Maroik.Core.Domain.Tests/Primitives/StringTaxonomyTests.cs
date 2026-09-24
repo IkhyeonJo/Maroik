@@ -1,6 +1,5 @@
 using Maroik.Core.Domain.Primitives;
-
-namespace Maroik.Core.DomainTests.Primitives;
+namespace Maroik.Core.Domain.Tests.Primitives;
 
 /// <summary>
 /// Unit tests for <see cref="StringTaxonomy"/> -- the shared "closed set of known string values"

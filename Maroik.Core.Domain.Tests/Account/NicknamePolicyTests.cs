@@ -1,7 +1,6 @@
 using Maroik.Core.Domain.Account;
 using Maroik.Core.Domain.Localization;
-
-namespace Maroik.Core.DomainTests.AccountDomain;
+namespace Maroik.Core.Domain.Tests.Account;
 
 /// <summary>
 /// Unit tests for <see cref="NicknamePolicy"/>: normalization, character rules, lookalike-script
@@ -95,6 +94,7 @@ public class NicknamePolicyTests
     [InlineData("Bo\u200Db")]      // zero-width joiner
     [InlineData("Bo\uFEFFb")]      // BOM / zero-width no-break space
     [InlineData("Bo\u202Eb")]      // right-to-left override
+    // ReSharper disable once CanSimplifyStringEscapeSequence
     [InlineData("Bo\u0007b")]      // bell (control)
     [InlineData("Bo\uE000b")]      // private use
     [InlineData("Bo\uD800b")]      // lone surrogate
@@ -184,7 +184,7 @@ public class NicknamePolicyTests
 
         Assert.Equal("Account.NicknameReserved", result.FirstError.Code);
         Assert.Equal("'{0}' cannot be used as a Nickname.", result.FirstError.Metadata![LocalizableError.ResourceKeyMetadataKey]);
-        Assert.Equal(new object[] { "ADMIN" }, (object[])result.FirstError.Metadata[LocalizableError.ResourceArgsMetadataKey]);
+        Assert.Equal(["ADMIN"], (object[])result.FirstError.Metadata[LocalizableError.ResourceArgsMetadataKey]);
     }
 
     /// <summary>An administrator may deliberately use a reserved name.</summary>

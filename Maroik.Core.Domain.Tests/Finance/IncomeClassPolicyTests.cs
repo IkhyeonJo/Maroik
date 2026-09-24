@@ -1,10 +1,9 @@
 using Maroik.Core.Domain.Finance;
-
-namespace Maroik.Core.DomainTests.Finance;
+namespace Maroik.Core.Domain.Tests.Finance;
 
 /// <summary>
 /// Unit tests for <see cref="IncomeClassPolicy"/>.
-/// Covers all valid main/sub-class combinations, invalid sub-classes per main class,
+/// Covers all valid main/subclass combinations, invalid subclasses per main class,
 /// and unknown main classes including null and empty inputs.
 /// </summary>
 public class IncomeClassPolicyTests
@@ -26,7 +25,7 @@ public class IncomeClassPolicyTests
         Assert.False(result.IsError);
     }
 
-    /// <summary>Validate returns error, when regular income sub class invalid.</summary>
+    /// <summary>Validate returns error, when regular income subclass invalid.</summary>
     [Theory]
     [InlineData("UnknownSub")]
     [InlineData("")]
@@ -40,7 +39,7 @@ public class IncomeClassPolicyTests
     }
 
     /// <summary>
-    /// A recognized main class with an unrecognized sub-class is built via <c>LocalizableError</c>:
+    /// A recognized main class with an unrecognized subclass is built via <c>LocalizableError</c>:
     /// its Metadata carries the composite-format resource template and the raw main-class name
     /// separately, so <c>ServiceResult.FromError</c> can hand the UI something resx-localizable
     /// instead of the already-baked, value-embedding sentence in <see cref="ErrorOr.Error.Description"/>.
@@ -104,7 +103,9 @@ public class IncomeClassPolicyTests
     public void SubClassesByMainClass_HasTheKnownMainClasses()
     {
         Assert.Equal(
+ #pragma warning disable CA1861
             new[] { "RegularIncome", "IrregularIncome" }.OrderBy(x => x),
+ #pragma warning restore CA1861
             IncomeClassPolicy.SubClassesByMainClass.Keys.OrderBy(x => x));
     }
 

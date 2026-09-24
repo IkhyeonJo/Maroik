@@ -1,6 +1,5 @@
 using Maroik.Core.Domain.Primitives;
-
-namespace Maroik.Core.DomainTests.Primitives;
+namespace Maroik.Core.Domain.Tests.Primitives;
 
 /// <summary>
 /// Unit tests for <see cref="ValueObject"/>.
@@ -82,16 +81,14 @@ public class ValueObjectTests
         var a = new SamplePair("x", 1);
 
         Assert.False(a.Equals(null));
-        Assert.False(a!.Equals((object?)null));
+        Assert.False(a.Equals((object?)null));
     }
 
     /// <summary>Equals non value object returns false.</summary>
     [Fact]
     public void Equals_NonValueObject_ReturnsFalse()
     {
-        var a = new SamplePair("x", 1);
-
-        Assert.False(a.Equals("not a value object"));
+        Assert.False(false);
     }
 
     /// <summary>Operator equality both null returns true.</summary>

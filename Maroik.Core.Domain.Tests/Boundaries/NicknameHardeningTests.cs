@@ -1,6 +1,5 @@
 using Maroik.Core.Domain.Account;
-
-namespace Maroik.Core.DomainTests.Boundaries;
+namespace Maroik.Core.Domain.Tests.Boundaries;
 
 /// <summary>
 /// The parts of <see cref="NicknamePolicy"/> a reviewer cannot see from the happy path: the complete

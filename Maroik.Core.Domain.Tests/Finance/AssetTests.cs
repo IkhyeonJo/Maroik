@@ -1,7 +1,6 @@
 using Maroik.Core.Domain.Finance;
 using Maroik.Core.Domain.ValueObjects;
-
-namespace Maroik.Core.DomainTests.Finance;
+namespace Maroik.Core.Domain.Tests.Finance;
 
 /// <summary>
 /// Unit tests for <see cref="Maroik.Core.Domain.Finance.Asset"/>.
@@ -61,7 +60,7 @@ public class AssetTests
     /// Regression: Create rejects an <c>Item</c> value outside <see cref="AssetItemType"/>'s known
     /// members — previously only <c>AssetService</c> checked this, so the aggregate itself could be
     /// constructed (and would then fail with a raw DB <c>Asset_Item_check</c> exception on save) with
-    /// an unrecognised category.
+    /// an unrecognized category.
     /// </summary>
     [Theory]
     [InlineData("Deposit")]

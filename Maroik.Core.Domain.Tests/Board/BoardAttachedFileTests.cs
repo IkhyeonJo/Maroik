@@ -1,6 +1,5 @@
 using Maroik.Core.Domain.Board;
-
-namespace Maroik.Core.DomainTests.BoardDomain;
+namespace Maroik.Core.Domain.Tests.Board;
 
 /// <summary>
 /// Unit tests for <see cref="BoardAttachedFile"/>.

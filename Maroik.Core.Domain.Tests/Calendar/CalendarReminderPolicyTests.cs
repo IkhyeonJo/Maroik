@@ -1,6 +1,5 @@
 using Maroik.Core.Domain.Calendar;
-
-namespace Maroik.Core.DomainTests.CalendarDomain;
+namespace Maroik.Core.Domain.Tests.Calendar;
 
 /// <summary>
 /// Unit tests for <see cref="CalendarReminderPolicy"/>.

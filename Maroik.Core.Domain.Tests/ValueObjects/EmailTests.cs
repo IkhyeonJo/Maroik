@@ -1,10 +1,9 @@
 using Maroik.Core.Domain.ValueObjects;
-
-namespace Maroik.Core.DomainTests.ValueObjects;
+namespace Maroik.Core.Domain.Tests.ValueObjects;
 
 /// <summary>
 /// Unit tests for <see cref="Maroik.Core.Domain.ValueObjects.Email"/>.
-/// Covers creation with valid inputs, empty/invalid format rejections, lower-case normalisation, and equality.
+/// Covers creation with valid inputs, empty/invalid format rejections, lower-case normalization, and equality.
 /// </summary>
 public class EmailTests
 {

@@ -1,7 +1,6 @@
 using Maroik.Core.Domain.Board;
 using Maroik.Core.Domain.Primitives;
-
-namespace Maroik.Core.DomainTests.BoardDomain;
+namespace Maroik.Core.Domain.Tests.Board;
 
 /// <summary>
 /// Unit tests for <see cref="BoardTypes"/>, pinning its <see cref="StringTaxonomy"/>-backed
@@ -22,7 +21,7 @@ public class BoardTypesTests
     [InlineData(BoardTypes.PrivateNote)]
     public void IsKnown_KnownType_ReturnsTrue(string type) => Assert.True(BoardTypes.IsKnown(type));
 
-    /// <summary>IsKnown returns false for an unrecognised type and for null.</summary>
+    /// <summary>IsKnown returns false for an unrecognized type and for null.</summary>
     [Theory]
     [InlineData("NotABoardType")]
     [InlineData(null)]

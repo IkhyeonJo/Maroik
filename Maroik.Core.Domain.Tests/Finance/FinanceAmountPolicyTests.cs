@@ -1,6 +1,5 @@
 using Maroik.Core.Domain.Finance;
-
-namespace Maroik.Core.DomainTests.Finance;
+namespace Maroik.Core.Domain.Tests.Finance;
 
 /// <summary>
 /// Unit tests for <see cref="FinanceAmountPolicy"/> -- the <c>Amount</c> validation rule shared by
@@ -39,7 +38,7 @@ public class FinanceAmountPolicyTests
     [Fact]
     public void MaxAbsoluteAmount_IsTheLargestNumeric18_2Value()
     {
-        // (a decimal constant is stored as an attribute on a static field, so also force the type's static initialisation)
+        // (a decimal constant is stored as an attribute on a static field, so also force the type's static initialization)
         System.Runtime.CompilerServices.RuntimeHelpers.RunClassConstructor(typeof(FinanceAmountPolicy).TypeHandle);
 
         Assert.Equal(9_999_999_999_999_999.99m, FinanceAmountPolicy.MaxAbsoluteAmount);

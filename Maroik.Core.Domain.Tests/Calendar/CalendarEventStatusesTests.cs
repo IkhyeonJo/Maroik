@@ -1,6 +1,5 @@
 using Maroik.Core.Domain.Calendar;
-
-namespace Maroik.Core.DomainTests.CalendarDomain;
+namespace Maroik.Core.Domain.Tests.Calendar;
 
 /// <summary>
 /// Unit tests for <see cref="CalendarEventStatuses"/>, pinning its <see cref="Maroik.Core.Domain.Primitives.StringTaxonomy"/>-backed
@@ -21,7 +20,7 @@ public class CalendarEventStatusesTests
     [InlineData(CalendarEventStatuses.Free)]
     public void IsKnown_KnownStatus_ReturnsTrue(string status) => Assert.True(CalendarEventStatuses.IsKnown(status));
 
-    /// <summary>IsKnown returns false for an unrecognised status and for null.</summary>
+    /// <summary>IsKnown returns false for an unrecognized status and for null.</summary>
     [Theory]
     [InlineData("Tentative")]
     [InlineData(null)]

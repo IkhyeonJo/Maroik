@@ -1,10 +1,9 @@
 using Maroik.Core.Domain.ValueObjects;
-
-namespace Maroik.Core.DomainTests.ValueObjects;
+namespace Maroik.Core.Domain.Tests.ValueObjects;
 
 /// <summary>
 /// Unit tests for <see cref="Maroik.Core.Domain.ValueObjects.TimeZoneId"/>.
-/// Covers acceptance of valid IANA zone identifiers, rejection of empty and unrecognised values, and equality.
+/// Covers acceptance of valid IANA zone identifiers, rejection of empty and unrecognized values, and equality.
 /// </summary>
 public class TimeZoneIdTests
 {
@@ -34,7 +33,7 @@ public class TimeZoneIdTests
         Assert.Equal("TimeZoneId.Empty", result.FirstError.Code);
     }
 
-    /// <summary>Create returns error, when unrecognised.</summary>
+    /// <summary>Create returns error, when unrecognized.</summary>
     [Fact]
     public void Create_ReturnsError_WhenUnrecognised()
     {
@@ -46,7 +45,7 @@ public class TimeZoneIdTests
     }
 
     /// <summary>
-    /// The "unrecognised" error is built via <c>LocalizableError</c>: its Metadata carries the
+    /// The "unrecognized" error is built via <c>LocalizableError</c>: its Metadata carries the
     /// composite-format resource template and the raw offending value separately, so
     /// <c>ServiceResult.FromError</c> can hand the UI something resx-localizable instead of the
     /// already-baked, value-embedding sentence in <see cref="ErrorOr.Error.Description"/>.

@@ -1,6 +1,5 @@
 using Maroik.Core.Domain.Finance;
-
-namespace Maroik.Core.DomainTests.Finance;
+namespace Maroik.Core.Domain.Tests.Finance;
 
 /// <summary>
 /// Unit tests for <see cref="Maroik.Core.Domain.Finance.FixedIncome"/>.
@@ -203,7 +202,7 @@ public class FixedIncomeTests
 
     // -- Register: the other required text fields --------------------------------------
 
-    /// <summary>Register refuses a blank sub class.</summary>
+    /// <summary>Register refuses a blank subclass.</summary>
     [Theory]
     [InlineData(null)]
     [InlineData("")]

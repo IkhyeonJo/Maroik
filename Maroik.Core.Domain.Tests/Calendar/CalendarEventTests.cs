@@ -1,6 +1,5 @@
 using Maroik.Core.Domain.Calendar;
-
-namespace Maroik.Core.DomainTests.CalendarDomain;
+namespace Maroik.Core.Domain.Tests.Calendar;
 
 /// <summary>
 /// Unit tests for <see cref="Maroik.Core.Domain.Calendar.CalendarEvent"/>.
@@ -112,7 +111,7 @@ public class CalendarEventTests
         Assert.Equal("CalendarEvent.InvalidDateRange", result.FirstError.Code);
     }
 
-    /// <summary>Create rejects an unrecognised per-endpoint time-zone ID.</summary>
+    /// <summary>Create rejects an unrecognized per-endpoint time-zone ID.</summary>
     [Fact]
     public void Create_ReturnsError_WhenTimeZoneIdInvalid()
     {

@@ -1,6 +1,5 @@
 using Maroik.Core.Domain.Menu;
-
-namespace Maroik.Core.DomainTests.Menu;
+namespace Maroik.Core.Domain.Tests.Menu;
 
 /// <summary>
 /// Unit tests for <see cref="MenuFieldPolicy"/> and its application in <see cref="Category"/> and
@@ -31,11 +30,11 @@ public class MenuFieldPolicyTests
     [InlineData("Action")]
     public void Validate_RejectsOverlongText(string field)
     {
-        string? name = field == "Name" ? _tooLong : "n";
-        string? display = field == "DisplayName" ? _tooLong : "d";
-        string? icon = field == "IconPath" ? _tooLong : "i";
-        string? controller = field == "Controller" ? _tooLong : "c";
-        string? action = field == "Action" ? _tooLong : "a";
+        string name = field == "Name" ? _tooLong : "n";
+        string display = field == "DisplayName" ? _tooLong : "d";
+        string icon = field == "IconPath" ? _tooLong : "i";
+        string controller = field == "Controller" ? _tooLong : "c";
+        string action = field == "Action" ? _tooLong : "a";
 
         var result = MenuFieldPolicy.Validate(name, display, icon, controller, action, "User", 1);
 
@@ -71,7 +70,9 @@ public class MenuFieldPolicyTests
     /// <summary>The role taxonomy holds exactly the three values the database allows.</summary>
     [Fact]
     public void Roles_AreTheThreeDatabaseValues()
+ #pragma warning disable CA1861
         => Assert.Equal(new[] { "Admin", "Anonymous", "User" }, MenuFieldPolicy.Roles.All.OrderBy(r => r).ToArray());
+ #pragma warning restore CA1861
 
     // -- Category / SubCategory apply it -----------------------------------------
 

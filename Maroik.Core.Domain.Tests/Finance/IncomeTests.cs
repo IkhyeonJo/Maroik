@@ -1,10 +1,9 @@
 using Maroik.Core.Domain.Finance;
-
-namespace Maroik.Core.DomainTests.Finance;
+namespace Maroik.Core.Domain.Tests.Finance;
 
 /// <summary>
 /// Unit tests for <see cref="Maroik.Core.Domain.Finance.Income"/>.
-/// Covers income recording validation (empty main/sub class, deposit asset) and update logic.
+/// Covers income recording validation (empty main/subclass, deposit asset) and update logic.
 /// </summary>
 public class IncomeTests
 {
@@ -37,7 +36,7 @@ public class IncomeTests
         Assert.Equal("Income.MainClassEmpty", result.FirstError.Code);
     }
 
-    /// <summary>Record returns error, when sub class empty.</summary>
+    /// <summary>Record returns error, when subclass empty.</summary>
     [Theory]
     [InlineData(null)]
     [InlineData("")]

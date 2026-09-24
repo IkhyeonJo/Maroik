@@ -1,11 +1,10 @@
 using Maroik.Core.Domain.Finance;
-
-namespace Maroik.Core.DomainTests.Finance;
+namespace Maroik.Core.Domain.Tests.Finance;
 
 /// <summary>
 /// Unit tests for <see cref="ExpenditureClassPolicy"/>.
-/// Covers all valid main/sub-class combinations (with and without deposit-asset requirement),
-/// invalid sub-classes per main class, and unknown main classes including null and empty inputs.
+/// Covers all valid main/subclass combinations (with and without deposit-asset requirement),
+/// invalid subclasses per main class, and unknown main classes including null and empty inputs.
 /// </summary>
 public class ExpenditureClassPolicyTests
 {
@@ -23,7 +22,7 @@ public class ExpenditureClassPolicyTests
         Assert.True(result.Value);
     }
 
-    /// <summary>Validate returns error, when regular savings sub class invalid.</summary>
+    /// <summary>Validate returns error, when regular savings subclass invalid.</summary>
     [Theory]
     [InlineData("Unknown")]
     [InlineData("")]
@@ -37,7 +36,7 @@ public class ExpenditureClassPolicyTests
     }
 
     /// <summary>
-    /// A recognized main class with an unrecognized sub-class is built via <c>LocalizableError</c>:
+    /// A recognized main class with an unrecognized subclass is built via <c>LocalizableError</c>:
     /// its Metadata carries the composite-format resource template and the raw main-class name
     /// separately, so <c>ServiceResult.FromError</c> can hand the UI something resx-localizable
     /// instead of the already-baked, value-embedding sentence in <see cref="ErrorOr.Error.Description"/>.
@@ -80,7 +79,7 @@ public class ExpenditureClassPolicyTests
         Assert.False(result.Value);
     }
 
-    /// <summary>Validate returns error, when non consumer spending sub class invalid.</summary>
+    /// <summary>Validate returns error, when non consumer spending subclass invalid.</summary>
     [Theory]
     [InlineData("Unknown")]
     [InlineData("")]
@@ -117,7 +116,7 @@ public class ExpenditureClassPolicyTests
         Assert.False(result.Value);
     }
 
-    /// <summary>Validate returns error, when consumer spending sub class invalid.</summary>
+    /// <summary>Validate returns error, when consumer spending subclass invalid.</summary>
     [Theory]
     [InlineData("Unknown")]
     [InlineData("")]
@@ -159,7 +158,7 @@ public class ExpenditureClassPolicyTests
     /// <summary>
     /// Every published (main, sub) pair validates, its deposit-asset result matches membership
     /// in <see cref="ExpenditureClassPolicy.DepositAssetSubClasses"/>, and every deposit-asset
-    /// sub-class is itself part of the published taxonomy.
+    /// subclass is itself part of the published taxonomy.
     /// </summary>
     [Theory]
     [InlineData("RegularSavings")]

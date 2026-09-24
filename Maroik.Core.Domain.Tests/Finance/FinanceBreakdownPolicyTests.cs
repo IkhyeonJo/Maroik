@@ -1,6 +1,5 @@
 using Maroik.Core.Domain.Finance;
-
-namespace Maroik.Core.DomainTests.Finance;
+namespace Maroik.Core.Domain.Tests.Finance;
 
 /// <summary>
 /// Unit tests for <see cref="FinanceBreakdownPolicy"/> -- the per-sub-class amount/percentage
@@ -9,14 +8,14 @@ namespace Maroik.Core.DomainTests.Finance;
 /// </summary>
 public class FinanceBreakdownPolicyTests
 {
-    /// <summary>Compute sums each sub-class's amounts and the grand total across every item.</summary>
+    /// <summary>Compute sums each subclass's amounts and the grand total across every item.</summary>
     [Fact]
     public void Compute_SumsAmountsPerSubClass_AndGrandTotal()
     {
         var result = FinanceBreakdownPolicy.Compute([
             ("LaborIncome", 600m),
             ("BusinessIncome", 300m),
-            ("LaborIncome", 100m) // same sub-class appears twice -- must accumulate, not overwrite
+            ("LaborIncome", 100m) // same subclass appears twice -- must accumulate, not overwrite
         ]);
 
         Assert.Equal(1000m, result.Total);
@@ -24,7 +23,7 @@ public class FinanceBreakdownPolicyTests
         Assert.Equal(300m, result.AmountBySubClass["BusinessIncome"]);
     }
 
-    /// <summary>Compute derives each sub-class's percentage share of the total.</summary>
+    /// <summary>Compute derives each subclass's percentage share of the total.</summary>
     [Fact]
     public void Compute_DerivesPercentageShare_OfTotal()
     {
@@ -58,7 +57,7 @@ public class FinanceBreakdownPolicyTests
     }
 
     /// <summary>
-    /// A null sub-class is grouped under the empty-string key rather than throwing or being
+    /// A null subclass is grouped under the empty-string key rather than throwing or being
     /// silently dropped from the total.
     /// </summary>
     [Fact]
@@ -75,9 +74,9 @@ public class FinanceBreakdownPolicyTests
     }
 
     /// <summary>
-    /// A sub-class outside any known taxonomy is still counted in the total (and therefore in every
-    /// other sub-class's percentage share) even though it gets no dedicated entry beyond its own —
-    /// this is what keeps percentages summing to 100% if a new sub-class is ever added upstream
+    /// A subclass outside any known taxonomy is still counted in the total (and therefore in every
+    /// other subclass's percentage share) even though it gets no dedicated entry beyond its own —
+    /// this is what keeps percentages summing to 100% if a new subclass is ever added upstream
     /// without a matching dashboard property.
     /// </summary>
     [Fact]

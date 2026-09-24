@@ -1,6 +1,5 @@
 using Maroik.Core.Domain.Account;
-
-namespace Maroik.Core.DomainTests.AccountDomain;
+namespace Maroik.Core.Domain.Tests.Account;
 
 /// <summary>
 /// Unit tests for <see cref="GuidToken"/>.
@@ -9,7 +8,7 @@ namespace Maroik.Core.DomainTests.AccountDomain;
 /// </summary>
 public class GuidTokenTests
 {
-    /// <summary>Verifies that <c>Generate</c> returns non empty base64 string.</summary>
+    /// <summary>Verifies that <c>Generate</c> returns non-empty base64 string.</summary>
     [Fact]
     public void Generate_ReturnsNonEmptyBase64String()
     {

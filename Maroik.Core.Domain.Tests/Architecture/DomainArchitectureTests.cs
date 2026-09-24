@@ -1,10 +1,8 @@
 using System.Reflection;
-using Maroik.Core.Domain.Account;
 using Mono.Cecil;
 using Mono.Cecil.Cil;
 using NetArchTest.Rules;
-
-namespace Maroik.Core.DomainTests.Architecture;
+namespace Maroik.Core.Domain.Tests.Architecture;
 
 /// <summary>
 /// Architecture tests enforcing that Maroik.Core.Domain is the innermost layer of the
@@ -14,7 +12,7 @@ namespace Maroik.Core.DomainTests.Architecture;
 /// </summary>
 public class DomainArchitectureTests
 {
-    private static readonly Assembly _domainAssembly = typeof(Account).Assembly;
+    private static readonly Assembly _domainAssembly = typeof(Domain.Account.Account).Assembly;
 
     /// <summary>Domain should not depend on any other layer.</summary>
     [Theory]
@@ -138,9 +136,11 @@ public class DomainArchitectureTests
     [InlineData("Maroik.Core.Domain.Menu")]
     public void BoundedContext_ShouldNot_DependOnAnotherBoundedContext(string boundedContextNamespace)
     {
-        string[] otherContexts = _boundedContextNamespaces
-            .Where(ns => ns != boundedContextNamespace)
-            .ToArray();
+        string[] otherContexts =
+        [
+            .. _boundedContextNamespaces
+                .Where(ns => ns != boundedContextNamespace)
+        ];
 
         NetArchTest.Rules.TestResult result = Types.InAssembly(_domainAssembly)
             .That()
@@ -219,20 +219,14 @@ public class DomainArchitectureTests
 
         public bool MeetsRule(TypeDefinition type)
         {
-            foreach (MethodDefinition method in type.Methods)
+            foreach (var instruction in type.Methods.Where(method => method.HasBody).SelectMany(method => method.Body.Instructions.Where(instruction => instruction.OpCode == OpCodes.Call || instruction.OpCode == OpCodes.Callvirt)))
             {
-                if (!method.HasBody) continue;
+                if (instruction.Operand is not MethodReference calledMethod) continue;
 
-                foreach (Instruction instruction in method.Body.Instructions)
+                if (calledMethod.DeclaringType.FullName == "ErrorOr.Error"
+                    && _rawFactoryMethodNames.Contains(calledMethod.Name))
                 {
-                    if (instruction.OpCode != OpCodes.Call && instruction.OpCode != OpCodes.Callvirt) continue;
-                    if (instruction.Operand is not MethodReference calledMethod) continue;
-
-                    if (calledMethod.DeclaringType.FullName == "ErrorOr.Error"
-                        && _rawFactoryMethodNames.Contains(calledMethod.Name))
-                    {
-                        return false;
-                    }
+                    return false;
                 }
             }
 

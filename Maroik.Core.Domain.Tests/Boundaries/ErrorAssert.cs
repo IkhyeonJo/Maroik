@@ -1,13 +1,12 @@
 using ErrorOr;
 using Maroik.Core.Domain.Localization;
-
-namespace Maroik.Core.DomainTests.Boundaries;
+namespace Maroik.Core.Domain.Tests.Boundaries;
 
 /// <summary>
 /// Asserts a domain error's full contract: its code, its type, and — because the Website resolves the
 /// translation from the message TEMPLATE (see <see cref="LocalizableError"/>) — the exact template and the
 /// arguments that fill it. A changed template silently loses its ko-KR translation, so the text is part of
-/// the behaviour, not decoration.
+/// the behavior, not decoration.
 /// </summary>
 internal static class ErrorAssert
 {

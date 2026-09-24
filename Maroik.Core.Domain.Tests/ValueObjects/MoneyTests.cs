@@ -1,10 +1,9 @@
 using Maroik.Core.Domain.ValueObjects;
-
-namespace Maroik.Core.DomainTests.ValueObjects;
+namespace Maroik.Core.Domain.Tests.ValueObjects;
 
 /// <summary>
 /// Unit tests for <see cref="Maroik.Core.Domain.ValueObjects.Money"/>.
-/// Covers creation, currency normalisation, zero factory, arithmetic (add/subtract),
+/// Covers creation, currency normalization, zero factory, arithmetic (add/subtract),
 /// cross-currency validation errors, and equality.
 /// </summary>
 public class MoneyTests

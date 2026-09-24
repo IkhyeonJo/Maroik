@@ -1,6 +1,5 @@
 using Maroik.Core.Domain.Finance;
-
-namespace Maroik.Core.DomainTests.Finance;
+namespace Maroik.Core.Domain.Tests.Finance;
 
 /// <summary>
 /// Unit tests for <see cref="Maroik.Core.Domain.Finance.FixedExpenditure"/>.
@@ -216,7 +215,7 @@ public class FixedExpenditureTests
         Assert.Equal("FixedExpenditure.MainClassEmpty", result.FirstError.Code);
     }
 
-    /// <summary>Register refuses a blank sub class.</summary>
+    /// <summary>Register refuses a blank subclass.</summary>
     [Theory]
     [InlineData(null)]
     [InlineData("")]

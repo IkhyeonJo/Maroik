@@ -1,6 +1,5 @@
 using Maroik.Core.Domain.Menu;
-
-namespace Maroik.Core.DomainTests.Menu;
+namespace Maroik.Core.Domain.Tests.Menu;
 
 /// <summary>
 /// Unit tests for <see cref="Category"/>.

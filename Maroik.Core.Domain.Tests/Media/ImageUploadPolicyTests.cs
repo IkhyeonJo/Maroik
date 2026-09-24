@@ -1,6 +1,5 @@
 using Maroik.Core.Domain.Media;
-
-namespace Maroik.Core.DomainTests.Media;
+namespace Maroik.Core.Domain.Tests.Media;
 
 /// <summary>
 /// Unit tests for <see cref="ImageUploadPolicy"/> — accepted extensions/content types
@@ -12,8 +11,8 @@ public class ImageUploadPolicyTests
     [Fact]
     public void AllowedSets_AreJpegAndPng()
     {
-        Assert.Equal(new[] { ".jpg", ".jpeg", ".png" }, ImageUploadPolicy.AllowedExtensions);
-        Assert.Equal(new[] { "image/jpeg", "image/png" }, ImageUploadPolicy.AllowedContentTypes);
+        Assert.Equal([".jpg", ".jpeg", ".png"], ImageUploadPolicy.AllowedExtensions);
+        Assert.Equal(["image/jpeg", "image/png"], ImageUploadPolicy.AllowedContentTypes);
     }
 
     /// <summary>Is allowed extension is case-insensitive and rejects everything else.</summary>

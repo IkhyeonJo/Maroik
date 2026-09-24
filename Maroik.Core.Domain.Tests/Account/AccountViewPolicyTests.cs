@@ -1,6 +1,5 @@
 using Maroik.Core.Domain.Account;
-
-namespace Maroik.Core.DomainTests.AccountDomain;
+namespace Maroik.Core.Domain.Tests.Account;
 
 /// <summary>
 /// Unit tests for <see cref="AccountViewPolicy"/> — the role-based rule deciding whether a viewer

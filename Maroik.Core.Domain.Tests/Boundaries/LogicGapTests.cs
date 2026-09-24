@@ -6,8 +6,10 @@ using Maroik.Core.Domain.Calendar;
 using Maroik.Core.Domain.Finance;
 using Maroik.Core.Domain.ValueObjects;
 using AccountEntity = Maroik.Core.Domain.Account.Account;
+using CalendarEntity = Maroik.Core.Domain.Calendar.Calendar;
+using IncomeEntity = Maroik.Core.Domain.Finance.Income;
 
-namespace Maroik.Core.DomainTests.Boundaries;
+namespace Maroik.Core.Domain.Tests.Boundaries;
 
 /// <summary>Rules the mutation run showed no test noticed: boundaries, value equality, ownership branches, round trips.</summary>
 public class LogicGapTests
@@ -27,8 +29,8 @@ public class LogicGapTests
     [InlineData(12)]
     public void FixedIncomeAndExpenditure_AcceptTheFirstAndLastMonth(short month)
     {
-        Assert.False(Income(month, 1).IsError);
-        Assert.False(Expense(month, 1).IsError);
+        Assert.False(Income(month).IsError);
+        Assert.False(Expense(month).IsError);
     }
 
     [Theory]
@@ -150,7 +152,9 @@ public class LogicGapTests
         string stamp1 = AccountEntity.Create(Email, "$2a$h", "Nick", Role.User, "UTC", null, GuidToken.Generate(), true).Value.SecurityStamp;
         string stamp2 = AccountEntity.Create(Email, "$2a$h", "Nick", Role.User, "UTC", null, GuidToken.Generate(), true).Value.SecurityStamp;
 
+ #pragma warning disable SYSLIB1045
         Assert.Matches(new Regex("^[0-9a-f]{32}$"), stamp1);
+ #pragma warning restore SYSLIB1045
         Assert.NotEqual(stamp1, stamp2);
     }
 
@@ -191,12 +195,12 @@ public class LogicGapTests
     {
         DateTime created = new(2025, 1, 2), updated = new(2025, 3, 4);
 
-        Income income = Domain.Finance.Income.Reconstitute(7, Email, "RegularIncome", "LaborIncome", "c", 123.45m, "KRW", "asset", "n", created, updated);
+        IncomeEntity income = IncomeEntity.Reconstitute(7, Email, "RegularIncome", "LaborIncome", "c", 123.45m, "KRW", "asset", "n", created, updated);
         Assert.Equal((7, Email, "RegularIncome", "LaborIncome", "c", "asset", "n", created, updated),
             (income.Id, income.AccountEmail.Value, income.MainClass, income.SubClass, income.Content, income.DepositMyAssetProductName, income.Note, income.Created, income.Updated));
         Assert.Equal(Money.Create(123.45m, "KRW").Value, income.Amount);
 
-        Expenditure expenditure = Domain.Finance.Expenditure.Reconstitute(8, Email, "ConsumerSpending", "MealOrEatOutExpenses", "c", 5m, "KRW", "pay", "dep", "n", created, updated);
+        Expenditure expenditure = Expenditure.Reconstitute(8, Email, "ConsumerSpending", "MealOrEatOutExpenses", "c", 5m, "KRW", "pay", "dep", "n", created, updated);
         Assert.Equal((8, Email, "ConsumerSpending", "MealOrEatOutExpenses", "c", "pay", "dep", "n", created, updated),
             (expenditure.Id, expenditure.AccountEmail.Value, expenditure.MainClass, expenditure.SubClass, expenditure.Content, expenditure.PaymentMethod, expenditure.MyDepositAsset, expenditure.Note, expenditure.Created, expenditure.Updated));
         Assert.Equal(Money.Create(5m, "KRW").Value, expenditure.Amount);
@@ -221,8 +225,8 @@ public class LogicGapTests
     [Fact]
     public void Board_CanBeDeletedBy_FollowsThePrivateNoteAndForumRules()
     {
-        Board forum = Board.Reconstitute(1, BoardTypes.FreeForum, "t", "c", "Alice", DateTime.UtcNow, DateTime.UtcNow, 0L, false, false, false);
-        Board note = Board.Reconstitute(2, BoardTypes.PrivateNote, "t", "c", "Alice", DateTime.UtcNow, DateTime.UtcNow, 0L, false, false, false);
+        Domain.Board.Board forum = Domain.Board.Board.Reconstitute(1, BoardTypes.FreeForum, "t", "c", "Alice", DateTime.UtcNow, DateTime.UtcNow, 0L, false, false, false);
+        Domain.Board.Board note = Domain.Board.Board.Reconstitute(2, BoardTypes.PrivateNote, "t", "c", "Alice", DateTime.UtcNow, DateTime.UtcNow, 0L, false, false, false);
 
         Assert.True(forum.CanBeDeletedBy("Alice", isAdmin: false));
         Assert.True(forum.CanBeDeletedBy("Admin", isAdmin: true));
@@ -251,12 +255,15 @@ public class LogicGapTests
     [Fact]
     public void DefaultMonetaryUnit_FallsBackToTheMostCommonCurrency()
     {
-        Asset A(string name, string unit) => Asset.Create(name, Email, "FreeDepositAndWithdrawal", 1m, unit).Value;
         IReadOnlyCollection<Asset> assets = [A("a", "USD"), A("b", "KRW"), A("c", "KRW")];
 
         Assert.Equal("KRW", DefaultMonetaryUnitPolicy.Resolve("EUR", assets));
         Assert.Equal("USD", DefaultMonetaryUnitPolicy.Resolve("USD", assets)); // a still-valid current unit wins over popularity
         Assert.Null(DefaultMonetaryUnitPolicy.Resolve("KRW", []));
+        return;
+ #pragma warning disable IDE0062
+        Asset A(string name, string unit) => Asset.Create(name, Email, "FreeDepositAndWithdrawal", 1m, unit).Value;
+ #pragma warning restore IDE0062
     }
 
     [Fact]
@@ -276,7 +283,7 @@ public class LogicGapTests
     {
         DateTime created = new(2025, 1, 2, 3, 4, 5), updated = new(2025, 6, 7, 8, 9, 10);
 
-        Calendar calendar = Calendar.Reconstitute(4, Email, "Work", "desc", "Asia/Seoul", "#112233", created, updated);
+        CalendarEntity calendar = CalendarEntity.Reconstitute(4, Email, "Work", "desc", "Asia/Seoul", "#112233", created, updated);
 
         Assert.Equal((4L, Email, "Work", "desc", "Asia/Seoul", "#112233", created, updated),
             (calendar.Id, calendar.AccountEmail.Value, calendar.Name, calendar.Description, calendar.TimeZone.Value, calendar.ColorCode.Value, calendar.Created, calendar.Updated));

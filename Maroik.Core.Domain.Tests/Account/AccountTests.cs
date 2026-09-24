@@ -1,7 +1,6 @@
 using Maroik.Core.Domain.Account;
 using Maroik.Core.Domain.ValueObjects;
-
-namespace Maroik.Core.DomainTests.AccountDomain;
+namespace Maroik.Core.Domain.Tests.Account;
 
 /// <summary>
 /// Unit tests for <see cref="Maroik.Core.Domain.Account.Account"/>.
@@ -10,7 +9,7 @@ namespace Maroik.Core.DomainTests.AccountDomain;
 /// </summary>
 public class AccountTests
 {
-    private static Account ValidAccount(
+    private static Domain.Account.Account ValidAccount(
         string email = "user@example.com",
         string hashedPassword = "hashed",
         string nickname = "TestUser",
@@ -18,7 +17,7 @@ public class AccountTests
         string timeZone = "UTC",
         string? registrationToken = "token-123",
         bool agreedServiceTerms = true)
-        => Account.Create(email, hashedPassword, nickname, role, timeZone, "KRW", registrationToken, agreedServiceTerms).Value;
+        => Domain.Account.Account.Create(email, hashedPassword, nickname, role, timeZone, "KRW", registrationToken, agreedServiceTerms).Value;
 
     /// <summary>
     /// Builds a token using the same encoding as <see cref="GuidToken.Generate"/> but timestamped
@@ -37,7 +36,7 @@ public class AccountTests
     [Fact]
     public void Create_ReturnsAccount_WhenAllInputsValid()
     {
-        var result = Account.Create("user@example.com", "hashed", "Nick", "User", "UTC", "KRW", "tok", true);
+        var result = Domain.Account.Account.Create("user@example.com", "hashed", "Nick", "User", "UTC", "KRW", "tok", true);
 
         Assert.False(result.IsError);
         Assert.Equal("user@example.com", result.Value.Email.Value);
@@ -51,7 +50,7 @@ public class AccountTests
     [InlineData(null)]
     public void Create_ReturnsError_WhenEmailInvalid(string? email)
     {
-        var result = Account.Create(email!, "hashed", "Nick", "User", "UTC", null, null, true);
+        var result = Domain.Account.Account.Create(email!, "hashed", "Nick", "User", "UTC", null, null, true);
 
         Assert.True(result.IsError);
     }
@@ -63,7 +62,7 @@ public class AccountTests
     [InlineData(null)]
     public void Create_ReturnsError_WhenNicknameEmpty(string? nickname)
     {
-        var result = Account.Create("user@example.com", "hashed", nickname!, "User", "UTC", null, null, true);
+        var result = Domain.Account.Account.Create("user@example.com", "hashed", nickname!, "User", "UTC", null, null, true);
 
         Assert.True(result.IsError);
         Assert.Equal("Account.NicknameEmpty", result.FirstError.Code);
@@ -73,7 +72,7 @@ public class AccountTests
     [Fact]
     public void Create_ReturnsError_WhenNicknameTooLong()
     {
-        var result = Account.Create("user@example.com", "hashed", new string('n', 256), "User", "UTC", null, null, true);
+        var result = Domain.Account.Account.Create("user@example.com", "hashed", new string('n', 256), "User", "UTC", null, null, true);
 
         Assert.True(result.IsError);
         Assert.Equal("Account.NicknameTooLong", result.FirstError.Code);
@@ -83,7 +82,7 @@ public class AccountTests
     [Fact]
     public void Create_ReturnsAccount_WhenNicknameAtMaxLength()
     {
-        var result = Account.Create("user@example.com", "hashed", new string('n', 255), "User", "UTC", null, null, true);
+        var result = Domain.Account.Account.Create("user@example.com", "hashed", new string('n', 255), "User", "UTC", null, null, true);
 
         Assert.False(result.IsError);
     }
@@ -92,7 +91,7 @@ public class AccountTests
     [Fact]
     public void Create_StoresNormalizedNickname()
     {
-        var result = Account.Create("user@example.com", "hashed", "  Ｂｏｂ   Smith ", "User", "UTC", null, null, true);
+        var result = Domain.Account.Account.Create("user@example.com", "hashed", "  Ｂｏｂ   Smith ", "User", "UTC", null, null, true);
 
         Assert.False(result.IsError);
         Assert.Equal("Bob Smith", result.Value.Nickname);
@@ -105,7 +104,7 @@ public class AccountTests
     [InlineData("A d m i n")]
     public void Create_ReturnsError_WhenNicknameIsReserved(string nickname)
     {
-        var result = Account.Create("user@example.com", "hashed", nickname, "User", "UTC", null, null, true);
+        var result = Domain.Account.Account.Create("user@example.com", "hashed", nickname, "User", "UTC", null, null, true);
 
         Assert.True(result.IsError);
         Assert.Equal("Account.NicknameReserved", result.FirstError.Code);
@@ -115,7 +114,7 @@ public class AccountTests
     [Fact]
     public void Create_AcceptsReservedNickname_WhenAllowReservedNickname()
     {
-        var result = Account.Create("user@example.com", "hashed", "Admin", "Admin", "UTC", null, null, true, allowReservedNickname: true);
+        var result = Domain.Account.Account.Create("user@example.com", "hashed", "Admin", "Admin", "UTC", null, null, true, allowReservedNickname: true);
 
         Assert.False(result.IsError);
         Assert.Equal("Admin", result.Value.Nickname);
@@ -125,7 +124,7 @@ public class AccountTests
     [Fact]
     public void Create_ReturnsError_WhenNicknameHasInvisibleCharacters()
     {
-        var result = Account.Create("user@example.com", "hashed", "Bo\u200Bb", "User", "UTC", null, null, true);
+        var result = Domain.Account.Account.Create("user@example.com", "hashed", "Bo\u200Bb", "User", "UTC", null, null, true);
 
         Assert.True(result.IsError);
         Assert.Equal("Account.NicknameInvalidCharacters", result.FirstError.Code);
@@ -138,7 +137,7 @@ public class AccountTests
     [InlineData(null)]
     public void Create_ReturnsError_WhenPasswordEmpty(string? password)
     {
-        var result = Account.Create("user@example.com", password!, "Nick", "User", "UTC", null, null, true);
+        var result = Domain.Account.Account.Create("user@example.com", password!, "Nick", "User", "UTC", null, null, true);
 
         Assert.True(result.IsError);
         Assert.Equal("Account.PasswordEmpty", result.FirstError.Code);
@@ -148,7 +147,7 @@ public class AccountTests
     [Fact]
     public void Create_ReturnsError_WhenTimeZoneInvalid()
     {
-        var result = Account.Create("user@example.com", "hashed", "Nick", "User", "Not/Valid", null, null, true);
+        var result = Domain.Account.Account.Create("user@example.com", "hashed", "Nick", "User", "Not/Valid", null, null, true);
 
         Assert.True(result.IsError);
         Assert.Equal("TimeZoneId.Invalid", result.FirstError.Code);
@@ -161,7 +160,7 @@ public class AccountTests
     [InlineData("")]
     public void Create_ReturnsError_WhenRoleInvalid(string role)
     {
-        var result = Account.Create("user@example.com", "hashed", "Nick", role, "UTC", null, null, true);
+        var result = Domain.Account.Account.Create("user@example.com", "hashed", "Nick", role, "UTC", null, null, true);
 
         Assert.True(result.IsError);
         Assert.Equal("Account.RoleInvalid", result.FirstError.Code);
@@ -717,7 +716,7 @@ public class AccountTests
         var account = ValidAccount(registrationToken: registrationToken);
         account.ConfirmEmail(registrationToken);
         // The admin reset comes first: it discards any reset link requested before it, so the
-        // link used below must be requested afterwards.
+        // link used below must be requested afterward.
         account.AdminResetPassword("tempHash");
         string resetToken = GuidToken.Generate();
         account.RequestPasswordReset(resetToken);

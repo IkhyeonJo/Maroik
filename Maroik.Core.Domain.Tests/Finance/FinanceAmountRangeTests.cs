@@ -1,6 +1,6 @@
 using Maroik.Core.Domain.Finance;
-
-namespace Maroik.Core.DomainTests.Finance;
+using DomainLocalizableError = Maroik.Core.Domain.Localization.LocalizableError;
+namespace Maroik.Core.Domain.Tests.Finance;
 
 /// <summary>
 /// Range / length limits that mirror the persisted columns (<c>numeric(18,2)</c> amounts,
@@ -45,7 +45,7 @@ public class FinanceAmountRangeTests
     {
         var error = FinanceAmountPolicy.ValidateWithinRange(OverMax).FirstError;
 
-        var args = (object[])error.Metadata![Maroik.Core.Domain.Localization.LocalizableError.ResourceArgsMetadataKey];
+        var args = (object[])error.Metadata![DomainLocalizableError.ResourceArgsMetadataKey];
         Assert.Equal("9,999,999,999,999,999.99", args[0]);
         Assert.Contains("9,999,999,999,999,999.99", error.Description);
     }

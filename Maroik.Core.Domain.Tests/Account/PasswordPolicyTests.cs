@@ -1,6 +1,5 @@
 using Maroik.Core.Domain.Account;
-
-namespace Maroik.Core.DomainTests.AccountDomain;
+namespace Maroik.Core.Domain.Tests.Account;
 
 /// <summary>
 /// Unit tests for <see cref="PasswordPolicy"/>.
@@ -14,7 +13,6 @@ public class PasswordPolicyTests
     [InlineData("ABCDEFG1!")] // upper + digit + special
     [InlineData("abcdefg1!")] // lower + digit + special
     [InlineData("Sup3r$ecurePwd")] // all four criteria
-    /// <summary>Is valid returns true, when password meets three of four criteria.</summary>
     public void IsValid_ReturnsTrue_WhenPasswordMeetsThreeOfFourCriteria(string password)
     {
         Assert.True(PasswordPolicy.IsValid(password));
@@ -35,7 +33,6 @@ public class PasswordPolicyTests
     [InlineData("abcdefgh1")] // only lower + digit (2 criteria)
     [InlineData("abcdefghijk")] // only lowercase (1 criterion)
     [InlineData("12345678")] // only digits (1 criterion)
-    /// <summary>Is valid returns false, when password fails complexity rule.</summary>
     public void IsValid_ReturnsFalse_WhenPasswordFailsComplexityRule(string password)
     {
         Assert.False(PasswordPolicy.IsValid(password));
