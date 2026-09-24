@@ -8,13 +8,8 @@ namespace Maroik.E2E.Tests.Flows;
 /// The forum list is accessible without authentication; write mode requires a login.
 /// </summary>
 [Collection("E2E")]
-public class ForumFlowTests : E2ETestBase
+public class ForumFlowTests(E2ESharedFixture fixture) : E2ETestBase(fixture)
 {
-    /// <summary>Initializes a new instance of ForumFlowTests, sharing the E2ESharedFixture fixture across the tests in this class.</summary>
- #pragma warning disable IDE0290
-    public ForumFlowTests(E2ESharedFixture fixture) : base(fixture) { }
- #pragma warning restore IDE0290
-
     // -- Forum list -----------------------------------------------------------
 
     /// <summary>Verifies that <c>FreeForumList</c> loads with non-empty body.</summary>

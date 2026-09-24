@@ -9,13 +9,8 @@ namespace Maroik.E2E.Tests.Flows;
 /// into the database and signed in through the real login form.
 /// </summary>
 [Collection("E2E")]
-public class SignedInFlowTests : E2ETestBase
+public class SignedInFlowTests(E2ESharedFixture fixture) : E2ETestBase(fixture)
 {
-    /// <summary>Initializes a new instance of SignedInFlowTests, sharing the E2ESharedFixture fixture across the tests in this class.</summary>
- #pragma warning disable IDE0290
-    public SignedInFlowTests(E2ESharedFixture fixture) : base(fixture) { }
- #pragma warning restore IDE0290
-
     // -- Sign in ----------------------------------------------------------------
 
     /// <summary>A User who signs in lands on the user dashboard.</summary>

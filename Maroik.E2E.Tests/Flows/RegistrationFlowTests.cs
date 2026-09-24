@@ -9,13 +9,8 @@ namespace Maroik.E2E.Tests.Flows;
 /// created. (Successful registration needs the mail broker, so only the refusals are exercised.)
 /// </summary>
 [Collection("E2E")]
-public class RegistrationFlowTests : E2ETestBase
+public class RegistrationFlowTests(E2ESharedFixture fixture) : E2ETestBase(fixture)
 {
-    /// <summary>Initializes a new instance of RegistrationFlowTests, sharing the E2ESharedFixture fixture across the tests in this class.</summary>
- #pragma warning disable IDE0290
-    public RegistrationFlowTests(E2ESharedFixture fixture) : base(fixture) { }
- #pragma warning restore IDE0290
-
     private static async Task<string> SubmitRegistrationAsync(IPage page, string nickname, string? email = null)
     {
         email ??= $"reg-{Guid.NewGuid():N}"[..16] + "@test.com";

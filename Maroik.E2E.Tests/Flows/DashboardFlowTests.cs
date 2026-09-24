@@ -9,13 +9,8 @@ namespace Maroik.E2E.Tests.Flows;
 /// dashboard that an unauthenticated browser can reach without a session.
 /// </summary>
 [Collection("E2E")]
-public class DashboardFlowTests : E2ETestBase
+public class DashboardFlowTests(E2ESharedFixture fixture) : E2ETestBase(fixture)
 {
-    /// <summary>Initializes a new instance of DashboardFlowTests, sharing the E2ESharedFixture fixture across the tests in this class.</summary>
- #pragma warning disable IDE0290
-    public DashboardFlowTests(E2ESharedFixture fixture) : base(fixture) { }
- #pragma warning restore IDE0290
-
     // -- Anonymous dashboard --------------------------------------------------
 
     /// <summary>Verifies that <c>AnonymousDashboard</c> loads with non-empty body.</summary>

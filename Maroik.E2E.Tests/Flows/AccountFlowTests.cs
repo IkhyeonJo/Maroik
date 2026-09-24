@@ -13,13 +13,8 @@ namespace Maroik.E2E.Tests.Flows;
 /// protected Logout POST is.
 /// </summary>
 [Collection("E2E")]
-public class AccountFlowTests : E2ETestBase
+public class AccountFlowTests(E2ESharedFixture fixture) : E2ETestBase(fixture)
 {
-    /// <summary>Initializes a new instance of AccountFlowTests, sharing the E2ESharedFixture fixture across the tests in this class.</summary>
- #pragma warning disable IDE0290
-    public AccountFlowTests(E2ESharedFixture fixture) : base(fixture) { }
- #pragma warning restore IDE0290
-
     // -- Login ----------------------------------------------------------------
 
     /// <summary>Verifies that <c>LoginPage</c> has email and password inputs and submit button.</summary>

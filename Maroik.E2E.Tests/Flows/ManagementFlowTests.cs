@@ -9,13 +9,8 @@ namespace Maroik.E2E.Tests.Flows;
 /// uniqueness) as they apply when an administrator creates an account.
 /// </summary>
 [Collection("E2E")]
-public class ManagementFlowTests : E2ETestBase
+public class ManagementFlowTests(E2ESharedFixture fixture) : E2ETestBase(fixture)
 {
-    /// <summary>Initializes a new instance of ManagementFlowTests, sharing the E2ESharedFixture fixture across the tests in this class.</summary>
- #pragma warning disable IDE0290
-    public ManagementFlowTests(E2ESharedFixture fixture) : base(fixture) { }
- #pragma warning restore IDE0290
-
     // -- Profile (User) ------------------------------------------------------------
 
     /// <summary>The profile page shows the signed-in User's own e-mail and nickname.</summary>

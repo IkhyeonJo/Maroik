@@ -15,29 +15,19 @@ namespace Maroik.Website.Tests.Controllers;
 /// <c>AccountBookControllerIncomeExpenditureTests</c> for Income/Expenditure themselves.
 /// </summary>
 [Collection("Website Integration")]
-public class AccountBookControllerAssetTests
+public class AccountBookControllerAssetTests(MaroikWebApplicationFactory factory)
 {
-    private readonly MaroikWebApplicationFactory _factory;
-    private readonly HttpClient _client;
-
-    /// <summary>Initializes a new instance of AccountBookControllerAssetTests, sharing the MaroikWebApplicationFactory fixture across the tests in this class.</summary>
- #pragma warning disable IDE0290
-    public AccountBookControllerAssetTests(MaroikWebApplicationFactory factory)
- #pragma warning restore IDE0290
-    {
-        _factory = factory;
-        _client = factory.CreateTestClient(followRedirects: false);
-    }
+    private readonly HttpClient _client = factory.CreateTestClient(followRedirects: false);
 
     private Task<AuthenticatedSession> LoginAsUserAsync(string email = "accountbook-user@test.com") =>
-        AuthenticatedSessionHelper.LoginAsync(_factory, _client, email, "UserPassword1!", Role.User, TestContext.Current.CancellationToken);
+        AuthenticatedSessionHelper.LoginAsync(factory, _client, email, "UserPassword1!", Role.User, TestContext.Current.CancellationToken);
 
     private Task<AuthenticatedSession> LoginAsAdminAsync(string email = "accountbook-admin@test.com") =>
-        AuthenticatedSessionHelper.LoginAsync(_factory, _client, email, "AdminPassword1!", Role.Admin, TestContext.Current.CancellationToken);
+        AuthenticatedSessionHelper.LoginAsync(factory, _client, email, "AdminPassword1!", Role.Admin, TestContext.Current.CancellationToken);
 
     private void SeedAsset(string accountEmail, string productName)
     {
-        using var scope = _factory.Services.CreateScope();
+        using var scope = factory.Services.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
         if (db.Assets.Any(a => a.AccountEmail == accountEmail && a.ProductName == productName)) return;
         db.Assets.Add(new Asset
@@ -188,7 +178,7 @@ public class AccountBookControllerAssetTests
 
         Assert.Contains("\"result\":true", json);
 
-        using var scope = _factory.Services.CreateScope();
+        using var scope = factory.Services.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
         var updated = db.Assets.Single(a => a.AccountEmail == "accountbook-user@test.com" && a.ProductName == productName);
         Assert.Equal(2000m, updated.Amount);
@@ -217,7 +207,7 @@ public class AccountBookControllerAssetTests
         const string newName = "wallet-renamed";
         SeedAsset(email, oldName);
 
-        using (var scope = _factory.Services.CreateScope())
+        using (var scope = factory.Services.CreateScope())
         {
             var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
             db.Incomes.Add(new Income
@@ -231,7 +221,7 @@ public class AccountBookControllerAssetTests
                 Created = DateTime.UtcNow,
                 Updated = DateTime.UtcNow
             });
-            db.SaveChanges();
+            await db.SaveChangesAsync(TestContext.Current.CancellationToken);
         }
 
         using var request = session.BuildJsonPostRequest("/AccountBook/UpdateAsset", new
@@ -249,7 +239,7 @@ public class AccountBookControllerAssetTests
 
         Assert.Contains("\"result\":true", json);
 
-        using var verifyScope = _factory.Services.CreateScope();
+        using var verifyScope = factory.Services.CreateScope();
         var verifyDb = verifyScope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
         Assert.True(verifyDb.Assets.Any(a => a.AccountEmail == email && a.ProductName == newName));
         var income = verifyDb.Incomes.Single(i => i.AccountEmail == email && i.Content == "Salary");

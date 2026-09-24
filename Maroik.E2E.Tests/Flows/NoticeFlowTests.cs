@@ -9,13 +9,8 @@ namespace Maroik.E2E.Tests.Flows;
 /// server and then be silently dropped, so the flag could never be switched on or off.
 /// </summary>
 [Collection("E2E")]
-public class NoticeFlowTests : E2ETestBase
+public class NoticeFlowTests(E2ESharedFixture fixture) : E2ETestBase(fixture)
 {
-    /// <summary>Initializes a new instance of NoticeFlowTests, sharing the E2ESharedFixture fixture across the tests in this class.</summary>
- #pragma warning disable IDE0290
-    public NoticeFlowTests(E2ESharedFixture fixture) : base(fixture) { }
- #pragma warning restore IDE0290
-
     private static async Task SelectGridRowAsync(IPage page, string rowText)
     {
         // The grid loads over AJAX; a click on a row's cell selects it (the row gets "table-primary").

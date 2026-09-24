@@ -9,13 +9,8 @@ namespace Maroik.E2E.Tests.Flows;
 /// so it is reachable without a session.
 /// </summary>
 [Collection("E2E")]
-public class CalendarFlowTests : E2ETestBase
+public class CalendarFlowTests(E2ESharedFixture fixture) : E2ETestBase(fixture)
 {
-    /// <summary>Initializes a new instance of CalendarFlowTests, sharing the E2ESharedFixture fixture across the tests in this class.</summary>
- #pragma warning disable IDE0290
-    public CalendarFlowTests(E2ESharedFixture fixture) : base(fixture) { }
- #pragma warning restore IDE0290
-
     /// <summary>Verifies that <c>AnonymousCalendar</c> loads with non-empty body.</summary>
     [Fact]
     public async Task AnonymousCalendar_Loads_WithNonEmptyBody()

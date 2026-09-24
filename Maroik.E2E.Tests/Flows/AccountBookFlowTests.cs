@@ -10,13 +10,8 @@ namespace Maroik.E2E.Tests.Flows;
 /// that the page said so.
 /// </summary>
 [Collection("E2E")]
-public class AccountBookFlowTests : E2ETestBase
+public class AccountBookFlowTests(E2ESharedFixture fixture) : E2ETestBase(fixture)
 {
-    /// <summary>Initializes a new instance of AccountBookFlowTests, sharing the E2ESharedFixture fixture across the tests in this class.</summary>
- #pragma warning disable IDE0290
-    public AccountBookFlowTests(E2ESharedFixture fixture) : base(fixture) { }
- #pragma warning restore IDE0290
-
     private static ILocator SuccessToast(IPage page) => page.Locator(".toast-success");
 
     private static ILocator ErrorToast(IPage page) => page.Locator(".toast-error");

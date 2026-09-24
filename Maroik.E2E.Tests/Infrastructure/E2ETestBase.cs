@@ -9,22 +9,12 @@ namespace Maroik.E2E.Tests.Infrastructure;
 /// instance for the entire test session.  Each test creates a fresh
 /// <see cref="IPage"/> in a new isolated browser context via <see cref="NewPageAsync"/>.
 /// </summary>
-public abstract class E2ETestBase
+public abstract class E2ETestBase(E2ESharedFixture fixture)
 {
-    private readonly E2ESharedFixture _fixture;
-
-    protected string BaseUrl => _fixture.ServerBaseUrl;
-
-    /// <summary>Initializes the base class with the shared fixture supplied by the test collection.</summary>
- #pragma warning disable IDE0290
-    protected E2ETestBase(E2ESharedFixture fixture)
- #pragma warning restore IDE0290
-    {
-        _fixture = fixture;
-    }
+    protected string BaseUrl => fixture.ServerBaseUrl;
 
     /// <summary>The seeded database, for creating fixtures and checking what the server persisted.</summary>
-    protected E2EDatabase Db => _fixture.Database;
+    protected E2EDatabase Db => fixture.Database;
 
     /// <summary>
     /// Signs <paramref name="account"/> in through the real login form and waits until the browser
@@ -56,7 +46,7 @@ public abstract class E2ETestBase
     /// <summary>Creates a fresh <see cref="IPage"/> in a new isolated browser context.</summary>
     protected async Task<IPage> NewPageAsync()
     {
-        var context = await _fixture.Browser.NewContextAsync(new BrowserNewContextOptions
+        var context = await fixture.Browser.NewContextAsync(new BrowserNewContextOptions
         {
             BaseURL = BaseUrl,
             IgnoreHTTPSErrors = true,

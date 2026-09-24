@@ -20,23 +20,14 @@ namespace Maroik.FileStorage.Tests.Controllers;
 /// cases (unknown type, unreadable file).
 /// </summary>
 [Collection("FileStorage host (Program builds a process-wide Serilog logger)")]
-public class FileControllerTests : IClassFixture<WebApplicationFactory<Program>>
+public class FileControllerTests(WebApplicationFactory<Program> baseFactory)
+    : IClassFixture<WebApplicationFactory<Program>>
 {
-    private readonly WebApplicationFactory<Program> _baseFactory;
-
-    /// <summary>Initializes a new instance of FileControllerTests, sharing the WebApplicationFactory&lt;Program&gt; fixture across the tests in this class.</summary>
- #pragma warning disable IDE0290
-    public FileControllerTests(WebApplicationFactory<Program> factory)
- #pragma warning restore IDE0290
-    {
-        _baseFactory = factory;
-    }
-
     // -- Factory helpers ------------------------------------------------------
 
     /// <summary>Returns a factory whose ClamAV mock always marks files as clean.</summary>
     private WebApplicationFactory<Program> FactoryWithCleanScan() =>
-        _baseFactory.WithWebHostBuilder(b => b.ConfigureServices(services =>
+        baseFactory.WithWebHostBuilder(b => b.ConfigureServices(services =>
         {
             RemoveService<IClamavClient>(services);
             var mock = new Mock<IClamavClient>();
@@ -47,7 +38,7 @@ public class FileControllerTests : IClassFixture<WebApplicationFactory<Program>>
 
     /// <summary>Returns a factory whose ClamAV mock can never complete a scan (daemon down).</summary>
     private WebApplicationFactory<Program> FactoryWithClamavUnavailable() =>
-        _baseFactory.WithWebHostBuilder(b =>
+        baseFactory.WithWebHostBuilder(b =>
         {
             // Storage root = OS temp dir, so the request's target path passes the path check and actually
             // reaches the ClamAV scan (under the default <contentRoot>/upload root it is rejected first).
@@ -64,7 +55,7 @@ public class FileControllerTests : IClassFixture<WebApplicationFactory<Program>>
 
     /// <summary>Returns a factory whose ClamAV mock always reports a virus.</summary>
     private WebApplicationFactory<Program> FactoryWithVirusDetected() =>
-        _baseFactory.WithWebHostBuilder(b =>
+        baseFactory.WithWebHostBuilder(b =>
         {
             // Storage root = OS temp dir, so the request's target path passes the path check and actually
             // reaches the ClamAV scan (under the default <contentRoot>/upload root it is rejected first).
@@ -91,7 +82,7 @@ public class FileControllerTests : IClassFixture<WebApplicationFactory<Program>>
     /// confines every path to &lt;contentRoot&gt;/upload).
     /// </summary>
     private WebApplicationFactory<Program> FactoryWithTempStorageRoot() =>
-        _baseFactory.WithWebHostBuilder(b =>
+        baseFactory.WithWebHostBuilder(b =>
             b.UseSetting("ServerSetting:StorageRootPath", Path.GetTempPath()));
 
     /// <summary>A not-yet-existing target directory inside the OS temp dir (the storage root of the scan-failure factories).</summary>
@@ -349,7 +340,7 @@ public class FileControllerTests : IClassFixture<WebApplicationFactory<Program>>
     [Fact]
     public async Task Upload_ReturnsBadRequest_WhenValidationServiceThrows()
     {
-        var factory = _baseFactory.WithWebHostBuilder(b => b.ConfigureServices(services =>
+        var factory = baseFactory.WithWebHostBuilder(b => b.ConfigureServices(services =>
         {
             RemoveService<IFileValidationService>(services);
             var mock = new Mock<IFileValidationService>();
@@ -376,7 +367,7 @@ public class FileControllerTests : IClassFixture<WebApplicationFactory<Program>>
     [Fact]
     public async Task Download_ReturnsNotFound_WhenFileDoesNotExist()
     {
-        var client = _baseFactory.CreateClient();
+        var client = baseFactory.CreateClient();
  #pragma warning disable IDE0028
         using var content = new MultipartFormDataContent();
  #pragma warning restore IDE0028
@@ -453,7 +444,7 @@ public class FileControllerTests : IClassFixture<WebApplicationFactory<Program>>
         byte[] png = [0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A, 0x00];
         try
         {
-            var factory = _baseFactory.WithWebHostBuilder(b =>
+            var factory = baseFactory.WithWebHostBuilder(b =>
             {
                 b.UseSetting("ServerSetting:StorageRootPath", Path.GetTempPath());
                 b.ConfigureServices(services =>
