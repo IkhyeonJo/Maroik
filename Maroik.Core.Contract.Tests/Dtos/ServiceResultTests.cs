@@ -95,7 +95,7 @@ public class ServiceResultTests
     /// <summary>
     /// FromError on a plain domain <see cref="Error"/> (no <see cref="LocalizableError"/> metadata) falls
     /// back to the already-formatted <see cref="Error.Description"/> with no args -- the pre-existing
-    /// behaviour every other caller of FromError still relies on.
+    /// behavior every other caller of FromError still relies on.
     /// </summary>
     [Fact]
     public void FromError_WithoutLocalizationMetadata_HasEmptyErrorArgs()

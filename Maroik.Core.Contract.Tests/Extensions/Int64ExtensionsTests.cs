@@ -22,7 +22,7 @@ public class Int64ExtensionsTests
     public void ToMegabytesLabel_PartialMegabyte_RoundsToOneDecimal()
     {
         // 9.5MB = 9,961,472.8 bytes; use an exact value to avoid rounding ambiguity.
-        long bytes = (long)(9.5 * 1048576);
+        const long bytes = (long)(9.5 * 1048576);
         Assert.Equal("9.5", bytes.ToMegabytesLabel());
     }
 

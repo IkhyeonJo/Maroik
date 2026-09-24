@@ -50,19 +50,18 @@ public class SolutionLayeringArchitectureTests
     /// The only <c>&lt;ProjectReference&gt;</c> edges allowed out of each production project.
     /// Anything a project references that is not in its set here is an architecture violation.
     /// </summary>
-    private static readonly IReadOnlyDictionary<string, string[]> _allowedProjectReferences =
-        new Dictionary<string, string[]>
-        {
-            [Domain] = [],
-            [Contract] = [Domain],
-            [PostgreSql] = [],
-            [Client] = [Contract],
-            [Repository] = [Contract, PostgreSql],
-            [Service] = [Contract],
-            [Website] = [Contract, Client, Repository, Service],
-            [Worker] = [Contract, Client, Repository, Service],
-            [FileStorage] = [Contract, Client],
-        };
+    private static readonly Dictionary<string, string[]> _allowedProjectReferences = new()
+    {
+        [Domain] = [],
+        [Contract] = [Domain],
+        [PostgreSql] = [],
+        [Client] = [Contract],
+        [Repository] = [Contract, PostgreSql],
+        [Service] = [Contract],
+        [Website] = [Contract, Client, Repository, Service],
+        [Worker] = [Contract, Client, Repository, Service],
+        [FileStorage] = [Contract, Client],
+    };
 
     /// <summary>
     /// External-system packages and the only projects allowed to reference them directly. Keeping
@@ -139,17 +138,7 @@ public class SolutionLayeringArchitectureTests
 
         foreach ((string packagePrefix, string[] allowedProjects, string purpose) in _confinedPackages)
         {
-            foreach (ProjectFile project in _productionProjects.Value)
-            {
-                bool referencesPackage = project.PackageReferences
-                    .Any(p => p.StartsWith(packagePrefix, StringComparison.OrdinalIgnoreCase));
-
-                if (referencesPackage && !allowedProjects.Contains(project.Name))
-                    violations.Add(
-                        $"{project.Name} references '{packagePrefix}*' ({purpose}) — only " +
-                        $"{string.Join(" / ", allowedProjects)} may. Depend on the matching " +
-                        "Maroik.Core.Contract interface instead.");
-            }
+            violations.AddRange(from project in _productionProjects.Value let referencesPackage = project.PackageReferences.Any(p => p.StartsWith(packagePrefix, StringComparison.OrdinalIgnoreCase)) where referencesPackage && !allowedProjects.Contains(project.Name) select $"{project.Name} references '{packagePrefix}*' ({purpose}) — only " + $"{string.Join(" / ", allowedProjects)} may. Depend on the matching " + "Maroik.Core.Contract interface instead.");
         }
 
         Assert.True(violations.Count == 0, string.Join("\n", violations));
@@ -177,17 +166,16 @@ public class SolutionLayeringArchitectureTests
     [Fact]
     public void CoreLayers_MustNotReference_AnyApplicationHostProject()
     {
-        List<string> violations = [];
+        List<string> violations =
+        [
+            .. from layer in _coreLayers
+            let offending = GetProject(layer)
+                .ProjectReferences.Where(_applicationHosts.Contains)
+                .ToArray()
+            where offending.Length > 0
+            select $"{layer} references application host(s): {string.Join(", ", offending)}"
 
-        foreach (string layer in _coreLayers)
-        {
-            string[] offending = GetProject(layer).ProjectReferences
-                .Where(_applicationHosts.Contains)
-                .ToArray();
-
-            if (offending.Length > 0)
-                violations.Add($"{layer} references application host(s): {string.Join(", ", offending)}");
-        }
+        ];
 
         Assert.True(
             violations.Count == 0,
@@ -235,6 +223,13 @@ public class SolutionLayeringArchitectureTests
         var done = new HashSet<string>();
         var cycle = new List<string>();
 
+        foreach (string _ in graph.Keys.Where(HasCycle))
+        {
+            cycle.Reverse();
+            Assert.Fail("Project-reference cycle detected: " + string.Join(" -> ", cycle));
+        }
+        return;
+
         bool HasCycle(string node)
         {
             if (done.Contains(node)) return false;
@@ -246,28 +241,16 @@ public class SolutionLayeringArchitectureTests
 
             if (graph.TryGetValue(node, out string[]? deps))
             {
-                foreach (string dep in deps)
+                if (deps.Any(HasCycle))
                 {
-                    if (HasCycle(dep))
-                    {
-                        cycle.Add(node);
-                        return true;
-                    }
+                    cycle.Add(node);
+                    return true;
                 }
             }
 
             visiting.Remove(node);
             done.Add(node);
             return false;
-        }
-
-        foreach (string node in graph.Keys)
-        {
-            if (HasCycle(node))
-            {
-                cycle.Reverse();
-                Assert.Fail("Project-reference cycle detected: " + string.Join(" -> ", cycle));
-            }
         }
     }
 
@@ -277,9 +260,11 @@ public class SolutionLayeringArchitectureTests
 
     private static void AssertOnlyErrorOrPackage(ProjectFile project)
     {
-        string[] unexpected = project.PackageReferences
-            .Where(p => p != "ErrorOr")
-            .ToArray();
+        string[] unexpected =
+        [
+            .. project.PackageReferences
+                .Where(p => p != "ErrorOr")
+        ];
 
         Assert.True(
             unexpected.Length == 0,
@@ -320,16 +305,11 @@ public class SolutionLayeringArchitectureTests
     public void EveryProject_MustBeNestedUnderTheMatchingSolutionFolder()
     {
         SolutionFile solution = SolutionFile.Load(Path.Combine(FindRepositoryRoot(), "Maroik.sln"));
-        List<string> wrong = [];
+        List<string> wrong =
+        [
+            .. from project in LoadAllProjects() let isTestSide = project.Name.EndsWith(".Tests", StringComparison.Ordinal) let expected = isTestSide ? "tests" : "src" let actual = solution.FolderOf(project.Name) where actual != expected select $"{project.Name}: in '{actual ?? "(solution root)"}', expected '{expected}'"
 
-        foreach (ProjectFile project in LoadAllProjects())
-        {
-            bool isTestSide = project.Name.EndsWith(".Tests", StringComparison.Ordinal);
-            string expected = isTestSide ? "tests" : "src";
-            string? actual = solution.FolderOf(project.Name);
-            if (actual != expected)
-                wrong.Add($"{project.Name}: in '{actual ?? "(solution root)"}', expected '{expected}'");
-        }
+        ];
 
         Assert.True(wrong.Count == 0, "Solution folder mismatch:\n" + string.Join("\n", wrong));
     }
@@ -352,11 +332,17 @@ public class SolutionLayeringArchitectureTests
         {
             string text = File.ReadAllText(path);
 
+ #pragma warning disable SYSLIB1045
             Dictionary<string, (string Name, string Path)> byGuid = System.Text.RegularExpressions.Regex
-                .Matches(text, @"Project\(""\{[^}]+\}""\) = ""(?<name>[^""]+)"", ""(?<path>[^""]+)"", ""\{(?<guid>[^}]+)\}""")
+ #pragma warning restore SYSLIB1045
+                .Matches(text, """
+                               Project\("\{[^}]+\}"\) = "(?<name>[^"]+)", "(?<path>[^"]+)", "\{(?<guid>[^}]+)\}"
+                               """)
                 .ToDictionary(m => m.Groups["guid"].Value.ToUpperInvariant(), m => (m.Groups["name"].Value, m.Groups["path"].Value));
 
+ #pragma warning disable SYSLIB1045
             Dictionary<string, string> parentByGuid = System.Text.RegularExpressions.Regex
+ #pragma warning restore SYSLIB1045
                 .Matches(text, @"\{(?<child>[0-9A-Fa-f-]+)\}\s*=\s*\{(?<parent>[0-9A-Fa-f-]+)\}")
                 .ToDictionary(m => m.Groups["child"].Value.ToUpperInvariant(), m => m.Groups["parent"].Value.ToUpperInvariant());
 
@@ -380,21 +366,24 @@ public class SolutionLayeringArchitectureTests
             "Known: " + string.Join(", ", _productionProjects.Value.Select(p => p.Name)));
 
     private static IReadOnlyList<ProjectFile> LoadProductionProjects() =>
-        LoadAllProjects()
+    [
+        .. LoadAllProjects()
             .Where(p => !p.Name.EndsWith(".Tests", StringComparison.Ordinal))
             .Where(p => p.Name != "Maroik.E2E.Tests")
-            .ToArray();
+    ];
 
     private static IReadOnlyList<ProjectFile> LoadAllProjects()
     {
         string root = FindRepositoryRoot();
 
-        return Directory.GetFiles(root, "*.csproj", SearchOption.AllDirectories)
-            .Where(path => !PathHasSegment(path, "bin") && !PathHasSegment(path, "obj"))
-            .Where(path => Path.GetFileName(path).StartsWith("Maroik.", StringComparison.Ordinal))
-            .Select(ProjectFile.Load)
-            .OrderBy(p => p.Name, StringComparer.Ordinal)
-            .ToArray();
+        return
+        [
+            .. Directory.GetFiles(root, "*.csproj", SearchOption.AllDirectories)
+                .Where(path => !PathHasSegment(path, "bin") && !PathHasSegment(path, "obj"))
+                .Where(path => Path.GetFileName(path).StartsWith("Maroik.", StringComparison.Ordinal))
+                .Select(ProjectFile.Load)
+                .OrderBy(p => p.Name, StringComparer.Ordinal)
+        ];
     }
 
     private static bool PathHasSegment(string path, string segment) =>
