@@ -69,7 +69,7 @@ public class MenuServiceTests
     public async Task SearchCategoriesAsync_ReturnsAll_WhenSearchIsEmpty()
     {
         _categoryRepo.Setup(r => r.GetAllAsync(It.IsAny<CancellationToken>()))
-            .ReturnsAsync([MakeCategory(1, "Forum"), MakeCategory(2, "Calendar")]);
+            .ReturnsAsync([MakeCategory(), MakeCategory(2, "Calendar")]);
         var sut = CreateSut();
 
         IEnumerable<CategoryResponse> result = await sut.SearchCategoriesAsync(null, TestContext.Current.CancellationToken);
@@ -82,7 +82,7 @@ public class MenuServiceTests
     public async Task SearchCategoriesAsync_FiltersByNameSubstring()
     {
         _categoryRepo.Setup(r => r.GetAllAsync(It.IsAny<CancellationToken>()))
-            .ReturnsAsync([MakeCategory(1, "Forum"), MakeCategory(2, "Calendar")]);
+            .ReturnsAsync([MakeCategory(), MakeCategory(2, "Calendar")]);
         var sut = CreateSut();
 
         IEnumerable<CategoryResponse> result = await sut.SearchCategoriesAsync("Cal", TestContext.Current.CancellationToken);
@@ -91,12 +91,12 @@ public class MenuServiceTests
         Assert.Equal("Calendar", only.Name);
     }
 
-    /// <summary>Verifies that <c>SearchCategoriesAsync</c> also matches a substring of the numeric Id.</summary>
+    /// <summary>Verifies that <c>SearchCategoriesAsync</c> also matches a substring of the numeric ID.</summary>
     [Fact]
     public async Task SearchCategoriesAsync_FiltersByIdSubstring()
     {
         _categoryRepo.Setup(r => r.GetAllAsync(It.IsAny<CancellationToken>()))
-            .ReturnsAsync([MakeCategory(1, "Forum"), MakeCategory(42, "Calendar")]);
+            .ReturnsAsync([MakeCategory(), MakeCategory(42, "Calendar")]);
         var sut = CreateSut();
 
         IEnumerable<CategoryResponse> result = await sut.SearchCategoriesAsync("42", TestContext.Current.CancellationToken);
@@ -112,7 +112,7 @@ public class MenuServiceTests
     public async Task SearchSubCategoriesAsync_ReturnsAll_WhenSearchIsEmpty()
     {
         _subCategoryRepo.Setup(r => r.GetAllAsync(It.IsAny<CancellationToken>()))
-            .ReturnsAsync([MakeSubCategory(1, BoardTypes.FreeForum), MakeSubCategory(2, BoardTypes.PrivateNote)]);
+            .ReturnsAsync([MakeSubCategory(), MakeSubCategory(2, BoardTypes.PrivateNote)]);
         var sut = CreateSut();
 
         IEnumerable<SubCategoryResponse> result = await sut.SearchSubCategoriesAsync("", TestContext.Current.CancellationToken);
@@ -125,7 +125,7 @@ public class MenuServiceTests
     public async Task SearchSubCategoriesAsync_FiltersByNameSubstring()
     {
         _subCategoryRepo.Setup(r => r.GetAllAsync(It.IsAny<CancellationToken>()))
-            .ReturnsAsync([MakeSubCategory(1, BoardTypes.FreeForum), MakeSubCategory(2, BoardTypes.PrivateNote)]);
+            .ReturnsAsync([MakeSubCategory(), MakeSubCategory(2, BoardTypes.PrivateNote)]);
         var sut = CreateSut();
 
         IEnumerable<SubCategoryResponse> result = await sut.SearchSubCategoriesAsync(BoardTypes.PrivateNote, TestContext.Current.CancellationToken);
@@ -230,7 +230,7 @@ public class MenuServiceTests
         Assert.True(result.Success);
     }
 
-    /// <summary>Verifies that <c>UpdateCategoryAsync</c> returns fail when the Id doesn't match any existing category.</summary>
+    /// <summary>Verifies that <c>UpdateCategoryAsync</c> returns fail when the ID doesn't match any existing category.</summary>
     [Fact]
     public async Task UpdateCategoryAsync_ReturnsFail_WhenIdNotFound()
     {
@@ -344,7 +344,7 @@ public class MenuServiceTests
         Assert.True(result.Success);
     }
 
-    /// <summary>Verifies that <c>UpdateSubCategoryAsync</c> returns fail when the Id doesn't match any existing sub-category.</summary>
+    /// <summary>Verifies that <c>UpdateSubCategoryAsync</c> returns fail when the ID doesn't match any existing sub-category.</summary>
     [Fact]
     public async Task UpdateSubCategoryAsync_ReturnsFail_WhenIdNotFound()
     {

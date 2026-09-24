@@ -10,7 +10,7 @@ namespace Maroik.Core.Service.Tests.Extensions;
 /// Verifies the deadlock-avoidance contract: assets are always requested from the batched
 /// row-locking query in <see cref="StringComparer.Ordinal"/> order regardless of caller-supplied
 /// order, duplicate names are only requested once, and blank/null names are filtered out before
-/// the single batched call — all in one round trip rather than one query per name.
+/// the single batched call — all-in-one round trip rather than one query per name.
 /// </summary>
 public class AssetBalanceOrdinalLockExtensionsTests
 {

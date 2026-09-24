@@ -57,7 +57,7 @@ public class AssetBalanceDomainServiceTests
     [Fact]
     public async Task GetAssetsAsync_DelegatesToBatchedRowLockingQuery_AndKeysResultByProductName()
     {
-        var wallet = MakeAsset("Wallet");
+        var wallet = MakeAsset();
         var savings = MakeAsset("Savings");
         _assetRepo.Setup(r => r.FindByEmailAndProductNamesForUpdateAsync(
                 "user@example.com", It.Is<IReadOnlyCollection<string>>(n => n.Count == 2 && n.Contains("Wallet") && n.Contains("Savings")),

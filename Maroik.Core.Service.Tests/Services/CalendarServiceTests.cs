@@ -6,6 +6,7 @@ using Maroik.Core.Service.Services;
 using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Options;
 using Moq;
+// ReSharper disable InvalidXmlDocComment
 
 namespace Maroik.Core.Service.Tests.Services;
 
@@ -27,7 +28,7 @@ public class CalendarServiceTests
     private readonly Mock<IUnitOfWork> _unitOfWork = new();
     private readonly Mock<IAttachmentContentService> _attachmentContent = new();
     private readonly IOptions<ServerSetting> _settings =
-        Options.Create(new ServerSetting { FileStorageBaseUrl = "http://files.example.com" });
+        Options.Create(new ServerSetting { FileStorageBaseUrl = "https://files.example.com" });
 
     /// <summary>Initializes the test fixture, setting up all required test doubles and the system under test.</summary>
     public CalendarServiceTests()
@@ -123,7 +124,7 @@ public class CalendarServiceTests
 
     /// <summary>
     /// Regression: the new calendar's database-generated id is handed back on the request (the aggregate
-    /// itself is created with Id 0), because the client builds the new calendar's checkbox / edit / delete
+    /// itself is created with ID 0), because the client builds the new calendar's checkbox / edit / delete
     /// controls from the id the controller echoes — with id 0 they addressed no calendar until a reload.
     /// </summary>
     [Fact]
@@ -1132,7 +1133,7 @@ public class CalendarServiceTests
 
     // -- Calendar CRUD: validation and unexpected failures -----------------------
 
-    /// <summary>A domain validation error (bad colour) is returned as-is and nothing is persisted.</summary>
+    /// <summary>A domain validation error (bad color) is returned as-is and nothing is persisted.</summary>
     [Fact]
     public async Task CreateCalendarAsync_ReturnsTheDomainValidationError_AndPersistsNothing()
     {
@@ -1150,7 +1151,7 @@ public class CalendarServiceTests
     [Fact]
     public async Task UpdateCalendarAsync_ReturnsTheDomainValidationError_AndDoesNotWrite()
     {
-        _calendarRepo.Setup(r => r.FindByIdForUpdateAsync(1, It.IsAny<CancellationToken>())).ReturnsAsync(MakeCalendar(1));
+        _calendarRepo.Setup(r => r.FindByIdForUpdateAsync(1, It.IsAny<CancellationToken>())).ReturnsAsync(MakeCalendar());
 
         ServiceResult result = await CreateSut().UpdateCalendarAsync("user@example.com",
             new CalendarRequest { Id = 1, Name = "   ", TimeZoneIanaId = "UTC", HtmlColorCode = "#3788d8" }, TestContext.Current.CancellationToken);
@@ -1179,7 +1180,7 @@ public class CalendarServiceTests
     public async Task DeleteCalendarAsync_RollsBackAndReportsUnexpectedFailure_WhenTheRepositoryThrows()
     {
         _calendarRepo.Setup(r => r.GetByAccountEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync([MakeCalendar(1)]);
+            .ReturnsAsync([MakeCalendar()]);
         _calendarRepo.Setup(r => r.DeleteByIdAsync(1, It.IsAny<CancellationToken>())).ThrowsAsync(new InvalidOperationException("db down"));
 
         ServiceResult result = await CreateSut().DeleteCalendarAsync("user@example.com", new CalendarRequest { Id = 1 }, TestContext.Current.CancellationToken);
@@ -1340,7 +1341,7 @@ public class CalendarServiceTests
     [Fact]
     public async Task CreateCalendarEventAsync_ReturnsTheDomainValidationError_WhenTheTitleIsBlank()
     {
-        _calendarRepo.Setup(r => r.GetByAccountEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync([MakeCalendar(1)]);
+        _calendarRepo.Setup(r => r.GetByAccountEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync([MakeCalendar()]);
 
         ServiceResult result = await CreateSut().CreateCalendarEventAsync(
             new CalendarEventRequest { CalendarId = 1, Title = "" }, "user@example.com", "1", [], null, TestContext.Current.CancellationToken);
@@ -1354,7 +1355,7 @@ public class CalendarServiceTests
     [Fact]
     public async Task CreateCalendarEventAsync_RollsBackAndReportsCreateFailed_WhenTheRepositoryThrows()
     {
-        _calendarRepo.Setup(r => r.GetByAccountEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync([MakeCalendar(1)]);
+        _calendarRepo.Setup(r => r.GetByAccountEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync([MakeCalendar()]);
         _eventRepo.Setup(r => r.CreateCalendarEventAsync(It.IsAny<CalendarEvent>(), It.IsAny<CancellationToken>()))
             .ThrowsAsync(new InvalidOperationException("secret detail"));
 
@@ -1371,7 +1372,7 @@ public class CalendarServiceTests
     [Fact]
     public async Task UpdateCalendarEventAsync_ReturnsTheDomainValidationError_WhenTheTitleIsBlank()
     {
-        _calendarRepo.Setup(r => r.GetByAccountEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync([MakeCalendar(1)]);
+        _calendarRepo.Setup(r => r.GetByAccountEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync([MakeCalendar()]);
         _eventRepo.Setup(r => r.FindByIdForUpdateAsync(1, It.IsAny<CancellationToken>())).ReturnsAsync(MakeCalendarEvent(1, 1, "Old"));
 
         ServiceResult result = await CreateSut().UpdateCalendarEventAsync(
@@ -1386,7 +1387,7 @@ public class CalendarServiceTests
     [Fact]
     public async Task UpdateCalendarEventAsync_RollsBackAndReportsUpdateFailed_WhenTheRepositoryThrows()
     {
-        _calendarRepo.Setup(r => r.GetByAccountEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync([MakeCalendar(1)]);
+        _calendarRepo.Setup(r => r.GetByAccountEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync([MakeCalendar()]);
         _eventRepo.Setup(r => r.FindByIdForUpdateAsync(1, It.IsAny<CancellationToken>())).ReturnsAsync(MakeCalendarEvent(1, 1, "Old"));
         _eventRepo.Setup(r => r.UpdateEntityAsync(It.IsAny<CalendarEvent>(), It.IsAny<CancellationToken>()))
             .ThrowsAsync(new InvalidOperationException("secret detail"));
@@ -1416,8 +1417,8 @@ public class CalendarServiceTests
     [Fact]
     public async Task DeleteCalendarEventAsync_RollsBackAndReportsUnexpectedFailure_WhenTheRepositoryThrows()
     {
-        _calendarRepo.Setup(r => r.GetByAccountEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync([MakeCalendar(1)]);
-        _eventRepo.Setup(r => r.FindByIdAsync(1, It.IsAny<CancellationToken>())).ReturnsAsync(MakeCalendarEvent(1, 1));
+        _calendarRepo.Setup(r => r.GetByAccountEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync([MakeCalendar()]);
+        _eventRepo.Setup(r => r.FindByIdAsync(1, It.IsAny<CancellationToken>())).ReturnsAsync(MakeCalendarEvent());
         _eventRepo.Setup(r => r.DeleteByIdAsync(1, It.IsAny<CancellationToken>())).ThrowsAsync(new InvalidOperationException("db down"));
 
         ServiceResult result = await CreateSut().DeleteCalendarEventAsync(1, "user@example.com", TestContext.Current.CancellationToken);
@@ -1445,11 +1446,13 @@ public class CalendarServiceTests
     [Fact]
     public async Task DownloadFileAsync_DelegatesToTheAttachmentService()
     {
-        _attachmentContent.Setup(a => a.DownloadFileAsync("/upload/x.png", It.IsAny<CancellationToken>())).ReturnsAsync([9, 9]);
+        _attachmentContent.Setup(a => a.DownloadFileAsync("/upload/x.png", It.IsAny<CancellationToken>())).ReturnsAsync([
+            .. "\t\t"u8
+        ]);
 
         byte[]? bytes = await CreateSut().DownloadFileAsync("/upload/x.png", TestContext.Current.CancellationToken);
 
-        Assert.Equal([9, 9], bytes);
+        Assert.Equal("\t\t"u8.ToArray(), bytes);
     }
 
     /// <summary>A shared-calendar row that cannot become a subscription (a non-positive calendar id) is refused, and the transaction rolls back.</summary>

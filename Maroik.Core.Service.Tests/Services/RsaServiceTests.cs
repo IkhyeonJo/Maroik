@@ -253,7 +253,7 @@ public class RsaServiceTests
         Assert.False(valid);
     }
 
-    /// <summary>Verifies that <c>Sign</c> produces non empty base64 string.</summary>
+    /// <summary>Verifies that <c>Sign</c> produces non-empty base64 string.</summary>
     [Fact]
     public void Sign_ProducesNonEmptyBase64String()
     {

@@ -4,7 +4,6 @@ using Maroik.Core.Contract.Misc.Settings;
 using Maroik.Core.Domain.Account;
 using Maroik.Core.Domain.Finance;
 using Maroik.Core.Service.Services;
-using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Options;
 using Moq;
 
@@ -14,7 +13,7 @@ namespace Maroik.Core.Service.Tests.Services;
 /// Unit tests for <see cref="DashboardService"/>.
 /// All repository dependencies are replaced with Moq mocks.
 /// Covers the summary aggregation (per-year / per-year-month income and expenditure
-/// breakdowns) and the default monetary unit synchronisation logic.
+/// breakdowns) and the default monetary unit synchronization logic.
 /// </summary>
 public class DashboardServiceTests
 {
@@ -70,7 +69,7 @@ public class DashboardServiceTests
             securityStamp: "stamp",
             mustChangePassword: false);
 
-    private void SetupEmptyFinancials(string email)
+    private void SetupEmptyFinancials()
     {
         _incomeRepo.Setup(r => r.GetByAccountEmailAndDateRangeAsync(It.IsAny<string>(), It.IsAny<DateTime>(), It.IsAny<DateTime>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync([]);
@@ -185,7 +184,7 @@ public class DashboardServiceTests
         var account = MakeAccount(unit: "KRW");
         _accountRepo.Setup(r => r.FindByEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(account);
         _assetRepo.Setup(r => r.GetByAccountEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync([MakeAsset("Bank")]);
-        SetupEmptyFinancials(email);
+        SetupEmptyFinancials();
         var sut = CreateSut();
 
         DashboardDto summary = await sut.GetSummaryAsync(email, "2025", "13", "UTC", TestContext.Current.CancellationToken);
@@ -202,14 +201,14 @@ public class DashboardServiceTests
         var account = MakeAccount(unit: null);
         var assets = new List<Asset>
         {
-            MakeAsset("Wallet", "KRW"),
-            MakeAsset("Checking", "KRW"),
+            MakeAsset("Wallet"),
+            MakeAsset("Checking"),
             MakeAsset("Savings", "USD")
         };
 
         _accountRepo.Setup(r => r.FindByEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(account);
         _assetRepo.Setup(r => r.GetByAccountEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(assets);
-        SetupEmptyFinancials(email);
+        SetupEmptyFinancials();
         var sut = CreateSut();
 
         DashboardDto summary = await sut.GetSummaryAsync(email, "2025", "1", "UTC", TestContext.Current.CancellationToken);
@@ -253,13 +252,13 @@ public class DashboardServiceTests
         var account = MakeAccount(unit: null);
         var assets = new List<Asset>
         {
-            MakeAsset("Wallet", "KRW"),
+            MakeAsset("Wallet"),
             MakeAsset("OldForeignAccount", "USD", deleted: true)
         };
 
         _accountRepo.Setup(r => r.FindByEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(account);
         _assetRepo.Setup(r => r.GetByAccountEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(assets);
-        SetupEmptyFinancials(email);
+        SetupEmptyFinancials();
         var sut = CreateSut();
 
         DashboardDto summary = await sut.GetSummaryAsync(email, "2025", "1", "UTC", TestContext.Current.CancellationToken);
@@ -289,11 +288,11 @@ public class DashboardServiceTests
     {
         const string email = "user@example.com";
         var account = MakeAccount(unit: "KRW");
-        var assets = new List<Asset> { MakeAsset("OldWallet", "KRW", deleted: true) };
+        var assets = new List<Asset> { MakeAsset("OldWallet", deleted: true) };
 
         _accountRepo.Setup(r => r.FindByEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(account);
         _assetRepo.Setup(r => r.GetByAccountEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(assets);
-        SetupEmptyFinancials(email);
+        SetupEmptyFinancials();
         var sut = CreateSut();
 
         DashboardDto summary = await sut.GetSummaryAsync(email, "2025", "1", "UTC", TestContext.Current.CancellationToken);
@@ -314,8 +313,8 @@ public class DashboardServiceTests
         var account = MakeAccount(email, unit: null);
         _accountRepo.Setup(r => r.FindByEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(account);
         _assetRepo.Setup(r => r.GetByAccountEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync([MakeAsset("Wallet", "KRW")]);
-        SetupEmptyFinancials(email);
+            .ReturnsAsync([MakeAsset("Wallet")]);
+        SetupEmptyFinancials();
         var sut = CreateSut(new ServerSetting
         {
             DemoAccountEmail = email,
@@ -370,7 +369,7 @@ public class DashboardServiceTests
     // -- GetSummaryAsync: income/expenditure breakdown -------------------------
 
     /// <summary>
-    /// Verifies that <c>GetSummaryAsync</c> computes the per-main-class/sub-class income breakdown
+    /// Verifies that <c>GetSummaryAsync</c> computes the per-main-class/subclass income breakdown
     /// (via <see cref="FinanceBreakdownPolicy"/>) itself, rather than leaving that arithmetic to the
     /// presentation layer -- <c>DashboardViewModelMapper</c> now only copies these pre-computed
     /// numbers onto the view model.
@@ -381,7 +380,7 @@ public class DashboardServiceTests
         const string email = "user@example.com";
         _accountRepo.Setup(r => r.FindByEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(MakeAccount(unit: "KRW"));
         _assetRepo.Setup(r => r.GetByAccountEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync([MakeAsset("Wallet")]);
-        SetupEmptyFinancials(email);
+        SetupEmptyFinancials();
 
         List<Income> yearIncomes =
         [
@@ -409,7 +408,7 @@ public class DashboardServiceTests
     }
 
     /// <summary>
-    /// Verifies that <c>GetSummaryAsync</c> computes the per-main-class/sub-class expenditure
+    /// Verifies that <c>GetSummaryAsync</c> computes the per-main-class/subclass expenditure
     /// breakdown itself, covering all three expenditure main classes.
     /// </summary>
     [Fact]
@@ -418,7 +417,7 @@ public class DashboardServiceTests
         const string email = "user@example.com";
         _accountRepo.Setup(r => r.FindByEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(MakeAccount(unit: "KRW"));
         _assetRepo.Setup(r => r.GetByAccountEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync([MakeAsset("Card")]);
-        SetupEmptyFinancials(email);
+        SetupEmptyFinancials();
 
         List<Expenditure> yearExpenditures =
         [
@@ -442,7 +441,7 @@ public class DashboardServiceTests
         Assert.Equal(100.0, savings.PercentageBySubClass["Deposit"]);
 
         // NonConsumerSpending had no records this year -- still present, with a zero total and no
-        // percentage entries (matches FinanceBreakdownPolicy's zero-total behaviour).
+        // percentage entries (matches FinanceBreakdownPolicy's zero-total behavior).
         FinanceBreakdownDto nonConsumer = summary.YearExpenditureBreakdown["NonConsumerSpending"];
         Assert.Equal(0m, nonConsumer.Total);
         Assert.Empty(nonConsumer.PercentageBySubClass);
@@ -461,7 +460,7 @@ public class DashboardServiceTests
         const string email = "user@example.com";
         _accountRepo.Setup(r => r.FindByEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(MakeAccount(unit: "KRW"));
         _assetRepo.Setup(r => r.GetByAccountEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync([MakeAsset("Wallet")]);
-        SetupEmptyFinancials(email);
+        SetupEmptyFinancials();
 
         List<Income> yearIncomes =
         [
@@ -481,7 +480,7 @@ public class DashboardServiceTests
     }
 
     /// <summary>
-    /// Verifies that the year and year-month breakdowns are computed independently from their
+    /// Verifies that the year and year-month breakdowns are computed independently of their
     /// respective (already year-month-filtered) lists, not from each other.
     /// </summary>
     [Fact]
@@ -490,7 +489,7 @@ public class DashboardServiceTests
         const string email = "user@example.com";
         _accountRepo.Setup(r => r.FindByEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(MakeAccount(unit: "KRW"));
         _assetRepo.Setup(r => r.GetByAccountEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync([MakeAsset("Wallet")]);
-        SetupEmptyFinancials(email);
+        SetupEmptyFinancials();
 
         var inMonth = Income.Reconstitute(1, email, "RegularIncome", "LaborIncome", null, 400m, "KRW", "Wallet", null,
             new DateTime(2025, 3, 15, 0, 0, 0, DateTimeKind.Utc), DateTime.UtcNow);
@@ -757,7 +756,7 @@ public class DashboardServiceTests
         Expenditure.Reconstitute(id, "user@example.com", "ConsumerSpending", "MealOrEatOutExpenses", null, amount, "KRW", paymentMethod, "", null, created, created);
 
     /// <summary>
-    /// Only rows whose asset uses the account's default currency are totalled (mixing currencies would
+    /// Only rows whose asset uses the account's default currency are totaled (mixing currencies would
     /// add unlike amounts), but the product→currency lookup still lists every asset for the view.
     /// </summary>
     [Fact]
@@ -765,7 +764,7 @@ public class DashboardServiceTests
     {
         var march = new DateTime(2025, 3, 15, 0, 0, 0, DateTimeKind.Utc);
         GivenSummaryInputs(
-            [MakeAsset("Wallet", "KRW"), MakeAsset("UsdWallet", "USD")],
+            [MakeAsset("Wallet"), MakeAsset("UsdWallet", "USD")],
             [IncomeAt(1, "Wallet", 100m, march), IncomeAt(2, "UsdWallet", 999m, march)],
             [ExpenditureAt(3, "Wallet", 10m, march), ExpenditureAt(4, "UsdWallet", 888m, march)]);
 
@@ -783,7 +782,7 @@ public class DashboardServiceTests
     public async Task GetSummaryAsync_KeepsTransactionsOnDeletedAssets_InTheTotals()
     {
         var march = new DateTime(2025, 3, 15, 0, 0, 0, DateTimeKind.Utc);
-        GivenSummaryInputs([MakeAsset("OldWallet", "KRW", deleted: true)], [IncomeAt(1, "OldWallet", 100m, march)], []);
+        GivenSummaryInputs([MakeAsset("OldWallet", deleted: true)], [IncomeAt(1, "OldWallet", 100m, march)], []);
 
         DashboardDto summary = await CreateSut().GetSummaryAsync("user@example.com", "2025", "3", "UTC", TestContext.Current.CancellationToken);
 
@@ -832,7 +831,7 @@ public class DashboardServiceTests
 
     private static FixedExpenditure FixedExpenditureDue(DateTime maturity, bool unpunctual = false) =>
         FixedExpenditure.Reconstitute(1, "user@example.com", "ConsumerSpending", "MealOrEatOutExpenses", null, 100m, "KRW",
-            "Wallet", null, (short)1, (short)1, maturity, null, unpunctual, DateTime.UtcNow, DateTime.UtcNow);
+            "Wallet", null, 1, 1, maturity, null, unpunctual, DateTime.UtcNow, DateTime.UtcNow);
 
     /// <summary>Fixed expenditures are counted like fixed incomes: "always notify" items are noticed, past-maturity ones are expired.</summary>
     [Fact]

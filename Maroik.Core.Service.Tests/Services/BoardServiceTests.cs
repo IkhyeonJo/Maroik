@@ -8,6 +8,7 @@ using Maroik.Core.Service.Services;
 using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Options;
 using Moq;
+// ReSharper disable InvalidXmlDocComment
 
 namespace Maroik.Core.Service.Tests.Services;
 
@@ -26,7 +27,7 @@ public class BoardServiceTests
     private readonly Mock<IUnitOfWork> _unitOfWork = new();
     private readonly Mock<IAttachmentContentService> _attachmentContent = new();
     private readonly IOptions<ServerSetting> _settings =
-        Options.Create(new ServerSetting { FileStorageBaseUrl = "http://files.example.com" });
+        Options.Create(new ServerSetting { FileStorageBaseUrl = "https://files.example.com" });
 
     /// <summary>Initializes the test fixture, setting up all required test doubles and the system under test.</summary>
     public BoardServiceTests()
@@ -752,7 +753,9 @@ public class BoardServiceTests
     {
         _boardRepo.Setup(r => r.FindActiveByIdForUpdateAsync(It.IsAny<long>(), It.IsAny<CancellationToken>())).ReturnsAsync(MakeBoard());
         _commentRepo.Setup(r => r.GetByBoardIdOrderedAsync(It.IsAny<long>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new List<BoardComment> { MakeComment(1, order: 0L), MakeComment(2, order: 1L) });
+            .ReturnsAsync([
+                MakeComment(), MakeComment(2, order: 1L)
+            ]);
 
         BoardComment? captured = null;
         _commentRepo.Setup(r => r.CreateAsync(It.IsAny<BoardComment>(), It.IsAny<CancellationToken>()))
@@ -778,7 +781,9 @@ public class BoardServiceTests
         _boardRepo.Setup(r => r.FindActiveByIdForUpdateAsync(It.IsAny<long>(), It.IsAny<CancellationToken>())).ReturnsAsync(MakeBoard());
         // Order 1 is "missing" here, simulating a soft-deleted comment excluded by the repository query.
         _commentRepo.Setup(r => r.GetByBoardIdOrderedAsync(It.IsAny<long>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new List<BoardComment> { MakeComment(1, order: 0L), MakeComment(3, order: 2L) });
+            .ReturnsAsync([
+                MakeComment(), MakeComment(3, order: 2L)
+            ]);
 
         BoardComment? captured = null;
         _commentRepo.Setup(r => r.CreateAsync(It.IsAny<BoardComment>(), It.IsAny<CancellationToken>()))
@@ -925,10 +930,10 @@ public class BoardServiceTests
     {
         SetupEditableBoardWithAttachment(BoardAttachedFile.Reconstitute(77, 1, 10, "old", ".txt", "/upload/old.txt"));
 
-        ServiceResult result = await CreateSut().EditBoardAsync(EditRequest(), "Alice", false, Zip("new.zip"), TestContext.Current.CancellationToken);
+        ServiceResult result = await CreateSut().EditBoardAsync(EditRequest(), "Alice", false, Zip(), TestContext.Current.CancellationToken);
 
         Assert.True(result.Success);
-        _fileClient.Verify(f => f.UploadAsync(It.IsAny<byte[]>(), "application/zip", It.Is<string>(p => p.StartsWith("upload/Forum/FreeForum/boardAttachedFiles/1/") && p.EndsWith(".zip")), "http://files.example.com", It.IsAny<CancellationToken>()), Times.Once);
+        _fileClient.Verify(f => f.UploadAsync(It.IsAny<byte[]>(), "application/zip", It.Is<string>(p => p.StartsWith("upload/Forum/FreeForum/boardAttachedFiles/1/") && p.EndsWith(".zip")), "https://files.example.com", It.IsAny<CancellationToken>()), Times.Once);
         _attachedFileRepo.Verify(r => r.UpdateEntityAsync(
             It.Is<BoardAttachedFile>(f => f.Id == 77 && f.BoardId == 1 && f.Name == "new" && f.Extension == ".zip" && f.Size == 2
                 && f.Path.StartsWith("upload/Forum/FreeForum/boardAttachedFiles/1/") && f.Path.EndsWith(".zip")),
@@ -1205,9 +1210,11 @@ public class BoardServiceTests
     [Fact]
     public async Task DownloadFileAsync_DelegatesToTheAttachmentService()
     {
-        _attachmentContent.Setup(a => a.DownloadFileAsync("/upload/x.png", It.IsAny<CancellationToken>())).ReturnsAsync([9, 9]);
+        _attachmentContent.Setup(a => a.DownloadFileAsync("/upload/x.png", It.IsAny<CancellationToken>())).ReturnsAsync([
+            .. "\t\t"u8
+        ]);
 
-        Assert.Equal([9, 9], await CreateSut().DownloadFileAsync("/upload/x.png", TestContext.Current.CancellationToken));
+        Assert.Equal("\t\t"u8.ToArray(), await CreateSut().DownloadFileAsync("/upload/x.png", TestContext.Current.CancellationToken));
     }
 
     // -- Domain refusals after the service's own checks ----------------------------------------------

@@ -101,7 +101,7 @@ public class ExpenditureServiceTests
         _unitOfWork.Verify(u => u.RollbackAsync(It.IsAny<CancellationToken>()), Times.Once);
     }
 
-    /// <summary>Verifies that <c>CreateAsync</c> returns fail when sub class is invalid for main class.</summary>
+    /// <summary>Verifies that <c>CreateAsync</c> returns fail when subclass is invalid for main class.</summary>
     [Fact]
     public async Task CreateAsync_ReturnsFail_WhenSubClassIsInvalidForMainClass()
     {
@@ -121,7 +121,7 @@ public class ExpenditureServiceTests
         _assetBalance.Setup(r => r.GetAssetAsync("user@example.com", "Wallet", It.IsAny<CancellationToken>())).ReturnsAsync((Asset?)null);
         var sut = CreateSut();
 
-        ServiceResult result = await sut.CreateAsync("user@example.com", ConsumerRequest("Wallet"), TestContext.Current.CancellationToken);
+        ServiceResult result = await sut.CreateAsync("user@example.com", ConsumerRequest(), TestContext.Current.CancellationToken);
 
         Assert.False(result.Success);
         _unitOfWork.Verify(u => u.RollbackAsync(It.IsAny<CancellationToken>()), Times.Once);
@@ -134,7 +134,7 @@ public class ExpenditureServiceTests
         _assetBalance.Setup(r => r.GetAssetAsync("user@example.com", "Wallet", It.IsAny<CancellationToken>())).ReturnsAsync(MakeAsset("Wallet", deleted: true));
         var sut = CreateSut();
 
-        ServiceResult result = await sut.CreateAsync("user@example.com", ConsumerRequest("Wallet"), TestContext.Current.CancellationToken);
+        ServiceResult result = await sut.CreateAsync("user@example.com", ConsumerRequest(), TestContext.Current.CancellationToken);
 
         Assert.False(result.Success);
         Assert.Contains("deleted", result.ErrorKey, StringComparison.OrdinalIgnoreCase);
@@ -265,7 +265,7 @@ public class ExpenditureServiceTests
     [Fact]
     public async Task UpdateAsync_ReturnsFail_WhenExpenditureNotFound()
     {
-        _expenditureRepo.Setup(r => r.GetByAccountEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(new List<Expenditure>());
+        _expenditureRepo.Setup(r => r.GetByAccountEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync([]);
         var sut = CreateSut();
         var request = ConsumerRequest();
         request.Id = 99;
@@ -281,11 +281,13 @@ public class ExpenditureServiceTests
     {
         const string email = "user@example.com";
         var previous = Expenditure.Reconstitute(1, email, "ConsumerSpending", "MealOrEatOutExpenses", null, 50m, "KRW", "Wallet", "", null, DateTime.UtcNow, DateTime.UtcNow);
-        _expenditureRepo.Setup(r => r.GetByAccountEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(new List<Expenditure> { previous });
+        _expenditureRepo.Setup(r => r.GetByAccountEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync([
+            previous
+        ]);
         _assetBalance.Setup(r => r.GetAssetAsync(email, "Wallet", It.IsAny<CancellationToken>())).ReturnsAsync(MakeAsset("Wallet", deleted: true));
         var sut = CreateSut();
 
-        var request = ConsumerRequest("Wallet", 100m);
+        var request = ConsumerRequest();
         request.Id = 1;
         ServiceResult result = await sut.UpdateAsync(email, request, TestContext.Current.CancellationToken);
 
@@ -303,12 +305,14 @@ public class ExpenditureServiceTests
     {
         const string email = "user@example.com";
         var previous = Expenditure.Reconstitute(1, email, "ConsumerSpending", "MealOrEatOutExpenses", null, 50m, "KRW", "Wallet", "", null, DateTime.UtcNow, DateTime.UtcNow);
-        _expenditureRepo.Setup(r => r.GetByAccountEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(new List<Expenditure> { previous });
+        _expenditureRepo.Setup(r => r.GetByAccountEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync([
+            previous
+        ]);
         _assetBalance.Setup(r => r.GetAssetAsync(email, "Wallet", It.IsAny<CancellationToken>())).ReturnsAsync(MakeAsset("Wallet"));
         _assetBalance.Setup(r => r.GetAssetAsync(email, "GhostWallet", It.IsAny<CancellationToken>())).ReturnsAsync((Asset?)null);
         var sut = CreateSut();
 
-        var request = ConsumerRequest("GhostWallet", 100m);
+        var request = ConsumerRequest("GhostWallet");
         request.Id = 1;
         ServiceResult result = await sut.UpdateAsync(email, request, TestContext.Current.CancellationToken);
 
@@ -325,7 +329,9 @@ public class ExpenditureServiceTests
         // Previous expenditure: spent 50 from Wallet
         var previous = Expenditure.Reconstitute(1, email, "ConsumerSpending", "MealOrEatOutExpenses", null, 50m, "KRW", "Wallet", "", null, DateTime.UtcNow, DateTime.UtcNow);
         var wallet = MakeAsset("Wallet", amount: 1000m);
-        _expenditureRepo.Setup(r => r.GetByAccountEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(new List<Expenditure> { previous });
+        _expenditureRepo.Setup(r => r.GetByAccountEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync([
+            previous
+        ]);
         _assetBalance.Setup(r => r.GetAssetAsync(email, "Wallet", It.IsAny<CancellationToken>())).ReturnsAsync(wallet);
         _expenditureRepo.Setup(r => r.UpdateEntityAsync(It.IsAny<Expenditure>(), It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
 
@@ -336,7 +342,7 @@ public class ExpenditureServiceTests
         var sut = CreateSut();
 
         // New request: spend 100 from Wallet (revert 50, apply 100 → net -50)
-        var request = ConsumerRequest("Wallet", 100m);
+        var request = ConsumerRequest();
         request.Id = 1;
         ServiceResult result = await sut.UpdateAsync(email, request, TestContext.Current.CancellationToken);
 
@@ -354,7 +360,9 @@ public class ExpenditureServiceTests
     {
         const string email = "user@example.com";
         var previous = Expenditure.Reconstitute(1, email, "RegularSavings", "Deposit", null, 100m, "KRW", "Zebra", "Apple", null, DateTime.UtcNow, DateTime.UtcNow);
-        _expenditureRepo.Setup(r => r.GetByAccountEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(new List<Expenditure> { previous });
+        _expenditureRepo.Setup(r => r.GetByAccountEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync([
+            previous
+        ]);
         _expenditureRepo.Setup(r => r.UpdateEntityAsync(It.IsAny<Expenditure>(), It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
 
         var callOrder = new List<string>();
@@ -380,7 +388,7 @@ public class ExpenditureServiceTests
     [Fact]
     public async Task DeleteAsync_ReturnsFail_WhenExpenditureNotFound()
     {
-        _expenditureRepo.Setup(r => r.GetByAccountEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(new List<Expenditure>());
+        _expenditureRepo.Setup(r => r.GetByAccountEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync([]);
         var sut = CreateSut();
 
         ServiceResult result = await sut.DeleteAsync("user@example.com", 99, TestContext.Current.CancellationToken);
@@ -396,7 +404,9 @@ public class ExpenditureServiceTests
         const string email = "user@example.com";
         var expenditure = Expenditure.Reconstitute(1, email, "ConsumerSpending", "MealOrEatOutExpenses", null, 200m, "KRW", "Wallet", "", null, DateTime.UtcNow, DateTime.UtcNow);
         var wallet = MakeAsset("Wallet", amount: 800m);
-        _expenditureRepo.Setup(r => r.GetByAccountEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(new List<Expenditure> { expenditure });
+        _expenditureRepo.Setup(r => r.GetByAccountEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync([
+            expenditure
+        ]);
         _assetBalance.Setup(r => r.GetAssetAsync(email, "Wallet", It.IsAny<CancellationToken>())).ReturnsAsync(wallet);
         _expenditureRepo.Setup(r => r.DeleteByIdAsync(It.IsAny<long>(), It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
 
@@ -422,7 +432,9 @@ public class ExpenditureServiceTests
         var expenditure = Expenditure.Reconstitute(1, email, "RegularSavings", "Deposit", null, 300m, "KRW", "Checking", "Savings", null, DateTime.UtcNow, DateTime.UtcNow);
         var checking = MakeAsset("Checking", amount: 700m);
         var savings = MakeAsset("Savings", amount: 800m);
-        _expenditureRepo.Setup(r => r.GetByAccountEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(new List<Expenditure> { expenditure });
+        _expenditureRepo.Setup(r => r.GetByAccountEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync([
+            expenditure
+        ]);
         _assetBalance.Setup(r => r.GetAssetAsync(email, "Checking", It.IsAny<CancellationToken>())).ReturnsAsync(checking);
         _assetBalance.Setup(r => r.GetAssetAsync(email, "Savings", It.IsAny<CancellationToken>())).ReturnsAsync(savings);
         _expenditureRepo.Setup(r => r.DeleteByIdAsync(It.IsAny<long>(), It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
@@ -457,8 +469,8 @@ public class ExpenditureServiceTests
 
         List<ExpenditureResponse> result = await sut.GetExpendituresAsync(email, TestContext.Current.CancellationToken);
 
-        Assert.Single(result);
-        Assert.Equal(1, result[0].Id);
+        var item = Assert.Single(result);
+        Assert.Equal(1, item.Id);
     }
 
     // -- SearchExpendituresAsync ------------------------------------------------
@@ -520,7 +532,7 @@ public class ExpenditureServiceTests
     {
         GivenAssets(MakeAsset("Wallet", amount: -FinanceAmountPolicy.MaxAbsoluteAmount));
 
-        ServiceResult result = await CreateSut().CreateAsync(Email, ConsumerRequest("Wallet", 100m), TestContext.Current.CancellationToken);
+        ServiceResult result = await CreateSut().CreateAsync(Email, ConsumerRequest(), TestContext.Current.CancellationToken);
 
         Assert.False(result.Success);
         Assert.Equal("Finance.AmountOutOfRange", result.ErrorCode);
@@ -548,7 +560,7 @@ public class ExpenditureServiceTests
     public async Task CreateAsync_ReturnsTheDomainValidationError_BeforeMovingAnyBalance()
     {
         GivenAssets(MakeAsset("Wallet"));
-        ExpenditureRequest request = ConsumerRequest("Wallet");
+        ExpenditureRequest request = ConsumerRequest();
         request.Content = new string('x', 100_000);
 
         ServiceResult result = await CreateSut().CreateAsync(Email, request, TestContext.Current.CancellationToken);
@@ -566,7 +578,7 @@ public class ExpenditureServiceTests
         _expenditureRepo.Setup(r => r.CreateAsync(It.IsAny<Expenditure>(), It.IsAny<CancellationToken>()))
             .ThrowsAsync(new InvalidOperationException("secret detail"));
 
-        ServiceResult result = await CreateSut().CreateAsync(Email, ConsumerRequest("Wallet"), TestContext.Current.CancellationToken);
+        ServiceResult result = await CreateSut().CreateAsync(Email, ConsumerRequest(), TestContext.Current.CancellationToken);
 
         Assert.Equal("Expenditure.Unexpected", result.ErrorCode);
         Assert.DoesNotContain("secret detail", result.ErrorKey);
@@ -637,7 +649,7 @@ public class ExpenditureServiceTests
         GivenExistingExpenditure(ExistingTransfer(deposit: "OldSavings"));
         GivenAssets(MakeAsset("Checking"), MakeAsset("Savings"), MakeAsset("OldSavings", deleted: true));
 
-        ServiceResult result = await CreateSut().UpdateAsync(Email, WithId(SavingsTransferRequest("Checking", "Savings")), TestContext.Current.CancellationToken);
+        ServiceResult result = await CreateSut().UpdateAsync(Email, WithId(SavingsTransferRequest()), TestContext.Current.CancellationToken);
 
         Assert.Equal("Expenditure.AssetDeleted", result.ErrorCode);
         _expenditureRepo.Verify(r => r.UpdateEntityAsync(It.IsAny<Expenditure>(), It.IsAny<CancellationToken>()), Times.Never);
@@ -649,7 +661,7 @@ public class ExpenditureServiceTests
     {
         GivenExistingExpenditure(ExistingConsumer());
         GivenAssets(MakeAsset("Wallet"));
-        ExpenditureRequest request = WithId(ConsumerRequest("Wallet"));
+        ExpenditureRequest request = WithId(ConsumerRequest());
         request.Content = new string('x', 100_000);
 
         ServiceResult result = await CreateSut().UpdateAsync(Email, request, TestContext.Current.CancellationToken);
@@ -666,7 +678,7 @@ public class ExpenditureServiceTests
         GivenExistingExpenditure(ExistingConsumer(amount: 50m));
         GivenAssets(MakeAsset("Wallet", amount: -FinanceAmountPolicy.MaxAbsoluteAmount));
 
-        ServiceResult result = await CreateSut().UpdateAsync(Email, WithId(ConsumerRequest("Wallet", 100m)), TestContext.Current.CancellationToken);
+        ServiceResult result = await CreateSut().UpdateAsync(Email, WithId(ConsumerRequest()), TestContext.Current.CancellationToken);
 
         Assert.False(result.Success);
         _unitOfWork.Verify(u => u.RollbackAsync(It.IsAny<CancellationToken>()), Times.Once);
@@ -704,7 +716,7 @@ public class ExpenditureServiceTests
         _expenditureRepo.Verify(r => r.DeleteByIdAsync(It.IsAny<long>(), It.IsAny<CancellationToken>()), Times.Never);
     }
 
-    /// <summary>Reverting the record's impact must keep every balance in range; otherwise the delete is refused and rolled back.</summary>
+    /// <summary>Reverting the record's impact must keep every balance in range; otherwise to delete is refused and rolled back.</summary>
     [Fact]
     public async Task DeleteAsync_ReturnsTheAdjustmentError_AndKeepsTheRow_WhenRevertingWouldOverflowTheBalance()
     {
@@ -739,10 +751,12 @@ public class ExpenditureServiceTests
     public async Task UpdateAsync_ReturnsAssetDeleted_WhenThePreviousPaymentAssetIsArchived_AndTheNewOneIsNot()
     {
         var previous = Expenditure.Reconstitute(1, Email, "ConsumerSpending", "MealOrEatOutExpenses", null, 50m, "KRW", "OldWallet", "", null, DateTime.UtcNow, DateTime.UtcNow);
-        _expenditureRepo.Setup(r => r.GetByAccountEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(new List<Expenditure> { previous });
+        _expenditureRepo.Setup(r => r.GetByAccountEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync([
+            previous
+        ]);
         GivenAssets(MakeAsset("Wallet"), MakeAsset("OldWallet", deleted: true));
 
-        ServiceResult result = await CreateSut().UpdateAsync(Email, WithId(ConsumerRequest("Wallet")), TestContext.Current.CancellationToken);
+        ServiceResult result = await CreateSut().UpdateAsync(Email, WithId(ConsumerRequest()), TestContext.Current.CancellationToken);
 
         Assert.Equal("Expenditure.AssetDeleted", result.ErrorCode);
         _expenditureRepo.Verify(r => r.UpdateEntityAsync(It.IsAny<Expenditure>(), It.IsAny<CancellationToken>()), Times.Never);

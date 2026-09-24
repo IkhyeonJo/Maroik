@@ -123,7 +123,7 @@ public class IncomeServiceTests
         _assetBalance.Setup(r => r.GetAssetAsync("user@example.com", "SavingsAccount", It.IsAny<CancellationToken>())).ReturnsAsync((Asset?)null);
         var sut = CreateSut();
 
-        ServiceResult result = await sut.CreateAsync("user@example.com", ValidRequest("SavingsAccount"), TestContext.Current.CancellationToken);
+        ServiceResult result = await sut.CreateAsync("user@example.com", ValidRequest(), TestContext.Current.CancellationToken);
 
         Assert.False(result.Success);
         _unitOfWork.Verify(u => u.RollbackAsync(It.IsAny<CancellationToken>()), Times.Once);
@@ -137,7 +137,7 @@ public class IncomeServiceTests
         _assetBalance.Setup(r => r.GetAssetAsync("user@example.com", "SavingsAccount", It.IsAny<CancellationToken>())).ReturnsAsync(asset);
         var sut = CreateSut();
 
-        ServiceResult result = await sut.CreateAsync("user@example.com", ValidRequest("SavingsAccount"), TestContext.Current.CancellationToken);
+        ServiceResult result = await sut.CreateAsync("user@example.com", ValidRequest(), TestContext.Current.CancellationToken);
 
         Assert.False(result.Success);
         Assert.Contains("deleted", result.ErrorKey, StringComparison.OrdinalIgnoreCase);
@@ -159,7 +159,7 @@ public class IncomeServiceTests
             .Returns(Task.CompletedTask);
         var sut = CreateSut();
 
-        ServiceResult result = await sut.CreateAsync(email, ValidRequest("SavingsAccount"), TestContext.Current.CancellationToken); // Amount = 500
+        ServiceResult result = await sut.CreateAsync(email, ValidRequest(), TestContext.Current.CancellationToken); // Amount = 500
 
         Assert.True(result.Success);
         Assert.NotNull(captured);
@@ -233,7 +233,7 @@ public class IncomeServiceTests
     public async Task UpdateAsync_ReturnsFail_WhenPreviousAssetIsDeleted()
     {
         const string email = "user@example.com";
-        var existing = MakeIncome(1, "OldAsset", 100m);
+        var existing = MakeIncome(1, "OldAsset");
         var deletedAsset = MakeAsset("OldAsset", deleted: true);
         _incomeRepo.Setup(r => r.GetByAccountEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync([existing]);
         _assetBalance.Setup(r => r.GetAssetAsync(email, "OldAsset", It.IsAny<CancellationToken>())).ReturnsAsync(deletedAsset);
@@ -391,7 +391,7 @@ public class IncomeServiceTests
     public async Task DeleteAsync_ReturnsFail_WhenAssetIsDeleted()
     {
         const string email = "user@example.com";
-        var income = MakeIncome(1, "SavingsAccount", 100m);
+        var income = MakeIncome(1);
         var deletedAsset = MakeAsset("SavingsAccount", deleted: true);
         _incomeRepo.Setup(r => r.GetByAccountEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync([income]);
         _assetBalance.Setup(r => r.GetAssetAsync(email, "SavingsAccount", It.IsAny<CancellationToken>())).ReturnsAsync(deletedAsset);
@@ -542,7 +542,7 @@ public class IncomeServiceTests
     [Fact]
     public async Task UpdateAsync_ReturnsAssetDeleted_WhenTheNewAssetIsArchived()
     {
-        GivenExistingIncome(MakeIncome(1, "SavingsAccount"));
+        GivenExistingIncome(MakeIncome(1));
         GivenAssets(MakeAsset("SavingsAccount"), MakeAsset("Archived", deleted: true));
 
         ServiceResult result = await CreateSut().UpdateAsync(Email, WithId(ValidRequest("Archived")), TestContext.Current.CancellationToken);
@@ -555,7 +555,7 @@ public class IncomeServiceTests
     [Fact]
     public async Task UpdateAsync_ReturnsTheDomainValidationError_AndDoesNotPersist()
     {
-        GivenExistingIncome(MakeIncome(1, "SavingsAccount"));
+        GivenExistingIncome(MakeIncome(1));
         GivenAssets(MakeAsset("SavingsAccount"));
         IncomeRequest request = WithId(ValidRequest());
         request.Content = new string('x', 100_000);
@@ -571,7 +571,7 @@ public class IncomeServiceTests
     [Fact]
     public async Task UpdateAsync_ReturnsTheAdjustmentError_AndRollsBack_WhenTheBalanceWouldOverflow()
     {
-        GivenExistingIncome(MakeIncome(1, "SavingsAccount", amount: 100m));
+        GivenExistingIncome(MakeIncome(1));
         GivenAssets(MakeAsset("SavingsAccount", amount: FinanceAmountPolicy.MaxAbsoluteAmount));
 
         ServiceResult result = await CreateSut().UpdateAsync(Email, WithId(ValidRequest()), TestContext.Current.CancellationToken);
@@ -585,7 +585,7 @@ public class IncomeServiceTests
     [Fact]
     public async Task UpdateAsync_RollsBackAndReportsUnexpectedFailure_WhenThePersistenceThrows()
     {
-        GivenExistingIncome(MakeIncome(1, "SavingsAccount"));
+        GivenExistingIncome(MakeIncome(1));
         GivenAssets(MakeAsset("SavingsAccount"));
         _incomeRepo.Setup(r => r.UpdateEntityAsync(It.IsAny<Income>(), It.IsAny<CancellationToken>())).ThrowsAsync(new InvalidOperationException("secret detail"));
 
@@ -596,11 +596,11 @@ public class IncomeServiceTests
         _unitOfWork.Verify(u => u.RollbackAsync(It.IsAny<CancellationToken>()), Times.Once);
     }
 
-    /// <summary>Reverting the record's impact must keep the balance in range; otherwise the delete is refused and rolled back.</summary>
+    /// <summary>Reverting the record's impact must keep the balance in range; otherwise to delete is refused and rolled back.</summary>
     [Fact]
     public async Task DeleteAsync_ReturnsTheAdjustmentError_AndKeepsTheRow_WhenRevertingWouldOverflowTheBalance()
     {
-        GivenExistingIncome(MakeIncome(1, "SavingsAccount", amount: 100m));
+        GivenExistingIncome(MakeIncome(1));
         GivenAssets(MakeAsset("SavingsAccount", amount: -FinanceAmountPolicy.MaxAbsoluteAmount));
 
         ServiceResult result = await CreateSut().DeleteAsync(Email, 1, TestContext.Current.CancellationToken);
@@ -614,7 +614,7 @@ public class IncomeServiceTests
     [Fact]
     public async Task DeleteAsync_RollsBackAndReportsUnexpectedFailure_WhenThePersistenceThrows()
     {
-        GivenExistingIncome(MakeIncome(1, "SavingsAccount"));
+        GivenExistingIncome(MakeIncome(1));
         GivenAssets(MakeAsset("SavingsAccount"));
         _incomeRepo.Setup(r => r.DeleteByIdAsync(It.IsAny<long>(), It.IsAny<CancellationToken>())).ThrowsAsync(new InvalidOperationException("secret detail"));
 

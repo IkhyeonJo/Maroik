@@ -18,7 +18,7 @@ public class PasswordServiceTests
 
     // -- HashPassword --------------------------------------------------------
 
-    /// <summary>Verifies that <c>HashPassword</c> returns non empty bcrypt hash for valid password.</summary>
+    /// <summary>Verifies that <c>HashPassword</c> returns non-empty bcrypt hash for valid password.</summary>
     [Fact]
     public void HashPassword_ReturnsNonEmptyBcryptHash_ForValidPassword()
     {

@@ -106,7 +106,7 @@ public class ImageValidatorServiceTests
         Assert.False(_sut.IsValidImage(bytes));
     }
 
-    /// <summary>An SVG document is recognised as one, whether or not it carries an XML declaration, a BOM or odd casing.</summary>
+    /// <summary>An SVG document is recognized as one, whether or not it carries an XML declaration, a BOM or odd casing.</summary>
     [Theory]
     [InlineData("<svg xmlns=\"http://www.w3.org/2000/svg\"></svg>")]
     [InlineData("<?xml version=\"1.0\"?>\n<!-- c -->\n<SVG xmlns=\"http://www.w3.org/2000/svg\"></SVG>")]

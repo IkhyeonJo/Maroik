@@ -56,7 +56,7 @@ public class AttachmentContentServiceTests
         var result = CreateSut().ValidateAttachedFile(file);
 
         Assert.NotNull(result);
-        Assert.False(result!.Success);
+        Assert.False(result.Success);
     }
 
     /// <summary>Verifies that files larger than the configured limit are rejected.</summary>
@@ -68,7 +68,7 @@ public class AttachmentContentServiceTests
         var result = CreateSut().ValidateAttachedFile(file);
 
         Assert.NotNull(result);
-        Assert.False(result!.Success);
+        Assert.False(result.Success);
     }
 
     /// <summary>
@@ -90,7 +90,7 @@ public class AttachmentContentServiceTests
         var result = sut.ValidateAttachedFile(file);
 
         Assert.NotNull(result);
-        Assert.Equal("File Size must be smaller than {0}MB.", result!.ErrorKey);
+        Assert.Equal("File Size must be smaller than {0}MB.", result.ErrorKey);
         Assert.Equal([5L], result.ErrorArgs);
     }
 
@@ -103,7 +103,7 @@ public class AttachmentContentServiceTests
         var result = CreateSut().ValidateAttachedFile(file);
 
         Assert.NotNull(result);
-        Assert.False(result!.Success);
+        Assert.False(result.Success);
     }
 
     /// <summary>Verifies that a zip file within the size limit passes validation.</summary>
@@ -162,7 +162,7 @@ public class AttachmentContentServiceTests
             It.IsAny<byte[]>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
     }
 
-    /// <summary>A jpg/png-labelled file that decodes as SVG is rejected (SVG can carry script).</summary>
+    /// <summary>A jpg/png-labeled file that decodes as SVG is rejected (SVG can carry script).</summary>
     [Fact]
     public async Task UploadSummernoteImageAsync_ReturnsFail_WhenBytesAreSvg()
     {
@@ -201,7 +201,10 @@ public class AttachmentContentServiceTests
         _fileClient.Setup(f => f.UploadAsync(
             It.IsAny<byte[]>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(true);
-        byte[] downloaded = [9, 9, 9];
+        byte[] downloaded =
+        [
+            .. "\t\t\t"u8
+        ];
         _fileClient.Setup(f => f.DownloadAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(downloaded);
         var file = new AttachedFileDto { Bytes = [1, 2, 3], ContentType = "image/png", FileName = "x.png" };
@@ -311,7 +314,7 @@ public class AttachmentContentServiceTests
         Assert.NotNull(capturedFactory);
         HtmlImgPatch? patch = await capturedFactory!("upload/img.png", TestContext.Current.CancellationToken);
         Assert.NotNull(patch);
-        Assert.True(patch!.Remove);
+        Assert.True(patch.Remove);
         Assert.Null(patch.NewAlt);
     }
 
@@ -343,7 +346,7 @@ public class AttachmentContentServiceTests
     /// <summary>
     /// An <c>&lt;img&gt;</c> whose <c>alt</c> is not a decryptable storage token — e.g. a
     /// hand-crafted plaintext path posted straight to the write endpoint rather than produced by
-    /// the editor — is marked for removal, not persisted. Otherwise the stored tag would drive a
+    /// the editor — is marked for removal, not persisted. Otherwise, the stored tag would drive a
     /// server-side file fetch every time the post is rendered.
     /// </summary>
     [Fact]

@@ -122,7 +122,7 @@ public class ProfileServiceTests
 
     // -- UploadAndUpdateAvatarAsync -----------------------------------------------
 
-    /// <summary>Rejects a payload the image validator does not recognise, without touching storage.</summary>
+    /// <summary>Rejects a payload the image validator does not recognize, without touching storage.</summary>
     [Fact]
     public async Task UploadAndUpdateAvatarAsync_ReturnsInvalidImage_WhenNotAnImage()
     {
@@ -172,7 +172,7 @@ public class ProfileServiceTests
             It.Is<string>(p => p.StartsWith("upload/Management/Profile/Avatar/") && p.EndsWith(".jpg")),
             It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Once);
         _accountRepo.Verify(r => r.UpdateAvatarPathAsync(
-            account.Email.Value, It.Is<string>(p => p!.StartsWith("/upload/Management/Profile/Avatar/")),
+            account.Email.Value, It.Is<string>(p => p.StartsWith("/upload/Management/Profile/Avatar/")),
             It.IsAny<DateTime>(), It.IsAny<CancellationToken>()), Times.Once);
     }
 
@@ -417,7 +417,7 @@ public class ProfileServiceTests
     public async Task UpdateDefaultMonetaryUnitAsync_SetsUnit_WhenUnitExistsInAssets()
     {
         var account = ActiveAccount();
-        _assetRepo.Setup(r => r.GetByAccountEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync([MakeAsset("Wallet", "KRW")]);
+        _assetRepo.Setup(r => r.GetByAccountEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync([MakeAsset("Wallet")]);
         _accountRepo.Setup(r => r.UpdateDefaultMonetaryUnitAsync(It.IsAny<string>(), It.IsAny<string?>(), It.IsAny<CancellationToken>())).ReturnsAsync(1);
         var sut = CreateSut();
 

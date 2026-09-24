@@ -34,7 +34,7 @@ public class AssetServiceTests
     private static Asset MakeAsset(string name, decimal amount = 1000m, string currency = "KRW", bool deleted = false) =>
         Asset.Reconstitute(name, "user@example.com", "FreeDepositAndWithdrawal", amount, currency, null, deleted, DateTime.UtcNow, DateTime.UtcNow);
 
-    private void SetupFindAsset(string productName, Asset? asset)
+    private void SetupFindAsset(Asset? asset)
     {
         _assetRepo.Setup(r => r.FindByEmailAndProductNameAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(asset);
@@ -82,7 +82,7 @@ public class AssetServiceTests
             .ThrowsAsync(new InvalidOperationException("22001: value too long for type character varying(255)"));
         var sut = CreateSut();
 
-        ServiceResult result = await sut.CreateAsync("user@example.com", ValidRequest("MyBank"), TestContext.Current.CancellationToken);
+        ServiceResult result = await sut.CreateAsync("user@example.com", ValidRequest(), TestContext.Current.CancellationToken);
 
         Assert.False(result.Success);
         Assert.Equal("Asset.CreateFailed", result.ErrorCode);
@@ -105,10 +105,10 @@ public class AssetServiceTests
     [Fact]
     public async Task CreateAsync_ReturnsFail_WhenAssetWithSameNameAlreadyExists()
     {
-        SetupFindAsset("MyBank", MakeAsset("MyBank"));
+        SetupFindAsset(MakeAsset("MyBank"));
         var sut = CreateSut();
 
-        ServiceResult result = await sut.CreateAsync("user@example.com", ValidRequest("MyBank"), TestContext.Current.CancellationToken);
+        ServiceResult result = await sut.CreateAsync("user@example.com", ValidRequest(), TestContext.Current.CancellationToken);
 
         Assert.False(result.Success);
         Assert.Contains("already exists", result.ErrorKey, StringComparison.OrdinalIgnoreCase);
@@ -123,10 +123,10 @@ public class AssetServiceTests
     [Fact]
     public async Task CreateAsync_ReturnsFail_WhenSameNameIsSoftDeleted()
     {
-        SetupFindAsset("MyBank", MakeAsset("MyBank", amount: 500m, currency: "KRW", deleted: true));
+        SetupFindAsset(MakeAsset("MyBank", amount: 500m, currency: "KRW", deleted: true));
         var sut = CreateSut();
 
-        ServiceResult result = await sut.CreateAsync("user@example.com", ValidRequest("MyBank"), TestContext.Current.CancellationToken);
+        ServiceResult result = await sut.CreateAsync("user@example.com", ValidRequest(), TestContext.Current.CancellationToken);
 
         Assert.False(result.Success);
         Assert.Contains("already exists", result.ErrorKey, StringComparison.OrdinalIgnoreCase);
@@ -147,7 +147,7 @@ public class AssetServiceTests
     [InlineData("InsuranceAsset")]
     public async Task CreateAsync_ReturnsSuccess_ForAllValidItemTypes(string item)
     {
-        SetupFindAsset("MyBank", null);
+        SetupFindAsset(null);
         _assetRepo.Setup(r => r.CreateAsync(It.IsAny<Asset>(), It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
         var sut = CreateSut();
 
@@ -167,13 +167,13 @@ public class AssetServiceTests
     [Fact]
     public async Task CreateAsync_ReturnsFail_WhenConcurrentInsertViolatesUniqueConstraint()
     {
-        SetupFindAsset("MyBank", null);
+        SetupFindAsset(null);
         var pgException = new Exception("23505: duplicate key value violates unique constraint \"Asset_pk\"");
         _assetRepo.Setup(r => r.CreateAsync(It.IsAny<Asset>(), It.IsAny<CancellationToken>()))
             .ThrowsAsync(new InvalidOperationException("insert failed", pgException));
         var sut = CreateSut();
 
-        ServiceResult result = await sut.CreateAsync("user@example.com", ValidRequest("MyBank"), TestContext.Current.CancellationToken);
+        ServiceResult result = await sut.CreateAsync("user@example.com", ValidRequest(), TestContext.Current.CancellationToken);
 
         Assert.False(result.Success);
         Assert.Contains("already exists", result.ErrorKey, StringComparison.OrdinalIgnoreCase);
@@ -183,7 +183,7 @@ public class AssetServiceTests
     [Fact]
     public async Task CreateAsync_SetsAccountEmailAndTimestamps_BeforeInserting()
     {
-        SetupFindAsset("MyBank", null);
+        SetupFindAsset(null);
 
         Asset? captured = null;
         _assetRepo.Setup(r => r.CreateAsync(It.IsAny<Asset>(), It.IsAny<CancellationToken>()))
@@ -191,7 +191,7 @@ public class AssetServiceTests
             .Returns(Task.CompletedTask);
         var sut = CreateSut();
 
-        await sut.CreateAsync("user@example.com", ValidRequest("MyBank"), TestContext.Current.CancellationToken);
+        await sut.CreateAsync("user@example.com", ValidRequest(), TestContext.Current.CancellationToken);
 
         Assert.NotNull(captured);
         Assert.Equal("user@example.com", captured.AccountEmail.Value);
@@ -220,7 +220,7 @@ public class AssetServiceTests
     [Fact]
     public async Task UpdateAsync_ReturnsFail_WhenOriginalAssetNotFound()
     {
-        SetupFindAsset("OldName", null);
+        SetupFindAsset(null);
         var sut = CreateSut();
 
         ServiceResult result = await sut.UpdateAsync("user@example.com", ValidRequest("NewName"), "OldName", TestContext.Current.CancellationToken);
@@ -234,7 +234,7 @@ public class AssetServiceTests
     [Fact]
     public async Task UpdateAsync_ReturnsFail_WhenRenameReturnsZeroRowsAffected()
     {
-        SetupFindAsset("OldName", MakeAsset("OldName"));
+        SetupFindAsset(MakeAsset("OldName"));
         _assetRepo.Setup(r => r.UpdateAssetWithProductNameAsync(It.IsAny<Asset>(), "OldName", It.IsAny<CancellationToken>())).ReturnsAsync(0);
         var sut = CreateSut();
 
@@ -249,7 +249,7 @@ public class AssetServiceTests
     public async Task UpdateAsync_Commits_WhenSuccessful()
     {
         const string email = "user@example.com";
-        SetupFindAsset("OldName", MakeAsset("OldName"));
+        SetupFindAsset(MakeAsset("OldName"));
         _assetRepo.Setup(r => r.UpdateAssetWithProductNameAsync(It.IsAny<Asset>(), "OldName", It.IsAny<CancellationToken>())).ReturnsAsync(1);
         var sut = CreateSut();
 
@@ -268,7 +268,7 @@ public class AssetServiceTests
     [Fact]
     public async Task UpdateAsync_ReturnsFail_WhenRenameViolatesUniqueConstraint()
     {
-        SetupFindAsset("OldName", MakeAsset("OldName"));
+        SetupFindAsset(MakeAsset("OldName"));
         var pgException = new Exception("23505: duplicate key value violates unique constraint \"Asset_pk\"");
         _assetRepo.Setup(r => r.UpdateAssetWithProductNameAsync(It.IsAny<Asset>(), "OldName", It.IsAny<CancellationToken>()))
             .ThrowsAsync(new InvalidOperationException("rename failed", pgException));
@@ -290,7 +290,7 @@ public class AssetServiceTests
     public async Task UpdateAsync_Rename_UpdatesAssetKeyedOnOriginalName_AndCommits()
     {
         const string email = "user@example.com";
-        SetupFindAsset("OldName", MakeAsset("OldName"));
+        SetupFindAsset(MakeAsset("OldName"));
         _assetRepo.Setup(r => r.UpdateAssetWithProductNameAsync(It.IsAny<Asset>(), "OldName", It.IsAny<CancellationToken>())).ReturnsAsync(1);
         var sut = CreateSut();
 
@@ -310,7 +310,7 @@ public class AssetServiceTests
     [Fact]
     public async Task DeleteAsync_ReturnsFail_WhenAssetNotFound()
     {
-        SetupFindAsset("MyBank", null);
+        SetupFindAsset(null);
         var sut = CreateSut();
 
         ServiceResult result = await sut.DeleteAsync("user@example.com", "MyBank", TestContext.Current.CancellationToken);
@@ -324,7 +324,7 @@ public class AssetServiceTests
     public async Task DeleteAsync_SetsDeletedFlagAndUpdates_WhenAssetFound()
     {
         const string email = "user@example.com";
-        SetupFindAsset("MyBank", MakeAsset("MyBank"));
+        SetupFindAsset(MakeAsset("MyBank"));
 
         Asset? captured = null;
         _assetRepo.Setup(r => r.UpdateEntityAsync(It.IsAny<Asset>(), It.IsAny<CancellationToken>()))
@@ -359,7 +359,7 @@ public class AssetServiceTests
     public async Task GetAssetAsync_DelegatesToRepository()
     {
         var asset = MakeAsset("MyBank");
-        SetupFindAsset("MyBank", asset);
+        SetupFindAsset(asset);
         var sut = CreateSut();
 
         AssetResponse? result = await sut.GetAssetAsync("user@example.com", "MyBank", TestContext.Current.CancellationToken);
@@ -388,7 +388,7 @@ public class AssetServiceTests
     [Fact]
     public async Task UpdateAsync_ReturnsTheDomainValidationError_AndDoesNotWrite()
     {
-        SetupFindAsset("MyBank", MakeAsset("MyBank"));
+        SetupFindAsset(MakeAsset("MyBank"));
 
         ServiceResult result = await CreateSut().UpdateAsync("user@example.com",
             new AssetRequest { ProductName = "   ", Item = "FreeDepositAndWithdrawal", Amount = 10m, MonetaryUnit = "KRW" }, "MyBank", TestContext.Current.CancellationToken);
@@ -403,11 +403,11 @@ public class AssetServiceTests
     [Fact]
     public async Task UpdateAsync_RollsBackAndReportsUpdateFailed_WhenTheRepositoryThrows()
     {
-        SetupFindAsset("MyBank", MakeAsset("MyBank"));
+        SetupFindAsset(MakeAsset("MyBank"));
         _assetRepo.Setup(r => r.UpdateAssetWithProductNameAsync(It.IsAny<Asset>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ThrowsAsync(new InvalidOperationException("secret detail"));
 
-        ServiceResult result = await CreateSut().UpdateAsync("user@example.com", ValidRequest("MyBank"), "MyBank", TestContext.Current.CancellationToken);
+        ServiceResult result = await CreateSut().UpdateAsync("user@example.com", ValidRequest(), "MyBank", TestContext.Current.CancellationToken);
 
         Assert.Equal("Asset.UpdateFailed", result.ErrorCode);
         Assert.DoesNotContain("secret detail", result.ErrorKey);
@@ -419,7 +419,7 @@ public class AssetServiceTests
     [Fact]
     public async Task DeleteAsync_RollsBackAndReportsDeleteFailed_WhenTheRepositoryThrows()
     {
-        SetupFindAsset("MyBank", MakeAsset("MyBank"));
+        SetupFindAsset(MakeAsset("MyBank"));
         _assetRepo.Setup(r => r.UpdateEntityAsync(It.IsAny<Asset>(), It.IsAny<CancellationToken>()))
             .ThrowsAsync(new InvalidOperationException("secret detail"));
 

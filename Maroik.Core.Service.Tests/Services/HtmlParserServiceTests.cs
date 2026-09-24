@@ -20,7 +20,7 @@ public class HtmlParserServiceTests
         Assert.False(hasImages);
     }
 
-    /// <summary>Verifies that HasImages is true when an &lt;img&gt; tag is present.</summary>
+    /// <summary>Verifies that HasImages is true when a &lt;img&gt; tag is present.</summary>
     [Fact]
     public async Task TransformImageAttributesAsync_ReturnsHasImagesTrue_WhenImgTagPresent()
     {

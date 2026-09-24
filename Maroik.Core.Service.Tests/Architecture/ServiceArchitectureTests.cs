@@ -39,7 +39,7 @@ public class ServiceArchitectureTests
 
     /// <summary>
     /// Third-party libraries that a service is allowed to use in-process for pure computation
-    /// (hashing, HTML sanitising/parsing, image inspection) — but never for talking to an external
+    /// (hashing, HTML sanitizing/parsing, image inspection) — but never for talking to an external
     /// <em>system</em>. Reaching a database, an SMTP server or a message broker is infrastructure
     /// work: it happens in Maroik.Core.Repository / Maroik.Core.Client behind a Contract interface,
     /// so the service layer must not reference EF Core, the Postgres driver, the mail client or the

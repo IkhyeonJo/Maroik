@@ -1,4 +1,5 @@
 using Maroik.Core.Service.Extensions;
+// ReSharper disable UnusedMember.Local
 
 namespace Maroik.Core.Service.Tests.Extensions;
 

@@ -10,6 +10,7 @@ using Maroik.Core.Service.Services;
 using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Options;
 using Moq;
+// ReSharper disable AccessToDisposedClosure
 
 namespace Maroik.Core.Service.Tests.Services;
 

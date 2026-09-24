@@ -179,7 +179,7 @@ public class FixedIncomeServiceTests
     [Fact]
     public async Task UpdateAsync_ReturnsFail_WhenRecordNotFound()
     {
-        _fixedIncomeRepo.Setup(r => r.GetByAccountEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(new List<FixedIncome>());
+        _fixedIncomeRepo.Setup(r => r.GetByAccountEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync([]);
         var sut = CreateSut();
 
         var request = ValidRequest();
@@ -195,8 +195,10 @@ public class FixedIncomeServiceTests
     {
         const string email = "user@example.com";
         var existing = FixedIncome.Reconstitute(1, email, "RegularIncome", "LaborIncome", null, 0m, "KRW",
-            "SavingsAccount", (short)1, (short)15, new DateTime(2025, 12, 31), null, false, DateTime.UtcNow, DateTime.UtcNow);
-        _fixedIncomeRepo.Setup(r => r.GetByAccountEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(new List<FixedIncome> { existing });
+            "SavingsAccount", 1, 15, new DateTime(2025, 12, 31), null, false, DateTime.UtcNow, DateTime.UtcNow);
+        _fixedIncomeRepo.Setup(r => r.GetByAccountEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync([
+            existing
+        ]);
         _assetBalance.Setup(r => r.GetAssetAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(MakeSavingsAsset());
         _fixedIncomeRepo.Setup(r => r.UpdateEntityAsync(It.IsAny<FixedIncome>(), It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
@@ -221,8 +223,10 @@ public class FixedIncomeServiceTests
     {
         const string email = "user@example.com";
         var existing = FixedIncome.Reconstitute(1, email, "RegularIncome", "LaborIncome", null, 0m, "KRW",
-            "SavingsAccount", (short)1, (short)15, new DateTime(2030, 12, 31), null, false, DateTime.UtcNow, DateTime.UtcNow);
-        _fixedIncomeRepo.Setup(r => r.GetByAccountEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(new List<FixedIncome> { existing });
+            "SavingsAccount", 1, 15, new DateTime(2030, 12, 31), null, false, DateTime.UtcNow, DateTime.UtcNow);
+        _fixedIncomeRepo.Setup(r => r.GetByAccountEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync([
+            existing
+        ]);
         _assetBalance.Setup(r => r.GetAssetAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(MakeSavingsAsset());
         _fixedIncomeRepo.Setup(r => r.UpdateEntityAsync(It.IsAny<FixedIncome>(), It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
@@ -243,8 +247,10 @@ public class FixedIncomeServiceTests
     {
         const string email = "user@example.com";
         var existing = FixedIncome.Reconstitute(1, email, "RegularIncome", "LaborIncome", null, 0m, "KRW",
-            "SavingsAccount", (short)1, (short)15, new DateTime(2030, 12, 31), null, true, DateTime.UtcNow, DateTime.UtcNow);
-        _fixedIncomeRepo.Setup(r => r.GetByAccountEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(new List<FixedIncome> { existing });
+            "SavingsAccount", 1, 15, new DateTime(2030, 12, 31), null, true, DateTime.UtcNow, DateTime.UtcNow);
+        _fixedIncomeRepo.Setup(r => r.GetByAccountEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync([
+            existing
+        ]);
         _assetBalance.Setup(r => r.GetAssetAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(MakeSavingsAsset());
         _fixedIncomeRepo.Setup(r => r.UpdateEntityAsync(It.IsAny<FixedIncome>(), It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
@@ -259,7 +265,7 @@ public class FixedIncomeServiceTests
         _fixedIncomeRepo.Verify(r => r.UpdateEntityAsync(It.Is<FixedIncome>(fi => !fi.Unpunctuality), It.IsAny<CancellationToken>()), Times.Once);
     }
 
-    /// <summary>A create request carrying Unpunctuality is honoured too.</summary>
+    /// <summary>A create request carrying Unpunctuality is honored too.</summary>
     [Fact]
     public async Task CreateAsync_PersistsUnpunctuality_WhenRequested()
     {
@@ -285,7 +291,7 @@ public class FixedIncomeServiceTests
     [Fact]
     public async Task DeleteAsync_ReturnsFail_WhenRecordNotFound()
     {
-        _fixedIncomeRepo.Setup(r => r.GetByAccountEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(new List<FixedIncome>());
+        _fixedIncomeRepo.Setup(r => r.GetByAccountEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync([]);
         var sut = CreateSut();
 
         ServiceResult result = await sut.DeleteAsync("user@example.com", 99, TestContext.Current.CancellationToken);
@@ -299,8 +305,10 @@ public class FixedIncomeServiceTests
     {
         const string email = "user@example.com";
         var existing = FixedIncome.Reconstitute(1, email, "RegularIncome", "LaborIncome", null, 0m, "KRW",
-            "SavingsAccount", (short)1, (short)15, new DateTime(2030, 12, 31), null, false, DateTime.UtcNow, DateTime.UtcNow);
-        _fixedIncomeRepo.Setup(r => r.GetByAccountEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(new List<FixedIncome> { existing });
+            "SavingsAccount", 1, 15, new DateTime(2030, 12, 31), null, false, DateTime.UtcNow, DateTime.UtcNow);
+        _fixedIncomeRepo.Setup(r => r.GetByAccountEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync([
+            existing
+        ]);
         _fixedIncomeRepo.Setup(r => r.DeleteByIdAsync(It.IsAny<long>(), It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
         var sut = CreateSut();
 
@@ -320,7 +328,7 @@ public class FixedIncomeServiceTests
         var list = new List<FixedIncome>
         {
             FixedIncome.Reconstitute(1, email, "RegularIncome", "LaborIncome", null, 500m, "KRW",
-                "SavingsAccount", (short)1, (short)15, new DateTime(2030, 12, 31), null, false, DateTime.UtcNow, DateTime.UtcNow)
+                "SavingsAccount", 1, 15, new DateTime(2030, 12, 31), null, false, DateTime.UtcNow, DateTime.UtcNow)
         };
         _fixedIncomeRepo.Setup(r => r.GetByAccountEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(list);
         var sut = CreateSut();
@@ -336,7 +344,7 @@ public class FixedIncomeServiceTests
 
     private static FixedIncome ExistingIncome(long id = 1) =>
         FixedIncome.Reconstitute(id, Email, "RegularIncome", "LaborIncome", null, 500m, "KRW", "SavingsAccount",
-            (short)1, (short)15, new DateTime(2030, 12, 31), null, false, DateTime.UtcNow, DateTime.UtcNow);
+            1, 15, new DateTime(2030, 12, 31), null, false, DateTime.UtcNow, DateTime.UtcNow);
 
     private static Asset ArchivedAsset(string name = "SavingsAccount") =>
         Asset.Reconstitute(name, Email, "SavingsAsset", 0m, "KRW", null, true, DateTime.UtcNow, DateTime.UtcNow);

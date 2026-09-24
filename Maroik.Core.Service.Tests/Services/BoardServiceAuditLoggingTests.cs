@@ -37,7 +37,7 @@ public class BoardServiceAuditLoggingTests
 
     private BoardService CreateSut() => new(_boardRepo.Object, _attachedFileRepo.Object, _commentRepo.Object,
         Mock.Of<IFileClient>(), _unitOfWork.Object, _attachmentContent.Object,
-        Options.Create(new ServerSetting { FileStorageBaseUrl = "http://files.example.com" }), _logger);
+        Options.Create(new ServerSetting { FileStorageBaseUrl = "https://files.example.com" }), _logger);
 
     private static Board MakeBoard(string writer = "Alice", bool locked = false) =>
         Board.Reconstitute(1, BoardTypes.FreeForum, "SECRET TITLE", "SECRET CONTENT", writer,
@@ -54,7 +54,7 @@ public class BoardServiceAuditLoggingTests
     [Fact]
     public async Task DeleteBoard_LogsInformationWithWriterRequesterAndAdminFlag_WhenAnAdminDeletesSomeoneElsesPost()
     {
-        _boardRepo.Setup(r => r.FindActiveByIdForUpdateAsync(It.IsAny<long>(), It.IsAny<CancellationToken>())).ReturnsAsync(MakeBoard("Alice"));
+        _boardRepo.Setup(r => r.FindActiveByIdForUpdateAsync(It.IsAny<long>(), It.IsAny<CancellationToken>())).ReturnsAsync(MakeBoard());
 
         await CreateSut().DeleteBoardAsync(1, BoardTypes.FreeForum, "Admin", true, TestContext.Current.CancellationToken);
 
@@ -65,7 +65,7 @@ public class BoardServiceAuditLoggingTests
     [Fact]
     public async Task DeleteBoard_LogsWarning_WhenTheRequesterMayNotDeleteThePost()
     {
-        _boardRepo.Setup(r => r.FindActiveByIdForUpdateAsync(It.IsAny<long>(), It.IsAny<CancellationToken>())).ReturnsAsync(MakeBoard("Alice"));
+        _boardRepo.Setup(r => r.FindActiveByIdForUpdateAsync(It.IsAny<long>(), It.IsAny<CancellationToken>())).ReturnsAsync(MakeBoard());
 
         await CreateSut().DeleteBoardAsync(1, BoardTypes.FreeForum, "Bob", false, TestContext.Current.CancellationToken);
 
@@ -97,7 +97,7 @@ public class BoardServiceAuditLoggingTests
     [Fact]
     public async Task EditBoard_LogsWarning_WhenTheRequesterIsNeitherTheWriterNorAnAdminClearingALock()
     {
-        _boardRepo.Setup(r => r.FindActiveByIdForUpdateAsync(It.IsAny<long>(), It.IsAny<CancellationToken>())).ReturnsAsync(MakeBoard("Alice"));
+        _boardRepo.Setup(r => r.FindActiveByIdForUpdateAsync(It.IsAny<long>(), It.IsAny<CancellationToken>())).ReturnsAsync(MakeBoard());
 
         await CreateSut().EditBoardAsync(
             new BoardRequest { Id = 1, Type = BoardTypes.FreeForum, Title = "T", Content = "C", Locked = false },
@@ -109,7 +109,7 @@ public class BoardServiceAuditLoggingTests
     [Fact]
     public async Task EditBoard_LogsInformation_WhenAnAdminClearsSomeoneElsesLock()
     {
-        _boardRepo.Setup(r => r.FindActiveByIdForUpdateAsync(It.IsAny<long>(), It.IsAny<CancellationToken>())).ReturnsAsync(MakeBoard("Alice", locked: true));
+        _boardRepo.Setup(r => r.FindActiveByIdForUpdateAsync(It.IsAny<long>(), It.IsAny<CancellationToken>())).ReturnsAsync(MakeBoard(locked: true));
 
         await CreateSut().EditBoardAsync(
             new BoardRequest { Id = 1, Type = BoardTypes.FreeForum, Title = "T", Content = "C", Locked = false },
