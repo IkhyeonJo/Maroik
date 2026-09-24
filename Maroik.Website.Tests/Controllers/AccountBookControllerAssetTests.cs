@@ -21,7 +21,9 @@ public class AccountBookControllerAssetTests
     private readonly HttpClient _client;
 
     /// <summary>Initializes a new instance of AccountBookControllerAssetTests, sharing the MaroikWebApplicationFactory fixture across the tests in this class.</summary>
+ #pragma warning disable IDE0290
     public AccountBookControllerAssetTests(MaroikWebApplicationFactory factory)
+ #pragma warning restore IDE0290
     {
         _factory = factory;
         _client = factory.CreateTestClient(followRedirects: false);

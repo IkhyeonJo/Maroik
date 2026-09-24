@@ -212,23 +212,21 @@ public class WebsiteArchitectureTests
     [Fact]
     public void Controllers_ShouldNot_DeclareNonPublicMethods()
     {
-        List<string> violations = [];
-
-        foreach (Type controllerType in _websiteAssembly.GetTypes()
-                     .Where(t => t is { IsClass: true, IsAbstract: false } && typeof(Controller).IsAssignableFrom(t)))
-        {
-            List<string> nonPublicMethods =
+        List<string> violations =
+        [
+            .. from controllerType in _websiteAssembly.GetTypes()
+                .Where(t => t is { IsClass: true, IsAbstract: false } && typeof(Controller).IsAssignableFrom(t))
+            let nonPublicMethods = (List<string>)
             [
-                .. controllerType
-                    .GetMethods(BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.Static | BindingFlags.DeclaredOnly)
+                .. controllerType.GetMethods(BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.Static | BindingFlags.DeclaredOnly)
                     .Where(m => !m.IsSpecialName) // exclude property/event accessors
                     .Where(m => m.GetCustomAttribute<CompilerGeneratedAttribute>() == null) // exclude lambda bodies etc.
                     .Select(m => m.Name)
-            ];
+            ]
+            where nonPublicMethods.Count > 0
+            select $"{controllerType.Name}: {string.Join(", ", nonPublicMethods)}"
 
-            if (nonPublicMethods.Count > 0)
-                violations.Add($"{controllerType.Name}: {string.Join(", ", nonPublicMethods)}");
-        }
+        ];
 
         Assert.True(
             violations.Count == 0,
@@ -308,7 +306,9 @@ public class WebsiteArchitectureTests
         List<string> offendingFiles =
         [
             .. Directory.GetFiles(controllersDirectory, "*.cs", SearchOption.AllDirectories)
+ #pragma warning disable SYSLIB1045
                 .Where(path => Regex.IsMatch(File.ReadAllText(path), @"\bpartial\s+class\s+\w*Controller\b"))
+ #pragma warning restore SYSLIB1045
         ];
 
         Assert.True(
@@ -360,20 +360,14 @@ public class WebsiteArchitectureTests
     {
         public bool MeetsRule(TypeDefinition type)
         {
-            foreach (MethodDefinition method in type.Methods)
+            foreach (var instruction in type.Methods.Where(method => method.HasBody).SelectMany(method => method.Body.Instructions.Where(instruction => instruction.OpCode == OpCodes.Call || instruction.OpCode == OpCodes.Callvirt)))
             {
-                if (!method.HasBody) continue;
+                if (instruction.Operand is not MethodReference calledMethod) continue;
 
-                foreach (Instruction instruction in method.Body.Instructions)
+                if (calledMethod.DeclaringType.FullName == "Maroik.Website.Contracts.ISessionService"
+                    && calledMethod.Name == "GetAccount")
                 {
-                    if (instruction.OpCode != OpCodes.Call && instruction.OpCode != OpCodes.Callvirt) continue;
-                    if (instruction.Operand is not MethodReference calledMethod) continue;
-
-                    if (calledMethod.DeclaringType.FullName == "Maroik.Website.Contracts.ISessionService"
-                        && calledMethod.Name == "GetAccount")
-                    {
-                        return false;
-                    }
+                    return false;
                 }
             }
 
@@ -387,9 +381,7 @@ public class WebsiteArchitectureTests
         var dir = new DirectoryInfo(AppContext.BaseDirectory);
         while (dir != null && !File.Exists(Path.Combine(dir.FullName, "Maroik.sln")))
             dir = dir.Parent;
-        if (dir == null)
-            throw new InvalidOperationException("Could not locate the repository root (Maroik.sln) from " + AppContext.BaseDirectory);
-        return dir.FullName;
+        return dir == null ? throw new InvalidOperationException("Could not locate the repository root (Maroik.sln) from " + AppContext.BaseDirectory) : dir.FullName;
     }
 
     /// <summary>
