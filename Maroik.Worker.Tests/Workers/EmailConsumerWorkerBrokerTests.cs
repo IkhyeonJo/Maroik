@@ -8,6 +8,7 @@ using Microsoft.Extensions.Logging;
 using Moq;
 using RabbitMQ.Client;
 using Testcontainers.RabbitMq;
+// ReSharper disable ClassNeverInstantiated.Global
 
 namespace Maroik.Worker.Tests.Workers;
 
@@ -227,7 +228,9 @@ public class EmailConsumerWorkerBrokerTests(WorkerBrokerFixture broker) : IClass
         await worker.StartAsync(Ct);
         try
         {
-            await PublishRawAsync(Encoding.UTF8.GetBytes("this is not json"));
+            await PublishRawAsync([
+                .. "this is not json"u8
+            ]);
             byte[] dead = await TakeAsync(QueueNames.EmailDeadLetter);
             Assert.Equal("this is not json", Encoding.UTF8.GetString(dead));
             Assert.Equal(0, handler.Calls);
@@ -258,7 +261,7 @@ public class EmailConsumerWorkerBrokerTests(WorkerBrokerFixture broker) : IClass
         }
     }
 
-    /// <summary>Stopping the worker while a send is in flight waits for it to finish and ack — the message is not redelivered (no duplicate mail).</summary>
+    /// <summary>Stopping the worker while a sent is in flight waits for it to finish and ack — the message is not redelivered (no duplicate mail).</summary>
     [Fact]
     public async Task StopAsync_WaitsForTheInFlightSend_ThenAcksIt()
     {
@@ -283,7 +286,7 @@ public class EmailConsumerWorkerBrokerTests(WorkerBrokerFixture broker) : IClass
     }
 
     /// <summary>
-    /// A send that ignores cancellation is not waited for indefinitely by the worker's own drain: after the drain window (in which it
+    /// Sent that ignores cancellation is not waited for indefinitely by the worker's own drain: after the drain window (in which it
     /// asks the send to cancel) and the extra unwind window it moves on to closing the channel, which itself only completes once that
     /// last send has returned. Shutdown therefore takes at least the two windows, and finishes as soon as the send does.
     /// </summary>

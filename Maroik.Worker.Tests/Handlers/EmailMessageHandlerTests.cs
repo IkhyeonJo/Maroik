@@ -54,7 +54,7 @@ public class EmailMessageHandlerTests
             Times.Never);
     }
 
-    /// <summary>Verifies that <c>HandleAsync</c> clears a previously recorded failure once the send succeeds.</summary>
+    /// <summary>Verifies that <c>HandleAsync</c> clears a previously recorded failure once to send succeeds.</summary>
     [Fact]
     public async Task HandleAsync_ClearsMailSendFailed_WhenMailSentSuccessfully()
     {
@@ -112,6 +112,7 @@ public class EmailMessageHandlerTests
         await Assert.ThrowsAsync<InvalidOperationException>(() => sut.HandleAsync(message, cts.Token));
 
         _accountMailStatusService.Verify(
+            // ReSharper disable once AccessToDisposedClosure
             s => s.MarkMailSendFailedAsync("user@example.com", cts.Token),
             Times.Once);
     }

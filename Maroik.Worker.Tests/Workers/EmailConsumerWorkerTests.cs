@@ -9,6 +9,7 @@ using Microsoft.Extensions.Logging.Testing;
 using Moq;
 using RabbitMQ.Client;
 using RabbitMQ.Client.Events;
+// ReSharper disable AccessToDisposedClosure
 
 namespace Maroik.Worker.Tests.Workers;
 
@@ -39,18 +40,21 @@ public class EmailConsumerWorkerTests
         return worker;
     }
 
+    /// <param name="redelivered"></param>
     /// <param name="retryCount">
     /// Sets <see cref="EmailConsumerWorker.RetryCountHeader"/> on the delivery's properties —
     /// this worker's own retry counter, tracked in a republished header rather than via
     /// <c>BasicDeliverEventArgs.Redelivered</c> (see that constant's doc comment for why).
     /// </param>
+    /// <param name="body"></param>
+    /// <param name="deliveryTag"></param>
     private static BasicDeliverEventArgs MakeDeliverArgs(byte[] body, ulong deliveryTag = 1, bool redelivered = false, int retryCount = 0)
     {
         var properties = new BasicProperties();
         if (retryCount > 0)
             properties.Headers = new Dictionary<string, object?> { [EmailConsumerWorker.RetryCountHeader] = retryCount };
 
-        return new("consumer-tag", deliveryTag, redelivered, exchange: "", routingKey: QueueNames.Email,
+        return new BasicDeliverEventArgs("consumer-tag", deliveryTag, redelivered, exchange: "", routingKey: QueueNames.Email,
             properties, body, CancellationToken.None);
     }
 
@@ -70,7 +74,7 @@ public class EmailConsumerWorkerTests
         channel.Verify(c => c.BasicNackAsync(It.IsAny<ulong>(), It.IsAny<bool>(), It.IsAny<bool>(), It.IsAny<CancellationToken>()), Times.Never);
     }
 
-    /// <summary>On message received async invalid json on first delivery republishes for retry (ack, not nack) and never calls handler.</summary>
+    /// <summary>On message received async invalid JSON on first delivery republishes for retry (ack, not nack) and never calls handler.</summary>
     [Fact]
     public async Task OnMessageReceivedAsync_InvalidJson_FirstDelivery_RepublishesForRetryAndNeverCallsHandler()
     {
@@ -92,7 +96,7 @@ public class EmailConsumerWorkerTests
         channel.Verify(c => c.BasicNackAsync(It.IsAny<ulong>(), It.IsAny<bool>(), It.IsAny<bool>(), It.IsAny<CancellationToken>()), Times.Never);
     }
 
-    /// <summary>On message received async invalid json already retried once nacks without requeue and never calls handler.</summary>
+    /// <summary>On message received async invalid JSON already retried once nacks without requeue and never calls handler.</summary>
     [Fact]
     public async Task OnMessageReceivedAsync_InvalidJson_AlreadyRetried_NacksWithoutRequeueAndNeverCallsHandler()
     {
@@ -107,7 +111,7 @@ public class EmailConsumerWorkerTests
         channel.Verify(c => c.BasicAckAsync(It.IsAny<ulong>(), It.IsAny<bool>(), It.IsAny<CancellationToken>()), Times.Never);
     }
 
-    /// <summary>On message received async null json body on first delivery republishes for retry.</summary>
+    /// <summary>On message received async null JSON body on first delivery republishes for retry.</summary>
     [Fact]
     public async Task OnMessageReceivedAsync_NullJsonBody_FirstDelivery_RepublishesForRetry()
     {
@@ -124,13 +128,16 @@ public class EmailConsumerWorkerTests
         channel.Verify(c => c.BasicNackAsync(It.IsAny<ulong>(), It.IsAny<bool>(), It.IsAny<bool>(), It.IsAny<CancellationToken>()), Times.Never);
     }
 
-    /// <summary>On message received async null json body already retried once nacks without requeue.</summary>
+    /// <summary>On message received async null JSON body already retried once nacks without requeue.</summary>
     [Fact]
     public async Task OnMessageReceivedAsync_NullJsonBody_AlreadyRetried_NacksWithoutRequeue()
     {
         var handler = new Mock<IEmailMessageHandler>();
         var worker = CreateSut(handler.Object, out var channel);
-        byte[] body = "null"u8.ToArray();
+        byte[] body =
+        [
+            .. "null"u8
+        ];
 
         await worker.OnMessageReceivedAsync(this, MakeDeliverArgs(body, deliveryTag: 4, redelivered: true, retryCount: EmailConsumerWorker.MaxRetries));
 
@@ -156,7 +163,7 @@ public class EmailConsumerWorkerTests
         channel.Verify(c => c.BasicNackAsync(It.IsAny<ulong>(), It.IsAny<bool>(), It.IsAny<bool>(), It.IsAny<CancellationToken>()), Times.Never);
     }
 
-    /// <summary>On message received async, when the handler succeeds but the ack itself throws, the message is neither nacked nor requeued — it must not be resent since the email already went out.</summary>
+    /// <summary>On message received async, when the handler succeeds but the ack itself throws, the message is neither nacked nor re-queued — it must not be resent since the email already went out.</summary>
     [Fact]
     public async Task OnMessageReceivedAsync_AckThrowsAfterSuccessfulHandle_DoesNotNack()
     {
@@ -222,7 +229,7 @@ public class EmailConsumerWorkerTests
 
     /// <summary>
     /// Regression test: a send still running when the shutdown drain deadline is reached must be
-    /// cancelled (via the token every <c>HandleAsync</c> call is given), not left to race the
+    /// canceled (via the token every <c>HandleAsync</c> call is given), not left to race the
     /// channel disposal that follows <c>StopAsync</c>'s drain wait -- disposing the channel out
     /// from under a still-running send would throw from its own ack/nack and force a
     /// redelivery/resend of a send that may already have completed.
@@ -249,7 +256,7 @@ public class EmailConsumerWorkerTests
         Task received = worker.OnMessageReceivedAsync(this, MakeDeliverArgs(body, deliveryTag: 21, redelivered: false));
         await handlerStarted.Task;
 
-        // StopAsync itself must return (the unwind wait isn't left hanging on the now-cancelled
+        // StopAsync itself must return (the unwind wait isn't left hanging on the now-canceled
         // send), and OnMessageReceivedAsync's own catch -- not an unhandled exception -- must be
         // what observes the cancellation: it never rethrows, it republishes for a first retry
         // (this is a first-attempt failure, so it isn't dead-lettered yet) and acks the original.
@@ -328,12 +335,12 @@ public class EmailConsumerWorkerTests
             WireChannel(Connection, Channel);
         }
 
-        public void WireChannel(Mock<IConnection> connection, Mock<IChannel> channel)
+        private void WireChannel(Mock<IConnection> connection, Mock<IChannel> channel)
         {
             connection.Setup(c => c.CreateChannelAsync(It.IsAny<CreateChannelOptions?>(), It.IsAny<CancellationToken>())).ReturnsAsync(channel.Object);
             channel.Setup(c => c.QueueDeclareAsync(It.IsAny<string>(), It.IsAny<bool>(), It.IsAny<bool>(), It.IsAny<bool>(),
                     It.IsAny<IDictionary<string, object?>?>(), It.IsAny<bool>(), It.IsAny<bool>(), It.IsAny<CancellationToken>()))
-                .Callback((string queue, bool durable, bool exclusive, bool autoDelete, IDictionary<string, object?>? args, bool passive, bool noWait, CancellationToken _) =>
+                .Callback((string queue, bool durable, bool exclusive, bool autoDelete, IDictionary<string, object?>? args, bool _, bool _, CancellationToken _) =>
                 {
                     Calls.Add($"declare:{queue}:durable={durable}:exclusive={exclusive}:autoDelete={autoDelete}");
                     if (queue == QueueNames.Email) EmailQueueArguments = args;
@@ -530,16 +537,19 @@ public class EmailConsumerWorkerTests
     }
 
     /// <summary>Header values that were exhausted, in each representation the client may deliver.</summary>
-    public static TheoryData<object> ExhaustedRetryHeaders => new()
-    {
+    public static TheoryData<object> ExhaustedRetryHeaders =>
+    [
+
         EmailConsumerWorker.MaxRetries,
         (long)EmailConsumerWorker.MaxRetries,
-        Encoding.UTF8.GetBytes(EmailConsumerWorker.MaxRetries.ToString()),
-    };
+        Encoding.UTF8.GetBytes(EmailConsumerWorker.MaxRetries.ToString())
+    ];
 
     /// <summary>A garbage or non-numeric header counts as "first attempt": the message still gets its retry.</summary>
     [Theory]
+ #pragma warning disable xUnit1045
     [MemberData(nameof(UnusableRetryHeaders))]
+ #pragma warning restore xUnit1045
     public async Task OnMessageReceivedAsync_TreatsAnUnusableRetryHeaderAsAFirstAttempt(object headerValue)
     {
         var handler = new Mock<IEmailMessageHandler>();
@@ -555,15 +565,16 @@ public class EmailConsumerWorkerTests
     }
 
     /// <summary>Header values that must not count as an exhausted retry budget.</summary>
-    public static TheoryData<object> UnusableRetryHeaders => new()
-    {
+    public static TheoryData<object> UnusableRetryHeaders =>
+    [
+
         "not-a-number",
-        Encoding.UTF8.GetBytes("abc"),
-        3.5,
-    };
+        "abc"u8.ToArray(),
+        3.5
+    ];
 
     /// <summary>
-    /// A send that ignores cancellation is still running when the unwind window ends: the worker moves on
+    /// Send that ignores cancellation is still running when the unwind window ends: the worker moves on
     /// to closing the channel regardless. That message will be redelivered, so it is logged as a warning
     /// (the drain-deadline warning before it only says cancellation was requested).
     /// </summary>

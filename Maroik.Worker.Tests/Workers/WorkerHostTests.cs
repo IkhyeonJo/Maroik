@@ -2,7 +2,6 @@ using System.Text.Json;
 using Maroik.Core.Client.Tests.Clients;
 using Maroik.Core.Contract.Misc.Messaging;
 using Maroik.Core.Contract.Misc.Settings;
-using Maroik.Worker;
 using Maroik.Worker.Handlers;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -50,7 +49,7 @@ public class WorkerHostTests(WorkerBrokerFixture broker) : IClassFixture<WorkerB
         Assert.Equal("Maroik Test", settings.FromFullName);
     }
 
-    /// <summary>The RabbitMQ connection is the configured one, with automatic and topology recovery on and a recognisable client name.</summary>
+    /// <summary>The RabbitMQ connection is the configured one, with automatic and topology recovery on and a recognizable client name.</summary>
     [Fact]
     public void Build_ConfiguresTheBrokerConnectionFactory()
     {
@@ -97,7 +96,7 @@ public class WorkerHostTests(WorkerBrokerFixture broker) : IClassFixture<WorkerB
 
         using IServiceScope scope = host.Services.CreateScope();
 
-        Assert.IsType<EmailMessageHandler>(scope.ServiceProvider.GetRequiredService<Maroik.Worker.Contracts.IEmailMessageHandler>());
+        Assert.IsType<EmailMessageHandler>(scope.ServiceProvider.GetRequiredService<Contracts.IEmailMessageHandler>());
     }
 
     /// <summary>
@@ -165,12 +164,16 @@ public class WorkerHostTests(WorkerBrokerFixture broker) : IClassFixture<WorkerB
         var info = new System.Diagnostics.ProcessStartInfo("dotnet", $"\"{dll}\"")
         {
             WorkingDirectory = AppContext.BaseDirectory, RedirectStandardOutput = true, RedirectStandardError = true, UseShellExecute = false,
+            Environment =
+            {
+                ["ConnectionStrings__RabbitMQ"] = broker.ConnectionString,
+                ["ConnectionStrings__DefaultConnection"] = "Host=127.0.0.1;Port=1;Database=unused;Username=u;Password=p",
+                ["DOTNET_ENVIRONMENT"] = "Production"
+            }
         };
-        info.Environment["ConnectionStrings__RabbitMQ"] = broker.ConnectionString;
-        info.Environment["ConnectionStrings__DefaultConnection"] = "Host=127.0.0.1;Port=1;Database=unused;Username=u;Password=p";
-        info.Environment["DOTNET_ENVIRONMENT"] = "Production";
         var output = new System.Text.StringBuilder();
-        using var process = new System.Diagnostics.Process { StartInfo = info };
+        using var process = new System.Diagnostics.Process();
+        process.StartInfo = info;
         process.OutputDataReceived += (_, e) => { lock (output) output.AppendLine(e.Data); };
         process.ErrorDataReceived += (_, e) => { lock (output) output.AppendLine(e.Data); };
         Assert.True(process.Start());
@@ -181,7 +184,7 @@ public class WorkerHostTests(WorkerBrokerFixture broker) : IClassFixture<WorkerB
             await WaitUntilAsync(() => { lock (output) return output.ToString().Contains("Email consumer started", StringComparison.Ordinal) || process.HasExited; });
             Assert.False(process.HasExited, output.ToString());
 
-            using (var kill = System.Diagnostics.Process.Start("kill", $"-INT {process.Id}")!) await kill.WaitForExitAsync(Ct);
+            using (var kill = System.Diagnostics.Process.Start("kill", $"-INT {process.Id}")) await kill.WaitForExitAsync(Ct);
             await process.WaitForExitAsync(Ct).WaitAsync(TimeSpan.FromSeconds(30), Ct);
 
             Assert.Equal(0, process.ExitCode);
