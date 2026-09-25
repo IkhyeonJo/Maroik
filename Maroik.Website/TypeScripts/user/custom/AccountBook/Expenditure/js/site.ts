@@ -167,9 +167,6 @@
         yearSuffix: localizer.YearSuffix
     });
 
-    // Today's date parts, split from the create-form date field's default value.
-    // (Declared here; `currentMonth` / `currentDay` are unused elsewhere but kept
-    // as-is from the original.)
     $(function() {
         $createExpenditureTabs.tabs();
         $editExpenditureTabs.tabs();

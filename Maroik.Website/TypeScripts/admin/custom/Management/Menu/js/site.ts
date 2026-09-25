@@ -453,7 +453,7 @@
      * a Category is verified with `IsCategoryExists` then removed with
      * `DeleteCategory` (the full record is echoed back into the delete payload);
      * a SubCategory goes through `IsSubCategoryExists` / `DeleteSubCategory`.
-     * Nested so to delete always uses the server's current record.
+     * Nested so the delete always uses the server's current record.
      */
     function DeleteMenu(errorMessageSelectGridRow?: string) {
         let selectedRowId = "-1";

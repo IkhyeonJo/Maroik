@@ -54,7 +54,7 @@ public class EmailMessageHandlerTests
             Times.Never);
     }
 
-    /// <summary>Verifies that <c>HandleAsync</c> clears a previously recorded failure once to send succeeds.</summary>
+    /// <summary>Verifies that <c>HandleAsync</c> clears a previously recorded failure once the send succeeds.</summary>
     [Fact]
     public async Task HandleAsync_ClearsMailSendFailed_WhenMailSentSuccessfully()
     {

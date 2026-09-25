@@ -573,4 +573,3 @@
         ChangeCreateFixedIncomeAmountLabel($createFixedIncomeDepositMyAssetProductName.find("option:selected").val());
     });
 })();
-//# sourceMappingURL=site.js.map

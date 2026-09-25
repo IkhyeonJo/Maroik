@@ -359,7 +359,7 @@
     /**
      * `change` handler for the create-event attachment input: reject + clear the
      * input if the file exceeds `maxFileSize`, otherwise stash the `File` in
-     * `createCalendarEventUploadedFile` for to submit to send.
+     * `createCalendarEventUploadedFile` for the submit to send.
      */
     function CreateCalendarEventUploadedFile(obj: HTMLInputElement, errorMessage?: string) {
         if (!obj.files || obj.files.length === 0) {

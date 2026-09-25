@@ -70,7 +70,7 @@ public class RabbitMqEmailPublisherTests
 
     /// <summary>
     /// Regression test: without publisher confirmations enabled, BasicPublishAsync returns as
-    /// soon as the message is locally buffered, so a dropped connection right after to write
+    /// soon as the message is locally buffered, so a dropped connection right after the write
     /// silently loses the message even though PublishAsync reported success. Verifies the channel
     /// is created with confirmations (and tracking) enabled so BasicPublishAsync actually waits
     /// for and validates the broker's ack.

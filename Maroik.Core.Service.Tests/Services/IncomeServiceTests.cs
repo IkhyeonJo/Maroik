@@ -596,7 +596,7 @@ public class IncomeServiceTests
         _unitOfWork.Verify(u => u.RollbackAsync(It.IsAny<CancellationToken>()), Times.Once);
     }
 
-    /// <summary>Reverting the record's impact must keep the balance in range; otherwise to delete is refused and rolled back.</summary>
+    /// <summary>Reverting the record's impact must keep the balance in range; otherwise the delete is refused and rolled back.</summary>
     [Fact]
     public async Task DeleteAsync_ReturnsTheAdjustmentError_AndKeepsTheRow_WhenRevertingWouldOverflowTheBalance()
     {

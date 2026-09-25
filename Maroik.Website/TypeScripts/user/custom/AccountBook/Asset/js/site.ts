@@ -302,7 +302,7 @@
 
     /**
      * Confirmed delete: re-check the selection, confirm the record still exists
-     * (`IsAssetExists`), then POST `DeleteAsset`. Nested so to delete always
+     * (`IsAssetExists`), then POST `DeleteAsset`. Nested so the delete always
      * uses the server's current record, not stale row markup.
      */
     function DeleteAsset(errorMessageSelectGridRow?: string) {

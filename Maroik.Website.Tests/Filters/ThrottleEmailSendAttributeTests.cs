@@ -384,7 +384,7 @@ public class ThrottleEmailSendAttributeTests
     /// Regression: the cooldown must be claimed (<c>SetAsync</c>) before the action runs, not after
     /// it completes. Claiming only after the action (and its possibly-slow mail send) let every
     /// request in a concurrent burst for the same address pass the <c>GetAsync</c> check above
-    /// before any of them reached to write, defeating the cooldown for the whole burst.
+    /// before any of them reached the write, defeating the cooldown for the whole burst.
     /// </summary>
     [Fact]
     public async Task OnActionExecutionAsync_ClaimsCooldown_BeforeActionRuns()

@@ -716,7 +716,7 @@ public class ExpenditureServiceTests
         _expenditureRepo.Verify(r => r.DeleteByIdAsync(It.IsAny<long>(), It.IsAny<CancellationToken>()), Times.Never);
     }
 
-    /// <summary>Reverting the record's impact must keep every balance in range; otherwise to delete is refused and rolled back.</summary>
+    /// <summary>Reverting the record's impact must keep every balance in range; otherwise the delete is refused and rolled back.</summary>
     [Fact]
     public async Task DeleteAsync_ReturnsTheAdjustmentError_AndKeepsTheRow_WhenRevertingWouldOverflowTheBalance()
     {

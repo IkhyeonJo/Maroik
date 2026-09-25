@@ -49,9 +49,9 @@ public class NicknameHardeningTests
             "Nickname contains characters that are not allowed.");
     }
 
+    /// <summary>Verifies that a letter just above the Latin range is not treated as Latin.</summary>
     [Theory]
     // (ª and º, the only letters below the range, NFKC-fold to the ASCII a / o, so they are Latin anyway.)
-    /// <summary>Verifies that a letter just above the Latin range is not treated as Latin.</summary>
     [InlineData("ɐ")]   // ɐ  just above the Latin range (IPA extensions)
     public void ALetterJustOutsideTheLatinRange_MayBeMixedWithCyrillic(string outside)
     {
