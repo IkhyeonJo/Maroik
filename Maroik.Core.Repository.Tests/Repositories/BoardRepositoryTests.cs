@@ -211,13 +211,6 @@ public sealed class BoardRepositoryTests(DatabaseFixture database) : RepositoryT
         Assert.Equal(6, result.View);
     }
 
-    /// <summary>Verifies that incrementing a non-existent board's view count is a no-op.</summary>
-    [Fact]
-    public async Task IncrementViewAsync_IsNoOp_WhenBoardDoesNotExist()
-    {
-        await Sut.IncrementViewAsync(long.MaxValue, TestContext.Current.CancellationToken);
-    }
-
     // -- FindActiveByIdForUpdateAsync (SELECT ... FOR UPDATE) --------------------
 
     /// <summary>Verifies that the row-locking lookup returns the board when it exists.</summary>

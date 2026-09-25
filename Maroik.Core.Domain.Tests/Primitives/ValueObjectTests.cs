@@ -88,7 +88,10 @@ public class ValueObjectTests
     [Fact]
     public void Equals_NonValueObject_ReturnsFalse()
     {
-        Assert.False(false);
+        var a = new SamplePair("x", 1);
+
+        // ReSharper disable once SuspiciousTypeConversion.Global -- deliberately comparing to an unrelated type
+        Assert.False(a.Equals("not a value object"));
     }
 
     /// <summary>Operator equality both null returns true.</summary>

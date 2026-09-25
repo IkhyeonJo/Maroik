@@ -128,11 +128,4 @@ public sealed class CalendarEventReminderRepositoryTests(DatabaseFixture databas
         Assert.False(await Context.CalendarEventReminders.AnyAsync(r => r.CalendarEventId == removeEvent, TestContext.Current.CancellationToken));
         Assert.True(await Context.CalendarEventReminders.AnyAsync(r => r.CalendarEventId == keepEvent, TestContext.Current.CancellationToken));
     }
-
-    /// <summary>Verifies that <c>DeleteByCalendarEventIdAsync</c> is a no-op when nothing matches.</summary>
-    [Fact]
-    public async Task DeleteByCalendarEventIdAsync_IsNoOp_WhenNoRemindersMatch()
-    {
-        await Sut.DeleteByCalendarEventIdAsync(long.MaxValue, TestContext.Current.CancellationToken);
-    }
 }

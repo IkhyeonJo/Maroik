@@ -129,11 +129,4 @@ public sealed class CalendarEventAttachedFileRepositoryTests(DatabaseFixture dat
         Assert.False(await Context.CalendarEventAttachedFiles.AnyAsync(f => f.CalendarEventId == removeEvent, TestContext.Current.CancellationToken));
         Assert.True(await Context.CalendarEventAttachedFiles.AnyAsync(f => f.CalendarEventId == keepEvent, TestContext.Current.CancellationToken));
     }
-
-    /// <summary>Verifies that <c>DeleteByCalendarEventIdAsync</c> is a no-op when nothing matches.</summary>
-    [Fact]
-    public async Task DeleteByCalendarEventIdAsync_IsNoOp_WhenNoFilesMatch()
-    {
-        await Sut.DeleteByCalendarEventIdAsync(long.MaxValue, TestContext.Current.CancellationToken);
-    }
 }

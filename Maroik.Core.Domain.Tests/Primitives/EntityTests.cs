@@ -61,7 +61,10 @@ public class EntityTests
     [Fact]
     public void Equals_NonEntityObject_ReturnsFalse()
     {
-        Assert.False(false);
+        var a = new SampleEntity(1);
+
+        // ReSharper disable once SuspiciousTypeConversion.Global -- deliberately comparing to an unrelated type
+        Assert.False(a.Equals("not an entity"));
     }
 
     /// <summary>Operator equality both null returns true.</summary>
