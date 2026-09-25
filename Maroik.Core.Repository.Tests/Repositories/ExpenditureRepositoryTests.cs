@@ -1,4 +1,3 @@
-using DocumentFormat.OpenXml.InkML;
 using Maroik.Core.Domain.Finance;
 using Maroik.Core.Repository.Repositories;
 using Microsoft.EntityFrameworkCore;
@@ -199,7 +198,7 @@ public sealed class ExpenditureRepositoryTests(DatabaseFixture database) : Repos
     /// <summary>
     /// Regression: the FOR UPDATE lookup re-reads through <c>FindByEmailAndIdAsync</c>-equivalent
     /// path, which must run <c>AsNoTracking()</c>. If this row is already tracked in the same
-    /// <see cref="Context"/> from an earlier plain read, a tracking re-read would perform EF's
+    /// <see cref="RepositoryTestBase.Context"/> from an earlier plain read, a tracking re-read would perform EF's
     /// identity resolution and hand back that pre-existing (stale) tracked instance instead of the
     /// row's just-locked, current committed values — silently defeating the FOR UPDATE lock.
     /// </summary>
