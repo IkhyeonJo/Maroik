@@ -1,6 +1,5 @@
 using System.Security.Cryptography;
 using Maroik.Core.Contract.Interfaces;
-using Maroik.Core.Contract.Misc.Settings;
 using Maroik.Core.Domain.Account;
 using Maroik.Core.PostgreSQL.Data;
 using Maroik.Core.PostgreSQL.Models;
@@ -15,6 +14,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Testcontainers.PostgreSql;
+// ReSharper disable ClassNeverInstantiated.Global
 
 namespace Maroik.Website.Tests.Infrastructure;
 
@@ -67,9 +67,7 @@ public class MaroikWebApplicationFactory : WebApplicationFactory<Program>, IAsyn
         var dir = new DirectoryInfo(AppContext.BaseDirectory);
         while (dir != null && !File.Exists(Path.Combine(dir.FullName, "Maroik.sln")))
             dir = dir.Parent;
-        if (dir == null)
-            throw new InvalidOperationException("Could not locate the repository root (Maroik.sln) from " + AppContext.BaseDirectory);
-        return Path.Combine(dir.FullName, "Maroik.DB", "PostgreSQL", "SQL_Init_Script", "Production", "Init.sql");
+        return dir == null ? throw new InvalidOperationException("Could not locate the repository root (Maroik.sln) from " + AppContext.BaseDirectory) : Path.Combine(dir.FullName, "Maroik.DB", "PostgreSQL", "SQL_Init_Script", "Production", "Init.sql");
     }
 
     /// <summary>Starts the Testcontainers PostgreSQL instance before any test in the collection runs.</summary>
@@ -89,6 +87,7 @@ public class MaroikWebApplicationFactory : WebApplicationFactory<Program>, IAsyn
     {
         await _postgres.DisposeAsync();
         await base.DisposeAsync();
+        GC.SuppressFinalize(this);
     }
 
     /// <summary>Points the application at the Testcontainers PostgreSQL instance and applies test-only configuration overrides.</summary>
@@ -186,22 +185,20 @@ public class MaroikWebApplicationFactory : WebApplicationFactory<Program>, IAsyn
     {
         var host = base.CreateHost(builder);
 
-        using (var scope = host.Services.CreateScope())
-        {
-            var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+        using var scope = host.Services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
 
-            // Idempotent: a derived factory (WithWebHostBuilder) runs this CreateHost again against
-            // the same, already-seeded database.
-            if (db.Categories.Any(c => c.Id == 9001))
-                return host;
+        // Idempotent: a derived factory (WithWebHostBuilder) runs this CreateHost again against
+        // the same, already-seeded database.
+        if (db.Categories.Any(c => c.Id == 9001))
+            return host;
 
-            db.Categories.AddRange(
-                new Category { Id = 9001, Name = "DriveAnon", DisplayName = "Drive", IconPath = "", Controller = "Drive", Action = "AnonymousIndex", Role = Role.Anonymous, Order = 100 },
-                new Category { Id = 9002, Name = "DriveAdmin", DisplayName = "Drive (Admin)", IconPath = "", Controller = "Drive", Action = "AdminIndex", Role = Role.Admin, Order = 101 },
-                new Category { Id = 9003, Name = "DriveUser", DisplayName = "Drive (User)", IconPath = "", Controller = "Drive", Action = "UserIndex", Role = Role.User, Order = 102 }
-            );
-            db.SaveChanges();
-        }
+        db.Categories.AddRange(
+            new Category { Id = 9001, Name = "DriveAnon", DisplayName = "Drive", IconPath = "", Controller = "Drive", Action = "AnonymousIndex", Role = Role.Anonymous, Order = 100 },
+            new Category { Id = 9002, Name = "DriveAdmin", DisplayName = "Drive (Admin)", IconPath = "", Controller = "Drive", Action = "AdminIndex", Role = Role.Admin, Order = 101 },
+            new Category { Id = 9003, Name = "DriveUser", DisplayName = "Drive (User)", IconPath = "", Controller = "Drive", Action = "UserIndex", Role = Role.User, Order = 102 }
+        );
+        db.SaveChanges();
 
         return host;
     }

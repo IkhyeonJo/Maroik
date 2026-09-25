@@ -15,26 +15,18 @@ namespace Maroik.Website.Tests.Controllers;
 /// rows are seeded straight into PostgreSQL and read back through the real HTTP pipeline.
 /// </summary>
 [Collection("Website Integration")]
-public class ManagementControllerPageTests
+public class ManagementControllerPageTests(MaroikWebApplicationFactory factory)
 {
     private const string PrivateNoteType = "PrivateNote";
 
-    private readonly MaroikWebApplicationFactory _factory;
-    private readonly HttpClient _client;
-
-    /// <summary>Initializes a new instance of ManagementControllerPageTests, sharing the MaroikWebApplicationFactory fixture across the tests in this class.</summary>
-    public ManagementControllerPageTests(MaroikWebApplicationFactory factory)
-    {
-        _factory = factory;
-        _client = factory.CreateTestClient(followRedirects: false);
-    }
-
+    private readonly HttpClient _client = factory.CreateTestClient(followRedirects: false);
+    
     private Task<AuthenticatedSession> LoginAsync(string email, string role = Role.User) =>
-        AuthenticatedSessionHelper.LoginAsync(_factory, _client, email, "UserPassword1!", role, TestContext.Current.CancellationToken);
+        AuthenticatedSessionHelper.LoginAsync(factory, _client, email, "UserPassword1!", role, TestContext.Current.CancellationToken);
 
     private long SeedNote(string writer, string title, string content = "Body", bool deleted = false)
     {
-        using var scope = _factory.Services.CreateScope();
+        using var scope = factory.Services.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
         var board = new Board
         {
@@ -48,7 +40,7 @@ public class ManagementControllerPageTests
 
     private void SeedComment(long boardId, string writer, string content)
     {
-        using var scope = _factory.Services.CreateScope();
+        using var scope = factory.Services.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
         db.BoardComments.Add(new BoardComment
         {
@@ -60,7 +52,7 @@ public class ManagementControllerPageTests
 
     private long ViewCount(long boardId)
     {
-        using var scope = _factory.Services.CreateScope();
+        using var scope = factory.Services.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
         return db.Boards.AsNoTracking().Single(b => b.Id == boardId).View;
     }
@@ -92,7 +84,9 @@ public class ManagementControllerPageTests
         string html = await BodyAsync(await GetAsync(Detail(id), owner));
 
         Assert.Contains("font-weight:bold;", html);
+ #pragma warning disable SYSLIB1045
         int deletable = System.Text.RegularExpressions.Regex
+ #pragma warning restore SYSLIB1045
             .Matches(html, "aPrivateNoteDeleteComment\" href=\"#\" data-commentId=\"(\\d+)\"").Select(m => m.Groups[1].Value).Distinct().Count();
         Assert.Equal(1, deletable);
     }
@@ -164,7 +158,7 @@ public class ManagementControllerPageTests
         var admin = await LoginAsync("mgmt-page-admin4@test.com", Role.Admin);
         long id = SeedNote(owner.Nickname, "SecretTitle-4", content: "<p>SecretBody-4</p>");
 
-        foreach (var session in new AuthenticatedSession?[] { other, admin })
+        foreach (var session in new[] { other, admin })
         {
             var response = await GetAsync(Detail(id), session);
             Assert.Equal(System.Net.HttpStatusCode.Redirect, response.StatusCode);
@@ -174,7 +168,7 @@ public class ManagementControllerPageTests
 
     /// <summary>A missing or deleted note, or a detail request without an id, goes back to the list.</summary>
     [Fact]
-    public async Task PrivateNoteDetail_MissingDeletedOrIdless_RedirectsToTheList()
+    public async Task PrivateNoteDetail_MissingDeletedOrIDLess_RedirectsToTheList()
     {
         var owner = await LoginAsync("mgmt-page-owner5@test.com");
         long deleted = SeedNote(owner.Nickname, "GoneTitle-5", deleted: true);
@@ -199,7 +193,7 @@ public class ManagementControllerPageTests
         Assert.Equal(System.Net.HttpStatusCode.OK, ownerResponse.StatusCode);
         Assert.Contains("EditTitle-6", await BodyAsync(ownerResponse));
 
-        foreach (var session in new AuthenticatedSession?[] { other, admin })
+        foreach (var session in new[] { other, admin })
             Assert.Equal(System.Net.HttpStatusCode.Redirect, (await GetAsync(Edit(id), session)).StatusCode);
         Assert.Equal(System.Net.HttpStatusCode.Redirect, (await GetAsync("/Management/PrivateNote?method=edit", owner)).StatusCode);
     }
@@ -289,12 +283,12 @@ public class ManagementControllerPageTests
     {
         var admin = await LoginAsync("mgmt-page-menusub@test.com", Role.Admin);
         string name = $"SubFindMe{Guid.NewGuid():N}";
-        using (var scope = _factory.Services.CreateScope())
+        using (var scope = factory.Services.CreateScope())
         {
             var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
             long categoryId = db.Categories.First().Id;
             db.SubCategories.Add(new SubCategory { CategoryId = categoryId, Name = name, DisplayName = name, IconPath = "/i.png", Action = "SubAction", Role = Role.User, Order = 5 });
-            db.SaveChanges();
+            await db.SaveChangesAsync(TestContext.Current.CancellationToken);
         }
 
         string body = await BodyAsync(await GetAsync($"/Management/Menu?wholeSearch={name}", admin, ajax: true));
@@ -364,7 +358,7 @@ public class ManagementControllerPageTests
     {
         var session = await LoginAsync("mgmt-page-upload12@test.com");
 
-        string json = await UploadAsync(session, "fake.png", "this is not an image"u8.ToArray());
+        string json = await UploadAsync(session, "fake.png", [.. "this is not an image"u8]);
 
         Assert.Contains("\"result\":false", json);
         Assert.DoesNotContain("filePath", json);

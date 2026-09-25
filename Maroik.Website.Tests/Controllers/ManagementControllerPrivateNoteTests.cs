@@ -2,7 +2,6 @@ using Maroik.Core.Domain.Account;
 using Maroik.Core.PostgreSQL.Data;
 using Maroik.Core.PostgreSQL.Models;
 using Maroik.Website.Tests.Infrastructure;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace Maroik.Website.Tests.Controllers;
@@ -18,22 +17,14 @@ namespace Maroik.Website.Tests.Controllers;
 /// to anyone else, including via this existence check.
 /// </summary>
 [Collection("Website Integration")]
-public class ManagementControllerPrivateNoteTests
+public class ManagementControllerPrivateNoteTests(MaroikWebApplicationFactory factory)
 {
     private const string PrivateNoteType = "PrivateNote";
 
-    private readonly MaroikWebApplicationFactory _factory;
-    private readonly HttpClient _client;
-
-    /// <summary>Initializes a new instance of ManagementControllerPrivateNoteTests, sharing the MaroikWebApplicationFactory fixture across the tests in this class.</summary>
-    public ManagementControllerPrivateNoteTests(MaroikWebApplicationFactory factory)
-    {
-        _factory = factory;
-        _client = factory.CreateTestClient(followRedirects: false);
-    }
-
+    private readonly HttpClient _client = factory.CreateTestClient(followRedirects: false);
+    
     private Task<AuthenticatedSession> LoginAsUserAsync(string email = "management-privatenote-user@test.com") =>
-        AuthenticatedSessionHelper.LoginAsync(_factory, _client, email, "UserPassword1!", Role.User, TestContext.Current.CancellationToken);
+        AuthenticatedSessionHelper.LoginAsync(factory, _client, email, "UserPassword1!", Role.User, TestContext.Current.CancellationToken);
 
     private static MultipartFormDataContent BoardForm(string? title, string content = "Body", bool noticed = false)
     {
@@ -49,7 +40,7 @@ public class ManagementControllerPrivateNoteTests
 
     private long SeedBoard(string writer, bool locked = false, bool deleted = false)
     {
-        using var scope = _factory.Services.CreateScope();
+        using var scope = factory.Services.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
         var board = new Board
         {
@@ -83,7 +74,7 @@ public class ManagementControllerPrivateNoteTests
         string json = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
         Assert.Contains("\"result\":true", json);
 
-        using var scope = _factory.Services.CreateScope();
+        using var scope = factory.Services.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
         var created = db.Boards.Single(b => b.Title == title);
         Assert.Equal(PrivateNoteType, created.Type);
@@ -153,7 +144,7 @@ public class ManagementControllerPrivateNoteTests
         string json = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
         Assert.Contains("\"result\":true", json);
 
-        using var scope = _factory.Services.CreateScope();
+        using var scope = factory.Services.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
         var updated = db.Boards.Single(b => b.Id == boardId);
         Assert.Equal(updatedTitle, updated.Title);
@@ -192,7 +183,7 @@ public class ManagementControllerPrivateNoteTests
 
         Assert.Contains("\"result\":true", json);
 
-        using var scope = _factory.Services.CreateScope();
+        using var scope = factory.Services.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
         Assert.True(db.Boards.Single(b => b.Id == boardId).Deleted);
     }
@@ -210,7 +201,7 @@ public class ManagementControllerPrivateNoteTests
 
         Assert.Contains("\"result\":false", json);
 
-        using var scope = _factory.Services.CreateScope();
+        using var scope = factory.Services.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
         Assert.False(db.Boards.Single(b => b.Id == boardId).Deleted);
     }
@@ -230,7 +221,7 @@ public class ManagementControllerPrivateNoteTests
         string writeJson = await writeResponse.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
         Assert.Contains("\"result\":true", writeJson);
 
-        using var scope = _factory.Services.CreateScope();
+        using var scope = factory.Services.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
         var comment = db.BoardComments.Single(c => c.BoardId == boardId && c.Writer == session.Nickname);
 
@@ -259,7 +250,7 @@ public class ManagementControllerPrivateNoteTests
 
     private void SeedComment(long boardId, string writer, string content)
     {
-        using var scope = _factory.Services.CreateScope();
+        using var scope = factory.Services.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
         db.BoardComments.Add(new BoardComment
         {

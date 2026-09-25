@@ -21,16 +21,11 @@ namespace Maroik.Website.Tests.Controllers;
 /// and every storage / virus-scan outcome are reachable without a real FileStorage or ClamAV.
 /// </summary>
 [Collection("Website Integration")]
-public class FileStorageBackedEndpointsTests
+public class FileStorageBackedEndpointsTests(MaroikWebApplicationFactory factory)
 {
     /// <summary>A valid 1×1 PNG.</summary>
     private static readonly byte[] _png = Convert.FromBase64String(
         "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==");
-
-    private readonly MaroikWebApplicationFactory _factory;
-
-    /// <summary>Initializes a new instance of FileStorageBackedEndpointsTests, sharing the MaroikWebApplicationFactory fixture across the tests in this class.</summary>
-    public FileStorageBackedEndpointsTests(MaroikWebApplicationFactory factory) => _factory = factory;
 
     private sealed record Host(WebApplicationFactory<Program> Factory, HttpClient Client, FakeFileClient Files) : IDisposable
     {
@@ -40,16 +35,16 @@ public class FileStorageBackedEndpointsTests
     private Host CreateHost()
     {
         var files = new FakeFileClient();
-        var factory = _factory.WithWebHostBuilder(b => b.ConfigureTestServices(services =>
+        var factory1 = factory.WithWebHostBuilder(b => b.ConfigureTestServices(services =>
         {
             services.RemoveAll<IFileClient>();
             services.AddSingleton<IFileClient>(files);
         }));
-        var client = factory.CreateClient(new WebApplicationFactoryClientOptions
+        var client = factory1.CreateClient(new WebApplicationFactoryClientOptions
         {
             BaseAddress = new Uri("https://www.localhost/"), AllowAutoRedirect = false, HandleCookies = false
         });
-        return new Host(factory, client, files);
+        return new Host(factory1, client, files);
     }
 
     private static Task<AuthenticatedSession> LoginAsync(Host host, string email, string role = Role.User) =>
@@ -91,7 +86,7 @@ public class FileStorageBackedEndpointsTests
         Assert.StartsWith("upload/Management/Profile/Avatar/", stored);
         Assert.EndsWith(".png", stored);
         Assert.Equal("image/png", host.Files.ContentTypeOf(stored));
-        using var scope = _factory.Services.CreateScope();
+        using var scope = factory.Services.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
         Assert.Equal("/" + stored, await db.Accounts.AsNoTracking().Where(a => a.Email == "storage-avatar-ok@test.com").Select(a => a.AvatarImagePath).SingleAsync(TestContext.Current.CancellationToken));
     }
@@ -100,30 +95,32 @@ public class FileStorageBackedEndpointsTests
     [Fact]
     public async Task UpdateProfileAvatar_ReportsEachRefusalWithItsOwnMessage()
     {
-        using var host = CreateHost();
-        var session = await LoginAsync(host, "storage-avatar-bad@test.com");
-        async Task<string> Send(MultipartFormDataContent form)
+        using var baseHost = CreateHost();
+        var session = await LoginAsync(baseHost, "storage-avatar-bad@test.com");
+
+        Assert.Equal("Please attach a file", await Send(new MultipartFormDataContent { { new StringContent("x"), "Nickname" } }, baseHost));
+        Assert.Equal("Please attach a file", await Send([], baseHost)); // no fields at all: the model is not even bound
+        Assert.Equal("Only .jpg or jpeg or .png file allowed", await Send(FileForm("ProfileAvatarFiles", "me.gif", _png, "image/gif"), baseHost));
+        Assert.Equal("Invalid image file", await Send(FileForm("ProfileAvatarFiles", "me.png", [.. "definitely not an image"u8], "image/png"), baseHost));
+        Assert.Equal("SVG format is not allowed", await Send(FileForm("ProfileAvatarFiles", "me.png", [.. "<svg xmlns=\"http://www.w3.org/2000/svg\"/>"u8], "image/png"), baseHost));
+
+        baseHost.Files.Outcome = FileUploadResult.Infected;
+        Assert.Equal("File may be infected with a virus.", await Send(FileForm("ProfileAvatarFiles", "me.png", _png, "image/png"), baseHost));
+        baseHost.Files.Outcome = FileUploadResult.ScanUnavailable;
+        Assert.Equal("The file could not be scanned for viruses. Please try again later.", await Send(FileForm("ProfileAvatarFiles", "me.png", _png, "image/png"), baseHost));
+        baseHost.Files.Outcome = FileUploadResult.Failed;
+        Assert.Equal("Input is invalid", await Send(FileForm("ProfileAvatarFiles", "me.png", _png, "image/png"), baseHost));
+
+        Assert.Empty(baseHost.Files.UploadedPaths);
+        return;
+
+        async Task<string> Send(MultipartFormDataContent form, Host host)
         {
             using var request = session.BuildFormPostRequest("/Management/UpdateProfileAvatar", form);
             using JsonDocument doc = await PostAsync(host, request);
             Assert.False(doc.RootElement.GetProperty("result").GetBoolean());
             return Error(doc);
         }
-
-        Assert.Equal("Please attach a file", await Send(new MultipartFormDataContent { { new StringContent("x"), "Nickname" } }));
-        Assert.Equal("Please attach a file", await Send(new MultipartFormDataContent())); // no fields at all: the model is not even bound
-        Assert.Equal("Only .jpg or jpeg or .png file allowed", await Send(FileForm("ProfileAvatarFiles", "me.gif", _png, "image/gif")));
-        Assert.Equal("Invalid image file", await Send(FileForm("ProfileAvatarFiles", "me.png", "definitely not an image"u8.ToArray(), "image/png")));
-        Assert.Equal("SVG format is not allowed", await Send(FileForm("ProfileAvatarFiles", "me.png", "<svg xmlns=\"http://www.w3.org/2000/svg\"/>"u8.ToArray(), "image/png")));
-
-        host.Files.Outcome = FileUploadResult.Infected;
-        Assert.Equal("File may be infected with a virus.", await Send(FileForm("ProfileAvatarFiles", "me.png", _png, "image/png")));
-        host.Files.Outcome = FileUploadResult.ScanUnavailable;
-        Assert.Equal("The file could not be scanned for viruses. Please try again later.", await Send(FileForm("ProfileAvatarFiles", "me.png", _png, "image/png")));
-        host.Files.Outcome = FileUploadResult.Failed;
-        Assert.Equal("Input is invalid", await Send(FileForm("ProfileAvatarFiles", "me.png", _png, "image/png")));
-
-        Assert.Empty(host.Files.UploadedPaths);
     }
 
     // -- the editor's inline images --------------------------------------------------------------------
@@ -160,7 +157,7 @@ public class FileStorageBackedEndpointsTests
         using var host = CreateHost();
         var session = await LoginAsync(host, "storage-editor-bad@test.com");
 
-        using var fake = session.BuildFormPostRequest("/Forum/UploadImageFile", FileForm("summernoteImageFile", "pic.png", "not an image"u8.ToArray(), "image/png"));
+        using var fake = session.BuildFormPostRequest("/Forum/UploadImageFile", FileForm("summernoteImageFile", "pic.png", [.. "not an image"u8], "image/png"));
         using JsonDocument fakeDoc = await PostAsync(host, fake);
         Assert.False(fakeDoc.RootElement.GetProperty("result").GetBoolean());
 
@@ -173,7 +170,7 @@ public class FileStorageBackedEndpointsTests
 
     // -- attachments -------------------------------------------------------------------------------------
 
-    /// <summary>A write with a .zip attachment uploads it under the post's folder and records its metadata; a failed upload persists nothing.</summary>
+    /// <summary>Write with a .zip attachment uploads it under the post's folder and records its metadata; a failed upload persists nothing.</summary>
     [Fact]
     public async Task WriteFreeBoard_WithAnAttachment_UploadsItAndRecordsIt()
     {
@@ -190,7 +187,7 @@ public class FileStorageBackedEndpointsTests
         string stored = Assert.Single(host.Files.UploadedPaths);
         Assert.Contains("/boardAttachedFiles/", stored);
         Assert.EndsWith(".zip", stored);
-        using var scope = _factory.Services.CreateScope();
+        using var scope = factory.Services.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
         BoardAttachedFile row = await db.BoardAttachedFiles.AsNoTracking()
             .Join(db.Boards, f => f.BoardId, b => b.Id, (f, b) => new { f, b.Title }).Where(x => x.Title == title).Select(x => x.f).SingleAsync(TestContext.Current.CancellationToken);
@@ -232,10 +229,10 @@ public class FileStorageBackedEndpointsTests
         using var host = CreateHost();
         var session = await LoginAsync(host, $"storage-attach-read-{type.ToLowerInvariant()}@test.com");
         string path = $"upload/{type}/attachments/{Guid.NewGuid():N}.zip";
-        byte[] bytes = "attachment-payload-bytes"u8.ToArray();
+        byte[] bytes = [.. "attachment-payload-bytes"u8];
         host.Files.Seed(path, bytes);
         long boardId;
-        using (var scope = _factory.Services.CreateScope())
+        using (var scope = factory.Services.CreateScope())
         {
             var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
             var board = new Board { Type = type, Title = "WithFile", Content = "b", Writer = session.Nickname, Locked = false, Noticed = false, Deleted = false, View = 0, Created = DateTime.UtcNow, Updated = DateTime.UtcNow };
@@ -268,7 +265,7 @@ public class FileStorageBackedEndpointsTests
         var session = await LoginAsync(host, $"storage-attach-down-{type.ToLowerInvariant()}@test.com");
         host.Files.ThrowOnDownload = true;
         long boardId;
-        using (var scope = _factory.Services.CreateScope())
+        using (var scope = factory.Services.CreateScope())
         {
             var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
             var board = new Board { Type = type, Title = "FileDown", Content = "b", Writer = session.Nickname, Locked = false, Noticed = false, Deleted = false, View = 0, Created = DateTime.UtcNow, Updated = DateTime.UtcNow };
@@ -300,7 +297,7 @@ public class FileStorageBackedEndpointsTests
     {
         using var host = CreateHost();
         var session = await LoginAsync(host, $"storage-toobig-{url.Replace("/", "-").ToLowerInvariant()}@test.com");
-        long limit = _factory.Services.GetRequiredService<Microsoft.Extensions.Options.IOptions<Maroik.Core.Contract.Misc.Settings.ServerSetting>>().Value.MaxAttachedFileSizeBytes;
+        long limit = factory.Services.GetRequiredService<Microsoft.Extensions.Options.IOptions<Core.Contract.Misc.Settings.ServerSetting>>().Value.MaxAttachedFileSizeBytes;
         var form = FileForm(field, "big.png", new byte[limit + 1], "image/png", ("Nickname", "x"));
 
         using var request = session.BuildFormPostRequest(url, form);

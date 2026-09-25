@@ -16,17 +16,9 @@ namespace Maroik.Website.Tests.Controllers;
 /// allow-list, so a direct GET is redirected away by the filter before the view ever renders.
 /// </summary>
 [Collection("Website Integration")]
-public class ExceptionControllerTests
+public class ExceptionControllerTests(MaroikWebApplicationFactory factory)
 {
-    private readonly MaroikWebApplicationFactory _factory;
-    private readonly HttpClient _client;
-
-    /// <summary>Initializes a new instance of ExceptionControllerTests, sharing the MaroikWebApplicationFactory fixture across the tests in this class.</summary>
-    public ExceptionControllerTests(MaroikWebApplicationFactory factory)
-    {
-        _factory = factory;
-        _client = factory.CreateTestClient(followRedirects: false);
-    }
+    private readonly HttpClient _client = factory.CreateTestClient(followRedirects: false);
 
     // -- Error ----------------------------------------------------------------
 
@@ -48,7 +40,7 @@ public class ExceptionControllerTests
     public async Task Error_LoggedInUser_Returns200()
     {
         var session = await AuthenticatedSessionHelper.LoginAsync(
-            _factory, _client, "exception-error-user@test.com", "UserPassword1!", Maroik.Core.Domain.Account.Role.User,
+            factory, _client, "exception-error-user@test.com", "UserPassword1!", Core.Domain.Account.Role.User,
             TestContext.Current.CancellationToken);
         using var request = new HttpRequestMessage(HttpMethod.Get, "/Exception/Error");
         request.Headers.Add("Cookie", session.CookieHeader);
@@ -100,13 +92,13 @@ public class ExceptionControllerTests
             .Setup(a => a.LoginAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ThrowsAsync(new InvalidOperationException("boom"));
 
-        using var factory = _factory.WithWebHostBuilder(builder =>
+        await using var factory1 = factory.WithWebHostBuilder(builder =>
             builder.ConfigureTestServices(services =>
             {
                 services.RemoveAll<IAccountService>();
                 services.AddScoped(_ => throwingAccountService.Object);
             }));
-        var client = factory.CreateClient(new WebApplicationFactoryClientOptions
+        var client = factory1.CreateClient(new WebApplicationFactoryClientOptions
         {
             BaseAddress = new Uri("https://www.localhost/"),
             AllowAutoRedirect = false,
@@ -117,7 +109,9 @@ public class ExceptionControllerTests
         using var getRequest = new HttpRequestMessage(HttpMethod.Get, "/Account/Login");
         var getResponse = await client.SendAsync(getRequest, TestContext.Current.CancellationToken);
         string formHtml = await getResponse.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+ #pragma warning disable SYSLIB1045
         string token = Regex.Match(formHtml, "name=\"__RequestVerificationToken\"[^>]*value=\"([^\"]+)\"").Groups[1].Value;
+ #pragma warning restore SYSLIB1045
         string cookie = getResponse.Headers.GetValues("Set-Cookie")
             .Select(h => h.Split(';', 2)[0])
             .First(c => c.StartsWith("__Secure-.AspNetCore.Antiforgery.", StringComparison.Ordinal));
@@ -152,12 +146,12 @@ public class ExceptionControllerTests
         Assert.Contains("/Dashboard/AnonymousIndex", response.Headers.Location!.ToString());
     }
 
-    /// <summary>Access denied logged in user is redirected by authorization filter.</summary>
+    /// <summary>Access denied logged-in user is redirected by authorization filter.</summary>
     [Fact]
     public async Task AccessDenied_LoggedInUser_IsRedirectedByAuthorizationFilter()
     {
         var session = await AuthenticatedSessionHelper.LoginAsync(
-            _factory, _client, "exception-accessdenied-user@test.com", "UserPassword1!", Maroik.Core.Domain.Account.Role.User,
+            factory, _client, "exception-accessdenied-user@test.com", "UserPassword1!", Core.Domain.Account.Role.User,
             TestContext.Current.CancellationToken);
         using var request = new HttpRequestMessage(HttpMethod.Get, "/Exception/AccessDenied");
         request.Headers.Add("Cookie", session.CookieHeader);

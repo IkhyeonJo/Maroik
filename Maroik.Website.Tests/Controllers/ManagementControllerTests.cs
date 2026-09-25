@@ -11,22 +11,14 @@ namespace Maroik.Website.Tests.Controllers;
 /// authenticate as an Admin first.
 /// </summary>
 [Collection("Website Integration")]
-public class ManagementControllerTests
+public class ManagementControllerTests(MaroikWebApplicationFactory factory)
 {
-    private readonly MaroikWebApplicationFactory _factory;
-    private readonly HttpClient _client;
-
-    /// <summary>Initializes a new instance of ManagementControllerTests, sharing the MaroikWebApplicationFactory fixture across the tests in this class.</summary>
-    public ManagementControllerTests(MaroikWebApplicationFactory factory)
-    {
-        _factory = factory;
-        _client = factory.CreateTestClient(followRedirects: false);
-    }
+    private readonly HttpClient _client = factory.CreateTestClient(followRedirects: false);
 
     private async Task<HttpResponseMessage> GetAsAdminAsync(string url)
     {
         var session = await AuthenticatedSessionHelper.LoginAsync(
-            _factory, _client, "management-smoke-admin@test.com", "AdminPassword1!", Role.Admin, TestContext.Current.CancellationToken);
+            factory, _client, "management-smoke-admin@test.com", "AdminPassword1!", Role.Admin, TestContext.Current.CancellationToken);
         using var request = new HttpRequestMessage(HttpMethod.Get, url);
         request.Headers.Add("Cookie", session.CookieHeader);
         return await _client.SendAsync(request, TestContext.Current.CancellationToken);

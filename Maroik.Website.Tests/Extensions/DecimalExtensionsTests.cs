@@ -36,7 +36,7 @@ public class DecimalExtensionsTests
     [Fact]
     public void TrimTrailingZeros_HandlesLargeWholeNumber()
     {
-        decimal value = 1_000_000m;
+        const decimal value = 1_000_000m;
         string result = value.TrimTrailingZeros();
         Assert.Equal("1000000", result);
     }
@@ -45,7 +45,7 @@ public class DecimalExtensionsTests
     [Fact]
     public void TrimTrailingZeros_HandlesWholeNumber_BeyondIntMaxValue()
     {
-        decimal value = 3_000_000_000m;
+        const decimal value = 3_000_000_000m;
         string result = value.TrimTrailingZeros();
         Assert.Equal("3000000000", result);
     }

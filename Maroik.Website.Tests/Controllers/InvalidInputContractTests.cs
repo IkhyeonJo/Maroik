@@ -13,13 +13,9 @@ namespace Maroik.Website.Tests.Controllers;
 /// Runs against the real services and database.
 /// </summary>
 [Collection("Website Integration")]
-public class InvalidInputContractTests
+public class InvalidInputContractTests(MaroikWebApplicationFactory factory)
 {
     private const string Invalid = "Input is invalid";
-    private readonly MaroikWebApplicationFactory _factory;
-
-    /// <summary>Initializes a new instance of InvalidInputContractTests, sharing the MaroikWebApplicationFactory fixture across the tests in this class.</summary>
-    public InvalidInputContractTests(MaroikWebApplicationFactory factory) => _factory = factory;
 
     private static MultipartFormDataContent EmptyForm() => new() { { new StringContent(""), "x" } };
 
@@ -62,10 +58,10 @@ public class InvalidInputContractTests
     [Fact]
     public async Task AnEmptyOrMalformedBody_IsRefused_ByEveryListedWriteEndpoint()
     {
-        var client = _factory.CreateTestClient();
+        var client = factory.CreateTestClient();
         var sessions = new Dictionary<string, AuthenticatedSession>();
         foreach (string role in new[] { Role.User, Role.Admin })
-            sessions[role] = await AuthenticatedSessionHelper.LoginAsync(_factory, client, $"invalid-input-{role.ToLowerInvariant()}@test.com", "UserPassword1!", role, TestContext.Current.CancellationToken);
+            sessions[role] = await AuthenticatedSessionHelper.LoginAsync(factory, client, $"invalid-input-{role.ToLowerInvariant()}@test.com", "UserPassword1!", role, TestContext.Current.CancellationToken);
 
         List<string> problems = [];
         foreach (var (role, url, form, body, message) in _endpoints)
@@ -85,7 +81,7 @@ public class InvalidInputContractTests
 
     private long CategoryIdByName(string name)
     {
-        using var scope = _factory.Services.CreateScope();
+        using var scope = factory.Services.CreateScope();
         return scope.ServiceProvider.GetRequiredService<ApplicationDbContext>().Categories.Single(c => c.Name == name).Id;
     }
 
@@ -103,17 +99,9 @@ public class InvalidInputContractTests
     [Fact]
     public async Task MenuWrites_TheDatabaseRefuses_AreAnsweredWithTheGenericMessage()
     {
-        var client = _factory.CreateTestClient();
-        var admin = await AuthenticatedSessionHelper.LoginAsync(_factory, client, "invalid-input-menu-admin@test.com", "AdminPassword1!", Role.Admin, TestContext.Current.CancellationToken);
+        var client = factory.CreateTestClient();
+        var admin = await AuthenticatedSessionHelper.LoginAsync(factory, client, "invalid-input-menu-admin@test.com", "AdminPassword1!", Role.Admin, TestContext.Current.CancellationToken);
         string name = $"Refused-{Guid.NewGuid():N}";
-
-        async Task<string> Post(string url, object body)
-        {
-            using var request = admin.BuildJsonPostRequest(url, body);
-            var response = await client.SendAsync(request, TestContext.Current.CancellationToken);
-            Assert.Equal(HttpStatusCode.OK, response.StatusCode);
-            return await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
-        }
 
         string created = await Post("/Management/CreateCategory", Category(name));
         Assert.Contains("\"result\":true", created);
@@ -123,11 +111,20 @@ public class InvalidInputContractTests
         string createTooLong = await Post("/Management/CreateCategory", Category(new string('n', 5000)));
         string createSubOfMissing = await Post("/Management/CreateSubCategory", SubCategory(name, 987654321));
 
-        Assert.All(new[] { createTooLong, createSubOfMissing }, b =>
+        Assert.All([createTooLong, createSubOfMissing], b =>
         {
             Assert.False(JsonDocument.Parse(b).RootElement.GetProperty("result").GetBoolean());
             Assert.Contains(Invalid, b);
         });
+        return;
+
+        async Task<string> Post(string url, object body)
+        {
+            using var request = admin.BuildJsonPostRequest(url, body);
+            var response = await client.SendAsync(request, TestContext.Current.CancellationToken);
+            Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+            return await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+        }
     }
 
     /// <summary>The admin exports return real .xlsx workbooks named after the requested file.</summary>
@@ -136,8 +133,8 @@ public class InvalidInputContractTests
     [InlineData("/Management/ExportExcelMenu")]
     public async Task AdminExportExcel_ReturnsAnXlsxWorkbook_NamedAfterTheRequestedFile(string url)
     {
-        var client = _factory.CreateTestClient();
-        var admin = await AuthenticatedSessionHelper.LoginAsync(_factory, client, $"invalid-input-export{url.Replace("/", "-").ToLowerInvariant()}@test.com", "AdminPassword1!", Role.Admin, TestContext.Current.CancellationToken);
+        var client = factory.CreateTestClient();
+        var admin = await AuthenticatedSessionHelper.LoginAsync(factory, client, $"invalid-input-export{url.Replace("/", "-").ToLowerInvariant()}@test.com", "AdminPassword1!", Role.Admin, TestContext.Current.CancellationToken);
         using var request = admin.BuildJsonPostRequest($"{url}?fileName=admin report");
 
         var response = await client.SendAsync(request, TestContext.Current.CancellationToken);
@@ -155,8 +152,8 @@ public class InvalidInputContractTests
     [Fact]
     public async Task CultureManagement_RefusesAnUnsupportedCulture_AndSetsNoCookie()
     {
-        var client = _factory.CreateTestClient();
-        var user = await AuthenticatedSessionHelper.LoginAsync(_factory, client, "invalid-input-culture@test.com", "UserPassword1!", Role.User, TestContext.Current.CancellationToken);
+        var client = factory.CreateTestClient();
+        var user = await AuthenticatedSessionHelper.LoginAsync(factory, client, "invalid-input-culture@test.com", "UserPassword1!", Role.User, TestContext.Current.CancellationToken);
         using var request = user.BuildJsonPostRequest("/Dashboard/CultureManagement", new { Culture = "xx-NOPE" });
 
         var response = await client.SendAsync(request, TestContext.Current.CancellationToken);
@@ -171,8 +168,8 @@ public class InvalidInputContractTests
     [Fact]
     public async Task UpdateProfileTimeZone_WithoutATimeZone_RedirectsBackToTheProfile()
     {
-        var client = _factory.CreateTestClient();
-        var user = await AuthenticatedSessionHelper.LoginAsync(_factory, client, "invalid-input-tz@test.com", "UserPassword1!", Role.User, TestContext.Current.CancellationToken);
+        var client = factory.CreateTestClient();
+        var user = await AuthenticatedSessionHelper.LoginAsync(factory, client, "invalid-input-tz@test.com", "UserPassword1!", Role.User, TestContext.Current.CancellationToken);
         using var request = user.BuildFormPostRequest("/Management/UpdateProfileTimeZone", new MultipartFormDataContent { { new StringContent("x"), "Unrelated" } });
 
         var response = await client.SendAsync(request, TestContext.Current.CancellationToken);
@@ -188,9 +185,9 @@ public class InvalidInputContractTests
     [Fact]
     public async Task AnEmptyMultipartBody_NeverCausesAServerError()
     {
-        var client = _factory.CreateTestClient();
-        var user = await AuthenticatedSessionHelper.LoginAsync(_factory, client, "invalid-input-emptymulti-user@test.com", "UserPassword1!", Role.User, TestContext.Current.CancellationToken);
-        var admin = await AuthenticatedSessionHelper.LoginAsync(_factory, client, "invalid-input-emptymulti-admin@test.com", "UserPassword1!", Role.Admin, TestContext.Current.CancellationToken);
+        var client = factory.CreateTestClient();
+        var user = await AuthenticatedSessionHelper.LoginAsync(factory, client, "invalid-input-emptymulti-user@test.com", "UserPassword1!", Role.User, TestContext.Current.CancellationToken);
+        var admin = await AuthenticatedSessionHelper.LoginAsync(factory, client, "invalid-input-emptymulti-admin@test.com", "UserPassword1!", Role.Admin, TestContext.Current.CancellationToken);
         (AuthenticatedSession Session, string Url)[] endpoints =
         [
             (user, "/Management/UpdateProfileAvatar"), (user, "/Management/UpdateProfileTimeZone"),
@@ -203,7 +200,7 @@ public class InvalidInputContractTests
         List<string> problems = [];
         foreach (var (session, url) in endpoints)
         {
-            using var request = session.BuildFormPostRequest(url, new MultipartFormDataContent());
+            using var request = session.BuildFormPostRequest(url, []);
             var response = await client.SendAsync(request, TestContext.Current.CancellationToken);
             if ((int)response.StatusCode >= 500) problems.Add($"{url}: HTTP {(int)response.StatusCode}");
         }

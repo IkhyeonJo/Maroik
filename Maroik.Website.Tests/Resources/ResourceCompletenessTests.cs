@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 using System.Text.RegularExpressions;
 using System.Xml.Linq;
 
@@ -31,6 +32,7 @@ public class ResourceCompletenessTests
     private static IEnumerable<string> ResxFiles() =>
         Directory.EnumerateFiles(_resourcesDir, "*.resx", SearchOption.AllDirectories).Order();
 
+    [SuppressMessage("Performance", "SYSLIB1045:\'GeneratedRegexAttribute\'로 변환합니다.")]
     private static string Stem(string resxPath)
     {
         string relative = Path.GetRelativePath(_resourcesDir, resxPath).Replace('\\', '/');
@@ -42,12 +44,14 @@ public class ResourceCompletenessTests
     public void EveryResx_HasBothCultures()
     {
         var byStem = ResxFiles().GroupBy(Stem).ToList();
-        var problems = new List<string>();
-        foreach (var group in byStem)
-        {
-            var cultures = group.Select(f => Regex.Match(f, @"\.(en-US|ko-KR)\.resx$").Groups[1].Value).Order().ToList();
-            if (!cultures.SequenceEqual(["en-US", "ko-KR"])) problems.Add($"{group.Key}: {string.Join(",", cultures)}");
-        }
+        var problems = (from @group in byStem
+ #pragma warning disable SYSLIB1045
+            let cultures = @group.Select(f => Regex.Match(f, @"\.(en-US|ko-KR)\.resx$").Groups[1].Value).Order().ToList()
+ #pragma warning restore SYSLIB1045
+            where !cultures.SequenceEqual([
+                "en-US", "ko-KR"
+            ])
+            select $"{@group.Key}: {string.Join(",", cultures)}").ToList();
 
         Assert.NotEmpty(byStem);
         Assert.True(problems.Count == 0, "resx files that are not an en-US + ko-KR pair: " + string.Join("; ", problems));
@@ -64,8 +68,8 @@ public class ResourceCompletenessTests
             var ko = group.Single(f => f.EndsWith(".ko-KR.resx", StringComparison.Ordinal));
             var enKeys = ReadResx(en).Keys.ToHashSet();
             var koKeys = ReadResx(ko).Keys.ToHashSet();
-            foreach (string key in enKeys.Except(koKeys)) problems.Add($"{group.Key}: '{key}' only in en-US");
-            foreach (string key in koKeys.Except(enKeys)) problems.Add($"{group.Key}: '{key}' only in ko-KR");
+            problems.AddRange(enKeys.Except(koKeys).Select(key => $"{group.Key}: '{key}' only in en-US"));
+            problems.AddRange(koKeys.Except(enKeys).Select(key => $"{group.Key}: '{key}' only in ko-KR"));
         }
 
         Assert.True(problems.Count == 0, string.Join(Environment.NewLine, problems));
@@ -78,7 +82,9 @@ public class ResourceCompletenessTests
         var blank = new List<string>();
         foreach (string file in ResxFiles())
         {
+ #pragma warning disable SYSLIB1045
             string culture = Regex.Match(file, @"\.(en-US|ko-KR)\.resx$").Groups[1].Value;
+ #pragma warning restore SYSLIB1045
             foreach (var (key, value) in ReadResx(file))
                 if (string.IsNullOrWhiteSpace(value) && !_allowedEmpty.Contains((culture, key))) blank.Add($"{Stem(file)} [{culture}]: '{key}'");
         }
@@ -87,10 +93,14 @@ public class ResourceCompletenessTests
     }
 
     // A literal key asked of a localizer: Localizer["..."], _localizer["..."], localizer["..."] (C# string escapes for \" only).
-    private static readonly Regex _literalKey = new(@"\b_?[Ll]ocalizer\s*\[\s*""((?:[^""\\]|\\.)*)""", RegexOptions.Compiled);
+ #pragma warning disable SYSLIB1045
+    private static readonly Regex _literalKey = new("""
+                                                    \b_?[Ll]ocalizer\s*\[\s*"((?:[^"\\]|\\.)*)"
+                                                    """, RegexOptions.Compiled);
+ #pragma warning restore SYSLIB1045
 
     private static IEnumerable<string> LiteralKeys(string path) =>
-        _literalKey.Matches(File.ReadAllText(path)).Select(m => m.Groups[1].Value.Replace("\\\"", "\"").Replace("\\\\", "\\")).Distinct();
+        _literalKey.Matches(File.ReadAllText(path)).Select(m => m.Groups[1].Value.Replace("\\\"", "\"").Replace(@"\\", "\\")).Distinct();
 
     private static List<string> MissingKeys(IEnumerable<string> sourceFiles, Func<string, string> resxStemFor)
     {
@@ -105,8 +115,7 @@ public class ResourceCompletenessTests
                 string resx = Path.Combine(_resourcesDir, $"{stem}.{culture}.resx");
                 if (!File.Exists(resx)) { missing.Add($"{Path.GetRelativePath(_websiteDir, source)}: no {stem}.{culture}.resx for its {keys.Count} key(s)"); continue; }
                 var defined = ReadResx(resx);
-                foreach (string key in keys.Where(k => !defined.ContainsKey(k)))
-                    missing.Add($"{Path.GetRelativePath(_websiteDir, source)}: '{key}' missing in {stem}.{culture}.resx");
+                missing.AddRange(keys.Where(k => !defined.ContainsKey(k)).Select(key => $"{Path.GetRelativePath(_websiteDir, source)}: '{key}' missing in {stem}.{culture}.resx"));
             }
         }
         return missing;

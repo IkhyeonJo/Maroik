@@ -15,24 +15,16 @@ namespace Maroik.Website.Tests.Controllers;
 /// straight into PostgreSQL and read back through the real HTTP pipeline.
 /// </summary>
 [Collection("Website Integration")]
-public class FinanceReadEndpointsTests
+public class FinanceReadEndpointsTests(MaroikWebApplicationFactory factory)
 {
-    private readonly MaroikWebApplicationFactory _factory;
-    private readonly HttpClient _client;
-
-    /// <summary>Initializes a new instance of FinanceReadEndpointsTests, sharing the MaroikWebApplicationFactory fixture across the tests in this class.</summary>
-    public FinanceReadEndpointsTests(MaroikWebApplicationFactory factory)
-    {
-        _factory = factory;
-        _client = factory.CreateTestClient(followRedirects: false);
-    }
-
+    private readonly HttpClient _client = factory.CreateTestClient(followRedirects: false);
+    
     private Task<AuthenticatedSession> LoginAsync(string email) =>
-        AuthenticatedSessionHelper.LoginAsync(_factory, _client, email, "UserPassword1!", Role.User, TestContext.Current.CancellationToken);
+        AuthenticatedSessionHelper.LoginAsync(factory, _client, email, "UserPassword1!", Role.User, TestContext.Current.CancellationToken);
 
     private void Seed(Action<ApplicationDbContext> seed)
     {
-        using var scope = _factory.Services.CreateScope();
+        using var scope = factory.Services.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
         seed(db);
         db.SaveChanges();
@@ -137,7 +129,7 @@ public class FinanceReadEndpointsTests
     [Fact]
     public async Task IncomeGrid_ListsOnlyTheCallersRows_AndTheSearchNarrowsThem()
     {
-        string email = "fin-read-income-grid@test.com";
+        const string email = "fin-read-income-grid@test.com";
         var session = await LoginAsync(email);
         await LoginAsync("fin-read-income-grid-other@test.com");
         SeedAsset(email, "IncGrid-Bank");
@@ -160,7 +152,7 @@ public class FinanceReadEndpointsTests
     [Fact]
     public async Task ExpenditureGrid_ListsTheCallersRows_AndTheSearchNarrowsThem()
     {
-        string email = "fin-read-exp-grid@test.com";
+        const string email = "fin-read-exp-grid@test.com";
         var session = await LoginAsync(email);
         SeedAsset(email, "ExpGrid-Card");
         SeedExpenditure(email, "ExpGrid-Card", "LunchAlpha-EG");
@@ -175,11 +167,11 @@ public class FinanceReadEndpointsTests
         Assert.Contains("DinnerBeta-EG", searched);
     }
 
-    /// <summary>The asset grid lists the caller's assets and honours the whole-row search.</summary>
+    /// <summary>The asset grid lists the caller's assets and honors the whole-row search.</summary>
     [Fact]
     public async Task AssetGrid_ListsTheCallersAssets_AndTheSearchNarrowsThem()
     {
-        string email = "fin-read-asset-grid@test.com";
+        const string email = "fin-read-asset-grid@test.com";
         var session = await LoginAsync(email);
         SeedAsset(email, "AssetGridAlpha-AG");
         SeedAsset(email, "AssetGridBeta-AG");
@@ -197,7 +189,7 @@ public class FinanceReadEndpointsTests
     [Fact]
     public async Task FixedGrids_ListTheCallersSchedules_AndTheSearchNarrowsThem()
     {
-        string email = "fin-read-fixed-grid@test.com";
+        const string email = "fin-read-fixed-grid@test.com";
         var session = await LoginAsync(email);
         SeedAsset(email, "FixGrid-Bank");
         SeedFixedIncome(email, "FixGrid-Bank", "SalaryAlpha-FG");
@@ -249,8 +241,8 @@ public class FinanceReadEndpointsTests
     [Fact]
     public async Task ExistsLookups_ResolveOnlyTheCallersOwnRecords()
     {
-        string email = "fin-read-exists@test.com";
-        string other = "fin-read-exists-other@test.com";
+        const string email = "fin-read-exists@test.com";
+        const string other = "fin-read-exists-other@test.com";
         var session = await LoginAsync(email);
         await LoginAsync(other);
         SeedAsset(email, "Exists-Bank");

@@ -6,7 +6,7 @@ namespace Maroik.Website.Tests.Extensions;
 /// <summary>Unit tests for <see cref="ExportExcelExtensions"/>.</summary>
 public class ExportExcelExtensionsTests
 {
-    /// <summary>To excel file name starts with prefix and ends with xlsx extension.</summary>
+    /// <summary>To Excel file name starts with prefix and ends with xlsx extension.</summary>
     [Fact]
     public void ToExcelFileName_StartsWithPrefixAndEndsWithXlsxExtension()
     {
@@ -16,13 +16,15 @@ public class ExportExcelExtensionsTests
         Assert.EndsWith(".xlsx", fileName);
     }
 
-    /// <summary>To excel file name matches timestamp pattern.</summary>
+    /// <summary>To Excel file name matches timestamp pattern.</summary>
     [Fact]
     public void ToExcelFileName_MatchesTimestampPattern()
     {
         string fileName = "Menu".ToExcelFileName("UTC");
 
+ #pragma warning disable SYSLIB1045
         Assert.Matches(new Regex(@"^Menu-\d{4}-\d{2}-\d{2}-\d{2}-\d{2}-\d{2}-\d{3}\.xlsx$"), fileName);
+ #pragma warning restore SYSLIB1045
     }
 
     /// <summary>

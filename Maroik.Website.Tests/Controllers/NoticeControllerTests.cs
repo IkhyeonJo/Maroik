@@ -11,22 +11,14 @@ namespace Maroik.Website.Tests.Controllers;
 /// authenticate as a User first.
 /// </summary>
 [Collection("Website Integration")]
-public class NoticeControllerTests
+public class NoticeControllerTests(MaroikWebApplicationFactory factory)
 {
-    private readonly MaroikWebApplicationFactory _factory;
-    private readonly HttpClient _client;
-
-    /// <summary>Initializes a new instance of NoticeControllerTests, sharing the MaroikWebApplicationFactory fixture across the tests in this class.</summary>
-    public NoticeControllerTests(MaroikWebApplicationFactory factory)
-    {
-        _factory = factory;
-        _client = factory.CreateTestClient(followRedirects: false);
-    }
+    private readonly HttpClient _client = factory.CreateTestClient(followRedirects: false);
 
     private async Task<HttpResponseMessage> GetAsUserAsync(string url)
     {
         var session = await AuthenticatedSessionHelper.LoginAsync(
-            _factory, _client, "notice-smoke-user@test.com", "UserPassword1!", Role.User, TestContext.Current.CancellationToken);
+            factory, _client, "notice-smoke-user@test.com", "UserPassword1!", Role.User, TestContext.Current.CancellationToken);
         using var request = new HttpRequestMessage(HttpMethod.Get, url);
         request.Headers.Add("Cookie", session.CookieHeader);
         return await _client.SendAsync(request, TestContext.Current.CancellationToken);
@@ -74,7 +66,7 @@ public class NoticeControllerTests
     public async Task CreateFixedIncome_MalformedMaturityDate_ReturnsFailureResult_NotServerError()
     {
         var session = await AuthenticatedSessionHelper.LoginAsync(
-            _factory, _client, "notice-create-badmaturity@test.com", "UserPassword1!", Role.User, TestContext.Current.CancellationToken);
+            factory, _client, "notice-create-badmaturity@test.com", "UserPassword1!", Role.User, TestContext.Current.CancellationToken);
 
         using var request = session.BuildJsonPostRequest("/Notice/CreateFixedIncome", new
         {

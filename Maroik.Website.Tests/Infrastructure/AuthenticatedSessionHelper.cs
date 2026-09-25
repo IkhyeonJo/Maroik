@@ -1,9 +1,7 @@
 using System.Net.Http.Json;
 using System.Text.RegularExpressions;
 using Maroik.Core.Contract.Interfaces;
-using Maroik.Core.Domain.Account;
 using Maroik.Core.PostgreSQL.Data;
-using Maroik.Core.PostgreSQL.Models;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.Extensions.DependencyInjection;
@@ -21,9 +19,6 @@ public sealed class AuthenticatedSession(string sessionCookieValue, string antif
     /// <summary>Cookie header value combining the session and antiforgery cookies.</summary>
     public string CookieHeader =>
         $"{AuthenticatedSessionHelper.SessionCookieName}={sessionCookieValue}; {AuthenticatedSessionHelper.AntiforgeryCookieName}={antiforgeryCookieValue}";
-
-    /// <summary>The raw antiforgery token to send via the <c>RequestVerificationToken</c> header on AJAX/JSON POSTs.</summary>
-    public string AntiforgeryToken => antiforgeryToken;
 
     /// <summary>The seeded account's nickname (derived from its email — see <see cref="AuthenticatedSessionHelper.LoginAsync"/>).</summary>
     public string Nickname => nickname;
@@ -96,7 +91,7 @@ public static class AuthenticatedSessionHelper
                     Created = DateTime.UtcNow,
                     Updated = DateTime.UtcNow
                 });
-                db.SaveChanges();
+                await db.SaveChangesAsync(ct);
             }
         }
 
@@ -137,24 +132,14 @@ public static class AuthenticatedSessionHelper
 
     private static string? ExtractCookieValue(HttpResponseMessage response, string cookieName)
     {
-        if (!response.Headers.TryGetValues("Set-Cookie", out var setCookieHeaders)) return null;
-
-        foreach (string header in setCookieHeaders)
-        {
-            string namePart = header.Split(';', 2)[0];
-            int eq = namePart.IndexOf('=');
-            if (eq <= 0) continue;
-            if (namePart[..eq] == cookieName) return namePart[(eq + 1)..];
-        }
-
-        return null;
+        return !response.Headers.TryGetValues("Set-Cookie", out var setCookieHeaders) ? null : (from header in setCookieHeaders select header.Split(';', 2)[0] into namePart let eq = namePart.IndexOf('=') where eq > 0 where namePart[..eq] == cookieName select namePart[(eq + 1)..]).FirstOrDefault();
     }
 
     private static string ExtractAntiForgeryToken(string html)
     {
+ #pragma warning disable SYSLIB1045
         Match match = Regex.Match(html, "name=\"__RequestVerificationToken\"[^>]*value=\"([^\"]+)\"");
-        if (!match.Success)
-            throw new InvalidOperationException("Could not find __RequestVerificationToken in the response HTML.");
-        return match.Groups[1].Value;
+ #pragma warning restore SYSLIB1045
+        return !match.Success ? throw new InvalidOperationException("Could not find __RequestVerificationToken in the response HTML.") : match.Groups[1].Value;
     }
 }

@@ -21,24 +21,16 @@ namespace Maroik.Website.Tests.Controllers;
 /// Razor views whose optional parts only render for particular data or modes: the dashboard's settings card (needs assets in
 /// more than one currency and a span of years), the top bar's notification entries (need due fixed schedules), the
 /// access-denied page (the authorization filter always redirects away from it, so it is rendered with that filter removed) and
-/// the MVC Grid table template in the excel filter mode no page of the site uses (its header mode is not rendered here: the library's template throws for a header-mode column that has no applied filter, and no site grid uses that mode).
+/// the MVC Grid table template in the Excel filter mode no page of the site uses (its header mode is not rendered here: the library's template throws for a header-mode column that has no applied filter, and no site grid uses that mode).
 /// </summary>
 [Collection("Website Integration")]
-public class ViewRenderingTests
+public class ViewRenderingTests(MaroikWebApplicationFactory factory)
 {
-    private readonly MaroikWebApplicationFactory _factory;
-    private readonly HttpClient _client;
-
-    /// <summary>Initializes a new instance of ViewRenderingTests, sharing the MaroikWebApplicationFactory fixture across the tests in this class.</summary>
-    public ViewRenderingTests(MaroikWebApplicationFactory factory)
-    {
-        _factory = factory;
-        _client = factory.CreateTestClient(followRedirects: false);
-    }
+    private readonly HttpClient _client = factory.CreateTestClient(followRedirects: false);
 
     private void Seed(Action<ApplicationDbContext> seed)
     {
-        using var scope = _factory.Services.CreateScope();
+        using var scope = factory.Services.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
         seed(db);
         db.SaveChanges();
@@ -66,8 +58,8 @@ public class ViewRenderingTests
     [Fact]
     public async Task Dashboard_WithAssetsInTwoCurrencies_ShowsTheSettingsCard()
     {
-        string email = "view-dash@test.com";
-        var session = await AuthenticatedSessionHelper.LoginAsync(_factory, _client, email, "UserPassword1!", Role.User, TestContext.Current.CancellationToken);
+        const string email = "view-dash@test.com";
+        var session = await AuthenticatedSessionHelper.LoginAsync(factory, _client, email, "UserPassword1!", Role.User, TestContext.Current.CancellationToken);
         SeedAsset(email, "View-KRW-Asset", "KRW");
         SeedAsset(email, "View-USD-Asset", "USD");
         Seed(db => db.Incomes.Add(new Income
@@ -92,8 +84,8 @@ public class ViewRenderingTests
     [Fact]
     public async Task TopBar_ListsDueFixedIncomesAndExpenditures()
     {
-        string email = "view-topbar@test.com";
-        var session = await AuthenticatedSessionHelper.LoginAsync(_factory, _client, email, "UserPassword1!", Role.User, TestContext.Current.CancellationToken);
+        const string email = "view-topbar@test.com";
+        var session = await AuthenticatedSessionHelper.LoginAsync(factory, _client, email, "UserPassword1!", Role.User, TestContext.Current.CancellationToken);
         SeedAsset(email, "View-Top-Asset", "KRW");
         Seed(db =>
         {
@@ -121,12 +113,11 @@ public class ViewRenderingTests
     [Fact]
     public async Task AccessDenied_RendersItsView_WhenNotRedirectedAway()
     {
-        var session = await AuthenticatedSessionHelper.LoginAsync(_factory, _client, "view-denied@test.com", "UserPassword1!", Role.User, TestContext.Current.CancellationToken);
-        using var host = _factory.WithWebHostBuilder(b => b.ConfigureTestServices(services =>
+        var session = await AuthenticatedSessionHelper.LoginAsync(factory, _client, "view-denied@test.com", "UserPassword1!", Role.User, TestContext.Current.CancellationToken);
+        await using var host = factory.WithWebHostBuilder(b => b.ConfigureTestServices(services =>
             services.Configure<MvcOptions>(o =>
             {
-                foreach (var filter in o.Filters.Where(f => f is TypeFilterAttribute { ImplementationType.Name: "AuthorizationFilter" }
-                                                          || f is ServiceFilterAttribute { ServiceType.Name: "AuthorizationFilter" }).ToList())
+                foreach (var filter in o.Filters.Where(f => f is TypeFilterAttribute { ImplementationType.Name: "AuthorizationFilter" } or ServiceFilterAttribute { ServiceType.Name: "AuthorizationFilter" }).ToList())
                     o.Filters.Remove(filter);
             })));
         var client = host.CreateClient(new WebApplicationFactoryClientOptions { BaseAddress = new Uri("https://www.localhost/"), AllowAutoRedirect = false, HandleCookies = false });
@@ -146,13 +137,13 @@ public class ViewRenderingTests
 
     private async Task<string> RenderGridAsync(GridFilterMode mode)
     {
-        using var scope = _factory.Services.CreateScope();
+        using var scope = factory.Services.CreateScope();
         var sp = scope.ServiceProvider;
         var httpContext = new Microsoft.AspNetCore.Http.DefaultHttpContext { RequestServices = sp };
         var actionContext = new ActionContext(httpContext, new RouteData(), new ActionDescriptor());
         IRazorViewEngine engine = sp.GetRequiredService<IRazorViewEngine>();
         ViewEngineResult found = engine.GetView(null, "~/Views/Shared/MvcGrid/_Grid.cshtml", isMainPage: false);
-        Assert.True(found.Success, string.Join(",", found.SearchedLocations ?? []));
+        Assert.True(found.Success, string.Join(",", found.SearchedLocations));
 
         var grid = new Grid<Row>([new Row("alpha", "x"), new Row("beta", "y")])
         {
@@ -171,15 +162,15 @@ public class ViewRenderingTests
         choice.Filter.Options = [new SelectListItem("X", "x"), new SelectListItem("Y", "y")];
         choice.Filter.Type = GridFilterType.Multi;
 
-        var viewData = new ViewDataDictionary<IGrid>(new Microsoft.AspNetCore.Mvc.ModelBinding.EmptyModelMetadataProvider(), new ModelStateDictionary()) { Model = grid };
-        using var writer = new StringWriter();
+        var viewData = new ViewDataDictionary<IGrid>(new EmptyModelMetadataProvider(), new ModelStateDictionary()) { Model = grid };
+        await using var writer = new StringWriter();
         var viewContext = new ViewContext(actionContext, found.View, viewData,
             new TempDataDictionary(httpContext, sp.GetRequiredService<ITempDataProvider>()), writer, new HtmlHelperOptions());
         await found.View.RenderAsync(viewContext);
         return writer.ToString();
     }
 
-    /// <summary>In excel mode the header shows the plain title with the filter popup's options next to it.</summary>
+    /// <summary>In Excel mode the header shows the plain title with the filter popup's options next to it.</summary>
     [Fact]
     public async Task GridTemplate_ExcelFilterMode_ShowsTitlesWithFilterOptions()
     {

@@ -14,18 +14,10 @@ namespace Maroik.Website.Tests.Controllers;
 /// without a session and must respond 200 OK.
 /// </summary>
 [Collection("Website Integration")]
-public class ForumControllerTests
+public class ForumControllerTests(MaroikWebApplicationFactory factory)
 {
-    private readonly MaroikWebApplicationFactory _factory;
-    private readonly HttpClient _client;
-
-    /// <summary>Initializes a new instance of ForumControllerTests, sharing the MaroikWebApplicationFactory fixture across the tests in this class.</summary>
-    public ForumControllerTests(MaroikWebApplicationFactory factory)
-    {
-        _factory = factory;
-        _client = factory.CreateTestClient(followRedirects: false);
-    }
-
+    private readonly HttpClient _client = factory.CreateTestClient(followRedirects: false);
+    
     // -- FreeForum list -------------------------------------------------------
 
     /// <summary>Verifies that <c>FreeForum</c> default list when returns200.</summary>
@@ -57,7 +49,7 @@ public class ForumControllerTests
 
     // -- FreeForum write (no session) -----------------------------------------
 
-    /// <summary>Verifies that <c>FreeForum</c> write mode without session when redirects to login.</summary>
+    /// <summary>Verifies that <c>FreeForum</c> write mode without session when redirects to log in.</summary>
     [Fact]
     public async Task FreeForum_WriteModeWithoutSession_RedirectsToLogin()
     {
@@ -108,7 +100,7 @@ public class ForumControllerTests
         const string secretContent = "TOP-SECRET-LOCKED-BOARD-CONTENT";
 
         long boardId;
-        using (var scope = _factory.Services.CreateScope())
+        using (var scope = factory.Services.CreateScope())
         {
             var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
             var passwordService = scope.ServiceProvider.GetRequiredService<IPasswordService>();
@@ -130,7 +122,7 @@ public class ForumControllerTests
                 Locked = true
             };
             db.Boards.Add(board);
-            db.SaveChanges();
+            await db.SaveChangesAsync(TestContext.Current.CancellationToken);
             boardId = board.Id;
         }
 
@@ -156,7 +148,7 @@ public class ForumControllerTests
     public async Task WriteFreeComment_ValidPayload_PersistsComment()
     {
         long boardId;
-        using (var scope = _factory.Services.CreateScope())
+        using (var scope = factory.Services.CreateScope())
         {
             var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
             var board = new Board
@@ -172,18 +164,18 @@ public class ForumControllerTests
                 Locked = false
             };
             db.Boards.Add(board);
-            db.SaveChanges();
+            await db.SaveChangesAsync(TestContext.Current.CancellationToken);
             boardId = board.Id;
         }
 
-        var session = await AuthenticatedSessionHelper.LoginAsync(_factory, _client, "forum-writecomment-user@test.com", "UserPassword1!", Role.User, TestContext.Current.CancellationToken);
+        var session = await AuthenticatedSessionHelper.LoginAsync(factory, _client, "forum-writecomment-user@test.com", "UserPassword1!", Role.User, TestContext.Current.CancellationToken);
         using var request = session.BuildJsonPostRequest("/Forum/WriteFreeComment", new { BoardId = boardId, Content = "Nice post!", DetailCurrentPage = 1 });
 
         var response = await _client.SendAsync(request, TestContext.Current.CancellationToken);
         string json = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
         Assert.Contains("\"result\":true", json);
 
-        using var verifyScope = _factory.Services.CreateScope();
+        using var verifyScope = factory.Services.CreateScope();
         var verifyDb = verifyScope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
         Assert.Contains(verifyDb.BoardComments, c => c.BoardId == boardId && c.Writer == session.Nickname && c.Content == "Nice post!");
     }
@@ -192,7 +184,7 @@ public class ForumControllerTests
     [Fact]
     public async Task WriteFreeComment_EmptyContent_ReturnsFailureResult()
     {
-        var session = await AuthenticatedSessionHelper.LoginAsync(_factory, _client, "forum-writecomment-empty@test.com", "UserPassword1!", Role.User, TestContext.Current.CancellationToken);
+        var session = await AuthenticatedSessionHelper.LoginAsync(factory, _client, "forum-writecomment-empty@test.com", "UserPassword1!", Role.User, TestContext.Current.CancellationToken);
         using var request = session.BuildJsonPostRequest("/Forum/WriteFreeComment", new { BoardId = 1, Content = "", DetailCurrentPage = 1 });
 
         var response = await _client.SendAsync(request, TestContext.Current.CancellationToken);
@@ -222,7 +214,7 @@ public class ForumControllerTests
     [Fact]
     public async Task UploadImageFile_NoFileAttached_ReturnsFailureResult()
     {
-        var session = await AuthenticatedSessionHelper.LoginAsync(_factory, _client, "forum-uploadimage-nofile@test.com", "UserPassword1!", Role.User, TestContext.Current.CancellationToken);
+        var session = await AuthenticatedSessionHelper.LoginAsync(factory, _client, "forum-uploadimage-nofile@test.com", "UserPassword1!", Role.User, TestContext.Current.CancellationToken);
         var form = new MultipartFormDataContent();
         using var request = session.BuildFormPostRequest("/Forum/UploadImageFile", form);
 
@@ -237,7 +229,7 @@ public class ForumControllerTests
     [Fact]
     public async Task UploadImageFile_DisallowedExtension_ReturnsFailureResult()
     {
-        var session = await AuthenticatedSessionHelper.LoginAsync(_factory, _client, "forum-uploadimage-badext@test.com", "UserPassword1!", Role.User, TestContext.Current.CancellationToken);
+        var session = await AuthenticatedSessionHelper.LoginAsync(factory, _client, "forum-uploadimage-badext@test.com", "UserPassword1!", Role.User, TestContext.Current.CancellationToken);
         var form = new MultipartFormDataContent();
         var fileContent = new ByteArrayContent([1, 2, 3, 4]);
         fileContent.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue("text/plain");
@@ -296,29 +288,21 @@ public class ForumControllerTests
         string? sessionCookie = ExtractCookieValue(postResponse, SessionCookieName);
         Assert.False(string.IsNullOrEmpty(sessionCookie), "Login did not issue a session cookie.");
 
-        return (sessionCookie!, antiForgeryCookie!, antiForgeryToken);
+        return (sessionCookie, antiForgeryCookie, antiForgeryToken);
     }
 
     /// <summary>Extracts the value of a specific cookie from a response's Set-Cookie headers, or null if absent.</summary>
     private static string? ExtractCookieValue(HttpResponseMessage response, string cookieName)
     {
-        if (!response.Headers.TryGetValues("Set-Cookie", out var setCookieHeaders)) return null;
-
-        foreach (string header in setCookieHeaders)
-        {
-            string namePart = header.Split(';', 2)[0];
-            int eq = namePart.IndexOf('=');
-            if (eq <= 0) continue;
-            if (namePart[..eq] == cookieName) return namePart[(eq + 1)..];
-        }
-
-        return null;
+        return !response.Headers.TryGetValues("Set-Cookie", out var setCookieHeaders) ? null : (from header in setCookieHeaders select header.Split(';', 2)[0] into namePart let eq = namePart.IndexOf('=') where eq > 0 where namePart[..eq] == cookieName select namePart[(eq + 1)..]).FirstOrDefault();
     }
 
     /// <summary>Extracts the antiforgery hidden-input value from a rendered form's HTML.</summary>
     private static string ExtractAntiForgeryToken(string html)
     {
+ #pragma warning disable SYSLIB1045
         Match match = Regex.Match(html, "name=\"__RequestVerificationToken\"[^>]*value=\"([^\"]+)\"");
+ #pragma warning restore SYSLIB1045
         Assert.True(match.Success, "Could not find __RequestVerificationToken in the login page HTML.");
         return match.Groups[1].Value;
     }

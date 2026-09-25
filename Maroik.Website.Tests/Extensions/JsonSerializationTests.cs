@@ -1,4 +1,5 @@
 using Maroik.Website.Extensions;
+// ReSharper disable NotAccessedPositionalProperty.Local
 
 namespace Maroik.Website.Tests.Extensions;
 

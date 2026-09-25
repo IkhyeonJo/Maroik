@@ -165,7 +165,10 @@ public sealed class AvatarCacheMiddlewareTests : IDisposable
     [Fact]
     public async Task InvokeAsync_PathTraversalAttempt_StripsDirectoryComponent()
     {
-        byte[] avatarBytes = [9, 9, 9];
+        byte[] avatarBytes =
+        [
+            .. "\t\t\t"u8
+        ];
         _profileService.Setup(p => p.DownloadAvatarAsync("passwd", It.IsAny<CancellationToken>())).ReturnsAsync(avatarBytes);
         bool nextCalled = false;
         var sut = new AvatarCacheMiddleware(_ => { nextCalled = true; return Task.CompletedTask; });

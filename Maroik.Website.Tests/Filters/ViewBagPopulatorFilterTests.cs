@@ -5,15 +5,12 @@ using Maroik.Core.Domain.Account;
 using Maroik.Website.Contracts;
 using Maroik.Website.Filters;
 using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Http.Features;
 using Microsoft.AspNetCore.Localization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.Abstractions;
 using Microsoft.AspNetCore.Mvc.Controllers;
 using Microsoft.AspNetCore.Mvc.Filters;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Moq;
 
@@ -49,8 +46,12 @@ public class ViewBagPopulatorFilterTests
         services.AddLogging();
         var sp = services.BuildServiceProvider();
 
-        var httpContext = new DefaultHttpContext { RequestServices = sp };
-        httpContext.Request.Path = path;
+        var httpContext = new DefaultHttpContext { RequestServices = sp,
+            Request =
+            {
+                Path = path
+            }
+        };
 
         if (cultureName != null)
         {
@@ -79,7 +80,7 @@ public class ViewBagPopulatorFilterTests
         var actionContext = new ActionContext(httpContext, new RouteData(), actionDescriptor);
         var executingContext = new ActionExecutingContext(
             actionContext,
-            new List<IFilterMetadata>(),
+            [],
             new Dictionary<string, object?>(),
             controller);
 
@@ -89,7 +90,7 @@ public class ViewBagPopulatorFilterTests
     private static ActionExecutionDelegate EmptyNext() =>
         () => Task.FromResult(new ActionExecutedContext(
             new ActionContext(new DefaultHttpContext(), new RouteData(), new ControllerActionDescriptor()),
-            new List<IFilterMetadata>(),
+            [],
             null!));
 
     // -- ServerSettings -------------------------------------------------------
@@ -99,7 +100,7 @@ public class ViewBagPopulatorFilterTests
     public async Task OnActionExecutionAsync_NonControllerTarget_RunsTheActionAndPopulatesNothing()
     {
         var (template, _) = BuildContext();
-        var context = new ActionExecutingContext(template, new List<IFilterMetadata>(), new Dictionary<string, object?>(), new object());
+        var context = new ActionExecutingContext(template, [], new Dictionary<string, object?>(), new object());
         bool ran = false;
 
         await CreateSut().OnActionExecutionAsync(context, () =>
@@ -208,7 +209,7 @@ public class ViewBagPopulatorFilterTests
             .ReturnsAsync(new NotificationDto());
 
         var (context, controller) = BuildContext();
-        context.HttpContext.Items[Maroik.Website.Constants.HttpContextItemKeys.LoggedInAccount] = stashedAccount;
+        context.HttpContext.Items[Constants.HttpContextItemKeys.LoggedInAccount] = stashedAccount;
 
         await CreateSut().OnActionExecutionAsync(context, EmptyNext());
 
@@ -347,7 +348,7 @@ public class ViewBagPopulatorFilterTests
     // -- Active menu resolution -------------------------------------------------
 
     /// <summary>
-    /// Verifies the hand-off from AuthorizationFilter: the menu it left on HttpContext.Items is published
+    /// Verifies the hand-off from AuthorizationFilter: the menu it left on HttpContext.Items are published
     /// as ViewBag.{Role}Categories/{Role}SubCategories (an authorization filter has no controller to
     /// write to), and the active menu item is then resolved from it.
     /// </summary>
@@ -365,7 +366,7 @@ public class ViewBagPopulatorFilterTests
             new() { Id = 1, DisplayName = "AccountBook", Controller = "AccountBook", Action = "Income" }
         };
         var adminCategories = new List<CategoryResponse> { new() { Id = 2, DisplayName = "Management", Controller = "Management", Action = "Account" } };
-        context.HttpContext.Items[Maroik.Website.Constants.HttpContextItemKeys.NavigationMenus] = new NavigationMenus(
+        context.HttpContext.Items[Constants.HttpContextItemKeys.NavigationMenus] = new NavigationMenus(
             adminCategories, [], userCategories, [], [], []);
 
         await CreateSut().OnActionExecutionAsync(context, EmptyNext());

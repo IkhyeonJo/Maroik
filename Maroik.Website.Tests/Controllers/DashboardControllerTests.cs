@@ -48,7 +48,7 @@ public class DashboardControllerTests
         Assert.Equal(System.Net.HttpStatusCode.OK, response.StatusCode);
     }
 
-    /// <summary>Anonymous index logged in user redirects to user index.</summary>
+    /// <summary>Anonymous index logged-in user redirects to user index.</summary>
     [Fact]
     public async Task AnonymousIndex_LoggedInUser_RedirectsToUserIndex()
     {
@@ -111,7 +111,7 @@ public class DashboardControllerTests
 
     // -- UserUpdateDefaultMonetary --------------------------------------------------
 
-    /// <summary>User update default monetary logged in user returns success result.</summary>
+    /// <summary>User update default monetary logged-in user returns success result.</summary>
     [Fact]
     public async Task UserUpdateDefaultMonetary_LoggedInUser_ReturnsSuccessResult()
     {

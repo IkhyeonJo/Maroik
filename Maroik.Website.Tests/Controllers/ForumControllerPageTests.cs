@@ -15,26 +15,18 @@ namespace Maroik.Website.Tests.Controllers;
 /// are seeded straight into PostgreSQL and read back through the real HTTP pipeline.
 /// </summary>
 [Collection("Website Integration")]
-public class ForumControllerPageTests
+public class ForumControllerPageTests(MaroikWebApplicationFactory factory)
 {
     private const string FreeForumType = "FreeForum";
 
-    private readonly MaroikWebApplicationFactory _factory;
-    private readonly HttpClient _client;
-
-    /// <summary>Initializes a new instance of ForumControllerPageTests, sharing the MaroikWebApplicationFactory fixture across the tests in this class.</summary>
-    public ForumControllerPageTests(MaroikWebApplicationFactory factory)
-    {
-        _factory = factory;
-        _client = factory.CreateTestClient(followRedirects: false);
-    }
+    private readonly HttpClient _client = factory.CreateTestClient(followRedirects: false);
 
     private Task<AuthenticatedSession> LoginAsync(string email, string role = Role.User) =>
-        AuthenticatedSessionHelper.LoginAsync(_factory, _client, email, "UserPassword1!", role, TestContext.Current.CancellationToken);
+        AuthenticatedSessionHelper.LoginAsync(factory, _client, email, "UserPassword1!", role, TestContext.Current.CancellationToken);
 
     private long SeedBoard(string writer, string title, string content = "Body", bool locked = false, bool noticed = false, bool deleted = false, DateTime? created = null)
     {
-        using var scope = _factory.Services.CreateScope();
+        using var scope = factory.Services.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
         var board = new Board
         {
@@ -49,7 +41,7 @@ public class ForumControllerPageTests
 
     private void SeedComment(long boardId, string writer, string content, long order = 0)
     {
-        using var scope = _factory.Services.CreateScope();
+        using var scope = factory.Services.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
         db.BoardComments.Add(new BoardComment
         {
@@ -61,7 +53,7 @@ public class ForumControllerPageTests
 
     private long ViewCount(long boardId)
     {
-        using var scope = _factory.Services.CreateScope();
+        using var scope = factory.Services.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
         return db.Boards.AsNoTracking().Single(b => b.Id == boardId).View;
     }
@@ -99,13 +91,16 @@ public class ForumControllerPageTests
         string adminHtml = await BodyAsync(await GetAsync(Detail(id), admin));
         string otherHtml = await BodyAsync(await GetAsync(Detail(id), other));
 
-        int DeletableComments(string html) => System.Text.RegularExpressions.Regex
-            .Matches(html, "aFreeForumDeleteComment\" href=\"#\" data-commentId=\"(\\d+)\"").Select(m => m.Groups[1].Value).Distinct().Count();
-
         Assert.Contains("font-weight:bold; color:green;", ownerHtml);   // the administrator's name stands out
         Assert.Equal(1, DeletableComments(ownerHtml));                  // only the owner's own comment
         Assert.Equal(2, DeletableComments(adminHtml));                  // an admin may delete both
         Assert.Equal(0, DeletableComments(otherHtml));                  // a bystander gets none
+        return;
+
+ #pragma warning disable SYSLIB1045
+        static int DeletableComments(string html) => System.Text.RegularExpressions.Regex
+ #pragma warning restore SYSLIB1045
+            .Matches(html, "aFreeForumDeleteComment\" href=\"#\" data-commentId=\"(\\d+)\"").Select(m => m.Groups[1].Value).Distinct().Count();
     }
 
 
@@ -165,11 +160,11 @@ public class ForumControllerPageTests
     public async Task Detail_ShowsTheAttachmentName_EvenWhenTheStoredFileCannotBeFetched()
     {
         long id = SeedBoard("forum-page-writer4", "AttachTitle-4");
-        using (var scope = _factory.Services.CreateScope())
+        using (var scope = factory.Services.CreateScope())
         {
             var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
             db.BoardAttachedFiles.Add(new BoardAttachedFile { BoardId = id, Size = 12, Name = "quarterly-report-4", Extension = ".zip", Path = "upload/Forum/FreeForum/boardAttachedFiles/none/absent.zip" });
-            db.SaveChanges();
+            await db.SaveChangesAsync(TestContext.Current.CancellationToken);
         }
 
         var response = await GetAsync(Detail(id));
@@ -194,7 +189,7 @@ public class ForumControllerPageTests
         string html = await BodyAsync(authorResponse);
         Assert.Contains("EditTitle-5", html);
 
-        foreach (var session in new AuthenticatedSession?[] { null, other, admin })
+        foreach (var session in new[] { null, other, admin })
         {
             var response = await GetAsync(Edit(id), session);
             Assert.Equal(System.Net.HttpStatusCode.Redirect, response.StatusCode);
@@ -248,11 +243,11 @@ public class ForumControllerPageTests
     [Fact]
     public async Task List_PagesFivePostsAtATime_NewestFirst()
     {
-        string writer = "forum-page-pager9";
+        const string writer = "forum-page-pager9";
         DateTime start = DateTime.UtcNow.AddMinutes(-30);
         for (int i = 1; i <= 7; i++)
             SeedBoard(writer, $"PagedPost-9-{i}", created: start.AddMinutes(i));
-        string url = $"/Forum/FreeForum?searchType=Writer&searchText={writer}";
+        const string url = $"/Forum/FreeForum?searchType=Writer&searchText={writer}";
 
         string page1 = await BodyAsync(await GetAsync(url + "&page=1"));
         string page2 = await BodyAsync(await GetAsync(url + "&page=2"));
@@ -285,7 +280,7 @@ public class ForumControllerPageTests
     public async Task List_ShowsPinnedPosts_WithTheirCommentCount()
     {
         long pinned = SeedBoard("forum-page-writer11", "PinnedTitle-11", noticed: true);
-        SeedComment(pinned, "forum-page-commenter11", "c1", 0);
+        SeedComment(pinned, "forum-page-commenter11", "c1");
         SeedComment(pinned, "forum-page-commenter11", "c2", 1);
 
         string html = await BodyAsync(await GetAsync("/Forum/FreeForum?searchType=Writer&searchText=nobody-matches-11"));

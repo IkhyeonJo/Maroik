@@ -42,22 +42,21 @@ public class ManagementViewModelMapperTests
 
         var vms = new[] { account }.ToDisplayViewModels("UTC");
 
-        Assert.Single(vms);
-        var vm = vms[0];
-        Assert.Equal("user@example.com", vm.Email);
-        Assert.Equal("hashed", vm.HashedPassword);
-        Assert.Equal("Nick", vm.Nickname);
-        Assert.Equal("/avatars/a.png", vm.AvatarImagePath);
-        Assert.Equal("User", vm.Role);
-        Assert.Equal("Asia/Seoul", vm.TimeZoneIanaId);
-        Assert.True(vm.Locked);
-        Assert.Equal(3, vm.LoginAttempt);
-        Assert.True(vm.EmailConfirmed);
-        Assert.True(vm.AgreedServiceTerms);
-        Assert.Equal("reg-token", vm.RegistrationToken);
-        Assert.Equal("reset-token", vm.ResetPasswordToken);
-        Assert.Equal("note", vm.Message);
-        Assert.False(vm.Deleted);
+        var item = Assert.Single(vms);
+        Assert.Equal("user@example.com", item.Email);
+        Assert.Equal("hashed", item.HashedPassword);
+        Assert.Equal("Nick", item.Nickname);
+        Assert.Equal("/avatars/a.png", item.AvatarImagePath);
+        Assert.Equal("User", item.Role);
+        Assert.Equal("Asia/Seoul", item.TimeZoneIanaId);
+        Assert.True(item.Locked);
+        Assert.Equal(3, item.LoginAttempt);
+        Assert.True(item.EmailConfirmed);
+        Assert.True(item.AgreedServiceTerms);
+        Assert.Equal("reg-token", item.RegistrationToken);
+        Assert.Equal("reset-token", item.ResetPasswordToken);
+        Assert.Equal("note", item.Message);
+        Assert.False(item.Deleted);
     }
 
     // -- ToDisplayViewModels: timezone conversion -------------------------------

@@ -493,7 +493,7 @@ public class ExcelExportServiceTests
 
         var rows = ReadRows(_sut.CreateMenuExcel(categories, subCategories, _identity));
 
-        // Header + 3 data rows, ordered descending by parsed Id: 10, 2, 1
+        // Header + 3 data rows, ordered descending by parsed ID: 10, 2, 1
         Assert.Equal("10", rows[1][0]);
         Assert.Equal("2", rows[2][0]);
         Assert.Equal("1", rows[3][0]);
@@ -509,8 +509,8 @@ public class ExcelExportServiceTests
     [Fact]
     public void CreateAssetExcel_StripsUnpairedSurrogate_AndKeepsValidPair_WithoutFailingTheExport()
     {
-        string loneHigh = "before\uD83Dafter";     // high surrogate with no low following
-        string loneLow = "x\uDE00y";               // low surrogate with no high preceding
+        const string loneHigh = "before\uD83Dafter";     // high surrogate with no low following
+        const string loneLow = "x\uDE00y";               // low surrogate with no high preceding
         AssetResponse[] items =
         [
             new() { ProductName = "A", Item = "i", Amount = 1m, Note = loneHigh },

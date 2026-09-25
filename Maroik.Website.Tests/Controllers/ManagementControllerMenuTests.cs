@@ -2,7 +2,6 @@ using Maroik.Core.Domain.Account;
 using Maroik.Core.PostgreSQL.Data;
 using Maroik.Website.Constants;
 using Maroik.Website.Tests.Infrastructure;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -14,31 +13,23 @@ namespace Maroik.Website.Tests.Controllers;
 /// <c>ManagementControllerTests.cs</c>. Along the way this uncovered a real bug in
 /// <c>MenuService.UpdateCategoryAsync</c>/<c>UpdateSubCategoryAsync</c>: both built the updated
 /// entity via <c>Reconstitute</c> and called the repository's generic <c>UpdateEntityAsync</c>
-/// directly, which silently no-ops (returns without throwing) when the given Id doesn't match
+/// directly, which silently no-ops (returns without throwing) when the given ID doesn't match
 /// any row — so updating a nonexistent category/sub-category used to report
 /// "successfully updated" while changing nothing. Fixed by checking existence first, matching
 /// the fetch-then-act pattern already used elsewhere (e.g. <c>AccountService.UpdateAccountAsync</c>).
 /// </summary>
 [Collection("Website Integration")]
-public class ManagementControllerMenuTests
+public class ManagementControllerMenuTests(MaroikWebApplicationFactory factory)
 {
-    private readonly MaroikWebApplicationFactory _factory;
-    private readonly HttpClient _client;
-
-    /// <summary>Initializes a new instance of ManagementControllerMenuTests, sharing the MaroikWebApplicationFactory fixture across the tests in this class.</summary>
-    public ManagementControllerMenuTests(MaroikWebApplicationFactory factory)
-    {
-        _factory = factory;
-        _client = factory.CreateTestClient(followRedirects: false);
-    }
-
+    private readonly HttpClient _client = factory.CreateTestClient(followRedirects: false);
+    
     private Task<AuthenticatedSession> LoginAsAdminAsync(string email = "management-menu-admin@test.com") =>
-        AuthenticatedSessionHelper.LoginAsync(_factory, _client, email, "AdminPassword1!", Role.Admin, TestContext.Current.CancellationToken);
+        AuthenticatedSessionHelper.LoginAsync(factory, _client, email, "AdminPassword1!", Role.Admin, TestContext.Current.CancellationToken);
 
     private Task<AuthenticatedSession> LoginAsUserAsync(string email = "management-menu-user@test.com") =>
-        AuthenticatedSessionHelper.LoginAsync(_factory, _client, email, "UserPassword1!", Role.User, TestContext.Current.CancellationToken);
+        AuthenticatedSessionHelper.LoginAsync(factory, _client, email, "UserPassword1!", Role.User, TestContext.Current.CancellationToken);
 
-    private static string UniqueName([System.Runtime.CompilerServices.CallerMemberName] string testName = "") =>
+    private static string UniqueName(string testName = "") =>
         $"{testName}-{Guid.NewGuid():N}";
 
     private static object ValidCategoryPayload(string name, int id = 0) => new
@@ -93,7 +84,7 @@ public class ManagementControllerMenuTests
         string createJson = await createResponse.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
         Assert.Contains("\"result\":true", createJson);
 
-        using var scope = _factory.Services.CreateScope();
+        using var scope = factory.Services.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
         var created = db.Categories.Single(c => c.Name == name);
 
@@ -128,7 +119,7 @@ public class ManagementControllerMenuTests
         using var createRequest = admin.BuildJsonPostRequest("/Management/CreateCategory", ValidCategoryPayload(name));
         await _client.SendAsync(createRequest, TestContext.Current.CancellationToken);
 
-        using var scope = _factory.Services.CreateScope();
+        using var scope = factory.Services.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
         var created = db.Categories.Single(c => c.Name == name);
 
@@ -139,7 +130,7 @@ public class ManagementControllerMenuTests
 
         Assert.Contains("\"result\":true", json);
 
-        using var verifyScope = _factory.Services.CreateScope();
+        using var verifyScope = factory.Services.CreateScope();
         var verifyDb = verifyScope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
         Assert.Equal(updatedName, verifyDb.Categories.Single(c => c.Id == created.Id).Name);
     }
@@ -171,7 +162,7 @@ public class ManagementControllerMenuTests
         using var createRequest = admin.BuildJsonPostRequest("/Management/CreateCategory", ValidCategoryPayload(name));
         await _client.SendAsync(createRequest, TestContext.Current.CancellationToken);
 
-        using var scope = _factory.Services.CreateScope();
+        using var scope = factory.Services.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
         var created = db.Categories.Single(c => c.Name == name);
 
@@ -181,7 +172,7 @@ public class ManagementControllerMenuTests
 
         Assert.Contains("\"result\":true", json);
 
-        using var verifyScope = _factory.Services.CreateScope();
+        using var verifyScope = factory.Services.CreateScope();
         var verifyDb = verifyScope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
         Assert.False(verifyDb.Categories.Any(c => c.Id == created.Id));
     }
@@ -197,7 +188,7 @@ public class ManagementControllerMenuTests
         using var createCatRequest = admin.BuildJsonPostRequest("/Management/CreateCategory", ValidCategoryPayload(catName));
         await _client.SendAsync(createCatRequest, TestContext.Current.CancellationToken);
 
-        using var scope = _factory.Services.CreateScope();
+        using var scope = factory.Services.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
         var category = db.Categories.Single(c => c.Name == catName);
 
@@ -207,7 +198,7 @@ public class ManagementControllerMenuTests
         string createJson = await createResponse.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
         Assert.Contains("\"result\":true", createJson);
 
-        using var verifyScope = _factory.Services.CreateScope();
+        using var verifyScope = factory.Services.CreateScope();
         var verifyDb = verifyScope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
         var createdSub = verifyDb.SubCategories.Single(s => s.Name == subName);
 
@@ -257,7 +248,7 @@ public class ManagementControllerMenuTests
         using var createCatRequest = admin.BuildJsonPostRequest("/Management/CreateCategory", ValidCategoryPayload(catName));
         await _client.SendAsync(createCatRequest, TestContext.Current.CancellationToken);
 
-        using var scope = _factory.Services.CreateScope();
+        using var scope = factory.Services.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
         var category = db.Categories.Single(c => c.Name == catName);
 
@@ -265,7 +256,7 @@ public class ManagementControllerMenuTests
         using var createSubRequest = admin.BuildJsonPostRequest("/Management/CreateSubCategory", ValidSubCategoryPayload(subName, category.Id));
         await _client.SendAsync(createSubRequest, TestContext.Current.CancellationToken);
 
-        using var verifyScope = _factory.Services.CreateScope();
+        using var verifyScope = factory.Services.CreateScope();
         var verifyDb = verifyScope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
         var createdSub = verifyDb.SubCategories.Single(s => s.Name == subName);
 
@@ -275,7 +266,7 @@ public class ManagementControllerMenuTests
 
         Assert.Contains("\"result\":true", json);
 
-        using var finalScope = _factory.Services.CreateScope();
+        using var finalScope = factory.Services.CreateScope();
         var finalDb = finalScope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
         Assert.False(finalDb.SubCategories.Any(s => s.Id == createdSub.Id));
     }
@@ -302,7 +293,7 @@ public class ManagementControllerMenuTests
     /// </summary>
     private async Task AssertClearsNavigationCacheAsync(AuthenticatedSession admin, HttpRequestMessage request)
     {
-        var cache = _factory.Services.GetRequiredService<IDistributedCache>();
+        var cache = factory.Services.GetRequiredService<IDistributedCache>();
 
         // Warm the cache with real data via any admin request — AuthorizationFilter populates
         // it from the DB on first miss for every request, not just menu-editing ones.
@@ -345,7 +336,7 @@ public class ManagementControllerMenuTests
         using var createRequest = admin.BuildJsonPostRequest("/Management/CreateCategory", ValidCategoryPayload(name));
         await _client.SendAsync(createRequest, TestContext.Current.CancellationToken);
 
-        using var scope = _factory.Services.CreateScope();
+        using var scope = factory.Services.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
         var created = db.Categories.Single(c => c.Name == name);
 
@@ -362,7 +353,7 @@ public class ManagementControllerMenuTests
         using var createRequest = admin.BuildJsonPostRequest("/Management/CreateCategory", ValidCategoryPayload(name));
         await _client.SendAsync(createRequest, TestContext.Current.CancellationToken);
 
-        using var scope = _factory.Services.CreateScope();
+        using var scope = factory.Services.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
         var created = db.Categories.Single(c => c.Name == name);
 
@@ -379,7 +370,7 @@ public class ManagementControllerMenuTests
         using var createCatRequest = admin.BuildJsonPostRequest("/Management/CreateCategory", ValidCategoryPayload(catName));
         await _client.SendAsync(createCatRequest, TestContext.Current.CancellationToken);
 
-        using var scope = _factory.Services.CreateScope();
+        using var scope = factory.Services.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
         var category = db.Categories.Single(c => c.Name == catName);
 
@@ -396,7 +387,7 @@ public class ManagementControllerMenuTests
         using var createCatRequest = admin.BuildJsonPostRequest("/Management/CreateCategory", ValidCategoryPayload(catName));
         await _client.SendAsync(createCatRequest, TestContext.Current.CancellationToken);
 
-        using var scope = _factory.Services.CreateScope();
+        using var scope = factory.Services.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
         var category = db.Categories.Single(c => c.Name == catName);
 
@@ -404,7 +395,7 @@ public class ManagementControllerMenuTests
         using var createSubRequest = admin.BuildJsonPostRequest("/Management/CreateSubCategory", ValidSubCategoryPayload(subName, category.Id));
         await _client.SendAsync(createSubRequest, TestContext.Current.CancellationToken);
 
-        using var verifyScope = _factory.Services.CreateScope();
+        using var verifyScope = factory.Services.CreateScope();
         var verifyDb = verifyScope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
         var createdSub = verifyDb.SubCategories.Single(s => s.Name == subName);
 
@@ -421,7 +412,7 @@ public class ManagementControllerMenuTests
         using var createCatRequest = admin.BuildJsonPostRequest("/Management/CreateCategory", ValidCategoryPayload(catName));
         await _client.SendAsync(createCatRequest, TestContext.Current.CancellationToken);
 
-        using var scope = _factory.Services.CreateScope();
+        using var scope = factory.Services.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
         var category = db.Categories.Single(c => c.Name == catName);
 
@@ -429,7 +420,7 @@ public class ManagementControllerMenuTests
         using var createSubRequest = admin.BuildJsonPostRequest("/Management/CreateSubCategory", ValidSubCategoryPayload(subName, category.Id));
         await _client.SendAsync(createSubRequest, TestContext.Current.CancellationToken);
 
-        using var verifyScope = _factory.Services.CreateScope();
+        using var verifyScope = factory.Services.CreateScope();
         var verifyDb = verifyScope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
         var createdSub = verifyDb.SubCategories.Single(s => s.Name == subName);
 

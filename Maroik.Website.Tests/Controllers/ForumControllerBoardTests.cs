@@ -23,29 +23,21 @@ namespace Maroik.Website.Tests.Controllers;
 /// (non-owner) rather than a hardcoded nickname.
 /// </summary>
 [Collection("Website Integration")]
-public class ForumControllerBoardTests
+public class ForumControllerBoardTests(MaroikWebApplicationFactory factory)
 {
     private const string FreeForumType = "FreeForum";
 
-    private readonly MaroikWebApplicationFactory _factory;
-    private readonly HttpClient _client;
-
-    /// <summary>Initializes a new instance of ForumControllerBoardTests, sharing the MaroikWebApplicationFactory fixture across the tests in this class.</summary>
-    public ForumControllerBoardTests(MaroikWebApplicationFactory factory)
-    {
-        _factory = factory;
-        _client = factory.CreateTestClient(followRedirects: false);
-    }
-
+    private readonly HttpClient _client = factory.CreateTestClient(followRedirects: false);
+    
     private Task<AuthenticatedSession> LoginAsUserAsync(string email = "forum-user@test.com") =>
-        AuthenticatedSessionHelper.LoginAsync(_factory, _client, email, "UserPassword1!", Role.User, TestContext.Current.CancellationToken);
+        AuthenticatedSessionHelper.LoginAsync(factory, _client, email, "UserPassword1!", Role.User, TestContext.Current.CancellationToken);
 
     private Task<AuthenticatedSession> LoginAsAdminAsync(string email = "forum-admin@test.com") =>
-        AuthenticatedSessionHelper.LoginAsync(_factory, _client, email, "AdminPassword1!", Role.Admin, TestContext.Current.CancellationToken);
+        AuthenticatedSessionHelper.LoginAsync(factory, _client, email, "AdminPassword1!", Role.Admin, TestContext.Current.CancellationToken);
 
     private long SeedBoard(string writer, bool locked = false, bool deleted = false)
     {
-        using var scope = _factory.Services.CreateScope();
+        using var scope = factory.Services.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
         var board = new Board
         {
@@ -67,7 +59,7 @@ public class ForumControllerBoardTests
 
     private long SeedComment(long boardId, string writer)
     {
-        using var scope = _factory.Services.CreateScope();
+        using var scope = factory.Services.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
         var comment = new BoardComment
         {
@@ -198,7 +190,7 @@ public class ForumControllerBoardTests
 
         Assert.Contains("\"result\":false", json);
 
-        using var scope = _factory.Services.CreateScope();
+        using var scope = factory.Services.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
         Assert.False(db.Boards.Single(b => b.Id == boardId).Deleted);
     }

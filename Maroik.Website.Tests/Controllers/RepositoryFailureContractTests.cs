@@ -4,7 +4,6 @@ using System.Text.RegularExpressions;
 using Maroik.Core.Contract.Interfaces;
 using Maroik.Core.Domain.Account;
 using Maroik.Core.PostgreSQL.Data;
-using Maroik.Core.PostgreSQL.Models;
 using Maroik.Website.Tests.Infrastructure;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.AspNetCore.TestHost;
@@ -19,13 +18,9 @@ namespace Maroik.Website.Tests.Controllers;
 /// the controller's handling of that result is exercised end to end.
 /// </summary>
 [Collection("Website Integration")]
-public class RepositoryFailureContractTests
+public class RepositoryFailureContractTests(MaroikWebApplicationFactory factory)
 {
     private const string DatabaseSecret = "db-secret-do-not-leak";
-    private readonly MaroikWebApplicationFactory _factory;
-
-    /// <summary>Initializes a new instance of RepositoryFailureContractTests, sharing the MaroikWebApplicationFactory fixture across the tests in this class.</summary>
-    public RepositoryFailureContractTests(MaroikWebApplicationFactory factory) => _factory = factory;
 
     /// <summary>Forwards every call to the real repository, except the named methods, which throw.</summary>
     public class FailingRepositoryProxy : DispatchProxy
@@ -46,7 +41,7 @@ public class RepositoryFailureContractTests
     }
 
     private WebApplicationFactory<Program> HostWithFailing<TRepository>(params string[] failingMethods) where TRepository : class =>
-        _factory.WithWebHostBuilder(b => b.ConfigureTestServices(services =>
+        factory.WithWebHostBuilder(b => b.ConfigureTestServices(services =>
         {
             ServiceDescriptor real = services.Single(d => d.ServiceType == typeof(TRepository));
             services.Remove(real);
@@ -67,7 +62,9 @@ public class RepositoryFailureContractTests
     {
         var response = await client.GetAsync(url, TestContext.Current.CancellationToken);
         string html = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+ #pragma warning disable SYSLIB1045
         Match token = Regex.Match(html, "name=\"__RequestVerificationToken\"[^>]*value=\"([^\"]+)\"");
+ #pragma warning restore SYSLIB1045
         Assert.True(token.Success);
         string cookie = response.Headers.GetValues("Set-Cookie")
             .Select(h => h.Split(';', 2)[0]).First(c => c.StartsWith("__Secure-.AspNetCore.Antiforgery.", StringComparison.Ordinal));
@@ -76,7 +73,7 @@ public class RepositoryFailureContractTests
 
     private async Task SeedAccountAsync(string email, string? registrationToken = null, string? resetPasswordToken = null, bool emailConfirmed = true)
     {
-        using var scope = _factory.Services.CreateScope();
+        using var scope = factory.Services.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
         db.Accounts.Add(new Maroik.Core.PostgreSQL.Models.Account
         {
@@ -95,7 +92,7 @@ public class RepositoryFailureContractTests
         string email = $"confirm-fail-{Guid.NewGuid():N}@test.com";
         string rawToken = GuidToken.Generate();
         await SeedAccountAsync(email, registrationToken: rawToken, emailConfirmed: false);
-        using var host = HostWithFailing<IAccountRepository>(nameof(IAccountRepository.UpdateEmailConfirmationAsync));
+        await using var host = HostWithFailing<IAccountRepository>(nameof(IAccountRepository.UpdateEmailConfirmationAsync));
         var client = host.CreateClient(new WebApplicationFactoryClientOptions { BaseAddress = new Uri("https://www.localhost/"), AllowAutoRedirect = false, HandleCookies = false });
         string encrypted = host.Services.CreateScope().ServiceProvider.GetRequiredService<IRsaService>().Encrypt(rawToken);
 
@@ -105,7 +102,7 @@ public class RepositoryFailureContractTests
         Assert.Equal(System.Net.HttpStatusCode.OK, response.StatusCode);
         Assert.Contains("Error occurred while processing about confirm email account status", html);
         Assert.DoesNotContain(DatabaseSecret, html);
-        using var scope = _factory.Services.CreateScope();
+        using var scope = factory.Services.CreateScope();
         Assert.False(scope.ServiceProvider.GetRequiredService<ApplicationDbContext>().Accounts.Single(a => a.Email == email).EmailConfirmed);
     }
 
@@ -116,7 +113,7 @@ public class RepositoryFailureContractTests
         string email = $"reset-fail-{Guid.NewGuid():N}@test.com";
         string rawToken = GuidToken.Generate();
         await SeedAccountAsync(email, resetPasswordToken: rawToken);
-        using var host = HostWithFailing<IAccountRepository>(nameof(IAccountRepository.FindByEmailForUpdateAsync));
+        await using var host = HostWithFailing<IAccountRepository>(nameof(IAccountRepository.FindByEmailForUpdateAsync));
         var client = host.CreateClient(new WebApplicationFactoryClientOptions { BaseAddress = new Uri("https://www.localhost/"), AllowAutoRedirect = false, HandleCookies = false });
         string encrypted = host.Services.CreateScope().ServiceProvider.GetRequiredService<IRsaService>().Encrypt(rawToken);
         var (cookie, token) = await AntiForgeryAsync(client, "/Account/ResetPassword");
@@ -134,7 +131,7 @@ public class RepositoryFailureContractTests
         Assert.Contains("resetPasswordForm", html);
         Assert.DoesNotContain("The authentication token is invalid.", html);
         Assert.DoesNotContain(DatabaseSecret, html);
-        using var scope = _factory.Services.CreateScope();
+        using var scope = factory.Services.CreateScope();
         Assert.Equal(rawToken, scope.ServiceProvider.GetRequiredService<ApplicationDbContext>().Accounts.Single(a => a.Email == email).ResetPasswordToken);
     }
 
@@ -147,7 +144,7 @@ public class RepositoryFailureContractTests
     [InlineData(false)]
     public async Task MenuDelete_WhenTheDatabaseWriteFails_AnswersWithTheGenericMessage(bool category)
     {
-        using var host = category
+        await using var host = category
             ? HostWithFailing<ICategoryRepository>(nameof(ICategoryRepository.DeleteByIdAsync))
             : HostWithFailing<ISubCategoryRepository>(nameof(ISubCategoryRepository.DeleteByIdAsync));
         var client = host.CreateClient(new WebApplicationFactoryClientOptions { BaseAddress = new Uri("https://www.localhost/"), AllowAutoRedirect = false, HandleCookies = false });

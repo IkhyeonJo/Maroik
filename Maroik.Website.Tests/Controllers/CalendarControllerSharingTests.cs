@@ -22,7 +22,7 @@ public class CalendarControllerSharingTests(MaroikWebApplicationFactory factory)
     private Task<AuthenticatedSession> LoginAsAdminAsync(string email = "calendar-sharing-admin@test.com") =>
         AuthenticatedSessionHelper.LoginAsync(factory, _client, email, "AdminPassword1!", Role.Admin, TestContext.Current.CancellationToken);
 
-    private static string UniqueName([System.Runtime.CompilerServices.CallerMemberName] string testName = "") =>
+    private static string UniqueName(string testName = "") =>
         $"{testName}-{Guid.NewGuid():N}";
 
     /// <summary>

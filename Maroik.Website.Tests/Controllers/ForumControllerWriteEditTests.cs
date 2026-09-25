@@ -15,20 +15,12 @@ namespace Maroik.Website.Tests.Controllers;
 /// for real on the success paths, not just the ModelState validation branch.
 /// </summary>
 [Collection("Website Integration")]
-public class ForumControllerWriteEditTests
+public class ForumControllerWriteEditTests(MaroikWebApplicationFactory factory)
 {
-    private readonly MaroikWebApplicationFactory _factory;
-    private readonly HttpClient _client;
-
-    /// <summary>Initializes a new instance of ForumControllerWriteEditTests, sharing the MaroikWebApplicationFactory fixture across the tests in this class.</summary>
-    public ForumControllerWriteEditTests(MaroikWebApplicationFactory factory)
-    {
-        _factory = factory;
-        _client = factory.CreateTestClient(followRedirects: false);
-    }
-
+    private readonly HttpClient _client = factory.CreateTestClient(followRedirects: false);
+    
     private Task<AuthenticatedSession> LoginAsUserAsync(string email = "forum-writeedit-user@test.com") =>
-        AuthenticatedSessionHelper.LoginAsync(_factory, _client, email, "UserPassword1!", Role.User, TestContext.Current.CancellationToken);
+        AuthenticatedSessionHelper.LoginAsync(factory, _client, email, "UserPassword1!", Role.User, TestContext.Current.CancellationToken);
 
     private static MultipartFormDataContent BoardForm(string? title, string content = "Body", bool locked = false, bool noticed = false)
     {
@@ -47,7 +39,8 @@ public class ForumControllerWriteEditTests
     [Fact]
     public async Task WriteFreeBoard_AnonymousSession_IsForbidden()
     {
-        using var request = new HttpRequestMessage(HttpMethod.Post, "/Forum/WriteFreeBoard") { Content = BoardForm("Hello") };
+        using var request = new HttpRequestMessage(HttpMethod.Post, "/Forum/WriteFreeBoard");
+        request.Content = BoardForm("Hello");
 
         var response = await _client.SendAsync(request, TestContext.Current.CancellationToken);
 
@@ -109,7 +102,7 @@ public class ForumControllerWriteEditTests
         string json = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
         Assert.Contains("\"result\":true", json);
 
-        using var scope = _factory.Services.CreateScope();
+        using var scope = factory.Services.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
         var created = db.Boards.Single(b => b.Title == title);
         Assert.Equal(session.Nickname, created.Writer);
@@ -131,7 +124,7 @@ public class ForumControllerWriteEditTests
         string json = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
         Assert.Contains("\"result\":true", json);
 
-        using var scope = _factory.Services.CreateScope();
+        using var scope = factory.Services.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
         var created = db.Boards.Single(b => b.Title == title);
         Assert.False(created.Noticed);
@@ -148,7 +141,7 @@ public class ForumControllerWriteEditTests
         using var createRequest = session.BuildFormPostRequest("/Forum/WriteFreeBoard", BoardForm(title, content: "Original"));
         await _client.SendAsync(createRequest, TestContext.Current.CancellationToken);
 
-        using var scope = _factory.Services.CreateScope();
+        using var scope = factory.Services.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
         var created = db.Boards.Single(b => b.Title == title);
 
@@ -161,7 +154,7 @@ public class ForumControllerWriteEditTests
         string json = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
         Assert.Contains("\"result\":true", json);
 
-        using var verifyScope = _factory.Services.CreateScope();
+        using var verifyScope = factory.Services.CreateScope();
         var verifyDb = verifyScope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
         var updated = verifyDb.Boards.Single(b => b.Id == created.Id);
         Assert.Equal(updatedTitle, updated.Title);
@@ -175,7 +168,7 @@ public class ForumControllerWriteEditTests
     {
         var session = await LoginAsUserAsync();
         long boardId;
-        using (var scope = _factory.Services.CreateScope())
+        using (var scope = factory.Services.CreateScope())
         {
             var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
             var board = new Maroik.Core.PostgreSQL.Models.Board
@@ -192,7 +185,7 @@ public class ForumControllerWriteEditTests
                 Updated = DateTime.UtcNow
             };
             db.Boards.Add(board);
-            db.SaveChanges();
+            await db.SaveChangesAsync(TestContext.Current.CancellationToken);
             boardId = board.Id;
         }
 

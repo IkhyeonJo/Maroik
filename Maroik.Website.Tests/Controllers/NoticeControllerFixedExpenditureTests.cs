@@ -13,41 +13,34 @@ namespace Maroik.Website.Tests.Controllers;
 /// rationale.
 /// </summary>
 [Collection("Website Integration")]
-public class NoticeControllerFixedExpenditureTests
+public class NoticeControllerFixedExpenditureTests(MaroikWebApplicationFactory factory)
 {
     private const string Email = "notice-expenditure-user@test.com";
     private const string AssetProductName = "notice-expenditure-asset";
 
-    private readonly MaroikWebApplicationFactory _factory;
-    private readonly HttpClient _client;
-
-    /// <summary>Initializes a new instance of NoticeControllerFixedExpenditureTests, sharing the MaroikWebApplicationFactory fixture across the tests in this class.</summary>
-    public NoticeControllerFixedExpenditureTests(MaroikWebApplicationFactory factory)
-    {
-        _factory = factory;
-        _client = factory.CreateTestClient(followRedirects: false);
-    }
+    private readonly HttpClient _client = factory.CreateTestClient(followRedirects: false);
 
     private async Task<AuthenticatedSession> LoginAsync()
     {
-        var session = await AuthenticatedSessionHelper.LoginAsync(_factory, _client, Email, "UserPassword1!", Role.User, TestContext.Current.CancellationToken);
-        using var scope = _factory.Services.CreateScope();
+        var session = await AuthenticatedSessionHelper.LoginAsync(factory, _client, Email, "UserPassword1!", Role.User, TestContext.Current.CancellationToken);
+        using var scope = factory.Services.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-        if (!db.Assets.Any(a => a.AccountEmail == Email && a.ProductName == AssetProductName))
+        if (db.Assets.Any(a => a.AccountEmail == Email && a.ProductName == AssetProductName))
         {
-            db.Assets.Add(new Asset
-            {
-                ProductName = AssetProductName,
-                AccountEmail = Email,
-                Item = "CashAsset",
-                Amount = 1000,
-                MonetaryUnit = "KRW",
-                Deleted = false,
-                Created = DateTime.UtcNow,
-                Updated = DateTime.UtcNow
-            });
-            db.SaveChanges();
+            return session;
         }
+        db.Assets.Add(new Asset
+        {
+            ProductName = AssetProductName,
+            AccountEmail = Email,
+            Item = "CashAsset",
+            Amount = 1000,
+            MonetaryUnit = "KRW",
+            Deleted = false,
+            Created = DateTime.UtcNow,
+            Updated = DateTime.UtcNow
+        });
+        await db.SaveChangesAsync();
         return session;
     }
 
@@ -141,7 +134,7 @@ public class NoticeControllerFixedExpenditureTests
         string createJson = await createResponse.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
         Assert.Contains("\"result\":true", createJson);
 
-        using var scope = _factory.Services.CreateScope();
+        using var scope = factory.Services.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
         var created = db.FixedExpenditures.Single(f => f.AccountEmail == Email && f.Content == content);
 
@@ -176,13 +169,13 @@ public class NoticeControllerFixedExpenditureTests
         using var createRequest = session.BuildJsonPostRequest("/Notice/CreateFixedExpenditure", ValidPayload(content: content));
         await _client.SendAsync(createRequest, TestContext.Current.CancellationToken);
 
-        using var scope = _factory.Services.CreateScope();
+        using var scope = factory.Services.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
         var created = db.FixedExpenditures.Single(f => f.AccountEmail == Email && f.Content == content);
 
         var updatePayload = new
         {
-            Id = created.Id, MainClass = "ConsumerSpending", SubClass = "TransportationCost", Content = "Updated",
+            created.Id, MainClass = "ConsumerSpending", SubClass = "TransportationCost", Content = "Updated",
             Amount = 150, DepositMonth = 7, DepositDay = 1, MaturityDate = "2031-01-01",
             Note = "updated", PaymentMethod = AssetProductName, MyDepositAsset = "N/A", Unpunctuality = false
         };
@@ -192,7 +185,7 @@ public class NoticeControllerFixedExpenditureTests
 
         Assert.Contains("\"result\":true", json);
 
-        using var verifyScope = _factory.Services.CreateScope();
+        using var verifyScope = factory.Services.CreateScope();
         var verifyDb = verifyScope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
         var updated = verifyDb.FixedExpenditures.Single(f => f.Id == created.Id);
         Assert.Equal("TransportationCost", updated.SubClass);
@@ -223,17 +216,18 @@ public class NoticeControllerFixedExpenditureTests
         using var createRequest = session.BuildJsonPostRequest("/Notice/CreateFixedExpenditure", ValidPayload(content: content));
         await _client.SendAsync(createRequest, TestContext.Current.CancellationToken);
 
-        using var scope = _factory.Services.CreateScope();
+        using var scope = factory.Services.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
         var created = db.FixedExpenditures.Single(f => f.AccountEmail == Email && f.Content == content);
 
-        using var deleteRequest = session.BuildJsonPostRequest("/Notice/DeleteFixedExpenditure", new { Id = created.Id });
+        using var deleteRequest = session.BuildJsonPostRequest("/Notice/DeleteFixedExpenditure", new {
+            created.Id });
         var response = await _client.SendAsync(deleteRequest, TestContext.Current.CancellationToken);
         string json = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
 
         Assert.Contains("\"result\":true", json);
 
-        using var verifyScope = _factory.Services.CreateScope();
+        using var verifyScope = factory.Services.CreateScope();
         var verifyDb = verifyScope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
         Assert.False(verifyDb.FixedExpenditures.Any(f => f.Id == created.Id));
     }

@@ -2,7 +2,6 @@ using Maroik.Core.Contract.Dtos;
 using Maroik.Core.Domain.Account;
 using Maroik.Website.Services;
 using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Session;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Testing;
 using Moq;
@@ -13,7 +12,7 @@ namespace Maroik.Website.Tests.Services;
 /// Unit tests for <see cref="SessionService"/>.
 /// <see cref="IHttpContextAccessor"/> and <see cref="ISession"/> are replaced with Moq mocks.
 /// Verifies that <c>SetAccount</c> serialises an <see cref="Maroik.Core.Contract.Dtos.AccountResponse"/>
-/// to JSON and that <c>GetAccount</c> correctly deserialises it back.
+/// to JSON and that <c>GetAccount</c> correctly deserializes it back.
 /// </summary>
 public class SessionServiceTests
 {
@@ -86,7 +85,7 @@ public class SessionServiceTests
         Assert.Equal(account.Nickname, result.Nickname);
     }
 
-    /// <summary>Verifies that <c>GetAccount</c> returns null when session data is invalid json.</summary>
+    /// <summary>Verifies that <c>GetAccount</c> returns null when session data is invalid JSON.</summary>
     [Fact]
     public void GetAccount_ReturnsNull_WhenSessionDataIsInvalidJson()
     {
@@ -162,7 +161,7 @@ public class SessionServiceTests
         _httpContextAccessor.Setup(a => a.HttpContext).Returns(((HttpContext?)null)!);
         var sut = CreateSut();
 
-        var ex = Record.Exception(() => sut.RemoveAccount());
+        var ex = Record.Exception(sut.RemoveAccount);
         Assert.Null(ex);
     }
 

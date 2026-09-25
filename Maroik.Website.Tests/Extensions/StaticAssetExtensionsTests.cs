@@ -8,17 +8,11 @@ namespace Maroik.Website.Tests.Extensions;
 /// security header applied to every static-file response.
 /// </summary>
 [Collection("Website Integration")]
-public class StaticAssetExtensionsTests
+public class StaticAssetExtensionsTests(MaroikWebApplicationFactory factory)
 {
-    private readonly HttpClient _client;
+    private readonly HttpClient _client = factory.CreateTestClient(followRedirects: false);
 
-    /// <summary>Initializes a new instance of StaticAssetExtensionsTests, sharing the MaroikWebApplicationFactory fixture across the tests in this class.</summary>
-    public StaticAssetExtensionsTests(MaroikWebApplicationFactory factory)
-    {
-        _client = factory.CreateTestClient(followRedirects: false);
-    }
-
-    /// <summary>Static file java script has explicit application javascript content type.</summary>
+    /// <summary>Static file JavaScript has explicit application JavaScript content type.</summary>
     [Fact]
     public async Task StaticFile_JavaScript_HasExplicitApplicationJavascriptContentType()
     {
@@ -28,7 +22,7 @@ public class StaticAssetExtensionsTests
         Assert.Equal("application/javascript", response.Content.Headers.ContentType?.MediaType);
     }
 
-    /// <summary>Static file css has explicit text css content type.</summary>
+    /// <summary>Static file CSS has explicit text CSS content type.</summary>
     [Fact]
     public async Task StaticFile_Css_HasExplicitTextCssContentType()
     {
@@ -45,7 +39,7 @@ public class StaticAssetExtensionsTests
         var response = await _client.GetAsync("/anonymous/css/site.css", TestContext.Current.CancellationToken);
 
         Assert.True(response.Headers.TryGetValues("X-Content-Type-Options", out var values));
-        Assert.Contains("nosniff", values!);
+        Assert.Contains("nosniff", values);
     }
 
     /// <summary>

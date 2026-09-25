@@ -1,5 +1,3 @@
-using Maroik.Website.Tests.Infrastructure;
-
 namespace Maroik.Website.Tests.Infrastructure;
 
 /// <summary>
@@ -9,6 +7,4 @@ namespace Maroik.Website.Tests.Infrastructure;
 /// that occurs when multiple factories start concurrently.
 /// </summary>
 [CollectionDefinition("Website Integration")]
-public class WebsiteIntegrationCollection : ICollectionFixture<MaroikWebApplicationFactory>
-{
-}
+public class WebsiteIntegrationCollection : ICollectionFixture<MaroikWebApplicationFactory>;

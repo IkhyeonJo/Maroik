@@ -156,7 +156,7 @@ public class CertificateManagerTests : IDisposable
 
         File.WriteAllText(CertPath, "not a valid certificate");
 
-        var ex = Record.Exception(() => sut.TryReload());
+        var ex = Record.Exception(sut.TryReload);
 
         Assert.Null(ex);
         Assert.Equal(thumbprint, sut.SelectCertificate().Thumbprint);
@@ -166,5 +166,6 @@ public class CertificateManagerTests : IDisposable
     public void Dispose()
     {
         Directory.Delete(_tempDir, recursive: true);
+        GC.SuppressFinalize(this);
     }
 }

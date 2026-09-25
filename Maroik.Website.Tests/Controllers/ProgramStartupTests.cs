@@ -5,8 +5,6 @@ using Maroik.Core.Domain.Localization;
 using Maroik.Website.Contracts;
 using Maroik.Website.Tests.Infrastructure;
 using Microsoft.AspNetCore.Builder;
-using Microsoft.AspNetCore.Hosting;
-using Microsoft.AspNetCore.Localization;
 using Microsoft.AspNetCore.Server.Kestrel.Core;
 using Microsoft.AspNetCore.Server.Kestrel.Https;
 using Microsoft.Extensions.Caching.StackExchangeRedis;
@@ -23,17 +21,12 @@ namespace Maroik.Website.Tests.Controllers;
 /// settings (<c>UseSetting</c> — the only kind <c>Program.cs</c> sees while it is still building the host).
 /// </summary>
 [Collection("Website Integration")]
-public class ProgramStartupTests
+public class ProgramStartupTests(MaroikWebApplicationFactory factory)
 {
-    private readonly MaroikWebApplicationFactory _factory;
-
-    /// <summary>Initializes a new instance of ProgramStartupTests, sharing the MaroikWebApplicationFactory fixture across the tests in this class.</summary>
-    public ProgramStartupTests(MaroikWebApplicationFactory factory) => _factory = factory;
-
     private static Exception? StartupFailure(Func<HttpClient> start)
     {
         try { start().Dispose(); return null; }
-        catch (Exception e) { return e is System.Reflection.TargetInvocationException { InnerException: { } inner } ? inner : e; }
+        catch (Exception e) { return e is TargetInvocationException { InnerException: { } inner } ? inner : e; }
     }
 
     /// <summary>A non-positive session lifetime would issue instantly-expired cookies, so start-up refuses it.</summary>
@@ -42,9 +35,9 @@ public class ProgramStartupTests
     [InlineData("-5")]
     public void Startup_Throws_WhenSessionExpireMinutesIsNotPositive(string value)
     {
-        using var factory = _factory.WithWebHostBuilder(b => b.UseSetting("ServerSetting:SessionExpireMinutes", value));
+        using var factory1 = factory.WithWebHostBuilder(b => b.UseSetting("ServerSetting:SessionExpireMinutes", value));
 
-        Exception? failure = StartupFailure(factory.CreateClient);
+        Exception? failure = StartupFailure(factory1.CreateClient);
 
         Assert.IsType<InvalidOperationException>(failure);
         Assert.Contains("SessionExpireMinutes", failure.Message);
@@ -54,9 +47,9 @@ public class ProgramStartupTests
     [Fact]
     public void Startup_Throws_WhenMaxLoginAttemptIsZero()
     {
-        using var factory = _factory.WithWebHostBuilder(b => b.UseSetting("ServerSetting:MaxLoginAttempt", "0"));
+        using var factory1 = factory.WithWebHostBuilder(b => b.UseSetting("ServerSetting:MaxLoginAttempt", "0"));
 
-        Exception? failure = StartupFailure(factory.CreateClient);
+        Exception? failure = StartupFailure(factory1.CreateClient);
 
         Assert.IsType<InvalidOperationException>(failure);
         Assert.Contains("MaxLoginAttempt", failure.Message);
@@ -77,17 +70,17 @@ public class ProgramStartupTests
             File.WriteAllText(certPath, cert.ExportCertificatePem());
             File.WriteAllText(keyPath, key.ExportECPrivateKeyPem());
 
-            using var factory = _factory.WithWebHostBuilder(b => b
+            using var factory1 = factory.WithWebHostBuilder(b => b
                 .UseSetting("ServerSetting:DockerCertPath", certPath)
                 .UseSetting("ServerSetting:DockerKeyPath", keyPath));
-            using HttpClient client = factory.CreateClient();
+            using HttpClient client = factory1.CreateClient();
 
-            var manager = factory.Services.GetRequiredService<ICertificateManager>();
+            var manager = factory1.Services.GetRequiredService<ICertificateManager>();
             Assert.Equal(cert.Thumbprint, manager.SelectCertificate().Thumbprint);
 
             // Kestrel's HTTPS defaults pick the certificate from that manager on every handshake (so a renewed one is served
             // without a restart). ApplyHttpsDefaults is Kestrel-internal, so it is invoked by reflection.
-            var kestrel = factory.Services.GetRequiredService<IOptions<KestrelServerOptions>>().Value;
+            var kestrel = factory1.Services.GetRequiredService<IOptions<KestrelServerOptions>>().Value;
             var https = new HttpsConnectionAdapterOptions();
             typeof(KestrelServerOptions).GetMethod("ApplyHttpsDefaults", BindingFlags.Instance | BindingFlags.NonPublic)!
                 .Invoke(kestrel, [https]);
@@ -104,19 +97,19 @@ public class ProgramStartupTests
     [Fact]
     public void Startup_DoesNotRegisterTheCertificateManager_WithoutCertificatePaths()
     {
-        using HttpClient client = _factory.CreateClient();
+        using HttpClient client = factory.CreateClient();
 
-        Assert.Null(_factory.Services.GetService<ICertificateManager>());
+        Assert.Null(factory.Services.GetService<ICertificateManager>());
     }
 
     /// <summary>Without a Valkey connection string the Data Protection keyring is persisted to a folder under the content root.</summary>
     [Fact]
     public void Startup_PersistsTheDataProtectionKeyRingToDisk_WithoutValkey()
     {
-        using var factory = _factory.WithWebHostBuilder(b => b.UseSetting("ConnectionStrings:Valkey", ""));
-        using HttpClient client = factory.CreateClient();
+        using var factory1 = factory.WithWebHostBuilder(b => b.UseSetting("ConnectionStrings:Valkey", ""));
+        using HttpClient client = factory1.CreateClient();
 
-        string contentRoot = factory.Services.GetRequiredService<IHostEnvironment>().ContentRootPath;
+        string contentRoot = factory1.Services.GetRequiredService<IHostEnvironment>().ContentRootPath;
         Assert.True(Directory.Exists(Path.Combine(contentRoot, "dataprotection-keys")));
     }
 
@@ -124,9 +117,9 @@ public class ProgramStartupTests
     [Fact]
     public void Startup_ConfiguresRequestLocalization_FromCulturePolicy()
     {
-        using HttpClient client = _factory.CreateClient();
+        using HttpClient client = factory.CreateClient();
 
-        RequestLocalizationOptions options = _factory.Services.GetRequiredService<IOptions<RequestLocalizationOptions>>().Value;
+        RequestLocalizationOptions options = factory.Services.GetRequiredService<IOptions<RequestLocalizationOptions>>().Value;
 
         Assert.Equal(CulturePolicy.DefaultCulture, options.DefaultRequestCulture.Culture.Name);
         Assert.Equal(CulturePolicy.SupportedCultures.OrderBy(c => c), options.SupportedCultures!.Select(c => c.Name).OrderBy(c => c));
@@ -137,12 +130,12 @@ public class ProgramStartupTests
     [Fact]
     public async Task Startup_BacksTheDistributedCacheWithTheSharedValkeyMultiplexer()
     {
-        using HttpClient client = _factory.CreateClient();
+        using HttpClient client = factory.CreateClient();
 
-        RedisCacheOptions options = _factory.Services.GetRequiredService<IOptions<RedisCacheOptions>>().Value;
+        RedisCacheOptions options = factory.Services.GetRequiredService<IOptions<RedisCacheOptions>>().Value;
 
         Assert.Equal("MaroikWebsite:", options.InstanceName);
         Assert.NotNull(options.ConnectionMultiplexerFactory);
-        Assert.Same(_factory.Services.GetRequiredService<IConnectionMultiplexer>(), await options.ConnectionMultiplexerFactory!());
+        Assert.Same(factory.Services.GetRequiredService<IConnectionMultiplexer>(), await options.ConnectionMultiplexerFactory!());
     }
 }

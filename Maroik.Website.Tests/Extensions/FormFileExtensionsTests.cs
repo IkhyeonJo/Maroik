@@ -7,7 +7,7 @@ namespace Maroik.Website.Tests.Extensions;
 /// <summary>Unit tests for <see cref="FormFileExtensions"/>.</summary>
 public class FormFileExtensionsTests
 {
-    private static IFormFile MakeFormFile(string content, string fileName, string contentType)
+    private static FormFile MakeFormFile(string content, string fileName, string contentType)
     {
         byte[] bytes = Encoding.UTF8.GetBytes(content);
         var stream = new MemoryStream(bytes);

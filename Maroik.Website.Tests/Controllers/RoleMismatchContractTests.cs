@@ -17,26 +17,22 @@ namespace Maroik.Website.Tests.Controllers;
 /// carry <c>X-Test-Ghost</c> — swaps the account on the controller's ViewBag for one with an unknown role.
 /// </summary>
 [Collection("Website Integration")]
-public class RoleMismatchContractTests
+public class RoleMismatchContractTests(MaroikWebApplicationFactory factory)
 {
-    private readonly MaroikWebApplicationFactory _factory;
-
-    /// <summary>Initializes a new instance of RoleMismatchContractTests, sharing the MaroikWebApplicationFactory fixture across the tests in this class.</summary>
-    public RoleMismatchContractTests(MaroikWebApplicationFactory factory) => _factory = factory;
-
     private sealed class GhostRoleFilter : IAsyncActionFilter
     {
         public Task OnActionExecutionAsync(ActionExecutingContext context, ActionExecutionDelegate next)
         {
-            if (context.HttpContext.Request.Headers.ContainsKey("X-Test-Ghost") && context.Controller is Controller controller)
+            if (!context.HttpContext.Request.Headers.ContainsKey("X-Test-Ghost") || context.Controller is not Controller controller)
             {
-                object? current = controller.ViewBag.LoggedInAccount;
-                if (current is AccountResponse account)
-                    controller.ViewBag.LoggedInAccount = new AccountResponse
-                    {
-                        Email = account.Email, Nickname = account.Nickname, TimeZoneIanaId = account.TimeZoneIanaId, Role = "Ghost",
-                    };
+                return next();
             }
+            object? current = controller.ViewBag.LoggedInAccount;
+            if (current is AccountResponse account)
+                controller.ViewBag.LoggedInAccount = new AccountResponse
+                {
+                    Email = account.Email, Nickname = account.Nickname, TimeZoneIanaId = account.TimeZoneIanaId, Role = "Ghost",
+                };
             return next();
         }
     }
@@ -52,8 +48,8 @@ public class RoleMismatchContractTests
     [Fact]
     public async Task AWriteByAnAccountWithAnUnknownRole_IsRefusedAsNotLoggedIn()
     {
-        using var host = _factory.WithWebHostBuilder(b => b.ConfigureTestServices(services =>
-            services.Configure<Microsoft.AspNetCore.Mvc.MvcOptions>(o => o.Filters.Add(new GhostRoleFilter()))));
+        await using var host = factory.WithWebHostBuilder(b => b.ConfigureTestServices(services =>
+            services.Configure<MvcOptions>(o => o.Filters.Add(new GhostRoleFilter()))));
         var client = host.CreateClient(new WebApplicationFactoryClientOptions
         {
             BaseAddress = new Uri("https://www.localhost/"), AllowAutoRedirect = false, HandleCookies = false

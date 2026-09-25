@@ -2,7 +2,6 @@ using Maroik.Core.Contract.Interfaces;
 using Maroik.Core.Domain.Account;
 using Maroik.Core.PostgreSQL.Data;
 using Maroik.Website.Tests.Infrastructure;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace Maroik.Website.Tests.Controllers;
@@ -20,20 +19,12 @@ namespace Maroik.Website.Tests.Controllers;
 /// extension) are exercised.
 /// </summary>
 [Collection("Website Integration")]
-public class ManagementControllerProfileTests
+public class ManagementControllerProfileTests(MaroikWebApplicationFactory factory)
 {
-    private readonly MaroikWebApplicationFactory _factory;
-    private readonly HttpClient _client;
-
-    /// <summary>Initializes a new instance of ManagementControllerProfileTests, sharing the MaroikWebApplicationFactory fixture across the tests in this class.</summary>
-    public ManagementControllerProfileTests(MaroikWebApplicationFactory factory)
-    {
-        _factory = factory;
-        _client = factory.CreateTestClient(followRedirects: false);
-    }
-
+    private readonly HttpClient _client = factory.CreateTestClient(followRedirects: false);
+    
     private Task<AuthenticatedSession> LoginAsUserAsync(string email = "management-profile-user@test.com") =>
-        AuthenticatedSessionHelper.LoginAsync(_factory, _client, email, "UserPassword1!", Role.User, TestContext.Current.CancellationToken);
+        AuthenticatedSessionHelper.LoginAsync(factory, _client, email, "UserPassword1!", Role.User, TestContext.Current.CancellationToken);
 
     // -- Profile: GET -----------------------------------------------------------------
 
@@ -64,8 +55,8 @@ public class ManagementControllerProfileTests
         var response = await _client.SendAsync(request, TestContext.Current.CancellationToken);
         string html = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
 
-        string expected = string.Join(", ", Maroik.Core.Domain.Media.ImageUploadPolicy.AllowedContentTypes);
-        Assert.Contains($"id=\"ProfileAvatarFiles\"", html);
+        string expected = string.Join(", ", Core.Domain.Media.ImageUploadPolicy.AllowedContentTypes);
+        Assert.Contains("id=\"ProfileAvatarFiles\"", html);
         Assert.Matches($"id=\"ProfileAvatarFiles\"[^>]*accept=\"{System.Text.RegularExpressions.Regex.Escape(expected)}\"", html);
     }
 
@@ -83,7 +74,7 @@ public class ManagementControllerProfileTests
 
         Assert.Equal(System.Net.HttpStatusCode.Redirect, response.StatusCode);
 
-        using var scope = _factory.Services.CreateScope();
+        using var scope = factory.Services.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
         var account = db.Accounts.Single(a => a.Email == "management-profile-tz@test.com");
         Assert.Equal("Asia/Seoul", account.TimeZoneIanaId);
@@ -101,7 +92,7 @@ public class ManagementControllerProfileTests
 
         Assert.Equal(System.Net.HttpStatusCode.Redirect, response.StatusCode); // redirects regardless; failure is logged server-side
 
-        using var scope = _factory.Services.CreateScope();
+        using var scope = factory.Services.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
         var account = db.Accounts.Single(a => a.Email == "management-profile-tz-bad@test.com");
         Assert.Equal("UTC", account.TimeZoneIanaId); // unchanged from seed default
@@ -127,11 +118,11 @@ public class ManagementControllerProfileTests
 
         Assert.Contains("\"result\":true", json);
 
-        using var scope = _factory.Services.CreateScope();
+        using var scope = factory.Services.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
         var passwordService = scope.ServiceProvider.GetRequiredService<IPasswordService>();
         var account = db.Accounts.Single(a => a.Email == "management-profile-pw@test.com");
-        Assert.True(passwordService.VerifyPassword("BrandNewPassword1!", account.HashedPassword!));
+        Assert.True(passwordService.VerifyPassword("BrandNewPassword1!", account.HashedPassword));
     }
 
     /// <summary>
@@ -174,7 +165,7 @@ public class ManagementControllerProfileTests
     {
         const string email = "management-profile-pw-legacy@test.com";
         var session = await AuthenticatedSessionHelper.LoginAsync(
-            _factory, _client, email, "weak", Role.User, TestContext.Current.CancellationToken);
+            factory, _client, email, "weak", Role.User, TestContext.Current.CancellationToken);
         using var request = session.BuildJsonPostRequest("/Management/UpdateProfilePassword", new
         {
             Nickname = "unused",
@@ -188,11 +179,11 @@ public class ManagementControllerProfileTests
 
         Assert.Contains("\"result\":true", json);
 
-        using var scope = _factory.Services.CreateScope();
+        using var scope = factory.Services.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
         var passwordService = scope.ServiceProvider.GetRequiredService<IPasswordService>();
         var account = db.Accounts.Single(a => a.Email == email);
-        Assert.True(passwordService.VerifyPassword("BrandNewPassword1!", account.HashedPassword!));
+        Assert.True(passwordService.VerifyPassword("BrandNewPassword1!", account.HashedPassword));
     }
 
     /// <summary>A new password over 72 UTF-8 bytes is refused (BCrypt would silently truncate it) and nothing changes.</summary>
@@ -213,11 +204,11 @@ public class ManagementControllerProfileTests
 
         Assert.Contains("\"result\":false", json);
 
-        using var scope = _factory.Services.CreateScope();
+        using var scope = factory.Services.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
         var passwordService = scope.ServiceProvider.GetRequiredService<IPasswordService>();
         var account = db.Accounts.Single(a => a.Email == "management-profile-pw-toolong@test.com");
-        Assert.True(passwordService.VerifyPassword("UserPassword1!", account.HashedPassword!)); // unchanged
+        Assert.True(passwordService.VerifyPassword("UserPassword1!", account.HashedPassword)); // unchanged
     }
 
     /// <summary>Update profile password wrong current password returns failure result.</summary>
@@ -238,11 +229,11 @@ public class ManagementControllerProfileTests
 
         Assert.Contains("\"result\":false", json);
 
-        using var scope = _factory.Services.CreateScope();
+        using var scope = factory.Services.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
         var passwordService = scope.ServiceProvider.GetRequiredService<IPasswordService>();
         var account = db.Accounts.Single(a => a.Email == "management-profile-pw-wrong@test.com");
-        Assert.True(passwordService.VerifyPassword("UserPassword1!", account.HashedPassword!)); // unchanged
+        Assert.True(passwordService.VerifyPassword("UserPassword1!", account.HashedPassword)); // unchanged
     }
 
     // -- UpdateProfileAvatar: validation only (see class doc comment) -------------------

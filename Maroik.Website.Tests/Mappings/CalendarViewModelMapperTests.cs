@@ -198,7 +198,7 @@ public class CalendarViewModelMapperTests
     {
         List<CalendarEventReminderDto> reminders =
         [
-            new CalendarEventReminderDto
+            new()
             {
                 Method = "Email",
                 MinutesBeforeEvent = 30,
@@ -224,7 +224,7 @@ public class CalendarViewModelMapperTests
     [Fact]
     public void ToSerializedReminders_NullMethod_DefaultsToEmptyString()
     {
-        List<CalendarEventReminderDto> reminders = [new CalendarEventReminderDto { Method = null }];
+        List<CalendarEventReminderDto> reminders = [new() { Method = null }];
 
         string json = reminders.ToSerializedReminders();
         var roundTripped = JsonSerializer.Deserialize<List<CalendarReminderDto>>(json)!;
@@ -382,8 +382,8 @@ public class CalendarViewModelMapperTests
 
         var reminders = json.ToReminderInfoList();
 
-        Assert.Single(reminders);
-        Assert.Equal("Push", reminders[0].Method);
+        var item = Assert.Single(reminders);
+        Assert.Equal("Push", item.Method);
         Assert.Equal(15, reminders[0].MinutesBeforeEvent);
         Assert.Equal(1, reminders[0].DaysBeforeEvent);
         Assert.Equal(new TimeOnly(9, 30), reminders[0].TimesBeforeEvent);
@@ -457,8 +457,8 @@ public class CalendarViewModelMapperTests
 
         var reminders = json.ToReminderInfoList();
 
-        Assert.Single(reminders);
-        Assert.Equal(15, reminders[0].MinutesBeforeEvent);
+        var item = Assert.Single(reminders);
+        Assert.Equal(15, item.MinutesBeforeEvent);
         Assert.Null(reminders[0].HoursBeforeEvent);
         Assert.Null(reminders[0].DaysBeforeEvent);
         Assert.Null(reminders[0].WeeksBeforeEvent);

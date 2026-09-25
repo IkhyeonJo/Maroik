@@ -2,7 +2,6 @@ using System.Globalization;
 using Maroik.Website.Attributes;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.Abstractions;
 using Microsoft.AspNetCore.Mvc.Controllers;
 using Microsoft.AspNetCore.Mvc.Filters;
 using Microsoft.AspNetCore.Mvc.ViewFeatures;
@@ -13,6 +12,7 @@ using Microsoft.Extensions.Localization;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Testing;
 using Moq;
+// ReSharper disable UnusedAutoPropertyAccessor.Local
 
 namespace Maroik.Website.Tests.Filters;
 
@@ -20,7 +20,7 @@ namespace Maroik.Website.Tests.Filters;
 /// Unit tests for <see cref="ThrottleEmailSendAttribute"/>: the per-address cooldown gate on the
 /// account e-mail-sending POST actions. Covers the address-extraction fallback (bare string vs. a
 /// bound view model's <c>Email</c> property), the cooldown-hit redirect (which must never reach the
-/// action), the fail-open behaviour when the distributed cache is unavailable or unregistered, that
+/// action), the fail-open behavior when the distributed cache is unavailable or unregistered, that
 /// the cooldown claim is released again when the action never reached a real send attempt, and that
 /// the claim is written before the action runs (closing the concurrent-burst race).
 /// </summary>
@@ -48,9 +48,14 @@ public class ThrottleEmailSendAttributeTests
         };
         // ThrottleEmailSendAttribute reads context.RouteData.Values (not ActionDescriptor.RouteValues)
         // for the action/controller name, so both must carry the same values here.
-        var routeData = new RouteData();
-        routeData.Values["controller"] = controllerName;
-        routeData.Values["action"] = action;
+        var routeData = new RouteData
+        {
+            Values =
+            {
+                ["controller"] = controllerName,
+                ["action"] = action
+            }
+        };
         controller.ControllerContext = new ControllerContext
         {
             HttpContext = httpContext,
@@ -378,7 +383,7 @@ public class ThrottleEmailSendAttributeTests
     /// Regression: the cooldown must be claimed (<c>SetAsync</c>) before the action runs, not after
     /// it completes. Claiming only after the action (and its possibly-slow mail send) let every
     /// request in a concurrent burst for the same address pass the <c>GetAsync</c> check above
-    /// before any of them reached the write, defeating the cooldown for the whole burst.
+    /// before any of them reached to write, defeating the cooldown for the whole burst.
     /// </summary>
     [Fact]
     public async Task OnActionExecutionAsync_ClaimsCooldown_BeforeActionRuns()
@@ -408,10 +413,9 @@ public class ThrottleEmailSendAttributeTests
     {
         var cache = new Mock<IDistributedCache>();
         cache.Setup(c => c.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ThrowsAsync(new TimeoutException("cache down"));
-        FakeLogCollector? collector = null;
         var (context, _) = BuildContext(boundArgument: "user@example.com", cache.Object,
             configureServices: services => services.AddFakeLogging());
-        collector = context.HttpContext.RequestServices.GetFakeLogCollector();
+        var collector = context.HttpContext.RequestServices.GetFakeLogCollector();
 
         await new ThrottleEmailSendAttribute().OnActionExecutionAsync(context, NextReturning(() => { }));
 

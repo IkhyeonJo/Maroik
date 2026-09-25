@@ -1,6 +1,5 @@
 using Maroik.Core.Domain.Account;
 using Maroik.Core.PostgreSQL.Data;
-using Maroik.Core.PostgreSQL.Models;
 using Maroik.Website.Tests.Infrastructure;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -18,27 +17,19 @@ namespace Maroik.Website.Tests.Controllers;
 /// evaluate — works exactly as in production and is exercised directly below.
 /// </summary>
 [Collection("Website Integration")]
-public class ManagementControllerAccountTests
+public class ManagementControllerAccountTests(MaroikWebApplicationFactory factory)
 {
-    private readonly MaroikWebApplicationFactory _factory;
-    private readonly HttpClient _client;
-
-    /// <summary>Initializes a new instance of ManagementControllerAccountTests, sharing the MaroikWebApplicationFactory fixture across the tests in this class.</summary>
-    public ManagementControllerAccountTests(MaroikWebApplicationFactory factory)
-    {
-        _factory = factory;
-        _client = factory.CreateTestClient(followRedirects: false);
-    }
-
+    private readonly HttpClient _client = factory.CreateTestClient(followRedirects: false);
+    
     private Task<AuthenticatedSession> LoginAsAdminAsync(string email = "mgmt-admin@test.com") =>
-        AuthenticatedSessionHelper.LoginAsync(_factory, _client, email, "AdminPassword1!", Role.Admin, TestContext.Current.CancellationToken);
+        AuthenticatedSessionHelper.LoginAsync(factory, _client, email, "AdminPassword1!", Role.Admin, TestContext.Current.CancellationToken);
 
     private Task<AuthenticatedSession> LoginAsUserAsync(string email = "mgmt-user@test.com") =>
-        AuthenticatedSessionHelper.LoginAsync(_factory, _client, email, "UserPassword1!", Role.User, TestContext.Current.CancellationToken);
+        AuthenticatedSessionHelper.LoginAsync(factory, _client, email, "UserPassword1!", Role.User, TestContext.Current.CancellationToken);
 
     private void SeedAccount(string email)
     {
-        using var scope = _factory.Services.CreateScope();
+        using var scope = factory.Services.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
         if (db.Accounts.Any(a => a.Email == email)) return;
         db.Accounts.Add(new Maroik.Core.PostgreSQL.Models.Account
@@ -193,7 +184,7 @@ public class ManagementControllerAccountTests
 
         Assert.Contains("\"result\":true", json);
 
-        using var scope = _factory.Services.CreateScope();
+        using var scope = factory.Services.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
         var account = db.Accounts.Single(a => a.Email == email);
         Assert.Equal("/upload/Management/Profile/default-avatar.jpg", account.AvatarImagePath);
@@ -401,7 +392,7 @@ public class ManagementControllerAccountTests
 
         Assert.Contains("\"result\":true", json);
 
-        using var scope = _factory.Services.CreateScope();
+        using var scope = factory.Services.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
         var account = db.Accounts.Single(a => a.Email == email);
         Assert.Equal(Role.Admin, account.Role);
@@ -439,7 +430,7 @@ public class ManagementControllerAccountTests
 
         Assert.Contains("\"result\":false", json);
 
-        using var scope = _factory.Services.CreateScope();
+        using var scope = factory.Services.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
         var account = db.Accounts.Single(a => a.Email == email);
         Assert.Equal(Role.User, account.Role); // unchanged from SeedAccount, not clamped
@@ -487,7 +478,7 @@ public class ManagementControllerAccountTests
 
         // DeleteAccount is a soft delete (Deleted flag flipped), not a row removal — FindByEmailAsync
         // does not filter on Deleted, so verify the flag directly rather than via IsAccountExists.
-        using var scope = _factory.Services.CreateScope();
+        using var scope = factory.Services.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
         var account = db.Accounts.Single(a => a.Email == email);
         Assert.True(account.Deleted);

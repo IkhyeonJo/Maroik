@@ -64,7 +64,7 @@ public class DashboardViewModelMapperTests
     {
         var dto = BaseDto();
         dto.DefaultMonetaryUnit = null;
-        dto.YearIncomeBreakdown = new() { ["RegularIncome"] = Breakdown(100m, ("LaborIncome", 100m, 100.0)) };
+        dto.YearIncomeBreakdown = new Dictionary<string, FinanceBreakdownDto> { ["RegularIncome"] = Breakdown(100m, ("LaborIncome", 100m, 100.0)) };
 
         var vm = dto.ToViewModel(Utc);
 
@@ -105,8 +105,8 @@ public class DashboardViewModelMapperTests
     public void ToViewModel_MapsIncomeMonetaryUnit_FromAssetLookupByDepositProductName()
     {
         var dto = BaseDto();
-        dto.CurrencyByProduct = new() { ["Bank"] = "USD" };
-        dto.YearIncomes = [Income("RegularIncome", "LaborIncome", 100, "Bank")];
+        dto.CurrencyByProduct = new Dictionary<string, string> { ["Bank"] = "USD" };
+        dto.YearIncomes = [Income("RegularIncome", "LaborIncome", 100)];
 
         var vm = dto.ToViewModel(Utc);
 
@@ -122,7 +122,7 @@ public class DashboardViewModelMapperTests
     {
         var dto = BaseDto();
         dto.Assets = [];
-        dto.CurrencyByProduct = new() { ["OldBank"] = "KRW" };
+        dto.CurrencyByProduct = new Dictionary<string, string> { ["OldBank"] = "KRW" };
         dto.YearIncomes = [Income("RegularIncome", "LaborIncome", 100, "OldBank")];
 
         var vm = dto.ToViewModel(Utc);
@@ -135,8 +135,8 @@ public class DashboardViewModelMapperTests
     public void ToViewModel_MapsExpenditureMonetaryUnit_FromAssetLookupByPaymentMethod()
     {
         var dto = BaseDto();
-        dto.CurrencyByProduct = new() { ["Card"] = "USD" };
-        dto.YearExpenditures = [Expenditure("ConsumerSpending", "MealOrEatOutExpenses", 50, "Card")];
+        dto.CurrencyByProduct = new Dictionary<string, string> { ["Card"] = "USD" };
+        dto.YearExpenditures = [Expenditure("ConsumerSpending", "MealOrEatOutExpenses", 50)];
 
         var vm = dto.ToViewModel(Utc);
 
@@ -159,12 +159,12 @@ public class DashboardViewModelMapperTests
 
     // -- Income breakdown copy: RegularIncome / IrregularIncome ----------------
 
-    /// <summary>To view model copies regular income sub-class amounts and percentages for the year onto their named properties.</summary>
+    /// <summary>To view model copies regular income subclass amounts and percentages for the year onto their named properties.</summary>
     [Fact]
     public void ToViewModel_CopiesRegularIncomeBreakdown_Year()
     {
         var dto = BaseDto();
-        dto.YearIncomeBreakdown = new()
+        dto.YearIncomeBreakdown = new Dictionary<string, FinanceBreakdownDto>
         {
             ["RegularIncome"] = Breakdown(1000m,
                 ("LaborIncome", 600m, 60.0), ("BusinessIncome", 300m, 30.0), ("PensionIncome", 100m, 10.0))
@@ -175,18 +175,18 @@ public class DashboardViewModelMapperTests
         Assert.Equal(600m, vm.RegularIncomeLaborIncomeYear);
         Assert.Equal(300m, vm.RegularIncomeBusinessIncomeYear);
         Assert.Equal(100m, vm.RegularIncomePensionIncomeYear);
-        Assert.Equal(0m, vm.RegularIncomeFinancialIncomeYear); // sub-class absent from the breakdown -> default
+        Assert.Equal(0m, vm.RegularIncomeFinancialIncomeYear); // subclass absent from the breakdown -> default
         Assert.Equal(60.0, vm.PercentageOfRegularIncomeLaborIncomeYear);
         Assert.Equal(30.0, vm.PercentageOfRegularIncomeBusinessIncomeYear);
         Assert.Equal(10.0, vm.PercentageOfRegularIncomePensionIncomeYear);
     }
 
-    /// <summary>To view model copies irregular income breakdown for the year onto its named properties, independently of RegularIncome.</summary>
+    /// <summary>To view model copies irregular income breakdown for the year onto it's named properties, independently of RegularIncome.</summary>
     [Fact]
     public void ToViewModel_CopiesIrregularIncomeBreakdown_Year()
     {
         var dto = BaseDto();
-        dto.YearIncomeBreakdown = new()
+        dto.YearIncomeBreakdown = new Dictionary<string, FinanceBreakdownDto>
         {
             ["RegularIncome"] = Breakdown(999m, ("LaborIncome", 999m, 100.0)), // must not bleed into IrregularIncome
             ["IrregularIncome"] = Breakdown(1000m, ("LaborIncome", 750m, 75.0), ("OtherIncome", 250m, 25.0))
@@ -218,8 +218,8 @@ public class DashboardViewModelMapperTests
     public void ToViewModel_CopiesRegularIncomeBreakdown_ForYearAndYearMonth_Independently()
     {
         var dto = BaseDto();
-        dto.YearIncomeBreakdown = new() { ["RegularIncome"] = Breakdown(1000m, ("LaborIncome", 1000m, 100.0)) };
-        dto.YearMonthIncomeBreakdown = new()
+        dto.YearIncomeBreakdown = new Dictionary<string, FinanceBreakdownDto> { ["RegularIncome"] = Breakdown(1000m, ("LaborIncome", 1000m, 100.0)) };
+        dto.YearMonthIncomeBreakdown = new Dictionary<string, FinanceBreakdownDto>
         {
             ["RegularIncome"] = Breakdown(500m, ("LaborIncome", 400m, 80.0), ("BusinessIncome", 100m, 20.0))
         };
@@ -234,12 +234,12 @@ public class DashboardViewModelMapperTests
 
     // -- Expenditure breakdown copy: RegularSavings ----------------------------
 
-    /// <summary>To view model copies regular savings breakdown for the year onto its named properties.</summary>
+    /// <summary>To view model copies regular savings breakdown for the year onto it's named properties.</summary>
     [Fact]
     public void ToViewModel_CopiesRegularSavingsBreakdown_Year()
     {
         var dto = BaseDto();
-        dto.YearExpenditureBreakdown = new()
+        dto.YearExpenditureBreakdown = new Dictionary<string, FinanceBreakdownDto>
         {
             ["RegularSavings"] = Breakdown(1000m, ("Deposit", 700m, 70.0), ("Investment", 300m, 30.0))
         };
@@ -254,12 +254,12 @@ public class DashboardViewModelMapperTests
 
     // -- Expenditure breakdown copy: NonConsumerSpending -----------------------
 
-    /// <summary>To view model copies every non-consumer-spending sub-class for the year onto its named property.</summary>
+    /// <summary>To view model copies every non-consumer-spending subclass for the year onto it's named property.</summary>
     [Fact]
     public void ToViewModel_CopiesNonConsumerSpendingBreakdown_Year()
     {
         var dto = BaseDto();
-        dto.YearExpenditureBreakdown = new()
+        dto.YearExpenditureBreakdown = new Dictionary<string, FinanceBreakdownDto>
         {
             ["NonConsumerSpending"] = Breakdown(1000m,
                 ("PublicPension", 200m, 20.0), ("DebtRepayment", 200m, 20.0), ("Tax", 200m, 20.0),
@@ -281,13 +281,13 @@ public class DashboardViewModelMapperTests
 
     // -- Expenditure breakdown copy: ConsumerSpending (all 12 sub-classes) -----
 
-    /// <summary>To view model copies every consumer-spending sub-class for the year onto its named property.</summary>
+    /// <summary>To view model copies every consumer-spending subclass for the year onto it's named property.</summary>
     [Fact]
     public void ToViewModel_CopiesConsumerSpendingBreakdown_Year()
     {
         var dto = BaseDto();
-        double eachPct = 100.0 / 12.0;
-        dto.YearExpenditureBreakdown = new()
+        const double eachPct = 100.0 / 12.0;
+        dto.YearExpenditureBreakdown = new Dictionary<string, FinanceBreakdownDto>
         {
             ["ConsumerSpending"] = Breakdown(1200m,
                 ("MealOrEatOutExpenses", 100m, eachPct), ("HousingOrSuppliesCost", 100m, eachPct),
@@ -307,13 +307,13 @@ public class DashboardViewModelMapperTests
         Assert.Equal(eachPct, vm.PercentageOfConsumerSpendingUnknownExpenditureYear, precision: 10);
     }
 
-    /// <summary>To view model copies every consumer-spending sub-class for the year-month period onto its named property.</summary>
+    /// <summary>To view model copies every consumer-spending subclass for the year-month period onto it's named property.</summary>
     [Fact]
     public void ToViewModel_CopiesConsumerSpendingBreakdown_YearMonth()
     {
         var dto = BaseDto();
-        double eachPct = 100.0 / 12.0;
-        dto.YearMonthExpenditureBreakdown = new()
+        const double eachPct = 100.0 / 12.0;
+        dto.YearMonthExpenditureBreakdown = new Dictionary<string, FinanceBreakdownDto>
         {
             ["ConsumerSpending"] = Breakdown(1200m,
                 ("MealOrEatOutExpenses", 100m, eachPct), ("CommunicationCost", 100m, eachPct),

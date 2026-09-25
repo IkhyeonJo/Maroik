@@ -6,8 +6,8 @@ using Maroik.Website.Models.ViewModels.Notice;
 namespace Maroik.Website.Tests.Models;
 
 /// <summary>
-/// The cross-field rules the finance input view models add to their attributes: a transfer sub-class needs a deposit
-/// asset, and the local "created" date-time must be well formed — so a bad value is caught before the mapper parses it.
+/// The cross-field rules the finance input view models add to their attributes: a transfer subclass needs a deposit
+/// asset, and the local "created" date-time must be well-formed — so a bad value is caught before the mapper parses it.
 /// </summary>
 public class InputViewModelValidationTests
 {
@@ -87,7 +87,7 @@ public class InputViewModelValidationTests
         if (!valid) Assert.Equal([nameof(FixedExpenditureInputViewModel.MyDepositAsset)], Assert.Single(results).MemberNames);
     }
 
-    /// <summary>A fixed expenditure of another sub-class needs no deposit asset.</summary>
+    /// <summary>A fixed expenditure of another subclass needs no deposit asset.</summary>
     [Fact]
     public void FixedExpenditure_NonTransfer_NeedsNoDepositAsset()
     {

@@ -6,7 +6,6 @@ using Maroik.Website.Contracts;
 using Maroik.Website.Filters;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.Abstractions;
 using Microsoft.AspNetCore.Mvc.Controllers;
 using Microsoft.AspNetCore.Mvc.Filters;
 using Microsoft.AspNetCore.Routing;
@@ -77,8 +76,12 @@ public class AuthorizationFilterTests
         services.AddLogging();
         var sp = services.BuildServiceProvider();
 
-        var httpContext = new DefaultHttpContext { RequestServices = sp };
-        httpContext.Request.Method = httpMethod;
+        var httpContext = new DefaultHttpContext { RequestServices = sp,
+            Request =
+            {
+                Method = httpMethod
+            }
+        };
 
         var actionDescriptor = new ControllerActionDescriptor
         {
@@ -93,7 +96,7 @@ public class AuthorizationFilterTests
         // only the request and the matched action — no controller, no ViewBag.
         return new AuthorizationFilterContext(
             new ActionContext(httpContext, new RouteData(), actionDescriptor),
-            new List<IFilterMetadata>());
+            []);
     }
 
     // -- GET, not logged in -------------------------------------------------------
@@ -321,7 +324,7 @@ public class AuthorizationFilterTests
         Assert.Equal("/Dashboard/AnonymousIndex", redirect.Url);
     }
 
-    /// <summary>A revoked / deleted session is still sent to login even on the error page (session validity comes first).</summary>
+    /// <summary>A revoked / deleted session is still sent to log in even on the error page (session validity comes first).</summary>
     [Fact]
     public async Task OnAuthorizationAsync_ExceptionError_Post_DeletedAccount_StillRedirectsToLogin()
     {
@@ -340,7 +343,7 @@ public class AuthorizationFilterTests
 
     // -- Session validity (unrelated to menu resolution, still gated by this filter) --
 
-    /// <summary>On action execution async logged in account deleted in db redirects to login and clears session.</summary>
+    /// <summary>On action execution async logged in account deleted in db redirects to log in and clears session.</summary>
     [Fact]
     public async Task OnAuthorizationAsync_LoggedInAccountDeletedInDb_RedirectsToLoginAndClearsSession()
     {
@@ -359,7 +362,7 @@ public class AuthorizationFilterTests
         _sessionService.Verify(s => s.RemoveAccount(), Times.Once);
     }
 
-    /// <summary>A stale security stamp (password changed since this session was minted) redirects to login and clears the session.</summary>
+    /// <summary>A stale security stamp (password changed since this session was minted) redirects to log in and clears the session.</summary>
     [Fact]
     public async Task OnAuthorizationAsync_SecurityStampMismatch_RedirectsToLoginAndClearsSession()
     {
@@ -568,7 +571,7 @@ public class AuthorizationFilterTests
     [Fact]
     public async Task OnAuthorizationAsync_APoisonedMenuCacheEntry_FallsBackToTheDatabase()
     {
-        _cache.Setup(c => c.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync("this is not json"u8.ToArray());
+        _cache.Setup(c => c.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync([.. "this is not json"u8]);
         _sessionService.Setup(s => s.GetAccount()).Returns((AccountResponse?)null);
         SetupMenu([], []);
         var context = BuildContext("Account", "Login");
@@ -588,7 +591,7 @@ public class AuthorizationFilterTests
     [Fact]
     public async Task OnAuthorizationAsync_LogsAWarningWithTheException_WhenTheMenuCacheEntryIsPoisoned()
     {
-        _cache.Setup(c => c.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync("this is not json"u8.ToArray());
+        _cache.Setup(c => c.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync([.. "this is not json"u8]);
         _sessionService.Setup(s => s.GetAccount()).Returns((AccountResponse?)null);
         SetupMenu([], []);
 

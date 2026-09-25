@@ -9,10 +9,10 @@ namespace Maroik.Website.Tests.Extensions;
 
 /// <summary>
 /// Unit tests for <see cref="IncomeSubClassOptionsExtensions"/>. Unlike
-/// <c>ExpenditureSubClassOptionsExtensions</c>, income sub-classes are not partitioned per main
+/// <c>ExpenditureSubClassOptionsExtensions</c>, income subclasses are not partitioned per main
 /// class -- "LaborIncome"/"OtherIncome" are valid under both "RegularIncome" and "IrregularIncome"
 /// -- so these tests specifically guard against re-introducing a duplicate &lt;option&gt; per
-/// overlapping sub-class.
+/// overlapping subclass.
 /// </summary>
 public class IncomeSubClassOptionsExtensionsTests
 {
@@ -30,7 +30,7 @@ public class IncomeSubClassOptionsExtensionsTests
         return writer.ToString();
     }
 
-    /// <summary>Every distinct sub-class value across all main classes is rendered exactly once, even though "LaborIncome" and "OtherIncome" belong to both "RegularIncome" and "IrregularIncome".</summary>
+    /// <summary>Every distinct subclass value across all main classes is rendered exactly once, even though "LaborIncome" and "OtherIncome" belong to both "RegularIncome" and "IrregularIncome".</summary>
     [Fact]
     public void IncomeSubClassOptions_RendersEachDistinctSubClassExactlyOnce()
     {
@@ -44,7 +44,7 @@ public class IncomeSubClassOptionsExtensionsTests
         Assert.Equal(1, CountOccurrences(html, "value=\"RentalIncome\""));
     }
 
-    /// <summary>The first rendered sub-class (matching the create-form's previously-hardcoded default) is marked selected.</summary>
+    /// <summary>The first rendered subclass (matching the create-form's previously-hardcoded default) is marked selected.</summary>
     [Fact]
     public void IncomeSubClassOptions_MarksFirstSubClass_AsSelected()
     {
