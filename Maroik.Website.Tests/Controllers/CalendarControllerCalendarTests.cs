@@ -14,20 +14,12 @@ namespace Maroik.Website.Tests.Controllers;
 /// action groups, which wrap <c>IUnitOfWork</c> transactions.
 /// </summary>
 [Collection("Website Integration")]
-public class CalendarControllerCalendarTests
+public class CalendarControllerCalendarTests(MaroikWebApplicationFactory factory)
 {
-    private readonly MaroikWebApplicationFactory _factory;
-    private readonly HttpClient _client;
-
-    /// <summary>Initializes a new instance of CalendarControllerCalendarTests, sharing the MaroikWebApplicationFactory fixture across the tests in this class.</summary>
-    public CalendarControllerCalendarTests(MaroikWebApplicationFactory factory)
-    {
-        _factory = factory;
-        _client = factory.CreateTestClient(followRedirects: false);
-    }
+    private readonly HttpClient _client = factory.CreateTestClient(followRedirects: false);
 
     private Task<AuthenticatedSession> LoginAsUserAsync(string email = "calendar-user@test.com") =>
-        AuthenticatedSessionHelper.LoginAsync(_factory, _client, email, "UserPassword1!", Role.User, TestContext.Current.CancellationToken);
+        AuthenticatedSessionHelper.LoginAsync(factory, _client, email, "UserPassword1!", Role.User, TestContext.Current.CancellationToken);
 
     private static object ValidCalendarPayload(string name) => new
     {
@@ -83,7 +75,7 @@ public class CalendarControllerCalendarTests
         using var doc = System.Text.Json.JsonDocument.Parse(await createResponse.Content.ReadAsStringAsync(TestContext.Current.CancellationToken));
         long returnedId = doc.RootElement.GetProperty("calendar").GetProperty("id").GetInt64();
 
-        using var scope = _factory.Services.CreateScope();
+        using var scope = factory.Services.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
         long storedId = db.Calendars.Single(c => c.AccountEmail == "calendar-user@test.com" && c.Name == "WithId").Id;
 
@@ -209,10 +201,9 @@ public class CalendarControllerCalendarTests
         string json = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
 
         using var doc = System.Text.Json.JsonDocument.Parse(json);
-        foreach (var calendar in doc.RootElement.GetProperty("calendars").EnumerateArray())
+        foreach (var calendar in doc.RootElement.GetProperty("calendars").EnumerateArray().Where(calendar => calendar.GetProperty("name").GetString() == name))
         {
-            if (calendar.GetProperty("name").GetString() == name)
-                return calendar.GetProperty("id").GetInt64();
+            return calendar.GetProperty("id").GetInt64();
         }
 
         throw new InvalidOperationException($"Calendar named '{name}' not found in GetCalendars response: {json}");

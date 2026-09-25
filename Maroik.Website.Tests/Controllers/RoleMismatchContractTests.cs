@@ -63,7 +63,7 @@ public class RoleMismatchContractTests
             sessions[role] = await AuthenticatedSessionHelper.LoginAsync(host, client, $"role-mismatch-{role.ToLowerInvariant()}@test.com", "UserPassword1!", role, TestContext.Current.CancellationToken);
 
         List<string> problems = [];
-        var endpoints = ControllerFailureContractTests._bodyEndpoints.Where(e => _writeEndpoints.Contains(e.Url)).ToList();
+        var endpoints = ControllerFailureContractTests.BodyEndpoints.Where(e => _writeEndpoints.Contains(e.Url)).ToList();
         Assert.Equal(_writeEndpoints.Length, endpoints.Count);
         foreach (var (role, url, build) in endpoints)
         {

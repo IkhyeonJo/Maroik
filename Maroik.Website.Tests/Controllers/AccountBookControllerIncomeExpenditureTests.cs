@@ -15,25 +15,17 @@ namespace Maroik.Website.Tests.Controllers;
 /// exercised for real, including their Asset-balance side effects.
 /// </summary>
 [Collection("Website Integration")]
-public class AccountBookControllerIncomeExpenditureTests
+public class AccountBookControllerIncomeExpenditureTests(MaroikWebApplicationFactory factory)
 {
     private const string Email = "accountbook-incexp-user@test.com";
     private const string AssetProductName = "some-asset";
 
-    private readonly MaroikWebApplicationFactory _factory;
-    private readonly HttpClient _client;
-
-    /// <summary>Initializes a new instance of AccountBookControllerIncomeExpenditureTests, sharing the MaroikWebApplicationFactory fixture across the tests in this class.</summary>
-    public AccountBookControllerIncomeExpenditureTests(MaroikWebApplicationFactory factory)
-    {
-        _factory = factory;
-        _client = factory.CreateTestClient(followRedirects: false);
-    }
-
+    private readonly HttpClient _client = factory.CreateTestClient(followRedirects: false);
+    
     private Task<AuthenticatedSession> LoginAsync() =>
-        AuthenticatedSessionHelper.LoginAsync(_factory, _client, Email, "UserPassword1!", Role.User, TestContext.Current.CancellationToken);
+        AuthenticatedSessionHelper.LoginAsync(factory, _client, Email, "UserPassword1!", Role.User, TestContext.Current.CancellationToken);
 
-    private void SeedAssetIfMissing(ApplicationDbContext db, string productName = AssetProductName)
+    private static void SeedAssetIfMissing(ApplicationDbContext db, string productName = AssetProductName)
     {
         if (db.Assets.Any(a => a.AccountEmail == Email && a.ProductName == productName)) return;
         db.Assets.Add(new Asset
@@ -52,7 +44,7 @@ public class AccountBookControllerIncomeExpenditureTests
 
     private decimal GetAssetBalance(string productName = AssetProductName)
     {
-        using var scope = _factory.Services.CreateScope();
+        using var scope = factory.Services.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
         return db.Assets.Single(a => a.AccountEmail == Email && a.ProductName == productName).Amount;
     }
@@ -64,7 +56,7 @@ public class AccountBookControllerIncomeExpenditureTests
 
     private long SeedIncome(decimal amount = 1000, string productName = AssetProductName)
     {
-        using var scope = _factory.Services.CreateScope();
+        using var scope = factory.Services.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
         SeedAssetIfMissing(db, productName);
         var income = new Income
@@ -85,7 +77,7 @@ public class AccountBookControllerIncomeExpenditureTests
 
     private long SeedExpenditure(decimal amount = 50, string productName = AssetProductName)
     {
-        using var scope = _factory.Services.CreateScope();
+        using var scope = factory.Services.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
         SeedAssetIfMissing(db, productName);
         var expenditure = new Expenditure
@@ -100,7 +92,7 @@ public class AccountBookControllerIncomeExpenditureTests
             // "transfer"-classified expenditures (moving money between two assets). Setting it
             // to the same value as PaymentMethod — which the real CreateExpenditure flow never
             // does for a non-transfer category like this one — would make
-            // AdjustAssetBalancesAsync deposit and withdraw the *same* asset on revert, net zero.
+            // AdjustAssetBalancesAsync deposit and withdraw the *same* asset on revert, net-zero.
             MyDepositAsset = null,
             Created = DateTime.UtcNow,
             Updated = DateTime.UtcNow
@@ -116,7 +108,7 @@ public class AccountBookControllerIncomeExpenditureTests
     [Fact]
     public async Task CreateIncome_AdminSession_IsForbidden()
     {
-        var session = await AuthenticatedSessionHelper.LoginAsync(_factory, _client, "accountbook-incexp-admin@test.com", "AdminPassword1!", Role.Admin, TestContext.Current.CancellationToken);
+        var session = await AuthenticatedSessionHelper.LoginAsync(factory, _client, "accountbook-incexp-admin@test.com", "AdminPassword1!", Role.Admin, TestContext.Current.CancellationToken);
         using var request = session.BuildJsonPostRequest("/AccountBook/CreateIncome", new { Id = 0, MainClass = "RegularIncome", SubClass = "LaborIncome", Content = "x", Amount = 1, DepositMyAssetProductName = "a", Note = "" });
 
         var response = await _client.SendAsync(request, TestContext.Current.CancellationToken);
@@ -147,7 +139,7 @@ public class AccountBookControllerIncomeExpenditureTests
     {
         string asset = UniqueAssetName();
         var session = await LoginAsync();
-        using (var scope = _factory.Services.CreateScope())
+        using (var scope = factory.Services.CreateScope())
             SeedAssetIfMissing(scope.ServiceProvider.GetRequiredService<ApplicationDbContext>(), asset);
         decimal before = GetAssetBalance(asset);
 
@@ -185,7 +177,7 @@ public class AccountBookControllerIncomeExpenditureTests
 
         Assert.Contains("\"result\":true", json);
 
-        using var scope = _factory.Services.CreateScope();
+        using var scope = factory.Services.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
         var income = db.Incomes.Single(i => i.Id == id);
         Assert.Equal("BusinessIncome", income.SubClass);
@@ -207,7 +199,7 @@ public class AccountBookControllerIncomeExpenditureTests
 
         Assert.Contains("\"result\":true", json);
 
-        using var scope = _factory.Services.CreateScope();
+        using var scope = factory.Services.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
         Assert.False(db.Incomes.Any(i => i.Id == id));
         Assert.Equal(balanceAfterDeposit - 500, GetAssetBalance(asset));
@@ -280,7 +272,7 @@ public class AccountBookControllerIncomeExpenditureTests
     {
         string asset = UniqueAssetName();
         var session = await LoginAsync();
-        using (var scope = _factory.Services.CreateScope())
+        using (var scope = factory.Services.CreateScope())
             SeedAssetIfMissing(scope.ServiceProvider.GetRequiredService<ApplicationDbContext>(), asset);
         decimal before = GetAssetBalance(asset);
 
@@ -318,7 +310,7 @@ public class AccountBookControllerIncomeExpenditureTests
 
         Assert.Contains("\"result\":true", json);
 
-        using var scope = _factory.Services.CreateScope();
+        using var scope = factory.Services.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
         var expenditure = db.Expenditures.Single(e => e.Id == id);
         Assert.Equal("TransportationCost", expenditure.SubClass);
@@ -340,7 +332,7 @@ public class AccountBookControllerIncomeExpenditureTests
 
         Assert.Contains("\"result\":true", json);
 
-        using var scope = _factory.Services.CreateScope();
+        using var scope = factory.Services.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
         Assert.False(db.Expenditures.Any(e => e.Id == id));
         Assert.Equal(balanceAfterWithdrawal + 75, GetAssetBalance(asset));

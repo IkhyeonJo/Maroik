@@ -20,24 +20,16 @@ namespace Maroik.Website.Tests.Controllers;
 /// through the real HTTP pipeline.
 /// </summary>
 [Collection("Website Integration")]
-public class CalendarControllerVisibilityTests
+public class CalendarControllerVisibilityTests(MaroikWebApplicationFactory factory)
 {
-    private readonly MaroikWebApplicationFactory _factory;
-    private readonly HttpClient _client;
-
-    /// <summary>Initializes a new instance of CalendarControllerVisibilityTests, sharing the MaroikWebApplicationFactory fixture across the tests in this class.</summary>
-    public CalendarControllerVisibilityTests(MaroikWebApplicationFactory factory)
-    {
-        _factory = factory;
-        _client = factory.CreateTestClient(followRedirects: false);
-    }
-
+    private readonly HttpClient _client = factory.CreateTestClient(followRedirects: false);
+    
     private Task<AuthenticatedSession> LoginAsync(string email, string role = Role.User) =>
-        AuthenticatedSessionHelper.LoginAsync(_factory, _client, email, "UserPassword1!", role, TestContext.Current.CancellationToken);
+        AuthenticatedSessionHelper.LoginAsync(factory, _client, email, "UserPassword1!", role, TestContext.Current.CancellationToken);
 
     private async Task<long> SeedCalendarAsync(string ownerEmail, string name, string? eventTitle = null, bool sharedToUsers = false, bool sharedToAnonymous = false)
     {
-        using var scope = _factory.Services.CreateScope();
+        using var scope = factory.Services.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
 
         var calendar = new OrmCalendar
@@ -64,7 +56,7 @@ public class CalendarControllerVisibilityTests
 
     private async Task SubscribeAsync(string subscriberEmail, long calendarId)
     {
-        using var scope = _factory.Services.CreateScope();
+        using var scope = factory.Services.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
         db.OtherCalendars.Add(new OrmOtherCalendar { AccountEmail = subscriberEmail, CalendarId = calendarId });
         await db.SaveChangesAsync(TestContext.Current.CancellationToken);
@@ -86,7 +78,7 @@ public class CalendarControllerVisibilityTests
     [Fact]
     public async Task GetCalendarEvents_ReturnsTheOwnersEvents()
     {
-        string owner = "cal-vis-owner1@test.com";
+        const string owner = "cal-vis-owner1@test.com";
         var session = await LoginAsync(owner);
         long calendarId = await SeedCalendarAsync(owner, "Mine-1", eventTitle: "OwnerEvent-1");
 
@@ -103,8 +95,8 @@ public class CalendarControllerVisibilityTests
     [Fact]
     public async Task GetCalendarEvents_DoesNotLeakAnotherUsersPrivateCalendar_WhenItsIdIsSupplied()
     {
-        string victim = "cal-vis-victim2@test.com";
-        string attacker = "cal-vis-attacker2@test.com";
+        const string victim = "cal-vis-victim2@test.com";
+        const string attacker = "cal-vis-attacker2@test.com";
         await LoginAsync(victim);
         var attackerSession = await LoginAsync(attacker);
         long victimCalendar = await SeedCalendarAsync(victim, "Private-2", eventTitle: "VictimSecretEvent-2");
@@ -119,8 +111,8 @@ public class CalendarControllerVisibilityTests
     [Fact]
     public async Task GetCalendarEvents_AnswersOnlyTheAuthorizedCalendars_OfAMixedRequest()
     {
-        string victim = "cal-vis-victim3@test.com";
-        string caller = "cal-vis-caller3@test.com";
+        const string victim = "cal-vis-victim3@test.com";
+        const string caller = "cal-vis-caller3@test.com";
         await LoginAsync(victim);
         var session = await LoginAsync(caller);
         long victimCalendar = await SeedCalendarAsync(victim, "Private-3", eventTitle: "VictimSecretEvent-3");
@@ -136,9 +128,9 @@ public class CalendarControllerVisibilityTests
     [Fact]
     public async Task GetCalendarEvents_ShowsASharedCalendar_OnlyToItsSubscribers()
     {
-        string owner = "cal-vis-owner4@test.com";
-        string subscriber = "cal-vis-subscriber4@test.com";
-        string stranger = "cal-vis-stranger4@test.com";
+        const string owner = "cal-vis-owner4@test.com";
+        const string subscriber = "cal-vis-subscriber4@test.com";
+        const string stranger = "cal-vis-stranger4@test.com";
         await LoginAsync(owner);
         var subscriberSession = await LoginAsync(subscriber);
         var strangerSession = await LoginAsync(stranger);
@@ -157,8 +149,8 @@ public class CalendarControllerVisibilityTests
     [Fact]
     public async Task GetCalendarEvents_HidesACalendarThatStoppedBeingShared_EvenForAStaleSubscriber()
     {
-        string owner = "cal-vis-owner5@test.com";
-        string subscriber = "cal-vis-subscriber5@test.com";
+        const string owner = "cal-vis-owner5@test.com";
+        const string subscriber = "cal-vis-subscriber5@test.com";
         await LoginAsync(owner);
         var subscriberSession = await LoginAsync(subscriber);
         long calendar = await SeedCalendarAsync(owner, "WasShared-5", eventTitle: "WasSharedEvent-5", sharedToUsers: false);
@@ -187,8 +179,8 @@ public class CalendarControllerVisibilityTests
     [Fact]
     public async Task GetOtherCalendars_ListsOnlySubscribedCalendarsThatAreStillShared()
     {
-        string owner = "cal-vis-owner7@test.com";
-        string subscriber = "cal-vis-subscriber7@test.com";
+        const string owner = "cal-vis-owner7@test.com";
+        const string subscriber = "cal-vis-subscriber7@test.com";
         await LoginAsync(owner);
         var session = await LoginAsync(subscriber);
         long stillShared = await SeedCalendarAsync(owner, "StillShared-7", sharedToUsers: true);
@@ -213,7 +205,7 @@ public class CalendarControllerVisibilityTests
     [Fact]
     public async Task IsCalendarExists_DoesNotRevealAnotherUsersCalendar()
     {
-        string victim = "cal-vis-victim8@test.com";
+        const string victim = "cal-vis-victim8@test.com";
         await LoginAsync(victim);
         var session = await LoginAsync("cal-vis-caller8@test.com");
         long victimCalendar = await SeedCalendarAsync(victim, "Private-8");
@@ -241,13 +233,13 @@ public class CalendarControllerVisibilityTests
     [Fact]
     public async Task IsCalendarEventExists_DoesNotRevealAnotherUsersEvent()
     {
-        string victim = "cal-vis-victim10@test.com";
+        const string victim = "cal-vis-victim10@test.com";
         await LoginAsync(victim);
         var session = await LoginAsync("cal-vis-caller10@test.com");
         long victimCalendar = await SeedCalendarAsync(victim, "Private-10", eventTitle: "VictimSecretEvent-10");
         await SeedCalendarAsync("cal-vis-caller10@test.com", "Own-10");
         long victimEventId;
-        using (var scope = _factory.Services.CreateScope())
+        using (var scope = factory.Services.CreateScope())
         {
             var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
             victimEventId = await db.CalendarEvents.Where(e => e.CalendarId == victimCalendar).Select(e => e.Id).SingleAsync(TestContext.Current.CancellationToken);
@@ -280,7 +272,7 @@ public class CalendarControllerVisibilityTests
             Assert.Equal(System.Net.HttpStatusCode.OK, response.StatusCode);
         }
 
-        using var scope = _factory.Services.CreateScope();
+        using var scope = factory.Services.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
         List<string> names = await db.Calendars.AsNoTracking().Where(c => c.AccountEmail == email).Select(c => c.Name).ToListAsync(TestContext.Current.CancellationToken);
         Assert.Equal([session.Nickname], names);
@@ -290,8 +282,8 @@ public class CalendarControllerVisibilityTests
     [Fact]
     public async Task UserIndex_RendersSubscribedSharedCalendarNames()
     {
-        string owner = "cal-vis-owner11@test.com";
-        string subscriber = "cal-vis-subscriber11@test.com";
+        const string owner = "cal-vis-owner11@test.com";
+        const string subscriber = "cal-vis-subscriber11@test.com";
         await LoginAsync(owner);
         var session = await LoginAsync(subscriber);
         long shared = await SeedCalendarAsync(owner, "TeamCalendar-11", sharedToUsers: true);
@@ -350,7 +342,9 @@ public class CalendarControllerVisibilityTests
     {
         var session = await LoginAsync("cal-vis-upload14@test.com");
 
-        string json = await UploadAsync(session, "fake.png", "this is not an image"u8.ToArray());
+        string json = await UploadAsync(session, "fake.png", [
+            .. "this is not an image"u8
+        ]);
 
         Assert.Contains("\"result\":false", json);
         Assert.DoesNotContain("filePath", json);

@@ -2,9 +2,7 @@ using System.Text.RegularExpressions;
 using Maroik.Core.Contract.Interfaces;
 using Maroik.Core.Domain.Account;
 using Maroik.Core.PostgreSQL.Data;
-using Maroik.Core.PostgreSQL.Models;
 using Maroik.Website.Tests.Infrastructure;
-using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace Maroik.Website.Tests.Controllers;
@@ -15,17 +13,9 @@ namespace Maroik.Website.Tests.Controllers;
 /// are accessible without authentication and should respond with 200 OK.
 /// </summary>
 [Collection("Website Integration")]
-public class AccountControllerTests
+public class AccountControllerTests(MaroikWebApplicationFactory factory)
 {
-    private readonly MaroikWebApplicationFactory _factory;
-    private readonly HttpClient _client;
-
-    /// <summary>Initializes a new instance of AccountControllerTests, sharing the MaroikWebApplicationFactory fixture across the tests in this class.</summary>
-    public AccountControllerTests(MaroikWebApplicationFactory factory)
-    {
-        _factory = factory;
-        _client = factory.CreateTestClient(followRedirects: false);
-    }
+    private readonly HttpClient _client = factory.CreateTestClient(followRedirects: false);
 
     // -- ConsentForm ----------------------------------------------------------
 
@@ -61,7 +51,7 @@ public class AccountControllerTests
         const string email = "fixation-test@example.com";
         const string password = "TestPassword1!";
 
-        using (var scope = _factory.Services.CreateScope())
+        using (var scope = factory.Services.CreateScope())
         {
             var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
             var passwordService = scope.ServiceProvider.GetRequiredService<IPasswordService>();
@@ -81,13 +71,13 @@ public class AccountControllerTests
                 Created = DateTime.UtcNow,
                 Updated = DateTime.UtcNow
             });
-            db.SaveChanges();
+            await db.SaveChangesAsync(TestContext.Current.CancellationToken);
         }
 
         // Simulate a fixation attacker who has already planted a known session cookie in the
-        // victim's browser before the victim ever logs in (a plain unauthenticated visit does not
+        // victim's browser before the victim ever logs in. (A plain unauthenticated visit does not
         // get a session cookie by default — ASP.NET Core only issues one once something is written
-        // to session — so the attack precondition is reproduced directly rather than relying on that).
+        // to session — so the attack precondition is reproduced directly rather than relying on that.)
         const string attackerChosenSessionId = "attacker-fixed-session-id-0123456789abcdef";
 
         using var getRequest = new HttpRequestMessage(HttpMethod.Get, "/Account/Login");
@@ -128,23 +118,15 @@ public class AccountControllerTests
     /// <summary>Extracts the value of a specific cookie from a response's Set-Cookie headers, or null if absent.</summary>
     private static string? ExtractCookieValue(HttpResponseMessage response, string cookieName)
     {
-        if (!response.Headers.TryGetValues("Set-Cookie", out var setCookieHeaders)) return null;
-
-        foreach (string header in setCookieHeaders)
-        {
-            string namePart = header.Split(';', 2)[0];
-            int eq = namePart.IndexOf('=');
-            if (eq <= 0) continue;
-            if (namePart[..eq] == cookieName) return namePart[(eq + 1)..];
-        }
-
-        return null;
+        return !response.Headers.TryGetValues("Set-Cookie", out var setCookieHeaders) ? null : (from header in setCookieHeaders select header.Split(';', 2)[0] into namePart let eq = namePart.IndexOf('=') where eq > 0 where namePart[..eq] == cookieName select namePart[(eq + 1)..]).FirstOrDefault();
     }
 
     /// <summary>Extracts the antiforgery hidden-input value from a rendered form's HTML.</summary>
     private static string ExtractAntiForgeryToken(string html)
     {
+ #pragma warning disable SYSLIB1045
         Match match = Regex.Match(html, "name=\"__RequestVerificationToken\"[^>]*value=\"([^\"]+)\"");
+ #pragma warning restore SYSLIB1045
         Assert.True(match.Success, "Could not find __RequestVerificationToken in the login page HTML.");
         return match.Groups[1].Value;
     }

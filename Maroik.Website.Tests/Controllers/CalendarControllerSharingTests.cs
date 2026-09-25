@@ -1,7 +1,6 @@
 using Maroik.Core.Domain.Account;
 using Maroik.Core.PostgreSQL.Data;
 using Maroik.Website.Tests.Infrastructure;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace Maroik.Website.Tests.Controllers;
@@ -16,20 +15,12 @@ namespace Maroik.Website.Tests.Controllers;
 /// for real.
 /// </summary>
 [Collection("Website Integration")]
-public class CalendarControllerSharingTests
+public class CalendarControllerSharingTests(MaroikWebApplicationFactory factory)
 {
-    private readonly MaroikWebApplicationFactory _factory;
-    private readonly HttpClient _client;
-
-    /// <summary>Initializes a new instance of CalendarControllerSharingTests, sharing the MaroikWebApplicationFactory fixture across the tests in this class.</summary>
-    public CalendarControllerSharingTests(MaroikWebApplicationFactory factory)
-    {
-        _factory = factory;
-        _client = factory.CreateTestClient(followRedirects: false);
-    }
+    private readonly HttpClient _client = factory.CreateTestClient(followRedirects: false);
 
     private Task<AuthenticatedSession> LoginAsAdminAsync(string email = "calendar-sharing-admin@test.com") =>
-        AuthenticatedSessionHelper.LoginAsync(_factory, _client, email, "AdminPassword1!", Role.Admin, TestContext.Current.CancellationToken);
+        AuthenticatedSessionHelper.LoginAsync(factory, _client, email, "AdminPassword1!", Role.Admin, TestContext.Current.CancellationToken);
 
     private static string UniqueName([System.Runtime.CompilerServices.CallerMemberName] string testName = "") =>
         $"{testName}-{Guid.NewGuid():N}";
@@ -56,10 +47,9 @@ public class CalendarControllerSharingTests
         string getJson = await getResponse.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
         using var doc = System.Text.Json.JsonDocument.Parse(getJson);
         long calendarId = 0;
-        foreach (var calendar in doc.RootElement.GetProperty("calendars").EnumerateArray())
+        foreach (var calendar in doc.RootElement.GetProperty("calendars").EnumerateArray().Where(calendar => calendar.GetProperty("name").GetString() == name))
         {
-            if (calendar.GetProperty("name").GetString() == name)
-                calendarId = calendar.GetProperty("id").GetInt64();
+            calendarId = calendar.GetProperty("id").GetInt64();
         }
         if (calendarId == 0)
             throw new InvalidOperationException($"Calendar named '{name}' not found in GetCalendars response: {getJson}");
@@ -76,7 +66,7 @@ public class CalendarControllerSharingTests
     [Fact]
     public async Task UpdateCalendarShared_UserSession_IsForbidden()
     {
-        var user = await AuthenticatedSessionHelper.LoginAsync(_factory, _client, "calendar-sharing-user@test.com", "UserPassword1!", Role.User, TestContext.Current.CancellationToken);
+        var user = await AuthenticatedSessionHelper.LoginAsync(factory, _client, "calendar-sharing-user@test.com", "UserPassword1!", Role.User, TestContext.Current.CancellationToken);
         using var request = user.BuildJsonPostRequest("/Calendar/UpdateCalendarShared", new[] { new { CalendarId = 1, User = true, Anonymous = false } });
 
         var response = await _client.SendAsync(request, TestContext.Current.CancellationToken);
@@ -100,7 +90,7 @@ public class CalendarControllerSharingTests
 
         Assert.Contains("\"result\":true", json);
 
-        using var scope = _factory.Services.CreateScope();
+        using var scope = factory.Services.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
         var shared = db.CalendarShareds.Single(s => s.CalendarId == calendarId);
         Assert.True(shared.User);
@@ -133,9 +123,9 @@ public class CalendarControllerSharingTests
             new[] { new { CalendarId = calendarId, User = true, Anonymous = false } });
         await _client.SendAsync(shareRequest, TestContext.Current.CancellationToken);
 
-        string subscriberEmail = "calendar-sharing-subscriber1@test.com";
-        var subscriberClient = _factory.CreateTestClient(followRedirects: false);
-        var subscriber = await AuthenticatedSessionHelper.LoginAsync(_factory, subscriberClient, subscriberEmail, "UserPassword1!", Role.User, TestContext.Current.CancellationToken);
+        const string subscriberEmail = "calendar-sharing-subscriber1@test.com";
+        var subscriberClient = factory.CreateTestClient(followRedirects: false);
+        var subscriber = await AuthenticatedSessionHelper.LoginAsync(factory, subscriberClient, subscriberEmail, "UserPassword1!", Role.User, TestContext.Current.CancellationToken);
 
         using var subscribeRequest = subscriber.BuildJsonPostRequest("/Calendar/UpdateOtherCalendar",
             new[] { new { AccountEmail = subscriberEmail, CalendarId = calendarId } });
@@ -144,7 +134,7 @@ public class CalendarControllerSharingTests
 
         Assert.Contains("\"result\":true", json);
 
-        using var scope = _factory.Services.CreateScope();
+        using var scope = factory.Services.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
         Assert.True(db.OtherCalendars.Any(o => o.AccountEmail == subscriberEmail && o.CalendarId == calendarId));
     }
@@ -158,9 +148,9 @@ public class CalendarControllerSharingTests
         // default CalendarShared.CreatePrivate leaves it in) — not a shareable calendar.
         long calendarId = await CreateCalendarAndBackfillSharedAsync(admin, UniqueName());
 
-        string subscriberEmail = "calendar-sharing-subscriber2@test.com";
-        var subscriberClient = _factory.CreateTestClient(followRedirects: false);
-        var subscriber = await AuthenticatedSessionHelper.LoginAsync(_factory, subscriberClient, subscriberEmail, "UserPassword1!", Role.User, TestContext.Current.CancellationToken);
+        const string subscriberEmail = "calendar-sharing-subscriber2@test.com";
+        var subscriberClient = factory.CreateTestClient(followRedirects: false);
+        var subscriber = await AuthenticatedSessionHelper.LoginAsync(factory, subscriberClient, subscriberEmail, "UserPassword1!", Role.User, TestContext.Current.CancellationToken);
 
         using var subscribeRequest = subscriber.BuildJsonPostRequest("/Calendar/UpdateOtherCalendar",
             new[] { new { AccountEmail = subscriberEmail, CalendarId = calendarId } });
@@ -169,7 +159,7 @@ public class CalendarControllerSharingTests
 
         Assert.Contains("\"result\":false", json);
 
-        using var scope = _factory.Services.CreateScope();
+        using var scope = factory.Services.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
         Assert.False(db.OtherCalendars.Any(o => o.AccountEmail == subscriberEmail && o.CalendarId == calendarId));
     }

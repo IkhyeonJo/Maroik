@@ -2,9 +2,7 @@ using System.Text.RegularExpressions;
 using Maroik.Core.Contract.Interfaces;
 using Maroik.Core.Domain.Account;
 using Maroik.Core.PostgreSQL.Data;
-using Maroik.Core.PostgreSQL.Models;
 using Maroik.Website.Tests.Infrastructure;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace Maroik.Website.Tests.Controllers;
@@ -28,17 +26,9 @@ namespace Maroik.Website.Tests.Controllers;
 /// been sent.
 /// </summary>
 [Collection("Website Integration")]
-public class AccountControllerRegistrationTests
+public class AccountControllerRegistrationTests(MaroikWebApplicationFactory factory)
 {
-    private readonly MaroikWebApplicationFactory _factory;
-    private readonly HttpClient _client;
-
-    /// <summary>Initializes a new instance of AccountControllerRegistrationTests, sharing the MaroikWebApplicationFactory fixture across the tests in this class.</summary>
-    public AccountControllerRegistrationTests(MaroikWebApplicationFactory factory)
-    {
-        _factory = factory;
-        _client = factory.CreateTestClient(followRedirects: false);
-    }
+    private readonly HttpClient _client = factory.CreateTestClient(followRedirects: false);
 
     private static string UniqueEmail([System.Runtime.CompilerServices.CallerMemberName] string testName = "") =>
         $"{testName.ToLowerInvariant()}-{Guid.NewGuid():N}@test.com";
@@ -51,7 +41,7 @@ public class AccountControllerRegistrationTests
         string token = ExtractAntiForgeryToken(html);
         string? cookie = ExtractCookieValue(response, AntiForgeryCookieName);
         Assert.False(string.IsNullOrEmpty(cookie));
-        return (cookie!, token);
+        return (cookie, token);
     }
 
     private async Task<HttpResponseMessage> PostFormAsync(string url, Dictionary<string, string> fields)
@@ -68,27 +58,21 @@ public class AccountControllerRegistrationTests
 
     private static string? ExtractCookieValue(HttpResponseMessage response, string cookieName)
     {
-        if (!response.Headers.TryGetValues("Set-Cookie", out var setCookieHeaders)) return null;
-        foreach (string header in setCookieHeaders)
-        {
-            string namePart = header.Split(';', 2)[0];
-            int eq = namePart.IndexOf('=');
-            if (eq <= 0) continue;
-            if (namePart[..eq] == cookieName) return namePart[(eq + 1)..];
-        }
-        return null;
+        return !response.Headers.TryGetValues("Set-Cookie", out var setCookieHeaders) ? null : (from header in setCookieHeaders select header.Split(';', 2)[0] into namePart let eq = namePart.IndexOf('=') where eq > 0 where namePart[..eq] == cookieName select namePart[(eq + 1)..]).FirstOrDefault();
     }
 
     private static string ExtractAntiForgeryToken(string html)
     {
+ #pragma warning disable SYSLIB1045
         Match match = Regex.Match(html, "name=\"__RequestVerificationToken\"[^>]*value=\"([^\"]+)\"");
+ #pragma warning restore SYSLIB1045
         Assert.True(match.Success, "Could not find __RequestVerificationToken in the page HTML.");
         return match.Groups[1].Value;
     }
 
     private async Task SeedAccountAsync(string email, bool emailConfirmed, string? registrationToken = null, string? resetPasswordToken = null, string? nickname = null)
     {
-        using var scope = _factory.Services.CreateScope();
+        using var scope = factory.Services.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
         var passwordService = scope.ServiceProvider.GetRequiredService<IPasswordService>();
         db.Accounts.Add(new Maroik.Core.PostgreSQL.Models.Account
@@ -130,7 +114,7 @@ public class AccountControllerRegistrationTests
 
         Assert.Equal(System.Net.HttpStatusCode.OK, response.StatusCode);
 
-        using var scope = _factory.Services.CreateScope();
+        using var scope = factory.Services.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
         var created = db.Accounts.Single(a => a.Email == email);
         Assert.False(created.EmailConfirmed);
@@ -156,7 +140,7 @@ public class AccountControllerRegistrationTests
 
         Assert.Equal(System.Net.HttpStatusCode.OK, response.StatusCode);
 
-        using var scope = _factory.Services.CreateScope();
+        using var scope = factory.Services.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
         Assert.False(db.Accounts.Any(a => a.Email == email));
     }
@@ -177,7 +161,7 @@ public class AccountControllerRegistrationTests
 
         Assert.Equal(System.Net.HttpStatusCode.OK, response.StatusCode);
 
-        using var scope = _factory.Services.CreateScope();
+        using var scope = factory.Services.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
         Assert.False(db.Accounts.Any(a => a.Email == email));
     }
@@ -200,7 +184,7 @@ public class AccountControllerRegistrationTests
 
         Assert.Equal(System.Net.HttpStatusCode.OK, response.StatusCode);
 
-        using var scope = _factory.Services.CreateScope();
+        using var scope = factory.Services.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
         var account = db.Accounts.Single(a => a.Email == email);
         Assert.True(account.EmailConfirmed); // unchanged
@@ -209,7 +193,7 @@ public class AccountControllerRegistrationTests
     /// <summary>
     /// The "nickname already exists" message is stored raw in <c>TempData</c> and HTML-encoded once by the
     /// view. Regression: it used to be encoded twice (once when built, once by the view), so a Korean
-    /// nickname was shown as <c>&amp;#xD64D;…</c> and <c>R&amp;D</c> as <c>R&amp;amp;D</c>.
+    /// nickname was shown as <c>&amp;#xD64D;…</c> and <c>R&amp;D</c> as <c>R&amp;amp'd</c>.
     /// </summary>
     [Theory]
     [InlineData("홍길동")]
@@ -232,7 +216,9 @@ public class AccountControllerRegistrationTests
 
         Assert.Equal(System.Net.HttpStatusCode.OK, response.StatusCode);
         string html = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+ #pragma warning disable SYSLIB1045
         Match error = Regex.Match(html, "<span style=\"font-weight:bold; color: red; \">(.*?)</span>", RegexOptions.Singleline);
+ #pragma warning restore SYSLIB1045
         Assert.True(error.Success, "The registration error message was not rendered.");
 
         // What the browser shows is the HTML-decoded text; it must read exactly like the typed nickname.
@@ -263,7 +249,9 @@ public class AccountControllerRegistrationTests
 
         Assert.Equal(System.Net.HttpStatusCode.OK, response.StatusCode);
         string html = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+ #pragma warning disable SYSLIB1045
         Match error = Regex.Match(html, "<span style=\"font-weight:bold; color: red; \">(.*?)</span>", RegexOptions.Singleline);
+ #pragma warning restore SYSLIB1045
         Assert.True(error.Success, "The registration error message was not rendered.");
 
         Assert.StartsWith($"'{typed}' ", System.Net.WebUtility.HtmlDecode(error.Groups[1].Value));
@@ -289,7 +277,7 @@ public class AccountControllerRegistrationTests
 
         Assert.Equal(System.Net.HttpStatusCode.OK, response.StatusCode);
 
-        using var scope = _factory.Services.CreateScope();
+        using var scope = factory.Services.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
         var account = db.Accounts.Single(a => a.Email == email);
         Assert.False(string.IsNullOrEmpty(account.RegistrationToken)); // regenerated
@@ -332,14 +320,14 @@ public class AccountControllerRegistrationTests
         string rawToken = GuidToken.Generate();
         await SeedAccountAsync(email, emailConfirmed: false, registrationToken: rawToken);
 
-        using var scope = _factory.Services.CreateScope();
+        using var scope = factory.Services.CreateScope();
         var rsa = scope.ServiceProvider.GetRequiredService<IRsaService>();
         string encryptedToken = rsa.Encrypt(rawToken);
 
         var response = await _client.GetAsync($"/Account/ConfirmEmail?registrationToken={Uri.EscapeDataString(encryptedToken)}", TestContext.Current.CancellationToken);
         Assert.Equal(System.Net.HttpStatusCode.OK, response.StatusCode);
 
-        using var verifyScope = _factory.Services.CreateScope();
+        using var verifyScope = factory.Services.CreateScope();
         var db = verifyScope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
         var account = db.Accounts.Single(a => a.Email == email);
         Assert.True(account.EmailConfirmed);
@@ -353,7 +341,7 @@ public class AccountControllerRegistrationTests
         string rawToken = GuidToken.Generate();
         await SeedAccountAsync(email, emailConfirmed: true, registrationToken: rawToken);
 
-        using var scope = _factory.Services.CreateScope();
+        using var scope = factory.Services.CreateScope();
         var rsa = scope.ServiceProvider.GetRequiredService<IRsaService>();
         string encryptedToken = rsa.Encrypt(rawToken);
 
@@ -375,7 +363,7 @@ public class AccountControllerRegistrationTests
 
         Assert.Equal(System.Net.HttpStatusCode.OK, response.StatusCode);
 
-        using var scope = _factory.Services.CreateScope();
+        using var scope = factory.Services.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
         var account = db.Accounts.Single(a => a.Email == email);
         Assert.False(string.IsNullOrEmpty(account.ResetPasswordToken));
@@ -395,7 +383,7 @@ public class AccountControllerRegistrationTests
         // Silently succeeds (200) to avoid user enumeration, even though the account doesn't exist.
         Assert.Equal(System.Net.HttpStatusCode.OK, response.StatusCode);
 
-        using var scope = _factory.Services.CreateScope();
+        using var scope = factory.Services.CreateScope();
         var publisher = scope.ServiceProvider.GetRequiredService<FakeEmailPublisher>();
         Assert.DoesNotContain(publisher.PublishedMessages, m => m.ToEmail == email);
     }
@@ -410,7 +398,7 @@ public class AccountControllerRegistrationTests
         string rawToken = GuidToken.Generate();
         await SeedAccountAsync(email, emailConfirmed: true, resetPasswordToken: rawToken);
 
-        using var scope = _factory.Services.CreateScope();
+        using var scope = factory.Services.CreateScope();
         var rsa = scope.ServiceProvider.GetRequiredService<IRsaService>();
         string encryptedToken = rsa.Encrypt(rawToken);
 
@@ -431,7 +419,7 @@ public class AccountControllerRegistrationTests
         string rawToken = GuidToken.Generate();
         await SeedAccountAsync(email, emailConfirmed: true, resetPasswordToken: rawToken);
 
-        using var scope = _factory.Services.CreateScope();
+        using var scope = factory.Services.CreateScope();
         var rsa = scope.ServiceProvider.GetRequiredService<IRsaService>();
         string encryptedToken = rsa.Encrypt(rawToken);
 
@@ -461,7 +449,7 @@ public class AccountControllerRegistrationTests
     [Fact]
     public async Task ResetPassword_Post_UnknownToken_ReturnsFailToReset()
     {
-        using var scope = _factory.Services.CreateScope();
+        using var scope = factory.Services.CreateScope();
         var rsa = scope.ServiceProvider.GetRequiredService<IRsaService>();
         string encryptedToken = rsa.Encrypt(GuidToken.Generate()); // well-formed but not stored on any account
 
@@ -489,7 +477,7 @@ public class AccountControllerRegistrationTests
         string rawToken = GuidToken.Generate();
         await SeedAccountAsync(email, emailConfirmed: true, resetPasswordToken: rawToken);
 
-        using var scope = _factory.Services.CreateScope();
+        using var scope = factory.Services.CreateScope();
         var rsa = scope.ServiceProvider.GetRequiredService<IRsaService>();
         string encryptedToken = rsa.Encrypt(rawToken);
 
@@ -505,7 +493,7 @@ public class AccountControllerRegistrationTests
         Assert.DoesNotContain("The authentication token is invalid.", html);
         Assert.Contains("at most 72 bytes", html);
 
-        using var verifyScope = _factory.Services.CreateScope();
+        using var verifyScope = factory.Services.CreateScope();
         var db = verifyScope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
         var account = db.Accounts.Single(a => a.Email == email);
         Assert.Equal(rawToken, account.ResetPasswordToken); // still usable
@@ -541,7 +529,7 @@ public class AccountControllerRegistrationTests
         });
         Assert.Equal(System.Net.HttpStatusCode.OK, accepted.StatusCode);
 
-        using var scope = _factory.Services.CreateScope();
+        using var scope = factory.Services.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
         Assert.True(db.Accounts.Any(a => a.Email == email), "the corrected registration was throttled");
         var publisher = scope.ServiceProvider.GetRequiredService<FakeEmailPublisher>();
@@ -570,7 +558,7 @@ public class AccountControllerRegistrationTests
         string email = UniqueEmail();
         await SeedAccountAsync(email, emailConfirmed: true);
 
-        var response = await PostLoginAsync(new() { ["Email"] = email, ["Password"] = "OldPassword1!" }, userAgent);
+        var response = await PostLoginAsync(new Dictionary<string, string> { ["Email"] = email, ["Password"] = "OldPassword1!" }, userAgent);
         string html = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
 
         Assert.Equal(System.Net.HttpStatusCode.OK, response.StatusCode); // a successful login redirects
@@ -584,7 +572,7 @@ public class AccountControllerRegistrationTests
         string email = UniqueEmail();
         await SeedAccountAsync(email, emailConfirmed: true);
 
-        var response = await PostLoginAsync(new() { ["Email"] = email, ["Password"] = "NotThePassword9!" });
+        var response = await PostLoginAsync(new Dictionary<string, string> { ["Email"] = email, ["Password"] = "NotThePassword9!" });
         string html = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
 
         Assert.Equal(System.Net.HttpStatusCode.OK, response.StatusCode);
@@ -602,20 +590,26 @@ public class AccountControllerRegistrationTests
     {
         string email = UniqueEmail();
         if (accountExists) await SeedAccountAsync(email, emailConfirmed: true);
-        var fields = () => new Dictionary<string, string>
-        {
-            ["Email"] = email, ["Password"] = "", ["Nickname"] = "", ["AgreedServiceTerms"] = "false", ["TimeZoneIanaId"] = ""
-        };
 
-        var first = await PostFormAsync("/Account/Register", fields());
-        var second = await PostFormAsync("/Account/Register", fields());
+        var first = await PostFormAsync("/Account/Register", Fields());
+        var second = await PostFormAsync("/Account/Register", Fields());
         string secondHtml = await second.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
 
         Assert.Equal(System.Net.HttpStatusCode.OK, first.StatusCode);
         Assert.Equal(System.Net.HttpStatusCode.OK, second.StatusCode); // not answered by the cool-down (which is 429)
         Assert.Contains("registerForm", secondHtml);
-        using var scope = _factory.Services.CreateScope();
+        using var scope = factory.Services.CreateScope();
         Assert.DoesNotContain(scope.ServiceProvider.GetRequiredService<FakeEmailPublisher>().PublishedMessages, m => m.ToEmail == email);
+        return;
+
+        Dictionary<string, string> Fields() => new()
+        {
+            ["Email"] = email,
+            ["Password"] = "",
+            ["Nickname"] = "",
+            ["AgreedServiceTerms"] = "false",
+            ["TimeZoneIanaId"] = ""
+        };
     }
 
     /// <summary>A reset with a live token but a password the policy refuses keeps the form (and the token) instead of consuming it.</summary>
@@ -625,7 +619,7 @@ public class AccountControllerRegistrationTests
         string email = UniqueEmail();
         string rawToken = GuidToken.Generate();
         await SeedAccountAsync(email, emailConfirmed: true, resetPasswordToken: rawToken);
-        using var scope = _factory.Services.CreateScope();
+        using var scope = factory.Services.CreateScope();
         string encryptedToken = scope.ServiceProvider.GetRequiredService<IRsaService>().Encrypt(rawToken);
 
         var response = await PostFormAsync("/Account/ResetPassword", new Dictionary<string, string>

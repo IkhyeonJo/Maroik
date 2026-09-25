@@ -1,7 +1,6 @@
 using Maroik.Core.Domain.Account;
 using Maroik.Core.PostgreSQL.Data;
 using Maroik.Website.Tests.Infrastructure;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace Maroik.Website.Tests.Controllers;
@@ -17,20 +16,12 @@ namespace Maroik.Website.Tests.Controllers;
 /// exercised for real here.
 /// </summary>
 [Collection("Website Integration")]
-public class CalendarControllerEventTests
+public class CalendarControllerEventTests(MaroikWebApplicationFactory factory)
 {
-    private readonly MaroikWebApplicationFactory _factory;
-    private readonly HttpClient _client;
-
-    /// <summary>Initializes a new instance of CalendarControllerEventTests, sharing the MaroikWebApplicationFactory fixture across the tests in this class.</summary>
-    public CalendarControllerEventTests(MaroikWebApplicationFactory factory)
-    {
-        _factory = factory;
-        _client = factory.CreateTestClient(followRedirects: false);
-    }
+    private readonly HttpClient _client = factory.CreateTestClient(followRedirects: false);
 
     private Task<AuthenticatedSession> LoginAsUserAsync(string email = "calendar-event-user@test.com") =>
-        AuthenticatedSessionHelper.LoginAsync(_factory, _client, email, "UserPassword1!", Role.User, TestContext.Current.CancellationToken);
+        AuthenticatedSessionHelper.LoginAsync(factory, _client, email, "UserPassword1!", Role.User, TestContext.Current.CancellationToken);
 
     private async Task<long> CreateOwnCalendarAsync(AuthenticatedSession session, string name)
     {
@@ -46,10 +37,9 @@ public class CalendarControllerEventTests
         string getJson = await getResponse.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
 
         using var doc = System.Text.Json.JsonDocument.Parse(getJson);
-        foreach (var calendar in doc.RootElement.GetProperty("calendars").EnumerateArray())
+        foreach (var calendar in doc.RootElement.GetProperty("calendars").EnumerateArray().Where(calendar => calendar.GetProperty("name").GetString() == name))
         {
-            if (calendar.GetProperty("name").GetString() == name)
-                return calendar.GetProperty("id").GetInt64();
+            return calendar.GetProperty("id").GetInt64();
         }
         throw new InvalidOperationException($"Calendar named '{name}' not found in GetCalendars response: {getJson}");
     }
@@ -82,7 +72,8 @@ public class CalendarControllerEventTests
     [Fact]
     public async Task CreateCalendarEvent_AnonymousSession_IsForbidden()
     {
-        using var request = new HttpRequestMessage(HttpMethod.Post, "/Calendar/CreateCalendarEvent") { Content = EventForm(1, "Blocked") };
+        using var request = new HttpRequestMessage(HttpMethod.Post, "/Calendar/CreateCalendarEvent");
+        request.Content = EventForm(1, "Blocked");
 
         var response = await _client.SendAsync(request, TestContext.Current.CancellationToken);
 
@@ -111,7 +102,7 @@ public class CalendarControllerEventTests
     public async Task CreateCalendarEvent_ThenIsCalendarEventExists_FindsTheNewEvent()
     {
         var session = await LoginAsUserAsync();
-        long calendarId = await CreateOwnCalendarAsync(session, UniqueTitle("cal"));
+        long calendarId = await CreateOwnCalendarAsync(session, UniqueTitle());
         string title = UniqueTitle();
 
         using var createRequest = session.BuildFormPostRequest("/Calendar/CreateCalendarEvent", EventForm(calendarId, title));
@@ -119,7 +110,7 @@ public class CalendarControllerEventTests
         string createJson = await createResponse.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
         Assert.Contains("\"result\":true", createJson);
 
-        using var scope = _factory.Services.CreateScope();
+        using var scope = factory.Services.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
         var created = db.CalendarEvents.Single(e => e.CalendarId == calendarId && e.Title == title);
 
@@ -150,12 +141,12 @@ public class CalendarControllerEventTests
     public async Task UpdateCalendarEvent_OwnEvent_ReturnsSuccessResult()
     {
         var session = await LoginAsUserAsync();
-        long calendarId = await CreateOwnCalendarAsync(session, UniqueTitle("cal"));
+        long calendarId = await CreateOwnCalendarAsync(session, UniqueTitle());
         string title = UniqueTitle();
         using var createRequest = session.BuildFormPostRequest("/Calendar/CreateCalendarEvent", EventForm(calendarId, title));
         await _client.SendAsync(createRequest, TestContext.Current.CancellationToken);
 
-        using var scope = _factory.Services.CreateScope();
+        using var scope = factory.Services.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
         var created = db.CalendarEvents.Single(e => e.CalendarId == calendarId && e.Title == title);
 
@@ -167,7 +158,7 @@ public class CalendarControllerEventTests
 
         Assert.Contains("\"result\":true", json);
 
-        using var verifyScope = _factory.Services.CreateScope();
+        using var verifyScope = factory.Services.CreateScope();
         var verifyDb = verifyScope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
         var updated = verifyDb.CalendarEvents.Single(e => e.Id == created.Id);
         Assert.Equal(updatedTitle, updated.Title);
@@ -179,7 +170,7 @@ public class CalendarControllerEventTests
     public async Task UpdateCalendarEvent_UnknownId_ReturnsFailureResult()
     {
         var session = await LoginAsUserAsync();
-        long calendarId = await CreateOwnCalendarAsync(session, UniqueTitle("cal"));
+        long calendarId = await CreateOwnCalendarAsync(session, UniqueTitle());
         using var request = session.BuildFormPostRequest("/Calendar/UpdateCalendarEvent", EventForm(calendarId, UniqueTitle(), id: 999999));
 
         var response = await _client.SendAsync(request, TestContext.Current.CancellationToken);
@@ -193,18 +184,18 @@ public class CalendarControllerEventTests
     public async Task UpdateCalendarEvent_NotOwnedByCaller_ReturnsFailureResult()
     {
         var owner = await LoginAsUserAsync("calendar-event-owner@test.com");
-        long ownerCalendarId = await CreateOwnCalendarAsync(owner, UniqueTitle("ownercal"));
+        long ownerCalendarId = await CreateOwnCalendarAsync(owner, UniqueTitle());
         string title = UniqueTitle();
         using var createRequest = owner.BuildFormPostRequest("/Calendar/CreateCalendarEvent", EventForm(ownerCalendarId, title));
         await _client.SendAsync(createRequest, TestContext.Current.CancellationToken);
 
-        using var scope = _factory.Services.CreateScope();
+        using var scope = factory.Services.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
         var created = db.CalendarEvents.Single(e => e.CalendarId == ownerCalendarId && e.Title == title);
 
-        var otherClient = _factory.CreateTestClient(followRedirects: false);
-        var other = await AuthenticatedSessionHelper.LoginAsync(_factory, otherClient, "calendar-event-other@test.com", "UserPassword1!", Role.User, TestContext.Current.CancellationToken);
-        long otherCalendarId = await CreateOwnCalendarAsync(other, UniqueTitle("othercal"));
+        var otherClient = factory.CreateTestClient(followRedirects: false);
+        var other = await AuthenticatedSessionHelper.LoginAsync(factory, otherClient, "calendar-event-other@test.com", "UserPassword1!", Role.User, TestContext.Current.CancellationToken);
+        long otherCalendarId = await CreateOwnCalendarAsync(other, UniqueTitle());
 
         using var updateRequest = other.BuildFormPostRequest("/Calendar/UpdateCalendarEvent", EventForm(otherCalendarId, UniqueTitle(), id: created.Id));
         var response = await otherClient.SendAsync(updateRequest, TestContext.Current.CancellationToken);
@@ -220,12 +211,12 @@ public class CalendarControllerEventTests
     public async Task DeleteCalendarEvent_OwnEvent_ReturnsSuccessResult()
     {
         var session = await LoginAsUserAsync();
-        long calendarId = await CreateOwnCalendarAsync(session, UniqueTitle("cal"));
+        long calendarId = await CreateOwnCalendarAsync(session, UniqueTitle());
         string title = UniqueTitle();
         using var createRequest = session.BuildFormPostRequest("/Calendar/CreateCalendarEvent", EventForm(calendarId, title));
         await _client.SendAsync(createRequest, TestContext.Current.CancellationToken);
 
-        using var scope = _factory.Services.CreateScope();
+        using var scope = factory.Services.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
         var created = db.CalendarEvents.Single(e => e.CalendarId == calendarId && e.Title == title);
 
@@ -235,7 +226,7 @@ public class CalendarControllerEventTests
 
         Assert.Contains("\"result\":true", json);
 
-        using var verifyScope = _factory.Services.CreateScope();
+        using var verifyScope = factory.Services.CreateScope();
         var verifyDb = verifyScope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
         Assert.False(verifyDb.CalendarEvents.Any(e => e.Id == created.Id));
     }

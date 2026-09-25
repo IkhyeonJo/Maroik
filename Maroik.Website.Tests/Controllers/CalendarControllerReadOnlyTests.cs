@@ -14,23 +14,15 @@ namespace Maroik.Website.Tests.Controllers;
 /// transactions those actions wrap (unusable under EF Core InMemory) are exercised for real.
 /// </summary>
 [Collection("Website Integration")]
-public class CalendarControllerReadOnlyTests
+public class CalendarControllerReadOnlyTests(MaroikWebApplicationFactory factory)
 {
-    private readonly MaroikWebApplicationFactory _factory;
-    private readonly HttpClient _client;
-
-    /// <summary>Initializes a new instance of CalendarControllerReadOnlyTests, sharing the MaroikWebApplicationFactory fixture across the tests in this class.</summary>
-    public CalendarControllerReadOnlyTests(MaroikWebApplicationFactory factory)
-    {
-        _factory = factory;
-        _client = factory.CreateTestClient(followRedirects: false);
-    }
+    private readonly HttpClient _client = factory.CreateTestClient(followRedirects: false);
 
     private Task<AuthenticatedSession> LoginAsUserAsync(string email = "calendar-readonly-user@test.com") =>
-        AuthenticatedSessionHelper.LoginAsync(_factory, _client, email, "UserPassword1!", Role.User, TestContext.Current.CancellationToken);
+        AuthenticatedSessionHelper.LoginAsync(factory, _client, email, "UserPassword1!", Role.User, TestContext.Current.CancellationToken);
 
     private Task<AuthenticatedSession> LoginAsAdminAsync(string email = "calendar-readonly-admin@test.com") =>
-        AuthenticatedSessionHelper.LoginAsync(_factory, _client, email, "AdminPassword1!", Role.Admin, TestContext.Current.CancellationToken);
+        AuthenticatedSessionHelper.LoginAsync(factory, _client, email, "AdminPassword1!", Role.Admin, TestContext.Current.CancellationToken);
 
     /// <summary>Is calendar event exists unknown id returns failure result.</summary>
     [Fact]

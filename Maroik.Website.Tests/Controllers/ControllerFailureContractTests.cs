@@ -17,7 +17,7 @@ namespace Maroik.Website.Tests.Controllers;
 /// that throw on every call, in a derived host that shares the same PostgreSQL database.
 /// </summary>
 [Collection("Website Integration")]
-public class ControllerFailureContractTests
+public class ControllerFailureContractTests(MaroikWebApplicationFactory factory)
 {
     private const string Secret = "boom-secret-detail-do-not-leak";
 
@@ -32,16 +32,11 @@ public class ControllerFailureContractTests
     public class ThrowingProxy : DispatchProxy
     {
         /// <inheritdoc />
-        protected override object? Invoke(MethodInfo? targetMethod, object?[]? args) => throw new InvalidOperationException(Secret);
+        protected override object Invoke(MethodInfo? targetMethod, object?[]? args) => throw new InvalidOperationException(Secret);
     }
 
-    private readonly MaroikWebApplicationFactory _factory;
-
-    /// <summary>Initializes a new instance of ControllerFailureContractTests, sharing the MaroikWebApplicationFactory fixture across the tests in this class.</summary>
-    public ControllerFailureContractTests(MaroikWebApplicationFactory factory) => _factory = factory;
-
     private WebApplicationFactory<Program> CreateBrokenHost() =>
-        _factory.WithWebHostBuilder(builder => builder.ConfigureTestServices(services =>
+        factory.WithWebHostBuilder(builder => builder.ConfigureTestServices(services =>
         {
             foreach (Type service in _brokenServices)
             {
@@ -96,7 +91,7 @@ public class ControllerFailureContractTests
     [Fact]
     public async Task AServiceFailure_BecomesTheGenericFailureResult_WithoutLeakingTheException()
     {
-        using var host = CreateBrokenHost();
+        await using var host = CreateBrokenHost();
         var client = host.CreateClient(new WebApplicationFactoryClientOptions
         {
             BaseAddress = new Uri("https://www.localhost/"), AllowAutoRedirect = false, HandleCookies = false
@@ -126,7 +121,7 @@ public class ControllerFailureContractTests
     [Fact]
     public async Task AmountLabel_FallsBackToThePlainLabel_WhenTheAssetLookupFails()
     {
-        using var host = CreateBrokenHost();
+        await using var host = CreateBrokenHost();
         var client = host.CreateClient(new WebApplicationFactoryClientOptions
         {
             BaseAddress = new Uri("https://www.localhost/"), AllowAutoRedirect = false, HandleCookies = false
@@ -177,7 +172,7 @@ public class ControllerFailureContractTests
         ("Status", "Busy"), ("SerializedCalendarReminders", "[]"));
 
     /// <summary>Each body-carrying JSON endpoint whose action wraps its service call in a try/catch.</summary>
-    internal static readonly (string Role, string Url, Func<AuthenticatedSession, HttpRequestMessage> Build)[] _bodyEndpoints =
+    internal static readonly (string Role, string Url, Func<AuthenticatedSession, HttpRequestMessage> Build)[] BodyEndpoints =
     [
         (Role.User, "/Forum/WriteFreeBoard", s => s.BuildFormPostRequest("/Forum/WriteFreeBoard", Form(("Title", "t"), ("Content", "c"), ("Locked", "false"), ("Noticed", "false")))),
         (Role.User, "/Forum/EditFreeBoard", s => s.BuildFormPostRequest("/Forum/EditFreeBoard", Form(("Id", "1"), ("Title", "t"), ("Content", "c"), ("Locked", "false")))),
@@ -206,7 +201,7 @@ public class ControllerFailureContractTests
     [Fact]
     public async Task AServiceFailure_InAWriteEndpoint_BecomesTheGenericFailureResult_WithoutLeakingTheException()
     {
-        using var host = CreateBrokenHost();
+        await using var host = CreateBrokenHost();
         var client = host.CreateClient(new WebApplicationFactoryClientOptions
         {
             BaseAddress = new Uri("https://www.localhost/"), AllowAutoRedirect = false, HandleCookies = false
@@ -216,7 +211,7 @@ public class ControllerFailureContractTests
             sessions[role] = await AuthenticatedSessionHelper.LoginAsync(host, client, $"failure-body-{role.ToLowerInvariant()}@test.com", "UserPassword1!", role, TestContext.Current.CancellationToken);
 
         List<string> failures = [];
-        foreach (var (role, url, build) in _bodyEndpoints)
+        foreach (var (role, url, build) in BodyEndpoints)
         {
             using var request = build(sessions[role]);
             var response = await client.SendAsync(request, TestContext.Current.CancellationToken);
@@ -239,7 +234,7 @@ public class ControllerFailureContractTests
     [Fact]
     public async Task AServiceFailure_InCreateAccountAndDefaultMonetary_ReportsFailure_WithoutLeakingTheException()
     {
-        using var host = CreateBrokenHost();
+        await using var host = CreateBrokenHost();
         var client = host.CreateClient(new WebApplicationFactoryClientOptions
         {
             BaseAddress = new Uri("https://www.localhost/"), AllowAutoRedirect = false, HandleCookies = false
@@ -271,7 +266,7 @@ public class ControllerFailureContractTests
     [Fact]
     public async Task ADetailOrEditPage_WhoseServiceFails_RedirectsToTheList()
     {
-        using var host = CreateBrokenHost();
+        await using var host = CreateBrokenHost();
         var client = host.CreateClient(new WebApplicationFactoryClientOptions
         {
             BaseAddress = new Uri("https://www.localhost/"), AllowAutoRedirect = false, HandleCookies = false
@@ -298,7 +293,7 @@ public class ControllerFailureContractTests
     [Fact]
     public async Task ATimeZoneUpdate_WhoseServiceFails_ReturnsToTheProfilePage()
     {
-        using var host = CreateBrokenHost();
+        await using var host = CreateBrokenHost();
         var client = host.CreateClient(new WebApplicationFactoryClientOptions
         {
             BaseAddress = new Uri("https://www.localhost/"), AllowAutoRedirect = false, HandleCookies = false
@@ -324,9 +319,7 @@ public class ControllerFailureContractTests
         /// <inheritdoc />
         protected override object? Invoke(MethodInfo? targetMethod, object?[]? args)
         {
-            if (targetMethod!.Name.StartsWith("GetAll", StringComparison.Ordinal))
-                return targetMethod.Invoke(Target, args);
-            throw new InvalidOperationException(Secret);
+            return targetMethod!.Name.StartsWith("GetAll", StringComparison.Ordinal) ? targetMethod.Invoke(Target, args) : throw new InvalidOperationException(Secret);
         }
     }
 
@@ -334,14 +327,16 @@ public class ControllerFailureContractTests
     [Fact]
     public async Task AMenuServiceFailure_BecomesTheGenericFailureResult_WithoutLeakingTheException()
     {
-        using var host = _factory.WithWebHostBuilder(builder => builder.ConfigureTestServices(services =>
+        await using var host = factory.WithWebHostBuilder(builder => builder.ConfigureTestServices(services =>
         {
             services.RemoveAll<IMenuService>();
             services.AddScoped<IMenuService>(sp =>
             {
-                var proxy = (MenuWritesThrowProxy)(object)DispatchProxy.Create<IMenuService, MenuWritesThrowProxy>();
+                // ReSharper disable once SuspiciousTypeConversion.Global
+                var proxy = (MenuWritesThrowProxy)DispatchProxy.Create<IMenuService, MenuWritesThrowProxy>();
                 proxy.Target = ActivatorUtilities.CreateInstance<Maroik.Core.Service.Services.MenuService>(sp);
-                return (IMenuService)(object)proxy;
+                // ReSharper disable once SuspiciousTypeConversion.Global
+                return (IMenuService)proxy;
             });
         }));
         var client = host.CreateClient(new WebApplicationFactoryClientOptions

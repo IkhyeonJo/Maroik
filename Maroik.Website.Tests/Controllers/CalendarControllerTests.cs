@@ -9,17 +9,9 @@ namespace Maroik.Website.Tests.Controllers;
 /// and requires no session; it must respond 200 OK.
 /// </summary>
 [Collection("Website Integration")]
-public class CalendarControllerTests
+public class CalendarControllerTests(MaroikWebApplicationFactory factory)
 {
-    private readonly MaroikWebApplicationFactory _factory;
-    private readonly HttpClient _client;
-
-    /// <summary>Initializes a new instance of CalendarControllerTests, sharing the MaroikWebApplicationFactory fixture across the tests in this class.</summary>
-    public CalendarControllerTests(MaroikWebApplicationFactory factory)
-    {
-        _factory = factory;
-        _client = factory.CreateTestClient(followRedirects: false);
-    }
+    private readonly HttpClient _client = factory.CreateTestClient(followRedirects: false);
 
     /// <summary>Verifies that <c>AnonymousIndex</c> get when returns200.</summary>
     [Fact]
@@ -42,7 +34,7 @@ public class CalendarControllerTests
     [Fact]
     public async Task UploadImageFile_NoFileAttached_ReturnsFailureResult()
     {
-        var session = await AuthenticatedSessionHelper.LoginAsync(_factory, _client, "calendar-uploadimage-nofile@test.com", "UserPassword1!", Role.User, TestContext.Current.CancellationToken);
+        var session = await AuthenticatedSessionHelper.LoginAsync(factory, _client, "calendar-uploadimage-nofile@test.com", "UserPassword1!", Role.User, TestContext.Current.CancellationToken);
         var form = new MultipartFormDataContent();
         using var request = session.BuildFormPostRequest("/Calendar/UploadImageFile", form);
 
