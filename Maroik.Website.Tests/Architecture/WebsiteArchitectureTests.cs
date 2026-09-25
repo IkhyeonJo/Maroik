@@ -358,6 +358,7 @@ public class WebsiteArchitectureTests
     /// </summary>
     private sealed class DoesNotCallSessionServiceGetAccount : ICustomRule
     {
+        /// <summary>Returns <see langword="false"/> when any method body of <paramref name="type"/> calls <c>ISessionService.GetAccount</c>.</summary>
         public bool MeetsRule(TypeDefinition type)
         {
             foreach (var instruction in type.Methods.Where(method => method.HasBody).SelectMany(method => method.Body.Instructions.Where(instruction => instruction.OpCode == OpCodes.Call || instruction.OpCode == OpCodes.Callvirt)))

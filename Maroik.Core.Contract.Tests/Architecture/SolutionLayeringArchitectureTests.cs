@@ -326,8 +326,10 @@ public class SolutionLayeringArchitectureTests
             _parentByGuid = parentByGuid;
         }
 
+        /// <summary>Names of every project entry in the solution (solution folders included).</summary>
         public IReadOnlySet<string> ProjectNames => _byGuid.Values.Select(v => v.Name).ToHashSet(StringComparer.Ordinal);
 
+        /// <summary>Parses the <c>.sln</c> at <paramref name="path"/>.</summary>
         public static SolutionFile Load(string path)
         {
             string text = File.ReadAllText(path);
@@ -407,6 +409,7 @@ public class SolutionLayeringArchitectureTests
         HashSet<string> ProjectReferences,
         HashSet<string> PackageReferences)
     {
+        /// <summary>Parses the <c>.csproj</c> at <paramref name="path"/>.</summary>
         public static ProjectFile Load(string path)
         {
             XDocument doc = XDocument.Load(path);

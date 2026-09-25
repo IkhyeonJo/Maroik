@@ -85,6 +85,7 @@ public class ThrottleEmailSendAttributeTests
 
     private sealed class ModelWithEmail
     {
+        /// <summary>The address the throttle attribute reads from the bound model.</summary>
         public string? Email { get; set; }
     }
 

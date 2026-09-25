@@ -43,6 +43,7 @@ public class ManagementAccountServiceAuditLoggingTests
             Assert.DoesNotContain(secret, record.Message + record.Exception);
     }
 
+    /// <summary>Verifies that an admin-created account is logged at Information with its role.</summary>
     [Fact]
     public async Task Create_LogsInformationWithTheRole_WhenTheAccountIsCreated()
     {
@@ -60,6 +61,7 @@ public class ManagementAccountServiceAuditLoggingTests
         AssertNoSecretLogged("Plain1234!", "$2a$13$hashedvalue");
     }
 
+    /// <summary>Verifies that an admin update logs the role and lock changes (before -> after) and the password-reset flag, without the new password or its hash.</summary>
     [Fact]
     public async Task Update_LogsTheChangesBeforeAndAfter_WhenTheRoleLockAndPasswordChange()
     {
@@ -79,6 +81,7 @@ public class ManagementAccountServiceAuditLoggingTests
         AssertNoSecretLogged("NewPass1!", "$2a$13$newhash");
     }
 
+    /// <summary>Verifies that an admin update without a new password logs <c>password reset False</c>.</summary>
     [Fact]
     public async Task Update_LogsThatThePasswordWasNotReset_WhenNoNewPasswordIsGiven()
     {
@@ -91,6 +94,7 @@ public class ManagementAccountServiceAuditLoggingTests
         Assert.Contains("password reset False", Only(LogLevel.Information, "Admin updated account").Message);
     }
 
+    /// <summary>Verifies that an admin update of a missing account logs a Warning.</summary>
     [Fact]
     public async Task Update_LogsWarning_WhenTheAccountDoesNotExist()
     {
@@ -101,6 +105,7 @@ public class ManagementAccountServiceAuditLoggingTests
         Only(LogLevel.Warning, "Admin update failed: account not found");
     }
 
+    /// <summary>Verifies that an admin deleting an account logs an Information entry.</summary>
     [Fact]
     public async Task Delete_LogsInformation_WhenTheAccountIsDeleted()
     {
@@ -112,6 +117,7 @@ public class ManagementAccountServiceAuditLoggingTests
         Only(LogLevel.Information, "Admin deleted account");
     }
 
+    /// <summary>Verifies that an admin deleting a missing account logs a Warning.</summary>
     [Fact]
     public async Task Delete_LogsWarning_WhenTheAccountDoesNotExist()
     {

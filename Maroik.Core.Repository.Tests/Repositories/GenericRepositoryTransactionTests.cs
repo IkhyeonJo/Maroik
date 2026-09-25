@@ -134,6 +134,7 @@ public sealed class GenericRepositoryTransactionTests(DatabaseFixture database) 
     /// non-key column) so the Modified-row extension below can be exercised through it.</summary>
     private sealed class NameFilterableCategoryRepository(ApplicationDbContext context) : CategoryRepository(context)
     {
+        /// <summary>Deletes every category with the given name through the protected <c>DeleteWhereAsync</c>.</summary>
         public Task DeleteByNameAsync(string name, CancellationToken ct) => DeleteWhereAsync(e => e.Name == name, ct);
     }
 

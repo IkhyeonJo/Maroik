@@ -55,6 +55,7 @@ public class FileControllerLoggingTests(WebApplicationFactory<Program> baseFacto
         return content;
     }
 
+    /// <summary>Verifies that an infected upload is refused (400) with one Warning naming the path and correlation ID.</summary>
     [Fact]
     public async Task Upload_LogsAWarningWithPathAndCorrelationId_WhenAVirusIsDetected()
     {
@@ -71,6 +72,7 @@ public class FileControllerLoggingTests(WebApplicationFactory<Program> baseFacto
         Assert.Contains("corr-virus-1", record.Message);
     }
 
+    /// <summary>Verifies that an upload that could not be scanned logs one Error with the correlation ID.</summary>
     [Fact]
     public async Task Upload_LogsAnError_WhenTheScannerIsUnavailable()
     {
@@ -84,6 +86,7 @@ public class FileControllerLoggingTests(WebApplicationFactory<Program> baseFacto
         Assert.Contains("corr-scan-1", record.Message);
     }
 
+    /// <summary>Verifies that an upload to a path outside the storage root is refused (400) with one Warning naming the path.</summary>
     [Fact]
     public async Task Upload_LogsAWarning_WhenThePathEscapesTheStorageRoot()
     {
@@ -98,6 +101,7 @@ public class FileControllerLoggingTests(WebApplicationFactory<Program> baseFacto
         Assert.Contains(traversal, record.Message);
     }
 
+    /// <summary>Verifies that a clean upload logs only an Information entry.</summary>
     [Fact]
     public async Task Upload_LogsNoWarningOrError_WhenTheUploadSucceeds()
     {
@@ -110,6 +114,7 @@ public class FileControllerLoggingTests(WebApplicationFactory<Program> baseFacto
         Assert.Contains(logger.Collector.GetSnapshot(), r => r.Level == LogLevel.Information && r.Message.Contains("File uploaded"));
     }
 
+    /// <summary>Verifies that a download from a path outside the storage root returns 404 with one Warning naming the path and correlation ID.</summary>
     [Fact]
     public async Task Download_LogsAWarning_WhenThePathEscapesTheStorageRoot()
     {
@@ -129,6 +134,7 @@ public class FileControllerLoggingTests(WebApplicationFactory<Program> baseFacto
         Assert.Contains("corr-dl-1", record.Message);
     }
 
+    /// <summary>Verifies that a download of a missing file returns 404 with one Warning naming the path.</summary>
     [Fact]
     public async Task Download_LogsAWarning_WhenTheFileDoesNotExist()
     {

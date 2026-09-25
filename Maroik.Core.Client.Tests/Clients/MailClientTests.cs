@@ -435,9 +435,13 @@ public class MailClientTests
 
     private sealed class RecordingLogger : Microsoft.Extensions.Logging.ILogger<MailClient>
     {
+        /// <summary>Every logged entry: its level, formatted message and exception.</summary>
         public List<(Microsoft.Extensions.Logging.LogLevel Level, string Message, Exception? Exception)> Entries { get; } = [];
+        /// <summary>Scopes are not recorded.</summary>
         public IDisposable? BeginScope<TState>(TState state) where TState : notnull => null;
+        /// <summary>Every level is enabled.</summary>
         public bool IsEnabled(Microsoft.Extensions.Logging.LogLevel logLevel) => true;
+        /// <summary>Records the level, formatted message and exception.</summary>
         public void Log<TState>(Microsoft.Extensions.Logging.LogLevel logLevel, Microsoft.Extensions.Logging.EventId eventId, TState state, Exception? exception, Func<TState, Exception?, string> formatter) =>
             Entries.Add((logLevel, formatter(state, exception), exception));
     }

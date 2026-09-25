@@ -217,6 +217,7 @@ public class DomainArchitectureTests
         private static readonly string[] _rawFactoryMethodNames =
             ["Validation", "Conflict", "Failure", "NotFound", "Forbidden", "Unexpected"];
 
+        /// <summary>Returns <see langword="false"/> when any method body of <paramref name="type"/> calls a raw <c>ErrorOr.Error</c> factory.</summary>
         public bool MeetsRule(TypeDefinition type)
         {
             foreach (var instruction in type.Methods.Where(method => method.HasBody).SelectMany(method => method.Body.Instructions.Where(instruction => instruction.OpCode == OpCodes.Call || instruction.OpCode == OpCodes.Callvirt)))

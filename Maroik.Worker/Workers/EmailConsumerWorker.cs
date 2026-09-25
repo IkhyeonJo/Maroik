@@ -21,6 +21,7 @@ public sealed class EmailConsumerWorker(
     ILogger<EmailConsumerWorker> logger) : BackgroundService
 {
     private IConnection? _connection;
+    /// <summary>The RabbitMQ channel opened in <c>ExecuteAsync</c>; <see langword="null"/> until connected. Internal so tests can inject a mock channel.</summary>
     internal IChannel? Channel;
     private string? _consumerTag;
 

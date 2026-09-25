@@ -10,6 +10,7 @@ namespace Maroik.Core.Domain.Tests.Boundaries;
 /// </summary>
 internal static class ErrorAssert
 {
+    /// <summary>Asserts that <paramref name="result"/> failed with the given code, type, message template and template arguments, and that the description is the formatted template.</summary>
     public static void Is<T>(ErrorOr<T> result, string code, ErrorType type, string template, params object[] args)
     {
         Assert.True(result.IsError, $"expected error '{code}' but the call succeeded");
@@ -21,6 +22,7 @@ internal static class ErrorAssert
         Assert.Equal(string.Format(template, args), error.Description);
     }
 
+    /// <summary>Shorthand for <see cref="Is{T}"/> with <see cref="ErrorType.Validation"/>.</summary>
     public static void Validation<T>(ErrorOr<T> result, string code, string template, params object[] args) =>
         Is(result, code, ErrorType.Validation, template, args);
 }

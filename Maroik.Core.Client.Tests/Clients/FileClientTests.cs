@@ -64,12 +64,16 @@ public class FileClientTests
     /// <summary>Records every formatted log message.</summary>
     private sealed class RecordingLogger : ILogger<FileClient>
     {
+        /// <summary>Every logged entry: its level and formatted message.</summary>
         public List<(LogLevel Level, string Message)> Entries { get; } = [];
 
+        /// <summary>Scopes are not recorded.</summary>
         public IDisposable? BeginScope<TState>(TState state) where TState : notnull => null;
 
+        /// <summary>Every level is enabled.</summary>
         public bool IsEnabled(LogLevel logLevel) => true;
 
+        /// <summary>Records the level and formatted message.</summary>
         public void Log<TState>(LogLevel logLevel, EventId eventId, TState state, Exception? exception, Func<TState, Exception?, string> formatter)
             => Entries.Add((logLevel, formatter(state, exception)));
     }

@@ -588,6 +588,7 @@ public class AuthorizationFilterTests
         Assert.Single(_logger.Collector.GetSnapshot(),
             r => r.Level == LogLevel.Warning && r.Message.Contains(containing, StringComparison.Ordinal));
 
+    /// <summary>Verifies that an unreadable navigation-menu cache entry logs a Warning with the exception attached.</summary>
     [Fact]
     public async Task OnAuthorizationAsync_LogsAWarningWithTheException_WhenTheMenuCacheEntryIsPoisoned()
     {
@@ -601,6 +602,7 @@ public class AuthorizationFilterTests
         Assert.NotNull(record.Exception);
     }
 
+    /// <summary>Verifies that a session whose account was deleted is invalidated with a Warning naming the email and the reason.</summary>
     [Fact]
     public async Task OnAuthorizationAsync_LogsTheSessionInvalidation_WhenTheAccountWasDeleted()
     {
@@ -616,6 +618,7 @@ public class AuthorizationFilterTests
         Assert.Contains("account is deleted", OnlyWarning("Session invalidated").Message);
     }
 
+    /// <summary>Verifies that a session whose security stamp changed is invalidated with a Warning that names the email but not the stamp.</summary>
     [Fact]
     public async Task OnAuthorizationAsync_LogsTheSessionInvalidation_WhenTheSecurityStampChanged()
     {
@@ -632,6 +635,7 @@ public class AuthorizationFilterTests
         Assert.DoesNotContain("old", record.Message.Replace("Session invalidated", ""));
     }
 
+    /// <summary>Verifies that a signed-in account requesting a page outside its menu logs an access-denied Warning with the method, route and email.</summary>
     [Fact]
     public async Task OnAuthorizationAsync_LogsAnAccessDeniedWarning_WhenALoggedInAccountRequestsAPageOutsideItsMenu()
     {
@@ -647,6 +651,7 @@ public class AuthorizationFilterTests
         Assert.Contains("admin@test.com", record.Message);
     }
 
+    /// <summary>Verifies that a signed-in account posting to a disallowed action logs an access-denied Warning with the method, route and email.</summary>
     [Fact]
     public async Task OnAuthorizationAsync_LogsAnAccessDeniedWarning_WhenALoggedInPostIsNotPermitted()
     {
@@ -662,6 +667,7 @@ public class AuthorizationFilterTests
         Assert.Contains("user@test.com", record.Message);
     }
 
+    /// <summary>Verifies that an anonymous post to a disallowed action logs an access-denied Warning marked as anonymous.</summary>
     [Fact]
     public async Task OnAuthorizationAsync_LogsAnAccessDeniedWarning_WhenAnAnonymousPostIsNotPermitted()
     {
@@ -675,6 +681,7 @@ public class AuthorizationFilterTests
         Assert.Contains("anonymous", record.Message);
     }
 
+    /// <summary>Verifies that an anonymous visitor requesting an unlisted page is not logged as a Warning or above.</summary>
     [Fact]
     public async Task OnAuthorizationAsync_LogsNothing_WhenAnAnonymousVisitorIsSentFromAnUnlistedPage()
     {

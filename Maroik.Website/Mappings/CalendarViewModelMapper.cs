@@ -238,11 +238,17 @@ public static class CalendarViewModelMapper
     private sealed class ReminderFormItem(string? method, int? weeksBeforeEvent, int? daysBeforeEvent, 
         int? hoursBeforeEvent, int? minutesBeforeEvent, string? timesBeforeEvent)
     {
+        /// <summary>Delivery method as posted by the form (validated later by the domain reminder policy).</summary>
         public string? Method { get; } = method;
+        /// <summary>Minutes before the event to send the reminder.</summary>
         public int? MinutesBeforeEvent { get; } = minutesBeforeEvent;
+        /// <summary>Hours before the event to send the reminder.</summary>
         public int? HoursBeforeEvent { get; } = hoursBeforeEvent;
+        /// <summary>Days before the event to send the reminder.</summary>
         public int? DaysBeforeEvent { get; } = daysBeforeEvent;
+        /// <summary>Weeks before the event to send the reminder.</summary>
         public int? WeeksBeforeEvent { get; } = weeksBeforeEvent;
+        /// <summary>Time of day (text, e.g. <c>HH:mm</c>) the reminder fires at on the target day; unparsable values become <see langword="null"/>.</summary>
         public string? TimesBeforeEvent { get; } = timesBeforeEvent;
     }
 

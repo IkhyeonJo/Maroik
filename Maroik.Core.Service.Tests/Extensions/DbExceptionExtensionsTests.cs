@@ -17,7 +17,9 @@ public class DbExceptionExtensionsTests
     private sealed class FakePostgresException(string message, string? sqlState = null, string? constraintName = null)
         : Exception(message)
     {
+        /// <summary>PostgreSQL SQLSTATE code, e.g. <c>23505</c> for a unique violation.</summary>
         public string? SqlState { get; } = sqlState;
+        /// <summary>Name of the violated constraint.</summary>
         public string? ConstraintName { get; } = constraintName;
     }
 

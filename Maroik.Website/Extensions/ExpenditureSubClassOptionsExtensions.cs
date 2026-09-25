@@ -21,6 +21,13 @@ namespace Maroik.Website.Extensions;
 /// </summary>
 public static class ExpenditureSubClassOptionsExtensions
 {
+    /// <summary>
+    /// Builds one <c>&lt;option&gt;</c> per (main class, subclass) pair; options of every main class but
+    /// the default one carry <c>hidden</c>, and the default main class's first subclass is <c>selected</c>.
+    /// </summary>
+    /// <param name="html">The view's HTML helper (extension receiver; not otherwise used).</param>
+    /// <param name="localizer">The calling view's localizer, used for each option's label.</param>
+    /// <returns>The rendered option list, ready to place inside the subclass <c>&lt;select&gt;</c>.</returns>
     public static IHtmlContent ExpenditureSubClassOptions(this IHtmlHelper html, IViewLocalizer localizer)
     {
         string defaultMainClass = ExpenditureClassPolicy.SubClassesByMainClass.Keys.First();

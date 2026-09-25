@@ -54,7 +54,9 @@ public sealed class AuthenticatedSession(string sessionCookieValue, string antif
 /// <summary>Seeds an account and drives the real <c>/Account/Login</c> flow to produce an <see cref="AuthenticatedSession"/>.</summary>
 public static class AuthenticatedSessionHelper
 {
+    /// <summary>Name of the ASP.NET Core session cookie the site issues.</summary>
     internal const string SessionCookieName = "__Secure-.AspNetCore.Session";
+    /// <summary>Name prefix of the antiforgery cookie the site issues.</summary>
     internal const string AntiforgeryCookieName = "__Secure-.AspNetCore.Antiforgery.";
 
     /// <summary>

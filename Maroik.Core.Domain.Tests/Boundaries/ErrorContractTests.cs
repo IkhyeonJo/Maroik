@@ -21,6 +21,7 @@ public class ErrorContractTests
 
     // ---- Asset ----------------------------------------------------------------------------
 
+    /// <summary>Verifies the empty / invalid / too-long errors of <c>Asset.Create</c>, and that product name and note exactly at the limit are accepted.</summary>
     [Fact]
     public void Asset_Create_Errors()
     {
@@ -34,6 +35,7 @@ public class ErrorContractTests
         Assert.False(Asset.Create(new string('x', FinanceTextPolicy.MaxTextLength), Email, "FreeDepositAndWithdrawal", 1m, "KRW", new string('x', FinanceTextPolicy.MaxTextLength)).IsError);
     }
 
+    /// <summary>Verifies that depositing, withdrawing or setting a balance in another currency returns <c>Asset.CurrencyMismatch</c> with an operation-specific message.</summary>
     [Fact]
     public void Asset_DepositWithdrawAndUpdate_CurrencyErrors()
     {
@@ -45,6 +47,7 @@ public class ErrorContractTests
         ErrorAssert.Validation(asset.SetBalance(usd), "Asset.CurrencyMismatch", "Cannot change the currency of an existing asset.");
     }
 
+    /// <summary>Verifies the empty-name, empty-item and unknown-item errors of <c>Asset.Update</c>.</summary>
     [Fact]
     public void Asset_Update_Errors()
     {
@@ -65,6 +68,7 @@ public class ErrorContractTests
         DomainAccount.Reconstitute(Email, "$2a$hash", "Nick", null, Role.User, "UTC", null, locked, loginAttempt, emailConfirmed, true,
             registrationToken, resetToken, DateTime.UtcNow, DateTime.UtcNow, null, false, "stamp", false);
 
+    /// <summary>Verifies that <c>Account.Create</c> rejects an empty password hash and an unknown role.</summary>
     [Fact]
     public void Account_Create_Errors()
     {
@@ -72,6 +76,7 @@ public class ErrorContractTests
         ErrorAssert.Validation(NewAccount(role: "Root"), "Account.RoleInvalid", "Role must be either Admin or User.");
     }
 
+    /// <summary>Verifies that confirming an already-confirmed account is a conflict and a wrong token is a validation error.</summary>
     [Fact]
     public void Account_ConfirmEmail_Errors()
     {
@@ -80,6 +85,7 @@ public class ErrorContractTests
             "Account.InvalidToken", "Invalid email confirmation token.");
     }
 
+    /// <summary>Verifies that a reset needs a confirmed email, the right token and a non-empty new hash.</summary>
     [Fact]
     public void Account_PasswordReset_Errors()
     {
@@ -92,6 +98,7 @@ public class ErrorContractTests
         ErrorAssert.Validation(account.ResetPassword(token, " "), "Account.PasswordEmpty", "New hashed password cannot be empty.");
     }
 
+    /// <summary>Verifies that <c>AdminUpdate</c> rejects a role other than Admin or User.</summary>
     [Fact]
     public void Account_AdminUpdate_RejectsAnUnknownRole()
     {
@@ -101,6 +108,7 @@ public class ErrorContractTests
 
     // ---- Board ----------------------------------------------------------------------------
 
+    /// <summary>Verifies the conflicts on a deleted or locked post and the mismatch error for a comment that belongs to another post.</summary>
     [Fact]
     public void Board_Conflicts()
     {
@@ -121,6 +129,7 @@ public class ErrorContractTests
     private static Domain.Board.Board NewBoardWithId(long id) =>
         Domain.Board.Board.Reconstitute(id, BoardTypes.FreeForum, "t", "c", "Alice", DateTime.UtcNow, DateTime.UtcNow, 0L, false, false, false);
 
+    /// <summary>Verifies the empty-writer, empty/too-long content and already-deleted errors of a board comment.</summary>
     [Fact]
     public void BoardComment_Errors()
     {
@@ -136,6 +145,7 @@ public class ErrorContractTests
 
     // ---- Calendar reminders / other calendar --------------------------------------------------
 
+    /// <summary>Verifies that subscribing to calendar ID 0 is refused and ID 1 is accepted.</summary>
     [Fact]
     public void OtherCalendar_Create_RejectsANonPositiveCalendarId()
     {
@@ -145,6 +155,7 @@ public class ErrorContractTests
 
     // ---- Menu -----------------------------------------------------------------------------
 
+    /// <summary>Verifies the empty-name errors of categories and sub-categories and the role / order errors of <c>MenuFieldPolicy</c>.</summary>
     [Fact]
     public void Menu_Errors()
     {
@@ -160,6 +171,7 @@ public class ErrorContractTests
 
     // ---- Value objects ------------------------------------------------------------------------
 
+    /// <summary>Verifies the empty errors of <c>HtmlColorCode</c>, <c>TimeZoneId</c> and <c>Email</c>, and the too-long email error.</summary>
     [Fact]
     public void ValueObject_EmptyErrors()
     {
@@ -171,6 +183,7 @@ public class ErrorContractTests
 
     // ---- Finance records ------------------------------------------------------------------------
 
+    /// <summary>Verifies the empty main class / sub class / deposit asset / content errors of <c>Income.Record</c>.</summary>
     [Fact]
     public void Income_Record_Errors()
     {
@@ -180,6 +193,7 @@ public class ErrorContractTests
         ErrorAssert.Validation(Income.Record(Email, "RegularIncome", "LaborIncome", " ", 1m, "KRW", "a"), "Income.ContentEmpty", "Content cannot be empty.");
     }
 
+    /// <summary>Verifies the empty main class / sub class / payment method / content errors of <c>Expenditure.Record</c>.</summary>
     [Fact]
     public void Expenditure_Record_Errors()
     {

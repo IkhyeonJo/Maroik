@@ -65,6 +65,7 @@ public class AccountServiceAuditLoggingTests
             Assert.DoesNotContain(secret, record.Message + record.Exception);
     }
 
+    /// <summary>Verifies that a successful login logs one Information entry and never the typed password.</summary>
     [Fact]
     public async Task Login_LogsInformation_WhenItSucceeds()
     {
@@ -76,6 +77,7 @@ public class AccountServiceAuditLoggingTests
         AssertNoSecretLogged(TypedPassword);
     }
 
+    /// <summary>Verifies that a wrong password logs a Warning with the updated attempt count and never the typed password.</summary>
     [Fact]
     public async Task Login_LogsWarningWithAttemptCount_WhenThePasswordIsWrong()
     {
@@ -88,6 +90,7 @@ public class AccountServiceAuditLoggingTests
         AssertNoSecretLogged(TypedPassword);
     }
 
+    /// <summary>Verifies that the failure that reaches the attempt limit logs an account-locked Warning with the count.</summary>
     [Fact]
     public async Task Login_LogsAnAccountLockedWarning_WhenTheFailureReachesTheLimit()
     {
@@ -99,6 +102,7 @@ public class AccountServiceAuditLoggingTests
         Assert.Contains("3", record.Message);
     }
 
+    /// <summary>Verifies that a login for an unknown email logs a Warning and never the typed password.</summary>
     [Fact]
     public async Task Login_LogsWarning_WhenNoAccountHasThatEmail()
     {
@@ -110,6 +114,7 @@ public class AccountServiceAuditLoggingTests
         AssertNoSecretLogged(TypedPassword);
     }
 
+    /// <summary>Verifies that a login refused because the account is locked logs a Warning.</summary>
     [Fact]
     public async Task Login_LogsWarning_WhenALockedAccountIsRefused()
     {
@@ -120,6 +125,7 @@ public class AccountServiceAuditLoggingTests
         Only(LogLevel.Warning, "Login refused: account is locked");
     }
 
+    /// <summary>Verifies that a correct password refused for a deleted, unconfirmed or terms-not-accepted account logs a Warning naming the reason.</summary>
     [Theory]
     [InlineData("deleted")]
     [InlineData("email not confirmed")]
@@ -136,6 +142,7 @@ public class AccountServiceAuditLoggingTests
         Only(LogLevel.Warning, "Login refused: " + reason);
     }
 
+    /// <summary>Verifies that registration logs one Information entry without the password, its hash or the encrypted token.</summary>
     [Fact]
     public async Task Register_LogsInformation_WhenANewAccountIsCreated()
     {
@@ -154,6 +161,7 @@ public class AccountServiceAuditLoggingTests
         AssertNoSecretLogged("PlainPass1!", "enc-token", "$2a$13$hashed");
     }
 
+    /// <summary>Verifies that a successful email confirmation logs one Information entry without the token or its ciphertext.</summary>
     [Fact]
     public async Task ConfirmEmail_LogsInformation_WhenTheTokenConfirmsTheAccount()
     {
@@ -170,6 +178,7 @@ public class AccountServiceAuditLoggingTests
         AssertNoSecretLogged(token, "enc");
     }
 
+    /// <summary>Verifies that an unknown confirmation token logs a Warning without the token or its ciphertext.</summary>
     [Fact]
     public async Task ConfirmEmail_LogsWarning_WhenTheTokenIsRejected()
     {
@@ -183,6 +192,7 @@ public class AccountServiceAuditLoggingTests
         AssertNoSecretLogged("raw-token", "enc");
     }
 
+    /// <summary>Verifies that queuing a reset mail logs one Information entry without the encrypted reset token.</summary>
     [Fact]
     public async Task ForgotPassword_LogsInformation_WhenAResetMailIsQueued()
     {
@@ -199,6 +209,7 @@ public class AccountServiceAuditLoggingTests
         AssertNoSecretLogged("enc-reset-token");
     }
 
+    /// <summary>Verifies that a reset request for an unknown address logs a Warning.</summary>
     [Fact]
     public async Task ForgotPassword_LogsWarning_WhenTheAddressIsUnknown()
     {
@@ -211,6 +222,7 @@ public class AccountServiceAuditLoggingTests
         Only(LogLevel.Warning, "Password reset ignored");
     }
 
+    /// <summary>Verifies that a completed reset logs one Information entry without the new password, its hash or the token.</summary>
     [Fact]
     public async Task ResetPassword_LogsInformation_WhenThePasswordIsReset()
     {
@@ -228,6 +240,7 @@ public class AccountServiceAuditLoggingTests
         AssertNoSecretLogged("NewPass1!", "$2a$13$newhash", token, "enc");
     }
 
+    /// <summary>Verifies that an unknown reset token logs a Warning without the token, its ciphertext or the new password.</summary>
     [Fact]
     public async Task ResetPassword_LogsWarning_WhenTheTokenIsRejected()
     {

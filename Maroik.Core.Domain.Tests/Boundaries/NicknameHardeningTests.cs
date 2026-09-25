@@ -8,6 +8,7 @@ namespace Maroik.Core.Domain.Tests.Boundaries;
 /// </summary>
 public class NicknameHardeningTests
 {
+    /// <summary>The complete reserved-name list, spelled out independently of <see cref="NicknamePolicy.ReservedNicknames"/>.</summary>
     public static TheoryData<string> AllReservedNames =>
     [
         "admin", "administrator", "sysadmin", "root", "system", "moderator", "operator", "staff",
@@ -15,6 +16,7 @@ public class NicknameHardeningTests
         "관리자", "운영자", "운영진", "어드민", "시스템", "익명", "게스트",
     ];
 
+    /// <summary>Verifies that each reserved name is refused for self-registration but allowed when <c>allowReserved</c> is set.</summary>
     [Theory]
     [MemberData(nameof(AllReservedNames))]
     public void EveryReservedName_IsReserved_ForSelfRegistration_AndAllowedForAnAdministrator(string name)
@@ -24,6 +26,7 @@ public class NicknameHardeningTests
         Assert.False(NicknamePolicy.Validate(name, allowReserved: true).IsError);
     }
 
+    /// <summary>Verifies that the policy's reserved list matches <see cref="AllReservedNames"/> exactly (no extra, no missing names).</summary>
     [Fact]
     public void TheReservedListHasExactlyTheDocumentedNames()
     {
@@ -35,6 +38,7 @@ public class NicknameHardeningTests
     private const string Cyrillic = "д";      // U+0434
     private const string LatinLetter = "a";
 
+    /// <summary>Verifies that Latin letters at both edges and the middle of each Latin range are refused next to a Cyrillic letter.</summary>
     [Theory]
     [InlineData("A")] [InlineData("M")] [InlineData("Z")]           // upper-case ASCII, both edges and the middle
     [InlineData("a")] [InlineData("m")] [InlineData("z")]           // lower-case ASCII
@@ -47,12 +51,14 @@ public class NicknameHardeningTests
 
     [Theory]
     // (ª and º, the only letters below the range, NFKC-fold to the ASCII a / o, so they are Latin anyway.)
+    /// <summary>Verifies that a letter just above the Latin range is not treated as Latin.</summary>
     [InlineData("ɐ")]   // ɐ  just above the Latin range (IPA extensions)
     public void ALetterJustOutsideTheLatinRange_MayBeMixedWithCyrillic(string outside)
     {
         Assert.False(NicknamePolicy.Validate(outside + Cyrillic).IsError);
     }
 
+    /// <summary>Verifies that Greek and Cyrillic letters at the edges of their ranges are refused next to a Latin letter.</summary>
     [Theory]
     [InlineData("Ͱ")] [InlineData("α")] [InlineData("Ͽ")]   // Greek and Coptic: first, alpha, last
     [InlineData("Ѐ")] [InlineData("д")] [InlineData("ԯ")]   // Cyrillic and Supplement: first, middle, last
@@ -62,6 +68,7 @@ public class NicknameHardeningTests
             "Nickname contains characters that are not allowed.");
     }
 
+    /// <summary>Verifies that letters just outside the Greek / Cyrillic ranges may be mixed with Latin.</summary>
     [Theory]
     [InlineData("ʰ")]   // ʰ  just below Greek (modifier letter)
     [InlineData("Ա")]   // Ա  just above the Cyrillic supplement (Armenian)
@@ -70,6 +77,7 @@ public class NicknameHardeningTests
         Assert.False(NicknamePolicy.Validate(LatinLetter + outside).IsError);
     }
 
+    /// <summary>Verifies that a symbol inside the Latin-1 block does not make a name count as Latin.</summary>
     [Fact]
     public void ASymbolInsideTheLatinBlock_IsNotALetter_SoItDoesNotCountAsLatin()
     {
@@ -80,6 +88,7 @@ public class NicknameHardeningTests
 
     // ---- error contract and canonical key --------------------------------------------------------
 
+    /// <summary>Verifies the empty, invalid-character and too-long nickname errors.</summary>
     [Fact]
     public void ErrorContract()
     {
@@ -89,6 +98,7 @@ public class NicknameHardeningTests
         ErrorAssert.Validation(NicknamePolicy.Validate(new string('x', 256)), "Account.NicknameTooLong", "Nickname must be {0} characters or fewer.", 255);
     }
 
+    /// <summary>Verifies that a null or empty input has an empty canonical key and is not reserved.</summary>
     [Theory]
     [InlineData(null)]
     [InlineData("")]
@@ -98,6 +108,7 @@ public class NicknameHardeningTests
         Assert.False(NicknamePolicy.IsReserved(input));
     }
 
+    /// <summary>Verifies that a string with a lone surrogate has an empty canonical key.</summary>
     [Fact]
     public void CanonicalKey_OfAMalformedString_IsEmpty()
     {

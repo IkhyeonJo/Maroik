@@ -33,6 +33,7 @@ namespace Maroik.Core.Repository.Repositories;
 public abstract class GenericRepository<TDomain, TEntity>(ApplicationDbContext context) : IGenericRepository<TDomain>
     where TEntity : class
 {
+    /// <summary>The shared EF Core context (and so the unit of work's transaction) this repository reads and writes through.</summary>
     protected readonly ApplicationDbContext Context = context;
 
     /// <summary>The concrete <see cref="DbSet{TEntity}"/> on <see cref="ApplicationDbContext"/> this repository operates on.</summary>

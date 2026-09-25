@@ -21,6 +21,7 @@ public class RoleMismatchContractTests(MaroikWebApplicationFactory factory)
 {
     private sealed class GhostRoleFilter : IAsyncActionFilter
     {
+        /// <summary>Replaces the logged-in account on the ViewBag with an unknown-role copy when the request carries <c>X-Test-Ghost</c>; otherwise just continues.</summary>
         public Task OnActionExecutionAsync(ActionExecutingContext context, ActionExecutionDelegate next)
         {
             if (!context.HttpContext.Request.Headers.ContainsKey("X-Test-Ghost") || context.Controller is not Controller controller)

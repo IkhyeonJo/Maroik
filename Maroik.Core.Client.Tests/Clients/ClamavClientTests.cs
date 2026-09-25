@@ -188,6 +188,7 @@ public class ClamavClientTests
 
         private readonly TaskCompletionSource<string> _commandLine = new();
 
+        /// <summary>Loopback port the fake daemon listens on.</summary>
         public int Port { get; }
 
         /// <summary>The raw command line (including its terminator) the client sent before the chunks.</summary>
@@ -209,6 +210,7 @@ public class ClamavClientTests
             _acceptTask = AcceptAndRespondAsync(response);
         }
 
+        /// <summary>Starts listening on a free loopback port and answers the first session with <paramref name="response"/>.</summary>
         public static FakeClamavServer Start(string response)
         {
             var listener = new TcpListener(IPAddress.Loopback, 0);
@@ -268,6 +270,7 @@ public class ClamavClientTests
             return line.ToString();
         }
 
+        /// <summary>Stops the listener and waits for the accept task to finish.</summary>
         public async ValueTask DisposeAsync()
         {
             _listener.Stop();

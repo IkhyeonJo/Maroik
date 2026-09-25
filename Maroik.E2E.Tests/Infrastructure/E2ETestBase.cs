@@ -11,6 +11,7 @@ namespace Maroik.E2E.Tests.Infrastructure;
 /// </summary>
 public abstract class E2ETestBase(E2ESharedFixture fixture)
 {
+    /// <summary>Base URL of the Kestrel server the browser talks to.</summary>
     protected string BaseUrl => fixture.ServerBaseUrl;
 
     /// <summary>The seeded database, for creating fixtures and checking what the server persisted.</summary>

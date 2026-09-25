@@ -7,6 +7,7 @@ namespace Maroik.Core.Domain.Tests.Account;
 /// </summary>
 public class PasswordPolicyTests
 {
+    /// <summary>Verifies that a password of 8+ characters meeting any three (or all four) of the criteria is valid.</summary>
     [Theory]
     [InlineData("Abcdefg1")] // upper + lower + digit
     [InlineData("Abcdefg!")] // upper + lower + special
@@ -27,6 +28,7 @@ public class PasswordPolicyTests
         Assert.False(PasswordPolicy.IsValid(password));
     }
 
+    /// <summary>Verifies that a password that is too short or meets fewer than three criteria is invalid.</summary>
     [Theory]
     [InlineData("Abc12")] // meets 3 criteria but under 8 characters
     [InlineData("Abcdefgh")] // only upper + lower (2 criteria)

@@ -41,6 +41,7 @@ public class MenuServiceAuditLoggingTests
         Assert.Contains(containing, record.Message);
     }
 
+    /// <summary>Verifies that creating a menu category logs its name at Information.</summary>
     [Fact]
     public async Task CreateCategory_LogsInformation()
     {
@@ -51,6 +52,7 @@ public class MenuServiceAuditLoggingTests
         AssertOnlyInformation("Menu category Forum created");
     }
 
+    /// <summary>Verifies that updating a menu category logs its ID and name at Information.</summary>
     [Fact]
     public async Task UpdateCategory_LogsInformationWithTheId()
     {
@@ -62,6 +64,7 @@ public class MenuServiceAuditLoggingTests
         AssertOnlyInformation("Menu category 3 (Forum) updated");
     }
 
+    /// <summary>Verifies that deleting a menu category logs its ID and name at Information.</summary>
     [Fact]
     public async Task DeleteCategory_LogsInformation()
     {
@@ -72,6 +75,7 @@ public class MenuServiceAuditLoggingTests
         AssertOnlyInformation("Menu category 3 (Forum) deleted");
     }
 
+    /// <summary>Verifies that creating a sub-category logs its name at Information.</summary>
     [Fact]
     public async Task CreateSubCategory_LogsInformation()
     {
@@ -82,6 +86,7 @@ public class MenuServiceAuditLoggingTests
         AssertOnlyInformation("Menu sub-category FreeForum created");
     }
 
+    /// <summary>Verifies that updating a sub-category logs its ID and name at Information.</summary>
     [Fact]
     public async Task UpdateSubCategory_LogsInformationWithTheId()
     {
@@ -93,6 +98,7 @@ public class MenuServiceAuditLoggingTests
         AssertOnlyInformation("Menu sub-category 4 (FreeForum) updated");
     }
 
+    /// <summary>Verifies that deleting a sub-category logs its ID and name at Information.</summary>
     [Fact]
     public async Task DeleteSubCategory_LogsInformation()
     {

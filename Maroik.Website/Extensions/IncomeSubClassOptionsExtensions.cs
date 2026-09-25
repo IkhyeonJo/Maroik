@@ -27,6 +27,12 @@ namespace Maroik.Website.Extensions;
 /// </summary>
 public static class IncomeSubClassOptionsExtensions
 {
+    /// <summary>
+    /// Builds one <c>&lt;option&gt;</c> per distinct subclass across all main classes, in policy order.
+    /// </summary>
+    /// <param name="html">The view's HTML helper (extension receiver; not otherwise used).</param>
+    /// <param name="localizer">The calling view's localizer, used for each option's label.</param>
+    /// <returns>The rendered option list, ready to place inside the subclass <c>&lt;select&gt;</c>.</returns>
     public static IHtmlContent IncomeSubClassOptions(this IHtmlHelper html, IViewLocalizer localizer)
     {
         IReadOnlyList<string> distinctSubClasses =

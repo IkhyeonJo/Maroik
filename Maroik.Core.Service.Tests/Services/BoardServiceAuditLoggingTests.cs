@@ -51,6 +51,7 @@ public class BoardServiceAuditLoggingTests
         return record;
     }
 
+    /// <summary>Verifies that an admin deleting someone else's post logs the post, writer, requester and admin flag at Information.</summary>
     [Fact]
     public async Task DeleteBoard_LogsInformationWithWriterRequesterAndAdminFlag_WhenAnAdminDeletesSomeoneElsesPost()
     {
@@ -62,6 +63,7 @@ public class BoardServiceAuditLoggingTests
         Assert.Contains("admin: True", record.Message);
     }
 
+    /// <summary>Verifies that a refused post deletion logs a Warning naming the requester and the post.</summary>
     [Fact]
     public async Task DeleteBoard_LogsWarning_WhenTheRequesterMayNotDeleteThePost()
     {
@@ -72,6 +74,7 @@ public class BoardServiceAuditLoggingTests
         Only(LogLevel.Warning, "Board delete refused: Bob may not delete post 1");
     }
 
+    /// <summary>Verifies that deleting a comment logs the comment, its writer and the requester at Information.</summary>
     [Fact]
     public async Task DeleteComment_LogsInformation_WhenTheCommentIsDeleted()
     {
@@ -83,6 +86,7 @@ public class BoardServiceAuditLoggingTests
         Only(LogLevel.Information, "Comment 7 of Alice deleted by Alice");
     }
 
+    /// <summary>Verifies that a refused comment deletion logs a Warning naming the requester and the comment.</summary>
     [Fact]
     public async Task DeleteComment_LogsWarning_WhenTheRequesterMayNotDeleteTheComment()
     {
@@ -94,6 +98,7 @@ public class BoardServiceAuditLoggingTests
         Only(LogLevel.Warning, "Comment delete refused: Bob may not delete comment 7");
     }
 
+    /// <summary>Verifies that an edit by someone who is neither the writer nor an admin clearing a lock logs a Warning.</summary>
     [Fact]
     public async Task EditBoard_LogsWarning_WhenTheRequesterIsNeitherTheWriterNorAnAdminClearingALock()
     {
@@ -106,6 +111,7 @@ public class BoardServiceAuditLoggingTests
         Only(LogLevel.Warning, "Board edit refused: Bob may not edit post 1");
     }
 
+    /// <summary>Verifies that an admin clearing the lock on someone else's post logs an Information entry.</summary>
     [Fact]
     public async Task EditBoard_LogsInformation_WhenAnAdminClearsSomeoneElsesLock()
     {

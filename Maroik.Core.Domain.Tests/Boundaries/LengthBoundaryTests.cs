@@ -18,6 +18,7 @@ public class LengthBoundaryTests
 
     // ---- Board ----------------------------------------------------------------------------
 
+    /// <summary>Verifies that <c>Board.Create</c> accepts a title and content at the maximum length and refuses one character more.</summary>
     [Fact]
     public void Board_Create_AcceptsATitleAndContentAtTheLimit_AndRefusesOneMore()
     {
@@ -29,6 +30,7 @@ public class LengthBoundaryTests
             "Board.ContentTooLong", "Post content must be {0} characters or fewer.", TitledContentPolicy.MaxBodyLength);
     }
 
+    /// <summary>Verifies that <c>Board.Update</c> accepts a title and content at the maximum length and refuses one character more.</summary>
     [Fact]
     public void Board_Update_AcceptsATitleAndContentAtTheLimit_AndRefusesOneMore()
     {
@@ -42,6 +44,7 @@ public class LengthBoundaryTests
             "Board.ContentTooLong", "Post content must be {0} characters or fewer.", TitledContentPolicy.MaxBodyLength);
     }
 
+    /// <summary>Verifies the empty/unknown board type, empty title and empty writer errors.</summary>
     [Fact]
     public void Board_ValidationMessages_ForEmptyAndUnknownInput()
     {
@@ -55,6 +58,7 @@ public class LengthBoundaryTests
 
     // ---- Calendar / CalendarEvent -----------------------------------------------------------
 
+    /// <summary>Verifies that a calendar name at the limit is accepted, and that too-long, empty and angle-bracket names are refused.</summary>
     [Fact]
     public void Calendar_Create_AcceptsANameAtTheLimit_AndRefusesOneMore()
     {
@@ -73,6 +77,7 @@ public class LengthBoundaryTests
     private static ErrorOr.ErrorOr<CalendarEvent> Event(string title = "t", string? description = null, string? location = null, string? status = null) =>
         CalendarEvent.Create(1, title, description, false, _start, _start.AddHours(1), "UTC", "UTC", location, status);
 
+    /// <summary>Verifies the title / description / location length limits, the empty title and the unknown status on <c>CalendarEvent.Create</c>.</summary>
     [Fact]
     public void CalendarEvent_Create_AcceptsTextAtTheLimits_AndRefusesOneMore()
     {
@@ -88,6 +93,7 @@ public class LengthBoundaryTests
         ErrorAssert.Validation(Event(status: "nonsense"), "CalendarEvent.StatusInvalid", "Event status is not a recognised value.");
     }
 
+    /// <summary>Verifies the title / description / location length limits, the empty title and the unknown status on <c>CalendarEvent.Update</c>.</summary>
     [Fact]
     public void CalendarEvent_Update_AcceptsTextAtTheLimits_AndRefusesOneMore()
     {
@@ -108,6 +114,7 @@ public class LengthBoundaryTests
             "CalendarEvent.StatusInvalid", "Event status is not a recognised value.");
     }
 
+    /// <summary>Verifies that a zero-length event is valid and an end one minute before the start is refused.</summary>
     [Fact]
     public void CalendarEvent_EndEqualToStart_IsAccepted_ButEndBeforeStart_IsRefused()
     {
@@ -119,6 +126,7 @@ public class LengthBoundaryTests
 
     // ---- Money ----------------------------------------------------------------------------
 
+    /// <summary>Verifies that a 45-character currency code is accepted, a 46-character or blank one is refused.</summary>
     [Fact]
     public void Money_Create_AcceptsACurrencyAtTheLimit_AndRefusesOneMore()
     {
@@ -128,6 +136,7 @@ public class LengthBoundaryTests
         ErrorAssert.Validation(Money.Create(1m, " "), "Money.CurrencyEmpty", "Currency code cannot be empty.");
     }
 
+    /// <summary>Verifies that adding or subtracting mixed currencies reports both currency codes as template arguments.</summary>
     [Fact]
     public void Money_ArithmeticAcrossCurrencies_ReportsBothCodes()
     {
@@ -140,6 +149,7 @@ public class LengthBoundaryTests
 
     // ---- Attached files (board and calendar event share the rules) ---------------------------
 
+    /// <summary>Verifies the size, empty and length limits of a board attachment (a size of 0 is legal).</summary>
     [Fact]
     public void BoardAttachedFile_Create_AcceptsTheLimits_AndRefusesOneMore()
     {
@@ -153,6 +163,7 @@ public class LengthBoundaryTests
         ErrorAssert.Validation(BoardAttachedFile.Create(1, 1, "n", ".e", Text(ShortTextPolicy.MaxLength + 1)), "BoardAttachedFile.PathTooLong", "File storage path must be {0} characters or fewer.", ShortTextPolicy.MaxLength);
     }
 
+    /// <summary>Verifies the size, empty and length limits of a calendar-event attachment (a size of 0 is legal).</summary>
     [Fact]
     public void CalendarEventAttachedFile_Create_AcceptsTheLimits_AndRefusesOneMore()
     {

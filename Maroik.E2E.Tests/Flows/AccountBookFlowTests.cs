@@ -123,6 +123,7 @@ public class AccountBookFlowTests(E2ESharedFixture fixture) : E2ETestBase(fixtur
         await Assertions.Expect(page.Locator("#editAssetProductName")).ToHaveValueAsync(name);
     }
 
+    /// <summary>Verifies that creating an income through the page persists it and adds its amount to the deposit asset's balance.</summary>
     [Fact]
     public async Task Income_Create_AddsTheAmountToTheDepositAsset()
     {

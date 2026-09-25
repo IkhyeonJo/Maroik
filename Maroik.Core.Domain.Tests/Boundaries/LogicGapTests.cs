@@ -24,6 +24,7 @@ public class LogicGapTests
     private static ErrorOr<FixedExpenditure> Expense(short month, short day = 1, DateTime? maturity = null) =>
         FixedExpenditure.Register(Email, "ConsumerSpending", "MealOrEatOutExpenses", "c", 1000m, "KRW", "asset", null, month, day, maturity ?? FixedSchedulePolicy.NoMaturityDate);
 
+    /// <summary>Verifies that months 1 and 12 are accepted as the deposit month.</summary>
     [Theory]
     [InlineData(1)]
     [InlineData(12)]
@@ -33,6 +34,7 @@ public class LogicGapTests
         Assert.False(Expense(month).IsError);
     }
 
+    /// <summary>Verifies that months 0 and 13 are refused as the deposit month.</summary>
     [Theory]
     [InlineData(0)]
     [InlineData(13)]
@@ -42,6 +44,7 @@ public class LogicGapTests
         ErrorAssert.Validation(Expense(month), "FixedExpenditure.InvalidDepositMonth", "Deposit month must be between 1 and 12.");
     }
 
+    /// <summary>Verifies the invalid-day and empty-field errors of fixed income and fixed expenditure registration.</summary>
     [Fact]
     public void FixedIncomeAndExpenditure_ErrorContract()
     {
@@ -56,6 +59,7 @@ public class LogicGapTests
         ErrorAssert.Validation(FixedExpenditure.Register(Email, "ConsumerSpending", "MealOrEatOutExpenses", "c", 1m, "KRW", " ", null, 1, 1, DateTime.UtcNow.AddDays(1)), "FixedExpenditure.PaymentMethodEmpty", "Payment method cannot be empty.");
     }
 
+    /// <summary>Verifies that a maturity date in the past is refused both when registering and when updating.</summary>
     [Fact]
     public void FixedIncomeAndExpenditure_MaturityInThePast_IsRefusedOnRegisterAndOnUpdate()
     {
@@ -68,6 +72,7 @@ public class LogicGapTests
         ErrorAssert.Validation(Expense(1).Value.Update("ConsumerSpending", "MealOrEatOutExpenses", "c", 1m, "KRW", "asset", null, 1, 1, past, null), "FixedExpenditure.MaturityDateInPast", template);
     }
 
+    /// <summary>Verifies the edges of the notice window and the one-day grace for a maturity date.</summary>
     [Fact]
     public void FixedSchedulePolicy_Boundaries()
     {
@@ -85,6 +90,7 @@ public class LogicGapTests
 
     // ---- Value-object equality --------------------------------------------------------------
 
+    /// <summary>Verifies that two <c>Money</c> values are equal (with equal hash codes) only when amount and currency both match.</summary>
     [Fact]
     public void Money_EqualityConsidersBothAmountAndCurrency()
     {
@@ -96,6 +102,7 @@ public class LogicGapTests
         Assert.NotEqual(krw10, Money.Create(11m, "KRW").Value);
     }
 
+    /// <summary>Verifies value equality of color codes, time-zone IDs and emails (emails compare case-insensitively).</summary>
     [Fact]
     public void HtmlColorCodeTimeZoneIdAndEmail_AreEqualExactlyWhenTheirValuesAre()
     {
@@ -109,11 +116,13 @@ public class LogicGapTests
 
     // ---- Email parsing ------------------------------------------------------------------------
 
+    /// <summary>Verifies that ordinary addresses, including dotted local parts and sub-domains, are accepted.</summary>
     [Theory]
     [InlineData("a@b.co")]
     [InlineData("first.last@sub.example.com")]
     public void Email_AcceptsOrdinaryAddresses(string address) => Assert.False(Domain.ValueObjects.Email.Create(address).IsError);
 
+    /// <summary>Verifies that malformed hosts, local parts and the display-name form are rejected with <c>Email.Invalid</c>.</summary>
     [Theory]
     [InlineData("a@localhost")]     // host without a dot
     [InlineData("a@b..com")]        // empty host label
@@ -134,6 +143,7 @@ public class LogicGapTests
         DomainAccount.Reconstitute(Email, "$2a$hash", "Nick", null, Role.User, "UTC", null, locked, loginAttempt, true, true,
             null, null, DateTime.UtcNow, DateTime.UtcNow, null, false, "stamp", false);
 
+    /// <summary>Verifies that an admin update keeps the login attempt count while the account stays locked and resets it on unlock.</summary>
     [Fact]
     public void AdminUpdate_KeepsTheAttemptCountWhileLocked_AndClearsItOnUnlock()
     {
@@ -146,6 +156,7 @@ public class LogicGapTests
         Assert.Equal(0, unlocked.LoginAttempt);
     }
 
+    /// <summary>Verifies that each new account gets a different 32-hex-digit security stamp.</summary>
     [Fact]
     public void NewAccounts_GetADistinctHyphenlessSecurityStamp()
     {
@@ -158,6 +169,7 @@ public class LogicGapTests
         Assert.NotEqual(stamp1, stamp2);
     }
 
+    /// <summary>Verifies that <c>Account.Reconstitute</c> restores every field (the email lower-cased).</summary>
     [Fact]
     public void Account_Reconstitute_RestoresEveryFieldVerbatim()
     {
@@ -190,6 +202,7 @@ public class LogicGapTests
 
     // ---- Income / Expenditure / CalendarEvent round trips ---------------------------------------
 
+    /// <summary>Verifies that <c>Income</c> and <c>Expenditure</c> reconstitution restore every field.</summary>
     [Fact]
     public void IncomeAndExpenditure_Reconstitute_RestoreEveryFieldVerbatim()
     {
@@ -206,6 +219,7 @@ public class LogicGapTests
         Assert.Equal(Money.Create(5m, "KRW").Value, expenditure.Amount);
     }
 
+    /// <summary>Verifies that <c>Reassign</c> sets the new calendar and recurrence IDs and does not move <c>Updated</c> backwards.</summary>
     [Fact]
     public void CalendarEvent_Reassign_MovesTheEventAndTouchesUpdated()
     {
@@ -222,6 +236,7 @@ public class LogicGapTests
 
     // ---- Board ownership --------------------------------------------------------------------------
 
+    /// <summary>Verifies that a forum post may be deleted by its writer or an admin, but a private note only by its writer.</summary>
     [Fact]
     public void Board_CanBeDeletedBy_FollowsThePrivateNoteAndForumRules()
     {
@@ -239,6 +254,7 @@ public class LogicGapTests
 
     // ---- Reminders --------------------------------------------------------------------------------
 
+    /// <summary>Verifies the method and lead-time errors of <c>CalendarEventReminder.Create</c>.</summary>
     [Fact]
     public void Reminder_Create_ErrorContract()
     {
@@ -252,6 +268,7 @@ public class LogicGapTests
 
     // ---- Policies ---------------------------------------------------------------------------------
 
+    /// <summary>Verifies that a still-used unit is kept, an unused one falls back to the most common asset currency, and no assets yield <see langword="null"/>.</summary>
     [Fact]
     public void DefaultMonetaryUnit_FallsBackToTheMostCommonCurrency()
     {
@@ -266,6 +283,7 @@ public class LogicGapTests
  #pragma warning restore IDE0062
     }
 
+    /// <summary>Verifies that a breakdown whose total is zero reports amounts but no percentages.</summary>
     [Fact]
     public void FinanceBreakdown_WithATotalOfZero_HasNoPercentages()
     {
@@ -278,6 +296,7 @@ public class LogicGapTests
 
     // ---- Reconstitution of the calendar aggregates and the asset note -------------------------------
 
+    /// <summary>Verifies that <c>Calendar.Reconstitute</c> restores every field.</summary>
     [Fact]
     public void Calendar_Reconstitute_RestoresEveryField()
     {
@@ -289,6 +308,7 @@ public class LogicGapTests
             (calendar.Id, calendar.AccountEmail.Value, calendar.Name, calendar.Description, calendar.TimeZone.Value, calendar.ColorCode.Value, calendar.Created, calendar.Updated));
     }
 
+    /// <summary>Verifies that <c>CalendarEvent.Reconstitute</c> restores every field.</summary>
     [Fact]
     public void CalendarEvent_Reconstitute_RestoresEveryField()
     {
@@ -300,6 +320,7 @@ public class LogicGapTests
             (ev.Id, ev.CalendarId, ev.Title, ev.Description, ev.AllDay, ev.StartDate, ev.EndDate, ev.StartDateTimeZoneIanaId, ev.EndDateTimeZoneIanaId, ev.Location, ev.Status, ev.RecurrenceId, ev.Created, ev.Updated));
     }
 
+    /// <summary>Verifies that the note passed to <c>Asset.Create</c> is kept.</summary>
     [Fact]
     public void Asset_Create_KeepsTheNote()
     {

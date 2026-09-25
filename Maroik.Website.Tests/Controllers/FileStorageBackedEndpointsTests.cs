@@ -29,6 +29,7 @@ public class FileStorageBackedEndpointsTests(MaroikWebApplicationFactory factory
 
     private sealed record Host(WebApplicationFactory<Program> Factory, HttpClient Client, FakeFileClient Files) : IDisposable
     {
+        /// <summary>Disposes the derived host (and with it the client it created).</summary>
         public void Dispose() => Factory.Dispose();
     }
 

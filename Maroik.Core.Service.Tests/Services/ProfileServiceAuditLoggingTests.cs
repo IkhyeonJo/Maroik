@@ -52,6 +52,7 @@ public class ProfileServiceAuditLoggingTests
             It.IsAny<string?>(), It.IsAny<DateTime>(), It.IsAny<CancellationToken>())).ReturnsAsync(1);
     }
 
+    /// <summary>Verifies that a password change logs an Information entry without the old or new password or the new hash.</summary>
     [Fact]
     public async Task UpdatePassword_LogsInformation_WhenThePasswordIsChanged()
     {
@@ -65,6 +66,7 @@ public class ProfileServiceAuditLoggingTests
         Assert.DoesNotContain("$2a$13$newhash", record.Message);
     }
 
+    /// <summary>Verifies that a password change with a wrong current password logs a Warning without that password.</summary>
     [Fact]
     public async Task UpdatePassword_LogsWarning_WhenTheCurrentPasswordIsWrong()
     {
@@ -85,6 +87,7 @@ public class ProfileServiceAuditLoggingTests
                 .ReturnsAsync(uploaded.Value);
     }
 
+    /// <summary>Verifies that an avatar that is not a valid image is refused with a Warning.</summary>
     [Fact]
     public async Task UploadAvatar_LogsWarning_WhenTheFileIsNotAValidImage()
     {
@@ -95,6 +98,7 @@ public class ProfileServiceAuditLoggingTests
         Only(LogLevel.Warning, "Avatar upload refused: not a valid image");
     }
 
+    /// <summary>Verifies that an SVG avatar is refused with a Warning.</summary>
     [Fact]
     public async Task UploadAvatar_LogsWarning_WhenTheFileIsAnSvg()
     {
@@ -105,6 +109,7 @@ public class ProfileServiceAuditLoggingTests
         Only(LogLevel.Warning, "Avatar upload refused: SVG is not allowed");
     }
 
+    /// <summary>Verifies that an avatar with a disallowed extension is refused with a Warning naming the extension.</summary>
     [Fact]
     public async Task UploadAvatar_LogsWarning_WhenTheExtensionIsNotAllowed()
     {
@@ -114,6 +119,7 @@ public class ProfileServiceAuditLoggingTests
         Assert.Contains(".exe", record.Message);
     }
 
+    /// <summary>Verifies that an avatar the virus scanner flags is refused with a Warning.</summary>
     [Fact]
     public async Task UploadAvatar_LogsWarning_WhenMalwareIsDetected()
     {
@@ -124,6 +130,7 @@ public class ProfileServiceAuditLoggingTests
         Only(LogLevel.Warning, "Avatar upload refused: virus detected");
     }
 
+    /// <summary>Verifies that an unavailable virus scanner logs an Error.</summary>
     [Fact]
     public async Task UploadAvatar_LogsError_WhenTheScannerIsUnavailable()
     {
@@ -134,6 +141,7 @@ public class ProfileServiceAuditLoggingTests
         Only(LogLevel.Error, "Avatar upload failed: virus scanner unavailable");
     }
 
+    /// <summary>Verifies that a file storage refusal logs an Error.</summary>
     [Fact]
     public async Task UploadAvatar_LogsError_WhenTheStorageRefusesTheUpload()
     {
@@ -144,6 +152,7 @@ public class ProfileServiceAuditLoggingTests
         Only(LogLevel.Error, "Avatar upload failed: file storage refused the upload");
     }
 
+    /// <summary>Verifies that a stored avatar logs an Information entry.</summary>
     [Fact]
     public async Task UploadAvatar_LogsInformation_WhenTheAvatarIsStored()
     {

@@ -51,9 +51,12 @@ public class EmailConsumerWorkerBrokerTests(WorkerBrokerFixture broker) : IClass
     private sealed class ScriptedHandler(Func<SendEmailMessage, int, Task> onCall) : IEmailMessageHandler
     {
         private int _calls;
+        /// <summary>How many times <see cref="HandleAsync"/> has been called.</summary>
         public int Calls => Volatile.Read(ref _calls);
+        /// <summary>Every message handed to the handler, in arrival order (lock it before reading while the worker runs).</summary>
         public List<SendEmailMessage> Received { get; } = [];
 
+        /// <summary>Records the message, then runs the scripted behavior for this call number (1-based).</summary>
         public async Task HandleAsync(SendEmailMessage message, CancellationToken ct = default)
         {
             int n = Interlocked.Increment(ref _calls);

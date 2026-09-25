@@ -141,6 +141,7 @@ public class BoardServiceTests
     private static AccountResponse MakeAccount(string nickname, string role = Role.User) =>
         new() { Nickname = nickname, Role = role };
 
+    /// <summary>Verifies that an anonymous visitor can view an unlocked forum post.</summary>
     [Fact]
     public void CanView_ReturnsTrue_ForUnlockedFreeForumBoard_WhenViewerIsAnonymous()
     {
@@ -150,6 +151,7 @@ public class BoardServiceTests
         Assert.True(sut.CanView(board, null));
     }
 
+    /// <summary>Verifies that an anonymous visitor cannot view a locked forum post.</summary>
     [Fact]
     public void CanView_ReturnsFalse_ForLockedFreeForumBoard_WhenViewerIsAnonymous()
     {
@@ -159,6 +161,7 @@ public class BoardServiceTests
         Assert.False(sut.CanView(board, null));
     }
 
+    /// <summary>Verifies that the writer can view their own locked forum post.</summary>
     [Fact]
     public void CanView_ReturnsTrue_ForLockedFreeForumBoard_WhenViewerIsWriter()
     {
@@ -168,6 +171,7 @@ public class BoardServiceTests
         Assert.True(sut.CanView(board, MakeAccount("Alice")));
     }
 
+    /// <summary>Verifies that an admin can view someone else's locked forum post.</summary>
     [Fact]
     public void CanView_ReturnsTrue_ForLockedFreeForumBoard_WhenViewerIsAdmin()
     {
@@ -177,6 +181,7 @@ public class BoardServiceTests
         Assert.True(sut.CanView(board, MakeAccount("Bob", Role.Admin)));
     }
 
+    /// <summary>Verifies that another signed-in user cannot view a locked forum post.</summary>
     [Fact]
     public void CanView_ReturnsFalse_ForLockedFreeForumBoard_WhenViewerIsUnrelatedUser()
     {
@@ -186,6 +191,7 @@ public class BoardServiceTests
         Assert.False(sut.CanView(board, MakeAccount("Bob")));
     }
 
+    /// <summary>Verifies that the writer can view their own private note.</summary>
     [Fact]
     public void CanView_ReturnsTrue_ForPrivateNoteBoard_WhenViewerIsWriter()
     {
@@ -195,6 +201,7 @@ public class BoardServiceTests
         Assert.True(sut.CanView(board, MakeAccount("Alice")));
     }
 
+    /// <summary>Verifies that an anonymous visitor cannot view a private note.</summary>
     [Fact]
     public void CanView_ReturnsFalse_ForPrivateNoteBoard_WhenViewerIsAnonymous()
     {

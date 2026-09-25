@@ -321,12 +321,19 @@ public class EmailConsumerWorkerTests
 
     private sealed class BrokerFixture
     {
+        /// <summary>Connection factory handed to the worker; returns <see cref="Connection"/>.</summary>
         public Mock<IConnectionFactory> Factory { get; } = new();
+        /// <summary>Connection whose channel is <see cref="Channel"/>.</summary>
         public Mock<IConnection> Connection { get; } = new();
+        /// <summary>Channel whose declare / QoS / consume calls are recorded.</summary>
         public Mock<IChannel> Channel { get; } = new();
+        /// <summary>Channel calls in the order the worker made them (<c>declare:…</c>, <c>qos</c>, <c>consume</c>).</summary>
         public List<string> Calls { get; } = [];
+        /// <summary>Arguments the email queue was declared with.</summary>
         public IDictionary<string, object?>? EmailQueueArguments { get; private set; }
+        /// <summary>The last <c>BasicQos</c> settings.</summary>
         public (uint PrefetchSize, ushort PrefetchCount, bool Global)? Qos { get; private set; }
+        /// <summary>The queue and auto-ack flag of the last <c>BasicConsume</c>.</summary>
         public (string Queue, bool AutoAck)? Consume { get; private set; }
 
         public BrokerFixture()
@@ -359,6 +366,7 @@ public class EmailConsumerWorkerTests
                 .ReturnsAsync("consumer-tag-1");
         }
 
+        /// <summary>Creates a worker wired to this fake broker, with short retry and drain timeouts.</summary>
         public EmailConsumerWorker CreateWorker() => new(Factory.Object, BuildScopeFactory(Mock.Of<IEmailMessageHandler>()), Mock.Of<ILogger<EmailConsumerWorker>>())
         {
             ConnectRetryInitialDelay = TimeSpan.FromMilliseconds(10),
