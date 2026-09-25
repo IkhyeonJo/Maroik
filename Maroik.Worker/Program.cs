@@ -6,7 +6,7 @@ using Maroik.Worker;
 using Serilog;
 
 Log.Logger = new LoggerConfiguration()
-    .WriteTo.Console()
+    .WriteTo.Console(outputTemplate: WorkerHost.ConsoleOutputTemplate)
     .CreateBootstrapLogger();
 
 try

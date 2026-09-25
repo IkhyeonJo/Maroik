@@ -87,7 +87,10 @@ dependency, retry); `Information` = business / audit events; `Debug`/`Trace` = d
 How:
 
 - **Structured templates with named placeholders** (`"Locked account {Email} after {Attempts} attempts"`), never string
-  interpolation or concatenation, so the values stay queryable and cannot forge extra log lines.
+  interpolation or concatenation, so the values stay queryable and cannot forge extra log lines. The console output templates
+  (`Maroik.Website/Constants/LogTemplates.cs`, `Maroik.FileStorage/Helpers/LogTemplates.cs`, `WorkerHost.ConsoleOutputTemplate`)
+  render `{Message:j}`, not Serilog's usual `:lj` — `:l` writes a string value raw, so a line break inside it would start a
+  forged line. Keep `:j`; each host has a test that fails if a value can break the line.
 - **Never log secrets or content:** passwords, password hashes, registration / reset tokens or their RSA ciphertext, session
   or antiforgery values, connection strings, mail bodies, uploaded file bytes, post/comment text. Identify an account by the
   identifier the existing logs already use (its email). A test asserts a secret does not appear when one could leak.

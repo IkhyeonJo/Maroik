@@ -5,6 +5,7 @@
 using Maroik.Core.Client.Clients;
 using Maroik.Core.Contract.Interfaces;
 using Maroik.FileStorage.Contracts;
+using Maroik.FileStorage.Helpers;
 using Maroik.FileStorage.Services;
 using Maroik.FileStorage.Settings;
 using Microsoft.OpenApi;
@@ -13,7 +14,7 @@ using Serilog.Events;
 
 // Bootstrap logger captures startup errors before the host is built.
 Log.Logger = new LoggerConfiguration()
-    .WriteTo.Console()
+    .WriteTo.Console(outputTemplate: LogTemplates.Console)
     .CreateBootstrapLogger();
 
 try
@@ -26,7 +27,7 @@ try
         .MinimumLevel.Override("Microsoft.Hosting.Lifetime", LogEventLevel.Information)
         .MinimumLevel.Override("System", LogEventLevel.Warning)
         .Enrich.FromLogContext()
-        .WriteTo.Console(outputTemplate: "[{Timestamp:HH:mm:ss} {Level:u3}] {SourceContext}: {Message:lj}{NewLine}{Exception}"));
+        .WriteTo.Console(outputTemplate: LogTemplates.Console));
 
     // Register MVC controllers (FileController and any future controllers).
     builder.Services.AddControllers();

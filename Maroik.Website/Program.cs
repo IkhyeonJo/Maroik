@@ -10,6 +10,7 @@ using Maroik.Core.Contract.Misc.Settings;
 using Maroik.Core.Domain.Localization;
 using Maroik.Core.Repository.Extensions;
 using Maroik.Core.Service.Extensions;
+using Maroik.Website.Constants;
 using Maroik.Website.Extensions;
 using Maroik.Website.Filters;
 using Maroik.Website.Middlewares;
@@ -27,7 +28,7 @@ using StackExchange.Redis;
 
 // Bootstrap logger captures startup errors before the host is built.
 Log.Logger = new LoggerConfiguration()
-    .WriteTo.Console()
+    .WriteTo.Console(outputTemplate: LogTemplates.Console)
     .CreateBootstrapLogger();
 
 try
@@ -41,8 +42,7 @@ try
         .MinimumLevel.Override("Microsoft.Hosting.Lifetime", LogEventLevel.Information)
         .MinimumLevel.Override("System", LogEventLevel.Warning)
         .Enrich.FromLogContext()
-        .WriteTo.Console(
-            outputTemplate: "[{Timestamp:HH:mm:ss} {Level:u3}] {SourceContext}: {Message:lj}{NewLine}{Exception}"));
+        .WriteTo.Console(outputTemplate: LogTemplates.Console));
 
     const string cookiePrefix = "__Secure-";
 

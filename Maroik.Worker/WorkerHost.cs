@@ -21,6 +21,14 @@ internal static class WorkerHost
     /// <summary>Broker address used when <c>ConnectionStrings:RabbitMQ</c> is not configured (a local development broker).</summary>
     private const string DefaultRabbitMqConnectionString = "amqp://guest:guest@localhost:5672/";
 
+    /// <summary>
+    /// The console sink's line format, shared with the bootstrap logger in <c>Program.cs</c>. <c>{Message:j}</c>, not the usual
+    /// <c>:lj</c>: property values are rendered JSON-escaped (in quotes), so a value holding a line break cannot end the line and
+    /// forge an entry of its own.
+    /// </summary>
+    internal const string ConsoleOutputTemplate =
+        "[{Timestamp:HH:mm:ss} {Level:u3}] [{CorrelationId}] {SourceContext}: {Message:j}{NewLine}{Exception}";
+
     /// <summary>Builds (does not start) the worker host from the command line / environment / appsettings in <paramref name="args"/>.</summary>
     internal static IHost Build(string[] args)
     {
@@ -31,8 +39,7 @@ internal static class WorkerHost
             .MinimumLevel.Override("Microsoft", LogEventLevel.Warning)
             .MinimumLevel.Override("Microsoft.Hosting.Lifetime", LogEventLevel.Information)
             .Enrich.FromLogContext()
-            .WriteTo.Console(
-                outputTemplate: "[{Timestamp:HH:mm:ss} {Level:u3}] [{CorrelationId}] {SourceContext}: {Message:lj}{NewLine}{Exception}"));
+            .WriteTo.Console(outputTemplate: ConsoleOutputTemplate));
 
         #region ServerSettings (SMTP only — reuses the shared ServerSetting shape)
 
