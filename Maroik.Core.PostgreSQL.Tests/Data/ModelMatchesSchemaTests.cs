@@ -1,4 +1,5 @@
 using Maroik.Core.PostgreSQL.Data;
+using Maroik.Core.PostgreSQL.Models;
 using Maroik.Core.PostgreSQL.Tests.Infrastructure;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata;
@@ -223,6 +224,60 @@ public abstract class ModelMatchesSchemaTests(SchemaDatabaseFixture database)
         await db.Incomes.AsNoTracking().Take(1).ToListAsync(Ct);
         await db.OtherCalendars.AsNoTracking().Take(1).ToListAsync(Ct);
         await db.SubCategories.AsNoTracking().Take(1).ToListAsync(Ct);
+    }
+
+    /// <summary>
+    /// <c>OtherCalendar</c> is a pure two-column composite-PK join table (<c>AccountEmail</c>, <c>CalendarId</c>),
+    /// each column itself a foreign key (to <c>Account</c> and <c>Calendar</c>). Scaffolding that shape from the
+    /// database on its own does not produce an <c>OtherCalendar</c> CLR type or <c>DbSet</c> at all — EF Core's
+    /// scaffolder collapses it into an implicit skip-navigation many-to-many directly between <c>Account</c> and
+    /// <c>Calendar</c> (a <c>Dictionary&lt;string, object&gt;</c>-backed shared-type join entity, confirmed by
+    /// scaffolding this schema fresh). The hand-edit in <c>OnModelCreating</c> instead keeps it promoted to an
+    /// explicit entity with two ordinary one-to-many relationships (<c>Account.OtherCalendars</c> and
+    /// <c>Calendar.OtherCalendars</c>, each a real <c>HasOne(...).WithMany(...)</c> against its own foreign key) —
+    /// its own POCO, <c>DbSet&lt;OtherCalendar&gt;</c> and repository, so it can be an <c>AggregateRoot</c> with
+    /// its own identity. Re-running the scaffolder over this model would silently collapse that promotion back
+    /// into the implicit join table and its single many-to-many relationship; this pins both the explicit entity
+    /// and its two relationships so such a regression fails here instead of surfacing as a missing
+    /// repository/DbSet or a broken navigation elsewhere.
+    /// </summary>
+    [Fact]
+    public void OtherCalendar_IsAnExplicitEntity_WithItsOwnTwoRelationships()
+    {
+        using ApplicationDbContext db = CreateContext();
+
+        IEntityType? otherCalendar = db.Model.FindEntityType(typeof(OtherCalendar));
+        Assert.NotNull(otherCalendar);
+        Assert.False(otherCalendar.HasSharedClrType, "OtherCalendar must be its own CLR entity, not the scaffolder's default Dictionary<string, object> join entity");
+
+        IEntityType account = db.Model.FindEntityType(typeof(Account))!;
+        IEntityType calendar = db.Model.FindEntityType(typeof(Calendar))!;
+        Assert.Empty(account.GetSkipNavigations());
+        Assert.Empty(calendar.GetSkipNavigations());
+
+        // OtherCalendar -> Account (many-to-one, via the AccountEmail FK).
+        INavigation toAccount = otherCalendar.FindNavigation(nameof(OtherCalendar.Account))!;
+        Assert.NotNull(toAccount);
+        Assert.False(toAccount.IsCollection);
+        Assert.Equal(typeof(Account), toAccount.TargetEntityType.ClrType);
+
+        // OtherCalendar -> Calendar (many-to-one, via the CalendarId FK).
+        INavigation toCalendar = otherCalendar.FindNavigation(nameof(OtherCalendar.Calendar))!;
+        Assert.NotNull(toCalendar);
+        Assert.False(toCalendar.IsCollection);
+        Assert.Equal(typeof(Calendar), toCalendar.TargetEntityType.ClrType);
+
+        // Account -> OtherCalendar (one-to-many, the inverse of the AccountEmail FK).
+        INavigation accountOtherCalendars = account.FindNavigation(nameof(Account.OtherCalendars))!;
+        Assert.NotNull(accountOtherCalendars);
+        Assert.True(accountOtherCalendars.IsCollection);
+        Assert.Equal(typeof(OtherCalendar), accountOtherCalendars.TargetEntityType.ClrType);
+
+        // Calendar -> OtherCalendar (one-to-many, the inverse of the CalendarId FK).
+        INavigation calendarOtherCalendars = calendar.FindNavigation(nameof(Calendar.OtherCalendars))!;
+        Assert.NotNull(calendarOtherCalendars);
+        Assert.True(calendarOtherCalendars.IsCollection);
+        Assert.Equal(typeof(OtherCalendar), calendarOtherCalendars.TargetEntityType.ClrType);
     }
 
     /// <summary>The context exposes a <c>DbSet</c> for every entity of the model.</summary>
