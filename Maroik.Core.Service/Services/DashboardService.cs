@@ -43,10 +43,9 @@ public class DashboardService(
         if (!int.TryParse(year, out int yearInt)) yearInt = accountToday.Year;
         if (!int.TryParse(month, out int monthInt)) monthInt = accountToday.Month;
 
-        // An out-of-range month (or year outside DateTime's valid range) must be caught here rather
-        // than left to throw from `new DateTime(yearInt, monthInt, 1)` below — the catch block there
-        // only guards against an invalid timeZoneId and reconstructs the same DateTime with the same
-        // values, so an invalid month would throw a second time, unhandled.
+        // An out-of-range month (or year outside DateTime's valid range) is replaced here with the
+        // account's current one, so the `new DateTime(yearInt, monthInt, 1)` calls below can never throw
+        // on a hand-edited query string.
         if (monthInt is < 1 or > 12) monthInt = accountToday.Month;
         // Capped one below DateTime.MaxValue's year: yearEnd below computes `new DateTime(yearInt + 1, ...)`.
         if (yearInt is < 1 or > 9998) yearInt = accountToday.Year;

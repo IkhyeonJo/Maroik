@@ -87,7 +87,8 @@ public static class DateTimeExtensions
         /// <summary>
         /// Returns the <see cref="TimeZoneInfo.StandardName"/> for an IANA time-zone ID
         /// (e.g. "Asia/Seoul" → "Korea Standard Time").
-        /// Falls back to the raw IANA ID string if the ID is invalid or unrecognized.
+        /// Falls back to the raw IANA ID string if the ID is invalid or unrecognized; a null ID throws
+        /// <see cref="ArgumentNullException"/>.
         /// </summary>
         public string ToTimeZoneStandardName()
         {
@@ -95,8 +96,10 @@ public static class DateTimeExtensions
             {
                 return TimeZoneInfo.FindSystemTimeZoneById(timeZoneIanaId).StandardName;
             }
-            catch
+            catch (Exception e) when (e is TimeZoneNotFoundException or InvalidTimeZoneException)
             {
+                // Unrecognized / corrupt zone id only (see ConvertTimeByTimeZoneIanaId): a null id is a
+                // caller bug and propagates.
                 return timeZoneIanaId;
             }
         }

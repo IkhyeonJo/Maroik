@@ -170,4 +170,16 @@ public class DateTimeExtensionsTests
 
         Assert.Equal("Invalid/Timezone/ID", result);
     }
+
+    /// <summary>
+    /// Verifies that only an unrecognized / corrupt zone id falls back to the raw id: a null id is a caller bug
+    /// and propagates (same contract as <c>ConvertTimeByTimeZoneIanaId</c>) instead of being swallowed.
+    /// </summary>
+    [Fact]
+    public void ToTimeZoneStandardName_Throws_ForNullId()
+    {
+        string? id = null;
+
+        Assert.Throws<ArgumentNullException>(() => id!.ToTimeZoneStandardName());
+    }
 }

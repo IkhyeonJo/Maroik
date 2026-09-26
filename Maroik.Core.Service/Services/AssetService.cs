@@ -161,7 +161,7 @@ public class AssetService(
             // Row-lock the asset for the rest of this transaction, exactly as UpdateAsync does: the
             // soft-delete is a full-row UPDATE (UpdateEntityAsync writes every column), so without the
             // lock a balance mutation committed by a concurrent Income/Expenditure between the read
-            // and to write would be silently overwritten with this pre-lock snapshot.
+            // and the write would be silently overwritten with this pre-lock snapshot.
             Asset? asset = await assetRepository.FindByEmailAndProductNameForUpdateAsync(accountEmail, productName, ct);
             if (asset == null)
             {

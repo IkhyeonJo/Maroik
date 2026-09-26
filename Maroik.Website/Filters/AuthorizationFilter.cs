@@ -67,7 +67,7 @@ public class AuthorizationFilter(IMenuService menuService, IDistributedCache cac
     /// The fixed set of <c>AccountController</c> POST endpoints an unauthenticated visitor may POST
     /// to without a navigation-menu match — login, logout, registration / resend, and the
     /// forgot / reset-password flow. Spelled out explicitly (not reflected off the controller) so
-    /// this anonymous surface mirrors the hardcoded GET allow-list in <see cref="OnActionExecutionAsync"/>:
+    /// this anonymous surface mirrors the hardcoded GET allow-list in <see cref="OnAuthorizationAsync"/>:
     /// adding a new POST action to <c>AccountController</c> does NOT silently widen anonymous access
     /// — it stays denied (redirect to Dashboard) until it is added here on purpose. Every entry must
     /// still carry <c>[HttpPost]</c> + <c>[ValidateAntiForgeryToken]</c>, enforced by
