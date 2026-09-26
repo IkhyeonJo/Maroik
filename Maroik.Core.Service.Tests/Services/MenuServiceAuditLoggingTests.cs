@@ -17,6 +17,9 @@ namespace Maroik.Core.Service.Tests.Services;
 /// </summary>
 public class MenuServiceAuditLoggingTests
 {
+    /// <summary>The signed-in administrator performing the change (recorded in the audit log).</summary>
+    private const string Actor = "admin@example.com";
+
     private readonly Mock<ICategoryRepository> _categoryRepo = new();
     private readonly Mock<ISubCategoryRepository> _subCategoryRepo = new();
     private readonly Mock<IUnitOfWork> _unitOfWork = new();
@@ -39,6 +42,7 @@ public class MenuServiceAuditLoggingTests
     {
         FakeLogRecord record = Assert.Single(_logger.Collector.GetSnapshot(), r => r.Level == LogLevel.Information);
         Assert.Contains(containing, record.Message);
+        Assert.Contains($"by admin {Actor}", record.Message);
     }
 
     /// <summary>Verifies that creating a menu category logs its name at Information.</summary>
@@ -47,7 +51,7 @@ public class MenuServiceAuditLoggingTests
     {
         _categoryRepo.Setup(r => r.CreateAsync(It.IsAny<Category>(), It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
 
-        await CreateSut().CreateCategoryAsync(new CategoryRequest { Name = "Forum", DisplayName = "Forum", IconPath = "/i.png", Controller = "Forum", Action = "Index", Role = Role.User }, TestContext.Current.CancellationToken);
+        await CreateSut().CreateCategoryAsync(new CategoryRequest { Name = "Forum", DisplayName = "Forum", IconPath = "/i.png", Controller = "Forum", Action = "Index", Role = Role.User }, Actor, TestContext.Current.CancellationToken);
 
         AssertOnlyInformation("Menu category Forum created");
     }
@@ -59,7 +63,7 @@ public class MenuServiceAuditLoggingTests
         _categoryRepo.Setup(r => r.FindByIdForUpdateAsync(It.IsAny<long>(), It.IsAny<CancellationToken>())).ReturnsAsync(MakeCategory());
         _categoryRepo.Setup(r => r.UpdateEntityAsync(It.IsAny<Category>(), It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
 
-        await CreateSut().UpdateCategoryAsync(new CategoryRequest { Id = 3, Name = "Forum", DisplayName = "Forum", IconPath = "/i.png", Controller = "Forum", Action = "Index", Role = Role.Admin }, TestContext.Current.CancellationToken);
+        await CreateSut().UpdateCategoryAsync(new CategoryRequest { Id = 3, Name = "Forum", DisplayName = "Forum", IconPath = "/i.png", Controller = "Forum", Action = "Index", Role = Role.Admin }, Actor, TestContext.Current.CancellationToken);
 
         AssertOnlyInformation("Menu category 3 (Forum) updated");
     }
@@ -70,7 +74,7 @@ public class MenuServiceAuditLoggingTests
     {
         _categoryRepo.Setup(r => r.DeleteByIdAsync(It.IsAny<long>(), It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
 
-        await CreateSut().DeleteCategoryAsync(new CategoryRequest { Id = 3, Name = "Forum" }, TestContext.Current.CancellationToken);
+        await CreateSut().DeleteCategoryAsync(new CategoryRequest { Id = 3, Name = "Forum" }, Actor, TestContext.Current.CancellationToken);
 
         AssertOnlyInformation("Menu category 3 (Forum) deleted");
     }
@@ -81,7 +85,7 @@ public class MenuServiceAuditLoggingTests
     {
         _subCategoryRepo.Setup(r => r.CreateAsync(It.IsAny<SubCategory>(), It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
 
-        await CreateSut().CreateSubCategoryAsync(new SubCategoryRequest { CategoryId = 3, Name = "FreeForum", DisplayName = "Free", IconPath = "/i.png", Action = "Index", Role = Role.User }, TestContext.Current.CancellationToken);
+        await CreateSut().CreateSubCategoryAsync(new SubCategoryRequest { CategoryId = 3, Name = "FreeForum", DisplayName = "Free", IconPath = "/i.png", Action = "Index", Role = Role.User }, Actor, TestContext.Current.CancellationToken);
 
         AssertOnlyInformation("Menu sub-category FreeForum created");
     }
@@ -93,7 +97,7 @@ public class MenuServiceAuditLoggingTests
         _subCategoryRepo.Setup(r => r.FindByIdForUpdateAsync(It.IsAny<long>(), It.IsAny<CancellationToken>())).ReturnsAsync(MakeSubCategory());
         _subCategoryRepo.Setup(r => r.UpdateEntityAsync(It.IsAny<SubCategory>(), It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
 
-        await CreateSut().UpdateSubCategoryAsync(new SubCategoryRequest { Id = 4, CategoryId = 3, Name = "FreeForum", DisplayName = "Free", IconPath = "/i.png", Action = "Index", Role = Role.Admin }, TestContext.Current.CancellationToken);
+        await CreateSut().UpdateSubCategoryAsync(new SubCategoryRequest { Id = 4, CategoryId = 3, Name = "FreeForum", DisplayName = "Free", IconPath = "/i.png", Action = "Index", Role = Role.Admin }, Actor, TestContext.Current.CancellationToken);
 
         AssertOnlyInformation("Menu sub-category 4 (FreeForum) updated");
     }
@@ -104,7 +108,7 @@ public class MenuServiceAuditLoggingTests
     {
         _subCategoryRepo.Setup(r => r.DeleteByIdAsync(It.IsAny<long>(), It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
 
-        await CreateSut().DeleteSubCategoryAsync(new SubCategoryRequest { Id = 4, Name = "FreeForum" }, TestContext.Current.CancellationToken);
+        await CreateSut().DeleteSubCategoryAsync(new SubCategoryRequest { Id = 4, Name = "FreeForum" }, Actor, TestContext.Current.CancellationToken);
 
         AssertOnlyInformation("Menu sub-category 4 (FreeForum) deleted");
     }

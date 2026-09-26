@@ -37,7 +37,7 @@ public class ManagementAccountService(
     }
 
     /// <inheritdoc />
-    public async Task<ServiceResult> CreateAccountAsync(AccountRequest request, CancellationToken ct = default)
+    public async Task<ServiceResult> CreateAccountAsync(AccountRequest request, string actorEmail, CancellationToken ct = default)
     {
         try
         {
@@ -99,7 +99,7 @@ public class ManagementAccountService(
                     : ServiceResult.Conflict("Account.AlreadyExists", "This account has already been created.");
             }
 
-            logger.LogInformation("Admin created account {Email} with role {Role}", account.Email.Value, account.Role);
+            logger.LogInformation("Admin created account {Email} with role {Role} by admin {Admin}", account.Email.Value, account.Role, actorEmail);
             return ServiceResult.Ok();
         }
         catch (Exception e)
@@ -110,7 +110,7 @@ public class ManagementAccountService(
     }
 
     /// <inheritdoc />
-    public async Task<ServiceResult> UpdateAccountAsync(AccountRequest request, string? newPassword, CancellationToken ct = default)
+    public async Task<ServiceResult> UpdateAccountAsync(AccountRequest request, string? newPassword, string actorEmail, CancellationToken ct = default)
     {
         // An admin-set password always forces the account to pick its own new one (meeting
         // PasswordPolicy) at next login — see Account.AdminResetPassword. It must still meet the
@@ -137,7 +137,7 @@ public class ManagementAccountService(
             if (account == null)
             {
                 await unitOfWork.RollbackAsync(ct);
-                logger.LogWarning("Admin update failed: account not found for {Email}", request.Email);
+                logger.LogWarning("Admin update failed: account not found for {Email} by admin {Admin}", request.Email, actorEmail);
                 return ServiceResult.NotFound("Account.NotFound", "Email address is wrong");
             }
 
@@ -170,8 +170,8 @@ public class ManagementAccountService(
             await accountRepository.UpdateEntityAsync(account, ct);
             await unitOfWork.CommitAsync(ct);
             logger.LogInformation(
-                "Admin updated account {Email}: role {OldRole} -> {NewRole}, locked {OldLocked} -> {NewLocked}, deleted {OldDeleted} -> {NewDeleted}, password reset {PasswordReset}",
-                account.Email.Value, oldRole, account.Role, oldLocked, account.Locked, oldDeleted, account.Deleted, newHashedPassword != null);
+                "Admin updated account {Email}: role {OldRole} -> {NewRole}, locked {OldLocked} -> {NewLocked}, deleted {OldDeleted} -> {NewDeleted}, password reset {PasswordReset} by admin {Admin}",
+                account.Email.Value, oldRole, account.Role, oldLocked, account.Locked, oldDeleted, account.Deleted, newHashedPassword != null, actorEmail);
             return ServiceResult.Ok();
         }
         catch (Exception e)
@@ -186,7 +186,7 @@ public class ManagementAccountService(
         => accountRepository.FindByEmailAsync(email, ct);
 
     /// <inheritdoc />
-    public async Task<ServiceResult> DeleteAccountAsync(string email, CancellationToken ct = default)
+    public async Task<ServiceResult> DeleteAccountAsync(string email, string actorEmail, CancellationToken ct = default)
     {
         await unitOfWork.BeginAsync(ct);
         try
@@ -198,7 +198,7 @@ public class ManagementAccountService(
             if (account == null)
             {
                 await unitOfWork.RollbackAsync(ct);
-                logger.LogWarning("Admin delete failed: account not found for {Email}", email);
+                logger.LogWarning("Admin delete failed: account not found for {Email} by admin {Admin}", email, actorEmail);
                 return ServiceResult.NotFound("Account.NotFound", "Fail to find the account by given email address");
             }
 
@@ -206,7 +206,7 @@ public class ManagementAccountService(
 
             await accountRepository.UpdateEntityAsync(account, ct);
             await unitOfWork.CommitAsync(ct);
-            logger.LogInformation("Admin deleted account {Email}", account.Email.Value);
+            logger.LogInformation("Admin deleted account {Email} by admin {Admin}", account.Email.Value, actorEmail);
             return ServiceResult.Ok();
         }
         catch (Exception e)

@@ -4,7 +4,8 @@ namespace Maroik.Core.Contract.Interfaces;
 
 /// <summary>
 /// Service interface for managing the sidebar navigation menu (categories and sub-categories).
-/// Used by the admin Management > Menu page.
+/// Used by the admin Management > Menu page. The write methods take <c>actorEmail</c>, the signed-in
+/// administrator making the change, so the audit log records who changed the menu.
 /// </summary>
 public interface IMenuService
 {
@@ -37,20 +38,20 @@ public interface IMenuService
     Task<SubCategoryResponse?> GetSubCategoryByIdAsync(int id, CancellationToken ct = default);
 
     /// <summary>Creates a new top-level navigation category.</summary>
-    Task<ServiceResult> CreateCategoryAsync(CategoryRequest request, CancellationToken ct = default);
+    Task<ServiceResult> CreateCategoryAsync(CategoryRequest request, string actorEmail, CancellationToken ct = default);
 
     /// <summary>Updates an existing navigation category.</summary>
-    Task<ServiceResult> UpdateCategoryAsync(CategoryRequest request, CancellationToken ct = default);
+    Task<ServiceResult> UpdateCategoryAsync(CategoryRequest request, string actorEmail, CancellationToken ct = default);
 
     /// <summary>Deletes a navigation category and its sub-categories.</summary>
-    Task<ServiceResult> DeleteCategoryAsync(CategoryRequest request, CancellationToken ct = default);
+    Task<ServiceResult> DeleteCategoryAsync(CategoryRequest request, string actorEmail, CancellationToken ct = default);
 
     /// <summary>Creates a new sub-category under an existing category.</summary>
-    Task<ServiceResult> CreateSubCategoryAsync(SubCategoryRequest request, CancellationToken ct = default);
+    Task<ServiceResult> CreateSubCategoryAsync(SubCategoryRequest request, string actorEmail, CancellationToken ct = default);
 
     /// <summary>Updates an existing sub-category.</summary>
-    Task<ServiceResult> UpdateSubCategoryAsync(SubCategoryRequest request, CancellationToken ct = default);
+    Task<ServiceResult> UpdateSubCategoryAsync(SubCategoryRequest request, string actorEmail, CancellationToken ct = default);
 
     /// <summary>Deletes a sub-category.</summary>
-    Task<ServiceResult> DeleteSubCategoryAsync(SubCategoryRequest request, CancellationToken ct = default);
+    Task<ServiceResult> DeleteSubCategoryAsync(SubCategoryRequest request, string actorEmail, CancellationToken ct = default);
 }

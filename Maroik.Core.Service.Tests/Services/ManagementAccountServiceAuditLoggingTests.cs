@@ -11,10 +11,13 @@ namespace Maroik.Core.Service.Tests.Services;
 /// <summary>
 /// The admin audit trail of <see cref="ManagementAccountService"/>: what an administrator created,
 /// changed (role, lock, deletion, password reset) or deleted is logged with the values before and
-/// after, so "who did what to which account" is answerable from the logs. Passwords are never logged.
+/// after and the administrator who did it, so "who did what to which account" is answerable from the logs. Passwords are never logged.
 /// </summary>
 public class ManagementAccountServiceAuditLoggingTests
 {
+    /// <summary>The signed-in administrator performing the change (recorded in the audit log).</summary>
+    private const string Actor = "admin@example.com";
+
     private const string Email = "target@example.com";
 
     private readonly Mock<IAccountRepository> _accountRepo = new();
@@ -33,6 +36,7 @@ public class ManagementAccountServiceAuditLoggingTests
         FakeLogRecord record = Assert.Single(_logger.Collector.GetSnapshot(),
             r => r.Level == level && r.Message.Contains(containing, StringComparison.Ordinal));
         Assert.Contains(Email, record.Message);
+        Assert.Contains($"by admin {Actor}", record.Message);
         return record;
     }
 
@@ -54,7 +58,7 @@ public class ManagementAccountServiceAuditLoggingTests
         await CreateSut().CreateAccountAsync(new AccountRequest
         {
             Email = Email, PlainPassword = "Plain1234!", Nickname = "NewUser", Role = Role.Admin, EmailConfirmed = true,
-        }, TestContext.Current.CancellationToken);
+        }, Actor, TestContext.Current.CancellationToken);
 
         FakeLogRecord record = Only(LogLevel.Information, "Admin created account");
         Assert.Contains(Role.Admin, record.Message);
@@ -72,7 +76,7 @@ public class ManagementAccountServiceAuditLoggingTests
 
         await CreateSut().UpdateAccountAsync(
             new AccountRequest { Email = Email, Role = Role.Admin, Locked = true, EmailConfirmed = true, AgreedServiceTerms = true },
-            "NewPass1!", TestContext.Current.CancellationToken);
+            "NewPass1!", Actor, TestContext.Current.CancellationToken);
 
         FakeLogRecord record = Only(LogLevel.Information, "Admin updated account");
         Assert.Contains("role User -> Admin", record.Message);
@@ -89,7 +93,7 @@ public class ManagementAccountServiceAuditLoggingTests
         _accountRepo.Setup(r => r.UpdateEntityAsync(It.IsAny<Account>(), It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
 
         await CreateSut().UpdateAccountAsync(
-            new AccountRequest { Email = Email, Role = Role.User, EmailConfirmed = true, AgreedServiceTerms = true }, null, TestContext.Current.CancellationToken);
+            new AccountRequest { Email = Email, Role = Role.User, EmailConfirmed = true, AgreedServiceTerms = true }, null, Actor, TestContext.Current.CancellationToken);
 
         Assert.Contains("password reset False", Only(LogLevel.Information, "Admin updated account").Message);
     }
@@ -100,7 +104,7 @@ public class ManagementAccountServiceAuditLoggingTests
     {
         _accountRepo.Setup(r => r.FindByEmailForUpdateAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync((Account?)null);
 
-        await CreateSut().UpdateAccountAsync(new AccountRequest { Email = Email }, null, TestContext.Current.CancellationToken);
+        await CreateSut().UpdateAccountAsync(new AccountRequest { Email = Email }, null, Actor, TestContext.Current.CancellationToken);
 
         Only(LogLevel.Warning, "Admin update failed: account not found");
     }
@@ -112,7 +116,7 @@ public class ManagementAccountServiceAuditLoggingTests
         _accountRepo.Setup(r => r.FindByEmailForUpdateAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(Existing());
         _accountRepo.Setup(r => r.UpdateEntityAsync(It.IsAny<Account>(), It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
 
-        await CreateSut().DeleteAccountAsync(Email, TestContext.Current.CancellationToken);
+        await CreateSut().DeleteAccountAsync(Email, Actor, TestContext.Current.CancellationToken);
 
         Only(LogLevel.Information, "Admin deleted account");
     }
@@ -123,7 +127,7 @@ public class ManagementAccountServiceAuditLoggingTests
     {
         _accountRepo.Setup(r => r.FindByEmailForUpdateAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync((Account?)null);
 
-        await CreateSut().DeleteAccountAsync(Email, TestContext.Current.CancellationToken);
+        await CreateSut().DeleteAccountAsync(Email, Actor, TestContext.Current.CancellationToken);
 
         Only(LogLevel.Warning, "Admin delete failed: account not found");
     }

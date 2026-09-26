@@ -79,7 +79,7 @@ public class MenuService(
     }
 
     /// <inheritdoc />
-    public async Task<ServiceResult> CreateCategoryAsync(CategoryRequest request, CancellationToken ct = default)
+    public async Task<ServiceResult> CreateCategoryAsync(CategoryRequest request, string actorEmail, CancellationToken ct = default)
     {
         try
         {
@@ -89,7 +89,7 @@ public class MenuService(
                 return ServiceResult.FromError(result.FirstError);
 
             await categoryRepository.CreateAsync(result.Value, ct);
-            logger.LogInformation("Menu category {Name} created (role {Role})", request.Name, request.Role);
+            logger.LogInformation("Menu category {Name} created (role {Role}) by admin {Admin}", request.Name, request.Role, actorEmail);
             return ServiceResult.Ok();
         }
         catch (Exception e)
@@ -100,7 +100,7 @@ public class MenuService(
     }
 
     /// <inheritdoc />
-    public async Task<ServiceResult> UpdateCategoryAsync(CategoryRequest request, CancellationToken ct = default)
+    public async Task<ServiceResult> UpdateCategoryAsync(CategoryRequest request, string actorEmail, CancellationToken ct = default)
     {
         await unitOfWork.BeginAsync(ct);
         try
@@ -120,7 +120,7 @@ public class MenuService(
 
             await categoryRepository.UpdateEntityAsync(category, ct);
             await unitOfWork.CommitAsync(ct);
-            logger.LogInformation("Menu category {CategoryId} ({Name}) updated (role {Role})", request.Id, request.Name, request.Role);
+            logger.LogInformation("Menu category {CategoryId} ({Name}) updated (role {Role}) by admin {Admin}", request.Id, request.Name, request.Role, actorEmail);
             return ServiceResult.Ok();
         }
         catch (Exception e)
@@ -132,12 +132,12 @@ public class MenuService(
     }
 
     /// <inheritdoc />
-    public async Task<ServiceResult> DeleteCategoryAsync(CategoryRequest request, CancellationToken ct = default)
+    public async Task<ServiceResult> DeleteCategoryAsync(CategoryRequest request, string actorEmail, CancellationToken ct = default)
     {
         try
         {
             await categoryRepository.DeleteByIdAsync(request.Id, ct);
-            logger.LogInformation("Menu category {CategoryId} ({Name}) deleted", request.Id, request.Name);
+            logger.LogInformation("Menu category {CategoryId} ({Name}) deleted by admin {Admin}", request.Id, request.Name, actorEmail);
             return ServiceResult.Ok();
         }
         catch (Exception e)
@@ -148,7 +148,7 @@ public class MenuService(
     }
 
     /// <inheritdoc />
-    public async Task<ServiceResult> CreateSubCategoryAsync(SubCategoryRequest request, CancellationToken ct = default)
+    public async Task<ServiceResult> CreateSubCategoryAsync(SubCategoryRequest request, string actorEmail, CancellationToken ct = default)
     {
         try
         {
@@ -158,7 +158,7 @@ public class MenuService(
                 return ServiceResult.FromError(result.FirstError);
 
             await subCategoryRepository.CreateAsync(result.Value, ct);
-            logger.LogInformation("Menu sub-category {Name} created (role {Role})", request.Name, request.Role);
+            logger.LogInformation("Menu sub-category {Name} created (role {Role}) by admin {Admin}", request.Name, request.Role, actorEmail);
             return ServiceResult.Ok();
         }
         catch (Exception e)
@@ -169,7 +169,7 @@ public class MenuService(
     }
 
     /// <inheritdoc />
-    public async Task<ServiceResult> UpdateSubCategoryAsync(SubCategoryRequest request, CancellationToken ct = default)
+    public async Task<ServiceResult> UpdateSubCategoryAsync(SubCategoryRequest request, string actorEmail, CancellationToken ct = default)
     {
         await unitOfWork.BeginAsync(ct);
         try
@@ -187,7 +187,7 @@ public class MenuService(
 
             await subCategoryRepository.UpdateEntityAsync(subCategory, ct);
             await unitOfWork.CommitAsync(ct);
-            logger.LogInformation("Menu sub-category {SubCategoryId} ({Name}) updated (role {Role})", request.Id, request.Name, request.Role);
+            logger.LogInformation("Menu sub-category {SubCategoryId} ({Name}) updated (role {Role}) by admin {Admin}", request.Id, request.Name, request.Role, actorEmail);
             return ServiceResult.Ok();
         }
         catch (Exception e)
@@ -199,12 +199,12 @@ public class MenuService(
     }
 
     /// <inheritdoc />
-    public async Task<ServiceResult> DeleteSubCategoryAsync(SubCategoryRequest request, CancellationToken ct = default)
+    public async Task<ServiceResult> DeleteSubCategoryAsync(SubCategoryRequest request, string actorEmail, CancellationToken ct = default)
     {
         try
         {
             await subCategoryRepository.DeleteByIdAsync(request.Id, ct);
-            logger.LogInformation("Menu sub-category {SubCategoryId} ({Name}) deleted", request.Id, request.Name);
+            logger.LogInformation("Menu sub-category {SubCategoryId} ({Name}) deleted by admin {Admin}", request.Id, request.Name, actorEmail);
             return ServiceResult.Ok();
         }
         catch (Exception e)

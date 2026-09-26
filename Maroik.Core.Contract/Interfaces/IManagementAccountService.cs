@@ -4,7 +4,8 @@ namespace Maroik.Core.Contract.Interfaces;
 
 /// <summary>
 /// Service interface for admin-level account management (Management > Account page).
-/// Provides full CRUD over user accounts, including forced password changes.
+/// Provides full CRUD over user accounts, including forced password changes. The write methods take
+/// <c>actorEmail</c>, the signed-in administrator making the change, so the audit log records who did it.
 /// </summary>
 public interface IManagementAccountService
 {
@@ -23,14 +24,14 @@ public interface IManagementAccountService
     Task<AccountResponse?> GetAccountByEmailAsync(string email, CancellationToken ct = default);
 
     /// <summary>Admin-creates a new account (skips the normal email-confirmation flow).</summary>
-    Task<ServiceResult> CreateAccountAsync(AccountRequest request, CancellationToken ct = default);
+    Task<ServiceResult> CreateAccountAsync(AccountRequest request, string actorEmail, CancellationToken ct = default);
 
     /// <summary>
     /// Updates an account's details. If <paramref name="newPassword"/> is provided,
     /// hashes and sets it as the account's password.
     /// </summary>
-    Task<ServiceResult> UpdateAccountAsync(AccountRequest request, string? newPassword, CancellationToken ct = default);
+    Task<ServiceResult> UpdateAccountAsync(AccountRequest request, string? newPassword, string actorEmail, CancellationToken ct = default);
 
-    /// <summary>Hard-deletes an account and all associated data.</summary>
-    Task<ServiceResult> DeleteAccountAsync(string email, CancellationToken ct = default);
+    /// <summary>Soft-deletes an account (sets its Deleted flag; the row and its data are kept).</summary>
+    Task<ServiceResult> DeleteAccountAsync(string email, string actorEmail, CancellationToken ct = default);
 }

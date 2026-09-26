@@ -71,6 +71,12 @@ public class ManagementController : Controller
         _localize = key => _localizer[key].Value;
     }
 
+    /// <summary>
+    /// E-mail of the signed-in administrator, passed to the admin write use cases so their audit log
+    /// records who made the change (ViewBag.LoggedInAccount is set by ViewBagPopulatorFilter).
+    /// </summary>
+    private string AdminEmail => ((AccountResponse)ViewBag.LoggedInAccount).Email!;
+
     #region Profile
 
     #region Read
@@ -283,7 +289,7 @@ public class ManagementController : Controller
                 AgreedServiceTerms = true,
                 Message = EnumHelper.GetDescription(AccountMessage.Success),
                 Deleted = false
-            }, HttpContext.RequestAborted);
+            }, AdminEmail, HttpContext.RequestAborted);
 
             return createResult.Success
                 ? Json(new { result = true, message = _localizer["Account create successfully done."].Value })
@@ -392,7 +398,7 @@ public class ManagementController : Controller
                     Deleted = accountInputViewModel.Deleted
                 },
                 accountInputViewModel.Password, // new password (plain); service hashes it
-                HttpContext.RequestAborted);
+                AdminEmail, HttpContext.RequestAborted);
 
             return updateResult.Success
                 ? Json(new { result = true, message = _localizer["Successfully updated the account"].Value })
@@ -417,7 +423,7 @@ public class ManagementController : Controller
     {
         try
         {
-            ServiceResult deleteResult = await _managementAccountService.DeleteAccountAsync(accountInputViewModel.Email!, HttpContext.RequestAborted);
+            ServiceResult deleteResult = await _managementAccountService.DeleteAccountAsync(accountInputViewModel.Email!, AdminEmail, HttpContext.RequestAborted);
             return deleteResult.Success
                 ? Json(new { result = true, message = _localizer["Successfully deleted the account"].Value })
                 : Json(new { result = false, error = _localizer[deleteResult.ErrorKey, deleteResult.ErrorArgs].ToPlainString() });
@@ -477,7 +483,7 @@ public class ManagementController : Controller
                 Action = menuInputViewModel.Action,
                 Role = menuInputViewModel.Role,
                 Order = menuInputViewModel.Order
-            }, HttpContext.RequestAborted);
+            }, AdminEmail, HttpContext.RequestAborted);
             if (!createCatResult.Success)
                 return Json(new { result = false, error = _localizer["Input is invalid"].Value });
             await _cache.InvalidateNavigationMenuCacheAsync();
@@ -513,7 +519,7 @@ public class ManagementController : Controller
                 Action = menuInputViewModel.Action,
                 Role = menuInputViewModel.Role,
                 Order = menuInputViewModel.Order
-            }, HttpContext.RequestAborted);
+            }, AdminEmail, HttpContext.RequestAborted);
             if (!createSubCatResult.Success)
                 return Json(new { result = false, error = _localizer["Input is invalid"].Value });
             await _cache.InvalidateNavigationMenuCacheAsync();
@@ -675,7 +681,7 @@ public class ManagementController : Controller
                 Action = menuInputViewModel.Action,
                 Role = menuInputViewModel.Role,
                 Order = menuInputViewModel.Order
-            }, HttpContext.RequestAborted);
+            }, AdminEmail, HttpContext.RequestAborted);
             if (!updateCatResult.Success)
                 return Json(new { result = false, error = _localizer["Input is invalid"].Value });
             await _cache.InvalidateNavigationMenuCacheAsync();
@@ -712,7 +718,7 @@ public class ManagementController : Controller
                 Action = menuInputViewModel.Action,
                 Role = menuInputViewModel.Role,
                 Order = menuInputViewModel.Order
-            }, HttpContext.RequestAborted);
+            }, AdminEmail, HttpContext.RequestAborted);
             if (!updateSubCatResult.Success)
                 return Json(new { result = false, error = _localizer["Input is invalid"].Value });
             await _cache.InvalidateNavigationMenuCacheAsync();
@@ -753,7 +759,7 @@ public class ManagementController : Controller
                 Action = menuInputViewModel.Action,
                 Role = menuInputViewModel.Role,
                 Order = menuInputViewModel.Order
-            }, HttpContext.RequestAborted);
+            }, AdminEmail, HttpContext.RequestAborted);
             if (!deleteCatResult.Success)
                 return Json(new { result = false, error = _localizer["Input is invalid"].Value });
             await _cache.InvalidateNavigationMenuCacheAsync();
@@ -790,7 +796,7 @@ public class ManagementController : Controller
                 Action = menuInputViewModel.Action,
                 Role = menuInputViewModel.Role,
                 Order = menuInputViewModel.Order
-            }, HttpContext.RequestAborted);
+            }, AdminEmail, HttpContext.RequestAborted);
 
             if (!deleteSubCatResult.Success)
                 return Json(new { result = false, error = _localizer["Input is invalid"].Value });
