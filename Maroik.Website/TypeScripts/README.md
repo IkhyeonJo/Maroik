@@ -2,10 +2,11 @@
 
 ## Prerequisites — Node.js (one-time setup, written for a non-JS dev)
 
-**You can skip all of this if you only touch C#.** `dotnet build` still succeeds
-with no Node installed — it just reuses the `wwwroot/**/site.js` that is already
-committed to git instead of recompiling it (see **Build integration**). You need
-the steps below only to **edit a `.ts` file and regenerate its `.js`**, or to **run the client-script tests**.
+**You can skip all of this if you only build through Docker Compose** — the Dockerfile
+`tsbuild` stage compiles the scripts itself (see **Build integration**). The compiled
+`wwwroot/**/site.js` is build output and is **not** committed, so you need the steps
+below to **run the site on the host** (`dotnet run`, Rider/VS "Fast Mode" container
+debugging), to **edit a `.ts` file and see its `.js`**, or to **run the client-script tests**.
 
 **Why it isn't automatic:** `tsc` (the TypeScript compiler) is not a system-wide
 tool here. `tsc`, Vitest, jsdom and every `@types/*` package are listed in
@@ -16,7 +17,7 @@ fresh checkout's `.ts` files can't be compiled.
 ### 1. Install Node.js 22
 
 The build uses Node 22 everywhere else (`Maroik.Website/Dockerfile` →
-`FROM node:22-alpine`; there is no other pinned version and CI doesn't use Node),
+`FROM node:22-alpine`; CI's `setup-node` also uses 22),
 so match it. `package.json` `"engines"` requires `node >=22.22.2 <23` and
 `Maroik.Website/.npmrc` sets `engine-strict=true`, so **any other version stops
 `npm ci` immediately** with `npm error code EBADENGINE` — nothing gets installed,
@@ -111,10 +112,10 @@ up. Its own **`README.md`** has the details.
 
 ### If you skip this
 
-`dotnet build` / `dotnet run` still work — with no `node_modules/` present the
-MSBuild target that would call `tsc` is a silent no-op, so you simply get the
-already-committed `wwwroot/**/site.js` (see **Build integration**). The failure
-mode is "my `.ts` edit didn't show up in the browser", not a build error.
+`dotnet build` still succeeds — with no `node_modules/` present the MSBuild target
+that would call `tsc` is a silent no-op — but no `wwwroot/**/site.js` is produced, so a
+host-run site (`dotnet run`, Fast Mode) serves pages without their custom scripts.
+Docker Compose builds are unaffected (see **Build integration**).
 
 ---
 
@@ -126,7 +127,7 @@ Maroik.Website/
   TypeScripts/{area}/custom/{Feature}/{Page}/js/site.ts   ── source (this tree)
                 │  tsc  (rootDir: TypeScripts, outDir: wwwroot)
                 ▼
-  wwwroot/{area}/custom/{Feature}/{Page}/js/site.js        ── generated, COMMITTED
+  wwwroot/{area}/custom/{Feature}/{Page}/js/site.js        ── generated, git-ignored
 ```
 
 No other `wwwroot` asset is touched. Vendored libraries (jQuery, AdminLTE, FullCalendar,
@@ -284,14 +285,11 @@ passes `--build-arg TS_SOURCEMAPS=true`, so the Dockerfile `tsbuild` stage runs
 this and the maps are there. `docker-compose.prod.yml` passes `TS_SOURCEMAPS=false`.
 
 **Nothing debug-related reaches production.** With `TS_SOURCEMAPS` unset/`false` —
-`npm run build`, the `.csproj` `CompileClientTypeScript` target, the prod Docker build, the
-no-Node `dotnet publish` fallback — `tsc` runs `tsconfig.build.json`: no `.map`, no
+`npm run build`, a Release `dotnet build`, the prod Docker build — `tsc` runs `tsconfig.build.json`: no `.map`, no
 `sourceMappingURL` comment. On top of that `Maroik.DeployOps/Deploy.sh` deletes any
 `site.js.map` and strips the comment from the server checkout before `docker-compose up`,
 and `.dockerignore` keeps host maps out of the build context.
-`Maroik.Website/wwwroot/**/custom/**/*.js.map` is git-ignored — don't commit it, and don't
-commit a `site.js` that has picked up the `sourceMappingURL` comment (re-run
-`npm run build` to drop it).
+Both `site.js` and `site.js.map` under `Maroik.Website/wwwroot/**/custom/**` are git-ignored.
 
 ## Build integration
 
@@ -303,10 +301,13 @@ commit a `site.js` that has picked up the `sourceMappingURL` comment (re-run
 * **Docker** — `Dockerfile` has a dedicated `node:22-alpine` `tsbuild` stage (`npm ci && npm run build`) whose
   `wwwroot/` output is `COPY --from=tsbuild` over the
   SDK build stage's copy. The .NET SDK image has no Node, so the csproj target stays a no-op.
-* **`dotnet publish` with no Node at all** — falls back to the committed `wwwroot/**/site.js`.
+* **CI** — `build-and-test.yml` runs `npm ci`, then builds with `-p:BuildClientTypeScript=true`,
+  so the Vitest and E2E steps run against freshly compiled scripts.
+* **`dotnet publish` with no Node at all** — produces a site without the custom scripts. Don't
+  deploy that way; deploy through the Docker image.
 
-`wwwroot/**/site.js` is committed for exactly that last reason. `node_modules/`,
-`*.tsbuildinfo` and `.vitest/` are git-ignored in the repo-root `.gitignore`.
+`wwwroot/**/custom/**/site.js` (and `.map`), `node_modules/`, `*.tsbuildinfo` and `.vitest/`
+are git-ignored in the repo-root `.gitignore`.
 
 ### Project-file hygiene
 

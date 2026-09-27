@@ -445,11 +445,11 @@ Maroik.Website/wwwroot/upload/**
 Maroik.FileStorage/upload/**
 
 # TypeScript client-scripts toolchain (Maroik.Website/TypeScripts, see its README).
-# Compiled Maroik.Website/wwwroot/**/site.js IS committed (publish/Docker without Node fall back to it).
+# The compiled Maroik.Website/wwwroot/**/custom/**/site.js is build output, not source: the
+# Dockerfile tsbuild stage, `dotnet build` (with node_modules) and `npm run build` regenerate it.
 *.tsbuildinfo
 .vitest/
-# Source maps are debug-only: produced by `npm run build:debug` / `npm run watch`, never
-# committed, stripped from release builds (tsconfig.build.json) and by Maroik.DeployOps/Deploy.sh.
+Maroik.Website/wwwroot/**/custom/**/*.js
 Maroik.Website/wwwroot/**/custom/**/*.js.map
 
 

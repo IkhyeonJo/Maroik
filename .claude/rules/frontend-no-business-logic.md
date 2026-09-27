@@ -8,7 +8,7 @@ restated per task.
 The custom client scripts are authored as **TypeScript** under
 `Maroik.Website/TypeScripts/{admin,anonymous,user}/custom/{Feature}/{Page}/js/site.ts`
 and compiled 1:1 by `tsc` to `Maroik.Website/wwwroot/**/custom/**/site.js`.
-**Never hand-edit the `wwwroot/**/site.js` — it is generated output.** Edit the `.ts`;
+**Never hand-edit the `wwwroot/**/site.js` — it is generated, git-ignored output.** Edit the `.ts`;
 the build (or `npm run build` in `Maroik.Website/`) regenerates the `.js`.
 See `Maroik.Website/TypeScripts/README.md`.
 
@@ -94,7 +94,8 @@ script (no `import`/`export`); keep it that way.
   passwords, image upload, and culture. Treat new findings as regressions to fix,
   not a fresh migration.
 * The 22 client scripts were migrated JS → TypeScript (`TypeScripts/`), byte-faithful,
-  with jsdom tests in `TypeScripts.Tests/`. `wwwroot/**/site.js` is now generated.
+  with jsdom tests in `TypeScripts.Tests/`. `wwwroot/**/site.js` is now generated
+  (and, since 2026-09-27, git-ignored rather than committed).
 * Modernising `site.css` (native nesting, custom properties, `@layer` — no Sass
   build or other toolchain assumed, unlike the TypeScript move) is a separate
   future effort — out of scope here.

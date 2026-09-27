@@ -2,10 +2,9 @@
   // Release config for the custom client scripts: identical to tsconfig.json but with
   // NO source maps. This is what ships.
   //
-  //   npm run build              -> tsc -p tsconfig.build.json   (writes the committed site.js)
-  //   Maroik.Website.csproj      -> CompileClientTypeScript target runs `npm run build`
+  //   npm run build              -> tsc -p tsconfig.build.json   (writes the git-ignored site.js)
+  //   Maroik.Website.csproj      -> CompileClientTypeScript target runs `npm run build` (Release)
   //   Dockerfile (tsbuild stage) -> `npm run build`
-  //   dotnet publish (no Node)   -> falls back to the committed, map-free site.js
   //
   // Debugging in Chrome uses tsconfig.json instead (`npm run build:debug` / `npm run watch`),
   // which additionally emits site.js.map. See TypeScripts/README.md ("Debugging in Chrome").

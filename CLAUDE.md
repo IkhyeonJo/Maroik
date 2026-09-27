@@ -9,7 +9,7 @@ Client-side rule checks are UX mirrors — the server always re-validates.
 
 The custom client scripts are authored in **TypeScript** at
 `Maroik.Website/TypeScripts/**/custom/**/site.ts` and compiled 1:1 by `tsc` to
-`Maroik.Website/wwwroot/**/custom/**/site.js` — **that `.js` is generated; edit the
+`Maroik.Website/wwwroot/**/custom/**/site.js` — **that `.js` is generated and git-ignored; edit the
 `.ts`** (see `Maroik.Website/TypeScripts/README.md`).
 
 Layer map (dependency direction: Website → Service → Domain; Domain depends on nothing):
@@ -47,8 +47,8 @@ Consequences that apply to every change — C# under `Maroik.Core.*` / `Maroik.W
   the thing under test. Assert the concrete result (value, status code, message, persisted row, request body, DOM).
 - **Prefer real collaborators over mocks** where the behaviour is about PostgreSQL, RabbitMQ, SMTP or HTTP: use the
   Testcontainers / in-process fakes already in the test projects (see "Tests that need Docker").
-- **Do not lower a gate to make a change pass.** CI enforces line >= 80 % / branch >= 65 %, the architecture tests, and that the
-  generated `wwwroot/**/site.js` matches the `.ts`. A change that needs an exemption gets a discussion, not a quiet skip.
+- **Do not lower a gate to make a change pass.** CI enforces line >= 80 % / branch >= 65 %, the architecture tests, and the
+  client-script tests against freshly compiled `wwwroot/**/site.js`. A change that needs an exemption gets a discussion, not a quiet skip.
 - **Done means the suite is green** (`dotnet test` for the touched projects, `npm test` for scripts), the build has zero warnings,
   and the tests for the change are in the same commit as the change.
 

@@ -8,8 +8,8 @@
   // This is the DEBUG config: it emits wwwroot/**/custom/**/site.js.map (with the .ts source inlined)
   // so Chrome DevTools maps site.js -> site.ts. `npm run build:debug`
   // and `npm run watch` use it. Release builds use tsconfig.build.json (no maps) — that
-  // is what `npm run build`, the .csproj target, Docker and `dotnet publish` run, and
-  // what the committed site.js reflects. See TypeScripts/README.md ("Debugging in Chrome").
+  // is what `npm run build`, a Release .csproj build and the prod Docker image run.
+  // See TypeScripts/README.md ("Debugging in Chrome").
   "compilerOptions": {
     "target": "ES2020",
     "lib": ["ES2020", "DOM", "DOM.Iterable"],

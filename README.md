@@ -74,7 +74,7 @@ Domain registration: AWS Route 53
   - The custom client scripts are authored in TypeScript at `Maroik.Website/TypeScripts/{admin,anonymous,user}/custom/**/site.ts` and compiled 1:1 by `tsc` to `Maroik.Website/wwwroot/**/custom/**/site.js` (no bundler, no Babel — the emitted `.js` is byte-faithful to the original, minus comments and an IIFE wrapper).
   - Compiled under `--strict`; each file is an IIFE-wrapped global script (no `import`/`export`).
   - Scripts keep only DOM wiring, widget init, AJAX transport, and notifications — business logic lives in `Maroik.Core.*` (DDD + Clean Architecture). Client-side rule checks are UX mirrors; the server always re-validates.
-  - `wwwroot/**/site.js` is generated and committed, so `dotnet build` / `dotnet publish` work with no Node installed; editing a `.ts` and regenerating its `.js` needs Node 22 + `npm ci` in `Maroik.Website/`.
+  - `wwwroot/**/site.js` is build output and git-ignored. Docker Compose builds generate it in the Dockerfile's Node stage; running the site on the host, or running the client-script tests, needs Node 22 + `npm ci` in `Maroik.Website/`.
   - MSBuild runs `tsc` on `dotnet build` when `node_modules/` is present; Docker builds run it in a dedicated `node:22-alpine` stage.
   - Unit-tested with Vitest + jsdom in `Maroik.Website/TypeScripts.Tests/` (one `*.test.ts` per script, exercising the compiled `site.js`).
   - Details: `Maroik.Website/TypeScripts/README.md`.

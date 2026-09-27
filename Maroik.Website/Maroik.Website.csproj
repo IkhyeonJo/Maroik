@@ -70,9 +70,9 @@
 
     This target compiles them as part of `dotnet build` / `dotnet run`, but ONLY where the
     npm toolchain has been installed (Maroik.Website/node_modules/typescript present), or when
-    `-p:BuildClientTypeScript=true` is passed. Environments without Node - the Docker `build`
-    stage, a plain `dotnet publish`, CI that skips npm - use the committed wwwroot/**/*.js
-    instead (the Dockerfile has a dedicated `tsbuild` Node stage that regenerates them).
+    `-p:BuildClientTypeScript=true` is passed (CI does). The generated wwwroot/**/*.js is
+    git-ignored; the Docker `build` stage has no Node and gets it from the Dockerfile's
+    dedicated `tsbuild` Node stage instead.
     npm's exit code propagates, so a TypeScript error fails the .NET build on dev machines.
 
     Debug builds run `npm run build:debug` (tsconfig.json: sourceMap + inlineSources) instead
@@ -80,8 +80,7 @@
     container "Fast Mode" debugging get a Chrome-debuggable site.js.map with no extra step -
     Fast Mode builds on the host and bind-mounts wwwroot into the container, so the
     Dockerfile's TS_SOURCEMAPS build arg never runs for it. Release builds keep the map-free
-    `npm run build`. See "Debugging in Chrome" in TypeScripts/README.md. Don't commit a
-    site.js carrying the sourceMappingURL comment - a Release build strips it back out.
+    `npm run build`. See "Debugging in Chrome" in TypeScripts/README.md.
   -->
   <PropertyGroup>
     <_ClientTypeScriptNpmScript Condition="'$(Configuration)' == 'Debug'">build:debug</_ClientTypeScriptNpmScript>

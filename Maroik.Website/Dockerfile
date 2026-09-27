@@ -7,8 +7,8 @@ EXPOSE 80
 EXPOSE 443
 
 # Compile the custom client scripts (TypeScripts/**/*.ts -> wwwroot/**/*.js). The .NET
-# SDK image has no Node, so this dedicated stage regenerates them; the committed
-# wwwroot/**/*.js are the fallback. See Maroik.Website/TypeScripts/README.md.
+# SDK image has no Node, so this dedicated stage generates them (they are git-ignored,
+# not committed). See Maroik.Website/TypeScripts/README.md.
 #
 # TS_SOURCEMAPS: default "false" -> `npm run build` (tsconfig.build.json): no site.js.map,
 # no sourceMappingURL comment -> nothing to strip from a production image.
