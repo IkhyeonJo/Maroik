@@ -254,7 +254,7 @@ try
     #region Multi-Language
 
     builder.Services.AddLocalization(opt => { opt.ResourcesPath = "Resources"; });
-    // AddControllersWithViews (not AddMvc): this app has no Razor Pages, so AddMvc extra Razor
+    // AddControllersWithViews (not AddMvc): this app has no Razor Pages, so AddMvc's extra Razor
     // Pages services were dead weight. The filters/options for the same builder are added by the
     // AddControllersWithViews call further below; the two calls merge into one MVC builder.
     builder.Services.AddControllersWithViews()
@@ -263,10 +263,7 @@ try
 
     builder.Services.Configure<RequestLocalizationOptions>(opt =>
     {
-        List<CultureInfo> supportedCultures =
-        [
-            .. CulturePolicy.SupportedCultures.Select(c => new CultureInfo(c))
-        ];
+        List<CultureInfo> supportedCultures = CulturePolicy.SupportedCultures.Select(c => new CultureInfo(c)).ToList();
         opt.DefaultRequestCulture = new RequestCulture(CulturePolicy.DefaultCulture);
         opt.SupportedCultures = supportedCultures;
         opt.SupportedUICultures = supportedCultures;
@@ -346,14 +343,14 @@ try
         });
 
     app.UseSerilogRequestLogging(); // Log each HTTP request (method, path, status, duration) via Serilog
-    app.UseRouting(); // Routing middleware for routing requests (UseRouting)
+    app.UseRouting(); // 5. Routing middleware for routing requests (UseRouting)
     app.UseCors();
 
     #region Login
 
-    app.UseSession(); // Session middleware (UseSession) establishes and maintains session state. If the app uses session state, call Session Middleware after Cookie Policy Middleware and before MVC Middleware.
-    app.UseAuthentication(); // Authentication middleware (UseAuthentication) attempts to authenticate the user before they're allowed access to secure resources.
-    app.UseAuthorization(); // Authorization middleware (UseAuthorization) authorizes a user to access secure resources.
+    app.UseSession(); // 6. Session middleware (UseSession) establishes and maintains session state. If the app uses session state, call Session Middleware after Cookie Policy Middleware and before MVC Middleware.
+    app.UseAuthentication(); // 7. Authentication middleware (UseAuthentication) attempts to authenticate the user before they're allowed access to secure resources.
+    app.UseAuthorization(); // 8. Authorization middleware (UseAuthorization) authorizes a user to access secure resources.
 
     #endregion
 

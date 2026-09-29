@@ -21,12 +21,14 @@ namespace Maroik.E2E.Tests.Infrastructure;
 /// still returning the original test-host so the base-class HttpClient helpers work normally.
 ///
 /// The application talks to a real PostgreSQL 17 database (<see cref="E2EPostgresContainer"/>,
-/// loaded from the production <c>Init.sql</c>) — not the EF Core InMemory provider — so the
+/// loaded from the Debugging <c>Init.sql</c>) — not the EF Core InMemory provider — so the
 /// browser tests exercise the real schema, constraints and seeded navigation menu.
 /// </summary>
 public sealed class PlaywrightWebApplicationFactory : WebApplicationFactory<Program>
 {
+    /// <summary>Configuration values layered over the website's own settings.</summary>
     private readonly Dictionary<string, string?> _configOverrides;
+    /// <summary>The real Kestrel host the browser talks to; set when the host is created.</summary>
     private IHost? _realHost;
 
     /// <summary>Base URL of the real Kestrel server (e.g. <c>http://localhost:57432</c>).</summary>
