@@ -89,7 +89,7 @@ public sealed class AccountRepositoryTests(DatabaseFixture database) : Repositor
     {
         List<Account> result = await Sut.GetAllAsync(TestContext.Current.CancellationToken);
 
-        Assert.Contains(result, x => x.Email.Value == "admin@maroik.com" && x.Role == Role.Admin);
+        Assert.Contains(result, x => x.Email.Value == "admin@maroik.com" && x.Role == AccountRole.Admin);
         Assert.Contains(result, x => x.Email.Value == "user@maroik.com");
     }
 
@@ -375,7 +375,7 @@ public sealed class AccountRepositoryTests(DatabaseFixture database) : Repositor
 
         Account? result = await Sut.FindByEmailAsync(email, TestContext.Current.CancellationToken);
         Assert.NotNull(result);
-        Assert.Equal(Role.Admin, result.Role);
+        Assert.Equal(Role.Admin, result.Role.Value);
         Assert.Equal("Asia/Seoul", result.TimeZone.Value);
     }
 
@@ -430,11 +430,11 @@ public sealed class AccountRepositoryTests(DatabaseFixture database) : Repositor
         Assert.True(result.MustChangePassword);
         // A password write discards the pending reset token, so a link mailed earlier is dead.
         Assert.Null(result.ResetPasswordToken);
-        Assert.Equal("KRW", result.DefaultMonetaryUnit);
+        Assert.Equal("KRW", result.DefaultMonetaryUnit?.Value);
         Assert.Equal("new-message", result.Message);
         // Untouched by any of the above.
         Assert.True(result.EmailConfirmed);
-        Assert.Equal(Role.User, result.Role);
+        Assert.Equal(Role.User, result.Role.Value);
     }
 
     /// <summary>A null avatar path persists as the shared default-avatar path, matching ToEntity.</summary>
