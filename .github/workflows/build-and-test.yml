@@ -1,0 +1,133 @@
+name: Build & Test (reusable)
+
+on:
+  workflow_call:
+
+# Least privilege by default; a job that needs more (bump-version, CodeQL) declares it itself.
+permissions:
+  contents: read
+
+jobs:
+  build-and-test:
+    name: Build & Test
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@67a3573c9a986a3f9c594539f4ab511d57bb3ce9 # v4
+        with:
+          dotnet-version: '10.0.x'
+
+      # ── Client scripts (TypeScript) toolchain ────────────────────────────────
+      # Maroik.Website's client scripts are authored as TypeScripts/**/site.ts and compiled 1:1 by
+      # tsc to wwwroot/**/site.js, which is build output and not committed. The build below must
+      # generate it: the Vitest suite and the E2E tests run the compiled scripts.
+      - name: Setup Node.js
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: Maroik.Website/package-lock.json
+
+      - name: Install client script dependencies
+        run: npm ci
+        working-directory: Maroik.Website
+
+      - name: Restore dependencies
+        run: dotnet restore Maroik.sln
+
+      # BuildClientTypeScript=true: run tsc even if node_modules detection ever fails, so a missing
+      # site.js fails here instead of in a test. RunClientScriptTests=false: the Vitest suite runs
+      # as its own visible step below instead of implicitly inside the build.
+      - name: Build
+        run: dotnet build Maroik.sln --no-restore --configuration Release -p:BuildClientTypeScript=true -p:RunClientScriptTests=false
+
+      - name: Client script tests (Vitest)
+        run: npm test
+        working-directory: Maroik.Website
+
+      # ── Unit & Integration Tests ─────────────────────────────────────────────
+      # The test projects run on Microsoft.Testing.Platform (xunit.v3); `dotnet test`
+      # is opted into MTP mode by global.json, so it takes --project (not a filter over
+      # the solution) and --coverage (not the VSTest-only "XPlat Code Coverage" collector).
+      # E2E is excluded here and runs in its own step below.
+      - name: Unit & Integration Tests
+        run: |
+          set -euo pipefail
+          mkdir -p ./coverage
+          for proj in $(find . -name '*.Tests.csproj' ! -name 'Maroik.E2E.Tests.csproj' | sort); do
+            name=$(basename "$proj" .csproj)
+            echo "::group::$name"
+            dotnet test --project "$proj" --no-build --configuration Release \
+              --coverage --coverage-output-format cobertura \
+              --coverage-output "$PWD/coverage/$name.cobertura.xml"
+            echo "::endgroup::"
+          done
+
+      # ── Coverage Threshold ───────────────────────────────────────────────────
+      - name: Install ReportGenerator
+        run: dotnet tool install --global dotnet-reportgenerator-globaltool
+
+      - name: Check Coverage Threshold (line >= 80%, branch >= 65%)
+        run: |
+          reportgenerator \
+            -reports:"./coverage/*.cobertura.xml" \
+            -targetdir:"./coverage/report" \
+            -reporttypes:"TextSummary;Html" \
+            -assemblyfilters:"-*Tests*;-*E2E*" \
+            -classfilters:"-AspNetCoreGeneratedDocument.*"
+          cat ./coverage/report/Summary.txt
+          python3 -c "
+          import re, sys
+          with open('./coverage/report/Summary.txt') as f:
+              content = f.read()
+          def pct(label):
+              m = re.search(label + r' coverage:\s+([\d.]+)%', content)
+              if not m:
+                  print(f'ERROR: Could not parse {label} coverage', file=sys.stderr)
+                  sys.exit(1)
+              return float(m.group(1))
+          line_cov, branch_cov = pct('Line'), pct('Branch')
+          line_min, branch_min = 80.0, 65.0
+          print(f'Line coverage:   {line_cov}%  (min {line_min}%)')
+          print(f'Branch coverage: {branch_cov}%  (min {branch_min}%)')
+          failed = False
+          if line_cov < line_min:
+              print(f'::error::Line coverage {line_cov}% is below the {line_min}% minimum', file=sys.stderr)
+              failed = True
+          if branch_cov < branch_min:
+              print(f'::error::Branch coverage {branch_cov}% is below the {branch_min}% minimum', file=sys.stderr)
+              failed = True
+          sys.exit(1 if failed else 0)
+          "
+
+      - name: Upload Coverage Report
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        if: always()
+        with:
+          name: coverage-report
+          path: ./coverage/report
+          retention-days: 30
+
+      # ── E2E Tests (Playwright) ───────────────────────────────────────────────
+      # Needs Docker for the Testcontainers PostgreSQL instance (ubuntu-latest has it).
+      - name: Install Playwright browsers
+        run: pwsh Maroik.E2E.Tests/bin/Release/net10.0/playwright.ps1 install --with-deps chromium firefox
+
+      # The suite runs once per browser; E2E_BROWSER picks it (default: the runner's Google Chrome).
+      - name: E2E Tests (Chrome)
+        run: |
+          dotnet test --project Maroik.E2E.Tests/Maroik.E2E.Tests.csproj \
+            --no-build \
+            --configuration Release
+
+      - name: E2E Tests (Firefox)
+        env:
+          E2E_BROWSER: firefox
+        run: |
+          dotnet test --project Maroik.E2E.Tests/Maroik.E2E.Tests.csproj \
+            --no-build \
+            --configuration Release

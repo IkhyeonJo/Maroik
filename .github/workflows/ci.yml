@@ -1,0 +1,14 @@
+name: CI
+
+on:
+  pull_request:
+    branches: [ main ]
+
+# Least privilege by default; a job that needs more (bump-version, CodeQL) declares it itself.
+permissions:
+  contents: read
+
+jobs:
+  build-and-test:
+    name: Build & Test
+    uses: ./.github/workflows/build-and-test.yml

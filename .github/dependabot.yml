@@ -1,0 +1,44 @@
+version: 2
+updates:
+  - package-ecosystem: "nuget"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+    open-pull-requests-limit: 10
+    labels:
+      - "dependencies"
+      - "nuget"
+
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+    labels:
+      - "dependencies"
+      - "github-actions"
+
+  # The Dockerfiles live in each service's folder, not at the repository root.
+  - package-ecosystem: "docker"
+    directories:
+      - "/Maroik.Website"
+      - "/Maroik.FileStorage"
+      - "/Maroik.Worker"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+    labels:
+      - "dependencies"
+      - "docker"
+
+  # Client-script toolchain (TypeScript, Vitest, jsdom, type packages).
+  - package-ecosystem: "npm"
+    directory: "/Maroik.Website"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+    open-pull-requests-limit: 10
+    labels:
+      - "dependencies"
+      - "npm"

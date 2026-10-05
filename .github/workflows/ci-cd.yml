@@ -1,0 +1,105 @@
+name: CI / CD
+
+on:
+  push:
+    branches: [ main ]
+
+# Least privilege by default; a job that needs more (bump-version, CodeQL) declares it itself.
+permissions:
+  contents: read
+
+# Two quick pushes to main would otherwise trigger two parallel deploy jobs that SSH into the
+# same server and race on /tmp/maroik_prev_commit and Deploy.sh/Undeploy.sh. Queue runs instead
+# of racing them; don't cancel an in-progress deploy mid-flight (that could leave the server in a
+# half-deployed state).
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  # ─────────────────────────────────────────────────────────────────────────────
+  # Guard — version-bump commits must not re-trigger CI/CD
+  # ─────────────────────────────────────────────────────────────────────────────
+  guard:
+    name: Skip check
+    runs-on: ubuntu-latest
+    if: "!contains(github.event.head_commit.message, '[skip ci]')"
+    steps:
+      - run: echo "Proceeding with CI/CD"
+
+  # ─────────────────────────────────────────────────────────────────────────────
+  # CI — Build & Test (reusable workflow)
+  # ─────────────────────────────────────────────────────────────────────────────
+  build-and-test:
+    name: Build & Test
+    needs: guard
+    uses: ./.github/workflows/build-and-test.yml
+
+  # ─────────────────────────────────────────────────────────────────────────────
+  # CD — Deploy (main 브랜치 push 시에만, CI 통과 후)
+  # ─────────────────────────────────────────────────────────────────────────────
+  deploy:
+    name: Deploy to Server
+    runs-on: ubuntu-latest
+    needs: [guard, build-and-test]
+
+    steps:
+      - name: SSH Deploy
+        uses: appleboy/ssh-action@029f5b4aeeeb58fdfe1410a5d17f967dacf36262 # v1.0.3
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: |
+            cd /home/ubuntu/Maroik
+            git rev-parse HEAD > /tmp/maroik_prev_commit
+            echo "Saved rollback point: $(cat /tmp/maroik_prev_commit)"
+            git pull origin main
+            chmod +x Maroik.DeployOps/Undeploy.sh Maroik.DeployOps/Deploy.sh
+            ./Maroik.DeployOps/Undeploy.sh
+            ./Maroik.DeployOps/Deploy.sh
+
+      # ── Post-Deploy Health Check ─────────────────────────────────────────────
+      - name: Health Check
+        uses: appleboy/ssh-action@029f5b4aeeeb58fdfe1410a5d17f967dacf36262 # v1.0.3
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: |
+            for i in $(seq 1 12); do
+              STATUS=$(curl -s -o /dev/null -w "%{http_code}" http://localhost/health 2>/dev/null || echo "000")
+              if [ "$STATUS" = "200" ]; then
+                echo "Health check passed (attempt $i/12)"
+                rm -f /tmp/maroik_prev_commit
+                exit 0
+              fi
+              echo "Attempt $i/12: HTTP $STATUS — waiting 10s..."
+              sleep 10
+            done
+            echo "Health check failed after 12 attempts (2 minutes)"
+            docker logs Maroik.Website --tail 80
+            exit 1
+
+      # ── Rollback on Failure ──────────────────────────────────────────────────
+      - name: Rollback
+        if: failure()
+        uses: appleboy/ssh-action@029f5b4aeeeb58fdfe1410a5d17f967dacf36262 # v1.0.3
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: |
+            PREV_COMMIT=$(cat /tmp/maroik_prev_commit 2>/dev/null)
+            if [ -z "$PREV_COMMIT" ]; then
+              echo "Cannot rollback: no previous commit recorded"
+              exit 1
+            fi
+            echo "Rolling back to $PREV_COMMIT"
+            cd /home/ubuntu/Maroik
+            git checkout "$PREV_COMMIT"
+            chmod +x Maroik.DeployOps/Undeploy.sh Maroik.DeployOps/Deploy.sh
+            ./Maroik.DeployOps/Undeploy.sh
+            ./Maroik.DeployOps/Deploy.sh
+            rm -f /tmp/maroik_prev_commit
+            echo "Rollback complete"
