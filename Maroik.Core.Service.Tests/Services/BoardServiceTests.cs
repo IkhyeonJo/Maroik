@@ -40,7 +40,7 @@ public class BoardServiceTests
     /// <summary>Initializes the test fixture, setting up all required test doubles and the system under test.</summary>
     public BoardServiceTests()
     {
-        _unitOfWork.Setup(u => u.BeginAsync(It.IsAny<CancellationToken>(), It.IsAny<IsolationLevel?>())).Returns(Task.CompletedTask);
+        _unitOfWork.Setup(u => u.BeginAsync(It.IsAny<IsolationLevel?>(), It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
         _unitOfWork.Setup(u => u.CommitAsync(It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
         _unitOfWork.Setup(u => u.RollbackAsync(It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
         _unitOfWork.Setup(u => u.DisposeAsync()).Returns(ValueTask.CompletedTask);
@@ -131,7 +131,7 @@ public class BoardServiceTests
 
         Assert.Single(items);
         Assert.Equal(1, totalCount);
-        _unitOfWork.Verify(u => u.BeginAsync(It.IsAny<CancellationToken>(), IsolationLevel.RepeatableRead), Times.Once);
+        _unitOfWork.Verify(u => u.BeginAsync(IsolationLevel.RepeatableRead, It.IsAny<CancellationToken>()), Times.Once);
         _unitOfWork.Verify(u => u.CommitAsync(It.IsAny<CancellationToken>()), Times.Once);
         _unitOfWork.Verify(u => u.RollbackAsync(It.IsAny<CancellationToken>()), Times.Never);
     }
@@ -883,7 +883,7 @@ public class BoardServiceTests
 
         Assert.True(result.Success);
         _boardRepo.Verify(r => r.FindActiveByIdForUpdateAsync(1, It.IsAny<CancellationToken>()), Times.Once);
-        _unitOfWork.Verify(u => u.BeginAsync(It.IsAny<CancellationToken>()), Times.Once);
+        _unitOfWork.Verify(u => u.BeginAsync(null, It.IsAny<CancellationToken>()), Times.Once);
         _unitOfWork.Verify(u => u.CommitAsync(It.IsAny<CancellationToken>()), Times.Once);
     }
 
@@ -927,7 +927,7 @@ public class BoardServiceTests
         ServiceResult result = await sut.DeleteCommentAsync(1, "Alice", false, ct: TestContext.Current.CancellationToken);
 
         Assert.True(result.Success);
-        _unitOfWork.Verify(u => u.BeginAsync(It.IsAny<CancellationToken>()), Times.Once);
+        _unitOfWork.Verify(u => u.BeginAsync(null, It.IsAny<CancellationToken>()), Times.Once);
         _unitOfWork.Verify(u => u.CommitAsync(It.IsAny<CancellationToken>()), Times.Once);
     }
 

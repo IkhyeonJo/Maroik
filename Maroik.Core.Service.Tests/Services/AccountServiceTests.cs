@@ -1729,7 +1729,7 @@ public class AccountServiceTests
 
         Assert.False(result.Success);
         _passwordService.Verify(p => p.HashPassword(It.IsAny<string>()), Times.Never);
-        _unitOfWork.Verify(u => u.BeginAsync(It.IsAny<CancellationToken>()), Times.Never);
+        _unitOfWork.Verify(u => u.BeginAsync(null, It.IsAny<CancellationToken>()), Times.Never);
     }
 
     /// <summary>The account vanishing (or being soft-deleted) between the token lookup and the lock refuses the reset.</summary>

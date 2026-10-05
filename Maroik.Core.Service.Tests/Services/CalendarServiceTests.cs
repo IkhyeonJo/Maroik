@@ -44,7 +44,7 @@ public class CalendarServiceTests
     /// <summary>Initializes the test fixture, setting up all required test doubles and the system under test.</summary>
     public CalendarServiceTests()
     {
-        _unitOfWork.Setup(u => u.BeginAsync(It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
+        _unitOfWork.Setup(u => u.BeginAsync(null, It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
         _unitOfWork.Setup(u => u.CommitAsync(It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
         _unitOfWork.Setup(u => u.RollbackAsync(It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
         _unitOfWork.Setup(u => u.DisposeAsync()).Returns(ValueTask.CompletedTask);
@@ -1141,7 +1141,7 @@ public class CalendarServiceTests
 
         Assert.False(result.Success);
         _sharedRepo.Verify(r => r.UpdateEntityAsync(It.IsAny<CalendarShared>(), It.IsAny<CancellationToken>()), Times.Never);
-        _unitOfWork.Verify(u => u.BeginAsync(It.IsAny<CancellationToken>()), Times.Never);
+        _unitOfWork.Verify(u => u.BeginAsync(null, It.IsAny<CancellationToken>()), Times.Never);
     }
 
     /// <summary>
@@ -1265,7 +1265,7 @@ public class CalendarServiceTests
         ServiceResult result = await CreateSut().EnsureCalendarSharedAsync([5], TestContext.Current.CancellationToken);
 
         Assert.True(result.Success);
-        _unitOfWork.Verify(u => u.BeginAsync(It.IsAny<CancellationToken>()), Times.Exactly(2));
+        _unitOfWork.Verify(u => u.BeginAsync(null, It.IsAny<CancellationToken>()), Times.Exactly(2));
         _unitOfWork.Verify(u => u.RollbackAsync(It.IsAny<CancellationToken>()), Times.Once);
         _unitOfWork.Verify(u => u.CommitAsync(It.IsAny<CancellationToken>()), Times.Once);
     }
@@ -1282,7 +1282,7 @@ public class CalendarServiceTests
         Assert.False(result.Success);
         Assert.Equal("Calendar.Unexpected", result.ErrorCode);
         Assert.Equal(ServiceResult.TemporaryErrorKey, result.ErrorKey);
-        _unitOfWork.Verify(u => u.BeginAsync(It.IsAny<CancellationToken>()), Times.Exactly(3));
+        _unitOfWork.Verify(u => u.BeginAsync(null, It.IsAny<CancellationToken>()), Times.Exactly(3));
         _unitOfWork.Verify(u => u.RollbackAsync(It.IsAny<CancellationToken>()), Times.Exactly(3));
         _unitOfWork.Verify(u => u.CommitAsync(It.IsAny<CancellationToken>()), Times.Never);
     }
@@ -1298,7 +1298,7 @@ public class CalendarServiceTests
         Assert.False(result.Success);
         Assert.Equal("Calendar.Unexpected", result.ErrorCode);
         Assert.Equal(ServiceResult.TemporaryErrorKey, result.ErrorKey);
-        _unitOfWork.Verify(u => u.BeginAsync(It.IsAny<CancellationToken>()), Times.Once);
+        _unitOfWork.Verify(u => u.BeginAsync(null, It.IsAny<CancellationToken>()), Times.Once);
         _unitOfWork.Verify(u => u.RollbackAsync(It.IsAny<CancellationToken>()), Times.Once);
     }
 
@@ -1473,7 +1473,7 @@ public class CalendarServiceTests
 
         Assert.True(result.Success);
         _sharedRepo.Verify(r => r.UpdateEntityAsync(It.Is<CalendarShared>(s => s.Id == 1 && s.User), It.IsAny<CancellationToken>()), Times.Once);
-        _unitOfWork.Verify(u => u.BeginAsync(It.IsAny<CancellationToken>()), Times.Exactly(2));
+        _unitOfWork.Verify(u => u.BeginAsync(null, It.IsAny<CancellationToken>()), Times.Exactly(2));
     }
 
     /// <summary>A persistent PK race gives up after the retry limit with the shared-settings failure code.</summary>
@@ -1491,7 +1491,7 @@ public class CalendarServiceTests
         Assert.False(result.Success);
         Assert.Equal("Calendar.UpdateSharedFailed", result.ErrorCode);
         Assert.Equal(ServiceResult.TemporaryErrorKey, result.ErrorKey);
-        _unitOfWork.Verify(u => u.BeginAsync(It.IsAny<CancellationToken>()), Times.Exactly(3));
+        _unitOfWork.Verify(u => u.BeginAsync(null, It.IsAny<CancellationToken>()), Times.Exactly(3));
         _unitOfWork.Verify(u => u.CommitAsync(It.IsAny<CancellationToken>()), Times.Never);
     }
 
@@ -1508,7 +1508,7 @@ public class CalendarServiceTests
 
         Assert.Equal("Calendar.UpdateSharedFailed", result.ErrorCode);
         Assert.Equal(ServiceResult.TemporaryErrorKey, result.ErrorKey);
-        _unitOfWork.Verify(u => u.BeginAsync(It.IsAny<CancellationToken>()), Times.Once);
+        _unitOfWork.Verify(u => u.BeginAsync(null, It.IsAny<CancellationToken>()), Times.Once);
         _unitOfWork.Verify(u => u.RollbackAsync(It.IsAny<CancellationToken>()), Times.Once);
     }
 

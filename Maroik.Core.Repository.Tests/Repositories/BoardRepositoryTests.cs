@@ -183,7 +183,7 @@ public sealed class BoardRepositoryTests(DatabaseFixture database) : RepositoryT
         OrmBoard[] seeded = await SeedAsync(MakeBoard("Locked"));
 
         await using var unitOfWork = new UnitOfWork(Context);
-        await unitOfWork.BeginAsync(TestContext.Current.CancellationToken);
+        await unitOfWork.BeginAsync(ct: TestContext.Current.CancellationToken);
         Board? result = await Sut.FindActiveByIdForUpdateAsync(seeded[0].Id, TestContext.Current.CancellationToken);
         await unitOfWork.CommitAsync(TestContext.Current.CancellationToken);
 
@@ -196,7 +196,7 @@ public sealed class BoardRepositoryTests(DatabaseFixture database) : RepositoryT
     public async Task FindActiveByIdForUpdateAsync_ReturnsNull_WhenNotFound()
     {
         await using var unitOfWork = new UnitOfWork(Context);
-        await unitOfWork.BeginAsync(TestContext.Current.CancellationToken);
+        await unitOfWork.BeginAsync(ct: TestContext.Current.CancellationToken);
         Board? result = await Sut.FindActiveByIdForUpdateAsync(long.MaxValue, TestContext.Current.CancellationToken);
         await unitOfWork.CommitAsync(TestContext.Current.CancellationToken);
 
@@ -210,7 +210,7 @@ public sealed class BoardRepositoryTests(DatabaseFixture database) : RepositoryT
         OrmBoard[] seeded = await SeedAsync(MakeBoard("Gone", deleted: true));
 
         await using var unitOfWork = new UnitOfWork(Context);
-        await unitOfWork.BeginAsync(TestContext.Current.CancellationToken);
+        await unitOfWork.BeginAsync(ct: TestContext.Current.CancellationToken);
         Board? result = await Sut.FindActiveByIdForUpdateAsync(seeded[0].Id, TestContext.Current.CancellationToken);
         await unitOfWork.CommitAsync(TestContext.Current.CancellationToken);
 
@@ -240,7 +240,7 @@ public sealed class BoardRepositoryTests(DatabaseFixture database) : RepositoryT
             var commentRepo = new BoardCommentRepository(context);
             await using var unitOfWork = new UnitOfWork(context);
 
-            await unitOfWork.BeginAsync(TestContext.Current.CancellationToken);
+            await unitOfWork.BeginAsync(ct: TestContext.Current.CancellationToken);
             _ = (await boardRepo.FindActiveByIdForUpdateAsync(boardId, TestContext.Current.CancellationToken))!;
             List<BoardComment> existing = await commentRepo.GetByBoardIdOrderedAsync(boardId, TestContext.Current.CancellationToken);
             BoardComment comment = BoardComment.Create(boardId, existing.Count, "/upload/avatar.jpg", $"Writer{i}{Token}", "Hi", DateTime.UtcNow).Value;

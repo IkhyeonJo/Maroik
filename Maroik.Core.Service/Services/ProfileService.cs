@@ -94,7 +94,7 @@ public class ProfileService(
     /// <inheritdoc />
     public async Task<ServiceResult> UpdatePasswordAsync(string email, string currentPassword, string newPassword, CancellationToken ct = default)
     {
-        await unitOfWork.BeginAsync(ct);
+        await unitOfWork.BeginAsync(ct: ct);
         try
         {
             // The read must be locked (FOR UPDATE), not the plain FindByEmailAsync used elsewhere in

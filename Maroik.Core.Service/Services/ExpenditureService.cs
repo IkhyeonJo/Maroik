@@ -47,7 +47,7 @@ public class ExpenditureService(
     public async Task<ServiceResult> CreateAsync(string accountEmail, ExpenditureRequest request, CancellationToken ct = default)
     {
         DateTime utcNow = timeProvider.GetUtcNow().UtcDateTime;
-        await unitOfWork.BeginAsync(ct);
+        await unitOfWork.BeginAsync(ct: ct);
         try
         {
             var classResult = ExpenditureClassPolicy.Validate(request.MainClass, request.SubClass);
@@ -120,7 +120,7 @@ public class ExpenditureService(
     public async Task<ServiceResult> UpdateAsync(string accountEmail, ExpenditureRequest request, CancellationToken ct = default)
     {
         DateTime utcNow = timeProvider.GetUtcNow().UtcDateTime;
-        await unitOfWork.BeginAsync(ct);
+        await unitOfWork.BeginAsync(ct: ct);
         try
         {
             var classResult = ExpenditureClassPolicy.Validate(request.MainClass, request.SubClass);
@@ -205,7 +205,7 @@ public class ExpenditureService(
     public async Task<ServiceResult> DeleteAsync(string accountEmail, long id, CancellationToken ct = default)
     {
         DateTime utcNow = timeProvider.GetUtcNow().UtcDateTime;
-        await unitOfWork.BeginAsync(ct);
+        await unitOfWork.BeginAsync(ct: ct);
         try
         {
             // FOR UPDATE: see UpdateAsync — lock the record so a concurrent edit/delete of the

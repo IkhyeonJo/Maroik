@@ -103,7 +103,7 @@ public class MenuService(
     /// <inheritdoc />
     public async Task<ServiceResult> UpdateCategoryAsync(CategoryRequest request, string actorEmail, CancellationToken ct = default)
     {
-        await unitOfWork.BeginAsync(ct);
+        await unitOfWork.BeginAsync(ct: ct);
         try
         {
             // FOR UPDATE, inside this explicit transaction: without BeginAsync/CommitAsync around
@@ -172,7 +172,7 @@ public class MenuService(
     /// <inheritdoc />
     public async Task<ServiceResult> UpdateSubCategoryAsync(SubCategoryRequest request, string actorEmail, CancellationToken ct = default)
     {
-        await unitOfWork.BeginAsync(ct);
+        await unitOfWork.BeginAsync(ct: ct);
         try
         {
             // FOR UPDATE, inside this explicit transaction — see UpdateCategoryAsync for why the

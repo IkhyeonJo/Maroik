@@ -621,7 +621,7 @@ public class ManagementAccountServiceTests
 
         Assert.Equal("Account.PasswordPolicy", result.ErrorCode);
         _passwordService.Verify(p => p.HashPassword(It.IsAny<string>()), Times.Never);
-        _unitOfWork.Verify(u => u.BeginAsync(It.IsAny<CancellationToken>()), Times.Never);
+        _unitOfWork.Verify(u => u.BeginAsync(null, It.IsAny<CancellationToken>()), Times.Never);
     }
 
     /// <summary>An unknown role is returned as the domain's validation error; the row is not written and the lock is released.</summary>

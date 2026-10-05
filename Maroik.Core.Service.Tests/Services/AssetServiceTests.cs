@@ -32,7 +32,7 @@ public class AssetServiceTests
     /// <summary>Initializes the test fixture, setting up all required test doubles and the system under test.</summary>
     public AssetServiceTests()
     {
-        _unitOfWork.Setup(u => u.BeginAsync(It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
+        _unitOfWork.Setup(u => u.BeginAsync(null, It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
         _unitOfWork.Setup(u => u.CommitAsync(It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
         _unitOfWork.Setup(u => u.RollbackAsync(It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
         _unitOfWork.Setup(u => u.DisposeAsync()).Returns(ValueTask.CompletedTask);

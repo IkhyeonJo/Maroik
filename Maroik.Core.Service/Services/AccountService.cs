@@ -52,7 +52,7 @@ public class AccountService(
         DateTime utcNow = timeProvider.GetUtcNow().UtcDateTime;
         // Matched in the stored form: a mobile autocomplete's trailing space must not fail the login.
         email = Email.NormalizeForLookup(email);
-        await unitOfWork.BeginAsync(ct);
+        await unitOfWork.BeginAsync(ct: ct);
         try
         {
             // Row lock (FOR UPDATE) held until commit/rollback below, so concurrent login attempts
@@ -241,7 +241,7 @@ public class AccountService(
             string hashedPassword = passwordService.HashPassword(newAccount.PlainPassword ?? "");
 
             Account locked;
-            await unitOfWork.BeginAsync(ct);
+            await unitOfWork.BeginAsync(ct: ct);
             try
             {
                 // Re-read under FOR UPDATE: serializes against a concurrent ConfirmEmailAsync /
@@ -378,7 +378,7 @@ public class AccountService(
         }
 
         Account locked;
-        await unitOfWork.BeginAsync(ct);
+        await unitOfWork.BeginAsync(ct: ct);
         try
         {
             // Re-read under FOR UPDATE before regenerating/persisting the token: serializes against
@@ -473,7 +473,7 @@ public class AccountService(
             return new ConfirmEmailResult { InvalidToken = true, AccountCreated = false };
         }
 
-        await unitOfWork.BeginAsync(ct);
+        await unitOfWork.BeginAsync(ct: ct);
         try
         {
             // Re-read under FOR UPDATE, serializing against a concurrent ResendConfirmationEmailAsync
@@ -686,7 +686,7 @@ public class AccountService(
 
         string newHashedPassword = passwordService.HashPassword(newPassword);
 
-        await unitOfWork.BeginAsync(ct);
+        await unitOfWork.BeginAsync(ct: ct);
         try
         {
             // The lookup above was by token and unlocked. Re-read the row under FOR UPDATE before

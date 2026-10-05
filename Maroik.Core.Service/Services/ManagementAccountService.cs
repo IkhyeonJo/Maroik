@@ -134,7 +134,7 @@ public class ManagementAccountService(
             newHashedPassword = passwordService.HashPassword(newPassword);
         }
 
-        await unitOfWork.BeginAsync(ct);
+        await unitOfWork.BeginAsync(ct: ct);
         try
         {
             // FOR UPDATE: hold the row lock from read to commit so a concurrent self-service
@@ -245,7 +245,7 @@ public class ManagementAccountService(
     public async Task<ServiceResult> DeleteAccountAsync(string email, string actorEmail, CancellationToken ct = default)
     {
         DateTime utcNow = timeProvider.GetUtcNow().UtcDateTime;
-        await unitOfWork.BeginAsync(ct);
+        await unitOfWork.BeginAsync(ct: ct);
         try
         {
             // FOR UPDATE, same reason as UpdateAccountAsync: SoftDelete is persisted as a full-row

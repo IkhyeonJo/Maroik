@@ -403,7 +403,7 @@ public class ProfileServiceTests
         Assert.True(result.Success);
         _accountRepo.Verify(r => r.UpdatePasswordAsync(
             account.Email.Value, "$2a$13$newhash", It.IsAny<string>(), false, null, It.IsAny<bool>(), It.IsAny<long>(), It.IsAny<string?>(), It.IsAny<DateTime>(), It.IsAny<CancellationToken>()), Times.Once);
-        _unitOfWork.Verify(u => u.BeginAsync(It.IsAny<CancellationToken>()), Times.Once);
+        _unitOfWork.Verify(u => u.BeginAsync(null, It.IsAny<CancellationToken>()), Times.Once);
         _unitOfWork.Verify(u => u.CommitAsync(It.IsAny<CancellationToken>()), Times.Once);
     }
 

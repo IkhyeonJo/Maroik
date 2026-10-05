@@ -46,7 +46,7 @@ public class BoardService(
         // REPEATABLE READ pins the count and page reads QueryPageAsync makes to one snapshot, so a
         // concurrent insert/delete between them can't produce a TotalCount inconsistent with the
         // returned page. Owned here (Service via IUnitOfWork), not inside the repository.
-        await unitOfWork.BeginAsync(ct, IsolationLevel.RepeatableRead);
+        await unitOfWork.BeginAsync(IsolationLevel.RepeatableRead, ct);
         try
         {
             var (items, totalCount) = await boardRepository.QueryPageAsync(query, ct);
@@ -113,7 +113,7 @@ public class BoardService(
 
         string content = attachmentContent.SanitizeAndDecryptContent(request.Content ?? "");
 
-        await unitOfWork.BeginAsync(ct);
+        await unitOfWork.BeginAsync(ct: ct);
         try
         {
             var boardResult = Board.Create(request.Type, request.Title, content, request.Writer, utcNow);
@@ -177,7 +177,7 @@ public class BoardService(
 
         string content = attachmentContent.SanitizeAndDecryptContent(request.Content ?? "");
 
-        await unitOfWork.BeginAsync(ct);
+        await unitOfWork.BeginAsync(ct: ct);
         try
         {
             // Row-lock the post for the rest of the transaction. The subsequent UpdateEntityAsync
@@ -261,7 +261,7 @@ public class BoardService(
     public async Task<ServiceResult> DeleteBoardAsync(long boardId, string boardType, string requesterNickname, bool isAdmin, CancellationToken ct = default)
     {
         DateTime utcNow = timeProvider.GetUtcNow().UtcDateTime;
-        await unitOfWork.BeginAsync(ct);
+        await unitOfWork.BeginAsync(ct: ct);
         try
         {
             // Row-lock the post: SoftDelete goes out through the full-row UpdateEntityAsync, so a
@@ -305,7 +305,7 @@ public class BoardService(
         DateTime utcNow = timeProvider.GetUtcNow().UtcDateTime;
         string content = attachmentContent.SanitizeContent(request.Content ?? "");
 
-        await unitOfWork.BeginAsync(ct);
+        await unitOfWork.BeginAsync(ct: ct);
         try
         {
             // Row-locks the post for the rest of this transaction, so concurrent commenters on
@@ -377,7 +377,7 @@ public class BoardService(
     /// <inheritdoc />
     public async Task<ServiceResult> DeleteCommentAsync(long commentId, string requesterNickname, bool isAdmin, string? requiredType = null, CancellationToken ct = default)
     {
-        await unitOfWork.BeginAsync(ct);
+        await unitOfWork.BeginAsync(ct: ct);
         try
         {
             // Lock the row for the rest of this transaction, consistent with every other write in
