@@ -441,8 +441,8 @@ website-upload-*.tar.xz
 file-storage-upload-*.tar.xz
 
 # Upload directories (user uploaded files)
-#Maroik.Website/wwwroot/upload/**
-#Maroik.FileStorage/upload/**
+Maroik.Website/wwwroot/upload/**
+Maroik.FileStorage/upload/**
 
 # TypeScript client-scripts toolchain (Maroik.Website/TypeScripts, see its README).
 # The compiled Maroik.Website/wwwroot/**/custom/**/site.js is build output, not source: the
