@@ -275,11 +275,11 @@ public class ExpenditureService(
             new(toRevert.PaymentMethod, toRevert.Amount, IsDeposit: true, Currency: toRevert.Currency),
             new(toRevert.MyDepositAsset, toRevert.Amount, IsDeposit: false, Currency: toRevert.Currency)
         ];
-        if (toApply.HasValue)
-        {
-            adjustments.Add(new AssetBalanceAdjustment(toApply.Value.PaymentMethod, toApply.Value.Amount, IsDeposit: false, Currency: toApply.Value.Currency));
-            adjustments.Add(new AssetBalanceAdjustment(toApply.Value.MyDepositAsset, toApply.Value.Amount, IsDeposit: true, Currency: toApply.Value.Currency));
-        }
+        if (!toApply.HasValue)
+            return await assetBalance.ApplyAssetBalanceAdjustmentsAsync(
+                touchedAssets, adjustments, "Expenditure.AssetNotFound", "The asset referenced by this expenditure could not be found.", utcNow, ct);
+        adjustments.Add(new AssetBalanceAdjustment(toApply.Value.PaymentMethod, toApply.Value.Amount, IsDeposit: false, Currency: toApply.Value.Currency));
+        adjustments.Add(new AssetBalanceAdjustment(toApply.Value.MyDepositAsset, toApply.Value.Amount, IsDeposit: true, Currency: toApply.Value.Currency));
 
         return await assetBalance.ApplyAssetBalanceAdjustmentsAsync(
             touchedAssets, adjustments, "Expenditure.AssetNotFound", "The asset referenced by this expenditure could not be found.", utcNow, ct);

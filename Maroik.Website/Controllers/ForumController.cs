@@ -456,10 +456,8 @@ public class ForumController(
 
             // Re-fetched from the database by ViewBagPopulatorFilter on every request.
             AccountResponse loggedInAccount = ViewBag.LoggedInAccount;
-            if (!loggedInAccount.IsOwnerOrAdmin(board.Writer))
-                return Json(new { result = false, error = localizer["Input is invalid"].Value });
+            return !loggedInAccount.IsOwnerOrAdmin(board.Writer) ? Json(new { result = false, error = localizer["Input is invalid"].Value }) : Json(new { result = true, freeBoard = new { id = board.Id } });
 
-            return Json(new { result = true, freeBoard = new { id = board.Id } });
         }
         catch (Exception ex)
         {

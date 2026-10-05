@@ -49,7 +49,7 @@ public class BoardService(
         await unitOfWork.BeginAsync(IsolationLevel.RepeatableRead, ct);
         try
         {
-            var (items, totalCount) = await boardRepository.QueryPageAsync(query, ct);
+            (var items, int totalCount) = await boardRepository.QueryPageAsync(query, ct);
             await unitOfWork.CommitAsync(ct);
             return (items.Select(BoardMapper.ToResponse), totalCount);
         }
@@ -232,7 +232,9 @@ public class BoardService(
                     // adminClearingSomeoneElsesLock: an admin acting on a post they don't own may only
                     // clear its lock -- title and content are left untouched.
                     board.Unlock(utcNow);
+ #pragma warning disable CA1873
                     logger.LogInformation("Lock on post {BoardId} of {Writer} cleared by admin {Requester}", board.Id, board.Writer, writerNickname);
+ #pragma warning restore CA1873
                     break;
             }
 
@@ -288,7 +290,9 @@ public class BoardService(
 
             await boardRepository.UpdateEntityAsync(board, ct);
             await unitOfWork.CommitAsync(ct);
+ #pragma warning disable CA1873
             logger.LogInformation("Board post {BoardId} of {Writer} deleted by {Requester} (admin: {IsAdmin})", boardId, board.Writer, requesterNickname, isAdmin);
+ #pragma warning restore CA1873
             return ServiceResult.Ok();
         }
         catch (Exception e)
@@ -425,7 +429,9 @@ public class BoardService(
 
             await boardCommentRepository.UpdateEntityAsync(comment, ct);
             await unitOfWork.CommitAsync(ct);
+ #pragma warning disable CA1873
             logger.LogInformation("Comment {CommentId} of {Writer} deleted by {Requester} (admin: {IsAdmin})", commentId, comment.Writer, requesterNickname, isAdmin);
+ #pragma warning restore CA1873
             return ServiceResult.Ok();
         }
         catch (Exception e)
@@ -516,10 +522,8 @@ public class BoardService(
 
         // OpenFileAsync logs its own failure (with the storage path) where it happens.
         Stream? content = await attachmentContent.OpenFileAsync(attachedFile.Path, ct);
-        if (content == null)
-            return (ServiceResult.Failure("Board.AttachedFileUnavailable", ServiceResult.TemporaryErrorKey), null);
+        return content == null ? (ServiceResult.Failure("Board.AttachedFileUnavailable", ServiceResult.TemporaryErrorKey), null) : (ServiceResult.Ok(), new AttachmentDownload(content, $"{attachedFile.Name}{attachedFile.Extension}"));
 
-        return (ServiceResult.Ok(), new AttachmentDownload(content, $"{attachedFile.Name}{attachedFile.Extension}"));
     }
 
     /// <summary>

@@ -808,10 +808,8 @@ public class CalendarService(
 
         // OpenFileAsync logs its own failure (with the storage path) where it happens.
         Stream? content = await attachmentContent.OpenFileAsync(attachedFile.Path, ct);
-        if (content == null)
-            return (ServiceResult.Failure("CalendarEvent.AttachedFileUnavailable", ServiceResult.TemporaryErrorKey), null);
+        return content == null ? (ServiceResult.Failure("CalendarEvent.AttachedFileUnavailable", ServiceResult.TemporaryErrorKey), null) : (ServiceResult.Ok(), new AttachmentDownload(content, $"{attachedFile.Name}{attachedFile.Extension}"));
 
-        return (ServiceResult.Ok(), new AttachmentDownload(content, $"{attachedFile.Name}{attachedFile.Extension}"));
     }
 
     /// <inheritdoc />

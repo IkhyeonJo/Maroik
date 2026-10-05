@@ -133,9 +133,13 @@ public class ProfileService(
                 email, account.HashedPassword, account.SecurityStamp, account.MustChangePassword, account.ResetPasswordToken,
                 account.Locked, account.LoginAttempt, account.Message, account.Updated, ct);
             await unitOfWork.CommitAsync(ct);
+ #pragma warning disable CA1873
             logger.LogInformation("Password changed for {Email}", email);
+ #pragma warning restore CA1873
             if (wasLocked)
+ #pragma warning disable CA1873
                 logger.LogInformation("Lock lifted by a password change for {Email}", email);
+ #pragma warning restore CA1873
             return ServiceResult.Ok();
         }
         catch (Exception e)
@@ -199,6 +203,9 @@ public class ProfileService(
                 case FileUploadResult.Failed:
                     logger.LogError("Avatar upload failed: file storage refused the upload for {Email}", email);
                     return ServiceResult.Failure("Profile.UploadAvatarFailed", ServiceResult.TemporaryErrorKey);
+                case FileUploadResult.Stored:
+                default:
+                    break;
             }
 
             ServiceResult updated = await UpdateAvatarAsync(email, $"/{AvatarStorageDirectory}/{avatarFile}", ct);

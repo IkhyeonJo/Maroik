@@ -155,17 +155,11 @@ public static class NicknamePolicy
             if (rune.IsBmp && _markupAndEscapeCharacters.Contains((char)rune.Value))
                 return true;
 
-            switch (Rune.GetUnicodeCategory(rune))
+            return Rune.GetUnicodeCategory(rune) switch
             {
-                case UnicodeCategory.Control:
-                case UnicodeCategory.Format:
-                case UnicodeCategory.PrivateUse:
-                case UnicodeCategory.OtherNotAssigned:
-                case UnicodeCategory.Surrogate:
-                case UnicodeCategory.LineSeparator:
-                case UnicodeCategory.ParagraphSeparator:
-                    return true;
-            }
+                UnicodeCategory.Control or UnicodeCategory.Format or UnicodeCategory.PrivateUse or UnicodeCategory.OtherNotAssigned or UnicodeCategory.Surrogate or UnicodeCategory.LineSeparator or UnicodeCategory.ParagraphSeparator => true,
+                _ => false
+            };
         }
         return false;
     }
@@ -178,15 +172,17 @@ public static class NicknamePolicy
     private static bool MixesLookalikeScripts(string value)
     {
         bool latin = false, lookalike = false;
-        foreach (char c in value)
+        foreach (char c in value.Where(char.IsLetter))
         {
-            if (!char.IsLetter(c))
-                continue;
-
-            if (c is (>= 'A' and <= 'Z') or (>= 'a' and <= 'z') or (>= 'À' and <= 'ɏ'))
-                latin = true;
-            else if (c is (>= 'Ͱ' and <= 'Ͽ') or (>= 'Ѐ' and <= 'ԯ'))
-                lookalike = true;
+            switch (c)
+            {
+                case (>= 'A' and <= 'Z') or (>= 'a' and <= 'z') or (>= 'À' and <= 'ɏ'):
+                    latin = true;
+                    break;
+                case (>= 'Ͱ' and <= 'Ͽ') or (>= 'Ѐ' and <= 'ԯ'):
+                    lookalike = true;
+                    break;
+            }
 
             if (latin && lookalike)
                 return true;
