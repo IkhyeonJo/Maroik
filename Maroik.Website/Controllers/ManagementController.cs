@@ -978,8 +978,15 @@ public class ManagementController(
             // Write
             case "write":
             {
-                PrivateNoteOutputViewModel privateNoteOutputViewModel = new() { Method = method };
-                bool isAccountSessionExist = ((AccountResponse)ViewBag.LoggedInAccount).Role != Role.Anonymous;
+                AccountResponse loggedInAccount = ViewBag.LoggedInAccount;
+                // The view picks the role's page script (the editor) from LoggedInAccount.
+                PrivateNoteOutputViewModel privateNoteOutputViewModel = new()
+                {
+                    Method = method,
+                    LoggedInAccount = loggedInAccount,
+                    LoggedInAccountTimeZoneIanaId = loggedInAccount.TimeZoneIanaId ?? ""
+                };
+                bool isAccountSessionExist = loggedInAccount.Role != Role.Anonymous;
                 return isAccountSessionExist ? View(privateNoteOutputViewModel) : RedirectToAction("Login", "Account");
             }
             // Detail view
@@ -1100,6 +1107,8 @@ public class ManagementController(
                             BoardAttachedFilePath = attachedFile?.Path ?? "",
                             IsImgTagIncluded = isImgTagIncluded
                         };
+                    privateNoteOutputViewModel.LoggedInAccount = loggedInAccount;
+                    privateNoteOutputViewModel.LoggedInAccountTimeZoneIanaId = loggedInAccount.TimeZoneIanaId ?? "";
 
                     return View(privateNoteOutputViewModel);
                 }

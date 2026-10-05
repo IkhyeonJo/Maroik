@@ -197,9 +197,16 @@ public class ForumController(
             // Write
             case "write":
             {
-                FreeForumOutputViewModel freeForumOutputViewModel = new() { Method = method };
+                AccountResponse loggedInAccount = ViewBag.LoggedInAccount;
+                // The view picks the role's page script (the editor) from LoggedInAccount.
+                FreeForumOutputViewModel freeForumOutputViewModel = new()
+                {
+                    Method = method,
+                    LoggedInAccount = loggedInAccount,
+                    LoggedInAccountTimeZoneIanaId = loggedInAccount.TimeZoneIanaId ?? ""
+                };
 
-                bool isAccountSessionExist = ((AccountResponse)ViewBag.LoggedInAccount).Role != Role.Anonymous;
+                bool isAccountSessionExist = loggedInAccount.Role != Role.Anonymous;
                 return isAccountSessionExist ? View(freeForumOutputViewModel) : RedirectToAction("Login", "Account");
             }
             // Detail view
@@ -314,6 +321,8 @@ public class ForumController(
                         BoardAttachedFilePath = boardAttachedFile?.Path ?? "",
                         IsImgTagIncluded = isImgTagIncluded
                     };
+                    freeForumOutputViewModel.LoggedInAccount = loggedInAccount;
+                    freeForumOutputViewModel.LoggedInAccountTimeZoneIanaId = loggedInAccount.TimeZoneIanaId ?? "";
 
                     return View(freeForumOutputViewModel);
                 }
