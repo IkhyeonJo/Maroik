@@ -155,11 +155,10 @@ public static class NicknamePolicy
             if (rune.IsBmp && _markupAndEscapeCharacters.Contains((char)rune.Value))
                 return true;
 
-            return Rune.GetUnicodeCategory(rune) switch
-            {
-                UnicodeCategory.Control or UnicodeCategory.Format or UnicodeCategory.PrivateUse or UnicodeCategory.OtherNotAssigned or UnicodeCategory.Surrogate or UnicodeCategory.LineSeparator or UnicodeCategory.ParagraphSeparator => true,
-                _ => false
-            };
+            if (Rune.GetUnicodeCategory(rune) is UnicodeCategory.Control or UnicodeCategory.Format
+                or UnicodeCategory.PrivateUse or UnicodeCategory.OtherNotAssigned or UnicodeCategory.Surrogate
+                or UnicodeCategory.LineSeparator or UnicodeCategory.ParagraphSeparator)
+                return true;
         }
         return false;
     }
