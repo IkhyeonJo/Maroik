@@ -21,32 +21,33 @@ public partial class SubCategory
     /// <summary>
     /// Name
     /// </summary>
-    public string? Name { get; set; }
+    public string Name { get; set; } = null!;
 
     /// <summary>
     /// DisplayName
     /// </summary>
-    public string? DisplayName { get; set; }
+    public string DisplayName { get; set; } = null!;
 
     /// <summary>
     /// IconPath
     /// </summary>
-    public string? IconPath { get; set; }
+    public string IconPath { get; set; } = null!;
 
     /// <summary>
     /// Action
     /// </summary>
-    public string? Action { get; set; }
+    public string Action { get; set; } = null!;
 
     /// <summary>
     /// Role
     /// </summary>
-    public string? Role { get; set; }
+    public string Role { get; set; } = null!;
 
     /// <summary>
     /// Order
     /// </summary>
     public long Order { get; set; }
 
-    public virtual Category? Category { get; set; }
+    /// <summary>The category this item belongs to.</summary>
+    public virtual Category Category { get; set; } = null!;
 }

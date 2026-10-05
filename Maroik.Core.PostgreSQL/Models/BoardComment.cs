@@ -26,17 +26,17 @@ public partial class BoardComment
     /// <summary>
     /// AvatarImagePath
     /// </summary>
-    public string? AvatarImagePath { get; set; }
+    public string AvatarImagePath { get; set; } = null!;
 
     /// <summary>
     /// Writer
     /// </summary>
-    public string? Writer { get; set; }
+    public string Writer { get; set; } = null!;
 
     /// <summary>
     /// Content
     /// </summary>
-    public string? Content { get; set; }
+    public string Content { get; set; } = null!;
 
     /// <summary>
     /// Created
@@ -48,5 +48,9 @@ public partial class BoardComment
     /// </summary>
     public bool Deleted { get; set; }
 
-    public virtual Board? Board { get; set; }
+    /// <summary>The post this comment belongs to.</summary>
+    public virtual Board Board { get; set; } = null!;
+
+    /// <summary>The account that wrote this comment (Writer → Account.Nickname).</summary>
+    public virtual Account WriterNavigation { get; set; } = null!;
 }

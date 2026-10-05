@@ -18,29 +18,47 @@ Domain registration: AWS Route 53
 ### 1. Personal Finance Management
 - Expense tracking and categorization
 - Income recording
+- Fixed (recurring) income and expenditure with deposit-day reminders — the next deposit is found across the year end (e.g. 28 Dec → 2 Jan), and a 29 February schedule is skipped in common years
+- Amounts are kept exactly to four decimal places (`numeric(20,4)`); a fifth decimal is rejected instead of silently rounded, so an asset's balance always equals the sum of what was recorded against it
 - Financial reports and analytics
-- Export to Excel
+- Export to Excel — amounts as numeric cells (they sum and sort in Excel), timestamps as `yyyy-MM-dd HH:mm:ss` in the viewer's time zone
 
 ### 2. Calendar and Schedule Management
 - Monthly calendar view
-- Event creation and management
+- Event creation and management, with a file attachment and inline images per event
+- Calendars shared with other users or the public
 
 ### 3. Bulletin Board System
 - Post creation, editing, and deletion
 - Comment system
-- File attachments
+- File attachments, downloaded through a separate access-checked POST action and streamed — the post page itself carries only the file's name and size
+- Rich-text editor images, embedded in the post when it is viewed
 - Search functionality
 
 ### 4. User Management
 - Role-based access control (Admin/User)
-- User profile management
+- User profile management, including an avatar
 - Session-based authentication
-- Password management
+- Password management (registration confirmation, password reset, forced password change)
+- E-mail addresses are matched trimmed and case-insensitively at login, password reset and confirmation resend
+- Privacy: uploaded avatars and editor images are re-encoded without their metadata (EXIF GPS position, camera model, capture time), after first being turned upright by their EXIF orientation
 
 ### 5. Admin Dashboard
-- User management
-- System settings
+- User management — role change, lock/unlock, e-mail confirmation, terms agreement, soft delete/restore, password reset with a forced change at next login; role, lock and delete changes are audit-logged with the acting admin
+- Navigation menu management (the menu doubles as the access-control list)
+- Account export to Excel without password hashes or registration/reset tokens
 - Analytics dashboard
+
+### Error messages
+- A refused write shows its actual reason, localized in English and Korean (e.g. "Only zip extension allowed.", "Cannot add a comment to a locked post.", "Role must be Admin, User or Anonymous.").
+- A server-side fault (database, file storage) shows "A temporary error occurred. Please try again later." instead of blaming the user's input; the exception is logged once, where it is handled.
+
+## Engineering Highlights
+- **DDD + Clean Architecture, enforced by tests.** Dependencies point Website → Service → Domain; NetArchTest rules fail the build when a layer reaches the wrong way, when the domain logs, reads the clock, or builds an error outside `LocalizableError`, and when a project is missing from the solution.
+- **Deterministic time.** Domain methods take the current time as a `DateTime utcNow` argument; each use case reads `TimeProvider` once and passes the same instant everywhere, so `Created == Updated` on creation and token expiry is tested at its exact boundaries with `FakeTimeProvider`.
+- **Rich domain model.** Value objects (`Email`, `Money`, `CurrencyCode`, `AccountRole`, …) replace primitive strings; admin actions are intent-revealing aggregate operations (`ChangeRole`, `Lock`/`Unlock`, `ForceConfirmEmail`/`RevokeEmailConfirmation`, `AcceptServiceTerms`/`RevokeServiceTerms`, `SoftDelete`/`Restore`, `AdminResetPassword`) instead of a field-overwriting update.
+- **Use-case DTOs.** Self-registration, admin account creation and admin account update each have their own request type, so a registration form can never carry a role, lock or confirmation flag.
+- **Test-first development.** Every change starts with a failing test, including the log entries it must write; real PostgreSQL and RabbitMQ run in Testcontainers instead of mocks wherever the behaviour depends on them.
 
 ## Technologies Used
 
@@ -63,18 +81,32 @@ Domain registration: AWS Route 53
   - Session Authentication
   - Role-based access control
 - Cross-Origin Resource Sharing (CORS)
+- Magick.NET — image validation and metadata stripping
+- DocumentFormat.OpenXml — Excel export
 
 ### Frontend
-- AdminLTE 3
-- Bootstrap 5.3
-- jQuery 3.7
+- AdminLTE 3.1.0
+- Bootstrap 4.6.0
+- jQuery 3.6.0
 - HTML5/CSS3
 - JavaScript ES2024
+- TypeScript 7.0
+  - The custom client scripts are authored in TypeScript at `Maroik.Website/TypeScripts/{admin,anonymous,user}/custom/**/site.ts` and compiled 1:1 by `tsc` to `Maroik.Website/wwwroot/**/custom/**/site.js` (no bundler, no Babel — the emitted `.js` is byte-faithful to the original, minus comments and an IIFE wrapper).
+  - Compiled under `--strict`; each file is an IIFE-wrapped global script (no `import`/`export`).
+  - Scripts keep only DOM wiring, widget init, AJAX transport, and notifications — business logic lives in `Maroik.Core.*` (DDD + Clean Architecture). Client-side rule checks are UX mirrors; the server always re-validates.
+  - `wwwroot/**/site.js` is build output and git-ignored. Docker Compose builds generate it in the Dockerfile's Node stage; running the site on the host, or running the client-script tests, needs Node 22 + `npm ci` in `Maroik.Website/`.
+  - MSBuild runs `tsc` on `dotnet build` when `node_modules/` is present; Docker builds run it in a dedicated `node:22-alpine` stage.
+  - Unit-tested with Vitest + jsdom in `Maroik.Website/TypeScripts.Tests/` (one `*.test.ts` per script, exercising the compiled `site.js`).
+  - Details: `Maroik.Website/TypeScripts/README.md`.
 - NonfactorGrid
-- Chart.js 4.4
-- Font Awesome 6
-- DataTables
-- SweetAlert2
+- Chart.js 2.9.4
+- Font Awesome 5.15.3
+- Summernote 0.8.18
+- FullCalendar 5.5.1
+- jQuery UI 1.12.1
+- jquery-confirm 3.3.4
+- toastr 2.1.4
+- Moment.js 2.30.1
 
 ### Development Tools
 - Visual Studio
@@ -82,6 +114,32 @@ Domain registration: AWS Route 53
 - Git
 - Docker Compose
 - Postman
+
+## Naming Conventions
+- Code projects (assemblies, namespaces, types) follow the .NET Framework Design Guidelines for acronym casing: acronyms of three or more letters use PascalCase (e.g. `Ssl`, `Http`), while two-letter acronyms stay uppercase (e.g. `DB`, `IO`).
+- Operational folders that are not code projects — `Maroik.SSL`, `Maroik.DB`, `Maroik.Log`, `Maroik.Crontab`, `Maroik.DeployOps` — intentionally keep their existing casing. These names are referenced by docker-compose volume mounts, deployment scripts, and live directories on the production server, so they are kept stable by design rather than renamed for stylistic consistency.
+
+## Testing
+Every source project has a matching `*.Tests` project (xUnit v3 on Microsoft.Testing.Platform), plus the client-script suite and an end-to-end suite. `Maroik.sln` builds them all; CI runs each with coverage (`.github/workflows/build-and-test.yml`, gate: line >= 80 %, branch >= 65 %).
+
+| Tests | What they cover | Needs Docker |
+|---|---|---|
+| `Maroik.Core.Domain.Tests`, `Maroik.Core.Contract.Tests` | entities, policies, value objects, DTOs, the layering / package-reference architecture rules | no |
+| `Maroik.Core.Service.Tests` | use-case orchestration (mocked repositories) | no |
+| `Maroik.Core.Repository.Tests` | EF Core repositories against a real PostgreSQL 17 loaded from `Maroik.DB/.../Debugging/Init.sql` | yes |
+| `Maroik.Core.PostgreSQL.Tests` | the EF model against the real schema of both init scripts (tables, columns, keys, foreign keys, indexes) | yes |
+| `Maroik.Core.Client.Tests` | mail (in-process SMTP server), file storage, ClamAV, RabbitMQ publisher and health check (real RabbitMQ) | yes |
+| `Maroik.Worker.Tests` | the e-mail consumer and the worker host, against a real RabbitMQ and an SMTP relay | yes |
+| `Maroik.FileStorage.Tests` | the file-storage service | no |
+| `Maroik.Website.Tests` | controllers, filters, views and start-up through `WebApplicationFactory` against a real PostgreSQL | yes |
+| `Maroik.Website/TypeScripts.Tests` | every client script (Vitest + jsdom), run with `npm test` in `Maroik.Website/` | no |
+| `Maroik.E2E.Tests` | the running site in a real browser (Playwright) | yes |
+
+```bash
+dotnet build Maroik.sln -p:RunClientScriptTests=false
+dotnet test --project Maroik.Core.Service.Tests            # any single project
+(cd Maroik.Website && npm ci && npm test)                  # client scripts
+```
 
 ## Getting Started
 
@@ -125,16 +183,24 @@ Domain registration: AWS Route 53
 ## Screenshots
 
 ### Login
-![Login](https://user-images.githubusercontent.com/20404991/132020270-488a1ab7-448c-44d9-938a-40ce32d6d364.jpg)
+<img width="551" height="574" alt="0" src="https://github.com/user-attachments/assets/748bba8d-09d0-4dff-9d40-b85df3aa7764" />
 
 ### User Dashboard
-![User-DashBoard](https://user-images.githubusercontent.com/20404991/132020299-e5adb366-9041-44f9-ad56-f2bb606028d5.jpg)
+<img width="1893" height="934" alt="1" src="https://github.com/user-attachments/assets/663dd6a7-9325-4f02-9ae5-057fe3cc5034" />
+
+### Calendar
+<img width="1894" height="932" alt="2" src="https://github.com/user-attachments/assets/8cf018c1-0edb-4963-869e-aa9a16da3f75" />
+
+### Forum
+<img width="1911" height="935" alt="3" src="https://github.com/user-attachments/assets/222a259e-0be9-44f2-896a-62834060d87c" />
 
 ### NonfactorGrid
-![NonfactorGrid](https://user-images.githubusercontent.com/20404991/132020455-e66897ef-ece8-4e71-b323-6ebb72f6b110.jpg)
+<img width="1914" height="935" alt="4" src="https://github.com/user-attachments/assets/278f170f-f2ee-4c02-9a3a-1ef6bb6f1c3c" />
+<img width="1916" height="930" alt="5" src="https://github.com/user-attachments/assets/74695073-ba46-4ffe-a9ca-e8fe7a995cb4" />
 
 ### User Profile
-![UserProfile](https://user-images.githubusercontent.com/20404991/132020484-4b633287-a1b1-48b0-8340-ae3ead83235a.jpg)
+<img width="1885" height="932" alt="6" src="https://github.com/user-attachments/assets/bb54de54-3032-4d09-8e94-ded722824c51" />
+
 
 ## Contributing
 1. Fork the repository

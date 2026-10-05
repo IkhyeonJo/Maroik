@@ -26,7 +26,7 @@ public partial class CalendarEventAttachedFile
     /// <summary>
     /// Name
     /// </summary>
-    public string? Name { get; set; }
+    public string Name { get; set; } = null!;
 
     /// <summary>
     /// Extension
@@ -36,7 +36,8 @@ public partial class CalendarEventAttachedFile
     /// <summary>
     /// Path
     /// </summary>
-    public string? Path { get; set; }
+    public string Path { get; set; } = null!;
 
-    public virtual CalendarEvent? CalendarEvent { get; set; }
+    /// <summary>The event this file is attached to.</summary>
+    public virtual CalendarEvent CalendarEvent { get; set; } = null!;
 }

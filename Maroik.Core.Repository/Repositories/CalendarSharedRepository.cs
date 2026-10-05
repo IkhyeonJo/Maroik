@@ -1,50 +1,60 @@
-using Maroik.Core.Repository.Contracts;
+using Maroik.Core.Contract.Interfaces;
+using Maroik.Core.Domain.Calendar;
 using Maroik.Core.PostgreSQL.Data;
-using Maroik.Core.PostgreSQL.Models;
 using Microsoft.EntityFrameworkCore;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
+using OrmCalendarShared = Maroik.Core.PostgreSQL.Models.CalendarShared;
 
 namespace Maroik.Core.Repository.Repositories;
 
-public class CalendarSharedRepository : ICalendarSharedRepository
+/// <summary>
+/// EF Core repository for <see cref="CalendarShared"/> domain objects,
+/// which control whether a calendar is visible to authenticated users or anonymous visitors.
+/// </summary>
+public class CalendarSharedRepository(ApplicationDbContext context)
+    : GenericRepository<CalendarShared, OrmCalendarShared>(context), ICalendarSharedRepository
 {
-    private readonly ApplicationDbContext _context;
+    /// <summary>The underlying <see cref="DbSet{TEntity}"/> for <see cref="OrmCalendarShared"/> rows.</summary>
+    protected override DbSet<OrmCalendarShared> Set => Context.CalendarShareds;
 
-    public CalendarSharedRepository(ApplicationDbContext context)
-    {
-        _context = context;
-    }
+    /// <summary>Maps a persisted <see cref="OrmCalendarShared"/> row to the <see cref="CalendarShared"/> domain object.</summary>
+    protected override CalendarShared ToDomain(OrmCalendarShared e)
+        => CalendarShared.Reconstitute(e.CalendarId, e.User, e.Anonymous);
 
-    /// <summary>
-    /// Gets all shared calendars.
-    /// </summary>
-    /// <returns></returns>
-    public async Task<List<CalendarShared>> GetCalendarSharedAsync()
+    /// <summary>Maps a <see cref="CalendarShared"/> domain object to its <see cref="OrmCalendarShared"/> persistence representation.</summary>
+    protected override OrmCalendarShared ToEntity(CalendarShared s) => new()
     {
-        return await _context.CalendarShareds.OrderBy(x => x.CalendarId).ToListAsync();
-    }
+        CalendarId = s.Id,
+        User = s.User,
+        Anonymous = s.Anonymous
+    };
 
-    /// <summary>
-    /// Creates a shared calendar.
-    /// </summary>
-    /// <param name="calendarShared"></param>
-    /// <returns></returns>
-    public async Task CreateCalendarSharedAsync(CalendarShared calendarShared)
-    {
-        _ = await _context.CalendarShareds.AddAsync(calendarShared);
-        _ = await _context.SaveChangesAsync();
-    }
+    /// <inheritdoc />
+    public Task<List<CalendarShared>> GetAllAsync(CancellationToken ct = default)
+        => QueryAllAsync(ct: ct);
 
-    /// <summary>
-    /// Updates a shared calendar.
-    /// </summary>
-    /// <param name="calendarShared"></param>
-    /// <returns></returns>
-    public async Task UpdateCalendarSharedAsync(CalendarShared calendarShared)
+    /// <inheritdoc />
+    public async Task<List<CalendarShared>> GetByIdsForUpdateAsync(IEnumerable<long> calendarIds, CancellationToken ct = default)
     {
-        _ = _context.CalendarShareds.Update(calendarShared);
-        _ = await _context.SaveChangesAsync();
+        long[] ids = [.. calendarIds];
+        if (ids.Length == 0) return [];
+
+        // Raw SQL is required because EF Core LINQ cannot emit FOR UPDATE. AsNoTracking so a
+        // pre-lock instance already tracked in this context can't snap back and defeat the lock
+        // (see BoardRepository.FindActiveByIdForUpdateAsync for the same rationale).
+        // ORDER BY "CalendarId" locks every matched row in a fixed, deterministic order regardless
+        // of the order ids were passed in — the same ORDER BY + FOR UPDATE technique
+        // AssetRepository.FindByEmailAndProductNamesForUpdateAsync uses to guarantee two concurrent
+        // batched-lock callers with overlapping id sets can never acquire their locks in different
+        // orders and deadlock.
+        var entities = await Set.FromSqlInterpolated(
+            $"""
+             SELECT *
+             FROM "CalendarShared"
+             WHERE "CalendarId" = ANY({ids})
+             ORDER BY "CalendarId"
+             FOR UPDATE
+             """).AsNoTracking().ToListAsync(ct);
+
+        return [.. entities.Select(ToDomain)];
     }
 }

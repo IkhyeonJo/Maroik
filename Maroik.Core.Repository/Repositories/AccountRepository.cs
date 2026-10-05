@@ -1,73 +1,279 @@
-using Maroik.Core.Repository.Contracts;
+using Maroik.Core.Contract.Interfaces;
+using Maroik.Core.Domain.Account;
 using Maroik.Core.PostgreSQL.Data;
-using Maroik.Core.PostgreSQL.Models;
 using Microsoft.EntityFrameworkCore;
-using System.Collections.Generic;
-using System.Threading.Tasks;
+using OrmAccount = Maroik.Core.PostgreSQL.Models.Account;
 
 namespace Maroik.Core.Repository.Repositories;
 
-public class AccountRepository : IAccountRepository
+/// <summary>
+/// EF Core repository for <see cref="Account"/> domain objects.
+/// Maps between the <see cref="Account"/> domain aggregate and the <see cref="OrmAccount"/> PostgreSQL entity.
+/// </summary>
+public class AccountRepository(ApplicationDbContext context)
+    : GenericRepository<Account, OrmAccount>(context), IAccountRepository
 {
-    private readonly ApplicationDbContext _context;
+    /// <summary>The underlying <see cref="DbSet{TEntity}"/> for <see cref="OrmAccount"/> rows.</summary>
+    protected override DbSet<OrmAccount> Set => Context.Accounts;
 
-    public AccountRepository(ApplicationDbContext context)
+    /// <summary>Maps a persisted <see cref="OrmAccount"/> row to the <see cref="Account"/> domain aggregate.</summary>
+    protected override Account ToDomain(OrmAccount e) => Account.Reconstitute(
+        e.Email, e.HashedPassword, e.Nickname,
+        e.AvatarImagePath, e.Role, e.TimeZoneIanaId,
+        e.DefaultMonetaryUnit, e.Locked, e.LoginAttempt, e.EmailConfirmed,
+        e.AgreedServiceTerms, e.RegistrationToken, e.ResetPasswordToken,
+        e.Created, e.Updated, e.Message, e.Deleted,
+        e.SecurityStamp, e.MustChangePassword);
+
+    /// <summary>Maps an <see cref="Account"/> domain aggregate to its <see cref="OrmAccount"/> persistence representation.</summary>
+    protected override OrmAccount ToEntity(Account a) => new()
     {
-        _context = context;
-    }
+        Email = a.Email.Value,
+        HashedPassword = a.HashedPassword,
+        Nickname = a.Nickname,
+        AvatarImagePath = a.AvatarImagePath ?? Account.DefaultAvatarImagePath,
+        Role = a.Role.Value,
+        TimeZoneIanaId = a.TimeZone.Value,
+        DefaultMonetaryUnit = a.DefaultMonetaryUnit?.Value,
+        Locked = a.Locked,
+        LoginAttempt = a.LoginAttempt,
+        EmailConfirmed = a.EmailConfirmed,
+        AgreedServiceTerms = a.AgreedServiceTerms,
+        RegistrationToken = a.RegistrationToken,
+        ResetPasswordToken = a.ResetPasswordToken,
+        Created = a.Created,
+        Updated = a.Updated,
+        Message = a.Message,
+        Deleted = a.Deleted,
+        SecurityStamp = a.SecurityStamp,
+        MustChangePassword = a.MustChangePassword
+    };
+
     /// <summary>
-    /// Gets all registered accounts.
+    /// Writes every column of <paramref name="domain"/>. <c>Nickname</c> is the principal key of <c>Board_fk_0</c> /
+    /// <c>BoardComment_fk_1</c>, which EF Core refuses to change on a tracked row, so a changed nickname (the replaced
+    /// unconfirmed registration) is written first by its own UPDATE — the database cascades it to the posts' and comments'
+    /// <c>Writer</c> — and the rest of the row then goes through the generic full-row update. A write that keeps the
+    /// nickname (every other account write) sends only the generic update.
     /// </summary>
-    /// <returns></returns>
-    public async Task<List<Account>> GetAllAsync()
+    public override async Task UpdateEntityAsync(Account domain, CancellationToken ct = default)
     {
-        return await _context.Accounts.ToListAsync();
+        string email = domain.Email.Value;
+        string nickname = domain.Nickname;
+
+        // The same lookup the generic update starts with (served from the tracker when the row is already loaded).
+        OrmAccount? current = await Set.FindAsync([email], ct);
+        if (current != null && current.Nickname != nickname)
+        {
+            await Set
+                .Where(e => e.Email == email)
+                .ExecuteUpdateAsync(s => s.SetProperty(e => e.Nickname, nickname), ct);
+
+            // The tracked row still holds the old nickname; drop it so the generic update reloads the row
+            // (it overwrites every column of the reloaded row anyway).
+            Context.Entry(current).State = EntityState.Detached;
+        }
+
+        await base.UpdateEntityAsync(domain, ct);
     }
-    /// <summary>
-    /// Gets an account by email.
-    /// </summary>
-    /// <param name="email"></param>
-    /// <returns></returns>
-    public async Task<Account> GetAccountByEmailAsync(string email)
+
+    /// <inheritdoc />
+    public Task<List<Account>> GetAllAsync(CancellationToken ct = default)
+        => QueryAllAsync(ct: ct);
+
+    /// <inheritdoc />
+    // See ExpenditureRepository.SearchByAccountEmailAsync for why this is raw SQL rather than LINQ
+    // (ILIKE is case-insensitive natively, so it also covers the Locked/EmailConfirmed/
+    // AgreedServiceTerms/Deleted bool matching). Every column the admin account grid renders is
+    // searchable, HashedPassword / RegistrationToken / ResetPasswordToken included: they are shown
+    // in that grid (and exported), so the whole-row search box must match what the admin sees.
+    public async Task<List<Account>> SearchAsync(string search, CancellationToken ct = default)
     {
-        return await _context.Accounts.FirstOrDefaultAsync(x => x.Email == email);
+        string pattern = ToLikePattern(search);
+        List<string> matchingEmails = await Context.Database.SqlQuery<string>($"""
+            SELECT "Email" AS "Value" FROM "Account"
+            WHERE
+                  "Email" ILIKE {pattern} OR
+                  "HashedPassword" ILIKE {pattern} OR
+                  "Nickname" ILIKE {pattern} OR
+                  "AvatarImagePath" ILIKE {pattern} OR
+                  "Role" ILIKE {pattern} OR
+                  "TimeZoneIanaId" ILIKE {pattern} OR
+                  CAST("Locked" AS TEXT) ILIKE {pattern} OR
+                  CAST("LoginAttempt" AS TEXT) ILIKE {pattern} OR
+                  CAST("EmailConfirmed" AS TEXT) ILIKE {pattern} OR
+                  CAST("AgreedServiceTerms" AS TEXT) ILIKE {pattern} OR
+                  "RegistrationToken" ILIKE {pattern} OR
+                  "ResetPasswordToken" ILIKE {pattern} OR
+                  CAST("Created" AS TEXT) ILIKE {pattern} OR
+                  CAST("Updated" AS TEXT) ILIKE {pattern} OR
+                  "Message" ILIKE {pattern} OR
+                  CAST("Deleted" AS TEXT) ILIKE {pattern}
+            """).ToListAsync(ct);
+
+        if (matchingEmails.Count == 0) return [];
+        return await QueryAsync(e => matchingEmails.Contains(e.Email), ct: ct);
     }
-    /// <summary>
-    /// Creates an account.
-    /// </summary>
-    /// <param name="account"></param>
-    /// <returns></returns>
-    public async Task CreateAccountAsync(Account account)
+
+    /// <inheritdoc />
+    public Task<Account?> FindByEmailAsync(string email, CancellationToken ct = default)
     {
-        _ = await _context.Accounts.AddAsync(account);
-        _ = await _context.SaveChangesAsync();
+        // Email is always persisted lower-cased (see Email.Create), but callers here pass raw,
+        // un-normalized user input (login form, forgot-password form, etc.) — normalize the
+        // lookup key too, or a differently-cased-but-identical email never matches.
+        string normalizedEmail = email.ToLowerInvariant();
+        return QueryFirstAsync(e => e.Email == normalizedEmail, ct: ct);
     }
-    /// <summary>
-    /// Updates an account.
-    /// </summary>
-    /// <param name="account"></param>
-    /// <returns></returns>
-    public async Task UpdateAccountAsync(Account account)
+
+    /// <inheritdoc />
+    public Task<Account?> FindByRegistrationTokenAsync(string token, CancellationToken ct = default)
+        => QueryFirstAsync(e => e.RegistrationToken == token, ct: ct);
+
+    /// <inheritdoc />
+    public Task<Account?> FindByResetPasswordTokenAsync(string token, CancellationToken ct = default)
+        => QueryFirstAsync(e => e.ResetPasswordToken == token, ct: ct);
+
+    /// <inheritdoc />
+    public Task<bool> NicknameExistsIgnoreCaseAsync(string nickname, CancellationToken ct = default)
     {
-        _ = _context.Accounts.Update(account);
-        _ = await _context.SaveChangesAsync();
+        string lowered = nickname.ToLowerInvariant();
+        return Set.AnyAsync(e => e.Nickname.ToLower() == lowered, ct);
     }
-    /// <summary>
-    /// Gets an account by email with a database row lock (SELECT ... FOR UPDATE).
-    /// Must be called inside an active transaction; the lock is held until commit/rollback,
-    /// so concurrent requests against the same account (e.g. parallel login attempts) queue
-    /// up and each sees the latest committed state instead of racing on a stale read.
-    /// </summary>
-    /// <param name="email"></param>
-    /// <returns></returns>
-    public async Task<Account> GetAccountForUpdateAsync(string email)
+
+    /// <inheritdoc />
+    public Task<List<Account>> FindByNicknamesAsync(IEnumerable<string> nicknames, CancellationToken ct = default)
     {
-        return await _context.Accounts.FromSqlInterpolated(
+        var list = nicknames.ToList();
+        return QueryAsync(e => list.Contains(e.Nickname), ct: ct);
+    }
+
+    /// <inheritdoc />
+    public async Task<Account?> FindByEmailForUpdateAsync(string email, CancellationToken ct = default)
+    {
+        // Normalize for the same reason as FindByEmailAsync above (this is the login lookup path).
+        string normalizedEmail = email.ToLowerInvariant();
+
+        // Raw SQL is required because EF Core LINQ cannot emit FOR UPDATE.
+        // ToListAsync on the raw root executes the SQL verbatim (no composition),
+        // keeping FOR UPDATE at the top level of the statement.
+        // AsNoTracking is required too: if this Account's row was already tracked earlier in the
+        // same DbContext scope, a tracking query performs identity resolution and hands back that
+        // already-tracked (pre-lock) instance instead of the row this FOR UPDATE just (re-)read —
+        // silently defeating the lock's whole purpose. AsNoTracking always materializes a fresh
+        // instance from what was actually just selected, bypassing that snap-back.
+        var entities = await Set.FromSqlInterpolated(
             $"""
              SELECT *
              FROM "Account"
-             WHERE "Email" = {email}
+             WHERE "Email" = {normalizedEmail}
+             LIMIT 1
              FOR UPDATE
-             """).FirstOrDefaultAsync();
+             """).AsNoTracking().ToListAsync(ct);
+
+        var entity = entities.FirstOrDefault();
+        return entity == null ? null : ToDomain(entity);
+    }
+
+    // -- Column-scoped updates (see IAccountRepository for the rationale) ---------------------------
+    // ExecuteUpdateAsync emits one UPDATE that sets only the listed columns and runs immediately
+    // (inside the ambient transaction if one is open), so it never overwrites a column a concurrent
+    // writer just changed.
+
+    /// <inheritdoc />
+    public Task<int> UpdateAvatarPathAsync(string email, string? avatarImagePath, DateTime updated, CancellationToken ct = default)
+    {
+        string normalizedEmail = email.ToLowerInvariant();
+        // Keep parity with ToEntity: a null avatar persists as the shared default-avatar path.
+        string stored = avatarImagePath ?? Account.DefaultAvatarImagePath;
+        return Set.Where(e => e.Email == normalizedEmail)
+            .ExecuteUpdateAsync(s => s
+                .SetProperty(e => e.AvatarImagePath, stored)
+                .SetProperty(e => e.Updated, updated), ct);
+    }
+
+    /// <inheritdoc />
+    public Task<int> UpdateTimeZoneAsync(string email, string timeZoneIanaId, DateTime updated, CancellationToken ct = default)
+    {
+        string normalizedEmail = email.ToLowerInvariant();
+        return Set.Where(e => e.Email == normalizedEmail)
+            .ExecuteUpdateAsync(s => s
+                .SetProperty(e => e.TimeZoneIanaId, timeZoneIanaId)
+                .SetProperty(e => e.Updated, updated), ct);
+    }
+
+    /// <inheritdoc />
+    public Task<int> UpdatePasswordAsync(string email, string hashedPassword, string securityStamp, bool mustChangePassword, string? resetPasswordToken, bool locked, long loginAttempt, string? message, DateTime updated, CancellationToken ct = default)
+    {
+        string normalizedEmail = email.ToLowerInvariant();
+        return Set.Where(e => e.Email == normalizedEmail)
+            .ExecuteUpdateAsync(s => s
+                .SetProperty(e => e.HashedPassword, hashedPassword)
+                .SetProperty(e => e.SecurityStamp, securityStamp)
+                .SetProperty(e => e.MustChangePassword, mustChangePassword)
+                .SetProperty(e => e.ResetPasswordToken, resetPasswordToken)
+                .SetProperty(e => e.Locked, locked)
+                .SetProperty(e => e.LoginAttempt, loginAttempt)
+                .SetProperty(e => e.Message, message)
+                .SetProperty(e => e.Updated, updated), ct);
+    }
+
+    /// <inheritdoc />
+    public Task<int> UpdateDefaultMonetaryUnitAsync(string email, string? defaultMonetaryUnit, CancellationToken ct = default)
+    {
+        string normalizedEmail = email.ToLowerInvariant();
+        return Set.Where(e => e.Email == normalizedEmail)
+            .ExecuteUpdateAsync(s => s.SetProperty(e => e.DefaultMonetaryUnit, defaultMonetaryUnit), ct);
+    }
+
+    /// <inheritdoc />
+    public Task<int> UpdateResetPasswordTokenAsync(string email, string? resetPasswordToken, DateTime updated, CancellationToken ct = default)
+    {
+        string normalizedEmail = email.ToLowerInvariant();
+        return Set.Where(e => e.Email == normalizedEmail)
+            .ExecuteUpdateAsync(s => s
+                .SetProperty(e => e.ResetPasswordToken, resetPasswordToken)
+                .SetProperty(e => e.Updated, updated), ct);
+    }
+
+    /// <inheritdoc />
+    public Task<int> UpdateRegistrationTokenAsync(string email, string? registrationToken, DateTime updated, CancellationToken ct = default)
+    {
+        string normalizedEmail = email.ToLowerInvariant();
+        return Set.Where(e => e.Email == normalizedEmail)
+            .ExecuteUpdateAsync(s => s
+                .SetProperty(e => e.RegistrationToken, registrationToken)
+                .SetProperty(e => e.Updated, updated), ct);
+    }
+
+    /// <inheritdoc />
+    public Task<int> UpdateAgreedServiceTermsAsync(string email, bool agreedServiceTerms, DateTime updated, CancellationToken ct = default)
+    {
+        string normalizedEmail = email.ToLowerInvariant();
+        return Set.Where(e => e.Email == normalizedEmail)
+            .ExecuteUpdateAsync(s => s
+                .SetProperty(e => e.AgreedServiceTerms, agreedServiceTerms)
+                .SetProperty(e => e.Updated, updated), ct);
+    }
+
+    /// <inheritdoc />
+    public Task<int> UpdateMessageAsync(string email, string? message, DateTime updated, CancellationToken ct = default)
+    {
+        string normalizedEmail = email.ToLowerInvariant();
+        return Set.Where(e => e.Email == normalizedEmail)
+            .ExecuteUpdateAsync(s => s
+                .SetProperty(e => e.Message, message)
+                .SetProperty(e => e.Updated, updated), ct);
+    }
+
+    /// <inheritdoc />
+    public Task<int> UpdateEmailConfirmationAsync(string email, string? registrationToken, string? message, DateTime updated, CancellationToken ct = default)
+    {
+        string normalizedEmail = email.ToLowerInvariant();
+        return Set.Where(e => e.Email == normalizedEmail)
+            .ExecuteUpdateAsync(s => s
+                .SetProperty(e => e.EmailConfirmed, true)
+                .SetProperty(e => e.RegistrationToken, registrationToken)
+                .SetProperty(e => e.Message, message)
+                .SetProperty(e => e.Updated, updated), ct);
     }
 }

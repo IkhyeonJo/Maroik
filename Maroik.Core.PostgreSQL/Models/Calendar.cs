@@ -16,12 +16,12 @@ public partial class Calendar
     /// <summary>
     /// AccountEmail (ID)
     /// </summary>
-    public string? AccountEmail { get; set; }
+    public string AccountEmail { get; set; } = null!;
 
     /// <summary>
     /// Name
     /// </summary>
-    public string? Name { get; set; }
+    public string Name { get; set; } = null!;
 
     /// <summary>
     /// Description
@@ -31,12 +31,12 @@ public partial class Calendar
     /// <summary>
     /// IANA TimeZone ID
     /// </summary>
-    public string? TimeZoneIanaId { get; set; }
+    public string TimeZoneIanaId { get; set; } = null!;
 
     /// <summary>
     /// HtmlColorCode
     /// </summary>
-    public string? HtmlColorCode { get; set; }
+    public string HtmlColorCode { get; set; } = null!;
 
     /// <summary>
     /// Created
@@ -48,12 +48,15 @@ public partial class Calendar
     /// </summary>
     public DateTime Updated { get; set; }
 
-    public virtual Account? AccountEmailNavigation { get; set; }
+    /// <summary>The account that owns this calendar.</summary>
+    public virtual Account AccountEmailNavigation { get; set; } = null!;
 
+    /// <summary>Events in this calendar.</summary>
     public virtual ICollection<CalendarEvent> CalendarEvents { get; set; } = new List<CalendarEvent>();
 
+    /// <summary>This calendar's sharing flags (one-to-one), or null when no row has been created yet.</summary>
     public virtual CalendarShared? CalendarShared { get; set; }
 
-    public virtual ICollection<Account> AccountEmails { get; set; } = new List<Account>();
-    public virtual ICollection<OtherCalendar>? OtherCalendars { get; set; }
+    /// <summary>Other accounts' subscriptions to this calendar.</summary>
+    public virtual ICollection<OtherCalendar> OtherCalendars { get; set; } = new List<OtherCalendar>();
 }

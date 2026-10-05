@@ -1,70 +1,65 @@
-using Maroik.Core.Repository.Contracts;
+using Maroik.Core.Contract.Interfaces;
+using Maroik.Core.Domain.Menu;
 using Maroik.Core.PostgreSQL.Data;
-using Maroik.Core.PostgreSQL.Models;
 using Microsoft.EntityFrameworkCore;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
+using OrmSubCategory = Maroik.Core.PostgreSQL.Models.SubCategory;
 
 namespace Maroik.Core.Repository.Repositories;
 
-public class SubCategoryRepository : ISubCategoryRepository
+/// <summary>
+/// EF Core repository for <see cref="SubCategory"/> domain objects,
+/// representing child navigation menu items under a <see cref="Category"/>.
+/// </summary>
+public class SubCategoryRepository(ApplicationDbContext context)
+    : GenericRepository<SubCategory, OrmSubCategory>(context), ISubCategoryRepository
 {
-    private readonly ApplicationDbContext _context;
+    /// <summary>The underlying <see cref="DbSet{TEntity}"/> for <see cref="OrmSubCategory"/> rows.</summary>
+    protected override DbSet<OrmSubCategory> Set => Context.SubCategories;
 
-    public SubCategoryRepository(ApplicationDbContext context)
+    /// <summary>Maps a persisted <see cref="OrmSubCategory"/> row to the <see cref="SubCategory"/> domain object.</summary>
+    protected override SubCategory ToDomain(OrmSubCategory e)
+        => SubCategory.Reconstitute(e.Id, e.CategoryId, e.Name, e.DisplayName, e.IconPath, e.Action, e.Role, e.Order);
+
+    /// <summary>Maps a <see cref="SubCategory"/> domain object to its <see cref="OrmSubCategory"/> persistence representation.</summary>
+    protected override OrmSubCategory ToEntity(SubCategory s) => new()
     {
-        _context = context;
+        Id = s.Id,
+        CategoryId = s.CategoryId,
+        Name = s.Name ?? "",
+        DisplayName = s.DisplayName ?? "",
+        IconPath = s.IconPath ?? "",
+        Action = s.Action ?? "",
+        Role = s.Role ?? "Admin",
+        Order = s.Order
+    };
+
+    /// <inheritdoc />
+    public Task<List<SubCategory>> GetAllAsync(CancellationToken ct = default)
+        => QueryAllAsync(ct: ct);
+
+    /// <inheritdoc />
+    public Task<SubCategory?> FindByIdAsync(long id, CancellationToken ct = default)
+        => QueryFirstAsync(e => e.Id == id, ct: ct);
+
+    /// <inheritdoc />
+    public async Task<SubCategory?> FindByIdForUpdateAsync(long id, CancellationToken ct = default)
+    {
+        // Raw SQL is required because EF Core LINQ cannot emit FOR UPDATE. AsNoTracking so a
+        // pre-lock instance already tracked in this context can't snap back and defeat the lock.
+        var entities = await Set.FromSqlInterpolated(
+            $"""
+             SELECT *
+             FROM "SubCategory"
+             WHERE "Id" = {id}
+             LIMIT 1
+             FOR UPDATE
+             """).AsNoTracking().ToListAsync(ct);
+
+        var entity = entities.FirstOrDefault();
+        return entity == null ? null : ToDomain(entity);
     }
 
-    /// <summary>
-    /// Gets all subcategories.
-    /// </summary>
-    /// <returns></returns>
-    public async Task<IEnumerable<SubCategory>> GetSubCategoryAsync()
-    {
-        return await _context.SubCategories.ToListAsync();
-    }
-    /// <summary>
-    /// Gets subcategories by permission.
-    /// </summary>
-    /// <param name="role"></param>
-    /// <returns></returns>
-    public async Task<IEnumerable<SubCategory>> GetSubCategoryByRoleAsync(string role)
-    {
-        return await _context.SubCategories
-                .Where(a => a.Role == role)
-                .OrderBy(a => a.Order)
-                .ToListAsync();
-    }
-    /// <summary>
-    /// Creates a subcategory.
-    /// </summary>
-    /// <param name="subCategory"></param>
-    /// <returns></returns>
-    public async Task CreateSubCategoryAsync(SubCategory subCategory)
-    {
-        _ = await _context.SubCategories.AddAsync(subCategory);
-        _ = await _context.SaveChangesAsync();
-    }
-    /// <summary>
-    /// Updates a subcategory.
-    /// </summary>
-    /// <param name="category"></param>
-    /// <returns></returns>
-    public async Task UpdateSubCategoryAsync(SubCategory subCategory)
-    {
-        _ = _context.SubCategories.Update(subCategory);
-        _ = await _context.SaveChangesAsync();
-    }
-    /// <summary>
-    /// Removes a subcategory.
-    /// </summary>
-    /// <param name="category"></param>
-    /// <returns></returns>
-    public async Task DeleteSubCategoryAsync(SubCategory subCategory)
-    {
-        _ = _context.SubCategories.Remove(subCategory);
-        _ = await _context.SaveChangesAsync();
-    }
+    /// <inheritdoc />
+    public Task DeleteByIdAsync(long id, CancellationToken ct = default)
+        => DeleteWhereAsync(e => e.Id == id, ct);
 }

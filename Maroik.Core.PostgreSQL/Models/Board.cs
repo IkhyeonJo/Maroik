@@ -16,22 +16,22 @@ public partial class Board
     /// <summary>
     /// Type
     /// </summary>
-    public string? Type { get; set; }
+    public string Type { get; set; } = null!;
 
     /// <summary>
     /// Title
     /// </summary>
-    public string? Title { get; set; }
+    public string Title { get; set; } = null!;
 
     /// <summary>
     /// Content
     /// </summary>
-    public string? Content { get; set; }
+    public string Content { get; set; } = null!;
 
     /// <summary>
     /// Writer
     /// </summary>
-    public string? Writer { get; set; }
+    public string Writer { get; set; } = null!;
 
     /// <summary>
     /// Created
@@ -63,7 +63,12 @@ public partial class Board
     /// </summary>
     public bool Noticed { get; set; }
 
+    /// <summary>Files attached to this post.</summary>
     public virtual ICollection<BoardAttachedFile> BoardAttachedFiles { get; set; } = new List<BoardAttachedFile>();
 
+    /// <summary>Comments on this post (soft-deleted ones included).</summary>
     public virtual ICollection<BoardComment> BoardComments { get; set; } = new List<BoardComment>();
+
+    /// <summary>The account that wrote this post (Writer → Account.Nickname).</summary>
+    public virtual Account WriterNavigation { get; set; } = null!;
 }

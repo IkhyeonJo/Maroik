@@ -1,112 +1,146 @@
-using Maroik.Core.Repository.Contracts;
+using Maroik.Core.Contract.Interfaces;
+using Maroik.Core.Domain.Finance;
 using Maroik.Core.PostgreSQL.Data;
-using Maroik.Core.PostgreSQL.Models;
 using Microsoft.EntityFrameworkCore;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
+using OrmAsset = Maroik.Core.PostgreSQL.Models.Asset;
 
 namespace Maroik.Core.Repository.Repositories;
 
-public class AssetRepository : IAssetRepository
+/// <summary>
+/// EF Core repository for <see cref="Asset"/> domain objects.
+/// Includes a raw SQL update method for cases where the composite primary key (ProductName, AccountEmail) changes.
+/// </summary>
+public class AssetRepository(ApplicationDbContext context)
+    : GenericRepository<Asset, OrmAsset>(context), IAssetRepository
 {
-    private readonly ApplicationDbContext _context;
+    /// <summary>The underlying <see cref="DbSet{TEntity}"/> for <see cref="OrmAsset"/> rows.</summary>
+    protected override DbSet<OrmAsset> Set => Context.Assets;
 
-    public AssetRepository(ApplicationDbContext context)
+    /// <inheritdoc />
+    public async Task<int> UpdateAssetWithProductNameAsync(Asset asset, string originalProductName, CancellationToken ct = default)
     {
-        _context = context;
+        // Raw SQL is required because the composite PK (ProductName, AccountEmail) changes.
+        return await Context.Database.ExecuteSqlInterpolatedAsync(
+            $"""
+             UPDATE "Asset"
+             SET
+                 "ProductName" = {asset.ProductName},
+                 "Item" = {asset.Item},
+                 "Amount" = {asset.Balance.Amount},
+                 "MonetaryUnit" = {asset.Balance.Currency.Value},
+                 "Note" = {asset.Note ?? ""},
+                 "Deleted" = {asset.Deleted},
+                 "Updated" = {asset.Updated}
+             WHERE
+                 "ProductName" = {originalProductName}
+                 AND "AccountEmail" = {asset.AccountEmail.Value}
+             """, ct);
     }
 
-    /// <summary>
-    /// Gets all assets for the logged-in account.
-    /// </summary>
-    /// <param name="email"></param>
-    /// <returns></returns>
-    public async Task<List<Asset>> GetAssetsAsync(string email)
+    /// <summary>Maps a persisted <see cref="OrmAsset"/> row to the <see cref="Asset"/> domain object.</summary>
+    protected override Asset ToDomain(OrmAsset e) => Asset.Reconstitute(
+        e.ProductName, e.AccountEmail, e.Item,
+        e.Amount, e.MonetaryUnit, e.Note, e.Deleted, e.Created, e.Updated);
+
+    /// <summary>Maps an <see cref="Asset"/> domain object to its <see cref="OrmAsset"/> persistence representation.</summary>
+    protected override OrmAsset ToEntity(Asset a) => new()
     {
-        return await _context.Assets.Where(x => x.AccountEmail == email).ToListAsync();
+        ProductName = a.ProductName,
+        AccountEmail = a.AccountEmail.Value,
+        Item = a.Item,
+        Amount = a.Balance.Amount,
+        MonetaryUnit = a.Balance.Currency.Value,
+        Note = a.Note ?? "",
+        Deleted = a.Deleted,
+        Created = a.Created,
+        Updated = a.Updated
+    };
+
+    /// <inheritdoc />
+    public Task<List<Asset>> GetByAccountEmailAsync(string accountEmail, CancellationToken ct = default)
+        => QueryAsync(e => e.AccountEmail == accountEmail, ct: ct);
+
+    /// <inheritdoc />
+    // See ExpenditureRepository.SearchByAccountEmailAsync for why this is raw SQL rather than LINQ
+    // (ILIKE is case-insensitive natively, so it also covers the Deleted/bool matching).
+    // Asset's key is (AccountEmail, ProductName), not a single ID, so the two-step match collects
+    // ProductName instead.
+    public async Task<List<Asset>> SearchByAccountEmailAsync(string accountEmail, string search, CancellationToken ct = default)
+    {
+        string pattern = ToLikePattern(search);
+        List<string> matchingProductNames = await Context.Database.SqlQuery<string>($"""
+            SELECT "ProductName" AS "Value" FROM "Asset"
+            WHERE "AccountEmail" = {accountEmail}
+              AND (
+                  "ProductName" ILIKE {pattern} OR
+                  "Item" ILIKE {pattern} OR
+                  "MonetaryUnit" ILIKE {pattern} OR
+                  "Note" ILIKE {pattern} OR
+                  CAST("Amount" AS TEXT) ILIKE {pattern} OR
+                  CAST("Created" AS TEXT) ILIKE {pattern} OR
+                  CAST("Updated" AS TEXT) ILIKE {pattern} OR
+                  CAST("Deleted" AS TEXT) ILIKE {pattern}
+              )
+            """).ToListAsync(ct);
+
+        if (matchingProductNames.Count == 0) return [];
+        return await QueryAsync(e => e.AccountEmail == accountEmail && matchingProductNames.Contains(e.ProductName), ct: ct);
     }
 
-    /// <summary>
-    /// Gets a specific asset for the logged-in account.
-    /// </summary>
-    /// <param name="email"></param>
-    /// <param name="productName"></param>
-    /// <returns></returns>
-    public async Task<Asset> GetAssetAsync(string email, string productName)
-    {
-        return await _context.Assets.FirstOrDefaultAsync(a => a.AccountEmail == email && a.ProductName == productName);
-    }
+    /// <inheritdoc />
+    public Task<Asset?> FindByEmailAndProductNameAsync(string accountEmail, string productName, CancellationToken ct = default)
+        => QueryFirstAsync(e => e.AccountEmail == accountEmail && e.ProductName == productName, ct: ct);
 
-    /// <summary>
-    /// Gets all assets for the logged-in account with a database row lock (SELECT ... FOR UPDATE).
-    /// Must be called inside an active transaction; the locks are held until commit/rollback.
-    /// </summary>
-    /// <param name="email"></param>
-    /// <returns></returns>
-    public async Task<List<Asset>> GetAssetsForUpdateAsync(string email)
+    /// <inheritdoc />
+    public async Task<Asset?> FindByEmailAndProductNameForUpdateAsync(string accountEmail, string productName, CancellationToken ct = default)
     {
         // Raw SQL is required because EF Core LINQ cannot emit FOR UPDATE.
         // ToListAsync on the raw root executes the SQL verbatim (no composition),
         // keeping FOR UPDATE at the top level of the statement.
-        // ORDER BY "ProductName" makes the row-lock acquisition order deterministic,
-        // so two concurrent transactions on the same account cannot deadlock.
-        return await _context.Assets.FromSqlInterpolated(
+        // AsNoTracking is required too: if this Asset's row was already tracked earlier in the
+        // same DbContext scope (e.g. loaded via an Include on an unrelated query), a tracking
+        // query performs identity resolution and hands back that already-tracked (pre-lock)
+        // instance instead of the row this FOR UPDATE just (re-)read — silently defeating the
+        // lock's whole purpose. AsNoTracking always materializes a fresh instance from what was
+        // actually just selected, bypassing that snap-back.
+        var entities = await Set.FromSqlInterpolated(
             $"""
              SELECT *
              FROM "Asset"
-             WHERE "AccountEmail" = {email}
+             WHERE
+                 "AccountEmail" = {accountEmail}
+                 AND "ProductName" = {productName}
+             LIMIT 1
+             FOR UPDATE
+             """).AsNoTracking().ToListAsync(ct);
+
+        var entity = entities.FirstOrDefault();
+        return entity == null ? null : ToDomain(entity);
+    }
+
+    /// <inheritdoc />
+    public async Task<List<Asset>> FindByEmailAndProductNamesForUpdateAsync(string accountEmail, IReadOnlyCollection<string> productNames, CancellationToken ct = default)
+    {
+        if (productNames.Count == 0) return [];
+
+        // Same rationale as FindByEmailAndProductNameForUpdateAsync (raw SQL for "FOR UPDATE",
+        // AsNoTracking to bypass identity-resolution snap-back to a pre-lock tracked instance).
+        // ORDER BY "ProductName" locks every matched row in the same order a caller that already
+        // sorts its requested names (see AssetBalanceOrdinalLockExtensions) would have locked them
+        // one at a time, so batching here doesn't change the deadlock-avoidance guarantee -- the
+        // same ORDER BY + FOR UPDATE technique is what main's GetAssetsForUpdateAsync has used in
+        // production for exactly this reason since it was added to fix a lost-update bug.
+        var entities = await Set.FromSqlInterpolated(
+            $"""
+             SELECT *
+             FROM "Asset"
+             WHERE
+                 "AccountEmail" = {accountEmail}
+                 AND "ProductName" = ANY({productNames.ToArray()})
              ORDER BY "ProductName"
              FOR UPDATE
-             """).ToListAsync();
-    }
+             """).AsNoTracking().ToListAsync(ct);
 
-    /// <summary>
-    /// Creates an asset.
-    /// </summary>
-    /// <param name="asset"></param>
-    /// <returns></returns>
-    public async Task CreateAssetAsync(Asset asset)
-    {
-        _ = await _context.Assets.AddAsync(asset);
-        _ = await _context.SaveChangesAsync();
-    }
-
-    /// <summary>
-    /// Updates an asset.
-    /// </summary>
-    /// <param name="asset"></param>
-    /// <returns></returns>
-    public async Task UpdateAssetAsync(Asset asset)
-    {
-        _ = _context.Assets.Update(asset);
-        _ = await _context.SaveChangesAsync();
-    }
-
-    /// <summary>
-    /// Updates an asset including asset name.
-    /// </summary>
-    /// <param name="asset"></param>
-    /// <param name="originalProductName"></param>
-    /// <returns></returns>
-    public async Task<int> UpdateAssetWithProductNameAsync(Asset asset, string originalProductName)
-    {
-        return await _context.Database.ExecuteSqlInterpolatedAsync
-        (
-            $"""
-             UPDATE "Asset"
-             SET 
-                 "ProductName" = {asset.ProductName},
-                 "Item" = {asset.Item},
-                 "Amount" = {asset.Amount},
-                 "MonetaryUnit" = {asset.MonetaryUnit},
-                 "Note" = {asset.Note},
-                 "Deleted" = {asset.Deleted},
-                 "Updated" = {asset.Updated}
-             WHERE 
-                 "ProductName" = {originalProductName}
-                 AND "AccountEmail" = {asset.AccountEmail}
-             """
-        );
+        return [.. entities.Select(ToDomain)];
     }
 }

@@ -1,52 +1,44 @@
-using Maroik.Core.Repository.Contracts;
+using Maroik.Core.Contract.Interfaces;
+using Maroik.Core.Domain.Calendar;
 using Maroik.Core.PostgreSQL.Data;
-using Maroik.Core.PostgreSQL.Models;
 using Microsoft.EntityFrameworkCore;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
+using OrmCalendarEventReminder = Maroik.Core.PostgreSQL.Models.CalendarEventReminder;
 
 namespace Maroik.Core.Repository.Repositories;
 
-public class CalendarEventReminderRepository : ICalendarEventReminderRepository
+/// <summary>
+/// EF Core repository for <see cref="CalendarEventReminder"/> domain objects.
+/// </summary>
+public class CalendarEventReminderRepository(ApplicationDbContext context)
+    : GenericRepository<CalendarEventReminder, OrmCalendarEventReminder>(context), ICalendarEventReminderRepository
 {
-    private readonly ApplicationDbContext _context;
+    /// <summary>The underlying <see cref="DbSet{TEntity}"/> for <see cref="OrmCalendarEventReminder"/> rows.</summary>
+    protected override DbSet<OrmCalendarEventReminder> Set => Context.CalendarEventReminders;
 
-    public CalendarEventReminderRepository(ApplicationDbContext context)
-    {
-        _context = context;
-    }
+    /// <summary>Maps a persisted <see cref="OrmCalendarEventReminder"/> row to the <see cref="CalendarEventReminder"/> domain object.</summary>
+    protected override CalendarEventReminder ToDomain(OrmCalendarEventReminder e) => CalendarEventReminder.Reconstitute(
+        e.Id, e.CalendarEventId, e.Method,
+        e.MinutesBeforeEvent, e.HoursBeforeEvent,
+        e.DaysBeforeEvent, e.WeeksBeforeEvent, e.TimesBeforeEvent);
 
-    /// <summary>
-    /// Gets all calendar event reminders for the calendar event.
-    /// </summary>
-    /// <param name="calendarEventId"></param>
-    /// <returns></returns>
-    public async Task<IEnumerable<CalendarEventReminder>> GetCalendarEventRemindersAsync(long calendarEventId)
+    /// <summary>Maps a <see cref="CalendarEventReminder"/> domain object to its <see cref="OrmCalendarEventReminder"/> persistence representation.</summary>
+    protected override OrmCalendarEventReminder ToEntity(CalendarEventReminder r) => new()
     {
-        return await _context.CalendarEventReminders.Where(x => x.CalendarEventId == calendarEventId).ToListAsync();
-    }
+        Id = r.Id,
+        CalendarEventId = r.CalendarEventId,
+        Method = r.Method,
+        MinutesBeforeEvent = r.MinutesBeforeEvent,
+        HoursBeforeEvent = r.HoursBeforeEvent,
+        DaysBeforeEvent = r.DaysBeforeEvent,
+        WeeksBeforeEvent = r.WeeksBeforeEvent,
+        TimesBeforeEvent = r.TimesBeforeEvent
+    };
 
-    /// <summary>
-    /// Creates a calendar event reminder.
-    /// </summary>
-    /// <param name="calendarEventReminder"></param>
-    /// <returns></returns>
-    public async Task CreateCalendarEventReminderAsync(CalendarEventReminder calendarEventReminder)
-    {
-        _ = await _context.CalendarEventReminders.AddAsync(calendarEventReminder);
-        _ = await _context.SaveChangesAsync();
-    }
+    /// <inheritdoc />
+    public Task<List<CalendarEventReminder>> GetByCalendarEventIdAsync(long calendarEventId, CancellationToken ct = default)
+        => QueryAsync(e => e.CalendarEventId == calendarEventId, ct: ct);
 
-    /// <summary>
-    /// Deletes calendar event reminders.
-    /// </summary>
-    /// <param name="calendarEventId"></param>
-    /// <returns></returns>
-    public async Task<int> DeleteCalendarEventReminderAsync(long calendarEventId)
-    {
-        return await _context.Database.ExecuteSqlInterpolatedAsync(
-            $"""DELETE FROM "CalendarEventReminder" WHERE "CalendarEventId" = {calendarEventId}"""
-        );
-    }
+    /// <inheritdoc />
+    public Task DeleteByCalendarEventIdAsync(long calendarEventId, CancellationToken ct = default)
+        => DeleteWhereAsync(e => e.CalendarEventId == calendarEventId, ct);
 }

@@ -131,6 +131,7 @@ $tf/
 _ReSharper*/
 *.[Rr]e[Ss]harper
 *.DotSettings.user
+*.csproj.DotSettings
 
 # TeamCity is a build add-in
 _TeamCity*
@@ -431,7 +432,29 @@ Maroik.SSL/**
 *.log
 Maroik.Log/**
 
-# Upload directories (user uploaded files)
-Maroik.WebSite/wwwroot/upload/**
-Maroik.FileStorage/upload/**
+# Backup artifacts written into the repo folder by Maroik.Crontab/DBBackup.sh and UploadFileBackup.sh
+maroik-db-*.sql
+maroik-db-*.sql.gz
+website-upload-*/
+file-storage-upload-*/
+website-upload-*.tar.xz
+file-storage-upload-*.tar.xz
 
+# Upload directories (user uploaded files)
+#Maroik.Website/wwwroot/upload/**
+#Maroik.FileStorage/upload/**
+
+# TypeScript client-scripts toolchain (Maroik.Website/TypeScripts, see its README).
+# The compiled Maroik.Website/wwwroot/**/custom/**/site.js is build output, not source: the
+# Dockerfile tsbuild stage, `dotnet build` (with node_modules) and `npm run build` regenerate it.
+*.tsbuildinfo
+.vitest/
+Maroik.Website/wwwroot/**/custom/**/*.js
+Maroik.Website/wwwroot/**/custom/**/*.js.map
+
+
+# Merged code-coverage output (CI regenerates it)
+/coverage/
+
+# ASP.NET Core Data Protection key ring — machine-local secret, generated at runtime.
+Maroik.Website/dataprotection-keys/

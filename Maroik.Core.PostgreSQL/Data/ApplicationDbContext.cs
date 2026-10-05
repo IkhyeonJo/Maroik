@@ -5,54 +5,74 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Maroik.Core.PostgreSQL.Data;
 
+/// <summary>
+/// EF Core context over the Maroik PostgreSQL schema (scaffolded from the database). The schema itself
+/// is created by <c>Maroik.DB/PostgreSQL/SQL_Init_Script/*/Init.sql</c>, not by this model; the mapping
+/// below must match it (constraint / index names are relied on by the Service layer's error classification).
+/// </summary>
 public partial class ApplicationDbContext : DbContext
 {
-    public ApplicationDbContext()
-    {
-    }
-
+    /// <summary>Creates the context with the options configured at DI registration (Npgsql connection string).</summary>
     public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options)
         : base(options)
     {
-        ChangeTracker.QueryTrackingBehavior = QueryTrackingBehavior.NoTracking;
-        ChangeTracker.AutoDetectChangesEnabled = false;
     }
 
+    /// <summary>"Account" table.</summary>
     public virtual DbSet<Account> Accounts { get; set; }
 
+    /// <summary>"Asset" table.</summary>
     public virtual DbSet<Asset> Assets { get; set; }
 
+    /// <summary>"Board" table.</summary>
     public virtual DbSet<Board> Boards { get; set; }
 
+    /// <summary>"BoardAttachedFile" table.</summary>
     public virtual DbSet<BoardAttachedFile> BoardAttachedFiles { get; set; }
 
+    /// <summary>"BoardComment" table.</summary>
     public virtual DbSet<BoardComment> BoardComments { get; set; }
 
+    /// <summary>"Calendar" table.</summary>
     public virtual DbSet<Calendar> Calendars { get; set; }
 
+    /// <summary>"CalendarEvent" table.</summary>
     public virtual DbSet<CalendarEvent> CalendarEvents { get; set; }
 
+    /// <summary>"CalendarEventAttachedFile" table.</summary>
     public virtual DbSet<CalendarEventAttachedFile> CalendarEventAttachedFiles { get; set; }
 
+    /// <summary>"CalendarEventReminder" table.</summary>
     public virtual DbSet<CalendarEventReminder> CalendarEventReminders { get; set; }
 
+    /// <summary>"CalendarRecurrence" table.</summary>
     public virtual DbSet<CalendarRecurrence> CalendarRecurrences { get; set; }
 
+    /// <summary>"CalendarShared" table.</summary>
     public virtual DbSet<CalendarShared> CalendarShareds { get; set; }
 
+    /// <summary>"Category" table.</summary>
     public virtual DbSet<Category> Categories { get; set; }
 
+    /// <summary>"Expenditure" table.</summary>
     public virtual DbSet<Expenditure> Expenditures { get; set; }
 
+    /// <summary>"FixedExpenditure" table.</summary>
     public virtual DbSet<FixedExpenditure> FixedExpenditures { get; set; }
 
+    /// <summary>"FixedIncome" table.</summary>
     public virtual DbSet<FixedIncome> FixedIncomes { get; set; }
 
+    /// <summary>"Income" table.</summary>
     public virtual DbSet<Income> Incomes { get; set; }
+
+    /// <summary>"OtherCalendar" table.</summary>
     public virtual DbSet<OtherCalendar> OtherCalendars { get; set; }
 
+    /// <summary>"SubCategory" table.</summary>
     public virtual DbSet<SubCategory> SubCategories { get; set; }
 
+    /// <summary>Maps every entity to its table: keys, constraint / index names, column types, defaults, comments and relationships.</summary>
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.Entity<Account>(entity =>
@@ -62,18 +82,22 @@ public partial class ApplicationDbContext : DbContext
             entity.ToTable("Account", tb => tb.HasComment("Account"));
 
             entity.HasIndex(e => e.Nickname, "Account_Nickname_unique").IsUnique();
+            // Not mapped here on purpose: the case-insensitive UNIQUE index "Account_unique_index_0" on
+            // lower("Nickname") lives only in Init.sql. EF Core / Npgsql have no expression-index mapping (a
+            // HasIndex on Nickname would misstate it as a plain index on the column). The schema is created
+            // from Init.sql, not from this model, so nothing is lost; DbExceptionExtensions matches the index
+            // by name when it classifies a duplicate-nickname violation.
 
             entity.Property(e => e.Email)
                 .HasMaxLength(255)
                 .HasComment("Email (ID)");
             entity.Property(e => e.AgreedServiceTerms).HasComment("AgreedServiceTerms");
             entity.Property(e => e.AvatarImagePath)
-                .IsRequired()
                 .HasMaxLength(255)
                 .HasDefaultValueSql("'/upload/Management/Profile/default-avatar.jpg'::character varying")
                 .HasComment("AvatarImagePath");
             entity.Property(e => e.Created)
-                .HasDefaultValueSql("'1900-01-01 00:00:00'::timestamp without time zone")
+                .HasDefaultValueSql("now()")
                 .HasComment("Created")
                 .HasColumnType("timestamp without time zone");
             entity.Property(e => e.DefaultMonetaryUnit)
@@ -82,30 +106,29 @@ public partial class ApplicationDbContext : DbContext
                 .HasComment("Default monetary unit (KRW, USD, ETC)");
             entity.Property(e => e.Deleted).HasComment("Deleted");
             entity.Property(e => e.EmailConfirmed).HasComment("EmailConfirmed");
-            entity.Property(e => e.HashedPassword)
-                .IsRequired()
-                .HasComment("HashedPassword");
+            entity.Property(e => e.HashedPassword).HasComment("HashedPassword");
             entity.Property(e => e.Locked).HasComment("Locked");
             entity.Property(e => e.LoginAttempt).HasComment("LoginAttempt");
             entity.Property(e => e.Message).HasComment("Message");
+            entity.Property(e => e.MustChangePassword).HasComment("Forces a password change on next login (set by an admin password override)");
             entity.Property(e => e.Nickname)
-                .IsRequired()
                 .HasMaxLength(255)
                 .HasComment("Nickname");
             entity.Property(e => e.RegistrationToken).HasComment("RegistrationToken");
             entity.Property(e => e.ResetPasswordToken).HasComment("ResetPasswordToken");
             entity.Property(e => e.Role)
-                .IsRequired()
                 .HasMaxLength(255)
                 .HasDefaultValueSql("'User'::character varying")
                 .HasComment("Role (Admin or User)");
+            entity.Property(e => e.SecurityStamp)
+                .HasDefaultValueSql("(gen_random_uuid())::text")
+                .HasComment("Opaque value that changes on every password change; invalidates other open sessions");
             entity.Property(e => e.TimeZoneIanaId)
-                .IsRequired()
                 .HasMaxLength(255)
                 .HasDefaultValueSql("'UTC'::character varying")
                 .HasComment("IANA TimeZone ID");
             entity.Property(e => e.Updated)
-                .HasDefaultValueSql("'1900-01-01 00:00:00'::timestamp without time zone")
+                .HasDefaultValueSql("now()")
                 .HasComment("Updated")
                 .HasColumnType("timestamp without time zone");
         });
@@ -125,23 +148,21 @@ public partial class ApplicationDbContext : DbContext
                 .HasMaxLength(255)
                 .HasComment("AccountEmail (ID)");
             entity.Property(e => e.Amount)
-                .HasPrecision(18, 2)
+                .HasPrecision(20, 4)
                 .HasComment("Amount");
             entity.Property(e => e.Created)
                 .HasComment("Created")
                 .HasColumnType("timestamp without time zone");
             entity.Property(e => e.Deleted).HasComment("Deleted");
             entity.Property(e => e.Item)
-                .IsRequired()
                 .HasMaxLength(255)
                 .HasComment("Item");
             entity.Property(e => e.MonetaryUnit)
-                .IsRequired()
                 .HasMaxLength(45)
                 .HasComment("MonetaryUnit (KRW, USD, ETC)");
             entity.Property(e => e.Note)
                 .HasMaxLength(255)
-                .HasDefaultValueSql("NULL::character varying")
+                .HasDefaultValueSql("''::character varying")
                 .HasComment("Note");
             entity.Property(e => e.Updated)
                 .HasComment("Updated")
@@ -159,10 +180,10 @@ public partial class ApplicationDbContext : DbContext
 
             entity.ToTable("Board", tb => tb.HasComment("Board"));
 
+            entity.HasIndex(e => new { e.Type, e.Noticed, e.Id }, "Board_index_0");
+
             entity.Property(e => e.Id).HasComment("PK");
-            entity.Property(e => e.Content)
-                .IsRequired()
-                .HasComment("Content");
+            entity.Property(e => e.Content).HasComment("Content");
             entity.Property(e => e.Created)
                 .HasComment("Created")
                 .HasColumnType("timestamp without time zone");
@@ -170,11 +191,9 @@ public partial class ApplicationDbContext : DbContext
             entity.Property(e => e.Locked).HasComment("Locked");
             entity.Property(e => e.Noticed).HasComment("Noticed");
             entity.Property(e => e.Title)
-                .IsRequired()
                 .HasMaxLength(255)
                 .HasComment("Title");
             entity.Property(e => e.Type)
-                .IsRequired()
                 .HasMaxLength(255)
                 .HasComment("Type");
             entity.Property(e => e.Updated)
@@ -182,9 +201,14 @@ public partial class ApplicationDbContext : DbContext
                 .HasColumnType("timestamp without time zone");
             entity.Property(e => e.View).HasComment("View");
             entity.Property(e => e.Writer)
-                .IsRequired()
                 .HasMaxLength(255)
                 .HasComment("Writer");
+
+            entity.HasOne(d => d.WriterNavigation).WithMany(p => p.Boards)
+                .HasPrincipalKey(p => p.Nickname)
+                .HasForeignKey(d => d.Writer)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("Board_fk_0");
         });
 
         modelBuilder.Entity<BoardAttachedFile>(entity =>
@@ -202,11 +226,9 @@ public partial class ApplicationDbContext : DbContext
                 .HasDefaultValueSql("NULL::character varying")
                 .HasComment("Extension");
             entity.Property(e => e.Name)
-                .IsRequired()
                 .HasMaxLength(255)
                 .HasComment("Name");
             entity.Property(e => e.Path)
-                .IsRequired()
                 .HasMaxLength(255)
                 .HasComment("Path");
             entity.Property(e => e.Size).HasComment("Size (Byte)");
@@ -227,20 +249,16 @@ public partial class ApplicationDbContext : DbContext
 
             entity.Property(e => e.Id).HasComment("PK");
             entity.Property(e => e.AvatarImagePath)
-                .IsRequired()
                 .HasMaxLength(255)
                 .HasComment("AvatarImagePath");
             entity.Property(e => e.BoardId).HasComment("Board Id");
-            entity.Property(e => e.Content)
-                .IsRequired()
-                .HasComment("Content");
+            entity.Property(e => e.Content).HasComment("Content");
             entity.Property(e => e.Created)
                 .HasComment("Created")
                 .HasColumnType("timestamp without time zone");
             entity.Property(e => e.Deleted).HasComment("Deleted");
             entity.Property(e => e.Order).HasComment("Order");
             entity.Property(e => e.Writer)
-                .IsRequired()
                 .HasMaxLength(255)
                 .HasComment("Writer");
 
@@ -248,6 +266,12 @@ public partial class ApplicationDbContext : DbContext
                 .HasForeignKey(d => d.BoardId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("BoardComment_fk_0");
+
+            entity.HasOne(d => d.WriterNavigation).WithMany(p => p.BoardComments)
+                .HasPrincipalKey(p => p.Nickname)
+                .HasForeignKey(d => d.Writer)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("BoardComment_fk_1");
         });
 
         modelBuilder.Entity<Calendar>(entity =>
@@ -256,11 +280,12 @@ public partial class ApplicationDbContext : DbContext
 
             entity.ToTable("Calendar", tb => tb.HasComment("Calendar"));
 
+            entity.HasIndex(e => new { e.AccountEmail, e.Name }, "Calendar_AccountEmail_Name_unique").IsUnique();
+
             entity.HasIndex(e => e.AccountEmail, "Calendar_index_0");
 
             entity.Property(e => e.Id).HasComment("PK");
             entity.Property(e => e.AccountEmail)
-                .IsRequired()
                 .HasMaxLength(255)
                 .HasComment("AccountEmail (ID)");
             entity.Property(e => e.Created)
@@ -268,15 +293,12 @@ public partial class ApplicationDbContext : DbContext
                 .HasColumnType("timestamp without time zone");
             entity.Property(e => e.Description).HasComment("Description");
             entity.Property(e => e.HtmlColorCode)
-                .IsRequired()
                 .HasMaxLength(10)
                 .HasComment("HtmlColorCode");
             entity.Property(e => e.Name)
-                .IsRequired()
                 .HasMaxLength(255)
                 .HasComment("Name");
             entity.Property(e => e.TimeZoneIanaId)
-                .IsRequired()
                 .HasMaxLength(255)
                 .HasComment("IANA TimeZone ID");
             entity.Property(e => e.Updated)
@@ -285,6 +307,7 @@ public partial class ApplicationDbContext : DbContext
 
             entity.HasOne(d => d.AccountEmailNavigation).WithMany(p => p.Calendars)
                 .HasForeignKey(d => d.AccountEmail)
+                .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("Calendar_fk_0");
         });
 
@@ -294,9 +317,9 @@ public partial class ApplicationDbContext : DbContext
 
             entity.ToTable("CalendarEvent", tb => tb.HasComment("CalendarEvent"));
 
-            entity.HasIndex(e => e.CalendarId, "CalendarEvent_index_0");
-
             entity.HasIndex(e => e.RecurrenceId, "CalendarEvent_index_1");
+
+            entity.HasIndex(e => new { e.CalendarId, e.StartDate }, "CalendarEvent_index_2");
 
             entity.Property(e => e.Id).HasComment("PK");
             entity.Property(e => e.AllDay).HasComment("AllDay");
@@ -325,12 +348,10 @@ public partial class ApplicationDbContext : DbContext
                 .HasDefaultValueSql("NULL::character varying")
                 .HasComment("StartDateTimeZone (IANA TimeZone ID)");
             entity.Property(e => e.Status)
-                .IsRequired()
                 .HasMaxLength(255)
                 .HasDefaultValueSql("'Busy'::character varying")
                 .HasComment("Status");
             entity.Property(e => e.Title)
-                .IsRequired()
                 .HasMaxLength(255)
                 .HasComment("Title");
             entity.Property(e => e.Updated)
@@ -362,11 +383,9 @@ public partial class ApplicationDbContext : DbContext
                 .HasDefaultValueSql("NULL::character varying")
                 .HasComment("Extension");
             entity.Property(e => e.Name)
-                .IsRequired()
                 .HasMaxLength(255)
                 .HasComment("Name");
             entity.Property(e => e.Path)
-                .IsRequired()
                 .HasMaxLength(255)
                 .HasComment("Path");
             entity.Property(e => e.Size).HasComment("Size (Byte)");
@@ -389,7 +408,6 @@ public partial class ApplicationDbContext : DbContext
             entity.Property(e => e.DaysBeforeEvent).HasComment("DaysBeforeEvent");
             entity.Property(e => e.HoursBeforeEvent).HasComment("HoursBeforeEvent");
             entity.Property(e => e.Method)
-                .IsRequired()
                 .HasMaxLength(255)
                 .HasComment("Method");
             entity.Property(e => e.MinutesBeforeEvent).HasComment("MinutesBeforeEvent");
@@ -418,7 +436,6 @@ public partial class ApplicationDbContext : DbContext
                 .HasDefaultValueSql("NULL::character varying")
                 .HasComment("DayOfWeek");
             entity.Property(e => e.Frequency)
-                .IsRequired()
                 .HasMaxLength(255)
                 .HasComment("Frequency");
             entity.Property(e => e.Interval)
@@ -464,24 +481,19 @@ public partial class ApplicationDbContext : DbContext
                 .HasDefaultValueSql("NULL::character varying")
                 .HasComment("Action");
             entity.Property(e => e.Controller)
-                .IsRequired()
                 .HasMaxLength(255)
                 .HasComment("Controller");
             entity.Property(e => e.DisplayName)
-                .IsRequired()
                 .HasMaxLength(255)
                 .HasComment("DisplayName");
             entity.Property(e => e.IconPath)
-                .IsRequired()
                 .HasMaxLength(255)
                 .HasComment("IconPath");
             entity.Property(e => e.Name)
-                .IsRequired()
                 .HasMaxLength(255)
                 .HasComment("Name");
             entity.Property(e => e.Order).HasComment("Order");
             entity.Property(e => e.Role)
-                .IsRequired()
                 .HasMaxLength(255)
                 .HasDefaultValueSql("'Admin'::character varying")
                 .HasComment("Role");
@@ -495,24 +507,23 @@ public partial class ApplicationDbContext : DbContext
 
             entity.HasIndex(e => new { e.PaymentMethod, e.AccountEmail }, "Expenditure_index_0");
 
+            entity.HasIndex(e => new { e.AccountEmail, e.Created }, "Expenditure_index_1");
+
             entity.Property(e => e.Id).HasComment("PK");
             entity.Property(e => e.AccountEmail)
-                .IsRequired()
                 .HasMaxLength(255)
                 .HasComment("Account Email (ID)");
             entity.Property(e => e.Amount)
-                .HasPrecision(18, 2)
+                .HasPrecision(20, 4)
                 .HasComment("Amount");
             entity.Property(e => e.Content)
-                .IsRequired()
                 .HasMaxLength(255)
                 .HasComment("Content");
             entity.Property(e => e.Created)
-                .HasDefaultValueSql("'1900-01-01 00:00:00'::timestamp without time zone")
+                .HasDefaultValueSql("now()")
                 .HasComment("Created")
                 .HasColumnType("timestamp without time zone");
             entity.Property(e => e.MainClass)
-                .IsRequired()
                 .HasMaxLength(255)
                 .HasComment("MainClass");
             entity.Property(e => e.MyDepositAsset)
@@ -521,22 +532,24 @@ public partial class ApplicationDbContext : DbContext
                 .HasComment("MyDepositAsset");
             entity.Property(e => e.Note)
                 .HasMaxLength(255)
-                .HasDefaultValueSql("NULL::character varying")
+                .HasDefaultValueSql("''::character varying")
                 .HasComment("Note");
             entity.Property(e => e.PaymentMethod)
-                .IsRequired()
                 .HasMaxLength(255)
                 .HasComment("PaymentMethod");
             entity.Property(e => e.SubClass)
-                .IsRequired()
                 .HasMaxLength(255)
                 .HasComment("SubClass");
             entity.Property(e => e.Updated)
-                .HasDefaultValueSql("'1900-01-01 00:00:00'::timestamp without time zone")
+                .HasDefaultValueSql("now()")
                 .HasComment("Updated")
                 .HasColumnType("timestamp without time zone");
 
-            entity.HasOne(d => d.Asset).WithMany(p => p.Expenditures)
+            entity.HasOne(d => d.Asset).WithMany(p => p.ExpenditureAssets)
+                .HasForeignKey(d => new { d.MyDepositAsset, d.AccountEmail })
+                .HasConstraintName("Expenditure_fk_1");
+
+            entity.HasOne(d => d.AssetNavigation).WithMany(p => p.ExpenditureAssetNavigations)
                 .HasForeignKey(d => new { d.PaymentMethod, d.AccountEmail })
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("Expenditure_fk_0");
@@ -552,28 +565,25 @@ public partial class ApplicationDbContext : DbContext
 
             entity.Property(e => e.Id).HasComment("PK");
             entity.Property(e => e.AccountEmail)
-                .IsRequired()
                 .HasMaxLength(255)
                 .HasComment("Account Email (ID)");
             entity.Property(e => e.Amount)
-                .HasPrecision(18, 2)
+                .HasPrecision(20, 4)
                 .HasComment("Amount");
             entity.Property(e => e.Content)
-                .IsRequired()
                 .HasMaxLength(255)
                 .HasComment("Content");
             entity.Property(e => e.Created)
-                .HasDefaultValueSql("'1900-01-01 00:00:00'::timestamp without time zone")
+                .HasDefaultValueSql("now()")
                 .HasComment("Created")
                 .HasColumnType("timestamp without time zone");
             entity.Property(e => e.DepositDay).HasComment("DepositDay");
             entity.Property(e => e.DepositMonth).HasComment("DepositMonth");
             entity.Property(e => e.MainClass)
-                .IsRequired()
                 .HasMaxLength(255)
                 .HasComment("MainClass");
             entity.Property(e => e.MaturityDate)
-                .HasDefaultValueSql("'1900-01-01 00:00:00'::timestamp without time zone")
+                .HasDefaultValueSql("now()")
                 .HasComment("MaturityDate")
                 .HasColumnType("timestamp without time zone");
             entity.Property(e => e.MyDepositAsset)
@@ -582,23 +592,25 @@ public partial class ApplicationDbContext : DbContext
                 .HasComment("MyDepositAsset");
             entity.Property(e => e.Note)
                 .HasMaxLength(255)
-                .HasDefaultValueSql("NULL::character varying")
+                .HasDefaultValueSql("''::character varying")
                 .HasComment("Note");
             entity.Property(e => e.PaymentMethod)
-                .IsRequired()
                 .HasMaxLength(255)
                 .HasComment("PaymentMethod");
             entity.Property(e => e.SubClass)
-                .IsRequired()
                 .HasMaxLength(255)
                 .HasComment("SubClass");
             entity.Property(e => e.Unpunctuality).HasComment("Unpunctuality");
             entity.Property(e => e.Updated)
-                .HasDefaultValueSql("'1900-01-01 00:00:00'::timestamp without time zone")
+                .HasDefaultValueSql("now()")
                 .HasComment("Updated")
                 .HasColumnType("timestamp without time zone");
 
-            entity.HasOne(d => d.Asset).WithMany(p => p.FixedExpenditures)
+            entity.HasOne(d => d.Asset).WithMany(p => p.FixedExpenditureAssets)
+                .HasForeignKey(d => new { d.MyDepositAsset, d.AccountEmail })
+                .HasConstraintName("FixedExpenditure_fk_1");
+
+            entity.HasOne(d => d.AssetNavigation).WithMany(p => p.FixedExpenditureAssetNavigations)
                 .HasForeignKey(d => new { d.PaymentMethod, d.AccountEmail })
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FixedExpenditure_fk_0");
@@ -614,45 +626,40 @@ public partial class ApplicationDbContext : DbContext
 
             entity.Property(e => e.Id).HasComment("PK");
             entity.Property(e => e.AccountEmail)
-                .IsRequired()
                 .HasMaxLength(255)
                 .HasComment("Account Email (ID)");
             entity.Property(e => e.Amount)
-                .HasPrecision(18, 2)
+                .HasPrecision(20, 4)
                 .HasComment("Amount");
             entity.Property(e => e.Content)
-                .IsRequired()
                 .HasMaxLength(255)
                 .HasComment("Content");
             entity.Property(e => e.Created)
-                .HasDefaultValueSql("'1900-01-01 00:00:00'::timestamp without time zone")
+                .HasDefaultValueSql("now()")
                 .HasComment("Created")
                 .HasColumnType("timestamp without time zone");
             entity.Property(e => e.DepositDay).HasComment("DepositDay");
             entity.Property(e => e.DepositMonth).HasComment("DepositMonth");
             entity.Property(e => e.DepositMyAssetProductName)
-                .IsRequired()
                 .HasMaxLength(255)
                 .HasComment("DepositMyAssetProductName");
             entity.Property(e => e.MainClass)
-                .IsRequired()
                 .HasMaxLength(255)
                 .HasComment("MainClass");
             entity.Property(e => e.MaturityDate)
-                .HasDefaultValueSql("'1900-01-01 00:00:00'::timestamp without time zone")
+                .HasDefaultValueSql("now()")
                 .HasComment("MaturityDate")
                 .HasColumnType("timestamp without time zone");
             entity.Property(e => e.Note)
                 .HasMaxLength(255)
-                .HasDefaultValueSql("NULL::character varying")
+                .HasDefaultValueSql("''::character varying")
                 .HasComment("Note");
             entity.Property(e => e.SubClass)
-                .IsRequired()
                 .HasMaxLength(255)
                 .HasComment("SubClass");
             entity.Property(e => e.Unpunctuality).HasComment("Unpunctuality");
             entity.Property(e => e.Updated)
-                .HasDefaultValueSql("'1900-01-01 00:00:00'::timestamp without time zone")
+                .HasDefaultValueSql("now()")
                 .HasComment("Updated")
                 .HasColumnType("timestamp without time zone");
 
@@ -670,40 +677,37 @@ public partial class ApplicationDbContext : DbContext
 
             entity.HasIndex(e => new { e.DepositMyAssetProductName, e.AccountEmail }, "Income_index_0");
 
+            entity.HasIndex(e => new { e.AccountEmail, e.Created }, "Income_index_1");
+
             entity.Property(e => e.Id).HasComment("PK");
             entity.Property(e => e.AccountEmail)
-                .IsRequired()
                 .HasMaxLength(255)
                 .HasComment("Account Email (ID)");
             entity.Property(e => e.Amount)
-                .HasPrecision(18, 2)
+                .HasPrecision(20, 4)
                 .HasComment("Amount");
             entity.Property(e => e.Content)
-                .IsRequired()
                 .HasMaxLength(255)
                 .HasComment("Content");
             entity.Property(e => e.Created)
-                .HasDefaultValueSql("'1900-01-01 00:00:00'::timestamp without time zone")
+                .HasDefaultValueSql("now()")
                 .HasComment("Created")
                 .HasColumnType("timestamp without time zone");
             entity.Property(e => e.DepositMyAssetProductName)
-                .IsRequired()
                 .HasMaxLength(255)
                 .HasComment("DepositMyAssetProductName");
             entity.Property(e => e.MainClass)
-                .IsRequired()
                 .HasMaxLength(255)
                 .HasComment("MainClass");
             entity.Property(e => e.Note)
                 .HasMaxLength(255)
-                .HasDefaultValueSql("NULL::character varying")
+                .HasDefaultValueSql("''::character varying")
                 .HasComment("Note");
             entity.Property(e => e.SubClass)
-                .IsRequired()
                 .HasMaxLength(255)
                 .HasComment("SubClass");
             entity.Property(e => e.Updated)
-                .HasDefaultValueSql("'1900-01-01 00:00:00'::timestamp without time zone")
+                .HasDefaultValueSql("now()")
                 .HasComment("Updated")
                 .HasColumnType("timestamp without time zone");
 
@@ -713,34 +717,27 @@ public partial class ApplicationDbContext : DbContext
                 .HasConstraintName("Income_fk_0");
         });
 
-        _ = modelBuilder.Entity<OtherCalendar>(entity =>
+        modelBuilder.Entity<OtherCalendar>(entity =>
         {
-            _ = entity.HasKey(e => new { e.AccountEmail, e.CalendarId })
-                .HasName("OtherCalendar_pk");
+            entity.HasKey(e => new { e.AccountEmail, e.CalendarId }).HasName("OtherCalendar_pk");
 
-            _ = entity.ToTable("OtherCalendar", tb =>
-                tb.HasComment("OtherCalendar"));
+            entity.ToTable("OtherCalendar", tb => tb.HasComment("OtherCalendar"));
 
-            _ = entity.HasIndex(e => e.AccountEmail)
-                .HasDatabaseName("OtherCalendar_index_0");
+            entity.HasIndex(e => e.AccountEmail, "OtherCalendar_index_0");
 
-            _ = entity.HasIndex(e => e.CalendarId)
-                .HasDatabaseName("OtherCalendar_index_1");
+            entity.HasIndex(e => e.CalendarId, "OtherCalendar_index_1");
 
-            _ = entity.Property(e => e.AccountEmail)
+            entity.Property(e => e.AccountEmail)
+                .HasMaxLength(255)
                 .HasComment("Account Email (ID)");
+            entity.Property(e => e.CalendarId).HasComment("Parent Calendar Id");
 
-            _ = entity.Property(e => e.CalendarId)
-                .HasComment("Parent Calendar Id");
-
-            _ = entity.HasOne(d => d.Account)
-                .WithMany(p => p.OtherCalendars)
+            entity.HasOne(d => d.Account).WithMany(p => p.OtherCalendars)
                 .HasForeignKey(d => d.AccountEmail)
-                .OnDelete(DeleteBehavior.Cascade)
+                .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("OtherCalendar_fk_0");
 
-            _ = entity.HasOne(d => d.Calendar)
-                .WithMany(p => p.OtherCalendars)
+            entity.HasOne(d => d.Calendar).WithMany(p => p.OtherCalendars)
                 .HasForeignKey(d => d.CalendarId)
                 .OnDelete(DeleteBehavior.Cascade)
                 .HasConstraintName("OtherCalendar_fk_1");
@@ -756,25 +753,20 @@ public partial class ApplicationDbContext : DbContext
 
             entity.Property(e => e.Id).HasComment("ID");
             entity.Property(e => e.Action)
-                .IsRequired()
                 .HasMaxLength(255)
                 .HasComment("Action");
             entity.Property(e => e.CategoryId).HasComment("Parent Category ID");
             entity.Property(e => e.DisplayName)
-                .IsRequired()
                 .HasMaxLength(255)
                 .HasComment("DisplayName");
             entity.Property(e => e.IconPath)
-                .IsRequired()
                 .HasMaxLength(255)
                 .HasComment("IconPath");
             entity.Property(e => e.Name)
-                .IsRequired()
                 .HasMaxLength(255)
                 .HasComment("Name");
             entity.Property(e => e.Order).HasComment("Order");
             entity.Property(e => e.Role)
-                .IsRequired()
                 .HasMaxLength(255)
                 .HasDefaultValueSql("'Admin'::character varying")
                 .HasComment("Role");
@@ -787,5 +779,6 @@ public partial class ApplicationDbContext : DbContext
         OnModelCreatingPartial(modelBuilder);
     }
 
+    /// <summary>Extension point for mapping kept outside the scaffolded file (no implementation at present).</summary>
     partial void OnModelCreatingPartial(ModelBuilder modelBuilder);
 }

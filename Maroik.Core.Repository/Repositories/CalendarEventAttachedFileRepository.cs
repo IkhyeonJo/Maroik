@@ -1,72 +1,36 @@
-using Maroik.Core.Repository.Contracts;
+using Maroik.Core.Contract.Interfaces;
+using Maroik.Core.Domain.Calendar;
 using Maroik.Core.PostgreSQL.Data;
-using Maroik.Core.PostgreSQL.Models;
 using Microsoft.EntityFrameworkCore;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
+using OrmCalendarEventAttachedFile = Maroik.Core.PostgreSQL.Models.CalendarEventAttachedFile;
 
 namespace Maroik.Core.Repository.Repositories;
 
-public class CalendarEventAttachedFileRepository : ICalendarEventAttachedFileRepository
+/// <summary>
+/// EF Core repository for <see cref="CalendarEventAttachedFile"/> domain objects.
+/// </summary>
+public class CalendarEventAttachedFileRepository(ApplicationDbContext context)
+    : GenericRepository<CalendarEventAttachedFile, OrmCalendarEventAttachedFile>(context), ICalendarEventAttachedFileRepository
 {
-    private readonly ApplicationDbContext _context;
+    /// <summary>The underlying <see cref="DbSet{TEntity}"/> for <see cref="OrmCalendarEventAttachedFile"/> rows.</summary>
+    protected override DbSet<OrmCalendarEventAttachedFile> Set => Context.CalendarEventAttachedFiles;
 
-    public CalendarEventAttachedFileRepository(ApplicationDbContext context)
-    {
-        _context = context;
-    }
-    /// <summary>
-    /// Gets all registered files.
-    /// </summary>
-    /// <returns></returns>
-    public async Task<List<CalendarEventAttachedFile>> GetAllAsync()
-    {
-        return await _context.CalendarEventAttachedFiles.ToListAsync();
-    }
+    /// <summary>Maps a persisted <see cref="OrmCalendarEventAttachedFile"/> row to the <see cref="CalendarEventAttachedFile"/> domain object.</summary>
+    protected override CalendarEventAttachedFile ToDomain(OrmCalendarEventAttachedFile e)
+        => CalendarEventAttachedFile.Reconstitute(e.Id, e.CalendarEventId, e.Size, e.Name, e.Extension, e.Path);
 
-    /// <summary>
-    /// Gets an attached file.
-    /// </summary>
-    /// <param name="calendarEventId"></param>
-    /// <returns></returns>
-    public async Task<CalendarEventAttachedFile> GetCalendarEventAttachedFileAsync(long calendarEventId)
+    /// <summary>Maps a <see cref="CalendarEventAttachedFile"/> domain object to its <see cref="OrmCalendarEventAttachedFile"/> persistence representation.</summary>
+    protected override OrmCalendarEventAttachedFile ToEntity(CalendarEventAttachedFile f) => new()
     {
-        return await _context.CalendarEventAttachedFiles.Where(x => x.CalendarEventId == calendarEventId).FirstOrDefaultAsync();
-    }
+        Id = f.Id,
+        CalendarEventId = f.CalendarEventId,
+        Size = f.Size,
+        Name = f.Name,
+        Extension = f.Extension,
+        Path = f.Path
+    };
 
-    /// <summary>
-    /// Saves an attached file.
-    /// </summary>
-    /// <param name="calendarEventAttachedFile"></param>
-    /// <returns></returns>
-    public async Task SaveCalendarEventAttachedFileAsync(CalendarEventAttachedFile calendarEventAttachedFile)
-    {
-        _ = await _context.CalendarEventAttachedFiles.AddAsync(calendarEventAttachedFile);
-        _ = await _context.SaveChangesAsync();
-    }
-
-    /// <summary>
-    /// Updates an attached file.
-    /// </summary>
-    /// <param name="calendarEventAttachedFile"></param>
-    /// <returns></returns>
-    public async Task UpdateCalendarEventAttachedFileAsync(CalendarEventAttachedFile calendarEventAttachedFile)
-    {
-        _ = _context.CalendarEventAttachedFiles.Update(calendarEventAttachedFile);
-        _ = await _context.SaveChangesAsync();
-    }
-
-    /// <summary>
-    /// Deletes attached files.
-    /// </summary>
-    /// <param name="calendarEventId"></param>
-    /// <returns></returns>
-    public async Task<int> DeleteCalendarEventAttachedFileAsync(long calendarEventId)
-    {
-        return await _context.Database.ExecuteSqlInterpolatedAsync
-        (
-            $"""DELETE FROM "CalendarEventAttachedFile" WHERE "CalendarEventId" = {calendarEventId}"""
-        );
-    }
+    /// <inheritdoc />
+    public Task<CalendarEventAttachedFile?> FindByCalendarEventIdAsync(long calendarEventId, CancellationToken ct = default)
+        => QueryFirstAsync(e => e.CalendarEventId == calendarEventId, ct: ct);
 }

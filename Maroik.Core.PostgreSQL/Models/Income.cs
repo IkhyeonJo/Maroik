@@ -16,22 +16,22 @@ public partial class Income
     /// <summary>
     /// Account Email (ID)
     /// </summary>
-    public string? AccountEmail { get; set; }
+    public string AccountEmail { get; set; } = null!;
 
     /// <summary>
     /// MainClass
     /// </summary>
-    public string? MainClass { get; set; }
+    public string MainClass { get; set; } = null!;
 
     /// <summary>
     /// SubClass
     /// </summary>
-    public string? SubClass { get; set; }
+    public string SubClass { get; set; } = null!;
 
     /// <summary>
     /// Content
     /// </summary>
-    public string? Content { get; set; }
+    public string Content { get; set; } = null!;
 
     /// <summary>
     /// Amount
@@ -41,7 +41,7 @@ public partial class Income
     /// <summary>
     /// DepositMyAssetProductName
     /// </summary>
-    public string? DepositMyAssetProductName { get; set; }
+    public string DepositMyAssetProductName { get; set; } = null!;
 
     /// <summary>
     /// Created
@@ -56,7 +56,8 @@ public partial class Income
     /// <summary>
     /// Note
     /// </summary>
-    public string? Note { get; set; }
+    public string Note { get; set; } = null!;
 
-    public virtual Asset? Asset { get; set; }
+    /// <summary>The asset the income is deposited into; carries the amount's currency.</summary>
+    public virtual Asset Asset { get; set; } = null!;
 }

@@ -1,70 +1,65 @@
-using Maroik.Core.Repository.Contracts;
+using Maroik.Core.Contract.Interfaces;
+using Maroik.Core.Domain.Menu;
 using Maroik.Core.PostgreSQL.Data;
-using Maroik.Core.PostgreSQL.Models;
 using Microsoft.EntityFrameworkCore;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
+using OrmCategory = Maroik.Core.PostgreSQL.Models.Category;
 
 namespace Maroik.Core.Repository.Repositories;
 
-public class CategoryRepository : ICategoryRepository
+/// <summary>
+/// EF Core repository for <see cref="Category"/> domain objects,
+/// representing top-level navigation menu categories.
+/// </summary>
+public class CategoryRepository(ApplicationDbContext context)
+    : GenericRepository<Category, OrmCategory>(context), ICategoryRepository
 {
-    private readonly ApplicationDbContext _context;
+    /// <summary>The underlying <see cref="DbSet{TEntity}"/> for <see cref="OrmCategory"/> rows.</summary>
+    protected override DbSet<OrmCategory> Set => Context.Categories;
 
-    public CategoryRepository(ApplicationDbContext context)
+    /// <summary>Maps a persisted <see cref="OrmCategory"/> row to the <see cref="Category"/> domain object.</summary>
+    protected override Category ToDomain(OrmCategory e)
+        => Category.Reconstitute(e.Id, e.Name, e.DisplayName, e.IconPath, e.Controller, e.Action, e.Role, e.Order);
+
+    /// <summary>Maps a <see cref="Category"/> domain object to its <see cref="OrmCategory"/> persistence representation.</summary>
+    protected override OrmCategory ToEntity(Category c) => new()
     {
-        _context = context;
+        Id = c.Id,
+        Name = c.Name ?? "",
+        DisplayName = c.DisplayName ?? "",
+        IconPath = c.IconPath ?? "",
+        Controller = c.Controller ?? "",
+        Action = c.Action,
+        Role = c.Role ?? "Admin",
+        Order = c.Order
+    };
+
+    /// <inheritdoc />
+    public Task<List<Category>> GetAllAsync(CancellationToken ct = default)
+        => QueryAllAsync(ct: ct);
+
+    /// <inheritdoc />
+    public Task<Category?> FindByIdAsync(long id, CancellationToken ct = default)
+        => QueryFirstAsync(e => e.Id == id, ct: ct);
+
+    /// <inheritdoc />
+    public async Task<Category?> FindByIdForUpdateAsync(long id, CancellationToken ct = default)
+    {
+        // Raw SQL is required because EF Core LINQ cannot emit FOR UPDATE. AsNoTracking so a
+        // pre-lock instance already tracked in this context can't snap back and defeat the lock.
+        var entities = await Set.FromSqlInterpolated(
+            $"""
+             SELECT *
+             FROM "Category"
+             WHERE "Id" = {id}
+             LIMIT 1
+             FOR UPDATE
+             """).AsNoTracking().ToListAsync(ct);
+
+        var entity = entities.FirstOrDefault();
+        return entity == null ? null : ToDomain(entity);
     }
 
-    /// <summary>
-    /// Gets all categories.
-    /// </summary>
-    /// <returns></returns>
-    public async Task<IEnumerable<Category>> GetCategoryAsync()
-    {
-        return await _context.Categories.ToListAsync();
-    }
-    /// <summary>
-    /// Gets categories by permission.
-    /// </summary>
-    /// <param name="role"></param>
-    /// <returns></returns>
-    public async Task<IEnumerable<Category>> GetCategoryByRoleAsync(string role)
-    {
-        return await _context.Categories
-                .Where(a => a.Role == role)
-                .OrderBy(a => a.Order)
-                .ToListAsync();
-    }
-    /// <summary>
-    /// Creates a category.
-    /// </summary>
-    /// <param name="category"></param>
-    /// <returns></returns>
-    public async Task CreateCategoryAsync(Category category)
-    {
-        _ = await _context.Categories.AddAsync(category);
-        _ = await _context.SaveChangesAsync();
-    }
-    /// <summary>
-    /// Updates a category.
-    /// </summary>
-    /// <param name="category"></param>
-    /// <returns></returns>
-    public async Task UpdateCategoryAsync(Category category)
-    {
-        _ = _context.Categories.Update(category);
-        _ = await _context.SaveChangesAsync();
-    }
-    /// <summary>
-    /// Removes a category.
-    /// </summary>
-    /// <param name="category"></param>
-    /// <returns></returns>
-    public async Task DeleteCategoryAsync(Category category)
-    {
-        _ = _context.Categories.Remove(category);
-        _ = await _context.SaveChangesAsync();
-    }
+    /// <inheritdoc />
+    public Task DeleteByIdAsync(long id, CancellationToken ct = default)
+        => DeleteWhereAsync(e => e.Id == id, ct);
 }

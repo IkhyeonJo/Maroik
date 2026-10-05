@@ -1,60 +1,80 @@
-using Maroik.Core.Repository.Contracts;
+using Maroik.Core.Contract.Interfaces;
+using Maroik.Core.Domain.Board;
 using Maroik.Core.PostgreSQL.Data;
-using Maroik.Core.PostgreSQL.Models;
 using Microsoft.EntityFrameworkCore;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
+using OrmBoardComment = Maroik.Core.PostgreSQL.Models.BoardComment;
 
 namespace Maroik.Core.Repository.Repositories;
 
-public class BoardCommentRepository : IBoardCommentRepository
+/// <summary>
+/// EF Core repository for <see cref="BoardComment"/> domain objects.
+/// Includes a batched comment-count query used to populate board list views efficiently.
+/// </summary>
+public class BoardCommentRepository(ApplicationDbContext context)
+    : GenericRepository<BoardComment, OrmBoardComment>(context), IBoardCommentRepository
 {
-    private readonly ApplicationDbContext _context;
+    /// <summary>The underlying <see cref="DbSet{TEntity}"/> for <see cref="OrmBoardComment"/> rows.</summary>
+    protected override DbSet<OrmBoardComment> Set => Context.BoardComments;
 
-    public BoardCommentRepository(ApplicationDbContext context)
+    /// <inheritdoc />
+    public async Task<Dictionary<long, int>> GetCommentCountsByBoardIdsAsync(IEnumerable<long> boardIds, CancellationToken ct = default)
     {
-        _context = context;
+        List<long> ids = [.. boardIds];
+
+        Dictionary<long, int> counts = await Context.BoardComments
+            .Where(x => ids.Contains(x.BoardId) && !x.Deleted)
+            .GroupBy(x => x.BoardId)
+            .Select(g => new { BoardId = g.Key, Count = g.Count() })
+            .ToDictionaryAsync(x => x.BoardId, x => x.Count, ct);
+
+        foreach (long id in ids.Where(id => !counts.ContainsKey(id)))
+            counts[id] = 0;
+
+        return counts;
     }
 
-    /// <summary>
-    /// Gets all comments for a post.
-    /// </summary>
-    /// <returns></returns>
-    public async Task<IEnumerable<BoardComment>> GetOneBoardCommentsAsync(long boardId)
-    {
-        return await _context.BoardComments.Where(x => x.BoardId == boardId).OrderBy(m => m.Order).ToListAsync();
-    }
+    /// <summary>Maps a persisted <see cref="OrmBoardComment"/> row to the <see cref="BoardComment"/> domain object.</summary>
+    protected override BoardComment ToDomain(OrmBoardComment e) => BoardComment.Reconstitute(
+        e.Id, e.BoardId, e.Order, e.AvatarImagePath, e.Writer,
+        e.Content, e.Created, e.Deleted);
 
-    /// <summary>
-    /// Gets a comment.
-    /// </summary>
-    /// <returns></returns>
-    public async Task<BoardComment> GetBoardCommentAsync(int id)
+    /// <summary>Maps a <see cref="BoardComment"/> domain object to its <see cref="OrmBoardComment"/> persistence representation.</summary>
+    protected override OrmBoardComment ToEntity(BoardComment c) => new()
     {
-        return await _context.BoardComments.Where(x => x.Id == id).FirstOrDefaultAsync();
-    }
+        Id = c.Id,
+        BoardId = c.BoardId,
+        Order = c.Order,
+        AvatarImagePath = c.AvatarImagePath ?? "",
+        Writer = c.Writer,
+        Content = c.Content ?? "",
+        Created = c.Created,
+        Deleted = c.Deleted
+    };
 
-    /// <summary>
-    /// Creates a comment.
-    /// </summary>
-    /// <param name="boardComment"></param>
-    /// <returns></returns>
-    public async Task WriteBoardCommentAsync(BoardComment boardComment)
+    /// <inheritdoc />
+    public Task<List<BoardComment>> GetByBoardIdOrderedAsync(long boardId, CancellationToken ct = default)
+        => QueryAsync(e => e.BoardId == boardId && !e.Deleted, q => q.OrderBy(e => e.Order), ct: ct);
+
+    /// <inheritdoc />
+    public Task<BoardComment?> FindByIdAsync(long id, CancellationToken ct = default)
+        => QueryFirstAsync(e => e.Id == id && !e.Deleted, ct: ct);
+
+    /// <inheritdoc />
+    public async Task<BoardComment?> FindByIdForUpdateAsync(long id, CancellationToken ct = default)
     {
-        _ = await _context.BoardComments.AddAsync(boardComment);
-        _ = await _context.SaveChangesAsync();
-    }
+        // Raw SQL is required because EF Core LINQ cannot emit FOR UPDATE. AsNoTracking so a
+        // pre-lock instance already tracked in this context can't snap back and defeat the lock
+        // (see BoardRepository.FindActiveByIdForUpdateAsync for the same rationale).
+        var entities = await Set.FromSqlInterpolated(
+            $"""
+             SELECT *
+             FROM "BoardComment"
+             WHERE "Id" = {id} AND "Deleted" = false
+             LIMIT 1
+             FOR UPDATE
+             """).AsNoTracking().ToListAsync(ct);
 
-    /// <summary>
-    /// Deletes a comment.
-    /// </summary>
-    /// <param name="boardComment"></param>
-    /// <returns></returns>
-    public async Task DeleteBoardCommentAsync(BoardComment boardComment)
-    {
-        _ = _context.BoardComments.Update(boardComment);
-        _ = await _context.SaveChangesAsync();
+        var entity = entities.FirstOrDefault();
+        return entity == null ? null : ToDomain(entity);
     }
-
 }

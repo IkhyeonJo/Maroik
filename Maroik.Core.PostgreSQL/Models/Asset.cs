@@ -11,17 +11,17 @@ public partial class Asset
     /// <summary>
     /// ProductName
     /// </summary>
-    public string? ProductName { get; set; }
+    public string ProductName { get; set; } = null!;
 
     /// <summary>
     /// AccountEmail (ID)
     /// </summary>
-    public string? AccountEmail { get; set; }
+    public string AccountEmail { get; set; } = null!;
 
     /// <summary>
     /// Item
     /// </summary>
-    public string? Item { get; set; }
+    public string Item { get; set; } = null!;
 
     /// <summary>
     /// Amount
@@ -31,7 +31,7 @@ public partial class Asset
     /// <summary>
     /// MonetaryUnit (KRW, USD, ETC)
     /// </summary>
-    public string? MonetaryUnit { get; set; }
+    public string MonetaryUnit { get; set; } = null!;
 
     /// <summary>
     /// Created
@@ -46,20 +46,31 @@ public partial class Asset
     /// <summary>
     /// Note
     /// </summary>
-    public string? Note { get; set; }
+    public string Note { get; set; } = null!;
 
     /// <summary>
     /// Deleted
     /// </summary>
     public bool Deleted { get; set; }
 
-    public virtual Account? AccountEmailNavigation { get; set; }
+    /// <summary>The account that owns this asset.</summary>
+    public virtual Account AccountEmailNavigation { get; set; } = null!;
 
-    public virtual ICollection<Expenditure> Expenditures { get; set; } = new List<Expenditure>();
+    /// <summary>Expenditures paid from this asset (Expenditure.PaymentMethod).</summary>
+    public virtual ICollection<Expenditure> ExpenditureAssetNavigations { get; set; } = new List<Expenditure>();
 
-    public virtual ICollection<FixedExpenditure> FixedExpenditures { get; set; } = new List<FixedExpenditure>();
+    /// <summary>Transfer-type expenditures credited to this asset (Expenditure.MyDepositAsset).</summary>
+    public virtual ICollection<Expenditure> ExpenditureAssets { get; set; } = new List<Expenditure>();
 
+    /// <summary>Fixed expenditures paid from this asset (FixedExpenditure.PaymentMethod).</summary>
+    public virtual ICollection<FixedExpenditure> FixedExpenditureAssetNavigations { get; set; } = new List<FixedExpenditure>();
+
+    /// <summary>Transfer-type fixed expenditures credited to this asset (FixedExpenditure.MyDepositAsset).</summary>
+    public virtual ICollection<FixedExpenditure> FixedExpenditureAssets { get; set; } = new List<FixedExpenditure>();
+
+    /// <summary>Fixed incomes deposited into this asset (FixedIncome.DepositMyAssetProductName).</summary>
     public virtual ICollection<FixedIncome> FixedIncomes { get; set; } = new List<FixedIncome>();
 
+    /// <summary>Incomes deposited into this asset (Income.DepositMyAssetProductName).</summary>
     public virtual ICollection<Income> Incomes { get; set; } = new List<Income>();
 }
