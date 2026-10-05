@@ -36,10 +36,6 @@ public class AccountService(
     ) : IAccountService
 {
     /// <inheritdoc />
-    public async Task<List<AccountResponse>> GetAllAccountsAsync(CancellationToken ct = default)
-        => (await accountRepository.GetAllAsync(ct)).Select(AccountMapper.ToResponse).ToList();
-
-    /// <inheritdoc />
     public async Task<List<AccountResponse>> GetAccountsByNicknamesAsync(IEnumerable<string> nicknames, CancellationToken ct = default)
         => (await accountRepository.FindByNicknamesAsync(nicknames, ct)).Select(AccountMapper.ToResponse).ToList();
 

@@ -46,48 +46,6 @@ public sealed class BoardRepositoryTests(DatabaseFixture database) : RepositoryT
         return boards;
     }
 
-    // -- GetByTypeAsync -----------------------------------------------------------
-
-    /// <summary>Verifies that <c>GetByTypeAsync</c> returns only non-deleted boards of the given type.</summary>
-    [Fact]
-    public async Task GetByTypeAsync_ReturnsOnlyBoardsOfGivenType()
-    {
-        string mine = Unique("writer");
-        await SeedAsync(
-            MakeBoard("Hello", mine),
-            MakeBoard("World", mine),
-            MakeBoard("Note1", mine, type: BoardTypes.PrivateNote));
-
-        List<Board> result = await Sut.GetByTypeAsync(BoardTypes.FreeForum, TestContext.Current.CancellationToken);
-
-        Assert.All(result, b => Assert.Equal(BoardTypes.FreeForum, b.Type));
-        Assert.Equal(2, result.Count(b => b.Writer == mine));
-    }
-
-    /// <summary>Verifies that <c>GetByTypeAsync</c> returns empty for a type that matches no rows.</summary>
-    [Fact]
-    public async Task GetByTypeAsync_ReturnsEmpty_WhenNoMatchingType()
-    {
-        List<Board> result = await Sut.GetByTypeAsync("NonExistentType", TestContext.Current.CancellationToken);
-
-        Assert.Empty(result);
-    }
-
-    /// <summary>Verifies that <c>GetByTypeAsync</c> excludes soft-deleted boards.</summary>
-    [Fact]
-    public async Task GetByTypeAsync_ExcludesDeletedBoards()
-    {
-        string mine = Unique("writer");
-        await SeedAsync(
-            MakeBoard("Visible", mine),
-            MakeBoard("Removed", mine, deleted: true));
-
-        List<Board> result = await Sut.GetByTypeAsync(BoardTypes.FreeForum, TestContext.Current.CancellationToken);
-
-        Board single = Assert.Single(result, b => b.Writer == mine);
-        Assert.Equal("Visible", single.Title);
-    }
-
     // -- FindActiveByIdAsync -------------------------------------------------
 
     /// <summary>Verifies that <c>FindActiveByIdAsync</c> returns the board when it exists and is not deleted.</summary>

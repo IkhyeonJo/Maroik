@@ -1,3 +1,4 @@
+#file: noinspection HttpUrlsUsage
 # ─────────────────────────────────────────────────────────────────────────────
 # Maroik — PRODUCTION compose stack (maroik.com, home server behind Cloudflare).
 #

@@ -1142,18 +1142,6 @@ public class AccountServiceTests
         _passwordService.Setup(p => p.HashPassword(It.IsAny<string>())).Returns(ReplacementHash);
     }
 
-    /// <summary>Verifies that <c>GetAllAccountsAsync</c> maps every repository row.</summary>
-    [Fact]
-    public async Task GetAllAccountsAsync_MapsEveryAccount()
-    {
-        _accountRepo.Setup(r => r.GetAllAsync(It.IsAny<CancellationToken>()))
-            .ReturnsAsync([ActiveAccount("a@example.com"), ActiveAccount("b@example.com")]);
-
-        List<AccountResponse> result = await CreateSut().GetAllAccountsAsync(TestContext.Current.CancellationToken);
-
-        Assert.Equal(["a@example.com", "b@example.com"], result.Select(a => a.Email));
-    }
-
     /// <summary>Verifies that <c>GetAccountByEmailAsync</c> returns null for an unknown address and a mapped response otherwise.</summary>
     [Fact]
     public async Task GetAccountByEmailAsync_ReturnsNullWhenMissing_AndMappedResponseWhenFound()
