@@ -34,9 +34,11 @@ chmod 755 /home/ubuntu/Maroik/Maroik.Log
 # apt upgrade auto restart services
 sudo sed -i 's/#$nrconf{restart} = '"'"'i'"'"';/$nrconf{restart} = '"'"'a'"'"';/g' /etc/needrestart/needrestart.conf
 
-# Modify logind.conf to ignore lid switch
-echo "HandleLidSwitch=ignore" | sudo tee -a /etc/systemd/logind.conf
-sudo systemctl restart systemd-logind
+# Modify logind.conf to ignore lid switch (only once: every deploy reruns this script)
+if ! grep -q '^HandleLidSwitch=ignore$' /etc/systemd/logind.conf; then
+  echo "HandleLidSwitch=ignore" | sudo tee -a /etc/systemd/logind.conf
+  sudo systemctl restart systemd-logind
+fi
 
 # Update and upgrade system
 sudo apt update -y
@@ -113,6 +115,12 @@ else
       exit 1
     fi
     echo "[INFO] External drive mounted successfully at $EXTERNAL_DRIVE_MOUNT"
+  fi
+
+  # An empty value would turn the paths below into /DB and /Files at the filesystem root.
+  if [ -z "$BACKUP_BASE_DIR" ]; then
+    echo "[INFO] BACKUP_BASE_DIR not configured in .env.prod"
+    exit 1
   fi
 
   # Create backup directory structure
