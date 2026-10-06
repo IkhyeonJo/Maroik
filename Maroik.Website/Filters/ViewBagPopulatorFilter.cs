@@ -4,7 +4,6 @@ using Maroik.Core.Contract.Misc.Settings;
 using Maroik.Core.Domain.Account;
 using Maroik.Core.Domain.Localization;
 using Maroik.Website.Constants;
-using Maroik.Website.Contracts;
 using Maroik.Website.Extensions;
 using Microsoft.AspNetCore.Localization;
 using Microsoft.AspNetCore.Mvc;
@@ -23,11 +22,9 @@ namespace Maroik.Website.Filters;
 /// ViewBag.{Role}Categories/{Role}SubCategories.
 /// </summary>
 public class ViewBagPopulatorFilter(
-    IAccountService accountService,
     IDashboardService dashboardService,
     ITimeZoneCatalogService timeZoneCatalogService,
     IOptions<ServerSetting> serverSettings,
-    ISessionService sessionService,
     TimeProvider timeProvider) : IAsyncActionFilter
 {
     /// <summary>Populates shared ViewBag entries before each action executes.</summary>
@@ -58,35 +55,21 @@ public class ViewBagPopulatorFilter(
         controller.ViewBag.DomainName = serverSettings.Value.DomainName;
         controller.ViewBag.MaxAttachedFileSizeBytes = serverSettings.Value.MaxAttachedFileSizeBytes;
 
-        AccountResponse loggedInAccount = new()
-        {
-            Nickname = "Login",
-            Role = Role.Anonymous,
-            TimeZoneIanaId = "UTC",
-            AvatarImagePath = "/anonymous/images/bg1.jpg"
-        };
-
-        var sessionAccount = sessionService.GetAccount();
-        if (sessionAccount != null)
-        {
-            // AuthorizationFilter already re-loaded and re-validated this account from the database
-            // earlier in the same request; reuse that instead of issuing an identical second query.
-            if (context.HttpContext.Items.TryGetValue(HttpContextItemKeys.LoggedInAccount, out var cached)
-                && cached is AccountResponse cachedAccount)
-            {
-                loggedInAccount = cachedAccount;
-            }
-            else
-            {
-                try
+        // AuthorizationFilter (which always runs first) re-loads and re-validates a signed-in session's
+        // account from the database and stashes it here — or redirects the request to the login page,
+        // so the action never runs. No stash therefore means no signed-in account: the anonymous
+        // placeholder below.
+        AccountResponse loggedInAccount =
+            context.HttpContext.Items.TryGetValue(HttpContextItemKeys.LoggedInAccount, out var stashed)
+            && stashed is AccountResponse signedInAccount
+                ? signedInAccount
+                : new AccountResponse
                 {
-                    string email = sessionAccount.Email ?? "";
-                    if (!string.IsNullOrEmpty(email))
-                        loggedInAccount = await accountService.GetAccountByEmailAsync(email, context.HttpContext.RequestAborted) ?? loggedInAccount;
-                }
-                catch (Exception ex) { logger.LogWarning(ex, "Failed to refresh session account for {Email}", sessionAccount.Email); }
-            }
-        }
+                    Nickname = "Login",
+                    Role = Role.Anonymous,
+                    TimeZoneIanaId = "UTC",
+                    AvatarImagePath = "/anonymous/images/bg1.jpg"
+                };
 
         // Single source of truth for controllers and views alike, read back via the typed
         // HttpContext.GetLoggedInAccount() — never null from here on (anonymous placeholder at worst).
@@ -116,7 +99,7 @@ public class ViewBagPopulatorFilter(
         int fixedIncomesNoticedCount = 0, fixedExpenditureNoticedCount = 0;
         int fixedIncomesExpiredCount = 0, fixedExpenditureExpiredCount = 0;
 
-        if (sessionAccount != null && loggedInAccount.Role == Role.User)
+        if (loggedInAccount.Role == Role.User)
         {
             try
             {
