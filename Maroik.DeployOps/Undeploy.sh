@@ -4,14 +4,14 @@
 sudo docker-compose -f /home/ubuntu/Maroik/docker-compose.prod.yml down
 
 # Stop and remove all Docker containers
-sudo docker stop $(docker ps -a -q)
-sudo docker rm $(docker ps -a -q)
+sudo docker stop $(sudo docker ps -a -q)
+sudo docker rm $(sudo docker ps -a -q)
 
 # Remove all Docker volumes
-sudo docker volume rm $(docker volume ls -q)
+sudo docker volume rm $(sudo docker volume ls -q)
 
 # Optionally, remove all Docker images (use with caution)
-sudo docker rmi $(docker images -q)
+sudo docker rmi $(sudo docker images -q)
 
 # Remove current user's cron jobs
 sudo crontab -r
