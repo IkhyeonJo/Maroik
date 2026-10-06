@@ -15,10 +15,11 @@ namespace Maroik.Website.Filters;
 
 /// <summary>
 /// Global action filter that populates shared ViewBag entries before every action executes:
-/// domain name, file-size limit, logged-in account, the active navigation menu item (for
-/// sidebar highlighting/breadcrumbs), notification badge counts, current culture, and the
-/// return URI. Runs after <see cref="AuthorizationFilter"/>, which has already decided allow/deny for
-/// this request and left the navigation menu on <c>HttpContext.Items</c>; this filter publishes it as
+/// domain name, file-size limit, the active navigation menu item (for sidebar highlighting/breadcrumbs),
+/// notification badge counts, current culture, and the return URI. It also resolves the logged-in
+/// account, but publishes it on <c>HttpContext.Items</c> (read via the typed
+/// <see cref="Extensions.HttpContextAccountExtensions"/>) rather than the dynamic ViewBag.
+/// Runs after <see cref="AuthorizationFilter"/>, which has already decided allow/deny for this request and left the navigation menu on <c>HttpContext.Items</c>; this filter publishes it as
 /// ViewBag.{Role}Categories/{Role}SubCategories.
 /// </summary>
 public class ViewBagPopulatorFilter(
@@ -87,7 +88,9 @@ public class ViewBagPopulatorFilter(
             }
         }
 
-        controller.ViewBag.LoggedInAccount = loggedInAccount;
+        // Single source of truth for controllers and views alike, read back via the typed
+        // HttpContext.GetLoggedInAccount() — never null from here on (anonymous placeholder at worst).
+        context.HttpContext.Items[HttpContextItemKeys.LoggedInAccount] = loggedInAccount;
         controller.ViewBag.TimeZoneOptions = timeZoneCatalogService.GetTimeZoneOptions();
         controller.ViewBag.CopyrightYear = timeProvider.GetUtcNow().UtcDateTime.ConvertTimeByTimeZoneIanaId(loggedInAccount.TimeZoneIanaId ?? "UTC").Year;
 

@@ -3,6 +3,7 @@ using Maroik.Core.Contract.Interfaces;
 using Maroik.Core.Contract.Misc.Settings;
 using Maroik.Core.Domain.Account;
 using Maroik.Website.Contracts;
+using Maroik.Website.Extensions;
 using Maroik.Website.Filters;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Localization;
@@ -151,16 +152,16 @@ public class ViewBagPopulatorFilterTests
 
     // -- Anonymous session (no session account) --------------------------------
 
-    /// <summary>Verifies that <c>ViewBag.LoggedInAccount</c> defaults to anonymous when no session exists.</summary>
+    /// <summary>Verifies that the logged-in account (<c>HttpContext.GetLoggedInAccount()</c>) defaults to anonymous when no session exists.</summary>
     [Fact]
     public async Task OnActionExecutionAsync_SetsAnonymousAccount_WhenNoSession()
     {
         _sessionService.Setup(s => s.GetAccount()).Returns((AccountResponse?)null);
-        var (context, controller) = BuildContext();
+        var (context, _) = BuildContext();
 
         await CreateSut().OnActionExecutionAsync(context, EmptyNext());
 
-        AccountResponse account = controller.ViewBag.LoggedInAccount;
+        AccountResponse account = context.HttpContext.GetLoggedInAccount();
         Assert.Equal(Role.Anonymous, account.Role);
     }
 
@@ -181,7 +182,7 @@ public class ViewBagPopulatorFilterTests
 
     // -- Logged-in User session ------------------------------------------------
 
-    /// <summary>Verifies that <c>ViewBag.LoggedInAccount</c> is populated from the account service when session exists.</summary>
+    /// <summary>Verifies that the logged-in account (<c>HttpContext.GetLoggedInAccount()</c>) is populated from the account service when session exists.</summary>
     [Fact]
     public async Task OnActionExecutionAsync_SetsLoggedInAccount_WhenSessionExists()
     {
@@ -196,11 +197,11 @@ public class ViewBagPopulatorFilterTests
             .Setup(d => d.GetNoticeCountsAsync("user@test.com", 7, It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(new NotificationDto { FixedIncomesNoticed = 2, FixedExpendituresNoticed = 3, FixedIncomesExpired = 1, FixedExpendituresExpired = 4 });
 
-        var (context, controller) = BuildContext();
+        var (context, _) = BuildContext();
 
         await CreateSut().OnActionExecutionAsync(context, EmptyNext());
 
-        AccountResponse account = controller.ViewBag.LoggedInAccount;
+        AccountResponse account = context.HttpContext.GetLoggedInAccount();
         Assert.Equal("TestUser", account.Nickname);
         Assert.Equal(Role.User, account.Role);
     }
@@ -240,12 +241,12 @@ public class ViewBagPopulatorFilterTests
             .Setup(d => d.GetNoticeCountsAsync("user@test.com", 7, It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(new NotificationDto());
 
-        var (context, controller) = BuildContext();
+        var (context, _) = BuildContext();
         context.HttpContext.Items[Constants.HttpContextItemKeys.LoggedInAccount] = stashedAccount;
 
         await CreateSut().OnActionExecutionAsync(context, EmptyNext());
 
-        AccountResponse account = controller.ViewBag.LoggedInAccount;
+        AccountResponse account = context.HttpContext.GetLoggedInAccount();
         Assert.Equal("FromAuthFilter", account.Nickname);
         _accountService.Verify(
             a => a.GetAccountByEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
@@ -482,12 +483,12 @@ public class ViewBagPopulatorFilterTests
             .Setup(a => a.GetAccountByEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ThrowsAsync(new InvalidOperationException("db down"));
 
-        var (context, controller) = BuildContext();
+        var (context, _) = BuildContext();
 
         var ex = await Record.ExceptionAsync(() => CreateSut().OnActionExecutionAsync(context, EmptyNext()));
 
         Assert.Null(ex);
-        AccountResponse account = controller.ViewBag.LoggedInAccount;
+        AccountResponse account = context.HttpContext.GetLoggedInAccount();
         Assert.Equal(Role.Anonymous, account.Role);
     }
 

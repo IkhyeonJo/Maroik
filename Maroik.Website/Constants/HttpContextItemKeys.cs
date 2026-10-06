@@ -7,10 +7,12 @@ namespace Maroik.Website.Constants;
 internal static class HttpContextItemKeys
 {
     /// <summary>
-    /// The logged-in account (<c>AccountResponse</c>) that <see cref="Maroik.Website.Filters.AuthorizationFilter"/>
-    /// re-loaded and re-validated from the database for this request, so
-    /// <see cref="Maroik.Website.Filters.ViewBagPopulatorFilter"/> can reuse it instead of issuing an
-    /// identical second query.
+    /// The logged-in account (<c>AccountResponse</c>) for this request. First stashed by
+    /// <see cref="Maroik.Website.Filters.AuthorizationFilter"/> after re-loading and re-validating it from
+    /// the database (so <see cref="Maroik.Website.Filters.ViewBagPopulatorFilter"/> can reuse it instead of
+    /// issuing an identical second query), then overwritten by <see cref="Maroik.Website.Filters.ViewBagPopulatorFilter"/>
+    /// with the final value (anonymous placeholder when signed out). Read it through
+    /// <see cref="Maroik.Website.Extensions.HttpContextAccountExtensions"/>, never directly.
     /// </summary>
     internal const string LoggedInAccount = "__Maroik.LoggedInAccount";
 
