@@ -408,3 +408,16 @@ check doesn't work here since every Domain type legitimately depends on the unre
 return type). Keep it green; when a new error is added, add it via `LocalizableError`, and add the
 matching resx entry — with a `{0}`/`{1}` composite-format key, not a baked value — to every controller
 resx pair (`en-US` + `ko-KR`) that can surface it.
+
+## Service error keys must come from ServiceErrorKeys
+
+The message key of a failed service result (`ServiceResult`, `LoginResult`, `RegisterResult`, `SummernoteUploadResult`)
+is also the resx key the controller looks it up under, so it is written as a `Maroik.Core.Contract.Dtos.ServiceErrorKeys`
+constant, never a literal (the machine error *code*, e.g. `"Board.NotFound"`, stays a literal). Keys a controller compares
+against and answers itself (`"invalid-image"`, `"reset-password-invalid"`, ...) live in `ServiceErrorKeys.Signals` and are
+used by both sides. Rewording a value means renaming its resx key in every controller pair in the same change.
+
+Enforced by `ServiceErrorKeyArchitectureTests` (`Maroik.Core.Service.Tests`, no literal keys in the service sources) and
+`ServiceErrorKeyResxTests` (`Maroik.Website.Tests`), which follows the calls from each controller into the services with
+Mono.Cecil and fails when a key the controller can receive is missing from its `en-US` / `ko-KR` resx, or when a key is
+reached from no controller at all.

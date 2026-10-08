@@ -300,7 +300,7 @@ public class AccountController(
 
         if (!result.Success)
         {
-            if (result.ErrorKey == "reset-password-invalid")
+            if (result.ErrorKey == ServiceErrorKeys.Signals.ResetPasswordInvalid)
             {
                 ViewBag.FailToResetPassword = true;
                 return View();
