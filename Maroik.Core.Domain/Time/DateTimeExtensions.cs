@@ -41,7 +41,7 @@ public static class DateTimeExtensions
         /// to <paramref name="timeZoneIanaId"/>; otherwise (e.g. an anonymous viewer) the raw UTC value
         /// is returned in ISO-8601 ("yyyy-MM-ddTHH:mm:ssZ") form. Whether a given viewer sees local
         /// time is a caller decision (e.g. an Account bounded-context role check) — this helper stays
-        /// role-agnostic so Localization does not depend on the Account bounded context.
+        /// role-agnostic so Time does not depend on the Account bounded context.
         /// </summary>
         public string ToViewerFormattedString(bool viewerSeesLocalTime, string timeZoneIanaId) =>
             viewerSeesLocalTime

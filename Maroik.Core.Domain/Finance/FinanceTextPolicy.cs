@@ -8,7 +8,7 @@ namespace Maroik.Core.Domain.Finance;
 /// aggregate (<see cref="Income"/>, <see cref="Expenditure"/>, <see cref="FixedIncome"/>,
 /// <see cref="FixedExpenditure"/>). The persisted columns are <c>character varying(255)</c>, so a
 /// longer value would otherwise surface as a raw database exception ("Input is invalid") instead of
-/// a clean, localizable validation error. Authoritative here; the create/edit forms mirror it.
+/// a clean domain validation error with its own message. Authoritative here; the create/edit forms mirror it.
 /// </summary>
 public static class FinanceTextPolicy
 {
