@@ -2,13 +2,13 @@ import { describe, it, expect } from "vitest";
 import { describeMissingServerConstants } from "@tests/_common/missingConfigSuite";
 import { describeAmountLabel } from "@tests/_common/amountLabelSuite";
 import { describeGridCrudScript } from "@tests/_common/gridCrudSuite";
-import { loadSite, hidden, antiForgery } from "@tests/_common/harness";
+import { loadSite, hidden, antiForgery, lastOf } from "@tests/_common/harness";
 
 // wwwroot/user/custom/Notice/FixedIncome/js/site.js
 /** Main class → sub-classes, as the page publishes it. */
 const subClassMap = { Labor: ["Salary"] };
 /** Last selectable deposit day per month (a month missing here gets no day options). */
-const maxDepositDayByMonth = { "2": "28", "1": "31" };
+const maxDepositDayByMonth = { "2": 28, "1": 31 };
 
 /** The fixed-income page DOM (server constants, create/edit forms). */
 function fixture(): string {
@@ -30,7 +30,7 @@ function fixture(): string {
      <form id="formCreateFixedIncome"></form><form id="formEditFixedIncome"></form>
      <button id="btnExportExcelFixedIncome"></button>
      <button id="btnEditFixedIncomeGridRow" data-errorMessageSelectGridRow="Please select grid row"></button>
-     <button id="btnConfirmDeleteFixedIncome"></button><button id="btnDeleteFixedIncome"></button>
+     <button id="btnConfirmDeleteFixedIncome" data-errorMessageSelectGridRow="L_SelectRow"></button><button id="btnDeleteFixedIncome" data-errorMessageSelectGridRow="L_SelectRow"></button>
      <select id="createFixedIncomeDepositMyAssetProductName"><option value="A" selected>A</option></select>
      <select id="editFixedIncomeDepositMyAssetProductName"><option value="A">A</option><option value="B">B</option></select>
      <span id="labelCreateFixedIncomeAmount"></span><span id="labelEditFixedIncomeAmount"></span>`
@@ -50,7 +50,7 @@ describe("Notice/FixedIncome", () => {
     it("Excel export targets /Notice/ExportExcelFixedIncome", () => {
         const h = loadSite("user", "Notice", "FixedIncome", fixture());
         h.$("#btnExportExcelFixedIncome").trigger("click");
-        expect(h.submittedForms.at(-1)!.action).toContain("/Notice/ExportExcelFixedIncome");
+        expect(lastOf(h.submittedForms).action).toContain("/Notice/ExportExcelFixedIncome");
     });
 
     // Regression: the EDIT button's cached jQuery selector used to target a nonexistent id
@@ -109,6 +109,7 @@ describeGridCrudScript({
 describeAmountLabel({
     label: "user/Notice/FixedIncome",
     load: () => loadSite("user", "Notice", "FixedIncome", fixture()),
+    loadWithoutCreateChoices: () => loadSite("user", "Notice", "FixedIncome", fixture().replace('<select id="createFixedIncomeDepositMyAssetProductName"><option value="A" selected>A</option></select>', '<select id="createFixedIncomeDepositMyAssetProductName"></select>')),
     url: "GetFixedIncomeAmountLabel",
     create: { trigger: "#createFixedIncomeDepositMyAssetProductName", span: "#labelCreateFixedIncomeAmount" },
     edit: { trigger: "#editFixedIncomeDepositMyAssetProductName", span: "#labelEditFixedIncomeAmount" },

@@ -27,14 +27,6 @@ declare class MvcGrid {
     [key: string]: unknown;
 }
 
-// The `detail` of MvcGrid's `rowclick` CustomEvent: the clicked row's column values by column name.
-// jQuery 3 copies the native `detail` onto the jQuery event, but @types/jquery types `detail` as
-// UIEvent's number, so a `rowclick` handler narrows `e.detail` to this.
-interface MvcGridRowClickDetail {
-    /** Column name -> the row's value for that column. */
-    data: Record<string, string>;
-}
-
 // Shared helpers each role's _Layout script puts on `window` (see "Client scripts" in CLAUDE.md).
 interface Window {
     /** Fallback upload limit for a page whose `#maxAttachedFileSizeBytes` hidden field is missing. */
@@ -90,9 +82,9 @@ interface JQuery<TElement = HTMLElement> {
     datepicker(options: DatepickerSetupOptions): this;
 }
 
-// The datepicker `minDate` setter the calendar scripts call. @types/jqueryui resolves this call to its
-// catch-all `option` overload, which answers `any`, and an augmenting overload is never tried before it;
-// the call sites view the picker through this interface instead.
+// The datepicker `minDate` setter (window.setMinDate takes the picker as this). @types/jqueryui resolves the
+// call to its catch-all `option` overload, which answers `any`, and an augmenting overload is never tried
+// before it, so the setter is typed through this interface instead.
 interface DatepickerMinDateSetter {
     datepicker(methodName: "option", optionName: "minDate", minDate: Date | null): unknown;
 }
@@ -123,61 +115,6 @@ type FullCalendarCalendar = import("@fullcalendar/core").Calendar;
 type FullCalendarEventApi = import("@fullcalendar/core").EventApi;
 type FullCalendarEventClickArg = import("@fullcalendar/core").EventClickArg;
 type FullCalendarDateSelectArg = import("@fullcalendar/core").DateSelectArg;
-
-// ── Calendar payloads from CalendarController ───────────────────────────────────────────────────────
-// Two JSON spellings reach the scripts: `JsonSerialization.ToClientJson` strings (events, reminders —
-// PascalCase, parsed with JSON.parse) and MVC `Json(...)` replies (camelCase).
-
-/** One reminder in `serializedCalendarReminders` (CalendarReminderDto). Exactly one `*BeforeEvent` is set. */
-interface CalendarReminderJson {
-    Method: string;
-    MinutesBeforeEvent: number | null;
-    HoursBeforeEvent: number | null;
-    DaysBeforeEvent: number | null;
-    WeeksBeforeEvent: number | null;
-    /** Time of day ("HH:mm:ss") of an all-day event's reminder; null for a timed event. */
-    TimesBeforeEvent: string | null;
-}
-
-/** One event of `calendarEvents` or a page's `*CalendarEventOutputViewModels` (CalendarEventOutputViewModel). */
-interface CalendarEventJson {
-    /** FullCalendar takes event ids as strings (it converts any other value), so the scripts pass `String(Id)`. */
-    Id: number;
-    CalendarId: number;
-    Title: string;
-    AllDay: boolean;
-    StartDate: string;
-    EndDate: string;
-    HtmlColorCode: string;
-    DisplayStartDate: string;
-    DisplayEndDate: string;
-    DisplayStartDateTimeZone: string;
-    DisplayEndDateTimeZone: string;
-    /** "My" or "Other". */
-    CalendarType: string;
-}
-
-/** A calendar in the `calendars` / `tempOtherCalendars` replies (CalendarResponse). */
-interface CalendarSummary {
-    id: number;
-    name: string;
-    htmlColorCode: string;
-}
-
-/** A row of the `setCalendarShareds` reply (CalendarSharedSummaryResponse). */
-interface CalendarSharedSummary {
-    id: number;
-    name: string;
-    user: boolean;
-    guest: boolean;
-}
-
-/** A row of the `browseCalendarsOfInterests` reply (CalendarBrowseSummaryResponse). */
-interface CalendarBrowseSummary {
-    id: number;
-    name: string;
-    checked: boolean;
-}
 
 // ── Calendar request bodies the calendar scripts build ─────────────────────────────────────────────
 
@@ -255,8 +192,53 @@ interface JQuery<TElement = HTMLElement> {
 
 }
 
-// ── Controller replies (MVC `Json(...)`, camelCase) ──────────────────────────────────────────────────
-// `result` tells the two shapes apart, so `if (data.result)` narrows to the success shape.
+// ── Runtime checks — each role's _Layout script defines these on `window` ──────────────────────────
+// The page scripts read the values the view renders and the replies the controllers send through these
+// helpers instead of type assertions: a missing element or attribute throws, and a reply that does not
+// pass its check shows the generic "temporary error" toast (logging why).
+
+interface ArrayConstructor {
+    /** An array of values of unknown type (the library's typing says `any[]`). */
+    isArray(arg: unknown): arg is unknown[];
+}
+
+interface ObjectConstructor {
+    /** The own enumerable entries, values of unknown type (the library's typing says `any`). */
+    entries(o: object): [string, unknown][];
+}
+
+/** A runtime check that a value has type `T`. */
+interface Check<T> {
+    /** Where and why `value` is not a `T` (`"reply.asset.amount: expected a number, got string"`), or null when it is one. */
+    problem(value: unknown, path: string): string | null;
+    /** Whether `value` is a `T`. */
+    is(value: unknown): value is T;
+}
+
+/** The type a {@link Check} proves. */
+type Checked<C> = C extends Check<infer T> ? T : never;
+
+/** The fields a {@link CheckBuilders.object} check proves. */
+type CheckedFields<S extends Record<string, Check<unknown>>> = { [K in keyof S]: Checked<S[K]> };
+
+/** `window.check`: builds {@link Check}s. */
+interface CheckBuilders {
+    readonly string: Check<string>;
+    readonly number: Check<number>;
+    readonly boolean: Check<boolean>;
+    literal<const V extends string | number | boolean>(value: V): Check<V>;
+    nullable<T>(check: Check<T>): Check<T | null>;
+    array<T>(item: Check<T>): Check<T[]>;
+    /** A plain object whose every value passes `value`. */
+    record<T>(value: Check<T>): Check<Record<string, T>>;
+    /** A plain object with (at least) the fields of `shape`. */
+    object<S extends Record<string, Check<unknown>>>(shape: S): Check<CheckedFields<S>>;
+    oneOf<A, B>(first: Check<A>, second: Check<B>): Check<A | B>;
+    /** An instance of `type` (`instanceof`). */
+    instance<T>(type: Constructor<T>): Check<T>;
+    /** A string holding JSON that passes `content` (some replies nest their rows as JSON text). */
+    jsonText<T>(content: Check<T>): Check<string>;
+}
 
 /** The refusal every action answers with. */
 interface FailedReply {
@@ -264,203 +246,63 @@ interface FailedReply {
     error: string;
 }
 
-/** A write action's reply: a localized confirmation or the refusal. */
-type ActionReply = { result: true; message: string } | FailedReply;
-
-/** A read action's reply: `TPayload` on success, or the refusal. */
-type ReadReply<TPayload> = ({ result: true } & TPayload) | FailedReply;
-
-/** A write action's reply that also returns what it wrote. */
-type WriteReply<TPayload> = ({ result: true; message: string } & TPayload) | FailedReply;
-
-/**
- * The success shape of a reply, for code the `if (data.result)` narrowing cannot reach — a function
- * declaration inside that branch is hoisted, so TypeScript does not carry the narrowing into it.
- */
-type SucceededReply<TPayload> = { result: true } & TPayload;
-
-/** `Get*AmountLabel`: the currency label of the chosen asset. */
-interface AmountLabelReply {
-    result: boolean;
-    label: string;
+/** `window.replies`: the reply shapes most actions share. */
+interface ReplyChecks {
+    readonly failed: Check<FailedReply>;
+    /** A write action's reply: a localized confirmation, or the refusal. */
+    readonly action: Check<{ result: true; message: string } | FailedReply>;
+    /** A read action's reply: the payload on success, or the refusal. */
+    read<S extends Record<string, Check<unknown>>>(payload: S): Check<({ result: true } & CheckedFields<S>) | FailedReply>;
+    /** A write action's reply that also returns what it wrote. */
+    write<S extends Record<string, Check<unknown>>>(payload: S): Check<({ result: true; message: string } & CheckedFields<S>) | FailedReply>;
 }
 
-/** `UploadImageFile` (Forum / Management / Calendar): the stored inline image, or why it was refused. */
-type UploadImageReply =
-    | { result: true; file: { fileContents: string; contentType: string }; filePath: string }
-    | { result: false; errorMessage: string };
+/** A constructor `instanceof` can test against (`HTMLInputElement`, `File`, …). */
+type Constructor<T> = abstract new (...args: never[]) => T;
 
-/** `UpdateProfileAvatar`. */
-type AvatarReply = { result: true } | { result: false; errorMessage: string };
+interface Window {
+    check: CheckBuilders;
+    replies: ReplyChecks;
 
-/** `Write*Comment`: where to go back to. */
-type CommentWrittenReply = { result: true; boardId: number; page: number } | FailedReply;
+    /**
+     * Wraps an ajax `success` handler: calls it with a reply that passes `check`; otherwise logs why and shows
+     * the generic "temporary error" toast.
+     */
+    onReply<T>(check: Check<T>, handler: (reply: T) => void): (reply: unknown) => void;
 
-/** `IsAssetExists` (AssetResponse). */
-interface AssetPayload {
-    asset: { productName: string; item: string; amount: number; monetaryUnit: string; note: string | null; deleted: boolean };
-}
+    /** {@link onReply} for a reply that arrives as text (a refused file download): unparseable text counts as a mismatch. */
+    onReplyText<T>(check: Check<T>, handler: (reply: T) => void): (text: string) => void;
 
-/** `IsIncomeExists` (IncomeResponse). */
-interface IncomePayload {
-    income: {
-        id: number;
-        mainClass: string;
-        subClass: string;
-        content: string;
-        amount: number;
-        depositMyAssetProductName: string;
-        created: string;
-        note: string | null;
-    };
-}
+    /** Parses JSON the view rendered; throws, naming `what`, when it is not JSON or does not pass `check`. */
+    parseJson<T>(text: string, check: Check<T>, what: string): T;
 
-/** `IsExpenditureExists` (ExpenditureResponse). */
-interface ExpenditurePayload {
-    expenditure: {
-        id: number;
-        mainClass: string;
-        subClass: string;
-        content: string;
-        amount: number;
-        paymentMethod: string;
-        myDepositAsset: string | null;
-        created: string;
-        note: string | null;
-    };
-}
+    /** Returns `value` when it passes `check`; throws, naming `what`, otherwise. */
+    conform<T>(value: unknown, check: Check<T>, what: string): T;
 
-/** The fields `IsFixedIncomeExists` / `IsFixedExpenditureExists` share (Fixed*OutputViewModel). */
-interface FixedSchedule {
-    id: number;
-    mainClass: string;
-    subClass: string;
-    content: string;
-    amount: number;
-    depositMonth: number;
-    depositDay: number;
-    /** "yyyy-MM-dd". */
-    maturityDate: string;
-    note: string | null;
-    unpunctuality: boolean;
-}
+    /** Returns `value` unless it is null / undefined, which throws "`what` is missing". */
+    required<T>(value: T | null | undefined, what: string): T;
 
-/** `IsFixedIncomeExists`. */
-interface FixedIncomePayload {
-    fixedIncome: FixedSchedule & { depositMyAssetProductName: string };
-}
+    /** The element `#id`, which must be a `type`. */
+    byId<T extends Element>(id: string, type: Constructor<T>): T;
 
-/** `IsFixedExpenditureExists`. */
-interface FixedExpenditurePayload {
-    fixedExpenditure: FixedSchedule & { paymentMethod: string; myDepositAsset: string | null };
-}
+    /** The first element of `$element`, which must be a `type`. */
+    elementOf<T extends Element>($element: JQuery, type: Constructor<T>): T;
 
-/** `IsAccountExists` (AccountResponse). */
-interface AccountPayload {
-    account: {
-        email: string;
-        nickname: string;
-        role: string;
-        timeZoneIanaId: string;
-        locked: boolean;
-        emailConfirmed: boolean;
-        agreedServiceTerms: boolean;
-        message: string | null;
-        deleted: boolean;
-    };
-}
+    /** `value`, which must be a `type`. */
+    instanceOf<T>(value: unknown, type: Constructor<T>, what: string): T;
 
-/** A menu row (MenuOutputViewModel); `categoryId` is set on a sub-category only. */
-interface MenuItem {
-    id: number;
-    categoryId: number | null;
-    name: string;
-    displayName: string;
-    iconPath: string;
-    controller: string | null;
-    action: string;
-    role: string;
-    order: number;
-}
+    /** The text of a field the view always renders. */
+    fieldValue($field: JQuery): string;
 
-/** `IsCategoryExists`. */
-interface CategoryPayload {
-    category: MenuItem;
-}
+    /** The chosen value of a select the view always renders; null when no option is chosen (all disabled, or none). */
+    selectValue($select: JQuery): string | null;
 
-/** `IsSubCategoryExists`. */
-interface SubCategoryPayload {
-    subCategory: MenuItem;
-}
+    /** The text of a field the view may leave out (a server constant with a built-in fallback). */
+    optionalFieldValue($field: JQuery): string | undefined;
 
-/** `IsBoardExists` (Forum): the post's id. */
-interface FreeBoardPayload {
-    freeBoard: { id: number };
-}
+    /** An attribute the element always carries. */
+    attribute($element: JQuery, name: string): string;
 
-/** `IsBoardExists` (Management): the private note's id. */
-interface PrivateNoteBoardPayload {
-    privateNoteBoard: { id: number };
-}
-
-/** A calendar as `CreateCalendar` / `UpdateCalendar` / `DeleteCalendar` / `IsCalendarExists` return it. */
-interface CalendarPayload {
-    calendar: { id: number; name: string; htmlColorCode: string; description: string | null; timeZoneIanaId: string };
-}
-
-/** `IsCalendarEventExists` / `IsOtherCalendarEventExists` (CalendarEventOutputViewModel). */
-interface CalendarEventPayload {
-    calendarEvent: {
-        id: number;
-        calendarId: number;
-        title: string;
-        allDay: boolean;
-        /** "yyyy-MM-dd" for an all-day event, "yyyy-MM-dd HH:mm:ss" otherwise. */
-        displayStartDate: string;
-        displayEndDate: string;
-        startDateTimeZoneIanaId: string;
-        endDateTimeZoneIanaId: string;
-        location: string;
-        description: string;
-        calendarEventAttachedFile: { name: string; extension: string; size: number } | null;
-        status: string;
-        /** A JSON array of {@link CalendarReminderJson}. */
-        serializedCalendarReminders: string;
-    };
-}
-
-/** `GetCalendarEvents`: a JSON array of {@link CalendarEventJson}. */
-interface CalendarEventsPayload {
-    calendarEvents: string;
-}
-
-/** `GetCalendars`. */
-interface CalendarsPayload {
-    calendars: CalendarSummary[];
-}
-
-/** `GetOtherCalendars`. */
-interface OtherCalendarsPayload {
-    tempOtherCalendars: CalendarSummary[];
-}
-
-/** `GetCalendarShareds`. */
-interface CalendarSharedsPayload {
-    setCalendarShareds: CalendarSharedSummary[];
-}
-
-/** `GetBrowseCalendarsOfInterest`. */
-interface BrowseCalendarsPayload {
-    browseCalendarsOfInterests: CalendarBrowseSummary[];
-}
-
-/** What the calendar scripts put in a FullCalendar event's `extendedProps`. */
-interface CalendarEventExtendedProps {
-    calendarId: number;
-    displayStartDate: string;
-    displayEndDate: string;
-    displayStartDateTimeZone: string;
-    displayEndDateTimeZone: string;
-    /** "My" or "Other". */
-    calendarType: string;
+    /** Moves a datepicker's earliest selectable date. */
+    setMinDate(picker: DatepickerMinDateSetter, date: Date | null): void;
 }

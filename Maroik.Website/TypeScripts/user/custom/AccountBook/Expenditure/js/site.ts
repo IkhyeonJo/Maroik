@@ -15,6 +15,17 @@
  * class combination on save. IIFE-wrapped, no `import` / `export`.
  */
 (function() {
+    // The runtime-check helpers the _Layout script defines (see TypeScripts/global.d.ts).
+    const { check, replies, onReply, parseJson, conform, required, instanceOf, fieldValue, selectValue, optionalFieldValue, attribute } = window;
+
+    // The replies this page reads, mirroring the controllers' Json(...) results (see window.replies).
+    const amountLabelReply = check.object({ result: check.boolean, label: check.string });
+    const expenditureReply = replies.read({
+        expenditure: check.object({
+            id: check.number, mainClass: check.string, subClass: check.string, content: check.string, amount: check.number,
+            paymentMethod: check.string, myDepositAsset: check.nullable(check.string), created: check.string, note: check.string,
+        }),
+    });
     /** Zero-pads a 1-2 digit date/time component to 2 digits (e.g. `5` -> `"05"`). */
     function pad2(n: number): string {
         return n.toString().padStart(2, "0");
@@ -43,7 +54,7 @@
     const $createExpenditureMyDepositAsset = $("#createExpenditureMyDepositAsset");
     const $__RequestVerificationToken = $("input[name=\"__RequestVerificationToken\"]");
     // Localized toast shown when the amount-label request itself fails (transport error).
-    const failedToLoadAmountLabelMessage = $("#localizerFailedToLoadAmountLabel").val() as string;
+    const failedToLoadAmountLabelMessage = fieldValue($("#localizerFailedToLoadAmountLabel"));
     const $createExpenditureDialogModal = $("#createExpenditureDialogModal");
     const $editExpenditureId = $("#editExpenditureId");
     const $editExpenditureMainClass = $("#editExpenditureMainClass");
@@ -68,8 +79,8 @@
 
     // Server-published expenditure taxonomy (Expenditure.cshtml). Authoritative in
     // ExpenditureClassPolicy; mirrored here for form UX only, the server re-validates on save.
-    const expenditureSubClassMap = JSON.parse(($("#expenditureSubClassMap").val() as string) || "{}") as Record<string, string[]>;
-    const expenditureDepositAssetSubClasses = JSON.parse(($("#expenditureDepositAssetSubClasses").val() as string) || "[]") as string[];
+    const expenditureSubClassMap = parseJson(optionalFieldValue($("#expenditureSubClassMap")) || "{}", check.record(check.array(check.string)), "#expenditureSubClassMap");
+    const expenditureDepositAssetSubClasses = parseJson(optionalFieldValue($("#expenditureDepositAssetSubClasses")) || "[]", check.array(check.string), "#expenditureDepositAssetSubClasses");
 
     // Enables/shows only the options in allowedValues (disabling+hiding the rest) and selects
     // valueToSelect when it is allowed, otherwise the first allowed option.
@@ -87,15 +98,15 @@
     }
 
     // The "deposit asset" field is only relevant for transfer-type subclasses.
-    function ToggleCreateExpenditureMyDepositAsset(subClassValue: string) {
-        expenditureDepositAssetSubClasses.indexOf(subClassValue) !== -1
+    function ToggleCreateExpenditureMyDepositAsset(subClassValue: string | null) {
+        subClassValue !== null && expenditureDepositAssetSubClasses.indexOf(subClassValue) !== -1
             ? $divCreateExpenditureMyDepositAsset.show()
             : $divCreateExpenditureMyDepositAsset.hide();
     }
 
     /** Same as `ToggleCreateExpenditureMyDepositAsset` for the edit modal. */
-    function ToggleEditExpenditureMyDepositAsset(subClassValue: string) {
-        expenditureDepositAssetSubClasses.indexOf(subClassValue) !== -1
+    function ToggleEditExpenditureMyDepositAsset(subClassValue: string | null) {
+        subClassValue !== null && expenditureDepositAssetSubClasses.indexOf(subClassValue) !== -1
             ? $divEditExpenditureMyDepositAsset.show()
             : $divEditExpenditureMyDepositAsset.hide();
     }
@@ -105,54 +116,54 @@
     // types as a wider union). `PrevText` / `NextText` are read PascalCase to match the object
     // keys.
     const localizer = {
-        PrevText: $("#localizerPrevText").val(),
-        NextText: $("#localizerNextText").val(),
-        January: $("#localizerJanuary").val(),
-        February: $("#localizerFebruary").val(),
-        March: $("#localizerMarch").val(),
-        April: $("#localizerApril").val(),
-        May: $("#localizerMay").val(),
-        June: $("#localizerJune").val(),
-        July: $("#localizerJuly").val(),
-        August: $("#localizerAugust").val(),
-        September: $("#localizerSeptember").val(),
-        October: $("#localizerOctober").val(),
-        November: $("#localizerNovember").val(),
-        December: $("#localizerDecember").val(),
-        Jan: $("#localizerJan").val(),
-        Feb: $("#localizerFeb").val(),
-        Mar: $("#localizerMar").val(),
-        Apr: $("#localizerApr").val(),
-        Jun: $("#localizerJun").val(),
-        Jul: $("#localizerJul").val(),
-        Aug: $("#localizerAug").val(),
-        Sep: $("#localizerSep").val(),
-        Oct: $("#localizerOct").val(),
-        Nov: $("#localizerNov").val(),
-        Dec: $("#localizerDec").val(),
-        Sunday: $("#localizerSunday").val(),
-        Monday: $("#localizerMonday").val(),
-        Tuesday: $("#localizerTuesday").val(),
-        Wednesday: $("#localizerWednesday").val(),
-        Thursday: $("#localizerThursday").val(),
-        Friday: $("#localizerFriday").val(),
-        Saturday: $("#localizerSaturday").val(),
-        Sun: $("#localizerSun").val(),
-        Mon: $("#localizerMon").val(),
-        Tue: $("#localizerTue").val(),
-        Wed: $("#localizerWed").val(),
-        Thu: $("#localizerThu").val(),
-        Fri: $("#localizerFri").val(),
-        Sat: $("#localizerSat").val(),
-        Su: $("#localizerSu").val(),
-        Mo: $("#localizerMo").val(),
-        Tu: $("#localizerTu").val(),
-        We: $("#localizerWe").val(),
-        Th: $("#localizerTh").val(),
-        Fr: $("#localizerFr").val(),
-        Sa: $("#localizerSa").val(),
-        YearSuffix: $("#localizerYearSuffix").val()
-    } as Record<string, string>;
+        PrevText: fieldValue($("#localizerPrevText")),
+        NextText: fieldValue($("#localizerNextText")),
+        January: fieldValue($("#localizerJanuary")),
+        February: fieldValue($("#localizerFebruary")),
+        March: fieldValue($("#localizerMarch")),
+        April: fieldValue($("#localizerApril")),
+        May: fieldValue($("#localizerMay")),
+        June: fieldValue($("#localizerJune")),
+        July: fieldValue($("#localizerJuly")),
+        August: fieldValue($("#localizerAugust")),
+        September: fieldValue($("#localizerSeptember")),
+        October: fieldValue($("#localizerOctober")),
+        November: fieldValue($("#localizerNovember")),
+        December: fieldValue($("#localizerDecember")),
+        Jan: fieldValue($("#localizerJan")),
+        Feb: fieldValue($("#localizerFeb")),
+        Mar: fieldValue($("#localizerMar")),
+        Apr: fieldValue($("#localizerApr")),
+        Jun: fieldValue($("#localizerJun")),
+        Jul: fieldValue($("#localizerJul")),
+        Aug: fieldValue($("#localizerAug")),
+        Sep: fieldValue($("#localizerSep")),
+        Oct: fieldValue($("#localizerOct")),
+        Nov: fieldValue($("#localizerNov")),
+        Dec: fieldValue($("#localizerDec")),
+        Sunday: fieldValue($("#localizerSunday")),
+        Monday: fieldValue($("#localizerMonday")),
+        Tuesday: fieldValue($("#localizerTuesday")),
+        Wednesday: fieldValue($("#localizerWednesday")),
+        Thursday: fieldValue($("#localizerThursday")),
+        Friday: fieldValue($("#localizerFriday")),
+        Saturday: fieldValue($("#localizerSaturday")),
+        Sun: fieldValue($("#localizerSun")),
+        Mon: fieldValue($("#localizerMon")),
+        Tue: fieldValue($("#localizerTue")),
+        Wed: fieldValue($("#localizerWed")),
+        Thu: fieldValue($("#localizerThu")),
+        Fri: fieldValue($("#localizerFri")),
+        Sat: fieldValue($("#localizerSat")),
+        Su: fieldValue($("#localizerSu")),
+        Mo: fieldValue($("#localizerMo")),
+        Tu: fieldValue($("#localizerTu")),
+        We: fieldValue($("#localizerWe")),
+        Th: fieldValue($("#localizerTh")),
+        Fr: fieldValue($("#localizerFr")),
+        Sa: fieldValue($("#localizerSa")),
+        YearSuffix: fieldValue($("#localizerYearSuffix"))
+    };
 
     // Apply the localized names to every datepicker on the page.
     $.datepicker.setDefaults({
@@ -211,8 +222,8 @@
 
     // MvcGrid `rowclick`: move the highlight to the row whose `data-id` matches.
     $(document).off("rowclick.Expenditure").on("rowclick.Expenditure", (e: JQuery.TriggeredEvent) => {
-        let selectedRow = e.detail as unknown as MvcGridRowClickDetail;
-        let selectedRowId = selectedRow.data.Id;
+        let selectedRow = conform(e.detail, check.object({ data: check.record(check.string) }), "the rowclick detail");
+        let selectedRowId = selectedRow.data["Id"];
 
         let $clsGridRow = $(".clsGridRow");
 
@@ -221,7 +232,7 @@
         });
 
         $clsGridRow.each(function() {
-            if ((String(selectedRowId).valueOf() === String($(this).attr("data-id")).valueOf())) {
+            if ((String(selectedRowId).valueOf() === String(attribute($(this), "data-id")).valueOf())) {
                 $(this).addClass(selectedRowColor);
             }
         });
@@ -243,22 +254,22 @@
     // Double-click the highlighted row to open its edit modal.
     $(document).off("dblclick.Expenditure", ".clsGridRow").on("dblclick.Expenditure", ".clsGridRow", function() {
         $(".clsGridRow").each(function() {
-            if ($(this).attr("class")!.includes(selectedRowColor)) {
-                EditExpenditureGridRow();
+            if (attribute($(this), "class").includes(selectedRowColor)) {
+                EditExpenditureGridRow(attribute($btnEditExpenditureGridRow, "data-errorMessageSelectGridRow"));
             }
         });
     });
     // Free-text search: push the term into the grid query string and reload.
     $gridSearch.off("input").on("input", function(event) {
         const grid = new MvcGrid(document.querySelector(".mvc-grid"));
-        grid.url.searchParams.set("wholeSearch", (event.currentTarget as HTMLInputElement).value);
+        grid.url.searchParams.set("wholeSearch", instanceOf(event.currentTarget, HTMLInputElement, "the event target").value);
         grid.reload();
     });
 
     /** Create form main-class change: re-filter the subclass options and re-evaluate the deposit-asset block. */
     function CreateFormShowExpenditureSubClassBySelectedExpenditureMainClass(createExpenditureMainClass: HTMLSelectElement) {
         ApplyAllowedOptions($createExpenditureSubClass, expenditureSubClassMap[createExpenditureMainClass.value] || [], null);
-        ToggleCreateExpenditureMyDepositAsset($createExpenditureSubClass.val() as string);
+        ToggleCreateExpenditureMyDepositAsset(selectValue($createExpenditureSubClass));
     }
 
     /** Create form subclass change: show/hide the deposit-asset block for it. */
@@ -283,12 +294,12 @@
         let content = $createExpenditureContent.val();
         let amount = $createExpenditureAmount.val();
 
-        let year = parseInt(($createExpenditureDate.val() as string).substring(0, 4));
-        let month = parseInt(($createExpenditureDate.val() as string).substring(5, 7));
-        let day = parseInt(($createExpenditureDate.val() as string).substring(8, 10));
-        let hour = parseInt($createExpenditureHour.val() as string);
-        let minute = parseInt($createExpenditureMinute.val() as string);
-        let second = parseInt($createExpenditureSecond.val() as string);
+        let year = parseInt(fieldValue($createExpenditureDate).substring(0, 4));
+        let month = parseInt(fieldValue($createExpenditureDate).substring(5, 7));
+        let day = parseInt(fieldValue($createExpenditureDate).substring(8, 10));
+        let hour = parseInt(fieldValue($createExpenditureHour));
+        let minute = parseInt(fieldValue($createExpenditureMinute));
+        let second = parseInt(fieldValue($createExpenditureSecond));
 
         // Sent as the account's own local wall-clock time ("yyyy-MM-dd HH:mm:ss"), not converted
         // to UTC here: the server already knows the account's IANA time zone from the session and
@@ -314,11 +325,11 @@
         $.ajax({
             url: "/AccountBook/CreateExpenditure",
             type: "POST",
-            headers: { "RequestVerificationToken": $__RequestVerificationToken.val() as string },
+            headers: { "RequestVerificationToken": fieldValue($__RequestVerificationToken) },
             dataType: "json",
             data: paramValue,
             contentType: "application/json; charset=utf-8",
-            success: function(data: ActionReply) {
+            success: onReply(replies.action, function(data) {
                 if (data.result) {
                     $createExpenditureDialogModal.modal("hide");
 
@@ -329,7 +340,7 @@
                 } else {
                     toastr.error(data.error);
                 }
-            }
+            })
         });
 
         return false;
@@ -343,28 +354,28 @@
      *
      * @param errorMessageSelectGridRow localized "pick a row first" text from a `data-*` attribute.
      */
-    function EditExpenditureGridRow(errorMessageSelectGridRow?: string) {
+    function EditExpenditureGridRow(errorMessageSelectGridRow: string) {
 
         let selectedRowId = "";
 
         $(".clsGridRow").each(function() {
-            if ($(this).attr("class")!.includes(selectedRowColor)) {
-                selectedRowId = $(this).attr("data-id")!;
+            if (attribute($(this), "class").includes(selectedRowColor)) {
+                selectedRowId = attribute($(this), "data-id");
             }
         });
 
         if (selectedRowId === "") {
-            toastr.error(errorMessageSelectGridRow!);
+            toastr.error(errorMessageSelectGridRow);
             return false;
         }
 
         $.ajax({
             url: "/AccountBook/IsExpenditureExists" + "?id=" + selectedRowId,
             type: "POST",
-            headers: { "RequestVerificationToken": $__RequestVerificationToken.val() as string },
+            headers: { "RequestVerificationToken": fieldValue($__RequestVerificationToken) },
             dataType: "json",
             contentType: "application/json; charset=utf-8",
-            success: function(data: ReadReply<ExpenditurePayload>) {
+            success: onReply(expenditureReply, function(data) {
                 if (data.result) {
 
                     $editExpenditureId.val(data.expenditure.id);
@@ -377,10 +388,10 @@
                     $editExpenditureAmount.val(data.expenditure.amount);
                     // Split the `created` ISO string into the date field and the
                     // hour / minute / second selects.
-                    $editExpenditureDate.val(data.expenditure.created.split("T")[0]);
-                    $editExpenditureHour.val(parseInt(data.expenditure.created.split("T")[1].substring(0, 2))).trigger("change");
-                    $editExpenditureMinute.val(parseInt(data.expenditure.created.split("T")[1].substring(3, 5))).trigger("change");
-                    $editExpenditureSecond.val(parseInt(data.expenditure.created.split("T")[1].substring(6, 8))).trigger("change");
+                    $editExpenditureDate.val(required(data.expenditure.created.split("T")[0], "part 0 of expenditure.created"));
+                    $editExpenditureHour.val(parseInt(required(data.expenditure.created.split("T")[1], "part 1 of expenditure.created").substring(0, 2))).trigger("change");
+                    $editExpenditureMinute.val(parseInt(required(data.expenditure.created.split("T")[1], "part 1 of expenditure.created").substring(3, 5))).trigger("change");
+                    $editExpenditureSecond.val(parseInt(required(data.expenditure.created.split("T")[1], "part 1 of expenditure.created").substring(6, 8))).trigger("change");
                     $editExpenditurePaymentMethod.val(data.expenditure.paymentMethod).trigger("change");
                     $editExpenditureNote.val(data.expenditure.note);
 
@@ -400,14 +411,15 @@
                 } else {
                     toastr.error(data.error);
                 }
-            }
+            })
         });
+        return undefined;
     }
 
     /** Edit form main-class change: re-filter the subclass options and re-evaluate the deposit-asset block. */
     function EditFormShowExpenditureSubClassBySelectedExpenditureMainClass(editExpenditureMainClass: HTMLSelectElement) {
         ApplyAllowedOptions($editExpenditureSubClass, expenditureSubClassMap[editExpenditureMainClass.value] || [], null);
-        ToggleEditExpenditureMyDepositAsset($editExpenditureSubClass.val() as string);
+        ToggleEditExpenditureMyDepositAsset(selectValue($editExpenditureSubClass));
     }
 
     /** Edit form subclass change: show/hide the deposit-asset block for it. */
@@ -428,12 +440,12 @@
         let content = $editExpenditureContent.val();
         let amount = $editExpenditureAmount.val();
 
-        let year = parseInt(($editExpenditureDate.val() as string).substring(0, 4));
-        let month = parseInt(($editExpenditureDate.val() as string).substring(5, 7));
-        let day = parseInt(($editExpenditureDate.val() as string).substring(8, 10));
-        let hour = parseInt($editExpenditureHour.val() as string);
-        let minute = parseInt($editExpenditureMinute.val() as string);
-        let second = parseInt($editExpenditureSecond.val() as string);
+        let year = parseInt(fieldValue($editExpenditureDate).substring(0, 4));
+        let month = parseInt(fieldValue($editExpenditureDate).substring(5, 7));
+        let day = parseInt(fieldValue($editExpenditureDate).substring(8, 10));
+        let hour = parseInt(fieldValue($editExpenditureHour));
+        let minute = parseInt(fieldValue($editExpenditureMinute));
+        let second = parseInt(fieldValue($editExpenditureSecond));
 
         // See CreateExpenditure — local wall-clock string, no client-side UTC conversion.
         let created = `${year}-${pad2(month)}-${pad2(day)} ${pad2(hour)}:${pad2(minute)}:${pad2(second)}`;
@@ -456,11 +468,11 @@
         $.ajax({
             url: "/AccountBook/UpdateExpenditure",
             type: "POST",
-            headers: { "RequestVerificationToken": $__RequestVerificationToken.val() as string },
+            headers: { "RequestVerificationToken": fieldValue($__RequestVerificationToken) },
             dataType: "json",
             data: paramValue,
             contentType: "application/json; charset=utf-8",
-            success: function(data: ActionReply) {
+            success: onReply(replies.action, function(data) {
                 if (data.result) {
                     $editExpenditureDialogModal.modal("hide");
 
@@ -471,24 +483,24 @@
                 } else {
                     toastr.error(data.error);
                 }
-            }
+            })
         });
         return false;
     }
 
     /** "Delete" button: require a selected row, then just open the confirmation modal. */
-    function ConfirmDeleteExpenditure(errorMessageSelectGridRow?: string) {
+    function ConfirmDeleteExpenditure(errorMessageSelectGridRow: string) {
 
         let selectedRowId = "";
 
         $(".clsGridRow").each(function() {
-            if ($(this).attr("class")!.includes(selectedRowColor)) {
-                selectedRowId = $(this).attr("data-id")!;
+            if (attribute($(this), "class").includes(selectedRowColor)) {
+                selectedRowId = attribute($(this), "data-id");
             }
         });
 
         if (selectedRowId === "") {
-            toastr.error(errorMessageSelectGridRow!);
+            toastr.error(errorMessageSelectGridRow);
             return false;
         }
 
@@ -499,31 +511,32 @@
 
         $confirmDeleteExpenditureDialogModal.modal("toggle");
         $confirmDeleteExpenditureDialogModal.modal("show");
+        return undefined;
     }
 
     /** Confirmed delete: re-check selection, confirm the record exists, then POST `DeleteExpenditure`. */
-    function DeleteExpenditure(errorMessageSelectGridRow?: string) {
+    function DeleteExpenditure(errorMessageSelectGridRow: string) {
 
         let selectedRowId = "";
 
         $(".clsGridRow").each(function() {
-            if ($(this).attr("class")!.includes(selectedRowColor)) {
-                selectedRowId = $(this).attr("data-id")!;
+            if (attribute($(this), "class").includes(selectedRowColor)) {
+                selectedRowId = attribute($(this), "data-id");
             }
         });
 
         if (selectedRowId === "") {
-            toastr.error(errorMessageSelectGridRow!);
+            toastr.error(errorMessageSelectGridRow);
             return false;
         }
 
         $.ajax({
             url: "/AccountBook/IsExpenditureExists" + "?id=" + selectedRowId,
             type: "POST",
-            headers: { "RequestVerificationToken": $__RequestVerificationToken.val() as string },
+            headers: { "RequestVerificationToken": fieldValue($__RequestVerificationToken) },
             dataType: "json",
             contentType: "application/json; charset=utf-8",
-            success: function(data: ReadReply<ExpenditurePayload>) {
+            success: onReply(expenditureReply, function(data) {
                 if (data.result) {
 
                     let paramValue = JSON.stringify({
@@ -533,11 +546,11 @@
                     $.ajax({
                         url: "/AccountBook/DeleteExpenditure",
                         type: "POST",
-                        headers: { "RequestVerificationToken": $__RequestVerificationToken.val() as string },
+                        headers: { "RequestVerificationToken": fieldValue($__RequestVerificationToken) },
                         dataType: "json",
                         data: paramValue,
                         contentType: "application/json; charset=utf-8",
-                        success: function(data: ActionReply) {
+                        success: onReply(replies.action, function(data) {
                             if (data.result) {
                                 $confirmDeleteExpenditureDialogModal.modal("hide");
 
@@ -548,13 +561,14 @@
                             } else {
                                 toastr.error(data.error);
                             }
-                        }
+                        })
                     });
                 } else {
                     toastr.error(data.error);
                 }
-            }
+            })
         });
+        return undefined;
     }
 
     /**
@@ -570,7 +584,7 @@
         form.action = "/AccountBook/ExportExcelExpenditure";
 
         element1.name = "__RequestVerificationToken";
-        element1.value = $__RequestVerificationToken.val() as string;
+        element1.value = fieldValue($__RequestVerificationToken);
         form.appendChild(element1);
 
         element2.name = "fileName";
@@ -591,16 +605,16 @@
         $.ajax({
             url: "/AccountBook/GetExpenditureAmountLabel" + "?productName=" + encodeURIComponent(productName),
             type: "POST",
-            headers: { "RequestVerificationToken": $__RequestVerificationToken.val() as string },
+            headers: { "RequestVerificationToken": fieldValue($__RequestVerificationToken) },
             dataType: "json",
             contentType: "application/json; charset=utf-8",
-            success: function(data: AmountLabelReply) {
+            success: onReply(amountLabelReply, function(data) {
                 if (data.result) {
                     $labelCreateExpenditureAmount.text(data.label);
                 } else {
                     $labelCreateExpenditureAmount.text(data.label);
                 }
-            },
+            }),
             error: function() {
                 toastr.error(failedToLoadAmountLabelMessage);
             }
@@ -612,16 +626,16 @@
         $.ajax({
             url: "/AccountBook/GetExpenditureAmountLabel" + "?productName=" + encodeURIComponent(productName),
             type: "POST",
-            headers: { "RequestVerificationToken": $__RequestVerificationToken.val() as string },
+            headers: { "RequestVerificationToken": fieldValue($__RequestVerificationToken) },
             dataType: "json",
             contentType: "application/json; charset=utf-8",
-            success: function(data: AmountLabelReply) {
+            success: onReply(amountLabelReply, function(data) {
                 if (data.result) {
                     $labelEditExpenditureAmount.text(data.label);
                 } else {
                     $labelEditExpenditureAmount.text(data.label);
                 }
-            },
+            }),
             error: function() {
                 toastr.error(failedToLoadAmountLabelMessage);
             }
@@ -630,11 +644,11 @@
 
     // --- Button / form / select wiring --------------------------------
     $btnEditExpenditureGridRow.off("click").on("click", function() {
-        EditExpenditureGridRow($(this).attr("data-errorMessageSelectGridRow"));
+        EditExpenditureGridRow(attribute($(this), "data-errorMessageSelectGridRow"));
     });
 
     $btnConfirmDeleteExpenditure.off("click").on("click", function() {
-        ConfirmDeleteExpenditure($(this).attr("data-errorMessageSelectGridRow"));
+        ConfirmDeleteExpenditure(attribute($(this), "data-errorMessageSelectGridRow"));
     });
 
     $btnExportExcelExpenditure.off("click").on("click", function() {
@@ -642,7 +656,7 @@
     });
 
     $btnDeleteExpenditure.off("click").on("click", function() {
-        DeleteExpenditure($(this).attr("data-errorMessageSelectGridRow"));
+        DeleteExpenditure(attribute($(this), "data-errorMessageSelectGridRow"));
     });
 
     $formCreateExpenditure.off("submit").on("submit", function() {
@@ -655,42 +669,46 @@
 
     $createExpenditureMainClass.off("change").on("change", function(event) {
         CreateFormShowExpenditureSubClassBySelectedExpenditureMainClass(
-            event.currentTarget as HTMLSelectElement
+            instanceOf(event.currentTarget, HTMLSelectElement, "the event target")
         );
     });
 
     $createExpenditureSubClass.off("change").on("change", function(event) {
         CreateFormShowExpenditureDivCreateExpenditureMyDepositAssetBySelectedExpenditureSubClass(
-            event.currentTarget as HTMLSelectElement
+            instanceOf(event.currentTarget, HTMLSelectElement, "the event target")
         );
     });
 
     $editExpenditureMainClass.off("change").on("change", function(event) {
         EditFormShowExpenditureSubClassBySelectedExpenditureMainClass(
-            event.currentTarget as HTMLSelectElement
+            instanceOf(event.currentTarget, HTMLSelectElement, "the event target")
         );
     });
 
     $editExpenditureSubClass.off("change").on("change", function(event) {
         EditFormShowExpenditureDivCreateExpenditureMyDepositAssetBySelectedExpenditureSubClass(
-            event.currentTarget as HTMLSelectElement
+            instanceOf(event.currentTarget, HTMLSelectElement, "the event target")
         );
     });
 
     $createExpenditurePaymentMethod.off("change").on("change", function(event) {
         ChangeCreateExpenditureAmountLabel(
-            (event.currentTarget as HTMLSelectElement).value
+            instanceOf(event.currentTarget, HTMLSelectElement, "the event target").value
         );
     });
 
     $editExpenditurePaymentMethod.off("change").on("change", function(event) {
         ChangeEditExpenditureAmountLabel(
-            (event.currentTarget as HTMLSelectElement).value
+            instanceOf(event.currentTarget, HTMLSelectElement, "the event target").value
         );
     });
 
     // On load, set the create-form amount label for whichever method is preselected.
     $(function() {
-        ChangeCreateExpenditureAmountLabel($createExpenditurePaymentMethod.find("option:selected").val() as string);
+        // An account without assets has nothing preselected, and so no label to ask for.
+        const preselected = selectValue($createExpenditurePaymentMethod);
+        if (preselected !== null) {
+            ChangeCreateExpenditureAmountLabel(preselected);
+        }
     });
 })();

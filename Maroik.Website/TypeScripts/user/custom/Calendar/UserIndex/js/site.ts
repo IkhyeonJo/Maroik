@@ -30,6 +30,48 @@
  * re-bound with `.off().on()`.
  */
 (function() {
+    // The runtime-check helpers the _Layout script defines (see TypeScripts/global.d.ts).
+    const { check, replies, onReply, onReplyText, parseJson, conform, required, byId, instanceOf, fieldValue, optionalFieldValue, attribute, setMinDate } = window;
+
+    // The replies this page reads, mirroring the controllers' Json(...) results (see window.replies).
+    const uploadImageReply = check.oneOf(
+        check.object({ result: check.literal(true), file: check.object({ fileContents: check.string, contentType: check.string }), filePath: check.string }),
+        check.object({ result: check.literal(false), errorMessage: check.string }));
+    const calendarSummary = check.object({ id: check.number, name: check.string, htmlColorCode: check.string });
+    const calendarSavedReply = replies.write({ calendar: calendarSummary });
+    const calendarDeletedReply = replies.write({ calendar: check.object({ id: check.number }) });
+    const calendarDetailReply = replies.read({
+        calendar: check.object({
+            id: check.number, name: check.string, htmlColorCode: check.string, description: check.nullable(check.string), timeZoneIanaId: check.string,
+        }),
+    });
+    // What the scripts put in a FullCalendar event's extendedProps (see the calendar.addEvent calls).
+    const calendarEventProps = check.object({
+        calendarId: check.number, displayStartDate: check.string, displayEndDate: check.string,
+        displayStartDateTimeZone: check.string, displayEndDateTimeZone: check.string, calendarType: check.nullable(check.string),
+    });
+    const calendarEventJson = check.object({
+        Id: check.number, CalendarId: check.number, Title: check.string, AllDay: check.boolean, StartDate: check.string, EndDate: check.string,
+        HtmlColorCode: check.string, DisplayStartDate: check.string, DisplayEndDate: check.string, DisplayStartDateTimeZone: check.string,
+        DisplayEndDateTimeZone: check.string, CalendarType: check.nullable(check.string),
+    });
+    const calendarReminderJson = check.object({
+        Method: check.string, MinutesBeforeEvent: check.nullable(check.number), HoursBeforeEvent: check.nullable(check.number),
+        DaysBeforeEvent: check.nullable(check.number), WeeksBeforeEvent: check.nullable(check.number), TimesBeforeEvent: check.nullable(check.string),
+    });
+    const calendarEventReply = replies.read({
+        calendarEvent: check.object({
+            id: check.number, calendarId: check.number, title: check.string, allDay: check.boolean,
+            displayStartDate: check.string, displayEndDate: check.string, startDateTimeZoneIanaId: check.string, endDateTimeZoneIanaId: check.string,
+            location: check.nullable(check.string), description: check.string, status: check.string,
+            serializedCalendarReminders: check.jsonText(check.array(calendarReminderJson)),
+            calendarEventAttachedFile: check.nullable(check.object({ name: check.string, extension: check.nullable(check.string), size: check.number })),
+        }),
+    });
+    const calendarEventsReply = replies.read({ calendarEvents: check.jsonText(check.array(calendarEventJson)) });
+    const calendarsReply = replies.read({ calendars: check.array(calendarSummary) });
+    const otherCalendarsReply = replies.read({ tempOtherCalendars: check.array(calendarSummary) });
+    const browseCalendarsReply = replies.read({ browseCalendarsOfInterests: check.array(check.object({ id: check.number, name: check.string, checked: check.boolean })) });
     // Escapes text before it's interpolated into a raw HTML template literal (as opposed to
     // jQuery .text()/.attr(), which already escape on their own). Calendar names are free text a
     // calendar owner controls; the CSP (script-src with no 'unsafe-inline') already blocks any
@@ -47,17 +89,17 @@
     // Authoritative in ServerSetting.MaxAttachedFileSizeBytes (server); mirrored here for form UX
     // only. Falls back to the shared per-role default (_Layout/site.ts) if the hidden field is
     // missing or unparseable.
-    const maxFileSize = parseInt($("#maxAttachedFileSizeBytes").val() as string) || window.MaroikDefaultMaxAttachedFileSizeBytes;
+    const maxFileSize = parseInt(optionalFieldValue($("#maxAttachedFileSizeBytes")) ?? "") || window.MaroikDefaultMaxAttachedFileSizeBytes;
     // Authoritative in CalendarReminderPolicy (server); rendered into hidden inputs by the view.
-    const maxMinutesBeforeEvent = parseInt($("#maxMinutesBeforeEvent").val() as string, 10);
-    const maxHoursBeforeEvent = parseInt($("#maxHoursBeforeEvent").val() as string, 10);
-    const maxDaysBeforeEvent = parseInt($("#maxDaysBeforeEvent").val() as string, 10);
-    const maxWeeksBeforeEvent = parseInt($("#maxWeeksBeforeEvent").val() as string, 10);
+    const maxMinutesBeforeEvent = parseInt(optionalFieldValue($("#maxMinutesBeforeEvent")) ?? "", 10);
+    const maxHoursBeforeEvent = parseInt(optionalFieldValue($("#maxHoursBeforeEvent")) ?? "", 10);
+    const maxDaysBeforeEvent = parseInt(optionalFieldValue($("#maxDaysBeforeEvent")) ?? "", 10);
+    const maxWeeksBeforeEvent = parseInt(optionalFieldValue($("#maxWeeksBeforeEvent")) ?? "", 10);
     // "Notify at HH:MM" options for all-day reminders and the default selection, both published
     // by the server (CalendarViewModelMapper / CalendarReminderPolicy). Was regenerated inline
     // as Array.from({length:96}) in several places.
-    const reminderTimeIntervals = JSON.parse(($("#reminderTimeIntervals").val() as string) || "[]") as string[];
-    const defaultBeforeAt = ($("#defaultReminderTimeOfDay").val() as string) || "09:00";
+    const reminderTimeIntervals = parseJson(optionalFieldValue($("#reminderTimeIntervals")) || "[]", check.array(check.string), "#reminderTimeIntervals");
+    const defaultBeforeAt = optionalFieldValue($("#defaultReminderTimeOfDay")) || "09:00";
     const $createCalendarEventDescription = $("#createCalendarEventDescription");
     const $createCalendarEventTaskDialogModal = $("#createCalendarEventTaskDialogModal");
     const $editCalendarEventDescription = $("#editCalendarEventDescription");
@@ -224,88 +266,88 @@
     // — each from a hidden input the view rendered from the resource files (asserted
     // `Record<string, string>`: each holds a string, which `.val()` types as a wider union).
     const localizer = {
-        Email: $("#localizerEmail").val(),
-        Notification: $("#localizerNotification").val(),
-        Minutes: $("#localizerMinutes").val(),
-        Hours: $("#localizerHours").val(),
-        Days: $("#localizerDays").val(),
-        Weeks: $("#localizerWeeks").val(),
-        BeforeAt: $("#localizerBeforeAt").val(),
-        PrevText: $("#localizerPrevText").val(),
-        NextText: $("#localizerNextText").val(),
-        January: $("#localizerJanuary").val(),
-        February: $("#localizerFebruary").val(),
-        March: $("#localizerMarch").val(),
-        April: $("#localizerApril").val(),
-        May: $("#localizerMay").val(),
-        June: $("#localizerJune").val(),
-        July: $("#localizerJuly").val(),
-        August: $("#localizerAugust").val(),
-        September: $("#localizerSeptember").val(),
-        October: $("#localizerOctober").val(),
-        November: $("#localizerNovember").val(),
-        December: $("#localizerDecember").val(),
-        Jan: $("#localizerJan").val(),
-        Feb: $("#localizerFeb").val(),
-        Mar: $("#localizerMar").val(),
-        Apr: $("#localizerApr").val(),
-        Jun: $("#localizerJun").val(),
-        Jul: $("#localizerJul").val(),
-        Aug: $("#localizerAug").val(),
-        Sep: $("#localizerSep").val(),
-        Oct: $("#localizerOct").val(),
-        Nov: $("#localizerNov").val(),
-        Dec: $("#localizerDec").val(),
-        Sunday: $("#localizerSunday").val(),
-        Monday: $("#localizerMonday").val(),
-        Tuesday: $("#localizerTuesday").val(),
-        Wednesday: $("#localizerWednesday").val(),
-        Thursday: $("#localizerThursday").val(),
-        Friday: $("#localizerFriday").val(),
-        Saturday: $("#localizerSaturday").val(),
-        Sun: $("#localizerSun").val(),
-        Mon: $("#localizerMon").val(),
-        Tue: $("#localizerTue").val(),
-        Wed: $("#localizerWed").val(),
-        Thu: $("#localizerThu").val(),
-        Fri: $("#localizerFri").val(),
-        Sat: $("#localizerSat").val(),
-        Su: $("#localizerSu").val(),
-        Mo: $("#localizerMo").val(),
-        Tu: $("#localizerTu").val(),
-        We: $("#localizerWe").val(),
-        Th: $("#localizerTh").val(),
-        Fr: $("#localizerFr").val(),
-        Sa: $("#localizerSa").val(),
-        YearSuffix: $("#localizerYearSuffix").val(),
-        IETFLanguageTag: $("#localizerIETFLanguageTag").val(),
-        Prev: $("#localizerPrev").val(),
-        Next: $("#localizerNext").val(),
-        PrevYear: $("#localizerPrevYear").val(),
-        NextYear: $("#localizerNextYear").val(),
-        Today: $("#localizerToday").val(),
-        Month: $("#localizerMonth").val(),
-        Week: $("#localizerWeek").val(),
-        Day: $("#localizerDay").val(),
-        List: $("#localizerList").val(),
-        DayGridMonth: $("#localizerDayGridMonth").val(),
-        DayGridWeek: $("#localizerDayGridWeek").val(),
-        DayGridDay: $("#localizerDayGridDay").val(),
-        TimeGridWeek: $("#localizerTimeGridWeek").val(),
-        TimeGridDay: $("#localizerTimeGridDay").val(),
-        ListYear: $("#localizerListYear").val(),
-        ListMonth: $("#localizerListMonth").val(),
-        ListWeek: $("#localizerListWeek").val(),
-        ListDay: $("#localizerListDay").val(),
-        ConfirmDelete: $("#localizerConfirmDelete").val(),
-        ThisFieldRequired: $("#localizerThisFieldRequired").val(),
-        ErrorInvalidNumber: $("#localizerErrorInvalidNumber").val(),
-        ErrorRangeMinute: $("#localizerErrorRangeMinute").val(),
-        ErrorRangeHour: $("#localizerErrorRangeHour").val(),
-        ErrorRangeDay: $("#localizerErrorRangeDay").val(),
-        ErrorRangeWeek: $("#localizerErrorRangeWeek").val(),
-        FailedToLoadCalendars: $("#localizerFailedToLoadCalendars").val()
-    } as Record<string, string>;
+        Email: fieldValue($("#localizerEmail")),
+        Notification: fieldValue($("#localizerNotification")),
+        Minutes: fieldValue($("#localizerMinutes")),
+        Hours: fieldValue($("#localizerHours")),
+        Days: fieldValue($("#localizerDays")),
+        Weeks: fieldValue($("#localizerWeeks")),
+        BeforeAt: fieldValue($("#localizerBeforeAt")),
+        PrevText: fieldValue($("#localizerPrevText")),
+        NextText: fieldValue($("#localizerNextText")),
+        January: fieldValue($("#localizerJanuary")),
+        February: fieldValue($("#localizerFebruary")),
+        March: fieldValue($("#localizerMarch")),
+        April: fieldValue($("#localizerApril")),
+        May: fieldValue($("#localizerMay")),
+        June: fieldValue($("#localizerJune")),
+        July: fieldValue($("#localizerJuly")),
+        August: fieldValue($("#localizerAugust")),
+        September: fieldValue($("#localizerSeptember")),
+        October: fieldValue($("#localizerOctober")),
+        November: fieldValue($("#localizerNovember")),
+        December: fieldValue($("#localizerDecember")),
+        Jan: fieldValue($("#localizerJan")),
+        Feb: fieldValue($("#localizerFeb")),
+        Mar: fieldValue($("#localizerMar")),
+        Apr: fieldValue($("#localizerApr")),
+        Jun: fieldValue($("#localizerJun")),
+        Jul: fieldValue($("#localizerJul")),
+        Aug: fieldValue($("#localizerAug")),
+        Sep: fieldValue($("#localizerSep")),
+        Oct: fieldValue($("#localizerOct")),
+        Nov: fieldValue($("#localizerNov")),
+        Dec: fieldValue($("#localizerDec")),
+        Sunday: fieldValue($("#localizerSunday")),
+        Monday: fieldValue($("#localizerMonday")),
+        Tuesday: fieldValue($("#localizerTuesday")),
+        Wednesday: fieldValue($("#localizerWednesday")),
+        Thursday: fieldValue($("#localizerThursday")),
+        Friday: fieldValue($("#localizerFriday")),
+        Saturday: fieldValue($("#localizerSaturday")),
+        Sun: fieldValue($("#localizerSun")),
+        Mon: fieldValue($("#localizerMon")),
+        Tue: fieldValue($("#localizerTue")),
+        Wed: fieldValue($("#localizerWed")),
+        Thu: fieldValue($("#localizerThu")),
+        Fri: fieldValue($("#localizerFri")),
+        Sat: fieldValue($("#localizerSat")),
+        Su: fieldValue($("#localizerSu")),
+        Mo: fieldValue($("#localizerMo")),
+        Tu: fieldValue($("#localizerTu")),
+        We: fieldValue($("#localizerWe")),
+        Th: fieldValue($("#localizerTh")),
+        Fr: fieldValue($("#localizerFr")),
+        Sa: fieldValue($("#localizerSa")),
+        YearSuffix: fieldValue($("#localizerYearSuffix")),
+        IETFLanguageTag: fieldValue($("#localizerIETFLanguageTag")),
+        Prev: fieldValue($("#localizerPrev")),
+        Next: fieldValue($("#localizerNext")),
+        PrevYear: fieldValue($("#localizerPrevYear")),
+        NextYear: fieldValue($("#localizerNextYear")),
+        Today: fieldValue($("#localizerToday")),
+        Month: fieldValue($("#localizerMonth")),
+        Week: fieldValue($("#localizerWeek")),
+        Day: fieldValue($("#localizerDay")),
+        List: fieldValue($("#localizerList")),
+        DayGridMonth: fieldValue($("#localizerDayGridMonth")),
+        DayGridWeek: fieldValue($("#localizerDayGridWeek")),
+        DayGridDay: fieldValue($("#localizerDayGridDay")),
+        TimeGridWeek: fieldValue($("#localizerTimeGridWeek")),
+        TimeGridDay: fieldValue($("#localizerTimeGridDay")),
+        ListYear: fieldValue($("#localizerListYear")),
+        ListMonth: fieldValue($("#localizerListMonth")),
+        ListWeek: fieldValue($("#localizerListWeek")),
+        ListDay: fieldValue($("#localizerListDay")),
+        ConfirmDelete: fieldValue($("#localizerConfirmDelete")),
+        ThisFieldRequired: fieldValue($("#localizerThisFieldRequired")),
+        ErrorInvalidNumber: fieldValue($("#localizerErrorInvalidNumber")),
+        ErrorRangeMinute: fieldValue($("#localizerErrorRangeMinute")),
+        ErrorRangeHour: fieldValue($("#localizerErrorRangeHour")),
+        ErrorRangeDay: fieldValue($("#localizerErrorRangeDay")),
+        ErrorRangeWeek: fieldValue($("#localizerErrorRangeWeek")),
+        FailedToLoadCalendars: fieldValue($("#localizerFailedToLoadCalendars"))
+    };
 
     // Module-scope FullCalendar instance, assigned inside `$(function)` below and
     // closed over by the form handlers and `RefreshCalendarEvents`.
@@ -335,7 +377,7 @@
             onImageUpload: function(files: Blob[]) {
                 for (let i = 0; i < files.length; i++) {
                     // summernote hands over the dropped / pasted File objects (@types/summernote says Blob[]).
-                    CreateUploadImageFile(files[i] as File);
+                    CreateUploadImageFile(instanceOf(files[i], File, "the dropped image"));
                 }
                 $createCalendarEventTaskDialogModal.css("overflow", "scroll");
             }
@@ -348,7 +390,7 @@
             onImageUpload: function(files: Blob[]) {
                 for (let i = 0; i < files.length; i++) {
                     // summernote hands over the dropped / pasted File objects (@types/summernote says Blob[]).
-                    EditUploadImageFile(files[i] as File);
+                    EditUploadImageFile(instanceOf(files[i], File, "the dropped image"));
                 }
                 $editCalendarEventTaskDialogModal.css("overflow", "scroll");
             }
@@ -364,45 +406,49 @@
      * input if the file exceeds `maxFileSize`, otherwise stash the `File` in
      * `createCalendarEventUploadedFile` for the submit to send.
      */
-    function CreateCalendarEventUploadedFile(obj: HTMLInputElement, errorMessage?: string) {
-        if (!obj.files || obj.files.length === 0) {
+    function CreateCalendarEventUploadedFile(obj: HTMLInputElement, errorMessage: string) {
+        const chosenFile = obj.files?.[0];
+        if (chosenFile === undefined) {
             // The picker was cancelled: the input is empty, so nothing may be sent.
             createCalendarEventUploadedFile = undefined;
-            return;
+            return undefined;
         }
-        if (obj.files[0].size > maxFileSize) {
+        if (chosenFile.size > maxFileSize) {
             alert(errorMessage);
-            (document.getElementById("createCalendarEventAttachment") as HTMLInputElement).value = "";
+            byId("createCalendarEventAttachment", HTMLInputElement).value = "";
             createCalendarEventUploadedFile = undefined;
             return false;
         } else {
-            createCalendarEventUploadedFile = obj.files[0];
+            createCalendarEventUploadedFile = chosenFile;
         }
+        return undefined;
     }
 
     /** Same as `CreateCalendarEventUploadedFile` for the edit-event form. */
-    function EditCalendarEventUploadedFile(obj: HTMLInputElement, errorMessage?: string) {
-        if (!obj.files || obj.files.length === 0) {
+    function EditCalendarEventUploadedFile(obj: HTMLInputElement, errorMessage: string) {
+        const chosenFile = obj.files?.[0];
+        if (chosenFile === undefined) {
             // The picker was cancelled: the input is empty, so nothing may be sent.
             editCalendarEventUploadedFile = undefined;
-            return;
+            return undefined;
         }
-        if (obj.files[0].size > maxFileSize) {
+        if (chosenFile.size > maxFileSize) {
             alert(errorMessage);
-            (document.getElementById("editCalendarEventAttachment") as HTMLInputElement).value = "";
+            byId("editCalendarEventAttachment", HTMLInputElement).value = "";
             editCalendarEventUploadedFile = undefined;
             return false;
         } else {
-            editCalendarEventUploadedFile = obj.files[0];
+            editCalendarEventUploadedFile = chosenFile;
         }
+        return undefined;
     }
 
     $createCalendarEventAttachment.off("change").on("change", function(event) {
-        return CreateCalendarEventUploadedFile(event.currentTarget as HTMLInputElement, $(event.currentTarget).attr("data-errorMessage"));
+        return CreateCalendarEventUploadedFile(instanceOf(event.currentTarget, HTMLInputElement, "the file input"), attribute($(event.currentTarget), "data-errorMessage"));
     });
 
     $editCalendarEventAttachment.off("change").on("change", function(event) {
-        return EditCalendarEventUploadedFile(event.currentTarget as HTMLInputElement, $(event.currentTarget).attr("data-errorMessage"));
+        return EditCalendarEventUploadedFile(instanceOf(event.currentTarget, HTMLInputElement, "the file input"), attribute($(event.currentTarget), "data-errorMessage"));
     });
 
     /**
@@ -453,7 +499,7 @@
                 if (endDate && endDate < startDate) {
                     $createCalendarEventAllDayUncheckedEndDate.datepicker("setDate", startDate);
                 }
-                ($createCalendarEventAllDayUncheckedEndDate as DatepickerMinDateSetter).datepicker("option", "minDate", startDate);
+                setMinDate($createCalendarEventAllDayUncheckedEndDate, startDate);
             }
         });
 
@@ -492,7 +538,7 @@
                 if (endDate && endDate < startDate) {
                     $createCalendarEventAllDayCheckedEndDate.datepicker("setDate", startDate);
                 }
-                ($createCalendarEventAllDayCheckedEndDate as DatepickerMinDateSetter).datepicker("option", "minDate", startDate);
+                setMinDate($createCalendarEventAllDayCheckedEndDate, startDate);
             }
         });
 
@@ -531,7 +577,7 @@
                 if (endDate && endDate < startDate) {
                     $editCalendarEventAllDayUncheckedEndDate.datepicker("setDate", startDate);
                 }
-                ($editCalendarEventAllDayUncheckedEndDate as DatepickerMinDateSetter).datepicker("option", "minDate", startDate);
+                setMinDate($editCalendarEventAllDayUncheckedEndDate, startDate);
             }
         });
 
@@ -570,7 +616,7 @@
                 if (endDate && endDate < startDate) {
                     $editCalendarEventAllDayCheckedEndDate.datepicker("setDate", startDate);
                 }
-                ($editCalendarEventAllDayCheckedEndDate as DatepickerMinDateSetter).datepicker("option", "minDate", startDate);
+                setMinDate($editCalendarEventAllDayCheckedEndDate, startDate);
             }
         });
 
@@ -641,7 +687,7 @@
         // `extendedProps`; `eventClick` branches on it (edit/delete vs read-only
         // view). `calendar` is the module-scope var, closed over by the form
         // handlers and `RefreshCalendarEvents`.
-        calendar = new FullCalendar.Calendar(document.getElementById("calendar")!, {
+        calendar = new FullCalendar.Calendar(byId("calendar", HTMLElement), {
             locale: localizer.IETFLanguageTag,
             headerToolbar: {
                 left: "prevYear,prev,next,nextYear today",
@@ -675,29 +721,29 @@
                 $.ajax({
                     url: "/Calendar/GetCalendars",
                     method: "POST",
-                    headers: { "RequestVerificationToken": $__RequestVerificationToken.val() as string },
+                    headers: { "RequestVerificationToken": fieldValue($__RequestVerificationToken) },
                     dataType: "json",
                     contentType: "application/json; charset=utf-8",
-                    success: function(response: ReadReply<CalendarsPayload>) {
+                    success: onReply(calendarsReply, function(response) {
                         if (response.result) {
                             $createCalendarEventMyCalendar.empty();
 
-                            $.each(response.calendars, function(_, calendar: CalendarSummary) {
+                            $.each(response.calendars, function(_, calendar) {
                                 $createCalendarEventMyCalendar.append($("<option>", {
                                     value: calendar.id,
                                     text: calendar.name
                                 }));
                             });
                         }
-                    },
+                    }),
                     error: function() {
                         toastr.error(localizer.FailedToLoadCalendars);
                     },
                     complete: function() {
                         // Kept out of `success` so the modal still opens (with a stale/empty
                         // calendar list rather than not opening at all) even if this fetch fails.
-                        $createCalendarEventAllDayUncheckedStartTimeZone.val($loggedInAccountTimeZoneIanaId.val() as string);
-                        $createCalendarEventAllDayUncheckedEndTimeZone.val($loggedInAccountTimeZoneIanaId.val() as string);
+                        $createCalendarEventAllDayUncheckedStartTimeZone.val(fieldValue($loggedInAccountTimeZoneIanaId));
+                        $createCalendarEventAllDayUncheckedEndTimeZone.val(fieldValue($loggedInAccountTimeZoneIanaId));
 
                         ResetCreateCalendarEventAttachment();
                         $createCalendarEventTaskDialogModal.modal("show");
@@ -717,16 +763,16 @@
             //              read-only modal (every input disabled), like the
             //              anonymous Calendar page.
             eventClick: function(arg: FullCalendarEventClickArg) {
-                if ((arg.event.extendedProps as CalendarEventExtendedProps).calendarType === "My") {
+                if (conform(arg.event.extendedProps, calendarEventProps, "the event\'s extendedProps").calendarType === "My") {
 
                     let eventEl = $(arg.el);
-                    let offset = eventEl.offset()!;
+                    let offset = required(eventEl.offset(), "the event element\'s position");
                     let popup = $calendarEventPopup;
                     let currentEventId = popup.data("event-id");
 
                     if (popup.is(":visible") && currentEventId === arg.event.id) {
                         popup.hide();
-                        return;
+                        return undefined;
                     }
 
                     $calendarEventPopupTitle.text(arg.event.title);
@@ -734,20 +780,20 @@
                     $divCalendarEventPopupAllDayUnchecked.hide();
 
                     if (arg.event.allDay === true) {
-                        $calendarEventPopupStartAllDayChecked.text((arg.event.extendedProps as CalendarEventExtendedProps).displayStartDate);
-                        $calendarEventPopupEndAllDayChecked.text((arg.event.extendedProps as CalendarEventExtendedProps).displayEndDate);
+                        $calendarEventPopupStartAllDayChecked.text(conform(arg.event.extendedProps, calendarEventProps, "the event\'s extendedProps").displayStartDate);
+                        $calendarEventPopupEndAllDayChecked.text(conform(arg.event.extendedProps, calendarEventProps, "the event\'s extendedProps").displayEndDate);
                         $divCalendarEventPopupAllDayChecked.show();
                     } else {
-                        $calendarEventPopupStartAllDayUnchecked.text((arg.event.extendedProps as CalendarEventExtendedProps).displayStartDate);
-                        $calendarEventPopupStartTimeZoneAllDayUnchecked.text(`(${(arg.event.extendedProps as CalendarEventExtendedProps).displayStartDateTimeZone})`);
-                        $calendarEventPopupEndAllDayUnchecked.text((arg.event.extendedProps as CalendarEventExtendedProps).displayEndDate);
-                        $calendarEventPopupEndTimeZoneAllDayUnchecked.text(`(${(arg.event.extendedProps as CalendarEventExtendedProps).displayEndDateTimeZone})`);
+                        $calendarEventPopupStartAllDayUnchecked.text(conform(arg.event.extendedProps, calendarEventProps, "the event\'s extendedProps").displayStartDate);
+                        $calendarEventPopupStartTimeZoneAllDayUnchecked.text(`(${conform(arg.event.extendedProps, calendarEventProps, "the event\'s extendedProps").displayStartDateTimeZone})`);
+                        $calendarEventPopupEndAllDayUnchecked.text(conform(arg.event.extendedProps, calendarEventProps, "the event\'s extendedProps").displayEndDate);
+                        $calendarEventPopupEndTimeZoneAllDayUnchecked.text(`(${conform(arg.event.extendedProps, calendarEventProps, "the event\'s extendedProps").displayEndDateTimeZone})`);
                         $divCalendarEventPopupAllDayUnchecked.show();
                     }
 
                     popup.css({
-                        top: offset.top + eventEl.outerHeight()!,
-                        left: offset.left + eventEl.outerWidth()!,
+                        top: offset.top + required(eventEl.outerHeight(), "the event element\'s height"),
+                        left: offset.left + required(eventEl.outerWidth(), "the event element\'s width"),
                         display: "block"
                     }).data("event-id", arg.event.id);
 
@@ -768,10 +814,10 @@
                         $.ajax({
                             url: "/Calendar/IsCalendarEventExists" + "?id=" + popup.data("event-id"),
                             type: "POST",
-                            headers: { "RequestVerificationToken": $__RequestVerificationToken.val() as string },
+                            headers: { "RequestVerificationToken": fieldValue($__RequestVerificationToken) },
                             dataType: "json",
                             contentType: "application/json; charset=utf-8",
-                            success: function(data: ReadReply<CalendarEventPayload>) {
+                            success: onReply(calendarEventReply, function(data) {
                                 if (data.result) {
 
                                     $editCalendarEventId.val(data.calendarEvent.id);
@@ -791,12 +837,12 @@
 
                                         $editCalendarEventAllDay.prop("checked", false);
 
-                                        $editCalendarEventAllDayUncheckedStartDate.val(data.calendarEvent.displayStartDate.split(" ")[0]);
-                                        $editCalendarEventAllDayUncheckedStartTime.val(data.calendarEvent.displayStartDate.split(" ")[1].substring(0, 5));
+                                        $editCalendarEventAllDayUncheckedStartDate.val(required(data.calendarEvent.displayStartDate.split(" ")[0], "part 0 of calendarEvent.displayStartDate"));
+                                        $editCalendarEventAllDayUncheckedStartTime.val(required(data.calendarEvent.displayStartDate.split(" ")[1], "part 1 of calendarEvent.displayStartDate").substring(0, 5));
                                         $editCalendarEventAllDayUncheckedStartTimeZone.val(data.calendarEvent.startDateTimeZoneIanaId);
 
-                                        $editCalendarEventAllDayUncheckedEndDate.val(data.calendarEvent.displayEndDate.split(" ")[0]);
-                                        $editCalendarEventAllDayUncheckedEndTime.val(data.calendarEvent.displayEndDate.split(" ")[1].substring(0, 5));
+                                        $editCalendarEventAllDayUncheckedEndDate.val(required(data.calendarEvent.displayEndDate.split(" ")[0], "part 0 of calendarEvent.displayEndDate"));
+                                        $editCalendarEventAllDayUncheckedEndTime.val(required(data.calendarEvent.displayEndDate.split(" ")[1], "part 1 of calendarEvent.displayEndDate").substring(0, 5));
                                         $editCalendarEventAllDayUncheckedEndTimeZone.val(data.calendarEvent.endDateTimeZoneIanaId);
                                     }
 
@@ -831,27 +877,32 @@
 
                                         $aEditCalendarEventAttachedFile.attr("href", "#");
                                         $aEditCalendarEventAttachedFile.attr("data-calendareventid", data.calendarEvent.id);
-                                        $aEditCalendarEventAttachedFile.attr("data-name", `${data.calendarEvent.calendarEventAttachedFile.name}${data.calendarEvent.calendarEventAttachedFile.extension}`);
+                                        $aEditCalendarEventAttachedFile.attr("data-name", `${data.calendarEvent.calendarEventAttachedFile.name}${data.calendarEvent.calendarEventAttachedFile.extension ?? ""}`);
 
-                                        $aEditCalendarEventAttachedFile.text(`${data.calendarEvent.calendarEventAttachedFile.name}${data.calendarEvent.calendarEventAttachedFile.extension}`);
+                                        $aEditCalendarEventAttachedFile.text(`${data.calendarEvent.calendarEventAttachedFile.name}${data.calendarEvent.calendarEventAttachedFile.extension ?? ""}`);
 
                                         $spanEditCalendarEventAttachedFile.text(`${Math.round(data.calendarEvent.calendarEventAttachedFile.size / 1024).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",")}KB`);
                                     }
 
+                                    // Captured from the narrowed reply: the hoisted function below does not see `data.result`.
+
+                                    const calendarEvent = data.calendarEvent;
+
+
                                     function showEditCalendarEventModal() {
-                                        $editCalendarEventStatus.val((data as SucceededReply<CalendarEventPayload>).calendarEvent.status);
+                                        $editCalendarEventStatus.val(calendarEvent.status);
 
                                         $divEditEventNotificationAllDayChecked.hide();
                                         $divEditEventNotificationAllDayUnchecked.hide();
 
-                                        if ((data as SucceededReply<CalendarEventPayload>).calendarEvent.allDay === true) {
+                                        if (calendarEvent.allDay === true) {
                                             $divEditEventNotificationAllDayChecked.find(".divEditEventNotificationAllDayCheckedRow").remove();
                                             $divEditEventNotificationAllDayChecked.show();
 
-                                            if ((data as SucceededReply<CalendarEventPayload>).calendarEvent.serializedCalendarReminders !== "[]") {
+                                            if (calendarEvent.serializedCalendarReminders !== "[]") {
                                                 const timeIntervals = reminderTimeIntervals;
 
-                                                (JSON.parse((data as SucceededReply<CalendarEventPayload>).calendarEvent.serializedCalendarReminders) as CalendarReminderJson[]).forEach((reminder: CalendarReminderJson) => {
+                                                parseJson(calendarEvent.serializedCalendarReminders, check.array(calendarReminderJson), "the event\'s reminders").forEach((reminder) => {
 
                                                     const selectedMethodOption = `
                                                 <option value='Email' ${reminder.Method === "Email" ? "selected" : ""}>${localizer.Email}</option>
@@ -880,7 +931,7 @@
 
                                                 <label style="padding-left:5px;padding-right:5px;">${localizer.BeforeAt}</label>
                                                 <select class='form-control-sm editCalendarEventSelNotificationTimeAllDayChecked' style='width:11%;text-overflow:ellipsis;'>
-                                                    ${timeIntervals.map((time: string) => time === `${reminder.TimesBeforeEvent!.substring(0, 5)}` ? `<option value="${time}" selected>${time}</option>` : `<option value="${time}">${time}</option>`).join("")}
+                                                    ${timeIntervals.map((time: string) => time === `${required(reminder.TimesBeforeEvent, "an all-day reminder's time").substring(0, 5)}` ? `<option value="${time}" selected>${time}</option>` : `<option value="${time}">${time}</option>`).join("")}
                                                 </select>
                                                 <a class='hover aEditCalendarDeleteNotificationAllDayChecked' href='#' style='width:10%;'>
                                                     <i class='fa fa-trash' aria-hidden='true' style='margin-left: 7px;'></i>
@@ -898,9 +949,9 @@
                                             $divEditEventNotificationAllDayUnchecked.find(".divEditEventNotificationAllDayUncheckedRow").remove();
                                             $divEditEventNotificationAllDayUnchecked.show();
 
-                                            if ((data as SucceededReply<CalendarEventPayload>).calendarEvent.serializedCalendarReminders !== "[]") {
+                                            if (calendarEvent.serializedCalendarReminders !== "[]") {
 
-                                                (JSON.parse((data as SucceededReply<CalendarEventPayload>).calendarEvent.serializedCalendarReminders) as CalendarReminderJson[]).forEach((reminder: CalendarReminderJson) => {
+                                                parseJson(calendarEvent.serializedCalendarReminders, check.array(calendarReminderJson), "the event\'s reminders").forEach((reminder) => {
 
                                                     const selectedMethodOption = `
                                                 <option value='Email' ${reminder.Method === "Email" ? "selected" : ""}>${localizer.Email}</option>
@@ -960,14 +1011,14 @@
                                     $.ajax({
                                         url: "/Calendar/GetCalendars",
                                         method: "POST",
-                                        headers: { "RequestVerificationToken": $__RequestVerificationToken.val() as string },
+                                        headers: { "RequestVerificationToken": fieldValue($__RequestVerificationToken) },
                                         dataType: "json",
                                         contentType: "application/json; charset=utf-8",
-                                        success: function(response: ReadReply<CalendarsPayload>) {
+                                        success: onReply(calendarsReply, function(response) {
                                             if (response.result) {
                                                 $editCalendarEventMyCalendar.empty();
 
-                                                $.each(response.calendars, function(_, calendar: CalendarSummary) {
+                                                $.each(response.calendars, function(_, calendar) {
                                                     $editCalendarEventMyCalendar.append($("<option>", {
                                                         value: calendar.id,
                                                         text: calendar.name
@@ -976,7 +1027,7 @@
 
                                                 $editCalendarEventMyCalendar.val(data.calendarEvent.calendarId);
                                             }
-                                        },
+                                        }),
                                         error: function() {
                                             toastr.error(localizer.FailedToLoadCalendars);
                                         },
@@ -987,7 +1038,7 @@
                                 } else {
                                     toastr.error(data.error);
                                 }
-                            }
+                            })
                         });
 
                         popup.hide();
@@ -998,17 +1049,17 @@
                             $.ajax({
                                 url: "/Calendar/DeleteCalendarEvent?id=" + popup.data("event-id"),
                                 type: "POST",
-                                headers: { "RequestVerificationToken": $__RequestVerificationToken.val() as string },
+                                headers: { "RequestVerificationToken": fieldValue($__RequestVerificationToken) },
                                 dataType: "json",
                                 contentType: "application/json; charset=utf-8",
-                                success: function(data: ActionReply) {
+                                success: onReply(replies.action, function(data) {
                                     if (data.result) {
                                         arg.event.remove();
                                         toastr.success(data.message);
                                     } else {
                                         toastr.error(data.error);
                                     }
-                                }
+                                })
                             });
                         }
                         popup.hide();
@@ -1016,15 +1067,15 @@
 
                     return false;
                     // --- "Other" (shared) event: read-only view path ---
-                } else if ((arg.event.extendedProps as CalendarEventExtendedProps).calendarType === "Other") {
+                } else if (conform(arg.event.extendedProps, calendarEventProps, "the event\'s extendedProps").calendarType === "Other") {
                     let eventEl = $(arg.el);
-                    let offset = eventEl.offset()!;
+                    let offset = required(eventEl.offset(), "the event element\'s position");
                     let popup = $otherCalendarEventPopup;
                     let currentEventId = popup.data("event-id");
 
                     if (popup.is(":visible") && currentEventId === arg.event.id) {
                         popup.hide();
-                        return;
+                        return undefined;
                     }
 
                     $otherCalendarEventPopupTitle.text(arg.event.title);
@@ -1032,20 +1083,20 @@
                     $divOtherCalendarEventPopupAllDayUnchecked.hide();
 
                     if (arg.event.allDay === true) {
-                        $otherCalendarEventPopupStartAllDayChecked.text((arg.event.extendedProps as CalendarEventExtendedProps).displayStartDate);
-                        $otherCalendarEventPopupEndAllDayChecked.text((arg.event.extendedProps as CalendarEventExtendedProps).displayEndDate);
+                        $otherCalendarEventPopupStartAllDayChecked.text(conform(arg.event.extendedProps, calendarEventProps, "the event\'s extendedProps").displayStartDate);
+                        $otherCalendarEventPopupEndAllDayChecked.text(conform(arg.event.extendedProps, calendarEventProps, "the event\'s extendedProps").displayEndDate);
                         $divOtherCalendarEventPopupAllDayChecked.show();
                     } else {
-                        $otherCalendarEventPopupStartAllDayUnchecked.text((arg.event.extendedProps as CalendarEventExtendedProps).displayStartDate);
-                        $otherCalendarEventPopupStartTimeZoneAllDayUnchecked.text(`(${(arg.event.extendedProps as CalendarEventExtendedProps).displayStartDateTimeZone})`);
-                        $otherCalendarEventPopupEndAllDayUnchecked.text((arg.event.extendedProps as CalendarEventExtendedProps).displayEndDate);
-                        $otherCalendarEventPopupEndTimeZoneAllDayUnchecked.text(`(${(arg.event.extendedProps as CalendarEventExtendedProps).displayEndDateTimeZone})`);
+                        $otherCalendarEventPopupStartAllDayUnchecked.text(conform(arg.event.extendedProps, calendarEventProps, "the event\'s extendedProps").displayStartDate);
+                        $otherCalendarEventPopupStartTimeZoneAllDayUnchecked.text(`(${conform(arg.event.extendedProps, calendarEventProps, "the event\'s extendedProps").displayStartDateTimeZone})`);
+                        $otherCalendarEventPopupEndAllDayUnchecked.text(conform(arg.event.extendedProps, calendarEventProps, "the event\'s extendedProps").displayEndDate);
+                        $otherCalendarEventPopupEndTimeZoneAllDayUnchecked.text(`(${conform(arg.event.extendedProps, calendarEventProps, "the event\'s extendedProps").displayEndDateTimeZone})`);
                         $divOtherCalendarEventPopupAllDayUnchecked.show();
                     }
 
                     popup.css({
-                        top: offset.top + eventEl.outerHeight()!,
-                        left: offset.left + eventEl.outerWidth()!,
+                        top: offset.top + required(eventEl.outerHeight(), "the event element\'s height"),
+                        left: offset.left + required(eventEl.outerWidth(), "the event element\'s width"),
                         display: "block"
                     }).data("event-id", arg.event.id);
 
@@ -1065,10 +1116,10 @@
                         $.ajax({
                             url: "/Calendar/IsOtherCalendarEventExists" + "?id=" + popup.data("event-id"),
                             type: "POST",
-                            headers: { "RequestVerificationToken": $__RequestVerificationToken.val() as string },
+                            headers: { "RequestVerificationToken": fieldValue($__RequestVerificationToken) },
                             dataType: "json",
                             contentType: "application/json; charset=utf-8",
-                            success: function(data: ReadReply<CalendarEventPayload>) {
+                            success: onReply(calendarEventReply, function(data) {
                                 if (data.result) {
                                     $viewCalendarEventId.val(data.calendarEvent.id);
                                     $viewCalendarEventName.val(data.calendarEvent.title);
@@ -1088,12 +1139,12 @@
 
                                         $viewCalendarEventAllDay.prop("checked", false);
 
-                                        $viewCalendarEventAllDayUncheckedStartDate.val(data.calendarEvent.displayStartDate.split(" ")[0]);
-                                        $viewCalendarEventAllDayUncheckedStartTime.val(data.calendarEvent.displayStartDate.split(" ")[1].substring(0, 5));
+                                        $viewCalendarEventAllDayUncheckedStartDate.val(required(data.calendarEvent.displayStartDate.split(" ")[0], "part 0 of calendarEvent.displayStartDate"));
+                                        $viewCalendarEventAllDayUncheckedStartTime.val(required(data.calendarEvent.displayStartDate.split(" ")[1], "part 1 of calendarEvent.displayStartDate").substring(0, 5));
                                         $viewCalendarEventAllDayUncheckedStartTimeZone.val(data.calendarEvent.startDateTimeZoneIanaId);
 
-                                        $viewCalendarEventAllDayUncheckedEndDate.val(data.calendarEvent.displayEndDate.split(" ")[0]);
-                                        $viewCalendarEventAllDayUncheckedEndTime.val(data.calendarEvent.displayEndDate.split(" ")[1].substring(0, 5));
+                                        $viewCalendarEventAllDayUncheckedEndDate.val(required(data.calendarEvent.displayEndDate.split(" ")[0], "part 0 of calendarEvent.displayEndDate"));
+                                        $viewCalendarEventAllDayUncheckedEndTime.val(required(data.calendarEvent.displayEndDate.split(" ")[1], "part 1 of calendarEvent.displayEndDate").substring(0, 5));
                                         $viewCalendarEventAllDayUncheckedEndTimeZone.val(data.calendarEvent.endDateTimeZoneIanaId);
                                     }
 
@@ -1129,27 +1180,32 @@
 
                                         $aViewCalendarEventAttachedFile.attr("href", "#");
                                         $aViewCalendarEventAttachedFile.attr("data-calendareventid", data.calendarEvent.id);
-                                        $aViewCalendarEventAttachedFile.attr("data-name", `${data.calendarEvent.calendarEventAttachedFile.name}${data.calendarEvent.calendarEventAttachedFile.extension}`);
+                                        $aViewCalendarEventAttachedFile.attr("data-name", `${data.calendarEvent.calendarEventAttachedFile.name}${data.calendarEvent.calendarEventAttachedFile.extension ?? ""}`);
 
-                                        $aViewCalendarEventAttachedFile.text(`${data.calendarEvent.calendarEventAttachedFile.name}${data.calendarEvent.calendarEventAttachedFile.extension}`);
+                                        $aViewCalendarEventAttachedFile.text(`${data.calendarEvent.calendarEventAttachedFile.name}${data.calendarEvent.calendarEventAttachedFile.extension ?? ""}`);
 
                                         $spanViewCalendarEventAttachedFile.text(`${Math.round(data.calendarEvent.calendarEventAttachedFile.size / 1024).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",")}KB`);
                                     }
 
+                                    // Captured from the narrowed reply: the hoisted function below does not see `data.result`.
+
+                                    const calendarEvent = data.calendarEvent;
+
+
                                     function showViewCalendarEventModal() {
-                                        $viewCalendarEventStatus.val((data as SucceededReply<CalendarEventPayload>).calendarEvent.status);
+                                        $viewCalendarEventStatus.val(calendarEvent.status);
 
                                         $divViewEventNotificationAllDayChecked.hide();
                                         $divViewEventNotificationAllDayUnchecked.hide();
 
-                                        if ((data as SucceededReply<CalendarEventPayload>).calendarEvent.allDay === true) {
+                                        if (calendarEvent.allDay === true) {
                                             $divViewEventNotificationAllDayChecked.find(".divViewEventNotificationAllDayCheckedRow").remove();
                                             $divViewEventNotificationAllDayChecked.show();
 
-                                            if ((data as SucceededReply<CalendarEventPayload>).calendarEvent.serializedCalendarReminders !== "[]") {
+                                            if (calendarEvent.serializedCalendarReminders !== "[]") {
                                                 const timeIntervals = reminderTimeIntervals;
 
-                                                (JSON.parse((data as SucceededReply<CalendarEventPayload>).calendarEvent.serializedCalendarReminders) as CalendarReminderJson[]).forEach((reminder: CalendarReminderJson) => {
+                                                parseJson(calendarEvent.serializedCalendarReminders, check.array(calendarReminderJson), "the event\'s reminders").forEach((reminder) => {
 
                                                     const selectedMethodOption = `
                                                     <option value='Email' ${reminder.Method === "Email" ? "selected" : ""}>${localizer.Email}</option>
@@ -1178,7 +1234,7 @@
 
                                                         <label style="padding-left:5px;padding-right:5px;">${localizer.BeforeAt}</label>
                                                         <select class='form-control-sm viewCalendarEventSelNotificationTimeAllDayChecked' style='width:11%;text-overflow:ellipsis;' disabled>
-                                                            ${timeIntervals.map((time: string) => time === `${reminder.TimesBeforeEvent!.substring(0, 5)}` ? `<option value="${time}" selected>${time}</option>` : `<option value="${time}">${time}</option>`).join("")}
+                                                            ${timeIntervals.map((time: string) => time === `${required(reminder.TimesBeforeEvent, "an all-day reminder's time").substring(0, 5)}` ? `<option value="${time}" selected>${time}</option>` : `<option value="${time}">${time}</option>`).join("")}
                                                         </select>
 
                                                         <br />
@@ -1193,9 +1249,9 @@
                                             $divViewEventNotificationAllDayUnchecked.find(".divViewEventNotificationAllDayUncheckedRow").remove();
                                             $divViewEventNotificationAllDayUnchecked.show();
 
-                                            if ((data as SucceededReply<CalendarEventPayload>).calendarEvent.serializedCalendarReminders !== "[]") {
+                                            if (calendarEvent.serializedCalendarReminders !== "[]") {
 
-                                                (JSON.parse((data as SucceededReply<CalendarEventPayload>).calendarEvent.serializedCalendarReminders) as CalendarReminderJson[]).forEach((reminder: CalendarReminderJson) => {
+                                                parseJson(calendarEvent.serializedCalendarReminders, check.array(calendarReminderJson), "the event\'s reminders").forEach((reminder) => {
 
                                                     const selectedMethodOption = `
                                                     <option value='Email' ${reminder.Method === "Email" ? "selected" : ""}>${localizer.Email}</option>
@@ -1249,10 +1305,10 @@
                                     $.ajax({
                                         url: "/Calendar/GetOtherCalendars",
                                         method: "POST",
-                                        headers: { "RequestVerificationToken": $__RequestVerificationToken.val() as string },
+                                        headers: { "RequestVerificationToken": fieldValue($__RequestVerificationToken) },
                                         dataType: "json",
                                         contentType: "application/json; charset=utf-8",
-                                        success: function(response: ReadReply<OtherCalendarsPayload>) {
+                                        success: onReply(otherCalendarsReply, function(response) {
                                             if (response.result) {
                                                 $viewCalendarEventMyCalendar.empty();
 
@@ -1265,7 +1321,7 @@
 
                                                 $viewCalendarEventMyCalendar.val(data.calendarEvent.calendarId);
                                             }
-                                        },
+                                        }),
                                         error: function() {
                                             toastr.error(localizer.FailedToLoadCalendars);
                                         },
@@ -1276,7 +1332,7 @@
                                 } else {
                                     toastr.error(data.error);
                                 }
-                            }
+                            })
                         });
 
                         popup.hide();
@@ -1284,6 +1340,7 @@
 
                     return false;
                 }
+                return undefined;
             }
         });
 
@@ -1291,7 +1348,7 @@
         // the subscribed shared events (`calendarType: 'Other'`), both from
         // hidden inputs. `extendedProps` carries the pre-formatted display
         // strings the popups show.
-        (JSON.parse($calendarEventOutputViewModels.val() as string) as CalendarEventJson[]).forEach((item: CalendarEventJson) => {
+        parseJson(fieldValue($calendarEventOutputViewModels), check.array(calendarEventJson), "the calendar events").forEach((item) => {
             calendar.addEvent({
                 id: String(item.Id),
                 title: item.Title,
@@ -1311,7 +1368,7 @@
             });
         });
 
-        (JSON.parse($otherCalendarEventOutputViewModels.val() as string) as CalendarEventJson[]).forEach((item: CalendarEventJson) => {
+        parseJson(fieldValue($otherCalendarEventOutputViewModels), check.array(calendarEventJson), "the calendar events").forEach((item) => {
             calendar.addEvent({
                 id: String(item.Id),
                 title: item.Title,
@@ -1354,32 +1411,28 @@
 
             $myCalendars.find("input[type=\"checkbox\"]:checked").each(function() {
                 let calendarsArray = [
-                    { Id: Number($(this).closest("label").attr("id")!.replace("lblCalendar", "")) }
+                    { Id: Number(attribute($(this).closest("label"), "id").replace("lblCalendar", "")) }
                 ];
 
-                for (let i = 0; i < calendarsArray.length; i++) {
-                    paramValue.Calendars.push(calendarsArray[i]);
-                }
+                paramValue.Calendars.push(...calendarsArray);
             });
 
             $otherCalendars.find("input[type=\"checkbox\"]:checked").each(function() {
                 let calendarsArray = [
-                    { Id: Number($(this).closest("label").attr("id")!.replace("lblOtherCalendar", "")) }
+                    { Id: Number(attribute($(this).closest("label"), "id").replace("lblOtherCalendar", "")) }
                 ];
 
-                for (let i = 0; i < calendarsArray.length; i++) {
-                    paramValue.Calendars.push(calendarsArray[i]);
-                }
+                paramValue.Calendars.push(...calendarsArray);
             });
 
             $.ajax({
                 url: "/Calendar/GetCalendarEvents",
                 method: "POST",
-                headers: { "RequestVerificationToken": $__RequestVerificationToken.val() as string },
+                headers: { "RequestVerificationToken": fieldValue($__RequestVerificationToken) },
                 dataType: "json",
                 data: JSON.stringify(paramValue),
                 contentType: "application/json; charset=utf-8",
-                success: function(response: ReadReply<CalendarEventsPayload>) {
+                success: onReply(calendarEventsReply, function(response) {
                     // A newer RefreshCalendarEvents call already ran (and removed/re-added events)
                     // since this request went out — applying this stale response now would put
                     // back events the newer call's own removeAllEvents() just cleared.
@@ -1387,7 +1440,7 @@
                         return;
                     }
                     if (response.result) {
-                        (JSON.parse(response.calendarEvents) as CalendarEventJson[]).forEach((item: CalendarEventJson) => {
+                        parseJson(response.calendarEvents, check.array(calendarEventJson), "the calendar events").forEach((item) => {
                             calendar.addEvent({
                                 id: String(item.Id),
                                 title: item.Title,
@@ -1407,7 +1460,7 @@
                             });
                         });
                     }
-                }
+                })
             });
         }
 
@@ -1418,7 +1471,7 @@
         // on failure, and returns the bool. The server re-checks on save.
         function ValidateCreateEventInputAllDayChecked(row: JQuery) {
             let numberInput = row.find(".createCalendarEventSelNotificationNumberAllDayChecked");
-            let value: string | number = (numberInput.val() as string).trim();
+            let value: string | number = fieldValue(numberInput).trim();
             let timeType = row.find(".createCalendarEventSelNotificationTimeTypeAllDayChecked").val();
             let isValid = true;
             let errorMessage = "";
@@ -1458,7 +1511,7 @@
         // Create modal, timed (all-day unchecked) reminder row — see the group comment above.
         function ValidateCreateEventInputAllDayUnchecked(row: JQuery) {
             let numberInput = row.find(".createCalendarEventSelNotificationNumberAllDayUnchecked");
-            let value: string | number = (numberInput.val() as string).trim();
+            let value: string | number = fieldValue(numberInput).trim();
             let timeType = row.find(".createCalendarEventSelNotificationTimeTypeAllDayUnchecked").val();
             let isValid = true;
             let errorMessage = "";
@@ -1508,7 +1561,7 @@
         // Edit modal, timed (all-day unchecked) reminder row — see the group comment above.
         function ValidateEditEventInputAllDayUnchecked(row: JQuery) {
             let numberInput = row.find(".editCalendarEventSelNotificationNumberAllDayUnchecked");
-            let value: string | number = (numberInput.val() as string).trim();
+            let value: string | number = fieldValue(numberInput).trim();
             let timeType = row.find(".editCalendarEventSelNotificationTimeTypeAllDayUnchecked").val();
             let isValid = true;
             let errorMessage = "";
@@ -1558,7 +1611,7 @@
         // Edit modal, all-day (all-day checked) reminder row — see the group comment above.
         function ValidateEditEventInputAllDayChecked(row: JQuery) {
             let numberInput = row.find(".editCalendarEventSelNotificationNumberAllDayChecked");
-            let value: string | number = (numberInput.val() as string).trim();
+            let value: string | number = fieldValue(numberInput).trim();
             let timeType = row.find(".editCalendarEventSelNotificationTimeTypeAllDayChecked").val();
             let isValid = true;
             let errorMessage = "";
@@ -1807,12 +1860,12 @@
             $.ajax({
                 url: "/Calendar/CreateCalendarEvent",
                 type: "POST",
-                headers: { "RequestVerificationToken": $__RequestVerificationToken.val() as string },
+                headers: { "RequestVerificationToken": fieldValue($__RequestVerificationToken) },
                 dataType: "json",
                 data: formData,
                 contentType: false,
                 processData: false,
-                success: function(data: ActionReply) {
+                success: onReply(replies.action, function(data) {
                     if (data.result) {
                         // Accepted: the file has been stored and must not go out with the next submit. A refused
                         // submit keeps it, since the form still shows it and editing without a file clears the attachment.
@@ -1826,34 +1879,30 @@
 
                         $myCalendars.find("input[type=\"checkbox\"]:checked").each(function() {
                             let calendarsArray = [
-                                { Id: Number($(this).closest("label").attr("id")!.replace("lblCalendar", "")) }
+                                { Id: Number(attribute($(this).closest("label"), "id").replace("lblCalendar", "")) }
                             ];
 
-                            for (let i = 0; i < calendarsArray.length; i++) {
-                                paramValue.Calendars.push(calendarsArray[i]);
-                            }
+                            paramValue.Calendars.push(...calendarsArray);
                         });
 
                         $otherCalendars.find("input[type=\"checkbox\"]:checked").each(function() {
                             let calendarsArray = [
-                                { Id: Number($(this).closest("label").attr("id")!.replace("lblOtherCalendar", "")) }
+                                { Id: Number(attribute($(this).closest("label"), "id").replace("lblOtherCalendar", "")) }
                             ];
 
-                            for (let i = 0; i < calendarsArray.length; i++) {
-                                paramValue.Calendars.push(calendarsArray[i]);
-                            }
+                            paramValue.Calendars.push(...calendarsArray);
                         });
 
                         $.ajax({
                             url: "/Calendar/GetCalendarEvents",
                             method: "POST",
-                            headers: { "RequestVerificationToken": $__RequestVerificationToken.val() as string },
+                            headers: { "RequestVerificationToken": fieldValue($__RequestVerificationToken) },
                             dataType: "json",
                             data: JSON.stringify(paramValue),
                             contentType: "application/json; charset=utf-8",
-                            success: function(response: ReadReply<CalendarEventsPayload>) {
+                            success: onReply(calendarEventsReply, function(response) {
                                 if (response.result) {
-                                    (JSON.parse(response.calendarEvents) as CalendarEventJson[]).forEach((item: CalendarEventJson) => {
+                                    parseJson(response.calendarEvents, check.array(calendarEventJson), "the calendar events").forEach((item) => {
                                         calendar.addEvent({
                                             id: String(item.Id),
                                             title: item.Title,
@@ -1875,7 +1924,7 @@
                                 } else {
                                     toastr.error(response.error);
                                 }
-                            }
+                            })
                         });
 
                         toastr.success(data.message);
@@ -1884,7 +1933,7 @@
                     } else {
                         toastr.error(data.error);
                     }
-                }
+                })
             });
 
             return false;
@@ -2047,12 +2096,12 @@
             $.ajax({
                 url: "/Calendar/UpdateCalendarEvent",
                 type: "POST",
-                headers: { "RequestVerificationToken": $__RequestVerificationToken.val() as string },
+                headers: { "RequestVerificationToken": fieldValue($__RequestVerificationToken) },
                 dataType: "json",
                 data: formData,
                 contentType: false,
                 processData: false,
-                success: function(data: ActionReply) {
+                success: onReply(replies.action, function(data) {
                     if (data.result) {
                         // Accepted: the file has been stored and must not go out with the next submit. A refused
                         // submit keeps it, since the form still shows it and editing without a file clears the attachment.
@@ -2066,34 +2115,30 @@
 
                         $myCalendars.find("input[type=\"checkbox\"]:checked").each(function() {
                             let calendarsArray = [
-                                { Id: Number($(this).closest("label").attr("id")!.replace("lblCalendar", "")) }
+                                { Id: Number(attribute($(this).closest("label"), "id").replace("lblCalendar", "")) }
                             ];
 
-                            for (let i = 0; i < calendarsArray.length; i++) {
-                                paramValue.Calendars.push(calendarsArray[i]);
-                            }
+                            paramValue.Calendars.push(...calendarsArray);
                         });
 
                         $otherCalendars.find("input[type=\"checkbox\"]:checked").each(function() {
                             let calendarsArray = [
-                                { Id: Number($(this).closest("label").attr("id")!.replace("lblOtherCalendar", "")) }
+                                { Id: Number(attribute($(this).closest("label"), "id").replace("lblOtherCalendar", "")) }
                             ];
 
-                            for (let i = 0; i < calendarsArray.length; i++) {
-                                paramValue.Calendars.push(calendarsArray[i]);
-                            }
+                            paramValue.Calendars.push(...calendarsArray);
                         });
 
                         $.ajax({
                             url: "/Calendar/GetCalendarEvents",
                             method: "POST",
-                            headers: { "RequestVerificationToken": $__RequestVerificationToken.val() as string },
+                            headers: { "RequestVerificationToken": fieldValue($__RequestVerificationToken) },
                             dataType: "json",
                             data: JSON.stringify(paramValue),
                             contentType: "application/json; charset=utf-8",
-                            success: function(response: ReadReply<CalendarEventsPayload>) {
+                            success: onReply(calendarEventsReply, function(response) {
                                 if (response.result) {
-                                    (JSON.parse(response.calendarEvents) as CalendarEventJson[]).forEach((item: CalendarEventJson) => {
+                                    parseJson(response.calendarEvents, check.array(calendarEventJson), "the calendar events").forEach((item) => {
                                         calendar.addEvent({
                                             id: String(item.Id),
                                             title: item.Title,
@@ -2115,7 +2160,7 @@
                                 } else {
                                     toastr.error(response.error);
                                 }
-                            }
+                            })
                         });
 
                         toastr.success(data.message);
@@ -2124,7 +2169,7 @@
                     } else {
                         toastr.error(data.error);
                     }
-                }
+                })
             });
 
             return false;
@@ -2157,18 +2202,16 @@
                 Calendars: []
             };
 
-            for (let i = 0; i < calendarsArray.length; i++) {
-                paramValue.Calendars.push(calendarsArray[i]);
-            }
+            paramValue.Calendars.push(...calendarsArray);
 
             $.ajax({
                 url: "/Calendar/UpdateCalendar",
                 type: "POST",
-                headers: { "RequestVerificationToken": $__RequestVerificationToken.val() as string },
+                headers: { "RequestVerificationToken": fieldValue($__RequestVerificationToken) },
                 dataType: "json",
                 data: JSON.stringify(paramValue),
                 contentType: "application/json; charset=utf-8",
-                success: function(data: WriteReply<CalendarPayload>) {
+                success: onReply(calendarSavedReply, function(data) {
                     if (data.result) {
                         $editCalendarDialogModal.modal("hide");
                         let $lblCalendarId = $("#lblCalendar" + data.calendar.id);
@@ -2184,7 +2227,7 @@
                         }
 
                         calendar.getEvents().forEach(function(event: FullCalendarEventApi) {
-                            if ((event.extendedProps as CalendarEventExtendedProps).calendarId === data.calendar.id) {
+                            if (conform(event.extendedProps, calendarEventProps, "the event\'s extendedProps").calendarId === data.calendar.id) {
                                 event.setProp("backgroundColor", data.calendar.htmlColorCode);
                                 event.setProp("borderColor", data.calendar.htmlColorCode);
                             }
@@ -2211,7 +2254,7 @@
                     } else {
                         toastr.error(data.error);
                     }
-                }
+                })
             });
             return false;
         }
@@ -2232,10 +2275,10 @@
             $.ajax({
                 url: "/Calendar/IsCalendarExists" + "?id=" + selectedCalendarId,
                 type: "POST",
-                headers: { "RequestVerificationToken": $__RequestVerificationToken.val() as string },
+                headers: { "RequestVerificationToken": fieldValue($__RequestVerificationToken) },
                 dataType: "json",
                 contentType: "application/json; charset=utf-8",
-                success: function(data: ReadReply<CalendarPayload>) {
+                success: onReply(calendarDetailReply, function(data) {
                     if (data.result) {
                         let calendarsArray = [
                             { Id: data.calendar.id }
@@ -2245,25 +2288,23 @@
                             Calendars: []
                         };
 
-                        for (let i = 0; i < calendarsArray.length; i++) {
-                            paramValue.Calendars.push(calendarsArray[i]);
-                        }
+                        paramValue.Calendars.push(...calendarsArray);
 
                         $.ajax({
                             url: "/Calendar/DeleteCalendar",
                             type: "POST",
-                            headers: { "RequestVerificationToken": $__RequestVerificationToken.val() as string },
+                            headers: { "RequestVerificationToken": fieldValue($__RequestVerificationToken) },
                             dataType: "json",
                             data: JSON.stringify(paramValue),
                             contentType: "application/json; charset=utf-8",
-                            success: function(data: WriteReply<CalendarPayload>) {
+                            success: onReply(calendarDeletedReply, function(data) {
                                 if (data.result) {
                                     $confirmDeleteCalendarDialogModal.modal("hide");
 
                                     $("#lblCalendar" + data.calendar.id).remove();
 
                                     calendar.getEvents().forEach(function(event: FullCalendarEventApi) {
-                                        if ((event.extendedProps as CalendarEventExtendedProps).calendarId === data.calendar.id) {
+                                        if (conform(event.extendedProps, calendarEventProps, "the event\'s extendedProps").calendarId === data.calendar.id) {
                                             event.remove();
                                         }
                                     });
@@ -2272,12 +2313,12 @@
                                 } else {
                                     toastr.error(data.error);
                                 }
-                            }
+                            })
                         });
                     } else {
                         toastr.error(data.error);
                     }
-                }
+                })
             });
         }
 
@@ -2304,14 +2345,14 @@
         $.ajax({
             url: "/Calendar/UploadImageFile",
             data: formData,
-            headers: { "RequestVerificationToken": $__RequestVerificationToken.val() as string },
+            headers: { "RequestVerificationToken": fieldValue($__RequestVerificationToken) },
             type: "POST",
             enctype: "multipart/form-data",
             processData: false,
             contentType: false,
             dataType: "json",
             cache: false,
-            success: function(data: UploadImageReply) {
+            success: onReply(uploadImageReply, function(data) {
                 if (data.result) {
                     const imgURL = URL.createObjectURL(base64ToBlob(data.file.fileContents, data.file.contentType));
                     const imgNode = document.createElement("img");
@@ -2331,7 +2372,7 @@
                 } else {
                     alert(data.errorMessage);
                 }
-            }
+            })
         });
     }
 
@@ -2344,14 +2385,14 @@
         $.ajax({
             url: "/Calendar/UploadImageFile",
             data: formData,
-            headers: { "RequestVerificationToken": $__RequestVerificationToken.val() as string },
+            headers: { "RequestVerificationToken": fieldValue($__RequestVerificationToken) },
             type: "POST",
             enctype: "multipart/form-data",
             processData: false,
             contentType: false,
             dataType: "json",
             cache: false,
-            success: function(data: UploadImageReply) {
+            success: onReply(uploadImageReply, function(data) {
                 if (data.result) {
                     const imgURL = URL.createObjectURL(base64ToBlob(data.file.fileContents, data.file.contentType));
                     const imgNode = document.createElement("img");
@@ -2371,7 +2412,7 @@
                 } else {
                     alert(data.errorMessage);
                 }
-            }
+            })
         });
     }
 
@@ -2400,18 +2441,16 @@
             Calendars: []
         };
 
-        for (let i = 0; i < calendarsArray.length; i++) {
-            paramValue.Calendars.push(calendarsArray[i]);
-        }
+        paramValue.Calendars.push(...calendarsArray);
 
         $.ajax({
             url: "/Calendar/CreateCalendar",
             type: "POST",
-            headers: { "RequestVerificationToken": $__RequestVerificationToken.val() as string },
+            headers: { "RequestVerificationToken": fieldValue($__RequestVerificationToken) },
             dataType: "json",
             data: JSON.stringify(paramValue),
             contentType: "application/json; charset=utf-8",
-            success: function(data: WriteReply<CalendarPayload>) {
+            success: onReply(calendarSavedReply, function(data) {
                 if (data.result) {
                     $createCalendarDialogModal.modal("hide");
 
@@ -2436,7 +2475,7 @@
                 } else {
                     toastr.error(data.error);
                 }
-            }
+            })
         });
         return false;
     }
@@ -2454,27 +2493,27 @@
         $.ajax({
             url: "/Calendar/GetCalendars",
             method: "POST",
-            headers: { "RequestVerificationToken": $__RequestVerificationToken.val() as string },
+            headers: { "RequestVerificationToken": fieldValue($__RequestVerificationToken) },
             dataType: "json",
             contentType: "application/json; charset=utf-8",
-            success: function(response: ReadReply<CalendarsPayload>) {
+            success: onReply(calendarsReply, function(response) {
                 if (response.result) {
                     $createCalendarEventMyCalendar.empty();
 
-                    $.each(response.calendars, function(_, calendar: CalendarSummary) {
+                    $.each(response.calendars, function(_, calendar) {
                         $createCalendarEventMyCalendar.append($("<option>", {
                             value: calendar.id,
                             text: calendar.name
                         }));
                     });
                 }
-            },
+            }),
             error: function() {
                 toastr.error(localizer.FailedToLoadCalendars);
             },
             complete: function() {
-                $createCalendarEventAllDayUncheckedStartTimeZone.val($loggedInAccountTimeZoneIanaId.val() as string);
-                $createCalendarEventAllDayUncheckedEndTimeZone.val($loggedInAccountTimeZoneIanaId.val() as string);
+                $createCalendarEventAllDayUncheckedStartTimeZone.val(fieldValue($loggedInAccountTimeZoneIanaId));
+                $createCalendarEventAllDayUncheckedEndTimeZone.val(fieldValue($loggedInAccountTimeZoneIanaId));
 
                 ResetCreateCalendarEventAttachment();
                 $createCalendarEventTaskDialogModal.modal("show");
@@ -2697,13 +2736,13 @@
         $.ajax({
             url: "/Calendar/GetBrowseCalendarsOfInterest",
             method: "POST",
-            headers: { "RequestVerificationToken": $__RequestVerificationToken.val() as string },
+            headers: { "RequestVerificationToken": fieldValue($__RequestVerificationToken) },
             dataType: "json",
             contentType: "application/json; charset=utf-8",
-            success: function(response: ReadReply<BrowseCalendarsPayload>) {
+            success: onReply(browseCalendarsReply, function(response) {
                 if (response.result) {
                     let htmlString = "";
-                    $.each(response.browseCalendarsOfInterests, function(_, browseCalendarsOfInterest: CalendarBrowseSummary) {
+                    $.each(response.browseCalendarsOfInterests, function(_, browseCalendarsOfInterest) {
                         htmlString += String.raw`
                             <div class="form-row browseCalendarsOfInterest" style="margin-top: 20px;">
                                 <div id="divBrowseCalendarsOfInterest${browseCalendarsOfInterest.id}" class="form-group col-md-3 mb-3 text-center">
@@ -2726,7 +2765,7 @@
                         $allCheckBrowseCalendarsOfInterest.prop("checked", $(".checkBoxBrowseCalendarsOfInterest").length === $(".checkBoxBrowseCalendarsOfInterest:checked").length);
                     });
                 }
-            },
+            }),
             error: function() {
                 toastr.error(localizer.FailedToLoadCalendars);
             },
@@ -2751,7 +2790,7 @@
             let checkBox = $(element).find(".checkBoxBrowseCalendarsOfInterest");
             if (checkBox.is(":checked")) {
                 calendarBeOtherCalendar.push({
-                    CalendarId: checkBox.parent().attr("id")!.replace("divBrowseCalendarsOfInterest", "")
+                    CalendarId: attribute(checkBox.parent(), "id").replace("divBrowseCalendarsOfInterest", "")
                 });
             }
         });
@@ -2759,11 +2798,11 @@
         $.ajax({
             url: "/Calendar/UpdateOtherCalendar",
             type: "POST",
-            headers: { "RequestVerificationToken": $__RequestVerificationToken.val() as string },
+            headers: { "RequestVerificationToken": fieldValue($__RequestVerificationToken) },
             dataType: "json",
             data: JSON.stringify(calendarBeOtherCalendar),
             contentType: "application/json; charset=utf-8",
-            success: function(data: ActionReply) {
+            success: onReply(replies.action, function(data) {
                 if (data.result) {
 
                     // Runs on every exit path below (both ajax calls' success-but-failed-result,
@@ -2771,22 +2810,25 @@
                     // the dialog reliably closes and the toast reliably shows exactly once, instead
                     // of only on the single synchronous fall-through `async: false` used to
                     // guarantee before these calls were made asynchronous.
+                    // Captured from the narrowed reply: the hoisted function below does not see `data.result`.
+                    const savedMessage = data.message;
+
                     function finishBrowseCalendarsUpdate() {
                         $browseCalendarsOfInterestDialogModal.modal("hide");
-                        toastr.success((data as SucceededReply<{ message: string }>).message);
+                        toastr.success(savedMessage);
                     }
 
                     $.ajax({
                         url: "/Calendar/GetOtherCalendars",
                         method: "POST",
-                        headers: { "RequestVerificationToken": $__RequestVerificationToken.val() as string },
+                        headers: { "RequestVerificationToken": fieldValue($__RequestVerificationToken) },
                         dataType: "json",
                         contentType: "application/json; charset=utf-8",
-                        success: function(response: ReadReply<OtherCalendarsPayload>) {
+                        success: onReply(otherCalendarsReply, function(response) {
                             if (response.result) {
                                 let htmlString = "";
 
-                                $.each(response.tempOtherCalendars, function(_, otherCalendar: CalendarSummary) {
+                                $.each(response.tempOtherCalendars, function(_, otherCalendar) {
                                     htmlString += String.raw`
                                         <label id="lblOtherCalendar${otherCalendar.id}" style="position: relative; border:1px solid #ccc; padding:10px; margin:0 0 10px; display:block">
                                             <input type="checkbox" class="chkOtherCalendar" style="accent-color:${otherCalendar.htmlColorCode}" checked />
@@ -2805,34 +2847,30 @@
 
                                 $myCalendars.find("input[type=\"checkbox\"]:checked").each(function() {
                                     let calendarsArray = [
-                                        { Id: Number($(this).closest("label").attr("id")!.replace("lblCalendar", "")) }
+                                        { Id: Number(attribute($(this).closest("label"), "id").replace("lblCalendar", "")) }
                                     ];
 
-                                    for (let i = 0; i < calendarsArray.length; i++) {
-                                        paramValue.Calendars.push(calendarsArray[i]);
-                                    }
+                                    paramValue.Calendars.push(...calendarsArray);
                                 });
 
                                 $otherCalendars.find("input[type=\"checkbox\"]:checked").each(function() {
                                     let calendarsArray = [
-                                        { Id: Number($(this).closest("label").attr("id")!.replace("lblOtherCalendar", "")) }
+                                        { Id: Number(attribute($(this).closest("label"), "id").replace("lblOtherCalendar", "")) }
                                     ];
 
-                                    for (let i = 0; i < calendarsArray.length; i++) {
-                                        paramValue.Calendars.push(calendarsArray[i]);
-                                    }
+                                    paramValue.Calendars.push(...calendarsArray);
                                 });
 
                                 $.ajax({
                                     url: "/Calendar/GetCalendarEvents",
                                     method: "POST",
-                                    headers: { "RequestVerificationToken": $__RequestVerificationToken.val() as string },
+                                    headers: { "RequestVerificationToken": fieldValue($__RequestVerificationToken) },
                                     dataType: "json",
                                     data: JSON.stringify(paramValue),
                                     contentType: "application/json; charset=utf-8",
-                                    success: function(response: ReadReply<CalendarEventsPayload>) {
+                                    success: onReply(calendarEventsReply, function(response) {
                                         if (response.result) {
-                                            (JSON.parse(response.calendarEvents) as CalendarEventJson[]).forEach((item: CalendarEventJson) => {
+                                            parseJson(response.calendarEvents, check.array(calendarEventJson), "the calendar events").forEach((item) => {
                                                 calendar.addEvent({
                                                     id: String(item.Id),
                                                     title: item.Title,
@@ -2852,7 +2890,7 @@
                                                 });
                                             });
                                         }
-                                    },
+                                    }),
                                     error: function() {
                                         toastr.error(localizer.FailedToLoadCalendars);
                                     },
@@ -2867,7 +2905,7 @@
                             } else {
                                 finishBrowseCalendarsUpdate();
                             }
-                        },
+                        }),
                         error: function() {
                             toastr.error(localizer.FailedToLoadCalendars);
                             finishBrowseCalendarsUpdate();
@@ -2876,7 +2914,7 @@
                 } else {
                     toastr.error(data.error);
                 }
-            }
+            })
         });
 
         return false;
@@ -2891,15 +2929,15 @@
         e.preventDefault();
         e.stopPropagation();
 
-        let selectedCalendarId = $(this).parent().attr("id")!.replace("lblCalendar", "");
+        let selectedCalendarId = attribute($(this).parent(), "id").replace("lblCalendar", "");
 
         $.ajax({
             url: "/Calendar/IsCalendarExists" + "?id=" + selectedCalendarId,
             type: "POST",
-            headers: { "RequestVerificationToken": $__RequestVerificationToken.val() as string },
+            headers: { "RequestVerificationToken": fieldValue($__RequestVerificationToken) },
             dataType: "json",
             contentType: "application/json; charset=utf-8",
-            success: function(data: ReadReply<CalendarPayload>) {
+            success: onReply(calendarDetailReply, function(data) {
                 if (data.result) {
                     $editCalendarId.val(data.calendar.id);
                     $editCalendarName.val(data.calendar.name);
@@ -2917,7 +2955,7 @@
                 } else {
                     toastr.error(data.error);
                 }
-            }
+            })
         });
     });
 
@@ -2933,7 +2971,7 @@
         e.preventDefault();
         e.stopPropagation();
 
-        let calendarId = $(this).parent().attr("id")!.replace("lblCalendar", "");
+        let calendarId = attribute($(this).parent(), "id").replace("lblCalendar", "");
         $confirmDeleteCalendarDialogModal.data("calendar-id", calendarId);
 
         $confirmDeleteCalendarDialogModal.modal({
@@ -2960,26 +2998,27 @@
      */
     function DownloadCalendarEventAttachedFile(this: HTMLElement, event: JQuery.TriggeredEvent) {
         event.preventDefault();
+        // A link with nothing attached yet names no id: nothing to download.
         let calendarEventId = $(this).attr("data-calendareventid");
-        let name = $(this).attr("data-name");
         if (!calendarEventId) {
             return;
         }
+        let name = attribute($(this), "data-name");
 
         $.ajax({
             url: "/Calendar/DownloadCalendarEventAttachedFile",
             type: "POST",
-            headers: { "RequestVerificationToken": $__RequestVerificationToken.val() as string },
+            headers: { "RequestVerificationToken": fieldValue($__RequestVerificationToken) },
             data: { calendarEventId: calendarEventId },
             xhrFields: { responseType: "blob" },
             // Without a declared dataType jQuery infers "json" from a refusal's Content-Type and fails to
             // parse the Blob (parsererror -> the layout's ajaxError redirect); "binary" hands back the Blob as is.
             dataType: "binary",
-            success: function(data: Blob) {
+            success: onReply(check.instance(Blob), function(data) {
                 if (data.type.indexOf("application/json") === 0) {
-                    data.text().then(function(text) {
-                        toastr.error((JSON.parse(text) as FailedReply).error);
-                    });
+                    data.text().then(onReplyText(replies.failed, function(refusal) {
+                        toastr.error(refusal.error);
+                    }));
                     return;
                 }
 
@@ -2987,14 +3026,14 @@
                 let a = document.createElement("a");
                 try {
                     a.href = url;
-                    a.download = name!;
+                    a.download = name;
                     a.click();
                 } finally {
                     // Revoke after a tick so the download has started; drop the <a>.
                     setTimeout(() => URL.revokeObjectURL(url), 100);
                     a.remove();
                 }
-            }
+            })
         });
     }
 

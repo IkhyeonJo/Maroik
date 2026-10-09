@@ -2,7 +2,7 @@ import { describe, it, expect, vi } from "vitest";
 import { describeMissingServerConstants } from "@tests/_common/missingConfigSuite";
 import { describeAmountLabel } from "@tests/_common/amountLabelSuite";
 import { describeGridCrudScript } from "@tests/_common/gridCrudSuite";
-import { loadSite, hidden, antiForgery, stubPlugin } from "@tests/_common/harness";
+import { loadSite, hidden, antiForgery, stubPlugin, present } from "@tests/_common/harness";
 
 // wwwroot/user/custom/AccountBook/Income/js/site.js
 //
@@ -19,7 +19,8 @@ function fixture(extra = ""): string {
         hidden("incomeSubClassMap", JSON.stringify(subClassMap).replace(/"/g, "&quot;")) +
         hidden("localizerFailedToLoadAmountLabel", "Failed to load the amount label.") +
         `<div id="createIncomeTabs"></div><div id="editIncomeTabs"></div>
-     <input id="createIncomeDate" /><input id="editIncomeDate" /><input id="gridSearch" />
+     <input id="createIncomeDate" /><input id="editIncomeDate" />
+     <select id="createIncomeHour"><option value="9" selected>9</option></select><select id="createIncomeMinute"><option value="30" selected>30</option></select><select id="createIncomeSecond"><option value="0" selected>0</option></select><select id="editIncomeHour"><option value="9" selected>9</option></select><select id="editIncomeMinute"><option value="30" selected>30</option></select><select id="editIncomeSecond"><option value="0" selected>0</option></select><input id="gridSearch" />
      <select id="createIncomeMainClass">
        <option value="Labor">Labor</option><option value="Business">Business</option>
      </select>
@@ -29,8 +30,8 @@ function fixture(extra = ""): string {
      <select id="editIncomeMainClass"></select><select id="editIncomeSubClass"></select>
      <form id="formCreateIncome"></form><form id="formEditIncome"></form>
      <button id="btnExportExcelIncome"></button>
-     <button id="btnEditIncomeGridRow"></button><button id="btnConfirmDeleteIncome"></button>
-     <button id="btnDeleteIncome"></button>
+     <button id="btnEditIncomeGridRow" data-errorMessageSelectGridRow="L_SelectRow"></button><button id="btnConfirmDeleteIncome" data-errorMessageSelectGridRow="L_SelectRow"></button>
+     <button id="btnDeleteIncome" data-errorMessageSelectGridRow="L_SelectRow"></button>
      <select id="createIncomeDepositMyAssetProductName"><option value="A" selected>A</option></select>
      <select id="editIncomeDepositMyAssetProductName"><option value="A">A</option><option value="B">B</option><option value="A&amp;B Bank">A&amp;B Bank</option></select>
      <span id="labelCreateIncomeAmount"></span><span id="labelEditIncomeAmount"></span>` +
@@ -56,11 +57,11 @@ describe("AccountBook/Income", () => {
         h.$("#btnExportExcelIncome").trigger("click");
 
         expect(h.submittedForms).toHaveLength(1);
-        const form = h.submittedForms[0];
+        const form = present(h.submittedForms[0]);
         expect(form.method.toUpperCase()).toBe("POST");
         expect(form.action).toContain("/AccountBook/ExportExcelIncome");
-        expect(form.querySelector<HTMLInputElement>("input[name=\"fileName\"]")!.value).toBe("Income");
-        expect(form.querySelector<HTMLInputElement>("input[name=\"__RequestVerificationToken\"]")!.value).toBe("tok");
+        expect(present(form.querySelector<HTMLInputElement>("input[name=\"fileName\"]")).value).toBe("Income");
+        expect(present(form.querySelector<HTMLInputElement>("input[name=\"__RequestVerificationToken\"]")).value).toBe("tok");
     });
 
     it("does not call $.ajax when the create form is invalid", () => {
@@ -101,7 +102,7 @@ describe("AccountBook/Income", () => {
 
         call?.success?.({ result: true, label: "KRW" });
 
-        expect(h.win.document.querySelector("#labelCreateIncomeAmount")!.textContent).toBe("KRW");
+        expect(present(h.win.document.querySelector("#labelCreateIncomeAmount")).textContent).toBe("KRW");
     });
 
     it("percent-encodes the chosen deposit asset in the amount-label lookup query", () => {
@@ -131,6 +132,7 @@ describeGridCrudScript({
 describeAmountLabel({
     label: "user/AccountBook/Income",
     load: () => loadSite("user", "AccountBook", "Income", fixture()),
+    loadWithoutCreateChoices: () => loadSite("user", "AccountBook", "Income", fixture().replace('<select id="createIncomeDepositMyAssetProductName"><option value="A" selected>A</option></select>', '<select id="createIncomeDepositMyAssetProductName"></select>')),
     url: "GetIncomeAmountLabel",
     create: { trigger: "#createIncomeDepositMyAssetProductName", span: "#labelCreateIncomeAmount" },
     edit: { trigger: "#editIncomeDepositMyAssetProductName", span: "#labelEditIncomeAmount" },
@@ -142,11 +144,11 @@ describe("AccountBook/Income — date pickers", () => {
         vi.useFakeTimers(); // after load: loadSite manages its own fake timers while it evaluates the script
         try {
             for (const id of ["createIncomeDate", "editIncomeDate"]) {
-                const init = h.datepickerInits.find((i) => i.el?.id === id)!;
+                const init = present(h.datepickerInits.find((i) => i.el?.id === id));
                 expect(init, `a datepicker is attached to #${id}`).toBeDefined();
                 expect(() => {
-                    init.options.beforeShow!();
-                    init.options.onChangeMonthYear!();
+                    present(init.options.beforeShow)();
+                    present(init.options.onChangeMonthYear)();
                     vi.runAllTimers();
                 }).not.toThrow();
             }

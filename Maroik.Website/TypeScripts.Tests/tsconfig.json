@@ -7,6 +7,18 @@
     "module": "ESNext",
     "moduleResolution": "bundler",
     "strict": true,
+    // Beyond `strict`: an index read may be undefined, optional means "may be absent" (not "may be
+    // undefined"), every code path returns, nothing unused or unreachable is left behind, and a key from
+    // an index signature is read with [] so it is visibly not a declared property.
+    "noUncheckedIndexedAccess": true,
+    "exactOptionalPropertyTypes": true,
+    "noImplicitReturns": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "noPropertyAccessFromIndexSignature": true,
+    "noImplicitOverride": true,
+    "allowUnreachableCode": false,
+    "allowUnusedLabels": false,
     "noEmit": true,
     "esModuleInterop": true,
     "resolveJsonModule": true,
@@ -16,5 +28,5 @@
     // vitest.config.mts `resolve.alias`. TS 7 removed `baseUrl`; `./*` is required.
     "paths": { "@tests/*": ["./*"] }
   },
-  "include": ["**/*.ts"]
+  "include": ["**/*.ts", "../TypeScripts/global.d.ts"]
 }

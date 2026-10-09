@@ -18,6 +18,16 @@
  * IIFE-wrapped, no `import` / `export`.
  */
 (function() {
+    // The runtime-check helpers the _Layout script defines (see TypeScripts/global.d.ts).
+    const { check, replies, onReply, conform, instanceOf, fieldValue, attribute } = window;
+
+    // The replies this page reads, mirroring the controllers' Json(...) results (see window.replies).
+    const accountReply = replies.read({
+        account: check.object({
+            email: check.string, nickname: check.string, role: check.string, timeZoneIanaId: check.string, locked: check.boolean,
+            emailConfirmed: check.boolean, agreedServiceTerms: check.boolean, message: check.nullable(check.string), deleted: check.boolean,
+        }),
+    });
     // Cached references: the jQuery-UI tab containers, the grid search box, and
     // every field of the creation / edit modals plus the anti-forgery input.
     const $createAccountTabs = $("#createAccountTabs");
@@ -60,8 +70,8 @@
     // MvcGrid `rowclick` (native CustomEvent): move the selection highlight to
     // the row whose `data-email` matches the clicked record.
     $(document).off("rowclick.Account").on("rowclick.Account", (e: JQuery.TriggeredEvent) => {
-        let selectedRow = e.detail as unknown as MvcGridRowClickDetail;
-        let selectedRowEmail = selectedRow.data.Email;
+        let selectedRow = conform(e.detail, check.object({ data: check.record(check.string) }), "the rowclick detail");
+        let selectedRowEmail = selectedRow.data["Email"];
 
         let $clsGridRow = $(".clsGridRow");
 
@@ -70,7 +80,7 @@
         });
 
         $clsGridRow.each(function() {
-            if ((String(selectedRowEmail).valueOf() === String($(this).attr("data-email")).valueOf())) {
+            if ((String(selectedRowEmail).valueOf() === String(attribute($(this), "data-email")).valueOf())) {
                 $(this).addClass(selectedRowColor);
             }
         });
@@ -93,8 +103,8 @@
     // rows are re-rendered on every grid reload).
     $(document).off("dblclick.Account", ".clsGridRow").on("dblclick.Account", ".clsGridRow", function() {
         $(".clsGridRow").each(function() {
-            if ($(this).attr("class")!.includes(selectedRowColor)) {
-                EditAccountGridRow();
+            if (attribute($(this), "class").includes(selectedRowColor)) {
+                EditAccountGridRow(attribute($btnEditAccountGridRow, "data-errorMessageSelectGridRow"));
             }
         });
     });
@@ -102,7 +112,7 @@
     // Free-text search: push the term into the grid query string and reload.
     $gridSearch.off("input").on("input", function(event) {
         const grid = new MvcGrid(document.querySelector(".mvc-grid"));
-        grid.url.searchParams.set("wholeSearch", (event.currentTarget as HTMLInputElement).value);
+        grid.url.searchParams.set("wholeSearch", instanceOf(event.currentTarget, HTMLInputElement, "the event target").value);
         grid.reload();
     });
 
@@ -130,11 +140,11 @@
         $.ajax({
             url: "/Management/CreateAccount",
             type: "POST",
-            headers: { "RequestVerificationToken": $__RequestVerificationToken.val() as string },
+            headers: { "RequestVerificationToken": fieldValue($__RequestVerificationToken) },
             dataType: "json",
             data: paramValue,
             contentType: "application/json; charset=utf-8",
-            success: function(data: ActionReply) {
+            success: onReply(replies.action, function(data) {
                 if (data.result) {
                     $createAccountDialogModal.modal("hide");
 
@@ -145,7 +155,7 @@
                 } else {
                     toastr.error(data.error);
                 }
-            }
+            })
         });
 
         return false;
@@ -160,28 +170,28 @@
      *
      * @param errorMessageSelectGridRow localized "pick a row first" text from a `data-*` attribute.
      */
-    function EditAccountGridRow(errorMessageSelectGridRow?: string) {
+    function EditAccountGridRow(errorMessageSelectGridRow: string) {
 
         let selectedRowEmail = "";
 
         $(".clsGridRow").each(function() {
-            if ($(this).attr("class")!.includes(selectedRowColor)) {
-                selectedRowEmail = $(this).attr("data-email")!;
+            if (attribute($(this), "class").includes(selectedRowColor)) {
+                selectedRowEmail = attribute($(this), "data-email");
             }
         });
 
         if (selectedRowEmail === "") {
-            toastr.error(errorMessageSelectGridRow!);
+            toastr.error(errorMessageSelectGridRow);
             return false;
         }
 
         $.ajax({
             url: "/Management/IsAccountExists" + "?email=" + encodeURIComponent(selectedRowEmail),
             type: "POST",
-            headers: { "RequestVerificationToken": $__RequestVerificationToken.val() as string },
+            headers: { "RequestVerificationToken": fieldValue($__RequestVerificationToken) },
             dataType: "json",
             contentType: "application/json; charset=utf-8",
-            success: function(data: ReadReply<AccountPayload>) {
+            success: onReply(accountReply, function(data) {
                 if (data.result) {
 
                     $editAccountEmail.val(data.account.email);
@@ -207,8 +217,9 @@
                 } else {
                     toastr.error(data.error);
                 }
-            }
+            })
         });
+        return undefined;
     }
 
     /** Edit-account modal submit: validate, POST every field + flag as JSON, then close / reload / toast. */
@@ -242,11 +253,11 @@
         $.ajax({
             url: "/Management/UpdateAccount",
             type: "POST",
-            headers: { "RequestVerificationToken": $__RequestVerificationToken.val() as string },
+            headers: { "RequestVerificationToken": fieldValue($__RequestVerificationToken) },
             dataType: "json",
             data: paramValue,
             contentType: "application/json; charset=utf-8",
-            success: function(data: ActionReply) {
+            success: onReply(replies.action, function(data) {
                 if (data.result) {
                     $editAccountDialogModal.modal("hide");
 
@@ -257,24 +268,24 @@
                 } else {
                     toastr.error(data.error);
                 }
-            }
+            })
         });
         return false;
     }
 
     /** "Delete" button: require a selected row, then just open the confirmation modal. */
-    function ConfirmDeleteAccount(errorMessageSelectGridRow?: string) {
+    function ConfirmDeleteAccount(errorMessageSelectGridRow: string) {
 
         let selectedRowEmail = "";
 
         $(".clsGridRow").each(function() {
-            if ($(this).attr("class")!.includes(selectedRowColor)) {
-                selectedRowEmail = $(this).attr("data-email")!;
+            if (attribute($(this), "class").includes(selectedRowColor)) {
+                selectedRowEmail = attribute($(this), "data-email");
             }
         });
 
         if (selectedRowEmail === "") {
-            toastr.error(errorMessageSelectGridRow!);
+            toastr.error(errorMessageSelectGridRow);
             return false;
         }
 
@@ -285,31 +296,32 @@
 
         $confirmDeleteAccountDialogModal.modal("toggle");
         $confirmDeleteAccountDialogModal.modal("show");
+        return undefined;
     }
 
     /** Confirmed delete: re-check selection, confirm the record exists, then POST `DeleteAccount`. */
-    function DeleteAccount(errorMessageSelectGridRow?: string) {
+    function DeleteAccount(errorMessageSelectGridRow: string) {
 
         let selectedRowEmail = "";
 
         $(".clsGridRow").each(function() {
-            if ($(this).attr("class")!.includes(selectedRowColor)) {
-                selectedRowEmail = $(this).attr("data-email")!;
+            if (attribute($(this), "class").includes(selectedRowColor)) {
+                selectedRowEmail = attribute($(this), "data-email");
             }
         });
 
         if (selectedRowEmail === "") {
-            toastr.error(errorMessageSelectGridRow!);
+            toastr.error(errorMessageSelectGridRow);
             return false;
         }
 
         $.ajax({
             url: "/Management/IsAccountExists" + "?email=" + encodeURIComponent(selectedRowEmail),
             type: "POST",
-            headers: { "RequestVerificationToken": $__RequestVerificationToken.val() as string },
+            headers: { "RequestVerificationToken": fieldValue($__RequestVerificationToken) },
             dataType: "json",
             contentType: "application/json; charset=utf-8",
-            success: function(data: ReadReply<AccountPayload>) {
+            success: onReply(accountReply, function(data) {
                 if (data.result) {
 
                     let paramValue = JSON.stringify({
@@ -319,11 +331,11 @@
                     $.ajax({
                         url: "/Management/DeleteAccount",
                         type: "POST",
-                        headers: { "RequestVerificationToken": $__RequestVerificationToken.val() as string },
+                        headers: { "RequestVerificationToken": fieldValue($__RequestVerificationToken) },
                         dataType: "json",
                         data: paramValue,
                         contentType: "application/json; charset=utf-8",
-                        success: function(data: ActionReply) {
+                        success: onReply(replies.action, function(data) {
                             if (data.result) {
                                 $confirmDeleteAccountDialogModal.modal("hide");
 
@@ -334,13 +346,14 @@
                             } else {
                                 toastr.error(data.error);
                             }
-                        }
+                        })
                     });
                 } else {
                     toastr.error(data.error);
                 }
-            }
+            })
         });
+        return undefined;
     }
 
     /**
@@ -357,7 +370,7 @@
         form.action = "/Management/ExportExcelAccount";
 
         element1.name = "__RequestVerificationToken";
-        element1.value = $__RequestVerificationToken.val() as string;
+        element1.value = fieldValue($__RequestVerificationToken);
         form.appendChild(element1);
 
         element2.name = "fileName";
@@ -371,11 +384,11 @@
 
     // --- Button wiring ---------------------------------------------------
     $btnEditAccountGridRow.off("click").on("click", function() {
-        EditAccountGridRow($(this).attr("data-errorMessageSelectGridRow"));
+        EditAccountGridRow(attribute($(this), "data-errorMessageSelectGridRow"));
     });
 
     $btnConfirmDeleteAccount.off("click").on("click", function() {
-        ConfirmDeleteAccount($(this).attr("data-errorMessageSelectGridRow"));
+        ConfirmDeleteAccount(attribute($(this), "data-errorMessageSelectGridRow"));
     });
 
     $btnExportExcelAccount.off("click").on("click", function() {
@@ -383,7 +396,7 @@
     });
 
     $btnDeleteAccount.off("click").on("click", function() {
-        DeleteAccount($(this).attr("data-errorMessageSelectGridRow"));
+        DeleteAccount(attribute($(this), "data-errorMessageSelectGridRow"));
     });
 
     $formCreateAccount.off("submit").on("submit", function() {

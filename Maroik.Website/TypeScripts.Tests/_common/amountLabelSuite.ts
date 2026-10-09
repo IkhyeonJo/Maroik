@@ -4,6 +4,7 @@
  * on both the creation and the edit form.
  */
 import { describe, it, expect } from "vitest";
+import { successOf } from "@tests/_common/harness";
 import type { SiteHandle } from "@tests/_common/harness";
 
 /** What one page supplies to {@link describeAmountLabel}. */
@@ -12,6 +13,8 @@ export interface AmountLabelConfig {
     label: string;
     /** loads the page script with its fixture */
     load: () => SiteHandle;
+    /** loads it with nothing to choose in the creation form's select (an account without assets) */
+    loadWithoutCreateChoices: () => SiteHandle;
     /** substring of the lookup URL, e.g. "GetFixedExpenditureAmountLabel" */
     url: string;
     /** creation form: the select whose change triggers the lookup, and the span the label is drawn into */
@@ -28,10 +31,15 @@ export function describeAmountLabel(c: AmountLabelConfig): void {
             h.$(side.trigger).trigger("change");
             const call = h.lastAjax();
             expect(call.url).toContain(c.url);
-            call.success!({ result: true, label: "KRW" });
+            successOf(call)({ result: true, label: "KRW" });
             expect(h.$(side.span).text()).toBe("KRW");
-            call.success!({ result: false, label: "—" });
+            successOf(call)({ result: false, label: "—" });
             expect(h.$(side.span).text()).toBe("—");
+        });
+
+        it("on load, the creation form asks for the label of the preselected choice — and asks nothing when there is none", () => {
+            expect(c.load().ajaxCalls.filter((call) => call.url.includes(c.url))).toHaveLength(1);
+            expect(c.loadWithoutCreateChoices().ajaxCalls.filter((call) => call.url.includes(c.url))).toEqual([]);
         });
 
         it.each([["create", c.create], ["edit", c.edit]] as const)("%s form: the lookup's URL carries the URL-encoded selection", (_side, side) => {

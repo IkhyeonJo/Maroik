@@ -2,7 +2,7 @@ import { describe, it, expect, vi } from "vitest";
 import { describeMissingServerConstants } from "@tests/_common/missingConfigSuite";
 import { describeAmountLabel } from "@tests/_common/amountLabelSuite";
 import { describeGridCrudScript } from "@tests/_common/gridCrudSuite";
-import { loadSite, hidden, antiForgery, hiddenByStyle, fireNative, stubPlugin } from "@tests/_common/harness";
+import { loadSite, hidden, antiForgery, hiddenByStyle, fireNative, stubPlugin, present, lastOf, successOf } from "@tests/_common/harness";
 
 // wwwroot/user/custom/AccountBook/Expenditure/js/site.js
 /** Main class → sub-classes, as the page publishes it. */
@@ -18,7 +18,8 @@ function fixture(): string {
         hidden("expenditureDepositAssetSubClasses", JSON.stringify(depositAssetSubClasses).replace(/"/g, "&quot;")) +
         hidden("localizerFailedToLoadAmountLabel", "Failed to load the amount label.") +
         `<div id="createExpenditureTabs"></div><div id="editExpenditureTabs"></div>
-     <input id="createExpenditureDate" value="2024-05-04" /><input id="editExpenditureDate" /><input id="gridSearch" />
+     <input id="createExpenditureDate" value="2024-05-04" /><input id="editExpenditureDate" />
+     <select id="createExpenditureHour"><option value="9" selected>9</option></select><select id="createExpenditureMinute"><option value="30" selected>30</option></select><select id="createExpenditureSecond"><option value="0" selected>0</option></select><select id="editExpenditureHour"><option value="9" selected>9</option></select><select id="editExpenditureMinute"><option value="30" selected>30</option></select><select id="editExpenditureSecond"><option value="0" selected>0</option></select><input id="gridSearch" />
      <select id="createExpenditureMainClass"><option value="Living">Living</option><option value="Transfer">Transfer</option></select>
      <select id="createExpenditureSubClass"><option value="Food">Food</option><option value="Rent">Rent</option><option value="ToSavings">ToSavings</option></select>
      <select id="editExpenditureMainClass"></select><select id="editExpenditureSubClass"></select>
@@ -26,8 +27,8 @@ function fixture(): string {
      <div id="divEditExpenditureMyDepositAsset" style="display:none"></div>
      <form id="formCreateExpenditure"></form><form id="formEditExpenditure"></form>
      <button id="btnExportExcelExpenditure"></button>
-     <button id="btnEditExpenditureGridRow"></button><button id="btnConfirmDeleteExpenditure"></button>
-     <button id="btnDeleteExpenditure"></button>
+     <button id="btnEditExpenditureGridRow" data-errorMessageSelectGridRow="L_SelectRow"></button><button id="btnConfirmDeleteExpenditure" data-errorMessageSelectGridRow="L_SelectRow"></button>
+     <button id="btnDeleteExpenditure" data-errorMessageSelectGridRow="L_SelectRow"></button>
      <select id="createExpenditurePaymentMethod"><option value="Card" selected>Card</option></select>
      <select id="editExpenditurePaymentMethod"><option value="Card">Card</option><option value="Cash">Cash</option></select>
      <span id="labelCreateExpenditureAmount"></span><span id="labelEditExpenditureAmount"></span>`
@@ -55,7 +56,7 @@ describe("AccountBook/Expenditure", () => {
     it("Excel export targets /AccountBook/ExportExcelExpenditure", () => {
         const h = loadSite("user", "AccountBook", "Expenditure", fixture());
         h.$("#btnExportExcelExpenditure").trigger("click");
-        expect(h.submittedForms.at(-1)!.action).toContain("/AccountBook/ExportExcelExpenditure");
+        expect(lastOf(h.submittedForms).action).toContain("/AccountBook/ExportExcelExpenditure");
     });
 
     it("shows a toastr error when the create-form amount-label lookup fails", () => {
@@ -101,6 +102,7 @@ describeGridCrudScript({
 describeAmountLabel({
     label: "user/AccountBook/Expenditure",
     load: () => loadSite("user", "AccountBook", "Expenditure", fixture()),
+    loadWithoutCreateChoices: () => loadSite("user", "AccountBook", "Expenditure", fixture().replace('<select id="createExpenditurePaymentMethod"><option value="Card" selected>Card</option></select>', '<select id="createExpenditurePaymentMethod"></select>')),
     url: "GetExpenditureAmountLabel",
     create: { trigger: "#createExpenditurePaymentMethod", span: "#labelCreateExpenditureAmount" },
     edit: { trigger: "#editExpenditurePaymentMethod", span: "#labelEditExpenditureAmount" },
@@ -112,10 +114,10 @@ describe("AccountBook/Expenditure — date pickers and filling the edit form", (
         vi.useFakeTimers(); // after load: loadSite manages its own fake timers while it evaluates the script
         try {
             for (const id of ["createExpenditureDate", "editExpenditureDate"]) {
-                const init = h.datepickerInits.find((i) => i.el?.id === id)!;
+                const init = present(h.datepickerInits.find((i) => i.el?.id === id));
                 expect(() => {
-                    init.options.beforeShow!();
-                    init.options.onChangeMonthYear!();
+                    present(init.options.beforeShow)();
+                    present(init.options.onChangeMonthYear)();
                     vi.runAllTimers();
                 }).not.toThrow();
             }
@@ -135,7 +137,7 @@ describe("AccountBook/Expenditure — date pickers and filling the edit form", (
         });
         fireNative(h.win.document, "rowclick", { data: { Id: "1" } });
         h.$("#btnEditExpenditureGridRow").trigger("click");
-        h.ajaxCalls.find((a) => String(a.url).includes("IsExpenditureExists"))!.success!({
+        successOf(present(h.ajaxCalls.find((a) => String(a.url).includes("IsExpenditureExists"))))({
             result: true, expenditure: {
                 id: 1, mainClass: "Transfer", subClass: "ToSavings", content: "c", amount: 5, created: "2024-05-04T09:08:07", note: "n",
                 paymentMethod: "Card", myDepositAsset: null, ...record

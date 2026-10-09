@@ -1,6 +1,6 @@
 import { describe, it, expect, vi } from "vitest";
 import { describeMissingServerConstants } from "@tests/_common/missingConfigSuite";
-import { loadSite, antiForgery, hidden } from "@tests/_common/harness";
+import { loadSite, antiForgery, hidden, eventProps, present, lastOf, successOf, completeOf, errorOf, instanceOfType, calendarSelect, calendarEventClick, firstCalendar } from "@tests/_common/harness";
 import {
     describeCalendarCommon,
     describeEditFormDetail,
@@ -112,7 +112,7 @@ describe("user/Calendar/UserIndex", () => {
         const call = h.lastAjax();
         expect(call.async).not.toBe(false);
 
-        call.success?.({ result: true, calendars: [{ id: 1, name: "Cal 1" }] });
+        call.success?.({ result: true, calendars: [{ id: 1, name: "Cal 1", htmlColorCode: "#123456" }] });
         call.complete?.();
 
         expect(h.$("#createCalendarEventMyCalendar option").length).toBe(1);
@@ -144,7 +144,7 @@ describe("user/Calendar/UserIndex", () => {
         call.success?.({ result: true, browseCalendarsOfInterests: [{ id: 1, name: "Cal 1", checked: false }] });
         call.complete?.();
 
-        expect(h.win.document.getElementById("divBrowseCalendarsOfInterest")!.innerHTML).toContain("Cal 1");
+        expect(present(h.win.document.getElementById("divBrowseCalendarsOfInterest")).innerHTML).toContain("Cal 1");
     });
 
     /** Minimal payload accepted by IsCalendarEventExists / IsOtherCalendarEventExists's success handlers. */
@@ -157,6 +157,8 @@ describe("user/Calendar/UserIndex", () => {
                 allDay: true,
                 displayStartDate: "2024-01-01",
                 displayEndDate: "2024-01-02",
+                startDateTimeZoneIanaId: "UTC",
+                endDateTimeZoneIanaId: "UTC",
                 location: "",
                 description: "<p>hello</p>",
                 calendarEventAttachedFile: null,
@@ -173,13 +175,13 @@ describe("user/Calendar/UserIndex", () => {
     it("drag-selecting a date range fetches the calendar list asynchronously and opens the modal once settled", () => {
         const h = loadSite("user", "Calendar", "UserIndex", fixture());
 
-        h.calendarOptions[0].select({ start: new Date("2024-01-01"), end: new Date("2024-01-02") });
+        calendarSelect(h, { start: new Date("2024-01-01"), end: new Date("2024-01-02") });
 
         const call = h.lastAjax();
         expect(call.url).toBe("/Calendar/GetCalendars");
         expect(call.async).not.toBe(false);
 
-        call.success?.({ result: true, calendars: [{ id: 1, name: "Cal 1" }] });
+        call.success?.({ result: true, calendars: [{ id: 1, name: "Cal 1", htmlColorCode: "#123456" }] });
         call.complete?.();
 
         expect(h.$("#createCalendarEventMyCalendar option").length).toBe(1);
@@ -189,13 +191,13 @@ describe("user/Calendar/UserIndex", () => {
     function openEditPopup(h: ReturnType<typeof loadSite>): void {
         const eventEl = h.win.document.createElement("div");
         h.win.document.body.appendChild(eventEl);
-        h.calendarOptions[0].eventClick({
+        calendarEventClick(h, {
             el: eventEl,
             event: {
                 id: 1,
                 title: "Team sync",
                 allDay: true,
-                extendedProps: { calendarType: "My", displayStartDate: "2024-01-01", displayEndDate: "2024-01-02" },
+                extendedProps: eventProps({ calendarType: "My", displayStartDate: "2024-01-01", displayEndDate: "2024-01-02" }),
             },
         });
         h.$("#editCalendarEventPopup").trigger("click");
@@ -215,7 +217,7 @@ describe("user/Calendar/UserIndex", () => {
         expect(innerCall.url).toBe("/Calendar/GetCalendars");
         expect(innerCall.async).not.toBe(false);
 
-        innerCall.success?.({ result: true, calendars: [{ id: 5, name: "Cal 5" }] });
+        innerCall.success?.({ result: true, calendars: [{ id: 5, name: "Cal 5", htmlColorCode: "#123456" }] });
         innerCall.complete?.();
 
         expect(h.$("#editCalendarEventStatus").val()).toBe("Confirmed");
@@ -272,7 +274,7 @@ describe("user/Calendar/UserIndex", () => {
                 try {
                     h.respond(0, new h.win.Blob(["zip-bytes"], { type: "application/zip" }));
                     expect(click).toHaveBeenCalledTimes(1);
-                    expect((click.mock.contexts[0] as HTMLAnchorElement).download).toBe("report.zip");
+                    expect((instanceOfType(click.mock.contexts[0], HTMLAnchorElement)).download).toBe("report.zip");
                     expect(revoke).not.toHaveBeenCalled();
                     vi.advanceTimersByTime(100);
                     expect(revoke).toHaveBeenCalledWith("blob:attachment");
@@ -308,13 +310,13 @@ describe("user/Calendar/UserIndex", () => {
     function openViewPopup(h: ReturnType<typeof loadSite>): void {
         const eventEl = h.win.document.createElement("div");
         h.win.document.body.appendChild(eventEl);
-        h.calendarOptions[0].eventClick({
+        calendarEventClick(h, {
             el: eventEl,
             event: {
                 id: "other-1",
                 title: "Team sync",
                 allDay: true,
-                extendedProps: { calendarType: "Other", displayStartDate: "2024-01-01", displayEndDate: "2024-01-02" },
+                extendedProps: eventProps({ calendarType: "Other", displayStartDate: "2024-01-01", displayEndDate: "2024-01-02" }),
             },
         });
         h.$("#viewOtherCalendarEventPopup").trigger("click");
@@ -334,7 +336,7 @@ describe("user/Calendar/UserIndex", () => {
         expect(innerCall.url).toBe("/Calendar/GetOtherCalendars");
         expect(innerCall.async).not.toBe(false);
 
-        innerCall.success?.({ result: true, tempOtherCalendars: [{ id: 5, name: "Shared" }] });
+        innerCall.success?.({ result: true, tempOtherCalendars: [{ id: 5, name: "Shared", htmlColorCode: "#123456" }] });
         innerCall.complete?.();
 
         expect(h.$("#viewCalendarEventStatus").val()).toBe("Confirmed");
@@ -370,10 +372,11 @@ describe("user/Calendar/UserIndex", () => {
         expect(call.url).toBe("/Calendar/CreateCalendar");
         call.success?.({
             result: true,
+            message: "created",
             calendar: { id: 1, name: "<img src=x alt=\"\">", htmlColorCode: "#3788d8" },
         });
 
-        const myCalendarsHtml = h.win.document.getElementById("myCalendars")!.innerHTML;
+        const myCalendarsHtml = present(h.win.document.getElementById("myCalendars")).innerHTML;
         expect(myCalendarsHtml).not.toContain("<img");
         expect(myCalendarsHtml).toContain("&lt;img src=x alt=\"\"&gt;");
     });
@@ -389,7 +392,7 @@ describe("user/Calendar/UserIndex", () => {
             browseCalendarsOfInterests: [{ id: 1, name: `<img src=x alt="">`, checked: false }],
         });
 
-        const html = h.win.document.getElementById("divBrowseCalendarsOfInterest")!.innerHTML;
+        const html = present(h.win.document.getElementById("divBrowseCalendarsOfInterest")).innerHTML;
         expect(html).not.toContain("<img");
         expect(html).toContain("&lt;img src=x alt=\"\"&gt;");
     });
@@ -427,16 +430,16 @@ describeCalendarExtras({ label: "user/Calendar/UserIndex", build });
 describe("user/Calendar/UserIndex — events on the grid", () => {
     it("seeds the grid with my events (typed 'My') and other calendars' events (typed 'Other')", () => {
         const h = build({ my: [evt(1, 1)], other: [evt(2, 9)] });
-        const cal = h.calendarInstances[0];
-        expect(cal.addEvent.mock.calls.map((c) => [c[0].id, c[0].extendedProps.calendarType])).toEqual([["1", "My"], ["2", "Other"]]);
+        const cal = firstCalendar(h);
+        expect(cal.addEvent.mock.calls.map((c) => [c[0]["id"], c[0].extendedProps["calendarType"]])).toEqual([["1", "My"], ["2", "Other"]]);
         expect(cal.render).toHaveBeenCalled();
     });
 
     it("toggling my-calendar or other-calendar checkboxes clears the grid and requests exactly the checked ones, mine first", () => {
         const h = build();
         h.$(".chkCalendar").first().trigger("change");
-        expect(h.calendarInstances[0].removeAllEvents).toHaveBeenCalledTimes(1);
-        expect(JSON.parse(String(eventCalls(h)[0].data))).toEqual({ Calendars: [{ Id: 1 }, { Id: 3 }, { Id: 9 }] });
+        expect(firstCalendar(h).removeAllEvents).toHaveBeenCalledTimes(1);
+        expect(JSON.parse(String(present(eventCalls(h)[0]).data))).toEqual({ Calendars: [{ Id: 1 }, { Id: 3 }, { Id: 9 }] });
 
         h.$(".chkOtherCalendar").first().trigger("change");
         expect(eventCalls(h)).toHaveLength(2);
@@ -444,13 +447,13 @@ describe("user/Calendar/UserIndex — events on the grid", () => {
 
     it("the reply's events are added with the type the server assigned; a stale reply is ignored", () => {
         const h = build();
-        const cal = h.calendarInstances[0];
+        const cal = firstCalendar(h);
         h.$(".chkCalendar").first().trigger("change");
         h.$(".chkCalendar").first().trigger("change");
         const [first, second] = eventCalls(h);
-        second.success!({ result: true, calendarEvents: JSON.stringify([evt(20, 1, "Other")]) });
-        first.success!({ result: true, calendarEvents: JSON.stringify([evt(10, 1)]) });
-        expect(cal.addEvent.mock.calls.map((c) => [c[0].id, c[0].extendedProps.calendarType])).toEqual([["20", "Other"]]);
+        successOf(second)({ result: true, calendarEvents: JSON.stringify([evt(20, 1, "Other")]) });
+        successOf(first)({ result: true, calendarEvents: JSON.stringify([evt(10, 1)]) });
+        expect(cal.addEvent.mock.calls.map((c) => [c[0]["id"], c[0].extendedProps["calendarType"]])).toEqual([["20", "Other"]]);
     });
 });
 
@@ -458,10 +461,10 @@ describe("user/Calendar/UserIndex — a refused events reply", () => {
     it("a reply the server refuses adds no events", () => {
         const h = build();
         h.$(".chkCalendar").first().trigger("click");
-        const call = eventCalls(h).at(-1)!;
-        const added = h.calendarInstances[0].addEvent.mock.calls.length;
-        call.success!({ result: false });
-        expect(h.calendarInstances[0].addEvent.mock.calls.length).toBe(added);
+        const call = lastOf(eventCalls(h));
+        const added = firstCalendar(h).addEvent.mock.calls.length;
+        successOf(call)({ result: false });
+        expect(firstCalendar(h).addEvent.mock.calls.length).toBe(added);
     });
 });
 
@@ -469,7 +472,7 @@ describe("user/Calendar/UserIndex — calendars of interest", () => {
     /** Opens the "calendars of interest" dialog and answers it with calendars 11 (checked) and 12. */
     const openDialog = (h: Handle) => {
         h.$("#aBrowseCalendarsOfInterest").trigger("click");
-        h.lastAjax().success!({
+        successOf(h.lastAjax())({
             result: true,
             browseCalendarsOfInterests: [{ id: 11, name: "One", checked: true }, { id: 12, name: "Two", checked: false }],
         });
@@ -496,18 +499,18 @@ describe("user/Calendar/UserIndex — calendars of interest", () => {
         expect(save.url).toBe("/Calendar/UpdateOtherCalendar");
         expect(JSON.parse(String(save.data))).toEqual([{ CalendarId: "11" }]);
 
-        save.success!({ result: true, message: "saved" });
+        successOf(save)({ result: true, message: "saved" });
         const list = h.lastAjax();
         expect(list.url).toBe("/Calendar/GetOtherCalendars");
-        list.success!({ result: true, tempOtherCalendars: [{ id: 11, name: "<i>One</i>", htmlColorCode: "#010203" }] });
+        successOf(list)({ result: true, tempOtherCalendars: [{ id: 11, name: "<i>One</i>", htmlColorCode: "#010203" }] });
 
         expect(h.$("#otherCalendars label[id^='lblOtherCalendar']").map((_, l) => l.id).get()).toEqual(["lblOtherCalendar11"]);
         expect(h.$("#otherCalendars").html()).toContain("&lt;i&gt;One&lt;/i&gt;");
         expect(JSON.parse(String(h.lastAjax().data))).toEqual({ Calendars: [{ Id: 1 }, { Id: 3 }, { Id: 11 }] });
 
-        h.lastAjax().success!({ result: true, calendarEvents: JSON.stringify([evt(60, 11, "Other")]) });
-        h.lastAjax().complete!();
-        expect(h.calendarInstances[0].addEvent.mock.calls.at(-1)![0].id).toBe("60");
+        successOf(h.lastAjax())({ result: true, calendarEvents: JSON.stringify([evt(60, 11, "Other")]) });
+        completeOf(h.lastAjax())();
+        expect(lastOf(firstCalendar(h).addEvent.mock.calls)[0]["id"]).toBe("60");
         expect(modal).toHaveBeenCalledWith("hide");
         expect(h.toastr.success).toHaveBeenCalledWith("saved");
     });
@@ -517,8 +520,8 @@ describe("user/Calendar/UserIndex — calendars of interest", () => {
         const modal = spyModal(h);
         h.$("#aBrowseCalendarsOfInterest").trigger("click");
         const call = h.lastAjax();
-        call.error!();
-        call.complete!();
+        errorOf(call)();
+        completeOf(call)();
         expect(h.toastr.error).toHaveBeenCalledWith("L_FailedToLoadCalendars");
         expect(modal).toHaveBeenCalledWith("show");
     });
@@ -528,8 +531,8 @@ describe("user/Calendar/UserIndex — calendars of interest", () => {
         const modal = spyModal(h);
         h.$("#aBrowseCalendarsOfInterest").trigger("click");
         const call = h.lastAjax();
-        call.success!({ result: false });
-        call.complete!();
+        successOf(call)({ result: false });
+        completeOf(call)();
         expect(h.$("#divBrowseCalendarsOfInterest").children()).toHaveLength(0);
         expect(modal).toHaveBeenCalledWith("show");
     });
@@ -539,13 +542,13 @@ describe("user/Calendar/UserIndex — calendars of interest", () => {
         const modal = spyModal(h);
         openDialog(h);
         h.$("#formUpdateBrowseCalendarsOfInterest").trigger("submit");
-        h.lastAjax().success!({ result: true, message: "saved" });
-        h.lastAjax().success!({ result: true, tempOtherCalendars: [{ id: 11, name: "One", htmlColorCode: "#010203" }] });
+        successOf(h.lastAjax())({ result: true, message: "saved" });
+        successOf(h.lastAjax())({ result: true, tempOtherCalendars: [{ id: 11, name: "One", htmlColorCode: "#010203" }] });
         const events = h.lastAjax();
-        const added = h.calendarInstances[0].addEvent.mock.calls.length;
-        events.success!({ result: false });
-        events.complete!();
-        expect(h.calendarInstances[0].addEvent.mock.calls.length).toBe(added);
+        const added = firstCalendar(h).addEvent.mock.calls.length;
+        successOf(events)({ result: false });
+        completeOf(events)();
+        expect(firstCalendar(h).addEvent.mock.calls.length).toBe(added);
         expect(modal).toHaveBeenCalledWith("hide");
     });
 
@@ -554,8 +557,8 @@ describe("user/Calendar/UserIndex — calendars of interest", () => {
         const modal = spyModal(h);
         openDialog(h);
         h.$("#formUpdateBrowseCalendarsOfInterest").trigger("submit");
-        h.lastAjax().success!({ result: true, message: "saved" });
-        h.lastAjax().success!({ result: false });
+        successOf(h.lastAjax())({ result: true, message: "saved" });
+        successOf(h.lastAjax())({ result: false, error: "unavailable" });
         expect(modal).toHaveBeenCalledWith("hide");
         expect(h.toastr.error).not.toHaveBeenCalled();
     });
@@ -565,12 +568,12 @@ describe("user/Calendar/UserIndex — calendars of interest", () => {
         const modal = spyModal(h);
         openDialog(h);
         h.$("#formUpdateBrowseCalendarsOfInterest").trigger("submit");
-        h.lastAjax().success!({ result: true, message: "saved" });
-        h.lastAjax().success!({ result: true, tempOtherCalendars: [{ id: 11, name: "One", htmlColorCode: "#010203" }] });
+        successOf(h.lastAjax())({ result: true, message: "saved" });
+        successOf(h.lastAjax())({ result: true, tempOtherCalendars: [{ id: 11, name: "One", htmlColorCode: "#010203" }] });
         const events = h.lastAjax();
         expect(events.url).toBe("/Calendar/GetCalendarEvents");
-        events.error!();
-        events.complete!();
+        errorOf(events)();
+        completeOf(events)();
         expect(h.toastr.error).toHaveBeenCalledWith("L_FailedToLoadCalendars");
         expect(modal).toHaveBeenCalledWith("hide");
     });
@@ -580,8 +583,8 @@ describe("user/Calendar/UserIndex — calendars of interest", () => {
         const modal = spyModal(h);
         openDialog(h);
         h.$("#formUpdateBrowseCalendarsOfInterest").trigger("submit");
-        h.lastAjax().success!({ result: true, message: "saved" });
-        h.lastAjax().error!();
+        successOf(h.lastAjax())({ result: true, message: "saved" });
+        errorOf(h.lastAjax())();
         expect(h.toastr.error).toHaveBeenCalledWith("L_FailedToLoadCalendars");
         expect(modal).toHaveBeenCalledWith("hide");
 
@@ -589,7 +592,7 @@ describe("user/Calendar/UserIndex — calendars of interest", () => {
         const modal2 = spyModal(h2);
         openDialog(h2);
         h2.$("#formUpdateBrowseCalendarsOfInterest").trigger("submit");
-        h2.lastAjax().success!({ result: false, error: "not shared" });
+        successOf(h2.lastAjax())({ result: false, error: "not shared" });
         expect(h2.toastr.error).toHaveBeenCalledWith("not shared");
         expect(modal2).not.toHaveBeenCalledWith("hide");
     });
@@ -629,8 +632,8 @@ describe("user/Calendar/UserIndex — edit form and shared-event view in detail"
     const click = (h: Handle, over: Record<string, unknown>) => {
         const el = h.win.document.createElement("div");
         h.win.document.body.appendChild(el);
-        const event = { id: "55", title: "T", allDay: false, extendedProps: { calendarType: "My" }, ...over };
-        return h.calendarOptions[0].eventClick({ el, event });
+        const event = { id: "55", title: "T", allDay: false, extendedProps: eventProps({ calendarType: "My" }), ...over };
+        return calendarEventClick(h, { el, event });
     };
     /** A stored attachment as the event reply describes it. */
     const attachment = { name: "spec", extension: ".pdf", size: 2_500_000 };
@@ -650,16 +653,16 @@ describe("user/Calendar/UserIndex — edit form and shared-event view in detail"
 
     /** Runs "other event → view": IsOtherCalendarEventExists reply, then GetOtherCalendars settles. */
     const openView = (h: Handle, calendarEvent: Record<string, unknown>) => {
-        click(h, { extendedProps: { calendarType: "Other" } });
+        click(h, { extendedProps: eventProps({ calendarType: "Other" }) });
         h.$("#viewOtherCalendarEventPopup").trigger("click");
-        h.lastAjax().success!(payload(calendarEvent));
+        successOf(h.lastAjax())(payload(calendarEvent));
         const inner = h.lastAjax();
-        inner.success!({ result: true, tempOtherCalendars: [{ id: 1, name: "Shared" }] });
-        inner.complete!();
+        successOf(inner)({ result: true, tempOtherCalendars: [{ id: 1, name: "Shared", htmlColorCode: "#123456" }] });
+        completeOf(inner)();
     };
 
     /** The inline `display` style of the element matching `id` (jsdom does no layout). */
-    const display = (h: Handle, id: string) => (h.$(id)[0] as HTMLElement).style.display;
+    const display = (h: Handle, id: string) => (instanceOfType(h.$(id)[0], HTMLElement)).style.display;
 
     describe("shared-event view", () => {
         it("a timed shared event fills the read-only date/time/zone fields and the location", () => {
@@ -709,6 +712,13 @@ describe("user/Calendar/UserIndex — edit form and shared-event view in detail"
             expect(timed.map((_, r) => h2.$(r).find("input").val()).get()).toEqual(["10", "3", "2", "4"]);
         });
 
+        it("shows a file stored without an extension by its bare name", () => {
+            const h = setup();
+            openView(h, { calendarEventAttachedFile: { ...attachment, extension: null } });
+            expect(h.$("#aViewCalendarEventAttachedFile").text()).toBe("spec");
+            expect(h.$("#aViewCalendarEventAttachedFile").attr("data-name")).toBe("spec");
+        });
+
         it("shows the attached file and rebuilds inline images", () => {
             const h = setup();
             openView(h, {
@@ -721,8 +731,8 @@ describe("user/Calendar/UserIndex — edit form and shared-event view in detail"
             expect(h.$("#aViewCalendarEventAttachedFile").attr("data-calendareventid")).toBe("55");
             expect(h.$("#aViewCalendarEventAttachedFile").attr("data-file")).toBeUndefined();
             expect(h.$("#spanViewCalendarEventAttachedFile").text()).toBe("2,441KB");
-            const code = h.summernoteCalls.filter((c) => (c.el as HTMLElement | undefined)?.id === "viewCalendarEventDescription" && c.args[0] === "code").pop();
-            expect(String(code!.args[1])).toContain("src=\"blob:fake\"");
+            const code = h.summernoteCalls.filter((c) => c.el?.id === "viewCalendarEventDescription" && c.args[0] === "code").pop();
+            expect(String(present(code).args[1])).toContain("src=\"blob:fake\"");
         });
 
         it.each(["onload", "onerror"] as const)("the view's rebuilt image %s releases the object URL it was given", (event) => {
@@ -731,21 +741,21 @@ describe("user/Calendar/UserIndex — edit form and shared-event view in detail"
             spyModal(h);
             openView(h, { description: `<img data-file="${png}" data-contenttype="image/png" alt="">` });
             const revoke = (h.win.URL.revokeObjectURL = vi.fn());
-            const img = h.$(".note-editor img")[0] as HTMLImageElement;
+            const img = instanceOfType(h.$(".note-editor img")[0], HTMLImageElement);
 
-            (img[event] as () => void)();
+            img.dispatchEvent(new Event(event.slice(2))); // fires the onload / onerror handler
 
             expect(revoke).toHaveBeenCalledWith("blob:live");
         });
 
         it("a view of a shared event whose calendar list is refused still opens with the rest filled in", () => {
             const h = setup();
-            click(h, { extendedProps: { calendarType: "Other" } });
+            click(h, { extendedProps: eventProps({ calendarType: "Other" }) });
             h.$("#viewOtherCalendarEventPopup").trigger("click");
-            h.lastAjax().success!(payload());
+            successOf(h.lastAjax())(payload());
             const inner = h.lastAjax();
-            inner.success!({ result: false });
-            inner.complete!();
+            successOf(inner)({ result: false });
+            completeOf(inner)();
             expect(h.$("#viewCalendarEventMyCalendar option")).toHaveLength(0);
             expect(h.$("#viewCalendarEventStatus").val()).toBe("Busy");
         });
@@ -753,8 +763,8 @@ describe("user/Calendar/UserIndex — edit form and shared-event view in detail"
         it("the view leaves an inline image with no content type as stored", () => {
             const h = setup();
             openView(h, { description: `<img data-file="${png}" alt="">` });
-            const code = h.summernoteCalls.filter((c) => (c.el as HTMLElement | undefined)?.id === "viewCalendarEventDescription" && c.args[0] === "code").pop();
-            expect(String(code!.args[1])).toContain("data-file");
+            const code = h.summernoteCalls.filter((c) => c.el?.id === "viewCalendarEventDescription" && c.args[0] === "code").pop();
+            expect(String(present(code).args[1])).toContain("data-file");
         });
 
         it("shows a shared event's reminders with their own method selected (email and notification alike)", () => {
@@ -772,9 +782,9 @@ describe("user/Calendar/UserIndex — edit form and shared-event view in detail"
 
         it("a refused lookup toasts the server's message and opens nothing", () => {
             const h = setup();
-            click(h, { extendedProps: { calendarType: "Other" } });
+            click(h, { extendedProps: eventProps({ calendarType: "Other" }) });
             h.$("#viewOtherCalendarEventPopup").trigger("click");
-            h.lastAjax().success!({ result: false, error: "no longer shared" });
+            successOf(h.lastAjax())({ result: false, error: "no longer shared" });
             expect(h.toastr.error).toHaveBeenCalledWith("no longer shared");
         });
     });
@@ -783,13 +793,13 @@ describe("user/Calendar/UserIndex — edit form and shared-event view in detail"
         it("a timed event shows its local start/end with both zones", () => {
             const h = setup();
             click(h, {
-                extendedProps: {
+                extendedProps: eventProps({
                     calendarType: "Other",
                     displayStartDate: "2024-05-01 09:05:00",
                     displayEndDate: "2024-05-01 10:10:00",
                     displayStartDateTimeZone: "UTC",
                     displayEndDateTimeZone: "KST"
-                }
+                })
             });
             expect(h.$("#otherCalendarEventPopupStartAllDayUnchecked").text()).toBe("2024-05-01 09:05:00");
             expect(h.$("#otherCalendarEventPopupStartTimeZoneAllDayUnchecked").text()).toBe("(UTC)");
@@ -801,7 +811,7 @@ describe("user/Calendar/UserIndex — edit form and shared-event view in detail"
 
         it("a click on the open popup itself, or on a calendar event, does not close it", () => {
             const h = setup();
-            click(h, { extendedProps: { calendarType: "Other" } });
+            click(h, { extendedProps: eventProps({ calendarType: "Other" }) });
             h.$("#otherCalendarEventPopup").trigger("click");
             const other = h.win.document.createElement("div");
             other.className = "fc-event";
@@ -813,7 +823,7 @@ describe("user/Calendar/UserIndex — edit form and shared-event view in detail"
         it("an event of neither calendar type opens no popup", () => {
             const h = setup();
             const before = h.ajaxCalls.length;
-            const result = click(h, { extendedProps: { calendarType: "Something" } });
+            const result = click(h, { extendedProps: eventProps({ calendarType: "Something" }) });
             expect(result).toBeUndefined();
             expect(display(h, "#otherCalendarEventPopup")).not.toBe("block");
             expect(display(h, "#calendarEventPopup")).not.toBe("block");
@@ -822,20 +832,20 @@ describe("user/Calendar/UserIndex — edit form and shared-event view in detail"
 
         it("the close button, a click elsewhere and a second click on the same event all hide it", () => {
             const h = setup();
-            click(h, { extendedProps: { calendarType: "Other" } });
+            click(h, { extendedProps: eventProps({ calendarType: "Other" }) });
             h.$("#closeOtherCalendarEventPopup").trigger("click");
             expect(display(h, "#otherCalendarEventPopup")).toBe("none");
 
-            click(h, { extendedProps: { calendarType: "Other" } });
+            click(h, { extendedProps: eventProps({ calendarType: "Other" }) });
             h.$(h.win.document.body).trigger("click");
             expect(display(h, "#otherCalendarEventPopup")).toBe("none");
 
-            Object.assign(h.$("#otherCalendarEventPopup")[0], { getClientRects: () => [1] }); // jsdom has no layout
+            Object.assign(present(h.$("#otherCalendarEventPopup")[0]), { getClientRects: () => [1] }); // jsdom has no layout
             const el = h.win.document.createElement("div");
             h.win.document.body.appendChild(el);
-            const event = { id: "o1", title: "T", allDay: false, extendedProps: { calendarType: "Other" } };
-            h.calendarOptions[0].eventClick({ el, event });
-            expect(h.calendarOptions[0].eventClick({ el, event })).toBeUndefined();
+            const event = { id: "o1", title: "T", allDay: false, extendedProps: eventProps({ calendarType: "Other" }) };
+            calendarEventClick(h, { el, event });
+            expect(calendarEventClick(h, { el, event })).toBeUndefined();
             expect(display(h, "#otherCalendarEventPopup")).toBe("none");
         });
     });
