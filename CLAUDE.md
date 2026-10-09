@@ -385,14 +385,15 @@ for shipped code, `tests` for `*.Tests`): `dotnet sln Maroik.sln add <csproj> --
 `SolutionLayeringArchitectureTests` (`EveryProject_MustBeRegisteredInTheSolution`,
 `EveryProject_MustBeNestedUnderTheMatchingSolutionFolder`).
 
-## Domain error messages must go through LocalizableError
+## Domain error messages must go through DomainError
 
-Every `Maroik.Core.Domain` error is built via `Maroik.Core.Domain.Localization.LocalizableError`
-(`.Validation`/`.Conflict`/`.Failure`) — **never** call the raw `ErrorOr.Error.Validation` /
-`.Conflict` / `.Failure` / `.NotFound` / `.Forbidden` / `.Unexpected` factories directly outside
-`LocalizableError.cs` itself. This applies even to a message with no runtime value to interpolate
-(pass zero `args`) — a message that starts static and later gains an interpolated value must not be
-able to silently regress to bypassing localization.
+The domain speaks English only and does no translation. Every `Maroik.Core.Domain` error is built via
+`Maroik.Core.Domain.Errors.DomainError` (`.Validation`/`.Conflict`/`.Failure`) — **never** call the raw
+`ErrorOr.Error.Validation` / `.Conflict` / `.Failure` / `.NotFound` / `.Forbidden` / `.Unexpected` factories
+directly outside `DomainError.cs` itself. `DomainError` keeps the English message template and its values
+separately in `Error.Metadata` (`MessageTemplate` / `MessageArgs`), so the outer layers can translate it.
+This applies even to a message with no runtime value to interpolate (pass zero `args`) — a message that
+starts static and later gains an interpolated value must not be able to silently lose its template.
 
 Why: a raw `Error.X(code, "some message")` bakes the description straight into `Error.Description`
 with no composite-format template in `Error.Metadata`, so the Website's `IHtmlLocalizer` resx lookup
@@ -401,13 +402,17 @@ falls back to the baked (often English, sometimes value-specific) string instead
 `Money.Add`/`Subtract`'s currency-mismatch errors it was a live bug: a genuinely runtime currency
 code was interpolated straight into the message, so no resx key could ever match it.
 
-Enforced by `DomainArchitectureTests.Domain_ErrorMessages_MustGoThrough_LocalizableError`
+Enforced by `DomainArchitectureTests.Domain_ErrorMessages_MustGoThrough_DomainError`
 (`Maroik.Core.Domain.Tests/Architecture/DomainArchitectureTests.cs`) — a NetArchTest custom rule that
 inspects each type's IL for a direct call to a raw `ErrorOr.Error` factory method (a type-dependency
 check doesn't work here since every Domain type legitimately depends on the unrelated `ErrorOr<T>`
-return type). Keep it green; when a new error is added, add it via `LocalizableError`, and add the
+return type). Keep it green; when a new error is added, add it via `DomainError`, and add the
 matching resx entry — with a `{0}`/`{1}` composite-format key, not a baked value — to every controller
 resx pair (`en-US` + `ko-KR`) that can surface it.
+
+Cultures are a Website concern: the supported UI cultures and the culture → default time-zone pre-select
+live in `Maroik.Website/Constants/CulturePolicy.cs`, not in the domain. `Maroik.Core.Domain.Time.DateTimeExtensions`
+is time-zone conversion, not language handling.
 
 ## Service error keys must come from ServiceErrorKeys
 

@@ -5,7 +5,7 @@ using Maroik.Core.Contract.Misc.Helpers;
 using Maroik.Core.Contract.Misc.Settings;
 using Maroik.Core.Domain.Account;
 using Maroik.Core.Domain.Board;
-using Maroik.Core.Domain.Localization;
+using Maroik.Core.Domain.Time;
 using Maroik.Core.Domain.Media;
 using Maroik.Website.Attributes;
 using Maroik.Website.Contracts;
