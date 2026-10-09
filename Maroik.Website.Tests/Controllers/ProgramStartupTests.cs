@@ -1,7 +1,7 @@
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
 using System.Reflection;
-using Maroik.Core.Domain.Localization;
+using Maroik.Website.Constants;
 using Maroik.Website.Contracts;
 using Maroik.Website.Tests.Infrastructure;
 using Microsoft.AspNetCore.Builder;
@@ -114,7 +114,7 @@ public class ProgramStartupTests(MaroikWebApplicationFactory factory)
         Assert.True(Directory.Exists(Path.Combine(contentRoot, "dataprotection-keys")));
     }
 
-    /// <summary>The site's request cultures come from <c>CulturePolicy</c> (the Domain's single list of supported cultures).</summary>
+    /// <summary>The site's request cultures come from <c>CulturePolicy</c> (the Website's single list of supported cultures).</summary>
     [Fact]
     public void Startup_ConfiguresRequestLocalization_FromCulturePolicy()
     {

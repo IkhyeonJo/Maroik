@@ -2,7 +2,7 @@ using ErrorOr;
 using Maroik.Core.Contract.Dtos;
 using Maroik.Core.Contract.Interfaces;
 using Maroik.Core.Domain.Finance;
-using Maroik.Core.Domain.Localization;
+using Maroik.Core.Domain.Errors;
 using Maroik.Core.Service.Mappers;
 
 namespace Maroik.Core.Service.Services;
@@ -141,7 +141,7 @@ public class FixedIncomeService(IFixedIncomeRepository fixedIncomeRepository, IA
             return Error.Validation("FixedIncome.DepositMonth", "Deposit month must be between 1 and 12.");
 
         if (!FixedSchedulePolicy.IsValidDepositDate(request.DepositMonth, request.DepositDay))
-            return LocalizableError.Validation("FixedIncome.DepositDay",
+            return DomainError.Validation("FixedIncome.DepositDay",
                 "Deposit day must be between 1 and {0} for month {1}.",
                 FixedSchedulePolicy.MaxDepositDay(request.DepositMonth), request.DepositMonth);
 

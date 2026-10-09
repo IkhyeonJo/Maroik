@@ -7,7 +7,6 @@ using System.Globalization;
 using Maroik.Core.Client.Extensions;
 using Maroik.Core.Contract.Misc.Enums;
 using Maroik.Core.Contract.Misc.Settings;
-using Maroik.Core.Domain.Localization;
 using Maroik.Core.Repository.Extensions;
 using Maroik.Core.Service.Extensions;
 using Maroik.Website.Constants;
