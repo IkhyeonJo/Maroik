@@ -19,7 +19,6 @@ using Microsoft.AspNetCore.CookiePolicy;
 using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Localization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.Razor;
 using Microsoft.AspNetCore.Rewrite;
 using Microsoft.AspNetCore.Session;
 using Serilog;
@@ -147,9 +146,6 @@ try
     IConnectionMultiplexer? valkey = null;
     if (!string.IsNullOrEmpty(valkeyConnectionString))
     {
-        // AbortOnConnectFail = false so a Valkey that is briefly unreachable at boot (its container
-        // still starting, a transient network blip) does not take the whole web app down with it —
-        // the multiplexer connects in the background and retries instead of throwing here.
         var valkeyOptions = ConfigurationOptions.Parse(valkeyConnectionString);
         valkeyOptions.AbortOnConnectFail = false;
         valkey = await ConnectionMultiplexer.ConnectAsync(valkeyOptions);
@@ -258,12 +254,15 @@ try
     // Pages services were dead weight. The filters/options for the same builder are added by the
     // AddControllersWithViews call further below; the two calls merge into one MVC builder.
     builder.Services.AddControllersWithViews()
-        .AddViewLocalization(LanguageViewLocationExpanderFormat.Suffix)
+        .AddViewLocalization()
         .AddDataAnnotationsLocalization();
 
     builder.Services.Configure<RequestLocalizationOptions>(opt =>
     {
-        List<CultureInfo> supportedCultures = CulturePolicy.SupportedCultures.Select(c => new CultureInfo(c)).ToList();
+        List<CultureInfo> supportedCultures =
+        [
+            .. CulturePolicy.SupportedCultures.Select(c => new CultureInfo(c))
+        ];
         opt.DefaultRequestCulture = new RequestCulture(CulturePolicy.DefaultCulture);
         opt.SupportedCultures = supportedCultures;
         opt.SupportedUICultures = supportedCultures;
