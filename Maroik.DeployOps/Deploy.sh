@@ -57,22 +57,18 @@ sudo apt install docker-compose -y
 # Set permissions for scripts
 chmod 755 /home/ubuntu/Maroik/Maroik.Crontab/*.sh
 
-CERT_PATH="/home/ubuntu/Maroik/Maroik.SSL/conf"
-TARGET_SCRIPT="/home/ubuntu/Maroik/Maroik.Crontab/CertbotScript.sh"
-PARAM="issue_wildcard"
-
-# check directory
-if [ ! -d "$CERT_PATH" ]; then
-  echo "[INFO] Directory $CERT_PATH not found."
-  echo "[INFO] Please run $TARGET_SCRIPT with parameter '$PARAM'... manually."
-  exit 1
-fi
-
 # check .env.prod file
 ENV_PROD_PATH="/home/ubuntu/Maroik/.env.prod"
 if [ ! -f "$ENV_PROD_PATH" ]; then
   echo "[INFO] File $ENV_PROD_PATH not found."
   echo "[INFO] Please create .env.prod file with required environment variables."
+  exit 1
+fi
+
+# check the Cloudflare Tunnel token: cloudflared is the site's only way in (no port is published)
+if ! grep -q '^TUNNEL_TOKEN=.' "$ENV_PROD_PATH"; then
+  echo "[INFO] TUNNEL_TOKEN is not set in $ENV_PROD_PATH."
+  echo "[INFO] Copy the connector token from Cloudflare Zero Trust > Networks > Tunnels."
   exit 1
 fi
 
@@ -137,69 +133,29 @@ sudo crontab /home/ubuntu/Maroik/Maroik.Crontab/InitCron
 # Reload cron service
 sudo systemctl reload cron
 
-# only port 80, 443, [5001, 8080] allowed by ufw
+# No inbound port at all: the site is reached only through the Cloudflare Tunnel, which
+# cloudflared opens outbound (docker-compose.prod.yml), and the server is managed physically.
 sudo apt install ufw -y
 
-# Fetch and validate the Cloudflare ranges BEFORE resetting the firewall. `ufw --force reset`
-# wipes every existing rule, so a failed/truncated download here must not leave the box on
-# "default deny incoming" with no Cloudflare allowance until the next fix -- same rationale as
-# Maroik.Crontab/UpdateCloudflareUfw.sh (which reuses this exact fetch-then-reset ordering and,
-# via its own 3AM cron entry, will retry this setup later if it's skipped here).
-CF_IPV4_URL="https://www.cloudflare.com/ips-v4"
-CF_IPV6_URL="https://www.cloudflare.com/ips-v6"
+echo "[+] Resetting firewall rules..."
+sudo ufw --force reset
+sudo ufw default deny incoming
+sudo ufw default allow outgoing
 
-fetch() {
-  # --fail: non-2xx is an error (not a 0-byte "success"); --retry: ride out a brief blip.
-  curl --fail --silent --show-error --location \
-       --retry 3 --retry-delay 5 --max-time 30 "$1"
-}
-
-echo "[+] Fetching Cloudflare IP ranges..."
-CF_IPV4_LIST=$(fetch "$CF_IPV4_URL") || { echo "[ERROR] Failed to fetch $CF_IPV4_URL."; CF_IPV4_LIST=""; }
-CF_IPV6_LIST=$(fetch "$CF_IPV6_URL") || { echo "[ERROR] Failed to fetch $CF_IPV6_URL."; CF_IPV6_LIST=""; }
-
-# Keep only lines that look like an IPv4/IPv6 CIDR; drop anything else (HTML error page, blanks).
-CF_RANGES=$(printf '%s\n%s\n' "$CF_IPV4_LIST" "$CF_IPV6_LIST" | grep -E '^[0-9a-fA-F:.]+/[0-9]{1,3}$' || true)
-
-if [ -z "$CF_RANGES" ]; then
-  echo "[ERROR] Downloaded list held no CIDR ranges; leaving ufw untouched. Run Maroik.Crontab/UpdateCloudflareUfw.sh manually once connectivity is confirmed."
-else
-  RANGE_COUNT=$(printf '%s\n' "$CF_RANGES" | wc -l)
-  if [ "$RANGE_COUNT" -lt 5 ]; then
-    echo "[ERROR] Only $RANGE_COUNT Cloudflare ranges parsed (expected ~22); looks truncated, leaving ufw untouched. Run Maroik.Crontab/UpdateCloudflareUfw.sh manually once connectivity is confirmed."
-  else
-    echo "[+] $RANGE_COUNT Cloudflare ranges validated."
-
-    echo "[+] Removing old firewall rules..."
-    sudo ufw --force reset
-    sudo ufw default deny incoming
-    sudo ufw default allow outgoing
-
-    echo "[+] Adding Cloudflare IPs..."
-    while IFS= read -r ip; do
-      [ -z "$ip" ] && continue
-      sudo ufw allow from "$ip" to any port 80 proto tcp
-      sudo ufw allow from "$ip" to any port 443 proto tcp
-      #sudo ufw allow from "$ip" to any port 5001 proto tcp
-      #sudo ufw allow from "$ip" to any port 8080 proto tcp
-    done <<< "$CF_RANGES"
-
-    # Ping (ICMP Echo Request) block
-    if ! grep -q '^net.ipv4.icmp_echo_ignore_all = 1' /etc/sysctl.conf; then
-      sudo tee -a /etc/sysctl.conf > /dev/null <<EOF
+# Ping (ICMP Echo Request) block
+if ! grep -q '^net.ipv4.icmp_echo_ignore_all = 1' /etc/sysctl.conf; then
+  sudo tee -a /etc/sysctl.conf > /dev/null <<EOF
 
 # Ping block (ICMP Echo Request ignore)
 net.ipv4.icmp_echo_ignore_all = 1
 EOF
-    fi
-
-    # Apply sysctl settings
-    sudo sysctl -p
-
-    # Enable UFW
-    sudo ufw --force enable
-  fi
 fi
+
+# Apply sysctl settings
+sudo sysctl -p
+
+# Enable UFW
+sudo ufw --force enable
 
 # Adds the current user to the "docker" group,
 sudo usermod -a -G docker $USER

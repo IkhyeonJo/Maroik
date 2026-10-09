@@ -50,11 +50,14 @@ Operations and hosting
   no-op (GNU sed drops a backslash before an ordinary character), so a password with `!` or `@` reaches
   `PGPASSWORD='…'` unchanged. It is not a password-corruption bug.
 - Maroik only ever runs under docker-compose on Linux (Ubuntu). Behaviour that differs only on a Windows dev box
-  (path separators, a test that fails only there such as `CertificateManagerTests`) is an environment
-  difference, not a defect.
+  (path separators, a test that fails only there) is an environment difference, not a defect.
 - The containers run as root (no `USER` in the Dockerfiles).
-- The host only opens 80/443 at the network level, so `ufw` resets without an SSH rule and Docker-published
-  ports that bypass `ufw` are not concerns.
+- TLS ends at Cloudflare. The site is reached only through a Cloudflare Tunnel: `cloudflared` (docker-compose.prod.yml,
+  `TUNNEL_TOKEN` in `.env.prod`) connects outbound and hands requests to `maroik.website:80` over plain HTTP, so the
+  host publishes no port, `ufw` denies every inbound connection (no SSH rule — the server is managed physically) and
+  there is no origin certificate. `Program.cs` takes `X-Forwarded-Proto` from private-network peers only (pinned by
+  `ForwardedProtoTests`). During a Cloudflare outage the site is down; there is no grey-cloud fallback — accepted.
+  The SSH deploy job in `.github/workflows/ci-cd.yml` is not used.
 - `AllowedHosts` is `*`. The `amqp://guest:guest@localhost` fallbacks (`Program.cs`, `WorkerHost`) are never
   used in a deployment (the env files always set the connection string).
 - Data Protection keys are stored unencrypted (Valkey, or the file fallback); they only live on the server.
