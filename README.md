@@ -62,14 +62,19 @@ Outgoing Email / SMTP: Brevo
 
 ### Layers — DDD + Clean Architecture
 
-Arrows show who calls whom at run time. Every call into Repository and Client goes through an interface in
-`Maroik.Core.Contract` (interfaces and DTOs only, so it calls nothing and is not drawn).
+Arrows show who calls whom at run time; a dotted arrow means the host only registers that project in its
+dependency-injection container and never calls it itself. Every call into Repository and Client goes through an
+interface in `Maroik.Core.Contract` (interfaces and DTOs only, so it calls nothing and is not drawn). The three hosts
+sit side by side on top; the Website reaches Maroik.FileStorage over HTTP through Client's file client (see Runtime).
 
 ```mermaid
 flowchart TB
-    Website["Maroik.Website<br/>MVC controllers · views · TypeScript"]
-    Worker["Maroik.Worker<br/>e-mail consumer"]
-    FileStorage["Maroik.FileStorage<br/>internal file API"]
+    subgraph Hosts[" "]
+        direction LR
+        Website["Maroik.Website<br/>MVC controllers · views · TypeScript"]
+        Worker["Maroik.Worker<br/>e-mail consumer"]
+        FileStorage["Maroik.FileStorage<br/>internal file API"]
+    end
     Service["Maroik.Core.Service<br/>use cases · transactions · logging"]
     Domain["Maroik.Core.Domain<br/>aggregates · value objects · policies"]
     Repository["Maroik.Core.Repository<br/>EF Core repositories"]
@@ -77,14 +82,20 @@ flowchart TB
     Client["Maroik.Core.Client<br/>file storage · RabbitMQ · SMTP · ClamAV"]
 
     Website --> Service
+    Website -- "policies · value types<br/>(views, view models)" --> Domain
+    Website -- "/health (database)" --> Repository
+    Website -- "/health (RabbitMQ)" --> Client
     Worker -- "mail status" --> Service
     Worker -- "send mail (SMTP)" --> Client
+    Worker -. "registers" .-> Repository
     FileStorage -- "virus scan (ClamAV)" --> Client
     Service --> Domain
     Service --> Repository
     Service -- "file upload · mail queue" --> Client
     Repository -- "rows ↔ aggregates" --> Domain
     Repository --> PostgreSQL
+
+    style Hosts fill:none,stroke:none
 ```
 
 - **Domain** holds the business rules — aggregates, value objects (`Email`, `Money`, `CurrencyCode`, …) and policies
@@ -95,8 +106,8 @@ flowchart TB
   the transaction (each write spells out `BeginAsync` / `CommitAsync` / `RollbackAsync`), maps to DTOs and logs. It
   calls Repository and Client only through their Contract interfaces.
 - **Repository** (EF Core) and **Client** (file storage over HTTP, RabbitMQ publishing, SMTP, ClamAV) implement the
-  Contract interfaces. Website controllers and views never call them; the Worker calls the SMTP client itself and
-  FileStorage calls the ClamAV client itself.
+  Contract interfaces. Website controllers and views never call them (the Website touches them only for its
+  `/health` checks); the Worker calls the SMTP client itself and FileStorage calls the ClamAV client itself.
 - **Website** controllers bind the request, call a service and return the view model or a `{ result, error }`
   JSON reply; views only render. The navigation menu doubles as the access-control list (`AuthorizationFilter`).
 - **No business logic on the client.** The client scripts do DOM wiring and AJAX only; a rule the UI mirrors comes
