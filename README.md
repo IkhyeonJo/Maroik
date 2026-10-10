@@ -63,28 +63,23 @@ Outgoing Email / SMTP: Brevo
 ### Layers — DDD + Clean Architecture
 
 Solid arrows show which project calls which, always through an interface in `Maroik.Core.Contract`
-(interfaces and DTOs only, so it calls nothing and is not drawn). The Website talks to the core through the
-Service layer only; Maroik.Worker and Maroik.FileStorage are separate processes beside it. Dotted lines are the
-traffic between the processes: the Website hands its mail jobs to the Worker through RabbitMQ (the Worker sends
-them over SMTP), and stores files in FileStorage over HTTP — both calls are made by Client on the Service's behalf.
-Repository and Client implementations are registered only in each host's composition root (`Program.cs`,
-`WorkerHost`), never called from controllers, views or handlers.
+(interfaces and DTOs only, so it calls nothing and is not drawn). The Website calls the Service layer and nothing
+else. Maroik.Worker and Maroik.FileStorage are separate processes: when a use case sends mail or stores a file,
+the Service hands it to Client, and Client puts the mail job on RabbitMQ for the Worker (which sends it over SMTP)
+or uploads / downloads the file over HTTP to FileStorage — the dotted lines. Repository and Client implementations
+are registered only in each host's composition root (`Program.cs`, `WorkerHost`), never called from controllers,
+views or handlers.
 
 ```mermaid
 flowchart TB
-    subgraph Hosts[" "]
-        direction LR
-        Website["Maroik.Website<br/>MVC controllers · views · TypeScript"]
-        Worker["Maroik.Worker<br/>e-mail consumer"]
-        FileStorage["Maroik.FileStorage<br/>internal file API"]
-        Website -. "mail jobs<br/>(via RabbitMQ)" .-> Worker
-        Website -. "HTTP upload / download" .-> FileStorage
-    end
+    Website["Maroik.Website<br/>MVC controllers · views · TypeScript"]
     Service["Maroik.Core.Service<br/>use cases · transactions · logging"]
     Domain["Maroik.Core.Domain<br/>aggregates · value objects · policies"]
     Repository["Maroik.Core.Repository<br/>EF Core repositories"]
     PostgreSQL["Maroik.Core.PostgreSQL<br/>DbContext · mapped models"]
     Client["Maroik.Core.Client<br/>file storage · RabbitMQ · SMTP · ClamAV"]
+    Worker["Maroik.Worker<br/>e-mail consumer"]
+    FileStorage["Maroik.FileStorage<br/>internal file API"]
 
     Website --> Service
     Service --> Domain
@@ -93,11 +88,12 @@ flowchart TB
     Repository -- "rows ↔ aggregates" --> Domain
     Repository --> PostgreSQL
 
+    Client -. "mail jobs (RabbitMQ)" .-> Worker
+    Client -. "HTTP upload / download" .-> FileStorage
+
     Worker -- "mail status" --> Service
     Worker -- "send mail (SMTP)" --> Client
     FileStorage -- "virus scan (ClamAV)" --> Client
-
-    style Hosts fill:none,stroke:none
 ```
 
 - **Domain** holds the business rules — aggregates, value objects (`Email`, `Money`, `CurrencyCode`, …) and policies
