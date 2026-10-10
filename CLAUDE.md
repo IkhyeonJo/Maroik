@@ -143,6 +143,10 @@ Finance
 - The dashboard's first year (`StartYear`) is found from the account's earliest income / expenditure by loading
   them all, as on `main`.
 - `FixedSchedulePolicy.IsNoticed` keeps `main`'s behaviour around the year end and 29 February.
+- Amounts are shown with every decimal place the `numeric(20,4)` columns store: the finance grids use
+  `AmountDisplay.GridFormat` (`#,0.####`, trailing zeros dropped) and the dashboard tooltips read
+  `FinanceAmountPolicy.MaxDecimalPlaces` from `#amountMaxDecimalPlaces`. The currency is a free-text label, so there is
+  no per-currency number of decimals (USD 12.50 shows as "12.5").
 - The edit forms receive amounts as JSON numbers, so an amount beyond ~15 significant digits (≥ ~9×10¹⁵) can
   change on a re-save. Same as `main`; not a defect to raise.
 
