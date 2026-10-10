@@ -62,17 +62,19 @@ Outgoing Email / SMTP: Brevo
 
 ### Layers — DDD + Clean Architecture
 
-Arrows show who calls whom at run time; a dotted arrow means the host only registers that project in its
-dependency-injection container and never calls it itself. Every call into Repository and Client goes through an
-interface in `Maroik.Core.Contract` (interfaces and DTOs only, so it calls nothing and is not drawn). The three hosts
-sit side by side on top; the Website reaches Maroik.FileStorage over HTTP through Client's file client (see Runtime).
+Solid arrows show which project calls which, always through an interface in `Maroik.Core.Contract`
+(interfaces and DTOs only, so it calls nothing and is not drawn). The Website talks to the core through the
+Service layer only; Maroik.Worker and Maroik.FileStorage are separate processes beside it. Dotted lines are the
+traffic between the processes: mail jobs go through RabbitMQ to the Worker, and files go to FileStorage over HTTP.
+Repository and Client implementations are registered only in each host's composition root (`Program.cs`,
+`WorkerHost`), never called from controllers, views or handlers.
 
 ```mermaid
 flowchart TB
     subgraph Hosts[" "]
         direction LR
-        Website["Maroik.Website<br/>MVC controllers · views · TypeScript"]
         Worker["Maroik.Worker<br/>e-mail consumer"]
+        Website["Maroik.Website<br/>MVC controllers · views · TypeScript"]
         FileStorage["Maroik.FileStorage<br/>internal file API"]
     end
     Service["Maroik.Core.Service<br/>use cases · transactions · logging"]
@@ -80,20 +82,22 @@ flowchart TB
     Repository["Maroik.Core.Repository<br/>EF Core repositories"]
     PostgreSQL["Maroik.Core.PostgreSQL<br/>DbContext · mapped models"]
     Client["Maroik.Core.Client<br/>file storage · RabbitMQ · SMTP · ClamAV"]
+    RabbitMQ[("RabbitMQ")]
 
     Website --> Service
-    Website -- "policies · value types<br/>(views, view models)" --> Domain
-    Website -- "/health (database)" --> Repository
-    Website -- "/health (RabbitMQ)" --> Client
-    Worker -- "mail status" --> Service
-    Worker -- "send mail (SMTP)" --> Client
-    Worker -. "registers" .-> Repository
-    FileStorage -- "virus scan (ClamAV)" --> Client
     Service --> Domain
     Service --> Repository
     Service -- "file upload · mail queue" --> Client
     Repository -- "rows ↔ aggregates" --> Domain
     Repository --> PostgreSQL
+
+    Worker -- "mail status" --> Service
+    Worker -- "send mail (SMTP)" --> Client
+    FileStorage -- "virus scan (ClamAV)" --> Client
+
+    Client -. "publish mail job" .-> RabbitMQ
+    Worker -. "consume mail job" .-> RabbitMQ
+    FileStorage -. "HTTP upload / download<br/>(called by Client)" .- Client
 
     style Hosts fill:none,stroke:none
 ```
@@ -106,8 +110,8 @@ flowchart TB
   the transaction (each write spells out `BeginAsync` / `CommitAsync` / `RollbackAsync`), maps to DTOs and logs. It
   calls Repository and Client only through their Contract interfaces.
 - **Repository** (EF Core) and **Client** (file storage over HTTP, RabbitMQ publishing, SMTP, ClamAV) implement the
-  Contract interfaces. Website controllers and views never call them (the Website touches them only for its
-  `/health` checks); the Worker calls the SMTP client itself and FileStorage calls the ClamAV client itself.
+  Contract interfaces. Website controllers and views never call them; the Worker calls the SMTP client itself and
+  FileStorage calls the ClamAV client itself.
 - **Website** controllers bind the request, call a service and return the view model or a `{ result, error }`
   JSON reply; views only render. The navigation menu doubles as the access-control list (`AuthorizationFilter`).
 - **No business logic on the client.** The client scripts do DOM wiring and AJAX only; a rule the UI mirrors comes
