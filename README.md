@@ -65,7 +65,8 @@ Outgoing Email / SMTP: Brevo
 Solid arrows show which project calls which, always through an interface in `Maroik.Core.Contract`
 (interfaces and DTOs only, so it calls nothing and is not drawn). The Website talks to the core through the
 Service layer only; Maroik.Worker and Maroik.FileStorage are separate processes beside it. Dotted lines are the
-traffic between the processes: mail jobs go through RabbitMQ to the Worker, and files go to FileStorage over HTTP.
+traffic between the processes: the Website hands its mail jobs to the Worker through RabbitMQ (the Worker sends
+them over SMTP), and stores files in FileStorage over HTTP — both calls are made by Client on the Service's behalf.
 Repository and Client implementations are registered only in each host's composition root (`Program.cs`,
 `WorkerHost`), never called from controllers, views or handlers.
 
@@ -73,16 +74,17 @@ Repository and Client implementations are registered only in each host's composi
 flowchart TB
     subgraph Hosts[" "]
         direction LR
-        Worker["Maroik.Worker<br/>e-mail consumer"]
         Website["Maroik.Website<br/>MVC controllers · views · TypeScript"]
+        Worker["Maroik.Worker<br/>e-mail consumer"]
         FileStorage["Maroik.FileStorage<br/>internal file API"]
+        Website -. "mail jobs<br/>(via RabbitMQ)" .-> Worker
+        Website -. "HTTP upload / download" .-> FileStorage
     end
     Service["Maroik.Core.Service<br/>use cases · transactions · logging"]
     Domain["Maroik.Core.Domain<br/>aggregates · value objects · policies"]
     Repository["Maroik.Core.Repository<br/>EF Core repositories"]
     PostgreSQL["Maroik.Core.PostgreSQL<br/>DbContext · mapped models"]
     Client["Maroik.Core.Client<br/>file storage · RabbitMQ · SMTP · ClamAV"]
-    RabbitMQ[("RabbitMQ")]
 
     Website --> Service
     Service --> Domain
@@ -94,10 +96,6 @@ flowchart TB
     Worker -- "mail status" --> Service
     Worker -- "send mail (SMTP)" --> Client
     FileStorage -- "virus scan (ClamAV)" --> Client
-
-    Client -. "publish mail job" .-> RabbitMQ
-    Worker -. "consume mail job" .-> RabbitMQ
-    FileStorage -. "HTTP upload / download<br/>(called by Client)" .- Client
 
     style Hosts fill:none,stroke:none
 ```
@@ -137,9 +135,9 @@ flowchart LR
     Website -- "HTTP upload / download" --> FileStorage["Maroik.FileStorage"]
     FileStorage -- "scan (TCP 3310)" --> ClamAV["ClamAV"]
     Website -- "publish mail jobs" --> RabbitMQ[("RabbitMQ")]
-    Worker["Maroik.Worker"] -- "consume" --> RabbitMQ
+    RabbitMQ -- "deliver mail jobs" --> Worker["Maroik.Worker"]
     Worker -- "mail status" --> PostgreSQL
-    Worker --> SMTP["SMTP relay"]
+    Worker -- "send mail" --> SMTP["SMTP relay"]
 ```
 
 Every service runs as a container under Docker Compose. Uploads are scanned by ClamAV before they are stored, the
