@@ -128,10 +128,6 @@ public class MaroikWebApplicationFactory : WebApplicationFactory<Program>, IAsyn
                 ["ServerSetting:SmtpOptions:fromFullName"] = "Test",
                 ["ServerSetting:SmtpOptions:IsDefault"] = "true",
 
-                // ClamAV — not used in route tests
-                ["Clamav:Host"] = "localhost",
-                ["Clamav:Port"] = "3310",
-
                 // FileStorage
                 ["FileStorage:BaseUrl"] = "http://localhost:5001",
 

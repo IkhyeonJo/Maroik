@@ -58,12 +58,6 @@ public class ServerSetting
     /// </summary>
     public RsaType RsaAlgorithm { get; set; }
 
-    /// <summary>Host name or IP address of the ClamAV antivirus daemon.</summary>
-    public string? ClamavHost { get; set; }
-
-    /// <summary>TCP port of the ClamAV daemon (clamav standard port is 3310; no default is applied here).</summary>
-    public int ClamavPort { get; set; }
-
     /// <summary>Base URL of the Maroik.FileStorage microservice used for file upload/download.</summary>
     public string? FileStorageBaseUrl { get; set; }
 
