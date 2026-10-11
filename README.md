@@ -84,7 +84,7 @@ flowchart TB
     Website --> Service
     Service --> Domain
     Service --> Repository
-    Service -- "file upload · mail queue" --> Client
+    Service -- "files · mail body · mail queue" --> Client
     Repository -- "rows ↔ aggregates" --> Domain
     Repository --> PostgreSQL
 
