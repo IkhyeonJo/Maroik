@@ -1,6 +1,5 @@
 // ReSharper disable PropertyCanBeMadeInitOnly.Global
 // ReSharper disable UnusedAutoPropertyAccessor.Global
-using Maroik.Core.Contract.Misc.Enums;
 
 namespace Maroik.Core.Contract.Misc.Settings;
 
@@ -51,18 +50,6 @@ public class ServerSetting
 
     /// <summary>Base64-encoded DER (X.509 SubjectPublicKeyInfo) RSA public key used to encrypt mailed tokens and stored image paths.</summary>
     public string? RsaPublicKey { get; set; }
-
-    /// <summary>
-    /// Legacy RSA algorithm variant. Retained for configuration back-compat only — <c>RsaService</c>
-    /// now always uses SHA-256 for OAEP and signatures regardless of this value (SHA-1 is broken).
-    /// </summary>
-    public RsaType RsaAlgorithm { get; set; }
-
-    /// <summary>Host name or IP address of the ClamAV antivirus daemon.</summary>
-    public string? ClamavHost { get; set; }
-
-    /// <summary>TCP port of the ClamAV daemon (clamav standard port is 3310; no default is applied here).</summary>
-    public int ClamavPort { get; set; }
 
     /// <summary>Base URL of the Maroik.FileStorage microservice used for file upload/download.</summary>
     public string? FileStorageBaseUrl { get; set; }

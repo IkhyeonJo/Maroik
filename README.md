@@ -62,42 +62,50 @@ Outgoing Email / SMTP: Brevo
 
 ### Layers — DDD + Clean Architecture
 
+Solid arrows show which project calls which, always through an interface in `Maroik.Core.Contract`
+(interfaces and DTOs only, so it calls nothing and is not drawn). The Website calls the Service layer and nothing
+else. Maroik.Worker and Maroik.FileStorage are separate processes: when a use case sends mail or stores a file,
+the Service hands it to Client, and Client puts the mail job on RabbitMQ for the Worker (which sends it over SMTP)
+or uploads / downloads the file over HTTP to FileStorage — the dotted lines. Repository and Client implementations
+are registered only in each host's composition root (`Program.cs`, `WorkerHost`), never called from controllers,
+views or handlers.
+
 ```mermaid
 flowchart TB
-    subgraph hosts["Application hosts"]
-        Website["Maroik.Website<br/>MVC controllers · views · TypeScript"]
-        Worker["Maroik.Worker<br/>e-mail consumer"]
-        FileStorage["Maroik.FileStorage<br/>internal file API"]
-    end
+    Website["Maroik.Website<br/>MVC controllers · views · TypeScript"]
     Service["Maroik.Core.Service<br/>use cases · transactions · logging"]
-    Contract["Maroik.Core.Contract<br/>interfaces · DTOs"]
     Domain["Maroik.Core.Domain<br/>aggregates · value objects · policies"]
     Repository["Maroik.Core.Repository<br/>EF Core repositories"]
     PostgreSQL["Maroik.Core.PostgreSQL<br/>DbContext · mapped models"]
-    Client["Maroik.Core.Client<br/>SMTP · file storage · ClamAV · RabbitMQ"]
+    Client["Maroik.Core.Client<br/>file storage · RabbitMQ · SMTP · ClamAV"]
+    Worker["Maroik.Worker<br/>e-mail consumer"]
+    FileStorage["Maroik.FileStorage<br/>internal file API"]
 
     Website --> Service
-    Worker --> Service
-    Service --> Contract --> Domain
-    Repository --> Contract
+    Service --> Domain
+    Service --> Repository
+    Service -- "files · mail body · mail queue" --> Client
+    Repository -- "rows ↔ aggregates" --> Domain
     Repository --> PostgreSQL
-    Client --> Contract
-    FileStorage --> Client
-    Website -. "composition root only" .-> Repository
-    Website -. "composition root only" .-> Client
-    Worker -. "composition root only" .-> Repository
-    Worker -. "composition root only" .-> Client
+
+    Client -. "mail jobs (RabbitMQ)" .-> Worker
+    Client -. "HTTP upload / download" .-> FileStorage
+
+    Worker -- "mail status" --> Service
+    Worker -- "send mail (SMTP)" --> Client
+    FileStorage -- "virus scan (ClamAV)" --> Client
 ```
 
 - **Domain** holds the business rules — aggregates, value objects (`Email`, `Money`, `CurrencyCode`, …) and policies
-  (finance class taxonomies, reminder limits, fixed schedules, passwords, image uploads). It references no other
+  (finance class taxonomies, reminder limits, fixed schedules, passwords, image uploads). It calls no other
   project, logs nothing, never reads the clock (the current time is passed in) and reports every error through
   `DomainError`, so the outer layers can translate it.
 - **Service** orchestrates a use case: it loads aggregates through repository interfaces, calls domain methods, owns
   the transaction (each write spells out `BeginAsync` / `CommitAsync` / `RollbackAsync`), maps to DTOs and logs. It
-  depends on **Contract** only.
-- **Repository** (EF Core) and **Client** (SMTP, file storage, ClamAV, RabbitMQ) implement the Contract interfaces.
-  The hosts reference them only to register them in the composition root; controllers and views cannot see them.
+  calls Repository and Client only through their Contract interfaces.
+- **Repository** (EF Core) and **Client** (file storage over HTTP, RabbitMQ publishing, SMTP, ClamAV) implement the
+  Contract interfaces. Website controllers and views never call them; the Worker calls the SMTP client itself and
+  FileStorage calls the ClamAV client itself.
 - **Website** controllers bind the request, call a service and return the view model or a `{ result, error }`
   JSON reply; views only render. The navigation menu doubles as the access-control list (`AuthorizationFilter`).
 - **No business logic on the client.** The client scripts do DOM wiring and AJAX only; a rule the UI mirrors comes
@@ -115,15 +123,17 @@ All of this is enforced by architecture tests that fail the build, among them:
 
 ```mermaid
 flowchart LR
-    Browser --> Website["Maroik.Website"]
+    Browser --> Cloudflare["Cloudflare"]
+    cloudflared["cloudflared<br/>(outbound tunnel)"] -- "connects out" --> Cloudflare
+    cloudflared -- "HTTP :80" --> Website["Maroik.Website"]
     Website --> PostgreSQL[("PostgreSQL 17")]
     Website --> Valkey[("Valkey<br/>session · Data Protection keys")]
-    Website --> FileStorage["Maroik.FileStorage"]
-    Website --> ClamAV["ClamAV"]
-    FileStorage --> ClamAV
-    Website -- "mail jobs" --> RabbitMQ[("RabbitMQ")]
-    RabbitMQ --> Worker["Maroik.Worker"]
-    Worker --> SMTP["SMTP relay"]
+    Website -- "HTTP upload / download" --> FileStorage["Maroik.FileStorage"]
+    FileStorage -- "scan (TCP 3310)" --> ClamAV["ClamAV"]
+    Website -- "publish mail jobs" --> RabbitMQ[("RabbitMQ")]
+    RabbitMQ -- "deliver mail jobs" --> Worker["Maroik.Worker"]
+    Worker -- "mail status" --> PostgreSQL
+    Worker -- "send mail" --> SMTP["SMTP relay"]
 ```
 
 Every service runs as a container under Docker Compose. Uploads are scanned by ClamAV before they are stored, the
@@ -264,8 +274,8 @@ dotnet test --project Maroik.Core.Service.Tests            # any single project
 
 #### Linux/Mac
 1. Install JetBrains Rider
-2. Start debug mode with docker-compose.debug.yml
-3. Configure mail settings in appsettings files
+2. Open Maroik.sln
+3. Start debug mode with docker-compose.debug.yml
 
 ## Deployment
 
@@ -273,8 +283,7 @@ dotnet test --project Maroik.Core.Service.Tests            # any single project
 1. Configure .env.prod with domain name and mail settings
 2. Set email credentials in DBBackup.sh and UploadFileBackup.sh
 3. Copy Maroik folder to /home/ubuntu/
-4. Open ports 80, 443
-5. Run Deploy.sh script
+4. Run Deploy.sh script
 
 ## Default Accounts
 

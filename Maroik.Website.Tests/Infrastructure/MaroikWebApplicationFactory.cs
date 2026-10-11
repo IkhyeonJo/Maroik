@@ -115,7 +115,6 @@ public class MaroikWebApplicationFactory : WebApplicationFactory<Program>, IAsyn
                 ["ServerSetting:NoticeMaturityDateDay"] = "7",
                 ["ServerSetting:RsaPrivateKey"] = Convert.ToBase64String(_rsaKeyPair.ExportRSAPrivateKey()),
                 ["ServerSetting:RsaPublicKey"] = Convert.ToBase64String(_rsaKeyPair.ExportSubjectPublicKeyInfo()),
-                ["ServerSetting:RsaAlgorithm"] = "Rsa2",
                 ["ServerSetting:FileStorageBaseUrl"] = "http://localhost:5001",
 
                 // SMTP — not used in route tests
@@ -127,10 +126,6 @@ public class MaroikWebApplicationFactory : WebApplicationFactory<Program>, IAsyn
                 ["ServerSetting:SmtpOptions:fromEmail"] = "test@localhost",
                 ["ServerSetting:SmtpOptions:fromFullName"] = "Test",
                 ["ServerSetting:SmtpOptions:IsDefault"] = "true",
-
-                // ClamAV — not used in route tests
-                ["Clamav:Host"] = "localhost",
-                ["Clamav:Port"] = "3310",
 
                 // FileStorage
                 ["FileStorage:BaseUrl"] = "http://localhost:5001",
