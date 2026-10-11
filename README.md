@@ -283,8 +283,7 @@ dotnet test --project Maroik.Core.Service.Tests            # any single project
 1. Configure .env.prod with domain name and mail settings
 2. Set email credentials in DBBackup.sh and UploadFileBackup.sh
 3. Copy Maroik folder to /home/ubuntu/
-4. Open ports 80, 443
-5. Run Deploy.sh script
+4. Run Deploy.sh script
 
 ## Default Accounts
 
