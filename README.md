@@ -274,8 +274,8 @@ dotnet test --project Maroik.Core.Service.Tests            # any single project
 
 #### Linux/Mac
 1. Install JetBrains Rider
-2. Start debug mode with docker-compose.debug.yml
-3. Configure mail settings in appsettings files
+2. Open Maroik.sln
+3. Start debug mode with docker-compose.debug.yml
 
 ## Deployment
 
