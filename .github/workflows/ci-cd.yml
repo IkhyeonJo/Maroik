@@ -49,11 +49,18 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: write
+    # One bump at a time: two pushes in quick succession would otherwise both compute a version and race on
+    # `git push origin main` (the second is refused as non-fast-forward). Queued runs check out the latest main
+    # (below), so a run that waited sees the previous bump commit and its tag.
+    concurrency:
+      group: bump-version
+      cancel-in-progress: false
 
     steps:
       - name: Checkout
         uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
+          ref: main
           fetch-depth: 0
           token: ${{ secrets.GITHUB_TOKEN }}
 
