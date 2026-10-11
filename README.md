@@ -260,7 +260,7 @@ dotnet test --project Maroik.Core.Service.Tests            # any single project
 ## Getting Started
 
 ### Prerequisites
-- .NET 10.0 SDK or later
+- .NET 10.0 SDK
 - Docker and Docker Compose
 - Visual Studio (Windows) or JetBrains Rider (Linux/Mac)
 
