@@ -210,6 +210,10 @@ Error handling
   `{ result, error }`; exceptions are logged on the server. A genuine input-validation failure shows its
   specific reason (or "Input is invalid"), while an infrastructure failure shows a generic
   "temporary error, please try again" message.
+- Every `[HttpPost]` action is accounted for in `ControllerFailureContractTests`: either a row that makes its service throw
+  and asserts the generic failure (HTTP 200, no exception text), or an `_exemptPosts` entry with the reason (non-AJAX
+  form posts and plain file downloads, which fall to the global exception page). `EveryPostAction_IsCoveredByAFailureContractTest_OrExemptWithAReason`
+  fails for a new POST action until it has one of the two.
 
 ## Reviewing this repo
 
@@ -328,7 +332,7 @@ don't leave them for later or treat them as optional:
 
 - `main` — production, protected by CI: every pull request into `main` runs the build and the full test suite
   (`.github/workflows/ci.yml` → `build-and-test.yml`, with the coverage gates), every push to `main` runs it again
-  (`ci-cd.yml`; its SSH deploy job is not used), and a green run on `main` bumps the version (`bump-version.yml`).
+  (`ci-cd.yml`; its SSH deploy job is not used), and a green build there bumps the version (`ci-cd.yml`'s `bump-version` job, which needs only `build-and-test`, not the deploy job).
 - Work happens on a working branch (currently `refactor-code`) and reaches `main` only through a pull request.
 
 ## Aggregate model

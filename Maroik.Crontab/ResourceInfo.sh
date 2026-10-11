@@ -32,16 +32,11 @@ echo "Host Memory Information:" >> $HOST_OUTPUT_FILE
 MEMORY_USAGE=$(LC_ALL=C free -h | awk '$1 == "Mem:" {print $2 " / " $3}')
 echo "Memory: $MEMORY_USAGE" >> $HOST_OUTPUT_FILE
 
-# Host Disk Information (Total / Usage)
+# Host Disk Information (Total / Usage) of the root filesystem, which holds the Docker volumes
+# (PostgreSQL), the uploads and the logs. Summing every `df` row counted tmpfs, /boot/efi, the backup
+# disk and one overlay mount per running container (each the same root disk again) several times over.
 echo "Host Disk Information:" >> $HOST_OUTPUT_FILE
-TOTAL=0
-USED=0
-while read -r filesystem size used rest; do
-  if [[ "$size" =~ ^[0-9]+$ ]] && [[ "$used" =~ ^[0-9]+$ ]]; then
-    TOTAL=$((TOTAL + size))
-    USED=$((USED + used))
-  fi
-done < <(df -B1 | tail -n +2)
+read -r TOTAL USED < <(df -B1 --output=size,used / | tail -n 1)
 TOTAL_HUMAN=$(numfmt --to=iec --suffix=B "$TOTAL")
 USED_HUMAN=$(numfmt --to=iec --suffix=B "$USED")
 echo "Disk: $TOTAL_HUMAN / $USED_HUMAN" >> $HOST_OUTPUT_FILE
