@@ -5,7 +5,6 @@
 
 using System.Globalization;
 using Maroik.Core.Client.Extensions;
-using Maroik.Core.Contract.Misc.Enums;
 using Maroik.Core.Contract.Misc.Settings;
 using Maroik.Core.Repository.Extensions;
 using Maroik.Core.Service.Extensions;
@@ -55,10 +54,6 @@ try
         configuration.GetSection("ServerSetting").Bind(target);
         configuration.GetSection("ServerSetting:SmtpOptions").Bind(target);
         target.FileStorageBaseUrl = configuration["FileStorage:BaseUrl"];
-        target.RsaAlgorithm =
-            Enum.TryParse<RsaType>(configuration["ServerSetting:RsaAlgorithm"], ignoreCase: true, out var parsed)
-                ? parsed
-                : RsaType.Rsa2;
     }
 
     // A local copy for the values needed before the DI container is built (middleware).
