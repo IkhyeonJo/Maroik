@@ -36,6 +36,106 @@ jobs:
     uses: ./.github/workflows/build-and-test.yml
 
   # ─────────────────────────────────────────────────────────────────────────────
+  # Version bump — after a green build, independent of the deploy job
+  # ─────────────────────────────────────────────────────────────────────────────
+  # This used to be a separate workflow triggered by this one's `workflow_run` with
+  # `conclusion == 'success'`. The deploy job below is not used (no reachable SSH host), so it
+  # failed every run, the run never concluded `success`, and the bump never ran: no tag and no
+  # "bump version" commit ever reached main. Depending on build-and-test alone makes "a green
+  # build on main bumps the version" true again.
+  bump-version:
+    name: Calculate & bump version
+    needs: [guard, build-and-test]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Calculate next version
+        id: version
+        run: |
+          # ── Last version tag ─────────────────────────────────────────────────
+          LAST_TAG=$(git tag --list 'v*' --sort=-version:refname | head -1)
+
+          if [ -z "$LAST_TAG" ]; then
+            # No tags yet: tag the current version as-is, no bump
+            CURRENT=$(grep -oP '(?<=<Version>)[^<]+' Directory.Build.props 2>/dev/null || echo "1.0.0")
+            echo "new_version=${CURRENT}" >> "$GITHUB_OUTPUT"
+            echo "initial=true"           >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          # ── Commits since last tag ────────────────────────────────────────────
+          COMMITS=$(git log "${LAST_TAG}..HEAD" --pretty=format:"%s")
+          if [ -z "$COMMITS" ]; then
+            echo "No new commits since ${LAST_TAG} — nothing to bump."
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          # ── Parse current semver from tag ────────────────────────────────────
+          CURRENT="${LAST_TAG#v}"
+          IFS='.' read -r MAJOR MINOR PATCH <<< "$CURRENT"
+
+          # ── Determine bump type ───────────────────────────────────────────────
+          #   BREAKING (feat! / BREAKING CHANGE) → major
+          #   feat                               → minor
+          #   fix                                → patch
+          if echo "$COMMITS" | grep -qE "^feat(\([^)]*\))?!:|BREAKING[[:space:]]CHANGE"; then
+            MAJOR=$((MAJOR + 1)); MINOR=0; PATCH=0; BUMP="major"
+          elif echo "$COMMITS" | grep -qE "^feat(\([^)]*\))?:"; then
+            MINOR=$((MINOR + 1)); PATCH=0; BUMP="minor"
+          elif echo "$COMMITS" | grep -qE "^fix(\([^)]*\))?:"; then
+            PATCH=$((PATCH + 1)); BUMP="patch"
+          else
+            echo "No conventional commits found since ${LAST_TAG} — skipping bump."
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          NEW_VERSION="${MAJOR}.${MINOR}.${PATCH}"
+          echo "bump=${BUMP}"            >> "$GITHUB_OUTPUT"
+          echo "new_version=${NEW_VERSION}" >> "$GITHUB_OUTPUT"
+
+      # ── Initial tag (first-ever run) ─────────────────────────────────────────
+      - name: Create initial tag
+        if: steps.version.outputs.initial == 'true'
+        run: |
+          VERSION="${{ steps.version.outputs.new_version }}"
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git tag "v${VERSION}"
+          git push origin "v${VERSION}"
+          echo "Tagged initial version: v${VERSION}"
+
+      # ── Regular bump ────────────────────────────────────────────────────────
+      - name: Update Directory.Build.props
+        if: steps.version.outputs.skip != 'true' && steps.version.outputs.initial != 'true'
+        run: |
+          NEW_VERSION="${{ steps.version.outputs.new_version }}"
+          sed -i "s|<Version>[^<]*</Version>|<Version>${NEW_VERSION}</Version>|" Directory.Build.props
+
+      - name: Commit & tag
+        if: steps.version.outputs.skip != 'true' && steps.version.outputs.initial != 'true'
+        run: |
+          NEW_VERSION="${{ steps.version.outputs.new_version }}"
+          BUMP="${{ steps.version.outputs.bump }}"
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add Directory.Build.props
+          git commit -m "chore: bump version to ${NEW_VERSION} (${BUMP}) [skip ci]"
+          git tag "v${NEW_VERSION}"
+          git push origin main
+          git push origin "v${NEW_VERSION}"
+          echo "Version bumped: v${NEW_VERSION} (${BUMP})"
+
+  # ─────────────────────────────────────────────────────────────────────────────
   # CD — Deploy (main 브랜치 push 시에만, CI 통과 후)
   # ─────────────────────────────────────────────────────────────────────────────
   deploy:

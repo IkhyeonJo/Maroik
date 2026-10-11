@@ -332,7 +332,7 @@ don't leave them for later or treat them as optional:
 
 - `main` — production, protected by CI: every pull request into `main` runs the build and the full test suite
   (`.github/workflows/ci.yml` → `build-and-test.yml`, with the coverage gates), every push to `main` runs it again
-  (`ci-cd.yml`; its SSH deploy job is not used), and a green run on `main` bumps the version (`bump-version.yml`).
+  (`ci-cd.yml`; its SSH deploy job is not used), and a green build there bumps the version (`ci-cd.yml`'s `bump-version` job, which needs only `build-and-test`, not the deploy job).
 - Work happens on a working branch (currently `refactor-code`) and reaches `main` only through a pull request.
 
 ## Aggregate model
