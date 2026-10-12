@@ -13,6 +13,13 @@ sudo docker volume rm $(sudo docker volume ls -q)
 # Optionally, remove all Docker images (use with caution)
 sudo docker rmi $(sudo docker images -q)
 
+# Remove what `docker rmi` leaves behind: the build cache of the three images Deploy.sh builds
+# (NuGet restore, npm ci and publish layers — a new set on every deploy, never reused after the
+# images are gone), dangling images and unused networks. Without this every deploy adds gigabytes
+# that nothing ever frees, until the root disk fills up.
+sudo docker builder prune -af
+sudo docker system prune -af --volumes
+
 # Remove current user's cron jobs
 sudo crontab -r
 

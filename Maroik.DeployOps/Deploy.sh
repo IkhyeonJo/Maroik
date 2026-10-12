@@ -44,6 +44,11 @@ fi
 sudo apt update -y
 sudo apt upgrade -y
 
+# Remove what the upgrade replaced (old kernels, their modules and headers in / and /boot, orphaned
+# dependencies) and the downloaded .deb files; apt keeps them all otherwise, a little more on every deploy.
+sudo apt autoremove --purge -y
+sudo apt clean
+
 ## Enable HTTPS nextcloud
 #sudo nextcloud.enable-https self-signed
 
@@ -126,6 +131,11 @@ fi
 
 # Start Docker Compose
 sudo docker-compose -f /home/ubuntu/Maroik/docker-compose.prod.yml up -d
+
+# The images are built and running: drop the build cache and the intermediate build-stage images
+# (sdk / node stages) they leave behind. Images in use by the running containers are kept.
+sudo docker builder prune -af
+sudo docker image prune -f
 
 # Set up cron jobs
 sudo crontab /home/ubuntu/Maroik/Maroik.Crontab/InitCron
