@@ -15,6 +15,16 @@
 # -> http://maroik.website:80) are configured in the Cloudflare dashboard.
 # ─────────────────────────────────────────────────────────────────────────────
 
+# Container log rotation, applied to every service below. Every service logs to stdout (Serilog
+# console sink), which Docker's json-file driver keeps on the host disk with no size limit by default:
+# between two deploys the logs would grow until the root disk fills up. Each container keeps at most
+# 3 files of 10 MB.
+x-logging: &default-logging
+  driver: json-file
+  options:
+    max-size: "10m"
+    max-file: "3"
+
 # Named volumes — Docker-managed, survive `down`; wiped only by `down -v`.
 # (Hourly backups of the DB + upload files go to an external HDD via Maroik.Crontab.)
 volumes:
@@ -34,6 +44,7 @@ services:
     valkey:
       image: valkey/valkey:9-alpine
       container_name: Maroik.Valkey
+      logging: *default-logging
       restart: unless-stopped
       expose:
         - "6379"                       # visible to other containers on `backend`, NOT published to the host
@@ -53,6 +64,7 @@ services:
     rabbitmq:
       image: rabbitmq:4-management-alpine   # -management = adds the web UI / rabbitmqadmin on 15672
       container_name: Maroik.RabbitMQ
+      logging: *default-logging
       restart: unless-stopped
       expose:
         - "5672"                       # AMQP protocol port
@@ -76,6 +88,7 @@ services:
     clamav:
       image: clamav/clamav:latest
       container_name: Maroik.Clamav
+      logging: *default-logging
       restart: unless-stopped
       expose:
         - "3310"                       # clamd TCP socket
@@ -88,6 +101,7 @@ services:
     postgresql:
       image: postgres:17
       container_name: Maroik.PostgreSQL
+      logging: *default-logging
       restart: unless-stopped
       env_file:
         - .env.prod                    # POSTGRES_PASSWORD, POSTGRES_DB=Maroik, ...
@@ -122,6 +136,7 @@ services:
          args :
            TS_SOURCEMAPS : "false"
         container_name: Maroik.Website
+        logging: *default-logging
         restart: unless-stopped
         networks :
           - backend
@@ -148,6 +163,7 @@ services:
          context : .
          dockerfile : Maroik.FileStorage/Dockerfile
         container_name: Maroik.FileStorage
+        logging: *default-logging
         restart: unless-stopped
         networks :
           - backend
@@ -169,6 +185,7 @@ services:
          context : .
          dockerfile : Maroik.Worker/Dockerfile
         container_name: Maroik.Worker
+        logging: *default-logging
         restart: unless-stopped
         # Must exceed EmailConsumerWorker's 25s in-flight drain budget so Docker's SIGKILL
         # doesn't cut off an in-progress send before it can ack/nack.
@@ -193,6 +210,7 @@ services:
     cloudflared:
         image: cloudflare/cloudflared:2026.9.3
         container_name: Maroik.Cloudflared
+        logging: *default-logging
         restart: unless-stopped
         command: tunnel --no-autoupdate run
         env_file:
