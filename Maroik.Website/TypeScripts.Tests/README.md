@@ -83,7 +83,7 @@ reads the same from any depth. It's declared twice, keep them in sync:
 | `calendarSuite`      | Calendar/{UserIndex,AdminIndex}                                               | reminder validation, create/edit event, my calendars, popup, editors, downloads                                      |
 | `layoutSuite`        | the three `_Layout` scripts                                                   | culture switch, double-submit guard, session-expiry recovery                                                         |
 | `profileSuite`       | Management/Profile (user + admin)                                             | avatar upload rules, time zone, password                                                                             |
-| `missingConfigSuite` | every script that reads server-published constants                            | still initialises when a constant is absent (and no swallowed ready-callback exception)                              |
+| `missingConfigSuite` | every script that reads server-published constants                            | still initializes when a constant is absent (and no swallowed ready-callback exception)                              |
 
 ---
 
