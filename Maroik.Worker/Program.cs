@@ -22,7 +22,7 @@ try
     }
 
     var host = WorkerHost.Build(args);
-    host.Run();
+    await host.RunAsync();
 }
 catch (Exception ex)
 {
@@ -31,5 +31,5 @@ catch (Exception ex)
 }
 finally
 {
-    Log.CloseAndFlush();
+    await Log.CloseAndFlushAsync();
 }

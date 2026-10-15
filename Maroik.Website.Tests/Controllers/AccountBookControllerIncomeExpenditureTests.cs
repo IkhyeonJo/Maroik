@@ -364,7 +364,7 @@ public class AccountBookControllerIncomeExpenditureTests(MaroikWebApplicationFac
             var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
             SeedAssetIfMissing(db, asset);
             db.Assets.Single(a => a.AccountEmail == Email && a.ProductName == asset).Amount = 100.00m;
-            db.SaveChanges();
+            await db.SaveChangesAsync(TestContext.Current.CancellationToken);
         }
 
         using (var create = session.BuildJsonPostRequest("/AccountBook/CreateExpenditure", new

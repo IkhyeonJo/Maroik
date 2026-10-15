@@ -300,8 +300,12 @@ How:
 
 Not enforced by tests: the logging rules above are followed by convention and checked in review. The earlier
 `*LoggingArchitectureTests` / `LoggingRulesSelfTests` (and the `Maroik.Tests.Shared` project that held them) were removed on
-purpose — do not reintroduce them. The only automated logging check left is `DomainArchitectureTests.Domain_ShouldNot_Log`
+purpose — do not reintroduce them. The only automated logging test left is `DomainArchitectureTests.Domain_ShouldNot_Log`
 (`Maroik.Core.Domain` must not depend on `Microsoft.Extensions.Logging`).
+
+The compiler does enforce the template rules (`.editorconfig`, "Logging templates" block, all `error`): CA2254 (the message
+template is a constant — no interpolation or concatenation), CA2017 (its `{Placeholders}` match the arguments) and CA1727
+(placeholders are PascalCase).
 
 
 ## Memory safety — resource-lifetime analyzers are build errors
@@ -311,6 +315,22 @@ CA2000, CA1001, CA2213, CA2215, CA2216, CA1063, CA1816, CA2025 (disposal / owner
 CA1821, CA2011 (stack, buffers, ValueTask, finalizers). Only these rules are turned on, not `AnalysisLevel=latest-all`
 (that wider attempt was rolled back on 2026-10-15). No project allows `unsafe` code.
 
+Further rule-ID blocks in the same file, also `error`: "Logging templates" (CA2254, CA2017, CA1727 — see Logging) and
+"Async and cancellation" (CA2016: forward the `CancellationToken` you received; CA1849: call the async API in an async method,
+e.g. `await app.RunAsync()`, `await Log.CloseAndFlushAsync()`, `SaveChangesAsync`, `CancelAsync`).
+
+The code has no `#pragma warning disable`. SecurityCodeScan's path-traversal rule (SCS0018) is satisfied by declaring the
+project's own validator as a sanitizer — `Maroik.FileStorage/SecurityCodeScan.config.yml` lists `StoragePath.ResolveWithinRoot`
+(an `AdditionalFiles` item) — not by suppressing it; such a file declares validators and switches no rule off. A
+sanitizer entry must be proven to matter: rename its method in the file and the SCS0018 error must come back.
+
+- **CA2000 stays on the default `dispose_analysis_kind`, not `AllPaths`** (tried 2026-10-16). In `AllPaths` mode it reports
+  the construction site of a type whose async `DisposeAsync` awaits e.g. `Task.WhenAll` / `Task.Yield`, even after every owned
+  field was disposed (`FakeSmtpServer`), so it could only be met with suppressions. The genuine exception-path leaks that run
+  surfaced were fixed: a constructor / factory that starts a listener closes it if starting fails (`FakeSmtpServer`,
+  `FakeClamavServer.Start`), a semaphore is created right before the try that disposes it (`HtmlParserService`), and
+  `RabbitMqEmailPublisher.DisposeAsync` is idempotent (a second call returns at once; a call that timed out disposed nothing
+  and can be repeated).
 - **Configure analyzers by rule ID only.** `AnalysisLevel=latest-all` (or any `AnalysisMode`) ships an SDK globalconfig that
   sets every rule by ID, and a rule-ID entry beats a category or all-analyzers entry whichever file it is in (`.editorconfig`
   wins over the globalconfig only at the same level). So under `latest-all` a `dotnet_analyzer_diagnostic.severity = ...` or

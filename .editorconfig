@@ -178,6 +178,21 @@ dotnet_diagnostic.CA1821.severity = error
 # No unconditional self-recursion (stack overflow).
 dotnet_diagnostic.CA2011.severity = error
 
+# ---- Logging templates (build errors) ----
+# The logging rules in CLAUDE.md, enforced by the compiler instead of review.
+# The message template is a constant (no interpolation / concatenation, so values stay structured and cannot forge lines).
+dotnet_diagnostic.CA2254.severity = error
+# The template's {Placeholders} match the arguments passed.
+dotnet_diagnostic.CA2017.severity = error
+# Placeholders are PascalCase ({Email}, {FilePath}).
+dotnet_diagnostic.CA1727.severity = error
+
+# ---- Async and cancellation (build errors) ----
+# A CancellationToken the method received is forwarded to the calls that accept one.
+dotnet_diagnostic.CA2016.severity = error
+# An async method calls the async version of an API when there is one (no sync-over-async blocking).
+dotnet_diagnostic.CA1849.severity = error
+
 # Test code builds its regexes inline ([GeneratedRegex] buys nothing for a one-shot assertion);
 # production code still gets SYSLIB1045.
 [*.Tests/**.cs]

@@ -76,12 +76,33 @@ public class FileClientTests
         }
     }
 
+    /// <summary>
+    /// A response with <paramref name="status"/> and the content <paramref name="createContent"/> makes, adjusted by
+    /// <paramref name="configure"/>. The response owns its content, and is disposed (content included) if building it throws.
+    /// </summary>
+    private static HttpResponseMessage Respond(HttpStatusCode status, Func<HttpContent> createContent, Action<HttpContent>? configure = null)
+    {
+        HttpResponseMessage? response = new(status);
+        try
+        {
+            response.Content = createContent();
+            configure?.Invoke(response.Content);
+            HttpResponseMessage built = response;
+            response = null;
+            return built;
+        }
+        finally
+        {
+            response?.Dispose();
+        }
+    }
+
     /// <summary>Returns a fixed status + plain-text body, like Maroik.FileStorage's <c>BadRequest(error)</c>.</summary>
     private sealed class RefusingHandler(HttpStatusCode status, string body) : HttpMessageHandler
     {
         /// <inheritdoc />
         protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
-            => Task.FromResult(new HttpResponseMessage(status) { Content = new StringContent(body) });
+            => Task.FromResult(Respond(status, () => new StringContent(body)));
     }
 
     /// <summary>A refusal whose body cannot be decoded (a charset .NET does not know) — reading the reason throws.</summary>
@@ -90,10 +111,11 @@ public class FileClientTests
         /// <inheritdoc />
         protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
         {
-            var content = new StringContent("refused");
-            content.Headers.Remove("Content-Type");
-            content.Headers.TryAddWithoutValidation("Content-Type", "text/plain; charset=not-a-real-charset");
-            return Task.FromResult(new HttpResponseMessage(HttpStatusCode.BadRequest) { Content = content });
+            return Task.FromResult(Respond(HttpStatusCode.BadRequest, () => new StringContent("refused"), content =>
+            {
+                content.Headers.Remove("Content-Type");
+                content.Headers.TryAddWithoutValidation("Content-Type", "text/plain; charset=not-a-real-charset");
+            }));
         }
     }
 
@@ -252,7 +274,7 @@ public class FileClientTests
     {
         using var activity = new Activity("test-request");
         activity.Start();
-        var capturing = new CapturingHandler();
+        using var capturing = new CapturingHandler();
         _httpClientFactory.InnerHandler = capturing;
         byte[] data = [0x89, 0x50, 0x4E, 0x47];
 
@@ -268,7 +290,7 @@ public class FileClientTests
     {
         using var activity = new Activity("test-request");
         activity.Start();
-        var capturing = new CapturingHandler();
+        using var capturing = new CapturingHandler();
         _httpClientFactory.InnerHandler = capturing;
 
         await CreateSut().DownloadAsync("some/path.png", "http://filestorage.local", TestContext.Current.CancellationToken);
@@ -282,7 +304,7 @@ public class FileClientTests
     public async Task DownloadAsync_SendsEmptyCorrelationId_WhenNoActivityIsCurrent()
     {
         Activity.Current = null;
-        var capturing = new CapturingHandler();
+        using var capturing = new CapturingHandler();
         _httpClientFactory.InnerHandler = capturing;
 
         await CreateSut().DownloadAsync("some/path.png", "http://filestorage.local", TestContext.Current.CancellationToken);
@@ -325,7 +347,7 @@ public class FileClientTests
         protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
         {
             LastRequestBody = request.Content is null ? null : await request.Content.ReadAsStringAsync(cancellationToken);
-            return new HttpResponseMessage(HttpStatusCode.OK) { Content = new ByteArrayContent(bytes) };
+            return Respond(HttpStatusCode.OK, () => new ByteArrayContent(bytes));
         }
     }
 
@@ -335,7 +357,7 @@ public class FileClientTests
     {
         using var activity = new Activity("test-request");
         activity.Start();
-        var handler = new BytesHandler([1, 2, 3, 4]);
+        using var handler = new BytesHandler([1, 2, 3, 4]);
         _httpClientFactory.InnerHandler = handler;
 
         await using Stream stream = await CreateSut().OpenReadAsync(@"upload\Forum\a.zip", "http://filestorage.local", TestContext.Current.CancellationToken);
@@ -392,7 +414,7 @@ public class FileClientTests
     [InlineData("../../etc/passwd")]
     public async Task OpenReadAsync_ThrowsArgumentException_ForUnsafePath(string unsafePath)
     {
-        var handler = new BytesHandler([1]);
+        using var handler = new BytesHandler([1]);
         _httpClientFactory.InnerHandler = handler;
 
         await Assert.ThrowsAsync<ArgumentException>(

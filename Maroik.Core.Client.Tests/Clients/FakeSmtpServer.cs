@@ -17,22 +17,22 @@ namespace Maroik.Core.Client.Tests.Clients;
 internal sealed class FakeSmtpServer : IAsyncDisposable
 {
     /// <summary>Loopback listener on an OS-assigned port.</summary>
-    private readonly TcpListener _listener = new(IPAddress.Loopback, 0);
+    private readonly TcpListener _listener;
     /// <summary>Signalled on dispose to stop the accept loop.</summary>
-    private readonly CancellationTokenSource _stop = new();
+    private readonly CancellationTokenSource _stop;
     /// <summary>The running accept loop.</summary>
     private readonly Task _acceptLoop;
     /// <summary>One task per accepted connection, awaited on dispose.</summary>
     private readonly List<Task> _sessions = [];
 
     /// <summary>How the server reacts to <c>AUTH</c>.</summary>
-    public bool RejectAuthentication { get; init; }
+    public bool RejectAuthentication { get; }
 
     /// <summary>When true, the connection is dropped on <c>QUIT</c> instead of answering <c>221</c>.</summary>
-    public bool DropConnectionOnQuit { get; init; }
+    public bool DropConnectionOnQuit { get; }
 
     /// <summary>When set, the server advertises STARTTLS and upgrades the connection with this certificate.</summary>
-    public X509Certificate2? Certificate { get; init; }
+    public X509Certificate2? Certificate { get; }
 
     /// <summary>True once a client completed the STARTTLS upgrade.</summary>
     public bool TlsEstablished { get; private set; }
@@ -49,11 +49,35 @@ internal sealed class FakeSmtpServer : IAsyncDisposable
     /// <summary>The raw message text of the last <c>DATA</c> transaction (headers + body), or null when none completed.</summary>
     public string? ReceivedMessage { get; private set; }
 
-    /// <summary>Starts listening on a free loopback port.</summary>
-    public FakeSmtpServer()
+    /// <summary>
+    /// Starts listening on a free loopback port. Options are constructor arguments (not init-only properties) so the
+    /// server is fully configured before it starts accepting.
+    /// </summary>
+    public FakeSmtpServer(bool rejectAuthentication = false, bool dropConnectionOnQuit = false, X509Certificate2? certificate = null)
     {
-        _listener.Start();
-        _acceptLoop = Task.Run(AcceptLoopAsync);
+        RejectAuthentication = rejectAuthentication;
+        DropConnectionOnQuit = dropConnectionOnQuit;
+        Certificate = certificate;
+
+        // Handed over to the fields once the server is running; the caller never gets an instance to dispose
+        // if starting fails, so whatever was created is disposed here then.
+        TcpListener? listener = new(IPAddress.Loopback, 0);
+        CancellationTokenSource? stop = null;
+        try
+        {
+            stop = new CancellationTokenSource();
+            listener.Start();
+            _listener = listener;
+            _stop = stop;
+            listener = null;
+            stop = null;
+            _acceptLoop = Task.Run(AcceptLoopAsync);
+        }
+        finally
+        {
+            listener?.Dispose();
+            stop?.Dispose();
+        }
     }
 
     /// <summary>Accepts connections until stopped, handling each in its own session task.</summary>
@@ -178,12 +202,20 @@ internal sealed class FakeSmtpServer : IAsyncDisposable
     /// <inheritdoc />
     public async ValueTask DisposeAsync()
     {
-        await _stop.CancelAsync();
-        _listener.Dispose();
-        try { await _acceptLoop; } catch (OperationCanceledException) { /* expected */ }
-        Task[] sessions;
-        lock (_sessions) sessions = [.. _sessions];
-        await Task.WhenAll(sessions);
-        _stop.Dispose();
+        try
+        {
+            await _stop.CancelAsync();
+            _listener.Dispose();
+            try { await _acceptLoop; } catch (OperationCanceledException) { /* expected */ }
+            Task[] sessions;
+            lock (_sessions) sessions = [.. _sessions];
+            await Task.WhenAll(sessions);
+        }
+        finally
+        {
+            // Released even when a session ended with an unexpected exception (rethrown above).
+            _listener.Dispose();
+            _stop.Dispose();
+        }
     }
 }

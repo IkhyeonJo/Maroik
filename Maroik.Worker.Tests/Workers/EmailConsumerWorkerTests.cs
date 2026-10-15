@@ -534,11 +534,7 @@ public class EmailConsumerWorkerTests
         using var cts = new CancellationTokenSource();
         broker.Channel.Setup(c => c.QueueDeclareAsync(It.IsAny<string>(), It.IsAny<bool>(), It.IsAny<bool>(), It.IsAny<bool>(),
                 It.IsAny<IDictionary<string, object?>?>(), It.IsAny<bool>(), It.IsAny<bool>(), It.IsAny<CancellationToken>()))
-            .Returns(() =>
-            {
-                cts.Cancel();
-                throw new OperationCanceledException(cts.Token);
-            });
+            .Returns(CancelThenThrowAsync);
         using var worker = broker.CreateWorker();
 
         await worker.StartAsync(cts.Token);
@@ -547,6 +543,14 @@ public class EmailConsumerWorkerTests
         broker.Channel.Verify(c => c.DisposeAsync(), Times.Once);
         broker.Connection.Verify(c => c.DisposeAsync(), Times.Once);
         broker.Factory.Verify(f => f.CreateConnectionAsync(It.IsAny<CancellationToken>()), Times.Once);
+        return;
+
+        // The topology setup is where shutdown arrives: the host's token is cancelled, and the call fails as cancelled.
+        async Task<QueueDeclareOk> CancelThenThrowAsync()
+        {
+            await cts.CancelAsync();
+            throw new OperationCanceledException(cts.Token);
+        }
     }
 
     /// <summary>Stopping cancels the consumer first (no new deliveries), then releases the channel and connection.</summary>
@@ -620,9 +624,9 @@ public class EmailConsumerWorkerTests
 
     /// <summary>A garbage or non-numeric header counts as "first attempt": the message still gets its retry.</summary>
     [Theory]
- #pragma warning disable xUnit1045
-    [MemberData(nameof(UnusableRetryHeaders))]
- #pragma warning restore xUnit1045
+    // The rows are raw header values of different types (string, byte[], double) held as object, which xUnit
+    // cannot serialize for discovery-time enumeration; the rows are enumerated when the theory runs instead.
+    [MemberData(nameof(UnusableRetryHeaders), DisableDiscoveryEnumeration = true)]
     public async Task OnMessageReceivedAsync_TreatsAnUnusableRetryHeaderAsAFirstAttempt(object headerValue)
     {
         var handler = new Mock<IEmailMessageHandler>();

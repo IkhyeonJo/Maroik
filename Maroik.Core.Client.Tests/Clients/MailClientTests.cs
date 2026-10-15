@@ -291,7 +291,7 @@ public class MailClientTests
     [Fact]
     public async Task SendMailAsync_StillReportsSuccess_WhenClosingTheConnectionFailsAfterTheServerAcceptedTheMessage()
     {
-        await using var smtp = new FakeSmtpServer { DropConnectionOnQuit = true };
+        await using var smtp = new FakeSmtpServer(dropConnectionOnQuit: true);
 
         ServiceResult result = await _sut.SendMailAsync(
             "bob@example.com", "Hello", "<p>hi</p>", SettingsFor(smtp.Port), TestContext.Current.CancellationToken);
@@ -304,7 +304,7 @@ public class MailClientTests
     [Fact]
     public async Task SendMailAsync_ReturnsAGenericFailure_WhenTheServerRejectsTheCredentials()
     {
-        await using var smtp = new FakeSmtpServer { RejectAuthentication = true };
+        await using var smtp = new FakeSmtpServer(rejectAuthentication: true);
 
         ServiceResult result = await _sut.SendMailAsync(
             "bob@example.com", "Hello", "<p>hi</p>", SettingsFor(smtp.Port, "wrong"), TestContext.Current.CancellationToken);
@@ -399,7 +399,7 @@ public class MailClientTests
     public async Task SendMailAsync_AcceptsASelfSignedRelayCertificate_WhenSmtpSslIsOff_AndUpgradesToTls()
     {
         using X509Certificate2 cert = SelfSigned(n => n.AddIpAddress(IPAddress.Loopback));
-        await using var smtp = new FakeSmtpServer { Certificate = cert };
+        await using var smtp = new FakeSmtpServer(certificate: cert);
 
         ServiceResult result = await _sut.SendMailAsync(
             "bob@example.com", "Hello", "<p>hi</p>", SettingsFor(smtp.Port), TestContext.Current.CancellationToken);
@@ -417,7 +417,7 @@ public class MailClientTests
     public async Task SendMailAsync_RejectsACertificateForAnotherHost_EvenWhenSmtpSslIsOff()
     {
         using X509Certificate2 cert = SelfSigned(n => n.AddDnsName("mail.other-host.example"));
-        await using var smtp = new FakeSmtpServer { Certificate = cert };
+        await using var smtp = new FakeSmtpServer(certificate: cert);
 
         ServiceResult result = await _sut.SendMailAsync(
             "bob@example.com", "Hello", "<p>hi</p>", SettingsFor(smtp.Port), TestContext.Current.CancellationToken);

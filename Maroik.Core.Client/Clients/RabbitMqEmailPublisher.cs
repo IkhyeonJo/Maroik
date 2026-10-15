@@ -49,6 +49,12 @@ public sealed class RabbitMqEmailPublisher(
     /// </summary>
     private readonly SemaphoreSlim _publishLock = new(1, 1);
 
+    /// <summary>
+    /// 1 once <see cref="DisposeAsync"/> has disposed the channel / connection and the lock, so a repeated call returns
+    /// at once instead of waiting on the disposed lock. A dispose that timed out disposed nothing and leaves it 0.
+    /// </summary>
+    private int _disposed;
+
     /// <summary>The cached AMQP connection, opened lazily by <see cref="GetChannelAsync"/>; null until the first publish.</summary>
     private IConnection? _connection;
 
@@ -177,6 +183,9 @@ public sealed class RabbitMqEmailPublisher(
     /// <inheritdoc />
     public async ValueTask DisposeAsync()
     {
+        if (Volatile.Read(ref _disposed) == 1)
+            return;
+
         // Waits (bounded -- see _disposeLockTimeout) for any in-flight PublishAsync to release the
         // lock first, so the channel/connection it's using is never disposed out from under it.
         bool acquired = await _publishLock.WaitAsync(_disposeLockTimeout);
@@ -193,6 +202,7 @@ public sealed class RabbitMqEmailPublisher(
 
         try
         {
+            Volatile.Write(ref _disposed, 1);
             if (_channel != null)
                 await _channel.DisposeAsync();
             if (_connection != null)
