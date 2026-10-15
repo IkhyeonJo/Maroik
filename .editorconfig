@@ -78,7 +78,6 @@ end_of_line = crlf
 ###############################
 # C# Coding Conventions       #
 ###############################
-[*.cs]
 # var preferences
 csharp_style_var_for_built_in_types = false:silent
 csharp_style_var_when_type_is_apparent = true:silent
@@ -141,19 +140,6 @@ csharp_using_directive_placement = outside_namespace:suggestion
 csharp_prefer_simple_using_statement = true:suggestion
 csharp_style_expression_bodied_lambdas = true:silent
 csharp_style_expression_bodied_local_functions = false:silent
-
-# CA1873 ("avoid potentially expensive logging") fires on every structured log call, even when each
-# argument is a local, a field or a property read, so it only ever produced per-call suppressions.
-dotnet_diagnostic.CA1873.severity = none
-
-# Test code builds its regexes inline ([GeneratedRegex] buys nothing for a one-shot assertion);
-# production code still gets SYSLIB1045.
-[*.Tests/**.cs]
-dotnet_diagnostic.SYSLIB1045.severity = none
-
-[*.cs]
-# Warn when an IDisposable object goes out of scope without being disposed
-dotnet_diagnostic.CA2000.severity = warning
 
 ##############################################
 # TypeScript / JavaScript                    #
