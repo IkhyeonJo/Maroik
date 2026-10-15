@@ -1,4 +1,4 @@
-using System.Text.Json;
+﻿using System.Text.Json;
 using Maroik.Core.Domain.Account;
 using Maroik.Core.PostgreSQL.Data;
 using Maroik.Core.PostgreSQL.Models;
