@@ -338,6 +338,10 @@ Also `error`, by rule ID:
   `SolutionLayeringArchitectureTests` checks is unchanged). A method ID names one overload, so the file lists every overload;
   pin the analyzer version to the SDK's compiler (Roslyn 5.0 → 5.0.0).
 
+- **Unnecessary usings** (IDE0005): it runs at build time only because `Directory.Build.props` sets
+  `GenerateDocumentationFile` (which also checks doc-comment references such as `paramref`; missing doc comments, CS1591,
+  stay allowed). In a C# 14 `extension(T value)` block the receiver is not a `paramref` target — say "this value" instead.
+
 `UnitOfWork.RollbackAsync` / `DisposeAsync` ignore only a `DbException` (the database already ended the transaction);
 any other rollback failure propagates after the transaction is released and the tracker cleared (pinned by
 `UnitOfWorkTests.*_Rethrows_AFailureThatIsNotADatabaseError_AndStillClearsTheTracker`).

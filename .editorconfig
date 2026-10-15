@@ -261,6 +261,10 @@ dotnet_diagnostic.CA1309.severity = error
 dotnet_diagnostic.CA1310.severity = error
 dotnet_diagnostic.CA1311.severity = error
 
+# ---- Unnecessary usings (build error) ----
+# Runs at build time because Directory.Build.props sets GenerateDocumentationFile.
+dotnet_diagnostic.IDE0005.severity = error
+
 # ---- Async and cancellation (build errors) ----
 # A CancellationToken the method received is forwarded to the calls that accept one.
 dotnet_diagnostic.CA2016.severity = error
