@@ -78,6 +78,7 @@ end_of_line = crlf
 ###############################
 # C# Coding Conventions       #
 ###############################
+# noinspection EditorConfigKeyCorrectness
 [*.cs]
 # var preferences
 csharp_style_var_for_built_in_types = false:silent
@@ -273,6 +274,7 @@ dotnet_diagnostic.CA1849.severity = error
 
 # Test code builds its regexes inline ([GeneratedRegex] buys nothing for a one-shot assertion);
 # production code still gets SYSLIB1045.
+# noinspection EditorConfigKeyCorrectness
 [*.Tests/**.cs]
 dotnet_diagnostic.SYSLIB1045.severity = none
 # Test infrastructure creates and drops throwaway databases (CREATE DATABASE "test_<guid>" ... TEMPLATE ...): DDL takes
