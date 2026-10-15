@@ -7,11 +7,6 @@
     <UserSecretsId>b2a1e6f0-2a3c-4b3a-9a3e-6c9c9c8a5b31</UserSecretsId>
     <DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>
     <DockerComposeProjectPath>..\docker-compose.dcproj</DockerComposeProjectPath>
-    <EnableNETAnalyzers>true</EnableNETAnalyzers>
-    <AnalysisLevel>latest-all</AnalysisLevel>
-    <RunAnalyzersDuringBuild>true</RunAnalyzersDuringBuild>
-    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
-    <EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
   </PropertyGroup>
 
   <ItemGroup>

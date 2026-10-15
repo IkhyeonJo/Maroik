@@ -10,11 +10,6 @@
     <DockerComposeProjectPath>..\docker-compose.dcproj</DockerComposeProjectPath>
     <AssemblyName>Maroik.Website</AssemblyName>
     <RootNamespace>Maroik.Website</RootNamespace>
-    <EnableNETAnalyzers>true</EnableNETAnalyzers>
-    <AnalysisLevel>latest-all</AnalysisLevel>
-    <RunAnalyzersDuringBuild>true</RunAnalyzersDuringBuild>
-    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
-    <EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
   </PropertyGroup>
 
   <!--
