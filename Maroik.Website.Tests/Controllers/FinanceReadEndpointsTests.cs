@@ -149,8 +149,42 @@ public class FinanceReadEndpointsTests(MaroikWebApplicationFactory factory)
     {
         string email = $"fin-read-grid-decimals-{url.Replace("/", "-").ToLowerInvariant()}@test.com";
         var session = await LoginAsync(email);
-        const decimal amount = 1234.5678m;
-        string asset = "Decimals-" + url.Split('/')[^1];
+        SeedGridRow(url, email, "Decimals-", 1234.5678m);
+
+        string grid = await (await GetAsync(url, session, ajax: true)).Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+
+        Assert.Contains("1,234.5678", grid);
+    }
+
+    /// <summary>Every finance grid lists the monetary unit column before the amount column ("USD | 1,234.5678").</summary>
+    [Theory]
+    [InlineData("/AccountBook/Asset")]
+    [InlineData("/AccountBook/Income")]
+    [InlineData("/AccountBook/Expenditure")]
+    [InlineData("/Notice/FixedIncome")]
+    [InlineData("/Notice/FixedExpenditure")]
+    public async Task Grid_ShowsTheMonetaryUnitBeforeTheAmount(string url)
+    {
+        string email = $"fin-read-grid-unit-first-{url.Replace("/", "-").ToLowerInvariant()}@test.com";
+        var session = await LoginAsync(email);
+        SeedGridRow(url, email, "UnitFirst-", 1234.5678m);
+
+        string grid = await (await GetAsync(url, session, ajax: true)).Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+        string row = grid[grid.IndexOf("<tbody", StringComparison.Ordinal)..];
+
+        int unit = row.IndexOf(">USD<", StringComparison.Ordinal);
+        int amount = row.IndexOf(">1,234.5678<", StringComparison.Ordinal);
+        Assert.True(unit >= 0 && amount >= 0, "the row renders both the unit and the amount cell");
+        Assert.True(unit < amount, "the monetary unit cell comes before the amount cell");
+    }
+
+    /// <summary>
+    /// Seeds one row of <paramref name="amount"/> for the grid at <paramref name="url"/>, on a "USD" asset named
+    /// <paramref name="assetPrefix"/> plus the page name (the asset itself carries the amount on the asset page).
+    /// </summary>
+    private void SeedGridRow(string url, string email, string assetPrefix, decimal amount)
+    {
+        string asset = assetPrefix + url.Split('/')[^1];
         Seed(db => db.Assets.Add(new Asset
         {
             ProductName = asset, AccountEmail = email, Item = "FreeDepositAndWithdrawal", MonetaryUnit = "USD",
@@ -185,12 +219,7 @@ public class FinanceReadEndpointsTests(MaroikWebApplicationFactory factory)
                 }));
                 break;
         }
-
-        string grid = await (await GetAsync(url, session, ajax: true)).Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
-
-        Assert.Contains("1,234.5678", grid);
     }
-
 
     /// <summary>The grid partial lists the caller's own rows only, and the whole-row search narrows it.</summary>
     [Fact]
