@@ -151,6 +151,10 @@ dotnet_diagnostic.CA1873.severity = none
 [*.Tests/**.cs]
 dotnet_diagnostic.SYSLIB1045.severity = none
 
+[*.cs]
+# Warn when an IDisposable object goes out of scope without being disposed
+dotnet_diagnostic.CA2000.severity = warning
+
 ##############################################
 # TypeScript / JavaScript                    #
 # Client scripts: authored in               #
