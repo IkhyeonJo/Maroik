@@ -19,7 +19,7 @@ public class InvalidInputContractTests(MaroikWebApplicationFactory factory)
     private const string Invalid = "Input is invalid";
 
     /// <summary>A form with a single irrelevant empty field, so every required field is missing.</summary>
-    private static MultipartFormDataContent EmptyForm() => new() { { new StringContent(""), "x" } };
+    private static MultipartFormDataContent EmptyForm() => MultipartForm.Of(("x", ""));
 
     /// <summary>Each row: the role that may call the endpoint, the endpoint, whether it takes a form, the body to send, and the expected message.</summary>
     private static readonly (string Role, string Url, bool Form, object? Body, string Message)[] _endpoints =
@@ -69,10 +69,9 @@ public class InvalidInputContractTests(MaroikWebApplicationFactory factory)
         List<string> problems = [];
         foreach (var (role, url, form, body, message) in _endpoints)
         {
-            using var request = form
-                ? sessions[role].BuildFormPostRequest(url, EmptyForm())
-                : sessions[role].BuildJsonPostRequest(url, body ?? new { });
-            var response = await client.SendAsync(request, TestContext.Current.CancellationToken);
+            HttpResponseMessage response;
+            using (var request = EmptyRequest(sessions[role], url, form, body))
+                response = await client.SendAsync(request, TestContext.Current.CancellationToken);
             string text = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
             if (response.StatusCode != HttpStatusCode.OK) { problems.Add($"{url}: HTTP {(int)response.StatusCode} {text[..Math.Min(text.Length, 100)]}"); continue; }
             using JsonDocument doc = JsonDocument.Parse(text);
@@ -81,6 +80,10 @@ public class InvalidInputContractTests(MaroikWebApplicationFactory factory)
 
         Assert.True(problems.Count == 0, string.Join(Environment.NewLine, problems));
     }
+
+    /// <summary>A POST to <paramref name="url"/> carrying <see cref="EmptyForm"/> (form endpoints) or <paramref name="body"/> (JSON endpoints, an empty object when null).</summary>
+    private static HttpRequestMessage EmptyRequest(AuthenticatedSession session, string url, bool form, object? body) =>
+        form ? session.BuildFormPostRequest(url, EmptyForm()) : session.BuildJsonPostRequest(url, body ?? new { });
 
     /// <summary>The id of the category named <paramref name="name"/>.</summary>
     private long CategoryIdByName(string name)
@@ -179,7 +182,7 @@ public class InvalidInputContractTests(MaroikWebApplicationFactory factory)
     {
         var client = factory.CreateTestClient();
         var user = await AuthenticatedSessionHelper.LoginAsync(factory, client, "invalid-input-tz@test.com", "UserPassword1!", Role.User, TestContext.Current.CancellationToken);
-        using var request = user.BuildFormPostRequest("/Management/UpdateProfileTimeZone", new MultipartFormDataContent { { new StringContent("x"), "Unrelated" } });
+        using var request = user.BuildFormPostRequest("/Management/UpdateProfileTimeZone", MultipartForm.Of(("Unrelated", "x")));
 
         var response = await client.SendAsync(request, TestContext.Current.CancellationToken);
 

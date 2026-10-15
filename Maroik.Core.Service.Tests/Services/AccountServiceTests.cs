@@ -481,7 +481,8 @@ public class AccountServiceTests
         _accountRepo.Setup(r => r.CreateAsync(It.IsAny<Account>(), It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
         _dataProtection.Setup(r => r.Protect(It.IsAny<string>())).Returns("enc-token");
         SetupMailSuccess();
-        using var activity = new Activity("test-request").Start();
+        using var activity = new Activity("test-request");
+        activity.Start();
         var sut = CreateSut();
 
         var request = new RegisterAccountRequest

@@ -357,7 +357,8 @@ public class ManagementControllerPageTests(MaroikWebApplicationFactory factory)
     /// <summary>Uploads an editor image to <c>/Management/UploadImageFile</c>, asserts 200, and returns the response body.</summary>
     private async Task<string> UploadAsync(AuthenticatedSession session, string fileName, byte[] bytes)
     {
-        var form = new MultipartFormDataContent { { new ByteArrayContent(bytes), "summernoteImageFile", fileName } };
+        var form = new MultipartFormDataContent();
+        MultipartForm.AddFile(form, "summernoteImageFile", fileName, bytes);
         using var request = session.BuildFormPostRequest("/Management/UploadImageFile", form);
         var response = await _client.SendAsync(request, TestContext.Current.CancellationToken);
         Assert.Equal(System.Net.HttpStatusCode.OK, response.StatusCode);

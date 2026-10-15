@@ -233,9 +233,7 @@ public class ForumControllerTests(MaroikWebApplicationFactory factory)
     {
         var session = await AuthenticatedSessionHelper.LoginAsync(factory, _client, "forum-uploadimage-badext@test.com", "UserPassword1!", Role.User, TestContext.Current.CancellationToken);
         var form = new MultipartFormDataContent();
-        var fileContent = new ByteArrayContent([1, 2, 3, 4]);
-        fileContent.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue("text/plain");
-        form.Add(fileContent, "summernoteImageFile", "notanimage.txt");
+        MultipartForm.AddFile(form, "summernoteImageFile", "notanimage.txt", [1, 2, 3, 4], "text/plain");
         using var request = session.BuildFormPostRequest("/Forum/UploadImageFile", form);
 
         var response = await _client.SendAsync(request, TestContext.Current.CancellationToken);

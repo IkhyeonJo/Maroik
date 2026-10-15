@@ -194,7 +194,7 @@ public class ControllerFailureContractTests(MaroikWebApplicationFactory factory)
     private static MultipartFormDataContent Form(params (string Name, string Value)[] fields)
     {
         var form = new MultipartFormDataContent();
-        foreach (var (name, value) in fields) form.Add(new StringContent(value), name);
+        foreach (var (name, value) in fields) MultipartForm.AddText(form, name, value);
         return form;
     }
 
@@ -533,9 +533,7 @@ public class ControllerFailureContractTests(MaroikWebApplicationFactory factory)
     private static MultipartFormDataContent PngForm(string field)
     {
         var form = new MultipartFormDataContent();
-        var part = new ByteArrayContent([1, 2, 3, 4]);
-        part.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue("image/png");
-        form.Add(part, field, "picture.png");
+        MultipartForm.AddFile(form, field, "picture.png", [1, 2, 3, 4], "image/png");
         return form;
     }
 

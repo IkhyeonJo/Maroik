@@ -146,6 +146,38 @@ csharp_style_expression_bodied_local_functions = false:silent
 # argument is a local, a field or a property read, so it only ever produced per-call suppressions.
 dotnet_diagnostic.CA1873.severity = none
 
+# ---- Memory safety: resource lifetime and buffers (build errors) ----
+# Each rule is set to `error` on its own, so it fails the build (and shows red in the IDE)
+# without turning on the whole `latest-all` analyzer set.
+# Dispose an IDisposable before its last reference goes out of scope.
+dotnet_diagnostic.CA2000.severity = error
+# A type that owns a disposable field must itself be IDisposable ...
+dotnet_diagnostic.CA1001.severity = error
+# ... and must dispose that field.
+dotnet_diagnostic.CA2213.severity = error
+# Dispose(bool) overrides call base.Dispose.
+dotnet_diagnostic.CA2215.severity = error
+# A type holding native resources declares a finalizer.
+dotnet_diagnostic.CA2216.severity = error
+# The IDisposable pattern is implemented correctly.
+dotnet_diagnostic.CA1063.severity = error
+# Dispose calls GC.SuppressFinalize correctly.
+dotnet_diagnostic.CA1816.severity = error
+# An IDisposable is not handed to a task that is not awaited (it may be disposed under it).
+dotnet_diagnostic.CA2025.severity = error
+# No stackalloc inside a loop (stack overflow).
+dotnet_diagnostic.CA2014.severity = error
+# A ValueTask is awaited exactly once and never after it completed.
+dotnet_diagnostic.CA2012.severity = error
+# No finalizer on a MemoryManager<T>.
+dotnet_diagnostic.CA2015.severity = error
+# Buffer.BlockCopy counts bytes, not elements.
+dotnet_diagnostic.CA2018.severity = error
+# No empty finalizers (they only delay collection).
+dotnet_diagnostic.CA1821.severity = error
+# No unconditional self-recursion (stack overflow).
+dotnet_diagnostic.CA2011.severity = error
+
 # Test code builds its regexes inline ([GeneratedRegex] buys nothing for a one-shot assertion);
 # production code still gets SYSLIB1045.
 [*.Tests/**.cs]

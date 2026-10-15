@@ -66,7 +66,7 @@ public class EmailConsumerWorkerTests
     public async Task OnMessageReceivedAsync_ValidMessage_InvokesHandlerAndAcks()
     {
         var handler = new Mock<IEmailMessageHandler>();
-        var worker = CreateSut(handler.Object, out var channel);
+        using var worker = CreateSut(handler.Object, out var channel);
         byte[] body = JsonSerializer.SerializeToUtf8Bytes(_message);
 
         await worker.OnMessageReceivedAsync(this, MakeDeliverArgs(body, deliveryTag: 7));
@@ -82,7 +82,7 @@ public class EmailConsumerWorkerTests
     public async Task OnMessageReceivedAsync_InvalidJson_FirstDelivery_RepublishesForRetryAndNeverCallsHandler()
     {
         var handler = new Mock<IEmailMessageHandler>();
-        var worker = CreateSut(handler.Object, out var channel);
+        using var worker = CreateSut(handler.Object, out var channel);
         byte[] body = Encoding.UTF8.GetBytes("not valid json");
         BasicProperties? published = null;
         channel.Setup(c => c.BasicPublishAsync(
@@ -105,7 +105,7 @@ public class EmailConsumerWorkerTests
     public async Task OnMessageReceivedAsync_InvalidJson_AlreadyRetried_NacksWithoutRequeueAndNeverCallsHandler()
     {
         var handler = new Mock<IEmailMessageHandler>();
-        var worker = CreateSut(handler.Object, out var channel);
+        using var worker = CreateSut(handler.Object, out var channel);
         byte[] body = Encoding.UTF8.GetBytes("not valid json");
 
         await worker.OnMessageReceivedAsync(this, MakeDeliverArgs(body, deliveryTag: 3, redelivered: true, retryCount: EmailConsumerWorker.MaxRetries));
@@ -120,7 +120,7 @@ public class EmailConsumerWorkerTests
     public async Task OnMessageReceivedAsync_NullJsonBody_FirstDelivery_RepublishesForRetry()
     {
         var handler = new Mock<IEmailMessageHandler>();
-        var worker = CreateSut(handler.Object, out var channel);
+        using var worker = CreateSut(handler.Object, out var channel);
         byte[] body = "null"u8.ToArray();
         channel.Setup(c => c.BasicPublishAsync(
                 It.IsAny<string>(), It.IsAny<string>(), It.IsAny<bool>(), It.IsAny<BasicProperties>(), It.IsAny<ReadOnlyMemory<byte>>(), It.IsAny<CancellationToken>()))
@@ -137,7 +137,7 @@ public class EmailConsumerWorkerTests
     public async Task OnMessageReceivedAsync_NullJsonBody_AlreadyRetried_NacksWithoutRequeue()
     {
         var handler = new Mock<IEmailMessageHandler>();
-        var worker = CreateSut(handler.Object, out var channel);
+        using var worker = CreateSut(handler.Object, out var channel);
         byte[] body =
         [
             .. "null"u8
@@ -155,7 +155,7 @@ public class EmailConsumerWorkerTests
         var handler = new Mock<IEmailMessageHandler>();
         handler.Setup(h => h.HandleAsync(It.IsAny<SendEmailMessage>(), It.IsAny<CancellationToken>()))
             .ThrowsAsync(new InvalidOperationException("SMTP down"));
-        var worker = CreateSut(handler.Object, out var channel);
+        using var worker = CreateSut(handler.Object, out var channel);
         byte[] body = JsonSerializer.SerializeToUtf8Bytes(_message);
         channel.Setup(c => c.BasicPublishAsync(
                 It.IsAny<string>(), It.IsAny<string>(), It.IsAny<bool>(), It.IsAny<BasicProperties>(), It.IsAny<ReadOnlyMemory<byte>>(), It.IsAny<CancellationToken>()))
@@ -177,7 +177,7 @@ public class EmailConsumerWorkerTests
         var handler = new Mock<IEmailMessageHandler>();
         handler.Setup(h => h.HandleAsync(It.IsAny<SendEmailMessage>(), It.IsAny<CancellationToken>()))
             .ThrowsAsync(new InvalidOperationException("SMTP down"));
-        var worker = CreateSut(handler.Object, out var channel);
+        using var worker = CreateSut(handler.Object, out var channel);
         (string Queue, BasicProperties Props)? published = null;
         channel.Setup(c => c.BasicPublishAsync(
                 It.IsAny<string>(), It.IsAny<string>(), It.IsAny<bool>(), It.IsAny<BasicProperties>(), It.IsAny<ReadOnlyMemory<byte>>(), It.IsAny<CancellationToken>()))
@@ -198,7 +198,7 @@ public class EmailConsumerWorkerTests
     public async Task OnMessageReceivedAsync_AckThrowsAfterSuccessfulHandle_DoesNotNack()
     {
         var handler = new Mock<IEmailMessageHandler>();
-        var worker = CreateSut(handler.Object, out var channel);
+        using var worker = CreateSut(handler.Object, out var channel);
         channel.Setup(c => c.BasicAckAsync(It.IsAny<ulong>(), It.IsAny<bool>(), It.IsAny<CancellationToken>()))
             .ThrowsAsync(new InvalidOperationException("channel closed"));
         byte[] body = JsonSerializer.SerializeToUtf8Bytes(_message);
@@ -223,7 +223,7 @@ public class EmailConsumerWorkerTests
         var handler = new Mock<IEmailMessageHandler>();
         handler.Setup(h => h.HandleAsync(It.IsAny<SendEmailMessage>(), It.IsAny<CancellationToken>()))
             .ThrowsAsync(new InvalidOperationException("SMTP down"));
-        var worker = CreateSut(handler.Object, out var channel);
+        using var worker = CreateSut(handler.Object, out var channel);
         channel.Setup(c => c.BasicNackAsync(It.IsAny<ulong>(), It.IsAny<bool>(), It.IsAny<bool>(), It.IsAny<CancellationToken>()))
             .ThrowsAsync(new InvalidOperationException("channel closed"));
         byte[] body = JsonSerializer.SerializeToUtf8Bytes(_message);
@@ -245,7 +245,7 @@ public class EmailConsumerWorkerTests
         var handler = new Mock<IEmailMessageHandler>();
         handler.Setup(h => h.HandleAsync(It.IsAny<SendEmailMessage>(), It.IsAny<CancellationToken>()))
             .ThrowsAsync(new InvalidOperationException("SMTP down"));
-        var worker = CreateSut(handler.Object, out var channel);
+        using var worker = CreateSut(handler.Object, out var channel);
         channel.Setup(c => c.BasicPublishAsync(
                 It.IsAny<string>(), It.IsAny<string>(), It.IsAny<bool>(), It.IsAny<BasicProperties>(), It.IsAny<ReadOnlyMemory<byte>>(), It.IsAny<CancellationToken>()))
             .ThrowsAsync(new InvalidOperationException("channel closed"));
@@ -275,7 +275,7 @@ public class EmailConsumerWorkerTests
                 handlerStarted.SetResult();
                 await Task.Delay(Timeout.Infinite, ct);
             });
-        var worker = CreateSut(handler.Object, out var channel);
+        using var worker = CreateSut(handler.Object, out var channel);
         worker.DrainTimeout = TimeSpan.FromMilliseconds(50);
         worker.CancelUnwindTimeout = TimeSpan.FromMilliseconds(500);
         byte[] body = JsonSerializer.SerializeToUtf8Bytes(_message);
@@ -304,7 +304,7 @@ public class EmailConsumerWorkerTests
         var handler = new Mock<IEmailMessageHandler>();
         handler.Setup(h => h.HandleAsync(It.IsAny<SendEmailMessage>(), It.IsAny<CancellationToken>()))
             .ThrowsAsync(new InvalidOperationException("SMTP down"));
-        var worker = CreateSut(handler.Object, out var channel);
+        using var worker = CreateSut(handler.Object, out var channel);
         byte[] body = JsonSerializer.SerializeToUtf8Bytes(_message);
 
         await worker.OnMessageReceivedAsync(this, MakeDeliverArgs(body, deliveryTag: 9, redelivered: true, retryCount: EmailConsumerWorker.MaxRetries));
@@ -325,7 +325,7 @@ public class EmailConsumerWorkerTests
         var handler = new Mock<IEmailMessageHandler>();
         handler.Setup(h => h.HandleAsync(It.IsAny<SendEmailMessage>(), It.IsAny<CancellationToken>()))
             .ThrowsAsync(new InvalidOperationException("SMTP down"));
-        var worker = CreateSut(handler.Object, out var channel);
+        using var worker = CreateSut(handler.Object, out var channel);
         byte[] body = JsonSerializer.SerializeToUtf8Bytes(_message);
         channel.Setup(c => c.BasicPublishAsync(
                 It.IsAny<string>(), It.IsAny<string>(), It.IsAny<bool>(), It.IsAny<BasicProperties>(), It.IsAny<ReadOnlyMemory<byte>>(), It.IsAny<CancellationToken>()))
@@ -421,7 +421,7 @@ public class EmailConsumerWorkerTests
     public async Task StartAsync_DeclaresDeadLetterQueueFirst_SetsPrefetch_AndConsumesWithManualAck()
     {
         var broker = new BrokerFixture();
-        var worker = broker.CreateWorker();
+        using var worker = broker.CreateWorker();
 
         await worker.StartAsync(TestContext.Current.CancellationToken);
         try
@@ -458,7 +458,7 @@ public class EmailConsumerWorkerTests
     public async Task StartAsync_OpensItsChannelWithPublisherConfirms()
     {
         var broker = new BrokerFixture();
-        var worker = broker.CreateWorker();
+        using var worker = broker.CreateWorker();
 
         await worker.StartAsync(TestContext.Current.CancellationToken);
         try
@@ -481,7 +481,7 @@ public class EmailConsumerWorkerTests
         int attempts = 0;
         broker.Factory.Setup(f => f.CreateConnectionAsync(It.IsAny<CancellationToken>()))
             .ReturnsAsync(() => ++attempts < 3 ? throw new InvalidOperationException("broker not ready") : broker.Connection.Object);
-        var worker = broker.CreateWorker();
+        using var worker = broker.CreateWorker();
 
         await worker.StartAsync(TestContext.Current.CancellationToken);
         try
@@ -510,7 +510,7 @@ public class EmailConsumerWorkerTests
         broker.Factory.SetupSequence(f => f.CreateConnectionAsync(It.IsAny<CancellationToken>()))
             .ReturnsAsync(failingConnection.Object)
             .ReturnsAsync(broker.Connection.Object);
-        var worker = broker.CreateWorker();
+        using var worker = broker.CreateWorker();
 
         await worker.StartAsync(TestContext.Current.CancellationToken);
         try
@@ -539,7 +539,7 @@ public class EmailConsumerWorkerTests
                 cts.Cancel();
                 throw new OperationCanceledException(cts.Token);
             });
-        var worker = broker.CreateWorker();
+        using var worker = broker.CreateWorker();
 
         await worker.StartAsync(cts.Token);
         await Assert.ThrowsAnyAsync<OperationCanceledException>(() => worker.ExecuteTask!);
@@ -555,7 +555,7 @@ public class EmailConsumerWorkerTests
     {
         var broker = new BrokerFixture();
         broker.Channel.Setup(c => c.BasicCancelAsync("consumer-tag-1", It.IsAny<bool>(), It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
-        var worker = broker.CreateWorker();
+        using var worker = broker.CreateWorker();
         await worker.StartAsync(TestContext.Current.CancellationToken);
         await WaitUntilAsync(() => broker.Consume != null);
 
@@ -573,7 +573,7 @@ public class EmailConsumerWorkerTests
         var broker = new BrokerFixture();
         broker.Channel.Setup(c => c.BasicCancelAsync(It.IsAny<string>(), It.IsAny<bool>(), It.IsAny<CancellationToken>()))
             .ThrowsAsync(new InvalidOperationException("channel already closed"));
-        var worker = broker.CreateWorker();
+        using var worker = broker.CreateWorker();
         await worker.StartAsync(TestContext.Current.CancellationToken);
         await WaitUntilAsync(() => broker.Consume != null);
 
@@ -601,7 +601,7 @@ public class EmailConsumerWorkerTests
     {
         var handler = new Mock<IEmailMessageHandler>();
         handler.Setup(h => h.HandleAsync(It.IsAny<SendEmailMessage>(), It.IsAny<CancellationToken>())).ThrowsAsync(new InvalidOperationException("SMTP down"));
-        var worker = CreateSut(handler.Object, out var channel);
+        using var worker = CreateSut(handler.Object, out var channel);
 
         await worker.OnMessageReceivedAsync(this, MakeDeliverArgsWithRawRetryHeader(JsonSerializer.SerializeToUtf8Bytes(_message), headerValue, deliveryTag: 31));
 
@@ -627,7 +627,7 @@ public class EmailConsumerWorkerTests
     {
         var handler = new Mock<IEmailMessageHandler>();
         handler.Setup(h => h.HandleAsync(It.IsAny<SendEmailMessage>(), It.IsAny<CancellationToken>())).ThrowsAsync(new InvalidOperationException("SMTP down"));
-        var worker = CreateSut(handler.Object, out var channel);
+        using var worker = CreateSut(handler.Object, out var channel);
         channel.Setup(c => c.BasicPublishAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<bool>(), It.IsAny<BasicProperties>(), It.IsAny<ReadOnlyMemory<byte>>(), It.IsAny<CancellationToken>()))
             .Returns(ValueTask.CompletedTask);
 
@@ -664,7 +664,7 @@ public class EmailConsumerWorkerTests
                 return release.Task; // ignores the token on purpose
             });
         var logger = new FakeLogger<EmailConsumerWorker>();
-        var worker = CreateSut(handler.Object, out var channel, logger);
+        using var worker = CreateSut(handler.Object, out var channel, logger);
         worker.DrainTimeout = TimeSpan.FromMilliseconds(50);
         worker.CancelUnwindTimeout = TimeSpan.FromMilliseconds(100);
         channel.Setup(c => c.BasicPublishAsync(

@@ -556,9 +556,10 @@ public class ManagementControllerAccountTests(MaroikWebApplicationFactory factor
 
     // -- Admin safeguards (AdminSafeguardPolicy) ---------------------------------------
 
-    /// <summary>Sends <paramref name="request"/> (optionally as a <paramref name="culture"/> browser) and returns its <c>error</c>, asserting a refusal.</summary>
-    private async Task<string> ErrorOf(HttpRequestMessage request, string? culture = null)
+    /// <summary>Builds and sends a request (optionally as a <paramref name="culture"/> browser), disposes it, and returns its <c>error</c>, asserting a refusal.</summary>
+    private async Task<string> ErrorOf(Func<HttpRequestMessage> buildRequest, string? culture = null)
     {
+        using var request = buildRequest();
         if (culture != null) request.Headers.AcceptLanguage.ParseAdd(culture);
         var response = await _client.SendAsync(request, TestContext.Current.CancellationToken);
         Assert.Equal(System.Net.HttpStatusCode.OK, response.StatusCode);
@@ -594,9 +595,9 @@ public class ManagementControllerAccountTests(MaroikWebApplicationFactory factor
         var session = await LoginAsAdminAsync(self);
 
         Assert.Equal("You cannot delete your own account.",
-            await ErrorOf(session.BuildJsonPostRequest("/Management/DeleteAccount", new { Email = self })));
+            await ErrorOf(() => session.BuildJsonPostRequest("/Management/DeleteAccount", new { Email = self })));
         Assert.Equal("자기 계정은 삭제할 수 없습니다.",
-            await ErrorOf(session.BuildJsonPostRequest("/Management/DeleteAccount", new { Email = self }), "ko-KR"));
+            await ErrorOf(() => session.BuildJsonPostRequest("/Management/DeleteAccount", new { Email = self }), "ko-KR"));
         Assert.False(StoredAccount(self).Deleted);
     }
 
@@ -608,9 +609,9 @@ public class ManagementControllerAccountTests(MaroikWebApplicationFactory factor
         var session = await LoginAsAdminAsync(self);
 
         Assert.Equal("You cannot lock your own account.",
-            await ErrorOf(session.BuildJsonPostRequest("/Management/UpdateAccount", AdminEdit(self, b => b["Locked"] = true))));
+            await ErrorOf(() => session.BuildJsonPostRequest("/Management/UpdateAccount", AdminEdit(self, b => b["Locked"] = true))));
         Assert.Equal("자기 계정은 잠글 수 없습니다.",
-            await ErrorOf(session.BuildJsonPostRequest("/Management/UpdateAccount", AdminEdit(self, b => b["Locked"] = true)), "ko-KR"));
+            await ErrorOf(() => session.BuildJsonPostRequest("/Management/UpdateAccount", AdminEdit(self, b => b["Locked"] = true)), "ko-KR"));
         Assert.False(StoredAccount(self).Locked);
     }
 
@@ -622,9 +623,9 @@ public class ManagementControllerAccountTests(MaroikWebApplicationFactory factor
         var session = await LoginAsAdminAsync(self);
 
         Assert.Equal("You cannot remove the Admin role from your own account.",
-            await ErrorOf(session.BuildJsonPostRequest("/Management/UpdateAccount", AdminEdit(self, b => b["Role"] = Role.User))));
+            await ErrorOf(() => session.BuildJsonPostRequest("/Management/UpdateAccount", AdminEdit(self, b => b["Role"] = Role.User))));
         Assert.Equal("자기 계정의 Admin 권한은 해제할 수 없습니다.",
-            await ErrorOf(session.BuildJsonPostRequest("/Management/UpdateAccount", AdminEdit(self, b => b["Role"] = Role.User)), "ko-KR"));
+            await ErrorOf(() => session.BuildJsonPostRequest("/Management/UpdateAccount", AdminEdit(self, b => b["Role"] = Role.User)), "ko-KR"));
         Assert.Equal(Role.Admin, StoredAccount(self).Role);
     }
 

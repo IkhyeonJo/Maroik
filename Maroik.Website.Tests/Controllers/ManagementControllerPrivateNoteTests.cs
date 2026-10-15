@@ -34,9 +34,9 @@ public class ManagementControllerPrivateNoteTests(MaroikWebApplicationFactory fa
     private static MultipartFormDataContent BoardForm(string? title, string content = "Body", bool noticed = false)
     {
         var form = new MultipartFormDataContent();
-        if (title != null) form.Add(new StringContent(title), "Title");
-        form.Add(new StringContent(content), "Content");
-        form.Add(new StringContent(noticed.ToString()), "Noticed");
+        if (title != null) MultipartForm.AddText(form, "Title", title);
+        MultipartForm.AddText(form, "Content", content);
+        MultipartForm.AddText(form, "Noticed", noticed.ToString());
         return form;
     }
 
@@ -167,7 +167,7 @@ public class ManagementControllerPrivateNoteTests(MaroikWebApplicationFactory fa
 
         string updatedTitle = UniqueTitle();
         var form = BoardForm(updatedTitle, content: "Edited");
-        form.Add(new StringContent(boardId.ToString()), "Id");
+        MultipartForm.AddText(form, "Id", boardId.ToString());
         using var request = session.BuildFormPostRequest("/Management/EditPrivateNoteBoard", form);
 
         var response = await _client.SendAsync(request, TestContext.Current.CancellationToken);
@@ -189,7 +189,7 @@ public class ManagementControllerPrivateNoteTests(MaroikWebApplicationFactory fa
         long boardId = SeedBoard(writer: "SomeoneElse");
 
         var form = BoardForm(UniqueTitle());
-        form.Add(new StringContent(boardId.ToString()), "Id");
+        MultipartForm.AddText(form, "Id", boardId.ToString());
         using var request = session.BuildFormPostRequest("/Management/EditPrivateNoteBoard", form);
 
         var response = await _client.SendAsync(request, TestContext.Current.CancellationToken);

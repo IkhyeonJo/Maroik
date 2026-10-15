@@ -50,21 +50,18 @@ public class CalendarControllerEventTests(MaroikWebApplicationFactory factory)
     /// <summary>A create/update-event form for an all-day event in <paramref name="calendarId"/> (id 0 creates).</summary>
     private static MultipartFormDataContent EventForm(long calendarId, string title, string startDate = "2030-06-01", string endDate = "2030-06-02", long id = 0)
     {
-        var form = new MultipartFormDataContent
-        {
-            { new StringContent(id.ToString()), "Id" },
-            { new StringContent(calendarId.ToString()), "CalendarId" },
-            { new StringContent(title), "Title" },
-            { new StringContent("true"), "AllDay" },
-            { new StringContent(startDate), "StartDate" },
-            { new StringContent(endDate), "EndDate" },
-            { new StringContent("Somewhere"), "Location" },
+        return MultipartForm.Of(
+            ("Id", id.ToString()),
+            ("CalendarId", calendarId.ToString()),
+            ("Title", title),
+            ("AllDay", "true"),
+            ("StartDate", startDate),
+            ("EndDate", endDate),
+            ("Location", "Somewhere"),
             // "Status" carries a real DB CHECK constraint restricting it to "Busy"/"Free" —
             // anything else (e.g. "Confirmed") is silently rejected by CreateCalendarEventAsync's
             // catch-all as "Input is invalid".
-            { new StringContent("Busy"), "Status" }
-        };
-        return form;
+            ("Status", "Busy"));
     }
 
     /// <summary>A title unique to this call, prefixed with the calling test's name.</summary>

@@ -106,7 +106,7 @@ public sealed class UnitOfWorkTests(DatabaseFixture database) : RepositoryTestBa
     public async Task BeginAsync_WithIsolationLevel_OpensTransactionAtThatLevel()
     {
         await using var context = NewDbContext();
-        var uow = new UnitOfWork(context);
+        await using var uow = new UnitOfWork(context);
 
         await uow.BeginAsync(IsolationLevel.RepeatableRead, TestContext.Current.CancellationToken);
 
@@ -133,7 +133,7 @@ public sealed class UnitOfWorkTests(DatabaseFixture database) : RepositoryTestBa
         await EnsureAccountsAsync(email);
 
         await using var context = NewDbContext();
-        var uow = new UnitOfWork(context);
+        await using var uow = new UnitOfWork(context);
         await uow.BeginAsync(ct: ct);
         context.Accounts.Add(new OrmAccount
         {
@@ -166,7 +166,7 @@ public sealed class UnitOfWorkTests(DatabaseFixture database) : RepositoryTestBa
         await EnsureAccountsAsync(email);
 
         await using var context = NewDbContext();
-        var uow = new UnitOfWork(context);
+        await using var uow = new UnitOfWork(context);
         await uow.BeginAsync(ct: ct);
         context.Accounts.Add(new OrmAccount
         {

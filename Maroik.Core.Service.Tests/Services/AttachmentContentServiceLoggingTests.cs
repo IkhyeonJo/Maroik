@@ -50,7 +50,8 @@ public class AttachmentContentServiceLoggingTests
     [Fact]
     public async Task OpenFileAsync_LogsTheFailureOnce_WithPathAndCorrelationId()
     {
-        using var activity = new Activity("request").Start();
+        using var activity = new Activity("request");
+        activity.Start();
 
         Assert.Null(await CreateSut().OpenFileAsync("upload/a.zip", TestContext.Current.CancellationToken));
 
@@ -61,7 +62,8 @@ public class AttachmentContentServiceLoggingTests
     [Fact]
     public async Task PrepareHtmlForDisplayAsync_LogsAMissingImageOnce_WithPathAndCorrelationId()
     {
-        using var activity = new Activity("request").Start();
+        using var activity = new Activity("request");
+        activity.Start();
         Func<string, CancellationToken, Task<HtmlImgPatch?>>? factory = null;
         _htmlParser.Setup(p => p.TransformImageAttributesAsync(It.IsAny<string>(), It.IsAny<Func<string, CancellationToken, Task<HtmlImgPatch?>>>(), It.IsAny<CancellationToken>()))
             .Callback<string, Func<string, CancellationToken, Task<HtmlImgPatch?>>, CancellationToken>((_, f, _) => factory = f)

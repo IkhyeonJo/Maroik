@@ -232,7 +232,7 @@ public class RabbitMqEmailPublisherTests
     {
         _factory.Setup(f => f.CreateConnectionAsync(It.IsAny<CancellationToken>()))
             .ThrowsAsync(new InvalidOperationException("broker down"));
-        var sut = new RabbitMqEmailPublisher(_factory.Object, NullLogger<RabbitMqEmailPublisher>.Instance, TimeSpan.FromSeconds(30));
+        await using var sut = new RabbitMqEmailPublisher(_factory.Object, NullLogger<RabbitMqEmailPublisher>.Instance, TimeSpan.FromSeconds(30));
 
         await Assert.ThrowsAsync<InvalidOperationException>(() => sut.PublishAsync(_message, TestContext.Current.CancellationToken));
         var fastFail = await Assert.ThrowsAsync<InvalidOperationException>(() => sut.PublishAsync(_message, TestContext.Current.CancellationToken));
@@ -250,7 +250,7 @@ public class RabbitMqEmailPublisherTests
         _factory.SetupSequence(f => f.CreateConnectionAsync(It.IsAny<CancellationToken>()))
             .ThrowsAsync(new InvalidOperationException("broker down"))
             .ReturnsAsync(connection.Object);
-        var sut = new RabbitMqEmailPublisher(_factory.Object, NullLogger<RabbitMqEmailPublisher>.Instance, TimeSpan.FromMilliseconds(50));
+        await using var sut = new RabbitMqEmailPublisher(_factory.Object, NullLogger<RabbitMqEmailPublisher>.Instance, TimeSpan.FromMilliseconds(50));
 
         await Assert.ThrowsAsync<InvalidOperationException>(() => sut.PublishAsync(_message, TestContext.Current.CancellationToken));
         await Task.Delay(150, TestContext.Current.CancellationToken);
@@ -272,11 +272,11 @@ public class RabbitMqEmailPublisherTests
     /// waiting it out in real time.
     /// </summary>
     [Fact]
-    public void Constructor_SourcesRecoveryGraceWindow_FromConnectionFactoryNetworkRecoveryInterval()
+    public async Task Constructor_SourcesRecoveryGraceWindow_FromConnectionFactoryNetworkRecoveryInterval()
     {
         var realFactory = new ConnectionFactory { NetworkRecoveryInterval = TimeSpan.FromSeconds(42) };
 
-        var sut = new RabbitMqEmailPublisher(realFactory, NullLogger<RabbitMqEmailPublisher>.Instance);
+        await using var sut = new RabbitMqEmailPublisher(realFactory, NullLogger<RabbitMqEmailPublisher>.Instance);
 
         var field = typeof(RabbitMqEmailPublisher).GetField(
             "_connectionRecoveryGraceWindow", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);

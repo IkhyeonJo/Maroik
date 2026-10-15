@@ -27,7 +27,7 @@ public class IncomeSubClassOptionsExtensionsTests
     /// <summary>Writes <paramref name="content"/> to a string with the default HTML encoder.</summary>
     private static string Render(Microsoft.AspNetCore.Html.IHtmlContent content)
     {
-        var writer = new StringWriter(new StringBuilder());
+        using var writer = new StringWriter(new StringBuilder());
         content.WriteTo(writer, HtmlEncoder.Default);
         return writer.ToString();
     }

@@ -33,7 +33,7 @@ public class LogTemplatesTests
         var logEvent = new LogEvent(DateTimeOffset.UnixEpoch, LogEventLevel.Warning, null,
             new MessageTemplateParser().Parse(messageTemplate),
             [new LogEventProperty("FilePath", new ScalarValue(value)), new LogEventProperty("SourceContext", new ScalarValue("Test"))]);
-        var writer = new StringWriter();
+        using var writer = new StringWriter();
         new MessageTemplateTextFormatter(outputTemplate).Format(logEvent, writer);
         return writer.ToString();
     }

@@ -238,7 +238,8 @@ public class ProfileServiceAuditLoggingTests
     [Fact]
     public async Task DownloadAvatar_LogsAWarningWithTheCorrelationId_WhenStorageFails()
     {
-        using var activity = new System.Diagnostics.Activity("request").Start();
+        using var activity = new System.Diagnostics.Activity("request");
+        activity.Start();
         var failure = new HttpRequestException("404");
         _fileClient.Setup(f => f.DownloadAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>())).ThrowsAsync(failure);
 

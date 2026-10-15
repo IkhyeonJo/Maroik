@@ -304,6 +304,36 @@ purpose — do not reintroduce them. The only automated logging check left is `D
 (`Maroik.Core.Domain` must not depend on `Microsoft.Extensions.Logging`).
 
 
+## Memory safety — resource-lifetime analyzers are build errors
+
+`.editorconfig` (`[*.cs]`, "Memory safety" block) sets these rules to `error`, for production and test code alike:
+CA2000, CA1001, CA2213, CA2215, CA2216, CA1063, CA1816, CA2025 (disposal / ownership), CA2014, CA2012, CA2015, CA2018,
+CA1821, CA2011 (stack, buffers, ValueTask, finalizers). Only these rules are turned on, not `AnalysisLevel=latest-all`
+(that wider attempt was rolled back on 2026-10-15). No project allows `unsafe` code.
+
+- **Configure analyzers by rule ID only.** `AnalysisLevel=latest-all` (or any `AnalysisMode`) ships an SDK globalconfig that
+  sets every rule by ID, and a rule-ID entry beats a category or all-analyzers entry whichever file it is in (`.editorconfig`
+  wins over the globalconfig only at the same level). So under `latest-all` a `dotnet_analyzer_diagnostic.severity = ...` or
+  `dotnet_analyzer_diagnostic.category-<X>.severity = ...` line in `.editorconfig` is silently ignored, while
+  `dotnet_diagnostic.<ID>.severity` lines still apply (verified 2026-10-16). Widen the analysis by adding rule-ID lines, not
+  bulk or category lines.
+
+- **Fix the code; do not suppress.** No `#pragma warning disable`, `[SuppressMessage]`, per-file severity override or
+  CA2000 option change (`dispose_ownership_transfer_*`, `excluded_*`) for these rules. A real false positive is a discussion
+  with the owner first.
+- Dispose with `using` / `await using`. When ownership moves to something that disposes it later (a `FileStreamResult`, a
+  `MultipartFormDataContent` part), use the try/finally hand-over: assign `null` right after the hand-over and dispose the
+  non-null leftover in `finally` (see `FileController.Download`, `MultipartForm`).
+- A class that owns a disposable field disposes it in `Dispose` / `DisposeAsync` (e.g. `EmailConsumerWorker.Dispose`),
+  not only on a happy-path method such as `StopAsync`.
+- A client from `IHttpClientFactory` is disposed after use (`using HttpClient`); it does not own its pooled handler, and a
+  response it already returned (the streaming `OpenReadAsync`) keeps working.
+- Tests: multipart bodies are built with the per-project `Infrastructure/MultipartForm` helper (`Of`, `AddText`, `AddFile`),
+  never `new StringContent(...)` / `new ByteArrayContent(...)` added inline; a helper that sends a request takes a
+  `Func<...>` and disposes what it builds (`ErrorOf`, `Send`).
+- A leak fix with observable behaviour gets a regression test like any bug fix (`FileClientTests.EveryCall_DisposesTheHttpClientItCreated`,
+  `FileControllerTests.Download_ClosesTheFile_WhenItFailsAfterOpeningIt`); where nothing is observable, the build error is the red step.
+
 ## Always write resx + unit tests alongside code
 
 Whenever you add or change code, also write the matching pieces in the same change —

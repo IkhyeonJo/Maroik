@@ -14,14 +14,47 @@ namespace Maroik.Core.Client.Tests.Clients;
 /// </summary>
 public class FileClientTests
 {
-    /// <summary><see cref="IHttpClientFactory"/> whose clients go through a test-supplied handler.</summary>
+    /// <summary>An <see cref="HttpClient"/> that records whether it was disposed.</summary>
+    private sealed class TrackingHttpClient : HttpClient
+    {
+        /// <summary>A client over its own default handler, which it disposes with itself.</summary>
+        public TrackingHttpClient() { }
+
+        /// <summary>A client over a borrowed <paramref name="handler"/>, which disposing the client leaves usable.</summary>
+        public TrackingHttpClient(HttpMessageHandler handler) : base(handler, disposeHandler: false) { }
+
+        /// <summary>True once <see cref="Dispose(bool)"/> ran.</summary>
+        public bool Disposed { get; private set; }
+
+        /// <inheritdoc />
+        protected override void Dispose(bool disposing)
+        {
+            Disposed = true;
+            base.Dispose(disposing);
+        }
+    }
+
+    /// <summary>
+    /// <see cref="IHttpClientFactory"/> whose clients go through a test-supplied handler. Like the real factory, a
+    /// client does not own that handler (disposing the client leaves the handler usable); a default handler, made
+    /// when no handler is set, belongs to its client. Every client it hands out is kept so a test can check that the
+    /// caller disposed it.
+    /// </summary>
     private sealed class FakeHttpClientFactory : IHttpClientFactory
     {
-        /// <summary>The handler the created <see cref="HttpClient"/> should use, or null for a default client.</summary>
+        /// <summary>The handler the created <see cref="HttpClient"/> should use, or null for a default handler.</summary>
         public HttpMessageHandler? InnerHandler { get; set; }
 
-        /// <summary>Creates an <see cref="HttpClient"/> wrapping <see cref="InnerHandler"/> when one is set.</summary>
-        public HttpClient CreateClient(string name) => InnerHandler is null ? new HttpClient() : new HttpClient(InnerHandler);
+        /// <summary>Every client created so far.</summary>
+        public List<TrackingHttpClient> Created { get; } = [];
+
+        /// <summary>Creates an <see cref="HttpClient"/> wrapping <see cref="InnerHandler"/> (or a default handler).</summary>
+        public HttpClient CreateClient(string name)
+        {
+            var client = InnerHandler is null ? new TrackingHttpClient() : new TrackingHttpClient(InnerHandler);
+            Created.Add(client);
+            return client;
+        }
     }
 
     /// <summary>
@@ -217,7 +250,8 @@ public class FileClientTests
     [Fact]
     public async Task UploadAsync_IncludesCorrelationId_WhenActivityIsCurrent()
     {
-        using var activity = new Activity("test-request").Start();
+        using var activity = new Activity("test-request");
+        activity.Start();
         var capturing = new CapturingHandler();
         _httpClientFactory.InnerHandler = capturing;
         byte[] data = [0x89, 0x50, 0x4E, 0x47];
@@ -232,7 +266,8 @@ public class FileClientTests
     [Fact]
     public async Task DownloadAsync_IncludesCorrelationId_WhenActivityIsCurrent()
     {
-        using var activity = new Activity("test-request").Start();
+        using var activity = new Activity("test-request");
+        activity.Start();
         var capturing = new CapturingHandler();
         _httpClientFactory.InnerHandler = capturing;
 
@@ -298,7 +333,8 @@ public class FileClientTests
     [Fact]
     public async Task OpenReadAsync_ReturnsTheFileAsAStream()
     {
-        using var activity = new Activity("test-request").Start();
+        using var activity = new Activity("test-request");
+        activity.Start();
         var handler = new BytesHandler([1, 2, 3, 4]);
         _httpClientFactory.InnerHandler = handler;
 
@@ -309,6 +345,35 @@ public class FileClientTests
         Assert.Equal([1, 2, 3, 4], copy.ToArray());
         Assert.Contains("upload/Forum/a.zip", handler.LastRequestBody);
         Assert.Contains(activity.Id!, handler.LastRequestBody);
+    }
+
+    // -- HttpClient lifetime -------------------------------------------------------
+
+    /// <summary>
+    /// Every call disposes the <see cref="HttpClient"/> it took from the factory (the factory's pooled handler is
+    /// not disposed with it) — including <c>OpenReadAsync</c>, whose body is still read after the call returns, and
+    /// a refused request.
+    /// </summary>
+    [Fact]
+    public async Task EveryCall_DisposesTheHttpClientItCreated()
+    {
+        var ct = TestContext.Current.CancellationToken;
+        _httpClientFactory.InnerHandler = new BytesHandler([1, 2, 3]);
+        var sut = CreateSut();
+
+        Assert.Equal(FileUploadResult.Stored, await sut.UploadWithResultAsync([1], "application/zip", "upload/Forum/a.zip", "http://filestorage.local", ct));
+        Assert.Equal([1, 2, 3], await sut.DownloadAsync("upload/Forum/a.zip", "http://filestorage.local", ct));
+        await using (Stream stream = await sut.OpenReadAsync("upload/Forum/a.zip", "http://filestorage.local", ct))
+        {
+            using var copy = new MemoryStream();
+            await stream.CopyToAsync(copy, ct);
+            Assert.Equal([1, 2, 3], copy.ToArray());
+        }
+        _httpClientFactory.InnerHandler = new RefusingHandler(HttpStatusCode.NotFound, "File not found");
+        await Assert.ThrowsAsync<HttpRequestException>(() => sut.DownloadAsync("upload/Forum/a.zip", "http://filestorage.local", ct));
+
+        Assert.Equal(4, _httpClientFactory.Created.Count);
+        Assert.All(_httpClientFactory.Created, client => Assert.True(client.Disposed));
     }
 
     /// <summary><c>OpenReadAsync</c> throws for a non-success answer from the storage service.</summary>

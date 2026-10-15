@@ -70,7 +70,7 @@ public class ManagementControllerProfileTests(MaroikWebApplicationFactory factor
     {
         var session = await LoginAsUserAsync("management-profile-tz@test.com");
         using var request = session.BuildFormPostRequest("/Management/UpdateProfileTimeZone",
-            new MultipartFormDataContent { { new StringContent("Asia/Seoul"), "TimeZoneIanaId" } });
+            MultipartForm.Of(("TimeZoneIanaId", "Asia/Seoul")));
 
         var response = await _client.SendAsync(request, TestContext.Current.CancellationToken);
 
@@ -88,7 +88,7 @@ public class ManagementControllerProfileTests(MaroikWebApplicationFactory factor
     {
         var session = await LoginAsUserAsync("management-profile-tz-bad@test.com");
         using var request = session.BuildFormPostRequest("/Management/UpdateProfileTimeZone",
-            new MultipartFormDataContent { { new StringContent("Not/ARealZone"), "TimeZoneIanaId" } });
+            MultipartForm.Of(("TimeZoneIanaId", "Not/ARealZone")));
 
         var response = await _client.SendAsync(request, TestContext.Current.CancellationToken);
 
@@ -111,7 +111,7 @@ public class ManagementControllerProfileTests(MaroikWebApplicationFactory factor
     {
         var session = await LoginAsUserAsync($"management-profile-tz-msg-{timeZone.Replace('/', '-').ToLowerInvariant()}@test.com");
         using var post = session.BuildFormPostRequest("/Management/UpdateProfileTimeZone",
-            new MultipartFormDataContent { { new StringContent(timeZone), "TimeZoneIanaId" } });
+            MultipartForm.Of(("TimeZoneIanaId", timeZone)));
         var postResponse = await _client.SendAsync(post, TestContext.Current.CancellationToken);
 
         // Follow the redirect by hand with the session and whatever cookies the POST set (the TempData cookie).
@@ -318,7 +318,7 @@ public class ManagementControllerProfileTests(MaroikWebApplicationFactory factor
         // A real client always submits at least the other profile fields alongside the file
         // input, so a literally empty multipart body isn't representative — one harmless field
         // keeps the request well-formed while still attaching no file.
-        var form = new MultipartFormDataContent { { new StringContent("unused"), "Nickname" } };
+        var form = MultipartForm.Of(("Nickname", "unused"));
         using var request = session.BuildFormPostRequest("/Management/UpdateProfileAvatar", form);
 
         var response = await _client.SendAsync(request, TestContext.Current.CancellationToken);
@@ -334,9 +334,7 @@ public class ManagementControllerProfileTests(MaroikWebApplicationFactory factor
     {
         var session = await LoginAsUserAsync("management-profile-avatar-badext@test.com");
         var form = new MultipartFormDataContent();
-        var fileContent = new ByteArrayContent([1, 2, 3, 4]);
-        fileContent.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue("text/plain");
-        form.Add(fileContent, "ProfileAvatarFiles", "notanimage.txt");
+        MultipartForm.AddFile(form, "ProfileAvatarFiles", "notanimage.txt", [1, 2, 3, 4], "text/plain");
         using var request = session.BuildFormPostRequest("/Management/UpdateProfileAvatar", form);
 
         var response = await _client.SendAsync(request, TestContext.Current.CancellationToken);

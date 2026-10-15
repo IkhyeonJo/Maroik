@@ -79,57 +79,68 @@ internal sealed class FakeSmtpServer : IAsyncDisposable
             try
             {
                 await using NetworkStream network = client.GetStream();
-                Stream stream = network;
-                var reader = new StreamReader(stream, Encoding.ASCII);
-                var writer = new StreamWriter(stream, new ASCIIEncoding()) { NewLine = "\r\n", AutoFlush = true };
-
-                await writer.WriteLineAsync("220 fake.smtp ESMTP ready");
-                while (await reader.ReadLineAsync(_stop.Token) is { } line)
+                // The reader / writer leave their stream open, so STARTTLS can swap them for a pair over the
+                // TLS stream; each one (and the TLS stream) is disposed when replaced or when the session ends.
+                SslStream? ssl = null;
+                StreamReader reader = ReaderOver(network);
+                StreamWriter writer = WriterOver(network);
+                try
                 {
-                    lock (Commands) Commands.Add(line);
-                    string verb = line.Split(' ', 2)[0].ToUpperInvariant();
-                    switch (verb)
+                    await writer.WriteLineAsync("220 fake.smtp ESMTP ready");
+                    while (await reader.ReadLineAsync(_stop.Token) is { } line)
                     {
-                        case "EHLO":
-                        case "HELO":
-                            await writer.WriteLineAsync("250-fake.smtp greets you");
-                            if (Certificate != null && !TlsEstablished) await writer.WriteLineAsync("250-STARTTLS");
-                            await writer.WriteLineAsync("250-AUTH PLAIN");
-                            await writer.WriteLineAsync("250 8BITMIME");
-                            break;
-                        case "STARTTLS" when Certificate != null:
-                            await writer.WriteLineAsync("220 2.0.0 Ready to start TLS");
-                            var ssl = new SslStream(stream, leaveInnerStreamOpen: true);
-                            await ssl.AuthenticateAsServerAsync(Certificate, clientCertificateRequired: false, checkCertificateRevocation: false);
-                            stream = ssl;
-                            reader = new StreamReader(stream, Encoding.ASCII);
-                            writer = new StreamWriter(stream, new ASCIIEncoding()) { NewLine = "\r\n", AutoFlush = true };
-                            TlsEstablished = true;
-                            break;
-                        case "AUTH":
-                            await HandleAuthAsync(line, reader, writer);
-                            break;
-                        case "MAIL":
-                        case "RCPT":
-                        case "RSET":
-                        case "NOOP":
-                            await writer.WriteLineAsync("250 OK");
-                            break;
-                        case "DATA":
-                            await writer.WriteLineAsync("354 End data with <CR><LF>.<CR><LF>");
-                            StringBuilder message = new();
-                            while (await reader.ReadLineAsync(_stop.Token) is { } dataLine && dataLine != ".")
-                                message.AppendLine(dataLine.StartsWith("..") ? dataLine[1..] : dataLine);
-                            ReceivedMessage = message.ToString();
-                            await writer.WriteLineAsync("250 OK queued");
-                            break;
-                        case "QUIT":
-                            if (!DropConnectionOnQuit) await writer.WriteLineAsync("221 bye");
-                            return;
-                        default:
-                            await writer.WriteLineAsync("502 command not implemented");
-                            break;
+                        lock (Commands) Commands.Add(line);
+                        string verb = line.Split(' ', 2)[0].ToUpperInvariant();
+                        switch (verb)
+                        {
+                            case "EHLO":
+                            case "HELO":
+                                await writer.WriteLineAsync("250-fake.smtp greets you");
+                                if (Certificate != null && !TlsEstablished) await writer.WriteLineAsync("250-STARTTLS");
+                                await writer.WriteLineAsync("250-AUTH PLAIN");
+                                await writer.WriteLineAsync("250 8BITMIME");
+                                break;
+                            case "STARTTLS" when Certificate != null:
+                                await writer.WriteLineAsync("220 2.0.0 Ready to start TLS");
+                                ssl = new SslStream(network, leaveInnerStreamOpen: true);
+                                await ssl.AuthenticateAsServerAsync(Certificate, clientCertificateRequired: false, checkCertificateRevocation: false);
+                                reader.Dispose();
+                                await writer.DisposeAsync();
+                                reader = ReaderOver(ssl);
+                                writer = WriterOver(ssl);
+                                TlsEstablished = true;
+                                break;
+                            case "AUTH":
+                                await HandleAuthAsync(line, reader, writer);
+                                break;
+                            case "MAIL":
+                            case "RCPT":
+                            case "RSET":
+                            case "NOOP":
+                                await writer.WriteLineAsync("250 OK");
+                                break;
+                            case "DATA":
+                                await writer.WriteLineAsync("354 End data with <CR><LF>.<CR><LF>");
+                                StringBuilder message = new();
+                                while (await reader.ReadLineAsync(_stop.Token) is { } dataLine && dataLine != ".")
+                                    message.AppendLine(dataLine.StartsWith("..") ? dataLine[1..] : dataLine);
+                                ReceivedMessage = message.ToString();
+                                await writer.WriteLineAsync("250 OK queued");
+                                break;
+                            case "QUIT":
+                                if (!DropConnectionOnQuit) await writer.WriteLineAsync("221 bye");
+                                return;
+                            default:
+                                await writer.WriteLineAsync("502 command not implemented");
+                                break;
+                        }
                     }
+                }
+                finally
+                {
+                    reader.Dispose();
+                    await writer.DisposeAsync();
+                    if (ssl != null) await ssl.DisposeAsync();
                 }
             }
             catch (Exception e) when (e is IOException or OperationCanceledException or ObjectDisposedException)
@@ -138,6 +149,12 @@ internal sealed class FakeSmtpServer : IAsyncDisposable
             }
         }
     }
+
+    /// <summary>An ASCII line reader over <paramref name="stream"/> that leaves the stream open when disposed.</summary>
+    private static StreamReader ReaderOver(Stream stream) => new(stream, Encoding.ASCII, detectEncodingFromByteOrderMarks: false, leaveOpen: true);
+
+    /// <summary>An ASCII, CRLF, auto-flushing line writer over <paramref name="stream"/> that leaves the stream open when disposed.</summary>
+    private static StreamWriter WriterOver(Stream stream) => new(stream, new ASCIIEncoding(), leaveOpen: true) { NewLine = "\r\n", AutoFlush = true };
 
     /// <summary>Handles an <c>AUTH</c> command (with or without an initial payload), accepting or rejecting per <see cref="RejectAuthentication"/>.</summary>
     private async Task HandleAuthAsync(string line, StreamReader reader, StreamWriter writer)
@@ -162,7 +179,7 @@ internal sealed class FakeSmtpServer : IAsyncDisposable
     public async ValueTask DisposeAsync()
     {
         await _stop.CancelAsync();
-        _listener.Stop();
+        _listener.Dispose();
         try { await _acceptLoop; } catch (OperationCanceledException) { /* expected */ }
         Task[] sessions;
         lock (_sessions) sessions = [.. _sessions];

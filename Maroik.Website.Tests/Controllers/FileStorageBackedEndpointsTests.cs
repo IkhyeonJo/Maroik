@@ -1,4 +1,3 @@
-using System.Net.Http.Headers;
 using System.Text.Json;
 using ImageMagick;
 using Maroik.Core.Contract.Interfaces;
@@ -82,10 +81,8 @@ public class FileStorageBackedEndpointsTests(MaroikWebApplicationFactory factory
     private static MultipartFormDataContent FileForm(string field, string fileName, byte[] bytes, string contentType, params (string Name, string Value)[] fields)
     {
         var form = new MultipartFormDataContent();
-        var part = new ByteArrayContent(bytes);
-        part.Headers.ContentType = new MediaTypeHeaderValue(contentType);
-        form.Add(part, field, fileName);
-        foreach (var (name, value) in fields) form.Add(new StringContent(value), name);
+        MultipartForm.AddFile(form, field, fileName, bytes, contentType);
+        foreach (var (name, value) in fields) MultipartForm.AddText(form, name, value);
         return form;
     }
 
@@ -129,25 +126,26 @@ public class FileStorageBackedEndpointsTests(MaroikWebApplicationFactory factory
         using var baseHost = CreateHost();
         var session = await LoginAsync(baseHost, "storage-avatar-bad@test.com");
 
-        Assert.Equal("Please attach a file", await Send(new MultipartFormDataContent { { new StringContent("x"), "Nickname" } }, baseHost));
-        Assert.Equal("Please attach a file", await Send([], baseHost)); // no fields at all: the model is not even bound
-        Assert.Equal("Only .jpg or jpeg or .png file allowed", await Send(FileForm("ProfileAvatarFiles", "me.gif", _png, "image/gif"), baseHost));
-        Assert.Equal("Invalid image file", await Send(FileForm("ProfileAvatarFiles", "me.png", [.. "definitely not an image"u8], "image/png"), baseHost));
-        Assert.Equal("SVG format is not allowed", await Send(FileForm("ProfileAvatarFiles", "me.png", [.. "<svg xmlns=\"http://www.w3.org/2000/svg\"/>"u8], "image/png"), baseHost));
+        Assert.Equal("Please attach a file", await Send(() => MultipartForm.Of(("Nickname", "x")), baseHost));
+        Assert.Equal("Please attach a file", await Send(() => [], baseHost)); // no fields at all: the model is not even bound
+        Assert.Equal("Only .jpg or jpeg or .png file allowed", await Send(() => FileForm("ProfileAvatarFiles", "me.gif", _png, "image/gif"), baseHost));
+        Assert.Equal("Invalid image file", await Send(() => FileForm("ProfileAvatarFiles", "me.png", [.. "definitely not an image"u8], "image/png"), baseHost));
+        Assert.Equal("SVG format is not allowed", await Send(() => FileForm("ProfileAvatarFiles", "me.png", [.. "<svg xmlns=\"http://www.w3.org/2000/svg\"/>"u8], "image/png"), baseHost));
 
         baseHost.Files.Outcome = FileUploadResult.Infected;
-        Assert.Equal("File may be infected with a virus.", await Send(FileForm("ProfileAvatarFiles", "me.png", _png, "image/png"), baseHost));
+        Assert.Equal("File may be infected with a virus.", await Send(() => FileForm("ProfileAvatarFiles", "me.png", _png, "image/png"), baseHost));
         baseHost.Files.Outcome = FileUploadResult.ScanUnavailable;
-        Assert.Equal("The file could not be scanned for viruses. Please try again later.", await Send(FileForm("ProfileAvatarFiles", "me.png", _png, "image/png"), baseHost));
+        Assert.Equal("The file could not be scanned for viruses. Please try again later.", await Send(() => FileForm("ProfileAvatarFiles", "me.png", _png, "image/png"), baseHost));
         baseHost.Files.Outcome = FileUploadResult.Failed;
-        Assert.Equal("A temporary error occurred. Please try again later.", await Send(FileForm("ProfileAvatarFiles", "me.png", _png, "image/png"), baseHost));
+        Assert.Equal("A temporary error occurred. Please try again later.", await Send(() => FileForm("ProfileAvatarFiles", "me.png", _png, "image/png"), baseHost));
 
         Assert.Empty(baseHost.Files.UploadedPaths);
         return;
 
-        // Posts the avatar form, asserts the result is a failure, and returns its error message.
-        async Task<string> Send(MultipartFormDataContent form, Host host)
+        // Posts the avatar form built by buildForm, asserts the result is a failure, and returns its error message.
+        async Task<string> Send(Func<MultipartFormDataContent> buildForm, Host host)
         {
+            using var form = buildForm();
             using var request = session.BuildFormPostRequest("/Management/UpdateProfileAvatar", form);
             using JsonDocument doc = await PostAsync(host, request);
             Assert.False(doc.RootElement.GetProperty("result").GetBoolean());
@@ -395,7 +393,7 @@ public class FileStorageBackedEndpointsTests(MaroikWebApplicationFactory factory
         host.Files.Seed(path, bytes);
         long boardId = await SeedPostWithAttachmentAsync(type, session.Nickname, path, bytes.Length);
 
-        using var request = session.BuildFormPostRequest(url, new MultipartFormDataContent { { new StringContent(boardId.ToString()), "boardId" } });
+        using var request = session.BuildFormPostRequest(url, MultipartForm.Of(("boardId", boardId.ToString())));
         var response = await host.Client.SendAsync(request, TestContext.Current.CancellationToken);
 
         Assert.Equal(System.Net.HttpStatusCode.OK, response.StatusCode);
@@ -414,7 +412,7 @@ public class FileStorageBackedEndpointsTests(MaroikWebApplicationFactory factory
         long boardId = await SeedPostWithAttachmentAsync("FreeForum", author.Nickname, path, 3);
         var anonymous = await AuthenticatedSessionHelper.AnonymousAsync(host.Client, TestContext.Current.CancellationToken);
 
-        using var request = anonymous.BuildFormPostRequest("/Forum/DownloadFreeBoardAttachedFile", new MultipartFormDataContent { { new StringContent(boardId.ToString()), "boardId" } });
+        using var request = anonymous.BuildFormPostRequest("/Forum/DownloadFreeBoardAttachedFile", MultipartForm.Of(("boardId", boardId.ToString())));
         var response = await host.Client.SendAsync(request, TestContext.Current.CancellationToken);
 
         Assert.Equal(System.Net.HttpStatusCode.OK, response.StatusCode);
@@ -439,9 +437,9 @@ public class FileStorageBackedEndpointsTests(MaroikWebApplicationFactory factory
         long lockedId = await SeedPostWithAttachmentAsync("FreeForum", owner.Nickname, lockedPath, 1, locked: true);
         var anonymous = await AuthenticatedSessionHelper.AnonymousAsync(host.Client, TestContext.Current.CancellationToken);
 
-        using var noteRequest = stranger.BuildFormPostRequest("/Management/DownloadPrivateNoteAttachedFile", new MultipartFormDataContent { { new StringContent(noteId.ToString()), "boardId" } });
+        using var noteRequest = stranger.BuildFormPostRequest("/Management/DownloadPrivateNoteAttachedFile", MultipartForm.Of(("boardId", noteId.ToString())));
         using JsonDocument noteDoc = await PostAsync(host, noteRequest);
-        using var lockedRequest = anonymous.BuildFormPostRequest("/Forum/DownloadFreeBoardAttachedFile", new MultipartFormDataContent { { new StringContent(lockedId.ToString()), "boardId" } });
+        using var lockedRequest = anonymous.BuildFormPostRequest("/Forum/DownloadFreeBoardAttachedFile", MultipartForm.Of(("boardId", lockedId.ToString())));
         using JsonDocument lockedDoc = await PostAsync(host, lockedRequest);
 
         foreach (JsonDocument doc in new[] { noteDoc, lockedDoc })
@@ -461,7 +459,7 @@ public class FileStorageBackedEndpointsTests(MaroikWebApplicationFactory factory
         host.Files.ThrowOnDownload = true;
         long boardId = await SeedPostWithAttachmentAsync("FreeForum", session.Nickname, $"upload/FreeForum/attachments/{Guid.NewGuid():N}.zip", 10);
 
-        using var request = session.BuildFormPostRequest("/Forum/DownloadFreeBoardAttachedFile", new MultipartFormDataContent { { new StringContent(boardId.ToString()), "boardId" } });
+        using var request = session.BuildFormPostRequest("/Forum/DownloadFreeBoardAttachedFile", MultipartForm.Of(("boardId", boardId.ToString())));
         using JsonDocument doc = await PostAsync(host, request);
 
         Assert.False(doc.RootElement.GetProperty("result").GetBoolean());
@@ -500,7 +498,7 @@ public class FileStorageBackedEndpointsTests(MaroikWebApplicationFactory factory
 
     /// <summary>A form posting <paramref name="calendarEventId"/> to the calendar-event download action.</summary>
     private static MultipartFormDataContent CalendarEventIdForm(long calendarEventId) =>
-        new() { { new StringContent(calendarEventId.ToString()), "calendarEventId" } };
+        MultipartForm.Of(("calendarEventId", calendarEventId.ToString()));
 
     /// <summary>
     /// Asserts an event detail reply describes the attachment by name, extension and size only: neither the file's bytes nor its storage
@@ -537,7 +535,7 @@ public class FileStorageBackedEndpointsTests(MaroikWebApplicationFactory factory
         host.Files.Seed(path, bytes);
         long eventId = await SeedCalendarEventWithAttachmentAsync(email, path, bytes.Length);
 
-        using var request = session.BuildFormPostRequest("/Calendar/IsCalendarEventExists", new MultipartFormDataContent { { new StringContent(eventId.ToString()), "id" } });
+        using var request = session.BuildFormPostRequest("/Calendar/IsCalendarEventExists", MultipartForm.Of(("id", eventId.ToString())));
         var response = await host.Client.SendAsync(request, TestContext.Current.CancellationToken);
         string body = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
 
@@ -561,7 +559,7 @@ public class FileStorageBackedEndpointsTests(MaroikWebApplicationFactory factory
         long eventId = await SeedCalendarEventWithAttachmentAsync(email, path, bytes.Length, sharedWithAnonymous: true);
         var anonymous = await AuthenticatedSessionHelper.AnonymousAsync(host.Client, TestContext.Current.CancellationToken);
 
-        using var request = anonymous.BuildFormPostRequest("/Calendar/IsOtherCalendarEventExists", new MultipartFormDataContent { { new StringContent(eventId.ToString()), "id" } });
+        using var request = anonymous.BuildFormPostRequest("/Calendar/IsOtherCalendarEventExists", MultipartForm.Of(("id", eventId.ToString())));
         var response = await host.Client.SendAsync(request, TestContext.Current.CancellationToken);
         string body = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
 
@@ -665,13 +663,9 @@ public class FileStorageBackedEndpointsTests(MaroikWebApplicationFactory factory
                      ("StartDate", "2024-05-01 10:00"), ("EndDate", "2024-05-01 11:00"), ("StartDateTimeZoneIanaId", "UTC"),
                      ("EndDateTimeZoneIanaId", "UTC"), ("Status", "Busy"), ("SerializedCalendarReminders", "[]"),
                  })
-            form.Add(new StringContent(value), name);
+            MultipartForm.AddText(form, name, value);
         if (file is { } f)
-        {
-            var part = new ByteArrayContent(f.Bytes);
-            part.Headers.ContentType = new MediaTypeHeaderValue("application/zip");
-            form.Add(part, "CalendarEventUploadedFile", f.Name);
-        }
+            MultipartForm.AddFile(form, "CalendarEventUploadedFile", f.Name, f.Bytes, "application/zip");
         return form;
     }
 
@@ -747,7 +741,7 @@ public class FileStorageBackedEndpointsTests(MaroikWebApplicationFactory factory
         Assert.Equal("", row.Path);
         Assert.Equal(0, row.Size);
 
-        using var detailRequest = session.BuildFormPostRequest("/Calendar/IsCalendarEventExists", new MultipartFormDataContent { { new StringContent(eventId.ToString()), "id" } });
+        using var detailRequest = session.BuildFormPostRequest("/Calendar/IsCalendarEventExists", MultipartForm.Of(("id", eventId.ToString())));
         using JsonDocument detail = await PostAsync(host, detailRequest);
         Assert.Equal(JsonValueKind.Null, detail.RootElement.GetProperty("calendarEvent").GetProperty("calendarEventAttachedFile").ValueKind);
 
@@ -784,7 +778,7 @@ public class FileStorageBackedEndpointsTests(MaroikWebApplicationFactory factory
         using var host = CreateHost();
         var session = await LoginAsync(host, "storage-nofile-note@test.com");
 
-        using var request = session.BuildFormPostRequest("/Management/UploadImageFile", new MultipartFormDataContent { { new StringContent("x"), "unrelated" } });
+        using var request = session.BuildFormPostRequest("/Management/UploadImageFile", MultipartForm.Of(("unrelated", "x")));
         using JsonDocument doc = await PostAsync(host, request);
 
         Assert.False(doc.RootElement.GetProperty("result").GetBoolean());

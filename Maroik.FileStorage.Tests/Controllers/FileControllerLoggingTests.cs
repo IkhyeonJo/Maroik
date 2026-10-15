@@ -1,8 +1,8 @@
 using System.Net;
-using System.Net.Http.Headers;
 using Maroik.Core.Contract.Interfaces;
 using Maroik.Core.Contract.Misc.Enums;
 using Maroik.FileStorage.Controllers;
+using Maroik.FileStorage.Tests.Infrastructure;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -51,11 +51,9 @@ public class FileControllerLoggingTests(WebApplicationFactory<Program> baseFacto
     private static MultipartFormDataContent Upload(string fileName, byte[] bytes, string filePath, string correlationId)
     {
         var content = new MultipartFormDataContent();
-        var file = new ByteArrayContent(bytes);
-        file.Headers.ContentType = MediaTypeHeaderValue.Parse("image/jpeg");
-        content.Add(file, "file", fileName);
-        content.Add(new StringContent(filePath), "filePath");
-        content.Add(new StringContent(correlationId), "correlationId");
+        MultipartForm.AddFile(content, "file", fileName, bytes, "image/jpeg");
+        MultipartForm.AddText(content, "filePath", filePath);
+        MultipartForm.AddText(content, "correlationId", correlationId);
         return content;
     }
 
@@ -66,7 +64,8 @@ public class FileControllerLoggingTests(WebApplicationFactory<Program> baseFacto
         var (client, logger) = CreateClient(ClamavScanResult.Infected);
         string target = UniqueTarget();
 
-        var response = await client.PostAsync("/api/File/upload", Upload("evil.jpg", _jpeg, target, "corr-virus-1"), TestContext.Current.CancellationToken);
+        using var form = Upload("evil.jpg", _jpeg, target, "corr-virus-1");
+        var response = await client.PostAsync("/api/File/upload", form, TestContext.Current.CancellationToken);
 
         Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
         FakeLogRecord record = Assert.Single(logger.Collector.GetSnapshot(), r => r.Level == LogLevel.Warning);
@@ -82,7 +81,8 @@ public class FileControllerLoggingTests(WebApplicationFactory<Program> baseFacto
     {
         var (client, logger) = CreateClient(ClamavScanResult.Unavailable);
 
-        await client.PostAsync("/api/File/upload", Upload("x.jpg", _jpeg, UniqueTarget(), "corr-scan-1"), TestContext.Current.CancellationToken);
+        using var form = Upload("x.jpg", _jpeg, UniqueTarget(), "corr-scan-1");
+        await client.PostAsync("/api/File/upload", form, TestContext.Current.CancellationToken);
 
         FakeLogRecord record = Assert.Single(logger.Collector.GetSnapshot(), r => r.Level == LogLevel.Error);
         Assert.Contains("File upload refused", record.Message);
@@ -97,7 +97,8 @@ public class FileControllerLoggingTests(WebApplicationFactory<Program> baseFacto
         var (client, logger) = CreateClient(ClamavScanResult.Clean);
         const string traversal = "../../etc/cron.d";
 
-        var response = await client.PostAsync("/api/File/upload", Upload("x.jpg", _jpeg, traversal, "corr-path-1"), TestContext.Current.CancellationToken);
+        using var form = Upload("x.jpg", _jpeg, traversal, "corr-path-1");
+        var response = await client.PostAsync("/api/File/upload", form, TestContext.Current.CancellationToken);
 
         Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
         FakeLogRecord record = Assert.Single(logger.Collector.GetSnapshot(), r => r.Level == LogLevel.Warning);
@@ -111,7 +112,8 @@ public class FileControllerLoggingTests(WebApplicationFactory<Program> baseFacto
     {
         var (client, logger) = CreateClient(ClamavScanResult.Clean);
 
-        var response = await client.PostAsync("/api/File/upload", Upload("ok.jpg", _jpeg, UniqueTarget(), "corr-ok"), TestContext.Current.CancellationToken);
+        using var form = Upload("ok.jpg", _jpeg, UniqueTarget(), "corr-ok");
+        var response = await client.PostAsync("/api/File/upload", form, TestContext.Current.CancellationToken);
 
         Assert.True(response.IsSuccessStatusCode);
         Assert.DoesNotContain(logger.Collector.GetSnapshot(), r => r.Level >= LogLevel.Warning);
@@ -123,11 +125,7 @@ public class FileControllerLoggingTests(WebApplicationFactory<Program> baseFacto
     public async Task Download_LogsAWarning_WhenThePathEscapesTheStorageRoot()
     {
         var (client, logger) = CreateClient(ClamavScanResult.Clean);
-        using var content = new MultipartFormDataContent
-        {
-            { new StringContent("../../etc/passwd"), "filePath" },
-            { new StringContent("corr-dl-1"), "correlationId" }
-        };
+        using var content = MultipartForm.Of(("filePath", "../../etc/passwd"), ("correlationId", "corr-dl-1"));
 
         var response = await client.PostAsync("/api/File/download", content, TestContext.Current.CancellationToken);
 
@@ -144,10 +142,7 @@ public class FileControllerLoggingTests(WebApplicationFactory<Program> baseFacto
     {
         var (client, logger) = CreateClient(ClamavScanResult.Clean);
         string missing = Path.Combine(Path.GetTempPath(), $"maroik_missing_{Guid.NewGuid():N}.jpg");
-        using var content = new MultipartFormDataContent
-        {
-            { new StringContent(missing), "filePath" }
-        };
+        using var content = MultipartForm.Of(("filePath", missing));
 
         var response = await client.PostAsync("/api/File/download", content, TestContext.Current.CancellationToken);
 

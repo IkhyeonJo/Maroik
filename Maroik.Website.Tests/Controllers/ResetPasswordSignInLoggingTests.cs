@@ -74,11 +74,7 @@ public class ResetPasswordSignInLoggingTests(MaroikWebApplicationFactory factory
             BaseAddress = new Uri("https://www.localhost/"), AllowAutoRedirect = false, HandleCookies = false
         });
         var anonymous = await AuthenticatedSessionHelper.AnonymousAsync(client, TestContext.Current.CancellationToken);
-        var form = new MultipartFormDataContent
-        {
-            { new StringContent(encryptedToken), "ResetPasswordToken" },
-            { new StringContent("BrandNewPassword1!"), "Password" }
-        };
+        var form = MultipartForm.Of(("ResetPasswordToken", encryptedToken), ("Password", "BrandNewPassword1!"));
         using var request = anonymous.BuildFormPostRequest("/Account/ResetPassword", form);
 
         var response = await client.SendAsync(request, TestContext.Current.CancellationToken);

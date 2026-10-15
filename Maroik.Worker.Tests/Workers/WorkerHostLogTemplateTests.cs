@@ -36,7 +36,7 @@ public class WorkerHostLogTemplateTests
                 new LogEventProperty("SourceContext", new ScalarValue("Test")),
                 new LogEventProperty("CorrelationId", new ScalarValue("c-1"))
             ]);
-        var writer = new StringWriter();
+        using var writer = new StringWriter();
         new MessageTemplateTextFormatter(outputTemplate).Format(logEvent, writer);
         return writer.ToString();
     }

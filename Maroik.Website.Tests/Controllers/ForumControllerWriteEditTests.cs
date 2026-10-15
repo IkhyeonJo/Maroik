@@ -28,10 +28,10 @@ public class ForumControllerWriteEditTests(MaroikWebApplicationFactory factory)
     private static MultipartFormDataContent BoardForm(string? title, string content = "Body", bool locked = false, bool noticed = false)
     {
         var form = new MultipartFormDataContent();
-        if (title != null) form.Add(new StringContent(title), "Title");
-        form.Add(new StringContent(content), "Content");
-        form.Add(new StringContent(locked.ToString()), "Locked");
-        form.Add(new StringContent(noticed.ToString()), "Noticed");
+        if (title != null) MultipartForm.AddText(form, "Title", title);
+        MultipartForm.AddText(form, "Content", content);
+        MultipartForm.AddText(form, "Locked", locked.ToString());
+        MultipartForm.AddText(form, "Noticed", noticed.ToString());
         return form;
     }
 
@@ -83,7 +83,7 @@ public class ForumControllerWriteEditTests(MaroikWebApplicationFactory factory)
     {
         var session = await LoginAsUserAsync();
         var form = BoardForm(null);
-        form.Add(new StringContent("1"), "Id");
+        MultipartForm.AddText(form, "Id", "1");
         using var request = session.BuildFormPostRequest("/Forum/EditFreeBoard", form);
 
         var response = await _client.SendAsync(request, TestContext.Current.CancellationToken);
@@ -151,7 +151,7 @@ public class ForumControllerWriteEditTests(MaroikWebApplicationFactory factory)
 
         string updatedTitle = UniqueTitle();
         var editForm = BoardForm(updatedTitle, content: "Edited", locked: true);
-        editForm.Add(new StringContent(created.Id.ToString()), "Id");
+        MultipartForm.AddText(editForm, "Id", created.Id.ToString());
         using var editRequest = session.BuildFormPostRequest("/Forum/EditFreeBoard", editForm);
 
         var response = await _client.SendAsync(editRequest, TestContext.Current.CancellationToken);
@@ -195,7 +195,7 @@ public class ForumControllerWriteEditTests(MaroikWebApplicationFactory factory)
         }
 
         var editForm = BoardForm(UniqueTitle());
-        editForm.Add(new StringContent(boardId.ToString()), "Id");
+        MultipartForm.AddText(editForm, "Id", boardId.ToString());
         using var editRequest = session.BuildFormPostRequest("/Forum/EditFreeBoard", editForm);
 
         var response = await _client.SendAsync(editRequest, TestContext.Current.CancellationToken);
