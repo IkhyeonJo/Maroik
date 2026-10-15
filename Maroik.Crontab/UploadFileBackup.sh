@@ -3,7 +3,7 @@
 # =============================================================================
 # Maroik Upload Files Backup Script
 # =============================================================================
-# Purpose: Backup Website/FileStorage upload folders to local, then copy to external drive (YYYYMMDD folder)
+# Purpose: Backup FileStorage upload folders to local, then copy to external drive (YYYYMMDD folder)
 # External drive capacity check: Delete oldest backup when usage exceeds 50%
 # =============================================================================
 
@@ -35,33 +35,7 @@ CURRENT_DATETIME=$(date '+%Y%m%d_%H%M%S')
 # Clean up old temporary tar.xz files in Maroik base directory
 if [ -d "$MAROIK_BASE_DIR" ]; then
     find "$MAROIK_BASE_DIR" -maxdepth 1 -name "*.tar.xz" -type f -delete 2>/dev/null || true
-    find "$MAROIK_BASE_DIR" -maxdepth 1 -type d -name "website-upload-*" -exec rm -rf {} + 2>/dev/null || true
     find "$MAROIK_BASE_DIR" -maxdepth 1 -type d -name "file-storage-upload-*" -exec rm -rf {} + 2>/dev/null || true
-fi
-
-# Backup Website Upload Files
-echo "[INFO] $(date '+%Y-%m-%d %H:%M:%S') - Backing up Website upload files..."
-
-WEBSITE_BACKUP_NAME="website-upload-${CURRENT_DATETIME}"
-WEBSITE_TEMP_DIR="$MAROIK_BASE_DIR/$WEBSITE_BACKUP_NAME"
-WEBSITE_BACKUP_FILE="$MAROIK_BASE_DIR/${WEBSITE_BACKUP_NAME}.tar.xz"
-
-# Copy files from container
-sudo docker cp Maroik.Website:/app/wwwroot/upload "$WEBSITE_TEMP_DIR" 2>/dev/null || true
-
-if [ -d "$WEBSITE_TEMP_DIR" ]; then
-    # Compress
-    tar cfJ "$WEBSITE_BACKUP_FILE" -C "$MAROIK_BASE_DIR" "$WEBSITE_BACKUP_NAME"
-
-    # Remove temp directory
-    rm -rf "$WEBSITE_TEMP_DIR"
-
-    WEBSITE_SIZE=$(du -h "$WEBSITE_BACKUP_FILE" | cut -f1)
-    echo "[SUCCESS] $(date '+%Y-%m-%d %H:%M:%S') - Website upload backup completed"
-    echo "[INFO] Local backup file: $WEBSITE_BACKUP_FILE"
-    echo "[INFO] Backup size: $WEBSITE_SIZE"
-else
-    echo "[WARNING] $(date '+%Y-%m-%d %H:%M:%S') - Website upload directory not found or empty"
 fi
 
 # Backup FileStorage Upload Files
@@ -144,17 +118,6 @@ fi
 
 # Copy backup files to external drive
 COPY_SUCCESS=true
-
-if [ -f "$WEBSITE_BACKUP_FILE" ]; then
-    cp "$WEBSITE_BACKUP_FILE" "$EXTERNAL_BACKUP_FOLDER/"
-    if [ $? -eq 0 ]; then
-        echo "[SUCCESS] $(date '+%Y-%m-%d %H:%M:%S') - Website backup copied to external drive"
-        rm -f "$WEBSITE_BACKUP_FILE"
-    else
-        echo "[ERROR] $(date '+%Y-%m-%d %H:%M:%S') - Failed to copy Website backup to external drive"
-        COPY_SUCCESS=false
-    fi
-fi
 
 if [ -f "$FILESTORAGE_BACKUP_FILE" ]; then
     cp "$FILESTORAGE_BACKUP_FILE" "$EXTERNAL_BACKUP_FOLDER/"
