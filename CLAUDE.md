@@ -319,6 +319,29 @@ Further rule-ID blocks in the same file, also `error`: "Logging templates" (CA22
 "Async and cancellation" (CA2016: forward the `CancellationToken` you received; CA1849: call the async API in an async method,
 e.g. `await app.RunAsync()`, `await Log.CloseAndFlushAsync()`, `SaveChangesAsync`, `CancelAsync`).
 
+Also `error`, by rule ID:
+- **Security** ("Security" block): .NET's injection-taint, XML, antiforgery (CA3147), deserialization (CA23xx) and
+  crypto / TLS / randomness (CA53xx) rules, next to SecurityCodeScan. CA3003 (file path injection) is left off on purpose:
+  SCS0018 covers path traversal and accepts a declared sanitizer, CA3003 offers no such hook. CA2100 is off for
+  `*.Tests/**` only — the test fixtures create and drop throwaway databases with DDL, whose identifiers cannot be parameters.
+- **String comparison and culture** (CA1304, CA1305, CA1307, CA1309, CA1310, CA1311): `StringComparison.Ordinal` for
+  identifiers, paths and test assertions (xUnit's `Assert.Contains(string, string)` included), `CultureInfo.InvariantCulture`
+  for machine formats (parsing, storage keys, log rendering, Excel cells, the domain's English messages),
+  `CultureInfo.CurrentCulture` only for text shown to the user (`Int64Extensions` size labels). Inside an EF Core query a
+  .NET `ToLower` runs as SQL anyway, so a case-insensitive match uses `EF.Functions.ILike` with `EscapeLike` /
+  `LikeEscapeCharacter` (`AccountRepository.NicknameExistsIgnoreCaseAsync`), never `ToLowerInvariant` (not translatable).
+- **Banned APIs** (RS0030, `BannedSymbols.txt`, Microsoft.CodeAnalysis.BannedApiAnalyzers): every production project,
+  Domain and Contract included, may not read the clock directly (`DateTime.Now/UtcNow/Today`, `DateTimeOffset.Now/UtcNow` —
+  use the injected `TimeProvider`), block on async work (`Task.Wait/WaitAll/WaitAny`, `.Result`, `GetAwaiter().GetResult()`,
+  `Thread.Sleep`) or write to `Console`. It is wired in `Directory.Build.props` for every `.csproj` whose name does not end
+  in `.Tests` (a build-time analyzer, `PrivateAssets=all`, so not a runtime dependency — the `.csproj` package graph that
+  `SolutionLayeringArchitectureTests` checks is unchanged). A method ID names one overload, so the file lists every overload;
+  pin the analyzer version to the SDK's compiler (Roslyn 5.0 → 5.0.0).
+
+`UnitOfWork.RollbackAsync` / `DisposeAsync` ignore only a `DbException` (the database already ended the transaction);
+any other rollback failure propagates after the transaction is released and the tracker cleared (pinned by
+`UnitOfWorkTests.*_Rethrows_AFailureThatIsNotADatabaseError_AndStillClearsTheTracker`).
+
 The code has no `#pragma warning disable`. SecurityCodeScan's path-traversal rule (SCS0018) is satisfied by declaring the
 project's own validator as a sanitizer — `Maroik.FileStorage/SecurityCodeScan.config.yml` lists `StoragePath.ResolveWithinRoot`
 (an `AdditionalFiles` item) — not by suppressing it; such a file declares validators and switches no rule off. A

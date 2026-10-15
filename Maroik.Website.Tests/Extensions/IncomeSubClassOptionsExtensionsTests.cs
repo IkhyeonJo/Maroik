@@ -55,8 +55,8 @@ public class IncomeSubClassOptionsExtensionsTests
         int optionStart = html.IndexOf("<option", StringComparison.Ordinal);
         int optionEnd = html.IndexOf('>', optionStart);
         string firstOptionTag = html[optionStart..(optionEnd + 1)];
-        Assert.Contains("value=\"LaborIncome\"", firstOptionTag);
-        Assert.Contains("selected", firstOptionTag);
+        Assert.Contains("value=\"LaborIncome\"", firstOptionTag, StringComparison.Ordinal);
+        Assert.Contains("selected", firstOptionTag, StringComparison.Ordinal);
     }
 
     /// <summary>The number of non-overlapping occurrences of <paramref name="needle"/> in <paramref name="haystack"/>.</summary>

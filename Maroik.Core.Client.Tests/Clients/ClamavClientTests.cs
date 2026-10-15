@@ -166,7 +166,7 @@ public class ClamavClientTests
     {
         const int chunkSize = 64 * 1024;
         byte[] data = new byte[(2 * chunkSize) + 1234];
-        new Random(42).NextBytes(data);
+        System.Security.Cryptography.RandomNumberGenerator.Fill(data);
 
         await using var server = FakeClamavServer.Start("stream: OK\n");
         using var stream = new MemoryStream(data);

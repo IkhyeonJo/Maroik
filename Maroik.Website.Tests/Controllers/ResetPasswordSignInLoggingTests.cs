@@ -85,9 +85,9 @@ public class ResetPasswordSignInLoggingTests(MaroikWebApplicationFactory factory
         Assert.Equal(LogLevel.Information, record.Level);
         Assert.All(_logger.Collector.GetSnapshot(), r =>
         {
-            Assert.DoesNotContain("BrandNewPassword1!", r.Message);
-            Assert.DoesNotContain(rawToken, r.Message);
-            Assert.DoesNotContain(encryptedToken, r.Message);
+            Assert.DoesNotContain("BrandNewPassword1!", r.Message, StringComparison.Ordinal);
+            Assert.DoesNotContain(rawToken, r.Message, StringComparison.Ordinal);
+            Assert.DoesNotContain(encryptedToken, r.Message, StringComparison.Ordinal);
         });
     }
 }

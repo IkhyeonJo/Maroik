@@ -147,7 +147,7 @@ internal sealed class FakeSmtpServer : IAsyncDisposable
                                 await writer.WriteLineAsync("354 End data with <CR><LF>.<CR><LF>");
                                 StringBuilder message = new();
                                 while (await reader.ReadLineAsync(_stop.Token) is { } dataLine && dataLine != ".")
-                                    message.AppendLine(dataLine.StartsWith("..") ? dataLine[1..] : dataLine);
+                                    message.AppendLine(dataLine.StartsWith("..", StringComparison.Ordinal) ? dataLine[1..] : dataLine);
                                 ReceivedMessage = message.ToString();
                                 await writer.WriteLineAsync("250 OK queued");
                                 break;

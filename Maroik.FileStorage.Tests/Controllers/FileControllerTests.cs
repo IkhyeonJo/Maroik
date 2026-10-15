@@ -230,7 +230,7 @@ public class FileControllerTests(WebApplicationFactory<Program> baseFactory)
 
         Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
         // The refusal must come from the scan itself (not from an earlier path / extension check).
-        Assert.Contains("infected", body);
+        Assert.Contains("infected", body, StringComparison.Ordinal);
     }
 
     /// <summary>
@@ -249,8 +249,8 @@ public class FileControllerTests(WebApplicationFactory<Program> baseFactory)
         string body = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
 
         Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
-        Assert.Contains("could not be scanned", body);
-        Assert.DoesNotContain("infected", body);
+        Assert.Contains("could not be scanned", body, StringComparison.Ordinal);
+        Assert.DoesNotContain("infected", body, StringComparison.Ordinal);
     }
 
     // -- Upload: encrypted ZIP ------------------------------------------------

@@ -181,8 +181,8 @@ public class ExcelExportService(TimeProvider timeProvider) : IExcelExportService
             item.Content ?? "",
             item.MonetaryUnit ?? "",
             XlsxCell.Number(item.Amount),
-            item.DepositMonth.ToString(),
-            item.DepositDay.ToString(),
+            item.DepositMonth.ToString(CultureInfo.InvariantCulture),
+            item.DepositDay.ToString(CultureInfo.InvariantCulture),
             item.MaturityDate ?? "",
             item.Note ?? "",
             item.DepositMyAssetProductName ?? "",
@@ -238,8 +238,8 @@ public class ExcelExportService(TimeProvider timeProvider) : IExcelExportService
             XlsxCell.Number(item.Amount),
             item.PaymentMethod ?? "",
             item.MyDepositAsset ?? "",
-            item.DepositMonth.ToString(),
-            item.DepositDay.ToString(),
+            item.DepositMonth.ToString(CultureInfo.InvariantCulture),
+            item.DepositDay.ToString(CultureInfo.InvariantCulture),
             item.MaturityDate ?? "",
             Timestamp(item.Created),
             Timestamp(item.Updated),
@@ -288,7 +288,7 @@ public class ExcelExportService(TimeProvider timeProvider) : IExcelExportService
             item.Role ?? "",
             item.TimeZoneIanaId ?? "",
             item.Locked.ToString(),
-            item.LoginAttempt.ToString(),
+            item.LoginAttempt.ToString(CultureInfo.InvariantCulture),
             item.EmailConfirmed.ToString(),
             item.AgreedServiceTerms.ToString(),
             Timestamp(item.Created),
@@ -309,15 +309,15 @@ public class ExcelExportService(TimeProvider timeProvider) : IExcelExportService
         var rows = categories
             .Select(c => (IEnumerable<XlsxCell>)
             [
-                c.Id.ToString(), "", c.Name ?? "", c.DisplayName ?? "",
-                c.IconPath ?? "", c.Controller ?? "", c.Action ?? "", c.Role ?? "", c.Order.ToString()
+                c.Id.ToString(CultureInfo.InvariantCulture), "", c.Name ?? "", c.DisplayName ?? "",
+                c.IconPath ?? "", c.Controller ?? "", c.Action ?? "", c.Role ?? "", c.Order.ToString(CultureInfo.InvariantCulture)
             ])
             .Concat(subCategories.Select(s => (IEnumerable<XlsxCell>)
             [
-                s.Id.ToString(), s.CategoryId.ToString(), s.Name ?? "", s.DisplayName ?? "",
-                s.IconPath ?? "", "", s.Action ?? "", s.Role ?? "", s.Order.ToString()
+                s.Id.ToString(CultureInfo.InvariantCulture), s.CategoryId.ToString(CultureInfo.InvariantCulture), s.Name ?? "", s.DisplayName ?? "",
+                s.IconPath ?? "", "", s.Action ?? "", s.Role ?? "", s.Order.ToString(CultureInfo.InvariantCulture)
             ]))
-            .OrderByDescending(r => long.Parse(r.First().Text));
+            .OrderByDescending(r => long.Parse(r.First().Text, CultureInfo.InvariantCulture));
 
         var headers = new[]
         {

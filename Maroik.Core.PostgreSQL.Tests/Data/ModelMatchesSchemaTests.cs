@@ -46,7 +46,7 @@ public abstract class ModelMatchesSchemaTests(SchemaDatabaseFixture database)
     private static string BaseType(string relationalType)
     {
         string type = relationalType.ToLowerInvariant();
-        int paren = type.IndexOf('(');
+        int paren = type.IndexOf('(', StringComparison.Ordinal);
         if (paren >= 0) type = type[..paren].TrimEnd();
         return type switch
         {

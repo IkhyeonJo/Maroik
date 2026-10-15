@@ -41,7 +41,7 @@ public class MenuFieldPolicyTests
 
         Assert.True(result.IsError);
         Assert.Equal("Menu.FieldTooLong", result.FirstError.Code);
-        Assert.Contains(field, result.FirstError.Description);
+        Assert.Contains(field, result.FirstError.Description, StringComparison.Ordinal);
     }
 
     /// <summary>Only Admin / User / Anonymous (exact case) are accepted as a role.</summary>

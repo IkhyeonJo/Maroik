@@ -240,7 +240,7 @@ public class RabbitMqEmailPublisherTests
         await Assert.ThrowsAsync<InvalidOperationException>(() => sut.PublishAsync(_message, TestContext.Current.CancellationToken));
         var fastFail = await Assert.ThrowsAsync<InvalidOperationException>(() => sut.PublishAsync(_message, TestContext.Current.CancellationToken));
 
-        Assert.Contains("unavailable", fastFail.Message);
+        Assert.Contains("unavailable", fastFail.Message, StringComparison.Ordinal);
         _factory.Verify(f => f.CreateConnectionAsync(It.IsAny<CancellationToken>()), Times.Once);
     }
 

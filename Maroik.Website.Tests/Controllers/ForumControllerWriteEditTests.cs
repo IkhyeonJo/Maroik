@@ -1,3 +1,4 @@
+using System.Globalization;
 using Maroik.Core.Domain.Account;
 using Maroik.Core.PostgreSQL.Data;
 using Maroik.Website.Tests.Infrastructure;
@@ -61,7 +62,7 @@ public class ForumControllerWriteEditTests(MaroikWebApplicationFactory factory)
         var response = await _client.SendAsync(request, TestContext.Current.CancellationToken);
         string json = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
 
-        Assert.Contains("\"result\":false", json);
+        Assert.Contains("\"result\":false", json, StringComparison.Ordinal);
     }
 
     /// <summary>Write free board title too long returns input invalid.</summary>
@@ -74,7 +75,7 @@ public class ForumControllerWriteEditTests(MaroikWebApplicationFactory factory)
         var response = await _client.SendAsync(request, TestContext.Current.CancellationToken);
         string json = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
 
-        Assert.Contains("\"result\":false", json);
+        Assert.Contains("\"result\":false", json, StringComparison.Ordinal);
     }
 
     /// <summary>Edit free board missing title returns input invalid.</summary>
@@ -89,7 +90,7 @@ public class ForumControllerWriteEditTests(MaroikWebApplicationFactory factory)
         var response = await _client.SendAsync(request, TestContext.Current.CancellationToken);
         string json = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
 
-        Assert.Contains("\"result\":false", json);
+        Assert.Contains("\"result\":false", json, StringComparison.Ordinal);
     }
 
     // -- WriteFreeBoard: success path ---------------------------------------------
@@ -104,13 +105,13 @@ public class ForumControllerWriteEditTests(MaroikWebApplicationFactory factory)
 
         var response = await _client.SendAsync(request, TestContext.Current.CancellationToken);
         string json = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
-        Assert.Contains("\"result\":true", json);
+        Assert.Contains("\"result\":true", json, StringComparison.Ordinal);
 
         using var scope = factory.Services.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
         var created = db.Boards.Single(b => b.Title == title);
         Assert.Equal(session.Nickname, created.Writer);
-        Assert.Contains("Hello world", created.Content);
+        Assert.Contains("Hello world", created.Content, StringComparison.Ordinal);
         Assert.True(created.Locked);
         // Noticed is only honored for Admin writers, ignored here since this session is Role.User.
         Assert.False(created.Noticed);
@@ -126,7 +127,7 @@ public class ForumControllerWriteEditTests(MaroikWebApplicationFactory factory)
 
         var response = await _client.SendAsync(request, TestContext.Current.CancellationToken);
         string json = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
-        Assert.Contains("\"result\":true", json);
+        Assert.Contains("\"result\":true", json, StringComparison.Ordinal);
 
         using var scope = factory.Services.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
@@ -151,18 +152,18 @@ public class ForumControllerWriteEditTests(MaroikWebApplicationFactory factory)
 
         string updatedTitle = UniqueTitle();
         var editForm = BoardForm(updatedTitle, content: "Edited", locked: true);
-        MultipartForm.AddText(editForm, "Id", created.Id.ToString());
+        MultipartForm.AddText(editForm, "Id", created.Id.ToString(CultureInfo.InvariantCulture));
         using var editRequest = session.BuildFormPostRequest("/Forum/EditFreeBoard", editForm);
 
         var response = await _client.SendAsync(editRequest, TestContext.Current.CancellationToken);
         string json = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
-        Assert.Contains("\"result\":true", json);
+        Assert.Contains("\"result\":true", json, StringComparison.Ordinal);
 
         using var verifyScope = factory.Services.CreateScope();
         var verifyDb = verifyScope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
         var updated = verifyDb.Boards.Single(b => b.Id == created.Id);
         Assert.Equal(updatedTitle, updated.Title);
-        Assert.Contains("Edited", updated.Content);
+        Assert.Contains("Edited", updated.Content, StringComparison.Ordinal);
         Assert.True(updated.Locked);
     }
 
@@ -195,12 +196,12 @@ public class ForumControllerWriteEditTests(MaroikWebApplicationFactory factory)
         }
 
         var editForm = BoardForm(UniqueTitle());
-        MultipartForm.AddText(editForm, "Id", boardId.ToString());
+        MultipartForm.AddText(editForm, "Id", boardId.ToString(CultureInfo.InvariantCulture));
         using var editRequest = session.BuildFormPostRequest("/Forum/EditFreeBoard", editForm);
 
         var response = await _client.SendAsync(editRequest, TestContext.Current.CancellationToken);
         string json = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
 
-        Assert.Contains("\"result\":false", json);
+        Assert.Contains("\"result\":false", json, StringComparison.Ordinal);
     }
 }

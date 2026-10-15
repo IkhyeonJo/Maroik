@@ -69,10 +69,10 @@ public class FileControllerLoggingTests(WebApplicationFactory<Program> baseFacto
 
         Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
         FakeLogRecord record = Assert.Single(logger.Collector.GetSnapshot(), r => r.Level == LogLevel.Warning);
-        Assert.Contains("File upload refused", record.Message);
-        Assert.Contains("infected", record.Message);
-        Assert.Contains(target, record.Message);
-        Assert.Contains("corr-virus-1", record.Message);
+        Assert.Contains("File upload refused", record.Message, StringComparison.Ordinal);
+        Assert.Contains("infected", record.Message, StringComparison.Ordinal);
+        Assert.Contains(target, record.Message, StringComparison.Ordinal);
+        Assert.Contains("corr-virus-1", record.Message, StringComparison.Ordinal);
     }
 
     /// <summary>Verifies that an upload that could not be scanned logs one Error with the correlation ID.</summary>
@@ -85,9 +85,9 @@ public class FileControllerLoggingTests(WebApplicationFactory<Program> baseFacto
         await client.PostAsync("/api/File/upload", form, TestContext.Current.CancellationToken);
 
         FakeLogRecord record = Assert.Single(logger.Collector.GetSnapshot(), r => r.Level == LogLevel.Error);
-        Assert.Contains("File upload refused", record.Message);
-        Assert.Contains("could not be scanned", record.Message);
-        Assert.Contains("corr-scan-1", record.Message);
+        Assert.Contains("File upload refused", record.Message, StringComparison.Ordinal);
+        Assert.Contains("could not be scanned", record.Message, StringComparison.Ordinal);
+        Assert.Contains("corr-scan-1", record.Message, StringComparison.Ordinal);
     }
 
     /// <summary>Verifies that an upload to a path outside the storage root is refused (400) with one Warning naming the path.</summary>
@@ -102,8 +102,8 @@ public class FileControllerLoggingTests(WebApplicationFactory<Program> baseFacto
 
         Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
         FakeLogRecord record = Assert.Single(logger.Collector.GetSnapshot(), r => r.Level == LogLevel.Warning);
-        Assert.Contains("Invalid file path", record.Message);
-        Assert.Contains(traversal, record.Message);
+        Assert.Contains("Invalid file path", record.Message, StringComparison.Ordinal);
+        Assert.Contains(traversal, record.Message, StringComparison.Ordinal);
     }
 
     /// <summary>Verifies that a clean upload logs only an Information entry.</summary>
@@ -117,7 +117,7 @@ public class FileControllerLoggingTests(WebApplicationFactory<Program> baseFacto
 
         Assert.True(response.IsSuccessStatusCode);
         Assert.DoesNotContain(logger.Collector.GetSnapshot(), r => r.Level >= LogLevel.Warning);
-        Assert.Contains(logger.Collector.GetSnapshot(), r => r.Level == LogLevel.Information && r.Message.Contains("File uploaded"));
+        Assert.Contains(logger.Collector.GetSnapshot(), r => r.Level == LogLevel.Information && r.Message.Contains("File uploaded", StringComparison.Ordinal));
     }
 
     /// <summary>Verifies that a download from a path outside the storage root returns 404 with one Warning naming the path and correlation ID.</summary>
@@ -131,9 +131,9 @@ public class FileControllerLoggingTests(WebApplicationFactory<Program> baseFacto
 
         Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
         FakeLogRecord record = Assert.Single(logger.Collector.GetSnapshot(), r => r.Level == LogLevel.Warning);
-        Assert.Contains("File download refused: path outside the storage root", record.Message);
-        Assert.Contains("../../etc/passwd", record.Message);
-        Assert.Contains("corr-dl-1", record.Message);
+        Assert.Contains("File download refused: path outside the storage root", record.Message, StringComparison.Ordinal);
+        Assert.Contains("../../etc/passwd", record.Message, StringComparison.Ordinal);
+        Assert.Contains("corr-dl-1", record.Message, StringComparison.Ordinal);
     }
 
     /// <summary>Verifies that a download of a missing file returns 404 with one Warning naming the path.</summary>
@@ -148,7 +148,7 @@ public class FileControllerLoggingTests(WebApplicationFactory<Program> baseFacto
 
         Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
         FakeLogRecord record = Assert.Single(logger.Collector.GetSnapshot(), r => r.Level == LogLevel.Warning);
-        Assert.Contains("File download failed: file not found", record.Message);
-        Assert.Contains(missing, record.Message);
+        Assert.Contains("File download failed: file not found", record.Message, StringComparison.Ordinal);
+        Assert.Contains(missing, record.Message, StringComparison.Ordinal);
     }
 }

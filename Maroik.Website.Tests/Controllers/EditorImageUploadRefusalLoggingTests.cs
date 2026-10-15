@@ -70,7 +70,7 @@ public class EditorImageUploadRefusalLoggingTests(MaroikWebApplicationFactory fa
         var response = await client.SendAsync(request, TestContext.Current.CancellationToken);
         string json = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
         Assert.Equal(System.Net.HttpStatusCode.OK, response.StatusCode);
-        Assert.Contains("\"result\":false", json);
+        Assert.Contains("\"result\":false", json, StringComparison.Ordinal);
         return email;
     }
 
@@ -79,9 +79,9 @@ public class EditorImageUploadRefusalLoggingTests(MaroikWebApplicationFactory fa
     {
         FakeLogRecord record = Assert.Single(Warnings());
         Assert.Equal(LogLevel.Warning, record.Level);
-        Assert.Contains("Editor image upload refused", record.Message);
-        Assert.Contains(reason, record.Message);
-        Assert.Contains(email, record.Message);
+        Assert.Contains("Editor image upload refused", record.Message, StringComparison.Ordinal);
+        Assert.Contains(reason, record.Message, StringComparison.Ordinal);
+        Assert.Contains(email, record.Message, StringComparison.Ordinal);
     }
 
     /// <summary>A file with an extension outside jpg / jpeg / png is refused by the controller, and logged.</summary>

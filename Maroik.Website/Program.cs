@@ -26,7 +26,7 @@ using StackExchange.Redis;
 
 // Bootstrap logger captures startup errors before the host is built.
 Log.Logger = new LoggerConfiguration()
-    .WriteTo.Console(outputTemplate: LogTemplates.Console)
+    .WriteTo.Console(outputTemplate: LogTemplates.Console, formatProvider: CultureInfo.InvariantCulture)
     .CreateBootstrapLogger();
 
 try
@@ -39,7 +39,7 @@ try
         .MinimumLevel.Override("Microsoft.Hosting.Lifetime", LogEventLevel.Information)
         .MinimumLevel.Override("System", LogEventLevel.Warning)
         .Enrich.FromLogContext()
-        .WriteTo.Console(outputTemplate: LogTemplates.Console));
+        .WriteTo.Console(outputTemplate: LogTemplates.Console, formatProvider: CultureInfo.InvariantCulture));
 
     const string cookiePrefix = "__Secure-";
 
@@ -147,7 +147,7 @@ try
             keyRingPath);
     }
 
-    string cookieDomain = cfgDomainName.Replace("https://", "").Replace("/", "");
+    string cookieDomain = cfgDomainName.Replace("https://", "", StringComparison.Ordinal).Replace("/", "", StringComparison.Ordinal);
 
     builder.Services.AddSession(options =>
     {

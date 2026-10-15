@@ -572,7 +572,7 @@ public class AccountServiceTests
         RegisterResult result = await sut.RegisterAsync(request, _emailTemplate, TestContext.Current.CancellationToken);
 
         Assert.False(result.Success);
-        Assert.Contains("Nickname", result.ErrorKey);
+        Assert.Contains("Nickname", result.ErrorKey, StringComparison.Ordinal);
         Assert.Contains("TakenNick", result.ErrorArgs);
     }
 
@@ -603,7 +603,7 @@ public class AccountServiceTests
 
         Assert.False(result.Success);
         Assert.Contains("raced@example.com", result.ErrorArgs);
-        Assert.DoesNotContain("Nickname", result.ErrorKey);
+        Assert.DoesNotContain("Nickname", result.ErrorKey, StringComparison.Ordinal);
     }
 
     /// <summary>Verifies that <c>RegisterAsync</c> resends confirmation email when account exists but not confirmed.</summary>

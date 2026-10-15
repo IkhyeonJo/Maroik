@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.Text.RegularExpressions;
 using Maroik.Core.Contract.Interfaces;
 using Maroik.Core.Domain.Account;
@@ -58,7 +59,7 @@ public class ForumControllerTests(MaroikWebApplicationFactory factory)
 
         // Without a session, the controller redirects to Account/Login
         Assert.Equal(System.Net.HttpStatusCode.Redirect, response.StatusCode);
-        Assert.Contains("Login", response.Headers.Location?.ToString() ?? "");
+        Assert.Contains("Login", response.Headers.Location?.ToString() ?? "", StringComparison.Ordinal);
     }
 
     // -- FreeForum detail (nonexistent board) ---------------------------------
@@ -133,13 +134,13 @@ public class ForumControllerTests(MaroikWebApplicationFactory factory)
         request.Headers.Add("Cookie", $"{SessionCookieName}={sessionCookie}; {AntiForgeryCookieName}={antiForgeryCookie}");
         request.Content = new FormUrlEncodedContent(new Dictionary<string, string>
         {
-            ["id"] = boardId.ToString(),
+            ["id"] = boardId.ToString(CultureInfo.InvariantCulture),
             ["__RequestVerificationToken"] = antiForgeryToken
         });
         var response = await _client.SendAsync(request, TestContext.Current.CancellationToken);
         string body = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
 
-        Assert.DoesNotContain(secretContent, body);
+        Assert.DoesNotContain(secretContent, body, StringComparison.Ordinal);
     }
 
     // -- WriteFreeComment -----------------------------------------------------------
@@ -175,7 +176,7 @@ public class ForumControllerTests(MaroikWebApplicationFactory factory)
 
         var response = await _client.SendAsync(request, TestContext.Current.CancellationToken);
         string json = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
-        Assert.Contains("\"result\":true", json);
+        Assert.Contains("\"result\":true", json, StringComparison.Ordinal);
 
         using var verifyScope = factory.Services.CreateScope();
         var verifyDb = verifyScope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
@@ -192,7 +193,7 @@ public class ForumControllerTests(MaroikWebApplicationFactory factory)
         var response = await _client.SendAsync(request, TestContext.Current.CancellationToken);
         string json = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
 
-        Assert.Contains("\"result\":false", json);
+        Assert.Contains("\"result\":false", json, StringComparison.Ordinal);
     }
 
     /// <summary>Write free comment anonymous session is forbidden.</summary>
@@ -224,7 +225,7 @@ public class ForumControllerTests(MaroikWebApplicationFactory factory)
         string json = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
 
         Assert.Equal(System.Net.HttpStatusCode.OK, response.StatusCode);
-        Assert.Contains("\"result\":false", json);
+        Assert.Contains("\"result\":false", json, StringComparison.Ordinal);
     }
 
     /// <summary>Upload image file disallowed extension returns failure result.</summary>
@@ -240,7 +241,7 @@ public class ForumControllerTests(MaroikWebApplicationFactory factory)
         string json = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
 
         Assert.Equal(System.Net.HttpStatusCode.OK, response.StatusCode);
-        Assert.Contains("\"result\":false", json);
+        Assert.Contains("\"result\":false", json, StringComparison.Ordinal);
     }
 
     // -- Test helpers -----------------------------------------------------------
@@ -296,7 +297,7 @@ public class ForumControllerTests(MaroikWebApplicationFactory factory)
     /// <summary>Extracts the value of a specific cookie from a response's Set-Cookie headers, or null if absent.</summary>
     private static string? ExtractCookieValue(HttpResponseMessage response, string cookieName)
     {
-        return !response.Headers.TryGetValues("Set-Cookie", out var setCookieHeaders) ? null : (from header in setCookieHeaders select header.Split(';', 2)[0] into namePart let eq = namePart.IndexOf('=') where eq > 0 where namePart[..eq] == cookieName select namePart[(eq + 1)..]).FirstOrDefault();
+        return !response.Headers.TryGetValues("Set-Cookie", out var setCookieHeaders) ? null : (from header in setCookieHeaders select header.Split(';', 2)[0] into namePart let eq = namePart.IndexOf('=', StringComparison.Ordinal) where eq > 0 where namePart[..eq] == cookieName select namePart[(eq + 1)..]).FirstOrDefault();
     }
 
     /// <summary>Extracts the antiforgery hidden-input value from a rendered form's HTML.</summary>

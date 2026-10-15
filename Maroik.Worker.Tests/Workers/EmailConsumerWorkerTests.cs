@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.Text;
 using System.Text.Json;
 using Maroik.Core.Contract.Misc.Messaging;
@@ -619,7 +620,7 @@ public class EmailConsumerWorkerTests
 
         EmailConsumerWorker.MaxRetries,
         (long)EmailConsumerWorker.MaxRetries,
-        Encoding.UTF8.GetBytes(EmailConsumerWorker.MaxRetries.ToString())
+        Encoding.UTF8.GetBytes(EmailConsumerWorker.MaxRetries.ToString(CultureInfo.InvariantCulture))
     ];
 
     /// <summary>A garbage or non-numeric header counts as "first attempt": the message still gets its retry.</summary>
@@ -682,7 +683,7 @@ public class EmailConsumerWorkerTests
 
         FakeLogRecord warning = Assert.Single(logger.Collector.GetSnapshot(),
             r => r.Level == LogLevel.Warning && r.Message.Contains("did not stop within the unwind window", StringComparison.Ordinal));
-        Assert.Contains("1", warning.Message); // one send still in flight
+        Assert.Contains("1", warning.Message, StringComparison.Ordinal); // one send still in flight
         release.SetResult();
         await received;
     }

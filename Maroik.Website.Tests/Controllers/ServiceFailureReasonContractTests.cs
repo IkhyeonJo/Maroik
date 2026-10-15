@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.Text.Json;
 using Maroik.Core.Contract.Dtos;
 using Maroik.Core.Contract.Interfaces;
@@ -44,7 +45,7 @@ public class ServiceFailureReasonContractTests(MaroikWebApplicationFactory facto
     private static MultipartFormDataContent BoardFormWithFile(string fileName, long id = 0)
     {
         var form = MultipartForm.Of(
-            ("Id", id.ToString()),
+            ("Id", id.ToString(CultureInfo.InvariantCulture)),
             ("Title", $"title-{Guid.NewGuid():N}"[..30]),
             ("Content", "Body"),
             ("Locked", "false"),

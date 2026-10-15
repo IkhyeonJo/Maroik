@@ -190,8 +190,8 @@ public class FileClientTests
 
         Assert.False(result);
         var (_, message) = Assert.Single(logger.Entries, e => e.Level == LogLevel.Warning);
-        Assert.Contains("400", message);
-        Assert.Contains("could not be scanned", message);
+        Assert.Contains("400", message, StringComparison.Ordinal);
+        Assert.Contains("could not be scanned", message, StringComparison.Ordinal);
     }
 
     /// <summary>A refusal whose body cannot be decoded does not turn into an exception: the upload just fails, with an empty reason logged.</summary>
@@ -205,9 +205,9 @@ public class FileClientTests
         bool result = await sut.UploadAsync([0x89, 0x50, 0x4E, 0x47], "image/png", "test.png", "http://filestorage.local", TestContext.Current.CancellationToken);
 
         Assert.False(result);
-        Assert.Single(logger.Entries, e => e.Level == LogLevel.Warning && e.Message.Contains("400"));
+        Assert.Single(logger.Entries, e => e.Level == LogLevel.Warning && e.Message.Contains("400", StringComparison.Ordinal));
         // The unreadable body itself leaves a trace too (diagnostic level: the refusal is already warned about).
-        Assert.Single(logger.Entries, e => e.Level == LogLevel.Debug && e.Message.Contains("could not be read"));
+        Assert.Single(logger.Entries, e => e.Level == LogLevel.Debug && e.Message.Contains("could not be read", StringComparison.Ordinal));
     }
 
     /// <summary>An over-long refusal body is truncated in the log.</summary>
@@ -280,8 +280,8 @@ public class FileClientTests
 
         await CreateSut().UploadAsync(data, "image/png", "test.png", "http://filestorage.local", TestContext.Current.CancellationToken);
 
-        Assert.Contains("name=correlationId", capturing.LastRequestBody);
-        Assert.Contains(activity.Id!, capturing.LastRequestBody);
+        Assert.Contains("name=correlationId", capturing.LastRequestBody, StringComparison.Ordinal);
+        Assert.Contains(activity.Id!, capturing.LastRequestBody, StringComparison.Ordinal);
     }
 
     /// <summary>Verifies that <c>DownloadAsync</c> includes the ambient Activity id as a form field.</summary>
@@ -295,8 +295,8 @@ public class FileClientTests
 
         await CreateSut().DownloadAsync("some/path.png", "http://filestorage.local", TestContext.Current.CancellationToken);
 
-        Assert.Contains("name=correlationId", capturing.LastRequestBody);
-        Assert.Contains(activity.Id!, capturing.LastRequestBody);
+        Assert.Contains("name=correlationId", capturing.LastRequestBody, StringComparison.Ordinal);
+        Assert.Contains(activity.Id!, capturing.LastRequestBody, StringComparison.Ordinal);
     }
 
     /// <summary>Verifies that <c>DownloadAsync</c> sends an empty correlation id when there is no ambient Activity.</summary>
@@ -309,7 +309,7 @@ public class FileClientTests
 
         await CreateSut().DownloadAsync("some/path.png", "http://filestorage.local", TestContext.Current.CancellationToken);
 
-        Assert.Contains("name=correlationId", capturing.LastRequestBody);
+        Assert.Contains("name=correlationId", capturing.LastRequestBody, StringComparison.Ordinal);
     }
 
     // -- DownloadAsync: failures are logged once, by the caller ---------------------
@@ -329,10 +329,10 @@ public class FileClientTests
         var thrown = await Assert.ThrowsAsync<HttpRequestException>(
             () => sut.DownloadAsync("upload/a.png", "http://filestorage.local", TestContext.Current.CancellationToken));
 
-        Assert.Contains("upload/a.png", thrown.Message);
+        Assert.Contains("upload/a.png", thrown.Message, StringComparison.Ordinal);
         Assert.Equal(HttpStatusCode.NotFound, thrown.StatusCode);
         Assert.DoesNotContain(logger.Entries, e => e.Level >= LogLevel.Warning);
-        Assert.Single(logger.Entries, e => e.Level == LogLevel.Information && e.Message.Contains("upload/a.png"));
+        Assert.Single(logger.Entries, e => e.Level == LogLevel.Information && e.Message.Contains("upload/a.png", StringComparison.Ordinal));
     }
 
     // -- OpenReadAsync ----------------------------------------------------------
@@ -365,8 +365,8 @@ public class FileClientTests
         await stream.CopyToAsync(copy, TestContext.Current.CancellationToken);
 
         Assert.Equal([1, 2, 3, 4], copy.ToArray());
-        Assert.Contains("upload/Forum/a.zip", handler.LastRequestBody);
-        Assert.Contains(activity.Id!, handler.LastRequestBody);
+        Assert.Contains("upload/Forum/a.zip", handler.LastRequestBody, StringComparison.Ordinal);
+        Assert.Contains(activity.Id!, handler.LastRequestBody, StringComparison.Ordinal);
     }
 
     // -- HttpClient lifetime -------------------------------------------------------

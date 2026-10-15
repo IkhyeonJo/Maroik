@@ -97,7 +97,7 @@ public class ExcelExportServiceTests
             [new() { ProductName = "Cash", Item = "x", Amount = value, Note = "" }], _identity, "UTC"))[1][3];
 
         AssertNumberCell(value, cell);
-        Assert.DoesNotContain(",", cell.Text);
+        Assert.DoesNotContain(",", cell.Text, StringComparison.Ordinal);
     }
 
     /// <summary>

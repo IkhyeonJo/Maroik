@@ -42,8 +42,8 @@ public class AttachmentContentServiceLoggingTests
         FakeLogRecord record = Assert.Single(_logger.Collector.GetSnapshot(), r => r.Level >= LogLevel.Warning);
         Assert.Equal(LogLevel.Error, record.Level);
         Assert.Same(_failure, record.Exception);
-        Assert.Contains(path, record.Message);
-        Assert.Contains($"CorrelationId={activity.Id}", record.Message);
+        Assert.Contains(path, record.Message, StringComparison.Ordinal);
+        Assert.Contains($"CorrelationId={activity.Id}", record.Message, StringComparison.Ordinal);
     }
 
     /// <summary>A failed attachment open.</summary>
@@ -91,10 +91,10 @@ public class AttachmentContentServiceLoggingTests
     {
         FakeLogRecord record = Assert.Single(_logger.Collector.GetSnapshot(), r => r.Level >= LogLevel.Warning);
         Assert.Equal(LogLevel.Warning, record.Level);
-        Assert.Contains("Editor image upload refused", record.Message);
-        Assert.Contains(reason, record.Message);
-        Assert.Contains("uploader@test.com", record.Message);
-        Assert.Contains("Forum/FreeForum", record.Message);
+        Assert.Contains("Editor image upload refused", record.Message, StringComparison.Ordinal);
+        Assert.Contains(reason, record.Message, StringComparison.Ordinal);
+        Assert.Contains("uploader@test.com", record.Message, StringComparison.Ordinal);
+        Assert.Contains("Forum/FreeForum", record.Message, StringComparison.Ordinal);
         _fileClient.Verify(f => f.UploadAsync(
             It.IsAny<byte[]>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
     }

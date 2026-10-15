@@ -91,7 +91,7 @@ public class AccountLockSessionTests(MaroikWebApplicationFactory factory)
             Deleted = false
         });
         Assert.Contains("\"result\":true", await (await _client.SendAsync(lockRequest, TestContext.Current.CancellationToken))
-            .Content.ReadAsStringAsync(TestContext.Current.CancellationToken));
+            .Content.ReadAsStringAsync(TestContext.Current.CancellationToken), StringComparison.Ordinal);
 
         var response = await OpenIncomePageAsync(owner);
 

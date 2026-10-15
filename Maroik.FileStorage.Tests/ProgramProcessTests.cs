@@ -91,7 +91,7 @@ public class ProgramProcessTests
             await process.WaitForExitAsync(TestContext.Current.CancellationToken).WaitAsync(TimeSpan.FromSeconds(30), TestContext.Current.CancellationToken);
 
             Assert.NotEqual(0, process.ExitCode);
-            Assert.Contains("Maroik.FileStorage terminated unexpectedly", output);
+            Assert.Contains("Maroik.FileStorage terminated unexpectedly", output, StringComparison.Ordinal);
         }
         finally
         {

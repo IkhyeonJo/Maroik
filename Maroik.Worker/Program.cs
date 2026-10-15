@@ -4,12 +4,13 @@
 // `dotnet Maroik.Worker.dll redrive-email-dead-letters` instead moves the dead-lettered e-mails back
 // into the e-mail queue and exits (run by an operator once the cause of the failures is fixed).
 
+using System.Globalization;
 using Maroik.Worker;
 using Maroik.Worker.Workers;
 using Serilog;
 
 Log.Logger = new LoggerConfiguration()
-    .WriteTo.Console(outputTemplate: WorkerHost.ConsoleOutputTemplate)
+    .WriteTo.Console(outputTemplate: WorkerHost.ConsoleOutputTemplate, formatProvider: CultureInfo.InvariantCulture)
     .CreateBootstrapLogger();
 
 try

@@ -19,12 +19,12 @@ public class LogTemplatesTests
 
         string rendered = Render(LogTemplates.Console, "Login failed: no account for {Email}", forged);
 
-        Assert.EndsWith(Environment.NewLine, rendered);
+        Assert.EndsWith(Environment.NewLine, rendered, StringComparison.Ordinal);
         string line = rendered[..^Environment.NewLine.Length];
         Assert.DoesNotContain('\n', line);
         Assert.DoesNotContain('\r', line);
         Assert.DoesNotContain('\u001b', line);
-        Assert.Contains(@"a@b.com\n[00:00:00 INF] Maroik: Login succeeded for admin@maroik.com\r", line);
+        Assert.Contains(@"a@b.com\n[00:00:00 INF] Maroik: Login succeeded for admin@maroik.com\r", line, StringComparison.Ordinal);
     }
 
     /// <summary>Renders one Warning event whose <c>Email</c> is <paramref name="value"/> through <paramref name="outputTemplate"/>.</summary>

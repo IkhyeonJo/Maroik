@@ -69,7 +69,7 @@ public static class AuthenticatedSessionHelper
         // Account_Nickname_unique is a real, enforced constraint (Postgres), so every seeded
         // account needs a distinct nickname — derive it from the (already-unique) email rather
         // than a fixed placeholder.
-        string nickname = "TestUser_" + email.Replace("@", "_").Replace(".", "_");
+        string nickname = "TestUser_" + email.Replace("@", "_", StringComparison.Ordinal).Replace(".", "_", StringComparison.Ordinal);
 
         using (var scope = factory.Services.CreateScope())
         {
@@ -149,7 +149,7 @@ public static class AuthenticatedSessionHelper
     /// <summary>The value of <paramref name="cookieName"/> from the response's <c>Set-Cookie</c> headers, or <see langword="null"/>.</summary>
     private static string? ExtractCookieValue(HttpResponseMessage response, string cookieName)
     {
-        return !response.Headers.TryGetValues("Set-Cookie", out var setCookieHeaders) ? null : (from header in setCookieHeaders select header.Split(';', 2)[0] into namePart let eq = namePart.IndexOf('=') where eq > 0 where namePart[..eq] == cookieName select namePart[(eq + 1)..]).FirstOrDefault();
+        return !response.Headers.TryGetValues("Set-Cookie", out var setCookieHeaders) ? null : (from header in setCookieHeaders select header.Split(';', 2)[0] into namePart let eq = namePart.IndexOf('=', StringComparison.Ordinal) where eq > 0 where namePart[..eq] == cookieName select namePart[(eq + 1)..]).FirstOrDefault();
     }
 
     /// <summary>The hidden <c>__RequestVerificationToken</c> value in <paramref name="html"/>; throws if there is none.</summary>

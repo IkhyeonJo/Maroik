@@ -126,7 +126,7 @@ public class AccountControllerTests(MaroikWebApplicationFactory factory)
     /// <summary>Extracts the value of a specific cookie from a response's Set-Cookie headers, or null if absent.</summary>
     private static string? ExtractCookieValue(HttpResponseMessage response, string cookieName)
     {
-        return !response.Headers.TryGetValues("Set-Cookie", out var setCookieHeaders) ? null : (from header in setCookieHeaders select header.Split(';', 2)[0] into namePart let eq = namePart.IndexOf('=') where eq > 0 where namePart[..eq] == cookieName select namePart[(eq + 1)..]).FirstOrDefault();
+        return !response.Headers.TryGetValues("Set-Cookie", out var setCookieHeaders) ? null : (from header in setCookieHeaders select header.Split(';', 2)[0] into namePart let eq = namePart.IndexOf('=', StringComparison.Ordinal) where eq > 0 where namePart[..eq] == cookieName select namePart[(eq + 1)..]).FirstOrDefault();
     }
 
     /// <summary>Extracts the antiforgery hidden-input value from a rendered form's HTML.</summary>

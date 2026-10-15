@@ -111,8 +111,8 @@ public class RepositoryFailureContractTests(MaroikWebApplicationFactory factory)
         string html = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
 
         Assert.Equal(System.Net.HttpStatusCode.OK, response.StatusCode);
-        Assert.Contains("Error occurred while processing about confirm email account status", html);
-        Assert.DoesNotContain(DatabaseSecret, html);
+        Assert.Contains("Error occurred while processing about confirm email account status", html, StringComparison.Ordinal);
+        Assert.DoesNotContain(DatabaseSecret, html, StringComparison.Ordinal);
         using var scope = factory.Services.CreateScope();
         Assert.False(scope.ServiceProvider.GetRequiredService<ApplicationDbContext>().Accounts.Single(a => a.Email == email).EmailConfirmed);
     }
@@ -140,9 +140,9 @@ public class RepositoryFailureContractTests(MaroikWebApplicationFactory factory)
         string html = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
 
         Assert.Equal(System.Net.HttpStatusCode.OK, response.StatusCode);
-        Assert.Contains("resetPasswordForm", html);
-        Assert.DoesNotContain("The authentication token is invalid.", html);
-        Assert.DoesNotContain(DatabaseSecret, html);
+        Assert.Contains("resetPasswordForm", html, StringComparison.Ordinal);
+        Assert.DoesNotContain("The authentication token is invalid.", html, StringComparison.Ordinal);
+        Assert.DoesNotContain(DatabaseSecret, html, StringComparison.Ordinal);
         using var scope = factory.Services.CreateScope();
         Assert.Equal(rawToken, scope.ServiceProvider.GetRequiredService<ApplicationDbContext>().Accounts.Single(a => a.Email == email).ResetPasswordToken);
     }
@@ -172,7 +172,7 @@ public class RepositoryFailureContractTests(MaroikWebApplicationFactory factory)
 
         Assert.Equal(System.Net.HttpStatusCode.OK, response.StatusCode);
         Assert.False(JsonDocument.Parse(json).RootElement.GetProperty("result").GetBoolean());
-        Assert.Contains("A temporary error occurred. Please try again later.", json);
-        Assert.DoesNotContain(DatabaseSecret, json);
+        Assert.Contains("A temporary error occurred. Please try again later.", json, StringComparison.Ordinal);
+        Assert.DoesNotContain(DatabaseSecret, json, StringComparison.Ordinal);
     }
 }

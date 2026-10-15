@@ -58,7 +58,7 @@ public class ManagementControllerProfileTests(MaroikWebApplicationFactory factor
         string html = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
 
         string expected = string.Join(", ", Core.Domain.Media.ImageUploadPolicy.AllowedContentTypes);
-        Assert.Contains("id=\"ProfileAvatarFiles\"", html);
+        Assert.Contains("id=\"ProfileAvatarFiles\"", html, StringComparison.Ordinal);
         Assert.Matches($"id=\"ProfileAvatarFiles\"[^>]*accept=\"{System.Text.RegularExpressions.Regex.Escape(expected)}\"", html);
     }
 
@@ -143,7 +143,7 @@ public class ManagementControllerProfileTests(MaroikWebApplicationFactory factor
         var response = await _client.SendAsync(request, TestContext.Current.CancellationToken);
         string json = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
 
-        Assert.Contains("\"result\":true", json);
+        Assert.Contains("\"result\":true", json, StringComparison.Ordinal);
 
         using var scope = factory.Services.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
@@ -172,8 +172,8 @@ public class ManagementControllerProfileTests(MaroikWebApplicationFactory factor
         var changeResponse = await _client.SendAsync(change, TestContext.Current.CancellationToken);
         string json = await changeResponse.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
 
-        Assert.Contains("\"result\":true", json);
-        Assert.Contains("sign in again", json);
+        Assert.Contains("\"result\":true", json, StringComparison.Ordinal);
+        Assert.Contains("sign in again", json, StringComparison.Ordinal);
 
         using var profile = new HttpRequestMessage(HttpMethod.Get, "/Management/Profile");
         profile.Headers.Add("Cookie", session.CookieHeader);
@@ -211,7 +211,7 @@ public class ManagementControllerProfileTests(MaroikWebApplicationFactory factor
         });
         string json = await (await _client.SendAsync(change, ct)).Content.ReadAsStringAsync(ct);
 
-        Assert.Contains("\"result\":true", json);
+        Assert.Contains("\"result\":true", json, StringComparison.Ordinal);
         using (var scope = factory.Services.CreateScope())
         {
             var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
@@ -249,7 +249,7 @@ public class ManagementControllerProfileTests(MaroikWebApplicationFactory factor
         var response = await _client.SendAsync(request, TestContext.Current.CancellationToken);
         string json = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
 
-        Assert.Contains("\"result\":true", json);
+        Assert.Contains("\"result\":true", json, StringComparison.Ordinal);
 
         using var scope = factory.Services.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
@@ -274,7 +274,7 @@ public class ManagementControllerProfileTests(MaroikWebApplicationFactory factor
         var response = await _client.SendAsync(request, TestContext.Current.CancellationToken);
         string json = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
 
-        Assert.Contains("\"result\":false", json);
+        Assert.Contains("\"result\":false", json, StringComparison.Ordinal);
 
         using var scope = factory.Services.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
@@ -299,7 +299,7 @@ public class ManagementControllerProfileTests(MaroikWebApplicationFactory factor
         var response = await _client.SendAsync(request, TestContext.Current.CancellationToken);
         string json = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
 
-        Assert.Contains("\"result\":false", json);
+        Assert.Contains("\"result\":false", json, StringComparison.Ordinal);
 
         using var scope = factory.Services.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
@@ -325,7 +325,7 @@ public class ManagementControllerProfileTests(MaroikWebApplicationFactory factor
         string json = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
 
         Assert.Equal(System.Net.HttpStatusCode.OK, response.StatusCode);
-        Assert.Contains("\"result\":false", json);
+        Assert.Contains("\"result\":false", json, StringComparison.Ordinal);
     }
 
     /// <summary>Update profile avatar disallowed extension returns failure result.</summary>
@@ -341,6 +341,6 @@ public class ManagementControllerProfileTests(MaroikWebApplicationFactory factor
         string json = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
 
         Assert.Equal(System.Net.HttpStatusCode.OK, response.StatusCode);
-        Assert.Contains("\"result\":false", json);
+        Assert.Contains("\"result\":false", json, StringComparison.Ordinal);
     }
 }
