@@ -322,6 +322,35 @@ public class RabbitMqEmailPublisherTests
     }
 
     /// <summary>
+    /// Two disposes that arrive together while a publish still holds the lock: one does the disposal, the other returns
+    /// without waiting its turn — neither throws (on the already-disposed lock) and the channel is disposed once.
+    /// </summary>
+    [Fact]
+    public async Task DisposeAsync_CalledConcurrently_DisposesOnce_AndNeitherCallThrows()
+    {
+        var channel = MakeChannelMock();
+        var unblock = new TaskCompletionSource();
+        channel.Setup(c => c.BasicPublishAsync(
+                It.IsAny<string>(), It.IsAny<string>(), It.IsAny<bool>(), It.IsAny<BasicProperties>(),
+                It.IsAny<ReadOnlyMemory<byte>>(), It.IsAny<CancellationToken>()))
+            .Returns(new ValueTask(unblock.Task));
+        var connection = MakeConnectionMock(channel, isOpen: true);
+        _factory.Setup(f => f.CreateConnectionAsync(It.IsAny<CancellationToken>())).ReturnsAsync(connection.Object);
+        var sut = CreateSut();
+        Task publish = sut.PublishAsync(_message, CancellationToken.None);
+
+        Task first = sut.DisposeAsync().AsTask();
+        Task second = sut.DisposeAsync().AsTask();
+        unblock.SetResult();
+        await publish;
+        Exception? thrown = await Record.ExceptionAsync(() => Task.WhenAll(first, second));
+
+        Assert.Null(thrown);
+        channel.Verify(c => c.DisposeAsync(), Times.Once);
+        connection.Verify(c => c.DisposeAsync(), Times.Once);
+    }
+
+    /// <summary>
     /// A dispose that timed out behind a stuck publish disposed nothing, so a later dispose — once the publish has
     /// finished — still disposes the channel and the connection.
     /// </summary>
