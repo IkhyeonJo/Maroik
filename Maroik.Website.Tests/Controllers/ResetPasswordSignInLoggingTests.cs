@@ -54,7 +54,7 @@ public class ResetPasswordSignInLoggingTests(MaroikWebApplicationFactory factory
             db.Accounts.Add(new Maroik.Core.PostgreSQL.Models.Account
             {
                 Email = email,
-                HashedPassword = scope.ServiceProvider.GetRequiredService<IPasswordService>().HashPassword("OldPassword1!"),
+                HashedPassword = TestPasswords.Hash("OldPassword1!"),
                 Nickname = "ResetSignIn_" + Guid.NewGuid().ToString("N")[..12],
                 AvatarImagePath = "/upload/Management/Profile/default-avatar.jpg",
                 Role = Role.User,

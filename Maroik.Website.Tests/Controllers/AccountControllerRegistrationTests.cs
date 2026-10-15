@@ -81,11 +81,10 @@ public class AccountControllerRegistrationTests(MaroikWebApplicationFactory fact
     {
         using var scope = factory.Services.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-        var passwordService = scope.ServiceProvider.GetRequiredService<IPasswordService>();
         db.Accounts.Add(new Maroik.Core.PostgreSQL.Models.Account
         {
             Email = email,
-            HashedPassword = passwordService.HashPassword("OldPassword1!"),
+            HashedPassword = TestPasswords.Hash("OldPassword1!"),
             Nickname = nickname ?? "RegTest_" + email.Replace("@", "_", StringComparison.Ordinal).Replace(".", "_", StringComparison.Ordinal),
             AvatarImagePath = "/upload/Management/Profile/default-avatar.jpg",
             Role = Role.User,

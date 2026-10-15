@@ -1,6 +1,5 @@
 using System.Net.Http.Json;
 using System.Text.RegularExpressions;
-using Maroik.Core.Contract.Interfaces;
 using Maroik.Core.PostgreSQL.Data;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc.Testing;
@@ -74,13 +73,12 @@ public static class AuthenticatedSessionHelper
         using (var scope = factory.Services.CreateScope())
         {
             var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-            var passwordService = scope.ServiceProvider.GetRequiredService<IPasswordService>();
             if (!db.Accounts.Any(a => a.Email == email))
             {
                 db.Accounts.Add(new Maroik.Core.PostgreSQL.Models.Account
                 {
                     Email = email,
-                    HashedPassword = passwordService.HashPassword(password),
+                    HashedPassword = TestPasswords.Hash(password),
                     Nickname = nickname,
                     AvatarImagePath = "/upload/Management/Profile/default-avatar.jpg",
                     Role = role,

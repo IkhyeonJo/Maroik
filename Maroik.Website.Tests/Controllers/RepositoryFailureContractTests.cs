@@ -79,7 +79,7 @@ public class RepositoryFailureContractTests(MaroikWebApplicationFactory factory)
         var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
         db.Accounts.Add(new Maroik.Core.PostgreSQL.Models.Account
         {
-            Email = email, HashedPassword = scope.ServiceProvider.GetRequiredService<IPasswordService>().HashPassword("OldPassword1!"),
+            Email = email, HashedPassword = TestPasswords.Hash("OldPassword1!"),
             Nickname = "Fail_" + Guid.NewGuid().ToString("N")[..10], AvatarImagePath = "/upload/Management/Profile/default-avatar.jpg",
             Role = Role.User, TimeZoneIanaId = "UTC", Locked = false, LoginAttempt = 0, EmailConfirmed = emailConfirmed, AgreedServiceTerms = true,
             RegistrationToken = registrationToken, ResetPasswordToken = resetPasswordToken, Deleted = false, Created = DateTime.UtcNow, Updated = DateTime.UtcNow,

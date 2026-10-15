@@ -1,5 +1,4 @@
 using System.Text.RegularExpressions;
-using Maroik.Core.Contract.Interfaces;
 using Maroik.Core.Domain.Account;
 using Maroik.Core.PostgreSQL.Data;
 using Maroik.Website.Tests.Infrastructure;
@@ -55,11 +54,10 @@ public class AccountControllerTests(MaroikWebApplicationFactory factory)
         using (var scope = factory.Services.CreateScope())
         {
             var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-            var passwordService = scope.ServiceProvider.GetRequiredService<IPasswordService>();
             db.Accounts.Add(new Maroik.Core.PostgreSQL.Models.Account
             {
                 Email = email,
-                HashedPassword = passwordService.HashPassword(password),
+                HashedPassword = TestPasswords.Hash(password),
                 Nickname = "FixationTester",
                 AvatarImagePath = "/upload/Management/Profile/default-avatar.jpg",
                 Role = Role.User,

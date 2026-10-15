@@ -1,6 +1,5 @@
 using System.Globalization;
 using System.Text.RegularExpressions;
-using Maroik.Core.Contract.Interfaces;
 using Maroik.Core.Domain.Account;
 using Maroik.Core.PostgreSQL.Data;
 using Maroik.Core.PostgreSQL.Models;
@@ -105,11 +104,10 @@ public class ForumControllerTests(MaroikWebApplicationFactory factory)
         using (var scope = factory.Services.CreateScope())
         {
             var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-            var passwordService = scope.ServiceProvider.GetRequiredService<IPasswordService>();
 
             db.Accounts.AddRange(
-                NewAccount(writerEmail, writerNickname, passwordService.HashPassword(password)),
-                NewAccount(otherEmail, otherNickname, passwordService.HashPassword(password)));
+                NewAccount(writerEmail, writerNickname, TestPasswords.Hash(password)),
+                NewAccount(otherEmail, otherNickname, TestPasswords.Hash(password)));
 
             var board = new Board
             {
