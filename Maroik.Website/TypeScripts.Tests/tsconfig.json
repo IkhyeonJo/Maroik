@@ -1,0 +1,32 @@
+{
+  // Standalone config for the Vitest test tree. The main Maroik.Website/tsconfig.json
+  // excludes this folder (it targets the global-script `site.ts` sources, not ESM tests).
+  "compilerOptions": {
+    "target": "ES2022",
+    "lib": ["ES2022", "DOM", "DOM.Iterable"],
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "strict": true,
+    // Beyond `strict`: an index read may be undefined, optional means "may be absent" (not "may be
+    // undefined"), every code path returns, nothing unused or unreachable is left behind, and a key from
+    // an index signature is read with [] so it is visibly not a declared property.
+    "noUncheckedIndexedAccess": true,
+    "exactOptionalPropertyTypes": true,
+    "noImplicitReturns": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "noPropertyAccessFromIndexSignature": true,
+    "noImplicitOverride": true,
+    "allowUnreachableCode": false,
+    "allowUnusedLabels": false,
+    "noEmit": true,
+    "esModuleInterop": true,
+    "resolveJsonModule": true,
+    "skipLibCheck": true,
+    "types": ["vitest/globals", "node", "jquery"],
+    // `@tests/…` == this folder (paths are relative to this tsconfig). Mirrors
+    // vitest.config.mts `resolve.alias`. TS 7 removed `baseUrl`; `./*` is required.
+    "paths": { "@tests/*": ["./*"] }
+  },
+  "include": ["**/*.ts", "../TypeScripts/global.d.ts"]
+}

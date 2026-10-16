@@ -1,0 +1,1077 @@
+using System.Globalization;
+using Maroik.Core.Contract.Dtos;
+using Maroik.Core.Contract.Interfaces;
+using Maroik.Core.Contract.Misc.Settings;
+using Maroik.Core.Domain.Account;
+using Maroik.Core.Domain.Finance;
+using Maroik.Core.Service.Services;
+using Microsoft.Extensions.Options;
+using Microsoft.Extensions.Time.Testing;
+using Moq;
+
+namespace Maroik.Core.Service.Tests.Services;
+
+/// <summary>
+/// Unit tests for <see cref="DashboardService"/>.
+/// All repository dependencies are replaced with Moq mocks.
+/// Covers the summary aggregation (per-year / per-year-month income and expenditure
+/// breakdowns) and the default monetary unit synchronization logic.
+/// </summary>
+public class DashboardServiceTests
+{
+    /// <summary>Mock <c>IAccountRepository</c> injected into the system under test.</summary>
+    private readonly Mock<IAccountRepository> _accountRepo = new();
+    /// <summary>Mock <c>IAssetRepository</c> injected into the system under test.</summary>
+    private readonly Mock<IAssetRepository> _assetRepo = new();
+    /// <summary>Mock <c>IIncomeRepository</c> injected into the system under test.</summary>
+    private readonly Mock<IIncomeRepository> _incomeRepo = new();
+    /// <summary>Mock <c>IExpenditureRepository</c> injected into the system under test.</summary>
+    private readonly Mock<IExpenditureRepository> _expenditureRepo = new();
+    /// <summary>Mock <c>IFixedIncomeRepository</c> injected into the system under test.</summary>
+    private readonly Mock<IFixedIncomeRepository> _fixedIncomeRepo = new();
+    /// <summary>Mock <c>IFixedExpenditureRepository</c> injected into the system under test.</summary>
+    private readonly Mock<IFixedExpenditureRepository> _fixedExpenditureRepo = new();
+
+    /// <summary>The fixed "current time" of these tests.</summary>
+    private static readonly DateTime Now = new(2026, 7, 1, 12, 0, 0, DateTimeKind.Utc);
+    /// <summary>The clock the service under test reads, stopped at <see cref="Now"/>.</summary>
+    private readonly FakeTimeProvider _time = new(new DateTimeOffset(Now));
+
+    /// <summary>The service under test over the mocked dependencies, with <paramref name="settings"/> or defaults.</summary>
+    private DashboardService CreateSut(ServerSetting? settings = null) => new(
+        _accountRepo.Object,
+        _assetRepo.Object,
+        _incomeRepo.Object,
+        _expenditureRepo.Object,
+        _fixedIncomeRepo.Object,
+        _fixedExpenditureRepo.Object,
+        Options.Create(settings ?? new ServerSetting()),
+        _time);
+
+    // -- Helpers --------------------------------------------------------------
+
+    /// <summary>A persisted asset named <paramref name="name"/> in <paramref name="unit"/>.</summary>
+    private static Asset MakeAsset(string name, string unit = "KRW", bool deleted = false) =>
+        Asset.Reconstitute(
+            productName: name,
+            accountEmail: "user@example.com",
+            item: "Deposit",
+            amount: 1000m,
+            monetaryUnit: unit,
+            note: null,
+            deleted: deleted,
+            created: DateTime.UtcNow,
+            updated: DateTime.UtcNow);
+
+    /// <summary>An account whose default monetary unit is <paramref name="unit"/>.</summary>
+    private static Account MakeAccount(string email = "user@example.com", string? unit = null) =>
+        Account.Reconstitute(
+            email: email,
+            hashedPassword: "hash",
+            nickname: "TestUser",
+            avatarImagePath: null,
+            role: Role.User,
+            timeZoneIanaId: "UTC",
+            defaultMonetaryUnit: unit,
+            locked: false,
+            loginAttempt: 0,
+            emailConfirmed: true,
+            agreedServiceTerms: true,
+            registrationToken: null,
+            resetPasswordToken: null,
+            created: DateTime.UtcNow,
+            updated: DateTime.UtcNow,
+            message: null,
+            deleted: false,
+            securityStamp: "stamp",
+            mustChangePassword: false);
+
+    /// <summary>Arranges no incomes or expenditures, in range or ever.</summary>
+    private void SetupEmptyFinancials()
+    {
+        _incomeRepo.Setup(r => r.GetByAccountEmailAndDateRangeAsync(It.IsAny<string>(), It.IsAny<DateTime>(), It.IsAny<DateTime>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync([]);
+        _expenditureRepo.Setup(r => r.GetByAccountEmailAndDateRangeAsync(It.IsAny<string>(), It.IsAny<DateTime>(), It.IsAny<DateTime>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync([]);
+        _incomeRepo.Setup(r => r.GetFirstByAccountEmailOrderedByCreatedAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((Income?)null);
+        _expenditureRepo.Setup(r => r.GetFirstByAccountEmailOrderedByCreatedAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((Expenditure?)null);
+    }
+
+    // -- GetSummaryAsync ------------------------------------------------------
+
+    /// <summary>Verifies that <c>GetSummaryAsync</c> returns expected selected year and month.</summary>
+    [Fact]
+    public async Task GetSummaryAsync_ReturnsExpectedSelectedYearAndMonth()
+    {
+        const string email = "user@example.com";
+        var account = MakeAccount(unit: null);
+        var assets = new List<Asset>();
+
+        _accountRepo.Setup(r => r.FindByEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(account);
+        _assetRepo.Setup(r => r.GetByAccountEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(assets);
+        _incomeRepo.Setup(r => r.GetFirstByAccountEmailOrderedByCreatedAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync((Income?)null);
+        _expenditureRepo.Setup(r => r.GetFirstByAccountEmailOrderedByCreatedAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync((Expenditure?)null);
+        var sut = CreateSut();
+
+        DashboardDto summary = await sut.GetSummaryAsync(email, "2025", "3", "UTC", TestContext.Current.CancellationToken);
+
+        Assert.Equal(2025, summary.SelectedYear);
+        Assert.Equal(3, summary.SelectedMonth);
+    }
+
+    /// <summary>
+    /// Verifies that the configured demo account always sees the configured fixed period,
+    /// regardless of the year/month it was actually requested with.
+    /// </summary>
+    [Fact]
+    public async Task GetSummaryAsync_OverridesYearAndMonth_ForConfiguredDemoAccount()
+    {
+        const string email = "demo@maroik.com";
+        var account = MakeAccount(unit: null);
+        _accountRepo.Setup(r => r.FindByEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(account);
+        _assetRepo.Setup(r => r.GetByAccountEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync([]);
+        _incomeRepo.Setup(r => r.GetFirstByAccountEmailOrderedByCreatedAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync((Income?)null);
+        _expenditureRepo.Setup(r => r.GetFirstByAccountEmailOrderedByCreatedAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync((Expenditure?)null);
+        var sut = CreateSut(new ServerSetting
+        {
+            DemoAccountEmail = email,
+            DemoDashboardYear = "2025",
+            DemoDashboardMonth = "6"
+        });
+
+        DashboardDto summary = await sut.GetSummaryAsync(email, "1999", "1", "UTC", TestContext.Current.CancellationToken);
+
+        Assert.Equal(2025, summary.SelectedYear);
+        Assert.Equal(6, summary.SelectedMonth);
+    }
+
+    /// <summary>Verifies that a non-demo account is unaffected by a configured demo account override.</summary>
+    [Fact]
+    public async Task GetSummaryAsync_DoesNotOverrideYearAndMonth_ForNonDemoAccount()
+    {
+        const string email = "user@example.com";
+        var account = MakeAccount(unit: null);
+        _accountRepo.Setup(r => r.FindByEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(account);
+        _assetRepo.Setup(r => r.GetByAccountEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync([]);
+        _incomeRepo.Setup(r => r.GetFirstByAccountEmailOrderedByCreatedAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync((Income?)null);
+        _expenditureRepo.Setup(r => r.GetFirstByAccountEmailOrderedByCreatedAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync((Expenditure?)null);
+        var sut = CreateSut(new ServerSetting
+        {
+            DemoAccountEmail = "demo@maroik.com",
+            DemoDashboardYear = "2025",
+            DemoDashboardMonth = "6"
+        });
+
+        DashboardDto summary = await sut.GetSummaryAsync(email, "2020", "4", "UTC", TestContext.Current.CancellationToken);
+
+        Assert.Equal(2020, summary.SelectedYear);
+        Assert.Equal(4, summary.SelectedMonth);
+    }
+
+    /// <summary>Verifies that <c>GetSummaryAsync</c> uses current year and month when invalid input given.</summary>
+    [Fact]
+    public async Task GetSummaryAsync_UsesCurrentYearAndMonth_WhenInvalidInputGiven()
+    {
+        const string email = "user@example.com";
+        var account = MakeAccount(unit: null);
+        _accountRepo.Setup(r => r.FindByEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(account);
+        _assetRepo.Setup(r => r.GetByAccountEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync([]);
+        _incomeRepo.Setup(r => r.GetFirstByAccountEmailOrderedByCreatedAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync((Income?)null);
+        _expenditureRepo.Setup(r => r.GetFirstByAccountEmailOrderedByCreatedAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync((Expenditure?)null);
+        var sut = CreateSut();
+
+        DashboardDto summary = await sut.GetSummaryAsync(email, "bad", "bad", "UTC", TestContext.Current.CancellationToken);
+
+        Assert.Equal(Now.Year, summary.SelectedYear);
+        Assert.Equal(Now.Month, summary.SelectedMonth);
+    }
+
+    /// <summary>
+    /// Regression test: month=13 parses successfully as an int but is out of DateTime's valid
+    /// range, so <c>new DateTime(yearInt, monthInt, 1)</c> would throw. An asset must be present
+    /// (giving a non-null DefaultMonetaryUnit) so the code path that builds that DateTime actually
+    /// runs. Verifies the out-of-range month is caught by falling back to the current month
+    /// rather than crashing the summary endpoint.
+    /// </summary>
+    [Fact]
+    public async Task GetSummaryAsync_FallsBackToCurrentMonth_WhenMonthIsOutOfRange()
+    {
+        const string email = "user@example.com";
+        var account = MakeAccount(unit: "KRW");
+        _accountRepo.Setup(r => r.FindByEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(account);
+        _assetRepo.Setup(r => r.GetByAccountEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync([MakeAsset("Bank")]);
+        SetupEmptyFinancials();
+        var sut = CreateSut();
+
+        DashboardDto summary = await sut.GetSummaryAsync(email, "2025", "13", "UTC", TestContext.Current.CancellationToken);
+
+        Assert.Equal(2025, summary.SelectedYear);
+        Assert.Equal(Now.Month, summary.SelectedMonth);
+    }
+
+    /// <summary>Verifies that <c>GetSummaryAsync</c> sets default monetary unit when account has none but assets exist.</summary>
+    [Fact]
+    public async Task GetSummaryAsync_SetsDefaultMonetaryUnit_WhenAccountHasNoneButAssetsExist()
+    {
+        const string email = "user@example.com";
+        var account = MakeAccount(unit: null);
+        var assets = new List<Asset>
+        {
+            MakeAsset("Wallet"),
+            MakeAsset("Checking"),
+            MakeAsset("Savings", "USD")
+        };
+
+        _accountRepo.Setup(r => r.FindByEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(account);
+        _assetRepo.Setup(r => r.GetByAccountEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(assets);
+        SetupEmptyFinancials();
+        var sut = CreateSut();
+
+        DashboardDto summary = await sut.GetSummaryAsync(email, "2025", "1", "UTC", TestContext.Current.CancellationToken);
+
+        // Most-used unit is KRW (2 assets), and the self-correction is persisted back to the
+        // account (matches main) so other screens reading Account.DefaultMonetaryUnit directly
+        // stay in sync with what the dashboard displays.
+        Assert.Equal("KRW", summary.DefaultMonetaryUnit);
+        _accountRepo.Verify(r => r.UpdateDefaultMonetaryUnitAsync(email, "KRW", It.IsAny<CancellationToken>()), Times.Once);
+        _accountRepo.Verify(r => r.UpdateEntityAsync(It.IsAny<Account>(), It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    /// <summary>Verifies that <c>GetSummaryAsync</c> clears default monetary unit when no assets exist.</summary>
+    [Fact]
+    public async Task GetSummaryAsync_ClearsDefaultMonetaryUnit_WhenNoAssetsExist()
+    {
+        const string email = "user@example.com";
+        var account = MakeAccount(unit: "KRW");
+        _accountRepo.Setup(r => r.FindByEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(account);
+        _assetRepo.Setup(r => r.GetByAccountEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync([]);
+        _incomeRepo.Setup(r => r.GetFirstByAccountEmailOrderedByCreatedAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync((Income?)null);
+        _expenditureRepo.Setup(r => r.GetFirstByAccountEmailOrderedByCreatedAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync((Expenditure?)null);
+        var sut = CreateSut();
+
+        DashboardDto summary = await sut.GetSummaryAsync(email, "2025", "1", "UTC", TestContext.Current.CancellationToken);
+
+        Assert.Null(summary.DefaultMonetaryUnit);
+        _accountRepo.Verify(r => r.UpdateDefaultMonetaryUnitAsync(email, null, It.IsAny<CancellationToken>()), Times.Once);
+        _accountRepo.Verify(r => r.UpdateEntityAsync(It.IsAny<Account>(), It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    /// <summary>
+    /// Verifies that a soft-deleted asset is excluded from the dashboard's visible asset card
+    /// list, but — as the currency lookup covers the full asset list, deleted included — still counts toward the MonetaryUnit options and effective-currency calculation.
+    /// </summary>
+    [Fact]
+    public async Task GetSummaryAsync_ExcludesDeletedAssets_FromVisibleAssetsListOnly()
+    {
+        const string email = "user@example.com";
+        var account = MakeAccount(unit: null);
+        var assets = new List<Asset>
+        {
+            MakeAsset("Wallet"),
+            MakeAsset("OldForeignAccount", "USD", deleted: true)
+        };
+
+        _accountRepo.Setup(r => r.FindByEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(account);
+        _assetRepo.Setup(r => r.GetByAccountEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(assets);
+        SetupEmptyFinancials();
+        var sut = CreateSut();
+
+        DashboardDto summary = await sut.GetSummaryAsync(email, "2025", "1", "UTC", TestContext.Current.CancellationToken);
+
+        // The visible asset card list excludes deleted assets.
+        Assert.Single(summary.Assets);
+
+        // The currency lookup covers the full asset list, deleted included, so the MonetaryUnit
+        // options and effective-currency resolution must still see the deleted asset's currency —
+        // otherwise an account whose only assets are deleted would resolve to no currency and its
+        // whole income/expenditure section would silently disappear from the dashboard.
+        Assert.Contains("USD", summary.MonetaryUnits);
+        Assert.Equal("KRW", summary.DefaultMonetaryUnit);
+
+        // Rows tied to the deleted asset still need its currency, so the lookup covers every asset.
+        Assert.Equal("USD", summary.CurrencyByProduct["OldForeignAccount"]);
+        Assert.Equal("KRW", summary.CurrencyByProduct["Wallet"]);
+    }
+
+    /// <summary>
+    /// Verifies that when an account's only asset has been soft-deleted, the dashboard still
+    /// resolves a DefaultMonetaryUnit instead of going empty, since the currency resolution
+    /// considers deleted assets too.
+    /// </summary>
+    [Fact]
+    public async Task GetSummaryAsync_ResolvesDefaultMonetaryUnit_WhenOnlyAssetIsDeleted()
+    {
+        const string email = "user@example.com";
+        var account = MakeAccount(unit: "KRW");
+        var assets = new List<Asset> { MakeAsset("OldWallet", deleted: true) };
+
+        _accountRepo.Setup(r => r.FindByEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(account);
+        _assetRepo.Setup(r => r.GetByAccountEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(assets);
+        SetupEmptyFinancials();
+        var sut = CreateSut();
+
+        DashboardDto summary = await sut.GetSummaryAsync(email, "2025", "1", "UTC", TestContext.Current.CancellationToken);
+
+        Assert.Empty(summary.Assets);
+        Assert.Equal("KRW", summary.DefaultMonetaryUnit);
+    }
+
+    /// <summary>
+    /// The demo account is browsed anonymously and its data is pre-seeded and fixed, so
+    /// <c>GetSummaryAsync</c> must never issue the DefaultMonetaryUnit self-correction write for it
+    /// (that would fire on ordinary anonymous page views).
+    /// </summary>
+    [Fact]
+    public async Task GetSummaryAsync_DoesNotPersistSelfCorrection_ForDemoAccount()
+    {
+        const string email = "demo@maroik.com";
+        var account = MakeAccount(email, unit: null);
+        _accountRepo.Setup(r => r.FindByEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(account);
+        _assetRepo.Setup(r => r.GetByAccountEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync([MakeAsset("Wallet")]);
+        SetupEmptyFinancials();
+        var sut = CreateSut(new ServerSetting
+        {
+            DemoAccountEmail = email,
+            DemoDashboardYear = "2025",
+            DemoDashboardMonth = "6"
+        });
+
+        DashboardDto summary = await sut.GetSummaryAsync(email, "2025", "6", "UTC", TestContext.Current.CancellationToken);
+
+        // The value still resolves for display...
+        Assert.Equal("KRW", summary.DefaultMonetaryUnit);
+        // ...but is not written back (the service self-corrects through the column-scoped update).
+        _accountRepo.Verify(r => r.UpdateDefaultMonetaryUnitAsync(
+            It.IsAny<string>(), It.IsAny<string?>(), It.IsAny<CancellationToken>()), Times.Never);
+        _accountRepo.Verify(r => r.UpdateEntityAsync(It.IsAny<Account>(), It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    /// <summary>
+    /// Verifies that the year-month totals are correctly derived by filtering the already-fetched
+    /// year-range results in memory, and that only one date-range query per repository is issued —
+    /// regression test for a fix that dropped two of four sequential DB round trips.
+    /// </summary>
+    [Fact]
+    public async Task GetSummaryAsync_DerivesYearMonthTotals_FromSingleYearRangeQueryPerRepository()
+    {
+        const string email = "user@example.com";
+        var account = MakeAccount(unit: "KRW");
+        _accountRepo.Setup(r => r.FindByEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(account);
+        _assetRepo.Setup(r => r.GetByAccountEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync([MakeAsset("Wallet")]);
+
+        var inMonth = Income.Reconstitute(1, email, "RegularIncome", "LaborIncome", null, 100m, "KRW", "Wallet", null,
+            new DateTime(2025, 3, 15, 0, 0, 0, DateTimeKind.Utc), DateTime.UtcNow);
+        var outOfMonth = Income.Reconstitute(2, email, "RegularIncome", "LaborIncome", null, 200m, "KRW", "Wallet", null,
+            new DateTime(2025, 7, 1, 0, 0, 0, DateTimeKind.Utc), DateTime.UtcNow);
+
+        _incomeRepo.Setup(r => r.GetByAccountEmailAndDateRangeAsync(email, It.IsAny<DateTime>(), It.IsAny<DateTime>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync([inMonth, outOfMonth]);
+        _expenditureRepo.Setup(r => r.GetByAccountEmailAndDateRangeAsync(email, It.IsAny<DateTime>(), It.IsAny<DateTime>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync([]);
+        _incomeRepo.Setup(r => r.GetFirstByAccountEmailOrderedByCreatedAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync((Income?)null);
+        _expenditureRepo.Setup(r => r.GetFirstByAccountEmailOrderedByCreatedAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync((Expenditure?)null);
+        var sut = CreateSut();
+
+        DashboardDto summary = await sut.GetSummaryAsync(email, "2025", "3", "UTC", TestContext.Current.CancellationToken);
+
+        Assert.Equal(2, summary.YearIncomes.Count);
+        Assert.Single(summary.YearMonthIncomes);
+        _incomeRepo.Verify(r => r.GetByAccountEmailAndDateRangeAsync(email, It.IsAny<DateTime>(), It.IsAny<DateTime>(), It.IsAny<CancellationToken>()), Times.Once);
+        _expenditureRepo.Verify(r => r.GetByAccountEmailAndDateRangeAsync(email, It.IsAny<DateTime>(), It.IsAny<DateTime>(), It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    // -- GetSummaryAsync: income/expenditure breakdown -------------------------
+
+    /// <summary>
+    /// Verifies that <c>GetSummaryAsync</c> computes the per-main-class/subclass income breakdown
+    /// (via <see cref="FinanceBreakdownPolicy"/>) itself, rather than leaving that arithmetic to the
+    /// presentation layer -- <c>DashboardViewModelMapper</c> now only copies these pre-computed
+    /// numbers onto the view model.
+    /// </summary>
+    [Fact]
+    public async Task GetSummaryAsync_ComputesIncomeBreakdown_PerMainClassAndSubClass()
+    {
+        const string email = "user@example.com";
+        _accountRepo.Setup(r => r.FindByEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(MakeAccount(unit: "KRW"));
+        _assetRepo.Setup(r => r.GetByAccountEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync([MakeAsset("Wallet")]);
+        SetupEmptyFinancials();
+
+        List<Income> yearIncomes =
+        [
+            Income.Reconstitute(1, email, "RegularIncome", "LaborIncome", null, 600m, "KRW", "Wallet", null, DateTime.UtcNow, DateTime.UtcNow),
+            Income.Reconstitute(2, email, "RegularIncome", "BusinessIncome", null, 400m, "KRW", "Wallet", null, DateTime.UtcNow, DateTime.UtcNow),
+            Income.Reconstitute(3, email, "IrregularIncome", "LaborIncome", null, 250m, "KRW", "Wallet", null, DateTime.UtcNow, DateTime.UtcNow),
+        ];
+        _incomeRepo.Setup(r => r.GetByAccountEmailAndDateRangeAsync(email, It.IsAny<DateTime>(), It.IsAny<DateTime>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(yearIncomes);
+        var sut = CreateSut();
+
+        DashboardDto summary = await sut.GetSummaryAsync(email, "2025", "1", "UTC", TestContext.Current.CancellationToken);
+
+        FinanceBreakdownDto regular = summary.YearIncomeBreakdown["RegularIncome"];
+        Assert.Equal(1000m, regular.Total);
+        Assert.Equal(600m, regular.AmountBySubClass["LaborIncome"]);
+        Assert.Equal(400m, regular.AmountBySubClass["BusinessIncome"]);
+        Assert.Equal(60.0, regular.PercentageBySubClass["LaborIncome"]);
+        Assert.Equal(40.0, regular.PercentageBySubClass["BusinessIncome"]);
+
+        FinanceBreakdownDto irregular = summary.YearIncomeBreakdown["IrregularIncome"];
+        Assert.Equal(250m, irregular.Total);
+        Assert.Equal(250m, irregular.AmountBySubClass["LaborIncome"]);
+        Assert.Equal(100.0, irregular.PercentageBySubClass["LaborIncome"]);
+    }
+
+    /// <summary>
+    /// Verifies that <c>GetSummaryAsync</c> computes the per-main-class/subclass expenditure
+    /// breakdown itself, covering all three expenditure main classes.
+    /// </summary>
+    [Fact]
+    public async Task GetSummaryAsync_ComputesExpenditureBreakdown_PerMainClassAndSubClass()
+    {
+        const string email = "user@example.com";
+        _accountRepo.Setup(r => r.FindByEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(MakeAccount(unit: "KRW"));
+        _assetRepo.Setup(r => r.GetByAccountEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync([MakeAsset("Card")]);
+        SetupEmptyFinancials();
+
+        List<Expenditure> yearExpenditures =
+        [
+            Expenditure.Reconstitute(1, email, "ConsumerSpending", "MealOrEatOutExpenses", null, 300m, "KRW", "Card", null, null, DateTime.UtcNow, DateTime.UtcNow),
+            Expenditure.Reconstitute(2, email, "ConsumerSpending", "HousingOrSuppliesCost", null, 700m, "KRW", "Card", null, null, DateTime.UtcNow, DateTime.UtcNow),
+            Expenditure.Reconstitute(3, email, "RegularSavings", "Deposit", null, 500m, "KRW", "Card", null, null, DateTime.UtcNow, DateTime.UtcNow),
+        ];
+        _expenditureRepo.Setup(r => r.GetByAccountEmailAndDateRangeAsync(email, It.IsAny<DateTime>(), It.IsAny<DateTime>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(yearExpenditures);
+        var sut = CreateSut();
+
+        DashboardDto summary = await sut.GetSummaryAsync(email, "2025", "1", "UTC", TestContext.Current.CancellationToken);
+
+        FinanceBreakdownDto consumer = summary.YearExpenditureBreakdown["ConsumerSpending"];
+        Assert.Equal(1000m, consumer.Total);
+        Assert.Equal(30.0, consumer.PercentageBySubClass["MealOrEatOutExpenses"]);
+        Assert.Equal(70.0, consumer.PercentageBySubClass["HousingOrSuppliesCost"]);
+
+        FinanceBreakdownDto savings = summary.YearExpenditureBreakdown["RegularSavings"];
+        Assert.Equal(500m, savings.Total);
+        Assert.Equal(100.0, savings.PercentageBySubClass["Deposit"]);
+
+        // NonConsumerSpending had no records this year -- still present, with a zero total and no
+        // percentage entries (matches FinanceBreakdownPolicy's zero-total behavior).
+        FinanceBreakdownDto nonConsumer = summary.YearExpenditureBreakdown["NonConsumerSpending"];
+        Assert.Equal(0m, nonConsumer.Total);
+        Assert.Empty(nonConsumer.PercentageBySubClass);
+    }
+
+    /// <summary>
+    /// Regression: <c>BuildBreakdown</c> now groups items by main class via a single
+    /// <see cref="Enumerable.ToLookup{TSource,TKey}(IEnumerable{TSource},Func{TSource,TKey})"/> pass
+    /// instead of re-filtering the full list once per known main class. An item whose main class is
+    /// not one of <c>IncomeClassPolicy.SubClassesByMainClass</c>'s keys must still be silently
+    /// excluded from every bucket -- neither crashing the lookup nor leaking into an unrelated class.
+    /// </summary>
+    [Fact]
+    public async Task GetSummaryAsync_IncomeWithUnrecognisedMainClass_IsExcludedFromEveryBucket()
+    {
+        const string email = "user@example.com";
+        _accountRepo.Setup(r => r.FindByEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(MakeAccount(unit: "KRW"));
+        _assetRepo.Setup(r => r.GetByAccountEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync([MakeAsset("Wallet")]);
+        SetupEmptyFinancials();
+
+        List<Income> yearIncomes =
+        [
+            Income.Reconstitute(1, email, "RegularIncome", "LaborIncome", null, 600m, "KRW", "Wallet", null, DateTime.UtcNow, DateTime.UtcNow),
+            Income.Reconstitute(2, email, "NotARealMainClass", "Whatever", null, 999m, "KRW", "Wallet", null, DateTime.UtcNow, DateTime.UtcNow),
+        ];
+        _incomeRepo.Setup(r => r.GetByAccountEmailAndDateRangeAsync(email, It.IsAny<DateTime>(), It.IsAny<DateTime>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(yearIncomes);
+        var sut = CreateSut();
+
+        DashboardDto summary = await sut.GetSummaryAsync(email, "2025", "1", "UTC", TestContext.Current.CancellationToken);
+
+        Assert.DoesNotContain("NotARealMainClass", summary.YearIncomeBreakdown.Keys);
+        FinanceBreakdownDto regular = summary.YearIncomeBreakdown["RegularIncome"];
+        Assert.Equal(600m, regular.Total);
+        Assert.Equal(100.0, regular.PercentageBySubClass["LaborIncome"]);
+    }
+
+    /// <summary>
+    /// Verifies that the year and year-month breakdowns are computed independently of their
+    /// respective (already year-month-filtered) lists, not from each other.
+    /// </summary>
+    [Fact]
+    public async Task GetSummaryAsync_ComputesYearAndYearMonthBreakdowns_Independently()
+    {
+        const string email = "user@example.com";
+        _accountRepo.Setup(r => r.FindByEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(MakeAccount(unit: "KRW"));
+        _assetRepo.Setup(r => r.GetByAccountEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync([MakeAsset("Wallet")]);
+        SetupEmptyFinancials();
+
+        var inMonth = Income.Reconstitute(1, email, "RegularIncome", "LaborIncome", null, 400m, "KRW", "Wallet", null,
+            new DateTime(2025, 3, 15, 0, 0, 0, DateTimeKind.Utc), DateTime.UtcNow);
+        var outOfMonth = Income.Reconstitute(2, email, "RegularIncome", "LaborIncome", null, 600m, "KRW", "Wallet", null,
+            new DateTime(2025, 7, 1, 0, 0, 0, DateTimeKind.Utc), DateTime.UtcNow);
+        _incomeRepo.Setup(r => r.GetByAccountEmailAndDateRangeAsync(email, It.IsAny<DateTime>(), It.IsAny<DateTime>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync([inMonth, outOfMonth]);
+        var sut = CreateSut();
+
+        DashboardDto summary = await sut.GetSummaryAsync(email, "2025", "3", "UTC", TestContext.Current.CancellationToken);
+
+        Assert.Equal(1000m, summary.YearIncomeBreakdown["RegularIncome"].Total);
+        Assert.Equal(400m, summary.YearMonthIncomeBreakdown["RegularIncome"].Total);
+        Assert.Equal(100.0, summary.YearMonthIncomeBreakdown["RegularIncome"].PercentageBySubClass["LaborIncome"]);
+    }
+
+    // -- GetNoticeCountsAsync -------------------------------------------------
+
+    /// <summary>Verifies that <c>GetNoticeCountsAsync</c> returns zero counts when no fixed items.</summary>
+    [Fact]
+    public async Task GetNoticeCountsAsync_ReturnsZeroCounts_WhenNoFixedItems()
+    {
+        const string email = "user@example.com";
+        _fixedIncomeRepo.Setup(r => r.GetByAccountEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync([]);
+        _fixedExpenditureRepo.Setup(r => r.GetByAccountEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync([]);
+        var sut = CreateSut();
+
+        NotificationDto counts = await sut.GetNoticeCountsAsync(email, 7, "UTC", TestContext.Current.CancellationToken);
+
+        Assert.Equal(0, counts.FixedIncomesNoticed);
+        Assert.Equal(0, counts.FixedExpendituresNoticed);
+        Assert.Equal(0, counts.FixedIncomesExpired);
+        Assert.Equal(0, counts.FixedExpendituresExpired);
+    }
+
+    /// <summary>Verifies that <c>GetNoticeCountsAsync</c> counts expired items when maturity date is past.</summary>
+    [Fact]
+    public async Task GetNoticeCountsAsync_CountsExpiredItems_WhenMaturityDateIsPast()
+    {
+        const string email = "user@example.com";
+        var pastDate = Now.Date.AddDays(-10);
+
+        _fixedIncomeRepo.Setup(r => r.GetByAccountEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(
+        [
+            FixedIncome.Reconstitute(
+                id: 1,
+                accountEmail: email,
+                mainClass: "RegularIncome",
+                subClass: "LaborIncome",
+                content: null,
+                amount: 100m,
+                monetaryUnit: "KRW",
+                depositMyAssetProductName: "Wallet",
+                depositMonth: 1,
+                depositDay: 1,
+                maturityDate: pastDate,
+                note: null,
+                unpunctuality: false,
+                created: DateTime.UtcNow,
+                updated: DateTime.UtcNow)
+        ]);
+        _fixedExpenditureRepo.Setup(r => r.GetByAccountEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(
+        [
+            FixedExpenditure.Reconstitute(
+                id: 1,
+                accountEmail: email,
+                mainClass: "RegularExpenditure",
+                subClass: "LivingExpenditure",
+                content: null,
+                amount: 100m,
+                monetaryUnit: "KRW",
+                paymentMethod: "Wallet",
+                myDepositAsset: null,
+                depositMonth: 1,
+                depositDay: 1,
+                maturityDate: pastDate,
+                note: null,
+                unpunctuality: false,
+                created: DateTime.UtcNow,
+                updated: DateTime.UtcNow)
+        ]);
+        var sut = CreateSut();
+
+        NotificationDto counts = await sut.GetNoticeCountsAsync(email, 7, "UTC", TestContext.Current.CancellationToken);
+
+        Assert.Equal(1, counts.FixedIncomesExpired);
+        Assert.Equal(1, counts.FixedExpendituresExpired);
+    }
+
+    /// <summary>Verifies that <c>GetNoticeCountsAsync</c> counts noticed when unpunctuality is true.</summary>
+    [Fact]
+    public async Task GetNoticeCountsAsync_CountsNoticed_WhenUnpunctualityIsTrue()
+    {
+        const string email = "user@example.com";
+        var futureDate = DateTime.UtcNow.Date.AddYears(1);
+
+        _fixedIncomeRepo.Setup(r => r.GetByAccountEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(
+        [
+            FixedIncome.Reconstitute(
+                id: 1,
+                accountEmail: email,
+                mainClass: "RegularIncome",
+                subClass: "LaborIncome",
+                content: null,
+                amount: 100m,
+                monetaryUnit: "KRW",
+                depositMyAssetProductName: "Wallet",
+                depositMonth: 1,
+                depositDay: 1,
+                maturityDate: futureDate,
+                note: null,
+                unpunctuality: true,
+                created: DateTime.UtcNow,
+                updated: DateTime.UtcNow)
+        ]);
+        _fixedExpenditureRepo.Setup(r => r.GetByAccountEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync([]);
+        var sut = CreateSut();
+
+        NotificationDto counts = await sut.GetNoticeCountsAsync(email, 7, "UTC", TestContext.Current.CancellationToken);
+
+        Assert.Equal(1, counts.FixedIncomesNoticed);
+    }
+
+    // -- GetServerResourceSummary ---------------------------------------------
+
+    /// <summary>Verifies that <c>GetServerResourceSummary</c> returns empty when files do not exist.</summary>
+    [Fact]
+    public void GetServerResourceSummary_ReturnsEmpty_WhenFilesDoNotExist()
+    {
+        var sut = CreateSut();
+
+        ServerResourceDto summary = sut.GetServerResourceSummary(
+            "nonexistent_host.txt",
+            "nonexistent_docker.txt");
+
+        Assert.Empty(summary.HostCpuInfo);
+        Assert.Empty(summary.HostMemoryInfo);
+        Assert.Empty(summary.HostDiskInfo);
+        Assert.Equal(0.0, summary.HostCpuNumeric);
+    }
+
+    /// <summary>Verifies that <c>GetServerResourceSummary</c> parses host cpu numeric when from host file.</summary>
+    [Fact]
+    public void GetServerResourceSummary_ParsesHostCpuNumeric_FromHostFile()
+    {
+        string hostFile = Path.GetTempFileName();
+        string dockerFile = Path.GetTempFileName();
+        try
+        {
+            File.WriteAllText(hostFile,
+                "Host CPU Information: 45.5%\nHost Memory Information: Memory: 4GB/8GB\nHost Disk Information: Disk: 100GB/500GB");
+            File.WriteAllText(dockerFile, "Docker Resource Usage:\napp 12.3% 100MiB / 512MiB");
+
+            var sut = CreateSut();
+            ServerResourceDto summary = sut.GetServerResourceSummary(hostFile, dockerFile);
+
+            Assert.Equal(45.5, summary.HostCpuNumeric, precision: 1);
+        }
+        finally
+        {
+            File.Delete(hostFile);
+            File.Delete(dockerFile);
+        }
+    }
+
+    /// <summary>Verifies that <c>GetServerResourceSummary</c> parses each docker container row into a typed <see cref="DockerContainerResourceDto"/>.</summary>
+    [Fact]
+    public void GetServerResourceSummary_ParsesDockerContainers_IntoTypedDtos()
+    {
+        string hostFile = Path.GetTempFileName();
+        string dockerFile = Path.GetTempFileName();
+        try
+        {
+            File.WriteAllText(hostFile, "Host CPU Information: 1%\nHost Memory Information: Memory: 1GB/2GB\nHost Disk Information: Disk: 1GB/2GB");
+            File.WriteAllText(dockerFile,
+                "Docker Resource Usage:\n" +
+                "NAME CPU% MEM USED / LIMIT\n" +
+                "web 12.3% 100MiB / 512MiB\n" +
+                "db 4.5% 1GiB / 2GiB");
+
+            var sut = CreateSut();
+            ServerResourceDto summary = sut.GetServerResourceSummary(hostFile, dockerFile);
+
+            Assert.Equal(2, summary.DockerContainerResult.Count);
+            Assert.Equal("web", summary.DockerContainerResult[0].Name);
+            Assert.Equal("12.3%", summary.DockerContainerResult[0].CpuPercent);
+            Assert.Equal("100MiB / 512MiB", summary.DockerContainerResult[0].MemUsageDisplay);
+            Assert.Equal("db", summary.DockerContainerResult[1].Name);
+        }
+        finally
+        {
+            File.Delete(hostFile);
+            File.Delete(dockerFile);
+        }
+    }
+
+    /// <summary>Verifies that <c>GetServerResourceSummary</c> returns an empty (not null) docker container list when the docker file is missing.</summary>
+    [Fact]
+    public void GetServerResourceSummary_ReturnsEmptyDockerContainerList_WhenDockerFileMissing()
+    {
+        var sut = CreateSut();
+
+        ServerResourceDto summary = sut.GetServerResourceSummary("nonexistent_host.txt", "nonexistent_docker.txt");
+
+        Assert.Empty(summary.DockerContainerResult);
+    }
+
+    /// <summary>
+    /// Regression test: when the docker resource file's content doesn't contain the
+    /// "Docker Resource Usage:" marker at all (e.g. the collection script's output format
+    /// changed, or it just wrote an error message), <c>ExtractSection</c> must return an empty
+    /// section instead of a garbage substring taken from near the start of the unrelated content —
+    /// a missing start marker previously still produced a non-empty slice when no end marker was
+    /// given, because the "not found" (-1) IndexOf result was silently added to the marker length
+    /// instead of being treated as "not found".
+    /// </summary>
+    [Fact]
+    public void GetServerResourceSummary_ReturnsEmptyDockerContainerList_WhenStartMarkerMissingFromDockerFile()
+    {
+        string hostFile = Path.GetTempFileName();
+        string dockerFile = Path.GetTempFileName();
+        try
+        {
+            // No "Docker Resource Usage:" marker anywhere in this content. The leading junk line is
+            // longer than the marker text so that, under the pre-fix bug, the wrongly-computed start
+            // index still lands inside it — leaving the real header/data lines below intact in the
+            // (incorrectly non-empty) extracted section, which would otherwise get parsed into fake
+            // container rows despite the marker never having been found.
+            File.WriteAllText(dockerFile,
+                new string('x', 50) + "\n" +
+                "NAME CPU% MEM USED / LIMIT\n" +
+                "web 12.3% 100MiB / 512MiB\n" +
+                "db 4.5% 1GiB / 2GiB");
+
+            var sut = CreateSut();
+            ServerResourceDto summary = sut.GetServerResourceSummary(hostFile, dockerFile);
+
+            Assert.Empty(summary.DockerContainerResult);
+        }
+        finally
+        {
+            File.Delete(hostFile);
+            File.Delete(dockerFile);
+        }
+    }
+
+    // -- GetSummaryAsync: currency filter and start year ------------------------------
+
+    /// <summary>Arranges the account (default unit <paramref name="defaultUnit"/>), its assets, the in-range incomes/expenditures, and the first-ever income/expenditure.</summary>
+    private void GivenSummaryInputs(IEnumerable<Asset> assets, List<Income> incomes, List<Expenditure> expenditures,
+        Income? firstIncome = null, Expenditure? firstExpenditure = null, string? defaultUnit = "KRW")
+    {
+        _accountRepo.Setup(r => r.FindByEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(MakeAccount(unit: defaultUnit));
+        _assetRepo.Setup(r => r.GetByAccountEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync([.. assets]);
+        _incomeRepo.Setup(r => r.GetByAccountEmailAndDateRangeAsync(It.IsAny<string>(), It.IsAny<DateTime>(), It.IsAny<DateTime>(), It.IsAny<CancellationToken>())).ReturnsAsync(incomes);
+        _expenditureRepo.Setup(r => r.GetByAccountEmailAndDateRangeAsync(It.IsAny<string>(), It.IsAny<DateTime>(), It.IsAny<DateTime>(), It.IsAny<CancellationToken>())).ReturnsAsync(expenditures);
+        _incomeRepo.Setup(r => r.GetFirstByAccountEmailOrderedByCreatedAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(firstIncome);
+        _expenditureRepo.Setup(r => r.GetFirstByAccountEmailOrderedByCreatedAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(firstExpenditure);
+    }
+
+    /// <summary>A KRW income into <paramref name="asset"/> created at <paramref name="created"/>.</summary>
+    private static Income IncomeAt(long id, string asset, decimal amount, DateTime created) =>
+        Income.Reconstitute(id, "user@example.com", "RegularIncome", "LaborIncome", null, amount, "KRW", asset, null, created, created);
+
+    /// <summary>A KRW expenditure paid by <paramref name="paymentMethod"/> created at <paramref name="created"/>.</summary>
+    private static Expenditure ExpenditureAt(long id, string paymentMethod, decimal amount, DateTime created) =>
+        Expenditure.Reconstitute(id, "user@example.com", "ConsumerSpending", "MealOrEatOutExpenses", null, amount, "KRW", paymentMethod, "", null, created, created);
+
+    /// <summary>
+    /// Only rows whose asset uses the account's default currency are totaled (mixing currencies would
+    /// add unlike amounts), but the product→currency lookup still lists every asset for the view.
+    /// </summary>
+    [Fact]
+    public async Task GetSummaryAsync_TotalsOnlyRowsInTheDefaultCurrency()
+    {
+        var march = new DateTime(2025, 3, 15, 0, 0, 0, DateTimeKind.Utc);
+        GivenSummaryInputs(
+            [MakeAsset("Wallet"), MakeAsset("UsdWallet", "USD")],
+            [IncomeAt(1, "Wallet", 100m, march), IncomeAt(2, "UsdWallet", 999m, march)],
+            [ExpenditureAt(3, "Wallet", 10m, march), ExpenditureAt(4, "UsdWallet", 888m, march)]);
+
+        DashboardDto summary = await CreateSut().GetSummaryAsync("user@example.com", "2025", "3", "UTC", TestContext.Current.CancellationToken);
+
+        Assert.Equal([1L], summary.YearIncomes.Select(i => i.Id));
+        Assert.Equal([1L], summary.YearMonthIncomes.Select(i => i.Id));
+        Assert.Equal([3L], summary.YearExpenditures.Select(e => e.Id));
+        Assert.Equal([3L], summary.YearMonthExpenditures.Select(e => e.Id));
+        Assert.Equal("USD", summary.CurrencyByProduct["UsdWallet"]);
+    }
+
+    /// <summary>A transaction on a since-deleted asset still resolves its currency and stays in the totals.</summary>
+    [Fact]
+    public async Task GetSummaryAsync_KeepsTransactionsOnDeletedAssets_InTheTotals()
+    {
+        var march = new DateTime(2025, 3, 15, 0, 0, 0, DateTimeKind.Utc);
+        GivenSummaryInputs([MakeAsset("OldWallet", deleted: true)], [IncomeAt(1, "OldWallet", 100m, march)], []);
+
+        DashboardDto summary = await CreateSut().GetSummaryAsync("user@example.com", "2025", "3", "UTC", TestContext.Current.CancellationToken);
+
+        Assert.Equal([1L], summary.YearIncomes.Select(i => i.Id));
+    }
+
+    /// <summary>The start year is the earlier of the first income and the first expenditure.</summary>
+    [Fact]
+    public async Task GetSummaryAsync_StartYear_IsTheEarlierOfTheFirstIncomeAndTheFirstExpenditure()
+    {
+        GivenSummaryInputs([MakeAsset("Wallet")], [], [],
+            firstIncome: IncomeAt(1, "Wallet", 1m, new DateTime(2023, 6, 1, 0, 0, 0, DateTimeKind.Utc)),
+            firstExpenditure: ExpenditureAt(2, "Wallet", 1m, new DateTime(2021, 2, 1, 0, 0, 0, DateTimeKind.Utc)));
+
+        DashboardDto summary = await CreateSut().GetSummaryAsync("user@example.com", "2025", "3", "UTC", TestContext.Current.CancellationToken);
+
+        Assert.Equal(2021, summary.StartYear);
+    }
+
+    /// <summary>The start year is read in the user's own time zone: a UTC instant just before New Year is already next year in Seoul.</summary>
+    [Fact]
+    public async Task GetSummaryAsync_StartYear_IsConvertedToTheUsersTimeZone()
+    {
+        GivenSummaryInputs([MakeAsset("Wallet")], [], [],
+            firstIncome: IncomeAt(1, "Wallet", 1m, new DateTime(2024, 12, 31, 20, 0, 0, DateTimeKind.Utc)));
+
+        DashboardDto utc = await CreateSut().GetSummaryAsync("user@example.com", "2025", "3", "UTC", TestContext.Current.CancellationToken);
+        DashboardDto seoul = await CreateSut().GetSummaryAsync("user@example.com", "2025", "3", "Asia/Seoul", TestContext.Current.CancellationToken);
+
+        Assert.Equal(2024, utc.StartYear);
+        Assert.Equal(2025, seoul.StartYear);
+    }
+
+    /// <summary>An account with no transactions yet starts "this year".</summary>
+    [Fact]
+    public async Task GetSummaryAsync_StartYear_IsTheCurrentYear_WhenThereAreNoTransactions()
+    {
+        GivenSummaryInputs([MakeAsset("Wallet")], [], []);
+
+        DashboardDto summary = await CreateSut().GetSummaryAsync("user@example.com", "2025", "3", "UTC", TestContext.Current.CancellationToken);
+
+        Assert.Equal(DateTime.UtcNow.Year, summary.StartYear);
+    }
+
+    // -- GetNoticeCountsAsync: fixed expenditures ------------------------------------
+
+    /// <summary>A fixed expenditure maturing on <paramref name="maturity"/>, with the "always notify" flag set by <paramref name="unpunctual"/>.</summary>
+    private static FixedExpenditure FixedExpenditureDue(DateTime maturity, bool unpunctual = false) =>
+        FixedExpenditure.Reconstitute(1, "user@example.com", "ConsumerSpending", "MealOrEatOutExpenses", null, 100m, "KRW",
+            "Wallet", null, 1, 1, maturity, null, unpunctual, DateTime.UtcNow, DateTime.UtcNow);
+
+    /// <summary>Fixed expenditures are counted like fixed incomes: "always notify" items are noticed, past-maturity ones are expired.</summary>
+    [Fact]
+    public async Task GetNoticeCountsAsync_CountsNoticedAndExpiredFixedExpenditures()
+    {
+        _fixedIncomeRepo.Setup(r => r.GetByAccountEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync([]);
+        _fixedExpenditureRepo.Setup(r => r.GetByAccountEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(
+        [
+            FixedExpenditureDue(DateTime.UtcNow.Date.AddYears(1), unpunctual: true),
+            FixedExpenditureDue(DateTime.UtcNow.Date.AddYears(-1)),
+        ]);
+
+        NotificationDto counts = await CreateSut().GetNoticeCountsAsync("user@example.com", 7, "UTC", TestContext.Current.CancellationToken);
+
+        Assert.Equal(1, counts.FixedExpendituresNoticed);
+        Assert.Equal(1, counts.FixedExpendituresExpired);
+        Assert.Equal(0, counts.FixedIncomesNoticed);
+        Assert.Equal(0, counts.FixedIncomesExpired);
+    }
+
+    // -- GetServerResourceSummary: memory / disk rendering ----------------------------
+
+    /// <summary>
+    /// The collector writes <c>Memory: total / usage</c> and <c>Disk: total / usage</c>; the summary
+    /// shows them as <c>usage / total</c>, and reads the CPU percentage out of the "CPU Usage: n%" line.
+    /// </summary>
+    [Fact]
+    public void GetServerResourceSummary_RendersMemoryAndDiskAsUsageOverTotal()
+    {
+        string hostFile = Path.GetTempFileName();
+        try
+        {
+            File.WriteAllText(hostFile,
+                "Host CPU Information:\nCPU Usage: 37.5%\nHost Memory Information:\nMemory: 8.0Gi / 3.2Gi\nHost Disk Information:\nDisk: 500GB / 120GB\n");
+
+            ServerResourceDto summary = CreateSut().GetServerResourceSummary(hostFile, "nonexistent_docker.txt");
+
+            Assert.Equal("3.2Gi / 8.0Gi", summary.MemUsageLimit);
+            Assert.Equal("120GB / 500GB", summary.DiskUsageLimit);
+            Assert.Equal(37.5, summary.HostCpuNumeric, precision: 1);
+        }
+        finally
+        {
+            File.Delete(hostFile);
+        }
+    }
+
+    /// <summary>A memory/disk line without the "total / usage" separator renders nothing instead of throwing.</summary>
+    [Fact]
+    public void GetServerResourceSummary_RendersNothing_WhenTheMemoryAndDiskLinesHaveNoSeparator()
+    {
+        string hostFile = Path.GetTempFileName();
+        try
+        {
+            File.WriteAllText(hostFile, "Host CPU Information: 1%\nHost Memory Information:\nMemory: unavailable\nHost Disk Information:\nDisk: unknown\n");
+
+            ServerResourceDto summary = CreateSut().GetServerResourceSummary(hostFile, "nonexistent_docker.txt");
+
+            Assert.Equal("", summary.MemUsageLimit);
+            Assert.Equal("", summary.DiskUsageLimit);
+        }
+        finally
+        {
+            File.Delete(hostFile);
+        }
+    }
+
+    // -- Range edges, missing account, year window, notice counting and resource parsing ----
+
+    /// <summary>The first and last valid month and year are kept as asked, not replaced with today's.</summary>
+    [Theory]
+    [InlineData("2025", "1", 2025, 1)]
+    [InlineData("2025", "12", 2025, 12)]
+    [InlineData("1", "3", 1, 3)]
+    [InlineData("9998", "3", 9998, 3)]
+    public async Task GetSummaryAsync_KeepsTheBoundaryYearsAndMonths(string year, string month, int expectedYear, int expectedMonth)
+    {
+        GivenSummaryInputs([], [], [], defaultUnit: null);
+
+        DashboardDto summary = await CreateSut().GetSummaryAsync("user@example.com", year, month, "UTC", TestContext.Current.CancellationToken);
+
+        Assert.Equal(expectedYear, summary.SelectedYear);
+        Assert.Equal(expectedMonth, summary.SelectedMonth);
+    }
+
+    /// <summary>An e-mail without an account has no default currency (and nothing is written back).</summary>
+    [Fact]
+    public async Task GetSummaryAsync_HasNoDefaultCurrency_WhenTheAccountDoesNotExist()
+    {
+        GivenSummaryInputs([MakeAsset("Wallet")], [], []);
+        _accountRepo.Setup(r => r.FindByEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync((Account?)null);
+
+        DashboardDto summary = await CreateSut().GetSummaryAsync("ghost@example.com", "2025", "3", "UTC", TestContext.Current.CancellationToken);
+
+        Assert.Null(summary.DefaultMonetaryUnit);
+        _accountRepo.Verify(r => r.UpdateDefaultMonetaryUnitAsync(It.IsAny<string>(), It.IsAny<string?>(), It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    /// <summary>The year totals are read for exactly the selected calendar year, [1 Jan, next 1 Jan).</summary>
+    [Fact]
+    public async Task GetSummaryAsync_QueriesTheSelectedCalendarYear()
+    {
+        GivenSummaryInputs([MakeAsset("Wallet")], [], []);
+
+        await CreateSut().GetSummaryAsync("user@example.com", "2025", "3", "UTC", TestContext.Current.CancellationToken);
+
+        var start = new DateTime(2025, 1, 1, 0, 0, 0, DateTimeKind.Utc);
+        var end = new DateTime(2026, 1, 1, 0, 0, 0, DateTimeKind.Utc);
+        _incomeRepo.Verify(r => r.GetByAccountEmailAndDateRangeAsync("user@example.com", start, end, It.IsAny<CancellationToken>()), Times.Once);
+        _expenditureRepo.Verify(r => r.GetByAccountEmailAndDateRangeAsync("user@example.com", start, end, It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    /// <summary>
+    /// The month totals take the rows from the first instant of the month up to, but not including, the first instant
+    /// of the next month; the year totals keep all of them.
+    /// </summary>
+    [Fact]
+    public async Task GetSummaryAsync_MonthTotals_IncludeTheMonthsFirstInstant_AndExcludeTheNextMonthsFirstInstant()
+    {
+        var before = new DateTime(2025, 2, 28, 23, 59, 59, DateTimeKind.Utc);
+        var first = new DateTime(2025, 3, 1, 0, 0, 0, DateTimeKind.Utc);
+        var next = new DateTime(2025, 4, 1, 0, 0, 0, DateTimeKind.Utc);
+        GivenSummaryInputs([MakeAsset("Wallet")],
+            [IncomeAt(1, "Wallet", 1m, before), IncomeAt(2, "Wallet", 1m, first), IncomeAt(3, "Wallet", 1m, next)],
+            [ExpenditureAt(4, "Wallet", 1m, before), ExpenditureAt(5, "Wallet", 1m, first), ExpenditureAt(6, "Wallet", 1m, next)]);
+
+        DashboardDto summary = await CreateSut().GetSummaryAsync("user@example.com", "2025", "3", "UTC", TestContext.Current.CancellationToken);
+
+        Assert.Equal([2L], summary.YearMonthIncomes.Select(i => i.Id));
+        Assert.Equal([5L], summary.YearMonthExpenditures.Select(e => e.Id));
+        Assert.Equal(3, summary.YearIncomes.Count);
+        Assert.Equal(3, summary.YearExpenditures.Count);
+    }
+
+    /// <summary>A fixed expenditure outside its notice window (and not "always notify") is not counted as noticed.</summary>
+    [Fact]
+    public async Task GetNoticeCountsAsync_DoesNotCountAFixedExpenditureOutsideItsNoticeWindow()
+    {
+        _fixedIncomeRepo.Setup(r => r.GetByAccountEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync([]);
+        _fixedExpenditureRepo.Setup(r => r.GetByAccountEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync([FixedExpenditureDue(Now.AddYears(1))]); // due 1 January; "today" is 1 July
+
+        NotificationDto counts = await CreateSut().GetNoticeCountsAsync("user@example.com", 7, "UTC", TestContext.Current.CancellationToken);
+
+        Assert.Equal(0, counts.FixedExpendituresNoticed);
+    }
+
+    /// <summary>Writes the two resource files, runs the summary over them, and deletes them.</summary>
+    private ServerResourceDto SummarizeResources(string hostText, string dockerText)
+    {
+        string hostFile = Path.GetTempFileName();
+        string dockerFile = Path.GetTempFileName();
+        try
+        {
+            File.WriteAllText(hostFile, hostText);
+            File.WriteAllText(dockerFile, dockerText);
+            return CreateSut().GetServerResourceSummary(hostFile, dockerFile);
+        }
+        finally
+        {
+            File.Delete(hostFile);
+            File.Delete(dockerFile);
+        }
+    }
+
+    /// <summary>
+    /// A docker row with fewer than five columns (a truncated line) is skipped, while a row with more than five keeps
+    /// its first five.
+    /// </summary>
+    [Fact]
+    public void GetServerResourceSummary_SkipsTruncatedDockerRows_AndKeepsWiderOnes()
+    {
+        ServerResourceDto summary = SummarizeResources("",
+            "Docker Resource Usage:\nNAME CPU% MEM USED / LIMIT\nbroken 1%\nweb 12.3% 100MiB / 512MiB extra");
+
+        DockerContainerResourceDto web = Assert.Single(summary.DockerContainerResult);
+        Assert.Equal("web", web.Name);
+        Assert.Equal("100MiB / 512MiB", web.MemUsageDisplay);
+    }
+
+    /// <summary>The CPU section is the text between its marker and the memory marker, without either marker.</summary>
+    [Fact]
+    public void GetServerResourceSummary_ExtractsTheCpuSection_BetweenItsMarkers()
+    {
+        ServerResourceDto summary = SummarizeResources(
+            "Host CPU Information: 45.5%\nHost Memory Information: Memory: 4GB/8GB\nHost Disk Information: Disk: 1GB/2GB", "");
+
+        Assert.Equal("45.5%", summary.HostCpuInfo);
+    }
+
+    /// <summary>A section whose end marker is missing is empty (not the rest of the file, and no error).</summary>
+    [Fact]
+    public void GetServerResourceSummary_LeavesASectionEmpty_WhenItsEndMarkerIsMissing()
+    {
+        ServerResourceDto summary = SummarizeResources("Host CPU Information: 45.5%", "");
+
+        Assert.Equal("", summary.HostCpuInfo);
+        Assert.Equal(0, summary.HostCpuNumeric);
+    }
+
+    /// <summary>
+    /// The resource log is written by a shell script with a '.' decimal point, so the CPU figure is read with the
+    /// invariant culture, not the request's: under a ',' decimal culture "45.5" would otherwise read as 455.
+    /// </summary>
+    [Fact]
+    public void GetServerResourceSummary_ReadsTheHostCpuWithADotDecimalPoint_WhateverTheCurrentCulture()
+    {
+        CultureInfo original = CultureInfo.CurrentCulture;
+        CultureInfo.CurrentCulture = CultureInfo.GetCultureInfo("de-DE");
+        try
+        {
+            ServerResourceDto summary = SummarizeResources(
+                "Host CPU Information: 45.5%\nHost Memory Information: Memory: 4GB/8GB\nHost Disk Information: Disk: 1GB/2GB", "");
+
+            Assert.Equal(45.5, summary.HostCpuNumeric);
+        }
+        finally
+        {
+            CultureInfo.CurrentCulture = original;
+        }
+    }
+}

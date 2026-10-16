@@ -1,0 +1,70 @@
+:root {
+    --calendar-popup-border: #ccc;
+    --calendar-popup-shadow: rgba(0, 0, 0, 0.2);
+    --calendar-weekend-tint: rgba(80, 180, 255, 0.15);
+}
+
+.event-popup {
+    background-color: white;
+    border: 1px solid var(--calendar-popup-border);
+    box-shadow: 0 0 15px var(--calendar-popup-shadow);
+    width: 170px;
+    z-index: 10000;
+    padding: 10px;
+    border-radius: 5px;
+    color: black;
+}
+
+.popup-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+
+    & h5 {
+        margin: 0;
+        font-size: 16px;
+    }
+}
+
+#closeCalendarEventPopup {
+    background: none;
+    border: none;
+    font-size: 18px;
+    line-height: 1;
+    cursor: pointer;
+}
+
+.popup-body {
+    overflow: hidden;
+    max-height: 200px;
+
+    & p {
+        margin: 5px 0;
+        font-size: 14px;
+    }
+}
+
+.popup-footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: 5px;
+    margin-top: 10px;
+}
+
+.fc-day-sun,
+.fc-day-sat {
+    background-color: var(--calendar-weekend-tint);
+}
+
+.fc-dayGridMonth-button {
+    display: none !important;
+}
+
+.fc-event {
+    cursor: pointer;
+
+    & .fc-event-title {
+        cursor: pointer;
+    }
+}
