@@ -8,8 +8,37 @@
 # of overwriting the edit.
 # SKIP_CI_CHECK=1 ./Deploy.sh skips the CI lookup (e.g. GitHub's API is down); the images must still exist.
 REPO_DIR="/home/ubuntu/Maroik"
+REPO_URL="https://github.com/IkhyeonJo/Maroik.git"
 APP_SERVICES="maroik.website maroik.filestorage maroik.worker"
+
+# Run as ubuntu, not with sudo: the clone must belong to ubuntu, because AutoDeploy.sh (root's cron) runs git as
+# ubuntu. The commands below that need root use sudo themselves.
+if [ "$(id -u)" = "0" ]; then
+  echo "[ERROR] Run Deploy.sh as ubuntu (bash Maroik.DeployOps/Deploy.sh), not as root or with sudo."
+  exit 1
+fi
 cd "$REPO_DIR" || exit 1
+
+command -v git > /dev/null 2>&1 || sudo apt install -y git
+
+# First deploy on this box: only the server-only files were copied here. Turn the folder into a clone of the public
+# repository in place (git clone refuses a non-empty folder). None of the server-only files is tracked there, so the
+# checkout below adds the source next to them and never overwrites one.
+if [ ! -d "$REPO_DIR/.git" ]; then
+  echo "[INFO] $REPO_DIR is not a git clone yet: fetching $REPO_URL into it."
+  git init -q -b main "$REPO_DIR" \
+    && git -C "$REPO_DIR" remote add origin "$REPO_URL" \
+    || { echo "[ERROR] git init failed"; exit 1; }
+fi
+
+# The deploy bookkeeping files live in the clone but are not part of the repository.
+for f in .deployed-sha .failed-sha; do
+  grep -qxF "$f" "$REPO_DIR/.git/info/exclude" 2>/dev/null || echo "$f" >> "$REPO_DIR/.git/info/exclude"
+done
+
+# .env.prod holds the database password, the SMTP password and the tunnel token: owner-only.
+[ -f "$REPO_DIR/.env.prod" ] && chmod 600 "$REPO_DIR/.env.prod"
+
 git fetch -q origin main || { echo "[ERROR] git fetch failed"; exit 1; }
 DEPLOY_SHA=$(git rev-parse origin/main)
 
@@ -23,7 +52,9 @@ if [ "${SKIP_CI_CHECK:-0}" != "1" ]; then
   fi
 fi
 
-git checkout -q --detach "$DEPLOY_SHA" || { echo "[ERROR] git checkout failed (tracked file changed on this box?)"; exit 1; }
+# -f: on the first deploy the folder may still hold source files copied by hand from an older deploy; the repository's
+# version replaces them. Untracked and git-ignored files (all the server-only ones) are left alone.
+git checkout -f -q --detach "$DEPLOY_SHA" || { echo "[ERROR] git checkout failed"; exit 1; }
 MAROIK_TAG="sha-${DEPLOY_SHA:0:12}"
 echo "[INFO] Deploying $DEPLOY_SHA ($MAROIK_TAG)"
 
