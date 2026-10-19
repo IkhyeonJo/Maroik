@@ -1,17 +1,31 @@
 #!/bin/bash
 
-# Strip TypeScript debug artifacts from the custom client scripts before deploy.
-# site.js.map files and the trailing `//# sourceMappingURL=` comment are produced only by
-# `npm run build:debug` / `npm run watch` for local Chrome DevTools debugging and must never
-# ship. Release builds (tsconfig.build.json, used by `npm run build`, the .csproj target and
-# the Docker tsbuild stage) already omit them; this is the safety net for a checkout that was
-# built in debug mode on the box. See Maroik.Website/TypeScripts/README.md.
-WWWROOT="/home/ubuntu/Maroik/Maroik.Website/wwwroot"
-if [ -d "$WWWROOT" ]; then
-  find "$WWWROOT" -path '*/custom/*' -name '*.js.map' -type f -delete
-  find "$WWWROOT" -path '*/custom/*' -name '*.js' -type f -exec \
-    sed -i '/^\/\/# sourceMappingURL=/d' {} +
+# Full deploy of the latest main whose images CI published (.github/workflows/ci.yml: build-and-test -> publish).
+# The three app images (ghcr.io/ikhyeonjo/maroik-*:sha-<12-char commit>) are pulled, not built here.
+# /home/ubuntu/Maroik is a clone of github.com/IkhyeonJo/Maroik. The server-only files (.env.prod,
+# docker-compose.prod.yml, Maroik.Crontab, Maroik.DeployOps, the Production Init.sql, upload folders) are
+# git-ignored, so the checkout below never touches them; a tracked file edited on this box makes it fail instead
+# of overwriting the edit.
+# SKIP_CI_CHECK=1 ./Deploy.sh skips the CI lookup (e.g. GitHub's API is down); the images must still exist.
+REPO_DIR="/home/ubuntu/Maroik"
+APP_SERVICES="maroik.website maroik.filestorage maroik.worker"
+cd "$REPO_DIR" || exit 1
+git fetch -q origin main || { echo "[ERROR] git fetch failed"; exit 1; }
+DEPLOY_SHA=$(git rev-parse origin/main)
+
+if [ "${SKIP_CI_CHECK:-0}" != "1" ]; then
+  CI_STATE=$(curl -fsS "https://api.github.com/repos/IkhyeonJo/Maroik/commits/$DEPLOY_SHA/check-runs" \
+    | python3 -c "import sys,json; r=[c for c in json.load(sys.stdin)['check_runs'] if c['name']=='publish']; print((r[0]['conclusion'] or r[0]['status']) if r else 'none')")
+  if [ "$CI_STATE" != "success" ]; then
+    echo "[INFO] CI publish for $DEPLOY_SHA is '$CI_STATE', not success. Not deploying."
+    echo "[INFO] Wait for the publish job of the CI workflow, or deploy an older commit by hand."
+    exit 1
+  fi
 fi
+
+git checkout -q --detach "$DEPLOY_SHA" || { echo "[ERROR] git checkout failed (tracked file changed on this box?)"; exit 1; }
+MAROIK_TAG="sha-${DEPLOY_SHA:0:12}"
+echo "[INFO] Deploying $DEPLOY_SHA ($MAROIK_TAG)"
 
 # Target upload directories
 paths=(
@@ -56,11 +70,34 @@ sudo apt clean
 #sudo snap set nextcloud ports.http=8079
 #sudo snap set nextcloud ports.https=8080
 
-# Install Docker Compose
-sudo apt install docker-compose -y
+# Install Docker Compose v2 (`docker compose`). v1 (the `docker-compose` package, 1.29) fails with
+# KeyError 'ContainerConfig' when it recreates a container on recent Docker Engine versions, which is what
+# AutoDeploy.sh does on every deploy. The plugin comes from the same place as the engine: docker-compose-plugin with
+# Docker's own docker-ce, docker-compose-v2 with Ubuntu's docker.io (installing the Ubuntu one next to docker-ce would
+# pull in docker.io and clash with it).
+if ! sudo docker compose version > /dev/null 2>&1; then
+  if dpkg -s docker-ce > /dev/null 2>&1; then
+    sudo apt install -y docker-compose-plugin
+  else
+    sudo apt install -y docker-compose-v2
+  fi
+fi
+if ! sudo docker compose version > /dev/null 2>&1; then
+  echo "[ERROR] Docker Compose v2 (docker compose) is not available. Install it and run Deploy.sh again."
+  exit 1
+fi
+COMPOSE="docker compose"
 
 # Set permissions for scripts
 chmod 755 /home/ubuntu/Maroik/Maroik.Crontab/*.sh
+
+# check docker-compose.prod.yml file
+COMPOSE_PROD_PATH="/home/ubuntu/Maroik/docker-compose.prod.yml"
+if [ ! -f "$COMPOSE_PROD_PATH" ]; then
+  echo "[INFO] Deployment is not set up yet: $COMPOSE_PROD_PATH not found."
+  echo "[INFO] Set up the deployment files first."
+  exit 1
+fi
 
 # check .env.prod file
 ENV_PROD_PATH="/home/ubuntu/Maroik/.env.prod"
@@ -128,11 +165,19 @@ else
 fi
 
 # Start Docker Compose
-sudo docker-compose -f /home/ubuntu/Maroik/docker-compose.prod.yml up -d
+# The app images CI published for this commit; docker-compose.prod.yml names them ...:${MAROIK_TAG}.
+# `sudo env` because sudo drops the caller's environment.
+# shellcheck disable=SC2086  # APP_SERVICES is a space-separated list on purpose
+sudo env MAROIK_TAG="$MAROIK_TAG" $COMPOSE -f "$COMPOSE_PROD_PATH" pull $APP_SERVICES \
+  || { echo "[ERROR] Could not pull the $MAROIK_TAG images. Did the CI publish job push them, and are the packages public?"; exit 1; }
+sudo env MAROIK_TAG="$MAROIK_TAG" $COMPOSE -f "$COMPOSE_PROD_PATH" up -d
 
-# The images are built and running: drop the build cache and the intermediate build-stage images
-# (sdk / node stages) they leave behind. Images in use by the running containers are kept.
-sudo docker builder prune -af
+# AutoDeploy.sh deploys only commits after this one. Through sudo: AutoDeploy.sh runs as root (cron) and may
+# have written these files last.
+echo "$DEPLOY_SHA" | sudo tee "$REPO_DIR/.deployed-sha" > /dev/null
+sudo rm -f "$REPO_DIR/.failed-sha"
+
+# Drop the images earlier deploys left behind. Images in use by the running containers are kept.
 sudo docker image prune -f
 
 # Set up cron jobs

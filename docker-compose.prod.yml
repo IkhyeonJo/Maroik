@@ -2,12 +2,18 @@
 # ─────────────────────────────────────────────────────────────────────────────
 # Maroik — PRODUCTION compose stack (maroik.com, home server behind Cloudflare).
 #
-# Brought up by Maroik.DeployOps/Deploy.sh:
-#   sudo docker-compose -f docker-compose.prod.yml up -d
+# Brought up by Maroik.DeployOps/Deploy.sh (full deploy) and kept current by
+# Maroik.Crontab/AutoDeploy.sh (cron, app services only). Both set MAROIK_TAG.
 # Differences from docker-compose.debug.yml: reads .env.prod, seeds the DB from the
 # Production SQL scripts, `restart: unless-stopped` on every long-running service,
-# a Cloudflare Tunnel (cloudflared) instead of published ports, and the website image
-# is built WITHOUT TypeScript source maps (TS_SOURCEMAPS=false).
+# a Cloudflare Tunnel (cloudflared) instead of published ports, and the three app
+# services are NOT built here: they run the images CI (.github/workflows/ci.yml, publish job)
+# built, tested and pushed to ghcr.io, tagged sha-<12-char commit>. The website image
+# there is a release build: minified site.js, no TypeScript source maps.
+#
+# MAROIK_TAG has no default on purpose: run compose through Deploy.sh / AutoDeploy.sh, or
+# set it yourself (e.g. MAROIK_TAG=sha-2ecebf469478), so a bare `up` can never pull some
+# other image (a newer `latest` whose schema change has not been deployed yet).
 #
 # TLS ends at Cloudflare. cloudflared dials out to Cloudflare and hands each request to
 # maroik.website over plain HTTP on `backend`, so the host publishes no port at all and
@@ -122,19 +128,7 @@ services:
     # The ASP.NET Core MVC app. Plain HTTP on 80 (ASPNETCORE_URLS in .env.prod), reached
     # only by cloudflared over `backend`; the visitor's https arrives as X-Forwarded-Proto.
     maroik.website:
-        build :
-         context : .                                  # build context = repo root (Dockerfile COPYs across projects)
-         dockerfile : Maroik.Website/Dockerfile
-         # TS_SOURCEMAPS=false -> the Dockerfile "tsbuild" stage runs `npm run build`
-         # (tsconfig.build.json), which emits NO site.js.map and NO //# sourceMappingURL=
-         # comment: the production image carries no TypeScript debug artifact. This is the
-         # Dockerfile default; it is pinned here so the prod build is explicit and can't drift
-         # if the default changes. docker-compose.debug.yml sets "true" for container debugging.
-         # Belt-and-braces: Maroik.DeployOps/Deploy.sh also strips any stray *.js.map and the
-         # sourceMappingURL comment from the checkout before `docker-compose up`.
-         # See Maroik.Website/TypeScripts/README.md ("Debugging in Chrome").
-         args :
-           TS_SOURCEMAPS : "false"
+        image: ghcr.io/ikhyeonjo/maroik-website:${MAROIK_TAG:?set MAROIK_TAG or run Maroik.DeployOps/Deploy.sh}
         container_name: Maroik.Website
         logging: *default-logging
         restart: unless-stopped
@@ -159,9 +153,7 @@ services:
     # Internal file-serving/upload API. Not published; reached only from
     # maroik.website over `backend`. Runs plain HTTP on 80 (TLS ends at the edge).
     maroik.filestorage:
-        build :
-         context : .
-         dockerfile : Maroik.FileStorage/Dockerfile
+        image: ghcr.io/ikhyeonjo/maroik-filestorage:${MAROIK_TAG:?set MAROIK_TAG or run Maroik.DeployOps/Deploy.sh}
         container_name: Maroik.FileStorage
         logging: *default-logging
         restart: unless-stopped
@@ -181,9 +173,7 @@ services:
     # Headless background service: consumes RabbitMQ messages (e.g. sends email).
     # No network ports at all. Needs only postgresql + rabbitmq.
     maroik.worker:
-        build :
-         context : .
-         dockerfile : Maroik.Worker/Dockerfile
+        image: ghcr.io/ikhyeonjo/maroik-worker:${MAROIK_TAG:?set MAROIK_TAG or run Maroik.DeployOps/Deploy.sh}
         container_name: Maroik.Worker
         logging: *default-logging
         restart: unless-stopped
