@@ -118,15 +118,13 @@ else
     echo "[INFO] External drive mounted successfully at $EXTERNAL_DRIVE_MOUNT"
   fi
 
-  # An empty value would turn the paths below into /DB and /Files at the filesystem root.
   if [ -z "$BACKUP_BASE_DIR" ]; then
     echo "[INFO] BACKUP_BASE_DIR not configured in .env.prod"
     exit 1
   fi
 
-  # Create backup directory structure
-  sudo mkdir -p "$BACKUP_BASE_DIR/DB"
-  sudo mkdir -p "$BACKUP_BASE_DIR/Files"
+  # Create backup directory (Backup.sh stores Maroik-Backup-YYYY-MM-DD-HH-MM-SS.tar.xz here)
+  sudo mkdir -p "$BACKUP_BASE_DIR"
 fi
 
 # Start Docker Compose

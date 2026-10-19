@@ -1,3 +1,2 @@
-0 * * * * /bin/bash /home/ubuntu/Maroik/Maroik.Crontab/DBBackup.sh
-0 * * * * /bin/bash /home/ubuntu/Maroik/Maroik.Crontab/UploadFileBackup.sh
+0 * * * * /bin/bash /home/ubuntu/Maroik/Maroik.Crontab/Backup.sh
 * * * * * /bin/bash /home/ubuntu/Maroik/Maroik.Crontab/ResourceInfo.sh
