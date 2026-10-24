@@ -22,6 +22,9 @@ public static class FileStorageRefusals
     /// <summary>A completed File Manager upload whose received size differs from the declared size.</summary>
     public const string SizeMismatch = "The uploaded size does not match the declared size.";
 
+    /// <summary>A completed File Manager upload whose background scan failed for another reason than the scanner (logged by the service).</summary>
+    public const string StoreFailed = "The upload could not be stored.";
+
     /// <summary>A delete that names anything but a File Manager file (the attachments have no delete API).</summary>
     public const string NotAFileManagerFile = "Only a File Manager file can be deleted.";
 

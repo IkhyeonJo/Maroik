@@ -44,6 +44,12 @@ public sealed class E2EFileStorage : IFileClient
         return Task.FromResult(FileUploadResult.Stored);
     }
 
+    /// <summary>How many File Manager completions still answer "scanning" before one is decided (see <see cref="ScanFor"/>).</summary>
+    private int _scanningAnswers;
+
+    /// <summary>Makes the next <paramref name="answers"/> File Manager completions answer "scanning" (0 = decided at once).</summary>
+    public void ScanFor(int answers) => Interlocked.Exchange(ref _scanningAnswers, answers);
+
     /// <summary>The bytes received so far of each unfinished File Manager upload.</summary>
     private readonly ConcurrentDictionary<Guid, byte[]> _staging = new();
 
@@ -64,6 +70,11 @@ public sealed class E2EFileStorage : IFileClient
     /// <inheritdoc />
     public Task<FileUploadResult> CompleteFileManagerUploadAsync(Guid uploadId, long expectedSize, string fileStorageBaseUrl, CancellationToken ct = default)
     {
+        // The background virus scan is still running: nothing is decided, the staging bytes stay.
+        if (Interlocked.Decrement(ref _scanningAnswers) >= 0)
+            return Task.FromResult(FileUploadResult.Scanning);
+        Interlocked.Exchange(ref _scanningAnswers, 0);
+
         _staging.TryRemove(uploadId, out byte[]? received);
         received ??= [];
         if (received.Length != expectedSize) return Task.FromResult(FileUploadResult.Failed);

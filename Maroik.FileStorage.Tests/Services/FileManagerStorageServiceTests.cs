@@ -10,9 +10,10 @@ namespace Maroik.FileStorage.Tests.Services;
 
 /// <summary>
 /// Unit tests for <see cref="FileManagerStorageService"/>, the File Manager's large-file flow (Implementation note [A]), against a real
-/// throwaway storage root on disk and a mocked ClamAV client: chunks are appended to a staging file in offset order (P5); completing an
-/// upload checks the size, scans the file streamed from disk and moves it to <c>upload/FileManager/{GUID}</c> (P1, S2); an abort drops
-/// the staging file; and a delete removes only a file directly in <c>upload/FileManager/</c> (P4).
+/// throwaway storage root on disk, a real scan queue and a mocked ClamAV client: chunks are appended to a staging file in offset order
+/// (P5); completing an upload checks the size and queues its scan, then reports "scanning", "stored" or the refusal; the scan streams
+/// the file from disk and moves a clean one to <c>upload/FileManager/{GUID}</c> (P1, S2); an abort cancels the scan and drops the
+/// staging (and an unconfirmed stored) file; and a delete removes only a file directly in <c>upload/FileManager/</c> (P4).
 /// </summary>
 public sealed class FileManagerStorageServiceTests : IDisposable
 {
@@ -50,8 +51,11 @@ public sealed class FileManagerStorageServiceTests : IDisposable
                 return result;
             });
 
+    /// <summary>The scan queue the service queues on (a real one).</summary>
+    private readonly FileManagerScanQueue _queue = new();
+
     /// <summary>The service under test, over the throwaway root.</summary>
-    private FileManagerStorageService Sut => new(_clamav.Object, Options.Create(new FileStorageSetting { StorageRootPath = Root, ClamavHost = "clamav", ClamavPort = 3310 }));
+    private FileManagerStorageService Sut => new(_clamav.Object, _queue, Options.Create(new FileStorageSetting { StorageRootPath = Root, ClamavHost = "clamav", ClamavPort = 3310 }));
 
     /// <summary>The staging file of <paramref name="id"/>.</summary>
     private string Staging(Guid id) => Path.Combine(Root, "FileManager", ".staging", id.ToString("D"));
@@ -103,48 +107,95 @@ public sealed class FileManagerStorageServiceTests : IDisposable
 
     // -- CompleteAsync ------------------------------------------------------------
 
+    /// <summary>The id <see cref="UploadId"/> as the requests carry it.</summary>
+    private static string Id => UploadId.ToString("D");
+
+    /// <summary>Completes <see cref="UploadId"/> as declared <paramref name="expectedSize"/> bytes.</summary>
+    private Task<(string? Error, bool Scanning)> CompleteAsync(long expectedSize) =>
+        Sut.CompleteAsync(Id, expectedSize, TestContext.Current.CancellationToken);
+
     /// <summary>
-    /// A complete upload of the declared size is scanned — streamed from the staging file, with the File Manager's long time limit —
-    /// then moved to upload/FileManager/{GUID}; the staging file is gone.
+    /// A complete upload of the declared size is not scanned in the request: its scan is queued, the answer is "scanning", and the
+    /// staging file stays where the scan will read it.
     /// </summary>
     [Fact]
-    public async Task CompleteAsync_ScansAndStoresTheFile()
+    public async Task CompleteAsync_QueuesTheScan_AndAnswersScanning()
     {
-        List<byte[]> scanned = [];
-        Scans(ClamavScanResult.Clean, scanned);
         await AppendAsync(0, 1, 2, 3);
 
-        string? error = await Sut.CompleteAsync(UploadId.ToString("D"), 3, TestContext.Current.CancellationToken);
+        Assert.Equal((null, true), await CompleteAsync(3));
 
-        Assert.Null(error);
-        Assert.Equal([1, 2, 3], await File.ReadAllBytesAsync(Stored(UploadId), TestContext.Current.CancellationToken));
-        Assert.False(File.Exists(Staging(UploadId)));
-        Assert.Equal([1, 2, 3], Assert.Single(scanned));
-        _clamav.Verify(c => c.ScanWithClamavAsync(It.IsAny<Stream>(), "clamav", 3310, FileManagerStorageService.ScanTimeout, It.IsAny<CancellationToken>()), Times.Once);
-        Assert.True(FileManagerStorageService.ScanTimeout >= TimeSpan.FromMinutes(10));
-    }
-
-    /// <summary>An empty file (no chunk was sent) is stored too.</summary>
-    [Fact]
-    public async Task CompleteAsync_StoresAnEmptyFile()
-    {
-        Assert.Null(await Sut.CompleteAsync(UploadId.ToString("D"), 0, TestContext.Current.CancellationToken));
-
-        Assert.Empty(await File.ReadAllBytesAsync(Stored(UploadId), TestContext.Current.CancellationToken));
-    }
-
-    /// <summary>An infected or unscannable file is not stored (S2): the refusal says which, and the staging file is deleted.</summary>
-    [Theory]
-    [InlineData(ClamavScanResult.Infected, FileStorageRefusals.Infected)]
-    [InlineData(ClamavScanResult.Unavailable, FileStorageRefusals.ScanUnavailable)]
-    public async Task CompleteAsync_RefusesAnInfectedOrUnscannableFile(ClamavScanResult scan, string refusal)
-    {
-        Scans(scan);
-        await AppendAsync(0, 1, 2, 3);
-
-        Assert.Equal(refusal, await Sut.CompleteAsync(UploadId.ToString("D"), 3, TestContext.Current.CancellationToken));
+        Assert.True(_queue.IsPending(Id));
+        Assert.True(File.Exists(Staging(UploadId)));
         Assert.False(File.Exists(Stored(UploadId)));
-        Assert.False(File.Exists(Staging(UploadId)));
+        _clamav.Verify(c => c.ScanWithClamavAsync(It.IsAny<Stream>(), It.IsAny<string>(), It.IsAny<int>(), It.IsAny<TimeSpan>(), It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    /// <summary>A complete while the scan is pending answers "scanning" again and queues nothing more.</summary>
+    [Fact]
+    public async Task CompleteAsync_WhileTheScanIsPending_AnswersScanning()
+    {
+        await AppendAsync(0, 1, 2, 3);
+        await CompleteAsync(3);
+        await _queue.DequeueAsync(TestContext.Current.CancellationToken);
+
+        Assert.Equal((null, true), await CompleteAsync(3));
+        using var nothingElse = CancellationTokenSource.CreateLinkedTokenSource(TestContext.Current.CancellationToken);
+        nothingElse.CancelAfter(TimeSpan.FromMilliseconds(100));
+        await Assert.ThrowsAnyAsync<OperationCanceledException>(async () => await _queue.DequeueAsync(nothingElse.Token));
+    }
+
+    /// <summary>Once the scan stored the file, complete answers "stored".</summary>
+    [Fact]
+    public async Task CompleteAsync_AfterTheScanStoredTheFile_AnswersStored()
+    {
+        await AppendAsync(0, 1, 2, 3);
+        await CompleteAsync(3);
+        await _queue.DequeueAsync(TestContext.Current.CancellationToken);
+        await Sut.ScanAsync(Id, TestContext.Current.CancellationToken);
+        _queue.Finish(Id, null);
+
+        Assert.Equal((null, false), await CompleteAsync(3));
+        Assert.Equal([1, 2, 3], await File.ReadAllBytesAsync(Stored(UploadId), TestContext.Current.CancellationToken));
+    }
+
+    /// <summary>Once the scan refused the file, complete answers that refusal once.</summary>
+    [Fact]
+    public async Task CompleteAsync_AfterTheScanRefusedTheFile_AnswersTheRefusalOnce()
+    {
+        await AppendAsync(0, 1, 2, 3);
+        await CompleteAsync(3);
+        await _queue.DequeueAsync(TestContext.Current.CancellationToken);
+        _queue.Finish(Id, FileStorageRefusals.Infected);
+        File.Delete(Staging(UploadId));
+
+        Assert.Equal((FileStorageRefusals.Infected, false), await CompleteAsync(3));
+        Assert.Equal((FileStorageRefusals.SizeMismatch, false), await CompleteAsync(3));
+    }
+
+    /// <summary>
+    /// After a restart nothing is pending: a complete of an upload whose staging file is still whole queues its scan again (D5).
+    /// </summary>
+    [Fact]
+    public async Task CompleteAsync_AfterARestart_QueuesTheScanAgain()
+    {
+        await AppendAsync(0, 1, 2, 3);
+        await CompleteAsync(3);
+
+        var restarted = new FileManagerScanQueue();
+        var service = new FileManagerStorageService(_clamav.Object, restarted, Options.Create(new FileStorageSetting { StorageRootPath = Root }));
+
+        Assert.Equal((null, true), await service.CompleteAsync(Id, 3, TestContext.Current.CancellationToken));
+        Assert.True(restarted.IsPending(Id));
+    }
+
+    /// <summary>An empty file (no chunk was sent) gets an empty staging file and is queued too.</summary>
+    [Fact]
+    public async Task CompleteAsync_QueuesAnEmptyFile()
+    {
+        Assert.Equal((null, true), await CompleteAsync(0));
+
+        Assert.Empty(await File.ReadAllBytesAsync(Staging(UploadId), TestContext.Current.CancellationToken));
     }
 
     /// <summary>A staging file of another size than declared is refused without a scan and deleted.</summary>
@@ -153,12 +204,12 @@ public sealed class FileManagerStorageServiceTests : IDisposable
     {
         await AppendAsync(0, 1, 2, 3);
 
-        Assert.Equal(FileStorageRefusals.SizeMismatch, await Sut.CompleteAsync(UploadId.ToString("D"), 4, TestContext.Current.CancellationToken));
+        Assert.Equal((FileStorageRefusals.SizeMismatch, false), await CompleteAsync(4));
         Assert.False(File.Exists(Staging(UploadId)));
-        _clamav.Verify(c => c.ScanWithClamavAsync(It.IsAny<Stream>(), It.IsAny<string>(), It.IsAny<int>(), It.IsAny<TimeSpan>(), It.IsAny<CancellationToken>()), Times.Never);
+        Assert.False(_queue.IsPending(Id));
     }
 
-    /// <summary>A file never overwrites one already stored under the same GUID.</summary>
+    /// <summary>A file never overwrites one already stored under the same GUID: a staging file beside it is refused and deleted.</summary>
     [Fact]
     public async Task CompleteAsync_NeverOverwritesAStoredFile()
     {
@@ -166,15 +217,72 @@ public sealed class FileManagerStorageServiceTests : IDisposable
         await File.WriteAllBytesAsync(Stored(UploadId), [7], TestContext.Current.CancellationToken);
         await AppendAsync(0, 1);
 
-        Assert.Equal(FileStorageRefusals.InvalidUpload, await Sut.CompleteAsync(UploadId.ToString("D"), 1, TestContext.Current.CancellationToken));
+        Assert.Equal((FileStorageRefusals.InvalidUpload, false), await CompleteAsync(1));
         Assert.Equal([7], await File.ReadAllBytesAsync(Stored(UploadId), TestContext.Current.CancellationToken));
+        Assert.False(File.Exists(Staging(UploadId)));
     }
 
     /// <summary>An invalid upload id is refused.</summary>
     [Fact]
     public async Task CompleteAsync_RefusesAnUploadIdThatIsNotAGuid()
     {
-        Assert.Equal(FileStorageRefusals.InvalidUpload, await Sut.CompleteAsync("../x", 0, TestContext.Current.CancellationToken));
+        Assert.Equal((FileStorageRefusals.InvalidUpload, false), await Sut.CompleteAsync("../x", 0, TestContext.Current.CancellationToken));
+    }
+
+    // -- ScanAsync ----------------------------------------------------------------
+
+    /// <summary>
+    /// The scan streams the staging file to ClamAV with the File Manager's long time limit, then moves a clean file to
+    /// upload/FileManager/{GUID}; the staging file is gone.
+    /// </summary>
+    [Fact]
+    public async Task ScanAsync_ScansAndStoresTheFile()
+    {
+        List<byte[]> scanned = [];
+        Scans(ClamavScanResult.Clean, scanned);
+        await AppendAsync(0, 1, 2, 3);
+
+        Assert.Null(await Sut.ScanAsync(Id, TestContext.Current.CancellationToken));
+
+        Assert.Equal([1, 2, 3], await File.ReadAllBytesAsync(Stored(UploadId), TestContext.Current.CancellationToken));
+        Assert.False(File.Exists(Staging(UploadId)));
+        Assert.Equal([1, 2, 3], Assert.Single(scanned));
+        _clamav.Verify(c => c.ScanWithClamavAsync(It.IsAny<Stream>(), "clamav", 3310, FileManagerStorageService.ScanTimeout, It.IsAny<CancellationToken>()), Times.Once);
+        Assert.True(FileManagerStorageService.ScanTimeout >= TimeSpan.FromMinutes(10));
+    }
+
+    /// <summary>An infected or unscannable file is not stored (S2): the refusal says which, and the staging file is deleted.</summary>
+    [Theory]
+    [InlineData(ClamavScanResult.Infected, FileStorageRefusals.Infected)]
+    [InlineData(ClamavScanResult.Unavailable, FileStorageRefusals.ScanUnavailable)]
+    public async Task ScanAsync_RefusesAnInfectedOrUnscannableFile(ClamavScanResult scan, string refusal)
+    {
+        Scans(scan);
+        await AppendAsync(0, 1, 2, 3);
+
+        Assert.Equal(refusal, await Sut.ScanAsync(Id, TestContext.Current.CancellationToken));
+        Assert.False(File.Exists(Stored(UploadId)));
+        Assert.False(File.Exists(Staging(UploadId)));
+    }
+
+    /// <summary>A scan of an id that is not a GUID is refused before anything touches the disk.</summary>
+    [Fact]
+    public async Task ScanAsync_RefusesAnUploadIdThatIsNotAGuid()
+    {
+        Assert.Equal(FileStorageRefusals.InvalidUpload, await Sut.ScanAsync("../x", TestContext.Current.CancellationToken));
+        _clamav.Verify(c => c.ScanWithClamavAsync(It.IsAny<Stream>(), It.IsAny<string>(), It.IsAny<int>(), It.IsAny<TimeSpan>(), It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    /// <summary>A scan whose upload was aborted meanwhile stores nothing and ends cancelled.</summary>
+    [Fact]
+    public async Task ScanAsync_StoresNothing_WhenTheUploadWasAborted()
+    {
+        await AppendAsync(0, 1, 2, 3);
+        using var aborted = new CancellationTokenSource();
+        await aborted.CancelAsync();
+
+        await Assert.ThrowsAnyAsync<OperationCanceledException>(() => Sut.ScanAsync(Id, aborted.Token));
+        Assert.False(File.Exists(Stored(UploadId)));
     }
 
     // -- Abort --------------------------------------------------------------------
@@ -185,10 +293,30 @@ public sealed class FileManagerStorageServiceTests : IDisposable
     {
         await AppendAsync(0, 1, 2);
 
-        Assert.True(Sut.Abort(UploadId.ToString("D")));
+        Assert.True(Sut.Abort(Id));
         Assert.False(File.Exists(Staging(UploadId)));
         Assert.True(Sut.Abort(Guid.NewGuid().ToString("D")));
         Assert.False(Sut.Abort("../x"));
+    }
+
+    /// <summary>
+    /// An abort while the file is scanning cancels the scan; an abort after the scan stored it (the upload was never confirmed, D1 / D3)
+    /// deletes the stored file too.
+    /// </summary>
+    [Fact]
+    public async Task Abort_CancelsThePendingScan_AndDeletesAFileItStored()
+    {
+        await AppendAsync(0, 1, 2);
+        Assert.Equal((null, true), await CompleteAsync(2));
+        (_, CancellationToken scanAborted) = await _queue.DequeueAsync(TestContext.Current.CancellationToken);
+        Directory.CreateDirectory(Path.GetDirectoryName(Stored(UploadId))!);
+        await File.WriteAllBytesAsync(Stored(UploadId), [1, 2, 3], TestContext.Current.CancellationToken);
+
+        Assert.True(Sut.Abort(Id));
+
+        Assert.True(scanAborted.IsCancellationRequested);
+        Assert.False(File.Exists(Staging(UploadId)));
+        Assert.False(File.Exists(Stored(UploadId)));
     }
 
     // -- Delete -------------------------------------------------------------------

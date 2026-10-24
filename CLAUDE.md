@@ -224,6 +224,13 @@ File Manager
 - Uploads go in 16 MB chunks to a staging file, are scanned by ClamAV on completion, and a file is at most 2 GB (clamd clamps its
   stream limit to 2,147,483,645 bytes; both compose files set `CLAMD_CONF_*` to 2048M and `MaxScanTime` to 10 minutes). A scan
   that hits a clamd limit counts as "could not be scanned", not as clean. Uploads left unfinished for 24 hours are cleaned up.
+- The virus scan runs in the background (since 2026-10-25, owner's request: a 484 MB zip took 202 s, past the 100 s of the
+  HttpClient and of Cloudflare). `api/FileManager/complete` queues the scan (`IFileManagerScanQueue`, in memory) and answers 202 until
+  `FileManagerScanWorker` (2 scans at once) has stored the file (200) or refused it (400, answered once); the page asks
+  `CompleteUpload` again every `FileManagerUploadPolicy.ScanPollMilliseconds` and gives up (abort) after `MaxScanWaitMilliseconds`
+  or on Cancel, and sends the next file meanwhile. Completing is idempotent (an already completed upload answers "stored"). A
+  restart forgets the queue: the next `complete` of a whole staging file queues it again. A page closed during the scan leaves the
+  row `Uploading`, and the 24-hour cleanup's abort removes the stored file too (abort drops staging, stored file and pending scan).
 - An overwrite keeps the old row until the new upload completes: the unique name index is partial (`WHERE NOT "Uploading"`), so
   the uploading twin may coexist with it.
 - Downloading several items downloads each file separately (no ZIP). Preview is images only (png / jpg / gif / webp, proven by

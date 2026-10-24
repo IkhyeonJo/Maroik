@@ -243,4 +243,10 @@
   <data name="Canceled" xml:space="preserve">
     <value>Canceled</value>
   </data>
+  <data name="Scanning for viruses…" xml:space="preserve">
+    <value>Scanning for viruses…</value>
+  </data>
+  <data name="Waiting for {0} virus scan(s)…" xml:space="preserve">
+    <value>Waiting for {0} virus scan(s)…</value>
+  </data>
 </root>

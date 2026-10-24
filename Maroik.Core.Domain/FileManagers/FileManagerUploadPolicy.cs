@@ -4,8 +4,8 @@ using Maroik.Core.Domain.Errors;
 namespace Maroik.Core.Domain.FileManagers;
 
 /// <summary>
-/// The upload rules of the File Manager: the size one file may have, the size of each chunk, when an unfinished upload is abandoned
-/// and whether an upload fits the account's quota.
+/// The upload rules of the File Manager: the size one file may have, the size of each chunk, how long the page waits for the virus
+/// scan, when an unfinished upload is abandoned and whether an upload fits the account's quota.
 /// </summary>
 public static class FileManagerUploadPolicy
 {
@@ -20,6 +20,18 @@ public static class FileManagerUploadPolicy
     /// stays well inside Kestrel's default 30 MB request limit.
     /// </summary>
     public const int ChunkBytes = 16 * 1024 * 1024;
+
+    /// <summary>
+    /// How often, in milliseconds, the page asks whether a completed upload's virus scan is done (D6). The scan runs in the background in
+    /// file storage, so every ask is a short request: none waits for ClamAV, which takes minutes over a large archive.
+    /// </summary>
+    public const int ScanPollMilliseconds = 3_000;
+
+    /// <summary>
+    /// How long, in milliseconds, the page waits for a virus scan before it gives the upload up (D6): file storage ends a scan after 15
+    /// minutes (<c>FileManagerStorageService.ScanTimeout</c>), and a minute more covers the scans queued before it.
+    /// </summary>
+    public const int MaxScanWaitMilliseconds = 16 * 60 * 1_000;
 
     /// <summary>How long an upload may stay unfinished before the next upload of the same user removes it (Q5).</summary>
     public static readonly TimeSpan StaleUploadAge = TimeSpan.FromHours(24);

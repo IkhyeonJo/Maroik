@@ -7,7 +7,8 @@ namespace Maroik.FileStorage.Controllers;
 
 /// <summary>
 /// Internal API of the File Manager's large-file flow (Implementation note [A]), next to <see cref="FileController"/>, which serves the
-/// attachments: <c>chunk</c> appends a 16 MB piece of an upload, <c>complete</c> scans and stores it, <c>abort</c> drops it, and
+/// attachments: <c>chunk</c> appends a 16 MB piece of an upload, <c>complete</c> queues its scan and reports it until the file is stored
+/// or refused, <c>abort</c> drops it, and
 /// <c>delete</c> removes a stored File Manager file. Like the rest of this service it is reachable only on the internal network.
 /// The disk work is delegated to <see cref="IFileManagerStorageService"/>; a refusal is answered with its <c>FileStorageRefusals</c>
 /// text and logged with the upload id or path and the caller's correlation id.
@@ -45,14 +46,21 @@ public class FileManagerController(IFileManagerStorageService storage, ILogger<F
         }
     }
 
-    /// <summary>Scans and stores upload <paramref name="uploadId"/> once it has <paramref name="expectedSize"/> bytes.</summary>
+    /// <summary>
+    /// Completes upload <paramref name="uploadId"/> of <paramref name="expectedSize"/> bytes, and is asked again until it is decided: 202
+    /// while its scan is queued or running (the scan runs in the background, <c>FileManagerScanWorker</c>), 200 once the file is stored,
+    /// or 400 with the refusal.
+    /// </summary>
     [AllowAnonymous]
     [HttpPost("complete")]
     public async Task<IActionResult> CompleteAsync([FromForm] string? uploadId, [FromForm] long expectedSize, [FromForm] string? correlationId = null)
     {
         try
         {
-            string? error = await storage.CompleteAsync(uploadId, expectedSize, HttpContext.RequestAborted);
+            (string? error, bool scanning) = await storage.CompleteAsync(uploadId, expectedSize, HttpContext.RequestAborted);
+            if (scanning)
+                return Accepted();
+
             if (error == null)
             {
                 logger.LogInformation("File Manager upload {UploadId} stored ({Size} bytes). CorrelationId={CorrelationId}", uploadId, expectedSize, correlationId);
@@ -73,7 +81,7 @@ public class FileManagerController(IFileManagerStorageService storage, ILogger<F
         }
     }
 
-    /// <summary>Drops the staging file of upload <paramref name="uploadId"/>.</summary>
+    /// <summary>Drops what is held of the unconfirmed upload <paramref name="uploadId"/> (its scan, its staging or stored file).</summary>
     [AllowAnonymous]
     [HttpPost("abort")]
     public IActionResult Abort([FromForm] string? uploadId, [FromForm] string? correlationId = null)

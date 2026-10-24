@@ -9,6 +9,7 @@ using Maroik.FileStorage.Constants;
 using Maroik.FileStorage.Interfaces;
 using Maroik.FileStorage.Services;
 using Maroik.FileStorage.Settings;
+using Maroik.FileStorage.Workers;
 using Microsoft.OpenApi;
 using Serilog;
 using Serilog.Events;
@@ -56,6 +57,12 @@ try
     builder.Services.AddScoped<IClamavClient, ClamavClient>();
     builder.Services.AddScoped<IFileValidationService, FileValidationService>();
     builder.Services.AddScoped<IFileManagerStorageService, FileManagerStorageService>();
+
+    // The File Manager's scans run in the background (a large file takes longer than a request may wait): complete queues one,
+    // FileManagerScanWorker runs it.
+    builder.Services.AddSingleton(TimeProvider.System);
+    builder.Services.AddSingleton<IFileManagerScanQueue, FileManagerScanQueue>();
+    builder.Services.AddHostedService<FileManagerScanWorker>();
 
     // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
     // Exposes the OpenAPI metadata endpoint consumed by SwaggerUI.

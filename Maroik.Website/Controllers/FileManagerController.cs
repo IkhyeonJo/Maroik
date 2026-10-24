@@ -307,7 +307,10 @@ public class FileManagerController(
         }
     }
 
-    /// <summary>Completes an upload: scanned and stored, it becomes a file of the drive.</summary>
+    /// <summary>
+    /// Completes an upload, asked again by the page until it is decided: while file storage scans it in the background the answer is
+    /// <c>scanning: true</c>; once scanned and stored it becomes a file of the drive (<c>scanning: false</c> and the message).
+    /// </summary>
     [HttpPost]
     [ValidateAntiForgeryToken]
     [RequiredHttpPostAccess(Role = Role.User)]
@@ -316,8 +319,11 @@ public class FileManagerController(
         if (!ModelState.IsValid) return Json(new { result = false, error = localizer["Input is invalid"].Value });
         try
         {
-            ServiceResult result = await fileManagerService.CompleteUploadAsync(Email, input.UploadId, input.Overwrite, ct);
-            return result.Success ? Json(new { result = true, message = localizer["The file has been uploaded."].Value }) : Json(new { result = false, error = localizer[result.ErrorKey, result.ErrorArgs].ToPlainString() });
+            var (result, scanning) = await fileManagerService.CompleteUploadAsync(Email, input.UploadId, input.Overwrite, ct);
+            if (!result.Success) return Json(new { result = false, error = localizer[result.ErrorKey, result.ErrorArgs].ToPlainString() });
+            return scanning
+                ? Json(new { result = true, scanning = true })
+                : Json(new { result = true, scanning = false, message = localizer["The file has been uploaded."].Value });
         }
         catch (Exception ex)
         {

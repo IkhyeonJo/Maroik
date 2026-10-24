@@ -9,13 +9,15 @@ using Microsoft.Extensions.Options;
 namespace Maroik.FileStorage.Services;
 
 /// <summary>
-/// The File Manager's large-file flow on disk. Nothing is held in memory: chunks are appended to
-/// <c>upload/FileManager/.staging/{uploadId}</c>, the completed file is scanned by streaming it from disk, and only a clean file of the
-/// declared size is moved to <c>upload/FileManager/{uploadId}</c>. The upload id is the GUID the Website stores the file under; anything
+/// The File Manager's large-file flow on disk. No file is held in memory: chunks are appended to
+/// <c>upload/FileManager/.staging/{uploadId}</c>, a completed file of the declared size gets its scan queued
+/// (<see cref="IFileManagerScanQueue"/>; <c>FileManagerScanWorker</c> runs it in the background), the scan streams it from disk, and
+/// only a clean file is moved to <c>upload/FileManager/{uploadId}</c>. The upload id is the GUID the Website stores the file under; anything
 /// that is not a GUID is refused before the disk is touched, so an id can never name a path. Every path goes through
 /// <see cref="StoragePath"/> and <see cref="StorageFiles"/> like the rest of the service.
 /// </summary>
-public class FileManagerStorageService(IClamavClient clamavClient, IOptions<FileStorageSetting> settings) : IFileManagerStorageService
+public class FileManagerStorageService(IClamavClient clamavClient, IFileManagerScanQueue scanQueue, IOptions<FileStorageSetting> settings)
+    : IFileManagerStorageService
 {
     /// <summary>
     /// The time limit of one File Manager scan. Files reach 2 GB, far beyond an attachment, so the client's 30-second default would
@@ -69,40 +71,70 @@ public class FileManagerStorageService(IClamavClient clamavClient, IOptions<File
     }
 
     /// <inheritdoc />
-    public async Task<string?> CompleteAsync(string? uploadId, long expectedSize, CancellationToken ct = default)
+    public async Task<(string? Error, bool Scanning)> CompleteAsync(string? uploadId, long expectedSize, CancellationToken ct = default)
     {
-        StoragePath? staging = StagingFile(uploadId);
-        StoragePath? stored = StoredFile(uploadId);
+        string? id = CanonicalId(uploadId);
+        StoragePath? staging = StagingFile(id);
+        StoragePath? stored = StoredFile(id);
         StoragePath? stagingDirectory = Directory(StagingDirectory);
-        if (staging == null || stored == null || stagingDirectory == null)
-            return FileStorageRefusals.InvalidUpload;
+        if (id == null || staging == null || stored == null || stagingDirectory == null)
+            return (FileStorageRefusals.InvalidUpload, false);
+
+        // The queue records a refusal before it ends the pending scan, and a clean scan moves the file before it, so an upload that is
+        // no longer pending has its refusal or its stored file in place by now.
+        if (scanQueue.IsPending(id))
+            return (null, true);
+        if (scanQueue.TakeRefusal(id) is { } refusal)
+            return (refusal, false);
+
+        bool staged = StorageFiles.Exists(staging);
+        if (StorageFiles.Exists(stored))
+        {
+            if (!staged)
+                return (null, false);
+
+            // Every upload gets a fresh GUID, so a stored file beside a new staging file means something is wrong upstream: never
+            // overwrite it.
+            StorageFiles.Delete(staging);
+            return (FileStorageRefusals.InvalidUpload, false);
+        }
 
         // An empty file sends no chunk: its staging file is created here.
-        if (expectedSize == 0 && !StorageFiles.Exists(staging))
+        if (expectedSize == 0 && !staged)
         {
             StorageFiles.CreateDirectory(stagingDirectory);
             await using Stream empty = StorageFiles.OpenAppend(staging);
+            staged = true;
         }
 
-        if (!StorageFiles.Exists(staging))
-            return FileStorageRefusals.SizeMismatch;
+        if (!staged)
+            return (FileStorageRefusals.SizeMismatch, false);
 
         if (StorageFiles.Length(staging) != expectedSize)
         {
             StorageFiles.Delete(staging);
-            return FileStorageRefusals.SizeMismatch;
+            return (FileStorageRefusals.SizeMismatch, false);
         }
 
-        // Every upload gets a fresh GUID, so a stored file under it means something is wrong upstream: never overwrite it.
-        if (StorageFiles.Exists(stored))
-        {
-            StorageFiles.Delete(staging);
+        // Queued here the first time, and again after a restart forgot the pending scan (its staging file is still whole).
+        scanQueue.TryEnqueue(id);
+        return (null, true);
+    }
+
+    /// <inheritdoc />
+    public async Task<string?> ScanAsync(string uploadId, CancellationToken ct)
+    {
+        StoragePath? staging = StagingFile(uploadId);
+        StoragePath? stored = StoredFile(uploadId);
+        if (staging == null || stored == null)
             return FileStorageRefusals.InvalidUpload;
-        }
 
         ClamavScanResult scan;
         await using (Stream file = StorageFiles.OpenRead(staging))
             scan = await clamavClient.ScanWithClamavAsync(file, settings.Value.ClamavHost ?? "", settings.Value.ClamavPort, ScanTimeout, ct);
+
+        // An abort cancels the scan, which the client reports as "could not be scanned": the abort already dropped the files.
+        ct.ThrowIfCancellationRequested();
 
         // Only Clean is stored (S2). Infected and "could not be scanned" are both refusals, reported apart.
         if (scan != ClamavScanResult.Clean)
@@ -119,11 +151,15 @@ public class FileManagerStorageService(IClamavClient clamavClient, IOptions<File
     /// <inheritdoc />
     public bool Abort(string? uploadId)
     {
-        StoragePath? staging = StagingFile(uploadId);
-        if (staging == null)
+        string? id = CanonicalId(uploadId);
+        StoragePath? staging = StagingFile(id);
+        StoragePath? stored = StoredFile(id);
+        if (id == null || staging == null || stored == null)
             return false;
 
+        scanQueue.Cancel(id);
         StorageFiles.Delete(staging);
+        StorageFiles.Delete(stored);
         return true;
     }
 

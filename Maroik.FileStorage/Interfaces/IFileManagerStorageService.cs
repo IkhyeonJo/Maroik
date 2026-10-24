@@ -15,12 +15,24 @@ public interface IFileManagerStorageService
     Task<(string? Error, long Length)> AppendChunkAsync(string? uploadId, long offset, Stream chunk, CancellationToken ct = default);
 
     /// <summary>
-    /// Completes the upload: checks the staging file is <paramref name="expectedSize"/> bytes, scans it with ClamAV and moves it to
-    /// <c>upload/FileManager/{uploadId}</c>. Returns null when stored, or the refusal (the staging file is then deleted).
+    /// Completes the upload, and is asked again until it is decided (the scan runs in the background, <see cref="IFileManagerScanQueue"/>):
+    /// a staging file of <paramref name="expectedSize"/> bytes gets its scan queued, and while it is queued or running the answer is
+    /// "scanning"; afterwards it is "stored" (the file is in <c>upload/FileManager/{uploadId}</c>) or the scan's refusal, answered once.
+    /// Returns no error and <c>Scanning</c> true while scanning, no error and false when stored, or the refusal.
     /// </summary>
-    Task<string?> CompleteAsync(string? uploadId, long expectedSize, CancellationToken ct = default);
+    Task<(string? Error, bool Scanning)> CompleteAsync(string? uploadId, long expectedSize, CancellationToken ct = default);
 
-    /// <summary>Deletes the staging file of <paramref name="uploadId"/> if there is one; false for an id that is not a GUID.</summary>
+    /// <summary>
+    /// Scans the staging file of <paramref name="uploadId"/> with ClamAV and moves a clean file to <c>upload/FileManager/{uploadId}</c>.
+    /// Returns null when stored, or the refusal (the staging file is then deleted). Throws <see cref="OperationCanceledException"/>
+    /// without storing anything when <paramref name="ct"/> is cancelled (the upload was aborted, or the service stops).
+    /// </summary>
+    Task<string?> ScanAsync(string uploadId, CancellationToken ct);
+
+    /// <summary>
+    /// Drops what is held of an unconfirmed upload: cancels its pending scan, deletes its staging file, and deletes the file its scan
+    /// already stored (the Website aborts only an upload it never confirmed). False for an id that is not a GUID.
+    /// </summary>
     bool Abort(string? uploadId);
 
     /// <summary>Deletes the File Manager file at <paramref name="filePath"/>; returns null when deleted, or the refusal.</summary>

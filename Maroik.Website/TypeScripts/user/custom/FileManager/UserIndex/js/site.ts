@@ -10,11 +10,14 @@
  *     upload into the open folder, or into the tree folder they are dropped on.
  *   • Uploads go file by file in chunks: the batch's total is checked against the quota first, the folders of a folder upload are
  *     created (merging into existing ones), a name conflict asks Overwrite / Keep both / Skip (with "Apply to all"), and a failed
- *     file is skipped while the rest continue; a success / failure list closes the batch.
+ *     file is skipped while the rest continue; a success / failure list closes the batch. The server scans each sent file for
+ *     viruses in the background: the page asks CompleteUpload again until the scan is decided (its line says "scanning" meanwhile),
+ *     sends the next file in the meantime, and gives a scan up (aborting the upload) on Cancel or after the server's wait limit.
  *
  * Every rule is the server's: the replies arrive with sizes, local times, icons, usage and the preview flag already decided, and
  * the server re-checks every name, size and quota. The 2 GB check before an upload starts is a UX mirror of
- * FileManagerUploadPolicy.MaxFileBytes (read from #maxFileBytes). IIFE-wrapped, no `import` / `export`.
+ * FileManagerUploadPolicy.MaxFileBytes (read from #maxFileBytes); how often and how long a scan is asked about is
+ * FileManagerUploadPolicy's too (#scanPollMilliseconds, #maxScanWaitMilliseconds). IIFE-wrapped, no `import` / `export`.
  */
 (function() {
     // The runtime-check helpers the _Layout script defines (see TypeScripts/global.d.ts).
@@ -42,6 +45,8 @@
     const folderCreatedReply = replies.write({ folderId: check.number });
     const beginReply = replies.read({ conflict: check.boolean, uploadId: check.string, name: check.string, chunkBytes: check.number });
     const chunkReply = replies.read({ length: check.number });
+    // CompleteUpload: still scanning (asked again), or decided — stored with its message, or the refusal.
+    const completeReply = check.oneOf(check.object({ result: check.literal(true), scanning: check.literal(true) }), replies.write({ scanning: check.literal(false) }));
     const selectNodeEvent = check.object({ node: check.object({ id: check.string }) });
     const moveNodeEvent = check.object({ node: check.object({ id: check.string }), parent: check.string });
 
@@ -85,6 +90,9 @@
 
     // Authoritative in FileManagerUploadPolicy.MaxFileBytes (server); mirrored here for form UX only.
     const maxFileBytes = Number(fieldValue($("#maxFileBytes")));
+    // FileManagerUploadPolicy.ScanPollMilliseconds / MaxScanWaitMilliseconds (server): how often and how long a scan is asked about.
+    const scanPollMilliseconds = Number(fieldValue($("#scanPollMilliseconds")));
+    const maxScanWaitMilliseconds = Number(fieldValue($("#maxScanWaitMilliseconds")));
     // Localized texts.
     const text = {
         myDrive: fieldValue($("#localizerMyDrive")),
@@ -108,6 +116,9 @@
         uploaded: fieldValue($("#localizerUploaded")),
         skipped: fieldValue($("#localizerSkipped")),
         fileTooLarge: fieldValue($("#localizerFileTooLarge")),
+        scanning: fieldValue($("#localizerScanning")),
+        scanWait: fieldValue($("#localizerScanWait")),
+        temporaryError: fieldValue($("#_localizerTemporaryError")),
     };
 
     /** Replaces {0}, {1}, … in a localized template. */
@@ -564,28 +575,42 @@
         });
     }
 
-    /** Adds a line to the upload result list. */
-    function report(name: string, outcome: string, failed: boolean) {
-        $("<li>").addClass(failed ? "text-danger" : "text-success").append($("<strong>").text(name), document.createTextNode(` — ${outcome}`))
-            .appendTo($uploadResults);
+    /** Adds a line to the upload result list; returns it. */
+    function report(name: string, outcome: string, failed: boolean): JQuery {
+        return settle($("<li>").appendTo($uploadResults), name, outcome, failed);
     }
 
-    /** The outcome of one file: stored (no error), skipped, or the reason it failed; and the conflict answer it was given. */
-    interface FileOutcome { error: string | null; skipped: boolean; choice: ConflictChoice | null; applyToAll: boolean; }
+    /** Writes a result line's outcome (a "scanning" line is settled once its scan is decided); returns it. */
+    function settle($line: JQuery, name: string, outcome: string, failed: boolean): JQuery {
+        return $line.removeClass("text-muted").addClass(failed ? "text-danger" : "text-success").empty()
+            .append($("<strong>").text(name), document.createTextNode(` — ${outcome}`));
+    }
+
+    /**
+     * The outcome of one file: stored (no error), skipped, or the reason it failed; and the conflict answer it was given. A file whose
+     * chunks were all sent carries its virus scan (`scan`), which settles into its final outcome.
+     */
+    interface FileOutcome { error: string | null; skipped: boolean; choice: ConflictChoice | null; applyToAll: boolean; scan: Promise<FileOutcome> | null; }
+
+    /** Resolves after `milliseconds`. */
+    function wait(milliseconds: number): Promise<void> {
+        return new Promise((resolve) => setTimeout(resolve, milliseconds));
+    }
 
     /** True once the running batch was cancelled: the file being sent is aborted before its next chunk, the rest are not started. */
     let cancelled = false;
 
     /**
-     * Uploads one file: starts it (with the batch's remembered conflict answer, if any), asks on a name conflict, sends its chunks
-     * and completes it. A chunk that fails aborts the upload.
+     * Uploads one file: starts it (with the batch's remembered conflict answer, if any), asks on a name conflict and sends its chunks;
+     * then its completion (the server's virus scan, {@link Confirm}) goes on in the background. A chunk that fails aborts the upload.
      */
     async function SendFile(entry: UploadEntry, parentId: number | null, remembered: ConflictChoice | null): Promise<FileOutcome> {
         let choice: ConflictChoice | null = remembered;
         let applyToAll = false;
         const begin = (conflict: string) =>
             post("/FileManager/BeginUpload", { ParentId: parentId, Name: entry.file.name, Size: entry.file.size, Conflict: conflict }, beginReply);
-        const fail = (error: string): FileOutcome => ({ error: error, skipped: false, choice: choice, applyToAll: applyToAll });
+        const outcome = (error: string | null, skipped = false): FileOutcome => ({ error: error, skipped: skipped, choice: choice, applyToAll: applyToAll, scan: null });
+        const fail = (error: string): FileOutcome => outcome(error);
 
         let started = await begin(choice === "Overwrite" || choice === "KeepBoth" ? choice : "Ask");
         if (started !== null && started.result && started.conflict) {
@@ -594,7 +619,7 @@
                 choice = answer.choice;
                 applyToAll = answer.applyToAll;
             }
-            if (choice === "Skip") return { error: null, skipped: true, choice: choice, applyToAll: applyToAll };
+            if (choice === "Skip") return { error: null, skipped: true, choice: choice, applyToAll: applyToAll, scan: null };
             started = await begin(choice);
         }
         if (started === null) return fail("");
@@ -604,7 +629,7 @@
         for (let offset = 0; offset < entry.file.size; offset += started.chunkBytes) {
             if (cancelled) {
                 await post("/FileManager/AbortUpload", { UploadId: started.uploadId }, doneReply);
-                return { error: null, skipped: true, choice: choice, applyToAll: applyToAll };
+                return { error: null, skipped: true, choice: choice, applyToAll: applyToAll, scan: null };
             }
             const form = new FormData();
             form.append("UploadId", started.uploadId);
@@ -618,9 +643,26 @@
             $uploadProgressBar.css("width", `${Math.round(chunk.length * 100 / Math.max(entry.file.size, 1))}%`);
         }
 
-        const done = await post("/FileManager/CompleteUpload", { UploadId: started.uploadId, Overwrite: choice === "Overwrite" }, replies.action);
-        if (done === null) return fail("");
-        return done.result ? { error: null, skipped: false, choice: choice, applyToAll: applyToAll } : fail(done.error);
+        return { error: null, skipped: false, choice: choice, applyToAll: applyToAll, scan: Confirm(started.uploadId, choice === "Overwrite", outcome) };
+    }
+
+    /**
+     * Completes a sent file, asking again every scanPollMilliseconds while the server is still scanning it. Cancel, or no decision
+     * within maxScanWaitMilliseconds, gives the scan up: the upload is aborted (canceled, or failed with the generic error).
+     */
+    async function Confirm(uploadId: string, overwrite: boolean, outcome: (error: string | null, skipped?: boolean) => FileOutcome): Promise<FileOutcome> {
+        const deadline = Date.now() + maxScanWaitMilliseconds;
+        for (; ;) {
+            const done = await post("/FileManager/CompleteUpload", { UploadId: uploadId, Overwrite: overwrite }, completeReply);
+            if (done === null) return outcome("");
+            if (!done.result) return outcome(done.error);
+            if (!done.scanning) return outcome(null);
+            await wait(scanPollMilliseconds);
+            if (cancelled || Date.now() >= deadline) {
+                await post("/FileManager/AbortUpload", { UploadId: uploadId }, doneReply);
+                return cancelled ? outcome(null, true) : outcome(text.temporaryError);
+            }
+        }
     }
 
     /**
@@ -670,6 +712,10 @@
         let failed = 0;
         let skipped = 0;
         let rememberedChoice: ConflictChoice | null = null;
+        /** The scans of the files sent, and how many of them are decided. */
+        const scans: Promise<void>[] = [];
+        let settled = 0;
+        let waiting = false;
         for (const [index, entry] of entries.entries()) {
             if (cancelled) {
                 skipped++;
@@ -691,20 +737,39 @@
             }
             const outcome = await SendFile(entry, parentId, rememberedChoice);
             if (outcome.applyToAll && outcome.choice !== null) rememberedChoice = outcome.choice;
-            count(entry, outcome);
+            if (outcome.scan === null) {
+                count(entry, outcome, report(entry.file.name, "", false));
+                continue;
+            }
+            // The next file is sent while this one is scanned; its line says so until the scan is decided.
+            const $line = $("<li>").addClass("text-muted").append($("<strong>").text(entry.file.name), document.createTextNode(` — ${text.scanning}`))
+                .appendTo($uploadResults);
+            scans.push(outcome.scan.then((scanned) => {
+                settled++;
+                count(entry, scanned, $line);
+                ShowScanWait();
+            }));
+        }
+        waiting = true;
+        ShowScanWait();
+        await Promise.all(scans);
+
+        /** Once every file is sent, says how many scans are still being waited for. */
+        function ShowScanWait() {
+            if (waiting) $uploadProgressText.text(format(text.scanWait, scans.length - settled));
         }
 
-        /** Tallies one file's outcome and lists it. */
-        function count(entry: UploadEntry, outcome: FileOutcome) {
+        /** Tallies one file's outcome and writes it on its line. */
+        function count(entry: UploadEntry, outcome: FileOutcome, $line: JQuery) {
             if (outcome.skipped) {
                 skipped++;
-                report(entry.file.name, cancelled ? text.canceled : text.skipped, false);
+                settle($line, entry.file.name, cancelled ? text.canceled : text.skipped, false);
             } else if (outcome.error === null) {
                 uploaded++;
-                report(entry.file.name, text.uploaded, false);
+                settle($line, entry.file.name, text.uploaded, false);
             } else {
                 failed++;
-                report(entry.file.name, outcome.error, true);
+                settle($line, entry.file.name, outcome.error, true);
             }
         }
 

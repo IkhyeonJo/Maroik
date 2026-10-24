@@ -262,6 +262,9 @@ public class FileClient(IHttpClientFactory httpClientFactory, ILogger<FileClient
             AddText(content, "expectedSize", expectedSize.ToString(System.Globalization.CultureInfo.InvariantCulture));
 
             using HttpResponseMessage response = await PostFileManagerAsync("complete", content, fileStorageBaseUrl, ct);
+            // 202: the virus scan is queued or still running in the background; the caller asks again.
+            if (response.StatusCode == System.Net.HttpStatusCode.Accepted)
+                return FileUploadResult.Scanning;
             if (response.IsSuccessStatusCode)
                 return FileUploadResult.Stored;
 

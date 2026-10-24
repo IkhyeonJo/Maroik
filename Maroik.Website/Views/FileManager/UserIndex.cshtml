@@ -5,13 +5,15 @@
     (breadcrumb, search box, grid / list toggle, the selection bar, the items, the item count).
     This view renders only the shell and the texts: the page script fetches the drive and the folders from the controller's POST
     actions (whose replies the server has already shaped — sizes, local times, icons, usage) and draws them. The limits the upload
-    code checks before it starts (2 GB per file, the name length) are rendered from the domain policies; the server re-checks every
-    file.
+    code checks before it starts (2 GB per file, the name length) and how often / how long it asks about a file's virus scan are
+    rendered from the domain policies; the server re-checks every file.
 *@
 @using Maroik.Core.Domain.FileManagers
 @using Maroik.Core.Domain.Primitives
 
 @Html.Hidden("maxFileBytes", FileManagerUploadPolicy.MaxFileBytes)
+@Html.Hidden("scanPollMilliseconds", FileManagerUploadPolicy.ScanPollMilliseconds)
+@Html.Hidden("maxScanWaitMilliseconds", FileManagerUploadPolicy.MaxScanWaitMilliseconds)
 @Html.Hidden("localizerMyDrive", Localizer["My Drive"].Value)
 @Html.Hidden("localizerItemCount", Localizer["{0} items"].Value)
 @Html.Hidden("localizerSelectedCount", Localizer["{0} selected"].Value)
@@ -33,6 +35,8 @@
 @Html.Hidden("localizerSkipped", Localizer["Skipped"].Value)
 @Html.Hidden("localizerCanceled", Localizer["Canceled"].Value)
 @Html.Hidden("localizerFileTooLarge", Localizer["A file larger than 2 GB cannot be uploaded."].Value)
+@Html.Hidden("localizerScanning", Localizer["Scanning for viruses…"].Value)
+@Html.Hidden("localizerScanWait", Localizer["Waiting for {0} virus scan(s)…"].Value)
 
 <section class="content">
     <div class="row">

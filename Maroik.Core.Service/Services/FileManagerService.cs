@@ -441,12 +441,18 @@ public class FileManagerService(
     }
 
     /// <inheritdoc />
-    public async Task<ServiceResult> CompleteUploadAsync(string accountEmail, Guid uploadId, bool overwrite, CancellationToken ct = default)
+    public async Task<(ServiceResult Result, bool Scanning)> CompleteUploadAsync(string accountEmail, Guid uploadId, bool overwrite, CancellationToken ct = default)
     {
-        if (await FindUploadAsync(accountEmail, uploadId, ct) is not { } upload)
-            return UploadNotFound();
+        if (await nodeRepository.FindByEmailAndStoragePathAsync(accountEmail, StoragePathOf(uploadId), ct) is not { } upload)
+            return (UploadNotFound(), false);
+        // The page asks again while the scan runs, so an upload completed already (a repeated or a second answer) answers the same.
+        if (!upload.Uploading)
+            return (ServiceResult.Ok(), false);
 
         FileUploadResult outcome = await fileClient.CompleteFileManagerUploadAsync(uploadId, upload.Size, BaseUrl, ct);
+        // Still scanning in the background: nothing is decided, the reservation stays.
+        if (outcome == FileUploadResult.Scanning)
+            return (ServiceResult.Ok(), true);
         if (outcome != FileUploadResult.Stored)
         {
             // The file is not kept: release the reservation.
@@ -455,13 +461,13 @@ public class FileManagerService(
             {
                 case FileUploadResult.Infected:
                     logger.LogWarning("File Manager upload refused for {Email}: file {ItemId} infected", accountEmail, upload.Id);
-                    return ServiceResult.Validation("FileManager.Infected", ServiceErrorKeys.FileManagerInfected);
+                    return (ServiceResult.Validation("FileManager.Infected", ServiceErrorKeys.FileManagerInfected), false);
                 case FileUploadResult.ScanUnavailable:
                     logger.LogWarning("File Manager upload refused for {Email}: file {ItemId} could not be scanned", accountEmail, upload.Id);
-                    return ServiceResult.Failure("FileManager.ScanUnavailable", ServiceErrorKeys.FileManagerScanUnavailable);
+                    return (ServiceResult.Failure("FileManager.ScanUnavailable", ServiceErrorKeys.FileManagerScanUnavailable), false);
                 default:
                     logger.LogWarning("File Manager upload of file {ItemId} of {Email} could not be stored", upload.Id, accountEmail);
-                    return Temporary();
+                    return (Temporary(), false);
             }
         }
 
@@ -475,7 +481,13 @@ public class FileManagerService(
             FileManagerTree tree = await LoadTreeAsync(accountEmail, ct);
             FileManagerNode? current = tree.Find(upload.Id);
             FileManagerNode? sibling = current == null ? null : FinishedChildren(tree, current.ParentId).FirstOrDefault(n => n.Name == current.Name);
-            if (current is not { Uploading: true })
+            if (current is { Uploading: false })
+            {
+                // Completed meanwhile by another answer for the same upload: the file is kept, nothing to write.
+                await unitOfWork.RollbackAsync(ct);
+                result = ServiceResult.Ok();
+            }
+            else if (current == null)
             {
                 // Removed meanwhile (its folder was deleted): the stored file has no row to belong to.
                 await unitOfWork.RollbackAsync(ct);
@@ -507,7 +519,7 @@ public class FileManagerService(
         {
             logger.LogError(e, "File Manager: failed to complete upload {UploadId} of {Email}", uploadId, accountEmail);
             await unitOfWork.RollbackAsync(ct);
-            return Temporary();
+            return (Temporary(), false);
         }
 
         // After the commit (P4): drop the file nobody keeps, or the one an overwrite replaced.
@@ -519,7 +531,7 @@ public class FileManagerService(
             await DeleteStoredFileAsync(accountEmail, replaced, ct);
         }
 
-        return result;
+        return (result, false);
     }
 
     /// <inheritdoc />

@@ -15,7 +15,7 @@ namespace Maroik.FileStorage.Tests.Controllers;
 /// <summary>
 /// Integration tests for <see cref="FileManagerController"/> (<c>api/FileManager/*</c>) through the real ASP.NET pipeline, with storage
 /// in a throwaway root and ClamAV mocked: the chunk / complete / abort / delete endpoints answer with the right status and refusal
-/// text, and each outcome is logged at the level it deserves with the upload id or path and the caller's correlation id (S8).
+/// text (complete answers 202 while the background scan runs), and each outcome is logged at the level it deserves with the upload id or path and the caller's correlation id (S8).
 /// </summary>
 [Collection("FileStorage host (Program builds a process-wide Serilog logger)")]
 public sealed class FileManagerControllerTests(WebApplicationFactory<Program> baseFactory) : IClassFixture<WebApplicationFactory<Program>>, IDisposable
@@ -35,8 +35,11 @@ public sealed class FileManagerControllerTests(WebApplicationFactory<Program> ba
         if (Directory.Exists(_base)) Directory.Delete(_base, recursive: true);
     }
 
-    /// <summary>A client for a host storing under the throwaway root, with every scan answering <paramref name="scan"/>.</summary>
-    private HttpClient Client(ClamavScanResult scan = ClamavScanResult.Clean)
+    /// <summary>
+    /// A client for a host storing under the throwaway root, with every scan answering <paramref name="scan"/> — once
+    /// <paramref name="scanDone"/> completes, when given (a scan that takes its time).
+    /// </summary>
+    private HttpClient Client(ClamavScanResult scan = ClamavScanResult.Clean, Task? scanDone = null)
     {
         var factory = baseFactory.WithWebHostBuilder(b =>
         {
@@ -46,7 +49,11 @@ public sealed class FileManagerControllerTests(WebApplicationFactory<Program> ba
                 foreach (var d in services.Where(d => d.ServiceType == typeof(IClamavClient)).ToList()) services.Remove(d);
                 var clam = new Mock<IClamavClient>();
                 clam.Setup(c => c.ScanWithClamavAsync(It.IsAny<Stream>(), It.IsAny<string>(), It.IsAny<int>(), It.IsAny<TimeSpan>(), It.IsAny<CancellationToken>()))
-                    .ReturnsAsync(scan);
+                    .Returns(async () =>
+                    {
+                        if (scanDone != null) await scanDone;
+                        return scan;
+                    });
                 services.AddScoped<IClamavClient>(_ => clam.Object);
                 services.AddSingleton<ILogger<FileManagerController>>(_logger);
             });
@@ -69,10 +76,28 @@ public sealed class FileManagerControllerTests(WebApplicationFactory<Program> ba
         return await client.PostAsync($"/api/FileManager/{action}", form, TestContext.Current.CancellationToken);
     }
 
+    /// <summary>
+    /// POSTs complete until it stops answering 202 (the scan runs in the background); returns that answer and how many 202s came first.
+    /// </summary>
+    private static async Task<(HttpResponseMessage Response, int Accepted)> CompleteUntilDecidedAsync(HttpClient client, string expectedSize)
+    {
+        for (int accepted = 0; ; accepted++)
+        {
+            HttpResponseMessage response = await PostAsync(client, "complete", ("uploadId", UploadId), ("expectedSize", expectedSize));
+            if (response.StatusCode != HttpStatusCode.Accepted || accepted == 500)
+                return (response, accepted);
+            response.Dispose();
+            await Task.Delay(10, TestContext.Current.CancellationToken);
+        }
+    }
+
     /// <summary>The single log entry at <paramref name="level"/>.</summary>
     private FakeLogRecord Only(LogLevel level) => Assert.Single(_logger.Collector.GetSnapshot(), r => r.Level == level);
 
-    /// <summary>Chunks answer the new length; then complete stores the file (logged at Information) and it can be downloaded back.</summary>
+    /// <summary>
+    /// Chunks answer the new length; the first complete answers 202 at once (the scan is queued, not awaited), and a later one 200 once
+    /// the background scan stored the file (logged at Information).
+    /// </summary>
     [Fact]
     public async Task ChunkThenComplete_StoresTheFile()
     {
@@ -80,15 +105,41 @@ public sealed class FileManagerControllerTests(WebApplicationFactory<Program> ba
 
         using var first = await ChunkAsync(client, 0, [1, 2, 3], UploadId);
         using var second = await ChunkAsync(client, 3, [4], UploadId);
-        using var complete = await PostAsync(client, "complete", ("uploadId", UploadId), ("expectedSize", "4"));
+        (HttpResponseMessage complete, int accepted) = await CompleteUntilDecidedAsync(client, "4");
+        using HttpResponseMessage decided = complete;
 
         Assert.Equal(HttpStatusCode.OK, first.StatusCode);
         Assert.Equal("3", await first.Content.ReadAsStringAsync(TestContext.Current.CancellationToken));
         Assert.Equal("4", await second.Content.ReadAsStringAsync(TestContext.Current.CancellationToken));
-        Assert.Equal(HttpStatusCode.OK, complete.StatusCode);
+        Assert.True(accepted >= 1);
+        Assert.Equal(HttpStatusCode.OK, decided.StatusCode);
         Assert.Equal([1, 2, 3, 4], await File.ReadAllBytesAsync(Path.Combine(_base, "upload", "FileManager", UploadId), TestContext.Current.CancellationToken));
         FakeLogRecord stored = Only(LogLevel.Information);
         Assert.Equal($"File Manager upload {UploadId} stored (4 bytes). CorrelationId=corr-1", stored.Message);
+    }
+
+    /// <summary>
+    /// Regression: complete used to wait for the scan, and a large file's scan (202 seconds for a 484 MB zip) outlasted the Website's
+    /// 100-second HTTP timeout and Cloudflare's, so every such upload failed. Now complete answers 202 at once while ClamAV is still
+    /// busy, keeps answering 202 until the scan ends, and then 200.
+    /// </summary>
+    [Fact]
+    public async Task Complete_AnswersAtOnce_WhileTheScanIsStillRunning()
+    {
+        var scanDone = new TaskCompletionSource();
+        using HttpClient client = Client(scanDone: scanDone.Task);
+        using var chunk = await ChunkAsync(client, 0, [1, 2], UploadId);
+
+        using var first = await PostAsync(client, "complete", ("uploadId", UploadId), ("expectedSize", "2")).WaitAsync(TimeSpan.FromSeconds(10), TestContext.Current.CancellationToken);
+        using var again = await PostAsync(client, "complete", ("uploadId", UploadId), ("expectedSize", "2")).WaitAsync(TimeSpan.FromSeconds(10), TestContext.Current.CancellationToken);
+        scanDone.SetResult();
+        (HttpResponseMessage complete, _) = await CompleteUntilDecidedAsync(client, "2");
+        using HttpResponseMessage decided = complete;
+
+        Assert.Equal(HttpStatusCode.Accepted, first.StatusCode);
+        Assert.Equal(HttpStatusCode.Accepted, again.StatusCode);
+        Assert.Equal(HttpStatusCode.OK, decided.StatusCode);
+        Assert.Equal([1, 2], await File.ReadAllBytesAsync(Path.Combine(_base, "upload", "FileManager", UploadId), TestContext.Current.CancellationToken));
     }
 
     /// <summary>A chunk at the wrong offset is a conflict, logged at Warning.</summary>
@@ -128,7 +179,8 @@ public sealed class FileManagerControllerTests(WebApplicationFactory<Program> ba
         using HttpClient client = Client(scan);
         using var chunk = await ChunkAsync(client, 0, [1], UploadId);
 
-        using var response = await PostAsync(client, "complete", ("uploadId", UploadId), ("expectedSize", "1"));
+        (HttpResponseMessage complete, _) = await CompleteUntilDecidedAsync(client, "1");
+        using HttpResponseMessage response = complete;
 
         Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
         Assert.Equal(refusal, await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken));

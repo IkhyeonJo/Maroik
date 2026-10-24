@@ -145,6 +145,10 @@ public sealed class FileManagerControllerTests(MaroikWebApplicationFactory facto
         Assert.Equal(System.Net.HttpStatusCode.OK, response.StatusCode);
         Assert.Contains("id=\"fileManagerTree\"", html, StringComparison.Ordinal);
         Assert.Contains($"value=\"{2147483647}\"", html, StringComparison.Ordinal);
+        Assert.Contains("id=\"scanPollMilliseconds\" name=\"scanPollMilliseconds\" type=\"hidden\" value=\"3000\"", html, StringComparison.Ordinal);
+        Assert.Contains("id=\"maxScanWaitMilliseconds\" name=\"maxScanWaitMilliseconds\" type=\"hidden\" value=\"960000\"", html, StringComparison.Ordinal);
+        Assert.Contains("id=\"localizerScanning\"", html, StringComparison.Ordinal);
+        Assert.Contains("id=\"localizerScanWait\"", html, StringComparison.Ordinal);
         Assert.Contains("My Drive", html, StringComparison.Ordinal);
         Assert.Contains("/user/plugins/jstree/jstree.min.js", html, StringComparison.Ordinal);
     }
@@ -281,11 +285,45 @@ public sealed class FileManagerControllerTests(MaroikWebApplicationFactory facto
         JsonElement done = await UploadAsync(session, "notes.txt", [1, 2, 3]);
 
         Assert.True(done.GetProperty("result").GetBoolean(), done.ToString());
+        Assert.False(done.GetProperty("scanning").GetBoolean());
         Assert.Equal("The file has been uploaded.", done.GetProperty("message").GetString());
         Assert.Equal(["notes.txt"], await ItemNamesAsync(session));
         using var scope = factory.Services.CreateScope();
         string path = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>().FileManagerNodes.AsNoTracking().Single(n => n.AccountEmail == email).StoragePath!;
         Assert.Equal([1, 2, 3], _files.BytesOf(path));
+    }
+
+    /// <summary>
+    /// While file storage is still scanning, CompleteUpload answers "scanning" (no message) and the file is not listed yet; asked again
+    /// after the scan, it answers the upload.
+    /// </summary>
+    [Fact]
+    public async Task CompleteUpload_AnswersScanning_UntilTheScanIsDone()
+    {
+        var (session, _) = await LoginAsync();
+        _files.FileManagerScanningAnswers = 1;
+
+        JsonElement first = await UploadAsync(session, "big.zip", [1, 2, 3]);
+        string uploadId = await UploadIdOfAsync("big.zip");
+        Assert.Empty(await ItemNamesAsync(session));
+        JsonElement second = await PostAsync(session, "/FileManager/CompleteUpload", new { UploadId = uploadId, Overwrite = false });
+
+        Assert.True(first.GetProperty("result").GetBoolean(), first.ToString());
+        Assert.True(first.GetProperty("scanning").GetBoolean());
+        Assert.False(first.TryGetProperty("message", out _));
+        Assert.True(second.GetProperty("result").GetBoolean(), second.ToString());
+        Assert.False(second.GetProperty("scanning").GetBoolean());
+        Assert.Equal("The file has been uploaded.", second.GetProperty("message").GetString());
+        Assert.Equal(["big.zip"], await ItemNamesAsync(session));
+    }
+
+    /// <summary>The upload id (storage GUID) of the unfinished upload named <paramref name="name"/>.</summary>
+    private async Task<string> UploadIdOfAsync(string name)
+    {
+        using var scope = factory.Services.CreateScope();
+        string path = (await scope.ServiceProvider.GetRequiredService<ApplicationDbContext>().FileManagerNodes.AsNoTracking()
+            .SingleAsync(n => n.Name == name && n.Uploading, TestContext.Current.CancellationToken)).StoragePath!;
+        return path["upload/FileManager/".Length..];
     }
 
     /// <summary>Under the default 0 GB quota the upload is refused before it starts, saying how much is missing (in Korean too).</summary>

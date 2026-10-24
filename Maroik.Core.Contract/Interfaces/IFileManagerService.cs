@@ -43,10 +43,12 @@ public interface IFileManagerService
     Task<(ServiceResult Result, long Length)> AppendChunkAsync(string accountEmail, Guid uploadId, long offset, Stream chunk, long chunkLength, CancellationToken ct = default);
 
     /// <summary>
-    /// Completes an upload: file storage scans and stores it, then the file becomes a normal item. With <paramref name="overwrite"/> a
-    /// finished file of the same name is replaced (deleted); without it such a file makes the upload fail.
+    /// Completes an upload, and is called again until it is decided: file storage scans it in the background, and while it does the
+    /// answer is a success with <c>Scanning</c> true and nothing changes. Once it is stored the file becomes a normal item (an upload
+    /// already completed answers the same). With <paramref name="overwrite"/> a finished file of the same name is replaced (deleted);
+    /// without it such a file makes the upload fail.
     /// </summary>
-    Task<ServiceResult> CompleteUploadAsync(string accountEmail, Guid uploadId, bool overwrite, CancellationToken ct = default);
+    Task<(ServiceResult Result, bool Scanning)> CompleteUploadAsync(string accountEmail, Guid uploadId, bool overwrite, CancellationToken ct = default);
 
     /// <summary>Abandons an unfinished upload.</summary>
     Task<ServiceResult> AbortUploadAsync(string accountEmail, Guid uploadId, CancellationToken ct = default);

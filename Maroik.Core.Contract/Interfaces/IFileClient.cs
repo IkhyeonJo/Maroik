@@ -57,8 +57,9 @@ public interface IFileClient
     public Task<long?> AppendFileManagerChunkAsync(Guid uploadId, long offset, Stream chunk, string fileStorageBaseUrl, CancellationToken ct = default);
 
     /// <summary>
-    /// Completes the File Manager upload <paramref name="uploadId"/> of <paramref name="expectedSize"/> bytes: the storage service scans
-    /// it and stores it under <c>upload/FileManager/{uploadId}</c>. The result says whether it was stored, infected, unscannable or failed.
+    /// Completes the File Manager upload <paramref name="uploadId"/> of <paramref name="expectedSize"/> bytes, and is called again until
+    /// it is decided: the storage service scans it in the background and stores it under <c>upload/FileManager/{uploadId}</c>, so the
+    /// result is <see cref="FileUploadResult.Scanning"/> until it says whether it was stored, infected, unscannable or failed.
     /// </summary>
     public Task<FileUploadResult> CompleteFileManagerUploadAsync(Guid uploadId, long expectedSize, string fileStorageBaseUrl, CancellationToken ct = default);
 

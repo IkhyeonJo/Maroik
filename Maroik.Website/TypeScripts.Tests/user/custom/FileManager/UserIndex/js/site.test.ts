@@ -5,16 +5,20 @@ import { loadSite, hidden, antiForgery, present, stubPlugin, successOf, formData
 // items, selection, drag and drop, and the chunked upload with its name-conflict dialog.
 
 /** The page shell, as UserIndex.cshtml renders it (localized texts as "L:<key>" so assertions can see them). */
-function fixture(maxFileBytes = 2147483647): string {
+function fixture(maxFileBytes = 2147483647, maxScanWaitMilliseconds = 960000): string {
     const texts: Record<string, string> = {
         MyDrive: "My Drive", ItemCount: "{0} items", SelectedCount: "{0} selected", EmptyFolder: "Empty", NoResults: "Nothing",
         Name: "Name", Size: "Size", Modified: "Modified", Location: "Location", Actions: "Actions", Download: "Download",
         Preview: "Preview", Rename: "Rename", Delete: "Delete", Conflict: "'{0}' exists", Uploading: "Uploading {0}/{1}: {2}",
         UploadSummary: "{0} up, {1} failed, {2} skipped", Uploaded: "Uploaded", Skipped: "Skipped", FileTooLarge: "Too large", Canceled: "Canceled",
+        Scanning: "Scanning…", ScanWait: "Waiting for {0} scans",
     };
     return (
         antiForgery +
         hidden("maxFileBytes", String(maxFileBytes)) +
+        // The page asks again at once in the tests (the server's 3 seconds would only slow them down).
+        hidden("scanPollMilliseconds", "0") +
+        hidden("maxScanWaitMilliseconds", String(maxScanWaitMilliseconds)) +
         Object.keys(texts).map((key) => hidden(`localizer${key}`, texts[key] ?? "")).join("") +
         `<button id="btnUploadFiles"></button><button id="btnUploadFolder"></button>
          <input type="file" id="fileManagerFileInput" multiple /><input type="file" id="fileManagerFolderInput" multiple />
@@ -74,6 +78,13 @@ function bodyOf(call: AjaxCall): unknown {
 /** Answers the latest call to `url` and lets the script continue. */
 async function answer(h: SiteHandle, url: string, data: unknown): Promise<void> {
     successOf(callTo(h, url))(data);
+    await flush();
+}
+
+/** Answers the latest CompleteUpload ask for `uploadId` (several files can be waiting for their scans at once). */
+async function answerScan(h: SiteHandle, uploadId: string, data: unknown): Promise<void> {
+    const ask = [...callsTo(h, "/FileManager/CompleteUpload")].reverse().find((c) => String(c.data).includes(`"UploadId":"${uploadId}"`));
+    successOf(present(ask, `an ask for ${uploadId}`))(data);
     await flush();
 }
 
@@ -573,7 +584,7 @@ describe("FileManager/UserIndex — upload", () => {
         await answer(h, "/FileManager/UploadChunk", { result: true, length: 3 });
 
         expect(bodyOf(callTo(h, "/FileManager/CompleteUpload"))).toEqual({ UploadId: "u-1", Overwrite: false });
-        await answer(h, "/FileManager/CompleteUpload", { result: true, message: "ok" });
+        await answer(h, "/FileManager/CompleteUpload", { result: true, scanning: false, message: "ok" });
         expect(h.$("#uploadResults li").text()).toBe("a.txt — Uploaded");
         expect(h.$("#uploadProgressText").text()).toBe("1 up, 0 failed, 0 skipped");
         expect(h.$("#btnUploadClose").prop("disabled")).toBe(false);
@@ -622,6 +633,87 @@ describe("FileManager/UserIndex — upload", () => {
         expect(h.$("#uploadResults li").map((_, el) => h.$(el).text()).get()).toEqual(["a.txt — ", "b.txt — ", "c.txt — ", "d.txt — 'd.txt' exists"]);
     });
 
+    it("while the server scans a file it asks again (same body) until the scan is decided; the line says so meanwhile", async () => {
+        const { h } = await load();
+        pick(h, "fileManagerFileInput", [file("big.zip")]);
+        await flush();
+        await answer(h, "/FileManager/CheckQuota", { result: true });
+        await answer(h, "/FileManager/BeginUpload", { result: true, conflict: false, uploadId: "u-1", name: "big.zip", chunkBytes: 16 });
+        await answer(h, "/FileManager/UploadChunk", { result: true, length: 3 });
+
+        await answer(h, "/FileManager/CompleteUpload", { result: true, scanning: true });
+        expect(h.$("#uploadResults li").text()).toBe("big.zip — Scanning…");
+        expect(h.$("#uploadProgressText").text()).toBe("Waiting for 1 scans");
+        expect(h.$("#btnUploadClose").prop("disabled")).toBe(true);
+        await answer(h, "/FileManager/CompleteUpload", { result: true, scanning: true });
+
+        const asks = callsTo(h, "/FileManager/CompleteUpload");
+        expect(asks).toHaveLength(3);
+        expect(asks.map(bodyOf)).toEqual([0, 1, 2].map(() => ({ UploadId: "u-1", Overwrite: false })));
+        await answer(h, "/FileManager/CompleteUpload", { result: true, scanning: false, message: "ok" });
+        expect(h.$("#uploadResults li").text()).toBe("big.zip — Uploaded");
+        expect(h.$("#uploadResults li").hasClass("text-success")).toBe(true);
+        expect(h.$("#uploadProgressText").text()).toBe("1 up, 0 failed, 0 skipped");
+        expect(h.$("#btnUploadClose").prop("disabled")).toBe(false);
+    });
+
+    it("the next file is sent while the one before is still scanning; each line settles when its scan does", async () => {
+        const { h } = await load();
+        pick(h, "fileManagerFileInput", [file("a.zip"), file("b.zip")]);
+        await flush();
+        await answer(h, "/FileManager/CheckQuota", { result: true });
+        await answer(h, "/FileManager/BeginUpload", { result: true, conflict: false, uploadId: "u-a", name: "a.zip", chunkBytes: 16 });
+        await answer(h, "/FileManager/UploadChunk", { result: true, length: 3 });
+        await answer(h, "/FileManager/CompleteUpload", { result: true, scanning: true });
+
+        expect(bodyOf(callTo(h, "/FileManager/BeginUpload"))).toMatchObject({ Name: "b.zip" });
+        expect(h.$("#uploadProgressText").text()).toBe("Uploading 2/2: b.zip");
+        await answer(h, "/FileManager/BeginUpload", { result: true, conflict: false, uploadId: "u-b", name: "b.zip", chunkBytes: 16 });
+        await answer(h, "/FileManager/UploadChunk", { result: true, length: 3 });
+        await answerScan(h, "u-b", { result: false, error: "infected" });
+        expect(h.$("#uploadResults li").map((_, el) => h.$(el).text()).get()).toEqual(["a.zip — Scanning…", "b.zip — infected"]);
+
+        await answerScan(h, "u-a", { result: true, scanning: false, message: "ok" });
+        expect(h.$("#uploadResults li").map((_, el) => h.$(el).text()).get()).toEqual(["a.zip — Uploaded", "b.zip — infected"]);
+        expect(h.$("#uploadProgressText").text()).toBe("1 up, 1 failed, 0 skipped");
+    });
+
+    it("Cancel while a file is scanning aborts that upload and lists it as canceled", async () => {
+        const { h } = await load();
+        pick(h, "fileManagerFileInput", [file("big.zip")]);
+        await flush();
+        await answer(h, "/FileManager/CheckQuota", { result: true });
+        await answer(h, "/FileManager/BeginUpload", { result: true, conflict: false, uploadId: "u-1", name: "big.zip", chunkBytes: 16 });
+        await answer(h, "/FileManager/UploadChunk", { result: true, length: 3 });
+        h.$("#btnUploadCancel").trigger("click");
+
+        await answer(h, "/FileManager/CompleteUpload", { result: true, scanning: true });
+        expect(bodyOf(callTo(h, "/FileManager/AbortUpload"))).toEqual({ UploadId: "u-1" });
+        await answer(h, "/FileManager/AbortUpload", { result: true });
+
+        expect(callsTo(h, "/FileManager/CompleteUpload")).toHaveLength(1);
+        expect(h.$("#uploadResults li").text()).toBe("big.zip — Canceled");
+        expect(h.$("#uploadProgressText").text()).toBe("0 up, 0 failed, 1 skipped");
+    });
+
+    it("a scan that is not decided within the server's wait limit is given up: aborted and failed with the generic error", async () => {
+        const h = loadSite("user", "FileManager", "UserIndex", fixture(2147483647, 0));
+        stubWidgets(h);
+        pick(h, "fileManagerFileInput", [file("big.zip")]);
+        await flush();
+        await answer(h, "/FileManager/CheckQuota", { result: true });
+        await answer(h, "/FileManager/BeginUpload", { result: true, conflict: false, uploadId: "u-1", name: "big.zip", chunkBytes: 16 });
+        await answer(h, "/FileManager/UploadChunk", { result: true, length: 3 });
+
+        await answer(h, "/FileManager/CompleteUpload", { result: true, scanning: true });
+        expect(bodyOf(callTo(h, "/FileManager/AbortUpload"))).toEqual({ UploadId: "u-1" });
+        await answer(h, "/FileManager/AbortUpload", { result: true });
+
+        expect(callsTo(h, "/FileManager/CompleteUpload")).toHaveLength(1);
+        expect(h.$("#uploadResults li").text()).toBe("big.zip — L_TemporaryError");
+        expect(h.$("#uploadProgressText").text()).toBe("0 up, 1 failed, 0 skipped");
+    });
+
     it("a quota or folder reply of another shape stops quietly (the generic error is shown)", async () => {
         const { h } = await load();
         pick(h, "fileManagerFileInput", [file("a.txt")]);
@@ -663,7 +755,7 @@ describe("FileManager/UserIndex — upload", () => {
         expect(bodyOf(callTo(h, "/FileManager/BeginUpload"))).toEqual({ ParentId: null, Name: "a.txt", Size: 3, Conflict: "KeepBoth" });
         await answer(h, "/FileManager/BeginUpload", { result: true, conflict: false, uploadId: "u-a", name: "a (1).txt", chunkBytes: 16 });
         await answer(h, "/FileManager/UploadChunk", { result: true, length: 3 });
-        await answer(h, "/FileManager/CompleteUpload", { result: true, message: "ok" });
+        await answer(h, "/FileManager/CompleteUpload", { result: true, scanning: false, message: "ok" });
 
         expect(bodyOf(callTo(h, "/FileManager/BeginUpload"))).toEqual({ ParentId: null, Name: "b.txt", Size: 3, Conflict: "KeepBoth" });
     });
@@ -680,7 +772,7 @@ describe("FileManager/UserIndex — upload", () => {
         await answer(h, "/FileManager/BeginUpload", { result: true, conflict: false, uploadId: "u-a", name: "a.txt", chunkBytes: 16 });
         await answer(h, "/FileManager/UploadChunk", { result: true, length: 3 });
         expect(bodyOf(callTo(h, "/FileManager/CompleteUpload"))).toEqual({ UploadId: "u-a", Overwrite: true });
-        await answer(h, "/FileManager/CompleteUpload", { result: true, message: "ok" });
+        await answer(h, "/FileManager/CompleteUpload", { result: true, scanning: false, message: "ok" });
 
         await answer(h, "/FileManager/BeginUpload", { result: true, conflict: true, uploadId: "", name: "b.txt", chunkBytes: 16 });
         h.$("#conflictApplyToAll").prop("checked", true);
@@ -705,7 +797,7 @@ describe("FileManager/UserIndex — upload", () => {
         expect(bodyOf(callTo(h, "/FileManager/BeginUpload"))).toMatchObject({ ParentId: 20, Name: "a.txt" });
         await answer(h, "/FileManager/BeginUpload", { result: true, conflict: false, uploadId: "u-a", name: "a.txt", chunkBytes: 16 });
         await answer(h, "/FileManager/UploadChunk", { result: true, length: 3 });
-        await answer(h, "/FileManager/CompleteUpload", { result: true, message: "ok" });
+        await answer(h, "/FileManager/CompleteUpload", { result: true, scanning: false, message: "ok" });
 
         expect(bodyOf(callTo(h, "/FileManager/CreateFolder"))).toEqual({ ParentId: 20, Name: "Sub", Merge: true });
         await answer(h, "/FileManager/CreateFolder", { result: true, message: "", folderId: 21 });
@@ -925,7 +1017,7 @@ describe("FileManager/UserIndex — cancelling an upload", () => {
 
         await answer(h, "/FileManager/BeginUpload", { result: true, conflict: false, uploadId: "u-a", name: "a.txt", chunkBytes: 16 });
         await answer(h, "/FileManager/UploadChunk", { result: true, length: 3 });
-        await answer(h, "/FileManager/CompleteUpload", { result: true, message: "ok" });
+        await answer(h, "/FileManager/CompleteUpload", { result: true, scanning: false, message: "ok" });
 
         expect(h.$("#btnUploadCancel").prop("disabled")).toBe(true);
     });
@@ -952,7 +1044,7 @@ describe("FileManager/UserIndex — cancelling an upload", () => {
         expect(callsTo(h, "/FileManager/GetDrive")).toHaveLength(2);
     });
 
-    it("a file already stored stays uploaded; only the rest is cancelled", async () => {
+    it("a file already stored stays uploaded; the one being sent meanwhile is aborted before its first chunk", async () => {
         const { h } = await load();
         pick(h, "fileManagerFileInput", [file("a.txt"), file("b.txt")]);
         await flush();
@@ -960,10 +1052,13 @@ describe("FileManager/UserIndex — cancelling an upload", () => {
         await answer(h, "/FileManager/BeginUpload", { result: true, conflict: false, uploadId: "u-a", name: "a.txt", chunkBytes: 16 });
         await answer(h, "/FileManager/UploadChunk", { result: true, length: 3 });
         h.$("#btnUploadCancel").trigger("click");
-        await answer(h, "/FileManager/CompleteUpload", { result: true, message: "ok" });
+        await answerScan(h, "u-a", { result: true, scanning: false, message: "ok" });
+        await answer(h, "/FileManager/BeginUpload", { result: true, conflict: false, uploadId: "u-b", name: "b.txt", chunkBytes: 16 });
+        expect(bodyOf(callTo(h, "/FileManager/AbortUpload"))).toEqual({ UploadId: "u-b" });
+        await answer(h, "/FileManager/AbortUpload", { result: true });
 
         expect(h.$("#uploadResults li").map((_, el) => h.$(el).text()).get()).toEqual(["a.txt — Uploaded", "b.txt — Canceled"]);
-        expect(callsTo(h, "/FileManager/BeginUpload")).toHaveLength(1);
+        expect(callsTo(h, "/FileManager/UploadChunk")).toHaveLength(1);
     });
 
     it("a cancelled batch does not cancel the next one", async () => {

@@ -2,8 +2,8 @@ namespace Maroik.Core.Contract.Enums;
 
 /// <summary>
 /// Outcome of an upload to the file-storage service (see <c>IFileClient.UploadWithResultAsync</c>).
-/// Only <see cref="Stored"/> means the file is on disk; the other values are all refusals, kept apart
-/// so a caller can tell a virus detection from a scanner outage from any other failure.
+/// Only <see cref="Stored"/> means the file is on disk; <see cref="Scanning"/> (File Manager only) means not decided yet; the other
+/// values are all refusals, kept apart so a caller can tell a virus detection from a scanner outage from any other failure.
 /// </summary>
 public enum FileUploadResult
 {
@@ -17,5 +17,11 @@ public enum FileUploadResult
     ScanUnavailable,
 
     /// <summary>Any other failure: empty input, an unsafe path, a rejected format/size, or a transport error.</summary>
-    Failed
+    Failed,
+
+    /// <summary>
+    /// A File Manager upload whose virus scan is queued or running in the background (<c>IFileClient.CompleteFileManagerUploadAsync</c>):
+    /// not decided yet, asked again later.
+    /// </summary>
+    Scanning
 }

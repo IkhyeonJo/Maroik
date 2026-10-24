@@ -127,6 +127,19 @@ public class FileClientFileManagerTests
         Assert.Contains(UploadId.ToString("D"), storage.Body, StringComparison.Ordinal);
     }
 
+    /// <summary>
+    /// 202 means the storage service queued the virus scan (or it is still running) and is asked again later: Scanning, not a refusal,
+    /// so nothing is logged.
+    /// </summary>
+    [Fact]
+    public async Task CompleteFileManagerUploadAsync_ReturnsScanning_WhileTheScanRuns()
+    {
+        using var storage = new FakeStorage(HttpStatusCode.Accepted, "");
+
+        Assert.Equal(FileUploadResult.Scanning, await Sut(storage).CompleteFileManagerUploadAsync(UploadId, 1234, BaseUrl, TestContext.Current.CancellationToken));
+        Assert.Empty(_logger.Collector.GetSnapshot());
+    }
+
     /// <summary>The storage service's refusal is mapped back: a virus is Infected, a scanner outage or exceeded limit ScanUnavailable, anything else Failed.</summary>
     [Theory]
     [InlineData(FileStorageRefusals.Infected, FileUploadResult.Infected)]

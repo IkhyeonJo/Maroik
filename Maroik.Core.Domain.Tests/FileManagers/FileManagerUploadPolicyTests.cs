@@ -4,7 +4,7 @@ namespace Maroik.Core.Domain.Tests.FileManagers;
 
 /// <summary>
 /// Unit tests for <see cref="FileManagerUploadPolicy"/>: the per-file size limit ClamAV can scan (S1), the chunk size (P5), the age of
-/// an abandoned upload (Q5) and the quota check (Q3, Q4).
+/// an abandoned upload (Q5), how long the page waits for the virus scan (D6) and the quota check (Q3, Q4).
 /// </summary>
 public class FileManagerUploadPolicyTests
 {
@@ -15,6 +15,17 @@ public class FileManagerUploadPolicyTests
         Assert.Equal(2_147_483_647L, FileManagerUploadPolicy.MaxFileBytes);
         Assert.Equal(16 * 1024 * 1024, FileManagerUploadPolicy.ChunkBytes);
         Assert.Equal(TimeSpan.FromHours(24), FileManagerUploadPolicy.StaleUploadAge);
+    }
+
+    /// <summary>
+    /// While a file is scanned the page asks every 3 seconds, and gives up after 16 minutes: the scan's own limit in file storage (15
+    /// minutes) plus a minute for the queue (D6).
+    /// </summary>
+    [Fact]
+    public void TheScanWait_IsAskedEveryThreeSeconds_ForAtMostSixteenMinutes()
+    {
+        Assert.Equal(3_000, FileManagerUploadPolicy.ScanPollMilliseconds);
+        Assert.Equal(16 * 60 * 1_000, FileManagerUploadPolicy.MaxScanWaitMilliseconds);
     }
 
     /// <summary>An empty file and a file up to the limit are accepted.</summary>

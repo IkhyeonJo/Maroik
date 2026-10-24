@@ -243,4 +243,10 @@
   <data name="Canceled" xml:space="preserve">
     <value>취소됨</value>
   </data>
+  <data name="Scanning for viruses…" xml:space="preserve">
+    <value>바이러스 검사 중…</value>
+  </data>
+  <data name="Waiting for {0} virus scan(s)…" xml:space="preserve">
+    <value>바이러스 검사 {0}건을 기다리는 중…</value>
+  </data>
 </root>

@@ -83,6 +83,9 @@ public sealed class FakeFileClient : IFileClient
     /// <summary>What every File Manager upload completion reports; defaults to <see cref="FileUploadResult.Stored"/>.</summary>
     public FileUploadResult FileManagerOutcome { get; set; } = FileUploadResult.Stored;
 
+    /// <summary>How many File Manager completions answer <see cref="FileUploadResult.Scanning"/> before one is decided; defaults to none.</summary>
+    public int FileManagerScanningAnswers { get; set; }
+
     /// <summary>When true every File Manager delete fails, as an unreachable file-storage service would.</summary>
     public bool FailFileManagerDeletes { get; set; }
 
@@ -109,6 +112,13 @@ public sealed class FakeFileClient : IFileClient
     /// <inheritdoc />
     public Task<FileUploadResult> CompleteFileManagerUploadAsync(Guid uploadId, long expectedSize, string fileStorageBaseUrl, CancellationToken ct = default)
     {
+        // The background virus scan is still running: nothing is decided, the staging bytes stay.
+        if (FileManagerScanningAnswers > 0)
+        {
+            FileManagerScanningAnswers--;
+            return Task.FromResult(FileUploadResult.Scanning);
+        }
+
         _staging.TryRemove(uploadId, out byte[]? received);
         received ??= [];
         if (received.Length != expectedSize) return Task.FromResult(FileUploadResult.Failed);

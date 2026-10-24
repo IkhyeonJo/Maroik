@@ -80,6 +80,32 @@ public class FileManagerFlowTests(E2ESharedFixture fixture) : E2ETestBase(fixtur
         Assert.Equal("hello"u8.ToArray(), Files.BytesOf(path!));
     }
 
+    /// <summary>
+    /// While file storage is still scanning a sent file, its line says so and the page keeps asking (every 3 seconds, the domain's
+    /// interval); once the scan is decided the line says it is uploaded and the file is listed.
+    /// </summary>
+    [Fact]
+    public async Task Upload_WaitsForTheVirusScan()
+    {
+        var (page, _) = await OpenAsync();
+        Files.ScanFor(1);
+        try
+        {
+            await page.Locator("#fileManagerFileInput").SetInputFilesAsync(new FilePayload { Name = "archive.zip", MimeType = "application/zip", Buffer = [1, 2, 3] });
+
+            await Assertions.Expect(page.Locator("#uploadResults li")).ToHaveTextAsync("archive.zip — 바이러스 검사 중…");
+            await Assertions.Expect(page.Locator("#btnUploadClose")).ToBeDisabledAsync();
+            await Assertions.Expect(page.Locator("#uploadResults li")).ToHaveTextAsync("archive.zip — 업로드됨", new LocatorAssertionsToHaveTextOptions { Timeout = 30_000 });
+            await Assertions.Expect(page.Locator("#btnUploadClose")).ToBeEnabledAsync();
+            await page.Locator("#btnUploadClose").ClickAsync();
+            await Assertions.Expect(Tile(page, "archive.zip")).ToBeVisibleAsync();
+        }
+        finally
+        {
+            Files.ScanFor(0);
+        }
+    }
+
     /// <summary>Under the default quota of 0 GB an upload is refused before it starts, saying how much is missing.</summary>
     [Fact]
     public async Task Upload_IsRefused_UnderTheZeroQuota()
