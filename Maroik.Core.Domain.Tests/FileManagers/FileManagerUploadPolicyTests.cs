@@ -37,35 +37,35 @@ public class FileManagerUploadPolicyTests
     [InlineData(1L, false)]
     [InlineData(2_147_483_645L, false)]
     [InlineData(2_147_483_645L, true)]
-    public void CheckSize_AcceptsAScannableFile(long size, bool mayKeepUnscanned)
+    public void CheckSize_AcceptsAScannableFile(long size, bool scanDisabled)
     {
-        Assert.False(FileManagerUploadPolicy.CheckSize(size, mayKeepUnscanned).IsError);
+        Assert.False(FileManagerUploadPolicy.CheckSize(size, scanDisabled).IsError);
     }
 
     /// <summary>
-    /// There is no upper limit: a file larger than ClamAV can scan is accepted from an account an administrator allows to keep
-    /// unscanned files (its owner is asked once the upload is complete), whatever its size.
+    /// There is no upper limit: a file larger than ClamAV can scan is accepted from an account whose virus scan an administrator
+    /// turned off (it is stored without a scan), whatever its size.
     /// </summary>
     [Theory]
     [InlineData(2_147_483_646L)]
     [InlineData(50L * 1024 * 1024 * 1024)]
     [InlineData(long.MaxValue)]
-    public void CheckSize_AcceptsAnUnscannableFile_FromAnAccountThatMayKeepIt(long size)
+    public void CheckSize_AcceptsAnUnscannableFile_FromAnAccountWhoseScanIsOff(long size)
     {
-        Assert.False(FileManagerUploadPolicy.CheckSize(size, mayKeepUnscanned: true).IsError);
+        Assert.False(FileManagerUploadPolicy.CheckSize(size, scanDisabled: true).IsError);
     }
 
     /// <summary>
-    /// From any other account a file one byte over what ClamAV can scan is refused when the upload starts (it could never be scanned,
+    /// From an account whose scan is on, a file one byte over what ClamAV can scan is refused when the upload starts (it could never be scanned,
     /// so it would be refused after the whole file was sent); a negative size is refused from every account.
     /// </summary>
     [Theory]
     [InlineData(2_147_483_646L, false, "FileManager.FileTooLarge")]
     [InlineData(-1L, false, "FileManager.SizeInvalid")]
     [InlineData(-1L, true, "FileManager.SizeInvalid")]
-    public void CheckSize_RefusesAFileThatCannotBeKept(long size, bool mayKeepUnscanned, string code)
+    public void CheckSize_RefusesAFileThatCannotBeScanned_OrANegativeSize(long size, bool scanDisabled, string code)
     {
-        Assert.Equal(code, FileManagerUploadPolicy.CheckSize(size, mayKeepUnscanned).FirstError.Code);
+        Assert.Equal(code, FileManagerUploadPolicy.CheckSize(size, scanDisabled).FirstError.Code);
     }
 
     /// <summary>An upload that fits the remaining quota exactly is accepted.</summary>

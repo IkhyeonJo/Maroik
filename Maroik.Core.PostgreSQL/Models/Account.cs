@@ -109,9 +109,9 @@ public partial class Account
     public long FileManagerQuotaBytes { get; set; }
 
     /// <summary>
-    /// May store a File Manager file that could not be scanned for viruses
+    /// File Manager uploads of this account skip the virus scan
     /// </summary>
-    public bool FileManagerAllowUnscanned { get; set; }
+    public bool FileManagerScanDisabled { get; set; }
 
     /// <summary>Assets owned by this account (Asset.AccountEmail).</summary>
     public virtual ICollection<Asset> Assets { get; set; } = new List<Asset>();

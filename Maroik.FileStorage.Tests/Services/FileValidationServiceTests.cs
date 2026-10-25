@@ -379,8 +379,8 @@ public class FileValidationServiceTests
     }
 
     /// <summary>
-    /// An attachment too large for clamd's limits is refused like any file that could not be scanned: only the File Manager lets its
-    /// owner keep such a file.
+    /// An attachment too large for clamd's limits is refused like any file that could not be scanned: attachments are always scanned,
+    /// even for an account whose File Manager scan is off.
     /// </summary>
     [Fact]
     public async Task ValidateAndSaveAsync_RefusesAFileOverTheScanLimits_AsUnscannable()

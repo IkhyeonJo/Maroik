@@ -19,8 +19,10 @@ public interface IFileManagerStorageService
     /// a staging file of <paramref name="expectedSize"/> bytes gets its scan queued, and while it is queued or running the answer is
     /// "scanning"; afterwards it is "stored" (the file is in <c>upload/FileManager/{uploadId}</c>) or the scan's refusal, answered once.
     /// Returns no error and <c>Scanning</c> true while scanning, no error and false when stored, or the refusal.
+    /// With <paramref name="skipScan"/> (the account's virus scan is off, decided by the Website) a whole staging file is moved there at
+    /// once, unscanned, and the answer is "stored"; a scan already queued for the upload is still followed.
     /// </summary>
-    Task<(string? Error, bool Scanning)> CompleteAsync(string? uploadId, long expectedSize, CancellationToken ct = default);
+    Task<(string? Error, bool Scanning)> CompleteAsync(string? uploadId, long expectedSize, bool skipScan, CancellationToken ct = default);
 
     /// <summary>
     /// Scans the staging file of <paramref name="uploadId"/> with ClamAV and moves a clean file to <c>upload/FileManager/{uploadId}</c>.
@@ -28,13 +30,6 @@ public interface IFileManagerStorageService
     /// without storing anything when <paramref name="ct"/> is cancelled (the upload was aborted, or the service stops).
     /// </summary>
     Task<string?> ScanAsync(string uploadId, CancellationToken ct);
-
-    /// <summary>
-    /// Keeps a file whose scan could not be finished, at its owner's request: when the upload waits for that decision
-    /// (<see cref="IFileManagerScanQueue.TakeUndecided"/>), its staging file is moved to <c>upload/FileManager/{uploadId}</c> unscanned.
-    /// Returns null when stored (also when it already was), or the refusal.
-    /// </summary>
-    string? AcceptUnscanned(string? uploadId);
 
     /// <summary>
     /// Drops what is held of an unconfirmed upload: cancels its pending scan, deletes its staging file, and deletes the file its scan

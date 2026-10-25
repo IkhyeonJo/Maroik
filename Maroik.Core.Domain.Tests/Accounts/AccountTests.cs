@@ -1023,41 +1023,41 @@ public class AccountTests
     }
 
     /// <summary>
-    /// An administrator allows (and later disallows) the account to keep a File Manager file that could not be scanned for viruses, and
-    /// Updated is stamped. A reconstituted account without the flag does not allow it.
+    /// An administrator turns the virus scan of the account's File Manager uploads off (and later back on), and Updated is stamped. A
+    /// reconstituted account without the flag is scanned.
     /// </summary>
     [Fact]
-    public void ChangeFileManagerAllowUnscanned_SetsTheFlag()
+    public void ChangeFileManagerScanDisabled_SetsTheFlag()
     {
         DateTime t = new(2026, 1, 1);
         var account = Account.Reconstitute("q@example.com", "h", "Q", null, "User", "UTC", null, false, 0, true, true, null, null, t, t, null, false, "s", false, 10);
-        Assert.False(account.FileManagerAllowUnscanned);
+        Assert.False(account.FileManagerScanDisabled);
 
-        account.ChangeFileManagerAllowUnscanned(true, t.AddDays(1));
-        Assert.True(account.FileManagerAllowUnscanned);
+        account.ChangeFileManagerScanDisabled(true, t.AddDays(1));
+        Assert.True(account.FileManagerScanDisabled);
         Assert.Equal(t.AddDays(1), account.Updated);
 
-        account.ChangeFileManagerAllowUnscanned(false, t.AddDays(2));
-        Assert.False(account.FileManagerAllowUnscanned);
+        account.ChangeFileManagerScanDisabled(false, t.AddDays(2));
+        Assert.False(account.FileManagerScanDisabled);
         Assert.Equal(t.AddDays(2), account.Updated);
     }
 
-    /// <summary>Reconstitute assigns the stored "may keep unscanned files" flag.</summary>
+    /// <summary>Reconstitute assigns the stored "virus scan off" flag.</summary>
     [Fact]
-    public void Reconstitute_AssignsFileManagerAllowUnscanned()
+    public void Reconstitute_AssignsFileManagerScanDisabled()
     {
         DateTime t = new(2026, 1, 1);
         var account = Account.Reconstitute("q@example.com", "h", "Q", null, "User", "UTC", null, false, 0, true, true, null, null, t, t, null, false, "s", false, 10, true);
 
-        Assert.True(account.FileManagerAllowUnscanned);
+        Assert.True(account.FileManagerScanDisabled);
     }
 
-    /// <summary>A newly registered account does not allow unscanned files: an administrator has to turn it on (Q4).</summary>
+    /// <summary>A newly registered account's uploads are scanned: only an administrator turns the scan off (Q4).</summary>
     [Fact]
-    public void Create_DoesNotAllowUnscannedFiles()
+    public void Create_KeepsTheVirusScanOn()
     {
         var account = Domain.Accounts.Account.Create("new@example.com", "hash", "NewUser", AccountRole.User, "UTC", null, null, true, Now).Value;
 
-        Assert.False(account.FileManagerAllowUnscanned);
+        Assert.False(account.FileManagerScanDisabled);
     }
 }

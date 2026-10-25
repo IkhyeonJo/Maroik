@@ -121,10 +121,26 @@ public class FileClientFileManagerTests
     {
         using var storage = new FakeStorage(HttpStatusCode.OK, "");
 
-        Assert.Equal(FileUploadResult.Stored, await Sut(storage).CompleteFileManagerUploadAsync(UploadId, 1234, BaseUrl, TestContext.Current.CancellationToken));
+        Assert.Equal(FileUploadResult.Stored, await Sut(storage).CompleteFileManagerUploadAsync(UploadId, 1234, false, BaseUrl, TestContext.Current.CancellationToken));
         Assert.Equal($"{BaseUrl}/api/FileManager/complete", storage.Url);
         Assert.Contains("1234", storage.Body, StringComparison.Ordinal);
         Assert.Contains(UploadId.ToString("D"), storage.Body, StringComparison.Ordinal);
+    }
+
+    /// <summary>
+    /// Whether the account's virus scan is off goes along as the skipScan field ("true" / "false"), so the storage service stores the file
+    /// without a scan only when the Website says so.
+    /// </summary>
+    [Theory]
+    [InlineData(true, "true")]
+    [InlineData(false, "false")]
+    public async Task CompleteFileManagerUploadAsync_SendsWhetherToSkipTheScan(bool skipScan, string sent)
+    {
+        using var storage = new FakeStorage(HttpStatusCode.OK, "");
+
+        await Sut(storage).CompleteFileManagerUploadAsync(UploadId, 1234, skipScan, BaseUrl, TestContext.Current.CancellationToken);
+
+        Assert.Matches($@"name=skipScan\r\n(.+\r\n)*\r\n{sent}\r\n", storage.Body);
     }
 
     /// <summary>
@@ -136,11 +152,11 @@ public class FileClientFileManagerTests
     {
         using var storage = new FakeStorage(HttpStatusCode.Accepted, "");
 
-        Assert.Equal(FileUploadResult.Scanning, await Sut(storage).CompleteFileManagerUploadAsync(UploadId, 1234, BaseUrl, TestContext.Current.CancellationToken));
+        Assert.Equal(FileUploadResult.Scanning, await Sut(storage).CompleteFileManagerUploadAsync(UploadId, 1234, false, BaseUrl, TestContext.Current.CancellationToken));
         Assert.Empty(_logger.Collector.GetSnapshot());
     }
 
-    /// <summary>The storage service's refusal is mapped back: a virus is Infected, a scanner outage or exceeded limit ScanUnavailable, anything else Failed.</summary>
+    /// <summary>The storage service's refusal is mapped back: a virus is Infected, a scanner outage ScanUnavailable, an exceeded limit ScanLimitExceeded, anything else Failed.</summary>
     [Theory]
     [InlineData(FileStorageRefusals.Infected, FileUploadResult.Infected)]
     [InlineData(FileStorageRefusals.ScanUnavailable, FileUploadResult.ScanUnavailable)]
@@ -150,7 +166,7 @@ public class FileClientFileManagerTests
     {
         using var storage = new FakeStorage(HttpStatusCode.BadRequest, reason);
 
-        Assert.Equal(expected, await Sut(storage).CompleteFileManagerUploadAsync(UploadId, 1, BaseUrl, TestContext.Current.CancellationToken));
+        Assert.Equal(expected, await Sut(storage).CompleteFileManagerUploadAsync(UploadId, 1, false, BaseUrl, TestContext.Current.CancellationToken));
         Assert.Contains(_logger.Collector.GetSnapshot(), r => r.Level == LogLevel.Warning && r.Message == $"File Manager upload {UploadId} returned 400: {reason}");
     }
 
@@ -160,7 +176,7 @@ public class FileClientFileManagerTests
     {
         using var handler = new Unreachable();
 
-        Assert.Equal(FileUploadResult.Failed, await Sut(handler).CompleteFileManagerUploadAsync(UploadId, 1, BaseUrl, TestContext.Current.CancellationToken));
+        Assert.Equal(FileUploadResult.Failed, await Sut(handler).CompleteFileManagerUploadAsync(UploadId, 1, false, BaseUrl, TestContext.Current.CancellationToken));
         Assert.Contains(_logger.Collector.GetSnapshot(), r => r.Level == LogLevel.Error && r.Exception != null);
     }
 
@@ -195,35 +211,5 @@ public class FileClientFileManagerTests
 
         Assert.Contains(_logger.Collector.GetSnapshot(), r => r.Level == LogLevel.Warning && r.Message == $"File Manager delete of upload/FileManager/x returned 404: {FileStorageRefusals.FileNotFound}");
         Assert.Equal(2, _logger.Collector.GetSnapshot().Count(r => r.Level == LogLevel.Error && r.Exception != null));
-    }
-
-    // -- AcceptUnscannedFileManagerUploadAsync -----------------------------------------
-
-    /// <summary>Keeping a file unscanned goes to accept-unscanned with the upload id; OK is true.</summary>
-    [Fact]
-    public async Task AcceptUnscanned_SendsItsRequest_AndReturnsTrue_WhenAccepted()
-    {
-        using var storage = new FakeStorage(HttpStatusCode.OK, "");
-
-        Assert.True(await Sut(storage).AcceptUnscannedFileManagerUploadAsync(UploadId, BaseUrl, TestContext.Current.CancellationToken));
-        Assert.Equal($"{BaseUrl}/api/FileManager/accept-unscanned", storage.Url);
-        Assert.Contains(UploadId.ToString("D"), storage.Body, StringComparison.Ordinal);
-    }
-
-    /// <summary>A refusal is false, logged at Warning with the upload id and the reason; an unreachable service is false, logged at Error.</summary>
-    [Fact]
-    public async Task AcceptUnscanned_ReturnsFalse_AndLogs_WhenRefusedOrUnreachable()
-    {
-        using var storage = new FakeStorage(HttpStatusCode.BadRequest, FileStorageRefusals.NotUndecided);
-        using var handler = new Unreachable();
-
-        Assert.False(await Sut(storage).AcceptUnscannedFileManagerUploadAsync(UploadId, BaseUrl, TestContext.Current.CancellationToken));
-        Assert.False(await Sut(handler).AcceptUnscannedFileManagerUploadAsync(UploadId, BaseUrl, TestContext.Current.CancellationToken));
-
-        Assert.Contains(_logger.Collector.GetSnapshot(), r => r.Level == LogLevel.Warning
-            && r.Message == $"File Manager unscanned store of {UploadId:D} returned 400: {FileStorageRefusals.NotUndecided}");
-        FakeLogRecord error = Assert.Single(_logger.Collector.GetSnapshot(), r => r.Level == LogLevel.Error);
-        Assert.Equal($"File Manager unscanned store request failed for {UploadId:D}", error.Message);
-        Assert.Equal("connection refused", error.Exception?.Message);
     }
 }

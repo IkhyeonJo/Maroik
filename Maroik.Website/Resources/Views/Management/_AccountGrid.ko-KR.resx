@@ -183,7 +183,7 @@
   <data name="This account is locked" xml:space="preserve">
     <value>이 계정은 잠겨 있습니다.</value>
   </data>
-  <data name="FileManagerAllowUnscanned" xml:space="preserve">
-    <value>검사 못 한 파일 허용</value>
+  <data name="FileManagerScanDisabled" xml:space="preserve">
+    <value>바이러스 검사 끔</value>
   </data>
 </root>

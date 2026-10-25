@@ -543,7 +543,7 @@
   <data name="The storage quota is too large." xml:space="preserve">
     <value>The storage quota is too large.</value>
   </data>
-  <data name="FileManagerAllowUnscanned" xml:space="preserve">
-    <value>Unscanned files allowed</value>
+  <data name="FileManagerScanDisabled" xml:space="preserve">
+    <value>Virus scan turned off</value>
   </data>
 </root>

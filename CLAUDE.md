@@ -224,23 +224,19 @@ File Manager
 - Uploads go in 16 MB chunks to a staging file and are scanned by ClamAV on completion. There is no file size limit (since
   2026-10-25, owner's request; only the quota bounds it), but ClamAV scans at most 2,147,483,645 bytes (clamd clamps its stream limit
   to that; both compose files set `CLAMD_CONF_*` to 2048M and `MaxScanTime` to 10 minutes) — `FileManagerUploadPolicy.MaxScannableBytes`
-  on the domain's side, `ClamavClient.MaxStreamBytes` on the scanner's. A larger file can only be kept unscanned: `BeginUpload`
-  refuses it ("larger than 2 GB") unless the locked account row allows unscanned files, and `ClamavClient` never sends a stream that
-  long (it answers `LimitExceeded` at once, so the owner is asked "too large to scan"). A scan that hits a clamd limit is never clean:
-  it is `ClamavScanResult.LimitExceeded` ("too large to scan"), kept apart from a scanner outage (`Unavailable`). Uploads left
-  unfinished for 24 hours are cleaned up.
-- A file the scan could not finish (a clamd limit, or the scanner unavailable / timed out; never an infected one) may be kept
-  unscanned (since 2026-10-25, owner's request) — only by an account an administrator allows it (`Account.FileManagerAllowUnscanned`,
-  default false, the checkbox in `Management/Account`, logged in the admin update audit line). FileStorage keeps such a file's staging
-  file and answers its refusal on every `complete` (`FileStorageRefusals.AwaitsDecision`, the queue's "undecided" refusals);
-  `CompleteUpload` answers `confirmUnscanned: true` with the question (too large / scanner unavailable), the page asks one question at
-  a time, "yes" calls `AcceptUnscannedUpload` (the account is checked before and again under the account lock; FileStorage's
-  `accept-unscanned` stores only an undecided upload) and the file is stored with `FileManagerNode.Unscanned`, logged at Warning on
-  both sides. "No", closing the question or an account without the permission aborts it (refused as "could not be scanned", as
-  before). A restart forgets the undecided list: the next `complete` scans the staging file again. An unscanned file carries a
-  "Not scanned" badge, is never previewed (`FileManagerNode.IsPreviewable`), and downloading it (or a selection the server counts
-  unscanned files in, `unscannedCount`) asks first; turning the permission off leaves kept files as they are. Attachments (posts,
-  notes, events) are still refused whenever the scan is not clean.
+  on the domain's side, `ClamavClient.MaxStreamBytes` on the scanner's. A larger file can only be stored without a scan: `BeginUpload`
+  refuses it ("larger than 2 GB") unless the locked account row has the scan turned off, and `ClamavClient` never sends a stream that
+  long (it answers `LimitExceeded` at once). A scan that hits a clamd limit is never clean: it is `ClamavScanResult.LimitExceeded`
+  (`FileStorageRefusals.ScanLimitExceeded`), kept apart from a scanner outage (`Unavailable`) in the logs; both are refused as "could
+  not be scanned" and the staging file is dropped. Uploads left unfinished for 24 hours are cleaned up.
+- "Turn off the virus scan for files" (since 2026-10-25, owner's request; it replaced the "keep a file the scan could not finish"
+  question flow): an administrator ticks it per account in `Management/Account` (`Account.FileManagerScanDisabled`, default false,
+  in the grid, its search, the Excel export and the admin update audit line). `CompleteUpload` reads it when the upload completes and
+  sends `skipScan` with `api/FileManager/complete`; FileStorage then moves the whole staging file into place at once (200, no scan
+  queued; a scan already queued is still followed) and logs it at Warning, as does `FileManagerService`. Such a file carries no mark:
+  it is listed, previewed and downloaded like any other, and turning the scan back on leaves it as it is. With the scan on, nothing is
+  asked: a file the scan could not finish is refused. Only the File Manager is affected — attachments (posts, notes, events) are
+  always scanned and refused whenever the scan is not clean.
 - The virus scan runs in the background (since 2026-10-25, owner's request: a 484 MB zip took 202 s, past the 100 s of the
   HttpClient and of Cloudflare). `api/FileManager/complete` queues the scan (`IFileManagerScanQueue`, in memory) and answers 202 until
   `FileManagerScanWorker` (2 scans at once) has stored the file (200) or refused it (400, answered once); the page asks
@@ -254,7 +250,7 @@ File Manager
   in a download dialog whose bar is measured against the file's size in bytes the server sends with the item / `ListDownloadFiles`
   (the streamed response carries no Content-Length); Cancel aborts the file being fetched and skips the rest. Each role's
   `ajaxError` handler ignores a request aborted on purpose (`thrownError === "abort"`); every other failure still redirects.
-- Preview is images only (png / jpg / gif / webp, proven by their header bytes) up to 100 MB, and never of an unscanned file.
+- Preview is images only (png / jpg / gif / webp, proven by their header bytes) up to 100 MB.
 
 Budgets (Income Budget / Expenditure Budget)
 - The two AccountBook sub-menu pages render one view (`Views/AccountBook/Budget.cshtml`) and one script, told the kind. A sheet is

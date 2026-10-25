@@ -35,7 +35,7 @@ public class AccountMapperTests
             securityStamp: "stamp",
             mustChangePassword: false,
             fileManagerQuotaBytes: 42,
-            fileManagerAllowUnscanned: true);
+            fileManagerScanDisabled: true);
 
         AccountResponse response = AccountMapper.ToResponse(account);
 
@@ -54,6 +54,6 @@ public class AccountMapperTests
         Assert.Equal("locked for review", response.Message);
         Assert.False(response.Deleted);
         Assert.Equal(42, response.FileManagerQuotaBytes);
-        Assert.True(response.FileManagerAllowUnscanned);
+        Assert.True(response.FileManagerScanDisabled);
     }
 }

@@ -119,6 +119,24 @@ public sealed class FileManagerControllerTests(WebApplicationFactory<Program> ba
     }
 
     /// <summary>
+    /// A complete with skipScan (the account's virus scan is off) answers 200 at once without asking ClamAV (which would say "infected"
+    /// here), stores the file, and logs the unscanned store at Warning (an audit event) with the upload id and the correlation id.
+    /// </summary>
+    [Fact]
+    public async Task Complete_WithoutAScan_StoresTheFileAtOnce_AndLogsAWarning()
+    {
+        using HttpClient client = Client(ClamavScanResult.Infected);
+        using var chunk = await ChunkAsync(client, 0, [1, 2], UploadId);
+
+        using var response = await PostAsync(client, "complete", ("uploadId", UploadId), ("expectedSize", "2"), ("skipScan", "true"));
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        Assert.Equal([1, 2], await File.ReadAllBytesAsync(Path.Combine(_base, "upload", "FileManager", UploadId), TestContext.Current.CancellationToken));
+        Assert.Equal($"File Manager upload {UploadId} stored without a virus scan (2 bytes). CorrelationId=corr-1", Only(LogLevel.Warning).Message);
+        Assert.DoesNotContain(_logger.Collector.GetSnapshot(), r => r.Level == LogLevel.Information);
+    }
+
+    /// <summary>
     /// Regression: complete used to wait for the scan, and a large file's scan (202 seconds for a 484 MB zip) outlasted the Website's
     /// 100-second HTTP timeout and Cloudflare's, so every such upload failed. Now complete answers 202 at once while ClamAV is still
     /// busy, keeps answering 202 until the scan ends, and then 200.
@@ -191,64 +209,6 @@ public sealed class FileManagerControllerTests(WebApplicationFactory<Program> ba
         Assert.Equal($"File Manager upload refused: {refusal}. UploadId={UploadId} CorrelationId=corr-1", Only(level).Message);
     }
 
-    /// <summary>
-    /// A file the scan could not finish is kept at its owner's request: accept-unscanned answers OK, the file is stored, and the unscanned
-    /// store is logged at Warning (an audit event) with the upload id and the correlation id.
-    /// </summary>
-    [Fact]
-    public async Task AcceptUnscanned_StoresAFileTheScanCouldNotFinish()
-    {
-        using HttpClient client = Client(ClamavScanResult.LimitExceeded);
-        using var chunk = await ChunkAsync(client, 0, [1, 2], UploadId);
-        (HttpResponseMessage complete, _) = await CompleteUntilDecidedAsync(client, "2");
-        complete.Dispose();
-
-        using var response = await PostAsync(client, "accept-unscanned", ("uploadId", UploadId));
-
-        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
-        Assert.Equal([1, 2], await File.ReadAllBytesAsync(Path.Combine(_base, "upload", "FileManager", UploadId), TestContext.Current.CancellationToken));
-        Assert.Contains(_logger.Collector.GetSnapshot(), r => r.Level == LogLevel.Warning
-            && r.Message == $"File Manager upload {UploadId} stored without a virus scan at its owner's request. CorrelationId=corr-1");
-    }
-
-    /// <summary>An upload that awaits no such decision is never stored unscanned: 400 with the refusal, logged at Warning.</summary>
-    [Fact]
-    public async Task AcceptUnscanned_RefusesAnUploadThatAwaitsNoDecision()
-    {
-        using HttpClient client = Client();
-        using var chunk = await ChunkAsync(client, 0, [1], UploadId);
-
-        using var response = await PostAsync(client, "accept-unscanned", ("uploadId", UploadId));
-
-        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
-        Assert.Equal(FileStorageRefusals.NotUndecided, await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken));
-        Assert.False(File.Exists(Path.Combine(_base, "upload", "FileManager", UploadId)));
-        Assert.Equal($"File Manager unscanned store refused: {FileStorageRefusals.NotUndecided}. UploadId={UploadId} CorrelationId=corr-1", Only(LogLevel.Warning).Message);
-    }
-
-    /// <summary>A failure while keeping the file is a bad request with the fixed text, logged at Error with the exception.</summary>
-    [Fact]
-    public async Task AcceptUnscanned_AServiceFailure_IsLoggedWithTheException_AndNotLeaked()
-    {
-        var service = new Mock<Maroik.FileStorage.Interfaces.IFileManagerStorageService>();
-        service.Setup(s => s.AcceptUnscanned(It.IsAny<string?>())).Throws(new IOException("disk-secret"));
-        var factory = baseFactory.WithWebHostBuilder(b => b.ConfigureServices(services =>
-        {
-            foreach (var d in services.Where(d => d.ServiceType == typeof(Maroik.FileStorage.Interfaces.IFileManagerStorageService)).ToList()) services.Remove(d);
-            services.AddScoped(_ => service.Object);
-            services.AddSingleton<ILogger<FileManagerController>>(_logger);
-        }));
-        using HttpClient client = factory.CreateClient();
-
-        using var response = await PostAsync(client, "accept-unscanned", ("uploadId", UploadId));
-
-        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
-        Assert.DoesNotContain("disk-secret", await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken), StringComparison.Ordinal);
-        FakeLogRecord error = Only(LogLevel.Error);
-        Assert.Equal($"File Manager unscanned store failed. UploadId={UploadId} CorrelationId=corr-1", error.Message);
-        Assert.Equal("disk-secret", error.Exception?.Message);
-    }
-
     /// <summary>Abort answers OK for a valid id and drops its staging file.</summary>
     [Fact]
     public async Task Abort_DropsTheStagingFile()
@@ -290,7 +250,7 @@ public sealed class FileManagerControllerTests(WebApplicationFactory<Program> ba
     public async Task AServiceFailure_IsLoggedWithTheException_AndNotLeaked()
     {
         var service = new Mock<Maroik.FileStorage.Interfaces.IFileManagerStorageService>();
-        service.Setup(s => s.CompleteAsync(It.IsAny<string?>(), It.IsAny<long>(), It.IsAny<CancellationToken>())).ThrowsAsync(new IOException("disk-secret"));
+        service.Setup(s => s.CompleteAsync(It.IsAny<string?>(), It.IsAny<long>(), It.IsAny<bool>(), It.IsAny<CancellationToken>())).ThrowsAsync(new IOException("disk-secret"));
         var factory = baseFactory.WithWebHostBuilder(b => b.ConfigureServices(services =>
         {
             foreach (var d in services.Where(d => d.ServiceType == typeof(Maroik.FileStorage.Interfaces.IFileManagerStorageService)).ToList()) services.Remove(d);

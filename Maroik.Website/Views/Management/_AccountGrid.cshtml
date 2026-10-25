@@ -27,7 +27,7 @@
         columns.Add(model => model.Message).Titled(Localizer[nameof(Maroik.Website.Models.ViewModels.Managements.AccountOutputViewModel.Message)])
             .RenderedAs(model => string.IsNullOrEmpty(model.Message) ? "" : Localizer[model.Message].Value);
         columns.Add(model => model.Deleted).Titled(Localizer[nameof(Maroik.Website.Models.ViewModels.Managements.AccountOutputViewModel.Deleted)]);
-        columns.Add(model => model.FileManagerAllowUnscanned).Titled(Localizer[nameof(Maroik.Website.Models.ViewModels.Managements.AccountOutputViewModel.FileManagerAllowUnscanned)]);
+        columns.Add(model => model.FileManagerScanDisabled).Titled(Localizer[nameof(Maroik.Website.Models.ViewModels.Managements.AccountOutputViewModel.FileManagerScanDisabled)]);
     })
     .Id("accountGrid")
     .Css("table table-striped")

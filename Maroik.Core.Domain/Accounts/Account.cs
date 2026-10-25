@@ -95,11 +95,12 @@ public sealed class Account : AggregateRoot<string>
     public long FileManagerQuotaBytes { get; private set; }
 
     /// <summary>
-    /// Whether the account may keep a File Manager file that could not be scanned for viruses (too large for the scanner's limits, or
-    /// the scanner unavailable): it is then asked, and the file is stored marked unscanned on "yes". A new account may not (Q4): an
-    /// administrator turns it on (<see cref="ChangeFileManagerAllowUnscanned"/>). Without it such a file is refused, as before.
+    /// Whether the account's File Manager uploads skip the virus scan: they are stored as soon as they are complete, without being sent
+    /// to ClamAV, and a file larger than ClamAV can scan may be uploaded. A new account is scanned (Q4): an administrator turns the scan
+    /// off (<see cref="ChangeFileManagerScanDisabled"/>). With the scan on, a file the scan could not finish is refused. Attachments
+    /// (posts, notes, events) are always scanned.
     /// </summary>
-    public bool FileManagerAllowUnscanned { get; private set; }
+    public bool FileManagerScanDisabled { get; private set; }
 
     /// <summary>Generates a fresh, unpredictable security stamp value.</summary>
     private static string GenerateSecurityStamp() => Guid.NewGuid().ToString("N");
@@ -152,7 +153,7 @@ public sealed class Account : AggregateRoot<string>
         TimeZoneId timeZone, CurrencyCode? defaultMonetaryUnit, bool locked, long loginAttempt, bool emailConfirmed,
         bool agreedServiceTerms, string? registrationToken, string? resetPasswordToken, DateTime created,
         DateTime updated, string? message, bool deleted, string securityStamp, bool mustChangePassword, long fileManagerQuotaBytes,
-        bool fileManagerAllowUnscanned) : base(email.Value)
+        bool fileManagerScanDisabled) : base(email.Value)
     {
         Email = email;
         HashedPassword = hashedPassword;
@@ -174,7 +175,7 @@ public sealed class Account : AggregateRoot<string>
         SecurityStamp = securityStamp;
         MustChangePassword = mustChangePassword;
         FileManagerQuotaBytes = fileManagerQuotaBytes;
-        FileManagerAllowUnscanned = fileManagerAllowUnscanned;
+        FileManagerScanDisabled = fileManagerScanDisabled;
     }
 
     // ------------------------------------------------------------------------
@@ -206,7 +207,7 @@ public sealed class Account : AggregateRoot<string>
         string securityStamp,
         bool mustChangePassword,
         long fileManagerQuotaBytes = 0,
-        bool fileManagerAllowUnscanned = false)
+        bool fileManagerScanDisabled = false)
     {
         return new Account(
             Email.FromTrustedSource(email),
@@ -229,7 +230,7 @@ public sealed class Account : AggregateRoot<string>
             securityStamp,
             mustChangePassword,
             fileManagerQuotaBytes,
-            fileManagerAllowUnscanned);
+            fileManagerScanDisabled);
     }
 
     /// <summary>
@@ -600,12 +601,12 @@ public sealed class Account : AggregateRoot<string>
     }
 
     /// <summary>
-    /// Administrator operation: allows or disallows the account to keep File Manager files that could not be scanned for viruses.
-    /// Turning it off leaves the files already kept as they are.
+    /// Administrator operation: turns the virus scan of the account's File Manager uploads off or back on. Turning it back on leaves
+    /// the files already stored as they are.
     /// </summary>
-    public void ChangeFileManagerAllowUnscanned(bool allowed, DateTime utcNow)
+    public void ChangeFileManagerScanDisabled(bool disabled, DateTime utcNow)
     {
-        FileManagerAllowUnscanned = allowed;
+        FileManagerScanDisabled = disabled;
         Updated = utcNow;
     }
 }

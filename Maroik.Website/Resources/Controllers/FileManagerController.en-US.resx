@@ -186,19 +186,4 @@
   <data name="This file cannot be previewed." xml:space="preserve">
     <value>This file cannot be previewed.</value>
   </data>
-  <data name="'{0}' is too large to be fully scanned for viruses. Upload it without a scan?" xml:space="preserve">
-    <value>'{0}' is too large to be fully scanned for viruses. Upload it without a scan?</value>
-  </data>
-  <data name="'{0}' could not be scanned for viruses right now. Upload it without a scan?" xml:space="preserve">
-    <value>'{0}' could not be scanned for viruses right now. Upload it without a scan?</value>
-  </data>
-  <data name="Your account may not keep files that could not be scanned for viruses." xml:space="preserve">
-    <value>Your account may not keep files that could not be scanned for viruses.</value>
-  </data>
-  <data name="A file that was not scanned for viruses cannot be previewed." xml:space="preserve">
-    <value>A file that was not scanned for viruses cannot be previewed.</value>
-  </data>
-  <data name="The file has been uploaded without a virus scan." xml:space="preserve">
-    <value>The file has been uploaded without a virus scan.</value>
-  </data>
 </root>

@@ -65,17 +65,17 @@ public sealed class FileManagerControllerTests(MaroikWebApplicationFactory facto
     private HttpClient Client => _client ??= Host.CreateClient(new WebApplicationFactoryClientOptions { BaseAddress = new Uri("https://www.localhost/"), AllowAutoRedirect = false, HandleCookies = false });
 
     /// <summary>
-    /// A fresh account (unique per test) signed in as a User, with <paramref name="quotaBytes"/> of File Manager quota, allowed to keep
-    /// files that could not be scanned when <paramref name="allowUnscanned"/>.
+    /// A fresh account (unique per test) signed in as a User, with <paramref name="quotaBytes"/> of File Manager quota, its virus scan
+    /// turned off when <paramref name="scanDisabled"/>.
     /// </summary>
-    private async Task<(AuthenticatedSession Session, string Email)> LoginAsync(long quotaBytes = 10 * Gb, bool allowUnscanned = false, [System.Runtime.CompilerServices.CallerMemberName] string test = "")
+    private async Task<(AuthenticatedSession Session, string Email)> LoginAsync(long quotaBytes = 10 * Gb, bool scanDisabled = false, [System.Runtime.CompilerServices.CallerMemberName] string test = "")
     {
         string email = $"fm-{Math.Abs(test.GetHashCode(StringComparison.Ordinal))}-{Guid.NewGuid():N}"[..40].ToLowerInvariant() + "@test.com";
         AuthenticatedSession session = await AuthenticatedSessionHelper.LoginAsync(Host, Client, email, "UserPassword1!", Role.User, TestContext.Current.CancellationToken);
         using var scope = factory.Services.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
         db.Accounts.Single(a => a.Email == email).FileManagerQuotaBytes = quotaBytes;
-        db.Accounts.Single(a => a.Email == email).FileManagerAllowUnscanned = allowUnscanned;
+        db.Accounts.Single(a => a.Email == email).FileManagerScanDisabled = scanDisabled;
         await db.SaveChangesAsync(TestContext.Current.CancellationToken);
         return (session, email);
     }
@@ -157,10 +157,9 @@ public sealed class FileManagerControllerTests(MaroikWebApplicationFactory facto
         Assert.Contains("id=\"maxScanWaitMilliseconds\" name=\"maxScanWaitMilliseconds\" type=\"hidden\" value=\"960000\"", html, StringComparison.Ordinal);
         Assert.Contains("id=\"localizerScanning\"", html, StringComparison.Ordinal);
         Assert.Contains("id=\"localizerScanWait\"", html, StringComparison.Ordinal);
-        Assert.Contains("id=\"unscannedModal\"", html, StringComparison.Ordinal);
-        Assert.Contains("id=\"localizerUnscannedBadge\" name=\"localizerUnscannedBadge\" type=\"hidden\" value=\"Not scanned\"", html, StringComparison.Ordinal);
-        Assert.Contains("id=\"localizerUploadedUnscanned\"", html, StringComparison.Ordinal);
-        Assert.Contains("id=\"localizerUnscannedDownload\"", html, StringComparison.Ordinal);
+        Assert.DoesNotContain("unscannedModal", html, StringComparison.Ordinal);
+        Assert.DoesNotContain("localizerUnscanned", html, StringComparison.Ordinal);
+        Assert.DoesNotContain("Not scanned", html, StringComparison.Ordinal);
         Assert.Contains("My Drive", html, StringComparison.Ordinal);
         Assert.Contains("/user/plugins/jstree/jstree.min.js", html, StringComparison.Ordinal);
     }
@@ -477,108 +476,67 @@ public sealed class FileManagerControllerTests(MaroikWebApplicationFactory facto
         Assert.Equal(3, Assert.Single(files.EnumerateArray()).GetProperty("bytes").GetInt64());
     }
 
-    // -- A file the scan could not finish ------------------------------------------------
+    // -- A file the scan could not finish / the scan turned off ---------------------------
 
     /// <summary>
-    /// A file too large for the scanner's limits, uploaded by an account an administrator allows it: CompleteUpload asks the owner
-    /// (localized, with the file's name) instead of refusing; "yes" (AcceptUnscannedUpload) stores it, and it is listed marked unscanned,
-    /// without a preview, and counted as unscanned by a multi-download.
+    /// An account whose virus scan an administrator turned off: CompleteUpload stores the file at once without asking anything (file
+    /// storage is told to skip the scan, which here would have said "too large"), and it is listed like any file — no unscanned mark,
+    /// an image previewable — and a multi-download says nothing about a scan.
+    /// </summary>
+    [Fact]
+    public async Task Upload_StoresTheFileWithoutAScan_WhenTheAccountsScanIsOff()
+    {
+        var (session, _) = await LoginAsync(scanDisabled: true);
+        _files.FileManagerOutcome = FileUploadResult.ScanLimitExceeded;
+
+        JsonElement done = await UploadAsync(session, "big.png", [0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A, 0, 0, 0, 0]);
+
+        Assert.True(done.GetProperty("result").GetBoolean(), done.ToString());
+        Assert.Equal("The file has been uploaded.", done.GetProperty("message").GetString());
+        Assert.False(done.TryGetProperty("confirmUnscanned", out _));
+        using (var scope = factory.Services.CreateScope())
+        {
+            string path = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>().FileManagerNodes.AsNoTracking().Single(n => n.Name == "big.png").StoragePath!;
+            Assert.Contains(Guid.Parse(path["upload/FileManager/".Length..]), _files.CompletedWithoutAScan);
+        }
+        JsonElement item = (await PostAsync(session, "/FileManager/GetFolder", new { FolderId = (long?)null })).GetProperty("folder").GetProperty("items").EnumerateArray().Single();
+        Assert.Equal(("big.png", true), (item.GetProperty("name").GetString(), item.GetProperty("previewable").GetBoolean()));
+        Assert.False(item.TryGetProperty("unscanned", out _));
+        JsonElement download = await PostAsync(session, "/FileManager/ListDownloadFiles", new { Ids = new[] { item.GetProperty("id").GetInt64() } });
+        Assert.False(download.TryGetProperty("unscannedCount", out _));
+    }
+
+    /// <summary>
+    /// With the scan on (the default), a file the scan could not finish is refused — nothing is asked — and released; the file was not
+    /// sent with the scan skipped.
     /// </summary>
     [Theory]
-    [InlineData("en-US", "'big.png' is too large to be fully scanned for viruses. Upload it without a scan?", "The file has been uploaded without a virus scan.")]
-    [InlineData("ko-KR", "'big.png'은(는) 파일이 너무 커서 바이러스 검사를 끝까지 하지 못했습니다. 검사하지 않은 채로 올리시겠습니까?", "바이러스 검사 없이 파일을 올렸습니다.")]
-    public async Task Upload_AsksTheOwner_WhenTheFileIsTooLargeToScan_AndKeepsItOnYes(string culture, string question, string uploaded)
-    {
-        var (session, _) = await LoginAsync(allowUnscanned: true);
-        _files.FileManagerOutcome = FileUploadResult.ScanLimitExceeded;
-        byte[] png = [0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A, 0, 0, 0, 0];
-        JsonElement begin = await PostAsync(session, "/FileManager/BeginUpload", new { Name = "big.png", Size = png.Length, Conflict = "Ask" });
-        string uploadId = begin.GetProperty("uploadId").GetString()!;
-        using (var form = MultipartForm.Of(("UploadId", uploadId), ("Offset", "0")))
-        {
-            MultipartForm.AddFile(form, "Chunk", "blob", png, "application/octet-stream");
-            using var chunk = session.BuildFormPostRequest("/FileManager/UploadChunk", form);
-            using var chunkResponse = await Client.SendAsync(chunk, TestContext.Current.CancellationToken);
-        }
-
-        JsonElement ask = await PostAsync(session, "/FileManager/CompleteUpload", new { UploadId = uploadId, Overwrite = false }, culture);
-        Assert.False(ask.GetProperty("result").GetBoolean());
-        Assert.True(ask.GetProperty("confirmUnscanned").GetBoolean());
-        Assert.Equal(question, ask.GetProperty("error").GetString());
-        Assert.Empty(await ItemNamesAsync(session));
-
-        JsonElement yes = await PostAsync(session, "/FileManager/AcceptUnscannedUpload", new { UploadId = uploadId, Overwrite = false }, culture);
-        Assert.True(yes.GetProperty("result").GetBoolean(), yes.ToString());
-        Assert.Equal(uploaded, yes.GetProperty("message").GetString());
-
-        JsonElement item = (await PostAsync(session, "/FileManager/GetFolder", new { FolderId = (long?)null })).GetProperty("folder").GetProperty("items").EnumerateArray().Single();
-        Assert.Equal(("big.png", true, false), (item.GetProperty("name").GetString(), item.GetProperty("unscanned").GetBoolean(), item.GetProperty("previewable").GetBoolean()));
-        JsonElement download = await PostAsync(session, "/FileManager/ListDownloadFiles", new { Ids = new[] { item.GetProperty("id").GetInt64() } });
-        Assert.Equal(1, download.GetProperty("unscannedCount").GetInt32());
-        Assert.Contains(Guid.Parse(uploadId), _files.AcceptedUnscanned);
-    }
-
-    /// <summary>The scanner being unavailable asks with its own question.</summary>
-    [Fact]
-    public async Task Upload_AsksTheOwner_WhenTheScannerIsUnavailable()
-    {
-        var (session, _) = await LoginAsync(allowUnscanned: true);
-        _files.FileManagerOutcome = FileUploadResult.ScanUnavailable;
-
-        JsonElement ask = await UploadAsync(session, "a.zip", [1, 2]);
-
-        Assert.True(ask.GetProperty("confirmUnscanned").GetBoolean());
-        Assert.Equal("'a.zip' could not be scanned for viruses right now. Upload it without a scan?", ask.GetProperty("error").GetString());
-    }
-
-    /// <summary>An account an administrator does not allow it is not asked: the file is refused as before and released.</summary>
-    [Fact]
-    public async Task Upload_IsRefused_WhenTheAccountMayNotKeepUnscannedFiles()
+    [InlineData(FileUploadResult.ScanLimitExceeded)]
+    [InlineData(FileUploadResult.ScanUnavailable)]
+    public async Task Upload_IsRefused_WhenTheScanCouldNotFinish(FileUploadResult outcome)
     {
         var (session, email) = await LoginAsync();
-        _files.FileManagerOutcome = FileUploadResult.ScanLimitExceeded;
+        _files.FileManagerOutcome = outcome;
 
         JsonElement done = await UploadAsync(session, "big.zip", [1, 2]);
 
         Assert.False(done.GetProperty("result").GetBoolean());
         Assert.False(done.TryGetProperty("confirmUnscanned", out _));
         Assert.Equal("The file could not be scanned for viruses.", done.GetProperty("error").GetString());
+        Assert.Empty(_files.CompletedWithoutAScan);
         using var scope = factory.Services.CreateScope();
         Assert.False(scope.ServiceProvider.GetRequiredService<ApplicationDbContext>().FileManagerNodes.Any(n => n.AccountEmail == email));
     }
 
-    /// <summary>A direct "yes" from an account that may not keep unscanned files is refused (localized) and the upload released.</summary>
-    [Theory]
-    [InlineData("en-US", "Your account may not keep files that could not be scanned for viruses.")]
-    [InlineData("ko-KR", "이 계정은 바이러스 검사를 못 한 파일을 올릴 수 없습니다.")]
-    public async Task AcceptUnscannedUpload_RefusesAnAccountThatMayNotKeepIt(string culture, string expected)
+    /// <summary>The question flow is gone: there is no AcceptUnscannedUpload action any more.</summary>
+    [Fact]
+    public async Task AcceptUnscannedUpload_NoLongerExists()
     {
-        var (session, email) = await LoginAsync();
-        JsonElement begin = await PostAsync(session, "/FileManager/BeginUpload", new { Name = "a.bin", Size = 10, Conflict = "Ask" });
+        var (session, _) = await LoginAsync(scanDisabled: true);
 
-        JsonElement reply = await PostAsync(session, "/FileManager/AcceptUnscannedUpload", new { UploadId = begin.GetProperty("uploadId").GetString(), Overwrite = false }, culture);
+        using var request = session.BuildJsonPostRequest("/FileManager/AcceptUnscannedUpload", new { UploadId = Guid.NewGuid(), Overwrite = false });
+        using var response = await Client.SendAsync(request, TestContext.Current.CancellationToken);
 
-        Assert.False(reply.GetProperty("result").GetBoolean());
-        Assert.Equal(expected, reply.GetProperty("error").GetString());
-        using var scope = factory.Services.CreateScope();
-        Assert.False(scope.ServiceProvider.GetRequiredService<ApplicationDbContext>().FileManagerNodes.Any(n => n.AccountEmail == email));
-    }
-
-    /// <summary>A file kept unscanned is never previewed: the refusal says why (in Korean too).</summary>
-    [Theory]
-    [InlineData("en-US", "A file that was not scanned for viruses cannot be previewed.")]
-    [InlineData("ko-KR", "바이러스 검사를 하지 않은 파일은 미리 볼 수 없습니다.")]
-    public async Task Preview_RefusesAnUnscannedImage(string culture, string expected)
-    {
-        var (session, _) = await LoginAsync(allowUnscanned: true);
-        _files.FileManagerOutcome = FileUploadResult.ScanLimitExceeded;
-        await UploadAsync(session, "photo.png", [0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A, 0, 0, 0, 0]);
-        string uploadId = await UploadIdOfAsync("photo.png");
-        await PostAsync(session, "/FileManager/AcceptUnscannedUpload", new { UploadId = uploadId, Overwrite = false });
-        long id = await IdOfAsync(session, "photo.png");
-
-        JsonElement refused = await PostAsync(session, $"/FileManager/Preview?id={id}", culture: culture);
-
-        Assert.Equal(expected, refused.GetProperty("error").GetString());
+        Assert.NotEqual(System.Net.HttpStatusCode.OK, response.StatusCode);
     }
 }

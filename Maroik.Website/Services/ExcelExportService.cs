@@ -278,7 +278,7 @@ public class ExcelExportService(TimeProvider timeProvider) : IExcelExportService
             localize(nameof(AccountOutputViewModel.Updated)),
             localize(nameof(AccountOutputViewModel.Message)),
             localize(nameof(AccountOutputViewModel.Deleted)),
-            localize(nameof(AccountOutputViewModel.FileManagerAllowUnscanned))
+            localize(nameof(AccountOutputViewModel.FileManagerScanDisabled))
         };
 
         var rows = ordered.Select(item => (IEnumerable<XlsxCell>)
@@ -296,7 +296,7 @@ public class ExcelExportService(TimeProvider timeProvider) : IExcelExportService
             Timestamp(item.Updated),
             item.Message ?? "",
             item.Deleted.ToString(),
-            item.FileManagerAllowUnscanned.ToString()
+            item.FileManagerScanDisabled.ToString()
         ]);
 
         return BuildExcel(headers, rows);

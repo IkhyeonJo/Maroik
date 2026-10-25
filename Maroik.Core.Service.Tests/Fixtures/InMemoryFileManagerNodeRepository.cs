@@ -24,7 +24,7 @@ internal sealed class InMemoryFileManagerNodeRepository : IFileManagerNodeReposi
 
     /// <summary>A detached copy of <paramref name="n"/>, with <paramref name="id"/> when given.</summary>
     private static FileManagerNode CopyWithId(FileManagerNode n, long id) =>
-        FileManagerNode.Reconstitute(id, n.AccountEmail.Value, n.ParentId, n.Name, n.IsFolder, n.Size, n.StoragePath, n.Uploading, n.Created, n.Updated, n.Unscanned);
+        FileManagerNode.Reconstitute(id, n.AccountEmail.Value, n.ParentId, n.Name, n.IsFolder, n.Size, n.StoragePath, n.Uploading, n.Created, n.Updated);
 
     /// <summary>A detached copy of <paramref name="n"/>.</summary>
     private static FileManagerNode Copy(FileManagerNode n) => CopyWithId(n, n.Id);

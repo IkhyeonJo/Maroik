@@ -39,7 +39,7 @@ public sealed class FileManagerNodeRepositoryTests(DatabaseFixture database) : R
     /// <summary>A file of <paramref name="email"/> (finished unless <paramref name="uploading"/>).</summary>
     private Task<long> FileAsync(string email, string name, long? parentId = null, bool uploading = false, long size = 10)
     {
-        FileManagerNode file = FileManagerNode.StartUpload(email, parentId, name, size, Guid.NewGuid(), Now, mayKeepUnscanned: false).Value;
+        FileManagerNode file = FileManagerNode.StartUpload(email, parentId, name, size, Guid.NewGuid(), Now, scanDisabled: false).Value;
         if (!uploading) file.CompleteUpload(Now);
         return SaveAsync(file);
     }
@@ -52,7 +52,7 @@ public sealed class FileManagerNodeRepositoryTests(DatabaseFixture database) : R
     {
         string email = UniqueEmail();
         long folderId = await FolderAsync(email, "Design");
-        FileManagerNode upload = FileManagerNode.StartUpload(email, folderId, "logo.png", 1234, Guid.Parse("8f1e9c0a-1b2c-4d5e-8f70-112233445566"), Now, mayKeepUnscanned: false).Value;
+        FileManagerNode upload = FileManagerNode.StartUpload(email, folderId, "logo.png", 1234, Guid.Parse("8f1e9c0a-1b2c-4d5e-8f70-112233445566"), Now, scanDisabled: false).Value;
         long fileId = await SaveAsync(upload);
 
         List<FileManagerNode> nodes = await Sut.GetByAccountEmailAsync(email, TestContext.Current.CancellationToken);
@@ -64,26 +64,6 @@ public sealed class FileManagerNodeRepositoryTests(DatabaseFixture database) : R
         Assert.Equal(((long?)folderId, "logo.png", false, 1234L, "upload/FileManager/8f1e9c0a-1b2c-4d5e-8f70-112233445566", true),
             (file.ParentId, file.Name, file.IsFolder, file.Size, file.StoragePath, file.Uploading));
         Assert.Equal(2, nodes.Count);
-    }
-
-    /// <summary>A file kept unscanned reads back marked so; a scanned one does not.</summary>
-    [Fact]
-    public async Task TheUnscannedMark_IsReadAndWritten()
-    {
-        string email = UniqueEmail();
-        FileManagerNode unscanned = FileManagerNode.StartUpload(email, null, "big.zip", 10, Guid.NewGuid(), Now, mayKeepUnscanned: false).Value;
-        long uploadId = await SaveAsync(unscanned);
-        long scannedId = await FileAsync(email, "a.txt");
-
-        FileManagerNode upload = (await Sut.GetByAccountEmailAsync(email, TestContext.Current.CancellationToken)).Single(n => n.Id == uploadId);
-        upload.CompleteUploadUnscanned(Now.AddMinutes(1));
-        await Sut.UpdateEntityAsync(upload, TestContext.Current.CancellationToken);
-        Context.ChangeTracker.Clear();
-
-        List<FileManagerNode> nodes = await Sut.GetByAccountEmailAsync(email, TestContext.Current.CancellationToken);
-        Assert.True(nodes.Single(n => n.Id == uploadId).Unscanned);
-        Assert.False(nodes.Single(n => n.Id == uploadId).Uploading);
-        Assert.False(nodes.Single(n => n.Id == scannedId).Unscanned);
     }
 
     /// <summary>Each account sees only its own nodes.</summary>
@@ -215,10 +195,7 @@ public sealed class FileManagerNodeRepositoryTests(DatabaseFixture database) : R
         Assert.Equal(3, await Context.FileManagerNodes.AsNoTracking().CountAsync(n => n.AccountEmail == email && n.Name == "a.txt", TestContext.Current.CancellationToken));
     }
 
-    /// <summary>
-    /// The kind check keeps a folder without a stored file (and never unscanned) and a file with one; the name check refuses a blank name;
-    /// sizes cannot be negative.
-    /// </summary>
+    /// <summary>The kind check keeps a folder without a stored file and a file with one; the name check refuses a blank name; sizes cannot be negative.</summary>
     [Fact]
     public async Task TheDatabase_EnforcesTheKindNameAndSizeChecks()
     {
@@ -227,9 +204,6 @@ public sealed class FileManagerNodeRepositoryTests(DatabaseFixture database) : R
 
         await AssertRefusedAsync(Row(email, "f", true, "upload/FileManager/x"), "FileManagerNode_Kind_check");
         await AssertRefusedAsync(Row(email, "f", false, null), "FileManagerNode_Kind_check");
-        OrmFileManagerNode unscannedFolder = Row(email, "g", true, null);
-        unscannedFolder.Unscanned = true;
-        await AssertRefusedAsync(unscannedFolder, "FileManagerNode_Kind_check");
         await AssertRefusedAsync(Row(email, " ", true, null), "FileManagerNode_Name_check");
         await AssertRefusedAsync(Row(email, "f", false, "upload/FileManager/y", size: -1), "FileManagerNode_Size_check");
     }

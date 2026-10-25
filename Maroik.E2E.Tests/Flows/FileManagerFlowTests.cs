@@ -107,28 +107,24 @@ public class FileManagerFlowTests(E2ESharedFixture fixture) : E2ETestBase(fixtur
     }
 
     /// <summary>
-    /// A file too large for the virus scanner, uploaded by an account an administrator allows it: the page asks (in Korean, over the
-    /// upload dialog); "yes" keeps it, its line says it was not scanned, and its tile carries the "not scanned" badge.
+    /// An account whose virus scan an administrator turned off: a file the scanner would call too large is stored at once — nothing is
+    /// asked, its line says it is uploaded, and its tile looks like any other (no "not scanned" mark).
     /// </summary>
     [Fact]
-    public async Task Upload_AsksAboutAFileTooLargeToScan_AndKeepsItOnYes()
+    public async Task Upload_StoresTheFileWithoutAScan_WhenTheAccountsScanIsOff()
     {
         var (page, account) = await OpenAsync();
-        await Db.ExecuteAsync("""UPDATE "Account" SET "FileManagerAllowUnscanned" = true WHERE "Email" = @email""", ("email", account.Email));
+        await Db.ExecuteAsync("""UPDATE "Account" SET "FileManagerScanDisabled" = true WHERE "Email" = @email""", ("email", account.Email));
         Files.ScanTooLarge(true);
         try
         {
             await page.Locator("#fileManagerFileInput").SetInputFilesAsync(new FilePayload { Name = "huge.zip", MimeType = "application/zip", Buffer = [1, 2, 3] });
 
-            await Assertions.Expect(page.Locator("#unscannedModal")).ToBeVisibleAsync();
-            await Assertions.Expect(page.Locator("#unscannedMessage")).ToHaveTextAsync("'huge.zip'은(는) 파일이 너무 커서 바이러스 검사를 끝까지 하지 못했습니다. 검사하지 않은 채로 올리시겠습니까?");
-            await page.Locator("#btnUnscannedYes").ClickAsync();
-
-            await Assertions.Expect(page.Locator("#unscannedModal")).ToBeHiddenAsync();
-            await Assertions.Expect(page.Locator("#uploadResults li")).ToHaveTextAsync("huge.zip — 저장됨(바이러스 검사 안 됨)");
+            await Assertions.Expect(page.Locator("#uploadResults li")).ToHaveTextAsync("huge.zip — 업로드됨");
             await page.Locator("#btnUploadClose").ClickAsync();
-            await Assertions.Expect(Tile(page, "huge.zip").Locator(".file-manager-unscanned")).ToHaveTextAsync("검사 안 됨");
-            Assert.True(await Db.ScalarAsync<bool>("""SELECT "Unscanned" FROM "FileManagerNode" WHERE "AccountEmail" = @email AND "Name" = 'huge.zip'""", ("email", account.Email)));
+            await Assertions.Expect(Tile(page, "huge.zip")).ToBeVisibleAsync();
+            await Assertions.Expect(page.Locator("#unscannedModal")).ToHaveCountAsync(0);
+            Assert.Equal(1L, await Db.ScalarAsync<long>("""SELECT count(*) FROM "FileManagerNode" WHERE "AccountEmail" = @email AND "Name" = 'huge.zip' AND NOT "Uploading" """, ("email", account.Email)));
         }
         finally
         {
@@ -136,21 +132,17 @@ public class FileManagerFlowTests(E2ESharedFixture fixture) : E2ETestBase(fixtur
         }
     }
 
-    /// <summary>"No" to the question drops the file: its line says it was cancelled and nothing is kept.</summary>
+    /// <summary>With the scan on (the default), a file too large to scan is refused: its line says so and nothing is kept.</summary>
     [Fact]
-    public async Task Upload_DropsAFileTooLargeToScan_OnNo()
+    public async Task Upload_RefusesAFileTooLargeToScan_WhenTheAccountsScanIsOn()
     {
         var (page, account) = await OpenAsync();
-        await Db.ExecuteAsync("""UPDATE "Account" SET "FileManagerAllowUnscanned" = true WHERE "Email" = @email""", ("email", account.Email));
         Files.ScanTooLarge(true);
         try
         {
             await page.Locator("#fileManagerFileInput").SetInputFilesAsync(new FilePayload { Name = "huge.zip", MimeType = "application/zip", Buffer = [1, 2, 3] });
 
-            await Assertions.Expect(page.Locator("#unscannedModal")).ToBeVisibleAsync();
-            await page.Locator("#btnUnscannedNo").ClickAsync();
-
-            await Assertions.Expect(page.Locator("#uploadResults li")).ToHaveTextAsync("huge.zip — 취소됨");
+            await Assertions.Expect(page.Locator("#uploadResults li")).ToHaveTextAsync("huge.zip — 파일의 바이러스 검사를 할 수 없습니다.");
             Assert.Equal(0L, await Db.ScalarAsync<long>("""SELECT count(*) FROM "FileManagerNode" WHERE "AccountEmail" = @email""", ("email", account.Email)));
         }
         finally

@@ -71,7 +71,7 @@ public class AccountOutputViewModel
     [Display(Name = "Deleted")]
     public bool Deleted { get; set; }
 
-    /// <summary>Whether the account may keep File Manager files that could not be scanned for viruses.</summary>
-    [Display(Name = "FileManagerAllowUnscanned")]
-    public bool FileManagerAllowUnscanned { get; set; }
+    /// <summary>Whether the account's File Manager uploads skip the virus scan.</summary>
+    [Display(Name = "FileManagerScanDisabled")]
+    public bool FileManagerScanDisabled { get; set; }
 }

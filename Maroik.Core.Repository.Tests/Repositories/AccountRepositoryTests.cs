@@ -396,23 +396,23 @@ public sealed class AccountRepositoryTests(DatabaseFixture database) : Repositor
     }
 
     /// <summary>
-    /// Whether the account may keep unscanned File Manager files reads back from its column (a new account's is false) and an admin's
-    /// update writes it.
+    /// Whether the account's File Manager virus scan is off reads back from its column (a new account's is false) and an admin's update
+    /// writes it.
     /// </summary>
     [Fact]
-    public async Task TheFileManagerAllowUnscannedFlag_IsReadAndWritten()
+    public async Task TheFileManagerScanDisabledFlag_IsReadAndWritten()
     {
         OrmAccount row = NewAccount();
         await SeedAsync(row);
 
         Account account = (await Sut.FindByEmailAsync(row.Email, TestContext.Current.CancellationToken))!;
-        Assert.False(account.FileManagerAllowUnscanned);
+        Assert.False(account.FileManagerScanDisabled);
 
-        account.ChangeFileManagerAllowUnscanned(true, DateTime.UtcNow);
+        account.ChangeFileManagerScanDisabled(true, DateTime.UtcNow);
         await Sut.UpdateEntityAsync(account, TestContext.Current.CancellationToken);
         Context.ChangeTracker.Clear();
 
-        Assert.True((await Sut.FindByEmailAsync(row.Email, TestContext.Current.CancellationToken))!.FileManagerAllowUnscanned);
+        Assert.True((await Sut.FindByEmailAsync(row.Email, TestContext.Current.CancellationToken))!.FileManagerScanDisabled);
     }
 
     /// <summary>Verifies that <c>UpdateEntityAsync</c> persists changes to an existing account.</summary>
@@ -733,25 +733,25 @@ public sealed class AccountRepositoryTests(DatabaseFixture database) : Repositor
     }
 
     /// <summary>
-    /// The "may keep unscanned files" flag is shown in the admin grid, so the whole-row search matches it too: an account whose every
+    /// The "virus scan off" flag is shown in the admin grid, so the whole-row search matches it too: an account whose every
     /// other flag is false is found by "true" through it alone.
     /// </summary>
     [Fact]
-    public async Task SearchAsync_MatchesTheAllowUnscannedFlag()
+    public async Task SearchAsync_MatchesTheScanDisabledFlag()
     {
-        OrmAccount allowed = NewAccount();
-        allowed.EmailConfirmed = false;
-        allowed.AgreedServiceTerms = false;
-        allowed.FileManagerAllowUnscanned = true;
-        OrmAccount notAllowed = NewAccount();
-        notAllowed.EmailConfirmed = false;
-        notAllowed.AgreedServiceTerms = false;
-        await SeedAsync(allowed, notAllowed);
+        OrmAccount scanOff = NewAccount();
+        scanOff.EmailConfirmed = false;
+        scanOff.AgreedServiceTerms = false;
+        scanOff.FileManagerScanDisabled = true;
+        OrmAccount scanOn = NewAccount();
+        scanOn.EmailConfirmed = false;
+        scanOn.AgreedServiceTerms = false;
+        await SeedAsync(scanOff, scanOn);
 
         List<string> found = [.. (await Sut.SearchAsync("true", TestContext.Current.CancellationToken)).Select(a => a.Email.Value)];
 
-        Assert.Contains(allowed.Email, found);
-        Assert.DoesNotContain(notAllowed.Email, found);
+        Assert.Contains(scanOff.Email, found);
+        Assert.DoesNotContain(scanOn.Email, found);
     }
 
     /// <summary>The admin message is shown in the admin grid, so the whole-row search matches it too.</summary>

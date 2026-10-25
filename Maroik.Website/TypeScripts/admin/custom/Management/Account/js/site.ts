@@ -26,7 +26,7 @@
         account: check.object({
             email: check.string, nickname: check.string, role: check.string, timeZoneIanaId: check.string, locked: check.boolean,
             emailConfirmed: check.boolean, agreedServiceTerms: check.boolean, message: check.nullable(check.string), deleted: check.boolean,
-            fileManagerAllowUnscanned: check.boolean,
+            fileManagerScanDisabled: check.boolean,
         }),
         // The account's File Manager quota in GB, converted by the server (FileManagerUploadPolicy.QuotaGbFromBytes).
         fileManagerQuotaGb: check.number,
@@ -54,7 +54,7 @@
     const $editMessage = $("#editMessage");
     const $editAccountDeleted = $("#editAccountDeleted");
     const $editAccountFileManagerQuotaGb = $("#editAccountFileManagerQuotaGb");
-    const $editAccountFileManagerAllowUnscanned = $("#editAccountFileManagerAllowUnscanned");
+    const $editAccountFileManagerScanDisabled = $("#editAccountFileManagerScanDisabled");
     const $formEditAccount = $("#formEditAccount");
     const $editAccountPassword = $("#editAccountPassword");
     const $btnEditAccountGridRow = $("#btnEditAccountGridRow");
@@ -210,7 +210,7 @@
                     $editMessage.val(data.account.message);
                     $editAccountDeleted.prop("checked", data.account.deleted);
                     $editAccountFileManagerQuotaGb.val(data.fileManagerQuotaGb);
-                    $editAccountFileManagerAllowUnscanned.prop("checked", data.account.fileManagerAllowUnscanned);
+                    $editAccountFileManagerScanDisabled.prop("checked", data.account.fileManagerScanDisabled);
 
                     // Static backdrop + no keyboard dismiss; `toggle` then `show`
                     // forces it open even mid-transition.
@@ -248,7 +248,7 @@
         // refuses a negative or oversized quota (authoritative in FileManagerUploadPolicy.QuotaBytesFromGb).
         let quotaText = fieldValue($editAccountFileManagerQuotaGb);
         let fileManagerQuotaGb = quotaText === "" ? null : Number(quotaText);
-        let fileManagerAllowUnscanned = $editAccountFileManagerAllowUnscanned.is(":checked");
+        let fileManagerScanDisabled = $editAccountFileManagerScanDisabled.is(":checked");
 
         let paramValue = JSON.stringify({
             Email: email,
@@ -261,7 +261,7 @@
             Message: message,
             Deleted: deleted,
             FileManagerQuotaGb: fileManagerQuotaGb,
-            FileManagerAllowUnscanned: fileManagerAllowUnscanned
+            FileManagerScanDisabled: fileManagerScanDisabled
         });
 
         $.ajax({

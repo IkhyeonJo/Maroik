@@ -12,9 +12,8 @@ namespace Maroik.FileStorage.Services;
 /// The File Manager's large-file flow on disk. No file is held in memory: chunks are appended to
 /// <c>upload/FileManager/.staging/{uploadId}</c>, a completed file of the declared size gets its scan queued
 /// (<see cref="IFileManagerScanQueue"/>; <c>FileManagerScanWorker</c> runs it in the background), the scan streams it from disk, and
-/// a clean file is moved to <c>upload/FileManager/{uploadId}</c>. A file the scan could not finish (a clamd limit, or the scanner
-/// unavailable) keeps its staging file and waits for its owner's decision: <see cref="AcceptUnscanned"/> moves it there unscanned, an
-/// abort drops it. The upload id is the GUID the Website stores the file under; anything
+/// only a clean file is moved to <c>upload/FileManager/{uploadId}</c> — or, for an account whose virus scan the Website says is off,
+/// the completed file is moved there at once, unscanned. The upload id is the GUID the Website stores the file under; anything
 /// that is not a GUID is refused before the disk is touched, so an id can never name a path. Every path goes through
 /// <see cref="StoragePath"/> and <see cref="StorageFiles"/> like the rest of the service.
 /// </summary>
@@ -73,7 +72,7 @@ public class FileManagerStorageService(IClamavClient clamavClient, IFileManagerS
     }
 
     /// <inheritdoc />
-    public async Task<(string? Error, bool Scanning)> CompleteAsync(string? uploadId, long expectedSize, CancellationToken ct = default)
+    public async Task<(string? Error, bool Scanning)> CompleteAsync(string? uploadId, long expectedSize, bool skipScan, CancellationToken ct = default)
     {
         string? id = CanonicalId(uploadId);
         StoragePath? staging = StagingFile(id);
@@ -118,6 +117,14 @@ public class FileManagerStorageService(IClamavClient clamavClient, IFileManagerS
             return (FileStorageRefusals.SizeMismatch, false);
         }
 
+        // The account's virus scan is off (the Website decides): the whole file is stored as it is.
+        if (skipScan)
+        {
+            StorageFiles.Move(staging, stored);
+            StorageFiles.MakeReadable(stored);
+            return (null, false);
+        }
+
         // Queued here the first time, and again after a restart forgot the pending scan (its staging file is still whole).
         scanQueue.TryEnqueue(id);
         return (null, true);
@@ -138,42 +145,17 @@ public class FileManagerStorageService(IClamavClient clamavClient, IFileManagerS
         // An abort cancels the scan, which the client reports as "could not be scanned": the abort already dropped the files.
         ct.ThrowIfCancellationRequested();
 
-        // An infected file is refused and dropped (S2). A file the scan could not finish is not stored either, but its staging file
-        // stays: its owner may keep it unscanned (AcceptUnscanned), or say no (abort).
-        if (scan == ClamavScanResult.Infected)
+        // Only Clean is stored (S2). Infected, too large to scan and "could not be scanned" are all refusals, reported apart.
+        if (scan != ClamavScanResult.Clean)
         {
             StorageFiles.Delete(staging);
-            return FileStorageRefusals.Infected;
+            return scan switch
+            {
+                ClamavScanResult.Infected => FileStorageRefusals.Infected,
+                ClamavScanResult.LimitExceeded => FileStorageRefusals.ScanLimitExceeded,
+                _ => FileStorageRefusals.ScanUnavailable
+            };
         }
-
-        if (scan != ClamavScanResult.Clean)
-            return scan == ClamavScanResult.LimitExceeded ? FileStorageRefusals.ScanLimitExceeded : FileStorageRefusals.ScanUnavailable;
-
-        StorageFiles.Move(staging, stored);
-        StorageFiles.MakeReadable(stored);
-        return null;
-    }
-
-    /// <inheritdoc />
-    public string? AcceptUnscanned(string? uploadId)
-    {
-        string? id = CanonicalId(uploadId);
-        StoragePath? staging = StagingFile(id);
-        StoragePath? stored = StoredFile(id);
-        if (id == null || staging == null || stored == null)
-            return FileStorageRefusals.InvalidUpload;
-
-        // Already kept: the Website repeats a call whose answer it lost.
-        if (StorageFiles.Exists(stored) && !StorageFiles.Exists(staging))
-            return null;
-
-        // Only a file whose scan could not be finished waits for this decision; anything else (still scanning, never completed,
-        // infected, aborted) is never stored unscanned.
-        if (!scanQueue.TakeUndecided(id))
-            return FileStorageRefusals.NotUndecided;
-
-        if (!StorageFiles.Exists(staging))
-            return FileStorageRefusals.InvalidUpload;
 
         StorageFiles.Move(staging, stored);
         StorageFiles.MakeReadable(stored);

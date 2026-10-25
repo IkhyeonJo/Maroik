@@ -19,7 +19,7 @@ public class FileManagerNodeRepository(ApplicationDbContext context)
 
     /// <summary>Maps a persisted <see cref="OrmFileManagerNode"/> row to the <see cref="FileManagerNode"/> domain object.</summary>
     protected override FileManagerNode ToDomain(OrmFileManagerNode e) => FileManagerNode.Reconstitute(
-        e.Id, e.AccountEmail, e.ParentId, e.Name, e.IsFolder, e.Size, e.StoragePath, e.Uploading, e.Created, e.Updated, e.Unscanned);
+        e.Id, e.AccountEmail, e.ParentId, e.Name, e.IsFolder, e.Size, e.StoragePath, e.Uploading, e.Created, e.Updated);
 
     /// <summary>Maps a <see cref="FileManagerNode"/> domain object to its <see cref="OrmFileManagerNode"/> persistence representation.</summary>
     protected override OrmFileManagerNode ToEntity(FileManagerNode node) => new()
@@ -33,8 +33,7 @@ public class FileManagerNodeRepository(ApplicationDbContext context)
         StoragePath = node.StoragePath,
         Uploading = node.Uploading,
         Created = node.Created,
-        Updated = node.Updated,
-        Unscanned = node.Unscanned
+        Updated = node.Updated
     };
 
     /// <inheritdoc />

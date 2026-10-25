@@ -84,34 +84,6 @@ public class FileManagerServiceBrowseTests
         Assert.Equal(0, Assert.Single(folder.Items, i => i.Name == "Icons").ItemCount);
     }
 
-    /// <summary>A file kept without a virus scan is listed as such and is never offered a preview, even when it is an image (Q3).</summary>
-    [Fact]
-    public async Task GetFolderAsync_MarksAnUnscannedFile_AndOffersItNoPreview()
-    {
-        _h.File("photo.png", unscanned: true);
-        _h.File("scanned.png");
-
-        var (_, folder) = await _h.Sut.GetFolderAsync(H.Email, null, TestContext.Current.CancellationToken);
-
-        FileManagerItemResponse unscanned = Assert.Single(folder!.Items, i => i.Name == "photo.png");
-        FileManagerItemResponse scanned = Assert.Single(folder.Items, i => i.Name == "scanned.png");
-        Assert.Equal((true, false), (unscanned.Unscanned, unscanned.Previewable));
-        Assert.Equal((false, true), (scanned.Unscanned, scanned.Previewable));
-    }
-
-    /// <summary>The files a multi-download fetches say which of them were kept unscanned (the page warns before downloading them).</summary>
-    [Fact]
-    public async Task ListFilesForDownloadAsync_SaysWhichFilesAreUnscanned()
-    {
-        long unscanned = _h.File("big.zip", unscanned: true);
-        long scanned = _h.File("a.txt");
-
-        var (_, files) = await _h.Sut.ListFilesForDownloadAsync(H.Email, [unscanned, scanned], TestContext.Current.CancellationToken);
-
-        Assert.True(Assert.Single(files, f => f.Id == unscanned).Unscanned);
-        Assert.False(Assert.Single(files, f => f.Id == scanned).Unscanned);
-    }
-
     /// <summary>Another account's folder, a missing folder and a file are "not found".</summary>
     [Fact]
     public async Task GetFolderAsync_AnswersNotFound_ForAFolderTheAccountDoesNotOwn()

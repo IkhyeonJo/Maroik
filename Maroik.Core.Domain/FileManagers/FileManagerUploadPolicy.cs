@@ -13,7 +13,7 @@ public static class FileManagerUploadPolicy
     /// The largest file ClamAV can scan, 2,147,483,645 bytes (S1): ClamAV cannot scan files of 2 GB or more ("Technical design
     /// limitations prevent ClamAV from scanning files greater than 2 GB", clamd.conf.sample), and clamd clamps the compose files'
     /// 2048M stream limit to this. It is not an upload limit (since 2026-10-25, owner's request, there is none): a larger file can
-    /// only be kept unscanned, so <see cref="CheckSize"/> refuses it up front from an account that may not keep such files.
+    /// only be stored without a scan, so <see cref="CheckSize"/> refuses it up front from an account whose virus scan is on.
     /// <c>ClamavClient.MaxStreamBytes</c> holds the same number on the scanner's side.
     /// </summary>
     public const long MaxScannableBytes = 2_147_483_645;
@@ -47,15 +47,15 @@ public static class FileManagerUploadPolicy
 
     /// <summary>
     /// Accepts a declared file size of 0 bytes or more. One larger than <see cref="MaxScannableBytes"/> can never be scanned, so it is
-    /// accepted only when <paramref name="mayKeepUnscanned"/> (<c>Account.FileManagerAllowUnscanned</c>): any other account would
-    /// send the whole file only to have it refused at the end.
+    /// accepted only when <paramref name="scanDisabled"/> (<c>Account.FileManagerScanDisabled</c>, stored without a scan): an account
+    /// whose scan is on would send the whole file only to have it refused at the end.
     /// </summary>
-    public static ErrorOr<Success> CheckSize(long size, bool mayKeepUnscanned)
+    public static ErrorOr<Success> CheckSize(long size, bool scanDisabled)
     {
         if (size < 0)
             return DomainError.Validation("FileManager.SizeInvalid", "The file size is not valid.");
 
-        if (size > MaxScannableBytes && !mayKeepUnscanned)
+        if (size > MaxScannableBytes && !scanDisabled)
             return DomainError.Validation("FileManager.FileTooLarge", "A file larger than 2 GB cannot be uploaded.");
 
         return Result.Success;

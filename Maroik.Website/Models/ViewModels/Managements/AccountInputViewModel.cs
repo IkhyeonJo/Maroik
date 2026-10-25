@@ -77,6 +77,6 @@ public class AccountInputViewModel
     /// </summary>
     public decimal? FileManagerQuotaGb { get; set; }
 
-    /// <summary>Whether the account may keep File Manager files that could not be scanned for viruses (Q4). Null keeps the current setting.</summary>
-    public bool? FileManagerAllowUnscanned { get; set; }
+    /// <summary>Whether the account's File Manager uploads skip the virus scan (Q4). Null keeps the current setting.</summary>
+    public bool? FileManagerScanDisabled { get; set; }
 }

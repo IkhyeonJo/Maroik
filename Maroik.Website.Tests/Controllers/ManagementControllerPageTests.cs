@@ -268,16 +268,16 @@ public class ManagementControllerPageTests(MaroikWebApplicationFactory factory)
         Assert.DoesNotContain("reset-secret10-value", body, StringComparison.Ordinal);
     }
 
-    /// <summary>The account grid shows whether each account may keep File Manager files that could not be scanned (column title localized).</summary>
+    /// <summary>The account grid shows whether each account's File Manager virus scan is off (column title localized).</summary>
     [Fact]
-    public async Task AccountGrid_ShowsTheFileManagerAllowUnscannedColumn()
+    public async Task AccountGrid_ShowsTheFileManagerScanDisabledColumn()
     {
-        var admin = await LoginAsync("mgmt-page-unscannedadmin@test.com", Role.Admin);
-        await LoginAsync("mgmt-page-unscanned11@test.com");
+        var admin = await LoginAsync("mgmt-page-scanoffadmin@test.com", Role.Admin);
+        await LoginAsync("mgmt-page-scanoff11@test.com");
 
-        string body = await BodyAsync(await GetAsync("/Management/Account?wholeSearch=mgmt-page-unscanned11", admin, ajax: true));
+        string body = await BodyAsync(await GetAsync("/Management/Account?wholeSearch=mgmt-page-scanoff11", admin, ajax: true));
 
-        Assert.Contains("Unscanned files allowed", body, StringComparison.Ordinal);
+        Assert.Contains("Virus scan turned off", body, StringComparison.Ordinal);
     }
 
     /// <summary>Several matching accounts are listed ordered by e-mail address.</summary>

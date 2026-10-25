@@ -246,31 +246,7 @@
   <data name="Waiting for {0} virus scan(s)…" xml:space="preserve">
     <value>Waiting for {0} virus scan(s)…</value>
   </data>
-  <data name="Not scanned" xml:space="preserve">
-    <value>Not scanned</value>
-  </data>
-  <data name="This file was not scanned for viruses." xml:space="preserve">
-    <value>This file was not scanned for viruses.</value>
-  </data>
-  <data name="Uploaded (not scanned for viruses)" xml:space="preserve">
-    <value>Uploaded (not scanned for viruses)</value>
-  </data>
-  <data name="{0} of the selected files were not scanned for viruses. Download them anyway?" xml:space="preserve">
-    <value>{0} of the selected files were not scanned for viruses. Download them anyway?</value>
-  </data>
-  <data name="Not scanned for viruses" xml:space="preserve">
-    <value>Not scanned for viruses</value>
-  </data>
-  <data name="Yes, upload it" xml:space="preserve">
-    <value>Yes, upload it</value>
-  </data>
   <data name="Preparing download {0} of {1}: {2}" xml:space="preserve">
     <value>Preparing download {0} of {1}: {2}</value>
-  </data>
-  <data name="Yes, download" xml:space="preserve">
-    <value>Yes, download</value>
-  </data>
-  <data name="No" xml:space="preserve">
-    <value>No</value>
   </data>
 </root>

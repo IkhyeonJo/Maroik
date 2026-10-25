@@ -29,9 +29,6 @@ public class FileManagerItemResponse
     /// <summary>Whether the file may be previewed (a scanned image within the preview limit, F9).</summary>
     public bool Previewable { get; set; }
 
-    /// <summary>Whether the file was stored without a virus scan at its owner's request.</summary>
-    public bool Unscanned { get; set; }
-
     /// <summary>The names of the folders above it, from the root down (shown with a search result, U5).</summary>
     public List<string> Location { get; set; } = [];
 }

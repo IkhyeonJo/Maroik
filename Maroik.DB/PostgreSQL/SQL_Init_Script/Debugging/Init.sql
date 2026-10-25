@@ -64,7 +64,7 @@ CREATE TABLE public."Account" (
     "SecurityStamp" text DEFAULT (gen_random_uuid())::text NOT NULL,
     "MustChangePassword" boolean DEFAULT false NOT NULL,
     "FileManagerQuotaBytes" bigint DEFAULT 0 NOT NULL,
-    "FileManagerAllowUnscanned" boolean DEFAULT false NOT NULL,
+    "FileManagerScanDisabled" boolean DEFAULT false NOT NULL,
     CONSTRAINT "Account_Email_check" CHECK ((("Email")::text = lower(("Email")::text))),
     CONSTRAINT "Account_FileManagerQuotaBytes_check" CHECK (("FileManagerQuotaBytes" >= 0)),
     CONSTRAINT "Account_LoginAttempt_check" CHECK (("LoginAttempt" >= 0)),
@@ -222,10 +222,10 @@ COMMENT ON COLUMN public."Account"."FileManagerQuotaBytes" IS 'File Manager stor
 
 
 --
--- Name: COLUMN "Account"."FileManagerAllowUnscanned"; Type: COMMENT; Schema: public; Owner: postgres
+-- Name: COLUMN "Account"."FileManagerScanDisabled"; Type: COMMENT; Schema: public; Owner: postgres
 --
 
-COMMENT ON COLUMN public."Account"."FileManagerAllowUnscanned" IS 'May store a File Manager file that could not be scanned for viruses';
+COMMENT ON COLUMN public."Account"."FileManagerScanDisabled" IS 'File Manager uploads of this account skip the virus scan';
 
 
 --
@@ -1785,8 +1785,7 @@ CREATE TABLE public."FileManagerNode" (
     "Uploading" boolean NOT NULL,
     "Created" timestamp without time zone NOT NULL,
     "Updated" timestamp without time zone NOT NULL,
-    "Unscanned" boolean DEFAULT false NOT NULL,
-    CONSTRAINT "FileManagerNode_Kind_check" CHECK ((("IsFolder" AND ("StoragePath" IS NULL) AND ("Size" = 0) AND (NOT "Uploading") AND (NOT "Unscanned")) OR ((NOT "IsFolder") AND ("StoragePath" IS NOT NULL)))),
+    CONSTRAINT "FileManagerNode_Kind_check" CHECK ((("IsFolder" AND ("StoragePath" IS NULL) AND ("Size" = 0) AND (NOT "Uploading")) OR ((NOT "IsFolder") AND ("StoragePath" IS NOT NULL)))),
     CONSTRAINT "FileManagerNode_Name_check" CHECK ((("Name")::text ~ '\S'::text)),
     CONSTRAINT "FileManagerNode_Size_check" CHECK (("Size" >= 0))
 );
@@ -1855,13 +1854,6 @@ COMMENT ON COLUMN public."FileManagerNode"."StoragePath" IS 'upload/FileManager/
 --
 
 COMMENT ON COLUMN public."FileManagerNode"."Uploading" IS 'Upload started but not completed';
-
-
---
--- Name: COLUMN "FileManagerNode"."Unscanned"; Type: COMMENT; Schema: public; Owner: postgres
---
-
-COMMENT ON COLUMN public."FileManagerNode"."Unscanned" IS 'Stored without a virus scan at the owner''s request';
 
 
 --

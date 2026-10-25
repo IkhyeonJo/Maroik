@@ -95,11 +95,8 @@ public sealed class FakeFileClient : IFileClient
     /// <summary>Every File Manager upload a caller aborted (in order).</summary>
     public List<Guid> AbortedUploads { get; } = [];
 
-    /// <summary>The received bytes of the uploads whose scan could not be finished, kept until their owner decides.</summary>
-    private readonly ConcurrentDictionary<Guid, byte[]> _undecided = new();
-
-    /// <summary>Every File Manager upload a caller kept unscanned (in order).</summary>
-    public List<Guid> AcceptedUnscanned { get; } = [];
+    /// <summary>Every File Manager upload a caller completed with the virus scan skipped (in order).</summary>
+    public List<Guid> CompletedWithoutAScan { get; } = [];
 
     /// <summary>Whether bytes are being received for <paramref name="uploadId"/>.</summary>
     public bool IsStaging(Guid uploadId) => _staging.ContainsKey(uploadId);
@@ -116,8 +113,18 @@ public sealed class FakeFileClient : IFileClient
     }
 
     /// <inheritdoc />
-    public Task<FileUploadResult> CompleteFileManagerUploadAsync(Guid uploadId, long expectedSize, string fileStorageBaseUrl, CancellationToken ct = default)
+    public Task<FileUploadResult> CompleteFileManagerUploadAsync(Guid uploadId, long expectedSize, bool skipScan, string fileStorageBaseUrl, CancellationToken ct = default)
     {
+        // The account's virus scan is off: the whole file is stored at once, whatever a scan would say.
+        if (skipScan)
+        {
+            _staging.TryRemove(uploadId, out byte[]? whole);
+            if ((whole ??= []).Length != expectedSize) return Task.FromResult(FileUploadResult.Failed);
+            Store(whole, "application/octet-stream", $"upload/FileManager/{uploadId:D}");
+            lock (CompletedWithoutAScan) CompletedWithoutAScan.Add(uploadId);
+            return Task.FromResult(FileUploadResult.Stored);
+        }
+
         // The background virus scan is still running: nothing is decided, the staging bytes stay.
         if (FileManagerScanningAnswers > 0)
         {
@@ -129,25 +136,13 @@ public sealed class FakeFileClient : IFileClient
         received ??= [];
         if (received.Length != expectedSize) return Task.FromResult(FileUploadResult.Failed);
         if (FileManagerOutcome == FileUploadResult.Stored) Store(received, "application/octet-stream", $"upload/FileManager/{uploadId:D}");
-        // A scan that could not be finished keeps the file for its owner's decision.
-        if (FileManagerOutcome is FileUploadResult.ScanLimitExceeded or FileUploadResult.ScanUnavailable) _undecided[uploadId] = received;
         return Task.FromResult(FileManagerOutcome);
-    }
-
-    /// <inheritdoc />
-    public Task<bool> AcceptUnscannedFileManagerUploadAsync(Guid uploadId, string fileStorageBaseUrl, CancellationToken ct = default)
-    {
-        if (!_undecided.TryRemove(uploadId, out byte[]? received)) return Task.FromResult(false);
-        Store(received, "application/octet-stream", $"upload/FileManager/{uploadId:D}");
-        lock (AcceptedUnscanned) AcceptedUnscanned.Add(uploadId);
-        return Task.FromResult(true);
     }
 
     /// <inheritdoc />
     public Task<bool> AbortFileManagerUploadAsync(Guid uploadId, string fileStorageBaseUrl, CancellationToken ct = default)
     {
         _staging.TryRemove(uploadId, out _);
-        _undecided.TryRemove(uploadId, out _);
         lock (AbortedUploads) AbortedUploads.Add(uploadId);
         return Task.FromResult(true);
     }

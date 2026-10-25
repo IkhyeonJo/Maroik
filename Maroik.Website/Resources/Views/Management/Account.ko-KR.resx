@@ -204,7 +204,7 @@
   <data name="File Manager quota (GB)" xml:space="preserve">
     <value>내 드라이브 용량(GB)</value>
   </data>
-  <data name="Allow uploading files that could not be scanned for viruses" xml:space="preserve">
-    <value>바이러스 검사를 못 한 파일 올리기 허용</value>
+  <data name="Turn off the virus scan for files" xml:space="preserve">
+    <value>파일 바이러스 검사 기능 끄기</value>
   </data>
 </root>

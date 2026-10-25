@@ -543,7 +543,7 @@
   <data name="The storage quota is too large." xml:space="preserve">
     <value>저장 공간 할당량이 너무 큽니다.</value>
   </data>
-  <data name="FileManagerAllowUnscanned" xml:space="preserve">
-    <value>검사 못 한 파일 허용</value>
+  <data name="FileManagerScanDisabled" xml:space="preserve">
+    <value>바이러스 검사 끔</value>
   </data>
 </root>

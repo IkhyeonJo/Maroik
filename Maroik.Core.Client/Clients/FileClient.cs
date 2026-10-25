@@ -255,13 +255,14 @@ public class FileClient(IHttpClientFactory httpClientFactory, ILogger<FileClient
     }
 
     /// <inheritdoc />
-    public async Task<FileUploadResult> CompleteFileManagerUploadAsync(Guid uploadId, long expectedSize, string fileStorageBaseUrl, CancellationToken ct = default)
+    public async Task<FileUploadResult> CompleteFileManagerUploadAsync(Guid uploadId, long expectedSize, bool skipScan, string fileStorageBaseUrl, CancellationToken ct = default)
     {
         try
         {
             using MultipartFormDataContent content = [];
             AddText(content, "uploadId", uploadId.ToString("D"));
             AddText(content, "expectedSize", expectedSize.ToString(System.Globalization.CultureInfo.InvariantCulture));
+            AddText(content, "skipScan", skipScan ? "true" : "false");
 
             using HttpResponseMessage response = await PostFileManagerAsync("complete", content, fileStorageBaseUrl, ct);
             // 202: the virus scan is queued or still running in the background; the caller asks again.
@@ -278,28 +279,6 @@ public class FileClient(IHttpClientFactory httpClientFactory, ILogger<FileClient
         {
             logger.LogError(ex, "File Manager upload completion request failed for {UploadId}", uploadId);
             return FileUploadResult.Failed;
-        }
-    }
-
-    /// <inheritdoc />
-    public async Task<bool> AcceptUnscannedFileManagerUploadAsync(Guid uploadId, string fileStorageBaseUrl, CancellationToken ct = default)
-    {
-        try
-        {
-            using MultipartFormDataContent content = [];
-            AddText(content, "uploadId", uploadId.ToString("D"));
-
-            using HttpResponseMessage response = await PostFileManagerAsync("accept-unscanned", content, fileStorageBaseUrl, ct);
-            if (response.IsSuccessStatusCode)
-                return true;
-
-            logger.LogWarning("File Manager unscanned store of {UploadId} returned {StatusCode}: {Reason}", uploadId, (int)response.StatusCode, await ReadReasonAsync(response, ct));
-            return false;
-        }
-        catch (Exception ex)
-        {
-            logger.LogError(ex, "File Manager unscanned store request failed for {UploadId}", uploadId);
-            return false;
         }
     }
 

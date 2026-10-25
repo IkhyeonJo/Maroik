@@ -111,10 +111,9 @@ public class FileManagerController(
         try
         {
             var (result, files) = await fileManagerService.ListFilesForDownloadAsync(Email, input.Ids, ct);
-            // bytes: each file's size, which the page's download progress bar is measured against. unscannedCount: how many of them
-            // were kept without a virus scan (the page warns before downloading them).
+            // bytes: each file's size, which the page's download progress bar is measured against.
             return result.Success
-                ? Json(new { result = true, files = files.Select(f => new { id = f.Id, name = f.Name, bytes = f.Size }), unscannedCount = files.Count(f => f.Unscanned) })
+                ? Json(new { result = true, files = files.Select(f => new { id = f.Id, name = f.Name, bytes = f.Size }) })
                 : Json(new { result = false, error = localizer[result.ErrorKey, result.ErrorArgs].ToPlainString() });
         }
         catch (Exception ex)
@@ -314,9 +313,8 @@ public class FileManagerController(
 
     /// <summary>
     /// Completes an upload, asked again by the page until it is decided: while file storage scans it in the background the answer is
-    /// <c>scanning: true</c>; once scanned and stored it becomes a file of the drive (<c>scanning: false</c> and the message). A file the
-    /// scan could not finish, uploaded by an account that may keep such files, is answered <c>confirmUnscanned: true</c> with the
-    /// question as the error: the page asks, and answers with <see cref="AcceptUnscannedUpload"/> or <see cref="AbortUpload"/>.
+    /// <c>scanning: true</c>; once scanned and stored it becomes a file of the drive (<c>scanning: false</c> and the message). An account
+    /// whose virus scan is off gets that answer at once (the file is stored without a scan).
     /// </summary>
     [HttpPost]
     [ValidateAntiForgeryToken]
@@ -327,8 +325,6 @@ public class FileManagerController(
         try
         {
             var (result, completion) = await fileManagerService.CompleteUploadAsync(Email, input.UploadId, input.Overwrite, ct);
-            if (completion == FileManagerCompletion.AwaitingDecision)
-                return Json(new { result = false, confirmUnscanned = true, error = localizer[result.ErrorKey, result.ErrorArgs].ToPlainString() });
             if (!result.Success) return Json(new { result = false, error = localizer[result.ErrorKey, result.ErrorArgs].ToPlainString() });
             return completion == FileManagerCompletion.Scanning
                 ? Json(new { result = true, scanning = true })
@@ -337,27 +333,6 @@ public class FileManagerController(
         catch (Exception ex)
         {
             logger.LogError(ex, "Failed to complete File Manager upload {UploadId} of {Email}", input.UploadId, Email);
-            return Json(new { result = false, error = localizer[ServiceResult.TemporaryErrorKey].Value });
-        }
-    }
-
-    /// <summary>The owner keeps an upload the scan could not finish ("yes" to the question <see cref="CompleteUpload"/> asked).</summary>
-    [HttpPost]
-    [ValidateAntiForgeryToken]
-    [RequiredHttpPostAccess(Role = Role.User)]
-    public async Task<IActionResult> AcceptUnscannedUpload([FromBody] FileManagerUploadIdInputViewModel input, CancellationToken ct)
-    {
-        if (!ModelState.IsValid) return Json(new { result = false, error = localizer["Input is invalid"].Value });
-        try
-        {
-            ServiceResult result = await fileManagerService.AcceptUnscannedUploadAsync(Email, input.UploadId, input.Overwrite, ct);
-            return result.Success
-                ? Json(new { result = true, message = localizer["The file has been uploaded without a virus scan."].Value })
-                : Json(new { result = false, error = localizer[result.ErrorKey, result.ErrorArgs].ToPlainString() });
-        }
-        catch (Exception ex)
-        {
-            logger.LogError(ex, "Failed to keep File Manager upload {UploadId} of {Email} unscanned", input.UploadId, Email);
             return Json(new { result = false, error = localizer[ServiceResult.TemporaryErrorKey].Value });
         }
     }

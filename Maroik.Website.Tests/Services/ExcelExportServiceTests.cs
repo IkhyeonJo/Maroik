@@ -608,16 +608,16 @@ public class ExcelExportServiceTests
         Assert.Equal("True", row[12]); // Deleted
     }
 
-    /// <summary>The account export has a localized "may keep unscanned File Manager files" column after Deleted.</summary>
+    /// <summary>The account export has a localized "File Manager virus scan off" column after Deleted.</summary>
     [Fact]
-    public void CreateAccountExcel_HasTheFileManagerAllowUnscannedColumn()
+    public void CreateAccountExcel_HasTheFileManagerScanDisabledColumn()
     {
-        AccountResponse[] items = [new() { Email = "a@example.com", FileManagerAllowUnscanned = true }];
+        AccountResponse[] items = [new() { Email = "a@example.com", FileManagerScanDisabled = true }];
 
         var header = ReadRows(_sut.CreateAccountExcel(items, _localize, "UTC"))[0];
         var row = ReadRows(_sut.CreateAccountExcel(items, _identity, "UTC"))[1];
 
-        Assert.Equal("L:FileManagerAllowUnscanned", header[13]);
+        Assert.Equal("L:FileManagerScanDisabled", header[13]);
         Assert.Equal("True", row[13]);
     }
 

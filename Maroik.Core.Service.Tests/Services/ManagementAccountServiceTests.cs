@@ -368,7 +368,7 @@ public class ManagementAccountServiceTests
     /// the flag keeps the current setting.
     /// </summary>
     [Fact]
-    public async Task UpdateAccountAsync_SetsTheFileManagerAllowUnscannedFlag_OnlyWhenGiven()
+    public async Task UpdateAccountAsync_SetsTheFileManagerScanDisabledFlag_OnlyWhenGiven()
     {
         var account = ActiveAccount();
         _accountRepo.Setup(r => r.FindByEmailForUpdateAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(account);
@@ -376,19 +376,19 @@ public class ManagementAccountServiceTests
         var sut = CreateSut();
 
         ServiceResult set = await sut.UpdateAccountAsync(
-            new AdminUpdateAccountRequest { Email = account.Email.Value, Role = "User", FileManagerAllowUnscanned = true }, null, Actor, TestContext.Current.CancellationToken);
+            new AdminUpdateAccountRequest { Email = account.Email.Value, Role = "User", FileManagerScanDisabled = true }, null, Actor, TestContext.Current.CancellationToken);
         Assert.True(set.Success);
-        Assert.True(account.FileManagerAllowUnscanned);
+        Assert.True(account.FileManagerScanDisabled);
 
         ServiceResult kept = await sut.UpdateAccountAsync(
-            new AdminUpdateAccountRequest { Email = account.Email.Value, Role = "User", FileManagerAllowUnscanned = null }, null, Actor, TestContext.Current.CancellationToken);
+            new AdminUpdateAccountRequest { Email = account.Email.Value, Role = "User", FileManagerScanDisabled = null }, null, Actor, TestContext.Current.CancellationToken);
         Assert.True(kept.Success);
-        Assert.True(account.FileManagerAllowUnscanned);
+        Assert.True(account.FileManagerScanDisabled);
 
         ServiceResult cleared = await sut.UpdateAccountAsync(
-            new AdminUpdateAccountRequest { Email = account.Email.Value, Role = "User", FileManagerAllowUnscanned = false }, null, Actor, TestContext.Current.CancellationToken);
+            new AdminUpdateAccountRequest { Email = account.Email.Value, Role = "User", FileManagerScanDisabled = false }, null, Actor, TestContext.Current.CancellationToken);
         Assert.True(cleared.Success);
-        Assert.False(account.FileManagerAllowUnscanned);
+        Assert.False(account.FileManagerScanDisabled);
     }
 
     /// <summary>A negative quota is refused with the domain's reason, rolled back and not saved.</summary>

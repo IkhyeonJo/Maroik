@@ -58,11 +58,6 @@ public partial class FileManagerNode
     /// </summary>
     public DateTime Updated { get; set; }
 
-    /// <summary>
-    /// Stored without a virus scan at the owner's request
-    /// </summary>
-    public bool Unscanned { get; set; }
-
     /// <summary>The account that owns this node.</summary>
     public virtual Account AccountEmailNavigation { get; set; } = null!;
 

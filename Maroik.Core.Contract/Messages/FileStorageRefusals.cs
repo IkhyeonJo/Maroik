@@ -10,20 +10,14 @@ public static class FileStorageRefusals
     /// <summary>The virus scan reported a detection.</summary>
     public const string Infected = "File may be infected with a virus.";
 
-    /// <summary>
-    /// The virus scan could not be completed (the scanner was unreachable, timed out or gave no verdict). For a File Manager upload the
-    /// file is kept until its owner decides (<see cref="AwaitsDecision"/>).
-    /// </summary>
+    /// <summary>The virus scan could not be completed (the scanner was unreachable, timed out or gave no verdict).</summary>
     public const string ScanUnavailable = "The file could not be scanned for viruses. Please try again later.";
 
     /// <summary>
-    /// The virus scan could not scan the whole file: one of the scanner's limits (size, recursion, file count, scan time) was reached. A
-    /// File Manager upload is kept until its owner decides (<see cref="AwaitsDecision"/>).
+    /// The virus scan could not scan the whole file: one of the scanner's limits (size, recursion, file count, scan time) was reached.
+    /// Refused like <see cref="ScanUnavailable"/>, but logged apart.
     /// </summary>
     public const string ScanLimitExceeded = "The file is too large to be fully scanned for viruses.";
-
-    /// <summary>A request to keep a File Manager upload unscanned whose scan did not leave it waiting for that decision.</summary>
-    public const string NotUndecided = "The upload is not waiting for a decision about an unscanned file.";
 
     /// <summary>A File Manager upload id that is not a GUID, or an upload that cannot be stored (its file already exists).</summary>
     public const string InvalidUpload = "The upload is not valid.";
@@ -42,11 +36,4 @@ public static class FileStorageRefusals
 
     /// <summary>A delete of a File Manager file that does not exist.</summary>
     public const string FileNotFound = "File not found";
-
-    /// <summary>
-    /// Whether <paramref name="refusal"/> leaves a File Manager upload waiting for its owner's decision: the scan could not be finished
-    /// (<see cref="ScanLimitExceeded"/>, <see cref="ScanUnavailable"/>), so the owner may keep the file unscanned. Every other refusal is
-    /// final.
-    /// </summary>
-    public static bool AwaitsDecision(string? refusal) => refusal is ScanLimitExceeded or ScanUnavailable;
 }
