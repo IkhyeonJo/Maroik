@@ -250,8 +250,11 @@ File Manager
   row `Uploading`, and the 24-hour cleanup's abort removes the stored file too (abort drops staging, stored file and pending scan).
 - An overwrite keeps the old row until the new upload completes: the unique name index is partial (`WHERE NOT "Uploading"`), so
   the uploading twin may coexist with it.
-- Downloading several items downloads each file separately (no ZIP). Preview is images only (png / jpg / gif / webp, proven by
-  their header bytes) up to 100 MB, and never of an unscanned file.
+- Downloading several items downloads each file separately (no ZIP). The page fetches each file whole before the browser saves it,
+  in a download dialog whose bar is measured against the file's size in bytes the server sends with the item / `ListDownloadFiles`
+  (the streamed response carries no Content-Length); Cancel aborts the file being fetched and skips the rest. Each role's
+  `ajaxError` handler ignores a request aborted on purpose (`thrownError === "abort"`); every other failure still redirects.
+- Preview is images only (png / jpg / gif / webp, proven by their header bytes) up to 100 MB, and never of an unscanned file.
 
 Budgets (Income Budget / Expenditure Budget)
 - The two AccountBook sub-menu pages render one view (`Views/AccountBook/Budget.cshtml`) and one script, told the kind. A sheet is

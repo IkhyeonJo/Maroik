@@ -40,6 +40,7 @@
 @Html.Hidden("localizerUnscannedDownload", Localizer["{0} of the selected files were not scanned for viruses. Download them anyway?"].Value)
 @Html.Hidden("localizerYesUpload", Localizer["Yes, upload it"].Value)
 @Html.Hidden("localizerYesDownload", Localizer["Yes, download"].Value)
+@Html.Hidden("localizerPreparingDownload", Localizer["Preparing download {0} of {1}: {2}"].Value)
 
 <section class="content">
     <div class="row">
@@ -192,6 +193,24 @@
             <div class="modal-footer">
                 <button type="button" id="btnUploadCancel" class="btn btn-danger" disabled>@Localizer["Cancel"].Value</button>
                 <button type="button" id="btnUploadClose" class="btn btn-secondary" data-dismiss="modal" disabled>@Localizer["Close"].Value</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@*<!--downloadModal: the file being fetched before the browser saves it, with its progress (Cancel stops it and the files after it)-->*@
+<div class="modal fade" tabindex="-1" role="dialog" id="downloadModal" data-backdrop="static" data-keyboard="false">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header"><h5 class="modal-title">@Localizer["Download"].Value</h5></div>
+            <div class="modal-body">
+                <p id="downloadProgressText" class="text-break"></p>
+                <div class="progress">
+                    <div id="downloadProgressBar" class="progress-bar" role="progressbar" aria-valuemin="0" aria-valuemax="100"></div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" id="btnDownloadCancel" class="btn btn-danger">@Localizer["Cancel"].Value</button>
             </div>
         </div>
     </div>

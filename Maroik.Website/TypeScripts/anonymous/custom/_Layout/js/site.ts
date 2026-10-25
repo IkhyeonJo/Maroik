@@ -233,7 +233,9 @@
 
     // Global safety net: any unhandled AJAX failure sends the visitor to the
     // public dashboard rather than leaving them on a page whose data never loaded.
-    $(document).off("ajaxError._Layout").on("ajaxError._Layout", function() {
+    // A request the page itself aborted (a cancelled File Manager download) is not a failure.
+    $(document).off("ajaxError._Layout").on("ajaxError._Layout", function(_event: unknown, _request: unknown, _settings: unknown, thrownError: unknown) {
+        if (thrownError === "abort") return;
         window.location.href = "/Dashboard/AnonymousIndex";
     });
 

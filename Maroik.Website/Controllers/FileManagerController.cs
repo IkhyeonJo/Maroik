@@ -111,9 +111,10 @@ public class FileManagerController(
         try
         {
             var (result, files) = await fileManagerService.ListFilesForDownloadAsync(Email, input.Ids, ct);
-            // unscannedCount: how many of them were kept without a virus scan (the page warns before downloading them).
+            // bytes: each file's size, which the page's download progress bar is measured against. unscannedCount: how many of them
+            // were kept without a virus scan (the page warns before downloading them).
             return result.Success
-                ? Json(new { result = true, files = files.Select(f => new { id = f.Id, name = f.Name }), unscannedCount = files.Count(f => f.Unscanned) })
+                ? Json(new { result = true, files = files.Select(f => new { id = f.Id, name = f.Name, bytes = f.Size }), unscannedCount = files.Count(f => f.Unscanned) })
                 : Json(new { result = false, error = localizer[result.ErrorKey, result.ErrorArgs].ToPlainString() });
         }
         catch (Exception ex)

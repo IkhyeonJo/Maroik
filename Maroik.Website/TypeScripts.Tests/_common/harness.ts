@@ -40,6 +40,8 @@ export interface AjaxCall {
     xhrFields?: Record<string, unknown>;
     /** the settings object itself, as jQuery takes it (respondOverHttp replays it through the real `$.ajax`) */
     settings: JQuery.AjaxSettings;
+    /** whether the script aborted the request (through the jqXHR `$.ajax` returned) */
+    aborted: boolean;
 }
 
 /**
@@ -431,15 +433,24 @@ export function loadSite(
         done(): FakeJqXhr;
         fail(): FakeJqXhr;
         always(): FakeJqXhr;
+        abort(): void;
     }
     Object.assign($, {
         // What the page passes: the fields a test reads, and jQuery's settings type for the replay.
-        ajax: vi.fn((options: Omit<AjaxCall, "settings"> & JQuery.AjaxSettings) => {
-            ajaxCalls.push({ ...options, settings: options });
+        ajax: vi.fn((options: Omit<AjaxCall, "settings" | "aborted"> & JQuery.AjaxSettings) => {
+            const call: AjaxCall = { ...options, settings: options, aborted: false };
+            ajaxCalls.push(call);
             if (opts.autoAjaxResult && typeof options.success === "function") {
                 options.success({ result: true, message: "ok", calendars: [], tempOtherCalendars: [] });
             }
-            const d: FakeJqXhr = { done: () => d, fail: () => d, always: () => d };
+            // abort() ends the request as jQuery does: its error callback runs with the "abort" status.
+            const d: FakeJqXhr = {
+                done: () => d, fail: () => d, always: () => d,
+                abort: () => {
+                    call.aborted = true;
+                    if (typeof options.error === "function") options.error(d, "abort", "abort");
+                },
+            };
             return d;
         }),
     });

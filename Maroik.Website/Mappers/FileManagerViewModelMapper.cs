@@ -60,6 +60,7 @@ public static class FileManagerViewModelMapper
             Name = item.Name,
             IsFolder = item.IsFolder,
             Size = item.IsFolder ? "" : item.Size.ToSizeLabel(),
+            Bytes = item.Size,
             Modified = item.Updated.ConvertTimeByTimeZoneIanaId(timeZoneIanaId).ToString("yyyy-MM-dd HH:mm", CultureInfo.InvariantCulture),
             Icon = IconOf(item.Name, item.IsFolder),
             Previewable = item.Previewable,

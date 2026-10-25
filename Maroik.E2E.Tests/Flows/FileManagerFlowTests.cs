@@ -228,4 +228,75 @@ public class FileManagerFlowTests(E2ESharedFixture fixture) : E2ETestBase(fixtur
         await Assertions.Expect(page.Locator("#btnUploadCancel")).ToBeDisabledAsync();
         Assert.Equal(0L, await Db.ScalarAsync<long>("""SELECT count(*) FROM "FileManagerNode" WHERE "AccountEmail" = @email""", ("email", account.Email)));
     }
+
+    /// <summary>Uploads one text file named <paramref name="name"/> and switches to the list view.</summary>
+    private static async Task UploadAndListAsync(IPage page, string name, byte[] content)
+    {
+        await page.Locator("#fileManagerFileInput").SetInputFilesAsync(new FilePayload { Name = name, MimeType = "text/plain", Buffer = content });
+        await Assertions.Expect(page.Locator("#btnUploadClose")).ToBeEnabledAsync();
+        await page.Locator("#btnUploadClose").ClickAsync();
+        await page.Locator("#btnListView").ClickAsync();
+    }
+
+    /// <summary>
+    /// A download is prepared in the download dialog (in Korean, naming the file), which closes by itself once the browser saves the
+    /// file — however fast the file arrives (the dialog may still be fading in).
+    /// </summary>
+    [Fact]
+    public async Task Download_ShowsItsProgress_AndClosesTheDialogOnceSaved()
+    {
+        var (page, _) = await OpenAsync();
+        await UploadAndListAsync(page, "notes.txt", "hello"u8.ToArray());
+        var release = new TaskCompletionSource();
+        await page.RouteAsync("**/FileManager/Download?*", async route =>
+        {
+            await release.Task;
+            await route.ContinueAsync();
+        });
+
+        IDownload download = await page.RunAndWaitForDownloadAsync(async () =>
+        {
+            await page.Locator(".file-manager-list [data-action='download']").ClickAsync();
+            await Assertions.Expect(page.Locator("#downloadModal")).ToBeVisibleAsync();
+            await Assertions.Expect(page.Locator("#downloadProgressText")).ToHaveTextAsync("1개 중 1번째 다운로드 준비 중: notes.txt");
+            release.SetResult();
+        });
+
+        Assert.Equal("notes.txt", download.SuggestedFilename);
+        await Assertions.Expect(page.Locator("#downloadModal")).ToBeHiddenAsync();
+        await page.UnrouteAllAsync();
+        await page.Locator(".file-manager-list [data-action='download']").ClickAsync();
+        await Assertions.Expect(page.Locator("#downloadModal")).ToBeHiddenAsync();
+    }
+
+    /// <summary>
+    /// Cancel in the download dialog aborts the file being fetched: nothing is saved, the dialog closes, and the aborted request is not
+    /// taken for a failure — the page stays (it is not sent to the public dashboard), and the next download works and is the only save.
+    /// </summary>
+    [Fact]
+    public async Task Download_Cancel_StopsIt_AndStaysOnThePage()
+    {
+        var (page, _) = await OpenAsync();
+        await UploadAndListAsync(page, "notes.txt", "hello"u8.ToArray());
+        var downloads = 0;
+        page.Download += (_, _) => downloads++;
+        var never = new TaskCompletionSource();
+        await page.RouteAsync("**/FileManager/Download?*", async route =>
+        {
+            await never.Task;
+            await route.ContinueAsync();
+        });
+
+        await page.Locator(".file-manager-list [data-action='download']").ClickAsync();
+        await Assertions.Expect(page.Locator("#downloadModal")).ToBeVisibleAsync();
+        await page.Locator("#btnDownloadCancel").ClickAsync();
+        await Assertions.Expect(page.Locator("#downloadModal")).ToBeHiddenAsync();
+        await page.UnrouteAllAsync(new PageUnrouteAllOptions { Behavior = UnrouteBehavior.IgnoreErrors });
+        never.SetResult();
+
+        IDownload download = await page.RunAndWaitForDownloadAsync(() => page.Locator(".file-manager-list [data-action='download']").ClickAsync());
+        Assert.Equal("notes.txt", download.SuggestedFilename);
+        Assert.Contains("/FileManager/UserIndex", page.Url, StringComparison.Ordinal);
+        Assert.Equal(1, downloads);
+    }
 }

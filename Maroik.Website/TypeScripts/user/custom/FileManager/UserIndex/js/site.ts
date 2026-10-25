@@ -17,6 +17,9 @@
  *     asked (one question at a time), "yes" keeps it unscanned (AcceptUnscannedUpload), "no" or closing the question aborts it.
  *   • A file kept unscanned carries a "Not scanned" badge, has no preview (the server's flag), and downloading it — or a selection
  *     the server counts unscanned files in — asks first.
+ *   • A download is fetched whole before the browser saves it: the download dialog names the file being prepared ("1 of 3") and fills
+ *     its bar as the bytes arrive, measured against the file's size the server sent (the response itself carries no length: it is
+ *     streamed from the file storage). Cancel aborts the file being fetched and skips the rest; the dialog closes when the batch ends.
  *
  * Every rule is the server's: the replies arrive with sizes, local times, icons, usage and the preview flag already decided, and
  * the server checks every name, size and quota. There is no size limit: a file too large to be scanned is refused by the server
@@ -30,7 +33,7 @@
 
     // The replies this page reads, mirroring the controller's Json(...) results.
     const itemCheck = check.object({
-        id: check.number, parentId: check.nullable(check.number), name: check.string, isFolder: check.boolean, size: check.string,
+        id: check.number, parentId: check.nullable(check.number), name: check.string, isFolder: check.boolean, size: check.string, bytes: check.number,
         modified: check.string, icon: check.string, previewable: check.boolean, unscanned: check.boolean, location: check.string, itemCount: check.number,
     });
     type Item = Checked<typeof itemCheck>;
@@ -45,8 +48,9 @@
         }),
     });
     const searchReply = replies.read({ items: check.array(itemCheck) });
-    // unscannedCount: how many of the files were kept without a virus scan (counted by the server).
-    const filesReply = replies.read({ files: check.array(check.object({ id: check.number, name: check.string })), unscannedCount: check.number });
+    // bytes: each file's size (the download bar's whole); unscannedCount: how many of the files were kept without a virus scan (counted
+    // by the server).
+    const filesReply = replies.read({ files: check.array(check.object({ id: check.number, name: check.string, bytes: check.number })), unscannedCount: check.number });
     const doneReply = replies.read({});
     const folderCreatedReply = replies.write({ folderId: check.number });
     const beginReply = replies.read({ conflict: check.boolean, uploadId: check.string, name: check.string, chunkBytes: check.number });
@@ -92,6 +96,10 @@
     const $uploadResults = $("#uploadResults");
     const $btnUploadClose = $("#btnUploadClose");
     const $btnUploadCancel = $("#btnUploadCancel");
+    const $downloadModal = $("#downloadModal");
+    const $downloadProgressText = $("#downloadProgressText");
+    const $downloadProgressBar = $("#downloadProgressBar");
+    const $btnDownloadCancel = $("#btnDownloadCancel");
     const $previewModal = $("#previewModal");
     const $previewTitle = $("#previewTitle");
     const $previewImage = $("#previewImage");
@@ -134,6 +142,7 @@
         unscannedDownload: fieldValue($("#localizerUnscannedDownload")),
         yesUpload: fieldValue($("#localizerYesUpload")),
         yesDownload: fieldValue($("#localizerYesDownload")),
+        preparingDownload: fieldValue($("#localizerPreparingDownload")),
         temporaryError: fieldValue($("#_localizerTemporaryError")),
     };
 
@@ -211,13 +220,22 @@
         });
     }
 
-    /** POSTs to a file action (Download / Preview) and resolves with the Blob, or null after toasting a JSON refusal. */
-    function postForBlob(url: string): Promise<Blob | null> {
-        return new Promise((resolve) => {
-            $.ajax({
+    /**
+     * POSTs to a file action (Download / Preview); `reply` resolves with the Blob, or null after toasting a JSON refusal or once
+     * aborted. `onProgress` is told how many bytes have arrived; `abort` ends the request (the layout ignores an aborted request).
+     */
+    function postForBlob(url: string, onProgress: (loaded: number) => void = () => undefined): { reply: Promise<Blob | null>; abort: () => void } {
+        let request: JQuery.jqXHR | null = null;
+        const reply = new Promise<Blob | null>((resolve) => {
+            request = $.ajax({
                 url: url,
                 type: "POST",
                 headers: { "RequestVerificationToken": fieldValue($__RequestVerificationToken) },
+                xhr: () => {
+                    const xhr = new XMLHttpRequest();
+                    xhr.addEventListener("progress", (e) => onProgress(e.loaded));
+                    return xhr;
+                },
                 xhrFields: { responseType: "blob" },
                 // Without a declared dataType jQuery infers "json" from a refusal's Content-Type and fails to parse the Blob.
                 dataType: "binary",
@@ -230,9 +248,11 @@
                         return;
                     }
                     resolve(data);
-                })
+                }),
+                error: () => resolve(null)
             });
         });
+        return { reply: reply, abort: () => request?.abort() };
     }
 
     // -- Drive and folders ------------------------------------------------------------------
@@ -538,13 +558,35 @@
     /** Downloads one file of the list; one kept without a virus scan asks first. */
     async function DownloadItem(item: Item) {
         if (item.unscanned && !await AskUnscanned(format(text.unscannedDownload, 1), text.yesDownload)) return;
-        await DownloadOne(item.id, item.name);
+        await DownloadFiles([{ id: item.id, name: item.name, bytes: item.bytes }]);
     }
 
-    /** Downloads one file. */
-    async function DownloadOne(id: number, name: string) {
-        const blob = await postForBlob(`/FileManager/Download?id=${id}`);
-        if (blob !== null) save(blob, name);
+    /** Whether the download dialog has finished opening (Bootstrap ignores a hide while it is still fading in). */
+    let downloadModalShown = false;
+    /** True once Cancel was clicked in the download dialog. */
+    let downloadCancelled = false;
+    /** Aborts the file being fetched. */
+    let abortDownload: () => void = () => undefined;
+
+    /** Downloads files one at a time in the download dialog, its bar filling as each file's bytes arrive; Cancel stops the batch. */
+    async function DownloadFiles(files: { id: number; name: string; bytes: number }[]) {
+        downloadCancelled = false;
+        $downloadModal.modal("show");
+        for (const [index, file] of files.entries()) {
+            if (downloadCancelled) break;
+            $downloadProgressText.text(format(text.preparingDownload, index + 1, files.length, file.name));
+            $downloadProgressBar.css("width", "0%");
+            const request = postForBlob(`/FileManager/Download?id=${file.id}`, (loaded) =>
+                $downloadProgressBar.css("width", `${Math.min(100, Math.round(loaded * 100 / Math.max(file.bytes, 1)))}%`));
+            abortDownload = request.abort;
+            const blob = await request.reply;
+            if (blob !== null) save(blob, file.name);
+        }
+        if (downloadModalShown) {
+            $downloadModal.modal("hide");
+        } else {
+            $downloadModal.one("shown.bs.modal", () => $downloadModal.modal("hide"));
+        }
     }
 
     /** Downloads the selected items one file at a time (a folder's files included; not a ZIP, F8). */
@@ -556,9 +598,7 @@
             return;
         }
         if (data.unscannedCount > 0 && !await AskUnscanned(format(text.unscannedDownload, data.unscannedCount), text.yesDownload)) return;
-        for (const file of data.files) {
-            await DownloadOne(file.id, file.name);
-        }
+        await DownloadFiles(data.files);
     }
 
     /** The object URL of the image in the preview, released when the preview closes. */
@@ -566,7 +606,7 @@
 
     /** Shows an image in the preview modal (the server decides it is one, F9). */
     async function Preview(item: Item) {
-        const blob = await postForBlob(`/FileManager/Preview?id=${item.id}`);
+        const blob = await postForBlob(`/FileManager/Preview?id=${item.id}`).reply;
         if (blob === null) return;
         if (previewUrl !== null) URL.revokeObjectURL(previewUrl);
         previewUrl = URL.createObjectURL(blob);
@@ -1103,6 +1143,11 @@
     $("#btnDownloadSelected").on("click", () => void DownloadSelected([...selected]));
     $("#btnMoveSelected").on("click", () => OpenMove([...selected]));
     $("#btnDeleteSelected").on("click", () => ConfirmDelete([...selected]));
+    $downloadModal.on("shown.bs.modal", () => { downloadModalShown = true; }).on("hidden.bs.modal", () => { downloadModalShown = false; });
+    $btnDownloadCancel.on("click", function() {
+        downloadCancelled = true;
+        abortDownload();
+    });
     $previewModal.on("hidden.bs.modal", function() {
         if (previewUrl !== null) URL.revokeObjectURL(previewUrl);
         previewUrl = null;

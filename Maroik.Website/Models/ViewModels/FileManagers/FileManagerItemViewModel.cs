@@ -19,6 +19,9 @@ public class FileManagerItemViewModel
     /// <summary>The size label ("12.3 MB"); empty for a folder.</summary>
     public string Size { get; set; } = "";
 
+    /// <summary>The size in bytes (0 for a folder): what a download's progress bar is measured against.</summary>
+    public long Bytes { get; set; }
+
     /// <summary>The last change in the user's time zone, "yyyy-MM-dd HH:mm".</summary>
     public string Modified { get; set; } = "";
 

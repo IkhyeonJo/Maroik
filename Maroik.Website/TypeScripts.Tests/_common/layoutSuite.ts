@@ -33,6 +33,15 @@ export function describeLayoutScript(area: "admin" | "user" | "anonymous"): void
             expect(h.navigations.at(-1)).toBe("/Dashboard/AnonymousIndex");
         });
 
+        it("a request the page aborted on purpose (a cancelled download) is not a failure: the visitor stays", () => {
+            const h = load();
+            const before = h.navigations.length;
+            h.$(h.win.document).trigger("ajaxError", [{}, {}, "abort"]);
+            expect(h.navigations).toHaveLength(before);
+            h.$(h.win.document).trigger("ajaxError", [{}, {}, "Internal Server Error"]);
+            expect(h.navigations.at(-1)).toBe("/Dashboard/AnonymousIndex");
+        });
+
         it.each([["EnUS", "en-US"], ["KoKR", "ko-KR"]])("the %s language link posts its culture with the anti-forgery header and then returns to the page", (id, culture) => {
             const h = load();
             h.$(`#aChangeCulture${id}`).trigger("click");

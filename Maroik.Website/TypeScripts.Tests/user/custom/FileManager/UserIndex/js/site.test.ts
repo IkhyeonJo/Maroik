@@ -13,6 +13,7 @@ function fixture(maxScanWaitMilliseconds = 960000): string {
         UploadSummary: "{0} up, {1} failed, {2} skipped", Uploaded: "Uploaded", Skipped: "Skipped", Canceled: "Canceled",
         Scanning: "Scanning…", ScanWait: "Waiting for {0} scans", UnscannedBadge: "Not scanned", UnscannedTitle: "Not scanned for viruses",
         UploadedUnscanned: "Uploaded (not scanned)", UnscannedDownload: "{0} not scanned. Download?", YesUpload: "Yes, upload", YesDownload: "Yes, download",
+        PreparingDownload: "Preparing {0}/{1}: {2}",
     };
     return (
         antiForgery +
@@ -37,6 +38,7 @@ function fixture(maxScanWaitMilliseconds = 960000): string {
            <button id="btnConflictOverwrite"></button><button id="btnConflictKeepBoth"></button><button id="btnConflictSkip"></button></div>
          <div id="uploadModal"><p id="uploadProgressText"></p><div id="uploadProgressBar"></div><ul id="uploadResults"></ul>
            <button id="btnUploadCancel"></button><button id="btnUploadClose" disabled></button></div>
+         <div id="downloadModal"><p id="downloadProgressText"></p><div id="downloadProgressBar"></div><button id="btnDownloadCancel"></button></div>
          <div id="previewModal"><h5 id="previewTitle"></h5><img id="previewImage" /></div>
          <div id="confirmDeleteModal"><button id="btnConfirmDelete"></button></div>
          <div id="unscannedModal"><div id="unscannedMessage"></div><button id="btnUnscannedYes"></button><button id="btnUnscannedNo"></button></div>`
@@ -46,14 +48,14 @@ function fixture(maxScanWaitMilliseconds = 960000): string {
 /** An item as the controller sends it. */
 function item(id: number, name: string, over: Record<string, unknown> = {}): Record<string, unknown> {
     return {
-        id, parentId: null, name, isFolder: false, size: "1 KB", modified: "2026-05-24 12:00", icon: "fas fa-file text-muted",
+        id, parentId: null, name, isFolder: false, size: "1 KB", bytes: 1024, modified: "2026-05-24 12:00", icon: "fas fa-file text-muted",
         previewable: false, unscanned: false, location: "", itemCount: 0, ...over,
     };
 }
 
 /** A folder item. */
 function folder(id: number, name: string, over: Record<string, unknown> = {}): Record<string, unknown> {
-    return item(id, name, { isFolder: true, size: "", icon: "fas fa-folder text-warning", ...over });
+    return item(id, name, { isFolder: true, size: "", bytes: 0, icon: "fas fa-folder text-warning", ...over });
 }
 
 /** Lets the awaited replies run on. */
@@ -858,7 +860,7 @@ describe("FileManager/UserIndex — download and preview", () => {
         h.$(".file-manager-tile[data-id='7']").trigger("click");
         h.$("#btnDownloadSelected").trigger("click");
         expect(bodyOf(callTo(h, "/FileManager/ListDownloadFiles"))).toEqual({ Ids: [7] });
-        await answer(h, "/FileManager/ListDownloadFiles", { result: true, unscannedCount: 0, files: [{ id: 30, name: "x.txt" }, { id: 31, name: "y.txt" }] });
+        await answer(h, "/FileManager/ListDownloadFiles", { result: true, unscannedCount: 0, files: [{ id: 30, name: "x.txt", bytes: 10 }, { id: 31, name: "y.txt", bytes: 10 }] });
 
         expect(callTo(h, "/FileManager/Download").url).toBe("/FileManager/Download?id=30");
         successOf(callTo(h, "/FileManager/Download"))(new Blob(["x"]));
@@ -868,6 +870,78 @@ describe("FileManager/UserIndex — download and preview", () => {
         h.$("#btnDownloadSelected").trigger("click");
         await answer(h, "/FileManager/ListDownloadFiles", { result: false, error: "missing" });
         expect(h.toastr.error).toHaveBeenCalledWith("missing");
+    });
+
+    it("a download shows its progress in the download dialog, measured against the file's size, and closes the dialog once saved", async () => {
+        const { h, modals } = await load([item(8, "a.txt", { bytes: 200 })], "list");
+        h.$(".file-manager-action[data-action='download']").trigger("click");
+        await flush();
+
+        expect(modals).toContainEqual(["downloadModal", "show"]);
+        expect(h.$("#downloadProgressText").text()).toBe("Preparing 1/1: a.txt");
+        expect(h.$("#downloadProgressBar").css("width")).toBe("0%");
+        const request = present(callTo(h, "/FileManager/Download").settings.xhr, "the download's xhr factory")();
+        request.dispatchEvent(new h.win.ProgressEvent("progress", { loaded: 50 }));
+        expect(h.$("#downloadProgressBar").css("width")).toBe("25%");
+        request.dispatchEvent(new h.win.ProgressEvent("progress", { loaded: 300 }));
+        expect(h.$("#downloadProgressBar").css("width")).toBe("100%");
+
+        // Saved before the dialog finished opening: it closes once it is open (Bootstrap ignores a hide during the fade).
+        successOf(callTo(h, "/FileManager/Download"))(new Blob(["x"]));
+        await flush();
+        expect(modals).not.toContainEqual(["downloadModal", "hide"]);
+        h.$("#downloadModal").trigger("shown.bs.modal");
+        expect(modals).toContainEqual(["downloadModal", "hide"]);
+        h.$("#downloadModal").trigger("hidden.bs.modal");
+
+        // Opened already: it closes as soon as the file is saved.
+        h.$(".file-manager-action[data-action='download']").trigger("click");
+        await flush();
+        h.$("#downloadModal").trigger("shown.bs.modal");
+        const hides = modals.filter((m) => m[0] === "downloadModal" && m[1] === "hide").length;
+        successOf(callTo(h, "/FileManager/Download"))(new Blob(["x"]));
+        await flush();
+        expect(modals.filter((m) => m[0] === "downloadModal" && m[1] === "hide")).toHaveLength(hides + 1);
+    });
+
+    it("downloading several files names each one in the dialog and starts each bar at zero", async () => {
+        const { h } = await load([folder(7, "Docs")]);
+        h.$(".file-manager-tile[data-id='7']").trigger("click");
+        h.$("#btnDownloadSelected").trigger("click");
+        await answer(h, "/FileManager/ListDownloadFiles", { result: true, unscannedCount: 0, files: [{ id: 30, name: "x.txt", bytes: 10 }, { id: 31, name: "y.txt", bytes: 40 }] });
+        present(callTo(h, "/FileManager/Download").settings.xhr, "the xhr factory")().dispatchEvent(new h.win.ProgressEvent("progress", { loaded: 10 }));
+        expect(h.$("#downloadProgressBar").css("width")).toBe("100%");
+        successOf(callTo(h, "/FileManager/Download"))(new Blob(["x"]));
+        await flush();
+
+        expect(h.$("#downloadProgressText").text()).toBe("Preparing 2/2: y.txt");
+        expect(h.$("#downloadProgressBar").css("width")).toBe("0%");
+        present(callTo(h, "/FileManager/Download").settings.xhr, "the xhr factory")().dispatchEvent(new h.win.ProgressEvent("progress", { loaded: 10 }));
+        expect(h.$("#downloadProgressBar").css("width")).toBe("25%");
+    });
+
+    it("Cancel stops the download being prepared and the files after it, and closes the dialog", async () => {
+        const { h, modals } = await load([folder(7, "Docs")]);
+        h.$(".file-manager-tile[data-id='7']").trigger("click");
+        h.$("#btnDownloadSelected").trigger("click");
+        await answer(h, "/FileManager/ListDownloadFiles", { result: true, unscannedCount: 0, files: [{ id: 30, name: "x.txt", bytes: 10 }, { id: 31, name: "y.txt", bytes: 10 }] });
+        h.$("#downloadModal").trigger("shown.bs.modal");
+
+        h.$("#btnDownloadCancel").trigger("click");
+        await flush();
+
+        expect(callTo(h, "/FileManager/Download").aborted).toBe(true);
+        expect(callsTo(h, "/FileManager/Download")).toHaveLength(1);
+        expect(modals).toContainEqual(["downloadModal", "hide"]);
+        expect(h.toastr.error).not.toHaveBeenCalled();
+
+        // The next download starts afresh.
+        h.$("#downloadModal").trigger("hidden.bs.modal");
+        h.$("#btnDownloadSelected").trigger("click");
+        await answer(h, "/FileManager/ListDownloadFiles", { result: true, unscannedCount: 0, files: [{ id: 30, name: "x.txt", bytes: 10 }, { id: 31, name: "y.txt", bytes: 10 }] });
+        successOf(callTo(h, "/FileManager/Download"))(new Blob(["x"]));
+        await flush();
+        expect(callTo(h, "/FileManager/Download").url).toBe("/FileManager/Download?id=31");
     });
 
     it("Preview shows the image in the modal (through a blob URL) and releases it when the modal closes", async () => {
@@ -1218,7 +1292,7 @@ describe("FileManager/UserIndex — files that could not be scanned", () => {
         h.$(".file-manager-tile[data-id='7']").trigger("click");
 
         h.$("#btnDownloadSelected").trigger("click");
-        await answer(h, "/FileManager/ListDownloadFiles", { result: true, unscannedCount: 2, files: [{ id: 30, name: "x.zip" }, { id: 31, name: "y.zip" }] });
+        await answer(h, "/FileManager/ListDownloadFiles", { result: true, unscannedCount: 2, files: [{ id: 30, name: "x.zip", bytes: 10 }, { id: 31, name: "y.zip", bytes: 10 }] });
         expect(modals).toContainEqual(["unscannedModal", "show"]);
         expect(h.$("#unscannedMessage").text()).toBe("2 not scanned. Download?");
         expect(h.$("#btnUnscannedYes").text()).toBe("Yes, download");
@@ -1227,7 +1301,7 @@ describe("FileManager/UserIndex — files that could not be scanned", () => {
         expect(callsTo(h, "/FileManager/Download")).toHaveLength(0);
 
         h.$("#btnDownloadSelected").trigger("click");
-        await answer(h, "/FileManager/ListDownloadFiles", { result: true, unscannedCount: 2, files: [{ id: 30, name: "x.zip" }] });
+        await answer(h, "/FileManager/ListDownloadFiles", { result: true, unscannedCount: 2, files: [{ id: 30, name: "x.zip", bytes: 10 }] });
         h.$("#btnUnscannedYes").trigger("click");
         await flush();
         expect(callTo(h, "/FileManager/Download").url).toBe("/FileManager/Download?id=30");
@@ -1237,7 +1311,7 @@ describe("FileManager/UserIndex — files that could not be scanned", () => {
         const { h, modals } = await load([folder(7, "Docs")]);
         h.$(".file-manager-tile[data-id='7']").trigger("click");
         h.$("#btnDownloadSelected").trigger("click");
-        await answer(h, "/FileManager/ListDownloadFiles", { result: true, unscannedCount: 0, files: [{ id: 30, name: "x.txt" }] });
+        await answer(h, "/FileManager/ListDownloadFiles", { result: true, unscannedCount: 0, files: [{ id: 30, name: "x.txt", bytes: 10 }] });
 
         expect(modals).not.toContainEqual(["unscannedModal", "show"]);
         expect(callTo(h, "/FileManager/Download").url).toBe("/FileManager/Download?id=30");

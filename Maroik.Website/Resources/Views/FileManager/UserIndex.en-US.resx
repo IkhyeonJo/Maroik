@@ -264,6 +264,9 @@
   <data name="Yes, upload it" xml:space="preserve">
     <value>Yes, upload it</value>
   </data>
+  <data name="Preparing download {0} of {1}: {2}" xml:space="preserve">
+    <value>Preparing download {0} of {1}: {2}</value>
+  </data>
   <data name="Yes, download" xml:space="preserve">
     <value>Yes, download</value>
   </data>

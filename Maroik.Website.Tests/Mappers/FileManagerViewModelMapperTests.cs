@@ -27,6 +27,15 @@ public class FileManagerViewModelMapperTests
             (vm.Id, vm.ParentId, vm.Name, vm.IsFolder, vm.Size, vm.Modified, vm.Icon, vm.Previewable, vm.Location));
     }
 
+    /// <summary>A file also carries its size in bytes, which a download's progress bar is measured against.</summary>
+    [Fact]
+    public void ToViewModel_CarriesTheFilesSizeInBytes()
+    {
+        FileManagerItemViewModel vm = File("big.zip", size: 3_000_000_000).ToViewModel("UTC", "My Drive", withLocation: false);
+
+        Assert.Equal(3_000_000_000L, vm.Bytes);
+    }
+
     /// <summary>A folder has no size label, a folder icon and its item count.</summary>
     [Fact]
     public void ToViewModel_MapsAFolder()

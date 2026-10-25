@@ -264,6 +264,9 @@
   <data name="Yes, upload it" xml:space="preserve">
     <value>예, 올립니다</value>
   </data>
+  <data name="Preparing download {0} of {1}: {2}" xml:space="preserve">
+    <value>{1}개 중 {0}번째 다운로드 준비 중: {2}</value>
+  </data>
   <data name="Yes, download" xml:space="preserve">
     <value>예, 내려받습니다</value>
   </data>

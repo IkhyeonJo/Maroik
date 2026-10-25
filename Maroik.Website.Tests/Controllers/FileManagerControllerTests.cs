@@ -464,6 +464,19 @@ public sealed class FileManagerControllerTests(MaroikWebApplicationFactory facto
         Assert.All(files.EnumerateArray(), f => Assert.True(f.GetProperty("id").GetInt64() > 0));
     }
 
+    /// <summary>Each file to download comes with its size in bytes (the page's download progress bar is measured against it).</summary>
+    [Fact]
+    public async Task ListDownloadFiles_GivesEachFilesSizeInBytes()
+    {
+        var (session, _) = await LoginAsync();
+        await UploadAsync(session, "c.txt", [1, 2, 3]);
+        long c = await IdOfAsync(session, "c.txt");
+
+        JsonElement files = (await PostAsync(session, "/FileManager/ListDownloadFiles", new { Ids = new[] { c } })).GetProperty("files");
+
+        Assert.Equal(3, Assert.Single(files.EnumerateArray()).GetProperty("bytes").GetInt64());
+    }
+
     // -- A file the scan could not finish ------------------------------------------------
 
     /// <summary>
