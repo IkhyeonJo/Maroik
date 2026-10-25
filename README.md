@@ -464,20 +464,29 @@ bash Maroik.DeployOps/Deploy.sh
 <img width="551" height="574" alt="1" src="https://github.com/user-attachments/assets/54821d51-5fce-46b6-a182-c97bbfa86b76" />
 
 ### User Dashboard
-<img width="1893" height="934" alt="2" src="https://github.com/user-attachments/assets/670fa326-a4ac-4d40-998c-ee03c60b0c66" />
+<img width="1902" height="940" alt="0" src="https://github.com/user-attachments/assets/22e98cb6-8f39-402a-9ec5-e73528afa06d" />
+
+### File Manager
+<img width="1915" height="934" alt="2" src="https://github.com/user-attachments/assets/5bc1aa12-591a-4d75-9c66-5bb8b722ffc5" />
+
+### Kanban Board
+<img width="1915" height="934" alt="2" src="https://github.com/user-attachments/assets/7537ddfc-6657-48a4-acac-88e1dab44ee2" />
 
 ### Calendar
-<img width="1894" height="932" alt="3" src="https://github.com/user-attachments/assets/68a9864e-805d-4e4b-a1dd-0a473ac939f9" />
+<img width="1915" height="933" alt="3" src="https://github.com/user-attachments/assets/884d923b-995b-4c98-93b1-5b10841c315c" />
 
 ### Forum
-<img width="1911" height="935" alt="4" src="https://github.com/user-attachments/assets/b24632b5-00e1-48dd-8b59-783f0b59cdcf" />
+<img width="1914" height="940" alt="4" src="https://github.com/user-attachments/assets/76894805-ac2e-4416-bba6-670b62133fa3" />
 
 ### NonfactorGrid
-<img width="1914" height="935" alt="5" src="https://github.com/user-attachments/assets/9b503e28-2677-4069-a72b-e604997eb68a" />
-<img width="1916" height="930" alt="6" src="https://github.com/user-attachments/assets/479cd480-568e-4cb9-b391-56f62d7dc098" />
+<img width="1917" height="933" alt="5" src="https://github.com/user-attachments/assets/8271558d-037e-45d6-a6a8-8e1a92958570" />
+<img width="1914" height="942" alt="6" src="https://github.com/user-attachments/assets/c6231b7a-6d87-44fe-aed4-cc1ba9bb6921" />
+
+### Budget
+<img width="1897" height="944" alt="7" src="https://github.com/user-attachments/assets/d1df24a3-e67e-4051-93b0-a9414c62765e" />
 
 ### User Profile
-<img width="1885" height="932" alt="7" src="https://github.com/user-attachments/assets/6162c519-b963-4eef-a286-dd91db5e9efe" />
+<img width="1899" height="942" alt="8" src="https://github.com/user-attachments/assets/b167e3c8-aa32-40ff-8332-748a8412f96d" />
 
 ## Contributing
 1. Fork the repository
