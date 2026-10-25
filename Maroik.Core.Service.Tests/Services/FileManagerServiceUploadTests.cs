@@ -162,15 +162,51 @@ public class FileManagerServiceUploadTests
         Assert.Contains(_h.Logger.Collector.GetSnapshot(), r => r.Level == LogLevel.Information && r.Message == $"File Manager: removed 1 abandoned upload(s) of {H.Email}");
     }
 
-    /// <summary>An invalid name, a file over 2 GB and a folder the account does not own are refused.</summary>
+    /// <summary>An invalid name, a file too large to scan (the account may not keep it) and a folder the account does not own are refused.</summary>
     [Fact]
     public async Task BeginUploadAsync_RefusesAnInvalidNameSizeOrFolder()
     {
         long theirs = _h.Folder("Theirs", email: H.OtherEmail);
 
         Assert.Equal("FileManager.NameReserved", (await _h.Sut.BeginUploadAsync(H.Email, Upload(".."), TestContext.Current.CancellationToken)).Result.ErrorCode);
-        Assert.Equal("FileManager.FileTooLarge", (await _h.Sut.BeginUploadAsync(H.Email, Upload("big.iso", FileManagerUploadPolicy.MaxFileBytes + 1), TestContext.Current.CancellationToken)).Result.ErrorCode);
+        Assert.Equal("FileManager.FileTooLarge", (await _h.Sut.BeginUploadAsync(H.Email, Upload("big.iso", FileManagerUploadPolicy.MaxScannableBytes + 1), TestContext.Current.CancellationToken)).Result.ErrorCode);
         Assert.Equal(ServiceErrorKeys.FileManagerItemNotFound, (await _h.Sut.BeginUploadAsync(H.Email, Upload("a.txt", parentId: theirs), TestContext.Current.CancellationToken)).Result.ErrorKey);
+    }
+
+    /// <summary>
+    /// There is no upper size limit for an account that may keep unscanned files: a file larger than ClamAV can scan is started (its
+    /// owner is asked once it is complete). The permission is read from the locked account row, so an administrator's change made
+    /// just before is the one that counts.
+    /// </summary>
+    [Theory]
+    [InlineData(true, null)]
+    [InlineData(false, true)]
+    public async Task BeginUploadAsync_StartsAFileTooLargeToScan_WhenTheAccountMayKeepIt(bool allowed, bool? allowedUnderLock)
+    {
+        const long Size = 50L * H.Gb;
+        _h.QuotaBytes = 100 * H.Gb;
+        _h.AllowUnscanned = allowed;
+        _h.AllowUnscannedUnderLock = allowedUnderLock;
+
+        FileManagerUploadStart start = await StartAsync(Upload("backup.iso", Size));
+
+        Assert.Equal(Size, Assert.Single(_h.Nodes.All, n => n.StorageId == start.UploadId).Size);
+    }
+
+    /// <summary>Without the permission (as the locked row sees it) such a file is refused before anything is stored.</summary>
+    [Fact]
+    public async Task BeginUploadAsync_RefusesAFileTooLargeToScan_WhenTheLockedAccountMayNotKeepIt()
+    {
+        _h.QuotaBytes = 100 * H.Gb;
+        _h.AllowUnscanned = true;
+        _h.AllowUnscannedUnderLock = false;
+
+        var (result, start) = await _h.Sut.BeginUploadAsync(H.Email, Upload("backup.iso", 50L * H.Gb), TestContext.Current.CancellationToken);
+
+        Assert.Equal("FileManager.FileTooLarge", result.ErrorCode);
+        Assert.Null(start);
+        Assert.Empty(_h.Nodes.All);
+        _h.UnitOfWork.Verify(u => u.RollbackAsync(It.IsAny<CancellationToken>()), Times.Once);
     }
 
     // -- AppendChunkAsync ----------------------------------------------------------

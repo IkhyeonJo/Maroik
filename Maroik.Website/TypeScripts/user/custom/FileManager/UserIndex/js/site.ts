@@ -19,9 +19,10 @@
  *     the server counts unscanned files in — asks first.
  *
  * Every rule is the server's: the replies arrive with sizes, local times, icons, usage and the preview flag already decided, and
- * the server re-checks every name, size and quota. The 2 GB check before an upload starts is a UX mirror of
- * FileManagerUploadPolicy.MaxFileBytes (read from #maxFileBytes); how often and how long a scan is asked about is
- * FileManagerUploadPolicy's too (#scanPollMilliseconds, #maxScanWaitMilliseconds). IIFE-wrapped, no `import` / `export`.
+ * the server checks every name, size and quota. There is no size limit: a file too large to be scanned is refused by the server
+ * when its upload starts unless the account may keep it unscanned, so the page sends every size and shows that refusal. How often
+ * and how long a scan is asked about is FileManagerUploadPolicy's (#scanPollMilliseconds, #maxScanWaitMilliseconds).
+ * IIFE-wrapped, no `import` / `export`.
  */
 (function() {
     // The runtime-check helpers the _Layout script defines (see TypeScripts/global.d.ts).
@@ -100,8 +101,6 @@
     const $btnUnscannedYes = $("#btnUnscannedYes");
     const $__RequestVerificationToken = $("input[name=\"__RequestVerificationToken\"]");
 
-    // Authoritative in FileManagerUploadPolicy.MaxFileBytes (server); mirrored here for form UX only.
-    const maxFileBytes = Number(fieldValue($("#maxFileBytes")));
     // FileManagerUploadPolicy.ScanPollMilliseconds / MaxScanWaitMilliseconds (server): how often and how long a scan is asked about.
     const scanPollMilliseconds = Number(fieldValue($("#scanPollMilliseconds")));
     const maxScanWaitMilliseconds = Number(fieldValue($("#maxScanWaitMilliseconds")));
@@ -127,7 +126,6 @@
         canceled: fieldValue($("#localizerCanceled")),
         uploaded: fieldValue($("#localizerUploaded")),
         skipped: fieldValue($("#localizerSkipped")),
-        fileTooLarge: fieldValue($("#localizerFileTooLarge")),
         scanning: fieldValue($("#localizerScanning")),
         scanWait: fieldValue($("#localizerScanWait")),
         unscannedBadge: fieldValue($("#localizerUnscannedBadge")),
@@ -807,12 +805,6 @@
             }
             $uploadProgressText.text(format(text.uploading, index + 1, entries.length, entry.file.name));
             $uploadProgressBar.css("width", "0%");
-            // Authoritative in FileManagerUploadPolicy.MaxFileBytes (server); mirrored here for form UX only.
-            if (entry.file.size > maxFileBytes) {
-                report(entry.file.name, text.fileTooLarge, true);
-                failed++;
-                continue;
-            }
             const parentId = await ensureFolder(entry.dir);
             if (parentId === undefined) {
                 failed++;

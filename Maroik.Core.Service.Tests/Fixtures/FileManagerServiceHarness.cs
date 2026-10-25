@@ -95,7 +95,7 @@ internal sealed class FileManagerServiceHarness
     /// <summary>Adds a file (finished unless <paramref name="uploading"/>; kept without a scan when <paramref name="unscanned"/>) and returns its id.</summary>
     public long File(string name, long? parentId = null, long size = 10, bool uploading = false, string email = Email, DateTime? created = null, bool unscanned = false)
     {
-        FileManagerNode file = FileManagerNode.StartUpload(email, parentId, name, size, Guid.NewGuid(), created ?? Now).Value;
+        FileManagerNode file = FileManagerNode.StartUpload(email, parentId, name, size, Guid.NewGuid(), created ?? Now, mayKeepUnscanned: false).Value;
         if (unscanned) file.CompleteUploadUnscanned(created ?? Now);
         else if (!uploading) file.CompleteUpload(created ?? Now);
         _ = Nodes.CreateAsync(file);

@@ -5,18 +5,17 @@ import { loadSite, hidden, antiForgery, present, stubPlugin, successOf, formData
 // items, selection, drag and drop, and the chunked upload with its name-conflict dialog.
 
 /** The page shell, as UserIndex.cshtml renders it (localized texts as "L:<key>" so assertions can see them). */
-function fixture(maxFileBytes = 2147483647, maxScanWaitMilliseconds = 960000): string {
+function fixture(maxScanWaitMilliseconds = 960000): string {
     const texts: Record<string, string> = {
         MyDrive: "My Drive", ItemCount: "{0} items", SelectedCount: "{0} selected", EmptyFolder: "Empty", NoResults: "Nothing",
         Name: "Name", Size: "Size", Modified: "Modified", Location: "Location", Actions: "Actions", Download: "Download",
         Preview: "Preview", Rename: "Rename", Delete: "Delete", Conflict: "'{0}' exists", Uploading: "Uploading {0}/{1}: {2}",
-        UploadSummary: "{0} up, {1} failed, {2} skipped", Uploaded: "Uploaded", Skipped: "Skipped", FileTooLarge: "Too large", Canceled: "Canceled",
+        UploadSummary: "{0} up, {1} failed, {2} skipped", Uploaded: "Uploaded", Skipped: "Skipped", Canceled: "Canceled",
         Scanning: "Scanning…", ScanWait: "Waiting for {0} scans", UnscannedBadge: "Not scanned", UnscannedTitle: "Not scanned for viruses",
         UploadedUnscanned: "Uploaded (not scanned)", UnscannedDownload: "{0} not scanned. Download?", YesUpload: "Yes, upload", YesDownload: "Yes, download",
     };
     return (
         antiForgery +
-        hidden("maxFileBytes", String(maxFileBytes)) +
         // The page asks again at once in the tests (the server's 3 seconds would only slow them down).
         hidden("scanPollMilliseconds", "0") +
         hidden("maxScanWaitMilliseconds", String(maxScanWaitMilliseconds)) +
@@ -699,7 +698,7 @@ describe("FileManager/UserIndex — upload", () => {
     });
 
     it("a scan that is not decided within the server's wait limit is given up: aborted and failed with the generic error", async () => {
-        const h = loadSite("user", "FileManager", "UserIndex", fixture(2147483647, 0));
+        const h = loadSite("user", "FileManager", "UserIndex", fixture(0));
         stubWidgets(h);
         pick(h, "fileManagerFileInput", [file("big.zip")]);
         await flush();
@@ -731,15 +730,16 @@ describe("FileManager/UserIndex — upload", () => {
         expect(h.toastr.error).toHaveBeenCalledWith("L_TemporaryError");
     });
 
-    it("a file over 2 GB is refused before it starts (a UX mirror of the server's limit)", async () => {
-        const h = loadSite("user", "FileManager", "UserIndex", fixture(10));
+    it("a file of any size is started (there is no size limit); the server's refusal of one it cannot scan is shown", async () => {
+        const h = loadSite("user", "FileManager", "UserIndex", fixture());
         stubWidgets(h);
-        pick(h, "fileManagerFileInput", [file("big.iso", 11)]);
+        pick(h, "fileManagerFileInput", [file("big.iso", 3_000_000_000)]);
         await flush();
         await answer(h, "/FileManager/CheckQuota", { result: true });
 
-        expect(h.$("#uploadResults li").text()).toBe("big.iso — Too large");
-        expect(callsTo(h, "/FileManager/BeginUpload")).toHaveLength(0);
+        expect(bodyOf(callTo(h, "/FileManager/BeginUpload"))).toEqual({ ParentId: null, Name: "big.iso", Size: 3_000_000_000, Conflict: "Ask" });
+        await answer(h, "/FileManager/BeginUpload", { result: false, error: "Cannot be scanned" });
+        expect(h.$("#uploadResults li").text()).toBe("big.iso — Cannot be scanned");
     });
 
     it("a name conflict asks; \"Keep both\" restarts the file with that choice and \"Apply to all\" answers the next conflicts too", async () => {

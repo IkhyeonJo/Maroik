@@ -90,14 +90,15 @@ public sealed class FileManagerNode : AggregateRoot<long>
 
     /// <summary>
     /// Starts the upload of a file of <paramref name="size"/> bytes named <paramref name="name"/> into <paramref name="parentId"/>,
-    /// to be stored as <paramref name="storageId"/>. The file is <see cref="Uploading"/> until <see cref="CompleteUpload"/>.
+    /// to be stored as <paramref name="storageId"/>. The file is <see cref="Uploading"/> until <see cref="CompleteUpload"/>. A file
+    /// too large to be scanned is accepted only when <paramref name="mayKeepUnscanned"/> (<see cref="FileManagerUploadPolicy.CheckSize"/>).
     /// </summary>
-    public static ErrorOr<FileManagerNode> StartUpload(string? accountEmail, long? parentId, string? name, long size, Guid storageId, DateTime utcNow)
+    public static ErrorOr<FileManagerNode> StartUpload(string? accountEmail, long? parentId, string? name, long size, Guid storageId, DateTime utcNow, bool mayKeepUnscanned)
     {
         var nameResult = FileManagerNamePolicy.Validate(name);
         if (nameResult.IsError) return nameResult.Errors;
 
-        var sizeResult = FileManagerUploadPolicy.CheckSize(size);
+        var sizeResult = FileManagerUploadPolicy.CheckSize(size, mayKeepUnscanned);
         if (sizeResult.IsError) return sizeResult.Errors;
 
         var emailResult = Email.Create(accountEmail);

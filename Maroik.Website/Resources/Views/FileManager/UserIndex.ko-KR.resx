@@ -120,9 +120,6 @@
   <data name="&#x27;{0}&#x27; already exists in this folder." xml:space="preserve">
     <value>&#x27;{0}&#x27; 항목이 이 폴더에 이미 있습니다.</value>
   </data>
-  <data name="A file larger than 2 GB cannot be uploaded." xml:space="preserve">
-    <value>2GB보다 큰 파일은 업로드할 수 없습니다.</value>
-  </data>
   <data name="Actions" xml:space="preserve">
     <value>작업</value>
   </data>

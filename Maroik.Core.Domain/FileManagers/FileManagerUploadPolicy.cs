@@ -4,16 +4,19 @@ using Maroik.Core.Domain.Errors;
 namespace Maroik.Core.Domain.FileManagers;
 
 /// <summary>
-/// The upload rules of the File Manager: the size one file may have, the size of each chunk, how long the page waits for the virus
+/// The upload rules of the File Manager: which sizes one file may have, the size of each chunk, how long the page waits for the virus
 /// scan, when an unfinished upload is abandoned and whether an upload fits the account's quota.
 /// </summary>
 public static class FileManagerUploadPolicy
 {
     /// <summary>
-    /// The largest file accepted, 2,147,483,647 bytes (S1): ClamAV cannot scan files of 2 GB or more ("Technical design limitations
-    /// prevent ClamAV from scanning files greater than 2 GB", clamd.conf.sample). A larger file is refused when its upload starts.
+    /// The largest file ClamAV can scan, 2,147,483,645 bytes (S1): ClamAV cannot scan files of 2 GB or more ("Technical design
+    /// limitations prevent ClamAV from scanning files greater than 2 GB", clamd.conf.sample), and clamd clamps the compose files'
+    /// 2048M stream limit to this. It is not an upload limit (since 2026-10-25, owner's request, there is none): a larger file can
+    /// only be kept unscanned, so <see cref="CheckSize"/> refuses it up front from an account that may not keep such files.
+    /// <c>ClamavClient.MaxStreamBytes</c> holds the same number on the scanner's side.
     /// </summary>
-    public const long MaxFileBytes = int.MaxValue;
+    public const long MaxScannableBytes = 2_147_483_645;
 
     /// <summary>
     /// The size of each upload chunk, 16 MB (P5): the site sits behind Cloudflare, which caps one request body at 100 MB, and a chunk
@@ -42,13 +45,17 @@ public static class FileManagerUploadPolicy
     /// <summary>Bytes in one GB, the unit the quota is shown and refused in.</summary>
     private const decimal BytesPerGb = 1024m * 1024 * 1024;
 
-    /// <summary>Accepts a declared file size of 0 to <see cref="MaxFileBytes"/> bytes.</summary>
-    public static ErrorOr<Success> CheckSize(long size)
+    /// <summary>
+    /// Accepts a declared file size of 0 bytes or more. One larger than <see cref="MaxScannableBytes"/> can never be scanned, so it is
+    /// accepted only when <paramref name="mayKeepUnscanned"/> (<c>Account.FileManagerAllowUnscanned</c>): any other account would
+    /// send the whole file only to have it refused at the end.
+    /// </summary>
+    public static ErrorOr<Success> CheckSize(long size, bool mayKeepUnscanned)
     {
         if (size < 0)
             return DomainError.Validation("FileManager.SizeInvalid", "The file size is not valid.");
 
-        if (size > MaxFileBytes)
+        if (size > MaxScannableBytes && !mayKeepUnscanned)
             return DomainError.Validation("FileManager.FileTooLarge", "A file larger than 2 GB cannot be uploaded.");
 
         return Result.Success;

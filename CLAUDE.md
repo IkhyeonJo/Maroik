@@ -221,10 +221,14 @@ File Manager
   file, which is logged, not retried.
 - `Maroik.FileStorage`'s `api/FileManager/delete` is the one delete API of the file storage, and it refuses any path that is not
   `upload/FileManager/{guid}`. Board / note / calendar attachments still have none (see Files and content).
-- Uploads go in 16 MB chunks to a staging file, are scanned by ClamAV on completion, and a file is at most 2 GB (clamd clamps its
-  stream limit to 2,147,483,645 bytes; both compose files set `CLAMD_CONF_*` to 2048M and `MaxScanTime` to 10 minutes). A scan
-  that hits a clamd limit is never clean: it is `ClamavScanResult.LimitExceeded` ("too large to scan"), kept apart from a scanner
-  outage (`Unavailable`). Uploads left unfinished for 24 hours are cleaned up.
+- Uploads go in 16 MB chunks to a staging file and are scanned by ClamAV on completion. There is no file size limit (since
+  2026-10-25, owner's request; only the quota bounds it), but ClamAV scans at most 2,147,483,645 bytes (clamd clamps its stream limit
+  to that; both compose files set `CLAMD_CONF_*` to 2048M and `MaxScanTime` to 10 minutes) — `FileManagerUploadPolicy.MaxScannableBytes`
+  on the domain's side, `ClamavClient.MaxStreamBytes` on the scanner's. A larger file can only be kept unscanned: `BeginUpload`
+  refuses it ("larger than 2 GB") unless the locked account row allows unscanned files, and `ClamavClient` never sends a stream that
+  long (it answers `LimitExceeded` at once, so the owner is asked "too large to scan"). A scan that hits a clamd limit is never clean:
+  it is `ClamavScanResult.LimitExceeded` ("too large to scan"), kept apart from a scanner outage (`Unavailable`). Uploads left
+  unfinished for 24 hours are cleaned up.
 - A file the scan could not finish (a clamd limit, or the scanner unavailable / timed out; never an infected one) may be kept
   unscanned (since 2026-10-25, owner's request) — only by an account an administrator allows it (`Account.FileManagerAllowUnscanned`,
   default false, the checkbox in `Management/Account`, logged in the admin update audit line). FileStorage keeps such a file's staging

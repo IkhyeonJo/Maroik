@@ -59,7 +59,7 @@ public class FileManagerNodeTests
     [Fact]
     public void StartUpload_ReturnsAnUploadingFile_StoredUnderItsGuid()
     {
-        var result = FileManagerNode.StartUpload("user@example.com", null, "photo.png", 1234, StorageId, Now);
+        var result = FileManagerNode.StartUpload("user@example.com", null, "photo.png", 1234, StorageId, Now, mayKeepUnscanned: false);
 
         Assert.False(result.IsError);
         FileManagerNode file = result.Value;
@@ -71,19 +71,24 @@ public class FileManagerNodeTests
         Assert.Equal(StorageId, file.StorageId);
     }
 
-    /// <summary>An upload over the per-file limit, or with an invalid name, is refused when it starts.</summary>
+    /// <summary>
+    /// A file larger than ClamAV can scan is refused when it starts unless the account may keep unscanned files; an invalid name is
+    /// refused either way.
+    /// </summary>
     [Fact]
-    public void StartUpload_RefusesATooLargeFile_OrAnInvalidName()
+    public void StartUpload_RefusesAnUnscannableFile_OrAnInvalidName()
     {
-        Assert.Equal("FileManager.FileTooLarge", FileManagerNode.StartUpload("user@example.com", null, "big.iso", FileManagerUploadPolicy.MaxFileBytes + 1, StorageId, Now).FirstError.Code);
-        Assert.Equal("FileManager.NameInvalidCharacter", FileManagerNode.StartUpload("user@example.com", null, "a:b", 1, StorageId, Now).FirstError.Code);
+        const long Unscannable = FileManagerUploadPolicy.MaxScannableBytes + 1;
+        Assert.Equal("FileManager.FileTooLarge", FileManagerNode.StartUpload("user@example.com", null, "big.iso", Unscannable, StorageId, Now, mayKeepUnscanned: false).FirstError.Code);
+        Assert.Equal(Unscannable, FileManagerNode.StartUpload("user@example.com", null, "big.iso", Unscannable, StorageId, Now, mayKeepUnscanned: true).Value.Size);
+        Assert.Equal("FileManager.NameInvalidCharacter", FileManagerNode.StartUpload("user@example.com", null, "a:b", 1, StorageId, Now, mayKeepUnscanned: true).FirstError.Code);
     }
 
     /// <summary>Completing an upload makes the file a normal one and stamps Updated.</summary>
     [Fact]
     public void CompleteUpload_EndsTheUpload()
     {
-        FileManagerNode file = FileManagerNode.StartUpload("user@example.com", null, "photo.png", 1, StorageId, Now).Value;
+        FileManagerNode file = FileManagerNode.StartUpload("user@example.com", null, "photo.png", 1, StorageId, Now, mayKeepUnscanned: false).Value;
 
         file.CompleteUpload(Now.AddMinutes(5));
 
@@ -96,7 +101,7 @@ public class FileManagerNodeTests
     [Fact]
     public void CompleteUpload_LeavesTheFileScanned()
     {
-        FileManagerNode file = FileManagerNode.StartUpload("user@example.com", null, "photo.png", 1, StorageId, Now).Value;
+        FileManagerNode file = FileManagerNode.StartUpload("user@example.com", null, "photo.png", 1, StorageId, Now, mayKeepUnscanned: false).Value;
 
         file.CompleteUpload(Now.AddMinutes(5));
 
@@ -107,7 +112,7 @@ public class FileManagerNodeTests
     [Fact]
     public void CompleteUploadUnscanned_EndsTheUpload_AndMarksTheFileUnscanned()
     {
-        FileManagerNode file = FileManagerNode.StartUpload("user@example.com", null, "big.zip", 1, StorageId, Now).Value;
+        FileManagerNode file = FileManagerNode.StartUpload("user@example.com", null, "big.zip", 1, StorageId, Now, mayKeepUnscanned: false).Value;
 
         file.CompleteUploadUnscanned(Now.AddMinutes(5));
 
@@ -120,7 +125,7 @@ public class FileManagerNodeTests
     [Fact]
     public void StartUpload_IsNotMarkedUnscanned()
     {
-        Assert.False(FileManagerNode.StartUpload("user@example.com", null, "big.zip", 1, StorageId, Now).Value.Unscanned);
+        Assert.False(FileManagerNode.StartUpload("user@example.com", null, "big.zip", 1, StorageId, Now, mayKeepUnscanned: false).Value.Unscanned);
     }
 
     /// <summary>A scanned image within the preview limit is previewable; the same image unscanned is not (Q3), nor a folder or another file.</summary>

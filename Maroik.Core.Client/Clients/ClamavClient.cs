@@ -30,6 +30,14 @@ public class ClamavClient(ILogger<ClamavClient> logger) : IClamavClient
     private const int ChunkSize = 64 * 1024;
 
     /// <summary>
+    /// The longest stream clamd scans, 2,147,483,645 bytes: ClamAV cannot scan 2 GB or more, and clamd clamps the compose files' 2048M
+    /// StreamMaxLength to this. A longer stream (a File Manager file, which has no size limit) is not sent: clamd would read only its
+    /// start, and the answer could look like a verdict on the whole file. <c>FileManagerUploadPolicy.MaxScannableBytes</c> holds the
+    /// same number on the domain's side.
+    /// </summary>
+    internal const long MaxStreamBytes = 2_147_483_645;
+
+    /// <summary>
     /// The prefix of the signature clamd reports, with <c>AlertExceedsMax</c> on, for a stream it could not scan whole because a
     /// size, recursion or time limit was reached (e.g. "Heuristics.Limits.Exceeded.MaxFileSize FOUND").
     /// </summary>
@@ -54,6 +62,12 @@ public class ClamavClient(ILogger<ClamavClient> logger) : IClamavClient
         {
             // Rewind the stream so we read from the beginning
             fileStream.Position = 0;
+            if (fileStream.Length > MaxStreamBytes)
+            {
+                logger.LogWarning("ClamAV at {ClamavHost}:{ClamavPort} was not sent a stream of {Length} bytes: it scans at most {MaxBytes}",
+                    clamavHost, clamavPort, fileStream.Length, MaxStreamBytes);
+                return ClamavScanResult.LimitExceeded;
+            }
 
             // Open a TCP connection to the ClamAV daemon. ConnectAsync (rather than the
             // TcpClient(host, port) constructor, which blocks the calling thread for the OS

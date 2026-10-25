@@ -2,6 +2,7 @@ using Maroik.Core.Contract.Dtos;
 using Maroik.Core.Contract.Enums;
 using Maroik.Core.Contract.Interfaces;
 using Maroik.Core.Contract.Settings;
+using Maroik.Core.Domain.Accounts;
 using Maroik.Core.Domain.FileManagers;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
@@ -352,7 +353,10 @@ public class FileManagerService(
         await unitOfWork.BeginAsync(ct: ct);
         try
         {
-            long quota = (await accountRepository.FindByEmailForUpdateAsync(accountEmail, ct))?.FileManagerQuotaBytes ?? 0;
+            Account? account = await accountRepository.FindByEmailForUpdateAsync(accountEmail, ct);
+            long quota = account?.FileManagerQuotaBytes ?? 0;
+            // A file too large to be scanned can only be kept unscanned: it is started only for an account allowed to keep one.
+            bool mayKeepUnscanned = account?.FileManagerAllowUnscanned == true;
             FileManagerTree tree = await LoadTreeAsync(accountEmail, ct);
             DateTime utcNow = UtcNow;
             if (!IsFolderOf(tree, request.ParentId))
@@ -362,7 +366,7 @@ public class FileManagerService(
             }
 
             Guid storageId = Guid.NewGuid();
-            var started = FileManagerNode.StartUpload(accountEmail, request.ParentId, request.Name, request.Size, storageId, utcNow);
+            var started = FileManagerNode.StartUpload(accountEmail, request.ParentId, request.Name, request.Size, storageId, utcNow, mayKeepUnscanned);
             if (started.IsError)
             {
                 await unitOfWork.RollbackAsync(ct);
@@ -401,7 +405,7 @@ public class FileManagerService(
 
             if (stale.Count > 0)
                 await nodeRepository.DeleteByEmailAndIdsAsync(accountEmail, [.. stale.Select(n => n.Id)], ct);
-            FileManagerNode upload = FileManagerNode.StartUpload(accountEmail, request.ParentId, name, request.Size, storageId, utcNow).Value;
+            FileManagerNode upload = FileManagerNode.StartUpload(accountEmail, request.ParentId, name, request.Size, storageId, utcNow, mayKeepUnscanned).Value;
             await nodeRepository.CreateAsync(upload, ct);
             await unitOfWork.CommitAsync(ct);
             start = new FileManagerUploadStart(false, storageId, name, FileManagerUploadPolicy.ChunkBytes);

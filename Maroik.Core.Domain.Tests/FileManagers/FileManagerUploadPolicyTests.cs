@@ -3,16 +3,19 @@ using Maroik.Core.Domain.FileManagers;
 namespace Maroik.Core.Domain.Tests.FileManagers;
 
 /// <summary>
-/// Unit tests for <see cref="FileManagerUploadPolicy"/>: the per-file size limit ClamAV can scan (S1), the chunk size (P5), the age of
+/// Unit tests for <see cref="FileManagerUploadPolicy"/>: the largest file ClamAV can scan (S1), the chunk size (P5), the age of
 /// an abandoned upload (Q5), how long the page waits for the virus scan (D6) and the quota check (Q3, Q4).
 /// </summary>
 public class FileManagerUploadPolicyTests
 {
-    /// <summary>The fixed limits: 2 GB per file (2,147,483,647 bytes), 16 MB chunks, 24 hours.</summary>
+    /// <summary>
+    /// The fixed limits: ClamAV scans a file of at most 2,147,483,645 bytes (the stream limit clamd clamps 2048M to), 16 MB chunks,
+    /// 24 hours.
+    /// </summary>
     [Fact]
     public void TheLimits_AreTheAgreedValues()
     {
-        Assert.Equal(2_147_483_647L, FileManagerUploadPolicy.MaxFileBytes);
+        Assert.Equal(2_147_483_645L, FileManagerUploadPolicy.MaxScannableBytes);
         Assert.Equal(16 * 1024 * 1024, FileManagerUploadPolicy.ChunkBytes);
         Assert.Equal(TimeSpan.FromHours(24), FileManagerUploadPolicy.StaleUploadAge);
     }
@@ -28,23 +31,41 @@ public class FileManagerUploadPolicyTests
         Assert.Equal(16 * 60 * 1_000, FileManagerUploadPolicy.MaxScanWaitMilliseconds);
     }
 
-    /// <summary>An empty file and a file up to the limit are accepted.</summary>
+    /// <summary>An empty file and a file ClamAV can still scan are accepted from every account.</summary>
     [Theory]
-    [InlineData(0L)]
-    [InlineData(1L)]
-    [InlineData(2_147_483_647L)]
-    public void CheckSize_AcceptsAFileUpToTheLimit(long size)
+    [InlineData(0L, false)]
+    [InlineData(1L, false)]
+    [InlineData(2_147_483_645L, false)]
+    [InlineData(2_147_483_645L, true)]
+    public void CheckSize_AcceptsAScannableFile(long size, bool mayKeepUnscanned)
     {
-        Assert.False(FileManagerUploadPolicy.CheckSize(size).IsError);
+        Assert.False(FileManagerUploadPolicy.CheckSize(size, mayKeepUnscanned).IsError);
     }
 
-    /// <summary>A file one byte over the limit is refused when the upload starts; a negative size is refused too.</summary>
+    /// <summary>
+    /// There is no upper limit: a file larger than ClamAV can scan is accepted from an account an administrator allows to keep
+    /// unscanned files (its owner is asked once the upload is complete), whatever its size.
+    /// </summary>
     [Theory]
-    [InlineData(2_147_483_648L, "FileManager.FileTooLarge")]
-    [InlineData(-1L, "FileManager.SizeInvalid")]
-    public void CheckSize_RefusesAFileOverTheLimit(long size, string code)
+    [InlineData(2_147_483_646L)]
+    [InlineData(50L * 1024 * 1024 * 1024)]
+    [InlineData(long.MaxValue)]
+    public void CheckSize_AcceptsAnUnscannableFile_FromAnAccountThatMayKeepIt(long size)
     {
-        Assert.Equal(code, FileManagerUploadPolicy.CheckSize(size).FirstError.Code);
+        Assert.False(FileManagerUploadPolicy.CheckSize(size, mayKeepUnscanned: true).IsError);
+    }
+
+    /// <summary>
+    /// From any other account a file one byte over what ClamAV can scan is refused when the upload starts (it could never be scanned,
+    /// so it would be refused after the whole file was sent); a negative size is refused from every account.
+    /// </summary>
+    [Theory]
+    [InlineData(2_147_483_646L, false, "FileManager.FileTooLarge")]
+    [InlineData(-1L, false, "FileManager.SizeInvalid")]
+    [InlineData(-1L, true, "FileManager.SizeInvalid")]
+    public void CheckSize_RefusesAFileThatCannotBeKept(long size, bool mayKeepUnscanned, string code)
+    {
+        Assert.Equal(code, FileManagerUploadPolicy.CheckSize(size, mayKeepUnscanned).FirstError.Code);
     }
 
     /// <summary>An upload that fits the remaining quota exactly is accepted.</summary>

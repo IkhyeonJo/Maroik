@@ -22,8 +22,8 @@ public class FileManagerStorageService(IClamavClient clamavClient, IFileManagerS
     : IFileManagerStorageService
 {
     /// <summary>
-    /// The time limit of one File Manager scan. Files reach 2 GB, far beyond an attachment, so the client's 30-second default would
-    /// refuse them; clamd's own MaxScanTime (set in the compose files) ends a scan that runs longer as "could not be scanned".
+    /// The time limit of one File Manager scan. A scanned file reaches 2 GB (a larger one is never sent to clamd), far beyond an
+    /// attachment, so the client's 30-second default would refuse it; clamd's own MaxScanTime (set in the compose files) ends a scan that runs longer as "could not be scanned".
     /// </summary>
     public static readonly TimeSpan ScanTimeout = TimeSpan.FromMinutes(15);
 

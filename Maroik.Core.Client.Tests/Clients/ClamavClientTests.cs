@@ -207,6 +207,38 @@ public class ClamavClientTests
     }
 
     /// <summary>
+    /// ClamAV cannot scan a stream of more than 2,147,483,645 bytes (the limit clamd clamps its StreamMaxLength to), so a longer one
+    /// (a File Manager file, which has no size limit) is not sent at all: it is reported as LimitExceeded straight away — never as
+    /// whatever clamd would answer the part it read — and logged as a warning naming the daemon and the size.
+    /// </summary>
+    [Fact]
+    public async Task ScanWithClamavAsync_ReportsAStreamTooLongToScan_AsLimitExceeded_WithoutSendingIt()
+    {
+        var logger = new FakeLogger<ClamavClient>();
+        await using var server = FakeClamavServer.Start("stream: OK\n");
+        await using var stream = new LengthOnlyStream(2_147_483_646);
+
+        ClamavScanResult result = await new ClamavClient(logger).ScanWithClamavAsync(stream, "127.0.0.1", server.Port, TimeSpan.FromSeconds(30), TestContext.Current.CancellationToken);
+
+        Assert.Equal(ClamavScanResult.LimitExceeded, result);
+        Assert.False(server.CommandLine.IsCompleted);
+        FakeLogRecord warning = Assert.Single(logger.Collector.GetSnapshot());
+        Assert.Equal(LogLevel.Warning, warning.Level);
+        Assert.Equal($"ClamAV at 127.0.0.1:{server.Port} was not sent a stream of 2147483646 bytes: it scans at most 2147483645", warning.Message);
+    }
+
+    /// <summary>A stream of exactly the largest scannable length is still sent and scanned.</summary>
+    [Fact]
+    public async Task ScanWithClamavAsync_SendsAStreamOfTheLargestScannableLength()
+    {
+        await using var server = FakeClamavServer.Start("stream: OK\n");
+        await using var stream = new LengthOnlyStream(2_147_483_645);
+
+        Assert.Equal(ClamavScanResult.Clean, await _sut.ScanWithClamavAsync(stream, "127.0.0.1", server.Port, TimeSpan.FromSeconds(30), TestContext.Current.CancellationToken));
+        Assert.Equal("nINSTREAM\n", await server.CommandLine);
+    }
+
+    /// <summary>
     /// A caller that scans large files (the File Manager, up to 2 GB) passes its own, longer time limit; the limit it passes is the
     /// one applied — a silent daemon is given up on after it, not after the default.
     /// </summary>
@@ -283,6 +315,24 @@ public class ClamavClientTests
         Assert.Equal(ClamavScanResult.Clean, result);
         Assert.Equal([chunkSize, chunkSize, 1234], await server.ChunkLengths);
         Assert.Equal(data, await server.Payload);
+    }
+
+    /// <summary>
+    /// A seekable stream that reports <c>length</c> bytes but reads as empty: the client's size check sees a huge file without the test
+    /// writing one.
+    /// </summary>
+    private sealed class LengthOnlyStream(long length) : Stream
+    {
+        public override bool CanRead => true;
+        public override bool CanSeek => true;
+        public override bool CanWrite => false;
+        public override long Length => length;
+        public override long Position { get; set; }
+        public override int Read(byte[] buffer, int offset, int count) => 0;
+        public override long Seek(long offset, SeekOrigin origin) => Position = offset;
+        public override void Flush() { }
+        public override void SetLength(long value) => throw new NotSupportedException();
+        public override void Write(byte[] buffer, int offset, int count) => throw new NotSupportedException();
     }
 
     /// <summary>

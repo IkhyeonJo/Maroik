@@ -120,9 +120,6 @@
   <data name="&#x27;{0}&#x27; already exists in this folder." xml:space="preserve">
     <value>&#x27;{0}&#x27; already exists in this folder.</value>
   </data>
-  <data name="A file larger than 2 GB cannot be uploaded." xml:space="preserve">
-    <value>A file larger than 2 GB cannot be uploaded.</value>
-  </data>
   <data name="Actions" xml:space="preserve">
     <value>Actions</value>
   </data>

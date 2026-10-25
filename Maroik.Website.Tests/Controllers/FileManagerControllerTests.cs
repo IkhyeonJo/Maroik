@@ -135,7 +135,10 @@ public sealed class FileManagerControllerTests(MaroikWebApplicationFactory facto
 
     // -- UserIndex ------------------------------------------------------------------
 
-    /// <summary>The menu page renders for a User, with the server's limits for the upload code and the localized root name.</summary>
+    /// <summary>
+    /// The menu page renders for a User, with the server's scan timings for the upload code and the localized root name. No size
+    /// limit is rendered: there is none (the server refuses a file too large to scan when its upload starts, per account).
+    /// </summary>
     [Fact]
     public async Task UserIndex_RendersThePage()
     {
@@ -148,7 +151,8 @@ public sealed class FileManagerControllerTests(MaroikWebApplicationFactory facto
 
         Assert.Equal(System.Net.HttpStatusCode.OK, response.StatusCode);
         Assert.Contains("id=\"fileManagerTree\"", html, StringComparison.Ordinal);
-        Assert.Contains($"value=\"{2147483647}\"", html, StringComparison.Ordinal);
+        Assert.DoesNotContain("maxFileBytes", html, StringComparison.Ordinal);
+        Assert.DoesNotContain("localizerFileTooLarge", html, StringComparison.Ordinal);
         Assert.Contains("id=\"scanPollMilliseconds\" name=\"scanPollMilliseconds\" type=\"hidden\" value=\"3000\"", html, StringComparison.Ordinal);
         Assert.Contains("id=\"maxScanWaitMilliseconds\" name=\"maxScanWaitMilliseconds\" type=\"hidden\" value=\"960000\"", html, StringComparison.Ordinal);
         Assert.Contains("id=\"localizerScanning\"", html, StringComparison.Ordinal);
