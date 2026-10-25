@@ -467,7 +467,7 @@ bash Maroik.DeployOps/Deploy.sh
 <img width="1902" height="940" alt="0" src="https://github.com/user-attachments/assets/22e98cb6-8f39-402a-9ec5-e73528afa06d" />
 
 ### File Manager
-<img width="1915" height="934" alt="2" src="https://github.com/user-attachments/assets/5bc1aa12-591a-4d75-9c66-5bb8b722ffc5" />
+<img width="1918" height="942" alt="1" src="https://github.com/user-attachments/assets/4b4099de-20d8-4fcd-9d68-838a29b5c6c9" />
 
 ### Kanban Board
 <img width="1915" height="934" alt="2" src="https://github.com/user-attachments/assets/7537ddfc-6657-48a4-acac-88e1dab44ee2" />
