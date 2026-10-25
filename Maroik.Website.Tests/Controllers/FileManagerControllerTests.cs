@@ -517,13 +517,15 @@ public sealed class FileManagerControllerTests(MaroikWebApplicationFactory facto
     {
         var (session, email) = await LoginAsync();
         _files.FileManagerOutcome = outcome;
+        // The fake is shared by the class's tests, so only what this upload adds counts.
+        int skippedBefore = _files.CompletedWithoutAScan.Count;
 
         JsonElement done = await UploadAsync(session, "big.zip", [1, 2]);
 
         Assert.False(done.GetProperty("result").GetBoolean());
         Assert.False(done.TryGetProperty("confirmUnscanned", out _));
         Assert.Equal("The file could not be scanned for viruses.", done.GetProperty("error").GetString());
-        Assert.Empty(_files.CompletedWithoutAScan);
+        Assert.Equal(skippedBefore, _files.CompletedWithoutAScan.Count);
         using var scope = factory.Services.CreateScope();
         Assert.False(scope.ServiceProvider.GetRequiredService<ApplicationDbContext>().FileManagerNodes.Any(n => n.AccountEmail == email));
     }
