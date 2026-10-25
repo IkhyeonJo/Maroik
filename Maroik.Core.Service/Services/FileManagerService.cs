@@ -78,7 +78,8 @@ public class FileManagerService(
         Size = node.Size,
         Updated = node.Updated,
         ItemCount = node.IsFolder ? tree.ItemCount(node.Id) : 0,
-        Previewable = !node.IsFolder && FileManagerPreviewPolicy.IsPreviewable(node.Name, node.Size),
+        Previewable = node.IsPreviewable,
+        Unscanned = node.Unscanned,
         Location = withLocation ? [.. tree.Location(node.Id)] : []
     };
 
@@ -441,43 +442,105 @@ public class FileManagerService(
     }
 
     /// <inheritdoc />
-    public async Task<(ServiceResult Result, bool Scanning)> CompleteUploadAsync(string accountEmail, Guid uploadId, bool overwrite, CancellationToken ct = default)
+    public async Task<(ServiceResult Result, FileManagerCompletion Completion)> CompleteUploadAsync(string accountEmail, Guid uploadId, bool overwrite, CancellationToken ct = default)
     {
         if (await nodeRepository.FindByEmailAndStoragePathAsync(accountEmail, StoragePathOf(uploadId), ct) is not { } upload)
-            return (UploadNotFound(), false);
+            return (UploadNotFound(), FileManagerCompletion.Decided);
         // The page asks again while the scan runs, so an upload completed already (a repeated or a second answer) answers the same.
         if (!upload.Uploading)
-            return (ServiceResult.Ok(), false);
+            return (ServiceResult.Ok(), FileManagerCompletion.Decided);
 
         FileUploadResult outcome = await fileClient.CompleteFileManagerUploadAsync(uploadId, upload.Size, BaseUrl, ct);
         // Still scanning in the background: nothing is decided, the reservation stays.
         if (outcome == FileUploadResult.Scanning)
-            return (ServiceResult.Ok(), true);
+            return (ServiceResult.Ok(), FileManagerCompletion.Scanning);
+
+        bool couldNotScan = outcome is FileUploadResult.ScanLimitExceeded or FileUploadResult.ScanUnavailable;
+        // The scan could not be finished and the account may keep such files: its owner decides (the reservation stays, and file
+        // storage keeps the file until AcceptUnscannedUploadAsync or an abort).
+        if (couldNotScan && (await accountRepository.FindByEmailAsync(accountEmail, ct))?.FileManagerAllowUnscanned == true)
+        {
+            logger.LogInformation("File Manager upload of file {ItemId} of {Email} could not be scanned ({Outcome}); its owner decides whether to keep it",
+                upload.Id, accountEmail, outcome);
+            string question = outcome == FileUploadResult.ScanLimitExceeded
+                ? ServiceErrorKeys.FileManagerConfirmUnscannedTooLarge
+                : ServiceErrorKeys.FileManagerConfirmUnscannedUnavailable;
+            return (ServiceResult.Validation("FileManager.ConfirmUnscanned", question, upload.Name), FileManagerCompletion.AwaitingDecision);
+        }
+
         if (outcome != FileUploadResult.Stored)
         {
-            // The file is not kept: release the reservation.
+            // The file is not kept: release the reservation, and drop what file storage kept for a decision nobody may make.
             await nodeRepository.DeleteByEmailAndIdsAsync(accountEmail, [upload.Id], ct);
+            if (couldNotScan)
+                await DeleteStoredFileAsync(accountEmail, upload, ct);
             switch (outcome)
             {
                 case FileUploadResult.Infected:
                     logger.LogWarning("File Manager upload refused for {Email}: file {ItemId} infected", accountEmail, upload.Id);
-                    return (ServiceResult.Validation("FileManager.Infected", ServiceErrorKeys.FileManagerInfected), false);
+                    return (ServiceResult.Validation("FileManager.Infected", ServiceErrorKeys.FileManagerInfected), FileManagerCompletion.Decided);
                 case FileUploadResult.ScanUnavailable:
+                case FileUploadResult.ScanLimitExceeded:
                     logger.LogWarning("File Manager upload refused for {Email}: file {ItemId} could not be scanned", accountEmail, upload.Id);
-                    return (ServiceResult.Failure("FileManager.ScanUnavailable", ServiceErrorKeys.FileManagerScanUnavailable), false);
+                    return (ServiceResult.Failure("FileManager.ScanUnavailable", ServiceErrorKeys.FileManagerScanUnavailable), FileManagerCompletion.Decided);
                 default:
                     logger.LogWarning("File Manager upload of file {ItemId} of {Email} could not be stored", upload.Id, accountEmail);
-                    return (Temporary(), false);
+                    return (Temporary(), FileManagerCompletion.Decided);
             }
         }
 
+        return (await FinishUploadAsync(accountEmail, uploadId, upload, overwrite, unscanned: false, ct), FileManagerCompletion.Decided);
+    }
+
+    /// <inheritdoc />
+    public async Task<ServiceResult> AcceptUnscannedUploadAsync(string accountEmail, Guid uploadId, bool overwrite, CancellationToken ct = default)
+    {
+        if (await nodeRepository.FindByEmailAndStoragePathAsync(accountEmail, StoragePathOf(uploadId), ct) is not { } upload)
+            return UploadNotFound();
+        // A repeated "yes" (or one whose answer was lost) answers the same.
+        if (!upload.Uploading)
+            return ServiceResult.Ok();
+
+        // An account an administrator does not allow it (only a direct request gets here: the page asks only when allowed) never gets an
+        // unscanned file: the upload is released.
+        if ((await accountRepository.FindByEmailAsync(accountEmail, ct))?.FileManagerAllowUnscanned != true)
+        {
+            logger.LogWarning("File Manager: {Email} may not keep file {ItemId} unscanned", accountEmail, upload.Id);
+            await nodeRepository.DeleteByEmailAndIdsAsync(accountEmail, [upload.Id], ct);
+            await DeleteStoredFileAsync(accountEmail, upload, ct);
+            return UnscannedNotAllowed();
+        }
+
+        // File storage stores it only when its scan could not be finished; anything else (still scanning, forgotten after a restart)
+        // is refused there.
+        if (!await fileClient.AcceptUnscannedFileManagerUploadAsync(uploadId, BaseUrl, ct))
+        {
+            logger.LogWarning("File Manager: upload {UploadId} of {Email} could not be stored unscanned", uploadId, accountEmail);
+            return Temporary();
+        }
+
+        return await FinishUploadAsync(accountEmail, uploadId, upload, overwrite, unscanned: true, ct);
+    }
+
+    /// <summary>The answer to an account that may not keep files that could not be scanned.</summary>
+    private static ServiceResult UnscannedNotAllowed() =>
+        ServiceResult.Validation("FileManager.UnscannedNotAllowed", ServiceErrorKeys.FileManagerUnscannedNotAllowed);
+
+    /// <summary>
+    /// Makes an upload whose file file storage has stored a normal item of the drive, under the account lock: completed meanwhile is a
+    /// success, removed meanwhile is "not found", a name taken meanwhile (without <paramref name="overwrite"/>) fails, and an overwrite
+    /// replaces the old file. An <paramref name="unscanned"/> file is marked so — only while the account, read under the lock, still may
+    /// keep such files. The file nobody keeps, or the one an overwrite replaced, is deleted after the commit (P4).
+    /// </summary>
+    private async Task<ServiceResult> FinishUploadAsync(string accountEmail, Guid uploadId, FileManagerNode upload, bool overwrite, bool unscanned, CancellationToken ct)
+    {
         FileManagerNode? replaced = null;
         FileManagerNode? discarded = null;
         ServiceResult result;
         await unitOfWork.BeginAsync(ct: ct);
         try
         {
-            await accountRepository.FindByEmailForUpdateAsync(accountEmail, ct);
+            bool mayKeepUnscanned = (await accountRepository.FindByEmailForUpdateAsync(accountEmail, ct))?.FileManagerAllowUnscanned == true;
             FileManagerTree tree = await LoadTreeAsync(accountEmail, ct);
             FileManagerNode? current = tree.Find(upload.Id);
             FileManagerNode? sibling = current == null ? null : FinishedChildren(tree, current.ParentId).FirstOrDefault(n => n.Name == current.Name);
@@ -494,6 +557,15 @@ public class FileManagerService(
                 discarded = upload;
                 result = UploadNotFound();
             }
+            else if (unscanned && !mayKeepUnscanned)
+            {
+                // An administrator disallowed it while the owner decided: the file is not kept.
+                await nodeRepository.DeleteByEmailAndIdsAsync(accountEmail, [current.Id], ct);
+                await unitOfWork.CommitAsync(ct);
+                discarded = upload;
+                logger.LogWarning("File Manager: {Email} may not keep file {ItemId} unscanned", accountEmail, current.Id);
+                result = UnscannedNotAllowed();
+            }
             else if (sibling != null && (!overwrite || sibling.IsFolder))
             {
                 await nodeRepository.DeleteByEmailAndIdsAsync(accountEmail, [current.Id], ct);
@@ -509,9 +581,14 @@ public class FileManagerService(
                     replaced = sibling;
                 }
 
-                current.CompleteUpload(UtcNow);
+                if (unscanned)
+                    current.CompleteUploadUnscanned(UtcNow);
+                else
+                    current.CompleteUpload(UtcNow);
                 await nodeRepository.UpdateEntityAsync(current, ct);
                 await unitOfWork.CommitAsync(ct);
+                if (unscanned)
+                    logger.LogWarning("File Manager: {Email} stored file {ItemId} ({Size} bytes) without a virus scan", accountEmail, current.Id, current.Size);
                 result = ServiceResult.Ok();
             }
         }
@@ -519,7 +596,7 @@ public class FileManagerService(
         {
             logger.LogError(e, "File Manager: failed to complete upload {UploadId} of {Email}", uploadId, accountEmail);
             await unitOfWork.RollbackAsync(ct);
-            return (Temporary(), false);
+            return Temporary();
         }
 
         // After the commit (P4): drop the file nobody keeps, or the one an overwrite replaced.
@@ -531,7 +608,7 @@ public class FileManagerService(
             await DeleteStoredFileAsync(accountEmail, replaced, ct);
         }
 
-        return (result, false);
+        return result;
     }
 
     /// <inheritdoc />
@@ -575,8 +652,12 @@ public class FileManagerService(
         if (await FindFileAsync(accountEmail, id, ct) is not { StoragePath: { } path } file)
             return (ItemNotFound(), null);
 
+        // A file nobody scanned is download-only (Q3), whatever its type.
+        if (file.Unscanned)
+            return (ServiceResult.Validation("FileManager.UnscannedNoPreview", ServiceErrorKeys.FileManagerUnscannedNoPreview), null);
+
         ServiceResult noPreview = ServiceResult.Validation("FileManager.NoPreview", ServiceErrorKeys.FileManagerNoPreview);
-        if (!FileManagerPreviewPolicy.IsPreviewable(file.Name, file.Size))
+        if (!file.IsPreviewable)
             return (noPreview, null);
 
         byte[] bytes;

@@ -174,6 +174,24 @@ public sealed class FileManagerStorageServiceTests : IDisposable
     }
 
     /// <summary>
+    /// A file whose scan could not be finished waits for its owner's decision: every complete answers the same refusal (the page may ask
+    /// again), nothing is queued again, and the staging file stays.
+    /// </summary>
+    [Fact]
+    public async Task CompleteAsync_WhileTheOwnerDecides_AnswersTheRefusalEveryTime()
+    {
+        await AppendAsync(0, 1, 2, 3);
+        await CompleteAsync(3);
+        await _queue.DequeueAsync(TestContext.Current.CancellationToken);
+        _queue.Finish(Id, FileStorageRefusals.ScanLimitExceeded, awaitsDecision: true);
+
+        Assert.Equal((FileStorageRefusals.ScanLimitExceeded, false), await CompleteAsync(3));
+        Assert.Equal((FileStorageRefusals.ScanLimitExceeded, false), await CompleteAsync(3));
+        Assert.False(_queue.IsPending(Id));
+        Assert.True(File.Exists(Staging(UploadId)));
+    }
+
+    /// <summary>
     /// After a restart nothing is pending: a complete of an upload whose staging file is still whole queues its scan again (D5).
     /// </summary>
     [Fact]
@@ -251,18 +269,45 @@ public sealed class FileManagerStorageServiceTests : IDisposable
         Assert.True(FileManagerStorageService.ScanTimeout >= TimeSpan.FromMinutes(10));
     }
 
-    /// <summary>An infected or unscannable file is not stored (S2): the refusal says which, and the staging file is deleted.</summary>
+    /// <summary>An infected file is not stored (S2): the refusal says so, and the staging file is deleted.</summary>
+    [Fact]
+    public async Task ScanAsync_RefusesAnInfectedFile_AndDeletesIt()
+    {
+        Scans(ClamavScanResult.Infected);
+        await AppendAsync(0, 1, 2, 3);
+
+        Assert.Equal(FileStorageRefusals.Infected, await Sut.ScanAsync(Id, TestContext.Current.CancellationToken));
+        Assert.False(File.Exists(Stored(UploadId)));
+        Assert.False(File.Exists(Staging(UploadId)));
+    }
+
+    /// <summary>
+    /// A file the scan could not finish (a clamd limit, or the scanner unavailable) is not stored, but its staging file is kept: its owner
+    /// may still choose to keep it unscanned (<see cref="FileManagerStorageService.AcceptUnscanned"/>). The refusal says which.
+    /// </summary>
     [Theory]
-    [InlineData(ClamavScanResult.Infected, FileStorageRefusals.Infected)]
+    [InlineData(ClamavScanResult.LimitExceeded, FileStorageRefusals.ScanLimitExceeded)]
     [InlineData(ClamavScanResult.Unavailable, FileStorageRefusals.ScanUnavailable)]
-    public async Task ScanAsync_RefusesAnInfectedOrUnscannableFile(ClamavScanResult scan, string refusal)
+    public async Task ScanAsync_KeepsAFileTheScanCouldNotFinish_ForItsOwnersDecision(ClamavScanResult scan, string refusal)
     {
         Scans(scan);
         await AppendAsync(0, 1, 2, 3);
 
         Assert.Equal(refusal, await Sut.ScanAsync(Id, TestContext.Current.CancellationToken));
         Assert.False(File.Exists(Stored(UploadId)));
-        Assert.False(File.Exists(Staging(UploadId)));
+        Assert.Equal([1, 2, 3], await File.ReadAllBytesAsync(Staging(UploadId), TestContext.Current.CancellationToken));
+    }
+
+    /// <summary>The two "could not finish" refusals are told apart from every other refusal, and from each other, by their text.</summary>
+    [Fact]
+    public void TheUndecidedRefusals_AreDistinct()
+    {
+        Assert.True(FileStorageRefusals.AwaitsDecision(FileStorageRefusals.ScanLimitExceeded));
+        Assert.True(FileStorageRefusals.AwaitsDecision(FileStorageRefusals.ScanUnavailable));
+        Assert.False(FileStorageRefusals.AwaitsDecision(FileStorageRefusals.Infected));
+        Assert.False(FileStorageRefusals.AwaitsDecision(FileStorageRefusals.StoreFailed));
+        Assert.DoesNotContain(FileStorageRefusals.ScanUnavailable, FileStorageRefusals.ScanLimitExceeded, StringComparison.Ordinal);
+        Assert.DoesNotContain(FileStorageRefusals.ScanLimitExceeded, FileStorageRefusals.ScanUnavailable, StringComparison.Ordinal);
     }
 
     /// <summary>A scan of an id that is not a GUID is refused before anything touches the disk.</summary>
@@ -283,6 +328,97 @@ public sealed class FileManagerStorageServiceTests : IDisposable
 
         await Assert.ThrowsAnyAsync<OperationCanceledException>(() => Sut.ScanAsync(Id, aborted.Token));
         Assert.False(File.Exists(Stored(UploadId)));
+    }
+
+    // -- AcceptUnscanned -----------------------------------------------------------
+
+    /// <summary>Brings <see cref="UploadId"/> to "waiting for its owner's decision" after a scan that could not be finished.</summary>
+    private async Task UndecidedAsync(string refusal = FileStorageRefusals.ScanLimitExceeded)
+    {
+        await AppendAsync(0, 1, 2, 3);
+        await CompleteAsync(3);
+        await _queue.DequeueAsync(TestContext.Current.CancellationToken);
+        _queue.Finish(Id, refusal, awaitsDecision: true);
+    }
+
+    /// <summary>
+    /// The owner keeps a file the scan could not finish (either reason): it is moved to upload/FileManager/{GUID} unscanned, the staging
+    /// file is gone, and complete now answers "stored".
+    /// </summary>
+    [Theory]
+    [InlineData(FileStorageRefusals.ScanLimitExceeded)]
+    [InlineData(FileStorageRefusals.ScanUnavailable)]
+    public async Task AcceptUnscanned_StoresAFileWaitingForTheDecision(string refusal)
+    {
+        await UndecidedAsync(refusal);
+
+        Assert.Null(Sut.AcceptUnscanned(Id));
+
+        Assert.Equal([1, 2, 3], await File.ReadAllBytesAsync(Stored(UploadId), TestContext.Current.CancellationToken));
+        Assert.False(File.Exists(Staging(UploadId)));
+        Assert.Equal((null, false), await CompleteAsync(3));
+    }
+
+    /// <summary>Accepting again once the file is stored answers "stored" (the Website may repeat a call whose answer it lost).</summary>
+    [Fact]
+    public async Task AcceptUnscanned_IsIdempotent()
+    {
+        await UndecidedAsync();
+        Sut.AcceptUnscanned(Id);
+
+        Assert.Null(Sut.AcceptUnscanned(Id));
+        Assert.Equal([1, 2, 3], await File.ReadAllBytesAsync(Stored(UploadId), TestContext.Current.CancellationToken));
+    }
+
+    /// <summary>
+    /// Only a file whose scan could not be finished can be kept unscanned: an upload still being scanned, one never completed, or one
+    /// refused as infected is refused, and its staging file is left alone.
+    /// </summary>
+    [Fact]
+    public async Task AcceptUnscanned_RefusesAnUploadThatAwaitsNoDecision()
+    {
+        await AppendAsync(0, 1, 2, 3);
+        Assert.Equal(FileStorageRefusals.NotUndecided, Sut.AcceptUnscanned(Id));
+
+        await CompleteAsync(3);
+        Assert.Equal(FileStorageRefusals.NotUndecided, Sut.AcceptUnscanned(Id));
+
+        await _queue.DequeueAsync(TestContext.Current.CancellationToken);
+        _queue.Finish(Id, FileStorageRefusals.Infected);
+        Assert.Equal(FileStorageRefusals.NotUndecided, Sut.AcceptUnscanned(Id));
+
+        Assert.True(File.Exists(Staging(UploadId)));
+        Assert.False(File.Exists(Stored(UploadId)));
+    }
+
+    /// <summary>After the owner said no (an abort), the file can no longer be kept.</summary>
+    [Fact]
+    public async Task AcceptUnscanned_RefusesAnAbortedUpload()
+    {
+        await UndecidedAsync();
+        Sut.Abort(Id);
+
+        Assert.Equal(FileStorageRefusals.NotUndecided, Sut.AcceptUnscanned(Id));
+        Assert.False(File.Exists(Stored(UploadId)));
+    }
+
+    /// <summary>A decision whose staging file has gone (deleted by hand) is refused as an invalid upload.</summary>
+    [Fact]
+    public async Task AcceptUnscanned_RefusesWhenTheStagingFileIsGone()
+    {
+        await UndecidedAsync();
+        File.Delete(Staging(UploadId));
+
+        Assert.Equal(FileStorageRefusals.InvalidUpload, Sut.AcceptUnscanned(Id));
+        Assert.False(File.Exists(Stored(UploadId)));
+    }
+
+    /// <summary>An id that is not a GUID is refused before anything touches the disk.</summary>
+    [Fact]
+    public void AcceptUnscanned_RefusesAnUploadIdThatIsNotAGuid()
+    {
+        Assert.Equal(FileStorageRefusals.InvalidUpload, Sut.AcceptUnscanned("../x"));
+        Assert.Equal(FileStorageRefusals.InvalidUpload, Sut.AcceptUnscanned(null));
     }
 
     // -- Abort --------------------------------------------------------------------

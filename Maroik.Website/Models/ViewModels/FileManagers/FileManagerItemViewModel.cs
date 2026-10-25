@@ -28,6 +28,9 @@ public class FileManagerItemViewModel
     /// <summary>Whether a Preview action is offered (decided by the server, F9).</summary>
     public bool Previewable { get; set; }
 
+    /// <summary>Whether the file was stored without a virus scan at its owner's request (drawn with a "Not scanned" badge).</summary>
+    public bool Unscanned { get; set; }
+
     /// <summary>For a search result: where it is ("My Drive / Documents"); empty otherwise.</summary>
     public string Location { get; set; } = "";
 

@@ -395,6 +395,25 @@ public sealed class AccountRepositoryTests(DatabaseFixture database) : Repositor
         Assert.Equal(30L * 1024 * 1024 * 1024, (await Sut.FindByEmailAsync(row.Email, TestContext.Current.CancellationToken))!.FileManagerQuotaBytes);
     }
 
+    /// <summary>
+    /// Whether the account may keep unscanned File Manager files reads back from its column (a new account's is false) and an admin's
+    /// update writes it.
+    /// </summary>
+    [Fact]
+    public async Task TheFileManagerAllowUnscannedFlag_IsReadAndWritten()
+    {
+        OrmAccount row = NewAccount();
+        await SeedAsync(row);
+
+        Account account = (await Sut.FindByEmailAsync(row.Email, TestContext.Current.CancellationToken))!;
+        Assert.False(account.FileManagerAllowUnscanned);
+
+        account.ChangeFileManagerAllowUnscanned(true, DateTime.UtcNow);
+        await Sut.UpdateEntityAsync(account, TestContext.Current.CancellationToken);
+        Context.ChangeTracker.Clear();
+
+        Assert.True((await Sut.FindByEmailAsync(row.Email, TestContext.Current.CancellationToken))!.FileManagerAllowUnscanned);
+    }
 
     /// <summary>Verifies that <c>UpdateEntityAsync</c> persists changes to an existing account.</summary>
     [Fact]
@@ -711,6 +730,28 @@ public sealed class AccountRepositoryTests(DatabaseFixture database) : Repositor
 
         Assert.Equal(target.Email, Assert.Single(byNickname).Email.Value);
         Assert.Equal(target.Email, Assert.Single(byEmail).Email.Value);
+    }
+
+    /// <summary>
+    /// The "may keep unscanned files" flag is shown in the admin grid, so the whole-row search matches it too: an account whose every
+    /// other flag is false is found by "true" through it alone.
+    /// </summary>
+    [Fact]
+    public async Task SearchAsync_MatchesTheAllowUnscannedFlag()
+    {
+        OrmAccount allowed = NewAccount();
+        allowed.EmailConfirmed = false;
+        allowed.AgreedServiceTerms = false;
+        allowed.FileManagerAllowUnscanned = true;
+        OrmAccount notAllowed = NewAccount();
+        notAllowed.EmailConfirmed = false;
+        notAllowed.AgreedServiceTerms = false;
+        await SeedAsync(allowed, notAllowed);
+
+        List<string> found = [.. (await Sut.SearchAsync("true", TestContext.Current.CancellationToken)).Select(a => a.Email.Value)];
+
+        Assert.Contains(allowed.Email, found);
+        Assert.DoesNotContain(notAllowed.Email, found);
     }
 
     /// <summary>The admin message is shown in the admin grid, so the whole-row search matches it too.</summary>

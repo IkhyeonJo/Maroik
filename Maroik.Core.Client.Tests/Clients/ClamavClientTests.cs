@@ -186,12 +186,13 @@ public class ClamavClientTests
     /// <summary>
     /// With <c>AlertExceedsMax</c> on, clamd answers a stream it could not scan whole (a size, recursion or time limit was reached —
     /// a zip bomb, a file past MaxScanSize) with "Heuristics.Limits.Exceeded… FOUND". That is a scan that did not complete, not a
-    /// virus: it is reported as Unavailable ("could not be scanned", S3) and logged as a warning naming the daemon and the reply.
+    /// virus: it is reported as LimitExceeded (kept apart from a scanner outage, so the File Manager can say the file was too large to
+    /// scan) and logged as a warning naming the daemon and the reply.
     /// </summary>
     [Theory]
     [InlineData("stream: Heuristics.Limits.Exceeded.MaxFileSize FOUND\n")]
     [InlineData("stream: Heuristics.Limits.Exceeded.MaxScanTime FOUND\n")]
-    public async Task ScanWithClamavAsync_ReportsAnExceededLimit_AsUnavailable_NotInfected(string reply)
+    public async Task ScanWithClamavAsync_ReportsAnExceededLimit_AsLimitExceeded_NotInfected(string reply)
     {
         var logger = new FakeLogger<ClamavClient>();
         await using var server = FakeClamavServer.Start(reply);
@@ -199,7 +200,7 @@ public class ClamavClientTests
 
         ClamavScanResult result = await new ClamavClient(logger).ScanWithClamavAsync(stream, "127.0.0.1", server.Port, TestContext.Current.CancellationToken);
 
-        Assert.Equal(ClamavScanResult.Unavailable, result);
+        Assert.Equal(ClamavScanResult.LimitExceeded, result);
         FakeLogRecord warning = Assert.Single(logger.Collector.GetSnapshot());
         Assert.Equal(LogLevel.Warning, warning.Level);
         Assert.Equal($"ClamAV at 127.0.0.1:{server.Port} could not scan the whole stream (a scan limit was exceeded): {reply.TrimEnd()}", warning.Message);

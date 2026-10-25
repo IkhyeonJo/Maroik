@@ -27,7 +27,8 @@ public static class ManagementViewModelMapper
             Created = item.Created.ConvertTimeByTimeZoneIanaId(timeZoneIanaId),
             Updated = item.Updated.ConvertTimeByTimeZoneIanaId(timeZoneIanaId),
             Message = item.Message,
-            Deleted = item.Deleted
+            Deleted = item.Deleted,
+            FileManagerAllowUnscanned = item.FileManagerAllowUnscanned
         };
     }
 

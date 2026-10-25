@@ -22,13 +22,23 @@ public interface IFileManagerScanQueue
 
     /// <summary>
     /// Ends the pending scan of <paramref name="uploadId"/>. A <paramref name="refusal"/> (the file was not stored) is kept until
-    /// <see cref="TakeRefusal"/> reads it, unless the upload was aborted meanwhile.
+    /// <see cref="TakeRefusal"/> reads it, unless the upload was aborted meanwhile. With <paramref name="awaitsDecision"/> (the scan could
+    /// not be finished, and the file waits for its owner's decision) it is kept until <see cref="TakeUndecided"/> or <see cref="Cancel"/>.
     /// </summary>
-    void Finish(string uploadId, string? refusal);
+    void Finish(string uploadId, string? refusal, bool awaitsDecision = false);
 
-    /// <summary>The refusal a finished scan of <paramref name="uploadId"/> left, or null; it is answered once.</summary>
+    /// <summary>
+    /// The refusal a finished scan of <paramref name="uploadId"/> left, or null; it is answered once, except one that awaits its owner's
+    /// decision, which is answered until the decision is made.
+    /// </summary>
     string? TakeRefusal(string uploadId);
 
-    /// <summary>Cancels the pending scan of <paramref name="uploadId"/>, if any, and forgets its refusal.</summary>
+    /// <summary>
+    /// Takes the owner's "keep it" decision for <paramref name="uploadId"/>: true, and the upload is forgotten, when its scan left it
+    /// waiting for that decision; false (nothing changes) otherwise.
+    /// </summary>
+    bool TakeUndecided(string uploadId);
+
+    /// <summary>Cancels the pending scan of <paramref name="uploadId"/>, if any, and forgets its refusal (an undecided one too).</summary>
     void Cancel(string uploadId);
 }

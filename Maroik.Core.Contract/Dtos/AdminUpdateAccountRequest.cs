@@ -35,4 +35,7 @@ public class AdminUpdateAccountRequest
 
     /// <summary>The account's File Manager quota in bytes (Q2). Null keeps the current quota.</summary>
     public long? FileManagerQuotaBytes { get; set; }
+
+    /// <summary>Whether the account may keep File Manager files that could not be scanned for viruses. Null keeps the current setting.</summary>
+    public bool? FileManagerAllowUnscanned { get; set; }
 }

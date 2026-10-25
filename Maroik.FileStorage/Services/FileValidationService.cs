@@ -54,8 +54,9 @@ public class FileValidationService(IClamavClient clamavClient, IOptions<FileStor
         if (!HasValidMagicBytes(memStream, ext))
             return (false, "Invalid or unsupported file format.");
 
-        // Only Clean lets the file through. Infected and Unavailable are both refusals (fail-closed),
-        // but they are reported differently: a ClamAV outage must not read as a virus detection.
+        // Only Clean lets the file through. Every other result is a refusal (fail-closed), but Infected is reported differently: a
+        // ClamAV outage or a file past its limits must not read as a virus detection. (Only the File Manager lets an owner keep a
+        // file that could not be scanned; an attachment is always refused.)
         ClamavScanResult scan = await clamavClient.ScanWithClamavAsync(memStream, settings.Value.ClamavHost ?? "", settings.Value.ClamavPort);
         if (scan == ClamavScanResult.Infected)
             return (false, FileStorageRefusals.Infected);

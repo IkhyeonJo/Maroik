@@ -30,6 +30,13 @@ public interface IFileManagerStorageService
     Task<string?> ScanAsync(string uploadId, CancellationToken ct);
 
     /// <summary>
+    /// Keeps a file whose scan could not be finished, at its owner's request: when the upload waits for that decision
+    /// (<see cref="IFileManagerScanQueue.TakeUndecided"/>), its staging file is moved to <c>upload/FileManager/{uploadId}</c> unscanned.
+    /// Returns null when stored (also when it already was), or the refusal.
+    /// </summary>
+    string? AcceptUnscanned(string? uploadId);
+
+    /// <summary>
     /// Drops what is held of an unconfirmed upload: cancels its pending scan, deletes its staging file, and deletes the file its scan
     /// already stored (the Website aborts only an upload it never confirmed). False for an id that is not a GUID.
     /// </summary>

@@ -106,6 +106,59 @@ public class FileManagerFlowTests(E2ESharedFixture fixture) : E2ETestBase(fixtur
         }
     }
 
+    /// <summary>
+    /// A file too large for the virus scanner, uploaded by an account an administrator allows it: the page asks (in Korean, over the
+    /// upload dialog); "yes" keeps it, its line says it was not scanned, and its tile carries the "not scanned" badge.
+    /// </summary>
+    [Fact]
+    public async Task Upload_AsksAboutAFileTooLargeToScan_AndKeepsItOnYes()
+    {
+        var (page, account) = await OpenAsync();
+        await Db.ExecuteAsync("""UPDATE "Account" SET "FileManagerAllowUnscanned" = true WHERE "Email" = @email""", ("email", account.Email));
+        Files.ScanTooLarge(true);
+        try
+        {
+            await page.Locator("#fileManagerFileInput").SetInputFilesAsync(new FilePayload { Name = "huge.zip", MimeType = "application/zip", Buffer = [1, 2, 3] });
+
+            await Assertions.Expect(page.Locator("#unscannedModal")).ToBeVisibleAsync();
+            await Assertions.Expect(page.Locator("#unscannedMessage")).ToHaveTextAsync("'huge.zip'은(는) 파일이 너무 커서 바이러스 검사를 끝까지 하지 못했습니다. 검사하지 않은 채로 올리시겠습니까?");
+            await page.Locator("#btnUnscannedYes").ClickAsync();
+
+            await Assertions.Expect(page.Locator("#unscannedModal")).ToBeHiddenAsync();
+            await Assertions.Expect(page.Locator("#uploadResults li")).ToHaveTextAsync("huge.zip — 저장됨(바이러스 검사 안 됨)");
+            await page.Locator("#btnUploadClose").ClickAsync();
+            await Assertions.Expect(Tile(page, "huge.zip").Locator(".file-manager-unscanned")).ToHaveTextAsync("검사 안 됨");
+            Assert.True(await Db.ScalarAsync<bool>("""SELECT "Unscanned" FROM "FileManagerNode" WHERE "AccountEmail" = @email AND "Name" = 'huge.zip'""", ("email", account.Email)));
+        }
+        finally
+        {
+            Files.ScanTooLarge(false);
+        }
+    }
+
+    /// <summary>"No" to the question drops the file: its line says it was cancelled and nothing is kept.</summary>
+    [Fact]
+    public async Task Upload_DropsAFileTooLargeToScan_OnNo()
+    {
+        var (page, account) = await OpenAsync();
+        await Db.ExecuteAsync("""UPDATE "Account" SET "FileManagerAllowUnscanned" = true WHERE "Email" = @email""", ("email", account.Email));
+        Files.ScanTooLarge(true);
+        try
+        {
+            await page.Locator("#fileManagerFileInput").SetInputFilesAsync(new FilePayload { Name = "huge.zip", MimeType = "application/zip", Buffer = [1, 2, 3] });
+
+            await Assertions.Expect(page.Locator("#unscannedModal")).ToBeVisibleAsync();
+            await page.Locator("#btnUnscannedNo").ClickAsync();
+
+            await Assertions.Expect(page.Locator("#uploadResults li")).ToHaveTextAsync("huge.zip — 취소됨");
+            Assert.Equal(0L, await Db.ScalarAsync<long>("""SELECT count(*) FROM "FileManagerNode" WHERE "AccountEmail" = @email""", ("email", account.Email)));
+        }
+        finally
+        {
+            Files.ScanTooLarge(false);
+        }
+    }
+
     /// <summary>Under the default quota of 0 GB an upload is refused before it starts, saying how much is missing.</summary>
     [Fact]
     public async Task Upload_IsRefused_UnderTheZeroQuota()

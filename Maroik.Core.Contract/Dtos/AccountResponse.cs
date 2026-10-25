@@ -62,4 +62,7 @@ public class AccountResponse
 
     /// <summary>The account's File Manager quota in bytes (0 = no uploads).</summary>
     public long FileManagerQuotaBytes { get; set; }
+
+    /// <summary>Whether the account may keep File Manager files that could not be scanned for viruses.</summary>
+    public bool FileManagerAllowUnscanned { get; set; }
 }

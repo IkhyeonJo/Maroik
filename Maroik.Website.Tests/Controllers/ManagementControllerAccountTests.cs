@@ -430,6 +430,46 @@ public class ManagementControllerAccountTests(MaroikWebApplicationFactory factor
         Assert.Equal(99, QuotaOf(email));
     }
 
+    /// <summary>Whether <paramref name="email"/> may keep File Manager files that could not be scanned.</summary>
+    private bool AllowsUnscanned(string email)
+    {
+        using var scope = factory.Services.CreateScope();
+        return scope.ServiceProvider.GetRequiredService<ApplicationDbContext>().Accounts.AsNoTracking().Single(a => a.Email == email).FileManagerAllowUnscanned;
+    }
+
+    /// <summary>
+    /// An administrator allows an account to keep File Manager files that could not be scanned, and turns it off again; an update
+    /// without the flag keeps the current setting. The edit form's lookup answers it.
+    /// </summary>
+    [Fact]
+    public async Task UpdateAccount_SetsTheFileManagerAllowUnscannedFlag()
+    {
+        var session = await LoginAsAdminAsync();
+        const string email = "unscanned-flag@test.com";
+        SeedAccount(email);
+        object Update(bool? allow) => allow is { } a
+            ? new { Email = email, Password = "", Role = Role.User, TimeZoneIanaId = "UTC", Locked = false, EmailConfirmed = true, AgreedServiceTerms = true, Message = "", Deleted = false, FileManagerAllowUnscanned = a }
+            : new { Email = email, Password = "", Role = Role.User, TimeZoneIanaId = "UTC", Locked = false, EmailConfirmed = true, AgreedServiceTerms = true, Message = "", Deleted = false };
+
+        using (var on = session.BuildJsonPostRequest("/Management/UpdateAccount", Update(true)))
+            Assert.Contains("\"result\":true", await (await _client.SendAsync(on, TestContext.Current.CancellationToken)).Content.ReadAsStringAsync(TestContext.Current.CancellationToken), StringComparison.Ordinal);
+        Assert.True(AllowsUnscanned(email));
+
+        using (var lookup = session.BuildJsonPostRequest($"/Management/IsAccountExists?email={email}"))
+        {
+            using JsonDocument doc = JsonDocument.Parse(await (await _client.SendAsync(lookup, TestContext.Current.CancellationToken)).Content.ReadAsStringAsync(TestContext.Current.CancellationToken));
+            Assert.True(doc.RootElement.GetProperty("account").GetProperty("fileManagerAllowUnscanned").GetBoolean());
+        }
+
+        using (var kept = session.BuildJsonPostRequest("/Management/UpdateAccount", Update(null)))
+            await _client.SendAsync(kept, TestContext.Current.CancellationToken);
+        Assert.True(AllowsUnscanned(email));
+
+        using (var off = session.BuildJsonPostRequest("/Management/UpdateAccount", Update(false)))
+            await _client.SendAsync(off, TestContext.Current.CancellationToken);
+        Assert.False(AllowsUnscanned(email));
+    }
+
     // -- UpdateAccount ------------------------------------------------------------
 
     /// <summary>Update account existing account returns success result.</summary>

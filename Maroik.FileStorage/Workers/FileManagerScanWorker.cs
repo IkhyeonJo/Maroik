@@ -9,8 +9,9 @@ namespace Maroik.FileStorage.Workers;
 /// seconds and Cloudflare answers 524 after 100 seconds too. <see cref="MaxConcurrentScans"/> loops take from the queue, so a batch
 /// upload's next file can be scanning while the one after it is still being sent, and clamd is never handed more than that at once.
 /// Each scan gets a scope of its own (the storage service and its ClamAV client are scoped) and runs with the upload's abort token
-/// linked to the service's stopping token. Its outcome is recorded for the next <c>complete</c> to answer; a scan that throws is logged
-/// and ends as <see cref="FileStorageRefusals.StoreFailed"/>. A scan the service stopping cuts short leaves its staging file whole,
+/// linked to the service's stopping token. Its outcome is recorded for the next <c>complete</c> to answer — a scan that could not be
+/// finished (<see cref="FileStorageRefusals.AwaitsDecision"/>) leaves the upload waiting for its owner's decision; a scan that throws
+/// is logged and ends as <see cref="FileStorageRefusals.StoreFailed"/>. A scan the service stopping cuts short leaves its staging file whole,
 /// and the next <c>complete</c> queues it again.
 /// </summary>
 public sealed class FileManagerScanWorker(IFileManagerScanQueue queue, IServiceScopeFactory scopes, TimeProvider timeProvider, ILogger<FileManagerScanWorker> logger)
@@ -72,10 +73,13 @@ public sealed class FileManagerScanWorker(IFileManagerScanQueue queue, IServiceS
         }
 
         TimeSpan elapsed = timeProvider.GetElapsedTime(started);
+        bool awaitsDecision = FileStorageRefusals.AwaitsDecision(refusal);
         if (refusal == null)
             logger.LogInformation("File Manager scan of {UploadId} stored the file after {Elapsed}", uploadId, elapsed);
+        else if (awaitsDecision)
+            logger.LogInformation("File Manager scan of {UploadId} could not be finished ({Reason}) after {Elapsed}; it awaits its owner's decision", uploadId, refusal, elapsed);
         else
             logger.LogInformation("File Manager scan of {UploadId} refused the file ({Reason}) after {Elapsed}", uploadId, refusal, elapsed);
-        queue.Finish(uploadId, refusal);
+        queue.Finish(uploadId, refusal, awaitsDecision);
     }
 }

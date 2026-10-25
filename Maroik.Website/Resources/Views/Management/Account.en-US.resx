@@ -204,4 +204,7 @@
   <data name="File Manager quota (GB)" xml:space="preserve">
     <value>File Manager quota (GB)</value>
   </data>
+  <data name="Allow uploading files that could not be scanned for viruses" xml:space="preserve">
+    <value>Allow uploading files that could not be scanned for viruses</value>
+  </data>
 </root>

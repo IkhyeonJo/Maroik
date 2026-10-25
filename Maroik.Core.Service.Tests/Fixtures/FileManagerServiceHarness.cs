@@ -55,24 +55,31 @@ internal sealed class FileManagerServiceHarness
     /// <summary>The account's File Manager quota.</summary>
     public long QuotaBytes { get; set; } = 10 * Gb;
 
+    /// <summary>Whether the account may keep files that could not be scanned for viruses (as the unlocked read sees it).</summary>
+    public bool AllowUnscanned { get; set; }
+
+    /// <summary>The same, as the locked read inside a transaction sees it (an administrator may change it in between); null = <see cref="AllowUnscanned"/>.</summary>
+    public bool? AllowUnscannedUnderLock { get; set; }
+
     /// <summary>Wires the mocks.</summary>
     public FileManagerServiceHarness()
     {
-        Accounts.Setup(a => a.FindByEmailForUpdateAsync(Email, It.IsAny<CancellationToken>())).ReturnsAsync(() => Account());
-        Accounts.Setup(a => a.FindByEmailAsync(Email, It.IsAny<CancellationToken>())).ReturnsAsync(() => Account());
+        Accounts.Setup(a => a.FindByEmailForUpdateAsync(Email, It.IsAny<CancellationToken>())).ReturnsAsync(() => Account(AllowUnscannedUnderLock ?? AllowUnscanned));
+        Accounts.Setup(a => a.FindByEmailAsync(Email, It.IsAny<CancellationToken>())).ReturnsAsync(() => Account(AllowUnscanned));
         UnitOfWork.Setup(u => u.BeginAsync(It.IsAny<IsolationLevel?>(), It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
         UnitOfWork.Setup(u => u.CommitAsync(It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
         UnitOfWork.Setup(u => u.RollbackAsync(It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
         Files.Setup(f => f.AppendFileManagerChunkAsync(It.IsAny<Guid>(), It.IsAny<long>(), It.IsAny<Stream>(), BaseUrl, It.IsAny<CancellationToken>()))
             .ReturnsAsync((Guid _, long offset, Stream chunk, string _, CancellationToken _) => offset + chunk.Length);
         Files.Setup(f => f.CompleteFileManagerUploadAsync(It.IsAny<Guid>(), It.IsAny<long>(), BaseUrl, It.IsAny<CancellationToken>())).ReturnsAsync(FileUploadResult.Stored);
+        Files.Setup(f => f.AcceptUnscannedFileManagerUploadAsync(It.IsAny<Guid>(), BaseUrl, It.IsAny<CancellationToken>())).ReturnsAsync(true);
         Files.Setup(f => f.AbortFileManagerUploadAsync(It.IsAny<Guid>(), BaseUrl, It.IsAny<CancellationToken>())).ReturnsAsync(true);
         Files.Setup(f => f.DeleteFileManagerFileAsync(It.IsAny<string>(), BaseUrl, It.IsAny<CancellationToken>())).ReturnsAsync(true);
     }
 
     /// <summary>The account, as the repository loads it.</summary>
-    private Account Account() => Domain.Accounts.Account.Reconstitute(Email, "hash", "User", null, "User", "UTC", null, false, 0, true, true,
-        null, null, Now, Now, null, false, "stamp", false, QuotaBytes);
+    private Account Account(bool allowUnscanned) => Domain.Accounts.Account.Reconstitute(Email, "hash", "User", null, "User", "UTC", null, false, 0, true, true,
+        null, null, Now, Now, null, false, "stamp", false, QuotaBytes, allowUnscanned);
 
     /// <summary>The service under test.</summary>
     public FileManagerService Sut => new(Nodes, Accounts.Object, UnitOfWork.Object, Files.Object,
@@ -85,11 +92,12 @@ internal sealed class FileManagerServiceHarness
         return Nodes.All.Max(n => n.Id);
     }
 
-    /// <summary>Adds a file (finished unless <paramref name="uploading"/>) and returns its id.</summary>
-    public long File(string name, long? parentId = null, long size = 10, bool uploading = false, string email = Email, DateTime? created = null)
+    /// <summary>Adds a file (finished unless <paramref name="uploading"/>; kept without a scan when <paramref name="unscanned"/>) and returns its id.</summary>
+    public long File(string name, long? parentId = null, long size = 10, bool uploading = false, string email = Email, DateTime? created = null, bool unscanned = false)
     {
         FileManagerNode file = FileManagerNode.StartUpload(email, parentId, name, size, Guid.NewGuid(), created ?? Now).Value;
-        if (!uploading) file.CompleteUpload(created ?? Now);
+        if (unscanned) file.CompleteUploadUnscanned(created ?? Now);
+        else if (!uploading) file.CompleteUpload(created ?? Now);
         _ = Nodes.CreateAsync(file);
         return Nodes.All.Max(n => n.Id);
     }

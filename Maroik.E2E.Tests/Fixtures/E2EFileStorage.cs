@@ -50,6 +50,18 @@ public sealed class E2EFileStorage : IFileClient
     /// <summary>Makes the next <paramref name="answers"/> File Manager completions answer "scanning" (0 = decided at once).</summary>
     public void ScanFor(int answers) => Interlocked.Exchange(ref _scanningAnswers, answers);
 
+    /// <summary>
+    /// When true, File Manager scans end as "too large to scan" (the file waits for its owner's decision) instead of storing the file
+    /// (see <see cref="ScanTooLarge"/>).
+    /// </summary>
+    private volatile bool _scanTooLarge;
+
+    /// <summary>Makes the File Manager scans end as "too large to scan" (<paramref name="tooLarge"/>), or store the file again.</summary>
+    public void ScanTooLarge(bool tooLarge) => _scanTooLarge = tooLarge;
+
+    /// <summary>The bytes of the uploads whose scan could not be finished, kept until their owner decides.</summary>
+    private readonly ConcurrentDictionary<Guid, byte[]> _undecided = new();
+
     /// <summary>The bytes received so far of each unfinished File Manager upload.</summary>
     private readonly ConcurrentDictionary<Guid, byte[]> _staging = new();
 
@@ -78,14 +90,29 @@ public sealed class E2EFileStorage : IFileClient
         _staging.TryRemove(uploadId, out byte[]? received);
         received ??= [];
         if (received.Length != expectedSize) return Task.FromResult(FileUploadResult.Failed);
+        if (_scanTooLarge)
+        {
+            _undecided[uploadId] = received;
+            return Task.FromResult(FileUploadResult.ScanLimitExceeded);
+        }
+
         Seed($"upload/FileManager/{uploadId:D}", received);
         return Task.FromResult(FileUploadResult.Stored);
+    }
+
+    /// <inheritdoc />
+    public Task<bool> AcceptUnscannedFileManagerUploadAsync(Guid uploadId, string fileStorageBaseUrl, CancellationToken ct = default)
+    {
+        if (!_undecided.TryRemove(uploadId, out byte[]? received)) return Task.FromResult(false);
+        Seed($"upload/FileManager/{uploadId:D}", received);
+        return Task.FromResult(true);
     }
 
     /// <inheritdoc />
     public Task<bool> AbortFileManagerUploadAsync(Guid uploadId, string fileStorageBaseUrl, CancellationToken ct = default)
     {
         _staging.TryRemove(uploadId, out _);
+        _undecided.TryRemove(uploadId, out _);
         return Task.FromResult(true);
     }
 

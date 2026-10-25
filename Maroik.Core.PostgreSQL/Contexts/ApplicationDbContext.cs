@@ -129,6 +129,7 @@ public partial class ApplicationDbContext : DbContext
             entity.Property(e => e.FileManagerQuotaBytes)
                 .HasDefaultValueSql("0")
                 .HasComment("File Manager storage quota in bytes (0 = no uploads)");
+            entity.Property(e => e.FileManagerAllowUnscanned).HasComment("May store a File Manager file that could not be scanned for viruses");
             entity.Property(e => e.Nickname)
                 .HasMaxLength(255)
                 .HasComment("Nickname");
@@ -701,6 +702,7 @@ public partial class ApplicationDbContext : DbContext
                 .HasComment("Updated")
                 .HasColumnType("timestamp without time zone");
             entity.Property(e => e.Uploading).HasComment("Upload started but not completed");
+            entity.Property(e => e.Unscanned).HasComment("Stored without a virus scan at the owner's request");
 
             entity.HasOne(d => d.AccountEmailNavigation).WithMany(p => p.FileManagerNodes)
                 .HasForeignKey(d => d.AccountEmail)

@@ -70,4 +70,8 @@ public class AccountOutputViewModel
     /// <summary>Soft-delete flag; when <see langword="true"/> the account is hidden from normal views.</summary>
     [Display(Name = "Deleted")]
     public bool Deleted { get; set; }
+
+    /// <summary>Whether the account may keep File Manager files that could not be scanned for viruses.</summary>
+    [Display(Name = "FileManagerAllowUnscanned")]
+    public bool FileManagerAllowUnscanned { get; set; }
 }

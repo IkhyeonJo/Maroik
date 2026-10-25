@@ -155,6 +155,7 @@ public class ManagementAccountService(
             bool oldLocked = account.Locked;
             bool oldDeleted = account.Deleted;
             long oldQuota = account.FileManagerQuotaBytes;
+            bool oldAllowUnscanned = account.FileManagerAllowUnscanned;
             AdminStanding before = AdminStanding.Of(account);
 
             if (newHashedPassword != null)
@@ -188,8 +189,9 @@ public class ManagementAccountService(
             await accountRepository.UpdateEntityAsync(account, ct);
             await unitOfWork.CommitAsync(ct);
             logger.LogInformation(
-                "Admin updated account {Email}: role {OldRole} -> {NewRole}, locked {OldLocked} -> {NewLocked}, deleted {OldDeleted} -> {NewDeleted}, file manager quota {OldQuota} -> {NewQuota}, password reset {PasswordReset} by admin {Admin}",
-                account.Email.Value, oldRole, account.Role, oldLocked, account.Locked, oldDeleted, account.Deleted, oldQuota, account.FileManagerQuotaBytes, newHashedPassword != null, actorEmail);
+                "Admin updated account {Email}: role {OldRole} -> {NewRole}, locked {OldLocked} -> {NewLocked}, deleted {OldDeleted} -> {NewDeleted}, file manager quota {OldQuota} -> {NewQuota}, file manager unscanned files allowed {OldAllowUnscanned} -> {NewAllowUnscanned}, password reset {PasswordReset} by admin {Admin}",
+                account.Email.Value, oldRole, account.Role, oldLocked, account.Locked, oldDeleted, account.Deleted, oldQuota, account.FileManagerQuotaBytes,
+                oldAllowUnscanned, account.FileManagerAllowUnscanned, newHashedPassword != null, actorEmail);
             return ServiceResult.Ok();
         }
         catch (Exception e)
@@ -219,6 +221,9 @@ public class ManagementAccountService(
             var quotaResult = account.ChangeFileManagerQuota(quota, utcNow);
             if (quotaResult.IsError) return quotaResult.Errors;
         }
+
+        if (request.FileManagerAllowUnscanned is { } allowUnscanned)
+            account.ChangeFileManagerAllowUnscanned(allowUnscanned, utcNow);
 
         if (request.Role != null)
         {

@@ -186,4 +186,19 @@
   <data name="This file cannot be previewed." xml:space="preserve">
     <value>미리 볼 수 없는 파일입니다.</value>
   </data>
+  <data name="'{0}' is too large to be fully scanned for viruses. Upload it without a scan?" xml:space="preserve">
+    <value>'{0}'은(는) 파일이 너무 커서 바이러스 검사를 끝까지 하지 못했습니다. 검사하지 않은 채로 올리시겠습니까?</value>
+  </data>
+  <data name="'{0}' could not be scanned for viruses right now. Upload it without a scan?" xml:space="preserve">
+    <value>'{0}'은(는) 지금 바이러스 검사를 할 수 없어 검사하지 못했습니다. 검사하지 않은 채로 올리시겠습니까?</value>
+  </data>
+  <data name="Your account may not keep files that could not be scanned for viruses." xml:space="preserve">
+    <value>이 계정은 바이러스 검사를 못 한 파일을 올릴 수 없습니다.</value>
+  </data>
+  <data name="A file that was not scanned for viruses cannot be previewed." xml:space="preserve">
+    <value>바이러스 검사를 하지 않은 파일은 미리 볼 수 없습니다.</value>
+  </data>
+  <data name="The file has been uploaded without a virus scan." xml:space="preserve">
+    <value>바이러스 검사 없이 파일을 올렸습니다.</value>
+  </data>
 </root>

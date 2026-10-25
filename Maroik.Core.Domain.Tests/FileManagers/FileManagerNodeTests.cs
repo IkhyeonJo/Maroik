@@ -92,6 +92,52 @@ public class FileManagerNodeTests
         Assert.Equal(Now, file.Created);
     }
 
+    /// <summary>A file completed after its virus scan stays a scanned file.</summary>
+    [Fact]
+    public void CompleteUpload_LeavesTheFileScanned()
+    {
+        FileManagerNode file = FileManagerNode.StartUpload("user@example.com", null, "photo.png", 1, StorageId, Now).Value;
+
+        file.CompleteUpload(Now.AddMinutes(5));
+
+        Assert.False(file.Unscanned);
+    }
+
+    /// <summary>A file the owner chose to keep although it could not be scanned ends its upload marked unscanned, and Updated is stamped.</summary>
+    [Fact]
+    public void CompleteUploadUnscanned_EndsTheUpload_AndMarksTheFileUnscanned()
+    {
+        FileManagerNode file = FileManagerNode.StartUpload("user@example.com", null, "big.zip", 1, StorageId, Now).Value;
+
+        file.CompleteUploadUnscanned(Now.AddMinutes(5));
+
+        Assert.False(file.Uploading);
+        Assert.True(file.Unscanned);
+        Assert.Equal(Now.AddMinutes(5), file.Updated);
+    }
+
+    /// <summary>An upload starts unscanned-free: whether it was scanned is decided only when it completes.</summary>
+    [Fact]
+    public void StartUpload_IsNotMarkedUnscanned()
+    {
+        Assert.False(FileManagerNode.StartUpload("user@example.com", null, "big.zip", 1, StorageId, Now).Value.Unscanned);
+    }
+
+    /// <summary>A scanned image within the preview limit is previewable; the same image unscanned is not (Q3), nor a folder or another file.</summary>
+    [Fact]
+    public void IsPreviewable_IsTrue_OnlyForAScannedImageWithinTheLimit()
+    {
+        FileManagerNode image = FileManagerNode.Reconstitute(1, "user@example.com", null, "a.png", false, 10, "upload/FileManager/x", false, Now, Now);
+        FileManagerNode unscanned = FileManagerNode.Reconstitute(2, "user@example.com", null, "a.png", false, 10, "upload/FileManager/y", false, Now, Now, unscanned: true);
+        FileManagerNode tooLarge = FileManagerNode.Reconstitute(3, "user@example.com", null, "a.png", false, FileManagerPreviewPolicy.MaxPreviewBytes + 1, "upload/FileManager/z", false, Now, Now);
+
+        Assert.True(image.IsPreviewable);
+        Assert.False(unscanned.IsPreviewable);
+        Assert.False(tooLarge.IsPreviewable);
+        Assert.False(File(4).IsPreviewable);
+        Assert.False(Folder(5, name: "a.png").IsPreviewable);
+    }
+
     /// <summary>A folder has no storage id; a file stored under another name than a GUID has none either.</summary>
     [Fact]
     public void StorageId_IsNull_WithoutAGuidStorageName()
@@ -180,9 +226,9 @@ public class FileManagerNodeTests
         DateTime created = new(2026, 1, 2);
         DateTime updated = new(2026, 2, 3);
 
-        FileManagerNode node = FileManagerNode.Reconstitute(42, "user@example.com", 3, "n", false, 99, "upload/FileManager/g", true, created, updated);
+        FileManagerNode node = FileManagerNode.Reconstitute(42, "user@example.com", 3, "n", false, 99, "upload/FileManager/g", true, created, updated, unscanned: true);
 
-        Assert.Equal((42L, "user@example.com", (long?)3, "n", false, 99L, "upload/FileManager/g", true, created, updated),
-            (node.Id, node.AccountEmail.Value, node.ParentId, node.Name, node.IsFolder, node.Size, node.StoragePath, node.Uploading, node.Created, node.Updated));
+        Assert.Equal((42L, "user@example.com", (long?)3, "n", false, 99L, "upload/FileManager/g", true, created, updated, true),
+            (node.Id, node.AccountEmail.Value, node.ParentId, node.Name, node.IsFolder, node.Size, node.StoragePath, node.Uploading, node.Created, node.Updated, node.Unscanned));
     }
 }

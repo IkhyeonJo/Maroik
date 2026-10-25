@@ -63,6 +63,7 @@ public static class FileManagerViewModelMapper
             Modified = item.Updated.ConvertTimeByTimeZoneIanaId(timeZoneIanaId).ToString("yyyy-MM-dd HH:mm", CultureInfo.InvariantCulture),
             Icon = IconOf(item.Name, item.IsFolder),
             Previewable = item.Previewable,
+            Unscanned = item.Unscanned,
             Location = withLocation ? string.Join(" / ", [rootName, .. item.Location]) : "",
             ItemCount = item.ItemCount
         };

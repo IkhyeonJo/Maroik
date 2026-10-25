@@ -223,7 +223,20 @@ File Manager
   `upload/FileManager/{guid}`. Board / note / calendar attachments still have none (see Files and content).
 - Uploads go in 16 MB chunks to a staging file, are scanned by ClamAV on completion, and a file is at most 2 GB (clamd clamps its
   stream limit to 2,147,483,645 bytes; both compose files set `CLAMD_CONF_*` to 2048M and `MaxScanTime` to 10 minutes). A scan
-  that hits a clamd limit counts as "could not be scanned", not as clean. Uploads left unfinished for 24 hours are cleaned up.
+  that hits a clamd limit is never clean: it is `ClamavScanResult.LimitExceeded` ("too large to scan"), kept apart from a scanner
+  outage (`Unavailable`). Uploads left unfinished for 24 hours are cleaned up.
+- A file the scan could not finish (a clamd limit, or the scanner unavailable / timed out; never an infected one) may be kept
+  unscanned (since 2026-10-25, owner's request) — only by an account an administrator allows it (`Account.FileManagerAllowUnscanned`,
+  default false, the checkbox in `Management/Account`, logged in the admin update audit line). FileStorage keeps such a file's staging
+  file and answers its refusal on every `complete` (`FileStorageRefusals.AwaitsDecision`, the queue's "undecided" refusals);
+  `CompleteUpload` answers `confirmUnscanned: true` with the question (too large / scanner unavailable), the page asks one question at
+  a time, "yes" calls `AcceptUnscannedUpload` (the account is checked before and again under the account lock; FileStorage's
+  `accept-unscanned` stores only an undecided upload) and the file is stored with `FileManagerNode.Unscanned`, logged at Warning on
+  both sides. "No", closing the question or an account without the permission aborts it (refused as "could not be scanned", as
+  before). A restart forgets the undecided list: the next `complete` scans the staging file again. An unscanned file carries a
+  "Not scanned" badge, is never previewed (`FileManagerNode.IsPreviewable`), and downloading it (or a selection the server counts
+  unscanned files in, `unscannedCount`) asks first; turning the permission off leaves kept files as they are. Attachments (posts,
+  notes, events) are still refused whenever the scan is not clean.
 - The virus scan runs in the background (since 2026-10-25, owner's request: a 484 MB zip took 202 s, past the 100 s of the
   HttpClient and of Cloudflare). `api/FileManager/complete` queues the scan (`IFileManagerScanQueue`, in memory) and answers 202 until
   `FileManagerScanWorker` (2 scans at once) has stored the file (200) or refused it (400, answered once); the page asks
@@ -234,7 +247,7 @@ File Manager
 - An overwrite keeps the old row until the new upload completes: the unique name index is partial (`WHERE NOT "Uploading"`), so
   the uploading twin may coexist with it.
 - Downloading several items downloads each file separately (no ZIP). Preview is images only (png / jpg / gif / webp, proven by
-  their header bytes) up to 100 MB.
+  their header bytes) up to 100 MB, and never of an unscanned file.
 
 Budgets (Income Budget / Expenditure Budget)
 - The two AccountBook sub-menu pages render one view (`Views/AccountBook/Budget.cshtml`) and one script, told the kind. A sheet is

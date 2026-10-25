@@ -122,10 +122,18 @@ public static class ServiceErrorKeys
     public const string FileManagerUploadNotFound = "The upload could not be found.";
     /// <summary>The virus scan found a virus in the uploaded file.</summary>
     public const string FileManagerInfected = "The file may be infected with a virus.";
-    /// <summary>The uploaded file could not be scanned (scanner outage, or a scan limit was exceeded).</summary>
+    /// <summary>The uploaded file could not be scanned (scanner outage, or a scan limit was exceeded) and the account may not keep it.</summary>
     public const string FileManagerScanUnavailable = "The file could not be scanned for viruses.";
     /// <summary>The file has no preview (not a png / jpg / gif / webp image of at most 100 MB).</summary>
     public const string FileManagerNoPreview = "This file cannot be previewed.";
+    /// <summary>Template: the question asked when file <c>{0}</c> was too large for the virus scanner's limits.</summary>
+    public const string FileManagerConfirmUnscannedTooLarge = "'{0}' is too large to be fully scanned for viruses. Upload it without a scan?";
+    /// <summary>Template: the question asked when file <c>{0}</c> could not be scanned because the scanner was unavailable.</summary>
+    public const string FileManagerConfirmUnscannedUnavailable = "'{0}' could not be scanned for viruses right now. Upload it without a scan?";
+    /// <summary>The account may not keep a file that could not be scanned (an administrator has not allowed it).</summary>
+    public const string FileManagerUnscannedNotAllowed = "Your account may not keep files that could not be scanned for viruses.";
+    /// <summary>A file kept without a virus scan is never previewed.</summary>
+    public const string FileManagerUnscannedNoPreview = "A file that was not scanned for viruses cannot be previewed.";
     /// <summary>A budget line that the sheet does not have.</summary>
     public const string BudgetLineNotFound = "The line could not be found.";
     /// <summary>A budget line the sheet already has.</summary>

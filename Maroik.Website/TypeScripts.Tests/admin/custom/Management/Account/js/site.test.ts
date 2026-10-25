@@ -13,7 +13,7 @@ function fixture(): string {
        <tr class="clsGridRow" data-email="b@x.com"></tr>
        <tr class="clsGridRow" data-email="a+b&amp;c@x.com"></tr>
      </tbody></table>
-     <form id="formCreateAccount"></form><form id="formEditAccount"><input type="number" id="editAccountFileManagerQuotaGb" value="0" /></form>
+     <form id="formCreateAccount"></form><form id="formEditAccount"><input type="number" id="editAccountFileManagerQuotaGb" value="0" /><input type="checkbox" id="editAccountFileManagerAllowUnscanned" /></form>
      <button id="btnExportExcelAccount"></button>
      <button id="btnEditAccountGridRow" data-errorMessageSelectGridRow="select a row"></button>
      <button id="btnConfirmDeleteAccount" data-errorMessageSelectGridRow="select a row"></button>
@@ -75,6 +75,28 @@ describe("Management/Account (admin)", () => {
         expect(JSON.parse(String(h.lastAjax().data))).toMatchObject({ FileManagerQuotaGb: null });
     });
 
+    it("ticks \"allow unscanned files\" from the account the lookup answered", () => {
+        const h = loadSite("admin", "Management", "Account", fixture());
+        fireNative(h.win.document, "rowclick", { data: { Email: "a@x.com" } });
+        h.$("#btnEditAccountGridRow").trigger("click");
+
+        h.respond(0, { result: true, account: { ...ACCOUNT, fileManagerAllowUnscanned: true }, fileManagerQuotaGb: 0 });
+
+        expect(h.$("#editAccountFileManagerAllowUnscanned").is(":checked")).toBe(true);
+    });
+
+    it("sends whether unscanned files are allowed with the update", () => {
+        const h = loadSite("admin", "Management", "Account", fixture());
+
+        h.$("#editAccountFileManagerAllowUnscanned").prop("checked", true);
+        h.$("#formEditAccount").trigger("submit");
+        expect(JSON.parse(String(h.lastAjax().data))).toMatchObject({ FileManagerAllowUnscanned: true });
+
+        h.$("#editAccountFileManagerAllowUnscanned").prop("checked", false);
+        h.$("#formEditAccount").trigger("submit");
+        expect(JSON.parse(String(h.lastAjax().data))).toMatchObject({ FileManagerAllowUnscanned: false });
+    });
+
     it("a lookup reply without the quota is not trusted (the generic error, nothing filled)", () => {
         const h = loadSite("admin", "Management", "Account", fixture());
         fireNative(h.win.document, "rowclick", { data: { Email: "a@x.com" } });
@@ -98,6 +120,7 @@ const ACCOUNT = {
     agreedServiceTerms: true,
     message: "m",
     deleted: false,
+    fileManagerAllowUnscanned: false,
 };
 
 describeGridCrudScript({

@@ -1,4 +1,5 @@
 using Maroik.Core.Contract.Dtos;
+using Maroik.Core.Contract.Enums;
 
 namespace Maroik.Core.Contract.Interfaces;
 
@@ -44,11 +45,20 @@ public interface IFileManagerService
 
     /// <summary>
     /// Completes an upload, and is called again until it is decided: file storage scans it in the background, and while it does the
-    /// answer is a success with <c>Scanning</c> true and nothing changes. Once it is stored the file becomes a normal item (an upload
-    /// already completed answers the same). With <paramref name="overwrite"/> a finished file of the same name is replaced (deleted);
-    /// without it such a file makes the upload fail.
+    /// answer is a success with <see cref="FileManagerCompletion.Scanning"/> and nothing changes. Once it is stored the file becomes a
+    /// normal item (an upload already completed answers the same). A file the scan could not finish is refused, unless the account may
+    /// keep such files: then the answer is <see cref="FileManagerCompletion.AwaitingDecision"/>, with the question as the result's
+    /// message, and the upload waits for <see cref="AcceptUnscannedUploadAsync"/> or <see cref="AbortUploadAsync"/>. With
+    /// <paramref name="overwrite"/> a finished file of the same name is replaced (deleted); without it such a file makes the upload fail.
     /// </summary>
-    Task<(ServiceResult Result, bool Scanning)> CompleteUploadAsync(string accountEmail, Guid uploadId, bool overwrite, CancellationToken ct = default);
+    Task<(ServiceResult Result, FileManagerCompletion Completion)> CompleteUploadAsync(string accountEmail, Guid uploadId, bool overwrite, CancellationToken ct = default);
+
+    /// <summary>
+    /// The owner keeps an upload the scan could not finish: when the account may (checked again under the account lock), file storage
+    /// stores it unscanned and it becomes a normal item marked unscanned; otherwise the upload is released. <paramref name="overwrite"/>
+    /// as for <see cref="CompleteUploadAsync"/>.
+    /// </summary>
+    Task<ServiceResult> AcceptUnscannedUploadAsync(string accountEmail, Guid uploadId, bool overwrite, CancellationToken ct = default);
 
     /// <summary>Abandons an unfinished upload.</summary>
     Task<ServiceResult> AbortUploadAsync(string accountEmail, Guid uploadId, CancellationToken ct = default);

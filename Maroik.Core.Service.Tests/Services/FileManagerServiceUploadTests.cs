@@ -4,6 +4,7 @@ using Maroik.Core.Contract.Enums;
 using Maroik.Core.Domain.FileManagers;
 using Maroik.Core.Service.Services;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Testing;
 using Moq;
 using H = Maroik.Core.Service.Tests.Fixtures.FileManagerServiceHarness;
 
@@ -235,10 +236,10 @@ public class FileManagerServiceUploadTests
         _h.UnitOfWork.Invocations.Clear();
         _h.Accounts.Invocations.Clear();
 
-        (ServiceResult result, bool scanning) = await _h.Sut.CompleteUploadAsync(H.Email, start.UploadId, overwrite: false, TestContext.Current.CancellationToken);
+        (ServiceResult result, FileManagerCompletion completion) = await _h.Sut.CompleteUploadAsync(H.Email, start.UploadId, overwrite: false, TestContext.Current.CancellationToken);
 
         Assert.True(result.Success);
-        Assert.False(scanning);
+        Assert.Equal(FileManagerCompletion.Decided, completion);
         Assert.False(Assert.Single(_h.Nodes.All).Uploading);
         _h.Files.Verify(f => f.CompleteFileManagerUploadAsync(start.UploadId, 10, H.BaseUrl, It.IsAny<CancellationToken>()), Times.Once);
         _h.AssertAccountLocked();
@@ -322,10 +323,10 @@ public class FileManagerServiceUploadTests
         _h.UnitOfWork.Invocations.Clear();
         _h.Accounts.Invocations.Clear();
 
-        (ServiceResult result, bool scanning) = await _h.Sut.CompleteUploadAsync(H.Email, start.UploadId, false, TestContext.Current.CancellationToken);
+        (ServiceResult result, FileManagerCompletion completion) = await _h.Sut.CompleteUploadAsync(H.Email, start.UploadId, false, TestContext.Current.CancellationToken);
 
         Assert.True(result.Success);
-        Assert.True(scanning);
+        Assert.Equal(FileManagerCompletion.Scanning, completion);
         Assert.True(Assert.Single(_h.Nodes.All).Uploading);
         _h.UnitOfWork.Verify(u => u.BeginAsync(It.IsAny<IsolationLevel?>(), It.IsAny<CancellationToken>()), Times.Never);
         _h.Accounts.Verify(a => a.FindByEmailForUpdateAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
@@ -340,10 +341,10 @@ public class FileManagerServiceUploadTests
         await _h.Sut.CompleteUploadAsync(H.Email, start.UploadId, false, TestContext.Current.CancellationToken);
         _h.Files.Invocations.Clear();
 
-        (ServiceResult result, bool scanning) = await _h.Sut.CompleteUploadAsync(H.Email, start.UploadId, false, TestContext.Current.CancellationToken);
+        (ServiceResult result, FileManagerCompletion completion) = await _h.Sut.CompleteUploadAsync(H.Email, start.UploadId, false, TestContext.Current.CancellationToken);
 
         Assert.True(result.Success);
-        Assert.False(scanning);
+        Assert.Equal(FileManagerCompletion.Decided, completion);
         Assert.False(Assert.Single(_h.Nodes.All).Uploading);
         _h.Files.Verify(f => f.CompleteFileManagerUploadAsync(It.IsAny<Guid>(), It.IsAny<long>(), It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
     }
@@ -363,10 +364,10 @@ public class FileManagerServiceUploadTests
             .ReturnsAsync(FileUploadResult.Stored);
         _h.UnitOfWork.Invocations.Clear();
 
-        (ServiceResult result, bool scanning) = await _h.Sut.CompleteUploadAsync(H.Email, start.UploadId, false, TestContext.Current.CancellationToken);
+        (ServiceResult result, FileManagerCompletion completion) = await _h.Sut.CompleteUploadAsync(H.Email, start.UploadId, false, TestContext.Current.CancellationToken);
 
         Assert.True(result.Success);
-        Assert.False(scanning);
+        Assert.Equal(FileManagerCompletion.Decided, completion);
         Assert.False(Assert.Single(_h.Nodes.All).Uploading);
         _h.Files.Verify(f => f.DeleteFileManagerFileAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
         _h.UnitOfWork.Verify(u => u.CommitAsync(It.IsAny<CancellationToken>()), Times.Never);
@@ -404,6 +405,209 @@ public class FileManagerServiceUploadTests
 
         Assert.Equal(ServiceErrorKeys.FileManagerUploadNotFound, result.ErrorKey);
         _h.Files.Verify(f => f.CompleteFileManagerUploadAsync(It.IsAny<Guid>(), It.IsAny<long>(), It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    // -- A file the scan could not finish ------------------------------------------
+
+    /// <summary>
+    /// When the scan could not be finished (too large for the scanner's limits, or the scanner unavailable) and the account may keep
+    /// such files, the owner is asked: the answer awaits their decision with the question for the reason and the file's name, nothing
+    /// is written, deleted or aborted, and it is logged.
+    /// </summary>
+    [Theory]
+    [InlineData(FileUploadResult.ScanLimitExceeded, ServiceErrorKeys.FileManagerConfirmUnscannedTooLarge)]
+    [InlineData(FileUploadResult.ScanUnavailable, ServiceErrorKeys.FileManagerConfirmUnscannedUnavailable)]
+    public async Task CompleteUploadAsync_AsksTheOwner_WhenTheScanCouldNotFinish_AndTheAccountMayKeepIt(FileUploadResult outcome, string question)
+    {
+        _h.AllowUnscanned = true;
+        FileManagerUploadStart start = await StartAsync(Upload("big.zip", 10));
+        _h.Files.Setup(f => f.CompleteFileManagerUploadAsync(start.UploadId, 10, H.BaseUrl, It.IsAny<CancellationToken>())).ReturnsAsync(outcome);
+        _h.UnitOfWork.Invocations.Clear();
+
+        (ServiceResult result, FileManagerCompletion completion) = await _h.Sut.CompleteUploadAsync(H.Email, start.UploadId, false, TestContext.Current.CancellationToken);
+
+        Assert.Equal(FileManagerCompletion.AwaitingDecision, completion);
+        Assert.Equal(("FileManager.ConfirmUnscanned", question, ServiceErrorType.Validation), (result.ErrorCode, result.ErrorKey, result.ErrorType));
+        Assert.Equal(["big.zip"], result.ErrorArgs);
+        Assert.True(Assert.Single(_h.Nodes.All).Uploading);
+        _h.UnitOfWork.Verify(u => u.BeginAsync(It.IsAny<IsolationLevel?>(), It.IsAny<CancellationToken>()), Times.Never);
+        _h.Files.Verify(f => f.AbortFileManagerUploadAsync(It.IsAny<Guid>(), It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
+        long id = 1;
+        Assert.Contains(_h.Logger.Collector.GetSnapshot(), r => r.Level == LogLevel.Information
+            && r.Message == $"File Manager upload of file {id} of {H.Email} could not be scanned ({outcome}); its owner decides whether to keep it");
+    }
+
+    /// <summary>
+    /// When the account may not keep such files, nothing is asked: the file is refused as before ("could not be scanned"), its row is
+    /// deleted, what file storage kept for a decision is dropped (abort), and the refusal is logged.
+    /// </summary>
+    [Theory]
+    [InlineData(FileUploadResult.ScanLimitExceeded)]
+    [InlineData(FileUploadResult.ScanUnavailable)]
+    public async Task CompleteUploadAsync_RefusesAFileTheScanCouldNotFinish_WhenTheAccountMayNotKeepIt(FileUploadResult outcome)
+    {
+        FileManagerUploadStart start = await StartAsync(Upload("big.zip", 10));
+        _h.Files.Setup(f => f.CompleteFileManagerUploadAsync(start.UploadId, 10, H.BaseUrl, It.IsAny<CancellationToken>())).ReturnsAsync(outcome);
+
+        (ServiceResult result, FileManagerCompletion completion) = await _h.Sut.CompleteUploadAsync(H.Email, start.UploadId, false, TestContext.Current.CancellationToken);
+
+        Assert.Equal(FileManagerCompletion.Decided, completion);
+        Assert.Equal(("FileManager.ScanUnavailable", ServiceErrorKeys.FileManagerScanUnavailable), (result.ErrorCode, result.ErrorKey));
+        Assert.Empty(_h.Nodes.All);
+        _h.Files.Verify(f => f.AbortFileManagerUploadAsync(start.UploadId, H.BaseUrl, It.IsAny<CancellationToken>()), Times.Once);
+        long id = 1;
+        Assert.Contains(_h.Logger.Collector.GetSnapshot(), r => r.Level == LogLevel.Warning && r.Message == $"File Manager upload refused for {H.Email}: file {id} could not be scanned");
+    }
+
+    // -- AcceptUnscannedUploadAsync ------------------------------------------------
+
+    /// <summary>Brings an upload of "big.zip" (10 bytes) to "waiting for its owner's decision" and returns its id.</summary>
+    private async Task<Guid> UndecidedAsync(string name = "big.zip", FileManagerConflictChoice conflict = FileManagerConflictChoice.Ask)
+    {
+        FileManagerUploadStart start = await StartAsync(Upload(name, 10, conflict: conflict));
+        _h.Files.Setup(f => f.CompleteFileManagerUploadAsync(start.UploadId, 10, H.BaseUrl, It.IsAny<CancellationToken>())).ReturnsAsync(FileUploadResult.ScanLimitExceeded);
+        _h.UnitOfWork.Invocations.Clear();
+        _h.Accounts.Invocations.Clear();
+        return start.UploadId;
+    }
+
+    /// <summary>
+    /// The owner keeps the file: file storage stores it unscanned, then (account locked, in a transaction) it becomes a normal file
+    /// marked unscanned — an audit event logged at Warning with the account, the file and its size.
+    /// </summary>
+    [Fact]
+    public async Task AcceptUnscannedUploadAsync_StoresTheFile_MarkedUnscanned()
+    {
+        _h.AllowUnscanned = true;
+        Guid uploadId = await UndecidedAsync();
+
+        ServiceResult result = await _h.Sut.AcceptUnscannedUploadAsync(H.Email, uploadId, overwrite: false, TestContext.Current.CancellationToken);
+
+        Assert.True(result.Success, result.ErrorKey);
+        FileManagerNode file = Assert.Single(_h.Nodes.All);
+        Assert.Equal((false, true), (file.Uploading, file.Unscanned));
+        _h.Files.Verify(f => f.AcceptUnscannedFileManagerUploadAsync(uploadId, H.BaseUrl, It.IsAny<CancellationToken>()), Times.Once);
+        _h.AssertAccountLocked();
+        _h.AssertCommitted();
+        Assert.Contains(_h.Logger.Collector.GetSnapshot(), r => r.Level == LogLevel.Warning
+            && r.Message == $"File Manager: {H.Email} stored file {file.Id} (10 bytes) without a virus scan");
+    }
+
+    /// <summary>Kept with an overwrite, the unscanned file replaces the old one like any completed upload.</summary>
+    [Fact]
+    public async Task AcceptUnscannedUploadAsync_WithOverwrite_ReplacesTheOldFile()
+    {
+        _h.AllowUnscanned = true;
+        long old = _h.File("big.zip");
+        string oldPath = _h.Node(old).StoragePath!;
+        Guid uploadId = await UndecidedAsync(conflict: FileManagerConflictChoice.Overwrite);
+
+        ServiceResult result = await _h.Sut.AcceptUnscannedUploadAsync(H.Email, uploadId, overwrite: true, TestContext.Current.CancellationToken);
+
+        Assert.True(result.Success, result.ErrorKey);
+        Assert.Null(_h.Nodes.Get(old));
+        Assert.True(Assert.Single(_h.Nodes.All).Unscanned);
+        _h.Files.Verify(f => f.DeleteFileManagerFileAsync(oldPath, H.BaseUrl, It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    /// <summary>
+    /// An account an administrator does not allow it (a direct request) is refused before file storage stores anything: the upload is
+    /// released (row deleted, file storage aborted) and the denial is logged at Warning.
+    /// </summary>
+    [Fact]
+    public async Task AcceptUnscannedUploadAsync_RefusesAnAccountThatMayNotKeepUnscannedFiles()
+    {
+        Guid uploadId = await UndecidedAsync();
+
+        ServiceResult result = await _h.Sut.AcceptUnscannedUploadAsync(H.Email, uploadId, false, TestContext.Current.CancellationToken);
+
+        Assert.Equal(("FileManager.UnscannedNotAllowed", ServiceErrorKeys.FileManagerUnscannedNotAllowed, ServiceErrorType.Validation), (result.ErrorCode, result.ErrorKey, result.ErrorType));
+        Assert.Empty(_h.Nodes.All);
+        _h.Files.Verify(f => f.AcceptUnscannedFileManagerUploadAsync(It.IsAny<Guid>(), It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
+        _h.Files.Verify(f => f.AbortFileManagerUploadAsync(uploadId, H.BaseUrl, It.IsAny<CancellationToken>()), Times.Once);
+        long id = 1;
+        Assert.Contains(_h.Logger.Collector.GetSnapshot(), r => r.Level == LogLevel.Warning && r.Message == $"File Manager: {H.Email} may not keep file {id} unscanned");
+    }
+
+    /// <summary>
+    /// An administrator who disallows it while the owner decides wins: the check under the account lock refuses, the upload's row is
+    /// deleted in the transaction and the file storage stored is deleted after the commit.
+    /// </summary>
+    [Fact]
+    public async Task AcceptUnscannedUploadAsync_RefusesUnderTheLock_WhenDisallowedMeanwhile()
+    {
+        _h.AllowUnscanned = true;
+        _h.AllowUnscannedUnderLock = false;
+        Guid uploadId = await UndecidedAsync();
+
+        ServiceResult result = await _h.Sut.AcceptUnscannedUploadAsync(H.Email, uploadId, false, TestContext.Current.CancellationToken);
+
+        Assert.Equal(ServiceErrorKeys.FileManagerUnscannedNotAllowed, result.ErrorKey);
+        Assert.Empty(_h.Nodes.All);
+        _h.AssertCommitted();
+        _h.Files.Verify(f => f.DeleteFileManagerFileAsync($"upload/FileManager/{uploadId:D}", H.BaseUrl, It.IsAny<CancellationToken>()), Times.Once);
+        long id = 1;
+        Assert.Contains(_h.Logger.Collector.GetSnapshot(), r => r.Level == LogLevel.Warning && r.Message == $"File Manager: {H.Email} may not keep file {id} unscanned");
+    }
+
+    /// <summary>File storage refusing to keep it (no longer waiting, e.g. after its restart) is a temporary error, logged; nothing is written.</summary>
+    [Fact]
+    public async Task AcceptUnscannedUploadAsync_AnswersATemporaryError_WhenFileStorageRefuses()
+    {
+        _h.AllowUnscanned = true;
+        Guid uploadId = await UndecidedAsync();
+        _h.Files.Setup(f => f.AcceptUnscannedFileManagerUploadAsync(uploadId, H.BaseUrl, It.IsAny<CancellationToken>())).ReturnsAsync(false);
+
+        ServiceResult result = await _h.Sut.AcceptUnscannedUploadAsync(H.Email, uploadId, false, TestContext.Current.CancellationToken);
+
+        Assert.Equal(ServiceResult.TemporaryErrorKey, result.ErrorKey);
+        Assert.True(Assert.Single(_h.Nodes.All).Uploading);
+        _h.UnitOfWork.Verify(u => u.BeginAsync(It.IsAny<IsolationLevel?>(), It.IsAny<CancellationToken>()), Times.Never);
+        Assert.Contains(_h.Logger.Collector.GetSnapshot(), r => r.Level == LogLevel.Warning && r.Message == $"File Manager: upload {uploadId} of {H.Email} could not be stored unscanned");
+    }
+
+    /// <summary>A failure inside the transaction is logged at Error with the exception, rolled back, and answered as a temporary error.</summary>
+    [Fact]
+    public async Task AcceptUnscannedUploadAsync_RollsBack_AndLogs_WhenTheTransactionFails()
+    {
+        _h.AllowUnscanned = true;
+        Guid uploadId = await UndecidedAsync();
+        _h.UnitOfWork.Setup(u => u.CommitAsync(It.IsAny<CancellationToken>())).ThrowsAsync(new InvalidOperationException("db down"));
+
+        ServiceResult result = await _h.Sut.AcceptUnscannedUploadAsync(H.Email, uploadId, false, TestContext.Current.CancellationToken);
+
+        Assert.Equal(ServiceResult.TemporaryErrorKey, result.ErrorKey);
+        _h.UnitOfWork.Verify(u => u.RollbackAsync(It.IsAny<CancellationToken>()), Times.Once);
+        FakeLogRecord error = Assert.Single(_h.Logger.Collector.GetSnapshot(), r => r.Level == LogLevel.Error);
+        Assert.Equal($"File Manager: failed to complete upload {uploadId} of {H.Email}", error.Message);
+        Assert.Equal("db down", error.Exception?.Message);
+    }
+
+    /// <summary>An upload already completed (a repeated "yes") answers success again; file storage is not asked.</summary>
+    [Fact]
+    public async Task AcceptUnscannedUploadAsync_OfACompletedUpload_AnswersSuccessAgain()
+    {
+        _h.AllowUnscanned = true;
+        Guid uploadId = await UndecidedAsync();
+        await _h.Sut.AcceptUnscannedUploadAsync(H.Email, uploadId, false, TestContext.Current.CancellationToken);
+        _h.Files.Invocations.Clear();
+
+        ServiceResult result = await _h.Sut.AcceptUnscannedUploadAsync(H.Email, uploadId, false, TestContext.Current.CancellationToken);
+
+        Assert.True(result.Success);
+        _h.Files.Verify(f => f.AcceptUnscannedFileManagerUploadAsync(It.IsAny<Guid>(), It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    /// <summary>An upload that is not the account's is "not found", and file storage is not asked.</summary>
+    [Fact]
+    public async Task AcceptUnscannedUploadAsync_AnswersNotFound_ForAnUnknownUpload()
+    {
+        _h.AllowUnscanned = true;
+
+        ServiceResult result = await _h.Sut.AcceptUnscannedUploadAsync(H.Email, Guid.NewGuid(), false, TestContext.Current.CancellationToken);
+
+        Assert.Equal(ServiceErrorKeys.FileManagerUploadNotFound, result.ErrorKey);
+        _h.Files.Verify(f => f.AcceptUnscannedFileManagerUploadAsync(It.IsAny<Guid>(), It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
     }
 
     // -- AbortUploadAsync ----------------------------------------------------------

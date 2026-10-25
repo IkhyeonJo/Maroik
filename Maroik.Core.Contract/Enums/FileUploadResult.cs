@@ -13,7 +13,10 @@ public enum FileUploadResult
     /// <summary>The storage service's virus scan flagged the file.</summary>
     Infected,
 
-    /// <summary>The virus scan could not be completed (scanner unreachable, timed out, or gave no verdict), so the file was refused.</summary>
+    /// <summary>
+    /// The virus scan could not be completed (scanner unreachable, timed out, or gave no verdict), so the file was refused — a File Manager
+    /// upload is kept until its owner decides whether to keep it unscanned.
+    /// </summary>
     ScanUnavailable,
 
     /// <summary>Any other failure: empty input, an unsafe path, a rejected format/size, or a transport error.</summary>
@@ -23,5 +26,11 @@ public enum FileUploadResult
     /// A File Manager upload whose virus scan is queued or running in the background (<c>IFileClient.CompleteFileManagerUploadAsync</c>):
     /// not decided yet, asked again later.
     /// </summary>
-    Scanning
+    Scanning,
+
+    /// <summary>
+    /// A File Manager upload too large for the virus scanner's limits to be scanned whole: not stored, but kept until its owner decides
+    /// whether to keep it unscanned (<c>IFileClient.AcceptUnscannedFileManagerUploadAsync</c>).
+    /// </summary>
+    ScanLimitExceeded
 }

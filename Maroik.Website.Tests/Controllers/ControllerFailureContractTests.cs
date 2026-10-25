@@ -296,6 +296,7 @@ public class ControllerFailureContractTests(MaroikWebApplicationFactory factory)
         (Role.User, "/FileManager/BeginUpload", s => s.BuildJsonPostRequest("/FileManager/BeginUpload", new { Name = "a.txt", Size = 1, Conflict = "Ask" })),
         (Role.User, "/FileManager/UploadChunk", s => s.BuildFormPostRequest("/FileManager/UploadChunk", ChunkForm())),
         (Role.User, "/FileManager/CompleteUpload", s => s.BuildJsonPostRequest("/FileManager/CompleteUpload", new { UploadId = Guid.NewGuid(), Overwrite = false })),
+        (Role.User, "/FileManager/AcceptUnscannedUpload", s => s.BuildJsonPostRequest("/FileManager/AcceptUnscannedUpload", new { UploadId = Guid.NewGuid(), Overwrite = false })),
         (Role.User, "/FileManager/AbortUpload", s => s.BuildJsonPostRequest("/FileManager/AbortUpload", new { UploadId = Guid.NewGuid() })),
     ];
 

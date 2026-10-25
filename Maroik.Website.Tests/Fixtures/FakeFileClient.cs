@@ -95,6 +95,12 @@ public sealed class FakeFileClient : IFileClient
     /// <summary>Every File Manager upload a caller aborted (in order).</summary>
     public List<Guid> AbortedUploads { get; } = [];
 
+    /// <summary>The received bytes of the uploads whose scan could not be finished, kept until their owner decides.</summary>
+    private readonly ConcurrentDictionary<Guid, byte[]> _undecided = new();
+
+    /// <summary>Every File Manager upload a caller kept unscanned (in order).</summary>
+    public List<Guid> AcceptedUnscanned { get; } = [];
+
     /// <summary>Whether bytes are being received for <paramref name="uploadId"/>.</summary>
     public bool IsStaging(Guid uploadId) => _staging.ContainsKey(uploadId);
 
@@ -123,13 +129,25 @@ public sealed class FakeFileClient : IFileClient
         received ??= [];
         if (received.Length != expectedSize) return Task.FromResult(FileUploadResult.Failed);
         if (FileManagerOutcome == FileUploadResult.Stored) Store(received, "application/octet-stream", $"upload/FileManager/{uploadId:D}");
+        // A scan that could not be finished keeps the file for its owner's decision.
+        if (FileManagerOutcome is FileUploadResult.ScanLimitExceeded or FileUploadResult.ScanUnavailable) _undecided[uploadId] = received;
         return Task.FromResult(FileManagerOutcome);
+    }
+
+    /// <inheritdoc />
+    public Task<bool> AcceptUnscannedFileManagerUploadAsync(Guid uploadId, string fileStorageBaseUrl, CancellationToken ct = default)
+    {
+        if (!_undecided.TryRemove(uploadId, out byte[]? received)) return Task.FromResult(false);
+        Store(received, "application/octet-stream", $"upload/FileManager/{uploadId:D}");
+        lock (AcceptedUnscanned) AcceptedUnscanned.Add(uploadId);
+        return Task.FromResult(true);
     }
 
     /// <inheritdoc />
     public Task<bool> AbortFileManagerUploadAsync(Guid uploadId, string fileStorageBaseUrl, CancellationToken ct = default)
     {
         _staging.TryRemove(uploadId, out _);
+        _undecided.TryRemove(uploadId, out _);
         lock (AbortedUploads) AbortedUploads.Add(uploadId);
         return Task.FromResult(true);
     }

@@ -1,6 +1,7 @@
 using ICSharpCode.SharpZipLib.Zip;
 using Maroik.Core.Contract.Enums;
 using Maroik.Core.Contract.Interfaces;
+using Maroik.Core.Contract.Messages;
 using Maroik.FileStorage.Services;
 using Maroik.FileStorage.Settings;
 using Microsoft.AspNetCore.Http;
@@ -375,6 +376,23 @@ public class FileValidationServiceTests
         Assert.False(success);
         Assert.Equal("The file could not be scanned for viruses. Please try again later.", error);
         Assert.DoesNotContain("infected", error!, StringComparison.OrdinalIgnoreCase);
+    }
+
+    /// <summary>
+    /// An attachment too large for clamd's limits is refused like any file that could not be scanned: only the File Manager lets its
+    /// owner keep such a file.
+    /// </summary>
+    [Fact]
+    public async Task ValidateAndSaveAsync_RefusesAFileOverTheScanLimits_AsUnscannable()
+    {
+        byte[] jpegBytes = [0xFF, 0xD8, 0xFF, 0xE0, 0x00, 0x10, 0x4A, 0x46, 0x49, 0x46, 0x00];
+        var file = MakeFormFile(jpegBytes, "huge.jpg");
+        var service = new FileValidationService(ScanMock(ClamavScanResult.LimitExceeded).Object, DefaultSettings());
+
+        var (success, error) = await service.ValidateAndSaveAsync(file, Path.GetTempPath());
+
+        Assert.False(success);
+        Assert.Equal(FileStorageRefusals.ScanUnavailable, error);
     }
 
     /// <summary>A refused scan leaves nothing on disk.</summary>

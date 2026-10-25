@@ -177,4 +177,28 @@ public sealed class FileManagerScanWorkerTests : IAsyncDisposable
         Assert.Contains(_logger.Collector.GetSnapshot(), r => r.Level == LogLevel.Information && r.Message == $"File Manager scan of {id} was cancelled");
         Assert.DoesNotContain(_logger.Collector.GetSnapshot(), r => r.Level == LogLevel.Error);
     }
+
+    /// <summary>
+    /// A scan that could not be finished (too large for clamd's limits, or the scanner unavailable) leaves the upload waiting for its
+    /// owner's decision: its refusal is answered until the decision takes it, and the log says it awaits the decision.
+    /// </summary>
+    [Theory]
+    [InlineData(FileStorageRefusals.ScanLimitExceeded)]
+    [InlineData(FileStorageRefusals.ScanUnavailable)]
+    public async Task AScanThatCouldNotFinish_LeavesTheUploadAwaitingItsOwnersDecision(string refusal)
+    {
+        string id = NewId();
+        _storage.Setup(s => s.ScanAsync(id, It.IsAny<CancellationToken>())).ReturnsAsync(refusal);
+        await StartAsync();
+
+        _queue.TryEnqueue(id);
+        await EventuallyAsync(() => !_queue.IsPending(id));
+
+        Assert.Equal(refusal, _queue.TakeRefusal(id));
+        Assert.Equal(refusal, _queue.TakeRefusal(id));
+        Assert.True(_queue.TakeUndecided(id));
+        Assert.Contains(_logger.Collector.GetSnapshot(), r => r.Level == LogLevel.Information
+            && r.Message.StartsWith($"File Manager scan of {id} could not be finished ({refusal}) after ", StringComparison.Ordinal)
+            && r.Message.EndsWith("; it awaits its owner's decision", StringComparison.Ordinal));
+    }
 }

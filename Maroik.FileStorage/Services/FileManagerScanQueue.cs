@@ -5,13 +5,13 @@ namespace Maroik.FileStorage.Services;
 
 /// <inheritdoc cref="IFileManagerScanQueue" />
 /// <remarks>
-/// One lock guards the pending and refused uploads together, so a <c>complete</c> that finds an upload no longer pending always finds
-/// its refusal (or its stored file): <see cref="Finish"/> records the refusal and ends the pending scan in one step. Each pending upload
+/// One lock guards the pending, refused and undecided uploads together, so a <c>complete</c> that finds an upload no longer pending
+/// always finds its refusal (or its stored file): <see cref="Finish"/> records the refusal and ends the pending scan in one step. Each pending upload
 /// owns the source of its abort token; it is disposed when the scan finishes.
 /// </remarks>
 public sealed class FileManagerScanQueue : IFileManagerScanQueue
 {
-    /// <summary>Guards <see cref="_pending"/> and <see cref="_refusals"/>.</summary>
+    /// <summary>Guards <see cref="_pending"/>, <see cref="_refusals"/> and <see cref="_undecided"/>.</summary>
     private readonly Lock _gate = new();
 
     /// <summary>The queued or running scans, with the source of the token their abort cancels.</summary>
@@ -19,6 +19,12 @@ public sealed class FileManagerScanQueue : IFileManagerScanQueue
 
     /// <summary>The refusals of the finished scans not yet answered.</summary>
     private readonly Dictionary<string, string> _refusals = new(StringComparer.Ordinal);
+
+    /// <summary>
+    /// The refusals of the scans that could not be finished, whose files wait for their owners' decision; answered until
+    /// <see cref="TakeUndecided"/> or <see cref="Cancel"/> removes them.
+    /// </summary>
+    private readonly Dictionary<string, string> _undecided = new(StringComparer.Ordinal);
 
     /// <summary>The upload ids in the order they were queued.</summary>
     private readonly Channel<string> _queued = Channel.CreateUnbounded<string>();
@@ -54,14 +60,14 @@ public sealed class FileManagerScanQueue : IFileManagerScanQueue
     }
 
     /// <inheritdoc />
-    public void Finish(string uploadId, string? refusal)
+    public void Finish(string uploadId, string? refusal, bool awaitsDecision = false)
     {
         lock (_gate)
         {
             // Only a dequeued upload is finished, so it is always pending here.
             _pending.Remove(uploadId, out CancellationTokenSource? aborted);
             if (refusal != null && aborted is { IsCancellationRequested: false })
-                _refusals[uploadId] = refusal;
+                (awaitsDecision ? _undecided : _refusals)[uploadId] = refusal;
             aborted?.Dispose();
         }
     }
@@ -70,7 +76,14 @@ public sealed class FileManagerScanQueue : IFileManagerScanQueue
     public string? TakeRefusal(string uploadId)
     {
         lock (_gate)
-            return _refusals.Remove(uploadId, out string? refusal) ? refusal : null;
+            return _refusals.Remove(uploadId, out string? refusal) ? refusal : _undecided.GetValueOrDefault(uploadId);
+    }
+
+    /// <inheritdoc />
+    public bool TakeUndecided(string uploadId)
+    {
+        lock (_gate)
+            return _undecided.Remove(uploadId);
     }
 
     /// <inheritdoc />
@@ -79,6 +92,7 @@ public sealed class FileManagerScanQueue : IFileManagerScanQueue
         lock (_gate)
         {
             _refusals.Remove(uploadId);
+            _undecided.Remove(uploadId);
             if (_pending.TryGetValue(uploadId, out CancellationTokenSource? aborted))
                 aborted.Cancel();
         }

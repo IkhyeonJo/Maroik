@@ -111,4 +111,17 @@ public class FileManagerServiceDownloadTests
 
         Assert.Equal(ServiceErrorKeys.FileManagerItemNotFound, (await _h.Sut.OpenPreviewAsync(H.Email, theirs, TestContext.Current.CancellationToken)).Result.ErrorKey);
     }
+
+    /// <summary>A file kept without a virus scan is never previewed (Q3), whatever its type: refused with its own reason, without fetching it.</summary>
+    [Fact]
+    public async Task OpenPreviewAsync_RefusesAnUnscannedFile()
+    {
+        long id = _h.File("photo.png", size: Png.Length, unscanned: true);
+
+        var (result, preview) = await _h.Sut.OpenPreviewAsync(H.Email, id, TestContext.Current.CancellationToken);
+
+        Assert.Equal(("FileManager.UnscannedNoPreview", ServiceErrorKeys.FileManagerUnscannedNoPreview, ServiceErrorType.Validation), (result.ErrorCode, result.ErrorKey, result.ErrorType));
+        Assert.Null(preview);
+        _h.Files.Verify(f => f.DownloadAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
+    }
 }

@@ -104,13 +104,14 @@ public class ClamavClient(ILogger<ClamavClient> logger) : IClamavClient
                 && !response.Contains("ERROR", StringComparison.Ordinal))
                 return ClamavScanResult.Clean;
 
-            // A limit clamd hit (AlertExceedsMax): the stream was not scanned whole, so nothing is known about it. Refused, but
-            // reported as "could not be scanned", not as a virus (this is also how a zip bomb past the limits is refused).
+            // A limit clamd hit (AlertExceedsMax): the stream was not scanned whole, so nothing is known about it. Not a virus, and
+            // reported apart from an outage so the File Manager can say the file was too large to scan (an attachment is refused
+            // either way; this is also how a zip bomb past the limits is refused).
             if (response.Contains(LimitsExceededSignature, StringComparison.Ordinal))
             {
                 logger.LogWarning("ClamAV at {ClamavHost}:{ClamavPort} could not scan the whole stream (a scan limit was exceeded): {Response}",
                     clamavHost, clamavPort, response);
-                return ClamavScanResult.Unavailable;
+                return ClamavScanResult.LimitExceeded;
             }
 
             if (response.Contains("FOUND", StringComparison.Ordinal))

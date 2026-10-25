@@ -91,4 +91,67 @@ public sealed class FileManagerScanQueueTests
 
         Assert.Null(queue.TakeRefusal(UploadId));
     }
+
+    /// <summary>
+    /// A refusal that leaves the file waiting for its owner's decision (the scan could not be finished) is answered on every ask until the
+    /// decision takes it; then the upload is unknown again.
+    /// </summary>
+    [Fact]
+    public async Task AnUndecidedRefusal_IsAnsweredUntilTheDecisionTakesIt()
+    {
+        var queue = new FileManagerScanQueue();
+        queue.TryEnqueue(UploadId);
+        await queue.DequeueAsync(TestContext.Current.CancellationToken);
+
+        queue.Finish(UploadId, "too large", awaitsDecision: true);
+
+        Assert.Equal("too large", queue.TakeRefusal(UploadId));
+        Assert.Equal("too large", queue.TakeRefusal(UploadId));
+        Assert.True(queue.TakeUndecided(UploadId));
+        Assert.Null(queue.TakeRefusal(UploadId));
+        Assert.False(queue.TakeUndecided(UploadId));
+    }
+
+    /// <summary>A plain refusal (an infected file) awaits no decision: the decision finds nothing to take and leaves the refusal in place.</summary>
+    [Fact]
+    public async Task TakeUndecided_IsFalse_ForARefusalThatAwaitsNoDecision()
+    {
+        var queue = new FileManagerScanQueue();
+        queue.TryEnqueue(UploadId);
+        await queue.DequeueAsync(TestContext.Current.CancellationToken);
+        queue.Finish(UploadId, "infected");
+
+        Assert.False(queue.TakeUndecided(UploadId));
+        Assert.Equal("infected", queue.TakeRefusal(UploadId));
+    }
+
+    /// <summary>Cancelling (the owner said no, or the upload was abandoned) forgets an undecided refusal.</summary>
+    [Fact]
+    public async Task Cancel_ForgetsAnUndecidedRefusal()
+    {
+        var queue = new FileManagerScanQueue();
+        queue.TryEnqueue(UploadId);
+        await queue.DequeueAsync(TestContext.Current.CancellationToken);
+        queue.Finish(UploadId, "too large", awaitsDecision: true);
+
+        queue.Cancel(UploadId);
+
+        Assert.Null(queue.TakeRefusal(UploadId));
+        Assert.False(queue.TakeUndecided(UploadId));
+    }
+
+    /// <summary>An aborted scan that finishes "undecided" keeps nothing either.</summary>
+    [Fact]
+    public async Task AnAbortedScan_KeepsNoUndecidedRefusal()
+    {
+        var queue = new FileManagerScanQueue();
+        queue.TryEnqueue(UploadId);
+        await queue.DequeueAsync(TestContext.Current.CancellationToken);
+
+        queue.Cancel(UploadId);
+        queue.Finish(UploadId, "could not be scanned", awaitsDecision: true);
+
+        Assert.Null(queue.TakeRefusal(UploadId));
+        Assert.False(queue.TakeUndecided(UploadId));
+    }
 }

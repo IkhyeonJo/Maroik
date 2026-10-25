@@ -35,6 +35,13 @@ public sealed class FileManagerNode : AggregateRoot<long>
     /// <summary>True while the file's upload has not completed.</summary>
     public bool Uploading { get; private set; }
 
+    /// <summary>
+    /// True for a file stored without a virus scan: the scan could not be finished (too large for the scanner's limits, or the scanner
+    /// unavailable) and the owner, whose account an administrator allows it (<c>Account.FileManagerAllowUnscanned</c>), chose to keep
+    /// it anyway. Such a file is never previewed (<see cref="IsPreviewable"/>). Always false for a folder and an unfinished upload.
+    /// </summary>
+    public bool Unscanned { get; private set; }
+
     /// <summary>UTC timestamp when the node was created (for an upload: when it started).</summary>
     public DateTime Created { get; }
 
@@ -47,7 +54,7 @@ public sealed class FileManagerNode : AggregateRoot<long>
 
     /// <summary>Assigns every field verbatim (used by the factories and reconstitution).</summary>
     private FileManagerNode(long id, Email accountEmail, long? parentId, string name, bool isFolder, long size, string? storagePath,
-        bool uploading, DateTime created, DateTime updated) : base(id)
+        bool uploading, DateTime created, DateTime updated, bool unscanned) : base(id)
     {
         AccountEmail = accountEmail;
         ParentId = parentId;
@@ -56,6 +63,7 @@ public sealed class FileManagerNode : AggregateRoot<long>
         Size = size;
         StoragePath = storagePath;
         Uploading = uploading;
+        Unscanned = unscanned;
         Created = created;
         Updated = updated;
     }
@@ -65,8 +73,8 @@ public sealed class FileManagerNode : AggregateRoot<long>
     /// Bypasses validation — use only with data from the trusted repository layer.
     /// </summary>
     public static FileManagerNode Reconstitute(long id, string accountEmail, long? parentId, string name, bool isFolder, long size,
-        string? storagePath, bool uploading, DateTime created, DateTime updated) =>
-        new(id, Email.FromTrustedSource(accountEmail), parentId, name, isFolder, size, storagePath, uploading, created, updated);
+        string? storagePath, bool uploading, DateTime created, DateTime updated, bool unscanned = false) =>
+        new(id, Email.FromTrustedSource(accountEmail), parentId, name, isFolder, size, storagePath, uploading, created, updated, unscanned);
 
     /// <summary>Creates a folder named <paramref name="name"/> in <paramref name="parentId"/> (null = the root).</summary>
     public static ErrorOr<FileManagerNode> CreateFolder(string? accountEmail, long? parentId, string? name, DateTime utcNow)
@@ -77,7 +85,7 @@ public sealed class FileManagerNode : AggregateRoot<long>
         var emailResult = Email.Create(accountEmail);
         if (emailResult.IsError) return emailResult.Errors;
 
-        return new FileManagerNode(0, emailResult.Value, parentId, nameResult.Value, true, 0, null, false, utcNow, utcNow);
+        return new FileManagerNode(0, emailResult.Value, parentId, nameResult.Value, true, 0, null, false, utcNow, utcNow, false);
     }
 
     /// <summary>
@@ -96,7 +104,7 @@ public sealed class FileManagerNode : AggregateRoot<long>
         if (emailResult.IsError) return emailResult.Errors;
 
         string storagePath = $"{FileManagerUploadPolicy.StorageDirectory}/{storageId:D}";
-        return new FileManagerNode(0, emailResult.Value, parentId, nameResult.Value, false, size, storagePath, true, utcNow, utcNow);
+        return new FileManagerNode(0, emailResult.Value, parentId, nameResult.Value, false, size, storagePath, true, utcNow, utcNow, false);
     }
 
     /// <summary>Ends the upload: the file is scanned and stored, and is now a normal file of the drive.</summary>
@@ -105,6 +113,23 @@ public sealed class FileManagerNode : AggregateRoot<long>
         Uploading = false;
         Updated = utcNow;
     }
+
+    /// <summary>
+    /// Ends the upload of a file that could not be scanned for viruses and that its owner chose to keep: it becomes a normal file of the
+    /// drive, marked <see cref="Unscanned"/>. Whether the owner may do so is the account's (<c>Account.FileManagerAllowUnscanned</c>).
+    /// </summary>
+    public void CompleteUploadUnscanned(DateTime utcNow)
+    {
+        Uploading = false;
+        Unscanned = true;
+        Updated = utcNow;
+    }
+
+    /// <summary>
+    /// Whether the file may be previewed (F9): a scanned file that <see cref="FileManagerPreviewPolicy.IsPreviewable"/> accepts. An
+    /// <see cref="Unscanned"/> file is download-only (Q3), whatever its type.
+    /// </summary>
+    public bool IsPreviewable => !IsFolder && !Unscanned && FileManagerPreviewPolicy.IsPreviewable(Name, Size);
 
     /// <summary>Whether this is an upload left unfinished for longer than <see cref="FileManagerUploadPolicy.StaleUploadAge"/> (Q5).</summary>
     public bool IsStaleUpload(DateTime utcNow) => Uploading && FileManagerUploadPolicy.IsStale(Created, utcNow);

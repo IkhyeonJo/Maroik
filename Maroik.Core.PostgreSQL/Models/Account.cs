@@ -108,6 +108,11 @@ public partial class Account
     /// </summary>
     public long FileManagerQuotaBytes { get; set; }
 
+    /// <summary>
+    /// May store a File Manager file that could not be scanned for viruses
+    /// </summary>
+    public bool FileManagerAllowUnscanned { get; set; }
+
     /// <summary>Assets owned by this account (Asset.AccountEmail).</summary>
     public virtual ICollection<Asset> Assets { get; set; } = new List<Asset>();
 

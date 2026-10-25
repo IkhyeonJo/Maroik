@@ -183,4 +183,7 @@
   <data name="This account is locked" xml:space="preserve">
     <value>This account is locked</value>
   </data>
+  <data name="FileManagerAllowUnscanned" xml:space="preserve">
+    <value>Unscanned files allowed</value>
+  </data>
 </root>

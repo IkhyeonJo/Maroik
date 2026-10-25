@@ -59,9 +59,17 @@ public interface IFileClient
     /// <summary>
     /// Completes the File Manager upload <paramref name="uploadId"/> of <paramref name="expectedSize"/> bytes, and is called again until
     /// it is decided: the storage service scans it in the background and stores it under <c>upload/FileManager/{uploadId}</c>, so the
-    /// result is <see cref="FileUploadResult.Scanning"/> until it says whether it was stored, infected, unscannable or failed.
+    /// result is <see cref="FileUploadResult.Scanning"/> until it says whether it was stored, infected, too large to scan, unscannable or
+    /// failed.
     /// </summary>
     public Task<FileUploadResult> CompleteFileManagerUploadAsync(Guid uploadId, long expectedSize, string fileStorageBaseUrl, CancellationToken ct = default);
+
+    /// <summary>
+    /// Keeps the File Manager upload <paramref name="uploadId"/> unscanned at its owner's request: the storage service stores it only when
+    /// its scan could not be finished (<see cref="FileUploadResult.ScanLimitExceeded"/> / <see cref="FileUploadResult.ScanUnavailable"/>).
+    /// True once stored (also when it already was); false when refused or unreachable (logged).
+    /// </summary>
+    public Task<bool> AcceptUnscannedFileManagerUploadAsync(Guid uploadId, string fileStorageBaseUrl, CancellationToken ct = default);
 
     /// <summary>Drops what the storage service holds of an unfinished File Manager upload; false when refused or unreachable (logged).</summary>
     public Task<bool> AbortFileManagerUploadAsync(Guid uploadId, string fileStorageBaseUrl, CancellationToken ct = default);

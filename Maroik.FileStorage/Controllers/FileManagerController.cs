@@ -8,7 +8,7 @@ namespace Maroik.FileStorage.Controllers;
 /// <summary>
 /// Internal API of the File Manager's large-file flow (Implementation note [A]), next to <see cref="FileController"/>, which serves the
 /// attachments: <c>chunk</c> appends a 16 MB piece of an upload, <c>complete</c> queues its scan and reports it until the file is stored
-/// or refused, <c>abort</c> drops it, and
+/// or refused, <c>accept-unscanned</c> keeps a file whose scan could not be finished at its owner's request, <c>abort</c> drops it, and
 /// <c>delete</c> removes a stored File Manager file. Like the rest of this service it is reachable only on the internal network.
 /// The disk work is delegated to <see cref="IFileManagerStorageService"/>; a refusal is answered with its <c>FileStorageRefusals</c>
 /// text and logged with the upload id or path and the caller's correlation id.
@@ -77,6 +77,34 @@ public class FileManagerController(IFileManagerStorageService storage, ILogger<F
         catch (Exception ex)
         {
             logger.LogError(ex, "File Manager upload completion failed. UploadId={UploadId} CorrelationId={CorrelationId}", uploadId, correlationId);
+            return BadRequest(RequestFailed);
+        }
+    }
+
+    /// <summary>
+    /// Keeps upload <paramref name="uploadId"/> unscanned at its owner's request: only a file whose scan could not be finished waits for
+    /// that decision (<see cref="IFileManagerStorageService.AcceptUnscanned"/>). 200 once stored, or 400 with the refusal. Storing a file
+    /// nobody scanned is an audit event, logged at Warning.
+    /// </summary>
+    [AllowAnonymous]
+    [HttpPost("accept-unscanned")]
+    public IActionResult AcceptUnscanned([FromForm] string? uploadId, [FromForm] string? correlationId = null)
+    {
+        try
+        {
+            string? error = storage.AcceptUnscanned(uploadId);
+            if (error == null)
+            {
+                logger.LogWarning("File Manager upload {UploadId} stored without a virus scan at its owner's request. CorrelationId={CorrelationId}", uploadId, correlationId);
+                return Ok();
+            }
+
+            logger.LogWarning("File Manager unscanned store refused: {Reason}. UploadId={UploadId} CorrelationId={CorrelationId}", error, uploadId, correlationId);
+            return BadRequest(error);
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "File Manager unscanned store failed. UploadId={UploadId} CorrelationId={CorrelationId}", uploadId, correlationId);
             return BadRequest(RequestFailed);
         }
     }

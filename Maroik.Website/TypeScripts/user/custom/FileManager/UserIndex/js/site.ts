@@ -13,6 +13,10 @@
  *     file is skipped while the rest continue; a success / failure list closes the batch. The server scans each sent file for
  *     viruses in the background: the page asks CompleteUpload again until the scan is decided (its line says "scanning" meanwhile),
  *     sends the next file in the meantime, and gives a scan up (aborting the upload) on Cancel or after the server's wait limit.
+ *     A file the scan could not finish is answered with the server's question when the account may keep such files: the owner is
+ *     asked (one question at a time), "yes" keeps it unscanned (AcceptUnscannedUpload), "no" or closing the question aborts it.
+ *   • A file kept unscanned carries a "Not scanned" badge, has no preview (the server's flag), and downloading it — or a selection
+ *     the server counts unscanned files in — asks first.
  *
  * Every rule is the server's: the replies arrive with sizes, local times, icons, usage and the preview flag already decided, and
  * the server re-checks every name, size and quota. The 2 GB check before an upload starts is a UX mirror of
@@ -26,7 +30,7 @@
     // The replies this page reads, mirroring the controller's Json(...) results.
     const itemCheck = check.object({
         id: check.number, parentId: check.nullable(check.number), name: check.string, isFolder: check.boolean, size: check.string,
-        modified: check.string, icon: check.string, previewable: check.boolean, location: check.string, itemCount: check.number,
+        modified: check.string, icon: check.string, previewable: check.boolean, unscanned: check.boolean, location: check.string, itemCount: check.number,
     });
     type Item = Checked<typeof itemCheck>;
     const driveReply = replies.read({
@@ -40,13 +44,18 @@
         }),
     });
     const searchReply = replies.read({ items: check.array(itemCheck) });
-    const filesReply = replies.read({ files: check.array(check.object({ id: check.number, name: check.string })) });
+    // unscannedCount: how many of the files were kept without a virus scan (counted by the server).
+    const filesReply = replies.read({ files: check.array(check.object({ id: check.number, name: check.string })), unscannedCount: check.number });
     const doneReply = replies.read({});
     const folderCreatedReply = replies.write({ folderId: check.number });
     const beginReply = replies.read({ conflict: check.boolean, uploadId: check.string, name: check.string, chunkBytes: check.number });
     const chunkReply = replies.read({ length: check.number });
-    // CompleteUpload: still scanning (asked again), or decided — stored with its message, or the refusal.
-    const completeReply = check.oneOf(check.object({ result: check.literal(true), scanning: check.literal(true) }), replies.write({ scanning: check.literal(false) }));
+    // CompleteUpload: still scanning (asked again), a question (the scan could not be finished and the account may keep the file), or
+    // decided — stored with its message, or the refusal.
+    const completeReply = check.oneOf(
+        check.object({ result: check.literal(false), confirmUnscanned: check.literal(true), error: check.string }),
+        check.oneOf(check.object({ result: check.literal(true), scanning: check.literal(true) }), replies.write({ scanning: check.literal(false) })));
+    const acceptReply = replies.write({});
     const selectNodeEvent = check.object({ node: check.object({ id: check.string }) });
     const moveNodeEvent = check.object({ node: check.object({ id: check.string }), parent: check.string });
 
@@ -86,6 +95,9 @@
     const $previewTitle = $("#previewTitle");
     const $previewImage = $("#previewImage");
     const $confirmDeleteModal = $("#confirmDeleteModal");
+    const $unscannedModal = $("#unscannedModal");
+    const $unscannedMessage = $("#unscannedMessage");
+    const $btnUnscannedYes = $("#btnUnscannedYes");
     const $__RequestVerificationToken = $("input[name=\"__RequestVerificationToken\"]");
 
     // Authoritative in FileManagerUploadPolicy.MaxFileBytes (server); mirrored here for form UX only.
@@ -118,6 +130,12 @@
         fileTooLarge: fieldValue($("#localizerFileTooLarge")),
         scanning: fieldValue($("#localizerScanning")),
         scanWait: fieldValue($("#localizerScanWait")),
+        unscannedBadge: fieldValue($("#localizerUnscannedBadge")),
+        unscannedTitle: fieldValue($("#localizerUnscannedTitle")),
+        uploadedUnscanned: fieldValue($("#localizerUploadedUnscanned")),
+        unscannedDownload: fieldValue($("#localizerUnscannedDownload")),
+        yesUpload: fieldValue($("#localizerYesUpload")),
+        yesDownload: fieldValue($("#localizerYesDownload")),
         temporaryError: fieldValue($("#_localizerTemporaryError")),
     };
 
@@ -354,6 +372,11 @@
         RenderSelection();
     }
 
+    /** The "Not scanned" badge of a file kept without a virus scan. */
+    function unscannedBadge(): JQuery {
+        return $("<span>").addClass("badge badge-warning ml-1 file-manager-unscanned").attr("title", text.unscannedTitle).text(text.unscannedBadge);
+    }
+
     /** The grid view: one tile per item (icon, name, size and date). */
     function RenderGrid() {
         const $row = $("<div>").addClass("row");
@@ -361,6 +384,7 @@
             const $tile = $("<div>").addClass("file-manager-tile file-manager-item").attr("data-id", String(item.id)).attr("draggable", "true");
             $("<i>").addClass(`${item.icon} file-manager-tile-icon`).appendTo($tile);
             $("<div>").addClass("file-manager-tile-name").text(item.name).appendTo($tile);
+            if (item.unscanned) unscannedBadge().appendTo($tile);
             $("<small>").addClass("text-muted d-block").text(item.isFolder ? item.modified : `${item.size} · ${item.modified}`).appendTo($tile);
             if (item.location !== "") {
                 $("<small>").addClass("text-muted d-block file-manager-location").text(item.location).appendTo($tile);
@@ -396,12 +420,13 @@
         for (const item of shownItems) {
             const $row = $("<tr>").addClass("file-manager-item").attr("data-id", String(item.id)).attr("draggable", "true");
             $("<td>").append($("<input>").attr("type", "checkbox").addClass("file-manager-check")).appendTo($row);
-            $("<td>").addClass("file-manager-name").append($("<i>").addClass(`${item.icon} mr-2`), $("<span>").text(item.name)).appendTo($row);
+            const $name = $("<td>").addClass("file-manager-name").append($("<i>").addClass(`${item.icon} mr-2`), $("<span>").text(item.name)).appendTo($row);
+            if (item.unscanned) $name.append(unscannedBadge());
             if (searching) $("<td>").text(item.location).appendTo($row);
             $("<td>").text(item.size).appendTo($row);
             $("<td>").text(item.modified).appendTo($row);
             const $actions = $("<td>").addClass("text-nowrap");
-            if (!item.isFolder) $actions.append(actionButton("download", "fas fa-download", text.download, () => void DownloadOne(item.id, item.name)));
+            if (!item.isFolder) $actions.append(actionButton("download", "fas fa-download", text.download, () => void DownloadItem(item)));
             if (item.previewable) $actions.append(actionButton("preview", "fas fa-eye", text.preview, () => void Preview(item)));
             $actions.append(actionButton("rename", "fas fa-pen", text.rename, () => OpenRename(item)),
                 actionButton("delete", "fas fa-trash", text.delete, () => ConfirmDelete([item.id])));
@@ -459,7 +484,7 @@
         } else if (item.previewable) {
             void Preview(item);
         } else {
-            void DownloadOne(item.id, item.name);
+            void DownloadItem(item);
         }
     }
 
@@ -480,6 +505,44 @@
         }
     }
 
+    /** The dialog shown last: a new one opens only after it is answered, so two never cover each other. */
+    let dialogs: Promise<unknown> = Promise.resolve();
+
+    /** Opens a dialog once the ones before it are answered; resolves with its answer. */
+    function queueDialog<T>(open: () => Promise<T>): Promise<T> {
+        const answered = dialogs.then(open);
+        dialogs = answered;
+        return answered;
+    }
+
+    /**
+     * Asks about a file that was not scanned for viruses (keep it, or download it): resolves true on "yes"; "no", the X, Esc or a click
+     * outside close the modal, which is "no".
+     */
+    function AskUnscanned(message: string, yes: string): Promise<boolean> {
+        return queueDialog(() => new Promise<boolean>((resolve) => {
+            let answered = false;
+            const answer = (keep: boolean) => {
+                if (answered) return;
+                answered = true;
+                $btnUnscannedYes.off("click.unscanned");
+                $unscannedModal.off("hidden.bs.modal.unscanned");
+                $unscannedModal.modal("hide");
+                resolve(keep);
+            };
+            $unscannedMessage.text(message);
+            $btnUnscannedYes.text(yes).off("click.unscanned").on("click.unscanned", () => answer(true));
+            $unscannedModal.off("hidden.bs.modal.unscanned").on("hidden.bs.modal.unscanned", () => answer(false));
+            $unscannedModal.modal("show");
+        }));
+    }
+
+    /** Downloads one file of the list; one kept without a virus scan asks first. */
+    async function DownloadItem(item: Item) {
+        if (item.unscanned && !await AskUnscanned(format(text.unscannedDownload, 1), text.yesDownload)) return;
+        await DownloadOne(item.id, item.name);
+    }
+
     /** Downloads one file. */
     async function DownloadOne(id: number, name: string) {
         const blob = await postForBlob(`/FileManager/Download?id=${id}`);
@@ -494,6 +557,7 @@
             toastr.error(data.error);
             return;
         }
+        if (data.unscannedCount > 0 && !await AskUnscanned(format(text.unscannedDownload, data.unscannedCount), text.yesDownload)) return;
         for (const file of data.files) {
             await DownloadOne(file.id, file.name);
         }
@@ -560,7 +624,7 @@
 
     /** Asks how to resolve a name conflict; resolves with the choice and whether it applies to the rest of the batch. */
     function AskConflict(name: string): Promise<{ choice: ConflictChoice; applyToAll: boolean }> {
-        return new Promise((resolve) => {
+        return queueDialog(() => new Promise((resolve) => {
             $conflictMessage.text(format(text.conflict, name));
             $conflictApplyToAll.prop("checked", false);
             const answer = (choice: ConflictChoice) => () => {
@@ -572,7 +636,7 @@
             $("#btnConflictKeepBoth").off("click.conflict").on("click.conflict", answer("KeepBoth"));
             $("#btnConflictSkip").off("click.conflict").on("click.conflict", answer("Skip"));
             $conflictModal.modal("show");
-        });
+        }));
     }
 
     /** Adds a line to the upload result list; returns it. */
@@ -588,9 +652,10 @@
 
     /**
      * The outcome of one file: stored (no error), skipped, or the reason it failed; and the conflict answer it was given. A file whose
-     * chunks were all sent carries its virus scan (`scan`), which settles into its final outcome.
+     * chunks were all sent carries its virus scan (`scan`), which settles into its final outcome. `label` replaces the line's usual
+     * "uploaded" / "skipped" text (kept unscanned, or declined).
      */
-    interface FileOutcome { error: string | null; skipped: boolean; choice: ConflictChoice | null; applyToAll: boolean; scan: Promise<FileOutcome> | null; }
+    interface FileOutcome { error: string | null; skipped: boolean; choice: ConflictChoice | null; applyToAll: boolean; scan: Promise<FileOutcome> | null; label: string | null; }
 
     /** Resolves after `milliseconds`. */
     function wait(milliseconds: number): Promise<void> {
@@ -609,7 +674,8 @@
         let applyToAll = false;
         const begin = (conflict: string) =>
             post("/FileManager/BeginUpload", { ParentId: parentId, Name: entry.file.name, Size: entry.file.size, Conflict: conflict }, beginReply);
-        const outcome = (error: string | null, skipped = false): FileOutcome => ({ error: error, skipped: skipped, choice: choice, applyToAll: applyToAll, scan: null });
+        const outcome = (error: string | null, skipped = false, label: string | null = null): FileOutcome =>
+            ({ error: error, skipped: skipped, choice: choice, applyToAll: applyToAll, scan: null, label: label });
         const fail = (error: string): FileOutcome => outcome(error);
 
         let started = await begin(choice === "Overwrite" || choice === "KeepBoth" ? choice : "Ask");
@@ -619,7 +685,7 @@
                 choice = answer.choice;
                 applyToAll = answer.applyToAll;
             }
-            if (choice === "Skip") return { error: null, skipped: true, choice: choice, applyToAll: applyToAll, scan: null };
+            if (choice === "Skip") return { error: null, skipped: true, choice: choice, applyToAll: applyToAll, scan: null, label: null };
             started = await begin(choice);
         }
         if (started === null) return fail("");
@@ -629,7 +695,7 @@
         for (let offset = 0; offset < entry.file.size; offset += started.chunkBytes) {
             if (cancelled) {
                 await post("/FileManager/AbortUpload", { UploadId: started.uploadId }, doneReply);
-                return { error: null, skipped: true, choice: choice, applyToAll: applyToAll, scan: null };
+                return { error: null, skipped: true, choice: choice, applyToAll: applyToAll, scan: null, label: null };
             }
             const form = new FormData();
             form.append("UploadId", started.uploadId);
@@ -643,18 +709,20 @@
             $uploadProgressBar.css("width", `${Math.round(chunk.length * 100 / Math.max(entry.file.size, 1))}%`);
         }
 
-        return { error: null, skipped: false, choice: choice, applyToAll: applyToAll, scan: Confirm(started.uploadId, choice === "Overwrite", outcome) };
+        return { error: null, skipped: false, choice: choice, applyToAll: applyToAll, scan: Confirm(started.uploadId, choice === "Overwrite", outcome), label: null };
     }
 
     /**
      * Completes a sent file, asking again every scanPollMilliseconds while the server is still scanning it. Cancel, or no decision
-     * within maxScanWaitMilliseconds, gives the scan up: the upload is aborted (canceled, or failed with the generic error).
+     * within maxScanWaitMilliseconds, gives the scan up: the upload is aborted (canceled, or failed with the generic error). A scan
+     * that could not be finished is the owner's question ({@link KeepUnscanned}); the time spent answering it does not count.
      */
-    async function Confirm(uploadId: string, overwrite: boolean, outcome: (error: string | null, skipped?: boolean) => FileOutcome): Promise<FileOutcome> {
+    async function Confirm(uploadId: string, overwrite: boolean, outcome: (error: string | null, skipped?: boolean, label?: string | null) => FileOutcome): Promise<FileOutcome> {
         const deadline = Date.now() + maxScanWaitMilliseconds;
         for (; ;) {
             const done = await post("/FileManager/CompleteUpload", { UploadId: uploadId, Overwrite: overwrite }, completeReply);
             if (done === null) return outcome("");
+            if ("confirmUnscanned" in done) return KeepUnscanned(uploadId, overwrite, done.error, outcome);
             if (!done.result) return outcome(done.error);
             if (!done.scanning) return outcome(null);
             await wait(scanPollMilliseconds);
@@ -663,6 +731,21 @@
                 return cancelled ? outcome(null, true) : outcome(text.temporaryError);
             }
         }
+    }
+
+    /**
+     * Asks the owner whether to keep a file the scan could not finish (`question` is the server's): "yes" keeps it unscanned, "no"
+     * aborts it (canceled); a "yes" the server refuses aborts it too, failed with the reason.
+     */
+    async function KeepUnscanned(uploadId: string, overwrite: boolean, question: string, outcome: (error: string | null, skipped?: boolean, label?: string | null) => FileOutcome): Promise<FileOutcome> {
+        if (!await AskUnscanned(question, text.yesUpload)) {
+            await post("/FileManager/AbortUpload", { UploadId: uploadId }, doneReply);
+            return outcome(null, true, text.canceled);
+        }
+        const kept = await post("/FileManager/AcceptUnscannedUpload", { UploadId: uploadId, Overwrite: overwrite }, acceptReply);
+        if (kept !== null && kept.result) return outcome(null, false, text.uploadedUnscanned);
+        await post("/FileManager/AbortUpload", { UploadId: uploadId }, doneReply);
+        return outcome(kept === null ? "" : kept.error);
     }
 
     /**
@@ -763,10 +846,10 @@
         function count(entry: UploadEntry, outcome: FileOutcome, $line: JQuery) {
             if (outcome.skipped) {
                 skipped++;
-                settle($line, entry.file.name, cancelled ? text.canceled : text.skipped, false);
+                settle($line, entry.file.name, outcome.label ?? (cancelled ? text.canceled : text.skipped), false);
             } else if (outcome.error === null) {
                 uploaded++;
-                settle($line, entry.file.name, text.uploaded, false);
+                settle($line, entry.file.name, outcome.label ?? text.uploaded, false);
             } else {
                 failed++;
                 settle($line, entry.file.name, outcome.error, true);

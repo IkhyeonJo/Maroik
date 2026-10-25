@@ -118,6 +118,8 @@ public class FileClient(IHttpClientFactory httpClientFactory, ILogger<FileClient
     {
         if (reason.Contains(FileStorageRefusals.Infected, StringComparison.Ordinal))
             return FileUploadResult.Infected;
+        if (reason.Contains(FileStorageRefusals.ScanLimitExceeded, StringComparison.Ordinal))
+            return FileUploadResult.ScanLimitExceeded;
         return reason.Contains(FileStorageRefusals.ScanUnavailable, StringComparison.Ordinal) ? FileUploadResult.ScanUnavailable : FileUploadResult.Failed;
     }
 
@@ -276,6 +278,28 @@ public class FileClient(IHttpClientFactory httpClientFactory, ILogger<FileClient
         {
             logger.LogError(ex, "File Manager upload completion request failed for {UploadId}", uploadId);
             return FileUploadResult.Failed;
+        }
+    }
+
+    /// <inheritdoc />
+    public async Task<bool> AcceptUnscannedFileManagerUploadAsync(Guid uploadId, string fileStorageBaseUrl, CancellationToken ct = default)
+    {
+        try
+        {
+            using MultipartFormDataContent content = [];
+            AddText(content, "uploadId", uploadId.ToString("D"));
+
+            using HttpResponseMessage response = await PostFileManagerAsync("accept-unscanned", content, fileStorageBaseUrl, ct);
+            if (response.IsSuccessStatusCode)
+                return true;
+
+            logger.LogWarning("File Manager unscanned store of {UploadId} returned {StatusCode}: {Reason}", uploadId, (int)response.StatusCode, await ReadReasonAsync(response, ct));
+            return false;
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "File Manager unscanned store request failed for {UploadId}", uploadId);
+            return false;
         }
     }
 

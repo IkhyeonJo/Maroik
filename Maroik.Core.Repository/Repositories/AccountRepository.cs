@@ -23,7 +23,7 @@ public class AccountRepository(ApplicationDbContext context)
         e.DefaultMonetaryUnit, e.Locked, e.LoginAttempt, e.EmailConfirmed,
         e.AgreedServiceTerms, e.RegistrationToken, e.ResetPasswordToken,
         e.Created, e.Updated, e.Message, e.Deleted,
-        e.SecurityStamp, e.MustChangePassword, e.FileManagerQuotaBytes);
+        e.SecurityStamp, e.MustChangePassword, e.FileManagerQuotaBytes, e.FileManagerAllowUnscanned);
 
     /// <summary>Maps an <see cref="Account"/> domain aggregate to its <see cref="OrmAccount"/> persistence representation.</summary>
     protected override OrmAccount ToEntity(Account a) => new()
@@ -47,7 +47,8 @@ public class AccountRepository(ApplicationDbContext context)
         Deleted = a.Deleted,
         SecurityStamp = a.SecurityStamp,
         MustChangePassword = a.MustChangePassword,
-        FileManagerQuotaBytes = a.FileManagerQuotaBytes
+        FileManagerQuotaBytes = a.FileManagerQuotaBytes,
+        FileManagerAllowUnscanned = a.FileManagerAllowUnscanned
     };
 
     /// <summary>
@@ -106,7 +107,8 @@ public class AccountRepository(ApplicationDbContext context)
                   CAST("Created" AS TEXT) ILIKE {pattern} OR
                   CAST("Updated" AS TEXT) ILIKE {pattern} OR
                   "Message" ILIKE {pattern} OR
-                  CAST("Deleted" AS TEXT) ILIKE {pattern}
+                  CAST("Deleted" AS TEXT) ILIKE {pattern} OR
+                  CAST("FileManagerAllowUnscanned" AS TEXT) ILIKE {pattern}
             """).ToListAsync(ct);
 
         if (matchingEmails.Count == 0) return [];

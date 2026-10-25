@@ -76,4 +76,7 @@ public class AccountInputViewModel
     /// (<c>FileManagerUploadPolicy.QuotaBytesFromGb</c>). Null keeps the current quota.
     /// </summary>
     public decimal? FileManagerQuotaGb { get; set; }
+
+    /// <summary>Whether the account may keep File Manager files that could not be scanned for viruses (Q4). Null keeps the current setting.</summary>
+    public bool? FileManagerAllowUnscanned { get; set; }
 }
