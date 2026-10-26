@@ -15,7 +15,33 @@ Maroik is a modern web application built with ASP.NET Core MVC, featuring a comp
 
 ## Key Features
 
-### 1. Personal Finance Management
+### 1. File Manager ("My Drive")
+- One personal drive per user: a folder tree with create, rename, move, delete and search
+- Uploads in 16 MB chunks with progress and cancel, no per-file size limit — only the account's quota, which an
+  administrator sets (0 GB by default)
+- Every upload is virus-scanned by ClamAV in the background; the page polls until the file is stored or refused
+- Overwrite, keep both ("name (n).ext") or skip on a name conflict; image preview (png / jpg / gif / webp); downloads with a progress dialog
+
+### 2. Kanban Board
+- One personal board per user with four fixed lanes (Backlog, To do, In progress, Done)
+- Cards with a title, a plain-text description and a due date; overdue is decided in the owner's time zone
+
+### 3. Calendar and Schedule Management
+- Monthly calendar view
+- Event creation and management, with a file attachment and inline images per event
+- Calendars shared with other users or the public
+- Event reminders by e-mail, scheduled when the event is saved (time zone and daylight-saving aware) and sent by the
+  worker through the mail queue
+
+### 4. Bulletin Board System
+- Post creation, editing, and deletion
+- Comment system
+- File attachments, downloaded through a separate access-checked POST action and streamed — the post page itself carries only the file's name and size
+- Rich-text editor images, embedded in the post when it is viewed
+- Search functionality
+- Private notes: a personal board only its owner sees
+
+### 5. Personal Finance Management
 - Expense tracking and categorization
 - Income recording
 - Fixed (recurring) income and expenditure with deposit-day reminders — the next deposit is found across the year end (e.g. 28 Dec → 2 Jan), and a 29 February schedule is skipped in common years
@@ -24,7 +50,7 @@ Maroik is a modern web application built with ASP.NET Core MVC, featuring a comp
 - Financial reports and analytics
 - Export to Excel — amounts as numeric cells (they sum and sort in Excel), timestamps as `yyyy-MM-dd HH:mm:ss` in the viewer's time zone
 
-### 2. Income and Expenditure Budgets
+### 6. Income and Expenditure Budgets
 - One spreadsheet per year and kind (income / expenditure): a line per class, sub-class and currency, subtotals and
   totals, 30 free rows, columns A..Z (B..M months, N the year total, O..Z free)
 - Excel-compatible formulas (`=SUM(B2:B13)`, `=ACTUAL(...)`, references to other sheets and last year's sheet), with a
@@ -35,32 +61,6 @@ Maroik is a modern web application built with ASP.NET Core MVC, featuring a comp
   `#REF!`, a circular reference `#CYCLE!`
 - Every request recalculates the workbook from the stored inputs on the server (the values are never stored, so they
   cannot be stale); the Excel download writes the calculated values
-
-### 3. Calendar and Schedule Management
-- Monthly calendar view
-- Event creation and management, with a file attachment and inline images per event
-- Calendars shared with other users or the public
-- Event reminders by e-mail, scheduled when the event is saved (time zone and daylight-saving aware) and sent by the
-  worker through the mail queue
-
-### 4. Kanban Board
-- One personal board per user with four fixed lanes (Backlog, To do, In progress, Done)
-- Cards with a title, a plain-text description and a due date; overdue is decided in the owner's time zone
-
-### 5. File Manager ("My Drive")
-- One personal drive per user: a folder tree with create, rename, move, delete and search
-- Uploads in 16 MB chunks with progress and cancel, no per-file size limit — only the account's quota, which an
-  administrator sets (0 GB by default)
-- Every upload is virus-scanned by ClamAV in the background; the page polls until the file is stored or refused
-- Overwrite, keep both ("name (n).ext") or skip on a name conflict; image preview (png / jpg / gif / webp); downloads with a progress dialog
-
-### 6. Bulletin Board System
-- Post creation, editing, and deletion
-- Comment system
-- File attachments, downloaded through a separate access-checked POST action and streamed — the post page itself carries only the file's name and size
-- Rich-text editor images, embedded in the post when it is viewed
-- Search functionality
-- Private notes: a personal board only its owner sees
 
 ### 7. User Management
 - Role-based access control (Admin/User)
