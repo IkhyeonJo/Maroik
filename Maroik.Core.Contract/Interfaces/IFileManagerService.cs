@@ -55,6 +55,13 @@ public interface IFileManagerService
     /// <summary>Abandons an unfinished upload.</summary>
     Task<ServiceResult> AbortUploadAsync(string accountEmail, Guid uploadId, CancellationToken ct = default);
 
+    /// <summary>
+    /// The worker's hourly sweep (Q5): removes the uploads idle for longer than <c>FileManagerUploadPolicy.StaleUploadAge</c> of at most
+    /// <paramref name="maxAccounts"/> accounts, each account in a transaction of its own, and then drops their files in file storage.
+    /// Returns how many uploads it removed; an account that fails is logged and left for the next sweep.
+    /// </summary>
+    Task<int> RemoveStaleUploadsAsync(int maxAccounts, CancellationToken ct = default);
+
     /// <summary>Opens a file for download (streamed from file storage, F3).</summary>
     Task<(ServiceResult Result, AttachmentDownload? File)> OpenFileAsync(string accountEmail, long id, CancellationToken ct = default);
 

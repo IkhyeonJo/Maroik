@@ -340,7 +340,9 @@ public class FileManagerService(
     {
         long quota = (await accountRepository.FindByEmailAsync(accountEmail, ct))?.FileManagerQuotaBytes ?? 0;
         FileManagerTree tree = await LoadTreeAsync(accountEmail, ct);
-        var result = FileManagerUploadPolicy.CheckQuota(quota, UsedBytes(tree.Nodes), totalBytes);
+        // Abandoned uploads do not count, as in BeginUploadAsync (Q5): an account they filled must still reach the upload that removes them.
+        DateTime utcNow = UtcNow;
+        var result = FileManagerUploadPolicy.CheckQuota(quota, UsedBytes(tree.Nodes.Where(n => !n.IsStaleUpload(utcNow))), totalBytes);
         return result.IsError ? ServiceResult.FromError(result.FirstError) : ServiceResult.Ok();
     }
 
@@ -372,7 +374,7 @@ public class FileManagerService(
                 return (ServiceResult.FromError(started.FirstError), null);
             }
 
-            // Uploads abandoned for more than 24 hours are removed now (Q5): they stop counting against the quota.
+            // Uploads idle for more than an hour are removed now (Q5), ahead of the worker's hourly sweep: they stop counting against the quota.
             stale = [.. tree.Nodes.Where(n => n.IsStaleUpload(utcNow))];
             string name = started.Value.Name;
             if (FinishedChildren(tree, request.ParentId).FirstOrDefault(n => n.Name == name) is { } existing)
@@ -438,7 +440,11 @@ public class FileManagerService(
 
         long? length = await fileClient.AppendFileManagerChunkAsync(uploadId, offset, chunk, BaseUrl, ct);
         if (length is { } received)
+        {
+            // A stored chunk keeps the upload alive (Q5), however long the whole upload takes.
+            await nodeRepository.RecordUploadActivityAsync(accountEmail, upload.Id, UtcNow, ct);
             return (ServiceResult.Ok(), received);
+        }
 
         logger.LogWarning("File Manager: chunk at {Offset} of upload {UploadId} of {Email} was not stored", offset, uploadId, accountEmail);
         return (Temporary(), 0);
@@ -456,9 +462,12 @@ public class FileManagerService(
         // Read when the upload completes, so an administrator's change made while it was sent is the one that counts.
         bool scanDisabled = (await accountRepository.FindByEmailAsync(accountEmail, ct))?.FileManagerScanDisabled == true;
         FileUploadResult outcome = await fileClient.CompleteFileManagerUploadAsync(uploadId, upload.Size, scanDisabled, BaseUrl, ct);
-        // Still scanning in the background: nothing is decided, the reservation stays.
+        // Still scanning in the background: nothing is decided, the reservation stays, and the page's poll keeps the upload alive (Q5).
         if (outcome == FileUploadResult.Scanning)
+        {
+            await nodeRepository.RecordUploadActivityAsync(accountEmail, upload.Id, UtcNow, ct);
             return (ServiceResult.Ok(), FileManagerCompletion.Scanning);
+        }
 
         if (outcome != FileUploadResult.Stored)
         {
@@ -564,6 +573,50 @@ public class FileManagerService(
         await nodeRepository.DeleteByEmailAndIdsAsync(accountEmail, [upload.Id], ct);
         await DeleteStoredFileAsync(accountEmail, upload, ct);
         return ServiceResult.Ok();
+    }
+
+    /// <inheritdoc />
+    public async Task<int> RemoveStaleUploadsAsync(int maxAccounts, CancellationToken ct = default)
+    {
+        DateTime utcNow = UtcNow;
+        int removed = 0;
+        foreach (string accountEmail in await nodeRepository.ListAccountsWithUploadsIdleBeforeAsync(utcNow - FileManagerUploadPolicy.StaleUploadAge, maxAccounts, ct))
+            removed += await RemoveStaleUploadsOfAsync(accountEmail, utcNow, ct);
+        return removed;
+    }
+
+    /// <summary>
+    /// Removes the account's idle uploads under its account lock — judged again there, since a chunk may have arrived after the unlocked
+    /// listing — and then aborts them in file storage (P4). A failure is logged and rolled back; the next sweep tries again.
+    /// </summary>
+    private async Task<int> RemoveStaleUploadsOfAsync(string accountEmail, DateTime utcNow, CancellationToken ct)
+    {
+        List<FileManagerNode> stale;
+        await unitOfWork.BeginAsync(ct: ct);
+        try
+        {
+            await accountRepository.FindByEmailForUpdateAsync(accountEmail, ct);
+            stale = [.. (await LoadTreeAsync(accountEmail, ct)).Nodes.Where(n => n.IsStaleUpload(utcNow))];
+            if (stale.Count == 0)
+            {
+                await unitOfWork.RollbackAsync(ct);
+                return 0;
+            }
+
+            await nodeRepository.DeleteByEmailAndIdsAsync(accountEmail, [.. stale.Select(n => n.Id)], ct);
+            await unitOfWork.CommitAsync(ct);
+        }
+        catch (Exception e)
+        {
+            logger.LogError(e, "File Manager: failed to remove the abandoned uploads of {Email}", accountEmail);
+            await unitOfWork.RollbackAsync(ct);
+            return 0;
+        }
+
+        foreach (FileManagerNode upload in stale)
+            await DeleteStoredFileAsync(accountEmail, upload, ct);
+        logger.LogInformation("File Manager: removed {Count} abandoned upload(s) of {Email}", stale.Count, accountEmail);
+        return stale.Count;
     }
 
     // -- Download / preview ------------------------------------------------------------------

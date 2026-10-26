@@ -168,8 +168,10 @@ services:
           - ./Maroik.FileStorage/upload/:/app/upload:rw            # uploaded files persisted to the host tree
 
     # ── Maroik.Worker ────────────────────────────────────────────────────────
-    # Headless background service: consumes RabbitMQ messages (e.g. sends email).
-    # No network ports at all. Needs only PostgreSQL + rabbitmq.
+    # Headless background service: consumes RabbitMQ messages (e.g. sends email), sends the
+    # calendar reminders and once an hour removes the File Manager's abandoned uploads (in
+    # maroik.filestorage, FileStorage__BaseUrl from .env.debug). No network ports at all.
+    # Starts after PostgreSQL + rabbitmq; a sweep that cannot reach file storage is logged.
     maroik.worker:
         build :
          context : .

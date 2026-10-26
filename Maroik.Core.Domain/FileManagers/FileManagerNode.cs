@@ -38,7 +38,7 @@ public sealed class FileManagerNode : AggregateRoot<long>
     /// <summary>UTC timestamp when the node was created (for an upload: when it started).</summary>
     public DateTime Created { get; }
 
-    /// <summary>UTC timestamp of the most recent change.</summary>
+    /// <summary>UTC timestamp of the most recent change; for an unfinished upload, of its last activity (start, chunk, scan poll — Q5).</summary>
     public DateTime Updated { get; private set; }
 
     /// <summary>The GUID name the file is stored under (also the id of its upload), or null for a folder.</summary>
@@ -114,8 +114,11 @@ public sealed class FileManagerNode : AggregateRoot<long>
     /// <summary>Whether the file may be previewed (F9): a file that <see cref="FileManagerPreviewPolicy.IsPreviewable"/> accepts.</summary>
     public bool IsPreviewable => !IsFolder && FileManagerPreviewPolicy.IsPreviewable(Name, Size);
 
-    /// <summary>Whether this is an upload left unfinished for longer than <see cref="FileManagerUploadPolicy.StaleUploadAge"/> (Q5).</summary>
-    public bool IsStaleUpload(DateTime utcNow) => Uploading && FileManagerUploadPolicy.IsStale(Created, utcNow);
+    /// <summary>
+    /// Whether this is an unfinished upload with no activity since <see cref="Updated"/> for longer than
+    /// <see cref="FileManagerUploadPolicy.StaleUploadAge"/> (Q5), however long ago it started.
+    /// </summary>
+    public bool IsStaleUpload(DateTime utcNow) => Uploading && FileManagerUploadPolicy.IsStale(Updated, utcNow);
 
     /// <summary>Renames the node. Whether the name is free in its folder is the caller's check (and the database's).</summary>
     public ErrorOr<Success> Rename(string? name, DateTime utcNow)

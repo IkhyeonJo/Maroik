@@ -11,7 +11,8 @@ namespace Maroik.Core.Service.Tests.Services;
 
 /// <summary>
 /// The upload flow of <see cref="FileManagerService"/>: the quota check before a batch (F2), starting one file (name, size, name conflict
-/// F2-C, quota reserved under the account lock Q4, abandoned uploads cleaned up Q5), its chunks (P5), its completion — scanned and stored
+/// F2-C, quota reserved under the account lock Q4, abandoned uploads cleaned up Q5), its chunks (P5) and scan polls — each recorded as the
+/// upload's activity (Q5) — its completion — scanned and stored
 /// by file storage, an overwrite replacing the old file, an infected or unscannable file refused and logged (S2, S8) — and an abort.
 /// </summary>
 public class FileManagerServiceUploadTests
@@ -47,6 +48,25 @@ public class FileManagerServiceUploadTests
         Assert.True(fits.Success);
         Assert.Equal("FileManager.QuotaExceeded", tooBig.ErrorCode);
         Assert.Equal("Not enough storage: {0} GB short.", tooBig.ErrorKey);
+        Assert.Equal([1.0m], tooBig.ErrorArgs);
+    }
+
+    /// <summary>
+    /// An upload idle for more than an hour (Q5) no longer counts, as in <see cref="FileManagerService.BeginUploadAsync"/>: otherwise an
+    /// account it filled could never reach the upload that removes it. An upload still active keeps its reservation, however old.
+    /// </summary>
+    [Fact]
+    public async Task CheckQuotaAsync_IgnoresStaleUploads_ButCountsActiveOnes()
+    {
+        _h.QuotaBytes = 2 * H.Gb;
+        _h.File("idle.iso", size: H.Gb, uploading: true, created: H.Now.AddMinutes(-61));
+        _h.File("active.iso", size: H.Gb, uploading: true, created: H.Now.AddMinutes(-59));
+
+        ServiceResult fits = await _h.Sut.CheckQuotaAsync(H.Email, H.Gb, TestContext.Current.CancellationToken);
+        ServiceResult tooBig = await _h.Sut.CheckQuotaAsync(H.Email, 2 * H.Gb, TestContext.Current.CancellationToken);
+
+        Assert.True(fits.Success, fits.ErrorKey);
+        Assert.Equal("FileManager.QuotaExceeded", tooBig.ErrorCode);
         Assert.Equal([1.0m], tooBig.ErrorArgs);
     }
 
@@ -141,15 +161,16 @@ public class FileManagerServiceUploadTests
     }
 
     /// <summary>
-    /// An upload left unfinished for more than 24 hours is removed when the same user starts a new one (Q5): its row is deleted inside
-    /// the transaction — so it no longer counts against the quota — and its staging file is aborted after the commit.
+    /// An upload idle for more than an hour is removed when the same user starts a new one (Q5): its row is deleted inside the
+    /// transaction — so it no longer counts against the quota — and its staging file is aborted after the commit. One active within the
+    /// hour stays.
     /// </summary>
     [Fact]
     public async Task BeginUploadAsync_CleansUpStaleUploads_FirstFreeingTheirQuota()
     {
         _h.QuotaBytes = H.Gb;
-        long stale = _h.File("old.iso", size: H.Gb, uploading: true, created: H.Now.AddHours(-25));
-        long fresh = _h.File("new.iso", size: 1, uploading: true, created: H.Now.AddHours(-1));
+        long stale = _h.File("old.iso", size: H.Gb, uploading: true, created: H.Now.AddMinutes(-61));
+        long fresh = _h.File("new.iso", size: 1, uploading: true, created: H.Now.AddMinutes(-59));
         Guid staleId = _h.Node(stale).StorageId!.Value;
 
         FileManagerUploadStart start = await StartAsync(Upload("a.txt", H.Gb - 1));
@@ -221,6 +242,31 @@ public class FileManagerServiceUploadTests
         Assert.True(result.Success);
         Assert.Equal(4, length);
         _h.Files.Verify(f => f.AppendFileManagerChunkAsync(start.UploadId, 0, It.IsAny<Stream>(), H.BaseUrl, It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    /// <summary>A stored chunk is the upload's activity (Q5): its last activity becomes now, so a slow upload that keeps sending is never stale.</summary>
+    [Fact]
+    public async Task AppendChunkAsync_RecordsTheUploadsActivity()
+    {
+        FileManagerUploadStart start = await StartAsync(Upload("a.bin", 10));
+        _h.Time.Advance(TimeSpan.FromMinutes(50));
+
+        await _h.Sut.AppendChunkAsync(H.Email, start.UploadId, 0, new MemoryStream(new byte[4]), 4, TestContext.Current.CancellationToken);
+
+        Assert.Equal(H.Now.AddMinutes(50), Assert.Single(_h.Nodes.All).Updated);
+    }
+
+    /// <summary>A chunk file storage did not store is no activity: the upload's last activity stays.</summary>
+    [Fact]
+    public async Task AppendChunkAsync_RecordsNoActivity_WhenFileStorageRefuses()
+    {
+        FileManagerUploadStart start = await StartAsync(Upload("a.bin", 10));
+        _h.Files.Setup(f => f.AppendFileManagerChunkAsync(It.IsAny<Guid>(), It.IsAny<long>(), It.IsAny<Stream>(), H.BaseUrl, It.IsAny<CancellationToken>())).ReturnsAsync((long?)null);
+        _h.Time.Advance(TimeSpan.FromMinutes(50));
+
+        await _h.Sut.AppendChunkAsync(H.Email, start.UploadId, 0, new MemoryStream([1]), 1, TestContext.Current.CancellationToken);
+
+        Assert.Equal(H.Now, Assert.Single(_h.Nodes.All).Updated);
     }
 
     /// <summary>A chunk that would go past the declared size is refused before it reaches file storage.</summary>
@@ -367,6 +413,22 @@ public class FileManagerServiceUploadTests
         _h.UnitOfWork.Verify(u => u.BeginAsync(It.IsAny<IsolationLevel?>(), It.IsAny<CancellationToken>()), Times.Never);
         _h.Accounts.Verify(a => a.FindByEmailForUpdateAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
         _h.Files.Verify(f => f.DeleteFileManagerFileAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    /// <summary>
+    /// Each poll while the scan runs is the upload's activity (Q5): a long scan whose page keeps asking is never stale, while one whose
+    /// page was closed stops being touched and is swept an hour later.
+    /// </summary>
+    [Fact]
+    public async Task CompleteUploadAsync_WhileTheScanRuns_RecordsTheUploadsActivity()
+    {
+        FileManagerUploadStart start = await StartAsync(Upload("a.bin", 10));
+        _h.Files.Setup(f => f.CompleteFileManagerUploadAsync(start.UploadId, 10, It.IsAny<bool>(), H.BaseUrl, It.IsAny<CancellationToken>())).ReturnsAsync(FileUploadResult.Scanning);
+        _h.Time.Advance(TimeSpan.FromMinutes(50));
+
+        await _h.Sut.CompleteUploadAsync(H.Email, start.UploadId, false, TestContext.Current.CancellationToken);
+
+        Assert.Equal(H.Now.AddMinutes(50), Assert.Single(_h.Nodes.All).Updated);
     }
 
     /// <summary>An upload that is already completed (a repeated answer, a second tab) is "stored" again; file storage is not asked.</summary>

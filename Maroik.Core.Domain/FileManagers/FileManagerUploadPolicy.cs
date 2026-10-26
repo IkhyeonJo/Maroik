@@ -36,8 +36,14 @@ public static class FileManagerUploadPolicy
     /// </summary>
     public const int MaxScanWaitMilliseconds = 16 * 60 * 1_000;
 
-    /// <summary>How long an upload may stay unfinished before the next upload of the same user removes it (Q5).</summary>
-    public static readonly TimeSpan StaleUploadAge = TimeSpan.FromHours(24);
+    /// <summary>
+    /// How long an unfinished upload may go without activity — its start, a chunk, a poll of its virus scan — before it is abandoned
+    /// (Q5) and removed by the worker's hourly sweep or by the same user's next upload. It counts from the last activity, not from the
+    /// start, so an upload that takes days but keeps sending is never removed: the page sends a chunk every few minutes at most and asks
+    /// about the scan every <see cref="ScanPollMilliseconds"/>, so an hour of silence means the page is gone (closed, offline, asleep) —
+    /// and the page cannot resume an upload it lost anyway.
+    /// </summary>
+    public static readonly TimeSpan StaleUploadAge = TimeSpan.FromHours(1);
 
     /// <summary>The storage directory every File Manager file lives in, under its GUID name (P1).</summary>
     public const string StorageDirectory = "upload/FileManager";
@@ -76,8 +82,8 @@ public static class FileManagerUploadPolicy
         return DomainError.Validation("FileManager.QuotaExceeded", "Not enough storage: {0} GB short.", shortfallGb);
     }
 
-    /// <summary>Whether an upload started at <paramref name="started"/> is older than <see cref="StaleUploadAge"/>.</summary>
-    public static bool IsStale(DateTime started, DateTime utcNow) => utcNow - started > StaleUploadAge;
+    /// <summary>Whether an upload last active at <paramref name="lastActivity"/> has been idle for longer than <see cref="StaleUploadAge"/>.</summary>
+    public static bool IsStale(DateTime lastActivity, DateTime utcNow) => utcNow - lastActivity > StaleUploadAge;
 
     /// <summary>
     /// The quota in bytes for one typed in GB by an administrator (Q2): 1 GB = 1024³ bytes, rounded to a whole byte. A negative quota,

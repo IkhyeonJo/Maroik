@@ -67,4 +67,22 @@ internal sealed class InMemoryFileManagerNodeRepository : IFileManagerNodeReposi
         _nodes.RemoveAll(n => doomed.Contains(n.Id));
         return Task.CompletedTask;
     }
+
+    /// <inheritdoc />
+    public Task RecordUploadActivityAsync(string accountEmail, long id, DateTime utcNow, CancellationToken ct = default)
+    {
+        int index = _nodes.FindIndex(n => n.AccountEmail.Value == accountEmail && n.Id == id && n.Uploading);
+        if (index >= 0)
+        {
+            FileManagerNode n = _nodes[index];
+            _nodes[index] = FileManagerNode.Reconstitute(n.Id, n.AccountEmail.Value, n.ParentId, n.Name, n.IsFolder, n.Size, n.StoragePath, n.Uploading, n.Created, utcNow);
+        }
+
+        return Task.CompletedTask;
+    }
+
+    /// <inheritdoc />
+    public Task<List<string>> ListAccountsWithUploadsIdleBeforeAsync(DateTime idleBefore, int max, CancellationToken ct = default) =>
+        Task.FromResult<List<string>>([.. _nodes.Where(n => n.Uploading && n.Updated < idleBefore).Select(n => n.AccountEmail.Value)
+            .Distinct().Order(StringComparer.Ordinal).Take(max)]);
 }

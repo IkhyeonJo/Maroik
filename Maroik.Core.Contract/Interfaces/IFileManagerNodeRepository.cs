@@ -18,4 +18,16 @@ public interface IFileManagerNodeRepository : IGenericRepository<FileManagerNode
 
     /// <summary>Deletes the account's nodes with the given IDs (another account's IDs are left alone).</summary>
     Task DeleteByEmailAndIdsAsync(string accountEmail, IReadOnlyCollection<long> ids, CancellationToken ct = default);
+
+    /// <summary>
+    /// Records activity on the account's unfinished upload <paramref name="id"/>: its <c>Updated</c> becomes <paramref name="utcNow"/>
+    /// (Q5). Only that column is written, at once and without a lock; a finished, removed or another account's node is left alone.
+    /// </summary>
+    Task RecordUploadActivityAsync(string accountEmail, long id, DateTime utcNow, CancellationToken ct = default);
+
+    /// <summary>
+    /// The emails, in order, of at most <paramref name="max"/> accounts holding an unfinished upload with no activity since before
+    /// <paramref name="idleBefore"/> (the worker's sweep of abandoned uploads, Q5). Read without a lock.
+    /// </summary>
+    Task<List<string>> ListAccountsWithUploadsIdleBeforeAsync(DateTime idleBefore, int max, CancellationToken ct = default);
 }

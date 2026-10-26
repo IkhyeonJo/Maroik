@@ -150,6 +150,62 @@ public sealed class FileManagerNodeRepositoryTests(DatabaseFixture database) : R
         Assert.False(await Context.FileManagerNodes.AsNoTracking().AnyAsync(n => n.Id == folder || n.Id == sub || n.Id == file, TestContext.Current.CancellationToken));
     }
 
+    // -- Upload activity / the sweep's listing (Q5) ------------------------------------
+
+    /// <summary>An upload of <paramref name="email"/> started (and last active) at <paramref name="at"/>.</summary>
+    private Task<long> UploadAtAsync(string email, string name, DateTime at) =>
+        SaveAsync(FileManagerNode.StartUpload(email, null, name, 10, Guid.NewGuid(), at, scanDisabled: false).Value);
+
+    /// <summary>The stored <c>Updated</c> of node <paramref name="id"/>.</summary>
+    private Task<DateTime> UpdatedOfAsync(long id) =>
+        Context.FileManagerNodes.AsNoTracking().Where(n => n.Id == id).Select(n => n.Updated).SingleAsync(TestContext.Current.CancellationToken);
+
+    /// <summary>Activity is recorded on the owner's unfinished upload only: a finished file and another account's upload keep their time.</summary>
+    [Fact]
+    public async Task RecordUploadActivityAsync_StampsOnlyTheOwnersUnfinishedUpload()
+    {
+        string owner = UniqueEmail("owner");
+        string other = UniqueEmail("other");
+        long upload = await FileAsync(owner, "a.bin", uploading: true);
+        long finished = await FileAsync(owner, "b.bin");
+        long theirs = await FileAsync(other, "c.bin", uploading: true);
+        DateTime later = Now.AddMinutes(30);
+
+        foreach (long id in new[] { upload, finished, theirs })
+            await Sut.RecordUploadActivityAsync(owner, id, later, TestContext.Current.CancellationToken);
+
+        Assert.Equal((later, Now, Now), (await UpdatedOfAsync(upload), await UpdatedOfAsync(finished), await UpdatedOfAsync(theirs)));
+    }
+
+    /// <summary>
+    /// The sweep lists each account with an upload idle since before the cutoff once, in email order and at most <c>max</c> of them; an
+    /// upload active at or after the cutoff and a finished file do not list their account.
+    /// </summary>
+    [Fact]
+    public async Task ListAccountsWithUploadsIdleBeforeAsync_ListsEachAccountWithAnIdleUpload_Once()
+    {
+        // Long before the nodes the other tests of this database create, so only this test's rows can be listed.
+        DateTime cutoff = new(2001, 1, 1, 12, 0, 0, DateTimeKind.Utc);
+        string a = UniqueEmail("a");
+        string b = UniqueEmail("b");
+        string active = UniqueEmail("c");
+        string finished = UniqueEmail("d");
+        await UploadAtAsync(a, "1.bin", cutoff.AddHours(-2));
+        await UploadAtAsync(a, "2.bin", cutoff.AddHours(-3));
+        await UploadAtAsync(b, "1.bin", cutoff.AddSeconds(-1));
+        await UploadAtAsync(active, "1.bin", cutoff);
+        FileManagerNode done = FileManagerNode.StartUpload(finished, null, "1.bin", 10, Guid.NewGuid(), cutoff.AddHours(-5), scanDisabled: false).Value;
+        done.CompleteUpload(cutoff.AddHours(-5));
+        await SaveAsync(done);
+        string[] expected = [.. new[] { a, b }.Order(StringComparer.Ordinal)];
+
+        List<string> all = await Sut.ListAccountsWithUploadsIdleBeforeAsync(cutoff, 10, TestContext.Current.CancellationToken);
+        List<string> first = await Sut.ListAccountsWithUploadsIdleBeforeAsync(cutoff, 1, TestContext.Current.CancellationToken);
+
+        Assert.Equal(expected, all);
+        Assert.Equal([expected[0]], first);
+    }
+
     // -- Schema -----------------------------------------------------------------------
 
     /// <summary>Saving <paramref name="row"/> fails on <paramref name="constraint"/>.</summary>

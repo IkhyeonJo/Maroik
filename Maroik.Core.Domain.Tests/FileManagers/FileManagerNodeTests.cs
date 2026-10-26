@@ -121,14 +121,19 @@ public class FileManagerNodeTests
         Assert.Null(File(2).StorageId);
     }
 
-    /// <summary>An upload left unfinished for more than 24 hours is stale; a completed file or a folder never is.</summary>
+    /// <summary>
+    /// An upload whose last activity (<see cref="FileManagerNode.Updated"/>: its start, a chunk, a scan poll) is more than an hour ago is
+    /// stale, however long ago it started — a slow upload that keeps sending is never stale. A completed file or a folder never is.
+    /// </summary>
     [Fact]
-    public void IsStaleUpload_IsTrue_OnlyForAnOldUnfinishedUpload()
+    public void IsStaleUpload_IsTrue_OnlyForAnUnfinishedUploadIdleForOverAnHour()
     {
-        FileManagerNode upload = FileManagerNode.Reconstitute(1, "user@example.com", null, "a", false, 1, "upload/FileManager/x", true, Now, Now);
+        FileManagerNode idle = FileManagerNode.Reconstitute(1, "user@example.com", null, "a", false, 1, "upload/FileManager/x", true, Now, Now);
+        FileManagerNode active = FileManagerNode.Reconstitute(4, "user@example.com", null, "b", false, 1, "upload/FileManager/y", true, Now.AddHours(-200), Now);
 
-        Assert.True(upload.IsStaleUpload(Now.AddHours(25)));
-        Assert.False(upload.IsStaleUpload(Now.AddHours(23)));
+        Assert.True(idle.IsStaleUpload(Now.AddMinutes(61)));
+        Assert.False(idle.IsStaleUpload(Now.AddMinutes(59)));
+        Assert.False(active.IsStaleUpload(Now.AddMinutes(59)));
         Assert.False(File(2).IsStaleUpload(Now.AddDays(30)));
         Assert.False(Folder(3).IsStaleUpload(Now.AddDays(30)));
     }

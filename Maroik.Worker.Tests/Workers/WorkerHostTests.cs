@@ -38,6 +38,7 @@ public class WorkerHostTests(WorkerBrokerFixture broker) : IClassFixture<WorkerB
         "--ServerSetting:SmtpOptions:fromFullName=Maroik Test",
         "--ServerSetting:DomainName=https://www.maroik.test/",
         "--ServerSetting:DemoAccountEmail=demo@maroik.test",
+        "--FileStorage:BaseUrl=http://files.maroik.test",
     ];
 
     /// <summary>The SMTP settings are read from <c>ServerSetting:SmtpOptions</c> with their types converted (port → int, ssl → bool).</summary>
@@ -66,6 +67,32 @@ public class WorkerHostTests(WorkerBrokerFixture broker) : IClassFixture<WorkerB
         ServerSetting settings = host.Services.GetRequiredService<IOptions<ServerSetting>>().Value;
 
         Assert.Equal(("https://www.maroik.test/", "demo@maroik.test"), (settings.DomainName, settings.DemoAccountEmail));
+    }
+
+    /// <summary>The File Manager sweep's setting: the file storage it aborts abandoned uploads in (<c>FileStorage:BaseUrl</c>, as on the website).</summary>
+    [Fact]
+    public void Build_BindsTheFileStorageAddress()
+    {
+        using IHost host = WorkerHost.Build(Args("amqp://guest:guest@127.0.0.1:5672/"));
+
+        Assert.Equal("http://files.maroik.test", host.Services.GetRequiredService<IOptions<ServerSetting>>().Value.FileStorageBaseUrl);
+    }
+
+    /// <summary>
+    /// The File Manager's hourly sweep is wired: the scheduler runs as a hosted service, the File Manager service is scoped (it uses the
+    /// DbContext) and reaches file storage through the file client.
+    /// </summary>
+    [Fact]
+    public async Task Build_WiresTheFileManagerUploadSweep()
+    {
+        IHost host = WorkerHost.Build(Args("amqp://guest:guest@127.0.0.1:5672/"));
+        await using var hostLifetime = (IAsyncDisposable)host;
+
+        await using AsyncServiceScope scope = host.Services.CreateAsyncScope();
+
+        Assert.Contains(host.Services.GetServices<IHostedService>(), s => s is FileManagerUploadSweepScheduler);
+        Assert.IsType<FileManagerService>(scope.ServiceProvider.GetRequiredService<IFileManagerService>());
+        Assert.IsType<FileClient>(scope.ServiceProvider.GetRequiredService<IFileClient>());
     }
 
     /// <summary>

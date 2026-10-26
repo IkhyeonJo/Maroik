@@ -228,7 +228,17 @@ File Manager
   refuses it ("larger than 2 GB") unless the locked account row has the scan turned off, and `ClamavClient` never sends a stream that
   long (it answers `LimitExceeded` at once). A scan that hits a clamd limit is never clean: it is `ClamavScanResult.LimitExceeded`
   (`FileStorageRefusals.ScanLimitExceeded`), kept apart from a scanner outage (`Unavailable`) in the logs; both are refused as "could
-  not be scanned" and the staging file is dropped. Uploads left unfinished for 24 hours are cleaned up.
+  not be scanned" and the staging file is dropped.
+- Abandoned uploads (since 2026-10-26, owner's request; it replaced "24 hours after the start, at the user's next upload"): an
+  unfinished upload is abandoned after `FileManagerUploadPolicy.StaleUploadAge` (1 hour) without activity, counted from its last
+  activity, not its start — `Updated` of an `Uploading` row is stamped by every stored chunk and every scan poll that answers
+  "scanning" (`RecordUploadActivityAsync`, a single column write, no transaction). An upload that keeps sending is never removed,
+  however many days it takes (a 16 MB chunk within the hour needs ~4.7 KB/s); an hour of silence means the page is gone, and the page
+  cannot resume a lost upload anyway. The worker's `FileManagerUploadSweepScheduler` runs `FileManagerService.RemoveStaleUploadsAsync`
+  at start-up and every hour (at most 100 accounts per run, each in its own transaction: account row locked, idleness judged again
+  under the lock, rows deleted, abort sent after the commit). `BeginUpload` still removes the account's idle uploads too, and
+  `CheckQuota` (the check before a batch) does not count them, so an account they filled can always start the upload that removes
+  them. The worker reads `FileStorage:BaseUrl` like the website.
 - "Turn off the virus scan for files" (since 2026-10-25, owner's request; it replaced the "keep a file the scan could not finish"
   question flow): an administrator ticks it per account in `Management/Account` (`Account.FileManagerScanDisabled`, default false,
   in the grid, its search, the Excel export and the admin update audit line). `CompleteUpload` reads it when the upload completes and
@@ -243,7 +253,7 @@ File Manager
   `CompleteUpload` again every `FileManagerUploadPolicy.ScanPollMilliseconds` and gives up (abort) after `MaxScanWaitMilliseconds`
   or on Cancel, and sends the next file meanwhile. Completing is idempotent (an already completed upload answers "stored"). A
   restart forgets the queue: the next `complete` of a whole staging file queues it again. A page closed during the scan leaves the
-  row `Uploading`, and the 24-hour cleanup's abort removes the stored file too (abort drops staging, stored file and pending scan).
+  row `Uploading`, and the hourly sweep's abort removes the stored file too (abort drops staging, stored file and pending scan).
 - An overwrite keeps the old row until the new upload completes: the unique name index is partial (`WHERE NOT "Uploading"`), so
   the uploading twin may coexist with it.
 - Downloading several items downloads each file separately (no ZIP). The page fetches each file whole before the browser saves it,

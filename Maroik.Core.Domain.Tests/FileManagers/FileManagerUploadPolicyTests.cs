@@ -4,20 +4,20 @@ namespace Maroik.Core.Domain.Tests.FileManagers;
 
 /// <summary>
 /// Unit tests for <see cref="FileManagerUploadPolicy"/>: the largest file ClamAV can scan (S1), the chunk size (P5), the age of
-/// an abandoned upload (Q5), how long the page waits for the virus scan (D6) and the quota check (Q3, Q4).
+/// an abandoned upload's idle time (Q5), how long the page waits for the virus scan (D6) and the quota check (Q3, Q4).
 /// </summary>
 public class FileManagerUploadPolicyTests
 {
     /// <summary>
-    /// The fixed limits: ClamAV scans a file of at most 2,147,483,645 bytes (the stream limit clamd clamps 2048M to), 16 MB chunks,
-    /// 24 hours.
+    /// The fixed limits: ClamAV scans a file of at most 2,147,483,645 bytes (the stream limit clamd clamps 2048M to), 16 MB chunks, and
+    /// an upload abandoned after an hour without activity.
     /// </summary>
     [Fact]
     public void TheLimits_AreTheAgreedValues()
     {
         Assert.Equal(2_147_483_645L, FileManagerUploadPolicy.MaxScannableBytes);
         Assert.Equal(16 * 1024 * 1024, FileManagerUploadPolicy.ChunkBytes);
-        Assert.Equal(TimeSpan.FromHours(24), FileManagerUploadPolicy.StaleUploadAge);
+        Assert.Equal(TimeSpan.FromHours(1), FileManagerUploadPolicy.StaleUploadAge);
     }
 
     /// <summary>
@@ -103,14 +103,14 @@ public class FileManagerUploadPolicyTests
         Assert.Equal("FileManager.QuotaExceeded", FileManagerUploadPolicy.CheckQuota(quotaBytes: 10, usedBytes: 50, requestedBytes: 1).FirstError.Code);
     }
 
-    /// <summary>An upload is stale once it is older than 24 hours.</summary>
+    /// <summary>An upload is stale once its last activity is more than an hour ago.</summary>
     [Fact]
-    public void IsStale_IsTrue_OnlyPastTwentyFourHours()
+    public void IsStale_IsTrue_OnlyPastAnHourWithoutActivity()
     {
         DateTime now = new(2026, 5, 24, 12, 0, 0, DateTimeKind.Utc);
 
-        Assert.False(FileManagerUploadPolicy.IsStale(now.AddHours(-24), now));
-        Assert.True(FileManagerUploadPolicy.IsStale(now.AddHours(-24).AddSeconds(-1), now));
+        Assert.False(FileManagerUploadPolicy.IsStale(now.AddHours(-1), now));
+        Assert.True(FileManagerUploadPolicy.IsStale(now.AddHours(-1).AddSeconds(-1), now));
     }
 
     // -- Quota units (the administrator enters GB) -----------------------------------

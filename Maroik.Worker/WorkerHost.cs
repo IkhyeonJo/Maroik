@@ -42,7 +42,7 @@ internal static class WorkerHost
             .Enrich.FromLogContext()
             .WriteTo.Console(outputTemplate: ConsoleOutputTemplate, formatProvider: CultureInfo.InvariantCulture));
 
-        #region ServerSettings (SMTP only — reuses the shared ServerSetting shape)
+        #region ServerSettings (SMTP, the reminders' and the File Manager sweep's — reuses the shared ServerSetting shape)
 
         builder.Services.Configure<ServerSetting>(cfg =>
         {
@@ -58,6 +58,8 @@ internal static class WorkerHost
             // The calendar reminders' link base and the account they never go to (CalendarReminderDispatchService).
             cfg.DomainName = section["DomainName"];
             cfg.DemoAccountEmail = section["DemoAccountEmail"];
+            // The file storage the File Manager sweep aborts abandoned uploads in (the same key as the website's).
+            cfg.FileStorageBaseUrl = builder.Configuration["FileStorage:BaseUrl"];
         });
 
         #endregion
@@ -100,6 +102,12 @@ internal static class WorkerHost
         builder.Services.AddScoped<ICalendarReminderDispatchService, CalendarReminderDispatchService>();
         builder.Services.AddHostedService<CalendarReminderScheduler>();
         builder.Services.AddSingleton<EmailDeadLetterRedriver>();
+
+        // File Manager: once an hour the scheduler removes the abandoned uploads (Q5) — their rows here, their staging files in file storage.
+        builder.Services.AddHttpClient();
+        builder.Services.AddScoped<IFileClient, FileClient>();
+        builder.Services.AddScoped<IFileManagerService, FileManagerService>();
+        builder.Services.AddHostedService<FileManagerUploadSweepScheduler>();
 
         return builder.Build();
     }

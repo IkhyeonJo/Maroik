@@ -51,4 +51,15 @@ public class FileManagerNodeRepository(ApplicationDbContext context)
     /// <inheritdoc />
     public Task DeleteByEmailAndIdsAsync(string accountEmail, IReadOnlyCollection<long> ids, CancellationToken ct = default)
         => DeleteWhereAsync(e => e.AccountEmail == accountEmail && ids.Contains(e.Id), ct);
+
+    /// <inheritdoc />
+    // One UPDATE of the one column, run at once: a chunk or a scan poll neither opens a transaction nor waits for the account lock.
+    public Task RecordUploadActivityAsync(string accountEmail, long id, DateTime utcNow, CancellationToken ct = default)
+        => Set.Where(e => e.AccountEmail == accountEmail && e.Id == id && e.Uploading)
+            .ExecuteUpdateAsync(s => s.SetProperty(e => e.Updated, utcNow), ct);
+
+    /// <inheritdoc />
+    public Task<List<string>> ListAccountsWithUploadsIdleBeforeAsync(DateTime idleBefore, int max, CancellationToken ct = default)
+        => Set.AsNoTracking().Where(e => e.Uploading && e.Updated < idleBefore)
+            .Select(e => e.AccountEmail).Distinct().OrderBy(e => e).Take(max).ToListAsync(ct);
 }

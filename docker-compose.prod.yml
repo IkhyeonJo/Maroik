@@ -185,8 +185,10 @@ services:
           - dataprotection-keys:/root/.aspnet/DataProtection-Keys  # unused: FileStorage does not use Data Protection
 
     # ── Maroik.Worker ────────────────────────────────────────────────────────
-    # Headless background service: consumes RabbitMQ messages (e.g. sends email).
-    # No network ports at all. Needs only postgresql + rabbitmq.
+    # Headless background service: consumes RabbitMQ messages (e.g. sends email), sends the
+    # calendar reminders and once an hour removes the File Manager's abandoned uploads (in
+    # maroik.filestorage, FileStorage__BaseUrl from .env.prod). No network ports at all.
+    # Starts after postgresql + rabbitmq; a sweep that cannot reach file storage is logged.
     maroik.worker:
         image: ghcr.io/ikhyeonjo/maroik-worker:${MAROIK_TAG:?set MAROIK_TAG or run Maroik.DeployOps/Deploy.sh}
         container_name: Maroik.Worker
