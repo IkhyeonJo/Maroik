@@ -5,7 +5,7 @@
 # Contact: admin@maroik.com
 
 ## Introduction
-Maroik is a modern web application built with ASP.NET Core MVC, featuring a comprehensive set of tools for personal and business management. It includes features such as expense tracking, calendar management, bulletin boards, and role-based user management.
+Maroik is a modern web application built with ASP.NET Core MVC, featuring a comprehensive set of tools for personal and business management. It includes features such as expense tracking, spreadsheet-style budgets, calendar management with e-mail reminders, bulletin boards, a personal Kanban board, a personal file drive, and role-based user management.
 
 - Domain Registrar: AWS Route 53 Domains
 - DNS: Cloudflare DNS
@@ -15,7 +15,33 @@ Maroik is a modern web application built with ASP.NET Core MVC, featuring a comp
 
 ## Key Features
 
-### 1. Personal Finance Management
+### 1. File Manager ("My Drive")
+- One personal drive per user: a folder tree with create, rename, move, delete and search
+- Uploads in 16 MB chunks with progress and cancel, no per-file size limit — only the account's quota, which an
+  administrator sets (0 GB by default)
+- Every upload is virus-scanned by ClamAV in the background; the page polls until the file is stored or refused
+- Overwrite, keep both ("name (n).ext") or skip on a name conflict; image preview (png / jpg / gif / webp); downloads with a progress dialog
+
+### 2. Kanban Board
+- One personal board per user with four fixed lanes (Backlog, To do, In progress, Done)
+- Cards with a title, a plain-text description and a due date; overdue is decided in the owner's time zone
+
+### 3. Calendar and Schedule Management
+- Monthly calendar view
+- Event creation and management, with a file attachment and inline images per event
+- Calendars shared with other users or the public
+- Event reminders by e-mail, scheduled when the event is saved (time zone and daylight-saving aware) and sent by the
+  worker through the mail queue
+
+### 4. Bulletin Board System
+- Post creation, editing, and deletion
+- Comment system
+- File attachments, downloaded through a separate access-checked POST action and streamed — the post page itself carries only the file's name and size
+- Rich-text editor images, embedded in the post when it is viewed
+- Search functionality
+- Private notes: a personal board only its owner sees
+
+### 5. Personal Finance Management
 - Expense tracking and categorization
 - Income recording
 - Fixed (recurring) income and expenditure with deposit-day reminders — the next deposit is found across the year end (e.g. 28 Dec → 2 Jan), and a 29 February schedule is skipped in common years
@@ -24,29 +50,31 @@ Maroik is a modern web application built with ASP.NET Core MVC, featuring a comp
 - Financial reports and analytics
 - Export to Excel — amounts as numeric cells (they sum and sort in Excel), timestamps as `yyyy-MM-dd HH:mm:ss` in the viewer's time zone
 
-### 2. Calendar and Schedule Management
-- Monthly calendar view
-- Event creation and management, with a file attachment and inline images per event
-- Calendars shared with other users or the public
+### 6. Income and Expenditure Budgets
+- One spreadsheet per year and kind (income / expenditure): a line per class, sub-class and currency, subtotals and
+  totals, 30 free rows, columns A..Z (B..M months, N the year total, O..Z free)
+- Excel-compatible formulas (`=SUM(B2:B13)`, `=ACTUAL(...)`, references to other sheets and last year's sheet), with a
+  formula bar that colours references, matches parentheses and suggests functions
+- Budget, actual and remaining views: actuals are the month's real income / expenditure records in the owner's time zone
+- Spreadsheet editing: range selection, copy / paste, fill down / right, undo / redo, carry-over from last year
+- Inputs are stored under stable row keys, so adding or removing a line never breaks a formula; a removed line shows
+  `#REF!`, a circular reference `#CYCLE!`
+- Every request recalculates the workbook from the stored inputs on the server (the values are never stored, so they
+  cannot be stale); the Excel download writes the calculated values
 
-### 3. Bulletin Board System
-- Post creation, editing, and deletion
-- Comment system
-- File attachments, downloaded through a separate access-checked POST action and streamed — the post page itself carries only the file's name and size
-- Rich-text editor images, embedded in the post when it is viewed
-- Search functionality
-
-### 4. User Management
+### 7. User Management
 - Role-based access control (Admin/User)
 - User profile management, including an avatar
 - Session-based authentication
 - Password management (registration confirmation, password reset, forced password change)
 - E-mail addresses are matched trimmed and case-insensitively at login, password reset and confirmation resend
 - Privacy: uploaded avatars and editor images are re-encoded without their metadata (EXIF GPS position, camera model, capture time), after first being turned upright by their EXIF orientation
+- Per-account time zone and default monetary unit; English and Korean UI
 
-### 5. Admin Dashboard
-- User management — role change, lock/unlock, e-mail confirmation, terms agreement, soft delete/restore, password reset with a forced change at next login; role, lock and delete changes are audit-logged with the acting admin
-- Navigation menu management (the menu doubles as the access-control list)
+### 8. Admin Dashboard
+- User management — role change, lock/unlock, e-mail confirmation, terms agreement, soft delete/restore, password reset with a forced change at next login, File Manager quota and per-account virus-scan switch; role, lock and delete changes are audit-logged with the acting admin
+- Safeguards: an administrator cannot lock, delete or demote their own account or the last active administrator
+- Navigation menu management (the menu doubles as the access-control list); a change that would cut administrators off from menu management is refused
 - Account export to Excel without password hashes or registration/reset tokens
 - Analytics dashboard
 
@@ -60,6 +88,13 @@ Maroik is a modern web application built with ASP.NET Core MVC, featuring a comp
 - **Rich domain model.** Value objects (`Email`, `Money`, `CurrencyCode`, `AccountRole`, …) replace primitive strings; admin actions are intent-revealing aggregate operations (`ChangeRole`, `Lock`/`Unlock`, `ForceConfirmEmail`/`RevokeEmailConfirmation`, `AcceptServiceTerms`/`RevokeServiceTerms`, `SoftDelete`/`Restore`, `AdminResetPassword`) instead of a field-overwriting update.
 - **Use-case DTOs.** Self-registration, admin account creation and admin account update each have their own request type, so a registration form can never carry a role, lock or confirmation flag.
 - **Test-first development.** Every change starts with a failing test, including the log entries it must write; real PostgreSQL and RabbitMQ run in Testcontainers instead of mocks wherever the behaviour depends on them.
+- **A formula engine of its own.** The budget sheets' Excel-compatible language is a lexer, a recursive-descent parser,
+  a binder, a tree-walking evaluator and a dependency graph (Tarjan / Kahn) in the Domain project. User text is never
+  compiled to code: it can only build a closed set of nodes and call the `FormulaFunctions` catalog.
+- **Rules the compiler and the tests enforce.** Logging rules (every `catch` logs or says why not, no secrets in
+  templates) are checked over every source with the Roslyn parser; memory-safety, security, culture and banned-API
+  (direct clock reads, sync-over-async) analyzers are build errors; one .NET SDK is pinned for `global.json`, every
+  Dockerfile and CI.
 - **Production runs what CI tested.** CI builds the three images once, versions them from the commit messages and publishes them to GHCR; the server only pulls them. A release that changes the database schema is never deployed automatically.
 
 ## Development Timeline
@@ -99,7 +134,7 @@ Maroik has been built by one developer since May 2021. It was developed in a pri
 | 2026-07 | Valkey (replacing Redis), RabbitMQ and the Maroik.Worker mail service |
 | 2026-09 | Client scripts migrated to TypeScript; repository and E2E tests on real PostgreSQL (Testcontainers); a series of whole-solution reviews fixing race conditions and security gaps; strict TDD and logging rules; mutation testing (Domain 78 % → 92 %) |
 | 2026-09-28 | Moved from the private repository to this public repository, where all development continues |
-| 2026-10 | Service mutation score 70 % → 96 %; TLS ended at Cloudflare through a Cloudflare Tunnel; RSA replaced with ASP.NET Core Data Protection; memory-safety, logging-template, security and banned-API analyzers as build errors; admin and menu safeguards against locking administrators out; GitHub Actions CI (coverage gate, isolated E2E run), release-only minified client scripts, semver from Conventional Commits, images published to GHCR and pulled by the server; calendar reminders delivered by e-mail (scheduled by the domain, sent once a minute by the worker through the mail queue) |
+| 2026-10 | Service mutation score 70 % → 96 %; TLS ended at Cloudflare through a Cloudflare Tunnel; RSA replaced with ASP.NET Core Data Protection; memory-safety, logging-template, security and banned-API analyzers as build errors; admin and menu safeguards against locking administrators out; GitHub Actions CI (coverage gate, isolated E2E run), release-only minified client scripts, semver from Conventional Commits, images published to GHCR and pulled by the server; calendar reminders delivered by e-mail (scheduled by the domain, sent once a minute by the worker through the mail queue); one pinned .NET SDK with a weekly bump pull request; personal Kanban board; personal File Manager (chunked uploads, quotas, background virus scan, download progress); Income and Expenditure Budget sheets with an Excel-compatible formula engine; `Deploy.sh` hosting modes (Cloudflare Tunnel, port forwarding behind Caddy, no domain) |
 
 ## Architecture
 
@@ -121,7 +156,7 @@ flowchart TB
     Repository["Maroik.Core.Repository<br/>EF Core repositories"]
     PostgreSQL["Maroik.Core.PostgreSQL<br/>DbContext · mapped models"]
     Client["Maroik.Core.Client<br/>file storage · RabbitMQ · SMTP · ClamAV"]
-    Worker["Maroik.Worker<br/>e-mail consumer"]
+    Worker["Maroik.Worker<br/>e-mail consumer · reminder scheduler"]
     FileStorage["Maroik.FileStorage<br/>internal file API"]
 
     Website --> Service
@@ -134,13 +169,14 @@ flowchart TB
     Client -. "mail jobs (RabbitMQ)" .-> Worker
     Client -. "HTTP upload / download" .-> FileStorage
 
-    Worker -- "mail status" --> Service
+    Worker -- "mail status · due reminders" --> Service
     Worker -- "send mail (SMTP)" --> Client
     FileStorage -- "virus scan (ClamAV)" --> Client
 ```
 
-- **Domain** holds the business rules — aggregates, value objects (`Email`, `Money`, `CurrencyCode`, …) and policies
-  (finance class taxonomies, reminder limits, fixed schedules, passwords, image uploads). It calls no other
+- **Domain** holds the business rules — aggregates, value objects (`Email`, `Money`, `CurrencyCode`, …), policies
+  (finance class taxonomies, reminder limits and schedules, fixed schedules, passwords, uploads, File Manager quotas
+  and names, Kanban lanes) and the budget formula engine. It calls no other
   project, logs nothing, never reads the clock (the current time is passed in) and reports every error through
   `DomainError`, so the outer layers can translate it.
 - **Service** orchestrates a use case: it loads aggregates through repository interfaces, calls domain methods, owns
@@ -175,13 +211,14 @@ flowchart LR
     FileStorage -- "scan (TCP 3310)" --> ClamAV["ClamAV"]
     Website -- "publish mail jobs" --> RabbitMQ[("RabbitMQ")]
     RabbitMQ -- "deliver mail jobs" --> Worker["Maroik.Worker"]
-    Worker -- "mail status" --> PostgreSQL
+    Worker -- "mail status · due reminders" --> PostgreSQL
     Worker -- "send mail" --> SMTP["SMTP relay"]
 ```
 
-Every service runs as a container under Docker Compose. Uploads are scanned by ClamAV before they are stored, the
-file storage is reachable only on the internal network, and outgoing mail is queued in RabbitMQ and sent by the
-worker. In production the site is reached through a Cloudflare Tunnel, so the host publishes no port (a build deployed with
+Every service runs as a container under Docker Compose. Uploads are scanned by ClamAV before they are stored (File
+Manager uploads in the background; an administrator can turn the scan off for one account's File Manager), the file
+storage is reachable only on the internal network, and outgoing mail is queued in RabbitMQ and sent by the worker,
+which also sends the due calendar reminders once a minute. In production the site is reached through a Cloudflare Tunnel, so the host publishes no port (a build deployed with
 `Deploy.sh` choice 1 can instead use port forwarding behind Caddy, or plain HTTP without a domain).
 
 ### Client scripts
@@ -236,6 +273,7 @@ generic error instead of failing half-way through a handler.
 - Font Awesome 5.15.3
 - Summernote 0.8.18
 - FullCalendar 5.5.1
+- CodeMirror 5.60.0 (the budget formula bar)
 - jQuery UI 1.12.1
 - jquery-confirm 3.3.4
 - toastr 2.1.4
@@ -280,7 +318,7 @@ The goal is that a test fails whenever the behaviour it describes breaks — not
   or ones the MTP runner miscounts inside static field initializers).
 
 ### Test projects
-Every source project has a matching `*.Tests` project (xUnit v3 on Microsoft.Testing.Platform), plus the client-script suite and an end-to-end suite. `Maroik.slnx` builds them all; CI runs each with coverage (`.github/workflows/ci-cd.yml`, gate: line >= 80 %, branch >= 65 %).
+Every source project has a matching `*.Tests` project (xUnit v3 on Microsoft.Testing.Platform), plus the client-script suite and an end-to-end suite — about 3,700 .NET tests and 500 client-script tests. `Maroik.slnx` builds them all; CI runs each with coverage (`.github/workflows/ci-cd.yml`, gate: line >= 80 %, branch >= 65 %).
 
 | Tests | What they cover | Needs Docker |
 |---|---|---|
@@ -304,7 +342,8 @@ dotnet test --project Maroik.Core.Service.Tests            # any single project
 ## Getting Started
 
 ### Prerequisites
-- .NET 10.0 SDK
+- The .NET 10 SDK version pinned in `global.json` (`rollForward: disable`, so exactly that version)
+- Node 22 (`npm ci` in `Maroik.Website/`) for the client scripts and their tests when building on the host
 - Docker and Docker Compose
 - Visual Studio (Windows) or JetBrains Rider (Linux/Mac)
 
@@ -464,20 +503,29 @@ bash Maroik.DeployOps/Deploy.sh
 <img width="551" height="574" alt="1" src="https://github.com/user-attachments/assets/54821d51-5fce-46b6-a182-c97bbfa86b76" />
 
 ### User Dashboard
-<img width="1893" height="934" alt="2" src="https://github.com/user-attachments/assets/670fa326-a4ac-4d40-998c-ee03c60b0c66" />
+<img width="1902" height="940" alt="0" src="https://github.com/user-attachments/assets/22e98cb6-8f39-402a-9ec5-e73528afa06d" />
+
+### File Manager
+<img width="1918" height="942" alt="1" src="https://github.com/user-attachments/assets/4b4099de-20d8-4fcd-9d68-838a29b5c6c9" />
+
+### Kanban Board
+<img width="1915" height="934" alt="2" src="https://github.com/user-attachments/assets/7537ddfc-6657-48a4-acac-88e1dab44ee2" />
 
 ### Calendar
-<img width="1894" height="932" alt="3" src="https://github.com/user-attachments/assets/68a9864e-805d-4e4b-a1dd-0a473ac939f9" />
+<img width="1915" height="933" alt="3" src="https://github.com/user-attachments/assets/884d923b-995b-4c98-93b1-5b10841c315c" />
 
 ### Forum
-<img width="1911" height="935" alt="4" src="https://github.com/user-attachments/assets/b24632b5-00e1-48dd-8b59-783f0b59cdcf" />
+<img width="1914" height="940" alt="4" src="https://github.com/user-attachments/assets/76894805-ac2e-4416-bba6-670b62133fa3" />
 
 ### NonfactorGrid
-<img width="1914" height="935" alt="5" src="https://github.com/user-attachments/assets/9b503e28-2677-4069-a72b-e604997eb68a" />
-<img width="1916" height="930" alt="6" src="https://github.com/user-attachments/assets/479cd480-568e-4cb9-b391-56f62d7dc098" />
+<img width="1917" height="933" alt="5" src="https://github.com/user-attachments/assets/8271558d-037e-45d6-a6a8-8e1a92958570" />
+<img width="1914" height="942" alt="6" src="https://github.com/user-attachments/assets/c6231b7a-6d87-44fe-aed4-cc1ba9bb6921" />
+
+### Budget
+<img width="1897" height="944" alt="7" src="https://github.com/user-attachments/assets/d1df24a3-e67e-4051-93b0-a9414c62765e" />
 
 ### User Profile
-<img width="1885" height="932" alt="7" src="https://github.com/user-attachments/assets/6162c519-b963-4eef-a286-dd91db5e9efe" />
+<img width="1899" height="942" alt="8" src="https://github.com/user-attachments/assets/b167e3c8-aa32-40ff-8332-748a8412f96d" />
 
 ## Contributing
 1. Fork the repository
