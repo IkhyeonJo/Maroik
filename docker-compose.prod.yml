@@ -215,7 +215,7 @@ services:
     # Reads TUNNEL_TOKEN from .env.prod. Running the same token on another host adds a
     # replica connector to the same tunnel.
     cloudflared:
-        image: cloudflare/cloudflared:2026.9.3
+        image: cloudflare/cloudflared:2026.10.4
         container_name: Maroik.Cloudflared
         logging: *default-logging
         restart: unless-stopped
