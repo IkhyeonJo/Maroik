@@ -10,7 +10,7 @@ namespace Maroik.Core.Domain.FileManagers;
 public static class FileManagerUploadPolicy
 {
     /// <summary>
-    /// The largest file ClamAV can scan, 2,147,483,645 bytes (S1): ClamAV cannot scan files of 2 GB or more ("Technical design
+    /// The largest file ClamAV can scan, 2,147,483,645 bytes: ClamAV cannot scan files of 2 GB or more ("Technical design
     /// limitations prevent ClamAV from scanning files greater than 2 GB", clamd.conf.sample), and clamd clamps the compose files'
     /// 2048M stream limit to this. It is not an upload limit (since 2026-10-25, owner's request, there is none): a larger file can
     /// only be stored without a scan, so <see cref="CheckSize"/> refuses it up front from an account whose virus scan is on.
@@ -19,33 +19,33 @@ public static class FileManagerUploadPolicy
     public const long MaxScannableBytes = 2_147_483_645;
 
     /// <summary>
-    /// The size of each upload chunk, 16 MB (P5): the site sits behind Cloudflare, which caps one request body at 100 MB, and a chunk
+    /// The size of each upload chunk, 16 MB: the site sits behind Cloudflare, which caps one request body at 100 MB, and a chunk
     /// stays well inside Kestrel's default 30 MB request limit.
     /// </summary>
     public const int ChunkBytes = 16 * 1024 * 1024;
 
     /// <summary>
-    /// How often, in milliseconds, the page asks whether a completed upload's virus scan is done (D6). The scan runs in the background in
+    /// How often, in milliseconds, the page asks whether a completed upload's virus scan is done. The scan runs in the background in
     /// file storage, so every ask is a short request: none waits for ClamAV, which takes minutes over a large archive.
     /// </summary>
     public const int ScanPollMilliseconds = 3_000;
 
     /// <summary>
-    /// How long, in milliseconds, the page waits for a virus scan before it gives the upload up (D6): file storage ends a scan after 15
+    /// How long, in milliseconds, the page waits for a virus scan before it gives the upload up: file storage ends a scan after 15
     /// minutes (<c>FileManagerStorageService.ScanTimeout</c>), and a minute more covers the scans queued before it.
     /// </summary>
     public const int MaxScanWaitMilliseconds = 16 * 60 * 1_000;
 
     /// <summary>
     /// How long an unfinished upload may go without activity — its start, a chunk, a poll of its virus scan — before it is abandoned
-    /// (Q5) and removed by the worker's hourly sweep or by the same user's next upload. It counts from the last activity, not from the
+    /// and removed by the worker's hourly sweep or by the same user's next upload. It counts from the last activity, not from the
     /// start, so an upload that takes days but keeps sending is never removed: the page sends a chunk every few minutes at most and asks
     /// about the scan every <see cref="ScanPollMilliseconds"/>, so an hour of silence means the page is gone (closed, offline, asleep) —
     /// and the page cannot resume an upload it lost anyway.
     /// </summary>
     public static readonly TimeSpan StaleUploadAge = TimeSpan.FromHours(1);
 
-    /// <summary>The storage directory every File Manager file lives in, under its GUID name (P1).</summary>
+    /// <summary>The storage directory every File Manager file lives in, under its GUID name.</summary>
     public const string StorageDirectory = "upload/FileManager";
 
     /// <summary>Bytes in one GB, the unit the quota is shown and refused in.</summary>
@@ -69,8 +69,8 @@ public static class FileManagerUploadPolicy
 
     /// <summary>
     /// Accepts an upload of <paramref name="requestedBytes"/> when it fits what is left of <paramref name="quotaBytes"/> after
-    /// <paramref name="usedBytes"/> (the user's files, unfinished uploads included, Q4). Otherwise the refusal names the shortfall in
-    /// GB, rounded up to 0.1 GB, so the user is told "N GB short". A quota already below the usage (Q3) refuses every new upload.
+    /// <paramref name="usedBytes"/> (the user's files, unfinished uploads included). Otherwise the refusal names the shortfall in
+    /// GB, rounded up to 0.1 GB, so the user is told "N GB short". A quota already below the usage refuses every new upload.
     /// </summary>
     public static ErrorOr<Success> CheckQuota(long quotaBytes, long usedBytes, long requestedBytes)
     {
@@ -86,7 +86,7 @@ public static class FileManagerUploadPolicy
     public static bool IsStale(DateTime lastActivity, DateTime utcNow) => utcNow - lastActivity > StaleUploadAge;
 
     /// <summary>
-    /// The quota in bytes for one typed in GB by an administrator (Q2): 1 GB = 1024³ bytes, rounded to a whole byte. A negative quota,
+    /// The quota in bytes for one typed in GB by an administrator: 1 GB = 1024³ bytes, rounded to a whole byte. A negative quota,
     /// or one beyond what the <c>bigint</c> column holds, is refused.
     /// </summary>
     public static ErrorOr<long> QuotaBytesFromGb(decimal gb)

@@ -2,9 +2,9 @@ using Maroik.Core.Domain.FileManagers;
 namespace Maroik.Core.Domain.Tests.FileManagers;
 
 /// <summary>
-/// Unit tests for <see cref="FileManagerNode"/>: a folder or a file of a user's drive. Folders are logical (database only, P3); a file
-/// is stored under a GUID name in <c>upload/FileManager</c> (P1) and is "uploading" until its upload completes (Q4). Names follow
-/// <see cref="FileManagerNamePolicy"/>; a folder cannot be moved into itself or its own sub-folder (S5).
+/// Unit tests for <see cref="FileManagerNode"/>: a folder or a file of a user's drive. Folders are logical (database only); a file
+/// is stored under a GUID name in <c>upload/FileManager</c> and is "uploading" until its upload completes. Names follow
+/// <see cref="FileManagerNamePolicy"/>; a folder cannot be moved into itself or its own sub-folder.
 /// </summary>
 public class FileManagerNodeTests
 {

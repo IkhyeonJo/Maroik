@@ -1,7 +1,7 @@
 // ReSharper disable UnusedAutoPropertyAccessor.Global
 namespace Maroik.Website.Models.ViewModels.FileManagers;
 
-/// <summary>A rename (F4).</summary>
+/// <summary>A rename.</summary>
 public class FileManagerRenameInputViewModel
 {
     /// <summary>The item to rename.</summary>

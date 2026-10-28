@@ -16,7 +16,7 @@ namespace Maroik.FileStorage.Workers;
 public sealed class FileManagerScanWorker(IFileManagerScanQueue queue, IServiceScopeFactory scopes, TimeProvider timeProvider, ILogger<FileManagerScanWorker> logger)
     : BackgroundService
 {
-    /// <summary>The most scans that run at once (D2).</summary>
+    /// <summary>The most scans that run at once.</summary>
     public const int MaxConcurrentScans = 2;
 
     /// <inheritdoc />

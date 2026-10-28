@@ -7,8 +7,8 @@ using Maroik.Website.Models.ViewModels.FileManagers;
 namespace Maroik.Website.Mappers;
 
 /// <summary>
-/// Maps the File Manager service's responses to what the page draws: sizes as labels, times in the user's zone, an icon per file type
-/// (U7), a search result's location from the root down, and the usage label and bar fill (F7). Everything the browser shows is computed
+/// Maps the File Manager service's responses to what the page draws: sizes as labels, times in the user's zone, an icon per file type,
+/// a search result's location from the root down, and the usage label and bar fill. Everything the browser shows is computed
 /// here; the page script only places it.
 /// </summary>
 public static class FileManagerViewModelMapper

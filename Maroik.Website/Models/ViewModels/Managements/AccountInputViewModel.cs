@@ -72,11 +72,11 @@ public class AccountInputViewModel
     public bool Deleted { get; set; }
 
     /// <summary>
-    /// The account's File Manager quota in GB as the administrator typed it (Q2); the server turns it into bytes
+    /// The account's File Manager quota in GB as the administrator typed it; the server turns it into bytes
     /// (<c>FileManagerUploadPolicy.QuotaBytesFromGb</c>). Null keeps the current quota.
     /// </summary>
     public decimal? FileManagerQuotaGb { get; set; }
 
-    /// <summary>Whether the account's File Manager uploads skip the virus scan (Q4). Null keeps the current setting.</summary>
+    /// <summary>Whether the account's File Manager uploads skip the virus scan. Null keeps the current setting.</summary>
     public bool? FileManagerScanDisabled { get; set; }
 }

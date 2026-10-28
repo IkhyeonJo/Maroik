@@ -11,7 +11,7 @@ namespace Maroik.Core.Repository.Tests.Repositories;
 /// <c>Init.sql</c> schema and seed data. <c>FileManagerNode</c> holds folders and files in one table: <c>FileManagerNode_fk_0</c> points
 /// at <c>Account.Email</c>, <c>FileManagerNode_fk_1</c> at the parent folder (ON DELETE CASCADE), the unique index
 /// <c>FileManagerNode_unique_index_0</c> keeps finished names unique per folder (root included, NULLS NOT DISTINCT) and the checks keep a
-/// folder without a file and a file with one. Every lookup is owner-scoped (S5).
+/// folder without a file and a file with one. Every lookup is owner-scoped.
 /// </summary>
 public sealed class FileManagerNodeRepositoryTests(DatabaseFixture database) : RepositoryTestBase(database)
 {
@@ -150,7 +150,7 @@ public sealed class FileManagerNodeRepositoryTests(DatabaseFixture database) : R
         Assert.False(await Context.FileManagerNodes.AsNoTracking().AnyAsync(n => n.Id == folder || n.Id == sub || n.Id == file, TestContext.Current.CancellationToken));
     }
 
-    // -- Upload activity / the sweep's listing (Q5) ------------------------------------
+    // -- Upload activity / the sweep's listing -----------------------------------------
 
     /// <summary>An upload of <paramref name="email"/> started (and last active) at <paramref name="at"/>.</summary>
     private Task<long> UploadAtAsync(string email, string name, DateTime at) =>

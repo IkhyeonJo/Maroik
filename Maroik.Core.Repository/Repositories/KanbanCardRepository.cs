@@ -8,7 +8,7 @@ namespace Maroik.Core.Repository.Repositories;
 
 /// <summary>
 /// EF Core repository for <see cref="KanbanCard"/> domain objects. Every query and delete is filtered by the owning account's
-/// email as well as the id, so a card of another account is neither found nor deleted (K2).
+/// email as well as the id, so a card of another account is neither found nor deleted.
 /// </summary>
 public class KanbanCardRepository(ApplicationDbContext context)
     : GenericRepository<KanbanCard, OrmKanbanCard>(context), IKanbanCardRepository

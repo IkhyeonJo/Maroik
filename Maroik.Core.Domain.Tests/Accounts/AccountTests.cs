@@ -975,7 +975,7 @@ public class AccountTests
 
     // -- File Manager quota ---------------------------------------------------------
 
-    /// <summary>A new account's File Manager quota is 0 bytes (Q1): it can upload nothing until an administrator grants some.</summary>
+    /// <summary>A new account's File Manager quota is 0 bytes: it can upload nothing until an administrator grants some.</summary>
     [Fact]
     public void Create_StartsWithAZeroFileManagerQuota()
     {
@@ -996,7 +996,7 @@ public class AccountTests
         Assert.Equal(0, withoutQuota.FileManagerQuotaBytes);
     }
 
-    /// <summary>An administrator sets the quota (also below the current usage, Q3) and Updated is stamped.</summary>
+    /// <summary>An administrator sets the quota (also below the current usage) and Updated is stamped.</summary>
     [Fact]
     public void ChangeFileManagerQuota_SetsTheQuota()
     {
@@ -1052,7 +1052,7 @@ public class AccountTests
         Assert.True(account.FileManagerScanDisabled);
     }
 
-    /// <summary>A newly registered account's uploads are scanned: only an administrator turns the scan off (Q4).</summary>
+    /// <summary>A newly registered account's uploads are scanned: only an administrator turns the scan off.</summary>
     [Fact]
     public void Create_KeepsTheVirusScanOn()
     {

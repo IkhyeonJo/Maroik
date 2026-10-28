@@ -341,7 +341,7 @@ public class ManagementControllerAccountTests(MaroikWebApplicationFactory factor
         Assert.Contains("Fail to find the account by given email address", json, StringComparison.Ordinal);
     }
 
-    // -- File Manager quota (Q2) --------------------------------------------------
+    // -- File Manager quota -------------------------------------------------------
 
     /// <summary>Sets the stored File Manager quota of <paramref name="email"/>.</summary>
     private void SetQuota(string email, long bytes)

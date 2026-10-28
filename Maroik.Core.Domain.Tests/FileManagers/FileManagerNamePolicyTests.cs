@@ -3,8 +3,8 @@ using Maroik.Core.Domain.FileManagers;
 namespace Maroik.Core.Domain.Tests.FileManagers;
 
 /// <summary>
-/// Unit tests for <see cref="FileManagerNamePolicy"/>: the file and folder name rule (S4) applied after NFKC normalization, and the
-/// "Keep both" name a conflicting upload gets (F2-C, "a (1).txt").
+/// Unit tests for <see cref="FileManagerNamePolicy"/>: the file and folder name rule applied after NFKC normalization, and the
+/// "Keep both" name a conflicting upload gets ("a (1).txt").
 /// </summary>
 public class FileManagerNamePolicyTests
 {

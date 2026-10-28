@@ -123,7 +123,7 @@ public class FileManagerController(
         }
     }
 
-    /// <summary>Streams a file as an attachment (S6); a refusal comes back as JSON.</summary>
+    /// <summary>Streams a file as an attachment; a refusal comes back as JSON.</summary>
     [HttpPost]
     [ValidateAntiForgeryToken]
     [RequiredHttpPostAccess(Role = Role.User)]
@@ -142,7 +142,7 @@ public class FileManagerController(
         }
     }
 
-    /// <summary>An image to preview, with the Content-Type its bytes proved (F9, S6); a refusal comes back as JSON.</summary>
+    /// <summary>An image to preview, with the Content-Type its bytes proved; a refusal comes back as JSON.</summary>
     [HttpPost]
     [ValidateAntiForgeryToken]
     [RequiredHttpPostAccess(Role = Role.User)]

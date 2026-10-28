@@ -5,8 +5,8 @@ namespace Maroik.Core.Contract.Interfaces;
 
 /// <summary>
 /// Service interface for the File Manager: one drive per user of logical folders and GUID-stored files. Every operation is scoped to
-/// the given account; another account's item is answered as "not found" (S5). Every structural write first locks the account row, so
-/// a user's concurrent writes (uploads, moves, deletes) are applied one at a time and can never exceed the quota (Q4).
+/// the given account; another account's item is answered as "not found". Every structural write first locks the account row, so
+/// a user's concurrent writes (uploads, moves, deletes) are applied one at a time and can never exceed the quota.
 /// </summary>
 public interface IFileManagerService
 {
@@ -16,25 +16,25 @@ public interface IFileManagerService
     /// <summary>The breadcrumb and items of <paramref name="folderId"/> (null = the root); "not found" for a folder the account does not own.</summary>
     Task<(ServiceResult Result, FileManagerFolderResponse? Folder)> GetFolderAsync(string accountEmail, long? folderId, CancellationToken ct = default);
 
-    /// <summary>The finished items whose name contains <paramref name="query"/> (ignoring case), each with its location (U5).</summary>
+    /// <summary>The finished items whose name contains <paramref name="query"/> (ignoring case), each with its location.</summary>
     Task<List<FileManagerItemResponse>> SearchAsync(string accountEmail, string? query, CancellationToken ct = default);
 
     /// <summary>
-    /// Creates a folder named <paramref name="name"/> in <paramref name="parentId"/>. With <paramref name="merge"/> (a folder upload, F2-C)
+    /// Creates a folder named <paramref name="name"/> in <paramref name="parentId"/>. With <paramref name="merge"/> (a folder upload)
     /// an existing folder of that name is reused; without it the name must be free. Returns the folder's id.
     /// </summary>
     Task<(ServiceResult Result, long? FolderId)> CreateFolderAsync(string accountEmail, long? parentId, string? name, bool merge, CancellationToken ct = default);
 
-    /// <summary>Renames an item; refused when the name is taken in its folder (F4).</summary>
+    /// <summary>Renames an item; refused when the name is taken in its folder.</summary>
     Task<ServiceResult> RenameAsync(string accountEmail, long id, string? name, CancellationToken ct = default);
 
-    /// <summary>Moves items into <paramref name="targetFolderId"/> (null = the root), all or none; refused on a name conflict or a cycle (F5).</summary>
+    /// <summary>Moves items into <paramref name="targetFolderId"/> (null = the root), all or none; refused on a name conflict or a cycle.</summary>
     Task<ServiceResult> MoveAsync(string accountEmail, IReadOnlyCollection<long> ids, long? targetFolderId, CancellationToken ct = default);
 
-    /// <summary>Deletes items, a folder with everything under it, and then their stored files (F6, P4).</summary>
+    /// <summary>Deletes items, a folder with everything under it, and then their stored files.</summary>
     Task<ServiceResult> DeleteAsync(string accountEmail, IReadOnlyCollection<long> ids, CancellationToken ct = default);
 
-    /// <summary>Whether uploads totalling <paramref name="totalBytes"/> fit the remaining quota (the check before a batch starts, F2).</summary>
+    /// <summary>Whether uploads totalling <paramref name="totalBytes"/> fit the remaining quota (the check before a batch starts).</summary>
     Task<ServiceResult> CheckQuotaAsync(string accountEmail, long totalBytes, CancellationToken ct = default);
 
     /// <summary>Starts the upload of one file: validates its name and size, resolves a name conflict, checks and reserves the quota.</summary>
@@ -56,18 +56,18 @@ public interface IFileManagerService
     Task<ServiceResult> AbortUploadAsync(string accountEmail, Guid uploadId, CancellationToken ct = default);
 
     /// <summary>
-    /// The worker's hourly sweep (Q5): removes the uploads idle for longer than <c>FileManagerUploadPolicy.StaleUploadAge</c> of at most
+    /// The worker's hourly sweep: removes the uploads idle for longer than <c>FileManagerUploadPolicy.StaleUploadAge</c> of at most
     /// <paramref name="maxAccounts"/> accounts, each account in a transaction of its own, and then drops their files in file storage.
     /// Returns how many uploads it removed; an account that fails is logged and left for the next sweep.
     /// </summary>
     Task<int> RemoveStaleUploadsAsync(int maxAccounts, CancellationToken ct = default);
 
-    /// <summary>Opens a file for download (streamed from file storage, F3).</summary>
+    /// <summary>Opens a file for download (streamed from file storage).</summary>
     Task<(ServiceResult Result, AttachmentDownload? File)> OpenFileAsync(string accountEmail, long id, CancellationToken ct = default);
 
-    /// <summary>The bytes and proven Content-Type of a previewable image (F9).</summary>
+    /// <summary>The bytes and proven Content-Type of a previewable image.</summary>
     Task<(ServiceResult Result, FileManagerPreview? Preview)> OpenPreviewAsync(string accountEmail, long id, CancellationToken ct = default);
 
-    /// <summary>The files a multi-download fetches (F8): each selected file, and every file at any depth under each selected folder.</summary>
+    /// <summary>The files a multi-download fetches: each selected file, and every file at any depth under each selected folder.</summary>
     Task<(ServiceResult Result, List<FileManagerItemResponse> Files)> ListFilesForDownloadAsync(string accountEmail, IReadOnlyCollection<long> ids, CancellationToken ct = default);
 }

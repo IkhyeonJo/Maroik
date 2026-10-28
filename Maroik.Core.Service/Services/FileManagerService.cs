@@ -16,10 +16,10 @@ namespace Maroik.Core.Service.Services;
 /// orchestrates them.
 /// <para>
 /// Every structural write runs in its own transaction and first locks the account row (<c>FindByEmailForUpdateAsync</c>), so one
-/// user's concurrent uploads, moves and deletes are applied one at a time: two uploads can never both pass the quota check (Q4), and a
+/// user's concurrent uploads, moves and deletes are applied one at a time: two uploads can never both pass the quota check, and a
 /// name checked free stays free until the commit. Work on file storage — a network call — never runs inside a transaction: a delete
 /// commits the rows first and then asks file storage to delete the files, leaving an orphan file (logged) rather than a row that points
-/// at a missing file (P4).
+/// at a missing file.
 /// </para>
 /// </summary>
 public class FileManagerService(
@@ -62,7 +62,7 @@ public class FileManagerService(
     /// <summary>The finished items directly in <paramref name="folderId"/>.</summary>
     private static IEnumerable<FileManagerNode> FinishedChildren(FileManagerTree tree, long? folderId) => tree.Children(folderId).Where(n => !n.Uploading);
 
-    /// <summary>The bytes the drive uses: every file, unfinished uploads included (Q4).</summary>
+    /// <summary>The bytes the drive uses: every file, unfinished uploads included.</summary>
     private static long UsedBytes(IEnumerable<FileManagerNode> nodes) => nodes.Where(n => !n.IsFolder).Sum(n => n.Size);
 
     /// <summary>Folders first, then by name ignoring case (then exactly, so the order is stable).</summary>
@@ -191,7 +191,7 @@ public class FileManagerService(
             if (FinishedChildren(tree, parentId).FirstOrDefault(n => n.Name == folder.Name) is { } existing)
             {
                 await unitOfWork.RollbackAsync(ct);
-                // A folder upload merges into a folder of the same name (F2-C); anything else is a taken name.
+                // A folder upload merges into a folder of the same name; anything else is a taken name.
                 return merge && existing.IsFolder ? (ServiceResult.Ok(), existing.Id) : (NameTaken(folder.Name), null);
             }
 
@@ -327,7 +327,7 @@ public class FileManagerService(
             return Temporary();
         }
 
-        // After the commit: a row never points at a missing file; a file that cannot be deleted is left as an orphan (P4).
+        // After the commit: a row never points at a missing file; a file that cannot be deleted is left as an orphan.
         foreach (FileManagerNode file in removed.Where(n => !n.IsFolder))
             await DeleteStoredFileAsync(accountEmail, file, ct);
         return ServiceResult.Ok();
@@ -340,7 +340,7 @@ public class FileManagerService(
     {
         long quota = (await accountRepository.FindByEmailAsync(accountEmail, ct))?.FileManagerQuotaBytes ?? 0;
         FileManagerTree tree = await LoadTreeAsync(accountEmail, ct);
-        // Abandoned uploads do not count, as in BeginUploadAsync (Q5): an account they filled must still reach the upload that removes them.
+        // Abandoned uploads do not count, as in BeginUploadAsync: an account they filled must still reach the upload that removes them.
         DateTime utcNow = UtcNow;
         var result = FileManagerUploadPolicy.CheckQuota(quota, UsedBytes(tree.Nodes.Where(n => !n.IsStaleUpload(utcNow))), totalBytes);
         return result.IsError ? ServiceResult.FromError(result.FirstError) : ServiceResult.Ok();
@@ -374,7 +374,7 @@ public class FileManagerService(
                 return (ServiceResult.FromError(started.FirstError), null);
             }
 
-            // Uploads idle for more than an hour are removed now (Q5), ahead of the worker's hourly sweep: they stop counting against the quota.
+            // Uploads idle for more than an hour are removed now, ahead of the worker's hourly sweep: they stop counting against the quota.
             stale = [.. tree.Nodes.Where(n => n.IsStaleUpload(utcNow))];
             string name = started.Value.Name;
             if (FinishedChildren(tree, request.ParentId).FirstOrDefault(n => n.Name == name) is { } existing)
@@ -441,7 +441,7 @@ public class FileManagerService(
         long? length = await fileClient.AppendFileManagerChunkAsync(uploadId, offset, chunk, BaseUrl, ct);
         if (length is { } received)
         {
-            // A stored chunk keeps the upload alive (Q5), however long the whole upload takes.
+            // A stored chunk keeps the upload alive, however long the whole upload takes.
             await nodeRepository.RecordUploadActivityAsync(accountEmail, upload.Id, UtcNow, ct);
             return (ServiceResult.Ok(), received);
         }
@@ -462,7 +462,7 @@ public class FileManagerService(
         // Read when the upload completes, so an administrator's change made while it was sent is the one that counts.
         bool scanDisabled = (await accountRepository.FindByEmailAsync(accountEmail, ct))?.FileManagerScanDisabled == true;
         FileUploadResult outcome = await fileClient.CompleteFileManagerUploadAsync(uploadId, upload.Size, scanDisabled, BaseUrl, ct);
-        // Still scanning in the background: nothing is decided, the reservation stays, and the page's poll keeps the upload alive (Q5).
+        // Still scanning in the background: nothing is decided, the reservation stays, and the page's poll keeps the upload alive.
         if (outcome == FileUploadResult.Scanning)
         {
             await nodeRepository.RecordUploadActivityAsync(accountEmail, upload.Id, UtcNow, ct);
@@ -495,7 +495,7 @@ public class FileManagerService(
     /// Makes an upload whose file file storage has stored a normal item of the drive, under the account lock: completed meanwhile is a
     /// success, removed meanwhile is "not found", a name taken meanwhile (without <paramref name="overwrite"/>) fails, and an overwrite
     /// replaces the old file. A file stored with the account's virus scan off (<paramref name="scanDisabled"/>) is an audit event. The
-    /// file nobody keeps, or the one an overwrite replaced, is deleted after the commit (P4).
+    /// file nobody keeps, or the one an overwrite replaced, is deleted after the commit.
     /// </summary>
     private async Task<ServiceResult> FinishUploadAsync(string accountEmail, Guid uploadId, FileManagerNode upload, bool overwrite, bool scanDisabled, CancellationToken ct)
     {
@@ -552,7 +552,7 @@ public class FileManagerService(
             return Temporary();
         }
 
-        // After the commit (P4): drop the file nobody keeps, or the one an overwrite replaced.
+        // After the commit: drop the file nobody keeps, or the one an overwrite replaced.
         if (discarded != null && !await fileClient.DeleteFileManagerFileAsync(StoragePathOf(uploadId), BaseUrl, ct))
             logger.LogWarning("File Manager: stored file {FilePath} of {Email} could not be deleted; left as an orphan", StoragePathOf(uploadId), accountEmail);
         if (replaced != null)
@@ -587,7 +587,7 @@ public class FileManagerService(
 
     /// <summary>
     /// Removes the account's idle uploads under its account lock — judged again there, since a chunk may have arrived after the unlocked
-    /// listing — and then aborts them in file storage (P4). A failure is logged and rolled back; the next sweep tries again.
+    /// listing — and then aborts them in file storage. A failure is logged and rolled back; the next sweep tries again.
     /// </summary>
     private async Task<int> RemoveStaleUploadsOfAsync(string accountEmail, DateTime utcNow, CancellationToken ct)
     {

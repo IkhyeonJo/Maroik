@@ -10,10 +10,10 @@ namespace Maroik.FileStorage.Tests.Services;
 
 /// <summary>
 /// Unit tests for <see cref="FileManagerStorageService"/>, the File Manager's large-file flow (Implementation note [A]), against a real
-/// throwaway storage root on disk, a real scan queue and a mocked ClamAV client: chunks are appended to a staging file in offset order
-/// (P5); completing an upload checks the size and queues its scan, then reports "scanning", "stored" or the refusal; the scan streams
-/// the file from disk and moves a clean one to <c>upload/FileManager/{GUID}</c> (P1, S2); an abort cancels the scan and drops the
-/// staging (and an unconfirmed stored) file; and a delete removes only a file directly in <c>upload/FileManager/</c> (P4).
+/// throwaway storage root on disk, a real scan queue and a mocked ClamAV client: chunks are appended to a staging file in offset order;
+/// completing an upload checks the size and queues its scan, then reports "scanning", "stored" or the refusal; the scan streams
+/// the file from disk and moves a clean one to <c>upload/FileManager/{GUID}</c>; an abort cancels the scan and drops the
+/// staging (and an unconfirmed stored) file; and a delete removes only a file directly in <c>upload/FileManager/</c>.
 /// </summary>
 public sealed class FileManagerStorageServiceTests : IDisposable
 {
@@ -219,7 +219,7 @@ public sealed class FileManagerStorageServiceTests : IDisposable
     }
 
     /// <summary>
-    /// After a restart nothing is pending: a complete of an upload whose staging file is still whole queues its scan again (D5).
+    /// After a restart nothing is pending: a complete of an upload whose staging file is still whole queues its scan again.
     /// </summary>
     [Fact]
     public async Task CompleteAsync_AfterARestart_QueuesTheScanAgain()
@@ -297,7 +297,7 @@ public sealed class FileManagerStorageServiceTests : IDisposable
     }
 
     /// <summary>
-    /// An infected file, or one the scan could not finish (a clamd limit, or the scanner unavailable), is not stored (S2): the refusal
+    /// An infected file, or one the scan could not finish (a clamd limit, or the scanner unavailable), is not stored: the refusal
     /// says which, and the staging file is deleted.
     /// </summary>
     [Theory]
@@ -357,7 +357,7 @@ public sealed class FileManagerStorageServiceTests : IDisposable
     }
 
     /// <summary>
-    /// An abort while the file is scanning cancels the scan; an abort after the scan stored it (the upload was never confirmed, D1 / D3)
+    /// An abort while the file is scanning cancels the scan; an abort after the scan stored it (the upload was never confirmed)
     /// deletes the stored file too.
     /// </summary>
     [Fact]

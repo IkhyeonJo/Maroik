@@ -11,7 +11,7 @@ namespace Maroik.Website.Tests.Controllers;
 /// <summary>
 /// Integration tests for <c>KanbanController</c> against a real PostgreSQL database (<see cref="MaroikWebApplicationFactory"/>):
 /// the board page reached through the menu (<c>/Kanban/UserIndex</c>, User role only), its AJAX partial, and the three card writes
-/// (create in a lane, edit without moving, delete), each owner-scoped so another user's card is "not found" (K2).
+/// (create in a lane, edit without moving, delete), each owner-scoped so another user's card is "not found".
 /// </summary>
 [Collection("Website Integration")]
 public class KanbanControllerTests(MaroikWebApplicationFactory factory)
@@ -308,7 +308,7 @@ public class KanbanControllerTests(MaroikWebApplicationFactory factory)
         Assert.Null(row.DueDate);
     }
 
-    /// <summary>An edit never moves a card: a lane sent along with the edit is ignored and the card stays where it was (K11).</summary>
+    /// <summary>An edit never moves a card: a lane sent along with the edit is ignored and the card stays where it was.</summary>
     [Fact]
     public async Task UpdateKanbanCard_KeepsTheLane_EvenWhenTheRequestNamesAnother()
     {

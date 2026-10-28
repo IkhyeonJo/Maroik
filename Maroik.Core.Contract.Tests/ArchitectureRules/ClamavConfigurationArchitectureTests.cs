@@ -4,7 +4,7 @@ using Maroik.Core.Contract.Tests.Fixtures;
 namespace Maroik.Core.Contract.Tests.ArchitectureRules;
 
 /// <summary>
-/// clamd's limits in both compose files (File Manager requirement S3). The image's defaults (StreamMaxLength / MaxFileSize 100 MB,
+/// clamd's limits in both compose files. The image's defaults (StreamMaxLength / MaxFileSize 100 MB,
 /// MaxScanSize 400 MB) would turn away every File Manager file over 100 MB, and with <c>AlertExceedsMax</c> off clamd may pass a file it
 /// did not scan whole as "OK". So both files raise the three size limits to 2 GB (2048M — the largest file ClamAV can scan), switch
 /// <c>AlertExceedsMax</c> on (an unscanned remainder is reported, and the client calls it "could not be scanned"), and give a scan up to

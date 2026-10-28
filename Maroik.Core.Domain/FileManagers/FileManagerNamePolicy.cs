@@ -6,7 +6,7 @@ using Maroik.Core.Domain.Primitives;
 namespace Maroik.Core.Domain.FileManagers;
 
 /// <summary>
-/// The name rule for a File Manager file or folder (S4). A name is judged — and stored — in its NFKC form, so a full-width "／" or
+/// The name rule for a File Manager file or folder. A name is judged — and stored — in its NFKC form, so a full-width "／" or
 /// "Ａ" cannot slip past the rule or sit beside its plain twin. Refused: an empty name, more than
 /// <see cref="ShortTextPolicy.MaxLength"/> characters, a control character, any of <c>/ \ : * ? " &lt; &gt; |</c>, the names
 /// <c>.</c> and <c>..</c>, and a trailing dot or space (the Windows rules, so a downloaded file keeps its name on every system).
@@ -41,7 +41,7 @@ public static class FileManagerNamePolicy
     }
 
     /// <summary>
-    /// The name a "Keep both" upload gets when <paramref name="name"/> is taken (F2-C): the first of "name (1).ext", "name (2).ext", …
+    /// The name a "Keep both" upload gets when <paramref name="name"/> is taken: the first of "name (1).ext", "name (2).ext", …
     /// that is not in <paramref name="taken"/>, the number placed before the last extension as Windows Explorer does. A name with no
     /// stem (".bashrc") or no extension gets the number at its end. The stem is shortened when needed so the result stays within
     /// <see cref="ShortTextPolicy.MaxLength"/>.

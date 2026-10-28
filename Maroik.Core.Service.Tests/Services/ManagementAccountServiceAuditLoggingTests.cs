@@ -128,7 +128,7 @@ public class ManagementAccountServiceAuditLoggingTests
         Only(LogLevel.Information, "deleted True -> False");
     }
 
-    /// <summary>An administrator's quota change is an audit event (S8): the update log names the quota before and after, in bytes.</summary>
+    /// <summary>An administrator's quota change is an audit event: the update log names the quota before and after, in bytes.</summary>
     [Fact]
     public async Task Update_LogsTheFileManagerQuotaBeforeAndAfter()
     {

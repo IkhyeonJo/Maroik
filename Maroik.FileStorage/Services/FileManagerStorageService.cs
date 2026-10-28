@@ -26,7 +26,7 @@ public class FileManagerStorageService(IClamavClient clamavClient, IFileManagerS
     /// </summary>
     public static readonly TimeSpan ScanTimeout = TimeSpan.FromMinutes(15);
 
-    /// <summary>The directory the stored File Manager files live in (P1).</summary>
+    /// <summary>The directory the stored File Manager files live in.</summary>
     private const string FileManagerDirectory = "upload/FileManager";
 
     /// <summary>The directory the unfinished uploads' staging files live in.</summary>
@@ -145,7 +145,7 @@ public class FileManagerStorageService(IClamavClient clamavClient, IFileManagerS
         // An abort cancels the scan, which the client reports as "could not be scanned": the abort already dropped the files.
         ct.ThrowIfCancellationRequested();
 
-        // Only Clean is stored (S2). Infected, too large to scan and "could not be scanned" are all refusals, reported apart.
+        // Only Clean is stored. Infected, too large to scan and "could not be scanned" are all refusals, reported apart.
         if (scan != ClamavScanResult.Clean)
         {
             StorageFiles.Delete(staging);

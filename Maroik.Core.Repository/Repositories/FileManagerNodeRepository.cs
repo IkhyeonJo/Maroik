@@ -9,7 +9,7 @@ namespace Maroik.Core.Repository.Repositories;
 /// <summary>
 /// EF Core repository for <see cref="FileManagerNode"/> domain objects (the folders and files of a File Manager drive, one table).
 /// Every query and delete is filtered by the owning account's email as well as the id or path, so another account's node is neither
-/// found nor deleted (S5). Deleting a folder row also deletes everything under it (<c>FileManagerNode_fk_1</c> ON DELETE CASCADE).
+/// found nor deleted. Deleting a folder row also deletes everything under it (<c>FileManagerNode_fk_1</c> ON DELETE CASCADE).
 /// </summary>
 public class FileManagerNodeRepository(ApplicationDbContext context)
     : GenericRepository<FileManagerNode, OrmFileManagerNode>(context), IFileManagerNodeRepository

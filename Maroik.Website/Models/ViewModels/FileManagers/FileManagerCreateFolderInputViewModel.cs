@@ -1,7 +1,7 @@
 // ReSharper disable UnusedAutoPropertyAccessor.Global
 namespace Maroik.Website.Models.ViewModels.FileManagers;
 
-/// <summary>A new folder (F1), or one a folder upload needs (<see cref="Merge"/>: an existing folder of that name is reused, F2-C).</summary>
+/// <summary>A new folder, or one a folder upload needs (<see cref="Merge"/>: an existing folder of that name is reused).</summary>
 public class FileManagerCreateFolderInputViewModel
 {
     /// <summary>The parent folder (null = the root).</summary>

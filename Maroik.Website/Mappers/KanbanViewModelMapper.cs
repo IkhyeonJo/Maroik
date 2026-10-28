@@ -10,7 +10,7 @@ namespace Maroik.Website.Mappers;
 /// </summary>
 public static class KanbanViewModelMapper
 {
-    /// <summary>The one format a card's due date is shown in, for every culture (K10).</summary>
+    /// <summary>The one format a card's due date is shown in, for every culture.</summary>
     private const string DueDateFormat = "yyyy-MM-dd";
 
     extension(List<KanbanLaneResponse> board)

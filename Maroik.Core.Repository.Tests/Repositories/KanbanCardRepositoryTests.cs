@@ -10,7 +10,7 @@ namespace Maroik.Core.Repository.Tests.Repositories;
 /// Tests for <see cref="KanbanCardRepository"/> against a real PostgreSQL database (Testcontainers) preloaded with the
 /// <c>Init.sql</c> schema and seed data. <c>KanbanCard</c> has the FK <c>KanbanCard_fk_0</c> to <c>Account.Email</c> and the checks
 /// <c>KanbanCard_Lane_check</c> (the four lanes) and <c>KanbanCard_Title_check</c> (not blank). Each test scopes itself to its own
-/// unique account e-mails, and every lookup is owner-scoped: another account's card id behaves as "not found" (K2).
+/// unique account e-mails, and every lookup is owner-scoped: another account's card id behaves as "not found".
 /// </summary>
 public sealed class KanbanCardRepositoryTests(DatabaseFixture database) : RepositoryTestBase(database)
 {

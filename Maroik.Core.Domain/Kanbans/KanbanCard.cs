@@ -8,9 +8,9 @@ namespace Maroik.Core.Domain.Kanbans;
 
 /// <summary>
 /// Aggregate root for one card of a user's personal Kanban board. A card belongs to one account and lives in the lane it was created
-/// in for its whole life (K11): nothing here can change <see cref="Lane"/>, so moving work to another lane means deleting the card
-/// and creating a new one there. Its title and description follow the post limits (<see cref="TitledContentPolicy"/>, K8); the
-/// description is plain text and the due date a date without a time (K10).
+/// in for its whole life: nothing here can change <see cref="Lane"/>, so moving work to another lane means deleting the card
+/// and creating a new one there. Its title and description follow the post limits (<see cref="TitledContentPolicy"/>); the
+/// description is plain text and the due date a date without a time.
 /// </summary>
 public sealed class KanbanCard : AggregateRoot<long>
 {
@@ -29,7 +29,7 @@ public sealed class KanbanCard : AggregateRoot<long>
     /// <summary>Optional due date (a date only, no time).</summary>
     public DateOnly? DueDate { get; private set; }
 
-    /// <summary>UTC timestamp when the card was created; with <see cref="Entity{TId}.Id"/> it orders the lane (K12).</summary>
+    /// <summary>UTC timestamp when the card was created; with <see cref="Entity{TId}.Id"/> it orders the lane.</summary>
     public DateTime Created { get; }
 
     /// <summary>UTC timestamp of the most recent update.</summary>
@@ -72,7 +72,7 @@ public sealed class KanbanCard : AggregateRoot<long>
         return new KanbanCard(0, emailResult.Value, lane, contentResult.Value, NormalizeDescription(description), dueDate, utcNow, utcNow);
     }
 
-    /// <summary>Replaces the title, description and due date. The lane stays as it is (K11).</summary>
+    /// <summary>Replaces the title, description and due date. The lane stays as it is.</summary>
     public ErrorOr<Success> Update(string? title, string? description, DateOnly? dueDate, DateTime utcNow)
     {
         var contentResult = ValidateContent(title, description);
@@ -86,7 +86,7 @@ public sealed class KanbanCard : AggregateRoot<long>
     }
 
     /// <summary>
-    /// The due-date state the board shows (K10): <see cref="KanbanDueState.Overdue"/> once the due date is before today,
+    /// The due-date state the board shows: <see cref="KanbanDueState.Overdue"/> once the due date is before today,
     /// <see cref="KanbanDueState.Upcoming"/> while it is today or later. "Today" is the owner's local date in
     /// <paramref name="timeZoneIanaId"/> at <paramref name="utcNow"/> — decided here, not by the browser's clock.
     /// </summary>

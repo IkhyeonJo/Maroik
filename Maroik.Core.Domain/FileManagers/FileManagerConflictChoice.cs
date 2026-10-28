@@ -1,7 +1,7 @@
 namespace Maroik.Core.Domain.FileManagers;
 
 /// <summary>
-/// What an upload does when a finished file of the same name is already in the folder (F2-C, Windows Explorer behaviour). "Skip" is
+/// What an upload does when a finished file of the same name is already in the folder (Windows Explorer behaviour). "Skip" is
 /// the client not uploading the file at all, so it has no value here.
 /// </summary>
 public enum FileManagerConflictChoice

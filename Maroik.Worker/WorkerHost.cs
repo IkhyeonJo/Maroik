@@ -103,7 +103,7 @@ internal static class WorkerHost
         builder.Services.AddHostedService<CalendarReminderScheduler>();
         builder.Services.AddSingleton<EmailDeadLetterRedriver>();
 
-        // File Manager: once an hour the scheduler removes the abandoned uploads (Q5) — their rows here, their staging files in file storage.
+        // File Manager: once an hour the scheduler removes the abandoned uploads — their rows here, their staging files in file storage.
         builder.Services.AddHttpClient();
         builder.Services.AddScoped<IFileClient, FileClient>();
         builder.Services.AddScoped<IFileManagerService, FileManagerService>();

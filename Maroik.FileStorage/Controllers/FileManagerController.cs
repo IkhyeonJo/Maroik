@@ -105,7 +105,7 @@ public class FileManagerController(IFileManagerStorageService storage, ILogger<F
         }
     }
 
-    /// <summary>Deletes the stored File Manager file at <paramref name="filePath"/> (P4).</summary>
+    /// <summary>Deletes the stored File Manager file at <paramref name="filePath"/>.</summary>
     [AllowAnonymous]
     [HttpPost("delete")]
     public IActionResult Delete([FromForm] string? filePath, [FromForm] string? correlationId = null)

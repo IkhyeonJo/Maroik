@@ -7,9 +7,9 @@ using H = Maroik.Core.Service.Tests.Fixtures.FileManagerServiceHarness;
 namespace Maroik.Core.Service.Tests.Services;
 
 /// <summary>
-/// The structural writes of <see cref="FileManagerService"/>: create a folder (F1, and the "merge" of a folder upload, F2-C), rename (F4),
-/// move (F5) and delete (F6, P4). Each runs in its own transaction after locking the account row, answers another account's item as
-/// "not found" (S5), refuses a taken name or a cycle, and a delete removes the stored files only after the commit — a failed file delete is
+/// The structural writes of <see cref="FileManagerService"/>: create a folder (also the "merge" of a folder upload), rename,
+/// move and delete. Each runs in its own transaction after locking the account row, answers another account's item as
+/// "not found", refuses a taken name or a cycle, and a delete removes the stored files only after the commit — a failed file delete is
 /// logged and left as an orphan.
 /// </summary>
 public class FileManagerServiceWriteTests

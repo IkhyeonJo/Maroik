@@ -8,9 +8,9 @@ using H = Maroik.Core.Service.Tests.Fixtures.FileManagerServiceHarness;
 namespace Maroik.Core.Service.Tests.Services;
 
 /// <summary>
-/// Download (F3) and preview (F9) in <see cref="FileManagerService"/>: a file of the account is streamed from file storage under its
+/// Download and preview in <see cref="FileManagerService"/>: a file of the account is streamed from file storage under its
 /// name; a preview is answered only for a png / jpg / gif / webp image of at most 100 MB whose magic bytes prove the format, with the
-/// Content-Type the server sets (S6). Another account's file, a folder and an unfinished upload are "not found".
+/// Content-Type the server sets. Another account's file, a folder and an unfinished upload are "not found".
 /// </summary>
 public class FileManagerServiceDownloadTests
 {

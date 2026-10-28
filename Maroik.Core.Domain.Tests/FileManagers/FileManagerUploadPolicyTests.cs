@@ -3,8 +3,8 @@ using Maroik.Core.Domain.FileManagers;
 namespace Maroik.Core.Domain.Tests.FileManagers;
 
 /// <summary>
-/// Unit tests for <see cref="FileManagerUploadPolicy"/>: the largest file ClamAV can scan (S1), the chunk size (P5), the age of
-/// an abandoned upload's idle time (Q5), how long the page waits for the virus scan (D6) and the quota check (Q3, Q4).
+/// Unit tests for <see cref="FileManagerUploadPolicy"/>: the largest file ClamAV can scan, the chunk size, the age of
+/// an abandoned upload's idle time, how long the page waits for the virus scan and the quota check.
 /// </summary>
 public class FileManagerUploadPolicyTests
 {
@@ -22,7 +22,7 @@ public class FileManagerUploadPolicyTests
 
     /// <summary>
     /// While a file is scanned the page asks every 3 seconds, and gives up after 16 minutes: the scan's own limit in file storage (15
-    /// minutes) plus a minute for the queue (D6).
+    /// minutes) plus a minute for the queue.
     /// </summary>
     [Fact]
     public void TheScanWait_IsAskedEveryThreeSeconds_ForAtMostSixteenMinutes()

@@ -89,14 +89,14 @@ public sealed class Account : AggregateRoot<string>
     public bool MustChangePassword { get; private set; }
 
     /// <summary>
-    /// How many bytes the account may store in the File Manager. A new account has 0 (Q1): it can upload nothing until an
+    /// How many bytes the account may store in the File Manager. A new account has 0: it can upload nothing until an
     /// administrator grants a quota (<see cref="ChangeFileManagerQuota"/>).
     /// </summary>
     public long FileManagerQuotaBytes { get; private set; }
 
     /// <summary>
     /// Whether the account's File Manager uploads skip the virus scan: they are stored as soon as they are complete, without being sent
-    /// to ClamAV, and a file larger than ClamAV can scan may be uploaded. A new account is scanned (Q4): an administrator turns the scan
+    /// to ClamAV, and a file larger than ClamAV can scan may be uploaded. A new account is scanned: an administrator turns the scan
     /// off (<see cref="ChangeFileManagerScanDisabled"/>). With the scan on, a file the scan could not finish is refused. Attachments
     /// (posts, notes, events) are always scanned.
     /// </summary>
@@ -587,7 +587,7 @@ public sealed class Account : AggregateRoot<string>
     }
 
     /// <summary>
-    /// Administrator operation: sets the account's File Manager quota. It may be set below the current usage (Q3): that only blocks
+    /// Administrator operation: sets the account's File Manager quota. It may be set below the current usage: that only blocks
     /// the account's new uploads.
     /// </summary>
     public ErrorOr<Success> ChangeFileManagerQuota(long quotaBytes, DateTime utcNow)

@@ -23,12 +23,12 @@ public class FileManagerItemResponse
     /// <summary>UTC time of the last change.</summary>
     public DateTime Updated { get; set; }
 
-    /// <summary>For a folder: the number of finished items directly in it (U3).</summary>
+    /// <summary>For a folder: the number of finished items directly in it.</summary>
     public int ItemCount { get; set; }
 
-    /// <summary>Whether the file may be previewed (a scanned image within the preview limit, F9).</summary>
+    /// <summary>Whether the file may be previewed (a scanned image within the preview limit).</summary>
     public bool Previewable { get; set; }
 
-    /// <summary>The names of the folders above it, from the root down (shown with a search result, U5).</summary>
+    /// <summary>The names of the folders above it, from the root down (shown with a search result).</summary>
     public List<string> Location { get; set; } = [];
 }

@@ -2,7 +2,7 @@
 // ReSharper disable UnusedAutoPropertyAccessor.Global
 namespace Maroik.Core.Contract.Dtos;
 
-/// <summary>One step of a File Manager breadcrumb (U4): a folder above the open one, or the open one itself.</summary>
+/// <summary>One step of a File Manager breadcrumb: a folder above the open one, or the open one itself.</summary>
 public class FileManagerCrumbResponse
 {
     /// <summary>Folder ID.</summary>

@@ -2,7 +2,7 @@
 namespace Maroik.Website.Models.ViewModels.Kanbans;
 
 /// <summary>
-/// Form model for editing a Kanban card from the card modal. It has no lane: a card never leaves the lane it was created in (K11),
+/// Form model for editing a Kanban card from the card modal. It has no lane: a card never leaves the lane it was created in,
 /// so a lane sent along with an edit is not even bound.
 /// </summary>
 public class KanbanCardEditInputViewModel

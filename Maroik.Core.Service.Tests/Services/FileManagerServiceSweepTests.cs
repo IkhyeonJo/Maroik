@@ -7,7 +7,7 @@ using H = Maroik.Core.Service.Tests.Fixtures.FileManagerServiceHarness;
 namespace Maroik.Core.Service.Tests.Services;
 
 /// <summary>
-/// The worker's hourly sweep of abandoned uploads, <see cref="FileManagerService.RemoveStaleUploadsAsync"/> (Q5): an upload idle for
+/// The worker's hourly sweep of abandoned uploads, <see cref="FileManagerService.RemoveStaleUploadsAsync"/>: an upload idle for
 /// more than an hour (no chunk, no scan poll) is removed — its row inside a transaction that first locks the account, its file in file
 /// storage after the commit — account by account, so one account's failure leaves the others to be swept.
 /// </summary>

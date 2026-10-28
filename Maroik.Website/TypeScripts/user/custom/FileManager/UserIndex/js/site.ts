@@ -532,7 +532,7 @@
         }
     }
 
-    /** Downloads the selected items one file at a time (a folder's files included; not a ZIP, F8). */
+    /** Downloads the selected items one file at a time (a folder's files included; not a ZIP). */
     async function DownloadSelected(ids: number[]) {
         const data = await post("/FileManager/ListDownloadFiles", { Ids: ids }, filesReply);
         if (data === null) return;
@@ -546,7 +546,7 @@
     /** The object URL of the image in the preview, released when the preview closes. */
     let previewUrl: string | null = null;
 
-    /** Shows an image in the preview modal (the server decides it is one, F9). */
+    /** Shows an image in the preview modal (the server decides it is one). */
     async function Preview(item: Item) {
         const blob = await postForBlob(`/FileManager/Preview?id=${item.id}`).reply;
         if (blob === null) return;
@@ -729,7 +729,7 @@
         $btnUploadCancel.prop("disabled", false);
         $uploadModal.modal("show");
 
-        // The folders of a folder upload, created from the top down (an existing folder of the same name is reused, F2-C).
+        // The folders of a folder upload, created from the top down (an existing folder of the same name is reused).
         const folderIds = new Map<string, number>();
         async function ensureFolder(dir: string[]): Promise<number | null | undefined> {
             let parent = targetFolderId;

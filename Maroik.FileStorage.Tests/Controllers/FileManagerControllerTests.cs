@@ -15,7 +15,7 @@ namespace Maroik.FileStorage.Tests.Controllers;
 /// <summary>
 /// Integration tests for <see cref="FileManagerController"/> (<c>api/FileManager/*</c>) through the real ASP.NET pipeline, with storage
 /// in a throwaway root and ClamAV mocked: the chunk / complete / abort / delete endpoints answer with the right status and refusal
-/// text (complete answers 202 while the background scan runs), and each outcome is logged at the level it deserves with the upload id or path and the caller's correlation id (S8).
+/// text (complete answers 202 while the background scan runs), and each outcome is logged at the level it deserves with the upload id or path and the caller's correlation id.
 /// </summary>
 [Collection("FileStorage host (Program builds a process-wide Serilog logger)")]
 public sealed class FileManagerControllerTests(WebApplicationFactory<Program> baseFactory) : IClassFixture<WebApplicationFactory<Program>>, IDisposable

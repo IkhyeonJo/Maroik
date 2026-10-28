@@ -3,7 +3,7 @@ namespace Maroik.Core.Contract.Interfaces;
 
 /// <summary>
 /// Repository abstraction over <see cref="FileManagerNode"/> persistence (the folders and files of a user's File Manager drive). Every
-/// lookup and delete is scoped to the owning account's email, so another user's node id behaves as "not found" (S5).
+/// lookup and delete is scoped to the owning account's email, so another user's node id behaves as "not found".
 /// </summary>
 public interface IFileManagerNodeRepository : IGenericRepository<FileManagerNode>
 {
@@ -20,14 +20,14 @@ public interface IFileManagerNodeRepository : IGenericRepository<FileManagerNode
     Task DeleteByEmailAndIdsAsync(string accountEmail, IReadOnlyCollection<long> ids, CancellationToken ct = default);
 
     /// <summary>
-    /// Records activity on the account's unfinished upload <paramref name="id"/>: its <c>Updated</c> becomes <paramref name="utcNow"/>
-    /// (Q5). Only that column is written, at once and without a lock; a finished, removed or another account's node is left alone.
+    /// Records activity on the account's unfinished upload <paramref name="id"/>: its <c>Updated</c> becomes <paramref name="utcNow"/>.
+    /// Only that column is written, at once and without a lock; a finished, removed or another account's node is left alone.
     /// </summary>
     Task RecordUploadActivityAsync(string accountEmail, long id, DateTime utcNow, CancellationToken ct = default);
 
     /// <summary>
     /// The emails, in order, of at most <paramref name="max"/> accounts holding an unfinished upload with no activity since before
-    /// <paramref name="idleBefore"/> (the worker's sweep of abandoned uploads, Q5). Read without a lock.
+    /// <paramref name="idleBefore"/> (the worker's sweep of abandoned uploads). Read without a lock.
     /// </summary>
     Task<List<string>> ListAccountsWithUploadsIdleBeforeAsync(DateTime idleBefore, int max, CancellationToken ct = default);
 }

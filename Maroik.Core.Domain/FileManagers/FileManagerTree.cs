@@ -2,8 +2,8 @@ namespace Maroik.Core.Domain.FileManagers;
 
 /// <summary>
 /// A user's whole drive held in memory, for the questions that need more than one node: a folder's ancestry (a move's cycle check,
-/// S5, and the breadcrumb, U4), the item count each folder shows (U3), a node's location path (search results, U5) and everything
-/// under a folder (a folder delete or download, F6 / F8). A node of another account is simply not in the tree.
+/// and the breadcrumb), the item count each folder shows, a node's location path (search results) and everything
+/// under a folder (a folder delete or download). A node of another account is simply not in the tree.
 /// </summary>
 public sealed class FileManagerTree
 {

@@ -4,8 +4,8 @@ using Maroik.Core.Domain.Primitives;
 namespace Maroik.Core.Domain.Tests.Kanbans;
 
 /// <summary>
-/// Unit tests for <see cref="KanbanCard"/>: the content rules of a card (K8), the lane it is created in and never leaves (K11),
-/// and the due-date state the board shows, decided in the owner's time zone (K10).
+/// Unit tests for <see cref="KanbanCard"/>: the content rules of a card, the lane it is created in and never leaves,
+/// and the due-date state the board shows, decided in the owner's time zone.
 /// </summary>
 public class KanbanCardTests
 {
@@ -159,7 +159,7 @@ public class KanbanCardTests
     }
 
     /// <summary>
-    /// A card's lane is fixed for its whole life (K11): nothing on the card can change it — the property has no public setter and
+    /// A card's lane is fixed for its whole life: nothing on the card can change it — the property has no public setter and
     /// no public method takes a lane, so moving work to another lane means deleting the card and creating a new one there.
     /// </summary>
     [Fact]

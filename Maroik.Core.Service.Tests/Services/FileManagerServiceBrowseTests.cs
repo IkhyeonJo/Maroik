@@ -5,9 +5,9 @@ using H = Maroik.Core.Service.Tests.Fixtures.FileManagerServiceHarness;
 namespace Maroik.Core.Service.Tests.Services;
 
 /// <summary>
-/// The read side of <see cref="FileManagerService"/>: the left panel's folder tree and usage (U1–U3, F7), an open folder's breadcrumb and
-/// items (U4, U6), the drive-wide name search with locations (U5) and the file list a multi-download fetches (F8). Another account's items
-/// are never shown, and an unfinished upload is never listed (though its size counts as used, Q4).
+/// The read side of <see cref="FileManagerService"/>: the left panel's folder tree and usage, an open folder's breadcrumb and
+/// items, the drive-wide name search with locations and the file list a multi-download fetches. Another account's items
+/// are never shown, and an unfinished upload is never listed (though its size counts as used).
 /// </summary>
 public class FileManagerServiceBrowseTests
 {

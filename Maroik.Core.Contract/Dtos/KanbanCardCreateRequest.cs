@@ -4,7 +4,7 @@ namespace Maroik.Core.Contract.Dtos;
 
 /// <summary>
 /// Data transfer object used to create a Kanban card in one of the four fixed lanes. The lane is the one whose "+ Add card" button
-/// was clicked; after creation it can never change (K11).
+/// was clicked; after creation it can never change.
 /// </summary>
 public class KanbanCardCreateRequest
 {

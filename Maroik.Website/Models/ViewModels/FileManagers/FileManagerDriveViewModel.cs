@@ -1,7 +1,7 @@
 // ReSharper disable UnusedAutoPropertyAccessor.Global
 namespace Maroik.Website.Models.ViewModels.FileManagers;
 
-/// <summary>The left panel's data: the folder tree and the storage usage (U1–U3, F7).</summary>
+/// <summary>The left panel's data: the folder tree and the storage usage.</summary>
 public class FileManagerDriveViewModel
 {
     /// <summary>The usage label, "12.3 GB / 30 GB".</summary>

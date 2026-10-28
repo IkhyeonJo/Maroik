@@ -1,7 +1,7 @@
 namespace Maroik.Core.Domain.Kanbans;
 
 /// <summary>
-/// The four fixed lanes of a Kanban board, declared in their display order (K5). The member names are the values stored in
+/// The four fixed lanes of a Kanban board, declared in their display order. The member names are the values stored in
 /// <c>KanbanCard.Lane</c> (mirrored by the DB's <c>KanbanCard_Lane_check</c>) and the resx keys their localized labels are
 /// looked up under; only the label is translated. The lanes cannot be added, renamed, deleted or reordered.
 /// </summary>

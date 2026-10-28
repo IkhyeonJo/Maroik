@@ -4,7 +4,7 @@ namespace Maroik.FileStorage.Interfaces;
 /// The File Manager's large-file flow on disk (Implementation note [A]), kept apart from <see cref="IFileValidationService"/>, which
 /// serves the small attachments: chunks are appended to a staging file, a completed upload is scanned from disk and moved to
 /// <c>upload/FileManager/{GUID}</c>, an abandoned one is dropped, and a stored File Manager file can be deleted (the one exception to
-/// the attachments' "no delete" rule, P4). A refusal is returned as one of the <c>FileStorageRefusals</c> texts.
+/// the attachments' "no delete" rule). A refusal is returned as one of the <c>FileStorageRefusals</c> texts.
 /// </summary>
 public interface IFileManagerStorageService
 {

@@ -2,8 +2,8 @@ using Maroik.Core.Domain.Kanbans;
 namespace Maroik.Core.Domain.Tests.Kanbans;
 
 /// <summary>
-/// Unit tests for <see cref="KanbanBoardPolicy.Arrange"/>: a board is the four fixed lanes in order (K5), each holding its cards
-/// in creation order — the oldest on top, ties broken by id (K12) — whatever order the cards arrive in.
+/// Unit tests for <see cref="KanbanBoardPolicy.Arrange"/>: a board is the four fixed lanes in order, each holding its cards
+/// in creation order — the oldest on top, ties broken by id — whatever order the cards arrive in.
 /// </summary>
 public class KanbanBoardPolicyTests
 {
@@ -11,7 +11,7 @@ public class KanbanBoardPolicyTests
     private static KanbanCard Card(long id, string lane, DateTime created) =>
         KanbanCard.Reconstitute(id, "user@example.com", lane, $"Card {id}", null, null, created, created);
 
-    /// <summary>Without cards the board is still the four lanes, each empty (a new user sees four empty lanes, K3).</summary>
+    /// <summary>Without cards the board is still the four lanes, each empty (a new user sees four empty lanes).</summary>
     [Fact]
     public void Arrange_ReturnsTheFourEmptyLanes_WhenThereAreNoCards()
     {

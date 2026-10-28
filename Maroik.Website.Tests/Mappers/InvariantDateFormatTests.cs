@@ -65,7 +65,7 @@ public sealed class InvariantDateFormatTests : IDisposable
         Assert.Equal("2025-06-15", accountBook.CurrentDate);
     }
 
-    /// <summary>A Kanban card's due date is shown as a Gregorian yyyy-MM-dd date for every culture (K10).</summary>
+    /// <summary>A Kanban card's due date is shown as a Gregorian yyyy-MM-dd date for every culture.</summary>
     [Fact]
     public void KanbanDueDates_AreGregorianIsoDates()
     {

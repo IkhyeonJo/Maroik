@@ -4,7 +4,7 @@ namespace Maroik.Core.Contract.Interfaces;
 
 /// <summary>
 /// Service interface for the personal Kanban board: one board per user, laid out as the four fixed lanes, and the card writes.
-/// Every operation is scoped to the given account; another account's card id is answered as "not found" (K2).
+/// Every operation is scoped to the given account; another account's card id is answered as "not found".
 /// </summary>
 public interface IKanbanService
 {

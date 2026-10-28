@@ -1,7 +1,7 @@
 // ReSharper disable UnusedAutoPropertyAccessor.Global
 namespace Maroik.Website.Models.ViewModels.FileManagers;
 
-/// <summary>One breadcrumb step (U4).</summary>
+/// <summary>One breadcrumb step.</summary>
 public class FileManagerCrumbViewModel
 {
     /// <summary>Folder ID.</summary>

@@ -1,7 +1,7 @@
 namespace Maroik.Core.Domain.FileManagers;
 
 /// <summary>
-/// Which files the File Manager previews (F9): png, jpg, gif and webp images of up to <see cref="MaxPreviewBytes"/>. Everything else —
+/// Which files the File Manager previews: png, jpg, gif and webp images of up to <see cref="MaxPreviewBytes"/>. Everything else —
 /// SVG included, since it can run script on the site's origin — is download-only. The extension alone is not trusted: the preview is
 /// answered only when the file's leading bytes prove one of the four formats, with the Content-Type of that proven format.
 /// </summary>

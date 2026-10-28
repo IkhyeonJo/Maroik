@@ -6,8 +6,8 @@ namespace Maroik.Website.Tests.Mappers;
 
 /// <summary>
 /// Unit tests for <see cref="FileManagerViewModelMapper"/>: the service's drive, folder and items become what the page draws — sizes as
-/// labels, times in the user's zone, an icon per file type (U7), a search result's location from "My Drive" down, and the usage label and
-/// bar fill (F7), all computed here rather than in the browser.
+/// labels, times in the user's zone, an icon per file type, a search result's location from "My Drive" down, and the usage label and
+/// bar fill, all computed here rather than in the browser.
 /// </summary>
 public class FileManagerViewModelMapperTests
 {

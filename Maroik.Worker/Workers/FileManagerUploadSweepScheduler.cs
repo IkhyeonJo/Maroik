@@ -3,7 +3,7 @@ using Maroik.Core.Contract.Interfaces;
 namespace Maroik.Worker.Workers;
 
 /// <summary>
-/// Removes the File Manager's abandoned uploads (<see cref="IFileManagerService.RemoveStaleUploadsAsync"/>, Q5) when the worker starts
+/// Removes the File Manager's abandoned uploads (<see cref="IFileManagerService.RemoveStaleUploadsAsync"/>) when the worker starts
 /// and then once an hour, on the injected <see cref="TimeProvider"/>: an upload whose page sent no chunk and asked about no scan for an
 /// hour is gone (closed, offline), and its reservation and staging file would otherwise wait for the same user's next upload. Each run
 /// gets a scope of its own (the service uses the scoped DbContext) and sweeps at most <see cref="MaxAccountsPerRun"/> accounts, the

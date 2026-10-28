@@ -343,7 +343,7 @@ public class ManagementAccountServiceTests
         Assert.Contains("wrong", result.ErrorKey, StringComparison.OrdinalIgnoreCase);
     }
 
-    /// <summary>An administrator sets the account's File Manager quota (Q2); a request without one keeps the current quota.</summary>
+    /// <summary>An administrator sets the account's File Manager quota; a request without one keeps the current quota.</summary>
     [Fact]
     public async Task UpdateAccountAsync_SetsTheFileManagerQuota_OnlyWhenGiven()
     {
@@ -364,7 +364,7 @@ public class ManagementAccountServiceTests
     }
 
     /// <summary>
-    /// An administrator allows (or disallows) the account to keep File Manager files that could not be scanned (Q4); a request without
+    /// An administrator allows (or disallows) the account to keep File Manager files that could not be scanned; a request without
     /// the flag keeps the current setting.
     /// </summary>
     [Fact]

@@ -3,7 +3,7 @@ namespace Maroik.Core.Domain.Tests.FileManagers;
 
 /// <summary>
 /// Unit tests for <see cref="FileManagerTree"/>: the questions the drive asks of the whole set of a user's nodes — a folder's ancestry
-/// (for a move's cycle check and the breadcrumb, U4), the item count each folder shows (U3), and a node's location path (U5).
+/// (for a move's cycle check and the breadcrumb), the item count each folder shows, and a node's location path.
 /// </summary>
 public class FileManagerTreeTests
 {

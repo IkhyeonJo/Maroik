@@ -10,10 +10,10 @@ using H = Maroik.Core.Service.Tests.Fixtures.FileManagerServiceHarness;
 namespace Maroik.Core.Service.Tests.Services;
 
 /// <summary>
-/// The upload flow of <see cref="FileManagerService"/>: the quota check before a batch (F2), starting one file (name, size, name conflict
-/// F2-C, quota reserved under the account lock Q4, abandoned uploads cleaned up Q5), its chunks (P5) and scan polls — each recorded as the
-/// upload's activity (Q5) — its completion — scanned and stored
-/// by file storage, an overwrite replacing the old file, an infected or unscannable file refused and logged (S2, S8) — and an abort.
+/// The upload flow of <see cref="FileManagerService"/>: the quota check before a batch, starting one file (name, size, name conflict
+/// included, quota reserved under the account lock, abandoned uploads cleaned up), its chunks and scan polls — each recorded as the
+/// upload's activity — its completion — scanned and stored
+/// by file storage, an overwrite replacing the old file, an infected or unscannable file refused and logged — and an abort.
 /// </summary>
 public class FileManagerServiceUploadTests
 {
@@ -52,7 +52,7 @@ public class FileManagerServiceUploadTests
     }
 
     /// <summary>
-    /// An upload idle for more than an hour (Q5) no longer counts, as in <see cref="FileManagerService.BeginUploadAsync"/>: otherwise an
+    /// An upload idle for more than an hour no longer counts, as in <see cref="FileManagerService.BeginUploadAsync"/>: otherwise an
     /// account it filled could never reach the upload that removes it. An upload still active keeps its reservation, however old.
     /// </summary>
     [Fact]
@@ -131,7 +131,7 @@ public class FileManagerServiceUploadTests
         Assert.NotNull(_h.Nodes.Get(old));
     }
 
-    /// <summary>An upload over the quota is refused with the shortfall and logged at Warning (an audit event, S8); nothing is reserved.</summary>
+    /// <summary>An upload over the quota is refused with the shortfall and logged at Warning (an audit event); nothing is reserved.</summary>
     [Fact]
     public async Task BeginUploadAsync_RefusesAnUploadOverTheQuota_AndLogsIt()
     {
@@ -161,7 +161,7 @@ public class FileManagerServiceUploadTests
     }
 
     /// <summary>
-    /// An upload idle for more than an hour is removed when the same user starts a new one (Q5): its row is deleted inside the
+    /// An upload idle for more than an hour is removed when the same user starts a new one: its row is deleted inside the
     /// transaction — so it no longer counts against the quota — and its staging file is aborted after the commit. One active within the
     /// hour stays.
     /// </summary>
@@ -244,7 +244,7 @@ public class FileManagerServiceUploadTests
         _h.Files.Verify(f => f.AppendFileManagerChunkAsync(start.UploadId, 0, It.IsAny<Stream>(), H.BaseUrl, It.IsAny<CancellationToken>()), Times.Once);
     }
 
-    /// <summary>A stored chunk is the upload's activity (Q5): its last activity becomes now, so a slow upload that keeps sending is never stale.</summary>
+    /// <summary>A stored chunk is the upload's activity: its last activity becomes now, so a slow upload that keeps sending is never stale.</summary>
     [Fact]
     public async Task AppendChunkAsync_RecordsTheUploadsActivity()
     {
@@ -328,7 +328,7 @@ public class FileManagerServiceUploadTests
         _h.AssertCommitted();
     }
 
-    /// <summary>An overwrite deletes the old file's row in the transaction and its stored file after the commit, logged as an audit event (S8).</summary>
+    /// <summary>An overwrite deletes the old file's row in the transaction and its stored file after the commit, logged as an audit event.</summary>
     [Fact]
     public async Task CompleteUploadAsync_WithOverwrite_ReplacesTheOldFile()
     {
@@ -363,7 +363,7 @@ public class FileManagerServiceUploadTests
         _h.Files.Verify(f => f.DeleteFileManagerFileAsync(newPath, H.BaseUrl, It.IsAny<CancellationToken>()), Times.Once);
     }
 
-    /// <summary>An infected or unscannable file is not kept: its row is deleted, the refusal says which, and it is logged at Warning (S8).</summary>
+    /// <summary>An infected or unscannable file is not kept: its row is deleted, the refusal says which, and it is logged at Warning.</summary>
     [Theory]
     [InlineData(FileUploadResult.Infected, ServiceErrorKeys.FileManagerInfected, "infected")]
     [InlineData(FileUploadResult.ScanUnavailable, ServiceErrorKeys.FileManagerScanUnavailable, "could not be scanned")]
@@ -416,7 +416,7 @@ public class FileManagerServiceUploadTests
     }
 
     /// <summary>
-    /// Each poll while the scan runs is the upload's activity (Q5): a long scan whose page keeps asking is never stale, while one whose
+    /// Each poll while the scan runs is the upload's activity: a long scan whose page keeps asking is never stale, while one whose
     /// page was closed stops being touched and is swept an hour later.
     /// </summary>
     [Fact]

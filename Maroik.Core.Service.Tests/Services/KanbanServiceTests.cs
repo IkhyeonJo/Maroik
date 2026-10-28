@@ -12,7 +12,7 @@ namespace Maroik.Core.Service.Tests.Services;
 /// <summary>
 /// Unit tests for <see cref="KanbanService"/>. The repository is a Moq mock; the clock is stopped at <see cref="Now"/>.
 /// Covers the board layout (four lanes, creation order, the overdue flag in the owner's time zone), the card writes (each a single
-/// non-transactional repository call), the owner scoping (another account's card is "not found", K2), the fixed lane (K11), and
+/// non-transactional repository call), the owner scoping (another account's card is "not found"), the fixed lane, and
 /// the log entries: a delete at Information, a card that was not found at Warning — never the card's text.
 /// </summary>
 public class KanbanServiceTests
@@ -164,7 +164,7 @@ public class KanbanServiceTests
         _repository.Verify(r => r.UpdateEntityAsync(card, It.IsAny<CancellationToken>()), Times.Once);
     }
 
-    /// <summary>The edit request has no lane at all, so no edit can move a card to another lane (K11).</summary>
+    /// <summary>The edit request has no lane at all, so no edit can move a card to another lane.</summary>
     [Fact]
     public void TheUpdateRequest_CarriesNoLane()
     {

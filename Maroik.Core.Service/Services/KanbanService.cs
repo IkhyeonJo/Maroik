@@ -10,7 +10,7 @@ namespace Maroik.Core.Service.Services;
 /// Implementation of <see cref="IKanbanService"/> for the personal Kanban board. The board is the account's cards laid out by
 /// <see cref="KanbanBoardPolicy"/>; the content rules and the fixed lane live in <see cref="KanbanCard"/>. Create, edit and delete
 /// each touch one card row, so they are single non-transactional repository writes (like the fixed income / expenditure CRUD).
-/// Every lookup is scoped to the signed-in account, so another account's card id is answered as "not found" (K2).
+/// Every lookup is scoped to the signed-in account, so another account's card id is answered as "not found".
 /// </summary>
 public class KanbanService(IKanbanCardRepository kanbanCardRepository, ILogger<KanbanService> logger, TimeProvider timeProvider) : IKanbanService
 {

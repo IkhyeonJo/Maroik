@@ -3,7 +3,7 @@ namespace Maroik.Core.Contract.Interfaces;
 
 /// <summary>
 /// Repository abstraction over <see cref="KanbanCard"/> persistence. Every lookup and delete is scoped to the owning account's email,
-/// so another user's card id behaves as "not found" (K2).
+/// so another user's card id behaves as "not found".
 /// </summary>
 public interface IKanbanCardRepository : IGenericRepository<KanbanCard>
 {

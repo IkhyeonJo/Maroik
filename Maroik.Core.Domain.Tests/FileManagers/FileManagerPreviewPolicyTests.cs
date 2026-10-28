@@ -3,7 +3,7 @@ using Maroik.Core.Domain.FileManagers;
 namespace Maroik.Core.Domain.Tests.FileManagers;
 
 /// <summary>
-/// Unit tests for <see cref="FileManagerPreviewPolicy"/> (F9): only png / jpg / gif / webp up to 100 MB are previewed, judged by the
+/// Unit tests for <see cref="FileManagerPreviewPolicy"/>: only png / jpg / gif / webp up to 100 MB are previewed, judged by the
 /// file's real format (its magic bytes) as well as its extension, and answered with a Content-Type the server sets.
 /// </summary>
 public class FileManagerPreviewPolicyTests

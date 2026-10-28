@@ -1,7 +1,7 @@
 // ReSharper disable UnusedAutoPropertyAccessor.Global
 namespace Maroik.Website.Models.ViewModels.FileManagers;
 
-/// <summary>One chunk of an upload, posted as a multipart form (P5).</summary>
+/// <summary>One chunk of an upload, posted as a multipart form.</summary>
 public class FileManagerChunkInputViewModel
 {
     /// <summary>The upload id.</summary>

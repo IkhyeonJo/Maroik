@@ -4,7 +4,7 @@ namespace Maroik.Core.Contract.Dtos;
 
 /// <summary>
 /// Data transfer object used to edit an existing Kanban card. It deliberately carries no lane: a card stays in the lane it was
-/// created in, so an edit cannot move it (K11).
+/// created in, so an edit cannot move it.
 /// </summary>
 public class KanbanCardUpdateRequest
 {
