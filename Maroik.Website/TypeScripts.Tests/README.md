@@ -29,9 +29,9 @@ short version:
 `TypeScripts.Tests/tsconfig.json` is standalone for **editor / `tsc --noEmit`
 type-checking only** — it emits nothing and needs no separate installation.
 
-If you never run `npm ci`, `dotnet build` still succeeds — with `node_modules/`
-absent the MSBuild target that would run the suite is a silent no-op (see **Running → In a build**), so a missing Node
-install is quiet, not a build error.
+All of this is optional: with no Node installed, a Debug `dotnet build` (Rider/VS "Fast Mode" included) and the
+`docker-compose.debug.yml` image build run the suite in a `node:22-alpine` container (see **Running → In a build**),
+so local development needs only Docker.
 
 ---
 
@@ -195,13 +195,14 @@ no `<canvas>` engine for the Chart.js code to use. Only the
 
 * **`dotnet build` / `dotnet test` / Rider / VS** — the `RunClientScriptTests` target (`Maroik.Website.csproj`,
   `AfterTargets="Build"`) runs `npx vitest run` **on by
-  default** wherever `npm ci` has been done. It is **incremental** — skipped unless a
+  default** wherever `npm ci` has been done, and in a `node:22-alpine` container for a Debug build without
+  `node_modules/` (`ClientScriptsInDocker`). It is **incremental** — skipped unless a
   `TypeScripts/**/*.ts`, `TypeScripts.Tests/**/*.ts`, `tsconfig.json`,
   `vitest.config.mts` or `package.json` changed since the last pass (stamp:
   `obj/…clientscripttests.stamp`), so a C#-only edit + build doesn't pay for it.
   One-off fast build: `dotnet build -p:RunClientScriptTests=false`.
-* **Docker** — the `Dockerfile` `tsbuild` stage runs the suite only when built with
-  `--build-arg RUN_CLIENT_TESTS=true` (keeps Rider/VS "regular mode" docker-compose
-  debug from being gated on it). CI passes that arg.
+* **Docker** — the `Dockerfile` `tsbuild` stage runs the suite when built with
+  `--build-arg RUN_CLIENT_TESTS=true`: `docker-compose.debug.yml` (and so Rider/VS "regular mode") passes it;
+  the release image does not (CI runs `npm test` in a step of its own).
 
 Not a .NET project (no `.csproj`) — not in `Maroik.slnx`.

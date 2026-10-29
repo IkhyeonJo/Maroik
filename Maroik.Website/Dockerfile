@@ -16,8 +16,9 @@ EXPOSE 80
 # emits wwwroot/**/custom/**/site.js.map (with .ts inlined), so container debugging in
 # Rider/VS maps site.js back to site.ts. Leave it "false" for a release image.
 #
-# The jsdom test suite is OFF by default so Rider/VS "regular mode" docker-compose
-# debug builds aren't gated on a ~40s test run. Opt in with:
+# The jsdom test suite is OFF by default (the release image: CI has already run it).
+# docker-compose.debug.yml turns it on (RUN_CLIENT_TESTS=true), so a local debug build
+# compiles and tests the scripts here and the dev machine needs no Node. Opt in by hand with:
 #     docker build --build-arg RUN_CLIENT_TESTS=true -f Maroik.Website/Dockerfile .
 FROM node:22-alpine AS tsbuild
 ARG RUN_CLIENT_TESTS=false

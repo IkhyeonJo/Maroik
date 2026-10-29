@@ -73,6 +73,15 @@
     dedicated `tsbuild` Node stage instead.
     npm's exit code propagates, so a TypeScript error fails the .NET build on dev machines.
 
+    No Node on the machine: a Debug build without node_modules (Rider / Visual Studio container
+    "Fast Mode", a plain `dotnet build`) runs the same steps in a throwaway container of the
+    Dockerfile's tsbuild image (ClientScriptsInDocker, client-scripts-in-docker.sh), so local
+    development needs only Docker. The packages stay in the `maroik-website-node-modules`
+    volume, so only the first build (or one after a package-lock.json change) installs them.
+    Not inside a container (the SDK image sets DOTNET_RUNNING_IN_CONTAINER) and not for Release
+    (the images build there and take their scripts from tsbuild). Switch it off with
+    `-p:ClientScriptsInDocker=false`; an `npm ci` here switches back to the machine's own npm.
+
     Debug builds run `npm run build:debug` (tsconfig.json: sourceMap + inlineSources) instead
     of the map-free `npm run build`, so plain `dotnet build`/`dotnet run` AND Rider/VS
     container "Fast Mode" debugging get a Chrome-debuggable site.js.map with no extra step -
@@ -83,12 +92,17 @@
   <PropertyGroup>
     <_ClientTypeScriptNpmScript Condition="'$(Configuration)' == 'Debug'">build:debug</_ClientTypeScriptNpmScript>
     <_ClientTypeScriptNpmScript Condition="'$(_ClientTypeScriptNpmScript)' == ''">build</_ClientTypeScriptNpmScript>
+    <ClientScriptsInDocker Condition="'$(ClientScriptsInDocker)' == '' And '$(Configuration)' == 'Debug' And '$(DOTNET_RUNNING_IN_CONTAINER)' != 'true' And !Exists('$(MSBuildProjectDirectory)/node_modules/typescript')">true</ClientScriptsInDocker>
+    <!-- The Dockerfile's tsbuild image (pinned equal by ClientScriptToolchainArchitectureTests). -->
+    <ClientScriptNodeImage>node:22-alpine</ClientScriptNodeImage>
+    <_ClientScriptDockerRun>docker run --rm -v "$(MSBuildProjectDirectory):/w/app" -v maroik-website-node-modules:/w -w /w/app $(ClientScriptNodeImage) sh client-scripts-in-docker.sh</_ClientScriptDockerRun>
   </PropertyGroup>
   <Target Name="CompileClientTypeScript"
           BeforeTargets="BeforeBuild"
-          Condition="Exists('$(MSBuildProjectDirectory)/node_modules/typescript') Or '$(BuildClientTypeScript)' == 'true'">
+          Condition="Exists('$(MSBuildProjectDirectory)/node_modules/typescript') Or '$(BuildClientTypeScript)' == 'true' Or '$(ClientScriptsInDocker)' == 'true'">
     <Message Importance="high" Text="tsc: compiling TypeScripts/**/*.ts -> wwwroot/**/*.js (npm run $(_ClientTypeScriptNpmScript))" />
-    <Exec Command="npm run $(_ClientTypeScriptNpmScript)" WorkingDirectory="$(MSBuildProjectDirectory)" />
+    <Exec Condition="'$(ClientScriptsInDocker)' != 'true'" Command="npm run $(_ClientTypeScriptNpmScript)" WorkingDirectory="$(MSBuildProjectDirectory)" />
+    <Exec Condition="'$(ClientScriptsInDocker)' == 'true'" Command="$(_ClientScriptDockerRun) $(_ClientTypeScriptNpmScript)" WorkingDirectory="$(MSBuildProjectDirectory)" />
   </Target>
 
   <!--
@@ -99,7 +113,8 @@
     skips it. Force off for a one-off fast build with `-p:RunClientScriptTests=false`.
 
     Skipped automatically where `node_modules/vitest` is absent (the .NET SDK Docker
-    stage, CI that doesn't `npm ci` here); the Dockerfile `tsbuild` stage covers Docker.
+    stage, CI that doesn't `npm ci` here), unless ClientScriptsInDocker runs them in the
+    Node container (above); the Dockerfile `tsbuild` stage covers the image builds.
   -->
   <PropertyGroup Condition="'$(RunClientScriptTests)' == ''">
     <RunClientScriptTests>true</RunClientScriptTests>
@@ -112,11 +127,12 @@
 
   <Target Name="RunClientScriptTests"
           AfterTargets="Build"
-          Condition="'$(RunClientScriptTests)' == 'true' And Exists('$(MSBuildProjectDirectory)/node_modules/vitest')"
+          Condition="'$(RunClientScriptTests)' == 'true' And (Exists('$(MSBuildProjectDirectory)/node_modules/vitest') Or '$(ClientScriptsInDocker)' == 'true')"
           Inputs="@(_ClientScriptTestInput)"
           Outputs="$(IntermediateOutputPath)clientscripttests.stamp">
     <Message Importance="high" Text="vitest: running TypeScripts.Tests" />
-    <Exec Command="npx vitest run" WorkingDirectory="$(MSBuildProjectDirectory)" />
+    <Exec Condition="'$(ClientScriptsInDocker)' != 'true'" Command="npx vitest run" WorkingDirectory="$(MSBuildProjectDirectory)" />
+    <Exec Condition="'$(ClientScriptsInDocker)' == 'true'" Command="$(_ClientScriptDockerRun) test" WorkingDirectory="$(MSBuildProjectDirectory)" />
     <MakeDir Directories="$(IntermediateOutputPath)" />
     <Touch Files="$(IntermediateOutputPath)clientscripttests.stamp" AlwaysCreate="true" />
   </Target>

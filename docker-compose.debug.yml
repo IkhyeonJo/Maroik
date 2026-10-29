@@ -9,7 +9,8 @@
 # (schema + the admin and demo accounts), uses a self-signed localhost cert, publishes 80/443 to
 # the host, catches all outgoing mail in Mailpit (http://localhost:8025), and builds
 # the website image with TypeScript source maps on (TS_SOURCEMAPS=true) so site.js can
-# be stepped as site.ts.
+# be stepped as site.ts, and with the client-script tests on (RUN_CLIENT_TESTS=true).
+# Node is needed only inside Docker, never on the dev machine.
 # ─────────────────────────────────────────────────────────────────────────────
 
 # Named volumes — Docker-managed, survive `down`; wiped only by `down -v`.
@@ -121,8 +122,13 @@ services:
          # Rebuild the image after toggling this: `docker compose -f docker-compose.debug.yml up -d --build maroik.website`.
          # Leave it unset/"false" for a release image so no debug artifact ships.
          # See Maroik.Website/TypeScripts/README.md ("Debugging in Chrome").
+         # RUN_CLIENT_TESTS=true -> the same stage also runs the client-script tests (vitest + jsdom), so a debug
+         # image is built only from scripts that pass them. Node runs only inside that stage: the dev machine needs
+         # Docker, not Node. (Rider / VS "Fast Mode" skips this stage and builds on the host; with no node_modules
+         # there, Maroik.Website.csproj does the same in a node container — ClientScriptsInDocker.)
          args :
            TS_SOURCEMAPS : "true"
+           RUN_CLIENT_TESTS : "true"
         container_name: Maroik.Website
         networks :
           - backend

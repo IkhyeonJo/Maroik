@@ -2,11 +2,17 @@
 
 ## Prerequisites — Node.js (one-time setup, written for a non-JS dev)
 
-**You can skip all of this if you only build through Docker Compose** — the Dockerfile
-`tsbuild` stage compiles the scripts itself (see **Build integration**). The compiled
-`wwwroot/**/site.js` is build output and is **not** committed, so you need the steps
-below to **run the site on the host** (`dotnet run`, Rider/VS "Fast Mode" container
-debugging), to **edit a `.ts` file and see its `.js`**, or to **run the client-script tests**.
+**Local development needs no Node — only Docker.** The compiled `wwwroot/**/site.js` is build
+output and is **not** committed, and every Docker debug path makes it (and runs the
+client-script tests) inside a `node:22-alpine` container (see **Build integration**):
+
+* `docker compose -f docker-compose.debug.yml up -d --build` and Rider/VS "regular mode" — the
+  Dockerfile `tsbuild` stage (`RUN_CLIENT_TESTS=true`, `TS_SOURCEMAPS=true`);
+* Rider/VS "Fast Mode" and any Debug `dotnet build` / `dotnet run` without `node_modules/` — the
+  csproj runs `npm run build:debug` and the tests in a throwaway container (`ClientScriptsInDocker`).
+
+The steps below are optional: a host Node gives a faster build, `npm run watch` and editor
+type-checking. Once `node_modules/` exists, the build uses it instead of the container.
 
 **Why it isn't automatic:** `tsc` (the TypeScript compiler) is not a system-wide
 tool here. `tsc`, Vitest, jsdom and every `@types/*` package are listed in
@@ -330,11 +336,19 @@ Both `site.js` and `site.js.map` under `Maroik.Website/wwwroot/**/custom/**` are
 * **`dotnet build` / `dotnet run`** — `Maroik.Website.csproj` has a `CompileClientTypeScript`
   target (`BeforeTargets="BeforeBuild"`) that runs `npm run build`, **guarded** by
   `Exists('$(MSBuildProjectDirectory)/node_modules/typescript')`. So it compiles on dev
-  machines that ran `npm ci`, and is a silent no-op everywhere else (a TS error there fails
-  the .NET build — that's intended). Force it with `-p:BuildClientTypeScript=true`.
+  machines that ran `npm ci` (a TS error there fails the .NET build — that's intended). Force it with
+  `-p:BuildClientTypeScript=true`.
+* **Debug `dotnet build` without `node_modules/`** (Rider/VS "Fast Mode", no Node installed) —
+  `ClientScriptsInDocker` runs the same `npm run build:debug` and the Vitest suite in a
+  `node:22-alpine` container (`docker run … sh client-scripts-in-docker.sh`), the Dockerfile's
+  tsbuild image (pinned equal by `ClientScriptToolchainArchitectureTests`). The packages are kept
+  in the `maroik-website-node-modules` Docker volume, not in this folder, and reinstalled only when
+  `package-lock.json` changes (`docker volume rm maroik-website-node-modules` forces it). Not inside
+  a container, not for Release; switch off with `-p:ClientScriptsInDocker=false`.
 * **Docker** — `Dockerfile` has a dedicated `node:22-alpine` `tsbuild` stage (`npm ci && npm run build`) whose
   `wwwroot/` output is `COPY --from=tsbuild` over the
-  SDK build stage's copy. The .NET SDK image has no Node, so the csproj target stays a no-op.
+  SDK build stage's copy. The .NET SDK image has no Node and is a container, so the csproj target stays a no-op.
+  `docker-compose.debug.yml` also builds it with `RUN_CLIENT_TESTS=true`, so a debug image only gets tested scripts.
 * **`dotnet publish` with no Node at all** — produces a site without the custom scripts. Don't
   deploy that way; deploy through the Docker image.
 
