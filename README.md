@@ -406,7 +406,7 @@ full deploy below is run by hand, because it rebuilds the database from `Init.sq
 
 ## How to Deploy
 
-The server runs Ubuntu Server 24.04 and Maroik lives in `/home/ubuntu/Maroik`. Run every command below **as `ubuntu`,
+The server runs Ubuntu Server 26.04 and Maroik lives in `/home/ubuntu/Maroik`. Run every command below **as `ubuntu`,
 not with `sudo`**: `Deploy.sh` refuses to run as root, because the folder must belong to `ubuntu` (it calls `sudo` itself
 where it needs it). It asks how to deploy; without a terminal, pass the choice (`bash Maroik.DeployOps/Deploy.sh local`
 or `github`):

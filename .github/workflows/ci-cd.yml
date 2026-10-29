@@ -23,9 +23,9 @@ env:
 
 jobs:
   build-and-test:
-    # Pinned to the production OS (Ubuntu Server 24.04) instead of ubuntu-latest, which moves to Ubuntu 26.
+    # Pinned to the production OS (Ubuntu Server 26.04) instead of ubuntu-latest, which moves with each new release.
     # The image ships Docker (Testcontainers: PostgreSQL 17, RabbitMQ 4) and Google Chrome (E2E default browser).
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
     timeout-minutes: 45
 
     steps:
@@ -202,7 +202,7 @@ jobs:
   publish:
     needs: build-and-test
     if: github.ref == 'refs/heads/main' && (github.event_name == 'push' || github.event_name == 'workflow_dispatch')
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
     timeout-minutes: 30
     permissions:
       contents: write   # push the version tag
