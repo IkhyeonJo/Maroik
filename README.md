@@ -1,5 +1,12 @@
 # Maroik
 
+## Seed accounts (`Init.sql`)
+
+| Role | Email | Password |
+|---|---|---|
+| Admin | `admin@maroik.com` | `demoO12!!` |
+| User (public demo) | `demo@maroik.com` | `demoO12!!` |
+
 # [https://www.maroik.com]
 
 # Contact: admin@maroik.com
