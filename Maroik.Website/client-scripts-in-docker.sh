@@ -21,12 +21,19 @@ if ! cmp -s app/package-lock.json package-lock.json || [ ! -f node_modules/.maro
 fi
 export PATH="/w/node_modules/.bin:$PATH"
 
+# On the way out, also after a failed build or test: vitest leaves its cache in the project's node_modules
+# (.vite, .vite-temp), which would leave a root-owned node_modules folder on the host, so it goes. And the
+# container runs as root, so what it wrote goes back to the owner of the project folder, for the host to
+# rebuild or delete (a no-op on Docker Desktop, where the bind mount maps owners itself).
+cleanup() {
+    rm -rf /w/app/node_modules/.vite /w/app/node_modules/.vite-temp
+    rmdir /w/app/node_modules 2>/dev/null || true
+    find /w/app/wwwroot -path '*/custom/*' \( -name '*.js' -o -name '*.js.map' \) -exec chown "$(stat -c %u:%g /w/app)" {} +
+}
+trap cleanup EXIT
+
 cd /w/app
 case "$1" in
     test) vitest run ;;
     *) npm run "$1" ;;
 esac
-
-# The container runs as root; hand what it wrote back to the owner of the project folder, so the host can
-# rebuild or delete it (a no-op on Docker Desktop, where the bind mount maps owners itself).
-find wwwroot -path '*/custom/*' \( -name '*.js' -o -name '*.js.map' \) -exec chown "$(stat -c %u:%g /w/app)" {} +

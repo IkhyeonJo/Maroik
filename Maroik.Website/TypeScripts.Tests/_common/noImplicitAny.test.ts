@@ -6,12 +6,17 @@
 import { execFileSync } from "node:child_process";
 import { present } from "@tests/_common/harness";
 import { mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import { createRequire } from "node:module";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const websiteRoot = join(dirname(fileURLToPath(import.meta.url)), "..", "..");
-const tsc = join(websiteRoot, "node_modules", "typescript", "bin", "tsc");
+// Found the way Node finds them, not under websiteRoot/node_modules: the build's Node container
+// (client-scripts-in-docker.sh) keeps the packages one folder up, in /w/node_modules.
+const resolvePackage = createRequire(import.meta.url).resolve;
+const tsc = join(dirname(resolvePackage("typescript/package.json")), "bin", "tsc");
+const typeRoots = dirname(dirname(resolvePackage("@types/jquery/package.json")));
 
 /** One untyped use per line; each must be a compile error. */
 const PROBE = [
@@ -29,7 +34,7 @@ function compileProbe(declarations: string, types: string[]): string[] {
         writeFileSync(probe, PROBE);
         try {
             execFileSync(process.execPath, [tsc, "--ignoreConfig", "--noEmit", "--strict", "--skipLibCheck", "--target", "ES2020",
-                "--lib", "ES2020,DOM", "--types", types.join(","), "--typeRoots", join(websiteRoot, "node_modules", "@types"),
+                "--lib", "ES2020,DOM", "--types", types.join(","), "--typeRoots", typeRoots,
                 declarations, probe], { cwd: websiteRoot, encoding: "utf8", stdio: "pipe" });
             return [];
         } catch (error) {
