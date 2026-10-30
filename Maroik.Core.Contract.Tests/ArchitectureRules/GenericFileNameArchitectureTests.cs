@@ -99,7 +99,7 @@ public class GenericFileNameArchitectureTests
         {
             null => null,
             { Parameters: null } => type.Value.Name,
-            _ => $"{type.Value.Name}{{{string.Join(",", type.Value.Parameters.Parameters.Select(p => p.Identifier.ValueText))}}}",
+            _ => $"{type.Value.Name}{{{string.Join(",", type.Value.Parameters!.Parameters.Select(p => p.Identifier.ValueText))}}}",
         };
     }
 
