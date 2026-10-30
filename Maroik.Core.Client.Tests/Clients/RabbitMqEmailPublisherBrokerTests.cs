@@ -2,8 +2,7 @@ using System.Text.Json;
 using Maroik.Core.Client.Clients;
 using Maroik.Core.Client.Tests.Fixtures;
 using Maroik.Core.Contract.Messages;
-using Microsoft.Extensions.Logging;
-using Moq;
+using Microsoft.Extensions.Logging.Abstractions;
 using RabbitMQ.Client;
 using RabbitMQ.Client.Exceptions;
 
@@ -21,7 +20,7 @@ public class RabbitMqEmailPublisherBrokerTests(RabbitMqBrokerFixture broker) : I
 
     /// <summary>A publisher against the shared broker, with a short reconnect grace window unless one is given.</summary>
     private RabbitMqEmailPublisher CreatePublisher(TimeSpan? grace = null) =>
-        new(broker.CreateFactory(), Mock.Of<ILogger<RabbitMqEmailPublisher>>(), grace ?? TimeSpan.FromMilliseconds(300));
+        new(broker.CreateFactory(), NullLogger<RabbitMqEmailPublisher>.Instance, grace ?? TimeSpan.FromMilliseconds(300));
 
     /// <summary>Opens a separate connection + channel to the broker for inspecting queues.</summary>
     private async Task<(IConnection Connection, IChannel Channel)> OpenAsync()
