@@ -139,7 +139,7 @@ public class AccountControllerRegistrationTests(MaroikWebApplicationFactory fact
 
         using var scope = factory.Services.CreateScope();
         string body = Assert.Single(scope.ServiceProvider.GetRequiredService<FakeEmailPublisher>().PublishedMessages, m => m.ToEmail == email).Body;
-        string encryptedToken = Uri.UnescapeDataString(Regex.Match(body, "registrationToken=([^\"&<\\s]+)").Groups[1].Value);
+        string encryptedToken = Uri.UnescapeDataString(Regex.Match(body, "registrationToken=([^'\"&<\\s]+)").Groups[1].Value);
         string mailedToken = scope.ServiceProvider.GetRequiredService<IDataProtectionService>().Unprotect(ProtectedValue.MailToken, encryptedToken);
         string? stored = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>().Accounts.Single(a => a.Email == email).RegistrationToken;
 
