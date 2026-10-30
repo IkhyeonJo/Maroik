@@ -315,6 +315,12 @@ Client scripts
 
 Code and tests
 - The DDD + Clean Architecture layering is deliberate preparation for growth, not over-engineering.
+- The `ErrorOr<T>` / `Error` result type is source in the repo, not a package (since 2026-10-30, owner's request): ErrorOr
+  2.1.1 (MIT; source and copyright in `Maroik.Core.Domain/Results/LICENSE.md`) lives in `Maroik.Core.Domain/Results`
+  (namespace `Maroik.Core.Domain.Results`, plus `.Interfaces` / `.Extensions`) with its upstream tests, ported from
+  FluentAssertions to xUnit `Assert`, in `Maroik.Core.Domain.Tests/Results`. Domain and Contract reference no NuGet package
+  at all and Domain only the BCL (`Domain_ShouldOnly_DependOn_TheBcl`, `SolutionLayeringArchitectureTests`). Do not bring the
+  `ErrorOr` package back.
 - The MVC grid is source in the repo, not a package (since 2026-10-30, owner's request): the upstream grid 8.0.0
   (MIT; source and copyright in `Maroik.Website/Grids/LICENSE.md`) lives in `Maroik.Website/Grids` (namespace `Maroik.Website.Grids.*`) with its
   upstream tests in `Maroik.Website.Tests/Grids` (Moq; `Grids/Fixtures/Fake` stands in for NSubstitute). Views render a grid
@@ -681,8 +687,8 @@ for shipped code, `tests` for `*.Tests`): `dotnet sln Maroik.slnx add <csproj> -
 
 The domain speaks English only and does no translation. Every `Maroik.Core.Domain` error is built via
 `Maroik.Core.Domain.Errors.DomainError` (`.Validation`/`.Conflict`/`.Failure`) — **never** call the raw
-`ErrorOr.Error.Validation` / `.Conflict` / `.Failure` / `.NotFound` / `.Forbidden` / `.Unexpected` factories
-directly outside `DomainError.cs` itself. `DomainError` keeps the English message template and its values
+`Error.Validation` / `.Conflict` / `.Failure` / `.NotFound` / `.Forbidden` / `.Unexpected` factories
+(`Maroik.Core.Domain.Results.Error`) directly outside `DomainError.cs` itself. `DomainError` keeps the English message template and its values
 separately in `Error.Metadata` (`MessageTemplate` / `MessageArgs`), so the outer layers can translate it.
 This applies even to a message with no runtime value to interpolate (pass zero `args`) — a message that
 starts static and later gains an interpolated value must not be able to silently lose its template.
@@ -696,9 +702,9 @@ code was interpolated straight into the message, so no resx key could ever match
 
 Enforced by `DomainArchitectureTests.Domain_ErrorMessages_MustGoThrough_DomainError`
 (`Maroik.Core.Domain.Tests/ArchitectureRules/DomainArchitectureTests.cs`) — a NetArchTest custom rule that
-inspects each type's IL for a direct call to a raw `ErrorOr.Error` factory method (a type-dependency
-check doesn't work here since every Domain type legitimately depends on the unrelated `ErrorOr<T>`
-return type). Keep it green; when a new error is added, add it via `DomainError`, and add the
+inspects each type's IL for a direct call to a raw `Results.Error` factory method (a type-dependency
+check doesn't work here since every Domain type legitimately depends on the `ErrorOr<T>` return type and on `Error`
+itself; the result type's own code in `Maroik.Core.Domain.Results` is exempt). Keep it green; when a new error is added, add it via `DomainError`, and add the
 matching resx entry — with a `{0}`/`{1}` composite-format key, not a baked value — to every controller
 resx pair (`en-US` + `ko-KR`) that can surface it.
 

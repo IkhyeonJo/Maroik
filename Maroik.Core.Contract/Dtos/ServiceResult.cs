@@ -1,4 +1,4 @@
-using ErrorOr;
+using Maroik.Core.Domain.Results;
 using Maroik.Core.Contract.Extensions;
 
 namespace Maroik.Core.Contract.Dtos;
@@ -96,9 +96,9 @@ public class ServiceResult
             ErrorArgs = args,
             ErrorType = error.Type switch
             {
-                ErrorOr.ErrorType.Validation => ServiceErrorType.Validation,
-                ErrorOr.ErrorType.NotFound => ServiceErrorType.NotFound,
-                ErrorOr.ErrorType.Conflict => ServiceErrorType.Conflict,
+                Maroik.Core.Domain.Results.ErrorType.Validation => ServiceErrorType.Validation,
+                Maroik.Core.Domain.Results.ErrorType.NotFound => ServiceErrorType.NotFound,
+                Maroik.Core.Domain.Results.ErrorType.Conflict => ServiceErrorType.Conflict,
                 _ => ServiceErrorType.Failure,
             },
         };

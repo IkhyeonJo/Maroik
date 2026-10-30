@@ -1,6 +1,6 @@
 using System.Globalization;
 using System.Text;
-using ErrorOr;
+using Maroik.Core.Domain.Results;
 using Maroik.Core.Domain.Errors;
 using Maroik.Core.Domain.Primitives;
 

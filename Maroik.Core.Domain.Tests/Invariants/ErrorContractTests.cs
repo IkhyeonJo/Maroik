@@ -1,4 +1,4 @@
-using ErrorOr;
+using Maroik.Core.Domain.Results;
 using Maroik.Core.Domain.Accounts;
 using Maroik.Core.Domain.Boards;
 using Maroik.Core.Domain.Calendars;

@@ -1,4 +1,4 @@
-using ErrorOr;
+using Maroik.Core.Domain.Results;
 using Maroik.Core.Domain.Errors;
 // ReSharper disable InvalidXmlDocComment
 namespace Maroik.Core.Domain.Tests.Errors;

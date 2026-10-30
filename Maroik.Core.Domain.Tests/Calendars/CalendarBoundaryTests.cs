@@ -1,5 +1,6 @@
 using Maroik.Core.Domain.Calendars;
 using Maroik.Core.Domain.Primitives;
+using Maroik.Core.Domain.Results;
 using Maroik.Core.Domain.Tests.Fixtures;
 using DomainCalendar = Maroik.Core.Domain.Calendars.Calendar;
 
@@ -27,7 +28,7 @@ public class CalendarBoundaryTests
     private static readonly DateTime _start = new(2026, 1, 1, 9, 0, 0);
 
     /// <summary>Result of <c>CalendarEvent.Create</c> for a one-hour UTC event with the given text fields and status.</summary>
-    private static ErrorOr.ErrorOr<CalendarEvent> Event(string title = "t", string? description = null, string? location = null, string? status = null) =>
+    private static ErrorOr<CalendarEvent> Event(string title = "t", string? description = null, string? location = null, string? status = null) =>
         CalendarEvent.Create(1, title, description, false, _start, _start.AddHours(1), "UTC", "UTC", location, status, Now);
 
     /// <summary>Verifies that <c>Reassign</c> sets the new calendar and recurrence IDs and does not move <c>Updated</c> backwards.</summary>

@@ -39,7 +39,7 @@ public class ExpenditureClassPolicyTests
     /// A recognized main class with an unrecognized subclass is built via <c>DomainError</c>:
     /// its Metadata carries the composite-format resource template and the raw main-class name
     /// separately, so <c>ServiceResult.FromError</c> can hand the UI something resx-localizable
-    /// instead of the already-baked, value-embedding sentence in <see cref="ErrorOr.Error.Description"/>.
+    /// instead of the already-baked, value-embedding sentence in <see cref="Maroik.Core.Domain.Results.Error.Description"/>.
     /// </summary>
     [Fact]
     public void Validate_ReturnsError_WithLocalizableMetadata_WhenSubClassInvalid()

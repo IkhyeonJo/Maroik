@@ -48,7 +48,7 @@ public class TimeZoneIdTests
     /// The "unrecognized" error is built via <c>DomainError</c>: its Metadata carries the
     /// composite-format resource template and the raw offending value separately, so
     /// <c>ServiceResult.FromError</c> can hand the UI something resx-localizable instead of the
-    /// already-baked, value-embedding sentence in <see cref="ErrorOr.Error.Description"/>.
+    /// already-baked, value-embedding sentence in <see cref="Maroik.Core.Domain.Results.Error.Description"/>.
     /// </summary>
     [Fact]
     public void Create_ReturnsError_WithLocalizableMetadata_WhenUnrecognised()

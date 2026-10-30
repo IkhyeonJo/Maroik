@@ -1,5 +1,5 @@
 using System.Globalization;
-using ErrorOr;
+using Maroik.Core.Domain.Results;
 using Maroik.Core.Domain.Errors;
 
 namespace Maroik.Core.Domain.Finances;
