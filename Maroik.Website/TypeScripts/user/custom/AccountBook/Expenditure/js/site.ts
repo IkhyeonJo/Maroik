@@ -1,6 +1,6 @@
 /**
  * Script for the account book **Expenditure** page
- * (`Views/AccountBook/Expenditure.cshtml`). A NonFactors MVC.Grid list with
+ * (`Views/AccountBook/Expenditure.cshtml`). An MVC Grid list with
  * create / edit / delete modals and Excel export — the standard grid-CRUD
  * pattern (see `AccountBook/Asset`) plus:
  *

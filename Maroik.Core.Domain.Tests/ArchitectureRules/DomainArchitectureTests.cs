@@ -92,7 +92,6 @@ public class DomainArchitectureTests
     [InlineData("ICSharpCode.SharpZipLib")]
     [InlineData("Serilog")]
     [InlineData("Swashbuckle")]
-    [InlineData("NonFactors.Grid")]
     [InlineData("Dapper")]
     [InlineData("AutoMapper")]
     [InlineData("MediatR")]

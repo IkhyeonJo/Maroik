@@ -1,6 +1,6 @@
 /**
  * Script for the admin **Menu** management page (`Views/Management/Menu.cshtml`).
- * A NonFactors MVC.Grid list of the navigation tree with create / edit / delete
+ * An MVC Grid list of the navigation tree with create / edit / delete
  * modals and Excel export.
  *
  * The tree has two levels — **Category** and **SubCategory** — shown flat in one

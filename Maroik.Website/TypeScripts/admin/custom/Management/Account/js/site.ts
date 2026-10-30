@@ -1,6 +1,6 @@
 /**
  * Script for the admin **Account** management page
- * (`Views/Management/Account.cshtml`). A NonFactors MVC.Grid list of user
+ * (`Views/Management/Account.cshtml`). An MVC Grid list of user
  * accounts with create / edit / delete modals and Excel export.
  *
  * Same shape as every grid-backed CRUD page in the app (see
