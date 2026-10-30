@@ -1,7 +1,7 @@
 /*
  * Shared behavior suite for the "grid CRUD" page scripts that follow one pattern:
  * AccountBook/{Asset,Income,Expenditure} and Notice/{FixedIncome,FixedExpenditure}
- * (an MVC Grid with create / edit / delete modals, row highlight, double-click to edit,
+ * (a NonFactors MVC.Grid with create / edit / delete modals, row highlight, double-click to edit,
  * whole-row search and a create/update/delete AJAX round trip against `/{Controller}/{Verb}{Entity}`).
  * Each site.test.ts calls `describeGridCrudScript(...)` with its own names and a sample record; the
  * script under test is the compiled one at the matching wwwroot path.

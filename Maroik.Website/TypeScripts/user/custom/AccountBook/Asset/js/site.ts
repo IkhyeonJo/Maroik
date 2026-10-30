@@ -1,6 +1,6 @@
 /**
  * Script for the **Asset** page of the account book
- * (`Views/AccountBook/Asset.cshtml`). An MVC Grid list of assets with
+ * (`Views/AccountBook/Asset.cshtml`). A NonFactors MVC.Grid list of assets with
  * create / edit / delete modals and an "export to Excel" button.
  *
  * The pattern used here recurs on every grid-backed CRUD page (Income,

@@ -1,6 +1,6 @@
 /**
  * Script for the **Fixed Income** page (`Views/Notice/FixedIncome.cshtml`) —
- * recurring/scheduled income entries. An MVC Grid list with create /
+ * recurring/scheduled income entries. A NonFactors MVC.Grid list with create /
  * edit / delete modals and Excel export, following the standard grid-CRUD
  * pattern (see `AccountBook/Asset`) plus:
  *

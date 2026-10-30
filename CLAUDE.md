@@ -315,11 +315,6 @@ Client scripts
 
 Code and tests
 - The DDD + Clean Architecture layering is deliberate preparation for growth, not over-engineering.
-- The MVC grid is source in the repo, not a package (since 2026-10-30, owner's request): the upstream grid 8.0.0
-  (MIT; source and copyright in `Maroik.Website/Grids/LICENSE.md`) lives in `Maroik.Website/Grids` (namespace `Maroik.Website.Grids.*`) with its
-  upstream tests in `Maroik.Website.Tests/Grids` (Moq; `Grids/Fixtures/Fake` stands in for NSubstitute). Views render a grid
-  with `@(await Html.Grid(...)....RenderAsync())`: the upstream `IHtmlContent.WriteTo` used the synchronous `Html.Partial`
-  (MVC1000). Do not bring the grid's NuGet packages back.
 - Long rationale comments are wanted; do not trim them in a review.
 - Service tests mock the repositories, and the Service layer's mutation score sits below the Domain's on purpose:
   the business rules live in Domain (with its own tests), and real-database coverage comes from the Repository

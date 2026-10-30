@@ -62,7 +62,7 @@ public class DashboardControllerTests
 
     /// <summary>
     /// The shared layout renders the label of MVC Grid 8's "consists-of" text-filter method for the grid script
-    /// (<c>mvc-grid-localizer1.js</c>), in the visitor's culture.
+    /// (<c>nonfactors-mvc-grid-localizer1.js</c>), in the visitor's culture.
     /// </summary>
     [Theory]
     [InlineData("en-US", "Consists of")]
@@ -75,7 +75,7 @@ public class DashboardControllerTests
         var response = await _client.SendAsync(request, TestContext.Current.CancellationToken);
         string html = System.Net.WebUtility.HtmlDecode(await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken));
 
-        Assert.Contains($"<input id=\"_localizerMvcGridConsistsOf\" type=\"hidden\" value=\"{text}\" />", html, StringComparison.Ordinal);
+        Assert.Contains($"<input id=\"_localizerNonFactorsConsistsOf\" type=\"hidden\" value=\"{text}\" />", html, StringComparison.Ordinal);
     }
 
     /// <summary>Verifies that <c>DefaultRoute</c> get when returns200.</summary>

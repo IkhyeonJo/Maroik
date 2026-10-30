@@ -1,15 +1,15 @@
 ﻿@*
     Notice/_FixedExpenditureGrid.cshtml
-    MVC Grid partial for the fixed expenditure list.
+    NonFactors MVC Grid partial for the fixed expenditure list.
     Renders a filterable, sortable data table of FixedExpenditureOutputViewModel records.
     Noticed and Expired columns are highlighted to draw attention to upcoming or overdue entries.
     Each row is clickable to populate the edit form in the parent FixedExpenditure.cshtml view.
-    Note: this partial should contain only the grid declaration (the grid script replaces the grid with the response).
+    Note: this partial should contain only the grid declaration (NonFactors constraint).
 *@
 @model IQueryable<Maroik.Website.Models.ViewModels.Notices.FixedExpenditureOutputViewModel>
 @* Should only include grid declaration *@
 
-@(await Html
+@(Html
     .Grid(Model)
     .Build(columns =>
     {
@@ -42,5 +42,4 @@
         pager.ShowPageSizes = true;
         pager.RowsPerPage = 10;
     })
-    .RenderAsync()
 )

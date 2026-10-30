@@ -1,6 +1,6 @@
 /**
  * Script for the account book **Income** page (`Views/AccountBook/Income.cshtml`).
- * An MVC Grid list of income entries with create / edit / delete
+ * A NonFactors MVC.Grid list of income entries with create / edit / delete
  * modals and Excel export — the standard grid-CRUD pattern (see
  * `AccountBook/Asset` for the fullest commentary) plus three page-specific bits:
  *
