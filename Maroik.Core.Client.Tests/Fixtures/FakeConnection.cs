@@ -112,13 +112,13 @@ public sealed class FakeConnection : IConnection
     /// <summary>What <c>UpdateSecretAsync</c> does; <see langword="null"/> returns an empty / default value.</summary>
     public Func<string, string, CancellationToken, Task>? OnUpdateSecretAsync { get; set; }
 
-    /// <summary>The arguments of every <c>UpdateSecretAsync</c> call, in order.</summary>
+    /// <summary>The arguments of every <c>UpdateSecretAsync</c> call, in order (appended under a lock on the list: a fake may be called from several threads).</summary>
     public List<(string NewSecret, string Reason, CancellationToken CancellationToken)> UpdateSecretAsyncCalls { get; } = [];
 
     /// <inheritdoc/>
     public Task UpdateSecretAsync(string newSecret, string reason, CancellationToken cancellationToken)
     {
-        UpdateSecretAsyncCalls.Add((newSecret, reason, cancellationToken));
+        lock (UpdateSecretAsyncCalls) UpdateSecretAsyncCalls.Add((newSecret, reason, cancellationToken));
         if (OnUpdateSecretAsync is { } on)
         {
             return on(newSecret, reason, cancellationToken);
@@ -130,13 +130,13 @@ public sealed class FakeConnection : IConnection
     /// <summary>What <c>CloseAsync</c> does; <see langword="null"/> returns an empty / default value.</summary>
     public Func<ushort, string, TimeSpan, bool, CancellationToken, Task>? OnCloseAsync { get; set; }
 
-    /// <summary>The arguments of every <c>CloseAsync</c> call, in order.</summary>
+    /// <summary>The arguments of every <c>CloseAsync</c> call, in order (appended under a lock on the list: a fake may be called from several threads).</summary>
     public List<(ushort ReasonCode, string ReasonText, TimeSpan Timeout, bool Abort, CancellationToken CancellationToken)> CloseAsyncCalls { get; } = [];
 
     /// <inheritdoc/>
     public Task CloseAsync(ushort reasonCode, string reasonText, TimeSpan timeout, bool abort, CancellationToken cancellationToken)
     {
-        CloseAsyncCalls.Add((reasonCode, reasonText, timeout, abort, cancellationToken));
+        lock (CloseAsyncCalls) CloseAsyncCalls.Add((reasonCode, reasonText, timeout, abort, cancellationToken));
         if (OnCloseAsync is { } on)
         {
             return on(reasonCode, reasonText, timeout, abort, cancellationToken);
@@ -148,13 +148,13 @@ public sealed class FakeConnection : IConnection
     /// <summary>What <c>CreateChannelAsync</c> does; <see langword="null"/> returns an empty / default value.</summary>
     public Func<CreateChannelOptions?, CancellationToken, Task<IChannel>>? OnCreateChannelAsync { get; set; }
 
-    /// <summary>The arguments of every <c>CreateChannelAsync</c> call, in order.</summary>
+    /// <summary>The arguments of every <c>CreateChannelAsync</c> call, in order (appended under a lock on the list: a fake may be called from several threads).</summary>
     public List<(CreateChannelOptions? Options, CancellationToken CancellationToken)> CreateChannelAsyncCalls { get; } = [];
 
     /// <inheritdoc/>
     public Task<IChannel> CreateChannelAsync(CreateChannelOptions? options, CancellationToken cancellationToken)
     {
-        CreateChannelAsyncCalls.Add((options, cancellationToken));
+        lock (CreateChannelAsyncCalls) CreateChannelAsyncCalls.Add((options, cancellationToken));
         if (OnCreateChannelAsync is { } on)
         {
             return on(options, cancellationToken);
@@ -166,13 +166,16 @@ public sealed class FakeConnection : IConnection
     /// <summary>What <c>DisposeAsync</c> does; <see langword="null"/> returns an empty / default value.</summary>
     public Func<ValueTask>? OnDisposeAsync { get; set; }
 
-    /// <summary>How many times <c>DisposeAsync</c> was called.</summary>
-    public int DisposeAsyncCallCount { get; private set; }
+    /// <summary>How many times <c>DisposeAsync</c> was called (counted atomically: a fake may be called from several threads).</summary>
+    public int DisposeAsyncCallCount => Volatile.Read(ref _disposeAsyncCallCount);
+
+    /// <summary>Backs <see cref="DisposeAsyncCallCount"/>.</summary>
+    private int _disposeAsyncCallCount;
 
     /// <inheritdoc/>
     public ValueTask DisposeAsync()
     {
-        DisposeAsyncCallCount++;
+        Interlocked.Increment(ref _disposeAsyncCallCount);
         if (OnDisposeAsync is { } on)
         {
             return on();
@@ -184,13 +187,16 @@ public sealed class FakeConnection : IConnection
     /// <summary>What <c>Dispose</c> does; <see langword="null"/> returns an empty / default value.</summary>
     public Action? OnDispose { get; set; }
 
-    /// <summary>How many times <c>Dispose</c> was called.</summary>
-    public int DisposeCallCount { get; private set; }
+    /// <summary>How many times <c>Dispose</c> was called (counted atomically: a fake may be called from several threads).</summary>
+    public int DisposeCallCount => Volatile.Read(ref _disposeCallCount);
+
+    /// <summary>Backs <see cref="DisposeCallCount"/>.</summary>
+    private int _disposeCallCount;
 
     /// <inheritdoc/>
     public void Dispose()
     {
-        DisposeCallCount++;
+        Interlocked.Increment(ref _disposeCallCount);
         OnDispose?.Invoke();
     }
 }

@@ -47,13 +47,13 @@ public sealed class FakeConnectionFactory : IConnectionFactory
     /// <summary>What <c>AuthMechanismFactory</c> does; <see langword="null"/> returns an empty / default value.</summary>
     public Func<IEnumerable<string>, IAuthMechanismFactory?>? OnAuthMechanismFactory { get; set; }
 
-    /// <summary>The arguments of every <c>AuthMechanismFactory</c> call, in order.</summary>
+    /// <summary>The arguments of every <c>AuthMechanismFactory</c> call, in order (appended under a lock on the list: a fake may be called from several threads).</summary>
     public List<IEnumerable<string>> AuthMechanismFactoryCalls { get; } = [];
 
     /// <inheritdoc/>
     public IAuthMechanismFactory? AuthMechanismFactory(IEnumerable<string> mechanismNames)
     {
-        AuthMechanismFactoryCalls.Add(mechanismNames);
+        lock (AuthMechanismFactoryCalls) AuthMechanismFactoryCalls.Add(mechanismNames);
         if (OnAuthMechanismFactory is { } on)
         {
             return on(mechanismNames);
@@ -65,13 +65,13 @@ public sealed class FakeConnectionFactory : IConnectionFactory
     /// <summary>What <c>CreateConnectionAsync</c> does; <see langword="null"/> returns an empty / default value.</summary>
     public Func<CancellationToken, Task<IConnection>>? OnCreateConnectionAsync { get; set; }
 
-    /// <summary>The arguments of every <c>CreateConnectionAsync</c> call, in order.</summary>
+    /// <summary>The arguments of every <c>CreateConnectionAsync</c> call, in order (appended under a lock on the list: a fake may be called from several threads).</summary>
     public List<CancellationToken> CreateConnectionAsyncCalls { get; } = [];
 
     /// <inheritdoc/>
     public Task<IConnection> CreateConnectionAsync(CancellationToken cancellationToken)
     {
-        CreateConnectionAsyncCalls.Add(cancellationToken);
+        lock (CreateConnectionAsyncCalls) CreateConnectionAsyncCalls.Add(cancellationToken);
         if (OnCreateConnectionAsync is { } on)
         {
             return on(cancellationToken);
@@ -81,16 +81,16 @@ public sealed class FakeConnectionFactory : IConnectionFactory
     }
 
     /// <summary>What <c>CreateConnectionAsync</c> does; <see langword="null"/> returns an empty / default value.</summary>
-    public Func<string, CancellationToken, Task<IConnection>>? OnCreateConnectionAsync_ClientProvidedName { get; set; }
+    public Func<string, CancellationToken, Task<IConnection>>? OnCreateConnectionAsyncWithClientProvidedName { get; set; }
 
-    /// <summary>The arguments of every <c>CreateConnectionAsync</c> call, in order.</summary>
-    public List<(string ClientProvidedName, CancellationToken CancellationToken)> CreateConnectionAsync_ClientProvidedNameCalls { get; } = [];
+    /// <summary>The arguments of every <c>CreateConnectionAsync</c> call, in order (appended under a lock on the list: a fake may be called from several threads).</summary>
+    public List<(string ClientProvidedName, CancellationToken CancellationToken)> CreateConnectionAsyncWithClientProvidedNameCalls { get; } = [];
 
     /// <inheritdoc/>
     public Task<IConnection> CreateConnectionAsync(string clientProvidedName, CancellationToken cancellationToken)
     {
-        CreateConnectionAsync_ClientProvidedNameCalls.Add((clientProvidedName, cancellationToken));
-        if (OnCreateConnectionAsync_ClientProvidedName is { } on)
+        lock (CreateConnectionAsyncWithClientProvidedNameCalls) CreateConnectionAsyncWithClientProvidedNameCalls.Add((clientProvidedName, cancellationToken));
+        if (OnCreateConnectionAsyncWithClientProvidedName is { } on)
         {
             return on(clientProvidedName, cancellationToken);
         }
@@ -99,16 +99,16 @@ public sealed class FakeConnectionFactory : IConnectionFactory
     }
 
     /// <summary>What <c>CreateConnectionAsync</c> does; <see langword="null"/> returns an empty / default value.</summary>
-    public Func<IEnumerable<string>, CancellationToken, Task<IConnection>>? OnCreateConnectionAsync_Hostnames { get; set; }
+    public Func<IEnumerable<string>, CancellationToken, Task<IConnection>>? OnCreateConnectionAsyncWithHostnames { get; set; }
 
-    /// <summary>The arguments of every <c>CreateConnectionAsync</c> call, in order.</summary>
-    public List<(IEnumerable<string> Hostnames, CancellationToken CancellationToken)> CreateConnectionAsync_HostnamesCalls { get; } = [];
+    /// <summary>The arguments of every <c>CreateConnectionAsync</c> call, in order (appended under a lock on the list: a fake may be called from several threads).</summary>
+    public List<(IEnumerable<string> Hostnames, CancellationToken CancellationToken)> CreateConnectionAsyncWithHostnamesCalls { get; } = [];
 
     /// <inheritdoc/>
     public Task<IConnection> CreateConnectionAsync(IEnumerable<string> hostnames, CancellationToken cancellationToken)
     {
-        CreateConnectionAsync_HostnamesCalls.Add((hostnames, cancellationToken));
-        if (OnCreateConnectionAsync_Hostnames is { } on)
+        lock (CreateConnectionAsyncWithHostnamesCalls) CreateConnectionAsyncWithHostnamesCalls.Add((hostnames, cancellationToken));
+        if (OnCreateConnectionAsyncWithHostnames is { } on)
         {
             return on(hostnames, cancellationToken);
         }
@@ -117,16 +117,16 @@ public sealed class FakeConnectionFactory : IConnectionFactory
     }
 
     /// <summary>What <c>CreateConnectionAsync</c> does; <see langword="null"/> returns an empty / default value.</summary>
-    public Func<IEnumerable<string>, string, CancellationToken, Task<IConnection>>? OnCreateConnectionAsync_Hostnames_ClientProvidedName { get; set; }
+    public Func<IEnumerable<string>, string, CancellationToken, Task<IConnection>>? OnCreateConnectionAsyncWithHostnamesClientProvidedName { get; set; }
 
-    /// <summary>The arguments of every <c>CreateConnectionAsync</c> call, in order.</summary>
-    public List<(IEnumerable<string> Hostnames, string ClientProvidedName, CancellationToken CancellationToken)> CreateConnectionAsync_Hostnames_ClientProvidedNameCalls { get; } = [];
+    /// <summary>The arguments of every <c>CreateConnectionAsync</c> call, in order (appended under a lock on the list: a fake may be called from several threads).</summary>
+    public List<(IEnumerable<string> Hostnames, string ClientProvidedName, CancellationToken CancellationToken)> CreateConnectionAsyncWithHostnamesClientProvidedNameCalls { get; } = [];
 
     /// <inheritdoc/>
     public Task<IConnection> CreateConnectionAsync(IEnumerable<string> hostnames, string clientProvidedName, CancellationToken cancellationToken)
     {
-        CreateConnectionAsync_Hostnames_ClientProvidedNameCalls.Add((hostnames, clientProvidedName, cancellationToken));
-        if (OnCreateConnectionAsync_Hostnames_ClientProvidedName is { } on)
+        lock (CreateConnectionAsyncWithHostnamesClientProvidedNameCalls) CreateConnectionAsyncWithHostnamesClientProvidedNameCalls.Add((hostnames, clientProvidedName, cancellationToken));
+        if (OnCreateConnectionAsyncWithHostnamesClientProvidedName is { } on)
         {
             return on(hostnames, clientProvidedName, cancellationToken);
         }
@@ -135,16 +135,16 @@ public sealed class FakeConnectionFactory : IConnectionFactory
     }
 
     /// <summary>What <c>CreateConnectionAsync</c> does; <see langword="null"/> returns an empty / default value.</summary>
-    public Func<IEnumerable<AmqpTcpEndpoint>, CancellationToken, Task<IConnection>>? OnCreateConnectionAsync_Endpoints { get; set; }
+    public Func<IEnumerable<AmqpTcpEndpoint>, CancellationToken, Task<IConnection>>? OnCreateConnectionAsyncWithEndpoints { get; set; }
 
-    /// <summary>The arguments of every <c>CreateConnectionAsync</c> call, in order.</summary>
-    public List<(IEnumerable<AmqpTcpEndpoint> Endpoints, CancellationToken CancellationToken)> CreateConnectionAsync_EndpointsCalls { get; } = [];
+    /// <summary>The arguments of every <c>CreateConnectionAsync</c> call, in order (appended under a lock on the list: a fake may be called from several threads).</summary>
+    public List<(IEnumerable<AmqpTcpEndpoint> Endpoints, CancellationToken CancellationToken)> CreateConnectionAsyncWithEndpointsCalls { get; } = [];
 
     /// <inheritdoc/>
     public Task<IConnection> CreateConnectionAsync(IEnumerable<AmqpTcpEndpoint> endpoints, CancellationToken cancellationToken)
     {
-        CreateConnectionAsync_EndpointsCalls.Add((endpoints, cancellationToken));
-        if (OnCreateConnectionAsync_Endpoints is { } on)
+        lock (CreateConnectionAsyncWithEndpointsCalls) CreateConnectionAsyncWithEndpointsCalls.Add((endpoints, cancellationToken));
+        if (OnCreateConnectionAsyncWithEndpoints is { } on)
         {
             return on(endpoints, cancellationToken);
         }
@@ -153,16 +153,16 @@ public sealed class FakeConnectionFactory : IConnectionFactory
     }
 
     /// <summary>What <c>CreateConnectionAsync</c> does; <see langword="null"/> returns an empty / default value.</summary>
-    public Func<IEnumerable<AmqpTcpEndpoint>, string, CancellationToken, Task<IConnection>>? OnCreateConnectionAsync_Endpoints_ClientProvidedName { get; set; }
+    public Func<IEnumerable<AmqpTcpEndpoint>, string, CancellationToken, Task<IConnection>>? OnCreateConnectionAsyncWithEndpointsClientProvidedName { get; set; }
 
-    /// <summary>The arguments of every <c>CreateConnectionAsync</c> call, in order.</summary>
-    public List<(IEnumerable<AmqpTcpEndpoint> Endpoints, string ClientProvidedName, CancellationToken CancellationToken)> CreateConnectionAsync_Endpoints_ClientProvidedNameCalls { get; } = [];
+    /// <summary>The arguments of every <c>CreateConnectionAsync</c> call, in order (appended under a lock on the list: a fake may be called from several threads).</summary>
+    public List<(IEnumerable<AmqpTcpEndpoint> Endpoints, string ClientProvidedName, CancellationToken CancellationToken)> CreateConnectionAsyncWithEndpointsClientProvidedNameCalls { get; } = [];
 
     /// <inheritdoc/>
     public Task<IConnection> CreateConnectionAsync(IEnumerable<AmqpTcpEndpoint> endpoints, string clientProvidedName, CancellationToken cancellationToken)
     {
-        CreateConnectionAsync_Endpoints_ClientProvidedNameCalls.Add((endpoints, clientProvidedName, cancellationToken));
-        if (OnCreateConnectionAsync_Endpoints_ClientProvidedName is { } on)
+        lock (CreateConnectionAsyncWithEndpointsClientProvidedNameCalls) CreateConnectionAsyncWithEndpointsClientProvidedNameCalls.Add((endpoints, clientProvidedName, cancellationToken));
+        if (OnCreateConnectionAsyncWithEndpointsClientProvidedName is { } on)
         {
             return on(endpoints, clientProvidedName, cancellationToken);
         }

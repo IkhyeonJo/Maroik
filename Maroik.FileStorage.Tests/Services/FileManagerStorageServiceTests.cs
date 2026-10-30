@@ -1,10 +1,9 @@
 using Maroik.Core.Contract.Enums;
-using Maroik.Core.Contract.Interfaces;
 using Maroik.Core.Contract.Messages;
 using Maroik.FileStorage.Services;
 using Maroik.FileStorage.Settings;
+using Maroik.FileStorage.Tests.Fixtures;
 using Microsoft.Extensions.Options;
-using Moq;
 
 namespace Maroik.FileStorage.Tests.Services;
 
@@ -24,7 +23,7 @@ public sealed class FileManagerStorageServiceTests : IDisposable
     private string Root => Path.Combine(_base, "upload");
 
     /// <summary>The ClamAV client the service scans with.</summary>
-    private readonly Mock<IClamavClient> _clamav = new();
+    private readonly FakeClamavClient _clamav = new();
 
     /// <summary>The upload id these tests use.</summary>
     private static readonly Guid UploadId = Guid.Parse("0f8fad5b-d9cb-469f-a165-70867728950e");
@@ -41,21 +40,20 @@ public sealed class FileManagerStorageServiceTests : IDisposable
 
     /// <summary>Makes every scan answer <paramref name="result"/>, recording what was scanned.</summary>
     private void Scans(ClamavScanResult result, List<byte[]>? scanned = null) =>
-        _clamav.Setup(c => c.ScanWithClamavAsync(It.IsAny<Stream>(), It.IsAny<string>(), It.IsAny<int>(), It.IsAny<TimeSpan>(), It.IsAny<CancellationToken>()))
-            .Returns(async (Stream s, string _, int _, TimeSpan _, CancellationToken c) =>
+        _clamav.OnScanWithClamavAsyncWithScanTimeout = async (s, _, _, _, c) =>
             {
                 using var copy = new MemoryStream();
                 s.Position = 0;
                 await s.CopyToAsync(copy, c);
                 scanned?.Add(copy.ToArray());
                 return result;
-            });
+            };
 
     /// <summary>The scan queue the service queues on (a real one).</summary>
     private readonly FileManagerScanQueue _queue = new();
 
     /// <summary>The service under test, over the throwaway root.</summary>
-    private FileManagerStorageService Sut => new(_clamav.Object, _queue, Options.Create(new FileStorageSetting { StorageRootPath = Root, ClamavHost = "clamav", ClamavPort = 3310 }));
+    private FileManagerStorageService Sut => new(_clamav, _queue, Options.Create(new FileStorageSetting { StorageRootPath = Root, ClamavHost = "clamav", ClamavPort = 3310 }));
 
     /// <summary>The staging file of <paramref name="id"/>.</summary>
     private string Staging(Guid id) => Path.Combine(Root, "FileManager", ".staging", id.ToString("D"));
@@ -128,7 +126,7 @@ public sealed class FileManagerStorageServiceTests : IDisposable
         Assert.True(_queue.IsPending(Id));
         Assert.True(File.Exists(Staging(UploadId)));
         Assert.False(File.Exists(Stored(UploadId)));
-        _clamav.Verify(c => c.ScanWithClamavAsync(It.IsAny<Stream>(), It.IsAny<string>(), It.IsAny<int>(), It.IsAny<TimeSpan>(), It.IsAny<CancellationToken>()), Times.Never);
+        Assert.Empty(_clamav.ScanWithClamavAsyncWithScanTimeoutCalls);
     }
 
     /// <summary>
@@ -146,7 +144,7 @@ public sealed class FileManagerStorageServiceTests : IDisposable
         Assert.Equal([1, 2, 3], await File.ReadAllBytesAsync(Stored(UploadId), TestContext.Current.CancellationToken));
         Assert.False(File.Exists(Staging(UploadId)));
         Assert.Equal((null, false), await CompleteAsync(3, skipScan: true));
-        _clamav.Verify(c => c.ScanWithClamavAsync(It.IsAny<Stream>(), It.IsAny<string>(), It.IsAny<int>(), It.IsAny<TimeSpan>(), It.IsAny<CancellationToken>()), Times.Never);
+        Assert.Empty(_clamav.ScanWithClamavAsyncWithScanTimeoutCalls);
     }
 
     /// <summary>Without a scan an empty file is stored too, and a size mismatch is still refused (the staging file is dropped).</summary>
@@ -228,7 +226,7 @@ public sealed class FileManagerStorageServiceTests : IDisposable
         await CompleteAsync(3);
 
         var restarted = new FileManagerScanQueue();
-        var service = new FileManagerStorageService(_clamav.Object, restarted, Options.Create(new FileStorageSetting { StorageRootPath = Root }));
+        var service = new FileManagerStorageService(_clamav, restarted, Options.Create(new FileStorageSetting { StorageRootPath = Root }));
 
         Assert.Equal((null, true), await service.CompleteAsync(Id, 3, false, TestContext.Current.CancellationToken));
         Assert.True(restarted.IsPending(Id));
@@ -292,7 +290,8 @@ public sealed class FileManagerStorageServiceTests : IDisposable
         Assert.Equal([1, 2, 3], await File.ReadAllBytesAsync(Stored(UploadId), TestContext.Current.CancellationToken));
         Assert.False(File.Exists(Staging(UploadId)));
         Assert.Equal([1, 2, 3], Assert.Single(scanned));
-        _clamav.Verify(c => c.ScanWithClamavAsync(It.IsAny<Stream>(), "clamav", 3310, FileManagerStorageService.ScanTimeout, It.IsAny<CancellationToken>()), Times.Once);
+        var scanCall = Assert.Single(_clamav.ScanWithClamavAsyncWithScanTimeoutCalls);
+        Assert.Equal(("clamav", 3310, FileManagerStorageService.ScanTimeout), (scanCall.ClamavHost, scanCall.ClamavPort, scanCall.ScanTimeout));
         Assert.True(FileManagerStorageService.ScanTimeout >= TimeSpan.FromMinutes(10));
     }
 
@@ -327,7 +326,7 @@ public sealed class FileManagerStorageServiceTests : IDisposable
     public async Task ScanAsync_RefusesAnUploadIdThatIsNotAGuid()
     {
         Assert.Equal(FileStorageRefusals.InvalidUpload, await Sut.ScanAsync("../x", TestContext.Current.CancellationToken));
-        _clamav.Verify(c => c.ScanWithClamavAsync(It.IsAny<Stream>(), It.IsAny<string>(), It.IsAny<int>(), It.IsAny<TimeSpan>(), It.IsAny<CancellationToken>()), Times.Never);
+        Assert.Empty(_clamav.ScanWithClamavAsyncWithScanTimeoutCalls);
     }
 
     /// <summary>A scan whose upload was aborted meanwhile stores nothing and ends cancelled.</summary>

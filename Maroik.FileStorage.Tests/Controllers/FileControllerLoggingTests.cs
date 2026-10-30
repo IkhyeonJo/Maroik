@@ -7,7 +7,6 @@ using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Testing;
-using Moq;
 
 namespace Maroik.FileStorage.Tests.Controllers;
 
@@ -34,9 +33,8 @@ public class FileControllerLoggingTests(WebApplicationFactory<Program> baseFacto
             b.ConfigureServices(services =>
             {
                 foreach (var d in services.Where(d => d.ServiceType == typeof(IClamavClient)).ToList()) services.Remove(d);
-                var clam = new Mock<IClamavClient>();
-                clam.Setup(c => c.ScanWithClamavAsync(It.IsAny<Stream>(), It.IsAny<string>(), It.IsAny<int>())).ReturnsAsync(scan);
-                services.AddScoped<IClamavClient>(_ => clam.Object);
+                var clam = new FakeClamavClient { OnScanWithClamavAsync = (_, _, _, _) => Task.FromResult(scan) };
+                services.AddScoped<IClamavClient>(_ => clam);
                 services.AddSingleton<ILogger<FileController>>(logger);
             });
         });

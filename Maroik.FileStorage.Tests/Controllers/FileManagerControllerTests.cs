@@ -8,7 +8,6 @@ using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Testing;
-using Moq;
 
 namespace Maroik.FileStorage.Tests.Controllers;
 
@@ -47,14 +46,15 @@ public sealed class FileManagerControllerTests(WebApplicationFactory<Program> ba
             b.ConfigureServices(services =>
             {
                 foreach (var d in services.Where(d => d.ServiceType == typeof(IClamavClient)).ToList()) services.Remove(d);
-                var clam = new Mock<IClamavClient>();
-                clam.Setup(c => c.ScanWithClamavAsync(It.IsAny<Stream>(), It.IsAny<string>(), It.IsAny<int>(), It.IsAny<TimeSpan>(), It.IsAny<CancellationToken>()))
-                    .Returns(async () =>
+                var clam = new FakeClamavClient
+                {
+                    OnScanWithClamavAsyncWithScanTimeout = async (_, _, _, _, _) =>
                     {
                         if (scanDone != null) await scanDone;
                         return scan;
-                    });
-                services.AddScoped<IClamavClient>(_ => clam.Object);
+                    },
+                };
+                services.AddScoped<IClamavClient>(_ => clam);
                 services.AddSingleton<ILogger<FileManagerController>>(_logger);
             });
         });
@@ -249,12 +249,14 @@ public sealed class FileManagerControllerTests(WebApplicationFactory<Program> ba
     [Fact]
     public async Task AServiceFailure_IsLoggedWithTheException_AndNotLeaked()
     {
-        var service = new Mock<Maroik.FileStorage.Interfaces.IFileManagerStorageService>();
-        service.Setup(s => s.CompleteAsync(It.IsAny<string?>(), It.IsAny<long>(), It.IsAny<bool>(), It.IsAny<CancellationToken>())).ThrowsAsync(new IOException("disk-secret"));
+        var service = new FakeFileManagerStorageService
+        {
+            OnCompleteAsync = (_, _, _, _) => Task.FromException<(string?, bool)>(new IOException("disk-secret")),
+        };
         var factory = baseFactory.WithWebHostBuilder(b => b.ConfigureServices(services =>
         {
             foreach (var d in services.Where(d => d.ServiceType == typeof(Maroik.FileStorage.Interfaces.IFileManagerStorageService)).ToList()) services.Remove(d);
-            services.AddScoped(_ => service.Object);
+            services.AddScoped<Maroik.FileStorage.Interfaces.IFileManagerStorageService>(_ => service);
             services.AddSingleton<ILogger<FileManagerController>>(_logger);
         }));
         using HttpClient client = factory.CreateClient();

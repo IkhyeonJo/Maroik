@@ -8,13 +8,13 @@ public sealed class FakeCalendarReminderDispatchService : ICalendarReminderDispa
     /// <summary>What <c>DispatchDueAsync</c> does; <see langword="null"/> returns an empty / default value.</summary>
     public Func<int, CancellationToken, Task<int>>? OnDispatchDueAsync { get; set; }
 
-    /// <summary>The arguments of every <c>DispatchDueAsync</c> call, in order.</summary>
+    /// <summary>The arguments of every <c>DispatchDueAsync</c> call, in order (appended under a lock on the list: a fake may be called from several threads).</summary>
     public List<(int Max, CancellationToken Ct)> DispatchDueAsyncCalls { get; } = [];
 
     /// <inheritdoc/>
     public Task<int> DispatchDueAsync(int max, CancellationToken ct)
     {
-        DispatchDueAsyncCalls.Add((max, ct));
+        lock (DispatchDueAsyncCalls) DispatchDueAsyncCalls.Add((max, ct));
         if (OnDispatchDueAsync is { } on)
         {
             return on(max, ct);

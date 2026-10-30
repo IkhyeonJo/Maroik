@@ -1,11 +1,11 @@
 using Maroik.Core.Contract.Messages;
 using Maroik.FileStorage.Interfaces;
 using Maroik.FileStorage.Services;
+using Maroik.FileStorage.Tests.Fixtures;
 using Maroik.FileStorage.Workers;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Testing;
-using Moq;
 
 namespace Maroik.FileStorage.Tests.Workers;
 
@@ -21,7 +21,7 @@ public sealed class FileManagerScanWorkerTests : IAsyncDisposable
     private readonly FileManagerScanQueue _queue = new();
 
     /// <summary>The storage service the worker scans through.</summary>
-    private readonly Mock<IFileManagerStorageService> _storage = new();
+    private readonly FakeFileManagerStorageService _storage = new();
 
     /// <summary>The worker's captured log.</summary>
     private readonly FakeLogger<FileManagerScanWorker> _logger = new();
@@ -35,7 +35,7 @@ public sealed class FileManagerScanWorkerTests : IAsyncDisposable
     /// <summary>Builds the worker over the real queue and the mocked storage service.</summary>
     public FileManagerScanWorkerTests()
     {
-        _services = new ServiceCollection().AddScoped(_ => _storage.Object).BuildServiceProvider();
+        _services = new ServiceCollection().AddScoped<IFileManagerStorageService>(_ => _storage).BuildServiceProvider();
         _worker = new FileManagerScanWorker(_queue, _services.GetRequiredService<IServiceScopeFactory>(), TimeProvider.System, _logger);
     }
 
@@ -67,8 +67,7 @@ public sealed class FileManagerScanWorkerTests : IAsyncDisposable
     {
         string clean = NewId();
         string infected = NewId();
-        _storage.Setup(s => s.ScanAsync(clean, It.IsAny<CancellationToken>())).ReturnsAsync((string?)null);
-        _storage.Setup(s => s.ScanAsync(infected, It.IsAny<CancellationToken>())).ReturnsAsync(FileStorageRefusals.Infected);
+        _storage.OnScanAsync = (id, _) => Task.FromResult(id == infected ? FileStorageRefusals.Infected : null);
         await StartAsync();
 
         _queue.TryEnqueue(clean);
@@ -91,13 +90,13 @@ public sealed class FileManagerScanWorkerTests : IAsyncDisposable
         int running = 0;
         int most = 0;
         var release = new TaskCompletionSource();
-        _storage.Setup(s => s.ScanAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).Returns(async () =>
+        _storage.OnScanAsync = async (_, _) =>
         {
             most = Math.Max(most, Interlocked.Increment(ref running));
             await release.Task;
             Interlocked.Decrement(ref running);
-            return (string?)null;
-        });
+            return null;
+        };
         await StartAsync();
         string[] ids = [NewId(), NewId(), NewId()];
 
@@ -118,8 +117,7 @@ public sealed class FileManagerScanWorkerTests : IAsyncDisposable
     {
         string failing = NewId();
         string next = NewId();
-        _storage.Setup(s => s.ScanAsync(failing, It.IsAny<CancellationToken>())).ThrowsAsync(new IOException("disk"));
-        _storage.Setup(s => s.ScanAsync(next, It.IsAny<CancellationToken>())).ReturnsAsync((string?)null);
+        _storage.OnScanAsync = (id, _) => id == failing ? Task.FromException<string?>(new IOException("disk")) : Task.FromResult<string?>(null);
         await StartAsync();
 
         _queue.TryEnqueue(failing);
@@ -138,12 +136,12 @@ public sealed class FileManagerScanWorkerTests : IAsyncDisposable
     {
         string id = NewId();
         var started = new TaskCompletionSource();
-        _storage.Setup(s => s.ScanAsync(id, It.IsAny<CancellationToken>())).Returns(async (string _, CancellationToken ct) =>
+        _storage.OnScanAsync = async (_, ct) =>
         {
             started.SetResult();
             await Task.Delay(Timeout.Infinite, ct);
-            return (string?)null;
-        });
+            return null;
+        };
         await StartAsync();
 
         _queue.TryEnqueue(id);
@@ -162,12 +160,12 @@ public sealed class FileManagerScanWorkerTests : IAsyncDisposable
     {
         string id = NewId();
         var started = new TaskCompletionSource();
-        _storage.Setup(s => s.ScanAsync(id, It.IsAny<CancellationToken>())).Returns(async (string _, CancellationToken ct) =>
+        _storage.OnScanAsync = async (_, ct) =>
         {
             started.SetResult();
             await Task.Delay(Timeout.Infinite, ct);
-            return (string?)null;
-        });
+            return null;
+        };
         await StartAsync();
         _queue.TryEnqueue(id);
         await started.Task.WaitAsync(TestContext.Current.CancellationToken);

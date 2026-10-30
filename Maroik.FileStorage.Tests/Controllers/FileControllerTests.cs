@@ -6,7 +6,6 @@ using Maroik.FileStorage.Tests.Fixtures;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.Extensions.DependencyInjection;
-using Moq;
 
 namespace Maroik.FileStorage.Tests.Controllers;
 
@@ -30,10 +29,8 @@ public class FileControllerTests(WebApplicationFactory<Program> baseFactory)
         baseFactory.WithWebHostBuilder(b => b.ConfigureServices(services =>
         {
             RemoveService<IClamavClient>(services);
-            var mock = new Mock<IClamavClient>();
-            mock.Setup(c => c.ScanWithClamavAsync(It.IsAny<Stream>(), It.IsAny<string>(), It.IsAny<int>()))
-                .ReturnsAsync(ClamavScanResult.Clean);
-            services.AddScoped<IClamavClient>(_ => mock.Object);
+            var mock = new FakeClamavClient { OnScanWithClamavAsync = (_, _, _, _) => Task.FromResult(ClamavScanResult.Clean) };
+            services.AddScoped<IClamavClient>(_ => mock);
         }));
 
     /// <summary>Returns a factory whose ClamAV mock can never complete a scan (daemon down).</summary>
@@ -46,10 +43,8 @@ public class FileControllerTests(WebApplicationFactory<Program> baseFactory)
             b.ConfigureServices(services =>
             {
                 RemoveService<IClamavClient>(services);
-                var mock = new Mock<IClamavClient>();
-                mock.Setup(c => c.ScanWithClamavAsync(It.IsAny<Stream>(), It.IsAny<string>(), It.IsAny<int>()))
-                    .ReturnsAsync(ClamavScanResult.Unavailable);
-                services.AddScoped<IClamavClient>(_ => mock.Object);
+                var mock = new FakeClamavClient { OnScanWithClamavAsync = (_, _, _, _) => Task.FromResult(ClamavScanResult.Unavailable) };
+                services.AddScoped<IClamavClient>(_ => mock);
             });
         });
 
@@ -63,10 +58,8 @@ public class FileControllerTests(WebApplicationFactory<Program> baseFactory)
             b.ConfigureServices(services =>
             {
                 RemoveService<IClamavClient>(services);
-                var mock = new Mock<IClamavClient>();
-                mock.Setup(c => c.ScanWithClamavAsync(It.IsAny<Stream>(), It.IsAny<string>(), It.IsAny<int>()))
-                    .ReturnsAsync(ClamavScanResult.Infected);
-                services.AddScoped<IClamavClient>(_ => mock.Object);
+                var mock = new FakeClamavClient { OnScanWithClamavAsync = (_, _, _, _) => Task.FromResult(ClamavScanResult.Infected) };
+                services.AddScoped<IClamavClient>(_ => mock);
             });
         });
 
@@ -286,10 +279,8 @@ public class FileControllerTests(WebApplicationFactory<Program> baseFactory)
         var factory = baseFactory.WithWebHostBuilder(b => b.ConfigureServices(services =>
         {
             RemoveService<IFileValidationService>(services);
-            var mock = new Mock<IFileValidationService>();
-            mock.Setup(v => v.ValidateAndSaveAsync(It.IsAny<IFormFile>(), It.IsAny<string>()))
-                .ThrowsAsync(new InvalidOperationException("disk full"));
-            services.AddScoped<IFileValidationService>(_ => mock.Object);
+            var mock = new FakeFileValidationService { OnValidateAndSaveAsync = (_, _) => Task.FromException<(bool, string?)>(new InvalidOperationException("disk full")) };
+            services.AddScoped<IFileValidationService>(_ => mock);
         }));
         var client = factory.CreateClient();
         using var content = new MultipartFormDataContent();
@@ -354,7 +345,7 @@ public class FileControllerTests(WebApplicationFactory<Program> baseFactory)
         try
         {
             var controller = new Maroik.FileStorage.Controllers.FileController(
-                Mock.Of<IFileValidationService>(),
+                new FakeFileValidationService(),
                 Microsoft.Extensions.Options.Options.Create(new Maroik.FileStorage.Settings.FileStorageSetting { StorageRootPath = Path.GetTempPath() }),
                 Microsoft.Extensions.Logging.Abstractions.NullLogger<Maroik.FileStorage.Controllers.FileController>.Instance);
 
@@ -406,7 +397,7 @@ public class FileControllerTests(WebApplicationFactory<Program> baseFactory)
         try
         {
             var controller = new Maroik.FileStorage.Controllers.FileController(
-                Mock.Of<IFileValidationService>(),
+                new FakeFileValidationService(),
                 Microsoft.Extensions.Options.Options.Create(new Maroik.FileStorage.Settings.FileStorageSetting { StorageRootPath = Path.GetTempPath() }),
                 new ThrowOnDownloadedLogger());
 
@@ -433,12 +424,14 @@ public class FileControllerTests(WebApplicationFactory<Program> baseFactory)
     [Fact]
     public async Task Upload_LogsAnError_AndAnswersGenerically_WhenSavingThrows()
     {
-        var validation = new Mock<IFileValidationService>();
-        validation.Setup(v => v.ValidateAndSaveAsync(It.IsAny<IFormFile>(), It.IsAny<string>())).ThrowsAsync(new IOException("disk full"));
+        var validation = new FakeFileValidationService
+        {
+            OnValidateAndSaveAsync = (_, _) => Task.FromException<(bool, string?)>(new IOException("disk full")),
+        };
         var logger = new Microsoft.Extensions.Logging.Testing.FakeLogger<Maroik.FileStorage.Controllers.FileController>();
         using var bytes = new MemoryStream([0xFF, 0xD8]);
 
-        var result = await ControllerWith(validation.Object, logger).UploadAsync(new FormFile(bytes, 0, 2, "file", "a.jpg"), "upload/x", "corr-up-9");
+        var result = await ControllerWith(validation, logger).UploadAsync(new FormFile(bytes, 0, 2, "file", "a.jpg"), "upload/x", "corr-up-9");
 
         Assert.Equal("File upload failed.", Assert.IsType<Microsoft.AspNetCore.Mvc.BadRequestObjectResult>(result).Value);
         var error = Assert.Single(logger.Collector.GetSnapshot());
@@ -462,7 +455,7 @@ public class FileControllerTests(WebApplicationFactory<Program> baseFactory)
         {
             var logger = new Microsoft.Extensions.Logging.Testing.FakeLogger<Maroik.FileStorage.Controllers.FileController>();
 
-            var result = ControllerWith(Mock.Of<IFileValidationService>(), logger).Download(tempPath, "corr-dl-9");
+            var result = ControllerWith(new FakeFileValidationService(), logger).Download(tempPath, "corr-dl-9");
 
             Assert.Equal("Invalid file", Assert.IsType<Microsoft.AspNetCore.Mvc.BadRequestObjectResult>(result).Value);
             var error = Assert.Single(logger.Collector.GetSnapshot());
@@ -517,10 +510,8 @@ public class FileControllerTests(WebApplicationFactory<Program> baseFactory)
                 b.ConfigureServices(services =>
                 {
                     RemoveService<IClamavClient>(services);
-                    var mock = new Mock<IClamavClient>();
-                    mock.Setup(c => c.ScanWithClamavAsync(It.IsAny<Stream>(), It.IsAny<string>(), It.IsAny<int>()))
-                        .ReturnsAsync(ClamavScanResult.Clean);
-                    services.AddScoped<IClamavClient>(_ => mock.Object);
+                    var mock = new FakeClamavClient { OnScanWithClamavAsync = (_, _, _, _) => Task.FromResult(ClamavScanResult.Clean) };
+                    services.AddScoped<IClamavClient>(_ => mock);
                 });
             });
             var client = factory.CreateClient();
