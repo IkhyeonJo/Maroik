@@ -1,9 +1,10 @@
-using ICSharpCode.SharpZipLib.Zip;
+using System.IO.Compression;
 using Maroik.Core.Contract.Enums;
 using Maroik.Core.Contract.Interfaces;
 using Maroik.Core.Contract.Messages;
 using Maroik.FileStorage.Services;
 using Maroik.FileStorage.Settings;
+using Maroik.FileStorage.Tests.Fixtures;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Options;
 using Moq;
@@ -66,59 +67,26 @@ public class FileValidationServiceTests
         return dir;
     }
 
-    /// <summary>Builds a minimal, unencrypted, valid ZIP archive in memory using SharpZipLib.</summary>
+    /// <summary>Builds a minimal, unencrypted, valid ZIP archive in memory with <see cref="ZipArchive"/>.</summary>
     private static byte[] BuildValidZipBytes()
     {
         using var memStream = new MemoryStream();
-        using (var zipStream = new ZipOutputStream(memStream))
+        using (var zip = new ZipArchive(memStream, ZipArchiveMode.Create, leaveOpen: true))
         {
-            zipStream.IsStreamOwner = false;
-            var entry = new ZipEntry("test.txt") { DateTime = DateTime.Now };
-            zipStream.PutNextEntry(entry);
-            var content = "hello world"u8.ToArray();
-            zipStream.Write(content, 0, content.Length);
-            zipStream.CloseEntry();
-            zipStream.Finish();
+            using Stream entry = zip.CreateEntry("test.txt").Open();
+            entry.Write("hello world"u8);
         }
         return memStream.ToArray();
     }
 
-    /// <summary>Builds a minimal, password-encrypted ZIP archive in memory using SharpZipLib.</summary>
-    private static byte[] BuildEncryptedZipBytes()
-    {
-        using var memStream = new MemoryStream();
-        using (var zipStream = new ZipOutputStream(memStream))
-        {
-            zipStream.IsStreamOwner = false;
-            zipStream.Password = "secret";
-            var entry = new ZipEntry("test.txt") { DateTime = DateTime.Now, AESKeySize = 0 };
-            zipStream.PutNextEntry(entry);
-            var content = "hello world"u8.ToArray();
-            zipStream.Write(content, 0, content.Length);
-            zipStream.CloseEntry();
-            zipStream.Finish();
-        }
-        return memStream.ToArray();
-    }
-
-    /// <summary>Builds a ZIP archive with one plain entry followed by one password-encrypted entry.</summary>
-    private static byte[] BuildZipWithOneEncryptedEntry()
-    {
-        using var memStream = new MemoryStream();
-        using (var zipStream = new ZipOutputStream(memStream))
-        {
-            zipStream.IsStreamOwner = false;
-            zipStream.PutNextEntry(new ZipEntry("plain.txt") { DateTime = DateTime.Now });
-            zipStream.Write("readable"u8);
-            zipStream.CloseEntry();
-            zipStream.Password = "secret";
-            zipStream.PutNextEntry(new ZipEntry("hidden.txt") { DateTime = DateTime.Now, AESKeySize = 0 });
-            zipStream.Write("payload"u8);
-            zipStream.CloseEntry();
-            zipStream.Finish();
-        }
-        return memStream.ToArray();
-    }
+    /// <summary>
+    /// A ZIP archive written by Info-ZIP (<c>zip plain.txt</c>, then <c>zip -P secret hidden.txt</c>): one plain entry followed
+    /// by one entry under real traditional PKWARE (ZipCrypto) encryption.
+    /// </summary>
+    private static byte[] InfoZipWithOneEncryptedEntry() => Convert.FromBase64String(
+        "UEsDBAoAAAAAAABIIVzgGZrBCAAAAAgAAAAJAAAAcGxhaW4udHh0cmVhZGFibGVQSwMECgAJAAAAAEghXBVqLEITAAAABwAAAAoAAABoaWRkZW4udHh0" +
+        "ZO1XqiPsjA7izYIWmc0GQXNKeVBLBwgVaixCEwAAAAcAAABQSwECHgMKAAAAAAAASCFc4BmawQgAAAAIAAAACQAAAAAAAAABAAAAtIEAAAAAcGxhaW4u" +
+        "dHh0UEsBAh4DCgAJAAAAAEghXBVqLEITAAAABwAAAAoAAAAAAAAAAQAAALSBLwAAAGhpZGRlbi50eHRQSwUGAAAAAAIAAgBvAAAAegAAAAAA");
 
     // -- Happy path ------------------------------------------------------------
 
@@ -335,7 +303,7 @@ public class FileValidationServiceTests
     [Fact]
     public async Task ValidateAndSaveAsync_ReturnsEncryptedZipMessage_WhenOnlyOneEntryIsEncrypted()
     {
-        byte[] bytes = BuildZipWithOneEncryptedEntry();
+        byte[] bytes = InfoZipWithOneEncryptedEntry();
         var service = new FileValidationService(CleanScanMock().Object, DefaultSettings());
 
         var (success, error) = await service.ValidateAndSaveAsync(MakeFormFile(bytes, "mixed.zip"), CreateTempDir());
@@ -438,18 +406,35 @@ public class FileValidationServiceTests
         }
     }
 
-    /// <summary>Validate and save async returns encrypted zip message, when zip built with sharp zip lib is encrypted.</summary>
+    /// <summary>An archive whose only entry carries the encryption flag in its central directory header is refused.</summary>
     [Fact]
-    public async Task ValidateAndSaveAsync_ReturnsEncryptedZipMessage_WhenZipBuiltWithSharpZipLibIsEncrypted()
+    public async Task ValidateAndSaveAsync_ReturnsEncryptedZipMessage_WhenZipIsEncrypted()
     {
-        var encryptedZipBytes = BuildEncryptedZipBytes();
-        var file = MakeFormFile(encryptedZipBytes, "encrypted.zip");
+        var file = MakeFormFile(ZipBytes.Build([("test.txt", true)]), "encrypted.zip");
         var service = new FileValidationService(CleanScanMock().Object, DefaultSettings());
 
         var (success, error) = await service.ValidateAndSaveAsync(file, Path.GetTempPath());
 
         Assert.False(success);
         Assert.Equal("Encrypted ZIP files are not allowed.", error);
+    }
+
+    /// <summary>
+    /// A file that starts like a ZIP but whose central directory cannot be followed (here cut short, losing its end record) is
+    /// refused as an invalid format and nothing is written: whether it holds an encrypted entry cannot be told.
+    /// </summary>
+    [Fact]
+    public async Task ValidateAndSaveAsync_ReturnsInvalidFormat_AndWritesNothing_WhenTheZipStructureIsUnreadable()
+    {
+        string dir = CreateTempDir();
+        byte[] truncated = BuildValidZipBytes()[..^10];
+        var service = new FileValidationService(CleanScanMock().Object, DefaultSettings());
+
+        var (success, error) = await service.ValidateAndSaveAsync(MakeFormFile(truncated, "truncated.zip"), dir);
+
+        Assert.False(success);
+        Assert.Equal("Invalid or unsupported file format.", error);
+        Assert.False(Directory.Exists(dir));
     }
 
     /// <summary>An upload whose target file already exists is refused (names are unique GUIDs, so a collision means a bug upstream) and the original is left untouched.</summary>

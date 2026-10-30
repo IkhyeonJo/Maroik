@@ -1,4 +1,3 @@
-using ICSharpCode.SharpZipLib.Zip;
 using Maroik.Core.Contract.Enums;
 using Maroik.Core.Contract.Interfaces;
 using Maroik.Core.Contract.Messages;
@@ -63,8 +62,15 @@ public class FileValidationService(IClamavClient clamavClient, IOptions<FileStor
         if (scan != ClamavScanResult.Clean)
             return (false, FileStorageRefusals.ScanUnavailable);
 
-        if (ext == ".zip" && IsZipEncrypted(memStream))
-            return (false, "Encrypted ZIP files are not allowed.");
+        // Encrypted entries cannot be scanned by ClamAV, so an archive with one is refused outright; an archive whose central
+        // directory cannot be followed cannot be cleared of them, so it is refused as a bad format (fail-closed).
+        if (ext == ".zip")
+        {
+            if (!ZipCentralDirectory.TryFindEncryptedEntry(new ReadOnlySpan<byte>(memStream.GetBuffer(), 0, (int)memStream.Length), out bool encrypted))
+                return (false, "Invalid or unsupported file format.");
+            if (encrypted)
+                return (false, "Encrypted ZIP files are not allowed.");
+        }
 
         StorageFiles.CreateDirectory(safeDir);
 
@@ -104,24 +110,5 @@ public class FileValidationService(IClamavClient clamavClient, IOptions<FileStor
                               && header[4] == 0x0D && header[5] == 0x0A && header[6] == 0x1A && header[7] == 0x0A,
             _ => false
         };
-    }
-
-    /// <summary>
-    /// Returns <see langword="true"/> if any entry in the ZIP archive is password-protected.
-    /// Encrypted entries cannot be scanned by ClamAV, so such archives are rejected outright.
-    /// </summary>
-    private static bool IsZipEncrypted(Stream stream)
-    {
-        // `stream` (the caller's already-fully-buffered upload) is itself seekable, so ZipFile can
-        // read directly from it — no need to duplicate it into a second in-memory copy first, which
-        // would double peak memory held per concurrent .zip upload for no functional reason.
-        // IsStreamOwner = false is required: ZipFile disposes its underlying stream by default, and
-        // the caller reuses `stream` (via ValidateAndSaveAsync's `memStream`) after this returns.
-        stream.Position = 0;
-        using var zip = new ZipFile(stream);
-        zip.IsStreamOwner = false;
-        bool encrypted = zip.Cast<ZipEntry>().Any(entry => entry.IsCrypted);
-        stream.Position = 0;
-        return encrypted;
     }
 }

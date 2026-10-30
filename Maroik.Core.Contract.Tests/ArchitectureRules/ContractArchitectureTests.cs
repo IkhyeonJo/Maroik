@@ -97,7 +97,6 @@ public class ContractArchitectureTests
     [InlineData("ImageMagick")]
     [InlineData("BCrypt.Net")]
     [InlineData("DocumentFormat.OpenXml")]
-    [InlineData("ICSharpCode.SharpZipLib")]
     [InlineData("Serilog")]
     [InlineData("Swashbuckle")]
     [InlineData("Dapper")]

@@ -259,55 +259,20 @@ public class FileControllerTests(WebApplicationFactory<Program> baseFactory)
     [Fact]
     public async Task Upload_ReturnsBadRequest_WhenZipIsEncrypted()
     {
-        // Create a minimal encrypted ZIP in memory using SharpZipLib conventions.
-        // The encrypted flag bit (0x0001) in the local file header's general purpose flags indicates encryption.
-        // We construct a valid ZIP local file header with the encryption bit set.
-        // Format: PK\x03\x04 (4) | version (2) | flags=0x0001 (2, encryption bit) | ...
-        byte[] encryptedZipBytes =
-        [
-            0x50, 0x4B, 0x03, 0x04, // Local file header signature
-            0x14, 0x00,             // Version needed: 2.0
-            0x01, 0x00,             // General purpose bit flag: bit 0 set = encrypted
-            0x00, 0x00,             // Compression method: stored
-            0x00, 0x00,             // Last mod time
-            0x00, 0x00,             // Last mod date
-            0x00, 0x00, 0x00, 0x00, // CRC-32
-            0x04, 0x00, 0x00, 0x00, // Compressed size
-            0x04, 0x00, 0x00, 0x00, // Uncompressed size
-            0x04, 0x00,             // File name length
-            0x00, 0x00,             // Extra field length
-            0x74, 0x65, 0x73, 0x74, // File name: "test"
-            0x01, 0x02, 0x03, 0x04, // Encrypted file data (dummy)
-            // Central directory
-            0x50, 0x4B, 0x01, 0x02,
-            0x14, 0x00, 0x14, 0x00,
-            0x01, 0x00,             // Encryption bit set in central directory too
-            0x00, 0x00, 0x00, 0x00,
-            0x00, 0x00, 0x00, 0x00,
-            0x04, 0x00, 0x00, 0x00,
-            0x04, 0x00, 0x00, 0x00,
-            0x04, 0x00, 0x00, 0x00,
-            0x00, 0x00, 0x00, 0x00,
-            0x00, 0x00, 0x00, 0x00,
-            0x00, 0x00, 0x00, 0x00,
-            0x74, 0x65, 0x73, 0x74, // File name
-            // End of central directory
-            0x50, 0x4B, 0x05, 0x06,
-            0x00, 0x00, 0x00, 0x00,
-            0x01, 0x00, 0x01, 0x00,
-            0x32, 0x00, 0x00, 0x00,
-            0x28, 0x00, 0x00, 0x00,
-            0x00, 0x00
-        ];
+        byte[] encryptedZipBytes = ZipBytes.Build([("test", true)]);
 
-        var client = FactoryWithCleanScan().CreateClient();
+        // Storage root = OS temp dir, so the target path passes the path check and the archive reaches the encryption check.
+        var client = FactoryWithCleanScan()
+            .WithWebHostBuilder(b => b.UseSetting("ServerSetting:StorageRootPath", Path.GetTempPath()))
+            .CreateClient();
         using var content = new MultipartFormDataContent();
         MultipartForm.AddFile(content, "file", "encrypted.zip", encryptedZipBytes, "application/zip");
-        MultipartForm.AddText(content, "filePath", "/tmp/uploads");
+        MultipartForm.AddText(content, "filePath", UniqueTempTarget());
 
         var response = await client.PostAsync("/api/File/upload", content, TestContext.Current.CancellationToken);
 
         Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+        Assert.Equal("Encrypted ZIP files are not allowed.", await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken));
     }
 
     // -- Upload: unexpected exception (logging path) --------------------------
