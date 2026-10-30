@@ -9,7 +9,7 @@ namespace Maroik.FileStorage.Tests.Services;
 
 /// <summary>
 /// Unit tests for <see cref="FileManagerStorageService"/>, the File Manager's large-file flow (Implementation note [A]), against a real
-/// throwaway storage root on disk, a real scan queue and a mocked ClamAV client: chunks are appended to a staging file in offset order;
+/// throwaway storage root on disk, a real scan queue and a fake ClamAV client: chunks are appended to a staging file in offset order;
 /// completing an upload checks the size and queues its scan, then reports "scanning", "stored" or the refusal; the scan streams
 /// the file from disk and moves a clean one to <c>upload/FileManager/{GUID}</c>; an abort cancels the scan and drops the
 /// staging (and an unconfirmed stored) file; and a delete removes only a file directly in <c>upload/FileManager/</c>.
@@ -28,7 +28,7 @@ public sealed class FileManagerStorageServiceTests : IDisposable
     /// <summary>The upload id these tests use.</summary>
     private static readonly Guid UploadId = Guid.Parse("0f8fad5b-d9cb-469f-a165-70867728950e");
 
-    /// <summary>Creates the storage root; the ClamAV mock answers Clean unless a test says otherwise.</summary>
+    /// <summary>Creates the storage root; the ClamAV fake answers Clean unless a test says otherwise.</summary>
     public FileManagerStorageServiceTests()
     {
         Directory.CreateDirectory(Root);

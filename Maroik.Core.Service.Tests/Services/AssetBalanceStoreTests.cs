@@ -1,7 +1,6 @@
-using Maroik.Core.Contract.Interfaces;
 using Maroik.Core.Domain.Finances;
 using Maroik.Core.Service.Services;
-using Moq;
+using Maroik.Core.Service.Tests.Fixtures;
 
 namespace Maroik.Core.Service.Tests.Services;
 
@@ -13,11 +12,11 @@ namespace Maroik.Core.Service.Tests.Services;
 /// </summary>
 public class AssetBalanceStoreTests
 {
-    /// <summary>Mock <c>IAssetRepository</c> injected into the system under test.</summary>
-    private readonly Mock<IAssetRepository> _assetRepo = new();
+    /// <summary>Fake <c>IAssetRepository</c> injected into the system under test.</summary>
+    private readonly FakeAssetRepository _assetRepo = new();
 
-    /// <summary>The service under test over the mocked repository.</summary>
-    private AssetBalanceStore CreateSut() => new(_assetRepo.Object);
+    /// <summary>The service under test over the fake repository.</summary>
+    private AssetBalanceStore CreateSut() => new(_assetRepo);
 
     /// <summary>A persisted, active 1000 KRW asset named <paramref name="name"/>.</summary>
     private static Asset MakeAsset(string name = "Wallet") =>
@@ -28,23 +27,21 @@ public class AssetBalanceStoreTests
     public async Task GetAssetAsync_UsesRowLockingQuery()
     {
         var asset = MakeAsset();
-        _assetRepo.Setup(r => r.FindByEmailAndProductNameForUpdateAsync("user@example.com", "Wallet", It.IsAny<CancellationToken>()))
-            .ReturnsAsync(asset);
+        _assetRepo.AnswerFindByEmailAndProductNameForUpdateAsync((accountEmail, productName, _) => accountEmail == "user@example.com" && productName == "Wallet", (_, _, _) => Task.FromResult<Asset?>(asset));
         var sut = CreateSut();
 
         Asset? result = await sut.GetAssetAsync("user@example.com", "Wallet", TestContext.Current.CancellationToken);
 
         Assert.Same(asset, result);
-        _assetRepo.Verify(r => r.FindByEmailAndProductNameForUpdateAsync("user@example.com", "Wallet", It.IsAny<CancellationToken>()), Times.Once);
-        _assetRepo.Verify(r => r.FindByEmailAndProductNameAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
+        Assert.Single(_assetRepo.FindByEmailAndProductNameForUpdateAsyncCalls, call => call.AccountEmail == "user@example.com" && call.ProductName == "Wallet");
+        Assert.Empty(_assetRepo.FindByEmailAndProductNameAsyncCalls);
     }
 
     /// <summary>Verifies that <c>GetAssetAsync</c> returns null when the asset does not exist.</summary>
     [Fact]
     public async Task GetAssetAsync_ReturnsNull_WhenAssetNotFound()
     {
-        _assetRepo.Setup(r => r.FindByEmailAndProductNameForUpdateAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync((Asset?)null);
+        _assetRepo.AnswerFindByEmailAndProductNameForUpdateAsync((_, _, _) => Task.FromResult<Asset?>(null));
         var sut = CreateSut();
 
         Asset? result = await sut.GetAssetAsync("user@example.com", "Missing", TestContext.Current.CancellationToken);
@@ -62,10 +59,7 @@ public class AssetBalanceStoreTests
     {
         var wallet = MakeAsset();
         var savings = MakeAsset("Savings");
-        _assetRepo.Setup(r => r.FindByEmailAndProductNamesForUpdateAsync(
-                "user@example.com", It.Is<IReadOnlyCollection<string>>(n => n.Count == 2 && n.Contains("Wallet") && n.Contains("Savings")),
-                It.IsAny<CancellationToken>()))
-            .ReturnsAsync([wallet, savings]);
+        _assetRepo.AnswerFindByEmailAndProductNamesForUpdateAsync((accountEmail, productNames, _) => accountEmail == "user@example.com" && (productNames.Count == 2 && productNames.Contains("Wallet") && productNames.Contains("Savings")), (_, _, _) => Task.FromResult<List<Asset>>([wallet, savings]));
         var sut = CreateSut();
 
         Dictionary<string, Asset> result = await sut.GetAssetsAsync(
@@ -74,8 +68,7 @@ public class AssetBalanceStoreTests
         Assert.Equal(2, result.Count);
         Assert.Same(wallet, result["Wallet"]);
         Assert.Same(savings, result["Savings"]);
-        _assetRepo.Verify(r => r.FindByEmailAndProductNamesForUpdateAsync(
-            It.IsAny<string>(), It.IsAny<IReadOnlyCollection<string>>(), It.IsAny<CancellationToken>()), Times.Once);
+        Assert.Single(_assetRepo.FindByEmailAndProductNamesForUpdateAsyncCalls);
     }
 
     /// <summary>Verifies that <c>SaveAsync</c> delegates to the repository update.</summary>
@@ -87,6 +80,6 @@ public class AssetBalanceStoreTests
 
         await sut.SaveAsync(asset, TestContext.Current.CancellationToken);
 
-        _assetRepo.Verify(r => r.UpdateEntityAsync(asset, It.IsAny<CancellationToken>()), Times.Once);
+        Assert.Single(_assetRepo.UpdateEntityAsyncCalls, call => call.Domain == asset);
     }
 }

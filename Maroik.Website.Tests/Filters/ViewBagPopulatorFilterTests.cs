@@ -20,7 +20,7 @@ namespace Maroik.Website.Tests.Filters;
 
 /// <summary>
 /// Unit tests for <see cref="ViewBagPopulatorFilter"/>.
-/// All service dependencies are replaced with Moq mocks.
+/// All service dependencies are replaced with hand-written fakes.
 /// </summary>
 public class ViewBagPopulatorFilterTests
 {
@@ -42,7 +42,7 @@ public class ViewBagPopulatorFilterTests
     /// <summary>Records the filter's log entries.</summary>
     private readonly FakeLogger<ViewBagPopulatorFilter> _logger = new();
 
-    /// <summary>The filter under test over the mocked dependencies.</summary>
+    /// <summary>The filter under test over the fake dependencies.</summary>
     private ViewBagPopulatorFilter CreateSut() =>
         new(_dashboardService, _timeZoneCatalogService, _serverSettings, _timeProvider, _logger);
 
@@ -109,7 +109,7 @@ public class ViewBagPopulatorFilterTests
             [],
             null!));
 
-    /// <summary>A signed-in User account whose notice counts the dashboard mock answers with 2/3/1/4.</summary>
+    /// <summary>A signed-in User account whose notice counts the dashboard fake answers with 2/3/1/4.</summary>
     private AccountResponse SignedInUserWithNotices()
     {
         _dashboardService.OnGetNoticeCountsAsync = (email, days, _, _) => email == "user@test.com" && days == 7 ? Task.FromResult(new NotificationDto { FixedIncomesNoticed = 2, FixedExpendituresNoticed = 3, FixedIncomesExpired = 1, FixedExpendituresExpired = 4 }) : Task.FromResult<NotificationDto>(null!);

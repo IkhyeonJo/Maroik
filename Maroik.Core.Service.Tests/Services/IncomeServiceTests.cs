@@ -1,28 +1,27 @@
 using Maroik.Core.Contract.Dtos;
-using Maroik.Core.Contract.Interfaces;
 using Maroik.Core.Domain.Finances;
 using Maroik.Core.Service.Services;
+using Maroik.Core.Service.Tests.Fixtures;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Testing;
 using Microsoft.Extensions.Time.Testing;
-using Moq;
 
 namespace Maroik.Core.Service.Tests.Services;
 
 /// <summary>
 /// Unit tests for <see cref="IncomeService"/>.
-/// All repository dependencies are replaced with Moq mocks.
+/// All repository dependencies are replaced with hand-written fakes.
 /// Covers income CRUD, asset-balance adjustments on create/update/delete,
 /// and category-class validation.
 /// </summary>
-public class IncomeServiceTests
+public class IncomeServiceTests : IAsyncDisposable
 {
-    /// <summary>Mock <c>IIncomeRepository</c> injected into the system under test.</summary>
-    private readonly Mock<IIncomeRepository> _incomeRepo = new();
-    /// <summary>Mock <c>IAssetBalanceStore</c> injected into the system under test.</summary>
-    private readonly Mock<IAssetBalanceStore> _assetBalance = new();
-    /// <summary>Mock <c>IUnitOfWork</c> injected into the system under test.</summary>
-    private readonly Mock<IUnitOfWork> _unitOfWork = new();
+    /// <summary>Fake <c>IIncomeRepository</c> injected into the system under test.</summary>
+    private readonly FakeIncomeRepository _incomeRepo = new();
+    /// <summary>Fake <c>IAssetBalanceStore</c> injected into the system under test.</summary>
+    private readonly FakeAssetBalanceStore _assetBalance = new();
+    /// <summary>Fake <c>IUnitOfWork</c> injected into the system under test.</summary>
+    private readonly FakeUnitOfWork _unitOfWork = new();
     /// <summary>Captures the log entries the system under test writes.</summary>
     private readonly FakeLogger<IncomeService> _logger = new();
 
@@ -31,42 +30,38 @@ public class IncomeServiceTests
     /// <summary>The clock the service under test reads, stopped at <see cref="Now"/>.</summary>
     private readonly FakeTimeProvider _time = new(new DateTimeOffset(Now));
 
-    /// <summary>The service under test over the mocked dependencies.</summary>
+    /// <summary>The service under test over the fake dependencies.</summary>
     private IncomeService CreateSut() => new(
-        _incomeRepo.Object,
-        _assetBalance.Object,
-        _unitOfWork.Object,
+        _incomeRepo,
+        _assetBalance,
+        _unitOfWork,
         _logger,
         _time);
 
     /// <summary>Initializes the test fixture, setting up all required test doubles and the system under test.</summary>
     public IncomeServiceTests()
     {
-        _unitOfWork.Setup(u => u.BeginAsync(null, It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
-        _unitOfWork.Setup(u => u.CommitAsync(It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
-        _unitOfWork.Setup(u => u.RollbackAsync(It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
-        _unitOfWork.Setup(u => u.DisposeAsync()).Returns(ValueTask.CompletedTask);
+        _unitOfWork.AnswerBeginAsync((isolationLevel, _) => isolationLevel == null, (_, _) => Task.CompletedTask);
+        _unitOfWork.AnswerCommitAsync(_ => Task.CompletedTask);
+        _unitOfWork.AnswerRollbackAsync(_ => Task.CompletedTask);
+        _unitOfWork.AnswerDisposeAsync(() => ValueTask.CompletedTask);
 
         // UpdateAsync/DeleteAsync fetch a single record by id; answer that lookup from the list-based
         // setups the tests declare via GetByAccountEmailAsync. UpdateAsync/DeleteAsync use
         // the FOR UPDATE variant — the row lock itself is covered by the repository tests, so here
         // it resolves identically.
         Func<string, long, CancellationToken, Task<Income?>> findById = async (e, id, c) =>
-            (await _incomeRepo.Object.GetByAccountEmailAsync(e, c)).FirstOrDefault(x => x.Id == id);
-        _incomeRepo.Setup(r => r.FindByEmailAndIdAsync(It.IsAny<string>(), It.IsAny<long>(), It.IsAny<CancellationToken>()))
-            .Returns(findById);
-        _incomeRepo.Setup(r => r.FindByEmailAndIdForUpdateAsync(It.IsAny<string>(), It.IsAny<long>(), It.IsAny<CancellationToken>()))
-            .Returns(findById);
+            (await _incomeRepo.GetByAccountEmailAsync(e, c)).FirstOrDefault(x => x.Id == id);
+        _incomeRepo.AnswerFindByEmailAndIdAsync(findById);
+        _incomeRepo.AnswerFindByEmailAndIdForUpdateAsync(findById);
 
         // GetAssetsOrdinalAsync fetches every asset in one batched call; answer it from the per-name
         // GetAssetAsync setups the tests below declare.
-        _assetBalance.Setup(r => r.GetAssetsAsync(It.IsAny<string>(), It.IsAny<IReadOnlyCollection<string>>(), It.IsAny<CancellationToken>()))
-            .Returns(async (string email, IReadOnlyCollection<string> names, CancellationToken ct) =>
-            {
+        _assetBalance.AnswerGetAssetsAsync(async (email, names, ct) => {
                 var result = new Dictionary<string, Asset>(StringComparer.Ordinal);
                 foreach (string name in names)
                 {
-                    Asset? asset = await _assetBalance.Object.GetAssetAsync(email, name, ct);
+                    Asset? asset = await _assetBalance.GetAssetAsync(email, name, ct);
                     if (asset != null) result[name] = asset;
                 }
                 return result;
@@ -130,20 +125,20 @@ public class IncomeServiceTests
         ServiceResult result = await sut.CreateAsync("user@example.com", request, TestContext.Current.CancellationToken);
 
         Assert.False(result.Success);
-        _unitOfWork.Verify(u => u.RollbackAsync(It.IsAny<CancellationToken>()), Times.Once);
+        Assert.Single(_unitOfWork.RollbackAsyncCalls);
     }
 
     /// <summary>Verifies that <c>CreateAsync</c> returns fail when deposit asset not found.</summary>
     [Fact]
     public async Task CreateAsync_ReturnsFail_WhenDepositAssetNotFound()
     {
-        _assetBalance.Setup(r => r.GetAssetAsync("user@example.com", "SavingsAccount", It.IsAny<CancellationToken>())).ReturnsAsync((Asset?)null);
+        _assetBalance.AnswerGetAssetAsync((accountEmail, productName, _) => accountEmail == "user@example.com" && productName == "SavingsAccount", (_, _, _) => Task.FromResult<Asset?>(null));
         var sut = CreateSut();
 
         ServiceResult result = await sut.CreateAsync("user@example.com", ValidRequest(), TestContext.Current.CancellationToken);
 
         Assert.False(result.Success);
-        _unitOfWork.Verify(u => u.RollbackAsync(It.IsAny<CancellationToken>()), Times.Once);
+        Assert.Single(_unitOfWork.RollbackAsyncCalls);
     }
 
     /// <summary>Verifies that <c>CreateAsync</c> returns fail when deposit asset is deleted.</summary>
@@ -151,14 +146,14 @@ public class IncomeServiceTests
     public async Task CreateAsync_ReturnsFail_WhenDepositAssetIsDeleted()
     {
         var asset = MakeAsset("SavingsAccount", deleted: true);
-        _assetBalance.Setup(r => r.GetAssetAsync("user@example.com", "SavingsAccount", It.IsAny<CancellationToken>())).ReturnsAsync(asset);
+        _assetBalance.AnswerGetAssetAsync((accountEmail, productName, _) => accountEmail == "user@example.com" && productName == "SavingsAccount", (_, _, _) => Task.FromResult<Asset?>(asset));
         var sut = CreateSut();
 
         ServiceResult result = await sut.CreateAsync("user@example.com", ValidRequest(), TestContext.Current.CancellationToken);
 
         Assert.False(result.Success);
         Assert.Contains("deleted", result.ErrorKey, StringComparison.OrdinalIgnoreCase);
-        _unitOfWork.Verify(u => u.RollbackAsync(It.IsAny<CancellationToken>()), Times.Once);
+        Assert.Single(_unitOfWork.RollbackAsyncCalls);
     }
 
     /// <summary>Verifies that <c>CreateAsync</c> increments asset amount when valid.</summary>
@@ -167,13 +162,11 @@ public class IncomeServiceTests
     {
         const string email = "user@example.com";
         var asset = MakeAsset("SavingsAccount", amount: 2000m);
-        _assetBalance.Setup(r => r.GetAssetAsync(email, "SavingsAccount", It.IsAny<CancellationToken>())).ReturnsAsync(asset);
-        _incomeRepo.Setup(r => r.CreateAsync(It.IsAny<Income>(), It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
+        _assetBalance.AnswerGetAssetAsync((accountEmail, productName, _) => accountEmail == email && productName == "SavingsAccount", (_, _, _) => Task.FromResult<Asset?>(asset));
+        _incomeRepo.AnswerCreateAsync((_, _) => Task.CompletedTask);
 
         Asset? captured = null;
-        _assetBalance.Setup(r => r.SaveAsync(It.IsAny<Asset>(), It.IsAny<CancellationToken>()))
-            .Callback<Asset, CancellationToken>((a, _) => captured = a)
-            .Returns(Task.CompletedTask);
+        _assetBalance.AnswerSaveAsync((a, _) => { captured = a; return Task.CompletedTask; });
         var sut = CreateSut();
 
         ServiceResult result = await sut.CreateAsync(email, ValidRequest(), TestContext.Current.CancellationToken); // Amount = 500
@@ -181,7 +174,7 @@ public class IncomeServiceTests
         Assert.True(result.Success);
         Assert.NotNull(captured);
         Assert.Equal(2500m, captured.Balance.Amount); // 2000 + 500
-        _unitOfWork.Verify(u => u.CommitAsync(It.IsAny<CancellationToken>()), Times.Once);
+        Assert.Single(_unitOfWork.CommitAsyncCalls);
     }
 
     /// <summary>Verifies that <c>CreateAsync</c> returns success for all valid income class combinations.</summary>
@@ -198,9 +191,9 @@ public class IncomeServiceTests
     {
         const string email = "user@example.com";
         var asset = MakeAsset("SavingsAccount");
-        _assetBalance.Setup(r => r.GetAssetAsync(email, "SavingsAccount", It.IsAny<CancellationToken>())).ReturnsAsync(asset);
-        _incomeRepo.Setup(r => r.CreateAsync(It.IsAny<Income>(), It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
-        _assetBalance.Setup(r => r.SaveAsync(It.IsAny<Asset>(), It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
+        _assetBalance.AnswerGetAssetAsync((accountEmail, productName, _) => accountEmail == email && productName == "SavingsAccount", (_, _, _) => Task.FromResult<Asset?>(asset));
+        _incomeRepo.AnswerCreateAsync((_, _) => Task.CompletedTask);
+        _assetBalance.AnswerSaveAsync((_, _) => Task.CompletedTask);
         var sut = CreateSut();
 
         var request = new IncomeRequest
@@ -228,14 +221,14 @@ public class IncomeServiceTests
         ServiceResult result = await sut.UpdateAsync("user@example.com", request, TestContext.Current.CancellationToken);
 
         Assert.False(result.Success);
-        _unitOfWork.Verify(u => u.RollbackAsync(It.IsAny<CancellationToken>()), Times.Once);
+        Assert.Single(_unitOfWork.RollbackAsyncCalls);
     }
 
     /// <summary>Verifies that <c>UpdateAsync</c> returns fail when income record not found.</summary>
     [Fact]
     public async Task UpdateAsync_ReturnsFail_WhenIncomeRecordNotFound()
     {
-        _incomeRepo.Setup(r => r.GetByAccountEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync([]);
+        _incomeRepo.AnswerGetByAccountEmailAsync((_, _) => Task.FromResult<List<Income>>([]));
         var sut = CreateSut();
         var request = ValidRequest();
         request.Id = 99;
@@ -252,8 +245,8 @@ public class IncomeServiceTests
         const string email = "user@example.com";
         var existing = MakeIncome(1, "OldAsset");
         var deletedAsset = MakeAsset("OldAsset", deleted: true);
-        _incomeRepo.Setup(r => r.GetByAccountEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync([existing]);
-        _assetBalance.Setup(r => r.GetAssetAsync(email, "OldAsset", It.IsAny<CancellationToken>())).ReturnsAsync(deletedAsset);
+        _incomeRepo.AnswerGetByAccountEmailAsync((_, _) => Task.FromResult<List<Income>>([existing]));
+        _assetBalance.AnswerGetAssetAsync((accountEmail, productName, _) => accountEmail == email && productName == "OldAsset", (_, _, _) => Task.FromResult<Asset?>(deletedAsset));
         var sut = CreateSut();
 
         var request = ValidRequest("NewAsset");
@@ -271,14 +264,12 @@ public class IncomeServiceTests
         const string email = "user@example.com";
         var existing = MakeIncome(1, "SavingsAccount", 300m);
         var asset = MakeAsset("SavingsAccount", amount: 1300m);
-        _incomeRepo.Setup(r => r.GetByAccountEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync([existing]);
-        _assetBalance.Setup(r => r.GetAssetAsync(email, "SavingsAccount", It.IsAny<CancellationToken>())).ReturnsAsync(asset);
-        _incomeRepo.Setup(r => r.UpdateEntityAsync(It.IsAny<Income>(), It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
+        _incomeRepo.AnswerGetByAccountEmailAsync((_, _) => Task.FromResult<List<Income>>([existing]));
+        _assetBalance.AnswerGetAssetAsync((accountEmail, productName, _) => accountEmail == email && productName == "SavingsAccount", (_, _, _) => Task.FromResult<Asset?>(asset));
+        _incomeRepo.AnswerUpdateEntityAsync((_, _) => Task.CompletedTask);
 
         Asset? captured = null;
-        _assetBalance.Setup(r => r.SaveAsync(It.IsAny<Asset>(), It.IsAny<CancellationToken>()))
-            .Callback<Asset, CancellationToken>((a, _) => captured = a)
-            .Returns(Task.CompletedTask);
+        _assetBalance.AnswerSaveAsync((a, _) => { captured = a; return Task.CompletedTask; });
         var sut = CreateSut();
 
         // Same asset, new amount = 500
@@ -296,7 +287,7 @@ public class IncomeServiceTests
         Assert.True(result.Success);
         Assert.NotNull(captured);
         Assert.Equal(1500m, captured.Balance.Amount); // 1300 - 300 + 500
-        _unitOfWork.Verify(u => u.CommitAsync(It.IsAny<CancellationToken>()), Times.Once);
+        Assert.Single(_unitOfWork.CommitAsyncCalls);
     }
 
     /// <summary>Verifies that <c>UpdateAsync</c> adjusts both assets when asset name changes.</summary>
@@ -307,15 +298,13 @@ public class IncomeServiceTests
         var existing = MakeIncome(1, "OldAsset", 200m);
         var oldAsset = MakeAsset("OldAsset", amount: 500m);
         var newAsset = MakeAsset("NewAsset", amount: 100m);
-        _incomeRepo.Setup(r => r.GetByAccountEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync([existing]);
-        _assetBalance.Setup(r => r.GetAssetAsync(email, "OldAsset", It.IsAny<CancellationToken>())).ReturnsAsync(oldAsset);
-        _assetBalance.Setup(r => r.GetAssetAsync(email, "NewAsset", It.IsAny<CancellationToken>())).ReturnsAsync(newAsset);
-        _incomeRepo.Setup(r => r.UpdateEntityAsync(It.IsAny<Income>(), It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
+        _incomeRepo.AnswerGetByAccountEmailAsync((_, _) => Task.FromResult<List<Income>>([existing]));
+        _assetBalance.AnswerGetAssetAsync((accountEmail, productName, _) => accountEmail == email && productName == "OldAsset", (_, _, _) => Task.FromResult<Asset?>(oldAsset));
+        _assetBalance.AnswerGetAssetAsync((accountEmail, productName, _) => accountEmail == email && productName == "NewAsset", (_, _, _) => Task.FromResult<Asset?>(newAsset));
+        _incomeRepo.AnswerUpdateEntityAsync((_, _) => Task.CompletedTask);
 
         var updatedAssets = new List<Asset>();
-        _assetBalance.Setup(r => r.SaveAsync(It.IsAny<Asset>(), It.IsAny<CancellationToken>()))
-            .Callback<Asset, CancellationToken>((a, _) => updatedAssets.Add(a))
-            .Returns(Task.CompletedTask);
+        _assetBalance.AnswerSaveAsync((a, _) => { updatedAssets.Add(a); return Task.CompletedTask; });
         var sut = CreateSut();
 
         var request = new IncomeRequest
@@ -343,14 +332,12 @@ public class IncomeServiceTests
     {
         const string email = "user@example.com";
         var existing = MakeIncome(1, depositAsset: "Zebra", amount: 200m);
-        _incomeRepo.Setup(r => r.GetByAccountEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync([existing]);
-        _incomeRepo.Setup(r => r.UpdateEntityAsync(It.IsAny<Income>(), It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
+        _incomeRepo.AnswerGetByAccountEmailAsync((_, _) => Task.FromResult<List<Income>>([existing]));
+        _incomeRepo.AnswerUpdateEntityAsync((_, _) => Task.CompletedTask);
 
         var callOrder = new List<string>();
-        _assetBalance.Setup(r => r.GetAssetAsync(email, It.IsAny<string>(), It.IsAny<CancellationToken>()))
-            .Callback<string, string, CancellationToken>((_, name, _) => callOrder.Add(name))
-            .Returns<string, string, CancellationToken>((_, name, _) => Task.FromResult<Asset?>(MakeAsset(name)));
-        _assetBalance.Setup(r => r.SaveAsync(It.IsAny<Asset>(), It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
+        _assetBalance.AnswerGetAssetAsync((accountEmail, _, _) => accountEmail == email, (_, name, _) => { callOrder.Add(name); return Task.FromResult<Asset?>(MakeAsset(name)); });
+        _assetBalance.AnswerSaveAsync((_, _) => Task.CompletedTask);
         var sut = CreateSut();
 
         // Previous asset "Zebra" sorts after the new asset "Apple"; locking them in
@@ -373,9 +360,9 @@ public class IncomeServiceTests
         const string email = "user@example.com";
         var existing = MakeIncome(1, "OldAsset", 200m);
         var oldAsset = MakeAsset("OldAsset", amount: 500m);
-        _incomeRepo.Setup(r => r.GetByAccountEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync([existing]);
-        _assetBalance.Setup(r => r.GetAssetAsync(email, "OldAsset", It.IsAny<CancellationToken>())).ReturnsAsync(oldAsset);
-        _assetBalance.Setup(r => r.GetAssetAsync(email, "GhostAsset", It.IsAny<CancellationToken>())).ReturnsAsync((Asset?)null);
+        _incomeRepo.AnswerGetByAccountEmailAsync((_, _) => Task.FromResult<List<Income>>([existing]));
+        _assetBalance.AnswerGetAssetAsync((accountEmail, productName, _) => accountEmail == email && productName == "OldAsset", (_, _, _) => Task.FromResult<Asset?>(oldAsset));
+        _assetBalance.AnswerGetAssetAsync((accountEmail, productName, _) => accountEmail == email && productName == "GhostAsset", (_, _, _) => Task.FromResult<Asset?>(null));
         var sut = CreateSut();
 
         var request = ValidRequest("GhostAsset");
@@ -383,9 +370,9 @@ public class IncomeServiceTests
         ServiceResult result = await sut.UpdateAsync(email, request, TestContext.Current.CancellationToken);
 
         Assert.False(result.Success);
-        _assetBalance.Verify(r => r.SaveAsync(It.IsAny<Asset>(), It.IsAny<CancellationToken>()), Times.Never);
-        _unitOfWork.Verify(u => u.RollbackAsync(It.IsAny<CancellationToken>()), Times.Once);
-        _unitOfWork.Verify(u => u.CommitAsync(It.IsAny<CancellationToken>()), Times.Never);
+        Assert.Empty(_assetBalance.SaveAsyncCalls);
+        Assert.Single(_unitOfWork.RollbackAsyncCalls);
+        Assert.Empty(_unitOfWork.CommitAsyncCalls);
     }
 
     // -- DeleteAsync ----------------------------------------------------------
@@ -394,13 +381,13 @@ public class IncomeServiceTests
     [Fact]
     public async Task DeleteAsync_ReturnsFail_WhenIncomeNotFound()
     {
-        _incomeRepo.Setup(r => r.GetByAccountEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync([]);
+        _incomeRepo.AnswerGetByAccountEmailAsync((_, _) => Task.FromResult<List<Income>>([]));
         var sut = CreateSut();
 
         ServiceResult result = await sut.DeleteAsync("user@example.com", 99, TestContext.Current.CancellationToken);
 
         Assert.False(result.Success);
-        _unitOfWork.Verify(u => u.RollbackAsync(It.IsAny<CancellationToken>()), Times.Once);
+        Assert.Single(_unitOfWork.RollbackAsyncCalls);
     }
 
     /// <summary>Verifies that <c>DeleteAsync</c> returns fail when asset is deleted.</summary>
@@ -410,8 +397,8 @@ public class IncomeServiceTests
         const string email = "user@example.com";
         var income = MakeIncome(1);
         var deletedAsset = MakeAsset("SavingsAccount", deleted: true);
-        _incomeRepo.Setup(r => r.GetByAccountEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync([income]);
-        _assetBalance.Setup(r => r.GetAssetAsync(email, "SavingsAccount", It.IsAny<CancellationToken>())).ReturnsAsync(deletedAsset);
+        _incomeRepo.AnswerGetByAccountEmailAsync((_, _) => Task.FromResult<List<Income>>([income]));
+        _assetBalance.AnswerGetAssetAsync((accountEmail, productName, _) => accountEmail == email && productName == "SavingsAccount", (_, _, _) => Task.FromResult<Asset?>(deletedAsset));
         var sut = CreateSut();
 
         ServiceResult result = await sut.DeleteAsync(email, 1, TestContext.Current.CancellationToken);
@@ -427,14 +414,12 @@ public class IncomeServiceTests
         const string email = "user@example.com";
         var income = MakeIncome(1, "SavingsAccount", 250m);
         var asset = MakeAsset("SavingsAccount", amount: 1000m);
-        _incomeRepo.Setup(r => r.GetByAccountEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync([income]);
-        _assetBalance.Setup(r => r.GetAssetAsync(email, "SavingsAccount", It.IsAny<CancellationToken>())).ReturnsAsync(asset);
-        _incomeRepo.Setup(r => r.DeleteByIdAsync(It.IsAny<long>(), It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
+        _incomeRepo.AnswerGetByAccountEmailAsync((_, _) => Task.FromResult<List<Income>>([income]));
+        _assetBalance.AnswerGetAssetAsync((accountEmail, productName, _) => accountEmail == email && productName == "SavingsAccount", (_, _, _) => Task.FromResult<Asset?>(asset));
+        _incomeRepo.AnswerDeleteByIdAsync((_, _) => Task.CompletedTask);
 
         Asset? captured = null;
-        _assetBalance.Setup(r => r.SaveAsync(It.IsAny<Asset>(), It.IsAny<CancellationToken>()))
-            .Callback<Asset, CancellationToken>((a, _) => captured = a)
-            .Returns(Task.CompletedTask);
+        _assetBalance.AnswerSaveAsync((a, _) => { captured = a; return Task.CompletedTask; });
         var sut = CreateSut();
 
         ServiceResult result = await sut.DeleteAsync(email, 1, TestContext.Current.CancellationToken);
@@ -442,7 +427,7 @@ public class IncomeServiceTests
         Assert.True(result.Success);
         Assert.NotNull(captured);
         Assert.Equal(750m, captured.Balance.Amount); // 1000 - 250
-        _unitOfWork.Verify(u => u.CommitAsync(It.IsAny<CancellationToken>()), Times.Once);
+        Assert.Single(_unitOfWork.CommitAsyncCalls);
     }
 
     // -- GetIncomesAsync ------------------------------------------------------
@@ -453,7 +438,7 @@ public class IncomeServiceTests
     {
         const string email = "user@example.com";
         var list = new List<Income> { MakeIncome(1) };
-        _incomeRepo.Setup(r => r.GetByAccountEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(list);
+        _incomeRepo.AnswerGetByAccountEmailAsync((_, _) => Task.FromResult<List<Income>>(list));
         var sut = CreateSut();
 
         List<IncomeResponse> result = await sut.GetIncomesAsync(email, TestContext.Current.CancellationToken);
@@ -467,8 +452,7 @@ public class IncomeServiceTests
     [Fact]
     public async Task SearchIncomesAsync_DelegatesToRepository_AndMapsTheRows()
     {
-        _incomeRepo.Setup(r => r.SearchByAccountEmailAsync("user@example.com", "salary", It.IsAny<CancellationToken>()))
-            .ReturnsAsync([MakeIncome(7)]);
+        _incomeRepo.AnswerSearchByAccountEmailAsync((accountEmail, search, _) => accountEmail == "user@example.com" && search == "salary", (_, _, _) => Task.FromResult<List<Income>>([MakeIncome(7)]));
 
         List<IncomeResponse> result = await CreateSut().SearchIncomesAsync("user@example.com", "salary", TestContext.Current.CancellationToken);
 
@@ -484,12 +468,12 @@ public class IncomeServiceTests
     private void GivenAssets(params Asset[] assets)
     {
         foreach (Asset a in assets)
-            _assetBalance.Setup(r => r.GetAssetAsync(Email, a.ProductName, It.IsAny<CancellationToken>())).ReturnsAsync(a);
+            _assetBalance.AnswerGetAssetAsync((accountEmail, productName, _) => accountEmail == Email && productName == a.ProductName, (_, _, _) => Task.FromResult<Asset?>(a));
     }
 
     /// <summary>Makes the owner's income list contain only <paramref name="previous"/>.</summary>
     private void GivenExistingIncome(Income previous) =>
-        _incomeRepo.Setup(r => r.GetByAccountEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync([previous]);
+        _incomeRepo.AnswerGetByAccountEmailAsync((_, _) => Task.FromResult<List<Income>>([previous]));
 
     /// <summary>Sets <paramref name="r"/>'s id to 1 (an update request) and returns it.</summary>
     private static IncomeRequest WithId(IncomeRequest r) { r.Id = 1; return r; }
@@ -500,11 +484,9 @@ public class IncomeServiceTests
     {
         GivenAssets(MakeAsset("SavingsAccount", amount: 1000m));
         Income? stored = null;
-        _incomeRepo.Setup(r => r.CreateAsync(It.IsAny<Income>(), It.IsAny<CancellationToken>()))
-            .Callback<Income, CancellationToken>((i, _) => stored = i).Returns(Task.CompletedTask);
+        _incomeRepo.AnswerCreateAsync((i, _) => { stored = i; return Task.CompletedTask; });
         Asset? saved = null;
-        _assetBalance.Setup(r => r.SaveAsync(It.IsAny<Asset>(), It.IsAny<CancellationToken>()))
-            .Callback<Asset, CancellationToken>((a, _) => saved = a).Returns(Task.CompletedTask);
+        _assetBalance.AnswerSaveAsync((a, _) => { saved = a; return Task.CompletedTask; });
         IncomeRequest request = ValidRequest();
         request.Amount = -250m;
 
@@ -525,8 +507,8 @@ public class IncomeServiceTests
 
         Assert.False(result.Success);
         Assert.Equal("Finance.AmountOutOfRange", result.ErrorCode);
-        _assetBalance.Verify(r => r.SaveAsync(It.IsAny<Asset>(), It.IsAny<CancellationToken>()), Times.Never);
-        _unitOfWork.Verify(u => u.CommitAsync(It.IsAny<CancellationToken>()), Times.Never);
+        Assert.Empty(_assetBalance.SaveAsyncCalls);
+        Assert.Empty(_unitOfWork.CommitAsyncCalls);
     }
 
     /// <summary>An amount with a fifth decimal place is refused (never rounded); nothing is written or committed.</summary>
@@ -542,9 +524,9 @@ public class IncomeServiceTests
         Assert.Equal("Finance.AmountTooManyDecimals", result.ErrorCode);
         Assert.Equal("Amount can have up to {0} decimal places.", result.ErrorKey);
         Assert.Equal([4], result.ErrorArgs);
-        _incomeRepo.Verify(r => r.CreateAsync(It.IsAny<Income>(), It.IsAny<CancellationToken>()), Times.Never);
-        _assetBalance.Verify(r => r.SaveAsync(It.IsAny<Asset>(), It.IsAny<CancellationToken>()), Times.Never);
-        _unitOfWork.Verify(u => u.CommitAsync(It.IsAny<CancellationToken>()), Times.Never);
+        Assert.Empty(_incomeRepo.CreateAsyncCalls);
+        Assert.Empty(_assetBalance.SaveAsyncCalls);
+        Assert.Empty(_unitOfWork.CommitAsyncCalls);
     }
 
     /// <summary>A record the domain rejects (over-long content) is returned as its validation error before any balance moves.</summary>
@@ -558,8 +540,8 @@ public class IncomeServiceTests
         ServiceResult result = await CreateSut().CreateAsync(Email, request, TestContext.Current.CancellationToken);
 
         Assert.Equal("Finance.ContentTooLong", result.ErrorCode);
-        _incomeRepo.Verify(r => r.CreateAsync(It.IsAny<Income>(), It.IsAny<CancellationToken>()), Times.Never);
-        _assetBalance.Verify(r => r.SaveAsync(It.IsAny<Asset>(), It.IsAny<CancellationToken>()), Times.Never);
+        Assert.Empty(_incomeRepo.CreateAsyncCalls);
+        Assert.Empty(_assetBalance.SaveAsyncCalls);
     }
 
     /// <summary>An unexpected failure on create is rolled back and reported without leaking internals.</summary>
@@ -567,15 +549,15 @@ public class IncomeServiceTests
     public async Task CreateAsync_RollsBackAndReportsUnexpectedFailure_WhenThePersistenceThrows()
     {
         GivenAssets(MakeAsset("SavingsAccount"));
-        _incomeRepo.Setup(r => r.CreateAsync(It.IsAny<Income>(), It.IsAny<CancellationToken>())).ThrowsAsync(new InvalidOperationException("secret detail"));
+        _incomeRepo.AnswerCreateAsync((_, _) => Task.FromException(new InvalidOperationException("secret detail")));
 
         ServiceResult result = await CreateSut().CreateAsync(Email, ValidRequest(), TestContext.Current.CancellationToken);
 
         Assert.Equal("Income.Unexpected", result.ErrorCode);
         Assert.Equal(ServiceResult.TemporaryErrorKey, result.ErrorKey);
         Assert.DoesNotContain("secret detail", result.ErrorKey, StringComparison.Ordinal);
-        _unitOfWork.Verify(u => u.RollbackAsync(It.IsAny<CancellationToken>()), Times.Once);
-        _unitOfWork.Verify(u => u.CommitAsync(It.IsAny<CancellationToken>()), Times.Never);
+        Assert.Single(_unitOfWork.RollbackAsyncCalls);
+        Assert.Empty(_unitOfWork.CommitAsyncCalls);
     }
 
     /// <summary>An income retargeted onto a since-archived asset is refused (its balance must never be touched).</summary>
@@ -588,7 +570,7 @@ public class IncomeServiceTests
         ServiceResult result = await CreateSut().UpdateAsync(Email, WithId(ValidRequest("Archived")), TestContext.Current.CancellationToken);
 
         Assert.Equal("Income.AssetDeleted", result.ErrorCode);
-        _incomeRepo.Verify(r => r.UpdateEntityAsync(It.IsAny<Income>(), It.IsAny<CancellationToken>()), Times.Never);
+        Assert.Empty(_incomeRepo.UpdateEntityAsyncCalls);
     }
 
     /// <summary>A record edited to content the domain rejects is returned as its validation error and not persisted.</summary>
@@ -603,8 +585,8 @@ public class IncomeServiceTests
         ServiceResult result = await CreateSut().UpdateAsync(Email, request, TestContext.Current.CancellationToken);
 
         Assert.Equal("Finance.ContentTooLong", result.ErrorCode);
-        _incomeRepo.Verify(r => r.UpdateEntityAsync(It.IsAny<Income>(), It.IsAny<CancellationToken>()), Times.Never);
-        _unitOfWork.Verify(u => u.RollbackAsync(It.IsAny<CancellationToken>()), Times.Once);
+        Assert.Empty(_incomeRepo.UpdateEntityAsyncCalls);
+        Assert.Single(_unitOfWork.RollbackAsyncCalls);
     }
 
     /// <summary>A balance adjustment the asset refuses (range overflow) rolls the whole update back.</summary>
@@ -617,8 +599,8 @@ public class IncomeServiceTests
         ServiceResult result = await CreateSut().UpdateAsync(Email, WithId(ValidRequest()), TestContext.Current.CancellationToken);
 
         Assert.False(result.Success);
-        _unitOfWork.Verify(u => u.RollbackAsync(It.IsAny<CancellationToken>()), Times.Once);
-        _unitOfWork.Verify(u => u.CommitAsync(It.IsAny<CancellationToken>()), Times.Never);
+        Assert.Single(_unitOfWork.RollbackAsyncCalls);
+        Assert.Empty(_unitOfWork.CommitAsyncCalls);
     }
 
     /// <summary>An unexpected failure on update is rolled back and reported without leaking internals.</summary>
@@ -627,14 +609,14 @@ public class IncomeServiceTests
     {
         GivenExistingIncome(MakeIncome(1));
         GivenAssets(MakeAsset("SavingsAccount"));
-        _incomeRepo.Setup(r => r.UpdateEntityAsync(It.IsAny<Income>(), It.IsAny<CancellationToken>())).ThrowsAsync(new InvalidOperationException("secret detail"));
+        _incomeRepo.AnswerUpdateEntityAsync((_, _) => Task.FromException(new InvalidOperationException("secret detail")));
 
         ServiceResult result = await CreateSut().UpdateAsync(Email, WithId(ValidRequest()), TestContext.Current.CancellationToken);
 
         Assert.Equal("Income.Unexpected", result.ErrorCode);
         Assert.Equal(ServiceResult.TemporaryErrorKey, result.ErrorKey);
         Assert.DoesNotContain("secret detail", result.ErrorKey, StringComparison.Ordinal);
-        _unitOfWork.Verify(u => u.RollbackAsync(It.IsAny<CancellationToken>()), Times.Once);
+        Assert.Single(_unitOfWork.RollbackAsyncCalls);
     }
 
     /// <summary>Reverting the record's impact must keep the balance in range; otherwise the delete is refused and rolled back.</summary>
@@ -647,8 +629,8 @@ public class IncomeServiceTests
         ServiceResult result = await CreateSut().DeleteAsync(Email, 1, TestContext.Current.CancellationToken);
 
         Assert.False(result.Success);
-        _incomeRepo.Verify(r => r.DeleteByIdAsync(It.IsAny<long>(), It.IsAny<CancellationToken>()), Times.Never);
-        _unitOfWork.Verify(u => u.RollbackAsync(It.IsAny<CancellationToken>()), Times.Once);
+        Assert.Empty(_incomeRepo.DeleteByIdAsyncCalls);
+        Assert.Single(_unitOfWork.RollbackAsyncCalls);
     }
 
     /// <summary>An unexpected failure on delete is rolled back and reported without leaking internals.</summary>
@@ -657,14 +639,14 @@ public class IncomeServiceTests
     {
         GivenExistingIncome(MakeIncome(1));
         GivenAssets(MakeAsset("SavingsAccount"));
-        _incomeRepo.Setup(r => r.DeleteByIdAsync(It.IsAny<long>(), It.IsAny<CancellationToken>())).ThrowsAsync(new InvalidOperationException("secret detail"));
+        _incomeRepo.AnswerDeleteByIdAsync((_, _) => Task.FromException(new InvalidOperationException("secret detail")));
 
         ServiceResult result = await CreateSut().DeleteAsync(Email, 1, TestContext.Current.CancellationToken);
 
         Assert.Equal("Income.Unexpected", result.ErrorCode);
         Assert.Equal(ServiceResult.TemporaryErrorKey, result.ErrorKey);
         Assert.DoesNotContain("secret detail", result.ErrorKey, StringComparison.Ordinal);
-        _unitOfWork.Verify(u => u.RollbackAsync(It.IsAny<CancellationToken>()), Times.Once);
+        Assert.Single(_unitOfWork.RollbackAsyncCalls);
     }
 
     // -- Transaction boundaries, result codes and failure logging --------------------
@@ -710,9 +692,9 @@ public class IncomeServiceTests
         ServiceResult result = await CreateSut().CreateAsync(Email, ValidRequest(), TestContext.Current.CancellationToken);
 
         Assert.True(result.Success);
-        _unitOfWork.Verify(u => u.BeginAsync(null, It.IsAny<CancellationToken>()), Times.Once);
-        _unitOfWork.Verify(u => u.CommitAsync(It.IsAny<CancellationToken>()), Times.Once);
-        _unitOfWork.Verify(u => u.RollbackAsync(It.IsAny<CancellationToken>()), Times.Never);
+        Assert.Single(_unitOfWork.BeginAsyncCalls, call => call.IsolationLevel == null);
+        Assert.Single(_unitOfWork.CommitAsyncCalls);
+        Assert.Empty(_unitOfWork.RollbackAsyncCalls);
     }
 
     /// <summary>An unknown deposit asset is a NotFound with the localizable "asset not found" message.</summary>
@@ -732,7 +714,7 @@ public class IncomeServiceTests
     {
         GivenAssets(MakeAsset("SavingsAccount"));
         var thrown = new InvalidOperationException("boom");
-        _incomeRepo.Setup(r => r.CreateAsync(It.IsAny<Income>(), It.IsAny<CancellationToken>())).ThrowsAsync(thrown);
+        _incomeRepo.AnswerCreateAsync((_, _) => Task.FromException(thrown));
 
         await CreateSut().CreateAsync(Email, ValidRequest(), TestContext.Current.CancellationToken);
 
@@ -749,9 +731,9 @@ public class IncomeServiceTests
         ServiceResult result = await CreateSut().UpdateAsync(Email, WithId(ValidRequest()), TestContext.Current.CancellationToken);
 
         Assert.True(result.Success);
-        _unitOfWork.Verify(u => u.BeginAsync(null, It.IsAny<CancellationToken>()), Times.Once);
-        _unitOfWork.Verify(u => u.CommitAsync(It.IsAny<CancellationToken>()), Times.Once);
-        _unitOfWork.Verify(u => u.RollbackAsync(It.IsAny<CancellationToken>()), Times.Never);
+        Assert.Single(_unitOfWork.BeginAsyncCalls, call => call.IsolationLevel == null);
+        Assert.Single(_unitOfWork.CommitAsyncCalls);
+        Assert.Empty(_unitOfWork.RollbackAsyncCalls);
     }
 
     /// <summary>An unknown income id is a NotFound with the localizable "record not found" message.</summary>
@@ -765,7 +747,7 @@ public class IncomeServiceTests
         Assert.Equal(ServiceErrorType.NotFound, result.ErrorType);
         Assert.Equal("Income.NotFound", result.ErrorCode);
         Assert.Equal("The income record could not be found.", result.ErrorKey);
-        _unitOfWork.Verify(u => u.RollbackAsync(It.IsAny<CancellationToken>()), Times.Once);
+        Assert.Single(_unitOfWork.RollbackAsyncCalls);
     }
 
     /// <summary>Retargeting onto an unknown asset is a NotFound with the localizable "asset not found" message.</summary>
@@ -795,7 +777,7 @@ public class IncomeServiceTests
         ServiceResult result = await CreateSut().UpdateAsync(Email, WithId(ValidRequest("")), TestContext.Current.CancellationToken);
 
         Assert.Equal("Income.DepositAssetEmpty", result.ErrorCode);
-        _incomeRepo.Verify(r => r.UpdateEntityAsync(It.IsAny<Income>(), It.IsAny<CancellationToken>()), Times.Never);
+        Assert.Empty(_incomeRepo.UpdateEntityAsyncCalls);
     }
 
     /// <summary>An income moved onto an asset in another currency is re-recorded in the new asset's currency.</summary>
@@ -805,8 +787,7 @@ public class IncomeServiceTests
         GivenExistingIncome(MakeIncome(1, "SavingsAccount", 100m));
         GivenAssets(MakeAsset("SavingsAccount"), MakeAsset("DollarAccount", amount: 0m, currency: "USD"));
         Income? stored = null;
-        _incomeRepo.Setup(r => r.UpdateEntityAsync(It.IsAny<Income>(), It.IsAny<CancellationToken>()))
-            .Callback<Income, CancellationToken>((i, _) => stored = i).Returns(Task.CompletedTask);
+        _incomeRepo.AnswerUpdateEntityAsync((i, _) => { stored = i; return Task.CompletedTask; });
 
         ServiceResult result = await CreateSut().UpdateAsync(Email, WithId(ValidRequest("DollarAccount")), TestContext.Current.CancellationToken);
 
@@ -821,7 +802,7 @@ public class IncomeServiceTests
         GivenExistingIncome(MakeIncome(1));
         GivenAssets(MakeAsset("SavingsAccount"));
         var thrown = new InvalidOperationException("boom");
-        _incomeRepo.Setup(r => r.UpdateEntityAsync(It.IsAny<Income>(), It.IsAny<CancellationToken>())).ThrowsAsync(thrown);
+        _incomeRepo.AnswerUpdateEntityAsync((_, _) => Task.FromException(thrown));
 
         await CreateSut().UpdateAsync(Email, WithId(ValidRequest()), TestContext.Current.CancellationToken);
 
@@ -838,9 +819,9 @@ public class IncomeServiceTests
         ServiceResult result = await CreateSut().DeleteAsync(Email, 1, TestContext.Current.CancellationToken);
 
         Assert.True(result.Success);
-        _unitOfWork.Verify(u => u.BeginAsync(null, It.IsAny<CancellationToken>()), Times.Once);
-        _unitOfWork.Verify(u => u.CommitAsync(It.IsAny<CancellationToken>()), Times.Once);
-        _unitOfWork.Verify(u => u.RollbackAsync(It.IsAny<CancellationToken>()), Times.Never);
+        Assert.Single(_unitOfWork.BeginAsyncCalls, call => call.IsolationLevel == null);
+        Assert.Single(_unitOfWork.CommitAsyncCalls);
+        Assert.Empty(_unitOfWork.RollbackAsyncCalls);
     }
 
     /// <summary>An unknown income id on delete is a NotFound with the localizable "record not found" message.</summary>
@@ -863,10 +844,17 @@ public class IncomeServiceTests
         GivenExistingIncome(MakeIncome(1));
         GivenAssets(MakeAsset("SavingsAccount"));
         var thrown = new InvalidOperationException("boom");
-        _incomeRepo.Setup(r => r.DeleteByIdAsync(It.IsAny<long>(), It.IsAny<CancellationToken>())).ThrowsAsync(thrown);
+        _incomeRepo.AnswerDeleteByIdAsync((_, _) => Task.FromException(thrown));
 
         await CreateSut().DeleteAsync(Email, 1, TestContext.Current.CancellationToken);
 
         AssertLoggedFailure("Failed to delete income 1", thrown);
+    }
+
+    /// <inheritdoc />
+    public async ValueTask DisposeAsync()
+    {
+        await _unitOfWork.DisposeAsync();
+        GC.SuppressFinalize(this);
     }
 }

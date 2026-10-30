@@ -1,13 +1,11 @@
-using System.Data;
 using Maroik.Core.Contract.Dtos;
-using Maroik.Core.Contract.Interfaces;
 using Maroik.Core.Domain.Accounts;
 using Maroik.Core.Domain.Boards;
 using Maroik.Core.Domain.Menus;
 using Maroik.Core.Service.Services;
+using Maroik.Core.Service.Tests.Fixtures;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Testing;
-using Moq;
 
 namespace Maroik.Core.Service.Tests.Services;
 
@@ -15,17 +13,17 @@ namespace Maroik.Core.Service.Tests.Services;
 /// The navigation menu decides which pages each role may open (see AuthorizationFilter), so every change to
 /// it — create, update, delete of a category or sub-category — is an audited administrative event.
 /// </summary>
-public class MenuServiceAuditLoggingTests
+public class MenuServiceAuditLoggingTests : IAsyncDisposable
 {
     /// <summary>The signed-in administrator performing the change (recorded in the audit log).</summary>
     private const string Actor = "admin@example.com";
 
-    /// <summary>Mock <c>ICategoryRepository</c> injected into the system under test.</summary>
-    private readonly Mock<ICategoryRepository> _categoryRepo = new();
-    /// <summary>Mock <c>ISubCategoryRepository</c> injected into the system under test.</summary>
-    private readonly Mock<ISubCategoryRepository> _subCategoryRepo = new();
-    /// <summary>Mock <c>IUnitOfWork</c> injected into the system under test.</summary>
-    private readonly Mock<IUnitOfWork> _unitOfWork = new();
+    /// <summary>Fake <c>ICategoryRepository</c> injected into the system under test.</summary>
+    private readonly FakeCategoryRepository _categoryRepo = new();
+    /// <summary>Fake <c>ISubCategoryRepository</c> injected into the system under test.</summary>
+    private readonly FakeSubCategoryRepository _subCategoryRepo = new();
+    /// <summary>Fake <c>IUnitOfWork</c> injected into the system under test.</summary>
+    private readonly FakeUnitOfWork _unitOfWork = new();
     /// <summary>Captures the log entries the system under test writes.</summary>
     private readonly FakeLogger<MenuService> _logger = new();
 
@@ -35,15 +33,15 @@ public class MenuServiceAuditLoggingTests
     /// </summary>
     public MenuServiceAuditLoggingTests()
     {
-        _unitOfWork.Setup(u => u.BeginAsync(It.IsAny<IsolationLevel?>(), It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
-        _unitOfWork.Setup(u => u.CommitAsync(It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
-        _unitOfWork.Setup(u => u.RollbackAsync(It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
-        _categoryRepo.Setup(r => r.GetAllForUpdateAsync(It.IsAny<CancellationToken>())).ReturnsAsync(() => []);
-        _subCategoryRepo.Setup(r => r.GetAllForUpdateAsync(It.IsAny<CancellationToken>())).ReturnsAsync(() => []);
+        _unitOfWork.AnswerBeginAsync((_, _) => Task.CompletedTask);
+        _unitOfWork.AnswerCommitAsync(_ => Task.CompletedTask);
+        _unitOfWork.AnswerRollbackAsync(_ => Task.CompletedTask);
+        _categoryRepo.AnswerGetAllForUpdateAsync(_ => Task.FromResult<List<Category>>([]));
+        _subCategoryRepo.AnswerGetAllForUpdateAsync(_ => Task.FromResult<List<SubCategory>>([]));
     }
 
-    /// <summary>The service under test over the mocked dependencies and the capturing logger.</summary>
-    private MenuService CreateSut() => new(_categoryRepo.Object, _subCategoryRepo.Object, _unitOfWork.Object, _logger);
+    /// <summary>The service under test over the fake dependencies and the capturing logger.</summary>
+    private MenuService CreateSut() => new(_categoryRepo, _subCategoryRepo, _unitOfWork, _logger);
 
     /// <summary>A persisted category (id 3).</summary>
     private static Category MakeCategory() => Category.Reconstitute(3, "Forum", "Forum", "/icons/forum.png", "Board", "Index", Role.User, 0L);
@@ -63,7 +61,7 @@ public class MenuServiceAuditLoggingTests
     [Fact]
     public async Task CreateCategory_LogsInformation()
     {
-        _categoryRepo.Setup(r => r.CreateAsync(It.IsAny<Category>(), It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
+        _categoryRepo.AnswerCreateAsync((_, _) => Task.CompletedTask);
 
         await CreateSut().CreateCategoryAsync(new CategoryRequest { Name = "Forum", DisplayName = "Forum", IconPath = "/i.png", Controller = "Forum", Action = "Index", Role = Role.User }, Actor, TestContext.Current.CancellationToken);
 
@@ -74,8 +72,8 @@ public class MenuServiceAuditLoggingTests
     [Fact]
     public async Task UpdateCategory_LogsInformationWithTheId()
     {
-        _categoryRepo.Setup(r => r.FindByIdForUpdateAsync(It.IsAny<long>(), It.IsAny<CancellationToken>())).ReturnsAsync(MakeCategory());
-        _categoryRepo.Setup(r => r.UpdateEntityAsync(It.IsAny<Category>(), It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
+        _categoryRepo.AnswerFindByIdForUpdateAsync((_, _) => Task.FromResult<Category?>(MakeCategory()));
+        _categoryRepo.AnswerUpdateEntityAsync((_, _) => Task.CompletedTask);
 
         await CreateSut().UpdateCategoryAsync(new CategoryRequest { Id = 3, Name = "Forum", DisplayName = "Forum", IconPath = "/i.png", Controller = "Forum", Action = "Index", Role = Role.Admin }, Actor, TestContext.Current.CancellationToken);
 
@@ -86,7 +84,7 @@ public class MenuServiceAuditLoggingTests
     [Fact]
     public async Task DeleteCategory_LogsInformation()
     {
-        _categoryRepo.Setup(r => r.DeleteByIdAsync(It.IsAny<long>(), It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
+        _categoryRepo.AnswerDeleteByIdAsync((_, _) => Task.CompletedTask);
 
         await CreateSut().DeleteCategoryAsync(new CategoryRequest { Id = 3, Name = "Forum" }, Actor, TestContext.Current.CancellationToken);
 
@@ -97,7 +95,7 @@ public class MenuServiceAuditLoggingTests
     [Fact]
     public async Task CreateSubCategory_LogsInformation()
     {
-        _subCategoryRepo.Setup(r => r.CreateAsync(It.IsAny<SubCategory>(), It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
+        _subCategoryRepo.AnswerCreateAsync((_, _) => Task.CompletedTask);
 
         await CreateSut().CreateSubCategoryAsync(new SubCategoryRequest { CategoryId = 3, Name = "FreeForum", DisplayName = "Free", IconPath = "/i.png", Action = "Index", Role = Role.User }, Actor, TestContext.Current.CancellationToken);
 
@@ -108,8 +106,8 @@ public class MenuServiceAuditLoggingTests
     [Fact]
     public async Task UpdateSubCategory_LogsInformationWithTheId()
     {
-        _subCategoryRepo.Setup(r => r.FindByIdForUpdateAsync(It.IsAny<long>(), It.IsAny<CancellationToken>())).ReturnsAsync(MakeSubCategory());
-        _subCategoryRepo.Setup(r => r.UpdateEntityAsync(It.IsAny<SubCategory>(), It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
+        _subCategoryRepo.AnswerFindByIdForUpdateAsync((_, _) => Task.FromResult<SubCategory?>(MakeSubCategory()));
+        _subCategoryRepo.AnswerUpdateEntityAsync((_, _) => Task.CompletedTask);
 
         await CreateSut().UpdateSubCategoryAsync(new SubCategoryRequest { Id = 4, CategoryId = 3, Name = "FreeForum", DisplayName = "Free", IconPath = "/i.png", Action = "Index", Role = Role.Admin }, Actor, TestContext.Current.CancellationToken);
 
@@ -120,10 +118,17 @@ public class MenuServiceAuditLoggingTests
     [Fact]
     public async Task DeleteSubCategory_LogsInformation()
     {
-        _subCategoryRepo.Setup(r => r.DeleteByIdAsync(It.IsAny<long>(), It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
+        _subCategoryRepo.AnswerDeleteByIdAsync((_, _) => Task.CompletedTask);
 
         await CreateSut().DeleteSubCategoryAsync(new SubCategoryRequest { Id = 4, Name = "FreeForum" }, Actor, TestContext.Current.CancellationToken);
 
         AssertOnlyInformation("Menu sub-category 4 (FreeForum) deleted");
+    }
+
+    /// <inheritdoc />
+    public async ValueTask DisposeAsync()
+    {
+        await _unitOfWork.DisposeAsync();
+        GC.SuppressFinalize(this);
     }
 }

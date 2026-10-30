@@ -11,7 +11,7 @@ using Microsoft.Extensions.Options;
 namespace Maroik.FileStorage.Tests.Services;
 
 /// <summary>
-/// Direct unit tests for <see cref="FileValidationService"/>, constructed with a mocked
+/// Direct unit tests for <see cref="FileValidationService"/>, constructed with a fake
 /// <see cref="IClamavClient"/> (no HTTP pipeline). <see cref="Controllers.FileControllerTests"/>
 /// already exercises the validation-failure branches end-to-end; this class adds the one
 /// path that isn't covered anywhere else in the repo -- the happy path where a fully valid

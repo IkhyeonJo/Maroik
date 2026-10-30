@@ -6,7 +6,7 @@ using Microsoft.AspNetCore.Mvc.Localization;
 namespace Maroik.Website.Tests.Extensions;
 
 /// <summary>
-/// Unit tests for <see cref="AccountEmailTemplateExtensions"/>. The localizer mock simply echoes
+/// Unit tests for <see cref="AccountEmailTemplateExtensions"/>. The localizer fake simply echoes
 /// each lookup key back as the resolved value, so a passing test confirms each
 /// <see cref="Maroik.Core.Contract.Dtos.EmailTemplate"/> field is wired to the *correct* resource
 /// key -- a swapped Subject/Title or reused key would show up as a mismatch here even though every

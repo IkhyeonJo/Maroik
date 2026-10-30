@@ -4,7 +4,6 @@ using Maroik.Core.Contract.Enums;
 using Maroik.Core.Domain.FileManagers;
 using Maroik.Core.Service.Services;
 using Microsoft.Extensions.Logging;
-using Moq;
 using H = Maroik.Core.Service.Tests.Fixtures.FileManagerServiceHarness;
 
 namespace Maroik.Core.Service.Tests.Services;
@@ -178,7 +177,7 @@ public class FileManagerServiceUploadTests
         Assert.Null(_h.Nodes.Get(stale));
         Assert.NotNull(_h.Nodes.Get(fresh));
         Assert.NotEqual(Guid.Empty, start.UploadId);
-        _h.Files.Verify(f => f.AbortFileManagerUploadAsync(staleId, H.BaseUrl, It.IsAny<CancellationToken>()), Times.Once);
+        Assert.Single(_h.Files.AbortFileManagerUploadAsyncCalls, call => call.UploadId == staleId && call.FileStorageBaseUrl == H.BaseUrl);
         Assert.Contains(_h.Logger.Collector.GetSnapshot(), r => r.Level == LogLevel.Information && r.Message == $"File Manager: removed 1 abandoned upload(s) of {H.Email}");
     }
 
@@ -226,7 +225,7 @@ public class FileManagerServiceUploadTests
         Assert.Equal("FileManager.FileTooLarge", result.ErrorCode);
         Assert.Null(start);
         Assert.Empty(_h.Nodes.All);
-        _h.UnitOfWork.Verify(u => u.RollbackAsync(It.IsAny<CancellationToken>()), Times.Once);
+        Assert.Single(_h.UnitOfWork.RollbackAsyncCalls);
     }
 
     // -- AppendChunkAsync ----------------------------------------------------------
@@ -241,7 +240,7 @@ public class FileManagerServiceUploadTests
 
         Assert.True(result.Success);
         Assert.Equal(4, length);
-        _h.Files.Verify(f => f.AppendFileManagerChunkAsync(start.UploadId, 0, It.IsAny<Stream>(), H.BaseUrl, It.IsAny<CancellationToken>()), Times.Once);
+        Assert.Single(_h.Files.AppendFileManagerChunkAsyncCalls, call => call.UploadId == start.UploadId && call.Offset == 0 && call.FileStorageBaseUrl == H.BaseUrl);
     }
 
     /// <summary>A stored chunk is the upload's activity: its last activity becomes now, so a slow upload that keeps sending is never stale.</summary>
@@ -261,7 +260,7 @@ public class FileManagerServiceUploadTests
     public async Task AppendChunkAsync_RecordsNoActivity_WhenFileStorageRefuses()
     {
         FileManagerUploadStart start = await StartAsync(Upload("a.bin", 10));
-        _h.Files.Setup(f => f.AppendFileManagerChunkAsync(It.IsAny<Guid>(), It.IsAny<long>(), It.IsAny<Stream>(), H.BaseUrl, It.IsAny<CancellationToken>())).ReturnsAsync((long?)null);
+        _h.Files.AnswerAppendFileManagerChunkAsync((_, _, _, fileStorageBaseUrl, _) => fileStorageBaseUrl == H.BaseUrl, (_, _, _, _, _) => Task.FromResult<long?>(null));
         _h.Time.Advance(TimeSpan.FromMinutes(50));
 
         await _h.Sut.AppendChunkAsync(H.Email, start.UploadId, 0, new MemoryStream([1]), 1, TestContext.Current.CancellationToken);
@@ -279,7 +278,7 @@ public class FileManagerServiceUploadTests
 
         Assert.Equal(ServiceErrorType.Validation, result.ErrorType);
         Assert.Equal(ServiceErrorKeys.InputInvalid, result.ErrorKey);
-        _h.Files.Verify(f => f.AppendFileManagerChunkAsync(It.IsAny<Guid>(), It.IsAny<long>(), It.IsAny<Stream>(), It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
+        Assert.Empty(_h.Files.AppendFileManagerChunkAsyncCalls);
     }
 
     /// <summary>An upload id the account does not have (another account's, a finished file's) is "not found".</summary>
@@ -298,7 +297,7 @@ public class FileManagerServiceUploadTests
     public async Task AppendChunkAsync_AnswersATemporaryError_WhenFileStorageRefuses()
     {
         FileManagerUploadStart start = await StartAsync(Upload("a.bin", 10));
-        _h.Files.Setup(f => f.AppendFileManagerChunkAsync(It.IsAny<Guid>(), It.IsAny<long>(), It.IsAny<Stream>(), H.BaseUrl, It.IsAny<CancellationToken>())).ReturnsAsync((long?)null);
+        _h.Files.AnswerAppendFileManagerChunkAsync((_, _, _, fileStorageBaseUrl, _) => fileStorageBaseUrl == H.BaseUrl, (_, _, _, _, _) => Task.FromResult<long?>(null));
 
         var (result, _) = await _h.Sut.AppendChunkAsync(H.Email, start.UploadId, 0, new MemoryStream([1]), 1, TestContext.Current.CancellationToken);
 
@@ -314,15 +313,15 @@ public class FileManagerServiceUploadTests
     public async Task CompleteUploadAsync_MakesTheFileANormalItem()
     {
         FileManagerUploadStart start = await StartAsync(Upload("a.bin", 10));
-        _h.UnitOfWork.Invocations.Clear();
-        _h.Accounts.Invocations.Clear();
+        _h.UnitOfWork.ClearCalls();
+        _h.Accounts.ClearCalls();
 
         (ServiceResult result, FileManagerCompletion completion) = await _h.Sut.CompleteUploadAsync(H.Email, start.UploadId, overwrite: false, TestContext.Current.CancellationToken);
 
         Assert.True(result.Success);
         Assert.Equal(FileManagerCompletion.Decided, completion);
         Assert.False(Assert.Single(_h.Nodes.All).Uploading);
-        _h.Files.Verify(f => f.CompleteFileManagerUploadAsync(start.UploadId, 10, false, H.BaseUrl, It.IsAny<CancellationToken>()), Times.Once);
+        Assert.Single(_h.Files.CompleteFileManagerUploadAsyncCalls, call => call.UploadId == start.UploadId && call.ExpectedSize == 10 && call.SkipScan == false && call.FileStorageBaseUrl == H.BaseUrl);
         Assert.DoesNotContain(_h.Logger.Collector.GetSnapshot(), r => r.Level == LogLevel.Warning);
         _h.AssertAccountLocked();
         _h.AssertCommitted();
@@ -341,7 +340,7 @@ public class FileManagerServiceUploadTests
         Assert.True(result.Success);
         Assert.Null(_h.Nodes.Get(old));
         Assert.False(Assert.Single(_h.Nodes.All).Uploading);
-        _h.Files.Verify(f => f.DeleteFileManagerFileAsync(oldPath, H.BaseUrl, It.IsAny<CancellationToken>()), Times.Once);
+        Assert.Single(_h.Files.DeleteFileManagerFileAsyncCalls, call => call.StoragePath == oldPath && call.FileStorageBaseUrl == H.BaseUrl);
         Assert.Contains(_h.Logger.Collector.GetSnapshot(), r => r.Level == LogLevel.Information && r.Message == $"File Manager: {H.Email} overwrote file {old}");
     }
 
@@ -360,7 +359,7 @@ public class FileManagerServiceUploadTests
 
         Assert.Equal(ServiceErrorKeys.FileManagerNameTaken, result.ErrorKey);
         Assert.Equal([meanwhile], _h.Nodes.All.Select(n => n.Id));
-        _h.Files.Verify(f => f.DeleteFileManagerFileAsync(newPath, H.BaseUrl, It.IsAny<CancellationToken>()), Times.Once);
+        Assert.Single(_h.Files.DeleteFileManagerFileAsyncCalls, call => call.StoragePath == newPath && call.FileStorageBaseUrl == H.BaseUrl);
     }
 
     /// <summary>An infected or unscannable file is not kept: its row is deleted, the refusal says which, and it is logged at Warning.</summary>
@@ -370,7 +369,7 @@ public class FileManagerServiceUploadTests
     public async Task CompleteUploadAsync_RefusesAnInfectedOrUnscannableFile(FileUploadResult outcome, string key, string reason)
     {
         FileManagerUploadStart start = await StartAsync(Upload("a.bin", 10));
-        _h.Files.Setup(f => f.CompleteFileManagerUploadAsync(start.UploadId, 10, It.IsAny<bool>(), H.BaseUrl, It.IsAny<CancellationToken>())).ReturnsAsync(outcome);
+        _h.Files.AnswerCompleteFileManagerUploadAsync((uploadId, expectedSize, _, fileStorageBaseUrl, _) => uploadId == start.UploadId && expectedSize == 10 && fileStorageBaseUrl == H.BaseUrl, (_, _, _, _, _) => Task.FromResult<FileUploadResult>(outcome));
 
         (ServiceResult result, _) = await _h.Sut.CompleteUploadAsync(H.Email, start.UploadId, false, TestContext.Current.CancellationToken);
 
@@ -385,7 +384,7 @@ public class FileManagerServiceUploadTests
     public async Task CompleteUploadAsync_AnswersATemporaryError_WhenStorageFails()
     {
         FileManagerUploadStart start = await StartAsync(Upload("a.bin", 10));
-        _h.Files.Setup(f => f.CompleteFileManagerUploadAsync(start.UploadId, 10, It.IsAny<bool>(), H.BaseUrl, It.IsAny<CancellationToken>())).ReturnsAsync(FileUploadResult.Failed);
+        _h.Files.AnswerCompleteFileManagerUploadAsync((uploadId, expectedSize, _, fileStorageBaseUrl, _) => uploadId == start.UploadId && expectedSize == 10 && fileStorageBaseUrl == H.BaseUrl, (_, _, _, _, _) => Task.FromResult<FileUploadResult>(FileUploadResult.Failed));
 
         (ServiceResult result, _) = await _h.Sut.CompleteUploadAsync(H.Email, start.UploadId, false, TestContext.Current.CancellationToken);
 
@@ -401,18 +400,18 @@ public class FileManagerServiceUploadTests
     public async Task CompleteUploadAsync_WhileTheScanRuns_AnswersScanning_AndChangesNothing()
     {
         FileManagerUploadStart start = await StartAsync(Upload("a.bin", 10));
-        _h.Files.Setup(f => f.CompleteFileManagerUploadAsync(start.UploadId, 10, It.IsAny<bool>(), H.BaseUrl, It.IsAny<CancellationToken>())).ReturnsAsync(FileUploadResult.Scanning);
-        _h.UnitOfWork.Invocations.Clear();
-        _h.Accounts.Invocations.Clear();
+        _h.Files.AnswerCompleteFileManagerUploadAsync((uploadId, expectedSize, _, fileStorageBaseUrl, _) => uploadId == start.UploadId && expectedSize == 10 && fileStorageBaseUrl == H.BaseUrl, (_, _, _, _, _) => Task.FromResult<FileUploadResult>(FileUploadResult.Scanning));
+        _h.UnitOfWork.ClearCalls();
+        _h.Accounts.ClearCalls();
 
         (ServiceResult result, FileManagerCompletion completion) = await _h.Sut.CompleteUploadAsync(H.Email, start.UploadId, false, TestContext.Current.CancellationToken);
 
         Assert.True(result.Success);
         Assert.Equal(FileManagerCompletion.Scanning, completion);
         Assert.True(Assert.Single(_h.Nodes.All).Uploading);
-        _h.UnitOfWork.Verify(u => u.BeginAsync(It.IsAny<IsolationLevel?>(), It.IsAny<CancellationToken>()), Times.Never);
-        _h.Accounts.Verify(a => a.FindByEmailForUpdateAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
-        _h.Files.Verify(f => f.DeleteFileManagerFileAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
+        Assert.Empty(_h.UnitOfWork.BeginAsyncCalls);
+        Assert.Empty(_h.Accounts.FindByEmailForUpdateAsyncCalls);
+        Assert.Empty(_h.Files.DeleteFileManagerFileAsyncCalls);
     }
 
     /// <summary>
@@ -423,7 +422,7 @@ public class FileManagerServiceUploadTests
     public async Task CompleteUploadAsync_WhileTheScanRuns_RecordsTheUploadsActivity()
     {
         FileManagerUploadStart start = await StartAsync(Upload("a.bin", 10));
-        _h.Files.Setup(f => f.CompleteFileManagerUploadAsync(start.UploadId, 10, It.IsAny<bool>(), H.BaseUrl, It.IsAny<CancellationToken>())).ReturnsAsync(FileUploadResult.Scanning);
+        _h.Files.AnswerCompleteFileManagerUploadAsync((uploadId, expectedSize, _, fileStorageBaseUrl, _) => uploadId == start.UploadId && expectedSize == 10 && fileStorageBaseUrl == H.BaseUrl, (_, _, _, _, _) => Task.FromResult<FileUploadResult>(FileUploadResult.Scanning));
         _h.Time.Advance(TimeSpan.FromMinutes(50));
 
         await _h.Sut.CompleteUploadAsync(H.Email, start.UploadId, false, TestContext.Current.CancellationToken);
@@ -437,14 +436,14 @@ public class FileManagerServiceUploadTests
     {
         FileManagerUploadStart start = await StartAsync(Upload("a.bin", 10));
         await _h.Sut.CompleteUploadAsync(H.Email, start.UploadId, false, TestContext.Current.CancellationToken);
-        _h.Files.Invocations.Clear();
+        _h.Files.ClearCalls();
 
         (ServiceResult result, FileManagerCompletion completion) = await _h.Sut.CompleteUploadAsync(H.Email, start.UploadId, false, TestContext.Current.CancellationToken);
 
         Assert.True(result.Success);
         Assert.Equal(FileManagerCompletion.Decided, completion);
         Assert.False(Assert.Single(_h.Nodes.All).Uploading);
-        _h.Files.Verify(f => f.CompleteFileManagerUploadAsync(It.IsAny<Guid>(), It.IsAny<long>(), It.IsAny<bool>(), It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
+        Assert.Empty(_h.Files.CompleteFileManagerUploadAsyncCalls);
     }
 
     /// <summary>
@@ -457,19 +456,17 @@ public class FileManagerServiceUploadTests
         FileManagerUploadStart start = await StartAsync(Upload("a.bin", 10));
         FileManagerNode completedByTheOther = Assert.Single(_h.Nodes.All);
         completedByTheOther.CompleteUpload(H.Now);
-        _h.Files.Setup(f => f.CompleteFileManagerUploadAsync(start.UploadId, 10, It.IsAny<bool>(), H.BaseUrl, It.IsAny<CancellationToken>()))
-            .Callback(() => _h.Nodes.UpdateEntityAsync(completedByTheOther, TestContext.Current.CancellationToken))
-            .ReturnsAsync(FileUploadResult.Stored);
-        _h.UnitOfWork.Invocations.Clear();
+        _h.Files.AnswerCompleteFileManagerUploadAsync((uploadId, expectedSize, _, fileStorageBaseUrl, _) => uploadId == start.UploadId && expectedSize == 10 && fileStorageBaseUrl == H.BaseUrl, (_, _, _, _, _) => { _h.Nodes.UpdateEntityAsync(completedByTheOther, TestContext.Current.CancellationToken); return Task.FromResult<FileUploadResult>(FileUploadResult.Stored); });
+        _h.UnitOfWork.ClearCalls();
 
         (ServiceResult result, FileManagerCompletion completion) = await _h.Sut.CompleteUploadAsync(H.Email, start.UploadId, false, TestContext.Current.CancellationToken);
 
         Assert.True(result.Success);
         Assert.Equal(FileManagerCompletion.Decided, completion);
         Assert.False(Assert.Single(_h.Nodes.All).Uploading);
-        _h.Files.Verify(f => f.DeleteFileManagerFileAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
-        _h.UnitOfWork.Verify(u => u.CommitAsync(It.IsAny<CancellationToken>()), Times.Never);
-        _h.UnitOfWork.Verify(u => u.RollbackAsync(It.IsAny<CancellationToken>()), Times.Once);
+        Assert.Empty(_h.Files.DeleteFileManagerFileAsyncCalls);
+        Assert.Empty(_h.UnitOfWork.CommitAsyncCalls);
+        Assert.Single(_h.UnitOfWork.RollbackAsyncCalls);
     }
 
     /// <summary>
@@ -481,18 +478,16 @@ public class FileManagerServiceUploadTests
     {
         FileManagerUploadStart start = await StartAsync(Upload("a.bin", 10));
         long id = Assert.Single(_h.Nodes.All).Id;
-        _h.Files.Setup(f => f.CompleteFileManagerUploadAsync(start.UploadId, 10, It.IsAny<bool>(), H.BaseUrl, It.IsAny<CancellationToken>()))
-            .Callback(() => _h.Nodes.DeleteByEmailAndIdsAsync(H.Email, [id], TestContext.Current.CancellationToken))
-            .ReturnsAsync(FileUploadResult.Stored);
-        _h.UnitOfWork.Invocations.Clear();
+        _h.Files.AnswerCompleteFileManagerUploadAsync((uploadId, expectedSize, _, fileStorageBaseUrl, _) => uploadId == start.UploadId && expectedSize == 10 && fileStorageBaseUrl == H.BaseUrl, (_, _, _, _, _) => { _h.Nodes.DeleteByEmailAndIdsAsync(H.Email, [id], TestContext.Current.CancellationToken); return Task.FromResult<FileUploadResult>(FileUploadResult.Stored); });
+        _h.UnitOfWork.ClearCalls();
 
         (ServiceResult result, _) = await _h.Sut.CompleteUploadAsync(H.Email, start.UploadId, false, TestContext.Current.CancellationToken);
 
         Assert.Equal(ServiceErrorKeys.FileManagerUploadNotFound, result.ErrorKey);
         Assert.Empty(_h.Nodes.All);
-        _h.UnitOfWork.Verify(u => u.RollbackAsync(It.IsAny<CancellationToken>()), Times.Once);
-        _h.UnitOfWork.Verify(u => u.CommitAsync(It.IsAny<CancellationToken>()), Times.Never);
-        _h.Files.Verify(f => f.DeleteFileManagerFileAsync($"upload/FileManager/{start.UploadId:D}", H.BaseUrl, It.IsAny<CancellationToken>()), Times.Once);
+        Assert.Single(_h.UnitOfWork.RollbackAsyncCalls);
+        Assert.Empty(_h.UnitOfWork.CommitAsyncCalls);
+        Assert.Single(_h.Files.DeleteFileManagerFileAsyncCalls, call => call.StoragePath == $"upload/FileManager/{start.UploadId:D}" && call.FileStorageBaseUrl == H.BaseUrl);
     }
 
     /// <summary>An upload that is not the account's is "not found", and file storage is not asked.</summary>
@@ -502,7 +497,7 @@ public class FileManagerServiceUploadTests
         (ServiceResult result, _) = await _h.Sut.CompleteUploadAsync(H.Email, Guid.NewGuid(), false, TestContext.Current.CancellationToken);
 
         Assert.Equal(ServiceErrorKeys.FileManagerUploadNotFound, result.ErrorKey);
-        _h.Files.Verify(f => f.CompleteFileManagerUploadAsync(It.IsAny<Guid>(), It.IsAny<long>(), It.IsAny<bool>(), It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
+        Assert.Empty(_h.Files.CompleteFileManagerUploadAsyncCalls);
     }
 
     // -- A file the scan could not finish / the scan turned off --------------------
@@ -520,15 +515,15 @@ public class FileManagerServiceUploadTests
     {
         _h.ScanDisabled = scanDisabled;
         FileManagerUploadStart start = await StartAsync(Upload("big.zip", 10));
-        _h.Files.Setup(f => f.CompleteFileManagerUploadAsync(start.UploadId, 10, It.IsAny<bool>(), H.BaseUrl, It.IsAny<CancellationToken>())).ReturnsAsync(outcome);
+        _h.Files.AnswerCompleteFileManagerUploadAsync((uploadId, expectedSize, _, fileStorageBaseUrl, _) => uploadId == start.UploadId && expectedSize == 10 && fileStorageBaseUrl == H.BaseUrl, (_, _, _, _, _) => Task.FromResult<FileUploadResult>(outcome));
 
         (ServiceResult result, FileManagerCompletion completion) = await _h.Sut.CompleteUploadAsync(H.Email, start.UploadId, false, TestContext.Current.CancellationToken);
 
         Assert.Equal(FileManagerCompletion.Decided, completion);
         Assert.Equal(("FileManager.ScanUnavailable", ServiceErrorKeys.FileManagerScanUnavailable), (result.ErrorCode, result.ErrorKey));
         Assert.Empty(_h.Nodes.All);
-        _h.Files.Verify(f => f.AbortFileManagerUploadAsync(It.IsAny<Guid>(), It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
-        _h.Files.Verify(f => f.DeleteFileManagerFileAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
+        Assert.Empty(_h.Files.AbortFileManagerUploadAsyncCalls);
+        Assert.Empty(_h.Files.DeleteFileManagerFileAsyncCalls);
         long id = 1;
         Assert.Contains(_h.Logger.Collector.GetSnapshot(), r => r.Level == LogLevel.Warning && r.Message == $"File Manager upload refused for {H.Email}: file {id} could not be scanned");
     }
@@ -543,8 +538,8 @@ public class FileManagerServiceUploadTests
     {
         _h.ScanDisabled = true;
         FileManagerUploadStart start = await StartAsync(Upload("big.zip", 10));
-        _h.UnitOfWork.Invocations.Clear();
-        _h.Accounts.Invocations.Clear();
+        _h.UnitOfWork.ClearCalls();
+        _h.Accounts.ClearCalls();
 
         (ServiceResult result, FileManagerCompletion completion) = await _h.Sut.CompleteUploadAsync(H.Email, start.UploadId, false, TestContext.Current.CancellationToken);
 
@@ -552,7 +547,7 @@ public class FileManagerServiceUploadTests
         Assert.Equal(FileManagerCompletion.Decided, completion);
         FileManagerNode file = Assert.Single(_h.Nodes.All);
         Assert.False(file.Uploading);
-        _h.Files.Verify(f => f.CompleteFileManagerUploadAsync(start.UploadId, 10, true, H.BaseUrl, It.IsAny<CancellationToken>()), Times.Once);
+        Assert.Single(_h.Files.CompleteFileManagerUploadAsyncCalls, call => call.UploadId == start.UploadId && call.ExpectedSize == 10 && call.SkipScan == true && call.FileStorageBaseUrl == H.BaseUrl);
         _h.AssertAccountLocked();
         _h.AssertCommitted();
         Assert.Contains(_h.Logger.Collector.GetSnapshot(), r => r.Level == LogLevel.Warning
@@ -571,7 +566,7 @@ public class FileManagerServiceUploadTests
 
         await _h.Sut.CompleteUploadAsync(H.Email, start.UploadId, false, TestContext.Current.CancellationToken);
 
-        _h.Files.Verify(f => f.CompleteFileManagerUploadAsync(start.UploadId, 10, atCompletion, H.BaseUrl, It.IsAny<CancellationToken>()), Times.Once);
+        Assert.Single(_h.Files.CompleteFileManagerUploadAsyncCalls, call => call.UploadId == start.UploadId && call.ExpectedSize == 10 && call.SkipScan == atCompletion && call.FileStorageBaseUrl == H.BaseUrl);
     }
 
     // -- AbortUploadAsync ----------------------------------------------------------
@@ -586,7 +581,7 @@ public class FileManagerServiceUploadTests
 
         Assert.True(result.Success);
         Assert.Empty(_h.Nodes.All);
-        _h.Files.Verify(f => f.AbortFileManagerUploadAsync(start.UploadId, H.BaseUrl, It.IsAny<CancellationToken>()), Times.Once);
+        Assert.Single(_h.Files.AbortFileManagerUploadAsyncCalls, call => call.UploadId == start.UploadId && call.FileStorageBaseUrl == H.BaseUrl);
     }
 
     /// <summary>A finished file cannot be "aborted": that upload id is not found and the file stays.</summary>

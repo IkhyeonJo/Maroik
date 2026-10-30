@@ -1,13 +1,12 @@
 using Maroik.Core.Contract.Dtos;
-using Maroik.Core.Contract.Interfaces;
 using Maroik.Core.Contract.Settings;
 using Maroik.Core.Domain.Calendars;
 using Maroik.Core.Service.Services;
+using Maroik.Core.Service.Tests.Fixtures;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Testing;
 using Microsoft.Extensions.Options;
 using Microsoft.Extensions.Time.Testing;
-using Moq;
 // ReSharper disable InvalidXmlDocComment
 
 namespace Maroik.Core.Service.Tests.Services;
@@ -15,29 +14,29 @@ namespace Maroik.Core.Service.Tests.Services;
 /// <summary>
 /// Unit tests for <see cref="CalendarService"/>.
 /// All external dependencies (repositories, ClamAV client, file client, logger)
-/// are replaced with Moq mocks. Covers calendar and calendar-event CRUD,
+/// are replaced with hand-written fakes. Covers calendar and calendar-event CRUD,
 /// calendar sharing / subscription, and reminder management.
 /// </summary>
-public class CalendarServiceTests
+public class CalendarServiceTests : IAsyncDisposable
 {
-    /// <summary>Mock <c>ICalendarRepository</c> injected into the system under test.</summary>
-    private readonly Mock<ICalendarRepository> _calendarRepo = new();
-    /// <summary>Mock <c>ICalendarEventRepository</c> injected into the system under test.</summary>
-    private readonly Mock<ICalendarEventRepository> _eventRepo = new();
-    /// <summary>Mock <c>ICalendarEventAttachedFileRepository</c> injected into the system under test.</summary>
-    private readonly Mock<ICalendarEventAttachedFileRepository> _eventFileRepo = new();
-    /// <summary>Mock <c>ICalendarEventReminderRepository</c> injected into the system under test.</summary>
-    private readonly Mock<ICalendarEventReminderRepository> _reminderRepo = new();
-    /// <summary>Mock <c>ICalendarSharedRepository</c> injected into the system under test.</summary>
-    private readonly Mock<ICalendarSharedRepository> _sharedRepo = new();
-    /// <summary>Mock <c>IOtherCalendarRepository</c> injected into the system under test.</summary>
-    private readonly Mock<IOtherCalendarRepository> _otherCalendarRepo = new();
-    /// <summary>Mock <c>IFileClient</c> injected into the system under test.</summary>
-    private readonly Mock<IFileClient> _fileClient = new();
-    /// <summary>Mock <c>IUnitOfWork</c> injected into the system under test.</summary>
-    private readonly Mock<IUnitOfWork> _unitOfWork = new();
-    /// <summary>Mock <c>IAttachmentContentService</c> injected into the system under test.</summary>
-    private readonly Mock<IAttachmentContentService> _attachmentContent = new();
+    /// <summary>Fake <c>ICalendarRepository</c> injected into the system under test.</summary>
+    private readonly FakeCalendarRepository _calendarRepo = new();
+    /// <summary>Fake <c>ICalendarEventRepository</c> injected into the system under test.</summary>
+    private readonly FakeCalendarEventRepository _eventRepo = new();
+    /// <summary>Fake <c>ICalendarEventAttachedFileRepository</c> injected into the system under test.</summary>
+    private readonly FakeCalendarEventAttachedFileRepository _eventFileRepo = new();
+    /// <summary>Fake <c>ICalendarEventReminderRepository</c> injected into the system under test.</summary>
+    private readonly FakeCalendarEventReminderRepository _reminderRepo = new();
+    /// <summary>Fake <c>ICalendarSharedRepository</c> injected into the system under test.</summary>
+    private readonly FakeCalendarSharedRepository _sharedRepo = new();
+    /// <summary>Fake <c>IOtherCalendarRepository</c> injected into the system under test.</summary>
+    private readonly FakeOtherCalendarRepository _otherCalendarRepo = new();
+    /// <summary>Fake <c>IFileClient</c> injected into the system under test.</summary>
+    private readonly FakeFileClient _fileClient = new();
+    /// <summary>Fake <c>IUnitOfWork</c> injected into the system under test.</summary>
+    private readonly FakeUnitOfWork _unitOfWork = new();
+    /// <summary>Fake <c>IAttachmentContentService</c> injected into the system under test.</summary>
+    private readonly FakeAttachmentContentService _attachmentContent = new();
     /// <summary>Captures the log entries the system under test writes.</summary>
     private readonly FakeLogger<CalendarService> _logger = new();
     /// <summary>Settings with a fake file-storage URL.</summary>
@@ -47,10 +46,10 @@ public class CalendarServiceTests
     /// <summary>Initializes the test fixture, setting up all required test doubles and the system under test.</summary>
     public CalendarServiceTests()
     {
-        _unitOfWork.Setup(u => u.BeginAsync(null, It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
-        _unitOfWork.Setup(u => u.CommitAsync(It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
-        _unitOfWork.Setup(u => u.RollbackAsync(It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
-        _unitOfWork.Setup(u => u.DisposeAsync()).Returns(ValueTask.CompletedTask);
+        _unitOfWork.AnswerBeginAsync((isolationLevel, _) => isolationLevel == null, (_, _) => Task.CompletedTask);
+        _unitOfWork.AnswerCommitAsync(_ => Task.CompletedTask);
+        _unitOfWork.AnswerRollbackAsync(_ => Task.CompletedTask);
+        _unitOfWork.AnswerDisposeAsync(() => ValueTask.CompletedTask);
     }
 
     /// <summary>The fixed "current time" of these tests.</summary>
@@ -58,17 +57,17 @@ public class CalendarServiceTests
     /// <summary>The clock the service under test reads, stopped at <see cref="Now"/>.</summary>
     private readonly FakeTimeProvider _time = new(new DateTimeOffset(Now));
 
-    /// <summary>The service under test over the mocked dependencies.</summary>
+    /// <summary>The service under test over the fake dependencies.</summary>
     private CalendarService CreateSut() => new(
-        _calendarRepo.Object,
-        _eventRepo.Object,
-        _eventFileRepo.Object,
-        _reminderRepo.Object,
-        _sharedRepo.Object,
-        _otherCalendarRepo.Object,
-        _fileClient.Object,
-        _unitOfWork.Object,
-        _attachmentContent.Object,
+        _calendarRepo,
+        _eventRepo,
+        _eventFileRepo,
+        _reminderRepo,
+        _sharedRepo,
+        _otherCalendarRepo,
+        _fileClient,
+        _unitOfWork,
+        _attachmentContent,
         _settings,
         _logger,
         _time);
@@ -77,8 +76,7 @@ public class CalendarServiceTests
 
     /// <summary>The sharing rows the repository holds: <c>GetByIdsAsync</c> returns those of the requested calendars, as the real query does.</summary>
     private void GivenShares(IReadOnlyList<CalendarShared> rows) =>
-        _sharedRepo.Setup(r => r.GetByIdsAsync(It.IsAny<IEnumerable<long>>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync((IEnumerable<long> ids, CancellationToken _) => [.. rows.Where(s => ids.Contains(s.Id))]);
+        _sharedRepo.AnswerGetByIdsAsync((ids, _) => Task.FromResult<List<CalendarShared>>([.. rows.Where(s => ids.Contains(s.Id))]));
 
     /// <summary>A persisted calendar owned by <paramref name="email"/>.</summary>
     private static Calendar MakeCalendar(long id = 1, string name = "MyCalendar", string email = "user@example.com") =>
@@ -116,8 +114,7 @@ public class CalendarServiceTests
     [Fact]
     public async Task CreateCalendarAsync_ReturnsFail_WhenCalendarWithSameNameExists()
     {
-        _calendarRepo.Setup(r => r.GetByAccountEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync([MakeCalendar(name: "MyCalendar")]);
+        _calendarRepo.AnswerGetByAccountEmailAsync((_, _) => Task.FromResult<List<Calendar>>([MakeCalendar(name: "MyCalendar")]));
         var sut = CreateSut();
 
         ServiceResult result = await sut.CreateCalendarAsync("user@example.com", new CalendarRequest
@@ -134,8 +131,8 @@ public class CalendarServiceTests
     [Fact]
     public async Task CreateCalendarAsync_ReturnsSuccess_WhenNameIsUnique()
     {
-        _calendarRepo.Setup(r => r.GetByAccountEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync([]);
-        _calendarRepo.Setup(r => r.CreateAsync(It.IsAny<Calendar>(), It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
+        _calendarRepo.AnswerGetByAccountEmailAsync((_, _) => Task.FromResult<List<Calendar>>([]));
+        _calendarRepo.AnswerCreateAsync((_, _) => Task.CompletedTask);
         var sut = CreateSut();
 
         ServiceResult result = await sut.CreateCalendarAsync("user@example.com", new CalendarRequest
@@ -147,7 +144,7 @@ public class CalendarServiceTests
         }, TestContext.Current.CancellationToken);
 
         Assert.True(result.Success);
-        _calendarRepo.Verify(r => r.CreateAsync(It.IsAny<Calendar>(), It.IsAny<CancellationToken>()), Times.Once);
+        Assert.Single(_calendarRepo.CreateAsyncCalls);
     }
 
     /// <summary>
@@ -158,10 +155,12 @@ public class CalendarServiceTests
     [Fact]
     public async Task CreateCalendarAsync_HandsTheGeneratedIdBackOnTheRequest()
     {
-        _calendarRepo.SetupSequence(r => r.GetByAccountEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync([MakeCalendar(id: 7, name: "Other")])                                      // duplicate check (before)
-            .ReturnsAsync([MakeCalendar(id: 7, name: "Other"), MakeCalendar(id: 42, name: "NewCalendar")]); // after the insert
-        _calendarRepo.Setup(r => r.CreateAsync(It.IsAny<Calendar>(), It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
+        var calendars = new Queue<List<Calendar>>([
+            [MakeCalendar(id: 7, name: "Other")],                                       // duplicate check (before)
+            [MakeCalendar(id: 7, name: "Other"), MakeCalendar(id: 42, name: "NewCalendar")], // after the insert
+        ]);
+        _calendarRepo.AnswerGetByAccountEmailAsync((_, _) => Task.FromResult<List<Calendar>>(calendars.TryDequeue(out var next) ? next : []));
+        _calendarRepo.AnswerCreateAsync((_, _) => Task.CompletedTask);
         var sut = CreateSut();
         var request = new CalendarRequest { Name = "NewCalendar", TimeZoneIanaId = "UTC", HtmlColorCode = "#3788d8" };
 
@@ -180,9 +179,9 @@ public class CalendarServiceTests
     [Fact]
     public async Task CreateCalendarAsync_ReturnsConflict_WhenConcurrentCreateWinsTheRace()
     {
-        _calendarRepo.Setup(r => r.GetByAccountEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync([]);
+        _calendarRepo.AnswerGetByAccountEmailAsync((_, _) => Task.FromResult<List<Calendar>>([]));
         var pgException = new Exception("23505: duplicate key value violates unique constraint \"Calendar_AccountEmail_Name_unique\"");
-        _calendarRepo.Setup(r => r.CreateAsync(It.IsAny<Calendar>(), It.IsAny<CancellationToken>())).ThrowsAsync(pgException);
+        _calendarRepo.AnswerCreateAsync((_, _) => Task.FromException(pgException));
         var sut = CreateSut();
 
         ServiceResult result = await sut.CreateCalendarAsync("user@example.com", new CalendarRequest
@@ -195,7 +194,7 @@ public class CalendarServiceTests
 
         Assert.False(result.Success);
         Assert.Contains("already exists", result.ErrorKey, StringComparison.OrdinalIgnoreCase);
-        _unitOfWork.Verify(u => u.RollbackAsync(It.IsAny<CancellationToken>()), Times.Once);
+        Assert.Single(_unitOfWork.RollbackAsyncCalls);
     }
 
     /// <summary>
@@ -207,9 +206,9 @@ public class CalendarServiceTests
     [Fact]
     public async Task CreateCalendarAsync_ReturnsUnexpectedFailure_WhenUniqueViolationIsOnADifferentConstraint()
     {
-        _calendarRepo.Setup(r => r.GetByAccountEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync([]);
+        _calendarRepo.AnswerGetByAccountEmailAsync((_, _) => Task.FromResult<List<Calendar>>([]));
         var pgException = new Exception("23505: duplicate key value violates unique constraint \"Calendar_pk\"");
-        _calendarRepo.Setup(r => r.CreateAsync(It.IsAny<Calendar>(), It.IsAny<CancellationToken>())).ThrowsAsync(pgException);
+        _calendarRepo.AnswerCreateAsync((_, _) => Task.FromException(pgException));
         var sut = CreateSut();
 
         ServiceResult result = await sut.CreateCalendarAsync("user@example.com", new CalendarRequest
@@ -223,7 +222,7 @@ public class CalendarServiceTests
         Assert.False(result.Success);
         Assert.Equal("Calendar.Unexpected", result.ErrorCode);
         Assert.Equal(ServiceResult.TemporaryErrorKey, result.ErrorKey);
-        _unitOfWork.Verify(u => u.RollbackAsync(It.IsAny<CancellationToken>()), Times.Once);
+        Assert.Single(_unitOfWork.RollbackAsyncCalls);
     }
 
     // -- UpdateCalendarAsync --------------------------------------------------
@@ -232,7 +231,7 @@ public class CalendarServiceTests
     [Fact]
     public async Task UpdateCalendarAsync_ReturnsFail_WhenCalendarNotFound()
     {
-        _calendarRepo.Setup(r => r.FindByIdForUpdateAsync(It.IsAny<long>(), It.IsAny<CancellationToken>())).ReturnsAsync((Calendar?)null);
+        _calendarRepo.AnswerFindByIdForUpdateAsync((_, _) => Task.FromResult<Calendar?>(null));
         var sut = CreateSut();
 
         ServiceResult result = await sut.UpdateCalendarAsync("user@example.com", new CalendarRequest
@@ -249,9 +248,8 @@ public class CalendarServiceTests
     [Fact]
     public async Task UpdateCalendarAsync_ReturnsSuccess_WhenCalendarFound()
     {
-        _calendarRepo.Setup(r => r.FindByIdForUpdateAsync(1, It.IsAny<CancellationToken>()))
-            .ReturnsAsync(MakeCalendar(id: 1));
-        _calendarRepo.Setup(r => r.UpdateEntityAsync(It.IsAny<Calendar>(), It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
+        _calendarRepo.AnswerFindByIdForUpdateAsync((idArg, _) => idArg == 1, (_, _) => Task.FromResult<Calendar?>(MakeCalendar(id: 1)));
+        _calendarRepo.AnswerUpdateEntityAsync((_, _) => Task.CompletedTask);
         var sut = CreateSut();
 
         ServiceResult result = await sut.UpdateCalendarAsync("user@example.com", new CalendarRequest
@@ -264,7 +262,7 @@ public class CalendarServiceTests
         }, TestContext.Current.CancellationToken);
 
         Assert.True(result.Success);
-        _calendarRepo.Verify(r => r.UpdateEntityAsync(It.IsAny<Calendar>(), It.IsAny<CancellationToken>()), Times.Once);
+        Assert.Single(_calendarRepo.UpdateEntityAsyncCalls);
     }
 
     /// <summary>Verifies that a calendar owned by a different account is treated as not found, not
@@ -273,8 +271,7 @@ public class CalendarServiceTests
     [Fact]
     public async Task UpdateCalendarAsync_ReturnsFail_WhenCalendarOwnedByDifferentAccount()
     {
-        _calendarRepo.Setup(r => r.FindByIdForUpdateAsync(1, It.IsAny<CancellationToken>()))
-            .ReturnsAsync(MakeCalendar(id: 1, email: "someone-else@example.com"));
+        _calendarRepo.AnswerFindByIdForUpdateAsync((idArg, _) => idArg == 1, (_, _) => Task.FromResult<Calendar?>(MakeCalendar(id: 1, email: "someone-else@example.com")));
         var sut = CreateSut();
 
         ServiceResult result = await sut.UpdateCalendarAsync("user@example.com", new CalendarRequest
@@ -287,17 +284,16 @@ public class CalendarServiceTests
         }, TestContext.Current.CancellationToken);
 
         Assert.False(result.Success);
-        _calendarRepo.Verify(r => r.UpdateEntityAsync(It.IsAny<Calendar>(), It.IsAny<CancellationToken>()), Times.Never);
+        Assert.Empty(_calendarRepo.UpdateEntityAsyncCalls);
     }
 
     /// <summary>Verifies that renaming to a name already used by another of the account's calendars is reported as a conflict, not a generic failure.</summary>
     [Fact]
     public async Task UpdateCalendarAsync_ReturnsConflict_WhenRenamedToAnExistingName()
     {
-        _calendarRepo.Setup(r => r.FindByIdForUpdateAsync(1, It.IsAny<CancellationToken>()))
-            .ReturnsAsync(MakeCalendar(id: 1));
+        _calendarRepo.AnswerFindByIdForUpdateAsync((idArg, _) => idArg == 1, (_, _) => Task.FromResult<Calendar?>(MakeCalendar(id: 1)));
         var pgException = new Exception("23505: duplicate key value violates unique constraint \"Calendar_AccountEmail_Name_unique\"");
-        _calendarRepo.Setup(r => r.UpdateEntityAsync(It.IsAny<Calendar>(), It.IsAny<CancellationToken>())).ThrowsAsync(pgException);
+        _calendarRepo.AnswerUpdateEntityAsync((_, _) => Task.FromException(pgException));
         var sut = CreateSut();
 
         ServiceResult result = await sut.UpdateCalendarAsync("user@example.com", new CalendarRequest
@@ -311,7 +307,7 @@ public class CalendarServiceTests
 
         Assert.False(result.Success);
         Assert.Contains("already exists", result.ErrorKey, StringComparison.OrdinalIgnoreCase);
-        _unitOfWork.Verify(u => u.RollbackAsync(It.IsAny<CancellationToken>()), Times.Once);
+        Assert.Single(_unitOfWork.RollbackAsyncCalls);
     }
 
     // -- DeleteCalendarAsync --------------------------------------------------
@@ -320,7 +316,7 @@ public class CalendarServiceTests
     [Fact]
     public async Task DeleteCalendarAsync_ReturnsFail_WhenCalendarNotFound()
     {
-        _calendarRepo.Setup(r => r.GetByAccountEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync([]);
+        _calendarRepo.AnswerGetByAccountEmailAsync((_, _) => Task.FromResult<List<Calendar>>([]));
         var sut = CreateSut();
 
         ServiceResult result = await sut.DeleteCalendarAsync("user@example.com", new CalendarRequest
@@ -336,9 +332,8 @@ public class CalendarServiceTests
     [Fact]
     public async Task DeleteCalendarAsync_ReturnsSuccess_WhenCalendarFound()
     {
-        _calendarRepo.Setup(r => r.GetByAccountEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync([MakeCalendar(id: 1)]);
-        _calendarRepo.Setup(r => r.DeleteByIdAsync(It.IsAny<long>(), It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
+        _calendarRepo.AnswerGetByAccountEmailAsync((_, _) => Task.FromResult<List<Calendar>>([MakeCalendar(id: 1)]));
+        _calendarRepo.AnswerDeleteByIdAsync((_, _) => Task.CompletedTask);
         var sut = CreateSut();
 
         ServiceResult result = await sut.DeleteCalendarAsync("user@example.com", new CalendarRequest
@@ -356,8 +351,8 @@ public class CalendarServiceTests
     [Fact]
     public async Task EnsureDefaultCalendarAsync_CreatesCalendar_WhenNoneExist()
     {
-        _calendarRepo.Setup(r => r.GetByAccountEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync([]);
-        _calendarRepo.Setup(r => r.CreateAsync(It.IsAny<Calendar>(), It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
+        _calendarRepo.AnswerGetByAccountEmailAsync((_, _) => Task.FromResult<List<Calendar>>([]));
+        _calendarRepo.AnswerCreateAsync((_, _) => Task.CompletedTask);
         var sut = CreateSut();
 
         ServiceResult result = await sut.EnsureDefaultCalendarAsync("user@example.com", new CalendarRequest
@@ -369,15 +364,14 @@ public class CalendarServiceTests
         }, TestContext.Current.CancellationToken);
 
         Assert.True(result.Success);
-        _calendarRepo.Verify(r => r.CreateAsync(It.IsAny<Calendar>(), It.IsAny<CancellationToken>()), Times.Once);
+        Assert.Single(_calendarRepo.CreateAsyncCalls);
     }
 
     /// <summary>Verifies that <c>EnsureDefaultCalendarAsync</c> does not create when calendar exists.</summary>
     [Fact]
     public async Task EnsureDefaultCalendarAsync_DoesNotCreate_WhenCalendarExists()
     {
-        _calendarRepo.Setup(r => r.GetByAccountEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync([MakeCalendar()]);
+        _calendarRepo.AnswerGetByAccountEmailAsync((_, _) => Task.FromResult<List<Calendar>>([MakeCalendar()]));
         var sut = CreateSut();
 
         ServiceResult result = await sut.EnsureDefaultCalendarAsync("user@example.com", new CalendarRequest
@@ -387,7 +381,7 @@ public class CalendarServiceTests
         }, TestContext.Current.CancellationToken);
 
         Assert.True(result.Success);
-        _calendarRepo.Verify(r => r.CreateAsync(It.IsAny<Calendar>(), It.IsAny<CancellationToken>()), Times.Never);
+        Assert.Empty(_calendarRepo.CreateAsyncCalls);
     }
 
     /// <summary>
@@ -399,9 +393,9 @@ public class CalendarServiceTests
     [Fact]
     public async Task EnsureDefaultCalendarAsync_ReturnsSuccess_WhenConcurrentRequestWinsTheRace()
     {
-        _calendarRepo.Setup(r => r.GetByAccountEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync([]);
+        _calendarRepo.AnswerGetByAccountEmailAsync((_, _) => Task.FromResult<List<Calendar>>([]));
         var pgException = new Exception("23505: duplicate key value violates unique constraint \"Calendar_AccountEmail_Name_unique\"");
-        _calendarRepo.Setup(r => r.CreateAsync(It.IsAny<Calendar>(), It.IsAny<CancellationToken>())).ThrowsAsync(pgException);
+        _calendarRepo.AnswerCreateAsync((_, _) => Task.FromException(pgException));
         var sut = CreateSut();
 
         ServiceResult result = await sut.EnsureDefaultCalendarAsync("user@example.com", new CalendarRequest
@@ -413,7 +407,7 @@ public class CalendarServiceTests
         }, TestContext.Current.CancellationToken);
 
         Assert.True(result.Success);
-        _unitOfWork.Verify(u => u.RollbackAsync(It.IsAny<CancellationToken>()), Times.Once);
+        Assert.Single(_unitOfWork.RollbackAsyncCalls);
     }
 
     // -- EnsureCalendarSharedAsync --------------------------------------------
@@ -423,13 +417,13 @@ public class CalendarServiceTests
     public async Task EnsureCalendarSharedAsync_CreatesShared_WhenNotAlreadyShared()
     {
         GivenShares([]);
-        _sharedRepo.Setup(r => r.CreateAsync(It.IsAny<CalendarShared>(), It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
+        _sharedRepo.AnswerCreateAsync((_, _) => Task.CompletedTask);
         var sut = CreateSut();
 
         ServiceResult result = await sut.EnsureCalendarSharedAsync([1L], TestContext.Current.CancellationToken);
 
         Assert.True(result.Success);
-        _sharedRepo.Verify(r => r.CreateAsync(It.Is<CalendarShared>(s => s.Id == 1), It.IsAny<CancellationToken>()), Times.Once);
+        Assert.Single(_sharedRepo.CreateAsyncCalls, call => (call.Domain!.Id == 1));
     }
 
     /// <summary>Verifies that <c>EnsureCalendarSharedAsync</c> does not create when already shared.</summary>
@@ -442,7 +436,7 @@ public class CalendarServiceTests
         ServiceResult result = await sut.EnsureCalendarSharedAsync([1L], TestContext.Current.CancellationToken);
 
         Assert.True(result.Success);
-        _sharedRepo.Verify(r => r.CreateAsync(It.IsAny<CalendarShared>(), It.IsAny<CancellationToken>()), Times.Never);
+        Assert.Empty(_sharedRepo.CreateAsyncCalls);
     }
 
     /// <summary>Verifies that <c>EnsureCalendarSharedAsync</c> fetches the shared table once and only
@@ -451,16 +445,16 @@ public class CalendarServiceTests
     public async Task EnsureCalendarSharedAsync_Batch_OnlyCreatesMissingIds_WithSingleFetch()
     {
         GivenShares([CalendarShared.Reconstitute(2, false, false)]);
-        _sharedRepo.Setup(r => r.CreateAsync(It.IsAny<CalendarShared>(), It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
+        _sharedRepo.AnswerCreateAsync((_, _) => Task.CompletedTask);
         var sut = CreateSut();
 
         ServiceResult result = await sut.EnsureCalendarSharedAsync([1L, 2L, 3L], TestContext.Current.CancellationToken);
 
         Assert.True(result.Success);
-        _sharedRepo.Verify(r => r.GetByIdsAsync(It.IsAny<IEnumerable<long>>(), It.IsAny<CancellationToken>()), Times.Once);
-        _sharedRepo.Verify(r => r.CreateAsync(It.Is<CalendarShared>(s => s.Id == 1), It.IsAny<CancellationToken>()), Times.Once);
-        _sharedRepo.Verify(r => r.CreateAsync(It.Is<CalendarShared>(s => s.Id == 2), It.IsAny<CancellationToken>()), Times.Never);
-        _sharedRepo.Verify(r => r.CreateAsync(It.Is<CalendarShared>(s => s.Id == 3), It.IsAny<CancellationToken>()), Times.Once);
+        Assert.Single(_sharedRepo.GetByIdsAsyncCalls);
+        Assert.Single(_sharedRepo.CreateAsyncCalls, call => (call.Domain!.Id == 1));
+        Assert.DoesNotContain(_sharedRepo.CreateAsyncCalls, call => (call.Domain!.Id == 2));
+        Assert.Single(_sharedRepo.CreateAsyncCalls, call => (call.Domain!.Id == 3));
     }
 
     // -- GetCalendarSharedSummariesAsync ---------------------------------------
@@ -473,8 +467,7 @@ public class CalendarServiceTests
     public async Task GetCalendarSharedSummariesAsync_ReturnsOwnedCalendars_JoinedWithSharingStatus()
     {
         const string email = "user@example.com";
-        _calendarRepo.Setup(r => r.GetByAccountEmailAsync(email, It.IsAny<CancellationToken>()))
-            .ReturnsAsync([MakeCalendar(id: 1, name: "Personal", email: email)]);
+        _calendarRepo.AnswerGetByAccountEmailAsync((accountEmail, _) => accountEmail == email, (_, _) => Task.FromResult<List<Calendar>>([MakeCalendar(id: 1, name: "Personal", email: email)]));
         GivenShares([CalendarShared.Reconstitute(1, true, false)]);
         var sut = CreateSut();
 
@@ -497,7 +490,7 @@ public class CalendarServiceTests
     public async Task GetCalendarSharedSummariesAsync_ExcludesCalendarsNotOwnedByAccount()
     {
         const string email = "user@example.com";
-        _calendarRepo.Setup(r => r.GetByAccountEmailAsync(email, It.IsAny<CancellationToken>())).ReturnsAsync([]);
+        _calendarRepo.AnswerGetByAccountEmailAsync((accountEmail, _) => accountEmail == email, (_, _) => Task.FromResult<List<Calendar>>([]));
         GivenShares([CalendarShared.Reconstitute(99, true, true)]);
         var sut = CreateSut();
 
@@ -517,11 +510,9 @@ public class CalendarServiceTests
     public async Task GetBrowseCalendarsOfInterestAsync_FlagsAlreadySubscribedCalendar()
     {
         const string email = "user@example.com";
-        _calendarRepo.Setup(r => r.GetSharedWithUsersAsync(It.IsAny<CancellationToken>()))
-            .ReturnsAsync([MakeCalendar(id: 1, name: "Shared A"), MakeCalendar(id: 2, name: "Shared B")]);
+        _calendarRepo.AnswerGetSharedWithUsersAsync(_ => Task.FromResult<List<Calendar>>([MakeCalendar(id: 1, name: "Shared A"), MakeCalendar(id: 2, name: "Shared B")]));
         GivenShares([CalendarShared.Reconstitute(1, true, false), CalendarShared.Reconstitute(2, true, false)]);
-        _otherCalendarRepo.Setup(r => r.GetByAccountEmailAsync(email, It.IsAny<CancellationToken>()))
-            .ReturnsAsync([OtherCalendar.Reconstitute(email, 1)]);
+        _otherCalendarRepo.AnswerGetByAccountEmailAsync((emailArg, _) => emailArg == email, (_, _) => Task.FromResult<List<OtherCalendar>>([OtherCalendar.Reconstitute(email, 1)]));
         var sut = CreateSut();
 
         List<CalendarBrowseSummaryResponse> result =
@@ -537,12 +528,12 @@ public class CalendarServiceTests
     public async Task GetBrowseCalendarsOfInterestAsync_ListsTheCalendarsSharedWithUsers()
     {
         const string email = "user@example.com";
-        _calendarRepo.Setup(r => r.GetSharedWithUsersAsync(It.IsAny<CancellationToken>())).ReturnsAsync([]);
-        _otherCalendarRepo.Setup(r => r.GetByAccountEmailAsync(email, It.IsAny<CancellationToken>())).ReturnsAsync([]);
+        _calendarRepo.AnswerGetSharedWithUsersAsync(_ => Task.FromResult<List<Calendar>>([]));
+        _otherCalendarRepo.AnswerGetByAccountEmailAsync((emailArg, _) => emailArg == email, (_, _) => Task.FromResult<List<OtherCalendar>>([]));
         GivenShares([]);
 
         Assert.Empty(await CreateSut().GetBrowseCalendarsOfInterestAsync(email, TestContext.Current.CancellationToken));
-        _calendarRepo.Verify(r => r.GetSharedWithUsersAsync(It.IsAny<CancellationToken>()), Times.Once);
+        Assert.Single(_calendarRepo.GetSharedWithUsersAsyncCalls);
     }
 
     // -- CreateCalendarEventAsync ---------------------------------------------
@@ -551,7 +542,7 @@ public class CalendarServiceTests
     [Fact]
     public async Task CreateCalendarEventAsync_ReturnsFail_WhenCalendarNotFound()
     {
-        _calendarRepo.Setup(r => r.GetByAccountEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync([]);
+        _calendarRepo.AnswerGetByAccountEmailAsync((_, _) => Task.FromResult<List<Calendar>>([]));
         var sut = CreateSut();
 
         ServiceResult result = await sut.CreateCalendarEventAsync(
@@ -559,34 +550,31 @@ public class CalendarServiceTests
 
         Assert.False(result.Success);
         Assert.Contains("does not exist", result.ErrorKey, StringComparison.OrdinalIgnoreCase);
-        _unitOfWork.Verify(u => u.RollbackAsync(It.IsAny<CancellationToken>()), Times.Once);
+        Assert.Single(_unitOfWork.RollbackAsyncCalls);
     }
 
     /// <summary>Verifies that <c>CreateCalendarEventAsync</c> returns success with no attachment and no reminders.</summary>
     [Fact]
     public async Task CreateCalendarEventAsync_ReturnsSuccess_WithNoAttachmentAndNoReminders()
     {
-        _calendarRepo.Setup(r => r.GetByAccountEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync([MakeCalendar(id: 1)]);
-        _eventRepo.Setup(r => r.CreateCalendarEventAsync(It.IsAny<CalendarEvent>(), It.IsAny<CancellationToken>())).ReturnsAsync(1L);
+        _calendarRepo.AnswerGetByAccountEmailAsync((_, _) => Task.FromResult<List<Calendar>>([MakeCalendar(id: 1)]));
+        _eventRepo.AnswerCreateCalendarEventAsync((_, _) => Task.FromResult<long>(1L));
         var sut = CreateSut();
 
         ServiceResult result = await sut.CreateCalendarEventAsync(
             new CalendarEventRequest { CalendarId = 1, Title = "Meeting" }, "user@example.com", "1", [], null, TestContext.Current.CancellationToken);
 
         Assert.True(result.Success);
-        _unitOfWork.Verify(u => u.CommitAsync(It.IsAny<CancellationToken>()), Times.Once);
+        Assert.Single(_unitOfWork.CommitAsyncCalls);
     }
 
     /// <summary>Verifies that <c>CreateCalendarEventAsync</c> creates the attachment record when the file upload succeeds.</summary>
     [Fact]
     public async Task CreateCalendarEventAsync_CreatesAttachment_WhenFileUploadSucceeds()
     {
-        _calendarRepo.Setup(r => r.GetByAccountEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync([MakeCalendar(id: 1)]);
-        _eventRepo.Setup(r => r.CreateCalendarEventAsync(It.IsAny<CalendarEvent>(), It.IsAny<CancellationToken>())).ReturnsAsync(1L);
-        _fileClient.Setup(f => f.UploadAsync(It.IsAny<byte[]>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(true);
+        _calendarRepo.AnswerGetByAccountEmailAsync((_, _) => Task.FromResult<List<Calendar>>([MakeCalendar(id: 1)]));
+        _eventRepo.AnswerCreateCalendarEventAsync((_, _) => Task.FromResult<long>(1L));
+        _fileClient.AnswerUploadAsync((_, _, _, _, _) => Task.FromResult<bool>(true));
         var sut = CreateSut();
         var attachedFile = new AttachedFileDto { Bytes = [1, 2, 3], ContentType = "application/zip", FileName = "a.zip", Size = 3 };
 
@@ -594,19 +582,17 @@ public class CalendarServiceTests
             new CalendarEventRequest { CalendarId = 1, Title = "Meeting" }, "user@example.com", "1", [], attachedFile, TestContext.Current.CancellationToken);
 
         Assert.True(result.Success);
-        _eventFileRepo.Verify(r => r.CreateAsync(It.IsAny<CalendarEventAttachedFile>(), It.IsAny<CancellationToken>()), Times.Once);
-        _unitOfWork.Verify(u => u.CommitAsync(It.IsAny<CancellationToken>()), Times.Once);
+        Assert.Single(_eventFileRepo.CreateAsyncCalls);
+        Assert.Single(_unitOfWork.CommitAsyncCalls);
     }
 
     /// <summary>Verifies that <c>CreateCalendarEventAsync</c> rolls back and fails, rather than creating a dangling record, when the file upload fails.</summary>
     [Fact]
     public async Task CreateCalendarEventAsync_RollsBackAndFails_WhenFileUploadFails()
     {
-        _calendarRepo.Setup(r => r.GetByAccountEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync([MakeCalendar(id: 1)]);
-        _eventRepo.Setup(r => r.CreateCalendarEventAsync(It.IsAny<CalendarEvent>(), It.IsAny<CancellationToken>())).ReturnsAsync(1L);
-        _fileClient.Setup(f => f.UploadAsync(It.IsAny<byte[]>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(false);
+        _calendarRepo.AnswerGetByAccountEmailAsync((_, _) => Task.FromResult<List<Calendar>>([MakeCalendar(id: 1)]));
+        _eventRepo.AnswerCreateCalendarEventAsync((_, _) => Task.FromResult<long>(1L));
+        _fileClient.AnswerUploadAsync((_, _, _, _, _) => Task.FromResult<bool>(false));
         var sut = CreateSut();
         var attachedFile = new AttachedFileDto { Bytes = [1, 2, 3], ContentType = "application/zip", FileName = "a.zip", Size = 3 };
 
@@ -616,9 +602,9 @@ public class CalendarServiceTests
         Assert.False(result.Success);
         Assert.Equal("CalendarEvent.AttachmentUploadFailed", result.ErrorCode);
         Assert.Equal(ServiceResult.TemporaryErrorKey, result.ErrorKey);
-        _eventFileRepo.Verify(r => r.CreateAsync(It.IsAny<CalendarEventAttachedFile>(), It.IsAny<CancellationToken>()), Times.Never);
-        _unitOfWork.Verify(u => u.RollbackAsync(It.IsAny<CancellationToken>()), Times.Once);
-        _unitOfWork.Verify(u => u.CommitAsync(It.IsAny<CancellationToken>()), Times.Never);
+        Assert.Empty(_eventFileRepo.CreateAsyncCalls);
+        Assert.Single(_unitOfWork.RollbackAsyncCalls);
+        Assert.Empty(_unitOfWork.CommitAsyncCalls);
     }
 
     /// <summary>
@@ -628,9 +614,8 @@ public class CalendarServiceTests
     [Fact]
     public async Task CreateCalendarEventAsync_RejectsAnOverlongFileName_BeforeUploadingAnything()
     {
-        _calendarRepo.Setup(r => r.GetByAccountEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync([MakeCalendar(id: 1)]);
-        _eventRepo.Setup(r => r.CreateCalendarEventAsync(It.IsAny<CalendarEvent>(), It.IsAny<CancellationToken>())).ReturnsAsync(1L);
+        _calendarRepo.AnswerGetByAccountEmailAsync((_, _) => Task.FromResult<List<Calendar>>([MakeCalendar(id: 1)]));
+        _eventRepo.AnswerCreateCalendarEventAsync((_, _) => Task.FromResult<long>(1L));
         var sut = CreateSut();
         var attachedFile = new AttachedFileDto { Bytes = [1, 2, 3], ContentType = "application/zip", FileName = new string('n', 256) + ".zip", Size = 3 };
 
@@ -639,8 +624,8 @@ public class CalendarServiceTests
 
         Assert.False(result.Success);
         Assert.Equal("CalendarEventAttachedFile.NameTooLong", result.ErrorCode);
-        _fileClient.Verify(f => f.UploadAsync(It.IsAny<byte[]>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
-        _unitOfWork.Verify(u => u.RollbackAsync(It.IsAny<CancellationToken>()), Times.Once);
+        Assert.Empty(_fileClient.UploadAsyncCalls);
+        Assert.Single(_unitOfWork.RollbackAsyncCalls);
     }
 
     /// <summary>
@@ -651,11 +636,10 @@ public class CalendarServiceTests
     public async Task CreateCalendarEventAsync_CreatesScheduledEmailReminders_ForTheSavedEvent()
     {
         Calendar seoul = Calendar.Reconstitute(1, "user@example.com", "Mine", null, "Asia/Seoul", "#3788d8", Now, Now);
-        _calendarRepo.Setup(r => r.GetByAccountEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync([seoul]);
-        _eventRepo.Setup(r => r.CreateCalendarEventAsync(It.IsAny<CalendarEvent>(), It.IsAny<CancellationToken>())).ReturnsAsync(41L);
+        _calendarRepo.AnswerGetByAccountEmailAsync((_, _) => Task.FromResult<List<Calendar>>([seoul]));
+        _eventRepo.AnswerCreateCalendarEventAsync((_, _) => Task.FromResult<long>(41L));
         List<CalendarEventReminder> created = [];
-        _reminderRepo.Setup(r => r.CreateAsync(It.IsAny<CalendarEventReminder>(), It.IsAny<CancellationToken>()))
-            .Callback<CalendarEventReminder, CancellationToken>((r, _) => created.Add(r)).Returns(Task.CompletedTask);
+        _reminderRepo.AnswerCreateAsync((r, _) => { created.Add(r!); return Task.CompletedTask; });
         DateTime start = Now.AddDays(10);
 
         ServiceResult timed = await CreateSut().CreateCalendarEventAsync(
@@ -675,10 +659,9 @@ public class CalendarServiceTests
     [Fact]
     public async Task CreateCalendarEventAsync_RollsBackAndFails_WhenReminderLeadTimeOutOfRange()
     {
-        _calendarRepo.Setup(r => r.GetByAccountEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync([MakeCalendar(id: 1)]);
-        _eventRepo.Setup(r => r.CreateCalendarEventAsync(It.IsAny<CalendarEvent>(), It.IsAny<CancellationToken>())).ReturnsAsync(1L);
-        _reminderRepo.Setup(r => r.CreateAsync(It.IsAny<CalendarEventReminder>(), It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
+        _calendarRepo.AnswerGetByAccountEmailAsync((_, _) => Task.FromResult<List<Calendar>>([MakeCalendar(id: 1)]));
+        _eventRepo.AnswerCreateCalendarEventAsync((_, _) => Task.FromResult<long>(1L));
+        _reminderRepo.AnswerCreateAsync((_, _) => Task.CompletedTask);
         var sut = CreateSut();
 
         var reminders = new List<CalendarReminderDto>
@@ -692,8 +675,8 @@ public class CalendarServiceTests
 
         Assert.False(result.Success);
         Assert.Contains("range", result.ErrorKey, StringComparison.OrdinalIgnoreCase);
-        _unitOfWork.Verify(u => u.RollbackAsync(It.IsAny<CancellationToken>()), Times.Once);
-        _unitOfWork.Verify(u => u.CommitAsync(It.IsAny<CancellationToken>()), Times.Never);
+        Assert.Single(_unitOfWork.RollbackAsyncCalls);
+        Assert.Empty(_unitOfWork.CommitAsyncCalls);
     }
 
     // -- GetCalendarEventsAsync (batch) ----------------------------------------
@@ -702,28 +685,25 @@ public class CalendarServiceTests
     [Fact]
     public async Task GetCalendarEventsAsync_Batch_GroupsEventsByCalendarId()
     {
-        _eventRepo.Setup(r => r.GetByCalendarIdsAsync(It.IsAny<IEnumerable<long>>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(
-            [
+        _eventRepo.AnswerGetByCalendarIdsAsync((_, _) => Task.FromResult<List<CalendarEvent>>([
                 MakeCalendarEvent(id: 1, calendarId: 1, title: "A"),
                 MakeCalendarEvent(id: 2, calendarId: 1, title: "B"),
                 MakeCalendarEvent(id: 3, calendarId: 2, title: "C")
-            ]);
+            ]));
         var sut = CreateSut();
 
         IReadOnlyDictionary<long, List<CalendarEventResponse>> result = await sut.GetCalendarEventsAsync([1L, 2L], TestContext.Current.CancellationToken);
 
         Assert.Equal(2, result[1L].Count);
         Assert.Single(result[2L]);
-        _eventRepo.Verify(r => r.GetByCalendarIdsAsync(It.IsAny<IEnumerable<long>>(), It.IsAny<CancellationToken>()), Times.Once);
+        Assert.Single(_eventRepo.GetByCalendarIdsAsyncCalls);
     }
 
     /// <summary>Verifies that the batch overload returns no entry for a calendar ID the repository finds no events for.</summary>
     [Fact]
     public async Task GetCalendarEventsAsync_Batch_ReturnsEmptyLookup_WhenNoEventsFound()
     {
-        _eventRepo.Setup(r => r.GetByCalendarIdsAsync(It.IsAny<IEnumerable<long>>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync([]);
+        _eventRepo.AnswerGetByCalendarIdsAsync((_, _) => Task.FromResult<List<CalendarEvent>>([]));
         var sut = CreateSut();
 
         IReadOnlyDictionary<long, List<CalendarEventResponse>> result = await sut.GetCalendarEventsAsync([1L], TestContext.Current.CancellationToken);
@@ -737,63 +717,57 @@ public class CalendarServiceTests
     [Fact]
     public async Task UpdateCalendarEventAsync_ReturnsFail_WhenCalendarNotFound()
     {
-        _calendarRepo.Setup(r => r.GetByAccountEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync([]);
+        _calendarRepo.AnswerGetByAccountEmailAsync((_, _) => Task.FromResult<List<Calendar>>([]));
         var sut = CreateSut();
 
         ServiceResult result = await sut.UpdateCalendarEventAsync(
             new CalendarEventRequest { Id = 1, CalendarId = 1 }, "user@example.com", "1", [], null, TestContext.Current.CancellationToken);
 
         Assert.False(result.Success);
-        _unitOfWork.Verify(u => u.RollbackAsync(It.IsAny<CancellationToken>()), Times.Once);
+        Assert.Single(_unitOfWork.RollbackAsyncCalls);
     }
 
     /// <summary>Verifies that <c>UpdateCalendarEventAsync</c> returns fail when event not found.</summary>
     [Fact]
     public async Task UpdateCalendarEventAsync_ReturnsFail_WhenEventNotFound()
     {
-        _calendarRepo.Setup(r => r.GetByAccountEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync([MakeCalendar(id: 1)]);
-        _eventRepo.Setup(r => r.FindByIdForUpdateAsync(It.IsAny<long>(), It.IsAny<CancellationToken>())).ReturnsAsync((CalendarEvent?)null);
+        _calendarRepo.AnswerGetByAccountEmailAsync((_, _) => Task.FromResult<List<Calendar>>([MakeCalendar(id: 1)]));
+        _eventRepo.AnswerFindByIdForUpdateAsync((_, _) => Task.FromResult<CalendarEvent?>(null));
         var sut = CreateSut();
 
         ServiceResult result = await sut.UpdateCalendarEventAsync(
             new CalendarEventRequest { Id = 1, CalendarId = 1 }, "user@example.com", "1", [], null, TestContext.Current.CancellationToken);
 
         Assert.False(result.Success);
-        _unitOfWork.Verify(u => u.RollbackAsync(It.IsAny<CancellationToken>()), Times.Once);
+        Assert.Single(_unitOfWork.RollbackAsyncCalls);
     }
 
     /// <summary>Verifies that <c>UpdateCalendarEventAsync</c> returns success when valid and no attachment.</summary>
     [Fact]
     public async Task UpdateCalendarEventAsync_ReturnsSuccess_WhenValidAndNoAttachment()
     {
-        _calendarRepo.Setup(r => r.GetByAccountEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync([MakeCalendar(id: 1)]);
-        _eventRepo.Setup(r => r.FindByIdForUpdateAsync(It.IsAny<long>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(MakeCalendarEvent(id: 1, calendarId: 1, title: "Old"));
-        _eventRepo.Setup(r => r.UpdateEntityAsync(It.IsAny<CalendarEvent>(), It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
-        _reminderRepo.Setup(r => r.DeleteByCalendarEventIdAsync(It.IsAny<long>(), It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
+        _calendarRepo.AnswerGetByAccountEmailAsync((_, _) => Task.FromResult<List<Calendar>>([MakeCalendar(id: 1)]));
+        _eventRepo.AnswerFindByIdForUpdateAsync((_, _) => Task.FromResult<CalendarEvent?>(MakeCalendarEvent(id: 1, calendarId: 1, title: "Old")));
+        _eventRepo.AnswerUpdateEntityAsync((_, _) => Task.CompletedTask);
+        _reminderRepo.AnswerDeleteByCalendarEventIdAsync((_, _) => Task.CompletedTask);
         var sut = CreateSut();
 
         ServiceResult result = await sut.UpdateCalendarEventAsync(
             new CalendarEventRequest { Id = 1, CalendarId = 1, Title = "New Title" }, "user@example.com", "1", [], null, TestContext.Current.CancellationToken);
 
         Assert.True(result.Success);
-        _unitOfWork.Verify(u => u.CommitAsync(It.IsAny<CancellationToken>()), Times.Once);
+        Assert.Single(_unitOfWork.CommitAsyncCalls);
     }
 
     /// <summary>Verifies that <c>UpdateCalendarEventAsync</c> creates the attachment record when the file upload succeeds.</summary>
     [Fact]
     public async Task UpdateCalendarEventAsync_CreatesAttachment_WhenFileUploadSucceeds()
     {
-        _calendarRepo.Setup(r => r.GetByAccountEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync([MakeCalendar(id: 1)]);
-        _eventRepo.Setup(r => r.FindByIdForUpdateAsync(It.IsAny<long>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(MakeCalendarEvent(id: 1, calendarId: 1, title: "Old"));
-        _eventRepo.Setup(r => r.UpdateEntityAsync(It.IsAny<CalendarEvent>(), It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
-        _reminderRepo.Setup(r => r.DeleteByCalendarEventIdAsync(It.IsAny<long>(), It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
-        _fileClient.Setup(f => f.UploadAsync(It.IsAny<byte[]>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(true);
+        _calendarRepo.AnswerGetByAccountEmailAsync((_, _) => Task.FromResult<List<Calendar>>([MakeCalendar(id: 1)]));
+        _eventRepo.AnswerFindByIdForUpdateAsync((_, _) => Task.FromResult<CalendarEvent?>(MakeCalendarEvent(id: 1, calendarId: 1, title: "Old")));
+        _eventRepo.AnswerUpdateEntityAsync((_, _) => Task.CompletedTask);
+        _reminderRepo.AnswerDeleteByCalendarEventIdAsync((_, _) => Task.CompletedTask);
+        _fileClient.AnswerUploadAsync((_, _, _, _, _) => Task.FromResult<bool>(true));
         var sut = CreateSut();
         var attachedFile = new AttachedFileDto { Bytes = [1, 2, 3], ContentType = "application/zip", FileName = "a.zip", Size = 3 };
 
@@ -801,22 +775,19 @@ public class CalendarServiceTests
             new CalendarEventRequest { Id = 1, CalendarId = 1, Title = "New Title" }, "user@example.com", "1", [], attachedFile, TestContext.Current.CancellationToken);
 
         Assert.True(result.Success);
-        _eventFileRepo.Verify(r => r.CreateAsync(It.IsAny<CalendarEventAttachedFile>(), It.IsAny<CancellationToken>()), Times.Once);
-        _unitOfWork.Verify(u => u.CommitAsync(It.IsAny<CancellationToken>()), Times.Once);
+        Assert.Single(_eventFileRepo.CreateAsyncCalls);
+        Assert.Single(_unitOfWork.CommitAsyncCalls);
     }
 
     /// <summary>Verifies that <c>UpdateCalendarEventAsync</c> rolls back and fails, rather than creating a dangling record, when the file upload fails.</summary>
     [Fact]
     public async Task UpdateCalendarEventAsync_RollsBackAndFails_WhenFileUploadFails()
     {
-        _calendarRepo.Setup(r => r.GetByAccountEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync([MakeCalendar(id: 1)]);
-        _eventRepo.Setup(r => r.FindByIdForUpdateAsync(It.IsAny<long>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(MakeCalendarEvent(id: 1, calendarId: 1, title: "Old"));
-        _eventRepo.Setup(r => r.UpdateEntityAsync(It.IsAny<CalendarEvent>(), It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
-        _reminderRepo.Setup(r => r.DeleteByCalendarEventIdAsync(It.IsAny<long>(), It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
-        _fileClient.Setup(f => f.UploadAsync(It.IsAny<byte[]>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(false);
+        _calendarRepo.AnswerGetByAccountEmailAsync((_, _) => Task.FromResult<List<Calendar>>([MakeCalendar(id: 1)]));
+        _eventRepo.AnswerFindByIdForUpdateAsync((_, _) => Task.FromResult<CalendarEvent?>(MakeCalendarEvent(id: 1, calendarId: 1, title: "Old")));
+        _eventRepo.AnswerUpdateEntityAsync((_, _) => Task.CompletedTask);
+        _reminderRepo.AnswerDeleteByCalendarEventIdAsync((_, _) => Task.CompletedTask);
+        _fileClient.AnswerUploadAsync((_, _, _, _, _) => Task.FromResult<bool>(false));
         var sut = CreateSut();
         var attachedFile = new AttachedFileDto { Bytes = [1, 2, 3], ContentType = "application/zip", FileName = "a.zip", Size = 3 };
 
@@ -826,9 +797,9 @@ public class CalendarServiceTests
         Assert.False(result.Success);
         Assert.Equal("CalendarEvent.AttachmentUploadFailed", result.ErrorCode);
         Assert.Equal(ServiceResult.TemporaryErrorKey, result.ErrorKey);
-        _eventFileRepo.Verify(r => r.CreateAsync(It.IsAny<CalendarEventAttachedFile>(), It.IsAny<CancellationToken>()), Times.Never);
-        _unitOfWork.Verify(u => u.RollbackAsync(It.IsAny<CancellationToken>()), Times.Once);
-        _unitOfWork.Verify(u => u.CommitAsync(It.IsAny<CancellationToken>()), Times.Never);
+        Assert.Empty(_eventFileRepo.CreateAsyncCalls);
+        Assert.Single(_unitOfWork.RollbackAsyncCalls);
+        Assert.Empty(_unitOfWork.CommitAsyncCalls);
     }
 
     /// <summary>Verifies that <c>UpdateCalendarEventAsync</c> rolls back and fails, rather than silently
@@ -836,12 +807,10 @@ public class CalendarServiceTests
     [Fact]
     public async Task UpdateCalendarEventAsync_RollsBackAndFails_WhenReminderLeadTimeOutOfRange()
     {
-        _calendarRepo.Setup(r => r.GetByAccountEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync([MakeCalendar(id: 1)]);
-        _eventRepo.Setup(r => r.FindByIdForUpdateAsync(It.IsAny<long>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(MakeCalendarEvent(id: 1, calendarId: 1, title: "Old"));
-        _eventRepo.Setup(r => r.UpdateEntityAsync(It.IsAny<CalendarEvent>(), It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
-        _reminderRepo.Setup(r => r.DeleteByCalendarEventIdAsync(It.IsAny<long>(), It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
+        _calendarRepo.AnswerGetByAccountEmailAsync((_, _) => Task.FromResult<List<Calendar>>([MakeCalendar(id: 1)]));
+        _eventRepo.AnswerFindByIdForUpdateAsync((_, _) => Task.FromResult<CalendarEvent?>(MakeCalendarEvent(id: 1, calendarId: 1, title: "Old")));
+        _eventRepo.AnswerUpdateEntityAsync((_, _) => Task.CompletedTask);
+        _reminderRepo.AnswerDeleteByCalendarEventIdAsync((_, _) => Task.CompletedTask);
         var sut = CreateSut();
 
         var reminders = new List<CalendarReminderDto>
@@ -854,8 +823,8 @@ public class CalendarServiceTests
 
         Assert.False(result.Success);
         Assert.Contains("range", result.ErrorKey, StringComparison.OrdinalIgnoreCase);
-        _unitOfWork.Verify(u => u.RollbackAsync(It.IsAny<CancellationToken>()), Times.Once);
-        _unitOfWork.Verify(u => u.CommitAsync(It.IsAny<CancellationToken>()), Times.Never);
+        Assert.Single(_unitOfWork.RollbackAsyncCalls);
+        Assert.Empty(_unitOfWork.CommitAsyncCalls);
     }
 
     // -- UpdateCalendarEventAsync: the attachment (same four states as a board post's edit) ---------------
@@ -863,13 +832,10 @@ public class CalendarServiceTests
     /// <summary>Arranges event 1 in the caller's calendar 1 whose current attachment is <paramref name="previous"/>, with uploads succeeding.</summary>
     private void SetupEditableEventWithAttachment(CalendarEventAttachedFile? previous)
     {
-        _calendarRepo.Setup(r => r.GetByAccountEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync([MakeCalendar(id: 1)]);
-        _eventRepo.Setup(r => r.FindByIdForUpdateAsync(It.IsAny<long>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(MakeCalendarEvent(id: 1, calendarId: 1, title: "Old"));
-        _eventFileRepo.Setup(r => r.FindByCalendarEventIdAsync(1, It.IsAny<CancellationToken>())).ReturnsAsync(previous);
-        _fileClient.Setup(f => f.UploadAsync(It.IsAny<byte[]>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(true);
+        _calendarRepo.AnswerGetByAccountEmailAsync((_, _) => Task.FromResult<List<Calendar>>([MakeCalendar(id: 1)]));
+        _eventRepo.AnswerFindByIdForUpdateAsync((_, _) => Task.FromResult<CalendarEvent?>(MakeCalendarEvent(id: 1, calendarId: 1, title: "Old")));
+        _eventFileRepo.AnswerFindByCalendarEventIdAsync((calendarEventId, _) => calendarEventId == 1, (_, _) => Task.FromResult<CalendarEventAttachedFile?>(previous));
+        _fileClient.AnswerUploadAsync((_, _, _, _, _) => Task.FromResult<bool>(true));
     }
 
     /// <summary>Edits event 1 as user@example.com from the "UserIndex" page with <paramref name="file"/>.</summary>
@@ -893,13 +859,11 @@ public class CalendarServiceTests
         ServiceResult result = await EditEventAsync(Zip());
 
         Assert.True(result.Success);
-        _fileClient.Verify(f => f.UploadAsync(It.IsAny<byte[]>(), "application/zip", It.Is<string>(p => p.StartsWith("upload/Calendar/UserIndex/calendarEventAttachedFiles/1/") && p.EndsWith(".zip")), "https://files.example.com", It.IsAny<CancellationToken>()), Times.Once);
-        _eventFileRepo.Verify(r => r.UpdateEntityAsync(
-            It.Is<CalendarEventAttachedFile>(f => f.Id == 77 && f.CalendarEventId == 1 && f.Name == "new" && f.Extension == ".zip" && f.Size == 2
-                && f.Path.StartsWith("upload/Calendar/UserIndex/calendarEventAttachedFiles/1/") && f.Path.EndsWith(".zip")),
-            It.IsAny<CancellationToken>()), Times.Once);
-        _eventFileRepo.Verify(r => r.CreateAsync(It.IsAny<CalendarEventAttachedFile>(), It.IsAny<CancellationToken>()), Times.Never);
-        _unitOfWork.Verify(u => u.CommitAsync(It.IsAny<CancellationToken>()), Times.Once);
+        Assert.Single(_fileClient.UploadAsyncCalls, call => call.ContentType == "application/zip" && (call.FilePath.StartsWith("upload/Calendar/UserIndex/calendarEventAttachedFiles/1/", StringComparison.Ordinal) && call.FilePath.EndsWith(".zip", StringComparison.Ordinal)) && call.FileStorageBaseUrl == "https://files.example.com");
+        Assert.Single(_eventFileRepo.UpdateEntityAsyncCalls, call => (call.Domain!.Id == 77 && call.Domain!.CalendarEventId == 1 && call.Domain!.Name == "new" && call.Domain!.Extension == ".zip" && call.Domain!.Size == 2
+                && call.Domain!.Path.StartsWith("upload/Calendar/UserIndex/calendarEventAttachedFiles/1/", StringComparison.Ordinal) && call.Domain!.Path.EndsWith(".zip", StringComparison.Ordinal)));
+        Assert.Empty(_eventFileRepo.CreateAsyncCalls);
+        Assert.Single(_unitOfWork.CommitAsyncCalls);
     }
 
     /// <summary>Clear: submitting the edit without a file empties the existing attachment record; nothing is uploaded (this is how an attachment is removed).</summary>
@@ -911,11 +875,9 @@ public class CalendarServiceTests
         ServiceResult result = await EditEventAsync(null);
 
         Assert.True(result.Success);
-        _eventFileRepo.Verify(r => r.UpdateEntityAsync(
-            It.Is<CalendarEventAttachedFile>(f => f.Id == 77 && f.CalendarEventId == 1 && f.Size == 0 && f.Name == "" && f.Path == ""),
-            It.IsAny<CancellationToken>()), Times.Once);
-        _eventFileRepo.Verify(r => r.CreateAsync(It.IsAny<CalendarEventAttachedFile>(), It.IsAny<CancellationToken>()), Times.Never);
-        _fileClient.Verify(f => f.UploadAsync(It.IsAny<byte[]>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
+        Assert.Single(_eventFileRepo.UpdateEntityAsyncCalls, call => (call.Domain!.Id == 77 && call.Domain!.CalendarEventId == 1 && call.Domain!.Size == 0 && call.Domain!.Name == "" && call.Domain!.Path == ""));
+        Assert.Empty(_eventFileRepo.CreateAsyncCalls);
+        Assert.Empty(_fileClient.UploadAsyncCalls);
     }
 
     /// <summary>Add: an event that had no attachment gets a new record for the uploaded file.</summary>
@@ -927,8 +889,8 @@ public class CalendarServiceTests
         ServiceResult result = await EditEventAsync(Zip());
 
         Assert.True(result.Success);
-        _eventFileRepo.Verify(r => r.CreateAsync(It.Is<CalendarEventAttachedFile>(f => f.CalendarEventId == 1 && f.Name == "new"), It.IsAny<CancellationToken>()), Times.Once);
-        _eventFileRepo.Verify(r => r.UpdateEntityAsync(It.IsAny<CalendarEventAttachedFile>(), It.IsAny<CancellationToken>()), Times.Never);
+        Assert.Single(_eventFileRepo.CreateAsyncCalls, call => (call.Domain!.CalendarEventId == 1 && call.Domain!.Name == "new"));
+        Assert.Empty(_eventFileRepo.UpdateEntityAsyncCalls);
     }
 
     /// <summary>No previous attachment and no new file: the attachment table is not touched at all.</summary>
@@ -940,8 +902,8 @@ public class CalendarServiceTests
         ServiceResult result = await EditEventAsync(null);
 
         Assert.True(result.Success);
-        _eventFileRepo.Verify(r => r.CreateAsync(It.IsAny<CalendarEventAttachedFile>(), It.IsAny<CancellationToken>()), Times.Never);
-        _eventFileRepo.Verify(r => r.UpdateEntityAsync(It.IsAny<CalendarEventAttachedFile>(), It.IsAny<CancellationToken>()), Times.Never);
+        Assert.Empty(_eventFileRepo.CreateAsyncCalls);
+        Assert.Empty(_eventFileRepo.UpdateEntityAsyncCalls);
     }
 
     /// <summary>A failed upload while REPLACING rolls everything back: the old record must not be overwritten to point at a missing file.</summary>
@@ -949,17 +911,16 @@ public class CalendarServiceTests
     public async Task UpdateCalendarEventAsync_RollsBackWithoutTouchingTheRecord_WhenReplacingAndTheUploadFails()
     {
         SetupEditableEventWithAttachment(PreviousAttachment());
-        _fileClient.Setup(f => f.UploadAsync(It.IsAny<byte[]>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(false);
+        _fileClient.AnswerUploadAsync((_, _, _, _, _) => Task.FromResult<bool>(false));
 
         ServiceResult result = await EditEventAsync(Zip());
 
         Assert.False(result.Success);
         Assert.Equal("CalendarEvent.AttachmentUploadFailed", result.ErrorCode);
         Assert.Equal(ServiceResult.TemporaryErrorKey, result.ErrorKey);
-        _eventFileRepo.Verify(r => r.UpdateEntityAsync(It.IsAny<CalendarEventAttachedFile>(), It.IsAny<CancellationToken>()), Times.Never);
-        _unitOfWork.Verify(u => u.RollbackAsync(It.IsAny<CancellationToken>()), Times.Once);
-        _unitOfWork.Verify(u => u.CommitAsync(It.IsAny<CancellationToken>()), Times.Never);
+        Assert.Empty(_eventFileRepo.UpdateEntityAsyncCalls);
+        Assert.Single(_unitOfWork.RollbackAsyncCalls);
+        Assert.Empty(_unitOfWork.CommitAsyncCalls);
     }
 
     /// <summary>A record the domain rejects (over-long name) is refused BEFORE uploading, for replace and add alike, so no orphan file is left.</summary>
@@ -974,9 +935,9 @@ public class CalendarServiceTests
 
         Assert.False(result.Success);
         Assert.Equal("CalendarEventAttachedFile.NameTooLong", result.ErrorCode);
-        _fileClient.Verify(f => f.UploadAsync(It.IsAny<byte[]>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
-        _eventFileRepo.Verify(r => r.UpdateEntityAsync(It.IsAny<CalendarEventAttachedFile>(), It.IsAny<CancellationToken>()), Times.Never);
-        _unitOfWork.Verify(u => u.RollbackAsync(It.IsAny<CancellationToken>()), Times.Once);
+        Assert.Empty(_fileClient.UploadAsyncCalls);
+        Assert.Empty(_eventFileRepo.UpdateEntityAsyncCalls);
+        Assert.Single(_unitOfWork.RollbackAsyncCalls);
     }
 
     // -- GetCalendarEventAttachedFileAsync ------------------------------------
@@ -985,7 +946,7 @@ public class CalendarServiceTests
     [Fact]
     public async Task GetCalendarEventAttachedFileAsync_DescribesAStoredAttachment()
     {
-        _eventFileRepo.Setup(r => r.FindByCalendarEventIdAsync(1, It.IsAny<CancellationToken>())).ReturnsAsync(PreviousAttachment());
+        _eventFileRepo.AnswerFindByCalendarEventIdAsync((calendarEventId, _) => calendarEventId == 1, (_, _) => Task.FromResult<CalendarEventAttachedFile?>(PreviousAttachment()));
 
         CalendarEventAttachedFileDto? file = await CreateSut().GetCalendarEventAttachedFileAsync(1, TestContext.Current.CancellationToken);
 
@@ -998,8 +959,7 @@ public class CalendarServiceTests
     [Fact]
     public async Task GetCalendarEventAttachedFileAsync_ReturnsNull_ForTheClearedRecord()
     {
-        _eventFileRepo.Setup(r => r.FindByCalendarEventIdAsync(1, It.IsAny<CancellationToken>()))
-            .ReturnsAsync(CalendarEventAttachedFile.Reconstitute(77, 1, 0, "", "", ""));
+        _eventFileRepo.AnswerFindByCalendarEventIdAsync((calendarEventId, _) => calendarEventId == 1, (_, _) => Task.FromResult<CalendarEventAttachedFile?>(CalendarEventAttachedFile.Reconstitute(77, 1, 0, "", "", "")));
 
         Assert.Null(await CreateSut().GetCalendarEventAttachedFileAsync(1, TestContext.Current.CancellationToken));
     }
@@ -1009,20 +969,18 @@ public class CalendarServiceTests
     [Fact]
     public async Task UpdateCalendarEventAsync_ReturnsFail_WhenExistingEventBelongsToDifferentCalendar()
     {
-        _calendarRepo.Setup(r => r.GetByAccountEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync([MakeCalendar(id: 1)]);
+        _calendarRepo.AnswerGetByAccountEmailAsync((_, _) => Task.FromResult<List<Calendar>>([MakeCalendar(id: 1)]));
         // Caller owns calendar 1 and passes CalendarId = 1, but the target event currently lives in
         // calendar 999 (another user's). The update must be rejected.
-        _eventRepo.Setup(r => r.FindByIdForUpdateAsync(It.IsAny<long>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(MakeCalendarEvent(id: 1, calendarId: 999, title: "Victim"));
+        _eventRepo.AnswerFindByIdForUpdateAsync((_, _) => Task.FromResult<CalendarEvent?>(MakeCalendarEvent(id: 1, calendarId: 999, title: "Victim")));
         var sut = CreateSut();
 
         ServiceResult result = await sut.UpdateCalendarEventAsync(
             new CalendarEventRequest { Id = 1, CalendarId = 1, Title = "Hijacked" }, "user@example.com", "1", [], null, TestContext.Current.CancellationToken);
 
         Assert.False(result.Success);
-        _eventRepo.Verify(r => r.UpdateEntityAsync(It.IsAny<CalendarEvent>(), It.IsAny<CancellationToken>()), Times.Never);
-        _unitOfWork.Verify(u => u.RollbackAsync(It.IsAny<CancellationToken>()), Times.Once);
+        Assert.Empty(_eventRepo.UpdateEntityAsyncCalls);
+        Assert.Single(_unitOfWork.RollbackAsyncCalls);
     }
 
     // -- DeleteCalendarEventAsync ---------------------------------------------
@@ -1031,8 +989,8 @@ public class CalendarServiceTests
     [Fact]
     public async Task DeleteCalendarEventAsync_ReturnsFail_WhenEventNotFound()
     {
-        _calendarRepo.Setup(r => r.GetByAccountEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync([MakeCalendar(id: 1)]);
-        _eventRepo.Setup(r => r.FindByIdAsync(It.IsAny<long>(), It.IsAny<CancellationToken>())).ReturnsAsync((CalendarEvent?)null);
+        _calendarRepo.AnswerGetByAccountEmailAsync((_, _) => Task.FromResult<List<Calendar>>([MakeCalendar(id: 1)]));
+        _eventRepo.AnswerFindByIdAsync((_, _) => Task.FromResult<CalendarEvent?>(null));
         var sut = CreateSut();
 
         ServiceResult result = await sut.DeleteCalendarEventAsync(99, "user@example.com", TestContext.Current.CancellationToken);
@@ -1044,10 +1002,8 @@ public class CalendarServiceTests
     [Fact]
     public async Task DeleteCalendarEventAsync_ReturnsFail_WhenEventBelongsToDifferentCalendar()
     {
-        _calendarRepo.Setup(r => r.GetByAccountEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync([MakeCalendar(id: 1)]);
-        _eventRepo.Setup(r => r.FindByIdAsync(It.IsAny<long>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(MakeCalendarEvent(id: 1, calendarId: 999)); // different calendar
+        _calendarRepo.AnswerGetByAccountEmailAsync((_, _) => Task.FromResult<List<Calendar>>([MakeCalendar(id: 1)]));
+        _eventRepo.AnswerFindByIdAsync((_, _) => Task.FromResult<CalendarEvent?>(MakeCalendarEvent(id: 1, calendarId: 999))); // different calendar
         var sut = CreateSut();
 
         ServiceResult result = await sut.DeleteCalendarEventAsync(1, "user@example.com", TestContext.Current.CancellationToken);
@@ -1059,11 +1015,9 @@ public class CalendarServiceTests
     [Fact]
     public async Task DeleteCalendarEventAsync_ReturnsSuccess_WhenOwnershipVerified()
     {
-        _calendarRepo.Setup(r => r.GetByAccountEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync([MakeCalendar(id: 1)]);
-        _eventRepo.Setup(r => r.FindByIdAsync(It.IsAny<long>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(MakeCalendarEvent(id: 1, calendarId: 1));
-        _eventRepo.Setup(r => r.DeleteByIdAsync(It.IsAny<long>(), It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
+        _calendarRepo.AnswerGetByAccountEmailAsync((_, _) => Task.FromResult<List<Calendar>>([MakeCalendar(id: 1)]));
+        _eventRepo.AnswerFindByIdAsync((_, _) => Task.FromResult<CalendarEvent?>(MakeCalendarEvent(id: 1, calendarId: 1)));
+        _eventRepo.AnswerDeleteByIdAsync((_, _) => Task.CompletedTask);
         var sut = CreateSut();
 
         ServiceResult result = await sut.DeleteCalendarEventAsync(1, "user@example.com", TestContext.Current.CancellationToken);
@@ -1078,19 +1032,18 @@ public class CalendarServiceTests
     public async Task UpdateOtherCalendarAsync_ClearsExistingAndCreatesNew()
     {
         const string email = "user@example.com";
-        _sharedRepo.Setup(r => r.GetByIdsForUpdateAsync(It.IsAny<IEnumerable<long>>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync([CalendarShared.Reconstitute(20, user: true, anonymous: false)]);
-        _otherCalendarRepo.Setup(r => r.DeleteByAccountEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
-        _otherCalendarRepo.Setup(r => r.CreateAsync(It.IsAny<OtherCalendar>(), It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
+        _sharedRepo.AnswerGetByIdsForUpdateAsync((_, _) => Task.FromResult<List<CalendarShared>>([CalendarShared.Reconstitute(20, user: true, anonymous: false)]));
+        _otherCalendarRepo.AnswerDeleteByAccountEmailAsync((_, _) => Task.CompletedTask);
+        _otherCalendarRepo.AnswerCreateAsync((_, _) => Task.CompletedTask);
         var sut = CreateSut();
 
         var newEntries = new List<OtherCalendarRequest> { new() { CalendarId = 20 } };
         ServiceResult result = await sut.UpdateOtherCalendarAsync(email, newEntries, TestContext.Current.CancellationToken);
 
         Assert.True(result.Success);
-        _otherCalendarRepo.Verify(r => r.DeleteByAccountEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Once);
-        _otherCalendarRepo.Verify(r => r.CreateAsync(It.IsAny<OtherCalendar>(), It.IsAny<CancellationToken>()), Times.Once);
-        _unitOfWork.Verify(u => u.CommitAsync(It.IsAny<CancellationToken>()), Times.Once);
+        Assert.Single(_otherCalendarRepo.DeleteByAccountEmailAsyncCalls);
+        Assert.Single(_otherCalendarRepo.CreateAsyncCalls);
+        Assert.Single(_unitOfWork.CommitAsyncCalls);
     }
 
     /// <summary>
@@ -1103,9 +1056,8 @@ public class CalendarServiceTests
     public async Task UpdateOtherCalendarAsync_RejectsSubscriptionToCalendarNotSharedToUsers()
     {
         const string email = "user@example.com";
-        _sharedRepo.Setup(r => r.GetByIdsForUpdateAsync(It.IsAny<IEnumerable<long>>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync([CalendarShared.Reconstitute(20, user: false, anonymous: false)]);
-        _otherCalendarRepo.Setup(r => r.DeleteByAccountEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
+        _sharedRepo.AnswerGetByIdsForUpdateAsync((_, _) => Task.FromResult<List<CalendarShared>>([CalendarShared.Reconstitute(20, user: false, anonymous: false)]));
+        _otherCalendarRepo.AnswerDeleteByAccountEmailAsync((_, _) => Task.CompletedTask);
         var sut = CreateSut();
 
         var newEntries = new List<OtherCalendarRequest> { new() { CalendarId = 20 } };
@@ -1113,8 +1065,8 @@ public class CalendarServiceTests
 
         Assert.False(result.Success);
         Assert.Equal("Input is invalid", result.ErrorKey); // a request that matches nothing is not a server fault
-        _otherCalendarRepo.Verify(r => r.CreateAsync(It.IsAny<OtherCalendar>(), It.IsAny<CancellationToken>()), Times.Never);
-        _unitOfWork.Verify(u => u.RollbackAsync(It.IsAny<CancellationToken>()), Times.Once);
+        Assert.Empty(_otherCalendarRepo.CreateAsyncCalls);
+        Assert.Single(_unitOfWork.RollbackAsyncCalls);
     }
 
     // -- UpdateCalendarSharedAsync ---------------------------------------------
@@ -1129,8 +1081,7 @@ public class CalendarServiceTests
     public async Task UpdateCalendarSharedAsync_RejectsCalendarNotOwnedByCaller()
     {
         const string email = "admin-a@example.com";
-        _calendarRepo.Setup(r => r.GetByAccountEmailAsync(email, It.IsAny<CancellationToken>()))
-            .ReturnsAsync([MakeCalendar(id: 1, email: email)]);
+        _calendarRepo.AnswerGetByAccountEmailAsync((accountEmail, _) => accountEmail == email, (_, _) => Task.FromResult<List<Calendar>>([MakeCalendar(id: 1, email: email)]));
         var sut = CreateSut();
 
         // CalendarId 99 belongs to a different account (not returned by GetByAccountEmailAsync above).
@@ -1138,8 +1089,8 @@ public class CalendarServiceTests
         ServiceResult result = await sut.UpdateCalendarSharedAsync(email, requests, TestContext.Current.CancellationToken);
 
         Assert.False(result.Success);
-        _sharedRepo.Verify(r => r.UpdateEntityAsync(It.IsAny<CalendarShared>(), It.IsAny<CancellationToken>()), Times.Never);
-        _unitOfWork.Verify(u => u.BeginAsync(null, It.IsAny<CancellationToken>()), Times.Never);
+        Assert.Empty(_sharedRepo.UpdateEntityAsyncCalls);
+        Assert.DoesNotContain(_unitOfWork.BeginAsyncCalls, call => call.IsolationLevel == null);
     }
 
     /// <summary>
@@ -1150,20 +1101,19 @@ public class CalendarServiceTests
     public async Task UpdateCalendarSharedAsync_Succeeds_WhenCallerOwnsCalendar()
     {
         const string email = "admin-a@example.com";
-        _calendarRepo.Setup(r => r.GetByAccountEmailAsync(email, It.IsAny<CancellationToken>()))
-            .ReturnsAsync([MakeCalendar(id: 1, email: email)]);
+        _calendarRepo.AnswerGetByAccountEmailAsync((accountEmail, _) => accountEmail == email, (_, _) => Task.FromResult<List<Calendar>>([MakeCalendar(id: 1, email: email)]));
         GivenShares([CalendarShared.Reconstitute(1, false, false)]);
-        _sharedRepo.Setup(r => r.UpdateEntityAsync(It.IsAny<CalendarShared>(), It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
-        _sharedRepo.Setup(r => r.CreateAsync(It.IsAny<CalendarShared>(), It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
+        _sharedRepo.AnswerUpdateEntityAsync((_, _) => Task.CompletedTask);
+        _sharedRepo.AnswerCreateAsync((_, _) => Task.CompletedTask);
         var sut = CreateSut();
 
         var requests = new List<CalendarSharedRequest> { new() { CalendarId = 1, User = true, Anonymous = false } };
         ServiceResult result = await sut.UpdateCalendarSharedAsync(email, requests, TestContext.Current.CancellationToken);
 
         Assert.True(result.Success);
-        _sharedRepo.Verify(r => r.UpdateEntityAsync(It.IsAny<CalendarShared>(), It.IsAny<CancellationToken>()), Times.Once);
-        _sharedRepo.Verify(r => r.CreateAsync(It.IsAny<CalendarShared>(), It.IsAny<CancellationToken>()), Times.Never);
-        _unitOfWork.Verify(u => u.CommitAsync(It.IsAny<CancellationToken>()), Times.Once);
+        Assert.Single(_sharedRepo.UpdateEntityAsyncCalls);
+        Assert.Empty(_sharedRepo.CreateAsyncCalls);
+        Assert.Single(_unitOfWork.CommitAsyncCalls);
     }
 
     /// <summary>
@@ -1174,20 +1124,19 @@ public class CalendarServiceTests
     public async Task UpdateCalendarSharedAsync_InsertsSharedRow_WhenNoneExistsYet()
     {
         const string email = "admin-a@example.com";
-        _calendarRepo.Setup(r => r.GetByAccountEmailAsync(email, It.IsAny<CancellationToken>()))
-            .ReturnsAsync([MakeCalendar(id: 1, email: email)]);
+        _calendarRepo.AnswerGetByAccountEmailAsync((accountEmail, _) => accountEmail == email, (_, _) => Task.FromResult<List<Calendar>>([MakeCalendar(id: 1, email: email)]));
         GivenShares([]);
-        _sharedRepo.Setup(r => r.UpdateEntityAsync(It.IsAny<CalendarShared>(), It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
-        _sharedRepo.Setup(r => r.CreateAsync(It.IsAny<CalendarShared>(), It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
+        _sharedRepo.AnswerUpdateEntityAsync((_, _) => Task.CompletedTask);
+        _sharedRepo.AnswerCreateAsync((_, _) => Task.CompletedTask);
         var sut = CreateSut();
 
         var requests = new List<CalendarSharedRequest> { new() { CalendarId = 1, User = true, Anonymous = false } };
         ServiceResult result = await sut.UpdateCalendarSharedAsync(email, requests, TestContext.Current.CancellationToken);
 
         Assert.True(result.Success);
-        _sharedRepo.Verify(r => r.CreateAsync(It.Is<CalendarShared>(s => s.Id == 1 && s.User), It.IsAny<CancellationToken>()), Times.Once);
-        _sharedRepo.Verify(r => r.UpdateEntityAsync(It.IsAny<CalendarShared>(), It.IsAny<CancellationToken>()), Times.Never);
-        _unitOfWork.Verify(u => u.CommitAsync(It.IsAny<CancellationToken>()), Times.Once);
+        Assert.Single(_sharedRepo.CreateAsyncCalls, call => (call.Domain!.Id == 1 && call.Domain!.User));
+        Assert.Empty(_sharedRepo.UpdateEntityAsyncCalls);
+        Assert.Single(_unitOfWork.CommitAsyncCalls);
     }
 
     // -- Read-time sharing filters ---------------------------------------------
@@ -1199,8 +1148,7 @@ public class CalendarServiceTests
     [Fact]
     public async Task GetOtherCalendarsAsync_DropsSubscriptionsToCalendarsThatAreNoLongerSharedToUsers()
     {
-        _otherCalendarRepo.Setup(r => r.GetByAccountEmailAsync("user@example.com", It.IsAny<CancellationToken>()))
-            .ReturnsAsync([OtherCalendar.Reconstitute("user@example.com", 1), OtherCalendar.Reconstitute("user@example.com", 2)]);
+        _otherCalendarRepo.AnswerGetByAccountEmailAsync((email, _) => email == "user@example.com", (_, _) => Task.FromResult<List<OtherCalendar>>([OtherCalendar.Reconstitute("user@example.com", 1), OtherCalendar.Reconstitute("user@example.com", 2)]));
         GivenShares([CalendarShared.Reconstitute(1, user: true, anonymous: false), CalendarShared.Reconstitute(2, user: false, anonymous: true)]);
 
         List<OtherCalendarResponse> result = await CreateSut().GetOtherCalendarsAsync("user@example.com", TestContext.Current.CancellationToken);
@@ -1212,27 +1160,25 @@ public class CalendarServiceTests
     [Fact]
     public async Task GetVisibleOtherCalendarsAsync_ForASignedInAccount_ReturnsSubscribedCalendarsSortedByName()
     {
-        _calendarRepo.Setup(r => r.GetSubscribedByAsync("user@example.com", It.IsAny<CancellationToken>()))
-            .ReturnsAsync([MakeCalendar(1, "Zeta"), MakeCalendar(2, "Alpha")]);
+        _calendarRepo.AnswerGetSubscribedByAsync((accountEmail, _) => accountEmail == "user@example.com", (_, _) => Task.FromResult<List<Calendar>>([MakeCalendar(1, "Zeta"), MakeCalendar(2, "Alpha")]));
 
         List<CalendarResponse> result = await CreateSut().GetVisibleOtherCalendarsAsync(
             new AccountResponse { Email = "user@example.com" }, TestContext.Current.CancellationToken);
 
         Assert.Equal(["Alpha", "Zeta"], result.Select(c => c.Name));
-        _calendarRepo.Verify(r => r.GetSharedWithGuestsAsync(It.IsAny<CancellationToken>()), Times.Never);
+        Assert.Empty(_calendarRepo.GetSharedWithGuestsAsyncCalls);
     }
 
     /// <summary>An anonymous visitor sees only calendars an admin shared with guests, sorted by name.</summary>
     [Fact]
     public async Task GetVisibleOtherCalendarsAsync_ForAnAnonymousVisitor_ReturnsOnlyGuestSharedCalendars()
     {
-        _calendarRepo.Setup(r => r.GetSharedWithGuestsAsync(It.IsAny<CancellationToken>()))
-            .ReturnsAsync([MakeCalendar(1, "Zeta"), MakeCalendar(2, "Alpha")]);
+        _calendarRepo.AnswerGetSharedWithGuestsAsync(_ => Task.FromResult<List<Calendar>>([MakeCalendar(1, "Zeta"), MakeCalendar(2, "Alpha")]));
 
         List<CalendarResponse> result = await CreateSut().GetVisibleOtherCalendarsAsync(null, TestContext.Current.CancellationToken);
 
         Assert.Equal(["Alpha", "Zeta"], result.Select(c => c.Name));
-        _calendarRepo.Verify(r => r.GetSubscribedByAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
+        Assert.Empty(_calendarRepo.GetSubscribedByAsyncCalls);
     }
 
     // -- EnsureCalendarSharedAsync: races and failures ---------------------------
@@ -1245,18 +1191,17 @@ public class CalendarServiceTests
     [Fact]
     public async Task EnsureCalendarSharedAsync_RetriesInAFreshTransaction_AfterLosingThePrimaryKeyRace()
     {
-        _sharedRepo.SetupSequence(r => r.GetByIdsAsync(It.IsAny<IEnumerable<long>>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync([])
-            .ReturnsAsync([CalendarShared.Reconstitute(5, false, false)]);
-        _sharedRepo.SetupSequence(r => r.CreateAsync(It.IsAny<CalendarShared>(), It.IsAny<CancellationToken>()))
-            .ThrowsAsync(SharedPkViolation());
+        var getByIdsAsyncAnswers2 = new Queue<Func<Task<List<CalendarShared>>>>([() => Task.FromResult<List<CalendarShared>>([]), () => Task.FromResult<List<CalendarShared>>([CalendarShared.Reconstitute(5, false, false)])]);
+        _sharedRepo.AnswerGetByIdsAsync((_, _) => getByIdsAsyncAnswers2.TryDequeue(out var next) ? next() : Task.FromResult<List<CalendarShared>>([]));
+        var createAsyncAnswers3 = new Queue<Func<Task>>([() => Task.FromException(SharedPkViolation())]);
+        _sharedRepo.AnswerCreateAsync((_, _) => createAsyncAnswers3.TryDequeue(out var next) ? next() : Task.CompletedTask);
 
         ServiceResult result = await CreateSut().EnsureCalendarSharedAsync([5], TestContext.Current.CancellationToken);
 
         Assert.True(result.Success);
-        _unitOfWork.Verify(u => u.BeginAsync(null, It.IsAny<CancellationToken>()), Times.Exactly(2));
-        _unitOfWork.Verify(u => u.RollbackAsync(It.IsAny<CancellationToken>()), Times.Once);
-        _unitOfWork.Verify(u => u.CommitAsync(It.IsAny<CancellationToken>()), Times.Once);
+        Assert.Equal(2, _unitOfWork.BeginAsyncCalls.Count(call => call.IsolationLevel == null));
+        Assert.Single(_unitOfWork.RollbackAsyncCalls);
+        Assert.Single(_unitOfWork.CommitAsyncCalls);
     }
 
     /// <summary>A persistent PK collision gives up after the retry limit instead of looping forever.</summary>
@@ -1264,31 +1209,31 @@ public class CalendarServiceTests
     public async Task EnsureCalendarSharedAsync_GivesUp_WhenThePrimaryKeyRaceNeverResolves()
     {
         GivenShares([]);
-        _sharedRepo.Setup(r => r.CreateAsync(It.IsAny<CalendarShared>(), It.IsAny<CancellationToken>())).ThrowsAsync(SharedPkViolation());
+        _sharedRepo.AnswerCreateAsync((_, _) => Task.FromException(SharedPkViolation()));
 
         ServiceResult result = await CreateSut().EnsureCalendarSharedAsync([5], TestContext.Current.CancellationToken);
 
         Assert.False(result.Success);
         Assert.Equal("Calendar.Unexpected", result.ErrorCode);
         Assert.Equal(ServiceResult.TemporaryErrorKey, result.ErrorKey);
-        _unitOfWork.Verify(u => u.BeginAsync(null, It.IsAny<CancellationToken>()), Times.Exactly(3));
-        _unitOfWork.Verify(u => u.RollbackAsync(It.IsAny<CancellationToken>()), Times.Exactly(3));
-        _unitOfWork.Verify(u => u.CommitAsync(It.IsAny<CancellationToken>()), Times.Never);
+        Assert.Equal(3, _unitOfWork.BeginAsyncCalls.Count(call => call.IsolationLevel == null));
+        Assert.Equal(3, _unitOfWork.RollbackAsyncCalls.Count);
+        Assert.Empty(_unitOfWork.CommitAsyncCalls);
     }
 
     /// <summary>Any other failure is not retried: it rolls back once and reports the generic failure.</summary>
     [Fact]
     public async Task EnsureCalendarSharedAsync_DoesNotRetry_WhenTheFailureIsNotThePrimaryKeyRace()
     {
-        _sharedRepo.Setup(r => r.GetByIdsAsync(It.IsAny<IEnumerable<long>>(), It.IsAny<CancellationToken>())).ThrowsAsync(new InvalidOperationException("db down"));
+        _sharedRepo.AnswerGetByIdsAsync((_, _) => Task.FromException<List<CalendarShared>>(new InvalidOperationException("db down")));
 
         ServiceResult result = await CreateSut().EnsureCalendarSharedAsync([5], TestContext.Current.CancellationToken);
 
         Assert.False(result.Success);
         Assert.Equal("Calendar.Unexpected", result.ErrorCode);
         Assert.Equal(ServiceResult.TemporaryErrorKey, result.ErrorKey);
-        _unitOfWork.Verify(u => u.BeginAsync(null, It.IsAny<CancellationToken>()), Times.Once);
-        _unitOfWork.Verify(u => u.RollbackAsync(It.IsAny<CancellationToken>()), Times.Once);
+        Assert.Single(_unitOfWork.BeginAsyncCalls, call => call.IsolationLevel == null);
+        Assert.Single(_unitOfWork.RollbackAsyncCalls);
     }
 
     // -- Calendar CRUD: validation and unexpected failures -----------------------
@@ -1297,35 +1242,35 @@ public class CalendarServiceTests
     [Fact]
     public async Task CreateCalendarAsync_ReturnsTheDomainValidationError_AndPersistsNothing()
     {
-        _calendarRepo.Setup(r => r.GetByAccountEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync([]);
+        _calendarRepo.AnswerGetByAccountEmailAsync((_, _) => Task.FromResult<List<Calendar>>([]));
 
         ServiceResult result = await CreateSut().CreateCalendarAsync("user@example.com",
             new CalendarRequest { Name = "Work", TimeZoneIanaId = "UTC", HtmlColorCode = "not-a-colour" }, TestContext.Current.CancellationToken);
 
         Assert.Equal("HtmlColorCode.Invalid", result.ErrorCode);
-        _calendarRepo.Verify(r => r.CreateAsync(It.IsAny<Calendar>(), It.IsAny<CancellationToken>()), Times.Never);
-        _unitOfWork.Verify(u => u.RollbackAsync(It.IsAny<CancellationToken>()), Times.Once);
+        Assert.Empty(_calendarRepo.CreateAsyncCalls);
+        Assert.Single(_unitOfWork.RollbackAsyncCalls);
     }
 
     /// <summary>A domain validation error on update (blank name) is returned and the row is not written.</summary>
     [Fact]
     public async Task UpdateCalendarAsync_ReturnsTheDomainValidationError_AndDoesNotWrite()
     {
-        _calendarRepo.Setup(r => r.FindByIdForUpdateAsync(1, It.IsAny<CancellationToken>())).ReturnsAsync(MakeCalendar());
+        _calendarRepo.AnswerFindByIdForUpdateAsync((id, _) => id == 1, (_, _) => Task.FromResult<Calendar?>(MakeCalendar()));
 
         ServiceResult result = await CreateSut().UpdateCalendarAsync("user@example.com",
             new CalendarRequest { Id = 1, Name = "   ", TimeZoneIanaId = "UTC", HtmlColorCode = "#3788d8" }, TestContext.Current.CancellationToken);
 
         Assert.Equal("Calendar.NameEmpty", result.ErrorCode);
-        _calendarRepo.Verify(r => r.UpdateEntityAsync(It.IsAny<Calendar>(), It.IsAny<CancellationToken>()), Times.Never);
-        _unitOfWork.Verify(u => u.RollbackAsync(It.IsAny<CancellationToken>()), Times.Once);
+        Assert.Empty(_calendarRepo.UpdateEntityAsyncCalls);
+        Assert.Single(_unitOfWork.RollbackAsyncCalls);
     }
 
     /// <summary>An unexpected repository failure on update is rolled back and reported generically (no internals leaked).</summary>
     [Fact]
     public async Task UpdateCalendarAsync_RollsBackAndReportsUnexpectedFailure_WhenTheRepositoryThrows()
     {
-        _calendarRepo.Setup(r => r.FindByIdForUpdateAsync(1, It.IsAny<CancellationToken>())).ThrowsAsync(new InvalidOperationException("secret detail"));
+        _calendarRepo.AnswerFindByIdForUpdateAsync((id, _) => id == 1, (_, _) => Task.FromException<Calendar?>(new InvalidOperationException("secret detail")));
 
         ServiceResult result = await CreateSut().UpdateCalendarAsync("user@example.com",
             new CalendarRequest { Id = 1, Name = "Work", TimeZoneIanaId = "UTC", HtmlColorCode = "#3788d8" }, TestContext.Current.CancellationToken);
@@ -1333,23 +1278,22 @@ public class CalendarServiceTests
         Assert.Equal("Calendar.Unexpected", result.ErrorCode);
         Assert.Equal(ServiceResult.TemporaryErrorKey, result.ErrorKey);
         Assert.DoesNotContain("secret detail", result.ErrorKey, StringComparison.Ordinal);
-        _unitOfWork.Verify(u => u.RollbackAsync(It.IsAny<CancellationToken>()), Times.Once);
+        Assert.Single(_unitOfWork.RollbackAsyncCalls);
     }
 
     /// <summary>An unexpected repository failure on delete is rolled back and reported generically.</summary>
     [Fact]
     public async Task DeleteCalendarAsync_RollsBackAndReportsUnexpectedFailure_WhenTheRepositoryThrows()
     {
-        _calendarRepo.Setup(r => r.GetByAccountEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync([MakeCalendar()]);
-        _calendarRepo.Setup(r => r.DeleteByIdAsync(1, It.IsAny<CancellationToken>())).ThrowsAsync(new InvalidOperationException("db down"));
+        _calendarRepo.AnswerGetByAccountEmailAsync((_, _) => Task.FromResult<List<Calendar>>([MakeCalendar()]));
+        _calendarRepo.AnswerDeleteByIdAsync((id, _) => id == 1, (_, _) => Task.FromException(new InvalidOperationException("db down")));
 
         ServiceResult result = await CreateSut().DeleteCalendarAsync("user@example.com", new CalendarRequest { Id = 1 }, TestContext.Current.CancellationToken);
 
         Assert.Equal("Calendar.Unexpected", result.ErrorCode);
         Assert.Equal(ServiceResult.TemporaryErrorKey, result.ErrorKey);
-        _unitOfWork.Verify(u => u.RollbackAsync(It.IsAny<CancellationToken>()), Times.Once);
-        _unitOfWork.Verify(u => u.CommitAsync(It.IsAny<CancellationToken>()), Times.Never);
+        Assert.Single(_unitOfWork.RollbackAsyncCalls);
+        Assert.Empty(_unitOfWork.CommitAsyncCalls);
     }
 
     /// <summary>
@@ -1361,10 +1305,9 @@ public class CalendarServiceTests
     [InlineData(null)]
     public async Task EnsureDefaultCalendarAsync_FallsBackToUtc_WhenTheAccountTimeZoneIsUnusable(string? timeZone)
     {
-        _calendarRepo.Setup(r => r.GetByAccountEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync([]);
+        _calendarRepo.AnswerGetByAccountEmailAsync((_, _) => Task.FromResult<List<Calendar>>([]));
         Calendar? created = null;
-        _calendarRepo.Setup(r => r.CreateAsync(It.IsAny<Calendar>(), It.IsAny<CancellationToken>()))
-            .Callback<Calendar, CancellationToken>((c, _) => created = c).Returns(Task.CompletedTask);
+        _calendarRepo.AnswerCreateAsync((c, _) => { created = c; return Task.CompletedTask; });
 
         ServiceResult result = await CreateSut().EnsureDefaultCalendarAsync("user@example.com",
             new CalendarRequest { Name = "Nick", TimeZoneIanaId = timeZone, HtmlColorCode = "#3788d8" }, TestContext.Current.CancellationToken);
@@ -1377,28 +1320,27 @@ public class CalendarServiceTests
     [Fact]
     public async Task EnsureDefaultCalendarAsync_ReportsUnexpectedFailure_WhenTheRepositoryThrows()
     {
-        _calendarRepo.Setup(r => r.GetByAccountEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
-            .ThrowsAsync(new InvalidOperationException("db down"));
+        _calendarRepo.AnswerGetByAccountEmailAsync((_, _) => Task.FromException<List<Calendar>>(new InvalidOperationException("db down")));
 
         ServiceResult result = await CreateSut().EnsureDefaultCalendarAsync("user@example.com",
             new CalendarRequest { Name = "Nick", TimeZoneIanaId = "UTC", HtmlColorCode = "#3788d8" }, TestContext.Current.CancellationToken);
 
         Assert.Equal("Calendar.Unexpected", result.ErrorCode);
         Assert.Equal(ServiceResult.TemporaryErrorKey, result.ErrorKey);
-        _unitOfWork.Verify(u => u.RollbackAsync(It.IsAny<CancellationToken>()), Times.Once);
+        Assert.Single(_unitOfWork.RollbackAsyncCalls);
     }
 
     /// <summary>A default-calendar name the domain rejects (e.g. a nickname with angle brackets) returns the validation error, not an exception.</summary>
     [Fact]
     public async Task EnsureDefaultCalendarAsync_ReturnsTheDomainValidationError_WhenTheNameIsRejected()
     {
-        _calendarRepo.Setup(r => r.GetByAccountEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync([]);
+        _calendarRepo.AnswerGetByAccountEmailAsync((_, _) => Task.FromResult<List<Calendar>>([]));
 
         ServiceResult result = await CreateSut().EnsureDefaultCalendarAsync("user@example.com",
             new CalendarRequest { Name = "a<b", TimeZoneIanaId = "UTC", HtmlColorCode = "#3788d8" }, TestContext.Current.CancellationToken);
 
         Assert.Equal("Calendar.NameInvalid", result.ErrorCode);
-        _calendarRepo.Verify(r => r.CreateAsync(It.IsAny<Calendar>(), It.IsAny<CancellationToken>()), Times.Never);
+        Assert.Empty(_calendarRepo.CreateAsyncCalls);
     }
 
     // -- UpdateOtherCalendarAsync / UpdateCalendarSharedAsync: failures ----------
@@ -1407,10 +1349,8 @@ public class CalendarServiceTests
     [Fact]
     public async Task UpdateOtherCalendarAsync_RollsBackAndFails_WhenTheRepositoryThrows()
     {
-        _sharedRepo.Setup(r => r.GetByIdsForUpdateAsync(It.IsAny<IEnumerable<long>>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync([CalendarShared.Reconstitute(20, true, false)]);
-        _otherCalendarRepo.Setup(r => r.CreateAsync(It.IsAny<OtherCalendar>(), It.IsAny<CancellationToken>()))
-            .ThrowsAsync(new InvalidOperationException("db down"));
+        _sharedRepo.AnswerGetByIdsForUpdateAsync((_, _) => Task.FromResult<List<CalendarShared>>([CalendarShared.Reconstitute(20, true, false)]));
+        _otherCalendarRepo.AnswerCreateAsync((_, _) => Task.FromException(new InvalidOperationException("db down")));
 
         ServiceResult result = await CreateSut().UpdateOtherCalendarAsync("user@example.com",
             [new OtherCalendarRequest { CalendarId = 20 }], TestContext.Current.CancellationToken);
@@ -1418,8 +1358,8 @@ public class CalendarServiceTests
         Assert.False(result.Success);
         Assert.Equal("Calendar.UpdateOtherCalendarsFailed", result.ErrorCode);
         Assert.Equal(ServiceResult.TemporaryErrorKey, result.ErrorKey);
-        _unitOfWork.Verify(u => u.RollbackAsync(It.IsAny<CancellationToken>()), Times.Once);
-        _unitOfWork.Verify(u => u.CommitAsync(It.IsAny<CancellationToken>()), Times.Never);
+        Assert.Single(_unitOfWork.RollbackAsyncCalls);
+        Assert.Empty(_unitOfWork.CommitAsyncCalls);
     }
 
     /// <summary>
@@ -1430,8 +1370,7 @@ public class CalendarServiceTests
     public async Task UpdateCalendarSharedAsync_RemovesAllSubscriptions_OnlyForCalendarsNoLongerSharedToUsers()
     {
         const string email = "admin@example.com";
-        _calendarRepo.Setup(r => r.GetByAccountEmailAsync(email, It.IsAny<CancellationToken>()))
-            .ReturnsAsync([MakeCalendar(1, "A", email), MakeCalendar(2, "B", email)]);
+        _calendarRepo.AnswerGetByAccountEmailAsync((accountEmail, _) => accountEmail == email, (_, _) => Task.FromResult<List<Calendar>>([MakeCalendar(1, "A", email), MakeCalendar(2, "B", email)]));
         GivenShares([CalendarShared.Reconstitute(1, true, false), CalendarShared.Reconstitute(2, true, false)]);
 
         ServiceResult result = await CreateSut().UpdateCalendarSharedAsync(email,
@@ -1441,8 +1380,8 @@ public class CalendarServiceTests
         ], TestContext.Current.CancellationToken);
 
         Assert.True(result.Success);
-        _otherCalendarRepo.Verify(r => r.DeleteByCalendarIdAsync(2, It.IsAny<CancellationToken>()), Times.Once);
-        _otherCalendarRepo.Verify(r => r.DeleteByCalendarIdAsync(1, It.IsAny<CancellationToken>()), Times.Never);
+        Assert.Single(_otherCalendarRepo.DeleteByCalendarIdAsyncCalls, call => call.CalendarId == 2);
+        Assert.DoesNotContain(_otherCalendarRepo.DeleteByCalendarIdAsyncCalls, call => call.CalendarId == 1);
     }
 
     /// <summary>A lost CalendarShared PK race on the upsert is retried and the second attempt applies the same values.</summary>
@@ -1450,18 +1389,17 @@ public class CalendarServiceTests
     public async Task UpdateCalendarSharedAsync_RetriesAfterLosingThePrimaryKeyRace()
     {
         const string email = "admin@example.com";
-        _calendarRepo.Setup(r => r.GetByAccountEmailAsync(email, It.IsAny<CancellationToken>())).ReturnsAsync([MakeCalendar(1, "A", email)]);
-        _sharedRepo.SetupSequence(r => r.GetByIdsAsync(It.IsAny<IEnumerable<long>>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync([])
-            .ReturnsAsync([CalendarShared.Reconstitute(1, false, false)]);
-        _sharedRepo.Setup(r => r.CreateAsync(It.IsAny<CalendarShared>(), It.IsAny<CancellationToken>())).ThrowsAsync(SharedPkViolation());
+        _calendarRepo.AnswerGetByAccountEmailAsync((accountEmail, _) => accountEmail == email, (_, _) => Task.FromResult<List<Calendar>>([MakeCalendar(1, "A", email)]));
+        var getByIdsAsyncAnswers4 = new Queue<Func<Task<List<CalendarShared>>>>([() => Task.FromResult<List<CalendarShared>>([]), () => Task.FromResult<List<CalendarShared>>([CalendarShared.Reconstitute(1, false, false)])]);
+        _sharedRepo.AnswerGetByIdsAsync((_, _) => getByIdsAsyncAnswers4.TryDequeue(out var next) ? next() : Task.FromResult<List<CalendarShared>>([]));
+        _sharedRepo.AnswerCreateAsync((_, _) => Task.FromException(SharedPkViolation()));
 
         ServiceResult result = await CreateSut().UpdateCalendarSharedAsync(email,
             [new CalendarSharedRequest { CalendarId = 1, User = true, Anonymous = false }], TestContext.Current.CancellationToken);
 
         Assert.True(result.Success);
-        _sharedRepo.Verify(r => r.UpdateEntityAsync(It.Is<CalendarShared>(s => s.Id == 1 && s.User), It.IsAny<CancellationToken>()), Times.Once);
-        _unitOfWork.Verify(u => u.BeginAsync(null, It.IsAny<CancellationToken>()), Times.Exactly(2));
+        Assert.Single(_sharedRepo.UpdateEntityAsyncCalls, call => (call.Domain!.Id == 1 && call.Domain!.User));
+        Assert.Equal(2, _unitOfWork.BeginAsyncCalls.Count(call => call.IsolationLevel == null));
     }
 
     /// <summary>A persistent PK race gives up after the retry limit with the shared-settings failure code.</summary>
@@ -1469,9 +1407,9 @@ public class CalendarServiceTests
     public async Task UpdateCalendarSharedAsync_GivesUp_WhenThePrimaryKeyRaceNeverResolves()
     {
         const string email = "admin@example.com";
-        _calendarRepo.Setup(r => r.GetByAccountEmailAsync(email, It.IsAny<CancellationToken>())).ReturnsAsync([MakeCalendar(1, "A", email)]);
+        _calendarRepo.AnswerGetByAccountEmailAsync((accountEmail, _) => accountEmail == email, (_, _) => Task.FromResult<List<Calendar>>([MakeCalendar(1, "A", email)]));
         GivenShares([]);
-        _sharedRepo.Setup(r => r.CreateAsync(It.IsAny<CalendarShared>(), It.IsAny<CancellationToken>())).ThrowsAsync(SharedPkViolation());
+        _sharedRepo.AnswerCreateAsync((_, _) => Task.FromException(SharedPkViolation()));
 
         ServiceResult result = await CreateSut().UpdateCalendarSharedAsync(email,
             [new CalendarSharedRequest { CalendarId = 1, User = true, Anonymous = false }], TestContext.Current.CancellationToken);
@@ -1479,8 +1417,8 @@ public class CalendarServiceTests
         Assert.False(result.Success);
         Assert.Equal("Calendar.UpdateSharedFailed", result.ErrorCode);
         Assert.Equal(ServiceResult.TemporaryErrorKey, result.ErrorKey);
-        _unitOfWork.Verify(u => u.BeginAsync(null, It.IsAny<CancellationToken>()), Times.Exactly(3));
-        _unitOfWork.Verify(u => u.CommitAsync(It.IsAny<CancellationToken>()), Times.Never);
+        Assert.Equal(3, _unitOfWork.BeginAsyncCalls.Count(call => call.IsolationLevel == null));
+        Assert.Empty(_unitOfWork.CommitAsyncCalls);
     }
 
     /// <summary>Any other failure is not retried: one rollback, then the shared-settings failure code.</summary>
@@ -1488,16 +1426,16 @@ public class CalendarServiceTests
     public async Task UpdateCalendarSharedAsync_DoesNotRetry_WhenTheFailureIsNotThePrimaryKeyRace()
     {
         const string email = "admin@example.com";
-        _calendarRepo.Setup(r => r.GetByAccountEmailAsync(email, It.IsAny<CancellationToken>())).ReturnsAsync([MakeCalendar(1, "A", email)]);
-        _sharedRepo.Setup(r => r.GetByIdsAsync(It.IsAny<IEnumerable<long>>(), It.IsAny<CancellationToken>())).ThrowsAsync(new InvalidOperationException("db down"));
+        _calendarRepo.AnswerGetByAccountEmailAsync((accountEmail, _) => accountEmail == email, (_, _) => Task.FromResult<List<Calendar>>([MakeCalendar(1, "A", email)]));
+        _sharedRepo.AnswerGetByIdsAsync((_, _) => Task.FromException<List<CalendarShared>>(new InvalidOperationException("db down")));
 
         ServiceResult result = await CreateSut().UpdateCalendarSharedAsync(email,
             [new CalendarSharedRequest { CalendarId = 1, User = true, Anonymous = false }], TestContext.Current.CancellationToken);
 
         Assert.Equal("Calendar.UpdateSharedFailed", result.ErrorCode);
         Assert.Equal(ServiceResult.TemporaryErrorKey, result.ErrorKey);
-        _unitOfWork.Verify(u => u.BeginAsync(null, It.IsAny<CancellationToken>()), Times.Once);
-        _unitOfWork.Verify(u => u.RollbackAsync(It.IsAny<CancellationToken>()), Times.Once);
+        Assert.Single(_unitOfWork.BeginAsyncCalls, call => call.IsolationLevel == null);
+        Assert.Single(_unitOfWork.RollbackAsyncCalls);
     }
 
     // -- Calendar events: validation and unexpected failures ----------------------
@@ -1506,23 +1444,22 @@ public class CalendarServiceTests
     [Fact]
     public async Task CreateCalendarEventAsync_ReturnsTheDomainValidationError_WhenTheTitleIsBlank()
     {
-        _calendarRepo.Setup(r => r.GetByAccountEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync([MakeCalendar()]);
+        _calendarRepo.AnswerGetByAccountEmailAsync((_, _) => Task.FromResult<List<Calendar>>([MakeCalendar()]));
 
         ServiceResult result = await CreateSut().CreateCalendarEventAsync(
             new CalendarEventRequest { CalendarId = 1, Title = "" }, "user@example.com", "1", [], null, TestContext.Current.CancellationToken);
 
         Assert.Equal("CalendarEvent.TitleEmpty", result.ErrorCode);
-        _eventRepo.Verify(r => r.CreateCalendarEventAsync(It.IsAny<CalendarEvent>(), It.IsAny<CancellationToken>()), Times.Never);
-        _unitOfWork.Verify(u => u.RollbackAsync(It.IsAny<CancellationToken>()), Times.Once);
+        Assert.Empty(_eventRepo.CreateCalendarEventAsyncCalls);
+        Assert.Single(_unitOfWork.RollbackAsyncCalls);
     }
 
     /// <summary>An unexpected repository failure while creating an event is rolled back and reported without leaking internals.</summary>
     [Fact]
     public async Task CreateCalendarEventAsync_RollsBackAndReportsCreateFailed_WhenTheRepositoryThrows()
     {
-        _calendarRepo.Setup(r => r.GetByAccountEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync([MakeCalendar()]);
-        _eventRepo.Setup(r => r.CreateCalendarEventAsync(It.IsAny<CalendarEvent>(), It.IsAny<CancellationToken>()))
-            .ThrowsAsync(new InvalidOperationException("secret detail"));
+        _calendarRepo.AnswerGetByAccountEmailAsync((_, _) => Task.FromResult<List<Calendar>>([MakeCalendar()]));
+        _eventRepo.AnswerCreateCalendarEventAsync((_, _) => Task.FromException<long>(new InvalidOperationException("secret detail")));
 
         ServiceResult result = await CreateSut().CreateCalendarEventAsync(
             new CalendarEventRequest { CalendarId = 1, Title = "Meeting" }, "user@example.com", "1", [], null, TestContext.Current.CancellationToken);
@@ -1530,33 +1467,32 @@ public class CalendarServiceTests
         Assert.Equal("CalendarEvent.CreateFailed", result.ErrorCode);
         Assert.Equal(ServiceResult.TemporaryErrorKey, result.ErrorKey);
         Assert.DoesNotContain("secret detail", result.ErrorKey, StringComparison.Ordinal);
-        _unitOfWork.Verify(u => u.RollbackAsync(It.IsAny<CancellationToken>()), Times.Once);
-        _unitOfWork.Verify(u => u.CommitAsync(It.IsAny<CancellationToken>()), Times.Never);
+        Assert.Single(_unitOfWork.RollbackAsyncCalls);
+        Assert.Empty(_unitOfWork.CommitAsyncCalls);
     }
 
     /// <summary>A blank title on update is returned as the domain validation error and the event row is not written.</summary>
     [Fact]
     public async Task UpdateCalendarEventAsync_ReturnsTheDomainValidationError_WhenTheTitleIsBlank()
     {
-        _calendarRepo.Setup(r => r.GetByAccountEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync([MakeCalendar()]);
-        _eventRepo.Setup(r => r.FindByIdForUpdateAsync(1, It.IsAny<CancellationToken>())).ReturnsAsync(MakeCalendarEvent(1, 1, "Old"));
+        _calendarRepo.AnswerGetByAccountEmailAsync((_, _) => Task.FromResult<List<Calendar>>([MakeCalendar()]));
+        _eventRepo.AnswerFindByIdForUpdateAsync((id, _) => id == 1, (_, _) => Task.FromResult<CalendarEvent?>(MakeCalendarEvent(1, 1, "Old")));
 
         ServiceResult result = await CreateSut().UpdateCalendarEventAsync(
             new CalendarEventRequest { Id = 1, CalendarId = 1, Title = "" }, "user@example.com", "1", [], null, TestContext.Current.CancellationToken);
 
         Assert.Equal("CalendarEvent.TitleEmpty", result.ErrorCode);
-        _eventRepo.Verify(r => r.UpdateEntityAsync(It.IsAny<CalendarEvent>(), It.IsAny<CancellationToken>()), Times.Never);
-        _unitOfWork.Verify(u => u.RollbackAsync(It.IsAny<CancellationToken>()), Times.Once);
+        Assert.Empty(_eventRepo.UpdateEntityAsyncCalls);
+        Assert.Single(_unitOfWork.RollbackAsyncCalls);
     }
 
     /// <summary>An unexpected repository failure while updating an event is rolled back and reported without leaking internals.</summary>
     [Fact]
     public async Task UpdateCalendarEventAsync_RollsBackAndReportsUpdateFailed_WhenTheRepositoryThrows()
     {
-        _calendarRepo.Setup(r => r.GetByAccountEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync([MakeCalendar()]);
-        _eventRepo.Setup(r => r.FindByIdForUpdateAsync(1, It.IsAny<CancellationToken>())).ReturnsAsync(MakeCalendarEvent(1, 1, "Old"));
-        _eventRepo.Setup(r => r.UpdateEntityAsync(It.IsAny<CalendarEvent>(), It.IsAny<CancellationToken>()))
-            .ThrowsAsync(new InvalidOperationException("secret detail"));
+        _calendarRepo.AnswerGetByAccountEmailAsync((_, _) => Task.FromResult<List<Calendar>>([MakeCalendar()]));
+        _eventRepo.AnswerFindByIdForUpdateAsync((idArg, _) => idArg == 1, (_, _) => Task.FromResult<CalendarEvent?>(MakeCalendarEvent(1, 1, "Old")));
+        _eventRepo.AnswerUpdateEntityAsync((_, _) => Task.FromException(new InvalidOperationException("secret detail")));
 
         ServiceResult result = await CreateSut().UpdateCalendarEventAsync(
             new CalendarEventRequest { Id = 1, CalendarId = 1, Title = "New" }, "user@example.com", "1", [], null, TestContext.Current.CancellationToken);
@@ -1564,35 +1500,35 @@ public class CalendarServiceTests
         Assert.Equal("CalendarEvent.UpdateFailed", result.ErrorCode);
         Assert.Equal(ServiceResult.TemporaryErrorKey, result.ErrorKey);
         Assert.DoesNotContain("secret detail", result.ErrorKey, StringComparison.Ordinal);
-        _unitOfWork.Verify(u => u.RollbackAsync(It.IsAny<CancellationToken>()), Times.Once);
+        Assert.Single(_unitOfWork.RollbackAsyncCalls);
     }
 
     /// <summary>An account with no calendar at all cannot delete an event (and the lookup never runs).</summary>
     [Fact]
     public async Task DeleteCalendarEventAsync_ReturnsNotFound_WhenTheAccountHasNoCalendar()
     {
-        _calendarRepo.Setup(r => r.GetByAccountEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync([]);
+        _calendarRepo.AnswerGetByAccountEmailAsync((_, _) => Task.FromResult<List<Calendar>>([]));
 
         ServiceResult result = await CreateSut().DeleteCalendarEventAsync(1, "user@example.com", TestContext.Current.CancellationToken);
 
         Assert.False(result.Success);
-        _eventRepo.Verify(r => r.FindByIdAsync(It.IsAny<long>(), It.IsAny<CancellationToken>()), Times.Never);
-        _unitOfWork.Verify(u => u.RollbackAsync(It.IsAny<CancellationToken>()), Times.Once);
+        Assert.Empty(_eventRepo.FindByIdAsyncCalls);
+        Assert.Single(_unitOfWork.RollbackAsyncCalls);
     }
 
     /// <summary>An unexpected repository failure while deleting an event is rolled back and reported generically.</summary>
     [Fact]
     public async Task DeleteCalendarEventAsync_RollsBackAndReportsUnexpectedFailure_WhenTheRepositoryThrows()
     {
-        _calendarRepo.Setup(r => r.GetByAccountEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync([MakeCalendar()]);
-        _eventRepo.Setup(r => r.FindByIdAsync(1, It.IsAny<CancellationToken>())).ReturnsAsync(MakeCalendarEvent());
-        _eventRepo.Setup(r => r.DeleteByIdAsync(1, It.IsAny<CancellationToken>())).ThrowsAsync(new InvalidOperationException("db down"));
+        _calendarRepo.AnswerGetByAccountEmailAsync((_, _) => Task.FromResult<List<Calendar>>([MakeCalendar()]));
+        _eventRepo.AnswerFindByIdAsync((idArg, _) => idArg == 1, (_, _) => Task.FromResult<CalendarEvent?>(MakeCalendarEvent()));
+        _eventRepo.AnswerDeleteByIdAsync((idArg, _) => idArg == 1, (_, _) => Task.FromException(new InvalidOperationException("db down")));
 
         ServiceResult result = await CreateSut().DeleteCalendarEventAsync(1, "user@example.com", TestContext.Current.CancellationToken);
 
         Assert.Equal("Calendar.Unexpected", result.ErrorCode);
         Assert.Equal(ServiceResult.TemporaryErrorKey, result.ErrorKey);
-        _unitOfWork.Verify(u => u.RollbackAsync(It.IsAny<CancellationToken>()), Times.Once);
+        Assert.Single(_unitOfWork.RollbackAsyncCalls);
     }
 
     // -- Attachment-content delegation --------------------------------------------
@@ -1603,7 +1539,7 @@ public class CalendarServiceTests
     {
         var file = new AttachedFileDto { Bytes = [1], ContentType = "image/png", FileName = "a.png", Size = 1 };
         var expected = SummernoteUploadResult.Fail("nope");
-        _attachmentContent.Setup(a => a.UploadSummernoteImageAsync(file, "Calendar", "7", "uploader@test.com", It.IsAny<CancellationToken>())).ReturnsAsync(expected);
+        _attachmentContent.AnswerUploadSummernoteImageAsync((fileArg, area, subArea, actorEmail, _) => fileArg == file && area == "Calendar" && subArea == "7" && actorEmail == "uploader@test.com", (_, _, _, _, _) => Task.FromResult<SummernoteUploadResult>(expected));
 
         SummernoteUploadResult actual = await CreateSut().UploadSummernoteImageAsync(file, "7", "uploader@test.com", TestContext.Current.CancellationToken);
 
@@ -1614,17 +1550,16 @@ public class CalendarServiceTests
     [Fact]
     public async Task UpdateOtherCalendarAsync_ReturnsTheDomainRefusal_ForAnInvalidCalendarId()
     {
-        _sharedRepo.Setup(r => r.GetByIdsForUpdateAsync(It.IsAny<IEnumerable<long>>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync([CalendarShared.Reconstitute(0, user: true, anonymous: false)]);
-        _otherCalendarRepo.Setup(r => r.DeleteByAccountEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
+        _sharedRepo.AnswerGetByIdsForUpdateAsync((_, _) => Task.FromResult<List<CalendarShared>>([CalendarShared.Reconstitute(0, user: true, anonymous: false)]));
+        _otherCalendarRepo.AnswerDeleteByAccountEmailAsync((_, _) => Task.CompletedTask);
         var sut = CreateSut();
 
         ServiceResult result = await sut.UpdateOtherCalendarAsync("user@example.com", [new OtherCalendarRequest { CalendarId = 0 }], TestContext.Current.CancellationToken);
 
         Assert.False(result.Success);
         Assert.Equal("OtherCalendar.InvalidCalendarId", result.ErrorCode);
-        _unitOfWork.Verify(u => u.RollbackAsync(It.IsAny<CancellationToken>()), Times.Once);
-        _otherCalendarRepo.Verify(r => r.CreateAsync(It.IsAny<OtherCalendar>(), It.IsAny<CancellationToken>()), Times.Never);
+        Assert.Single(_unitOfWork.RollbackAsyncCalls);
+        Assert.Empty(_otherCalendarRepo.CreateAsyncCalls);
     }
 
     // -- Ordering, ownership checks, transaction boundaries, exact results and logging -------
@@ -1643,14 +1578,14 @@ public class CalendarServiceTests
     /// <summary>Asserts the unit of work was begun once and committed once, without a rollback.</summary>
     private void AssertCommitted()
     {
-        _unitOfWork.Verify(u => u.BeginAsync(null, It.IsAny<CancellationToken>()), Times.Once);
-        _unitOfWork.Verify(u => u.CommitAsync(It.IsAny<CancellationToken>()), Times.Once);
-        _unitOfWork.Verify(u => u.RollbackAsync(It.IsAny<CancellationToken>()), Times.Never);
+        Assert.Single(_unitOfWork.BeginAsyncCalls, call => call.IsolationLevel == null);
+        Assert.Single(_unitOfWork.CommitAsyncCalls);
+        Assert.Empty(_unitOfWork.RollbackAsyncCalls);
     }
 
     /// <summary>Makes the owner's calendars <paramref name="calendars"/>.</summary>
     private void GivenOwnedCalendars(params Calendar[] calendars) =>
-        _calendarRepo.Setup(r => r.GetByAccountEmailAsync(Owner, It.IsAny<CancellationToken>())).ReturnsAsync([.. calendars]);
+        _calendarRepo.AnswerGetByAccountEmailAsync((accountEmail, _) => accountEmail == Owner, (_, _) => Task.FromResult<List<Calendar>>([.. calendars]));
 
     /// <summary>The owner's calendars come back sorted by name.</summary>
     [Fact]
@@ -1667,7 +1602,7 @@ public class CalendarServiceTests
     [Fact]
     public async Task GetCalendarEventAsync_MapsTheEvent_OrReturnsNull()
     {
-        _eventRepo.Setup(r => r.FindByIdAsync(1, It.IsAny<CancellationToken>())).ReturnsAsync(MakeCalendarEvent(1, title: "Standup"));
+        _eventRepo.AnswerFindByIdAsync((id, _) => id == 1, (_, _) => Task.FromResult<CalendarEvent?>(MakeCalendarEvent(1, title: "Standup")));
 
         Assert.Equal("Standup", (await CreateSut().GetCalendarEventAsync(1, TestContext.Current.CancellationToken))?.Title);
         Assert.Null(await CreateSut().GetCalendarEventAsync(2, TestContext.Current.CancellationToken));
@@ -1678,7 +1613,7 @@ public class CalendarServiceTests
     public async Task EnsureCalendarSharedAsync_LogsAnUnexpectedFailure_WithTheCalendarIds()
     {
         var thrown = new InvalidOperationException("db down");
-        _sharedRepo.Setup(r => r.GetByIdsAsync(It.IsAny<IEnumerable<long>>(), It.IsAny<CancellationToken>())).ThrowsAsync(thrown);
+        _sharedRepo.AnswerGetByIdsAsync((_, _) => Task.FromException<List<CalendarShared>>(thrown));
 
         await CreateSut().EnsureCalendarSharedAsync([5, 6], TestContext.Current.CancellationToken);
 
@@ -1690,7 +1625,7 @@ public class CalendarServiceTests
     public async Task EnsureCalendarSharedAsync_LogsGivingUp_WithTheIdsAndTheRetryCount()
     {
         GivenShares([]);
-        _sharedRepo.Setup(r => r.CreateAsync(It.IsAny<CalendarShared>(), It.IsAny<CancellationToken>())).ThrowsAsync(SharedPkViolation());
+        _sharedRepo.AnswerCreateAsync((_, _) => Task.FromException(SharedPkViolation()));
 
         await CreateSut().EnsureCalendarSharedAsync([5, 6], TestContext.Current.CancellationToken);
 
@@ -1702,13 +1637,12 @@ public class CalendarServiceTests
     public async Task GetCalendarSharedSummariesAsync_BackfillsMissingRows_AndSortsByName()
     {
         GivenOwnedCalendars(MakeCalendar(1, "Work"), MakeCalendar(2, "Home"));
-        _sharedRepo.SetupSequence(r => r.GetByIdsAsync(It.IsAny<IEnumerable<long>>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync([CalendarShared.Reconstitute(1, false, false)])
-            .ReturnsAsync([CalendarShared.Reconstitute(1, false, false), CalendarShared.Reconstitute(2, false, false)]);
+        var getByIdsAsyncAnswers5 = new Queue<Func<Task<List<CalendarShared>>>>([() => Task.FromResult<List<CalendarShared>>([CalendarShared.Reconstitute(1, false, false)]), () => Task.FromResult<List<CalendarShared>>([CalendarShared.Reconstitute(1, false, false), CalendarShared.Reconstitute(2, false, false)])]);
+        _sharedRepo.AnswerGetByIdsAsync((_, _) => getByIdsAsyncAnswers5.TryDequeue(out var next) ? next() : Task.FromResult<List<CalendarShared>>([]));
 
         List<CalendarSharedSummaryResponse> result = await CreateSut().GetCalendarSharedSummariesAsync(Owner, TestContext.Current.CancellationToken);
 
-        _sharedRepo.Verify(r => r.CreateAsync(It.Is<CalendarShared>(c => c.Id == 2 && !c.User && !c.Anonymous), It.IsAny<CancellationToken>()), Times.Once);
+        Assert.Single(_sharedRepo.CreateAsyncCalls, call => (call.Domain!.Id == 2 && !call.Domain!.User && !call.Domain!.Anonymous));
         Assert.Equal(["Home", "Work"], result.Select(c => c.Name));
     }
 
@@ -1716,10 +1650,9 @@ public class CalendarServiceTests
     [Fact]
     public async Task GetBrowseCalendarsOfInterestAsync_SortsByName()
     {
-        _calendarRepo.Setup(r => r.GetSharedWithUsersAsync(It.IsAny<CancellationToken>()))
-            .ReturnsAsync([MakeCalendar(1, "Work", "a@example.com"), MakeCalendar(2, "Home", "b@example.com")]);
+        _calendarRepo.AnswerGetSharedWithUsersAsync(_ => Task.FromResult<List<Calendar>>([MakeCalendar(1, "Work", "a@example.com"), MakeCalendar(2, "Home", "b@example.com")]));
         GivenShares([CalendarShared.Reconstitute(1, true, false), CalendarShared.Reconstitute(2, true, false)]);
-        _otherCalendarRepo.Setup(r => r.GetByAccountEmailAsync(Owner, It.IsAny<CancellationToken>())).ReturnsAsync([]);
+        _otherCalendarRepo.AnswerGetByAccountEmailAsync((email, _) => email == Owner, (_, _) => Task.FromResult<List<OtherCalendar>>([]));
 
         List<CalendarBrowseSummaryResponse> result = await CreateSut().GetBrowseCalendarsOfInterestAsync(Owner, TestContext.Current.CancellationToken);
 
@@ -1761,11 +1694,10 @@ public class CalendarServiceTests
     {
         GivenOwnedCalendars(MakeCalendar(1, "Taken"));
         AssertNameExists(await CreateSut().CreateCalendarAsync(Owner, new CalendarRequest { Name = "Taken" }, TestContext.Current.CancellationToken));
-        _unitOfWork.Verify(u => u.RollbackAsync(It.IsAny<CancellationToken>()), Times.Once);
+        Assert.Single(_unitOfWork.RollbackAsyncCalls);
 
         GivenOwnedCalendars();
-        _calendarRepo.Setup(r => r.CreateAsync(It.IsAny<Calendar>(), It.IsAny<CancellationToken>()))
-            .ThrowsAsync(new Exception("23505: duplicate key value violates unique constraint \"Calendar_AccountEmail_Name_unique\""));
+        _calendarRepo.AnswerCreateAsync((_, _) => Task.FromException(new Exception("23505: duplicate key value violates unique constraint \"Calendar_AccountEmail_Name_unique\"")));
         AssertNameExists(await CreateSut().CreateCalendarAsync(Owner,
             new CalendarRequest { Name = "New", TimeZoneIanaId = "UTC", HtmlColorCode = "#3788d8" }, TestContext.Current.CancellationToken));
     }
@@ -1775,7 +1707,7 @@ public class CalendarServiceTests
     public async Task CreateCalendarAsync_LogsTheFailure_WhenTheRepositoryThrows()
     {
         var thrown = new InvalidOperationException("db down");
-        _calendarRepo.Setup(r => r.GetByAccountEmailAsync(Owner, It.IsAny<CancellationToken>())).ThrowsAsync(thrown);
+        _calendarRepo.AnswerGetByAccountEmailAsync((accountEmail, _) => accountEmail == Owner, (_, _) => Task.FromException<List<Calendar>>(thrown));
 
         await CreateSut().CreateCalendarAsync(Owner, new CalendarRequest { Name = "New" }, TestContext.Current.CancellationToken);
 
@@ -1786,7 +1718,7 @@ public class CalendarServiceTests
     [Fact]
     public async Task UpdateCalendarAsync_BeginsAndCommits_OnSuccess()
     {
-        _calendarRepo.Setup(r => r.FindByIdForUpdateAsync(1, It.IsAny<CancellationToken>())).ReturnsAsync(MakeCalendar(1));
+        _calendarRepo.AnswerFindByIdForUpdateAsync((idArg, _) => idArg == 1, (_, _) => Task.FromResult<Calendar?>(MakeCalendar(1)));
 
         ServiceResult result = await CreateSut().UpdateCalendarAsync(Owner,
             new CalendarRequest { Id = 1, Name = "Renamed", TimeZoneIanaId = "UTC", HtmlColorCode = "#3788d8" }, TestContext.Current.CancellationToken);
@@ -1806,9 +1738,8 @@ public class CalendarServiceTests
     [Fact]
     public async Task UpdateCalendarAsync_ReturnsNameExists_WhenTheRenameHitsATakenName()
     {
-        _calendarRepo.Setup(r => r.FindByIdForUpdateAsync(1, It.IsAny<CancellationToken>())).ReturnsAsync(MakeCalendar(1));
-        _calendarRepo.Setup(r => r.UpdateEntityAsync(It.IsAny<Calendar>(), It.IsAny<CancellationToken>()))
-            .ThrowsAsync(new Exception("23505: duplicate key value violates unique constraint \"Calendar_AccountEmail_Name_unique\""));
+        _calendarRepo.AnswerFindByIdForUpdateAsync((idArg, _) => idArg == 1, (_, _) => Task.FromResult<Calendar?>(MakeCalendar(1)));
+        _calendarRepo.AnswerUpdateEntityAsync((_, _) => Task.FromException(new Exception("23505: duplicate key value violates unique constraint \"Calendar_AccountEmail_Name_unique\"")));
 
         AssertNameExists(await CreateSut().UpdateCalendarAsync(Owner,
             new CalendarRequest { Id = 1, Name = "Taken", TimeZoneIanaId = "UTC", HtmlColorCode = "#3788d8" }, TestContext.Current.CancellationToken));
@@ -1819,7 +1750,7 @@ public class CalendarServiceTests
     public async Task UpdateCalendarAsync_LogsTheFailure_WhenTheRepositoryThrows()
     {
         var thrown = new InvalidOperationException("db down");
-        _calendarRepo.Setup(r => r.FindByIdForUpdateAsync(1, It.IsAny<CancellationToken>())).ThrowsAsync(thrown);
+        _calendarRepo.AnswerFindByIdForUpdateAsync((idArg, _) => idArg == 1, (_, _) => Task.FromException<Calendar?>(thrown));
 
         await CreateSut().UpdateCalendarAsync(Owner, new CalendarRequest { Id = 1, Name = "X" }, TestContext.Current.CancellationToken);
 
@@ -1835,7 +1766,7 @@ public class CalendarServiceTests
         ServiceResult result = await CreateSut().DeleteCalendarAsync(Owner, new CalendarRequest { Id = 1 }, TestContext.Current.CancellationToken);
 
         Assert.True(result.Success);
-        _calendarRepo.Verify(r => r.DeleteByIdAsync(1, It.IsAny<CancellationToken>()), Times.Once);
+        Assert.Single(_calendarRepo.DeleteByIdAsyncCalls, call => call.Id == 1);
         AssertCommitted();
     }
 
@@ -1846,7 +1777,7 @@ public class CalendarServiceTests
         GivenOwnedCalendars(MakeCalendar(1));
 
         AssertCalendarNotFound(await CreateSut().DeleteCalendarAsync(Owner, new CalendarRequest { Id = 9 }, TestContext.Current.CancellationToken));
-        _calendarRepo.Verify(r => r.DeleteByIdAsync(It.IsAny<long>(), It.IsAny<CancellationToken>()), Times.Never);
+        Assert.Empty(_calendarRepo.DeleteByIdAsyncCalls);
     }
 
     /// <summary>A delete that throws is logged with the calendar id and the account.</summary>
@@ -1854,7 +1785,7 @@ public class CalendarServiceTests
     public async Task DeleteCalendarAsync_LogsTheFailure_WhenTheRepositoryThrows()
     {
         var thrown = new InvalidOperationException("db down");
-        _calendarRepo.Setup(r => r.GetByAccountEmailAsync(Owner, It.IsAny<CancellationToken>())).ThrowsAsync(thrown);
+        _calendarRepo.AnswerGetByAccountEmailAsync((accountEmail, _) => accountEmail == Owner, (_, _) => Task.FromException<List<Calendar>>(thrown));
 
         await CreateSut().DeleteCalendarAsync(Owner, new CalendarRequest { Id = 1 }, TestContext.Current.CancellationToken);
 
@@ -1871,7 +1802,7 @@ public class CalendarServiceTests
             new CalendarRequest { Name = "Default", TimeZoneIanaId = "Asia/Seoul", HtmlColorCode = "#3788d8" }, TestContext.Current.CancellationToken);
 
         Assert.True(result.Success);
-        _calendarRepo.Verify(r => r.CreateAsync(It.Is<Calendar>(c => c.TimeZone.Value == "Asia/Seoul"), It.IsAny<CancellationToken>()), Times.Once);
+        Assert.Single(_calendarRepo.CreateAsyncCalls, call => (call.Domain!.TimeZone.Value == "Asia/Seoul"));
         AssertCommitted();
     }
 
@@ -1883,8 +1814,8 @@ public class CalendarServiceTests
 
         await CreateSut().EnsureDefaultCalendarAsync(Owner, new CalendarRequest { Name = "Default" }, TestContext.Current.CancellationToken);
 
-        _unitOfWork.Verify(u => u.RollbackAsync(It.IsAny<CancellationToken>()), Times.Once);
-        _unitOfWork.Verify(u => u.CommitAsync(It.IsAny<CancellationToken>()), Times.Never);
+        Assert.Single(_unitOfWork.RollbackAsyncCalls);
+        Assert.Empty(_unitOfWork.CommitAsyncCalls);
     }
 
     /// <summary>A default-calendar failure is logged with the account.</summary>
@@ -1892,7 +1823,7 @@ public class CalendarServiceTests
     public async Task EnsureDefaultCalendarAsync_LogsTheFailure_WhenTheRepositoryThrows()
     {
         var thrown = new InvalidOperationException("db down");
-        _calendarRepo.Setup(r => r.GetByAccountEmailAsync(Owner, It.IsAny<CancellationToken>())).ThrowsAsync(thrown);
+        _calendarRepo.AnswerGetByAccountEmailAsync((accountEmail, _) => accountEmail == Owner, (_, _) => Task.FromException<List<Calendar>>(thrown));
 
         await CreateSut().EnsureDefaultCalendarAsync(Owner, new CalendarRequest { Name = "Default" }, TestContext.Current.CancellationToken);
 
@@ -1903,13 +1834,13 @@ public class CalendarServiceTests
     [Fact]
     public async Task UpdateOtherCalendarAsync_ReturnsInputIsInvalid_ForACalendarNotSharedWithUsers()
     {
-        _sharedRepo.Setup(r => r.GetByIdsForUpdateAsync(It.IsAny<IEnumerable<long>>(), It.IsAny<CancellationToken>())).ReturnsAsync([]);
+        _sharedRepo.AnswerGetByIdsForUpdateAsync((_, _) => Task.FromResult<List<CalendarShared>>([]));
 
         ServiceResult result = await CreateSut().UpdateOtherCalendarAsync(Owner, [new OtherCalendarRequest { CalendarId = 3 }], TestContext.Current.CancellationToken);
 
         Assert.Equal("Calendar.UpdateOtherCalendarsFailed", result.ErrorCode);
         Assert.Equal("Input is invalid", result.ErrorKey);
-        _unitOfWork.Verify(u => u.BeginAsync(null, It.IsAny<CancellationToken>()), Times.Once);
+        Assert.Single(_unitOfWork.BeginAsyncCalls, call => call.IsolationLevel == null);
     }
 
     /// <summary>A subscription update that throws is logged with the account.</summary>
@@ -1917,7 +1848,7 @@ public class CalendarServiceTests
     public async Task UpdateOtherCalendarAsync_LogsTheFailure_WhenTheRepositoryThrows()
     {
         var thrown = new InvalidOperationException("db down");
-        _sharedRepo.Setup(r => r.GetByIdsForUpdateAsync(It.IsAny<IEnumerable<long>>(), It.IsAny<CancellationToken>())).ThrowsAsync(thrown);
+        _sharedRepo.AnswerGetByIdsForUpdateAsync((_, _) => Task.FromException<List<CalendarShared>>(thrown));
 
         await CreateSut().UpdateOtherCalendarAsync(Owner, [new OtherCalendarRequest { CalendarId = 3 }], TestContext.Current.CancellationToken);
 
@@ -1937,8 +1868,8 @@ public class CalendarServiceTests
         Assert.Equal(ServiceErrorType.Validation, result.ErrorType);
         Assert.Equal("CalendarShared.InvalidTarget", result.ErrorCode);
         Assert.Equal("Input is invalid", result.ErrorKey);
-        _sharedRepo.Verify(r => r.UpdateEntityAsync(It.IsAny<CalendarShared>(), It.IsAny<CancellationToken>()), Times.Never);
-        _sharedRepo.Verify(r => r.CreateAsync(It.IsAny<CalendarShared>(), It.IsAny<CancellationToken>()), Times.Never);
+        Assert.Empty(_sharedRepo.UpdateEntityAsyncCalls);
+        Assert.Empty(_sharedRepo.CreateAsyncCalls);
     }
 
     /// <summary>Each lost primary-key race is rolled back before the retry, and giving up is logged with the retry count.</summary>
@@ -1947,11 +1878,11 @@ public class CalendarServiceTests
     {
         GivenOwnedCalendars(MakeCalendar(1));
         GivenShares([]);
-        _sharedRepo.Setup(r => r.CreateAsync(It.IsAny<CalendarShared>(), It.IsAny<CancellationToken>())).ThrowsAsync(SharedPkViolation());
+        _sharedRepo.AnswerCreateAsync((_, _) => Task.FromException(SharedPkViolation()));
 
         await CreateSut().UpdateCalendarSharedAsync(Owner, [new CalendarSharedRequest { CalendarId = 1, User = true }], TestContext.Current.CancellationToken);
 
-        _unitOfWork.Verify(u => u.RollbackAsync(It.IsAny<CancellationToken>()), Times.Exactly(3));
+        Assert.Equal(3, _unitOfWork.RollbackAsyncCalls.Count);
         AssertLoggedError("Failed to update calendar shared settings after 3 retries");
     }
 
@@ -1961,7 +1892,7 @@ public class CalendarServiceTests
     {
         GivenOwnedCalendars(MakeCalendar(1));
         var thrown = new InvalidOperationException("db down");
-        _sharedRepo.Setup(r => r.GetByIdsAsync(It.IsAny<IEnumerable<long>>(), It.IsAny<CancellationToken>())).ThrowsAsync(thrown);
+        _sharedRepo.AnswerGetByIdsAsync((_, _) => Task.FromException<List<CalendarShared>>(thrown));
 
         await CreateSut().UpdateCalendarSharedAsync(Owner, [new CalendarSharedRequest { CalendarId = 1, User = true }], TestContext.Current.CancellationToken);
 
@@ -1976,15 +1907,15 @@ public class CalendarServiceTests
     public async Task CreateCalendarEventAsync_SanitizesMissingDescription_UploadsToTheConfiguredStorage_AndCommits()
     {
         GivenOwnedCalendars(MakeCalendar(1));
-        _attachmentContent.Setup(a => a.SanitizeAndDecryptContent(It.IsAny<string>())).Returns<string>(h => h);
-        _fileClient.Setup(f => f.UploadAsync(It.IsAny<byte[]>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(true);
+        _attachmentContent.AnswerSanitizeAndDecryptContent(h => h);
+        _fileClient.AnswerUploadAsync((_, _, _, _, _) => Task.FromResult<bool>(true));
 
         ServiceResult result = await CreateSut().CreateCalendarEventAsync(
             new CalendarEventRequest { CalendarId = 1, Title = "T", Description = null }, Owner, "UserIndex", [], Zip(), TestContext.Current.CancellationToken);
 
         Assert.True(result.Success);
-        _attachmentContent.Verify(a => a.SanitizeAndDecryptContent(""), Times.Once);
-        _fileClient.Verify(f => f.UploadAsync(It.IsAny<byte[]>(), It.IsAny<string>(), It.IsAny<string>(), "https://files.example.com", It.IsAny<CancellationToken>()), Times.Once);
+        Assert.Single(_attachmentContent.SanitizeAndDecryptContentCalls, call => call == "");
+        Assert.Single(_fileClient.UploadAsyncCalls, call => call.FileStorageBaseUrl == "https://files.example.com");
         AssertCommitted();
     }
 
@@ -2007,7 +1938,7 @@ public class CalendarServiceTests
     public async Task CreateCalendarEventAsync_LogsTheFailure_WhenTheRepositoryThrows()
     {
         var thrown = new InvalidOperationException("db down");
-        _calendarRepo.Setup(r => r.GetByAccountEmailAsync(Owner, It.IsAny<CancellationToken>())).ThrowsAsync(thrown);
+        _calendarRepo.AnswerGetByAccountEmailAsync((accountEmail, _) => accountEmail == Owner, (_, _) => Task.FromException<List<Calendar>>(thrown));
 
         await CreateSut().CreateCalendarEventAsync(new CalendarEventRequest { CalendarId = 1, Title = "T" }, Owner, "UserIndex", [], null, TestContext.Current.CancellationToken);
 
@@ -2022,16 +1953,16 @@ public class CalendarServiceTests
     public async Task UpdateCalendarEventAsync_MovesTheEventToAnotherOwnedCalendar_AndReplacesItsReminders()
     {
         GivenOwnedCalendars(MakeCalendar(1, "Home"), MakeCalendar(2, "Work"));
-        _eventRepo.Setup(r => r.FindByIdForUpdateAsync(5, It.IsAny<CancellationToken>())).ReturnsAsync(MakeCalendarEvent(5, calendarId: 1));
-        _attachmentContent.Setup(a => a.SanitizeAndDecryptContent(It.IsAny<string>())).Returns<string>(h => h);
+        _eventRepo.AnswerFindByIdForUpdateAsync((idArg, _) => idArg == 5, (_, _) => Task.FromResult<CalendarEvent?>(MakeCalendarEvent(5, calendarId: 1)));
+        _attachmentContent.AnswerSanitizeAndDecryptContent(h => h);
 
         ServiceResult result = await CreateSut().UpdateCalendarEventAsync(
             new CalendarEventRequest { Id = 5, CalendarId = 2, Title = "T", Description = null }, Owner, "UserIndex", [], null, TestContext.Current.CancellationToken);
 
         Assert.True(result.Success);
-        _eventRepo.Verify(r => r.UpdateEntityAsync(It.Is<CalendarEvent>(e => e.Id == 5 && e.CalendarId == 2), It.IsAny<CancellationToken>()), Times.Once);
-        _reminderRepo.Verify(r => r.DeleteByCalendarEventIdAsync(5, It.IsAny<CancellationToken>()), Times.Once);
-        _attachmentContent.Verify(a => a.SanitizeAndDecryptContent(""), Times.Once);
+        Assert.Single(_eventRepo.UpdateEntityAsyncCalls, call => (call.Domain!.Id == 5 && call.Domain!.CalendarId == 2));
+        Assert.Single(_reminderRepo.DeleteByCalendarEventIdAsyncCalls, call => call.CalendarEventId == 5);
+        Assert.Single(_attachmentContent.SanitizeAndDecryptContentCalls, call => call == "");
         AssertCommitted();
     }
 
@@ -2040,11 +1971,10 @@ public class CalendarServiceTests
     public async Task UpdateCalendarEventAsync_SchedulesTheNewReminders_InTheTargetCalendarsTimeZone()
     {
         GivenOwnedCalendars(MakeCalendar(1, "Home"), Calendar.Reconstitute(2, Owner, "Work", null, "Asia/Seoul", "#3788d8", Now, Now));
-        _eventRepo.Setup(r => r.FindByIdForUpdateAsync(5, It.IsAny<CancellationToken>())).ReturnsAsync(MakeCalendarEvent(5, calendarId: 1));
-        _attachmentContent.Setup(a => a.SanitizeAndDecryptContent(It.IsAny<string>())).Returns<string>(h => h);
+        _eventRepo.AnswerFindByIdForUpdateAsync((idArg, _) => idArg == 5, (_, _) => Task.FromResult<CalendarEvent?>(MakeCalendarEvent(5, calendarId: 1)));
+        _attachmentContent.AnswerSanitizeAndDecryptContent(h => h);
         CalendarEventReminder? created = null;
-        _reminderRepo.Setup(r => r.CreateAsync(It.IsAny<CalendarEventReminder>(), It.IsAny<CancellationToken>()))
-            .Callback<CalendarEventReminder, CancellationToken>((r, _) => created = r).Returns(Task.CompletedTask);
+        _reminderRepo.AnswerCreateAsync((r, _) => { created = r; return Task.CompletedTask; });
         DateTime day = Now.Date.AddDays(10);
 
         ServiceResult result = await CreateSut().UpdateCalendarEventAsync(
@@ -2083,7 +2013,7 @@ public class CalendarServiceTests
             "foreign" => MakeCalendarEvent(5, calendarId: 9),
             _ => null
         };
-        _eventRepo.Setup(r => r.FindByIdForUpdateAsync(5, It.IsAny<CancellationToken>())).ReturnsAsync(existing);
+        _eventRepo.AnswerFindByIdForUpdateAsync((idArg, _) => idArg == 5, (_, _) => Task.FromResult<CalendarEvent?>(existing));
 
         ServiceResult result = await CreateSut().UpdateCalendarEventAsync(
             new CalendarEventRequest { Id = 5, CalendarId = 1, Title = "T" }, Owner, "UserIndex", [], null, TestContext.Current.CancellationToken);
@@ -2091,7 +2021,7 @@ public class CalendarServiceTests
         Assert.Equal(ServiceErrorType.Validation, result.ErrorType);
         Assert.Equal("CalendarEvent.InvalidRequest", result.ErrorCode);
         Assert.Equal("Input is invalid", result.ErrorKey);
-        _eventRepo.Verify(r => r.UpdateEntityAsync(It.IsAny<CalendarEvent>(), It.IsAny<CancellationToken>()), Times.Never);
+        Assert.Empty(_eventRepo.UpdateEntityAsyncCalls);
     }
 
     /// <summary>An event update that throws is logged with the event id and the account.</summary>
@@ -2099,7 +2029,7 @@ public class CalendarServiceTests
     public async Task UpdateCalendarEventAsync_LogsTheFailure_WhenTheRepositoryThrows()
     {
         var thrown = new InvalidOperationException("db down");
-        _calendarRepo.Setup(r => r.GetByAccountEmailAsync(Owner, It.IsAny<CancellationToken>())).ThrowsAsync(thrown);
+        _calendarRepo.AnswerGetByAccountEmailAsync((accountEmail, _) => accountEmail == Owner, (_, _) => Task.FromException<List<Calendar>>(thrown));
 
         await CreateSut().UpdateCalendarEventAsync(new CalendarEventRequest { Id = 5, CalendarId = 1, Title = "T" }, Owner, "UserIndex", [], null, TestContext.Current.CancellationToken);
 
@@ -2114,7 +2044,7 @@ public class CalendarServiceTests
 
         await EditEventAsync(null);
 
-        _eventFileRepo.Verify(r => r.UpdateEntityAsync(It.Is<CalendarEventAttachedFile>(f => f.Extension == ""), It.IsAny<CancellationToken>()), Times.Once);
+        Assert.Single(_eventFileRepo.UpdateEntityAsyncCalls, call => (call.Domain!.Extension == ""));
     }
 
     /// <summary>An event delete in one of several owned calendars runs in a committed transaction.</summary>
@@ -2122,12 +2052,12 @@ public class CalendarServiceTests
     public async Task DeleteCalendarEventAsync_DeletesAnEventInAnyOwnedCalendar_AndCommits()
     {
         GivenOwnedCalendars(MakeCalendar(1), MakeCalendar(2));
-        _eventRepo.Setup(r => r.FindByIdAsync(5, It.IsAny<CancellationToken>())).ReturnsAsync(MakeCalendarEvent(5, calendarId: 2));
+        _eventRepo.AnswerFindByIdAsync((idArg, _) => idArg == 5, (_, _) => Task.FromResult<CalendarEvent?>(MakeCalendarEvent(5, calendarId: 2)));
 
         ServiceResult result = await CreateSut().DeleteCalendarEventAsync(5, Owner, TestContext.Current.CancellationToken);
 
         Assert.True(result.Success);
-        _eventRepo.Verify(r => r.DeleteByIdAsync(5, It.IsAny<CancellationToken>()), Times.Once);
+        Assert.Single(_eventRepo.DeleteByIdAsyncCalls, call => call.Id == 5);
         AssertCommitted();
     }
 
@@ -2149,14 +2079,14 @@ public class CalendarServiceTests
     public async Task DeleteCalendarEventAsync_ReturnsEventNotFound_ForAnEventInSomeoneElsesCalendar()
     {
         GivenOwnedCalendars(MakeCalendar(1), MakeCalendar(2));
-        _eventRepo.Setup(r => r.FindByIdAsync(5, It.IsAny<CancellationToken>())).ReturnsAsync(MakeCalendarEvent(5, calendarId: 9));
+        _eventRepo.AnswerFindByIdAsync((idArg, _) => idArg == 5, (_, _) => Task.FromResult<CalendarEvent?>(MakeCalendarEvent(5, calendarId: 9)));
 
         ServiceResult result = await CreateSut().DeleteCalendarEventAsync(5, Owner, TestContext.Current.CancellationToken);
 
         Assert.Equal(ServiceErrorType.NotFound, result.ErrorType);
         Assert.Equal("CalendarEvent.NotFound", result.ErrorCode);
         Assert.Equal("The calendar event could not be found.", result.ErrorKey);
-        _eventRepo.Verify(r => r.DeleteByIdAsync(It.IsAny<long>(), It.IsAny<CancellationToken>()), Times.Never);
+        Assert.Empty(_eventRepo.DeleteByIdAsyncCalls);
     }
 
     /// <summary>An event delete that throws is logged with the event id and the account.</summary>
@@ -2164,7 +2094,7 @@ public class CalendarServiceTests
     public async Task DeleteCalendarEventAsync_LogsTheFailure_WhenTheRepositoryThrows()
     {
         var thrown = new InvalidOperationException("db down");
-        _calendarRepo.Setup(r => r.GetByAccountEmailAsync(Owner, It.IsAny<CancellationToken>())).ThrowsAsync(thrown);
+        _calendarRepo.AnswerGetByAccountEmailAsync((accountEmail, _) => accountEmail == Owner, (_, _) => Task.FromException<List<Calendar>>(thrown));
 
         await CreateSut().DeleteCalendarEventAsync(5, Owner, TestContext.Current.CancellationToken);
 
@@ -2176,13 +2106,20 @@ public class CalendarServiceTests
     public async Task CreateAndUpdateCalendarEvent_SanitizeTheRequestsOwnDescription()
     {
         GivenOwnedCalendars(MakeCalendar(1));
-        _eventRepo.Setup(r => r.FindByIdForUpdateAsync(5, It.IsAny<CancellationToken>())).ReturnsAsync(MakeCalendarEvent(5, calendarId: 1));
-        _attachmentContent.Setup(a => a.SanitizeAndDecryptContent(It.IsAny<string>())).Returns<string>(h => h);
+        _eventRepo.AnswerFindByIdForUpdateAsync((id, _) => id == 5, (_, _) => Task.FromResult<CalendarEvent?>(MakeCalendarEvent(5, calendarId: 1)));
+        _attachmentContent.AnswerSanitizeAndDecryptContent(h => h);
 
         await CreateSut().CreateCalendarEventAsync(new CalendarEventRequest { CalendarId = 1, Title = "T", Description = "<p>new</p>" }, Owner, "UserIndex", [], null, TestContext.Current.CancellationToken);
         await CreateSut().UpdateCalendarEventAsync(new CalendarEventRequest { Id = 5, CalendarId = 1, Title = "T", Description = "<p>edited</p>" }, Owner, "UserIndex", [], null, TestContext.Current.CancellationToken);
 
-        _attachmentContent.Verify(a => a.SanitizeAndDecryptContent("<p>new</p>"), Times.Once);
-        _attachmentContent.Verify(a => a.SanitizeAndDecryptContent("<p>edited</p>"), Times.Once);
+        Assert.Single(_attachmentContent.SanitizeAndDecryptContentCalls, call => call == "<p>new</p>");
+        Assert.Single(_attachmentContent.SanitizeAndDecryptContentCalls, call => call == "<p>edited</p>");
+    }
+
+    /// <inheritdoc />
+    public async ValueTask DisposeAsync()
+    {
+        await _unitOfWork.DisposeAsync();
+        GC.SuppressFinalize(this);
     }
 }

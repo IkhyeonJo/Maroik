@@ -32,7 +32,7 @@ public sealed class FileManagerScanWorkerTests : IAsyncDisposable
     /// <summary>The worker under test, started by <see cref="StartAsync"/>.</summary>
     private readonly FileManagerScanWorker _worker;
 
-    /// <summary>Builds the worker over the real queue and the mocked storage service.</summary>
+    /// <summary>Builds the worker over the real queue and the fake storage service.</summary>
     public FileManagerScanWorkerTests()
     {
         _services = new ServiceCollection().AddScoped<IFileManagerStorageService>(_ => _storage).BuildServiceProvider();

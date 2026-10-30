@@ -23,7 +23,7 @@ public class FileControllerLoggingTests(WebApplicationFactory<Program> baseFacto
     /// <summary>The leading bytes of a JPEG (JFIF) file.</summary>
     private static readonly byte[] _jpeg = [0xFF, 0xD8, 0xFF, 0xE0, 0x00, 0x10, 0x4A, 0x46, 0x49, 0x46, 0x00];
 
-    /// <summary>A client for the host with storage under the temp folder, ClamAV mocked to return <paramref name="scan"/>, and the controller logger captured.</summary>
+    /// <summary>A client for the host with storage under the temp folder, ClamAV faked to return <paramref name="scan"/>, and the controller logger captured.</summary>
     private (HttpClient Client, FakeLogger<FileController> Logger) CreateClient(ClamavScanResult scan)
     {
         var logger = new FakeLogger<FileController>();

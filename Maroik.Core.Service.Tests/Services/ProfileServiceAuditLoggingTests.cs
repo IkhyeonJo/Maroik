@@ -1,6 +1,5 @@
 using Maroik.Core.Contract.Dtos;
 using Maroik.Core.Contract.Enums;
-using Maroik.Core.Contract.Interfaces;
 using Maroik.Core.Contract.Settings;
 using Maroik.Core.Domain.Accounts;
 using Maroik.Core.Service.Services;
@@ -9,7 +8,6 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Testing;
 using Microsoft.Extensions.Options;
 using Microsoft.Extensions.Time.Testing;
-using Moq;
 
 namespace Maroik.Core.Service.Tests.Services;
 
@@ -18,23 +16,23 @@ namespace Maroik.Core.Service.Tests.Services;
 /// current password was wrong) and every avatar upload that is refused — malware, SVG, corrupt image,
 /// scanner outage — is logged with the account, and never with a password or the file content.
 /// </summary>
-public class ProfileServiceAuditLoggingTests
+public class ProfileServiceAuditLoggingTests : IAsyncDisposable
 {
     /// <summary>E-mail of the account every test acts on; audit entries must name it.</summary>
     private const string Email = "user@example.com";
 
-    /// <summary>Mock <c>IAccountRepository</c> injected into the system under test.</summary>
-    private readonly Mock<IAccountRepository> _accountRepo = new();
-    /// <summary>Mock <c>IAssetRepository</c> injected into the system under test.</summary>
-    private readonly Mock<IAssetRepository> _assetRepo = new();
-    /// <summary>Mock <c>IPasswordService</c> injected into the system under test.</summary>
-    private readonly Mock<IPasswordService> _passwordService = new();
-    /// <summary>Mock <c>IFileClient</c> injected into the system under test.</summary>
-    private readonly Mock<IFileClient> _fileClient = new();
-    /// <summary>Mock <c>IImageValidatorService</c> injected into the system under test.</summary>
-    private readonly Mock<IImageValidatorService> _imageValidator = ImageValidatorMock.Create();
-    /// <summary>Mock <c>IUnitOfWork</c> injected into the system under test.</summary>
-    private readonly Mock<IUnitOfWork> _unitOfWork = new();
+    /// <summary>Fake <c>IAccountRepository</c> injected into the system under test.</summary>
+    private readonly FakeAccountRepository _accountRepo = new();
+    /// <summary>Fake <c>IAssetRepository</c> injected into the system under test.</summary>
+    private readonly FakeAssetRepository _assetRepo = new();
+    /// <summary>Fake <c>IPasswordService</c> injected into the system under test.</summary>
+    private readonly FakePasswordService _passwordService = new();
+    /// <summary>Fake <c>IFileClient</c> injected into the system under test.</summary>
+    private readonly FakeFileClient _fileClient = new();
+    /// <summary>Fake <c>IImageValidatorService</c> injected into the system under test.</summary>
+    private readonly FakeImageValidatorService _imageValidator = EchoingImageValidator.Create();
+    /// <summary>Fake <c>IUnitOfWork</c> injected into the system under test.</summary>
+    private readonly FakeUnitOfWork _unitOfWork = new();
     /// <summary>Captures the log entries the system under test writes.</summary>
     private readonly FakeLogger<ProfileService> _logger = new();
 
@@ -43,10 +41,10 @@ public class ProfileServiceAuditLoggingTests
     /// <summary>The clock the service under test reads, stopped at <see cref="Now"/>.</summary>
     private readonly FakeTimeProvider _time = new(new DateTimeOffset(Now));
 
-    /// <summary>The service under test over the mocked dependencies and the capturing logger.</summary>
-    private ProfileService CreateSut() => new(_accountRepo.Object, _assetRepo.Object, _passwordService.Object,
-        _fileClient.Object, _imageValidator.Object,
-        Options.Create(new ServerSetting { FileStorageBaseUrl = "http://localhost:5001" }), _unitOfWork.Object, _logger, _time);
+    /// <summary>The service under test over the fake dependencies and the capturing logger.</summary>
+    private ProfileService CreateSut() => new(_accountRepo, _assetRepo, _passwordService,
+        _fileClient, _imageValidator,
+        Options.Create(new ServerSetting { FileStorageBaseUrl = "http://localhost:5001" }), _unitOfWork, _logger, _time);
 
     /// <summary>The persisted account for <see cref="Email"/>; <paramref name="locked"/> gives it a failed-login lock.</summary>
     private static Account Existing(bool locked = false) =>
@@ -65,11 +63,10 @@ public class ProfileServiceAuditLoggingTests
     /// <summary>Arranges a password change from "oldpass" to "NewPass1!"; the current-password check returns <paramref name="currentPasswordMatches"/>.</summary>
     private void SetupPasswordChange(bool currentPasswordMatches, bool locked = false)
     {
-        _accountRepo.Setup(r => r.FindByEmailForUpdateAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(Existing(locked));
-        _passwordService.Setup(p => p.VerifyPassword("oldpass", It.IsAny<string>())).Returns(currentPasswordMatches);
-        _passwordService.Setup(p => p.HashPassword("NewPass1!")).Returns("$2a$13$newhash");
-        _accountRepo.Setup(r => r.UpdatePasswordAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<bool>(),
-            It.IsAny<string?>(), It.IsAny<bool>(), It.IsAny<long>(), It.IsAny<string?>(), It.IsAny<DateTime>(), It.IsAny<CancellationToken>())).ReturnsAsync(1);
+        _accountRepo.AnswerFindByEmailForUpdateAsync((_, _) => Task.FromResult<Account?>(Existing(locked)));
+        _passwordService.AnswerVerifyPassword((passwordArg, _) => passwordArg == "oldpass", (_, _) => currentPasswordMatches);
+        _passwordService.AnswerHashPassword(passwordArg => passwordArg == "NewPass1!", _ => "$2a$13$newhash");
+        _accountRepo.AnswerUpdatePasswordAsync((_, _, _, _, _, _, _, _, _, _) => Task.FromResult<int>(1));
     }
 
     /// <summary>
@@ -80,17 +77,16 @@ public class ProfileServiceAuditLoggingTests
     public async Task UpdatePassword_FailsAndLogsAnError_WhenTheHasherReturnsAnEmptyHash()
     {
         SetupPasswordChange(currentPasswordMatches: true);
-        _passwordService.Setup(p => p.HashPassword("NewPass1!")).Returns("");
+        _passwordService.AnswerHashPassword(passwordArg => passwordArg == "NewPass1!", _ => "");
 
         var result = await CreateSut().UpdatePasswordAsync(Email, "oldpass", "NewPass1!", TestContext.Current.CancellationToken);
 
         Assert.False(result.Success);
         Assert.Equal("Profile.UpdatePasswordFailed", result.ErrorCode);
         Assert.Equal(ServiceResult.TemporaryErrorKey, result.ErrorKey);
-        _accountRepo.Verify(r => r.UpdatePasswordAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<bool>(),
-            It.IsAny<string?>(), It.IsAny<bool>(), It.IsAny<long>(), It.IsAny<string?>(), It.IsAny<DateTime>(), It.IsAny<CancellationToken>()), Times.Never);
-        _unitOfWork.Verify(u => u.RollbackAsync(It.IsAny<CancellationToken>()), Times.Once);
-        _unitOfWork.Verify(u => u.CommitAsync(It.IsAny<CancellationToken>()), Times.Never);
+        Assert.Empty(_accountRepo.UpdatePasswordAsyncCalls);
+        Assert.Single(_unitOfWork.RollbackAsyncCalls);
+        Assert.Empty(_unitOfWork.CommitAsyncCalls);
         Assert.Contains("Account.PasswordEmpty", Only(LogLevel.Error, "Password change failed").Message, StringComparison.Ordinal);
         Assert.DoesNotContain(_logger.Collector.GetSnapshot(), r => r.Message.Contains("Password changed", StringComparison.Ordinal));
     }
@@ -150,11 +146,10 @@ public class ProfileServiceAuditLoggingTests
     /// <summary>Arranges the image validator verdicts and, when <paramref name="uploaded"/> is given, the upload result.</summary>
     private void SetupUpload(bool valid, bool svg, FileUploadResult? uploaded = null)
     {
-        _imageValidator.Setup(v => v.IsValidImage(It.IsAny<byte[]>())).Returns(valid);
-        _imageValidator.Setup(v => v.IsSvg(It.IsAny<byte[]>())).Returns(svg);
+        _imageValidator.AnswerIsValidImage(_ => valid);
+        _imageValidator.AnswerIsSvg(_ => svg);
         if (uploaded != null)
-            _fileClient.Setup(c => c.UploadWithResultAsync(It.IsAny<byte[]>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
-                .ReturnsAsync(uploaded.Value);
+            _fileClient.AnswerUploadWithResultAsync((_, _, _, _, _) => Task.FromResult<FileUploadResult>(uploaded.Value));
     }
 
     /// <summary>Verifies that an avatar that is not a valid image is refused with a Warning.</summary>
@@ -227,8 +222,8 @@ public class ProfileServiceAuditLoggingTests
     public async Task UploadAvatar_LogsInformation_WhenTheAvatarIsStored()
     {
         SetupUpload(valid: true, svg: false, FileUploadResult.Stored);
-        _accountRepo.Setup(r => r.FindByEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(Existing());
-        _accountRepo.Setup(r => r.UpdateAvatarPathAsync(It.IsAny<string>(), It.IsAny<string?>(), It.IsAny<DateTime>(), It.IsAny<CancellationToken>())).ReturnsAsync(1);
+        _accountRepo.AnswerFindByEmailAsync((_, _) => Task.FromResult<Account?>(Existing()));
+        _accountRepo.AnswerUpdateAvatarPathAsync((_, _, _, _) => Task.FromResult<int>(1));
 
         await CreateSut().UploadAndUpdateAvatarAsync(Email, [0xFF, 0xD8, 0xFF], ".png", TestContext.Current.CancellationToken);
 
@@ -242,7 +237,7 @@ public class ProfileServiceAuditLoggingTests
         using var activity = new System.Diagnostics.Activity("request");
         activity.Start();
         var failure = new HttpRequestException("404");
-        _fileClient.Setup(f => f.DownloadAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>())).ThrowsAsync(failure);
+        _fileClient.AnswerDownloadAsync((_, _, _) => Task.FromException<byte[]>(failure));
 
         Assert.Null(await CreateSut().DownloadAvatarAsync("me.png", TestContext.Current.CancellationToken));
 
@@ -251,5 +246,12 @@ public class ProfileServiceAuditLoggingTests
         Assert.Same(failure, record.Exception);
         Assert.Contains("me.png", record.Message, StringComparison.Ordinal);
         Assert.Contains($"CorrelationId={activity.Id}", record.Message, StringComparison.Ordinal);
+    }
+
+    /// <inheritdoc />
+    public async ValueTask DisposeAsync()
+    {
+        await _unitOfWork.DisposeAsync();
+        GC.SuppressFinalize(this);
     }
 }

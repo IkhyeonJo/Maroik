@@ -1,6 +1,4 @@
-using System.Data;
 using Maroik.Core.Contract.Enums;
-using Maroik.Core.Contract.Interfaces;
 using Maroik.Core.Contract.Settings;
 using Maroik.Core.Domain.Accounts;
 using Maroik.Core.Domain.FileManagers;
@@ -8,13 +6,12 @@ using Maroik.Core.Service.Services;
 using Microsoft.Extensions.Logging.Testing;
 using Microsoft.Extensions.Options;
 using Microsoft.Extensions.Time.Testing;
-using Moq;
 
 namespace Maroik.Core.Service.Tests.Fixtures;
 
 /// <summary>
-/// Builds a <see cref="FileManagerService"/> for its tests: an in-memory node repository, a mocked account repository answering one
-/// account with <see cref="QuotaBytes"/>, a mocked unit of work, a mocked file client that accepts everything unless told otherwise, a
+/// Builds a <see cref="FileManagerService"/> for its tests: an in-memory node repository, a fake account repository answering one
+/// account with <see cref="QuotaBytes"/>, a fake unit of work, a fake file client that accepts everything unless told otherwise, a
 /// captured log and a stopped clock. Seeding helpers add folders and files of <see cref="Email"/>.
 /// </summary>
 internal sealed class FileManagerServiceHarness
@@ -38,13 +35,13 @@ internal sealed class FileManagerServiceHarness
     public InMemoryFileManagerNodeRepository Nodes { get; } = new();
 
     /// <summary>The account repository.</summary>
-    public Mock<IAccountRepository> Accounts { get; } = new();
+    public FakeAccountRepository Accounts { get; } = new();
 
     /// <summary>The unit of work.</summary>
-    public Mock<IUnitOfWork> UnitOfWork { get; } = new();
+    public FakeUnitOfWork UnitOfWork { get; } = new();
 
     /// <summary>The file client.</summary>
-    public Mock<IFileClient> Files { get; } = new();
+    public FakeFileClient Files { get; } = new();
 
     /// <summary>The captured log.</summary>
     public FakeLogger<FileManagerService> Logger { get; } = new();
@@ -61,19 +58,18 @@ internal sealed class FileManagerServiceHarness
     /// <summary>The same, as the locked read inside a transaction sees it (an administrator may change it in between); null = <see cref="ScanDisabled"/>.</summary>
     public bool? ScanDisabledUnderLock { get; set; }
 
-    /// <summary>Wires the mocks.</summary>
+    /// <summary>Wires the fakes.</summary>
     public FileManagerServiceHarness()
     {
-        Accounts.Setup(a => a.FindByEmailForUpdateAsync(Email, It.IsAny<CancellationToken>())).ReturnsAsync(() => Account(ScanDisabledUnderLock ?? ScanDisabled));
-        Accounts.Setup(a => a.FindByEmailAsync(Email, It.IsAny<CancellationToken>())).ReturnsAsync(() => Account(ScanDisabled));
-        UnitOfWork.Setup(u => u.BeginAsync(It.IsAny<IsolationLevel?>(), It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
-        UnitOfWork.Setup(u => u.CommitAsync(It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
-        UnitOfWork.Setup(u => u.RollbackAsync(It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
-        Files.Setup(f => f.AppendFileManagerChunkAsync(It.IsAny<Guid>(), It.IsAny<long>(), It.IsAny<Stream>(), BaseUrl, It.IsAny<CancellationToken>()))
-            .ReturnsAsync((Guid _, long offset, Stream chunk, string _, CancellationToken _) => offset + chunk.Length);
-        Files.Setup(f => f.CompleteFileManagerUploadAsync(It.IsAny<Guid>(), It.IsAny<long>(), It.IsAny<bool>(), BaseUrl, It.IsAny<CancellationToken>())).ReturnsAsync(FileUploadResult.Stored);
-        Files.Setup(f => f.AbortFileManagerUploadAsync(It.IsAny<Guid>(), BaseUrl, It.IsAny<CancellationToken>())).ReturnsAsync(true);
-        Files.Setup(f => f.DeleteFileManagerFileAsync(It.IsAny<string>(), BaseUrl, It.IsAny<CancellationToken>())).ReturnsAsync(true);
+        Accounts.AnswerFindByEmailForUpdateAsync((emailArg, _) => emailArg == Email, (_, _) => Task.FromResult<Account?>(Account(ScanDisabledUnderLock ?? ScanDisabled)));
+        Accounts.AnswerFindByEmailAsync((emailArg, _) => emailArg == Email, (_, _) => Task.FromResult<Account?>(Account(ScanDisabled)));
+        UnitOfWork.AnswerBeginAsync((_, _) => Task.CompletedTask);
+        UnitOfWork.AnswerCommitAsync(_ => Task.CompletedTask);
+        UnitOfWork.AnswerRollbackAsync(_ => Task.CompletedTask);
+        Files.AnswerAppendFileManagerChunkAsync((_, _, _, fileStorageBaseUrl, _) => fileStorageBaseUrl == BaseUrl, (_, offset, chunk, _, _) => Task.FromResult<long?>(offset + chunk.Length));
+        Files.AnswerCompleteFileManagerUploadAsync((_, _, _, fileStorageBaseUrl, _) => fileStorageBaseUrl == BaseUrl, (_, _, _, _, _) => Task.FromResult<FileUploadResult>(FileUploadResult.Stored));
+        Files.AnswerAbortFileManagerUploadAsync((_, fileStorageBaseUrl, _) => fileStorageBaseUrl == BaseUrl, (_, _, _) => Task.FromResult<bool>(true));
+        Files.AnswerDeleteFileManagerFileAsync((_, fileStorageBaseUrl, _) => fileStorageBaseUrl == BaseUrl, (_, _, _) => Task.FromResult<bool>(true));
     }
 
     /// <summary>The account, as the repository loads it.</summary>
@@ -81,7 +77,7 @@ internal sealed class FileManagerServiceHarness
         null, null, Now, Now, null, false, "stamp", false, QuotaBytes, scanDisabled);
 
     /// <summary>The service under test.</summary>
-    public FileManagerService Sut => new(Nodes, Accounts.Object, UnitOfWork.Object, Files.Object,
+    public FileManagerService Sut => new(Nodes, Accounts, UnitOfWork, Files,
         Options.Create(new ServerSetting { FileStorageBaseUrl = BaseUrl }), Logger, Time);
 
     /// <summary>Adds a folder and returns its id.</summary>
@@ -106,19 +102,19 @@ internal sealed class FileManagerServiceHarness
     /// <summary>Asserts the unit of work ran Begin and then Commit (no Rollback).</summary>
     public void AssertCommitted()
     {
-        UnitOfWork.Verify(u => u.BeginAsync(It.IsAny<IsolationLevel?>(), It.IsAny<CancellationToken>()), Times.Once);
-        UnitOfWork.Verify(u => u.CommitAsync(It.IsAny<CancellationToken>()), Times.Once);
-        UnitOfWork.Verify(u => u.RollbackAsync(It.IsAny<CancellationToken>()), Times.Never);
+        Assert.Single(UnitOfWork.BeginAsyncCalls);
+        Assert.Single(UnitOfWork.CommitAsyncCalls);
+        Assert.Empty(UnitOfWork.RollbackAsyncCalls);
     }
 
     /// <summary>Asserts the unit of work ran Begin and then Rollback (no Commit).</summary>
     public void AssertRolledBack()
     {
-        UnitOfWork.Verify(u => u.BeginAsync(It.IsAny<IsolationLevel?>(), It.IsAny<CancellationToken>()), Times.Once);
-        UnitOfWork.Verify(u => u.CommitAsync(It.IsAny<CancellationToken>()), Times.Never);
-        UnitOfWork.Verify(u => u.RollbackAsync(It.IsAny<CancellationToken>()), Times.Once);
+        Assert.Single(UnitOfWork.BeginAsyncCalls);
+        Assert.Empty(UnitOfWork.CommitAsyncCalls);
+        Assert.Single(UnitOfWork.RollbackAsyncCalls);
     }
 
     /// <summary>Asserts the account row was locked before the write.</summary>
-    public void AssertAccountLocked() => Accounts.Verify(a => a.FindByEmailForUpdateAsync(Email, It.IsAny<CancellationToken>()), Times.Once);
+    public void AssertAccountLocked() => Assert.Single(Accounts.FindByEmailForUpdateAsyncCalls, call => call.Email == Email);
 }

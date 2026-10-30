@@ -1,8 +1,7 @@
-using Maroik.Core.Contract.Interfaces;
 using Maroik.Core.Domain.Finances;
 using Maroik.Core.Domain.ValueObjects;
 using Maroik.Core.Service.Extensions;
-using Moq;
+using Maroik.Core.Service.Tests.Fixtures;
 
 namespace Maroik.Core.Service.Tests.Extensions;
 
@@ -21,8 +20,8 @@ public class AssetBalanceOrdinalLockExtensionsTests
     /// <summary>Owner e-mail of every asset in these tests.</summary>
     private const string Email = "user@example.com";
 
-    /// <summary>Mock <c>IAssetBalanceStore</c> injected into the system under test.</summary>
-    private readonly Mock<IAssetBalanceStore> _assetBalance = new();
+    /// <summary>Fake <c>IAssetBalanceStore</c> injected into the system under test.</summary>
+    private readonly FakeAssetBalanceStore _assetBalance = new();
 
     /// <summary>A persisted, active deposit asset named <paramref name="productName"/>.</summary>
     private static Asset MakeAsset(string productName, decimal amount = 100m, string currency = "KRW") =>
@@ -33,20 +32,17 @@ public class AssetBalanceOrdinalLockExtensionsTests
     public async Task GetAssetsOrdinalAsync_RequestsNames_InOrdinalOrder_InASingleBatchedCall()
     {
         List<string>? requestedNames = null;
-        _assetBalance.Setup(a => a.GetAssetsAsync(Email, It.IsAny<IReadOnlyCollection<string>>(), It.IsAny<CancellationToken>()))
-            .Callback<string, IReadOnlyCollection<string>, CancellationToken>((_, names, _) => requestedNames = [.. names])
-            .ReturnsAsync((string _, IReadOnlyCollection<string> names, CancellationToken _) =>
-                names.ToDictionary(n => n, n => MakeAsset(n), StringComparer.Ordinal));
+        _assetBalance.AnswerGetAssetsAsync((accountEmail, _, _) => accountEmail == Email, (_, names, _) => { requestedNames = [.. names]; return Task.FromResult<Dictionary<string, Asset>>(names.ToDictionary(n => n, n => MakeAsset(n), StringComparer.Ordinal)); });
 
         // Deliberately scrambled/reverse-ordinal input order.
         string[] names = ["Zebra", "apple", "Mango"];
 
-        Dictionary<string, Asset> result = await _assetBalance.Object.GetAssetsOrdinalAsync(
+        Dictionary<string, Asset> result = await _assetBalance.GetAssetsOrdinalAsync(
             Email, names, TestContext.Current.CancellationToken);
 
         // Ordinal comparison: uppercase letters sort before lowercase, so "Mango" < "Zebra" < "apple".
         Assert.Equal(["Mango", "Zebra", "apple"], requestedNames);
-        _assetBalance.Verify(a => a.GetAssetsAsync(Email, It.IsAny<IReadOnlyCollection<string>>(), It.IsAny<CancellationToken>()), Times.Once);
+        Assert.Single(_assetBalance.GetAssetsAsyncCalls, call => call.AccountEmail == Email);
         Assert.Equal(3, result.Count);
         Assert.Equal("Mango", result["Mango"].ProductName);
         Assert.Equal("Zebra", result["Zebra"].ProductName);
@@ -58,14 +54,11 @@ public class AssetBalanceOrdinalLockExtensionsTests
     public async Task GetAssetsOrdinalAsync_RequestsDuplicateNames_OnlyOnce()
     {
         List<string>? requestedNames = null;
-        _assetBalance.Setup(a => a.GetAssetsAsync(Email, It.IsAny<IReadOnlyCollection<string>>(), It.IsAny<CancellationToken>()))
-            .Callback<string, IReadOnlyCollection<string>, CancellationToken>((_, names, _) => requestedNames = [.. names])
-            .ReturnsAsync((string _, IReadOnlyCollection<string> names, CancellationToken _) =>
-                names.ToDictionary(n => n, n => MakeAsset(n), StringComparer.Ordinal));
+        _assetBalance.AnswerGetAssetsAsync((accountEmail, _, _) => accountEmail == Email, (_, names, _) => { requestedNames = [.. names]; return Task.FromResult<Dictionary<string, Asset>>(names.ToDictionary(n => n, n => MakeAsset(n), StringComparer.Ordinal)); });
 
         string[] names = ["Apple", "Apple", "Banana", "Apple"];
 
-        Dictionary<string, Asset> result = await _assetBalance.Object.GetAssetsOrdinalAsync(
+        Dictionary<string, Asset> result = await _assetBalance.GetAssetsOrdinalAsync(
             Email, names, TestContext.Current.CancellationToken);
 
         Assert.Equal(["Apple", "Banana"], requestedNames);
@@ -77,14 +70,11 @@ public class AssetBalanceOrdinalLockExtensionsTests
     public async Task GetAssetsOrdinalAsync_FiltersOutNullOrEmptyNames_BeforeTheBatchedCall()
     {
         List<string>? requestedNames = null;
-        _assetBalance.Setup(a => a.GetAssetsAsync(Email, It.IsAny<IReadOnlyCollection<string>>(), It.IsAny<CancellationToken>()))
-            .Callback<string, IReadOnlyCollection<string>, CancellationToken>((_, names, _) => requestedNames = [.. names])
-            .ReturnsAsync((string _, IReadOnlyCollection<string> names, CancellationToken _) =>
-                names.ToDictionary(n => n, n => MakeAsset(n), StringComparer.Ordinal));
+        _assetBalance.AnswerGetAssetsAsync((accountEmail, _, _) => accountEmail == Email, (_, names, _) => { requestedNames = [.. names]; return Task.FromResult<Dictionary<string, Asset>>(names.ToDictionary(n => n, n => MakeAsset(n), StringComparer.Ordinal)); });
 
         List<string?> names = ["Apple", null, "", "Banana"];
 
-        Dictionary<string, Asset> result = await _assetBalance.Object.GetAssetsOrdinalAsync(
+        Dictionary<string, Asset> result = await _assetBalance.GetAssetsOrdinalAsync(
             Email, names, TestContext.Current.CancellationToken);
 
         Assert.Equal(["Apple", "Banana"], requestedNames);
@@ -97,12 +87,11 @@ public class AssetBalanceOrdinalLockExtensionsTests
     [Fact]
     public async Task GetAssetsOrdinalAsync_ExcludesName_WhenBatchedCallOmitsIt()
     {
-        _assetBalance.Setup(a => a.GetAssetsAsync(Email, It.IsAny<IReadOnlyCollection<string>>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new Dictionary<string, Asset>(StringComparer.Ordinal) { ["Apple"] = MakeAsset("Apple") });
+        _assetBalance.AnswerGetAssetsAsync((accountEmail, _, _) => accountEmail == Email, (_, _, _) => Task.FromResult<Dictionary<string, Asset>>(new Dictionary<string, Asset>(StringComparer.Ordinal) { ["Apple"] = MakeAsset("Apple") }));
 
         string[] names = ["Apple", "Missing"];
 
-        Dictionary<string, Asset> result = await _assetBalance.Object.GetAssetsOrdinalAsync(
+        Dictionary<string, Asset> result = await _assetBalance.GetAssetsOrdinalAsync(
             Email, names, TestContext.Current.CancellationToken);
 
         Assert.Single(result);
@@ -149,14 +138,14 @@ public class AssetBalanceOrdinalLockExtensionsTests
     public async Task ApplyBalanceMovementsAsync_NeverFetches()
     {
         Dictionary<string, Asset> assets = new(StringComparer.Ordinal) { ["Wallet"] = MakeAsset("Wallet") };
-        _assetBalance.Setup(a => a.SaveAsync(It.IsAny<Asset>(), It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
+        _assetBalance.AnswerSaveAsync((_, _) => Task.CompletedTask);
 
-        var result = await _assetBalance.Object.ApplyBalanceMovementsAsync(
+        var result = await _assetBalance.ApplyBalanceMovementsAsync(
             assets, [Move("Wallet", 30m, isDeposit: true)],
             Now, TestContext.Current.CancellationToken);
 
         Assert.False(result.IsError);
-        _assetBalance.Verify(a => a.GetAssetsAsync(It.IsAny<string>(), It.IsAny<IReadOnlyCollection<string>>(), It.IsAny<CancellationToken>()), Times.Never);
+        Assert.Empty(_assetBalance.GetAssetsAsyncCalls);
     }
 
     /// <summary>Deposits and withdrawals apply in order and only the touched assets are saved.</summary>
@@ -171,11 +160,9 @@ public class AssetBalanceOrdinalLockExtensionsTests
             ["Payment"] = payment, ["Deposit"] = deposit, ["Untouched"] = untouched
         };
         List<Asset> saved = [];
-        _assetBalance.Setup(a => a.SaveAsync(It.IsAny<Asset>(), It.IsAny<CancellationToken>()))
-            .Callback<Asset, CancellationToken>((asset, _) => saved.Add(asset))
-            .Returns(Task.CompletedTask);
+        _assetBalance.AnswerSaveAsync((asset, _) => { saved.Add(asset); return Task.CompletedTask; });
 
-        var result = await _assetBalance.Object.ApplyBalanceMovementsAsync(
+        var result = await _assetBalance.ApplyBalanceMovementsAsync(
             assets,
             [Move("Payment", 40m, isDeposit: false), Move("Deposit", 40m, isDeposit: true)],
             Now, TestContext.Current.CancellationToken);
@@ -194,10 +181,9 @@ public class AssetBalanceOrdinalLockExtensionsTests
     {
         Dictionary<string, Asset> assets = new(StringComparer.Ordinal) { ["Wallet"] = MakeAsset("Wallet") };
         var saveCalls = 0;
-        _assetBalance.Setup(a => a.SaveAsync(It.IsAny<Asset>(), It.IsAny<CancellationToken>()))
-            .Callback(() => saveCalls++).Returns(Task.CompletedTask);
+        _assetBalance.AnswerSaveAsync((_, _) => { saveCalls++; return Task.CompletedTask; });
 
-        var result = await _assetBalance.Object.ApplyBalanceMovementsAsync(
+        var result = await _assetBalance.ApplyBalanceMovementsAsync(
             assets, [Move("", 10m, isDeposit: true)],
             Now, TestContext.Current.CancellationToken);
 
@@ -210,9 +196,9 @@ public class AssetBalanceOrdinalLockExtensionsTests
     public async Task ApplyBalanceMovementsAsync_ReturnsError_OnCurrencyMismatch()
     {
         Dictionary<string, Asset> assets = new(StringComparer.Ordinal) { ["Wallet"] = MakeAsset("Wallet", currency: "KRW") };
-        _assetBalance.Setup(a => a.SaveAsync(It.IsAny<Asset>(), It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
+        _assetBalance.AnswerSaveAsync((_, _) => Task.CompletedTask);
 
-        var result = await _assetBalance.Object.ApplyBalanceMovementsAsync(
+        var result = await _assetBalance.ApplyBalanceMovementsAsync(
             assets, [Move("Wallet", 10m, isDeposit: true, currency: "USD")],
             Now, TestContext.Current.CancellationToken);
 

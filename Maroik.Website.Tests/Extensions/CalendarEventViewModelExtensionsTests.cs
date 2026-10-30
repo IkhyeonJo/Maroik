@@ -8,7 +8,7 @@ namespace Maroik.Website.Tests.Extensions;
 
 /// <summary>
 /// Unit tests for <see cref="CalendarEventViewModelExtensions"/>.
-/// <see cref="ICalendarService"/> is replaced with a Moq mock; the actual event-to-view-model
+/// <see cref="ICalendarService"/> is replaced with a hand-written fake; the actual event-to-view-model
 /// mapping is delegated to the real <c>CalendarViewModelMapper.ToDisplayViewModel</c>, which is
 /// covered separately by <c>CalendarViewModelMapperTests</c>.
 /// </summary>

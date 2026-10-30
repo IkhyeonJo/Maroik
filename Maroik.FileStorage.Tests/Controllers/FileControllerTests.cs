@@ -12,7 +12,7 @@ namespace Maroik.FileStorage.Tests.Controllers;
 /// <summary>
 /// Integration tests for <see cref="Maroik.FileStorage.Controllers.FileController"/>.
 /// Uses <see cref="WebApplicationFactory{TEntryPoint}"/> to spin up the real ASP.NET pipeline
-/// in memory, replacing <see cref="IClamavClient"/> with a controllable mock.
+/// in memory, replacing <see cref="IClamavClient"/> with a controllable fake.
 ///
 /// Covers every validation path (extension, size, magic bytes, ClamAV, encrypted ZIP), the happy path
 /// (a clean image is written under the storage root and can be downloaded back) and the download edge
@@ -24,16 +24,16 @@ public class FileControllerTests(WebApplicationFactory<Program> baseFactory)
 {
     // -- Factory helpers ------------------------------------------------------
 
-    /// <summary>Returns a factory whose ClamAV mock always marks files as clean.</summary>
+    /// <summary>Returns a factory whose ClamAV fake always marks files as clean.</summary>
     private WebApplicationFactory<Program> FactoryWithCleanScan() =>
         baseFactory.WithWebHostBuilder(b => b.ConfigureServices(services =>
         {
             RemoveService<IClamavClient>(services);
-            var mock = new FakeClamavClient { OnScanWithClamavAsync = (_, _, _, _) => Task.FromResult(ClamavScanResult.Clean) };
-            services.AddScoped<IClamavClient>(_ => mock);
+            var fake = new FakeClamavClient { OnScanWithClamavAsync = (_, _, _, _) => Task.FromResult(ClamavScanResult.Clean) };
+            services.AddScoped<IClamavClient>(_ => fake);
         }));
 
-    /// <summary>Returns a factory whose ClamAV mock can never complete a scan (daemon down).</summary>
+    /// <summary>Returns a factory whose ClamAV fake can never complete a scan (daemon down).</summary>
     private WebApplicationFactory<Program> FactoryWithClamavUnavailable() =>
         baseFactory.WithWebHostBuilder(b =>
         {
@@ -43,12 +43,12 @@ public class FileControllerTests(WebApplicationFactory<Program> baseFactory)
             b.ConfigureServices(services =>
             {
                 RemoveService<IClamavClient>(services);
-                var mock = new FakeClamavClient { OnScanWithClamavAsync = (_, _, _, _) => Task.FromResult(ClamavScanResult.Unavailable) };
-                services.AddScoped<IClamavClient>(_ => mock);
+                var fake = new FakeClamavClient { OnScanWithClamavAsync = (_, _, _, _) => Task.FromResult(ClamavScanResult.Unavailable) };
+                services.AddScoped<IClamavClient>(_ => fake);
             });
         });
 
-    /// <summary>Returns a factory whose ClamAV mock always reports a virus.</summary>
+    /// <summary>Returns a factory whose ClamAV fake always reports a virus.</summary>
     private WebApplicationFactory<Program> FactoryWithVirusDetected() =>
         baseFactory.WithWebHostBuilder(b =>
         {
@@ -58,8 +58,8 @@ public class FileControllerTests(WebApplicationFactory<Program> baseFactory)
             b.ConfigureServices(services =>
             {
                 RemoveService<IClamavClient>(services);
-                var mock = new FakeClamavClient { OnScanWithClamavAsync = (_, _, _, _) => Task.FromResult(ClamavScanResult.Infected) };
-                services.AddScoped<IClamavClient>(_ => mock);
+                var fake = new FakeClamavClient { OnScanWithClamavAsync = (_, _, _, _) => Task.FromResult(ClamavScanResult.Infected) };
+                services.AddScoped<IClamavClient>(_ => fake);
             });
         });
 
@@ -279,8 +279,8 @@ public class FileControllerTests(WebApplicationFactory<Program> baseFactory)
         var factory = baseFactory.WithWebHostBuilder(b => b.ConfigureServices(services =>
         {
             RemoveService<IFileValidationService>(services);
-            var mock = new FakeFileValidationService { OnValidateAndSaveAsync = (_, _) => Task.FromException<(bool, string?)>(new InvalidOperationException("disk full")) };
-            services.AddScoped<IFileValidationService>(_ => mock);
+            var fake = new FakeFileValidationService { OnValidateAndSaveAsync = (_, _) => Task.FromException<(bool, string?)>(new InvalidOperationException("disk full")) };
+            services.AddScoped<IFileValidationService>(_ => fake);
         }));
         var client = factory.CreateClient();
         using var content = new MultipartFormDataContent();
@@ -510,8 +510,8 @@ public class FileControllerTests(WebApplicationFactory<Program> baseFactory)
                 b.ConfigureServices(services =>
                 {
                     RemoveService<IClamavClient>(services);
-                    var mock = new FakeClamavClient { OnScanWithClamavAsync = (_, _, _, _) => Task.FromResult(ClamavScanResult.Clean) };
-                    services.AddScoped<IClamavClient>(_ => mock);
+                    var fake = new FakeClamavClient { OnScanWithClamavAsync = (_, _, _, _) => Task.FromResult(ClamavScanResult.Clean) };
+                    services.AddScoped<IClamavClient>(_ => fake);
                 });
             });
             var client = factory.CreateClient();

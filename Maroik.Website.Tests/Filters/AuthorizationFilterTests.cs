@@ -20,7 +20,7 @@ namespace Maroik.Website.Tests.Filters;
 /// gating driven by <c>MenuNavigationMatcher.ResolveActiveMenuItem</c>. The filter is an authorization
 /// filter (it runs before model binding and before a controller instance exists): it only decides
 /// whether the request may proceed — a denial is a <c>Result</c> on the context, an allow leaves it
-/// null — and leaves the loaded menu on <c>HttpContext.Items</c> for <c>ViewBagPopulatorFilter</c>. All service dependencies are replaced with Moq mocks; the distributed
+/// null — and leaves the loaded menu on <c>HttpContext.Items</c> for <c>ViewBagPopulatorFilter</c>. All service dependencies are replaced with hand-written fakes; the distributed
 /// cache always misses so every test exercises the <see cref="IMenuService"/> fallback path.
 /// </summary>
 public class AuthorizationFilterTests
@@ -42,7 +42,7 @@ public class AuthorizationFilterTests
         _cache.OnGetAsync = (_, _) => Task.FromResult<byte[]?>(null);
     }
 
-    /// <summary>The filter under test over the mocked dependencies.</summary>
+    /// <summary>The filter under test over the fake dependencies.</summary>
     private AuthorizationFilter CreateSut() =>
         new(_menuService, _cache, _sessionService, _accountService, _logger);
 

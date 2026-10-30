@@ -1,14 +1,13 @@
 using Maroik.Core.Contract.Dtos;
-using Maroik.Core.Contract.Interfaces;
 using Maroik.Core.Contract.Settings;
 using Maroik.Core.Domain.Accounts;
 using Maroik.Core.Domain.Calendars;
 using Maroik.Core.Service.Services;
+using Maroik.Core.Service.Tests.Fixtures;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Testing;
 using Microsoft.Extensions.Options;
 using Microsoft.Extensions.Time.Testing;
-using Moq;
 
 namespace Maroik.Core.Service.Tests.Services;
 
@@ -19,30 +18,33 @@ namespace Maroik.Core.Service.Tests.Services;
 /// anonymous visitors), and it is streamed from file storage rather than embedded in the event detail.
 /// A refused download is logged as a permission denial.
 /// </summary>
-public class CalendarServiceAttachmentDownloadTests
+public class CalendarServiceAttachmentDownloadTests : IAsyncDisposable
 {
-    /// <summary>Mock <c>ICalendarRepository</c> injected into the system under test.</summary>
-    private readonly Mock<ICalendarRepository> _calendarRepo = new();
-    /// <summary>Mock <c>ICalendarEventRepository</c> injected into the system under test.</summary>
-    private readonly Mock<ICalendarEventRepository> _eventRepo = new();
-    /// <summary>Mock <c>ICalendarEventAttachedFileRepository</c> injected into the system under test.</summary>
-    private readonly Mock<ICalendarEventAttachedFileRepository> _attachedFileRepo = new();
-    /// <summary>Mock <c>ICalendarSharedRepository</c> injected into the system under test.</summary>
-    private readonly Mock<ICalendarSharedRepository> _sharedRepo = new();
-    /// <summary>Mock <c>IOtherCalendarRepository</c> injected into the system under test.</summary>
-    private readonly Mock<IOtherCalendarRepository> _otherCalendarRepo = new();
-    /// <summary>Mock <c>IAttachmentContentService</c> that opens the stored file.</summary>
-    private readonly Mock<IAttachmentContentService> _attachmentContent = new();
+    /// <summary>Fake <c>IUnitOfWork</c> injected into the system under test.</summary>
+    private readonly FakeUnitOfWork _unitOfWork = new();
+
+    /// <summary>Fake <c>ICalendarRepository</c> injected into the system under test.</summary>
+    private readonly FakeCalendarRepository _calendarRepo = new();
+    /// <summary>Fake <c>ICalendarEventRepository</c> injected into the system under test.</summary>
+    private readonly FakeCalendarEventRepository _eventRepo = new();
+    /// <summary>Fake <c>ICalendarEventAttachedFileRepository</c> injected into the system under test.</summary>
+    private readonly FakeCalendarEventAttachedFileRepository _attachedFileRepo = new();
+    /// <summary>Fake <c>ICalendarSharedRepository</c> injected into the system under test.</summary>
+    private readonly FakeCalendarSharedRepository _sharedRepo = new();
+    /// <summary>Fake <c>IOtherCalendarRepository</c> injected into the system under test.</summary>
+    private readonly FakeOtherCalendarRepository _otherCalendarRepo = new();
+    /// <summary>Fake <c>IAttachmentContentService</c> that opens the stored file.</summary>
+    private readonly FakeAttachmentContentService _attachmentContent = new();
     /// <summary>Captures the log entries the system under test writes.</summary>
     private readonly FakeLogger<CalendarService> _logger = new();
 
     /// <summary>The storage path of the attachment arranged by <see cref="GivenAnEventWithAnAttachment"/>.</summary>
     private const string StoredPath = "upload/Calendar/UserIndex/calendarEventAttachedFiles/7/A.zip";
 
-    /// <summary>The service under test over the mocked dependencies.</summary>
-    private CalendarService CreateSut() => new(_calendarRepo.Object, _eventRepo.Object, _attachedFileRepo.Object,
-        Mock.Of<ICalendarEventReminderRepository>(), _sharedRepo.Object, _otherCalendarRepo.Object,
-        Mock.Of<IFileClient>(), Mock.Of<IUnitOfWork>(), _attachmentContent.Object,
+    /// <summary>The service under test over the fake dependencies.</summary>
+    private CalendarService CreateSut() => new(_calendarRepo, _eventRepo, _attachedFileRepo,
+        new FakeCalendarEventReminderRepository(), _sharedRepo, _otherCalendarRepo,
+        new FakeFileClient(), _unitOfWork, _attachmentContent,
         Options.Create(new ServerSetting()), _logger, new FakeTimeProvider());
 
     /// <summary>A signed-in viewer with <paramref name="email"/>.</summary>
@@ -58,24 +60,22 @@ public class CalendarServiceAttachmentDownloadTests
     /// </summary>
     private void GivenAnEventWithAnAttachment()
     {
-        _calendarRepo.Setup(r => r.GetByAccountEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync([]);
-        _calendarRepo.Setup(r => r.GetByAccountEmailAsync("alice@example.com", It.IsAny<CancellationToken>())).ReturnsAsync([_calendar]);
-        _calendarRepo.Setup(r => r.GetSharedWithGuestsAsync(It.IsAny<CancellationToken>())).ReturnsAsync([]);
-        _calendarRepo.Setup(r => r.GetSubscribedByAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync([]);
-        _eventRepo.Setup(r => r.FindByIdAsync(7, It.IsAny<CancellationToken>()))
-            .ReturnsAsync(CalendarEvent.Reconstitute(7, 3, "t", null, false, DateTime.UtcNow, DateTime.UtcNow.AddHours(1),
-                null, null, null, null, null, DateTime.UtcNow, DateTime.UtcNow));
-        _attachedFileRepo.Setup(r => r.FindByCalendarEventIdAsync(7, It.IsAny<CancellationToken>()))
-            .ReturnsAsync(CalendarEventAttachedFile.Reconstitute(1, 7, 4, "report", ".zip", StoredPath));
+        _calendarRepo.AnswerGetByAccountEmailAsync((_, _) => Task.FromResult<List<Calendar>>([]));
+        _calendarRepo.AnswerGetByAccountEmailAsync((accountEmail, _) => accountEmail == "alice@example.com", (_, _) => Task.FromResult<List<Calendar>>([_calendar]));
+        _calendarRepo.AnswerGetSharedWithGuestsAsync(_ => Task.FromResult<List<Calendar>>([]));
+        _calendarRepo.AnswerGetSubscribedByAsync((_, _) => Task.FromResult<List<Calendar>>([]));
+        _eventRepo.AnswerFindByIdAsync((id, _) => id == 7, (_, _) => Task.FromResult<CalendarEvent?>(CalendarEvent.Reconstitute(7, 3, "t", null, false, DateTime.UtcNow, DateTime.UtcNow.AddHours(1),
+                null, null, null, null, null, DateTime.UtcNow, DateTime.UtcNow)));
+        _attachedFileRepo.AnswerFindByCalendarEventIdAsync((calendarEventId, _) => calendarEventId == 7, (_, _) => Task.FromResult<CalendarEventAttachedFile?>(CalendarEventAttachedFile.Reconstitute(1, 7, 4, "report", ".zip", StoredPath)));
     }
 
     /// <summary>Calendar 3 is shared with guests: the repository's guest query returns it.</summary>
     private void GivenSharedWithGuests() =>
-        _calendarRepo.Setup(r => r.GetSharedWithGuestsAsync(It.IsAny<CancellationToken>())).ReturnsAsync([_calendar]);
+        _calendarRepo.AnswerGetSharedWithGuestsAsync(_ => Task.FromResult<List<Calendar>>([_calendar]));
 
     /// <summary><paramref name="email"/> subscribes to calendar 3 while it is shared with users: the repository's subscribed query returns it.</summary>
     private void GivenSubscribed(string email) =>
-        _calendarRepo.Setup(r => r.GetSubscribedByAsync(email, It.IsAny<CancellationToken>())).ReturnsAsync([_calendar]);
+        _calendarRepo.AnswerGetSubscribedByAsync((accountEmail, _) => accountEmail == email, (_, _) => Task.FromResult<List<Calendar>>([_calendar]));
 
     /// <summary>Asserts the call was refused as a missing event, nothing was opened, and the denial was logged.</summary>
     private void AssertRefusedAndLogged(ServiceResult result, AttachmentDownload? file)
@@ -84,7 +84,7 @@ public class CalendarServiceAttachmentDownloadTests
         Assert.Equal("CalendarEvent.NotFound", result.ErrorCode);
         Assert.Equal("The calendar event could not be found.", result.ErrorKey);
         Assert.Null(file);
-        _attachmentContent.Verify(a => a.OpenFileAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
+        Assert.Empty(_attachmentContent.OpenFileAsyncCalls);
         FakeLogRecord denial = Assert.Single(_logger.Collector.GetSnapshot(), r => r.Level == LogLevel.Warning);
         Assert.Contains("Attachment download refused", denial.Message, StringComparison.Ordinal);
         Assert.Contains("7", denial.Message, StringComparison.Ordinal);
@@ -96,7 +96,7 @@ public class CalendarServiceAttachmentDownloadTests
     {
         GivenAnEventWithAnAttachment();
         var stream = new MemoryStream([1, 2, 3, 4]);
-        _attachmentContent.Setup(a => a.OpenFileAsync(StoredPath, It.IsAny<CancellationToken>())).ReturnsAsync(stream);
+        _attachmentContent.AnswerOpenFileAsync((filePath, _) => filePath == StoredPath, (_, _) => Task.FromResult<Stream?>(stream));
 
         var (result, file) = await CreateSut().OpenCalendarEventAttachedFileAsync(7, Viewer(), TestContext.Current.CancellationToken);
 
@@ -123,7 +123,7 @@ public class CalendarServiceAttachmentDownloadTests
     {
         GivenAnEventWithAnAttachment();
         GivenSubscribed("bob@example.com");
-        _attachmentContent.Setup(a => a.OpenFileAsync(StoredPath, It.IsAny<CancellationToken>())).ReturnsAsync(new MemoryStream([1]));
+        _attachmentContent.AnswerOpenFileAsync((filePath, _) => filePath == StoredPath, (_, _) => Task.FromResult<Stream?>(new MemoryStream([1])));
 
         var (result, file) = await CreateSut().OpenCalendarEventAttachedFileAsync(7, Viewer("bob@example.com"), TestContext.Current.CancellationToken);
 
@@ -137,7 +137,7 @@ public class CalendarServiceAttachmentDownloadTests
     {
         GivenAnEventWithAnAttachment();
         GivenSharedWithGuests();
-        _attachmentContent.Setup(a => a.OpenFileAsync(StoredPath, It.IsAny<CancellationToken>())).ReturnsAsync(new MemoryStream([1]));
+        _attachmentContent.AnswerOpenFileAsync((filePath, _) => filePath == StoredPath, (_, _) => Task.FromResult<Stream?>(new MemoryStream([1])));
 
         var (result, _) = await CreateSut().OpenCalendarEventAttachedFileAsync(7, null, TestContext.Current.CancellationToken);
 
@@ -160,7 +160,7 @@ public class CalendarServiceAttachmentDownloadTests
     public async Task OpenCalendarEventAttachedFileAsync_RefusesAndLogs_AMissingEvent()
     {
         GivenAnEventWithAnAttachment();
-        _eventRepo.Setup(r => r.FindByIdAsync(7, It.IsAny<CancellationToken>())).ReturnsAsync((CalendarEvent?)null);
+        _eventRepo.AnswerFindByIdAsync((id, _) => id == 7, (_, _) => Task.FromResult<CalendarEvent?>(null));
 
         var (result, file) = await CreateSut().OpenCalendarEventAttachedFileAsync(7, Viewer(), TestContext.Current.CancellationToken);
 
@@ -174,15 +174,14 @@ public class CalendarServiceAttachmentDownloadTests
     public async Task OpenCalendarEventAttachedFileAsync_ReportsNotFound_WhenTheEventHasNoAttachment(bool clearedRecord)
     {
         GivenAnEventWithAnAttachment();
-        _attachedFileRepo.Setup(r => r.FindByCalendarEventIdAsync(7, It.IsAny<CancellationToken>()))
-            .ReturnsAsync(clearedRecord ? CalendarEventAttachedFile.Reconstitute(1, 7, 0, "", "", "") : null);
+        _attachedFileRepo.AnswerFindByCalendarEventIdAsync((calendarEventId, _) => calendarEventId == 7, (_, _) => Task.FromResult<CalendarEventAttachedFile?>(clearedRecord ? CalendarEventAttachedFile.Reconstitute(1, 7, 0, "", "", "") : null));
 
         var (result, file) = await CreateSut().OpenCalendarEventAttachedFileAsync(7, Viewer(), TestContext.Current.CancellationToken);
 
         Assert.Equal("CalendarEvent.AttachedFileNotFound", result.ErrorCode);
         Assert.Equal("The attached file could not be found.", result.ErrorKey);
         Assert.Null(file);
-        _attachmentContent.Verify(a => a.OpenFileAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
+        Assert.Empty(_attachmentContent.OpenFileAsyncCalls);
     }
 
     /// <summary>A file the storage service cannot hand out is a failure (logged where it happens), not a missing file.</summary>
@@ -190,7 +189,7 @@ public class CalendarServiceAttachmentDownloadTests
     public async Task OpenCalendarEventAttachedFileAsync_ReportsAFailure_WhenTheFileCannotBeOpened()
     {
         GivenAnEventWithAnAttachment();
-        _attachmentContent.Setup(a => a.OpenFileAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync((Stream?)null);
+        _attachmentContent.AnswerOpenFileAsync((_, _) => Task.FromResult<Stream?>(null));
 
         var (result, file) = await CreateSut().OpenCalendarEventAttachedFileAsync(7, Viewer(), TestContext.Current.CancellationToken);
 
@@ -212,5 +211,12 @@ public class CalendarServiceAttachmentDownloadTests
 
         FakeLogRecord denial = Assert.Single(_logger.Collector.GetSnapshot(), r => r.Level == LogLevel.Warning);
         Assert.EndsWith($"is missing or not visible to {expected}", denial.Message, StringComparison.Ordinal);
+    }
+
+    /// <inheritdoc />
+    public async ValueTask DisposeAsync()
+    {
+        await _unitOfWork.DisposeAsync();
+        GC.SuppressFinalize(this);
     }
 }

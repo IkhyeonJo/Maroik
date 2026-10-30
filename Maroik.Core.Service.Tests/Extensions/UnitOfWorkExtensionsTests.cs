@@ -1,8 +1,7 @@
 using Maroik.Core.Domain.Results;
 using Maroik.Core.Contract.Dtos;
-using Maroik.Core.Contract.Interfaces;
 using Maroik.Core.Service.Extensions;
-using Moq;
+using Maroik.Core.Service.Tests.Fixtures;
 
 namespace Maroik.Core.Service.Tests.Extensions;
 
@@ -11,10 +10,10 @@ namespace Maroik.Core.Service.Tests.Extensions;
 /// transaction and return a failure" helper shared by
 /// <c>IncomeService</c>, <c>ExpenditureService</c>, and <c>CalendarService</c>.
 /// </summary>
-public class UnitOfWorkExtensionsTests
+public class UnitOfWorkExtensionsTests : IAsyncDisposable
 {
-    /// <summary>Mock <c>IUnitOfWork</c> injected into the system under test.</summary>
-    private readonly Mock<IUnitOfWork> _unitOfWork = new();
+    /// <summary>Fake <c>IUnitOfWork</c> injected into the system under test.</summary>
+    private readonly FakeUnitOfWork _unitOfWork = new();
 
     // -- FailAsync(ServiceResult) -----------------------------------------------
 
@@ -24,10 +23,10 @@ public class UnitOfWorkExtensionsTests
     {
         ServiceResult expected = ServiceResult.Conflict("Test.Conflict", "Already exists.");
 
-        ServiceResult result = await _unitOfWork.Object.FailAsync(expected, TestContext.Current.CancellationToken);
+        ServiceResult result = await _unitOfWork.FailAsync(expected, TestContext.Current.CancellationToken);
 
         Assert.Same(expected, result);
-        _unitOfWork.Verify(u => u.RollbackAsync(It.IsAny<CancellationToken>()), Times.Once);
+        Assert.Single(_unitOfWork.RollbackAsyncCalls);
     }
 
     // -- FailAsync(Error) --------------------------------------------------------
@@ -38,11 +37,18 @@ public class UnitOfWorkExtensionsTests
     {
         Error error = Error.Conflict("Test.Conflict", "Already exists.");
 
-        ServiceResult result = await _unitOfWork.Object.FailAsync(error, TestContext.Current.CancellationToken);
+        ServiceResult result = await _unitOfWork.FailAsync(error, TestContext.Current.CancellationToken);
 
         Assert.False(result.Success);
         Assert.Equal(ServiceErrorType.Conflict, result.ErrorType);
         Assert.Equal("Test.Conflict", result.ErrorCode);
-        _unitOfWork.Verify(u => u.RollbackAsync(It.IsAny<CancellationToken>()), Times.Once);
+        Assert.Single(_unitOfWork.RollbackAsyncCalls);
+    }
+
+    /// <inheritdoc />
+    public async ValueTask DisposeAsync()
+    {
+        await _unitOfWork.DisposeAsync();
+        GC.SuppressFinalize(this);
     }
 }

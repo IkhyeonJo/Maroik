@@ -1,15 +1,14 @@
 using Maroik.Core.Contract.Dtos;
-using Maroik.Core.Contract.Interfaces;
 using Maroik.Core.Contract.Messages;
 using Maroik.Core.Contract.Settings;
 using Maroik.Core.Domain.Accounts;
 using Maroik.Core.Domain.Calendars;
 using Maroik.Core.Service.Services;
+using Maroik.Core.Service.Tests.Fixtures;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Testing;
 using Microsoft.Extensions.Options;
 using Microsoft.Extensions.Time.Testing;
-using Moq;
 
 namespace Maroik.Core.Service.Tests.Services;
 
@@ -18,18 +17,18 @@ namespace Maroik.Core.Service.Tests.Services;
 /// calendar's owner through the mail queue (subject and body in the owner's time zone, a link to the owner's calendar page) or
 /// skipped with its reason — and marked handled; a queue failure or an unexpected one rolls back and ends the run, logged.
 /// </summary>
-public class CalendarReminderDispatchServiceTests
+public class CalendarReminderDispatchServiceTests : IAsyncDisposable
 {
     /// <summary>"Now": 2026-11-02 08:30 UTC (17:30 in Seoul).</summary>
     private static readonly DateTime Now = new(2026, 11, 2, 8, 30, 0, DateTimeKind.Utc);
 
-    private readonly Mock<ICalendarEventReminderRepository> _reminders = new();
-    private readonly Mock<ICalendarEventRepository> _events = new();
-    private readonly Mock<ICalendarRepository> _calendars = new();
-    private readonly Mock<IAccountRepository> _accounts = new();
-    private readonly Mock<IEmailPublisher> _publisher = new();
-    private readonly Mock<IMailClient> _mailClient = new();
-    private readonly Mock<IUnitOfWork> _unitOfWork = new();
+    private readonly FakeCalendarEventReminderRepository _reminders = new();
+    private readonly FakeCalendarEventRepository _events = new();
+    private readonly FakeCalendarRepository _calendars = new();
+    private readonly FakeAccountRepository _accounts = new();
+    private readonly FakeEmailPublisher _publisher = new();
+    private readonly FakeMailClient _mailClient = new();
+    private readonly FakeUnitOfWork _unitOfWork = new();
     private readonly FakeLogger<CalendarReminderDispatchService> _logger = new();
     private readonly List<SendEmailMessage> _published = [];
     private readonly List<CalendarEventReminder> _saved = [];
@@ -37,18 +36,15 @@ public class CalendarReminderDispatchServiceTests
     /// <summary>Wires the doubles: an empty queue, a mail body echoing its inputs, a publisher that records.</summary>
     public CalendarReminderDispatchServiceTests()
     {
-        _reminders.Setup(r => r.LockDueAsync(It.IsAny<DateTime>(), 1, It.IsAny<CancellationToken>())).ReturnsAsync([]);
-        _reminders.Setup(r => r.UpdateEntityAsync(It.IsAny<CalendarEventReminder>(), It.IsAny<CancellationToken>()))
-            .Callback<CalendarEventReminder, CancellationToken>((r, _) => _saved.Add(r)).Returns(Task.CompletedTask);
-        _mailClient.Setup(m => m.GetCalendarReminderBody(It.IsAny<CalendarReminderMail>(), It.IsAny<string>()))
-            .Returns<CalendarReminderMail, string>((mail, domain) => $"{mail} @ {domain}");
-        _publisher.Setup(p => p.PublishAsync(It.IsAny<SendEmailMessage>(), It.IsAny<CancellationToken>()))
-            .Callback<SendEmailMessage, CancellationToken>((m, _) => _published.Add(m)).Returns(Task.CompletedTask);
+        _reminders.AnswerLockDueAsync((_, limit, _) => limit == 1, (_, _, _) => Task.FromResult<List<CalendarEventReminder>>([]));
+        _reminders.AnswerUpdateEntityAsync((r, _) => { _saved.Add(r!); return Task.CompletedTask; });
+        _mailClient.AnswerGetCalendarReminderBody((mail, domain) => $"{mail} @ {domain}");
+        _publisher.AnswerPublishAsync((m, _) => { _published.Add(m); return Task.CompletedTask; });
     }
 
     /// <summary>The service under test.</summary>
-    private CalendarReminderDispatchService Sut() => new(_reminders.Object, _events.Object, _calendars.Object, _accounts.Object,
-        _publisher.Object, _mailClient.Object, _unitOfWork.Object,
+    private CalendarReminderDispatchService Sut() => new(_reminders, _events, _calendars, _accounts,
+        _publisher, _mailClient, _unitOfWork,
         Options.Create(new ServerSetting { DomainName = "https://www.maroik.com/", DemoAccountEmail = "demo@maroik.com" }),
         _logger, new FakeTimeProvider(new DateTimeOffset(Now)));
 
@@ -56,11 +52,11 @@ public class CalendarReminderDispatchServiceTests
     private CalendarEventReminder GivenDue(long id, Account? owner, CalendarEvent? calendarEvent = null, DateTime? fireAt = null)
     {
         var reminder = CalendarEventReminder.Reconstitute(id, 41, "Email", 30, null, null, null, null, fireAt ?? Now, null);
-        _reminders.SetupSequence(r => r.LockDueAsync(Now, 1, It.IsAny<CancellationToken>())).ReturnsAsync([reminder]).ReturnsAsync([]);
-        _events.Setup(e => e.FindByIdAsync(41, It.IsAny<CancellationToken>())).ReturnsAsync(calendarEvent ?? TimedEvent());
-        _calendars.Setup(c => c.FindByIdAsync(7, It.IsAny<CancellationToken>()))
-            .ReturnsAsync(Calendar.Reconstitute(7, "owner@example.com", "Home & Work", null, "Asia/Seoul", "#3788d8", Now, Now));
-        _accounts.Setup(a => a.FindByEmailAsync("owner@example.com", It.IsAny<CancellationToken>())).ReturnsAsync(owner);
+        var lockDueAsyncAnswers1 = new Queue<Func<Task<List<CalendarEventReminder>>>>([() => Task.FromResult<List<CalendarEventReminder>>([reminder]), () => Task.FromResult<List<CalendarEventReminder>>([])]);
+        _reminders.AnswerLockDueAsync((nowUtc, limit, _) => nowUtc == Now && limit == 1, (_, _, _) => lockDueAsyncAnswers1.TryDequeue(out var next) ? next() : Task.FromResult<List<CalendarEventReminder>>([]));
+        _events.AnswerFindByIdAsync((idArg, _) => idArg == 41, (_, _) => Task.FromResult<CalendarEvent?>(calendarEvent ?? TimedEvent()));
+        _calendars.AnswerFindByIdAsync((idArg, _) => idArg == 7, (_, _) => Task.FromResult<Calendar?>(Calendar.Reconstitute(7, "owner@example.com", "Home & Work", null, "Asia/Seoul", "#3788d8", Now, Now)));
+        _accounts.AnswerFindByEmailAsync((email, _) => email == "owner@example.com", (_, _) => Task.FromResult<Account?>(owner));
         return reminder;
     }
 
@@ -87,8 +83,8 @@ public class CalendarReminderDispatchServiceTests
         Assert.Equal(new CalendarReminderMail("Dentist", "2026-11-02 18:00 – 19:00 (Asia/Seoul)", "Room 2", "Home & Work", "Calendar/UserIndex")
             + " @ https://www.maroik.com/", mail.Body);
         Assert.Equal(Now, Assert.Single(_saved).HandledAt);
-        _unitOfWork.Verify(u => u.CommitAsync(It.IsAny<CancellationToken>()), Times.Once);
-        _unitOfWork.Verify(u => u.RollbackAsync(It.IsAny<CancellationToken>()), Times.Once); // the empty second look
+        Assert.Single(_unitOfWork.CommitAsyncCalls);
+        Assert.Single(_unitOfWork.RollbackAsyncCalls); // the empty second look
         FakeLogRecord log = Assert.Single(_logger.Collector.GetSnapshot());
         Assert.Equal((LogLevel.Information, "Sent calendar reminder 3 of event 41 to owner@example.com"), (log.Level, log.Message));
     }
@@ -129,14 +125,14 @@ public class CalendarReminderDispatchServiceTests
     {
         GivenDue(6, Owner());
         var down = new InvalidOperationException("broker down");
-        _publisher.Setup(p => p.PublishAsync(It.IsAny<SendEmailMessage>(), It.IsAny<CancellationToken>())).ThrowsAsync(down);
+        _publisher.AnswerPublishAsync((_, _) => Task.FromException(down));
 
         int handled = await Sut().DispatchDueAsync(10, TestContext.Current.CancellationToken);
 
         Assert.Equal(0, handled);
         Assert.Empty(_saved);
-        _unitOfWork.Verify(u => u.RollbackAsync(It.IsAny<CancellationToken>()), Times.Once);
-        _unitOfWork.Verify(u => u.CommitAsync(It.IsAny<CancellationToken>()), Times.Never);
+        Assert.Single(_unitOfWork.RollbackAsyncCalls);
+        Assert.Empty(_unitOfWork.CommitAsyncCalls);
         FakeLogRecord log = Assert.Single(_logger.Collector.GetSnapshot());
         Assert.Equal((LogLevel.Warning, "Could not queue calendar reminder 6 for owner@example.com; it is tried again on the next run"),
             (log.Level, log.Message));
@@ -148,12 +144,12 @@ public class CalendarReminderDispatchServiceTests
     public async Task AnUnexpectedFailure_RollsBack_AndEndsTheRun()
     {
         var broken = new InvalidOperationException("db");
-        _reminders.Setup(r => r.LockDueAsync(It.IsAny<DateTime>(), 1, It.IsAny<CancellationToken>())).ThrowsAsync(broken);
+        _reminders.AnswerLockDueAsync((_, limit, _) => limit == 1, (_, _, _) => Task.FromException<List<CalendarEventReminder>>(broken));
 
         int handled = await Sut().DispatchDueAsync(10, TestContext.Current.CancellationToken);
 
         Assert.Equal(0, handled);
-        _unitOfWork.Verify(u => u.RollbackAsync(It.IsAny<CancellationToken>()), Times.Once);
+        Assert.Single(_unitOfWork.RollbackAsyncCalls);
         FakeLogRecord log = Assert.Single(_logger.Collector.GetSnapshot());
         Assert.Equal((LogLevel.Error, "Failed to handle the due calendar reminders"), (log.Level, log.Message));
         Assert.Same(broken, log.Exception);
@@ -167,10 +163,16 @@ public class CalendarReminderDispatchServiceTests
         Assert.Empty(_published);
 
         GivenDue(7, Owner());
-        _reminders.Setup(r => r.LockDueAsync(Now, 1, It.IsAny<CancellationToken>()))
-            .ReturnsAsync(() => [CalendarEventReminder.Reconstitute(7, 41, "Email", 30, null, null, null, null, Now, null)]);
+        _reminders.AnswerLockDueAsync((nowUtc, limit, _) => nowUtc == Now && limit == 1, (_, _, _) => Task.FromResult<List<CalendarEventReminder>>([CalendarEventReminder.Reconstitute(7, 41, "Email", 30, null, null, null, null, Now, null)]));
 
         Assert.Equal(2, await Sut().DispatchDueAsync(2, TestContext.Current.CancellationToken));
         Assert.Equal(2, _published.Count);
+    }
+
+    /// <inheritdoc />
+    public async ValueTask DisposeAsync()
+    {
+        await _unitOfWork.DisposeAsync();
+        GC.SuppressFinalize(this);
     }
 }

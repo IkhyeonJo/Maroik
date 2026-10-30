@@ -1,6 +1,5 @@
 using Maroik.Core.Contract.Dtos;
 using Maroik.Core.Contract.Enums;
-using Maroik.Core.Contract.Interfaces;
 using Maroik.Core.Contract.Settings;
 using Maroik.Core.Domain.Accounts;
 using Maroik.Core.Domain.Finances;
@@ -10,30 +9,29 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Testing;
 using Microsoft.Extensions.Options;
 using Microsoft.Extensions.Time.Testing;
-using Moq;
 
 namespace Maroik.Core.Service.Tests.Services;
 
 /// <summary>
 /// Unit tests for <see cref="ProfileService"/>.
-/// All repository and dependency-service mocks are provided via Moq.
+/// All repository and dependency-service fakes are hand-written (Fixtures/).
 /// Covers profile retrieval, nickname update, avatar update,
 /// and password-change validation (current-password verification before update).
 /// </summary>
-public class ProfileServiceTests
+public class ProfileServiceTests : IAsyncDisposable
 {
-    /// <summary>Mock <c>IAccountRepository</c> injected into the system under test.</summary>
-    private readonly Mock<IAccountRepository> _accountRepo = new();
-    /// <summary>Mock <c>IAssetRepository</c> injected into the system under test.</summary>
-    private readonly Mock<IAssetRepository> _assetRepo = new();
-    /// <summary>Mock <c>IPasswordService</c> injected into the system under test.</summary>
-    private readonly Mock<IPasswordService> _passwordService = new();
-    /// <summary>Mock <c>IFileClient</c> injected into the system under test.</summary>
-    private readonly Mock<IFileClient> _fileClient = new();
-    /// <summary>Mock <c>IImageValidatorService</c> injected into the system under test.</summary>
-    private readonly Mock<IImageValidatorService> _imageValidator = ImageValidatorMock.Create();
-    /// <summary>Mock <c>IUnitOfWork</c> injected into the system under test.</summary>
-    private readonly Mock<IUnitOfWork> _unitOfWork = new();
+    /// <summary>Fake <c>IAccountRepository</c> injected into the system under test.</summary>
+    private readonly FakeAccountRepository _accountRepo = new();
+    /// <summary>Fake <c>IAssetRepository</c> injected into the system under test.</summary>
+    private readonly FakeAssetRepository _assetRepo = new();
+    /// <summary>Fake <c>IPasswordService</c> injected into the system under test.</summary>
+    private readonly FakePasswordService _passwordService = new();
+    /// <summary>Fake <c>IFileClient</c> injected into the system under test.</summary>
+    private readonly FakeFileClient _fileClient = new();
+    /// <summary>Fake <c>IImageValidatorService</c> injected into the system under test.</summary>
+    private readonly FakeImageValidatorService _imageValidator = EchoingImageValidator.Create();
+    /// <summary>Fake <c>IUnitOfWork</c> injected into the system under test.</summary>
+    private readonly FakeUnitOfWork _unitOfWork = new();
     /// <summary>Captures the log entries the system under test writes.</summary>
     private readonly FakeLogger<ProfileService> _logger = new();
     /// <summary>Settings with a local file-storage URL.</summary>
@@ -45,15 +43,15 @@ public class ProfileServiceTests
     /// <summary>The clock the service under test reads, stopped at <see cref="Now"/>.</summary>
     private readonly FakeTimeProvider _time = new(new DateTimeOffset(Now));
 
-    /// <summary>The service under test over the mocked dependencies.</summary>
+    /// <summary>The service under test over the fake dependencies.</summary>
     private ProfileService CreateSut() => new(
-        _accountRepo.Object,
-        _assetRepo.Object,
-        _passwordService.Object,
-        _fileClient.Object,
-        _imageValidator.Object,
+        _accountRepo,
+        _assetRepo,
+        _passwordService,
+        _fileClient,
+        _imageValidator,
         _settings,
-        _unitOfWork.Object,
+        _unitOfWork,
         _logger,
         _time);
 
@@ -102,7 +100,7 @@ public class ProfileServiceTests
     public async Task GetProfileAsync_DelegatesToRepository()
     {
         var account = ActiveAccount();
-        _accountRepo.Setup(r => r.FindByEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(account);
+        _accountRepo.AnswerFindByEmailAsync((_, _) => Task.FromResult<Account?>(account));
         var sut = CreateSut();
 
         AccountResponse? result = await sut.GetProfileAsync(account.Email.Value, TestContext.Current.CancellationToken);
@@ -117,7 +115,7 @@ public class ProfileServiceTests
     [Fact]
     public async Task UpdateAvatarAsync_ReturnsFail_WhenAccountNotFound()
     {
-        _accountRepo.Setup(r => r.FindByEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync((Account?)null);
+        _accountRepo.AnswerFindByEmailAsync((_, _) => Task.FromResult<Account?>(null));
         var sut = CreateSut();
 
         ServiceResult result = await sut.UpdateAvatarAsync("ghost@example.com", "/new/path.jpg", TestContext.Current.CancellationToken);
@@ -130,15 +128,14 @@ public class ProfileServiceTests
     public async Task UpdateAvatarAsync_UpdatesAvatarPath_WhenAccountFound()
     {
         var account = ActiveAccount();
-        _accountRepo.Setup(r => r.FindByEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(account);
-        _accountRepo.Setup(r => r.UpdateAvatarPathAsync(It.IsAny<string>(), It.IsAny<string?>(), It.IsAny<DateTime>(), It.IsAny<CancellationToken>())).ReturnsAsync(1);
+        _accountRepo.AnswerFindByEmailAsync((_, _) => Task.FromResult<Account?>(account));
+        _accountRepo.AnswerUpdateAvatarPathAsync((_, _, _, _) => Task.FromResult<int>(1));
         var sut = CreateSut();
 
         ServiceResult result = await sut.UpdateAvatarAsync(account.Email.Value, "/new/avatar.jpg", TestContext.Current.CancellationToken);
 
         Assert.True(result.Success);
-        _accountRepo.Verify(r => r.UpdateAvatarPathAsync(
-            account.Email.Value, "/new/avatar.jpg", It.IsAny<DateTime>(), It.IsAny<CancellationToken>()), Times.Once);
+        Assert.Single(_accountRepo.UpdateAvatarPathAsyncCalls, call => call.Email == account.Email.Value && call.AvatarImagePath == "/new/avatar.jpg");
     }
 
     // -- UploadAndUpdateAvatarAsync -----------------------------------------------
@@ -147,29 +144,29 @@ public class ProfileServiceTests
     [Fact]
     public async Task UploadAndUpdateAvatarAsync_ReturnsInvalidImage_WhenNotAnImage()
     {
-        _imageValidator.Setup(v => v.IsValidImage(It.IsAny<byte[]>())).Returns(false);
+        _imageValidator.AnswerIsValidImage(_ => false);
         var sut = CreateSut();
 
         ServiceResult result = await sut.UploadAndUpdateAvatarAsync("user@example.com", [1, 2, 3], ".png", TestContext.Current.CancellationToken);
 
         Assert.False(result.Success);
         Assert.Equal("invalid-image", result.ErrorKey);
-        _fileClient.Verify(c => c.UploadWithResultAsync(It.IsAny<byte[]>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
+        Assert.Empty(_fileClient.UploadWithResultAsyncCalls);
     }
 
     /// <summary>Rejects an SVG even though it is a "valid image", without touching storage.</summary>
     [Fact]
     public async Task UploadAndUpdateAvatarAsync_ReturnsSvgNotAllowed_WhenSvg()
     {
-        _imageValidator.Setup(v => v.IsValidImage(It.IsAny<byte[]>())).Returns(true);
-        _imageValidator.Setup(v => v.IsSvg(It.IsAny<byte[]>())).Returns(true);
+        _imageValidator.AnswerIsValidImage(_ => true);
+        _imageValidator.AnswerIsSvg(_ => true);
         var sut = CreateSut();
 
         ServiceResult result = await sut.UploadAndUpdateAvatarAsync("user@example.com", [1, 2, 3], ".png", TestContext.Current.CancellationToken);
 
         Assert.False(result.Success);
         Assert.Equal("svg-not-allowed", result.ErrorKey);
-        _fileClient.Verify(c => c.UploadWithResultAsync(It.IsAny<byte[]>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
+        Assert.Empty(_fileClient.UploadWithResultAsyncCalls);
     }
 
     /// <summary>A valid image is stored under the avatar directory with the right MIME type, and the account path is updated.</summary>
@@ -177,24 +174,18 @@ public class ProfileServiceTests
     public async Task UploadAndUpdateAvatarAsync_StoresImageAndUpdatesAccountPath_WhenValid()
     {
         var account = ActiveAccount();
-        _imageValidator.Setup(v => v.IsValidImage(It.IsAny<byte[]>())).Returns(true);
-        _imageValidator.Setup(v => v.IsSvg(It.IsAny<byte[]>())).Returns(false);
-        _fileClient.Setup(c => c.UploadWithResultAsync(It.IsAny<byte[]>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(FileUploadResult.Stored);
-        _accountRepo.Setup(r => r.FindByEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(account);
-        _accountRepo.Setup(r => r.UpdateAvatarPathAsync(It.IsAny<string>(), It.IsAny<string?>(), It.IsAny<DateTime>(), It.IsAny<CancellationToken>())).ReturnsAsync(1);
+        _imageValidator.AnswerIsValidImage(_ => true);
+        _imageValidator.AnswerIsSvg(_ => false);
+        _fileClient.AnswerUploadWithResultAsync((_, _, _, _, _) => Task.FromResult<FileUploadResult>(FileUploadResult.Stored));
+        _accountRepo.AnswerFindByEmailAsync((_, _) => Task.FromResult<Account?>(account));
+        _accountRepo.AnswerUpdateAvatarPathAsync((_, _, _, _) => Task.FromResult<int>(1));
         var sut = CreateSut();
 
         ServiceResult result = await sut.UploadAndUpdateAvatarAsync(account.Email.Value, [0xFF, 0xD8, 0xFF], ".JPG", TestContext.Current.CancellationToken);
 
         Assert.True(result.Success);
-        _fileClient.Verify(c => c.UploadWithResultAsync(
-            It.IsAny<byte[]>(), "image/jpeg",
-            It.Is<string>(p => p.StartsWith("upload/Management/Profile/Avatar/") && p.EndsWith(".jpg")),
-            It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Once);
-        _accountRepo.Verify(r => r.UpdateAvatarPathAsync(
-            account.Email.Value, It.Is<string>(p => p.StartsWith("/upload/Management/Profile/Avatar/")),
-            It.IsAny<DateTime>(), It.IsAny<CancellationToken>()), Times.Once);
+        Assert.Single(_fileClient.UploadWithResultAsyncCalls, call => call.ContentType == "image/jpeg" && (call.FilePath.StartsWith("upload/Management/Profile/Avatar/", StringComparison.Ordinal) && call.FilePath.EndsWith(".jpg", StringComparison.Ordinal)));
+        Assert.Single(_accountRepo.UpdateAvatarPathAsyncCalls, call => call.Email == account.Email.Value && (call.AvatarImagePath!.StartsWith("/upload/Management/Profile/Avatar/", StringComparison.Ordinal)));
     }
 
     /// <summary>
@@ -207,15 +198,13 @@ public class ProfileServiceTests
         var account = ActiveAccount();
         byte[] uploadedBytes = [0xFF, 0xD8, 0xFF, 0xE1, 0x45, 0x78, 0x69, 0x66];
         byte[] strippedBytes = [0xFF, 0xD8, 0xFF, 0xDB];
-        _imageValidator.Setup(v => v.IsValidImage(uploadedBytes)).Returns(true);
-        _imageValidator.Setup(v => v.IsSvg(uploadedBytes)).Returns(false);
-        _imageValidator.Setup(v => v.StripMetadata(uploadedBytes)).Returns(new StrippedImage(strippedBytes, ".jpg", "image/jpeg"));
+        _imageValidator.AnswerIsValidImage(bytesArg => bytesArg == uploadedBytes, _ => true);
+        _imageValidator.AnswerIsSvg(bytesArg => bytesArg == uploadedBytes, _ => false);
+        _imageValidator.AnswerStripMetadata(bytesArg => bytesArg == uploadedBytes, _ => new StrippedImage(strippedBytes, ".jpg", "image/jpeg"));
         byte[]? stored = null;
-        _fileClient.Setup(c => c.UploadWithResultAsync(It.IsAny<byte[]>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
-            .Callback<byte[], string, string, string, CancellationToken>((bytes, _, _, _, _) => stored = bytes)
-            .ReturnsAsync(FileUploadResult.Stored);
-        _accountRepo.Setup(r => r.FindByEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(account);
-        _accountRepo.Setup(r => r.UpdateAvatarPathAsync(It.IsAny<string>(), It.IsAny<string?>(), It.IsAny<DateTime>(), It.IsAny<CancellationToken>())).ReturnsAsync(1);
+        _fileClient.AnswerUploadWithResultAsync((bytes, _, _, _, _) => { stored = bytes; return Task.FromResult<FileUploadResult>(FileUploadResult.Stored); });
+        _accountRepo.AnswerFindByEmailAsync((_, _) => Task.FromResult<Account?>(account));
+        _accountRepo.AnswerUpdateAvatarPathAsync((_, _, _, _) => Task.FromResult<int>(1));
 
         ServiceResult result = await CreateSut().UploadAndUpdateAvatarAsync(account.Email.Value, uploadedBytes, ".jpg", TestContext.Current.CancellationToken);
 
@@ -227,21 +216,20 @@ public class ProfileServiceTests
     [Fact]
     public async Task UploadAndUpdateAvatarAsync_DoesNotReencode_AnImageThatFailedValidation()
     {
-        _imageValidator.Setup(v => v.IsValidImage(It.IsAny<byte[]>())).Returns(false);
+        _imageValidator.AnswerIsValidImage(_ => false);
 
         await CreateSut().UploadAndUpdateAvatarAsync("user@example.com", [1, 2, 3], ".png", TestContext.Current.CancellationToken);
 
-        _imageValidator.Verify(v => v.StripMetadata(It.IsAny<byte[]>()), Times.Never);
+        Assert.Empty(_imageValidator.StripMetadataCalls);
     }
 
     /// <summary>A storage upload failure returns a failure result and never updates the account.</summary>
     [Fact]
     public async Task UploadAndUpdateAvatarAsync_ReturnsFailure_WhenStorageUploadFails()
     {
-        _imageValidator.Setup(v => v.IsValidImage(It.IsAny<byte[]>())).Returns(true);
-        _imageValidator.Setup(v => v.IsSvg(It.IsAny<byte[]>())).Returns(false);
-        _fileClient.Setup(c => c.UploadWithResultAsync(It.IsAny<byte[]>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(FileUploadResult.Failed);
+        _imageValidator.AnswerIsValidImage(_ => true);
+        _imageValidator.AnswerIsSvg(_ => false);
+        _fileClient.AnswerUploadWithResultAsync((_, _, _, _, _) => Task.FromResult<FileUploadResult>(FileUploadResult.Failed));
         var sut = CreateSut();
 
         ServiceResult result = await sut.UploadAndUpdateAvatarAsync("user@example.com", [0xFF, 0xD8, 0xFF], ".png", TestContext.Current.CancellationToken);
@@ -249,43 +237,40 @@ public class ProfileServiceTests
         Assert.False(result.Success);
         Assert.Equal("Profile.UploadAvatarFailed", result.ErrorCode);
         Assert.Equal(ServiceResult.TemporaryErrorKey, result.ErrorKey);
-        _accountRepo.Verify(r => r.UpdateAvatarPathAsync(
-            It.IsAny<string>(), It.IsAny<string?>(), It.IsAny<DateTime>(), It.IsAny<CancellationToken>()), Times.Never);
-        _accountRepo.Verify(r => r.UpdateEntityAsync(It.IsAny<Account>(), It.IsAny<CancellationToken>()), Times.Never);
+        Assert.Empty(_accountRepo.UpdateAvatarPathAsyncCalls);
+        Assert.Empty(_accountRepo.UpdateEntityAsyncCalls);
     }
 
     /// <summary>Regression: a virus detection is reported as such (not as a generic "invalid input") and never updates the account.</summary>
     [Fact]
     public async Task UploadAndUpdateAvatarAsync_ReturnsVirusDetected_WhenStorageFlagsTheFile()
     {
-        _imageValidator.Setup(v => v.IsValidImage(It.IsAny<byte[]>())).Returns(true);
-        _imageValidator.Setup(v => v.IsSvg(It.IsAny<byte[]>())).Returns(false);
-        _fileClient.Setup(c => c.UploadWithResultAsync(It.IsAny<byte[]>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(FileUploadResult.Infected);
+        _imageValidator.AnswerIsValidImage(_ => true);
+        _imageValidator.AnswerIsSvg(_ => false);
+        _fileClient.AnswerUploadWithResultAsync((_, _, _, _, _) => Task.FromResult<FileUploadResult>(FileUploadResult.Infected));
         var sut = CreateSut();
 
         ServiceResult result = await sut.UploadAndUpdateAvatarAsync("user@example.com", [0xFF, 0xD8, 0xFF], ".png", TestContext.Current.CancellationToken);
 
         Assert.False(result.Success);
         Assert.Equal("virus-detected", result.ErrorKey);
-        _accountRepo.Verify(r => r.UpdateAvatarPathAsync(It.IsAny<string>(), It.IsAny<string?>(), It.IsAny<DateTime>(), It.IsAny<CancellationToken>()), Times.Never);
+        Assert.Empty(_accountRepo.UpdateAvatarPathAsyncCalls);
     }
 
     /// <summary>A scanner outage is reported separately from a detection and never updates the account.</summary>
     [Fact]
     public async Task UploadAndUpdateAvatarAsync_ReturnsScanUnavailable_WhenTheScannerCouldNotRun()
     {
-        _imageValidator.Setup(v => v.IsValidImage(It.IsAny<byte[]>())).Returns(true);
-        _imageValidator.Setup(v => v.IsSvg(It.IsAny<byte[]>())).Returns(false);
-        _fileClient.Setup(c => c.UploadWithResultAsync(It.IsAny<byte[]>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(FileUploadResult.ScanUnavailable);
+        _imageValidator.AnswerIsValidImage(_ => true);
+        _imageValidator.AnswerIsSvg(_ => false);
+        _fileClient.AnswerUploadWithResultAsync((_, _, _, _, _) => Task.FromResult<FileUploadResult>(FileUploadResult.ScanUnavailable));
         var sut = CreateSut();
 
         ServiceResult result = await sut.UploadAndUpdateAvatarAsync("user@example.com", [0xFF, 0xD8, 0xFF], ".png", TestContext.Current.CancellationToken);
 
         Assert.False(result.Success);
         Assert.Equal("scan-unavailable", result.ErrorKey);
-        _accountRepo.Verify(r => r.UpdateAvatarPathAsync(It.IsAny<string>(), It.IsAny<string?>(), It.IsAny<DateTime>(), It.IsAny<CancellationToken>()), Times.Never);
+        Assert.Empty(_accountRepo.UpdateAvatarPathAsyncCalls);
     }
 
     // -- DownloadAvatarAsync ----------------------------------------------------
@@ -295,8 +280,7 @@ public class ProfileServiceTests
     public async Task DownloadAvatarAsync_ReturnsBytes_WhenStorageHasFile()
     {
         byte[] payload = [1, 2, 3, 4];
-        _fileClient.Setup(c => c.DownloadAsync("upload/Management/Profile/Avatar/abc.png", It.IsAny<string>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(payload);
+        _fileClient.AnswerDownloadAsync((filePath, _, _) => filePath == "upload/Management/Profile/Avatar/abc.png", (_, _, _) => Task.FromResult<byte[]>(payload));
         var sut = CreateSut();
 
         byte[]? result = await sut.DownloadAvatarAsync("abc.png", TestContext.Current.CancellationToken);
@@ -308,8 +292,7 @@ public class ProfileServiceTests
     [Fact]
     public async Task DownloadAvatarAsync_ReturnsNull_WhenStorageThrows()
     {
-        _fileClient.Setup(c => c.DownloadAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
-            .ThrowsAsync(new HttpRequestException("connection refused"));
+        _fileClient.AnswerDownloadAsync((_, _, _) => Task.FromException<byte[]>(new HttpRequestException("connection refused")));
         var sut = CreateSut();
 
         byte[]? result = await sut.DownloadAvatarAsync("abc.png", TestContext.Current.CancellationToken);
@@ -321,8 +304,7 @@ public class ProfileServiceTests
     [Fact]
     public async Task DownloadAvatarAsync_ReturnsNull_WhenStorageReturnsEmpty()
     {
-        _fileClient.Setup(c => c.DownloadAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync([]);
+        _fileClient.AnswerDownloadAsync((_, _, _) => Task.FromResult<byte[]>([]));
         var sut = CreateSut();
 
         byte[]? result = await sut.DownloadAvatarAsync("abc.png", TestContext.Current.CancellationToken);
@@ -336,7 +318,7 @@ public class ProfileServiceTests
     [Fact]
     public async Task UpdateTimeZoneAsync_ReturnsFail_WhenAccountNotFound()
     {
-        _accountRepo.Setup(r => r.FindByEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync((Account?)null);
+        _accountRepo.AnswerFindByEmailAsync((_, _) => Task.FromResult<Account?>(null));
         var sut = CreateSut();
 
         ServiceResult result = await sut.UpdateTimeZoneAsync("ghost@example.com", "Asia/Seoul", TestContext.Current.CancellationToken);
@@ -349,15 +331,14 @@ public class ProfileServiceTests
     public async Task UpdateTimeZoneAsync_UpdatesTimeZone_WhenAccountFound()
     {
         var account = ActiveAccount();
-        _accountRepo.Setup(r => r.FindByEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(account);
-        _accountRepo.Setup(r => r.UpdateTimeZoneAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<DateTime>(), It.IsAny<CancellationToken>())).ReturnsAsync(1);
+        _accountRepo.AnswerFindByEmailAsync((_, _) => Task.FromResult<Account?>(account));
+        _accountRepo.AnswerUpdateTimeZoneAsync((_, _, _, _) => Task.FromResult<int>(1));
         var sut = CreateSut();
 
         ServiceResult result = await sut.UpdateTimeZoneAsync(account.Email.Value, "Asia/Seoul", TestContext.Current.CancellationToken);
 
         Assert.True(result.Success);
-        _accountRepo.Verify(r => r.UpdateTimeZoneAsync(
-            account.Email.Value, "Asia/Seoul", It.IsAny<DateTime>(), It.IsAny<CancellationToken>()), Times.Once);
+        Assert.Single(_accountRepo.UpdateTimeZoneAsyncCalls, call => call.Email == account.Email.Value && call.TimeZoneIanaId == "Asia/Seoul");
     }
 
     // -- UpdatePasswordAsync --------------------------------------------------
@@ -366,13 +347,13 @@ public class ProfileServiceTests
     [Fact]
     public async Task UpdatePasswordAsync_ReturnsFail_WhenAccountNotFound()
     {
-        _accountRepo.Setup(r => r.FindByEmailForUpdateAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync((Account?)null);
+        _accountRepo.AnswerFindByEmailForUpdateAsync((_, _) => Task.FromResult<Account?>(null));
         var sut = CreateSut();
 
         ServiceResult result = await sut.UpdatePasswordAsync("ghost@example.com", "old", "new", TestContext.Current.CancellationToken);
 
         Assert.False(result.Success);
-        _unitOfWork.Verify(u => u.RollbackAsync(It.IsAny<CancellationToken>()), Times.Once);
+        Assert.Single(_unitOfWork.RollbackAsyncCalls);
     }
 
     /// <summary>Verifies that <c>UpdatePasswordAsync</c> returns fail when current password is wrong.</summary>
@@ -380,15 +361,15 @@ public class ProfileServiceTests
     public async Task UpdatePasswordAsync_ReturnsFail_WhenCurrentPasswordIsWrong()
     {
         var account = ActiveAccount();
-        _accountRepo.Setup(r => r.FindByEmailForUpdateAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(account);
-        _passwordService.Setup(p => p.VerifyPassword("wrongpass", account.HashedPassword)).Returns(false);
+        _accountRepo.AnswerFindByEmailForUpdateAsync((_, _) => Task.FromResult<Account?>(account));
+        _passwordService.AnswerVerifyPassword((passwordArg, hashedPassword) => passwordArg == "wrongpass" && hashedPassword == account.HashedPassword, (_, _) => false);
         var sut = CreateSut();
 
         ServiceResult result = await sut.UpdatePasswordAsync(account.Email.Value, "wrongpass", "newpass", TestContext.Current.CancellationToken);
 
         Assert.False(result.Success);
         Assert.Contains("Invalid password", result.ErrorKey, StringComparison.OrdinalIgnoreCase);
-        _unitOfWork.Verify(u => u.RollbackAsync(It.IsAny<CancellationToken>()), Times.Once);
+        Assert.Single(_unitOfWork.RollbackAsyncCalls);
     }
 
     /// <summary>Verifies that <c>UpdatePasswordAsync</c> hashes and updates when current password is correct.</summary>
@@ -396,19 +377,18 @@ public class ProfileServiceTests
     public async Task UpdatePasswordAsync_HashesAndUpdates_WhenCurrentPasswordIsCorrect()
     {
         var account = ActiveAccount();
-        _accountRepo.Setup(r => r.FindByEmailForUpdateAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(account);
-        _passwordService.Setup(p => p.VerifyPassword("oldpass", account.HashedPassword)).Returns(true);
-        _passwordService.Setup(p => p.HashPassword("NewPass1!")).Returns("$2a$13$newhash");
-        _accountRepo.Setup(r => r.UpdatePasswordAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<bool>(), It.IsAny<string?>(), It.IsAny<bool>(), It.IsAny<long>(), It.IsAny<string?>(), It.IsAny<DateTime>(), It.IsAny<CancellationToken>())).ReturnsAsync(1);
+        _accountRepo.AnswerFindByEmailForUpdateAsync((_, _) => Task.FromResult<Account?>(account));
+        _passwordService.AnswerVerifyPassword((passwordArg, hashedPassword) => passwordArg == "oldpass" && hashedPassword == account.HashedPassword, (_, _) => true);
+        _passwordService.AnswerHashPassword(passwordArg => passwordArg == "NewPass1!", _ => "$2a$13$newhash");
+        _accountRepo.AnswerUpdatePasswordAsync((_, _, _, _, _, _, _, _, _, _) => Task.FromResult<int>(1));
         var sut = CreateSut();
 
         ServiceResult result = await sut.UpdatePasswordAsync(account.Email.Value, "oldpass", "NewPass1!", TestContext.Current.CancellationToken);
 
         Assert.True(result.Success);
-        _accountRepo.Verify(r => r.UpdatePasswordAsync(
-            account.Email.Value, "$2a$13$newhash", It.IsAny<string>(), false, null, It.IsAny<bool>(), It.IsAny<long>(), It.IsAny<string?>(), It.IsAny<DateTime>(), It.IsAny<CancellationToken>()), Times.Once);
-        _unitOfWork.Verify(u => u.BeginAsync(null, It.IsAny<CancellationToken>()), Times.Once);
-        _unitOfWork.Verify(u => u.CommitAsync(It.IsAny<CancellationToken>()), Times.Once);
+        Assert.Single(_accountRepo.UpdatePasswordAsyncCalls, call => call.Email == account.Email.Value && call.HashedPassword == "$2a$13$newhash" && call.MustChangePassword == false && call.ResetPasswordToken == null);
+        Assert.Single(_unitOfWork.BeginAsyncCalls, call => call.IsolationLevel == null);
+        Assert.Single(_unitOfWork.CommitAsyncCalls);
     }
 
     /// <summary>
@@ -421,17 +401,16 @@ public class ProfileServiceTests
     {
         var account = ActiveAccount();
         Assert.False(account.RequestPasswordReset(GuidToken.Generate(Now), Now).IsError);
-        _accountRepo.Setup(r => r.FindByEmailForUpdateAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(account);
-        _passwordService.Setup(p => p.VerifyPassword("oldpass", account.HashedPassword)).Returns(true);
-        _passwordService.Setup(p => p.HashPassword("NewPass1!")).Returns("$2a$13$newhash");
-        _accountRepo.Setup(r => r.UpdatePasswordAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<bool>(), It.IsAny<string?>(), It.IsAny<bool>(), It.IsAny<long>(), It.IsAny<string?>(), It.IsAny<DateTime>(), It.IsAny<CancellationToken>())).ReturnsAsync(1);
+        _accountRepo.AnswerFindByEmailForUpdateAsync((_, _) => Task.FromResult<Account?>(account));
+        _passwordService.AnswerVerifyPassword((passwordArg, hashedPassword) => passwordArg == "oldpass" && hashedPassword == account.HashedPassword, (_, _) => true);
+        _passwordService.AnswerHashPassword(passwordArg => passwordArg == "NewPass1!", _ => "$2a$13$newhash");
+        _accountRepo.AnswerUpdatePasswordAsync((_, _, _, _, _, _, _, _, _, _) => Task.FromResult<int>(1));
         var sut = CreateSut();
 
         ServiceResult result = await sut.UpdatePasswordAsync(account.Email.Value, "oldpass", "NewPass1!", TestContext.Current.CancellationToken);
 
         Assert.True(result.Success);
-        _accountRepo.Verify(r => r.UpdatePasswordAsync(
-            account.Email.Value, "$2a$13$newhash", It.IsAny<string>(), false, null, It.IsAny<bool>(), It.IsAny<long>(), It.IsAny<string?>(), It.IsAny<DateTime>(), It.IsAny<CancellationToken>()), Times.Once);
+        Assert.Single(_accountRepo.UpdatePasswordAsyncCalls, call => call.Email == account.Email.Value && call.HashedPassword == "$2a$13$newhash" && call.MustChangePassword == false && call.ResetPasswordToken == null);
     }
 
     /// <summary>
@@ -442,16 +421,15 @@ public class ProfileServiceTests
     public async Task UpdatePasswordAsync_PersistsTheLiftedLock_WhenTheAccountWasLocked()
     {
         var account = ActiveAccount(locked: true);
-        _accountRepo.Setup(r => r.FindByEmailForUpdateAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(account);
-        _passwordService.Setup(p => p.VerifyPassword("oldpass", account.HashedPassword)).Returns(true);
-        _passwordService.Setup(p => p.HashPassword("NewPass1!")).Returns("$2a$13$newhash");
-        _accountRepo.Setup(r => r.UpdatePasswordAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<bool>(), It.IsAny<string?>(), It.IsAny<bool>(), It.IsAny<long>(), It.IsAny<string?>(), It.IsAny<DateTime>(), It.IsAny<CancellationToken>())).ReturnsAsync(1);
+        _accountRepo.AnswerFindByEmailForUpdateAsync((_, _) => Task.FromResult<Account?>(account));
+        _passwordService.AnswerVerifyPassword((passwordArg, hashedPassword) => passwordArg == "oldpass" && hashedPassword == account.HashedPassword, (_, _) => true);
+        _passwordService.AnswerHashPassword(passwordArg => passwordArg == "NewPass1!", _ => "$2a$13$newhash");
+        _accountRepo.AnswerUpdatePasswordAsync((_, _, _, _, _, _, _, _, _, _) => Task.FromResult<int>(1));
 
         ServiceResult result = await CreateSut().UpdatePasswordAsync(account.Email.Value, "oldpass", "NewPass1!", TestContext.Current.CancellationToken);
 
         Assert.True(result.Success);
-        _accountRepo.Verify(r => r.UpdatePasswordAsync(
-            account.Email.Value, "$2a$13$newhash", It.IsAny<string>(), false, null, false, 0L, null, It.IsAny<DateTime>(), It.IsAny<CancellationToken>()), Times.Once);
+        Assert.Single(_accountRepo.UpdatePasswordAsyncCalls, call => call.Email == account.Email.Value && call.HashedPassword == "$2a$13$newhash" && call.MustChangePassword == false && call.ResetPasswordToken == null && call.Locked == false && call.LoginAttempt == 0L && call.Message == null);
     }
 
     /// <summary>
@@ -463,16 +441,16 @@ public class ProfileServiceTests
     public async Task UpdatePasswordAsync_UsesLockedLookup_NotUnlockedFindByEmail()
     {
         var account = ActiveAccount();
-        _accountRepo.Setup(r => r.FindByEmailForUpdateAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(account);
-        _passwordService.Setup(p => p.VerifyPassword("oldpass", account.HashedPassword)).Returns(true);
-        _passwordService.Setup(p => p.HashPassword("NewPass1!")).Returns("$2a$13$newhash");
-        _accountRepo.Setup(r => r.UpdatePasswordAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<bool>(), It.IsAny<string?>(), It.IsAny<bool>(), It.IsAny<long>(), It.IsAny<string?>(), It.IsAny<DateTime>(), It.IsAny<CancellationToken>())).ReturnsAsync(1);
+        _accountRepo.AnswerFindByEmailForUpdateAsync((_, _) => Task.FromResult<Account?>(account));
+        _passwordService.AnswerVerifyPassword((password, hashedPassword) => password == "oldpass" && hashedPassword == account.HashedPassword, (_, _) => true);
+        _passwordService.AnswerHashPassword(password => password == "NewPass1!", _ => "$2a$13$newhash");
+        _accountRepo.AnswerUpdatePasswordAsync((_, _, _, _, _, _, _, _, _, _) => Task.FromResult<int>(1));
         var sut = CreateSut();
 
         await sut.UpdatePasswordAsync(account.Email.Value, "oldpass", "NewPass1!", TestContext.Current.CancellationToken);
 
-        _accountRepo.Verify(r => r.FindByEmailForUpdateAsync(account.Email.Value, It.IsAny<CancellationToken>()), Times.Once);
-        _accountRepo.Verify(r => r.FindByEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
+        Assert.Single(_accountRepo.FindByEmailForUpdateAsyncCalls, call => call.Email == account.Email.Value);
+        Assert.Empty(_accountRepo.FindByEmailAsyncCalls);
     }
 
     // -- UpdateDefaultMonetaryUnitAsync --------------------------------------
@@ -481,14 +459,14 @@ public class ProfileServiceTests
     [Fact]
     public async Task UpdateDefaultMonetaryUnitAsync_IssuesColumnUpdate_EvenWhenAccountMissing()
     {
-        _assetRepo.Setup(r => r.GetByAccountEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync([]);
-        _accountRepo.Setup(r => r.UpdateDefaultMonetaryUnitAsync(It.IsAny<string>(), It.IsAny<string?>(), It.IsAny<CancellationToken>())).ReturnsAsync(0);
+        _assetRepo.AnswerGetByAccountEmailAsync((_, _) => Task.FromResult<List<Asset>>([]));
+        _accountRepo.AnswerUpdateDefaultMonetaryUnitAsync((_, _, _) => Task.FromResult<int>(0));
         var sut = CreateSut();
 
         await sut.UpdateDefaultMonetaryUnitAsync("missing@example.com", "KRW", TestContext.Current.CancellationToken);
 
-        _accountRepo.Verify(r => r.UpdateEntityAsync(It.IsAny<Account>(), It.IsAny<CancellationToken>()), Times.Never);
-        _accountRepo.Verify(r => r.UpdateDefaultMonetaryUnitAsync("missing@example.com", null, It.IsAny<CancellationToken>()), Times.Once);
+        Assert.Empty(_accountRepo.UpdateEntityAsyncCalls);
+        Assert.Single(_accountRepo.UpdateDefaultMonetaryUnitAsyncCalls, call => call.Email == "missing@example.com" && call.DefaultMonetaryUnit == null);
     }
 
     /// <summary>Verifies that <c>UpdateDefaultMonetaryUnitAsync</c> persists unit when it exists in assets.</summary>
@@ -496,13 +474,13 @@ public class ProfileServiceTests
     public async Task UpdateDefaultMonetaryUnitAsync_SetsUnit_WhenUnitExistsInAssets()
     {
         var account = ActiveAccount();
-        _assetRepo.Setup(r => r.GetByAccountEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync([MakeAsset("Wallet")]);
-        _accountRepo.Setup(r => r.UpdateDefaultMonetaryUnitAsync(It.IsAny<string>(), It.IsAny<string?>(), It.IsAny<CancellationToken>())).ReturnsAsync(1);
+        _assetRepo.AnswerGetByAccountEmailAsync((_, _) => Task.FromResult<List<Asset>>([MakeAsset("Wallet")]));
+        _accountRepo.AnswerUpdateDefaultMonetaryUnitAsync((_, _, _) => Task.FromResult<int>(1));
         var sut = CreateSut();
 
         await sut.UpdateDefaultMonetaryUnitAsync(account.Email.Value, "KRW", TestContext.Current.CancellationToken);
 
-        _accountRepo.Verify(r => r.UpdateDefaultMonetaryUnitAsync(account.Email.Value, "KRW", It.IsAny<CancellationToken>()), Times.Once);
+        Assert.Single(_accountRepo.UpdateDefaultMonetaryUnitAsyncCalls, call => call.Email == account.Email.Value && call.DefaultMonetaryUnit == "KRW");
     }
 
     /// <summary>Verifies that <c>UpdateDefaultMonetaryUnitAsync</c> clears unit when it is not in assets.</summary>
@@ -510,13 +488,13 @@ public class ProfileServiceTests
     public async Task UpdateDefaultMonetaryUnitAsync_SetsNull_WhenUnitNotInAssets()
     {
         var account = ActiveAccount();
-        _assetRepo.Setup(r => r.GetByAccountEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync([MakeAsset("Wallet", "USD")]);
-        _accountRepo.Setup(r => r.UpdateDefaultMonetaryUnitAsync(It.IsAny<string>(), It.IsAny<string?>(), It.IsAny<CancellationToken>())).ReturnsAsync(1);
+        _assetRepo.AnswerGetByAccountEmailAsync((_, _) => Task.FromResult<List<Asset>>([MakeAsset("Wallet", "USD")]));
+        _accountRepo.AnswerUpdateDefaultMonetaryUnitAsync((_, _, _) => Task.FromResult<int>(1));
         var sut = CreateSut();
 
         await sut.UpdateDefaultMonetaryUnitAsync(account.Email.Value, "KRW", TestContext.Current.CancellationToken);
 
-        _accountRepo.Verify(r => r.UpdateDefaultMonetaryUnitAsync(account.Email.Value, null, It.IsAny<CancellationToken>()), Times.Once);
+        Assert.Single(_accountRepo.UpdateDefaultMonetaryUnitAsyncCalls, call => call.Email == account.Email.Value && call.DefaultMonetaryUnit == null);
     }
 
     /// <summary>Verifies that <c>UpdateDefaultMonetaryUnitAsync</c> accepts a soft-deleted asset's currency (the dashboard counts deleted assets too).</summary>
@@ -524,14 +502,13 @@ public class ProfileServiceTests
     public async Task UpdateDefaultMonetaryUnitAsync_SetsUnit_WhenUnitOnlyExistsOnDeletedAsset()
     {
         var account = ActiveAccount();
-        _assetRepo.Setup(r => r.GetByAccountEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync([MakeAsset("OldForeignAccount", "USD", deleted: true)]);
-        _accountRepo.Setup(r => r.UpdateDefaultMonetaryUnitAsync(It.IsAny<string>(), It.IsAny<string?>(), It.IsAny<CancellationToken>())).ReturnsAsync(1);
+        _assetRepo.AnswerGetByAccountEmailAsync((_, _) => Task.FromResult<List<Asset>>([MakeAsset("OldForeignAccount", "USD", deleted: true)]));
+        _accountRepo.AnswerUpdateDefaultMonetaryUnitAsync((_, _, _) => Task.FromResult<int>(1));
         var sut = CreateSut();
 
         await sut.UpdateDefaultMonetaryUnitAsync(account.Email.Value, "USD", TestContext.Current.CancellationToken);
 
-        _accountRepo.Verify(r => r.UpdateDefaultMonetaryUnitAsync(account.Email.Value, "USD", It.IsAny<CancellationToken>()), Times.Once);
+        Assert.Single(_accountRepo.UpdateDefaultMonetaryUnitAsyncCalls, call => call.Email == account.Email.Value && call.DefaultMonetaryUnit == "USD");
     }
 
     // -- Failure branches ---------------------------------------------------------
@@ -540,7 +517,7 @@ public class ProfileServiceTests
     [Fact]
     public async Task UpdateAvatarAsync_ReportsUpdateAvatarFailed_WhenTheRepositoryThrows()
     {
-        _accountRepo.Setup(r => r.FindByEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ThrowsAsync(new InvalidOperationException("secret detail"));
+        _accountRepo.AnswerFindByEmailAsync((_, _) => Task.FromException<Account?>(new InvalidOperationException("secret detail")));
 
         ServiceResult result = await CreateSut().UpdateAvatarAsync("user@example.com", "/a.png", TestContext.Current.CancellationToken);
 
@@ -553,20 +530,20 @@ public class ProfileServiceTests
     [Fact]
     public async Task UpdateTimeZoneAsync_ReturnsTheDomainValidationError_ForAnUnknownTimeZone()
     {
-        _accountRepo.Setup(r => r.FindByEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(ActiveAccount());
+        _accountRepo.AnswerFindByEmailAsync((_, _) => Task.FromResult<Account?>(ActiveAccount()));
 
         ServiceResult result = await CreateSut().UpdateTimeZoneAsync("user@example.com", "Mars/Olympus_Mons", TestContext.Current.CancellationToken);
 
         Assert.False(result.Success);
         Assert.NotEqual("Profile.UpdateTimezoneFailed", result.ErrorCode);
-        _accountRepo.Verify(r => r.UpdateTimeZoneAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<DateTime>(), It.IsAny<CancellationToken>()), Times.Never);
+        Assert.Empty(_accountRepo.UpdateTimeZoneAsyncCalls);
     }
 
     /// <summary>A repository failure while saving the time zone is caught and reported generically.</summary>
     [Fact]
     public async Task UpdateTimeZoneAsync_ReportsUpdateTimezoneFailed_WhenTheRepositoryThrows()
     {
-        _accountRepo.Setup(r => r.FindByEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ThrowsAsync(new InvalidOperationException("secret detail"));
+        _accountRepo.AnswerFindByEmailAsync((_, _) => Task.FromException<Account?>(new InvalidOperationException("secret detail")));
 
         ServiceResult result = await CreateSut().UpdateTimeZoneAsync("user@example.com", "UTC", TestContext.Current.CancellationToken);
 
@@ -579,35 +556,34 @@ public class ProfileServiceTests
     [Fact]
     public async Task UpdatePasswordAsync_ReturnsPolicyViolation_AndDoesNotHashOrWrite_WhenTheNewPasswordIsTooWeak()
     {
-        _accountRepo.Setup(r => r.FindByEmailForUpdateAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(ActiveAccount());
-        _passwordService.Setup(p => p.VerifyPassword(It.IsAny<string>(), It.IsAny<string>())).Returns(true);
+        _accountRepo.AnswerFindByEmailForUpdateAsync((_, _) => Task.FromResult<Account?>(ActiveAccount()));
+        _passwordService.AnswerVerifyPassword((_, _) => true);
 
         ServiceResult result = await CreateSut().UpdatePasswordAsync("user@example.com", "current", "weak", TestContext.Current.CancellationToken);
 
         Assert.False(result.Success);
         Assert.Equal("Account.PasswordPolicy", result.ErrorCode);
-        _passwordService.Verify(p => p.HashPassword(It.IsAny<string>()), Times.Never);
-        _accountRepo.Verify(r => r.UpdatePasswordAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<bool>(), It.IsAny<string?>(), It.IsAny<bool>(), It.IsAny<long>(), It.IsAny<string?>(), It.IsAny<DateTime>(), It.IsAny<CancellationToken>()), Times.Never);
-        _unitOfWork.Verify(u => u.RollbackAsync(It.IsAny<CancellationToken>()), Times.Once);
+        Assert.Empty(_passwordService.HashPasswordCalls);
+        Assert.Empty(_accountRepo.UpdatePasswordAsyncCalls);
+        Assert.Single(_unitOfWork.RollbackAsyncCalls);
     }
 
     /// <summary>A failure while persisting the new password is rolled back and reported generically.</summary>
     [Fact]
     public async Task UpdatePasswordAsync_RollsBackAndReportsUpdatePasswordFailed_WhenTheRepositoryThrows()
     {
-        _accountRepo.Setup(r => r.FindByEmailForUpdateAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(ActiveAccount());
-        _passwordService.Setup(p => p.VerifyPassword(It.IsAny<string>(), It.IsAny<string>())).Returns(true);
-        _passwordService.Setup(p => p.HashPassword(It.IsAny<string>())).Returns("$2a$13$new");
-        _accountRepo.Setup(r => r.UpdatePasswordAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<bool>(), It.IsAny<string?>(), It.IsAny<bool>(), It.IsAny<long>(), It.IsAny<string?>(), It.IsAny<DateTime>(), It.IsAny<CancellationToken>()))
-            .ThrowsAsync(new InvalidOperationException("secret detail"));
+        _accountRepo.AnswerFindByEmailForUpdateAsync((_, _) => Task.FromResult<Account?>(ActiveAccount()));
+        _passwordService.AnswerVerifyPassword((_, _) => true);
+        _passwordService.AnswerHashPassword(_ => "$2a$13$new");
+        _accountRepo.AnswerUpdatePasswordAsync((_, _, _, _, _, _, _, _, _, _) => Task.FromException<int>(new InvalidOperationException("secret detail")));
 
         ServiceResult result = await CreateSut().UpdatePasswordAsync("user@example.com", "current", "NewPass1!", TestContext.Current.CancellationToken);
 
         Assert.Equal("Profile.UpdatePasswordFailed", result.ErrorCode);
         Assert.Equal(ServiceResult.TemporaryErrorKey, result.ErrorKey);
         Assert.DoesNotContain("secret detail", result.ErrorKey, StringComparison.Ordinal);
-        _unitOfWork.Verify(u => u.RollbackAsync(It.IsAny<CancellationToken>()), Times.Once);
-        _unitOfWork.Verify(u => u.CommitAsync(It.IsAny<CancellationToken>()), Times.Never);
+        Assert.Single(_unitOfWork.RollbackAsyncCalls);
+        Assert.Empty(_unitOfWork.CommitAsyncCalls);
     }
 
     /// <summary>The extension allow-list is re-asserted in the service: a disallowed extension never reaches the validator or storage.</summary>
@@ -621,8 +597,8 @@ public class ProfileServiceTests
         ServiceResult result = await CreateSut().UploadAndUpdateAvatarAsync("user@example.com", [1, 2, 3], extension, TestContext.Current.CancellationToken);
 
         Assert.Equal("invalid-image", result.ErrorKey);
-        _imageValidator.Verify(v => v.IsValidImage(It.IsAny<byte[]>()), Times.Never);
-        _fileClient.Verify(c => c.UploadWithResultAsync(It.IsAny<byte[]>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
+        Assert.Empty(_imageValidator.IsValidImageCalls);
+        Assert.Empty(_fileClient.UploadWithResultAsyncCalls);
     }
 
     /// <summary>
@@ -640,26 +616,22 @@ public class ProfileServiceTests
         string uploadedExtension, bool pngContent, string storedExtension, string storedContentType)
     {
         byte[] bytes = pngContent ? [0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A, 0x00] : [0xFF, 0xD8, 0xFF, 0xDB];
-        _imageValidator.Setup(v => v.IsValidImage(It.IsAny<byte[]>())).Returns(true);
-        _fileClient.Setup(c => c.UploadWithResultAsync(It.IsAny<byte[]>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(FileUploadResult.Stored);
-        _accountRepo.Setup(r => r.FindByEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(ActiveAccount());
-        _accountRepo.Setup(r => r.UpdateAvatarPathAsync(It.IsAny<string>(), It.IsAny<string?>(), It.IsAny<DateTime>(), It.IsAny<CancellationToken>())).ReturnsAsync(1);
+        _imageValidator.AnswerIsValidImage(_ => true);
+        _fileClient.AnswerUploadWithResultAsync((_, _, _, _, _) => Task.FromResult<FileUploadResult>(FileUploadResult.Stored));
+        _accountRepo.AnswerFindByEmailAsync((_, _) => Task.FromResult<Account?>(ActiveAccount()));
+        _accountRepo.AnswerUpdateAvatarPathAsync((_, _, _, _) => Task.FromResult<int>(1));
 
         await CreateSut().UploadAndUpdateAvatarAsync("user@example.com", bytes, uploadedExtension, TestContext.Current.CancellationToken);
 
-        _fileClient.Verify(c => c.UploadWithResultAsync(
-            It.IsAny<byte[]>(), storedContentType, It.Is<string>(p => p.EndsWith(storedExtension)),
-            It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Once);
-        _accountRepo.Verify(r => r.UpdateAvatarPathAsync(
-            It.IsAny<string>(), It.Is<string>(p => p.EndsWith(storedExtension)), It.IsAny<DateTime>(), It.IsAny<CancellationToken>()), Times.Once);
+        Assert.Single(_fileClient.UploadWithResultAsyncCalls, call => call.ContentType == storedContentType && (call.FilePath.EndsWith(storedExtension, StringComparison.Ordinal)));
+        Assert.Single(_accountRepo.UpdateAvatarPathAsyncCalls, call => (call.AvatarImagePath!.EndsWith(storedExtension, StringComparison.Ordinal)));
     }
 
     /// <summary>An unexpected failure while validating/storing the avatar is caught and reported generically.</summary>
     [Fact]
     public async Task UploadAndUpdateAvatarAsync_ReportsUploadAvatarFailed_WhenTheValidatorThrows()
     {
-        _imageValidator.Setup(v => v.IsSvg(It.IsAny<byte[]>())).Throws(new InvalidOperationException("secret detail"));
+        _imageValidator.AnswerIsSvg(_ => throw new InvalidOperationException("secret detail"));
 
         ServiceResult result = await CreateSut().UploadAndUpdateAvatarAsync("user@example.com", [1, 2, 3], ".png", TestContext.Current.CancellationToken);
 
@@ -692,14 +664,13 @@ public class ProfileServiceTests
     /// <summary>Makes the validator accept the upload as a (non-SVG) image.</summary>
     private void GivenAValidImage()
     {
-        _imageValidator.Setup(v => v.IsValidImage(It.IsAny<byte[]>())).Returns(true);
-        _imageValidator.Setup(v => v.IsSvg(It.IsAny<byte[]>())).Returns(false);
+        _imageValidator.AnswerIsValidImage(_ => true);
+        _imageValidator.AnswerIsSvg(_ => false);
     }
 
     /// <summary>Makes the file storage answer every upload with <paramref name="outcome"/>.</summary>
     private void GivenTheStorageAnswers(FileUploadResult outcome) =>
-        _fileClient.Setup(c => c.UploadWithResultAsync(It.IsAny<byte[]>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(outcome);
+        _fileClient.AnswerUploadWithResultAsync((_, _, _, _, _) => Task.FromResult<FileUploadResult>(outcome));
 
     /// <summary>An unknown e-mail has no profile.</summary>
     [Fact]
@@ -713,7 +684,7 @@ public class ProfileServiceTests
     public async Task UpdateAvatarAsync_ReturnsAccountNotFound_WhenTheAccountIsUnknown()
     {
         AssertAccountNotFound(await CreateSut().UpdateAvatarAsync(Email, "/a.png", TestContext.Current.CancellationToken));
-        _accountRepo.Verify(r => r.UpdateAvatarPathAsync(It.IsAny<string>(), It.IsAny<string?>(), It.IsAny<DateTime>(), It.IsAny<CancellationToken>()), Times.Never);
+        Assert.Empty(_accountRepo.UpdateAvatarPathAsyncCalls);
     }
 
     /// <summary>An avatar update that throws is logged with the exception and the account.</summary>
@@ -721,7 +692,7 @@ public class ProfileServiceTests
     public async Task UpdateAvatarAsync_LogsTheFailure_WhenTheRepositoryThrows()
     {
         var thrown = new InvalidOperationException("boom");
-        _accountRepo.Setup(r => r.FindByEmailAsync(Email, It.IsAny<CancellationToken>())).ThrowsAsync(thrown);
+        _accountRepo.AnswerFindByEmailAsync((email, _) => email == Email, (_, _) => Task.FromException<Account?>(thrown));
 
         await CreateSut().UpdateAvatarAsync(Email, "/a.png", TestContext.Current.CancellationToken);
 
@@ -733,7 +704,7 @@ public class ProfileServiceTests
     public async Task UpdateTimeZoneAsync_ReturnsAccountNotFound_WhenTheAccountIsUnknown()
     {
         AssertAccountNotFound(await CreateSut().UpdateTimeZoneAsync(Email, "Asia/Seoul", TestContext.Current.CancellationToken));
-        _accountRepo.Verify(r => r.UpdateTimeZoneAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<DateTime>(), It.IsAny<CancellationToken>()), Times.Never);
+        Assert.Empty(_accountRepo.UpdateTimeZoneAsyncCalls);
     }
 
     /// <summary>A time-zone update that throws is logged with the exception and the account.</summary>
@@ -741,7 +712,7 @@ public class ProfileServiceTests
     public async Task UpdateTimeZoneAsync_LogsTheFailure_WhenTheRepositoryThrows()
     {
         var thrown = new InvalidOperationException("boom");
-        _accountRepo.Setup(r => r.FindByEmailAsync(Email, It.IsAny<CancellationToken>())).ThrowsAsync(thrown);
+        _accountRepo.AnswerFindByEmailAsync((email, _) => email == Email, (_, _) => Task.FromException<Account?>(thrown));
 
         await CreateSut().UpdateTimeZoneAsync(Email, "Asia/Seoul", TestContext.Current.CancellationToken);
 
@@ -753,15 +724,15 @@ public class ProfileServiceTests
     public async Task UpdatePasswordAsync_ReturnsAccountNotFound_AndRollsBack_WhenTheAccountIsUnknown()
     {
         AssertAccountNotFound(await CreateSut().UpdatePasswordAsync(Email, "Old1234!", "New1234!", TestContext.Current.CancellationToken));
-        _unitOfWork.Verify(u => u.RollbackAsync(It.IsAny<CancellationToken>()), Times.Once);
+        Assert.Single(_unitOfWork.RollbackAsyncCalls);
     }
 
     /// <summary>A wrong current password is the "invalid password" Validation error.</summary>
     [Fact]
     public async Task UpdatePasswordAsync_ReturnsWrongPassword_WithItsMessage_WhenTheCurrentPasswordIsWrong()
     {
-        _accountRepo.Setup(r => r.FindByEmailForUpdateAsync(Email, It.IsAny<CancellationToken>())).ReturnsAsync(ActiveAccount());
-        _passwordService.Setup(p => p.VerifyPassword(It.IsAny<string>(), It.IsAny<string>())).Returns(false);
+        _accountRepo.AnswerFindByEmailForUpdateAsync((email, _) => email == Email, (_, _) => Task.FromResult<Account?>(ActiveAccount()));
+        _passwordService.AnswerVerifyPassword((_, _) => false);
 
         ServiceResult result = await CreateSut().UpdatePasswordAsync(Email, "Wrong1234!", "New1234!", TestContext.Current.CancellationToken);
 
@@ -775,7 +746,7 @@ public class ProfileServiceTests
     public async Task UpdatePasswordAsync_LogsTheFailure_WhenTheRepositoryThrows()
     {
         var thrown = new InvalidOperationException("boom");
-        _accountRepo.Setup(r => r.FindByEmailForUpdateAsync(Email, It.IsAny<CancellationToken>())).ThrowsAsync(thrown);
+        _accountRepo.AnswerFindByEmailForUpdateAsync((email, _) => email == Email, (_, _) => Task.FromException<Account?>(thrown));
 
         await CreateSut().UpdatePasswordAsync(Email, "Old1234!", "New1234!", TestContext.Current.CancellationToken);
 
@@ -796,7 +767,7 @@ public class ProfileServiceTests
     [Fact]
     public async Task UploadAndUpdateAvatarAsync_ReturnsSvgNotAllowedValidation_ForAnSvg()
     {
-        _imageValidator.Setup(v => v.IsSvg(It.IsAny<byte[]>())).Returns(true);
+        _imageValidator.AnswerIsSvg(_ => true);
 
         ServiceResult result = await CreateSut().UploadAndUpdateAvatarAsync(Email, [1, 2, 3], ".png", TestContext.Current.CancellationToken);
 
@@ -808,7 +779,7 @@ public class ProfileServiceTests
     [Fact]
     public async Task UploadAndUpdateAvatarAsync_ReturnsInvalidImageValidation_ForANonImage()
     {
-        _imageValidator.Setup(v => v.IsValidImage(It.IsAny<byte[]>())).Returns(false);
+        _imageValidator.AnswerIsValidImage(_ => false);
 
         ServiceResult result = await CreateSut().UploadAndUpdateAvatarAsync(Email, [1, 2, 3], ".png", TestContext.Current.CancellationToken);
 
@@ -840,7 +811,7 @@ public class ProfileServiceTests
 
         await CreateSut().UploadAndUpdateAvatarAsync(Email, [0xFF, 0xD8, 0xFF], ".png", TestContext.Current.CancellationToken);
 
-        _fileClient.Verify(c => c.UploadWithResultAsync(It.IsAny<byte[]>(), It.IsAny<string>(), It.IsAny<string>(), "http://localhost:5001", It.IsAny<CancellationToken>()), Times.Once);
+        Assert.Single(_fileClient.UploadWithResultAsyncCalls, call => call.FileStorageBaseUrl == "http://localhost:5001");
     }
 
     /// <summary>An avatar upload that throws is logged with the exception and the account.</summary>
@@ -848,7 +819,7 @@ public class ProfileServiceTests
     public async Task UploadAndUpdateAvatarAsync_LogsTheFailure_WhenTheValidatorThrows()
     {
         var thrown = new InvalidOperationException("boom");
-        _imageValidator.Setup(v => v.IsSvg(It.IsAny<byte[]>())).Throws(thrown);
+        _imageValidator.AnswerIsSvg(_ => throw thrown);
 
         await CreateSut().UploadAndUpdateAvatarAsync(Email, [1, 2, 3], ".png", TestContext.Current.CancellationToken);
 
@@ -859,9 +830,15 @@ public class ProfileServiceTests
     [Fact]
     public async Task DownloadAvatarAsync_DownloadsFromTheConfiguredFileStorage()
     {
-        _fileClient.Setup(c => c.DownloadAsync("upload/Management/Profile/Avatar/abc.png", "http://localhost:5001", It.IsAny<CancellationToken>()))
-            .ReturnsAsync([1, 2, 3]);
+        _fileClient.AnswerDownloadAsync((filePath, fileStorageBaseUrl, _) => filePath == "upload/Management/Profile/Avatar/abc.png" && fileStorageBaseUrl == "http://localhost:5001", (_, _, _) => Task.FromResult<byte[]>([1, 2, 3]));
 
         Assert.Equal([1, 2, 3], await CreateSut().DownloadAvatarAsync("abc.png", TestContext.Current.CancellationToken));
+    }
+
+    /// <inheritdoc />
+    public async ValueTask DisposeAsync()
+    {
+        await _unitOfWork.DisposeAsync();
+        GC.SuppressFinalize(this);
     }
 }

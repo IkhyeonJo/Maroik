@@ -1,14 +1,12 @@
-using System.Data;
 using Maroik.Core.Contract.Dtos;
-using Maroik.Core.Contract.Interfaces;
 using Maroik.Core.Contract.Settings;
 using Maroik.Core.Domain.Boards;
 using Maroik.Core.Service.Services;
+using Maroik.Core.Service.Tests.Fixtures;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Testing;
 using Microsoft.Extensions.Options;
 using Microsoft.Extensions.Time.Testing;
-using Moq;
 
 namespace Maroik.Core.Service.Tests.Services;
 
@@ -16,31 +14,31 @@ namespace Maroik.Core.Service.Tests.Services;
 /// The moderation trail of <see cref="BoardService"/>: who deleted whose post or comment, who was refused,
 /// and when an admin cleared someone else's lock. Post and comment text is never logged.
 /// </summary>
-public class BoardServiceAuditLoggingTests
+public class BoardServiceAuditLoggingTests : IAsyncDisposable
 {
-    /// <summary>Mock <c>IBoardRepository</c> injected into the system under test.</summary>
-    private readonly Mock<IBoardRepository> _boardRepo = new();
-    /// <summary>Mock <c>IBoardAttachedFileRepository</c> injected into the system under test.</summary>
-    private readonly Mock<IBoardAttachedFileRepository> _attachedFileRepo = new();
-    /// <summary>Mock <c>IBoardCommentRepository</c> injected into the system under test.</summary>
-    private readonly Mock<IBoardCommentRepository> _commentRepo = new();
-    /// <summary>Mock <c>IUnitOfWork</c> injected into the system under test.</summary>
-    private readonly Mock<IUnitOfWork> _unitOfWork = new();
-    /// <summary>Mock <c>IAttachmentContentService</c> injected into the system under test.</summary>
-    private readonly Mock<IAttachmentContentService> _attachmentContent = new();
+    /// <summary>Fake <c>IBoardRepository</c> injected into the system under test.</summary>
+    private readonly FakeBoardRepository _boardRepo = new();
+    /// <summary>Fake <c>IBoardAttachedFileRepository</c> injected into the system under test.</summary>
+    private readonly FakeBoardAttachedFileRepository _attachedFileRepo = new();
+    /// <summary>Fake <c>IBoardCommentRepository</c> injected into the system under test.</summary>
+    private readonly FakeBoardCommentRepository _commentRepo = new();
+    /// <summary>Fake <c>IUnitOfWork</c> injected into the system under test.</summary>
+    private readonly FakeUnitOfWork _unitOfWork = new();
+    /// <summary>Fake <c>IAttachmentContentService</c> injected into the system under test.</summary>
+    private readonly FakeAttachmentContentService _attachmentContent = new();
     /// <summary>Captures the log entries the system under test writes.</summary>
     private readonly FakeLogger<BoardService> _logger = new();
 
     /// <summary>Arranges a unit of work that always succeeds, pass-through content decryption, successful updates, and no existing attachment.</summary>
     public BoardServiceAuditLoggingTests()
     {
-        _unitOfWork.Setup(u => u.BeginAsync(It.IsAny<IsolationLevel?>(), It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
-        _unitOfWork.Setup(u => u.CommitAsync(It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
-        _unitOfWork.Setup(u => u.RollbackAsync(It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
-        _attachmentContent.Setup(s => s.SanitizeAndDecryptContent(It.IsAny<string>())).Returns<string>(html => html);
-        _boardRepo.Setup(r => r.UpdateEntityAsync(It.IsAny<Board>(), It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
-        _commentRepo.Setup(r => r.UpdateEntityAsync(It.IsAny<BoardComment>(), It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
-        _attachedFileRepo.Setup(r => r.FindByBoardIdAsync(It.IsAny<long>(), It.IsAny<CancellationToken>())).ReturnsAsync((BoardAttachedFile?)null);
+        _unitOfWork.AnswerBeginAsync((_, _) => Task.CompletedTask);
+        _unitOfWork.AnswerCommitAsync(_ => Task.CompletedTask);
+        _unitOfWork.AnswerRollbackAsync(_ => Task.CompletedTask);
+        _attachmentContent.AnswerSanitizeAndDecryptContent(html => html);
+        _boardRepo.AnswerUpdateEntityAsync((_, _) => Task.CompletedTask);
+        _commentRepo.AnswerUpdateEntityAsync((_, _) => Task.CompletedTask);
+        _attachedFileRepo.AnswerFindByBoardIdAsync((_, _) => Task.FromResult<BoardAttachedFile?>(null));
     }
 
     /// <summary>The fixed "current time" of these tests.</summary>
@@ -48,9 +46,9 @@ public class BoardServiceAuditLoggingTests
     /// <summary>The clock the service under test reads, stopped at <see cref="Now"/>.</summary>
     private readonly FakeTimeProvider _time = new(new DateTimeOffset(Now));
 
-    /// <summary>The service under test over the mocked dependencies and the capturing logger.</summary>
-    private BoardService CreateSut() => new(_boardRepo.Object, _attachedFileRepo.Object, _commentRepo.Object,
-        Mock.Of<IFileClient>(), _unitOfWork.Object, _attachmentContent.Object,
+    /// <summary>The service under test over the fake dependencies and the capturing logger.</summary>
+    private BoardService CreateSut() => new(_boardRepo, _attachedFileRepo, _commentRepo,
+        new FakeFileClient(), _unitOfWork, _attachmentContent,
         Options.Create(new ServerSetting { FileStorageBaseUrl = "https://files.example.com" }), _logger, _time);
 
     /// <summary>A free-forum post whose title and content are secrets that must never be logged.</summary>
@@ -71,7 +69,7 @@ public class BoardServiceAuditLoggingTests
     [Fact]
     public async Task DeleteBoard_LogsInformationWithWriterRequesterAndAdminFlag_WhenAnAdminDeletesSomeoneElsesPost()
     {
-        _boardRepo.Setup(r => r.FindActiveByIdForUpdateAsync(It.IsAny<long>(), It.IsAny<CancellationToken>())).ReturnsAsync(MakeBoard());
+        _boardRepo.AnswerFindActiveByIdForUpdateAsync((_, _) => Task.FromResult<Board?>(MakeBoard()));
 
         await CreateSut().DeleteBoardAsync(1, BoardTypes.FreeForum, "Admin", true, TestContext.Current.CancellationToken);
 
@@ -83,7 +81,7 @@ public class BoardServiceAuditLoggingTests
     [Fact]
     public async Task DeleteBoard_LogsWarning_WhenTheRequesterMayNotDeleteThePost()
     {
-        _boardRepo.Setup(r => r.FindActiveByIdForUpdateAsync(It.IsAny<long>(), It.IsAny<CancellationToken>())).ReturnsAsync(MakeBoard());
+        _boardRepo.AnswerFindActiveByIdForUpdateAsync((_, _) => Task.FromResult<Board?>(MakeBoard()));
 
         await CreateSut().DeleteBoardAsync(1, BoardTypes.FreeForum, "Bob", false, TestContext.Current.CancellationToken);
 
@@ -94,8 +92,7 @@ public class BoardServiceAuditLoggingTests
     [Fact]
     public async Task DeleteComment_LogsInformation_WhenTheCommentIsDeleted()
     {
-        _commentRepo.Setup(r => r.FindByIdForUpdateAsync(It.IsAny<long>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(BoardComment.Reconstitute(7, 1L, 0L, null, "Alice", "SECRET COMMENT", DateTime.UtcNow, false));
+        _commentRepo.AnswerFindByIdForUpdateAsync((_, _) => Task.FromResult<BoardComment?>(BoardComment.Reconstitute(7, 1L, 0L, null, "Alice", "SECRET COMMENT", DateTime.UtcNow, false)));
 
         await CreateSut().DeleteCommentAsync(7, "Alice", false, ct: TestContext.Current.CancellationToken);
 
@@ -106,8 +103,7 @@ public class BoardServiceAuditLoggingTests
     [Fact]
     public async Task DeleteComment_LogsWarning_WhenTheRequesterMayNotDeleteTheComment()
     {
-        _commentRepo.Setup(r => r.FindByIdForUpdateAsync(It.IsAny<long>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(BoardComment.Reconstitute(7, 1L, 0L, null, "Alice", "SECRET COMMENT", DateTime.UtcNow, false));
+        _commentRepo.AnswerFindByIdForUpdateAsync((_, _) => Task.FromResult<BoardComment?>(BoardComment.Reconstitute(7, 1L, 0L, null, "Alice", "SECRET COMMENT", DateTime.UtcNow, false)));
 
         await CreateSut().DeleteCommentAsync(7, "Bob", false, ct: TestContext.Current.CancellationToken);
 
@@ -118,7 +114,7 @@ public class BoardServiceAuditLoggingTests
     [Fact]
     public async Task EditBoard_LogsWarning_WhenTheRequesterIsNeitherTheWriterNorAnAdminClearingALock()
     {
-        _boardRepo.Setup(r => r.FindActiveByIdForUpdateAsync(It.IsAny<long>(), It.IsAny<CancellationToken>())).ReturnsAsync(MakeBoard());
+        _boardRepo.AnswerFindActiveByIdForUpdateAsync((_, _) => Task.FromResult<Board?>(MakeBoard()));
 
         await CreateSut().EditBoardAsync(
             new BoardRequest { Id = 1, Type = BoardTypes.FreeForum, Title = "T", Content = "C", Locked = false },
@@ -131,12 +127,19 @@ public class BoardServiceAuditLoggingTests
     [Fact]
     public async Task EditBoard_LogsInformation_WhenAnAdminClearsSomeoneElsesLock()
     {
-        _boardRepo.Setup(r => r.FindActiveByIdForUpdateAsync(It.IsAny<long>(), It.IsAny<CancellationToken>())).ReturnsAsync(MakeBoard(locked: true));
+        _boardRepo.AnswerFindActiveByIdForUpdateAsync((_, _) => Task.FromResult<Board?>(MakeBoard(locked: true)));
 
         await CreateSut().EditBoardAsync(
             new BoardRequest { Id = 1, Type = BoardTypes.FreeForum, Title = "T", Content = "C", Locked = false },
             "Admin", isAdmin: true, null, TestContext.Current.CancellationToken);
 
         Only(LogLevel.Information, "Lock on post 1 of Alice cleared by admin Admin");
+    }
+
+    /// <inheritdoc />
+    public async ValueTask DisposeAsync()
+    {
+        await _unitOfWork.DisposeAsync();
+        GC.SuppressFinalize(this);
     }
 }

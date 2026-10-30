@@ -1,16 +1,15 @@
 using Maroik.Core.Contract.Dtos;
-using Maroik.Core.Contract.Interfaces;
 using Maroik.Core.Domain.Kanbans;
 using Maroik.Core.Service.Services;
+using Maroik.Core.Service.Tests.Fixtures;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Testing;
 using Microsoft.Extensions.Time.Testing;
-using Moq;
 
 namespace Maroik.Core.Service.Tests.Services;
 
 /// <summary>
-/// Unit tests for <see cref="KanbanService"/>. The repository is a Moq mock; the clock is stopped at <see cref="Now"/>.
+/// Unit tests for <see cref="KanbanService"/>. The repository is a hand-written fake; the clock is stopped at <see cref="Now"/>.
 /// Covers the board layout (four lanes, creation order, the overdue flag in the owner's time zone), the card writes (each a single
 /// non-transactional repository call), the owner scoping (another account's card is "not found"), the fixed lane, and
 /// the log entries: a delete at Information, a card that was not found at Warning — never the card's text.
@@ -26,8 +25,8 @@ public class KanbanServiceTests
     /// <summary>The fixed "current time" of these tests: 2026-05-24 20:00 UTC (already the 25th in Seoul).</summary>
     private static readonly DateTime Now = new(2026, 5, 24, 20, 0, 0, DateTimeKind.Utc);
 
-    /// <summary>Mock <c>IKanbanCardRepository</c> injected into the system under test.</summary>
-    private readonly Mock<IKanbanCardRepository> _repository = new(MockBehavior.Strict);
+    /// <summary>Fake <c>IKanbanCardRepository</c> injected into the system under test.</summary>
+    private readonly FakeKanbanCardRepository _repository = new() { Strict = true };
 
     /// <summary>Captures the log entries the system under test writes.</summary>
     private readonly FakeLogger<KanbanService> _logger = new();
@@ -35,8 +34,8 @@ public class KanbanServiceTests
     /// <summary>The clock the service under test reads, stopped at <see cref="Now"/>.</summary>
     private readonly FakeTimeProvider _time = new(new DateTimeOffset(Now));
 
-    /// <summary>The service under test over the mocked repository.</summary>
-    private KanbanService CreateSut() => new(_repository.Object, _logger, _time);
+    /// <summary>The service under test over the fake repository.</summary>
+    private KanbanService CreateSut() => new(_repository, _logger, _time);
 
     /// <summary>A stored card of <see cref="Email"/>.</summary>
     private static KanbanCard Stored(long id, string lane = "ToDo", DateOnly? dueDate = null, DateTime? created = null, string title = SecretTitle) =>
@@ -44,7 +43,7 @@ public class KanbanServiceTests
 
     /// <summary>Makes the repository answer the owner-scoped lookup of <paramref name="id"/> with <paramref name="card"/>.</summary>
     private void Find(long id, KanbanCard? card) =>
-        _repository.Setup(r => r.FindByEmailAndIdAsync(Email, id, It.IsAny<CancellationToken>())).ReturnsAsync(card);
+        _repository.AnswerFindByEmailAndIdAsync((accountEmail, idArg, _) => accountEmail == Email && idArg == id, (_, _, _) => Task.FromResult<KanbanCard?>(card));
 
     // -- GetBoardAsync ------------------------------------------------------------
 
@@ -52,7 +51,7 @@ public class KanbanServiceTests
     [Fact]
     public async Task GetBoardAsync_ReturnsTheFourEmptyLanes_ForANewUser()
     {
-        _repository.Setup(r => r.GetByAccountEmailAsync(Email, It.IsAny<CancellationToken>())).ReturnsAsync([]);
+        _repository.AnswerGetByAccountEmailAsync((accountEmail, _) => accountEmail == Email, (_, _) => Task.FromResult<List<KanbanCard>>([]));
 
         List<KanbanLaneResponse> board = await CreateSut().GetBoardAsync(Email, "UTC", TestContext.Current.CancellationToken);
 
@@ -64,11 +63,10 @@ public class KanbanServiceTests
     [Fact]
     public async Task GetBoardAsync_MapsEachCard_IntoItsLane_OldestFirst()
     {
-        _repository.Setup(r => r.GetByAccountEmailAsync(Email, It.IsAny<CancellationToken>())).ReturnsAsync(
-        [
+        _repository.AnswerGetByAccountEmailAsync((accountEmail, _) => accountEmail == Email, (_, _) => Task.FromResult<List<KanbanCard>>([
             Stored(2, "Done", created: Now.AddHours(-1)),
             Stored(1, "Done", new DateOnly(2026, 6, 1), Now.AddHours(-2)),
-        ]);
+        ]));
 
         List<KanbanLaneResponse> board = await CreateSut().GetBoardAsync(Email, "UTC", TestContext.Current.CancellationToken);
 
@@ -92,8 +90,7 @@ public class KanbanServiceTests
     [Fact]
     public async Task GetBoardAsync_DecidesOverdue_InTheGivenTimeZone()
     {
-        _repository.Setup(r => r.GetByAccountEmailAsync(Email, It.IsAny<CancellationToken>()))
-            .ReturnsAsync([Stored(1, "ToDo", new DateOnly(2026, 5, 24))]);
+        _repository.AnswerGetByAccountEmailAsync((accountEmail, _) => accountEmail == Email, (_, _) => Task.FromResult<List<KanbanCard>>([Stored(1, "ToDo", new DateOnly(2026, 5, 24))]));
 
         var seoul = await CreateSut().GetBoardAsync(Email, "Asia/Seoul", TestContext.Current.CancellationToken);
         var newYork = await CreateSut().GetBoardAsync(Email, "America/New_York", TestContext.Current.CancellationToken);
@@ -109,8 +106,7 @@ public class KanbanServiceTests
     public async Task CreateAsync_CreatesTheCard_InTheRequestedLane()
     {
         KanbanCard? created = null;
-        _repository.Setup(r => r.CreateAsync(It.IsAny<KanbanCard>(), It.IsAny<CancellationToken>()))
-            .Callback((KanbanCard c, CancellationToken _) => created = c).Returns(Task.CompletedTask);
+        _repository.AnswerCreateAsync((c, _) => { created = c; return Task.CompletedTask; });
 
         ServiceResult result = await CreateSut().CreateAsync(Email, new KanbanCardCreateRequest
         {
@@ -139,7 +135,7 @@ public class KanbanServiceTests
         Assert.Equal("KanbanCard.LaneInvalid", result.ErrorCode);
         Assert.Equal("'{0}' is not a Kanban lane.", result.ErrorKey);
         Assert.Equal(["Archive"], result.ErrorArgs);
-        _repository.Verify(r => r.CreateAsync(It.IsAny<KanbanCard>(), It.IsAny<CancellationToken>()), Times.Never);
+        Assert.Empty(_repository.CreateAsyncCalls);
     }
 
     // -- UpdateAsync --------------------------------------------------------------
@@ -150,7 +146,7 @@ public class KanbanServiceTests
     {
         KanbanCard card = Stored(5, "Backlog", new DateOnly(2026, 5, 1));
         Find(5, card);
-        _repository.Setup(r => r.UpdateEntityAsync(card, It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
+        _repository.AnswerUpdateEntityAsync((domainArg, _) => domainArg == card, (_, _) => Task.CompletedTask);
 
         ServiceResult result = await CreateSut().UpdateAsync(Email, new KanbanCardUpdateRequest { Id = 5, Title = "New", Description = null, DueDate = null },
             TestContext.Current.CancellationToken);
@@ -161,7 +157,7 @@ public class KanbanServiceTests
         Assert.Null(card.DueDate);
         Assert.Equal("Backlog", card.Lane);
         Assert.Equal(Now, card.Updated);
-        _repository.Verify(r => r.UpdateEntityAsync(card, It.IsAny<CancellationToken>()), Times.Once);
+        Assert.Single(_repository.UpdateEntityAsyncCalls, call => call.Domain == card);
     }
 
     /// <summary>The edit request has no lane at all, so no edit can move a card to another lane.</summary>
@@ -182,7 +178,7 @@ public class KanbanServiceTests
         Assert.False(result.Success);
         Assert.Equal("KanbanCard.TitleEmpty", result.ErrorCode);
         Assert.Equal("Card title cannot be empty.", result.ErrorKey);
-        _repository.Verify(r => r.UpdateEntityAsync(It.IsAny<KanbanCard>(), It.IsAny<CancellationToken>()), Times.Never);
+        Assert.Empty(_repository.UpdateEntityAsyncCalls);
     }
 
     /// <summary>A card the account does not own (or that is gone) is "not found", logged at Warning without its text.</summary>
@@ -210,12 +206,12 @@ public class KanbanServiceTests
     public async Task DeleteAsync_DeletesTheCard_AndLogsWhoDeletedWhichCard()
     {
         Find(7, Stored(7, "InProgress"));
-        _repository.Setup(r => r.DeleteByEmailAndIdAsync(Email, 7, It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
+        _repository.AnswerDeleteByEmailAndIdAsync((accountEmail, id, _) => accountEmail == Email && id == 7, (_, _, _) => Task.CompletedTask);
 
         ServiceResult result = await CreateSut().DeleteAsync(Email, 7, TestContext.Current.CancellationToken);
 
         Assert.True(result.Success);
-        _repository.Verify(r => r.DeleteByEmailAndIdAsync(Email, 7, It.IsAny<CancellationToken>()), Times.Once);
+        Assert.Single(_repository.DeleteByEmailAndIdAsyncCalls, call => call.AccountEmail == Email && call.Id == 7);
         FakeLogRecord record = Assert.Single(_logger.Collector.GetSnapshot());
         Assert.Equal(LogLevel.Information, record.Level);
         Assert.Equal($"Kanban card 7 (InProgress) deleted by {Email}", record.Message);
@@ -234,7 +230,7 @@ public class KanbanServiceTests
         Assert.Equal(ServiceErrorType.NotFound, result.ErrorType);
         Assert.Equal("KanbanCard.NotFound", result.ErrorCode);
         Assert.Equal(ServiceErrorKeys.KanbanCardNotFound, result.ErrorKey);
-        _repository.Verify(r => r.DeleteByEmailAndIdAsync(It.IsAny<string>(), It.IsAny<long>(), It.IsAny<CancellationToken>()), Times.Never);
+        Assert.Empty(_repository.DeleteByEmailAndIdAsyncCalls);
         FakeLogRecord record = Assert.Single(_logger.Collector.GetSnapshot());
         Assert.Equal(LogLevel.Warning, record.Level);
         Assert.Equal($"Kanban card 9 not found for {Email} (delete)", record.Message);
@@ -245,7 +241,7 @@ public class KanbanServiceTests
     public async Task DeleteAsync_PropagatesARepositoryFailure_WithoutLoggingItTwice()
     {
         Find(7, Stored(7));
-        _repository.Setup(r => r.DeleteByEmailAndIdAsync(Email, 7, It.IsAny<CancellationToken>())).ThrowsAsync(new InvalidOperationException("db down"));
+        _repository.AnswerDeleteByEmailAndIdAsync((accountEmail, id, _) => accountEmail == Email && id == 7, (_, _, _) => Task.FromException(new InvalidOperationException("db down")));
 
         await Assert.ThrowsAsync<InvalidOperationException>(() => CreateSut().DeleteAsync(Email, 7, TestContext.Current.CancellationToken));
 

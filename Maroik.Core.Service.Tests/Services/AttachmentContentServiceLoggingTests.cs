@@ -1,13 +1,11 @@
 using System.Diagnostics;
 using Maroik.Core.Contract.Dtos;
-using Maroik.Core.Contract.Interfaces;
 using Maroik.Core.Contract.Settings;
 using Maroik.Core.Service.Services;
 using Maroik.Core.Service.Tests.Fixtures;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Testing;
 using Microsoft.Extensions.Options;
-using Moq;
 
 namespace Maroik.Core.Service.Tests.Services;
 
@@ -18,10 +16,10 @@ namespace Maroik.Core.Service.Tests.Services;
 /// </summary>
 public class AttachmentContentServiceLoggingTests
 {
-    /// <summary>Mock <c>IFileClient</c> whose calls fail.</summary>
-    private readonly Mock<IFileClient> _fileClient = new();
-    /// <summary>Mock <c>IHtmlParserService</c> that hands its patch factory to the test.</summary>
-    private readonly Mock<IHtmlParserService> _htmlParser = new();
+    /// <summary>Fake <c>IFileClient</c> whose calls fail.</summary>
+    private readonly FakeFileClient _fileClient = new();
+    /// <summary>Fake <c>IHtmlParserService</c> that hands its patch factory to the test.</summary>
+    private readonly FakeHtmlParserService _htmlParser = new();
     /// <summary>Captures the log entries the system under test writes.</summary>
     private readonly FakeLogger<AttachmentContentService> _logger = new();
     /// <summary>The storage failure every call fails with.</summary>
@@ -30,10 +28,10 @@ public class AttachmentContentServiceLoggingTests
     /// <summary>The service under test, over a file client whose every download and open fails.</summary>
     private AttachmentContentService CreateSut()
     {
-        _fileClient.Setup(f => f.DownloadAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>())).ThrowsAsync(_failure);
-        _fileClient.Setup(f => f.OpenReadAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>())).ThrowsAsync(_failure);
-        return new AttachmentContentService(_fileClient.Object, Mock.Of<IDataProtectionService>(), Mock.Of<IImageValidatorService>(),
-            Mock.Of<IHtmlContentSanitizerService>(), _htmlParser.Object,
+        _fileClient.AnswerDownloadAsync((_, _, _) => Task.FromException<byte[]>(_failure));
+        _fileClient.AnswerOpenReadAsync((_, _, _) => Task.FromException<Stream>(_failure));
+        return new AttachmentContentService(_fileClient, new FakeDataProtectionService(), new FakeImageValidatorService(),
+            new FakeHtmlContentSanitizerService(), _htmlParser,
             Options.Create(new ServerSetting { FileStorageBaseUrl = "http://filestorage.local" }), _logger);
     }
 
@@ -66,9 +64,7 @@ public class AttachmentContentServiceLoggingTests
         using var activity = new Activity("request");
         activity.Start();
         Func<string, CancellationToken, Task<HtmlImgPatch?>>? factory = null;
-        _htmlParser.Setup(p => p.TransformImageAttributesAsync(It.IsAny<string>(), It.IsAny<Func<string, CancellationToken, Task<HtmlImgPatch?>>>(), It.IsAny<CancellationToken>()))
-            .Callback<string, Func<string, CancellationToken, Task<HtmlImgPatch?>>, CancellationToken>((_, f, _) => factory = f)
-            .ReturnsAsync(("", true));
+        _htmlParser.AnswerTransformImageAttributesAsync((_, f, _) => { factory = f; return Task.FromResult<(string, bool)>(("", true)); });
 
         await CreateSut().PrepareHtmlForDisplayAsync("<img>", TestContext.Current.CancellationToken);
         HtmlImgPatch? patch = await factory!("upload/img.png", TestContext.Current.CancellationToken);
@@ -79,9 +75,9 @@ public class AttachmentContentServiceLoggingTests
     // -- Refused editor images ------------------------------------------------------
 
     /// <summary>The service under test for an editor-image upload, over <paramref name="imageValidator"/>.</summary>
-    private AttachmentContentService CreateUploadSut(Mock<IImageValidatorService> imageValidator) =>
-        new(_fileClient.Object, Mock.Of<IDataProtectionService>(), imageValidator.Object,
-            Mock.Of<IHtmlContentSanitizerService>(), _htmlParser.Object,
+    private AttachmentContentService CreateUploadSut(FakeImageValidatorService imageValidator) =>
+        new(_fileClient, new FakeDataProtectionService(), imageValidator,
+            new FakeHtmlContentSanitizerService(), _htmlParser,
             Options.Create(new ServerSetting { FileStorageBaseUrl = "http://filestorage.local" }), _logger);
 
     /// <summary>
@@ -96,8 +92,7 @@ public class AttachmentContentServiceLoggingTests
         Assert.Contains(reason, record.Message, StringComparison.Ordinal);
         Assert.Contains("uploader@test.com", record.Message, StringComparison.Ordinal);
         Assert.Contains("Forum/FreeForum", record.Message, StringComparison.Ordinal);
-        _fileClient.Verify(f => f.UploadAsync(
-            It.IsAny<byte[]>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
+        Assert.Empty(_fileClient.UploadAsyncCalls);
     }
 
     /// <summary>An image refused for its extension or declared content type is logged with both.</summary>
@@ -106,7 +101,7 @@ public class AttachmentContentServiceLoggingTests
     {
         var file = new AttachedFileDto { Bytes = [1, 2, 3], ContentType = "image/gif", FileName = "x.gif" };
 
-        SummernoteUploadResult result = await CreateUploadSut(ImageValidatorMock.Create())
+        SummernoteUploadResult result = await CreateUploadSut(EchoingImageValidator.Create())
             .UploadSummernoteImageAsync(file, "Forum", "FreeForum", "uploader@test.com", TestContext.Current.CancellationToken);
 
         Assert.False(result.Success);
@@ -117,8 +112,8 @@ public class AttachmentContentServiceLoggingTests
     [Fact]
     public async Task UploadSummernoteImageAsync_LogsARefusedSvg()
     {
-        Mock<IImageValidatorService> validator = ImageValidatorMock.Create();
-        validator.Setup(v => v.IsSvg(It.IsAny<byte[]>())).Returns(true);
+        FakeImageValidatorService validator = EchoingImageValidator.Create();
+        validator.AnswerIsSvg(_ => true);
         var file = new AttachedFileDto { Bytes = [1, 2, 3], ContentType = "image/png", FileName = "x.png" };
 
         SummernoteUploadResult result = await CreateUploadSut(validator)
@@ -132,8 +127,8 @@ public class AttachmentContentServiceLoggingTests
     [Fact]
     public async Task UploadSummernoteImageAsync_LogsARefusedInvalidImage()
     {
-        Mock<IImageValidatorService> validator = ImageValidatorMock.Create();
-        validator.Setup(v => v.IsValidImage(It.IsAny<byte[]>())).Returns(false);
+        FakeImageValidatorService validator = EchoingImageValidator.Create();
+        validator.AnswerIsValidImage(_ => false);
         var file = new AttachedFileDto { Bytes = [1, 2, 3], ContentType = "image/png", FileName = "x.png" };
 
         SummernoteUploadResult result = await CreateUploadSut(validator)
