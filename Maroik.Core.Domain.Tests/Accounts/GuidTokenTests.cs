@@ -89,6 +89,22 @@ public class GuidTokenTests
         Assert.False(GuidToken.IsTokenAlive(tooShort, Now));
     }
 
+    /// <summary>The stored form of a token is its SHA-256 digest as lowercase hex (the FIPS 180-2 "abc" test vector).</summary>
+    [Fact]
+    public void Hash_IsTheLowercaseHexSha256OfTheToken()
+        => Assert.Equal("ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad", GuidToken.Hash("abc"));
+
+    /// <summary>The same token always hashes the same way (the database is searched by it), and the hash is not the token.</summary>
+    [Fact]
+    public void Hash_IsDeterministic_AndNotTheTokenItself()
+    {
+        string token = GuidToken.Generate(Now);
+
+        Assert.Equal(GuidToken.Hash(token), GuidToken.Hash(token));
+        Assert.NotEqual(token, GuidToken.Hash(token));
+        Assert.NotEqual(GuidToken.Hash(token), GuidToken.Hash(GuidToken.Generate(Now)));
+    }
+
     /// <summary>
     /// The length check sits exactly at the 8-byte timestamp: a fresh 8-byte prefix is read as a time and is alive, while one byte
     /// fewer is refused before it is read.

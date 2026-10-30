@@ -104,8 +104,13 @@ Accounts
   the user in straight away (fresh session id, new security stamp) unless the account has not accepted the
   service terms. This does not weaken the lockout: the reset needs the single-use mailed token, not a guessed
   password. Admin sanctions use `AdminResetPassword` + `MustChangePassword`, not `Locked`.
-- Registration and password-reset tokens are stored in the database as plain values (they expire after
-  24 hours). `HashedPassword`, `RegistrationToken` and `ResetPasswordToken` never reach the admin screens:
+- Registration and password-reset tokens are stored in the database only as their SHA-256 hash (`GuidToken.Hash`,
+  since 2026-10-30, owner's request; the columns keep their names): only the mailed link carries the token, so a leaked row
+  cannot be turned into a working link. The account is looked up by the hash, the 24-hour expiry is read from the token the
+  link presents (the hash binds its timestamp), and a resend always mints a new token, so only the latest confirmation
+  mail's link works (pinned by `TheStoredHash_PresentedAsTheToken_IsRefused`,
+  `Register_StoresOnlyTheHashOfTheMailedToken_AndTheMailedLinkStillWorks`). A fast unsalted hash is enough: the token
+  holds 16 CSPRNG bytes. `HashedPassword`, `RegistrationToken` and `ResetPasswordToken` never reach the admin screens:
   `IManagementAccountService` returns plain `AccountResponse` rows, so the account grid, its whole-row search
   and the Excel export neither show nor match them (a live token on screen hands the account to whoever sees it;
   a searchable token or hash is a guessing oracle). Pinned by `AccountGrid_DoesNotRenderTheHashOrTheTokens`,

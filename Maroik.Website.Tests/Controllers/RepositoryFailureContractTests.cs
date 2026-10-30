@@ -73,7 +73,7 @@ public class RepositoryFailureContractTests(MaroikWebApplicationFactory factory)
         return (cookie, token.Groups[1].Value);
     }
 
-    /// <summary>Inserts a User account for <paramref name="email"/> (password "OldPassword1!") directly into the database with the given tokens and confirmation state.</summary>
+    /// <summary>Inserts a User account for <paramref name="email"/> (password "OldPassword1!") directly into the database with the given tokens (stored as their hash, as the site does) and confirmation state.</summary>
     private async Task SeedAccountAsync(string email, string? registrationToken = null, string? resetPasswordToken = null, bool emailConfirmed = true)
     {
         using var scope = factory.Services.CreateScope();
@@ -83,7 +83,7 @@ public class RepositoryFailureContractTests(MaroikWebApplicationFactory factory)
             Email = email, HashedPassword = TestPasswords.Hash("OldPassword1!"),
             Nickname = "Fail_" + Guid.NewGuid().ToString("N")[..10], AvatarImagePath = "/upload/Management/Profile/default-avatar.jpg",
             Role = Role.User, TimeZoneIanaId = "UTC", Locked = false, LoginAttempt = 0, EmailConfirmed = emailConfirmed, AgreedServiceTerms = true,
-            RegistrationToken = registrationToken, ResetPasswordToken = resetPasswordToken, Deleted = false, Created = DateTime.UtcNow, Updated = DateTime.UtcNow,
+            RegistrationToken = registrationToken is null ? null : GuidToken.Hash(registrationToken), ResetPasswordToken = resetPasswordToken is null ? null : GuidToken.Hash(resetPasswordToken), Deleted = false, Created = DateTime.UtcNow, Updated = DateTime.UtcNow,
         });
         await db.SaveChangesAsync(TestContext.Current.CancellationToken);
     }
@@ -145,7 +145,7 @@ public class RepositoryFailureContractTests(MaroikWebApplicationFactory factory)
         Assert.DoesNotContain("The authentication token is invalid.", html, StringComparison.Ordinal);
         Assert.DoesNotContain(DatabaseSecret, html, StringComparison.Ordinal);
         using var scope = factory.Services.CreateScope();
-        Assert.Equal(rawToken, scope.ServiceProvider.GetRequiredService<ApplicationDbContext>().Accounts.Single(a => a.Email == email).ResetPasswordToken);
+        Assert.Equal(GuidToken.Hash(rawToken), scope.ServiceProvider.GetRequiredService<ApplicationDbContext>().Accounts.Single(a => a.Email == email).ResetPasswordToken);
     }
 
     /// <summary>A category JSON body with id <paramref name="id"/>.</summary>

@@ -67,7 +67,7 @@ public class AccountSignInTests
     {
         string token = GuidToken.Generate(Now);
 
-        Assert.True(AccountIn(resetToken: token).AcceptsResetToken(token, Now.AddHours(24)));
+        Assert.True(AccountIn(resetToken: GuidToken.Hash(token)).AcceptsResetToken(token, Now.AddHours(24)));
     }
 
     /// <summary>An expired token is refused.</summary>
@@ -76,7 +76,7 @@ public class AccountSignInTests
     {
         string token = GuidToken.Generate(Now);
 
-        Assert.False(AccountIn(resetToken: token).AcceptsResetToken(token, Now.AddHours(24).AddTicks(1)));
+        Assert.False(AccountIn(resetToken: GuidToken.Hash(token)).AcceptsResetToken(token, Now.AddHours(24).AddTicks(1)));
     }
 
     /// <summary>A live token of a deleted or unconfirmed account is refused.</summary>
@@ -87,6 +87,6 @@ public class AccountSignInTests
     {
         string token = GuidToken.Generate(Now);
 
-        Assert.False(AccountIn(deleted: deleted, emailConfirmed: emailConfirmed, resetToken: token).AcceptsResetToken(token, Now));
+        Assert.False(AccountIn(deleted: deleted, emailConfirmed: emailConfirmed, resetToken: GuidToken.Hash(token)).AcceptsResetToken(token, Now));
     }
 }

@@ -56,10 +56,16 @@ public sealed class Account : AggregateRoot<string>
     /// <summary>Whether the user accepted the service terms of use.</summary>
     public bool AgreedServiceTerms { get; private set; }
 
-    /// <summary>Token embedded in the registration confirmation email (valid 24 h). Null after confirmation.</summary>
+    /// <summary>
+    /// <see cref="GuidToken.Hash"/> of the token embedded in the registration confirmation email (valid 24 h). Null after
+    /// confirmation. The token itself is never stored.
+    /// </summary>
     public string? RegistrationToken { get; private set; }
 
-    /// <summary>Token embedded in the password-reset email (valid 24 h). Null when no reset is pending.</summary>
+    /// <summary>
+    /// <see cref="GuidToken.Hash"/> of the token embedded in the password-reset email (valid 24 h). Null when no reset is
+    /// pending. The token itself is never stored.
+    /// </summary>
     public string? ResetPasswordToken { get; private set; }
 
     /// <summary>UTC timestamp when the account was created.</summary>
@@ -106,18 +112,19 @@ public sealed class Account : AggregateRoot<string>
     private static string GenerateSecurityStamp() => Guid.NewGuid().ToString("N");
 
     /// <summary>
-    /// Constant-time comparison of a bearer token (registration/password-reset) against the value
-    /// stored on this account. Guards against a timing side-channel that a plain <c>==</c>/<c>!=</c>
-    /// comparison (which short-circuits on the first differing byte) would leak on these
-    /// account-takeover-adjacent tokens. Null/empty on either side never matches.
+    /// Constant-time comparison of a bearer token (registration/password-reset) against the hash
+    /// stored on this account (<see cref="GuidToken.Hash"/>): the candidate is hashed first, so the
+    /// stored hash itself, read from a leaked row, is no key. Guards against a timing side-channel
+    /// that a plain <c>==</c>/<c>!=</c> comparison (which short-circuits on the first differing byte)
+    /// would leak on these account-takeover-adjacent tokens. Null/empty on either side never matches.
     /// </summary>
-    private static bool TokensMatch(string? stored, string? candidate)
+    private static bool TokensMatch(string? storedHash, string? candidate)
     {
-        if (string.IsNullOrWhiteSpace(stored) || string.IsNullOrWhiteSpace(candidate))
+        if (string.IsNullOrWhiteSpace(storedHash) || string.IsNullOrWhiteSpace(candidate))
             return false;
 
         return CryptographicOperations.FixedTimeEquals(
-            Encoding.UTF8.GetBytes(stored), Encoding.UTF8.GetBytes(candidate));
+            Encoding.UTF8.GetBytes(storedHash), Encoding.UTF8.GetBytes(GuidToken.Hash(candidate)));
     }
 
     /// <summary>"Brand-new account" constructor: stamps <see cref="Created"/>/<see cref="Updated"/>
@@ -139,7 +146,7 @@ public sealed class Account : AggregateRoot<string>
         Role = role;
         TimeZone = timeZone;
         DefaultMonetaryUnit = defaultMonetaryUnit;
-        RegistrationToken = registrationToken;
+        RegistrationToken = registrationToken is null ? null : GuidToken.Hash(registrationToken);
         AgreedServiceTerms = agreedServiceTerms;
         SecurityStamp = GenerateSecurityStamp();
         Created = utcNow;
@@ -276,8 +283,10 @@ public sealed class Account : AggregateRoot<string>
     // ------------------------------------------------------------------------
 
     /// <summary>
-    /// Validates the registration token — must match <see cref="RegistrationToken"/> and still be
-    /// within <see cref="GuidToken"/>'s 24 h window — and activates the account. Expiry is enforced
+    /// Validates the registration token — its hash must match <see cref="RegistrationToken"/> and it
+    /// must still be within <see cref="GuidToken"/>'s 24 h window — and activates the account. The
+    /// window is read from <paramref name="token"/> (the stored hash carries no time); once the hash
+    /// matched, its timestamp prefix is the one minted, so it cannot be forged. Expiry is enforced
     /// here, not just by callers, so this invariant can't be silently skipped by a future caller
     /// that forgets to pre-check <see cref="GuidToken.IsTokenAlive"/> itself.
     /// </summary>
@@ -286,7 +295,7 @@ public sealed class Account : AggregateRoot<string>
         if (EmailConfirmed)
             return DomainError.Conflict("Account.AlreadyConfirmed", "Email address is already confirmed.");
 
-        if (!TokensMatch(RegistrationToken, token) || !GuidToken.IsTokenAlive(RegistrationToken!, utcNow))
+        if (!TokensMatch(RegistrationToken, token) || !GuidToken.IsTokenAlive(token, utcNow))
             return DomainError.Validation("Account.InvalidToken", "Invalid email confirmation token.");
 
         EmailConfirmed = true;
@@ -322,8 +331,8 @@ public sealed class Account : AggregateRoot<string>
         CanRequestPasswordReset && GuidToken.IsTokenAlive(rawToken, utcNow);
 
     /// <summary>
-    /// Stores a password-reset token
-    /// so an email can be dispatched by the application layer.
+    /// Stores the hash of a password-reset token (<see cref="GuidToken.Hash"/>)
+    /// so an email carrying the token itself can be dispatched by the application layer.
     /// Available even when the account is locked, since resetting the password
     /// is the intended way for a user to recover from a login lockout.
     /// </summary>
@@ -332,20 +341,21 @@ public sealed class Account : AggregateRoot<string>
         if (!EmailConfirmed)
             return DomainError.Failure("Account.NotConfirmed", "Email must be confirmed before resetting the password.");
 
-        ResetPasswordToken = resetToken;
+        ResetPasswordToken = GuidToken.Hash(resetToken);
         Updated = utcNow;
         return Result.Success;
     }
 
     /// <summary>
-    /// Validates the reset token — must match <see cref="ResetPasswordToken"/> and still be within
-    /// <see cref="GuidToken"/>'s 24 h window — and replaces the hashed password. Expiry is enforced
+    /// Validates the reset token — its hash must match <see cref="ResetPasswordToken"/> and it must
+    /// still be within <see cref="GuidToken"/>'s 24 h window, read from <paramref name="token"/> as in
+    /// <see cref="ConfirmEmail"/> — and replaces the hashed password. Expiry is enforced
     /// here, not just by callers, so this invariant can't be silently skipped by a future caller
     /// that forgets to pre-check <see cref="GuidToken.IsTokenAlive"/> itself.
     /// </summary>
     public ErrorOr<Success> ResetPassword(string token, string newHashedPassword, DateTime utcNow)
     {
-        if (!TokensMatch(ResetPasswordToken, token) || !GuidToken.IsTokenAlive(ResetPasswordToken!, utcNow))
+        if (!TokensMatch(ResetPasswordToken, token) || !GuidToken.IsTokenAlive(token, utcNow))
             return DomainError.Validation("Account.InvalidToken", "Invalid or expired password-reset token.");
 
         if (string.IsNullOrWhiteSpace(newHashedPassword))
@@ -499,16 +509,16 @@ public sealed class Account : AggregateRoot<string>
         Nickname = nicknameResult.Value;
         TimeZone = tzResult.Value;
         AgreedServiceTerms = agreedServiceTerms;
-        RegistrationToken = registrationToken;
+        RegistrationToken = GuidToken.Hash(registrationToken);
         SecurityStamp = GenerateSecurityStamp();
         Updated = utcNow;
         return Result.Success;
     }
 
     /// <summary>
-    /// Unconditionally replaces the registration token — the resend / re-register flow calls this
-    /// when the stored token is missing <em>or expired</em>, so a stale, un-confirmable registration
-    /// can always be recovered by requesting a fresh email. No-op once the email is confirmed
+    /// Unconditionally replaces the registration token (stored as its hash) — the resend flow calls
+    /// this on every resend: only the hash is kept, so the earlier token cannot be mailed again, and
+    /// the links of earlier mails stop working. No-op once the email is confirmed
     /// (there is nothing left to confirm).
     /// </summary>
     public void RegenerateRegistrationToken(string newToken, DateTime utcNow)
@@ -518,7 +528,7 @@ public sealed class Account : AggregateRoot<string>
             return;
         }
 
-        RegistrationToken = newToken;
+        RegistrationToken = GuidToken.Hash(newToken);
         Updated = utcNow;
     }
 

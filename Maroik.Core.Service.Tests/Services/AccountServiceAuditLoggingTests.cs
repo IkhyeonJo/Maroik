@@ -200,7 +200,7 @@ public class AccountServiceAuditLoggingTests
     public async Task ConfirmEmail_LogsInformation_WhenTheTokenConfirmsTheAccount()
     {
         string token = GuidToken.Generate(Now);
-        Account account = ExistingAccount(emailConfirmed: false, registrationToken: token);
+        Account account = ExistingAccount(emailConfirmed: false, registrationToken: GuidToken.Hash(token));
         _dataProtection.Setup(r => r.Unprotect(ProtectedValue.MailToken, "enc")).Returns(token);
         _accountRepo.Setup(r => r.FindByRegistrationTokenAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(account);
         _accountRepo.Setup(r => r.FindByEmailForUpdateAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(account);
@@ -217,7 +217,7 @@ public class AccountServiceAuditLoggingTests
     public async Task ConfirmEmail_LogsWarning_WhenThePasswordDoesNotMatchTheRegistration()
     {
         string token = GuidToken.Generate(Now);
-        Account account = ExistingAccount(emailConfirmed: false, registrationToken: token);
+        Account account = ExistingAccount(emailConfirmed: false, registrationToken: GuidToken.Hash(token));
         _dataProtection.Setup(r => r.Unprotect(ProtectedValue.MailToken, "enc")).Returns(token);
         _accountRepo.Setup(r => r.FindByRegistrationTokenAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(account);
         _accountRepo.Setup(r => r.FindByEmailForUpdateAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(account);
@@ -297,7 +297,7 @@ public class AccountServiceAuditLoggingTests
     public async Task ResetPassword_LogsInformation_WhenThePasswordIsReset()
     {
         string token = GuidToken.Generate(Now);
-        Account account = ExistingAccount(locked: true, loginAttempt: 3, resetPasswordToken: token);
+        Account account = ExistingAccount(locked: true, loginAttempt: 3, resetPasswordToken: GuidToken.Hash(token));
         _dataProtection.Setup(r => r.Unprotect(ProtectedValue.MailToken, "enc")).Returns(token);
         _accountRepo.Setup(r => r.FindByResetPasswordTokenAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(account);
         _accountRepo.Setup(r => r.FindByEmailForUpdateAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(account);

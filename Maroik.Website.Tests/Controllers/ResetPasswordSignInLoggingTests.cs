@@ -62,7 +62,7 @@ public class ResetPasswordSignInLoggingTests(MaroikWebApplicationFactory factory
                 TimeZoneIanaId = "UTC",
                 EmailConfirmed = true,
                 AgreedServiceTerms = true,
-                ResetPasswordToken = rawToken,
+                ResetPasswordToken = GuidToken.Hash(rawToken),
                 Created = DateTime.UtcNow,
                 Updated = DateTime.UtcNow
             });

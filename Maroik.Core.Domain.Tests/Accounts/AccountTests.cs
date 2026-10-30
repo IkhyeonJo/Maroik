@@ -38,6 +38,37 @@ public class AccountTests
         Assert.Equal(account.Created, account.Updated);
     }
 
+    /// <summary>The registration token is stored as its hash: whoever reads the row cannot rebuild the mailed link.</summary>
+    [Fact]
+    public void Create_StoresTheRegistrationTokensHash_NotTheToken()
+    {
+        string token = GuidToken.Generate(Now);
+
+        Assert.Equal(GuidToken.Hash(token), ValidAccount(registrationToken: token).RegistrationToken);
+    }
+
+    /// <summary>An account created without a token (an administrator's) stores none.</summary>
+    [Fact]
+    public void Create_StoresNoRegistrationToken_WhenNoneIsGiven()
+        => Assert.Null(ValidAccount(registrationToken: null).RegistrationToken);
+
+    /// <summary>
+    /// A leaked database row is no key: the stored hash presented as the token is refused, for the confirmation link and
+    /// the reset link alike.
+    /// </summary>
+    [Fact]
+    public void TheStoredHash_PresentedAsTheToken_IsRefused()
+    {
+        string registration = GuidToken.Generate(Now);
+        var unconfirmed = ValidAccount(registrationToken: registration);
+        Assert.Equal("Account.InvalidToken", unconfirmed.ConfirmEmail(unconfirmed.RegistrationToken!, Now).FirstError.Code);
+
+        var confirmed = ValidAccount(registrationToken: registration);
+        confirmed.ConfirmEmail(registration, Now);
+        confirmed.RequestPasswordReset(GuidToken.Generate(Now), Now);
+        Assert.Equal("Account.InvalidToken", confirmed.ResetPassword(confirmed.ResetPasswordToken!, "newHash", Now).FirstError.Code);
+    }
+
     /// <summary>A registration token is checked against the time passed in: alive at exactly 24 h, refused one tick later.</summary>
     [Fact]
     public void ConfirmEmail_UsesTheGivenTime_ForTheTokenExpiry()
@@ -294,7 +325,7 @@ public class AccountTests
         var result = account.RequestPasswordReset("reset-token", Now);
 
         Assert.False(result.IsError);
-        Assert.Equal("reset-token", account.ResetPasswordToken);
+        Assert.Equal(GuidToken.Hash("reset-token"), account.ResetPasswordToken);
     }
 
     /// <summary>Request password reset returns error, when email not confirmed.</summary>
@@ -321,7 +352,7 @@ public class AccountTests
         var result = account.RequestPasswordReset("reset-token", Now);
 
         Assert.False(result.IsError);
-        Assert.Equal("reset-token", account.ResetPasswordToken);
+        Assert.Equal(GuidToken.Hash("reset-token"), account.ResetPasswordToken);
     }
 
     // -- ResetPassword --------------------------------------------------------
@@ -625,7 +656,7 @@ public class AccountTests
         Assert.Equal("new-hash", account.HashedPassword);
         Assert.Equal("Real Owner", account.Nickname);
         Assert.Equal("Asia/Seoul", account.TimeZone.Value);
-        Assert.Equal(newToken, account.RegistrationToken);
+        Assert.Equal(GuidToken.Hash(newToken), account.RegistrationToken);
         Assert.True(account.AgreedServiceTerms);
         Assert.NotEqual(oldStamp, account.SecurityStamp);
         Assert.False(account.EmailConfirmed);
@@ -680,7 +711,7 @@ public class AccountTests
         Assert.Equal(expectedCode, result.FirstError.Code);
         Assert.Equal("old-hash", account.HashedPassword);
         Assert.Equal("Squatter", account.Nickname);
-        Assert.Equal(token, account.RegistrationToken);
+        Assert.Equal(GuidToken.Hash(token), account.RegistrationToken);
     }
 
     // -- ChangePassword -------------------------------------------------------
@@ -957,7 +988,7 @@ public class AccountTests
 
         account.RegenerateRegistrationToken("fresh-token", Now);
 
-        Assert.Equal("fresh-token", account.RegistrationToken);
+        Assert.Equal(GuidToken.Hash("fresh-token"), account.RegistrationToken);
     }
 
     /// <summary>Once the e-mail is confirmed there is nothing left to confirm, so regenerating changes nothing.</summary>

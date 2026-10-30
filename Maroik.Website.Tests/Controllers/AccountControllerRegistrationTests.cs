@@ -63,7 +63,10 @@ public class AccountControllerRegistrationTests(MaroikWebApplicationFactory fact
     /// <summary>Name of the session cookie the site issues (see Program.cs).</summary>
     private const string SessionCookieName = "__Secure-.AspNetCore.Session";
 
-    /// <summary>Inserts a User account for <paramref name="email"/> directly into the database with the given confirmation state and tokens.</summary>
+    /// <summary>
+    /// Inserts a User account for <paramref name="email"/> directly into the database with the given confirmation state and
+    /// tokens. The tokens are the ones a mail would carry; the row stores their <see cref="GuidToken.Hash"/>, as the site does.
+    /// </summary>
     private async Task SeedAccountAsync(string email, bool emailConfirmed, string? registrationToken = null, string? resetPasswordToken = null, string? nickname = null, bool agreedServiceTerms = true)
     {
         using var scope = factory.Services.CreateScope();
@@ -80,8 +83,8 @@ public class AccountControllerRegistrationTests(MaroikWebApplicationFactory fact
             LoginAttempt = 0,
             EmailConfirmed = emailConfirmed,
             AgreedServiceTerms = agreedServiceTerms,
-            RegistrationToken = registrationToken,
-            ResetPasswordToken = resetPasswordToken,
+            RegistrationToken = registrationToken is null ? null : GuidToken.Hash(registrationToken),
+            ResetPasswordToken = resetPasswordToken is null ? null : GuidToken.Hash(resetPasswordToken),
             Deleted = false,
             Created = DateTime.UtcNow,
             Updated = DateTime.UtcNow
@@ -115,6 +118,37 @@ public class AccountControllerRegistrationTests(MaroikWebApplicationFactory fact
 
         var publisher = scope.ServiceProvider.GetRequiredService<FakeEmailPublisher>();
         Assert.Contains(publisher.PublishedMessages, m => m.ToEmail == email);
+    }
+
+    /// <summary>
+    /// The database holds only the hash of the token the confirmation mail carries, never the token: a leaked row cannot
+    /// be turned into a working link. The mailed link itself still opens the confirmation form.
+    /// </summary>
+    [Fact]
+    public async Task Register_StoresOnlyTheHashOfTheMailedToken_AndTheMailedLinkStillWorks()
+    {
+        string email = UniqueEmail();
+        _ = await PostFormAsync("/Account/Register", new Dictionary<string, string>
+        {
+            ["Email"] = email,
+            ["Password"] = "NewPassword1!",
+            ["Nickname"] = "RegHash_" + Guid.NewGuid().ToString("N")[..8],
+            ["AgreedServiceTerms"] = "true",
+            ["TimeZoneIanaId"] = "UTC"
+        });
+
+        using var scope = factory.Services.CreateScope();
+        string body = Assert.Single(scope.ServiceProvider.GetRequiredService<FakeEmailPublisher>().PublishedMessages, m => m.ToEmail == email).Body;
+        string encryptedToken = Uri.UnescapeDataString(Regex.Match(body, "registrationToken=([^\"&<\\s]+)").Groups[1].Value);
+        string mailedToken = scope.ServiceProvider.GetRequiredService<IDataProtectionService>().Unprotect(ProtectedValue.MailToken, encryptedToken);
+        string? stored = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>().Accounts.Single(a => a.Email == email).RegistrationToken;
+
+        Assert.Equal(GuidToken.Hash(mailedToken), stored);
+        Assert.NotEqual(mailedToken, stored);
+
+        var response = await _client.GetAsync($"/Account/ConfirmEmail?registrationToken={Uri.EscapeDataString(encryptedToken)}", TestContext.Current.CancellationToken);
+        string html = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+        Assert.Contains("id=\"confirmEmailForm\"", html, StringComparison.Ordinal);
     }
 
     /// <summary>Register missing consent does not create account.</summary>
@@ -653,7 +687,7 @@ public class AccountControllerRegistrationTests(MaroikWebApplicationFactory fact
         using var verifyScope = factory.Services.CreateScope();
         var db = verifyScope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
         var account = db.Accounts.Single(a => a.Email == email);
-        Assert.Equal(rawToken, account.ResetPasswordToken); // still usable
+        Assert.Equal(GuidToken.Hash(rawToken), account.ResetPasswordToken); // still usable
     }
 
     /// <summary>
@@ -809,6 +843,6 @@ public class AccountControllerRegistrationTests(MaroikWebApplicationFactory fact
         Assert.Contains("resetPasswordForm", html, StringComparison.Ordinal);
         Assert.DoesNotContain("The authentication token is invalid.", html, StringComparison.Ordinal);
         var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-        Assert.Equal(rawToken, db.Accounts.Single(a => a.Email == email).ResetPasswordToken);
+        Assert.Equal(GuidToken.Hash(rawToken), db.Accounts.Single(a => a.Email == email).ResetPasswordToken);
     }
 }

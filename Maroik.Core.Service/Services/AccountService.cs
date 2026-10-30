@@ -158,6 +158,8 @@ public class AccountService(
 
             // Self-registration always creates a plain User account; the request has no way to
             // choose a role or any admin-only state, and the confirmation token is generated here.
+            // The account keeps only its hash; the token itself goes out in the mail below.
+            string registrationToken = GuidToken.Generate(utcNow);
             var createResult = Account.Create(
                 newAccount.Email ?? "",
                 hashedPassword,
@@ -165,7 +167,7 @@ public class AccountService(
                 AccountRole.User,
                 newAccount.TimeZoneIanaId ?? "UTC",
                 defaultMonetaryUnit: null,
-                GuidToken.Generate(utcNow),
+                registrationToken,
                 newAccount.AgreedServiceTerms, utcNow);
 
             if (createResult.IsError)
@@ -202,7 +204,7 @@ public class AccountService(
             // The account was just created with UserCreatedVerifyEmail already set above, so a
             // successful send should not overwrite it with VerifyEmail.
             return await SendConfirmationEmailAndUpdateStatusAsync(
-                account, emailTemplate,
+                account, registrationToken, emailTemplate,
                 setVerifyEmailMessageOnSuccess: false, repeat: false, utcNow, ct);
         }
 
@@ -223,6 +225,7 @@ public class AccountService(
                 return RegisterResult.Fail(PasswordPolicy.ViolationMessage);
 
             string hashedPassword = passwordService.HashPassword(newAccount.PlainPassword ?? "");
+            string registrationToken = GuidToken.Generate(utcNow);
 
             Account locked;
             await unitOfWork.BeginAsync(ct: ct);
@@ -257,7 +260,7 @@ public class AccountService(
 
                 // A fresh token always: every link mailed for the replaced registration dies with it.
                 var replaceResult = found.ReplaceUnconfirmedRegistration(
-                    hashedPassword, nickname, newAccount.TimeZoneIanaId ?? "UTC", GuidToken.Generate(utcNow), newAccount.AgreedServiceTerms, utcNow);
+                    hashedPassword, nickname, newAccount.TimeZoneIanaId ?? "UTC", registrationToken, newAccount.AgreedServiceTerms, utcNow);
                 if (replaceResult.IsError)
                 {
                     await unitOfWork.RollbackAsync(ct);
@@ -283,12 +286,12 @@ public class AccountService(
             logger.LogInformation("Unconfirmed registration replaced for {Email}", locked.Email.Value);
 
             // Mail send + final status write run unlocked, after the row lock above was released.
-            // SendConfirmationEmailAndUpdateStatusAsync re-persists the same token it finds on
+            // SendConfirmationEmailAndUpdateStatusAsync re-persists the same token hash it finds on
             // `locked` as its first step — a harmless idempotent re-write of the value just
             // committed above — then sends the mail and writes the final status column, none of
             // which need this row's lock held.
             return await SendConfirmationEmailAndUpdateStatusAsync(
-                locked, emailTemplate,
+                locked, registrationToken, emailTemplate,
                 setVerifyEmailMessageOnSuccess: true, repeat: false, utcNow, ct);
         }
 
@@ -361,6 +364,7 @@ public class AccountService(
             return RegisterResult.Fail(AccountMessage.UserAlreadyCreated.GetDescription());
         }
 
+        string registrationToken = GuidToken.Generate(utcNow);
         Account locked;
         await unitOfWork.BeginAsync(ct: ct);
         try
@@ -369,7 +373,7 @@ public class AccountService(
             // a concurrent ConfirmEmailAsync/RegisterAsync write to the same row (both take the
             // same lock before writing) so this cannot resurrect a token a concurrent confirm just
             // consumed, or vice versa. The lock is held only long enough to persist the
-            // (possibly-regenerated) token — released at Commit below, before the network mail send
+            // regenerated token's hash — released at Commit below, before the network mail send
             // that follows, so a slow/degraded broker cannot hold this row's lock (and this
             // request's DB connection) open for the duration of the publish.
             Account? found = await accountRepository.FindByEmailForUpdateAsync(email, ct);
@@ -386,10 +390,9 @@ public class AccountService(
                 return RegisterResult.Fail(AccountMessage.UserAlreadyCreated.GetDescription());
             }
 
-            // Ensure a live token exists before building the confirmation URL — regenerate when it is
-            // missing OR has passed its 24h TTL (otherwise a resend just re-sends a dead link).
-            if (string.IsNullOrEmpty(found.RegistrationToken) || !GuidToken.IsTokenAlive(found.RegistrationToken, utcNow))
-                found.RegenerateRegistrationToken(GuidToken.Generate(utcNow), utcNow);
+            // A fresh token on every resend: the row keeps only the earlier token's hash, so that
+            // token cannot be mailed again. The links of earlier mails stop working.
+            found.RegenerateRegistrationToken(registrationToken, utcNow);
 
             await accountRepository.UpdateRegistrationTokenAsync(found.Email.Value, found.RegistrationToken, found.Updated, ct);
             await unitOfWork.CommitAsync(ct);
@@ -404,7 +407,7 @@ public class AccountService(
         // Mail send + final status write run unlocked, after the row lock above was released.
         // repeat: true signals the UI that this is a resend, not the first confirmation.
         return await SendConfirmationEmailAndUpdateStatusAsync(
-            locked, emailTemplate,
+            locked, registrationToken, emailTemplate,
             setVerifyEmailMessageOnSuccess: true, repeat: true, utcNow, ct);
     }
 
@@ -722,13 +725,19 @@ public class AccountService(
     private Task<Account?> FindByEmailAsync(string email, CancellationToken ct = default)
         => accountRepository.FindByEmailAsync(email, ct);
 
-    /// <summary>Unlocked lookup of the account holding <paramref name="token"/> (raw, already decrypted) as its registration token.</summary>
+    /// <summary>
+    /// Unlocked lookup of the account holding <paramref name="token"/> (raw, already decrypted) as its registration token:
+    /// the row stores only <see cref="GuidToken.Hash"/> of it, so that is what is searched for.
+    /// </summary>
     private Task<Account?> FindByRegistrationTokenAsync(string token, CancellationToken ct = default)
-        => accountRepository.FindByRegistrationTokenAsync(token, ct);
+        => accountRepository.FindByRegistrationTokenAsync(GuidToken.Hash(token), ct);
 
-    /// <summary>Unlocked lookup of the account holding <paramref name="token"/> (raw, already decrypted) as its password-reset token.</summary>
+    /// <summary>
+    /// Unlocked lookup of the account holding <paramref name="token"/> (raw, already decrypted) as its password-reset token,
+    /// searched for by its <see cref="GuidToken.Hash"/> as the row stores it.
+    /// </summary>
     private Task<Account?> FindByResetPasswordTokenAsync(string token, CancellationToken ct = default)
-        => accountRepository.FindByResetPasswordTokenAsync(token, ct);
+        => accountRepository.FindByResetPasswordTokenAsync(GuidToken.Hash(token), ct);
 
     /// <summary>
     /// Builds and publishes a registration-confirmation email for <paramref name="account"/>, then
@@ -738,13 +747,14 @@ public class AccountService(
     /// caller already set a more specific message and doesn't need it overwritten) before returning
     /// a success result. Shared by <see cref="RegisterAsync"/> (both branches) and
     /// <see cref="ResendConfirmationEmailAsync"/>, which otherwise repeated this send/persist/report
-    /// sequence three times with the same failure modes to keep in sync.
+    /// sequence three times with the same failure modes to keep in sync. <paramref name="registrationToken"/> is the token
+    /// the mail carries; the account holds only its hash.
     /// </summary>
     private async Task<RegisterResult> SendConfirmationEmailAndUpdateStatusAsync(
-        Account account, EmailTemplate emailTemplate,
+        Account account, string registrationToken, EmailTemplate emailTemplate,
         bool setVerifyEmailMessageOnSuccess, bool repeat, DateTime utcNow, CancellationToken ct)
     {
-        // Persist the (possibly just-regenerated) registration token BEFORE the mail goes out, so a
+        // Persist the just-minted registration token's hash BEFORE the mail goes out, so a
         // link that reaches the user always corresponds to a token FindByRegistrationTokenAsync can
         // match. Emailing first and persisting after — inside a swallow-and-log catch — can queue a
         // mail carrying a token the database never stored, leaving the account permanently
@@ -765,7 +775,7 @@ public class AccountService(
         string body;
         try
         {
-            body = mailClient.GetMailConfirmationBody(dataProtection.Protect(ProtectedValue.MailToken, account.RegistrationToken!), emailTemplate.Title, emailTemplate.Content0, emailTemplate.Content1, settings.Value.DomainName ?? "");
+            body = mailClient.GetMailConfirmationBody(dataProtection.Protect(ProtectedValue.MailToken, registrationToken), emailTemplate.Title, emailTemplate.Content0, emailTemplate.Content1, settings.Value.DomainName ?? "");
         }
         catch (Exception e)
         {

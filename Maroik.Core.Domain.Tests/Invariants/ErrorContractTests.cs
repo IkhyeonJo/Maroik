@@ -99,7 +99,7 @@ public class ErrorContractTests
             "Email must be confirmed before resetting the password.");
 
         string token = GuidToken.Generate(Now);
-        DomainAccount account = Reconstituted(resetToken: token);
+        DomainAccount account = Reconstituted(resetToken: GuidToken.Hash(token));
         ErrorAssert.Validation(account.ResetPassword("wrong", "$2a$new", Now), "Account.InvalidToken", "Invalid or expired password-reset token.");
         ErrorAssert.Validation(account.ResetPassword(token, " ", Now), "Account.PasswordEmpty", "New hashed password cannot be empty.");
     }
