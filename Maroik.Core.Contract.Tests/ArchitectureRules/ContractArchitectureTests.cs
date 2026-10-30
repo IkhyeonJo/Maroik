@@ -41,14 +41,15 @@ public class ContractArchitectureTests
     }
 
     /// <summary>
-    /// Contract must be as pure as Domain: the only things it is allowed to reference are the BCL and
-    /// Maroik.Core.Domain (which carries the <c>ErrorOr&lt;T&gt;</c> / <c>Error</c> result type). Interfaces and DTOs here describe the shape of the application's use
+    /// Contract must be as pure as Domain: the only things it is allowed to reference are the BCL,
+    /// the <c>ErrorOr</c> result type (the lightweight shared outcome/error object), and
+    /// Maroik.Core.Domain. Interfaces and DTOs here describe the shape of the application's use
     /// cases — pulling in EF Core, ASP.NET Core, a JSON library, DI/hosting abstractions, etc.
     /// would leak that concern into every layer, since every layer depends on Contract.
-    /// Mirrors <c>DomainArchitectureTests.Domain_ShouldOnly_DependOn_TheBcl</c>.
+    /// Mirrors <c>DomainArchitectureTests.Domain_ShouldOnly_DependOn_SystemOrErrorOr</c>.
     /// </summary>
     [Fact]
-    public void Contract_ShouldOnly_DependOn_Bcl_AndDomain()
+    public void Contract_ShouldOnly_DependOn_Bcl_ErrorOr_AndDomain()
     {
         AssemblyName[] referenced = _contractAssembly.GetReferencedAssemblies();
 
@@ -58,13 +59,14 @@ public class ContractArchitectureTests
             .Where(a => !a.Name!.StartsWith("netstandard", StringComparison.Ordinal))
             .Where(a => !a.Name!.StartsWith("Microsoft.CSharp", StringComparison.Ordinal))
             .Where(a => a.Name != "mscorlib")
+            .Where(a => a.Name != "ErrorOr")
             .Where(a => a.Name != "Maroik.Core.Domain")
             .Select(a => a.Name)
             .ToList();
 
         Assert.True(
             unexpected.Count == 0,
-            "Maroik.Core.Contract must only depend on the BCL and Maroik.Core.Domain. " +
+            "Maroik.Core.Contract must only depend on the BCL, ErrorOr and Maroik.Core.Domain. " +
             "Unexpected assembly references: " + string.Join(", ", unexpected));
     }
 
@@ -73,7 +75,7 @@ public class ContractArchitectureTests
     /// as <c>DomainArchitectureTests.Domain_ShouldNot_DependOn_ExternalInfrastructureLibrary</c> —
     /// kept as an explicit per-library check so a regression names the offending library and type,
     /// on top of the assembly-reference check in
-    /// <see cref="Contract_ShouldOnly_DependOn_Bcl_AndDomain"/>.
+    /// <see cref="Contract_ShouldOnly_DependOn_Bcl_ErrorOr_AndDomain"/>.
     /// </summary>
     [Theory]
     [InlineData("Microsoft.EntityFrameworkCore")]
@@ -95,8 +97,10 @@ public class ContractArchitectureTests
     [InlineData("ImageMagick")]
     [InlineData("BCrypt.Net")]
     [InlineData("DocumentFormat.OpenXml")]
+    [InlineData("ICSharpCode.SharpZipLib")]
     [InlineData("Serilog")]
     [InlineData("Swashbuckle")]
+    [InlineData("NonFactors.Grid")]
     [InlineData("Dapper")]
     [InlineData("AutoMapper")]
     [InlineData("MediatR")]
@@ -110,7 +114,7 @@ public class ContractArchitectureTests
         Assert.True(
             result.IsSuccessful,
             $"Maroik.Core.Contract must not reference {forbiddenNamespace}. Contract is a pure " +
-            "abstraction layer (interfaces + DTOs over Domain, carrying Domain's result type) and " +
+            "abstraction layer (interfaces + DTOs over Domain, plus the ErrorOr result type) and " +
             "every other layer depends on it — an infrastructure dependency here leaks everywhere.\n" +
             "Failing types: " + string.Join(", ", result.FailingTypeNames ?? []));
     }

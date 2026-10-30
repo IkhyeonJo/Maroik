@@ -1,4 +1,4 @@
-using Maroik.Core.Domain.Results;
+using ErrorOr;
 using Maroik.Core.Contract.Extensions;
 
 // ReSharper disable PropertyCanBeMadeInitOnly.Global

@@ -131,7 +131,7 @@ public class CalendarEventTests
     /// The rejection is built via <c>DomainError</c>: its Metadata carries the composite-format
     /// resource template and the raw offending zone separately, so <c>ServiceResult.FromError</c> can
     /// hand the UI something resx-localizable instead of the already-baked, value-embedding sentence
-    /// in <see cref="Maroik.Core.Domain.Results.Error.Description"/>.
+    /// in <see cref="ErrorOr.Error.Description"/>.
     /// </summary>
     [Fact]
     public void Create_ReturnsError_WithLocalizableMetadata_WhenTimeZoneIdInvalid()

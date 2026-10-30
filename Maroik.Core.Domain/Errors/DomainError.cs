@@ -1,5 +1,5 @@
 using System.Globalization;
-using Maroik.Core.Domain.Results;
+using ErrorOr;
 
 namespace Maroik.Core.Domain.Errors;
 
@@ -18,7 +18,7 @@ namespace Maroik.Core.Domain.Errors;
 /// </summary>
 /// <remarks>
 /// This is the <em>only</em> place in <c>Maroik.Core.Domain</c> allowed to call the raw
-/// <c>Results.Error.Validation</c>/<c>Conflict</c>/<c>Failure</c> factories — enforced by
+/// <c>ErrorOr.Error.Validation</c>/<c>Conflict</c>/<c>Failure</c> factories — enforced by
 /// <c>DomainArchitectureTests.Domain_ErrorMessages_MustGoThrough_DomainError</c>. Every other
 /// type builds its errors via <see cref="Validation"/>/<see cref="Conflict"/>/<see cref="Failure"/>
 /// below, even when the message has no runtime value to interpolate (pass zero <c>args</c>) — a

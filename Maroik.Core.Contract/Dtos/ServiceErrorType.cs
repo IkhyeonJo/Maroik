@@ -1,4 +1,4 @@
-using Maroik.Core.Domain.Results;
+using ErrorOr;
 
 namespace Maroik.Core.Contract.Dtos;
 

@@ -11,9 +11,7 @@ using Microsoft.AspNetCore.Mvc.ViewEngines;
 using Microsoft.AspNetCore.Mvc.ViewFeatures;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.DependencyInjection;
-using Maroik.Website.Grids;
-using Maroik.Website.Grids.Filters;
-using Maroik.Website.Grids.Interfaces;
+using NonFactors.Mvc.Grid;
 
 namespace Maroik.Website.Tests.Controllers;
 

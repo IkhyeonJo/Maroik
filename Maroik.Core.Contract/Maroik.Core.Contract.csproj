@@ -6,6 +6,9 @@
     <Nullable>enable</Nullable>
   </PropertyGroup>
 
+  <ItemGroup>
+    <PackageReference Include="ErrorOr" />
+  </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\Maroik.Core.Domain\Maroik.Core.Domain.csproj" />

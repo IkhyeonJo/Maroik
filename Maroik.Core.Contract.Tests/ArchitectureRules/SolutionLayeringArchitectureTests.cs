@@ -13,7 +13,7 @@ namespace Maroik.Core.Contract.Tests.ArchitectureRules;
 ///
 /// It encodes the ArchNet / Clean-Architecture rules for Maroik:
 /// <list type="number">
-///   <item>Domain and Contract are completely pure — BCL only, no NuGet package
+///   <item>Domain and Contract are completely pure — BCL + the <c>ErrorOr</c> result type only
 ///         (Contract additionally depends on Domain). No other package, no other project.</item>
 ///   <item>Client / Repository (infrastructure) never reach another concrete layer: they build on
 ///         Contract abstractions and must not reference each other or Service, and external-system
@@ -94,10 +94,10 @@ public class SolutionLayeringArchitectureTests
     // Rule 1 — Domain and Contract are completely pure
     // ─────────────────────────────────────────────────────────────────────────────────────────
 
-    /// <summary>Domain is the innermost layer: no project reference and no NuGet package at all (its
-    /// result/error type is vendored source, <c>Maroik.Core.Domain/Results</c>).</summary>
+    /// <summary>Domain is the innermost layer: no project reference at all, and no NuGet package
+    /// except <c>ErrorOr</c> (the shared lightweight result/error object).</summary>
     [Fact]
-    public void Domain_MustHaveNoProjectReferences_AndNoPackages()
+    public void Domain_MustHaveNoProjectReferences_AndOnlyErrorOrPackage()
     {
         ProjectFile domain = GetProject(Domain);
 
@@ -106,13 +106,13 @@ public class SolutionLayeringArchitectureTests
             $"{Domain} must not have any <ProjectReference>. The domain layer is the core of the " +
             "onion and depends on nothing.\nDeclared: " + string.Join(", ", domain.ProjectReferences));
 
-        AssertNoPackages(domain);
+        AssertOnlyErrorOrPackage(domain);
     }
 
     /// <summary>Contract is a pure abstraction layer: it may reference Domain and nothing else,
-    /// and — like Domain — no NuGet package.</summary>
+    /// and — like Domain — no NuGet package except <c>ErrorOr</c>.</summary>
     [Fact]
-    public void Contract_MustReferenceOnlyDomain_AndNoPackages()
+    public void Contract_MustReferenceOnlyDomain_AndOnlyErrorOrPackage()
     {
         ProjectFile contract = GetProject(Contract);
 
@@ -122,7 +122,7 @@ public class SolutionLayeringArchitectureTests
             "Contract holds interfaces + DTOs over the domain and nothing else.\nDeclared: " +
             string.Join(", ", contract.ProjectReferences));
 
-        AssertNoPackages(contract);
+        AssertOnlyErrorOrPackage(contract);
     }
 
     // ─────────────────────────────────────────────────────────────────────────────────────────
@@ -268,12 +268,19 @@ public class SolutionLayeringArchitectureTests
     // Helpers
     // ─────────────────────────────────────────────────────────────────────────────────────────
 
-    /// <summary>Fails if <paramref name="project"/> references any NuGet package.</summary>
-    private static void AssertNoPackages(ProjectFile project)
+    /// <summary>Fails unless <paramref name="project"/>'s only NuGet reference (if any) is ErrorOr.</summary>
+    private static void AssertOnlyErrorOrPackage(ProjectFile project)
     {
+        string[] unexpected =
+        [
+            .. project.PackageReferences
+                .Where(p => p != "ErrorOr")
+        ];
+
         Assert.True(
-            project.PackageReferences.Count == 0,
-            $"{project.Name} must not reference any NuGet package. Unexpected: " + string.Join(", ", project.PackageReferences));
+            unexpected.Length == 0,
+            $"{project.Name} must not reference any NuGet package except ErrorOr (the shared " +
+            "result/error object). Unexpected: " + string.Join(", ", unexpected));
     }
 
     /// <summary>Fails unless <paramref name="projectName"/> project-references exactly <paramref name="expected"/>.</summary>

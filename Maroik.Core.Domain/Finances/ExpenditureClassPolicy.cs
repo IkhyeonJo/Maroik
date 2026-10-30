@@ -1,4 +1,4 @@
-using Maroik.Core.Domain.Results;
+using ErrorOr;
 using Maroik.Core.Domain.Errors;
 
 namespace Maroik.Core.Domain.Finances;

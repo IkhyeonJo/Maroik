@@ -1,4 +1,4 @@
-using Maroik.Core.Domain.Results;
+using ErrorOr;
 using Maroik.Core.Domain.Calendars;
 namespace Maroik.Core.Domain.Tests.Calendars;
 

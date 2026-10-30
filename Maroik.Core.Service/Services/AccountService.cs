@@ -495,7 +495,7 @@ public class AccountService(
 
             if (confirmResult.IsError)
             {
-                if (confirmResult.FirstError.Type != Maroik.Core.Domain.Results.ErrorType.Conflict)
+                if (confirmResult.FirstError.Type != ErrorOr.ErrorType.Conflict)
                 {
                     await unitOfWork.RollbackAsync(ct);
                     logger.LogWarning("Email confirmation rejected: invalid or expired token for {Email}", locked.Email.Value);

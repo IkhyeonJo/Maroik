@@ -166,8 +166,8 @@ Finance
   change on a re-save. Accepted; not a defect to raise.
 
 Files and content
-- Maroik.FileStorage is only ever reachable on the internal network; its `[AllowAnonymous]` endpoints are intended. It has
-  no Swagger UI or OpenAPI document (Swashbuckle removed 2026-10-30, owner's request; pinned by `ProgramRoutesTests`).
+- Maroik.FileStorage is only ever reachable on the internal network; its `[AllowAnonymous]` endpoints
+  and always-on Swagger UI are intended.
 - Editing a post, private note or calendar event without choosing a new file removes the existing
   attachment (pinned by tests such as `EditBoardAsync_ClearsTheExistingAttachmentRecord_WhenNoFileIsSubmitted`).
 - The same holds when an admin clears the lock on someone else's FreeForum post (the
@@ -315,17 +315,6 @@ Client scripts
 
 Code and tests
 - The DDD + Clean Architecture layering is deliberate preparation for growth, not over-engineering.
-- The `ErrorOr<T>` / `Error` result type is source in the repo, not a package (since 2026-10-30, owner's request): ErrorOr
-  2.1.1 (MIT; source and copyright in `Maroik.Core.Domain/Results/LICENSE.md`) lives in `Maroik.Core.Domain/Results`
-  (namespace `Maroik.Core.Domain.Results`, plus `.Interfaces` / `.Extensions`) with its upstream tests, ported from
-  FluentAssertions to xUnit `Assert`, in `Maroik.Core.Domain.Tests/Results`. Domain and Contract reference no NuGet package
-  at all and Domain only the BCL (`Domain_ShouldOnly_DependOn_TheBcl`, `SolutionLayeringArchitectureTests`). Do not bring the
-  `ErrorOr` package back.
-- The MVC grid is source in the repo, not a package (since 2026-10-30, owner's request): the upstream grid 8.0.0
-  (MIT; source and copyright in `Maroik.Website/Grids/LICENSE.md`) lives in `Maroik.Website/Grids` (namespace `Maroik.Website.Grids.*`) with its
-  upstream tests in `Maroik.Website.Tests/Grids` (Moq; `Grids/Fixtures/Fake` stands in for NSubstitute). Views render a grid
-  with `@(await Html.Grid(...)....RenderAsync())`: the upstream `IHtmlContent.WriteTo` used the synchronous `Html.Partial`
-  (MVC1000). Do not bring the grid's NuGet packages back.
 - Long rationale comments are wanted; do not trim them in a review.
 - Service tests mock the repositories, and the Service layer's mutation score sits below the Domain's on purpose:
   the business rules live in Domain (with its own tests), and real-database coverage comes from the Repository
@@ -569,10 +558,7 @@ error contract) have no production folder of their own.
 ## One type per file, named after it
 
 Every `.cs` file holds one top-level type (class, record, struct, interface, enum, delegate) and is named after it
-(`AdminStanding.cs`, `MenuSnapshot.cs`, `SeededAccount.cs`). A generic type's file carries its type parameters in braces,
-StyleCop's convention (since 2026-10-30, owner's request): `AggregateRoot{TId}.cs`, `GenericRepository{TDomain,TEntity}.cs`,
-and a part of a partial generic type `ErrorOr{TValue}.Else.cs`; a non-generic type's file has no braces. SA1649 accepts the bare
-name too, so `GenericFileNameArchitectureTests` (`Maroik.Core.Contract.Tests`, Roslyn, the PostgreSQL scaffold aside) holds it. StyleCop.Analyzers is referenced for that alone: `.editorconfig`
+(`AdminStanding.cs`, `MenuSnapshot.cs`, `SeededAccount.cs`). StyleCop.Analyzers is referenced for that alone: `.editorconfig`
 sets SA1402 (one type per file; `stylecop.json` counts every kind of type, not only classes) and SA1649 (file name = first
 type) to `error` by rule ID, and `stylecop.globalconfig` turns every other StyleCop rule off. That file uses category lines —
 the one exception to "configure analyzers by rule ID only" below, which holds only while no `AnalysisLevel=latest-all` /
@@ -686,8 +672,8 @@ for shipped code, `tests` for `*.Tests`): `dotnet sln Maroik.slnx add <csproj> -
 
 The domain speaks English only and does no translation. Every `Maroik.Core.Domain` error is built via
 `Maroik.Core.Domain.Errors.DomainError` (`.Validation`/`.Conflict`/`.Failure`) — **never** call the raw
-`Error.Validation` / `.Conflict` / `.Failure` / `.NotFound` / `.Forbidden` / `.Unexpected` factories
-(`Maroik.Core.Domain.Results.Error`) directly outside `DomainError.cs` itself. `DomainError` keeps the English message template and its values
+`ErrorOr.Error.Validation` / `.Conflict` / `.Failure` / `.NotFound` / `.Forbidden` / `.Unexpected` factories
+directly outside `DomainError.cs` itself. `DomainError` keeps the English message template and its values
 separately in `Error.Metadata` (`MessageTemplate` / `MessageArgs`), so the outer layers can translate it.
 This applies even to a message with no runtime value to interpolate (pass zero `args`) — a message that
 starts static and later gains an interpolated value must not be able to silently lose its template.
@@ -701,9 +687,9 @@ code was interpolated straight into the message, so no resx key could ever match
 
 Enforced by `DomainArchitectureTests.Domain_ErrorMessages_MustGoThrough_DomainError`
 (`Maroik.Core.Domain.Tests/ArchitectureRules/DomainArchitectureTests.cs`) — a NetArchTest custom rule that
-inspects each type's IL for a direct call to a raw `Results.Error` factory method (a type-dependency
-check doesn't work here since every Domain type legitimately depends on the `ErrorOr<T>` return type and on `Error`
-itself; the result type's own code in `Maroik.Core.Domain.Results` is exempt). Keep it green; when a new error is added, add it via `DomainError`, and add the
+inspects each type's IL for a direct call to a raw `ErrorOr.Error` factory method (a type-dependency
+check doesn't work here since every Domain type legitimately depends on the unrelated `ErrorOr<T>`
+return type). Keep it green; when a new error is added, add it via `DomainError`, and add the
 matching resx entry — with a `{0}`/`{1}` composite-format key, not a baked value — to every controller
 resx pair (`en-US` + `ko-KR`) that can surface it.
 

@@ -7,9 +7,8 @@ namespace Maroik.Core.Domain.Tests.ArchitectureRules;
 /// <summary>
 /// Architecture tests enforcing that Maroik.Core.Domain is the innermost layer of the
 /// application: it must not depend on any outer layer (Contract, Client, Repository,
-/// Service, PostgreSQL, Website, Worker, FileStorage), and it must not depend on anything but the
-/// BCL. The <c>ErrorOr&lt;T&gt;</c> / <c>Error</c> result type is part of it (<c>Results/</c>, vendored from
-/// the ErrorOr library), not a package.
+/// Service, PostgreSQL, Website, Worker, FileStorage), and it must not depend on any
+/// framework other than the BCL and the ErrorOr result-type library.
 /// </summary>
 public class DomainArchitectureTests
 {
@@ -41,9 +40,9 @@ public class DomainArchitectureTests
             "Failing types: " + string.Join(", ", result.FailingTypeNames ?? []));
     }
 
-    /// <summary>Domain references the BCL and nothing else — no NuGet package, not even a result-type library.</summary>
+    /// <summary>Domain should only depend on system or error or.</summary>
     [Fact]
-    public void Domain_ShouldOnly_DependOn_TheBcl()
+    public void Domain_ShouldOnly_DependOn_SystemOrErrorOr()
     {
         AssemblyName[] referenced = _domainAssembly.GetReferencedAssemblies();
 
@@ -51,20 +50,23 @@ public class DomainArchitectureTests
             .Where(a => a.Name is not null)
             .Where(a => !a.Name!.StartsWith("System", StringComparison.Ordinal))
             .Where(a => !a.Name!.StartsWith("netstandard", StringComparison.Ordinal))
+            .Where(a => a.Name != "ErrorOr")
             .Select(a => a.Name)
             .ToList();
 
         Assert.True(
             unexpected.Count == 0,
-            "Maroik.Core.Domain must only depend on the BCL. " +
+            "Maroik.Core.Domain must only depend on the BCL and ErrorOr. " +
             "Unexpected assembly references: " + string.Join(", ", unexpected));
     }
 
     /// <summary>
     /// Domain must not touch any infrastructure or third-party library used elsewhere in the
     /// solution (EF Core, ASP.NET Core, MailKit, RabbitMQ, JSON/HTML/image libraries, DI and
-    /// hosting abstractions, …). Business logic in the innermost layer stays framework-free. This overlaps
-    /// <see cref="Domain_ShouldOnly_DependOn_TheBcl"/> (an assembly-reference check); it is
+    /// hosting abstractions, …). Business logic in the innermost layer stays framework-free; the
+    /// single deliberate exception is <c>ErrorOr</c>, the lightweight <c>ErrorOr&lt;T&gt;</c> /
+    /// <c>Error</c> result type used to report outcomes without throwing. This overlaps
+    /// <see cref="Domain_ShouldOnly_DependOn_SystemOrErrorOr"/> (an assembly-reference check); it is
     /// kept separately so a violation names the exact library and the exact offending type.
     /// </summary>
     [Theory]
@@ -87,8 +89,10 @@ public class DomainArchitectureTests
     [InlineData("ImageMagick")]
     [InlineData("BCrypt.Net")]
     [InlineData("DocumentFormat.OpenXml")]
+    [InlineData("ICSharpCode.SharpZipLib")]
     [InlineData("Serilog")]
     [InlineData("Swashbuckle")]
+    [InlineData("NonFactors.Grid")]
     [InlineData("Dapper")]
     [InlineData("AutoMapper")]
     [InlineData("MediatR")]
@@ -103,7 +107,7 @@ public class DomainArchitectureTests
             result.IsSuccessful,
             $"Maroik.Core.Domain must not reference {forbiddenNamespace}. The domain layer must " +
             "stay pure: business rules, invariants and policies are plain C# with no framework or " +
-            "third-party dependency.\n" +
+            "third-party dependency (the sole exception is the ErrorOr result type).\n" +
             "Failing types: " + string.Join(", ", result.FailingTypeNames ?? []));
     }
 
@@ -174,8 +178,7 @@ public class DomainArchitectureTests
 
     /// <summary>
     /// Every Domain error message must be built via <c>DomainError.Validation</c>/<c>Conflict</c>/
-    /// <c>Failure</c>, never the raw <c>Results.Error</c> factories directly (the result type's own code in
-    /// <c>Maroik.Core.Domain.Results</c> builds its few library errors itself). <c>DomainError</c> is
+    /// <c>Failure</c>, never the raw <c>ErrorOr.Error</c> factories directly. <c>DomainError</c> is
     /// what attaches the English composite-format template + args to <c>Error.Metadata</c> so an outer
     /// layer can translate the message via resx instead of falling back to an already-baked,
     /// untranslatable sentence (see <c>Maroik.Core.Domain.Errors.DomainError</c>'s doc comment). A raw
@@ -189,8 +192,6 @@ public class DomainArchitectureTests
         NetArchTest.Rules.TestResult result = Types.InAssembly(_domainAssembly)
             .That()
             .DoNotResideInNamespace("Maroik.Core.Domain.Errors")
-            .And()
-            .DoNotResideInNamespace("Maroik.Core.Domain.Results")
             .Should()
             .MeetCustomRule(new DoesNotCallRawErrorFactory())
             .GetResult();
@@ -198,7 +199,7 @@ public class DomainArchitectureTests
         Assert.True(
             result.IsSuccessful,
             "Domain types must build errors via DomainError.Validation/Conflict/Failure, not the " +
-            "raw Results.Error.Validation/Conflict/Failure/NotFound/Forbidden/Unexpected factories " +
+            "raw ErrorOr.Error.Validation/Conflict/Failure/NotFound/Forbidden/Unexpected factories " +
             "directly — only Maroik.Core.Domain.Errors.DomainError is allowed to call those.\n" +
             "Failing types: " + string.Join(", ", result.FailingTypeNames ?? []));
     }
@@ -255,26 +256,27 @@ public class DomainArchitectureTests
     }
 
     /// <summary>
-    /// Flags a type whose IL directly calls one of the raw <c>Results.Error</c> factory methods.
+    /// Flags a type whose IL directly calls one of the raw <c>ErrorOr.Error</c> factory methods.
     /// Deliberately checked at the method-call level via Mono.Cecil rather than as a type-dependency
-    /// (<c>HaveDependencyOn(".Results.Error")</c>) rule: every Domain type legitimately references the
-    /// <c>ErrorOr&lt;T&gt;</c> return type and <c>Error</c> itself, so a dependency-based check would also
-    /// flag those required references.
+    /// (<c>HaveDependencyOn("ErrorOr.Error")</c>) rule: every Domain type legitimately references the
+    /// <c>ErrorOr&lt;T&gt;</c> return type, whose full name (<c>ErrorOr.ErrorOr`1</c>) shares the
+    /// <c>"ErrorOr.Error"</c> prefix, so a dependency-based check would also flag that unrelated,
+    /// required reference.
     /// </summary>
     private sealed class DoesNotCallRawErrorFactory : ICustomRule
     {
-        /// <summary>The raw <c>Results.Error</c> factory methods domain code must not call directly.</summary>
+        /// <summary>The raw <c>ErrorOr.Error</c> factory methods domain code must not call directly.</summary>
         private static readonly string[] _rawFactoryMethodNames =
             ["Validation", "Conflict", "Failure", "NotFound", "Forbidden", "Unexpected"];
 
-        /// <summary>Returns <see langword="false"/> when any method body of <paramref name="type"/> (or a type nested in it) calls a raw <c>Results.Error</c> factory.</summary>
+        /// <summary>Returns <see langword="false"/> when any method body of <paramref name="type"/> (or a type nested in it) calls a raw <c>ErrorOr.Error</c> factory.</summary>
         public bool MeetsRule(TypeDefinition type)
         {
             foreach (var instruction in Flatten(type).SelectMany(t => t.Methods).Where(method => method.HasBody).SelectMany(method => method.Body.Instructions.Where(instruction => instruction.OpCode == OpCodes.Call || instruction.OpCode == OpCodes.Callvirt)))
             {
                 if (instruction.Operand is not MethodReference calledMethod) continue;
 
-                if (calledMethod.DeclaringType.FullName == "Maroik.Core.Domain.Results.Error"
+                if (calledMethod.DeclaringType.FullName == "ErrorOr.Error"
                     && _rawFactoryMethodNames.Contains(calledMethod.Name))
                 {
                     return false;
