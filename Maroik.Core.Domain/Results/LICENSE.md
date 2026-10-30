@@ -5,7 +5,8 @@ The code in this folder (`Maroik.Core.Domain/Results`, with its `Interfaces/` an
 `03984d5775704d2bd3e17df35f9362ce75375c2d`), the source of the `ErrorOr` NuGet package, which Maroik no longer references.
 It was adapted to this repository's rules (namespace `Maroik.Core.Domain.Results`, one type per file, the interfaces and
 extension classes in their own folders, net10.0 only; the tests use xUnit's `Assert` instead of FluentAssertions) and is
-maintained here.
+maintained here. Later upstream fixes applied here: `60b20e0` (`ErrorOr<TValue>.GetHashCode` no longer throws for a success holding
+`null`, including `default(ErrorOr<TValue>)`).
 
 MIT License
 

@@ -141,6 +141,35 @@ public sealed class ErrorOrEqualityTests
         Assert.NotEqual(hashCode2, hashCode1);
     }
 
+    // Upstream fix 60b20e0 (after 2.1.1): a success holding null hashes like null instead of throwing.
+    [Fact]
+    public void GetHashCode_WhenValueIsNull_ReturnsTheHashCodeOfNull()
+    {
+        ErrorOr<Person?> errorOrPerson = (Person?)null;
+
+        Assert.Equal(EqualityComparer<Person?>.Default.GetHashCode(null!), errorOrPerson.GetHashCode());
+    }
+
+    [Fact]
+    public void GetHashCode_WhenBothValuesAreNull_ShouldReturnSameHashCode()
+    {
+        ErrorOr<Person?> errorOrPerson1 = (Person?)null;
+        ErrorOr<Person?> errorOrPerson2 = (Person?)null;
+
+        var hashCode1 = errorOrPerson1.GetHashCode();
+        var hashCode2 = errorOrPerson2.GetHashCode();
+
+        Assert.Equal(hashCode1, hashCode2);
+    }
+
+    [Fact]
+    public void GetHashCode_OfTheDefaultInstance_ReturnsTheHashCodeOfNull()
+    {
+        ErrorOr<Person> errorOrPerson = default;
+
+        Assert.Equal(EqualityComparer<Person?>.Default.GetHashCode(null!), errorOrPerson.GetHashCode());
+    }
+
     [Fact]
     public void GetHashCode_WhenTwoInstancesHaveEqualErrors_ShouldReturnSameHashCode()
     {
