@@ -573,7 +573,10 @@ error contract) have no production folder of their own.
 ## One type per file, named after it
 
 Every `.cs` file holds one top-level type (class, record, struct, interface, enum, delegate) and is named after it
-(`AdminStanding.cs`, `MenuSnapshot.cs`, `SeededAccount.cs`). StyleCop.Analyzers is referenced for that alone: `.editorconfig`
+(`AdminStanding.cs`, `MenuSnapshot.cs`, `SeededAccount.cs`). A generic type's file carries its type parameters in braces,
+StyleCop's convention (since 2026-10-30, owner's request): `AggregateRoot{TId}.cs`, `GenericRepository{TDomain,TEntity}.cs`,
+and a part of a partial generic type `ErrorOr{TValue}.Else.cs`; a non-generic type's file has no braces. SA1649 accepts the bare
+name too, so `GenericFileNameArchitectureTests` (`Maroik.Core.Contract.Tests`, Roslyn, the PostgreSQL scaffold aside) holds it. StyleCop.Analyzers is referenced for that alone: `.editorconfig`
 sets SA1402 (one type per file; `stylecop.json` counts every kind of type, not only classes) and SA1649 (file name = first
 type) to `error` by rule ID, and `stylecop.globalconfig` turns every other StyleCop rule off. That file uses category lines —
 the one exception to "configure analyzers by rule ID only" below, which holds only while no `AnalysisLevel=latest-all` /
