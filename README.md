@@ -242,7 +242,7 @@ Maroik has been built by one developer since May 2021. It was developed in a pri
 | When | Milestone |
 |---|---|
 | 2021-05 | Project starts as *MyLaboratory*: ASP.NET Core (2.1 → .NET 5) with MariaDB, run under docker-compose from the first week |
-| 2021-06 | AdminLTE 3 layout, NonFactors MVC grid |
+| 2021-06 | AdminLTE 3 layout, MVC grid |
 | 2021-07 | Excel export, registration with e-mail confirmation, password reset, separate admin / user dashboards, English / Korean localization (resx) |
 | 2021-08 | Account book: assets, income, expenditure, fixed income / expenditure with deposit-day notices |
 | 2021-12 | MariaDB 10.6 |

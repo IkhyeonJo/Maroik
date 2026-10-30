@@ -1,7 +1,7 @@
 /**
  * Script for the **Fixed Expenditure** page
  * (`Views/Notice/FixedExpenditure.cshtml`) — recurring/scheduled expenditure
- * entries. A NonFactors MVC.Grid list with create / edit / delete modals and
+ * entries. An MVC Grid list with create / edit / delete modals and
  * Excel export, following the standard grid-CRUD pattern (see
  * `AccountBook/Asset`). It combines everything the Fixed Income and Expenditure
  * pages do:
