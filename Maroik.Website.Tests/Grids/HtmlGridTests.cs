@@ -1,22 +1,22 @@
 using System.Text.Encodings.Web;
 using Maroik.Website.Grids;
-using Maroik.Website.Tests.Fixtures;
 using Maroik.Website.Tests.Grids.Fixtures;
 using Microsoft.AspNetCore.Html;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc.Rendering;
+using Moq;
 
 namespace Maroik.Website.Tests.Grids;
 
 public class HtmlGridTests
 {
     private HtmlGrid<GridModel> htmlGrid;
-    private FakeHtmlHelper html;
 
     public HtmlGridTests()
     {
         Grid<GridModel> grid = new(new GridModel[8]);
-        html = new FakeHtmlHelper { ViewContext = new ViewContext { HttpContext = new DefaultHttpContext() } };
+        IHtmlHelper html = Fake.Of<IHtmlHelper>();
+        Mock.Get(html).Setup(mock => mock.ViewContext).Returns(new ViewContext { HttpContext = new DefaultHttpContext() });
 
         htmlGrid = new HtmlGrid<GridModel>(html, grid);
 
@@ -37,7 +37,7 @@ public class HtmlGridTests
     public void HtmlGrid_SetsRequestGridQuery()
     {
         htmlGrid.Grid.Query = null;
-        html.ViewContext = new ViewContext();
+        Mock.Get(htmlGrid.Html).Setup(mock => mock.ViewContext).Returns(new ViewContext());
         htmlGrid.Html.ViewContext.HttpContext = new DefaultHttpContext();
 
         Object expected = htmlGrid.Html.ViewContext.HttpContext.Request.Query;
@@ -51,7 +51,7 @@ public class HtmlGridTests
     public void HtmlGrid_SetsEmptyGridQuery()
     {
         htmlGrid.Grid.Query = null;
-        html.ViewContext = (ViewContext)null!;
+        Mock.Get(htmlGrid.Html).Setup(mock => mock.ViewContext).Returns((ViewContext)null!);
 
         Assert.Empty(new HtmlGrid<GridModel>(htmlGrid.Html, htmlGrid.Grid).Grid.Query!);
     }
@@ -60,7 +60,7 @@ public class HtmlGridTests
     public void HtmlGrid_DoesNotChangeHttpContext()
     {
         htmlGrid.Grid.HttpContext = new DefaultHttpContext();
-        html.ViewContext = new ViewContext { HttpContext = new DefaultHttpContext() };
+        Mock.Get(htmlGrid.Html).Setup(mock => mock.ViewContext).Returns(new ViewContext { HttpContext = new DefaultHttpContext() });
 
         Object? expected = htmlGrid.Grid.HttpContext;
         Object? actual = new HtmlGrid<GridModel>(htmlGrid.Html, htmlGrid.Grid).Grid.HttpContext;
@@ -72,7 +72,7 @@ public class HtmlGridTests
     public void HtmlGrid_SetsHttpContext()
     {
         htmlGrid.Grid.HttpContext = null;
-        html.ViewContext = new ViewContext();
+        Mock.Get(htmlGrid.Html).Setup(mock => mock.ViewContext).Returns(new ViewContext());
         htmlGrid.Html.ViewContext.HttpContext = new DefaultHttpContext();
 
         Object? actual = new HtmlGrid<GridModel>(htmlGrid.Html, htmlGrid.Grid).Grid.HttpContext;
@@ -110,7 +110,7 @@ public class HtmlGridTests
     {
         await using StringWriter writer = new();
         Task<IHtmlContent> view = Task.FromResult<IHtmlContent>(new HtmlString("Test"));
-        html.OnPartialAsync = (name, model, viewData) => name == htmlGrid.PartialViewName && model == htmlGrid.Grid && viewData == null ? view : Task.FromResult<IHtmlContent>(HtmlString.Empty);
+        Mock.Get(htmlGrid.Html).Setup(mock => mock.PartialAsync(htmlGrid.PartialViewName, htmlGrid.Grid, null)).Returns(view);
 
         (await htmlGrid.RenderAsync()).WriteTo(writer, HtmlEncoder.Default);
 

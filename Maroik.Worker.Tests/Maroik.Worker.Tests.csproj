@@ -11,6 +11,7 @@
   <ItemGroup>
     <PackageReference Include="Microsoft.NET.Test.Sdk" />
     <PackageReference Include="Microsoft.Extensions.Diagnostics.Testing" />
+    <PackageReference Include="Moq" />
     <PackageReference Include="Microsoft.Extensions.TimeProvider.Testing" />
     <PackageReference Include="Testcontainers.RabbitMq" />
     <PackageReference Include="NetArchTest.Rules" />
@@ -25,10 +26,6 @@
   <ItemGroup>
     <!-- the in-process SMTP server the Client tests use; here it stands in for the mail relay in the end-to-end host test -->
     <Compile Include="..\Maroik.Core.Client.Tests\Fixtures\FakeSmtpServer.cs" Link="Fixtures\FakeSmtpServer.cs" />
-    <!-- the RabbitMQ connection factory / connection / channel fakes the Client tests use; here they stand in for the broker -->
-    <Compile Include="..\Maroik.Core.Client.Tests\Fixtures\FakeConnectionFactory.cs" Link="Fixtures\FakeConnectionFactory.cs" />
-    <Compile Include="..\Maroik.Core.Client.Tests\Fixtures\FakeConnection.cs" Link="Fixtures\FakeConnection.cs" />
-    <Compile Include="..\Maroik.Core.Client.Tests\Fixtures\FakeChannel.cs" Link="Fixtures\FakeChannel.cs" />
   </ItemGroup>
 
   <ItemGroup>

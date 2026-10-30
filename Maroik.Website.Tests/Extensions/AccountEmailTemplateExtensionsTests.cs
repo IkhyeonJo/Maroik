@@ -1,12 +1,12 @@
 using Maroik.Website.Controllers;
 using Maroik.Website.Extensions;
-using Maroik.Website.Tests.Fixtures;
 using Microsoft.AspNetCore.Mvc.Localization;
+using Moq;
 
 namespace Maroik.Website.Tests.Extensions;
 
 /// <summary>
-/// Unit tests for <see cref="AccountEmailTemplateExtensions"/>. The localizer fake simply echoes
+/// Unit tests for <see cref="AccountEmailTemplateExtensions"/>. The localizer mock simply echoes
 /// each lookup key back as the resolved value, so a passing test confirms each
 /// <see cref="Maroik.Core.Contract.Dtos.EmailTemplate"/> field is wired to the *correct* resource
 /// key -- a swapped Subject/Title or reused key would show up as a mismatch here even though every
@@ -17,7 +17,9 @@ public class AccountEmailTemplateExtensionsTests
     /// <summary>A localizer that returns each key as its own value.</summary>
     private static IHtmlLocalizer<AccountController> MakeEchoLocalizer()
     {
-        return new FakeAccountControllerHtmlLocalizer { OnItem = name => new LocalizedHtmlString(name, name) };
+        var mock = new Mock<IHtmlLocalizer<AccountController>>();
+        mock.Setup(l => l[It.IsAny<string>()]).Returns((string name) => new LocalizedHtmlString(name, name));
+        return mock.Object;
     }
 
     /// <summary>Each field of the confirmation-email template is sourced from its own, distinct resource key.</summary>

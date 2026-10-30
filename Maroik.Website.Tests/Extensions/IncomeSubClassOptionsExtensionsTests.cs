@@ -1,9 +1,9 @@
 using System.Text;
 using System.Text.Encodings.Web;
 using Maroik.Website.Extensions;
-using Maroik.Website.Tests.Fixtures;
 using Microsoft.AspNetCore.Mvc.Localization;
 using Microsoft.AspNetCore.Mvc.Rendering;
+using Moq;
 
 namespace Maroik.Website.Tests.Extensions;
 
@@ -19,7 +19,9 @@ public class IncomeSubClassOptionsExtensionsTests
     /// <summary>A localizer that returns each key as its own value.</summary>
     private static IViewLocalizer MakeEchoLocalizer()
     {
-        return new FakeViewLocalizer { OnItem = name => new LocalizedHtmlString(name, name) };
+        var mock = new Mock<IViewLocalizer>();
+        mock.Setup(l => l[It.IsAny<string>()]).Returns((string name) => new LocalizedHtmlString(name, name));
+        return mock.Object;
     }
 
     /// <summary>Writes <paramref name="content"/> to a string with the default HTML encoder.</summary>

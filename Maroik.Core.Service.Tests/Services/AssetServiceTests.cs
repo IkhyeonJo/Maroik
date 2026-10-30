@@ -1,25 +1,26 @@
 using Maroik.Core.Contract.Dtos;
+using Maroik.Core.Contract.Interfaces;
 using Maroik.Core.Domain.Finances;
 using Maroik.Core.Service.Services;
-using Maroik.Core.Service.Tests.Fixtures;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Testing;
 using Microsoft.Extensions.Time.Testing;
+using Moq;
 
 namespace Maroik.Core.Service.Tests.Services;
 
 /// <summary>
 /// Unit tests for <see cref="AssetService"/>.
-/// All repository dependencies are replaced with hand-written fakes.
+/// All repository dependencies are replaced with Moq mocks.
 /// Covers asset CRUD, balance adjustments triggered by income/expenditure changes,
 /// and product-name rename propagation.
 /// </summary>
-public class AssetServiceTests : IAsyncDisposable
+public class AssetServiceTests
 {
-    /// <summary>Fake <c>IAssetRepository</c> injected into the system under test.</summary>
-    private readonly FakeAssetRepository _assetRepo = new();
-    /// <summary>Fake <c>IUnitOfWork</c> injected into the system under test.</summary>
-    private readonly FakeUnitOfWork _unitOfWork = new();
+    /// <summary>Mock <c>IAssetRepository</c> injected into the system under test.</summary>
+    private readonly Mock<IAssetRepository> _assetRepo = new();
+    /// <summary>Mock <c>IUnitOfWork</c> injected into the system under test.</summary>
+    private readonly Mock<IUnitOfWork> _unitOfWork = new();
     /// <summary>Captures the log entries the system under test writes.</summary>
     private readonly FakeLogger<AssetService> _logger = new();
 
@@ -28,16 +29,16 @@ public class AssetServiceTests : IAsyncDisposable
     /// <summary>The clock the service under test reads, stopped at <see cref="Now"/>.</summary>
     private readonly FakeTimeProvider _time = new(new DateTimeOffset(Now));
 
-    /// <summary>The service under test over the fake dependencies.</summary>
-    private AssetService CreateSut() => new(_assetRepo, _unitOfWork, _logger, _time);
+    /// <summary>The service under test over the mocked dependencies.</summary>
+    private AssetService CreateSut() => new(_assetRepo.Object, _unitOfWork.Object, _logger, _time);
 
     /// <summary>Initializes the test fixture, setting up all required test doubles and the system under test.</summary>
     public AssetServiceTests()
     {
-        _unitOfWork.AnswerBeginAsync((isolationLevel, _) => isolationLevel == null, (_, _) => Task.CompletedTask);
-        _unitOfWork.AnswerCommitAsync(_ => Task.CompletedTask);
-        _unitOfWork.AnswerRollbackAsync(_ => Task.CompletedTask);
-        _unitOfWork.AnswerDisposeAsync(() => ValueTask.CompletedTask);
+        _unitOfWork.Setup(u => u.BeginAsync(null, It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
+        _unitOfWork.Setup(u => u.CommitAsync(It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
+        _unitOfWork.Setup(u => u.RollbackAsync(It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
+        _unitOfWork.Setup(u => u.DisposeAsync()).Returns(ValueTask.CompletedTask);
     }
 
     // -- Helpers --------------------------------------------------------------
@@ -49,10 +50,12 @@ public class AssetServiceTests : IAsyncDisposable
     /// <summary>Makes both the plain and the row-locking lookup return <paramref name="asset"/>.</summary>
     private void SetupFindAsset(Asset? asset)
     {
-        _assetRepo.AnswerFindByEmailAndProductNameAsync((_, _, _) => Task.FromResult<Asset?>(asset));
+        _assetRepo.Setup(r => r.FindByEmailAndProductNameAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(asset);
         // UpdateAsync row-locks its read via the ForUpdate variant (see AssetService.UpdateAsync);
         // stub it too so Update-path tests using this same helper still find the asset.
-        _assetRepo.AnswerFindByEmailAndProductNameForUpdateAsync((_, _, _) => Task.FromResult<Asset?>(asset));
+        _assetRepo.Setup(r => r.FindByEmailAndProductNameForUpdateAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(asset);
     }
 
     /// <summary>A valid asset request for product <paramref name="name"/>.</summary>
@@ -90,7 +93,8 @@ public class AssetServiceTests : IAsyncDisposable
     [Fact]
     public async Task CreateAsync_ReturnsFailure_WhenTheRepositoryThrowsANonDuplicateError()
     {
-        _assetRepo.AnswerCreateAsync((_, _) => Task.FromException(new InvalidOperationException("22001: value too long for type character varying(255)")));
+        _assetRepo.Setup(r => r.CreateAsync(It.IsAny<Asset>(), It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new InvalidOperationException("22001: value too long for type character varying(255)"));
         var sut = CreateSut();
 
         ServiceResult result = await sut.CreateAsync("user@example.com", ValidRequest(), TestContext.Current.CancellationToken);
@@ -110,7 +114,7 @@ public class AssetServiceTests : IAsyncDisposable
 
         Assert.False(result.Success);
         Assert.Equal("Asset.ProductNameTooLong", result.ErrorCode);
-        Assert.Empty(_assetRepo.CreateAsyncCalls);
+        _assetRepo.Verify(r => r.CreateAsync(It.IsAny<Asset>(), It.IsAny<CancellationToken>()), Times.Never);
     }
 
     /// <summary>Verifies that <c>CreateAsync</c> returns fail when asset with same name already exists.</summary>
@@ -142,8 +146,8 @@ public class AssetServiceTests : IAsyncDisposable
 
         Assert.False(result.Success);
         Assert.Contains("already exists", result.ErrorKey, StringComparison.OrdinalIgnoreCase);
-        Assert.Empty(_assetRepo.UpdateEntityAsyncCalls);
-        Assert.Empty(_assetRepo.CreateAsyncCalls);
+        _assetRepo.Verify(r => r.UpdateEntityAsync(It.IsAny<Asset>(), It.IsAny<CancellationToken>()), Times.Never);
+        _assetRepo.Verify(r => r.CreateAsync(It.IsAny<Asset>(), It.IsAny<CancellationToken>()), Times.Never);
     }
 
     /// <summary>Verifies that <c>CreateAsync</c> returns success for all valid item types.</summary>
@@ -160,7 +164,7 @@ public class AssetServiceTests : IAsyncDisposable
     public async Task CreateAsync_ReturnsSuccess_ForAllValidItemTypes(string item)
     {
         SetupFindAsset(null);
-        _assetRepo.AnswerCreateAsync((_, _) => Task.CompletedTask);
+        _assetRepo.Setup(r => r.CreateAsync(It.IsAny<Asset>(), It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
         var sut = CreateSut();
 
         var request = new AssetRequest { ProductName = "MyBank", Item = item, MonetaryUnit = "KRW" };
@@ -181,7 +185,8 @@ public class AssetServiceTests : IAsyncDisposable
     {
         SetupFindAsset(null);
         var pgException = new Exception("23505: duplicate key value violates unique constraint \"Asset_pk\"");
-        _assetRepo.AnswerCreateAsync((_, _) => Task.FromException(new InvalidOperationException("insert failed", pgException)));
+        _assetRepo.Setup(r => r.CreateAsync(It.IsAny<Asset>(), It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new InvalidOperationException("insert failed", pgException));
         var sut = CreateSut();
 
         ServiceResult result = await sut.CreateAsync("user@example.com", ValidRequest(), TestContext.Current.CancellationToken);
@@ -197,7 +202,9 @@ public class AssetServiceTests : IAsyncDisposable
         SetupFindAsset(null);
 
         Asset? captured = null;
-        _assetRepo.AnswerCreateAsync((asset, _) => { captured = asset; return Task.CompletedTask; });
+        _assetRepo.Setup(r => r.CreateAsync(It.IsAny<Asset>(), It.IsAny<CancellationToken>()))
+            .Callback<Asset, CancellationToken>((asset, _) => captured = asset)
+            .Returns(Task.CompletedTask);
         var sut = CreateSut();
 
         await sut.CreateAsync("user@example.com", ValidRequest(), TestContext.Current.CancellationToken);
@@ -222,7 +229,7 @@ public class AssetServiceTests : IAsyncDisposable
 
         Assert.False(result.Success);
         Assert.Equal("Asset.ItemInvalid", result.ErrorCode);
-        Assert.Single(_unitOfWork.RollbackAsyncCalls);
+        _unitOfWork.Verify(u => u.RollbackAsync(It.IsAny<CancellationToken>()), Times.Once);
     }
 
     /// <summary>Verifies that <c>UpdateAsync</c> returns fail when original asset not found.</summary>
@@ -236,7 +243,7 @@ public class AssetServiceTests : IAsyncDisposable
 
         Assert.False(result.Success);
         Assert.Contains("find", result.ErrorKey, StringComparison.OrdinalIgnoreCase);
-        Assert.Single(_unitOfWork.RollbackAsyncCalls);
+        _unitOfWork.Verify(u => u.RollbackAsync(It.IsAny<CancellationToken>()), Times.Once);
     }
 
     /// <summary>Verifies that <c>UpdateAsync</c> returns fail when rename returns zero rows affected.</summary>
@@ -244,14 +251,14 @@ public class AssetServiceTests : IAsyncDisposable
     public async Task UpdateAsync_ReturnsFail_WhenRenameReturnsZeroRowsAffected()
     {
         SetupFindAsset(MakeAsset("OldName"));
-        _assetRepo.AnswerUpdateAssetWithProductNameAsync((_, originalProductName, _) => originalProductName == "OldName", (_, _, _) => Task.FromResult<int>(0));
+        _assetRepo.Setup(r => r.UpdateAssetWithProductNameAsync(It.IsAny<Asset>(), "OldName", It.IsAny<CancellationToken>())).ReturnsAsync(0);
         var sut = CreateSut();
 
         ServiceResult result = await sut.UpdateAsync("user@example.com", ValidRequest("NewName"), "OldName", TestContext.Current.CancellationToken);
 
         Assert.False(result.Success);
         Assert.Equal("Input is invalid", result.ErrorKey); // a request that matches nothing is not a server fault
-        Assert.Single(_unitOfWork.RollbackAsyncCalls);
+        _unitOfWork.Verify(u => u.RollbackAsync(It.IsAny<CancellationToken>()), Times.Once);
     }
 
     /// <summary>Verifies that <c>UpdateAsync</c> commits the rename when successful.</summary>
@@ -260,13 +267,13 @@ public class AssetServiceTests : IAsyncDisposable
     {
         const string email = "user@example.com";
         SetupFindAsset(MakeAsset("OldName"));
-        _assetRepo.AnswerUpdateAssetWithProductNameAsync((_, originalProductName, _) => originalProductName == "OldName", (_, _, _) => Task.FromResult<int>(1));
+        _assetRepo.Setup(r => r.UpdateAssetWithProductNameAsync(It.IsAny<Asset>(), "OldName", It.IsAny<CancellationToken>())).ReturnsAsync(1);
         var sut = CreateSut();
 
         ServiceResult result = await sut.UpdateAsync(email, ValidRequest("NewName"), "OldName", TestContext.Current.CancellationToken);
 
         Assert.True(result.Success);
-        Assert.Single(_unitOfWork.CommitAsyncCalls);
+        _unitOfWork.Verify(u => u.CommitAsync(It.IsAny<CancellationToken>()), Times.Once);
     }
 
     /// <summary>
@@ -280,14 +287,15 @@ public class AssetServiceTests : IAsyncDisposable
     {
         SetupFindAsset(MakeAsset("OldName"));
         var pgException = new Exception("23505: duplicate key value violates unique constraint \"Asset_pk\"");
-        _assetRepo.AnswerUpdateAssetWithProductNameAsync((_, originalProductName, _) => originalProductName == "OldName", (_, _, _) => Task.FromException<int>(new InvalidOperationException("rename failed", pgException)));
+        _assetRepo.Setup(r => r.UpdateAssetWithProductNameAsync(It.IsAny<Asset>(), "OldName", It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new InvalidOperationException("rename failed", pgException));
         var sut = CreateSut();
 
         ServiceResult result = await sut.UpdateAsync("user@example.com", ValidRequest("NewName"), "OldName", TestContext.Current.CancellationToken);
 
         Assert.False(result.Success);
         Assert.Contains("already exists", result.ErrorKey, StringComparison.OrdinalIgnoreCase);
-        Assert.Single(_unitOfWork.RollbackAsyncCalls);
+        _unitOfWork.Verify(u => u.RollbackAsync(It.IsAny<CancellationToken>()), Times.Once);
     }
 
     /// <summary>
@@ -300,14 +308,17 @@ public class AssetServiceTests : IAsyncDisposable
     {
         const string email = "user@example.com";
         SetupFindAsset(MakeAsset("OldName"));
-        _assetRepo.AnswerUpdateAssetWithProductNameAsync((_, originalProductName, _) => originalProductName == "OldName", (_, _, _) => Task.FromResult<int>(1));
+        _assetRepo.Setup(r => r.UpdateAssetWithProductNameAsync(It.IsAny<Asset>(), "OldName", It.IsAny<CancellationToken>())).ReturnsAsync(1);
         var sut = CreateSut();
 
         ServiceResult result = await sut.UpdateAsync(email, ValidRequest("NewName"), "OldName", TestContext.Current.CancellationToken);
 
         Assert.True(result.Success);
-        Assert.Single(_assetRepo.UpdateAssetWithProductNameAsyncCalls, call => (call.Asset.ProductName == "NewName") && call.OriginalProductName == "OldName");
-        Assert.Single(_unitOfWork.CommitAsyncCalls);
+        _assetRepo.Verify(
+            r => r.UpdateAssetWithProductNameAsync(
+                It.Is<Asset>(a => a.ProductName == "NewName"), "OldName", It.IsAny<CancellationToken>()),
+            Times.Once);
+        _unitOfWork.Verify(u => u.CommitAsync(It.IsAny<CancellationToken>()), Times.Once);
     }
 
     /// <summary>
@@ -318,9 +329,11 @@ public class AssetServiceTests : IAsyncDisposable
     public async Task UpdateAsync_Rename_LocksTheReferencingRecords_BeforeTheAsset()
     {
         List<string> calls = [];
-        _assetRepo.AnswerLockReferencingRecordsAsync((accountEmail, productName, _) => accountEmail == Email && productName == "OldName", (_, _, _) => { calls.Add("records"); return Task.CompletedTask; });
-        _assetRepo.AnswerFindByEmailAndProductNameForUpdateAsync((accountEmail, productName, _) => accountEmail == Email && productName == "OldName", (_, _, _) => { calls.Add("asset"); return Task.FromResult<Asset?>(MakeAsset("OldName")); });
-        _assetRepo.AnswerUpdateAssetWithProductNameAsync((_, originalProductName, _) => originalProductName == "OldName", (_, _, _) => Task.FromResult<int>(1));
+        _assetRepo.Setup(r => r.LockReferencingRecordsAsync(Email, "OldName", It.IsAny<CancellationToken>()))
+            .Callback(() => calls.Add("records")).Returns(Task.CompletedTask);
+        _assetRepo.Setup(r => r.FindByEmailAndProductNameForUpdateAsync(Email, "OldName", It.IsAny<CancellationToken>()))
+            .Callback(() => calls.Add("asset")).ReturnsAsync(MakeAsset("OldName"));
+        _assetRepo.Setup(r => r.UpdateAssetWithProductNameAsync(It.IsAny<Asset>(), "OldName", It.IsAny<CancellationToken>())).ReturnsAsync(1);
 
         ServiceResult result = await CreateSut().UpdateAsync(Email, ValidRequest("NewName"), "OldName", TestContext.Current.CancellationToken);
 
@@ -335,14 +348,14 @@ public class AssetServiceTests : IAsyncDisposable
     public async Task UpdateAsync_KeepingTheName_LocksNoRecord(string? requestedName)
     {
         SetupFindAsset(MakeAsset("MyBank"));
-        _assetRepo.AnswerUpdateAssetWithProductNameAsync((_, originalProductName, _) => originalProductName == "MyBank", (_, _, _) => Task.FromResult<int>(1));
+        _assetRepo.Setup(r => r.UpdateAssetWithProductNameAsync(It.IsAny<Asset>(), "MyBank", It.IsAny<CancellationToken>())).ReturnsAsync(1);
         AssetRequest request = ValidRequest();
         request.ProductName = requestedName;
 
         ServiceResult result = await CreateSut().UpdateAsync(Email, request, "MyBank", TestContext.Current.CancellationToken);
 
         Assert.True(result.Success);
-        Assert.Empty(_assetRepo.LockReferencingRecordsAsyncCalls);
+        _assetRepo.Verify(r => r.LockReferencingRecordsAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
     }
 
     // -- DeleteAsync ----------------------------------------------------------
@@ -368,7 +381,9 @@ public class AssetServiceTests : IAsyncDisposable
         SetupFindAsset(MakeAsset("MyBank"));
 
         Asset? captured = null;
-        _assetRepo.AnswerUpdateEntityAsync((asset, _) => { captured = asset; return Task.CompletedTask; });
+        _assetRepo.Setup(r => r.UpdateEntityAsync(It.IsAny<Asset>(), It.IsAny<CancellationToken>()))
+            .Callback<Asset, CancellationToken>((asset, _) => captured = asset)
+            .Returns(Task.CompletedTask);
         var sut = CreateSut();
 
         ServiceResult result = await sut.DeleteAsync(email, "MyBank", TestContext.Current.CancellationToken);
@@ -385,7 +400,7 @@ public class AssetServiceTests : IAsyncDisposable
     public async Task GetAssetsAsync_DelegatesToRepository()
     {
         var list = new List<Asset> { MakeAsset("MyBank") };
-        _assetRepo.AnswerGetByAccountEmailAsync((_, _) => Task.FromResult<List<Asset>>(list));
+        _assetRepo.Setup(r => r.GetByAccountEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(list);
         var sut = CreateSut();
 
         List<AssetResponse> result = await sut.GetAssetsAsync("user@example.com", TestContext.Current.CancellationToken);
@@ -413,7 +428,8 @@ public class AssetServiceTests : IAsyncDisposable
     [Fact]
     public async Task SearchAssetsAsync_DelegatesToRepository_AndMapsTheRows()
     {
-        _assetRepo.AnswerSearchByAccountEmailAsync((accountEmail, search, _) => accountEmail == "user@example.com" && search == "bank", (_, _, _) => Task.FromResult<List<Asset>>([MakeAsset("MyBank")]));
+        _assetRepo.Setup(r => r.SearchByAccountEmailAsync("user@example.com", "bank", It.IsAny<CancellationToken>()))
+            .ReturnsAsync([MakeAsset("MyBank")]);
 
         List<AssetResponse> result = await CreateSut().SearchAssetsAsync("user@example.com", "bank", TestContext.Current.CancellationToken);
 
@@ -433,8 +449,8 @@ public class AssetServiceTests : IAsyncDisposable
 
         Assert.False(result.Success);
         Assert.NotEqual("Asset.UpdateFailed", result.ErrorCode);
-        Assert.Empty(_assetRepo.UpdateAssetWithProductNameAsyncCalls);
-        Assert.Single(_unitOfWork.RollbackAsyncCalls);
+        _assetRepo.Verify(r => r.UpdateAssetWithProductNameAsync(It.IsAny<Asset>(), It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
+        _unitOfWork.Verify(u => u.RollbackAsync(It.IsAny<CancellationToken>()), Times.Once);
     }
 
     /// <summary>An unexpected repository failure on update is rolled back and reported without leaking internals.</summary>
@@ -442,15 +458,16 @@ public class AssetServiceTests : IAsyncDisposable
     public async Task UpdateAsync_RollsBackAndReportsUpdateFailed_WhenTheRepositoryThrows()
     {
         SetupFindAsset(MakeAsset("MyBank"));
-        _assetRepo.AnswerUpdateAssetWithProductNameAsync((_, _, _) => Task.FromException<int>(new InvalidOperationException("secret detail")));
+        _assetRepo.Setup(r => r.UpdateAssetWithProductNameAsync(It.IsAny<Asset>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new InvalidOperationException("secret detail"));
 
         ServiceResult result = await CreateSut().UpdateAsync("user@example.com", ValidRequest(), "MyBank", TestContext.Current.CancellationToken);
 
         Assert.Equal("Asset.UpdateFailed", result.ErrorCode);
         Assert.Equal(ServiceResult.TemporaryErrorKey, result.ErrorKey);
         Assert.DoesNotContain("secret detail", result.ErrorKey, StringComparison.Ordinal);
-        Assert.Single(_unitOfWork.RollbackAsyncCalls);
-        Assert.Empty(_unitOfWork.CommitAsyncCalls);
+        _unitOfWork.Verify(u => u.RollbackAsync(It.IsAny<CancellationToken>()), Times.Once);
+        _unitOfWork.Verify(u => u.CommitAsync(It.IsAny<CancellationToken>()), Times.Never);
     }
 
     /// <summary>An unexpected repository failure on delete is rolled back and reported without leaking internals.</summary>
@@ -458,15 +475,16 @@ public class AssetServiceTests : IAsyncDisposable
     public async Task DeleteAsync_RollsBackAndReportsDeleteFailed_WhenTheRepositoryThrows()
     {
         SetupFindAsset(MakeAsset("MyBank"));
-        _assetRepo.AnswerUpdateEntityAsync((_, _) => Task.FromException(new InvalidOperationException("secret detail")));
+        _assetRepo.Setup(r => r.UpdateEntityAsync(It.IsAny<Asset>(), It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new InvalidOperationException("secret detail"));
 
         ServiceResult result = await CreateSut().DeleteAsync("user@example.com", "MyBank", TestContext.Current.CancellationToken);
 
         Assert.Equal("Asset.DeleteFailed", result.ErrorCode);
         Assert.Equal(ServiceResult.TemporaryErrorKey, result.ErrorKey);
         Assert.DoesNotContain("secret detail", result.ErrorKey, StringComparison.Ordinal);
-        Assert.Single(_unitOfWork.RollbackAsyncCalls);
-        Assert.Empty(_unitOfWork.CommitAsyncCalls);
+        _unitOfWork.Verify(u => u.RollbackAsync(It.IsAny<CancellationToken>()), Times.Once);
+        _unitOfWork.Verify(u => u.CommitAsync(It.IsAny<CancellationToken>()), Times.Never);
     }
 
     // -- Transaction boundaries, exact results, field fall-backs and failure logging -------
@@ -528,12 +546,12 @@ public class AssetServiceTests : IAsyncDisposable
     [Fact]
     public async Task CreateAsync_ReturnsDuplicate_WhenTheRequestedNameIsAlreadyTaken()
     {
-        _assetRepo.AnswerFindByEmailAndProductNameAsync((accountEmail, productName, _) => accountEmail == Email && productName == "MyBank", (_, _, _) => Task.FromResult<Asset?>(MakeAsset("MyBank")));
+        _assetRepo.Setup(r => r.FindByEmailAndProductNameAsync(Email, "MyBank", It.IsAny<CancellationToken>())).ReturnsAsync(MakeAsset("MyBank"));
 
         ServiceResult result = await CreateSut().CreateAsync(Email, ValidRequest("MyBank"), TestContext.Current.CancellationToken);
 
         AssertDuplicate(result);
-        Assert.Empty(_assetRepo.CreateAsyncCalls);
+        _assetRepo.Verify(r => r.CreateAsync(It.IsAny<Asset>(), It.IsAny<CancellationToken>()), Times.Never);
     }
 
     /// <summary>A concurrent insert that hits the primary key is the same "already exists" Conflict.</summary>
@@ -541,7 +559,8 @@ public class AssetServiceTests : IAsyncDisposable
     public async Task CreateAsync_ReturnsDuplicate_WhenAConcurrentInsertHitsThePrimaryKey()
     {
         SetupFindAsset(null);
-        _assetRepo.AnswerCreateAsync((_, _) => Task.FromException(new InvalidOperationException("insert failed", new Exception("23505: duplicate key value violates unique constraint \"Asset_pk\""))));
+        _assetRepo.Setup(r => r.CreateAsync(It.IsAny<Asset>(), It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new InvalidOperationException("insert failed", new Exception("23505: duplicate key value violates unique constraint \"Asset_pk\"")));
 
         AssertDuplicate(await CreateSut().CreateAsync(Email, ValidRequest(), TestContext.Current.CancellationToken));
         Assert.Empty(_logger.Collector.GetSnapshot());
@@ -553,7 +572,7 @@ public class AssetServiceTests : IAsyncDisposable
     {
         SetupFindAsset(null);
         var thrown = new InvalidOperationException("boom");
-        _assetRepo.AnswerCreateAsync((_, _) => Task.FromException(thrown));
+        _assetRepo.Setup(r => r.CreateAsync(It.IsAny<Asset>(), It.IsAny<CancellationToken>())).ThrowsAsync(thrown);
 
         await CreateSut().CreateAsync(Email, ValidRequest("MyBank"), TestContext.Current.CancellationToken);
 
@@ -565,14 +584,14 @@ public class AssetServiceTests : IAsyncDisposable
     public async Task UpdateAsync_BeginsAndCommitsTheTransaction_OnSuccess()
     {
         SetupFindAsset(MakeAsset("MyBank"));
-        _assetRepo.AnswerUpdateAssetWithProductNameAsync((_, originalProductName, _) => originalProductName == "MyBank", (_, _, _) => Task.FromResult<int>(1));
+        _assetRepo.Setup(r => r.UpdateAssetWithProductNameAsync(It.IsAny<Asset>(), "MyBank", It.IsAny<CancellationToken>())).ReturnsAsync(1);
 
         ServiceResult result = await CreateSut().UpdateAsync(Email, ValidRequest("MyBank"), "MyBank", TestContext.Current.CancellationToken);
 
         Assert.True(result.Success);
-        Assert.Single(_unitOfWork.BeginAsyncCalls, call => call.IsolationLevel == null);
-        Assert.Single(_unitOfWork.CommitAsyncCalls);
-        Assert.Empty(_unitOfWork.RollbackAsyncCalls);
+        _unitOfWork.Verify(u => u.BeginAsync(null, It.IsAny<CancellationToken>()), Times.Once);
+        _unitOfWork.Verify(u => u.CommitAsync(It.IsAny<CancellationToken>()), Times.Once);
+        _unitOfWork.Verify(u => u.RollbackAsync(It.IsAny<CancellationToken>()), Times.Never);
     }
 
     /// <summary>An unknown asset category on update is a Validation error with its localizable message.</summary>
@@ -602,7 +621,8 @@ public class AssetServiceTests : IAsyncDisposable
     public async Task UpdateAsync_ReturnsDuplicate_WhenTheRenameHitsAnExistingName()
     {
         SetupFindAsset(MakeAsset("OldName"));
-        _assetRepo.AnswerUpdateAssetWithProductNameAsync((_, originalProductName, _) => originalProductName == "OldName", (_, _, _) => Task.FromException<int>(new InvalidOperationException("rename failed", new Exception("23505: duplicate key value violates unique constraint \"Asset_pk\""))));
+        _assetRepo.Setup(r => r.UpdateAssetWithProductNameAsync(It.IsAny<Asset>(), "OldName", It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new InvalidOperationException("rename failed", new Exception("23505: duplicate key value violates unique constraint \"Asset_pk\"")));
 
         AssertDuplicate(await CreateSut().UpdateAsync(Email, ValidRequest("NewName"), "OldName", TestContext.Current.CancellationToken));
     }
@@ -612,7 +632,7 @@ public class AssetServiceTests : IAsyncDisposable
     public async Task UpdateAsync_ReturnsUpdateFailed_WithInputIsInvalid_WhenNoRowIsUpdated()
     {
         SetupFindAsset(MakeAsset("MyBank"));
-        _assetRepo.AnswerUpdateAssetWithProductNameAsync((_, originalProductName, _) => originalProductName == "MyBank", (_, _, _) => Task.FromResult<int>(0));
+        _assetRepo.Setup(r => r.UpdateAssetWithProductNameAsync(It.IsAny<Asset>(), "MyBank", It.IsAny<CancellationToken>())).ReturnsAsync(0);
 
         ServiceResult result = await CreateSut().UpdateAsync(Email, ValidRequest("MyBank"), "MyBank", TestContext.Current.CancellationToken);
 
@@ -627,7 +647,8 @@ public class AssetServiceTests : IAsyncDisposable
     {
         SetupFindAsset(MakeAsset("MyBank", currency: "원"));
         Asset? written = null;
-        _assetRepo.AnswerUpdateAssetWithProductNameAsync((_, originalProductName, _) => originalProductName == "MyBank", (a, _, _) => { written = a; return Task.FromResult<int>(1); });
+        _assetRepo.Setup(r => r.UpdateAssetWithProductNameAsync(It.IsAny<Asset>(), "MyBank", It.IsAny<CancellationToken>()))
+            .Callback<Asset, string, CancellationToken>((a, _, _) => written = a).ReturnsAsync(1);
         var request = new AssetRequest { ProductName = "MyBank", Item = "SavingsAsset", Amount = 10m, MonetaryUnit = "KRW" };
 
         ServiceResult result = await CreateSut().UpdateAsync(Email, request, "MyBank", TestContext.Current.CancellationToken);
@@ -643,7 +664,8 @@ public class AssetServiceTests : IAsyncDisposable
     {
         SetupFindAsset(MakeAsset("MyBank", currency: "USD"));
         Asset? written = null;
-        _assetRepo.AnswerUpdateAssetWithProductNameAsync((_, originalProductName, _) => originalProductName == "MyBank", (a, _, _) => { written = a; return Task.FromResult<int>(1); });
+        _assetRepo.Setup(r => r.UpdateAssetWithProductNameAsync(It.IsAny<Asset>(), "MyBank", It.IsAny<CancellationToken>()))
+            .Callback<Asset, string, CancellationToken>((a, _, _) => written = a).ReturnsAsync(1);
         var request = new AssetRequest { ProductName = "MyBank", Item = "FreeDepositAndWithdrawal", Amount = 10m, MonetaryUnit = null };
 
         ServiceResult result = await CreateSut().UpdateAsync(Email, request, "MyBank", TestContext.Current.CancellationToken);
@@ -658,7 +680,7 @@ public class AssetServiceTests : IAsyncDisposable
     {
         SetupFindAsset(MakeAsset("MyBank"));
         var thrown = new InvalidOperationException("boom");
-        _assetRepo.AnswerUpdateAssetWithProductNameAsync((_, _, _) => Task.FromException<int>(thrown));
+        _assetRepo.Setup(r => r.UpdateAssetWithProductNameAsync(It.IsAny<Asset>(), It.IsAny<string>(), It.IsAny<CancellationToken>())).ThrowsAsync(thrown);
 
         await CreateSut().UpdateAsync(Email, ValidRequest("MyBank"), "MyBank", TestContext.Current.CancellationToken);
 
@@ -674,9 +696,9 @@ public class AssetServiceTests : IAsyncDisposable
         ServiceResult result = await CreateSut().DeleteAsync(Email, "MyBank", TestContext.Current.CancellationToken);
 
         Assert.True(result.Success);
-        Assert.Single(_unitOfWork.BeginAsyncCalls, call => call.IsolationLevel == null);
-        Assert.Single(_unitOfWork.CommitAsyncCalls);
-        Assert.Empty(_unitOfWork.RollbackAsyncCalls);
+        _unitOfWork.Verify(u => u.BeginAsync(null, It.IsAny<CancellationToken>()), Times.Once);
+        _unitOfWork.Verify(u => u.CommitAsync(It.IsAny<CancellationToken>()), Times.Once);
+        _unitOfWork.Verify(u => u.RollbackAsync(It.IsAny<CancellationToken>()), Times.Never);
     }
 
     /// <summary>An unknown asset on delete is the "asset not found" NotFound, and the transaction is rolled back.</summary>
@@ -686,8 +708,8 @@ public class AssetServiceTests : IAsyncDisposable
         SetupFindAsset(null);
 
         AssertAssetNotFound(await CreateSut().DeleteAsync(Email, "Ghost", TestContext.Current.CancellationToken));
-        Assert.Single(_unitOfWork.RollbackAsyncCalls);
-        Assert.Empty(_unitOfWork.CommitAsyncCalls);
+        _unitOfWork.Verify(u => u.RollbackAsync(It.IsAny<CancellationToken>()), Times.Once);
+        _unitOfWork.Verify(u => u.CommitAsync(It.IsAny<CancellationToken>()), Times.Never);
     }
 
     /// <summary>A delete that throws logs the failure with the exception, the asset and the account.</summary>
@@ -696,17 +718,10 @@ public class AssetServiceTests : IAsyncDisposable
     {
         SetupFindAsset(MakeAsset("MyBank"));
         var thrown = new InvalidOperationException("boom");
-        _assetRepo.AnswerUpdateEntityAsync((_, _) => Task.FromException(thrown));
+        _assetRepo.Setup(r => r.UpdateEntityAsync(It.IsAny<Asset>(), It.IsAny<CancellationToken>())).ThrowsAsync(thrown);
 
         await CreateSut().DeleteAsync(Email, "MyBank", TestContext.Current.CancellationToken);
 
         AssertLoggedFailure("Failed to delete asset", "MyBank", thrown);
-    }
-
-    /// <inheritdoc />
-    public async ValueTask DisposeAsync()
-    {
-        await _unitOfWork.DisposeAsync();
-        GC.SuppressFinalize(this);
     }
 }

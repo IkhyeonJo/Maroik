@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Testing;
+using Moq;
 
 namespace Maroik.FileStorage.Tests.Controllers;
 
@@ -23,7 +24,7 @@ public class FileControllerLoggingTests(WebApplicationFactory<Program> baseFacto
     /// <summary>The leading bytes of a JPEG (JFIF) file.</summary>
     private static readonly byte[] _jpeg = [0xFF, 0xD8, 0xFF, 0xE0, 0x00, 0x10, 0x4A, 0x46, 0x49, 0x46, 0x00];
 
-    /// <summary>A client for the host with storage under the temp folder, ClamAV faked to return <paramref name="scan"/>, and the controller logger captured.</summary>
+    /// <summary>A client for the host with storage under the temp folder, ClamAV mocked to return <paramref name="scan"/>, and the controller logger captured.</summary>
     private (HttpClient Client, FakeLogger<FileController> Logger) CreateClient(ClamavScanResult scan)
     {
         var logger = new FakeLogger<FileController>();
@@ -33,8 +34,9 @@ public class FileControllerLoggingTests(WebApplicationFactory<Program> baseFacto
             b.ConfigureServices(services =>
             {
                 foreach (var d in services.Where(d => d.ServiceType == typeof(IClamavClient)).ToList()) services.Remove(d);
-                var clam = new FakeClamavClient { OnScanWithClamavAsync = (_, _, _, _) => Task.FromResult(scan) };
-                services.AddScoped<IClamavClient>(_ => clam);
+                var clam = new Mock<IClamavClient>();
+                clam.Setup(c => c.ScanWithClamavAsync(It.IsAny<Stream>(), It.IsAny<string>(), It.IsAny<int>())).ReturnsAsync(scan);
+                services.AddScoped<IClamavClient>(_ => clam.Object);
                 services.AddSingleton<ILogger<FileController>>(logger);
             });
         });

@@ -4,6 +4,7 @@ using Maroik.Website.Grids.Interfaces;
 using Maroik.Website.Grids.Processors;
 using Maroik.Website.Grids.Rows;
 using Maroik.Website.Tests.Grids.Fixtures;
+using Moq;
 
 namespace Maroik.Website.Tests.Grids.Rows;
 
@@ -22,14 +23,14 @@ public class GridRowsTests
     public void GetEnumerator_ManuallyProcessesRows()
     {
         IQueryable<GridModel> items = new[] { new GridModel(), new GridModel() }.AsQueryable();
-        FakeGridProcessor<GridModel> postProcessor = new();
-        FakeGridProcessor<GridModel> preProcessor = new();
+        IGridProcessor<GridModel> postProcessor = Fake.Of<IGridProcessor<GridModel>>();
+        IGridProcessor<GridModel> preProcessor = Fake.Of<IGridProcessor<GridModel>>();
         IQueryable<GridModel> postProcessedItems = new[] { new GridModel() }.AsQueryable();
         IQueryable<GridModel> preProcessedItems = new[] { new GridModel() }.AsQueryable();
         Grid<GridModel> grid = new(items) { Mode = GridProcessingMode.Manual };
 
-        postProcessor.OnProcess = query => query == preProcessedItems ? postProcessedItems : query;
-        preProcessor.OnProcess = query => query == items ? preProcessedItems : query;
+        Mock.Get(postProcessor).Setup(mock => mock.Process(preProcessedItems)).Returns(postProcessedItems);
+        Mock.Get(preProcessor).Setup(mock => mock.Process(items)).Returns(preProcessedItems);
         postProcessor.ProcessorType = GridProcessorType.Post;
         preProcessor.ProcessorType = GridProcessorType.Pre;
         grid.Processors.Add(postProcessor);
@@ -45,14 +46,14 @@ public class GridRowsTests
     public void GetEnumerator_AutomaticallyProcessesRows()
     {
         IQueryable<GridModel> items = new[] { new GridModel(), new GridModel() }.AsQueryable();
-        FakeGridProcessor<GridModel> postProcessor = new();
-        FakeGridProcessor<GridModel> preProcessor = new();
+        IGridProcessor<GridModel> postProcessor = Fake.Of<IGridProcessor<GridModel>>();
+        IGridProcessor<GridModel> preProcessor = Fake.Of<IGridProcessor<GridModel>>();
         IQueryable<GridModel> postProcessedItems = new[] { new GridModel() }.AsQueryable();
         IQueryable<GridModel> preProcessedItems = new[] { new GridModel() }.AsQueryable();
         Grid<GridModel> grid = new(items) { Mode = GridProcessingMode.Automatic };
 
-        postProcessor.OnProcess = query => query == preProcessedItems ? postProcessedItems : query;
-        preProcessor.OnProcess = query => query == items ? preProcessedItems : query;
+        Mock.Get(postProcessor).Setup(mock => mock.Process(preProcessedItems)).Returns(postProcessedItems);
+        Mock.Get(preProcessor).Setup(mock => mock.Process(items)).Returns(preProcessedItems);
         postProcessor.ProcessorType = GridProcessorType.Post;
         preProcessor.ProcessorType = GridProcessorType.Pre;
         grid.Processors.Add(postProcessor);
@@ -90,8 +91,8 @@ public class GridRowsTests
     public void GetEnumerator_CachesRows()
     {
         IQueryable<GridModel> items = new[] { new GridModel(), new GridModel() }.AsQueryable();
-        FakeGridProcessor<GridModel> preProcessor = new();
-        preProcessor.OnProcess = query => query == items ? Array.Empty<GridModel>().AsQueryable() : query;
+        IGridProcessor<GridModel> preProcessor = Fake.Of<IGridProcessor<GridModel>>();
+        Mock.Get(preProcessor).Setup(mock => mock.Process(items)).Returns(Array.Empty<GridModel>().AsQueryable());
         preProcessor.ProcessorType = GridProcessorType.Pre;
         Grid<GridModel> grid = new(items);
 
@@ -103,7 +104,7 @@ public class GridRowsTests
         IEnumerable<Object> actual = rows.ToList().Select(row => row.Model);
         IEnumerable<Object> expected = originalRows.Select(row => row.Model);
 
-        Assert.Empty(preProcessor.ProcessCalls);
+        Mock.Get(preProcessor).Verify(mock => mock.Process(It.IsAny<IQueryable<GridModel>>()), Times.Never);
         Assert.Equal(expected, actual);
     }
 

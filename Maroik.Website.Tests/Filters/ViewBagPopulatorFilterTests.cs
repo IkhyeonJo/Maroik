@@ -1,4 +1,5 @@
 using Maroik.Core.Contract.Dtos;
+using Maroik.Core.Contract.Interfaces;
 using Maroik.Core.Contract.Settings;
 using Maroik.Core.Domain.Accounts;
 using Maroik.Website.Extensions;
@@ -15,19 +16,20 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Testing;
 using Microsoft.Extensions.Options;
 using Microsoft.Extensions.Time.Testing;
+using Moq;
 
 namespace Maroik.Website.Tests.Filters;
 
 /// <summary>
 /// Unit tests for <see cref="ViewBagPopulatorFilter"/>.
-/// All service dependencies are replaced with hand-written fakes.
+/// All service dependencies are replaced with Moq mocks.
 /// </summary>
 public class ViewBagPopulatorFilterTests
 {
-    /// <summary>Fake <c>IDashboardService</c> injected into the system under test.</summary>
-    private readonly FakeDashboardService _dashboardService = new();
-    /// <summary>Fake <c>ITimeZoneCatalogService</c> injected into the system under test.</summary>
-    private readonly FakeTimeZoneCatalogService _timeZoneCatalogService = new();
+    /// <summary>Mock <c>IDashboardService</c> injected into the system under test.</summary>
+    private readonly Mock<IDashboardService> _dashboardService = new();
+    /// <summary>Mock <c>ITimeZoneCatalogService</c> injected into the system under test.</summary>
+    private readonly Mock<ITimeZoneCatalogService> _timeZoneCatalogService = new();
     /// <summary>Settings whose values the filter copies to the ViewBag.</summary>
     private readonly IOptions<ServerSetting> _serverSettings = Options.Create(new ServerSetting
     {
@@ -42,9 +44,9 @@ public class ViewBagPopulatorFilterTests
     /// <summary>Records the filter's log entries.</summary>
     private readonly FakeLogger<ViewBagPopulatorFilter> _logger = new();
 
-    /// <summary>The filter under test over the fake dependencies.</summary>
+    /// <summary>The filter under test over the mocked dependencies.</summary>
     private ViewBagPopulatorFilter CreateSut() =>
-        new(_dashboardService, _timeZoneCatalogService, _serverSettings, _timeProvider, _logger);
+        new(_dashboardService.Object, _timeZoneCatalogService.Object, _serverSettings, _timeProvider, _logger);
 
     /// <summary>
     /// Signs <paramref name="account"/> in for this request the way production does: AuthorizationFilter,
@@ -73,7 +75,10 @@ public class ViewBagPopulatorFilterTests
 
         if (cultureName != null)
         {
-            httpContext.Features.Set<IRequestCultureFeature>(new RequestCultureFeature(new RequestCulture(cultureName), provider: null));
+            var cultureFeature = new Mock<IRequestCultureFeature>();
+            cultureFeature.Setup(f => f.RequestCulture)
+                .Returns(new RequestCulture(cultureName));
+            httpContext.Features.Set(cultureFeature.Object);
         }
 
         var controller = new FakeController();
@@ -109,10 +114,12 @@ public class ViewBagPopulatorFilterTests
             [],
             null!));
 
-    /// <summary>A signed-in User account whose notice counts the dashboard fake answers with 2/3/1/4.</summary>
+    /// <summary>A signed-in User account whose notice counts the dashboard mock answers with 2/3/1/4.</summary>
     private AccountResponse SignedInUserWithNotices()
     {
-        _dashboardService.OnGetNoticeCountsAsync = (email, days, _, _) => email == "user@test.com" && days == 7 ? Task.FromResult(new NotificationDto { FixedIncomesNoticed = 2, FixedExpendituresNoticed = 3, FixedIncomesExpired = 1, FixedExpendituresExpired = 4 }) : Task.FromResult<NotificationDto>(null!);
+        _dashboardService
+            .Setup(d => d.GetNoticeCountsAsync("user@test.com", 7, It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new NotificationDto { FixedIncomesNoticed = 2, FixedExpendituresNoticed = 3, FixedIncomesExpired = 1, FixedExpendituresExpired = 4 });
         return new AccountResponse { Email = "user@test.com", Role = Role.User };
     }
 
@@ -186,7 +193,9 @@ public class ViewBagPopulatorFilterTests
         Assert.Equal(0, controller.ViewBag.FixedIncomesTotalNoticeCount);
         Assert.Equal(0, controller.ViewBag.FixedExpenditureTotalNoticeCount);
         Assert.Equal(0, controller.ViewBag.TotalNoticeCount);
-        Assert.Empty(_dashboardService.GetNoticeCountsAsyncCalls);
+        _dashboardService.Verify(
+            d => d.GetNoticeCountsAsync(It.IsAny<string>(), It.IsAny<int>(), It.IsAny<string>(), It.IsAny<CancellationToken>()),
+            Times.Never);
     }
 
     // -- Signed-in account --------------------------------------------------------
@@ -199,7 +208,9 @@ public class ViewBagPopulatorFilterTests
     public async Task OnActionExecutionAsync_LogsAWarning_AndShowsZeroCounts_WhenTheNoticeCountsCannotBeLoaded()
     {
         var account = new AccountResponse { Email = "user@test.com", Role = Role.User };
-        _dashboardService.OnGetNoticeCountsAsync = (email, days, _, _) => email == "user@test.com" && days == 7 ? Task.FromException<NotificationDto>(new InvalidOperationException("db down")) : Task.FromResult<NotificationDto>(null!);
+        _dashboardService
+            .Setup(d => d.GetNoticeCountsAsync("user@test.com", 7, It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new InvalidOperationException("db down"));
         var (context, controller) = BuildContext();
         SignIn(context, account);
 
@@ -219,7 +230,9 @@ public class ViewBagPopulatorFilterTests
     public async Task OnActionExecutionAsync_KeepsTheAccountAuthorizationFilterStashed()
     {
         var stashedAccount = new AccountResponse { Email = "user@test.com", Nickname = "FromAuthFilter", Role = Role.User };
-        _dashboardService.OnGetNoticeCountsAsync = (email, days, _, _) => email == "user@test.com" && days == 7 ? Task.FromResult(new NotificationDto()) : Task.FromResult<NotificationDto>(null!);
+        _dashboardService
+            .Setup(d => d.GetNoticeCountsAsync("user@test.com", 7, It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new NotificationDto());
         var (context, _) = BuildContext();
         SignIn(context, stashedAccount);
 
@@ -236,7 +249,9 @@ public class ViewBagPopulatorFilterTests
     public async Task OnActionExecutionAsync_SetsCopyrightYear_FromTheClockInTheViewersTimeZone()
     {
         var account = new AccountResponse { Email = "user@test.com", Role = Role.User, TimeZoneIanaId = "Asia/Seoul" };
-        _dashboardService.OnGetNoticeCountsAsync = (email, days, _, _) => email == "user@test.com" && days == 7 ? Task.FromResult(new NotificationDto()) : Task.FromResult<NotificationDto>(null!);
+        _dashboardService
+            .Setup(d => d.GetNoticeCountsAsync("user@test.com", 7, It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new NotificationDto());
         var (context, controller) = BuildContext();
         SignIn(context, account);
 
@@ -269,7 +284,9 @@ public class ViewBagPopulatorFilterTests
         await CreateSut().OnActionExecutionAsync(context, EmptyNext());
 
         Assert.Equal(0, controller.ViewBag.TotalNoticeCount);
-        Assert.Empty(_dashboardService.GetNoticeCountsAsyncCalls);
+        _dashboardService.Verify(
+            d => d.GetNoticeCountsAsync(It.IsAny<string>(), It.IsAny<int>(), It.IsAny<string>(), It.IsAny<CancellationToken>()),
+            Times.Never);
     }
 
     // -- Culture & ReturnUri --------------------------------------------------
@@ -314,7 +331,7 @@ public class ViewBagPopulatorFilterTests
     public async Task OnActionExecutionAsync_SetsTimeZoneOptions_FromCatalogService()
     {
         var options = new List<TimeZoneOptionDto> { new() { IanaId = "Asia/Seoul", DisplayName = "Seoul" } };
-        _timeZoneCatalogService.OnGetTimeZoneOptions = () => options;
+        _timeZoneCatalogService.Setup(t => t.GetTimeZoneOptions()).Returns(options);
         var (context, controller) = BuildContext();
 
         await CreateSut().OnActionExecutionAsync(context, EmptyNext());
@@ -435,7 +452,9 @@ public class ViewBagPopulatorFilterTests
     [Fact]
     public async Task OnActionExecutionAsync_KeepsZeroNoticeCounts_WhenDashboardServiceThrows()
     {
-        _dashboardService.OnGetNoticeCountsAsync = (_, _, _, _) => Task.FromException<NotificationDto>(new InvalidOperationException("db down"));
+        _dashboardService
+            .Setup(d => d.GetNoticeCountsAsync(It.IsAny<string>(), It.IsAny<int>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new InvalidOperationException("db down"));
         var (context, controller) = BuildContext();
         SignIn(context, new AccountResponse { Email = "user@test.com", Role = Role.User });
 

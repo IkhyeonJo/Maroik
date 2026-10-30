@@ -1,8 +1,8 @@
 using Maroik.Core.Contract.Dtos;
 using Maroik.Core.Domain.Budgets;
-using Maroik.Core.Domain.Accounts;
 using Maroik.Core.Service.Tests.Fixtures;
 using Microsoft.Extensions.Logging;
+using Moq;
 using H = Maroik.Core.Service.Tests.Fixtures.BudgetServiceHarness;
 
 namespace Maroik.Core.Service.Tests.Services;
@@ -37,7 +37,7 @@ public class BudgetServiceWriteTests
         Assert.Equal(("L.RegularIncome.LaborIncome.4B5257", "B", "3000000"), (cell.RowKey, cell.Column, cell.Input));
         Assert.Contains(edit!.Changed, c => c.Address == "B2" && c.Value.Number == 3000000m);
         Assert.Equal(1, edit.Written);
-        Assert.Single(_h.Accounts.FindByEmailForUpdateAsyncCalls, call => call.Email == H.Email);
+        _h.Accounts.Verify(a => a.FindByEmailForUpdateAsync(H.Email, It.IsAny<CancellationToken>()), Times.Once);
         Assert.Equal([(H.Email, BudgetKind.Income, 2026)], _h.Sheets.Locks);
         _h.AssertTransactions(2, 2);
     }
@@ -56,7 +56,7 @@ public class BudgetServiceWriteTests
         Assert.True(result.Success);
         Assert.Equal([("B", "10", H.Now), ("D", $"=B{{{Meal.Key}}}*2", H.Now)], _h.Cells.All.OrderBy(c => c.Column, StringComparer.Ordinal).Select(c => (c.Column, c.Input, c.Updated)));
         Assert.Equal(H.Now, _h.Sheets.All.Single().Updated);
-        Assert.Empty(_h.Accounts.FindByEmailForUpdateAsyncCalls);
+        _h.Accounts.Verify(a => a.FindByEmailForUpdateAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
         _h.AssertTransactions(1, 1);
     }
 
@@ -96,7 +96,7 @@ public class BudgetServiceWriteTests
     public async Task EditAsync_LogsAFailureCreatingTheSheet()
     {
         var boom = new InvalidOperationException("db down");
-        _h.Accounts.AnswerFindByEmailForUpdateAsync((email, _) => email == H.Email, (_, _) => Task.FromException<Account?>(boom));
+        _h.Accounts.Setup(a => a.FindByEmailForUpdateAsync(H.Email, It.IsAny<CancellationToken>())).ThrowsAsync(boom);
 
         var (result, _) = await _h.Sut.EditAsync(H.Email, BudgetKind.Income, 2026, "UTC", [new BudgetCellEdit("B2", "1")], TestContext.Current.CancellationToken);
 
@@ -110,7 +110,9 @@ public class BudgetServiceWriteTests
     [Fact]
     public async Task EditAsync_UsesASheetCreatedMeanwhile()
     {
-        _h.Accounts.AnswerFindByEmailForUpdateAsync((email, _) => email == H.Email, (_, _) => { _h.Sheet(BudgetKind.Income, 2026, H.Email); return Task.FromResult<Account?>(null); });
+        _h.Accounts.Setup(a => a.FindByEmailForUpdateAsync(H.Email, It.IsAny<CancellationToken>()))
+            .Callback(() => _h.Sheet(BudgetKind.Income, 2026, H.Email))
+            .ReturnsAsync((Maroik.Core.Domain.Accounts.Account?)null);
 
         var (result, _) = await _h.Sut.EditAsync(H.Email, BudgetKind.Income, 2026, "UTC", [new BudgetCellEdit("B6", "1")], TestContext.Current.CancellationToken);
 

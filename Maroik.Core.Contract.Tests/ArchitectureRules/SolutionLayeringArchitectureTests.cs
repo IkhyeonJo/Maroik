@@ -265,34 +265,6 @@ public class SolutionLayeringArchitectureTests
     }
 
     // ─────────────────────────────────────────────────────────────────────────────────────────
-    // Rule — test doubles are hand-written
-    // ─────────────────────────────────────────────────────────────────────────────────────────
-
-    /// <summary>The mocking libraries no project may reference (Moq was replaced by hand-written fakes on 2026-10-30).</summary>
-    private static readonly string[] _mockingLibraries = ["Moq", "NSubstitute", "FakeItEasy", "JustMock", "Telerik.JustMock"];
-
-    /// <summary>
-    /// Test doubles are hand-written fakes in each test project's <c>Fixtures/</c> (owner's request, 2026-10-30): no project —
-    /// test projects included — references a mocking library, and the central package list does not offer one.
-    /// </summary>
-    [Fact]
-    public void NoProject_ReferencesAMockingLibrary()
-    {
-        string[] violations =
-        [
-            .. LoadAllProjects()
-                .SelectMany(p => p.PackageReferences.Where(r => _mockingLibraries.Contains(r, StringComparer.OrdinalIgnoreCase)).Select(r => $"{p.Name} references {r}")),
-            .. XDocument.Load(Path.Combine(RepositoryPaths.Root, "Directory.Packages.props")).Descendants()
-                .Where(e => e.Name.LocalName == "PackageVersion")
-                .Select(e => e.Attribute("Include")?.Value ?? "")
-                .Where(name => _mockingLibraries.Contains(name, StringComparer.OrdinalIgnoreCase))
-                .Select(name => $"Directory.Packages.props offers {name}"),
-        ];
-
-        Assert.True(violations.Length == 0, "Use a hand-written fake (Fixtures/) instead of a mocking library:\n" + string.Join("\n", violations));
-    }
-
-    // ─────────────────────────────────────────────────────────────────────────────────────────
     // Helpers
     // ─────────────────────────────────────────────────────────────────────────────────────────
 

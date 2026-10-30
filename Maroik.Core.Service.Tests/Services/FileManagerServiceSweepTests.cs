@@ -1,7 +1,7 @@
 using System.Data;
-using Maroik.Core.Domain.Accounts;
 using Maroik.Core.Service.Services;
 using Microsoft.Extensions.Logging;
+using Moq;
 using H = Maroik.Core.Service.Tests.Fixtures.FileManagerServiceHarness;
 
 namespace Maroik.Core.Service.Tests.Services;
@@ -27,8 +27,8 @@ public class FileManagerServiceSweepTests
     public async Task RemoveStaleUploadsAsync_RemovesTheIdleUploads_OfEveryAccount()
     {
         List<string> steps = [];
-        _h.UnitOfWork.AnswerCommitAsync(_ => { steps.Add("commit"); return Task.CompletedTask; });
-        _h.Files.AnswerAbortFileManagerUploadAsync((_, fileStorageBaseUrl, _) => fileStorageBaseUrl == H.BaseUrl, (_, _, _) => { steps.Add("abort"); return Task.FromResult<bool>(true); });
+        _h.UnitOfWork.Setup(u => u.CommitAsync(It.IsAny<CancellationToken>())).Callback(() => steps.Add("commit")).Returns(Task.CompletedTask);
+        _h.Files.Setup(f => f.AbortFileManagerUploadAsync(It.IsAny<Guid>(), H.BaseUrl, It.IsAny<CancellationToken>())).Callback(() => steps.Add("abort")).ReturnsAsync(true);
         long idle = _h.File("idle.iso", size: H.Gb, uploading: true, created: H.Now.AddMinutes(-61));
         long theirs = _h.File("theirs.iso", uploading: true, email: H.OtherEmail, created: H.Now.AddDays(-3));
         long active = _h.File("active.iso", uploading: true, created: H.Now.AddMinutes(-59));
@@ -41,13 +41,13 @@ public class FileManagerServiceSweepTests
 
         Assert.Equal(2, removed);
         Assert.Equal([active, finished, folder], _h.Nodes.All.Select(n => n.Id).Order());
-        Assert.Single(_h.Files.AbortFileManagerUploadAsyncCalls, call => call.UploadId == idleId && call.FileStorageBaseUrl == H.BaseUrl);
-        Assert.Single(_h.Files.AbortFileManagerUploadAsyncCalls, call => call.UploadId == theirsId && call.FileStorageBaseUrl == H.BaseUrl);
+        _h.Files.Verify(f => f.AbortFileManagerUploadAsync(idleId, H.BaseUrl, It.IsAny<CancellationToken>()), Times.Once);
+        _h.Files.Verify(f => f.AbortFileManagerUploadAsync(theirsId, H.BaseUrl, It.IsAny<CancellationToken>()), Times.Once);
         Assert.Equal(["commit", "abort", "commit", "abort"], steps);
-        Assert.Single(_h.Accounts.FindByEmailForUpdateAsyncCalls, call => call.Email == H.Email);
-        Assert.Single(_h.Accounts.FindByEmailForUpdateAsyncCalls, call => call.Email == H.OtherEmail);
-        Assert.Equal(2, _h.UnitOfWork.BeginAsyncCalls.Count);
-        Assert.Empty(_h.UnitOfWork.RollbackAsyncCalls);
+        _h.Accounts.Verify(a => a.FindByEmailForUpdateAsync(H.Email, It.IsAny<CancellationToken>()), Times.Once);
+        _h.Accounts.Verify(a => a.FindByEmailForUpdateAsync(H.OtherEmail, It.IsAny<CancellationToken>()), Times.Once);
+        _h.UnitOfWork.Verify(u => u.BeginAsync(It.IsAny<IsolationLevel?>(), It.IsAny<CancellationToken>()), Times.Exactly(2));
+        _h.UnitOfWork.Verify(u => u.RollbackAsync(It.IsAny<CancellationToken>()), Times.Never);
         string[] logged = [.. _h.Logger.Collector.GetSnapshot().Where(r => r.Level == LogLevel.Information).Select(r => r.Message)];
         Assert.Equal([$"File Manager: removed 1 abandoned upload(s) of {H.OtherEmail}", $"File Manager: removed 1 abandoned upload(s) of {H.Email}"], logged);
     }
@@ -61,7 +61,7 @@ public class FileManagerServiceSweepTests
         Assert.Equal(0, await SweepAsync());
 
         Assert.Single(_h.Nodes.All);
-        Assert.Empty(_h.UnitOfWork.BeginAsyncCalls);
+        _h.UnitOfWork.Verify(u => u.BeginAsync(It.IsAny<IsolationLevel?>(), It.IsAny<CancellationToken>()), Times.Never);
     }
 
     /// <summary>At most <c>maxAccounts</c> accounts are swept (in email order); the rest wait for the next sweep.</summary>
@@ -84,7 +84,9 @@ public class FileManagerServiceSweepTests
     public async Task RemoveStaleUploadsAsync_KeepsAnUploadThatBecameActive_BeforeTheLock()
     {
         long upload = _h.File("slow.iso", uploading: true, created: H.Now.AddHours(-2));
-        _h.Accounts.AnswerFindByEmailForUpdateAsync((emailArg, _) => emailArg == H.Email, async (_, _) => {
+        _h.Accounts.Setup(a => a.FindByEmailForUpdateAsync(H.Email, It.IsAny<CancellationToken>()))
+            .Returns(async () =>
+            {
                 await _h.Nodes.RecordUploadActivityAsync(H.Email, upload, H.Now, TestContext.Current.CancellationToken);
                 return null;
             });
@@ -93,7 +95,7 @@ public class FileManagerServiceSweepTests
 
         Assert.NotNull(_h.Nodes.Get(upload));
         _h.AssertRolledBack();
-        Assert.Empty(_h.Files.AbortFileManagerUploadAsyncCalls);
+        _h.Files.Verify(f => f.AbortFileManagerUploadAsync(It.IsAny<Guid>(), It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
         Assert.DoesNotContain(_h.Logger.Collector.GetSnapshot(), r => r.Level == LogLevel.Information);
     }
 
@@ -108,14 +110,14 @@ public class FileManagerServiceSweepTests
         long theirs = _h.File("theirs.iso", uploading: true, email: H.OtherEmail, created: H.Now.AddHours(-2));
         _h.File("mine.iso", uploading: true, created: H.Now.AddHours(-2));
         Guid theirsId = _h.Node(theirs).StorageId!.Value;
-        _h.Accounts.AnswerFindByEmailForUpdateAsync((emailArg, _) => emailArg == H.OtherEmail, (_, _) => Task.FromException<Account?>(broken));
+        _h.Accounts.Setup(a => a.FindByEmailForUpdateAsync(H.OtherEmail, It.IsAny<CancellationToken>())).ThrowsAsync(broken);
 
         Assert.Equal(1, await SweepAsync());
 
         Assert.Equal([theirs], _h.Nodes.All.Select(n => n.Id));
-        Assert.Single(_h.UnitOfWork.RollbackAsyncCalls);
-        Assert.Single(_h.UnitOfWork.CommitAsyncCalls);
-        Assert.DoesNotContain(_h.Files.AbortFileManagerUploadAsyncCalls, call => call.UploadId == theirsId);
+        _h.UnitOfWork.Verify(u => u.RollbackAsync(It.IsAny<CancellationToken>()), Times.Once);
+        _h.UnitOfWork.Verify(u => u.CommitAsync(It.IsAny<CancellationToken>()), Times.Once);
+        _h.Files.Verify(f => f.AbortFileManagerUploadAsync(theirsId, It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
         var error = Assert.Single(_h.Logger.Collector.GetSnapshot(), r => r.Level == LogLevel.Error);
         Assert.Equal($"File Manager: failed to remove the abandoned uploads of {H.OtherEmail}", error.Message);
         Assert.Same(broken, error.Exception);
@@ -127,7 +129,7 @@ public class FileManagerServiceSweepTests
     {
         long upload = _h.File("idle.iso", uploading: true, created: H.Now.AddHours(-2));
         Guid uploadId = _h.Node(upload).StorageId!.Value;
-        _h.Files.AnswerAbortFileManagerUploadAsync((uploadIdArg, fileStorageBaseUrl, _) => uploadIdArg == uploadId && fileStorageBaseUrl == H.BaseUrl, (_, _, _) => Task.FromResult<bool>(false));
+        _h.Files.Setup(f => f.AbortFileManagerUploadAsync(uploadId, H.BaseUrl, It.IsAny<CancellationToken>())).ReturnsAsync(false);
 
         Assert.Equal(1, await SweepAsync());
 

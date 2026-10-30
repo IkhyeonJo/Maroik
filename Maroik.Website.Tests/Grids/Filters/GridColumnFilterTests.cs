@@ -8,6 +8,7 @@ using Maroik.Website.Tests.Grids.Fixtures;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.Extensions.Primitives;
+using Moq;
 
 namespace Maroik.Website.Tests.Grids.Filters;
 
@@ -56,10 +57,12 @@ public class GridColumnFilterTests
     [Fact]
     public void Options_Get_FromFilters()
     {
-        SelectListItem[] expected = [new SelectListItem()];
-        FakeGridFilters filters = new() { OnOptionsFor = column => column == filter.Column ? expected : [] };
-        filter.Column.Grid.HttpContext = new DefaultHttpContext { RequestServices = new FakeServiceProvider((typeof(IGridFilters), filters)) };
+        IGridFilters filters = Fake.Of<IGridFilters>();
+        filter.Column.Grid.HttpContext = Fake.Of<HttpContext>();
+        Mock.Get(filters).Setup(mock => mock.OptionsFor(filter.Column)).Returns([new SelectListItem()]);
+        Mock.Get(filter.Column.Grid.HttpContext).Setup(mock => mock.RequestServices.GetService(typeof(IGridFilters))).Returns(filters);
 
+        Object expected = filters.OptionsFor(filter.Column);
         Object actual = filter.Options;
 
         Assert.Same(expected, actual);
@@ -68,12 +71,14 @@ public class GridColumnFilterTests
     [Fact]
     public void Options_Get_Caches()
     {
-        FakeGridFilters filters = new() { OnOptionsFor = _ => new List<SelectListItem>() };
-        filter.Column.Grid.HttpContext = new DefaultHttpContext { RequestServices = new FakeServiceProvider((typeof(IGridFilters), filters)) };
+        IGridFilters filters = Fake.Of<IGridFilters>();
+        Mock.Get(filters).Setup(mock => mock.OptionsFor(filter.Column)).Returns(Array.Empty<SelectListItem>());
+        filter.Column.Grid.HttpContext = Fake.Of<HttpContext>();
+        Mock.Get(filter.Column.Grid.HttpContext).Setup(mock => mock.RequestServices.GetService(typeof(IGridFilters))).Returns(filters);
 
         Object options = filter.Options;
 
-        filters.OnOptionsFor = _ => new List<SelectListItem>();
+        Mock.Get(filters).Setup(mock => mock.OptionsFor(filter.Column)).Returns(Array.Empty<SelectListItem>());
 
         Assert.Same(options, filter.Options);
     }
@@ -256,9 +261,11 @@ public class GridColumnFilterTests
     [Fact]
     public void First_Get_SkipsOperation()
     {
-        FakeGridFilters filters = new() { OnCreate = (_, _, _) => new FakeGridFilter() };
-        filter.Column.Grid.HttpContext = new DefaultHttpContext { RequestServices = new FakeServiceProvider((typeof(IGridFilters), filters)) };
+        IGridFilters filters = Fake.Of<IGridFilters>();
+        filter.Column.Grid.HttpContext = Fake.Of<HttpContext>();
         filter.Column.Grid.Query = HttpUtility.ParseQueryString("name-op=test");
+        Mock.Get(filter.Column.Grid.HttpContext).Setup(mock => mock.RequestServices.GetService(typeof(IGridFilters))).Returns(filters);
+        Mock.Get(filters).Setup(mock => mock.Create(It.IsAny<Type>(), It.IsAny<String>(), It.IsAny<StringValues>())).Returns(Fake.Of<IGridFilter>());
 
         Assert.Null(filter.First);
     }
@@ -442,9 +449,11 @@ public class GridColumnFilterTests
     public void Second_Get_SkipsOperation(GridFilterType type)
     {
         filter.Type = type;
-        FakeGridFilters filters = new() { OnCreate = (_, _, _) => new FakeGridFilter() };
-        filter.Column.Grid.HttpContext = new DefaultHttpContext { RequestServices = new FakeServiceProvider((typeof(IGridFilters), filters)) };
+        IGridFilters filters = Fake.Of<IGridFilters>();
+        filter.Column.Grid.HttpContext = Fake.Of<HttpContext>();
         filter.Column.Grid.Query = HttpUtility.ParseQueryString("name-equals=test&name-op=test");
+        Mock.Get(filter.Column.Grid.HttpContext).Setup(mock => mock.RequestServices.GetService(typeof(IGridFilters))).Returns(filters);
+        Mock.Get(filters).Setup(mock => mock.Create(It.IsAny<Type>(), It.IsAny<String>(), It.IsAny<StringValues>())).Returns(Fake.Of<IGridFilter>());
 
         Assert.Null(filter.Second);
     }
@@ -744,9 +753,9 @@ public class GridColumnFilterTests
     {
         filter.Operator = "or";
         filter.Type = GridFilterType.Double;
-        // Their Apply answers null: no filter.
-        filter.First = new FakeGridFilter();
-        filter.Second = new FakeGridFilter();
+        // Plain mocks: their Apply returns null (a fake would return a fake Expression).
+        filter.First = new Mock<IGridFilter>().Object;
+        filter.Second = new Mock<IGridFilter>().Object;
 
         Assert.Equal(items, filter.Apply(items));
     }

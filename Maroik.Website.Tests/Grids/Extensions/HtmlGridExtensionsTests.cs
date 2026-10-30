@@ -6,10 +6,10 @@ using Maroik.Website.Grids.Filters;
 using Maroik.Website.Grids.Interfaces;
 using Maroik.Website.Grids.Pagers;
 using Maroik.Website.Tests.Grids.Fixtures;
-using Maroik.Website.Tests.Fixtures;
 using Microsoft.AspNetCore.Html;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc.Rendering;
+using Moq;
 
 namespace Maroik.Website.Tests.Grids.Extensions;
 
@@ -20,7 +20,8 @@ public class HtmlGridExtensionsTests
     public HtmlGridExtensionsTests()
     {
         Grid<GridModel> grid = new(new GridModel[8]);
-        IHtmlHelper html = new FakeHtmlHelper { ViewContext = new ViewContext { HttpContext = new DefaultHttpContext() } };
+        IHtmlHelper html = Fake.Of<IHtmlHelper>();
+        Mock.Get(html).Setup(mock => mock.ViewContext).Returns(new ViewContext { HttpContext = new DefaultHttpContext() });
 
         htmlGrid = new HtmlGrid<GridModel>(html, grid);
         grid.Columns.Add(model => model.Name);
@@ -326,7 +327,7 @@ public class HtmlGridExtensionsTests
     [Fact]
     public void Using_Processor_AddsProcessorToGrid()
     {
-        IGridProcessor<GridModel> processor = new FakeGridProcessor<GridModel>();
+        IGridProcessor<GridModel> processor = Fake.Of<IGridProcessor<GridModel>>();
         htmlGrid.Grid.Processors.Clear();
 
         htmlGrid.Using(processor);
@@ -337,7 +338,7 @@ public class HtmlGridExtensionsTests
     [Fact]
     public void Using_Processor_ReturnsHtmlGrid()
     {
-        Assert.Same(htmlGrid, htmlGrid.Using(new FakeGridProcessor<GridModel>()));
+        Assert.Same(htmlGrid, htmlGrid.Using(Fake.Of<IGridProcessor<GridModel>>()));
     }
 
     [Fact]

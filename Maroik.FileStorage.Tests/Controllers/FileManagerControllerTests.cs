@@ -8,12 +8,13 @@ using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Testing;
+using Moq;
 
 namespace Maroik.FileStorage.Tests.Controllers;
 
 /// <summary>
 /// Integration tests for <see cref="FileManagerController"/> (<c>api/FileManager/*</c>) through the real ASP.NET pipeline, with storage
-/// in a throwaway root and ClamAV faked: the chunk / complete / abort / delete endpoints answer with the right status and refusal
+/// in a throwaway root and ClamAV mocked: the chunk / complete / abort / delete endpoints answer with the right status and refusal
 /// text (complete answers 202 while the background scan runs), and each outcome is logged at the level it deserves with the upload id or path and the caller's correlation id.
 /// </summary>
 [Collection("FileStorage host")]
@@ -46,15 +47,14 @@ public sealed class FileManagerControllerTests(WebApplicationFactory<Program> ba
             b.ConfigureServices(services =>
             {
                 foreach (var d in services.Where(d => d.ServiceType == typeof(IClamavClient)).ToList()) services.Remove(d);
-                var clam = new FakeClamavClient
-                {
-                    OnScanWithClamavAsyncWithScanTimeout = async (_, _, _, _, _) =>
+                var clam = new Mock<IClamavClient>();
+                clam.Setup(c => c.ScanWithClamavAsync(It.IsAny<Stream>(), It.IsAny<string>(), It.IsAny<int>(), It.IsAny<TimeSpan>(), It.IsAny<CancellationToken>()))
+                    .Returns(async () =>
                     {
                         if (scanDone != null) await scanDone;
                         return scan;
-                    },
-                };
-                services.AddScoped<IClamavClient>(_ => clam);
+                    });
+                services.AddScoped<IClamavClient>(_ => clam.Object);
                 services.AddSingleton<ILogger<FileManagerController>>(_logger);
             });
         });
@@ -249,14 +249,12 @@ public sealed class FileManagerControllerTests(WebApplicationFactory<Program> ba
     [Fact]
     public async Task AServiceFailure_IsLoggedWithTheException_AndNotLeaked()
     {
-        var service = new FakeFileManagerStorageService
-        {
-            OnCompleteAsync = (_, _, _, _) => Task.FromException<(string?, bool)>(new IOException("disk-secret")),
-        };
+        var service = new Mock<Maroik.FileStorage.Interfaces.IFileManagerStorageService>();
+        service.Setup(s => s.CompleteAsync(It.IsAny<string?>(), It.IsAny<long>(), It.IsAny<bool>(), It.IsAny<CancellationToken>())).ThrowsAsync(new IOException("disk-secret"));
         var factory = baseFactory.WithWebHostBuilder(b => b.ConfigureServices(services =>
         {
             foreach (var d in services.Where(d => d.ServiceType == typeof(Maroik.FileStorage.Interfaces.IFileManagerStorageService)).ToList()) services.Remove(d);
-            services.AddScoped<Maroik.FileStorage.Interfaces.IFileManagerStorageService>(_ => service);
+            services.AddScoped(_ => service.Object);
             services.AddSingleton<ILogger<FileManagerController>>(_logger);
         }));
         using HttpClient client = factory.CreateClient();

@@ -1,13 +1,14 @@
 using Maroik.Core.Contract.Dtos;
+using Maroik.Core.Contract.Interfaces;
 using Maroik.Core.Contract.Settings;
 using Maroik.Core.Domain.Accounts;
 using Maroik.Core.Domain.Boards;
 using Maroik.Core.Service.Services;
-using Maroik.Core.Service.Tests.Fixtures;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Testing;
 using Microsoft.Extensions.Options;
 using Microsoft.Extensions.Time.Testing;
+using Moq;
 
 namespace Maroik.Core.Service.Tests.Services;
 
@@ -16,30 +17,29 @@ namespace Maroik.Core.Service.Tests.Services;
 /// post's own visibility rule is checked again for the requesting viewer, and it is streamed from
 /// file storage rather than loaded into memory. A refused download is logged as a permission denial.
 /// </summary>
-public class BoardServiceAttachmentDownloadTests : IAsyncDisposable
+public class BoardServiceAttachmentDownloadTests
 {
-    /// <summary>Fake <c>IUnitOfWork</c> injected into the system under test.</summary>
-    private readonly FakeUnitOfWork _unitOfWork = new();
-
-    /// <summary>Fake <c>IBoardRepository</c> injected into the system under test.</summary>
-    private readonly FakeBoardRepository _boardRepo = new();
-    /// <summary>Fake <c>IBoardAttachedFileRepository</c> injected into the system under test.</summary>
-    private readonly FakeBoardAttachedFileRepository _attachedFileRepo = new();
-    /// <summary>Fake <c>IAttachmentContentService</c> that opens the stored file.</summary>
-    private readonly FakeAttachmentContentService _attachmentContent = new();
+    /// <summary>Mock <c>IBoardRepository</c> injected into the system under test.</summary>
+    private readonly Mock<IBoardRepository> _boardRepo = new();
+    /// <summary>Mock <c>IBoardAttachedFileRepository</c> injected into the system under test.</summary>
+    private readonly Mock<IBoardAttachedFileRepository> _attachedFileRepo = new();
+    /// <summary>Mock <c>IAttachmentContentService</c> that opens the stored file.</summary>
+    private readonly Mock<IAttachmentContentService> _attachmentContent = new();
     /// <summary>Captures the log entries the system under test writes.</summary>
     private readonly FakeLogger<BoardService> _logger = new();
 
-    /// <summary>The service under test over the fake dependencies.</summary>
-    private BoardService CreateSut() => new(_boardRepo, _attachedFileRepo, new FakeBoardCommentRepository(),
-        new FakeFileClient(), _unitOfWork, _attachmentContent,
+    /// <summary>The service under test over the mocked dependencies.</summary>
+    private BoardService CreateSut() => new(_boardRepo.Object, _attachedFileRepo.Object, Mock.Of<IBoardCommentRepository>(),
+        Mock.Of<IFileClient>(), Mock.Of<IUnitOfWork>(), _attachmentContent.Object,
         Options.Create(new ServerSetting()), _logger, new FakeTimeProvider());
 
     /// <summary>Arranges post 7 of <paramref name="type"/> by Alice (optionally locked) with a stored attachment "report.zip".</summary>
     private void GivenAPostWithAnAttachment(string type = BoardTypes.FreeForum, bool locked = false)
     {
-        _boardRepo.AnswerFindActiveByIdAsync((id, _) => id == 7, (_, _) => Task.FromResult<Board?>(Board.Reconstitute(7, type, "t", "c", "Alice", DateTime.UtcNow, DateTime.UtcNow, 0, false, locked, false)));
-        _attachedFileRepo.AnswerFindByBoardIdAsync((boardId, _) => boardId == 7, (_, _) => Task.FromResult<BoardAttachedFile?>(BoardAttachedFile.Reconstitute(1, 7, 4, "report", ".zip", "upload/Forum/FreeForum/7/report.zip")));
+        _boardRepo.Setup(r => r.FindActiveByIdAsync(7, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(Board.Reconstitute(7, type, "t", "c", "Alice", DateTime.UtcNow, DateTime.UtcNow, 0, false, locked, false));
+        _attachedFileRepo.Setup(r => r.FindByBoardIdAsync(7, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(BoardAttachedFile.Reconstitute(1, 7, 4, "report", ".zip", "upload/Forum/FreeForum/7/report.zip"));
     }
 
     /// <summary>A visible post's attachment is returned as the opened stream, named after the stored file.</summary>
@@ -48,7 +48,7 @@ public class BoardServiceAttachmentDownloadTests : IAsyncDisposable
     {
         GivenAPostWithAnAttachment();
         var stream = new MemoryStream([1, 2, 3, 4]);
-        _attachmentContent.AnswerOpenFileAsync((filePath, _) => filePath == "upload/Forum/FreeForum/7/report.zip", (_, _) => Task.FromResult<Stream?>(stream));
+        _attachmentContent.Setup(a => a.OpenFileAsync("upload/Forum/FreeForum/7/report.zip", It.IsAny<CancellationToken>())).ReturnsAsync(stream);
 
         var (result, file) = await CreateSut().OpenAttachedFileAsync(7, BoardTypes.FreeForum, null, TestContext.Current.CancellationToken);
 
@@ -72,7 +72,7 @@ public class BoardServiceAttachmentDownloadTests : IAsyncDisposable
         Assert.False(result.Success);
         Assert.Equal("Board.NotFound", result.ErrorCode);
         Assert.Null(file);
-        Assert.Empty(_attachmentContent.OpenFileAsyncCalls);
+        _attachmentContent.Verify(a => a.OpenFileAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
         FakeLogRecord denial = Assert.Single(_logger.Collector.GetSnapshot(), r => r.Level == LogLevel.Warning);
         Assert.Contains("Attachment download refused", denial.Message, StringComparison.Ordinal);
         Assert.Contains("7", denial.Message, StringComparison.Ordinal);
@@ -116,7 +116,7 @@ public class BoardServiceAttachmentDownloadTests : IAsyncDisposable
     public async Task OpenAttachedFileAsync_ReportsNotFound_WhenThePostHasNoAttachment()
     {
         GivenAPostWithAnAttachment();
-        _attachedFileRepo.AnswerFindByBoardIdAsync((boardId, _) => boardId == 7, (_, _) => Task.FromResult<BoardAttachedFile?>(null));
+        _attachedFileRepo.Setup(r => r.FindByBoardIdAsync(7, It.IsAny<CancellationToken>())).ReturnsAsync((BoardAttachedFile?)null);
 
         var (result, _) = await CreateSut().OpenAttachedFileAsync(7, BoardTypes.FreeForum, null, TestContext.Current.CancellationToken);
 
@@ -129,7 +129,7 @@ public class BoardServiceAttachmentDownloadTests : IAsyncDisposable
     public async Task OpenAttachedFileAsync_ReportsAFailure_WhenTheFileCannotBeOpened()
     {
         GivenAPostWithAnAttachment();
-        _attachmentContent.AnswerOpenFileAsync((_, _) => Task.FromResult<Stream?>(null));
+        _attachmentContent.Setup(a => a.OpenFileAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync((Stream?)null);
 
         var (result, file) = await CreateSut().OpenAttachedFileAsync(7, BoardTypes.FreeForum, null, TestContext.Current.CancellationToken);
 
@@ -164,12 +164,5 @@ public class BoardServiceAttachmentDownloadTests : IAsyncDisposable
 
         FakeLogRecord denial = Assert.Single(_logger.Collector.GetSnapshot(), r => r.Level == LogLevel.Warning);
         Assert.EndsWith("is missing or not visible to Bob", denial.Message, StringComparison.Ordinal);
-    }
-
-    /// <inheritdoc />
-    public async ValueTask DisposeAsync()
-    {
-        await _unitOfWork.DisposeAsync();
-        GC.SuppressFinalize(this);
     }
 }

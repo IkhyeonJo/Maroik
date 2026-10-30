@@ -323,22 +323,13 @@ Code and tests
   `ErrorOr` package back.
 - The MVC grid is source in the repo, not a package (since 2026-10-30, owner's request): the upstream grid 8.0.0
   (MIT; source and copyright in `Maroik.Website/Grids/LICENSE.md`) lives in `Maroik.Website/Grids` (namespace `Maroik.Website.Grids.*`) with its
-  upstream tests in `Maroik.Website.Tests/Grids` (hand-written fakes in `Grids/Fixtures` stand in for NSubstitute). Views render a grid
+  upstream tests in `Maroik.Website.Tests/Grids` (Moq; `Grids/Fixtures/Fake` stands in for NSubstitute). Views render a grid
   with `@(await Html.Grid(...)....RenderAsync())`: the upstream `IHtmlContent.WriteTo` used the synchronous `Html.Partial`
   (MVC1000). Do not bring the grid's NuGet packages back.
 - Long rationale comments are wanted; do not trim them in a review.
-- Service tests stand the repositories in with fakes, and the Service layer's mutation score sits below the Domain's on purpose:
+- Service tests mock the repositories, and the Service layer's mutation score sits below the Domain's on purpose:
   the business rules live in Domain (with its own tests), and real-database coverage comes from the Repository
   and Website integration tests.
-- Test doubles are hand-written fakes, not a mocking library (since 2026-10-30, owner's request; Moq was removed). Each test
-  project keeps its fakes in `Fixtures/` (`Fake<Name>`, e.g. `FakeAccountRepository`, `FakeUnitOfWork`), one per interface, all
-  in one shape: `Answer<Member>(answer)` / `Answer<Member>(match, answer)` add a rule (the newest matching rule answers, as Moq's
-  last setup did), `On<Member>` is the fallback, and without either a member returns an empty / default value (`Strict = true`
-  throws instead); `<Member>Calls` (`<Member>CallCount` without arguments) records every call under a lock, so a verification
-  is an `Assert` on that list. `TotalCallCount` / `ClearCalls()` replace Moq's `Invocations`. A fake for a huge interface the
-  tests barely touch may be a small `DispatchProxy` (`Maroik.Website.Tests/Fixtures/FakeDatabase`), and a framework type with a
-  usable implementation is used as it is (`DefaultHttpContext`, `HttpContextAccessor`). `NoProject_ReferencesAMockingLibrary`
-  (`SolutionLayeringArchitectureTests`) fails if Moq, NSubstitute, FakeItEasy or JustMock comes back.
 - A service reachable only on the internal Docker network gets no app-level authentication (API keys, shared
   secrets, JWT) and no `IsDevelopment()` gating: the network boundary is its security boundary.
 

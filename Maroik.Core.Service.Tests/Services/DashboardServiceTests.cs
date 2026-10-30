@@ -1,49 +1,50 @@
 using System.Globalization;
 using Maroik.Core.Contract.Dtos;
+using Maroik.Core.Contract.Interfaces;
 using Maroik.Core.Contract.Settings;
 using Maroik.Core.Domain.Accounts;
 using Maroik.Core.Domain.Finances;
 using Maroik.Core.Service.Services;
-using Maroik.Core.Service.Tests.Fixtures;
 using Microsoft.Extensions.Options;
 using Microsoft.Extensions.Time.Testing;
+using Moq;
 
 namespace Maroik.Core.Service.Tests.Services;
 
 /// <summary>
 /// Unit tests for <see cref="DashboardService"/>.
-/// All repository dependencies are replaced with hand-written fakes.
+/// All repository dependencies are replaced with Moq mocks.
 /// Covers the summary aggregation (per-year / per-year-month income and expenditure
 /// breakdowns) and the default monetary unit synchronization logic.
 /// </summary>
 public class DashboardServiceTests
 {
-    /// <summary>Fake <c>IAccountRepository</c> injected into the system under test.</summary>
-    private readonly FakeAccountRepository _accountRepo = new();
-    /// <summary>Fake <c>IAssetRepository</c> injected into the system under test.</summary>
-    private readonly FakeAssetRepository _assetRepo = new();
-    /// <summary>Fake <c>IIncomeRepository</c> injected into the system under test.</summary>
-    private readonly FakeIncomeRepository _incomeRepo = new();
-    /// <summary>Fake <c>IExpenditureRepository</c> injected into the system under test.</summary>
-    private readonly FakeExpenditureRepository _expenditureRepo = new();
-    /// <summary>Fake <c>IFixedIncomeRepository</c> injected into the system under test.</summary>
-    private readonly FakeFixedIncomeRepository _fixedIncomeRepo = new();
-    /// <summary>Fake <c>IFixedExpenditureRepository</c> injected into the system under test.</summary>
-    private readonly FakeFixedExpenditureRepository _fixedExpenditureRepo = new();
+    /// <summary>Mock <c>IAccountRepository</c> injected into the system under test.</summary>
+    private readonly Mock<IAccountRepository> _accountRepo = new();
+    /// <summary>Mock <c>IAssetRepository</c> injected into the system under test.</summary>
+    private readonly Mock<IAssetRepository> _assetRepo = new();
+    /// <summary>Mock <c>IIncomeRepository</c> injected into the system under test.</summary>
+    private readonly Mock<IIncomeRepository> _incomeRepo = new();
+    /// <summary>Mock <c>IExpenditureRepository</c> injected into the system under test.</summary>
+    private readonly Mock<IExpenditureRepository> _expenditureRepo = new();
+    /// <summary>Mock <c>IFixedIncomeRepository</c> injected into the system under test.</summary>
+    private readonly Mock<IFixedIncomeRepository> _fixedIncomeRepo = new();
+    /// <summary>Mock <c>IFixedExpenditureRepository</c> injected into the system under test.</summary>
+    private readonly Mock<IFixedExpenditureRepository> _fixedExpenditureRepo = new();
 
     /// <summary>The fixed "current time" of these tests.</summary>
     private static readonly DateTime Now = new(2026, 7, 1, 12, 0, 0, DateTimeKind.Utc);
     /// <summary>The clock the service under test reads, stopped at <see cref="Now"/>.</summary>
     private readonly FakeTimeProvider _time = new(new DateTimeOffset(Now));
 
-    /// <summary>The service under test over the fake dependencies, with <paramref name="settings"/> or defaults.</summary>
+    /// <summary>The service under test over the mocked dependencies, with <paramref name="settings"/> or defaults.</summary>
     private DashboardService CreateSut(ServerSetting? settings = null) => new(
-        _accountRepo,
-        _assetRepo,
-        _incomeRepo,
-        _expenditureRepo,
-        _fixedIncomeRepo,
-        _fixedExpenditureRepo,
+        _accountRepo.Object,
+        _assetRepo.Object,
+        _incomeRepo.Object,
+        _expenditureRepo.Object,
+        _fixedIncomeRepo.Object,
+        _fixedExpenditureRepo.Object,
         Options.Create(settings ?? new ServerSetting()),
         _time);
 
@@ -88,10 +89,14 @@ public class DashboardServiceTests
     /// <summary>Arranges no incomes or expenditures, in range or ever.</summary>
     private void SetupEmptyFinancials()
     {
-        _incomeRepo.AnswerGetByAccountEmailAndDateRangeAsync((_, _, _, _) => Task.FromResult<List<Income>>([]));
-        _expenditureRepo.AnswerGetByAccountEmailAndDateRangeAsync((_, _, _, _) => Task.FromResult<List<Expenditure>>([]));
-        _incomeRepo.AnswerGetFirstByAccountEmailOrderedByCreatedAsync((_, _) => Task.FromResult<Income?>(null));
-        _expenditureRepo.AnswerGetFirstByAccountEmailOrderedByCreatedAsync((_, _) => Task.FromResult<Expenditure?>(null));
+        _incomeRepo.Setup(r => r.GetByAccountEmailAndDateRangeAsync(It.IsAny<string>(), It.IsAny<DateTime>(), It.IsAny<DateTime>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync([]);
+        _expenditureRepo.Setup(r => r.GetByAccountEmailAndDateRangeAsync(It.IsAny<string>(), It.IsAny<DateTime>(), It.IsAny<DateTime>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync([]);
+        _incomeRepo.Setup(r => r.GetFirstByAccountEmailOrderedByCreatedAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((Income?)null);
+        _expenditureRepo.Setup(r => r.GetFirstByAccountEmailOrderedByCreatedAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((Expenditure?)null);
     }
 
     // -- GetSummaryAsync ------------------------------------------------------
@@ -104,10 +109,10 @@ public class DashboardServiceTests
         var account = MakeAccount(unit: null);
         var assets = new List<Asset>();
 
-        _accountRepo.AnswerFindByEmailAsync((_, _) => Task.FromResult<Account?>(account));
-        _assetRepo.AnswerGetByAccountEmailAsync((_, _) => Task.FromResult<List<Asset>>(assets));
-        _incomeRepo.AnswerGetFirstByAccountEmailOrderedByCreatedAsync((_, _) => Task.FromResult<Income?>(null));
-        _expenditureRepo.AnswerGetFirstByAccountEmailOrderedByCreatedAsync((_, _) => Task.FromResult<Expenditure?>(null));
+        _accountRepo.Setup(r => r.FindByEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(account);
+        _assetRepo.Setup(r => r.GetByAccountEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(assets);
+        _incomeRepo.Setup(r => r.GetFirstByAccountEmailOrderedByCreatedAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync((Income?)null);
+        _expenditureRepo.Setup(r => r.GetFirstByAccountEmailOrderedByCreatedAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync((Expenditure?)null);
         var sut = CreateSut();
 
         DashboardDto summary = await sut.GetSummaryAsync(email, "2025", "3", "UTC", TestContext.Current.CancellationToken);
@@ -125,10 +130,10 @@ public class DashboardServiceTests
     {
         const string email = "demo@maroik.com";
         var account = MakeAccount(unit: null);
-        _accountRepo.AnswerFindByEmailAsync((_, _) => Task.FromResult<Account?>(account));
-        _assetRepo.AnswerGetByAccountEmailAsync((_, _) => Task.FromResult<List<Asset>>([]));
-        _incomeRepo.AnswerGetFirstByAccountEmailOrderedByCreatedAsync((_, _) => Task.FromResult<Income?>(null));
-        _expenditureRepo.AnswerGetFirstByAccountEmailOrderedByCreatedAsync((_, _) => Task.FromResult<Expenditure?>(null));
+        _accountRepo.Setup(r => r.FindByEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(account);
+        _assetRepo.Setup(r => r.GetByAccountEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync([]);
+        _incomeRepo.Setup(r => r.GetFirstByAccountEmailOrderedByCreatedAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync((Income?)null);
+        _expenditureRepo.Setup(r => r.GetFirstByAccountEmailOrderedByCreatedAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync((Expenditure?)null);
         var sut = CreateSut(new ServerSetting
         {
             DemoAccountEmail = email,
@@ -148,10 +153,10 @@ public class DashboardServiceTests
     {
         const string email = "user@example.com";
         var account = MakeAccount(unit: null);
-        _accountRepo.AnswerFindByEmailAsync((_, _) => Task.FromResult<Account?>(account));
-        _assetRepo.AnswerGetByAccountEmailAsync((_, _) => Task.FromResult<List<Asset>>([]));
-        _incomeRepo.AnswerGetFirstByAccountEmailOrderedByCreatedAsync((_, _) => Task.FromResult<Income?>(null));
-        _expenditureRepo.AnswerGetFirstByAccountEmailOrderedByCreatedAsync((_, _) => Task.FromResult<Expenditure?>(null));
+        _accountRepo.Setup(r => r.FindByEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(account);
+        _assetRepo.Setup(r => r.GetByAccountEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync([]);
+        _incomeRepo.Setup(r => r.GetFirstByAccountEmailOrderedByCreatedAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync((Income?)null);
+        _expenditureRepo.Setup(r => r.GetFirstByAccountEmailOrderedByCreatedAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync((Expenditure?)null);
         var sut = CreateSut(new ServerSetting
         {
             DemoAccountEmail = "demo@maroik.com",
@@ -171,10 +176,10 @@ public class DashboardServiceTests
     {
         const string email = "user@example.com";
         var account = MakeAccount(unit: null);
-        _accountRepo.AnswerFindByEmailAsync((_, _) => Task.FromResult<Account?>(account));
-        _assetRepo.AnswerGetByAccountEmailAsync((_, _) => Task.FromResult<List<Asset>>([]));
-        _incomeRepo.AnswerGetFirstByAccountEmailOrderedByCreatedAsync((_, _) => Task.FromResult<Income?>(null));
-        _expenditureRepo.AnswerGetFirstByAccountEmailOrderedByCreatedAsync((_, _) => Task.FromResult<Expenditure?>(null));
+        _accountRepo.Setup(r => r.FindByEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(account);
+        _assetRepo.Setup(r => r.GetByAccountEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync([]);
+        _incomeRepo.Setup(r => r.GetFirstByAccountEmailOrderedByCreatedAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync((Income?)null);
+        _expenditureRepo.Setup(r => r.GetFirstByAccountEmailOrderedByCreatedAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync((Expenditure?)null);
         var sut = CreateSut();
 
         DashboardDto summary = await sut.GetSummaryAsync(email, "bad", "bad", "UTC", TestContext.Current.CancellationToken);
@@ -195,8 +200,8 @@ public class DashboardServiceTests
     {
         const string email = "user@example.com";
         var account = MakeAccount(unit: "KRW");
-        _accountRepo.AnswerFindByEmailAsync((_, _) => Task.FromResult<Account?>(account));
-        _assetRepo.AnswerGetByAccountEmailAsync((_, _) => Task.FromResult<List<Asset>>([MakeAsset("Bank")]));
+        _accountRepo.Setup(r => r.FindByEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(account);
+        _assetRepo.Setup(r => r.GetByAccountEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync([MakeAsset("Bank")]);
         SetupEmptyFinancials();
         var sut = CreateSut();
 
@@ -219,8 +224,8 @@ public class DashboardServiceTests
             MakeAsset("Savings", "USD")
         };
 
-        _accountRepo.AnswerFindByEmailAsync((_, _) => Task.FromResult<Account?>(account));
-        _assetRepo.AnswerGetByAccountEmailAsync((_, _) => Task.FromResult<List<Asset>>(assets));
+        _accountRepo.Setup(r => r.FindByEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(account);
+        _assetRepo.Setup(r => r.GetByAccountEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(assets);
         SetupEmptyFinancials();
         var sut = CreateSut();
 
@@ -230,8 +235,8 @@ public class DashboardServiceTests
         // account (matches main) so other screens reading Account.DefaultMonetaryUnit directly
         // stay in sync with what the dashboard displays.
         Assert.Equal("KRW", summary.DefaultMonetaryUnit);
-        Assert.Single(_accountRepo.UpdateDefaultMonetaryUnitAsyncCalls, call => call.Email == email && call.DefaultMonetaryUnit == "KRW");
-        Assert.Empty(_accountRepo.UpdateEntityAsyncCalls);
+        _accountRepo.Verify(r => r.UpdateDefaultMonetaryUnitAsync(email, "KRW", It.IsAny<CancellationToken>()), Times.Once);
+        _accountRepo.Verify(r => r.UpdateEntityAsync(It.IsAny<Account>(), It.IsAny<CancellationToken>()), Times.Never);
     }
 
     /// <summary>Verifies that <c>GetSummaryAsync</c> clears default monetary unit when no assets exist.</summary>
@@ -240,17 +245,17 @@ public class DashboardServiceTests
     {
         const string email = "user@example.com";
         var account = MakeAccount(unit: "KRW");
-        _accountRepo.AnswerFindByEmailAsync((_, _) => Task.FromResult<Account?>(account));
-        _assetRepo.AnswerGetByAccountEmailAsync((_, _) => Task.FromResult<List<Asset>>([]));
-        _incomeRepo.AnswerGetFirstByAccountEmailOrderedByCreatedAsync((_, _) => Task.FromResult<Income?>(null));
-        _expenditureRepo.AnswerGetFirstByAccountEmailOrderedByCreatedAsync((_, _) => Task.FromResult<Expenditure?>(null));
+        _accountRepo.Setup(r => r.FindByEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(account);
+        _assetRepo.Setup(r => r.GetByAccountEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync([]);
+        _incomeRepo.Setup(r => r.GetFirstByAccountEmailOrderedByCreatedAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync((Income?)null);
+        _expenditureRepo.Setup(r => r.GetFirstByAccountEmailOrderedByCreatedAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync((Expenditure?)null);
         var sut = CreateSut();
 
         DashboardDto summary = await sut.GetSummaryAsync(email, "2025", "1", "UTC", TestContext.Current.CancellationToken);
 
         Assert.Null(summary.DefaultMonetaryUnit);
-        Assert.Single(_accountRepo.UpdateDefaultMonetaryUnitAsyncCalls, call => call.Email == email && call.DefaultMonetaryUnit == null);
-        Assert.Empty(_accountRepo.UpdateEntityAsyncCalls);
+        _accountRepo.Verify(r => r.UpdateDefaultMonetaryUnitAsync(email, null, It.IsAny<CancellationToken>()), Times.Once);
+        _accountRepo.Verify(r => r.UpdateEntityAsync(It.IsAny<Account>(), It.IsAny<CancellationToken>()), Times.Never);
     }
 
     /// <summary>
@@ -268,8 +273,8 @@ public class DashboardServiceTests
             MakeAsset("OldForeignAccount", "USD", deleted: true)
         };
 
-        _accountRepo.AnswerFindByEmailAsync((_, _) => Task.FromResult<Account?>(account));
-        _assetRepo.AnswerGetByAccountEmailAsync((_, _) => Task.FromResult<List<Asset>>(assets));
+        _accountRepo.Setup(r => r.FindByEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(account);
+        _assetRepo.Setup(r => r.GetByAccountEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(assets);
         SetupEmptyFinancials();
         var sut = CreateSut();
 
@@ -298,8 +303,8 @@ public class DashboardServiceTests
         var account = MakeAccount(unit: "KRW");
         var assets = new List<Asset> { MakeAsset("OldWallet", deleted: true) };
 
-        _accountRepo.AnswerFindByEmailAsync((_, _) => Task.FromResult<Account?>(account));
-        _assetRepo.AnswerGetByAccountEmailAsync((_, _) => Task.FromResult<List<Asset>>(assets));
+        _accountRepo.Setup(r => r.FindByEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(account);
+        _assetRepo.Setup(r => r.GetByAccountEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(assets);
         SetupEmptyFinancials();
         var sut = CreateSut();
 
@@ -319,8 +324,9 @@ public class DashboardServiceTests
     {
         const string email = "demo@maroik.com";
         var account = MakeAccount(email, unit: null);
-        _accountRepo.AnswerFindByEmailAsync((_, _) => Task.FromResult<Account?>(account));
-        _assetRepo.AnswerGetByAccountEmailAsync((_, _) => Task.FromResult<List<Asset>>([MakeAsset("Wallet")]));
+        _accountRepo.Setup(r => r.FindByEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(account);
+        _assetRepo.Setup(r => r.GetByAccountEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync([MakeAsset("Wallet")]);
         SetupEmptyFinancials();
         var sut = CreateSut(new ServerSetting
         {
@@ -334,8 +340,9 @@ public class DashboardServiceTests
         // The value still resolves for display...
         Assert.Equal("KRW", summary.DefaultMonetaryUnit);
         // ...but is not written back (the service self-corrects through the column-scoped update).
-        Assert.Empty(_accountRepo.UpdateDefaultMonetaryUnitAsyncCalls);
-        Assert.Empty(_accountRepo.UpdateEntityAsyncCalls);
+        _accountRepo.Verify(r => r.UpdateDefaultMonetaryUnitAsync(
+            It.IsAny<string>(), It.IsAny<string?>(), It.IsAny<CancellationToken>()), Times.Never);
+        _accountRepo.Verify(r => r.UpdateEntityAsync(It.IsAny<Account>(), It.IsAny<CancellationToken>()), Times.Never);
     }
 
     /// <summary>
@@ -348,26 +355,28 @@ public class DashboardServiceTests
     {
         const string email = "user@example.com";
         var account = MakeAccount(unit: "KRW");
-        _accountRepo.AnswerFindByEmailAsync((_, _) => Task.FromResult<Account?>(account));
-        _assetRepo.AnswerGetByAccountEmailAsync((_, _) => Task.FromResult<List<Asset>>([MakeAsset("Wallet")]));
+        _accountRepo.Setup(r => r.FindByEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(account);
+        _assetRepo.Setup(r => r.GetByAccountEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync([MakeAsset("Wallet")]);
 
         var inMonth = Income.Reconstitute(1, email, "RegularIncome", "LaborIncome", null, 100m, "KRW", "Wallet", null,
             new DateTime(2025, 3, 15, 0, 0, 0, DateTimeKind.Utc), DateTime.UtcNow);
         var outOfMonth = Income.Reconstitute(2, email, "RegularIncome", "LaborIncome", null, 200m, "KRW", "Wallet", null,
             new DateTime(2025, 7, 1, 0, 0, 0, DateTimeKind.Utc), DateTime.UtcNow);
 
-        _incomeRepo.AnswerGetByAccountEmailAndDateRangeAsync((accountEmail, _, _, _) => accountEmail == email, (_, _, _, _) => Task.FromResult<List<Income>>([inMonth, outOfMonth]));
-        _expenditureRepo.AnswerGetByAccountEmailAndDateRangeAsync((accountEmail, _, _, _) => accountEmail == email, (_, _, _, _) => Task.FromResult<List<Expenditure>>([]));
-        _incomeRepo.AnswerGetFirstByAccountEmailOrderedByCreatedAsync((_, _) => Task.FromResult<Income?>(null));
-        _expenditureRepo.AnswerGetFirstByAccountEmailOrderedByCreatedAsync((_, _) => Task.FromResult<Expenditure?>(null));
+        _incomeRepo.Setup(r => r.GetByAccountEmailAndDateRangeAsync(email, It.IsAny<DateTime>(), It.IsAny<DateTime>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync([inMonth, outOfMonth]);
+        _expenditureRepo.Setup(r => r.GetByAccountEmailAndDateRangeAsync(email, It.IsAny<DateTime>(), It.IsAny<DateTime>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync([]);
+        _incomeRepo.Setup(r => r.GetFirstByAccountEmailOrderedByCreatedAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync((Income?)null);
+        _expenditureRepo.Setup(r => r.GetFirstByAccountEmailOrderedByCreatedAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync((Expenditure?)null);
         var sut = CreateSut();
 
         DashboardDto summary = await sut.GetSummaryAsync(email, "2025", "3", "UTC", TestContext.Current.CancellationToken);
 
         Assert.Equal(300m, summary.YearIncomeBreakdown["RegularIncome"].Total);
         Assert.Equal(100m, summary.YearMonthIncomeBreakdown["RegularIncome"].Total);
-        Assert.Single(_incomeRepo.GetByAccountEmailAndDateRangeAsyncCalls, call => call.AccountEmail == email);
-        Assert.Single(_expenditureRepo.GetByAccountEmailAndDateRangeAsyncCalls, call => call.AccountEmail == email);
+        _incomeRepo.Verify(r => r.GetByAccountEmailAndDateRangeAsync(email, It.IsAny<DateTime>(), It.IsAny<DateTime>(), It.IsAny<CancellationToken>()), Times.Once);
+        _expenditureRepo.Verify(r => r.GetByAccountEmailAndDateRangeAsync(email, It.IsAny<DateTime>(), It.IsAny<DateTime>(), It.IsAny<CancellationToken>()), Times.Once);
     }
 
     // -- GetSummaryAsync: income/expenditure breakdown -------------------------
@@ -382,8 +391,8 @@ public class DashboardServiceTests
     public async Task GetSummaryAsync_ComputesIncomeBreakdown_PerMainClassAndSubClass()
     {
         const string email = "user@example.com";
-        _accountRepo.AnswerFindByEmailAsync((_, _) => Task.FromResult<Account?>(MakeAccount(unit: "KRW")));
-        _assetRepo.AnswerGetByAccountEmailAsync((_, _) => Task.FromResult<List<Asset>>([MakeAsset("Wallet")]));
+        _accountRepo.Setup(r => r.FindByEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(MakeAccount(unit: "KRW"));
+        _assetRepo.Setup(r => r.GetByAccountEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync([MakeAsset("Wallet")]);
         SetupEmptyFinancials();
 
         List<Income> yearIncomes =
@@ -392,7 +401,8 @@ public class DashboardServiceTests
             Income.Reconstitute(2, email, "RegularIncome", "BusinessIncome", null, 400m, "KRW", "Wallet", null, DateTime.UtcNow, DateTime.UtcNow),
             Income.Reconstitute(3, email, "IrregularIncome", "LaborIncome", null, 250m, "KRW", "Wallet", null, DateTime.UtcNow, DateTime.UtcNow),
         ];
-        _incomeRepo.AnswerGetByAccountEmailAndDateRangeAsync((accountEmail, _, _, _) => accountEmail == email, (_, _, _, _) => Task.FromResult<List<Income>>(yearIncomes));
+        _incomeRepo.Setup(r => r.GetByAccountEmailAndDateRangeAsync(email, It.IsAny<DateTime>(), It.IsAny<DateTime>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(yearIncomes);
         var sut = CreateSut();
 
         DashboardDto summary = await sut.GetSummaryAsync(email, "2025", "1", "UTC", TestContext.Current.CancellationToken);
@@ -418,8 +428,8 @@ public class DashboardServiceTests
     public async Task GetSummaryAsync_ComputesExpenditureBreakdown_PerMainClassAndSubClass()
     {
         const string email = "user@example.com";
-        _accountRepo.AnswerFindByEmailAsync((_, _) => Task.FromResult<Account?>(MakeAccount(unit: "KRW")));
-        _assetRepo.AnswerGetByAccountEmailAsync((_, _) => Task.FromResult<List<Asset>>([MakeAsset("Card")]));
+        _accountRepo.Setup(r => r.FindByEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(MakeAccount(unit: "KRW"));
+        _assetRepo.Setup(r => r.GetByAccountEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync([MakeAsset("Card")]);
         SetupEmptyFinancials();
 
         List<Expenditure> yearExpenditures =
@@ -428,7 +438,8 @@ public class DashboardServiceTests
             Expenditure.Reconstitute(2, email, "ConsumerSpending", "HousingOrSuppliesCost", null, 700m, "KRW", "Card", null, null, DateTime.UtcNow, DateTime.UtcNow),
             Expenditure.Reconstitute(3, email, "RegularSavings", "Deposit", null, 500m, "KRW", "Card", null, null, DateTime.UtcNow, DateTime.UtcNow),
         ];
-        _expenditureRepo.AnswerGetByAccountEmailAndDateRangeAsync((accountEmail, _, _, _) => accountEmail == email, (_, _, _, _) => Task.FromResult<List<Expenditure>>(yearExpenditures));
+        _expenditureRepo.Setup(r => r.GetByAccountEmailAndDateRangeAsync(email, It.IsAny<DateTime>(), It.IsAny<DateTime>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(yearExpenditures);
         var sut = CreateSut();
 
         DashboardDto summary = await sut.GetSummaryAsync(email, "2025", "1", "UTC", TestContext.Current.CancellationToken);
@@ -460,8 +471,8 @@ public class DashboardServiceTests
     public async Task GetSummaryAsync_IncomeWithUnrecognisedMainClass_IsExcludedFromEveryBucket()
     {
         const string email = "user@example.com";
-        _accountRepo.AnswerFindByEmailAsync((_, _) => Task.FromResult<Account?>(MakeAccount(unit: "KRW")));
-        _assetRepo.AnswerGetByAccountEmailAsync((_, _) => Task.FromResult<List<Asset>>([MakeAsset("Wallet")]));
+        _accountRepo.Setup(r => r.FindByEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(MakeAccount(unit: "KRW"));
+        _assetRepo.Setup(r => r.GetByAccountEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync([MakeAsset("Wallet")]);
         SetupEmptyFinancials();
 
         List<Income> yearIncomes =
@@ -469,7 +480,8 @@ public class DashboardServiceTests
             Income.Reconstitute(1, email, "RegularIncome", "LaborIncome", null, 600m, "KRW", "Wallet", null, DateTime.UtcNow, DateTime.UtcNow),
             Income.Reconstitute(2, email, "NotARealMainClass", "Whatever", null, 999m, "KRW", "Wallet", null, DateTime.UtcNow, DateTime.UtcNow),
         ];
-        _incomeRepo.AnswerGetByAccountEmailAndDateRangeAsync((accountEmailArg, _, _, _) => accountEmailArg == email, (_, _, _, _) => Task.FromResult<List<Income>>(yearIncomes));
+        _incomeRepo.Setup(r => r.GetByAccountEmailAndDateRangeAsync(email, It.IsAny<DateTime>(), It.IsAny<DateTime>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(yearIncomes);
         var sut = CreateSut();
 
         DashboardDto summary = await sut.GetSummaryAsync(email, "2025", "1", "UTC", TestContext.Current.CancellationToken);
@@ -488,15 +500,16 @@ public class DashboardServiceTests
     public async Task GetSummaryAsync_ComputesYearAndYearMonthBreakdowns_Independently()
     {
         const string email = "user@example.com";
-        _accountRepo.AnswerFindByEmailAsync((_, _) => Task.FromResult<Account?>(MakeAccount(unit: "KRW")));
-        _assetRepo.AnswerGetByAccountEmailAsync((_, _) => Task.FromResult<List<Asset>>([MakeAsset("Wallet")]));
+        _accountRepo.Setup(r => r.FindByEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(MakeAccount(unit: "KRW"));
+        _assetRepo.Setup(r => r.GetByAccountEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync([MakeAsset("Wallet")]);
         SetupEmptyFinancials();
 
         var inMonth = Income.Reconstitute(1, email, "RegularIncome", "LaborIncome", null, 400m, "KRW", "Wallet", null,
             new DateTime(2025, 3, 15, 0, 0, 0, DateTimeKind.Utc), DateTime.UtcNow);
         var outOfMonth = Income.Reconstitute(2, email, "RegularIncome", "LaborIncome", null, 600m, "KRW", "Wallet", null,
             new DateTime(2025, 7, 1, 0, 0, 0, DateTimeKind.Utc), DateTime.UtcNow);
-        _incomeRepo.AnswerGetByAccountEmailAndDateRangeAsync((accountEmailArg, _, _, _) => accountEmailArg == email, (_, _, _, _) => Task.FromResult<List<Income>>([inMonth, outOfMonth]));
+        _incomeRepo.Setup(r => r.GetByAccountEmailAndDateRangeAsync(email, It.IsAny<DateTime>(), It.IsAny<DateTime>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync([inMonth, outOfMonth]);
         var sut = CreateSut();
 
         DashboardDto summary = await sut.GetSummaryAsync(email, "2025", "3", "UTC", TestContext.Current.CancellationToken);
@@ -513,8 +526,8 @@ public class DashboardServiceTests
     public async Task GetNoticeCountsAsync_ReturnsZeroCounts_WhenNoFixedItems()
     {
         const string email = "user@example.com";
-        _fixedIncomeRepo.AnswerGetByAccountEmailAsync((_, _) => Task.FromResult<List<FixedIncome>>([]));
-        _fixedExpenditureRepo.AnswerGetByAccountEmailAsync((_, _) => Task.FromResult<List<FixedExpenditure>>([]));
+        _fixedIncomeRepo.Setup(r => r.GetByAccountEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync([]);
+        _fixedExpenditureRepo.Setup(r => r.GetByAccountEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync([]);
         var sut = CreateSut();
 
         NotificationDto counts = await sut.GetNoticeCountsAsync(email, 7, "UTC", TestContext.Current.CancellationToken);
@@ -532,7 +545,8 @@ public class DashboardServiceTests
         const string email = "user@example.com";
         var pastDate = Now.Date.AddDays(-10);
 
-        _fixedIncomeRepo.AnswerGetByAccountEmailAsync((_, _) => Task.FromResult<List<FixedIncome>>([
+        _fixedIncomeRepo.Setup(r => r.GetByAccountEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(
+        [
             FixedIncome.Reconstitute(
                 id: 1,
                 accountEmail: email,
@@ -549,8 +563,9 @@ public class DashboardServiceTests
                 unpunctuality: false,
                 created: DateTime.UtcNow,
                 updated: DateTime.UtcNow)
-        ]));
-        _fixedExpenditureRepo.AnswerGetByAccountEmailAsync((_, _) => Task.FromResult<List<FixedExpenditure>>([
+        ]);
+        _fixedExpenditureRepo.Setup(r => r.GetByAccountEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(
+        [
             FixedExpenditure.Reconstitute(
                 id: 1,
                 accountEmail: email,
@@ -568,7 +583,7 @@ public class DashboardServiceTests
                 unpunctuality: false,
                 created: DateTime.UtcNow,
                 updated: DateTime.UtcNow)
-        ]));
+        ]);
         var sut = CreateSut();
 
         NotificationDto counts = await sut.GetNoticeCountsAsync(email, 7, "UTC", TestContext.Current.CancellationToken);
@@ -584,7 +599,8 @@ public class DashboardServiceTests
         const string email = "user@example.com";
         var futureDate = DateTime.UtcNow.Date.AddYears(1);
 
-        _fixedIncomeRepo.AnswerGetByAccountEmailAsync((_, _) => Task.FromResult<List<FixedIncome>>([
+        _fixedIncomeRepo.Setup(r => r.GetByAccountEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(
+        [
             FixedIncome.Reconstitute(
                 id: 1,
                 accountEmail: email,
@@ -601,8 +617,8 @@ public class DashboardServiceTests
                 unpunctuality: true,
                 created: DateTime.UtcNow,
                 updated: DateTime.UtcNow)
-        ]));
-        _fixedExpenditureRepo.AnswerGetByAccountEmailAsync((_, _) => Task.FromResult<List<FixedExpenditure>>([]));
+        ]);
+        _fixedExpenditureRepo.Setup(r => r.GetByAccountEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync([]);
         var sut = CreateSut();
 
         NotificationDto counts = await sut.GetNoticeCountsAsync(email, 7, "UTC", TestContext.Current.CancellationToken);
@@ -765,12 +781,12 @@ public class DashboardServiceTests
     private void GivenSummaryInputs(IEnumerable<Asset> assets, List<Income> incomes, List<Expenditure> expenditures,
         Income? firstIncome = null, Expenditure? firstExpenditure = null, string? defaultUnit = "KRW")
     {
-        _accountRepo.AnswerFindByEmailAsync((_, _) => Task.FromResult<Account?>(MakeAccount(unit: defaultUnit)));
-        _assetRepo.AnswerGetByAccountEmailAsync((_, _) => Task.FromResult<List<Asset>>([.. assets]));
-        _incomeRepo.AnswerGetByAccountEmailAndDateRangeAsync((_, _, _, _) => Task.FromResult<List<Income>>(incomes));
-        _expenditureRepo.AnswerGetByAccountEmailAndDateRangeAsync((_, _, _, _) => Task.FromResult<List<Expenditure>>(expenditures));
-        _incomeRepo.AnswerGetFirstByAccountEmailOrderedByCreatedAsync((_, _) => Task.FromResult<Income?>(firstIncome));
-        _expenditureRepo.AnswerGetFirstByAccountEmailOrderedByCreatedAsync((_, _) => Task.FromResult<Expenditure?>(firstExpenditure));
+        _accountRepo.Setup(r => r.FindByEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(MakeAccount(unit: defaultUnit));
+        _assetRepo.Setup(r => r.GetByAccountEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync([.. assets]);
+        _incomeRepo.Setup(r => r.GetByAccountEmailAndDateRangeAsync(It.IsAny<string>(), It.IsAny<DateTime>(), It.IsAny<DateTime>(), It.IsAny<CancellationToken>())).ReturnsAsync(incomes);
+        _expenditureRepo.Setup(r => r.GetByAccountEmailAndDateRangeAsync(It.IsAny<string>(), It.IsAny<DateTime>(), It.IsAny<DateTime>(), It.IsAny<CancellationToken>())).ReturnsAsync(expenditures);
+        _incomeRepo.Setup(r => r.GetFirstByAccountEmailOrderedByCreatedAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(firstIncome);
+        _expenditureRepo.Setup(r => r.GetFirstByAccountEmailOrderedByCreatedAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(firstExpenditure);
     }
 
     /// <summary>A KRW income into <paramref name="asset"/> created at <paramref name="created"/>.</summary>
@@ -863,11 +879,12 @@ public class DashboardServiceTests
     [Fact]
     public async Task GetNoticeCountsAsync_CountsNoticedAndExpiredFixedExpenditures()
     {
-        _fixedIncomeRepo.AnswerGetByAccountEmailAsync((_, _) => Task.FromResult<List<FixedIncome>>([]));
-        _fixedExpenditureRepo.AnswerGetByAccountEmailAsync((_, _) => Task.FromResult<List<FixedExpenditure>>([
+        _fixedIncomeRepo.Setup(r => r.GetByAccountEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync([]);
+        _fixedExpenditureRepo.Setup(r => r.GetByAccountEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(
+        [
             FixedExpenditureDue(DateTime.UtcNow.Date.AddYears(1), unpunctual: true),
             FixedExpenditureDue(DateTime.UtcNow.Date.AddYears(-1)),
-        ]));
+        ]);
 
         NotificationDto counts = await CreateSut().GetNoticeCountsAsync("user@example.com", 7, "UTC", TestContext.Current.CancellationToken);
 
@@ -947,12 +964,12 @@ public class DashboardServiceTests
     public async Task GetSummaryAsync_HasNoDefaultCurrency_WhenTheAccountDoesNotExist()
     {
         GivenSummaryInputs([MakeAsset("Wallet")], [], []);
-        _accountRepo.AnswerFindByEmailAsync((_, _) => Task.FromResult<Account?>(null));
+        _accountRepo.Setup(r => r.FindByEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync((Account?)null);
 
         DashboardDto summary = await CreateSut().GetSummaryAsync("ghost@example.com", "2025", "3", "UTC", TestContext.Current.CancellationToken);
 
         Assert.Null(summary.DefaultMonetaryUnit);
-        Assert.Empty(_accountRepo.UpdateDefaultMonetaryUnitAsyncCalls);
+        _accountRepo.Verify(r => r.UpdateDefaultMonetaryUnitAsync(It.IsAny<string>(), It.IsAny<string?>(), It.IsAny<CancellationToken>()), Times.Never);
     }
 
     /// <summary>The year totals are read for exactly the selected calendar year, [1 Jan, next 1 Jan).</summary>
@@ -965,8 +982,8 @@ public class DashboardServiceTests
 
         var start = new DateTime(2025, 1, 1, 0, 0, 0, DateTimeKind.Utc);
         var end = new DateTime(2026, 1, 1, 0, 0, 0, DateTimeKind.Utc);
-        Assert.Single(_incomeRepo.GetByAccountEmailAndDateRangeAsyncCalls, call => call.AccountEmail == "user@example.com" && call.From == start && call.To == end);
-        Assert.Single(_expenditureRepo.GetByAccountEmailAndDateRangeAsyncCalls, call => call.AccountEmail == "user@example.com" && call.From == start && call.To == end);
+        _incomeRepo.Verify(r => r.GetByAccountEmailAndDateRangeAsync("user@example.com", start, end, It.IsAny<CancellationToken>()), Times.Once);
+        _expenditureRepo.Verify(r => r.GetByAccountEmailAndDateRangeAsync("user@example.com", start, end, It.IsAny<CancellationToken>()), Times.Once);
     }
 
     /// <summary>
@@ -996,8 +1013,9 @@ public class DashboardServiceTests
     [Fact]
     public async Task GetNoticeCountsAsync_DoesNotCountAFixedExpenditureOutsideItsNoticeWindow()
     {
-        _fixedIncomeRepo.AnswerGetByAccountEmailAsync((_, _) => Task.FromResult<List<FixedIncome>>([]));
-        _fixedExpenditureRepo.AnswerGetByAccountEmailAsync((_, _) => Task.FromResult<List<FixedExpenditure>>([FixedExpenditureDue(Now.AddYears(1))])); // due 1 January; "today" is 1 July
+        _fixedIncomeRepo.Setup(r => r.GetByAccountEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync([]);
+        _fixedExpenditureRepo.Setup(r => r.GetByAccountEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync([FixedExpenditureDue(Now.AddYears(1))]); // due 1 January; "today" is 1 July
 
         NotificationDto counts = await CreateSut().GetNoticeCountsAsync("user@example.com", 7, "UTC", TestContext.Current.CancellationToken);
 

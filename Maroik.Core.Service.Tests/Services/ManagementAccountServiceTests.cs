@@ -1,50 +1,51 @@
 using Maroik.Core.Contract.Dtos;
+using Maroik.Core.Contract.Interfaces;
 using Maroik.Core.Domain.Accounts;
 using Maroik.Core.Service.Services;
-using Maroik.Core.Service.Tests.Fixtures;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Testing;
 using Microsoft.Extensions.Time.Testing;
+using Moq;
 
 namespace Maroik.Core.Service.Tests.Services;
 
 /// <summary>
 /// Unit tests for <see cref="ManagementAccountService"/>.
-/// All repository and password-service dependencies are replaced with hand-written fakes.
+/// All repository and password-service dependencies are replaced with Moq mocks.
 /// Covers admin-side account management: list retrieval, create, update,
 /// password reset, lock/unlock, and delete operations.
 /// </summary>
-public class ManagementAccountServiceTests : IAsyncDisposable
+public class ManagementAccountServiceTests
 {
     /// <summary>The signed-in administrator performing the change (recorded in the audit log).</summary>
     private const string Actor = "admin@example.com";
 
-    /// <summary>Fake <c>IAccountRepository</c> injected into the system under test.</summary>
-    private readonly FakeAccountRepository _accountRepo = new();
-    /// <summary>Fake <c>IPasswordService</c> injected into the system under test.</summary>
-    private readonly FakePasswordService _passwordService = new();
-    /// <summary>Fake <c>IUnitOfWork</c> injected into the system under test.</summary>
-    private readonly FakeUnitOfWork _unitOfWork = new();
+    /// <summary>Mock <c>IAccountRepository</c> injected into the system under test.</summary>
+    private readonly Mock<IAccountRepository> _accountRepo = new();
+    /// <summary>Mock <c>IPasswordService</c> injected into the system under test.</summary>
+    private readonly Mock<IPasswordService> _passwordService = new();
+    /// <summary>Mock <c>IUnitOfWork</c> injected into the system under test.</summary>
+    private readonly Mock<IUnitOfWork> _unitOfWork = new();
     /// <summary>Captures the log entries the system under test writes.</summary>
     private readonly FakeLogger<ManagementAccountService> _logger = new();
 
     /// <summary>
-    /// No active administrator by default; the admin-safeguard tests set
+    /// No active administrator by default (Moq would answer the list with null); the admin-safeguard tests set
     /// their own.
     /// </summary>
     public ManagementAccountServiceTests() =>
-        _accountRepo.AnswerFindActiveAdminsForUpdateAsync(_ => Task.FromResult<List<Account>>([]));
+        _accountRepo.Setup(r => r.FindActiveAdminsForUpdateAsync(It.IsAny<CancellationToken>())).ReturnsAsync([]);
 
     /// <summary>The fixed "current time" of these tests.</summary>
     private static readonly DateTime Now = new(2026, 7, 1, 12, 0, 0, DateTimeKind.Utc);
     /// <summary>The clock the service under test reads, stopped at <see cref="Now"/>.</summary>
     private readonly FakeTimeProvider _time = new(new DateTimeOffset(Now));
 
-    /// <summary>The service under test over the fake dependencies.</summary>
+    /// <summary>The service under test over the mocked dependencies.</summary>
     private ManagementAccountService CreateSut() => new(
-        _accountRepo,
-        _passwordService,
-        _unitOfWork,
+        _accountRepo.Object,
+        _passwordService.Object,
+        _unitOfWork.Object,
         _logger,
         _time);
 
@@ -82,7 +83,7 @@ public class ManagementAccountServiceTests : IAsyncDisposable
     [Fact]
     public async Task GetAllAccountsAsync_DelegatesToRepository()
     {
-        _accountRepo.AnswerGetAllAsync(_ => Task.FromResult<List<Account>>([ActiveAccount()]));
+        _accountRepo.Setup(r => r.GetAllAsync(It.IsAny<CancellationToken>())).ReturnsAsync([ActiveAccount()]);
         var sut = CreateSut();
 
         var result = await sut.GetAllAccountsAsync(TestContext.Current.CancellationToken);
@@ -101,7 +102,7 @@ public class ManagementAccountServiceTests : IAsyncDisposable
     [Fact]
     public async Task GetAllAccountsAsync_RowsCarryNoHashOrTokens()
     {
-        _accountRepo.AnswerGetAllAsync(_ => Task.FromResult<List<Account>>([ActiveAccount()]));
+        _accountRepo.Setup(r => r.GetAllAsync(It.IsAny<CancellationToken>())).ReturnsAsync([ActiveAccount()]);
 
         var row = Assert.Single(await CreateSut().GetAllAccountsAsync(TestContext.Current.CancellationToken));
 
@@ -114,7 +115,7 @@ public class ManagementAccountServiceTests : IAsyncDisposable
     [Fact]
     public async Task GetAccountByEmailAsync_ReturnsNull_WhenNotFound()
     {
-        _accountRepo.AnswerFindByEmailAsync((_, _) => Task.FromResult<Account?>(null));
+        _accountRepo.Setup(r => r.FindByEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync((Account?)null);
         var sut = CreateSut();
 
         AccountResponse? result = await sut.GetAccountByEmailAsync("ghost@example.com", TestContext.Current.CancellationToken);
@@ -130,7 +131,7 @@ public class ManagementAccountServiceTests : IAsyncDisposable
     public async Task GetAccountByEmailAsync_ReturnsPlainAccountResponse_WithoutSecretColumns()
     {
         var account = ActiveAccount();
-        _accountRepo.AnswerFindByEmailAsync((_, _) => Task.FromResult<Account?>(account));
+        _accountRepo.Setup(r => r.FindByEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(account);
         var sut = CreateSut();
 
         AccountResponse? result = await sut.GetAccountByEmailAsync(account.Email.Value, TestContext.Current.CancellationToken);
@@ -146,7 +147,7 @@ public class ManagementAccountServiceTests : IAsyncDisposable
     [Fact]
     public async Task CreateAccountAsync_ReturnsFail_WhenEmailAlreadyExists()
     {
-        _accountRepo.AnswerFindByEmailAsync((_, _) => Task.FromResult<Account?>(ActiveAccount("existing@example.com")));
+        _accountRepo.Setup(r => r.FindByEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(ActiveAccount("existing@example.com"));
         var sut = CreateSut();
 
         ServiceResult result = await sut.CreateAccountAsync(new AdminCreateAccountRequest
@@ -163,9 +164,9 @@ public class ManagementAccountServiceTests : IAsyncDisposable
     [Fact]
     public async Task CreateAccountAsync_HashesPasswordAndCreatesAccount_WhenEmailIsNew()
     {
-        _accountRepo.AnswerFindByEmailAsync((_, _) => Task.FromResult<Account?>(null));
-        _passwordService.AnswerHashPassword(password => password == "Plain1234!", _ => "$2a$13$hashedvalue");
-        _accountRepo.AnswerCreateAsync((_, _) => Task.CompletedTask);
+        _accountRepo.Setup(r => r.FindByEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync((Account?)null);
+        _passwordService.Setup(p => p.HashPassword("Plain1234!")).Returns("$2a$13$hashedvalue");
+        _accountRepo.Setup(r => r.CreateAsync(It.IsAny<Account>(), It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
         var sut = CreateSut();
 
         ServiceResult result = await sut.CreateAccountAsync(new AdminCreateAccountRequest
@@ -177,16 +178,16 @@ public class ManagementAccountServiceTests : IAsyncDisposable
         }, Actor, TestContext.Current.CancellationToken);
 
         Assert.True(result.Success);
-        Assert.Single(_accountRepo.CreateAsyncCalls, call => (call.Domain!.HashedPassword == "$2a$13$hashedvalue"));
+        _accountRepo.Verify(r => r.CreateAsync(It.Is<Account>(a => a.HashedPassword == "$2a$13$hashedvalue"), It.IsAny<CancellationToken>()), Times.Once);
     }
 
     /// <summary>An administrator may create an account under a reserved nickname (e.g. a second staff account).</summary>
     [Fact]
     public async Task CreateAccountAsync_AllowsReservedNickname_ForAdministrator()
     {
-        _accountRepo.AnswerFindByEmailAsync((_, _) => Task.FromResult<Account?>(null));
-        _passwordService.AnswerHashPassword(_ => "$2a$13$hashed");
-        _accountRepo.AnswerCreateAsync((_, _) => Task.CompletedTask);
+        _accountRepo.Setup(r => r.FindByEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync((Account?)null);
+        _passwordService.Setup(p => p.HashPassword(It.IsAny<string>())).Returns("$2a$13$hashed");
+        _accountRepo.Setup(r => r.CreateAsync(It.IsAny<Account>(), It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
         var sut = CreateSut();
 
         ServiceResult result = await sut.CreateAccountAsync(new AdminCreateAccountRequest
@@ -199,14 +200,14 @@ public class ManagementAccountServiceTests : IAsyncDisposable
         }, Actor, TestContext.Current.CancellationToken);
 
         Assert.True(result.Success);
-        Assert.Single(_accountRepo.CreateAsyncCalls, call => (call.Domain!.Nickname == "Admin"));
+        _accountRepo.Verify(r => r.CreateAsync(It.Is<Account>(a => a.Nickname == "Admin"), It.IsAny<CancellationToken>()), Times.Once);
     }
 
     /// <summary>An administrator-created nickname is still normalized and still rejected when it hides invisible characters.</summary>
     [Fact]
     public async Task CreateAccountAsync_ReturnsFail_WhenNicknameHasInvisibleCharacters()
     {
-        _accountRepo.AnswerFindByEmailAsync((_, _) => Task.FromResult<Account?>(null));
+        _accountRepo.Setup(r => r.FindByEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync((Account?)null);
         var sut = CreateSut();
 
         ServiceResult result = await sut.CreateAccountAsync(new AdminCreateAccountRequest
@@ -218,15 +219,15 @@ public class ManagementAccountServiceTests : IAsyncDisposable
 
         Assert.False(result.Success);
         Assert.Equal("Account.NicknameInvalidCharacters", result.ErrorCode);
-        Assert.Empty(_passwordService.HashPasswordCalls);
+        _passwordService.Verify(p => p.HashPassword(It.IsAny<string>()), Times.Never);
     }
 
     /// <summary>A nickname that differs from an existing one only by case is reported as a conflict, before hashing.</summary>
     [Fact]
     public async Task CreateAccountAsync_ReturnsNicknameConflict_WhenNicknameExistsIgnoringCase()
     {
-        _accountRepo.AnswerFindByEmailAsync((_, _) => Task.FromResult<Account?>(null));
-        _accountRepo.AnswerNicknameExistsIgnoreCaseAsync((nicknameArg, _) => nicknameArg == "bob", (_, _) => Task.FromResult<bool>(true));
+        _accountRepo.Setup(r => r.FindByEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync((Account?)null);
+        _accountRepo.Setup(r => r.NicknameExistsIgnoreCaseAsync("bob", It.IsAny<CancellationToken>())).ReturnsAsync(true);
         var sut = CreateSut();
 
         ServiceResult result = await sut.CreateAccountAsync(new AdminCreateAccountRequest
@@ -240,7 +241,7 @@ public class ManagementAccountServiceTests : IAsyncDisposable
         Assert.Equal(ServiceErrorType.Conflict, result.ErrorType);
         Assert.Equal("Account.NicknameAlreadyExists", result.ErrorCode);
         Assert.Contains("bob", result.ErrorArgs);
-        Assert.Empty(_passwordService.HashPasswordCalls);
+        _passwordService.Verify(p => p.HashPassword(It.IsAny<string>()), Times.Never);
     }
 
     /// <summary>
@@ -252,10 +253,11 @@ public class ManagementAccountServiceTests : IAsyncDisposable
     [Fact]
     public async Task CreateAccountAsync_ReturnsNicknameConflict_WhenNicknameUniqueViolationRaces()
     {
-        _accountRepo.AnswerFindByEmailAsync((_, _) => Task.FromResult<Account?>(null));
-        _passwordService.AnswerHashPassword(_ => "$2a$13$hashed");
+        _accountRepo.Setup(r => r.FindByEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync((Account?)null);
+        _passwordService.Setup(p => p.HashPassword(It.IsAny<string>())).Returns("$2a$13$hashed");
         // Simulate a unique constraint violation (Npgsql error code 23505) on the Nickname constraint specifically.
-        _accountRepo.AnswerCreateAsync((_, _) => Task.FromException(new Exception("duplicate key", new Exception("23505: duplicate key value violates unique constraint \"Account_Nickname_unique\""))));
+        _accountRepo.Setup(r => r.CreateAsync(It.IsAny<Account>(), It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new Exception("duplicate key", new Exception("23505: duplicate key value violates unique constraint \"Account_Nickname_unique\"")));
         var sut = CreateSut();
 
         ServiceResult result = await sut.CreateAccountAsync(new AdminCreateAccountRequest
@@ -279,9 +281,10 @@ public class ManagementAccountServiceTests : IAsyncDisposable
     [Fact]
     public async Task CreateAccountAsync_ReturnsNicknameConflict_WhenCaseInsensitiveIndexRaces()
     {
-        _accountRepo.AnswerFindByEmailAsync((_, _) => Task.FromResult<Account?>(null));
-        _passwordService.AnswerHashPassword(_ => "$2a$13$hashed");
-        _accountRepo.AnswerCreateAsync((_, _) => Task.FromException(new Exception("duplicate key", new Exception("23505: duplicate key value violates unique constraint \"Account_unique_index_0\""))));
+        _accountRepo.Setup(r => r.FindByEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync((Account?)null);
+        _passwordService.Setup(p => p.HashPassword(It.IsAny<string>())).Returns("$2a$13$hashed");
+        _accountRepo.Setup(r => r.CreateAsync(It.IsAny<Account>(), It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new Exception("duplicate key", new Exception("23505: duplicate key value violates unique constraint \"Account_unique_index_0\"")));
         var sut = CreateSut();
 
         ServiceResult result = await sut.CreateAccountAsync(new AdminCreateAccountRequest
@@ -304,10 +307,11 @@ public class ManagementAccountServiceTests : IAsyncDisposable
     [Fact]
     public async Task CreateAccountAsync_ReturnsEmailAlreadyExists_WhenEmailPrimaryKeyViolationRaces()
     {
-        _accountRepo.AnswerFindByEmailAsync((_, _) => Task.FromResult<Account?>(null));
-        _passwordService.AnswerHashPassword(_ => "$2a$13$hashed");
+        _accountRepo.Setup(r => r.FindByEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync((Account?)null);
+        _passwordService.Setup(p => p.HashPassword(It.IsAny<string>())).Returns("$2a$13$hashed");
         // Simulate a unique constraint violation on the Email primary key, not the Nickname constraint.
-        _accountRepo.AnswerCreateAsync((_, _) => Task.FromException(new Exception("duplicate key", new Exception("23505: duplicate key value violates unique constraint \"Account_pk\""))));
+        _accountRepo.Setup(r => r.CreateAsync(It.IsAny<Account>(), It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new Exception("duplicate key", new Exception("23505: duplicate key value violates unique constraint \"Account_pk\"")));
         var sut = CreateSut();
 
         ServiceResult result = await sut.CreateAccountAsync(new AdminCreateAccountRequest
@@ -329,7 +333,7 @@ public class ManagementAccountServiceTests : IAsyncDisposable
     [Fact]
     public async Task UpdateAccountAsync_ReturnsFail_WhenAccountNotFound()
     {
-        _accountRepo.AnswerFindByEmailForUpdateAsync((_, _) => Task.FromResult<Account?>(null));
+        _accountRepo.Setup(r => r.FindByEmailForUpdateAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync((Account?)null);
         var sut = CreateSut();
 
         ServiceResult result = await sut.UpdateAccountAsync(
@@ -344,8 +348,8 @@ public class ManagementAccountServiceTests : IAsyncDisposable
     public async Task UpdateAccountAsync_SetsTheFileManagerQuota_OnlyWhenGiven()
     {
         var account = ActiveAccount();
-        _accountRepo.AnswerFindByEmailForUpdateAsync((_, _) => Task.FromResult<Account?>(account));
-        _accountRepo.AnswerUpdateEntityAsync((_, _) => Task.CompletedTask);
+        _accountRepo.Setup(r => r.FindByEmailForUpdateAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(account);
+        _accountRepo.Setup(r => r.UpdateEntityAsync(It.IsAny<Account>(), It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
         var sut = CreateSut();
 
         ServiceResult set = await sut.UpdateAccountAsync(
@@ -367,8 +371,8 @@ public class ManagementAccountServiceTests : IAsyncDisposable
     public async Task UpdateAccountAsync_SetsTheFileManagerScanDisabledFlag_OnlyWhenGiven()
     {
         var account = ActiveAccount();
-        _accountRepo.AnswerFindByEmailForUpdateAsync((_, _) => Task.FromResult<Account?>(account));
-        _accountRepo.AnswerUpdateEntityAsync((_, _) => Task.CompletedTask);
+        _accountRepo.Setup(r => r.FindByEmailForUpdateAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(account);
+        _accountRepo.Setup(r => r.UpdateEntityAsync(It.IsAny<Account>(), It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
         var sut = CreateSut();
 
         ServiceResult set = await sut.UpdateAccountAsync(
@@ -392,15 +396,15 @@ public class ManagementAccountServiceTests : IAsyncDisposable
     public async Task UpdateAccountAsync_RefusesANegativeFileManagerQuota()
     {
         var account = ActiveAccount();
-        _accountRepo.AnswerFindByEmailForUpdateAsync((_, _) => Task.FromResult<Account?>(account));
+        _accountRepo.Setup(r => r.FindByEmailForUpdateAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(account);
 
         ServiceResult result = await CreateSut().UpdateAccountAsync(
             new AdminUpdateAccountRequest { Email = account.Email.Value, Role = "User", FileManagerQuotaBytes = -1 }, null, Actor, TestContext.Current.CancellationToken);
 
         Assert.Equal("Account.FileManagerQuotaNegative", result.ErrorCode);
         Assert.Equal("The storage quota cannot be negative.", result.ErrorKey);
-        Assert.Empty(_accountRepo.UpdateEntityAsyncCalls);
-        Assert.Single(_unitOfWork.RollbackAsyncCalls);
+        _accountRepo.Verify(r => r.UpdateEntityAsync(It.IsAny<Account>(), It.IsAny<CancellationToken>()), Times.Never);
+        _unitOfWork.Verify(u => u.RollbackAsync(It.IsAny<CancellationToken>()), Times.Once);
     }
 
     /// <summary>Verifies that <c>UpdateAccountAsync</c> keeps existing password when new password is empty.</summary>
@@ -408,16 +412,17 @@ public class ManagementAccountServiceTests : IAsyncDisposable
     public async Task UpdateAccountAsync_KeepsExistingPassword_WhenNewPasswordIsEmpty()
     {
         var account = ActiveAccount();
-        _accountRepo.AnswerFindByEmailForUpdateAsync((_, _) => Task.FromResult<Account?>(account));
-        _accountRepo.AnswerUpdateEntityAsync((_, _) => Task.CompletedTask);
+        _accountRepo.Setup(r => r.FindByEmailForUpdateAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(account);
+        _accountRepo.Setup(r => r.UpdateEntityAsync(It.IsAny<Account>(), It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
         var sut = CreateSut();
 
         ServiceResult result = await sut.UpdateAccountAsync(
             new AdminUpdateAccountRequest { Email = account.Email.Value, Role = "User" }, null, Actor, TestContext.Current.CancellationToken);
 
         Assert.True(result.Success);
-        Assert.Single(_accountRepo.UpdateEntityAsyncCalls, call => (call.Domain!.HashedPassword == account.HashedPassword));
-        Assert.Empty(_passwordService.HashPasswordCalls);
+        _accountRepo.Verify(r => r.UpdateEntityAsync(
+            It.Is<Account>(a => a.HashedPassword == account.HashedPassword), It.IsAny<CancellationToken>()), Times.Once);
+        _passwordService.Verify(p => p.HashPassword(It.IsAny<string>()), Times.Never);
     }
 
     /// <summary>Verifies that <c>UpdateAccountAsync</c> hashes new password when new password provided.</summary>
@@ -425,16 +430,17 @@ public class ManagementAccountServiceTests : IAsyncDisposable
     public async Task UpdateAccountAsync_HashesNewPassword_WhenNewPasswordProvided()
     {
         var account = ActiveAccount();
-        _accountRepo.AnswerFindByEmailForUpdateAsync((_, _) => Task.FromResult<Account?>(account));
-        _passwordService.AnswerHashPassword(passwordArg => passwordArg == "NewPass1!", _ => "$2a$13$newhash");
-        _accountRepo.AnswerUpdateEntityAsync((_, _) => Task.CompletedTask);
+        _accountRepo.Setup(r => r.FindByEmailForUpdateAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(account);
+        _passwordService.Setup(p => p.HashPassword("NewPass1!")).Returns("$2a$13$newhash");
+        _accountRepo.Setup(r => r.UpdateEntityAsync(It.IsAny<Account>(), It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
         var sut = CreateSut();
 
         ServiceResult result = await sut.UpdateAccountAsync(
             new AdminUpdateAccountRequest { Email = account.Email.Value, Role = "User" }, "NewPass1!", Actor, TestContext.Current.CancellationToken);
 
         Assert.True(result.Success);
-        Assert.Single(_accountRepo.UpdateEntityAsyncCalls, call => (call.Domain!.HashedPassword == "$2a$13$newhash"));
+        _accountRepo.Verify(r => r.UpdateEntityAsync(
+            It.Is<Account>(a => a.HashedPassword == "$2a$13$newhash"), It.IsAny<CancellationToken>()), Times.Once);
     }
 
     /// <summary>An admin-set password forces the account to choose its own new one at next login.</summary>
@@ -443,9 +449,9 @@ public class ManagementAccountServiceTests : IAsyncDisposable
     {
         var account = ActiveAccount();
         string originalStamp = account.SecurityStamp;
-        _accountRepo.AnswerFindByEmailForUpdateAsync((_, _) => Task.FromResult<Account?>(account));
-        _passwordService.AnswerHashPassword(password => password == "NewPass1!", _ => "$2a$13$newhash");
-        _accountRepo.AnswerUpdateEntityAsync((_, _) => Task.CompletedTask);
+        _accountRepo.Setup(r => r.FindByEmailForUpdateAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(account);
+        _passwordService.Setup(p => p.HashPassword("NewPass1!")).Returns("$2a$13$newhash");
+        _accountRepo.Setup(r => r.UpdateEntityAsync(It.IsAny<Account>(), It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
         var sut = CreateSut();
 
         await sut.UpdateAccountAsync(
@@ -460,15 +466,16 @@ public class ManagementAccountServiceTests : IAsyncDisposable
     public async Task UpdateAccountAsync_ResetsLoginAttempt_WhenUnlocking()
     {
         var account = ActiveAccount(locked: true, loginAttempt: 5);
-        _accountRepo.AnswerFindByEmailForUpdateAsync((_, _) => Task.FromResult<Account?>(account));
-        _accountRepo.AnswerUpdateEntityAsync((_, _) => Task.CompletedTask);
+        _accountRepo.Setup(r => r.FindByEmailForUpdateAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(account);
+        _accountRepo.Setup(r => r.UpdateEntityAsync(It.IsAny<Account>(), It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
         var sut = CreateSut();
 
         ServiceResult result = await sut.UpdateAccountAsync(
             new AdminUpdateAccountRequest { Email = account.Email.Value, Locked = false }, null, Actor, TestContext.Current.CancellationToken);
 
         Assert.True(result.Success);
-        Assert.Single(_accountRepo.UpdateEntityAsyncCalls, call => (call.Domain!.Locked == false && call.Domain!.LoginAttempt == 0));
+        _accountRepo.Verify(r => r.UpdateEntityAsync(
+            It.Is<Account>(a => a.Locked == false && a.LoginAttempt == 0), It.IsAny<CancellationToken>()), Times.Once);
     }
 
     /// <summary>A persisted account in the opposite state of every admin toggle: deleted, unconfirmed, terms not accepted.</summary>
@@ -481,9 +488,9 @@ public class ManagementAccountServiceTests : IAsyncDisposable
     public async Task UpdateAccountAsync_AppliesEveryAdminChange()
     {
         Account account = DeletedUnconfirmedAccount();
-        _accountRepo.AnswerFindByEmailForUpdateAsync((_, _) => Task.FromResult<Account?>(account));
+        _accountRepo.Setup(r => r.FindByEmailForUpdateAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(account);
         // Another active administrator remains, so the second call may delete this one after it became an Admin.
-        _accountRepo.AnswerFindActiveAdminsForUpdateAsync(_ => Task.FromResult<List<Account>>([AdminAccount(Actor)]));
+        _accountRepo.Setup(r => r.FindActiveAdminsForUpdateAsync(It.IsAny<CancellationToken>())).ReturnsAsync([AdminAccount(Actor)]);
 
         ServiceResult result = await CreateSut().UpdateAccountAsync(new AdminUpdateAccountRequest
         {
@@ -518,7 +525,7 @@ public class ManagementAccountServiceTests : IAsyncDisposable
     public async Task UpdateAccountAsync_KeepsTheLoginAttemptCount_WhenTheAccountStaysLocked()
     {
         Account account = ActiveAccount(locked: true, loginAttempt: 4);
-        _accountRepo.AnswerFindByEmailForUpdateAsync((_, _) => Task.FromResult<Account?>(account));
+        _accountRepo.Setup(r => r.FindByEmailForUpdateAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(account);
 
         await CreateSut().UpdateAccountAsync(
             new AdminUpdateAccountRequest { Email = account.Email.Value, Locked = true, Message = "spam" }, null, Actor, TestContext.Current.CancellationToken);
@@ -533,7 +540,7 @@ public class ManagementAccountServiceTests : IAsyncDisposable
     public async Task UpdateAccountAsync_LocksAnUnlockedAccount()
     {
         Account account = ActiveAccount(locked: false, loginAttempt: 2);
-        _accountRepo.AnswerFindByEmailForUpdateAsync((_, _) => Task.FromResult<Account?>(account));
+        _accountRepo.Setup(r => r.FindByEmailForUpdateAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(account);
 
         await CreateSut().UpdateAccountAsync(
             new AdminUpdateAccountRequest { Email = account.Email.Value, Locked = true, Message = "spam" }, null, Actor, TestContext.Current.CancellationToken);
@@ -553,7 +560,7 @@ public class ManagementAccountServiceTests : IAsyncDisposable
     public async Task UpdateAccountAsync_EndsTheSessions_OnlyWhenTheAdminLocksAnUnlockedAccount(bool alreadyLocked, bool stampReplaced)
     {
         Account account = ActiveAccount(locked: alreadyLocked);
-        _accountRepo.AnswerFindByEmailForUpdateAsync((_, _) => Task.FromResult<Account?>(account));
+        _accountRepo.Setup(r => r.FindByEmailForUpdateAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(account);
 
         await CreateSut().UpdateAccountAsync(
             new AdminUpdateAccountRequest { Email = account.Email.Value, Locked = true }, null, Actor, TestContext.Current.CancellationToken);
@@ -566,12 +573,12 @@ public class ManagementAccountServiceTests : IAsyncDisposable
     [Fact]
     public async Task UpdateAccountAsync_ReturnsTheDomainValidationError_ForAnUnknownTimeZone()
     {
-        _accountRepo.AnswerFindByEmailForUpdateAsync((_, _) => Task.FromResult<Account?>(ActiveAccount()));
+        _accountRepo.Setup(r => r.FindByEmailForUpdateAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(ActiveAccount());
 
         ServiceResult result = await CreateSut().UpdateAccountAsync(new AdminUpdateAccountRequest { Email = "user@example.com", TimeZoneIanaId = "Not/AZone" }, null, Actor, TestContext.Current.CancellationToken);
 
         Assert.Equal("TimeZoneId.Invalid", result.ErrorCode);
-        Assert.Empty(_accountRepo.UpdateEntityAsyncCalls);
+        _accountRepo.Verify(r => r.UpdateEntityAsync(It.IsAny<Account>(), It.IsAny<CancellationToken>()), Times.Never);
     }
 
     // -- DeleteAccountAsync ---------------------------------------------------
@@ -580,7 +587,7 @@ public class ManagementAccountServiceTests : IAsyncDisposable
     [Fact]
     public async Task DeleteAccountAsync_ReturnsFail_WhenAccountNotFound()
     {
-        _accountRepo.AnswerFindByEmailForUpdateAsync((_, _) => Task.FromResult<Account?>(null));
+        _accountRepo.Setup(r => r.FindByEmailForUpdateAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync((Account?)null);
         var sut = CreateSut();
 
         ServiceResult result = await sut.DeleteAccountAsync("ghost@example.com", Actor, TestContext.Current.CancellationToken);
@@ -594,14 +601,15 @@ public class ManagementAccountServiceTests : IAsyncDisposable
     public async Task DeleteAccountAsync_SetsDeletedFlag_WhenAccountFound()
     {
         var account = ActiveAccount();
-        _accountRepo.AnswerFindByEmailForUpdateAsync((_, _) => Task.FromResult<Account?>(account));
-        _accountRepo.AnswerUpdateEntityAsync((_, _) => Task.CompletedTask);
+        _accountRepo.Setup(r => r.FindByEmailForUpdateAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(account);
+        _accountRepo.Setup(r => r.UpdateEntityAsync(It.IsAny<Account>(), It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
         var sut = CreateSut();
 
         ServiceResult result = await sut.DeleteAccountAsync(account.Email.Value, Actor, TestContext.Current.CancellationToken);
 
         Assert.True(result.Success);
-        Assert.Single(_accountRepo.UpdateEntityAsyncCalls, call => (call.Domain!.Deleted == true));
+        _accountRepo.Verify(r => r.UpdateEntityAsync(
+            It.Is<Account>(a => a.Deleted == true), It.IsAny<CancellationToken>()), Times.Once);
     }
 
     // -- SearchAccountsAsync ------------------------------------------------------
@@ -610,7 +618,7 @@ public class ManagementAccountServiceTests : IAsyncDisposable
     [Fact]
     public async Task SearchAccountsAsync_DelegatesToRepository_AndMapsTheRows()
     {
-        _accountRepo.AnswerSearchAsync((search, _) => search == "needle", (_, _) => Task.FromResult<List<Account>>([ActiveAccount("found@example.com")]));
+        _accountRepo.Setup(r => r.SearchAsync("needle", It.IsAny<CancellationToken>())).ReturnsAsync([ActiveAccount("found@example.com")]);
 
         var row = Assert.Single(await CreateSut().SearchAccountsAsync("needle", TestContext.Current.CancellationToken));
 
@@ -630,50 +638,50 @@ public class ManagementAccountServiceTests : IAsyncDisposable
     [Fact]
     public async Task CreateAccountAsync_ReturnsPolicyViolation_AndDoesNotHashOrCreate_WhenThePasswordIsTooWeak()
     {
-        _accountRepo.AnswerFindByEmailAsync((_, _) => Task.FromResult<Account?>(null));
+        _accountRepo.Setup(r => r.FindByEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync((Account?)null);
 
         ServiceResult result = await CreateSut().CreateAccountAsync(NewAccountRequest(password: "weak"), Actor, TestContext.Current.CancellationToken);
 
         Assert.False(result.Success);
         Assert.Equal("Account.PasswordPolicy", result.ErrorCode);
-        Assert.Empty(_passwordService.HashPasswordCalls);
-        Assert.Empty(_accountRepo.CreateAsyncCalls);
+        _passwordService.Verify(p => p.HashPassword(It.IsAny<string>()), Times.Never);
+        _accountRepo.Verify(r => r.CreateAsync(It.IsAny<Account>(), It.IsAny<CancellationToken>()), Times.Never);
     }
 
     /// <summary>An account role other than Admin or User (e.g. the menu-only Anonymous) is refused before anything is hashed or stored.</summary>
     [Fact]
     public async Task CreateAccountAsync_RejectsARoleOtherThanAdminOrUser()
     {
-        _accountRepo.AnswerFindByEmailAsync((_, _) => Task.FromResult<Account?>(null));
+        _accountRepo.Setup(r => r.FindByEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync((Account?)null);
         AdminCreateAccountRequest request = NewAccountRequest();
         request.Role = Role.Anonymous;
 
         ServiceResult result = await CreateSut().CreateAccountAsync(request, Actor, TestContext.Current.CancellationToken);
 
         Assert.Equal("Account.RoleInvalid", result.ErrorCode);
-        Assert.Empty(_passwordService.HashPasswordCalls);
-        Assert.Empty(_accountRepo.CreateAsyncCalls);
+        _passwordService.Verify(p => p.HashPassword(It.IsAny<string>()), Times.Never);
+        _accountRepo.Verify(r => r.CreateAsync(It.IsAny<Account>(), It.IsAny<CancellationToken>()), Times.Never);
     }
 
     /// <summary>A malformed address is returned as the domain's validation error and nothing is stored.</summary>
     [Fact]
     public async Task CreateAccountAsync_ReturnsTheDomainValidationError_ForAMalformedEmail()
     {
-        _accountRepo.AnswerFindByEmailAsync((_, _) => Task.FromResult<Account?>(null));
-        _passwordService.AnswerHashPassword(_ => "$2a$13$hashed");
+        _accountRepo.Setup(r => r.FindByEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync((Account?)null);
+        _passwordService.Setup(p => p.HashPassword(It.IsAny<string>())).Returns("$2a$13$hashed");
 
         ServiceResult result = await CreateSut().CreateAccountAsync(NewAccountRequest(email: "not-an-email"), Actor, TestContext.Current.CancellationToken);
 
         Assert.Equal("Email.Invalid", result.ErrorCode);
-        Assert.Empty(_accountRepo.CreateAsyncCalls);
+        _accountRepo.Verify(r => r.CreateAsync(It.IsAny<Account>(), It.IsAny<CancellationToken>()), Times.Never);
     }
 
     /// <summary>The admin's "email confirmed" checkbox and status message are applied to the created account.</summary>
     [Fact]
     public async Task CreateAccountAsync_AppliesTheConfirmedFlagAndMessage_FromTheRequest()
     {
-        _accountRepo.AnswerFindByEmailAsync((_, _) => Task.FromResult<Account?>(null));
-        _passwordService.AnswerHashPassword(_ => "$2a$13$hashed");
+        _accountRepo.Setup(r => r.FindByEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync((Account?)null);
+        _passwordService.Setup(p => p.HashPassword(It.IsAny<string>())).Returns("$2a$13$hashed");
         AdminCreateAccountRequest request = NewAccountRequest();
         request.Message = "created by admin";
         request.EmailConfirmed = true;
@@ -681,14 +689,14 @@ public class ManagementAccountServiceTests : IAsyncDisposable
         ServiceResult result = await CreateSut().CreateAccountAsync(request, Actor, TestContext.Current.CancellationToken);
 
         Assert.True(result.Success);
-        Assert.Single(_accountRepo.CreateAsyncCalls, call => (call.Domain!.EmailConfirmed && call.Domain!.Message == "created by admin" && call.Domain!.RegistrationToken == null));
+        _accountRepo.Verify(r => r.CreateAsync(It.Is<Account>(a => a.EmailConfirmed && a.Message == "created by admin" && a.RegistrationToken == null), It.IsAny<CancellationToken>()), Times.Once);
     }
 
     /// <summary>An unexpected repository failure is caught and reported without leaking internals.</summary>
     [Fact]
     public async Task CreateAccountAsync_ReportsCreateFailed_WhenTheRepositoryThrows()
     {
-        _accountRepo.AnswerFindByEmailAsync((_, _) => Task.FromException<Account?>(new InvalidOperationException("secret detail")));
+        _accountRepo.Setup(r => r.FindByEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ThrowsAsync(new InvalidOperationException("secret detail"));
 
         ServiceResult result = await CreateSut().CreateAccountAsync(NewAccountRequest(), Actor, TestContext.Current.CancellationToken);
 
@@ -706,50 +714,50 @@ public class ManagementAccountServiceTests : IAsyncDisposable
         ServiceResult result = await CreateSut().UpdateAccountAsync(new AdminUpdateAccountRequest { Email = "user@example.com" }, "weak", Actor, TestContext.Current.CancellationToken);
 
         Assert.Equal("Account.PasswordPolicy", result.ErrorCode);
-        Assert.Empty(_passwordService.HashPasswordCalls);
-        Assert.DoesNotContain(_unitOfWork.BeginAsyncCalls, call => call.IsolationLevel == null);
+        _passwordService.Verify(p => p.HashPassword(It.IsAny<string>()), Times.Never);
+        _unitOfWork.Verify(u => u.BeginAsync(null, It.IsAny<CancellationToken>()), Times.Never);
     }
 
     /// <summary>An unknown role is returned as the domain's validation error; the row is not written and the lock is released.</summary>
     [Fact]
     public async Task UpdateAccountAsync_ReturnsTheDomainValidationError_ForAnUnknownRole()
     {
-        _accountRepo.AnswerFindByEmailForUpdateAsync((_, _) => Task.FromResult<Account?>(ActiveAccount()));
+        _accountRepo.Setup(r => r.FindByEmailForUpdateAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(ActiveAccount());
 
         ServiceResult result = await CreateSut().UpdateAccountAsync(new AdminUpdateAccountRequest { Email = "user@example.com", Role = "SuperUser", TimeZoneIanaId = "UTC" }, null, Actor, TestContext.Current.CancellationToken);
 
         Assert.Equal("Account.RoleInvalid", result.ErrorCode);
-        Assert.Empty(_accountRepo.UpdateEntityAsyncCalls);
-        Assert.Single(_unitOfWork.RollbackAsyncCalls);
+        _accountRepo.Verify(r => r.UpdateEntityAsync(It.IsAny<Account>(), It.IsAny<CancellationToken>()), Times.Never);
+        _unitOfWork.Verify(u => u.RollbackAsync(It.IsAny<CancellationToken>()), Times.Once);
     }
 
     /// <summary>An unexpected repository failure on update is rolled back and reported without leaking internals.</summary>
     [Fact]
     public async Task UpdateAccountAsync_RollsBackAndReportsUpdateFailed_WhenTheRepositoryThrows()
     {
-        _accountRepo.AnswerFindByEmailForUpdateAsync((_, _) => Task.FromException<Account?>(new InvalidOperationException("secret detail")));
+        _accountRepo.Setup(r => r.FindByEmailForUpdateAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ThrowsAsync(new InvalidOperationException("secret detail"));
 
         ServiceResult result = await CreateSut().UpdateAccountAsync(new AdminUpdateAccountRequest { Email = "user@example.com" }, null, Actor, TestContext.Current.CancellationToken);
 
         Assert.Equal("ManagementAccount.UpdateFailed", result.ErrorCode);
         Assert.Equal(ServiceResult.TemporaryErrorKey, result.ErrorKey);
         Assert.DoesNotContain("secret detail", result.ErrorKey, StringComparison.Ordinal);
-        Assert.Single(_unitOfWork.RollbackAsyncCalls);
-        Assert.Empty(_unitOfWork.CommitAsyncCalls);
+        _unitOfWork.Verify(u => u.RollbackAsync(It.IsAny<CancellationToken>()), Times.Once);
+        _unitOfWork.Verify(u => u.CommitAsync(It.IsAny<CancellationToken>()), Times.Never);
     }
 
     /// <summary>An unexpected repository failure on delete is rolled back and reported without leaking internals.</summary>
     [Fact]
     public async Task DeleteAccountAsync_RollsBackAndReportsDeleteFailed_WhenTheRepositoryThrows()
     {
-        _accountRepo.AnswerFindByEmailForUpdateAsync((_, _) => Task.FromException<Account?>(new InvalidOperationException("secret detail")));
+        _accountRepo.Setup(r => r.FindByEmailForUpdateAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ThrowsAsync(new InvalidOperationException("secret detail"));
 
         ServiceResult result = await CreateSut().DeleteAccountAsync("user@example.com", Actor, TestContext.Current.CancellationToken);
 
         Assert.Equal("ManagementAccount.DeleteFailed", result.ErrorCode);
         Assert.Equal(ServiceResult.TemporaryErrorKey, result.ErrorKey);
         Assert.DoesNotContain("secret detail", result.ErrorKey, StringComparison.Ordinal);
-        Assert.Single(_unitOfWork.RollbackAsyncCalls);
+        _unitOfWork.Verify(u => u.RollbackAsync(It.IsAny<CancellationToken>()), Times.Once);
     }
 
     // -- Exact results, lookup keys, defaults, transaction boundaries and failure logging ---
@@ -766,21 +774,21 @@ public class ManagementAccountServiceTests : IAsyncDisposable
     [Fact]
     public async Task CreateAccountAsync_ReturnsAlreadyExists_WhenTheRequestedEmailIsTaken()
     {
-        _accountRepo.AnswerFindByEmailAsync((email, _) => email == "taken@example.com", (_, _) => Task.FromResult<Account?>(ActiveAccount("taken@example.com")));
+        _accountRepo.Setup(r => r.FindByEmailAsync("taken@example.com", It.IsAny<CancellationToken>())).ReturnsAsync(ActiveAccount("taken@example.com"));
 
         ServiceResult result = await CreateSut().CreateAccountAsync(NewAccountRequest("taken@example.com"), Actor, TestContext.Current.CancellationToken);
 
         Assert.Equal(ServiceErrorType.Conflict, result.ErrorType);
         Assert.Equal("Account.AlreadyExists", result.ErrorCode);
         Assert.Equal("This account has already been created.", result.ErrorKey);
-        Assert.Empty(_accountRepo.CreateAsyncCalls);
+        _accountRepo.Verify(r => r.CreateAsync(It.IsAny<Account>(), It.IsAny<CancellationToken>()), Times.Never);
     }
 
     /// <summary>A nickname taken (ignoring case) is a Conflict whose message template takes the nickname as its argument.</summary>
     [Fact]
     public async Task CreateAccountAsync_ReturnsTheNicknameConflictTemplate_WhenTheNicknameIsTaken()
     {
-        _accountRepo.AnswerNicknameExistsIgnoreCaseAsync((nickname, _) => nickname == "NewUser", (_, _) => Task.FromResult<bool>(true));
+        _accountRepo.Setup(r => r.NicknameExistsIgnoreCaseAsync("NewUser", It.IsAny<CancellationToken>())).ReturnsAsync(true);
 
         ServiceResult result = await CreateSut().CreateAccountAsync(NewAccountRequest(), Actor, TestContext.Current.CancellationToken);
 
@@ -792,8 +800,9 @@ public class ManagementAccountServiceTests : IAsyncDisposable
     [Fact]
     public async Task CreateAccountAsync_ReturnsTheAlreadyExistsMessage_WhenTheEmailPrimaryKeyRaces()
     {
-        _passwordService.AnswerHashPassword(_ => "$2a$13$hashed");
-        _accountRepo.AnswerCreateAsync((_, _) => Task.FromException(new Exception("duplicate key", new Exception("23505: duplicate key value violates unique constraint \"Account_pk\""))));
+        _passwordService.Setup(p => p.HashPassword(It.IsAny<string>())).Returns("$2a$13$hashed");
+        _accountRepo.Setup(r => r.CreateAsync(It.IsAny<Account>(), It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new Exception("duplicate key", new Exception("23505: duplicate key value violates unique constraint \"Account_pk\"")));
 
         ServiceResult result = await CreateSut().CreateAccountAsync(NewAccountRequest(), Actor, TestContext.Current.CancellationToken);
 
@@ -804,36 +813,36 @@ public class ManagementAccountServiceTests : IAsyncDisposable
     [Fact]
     public async Task CreateAccountAsync_DefaultsTheTimeZoneToUtc_WhenNoneIsGiven()
     {
-        _passwordService.AnswerHashPassword(_ => "$2a$13$hashed");
+        _passwordService.Setup(p => p.HashPassword(It.IsAny<string>())).Returns("$2a$13$hashed");
         AdminCreateAccountRequest request = NewAccountRequest();
         request.TimeZoneIanaId = null;
 
         ServiceResult result = await CreateSut().CreateAccountAsync(request, Actor, TestContext.Current.CancellationToken);
 
         Assert.True(result.Success);
-        Assert.Single(_accountRepo.CreateAsyncCalls, call => (call.Domain!.TimeZone.Value == "UTC"));
+        _accountRepo.Verify(r => r.CreateAsync(It.Is<Account>(a => a.TimeZone.Value == "UTC"), It.IsAny<CancellationToken>()), Times.Once);
     }
 
     /// <summary>The requested time zone is stored on the new account.</summary>
     [Fact]
     public async Task CreateAccountAsync_StoresTheRequestedTimeZone()
     {
-        _passwordService.AnswerHashPassword(_ => "$2a$13$hashed");
+        _passwordService.Setup(p => p.HashPassword(It.IsAny<string>())).Returns("$2a$13$hashed");
         AdminCreateAccountRequest request = NewAccountRequest();
         request.TimeZoneIanaId = "Asia/Seoul";
 
         await CreateSut().CreateAccountAsync(request, Actor, TestContext.Current.CancellationToken);
 
-        Assert.Single(_accountRepo.CreateAsyncCalls, call => (call.Domain!.TimeZone.Value == "Asia/Seoul"));
+        _accountRepo.Verify(r => r.CreateAsync(It.Is<Account>(a => a.TimeZone.Value == "Asia/Seoul"), It.IsAny<CancellationToken>()), Times.Once);
     }
 
     /// <summary>A create that throws unexpectedly is logged with the exception and the e-mail.</summary>
     [Fact]
     public async Task CreateAccountAsync_LogsTheFailure_WhenTheRepositoryThrows()
     {
-        _passwordService.AnswerHashPassword(_ => "$2a$13$hashed");
+        _passwordService.Setup(p => p.HashPassword(It.IsAny<string>())).Returns("$2a$13$hashed");
         var thrown = new InvalidOperationException("boom");
-        _accountRepo.AnswerCreateAsync((_, _) => Task.FromException(thrown));
+        _accountRepo.Setup(r => r.CreateAsync(It.IsAny<Account>(), It.IsAny<CancellationToken>())).ThrowsAsync(thrown);
 
         await CreateSut().CreateAccountAsync(NewAccountRequest(), Actor, TestContext.Current.CancellationToken);
 
@@ -845,15 +854,15 @@ public class ManagementAccountServiceTests : IAsyncDisposable
     public async Task UpdateAccountAsync_LocksTheRequestedAccountAndCommits_OnSuccess()
     {
         Account account = ActiveAccount();
-        _accountRepo.AnswerFindByEmailForUpdateAsync((emailArg, _) => emailArg == "user@example.com", (_, _) => Task.FromResult<Account?>(account));
+        _accountRepo.Setup(r => r.FindByEmailForUpdateAsync("user@example.com", It.IsAny<CancellationToken>())).ReturnsAsync(account);
 
         ServiceResult result = await CreateSut().UpdateAccountAsync(
             new AdminUpdateAccountRequest { Email = "user@example.com" }, null, Actor, TestContext.Current.CancellationToken);
 
         Assert.True(result.Success);
-        Assert.Single(_unitOfWork.BeginAsyncCalls, call => call.IsolationLevel == null);
-        Assert.Single(_unitOfWork.CommitAsyncCalls);
-        Assert.Empty(_unitOfWork.RollbackAsyncCalls);
+        _unitOfWork.Verify(u => u.BeginAsync(null, It.IsAny<CancellationToken>()), Times.Once);
+        _unitOfWork.Verify(u => u.CommitAsync(It.IsAny<CancellationToken>()), Times.Once);
+        _unitOfWork.Verify(u => u.RollbackAsync(It.IsAny<CancellationToken>()), Times.Never);
     }
 
     /// <summary>An unknown account on update is a NotFound ("Email address is wrong"), rolled back.</summary>
@@ -866,17 +875,17 @@ public class ManagementAccountServiceTests : IAsyncDisposable
         Assert.Equal(ServiceErrorType.NotFound, result.ErrorType);
         Assert.Equal("Account.NotFound", result.ErrorCode);
         Assert.Equal("Email address is wrong", result.ErrorKey);
-        Assert.Single(_unitOfWork.RollbackAsyncCalls);
-        Assert.Empty(_unitOfWork.CommitAsyncCalls);
+        _unitOfWork.Verify(u => u.RollbackAsync(It.IsAny<CancellationToken>()), Times.Once);
+        _unitOfWork.Verify(u => u.CommitAsync(It.IsAny<CancellationToken>()), Times.Never);
     }
 
     /// <summary>An update that throws unexpectedly is logged with the exception and the e-mail.</summary>
     [Fact]
     public async Task UpdateAccountAsync_LogsTheFailure_WhenTheRepositoryThrows()
     {
-        _accountRepo.AnswerFindByEmailForUpdateAsync((emailArg, _) => emailArg == "user@example.com", (_, _) => Task.FromResult<Account?>(ActiveAccount()));
+        _accountRepo.Setup(r => r.FindByEmailForUpdateAsync("user@example.com", It.IsAny<CancellationToken>())).ReturnsAsync(ActiveAccount());
         var thrown = new InvalidOperationException("boom");
-        _accountRepo.AnswerUpdateEntityAsync((_, _) => Task.FromException(thrown));
+        _accountRepo.Setup(r => r.UpdateEntityAsync(It.IsAny<Account>(), It.IsAny<CancellationToken>())).ThrowsAsync(thrown);
 
         await CreateSut().UpdateAccountAsync(new AdminUpdateAccountRequest { Email = "user@example.com" }, null, Actor, TestContext.Current.CancellationToken);
 
@@ -887,14 +896,14 @@ public class ManagementAccountServiceTests : IAsyncDisposable
     [Fact]
     public async Task DeleteAccountAsync_BeginsAndCommitsTheTransaction_OnSuccess()
     {
-        _accountRepo.AnswerFindByEmailForUpdateAsync((emailArg, _) => emailArg == "user@example.com", (_, _) => Task.FromResult<Account?>(ActiveAccount()));
+        _accountRepo.Setup(r => r.FindByEmailForUpdateAsync("user@example.com", It.IsAny<CancellationToken>())).ReturnsAsync(ActiveAccount());
 
         ServiceResult result = await CreateSut().DeleteAccountAsync("user@example.com", Actor, TestContext.Current.CancellationToken);
 
         Assert.True(result.Success);
-        Assert.Single(_unitOfWork.BeginAsyncCalls, call => call.IsolationLevel == null);
-        Assert.Single(_unitOfWork.CommitAsyncCalls);
-        Assert.Empty(_unitOfWork.RollbackAsyncCalls);
+        _unitOfWork.Verify(u => u.BeginAsync(null, It.IsAny<CancellationToken>()), Times.Once);
+        _unitOfWork.Verify(u => u.CommitAsync(It.IsAny<CancellationToken>()), Times.Once);
+        _unitOfWork.Verify(u => u.RollbackAsync(It.IsAny<CancellationToken>()), Times.Never);
     }
 
     /// <summary>An unknown account on delete is a NotFound with its message, rolled back.</summary>
@@ -906,17 +915,17 @@ public class ManagementAccountServiceTests : IAsyncDisposable
         Assert.Equal(ServiceErrorType.NotFound, result.ErrorType);
         Assert.Equal("Account.NotFound", result.ErrorCode);
         Assert.Equal("Fail to find the account by given email address", result.ErrorKey);
-        Assert.Single(_unitOfWork.RollbackAsyncCalls);
-        Assert.Empty(_unitOfWork.CommitAsyncCalls);
+        _unitOfWork.Verify(u => u.RollbackAsync(It.IsAny<CancellationToken>()), Times.Once);
+        _unitOfWork.Verify(u => u.CommitAsync(It.IsAny<CancellationToken>()), Times.Never);
     }
 
     /// <summary>A delete that throws unexpectedly is logged with the exception and the e-mail.</summary>
     [Fact]
     public async Task DeleteAccountAsync_LogsTheFailure_WhenTheRepositoryThrows()
     {
-        _accountRepo.AnswerFindByEmailForUpdateAsync((emailArg, _) => emailArg == "user@example.com", (_, _) => Task.FromResult<Account?>(ActiveAccount()));
+        _accountRepo.Setup(r => r.FindByEmailForUpdateAsync("user@example.com", It.IsAny<CancellationToken>())).ReturnsAsync(ActiveAccount());
         var thrown = new InvalidOperationException("boom");
-        _accountRepo.AnswerUpdateEntityAsync((_, _) => Task.FromException(thrown));
+        _accountRepo.Setup(r => r.UpdateEntityAsync(It.IsAny<Account>(), It.IsAny<CancellationToken>())).ThrowsAsync(thrown);
 
         await CreateSut().DeleteAccountAsync("user@example.com", Actor, TestContext.Current.CancellationToken);
 
@@ -933,8 +942,8 @@ public class ManagementAccountServiceTests : IAsyncDisposable
     /// <summary>Returns <paramref name="target"/> as the locked account and <paramref name="activeAdmins"/> as the locked active administrators.</summary>
     private void SetUpAccounts(Account target, params Account[] activeAdmins)
     {
-        _accountRepo.AnswerFindByEmailForUpdateAsync((emailArg, _) => emailArg == target.Email.Value, (_, _) => Task.FromResult<Account?>(target));
-        _accountRepo.AnswerFindActiveAdminsForUpdateAsync(_ => Task.FromResult<List<Account>>([.. activeAdmins]));
+        _accountRepo.Setup(r => r.FindByEmailForUpdateAsync(target.Email.Value, It.IsAny<CancellationToken>())).ReturnsAsync(target);
+        _accountRepo.Setup(r => r.FindActiveAdminsForUpdateAsync(It.IsAny<CancellationToken>())).ReturnsAsync([.. activeAdmins]);
     }
 
     /// <summary>Asserts a refusal: the exact error, rolled back, nothing written, and a Warning naming account, admin and code.</summary>
@@ -944,9 +953,9 @@ public class ManagementAccountServiceTests : IAsyncDisposable
         Assert.Equal(type, result.ErrorType);
         Assert.Equal(code, result.ErrorCode);
         Assert.Equal(key, result.ErrorKey);
-        Assert.Single(_unitOfWork.RollbackAsyncCalls);
-        Assert.Empty(_unitOfWork.CommitAsyncCalls);
-        Assert.Empty(_accountRepo.UpdateEntityAsyncCalls);
+        _unitOfWork.Verify(u => u.RollbackAsync(It.IsAny<CancellationToken>()), Times.Once);
+        _unitOfWork.Verify(u => u.CommitAsync(It.IsAny<CancellationToken>()), Times.Never);
+        _accountRepo.Verify(r => r.UpdateEntityAsync(It.IsAny<Account>(), It.IsAny<CancellationToken>()), Times.Never);
         FakeLogRecord record = Assert.Single(_logger.Collector.GetSnapshot(), r => r.Level == LogLevel.Warning);
         Assert.Equal(loggedMessage, record.Message);
         Assert.Null(record.Exception);
@@ -1006,7 +1015,7 @@ public class ManagementAccountServiceTests : IAsyncDisposable
 
         Assert.True(result.Success);
         Assert.Equal("note", self.Message);
-        Assert.Single(_unitOfWork.CommitAsyncCalls);
+        _unitOfWork.Verify(u => u.CommitAsync(It.IsAny<CancellationToken>()), Times.Once);
     }
 
     /// <summary>Nobody can lock the last active administrator.</summary>
@@ -1035,7 +1044,7 @@ public class ManagementAccountServiceTests : IAsyncDisposable
 
         Assert.True(result.Success);
         Assert.True(target.Locked);
-        Assert.Single(_unitOfWork.CommitAsyncCalls);
+        _unitOfWork.Verify(u => u.CommitAsync(It.IsAny<CancellationToken>()), Times.Once);
     }
 
     /// <summary>
@@ -1046,8 +1055,10 @@ public class ManagementAccountServiceTests : IAsyncDisposable
     public async Task UpdateAccountAsync_LocksTheActiveAdminsBeforeTheEditedAccount()
     {
         List<string> calls = [];
-        _accountRepo.AnswerFindActiveAdminsForUpdateAsync(_ => { calls.Add("admins"); return Task.FromResult<List<Account>>([AdminAccount(Actor)]); });
-        _accountRepo.AnswerFindByEmailForUpdateAsync((email, _) => email == "user@example.com", (_, _) => { calls.Add("account"); return Task.FromResult<Account?>(ActiveAccount()); });
+        _accountRepo.Setup(r => r.FindActiveAdminsForUpdateAsync(It.IsAny<CancellationToken>()))
+            .Callback(() => calls.Add("admins")).ReturnsAsync([AdminAccount(Actor)]);
+        _accountRepo.Setup(r => r.FindByEmailForUpdateAsync("user@example.com", It.IsAny<CancellationToken>()))
+            .Callback(() => calls.Add("account")).ReturnsAsync(ActiveAccount());
 
         await CreateSut().UpdateAccountAsync(new AdminUpdateAccountRequest { Email = "user@example.com" }, null, Actor, TestContext.Current.CancellationToken);
 
@@ -1091,7 +1102,7 @@ public class ManagementAccountServiceTests : IAsyncDisposable
 
         Assert.True(result.Success);
         Assert.True(target.Deleted);
-        Assert.Single(_unitOfWork.CommitAsyncCalls);
+        _unitOfWork.Verify(u => u.CommitAsync(It.IsAny<CancellationToken>()), Times.Once);
     }
 
     /// <summary>A delete locks the active administrators before the deleted account (same order as an update).</summary>
@@ -1099,18 +1110,13 @@ public class ManagementAccountServiceTests : IAsyncDisposable
     public async Task DeleteAccountAsync_LocksTheActiveAdminsBeforeTheDeletedAccount()
     {
         List<string> calls = [];
-        _accountRepo.AnswerFindActiveAdminsForUpdateAsync(_ => { calls.Add("admins"); return Task.FromResult<List<Account>>([AdminAccount(Actor)]); });
-        _accountRepo.AnswerFindByEmailForUpdateAsync((email, _) => email == "user@example.com", (_, _) => { calls.Add("account"); return Task.FromResult<Account?>(ActiveAccount()); });
+        _accountRepo.Setup(r => r.FindActiveAdminsForUpdateAsync(It.IsAny<CancellationToken>()))
+            .Callback(() => calls.Add("admins")).ReturnsAsync([AdminAccount(Actor)]);
+        _accountRepo.Setup(r => r.FindByEmailForUpdateAsync("user@example.com", It.IsAny<CancellationToken>()))
+            .Callback(() => calls.Add("account")).ReturnsAsync(ActiveAccount());
 
         await CreateSut().DeleteAccountAsync("user@example.com", Actor, TestContext.Current.CancellationToken);
 
         Assert.Equal(["admins", "account"], calls);
-    }
-
-    /// <inheritdoc />
-    public async ValueTask DisposeAsync()
-    {
-        await _unitOfWork.DisposeAsync();
-        GC.SuppressFinalize(this);
     }
 }

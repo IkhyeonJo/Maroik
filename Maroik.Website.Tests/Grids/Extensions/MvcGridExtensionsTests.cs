@@ -3,10 +3,10 @@ using Maroik.Website.Grids.Extensions;
 using Maroik.Website.Grids.Filters;
 using Maroik.Website.Grids.Interfaces;
 using Maroik.Website.Tests.Grids.Fixtures;
-using Maroik.Website.Tests.Fixtures;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.Extensions.DependencyInjection;
+using Moq;
 
 namespace Maroik.Website.Tests.Grids.Extensions;
 
@@ -16,7 +16,8 @@ public class MvcGridExtensionsTests
 
     static MvcGridExtensionsTests()
     {
-        html = new FakeHtmlHelper { ViewContext = new ViewContext { HttpContext = new DefaultHttpContext() } };
+        html = Fake.Of<IHtmlHelper>();
+        Mock.Get(html).Setup(mock => mock.ViewContext).Returns(new ViewContext { HttpContext = new DefaultHttpContext() });
     }
 
     [Fact]

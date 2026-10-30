@@ -1,8 +1,9 @@
+using Maroik.Core.Contract.Interfaces;
 using Maroik.Website.Middlewares;
-using Maroik.Website.Tests.Fixtures;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging.Abstractions;
+using Moq;
 
 namespace Maroik.Website.Tests.Middlewares;
 
@@ -21,8 +22,8 @@ public sealed class AvatarCacheMiddlewareTests : IDisposable
     private const string AvatarUrl = "/upload/Management/Profile/Avatar/" + AvatarFile;
     /// <summary>A fresh temporary web root for this test.</summary>
     private readonly string _webRoot = Directory.CreateTempSubdirectory("MaroikAvatarCacheTests_").FullName;
-    /// <summary>Fake <c>IProfileService</c> injected into the system under test.</summary>
-    private readonly FakeProfileService _profileService = new();
+    /// <summary>Mock <c>IProfileService</c> injected into the system under test.</summary>
+    private readonly Mock<IProfileService> _profileService = new();
 
     /// <summary>The local avatar cache folder under <see cref="_webRoot"/>.</summary>
     private string LocalAvatarDir => Path.Combine(_webRoot, "upload", "Management", "Profile", "Avatar");
@@ -30,7 +31,9 @@ public sealed class AvatarCacheMiddlewareTests : IDisposable
     /// <summary>A host environment whose web root is <paramref name="webRootPath"/>.</summary>
     private static IWebHostEnvironment MakeEnv(string? webRootPath)
     {
-        return new FakeWebHostEnvironment { WebRootPath = webRootPath! };
+        var env = new Mock<IWebHostEnvironment>();
+        env.SetupGet(e => e.WebRootPath).Returns(webRootPath!);
+        return env.Object;
     }
 
     /// <summary>A request context for <paramref name="method"/> <paramref name="path"/>.</summary>
@@ -47,10 +50,10 @@ public sealed class AvatarCacheMiddlewareTests : IDisposable
         var sut = new AvatarCacheMiddleware(_ => { nextCalled = true; return Task.CompletedTask; });
         var context = BuildContext("/css/site.css");
 
-        await sut.InvokeAsync(context, MakeEnv(_webRoot), _profileService, NullLogger<AvatarCacheMiddleware>.Instance);
+        await sut.InvokeAsync(context, MakeEnv(_webRoot), _profileService.Object, NullLogger<AvatarCacheMiddleware>.Instance);
 
         Assert.True(nextCalled);
-        Assert.Empty(_profileService.DownloadAvatarAsyncCalls);
+        _profileService.Verify(p => p.DownloadAvatarAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
     }
 
     /// <summary>A non-GET request to the avatar path is forwarded without triggering a download.</summary>
@@ -61,10 +64,10 @@ public sealed class AvatarCacheMiddlewareTests : IDisposable
         var sut = new AvatarCacheMiddleware(_ => { nextCalled = true; return Task.CompletedTask; });
         var context = BuildContext(AvatarUrl, method: "POST");
 
-        await sut.InvokeAsync(context, MakeEnv(_webRoot), _profileService, NullLogger<AvatarCacheMiddleware>.Instance);
+        await sut.InvokeAsync(context, MakeEnv(_webRoot), _profileService.Object, NullLogger<AvatarCacheMiddleware>.Instance);
 
         Assert.True(nextCalled);
-        Assert.Empty(_profileService.DownloadAvatarAsyncCalls);
+        _profileService.Verify(p => p.DownloadAvatarAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
     }
 
     /// <summary>A null/empty WebRootPath (env not fully configured) skips the caching logic entirely.</summary>
@@ -75,10 +78,10 @@ public sealed class AvatarCacheMiddlewareTests : IDisposable
         var sut = new AvatarCacheMiddleware(_ => { nextCalled = true; return Task.CompletedTask; });
         var context = BuildContext(AvatarUrl);
 
-        await sut.InvokeAsync(context, MakeEnv(null), _profileService, NullLogger<AvatarCacheMiddleware>.Instance);
+        await sut.InvokeAsync(context, MakeEnv(null), _profileService.Object, NullLogger<AvatarCacheMiddleware>.Instance);
 
         Assert.True(nextCalled);
-        Assert.Empty(_profileService.DownloadAvatarAsyncCalls);
+        _profileService.Verify(p => p.DownloadAvatarAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
     }
 
     /// <summary>When the file already exists locally, it is served as-is -- no re-download.</summary>
@@ -91,10 +94,10 @@ public sealed class AvatarCacheMiddlewareTests : IDisposable
         var sut = new AvatarCacheMiddleware(_ => { nextCalled = true; return Task.CompletedTask; });
         var context = BuildContext(AvatarUrl);
 
-        await sut.InvokeAsync(context, MakeEnv(_webRoot), _profileService, NullLogger<AvatarCacheMiddleware>.Instance);
+        await sut.InvokeAsync(context, MakeEnv(_webRoot), _profileService.Object, NullLogger<AvatarCacheMiddleware>.Instance);
 
         Assert.True(nextCalled);
-        Assert.Empty(_profileService.DownloadAvatarAsyncCalls);
+        _profileService.Verify(p => p.DownloadAvatarAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
     }
 
     /// <summary>A missing local file is fetched from file storage and written into the local cache dir.</summary>
@@ -102,12 +105,12 @@ public sealed class AvatarCacheMiddlewareTests : IDisposable
     public async Task InvokeAsync_FileMissing_DownloadsAndWritesLocalCopy()
     {
         byte[] avatarBytes = [10, 20, 30, 40];
-        _profileService.OnDownloadAvatarAsync = (name, _) => Task.FromResult<byte[]?>(name == AvatarFile ? avatarBytes : null);
+        _profileService.Setup(p => p.DownloadAvatarAsync(AvatarFile, It.IsAny<CancellationToken>())).ReturnsAsync(avatarBytes);
         bool nextCalled = false;
         var sut = new AvatarCacheMiddleware(_ => { nextCalled = true; return Task.CompletedTask; });
         var context = BuildContext(AvatarUrl);
 
-        await sut.InvokeAsync(context, MakeEnv(_webRoot), _profileService, NullLogger<AvatarCacheMiddleware>.Instance);
+        await sut.InvokeAsync(context, MakeEnv(_webRoot), _profileService.Object, NullLogger<AvatarCacheMiddleware>.Instance);
 
         Assert.True(nextCalled);
         string localPath = Path.Combine(LocalAvatarDir, AvatarFile);
@@ -121,12 +124,12 @@ public sealed class AvatarCacheMiddlewareTests : IDisposable
     [Fact]
     public async Task InvokeAsync_DownloadReturnsEmpty_WritesNoFile_StillForwards()
     {
-        _profileService.OnDownloadAvatarAsync = (name, _) => Task.FromResult<byte[]?>(name == AvatarFile ? [] : null);
+        _profileService.Setup(p => p.DownloadAvatarAsync(AvatarFile, It.IsAny<CancellationToken>())).ReturnsAsync([]);
         bool nextCalled = false;
         var sut = new AvatarCacheMiddleware(_ => { nextCalled = true; return Task.CompletedTask; });
         var context = BuildContext(AvatarUrl);
 
-        await sut.InvokeAsync(context, MakeEnv(_webRoot), _profileService, NullLogger<AvatarCacheMiddleware>.Instance);
+        await sut.InvokeAsync(context, MakeEnv(_webRoot), _profileService.Object, NullLogger<AvatarCacheMiddleware>.Instance);
 
         Assert.True(nextCalled);
         Assert.False(File.Exists(Path.Combine(LocalAvatarDir, AvatarFile)));
@@ -136,12 +139,12 @@ public sealed class AvatarCacheMiddlewareTests : IDisposable
     [Fact]
     public async Task InvokeAsync_DownloadReturnsNull_WritesNoFile_StillForwards()
     {
-        _profileService.OnDownloadAvatarAsync = (name, _) => Task.FromResult<byte[]?>(name == AvatarFile ? null : null);
+        _profileService.Setup(p => p.DownloadAvatarAsync(AvatarFile, It.IsAny<CancellationToken>())).ReturnsAsync((byte[]?)null);
         bool nextCalled = false;
         var sut = new AvatarCacheMiddleware(_ => { nextCalled = true; return Task.CompletedTask; });
         var context = BuildContext(AvatarUrl);
 
-        await sut.InvokeAsync(context, MakeEnv(_webRoot), _profileService, NullLogger<AvatarCacheMiddleware>.Instance);
+        await sut.InvokeAsync(context, MakeEnv(_webRoot), _profileService.Object, NullLogger<AvatarCacheMiddleware>.Instance);
 
         Assert.True(nextCalled);
         Assert.False(File.Exists(Path.Combine(LocalAvatarDir, AvatarFile)));
@@ -151,12 +154,13 @@ public sealed class AvatarCacheMiddlewareTests : IDisposable
     [Fact]
     public async Task InvokeAsync_DownloadThrows_SwallowsException_StillForwards()
     {
-        _profileService.OnDownloadAvatarAsync = (name, _) => name == AvatarFile ? Task.FromException<byte[]?>(new InvalidOperationException("file storage unavailable")) : Task.FromResult<byte[]?>(null);
+        _profileService.Setup(p => p.DownloadAvatarAsync(AvatarFile, It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new InvalidOperationException("file storage unavailable"));
         bool nextCalled = false;
         var sut = new AvatarCacheMiddleware(_ => { nextCalled = true; return Task.CompletedTask; });
         var context = BuildContext(AvatarUrl);
 
-        await sut.InvokeAsync(context, MakeEnv(_webRoot), _profileService, NullLogger<AvatarCacheMiddleware>.Instance);
+        await sut.InvokeAsync(context, MakeEnv(_webRoot), _profileService.Object, NullLogger<AvatarCacheMiddleware>.Instance);
 
         Assert.True(nextCalled);
         Assert.False(File.Exists(Path.Combine(LocalAvatarDir, AvatarFile)));
@@ -177,10 +181,10 @@ public sealed class AvatarCacheMiddlewareTests : IDisposable
         bool nextCalled = false;
         var sut = new AvatarCacheMiddleware(_ => { nextCalled = true; return Task.CompletedTask; });
 
-        await sut.InvokeAsync(BuildContext(path), MakeEnv(_webRoot), _profileService, NullLogger<AvatarCacheMiddleware>.Instance);
+        await sut.InvokeAsync(BuildContext(path), MakeEnv(_webRoot), _profileService.Object, NullLogger<AvatarCacheMiddleware>.Instance);
 
         Assert.True(nextCalled);
-        Assert.Empty(_profileService.DownloadAvatarAsyncCalls);
+        _profileService.Verify(p => p.DownloadAvatarAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
         Assert.False(Directory.Exists(LocalAvatarDir) && Directory.EnumerateFiles(LocalAvatarDir).Any());
     }
 
@@ -190,10 +194,10 @@ public sealed class AvatarCacheMiddlewareTests : IDisposable
     [InlineData("6d83baf785e64266b0424c0a879c32a9.JPEG")]
     public async Task InvokeAsync_AnyGuidFormOfAnAvatarName_IsFetched(string fileName)
     {
-        _profileService.OnDownloadAvatarAsync = (name, _) => Task.FromResult<byte[]?>(name == fileName ? [1, 2] : null);
+        _profileService.Setup(p => p.DownloadAvatarAsync(fileName, It.IsAny<CancellationToken>())).ReturnsAsync([1, 2]);
         var sut = new AvatarCacheMiddleware(_ => Task.CompletedTask);
 
-        await sut.InvokeAsync(BuildContext("/upload/Management/Profile/Avatar/" + fileName), MakeEnv(_webRoot), _profileService, NullLogger<AvatarCacheMiddleware>.Instance);
+        await sut.InvokeAsync(BuildContext("/upload/Management/Profile/Avatar/" + fileName), MakeEnv(_webRoot), _profileService.Object, NullLogger<AvatarCacheMiddleware>.Instance);
 
         Assert.True(File.Exists(Path.Combine(LocalAvatarDir, fileName)));
     }

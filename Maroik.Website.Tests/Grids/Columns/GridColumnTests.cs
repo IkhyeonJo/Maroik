@@ -10,6 +10,7 @@ using Maroik.Website.Grids.Rows;
 using Maroik.Website.Grids.Sorts;
 using Maroik.Website.Tests.Grids.Fixtures;
 using Microsoft.AspNetCore.Html;
+using Moq;
 
 namespace Maroik.Website.Tests.Grids.Columns;
 
@@ -180,10 +181,12 @@ public class GridColumnTests
     [Fact]
     public void Process_FilteredItems()
     {
+        column.Filter = Fake.Of<IGridColumnFilter<GridModel, Object?>>();
+
         IQueryable<GridModel> filtered = new GridModel[2].AsQueryable();
         IQueryable<GridModel> items = new GridModel[2].AsQueryable();
 
-        column.Filter = new FakeGridColumnFilter<GridModel, Object?> { OnApply = query => query == items ? filtered : query };
+        Mock.Get(column.Filter).Setup(mock => mock.Apply(items)).Returns(filtered);
 
         Object actual = column.Process(items);
         Object expected = filtered;

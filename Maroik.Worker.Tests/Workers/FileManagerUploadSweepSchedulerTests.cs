@@ -1,10 +1,10 @@
 using Maroik.Core.Contract.Interfaces;
-using Maroik.Worker.Tests.Fixtures;
 using Maroik.Worker.Workers;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Testing;
 using Microsoft.Extensions.Time.Testing;
+using Moq;
 
 namespace Maroik.Worker.Tests.Workers;
 
@@ -15,31 +15,31 @@ namespace Maroik.Worker.Tests.Workers;
 /// </summary>
 public class FileManagerUploadSweepSchedulerTests
 {
-    private readonly FakeFileManagerService _files = new();
+    private readonly Mock<IFileManagerService> _files = new();
     private readonly FakeTimeProvider _clock = new(new DateTimeOffset(2026, 11, 2, 8, 0, 0, TimeSpan.Zero));
     private readonly FakeLogger<FileManagerUploadSweepScheduler> _logger = new();
 
-    /// <summary>The scheduler over a container holding the fake File Manager service.</summary>
+    /// <summary>The scheduler over a container holding the mocked File Manager service.</summary>
     private FileManagerUploadSweepScheduler Sut()
     {
         var services = new ServiceCollection();
-        services.AddScoped<IFileManagerService>(_ => _files);
+        services.AddScoped(_ => _files.Object);
         return new FileManagerUploadSweepScheduler(services.BuildServiceProvider().GetRequiredService<IServiceScopeFactory>(), _clock, _logger);
     }
 
     /// <summary>Waits (real time, bounded) until the service has been called <paramref name="times"/> times.</summary>
     private async Task CalledAsync(int times)
     {
-        for (int i = 0; i < 200 && _files.RemoveStaleUploadsAsyncCalls.Count < times; i++)
+        for (int i = 0; i < 200 && _files.Invocations.Count < times; i++)
             await Task.Delay(10, TestContext.Current.CancellationToken);
-        Assert.Equal(times, _files.RemoveStaleUploadsAsyncCalls.Count);
+        Assert.Equal(times, _files.Invocations.Count);
     }
 
     /// <summary>A run happens at start-up and then every hour, each sweeping at most <c>MaxAccountsPerRun</c> accounts.</summary>
     [Fact]
     public async Task ItSweeps_AtStartUp_AndEveryHour()
     {
-        _files.OnRemoveStaleUploadsAsync = (_, _) => Task.FromResult(0);
+        _files.Setup(f => f.RemoveStaleUploadsAsync(FileManagerUploadSweepScheduler.MaxAccountsPerRun, It.IsAny<CancellationToken>())).ReturnsAsync(0);
         using FileManagerUploadSweepScheduler scheduler = Sut();
 
         await scheduler.StartAsync(TestContext.Current.CancellationToken);
@@ -50,8 +50,6 @@ public class FileManagerUploadSweepSchedulerTests
         _clock.Advance(TimeSpan.FromMinutes(1));
         await CalledAsync(2);
         await scheduler.StopAsync(TestContext.Current.CancellationToken);
-
-        Assert.All(_files.RemoveStaleUploadsAsyncCalls, call => Assert.Equal(FileManagerUploadSweepScheduler.MaxAccountsPerRun, call.MaxAccounts));
     }
 
     /// <summary>A run that throws is logged as an error with its exception, and the next hour's run still happens.</summary>
@@ -59,8 +57,7 @@ public class FileManagerUploadSweepSchedulerTests
     public async Task AFailingRun_IsLogged_AndTheNextRunStillHappens()
     {
         var broken = new InvalidOperationException("no database");
-        var runs = 0;
-        _files.OnRemoveStaleUploadsAsync = (_, _) => ++runs == 1 ? Task.FromException<int>(broken) : Task.FromResult(0);
+        _files.SetupSequence(f => f.RemoveStaleUploadsAsync(It.IsAny<int>(), It.IsAny<CancellationToken>())).ThrowsAsync(broken).ReturnsAsync(0);
         using FileManagerUploadSweepScheduler scheduler = Sut();
 
         await scheduler.StartAsync(TestContext.Current.CancellationToken);

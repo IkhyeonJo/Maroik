@@ -1,14 +1,15 @@
 using Maroik.Core.Contract.Dtos;
 using Maroik.Core.Contract.Enums;
 using Maroik.Core.Contract.Interfaces;
+using Maroik.Core.Contract.Messages;
 using Maroik.Core.Contract.Settings;
 using Maroik.Core.Domain.Accounts;
 using Maroik.Core.Service.Services;
-using Maroik.Core.Service.Tests.Fixtures;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Testing;
 using Microsoft.Extensions.Options;
 using Microsoft.Extensions.Time.Testing;
+using Moq;
 
 namespace Maroik.Core.Service.Tests.Services;
 
@@ -17,25 +18,25 @@ namespace Maroik.Core.Service.Tests.Services;
 /// email confirmation and password reset leaves a log line an operator can search by account, at the
 /// level the CLAUDE.md logging rule prescribes, and never contains a password or token.
 /// </summary>
-public class AccountServiceAuditLoggingTests : IAsyncDisposable
+public class AccountServiceAuditLoggingTests
 {
     /// <summary>E-mail of the account every test acts on; audit entries must name it.</summary>
     private const string Email = "user@example.com";
     /// <summary>The password the user types; it must never appear in a log entry.</summary>
     private const string TypedPassword = "Typed-Secret-Pw1!";
 
-    /// <summary>Fake <c>IAccountRepository</c> injected into the system under test.</summary>
-    private readonly FakeAccountRepository _accountRepo = new();
-    /// <summary>Fake <c>IPasswordService</c> injected into the system under test.</summary>
-    private readonly FakePasswordService _passwordService = new();
-    /// <summary>Fake <c>IMailClient</c> injected into the system under test.</summary>
-    private readonly FakeMailClient _mailClient = new();
-    /// <summary>Fake <c>IEmailPublisher</c> injected into the system under test.</summary>
-    private readonly FakeEmailPublisher _emailPublisher = new();
-    /// <summary>Fake <c>IDataProtectionService</c> injected into the system under test.</summary>
-    private readonly FakeDataProtectionService _dataProtection = new();
-    /// <summary>Fake <c>IUnitOfWork</c> injected into the system under test.</summary>
-    private readonly FakeUnitOfWork _unitOfWork = new();
+    /// <summary>Mock <c>IAccountRepository</c> injected into the system under test.</summary>
+    private readonly Mock<IAccountRepository> _accountRepo = new();
+    /// <summary>Mock <c>IPasswordService</c> injected into the system under test.</summary>
+    private readonly Mock<IPasswordService> _passwordService = new();
+    /// <summary>Mock <c>IMailClient</c> injected into the system under test.</summary>
+    private readonly Mock<IMailClient> _mailClient = new();
+    /// <summary>Mock <c>IEmailPublisher</c> injected into the system under test.</summary>
+    private readonly Mock<IEmailPublisher> _emailPublisher = new();
+    /// <summary>Mock <c>IDataProtectionService</c> injected into the system under test.</summary>
+    private readonly Mock<IDataProtectionService> _dataProtection = new();
+    /// <summary>Mock <c>IUnitOfWork</c> injected into the system under test.</summary>
+    private readonly Mock<IUnitOfWork> _unitOfWork = new();
     /// <summary>Captures the log entries the system under test writes.</summary>
     private readonly FakeLogger<AccountService> _logger = new();
     /// <summary>Settings with a 3-attempt lockout threshold.</summary>
@@ -52,18 +53,18 @@ public class AccountServiceAuditLoggingTests : IAsyncDisposable
     /// </summary>
     private const string ConfirmPassword = "Confirm-Pass1!";
 
-    /// <summary>Accepts <see cref="ConfirmPassword"/> as the registration password of every fake account.</summary>
+    /// <summary>Accepts <see cref="ConfirmPassword"/> as the registration password of every mocked account.</summary>
     public AccountServiceAuditLoggingTests() =>
-        _passwordService.AnswerVerifyPassword((passwordArg, _) => passwordArg == ConfirmPassword, (_, _) => true);
+        _passwordService.Setup(p => p.VerifyPassword(ConfirmPassword, It.IsAny<string>())).Returns(true);
 
     /// <summary>The fixed "current time" of these tests.</summary>
     private static readonly DateTime Now = new(2026, 7, 1, 12, 0, 0, DateTimeKind.Utc);
     /// <summary>The clock the service under test reads, stopped at <see cref="Now"/>.</summary>
     private readonly FakeTimeProvider _time = new(new DateTimeOffset(Now));
 
-    /// <summary>The service under test over the fake dependencies and the capturing logger.</summary>
-    private AccountService CreateSut() => new(_accountRepo, _passwordService, _mailClient,
-        _emailPublisher, _settings, _dataProtection, _logger, _unitOfWork, _time);
+    /// <summary>The service under test over the mocked dependencies and the capturing logger.</summary>
+    private AccountService CreateSut() => new(_accountRepo.Object, _passwordService.Object, _mailClient.Object,
+        _emailPublisher.Object, _settings, _dataProtection.Object, _logger, _unitOfWork.Object, _time);
 
     /// <summary>A persisted account for <see cref="Email"/> whose state is set by the arguments.</summary>
     private static Account ExistingAccount(bool deleted = false, bool locked = false, bool emailConfirmed = true,
@@ -75,10 +76,10 @@ public class AccountServiceAuditLoggingTests : IAsyncDisposable
     /// <summary>Arranges a login: the locked read returns <paramref name="account"/> and the password check returns <paramref name="passwordMatches"/>.</summary>
     private void AccountForLogin(Account? account, bool passwordMatches)
     {
-        _accountRepo.AnswerFindByEmailForUpdateAsync((_, _) => Task.FromResult<Account?>(account));
-        _passwordService.AnswerVerifyPassword((_, _) => passwordMatches);
-        _accountRepo.AnswerUpdateEntityAsync((_, _) => Task.CompletedTask);
-        _accountRepo.AnswerUpdateMessageAsync((_, _, _, _) => Task.FromResult<int>(0));
+        _accountRepo.Setup(r => r.FindByEmailForUpdateAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(account);
+        _passwordService.Setup(p => p.VerifyPassword(It.IsAny<string>(), It.IsAny<string>())).Returns(passwordMatches);
+        _accountRepo.Setup(r => r.UpdateEntityAsync(It.IsAny<Account>(), It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
+        _accountRepo.Setup(r => r.UpdateMessageAsync(It.IsAny<string>(), It.IsAny<string?>(), It.IsAny<DateTime>(), It.IsAny<CancellationToken>())).ReturnsAsync(0);
     }
 
     /// <summary>Asserts exactly one entry at <paramref name="level"/> contains <paramref name="containing"/> and names <see cref="Email"/>, and returns it.</summary>
@@ -179,12 +180,12 @@ public class AccountServiceAuditLoggingTests : IAsyncDisposable
     [Fact]
     public async Task Register_LogsInformation_WhenANewAccountIsCreated()
     {
-        _accountRepo.AnswerFindByEmailAsync((_, _) => Task.FromResult<Account?>(null));
-        _passwordService.AnswerHashPassword(_ => "$2a$13$hashed");
-        _accountRepo.AnswerCreateAsync((_, _) => Task.CompletedTask);
-        _dataProtection.AnswerProtect((kind, _) => kind == ProtectedValue.MailToken, (_, _) => "enc-token");
-        _mailClient.AnswerGetMailConfirmationBody((_, _, _, _, _) => "body");
-        _emailPublisher.AnswerPublishAsync((_, _) => Task.CompletedTask);
+        _accountRepo.Setup(r => r.FindByEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync((Account?)null);
+        _passwordService.Setup(p => p.HashPassword(It.IsAny<string>())).Returns("$2a$13$hashed");
+        _accountRepo.Setup(r => r.CreateAsync(It.IsAny<Account>(), It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
+        _dataProtection.Setup(r => r.Protect(ProtectedValue.MailToken, It.IsAny<string>())).Returns("enc-token");
+        _mailClient.Setup(m => m.GetMailConfirmationBody(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>())).Returns("body");
+        _emailPublisher.Setup(p => p.PublishAsync(It.IsAny<SendEmailMessage>(), It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
 
         await CreateSut().RegisterAsync(
             new RegisterAccountRequest { Email = Email, PlainPassword = "PlainPass1!", Nickname = "TestUser" },
@@ -200,10 +201,10 @@ public class AccountServiceAuditLoggingTests : IAsyncDisposable
     {
         string token = GuidToken.Generate(Now);
         Account account = ExistingAccount(emailConfirmed: false, registrationToken: GuidToken.Hash(token));
-        _dataProtection.AnswerUnprotect((kind, protectedValue) => kind == ProtectedValue.MailToken && protectedValue == "enc", (_, _) => token);
-        _accountRepo.AnswerFindByRegistrationTokenAsync((_, _) => Task.FromResult<Account?>(account));
-        _accountRepo.AnswerFindByEmailForUpdateAsync((_, _) => Task.FromResult<Account?>(account));
-        _accountRepo.AnswerUpdateEmailConfirmationAsync((_, _, _, _, _) => Task.FromResult<int>(1));
+        _dataProtection.Setup(r => r.Unprotect(ProtectedValue.MailToken, "enc")).Returns(token);
+        _accountRepo.Setup(r => r.FindByRegistrationTokenAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(account);
+        _accountRepo.Setup(r => r.FindByEmailForUpdateAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(account);
+        _accountRepo.Setup(r => r.UpdateEmailConfirmationAsync(It.IsAny<string>(), It.IsAny<string?>(), It.IsAny<string?>(), It.IsAny<DateTime>(), It.IsAny<CancellationToken>())).ReturnsAsync(1);
 
         await CreateSut().ConfirmEmailAsync("enc", ConfirmPassword, TestContext.Current.CancellationToken);
 
@@ -217,9 +218,9 @@ public class AccountServiceAuditLoggingTests : IAsyncDisposable
     {
         string token = GuidToken.Generate(Now);
         Account account = ExistingAccount(emailConfirmed: false, registrationToken: GuidToken.Hash(token));
-        _dataProtection.AnswerUnprotect((kind, protectedValue) => kind == ProtectedValue.MailToken && protectedValue == "enc", (_, _) => token);
-        _accountRepo.AnswerFindByRegistrationTokenAsync((_, _) => Task.FromResult<Account?>(account));
-        _accountRepo.AnswerFindByEmailForUpdateAsync((_, _) => Task.FromResult<Account?>(account));
+        _dataProtection.Setup(r => r.Unprotect(ProtectedValue.MailToken, "enc")).Returns(token);
+        _accountRepo.Setup(r => r.FindByRegistrationTokenAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(account);
+        _accountRepo.Setup(r => r.FindByEmailForUpdateAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(account);
 
         await CreateSut().ConfirmEmailAsync("enc", "Guessed-Pass1!", TestContext.Current.CancellationToken);
 
@@ -232,12 +233,12 @@ public class AccountServiceAuditLoggingTests : IAsyncDisposable
     public async Task Register_LogsInformation_WhenAnUnconfirmedRegistrationIsReplaced()
     {
         Account existing = ExistingAccount(emailConfirmed: false, registrationToken: GuidToken.Generate(Now));
-        _accountRepo.AnswerFindByEmailAsync((_, _) => Task.FromResult<Account?>(existing));
-        _accountRepo.AnswerFindByEmailForUpdateAsync((_, _) => Task.FromResult<Account?>(existing));
-        _passwordService.AnswerHashPassword(_ => "$2a$13$replaced");
-        _dataProtection.AnswerProtect((kind, _) => kind == ProtectedValue.MailToken, (_, _) => "enc-token");
-        _mailClient.AnswerGetMailConfirmationBody((_, _, _, _, _) => "body");
-        _emailPublisher.AnswerPublishAsync((_, _) => Task.CompletedTask);
+        _accountRepo.Setup(r => r.FindByEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(existing);
+        _accountRepo.Setup(r => r.FindByEmailForUpdateAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(existing);
+        _passwordService.Setup(p => p.HashPassword(It.IsAny<string>())).Returns("$2a$13$replaced");
+        _dataProtection.Setup(r => r.Protect(ProtectedValue.MailToken, It.IsAny<string>())).Returns("enc-token");
+        _mailClient.Setup(m => m.GetMailConfirmationBody(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>())).Returns("body");
+        _emailPublisher.Setup(p => p.PublishAsync(It.IsAny<SendEmailMessage>(), It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
 
         await CreateSut().RegisterAsync(
             new RegisterAccountRequest { Email = Email, PlainPassword = "PlainPass1!", Nickname = "Owner", TimeZoneIanaId = "UTC", AgreedServiceTerms = true },
@@ -251,8 +252,8 @@ public class AccountServiceAuditLoggingTests : IAsyncDisposable
     [Fact]
     public async Task ConfirmEmail_LogsWarning_WhenTheTokenIsRejected()
     {
-        _dataProtection.AnswerUnprotect((kind, protectedValue) => kind == ProtectedValue.MailToken && protectedValue == "enc", (_, _) => "raw-token");
-        _accountRepo.AnswerFindByRegistrationTokenAsync((_, _) => Task.FromResult<Account?>(null));
+        _dataProtection.Setup(r => r.Unprotect(ProtectedValue.MailToken, "enc")).Returns("raw-token");
+        _accountRepo.Setup(r => r.FindByRegistrationTokenAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync((Account?)null);
 
         await CreateSut().ConfirmEmailAsync("enc", ConfirmPassword, TestContext.Current.CancellationToken);
 
@@ -265,12 +266,12 @@ public class AccountServiceAuditLoggingTests : IAsyncDisposable
     [Fact]
     public async Task ForgotPassword_LogsInformation_WhenAResetMailIsQueued()
     {
-        _accountRepo.AnswerFindByEmailAsync((_, _) => Task.FromResult<Account?>(ExistingAccount()));
-        _accountRepo.AnswerUpdateResetPasswordTokenAsync((_, _, _, _) => Task.FromResult<int>(1));
-        _accountRepo.AnswerUpdateMessageAsync((_, _, _, _) => Task.FromResult<int>(1));
-        _dataProtection.AnswerProtect((kind, _) => kind == ProtectedValue.MailToken, (_, _) => "enc-reset-token");
-        _mailClient.AnswerGetMailResetPasswordBody((_, _, _, _, _) => "body");
-        _emailPublisher.AnswerPublishAsync((_, _) => Task.CompletedTask);
+        _accountRepo.Setup(r => r.FindByEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(ExistingAccount());
+        _accountRepo.Setup(r => r.UpdateResetPasswordTokenAsync(It.IsAny<string>(), It.IsAny<string?>(), It.IsAny<DateTime>(), It.IsAny<CancellationToken>())).ReturnsAsync(1);
+        _accountRepo.Setup(r => r.UpdateMessageAsync(It.IsAny<string>(), It.IsAny<string?>(), It.IsAny<DateTime>(), It.IsAny<CancellationToken>())).ReturnsAsync(1);
+        _dataProtection.Setup(r => r.Protect(ProtectedValue.MailToken, It.IsAny<string>())).Returns("enc-reset-token");
+        _mailClient.Setup(m => m.GetMailResetPasswordBody(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>())).Returns("body");
+        _emailPublisher.Setup(p => p.PublishAsync(It.IsAny<SendEmailMessage>(), It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
 
         await CreateSut().ForgotPasswordAsync(Email, _emailTemplate, TestContext.Current.CancellationToken);
 
@@ -282,9 +283,9 @@ public class AccountServiceAuditLoggingTests : IAsyncDisposable
     [Fact]
     public async Task ForgotPassword_LogsWarning_WhenTheAddressIsUnknown()
     {
-        _accountRepo.AnswerFindByEmailAsync((_, _) => Task.FromResult<Account?>(null));
-        _dataProtection.AnswerProtect((kind, _) => kind == ProtectedValue.MailToken, (_, _) => "x");
-        _accountRepo.AnswerUpdateResetPasswordTokenAsync((_, _, _, _) => Task.FromResult<int>(0));
+        _accountRepo.Setup(r => r.FindByEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync((Account?)null);
+        _dataProtection.Setup(r => r.Protect(ProtectedValue.MailToken, It.IsAny<string>())).Returns("x");
+        _accountRepo.Setup(r => r.UpdateResetPasswordTokenAsync(It.IsAny<string>(), It.IsAny<string?>(), It.IsAny<DateTime>(), It.IsAny<CancellationToken>())).ReturnsAsync(0);
 
         await CreateSut().ForgotPasswordAsync(Email, _emailTemplate, TestContext.Current.CancellationToken);
 
@@ -297,11 +298,11 @@ public class AccountServiceAuditLoggingTests : IAsyncDisposable
     {
         string token = GuidToken.Generate(Now);
         Account account = ExistingAccount(locked: true, loginAttempt: 3, resetPasswordToken: GuidToken.Hash(token));
-        _dataProtection.AnswerUnprotect((kind, protectedValue) => kind == ProtectedValue.MailToken && protectedValue == "enc", (_, _) => token);
-        _accountRepo.AnswerFindByResetPasswordTokenAsync((_, _) => Task.FromResult<Account?>(account));
-        _accountRepo.AnswerFindByEmailForUpdateAsync((_, _) => Task.FromResult<Account?>(account));
-        _passwordService.AnswerHashPassword(passwordArg => passwordArg == "NewPass1!", _ => "$2a$13$newhash");
-        _accountRepo.AnswerUpdateEntityAsync((_, _) => Task.CompletedTask);
+        _dataProtection.Setup(r => r.Unprotect(ProtectedValue.MailToken, "enc")).Returns(token);
+        _accountRepo.Setup(r => r.FindByResetPasswordTokenAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(account);
+        _accountRepo.Setup(r => r.FindByEmailForUpdateAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(account);
+        _passwordService.Setup(p => p.HashPassword("NewPass1!")).Returns("$2a$13$newhash");
+        _accountRepo.Setup(r => r.UpdateEntityAsync(It.IsAny<Account>(), It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
 
         await CreateSut().ResetPasswordAsync("enc", "NewPass1!", TestContext.Current.CancellationToken);
 
@@ -313,20 +314,13 @@ public class AccountServiceAuditLoggingTests : IAsyncDisposable
     [Fact]
     public async Task ResetPassword_LogsWarning_WhenTheTokenIsRejected()
     {
-        _dataProtection.AnswerUnprotect((kind, protectedValue) => kind == ProtectedValue.MailToken && protectedValue == "enc", (_, _) => "raw-token");
-        _accountRepo.AnswerFindByResetPasswordTokenAsync((_, _) => Task.FromResult<Account?>(null));
+        _dataProtection.Setup(r => r.Unprotect(ProtectedValue.MailToken, "enc")).Returns("raw-token");
+        _accountRepo.Setup(r => r.FindByResetPasswordTokenAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync((Account?)null);
 
         await CreateSut().ResetPasswordAsync("enc", "NewPass1!", TestContext.Current.CancellationToken);
 
         Assert.Single(_logger.Collector.GetSnapshot(),
             r => r.Level == LogLevel.Warning && r.Message.Contains("Password reset rejected", StringComparison.Ordinal));
         AssertNoSecretLogged("raw-token", "enc", "NewPass1!");
-    }
-
-    /// <inheritdoc />
-    public async ValueTask DisposeAsync()
-    {
-        await _unitOfWork.DisposeAsync();
-        GC.SuppressFinalize(this);
     }
 }

@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.AspNetCore.TestHost;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
+using Moq;
 
 namespace Maroik.Website.Tests.Controllers;
 
@@ -102,16 +103,16 @@ public class ExceptionControllerTests(MaroikWebApplicationFactory factory)
     [Fact]
     public async Task UnhandledExceptionOnPost_RendersErrorPage()
     {
-        var throwingAccountService = new FakeAccountService
-        {
-            OnLoginAsync = (_, _, _) => Task.FromException<Maroik.Core.Contract.Dtos.LoginResult>(new InvalidOperationException("boom")),
-        };
+        var throwingAccountService = new Mock<IAccountService>();
+        throwingAccountService
+            .Setup(a => a.LoginAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new InvalidOperationException("boom"));
 
         await using var factory1 = factory.WithWebHostBuilder(builder =>
             builder.ConfigureTestServices(services =>
             {
                 services.RemoveAll<IAccountService>();
-                services.AddScoped<IAccountService>(_ => throwingAccountService);
+                services.AddScoped(_ => throwingAccountService.Object);
             }));
         var client = factory1.CreateClient(new WebApplicationFactoryClientOptions
         {

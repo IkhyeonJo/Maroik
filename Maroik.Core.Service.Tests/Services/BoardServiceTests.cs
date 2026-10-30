@@ -1,14 +1,15 @@
 using System.Data;
 using Maroik.Core.Contract.Dtos;
+using Maroik.Core.Contract.Interfaces;
 using Maroik.Core.Contract.Settings;
 using Maroik.Core.Domain.Accounts;
 using Maroik.Core.Domain.Boards;
 using Maroik.Core.Service.Services;
-using Maroik.Core.Service.Tests.Fixtures;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Testing;
 using Microsoft.Extensions.Options;
 using Microsoft.Extensions.Time.Testing;
+using Moq;
 // ReSharper disable InvalidXmlDocComment
 
 namespace Maroik.Core.Service.Tests.Services;
@@ -16,23 +17,23 @@ namespace Maroik.Core.Service.Tests.Services;
 /// <summary>
 /// Unit tests for <see cref="BoardService"/>.
 /// All external dependencies (repositories, ClamAV client, file client, logger)
-/// are replaced with hand-written fakes. Covers board post CRUD, comment management,
+/// are replaced with Moq mocks. Covers board post CRUD, comment management,
 /// attachment upload/delete, and view-count incrementing.
 /// </summary>
-public class BoardServiceTests : IAsyncDisposable
+public class BoardServiceTests
 {
-    /// <summary>Fake <c>IBoardRepository</c> injected into the system under test.</summary>
-    private readonly FakeBoardRepository _boardRepo = new();
-    /// <summary>Fake <c>IBoardAttachedFileRepository</c> injected into the system under test.</summary>
-    private readonly FakeBoardAttachedFileRepository _attachedFileRepo = new();
-    /// <summary>Fake <c>IBoardCommentRepository</c> injected into the system under test.</summary>
-    private readonly FakeBoardCommentRepository _commentRepo = new();
-    /// <summary>Fake <c>IFileClient</c> injected into the system under test.</summary>
-    private readonly FakeFileClient _fileClient = new();
-    /// <summary>Fake <c>IUnitOfWork</c> injected into the system under test.</summary>
-    private readonly FakeUnitOfWork _unitOfWork = new();
-    /// <summary>Fake <c>IAttachmentContentService</c> injected into the system under test.</summary>
-    private readonly FakeAttachmentContentService _attachmentContent = new();
+    /// <summary>Mock <c>IBoardRepository</c> injected into the system under test.</summary>
+    private readonly Mock<IBoardRepository> _boardRepo = new();
+    /// <summary>Mock <c>IBoardAttachedFileRepository</c> injected into the system under test.</summary>
+    private readonly Mock<IBoardAttachedFileRepository> _attachedFileRepo = new();
+    /// <summary>Mock <c>IBoardCommentRepository</c> injected into the system under test.</summary>
+    private readonly Mock<IBoardCommentRepository> _commentRepo = new();
+    /// <summary>Mock <c>IFileClient</c> injected into the system under test.</summary>
+    private readonly Mock<IFileClient> _fileClient = new();
+    /// <summary>Mock <c>IUnitOfWork</c> injected into the system under test.</summary>
+    private readonly Mock<IUnitOfWork> _unitOfWork = new();
+    /// <summary>Mock <c>IAttachmentContentService</c> injected into the system under test.</summary>
+    private readonly Mock<IAttachmentContentService> _attachmentContent = new();
     /// <summary>Captures the log entries the system under test writes.</summary>
     private readonly FakeLogger<BoardService> _logger = new();
     /// <summary>Settings with a fake file-storage URL.</summary>
@@ -42,12 +43,12 @@ public class BoardServiceTests : IAsyncDisposable
     /// <summary>Initializes the test fixture, setting up all required test doubles and the system under test.</summary>
     public BoardServiceTests()
     {
-        _unitOfWork.AnswerBeginAsync((_, _) => Task.CompletedTask);
-        _unitOfWork.AnswerCommitAsync(_ => Task.CompletedTask);
-        _unitOfWork.AnswerRollbackAsync(_ => Task.CompletedTask);
-        _unitOfWork.AnswerDisposeAsync(() => ValueTask.CompletedTask);
-        _attachmentContent.AnswerSanitizeAndDecryptContent(html => html);
-        _attachmentContent.AnswerSanitizeContent(html => html);
+        _unitOfWork.Setup(u => u.BeginAsync(It.IsAny<IsolationLevel?>(), It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
+        _unitOfWork.Setup(u => u.CommitAsync(It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
+        _unitOfWork.Setup(u => u.RollbackAsync(It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
+        _unitOfWork.Setup(u => u.DisposeAsync()).Returns(ValueTask.CompletedTask);
+        _attachmentContent.Setup(s => s.SanitizeAndDecryptContent(It.IsAny<string>())).Returns<string>(html => html);
+        _attachmentContent.Setup(s => s.SanitizeContent(It.IsAny<string>())).Returns<string>(html => html);
     }
 
     /// <summary>The fixed "current time" of these tests.</summary>
@@ -55,14 +56,14 @@ public class BoardServiceTests : IAsyncDisposable
     /// <summary>The clock the service under test reads, stopped at <see cref="Now"/>.</summary>
     private readonly FakeTimeProvider _time = new(new DateTimeOffset(Now));
 
-    /// <summary>The service under test over the fake dependencies.</summary>
+    /// <summary>The service under test over the mocked dependencies.</summary>
     private BoardService CreateSut() => new(
-        _boardRepo,
-        _attachedFileRepo,
-        _commentRepo,
-        _fileClient,
-        _unitOfWork,
-        _attachmentContent,
+        _boardRepo.Object,
+        _attachedFileRepo.Object,
+        _commentRepo.Object,
+        _fileClient.Object,
+        _unitOfWork.Object,
+        _attachmentContent.Object,
         _settings,
         _logger,
         _time);
@@ -84,7 +85,7 @@ public class BoardServiceTests : IAsyncDisposable
     [Fact]
     public async Task GetBoardByIdAsync_DelegatesToRepository()
     {
-        _boardRepo.AnswerFindActiveByIdAsync((_, _) => Task.FromResult<Board?>(MakeBoard()));
+        _boardRepo.Setup(r => r.FindActiveByIdAsync(It.IsAny<long>(), It.IsAny<CancellationToken>())).ReturnsAsync(MakeBoard());
         var sut = CreateSut();
 
         BoardResponse? result = await sut.GetBoardByIdAsync(1, ct: TestContext.Current.CancellationToken);
@@ -101,7 +102,8 @@ public class BoardServiceTests : IAsyncDisposable
     [Fact]
     public async Task GetBoardByIdAsync_ReturnsNull_WhenTypeDoesNotMatchRequiredType()
     {
-        _boardRepo.AnswerFindActiveByIdAsync((_, _) => Task.FromResult<Board?>(MakeBoard())); // Type = BoardTypes.FreeForum
+        _boardRepo.Setup(r => r.FindActiveByIdAsync(It.IsAny<long>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(MakeBoard()); // Type = BoardTypes.FreeForum
         var sut = CreateSut();
 
         BoardResponse? result = await sut.GetBoardByIdAsync(1, BoardTypes.PrivateNote, TestContext.Current.CancellationToken);
@@ -124,30 +126,32 @@ public class BoardServiceTests : IAsyncDisposable
     [Fact]
     public async Task GetBoardPageAsync_WrapsRepositoryCallInRepeatableReadTransaction()
     {
-        _boardRepo.AnswerQueryPageAsync((_, _) => Task.FromResult<(List<Board>, int)>(([MakeBoard()], 1)));
+        _boardRepo.Setup(r => r.QueryPageAsync(It.IsAny<BoardPageQuery>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(([MakeBoard()], 1));
         var sut = CreateSut();
 
         var (items, totalCount) = await sut.GetBoardPageAsync(MakeQuery(), TestContext.Current.CancellationToken);
 
         Assert.Single(items);
         Assert.Equal(1, totalCount);
-        Assert.Single(_unitOfWork.BeginAsyncCalls, call => call.IsolationLevel == IsolationLevel.RepeatableRead);
-        Assert.Single(_unitOfWork.CommitAsyncCalls);
-        Assert.Empty(_unitOfWork.RollbackAsyncCalls);
+        _unitOfWork.Verify(u => u.BeginAsync(IsolationLevel.RepeatableRead, It.IsAny<CancellationToken>()), Times.Once);
+        _unitOfWork.Verify(u => u.CommitAsync(It.IsAny<CancellationToken>()), Times.Once);
+        _unitOfWork.Verify(u => u.RollbackAsync(It.IsAny<CancellationToken>()), Times.Never);
     }
 
     /// <summary>A failure inside the transaction rolls back and propagates rather than swallowing the error.</summary>
     [Fact]
     public async Task GetBoardPageAsync_RollsBackAndRethrows_WhenRepositoryThrows()
     {
-        _boardRepo.AnswerQueryPageAsync((_, _) => Task.FromException<(List<Board>, int)>(new InvalidOperationException("boom")));
+        _boardRepo.Setup(r => r.QueryPageAsync(It.IsAny<BoardPageQuery>(), It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new InvalidOperationException("boom"));
         var sut = CreateSut();
 
         await Assert.ThrowsAsync<InvalidOperationException>(
             () => sut.GetBoardPageAsync(MakeQuery(), TestContext.Current.CancellationToken));
 
-        Assert.Single(_unitOfWork.RollbackAsyncCalls);
-        Assert.Empty(_unitOfWork.CommitAsyncCalls);
+        _unitOfWork.Verify(u => u.RollbackAsync(It.IsAny<CancellationToken>()), Times.Once);
+        _unitOfWork.Verify(u => u.CommitAsync(It.IsAny<CancellationToken>()), Times.Never);
     }
 
     // -- CanView ----------------------------------------------------------------
@@ -246,14 +250,14 @@ public class BoardServiceTests : IAsyncDisposable
     [Fact]
     public async Task WriteBoardAsync_ReturnsSuccess_WithNoAttachment()
     {
-        _boardRepo.AnswerWriteBoardAsync((_, _) => Task.FromResult<long>(1L));
+        _boardRepo.Setup(r => r.WriteBoardAsync(It.IsAny<Board>(), It.IsAny<CancellationToken>())).ReturnsAsync(1L);
         var sut = CreateSut();
 
         ServiceResult result = await sut.WriteBoardAsync(
             new BoardRequest { Type = BoardTypes.FreeForum, Title = "Test Title", Writer = "Alice" }, false, null, TestContext.Current.CancellationToken);
 
         Assert.True(result.Success);
-        Assert.Single(_unitOfWork.CommitAsyncCalls);
+        _unitOfWork.Verify(u => u.CommitAsync(It.IsAny<CancellationToken>()), Times.Once);
     }
 
     /// <summary>A new post is stamped with the injected clock's time (read once: Created equals Updated).</summary>
@@ -261,7 +265,8 @@ public class BoardServiceTests : IAsyncDisposable
     public async Task WriteBoardAsync_StampsThePost_WithTheInjectedClock()
     {
         Board? written = null;
-        _boardRepo.AnswerWriteBoardAsync((b, _) => { written = b; return Task.FromResult<long>(1L); });
+        _boardRepo.Setup(r => r.WriteBoardAsync(It.IsAny<Board>(), It.IsAny<CancellationToken>()))
+            .Callback<Board, CancellationToken>((b, _) => written = b).ReturnsAsync(1L);
 
         await CreateSut().WriteBoardAsync(
             new BoardRequest { Type = BoardTypes.FreeForum, Title = "Test Title", Writer = "Alice", Locked = true }, false, null, TestContext.Current.CancellationToken);
@@ -275,9 +280,10 @@ public class BoardServiceTests : IAsyncDisposable
     [Fact]
     public async Task WriteBoardAsync_ReturnsSuccess_WithAttachment()
     {
-        _boardRepo.AnswerWriteBoardAsync((_, _) => Task.FromResult<long>(1L));
-        _fileClient.AnswerUploadAsync((_, _, _, _, _) => Task.FromResult<bool>(true));
-        _attachedFileRepo.AnswerCreateAsync((_, _) => Task.CompletedTask);
+        _boardRepo.Setup(r => r.WriteBoardAsync(It.IsAny<Board>(), It.IsAny<CancellationToken>())).ReturnsAsync(1L);
+        _fileClient.Setup(f => f.UploadAsync(It.IsAny<byte[]>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(true);
+        _attachedFileRepo.Setup(r => r.CreateAsync(It.IsAny<BoardAttachedFile>(), It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
         var sut = CreateSut();
 
         var file = new AttachedFileDto { FileName = "doc.zip", ContentType = "application/zip", Bytes = [1, 2], Size = 2 };
@@ -285,16 +291,17 @@ public class BoardServiceTests : IAsyncDisposable
             new BoardRequest { Type = BoardTypes.FreeForum, Title = "Test Title", Writer = "Alice" }, false, file, TestContext.Current.CancellationToken);
 
         Assert.True(result.Success);
-        Assert.Single(_attachedFileRepo.CreateAsyncCalls);
-        Assert.Single(_unitOfWork.CommitAsyncCalls);
+        _attachedFileRepo.Verify(r => r.CreateAsync(It.IsAny<BoardAttachedFile>(), It.IsAny<CancellationToken>()), Times.Once);
+        _unitOfWork.Verify(u => u.CommitAsync(It.IsAny<CancellationToken>()), Times.Once);
     }
 
     /// <summary>Verifies that <c>WriteBoardAsync</c> rolls back and fails when the file upload itself fails, instead of committing an attachment record for a file that was never saved.</summary>
     [Fact]
     public async Task WriteBoardAsync_RollsBackAndFails_WhenUploadFails()
     {
-        _boardRepo.AnswerWriteBoardAsync((_, _) => Task.FromResult<long>(1L));
-        _fileClient.AnswerUploadAsync((_, _, _, _, _) => Task.FromResult<bool>(false));
+        _boardRepo.Setup(r => r.WriteBoardAsync(It.IsAny<Board>(), It.IsAny<CancellationToken>())).ReturnsAsync(1L);
+        _fileClient.Setup(f => f.UploadAsync(It.IsAny<byte[]>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(false);
         var sut = CreateSut();
 
         var file = new AttachedFileDto { FileName = "doc.zip", ContentType = "application/zip", Bytes = [1, 2], Size = 2 };
@@ -302,9 +309,9 @@ public class BoardServiceTests : IAsyncDisposable
             new BoardRequest { Type = BoardTypes.FreeForum, Title = "Test Title", Writer = "Alice" }, false, file, TestContext.Current.CancellationToken);
 
         Assert.False(result.Success);
-        Assert.Empty(_attachedFileRepo.CreateAsyncCalls);
-        Assert.Single(_unitOfWork.RollbackAsyncCalls);
-        Assert.Empty(_unitOfWork.CommitAsyncCalls);
+        _attachedFileRepo.Verify(r => r.CreateAsync(It.IsAny<BoardAttachedFile>(), It.IsAny<CancellationToken>()), Times.Never);
+        _unitOfWork.Verify(u => u.RollbackAsync(It.IsAny<CancellationToken>()), Times.Once);
+        _unitOfWork.Verify(u => u.CommitAsync(It.IsAny<CancellationToken>()), Times.Never);
     }
 
     /// <summary>
@@ -314,7 +321,7 @@ public class BoardServiceTests : IAsyncDisposable
     [Fact]
     public async Task WriteBoardAsync_RejectsAnOverlongFileName_BeforeUploadingAnything()
     {
-        _boardRepo.AnswerWriteBoardAsync((_, _) => Task.FromResult<long>(1L));
+        _boardRepo.Setup(r => r.WriteBoardAsync(It.IsAny<Board>(), It.IsAny<CancellationToken>())).ReturnsAsync(1L);
         var sut = CreateSut();
 
         var file = new AttachedFileDto { FileName = new string('n', 256) + ".zip", ContentType = "application/zip", Bytes = [1, 2], Size = 2 };
@@ -323,8 +330,8 @@ public class BoardServiceTests : IAsyncDisposable
 
         Assert.False(result.Success);
         Assert.Equal("BoardAttachedFile.NameTooLong", result.ErrorCode);
-        Assert.Empty(_fileClient.UploadAsyncCalls);
-        Assert.Single(_unitOfWork.RollbackAsyncCalls);
+        _fileClient.Verify(f => f.UploadAsync(It.IsAny<byte[]>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
+        _unitOfWork.Verify(u => u.RollbackAsync(It.IsAny<CancellationToken>()), Times.Once);
     }
 
     /// <summary>
@@ -337,8 +344,9 @@ public class BoardServiceTests : IAsyncDisposable
     [Fact]
     public async Task WriteBoardAsync_RollsBackAndFails_WhenAttachmentNameIsEmpty()
     {
-        _boardRepo.AnswerWriteBoardAsync((_, _) => Task.FromResult<long>(1L));
-        _fileClient.AnswerUploadAsync((_, _, _, _, _) => Task.FromResult<bool>(true));
+        _boardRepo.Setup(r => r.WriteBoardAsync(It.IsAny<Board>(), It.IsAny<CancellationToken>())).ReturnsAsync(1L);
+        _fileClient.Setup(f => f.UploadAsync(It.IsAny<byte[]>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(true);
         var sut = CreateSut();
 
         var file = new AttachedFileDto { FileName = ".zip", ContentType = "application/zip", Bytes = [1, 2], Size = 2 };
@@ -346,15 +354,15 @@ public class BoardServiceTests : IAsyncDisposable
             new BoardRequest { Type = BoardTypes.FreeForum, Title = "Test Title", Writer = "Alice" }, false, file, TestContext.Current.CancellationToken);
 
         Assert.False(result.Success);
-        Assert.Empty(_attachedFileRepo.CreateAsyncCalls);
-        Assert.Single(_unitOfWork.RollbackAsyncCalls);
+        _attachedFileRepo.Verify(r => r.CreateAsync(It.IsAny<BoardAttachedFile>(), It.IsAny<CancellationToken>()), Times.Never);
+        _unitOfWork.Verify(u => u.RollbackAsync(It.IsAny<CancellationToken>()), Times.Once);
     }
 
     /// <summary>Verifies that <c>WriteBoardAsync</c> returns fail when repository throws.</summary>
     [Fact]
     public async Task WriteBoardAsync_ReturnsFail_WhenRepositoryThrows()
     {
-        _boardRepo.AnswerWriteBoardAsync((_, _) => Task.FromException<long>(new Exception("DB error")));
+        _boardRepo.Setup(r => r.WriteBoardAsync(It.IsAny<Board>(), It.IsAny<CancellationToken>())).ThrowsAsync(new Exception("DB error"));
         var sut = CreateSut();
 
         ServiceResult result = await sut.WriteBoardAsync(
@@ -362,7 +370,7 @@ public class BoardServiceTests : IAsyncDisposable
 
         Assert.False(result.Success);
         Assert.Equal(ServiceResult.TemporaryErrorKey, result.ErrorKey);
-        Assert.Single(_unitOfWork.RollbackAsyncCalls);
+        _unitOfWork.Verify(u => u.RollbackAsync(It.IsAny<CancellationToken>()), Times.Once);
     }
 
     /// <summary>Verifies that <c>Noticed=true</c> from a non-admin caller does not pin the post —
@@ -371,7 +379,9 @@ public class BoardServiceTests : IAsyncDisposable
     public async Task WriteBoardAsync_DoesNotPin_WhenNoticedTrueButNotAdmin()
     {
         Board? written = null;
-        _boardRepo.AnswerWriteBoardAsync((b, _) => { written = b; return Task.FromResult<long>(1L); });
+        _boardRepo.Setup(r => r.WriteBoardAsync(It.IsAny<Board>(), It.IsAny<CancellationToken>()))
+            .Callback<Board, CancellationToken>((b, _) => written = b)
+            .ReturnsAsync(1L);
         var sut = CreateSut();
 
         ServiceResult result = await sut.WriteBoardAsync(
@@ -388,7 +398,9 @@ public class BoardServiceTests : IAsyncDisposable
     public async Task WriteBoardAsync_Pins_WhenNoticedTrueAndAdmin()
     {
         Board? written = null;
-        _boardRepo.AnswerWriteBoardAsync((b, _) => { written = b; return Task.FromResult<long>(1L); });
+        _boardRepo.Setup(r => r.WriteBoardAsync(It.IsAny<Board>(), It.IsAny<CancellationToken>()))
+            .Callback<Board, CancellationToken>((b, _) => written = b)
+            .ReturnsAsync(1L);
         var sut = CreateSut();
 
         ServiceResult result = await sut.WriteBoardAsync(
@@ -406,13 +418,13 @@ public class BoardServiceTests : IAsyncDisposable
     [Fact]
     public async Task EditBoardAsync_ReturnsFail_WhenBoardNotFound()
     {
-        _boardRepo.AnswerFindActiveByIdForUpdateAsync((_, _) => Task.FromResult<Board?>(null));
+        _boardRepo.Setup(r => r.FindActiveByIdForUpdateAsync(It.IsAny<long>(), It.IsAny<CancellationToken>())).ReturnsAsync((Board?)null);
         var sut = CreateSut();
 
         ServiceResult result = await sut.EditBoardAsync(new BoardRequest { Id = 99, Type = BoardTypes.FreeForum }, "Alice", isAdmin: false, null, TestContext.Current.CancellationToken);
 
         Assert.False(result.Success);
-        Assert.Single(_unitOfWork.RollbackAsyncCalls);
+        _unitOfWork.Verify(u => u.RollbackAsync(It.IsAny<CancellationToken>()), Times.Once);
     }
 
     /// <summary>Verifies that <c>EditBoardAsync</c> returns fail when board is deleted.</summary>
@@ -420,52 +432,53 @@ public class BoardServiceTests : IAsyncDisposable
     public async Task EditBoardAsync_ReturnsFail_WhenBoardIsDeleted()
     {
         // FindActiveByIdForUpdateAsync already filters for !Deleted, so deleted board returns null
-        _boardRepo.AnswerFindActiveByIdForUpdateAsync((_, _) => Task.FromResult<Board?>(null));
+        _boardRepo.Setup(r => r.FindActiveByIdForUpdateAsync(It.IsAny<long>(), It.IsAny<CancellationToken>())).ReturnsAsync((Board?)null);
         var sut = CreateSut();
 
         ServiceResult result = await sut.EditBoardAsync(new BoardRequest { Id = 1, Type = BoardTypes.FreeForum }, "Alice", isAdmin: false, null, TestContext.Current.CancellationToken);
 
         Assert.False(result.Success);
-        Assert.Single(_unitOfWork.RollbackAsyncCalls);
+        _unitOfWork.Verify(u => u.RollbackAsync(It.IsAny<CancellationToken>()), Times.Once);
     }
 
     /// <summary>Verifies that <c>EditBoardAsync</c> returns fail when requester is not writer.</summary>
     [Fact]
     public async Task EditBoardAsync_ReturnsFail_WhenRequesterIsNotWriter()
     {
-        _boardRepo.AnswerFindActiveByIdForUpdateAsync((_, _) => Task.FromResult<Board?>(MakeBoard(writer: "Alice")));
+        _boardRepo.Setup(r => r.FindActiveByIdForUpdateAsync(It.IsAny<long>(), It.IsAny<CancellationToken>())).ReturnsAsync(MakeBoard(writer: "Alice"));
         var sut = CreateSut();
 
         ServiceResult result = await sut.EditBoardAsync(new BoardRequest { Id = 1, Type = BoardTypes.FreeForum }, "Bob", isAdmin: false, null, TestContext.Current.CancellationToken);
 
         Assert.False(result.Success);
-        Assert.Single(_unitOfWork.RollbackAsyncCalls);
+        _unitOfWork.Verify(u => u.RollbackAsync(It.IsAny<CancellationToken>()), Times.Once);
     }
 
     /// <summary>Verifies that <c>EditBoardAsync</c> returns success when writer matches and no new file.</summary>
     [Fact]
     public async Task EditBoardAsync_ReturnsSuccess_WhenWriterMatchesAndNoNewFile()
     {
-        _boardRepo.AnswerFindActiveByIdForUpdateAsync((_, _) => Task.FromResult<Board?>(MakeBoard(writer: "Alice")));
-        _boardRepo.AnswerUpdateEntityAsync((_, _) => Task.CompletedTask);
-        _attachedFileRepo.AnswerFindByBoardIdAsync((_, _) => Task.FromResult<BoardAttachedFile?>(null));
+        _boardRepo.Setup(r => r.FindActiveByIdForUpdateAsync(It.IsAny<long>(), It.IsAny<CancellationToken>())).ReturnsAsync(MakeBoard(writer: "Alice"));
+        _boardRepo.Setup(r => r.UpdateEntityAsync(It.IsAny<Board>(), It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
+        _attachedFileRepo.Setup(r => r.FindByBoardIdAsync(It.IsAny<long>(), It.IsAny<CancellationToken>())).ReturnsAsync((BoardAttachedFile?)null);
         var sut = CreateSut();
 
         ServiceResult result = await sut.EditBoardAsync(
             new BoardRequest { Id = 1, Type = BoardTypes.FreeForum, Title = "New Title", Content = "New Content" }, "Alice", isAdmin: false, null, TestContext.Current.CancellationToken);
 
         Assert.True(result.Success);
-        Assert.Single(_unitOfWork.CommitAsyncCalls);
+        _unitOfWork.Verify(u => u.CommitAsync(It.IsAny<CancellationToken>()), Times.Once);
     }
 
     /// <summary>Verifies that <c>EditBoardAsync</c> rolls back and fails when the new attachment's upload fails, instead of committing an attachment record for a file that was never saved.</summary>
     [Fact]
     public async Task EditBoardAsync_RollsBackAndFails_WhenUploadFails()
     {
-        _boardRepo.AnswerFindActiveByIdForUpdateAsync((_, _) => Task.FromResult<Board?>(MakeBoard(writer: "Alice")));
-        _boardRepo.AnswerUpdateEntityAsync((_, _) => Task.CompletedTask);
-        _attachedFileRepo.AnswerFindByBoardIdAsync((_, _) => Task.FromResult<BoardAttachedFile?>(null));
-        _fileClient.AnswerUploadAsync((_, _, _, _, _) => Task.FromResult<bool>(false));
+        _boardRepo.Setup(r => r.FindActiveByIdForUpdateAsync(It.IsAny<long>(), It.IsAny<CancellationToken>())).ReturnsAsync(MakeBoard(writer: "Alice"));
+        _boardRepo.Setup(r => r.UpdateEntityAsync(It.IsAny<Board>(), It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
+        _attachedFileRepo.Setup(r => r.FindByBoardIdAsync(It.IsAny<long>(), It.IsAny<CancellationToken>())).ReturnsAsync((BoardAttachedFile?)null);
+        _fileClient.Setup(f => f.UploadAsync(It.IsAny<byte[]>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(false);
         var sut = CreateSut();
 
         var file = new AttachedFileDto { FileName = "doc.zip", ContentType = "application/zip", Bytes = [1, 2], Size = 2 };
@@ -473,9 +486,9 @@ public class BoardServiceTests : IAsyncDisposable
             new BoardRequest { Id = 1, Type = BoardTypes.FreeForum, Title = "New Title", Content = "New Content" }, "Alice", isAdmin: false, file, TestContext.Current.CancellationToken);
 
         Assert.False(result.Success);
-        Assert.Empty(_attachedFileRepo.CreateAsyncCalls);
-        Assert.Single(_unitOfWork.RollbackAsyncCalls);
-        Assert.Empty(_unitOfWork.CommitAsyncCalls);
+        _attachedFileRepo.Verify(r => r.CreateAsync(It.IsAny<BoardAttachedFile>(), It.IsAny<CancellationToken>()), Times.Never);
+        _unitOfWork.Verify(u => u.RollbackAsync(It.IsAny<CancellationToken>()), Times.Once);
+        _unitOfWork.Verify(u => u.CommitAsync(It.IsAny<CancellationToken>()), Times.Never);
     }
 
     /// <summary>
@@ -487,10 +500,12 @@ public class BoardServiceTests : IAsyncDisposable
     {
         Board pinnedBoard = Board.Reconstitute(1, BoardTypes.FreeForum, "Test Title", "Test Content", "Alice",
             DateTime.UtcNow, DateTime.UtcNow, 0L, deleted: false, locked: false, noticed: true);
-        _boardRepo.AnswerFindActiveByIdForUpdateAsync((_, _) => Task.FromResult<Board?>(pinnedBoard));
-        _attachedFileRepo.AnswerFindByBoardIdAsync((_, _) => Task.FromResult<BoardAttachedFile?>(null));
+        _boardRepo.Setup(r => r.FindActiveByIdForUpdateAsync(It.IsAny<long>(), It.IsAny<CancellationToken>())).ReturnsAsync(pinnedBoard);
+        _attachedFileRepo.Setup(r => r.FindByBoardIdAsync(It.IsAny<long>(), It.IsAny<CancellationToken>())).ReturnsAsync((BoardAttachedFile?)null);
         Board? savedBoard = null;
-        _boardRepo.AnswerUpdateEntityAsync((b, _) => { savedBoard = b; return Task.CompletedTask; });
+        _boardRepo.Setup(r => r.UpdateEntityAsync(It.IsAny<Board>(), It.IsAny<CancellationToken>()))
+            .Callback<Board, CancellationToken>((b, _) => savedBoard = b)
+            .Returns(Task.CompletedTask);
         var sut = CreateSut();
 
         ServiceResult result = await sut.EditBoardAsync(
@@ -512,10 +527,12 @@ public class BoardServiceTests : IAsyncDisposable
     {
         Board lockedBoard = Board.Reconstitute(1, BoardTypes.FreeForum, "Test Title", "Test Content", "Alice",
             DateTime.UtcNow, DateTime.UtcNow, 0L, deleted: false, locked: true, noticed: false);
-        _boardRepo.AnswerFindActiveByIdForUpdateAsync((_, _) => Task.FromResult<Board?>(lockedBoard));
-        _attachedFileRepo.AnswerFindByBoardIdAsync((_, _) => Task.FromResult<BoardAttachedFile?>(null));
+        _boardRepo.Setup(r => r.FindActiveByIdForUpdateAsync(It.IsAny<long>(), It.IsAny<CancellationToken>())).ReturnsAsync(lockedBoard);
+        _attachedFileRepo.Setup(r => r.FindByBoardIdAsync(It.IsAny<long>(), It.IsAny<CancellationToken>())).ReturnsAsync((BoardAttachedFile?)null);
         Board? savedBoard = null;
-        _boardRepo.AnswerUpdateEntityAsync((b, _) => { savedBoard = b; return Task.CompletedTask; });
+        _boardRepo.Setup(r => r.UpdateEntityAsync(It.IsAny<Board>(), It.IsAny<CancellationToken>()))
+            .Callback<Board, CancellationToken>((b, _) => savedBoard = b)
+            .Returns(Task.CompletedTask);
         var sut = CreateSut();
 
         ServiceResult result = await sut.EditBoardAsync(
@@ -533,10 +550,12 @@ public class BoardServiceTests : IAsyncDisposable
     public async Task EditBoardAsync_NonAdminAuthor_CanRaiseTheirOwnLock()
     {
         Board unlockedBoard = MakeBoard(writer: "Alice");
-        _boardRepo.AnswerFindActiveByIdForUpdateAsync((_, _) => Task.FromResult<Board?>(unlockedBoard));
-        _attachedFileRepo.AnswerFindByBoardIdAsync((_, _) => Task.FromResult<BoardAttachedFile?>(null));
+        _boardRepo.Setup(r => r.FindActiveByIdForUpdateAsync(It.IsAny<long>(), It.IsAny<CancellationToken>())).ReturnsAsync(unlockedBoard);
+        _attachedFileRepo.Setup(r => r.FindByBoardIdAsync(It.IsAny<long>(), It.IsAny<CancellationToken>())).ReturnsAsync((BoardAttachedFile?)null);
         Board? savedBoard = null;
-        _boardRepo.AnswerUpdateEntityAsync((b, _) => { savedBoard = b; return Task.CompletedTask; });
+        _boardRepo.Setup(r => r.UpdateEntityAsync(It.IsAny<Board>(), It.IsAny<CancellationToken>()))
+            .Callback<Board, CancellationToken>((b, _) => savedBoard = b)
+            .Returns(Task.CompletedTask);
         var sut = CreateSut();
 
         ServiceResult result = await sut.EditBoardAsync(
@@ -554,10 +573,12 @@ public class BoardServiceTests : IAsyncDisposable
     {
         Board lockedBoard = Board.Reconstitute(1, BoardTypes.FreeForum, "Test Title", "Test Content", "Alice",
             DateTime.UtcNow, DateTime.UtcNow, 0L, deleted: false, locked: true, noticed: false);
-        _boardRepo.AnswerFindActiveByIdForUpdateAsync((_, _) => Task.FromResult<Board?>(lockedBoard));
-        _attachedFileRepo.AnswerFindByBoardIdAsync((_, _) => Task.FromResult<BoardAttachedFile?>(null));
+        _boardRepo.Setup(r => r.FindActiveByIdForUpdateAsync(It.IsAny<long>(), It.IsAny<CancellationToken>())).ReturnsAsync(lockedBoard);
+        _attachedFileRepo.Setup(r => r.FindByBoardIdAsync(It.IsAny<long>(), It.IsAny<CancellationToken>())).ReturnsAsync((BoardAttachedFile?)null);
         Board? savedBoard = null;
-        _boardRepo.AnswerUpdateEntityAsync((b, _) => { savedBoard = b; return Task.CompletedTask; });
+        _boardRepo.Setup(r => r.UpdateEntityAsync(It.IsAny<Board>(), It.IsAny<CancellationToken>()))
+            .Callback<Board, CancellationToken>((b, _) => savedBoard = b)
+            .Returns(Task.CompletedTask);
         var sut = CreateSut();
 
         ServiceResult result = await sut.EditBoardAsync(
@@ -581,10 +602,12 @@ public class BoardServiceTests : IAsyncDisposable
     {
         Board lockedBoard = Board.Reconstitute(1, BoardTypes.FreeForum, "Test Title", "Test Content", "Alice",
             DateTime.UtcNow, DateTime.UtcNow, 0L, deleted: false, locked: true, noticed: false);
-        _boardRepo.AnswerFindActiveByIdForUpdateAsync((_, _) => Task.FromResult<Board?>(lockedBoard));
-        _attachedFileRepo.AnswerFindByBoardIdAsync((_, _) => Task.FromResult<BoardAttachedFile?>(null));
+        _boardRepo.Setup(r => r.FindActiveByIdForUpdateAsync(It.IsAny<long>(), It.IsAny<CancellationToken>())).ReturnsAsync(lockedBoard);
+        _attachedFileRepo.Setup(r => r.FindByBoardIdAsync(It.IsAny<long>(), It.IsAny<CancellationToken>())).ReturnsAsync((BoardAttachedFile?)null);
         Board? savedBoard = null;
-        _boardRepo.AnswerUpdateEntityAsync((b, _) => { savedBoard = b; return Task.CompletedTask; });
+        _boardRepo.Setup(r => r.UpdateEntityAsync(It.IsAny<Board>(), It.IsAny<CancellationToken>()))
+            .Callback<Board, CancellationToken>((b, _) => savedBoard = b)
+            .Returns(Task.CompletedTask);
         var sut = CreateSut();
 
         ServiceResult result = await sut.EditBoardAsync(
@@ -606,17 +629,21 @@ public class BoardServiceTests : IAsyncDisposable
     [Fact]
     public async Task EditBoardAsync_AdminNonOwner_ClearingALockWithoutAFile_ClearsTheWritersAttachmentRecord()
     {
-        _boardRepo.AnswerFindActiveByIdForUpdateAsync((_, _) => Task.FromResult<Board?>(MakeBoard(writer: "Alice", locked: true)));
-        _boardRepo.AnswerUpdateEntityAsync((_, _) => Task.CompletedTask);
-        _attachedFileRepo.AnswerFindByBoardIdAsync((_, _) => Task.FromResult<BoardAttachedFile?>(BoardAttachedFile.Reconstitute(77, 1, 10, "alices", ".txt", "/upload/alices.txt")));
+        _boardRepo.Setup(r => r.FindActiveByIdForUpdateAsync(It.IsAny<long>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(MakeBoard(writer: "Alice", locked: true));
+        _boardRepo.Setup(r => r.UpdateEntityAsync(It.IsAny<Board>(), It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
+        _attachedFileRepo.Setup(r => r.FindByBoardIdAsync(It.IsAny<long>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(BoardAttachedFile.Reconstitute(77, 1, 10, "alices", ".txt", "/upload/alices.txt"));
 
         ServiceResult result = await CreateSut().EditBoardAsync(
             new BoardRequest { Id = 1, Type = BoardTypes.FreeForum, Title = "Test Title", Content = "Test Content", Locked = false },
             "Bob", isAdmin: true, null, TestContext.Current.CancellationToken);
 
         Assert.True(result.Success);
-        Assert.Single(_attachedFileRepo.UpdateEntityAsyncCalls, call => (call.Domain!.Id == 77 && call.Domain!.BoardId == 1 && call.Domain!.Size == 0 && call.Domain!.Name == "" && call.Domain!.Extension == "" && call.Domain!.Path == ""));
-        Assert.Single(_unitOfWork.CommitAsyncCalls);
+        _attachedFileRepo.Verify(r => r.UpdateEntityAsync(
+            It.Is<BoardAttachedFile>(f => f.Id == 77 && f.BoardId == 1 && f.Size == 0 && f.Name == "" && f.Extension == "" && f.Path == ""),
+            It.IsAny<CancellationToken>()), Times.Once);
+        _unitOfWork.Verify(u => u.CommitAsync(It.IsAny<CancellationToken>()), Times.Once);
     }
 
     /// <summary>An admin who is not the writer and does not clear an existing lock is still rejected.</summary>
@@ -624,7 +651,7 @@ public class BoardServiceTests : IAsyncDisposable
     public async Task EditBoardAsync_AdminNonOwner_ReturnsFail_WhenNotClearingALock()
     {
         Board unlockedBoard = MakeBoard(writer: "Alice");
-        _boardRepo.AnswerFindActiveByIdForUpdateAsync((_, _) => Task.FromResult<Board?>(unlockedBoard));
+        _boardRepo.Setup(r => r.FindActiveByIdForUpdateAsync(It.IsAny<long>(), It.IsAny<CancellationToken>())).ReturnsAsync(unlockedBoard);
         var sut = CreateSut();
 
         ServiceResult result = await sut.EditBoardAsync(
@@ -632,7 +659,7 @@ public class BoardServiceTests : IAsyncDisposable
             "Bob", isAdmin: true, null, TestContext.Current.CancellationToken);
 
         Assert.False(result.Success);
-        Assert.Single(_unitOfWork.RollbackAsyncCalls);
+        _unitOfWork.Verify(u => u.RollbackAsync(It.IsAny<CancellationToken>()), Times.Once);
     }
 
     /// <summary>
@@ -645,7 +672,7 @@ public class BoardServiceTests : IAsyncDisposable
     {
         Board lockedNote = Board.Reconstitute(1, BoardTypes.PrivateNote, "Test Title", "Test Content", "Alice",
             DateTime.UtcNow, DateTime.UtcNow, 0L, deleted: false, locked: true, noticed: false);
-        _boardRepo.AnswerFindActiveByIdForUpdateAsync((_, _) => Task.FromResult<Board?>(lockedNote));
+        _boardRepo.Setup(r => r.FindActiveByIdForUpdateAsync(It.IsAny<long>(), It.IsAny<CancellationToken>())).ReturnsAsync(lockedNote);
         var sut = CreateSut();
 
         ServiceResult result = await sut.EditBoardAsync(
@@ -654,8 +681,8 @@ public class BoardServiceTests : IAsyncDisposable
 
         Assert.False(result.Success);
         Assert.True(lockedNote.Locked);
-        Assert.Empty(_boardRepo.UpdateEntityAsyncCalls);
-        Assert.Single(_unitOfWork.RollbackAsyncCalls);
+        _boardRepo.Verify(r => r.UpdateEntityAsync(It.IsAny<Board>(), It.IsAny<CancellationToken>()), Times.Never);
+        _unitOfWork.Verify(u => u.RollbackAsync(It.IsAny<CancellationToken>()), Times.Once);
     }
 
     // -- DeleteBoardAsync -----------------------------------------------------
@@ -664,7 +691,7 @@ public class BoardServiceTests : IAsyncDisposable
     [Fact]
     public async Task DeleteBoardAsync_ReturnsFail_WhenBoardNotFound()
     {
-        _boardRepo.AnswerFindActiveByIdForUpdateAsync((_, _) => Task.FromResult<Board?>(null));
+        _boardRepo.Setup(r => r.FindActiveByIdForUpdateAsync(It.IsAny<long>(), It.IsAny<CancellationToken>())).ReturnsAsync((Board?)null);
         var sut = CreateSut();
 
         ServiceResult result = await sut.DeleteBoardAsync(99, BoardTypes.FreeForum, "Alice", false, TestContext.Current.CancellationToken);
@@ -676,7 +703,7 @@ public class BoardServiceTests : IAsyncDisposable
     [Fact]
     public async Task DeleteBoardAsync_ReturnsFail_WhenNotOwnerAndNotAdmin()
     {
-        _boardRepo.AnswerFindActiveByIdForUpdateAsync((_, _) => Task.FromResult<Board?>(MakeBoard(writer: "Alice")));
+        _boardRepo.Setup(r => r.FindActiveByIdForUpdateAsync(It.IsAny<long>(), It.IsAny<CancellationToken>())).ReturnsAsync(MakeBoard(writer: "Alice"));
         var sut = CreateSut();
 
         ServiceResult result = await sut.DeleteBoardAsync(1, BoardTypes.FreeForum, "Bob", false, TestContext.Current.CancellationToken);
@@ -689,8 +716,8 @@ public class BoardServiceTests : IAsyncDisposable
     [Fact]
     public async Task DeleteBoardAsync_ReturnsSuccess_WhenOwner()
     {
-        _boardRepo.AnswerFindActiveByIdForUpdateAsync((_, _) => Task.FromResult<Board?>(MakeBoard(writer: "Alice")));
-        _boardRepo.AnswerUpdateEntityAsync((_, _) => Task.CompletedTask);
+        _boardRepo.Setup(r => r.FindActiveByIdForUpdateAsync(It.IsAny<long>(), It.IsAny<CancellationToken>())).ReturnsAsync(MakeBoard(writer: "Alice"));
+        _boardRepo.Setup(r => r.UpdateEntityAsync(It.IsAny<Board>(), It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
         var sut = CreateSut();
 
         ServiceResult result = await sut.DeleteBoardAsync(1, BoardTypes.FreeForum, "Alice", false, TestContext.Current.CancellationToken);
@@ -702,8 +729,8 @@ public class BoardServiceTests : IAsyncDisposable
     [Fact]
     public async Task DeleteBoardAsync_ReturnsSuccess_WhenAdmin()
     {
-        _boardRepo.AnswerFindActiveByIdForUpdateAsync((_, _) => Task.FromResult<Board?>(MakeBoard(writer: "Alice")));
-        _boardRepo.AnswerUpdateEntityAsync((_, _) => Task.CompletedTask);
+        _boardRepo.Setup(r => r.FindActiveByIdForUpdateAsync(It.IsAny<long>(), It.IsAny<CancellationToken>())).ReturnsAsync(MakeBoard(writer: "Alice"));
+        _boardRepo.Setup(r => r.UpdateEntityAsync(It.IsAny<Board>(), It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
         var sut = CreateSut();
 
         ServiceResult result = await sut.DeleteBoardAsync(1, BoardTypes.FreeForum, "Admin", true, TestContext.Current.CancellationToken);
@@ -717,7 +744,7 @@ public class BoardServiceTests : IAsyncDisposable
     [Fact]
     public async Task WriteCommentAsync_ReturnsFail_WhenBoardNotFound()
     {
-        _boardRepo.AnswerFindActiveByIdForUpdateAsync((_, _) => Task.FromResult<Board?>(null));
+        _boardRepo.Setup(r => r.FindActiveByIdForUpdateAsync(It.IsAny<long>(), It.IsAny<CancellationToken>())).ReturnsAsync((Board?)null);
         var sut = CreateSut();
 
         ServiceResult result = await sut.WriteCommentAsync(new BoardCommentRequest { BoardId = 99 }, ct: TestContext.Current.CancellationToken);
@@ -729,7 +756,7 @@ public class BoardServiceTests : IAsyncDisposable
     [Fact]
     public async Task WriteCommentAsync_ReturnsFail_WhenRequiredOwnerDoesNotMatch()
     {
-        _boardRepo.AnswerFindActiveByIdForUpdateAsync((_, _) => Task.FromResult<Board?>(MakeBoard(writer: "Alice")));
+        _boardRepo.Setup(r => r.FindActiveByIdForUpdateAsync(It.IsAny<long>(), It.IsAny<CancellationToken>())).ReturnsAsync(MakeBoard(writer: "Alice"));
         var sut = CreateSut();
 
         ServiceResult result = await sut.WriteCommentAsync(new BoardCommentRequest { BoardId = 1 }, "Bob", ct: TestContext.Current.CancellationToken);
@@ -742,9 +769,9 @@ public class BoardServiceTests : IAsyncDisposable
     [Fact]
     public async Task WriteCommentAsync_ReturnsSuccess_WhenOwnerMatchesAndNoOwnerRestriction()
     {
-        _boardRepo.AnswerFindActiveByIdForUpdateAsync((_, _) => Task.FromResult<Board?>(MakeBoard(writer: "Alice")));
-        _commentRepo.AnswerGetByBoardIdOrderedAsync((_, _) => Task.FromResult<List<BoardComment>>([]));
-        _commentRepo.AnswerCreateAsync((_, _) => Task.CompletedTask);
+        _boardRepo.Setup(r => r.FindActiveByIdForUpdateAsync(It.IsAny<long>(), It.IsAny<CancellationToken>())).ReturnsAsync(MakeBoard(writer: "Alice"));
+        _commentRepo.Setup(r => r.GetByBoardIdOrderedAsync(It.IsAny<long>(), It.IsAny<CancellationToken>())).ReturnsAsync([]);
+        _commentRepo.Setup(r => r.CreateAsync(It.IsAny<BoardComment>(), It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
         var sut = CreateSut();
 
         ServiceResult result = await sut.WriteCommentAsync(new BoardCommentRequest { BoardId = 1, Writer = "Bob", Content = "Hello" }, ct: TestContext.Current.CancellationToken);
@@ -756,7 +783,7 @@ public class BoardServiceTests : IAsyncDisposable
     [Fact]
     public async Task WriteCommentAsync_ReturnsFail_WhenBoardLockedAndCommenterIsNotOwnerOrAdmin()
     {
-        _boardRepo.AnswerFindActiveByIdForUpdateAsync((_, _) => Task.FromResult<Board?>(MakeBoard(writer: "Alice", locked: true)));
+        _boardRepo.Setup(r => r.FindActiveByIdForUpdateAsync(It.IsAny<long>(), It.IsAny<CancellationToken>())).ReturnsAsync(MakeBoard(writer: "Alice", locked: true));
         var sut = CreateSut();
 
         ServiceResult result = await sut.WriteCommentAsync(new BoardCommentRequest { BoardId = 1, Writer = "Bob", Content = "Hi" }, ct: TestContext.Current.CancellationToken);
@@ -768,9 +795,9 @@ public class BoardServiceTests : IAsyncDisposable
     [Fact]
     public async Task WriteCommentAsync_ReturnsSuccess_WhenBoardLockedAndCommenterIsOwner()
     {
-        _boardRepo.AnswerFindActiveByIdForUpdateAsync((_, _) => Task.FromResult<Board?>(MakeBoard(writer: "Alice", locked: true)));
-        _commentRepo.AnswerGetByBoardIdOrderedAsync((_, _) => Task.FromResult<List<BoardComment>>([]));
-        _commentRepo.AnswerCreateAsync((_, _) => Task.CompletedTask);
+        _boardRepo.Setup(r => r.FindActiveByIdForUpdateAsync(It.IsAny<long>(), It.IsAny<CancellationToken>())).ReturnsAsync(MakeBoard(writer: "Alice", locked: true));
+        _commentRepo.Setup(r => r.GetByBoardIdOrderedAsync(It.IsAny<long>(), It.IsAny<CancellationToken>())).ReturnsAsync([]);
+        _commentRepo.Setup(r => r.CreateAsync(It.IsAny<BoardComment>(), It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
         var sut = CreateSut();
 
         ServiceResult result = await sut.WriteCommentAsync(new BoardCommentRequest { BoardId = 1, Writer = "Alice", Content = "Hi" }, ct: TestContext.Current.CancellationToken);
@@ -782,9 +809,9 @@ public class BoardServiceTests : IAsyncDisposable
     [Fact]
     public async Task WriteCommentAsync_ReturnsSuccess_WhenBoardLockedAndCommenterIsAdmin()
     {
-        _boardRepo.AnswerFindActiveByIdForUpdateAsync((_, _) => Task.FromResult<Board?>(MakeBoard(writer: "Alice", locked: true)));
-        _commentRepo.AnswerGetByBoardIdOrderedAsync((_, _) => Task.FromResult<List<BoardComment>>([]));
-        _commentRepo.AnswerCreateAsync((_, _) => Task.CompletedTask);
+        _boardRepo.Setup(r => r.FindActiveByIdForUpdateAsync(It.IsAny<long>(), It.IsAny<CancellationToken>())).ReturnsAsync(MakeBoard(writer: "Alice", locked: true));
+        _commentRepo.Setup(r => r.GetByBoardIdOrderedAsync(It.IsAny<long>(), It.IsAny<CancellationToken>())).ReturnsAsync([]);
+        _commentRepo.Setup(r => r.CreateAsync(It.IsAny<BoardComment>(), It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
         var sut = CreateSut();
 
         ServiceResult result = await sut.WriteCommentAsync(new BoardCommentRequest { BoardId = 1, Writer = "Bob", Content = "Hi" }, isAdmin: true, ct: TestContext.Current.CancellationToken);
@@ -796,13 +823,16 @@ public class BoardServiceTests : IAsyncDisposable
     [Fact]
     public async Task WriteCommentAsync_SetsOrderBasedOnHighestExistingCommentOrder()
     {
-        _boardRepo.AnswerFindActiveByIdForUpdateAsync((_, _) => Task.FromResult<Board?>(MakeBoard()));
-        _commentRepo.AnswerGetByBoardIdOrderedAsync((_, _) => Task.FromResult<List<BoardComment>>([
+        _boardRepo.Setup(r => r.FindActiveByIdForUpdateAsync(It.IsAny<long>(), It.IsAny<CancellationToken>())).ReturnsAsync(MakeBoard());
+        _commentRepo.Setup(r => r.GetByBoardIdOrderedAsync(It.IsAny<long>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync([
                 MakeComment(), MakeComment(2, order: 1L)
-            ]));
+            ]);
 
         BoardComment? captured = null;
-        _commentRepo.AnswerCreateAsync((c, _) => { captured = c; return Task.CompletedTask; });
+        _commentRepo.Setup(r => r.CreateAsync(It.IsAny<BoardComment>(), It.IsAny<CancellationToken>()))
+            .Callback<BoardComment, CancellationToken>((c, _) => captured = c)
+            .Returns(Task.CompletedTask);
         var sut = CreateSut();
 
         await sut.WriteCommentAsync(new BoardCommentRequest { BoardId = 1, Writer = "Bob", Content = "Hi" }, ct: TestContext.Current.CancellationToken);
@@ -820,14 +850,17 @@ public class BoardServiceTests : IAsyncDisposable
     [Fact]
     public async Task WriteCommentAsync_DoesNotCollideWithExistingOrder_AfterAPriorCommentWasDeleted()
     {
-        _boardRepo.AnswerFindActiveByIdForUpdateAsync((_, _) => Task.FromResult<Board?>(MakeBoard()));
+        _boardRepo.Setup(r => r.FindActiveByIdForUpdateAsync(It.IsAny<long>(), It.IsAny<CancellationToken>())).ReturnsAsync(MakeBoard());
         // Order 1 is "missing" here, simulating a soft-deleted comment excluded by the repository query.
-        _commentRepo.AnswerGetByBoardIdOrderedAsync((_, _) => Task.FromResult<List<BoardComment>>([
+        _commentRepo.Setup(r => r.GetByBoardIdOrderedAsync(It.IsAny<long>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync([
                 MakeComment(), MakeComment(3, order: 2L)
-            ]));
+            ]);
 
         BoardComment? captured = null;
-        _commentRepo.AnswerCreateAsync((c, _) => { captured = c; return Task.CompletedTask; });
+        _commentRepo.Setup(r => r.CreateAsync(It.IsAny<BoardComment>(), It.IsAny<CancellationToken>()))
+            .Callback<BoardComment, CancellationToken>((c, _) => captured = c)
+            .Returns(Task.CompletedTask);
         var sut = CreateSut();
 
         await sut.WriteCommentAsync(new BoardCommentRequest { BoardId = 1, Writer = "Bob", Content = "Hi" }, ct: TestContext.Current.CancellationToken);
@@ -844,17 +877,17 @@ public class BoardServiceTests : IAsyncDisposable
     [Fact]
     public async Task WriteCommentAsync_LocksBoardRowInTransaction()
     {
-        _boardRepo.AnswerFindActiveByIdForUpdateAsync((_, _) => Task.FromResult<Board?>(MakeBoard()));
-        _commentRepo.AnswerGetByBoardIdOrderedAsync((_, _) => Task.FromResult<List<BoardComment>>([]));
-        _commentRepo.AnswerCreateAsync((_, _) => Task.CompletedTask);
+        _boardRepo.Setup(r => r.FindActiveByIdForUpdateAsync(It.IsAny<long>(), It.IsAny<CancellationToken>())).ReturnsAsync(MakeBoard());
+        _commentRepo.Setup(r => r.GetByBoardIdOrderedAsync(It.IsAny<long>(), It.IsAny<CancellationToken>())).ReturnsAsync([]);
+        _commentRepo.Setup(r => r.CreateAsync(It.IsAny<BoardComment>(), It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
         var sut = CreateSut();
 
         ServiceResult result = await sut.WriteCommentAsync(new BoardCommentRequest { BoardId = 1, Writer = "Bob", Content = "Hi" }, ct: TestContext.Current.CancellationToken);
 
         Assert.True(result.Success);
-        Assert.Single(_boardRepo.FindActiveByIdForUpdateAsyncCalls, call => call.Id == 1);
-        Assert.Single(_unitOfWork.BeginAsyncCalls, call => call.IsolationLevel == null);
-        Assert.Single(_unitOfWork.CommitAsyncCalls);
+        _boardRepo.Verify(r => r.FindActiveByIdForUpdateAsync(1, It.IsAny<CancellationToken>()), Times.Once);
+        _unitOfWork.Verify(u => u.BeginAsync(null, It.IsAny<CancellationToken>()), Times.Once);
+        _unitOfWork.Verify(u => u.CommitAsync(It.IsAny<CancellationToken>()), Times.Once);
     }
 
     // -- DeleteCommentAsync ---------------------------------------------------
@@ -863,42 +896,42 @@ public class BoardServiceTests : IAsyncDisposable
     [Fact]
     public async Task DeleteCommentAsync_ReturnsFail_WhenCommentNotFound()
     {
-        _commentRepo.AnswerFindByIdForUpdateAsync((_, _) => Task.FromResult<BoardComment?>(null));
+        _commentRepo.Setup(r => r.FindByIdForUpdateAsync(It.IsAny<long>(), It.IsAny<CancellationToken>())).ReturnsAsync((BoardComment?)null);
         var sut = CreateSut();
 
         ServiceResult result = await sut.DeleteCommentAsync(99, "Alice", false, ct: TestContext.Current.CancellationToken);
 
         Assert.False(result.Success);
-        Assert.Single(_unitOfWork.RollbackAsyncCalls);
+        _unitOfWork.Verify(u => u.RollbackAsync(It.IsAny<CancellationToken>()), Times.Once);
     }
 
     /// <summary>Verifies that <c>DeleteCommentAsync</c> returns fail when not owner and not admin.</summary>
     [Fact]
     public async Task DeleteCommentAsync_ReturnsFail_WhenNotOwnerAndNotAdmin()
     {
-        _commentRepo.AnswerFindByIdForUpdateAsync((_, _) => Task.FromResult<BoardComment?>(MakeComment(writer: "Alice")));
+        _commentRepo.Setup(r => r.FindByIdForUpdateAsync(It.IsAny<long>(), It.IsAny<CancellationToken>())).ReturnsAsync(MakeComment(writer: "Alice"));
         var sut = CreateSut();
 
         ServiceResult result = await sut.DeleteCommentAsync(1, "Bob", false, ct: TestContext.Current.CancellationToken);
 
         Assert.False(result.Success);
         Assert.Contains("permission", result.ErrorKey, StringComparison.OrdinalIgnoreCase);
-        Assert.Single(_unitOfWork.RollbackAsyncCalls);
+        _unitOfWork.Verify(u => u.RollbackAsync(It.IsAny<CancellationToken>()), Times.Once);
     }
 
     /// <summary>Verifies that <c>DeleteCommentAsync</c> returns success when owner.</summary>
     [Fact]
     public async Task DeleteCommentAsync_ReturnsSuccess_WhenOwner()
     {
-        _commentRepo.AnswerFindByIdForUpdateAsync((_, _) => Task.FromResult<BoardComment?>(MakeComment(writer: "Alice")));
-        _commentRepo.AnswerUpdateEntityAsync((_, _) => Task.CompletedTask);
+        _commentRepo.Setup(r => r.FindByIdForUpdateAsync(It.IsAny<long>(), It.IsAny<CancellationToken>())).ReturnsAsync(MakeComment(writer: "Alice"));
+        _commentRepo.Setup(r => r.UpdateEntityAsync(It.IsAny<BoardComment>(), It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
         var sut = CreateSut();
 
         ServiceResult result = await sut.DeleteCommentAsync(1, "Alice", false, ct: TestContext.Current.CancellationToken);
 
         Assert.True(result.Success);
-        Assert.Single(_unitOfWork.BeginAsyncCalls, call => call.IsolationLevel == null);
-        Assert.Single(_unitOfWork.CommitAsyncCalls);
+        _unitOfWork.Verify(u => u.BeginAsync(null, It.IsAny<CancellationToken>()), Times.Once);
+        _unitOfWork.Verify(u => u.CommitAsync(It.IsAny<CancellationToken>()), Times.Once);
     }
 
     /// <summary>
@@ -909,14 +942,14 @@ public class BoardServiceTests : IAsyncDisposable
     [Fact]
     public async Task DeleteCommentAsync_UsesLockedLookup_NotUnlockedFindById()
     {
-        _commentRepo.AnswerFindByIdForUpdateAsync((_, _) => Task.FromResult<BoardComment?>(MakeComment(writer: "Alice")));
-        _commentRepo.AnswerUpdateEntityAsync((_, _) => Task.CompletedTask);
+        _commentRepo.Setup(r => r.FindByIdForUpdateAsync(It.IsAny<long>(), It.IsAny<CancellationToken>())).ReturnsAsync(MakeComment(writer: "Alice"));
+        _commentRepo.Setup(r => r.UpdateEntityAsync(It.IsAny<BoardComment>(), It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
         var sut = CreateSut();
 
         await sut.DeleteCommentAsync(1, "Alice", false, ct: TestContext.Current.CancellationToken);
 
-        Assert.Single(_commentRepo.FindByIdForUpdateAsyncCalls, call => call.Id == 1);
-        Assert.Empty(_commentRepo.FindByIdAsyncCalls);
+        _commentRepo.Verify(r => r.FindByIdForUpdateAsync(1, It.IsAny<CancellationToken>()), Times.Once);
+        _commentRepo.Verify(r => r.FindByIdAsync(It.IsAny<long>(), It.IsAny<CancellationToken>()), Times.Never);
     }
 
     // -- IncrementBoardViewAsync ----------------------------------------------
@@ -925,20 +958,20 @@ public class BoardServiceTests : IAsyncDisposable
     [Fact]
     public async Task IncrementBoardViewAsync_ReturnsSuccess_WhenNoException()
     {
-        _boardRepo.AnswerIncrementViewAsync((idArg, _) => idArg == 1, (_, _) => Task.CompletedTask);
+        _boardRepo.Setup(r => r.IncrementViewAsync(1, It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
         var sut = CreateSut();
 
         ServiceResult result = await sut.IncrementBoardViewAsync(1, TestContext.Current.CancellationToken);
 
         Assert.True(result.Success);
-        Assert.Single(_boardRepo.IncrementViewAsyncCalls, call => call.Id == 1);
+        _boardRepo.Verify(r => r.IncrementViewAsync(1, It.IsAny<CancellationToken>()), Times.Once);
     }
 
     /// <summary>Verifies that <c>IncrementBoardViewAsync</c> returns fail when repository throws.</summary>
     [Fact]
     public async Task IncrementBoardViewAsync_ReturnsFail_WhenRepositoryThrows()
     {
-        _boardRepo.AnswerIncrementViewAsync((idArg, _) => idArg == 1, (_, _) => Task.FromException(new Exception("error")));
+        _boardRepo.Setup(r => r.IncrementViewAsync(1, It.IsAny<CancellationToken>())).ThrowsAsync(new Exception("error"));
         var sut = CreateSut();
 
         ServiceResult result = await sut.IncrementBoardViewAsync(1, TestContext.Current.CancellationToken);
@@ -956,10 +989,11 @@ public class BoardServiceTests : IAsyncDisposable
     /// <summary>Arranges an editable post by Alice whose current attachment is <paramref name="previous"/>, with uploads succeeding.</summary>
     private void SetupEditableBoardWithAttachment(BoardAttachedFile? previous)
     {
-        _boardRepo.AnswerFindActiveByIdForUpdateAsync((_, _) => Task.FromResult<Board?>(MakeBoard(writer: "Alice")));
-        _boardRepo.AnswerUpdateEntityAsync((_, _) => Task.CompletedTask);
-        _attachedFileRepo.AnswerFindByBoardIdAsync((_, _) => Task.FromResult<BoardAttachedFile?>(previous));
-        _fileClient.AnswerUploadAsync((_, _, _, _, _) => Task.FromResult<bool>(true));
+        _boardRepo.Setup(r => r.FindActiveByIdForUpdateAsync(It.IsAny<long>(), It.IsAny<CancellationToken>())).ReturnsAsync(MakeBoard(writer: "Alice"));
+        _boardRepo.Setup(r => r.UpdateEntityAsync(It.IsAny<Board>(), It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
+        _attachedFileRepo.Setup(r => r.FindByBoardIdAsync(It.IsAny<long>(), It.IsAny<CancellationToken>())).ReturnsAsync(previous);
+        _fileClient.Setup(f => f.UploadAsync(It.IsAny<byte[]>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(true);
     }
 
     /// <summary>An edit request for post 1 with a new title and content.</summary>
@@ -975,10 +1009,12 @@ public class BoardServiceTests : IAsyncDisposable
         ServiceResult result = await CreateSut().EditBoardAsync(EditRequest(), "Alice", false, Zip(), TestContext.Current.CancellationToken);
 
         Assert.True(result.Success);
-        Assert.Single(_fileClient.UploadAsyncCalls, call => call.ContentType == "application/zip" && (call.FilePath.StartsWith("upload/Forum/FreeForum/boardAttachedFiles/1/", StringComparison.Ordinal) && call.FilePath.EndsWith(".zip", StringComparison.Ordinal)) && call.FileStorageBaseUrl == "https://files.example.com");
-        Assert.Single(_attachedFileRepo.UpdateEntityAsyncCalls, call => (call.Domain!.Id == 77 && call.Domain!.BoardId == 1 && call.Domain!.Name == "new" && call.Domain!.Extension == ".zip" && call.Domain!.Size == 2
-                && call.Domain!.Path.StartsWith("upload/Forum/FreeForum/boardAttachedFiles/1/", StringComparison.Ordinal) && call.Domain!.Path.EndsWith(".zip", StringComparison.Ordinal)));
-        Assert.Empty(_attachedFileRepo.CreateAsyncCalls);
+        _fileClient.Verify(f => f.UploadAsync(It.IsAny<byte[]>(), "application/zip", It.Is<string>(p => p.StartsWith("upload/Forum/FreeForum/boardAttachedFiles/1/") && p.EndsWith(".zip")), "https://files.example.com", It.IsAny<CancellationToken>()), Times.Once);
+        _attachedFileRepo.Verify(r => r.UpdateEntityAsync(
+            It.Is<BoardAttachedFile>(f => f.Id == 77 && f.BoardId == 1 && f.Name == "new" && f.Extension == ".zip" && f.Size == 2
+                && f.Path.StartsWith("upload/Forum/FreeForum/boardAttachedFiles/1/") && f.Path.EndsWith(".zip")),
+            It.IsAny<CancellationToken>()), Times.Once);
+        _attachedFileRepo.Verify(r => r.CreateAsync(It.IsAny<BoardAttachedFile>(), It.IsAny<CancellationToken>()), Times.Never);
     }
 
     /// <summary>Clear: submitting the edit without a file empties the existing attachment record; nothing is uploaded (this is how an attachment is removed).</summary>
@@ -990,8 +1026,10 @@ public class BoardServiceTests : IAsyncDisposable
         ServiceResult result = await CreateSut().EditBoardAsync(EditRequest(), "Alice", false, null, TestContext.Current.CancellationToken);
 
         Assert.True(result.Success);
-        Assert.Single(_attachedFileRepo.UpdateEntityAsyncCalls, call => (call.Domain!.Id == 77 && call.Domain!.BoardId == 1 && call.Domain!.Size == 0 && call.Domain!.Name == "" && call.Domain!.Path == ""));
-        Assert.Empty(_fileClient.UploadAsyncCalls);
+        _attachedFileRepo.Verify(r => r.UpdateEntityAsync(
+            It.Is<BoardAttachedFile>(f => f.Id == 77 && f.BoardId == 1 && f.Size == 0 && f.Name == "" && f.Path == ""),
+            It.IsAny<CancellationToken>()), Times.Once);
+        _fileClient.Verify(f => f.UploadAsync(It.IsAny<byte[]>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
     }
 
     /// <summary>Add: a post that had no attachment gets a new record for the uploaded file.</summary>
@@ -1003,8 +1041,8 @@ public class BoardServiceTests : IAsyncDisposable
         ServiceResult result = await CreateSut().EditBoardAsync(EditRequest(), "Alice", false, Zip(), TestContext.Current.CancellationToken);
 
         Assert.True(result.Success);
-        Assert.Single(_attachedFileRepo.CreateAsyncCalls, call => (call.Domain!.BoardId == 1 && call.Domain!.Name == "new"));
-        Assert.Empty(_attachedFileRepo.UpdateEntityAsyncCalls);
+        _attachedFileRepo.Verify(r => r.CreateAsync(It.Is<BoardAttachedFile>(f => f.BoardId == 1 && f.Name == "new"), It.IsAny<CancellationToken>()), Times.Once);
+        _attachedFileRepo.Verify(r => r.UpdateEntityAsync(It.IsAny<BoardAttachedFile>(), It.IsAny<CancellationToken>()), Times.Never);
     }
 
     /// <summary>No previous attachment and no new file: the attachment table is not touched at all.</summary>
@@ -1016,8 +1054,8 @@ public class BoardServiceTests : IAsyncDisposable
         ServiceResult result = await CreateSut().EditBoardAsync(EditRequest(), "Alice", false, null, TestContext.Current.CancellationToken);
 
         Assert.True(result.Success);
-        Assert.Empty(_attachedFileRepo.CreateAsyncCalls);
-        Assert.Empty(_attachedFileRepo.UpdateEntityAsyncCalls);
+        _attachedFileRepo.Verify(r => r.CreateAsync(It.IsAny<BoardAttachedFile>(), It.IsAny<CancellationToken>()), Times.Never);
+        _attachedFileRepo.Verify(r => r.UpdateEntityAsync(It.IsAny<BoardAttachedFile>(), It.IsAny<CancellationToken>()), Times.Never);
     }
 
     /// <summary>A failed upload while REPLACING rolls everything back: the old record must not be overwritten to point at a missing file.</summary>
@@ -1025,15 +1063,16 @@ public class BoardServiceTests : IAsyncDisposable
     public async Task EditBoardAsync_RollsBackWithoutTouchingTheRecord_WhenReplacingAndTheUploadFails()
     {
         SetupEditableBoardWithAttachment(BoardAttachedFile.Reconstitute(77, 1, 10, "old", ".txt", "/upload/old.txt"));
-        _fileClient.AnswerUploadAsync((_, _, _, _, _) => Task.FromResult<bool>(false));
+        _fileClient.Setup(f => f.UploadAsync(It.IsAny<byte[]>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(false);
 
         ServiceResult result = await CreateSut().EditBoardAsync(EditRequest(), "Alice", false, Zip(), TestContext.Current.CancellationToken);
 
         Assert.False(result.Success);
         Assert.Equal("Board.AttachmentUploadFailed", result.ErrorCode);
-        Assert.Empty(_attachedFileRepo.UpdateEntityAsyncCalls);
-        Assert.Single(_unitOfWork.RollbackAsyncCalls);
-        Assert.Empty(_unitOfWork.CommitAsyncCalls);
+        _attachedFileRepo.Verify(r => r.UpdateEntityAsync(It.IsAny<BoardAttachedFile>(), It.IsAny<CancellationToken>()), Times.Never);
+        _unitOfWork.Verify(u => u.RollbackAsync(It.IsAny<CancellationToken>()), Times.Once);
+        _unitOfWork.Verify(u => u.CommitAsync(It.IsAny<CancellationToken>()), Times.Never);
     }
 
     /// <summary>A record the domain rejects (over-long name) is refused BEFORE uploading, for replace and add alike, so no orphan file is left.</summary>
@@ -1049,22 +1088,22 @@ public class BoardServiceTests : IAsyncDisposable
 
         Assert.False(result.Success);
         Assert.Equal("BoardAttachedFile.NameTooLong", result.ErrorCode);
-        Assert.Empty(_fileClient.UploadAsyncCalls);
-        Assert.Single(_unitOfWork.RollbackAsyncCalls);
+        _fileClient.Verify(f => f.UploadAsync(It.IsAny<byte[]>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
+        _unitOfWork.Verify(u => u.RollbackAsync(It.IsAny<CancellationToken>()), Times.Once);
     }
 
     /// <summary>A post edited through another board type's endpoint is "not found" (no cross-type edit).</summary>
     [Fact]
     public async Task EditBoardAsync_ReturnsNotFound_WhenTheCallerExpectsADifferentBoardType()
     {
-        _boardRepo.AnswerFindActiveByIdForUpdateAsync((_, _) => Task.FromResult<Board?>(MakeBoard(writer: "Alice")));
+        _boardRepo.Setup(r => r.FindActiveByIdForUpdateAsync(It.IsAny<long>(), It.IsAny<CancellationToken>())).ReturnsAsync(MakeBoard(writer: "Alice"));
 
         ServiceResult result = await CreateSut().EditBoardAsync(
             new BoardRequest { Id = 1, Type = BoardTypes.PrivateNote, Title = "t", Content = "c" }, "Alice", false, null, TestContext.Current.CancellationToken);
 
         Assert.False(result.Success);
         Assert.Equal("Board.NotFound", result.ErrorCode);
-        Assert.Empty(_boardRepo.UpdateEntityAsyncCalls);
+        _boardRepo.Verify(r => r.UpdateEntityAsync(It.IsAny<Board>(), It.IsAny<CancellationToken>()), Times.Never);
     }
 
     /// <summary>A blank title on edit is returned as the domain validation error and nothing is written.</summary>
@@ -1077,22 +1116,22 @@ public class BoardServiceTests : IAsyncDisposable
             new BoardRequest { Id = 1, Type = BoardTypes.FreeForum, Title = "  ", Content = "c" }, "Alice", false, null, TestContext.Current.CancellationToken);
 
         Assert.Equal("Board.TitleEmpty", result.ErrorCode);
-        Assert.Empty(_boardRepo.UpdateEntityAsyncCalls);
-        Assert.Single(_unitOfWork.RollbackAsyncCalls);
+        _boardRepo.Verify(r => r.UpdateEntityAsync(It.IsAny<Board>(), It.IsAny<CancellationToken>()), Times.Never);
+        _unitOfWork.Verify(u => u.RollbackAsync(It.IsAny<CancellationToken>()), Times.Once);
     }
 
     /// <summary>An unexpected failure on edit is rolled back and reported without leaking internals.</summary>
     [Fact]
     public async Task EditBoardAsync_RollsBackAndReportsEditFailed_WhenTheRepositoryThrows()
     {
-        _boardRepo.AnswerFindActiveByIdForUpdateAsync((_, _) => Task.FromException<Board?>(new InvalidOperationException("secret detail")));
+        _boardRepo.Setup(r => r.FindActiveByIdForUpdateAsync(It.IsAny<long>(), It.IsAny<CancellationToken>())).ThrowsAsync(new InvalidOperationException("secret detail"));
 
         ServiceResult result = await CreateSut().EditBoardAsync(EditRequest(), "Alice", false, null, TestContext.Current.CancellationToken);
 
         Assert.Equal("Board.EditFailed", result.ErrorCode);
         Assert.Equal(ServiceResult.TemporaryErrorKey, result.ErrorKey);
         Assert.DoesNotContain("secret detail", result.ErrorKey, StringComparison.Ordinal);
-        Assert.Single(_unitOfWork.RollbackAsyncCalls);
+        _unitOfWork.Verify(u => u.RollbackAsync(It.IsAny<CancellationToken>()), Times.Once);
     }
 
     // -- WriteBoardAsync / DeleteBoardAsync: validation and failures ---------------
@@ -1105,35 +1144,35 @@ public class BoardServiceTests : IAsyncDisposable
             new BoardRequest { Type = BoardTypes.FreeForum, Title = "", Writer = "Alice" }, false, null, TestContext.Current.CancellationToken);
 
         Assert.Equal("Board.TitleEmpty", result.ErrorCode);
-        Assert.Empty(_boardRepo.WriteBoardAsyncCalls);
-        Assert.Single(_unitOfWork.RollbackAsyncCalls);
+        _boardRepo.Verify(r => r.WriteBoardAsync(It.IsAny<Board>(), It.IsAny<CancellationToken>()), Times.Never);
+        _unitOfWork.Verify(u => u.RollbackAsync(It.IsAny<CancellationToken>()), Times.Once);
     }
 
     /// <summary>A post can only be deleted through its own board type's endpoint.</summary>
     [Fact]
     public async Task DeleteBoardAsync_ReturnsNotFound_WhenTheBoardTypeDoesNotMatch()
     {
-        _boardRepo.AnswerFindActiveByIdForUpdateAsync((_, _) => Task.FromResult<Board?>(MakeBoard(writer: "Alice")));
+        _boardRepo.Setup(r => r.FindActiveByIdForUpdateAsync(It.IsAny<long>(), It.IsAny<CancellationToken>())).ReturnsAsync(MakeBoard(writer: "Alice"));
 
         ServiceResult result = await CreateSut().DeleteBoardAsync(1, BoardTypes.PrivateNote, "Alice", isAdmin: true, TestContext.Current.CancellationToken);
 
         Assert.Equal("Board.NotFound", result.ErrorCode);
-        Assert.Empty(_boardRepo.UpdateEntityAsyncCalls);
+        _boardRepo.Verify(r => r.UpdateEntityAsync(It.IsAny<Board>(), It.IsAny<CancellationToken>()), Times.Never);
     }
 
     /// <summary>An unexpected failure on delete is rolled back and reported without leaking internals.</summary>
     [Fact]
     public async Task DeleteBoardAsync_RollsBackAndReportsDeleteFailed_WhenTheRepositoryThrows()
     {
-        _boardRepo.AnswerFindActiveByIdForUpdateAsync((_, _) => Task.FromResult<Board?>(MakeBoard(writer: "Alice")));
-        _boardRepo.AnswerUpdateEntityAsync((_, _) => Task.FromException(new InvalidOperationException("secret detail")));
+        _boardRepo.Setup(r => r.FindActiveByIdForUpdateAsync(It.IsAny<long>(), It.IsAny<CancellationToken>())).ReturnsAsync(MakeBoard(writer: "Alice"));
+        _boardRepo.Setup(r => r.UpdateEntityAsync(It.IsAny<Board>(), It.IsAny<CancellationToken>())).ThrowsAsync(new InvalidOperationException("secret detail"));
 
         ServiceResult result = await CreateSut().DeleteBoardAsync(1, BoardTypes.FreeForum, "Alice", false, TestContext.Current.CancellationToken);
 
         Assert.Equal("Board.DeleteFailed", result.ErrorCode);
         Assert.Equal(ServiceResult.TemporaryErrorKey, result.ErrorKey);
         Assert.DoesNotContain("secret detail", result.ErrorKey, StringComparison.Ordinal);
-        Assert.Single(_unitOfWork.RollbackAsyncCalls);
+        _unitOfWork.Verify(u => u.RollbackAsync(It.IsAny<CancellationToken>()), Times.Once);
     }
 
     // -- Comments: validation, scoping and failures -------------------------------
@@ -1142,35 +1181,35 @@ public class BoardServiceTests : IAsyncDisposable
     [Fact]
     public async Task WriteCommentAsync_ReturnsTheDomainValidationError_WhenTheCommentIsEmpty()
     {
-        _boardRepo.AnswerFindActiveByIdForUpdateAsync((_, _) => Task.FromResult<Board?>(MakeBoard(writer: "Alice")));
-        _commentRepo.AnswerGetByBoardIdOrderedAsync((_, _) => Task.FromResult<List<BoardComment>>([]));
+        _boardRepo.Setup(r => r.FindActiveByIdForUpdateAsync(It.IsAny<long>(), It.IsAny<CancellationToken>())).ReturnsAsync(MakeBoard(writer: "Alice"));
+        _commentRepo.Setup(r => r.GetByBoardIdOrderedAsync(It.IsAny<long>(), It.IsAny<CancellationToken>())).ReturnsAsync([]);
 
         ServiceResult result = await CreateSut().WriteCommentAsync(
             new BoardCommentRequest { BoardId = 1, Writer = "Bob", Content = "" }, ct: TestContext.Current.CancellationToken);
 
         Assert.Equal("BoardComment.ContentEmpty", result.ErrorCode);
-        Assert.Empty(_commentRepo.CreateAsyncCalls);
-        Assert.Single(_unitOfWork.RollbackAsyncCalls);
+        _commentRepo.Verify(r => r.CreateAsync(It.IsAny<BoardComment>(), It.IsAny<CancellationToken>()), Times.Never);
+        _unitOfWork.Verify(u => u.RollbackAsync(It.IsAny<CancellationToken>()), Times.Once);
     }
 
     /// <summary>A comment can only be written through the endpoint of the post's own board type.</summary>
     [Fact]
     public async Task WriteCommentAsync_ReturnsNotFound_WhenTheBoardTypeDoesNotMatchTheRequiredType()
     {
-        _boardRepo.AnswerFindActiveByIdForUpdateAsync((_, _) => Task.FromResult<Board?>(MakeBoard(writer: "Alice")));
+        _boardRepo.Setup(r => r.FindActiveByIdForUpdateAsync(It.IsAny<long>(), It.IsAny<CancellationToken>())).ReturnsAsync(MakeBoard(writer: "Alice"));
 
         ServiceResult result = await CreateSut().WriteCommentAsync(
             new BoardCommentRequest { BoardId = 1, Writer = "Bob", Content = "Hi" }, requiredType: BoardTypes.PrivateNote, ct: TestContext.Current.CancellationToken);
 
         Assert.Equal("Board.NotFound", result.ErrorCode);
-        Assert.Empty(_commentRepo.CreateAsyncCalls);
+        _commentRepo.Verify(r => r.CreateAsync(It.IsAny<BoardComment>(), It.IsAny<CancellationToken>()), Times.Never);
     }
 
     /// <summary>An unexpected failure while writing a comment is rolled back and reported without leaking internals.</summary>
     [Fact]
     public async Task WriteCommentAsync_RollsBackAndReportsWriteCommentFailed_WhenTheRepositoryThrows()
     {
-        _boardRepo.AnswerFindActiveByIdForUpdateAsync((_, _) => Task.FromException<Board?>(new InvalidOperationException("secret detail")));
+        _boardRepo.Setup(r => r.FindActiveByIdForUpdateAsync(It.IsAny<long>(), It.IsAny<CancellationToken>())).ThrowsAsync(new InvalidOperationException("secret detail"));
 
         ServiceResult result = await CreateSut().WriteCommentAsync(
             new BoardCommentRequest { BoardId = 1, Writer = "Bob", Content = "Hi" }, ct: TestContext.Current.CancellationToken);
@@ -1178,7 +1217,7 @@ public class BoardServiceTests : IAsyncDisposable
         Assert.Equal("Board.WriteCommentFailed", result.ErrorCode);
         Assert.Equal(ServiceResult.TemporaryErrorKey, result.ErrorKey);
         Assert.DoesNotContain("secret detail", result.ErrorKey, StringComparison.Ordinal);
-        Assert.Single(_unitOfWork.RollbackAsyncCalls);
+        _unitOfWork.Verify(u => u.RollbackAsync(It.IsAny<CancellationToken>()), Times.Once);
     }
 
     /// <summary>When the caller is scoped to a board type, a comment whose parent post is gone (or of another type) is "not found".</summary>
@@ -1187,14 +1226,15 @@ public class BoardServiceTests : IAsyncDisposable
     [InlineData(true)]
     public async Task DeleteCommentAsync_ReturnsNotFound_WhenTheParentPostIsMissingOrOfAnotherType(bool parentExists)
     {
-        _commentRepo.AnswerFindByIdForUpdateAsync((_, _) => Task.FromResult<BoardComment?>(MakeComment(writer: "Alice")));
-        _boardRepo.AnswerFindActiveByIdAsync((_, _) => Task.FromResult<Board?>(parentExists ? MakeBoard(writer: "Alice") : null));
+        _commentRepo.Setup(r => r.FindByIdForUpdateAsync(It.IsAny<long>(), It.IsAny<CancellationToken>())).ReturnsAsync(MakeComment(writer: "Alice"));
+        _boardRepo.Setup(r => r.FindActiveByIdAsync(It.IsAny<long>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(parentExists ? MakeBoard(writer: "Alice") : null);
 
         ServiceResult result = await CreateSut().DeleteCommentAsync(1, "Alice", false, BoardTypes.PrivateNote, TestContext.Current.CancellationToken);
 
         Assert.Equal("BoardComment.NotFound", result.ErrorCode);
-        Assert.Empty(_commentRepo.UpdateEntityAsyncCalls);
-        Assert.Single(_unitOfWork.RollbackAsyncCalls);
+        _commentRepo.Verify(r => r.UpdateEntityAsync(It.IsAny<BoardComment>(), It.IsAny<CancellationToken>()), Times.Never);
+        _unitOfWork.Verify(u => u.RollbackAsync(It.IsAny<CancellationToken>()), Times.Once);
     }
 
     /// <summary>A private note is owner-only: an admin who did not write the comment cannot delete it, unlike on the free forum.</summary>
@@ -1202,16 +1242,16 @@ public class BoardServiceTests : IAsyncDisposable
     public async Task DeleteCommentAsync_DeniesAnAdmin_OnAPrivateNoteComment_ButAllowsThemOnAForumComment()
     {
         var privateNote = Board.Reconstitute(1, BoardTypes.PrivateNote, "t", "c", "Owner", DateTime.UtcNow, DateTime.UtcNow, 0L, false, false, false);
-        _commentRepo.AnswerFindByIdForUpdateAsync((_, _) => Task.FromResult<BoardComment?>(MakeComment(writer: "Owner")));
-        _commentRepo.AnswerUpdateEntityAsync((_, _) => Task.CompletedTask);
-        _boardRepo.AnswerFindActiveByIdAsync((_, _) => Task.FromResult<Board?>(privateNote));
+        _commentRepo.Setup(r => r.FindByIdForUpdateAsync(It.IsAny<long>(), It.IsAny<CancellationToken>())).ReturnsAsync(MakeComment(writer: "Owner"));
+        _commentRepo.Setup(r => r.UpdateEntityAsync(It.IsAny<BoardComment>(), It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
+        _boardRepo.Setup(r => r.FindActiveByIdAsync(It.IsAny<long>(), It.IsAny<CancellationToken>())).ReturnsAsync(privateNote);
 
         ServiceResult onPrivateNote = await CreateSut().DeleteCommentAsync(1, "AdminNick", isAdmin: true, BoardTypes.PrivateNote, TestContext.Current.CancellationToken);
 
         Assert.False(onPrivateNote.Success);
         Assert.Contains("permission", onPrivateNote.ErrorKey, StringComparison.OrdinalIgnoreCase);
 
-        _boardRepo.AnswerFindActiveByIdAsync((_, _) => Task.FromResult<Board?>(MakeBoard(writer: "Owner")));
+        _boardRepo.Setup(r => r.FindActiveByIdAsync(It.IsAny<long>(), It.IsAny<CancellationToken>())).ReturnsAsync(MakeBoard(writer: "Owner"));
         ServiceResult onForum = await CreateSut().DeleteCommentAsync(1, "AdminNick", isAdmin: true, BoardTypes.FreeForum, TestContext.Current.CancellationToken);
 
         Assert.True(onForum.Success);
@@ -1221,14 +1261,14 @@ public class BoardServiceTests : IAsyncDisposable
     [Fact]
     public async Task DeleteCommentAsync_RollsBackAndReportsDeleteCommentFailed_WhenTheRepositoryThrows()
     {
-        _commentRepo.AnswerFindByIdForUpdateAsync((_, _) => Task.FromException<BoardComment?>(new InvalidOperationException("secret detail")));
+        _commentRepo.Setup(r => r.FindByIdForUpdateAsync(It.IsAny<long>(), It.IsAny<CancellationToken>())).ThrowsAsync(new InvalidOperationException("secret detail"));
 
         ServiceResult result = await CreateSut().DeleteCommentAsync(1, "Alice", false, ct: TestContext.Current.CancellationToken);
 
         Assert.Equal("Board.DeleteCommentFailed", result.ErrorCode);
         Assert.Equal(ServiceResult.TemporaryErrorKey, result.ErrorKey);
         Assert.DoesNotContain("secret detail", result.ErrorKey, StringComparison.Ordinal);
-        Assert.Single(_unitOfWork.RollbackAsyncCalls);
+        _unitOfWork.Verify(u => u.RollbackAsync(It.IsAny<CancellationToken>()), Times.Once);
     }
 
     // -- Attachment-content delegation ---------------------------------------------
@@ -1239,7 +1279,7 @@ public class BoardServiceTests : IAsyncDisposable
     {
         var file = new AttachedFileDto { Bytes = [1], ContentType = "image/png", FileName = "a.png", Size = 1 };
         var expected = SummernoteUploadResult.Fail("nope");
-        _attachmentContent.AnswerUploadSummernoteImageAsync((fileArg, area, subArea, actorEmail, _) => fileArg == file && area == "user" && subArea == BoardTypes.FreeForum && actorEmail == "uploader@test.com", (_, _, _, _, _) => Task.FromResult<SummernoteUploadResult>(expected));
+        _attachmentContent.Setup(a => a.UploadSummernoteImageAsync(file, "user", BoardTypes.FreeForum, "uploader@test.com", It.IsAny<CancellationToken>())).ReturnsAsync(expected);
 
         SummernoteUploadResult actual = await CreateSut().UploadSummernoteImageAsync(file, "user", BoardTypes.FreeForum, "uploader@test.com", TestContext.Current.CancellationToken);
 
@@ -1252,30 +1292,31 @@ public class BoardServiceTests : IAsyncDisposable
     [Fact]
     public async Task WriteCommentAsync_ReturnsTheDomainRefusal_ForALockedPostAndAStranger()
     {
-        _boardRepo.AnswerFindActiveByIdForUpdateAsync((_, _) => Task.FromResult<Board?>(MakeBoard(writer: "Alice", locked: true)));
-        _commentRepo.AnswerGetByBoardIdOrderedAsync((_, _) => Task.FromResult<List<BoardComment>>([]));
+        _boardRepo.Setup(r => r.FindActiveByIdForUpdateAsync(It.IsAny<long>(), It.IsAny<CancellationToken>())).ReturnsAsync(MakeBoard(writer: "Alice", locked: true));
+        _commentRepo.Setup(r => r.GetByBoardIdOrderedAsync(It.IsAny<long>(), It.IsAny<CancellationToken>())).ReturnsAsync([]);
         var sut = CreateSut();
 
         ServiceResult result = await sut.WriteCommentAsync(new BoardCommentRequest { BoardId = 1, Writer = "Bob", Content = "Hello" }, ct: TestContext.Current.CancellationToken);
 
         Assert.False(result.Success);
         Assert.Equal("Board.Locked", result.ErrorCode);
-        Assert.Single(_unitOfWork.RollbackAsyncCalls);
-        Assert.Empty(_commentRepo.CreateAsyncCalls);
+        _unitOfWork.Verify(u => u.RollbackAsync(It.IsAny<CancellationToken>()), Times.Once);
+        _commentRepo.Verify(r => r.CreateAsync(It.IsAny<BoardComment>(), It.IsAny<CancellationToken>()), Times.Never);
     }
 
     /// <summary>Deleting a comment that is already deleted is refused by the comment itself (the lookup does not filter deleted rows), and the transaction rolls back.</summary>
     [Fact]
     public async Task DeleteCommentAsync_ReturnsTheDomainRefusal_ForAnAlreadyDeletedComment()
     {
-        _commentRepo.AnswerFindByIdForUpdateAsync((_, _) => Task.FromResult<BoardComment?>(BoardComment.Reconstitute(1, 1L, 0L, null, "Alice", "Comment", DateTime.UtcNow, true)));
+        _commentRepo.Setup(r => r.FindByIdForUpdateAsync(It.IsAny<long>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(BoardComment.Reconstitute(1, 1L, 0L, null, "Alice", "Comment", DateTime.UtcNow, true));
         var sut = CreateSut();
 
         ServiceResult result = await sut.DeleteCommentAsync(1, "Alice", false, ct: TestContext.Current.CancellationToken);
 
         Assert.False(result.Success);
         Assert.Equal("BoardComment.AlreadyDeleted", result.ErrorCode);
-        Assert.Single(_unitOfWork.RollbackAsyncCalls);
+        _unitOfWork.Verify(u => u.RollbackAsync(It.IsAny<CancellationToken>()), Times.Once);
     }
 
     // -- Transaction boundaries, exact results, request details and failure logging ----------
@@ -1291,16 +1332,16 @@ public class BoardServiceTests : IAsyncDisposable
     /// <summary>Asserts the unit of work was begun once and committed once, without a rollback.</summary>
     private void AssertCommitted()
     {
-        Assert.Single(_unitOfWork.BeginAsyncCalls, call => call.IsolationLevel == null);
-        Assert.Single(_unitOfWork.CommitAsyncCalls);
-        Assert.Empty(_unitOfWork.RollbackAsyncCalls);
+        _unitOfWork.Verify(u => u.BeginAsync(null, It.IsAny<CancellationToken>()), Times.Once);
+        _unitOfWork.Verify(u => u.CommitAsync(It.IsAny<CancellationToken>()), Times.Once);
+        _unitOfWork.Verify(u => u.RollbackAsync(It.IsAny<CancellationToken>()), Times.Never);
     }
 
     /// <summary>Asserts the unit of work was rolled back and never committed.</summary>
     private void AssertRolledBack()
     {
-        Assert.Single(_unitOfWork.RollbackAsyncCalls);
-        Assert.Empty(_unitOfWork.CommitAsyncCalls);
+        _unitOfWork.Verify(u => u.RollbackAsync(It.IsAny<CancellationToken>()), Times.Once);
+        _unitOfWork.Verify(u => u.CommitAsync(It.IsAny<CancellationToken>()), Times.Never);
     }
 
     /// <summary>Asserts <paramref name="result"/> is the post NotFound ("Input is invalid").</summary>
@@ -1315,7 +1356,8 @@ public class BoardServiceTests : IAsyncDisposable
     [Fact]
     public async Task GetAttachedFileByBoardIdAsync_MapsTheRecord_OrReturnsNull()
     {
-        _attachedFileRepo.AnswerFindByBoardIdAsync((boardId, _) => boardId == 1, (_, _) => Task.FromResult<BoardAttachedFile?>(BoardAttachedFile.Reconstitute(5, 1, 4, "report", ".zip", "upload/x.zip")));
+        _attachedFileRepo.Setup(r => r.FindByBoardIdAsync(1, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(BoardAttachedFile.Reconstitute(5, 1, 4, "report", ".zip", "upload/x.zip"));
 
         BoardAttachedFileDto? found = await CreateSut().GetAttachedFileByBoardIdAsync(1, TestContext.Current.CancellationToken);
         BoardAttachedFileDto? missing = await CreateSut().GetAttachedFileByBoardIdAsync(2, TestContext.Current.CancellationToken);
@@ -1328,7 +1370,8 @@ public class BoardServiceTests : IAsyncDisposable
     [Fact]
     public async Task GetAttachedFilesForBoardsAsync_MapsEachRecord_AndKeepsMissingOnesAsNull()
     {
-        _attachedFileRepo.AnswerGetByBoardIdsAsync((_, _) => Task.FromResult<Dictionary<long, BoardAttachedFile?>>(new Dictionary<long, BoardAttachedFile?> { [1] = BoardAttachedFile.Reconstitute(5, 1, 4, "report", ".zip", "upload/x.zip"), [2] = null }));
+        _attachedFileRepo.Setup(r => r.GetByBoardIdsAsync(It.IsAny<IEnumerable<long>>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new Dictionary<long, BoardAttachedFile?> { [1] = BoardAttachedFile.Reconstitute(5, 1, 4, "report", ".zip", "upload/x.zip"), [2] = null });
 
         Dictionary<long, BoardAttachedFileDto?> result = await CreateSut().GetAttachedFilesForBoardsAsync([1, 2], TestContext.Current.CancellationToken);
 
@@ -1340,13 +1383,13 @@ public class BoardServiceTests : IAsyncDisposable
     [Fact]
     public async Task WriteBoardAsync_SanitizesMissingContentAsEmpty_AndCommits()
     {
-        _boardRepo.AnswerWriteBoardAsync((_, _) => Task.FromResult<long>(1L));
+        _boardRepo.Setup(r => r.WriteBoardAsync(It.IsAny<Board>(), It.IsAny<CancellationToken>())).ReturnsAsync(1L);
 
         ServiceResult result = await CreateSut().WriteBoardAsync(
             new BoardRequest { Type = BoardTypes.FreeForum, Title = "T", Writer = "Alice", Content = null }, false, null, TestContext.Current.CancellationToken);
 
         Assert.True(result.Success);
-        Assert.Single(_attachmentContent.SanitizeAndDecryptContentCalls, call => call == "");
+        _attachmentContent.Verify(s => s.SanitizeAndDecryptContent(""), Times.Once);
         AssertCommitted();
     }
 
@@ -1357,7 +1400,8 @@ public class BoardServiceTests : IAsyncDisposable
     public async Task WriteBoardAsync_StoresTheRequestedLock(bool locked)
     {
         Board? written = null;
-        _boardRepo.AnswerWriteBoardAsync((b, _) => { written = b; return Task.FromResult<long>(1L); });
+        _boardRepo.Setup(r => r.WriteBoardAsync(It.IsAny<Board>(), It.IsAny<CancellationToken>()))
+            .Callback<Board, CancellationToken>((b, _) => written = b).ReturnsAsync(1L);
 
         await CreateSut().WriteBoardAsync(
             new BoardRequest { Type = BoardTypes.FreeForum, Title = "T", Writer = "Alice", Locked = locked }, false, null, TestContext.Current.CancellationToken);
@@ -1374,20 +1418,21 @@ public class BoardServiceTests : IAsyncDisposable
     [InlineData(BoardTypes.PrivateNote, "upload/Management/PrivateNote/boardAttachedFiles/1/")]
     public async Task WriteBoardAsync_UploadsTheAttachmentUnderItsBoardsArea_ToTheConfiguredStorage(string type, string expectedPrefix)
     {
-        _boardRepo.AnswerWriteBoardAsync((_, _) => Task.FromResult<long>(1L));
-        _fileClient.AnswerUploadAsync((_, _, _, _, _) => Task.FromResult<bool>(true));
+        _boardRepo.Setup(r => r.WriteBoardAsync(It.IsAny<Board>(), It.IsAny<CancellationToken>())).ReturnsAsync(1L);
+        _fileClient.Setup(f => f.UploadAsync(It.IsAny<byte[]>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(true);
 
         await CreateSut().WriteBoardAsync(new BoardRequest { Type = type, Title = "T", Writer = "Alice" }, false, Zip(), TestContext.Current.CancellationToken);
 
-        Assert.Single(_fileClient.UploadAsyncCalls, call => call.ContentType == "application/zip" && (call.FilePath.StartsWith(expectedPrefix, StringComparison.Ordinal) && call.FilePath.EndsWith(".zip", StringComparison.Ordinal)) && call.FileStorageBaseUrl == "https://files.example.com");
+        _fileClient.Verify(f => f.UploadAsync(It.IsAny<byte[]>(), "application/zip",
+            It.Is<string>(p => p.StartsWith(expectedPrefix) && p.EndsWith(".zip")), "https://files.example.com", It.IsAny<CancellationToken>()), Times.Once);
     }
 
     /// <summary>A refused attachment upload is the "failed to upload" Failure.</summary>
     [Fact]
     public async Task WriteBoardAsync_ReturnsAttachmentUploadFailed_WhenTheUploadIsRefused()
     {
-        _boardRepo.AnswerWriteBoardAsync((_, _) => Task.FromResult<long>(1L));
-        _fileClient.AnswerUploadAsync((_, _, _, _, _) => Task.FromResult<bool>(false));
+        _boardRepo.Setup(r => r.WriteBoardAsync(It.IsAny<Board>(), It.IsAny<CancellationToken>())).ReturnsAsync(1L);
+        _fileClient.Setup(f => f.UploadAsync(It.IsAny<byte[]>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(false);
 
         ServiceResult result = await CreateSut().WriteBoardAsync(new BoardRequest { Type = BoardTypes.FreeForum, Title = "T", Writer = "Alice" }, false, Zip(), TestContext.Current.CancellationToken);
 
@@ -1401,7 +1446,7 @@ public class BoardServiceTests : IAsyncDisposable
     public async Task WriteBoardAsync_LogsAndReportsWriteFailed_WhenTheRepositoryThrows()
     {
         var thrown = new InvalidOperationException("boom");
-        _boardRepo.AnswerWriteBoardAsync((_, _) => Task.FromException<long>(thrown));
+        _boardRepo.Setup(r => r.WriteBoardAsync(It.IsAny<Board>(), It.IsAny<CancellationToken>())).ThrowsAsync(thrown);
 
         ServiceResult result = await CreateSut().WriteBoardAsync(new BoardRequest { Type = BoardTypes.FreeForum, Title = "T", Writer = "Alice" }, false, null, TestContext.Current.CancellationToken);
 
@@ -1420,7 +1465,7 @@ public class BoardServiceTests : IAsyncDisposable
         ServiceResult result = await CreateSut().EditBoardAsync(request, "Alice", false, null, TestContext.Current.CancellationToken);
 
         Assert.True(result.Success);
-        Assert.Single(_attachmentContent.SanitizeAndDecryptContentCalls, call => call == "");
+        _attachmentContent.Verify(s => s.SanitizeAndDecryptContent(""), Times.Once);
         AssertCommitted();
     }
 
@@ -1430,7 +1475,7 @@ public class BoardServiceTests : IAsyncDisposable
     [InlineData(true)]
     public async Task EditBoardAsync_ReturnsBoardNotFound_ForAMissingOrDeletedPost(bool exists)
     {
-        _boardRepo.AnswerFindActiveByIdForUpdateAsync((idArg, _) => idArg == 1, (_, _) => Task.FromResult<Board?>(exists ? MakeBoard(deleted: true) : null));
+        _boardRepo.Setup(r => r.FindActiveByIdForUpdateAsync(1, It.IsAny<CancellationToken>())).ReturnsAsync(exists ? MakeBoard(deleted: true) : null);
 
         AssertBoardNotFound(await CreateSut().EditBoardAsync(EditRequest(), "Alice", false, null, TestContext.Current.CancellationToken));
         AssertRolledBack();
@@ -1440,7 +1485,7 @@ public class BoardServiceTests : IAsyncDisposable
     [Fact]
     public async Task EditBoardAsync_RefusesAStranger_WithInputIsInvalid()
     {
-        _boardRepo.AnswerFindActiveByIdForUpdateAsync((idArg, _) => idArg == 1, (_, _) => Task.FromResult<Board?>(MakeBoard(writer: "Alice")));
+        _boardRepo.Setup(r => r.FindActiveByIdForUpdateAsync(1, It.IsAny<CancellationToken>())).ReturnsAsync(MakeBoard(writer: "Alice"));
 
         ServiceResult result = await CreateSut().EditBoardAsync(EditRequest(), "Mallory", false, null, TestContext.Current.CancellationToken);
 
@@ -1453,7 +1498,7 @@ public class BoardServiceTests : IAsyncDisposable
     public async Task EditBoardAsync_LogsTheFailure_WhenTheRepositoryThrows()
     {
         var thrown = new InvalidOperationException("boom");
-        _boardRepo.AnswerFindActiveByIdForUpdateAsync((idArg, _) => idArg == 1, (_, _) => Task.FromException<Board?>(thrown));
+        _boardRepo.Setup(r => r.FindActiveByIdForUpdateAsync(1, It.IsAny<CancellationToken>())).ThrowsAsync(thrown);
 
         await CreateSut().EditBoardAsync(EditRequest(), "Alice", false, null, TestContext.Current.CancellationToken);
 
@@ -1465,13 +1510,13 @@ public class BoardServiceTests : IAsyncDisposable
     public async Task EditBoardAsync_ReturnsAttachmentUploadFailed_WhenTheReplacementUploadIsRefused()
     {
         SetupEditableBoardWithAttachment(BoardAttachedFile.Reconstitute(5, 1, 4, "old", ".zip", "upload/old.zip"));
-        _fileClient.AnswerUploadAsync((_, _, _, _, _) => Task.FromResult<bool>(false));
+        _fileClient.Setup(f => f.UploadAsync(It.IsAny<byte[]>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(false);
 
         ServiceResult result = await CreateSut().EditBoardAsync(EditRequest(), "Alice", false, Zip(), TestContext.Current.CancellationToken);
 
         Assert.Equal("Board.AttachmentUploadFailed", result.ErrorCode);
         Assert.Equal("Failed to upload the attached file.", result.ErrorKey);
-        Assert.Single(_fileClient.UploadAsyncCalls, call => call.FileStorageBaseUrl == "https://files.example.com");
+        _fileClient.Verify(f => f.UploadAsync(It.IsAny<byte[]>(), It.IsAny<string>(), It.IsAny<string>(), "https://files.example.com", It.IsAny<CancellationToken>()), Times.Once);
     }
 
     /// <summary>Adding a first attachment uploads to the configured storage; a refused upload is the "failed to upload" Failure.</summary>
@@ -1479,21 +1524,21 @@ public class BoardServiceTests : IAsyncDisposable
     public async Task EditBoardAsync_ReturnsAttachmentUploadFailed_WhenTheFirstAttachmentUploadIsRefused()
     {
         SetupEditableBoardWithAttachment(null);
-        _fileClient.AnswerUploadAsync((_, _, _, _, _) => Task.FromResult<bool>(false));
+        _fileClient.Setup(f => f.UploadAsync(It.IsAny<byte[]>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(false);
 
         ServiceResult result = await CreateSut().EditBoardAsync(EditRequest(), "Alice", false, Zip(), TestContext.Current.CancellationToken);
 
         Assert.Equal(ServiceErrorType.Failure, result.ErrorType);
         Assert.Equal("Board.AttachmentUploadFailed", result.ErrorCode);
         Assert.Equal("Failed to upload the attached file.", result.ErrorKey);
-        Assert.Single(_fileClient.UploadAsyncCalls, call => call.FileStorageBaseUrl == "https://files.example.com");
+        _fileClient.Verify(f => f.UploadAsync(It.IsAny<byte[]>(), It.IsAny<string>(), It.IsAny<string>(), "https://files.example.com", It.IsAny<CancellationToken>()), Times.Once);
     }
 
     /// <summary>A successful delete runs in a committed transaction.</summary>
     [Fact]
     public async Task DeleteBoardAsync_BeginsAndCommitsTheTransaction_OnSuccess()
     {
-        _boardRepo.AnswerFindActiveByIdForUpdateAsync((idArg, _) => idArg == 1, (_, _) => Task.FromResult<Board?>(MakeBoard(writer: "Alice")));
+        _boardRepo.Setup(r => r.FindActiveByIdForUpdateAsync(1, It.IsAny<CancellationToken>())).ReturnsAsync(MakeBoard(writer: "Alice"));
 
         ServiceResult result = await CreateSut().DeleteBoardAsync(1, BoardTypes.FreeForum, "Alice", false, TestContext.Current.CancellationToken);
 
@@ -1507,7 +1552,7 @@ public class BoardServiceTests : IAsyncDisposable
     [InlineData(true)]
     public async Task DeleteBoardAsync_ReturnsBoardNotFound_ForAMissingOrDeletedPost(bool exists)
     {
-        _boardRepo.AnswerFindActiveByIdForUpdateAsync((idArg, _) => idArg == 1, (_, _) => Task.FromResult<Board?>(exists ? MakeBoard(deleted: true) : null));
+        _boardRepo.Setup(r => r.FindActiveByIdForUpdateAsync(1, It.IsAny<CancellationToken>())).ReturnsAsync(exists ? MakeBoard(deleted: true) : null);
 
         AssertBoardNotFound(await CreateSut().DeleteBoardAsync(1, BoardTypes.FreeForum, "Alice", false, TestContext.Current.CancellationToken));
         AssertRolledBack();
@@ -1517,7 +1562,7 @@ public class BoardServiceTests : IAsyncDisposable
     [Fact]
     public async Task DeleteBoardAsync_RollsBack_WhenTheRequesterMayNotDelete()
     {
-        _boardRepo.AnswerFindActiveByIdForUpdateAsync((idArg, _) => idArg == 1, (_, _) => Task.FromResult<Board?>(MakeBoard(writer: "Alice")));
+        _boardRepo.Setup(r => r.FindActiveByIdForUpdateAsync(1, It.IsAny<CancellationToken>())).ReturnsAsync(MakeBoard(writer: "Alice"));
 
         await CreateSut().DeleteBoardAsync(1, BoardTypes.FreeForum, "Mallory", false, TestContext.Current.CancellationToken);
 
@@ -1529,7 +1574,7 @@ public class BoardServiceTests : IAsyncDisposable
     public async Task DeleteBoardAsync_LogsTheFailure_WhenTheRepositoryThrows()
     {
         var thrown = new InvalidOperationException("boom");
-        _boardRepo.AnswerFindActiveByIdForUpdateAsync((idArg, _) => idArg == 1, (_, _) => Task.FromException<Board?>(thrown));
+        _boardRepo.Setup(r => r.FindActiveByIdForUpdateAsync(1, It.IsAny<CancellationToken>())).ThrowsAsync(thrown);
 
         await CreateSut().DeleteBoardAsync(1, BoardTypes.FreeForum, "Alice", false, TestContext.Current.CancellationToken);
 
@@ -1540,12 +1585,12 @@ public class BoardServiceTests : IAsyncDisposable
     [Fact]
     public async Task WriteCommentAsync_SanitizesMissingContentAsEmpty()
     {
-        _boardRepo.AnswerFindActiveByIdForUpdateAsync((idArg, _) => idArg == 1, (_, _) => Task.FromResult<Board?>(MakeBoard()));
-        _commentRepo.AnswerGetByBoardIdOrderedAsync((boardId, _) => boardId == 1, (_, _) => Task.FromResult<List<BoardComment>>([]));
+        _boardRepo.Setup(r => r.FindActiveByIdForUpdateAsync(1, It.IsAny<CancellationToken>())).ReturnsAsync(MakeBoard());
+        _commentRepo.Setup(r => r.GetByBoardIdOrderedAsync(1, It.IsAny<CancellationToken>())).ReturnsAsync([]);
 
         await CreateSut().WriteCommentAsync(new BoardCommentRequest { BoardId = 1, Writer = "Alice", Content = null }, ct: TestContext.Current.CancellationToken);
 
-        Assert.Single(_attachmentContent.SanitizeContentCalls, call => call == "");
+        _attachmentContent.Verify(s => s.SanitizeContent(""), Times.Once);
     }
 
     /// <summary>A comment on a missing post is the post NotFound, rolled back.</summary>
@@ -1560,7 +1605,7 @@ public class BoardServiceTests : IAsyncDisposable
     [Fact]
     public async Task WriteCommentAsync_RollsBack_WhenTheOwnerOnlyRestrictionRefusesIt()
     {
-        _boardRepo.AnswerFindActiveByIdForUpdateAsync((idArg, _) => idArg == 1, (_, _) => Task.FromResult<Board?>(MakeBoard(writer: "Alice")));
+        _boardRepo.Setup(r => r.FindActiveByIdForUpdateAsync(1, It.IsAny<CancellationToken>())).ReturnsAsync(MakeBoard(writer: "Alice"));
 
         await CreateSut().WriteCommentAsync(new BoardCommentRequest { BoardId = 1, Writer = "Mallory", Content = "hi" }, requiredOwnerNickname: "Mallory", ct: TestContext.Current.CancellationToken);
 
@@ -1572,7 +1617,7 @@ public class BoardServiceTests : IAsyncDisposable
     public async Task WriteCommentAsync_LogsTheFailure_WhenTheRepositoryThrows()
     {
         var thrown = new InvalidOperationException("boom");
-        _boardRepo.AnswerFindActiveByIdForUpdateAsync((idArg, _) => idArg == 1, (_, _) => Task.FromException<Board?>(thrown));
+        _boardRepo.Setup(r => r.FindActiveByIdForUpdateAsync(1, It.IsAny<CancellationToken>())).ThrowsAsync(thrown);
 
         await CreateSut().WriteCommentAsync(new BoardCommentRequest { BoardId = 1, Writer = "Alice", Content = "hi" }, ct: TestContext.Current.CancellationToken);
 
@@ -1584,7 +1629,7 @@ public class BoardServiceTests : IAsyncDisposable
     public async Task IncrementBoardViewAsync_LogsAndReportsIncrementViewFailed_WhenTheRepositoryThrows()
     {
         var thrown = new InvalidOperationException("boom");
-        _boardRepo.AnswerIncrementViewAsync((idArg, _) => idArg == 1, (_, _) => Task.FromException(thrown));
+        _boardRepo.Setup(r => r.IncrementViewAsync(1, It.IsAny<CancellationToken>())).ThrowsAsync(thrown);
 
         ServiceResult result = await CreateSut().IncrementBoardViewAsync(1, TestContext.Current.CancellationToken);
 
@@ -1607,8 +1652,8 @@ public class BoardServiceTests : IAsyncDisposable
     [Fact]
     public async Task DeleteCommentAsync_ReturnsCommentNotFound_WhenThePostIsOfAnotherType()
     {
-        _commentRepo.AnswerFindByIdForUpdateAsync((idArg, _) => idArg == 1, (_, _) => Task.FromResult<BoardComment?>(MakeComment(writer: "Alice")));
-        _boardRepo.AnswerFindActiveByIdAsync((idArg, _) => idArg == 1, (_, _) => Task.FromResult<Board?>(MakeBoard()));
+        _commentRepo.Setup(r => r.FindByIdForUpdateAsync(1, It.IsAny<CancellationToken>())).ReturnsAsync(MakeComment(writer: "Alice"));
+        _boardRepo.Setup(r => r.FindActiveByIdAsync(1, It.IsAny<CancellationToken>())).ReturnsAsync(MakeBoard());
 
         ServiceResult result = await CreateSut().DeleteCommentAsync(1, "Alice", false, BoardTypes.PrivateNote, TestContext.Current.CancellationToken);
 
@@ -1622,12 +1667,12 @@ public class BoardServiceTests : IAsyncDisposable
     [Fact]
     public async Task DeleteCommentAsync_LetsAnAdminDeleteSomeoneElsesComment_WithoutABoardTypeScope()
     {
-        _commentRepo.AnswerFindByIdForUpdateAsync((idArg, _) => idArg == 1, (_, _) => Task.FromResult<BoardComment?>(MakeComment(writer: "Alice")));
+        _commentRepo.Setup(r => r.FindByIdForUpdateAsync(1, It.IsAny<CancellationToken>())).ReturnsAsync(MakeComment(writer: "Alice"));
 
         ServiceResult result = await CreateSut().DeleteCommentAsync(1, "Admin", true, ct: TestContext.Current.CancellationToken);
 
         Assert.True(result.Success);
-        Assert.Single(_commentRepo.UpdateEntityAsyncCalls, call => (call.Domain!.Id == 1 && call.Domain!.Deleted));
+        _commentRepo.Verify(r => r.UpdateEntityAsync(It.Is<BoardComment>(c => c.Id == 1 && c.Deleted), It.IsAny<CancellationToken>()), Times.Once);
         AssertCommitted();
     }
 
@@ -1636,7 +1681,7 @@ public class BoardServiceTests : IAsyncDisposable
     public async Task DeleteCommentAsync_LogsTheFailure_WhenTheRepositoryThrows()
     {
         var thrown = new InvalidOperationException("boom");
-        _commentRepo.AnswerFindByIdForUpdateAsync((id, _) => id == 1, (_, _) => Task.FromException<BoardComment?>(thrown));
+        _commentRepo.Setup(r => r.FindByIdForUpdateAsync(1, It.IsAny<CancellationToken>())).ThrowsAsync(thrown);
 
         await CreateSut().DeleteCommentAsync(1, "Alice", false, ct: TestContext.Current.CancellationToken);
 
@@ -1647,20 +1692,13 @@ public class BoardServiceTests : IAsyncDisposable
     [Fact]
     public async Task WriteAndEdit_SanitizeTheRequestsOwnContent()
     {
-        _boardRepo.AnswerWriteBoardAsync((_, _) => Task.FromResult<long>(1L));
+        _boardRepo.Setup(r => r.WriteBoardAsync(It.IsAny<Board>(), It.IsAny<CancellationToken>())).ReturnsAsync(1L);
         SetupEditableBoardWithAttachment(null);
 
         await CreateSut().WriteBoardAsync(new BoardRequest { Type = BoardTypes.FreeForum, Title = "T", Writer = "Alice", Content = "<p>hello</p>" }, false, null, TestContext.Current.CancellationToken);
         await CreateSut().EditBoardAsync(EditRequest(), "Alice", false, null, TestContext.Current.CancellationToken);
 
-        Assert.Single(_attachmentContent.SanitizeAndDecryptContentCalls, call => call == "<p>hello</p>");
-        Assert.Single(_attachmentContent.SanitizeAndDecryptContentCalls, call => call == "New Content");
-    }
-
-    /// <inheritdoc />
-    public async ValueTask DisposeAsync()
-    {
-        await _unitOfWork.DisposeAsync();
-        GC.SuppressFinalize(this);
+        _attachmentContent.Verify(s => s.SanitizeAndDecryptContent("<p>hello</p>"), Times.Once);
+        _attachmentContent.Verify(s => s.SanitizeAndDecryptContent("New Content"), Times.Once);
     }
 }
